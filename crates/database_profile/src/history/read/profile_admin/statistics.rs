@@ -1,7 +1,10 @@
 use database::{define_history_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
-use model_profile::{GetProfileStatisticsHistoryResult, ProfileStatisticsHistoryValue, ProfileStatisticsHistoryValueTypeInternal, StatisticsGender};
+use model_profile::{
+    GetProfileStatisticsHistoryResult, ProfileStatisticsHistoryValue,
+    ProfileStatisticsHistoryValueTypeInternal, StatisticsGender,
+};
 
 define_history_read_commands!(HistoryReadProfileAdminStatistics);
 
@@ -14,18 +17,31 @@ impl HistoryReadProfileAdminStatistics<'_> {
         let values = match settings {
             S::Accounts => self.count_changes_account(),
             S::Public { gender: None } => self.count_changes_all_genders(),
-            S::Public { gender: Some(StatisticsGender::Man) } => self.count_changes_man(),
-            S::Public { gender: Some(StatisticsGender::Woman) } => self.count_changes_woman(),
-            S::Public { gender: Some(StatisticsGender::NonBinary) } => self.count_changes_non_binary(),
+            S::Public {
+                gender: Some(StatisticsGender::Man),
+            } => self.count_changes_man(),
+            S::Public {
+                gender: Some(StatisticsGender::Woman),
+            } => self.count_changes_woman(),
+            S::Public {
+                gender: Some(StatisticsGender::NonBinary),
+            } => self.count_changes_non_binary(),
             S::AgeChange { gender: None, age } => self.age_changes_all_genders(age),
-            S::AgeChange { gender: Some(StatisticsGender::Man), age } => self.age_changes_man(age),
-            S::AgeChange { gender: Some(StatisticsGender::Woman), age } => self.age_changes_woman(age),
-            S::AgeChange { gender: Some(StatisticsGender::NonBinary), age } => self.age_changes_non_binary(age),
+            S::AgeChange {
+                gender: Some(StatisticsGender::Man),
+                age,
+            } => self.age_changes_man(age),
+            S::AgeChange {
+                gender: Some(StatisticsGender::Woman),
+                age,
+            } => self.age_changes_woman(age),
+            S::AgeChange {
+                gender: Some(StatisticsGender::NonBinary),
+                age,
+            } => self.age_changes_non_binary(age),
         }?;
 
-        Ok(GetProfileStatisticsHistoryResult {
-            values
-        })
+        Ok(GetProfileStatisticsHistoryResult { values })
     }
 }
 
@@ -39,19 +55,13 @@ macro_rules! define_read_count_change_methods {
                 &mut self,
             ) -> Result<Vec<ProfileStatisticsHistoryValue>, DieselDatabaseError> {
                 use crate::schema::{
-                    history_profile_statistics_save_time::dsl::*,
-                    $table_name::dsl::*
+                    history_profile_statistics_save_time::dsl::*, $table_name::dsl::*,
                 };
 
                 $table_name
                     .inner_join(history_profile_statistics_save_time)
-                    .select((
-                        unix_time,
-                        count,
-                    ))
-                    .order((
-                        unix_time.desc(),
-                    ))
+                    .select((unix_time, count))
+                    .order((unix_time.desc(),))
                     .load(self.conn())
                     .change_context(DieselDatabaseError::Execute)
             }
@@ -95,20 +105,14 @@ macro_rules! define_read_age_change_methods {
                 age_value: i64,
             ) -> Result<Vec<ProfileStatisticsHistoryValue>, DieselDatabaseError> {
                 use crate::schema::{
-                    history_profile_statistics_save_time::dsl::*,
-                    $table_name::dsl::*
+                    history_profile_statistics_save_time::dsl::*, $table_name::dsl::*,
                 };
 
                 $table_name
                     .inner_join(history_profile_statistics_save_time)
                     .filter(age.eq(age_value))
-                    .select((
-                        unix_time,
-                        count,
-                    ))
-                    .order((
-                        unix_time.desc(),
-                    ))
+                    .select((unix_time, count))
+                    .order((unix_time.desc(),))
                     .load(self.conn())
                     .change_context(DieselDatabaseError::Execute)
             }

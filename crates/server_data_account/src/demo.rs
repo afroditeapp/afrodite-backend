@@ -1,7 +1,10 @@
 use config::Config;
 use model::{AccessibleAccount, AccountId};
 use model_server_state::AccessibleAccountsInfo;
-use server_data::{db_manager::RouterDatabaseReadHandle, read::GetReadCommandsCommon, result::WrappedContextExt, DataError};
+use server_data::{
+    db_manager::RouterDatabaseReadHandle, read::GetReadCommandsCommon, result::WrappedContextExt,
+    DataError,
+};
 
 use crate::read::GetReadCommandsAccount;
 
@@ -85,7 +88,10 @@ impl DemoModeUtils {
         for id in &accounts {
             let info = if config.components().profile {
                 let internal_id = read.account_id_manager().get_internal_id(*id).await?;
-                let profile = read.account_profile_utils().profile_name_and_age(internal_id).await?;
+                let profile = read
+                    .account_profile_utils()
+                    .profile_name_and_age(internal_id)
+                    .await?;
                 AccessibleAccount {
                     aid: *id,
                     name: Some(profile.name),

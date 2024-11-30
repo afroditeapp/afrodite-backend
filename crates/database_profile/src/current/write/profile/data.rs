@@ -1,8 +1,13 @@
 use database::{define_current_write_commands, DieselDatabaseError};
-use diesel::{delete, insert_into, prelude::*, update, upsert::excluded, ExpressionMethods, QueryDsl};
+use diesel::{
+    delete, insert_into, prelude::*, update, upsert::excluded, ExpressionMethods, QueryDsl,
+};
 use error_stack::{Result, ResultExt};
 use model_profile::{
-    AccountIdInternal, Attribute, LastSeenTimeFilter, Location, ProfileAge, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileAttributes, ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion, SyncVersion, UnixTime
+    AccountIdInternal, Attribute, LastSeenTimeFilter, Location, ProfileAge,
+    ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileAttributes,
+    ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion, SyncVersion,
+    UnixTime,
 };
 
 use crate::IntoDatabaseError;
@@ -201,7 +206,7 @@ impl CurrentWriteProfileData<'_> {
 
     pub fn increment_profile_sync_version(
         &mut self,
-        id: AccountIdInternal
+        id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::profile_state::dsl::*;
 
@@ -268,7 +273,6 @@ impl CurrentWriteProfileData<'_> {
         data: Vec<ProfileAttributeValueUpdate>,
         attributes: Option<&ProfileAttributes>,
     ) -> Result<(), DieselDatabaseError> {
-
         // Using for loop here because this:
         // https://github.com/diesel-rs/diesel/discussions/3115
         // (SQLite does not support DEFAULT keyword when inserting data
@@ -291,14 +295,16 @@ impl CurrentWriteProfileData<'_> {
                     .execute(self.conn())
                     .into_db_error(())?;
 
-                let values: Vec<_> = a.v.into_iter().map(|value| {
-                    (
-                        account_id.eq(id.as_db_id()),
-                        attribute_id.eq(a.id as i64),
-                        attribute_value.eq(value as i64),
-                    )
-                })
-                .collect();
+                let values: Vec<_> =
+                    a.v.into_iter()
+                        .map(|value| {
+                            (
+                                account_id.eq(id.as_db_id()),
+                                attribute_id.eq(a.id as i64),
+                                attribute_value.eq(value as i64),
+                            )
+                        })
+                        .collect();
 
                 insert_into(profile_attributes_number_list)
                     .values(values)
@@ -334,7 +340,6 @@ impl CurrentWriteProfileData<'_> {
         data: Vec<ProfileAttributeFilterValueUpdate>,
         attributes: Option<&ProfileAttributes>,
     ) -> Result<(), DieselDatabaseError> {
-
         // Using for loop here because this:
         // https://github.com/diesel-rs/diesel/discussions/3115
         // (SQLite does not support DEFAULT keyword when inserting data
@@ -357,14 +362,17 @@ impl CurrentWriteProfileData<'_> {
                     .execute(self.conn())
                     .into_db_error(())?;
 
-                let values: Vec<_> = a.filter_values.into_iter().map(|value| {
-                    (
-                        account_id.eq(id.as_db_id()),
-                        attribute_id.eq(a.id as i64),
-                        filter_value.eq(value as i64),
-                    )
-                })
-                .collect();
+                let values: Vec<_> = a
+                    .filter_values
+                    .into_iter()
+                    .map(|value| {
+                        (
+                            account_id.eq(id.as_db_id()),
+                            attribute_id.eq(a.id as i64),
+                            filter_value.eq(value as i64),
+                        )
+                    })
+                    .collect();
 
                 insert_into(profile_attributes_number_list_filters)
                     .values(values)
@@ -395,7 +403,8 @@ impl CurrentWriteProfileData<'_> {
                     .set((
                         filter_value_part1.eq(excluded(filter_value_part1)),
                         filter_value_part2.eq(excluded(filter_value_part2)),
-                        filter_accept_missing_attribute.eq(excluded(filter_accept_missing_attribute)),
+                        filter_accept_missing_attribute
+                            .eq(excluded(filter_accept_missing_attribute)),
                     ))
                     .execute(self.conn())
                     .into_db_error(())?;

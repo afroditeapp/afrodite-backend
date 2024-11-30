@@ -1,7 +1,8 @@
-use model_profile::{GetProfileStatisticsResult, ProfileAgeCounts, PublicProfileCounts, StatisticsGender, StatisticsProfileVisibility, UnixTime};
-use server_data::{
-    define_cmd_wrapper_read, result::Result, DataError
+use model_profile::{
+    GetProfileStatisticsResult, ProfileAgeCounts, PublicProfileCounts, StatisticsGender,
+    StatisticsProfileVisibility, UnixTime,
 };
+use server_data::{define_cmd_wrapper_read, result::Result, DataError};
 
 use crate::cache::CacheReadProfile;
 
@@ -18,46 +19,45 @@ impl ReadCommandsProfileStatistics<'_> {
 
         let mut age_counts = ProfileAgeCounts::empty();
 
-        self
-            .read_cache_profile_and_common_for_all_accounts(|p, e| {
-                account_count += 1;
+        self.read_cache_profile_and_common_for_all_accounts(|p, e| {
+            account_count += 1;
 
-                let visibility = e.account_state_related_shared_state.profile_visibility();
+            let visibility = e.account_state_related_shared_state.profile_visibility();
 
-                let groups = p.state.search_group_flags;
-                if visibility.is_currently_public() {
-                    if groups.is_man() {
-                        public_profile_counts.man += 1;
-                    } else if groups.is_woman() {
-                        public_profile_counts.woman += 1;
-                    } else if groups.is_non_binary() {
-                        public_profile_counts.non_binary += 1;
-                    }
-                }
-
-                match profile_visibility {
-                    StatisticsProfileVisibility::All => (),
-                    StatisticsProfileVisibility::Public => {
-                        if !visibility.is_currently_public() {
-                            return;
-                        }
-                    }
-                    StatisticsProfileVisibility::Private => {
-                        if visibility.is_currently_public() {
-                            return;
-                        }
-                    }
-                }
-
+            let groups = p.state.search_group_flags;
+            if visibility.is_currently_public() {
                 if groups.is_man() {
-                    age_counts.increment_age(StatisticsGender::Man, p.data.age.value());
+                    public_profile_counts.man += 1;
                 } else if groups.is_woman() {
-                    age_counts.increment_age(StatisticsGender::Woman, p.data.age.value());
+                    public_profile_counts.woman += 1;
                 } else if groups.is_non_binary() {
-                    age_counts.increment_age(StatisticsGender::NonBinary, p.data.age.value());
+                    public_profile_counts.non_binary += 1;
                 }
-            })
-            .await?;
+            }
+
+            match profile_visibility {
+                StatisticsProfileVisibility::All => (),
+                StatisticsProfileVisibility::Public => {
+                    if !visibility.is_currently_public() {
+                        return;
+                    }
+                }
+                StatisticsProfileVisibility::Private => {
+                    if visibility.is_currently_public() {
+                        return;
+                    }
+                }
+            }
+
+            if groups.is_man() {
+                age_counts.increment_age(StatisticsGender::Man, p.data.age.value());
+            } else if groups.is_woman() {
+                age_counts.increment_age(StatisticsGender::Woman, p.data.age.value());
+            } else if groups.is_non_binary() {
+                age_counts.increment_age(StatisticsGender::NonBinary, p.data.age.value());
+            }
+        })
+        .await?;
 
         Ok(GetProfileStatisticsResult::new(
             generation_time,

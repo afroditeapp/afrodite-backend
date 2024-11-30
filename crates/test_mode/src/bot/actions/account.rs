@@ -5,7 +5,9 @@ use api_client::{
         account_api::{self, get_account_state, post_account_setup, post_complete_setup},
         account_internal_api::{post_login, post_register},
     },
-    models::{auth_pair, AccountData, AccountState, BooleanSetting, EventToClient, ProfileVisibility},
+    models::{
+        auth_pair, AccountData, AccountState, BooleanSetting, EventToClient, ProfileVisibility,
+    },
 };
 use async_trait::async_trait;
 use base64::Engine;
@@ -188,9 +190,10 @@ async fn connect_websocket(
         .change_context(TestError::WebSocket)?;
     match access_token {
         Message::Binary(access_token_bytes) => {
-            let access_token = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(access_token_bytes);
+            let access_token =
+                base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(access_token_bytes);
             state.api.set_access_token(access_token)
-        },
+        }
         _ => return Err(TestError::WebSocketWrongValue.report()),
     }
 
@@ -328,9 +331,7 @@ impl BotAction for SetAccountSetup<'_> {
             .map(|email| email.to_string())
             .unwrap_or("default@example.com".to_string());
 
-        let account_data = AccountData {
-            email: Some(email),
-        };
+        let account_data = AccountData { email: Some(email) };
 
         account_api::post_account_data(state.api.account(), account_data)
             .await

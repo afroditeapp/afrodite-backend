@@ -3,8 +3,7 @@ use model_server_data::ReceivedLikesIteratorSessionId;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::AccountId;
-use crate::ReceivedLikesSyncVersion;
+use crate::{AccountId, ReceivedLikesSyncVersion};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ResetReceivedLikesIteratorResult {
@@ -25,16 +24,7 @@ pub struct ReceivedLikesPage {
 /// Define how many returned profiles counted from the first page item are
 /// new likes (interaction state changed to like after previous received likes
 /// iterator reset).
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    Default,
-    Deserialize,
-    Serialize,
-    ToSchema,
-    PartialEq,
-)]
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct PageItemCountForNewLikes {
     pub c: i64,
 }

@@ -6,15 +6,22 @@ use api_client::{
     apis::{
         account_api::get_account_state,
         chat_api::{
-            get_public_key, post_add_receiver_acknowledgement, post_add_sender_acknowledgement, post_get_next_received_likes_page, post_public_key, post_reset_received_likes_paging, post_send_like
+            get_public_key, post_add_receiver_acknowledgement, post_add_sender_acknowledgement,
+            post_get_next_received_likes_page, post_public_key, post_reset_received_likes_paging,
+            post_send_like,
         },
         profile_api::{
             get_available_profile_attributes, post_profile, post_search_age_range,
             post_search_groups,
         },
-    }, manual_additions::{get_pending_messages_fixed, post_send_message_fixed}, models::{
-        AccountId, AccountState, AttributeMode, ClientId, ClientLocalId, PendingMessage, PendingMessageAcknowledgementList, ProfileAttributeValueUpdate, ProfileSearchAgeRange, ProfileUpdate, PublicKeyData, PublicKeyVersion, SearchGroups, SentMessageId, SentMessageIdList, SetPublicKey
-    }
+    },
+    manual_additions::{get_pending_messages_fixed, post_send_message_fixed},
+    models::{
+        AccountId, AccountState, AttributeMode, ClientId, ClientLocalId, PendingMessage,
+        PendingMessageAcknowledgementList, ProfileAttributeValueUpdate, ProfileSearchAgeRange,
+        ProfileUpdate, PublicKeyData, PublicKeyVersion, SearchGroups, SentMessageId,
+        SentMessageIdList, SetPublicKey,
+    },
 };
 use async_trait::async_trait;
 use config::bot_config_file::Gender;
@@ -23,17 +30,21 @@ use tracing::warn;
 
 use super::{
     actions::{
-        account::{AssertAccountState, Login, Register, SetAccountSetup, SetProfileVisibility, DEFAULT_AGE},
+        account::{
+            AssertAccountState, Login, Register, SetAccountSetup, SetProfileVisibility, DEFAULT_AGE,
+        },
         media::SendImageToSlot,
         profile::{ChangeProfileText, GetProfile, ProfileText, UpdateLocationRandom},
         BotAction, RunActions, RunActionsIf,
-    }, utils::encrypt::encrypt_data, BotState, BotStruct, TaskState
+    },
+    utils::encrypt::encrypt_data,
+    BotState, BotStruct, TaskState,
 };
 use crate::{
     action_array,
     bot::actions::{
         account::CompleteAccountSetup,
-        admin::{AdminBotContentModerationLogic, profile_text::AdminBotProfileTextModerationLogic},
+        admin::{profile_text::AdminBotProfileTextModerationLogic, AdminBotContentModerationLogic},
         media::{MakeModerationRequest, SetPendingContent},
         ActionArray,
     },
@@ -56,18 +67,18 @@ impl ClientBot {
         let iter = if state.is_bot_mode_admin_bot() {
             // Admin bot
 
-            const SETUP: ActionArray = action_array![
-                Register,
-                Login,
-                DoInitialSetupIfNeeded { admin: true },
-            ];
+            const SETUP: ActionArray =
+                action_array![Register, Login, DoInitialSetupIfNeeded { admin: true },];
             const ACTION_LOOP: ActionArray = action_array![
                 ActionsBeforeIteration,
                 AdminBotContentModerationLogic,
                 AdminBotProfileTextModerationLogic,
                 ActionsAfterIteration,
             ];
-            let iter = SETUP.iter().copied().chain(ACTION_LOOP.iter().copied().cycle());
+            let iter = SETUP
+                .iter()
+                .copied()
+                .chain(ACTION_LOOP.iter().copied().cycle());
 
             Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>
         } else {
@@ -98,7 +109,10 @@ impl ClientBot {
                 AnswerReceivedMessages,
                 ActionsAfterIteration,
             ];
-            let iter = SETUP.iter().copied().chain(ACTION_LOOP.iter().copied().cycle());
+            let iter = SETUP
+                .iter()
+                .copied()
+                .chain(ACTION_LOOP.iter().copied().cycle());
 
             Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>
         };
@@ -254,12 +268,15 @@ pub struct SetBotPublicKey;
 #[async_trait]
 impl BotAction for SetBotPublicKey {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        post_public_key(state.api.chat(), SetPublicKey {
-            version: PublicKeyVersion::new(1).into(),
-            data: PublicKeyData::new(BOT_PUBLIC_KEY.to_string()).into(),
-        })
-            .await
-            .change_context(TestError::ApiRequest)?;
+        post_public_key(
+            state.api.chat(),
+            SetPublicKey {
+                version: PublicKeyVersion::new(1).into(),
+                data: PublicKeyData::new(BOT_PUBLIC_KEY.to_string()).into(),
+            },
+        )
+        .await
+        .change_context(TestError::ApiRequest)?;
 
         Ok(())
     }
@@ -324,7 +341,7 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
                     0 => man,
                     1 => woman,
                     _ => non_binary,
-                }
+                },
             }
         };
 
@@ -402,9 +419,10 @@ impl BotAction for AcceptReceivedLikesAndSendMessage {
         let session_id = *r.s;
 
         loop {
-            let received_likes = post_get_next_received_likes_page(state.api.chat(), session_id.clone())
-                .await
-                .change_context(TestError::ApiRequest)?;
+            let received_likes =
+                post_get_next_received_likes_page(state.api.chat(), session_id.clone())
+                    .await
+                    .change_context(TestError::ApiRequest)?;
 
             if received_likes.p.is_empty() {
                 break;
@@ -450,13 +468,14 @@ impl BotAction for AnswerReceivedMessages {
                     list_iterator.next()?,
                 ];
                 let pending_message_json_len = u16::from_le_bytes(pending_message_json_len);
-                let pending_message_json = list_iterator.by_ref().take(pending_message_json_len.into()).collect::<Vec<u8>>();
-                let pending_message: PendingMessage = serde_json::from_slice(&pending_message_json).ok()?;
+                let pending_message_json = list_iterator
+                    .by_ref()
+                    .take(pending_message_json_len.into())
+                    .collect::<Vec<u8>>();
+                let pending_message: PendingMessage =
+                    serde_json::from_slice(&pending_message_json).ok()?;
                 pending_messages.push(pending_message);
-                let data_len = [
-                    list_iterator.next()?,
-                    list_iterator.next()?,
-                ];
+                let data_len = [list_iterator.next()?, list_iterator.next()?];
                 let data_len = u16::from_le_bytes(data_len);
                 list_iterator.by_ref().skip(data_len.into()).for_each(drop);
             }
@@ -464,8 +483,7 @@ impl BotAction for AnswerReceivedMessages {
             Some(pending_messages)
         }
 
-        let pending_messages = parse_messages(&messages)
-            .ok_or(TestError::MissingValue)?;
+        let pending_messages = parse_messages(&messages).ok_or(TestError::MissingValue)?;
 
         let messages_ids = pending_messages
             .iter()
@@ -506,7 +524,7 @@ async fn send_message(
             &receiver_public_key.data.data,
             &message_bytes,
         )
-            .map_err(|e| TestError::MessageEncryptionError(e).report())?;
+        .map_err(|e| TestError::MessageEncryptionError(e).report())?;
 
         let mut type_number_and_message = vec![0]; // Message type PGP
         type_number_and_message.extend_from_slice(&encrypted_bytes);
@@ -520,22 +538,20 @@ async fn send_message(
             0,
             type_number_and_message,
         )
-            .await
-            .change_context(TestError::ApiRequest)?;
+        .await
+        .change_context(TestError::ApiRequest)?;
 
         post_add_sender_acknowledgement(
             state.api.chat(),
             SentMessageIdList {
-                ids: vec![
-                    SentMessageId {
-                        c: ClientId::new(0).into(),
-                        l: ClientLocalId::new(0).into(),
-                    }
-                ],
+                ids: vec![SentMessageId {
+                    c: ClientId::new(0).into(),
+                    l: ClientLocalId::new(0).into(),
+                }],
             },
         )
-            .await
-            .change_context(TestError::ApiRequest)?;
+        .await
+        .change_context(TestError::ApiRequest)?;
     } else {
         warn!("Receiver public key is missing");
     }
@@ -573,10 +589,12 @@ impl BotAction for SendLikeIfNeeded {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         if let Some(account_id) = state.get_bot_config().send_like_to_account_id {
             let account_id = AccountId::new(account_id.to_string());
-            let r = post_send_like(state.api.chat(), account_id)
-                .await;
+            let r = post_send_like(state.api.chat(), account_id).await;
             if r.is_err() {
-                warn!("Sending like failed. Task: {}, Bot: {}", state.task_id, state.bot_id);
+                warn!(
+                    "Sending like failed. Task: {}, Bot: {}",
+                    state.task_id, state.bot_id
+                );
             }
         }
         Ok(())

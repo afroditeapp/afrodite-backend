@@ -99,14 +99,7 @@ impl PublicKeyVersion {
 
 diesel_i64_wrapper!(PublicKeyVersion);
 
-#[derive(
-    Debug,
-    Clone,
-    Deserialize,
-    Serialize,
-    ToSchema,
-    PartialEq,
-)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct PublicKeyIdAndVersion {
     pub id: PublicKeyId,
     pub version: PublicKeyVersion,
@@ -155,12 +148,16 @@ impl NewReceivedLikesCount {
 
     /// Return new incremented value using `saturated_add`.
     pub fn increment(&self) -> Self {
-        Self { c: self.c.saturating_add(1) }
+        Self {
+            c: self.c.saturating_add(1),
+        }
     }
 
     /// Return new decremented value using `max(0, value - 1)`.
     pub fn decrement(&self) -> Self {
-        Self { c: i64::max(0, self.c - 1) }
+        Self {
+            c: i64::max(0, self.c - 1),
+        }
     }
 }
 

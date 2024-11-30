@@ -11,7 +11,7 @@ pub struct DbIteratorStateNewCount<T: IteratorStartPoint> {
     base: DbIteratorState<T>,
 }
 
-impl <T: IteratorStartPoint> DbIteratorStateNewCount<T> {
+impl<T: IteratorStartPoint> DbIteratorStateNewCount<T> {
     fn new(id_at_reset: T, previous_id_at_reset: Option<T>) -> Self {
         Self {
             previous_id_at_reset,
@@ -51,7 +51,7 @@ pub struct DbIteratorNewCount<T: IteratorSessionIdTrait, U: IteratorStartPoint> 
     state: Option<DbIteratorStateWithSessionId<T, U>>,
 }
 
-impl <T: IteratorSessionIdTrait, U: IteratorStartPoint> DbIteratorNewCount<T, U> {
+impl<T: IteratorSessionIdTrait, U: IteratorStartPoint> DbIteratorNewCount<T, U> {
     pub fn reset(
         &mut self,
         iterator_start_point: U,
@@ -62,7 +62,7 @@ impl <T: IteratorSessionIdTrait, U: IteratorStartPoint> DbIteratorNewCount<T, U>
             id,
             state: DbIteratorStateNewCount::new(
                 iterator_start_point,
-                previous_iterator_start_point
+                previous_iterator_start_point,
             ),
         });
         id
@@ -82,7 +82,7 @@ impl <T: IteratorSessionIdTrait, U: IteratorStartPoint> DbIteratorNewCount<T, U>
     }
 }
 
-impl <T: IteratorSessionIdTrait, U: IteratorStartPoint> Default for DbIteratorNewCount<T, U> {
+impl<T: IteratorSessionIdTrait, U: IteratorStartPoint> Default for DbIteratorNewCount<T, U> {
     fn default() -> Self {
         Self {
             session_id_storage: NextNumberStorage::default(),

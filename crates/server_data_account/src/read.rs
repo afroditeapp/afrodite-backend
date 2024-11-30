@@ -6,8 +6,8 @@ use self::{account::ReadCommandsAccount, account_admin::ReadCommandsAccountAdmin
 
 pub mod account;
 pub mod account_admin;
-pub mod profile;
 pub mod chat;
+pub mod profile;
 
 pub trait GetReadCommandsAccount<'a> {
     fn account(self) -> ReadCommandsAccount<'a>;
@@ -16,7 +16,7 @@ pub trait GetReadCommandsAccount<'a> {
     fn account_chat_utils(self) -> ReadCommandsChatUtils<'a>;
 }
 
-impl <'a, T: ReadAccessProvider<'a>> GetReadCommandsAccount<'a> for T {
+impl<'a, T: ReadAccessProvider<'a>> GetReadCommandsAccount<'a> for T {
     fn account(self) -> ReadCommandsAccount<'a> {
         ReadCommandsAccount::new(self.handle())
     }

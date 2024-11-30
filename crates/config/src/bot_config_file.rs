@@ -20,9 +20,12 @@ pub struct BotConfigFile {
 }
 
 impl BotConfigFile {
-    pub fn load_if_bot_mode_or_default(file: impl AsRef<Path>, test_mode: &TestMode) -> Result<BotConfigFile, ConfigFileError> {
+    pub fn load_if_bot_mode_or_default(
+        file: impl AsRef<Path>,
+        test_mode: &TestMode,
+    ) -> Result<BotConfigFile, ConfigFileError> {
         if test_mode.bot_mode().is_none() {
-            return Ok(BotConfigFile::default())
+            return Ok(BotConfigFile::default());
         }
 
         let config_content =
@@ -31,7 +34,9 @@ impl BotConfigFile {
             toml::from_str(&config_content).change_context(ConfigFileError::LoadConfig)?;
 
         let validate_common_config = |bot: &BaseBotConfig, id: Option<u16>| {
-            let error_location = id.map(|v| format!("Bot ID {} config error.", v)).unwrap_or("Bot config error.".to_string());
+            let error_location = id
+                .map(|v| format!("Bot ID {} config error.", v))
+                .unwrap_or("Bot config error.".to_string());
             if let Some(age) = bot.age {
                 if age < 18 || age > 99 {
                     return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
@@ -58,8 +63,10 @@ impl BotConfigFile {
                 }
 
                 if bot.random_color_image.is_some() {
-                    return Err(ConfigFileError::InvalidConfig)
-                        .attach_printable(format!("{} Image and random color image can't be both set", error_location));
+                    return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
+                        "{} Image and random color image can't be both set",
+                        error_location
+                    ));
                 }
             }
 
@@ -91,14 +98,18 @@ impl BotConfigFile {
         }
 
         if let Some(config) = &config.profile_text_moderation {
-            let count = config.user_text_template.split(ProfileTextModerationConfig::TEMPLATE_FORMAT_ARGUMENT).count();
+            let count = config
+                .user_text_template
+                .split(ProfileTextModerationConfig::TEMPLATE_FORMAT_ARGUMENT)
+                .count();
             #[allow(clippy::comparison_chain)]
             if count > 2 {
                 return Err(ConfigFileError::InvalidConfig)
                     .attach_printable("Profile text moderation user text template: only one '%s' format argument is allowed");
             } else if count < 2 {
-                return Err(ConfigFileError::InvalidConfig)
-                    .attach_printable("Profile text moderation user text template: '%s' format argument is missing");
+                return Err(ConfigFileError::InvalidConfig).attach_printable(
+                    "Profile text moderation user text template: '%s' format argument is missing",
+                );
             }
         }
 
@@ -112,8 +123,7 @@ impl BotConfigFile {
             let base = self.bot_config.clone();
             let c = config.config.clone();
 
-            let prevent_base_image_config = c.image.is_some() ||
-                c.random_color_image.is_some();
+            let prevent_base_image_config = c.image.is_some() || c.random_color_image.is_some();
             let base_image = if prevent_base_image_config {
                 None
             } else {
@@ -147,7 +157,8 @@ fn check_imgs_exist(
     img_dir: &Path,
     gender: Gender,
 ) -> Result<(), ConfigFileError> {
-    let configs = [&config.bot_config].into_iter()
+    let configs = [&config.bot_config]
+        .into_iter()
         .chain(config.bot.iter().map(|v| &v.config));
 
     for bot in configs {

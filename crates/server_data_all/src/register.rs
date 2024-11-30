@@ -1,25 +1,24 @@
 use std::sync::Arc;
 
 use config::Config;
-use database::current::write::GetDbWriteCommandsCommon;
 use database::{
-    current::write::TransactionConnection, TransactionError, DbWriteModeHistory
+    current::write::{GetDbWriteCommandsCommon, TransactionConnection},
+    DbWriteModeHistory, TransactionError,
 };
-use database_account::current::write::GetDbWriteCommandsAccount;
-use database_account::history::write::GetDbHistoryWriteCommandsAccount;
+use database_account::{
+    current::write::GetDbWriteCommandsAccount, history::write::GetDbHistoryWriteCommandsAccount,
+};
 use database_chat::current::write::GetDbWriteCommandsChat;
 use database_media::current::write::GetDbWriteCommandsMedia;
 use database_profile::current::write::GetDbWriteCommandsProfile;
 use model_account::{
-    Account, AccountId, AccountIdInternal, AccountInternal, EmailAddress, SharedStateRaw, SignInWithInfo
+    Account, AccountId, AccountIdInternal, AccountInternal, EmailAddress, SharedStateRaw,
+    SignInWithInfo,
 };
-use server_data::db_manager::InternalWriting;
-use server_data::define_cmd_wrapper_write;
 use server_data::{
-    result::Result,
-    DataError, IntoDataError,
+    db_manager::InternalWriting, define_cmd_wrapper_write, index::LocationIndexIteratorHandle,
+    result::Result, DataError, IntoDataError,
 };
-use server_data::index::LocationIndexIteratorHandle;
 
 use crate::load::DbDataToCacheLoader;
 
@@ -97,14 +96,8 @@ impl RegisterAccount<'_> {
                 .account()
                 .data()
                 .insert_account(id, AccountInternal::default())?;
-            current
-                .account()
-                .data()
-                .insert_default_account_setup(id)?;
-            current
-                .account()
-                .data()
-                .insert_account_state(id)?;
+            current.account().data().insert_default_account_setup(id)?;
+            current.account().data().insert_account_state(id)?;
             current
                 .account()
                 .sign_in_with()

@@ -2,7 +2,8 @@ use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
 use model_chat::{
-    AccountId, AccountIdInternal, PendingMessage, PendingMessageAndMessageData, PendingMessageId, PendingMessageInternal, SentMessageId
+    AccountId, AccountIdInternal, PendingMessage, PendingMessageAndMessageData, PendingMessageId,
+    PendingMessageInternal, SentMessageId,
 };
 
 use crate::IntoDatabaseError;
@@ -28,18 +29,16 @@ impl CurrentReadChatMessage<'_> {
 
         let messages = value
             .into_iter()
-            .map(|(sender_uuid, msg)|
-                PendingMessageAndMessageData {
-                    pending_message: PendingMessage {
-                        id: PendingMessageId {
-                            sender: sender_uuid,
-                            mn: msg.message_number,
-                        },
-                        unix_time: msg.unix_time,
+            .map(|(sender_uuid, msg)| PendingMessageAndMessageData {
+                pending_message: PendingMessage {
+                    id: PendingMessageId {
+                        sender: sender_uuid,
+                        mn: msg.message_number,
                     },
-                    message: msg.message_bytes,
-                }
-            )
+                    unix_time: msg.unix_time,
+                },
+                message: msg.message_bytes,
+            })
             .collect();
 
         Ok(messages)
@@ -82,12 +81,10 @@ impl CurrentReadChatMessage<'_> {
 
         let messages = value
             .into_iter()
-            .map(|msg|
-                SentMessageId {
-                    c: msg.sender_client_id,
-                    l: msg.sender_client_local_id,
-                }
-            )
+            .map(|msg| SentMessageId {
+                c: msg.sender_client_id,
+                l: msg.sender_client_local_id,
+            })
             .collect();
 
         Ok(messages)

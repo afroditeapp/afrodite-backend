@@ -1,6 +1,8 @@
 use model::NextNumberStorage;
-use model_server_data::{NewsIteratorSessionIdInternal, PublicationId};
-use model_server_data::{MatchId, MatchesIteratorSessionIdInternal, ReceivedLikeId, ReceivedLikesIteratorSessionIdInternal};
+use model_server_data::{
+    MatchId, MatchesIteratorSessionIdInternal, NewsIteratorSessionIdInternal, PublicationId,
+    ReceivedLikeId, ReceivedLikesIteratorSessionIdInternal,
+};
 
 pub mod new_count;
 
@@ -29,7 +31,7 @@ pub struct DbIteratorState<T: IteratorStartPoint> {
     db_iterator: DbIteratorPageState,
 }
 
-impl <T: IteratorStartPoint> DbIteratorState<T> {
+impl<T: IteratorStartPoint> DbIteratorState<T> {
     fn new(id_at_reset: T) -> Self {
         Self {
             id_at_reset,
@@ -69,11 +71,8 @@ pub struct DbIterator<T: IteratorSessionIdTrait, U: IteratorStartPoint> {
     state: Option<DbIteratorStateWithSessionId<T, U>>,
 }
 
-impl <T: IteratorSessionIdTrait, U: IteratorStartPoint> DbIterator<T, U> {
-    pub fn reset(
-        &mut self,
-        iterator_start_point: U,
-    ) -> T {
+impl<T: IteratorSessionIdTrait, U: IteratorStartPoint> DbIterator<T, U> {
+    pub fn reset(&mut self, iterator_start_point: U) -> T {
         let id = T::create(&mut self.session_id_storage);
         self.state = Some(DbIteratorStateWithSessionId {
             id,
@@ -96,7 +95,7 @@ impl <T: IteratorSessionIdTrait, U: IteratorStartPoint> DbIterator<T, U> {
     }
 }
 
-impl <T: IteratorSessionIdTrait, U: IteratorStartPoint> Default for DbIterator<T, U> {
+impl<T: IteratorSessionIdTrait, U: IteratorStartPoint> Default for DbIterator<T, U> {
     fn default() -> Self {
         Self {
             session_id_storage: NextNumberStorage::default(),

@@ -13,7 +13,7 @@ pub trait GetReadProfileCommands<'a> {
     fn profile_admin_history(self) -> ReadCommandsProfileAdminHistory<'a>;
 }
 
-impl <'a, I: ReadAccessProvider<'a>> GetReadProfileCommands<'a> for I {
+impl<'a, I: ReadAccessProvider<'a>> GetReadProfileCommands<'a> for I {
     fn profile(self) -> ReadCommandsProfile<'a> {
         ReadCommandsProfile::new(self.handle())
     }
@@ -41,7 +41,7 @@ pub trait DbReadProfileHistory {
     ) -> error_stack::Result<R, server_data::DieselDatabaseError>;
 }
 
-impl <I: InternalReading> DbReadProfileHistory for I {
+impl<I: InternalReading> DbReadProfileHistory for I {
     async fn db_read_history<
         T: FnOnce(
                 database::DbReadModeHistory<'_>,
@@ -53,7 +53,6 @@ impl <I: InternalReading> DbReadProfileHistory for I {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, server_data::DieselDatabaseError> {
-        self.db_read_history_raw(cmd)
-            .await
+        self.db_read_history_raw(cmd).await
     }
 }

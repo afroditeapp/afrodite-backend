@@ -22,8 +22,10 @@ impl EmailContentFile {
         let mut messages = std::collections::HashSet::<EmailMessages>::new();
         for content in &config.email {
             if messages.contains(&content.message_type) {
-                return Err(ConfigFileError::InvalidConfig)
-                    .attach_printable(format!("Message {:?} is defined more than once", content.message_type));
+                return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
+                    "Message {:?} is defined more than once",
+                    content.message_type
+                ));
             }
             messages.insert(content.message_type);
         }
@@ -36,8 +38,10 @@ impl EmailContentFile {
         }
 
         if !missing_messages.is_empty() {
-            return Err(ConfigFileError::InvalidConfig)
-                .attach_printable(format!("Message content not defined for {:?}", missing_messages));
+            return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
+                "Message content not defined for {:?}",
+                missing_messages
+            ));
         }
 
         Ok(config)

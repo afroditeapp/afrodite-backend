@@ -1,5 +1,10 @@
 use std::{
-    collections::HashMap, io::Write, net::SocketAddr, num::NonZeroU32, path::{Path, PathBuf}, str::FromStr
+    collections::HashMap,
+    io::Write,
+    net::SocketAddr,
+    num::NonZeroU32,
+    path::{Path, PathBuf},
+    str::FromStr,
 };
 
 use error_stack::{Report, Result, ResultExt};
@@ -428,10 +433,7 @@ impl TimeValue {
             panic!("Minutes value is not valid");
         }
 
-        Self {
-            hours,
-            minutes,
-        }
+        Self { hours, minutes }
     }
 }
 
@@ -446,13 +448,19 @@ impl TryFrom<String> for TimeValue {
                     .parse()
                     .map_err(|e: std::num::ParseIntError| e.to_string())?;
                 if hours > Self::MAX_HOURS {
-                    return Err(format!("Max value for hours is {}, current value: {hours}", Self::MAX_HOURS));
+                    return Err(format!(
+                        "Max value for hours is {}, current value: {hours}",
+                        Self::MAX_HOURS
+                    ));
                 }
                 let minutes: u8 = minutes
                     .parse()
                     .map_err(|e: std::num::ParseIntError| e.to_string())?;
                 if minutes > Self::MAX_MINUTES {
-                    return Err(format!("Max value for minutes is {}, current value: {minutes}", Self::MAX_MINUTES));
+                    return Err(format!(
+                        "Max value for minutes is {}, current value: {minutes}",
+                        Self::MAX_MINUTES
+                    ));
                 }
                 Ok(TimeValue { hours, minutes })
             }
@@ -531,7 +539,7 @@ pub struct ScheduledTasksConfig {
 impl Default for ScheduledTasksConfig {
     fn default() -> Self {
         Self {
-            daily_run_time: UtcTimeValue(TimeValue::DEFAULT_SCHEDULED_TASKS_TIME)
+            daily_run_time: UtcTimeValue(TimeValue::DEFAULT_SCHEDULED_TASKS_TIME),
         }
     }
 }

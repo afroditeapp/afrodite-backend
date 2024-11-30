@@ -1,7 +1,9 @@
 use database_account::current::read::GetDbReadCommandsAccount;
 use model::PublicKeyIdAndVersion;
 use model_account::AccountIdInternal;
-use server_data::{define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError};
+use server_data::{
+    define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError,
+};
 
 define_cmd_wrapper_read!(ReadCommandsChatUtils);
 

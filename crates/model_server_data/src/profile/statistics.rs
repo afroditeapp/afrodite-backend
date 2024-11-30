@@ -2,7 +2,6 @@ use model::{ProfileAge, UnixTime};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum StatisticsGender {
     Man,
@@ -66,12 +65,11 @@ impl ProfileAgeCounts {
             StatisticsGender::Woman => &mut self.woman,
             StatisticsGender::NonBinary => &mut self.non_binary,
         };
-        if let Some(c) = v.get_mut::<usize>(i.into())  {
+        if let Some(c) = v.get_mut::<usize>(i.into()) {
             *c += 1;
         }
     }
 }
-
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct GetProfileStatisticsResult {

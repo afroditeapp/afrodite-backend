@@ -1,13 +1,14 @@
 use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{prelude::*, update};
 use error_stack::Result;
-use model::{AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken, PushNotificationStateInfo};
+use model::{
+    AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken,
+    PushNotificationStateInfo,
+};
 
 use crate::IntoDatabaseError;
 
-define_current_write_commands!(
-    CurrentWriteChatPushNotifications
-);
+define_current_write_commands!(CurrentWriteChatPushNotifications);
 
 impl CurrentWriteChatPushNotifications<'_> {
     pub fn remove_fcm_device_token(
@@ -88,18 +89,24 @@ impl CurrentWriteChatPushNotifications<'_> {
         &mut self,
         token: PendingNotificationToken,
     ) -> Result<(AccountIdInternal, PendingNotification), DieselDatabaseError> {
-        use model::schema::{chat_state, account_id};
+        use model::schema::{account_id, chat_state};
 
         let token_clone = token.clone();
         let (id, notification) = chat_state::table
             .inner_join(account_id::table)
             .filter(chat_state::pending_notification_token.eq(token_clone))
-            .select((AccountIdInternal::as_select(), chat_state::pending_notification))
+            .select((
+                AccountIdInternal::as_select(),
+                chat_state::pending_notification,
+            ))
             .first(self.conn())
             .into_db_error(())?;
 
         update(chat_state::table.filter(chat_state::pending_notification_token.eq(token)))
-            .set((chat_state::pending_notification.eq(0), chat_state::fcm_notification_sent.eq(false)))
+            .set((
+                chat_state::pending_notification.eq(0),
+                chat_state::fcm_notification_sent.eq(false),
+            ))
             .execute(self.conn())
             .into_db_error(())?;
 

@@ -2,10 +2,18 @@ use database::current::read::GetDbReadCommandsCommon;
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
 use error_stack::ResultExt;
 use model_media::{
-    AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, ModerationRequestState, NewContentParams, NextQueueNumberType, ProfileContentVersion, ProfileVisibility, SetProfileContent
+    AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, ModerationRequestState,
+    NewContentParams, NextQueueNumberType, ProfileContentVersion, ProfileVisibility,
+    SetProfileContent,
 };
 use server_data::{
-    cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, file::FileWrite, read::DbRead, result::{Result, WrappedContextExt}, DataError, DieselDatabaseError, write::DbTransaction,
+    cache::profile::UpdateLocationCacheState,
+    define_cmd_wrapper_write,
+    file::FileWrite,
+    read::DbRead,
+    result::{Result, WrappedContextExt},
+    write::DbTransaction,
+    DataError, DieselDatabaseError,
 };
 
 use crate::cache::CacheWriteMedia;
@@ -107,7 +115,13 @@ impl WriteCommandsMedia<'_> {
         self.db_transaction(move |mut cmds| {
             cmds.media()
                 .moderation_request()
-                .insert_content_id_to_slot(id, content_id, slot, new_content_params, face_detected)?;
+                .insert_content_id_to_slot(
+                    id,
+                    content_id,
+                    slot,
+                    new_content_params,
+                    face_detected,
+                )?;
 
             // Move content from tmp dir to content dir
             tmp_img
@@ -136,15 +150,18 @@ impl WriteCommandsMedia<'_> {
         let new_profile_content_version = ProfileContentVersion::new_random();
 
         db_transaction!(self, move |mut cmds| {
-            cmds.media().media_content().update_profile_content(id, new, new_profile_content_version)
+            cmds.media().media_content().update_profile_content(
+                id,
+                new,
+                new_profile_content_version,
+            )
         })?;
 
-        self
-            .write_cache_media(id.as_id(), |e| {
-                e.profile_content_version = new_profile_content_version;
-                Ok(())
-            })
-            .await?;
+        self.write_cache_media(id.as_id(), |e| {
+            e.profile_content_version = new_profile_content_version;
+            Ok(())
+        })
+        .await?;
 
         self.update_location_cache_profile(id).await?;
 

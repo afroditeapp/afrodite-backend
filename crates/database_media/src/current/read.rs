@@ -10,7 +10,7 @@ pub trait GetDbReadCommandsMedia {
     fn media_admin(&mut self) -> CurrentReadMediaAdmin<'_>;
 }
 
-impl <I: DbReadAccessProvider> GetDbReadCommandsMedia for I {
+impl<I: DbReadAccessProvider> GetDbReadCommandsMedia for I {
     fn media(&mut self) -> CurrentReadMedia<'_> {
         CurrentReadMedia::new(self.handle())
     }

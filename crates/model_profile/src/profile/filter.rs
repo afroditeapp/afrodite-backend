@@ -1,15 +1,11 @@
-
 use std::collections::HashSet;
 
 use model_server_data::ProfileAttributeFilterValue;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::{
-    LastSeenTimeFilter, ProfileAttributes,
-};
-
 use super::NUMBER_LIST_ATTRIBUTE_MAX_VALUES;
+use crate::{LastSeenTimeFilter, ProfileAttributes};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileAttributeFilterListUpdate {
@@ -34,8 +30,13 @@ impl ProfileAttributeFilterListUpdate {
                 match attribute_info {
                     None => return Err("Unknown attribute ID".to_string()),
                     Some(info) => {
-                        if info.mode.is_number_list() && a.filter_values.len() > NUMBER_LIST_ATTRIBUTE_MAX_VALUES {
-                            return Err(format!("Number list attribute supports max {} filters", NUMBER_LIST_ATTRIBUTE_MAX_VALUES));
+                        if info.mode.is_number_list()
+                            && a.filter_values.len() > NUMBER_LIST_ATTRIBUTE_MAX_VALUES
+                        {
+                            return Err(format!(
+                                "Number list attribute supports max {} filters",
+                                NUMBER_LIST_ATTRIBUTE_MAX_VALUES
+                            ));
                         }
                     }
                 }

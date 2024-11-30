@@ -112,10 +112,7 @@ impl SendImageToSlot {
                         tokio::time::sleep(std::time::Duration::from_millis(200)).await
                     }
                     ContentProcessingStateType::Completed => {
-                        return Ok(*slot_state
-                            .cid
-                            .flatten()
-                            .expect("Content ID is missing"))
+                        return Ok(*slot_state.cid.flatten().expect("Content ID is missing"))
                     }
                 }
             }
@@ -200,11 +197,11 @@ impl BotAction for MakeModerationRequest {
             content_ids.push(
                 match state.media.slots[*i].clone() {
                     Some(content_id) => Box::new(content_id),
-                    None => return Err(
-                        TestError::MissingValue
+                    None => {
+                        return Err(TestError::MissingValue
                             .report()
-                            .attach_printable(format!("Content ID is not set to index {i}"))
-                    )
+                            .attach_printable(format!("Content ID is not set to index {i}")))
+                    }
                 }
                 .into(),
             );

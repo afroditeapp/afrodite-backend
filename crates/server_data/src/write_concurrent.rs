@@ -7,7 +7,11 @@ use axum::body::BodyDataStream;
 use config::Config;
 use futures::Future;
 use model::{AccountId, AccountIdInternal, ContentProcessingId};
-use model_server_data::{NewsIteratorSessionId, PublicationId, MatchId, MatchesIteratorSessionId, ReceivedLikeId, ReceivedLikesIteratorSessionId, ProfileIteratorSessionId, ProfileIteratorSessionIdInternal, ProfileLink};
+use model_server_data::{
+    MatchId, MatchesIteratorSessionId, NewsIteratorSessionId, ProfileIteratorSessionId,
+    ProfileIteratorSessionIdInternal, ProfileLink, PublicationId, ReceivedLikeId,
+    ReceivedLikesIteratorSessionId,
+};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{
@@ -16,7 +20,12 @@ use super::{
     IntoDataError,
 };
 use crate::{
-    cache::db_iterator::{new_count::DbIteratorStateNewCount, DbIteratorState}, content_processing::NewContentInfo, db_manager::RouterDatabaseWriteHandle, index::LocationIndexIteratorHandle, result::Result, DataError
+    cache::db_iterator::{new_count::DbIteratorStateNewCount, DbIteratorState},
+    content_processing::NewContentInfo,
+    db_manager::RouterDatabaseWriteHandle,
+    index::LocationIndexIteratorHandle,
+    result::Result,
+    DataError,
 };
 
 const PROFILE_ITERATOR_PAGE_SIZE: usize = 25;
@@ -134,9 +143,7 @@ impl ConcurrentWriteSelectorHandle {
         }
     }
 
-    pub async fn profile_blocking(
-        self,
-    ) -> ConcurrentWriteProfileHandleBlocking {
+    pub async fn profile_blocking(self) -> ConcurrentWriteProfileHandleBlocking {
         let permit = self
             .profile_index_queue
             .clone()
@@ -191,7 +198,8 @@ pub struct ConcurrentWriteProfileHandleBlocking {
 
 impl fmt::Debug for ConcurrentWriteProfileHandleBlocking {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("ConcurrentWriteProfileHandleBlocking").finish()
+        f.debug_struct("ConcurrentWriteProfileHandleBlocking")
+            .finish()
     }
 }
 
@@ -206,7 +214,10 @@ impl ConcurrentWriteProfileHandleBlocking {
             .next_profiles(id, iterator_id)
     }
 
-    pub fn reset_profile_iterator(&self, id: AccountIdInternal) -> Result<ProfileIteratorSessionIdInternal, DataError> {
+    pub fn reset_profile_iterator(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<ProfileIteratorSessionIdInternal, DataError> {
         self.write
             .user_write_commands_account()
             .reset_profile_iterator(id)
@@ -311,7 +322,11 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .cache
             .read_cache_blocking(id.as_id(), |e| {
                 let p = e.profile.as_ref().ok_or(CacheError::FeatureNotEnabled)?;
-                error_stack::Result::<_, CacheError>::Ok((p.location.clone(), p.filters(), p.profile_iterator_session_id))
+                error_stack::Result::<_, CacheError>::Ok((
+                    p.location.clone(),
+                    p.filters(),
+                    p.profile_iterator_session_id,
+                ))
             })
             .into_data_error(id)??;
 
@@ -365,7 +380,9 @@ impl<'a> WriteCommandsConcurrent<'a> {
         self.cache
             .write_cache_blocking(id.as_id(), |e| {
                 let p = e.profile_data_mut()?;
-                let new_id = ProfileIteratorSessionIdInternal::create(&mut p.profile_iterator_session_id_storage);
+                let new_id = ProfileIteratorSessionIdInternal::create(
+                    &mut p.profile_iterator_session_id_storage,
+                );
                 let next_state = self
                     .location
                     .reset_iterator(p.location.current_iterator, p.location.current_position);
@@ -384,7 +401,8 @@ impl<'a> WriteCommandsConcurrent<'a> {
         self.cache
             .write_cache_blocking(id.as_id(), |e| {
                 if let Some(c) = e.chat.as_mut() {
-                    Ok(c.received_likes_iterator.get_and_increment(iterator_session_id))
+                    Ok(c.received_likes_iterator
+                        .get_and_increment(iterator_session_id))
                 } else {
                     Err(CacheError::FeatureNotEnabled.report())
                 }

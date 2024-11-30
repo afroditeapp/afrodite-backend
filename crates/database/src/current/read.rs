@@ -8,7 +8,7 @@ pub trait GetDbReadCommandsCommon {
     fn common(&mut self) -> CurrentReadCommon<'_>;
 }
 
-impl <I: DbReadAccessProvider> GetDbReadCommandsCommon for I {
+impl<I: DbReadAccessProvider> GetDbReadCommandsCommon for I {
     fn common(&mut self) -> CurrentReadCommon<'_> {
         CurrentReadCommon::new(self.handle())
     }

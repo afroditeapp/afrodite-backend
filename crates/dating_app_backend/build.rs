@@ -8,20 +8,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .debug(true)
                 .features(true)
                 .opt_level(true)
-                .build()?
+                .build()?,
         )?
         .add_instructions(
             &RustcBuilder::default()
                 .semver(true)
                 .host_triple(true)
-                .build()?
+                .build()?,
         )?
         .add_instructions(
             &GitclBuilder::default()
                 .branch(true)
                 .describe(true, true, None)
                 .sha(false)
-                .build()?
+                .build()?,
         )?
         .fail_on_error()
         .emit()?;

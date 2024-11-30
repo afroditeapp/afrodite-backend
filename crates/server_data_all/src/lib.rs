@@ -16,10 +16,10 @@ macro_rules! db_transaction {
     }};
 }
 
+pub mod app;
+pub mod initial_setup;
 pub mod load;
+pub mod push_notification;
 pub mod register;
 pub mod unlimited_likes;
-pub mod app;
 pub mod websocket;
-pub mod push_notification;
-pub mod initial_setup;

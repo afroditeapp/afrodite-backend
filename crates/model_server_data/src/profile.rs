@@ -1,5 +1,3 @@
-
-
 use diesel::{prelude::Queryable, sql_types::Binary, Selectable};
 use model::{AccountIdDb, ProfileAge};
 use serde::{Deserialize, Serialize};
@@ -83,7 +81,9 @@ impl ProfileVersion {
     }
 
     pub fn new_random() -> Self {
-        Self { v: simple_backend_utils::UuidBase64Url::new_random_id() }
+        Self {
+            v: simple_backend_utils::UuidBase64Url::new_random_id(),
+        }
     }
 
     fn diesel_uuid_wrapper_as_uuid(&self) -> &simple_backend_utils::UuidBase64Url {
@@ -92,7 +92,6 @@ impl ProfileVersion {
 }
 
 diesel_uuid_wrapper!(ProfileVersion);
-
 
 /// Subset of ProfileStateInternal which is cached in memory.
 #[derive(Debug, Clone, Copy)]

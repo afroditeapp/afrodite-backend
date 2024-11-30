@@ -1,4 +1,3 @@
-
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
 use model::UnixTime;
 use serde::{Deserialize, Serialize};
@@ -67,18 +66,13 @@ impl LastSeenTimeFilter {
         &self.value
     }
 
-    pub fn is_match(
-        &self,
-        last_seen_time: LastSeenTime,
-        current_time: &UnixTime,
-    ) -> bool {
+    pub fn is_match(&self, last_seen_time: LastSeenTime, current_time: &UnixTime) -> bool {
         if *self == Self::ONLINE {
             last_seen_time == LastSeenTime::ONLINE
         } else if last_seen_time.raw() <= current_time.ut {
             let seconds_since_last_seen = last_seen_time.raw().abs_diff(current_time.ut);
             let max_seconds_since = self.value as u64;
-            last_seen_time == LastSeenTime::ONLINE ||
-            seconds_since_last_seen <= max_seconds_since
+            last_seen_time == LastSeenTime::ONLINE || seconds_since_last_seen <= max_seconds_since
         } else {
             false
         }

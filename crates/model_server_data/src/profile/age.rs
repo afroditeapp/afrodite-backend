@@ -1,7 +1,5 @@
 use model::ProfileAge;
 
-
-
 /// Profile search age range which min and max are in
 /// inclusive range of `[18, 99]`.
 #[derive(Debug, Clone, Copy, PartialEq)]

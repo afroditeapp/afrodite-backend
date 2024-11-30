@@ -3,7 +3,6 @@ use utoipa::ToSchema;
 
 use super::{Attribute, ProfileAttributeValue};
 
-
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileAttributeFilterValue {
     /// Attribute ID

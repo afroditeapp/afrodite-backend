@@ -4,30 +4,43 @@
 use std::{net::SocketAddr, time::Duration};
 
 use axum::{
-    body::Bytes, extract::{
-        ws::{Message, WebSocket}, ConnectInfo, Path, State, WebSocketUpgrade
-    }, response::IntoResponse
+    body::Bytes,
+    extract::{
+        ws::{Message, WebSocket},
+        ConnectInfo, Path, State, WebSocketUpgrade,
+    },
+    response::IntoResponse,
 };
 use axum_extra::TypedHeader;
 use headers::ContentType;
 use http::HeaderMap;
-use model::{AccessToken, AccountIdInternal, BackendVersion, EventToClient, PendingNotificationFlags, RefreshToken, SyncDataVersionFromClient};
+use model::{
+    AccessToken, AccountIdInternal, BackendVersion, EventToClient, PendingNotificationFlags,
+    RefreshToken, SyncDataVersionFromClient,
+};
 use model_server_data::AuthPair;
 use obfuscate_api_macro::obfuscate_api;
 use server_common::websocket::WebSocketError;
-use crate::S;
-use tokio::time::Instant;
-use server_state::app::GetAccessTokens;
-use crate::utils::Json;
-use server_data::{app::{BackendVersionProvider, EventManagerProvider}, read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
+use server_data::{
+    app::{BackendVersionProvider, EventManagerProvider},
+    read::GetReadCommandsCommon,
+    write::GetWriteCommandsCommon,
+};
+use server_state::{
+    app::GetAccessTokens,
+    state_impl::{ReadData, WriteData},
+};
 use simple_backend::{app::FilePackageProvider, create_counters, web_socket::WebSocketManager};
 use simple_backend_utils::IntoReportFromString;
+use tokio::time::Instant;
 use tracing::{error, info};
 
-use server_state::state_impl::{ReadData, WriteData};
-
 use super::utils::StatusCode;
-use crate::result::{WrappedContextExt, WrappedResultExt};
+use crate::{
+    result::{WrappedContextExt, WrappedResultExt},
+    utils::Json,
+    S,
+};
 
 #[obfuscate_api]
 pub const PATH_GET_VERSION: &str = "/common_api/version";
@@ -41,9 +54,7 @@ pub const PATH_GET_VERSION: &str = "/common_api/version";
         (status = 200, description = "Version information.", body = BackendVersion),
     )
 )]
-pub async fn get_version(
-    State(state): State<S>,
-) -> Json<BackendVersion> {
+pub async fn get_version(State(state): State<S>) -> Json<BackendVersion> {
     COMMON.get_version.incr();
     state.backend_version().into()
 }
@@ -54,10 +65,10 @@ pub const PATH_FILE_PACKAGE_ACCESS: &str = "/*path";
 
 pub async fn get_file_package_access(
     State(state): State<S>,
-    Path(path_parts): Path<Vec<String>>
+    Path(path_parts): Path<Vec<String>>,
 ) -> Result<(TypedHeader<ContentType>, Bytes), StatusCode> {
     COMMON.get_file_package_access.incr();
-    let wanted_file =  path_parts.join("/");
+    let wanted_file = path_parts.join("/");
     let (content_type, data) = state
         .file_package()
         .data(&wanted_file)
@@ -78,8 +89,7 @@ pub async fn get_file_package_access_root(
     Ok((TypedHeader(content_type), data))
 }
 
-pub use utils::api::PATH_CONNECT;
-pub use utils::api::PATH_CONNECT_AXUM;
+pub use utils::api::{PATH_CONNECT, PATH_CONNECT_AXUM};
 
 // ------------------------- WebSocket -------------------------
 
@@ -147,7 +157,8 @@ pub async fn get_connect_websocket(
     // NOTE: This handler does not have authentication layer enabled, so
     // authentication must be done manually.
 
-    let mut protocols_iterator = header_map.get(http::header::SEC_WEBSOCKET_PROTOCOL)
+    let mut protocols_iterator = header_map
+        .get(http::header::SEC_WEBSOCKET_PROTOCOL)
         .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?
         .to_str()
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
@@ -185,7 +196,11 @@ async fn handle_socket(
 ) {
     // TODO(prod): Remove account details printing before 1.0
 
-    info!("handle_socket for '{}', address: {}", id.id.as_i64(), address);
+    info!(
+        "handle_socket for '{}', address: {}",
+        id.id.as_i64(),
+        address
+    );
     let quit_lock = if let Some(quit_lock) = ws_manager.get_ongoing_ws_connection_quit_lock().await
     {
         quit_lock
@@ -237,13 +252,19 @@ async fn handle_socket(
         }
     }
 
-    state.event_manager().trigger_push_notification_sending_check_if_needed(id).await;
+    state
+        .event_manager()
+        .trigger_push_notification_sending_check_if_needed(id)
+        .await;
 
     drop(quit_lock);
 
-    info!("Connection for '{}' closed, address: {}", id.id.as_i64(), address);
+    info!(
+        "Connection for '{}' closed, address: {}",
+        id.id.as_i64(),
+        address
+    );
 }
-
 
 async fn handle_socket_result(
     mut socket: WebSocket,
@@ -251,7 +272,11 @@ async fn handle_socket_result(
     id: AccountIdInternal,
     state: &S,
 ) -> crate::result::Result<(), WebSocketError> {
-    info!("handle_socket_result for '{}', address: {}", id.id.as_i64(), address);
+    info!(
+        "handle_socket_result for '{}', address: {}",
+        id.id.as_i64(),
+        address
+    );
 
     // Receive protocol version byte.
     let client_is_supported = match socket
@@ -267,7 +292,12 @@ async fn handle_socket_result(
                         .into_error_string(WebSocketError::ProtocolError)?;
                     // TODO: remove after client is tested to work with the
                     // new protocol
-                    info!("{:#?}, for '{}', address: {}", info, id.id.as_i64(), address);
+                    info!(
+                        "{:#?}, for '{}', address: {}",
+                        info,
+                        id.id.as_i64(),
+                        address
+                    );
                     // In the future there is possibility to blacklist some
                     // old client versions.
                     true
@@ -329,7 +359,12 @@ async fn handle_socket_result(
         .write(move |cmds| async move {
             // Prevent sending push notification if this connection
             // replaces the old connection.
-            cmds.events().remove_specific_pending_notification_flags_from_cache(id, PendingNotificationFlags::all()).await;
+            cmds.events()
+                .remove_specific_pending_notification_flags_from_cache(
+                    id,
+                    PendingNotificationFlags::all(),
+                )
+                .await;
             // Create new event channel, so old one will break.
             // Also update tokens.
             cmds.common()
@@ -366,7 +401,10 @@ async fn handle_socket_result(
         _ => return Err(WebSocketError::ProtocolError.report()),
     };
 
-    state.data_all_access().handle_new_websocket_connection(&mut socket, id, data_sync_versions).await?;
+    state
+        .data_all_access()
+        .handle_new_websocket_connection(&mut socket, id, data_sync_versions)
+        .await?;
 
     // TODO(prod): Remove extra logging from this file.
 
@@ -446,7 +484,10 @@ impl ConnectionPingTracker {
     pub fn new() -> Self {
         let first_tick = Instant::now() + Duration::from_secs(Self::TIMEOUT_IN_SECONDS);
         Self {
-            timer: tokio::time::interval_at(first_tick, Duration::from_secs(Self::TIMEOUT_IN_SECONDS)),
+            timer: tokio::time::interval_at(
+                first_tick,
+                Duration::from_secs(Self::TIMEOUT_IN_SECONDS),
+            ),
         }
     }
 
@@ -459,4 +500,12 @@ impl ConnectionPingTracker {
     }
 }
 
-create_counters!(CommonCounters, COMMON, COMMON_COUNTERS_LIST, get_version, get_file_package_access, get_file_package_access_root, get_connect_websocket,);
+create_counters!(
+    CommonCounters,
+    COMMON,
+    COMMON_COUNTERS_LIST,
+    get_version,
+    get_file_package_access,
+    get_file_package_access_root,
+    get_connect_websocket,
+);

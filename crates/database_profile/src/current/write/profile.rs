@@ -7,7 +7,7 @@ mod profile_text;
 
 define_current_write_commands!(CurrentWriteProfile);
 
-impl <'a> CurrentWriteProfile<'a> {
+impl<'a> CurrentWriteProfile<'a> {
     pub fn data(self) -> data::CurrentWriteProfileData<'a> {
         data::CurrentWriteProfileData::new(self.cmds)
     }
@@ -16,7 +16,9 @@ impl <'a> CurrentWriteProfile<'a> {
         favorite::CurrentWriteProfileFavorite::new(self.cmds)
     }
 
-    pub fn profile_name_allowlist(self) -> profile_name_allowlist::CurrentWriteProfileNameAllowlist<'a> {
+    pub fn profile_name_allowlist(
+        self,
+    ) -> profile_name_allowlist::CurrentWriteProfileNameAllowlist<'a> {
         profile_name_allowlist::CurrentWriteProfileNameAllowlist::new(self.cmds)
     }
 

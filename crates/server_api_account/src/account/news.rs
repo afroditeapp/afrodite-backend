@@ -1,16 +1,20 @@
-
-use axum::{extract::{Path, Query, State}, Extension};
-use model_account::{AccountIdInternal, GetNewsItemResult, NewsId, NewsIteratorSessionId, NewsLocale, NewsPage, PageItemCountForNewPublicNews, PendingNotificationFlags, Permissions, RequireNewsLocale, ResetNewsIteratorResult, UnreadNewsCountResult};
+use axum::{
+    extract::{Path, Query, State},
+    Extension,
+};
+use model_account::{
+    AccountIdInternal, GetNewsItemResult, NewsId, NewsIteratorSessionId, NewsLocale, NewsPage,
+    PageItemCountForNewPublicNews, PendingNotificationFlags, Permissions, RequireNewsLocale,
+    ResetNewsIteratorResult, UnreadNewsCountResult,
+};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::{app::EventManagerProvider, create_open_api_router, db_write};
+use server_api::{app::EventManagerProvider, create_open_api_router, db_write, S};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
 use crate::app::{ReadData, WriteData};
-
 
 #[obfuscate_api]
 const PATH_GET_UNREAD_NEWS_COUNT: &str = "/account_api/news_count";
@@ -36,7 +40,10 @@ pub async fn post_get_unread_news_count(
 
     state
         .event_manager()
-        .remove_specific_pending_notification_flags_from_cache(id, PendingNotificationFlags::NEWS_CHANGED)
+        .remove_specific_pending_notification_flags_from_cache(
+            id,
+            PendingNotificationFlags::NEWS_CHANGED,
+        )
         .await;
 
     Ok(r.into())
@@ -94,12 +101,9 @@ pub async fn post_get_next_news_page(
     ACCOUNT.post_get_next_news_page.incr();
 
     let data = state
-        .concurrent_write_profile_blocking(
-            account_id.as_id(),
-            move |cmds| {
-                cmds.next_news_iterator_state(account_id, iterator_session_id)
-            }
-        )
+        .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {
+            cmds.next_news_iterator_state(account_id, iterator_session_id)
+        })
         .await??;
 
     if let Some(data) = data {
@@ -108,19 +112,25 @@ pub async fn post_get_next_news_page(
             .read()
             .account()
             .news()
-            .news_page(data, locale, permissions.some_admin_news_permissions_granted())
+            .news_page(
+                data,
+                locale,
+                permissions.some_admin_news_permissions_granted(),
+            )
             .await?;
         Ok(NewsPage {
             n,
             news,
             error_invalid_iterator_session_id: false,
-        }.into())
+        }
+        .into())
     } else {
         Ok(NewsPage {
             n: PageItemCountForNewPublicNews::default(),
             news: vec![],
             error_invalid_iterator_session_id: true,
-        }.into())
+        }
+        .into())
     }
 }
 
@@ -164,12 +174,7 @@ pub async fn get_news_item(
         }
     }
 
-    let is_public = state
-        .read()
-        .account()
-        .news()
-        .is_public(nid)
-        .await?;
+    let is_public = state.read().account().news().is_public(nid).await?;
 
     let news = GetNewsItemResult {
         item,

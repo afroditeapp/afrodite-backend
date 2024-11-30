@@ -1,4 +1,3 @@
-
 use database::{define_history_write_commands, DieselDatabaseError, IntoDatabaseError};
 use diesel::{insert_into, prelude::*};
 use error_stack::Result;
@@ -6,7 +5,7 @@ use model_profile::{GetProfileStatisticsResult, SaveTimeId, UnixTime};
 
 define_history_write_commands!(HistoryWriteProfileAdminStatistics);
 
-impl <'a> HistoryWriteProfileAdminStatistics<'a> {
+impl<'a> HistoryWriteProfileAdminStatistics<'a> {
     pub fn save_statistics(
         &mut self,
         r: GetProfileStatisticsResult,
@@ -18,12 +17,17 @@ impl <'a> HistoryWriteProfileAdminStatistics<'a> {
         self.save_count_if_needed_non_binary(time_id, r.public_profile_counts.non_binary)?;
         self.save_count_if_needed_all_genders(
             time_id,
-            r.public_profile_counts.man +
-            r.public_profile_counts.woman +
-            r.public_profile_counts.non_binary
+            r.public_profile_counts.man
+                + r.public_profile_counts.woman
+                + r.public_profile_counts.non_binary,
         )?;
 
-        type SaveMethod<'b> = fn(&mut HistoryWriteProfileAdminStatistics<'b>, SaveTimeId, i64, i64) -> Result<(), DieselDatabaseError>;
+        type SaveMethod<'b> = fn(
+            &mut HistoryWriteProfileAdminStatistics<'b>,
+            SaveTimeId,
+            i64,
+            i64,
+        ) -> Result<(), DieselDatabaseError>;
         let mut handle_ages = |v: &Vec<i64>, save_method: SaveMethod<'a>| {
             for (i, c) in v.iter().enumerate() {
                 let age = r.age_counts.start_age + i as i64;
@@ -34,9 +38,15 @@ impl <'a> HistoryWriteProfileAdminStatistics<'a> {
 
         handle_ages(&r.age_counts.man, Self::save_age_count_if_needed_man)?;
         handle_ages(&r.age_counts.woman, Self::save_age_count_if_needed_woman)?;
-        handle_ages(&r.age_counts.non_binary, Self::save_age_count_if_needed_non_binary)?;
+        handle_ages(
+            &r.age_counts.non_binary,
+            Self::save_age_count_if_needed_non_binary,
+        )?;
 
-        let ages_all_genders = r.age_counts.man.iter()
+        let ages_all_genders = r
+            .age_counts
+            .man
+            .iter()
             .zip(r.age_counts.woman.iter())
             .zip(r.age_counts.non_binary.iter());
 
@@ -49,10 +59,7 @@ impl <'a> HistoryWriteProfileAdminStatistics<'a> {
         Ok(())
     }
 
-    fn save_time(
-        &mut self,
-        time: UnixTime
-    ) -> Result<SaveTimeId, DieselDatabaseError> {
+    fn save_time(&mut self, time: UnixTime) -> Result<SaveTimeId, DieselDatabaseError> {
         use crate::schema::history_profile_statistics_save_time::dsl::*;
 
         insert_into(history_profile_statistics_save_time)
@@ -90,10 +97,7 @@ macro_rules! define_integer_change_method {
                 }
 
                 insert_into($table_name)
-                    .values((
-                        save_time_id.eq(time_id),
-                        count.eq(count_value),
-                    ))
+                    .values((save_time_id.eq(time_id), count.eq(count_value)))
                     .execute(self.conn())
                     .into_db_error(())?;
 
@@ -160,7 +164,7 @@ macro_rules! define_age_change_method {
                     .values((
                         save_time_id.eq(time_id),
                         age.eq(age_value),
-                        count.eq(count_value)
+                        count.eq(count_value),
                     ))
                     .execute(self.conn())
                     .into_db_error(())?;

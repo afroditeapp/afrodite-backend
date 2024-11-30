@@ -19,9 +19,9 @@ use error_stack::{Result, ResultExt};
 use file::{DemoModeConfig, GrantAdminAccessConfig, QueueLimitsConfig};
 use file_dynamic::ConfigFileDynamic;
 use file_email_content::EmailContentFile;
-use profile_name_allowlist::{ProfileNameAllowlistBuilder, ProfileNameAllowlistData};
 use model::BotConfig;
 use model_server_data::{AttributesFileInternal, ProfileAttributes};
+use profile_name_allowlist::{ProfileNameAllowlistBuilder, ProfileNameAllowlistData};
 use reqwest::Url;
 use sha2::{Digest, Sha256};
 use simple_backend_config::SimpleBackendConfig;
@@ -76,7 +76,9 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn minimal_config_for_api_doc_json(simple_backend_config: Arc<SimpleBackendConfig>) -> Self {
+    pub fn minimal_config_for_api_doc_json(
+        simple_backend_config: Arc<SimpleBackendConfig>,
+    ) -> Self {
         Self {
             file: ConfigFile::minimal_config_for_api_doc_json(),
             file_dynamic: ConfigFileDynamic::minimal_config_for_api_doc_json(),
@@ -238,8 +240,8 @@ pub fn get_config(
         };
 
     let email_content = if let Some(path) = &file_config.email_content_file {
-        let email_content = EmailContentFile::load(path)
-            .change_context(GetConfigError::LoadFileError)?;
+        let email_content =
+            EmailContentFile::load(path).change_context(GetConfigError::LoadFileError)?;
         Some(email_content)
     } else {
         None
@@ -254,18 +256,19 @@ pub fn get_config(
     let limits = file_config.limits.clone().unwrap_or_default();
     let offset_hours = 60 * 60 * Into::<i32>::into(limits.like_limit_reset_time_utc_offset_hours);
     let Some(reset_likes_utc_offset) = FixedOffset::east_opt(offset_hours) else {
-        return Err(GetConfigError::InvalidConfiguration).attach_printable(
-            "like_limit_reset_time_utc_offset_hours is not valid",
-        );
+        return Err(GetConfigError::InvalidConfiguration)
+            .attach_printable("like_limit_reset_time_utc_offset_hours is not valid");
     };
 
     let mut allowlist_builder = ProfileNameAllowlistBuilder::default();
-    let csv_configs = file_config.profile_name_allowlist
+    let csv_configs = file_config
+        .profile_name_allowlist
         .as_ref()
         .map(|v| v.iter())
         .unwrap_or_default();
     for c in csv_configs {
-        allowlist_builder.load(c)
+        allowlist_builder
+            .load(c)
             .change_context(GetConfigError::ProfileNameAllowlistError)?;
     }
     let profile_name_allowlist = allowlist_builder.build();

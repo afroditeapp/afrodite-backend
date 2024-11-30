@@ -10,7 +10,7 @@ pub trait GetReadChatCommands<'a> {
     fn chat_admin(self) -> ReadCommandsChatAdmin<'a>;
 }
 
-impl <'a, I: ReadAccessProvider<'a>> GetReadChatCommands<'a> for I {
+impl<'a, I: ReadAccessProvider<'a>> GetReadChatCommands<'a> for I {
     fn chat(self) -> ReadCommandsChat<'a> {
         ReadCommandsChat::new(self.handle())
     }

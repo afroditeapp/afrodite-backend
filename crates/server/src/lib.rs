@@ -8,13 +8,13 @@ pub mod api;
 pub mod api_doc;
 pub mod bot;
 pub mod content_processing;
-pub mod perf;
-pub mod scheduled_tasks;
-pub mod startup_tasks;
-pub mod shutdown_tasks;
-pub mod utils;
 pub mod email;
+pub mod perf;
 pub mod push_notifications;
+pub mod scheduled_tasks;
+pub mod shutdown_tasks;
+pub mod startup_tasks;
+pub mod utils;
 
 use std::sync::Arc;
 
@@ -39,7 +39,12 @@ use server_data_all::{app::DataAllUtilsImpl, load::DbDataToCacheLoader};
 use server_state::{demo::DemoModeManager, AppState};
 use shutdown_tasks::ShutdownTasks;
 use simple_backend::{
-    app::SimpleBackendAppState, email::{EmailManager, EmailManagerQuitHandle}, media_backup::MediaBackupHandle, perf::AllCounters, web_socket::WebSocketManager, BusinessLogic, ServerQuitWatcher
+    app::SimpleBackendAppState,
+    email::{EmailManager, EmailManagerQuitHandle},
+    media_backup::MediaBackupHandle,
+    perf::AllCounters,
+    web_socket::WebSocketManager,
+    BusinessLogic, ServerQuitWatcher,
 };
 use startup_tasks::StartupTasks;
 use tracing::{error, warn};
@@ -99,7 +104,8 @@ impl BusinessLogic for DatingAppBusinessLogic {
         web_socket_manager: WebSocketManager,
         state: &Self::AppState,
     ) -> Router {
-        let mut router = server_router_account::create_common_server_router(state.clone(), web_socket_manager);
+        let mut router =
+            server_router_account::create_common_server_router(state.clone(), web_socket_manager);
 
         if self.config.components().account {
             router = router.merge(server_router_account::create_account_server_router(
@@ -150,8 +156,8 @@ impl BusinessLogic for DatingAppBusinessLogic {
                 .config(
                     utoipa_swagger_ui::Config::from(API_DOC_URL)
                         .display_operation_id(true)
-                        .use_base_layout()
-                )
+                        .use_base_layout(),
+                ),
         )
     }
 
@@ -161,8 +167,10 @@ impl BusinessLogic for DatingAppBusinessLogic {
         media_backup_handle: MediaBackupHandle,
         server_quit_watcher: ServerQuitWatcher,
     ) -> Self::AppState {
-        let (push_notification_sender, push_notification_receiver) = server_common::push_notifications::channel();
-        let (email_sender, email_receiver) = simple_backend::email::channel::<AccountIdInternal, EmailMessages>();
+        let (push_notification_sender, push_notification_receiver) =
+            server_common::push_notifications::channel();
+        let (email_sender, email_receiver) =
+            simple_backend::email::channel::<AccountIdInternal, EmailMessages>();
         let (database_manager, router_database_handle, router_database_write_handle) =
             DatabaseManager::new(
                 self.config.simple_backend().data_dir().to_path_buf(),
@@ -228,16 +236,12 @@ impl BusinessLogic for DatingAppBusinessLogic {
         .await;
 
         StartupTasks::new(app_state.clone())
-            .run_and_wait_completion(
-                email_sender,
-            )
+            .run_and_wait_completion(email_sender)
             .await
             .expect("Startup tasks failed");
 
-        let scheduled_tasks = ScheduledTaskManager::new_manager(
-            app_state.clone(),
-            server_quit_watcher.resubscribe(),
-        );
+        let scheduled_tasks =
+            ScheduledTaskManager::new_manager(app_state.clone(), server_quit_watcher.resubscribe());
 
         self.database_manager = Some(database_manager);
         self.write_cmd_waiter = Some(write_cmd_waiter);
@@ -294,7 +298,8 @@ impl BusinessLogic for DatingAppBusinessLogic {
             .wait_quit()
             .await;
 
-        let result = self.shutdown_tasks
+        let result = self
+            .shutdown_tasks
             .expect("Not initialized")
             .run_and_wait_completion()
             .await;

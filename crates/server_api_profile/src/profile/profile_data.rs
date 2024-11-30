@@ -3,11 +3,13 @@ use axum::{
     Extension,
 };
 use model_profile::{
-    AccountId, AccountIdInternal, AccountState, GetInitialProfileAgeInfoResult, GetMyProfileResult, GetProfileQueryParam, GetProfileResult, Permissions, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated, ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups
+    AccountId, AccountIdInternal, AccountState, GetInitialProfileAgeInfoResult, GetMyProfileResult,
+    GetProfileQueryParam, GetProfileResult, Permissions, ProfileSearchAgeRange,
+    ProfileSearchAgeRangeValidated, ProfileUpdate, ProfileUpdateInternal, SearchGroups,
+    ValidatedSearchGroups,
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::{create_open_api_router, db_write_multiple, result::WrappedContextExt};
+use server_api::{create_open_api_router, db_write_multiple, result::WrappedContextExt, S};
 use server_data::read::GetReadCommandsCommon;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -15,9 +17,7 @@ use simple_backend_utils::IntoReportFromString;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{
-        GetAccounts, ReadData,WriteData,
-    },
+    app::{GetAccounts, ReadData, WriteData},
     db_write,
     utils::{Json, StatusCode},
     DataError,
@@ -77,20 +77,16 @@ pub async fn get_profile(
     let requested_profile = state.get_internal_id(requested_profile).await?;
 
     let read_profile_action = || async {
-        let profile_info = state
-            .read()
-            .profile()
-            .profile(requested_profile)
-            .await?;
+        let profile_info = state.read().profile().profile(requested_profile).await?;
         match params.profile_version() {
-            Some(param_version) if param_version == profile_info.version =>
+            Some(param_version) if param_version == profile_info.version => {
                 Ok(GetProfileResult::current_version_latest_response(
                     profile_info.version,
                     profile_info.last_seen_time,
-                ).into()),
-            _ => Ok(GetProfileResult::profile_with_version_response(
-                profile_info,
-            ).into()),
+                )
+                .into())
+            }
+            _ => Ok(GetProfileResult::profile_with_version_response(profile_info).into()),
         }
     };
 
@@ -110,9 +106,13 @@ pub async fn get_profile(
         .profile_visibility()
         .is_currently_public();
 
-    if visibility ||
-        permissions.admin_view_all_profiles ||
-        (params.allow_get_profile_if_match() && state.data_all_access().is_match(account_id, requested_profile).await?)
+    if visibility
+        || permissions.admin_view_all_profiles
+        || (params.allow_get_profile_if_match()
+            && state
+                .data_all_access()
+                .is_match(account_id, requested_profile)
+                .await?)
     {
         read_profile_action().await
     } else {
@@ -174,12 +174,19 @@ pub async fn post_profile(
         let account_state = cmds.read().common().account(account_id).await?.state();
         let old_profile = cmds.read().profile().profile(account_id).await?;
         let accepted_ages = if account_state != AccountState::InitialSetup {
-            cmds.read().profile().accepted_profile_ages(account_id).await?
+            cmds.read()
+                .profile()
+                .accepted_profile_ages(account_id)
+                .await?
         } else {
             None
         };
         let profile = profile
-            .validate(cmds.config().profile_attributes(), &old_profile.profile, accepted_ages)
+            .validate(
+                cmds.config().profile_attributes(),
+                &old_profile.profile,
+                accepted_ages,
+            )
             .into_error_string(DataError::NotAllowed)?;
 
         if profile.equals_with(&old_profile.profile) {
@@ -337,11 +344,7 @@ pub async fn get_my_profile(
 ) -> Result<Json<GetMyProfileResult>, StatusCode> {
     PROFILE.get_my_profile.incr();
 
-    let r = state
-        .read()
-        .profile()
-        .my_profile(account_id)
-        .await?;
+    let r = state.read().profile().my_profile(account_id).await?;
 
     Ok(r.into())
 }
@@ -376,16 +379,12 @@ pub async fn get_initial_profile_age_info(
         .accepted_profile_ages(account_id)
         .await?;
 
-    let r = GetInitialProfileAgeInfoResult {
-        info,
-    };
+    let r = GetInitialProfileAgeInfoResult { info };
 
     Ok(r.into())
 }
 
-pub fn profile_data_router(
-    s: S,
-) -> OpenApiRouter {
+pub fn profile_data_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
         get_profile,

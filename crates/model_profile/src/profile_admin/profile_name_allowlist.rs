@@ -1,4 +1,3 @@
-
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;

@@ -3,7 +3,14 @@ mod benchmark;
 mod client_bot;
 pub mod utils;
 
-use std::{fmt::Debug, sync::{atomic::{AtomicBool, Ordering}, Arc}, vec};
+use std::{
+    fmt::Debug,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+    vec,
+};
 
 use actions::{admin::AdminBotState, profile::ProfileState};
 use api_client::models::{AccountId, EventToClient};
@@ -247,7 +254,7 @@ impl BotState {
                 let task_i_shifted = task_i_u64 << 32;
                 let bot_i_u64: u64 = bot_id.into();
                 Xoshiro256PlusPlus::seed_from_u64(task_i_shifted + bot_i_u64)
-            }
+            },
         }
     }
 
@@ -260,15 +267,21 @@ impl BotState {
     }
 
     pub fn are_events_enabled(&self) -> bool {
-        self.connections.enable_event_sending.load(Ordering::Relaxed)
+        self.connections
+            .enable_event_sending
+            .load(Ordering::Relaxed)
     }
 
     pub fn enable_events(&self) {
-        self.connections.enable_event_sending.store(true, Ordering::Relaxed);
+        self.connections
+            .enable_event_sending
+            .store(true, Ordering::Relaxed);
     }
 
     pub fn disable_events(&self) {
-        self.connections.enable_event_sending.store(true, Ordering::Relaxed);
+        self.connections
+            .enable_event_sending
+            .store(true, Ordering::Relaxed);
     }
 
     pub fn account_id(&self) -> Result<AccountId, TestError> {
@@ -308,7 +321,8 @@ impl BotState {
     /// Default [BaseBotConfig] is returned when current mode is other than
     /// [TestModeSubMode::Bot] even if the bot config file exists.
     pub fn get_bot_config(&self) -> &BaseBotConfig {
-        self.bot_config_file.bot
+        self.bot_config_file
+            .bot
             .iter()
             .find(|v| Into::<u32>::into(v.id) == self.bot_id)
             .map(|v| &v.config)
@@ -439,14 +453,14 @@ impl BotManager {
                             if bot_i == 0 {
                                 Benchmark::benchmark_get_profile_list_admin_bot(state)
                             } else {
-                                continue
+                                continue;
                             }
                         } else if bot_i == 0 {
                             // Create bot for benchmark task
                             Benchmark::benchmark_get_profile_list(state)
                         } else {
                             // Create only one benchmark bot per benchmark task.
-                            continue
+                            continue;
                         };
                         bots.push(Box::new(benchmark))
                     }
@@ -506,7 +520,10 @@ impl BotManager {
 
             if self.bots.is_empty() {
                 if errors {
-                    error!("All bots closed from task {}. Errors occurred.", self.task_id);
+                    error!(
+                        "All bots closed from task {}. Errors occurred.",
+                        self.task_id
+                    );
                 } else {
                     info!("All bots closed from task {}. No errors.", self.task_id);
                 }

@@ -2,7 +2,9 @@ use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model_chat::{
-    AccountIdInternal, ChatStateRaw, MatchId, MatchesSyncVersion, NewReceivedLikesCount, PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion, SetPublicKey, SyncVersionUtils, CHAT_GLOBAL_STATE_ROW_TYPE
+    AccountIdInternal, ChatStateRaw, MatchId, MatchesSyncVersion, NewReceivedLikesCount,
+    PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikesSyncVersion, SentBlocksSyncVersion,
+    SentLikesSyncVersion, SetPublicKey, SyncVersionUtils, CHAT_GLOBAL_STATE_ROW_TYPE,
 };
 use simple_backend_utils::ContextExt;
 
@@ -14,7 +16,7 @@ mod push_notifications;
 
 define_current_write_commands!(CurrentWriteChat);
 
-impl <'a> CurrentWriteChat<'a> {
+impl<'a> CurrentWriteChat<'a> {
     pub fn interaction(self) -> interaction::CurrentWriteChatInteraction<'a> {
         interaction::CurrentWriteChatInteraction::new(self.cmds)
     }
@@ -23,9 +25,7 @@ impl <'a> CurrentWriteChat<'a> {
         message::CurrentWriteChatMessage::new(self.cmds)
     }
 
-    pub fn push_notifications(
-        self,
-    ) -> push_notifications::CurrentWriteChatPushNotifications<'a> {
+    pub fn push_notifications(self) -> push_notifications::CurrentWriteChatPushNotifications<'a> {
         push_notifications::CurrentWriteChatPushNotifications::new(self.cmds)
     }
 }
@@ -66,12 +66,10 @@ impl CurrentWriteChat<'_> {
             received_likes_change: current
                 .received_likes_sync_version
                 .return_new_if_different(new.received_likes_sync_version)
-                .map(|changed_sync_version| {
-                    ReceivedLikesChangeInfo {
-                        current_version: changed_sync_version,
-                        current_count: new.new_received_likes_count,
-                        previous_count: current.new_received_likes_count,
-                    }
+                .map(|changed_sync_version| ReceivedLikesChangeInfo {
+                    current_version: changed_sync_version,
+                    current_count: new.new_received_likes_count,
+                    previous_count: current.new_received_likes_count,
                 }),
             sent_likes_sync_version: current
                 .sent_likes_sync_version
@@ -104,9 +102,7 @@ impl CurrentWriteChat<'_> {
                 }
             }
         } else {
-            PublicKeyId {
-                id: 0,
-            }
+            PublicKeyId { id: 0 }
         };
 
         insert_into(public_key)
@@ -118,10 +114,7 @@ impl CurrentWriteChat<'_> {
             ))
             .on_conflict((account_id, public_key_version))
             .do_update()
-            .set((
-                public_key_id.eq(new_id),
-                public_key_data.eq(new_key.data),
-            ))
+            .set((public_key_id.eq(new_id), public_key_data.eq(new_key.data)))
             .execute(self.conn())
             .into_db_error(id)?;
 
@@ -129,9 +122,7 @@ impl CurrentWriteChat<'_> {
     }
 
     /// Return unused MatchId
-    pub fn upsert_next_match_id(
-        &mut self,
-    ) -> Result<MatchId, DieselDatabaseError> {
+    pub fn upsert_next_match_id(&mut self) -> Result<MatchId, DieselDatabaseError> {
         use model::schema::chat_global_state::dsl::*;
 
         let current = self.read().chat().global_state()?.next_match_id;

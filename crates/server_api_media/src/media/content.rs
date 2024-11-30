@@ -1,23 +1,28 @@
 use axum::{
-    body::Body, extract::{Path, Query, State}, Extension,
+    body::Body,
+    extract::{Path, Query, State},
+    Extension,
 };
 use axum_extra::TypedHeader;
 use headers::{ContentLength, ContentType};
 use model_media::{
-    AccountContent, AccountId, AccountIdInternal, AccountState, Permissions, ContentId, ContentProcessingId, ContentProcessingState, ContentSlot, GetContentQueryParams, NewContentParams, SlotId
+    AccountContent, AccountId, AccountIdInternal, AccountState, ContentId, ContentProcessingId,
+    ContentProcessingState, ContentSlot, GetContentQueryParams, NewContentParams, Permissions,
+    SlotId,
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::{create_open_api_router, result::WrappedResultExt};
+use server_api::{create_open_api_router, result::WrappedResultExt, S};
 use server_data::{
-    read::GetReadCommandsCommon, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle}, DataError
+    read::GetReadCommandsCommon,
+    write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle},
+    DataError,
 };
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{ContentProcessingProvider, GetAccounts, ReadData,WriteData},
+    app::{ContentProcessingProvider, GetAccounts, ReadData, WriteData},
     db_write,
     utils::{Json, StatusCode},
 };
@@ -72,11 +77,16 @@ pub async fn get_content(
             .content_data(requested_profile, requested_content_id)
             .await?;
 
-        let (lenght, stream) = data.byte_count_and_read_stream()
+        let (lenght, stream) = data
+            .byte_count_and_read_stream()
             .await
             .change_context(DataError::File)?;
 
-        Ok((TypedHeader(ContentType::octet_stream()), TypedHeader(ContentLength(lenght)), Body::from_stream(stream)))
+        Ok((
+            TypedHeader(ContentType::octet_stream()),
+            TypedHeader(ContentLength(lenght)),
+            Body::from_stream(stream),
+        ))
     };
 
     if account_id.as_id() == requested_profile {
@@ -107,14 +117,15 @@ pub async fn get_content(
         .iter_current_profile_content()
         .any(|c| c.content_id() == requested_content_id);
 
-    if (visibility && requested_content_is_profile_content) ||
-        permissions.admin_view_all_profiles ||
-        permissions.admin_moderate_images ||
-        (
-            params.is_match &&
-            requested_content_is_profile_content &&
-            state.data_all_access().is_match(account_id, requested_profile_internal_id).await?
-        )
+    if (visibility && requested_content_is_profile_content)
+        || permissions.admin_view_all_profiles
+        || permissions.admin_moderate_images
+        || (params.is_match
+            && requested_content_is_profile_content
+            && state
+                .data_all_access()
+                .is_match(account_id, requested_profile_internal_id)
+                .await?)
     {
         send_content().await
     } else {
@@ -123,8 +134,7 @@ pub async fn get_content(
 }
 
 #[obfuscate_api]
-const PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT: &str =
-    "/media_api/all_account_media_content/{aid}";
+const PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT: &str = "/media_api/all_account_media_content/{aid}";
 
 /// Get list of all media content on the server for one account.
 #[utoipa::path(
@@ -300,9 +310,7 @@ pub async fn delete_content(
         .delete_content(internal_id, content_id))
 }
 
-pub fn content_router(
-    s: S,
-) -> OpenApiRouter {
+pub fn content_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
         get_content,

@@ -1,15 +1,14 @@
 use axum::{extract::State, Extension};
 use model_chat::{AccountId, AccountIdInternal, ReceivedBlocksPage, SentBlocksPage};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::create_open_api_router;
+use server_api::{create_open_api_router, S};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
 use crate::{
-    app::{GetAccounts, ReadData,WriteData},
+    app::{GetAccounts, ReadData, WriteData},
     db_write_multiple,
 };
 
@@ -76,10 +75,7 @@ pub async fn post_unblock_profile(
     let requested_profile = state.get_internal_id(requested_profile).await?;
 
     db_write_multiple!(state, move |cmds| {
-        let changes = cmds
-            .chat()
-            .delete_block(id, requested_profile)
-            .await?;
+        let changes = cmds.chat().delete_block(id, requested_profile).await?;
         cmds.events()
             .handle_chat_state_changes(changes.sender)
             .await?;

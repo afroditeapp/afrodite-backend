@@ -5,9 +5,7 @@ use model_media::{ContentId, ContentState};
 
 use crate::IntoDatabaseError;
 
-define_current_write_commands!(
-    CurrentWriteMediaAdminMediaContent
-);
+define_current_write_commands!(CurrentWriteMediaAdminMediaContent);
 
 impl CurrentWriteMediaAdminMediaContent<'_> {
     pub fn update_content_state(

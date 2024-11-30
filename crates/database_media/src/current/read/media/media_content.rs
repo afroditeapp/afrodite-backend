@@ -8,9 +8,7 @@ use model_media::{
 
 use crate::IntoDatabaseError;
 
-define_current_read_commands!(
-    CurrentReadMediaMediaContent
-);
+define_current_read_commands!(CurrentReadMediaMediaContent);
 
 impl CurrentReadMediaMediaContent<'_> {
     fn media_content_raw(

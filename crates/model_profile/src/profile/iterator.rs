@@ -1,4 +1,3 @@
-
 use model_server_data::ProfileLink;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;

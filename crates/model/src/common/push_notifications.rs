@@ -6,10 +6,10 @@ use utils::random_bytes::random_128_bits;
 use utoipa::ToSchema;
 
 use crate::{
-    schema_sqlite_types::{Integer, Text}, AccountId, ModerationRequestState, NotificationEvent, UnreadNewsCountResult
+    schema_sqlite_types::{Integer, Text},
+    AccountId, ModerationRequestState, NewReceivedLikesCountResult, NotificationEvent,
+    UnreadNewsCountResult,
 };
-
-use crate::NewReceivedLikesCountResult;
 
 /// Pending notification (or multiple notifications which each have
 /// different type) not yet received notifications which push notification
@@ -74,7 +74,9 @@ impl From<NotificationEvent> for PendingNotificationFlags {
         match value {
             NotificationEvent::NewMessageReceived => Self::NEW_MESSAGE,
             NotificationEvent::ReceivedLikesChanged => Self::RECEIVED_LIKES_CHANGED,
-            NotificationEvent::ContentModerationRequestCompleted => Self::CONTENT_MODERATION_REQUEST_COMPLETED,
+            NotificationEvent::ContentModerationRequestCompleted => {
+                Self::CONTENT_MODERATION_REQUEST_COMPLETED
+            }
             NotificationEvent::NewsChanged => Self::NEWS_CHANGED,
         }
     }
@@ -94,9 +96,7 @@ impl From<PendingNotificationFlags> for i64 {
 
 impl From<PendingNotificationFlags> for PendingNotification {
     fn from(value: PendingNotificationFlags) -> Self {
-        PendingNotification(
-            value.bits()
-        )
+        PendingNotification(value.bits())
     }
 }
 
@@ -132,7 +132,6 @@ impl FcmDeviceToken {
 
 diesel_string_wrapper!(FcmDeviceToken);
 
-
 #[derive(Debug, Selectable, Queryable)]
 #[diesel(table_name = crate::schema::chat_state)]
 #[diesel(check_for_backend(crate::Db))]
@@ -148,7 +147,18 @@ pub struct PendingNotificationTokenRaw {
 ///
 /// OWASP recommends at least 128 bit session IDs.
 /// https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
-#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq, diesel::FromSqlRow, diesel::AsExpression)]
+#[derive(
+    Debug,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    Clone,
+    Eq,
+    Hash,
+    PartialEq,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+)]
 #[diesel(sql_type = Text)]
 pub struct PendingNotificationToken {
     token: String,
@@ -162,14 +172,12 @@ impl PendingNotificationToken {
             token.extend(random_128_bits())
         }
         Self {
-            token: base64::engine::general_purpose::STANDARD.encode(token)
+            token: base64::engine::general_purpose::STANDARD.encode(token),
         }
     }
 
     pub fn new(token: String) -> Self {
-        Self {
-            token
-        }
+        Self { token }
     }
 
     pub fn into_string(self) -> String {
@@ -184,14 +192,7 @@ impl PendingNotificationToken {
 diesel_string_wrapper!(PendingNotificationToken);
 
 /// Pending notification with notification data.
-#[derive(
-    Debug,
-    Clone,
-    Default,
-    Deserialize,
-    Serialize,
-    ToSchema,
-)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
 pub struct PendingNotificationWithData {
     pub value: PendingNotification,
     /// Data for NEW_MESSAGE notification.

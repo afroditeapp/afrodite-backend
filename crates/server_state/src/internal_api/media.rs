@@ -4,7 +4,8 @@ use server_common::internal_api::InternalApiError;
 
 use crate::{
     app::{GetConfig, GetInternalApi},
-    result::{Result, WrappedResultExt}, S,
+    result::{Result, WrappedResultExt},
+    S,
 };
 
 /// Check that media server has correct state for completing initial setup.
@@ -22,7 +23,9 @@ pub async fn media_check_moderation_request_for_account(
     account_id: AccountIdInternal,
 ) -> Result<(), InternalApiError> {
     if state.config().components().media {
-        state.data_all_access().check_moderation_request_for_account(account_id)
+        state
+            .data_all_access()
+            .check_moderation_request_for_account(account_id)
             .await
             .change_context(InternalApiError::DataError)
     } else {

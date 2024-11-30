@@ -1,9 +1,6 @@
-
-
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
-
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Default)]
 #[serde(try_from = "f64")]

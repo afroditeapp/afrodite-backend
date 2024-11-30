@@ -1,11 +1,8 @@
-
 use model::{AccountId, NextNumberStorage, ProfileContentVersion};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::{LastSeenTime, ProfileVersion};
-
-
 
 /// Session ID type for profile iterator so that client can detect
 /// server restarts and ask user to refresh profiles.
@@ -33,13 +30,9 @@ pub struct ProfileIteratorSessionId {
 
 impl From<ProfileIteratorSessionIdInternal> for ProfileIteratorSessionId {
     fn from(value: ProfileIteratorSessionIdInternal) -> Self {
-        Self {
-            id: value.id,
-        }
+        Self { id: value.id }
     }
 }
-
-
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct ProfileLink {

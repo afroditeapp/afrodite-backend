@@ -1,8 +1,9 @@
 use std::collections::hash_map::Entry;
 
 use config::Config;
-use database::current::read::GetDbReadCommandsCommon;
-use database::{CurrentReadHandle, DbReaderRaw, DieselDatabaseError};
+use database::{
+    current::read::GetDbReadCommandsCommon, CurrentReadHandle, DbReaderRaw, DieselDatabaseError,
+};
 use database_chat::current::read::GetDbReadCommandsChat;
 use database_media::current::read::GetDbReadCommandsMedia;
 use database_profile::current::read::GetDbReadCommandsProfile;
@@ -10,12 +11,13 @@ use error_stack::{Result, ResultExt};
 use model::AccountIdInternal;
 pub use server_common::data::cache::CacheError;
 use server_common::data::WithInfo;
-
-use server_data::cache::account::CachedAccountComponentData;
-use server_data::cache::chat::CachedChatComponentData;
-use server_data::cache::media::CachedMedia;
-use server_data::cache::DatabaseCache;
-use server_data::{cache::profile::CachedProfile, index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle}};
+use server_data::{
+    cache::{
+        account::CachedAccountComponentData, chat::CachedChatComponentData, media::CachedMedia,
+        profile::CachedProfile, DatabaseCache,
+    },
+    index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
+};
 use tracing::info;
 
 pub struct DbDataToCacheLoader;
@@ -93,7 +95,11 @@ impl DbDataToCacheLoader {
             .await?;
         entry.common.permissions = permissions;
         let state = db
-            .db_read(move |mut cmds| cmds.common().state().account_state_related_shared_state(account_id))
+            .db_read(move |mut cmds| {
+                cmds.common()
+                    .state()
+                    .account_state_related_shared_state(account_id)
+            })
             .await?;
         entry.common.account_state_related_shared_state = state;
         let other_state = db
@@ -110,9 +116,14 @@ impl DbDataToCacheLoader {
         // can contain ProfileContentVersion.
         if config.components().media {
             let media_content = db
-                .db_read(move |mut cmds| cmds.media().media_content().current_account_media_raw(account_id))
+                .db_read(move |mut cmds| {
+                    cmds.media()
+                        .media_content()
+                        .current_account_media_raw(account_id)
+                })
                 .await?;
-            let media_data = CachedMedia::new(account_id.uuid, media_content.profile_content_version_uuid);
+            let media_data =
+                CachedMedia::new(account_id.uuid, media_content.profile_content_version_uuid);
             entry.media = Some(Box::new(media_data));
         }
 
@@ -127,9 +138,7 @@ impl DbDataToCacheLoader {
                 .db_read(move |mut cmds| cmds.profile().data().profile_location(account_id))
                 .await?;
             let attributes = db
-                .db_read(move |mut cmds| {
-                    cmds.profile().data().profile_attribute_values(account_id)
-                })
+                .db_read(move |mut cmds| cmds.profile().data().profile_attribute_values(account_id))
                 .await?;
             let filters = db
                 .db_read(move |mut cmds| {
@@ -137,13 +146,18 @@ impl DbDataToCacheLoader {
                 })
                 .await?;
             let last_seen_unix_time = db
-                .db_read(move |mut cmds| {
-                    cmds.profile().data().profile_last_seen_time(account_id)
-                })
+                .db_read(move |mut cmds| cmds.profile().data().profile_last_seen_time(account_id))
                 .await?;
 
-            let mut profile_data =
-                CachedProfile::new(account_id.uuid, profile, state.into(), attributes, filters, config, last_seen_unix_time);
+            let mut profile_data = CachedProfile::new(
+                account_id.uuid,
+                profile,
+                state.into(),
+                attributes,
+                filters,
+                config,
+                last_seen_unix_time,
+            );
 
             let location_key = index_writer.coordinates_to_key(&profile_location);
             profile_data.location.current_position = location_key;
@@ -193,9 +207,7 @@ impl<'a> DbReaderAll<'a> {
     }
 
     pub async fn db_read<
-        T: FnOnce(
-                database::DbReadMode<'_>,
-            ) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(database::DbReadMode<'_>) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,

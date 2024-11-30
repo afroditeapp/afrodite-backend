@@ -7,22 +7,28 @@ use std::sync::Arc;
 
 use axum::extract::ws::WebSocket;
 use config::Config;
-use model::{Account, AccountIdInternal, PendingNotification, PendingNotificationWithData, SyncDataVersionFromClient};
+use model::{
+    Account, AccountIdInternal, PendingNotification, PendingNotificationWithData,
+    SyncDataVersionFromClient,
+};
 use model_chat::SignInWithInfo;
 use model_server_data::EmailAddress;
-use self::internal_api::InternalApiClient;
 use server_common::{push_notifications::PushNotificationSender, websocket::WebSocketError};
 use server_data::{
-    app::DataAllUtils, content_processing::ContentProcessingManagerData, db_manager::RouterDatabaseReadHandle, statistics::ProfileStatisticsCache, write_commands::WriteCommandRunnerHandle
+    app::DataAllUtils, content_processing::ContentProcessingManagerData,
+    db_manager::RouterDatabaseReadHandle, statistics::ProfileStatisticsCache,
+    write_commands::WriteCommandRunnerHandle,
 };
-use crate::demo::DemoModeManager;
 use simple_backend::app::SimpleBackendAppState;
 
-pub mod state_impl;
-pub mod internal_api;
+use self::internal_api::InternalApiClient;
+use crate::demo::DemoModeManager;
+
 pub mod app;
-pub mod utils;
 pub mod demo;
+pub mod internal_api;
+pub mod state_impl;
+pub mod utils;
 
 pub use server_common::{data::DataError, result};
 
@@ -90,7 +96,7 @@ impl DataAllAccess<'_> {
         &self.state.config
     }
 
-    fn read(&self) ->  &RouterDatabaseReadHandle {
+    fn read(&self) -> &RouterDatabaseReadHandle {
         &self.state.database
     }
 
@@ -107,11 +113,9 @@ impl DataAllAccess<'_> {
         id: AccountIdInternal,
         unlimited_likes: bool,
     ) -> server_common::result::Result<(), DataError> {
-        let cmd = self.utils().update_unlimited_likes(
-            self.write(),
-            id,
-            unlimited_likes
-        );
+        let cmd = self
+            .utils()
+            .update_unlimited_likes(self.write(), id, unlimited_likes);
         cmd.await
     }
 
@@ -120,11 +124,9 @@ impl DataAllAccess<'_> {
         sign_in_with: SignInWithInfo,
         email: Option<EmailAddress>,
     ) -> server_common::result::Result<AccountIdInternal, DataError> {
-        let cmd = self.utils().register_impl(
-            self.write(),
-            sign_in_with,
-            email
-        );
+        let cmd = self
+            .utils()
+            .register_impl(self.write(), sign_in_with, email);
         cmd.await
     }
 
@@ -149,10 +151,9 @@ impl DataAllAccess<'_> {
         &self,
         id: AccountIdInternal,
     ) -> server_common::result::Result<(), DataError> {
-        let cmd = self.utils().check_moderation_request_for_account(
-            self.read(),
-            id
-        );
+        let cmd = self
+            .utils()
+            .check_moderation_request_for_account(self.read(), id);
         cmd.await
     }
 
@@ -161,11 +162,9 @@ impl DataAllAccess<'_> {
         id: AccountIdInternal,
         notification_value: PendingNotification,
     ) -> PendingNotificationWithData {
-        let cmd = self.utils().get_push_notification_data(
-            self.read(),
-            id,
-            notification_value
-        );
+        let cmd = self
+            .utils()
+            .get_push_notification_data(self.read(), id, notification_value);
         cmd.await
     }
 
@@ -173,12 +172,9 @@ impl DataAllAccess<'_> {
         &self,
         id: AccountIdInternal,
     ) -> server_common::result::Result<Account, DataError> {
-        let cmd = self.utils().complete_initial_setup(
-            self.config(),
-            self.read(),
-            self.write(),
-            id
-        );
+        let cmd = self
+            .utils()
+            .complete_initial_setup(self.config(), self.read(), self.write(), id);
         cmd.await
     }
 
@@ -187,11 +183,7 @@ impl DataAllAccess<'_> {
         account0: AccountIdInternal,
         account1: AccountIdInternal,
     ) -> server_common::result::Result<bool, DataError> {
-        let cmd = self.utils().is_match(
-            self.read(),
-            account0,
-            account1,
-        );
+        let cmd = self.utils().is_match(self.read(), account0, account1);
         cmd.await
     }
 }
@@ -228,9 +220,7 @@ macro_rules! db_write {
     ($state:expr, move |$cmds:ident| $commands:expr) => {{
         let r = async {
             let r: $crate::result::Result<_, server_data::DataError> = $state
-                .write(move |$cmds| async move {
-                    ($commands).await
-                })
+                .write(move |$cmds| async move { ($commands).await })
                 .await;
             r
         }
@@ -247,11 +237,8 @@ macro_rules! db_write {
 macro_rules! db_write_multiple {
     ($state:expr, move |$cmds:ident| $commands:expr) => {{
         let r = async {
-            let r: $crate::result::Result<_, $crate::DataError> = $state
-                .write(move |$cmds| async move {
-                    ($commands)
-                })
-                .await;
+            let r: $crate::result::Result<_, $crate::DataError> =
+                $state.write(move |$cmds| async move { ($commands) }).await;
             r
         }
         .await;
@@ -266,11 +253,8 @@ macro_rules! db_write_multiple {
 macro_rules! db_write_raw {
     ($state:expr, move |$cmds:ident| $commands:expr) => {{
         async {
-            let r: $crate::result::Result<_, $crate::DataError> = $state
-                .write(move |$cmds| async move {
-                    ($commands)
-                })
-                .await;
+            let r: $crate::result::Result<_, $crate::DataError> =
+                $state.write(move |$cmds| async move { ($commands) }).await;
             r
         }
     }};

@@ -5,9 +5,7 @@ use serde::{Deserialize, Serialize};
 use utils::time::age_in_years_from_birthdate;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{
-    AccountId, AccountIdDb, AccountIdInternal, PublicKeyIdAndVersion,
-};
+use crate::{AccountId, AccountIdDb, AccountIdInternal, PublicKeyIdAndVersion};
 
 mod email;
 pub use email::*;
@@ -98,16 +96,7 @@ pub struct AccountData {
     pub email: Option<EmailAddress>,
 }
 
-#[derive(
-    Debug,
-    Clone,
-    Deserialize,
-    Serialize,
-    ToSchema,
-    Default,
-    PartialEq,
-    Eq,
-)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
 pub struct SetAccountSetup {
     /// String date with "YYYY-MM-DD" format.
     ///
@@ -157,16 +146,7 @@ impl AccountSetup {
     }
 }
 
-#[derive(
-    Debug,
-    Clone,
-    Deserialize,
-    Serialize,
-    ToSchema,
-    Default,
-    PartialEq,
-    Eq,
-)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
 pub struct LatestBirthdate {
     #[schema(value_type = Option<String>)]
     pub birthdate: Option<NaiveDate>,

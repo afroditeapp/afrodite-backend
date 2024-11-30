@@ -10,7 +10,7 @@ pub trait GetDbReadCommandsProfile {
     fn profile_admin(&mut self) -> CurrentReadProfileAdmin<'_>;
 }
 
-impl <I: DbReadAccessProvider> GetDbReadCommandsProfile for I {
+impl<I: DbReadAccessProvider> GetDbReadCommandsProfile for I {
     fn profile(&mut self) -> CurrentReadProfile<'_> {
         CurrentReadProfile::new(self.handle())
     }

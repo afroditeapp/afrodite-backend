@@ -2,12 +2,17 @@ use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommands
 use database_account::current::write::GetDbWriteCommandsAccount;
 use email::WriteCommandsAccountEmail;
 use model_account::{
-    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountState, Permissions, ClientId, ProfileVisibility, SetAccountSetup
+    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountState, ClientId,
+    Permissions, ProfileVisibility, SetAccountSetup,
 };
 use model_server_state::DemoModeId;
 use news::WriteCommandsAccountNews;
 use server_data::{
-    define_cmd_wrapper_write, read::DbRead, result::Result, write::GetWriteCommandsCommon, DataError, DieselDatabaseError, write::DbTransaction,
+    define_cmd_wrapper_write,
+    read::DbRead,
+    result::Result,
+    write::{DbTransaction, GetWriteCommandsCommon},
+    DataError, DieselDatabaseError,
 };
 
 pub mod email;
@@ -18,7 +23,7 @@ pub struct IncrementAdminAccessGrantedCount;
 
 define_cmd_wrapper_write!(WriteCommandsAccount);
 
-impl <'a> WriteCommandsAccount<'a> {
+impl<'a> WriteCommandsAccount<'a> {
     pub fn email(self) -> WriteCommandsAccountEmail<'a> {
         WriteCommandsAccountEmail::new(self.0)
     }
@@ -123,10 +128,7 @@ impl WriteCommandsAccount<'_> {
         })
     }
 
-    pub async fn get_next_client_id(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<ClientId, DataError> {
+    pub async fn get_next_client_id(&self, id: AccountIdInternal) -> Result<ClientId, DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.account().data().get_next_client_id(id)
         })

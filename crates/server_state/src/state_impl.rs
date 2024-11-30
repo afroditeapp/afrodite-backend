@@ -4,30 +4,52 @@ use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
 use error_stack::ResultExt;
 use futures::Future;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, Permissions
+    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion,
+    Permissions,
 };
-use crate::internal_api::InternalApiClient;
 use server_data::{
-    content_processing::ContentProcessingManagerData, db_manager::RouterDatabaseReadHandle, event::EventManagerWithCacheReference, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle}, DataError
+    content_processing::ContentProcessingManagerData,
+    db_manager::RouterDatabaseReadHandle,
+    event::EventManagerWithCacheReference,
+    write_commands::WriteCmds,
+    write_concurrent::{
+        ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle,
+    },
+    DataError,
 };
 use simple_backend::{
-    app::{FilePackageProvider, GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith}, file_package::FilePackageManager, manager_client::ManagerApiManager, map::TileMapManager, perf::PerfCounterManagerData, sign_in_with::SignInWithManager
+    app::{
+        FilePackageProvider, GetManagerApi, GetSimpleBackendConfig, GetTileMap,
+        PerfCounterDataProvider, SignInWith,
+    },
+    file_package::FilePackageManager,
+    manager_client::ManagerApiManager,
+    map::TileMapManager,
+    perf::PerfCounterManagerData,
+    sign_in_with::SignInWithManager,
 };
 use simple_backend_config::SimpleBackendConfig;
 
-pub use crate::app::*;
 use super::S;
+pub use crate::app::*;
+use crate::internal_api::InternalApiClient;
 
 // Server common
 
 impl EventManagerProvider for S {
     fn event_manager(&self) -> EventManagerWithCacheReference<'_> {
-        EventManagerWithCacheReference::new(self.database.cache_read_write_access(), &self.push_notification_sender)
+        EventManagerWithCacheReference::new(
+            self.database.cache_read_write_access(),
+            &self.push_notification_sender,
+        )
     }
 }
 
 impl GetAccounts for S {
-    async fn get_internal_id(&self, id: AccountId) -> error_stack::Result<AccountIdInternal, DataError> {
+    async fn get_internal_id(
+        &self,
+        id: AccountId,
+    ) -> error_stack::Result<AccountIdInternal, DataError> {
         self.database
             .account_id_manager()
             .get_internal_id(id)
@@ -142,7 +164,9 @@ impl WriteData for S {
         account: AccountId,
         write_cmd: WriteCmd,
     ) -> server_common::result::Result<CmdResult, DataError> {
-        self.write_queue.concurrent_write_profile_blocking(account, write_cmd).await
+        self.write_queue
+            .concurrent_write_profile_blocking(account, write_cmd)
+            .await
     }
 }
 

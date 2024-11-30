@@ -26,9 +26,10 @@ fn main() -> ExitCode {
     if let Some(AppMode::ImageProcess(settings)) = args.mode {
         let config = simple_backend_config::get_config(
             args.server,
-        BUILD_INFO_GIT_DESCRIBE.to_string(),
-        BUILD_INFO_CARGO_PKG_VERSION.to_string(),
-        ).unwrap();
+            BUILD_INFO_GIT_DESCRIBE.to_string(),
+            BUILD_INFO_CARGO_PKG_VERSION.to_string(),
+        )
+        .unwrap();
         return handle_image_process_mode(settings, config.image_processing());
     }
 
@@ -50,8 +51,7 @@ fn main() -> ExitCode {
     if index_info {
         println!(
             "{}",
-            LocationIndexInfoCreator::new(config.location().clone())
-                .create_all()
+            LocationIndexInfoCreator::new(config.location().clone()).create_all()
         );
         return ExitCode::SUCCESS;
     }

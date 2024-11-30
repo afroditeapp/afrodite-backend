@@ -1,20 +1,33 @@
 mod push_notifications;
 
-use database_chat::current::{read::GetDbReadCommandsChat, write::{chat::{ChatStateChanges, ReceiverBlockedSender}, GetDbWriteCommandsChat}};
+use database_chat::current::{
+    read::GetDbReadCommandsChat,
+    write::{
+        chat::{ChatStateChanges, ReceiverBlockedSender},
+        GetDbWriteCommandsChat,
+    },
+};
 use error_stack::ResultExt;
-use model_chat::{AccountIdInternal, ChatStateRaw, ClientId, ClientLocalId, MatchesIteratorSessionIdInternal, MessageNumber, NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion, SendMessageResult, SentMessageId, SetPublicKey, SyncVersionUtils};
+use model_chat::{
+    AccountIdInternal, ChatStateRaw, ClientId, ClientLocalId, MatchesIteratorSessionIdInternal,
+    MessageNumber, NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal,
+    PendingNotificationFlags, PublicKeyId, PublicKeyVersion,
+    ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion, SendMessageResult,
+    SentMessageId, SetPublicKey, SyncVersionUtils,
+};
 use server_data::{
-    app::EventManagerProvider, cache::chat::limit::ChatLimits, define_cmd_wrapper_write, id::ToAccountIdInternal, read::DbRead, result::Result, DataError, DieselDatabaseError, IntoDataError, write::DbTransaction,
+    app::EventManagerProvider, cache::chat::limit::ChatLimits, define_cmd_wrapper_write,
+    id::ToAccountIdInternal, read::DbRead, result::Result, write::DbTransaction, DataError,
+    DieselDatabaseError, IntoDataError,
 };
 use simple_backend_utils::ContextExt;
 
-use crate::cache::CacheWriteChat;
-
 use self::push_notifications::WriteCommandsChatPushNotifications;
+use crate::cache::CacheWriteChat;
 
 define_cmd_wrapper_write!(WriteCommandsChat);
 
-impl <'a> WriteCommandsChat<'a> {
+impl<'a> WriteCommandsChat<'a> {
     pub fn push_notifications(self) -> WriteCommandsChatPushNotifications<'a> {
         WriteCommandsChatPushNotifications::new(self.0)
     }
@@ -26,9 +39,8 @@ impl WriteCommandsChat<'_> {
         id: AccountIdInternal,
         mut action: impl FnMut(&mut ChatLimits) -> T,
     ) -> Result<T, DataError> {
-        let value = self.write_cache_chat(id, move |entry| {
-            Ok(action(&mut entry.limits))
-        })
+        let value = self
+            .write_cache_chat(id, move |entry| Ok(action(&mut entry.limits)))
             .await?;
 
         Ok(value)
@@ -78,7 +90,11 @@ impl WriteCommandsChat<'_> {
             } else if interaction.is_match() {
                 return Err(DieselDatabaseError::AlreadyDone.report());
             } else {
-                let next_id = cmds.read().chat().chat_state(id_like_receiver)?.next_received_like_id;
+                let next_id = cmds
+                    .read()
+                    .chat()
+                    .chat_state(id_like_receiver)?
+                    .next_received_like_id;
                 let updated_interaction = interaction
                     .clone()
                     .try_into_like(id_like_sender, id_like_receiver, next_id)
@@ -187,10 +203,7 @@ impl WriteCommandsChat<'_> {
                 .interaction()
                 .get_or_create_account_interaction(id_block_sender, id_block_receiver)?;
 
-            if interaction.is_direction_blocked(
-                id_block_sender,
-                id_block_receiver,
-            ) {
+            if interaction.is_direction_blocked(id_block_sender, id_block_receiver) {
                 return Err(DieselDatabaseError::AlreadyDone.report());
             }
             let updated = interaction
@@ -227,10 +240,7 @@ impl WriteCommandsChat<'_> {
                 .interaction()
                 .get_or_create_account_interaction(id_block_sender, id_block_receiver)?;
 
-            if !interaction.is_direction_blocked(
-                id_block_sender,
-                id_block_receiver,
-            ) {
+            if !interaction.is_direction_blocked(id_block_sender, id_block_receiver) {
                 return Err(DieselDatabaseError::NotAllowed.report());
             }
             let updated = interaction
@@ -263,24 +273,29 @@ impl WriteCommandsChat<'_> {
         let mut converted = vec![];
         for m in messages {
             let sender = self.to_account_id_internal(m.sender).await?;
-            converted.push(PendingMessageIdInternal {
-                sender,
-                mn: m.mn,
-            });
+            converted.push(PendingMessageIdInternal { sender, mn: m.mn });
         }
 
         let pending_messages = db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .message()
-                .add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(message_receiver, converted)?;
+                .add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
+                    message_receiver,
+                    converted,
+                )?;
 
-            cmds.read().chat().message().all_pending_message_sender_account_ids(message_receiver)
+            cmds.read()
+                .chat()
+                .message()
+                .all_pending_message_sender_account_ids(message_receiver)
         })?;
 
         if pending_messages.is_empty() {
-            self
-                .event_manager()
-                .remove_specific_pending_notification_flags_from_cache(message_receiver, PendingNotificationFlags::NEW_MESSAGE)
+            self.event_manager()
+                .remove_specific_pending_notification_flags_from_cache(
+                    message_receiver,
+                    PendingNotificationFlags::NEW_MESSAGE,
+                )
                 .await;
         }
 
@@ -295,7 +310,10 @@ impl WriteCommandsChat<'_> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .message()
-                .add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(message_receiver, messages)
+                .add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(
+                    message_receiver,
+                    messages,
+                )
         })?;
 
         Ok(())
@@ -366,10 +384,10 @@ impl WriteCommandsChat<'_> {
         client_local_id_value: ClientLocalId,
     ) -> Result<(SendMessageResult, Option<PushNotificationAllowed>), DataError> {
         db_transaction!(self, move |mut cmds| {
-            let current_key = cmds.read().chat().public_key(
-                receiver,
-                receiver_public_key_version_from_client
-            )?;
+            let current_key = cmds
+                .read()
+                .chat()
+                .public_key(receiver, receiver_public_key_version_from_client)?;
             if Some(receiver_public_key_from_client) != current_key.map(|v| v.id) {
                 return Ok((SendMessageResult::public_key_outdated(), None));
             }
@@ -381,7 +399,10 @@ impl WriteCommandsChat<'_> {
                 .receiver_acknowledgements_missing_count_for_one_conversation(sender, receiver)?;
 
             if receiver_acknowledgements_missing >= 50 {
-                return Ok((SendMessageResult::too_many_receiver_acknowledgements_missing(), None));
+                return Ok((
+                    SendMessageResult::too_many_receiver_acknowledgements_missing(),
+                    None,
+                ));
             }
 
             let sender_acknowledgements_missing = cmds
@@ -391,10 +412,14 @@ impl WriteCommandsChat<'_> {
                 .sender_acknowledgements_missing_count_for_one_conversation(sender, receiver)?;
 
             if sender_acknowledgements_missing >= 50 {
-                return Ok((SendMessageResult::too_many_sender_acknowledgements_missing(), None));
+                return Ok((
+                    SendMessageResult::too_many_sender_acknowledgements_missing(),
+                    None,
+                ));
             }
 
-            let message_values = cmds.chat()
+            let message_values = cmds
+                .chat()
                 .message()
                 .insert_pending_message_if_match_and_not_blocked(
                     sender,
@@ -406,8 +431,12 @@ impl WriteCommandsChat<'_> {
 
             let message_values = match message_values {
                 Ok(v) => v,
-                Err(ReceiverBlockedSender) =>
-                    return Ok((SendMessageResult::receiver_blocked_sender_or_receiver_not_found(), None)),
+                Err(ReceiverBlockedSender) => {
+                    return Ok((
+                        SendMessageResult::receiver_blocked_sender_or_receiver_not_found(),
+                        None,
+                    ))
+                }
             };
 
             let push_notification_allowd = if receiver_acknowledgements_missing == 0 {
@@ -416,7 +445,10 @@ impl WriteCommandsChat<'_> {
                 None
             };
 
-            Ok((SendMessageResult::successful(message_values), push_notification_allowd))
+            Ok((
+                SendMessageResult::successful(message_values),
+                push_notification_allowd,
+            ))
         })
     }
 
@@ -426,8 +458,7 @@ impl WriteCommandsChat<'_> {
         data: SetPublicKey,
     ) -> Result<PublicKeyId, DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.chat()
-                .set_public_key(id, data)
+            cmds.chat().set_public_key(id, data)
         })
     }
 
@@ -436,30 +467,41 @@ impl WriteCommandsChat<'_> {
     pub async fn handle_reset_received_likes_iterator(
         &self,
         id: AccountIdInternal,
-    ) -> Result<(ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion), DataError> {
-        let (new_version, received_like_id, received_like_id_previous) = db_transaction!(self, move |mut cmds| {
-            cmds.chat().interaction().reset_included_in_received_new_likes_count(id)?;
-            let state = cmds.read().chat().chat_state(id)?;
-            let latest_used_id = state.next_received_like_id.next_id_to_latest_used_id();
-            let id_at_previous_reset = state.received_like_id_at_received_likes_iterator_reset;
-            cmds.chat().modify_chat_state(id, |s| {
-                if s.new_received_likes_count.c != 0 {
-                    s.received_likes_sync_version.increment_if_not_max_value_mut();
-                    s.new_received_likes_count = NewReceivedLikesCount::default();
-                }
-                s.received_like_id_at_received_likes_iterator_reset = Some(latest_used_id);
+    ) -> Result<
+        (
+            ReceivedLikesIteratorSessionIdInternal,
+            ReceivedLikesSyncVersion,
+        ),
+        DataError,
+    > {
+        let (new_version, received_like_id, received_like_id_previous) =
+            db_transaction!(self, move |mut cmds| {
+                cmds.chat()
+                    .interaction()
+                    .reset_included_in_received_new_likes_count(id)?;
+                let state = cmds.read().chat().chat_state(id)?;
+                let latest_used_id = state.next_received_like_id.next_id_to_latest_used_id();
+                let id_at_previous_reset = state.received_like_id_at_received_likes_iterator_reset;
+                cmds.chat().modify_chat_state(id, |s| {
+                    if s.new_received_likes_count.c != 0 {
+                        s.received_likes_sync_version
+                            .increment_if_not_max_value_mut();
+                        s.new_received_likes_count = NewReceivedLikesCount::default();
+                    }
+                    s.received_like_id_at_received_likes_iterator_reset = Some(latest_used_id);
+                })?;
+                let new_state = cmds.read().chat().chat_state(id)?;
+                Ok((
+                    new_state.received_likes_sync_version,
+                    latest_used_id,
+                    id_at_previous_reset,
+                ))
             })?;
-            let new_state = cmds.read().chat().chat_state(id)?;
-            Ok((
-                new_state.received_likes_sync_version,
-                latest_used_id,
-                id_at_previous_reset,
-            ))
-        })?;
 
         let session_id = self
             .write_cache_chat(id.as_id(), |e| {
-                Ok(e.received_likes_iterator.reset(received_like_id, received_like_id_previous))
+                Ok(e.received_likes_iterator
+                    .reset(received_like_id, received_like_id_previous))
             })
             .await
             .into_data_error(id)?;
@@ -471,13 +513,13 @@ impl WriteCommandsChat<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<MatchesIteratorSessionIdInternal, DataError> {
-        let latest_used_id = self.db_read(|mut cmds| cmds.chat().global_state()).await?
+        let latest_used_id = self
+            .db_read(|mut cmds| cmds.chat().global_state())
+            .await?
             .next_match_id
             .next_id_to_latest_used_id();
         let session_id = self
-            .write_cache_chat(id.as_id(), |e| {
-                Ok(e.matches_iterator.reset(latest_used_id))
-            })
+            .write_cache_chat(id.as_id(), |e| Ok(e.matches_iterator.reset(latest_used_id)))
             .await
             .into_data_error(id)?;
 

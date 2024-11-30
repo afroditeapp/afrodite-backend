@@ -6,7 +6,9 @@ mod profile_text;
 define_current_read_commands!(CurrentReadProfileAdmin);
 
 impl<'a> CurrentReadProfileAdmin<'a> {
-    pub fn profile_name_allowlist(self) -> profile_name_allowlist::CurrentReadProfileNameAllowlist<'a> {
+    pub fn profile_name_allowlist(
+        self,
+    ) -> profile_name_allowlist::CurrentReadProfileNameAllowlist<'a> {
         profile_name_allowlist::CurrentReadProfileNameAllowlist::new(self.cmds)
     }
 

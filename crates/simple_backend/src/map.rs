@@ -46,7 +46,8 @@ impl TileMapManager {
         let file = tokio::fs::File::open(path)
             .await
             .change_context(TileMapError::IoFileOpen)?;
-        let metadata = file.metadata()
+        let metadata = file
+            .metadata()
             .await
             .change_context(TileMapError::IoFileMetadata)?;
         let stream = ReaderStream::new(file);

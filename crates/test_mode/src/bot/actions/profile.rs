@@ -2,7 +2,7 @@ use std::{collections::HashSet, fmt::Debug};
 
 use api_client::{
     apis::profile_api::{self, get_location, get_profile, post_profile},
-    models::{ProfileIteratorSessionId, Location, ProfileAttributeValueUpdate, ProfileUpdate},
+    models::{Location, ProfileAttributeValueUpdate, ProfileIteratorSessionId, ProfileUpdate},
 };
 use async_trait::async_trait;
 use config::file::LocationConfig;
@@ -164,13 +164,11 @@ impl BotAction for UpdateLocationRandom {
             .config
             .clone()
             .unwrap_or(state.server_config.location().clone());
-        let location = config.generate_random_location(
-            if self.deterministic {
-                Some(&mut state.deterministic_rng)
-            } else {
-                None
-            }
-        );
+        let location = config.generate_random_location(if self.deterministic {
+            Some(&mut state.deterministic_rng)
+        } else {
+            None
+        });
         profile_api::put_location(state.api.profile(), location)
             .await
             .change_context(TestError::ApiRequest)?;
@@ -209,9 +207,10 @@ impl BotAction for GetProfileList {
             .as_ref()
             .ok_or(TestError::MissingValue)?
             .clone();
-        let data = profile_api::post_get_next_profile_page(state.api.profile(), iterator_session_id)
-            .await
-            .change_context(TestError::ApiRequest)?;
+        let data =
+            profile_api::post_get_next_profile_page(state.api.profile(), iterator_session_id)
+                .await
+                .change_context(TestError::ApiRequest)?;
         let value =
             HashSet::<String>::from_iter(data.profiles.into_iter().map(|l| l.id.to_string()));
         state.previous_value = PreviousValue::Profiles(value);

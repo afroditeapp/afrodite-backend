@@ -5,7 +5,6 @@ use database::define_history_read_commands;
 pub mod account;
 pub mod account_admin;
 
-
 define_history_read_commands!(HistorySyncReadCommands);
 
 impl<'a> HistorySyncReadCommands<'a> {

@@ -1,8 +1,7 @@
 use axum::extract::State;
 use model_account::DeleteStatus;
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::create_open_api_router;
+use server_api::{create_open_api_router, S};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
@@ -29,9 +28,7 @@ const PATH_POST_DELETE: &str = "/account_api/delete";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_delete(
-    State(_state): State<S>,
-) -> Result<(), StatusCode> {
+pub async fn post_delete(State(_state): State<S>) -> Result<(), StatusCode> {
     ACCOUNT.post_delete.incr();
     // TODO
     Ok(())
@@ -86,12 +83,7 @@ pub async fn delete_cancel_deletion(
 }
 
 pub fn delete_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
-        post_delete,
-        get_deletion_status,
-        delete_cancel_deletion,
-    )
+    create_open_api_router!(s, post_delete, get_deletion_status, delete_cancel_deletion,)
 }
 
 create_counters!(

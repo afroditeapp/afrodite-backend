@@ -10,7 +10,7 @@ pub trait GetDbHistoryWriteCommandsMedia {
     fn media_admin_history(&mut self) -> HistoryWriteMediaAdmin;
 }
 
-impl <I: DbWriteAccessProviderHistory> GetDbHistoryWriteCommandsMedia for I {
+impl<I: DbWriteAccessProviderHistory> GetDbHistoryWriteCommandsMedia for I {
     fn media_history(&mut self) -> HistoryWriteMedia {
         HistoryWriteMedia::new(self.handle())
     }

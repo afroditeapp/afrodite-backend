@@ -12,10 +12,9 @@ pub trait GetDbWriteCommandsAccount {
     fn account(&mut self) -> CurrentWriteAccount<'_>;
     fn account_admin(&mut self) -> CurrentWriteAccountAdmin<'_>;
     fn account_chat_utils(&mut self) -> CurrentWriteChatUtils<'_>;
-
 }
 
-impl <I: DbWriteAccessProvider> GetDbWriteCommandsAccount for I {
+impl<I: DbWriteAccessProvider> GetDbWriteCommandsAccount for I {
     fn account(&mut self) -> CurrentWriteAccount<'_> {
         CurrentWriteAccount::new(self.handle())
     }

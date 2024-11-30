@@ -3,11 +3,11 @@ use error_stack::Result;
 use model::{AccountIdInternal, NextQueueNumberType, QueueNumber};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
-use crate::{current::read::GetDbReadCommandsCommon, define_current_write_commands, IntoDatabaseError};
+use crate::{
+    current::read::GetDbReadCommandsCommon, define_current_write_commands, IntoDatabaseError,
+};
 
-define_current_write_commands!(
-    CurrentWriteCommonQueueNumber
-);
+define_current_write_commands!(CurrentWriteCommonQueueNumber);
 
 impl CurrentWriteCommonQueueNumber<'_> {
     fn next_queue_number_and_update_number_table(

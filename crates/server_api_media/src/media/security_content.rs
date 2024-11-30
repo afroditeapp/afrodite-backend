@@ -2,16 +2,17 @@ use axum::{
     extract::{Path, State},
     Extension,
 };
-use model_media::{AccountId, AccountIdInternal, ContentId, PendingSecurityContent, SecurityContent};
+use model_media::{
+    AccountId, AccountIdInternal, ContentId, PendingSecurityContent, SecurityContent,
+};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::create_open_api_router;
+use server_api::{create_open_api_router, S};
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{GetAccounts, ReadData,WriteData},
+    app::{GetAccounts, ReadData, WriteData},
     db_write,
     utils::{Json, StatusCode},
 };

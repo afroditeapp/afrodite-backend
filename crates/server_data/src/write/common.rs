@@ -7,7 +7,14 @@ use server_common::data::cache::CacheError;
 
 use super::DbTransaction;
 use crate::{
-    cache::{CacheWriteCommon, LastSeenTimeUpdated, TopLevelCacheOperations}, db_manager::InternalWriting, define_cmd_wrapper_write, event::EventReceiver, file::FileWrite, result::Result, write::db_transaction, DataError, IntoDataError
+    cache::{CacheWriteCommon, LastSeenTimeUpdated, TopLevelCacheOperations},
+    db_manager::InternalWriting,
+    define_cmd_wrapper_write,
+    event::EventReceiver,
+    file::FileWrite,
+    result::Result,
+    write::db_transaction,
+    DataError, IntoDataError,
 };
 
 define_cmd_wrapper_write!(WriteCommandsCommon);
@@ -30,7 +37,8 @@ impl WriteCommandsCommon<'_> {
             Ok(current_access_token)
         })?;
 
-        let option = self.update_access_token_and_connection(
+        let option = self
+            .update_access_token_and_connection(
                 id.as_id(),
                 current_access_token,
                 pair.access,
@@ -40,17 +48,15 @@ impl WriteCommandsCommon<'_> {
             .into_data_error(id)?;
 
         if let Some(last_seen_time_update) = option.as_ref().and_then(|v| v.1) {
-            self.update_last_seen_time(id.uuid, last_seen_time_update).await;
+            self.update_last_seen_time(id.uuid, last_seen_time_update)
+                .await;
         }
 
         Ok(option.map(|v| v.0))
     }
 
     /// Remove current connection address, access and refresh tokens.
-    pub async fn logout(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<(), DataError> {
+    pub async fn logout(&self, id: AccountIdInternal) -> Result<(), DataError> {
         let current_access_token = db_transaction!(self, move |mut cmds| {
             let current_access_token = cmds.read().common().token().access_token(id);
             cmds.common().token().access_token(id, None)?;
@@ -64,7 +70,8 @@ impl WriteCommandsCommon<'_> {
             .into_data_error(id)?;
 
         if let Some(last_seen_time_update) = last_seen_time_update {
-            self.update_last_seen_time(id.uuid, last_seen_time_update).await;
+            self.update_last_seen_time(id.uuid, last_seen_time_update)
+                .await;
         }
 
         Ok(())
@@ -82,16 +89,14 @@ impl WriteCommandsCommon<'_> {
             .into_data_error(id)?;
 
         if let Some(last_seen_time_update) = last_seen_time_update {
-            self.update_last_seen_time(id.uuid, last_seen_time_update).await;
+            self.update_last_seen_time(id.uuid, last_seen_time_update)
+                .await;
         }
 
         Ok(())
     }
 
-    pub async fn remove_tmp_files(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<(), DataError> {
+    pub async fn remove_tmp_files(&self, id: AccountIdInternal) -> Result<(), DataError> {
         self.files()
             .tmp_dir(id.into())
             .remove_contents_if_exists()
@@ -147,14 +152,10 @@ pub trait UpdateLocationIndexVisibility {
         visibility: bool,
     ) -> Result<(), DataError>;
 
-    async fn update_last_seen_time(
-        &self,
-        account_id: AccountId,
-        info: LastSeenTimeUpdated,
-    );
+    async fn update_last_seen_time(&self, account_id: AccountId, info: LastSeenTimeUpdated);
 }
 
-impl <I: InternalWriting> UpdateLocationIndexVisibility for I {
+impl<I: InternalWriting> UpdateLocationIndexVisibility for I {
     async fn profile_update_location_index_visibility(
         &self,
         id: AccountIdInternal,
@@ -164,9 +165,18 @@ impl <I: InternalWriting> UpdateLocationIndexVisibility for I {
             .cache()
             .read_cache(id.as_id(), |e| {
                 let index_data = e.location_index_profile_data()?;
-                let p = e.profile.as_ref().ok_or(CacheError::FeatureNotEnabled.report())?;
+                let p = e
+                    .profile
+                    .as_ref()
+                    .ok_or(CacheError::FeatureNotEnabled.report())?;
 
-                Ok::<(model_server_data::LocationIndexKey, model_server_data::LocationIndexProfileData), error_stack::Report<CacheError>>((p.location.current_position, index_data))
+                Ok::<
+                    (
+                        model_server_data::LocationIndexKey,
+                        model_server_data::LocationIndexProfileData,
+                    ),
+                    error_stack::Report<CacheError>,
+                >((p.location.current_position, index_data))
             })
             .await
             .into_data_error(id)?;
@@ -184,11 +194,9 @@ impl <I: InternalWriting> UpdateLocationIndexVisibility for I {
         Ok(())
     }
 
-    async fn update_last_seen_time(
-        &self,
-        account_id: AccountId,
-        info: LastSeenTimeUpdated,
-    ) {
-        self.location_index_write_handle().update_last_seen_time(account_id, info).await
+    async fn update_last_seen_time(&self, account_id: AccountId, info: LastSeenTimeUpdated) {
+        self.location_index_write_handle()
+            .update_last_seen_time(account_id, info)
+            .await
     }
 }

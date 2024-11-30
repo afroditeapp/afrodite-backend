@@ -12,7 +12,7 @@ pub trait GetWriteCommandsMedia<'a> {
     fn media_admin(self) -> WriteCommandsMediaAdmin<'a>;
 }
 
-impl <'a, I: WriteAccessProvider<'a>> GetWriteCommandsMedia<'a> for I {
+impl<'a, I: WriteAccessProvider<'a>> GetWriteCommandsMedia<'a> for I {
     fn media(self) -> WriteCommandsMedia<'a> {
         WriteCommandsMedia::new(self.handle())
     }

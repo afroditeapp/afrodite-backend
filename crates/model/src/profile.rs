@@ -1,5 +1,3 @@
-
-
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_struct_try_from;
 use utoipa::ToSchema;

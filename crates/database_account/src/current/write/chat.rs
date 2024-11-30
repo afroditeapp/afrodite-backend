@@ -1,7 +1,7 @@
-use diesel::{prelude::*, update};
 use database::{define_current_write_commands, DieselDatabaseError, IntoDatabaseError};
-use model::{AccountIdInternal, FcmDeviceToken, PendingNotificationToken};
+use diesel::{prelude::*, update};
 use error_stack::Result;
+use model::{AccountIdInternal, FcmDeviceToken, PendingNotificationToken};
 
 define_current_write_commands!(CurrentWriteChatUtils);
 

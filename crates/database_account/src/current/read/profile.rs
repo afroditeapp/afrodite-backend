@@ -1,14 +1,19 @@
 use database::{define_current_read_commands, DieselDatabaseError, IntoDatabaseError};
-use diesel::{query_dsl::methods::{FilterDsl, SelectDsl}, ExpressionMethods, RunQueryDsl};
+use diesel::{
+    query_dsl::methods::{FilterDsl, SelectDsl},
+    ExpressionMethods, RunQueryDsl,
+};
+use error_stack::Result;
 use model::AccountIdInternal;
 use model_account::ProfileNameAndAge;
-
-use error_stack::Result;
 
 define_current_read_commands!(CurrentReadProfileUtils);
 
 impl CurrentReadProfileUtils<'_> {
-    pub fn profile_name_and_age(&mut self, id: AccountIdInternal) -> Result<ProfileNameAndAge, DieselDatabaseError> {
+    pub fn profile_name_and_age(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<ProfileNameAndAge, DieselDatabaseError> {
         use crate::schema::profile::dsl::*;
 
         let (name_value, age_value) = profile

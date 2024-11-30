@@ -1,12 +1,12 @@
 use std::collections::{HashMap, HashSet};
 
-use diesel::{
-    prelude::*,
-    sql_types::BigInt,
-    AsExpression, FromSqlRow,
-};
+use diesel::{prelude::*, sql_types::BigInt, AsExpression, FromSqlRow};
 use model::ProfileAge;
-use model_server_data::{LastSeenTime, LastSeenTimeFilter, ProfileAttributeValue, ProfileAttributeValueUpdate, ProfileAttributes, ProfileInternal, ProfileNameModerationState, ProfileStateCached, ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes};
+use model_server_data::{
+    LastSeenTime, LastSeenTimeFilter, ProfileAttributeValue, ProfileAttributeValueUpdate,
+    ProfileAttributes, ProfileInternal, ProfileNameModerationState, ProfileStateCached,
+    ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes,
+};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, UnixTime};
 use utoipa::{IntoParams, ToSchema};
@@ -120,8 +120,10 @@ pub struct ProfileStateInternal {
     pub profile_sync_version: ProfileSyncVersion,
     pub profile_name_moderation_state: ProfileNameModerationState,
     pub profile_text_moderation_state: ProfileTextModerationState,
-    pub profile_text_moderation_rejected_reason_category: Option<ProfileTextModerationRejectedReasonCategory>,
-    pub profile_text_moderation_rejected_reason_details: Option<ProfileTextModerationRejectedReasonDetails>,
+    pub profile_text_moderation_rejected_reason_category:
+        Option<ProfileTextModerationRejectedReasonCategory>,
+    pub profile_text_moderation_rejected_reason_details:
+        Option<ProfileTextModerationRejectedReasonDetails>,
     pub profile_text_moderation_moderator_account_id: Option<AccountIdDb>,
 }
 
@@ -170,8 +172,13 @@ impl ProfileUpdate {
                 match attribute_info {
                     None => return Err("Unknown attribute ID".to_string()),
                     Some(info) => {
-                        if info.mode.is_number_list() && a.v.len() > NUMBER_LIST_ATTRIBUTE_MAX_VALUES {
-                            return Err(format!("Number list attribute supports max {} values", NUMBER_LIST_ATTRIBUTE_MAX_VALUES));
+                        if info.mode.is_number_list()
+                            && a.v.len() > NUMBER_LIST_ATTRIBUTE_MAX_VALUES
+                        {
+                            return Err(format!(
+                                "Number list attribute supports max {} values",
+                                NUMBER_LIST_ATTRIBUTE_MAX_VALUES
+                            ));
                         }
 
                         if info.mode.is_number_list() {
@@ -199,7 +206,10 @@ impl ProfileUpdate {
         if self.age != current_profile.age {
             if let Some(age_range) = accepted_profile_ages {
                 if !age_range.is_age_valid(self.age) {
-                    return Err("The new profile age is not in the current accepted profile age range".to_string());
+                    return Err(
+                        "The new profile age is not in the current accepted profile age range"
+                            .to_string(),
+                    );
                 }
             }
         }
@@ -224,9 +234,7 @@ pub struct ProfileUpdateValidated {
 
 impl ProfileUpdateValidated {
     pub fn equals_with(&self, other: &Profile) -> bool {
-        let basic = self.name == other.name
-            && self.ptext == other.ptext
-            && self.age == other.age;
+        let basic = self.name == other.name && self.ptext == other.ptext && self.age == other.age;
         if basic {
             let a1: HashMap<u16, ProfileAttributeValueUpdate> =
                 HashMap::from_iter(self.attributes.iter().map(|v| (v.id, v.clone())));
@@ -334,9 +342,7 @@ pub struct GetProfileResult {
 }
 
 impl GetProfileResult {
-    pub fn profile_with_version_response(
-        info: ProfileAndProfileVersion,
-    ) -> Self {
+    pub fn profile_with_version_response(info: ProfileAndProfileVersion) -> Self {
         Self {
             p: Some(info.profile),
             v: Some(info.version),
@@ -388,7 +394,10 @@ impl AcceptedProfileAges {
         }
 
         let current_time = UnixTime::current_time();
-        match (current_time.year(), self.profile_initial_age_set_unix_time.year()) {
+        match (
+            current_time.year(),
+            self.profile_initial_age_set_unix_time.year(),
+        ) {
             (Some(current_year), Some(initial_year)) => {
                 let initial_age: i32 = self.profile_initial_age.value().into();
                 let year_diff = current_year - initial_year;

@@ -116,11 +116,10 @@ impl TestMode {
         match &self.mode {
             TestModeSubMode::Bot(c) if c.admin => 2,
             TestModeSubMode::Bot(_) => 1,
-            TestModeSubMode::Benchmark(c) =>
-                match c.benchmark {
-                    SelectedBenchmark::GetProfileList => c.tasks + 2,
-                    _ => c.tasks,
-                },
+            TestModeSubMode::Benchmark(c) => match c.benchmark {
+                SelectedBenchmark::GetProfileList => c.tasks + 2,
+                _ => c.tasks,
+            },
             _ => 1,
         }
     }

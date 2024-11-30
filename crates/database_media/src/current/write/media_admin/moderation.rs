@@ -1,17 +1,21 @@
-use database::{current::write::GetDbWriteCommandsCommon, define_current_write_commands, DieselDatabaseError};
+use database::{
+    current::write::GetDbWriteCommandsCommon, define_current_write_commands, DieselDatabaseError,
+};
 use diesel::{prelude::*, update};
 use error_stack::Result;
 use model_media::{
     AccountIdInternal, ContentState, HandleModerationRequest, Moderation, ModerationId,
-    ModerationQueueType, ModerationRequestId, ModerationRequestState, NextQueueNumberType, ProfileContentVersion,
+    ModerationQueueType, ModerationRequestId, ModerationRequestState, NextQueueNumberType,
+    ProfileContentVersion,
 };
 
 use super::InitialModerationRequestIsNowAccepted;
-use crate::{current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia}, IntoDatabaseError};
+use crate::{
+    current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia},
+    IntoDatabaseError,
+};
 
-define_current_write_commands!(
-    CurrentWriteMediaAdminModeration
-);
+define_current_write_commands!(CurrentWriteMediaAdminModeration);
 
 // TODO(prod): Support selecting initial and normal requests from API
 // level, so that admin can prioritize moderations.
@@ -218,7 +222,10 @@ impl CurrentWriteMediaAdminModeration<'_> {
                 self.write()
                     .media()
                     .media_content()
-                    .move_pending_content_to_current_content(moderation_request_owner, new_profile_content_version)?;
+                    .move_pending_content_to_current_content(
+                        moderation_request_owner,
+                        new_profile_content_version,
+                    )?;
 
                 return Ok(Some(InitialModerationRequestIsNowAccepted {
                     new_profile_content_version,

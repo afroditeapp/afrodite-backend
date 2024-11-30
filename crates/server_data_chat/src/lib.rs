@@ -17,6 +17,6 @@ macro_rules! db_transaction {
     }};
 }
 
+pub mod cache;
 pub mod read;
 pub mod write;
-pub mod cache;

@@ -2,10 +2,7 @@
 #![deny(unused_must_use)]
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
-#![allow(
-    clippy::collapsible_else_if,
-    clippy::manual_range_contains,
-)]
+#![allow(clippy::collapsible_else_if, clippy::manual_range_contains)]
 
 //! Data types for API and database.
 
@@ -38,7 +35,6 @@ pub mod schema_sqlite_types;
 
 pub type Db = diesel::sqlite::Sqlite;
 
-
 #[derive(thiserror::Error, Debug)]
 pub enum EnumParsingError {
     #[error("ParsingFailed, value: {0}")]
@@ -47,7 +43,7 @@ pub enum EnumParsingError {
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct NextNumberStorage {
-    next: i64
+    next: i64,
 }
 
 impl NextNumberStorage {

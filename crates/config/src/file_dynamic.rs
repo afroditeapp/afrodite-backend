@@ -35,9 +35,7 @@ pub struct ConfigFileDynamic {
 impl ConfigFileDynamic {
     pub fn minimal_config_for_api_doc_json() -> Self {
         Self {
-            backend_config: BackendConfig {
-                bots: None,
-            }
+            backend_config: BackendConfig { bots: None },
         }
     }
 

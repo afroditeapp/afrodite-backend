@@ -1,7 +1,11 @@
 use database_chat::current::write::GetDbWriteCommandsChat;
-use model::{AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken, PushNotificationStateInfo};
+use model::{
+    AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken,
+    PushNotificationStateInfo,
+};
 use server_data::{
-    cache::CacheReadCommon, define_cmd_wrapper_write, result::Result, DataError, write::DbTransaction,
+    cache::CacheReadCommon, define_cmd_wrapper_write, result::Result, write::DbTransaction,
+    DataError,
 };
 
 define_cmd_wrapper_write!(WriteCommandsChatPushNotifications);
@@ -9,9 +13,7 @@ define_cmd_wrapper_write!(WriteCommandsChatPushNotifications);
 impl WriteCommandsChatPushNotifications<'_> {
     pub async fn remove_fcm_device_token(&self, id: AccountIdInternal) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.chat()
-                .push_notifications()
-                .remove_fcm_device_token(id)
+            cmds.chat().push_notifications().remove_fcm_device_token(id)
         })?;
 
         Ok(())
@@ -32,10 +34,7 @@ impl WriteCommandsChatPushNotifications<'_> {
         Ok(token)
     }
 
-    pub async fn reset_pending_notification(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<(), DataError> {
+    pub async fn reset_pending_notification(&self, id: AccountIdInternal) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .push_notifications()
@@ -81,10 +80,9 @@ impl WriteCommandsChatPushNotifications<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
-        let flags = self.read_cache_common(id, move |entry| {
-            Ok(entry.pending_notification_flags)
-        })
-        .await?;
+        let flags = self
+            .read_cache_common(id, move |entry| Ok(entry.pending_notification_flags))
+            .await?;
 
         if flags.is_empty() {
             return Ok(());

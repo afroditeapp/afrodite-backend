@@ -14,7 +14,9 @@ use self::{
     account::{AssertAccountState, CompleteAccountSetup, Login, Register, SetAccountSetup},
     media::{MakeModerationRequest, SendImageToSlot, SetPendingContent},
 };
-use super::{super::client::TestError, client_bot::ChangeBotAgeAndOtherSettings, BotState, TaskState};
+use super::{
+    super::client::TestError, client_bot::ChangeBotAgeAndOtherSettings, BotState, TaskState,
+};
 
 #[macro_export]
 macro_rules! action_array {
@@ -375,9 +377,7 @@ impl<T: PartialEq + Send + Sync + 'static + Debug> BotAction for RepeatUntilFnSi
     }
 }
 
-pub struct RunFn(
-    pub fn(&BotState),
-);
+pub struct RunFn(pub fn(&BotState));
 
 impl Debug for RunFn {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -396,7 +396,6 @@ impl BotAction for RunFn {
         Ok(())
     }
 }
-
 
 #[derive(Debug)]
 pub struct RunActions(pub ActionArray);
@@ -447,9 +446,7 @@ pub const TO_NORMAL_STATE: ActionArray = action_array![
     MakeModerationRequest {
         slots_to_request: &[0],
     },
-    ChangeBotAgeAndOtherSettings {
-        admin: false,
-    },
+    ChangeBotAgeAndOtherSettings { admin: false },
     CompleteAccountSetup,
     AssertAccountState::account(AccountState::Normal),
 ];
@@ -466,9 +463,7 @@ pub const TO_ADMIN_NORMAL_STATE: ActionArray = action_array![
     MakeModerationRequest {
         slots_to_request: &[0],
     },
-    ChangeBotAgeAndOtherSettings {
-        admin: true,
-    },
+    ChangeBotAgeAndOtherSettings { admin: true },
     CompleteAccountSetup,
     AssertAccountState::account(AccountState::Normal),
 ];

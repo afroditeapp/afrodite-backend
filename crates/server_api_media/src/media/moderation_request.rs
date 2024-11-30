@@ -1,14 +1,15 @@
 use axum::{extract::State, Extension};
-use model_media::{AccountIdInternal, CurrentModerationRequest, ModerationRequestContent, PendingNotificationFlags};
+use model_media::{
+    AccountIdInternal, CurrentModerationRequest, ModerationRequestContent, PendingNotificationFlags,
+};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::{app::EventManagerProvider, create_open_api_router};
+use server_api::{app::EventManagerProvider, create_open_api_router, S};
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{ReadData,WriteData},
+    app::{ReadData, WriteData},
     db_write,
     utils::{Json, StatusCode},
 };
@@ -42,7 +43,7 @@ pub async fn get_moderation_request(
         .event_manager()
         .remove_specific_pending_notification_flags_from_cache(
             account_id,
-            PendingNotificationFlags::CONTENT_MODERATION_REQUEST_COMPLETED
+            PendingNotificationFlags::CONTENT_MODERATION_REQUEST_COMPLETED,
         )
         .await;
 

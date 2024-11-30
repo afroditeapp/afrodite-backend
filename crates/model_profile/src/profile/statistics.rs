@@ -18,7 +18,10 @@ pub struct GetProfileStatisticsParams {
 
 impl GetProfileStatisticsParams {
     pub fn contains_admin_settings(&self) -> bool {
-        !self.profile_visibility.unwrap_or_default().is_default_statistics() ||
-        self.generate_new_statistics
+        !self
+            .profile_visibility
+            .unwrap_or_default()
+            .is_default_statistics()
+            || self.generate_new_statistics
     }
 }

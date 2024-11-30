@@ -1,10 +1,12 @@
 //! Match related routes
 
 use axum::{extract::State, Extension};
-use model_chat::{AccountIdInternal, AllMatchesPage, MatchesIteratorSessionId, MatchesPage, ResetMatchesIteratorResult};
+use model_chat::{
+    AccountIdInternal, AllMatchesPage, MatchesIteratorSessionId, MatchesPage,
+    ResetMatchesIteratorResult,
+};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::{app::WriteData, create_open_api_router, db_write};
+use server_api::{app::WriteData, create_open_api_router, db_write, S};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
@@ -89,30 +91,25 @@ pub async fn post_get_next_matches_page(
     CHAT.post_get_next_matches_page.incr();
 
     let data = state
-        .concurrent_write_profile_blocking(
-            account_id.as_id(),
-            move |cmds| {
-                cmds.next_matches_iterator_state(account_id, iterator_session_id)
-            }
-        )
+        .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {
+            cmds.next_matches_iterator_state(account_id, iterator_session_id)
+        })
         .await??;
 
     if let Some(data) = data {
         // Matches iterator session ID was valid
-        let profiles = state
-            .read()
-            .chat()
-            .matches_page(account_id, data)
-            .await?;
+        let profiles = state.read().chat().matches_page(account_id, data).await?;
         Ok(MatchesPage {
             p: profiles,
             error_invalid_iterator_session_id: false,
-        }.into())
+        }
+        .into())
     } else {
         Ok(MatchesPage {
             p: vec![],
             error_invalid_iterator_session_id: true,
-        }.into())
+        }
+        .into())
     }
 }
 
@@ -125,4 +122,11 @@ pub fn match_router(s: S) -> OpenApiRouter {
     )
 }
 
-create_counters!(ChatCounters, CHAT, CHAT_MATCH_COUNTERS_LIST, get_matches, post_reset_matches_paging, post_get_next_matches_page,);
+create_counters!(
+    ChatCounters,
+    CHAT,
+    CHAT_MATCH_COUNTERS_LIST,
+    get_matches,
+    post_reset_matches_paging,
+    post_get_next_matches_page,
+);

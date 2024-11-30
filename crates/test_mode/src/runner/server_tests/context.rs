@@ -2,7 +2,9 @@ use std::{mem, sync::Arc};
 
 use api_client::{
     apis::{
-        configuration::Configuration, media_admin_api, profile_api::{post_profile, post_search_age_range, post_search_groups}
+        configuration::Configuration,
+        media_admin_api,
+        profile_api::{post_profile, post_search_age_range, post_search_groups},
     },
     models::{
         AccountId, EventToClient, ModerationQueueType, ProfileSearchAgeRange, ProfileUpdate,
@@ -76,7 +78,7 @@ impl TestContext {
 
     /// Account with Normal state, age 30 and name "Test".
     pub async fn new_account(&self) -> Result<Account, TestError> {
-      self.new_account_internal(30, "Test").await
+        self.new_account_internal(30, "Test").await
     }
 
     async fn new_account_internal(&self, age: i64, name: &str) -> Result<Account, TestError> {
@@ -106,9 +108,7 @@ impl TestContext {
             .change_context(TestError::ApiRequest)?;
 
         account
-            .run_actions(action_array![
-                CompleteAccountSetup,
-            ])
+            .run_actions(action_array![CompleteAccountSetup,])
             .await?;
 
         Ok(account)
@@ -220,10 +220,16 @@ pub struct Account {
 
 impl Account {
     pub async fn register_and_login(mut test_context: TestContext) -> Result<Self, TestError> {
-        let urls = test_context.test_config.server.api_urls.clone().change_ports(
-            test_context.account_server_internal_api_port,
-            test_context.account_server_public_api_port,
-        ).map_err(|_| TestError::ApiUrlPortConfigFailed.report())?;
+        let urls = test_context
+            .test_config
+            .server
+            .api_urls
+            .clone()
+            .change_ports(
+                test_context.account_server_internal_api_port,
+                test_context.account_server_public_api_port,
+            )
+            .map_err(|_| TestError::ApiUrlPortConfigFailed.report())?;
 
         let mut state = BotState::new(
             None,

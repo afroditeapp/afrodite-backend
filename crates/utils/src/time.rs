@@ -6,8 +6,8 @@ pub fn age_in_years_from_birthdate(birthdate: NaiveDate) -> i32 {
     if now < birthdate {
         // Birthdate is in future
         0
-    } else if now.month() < birthdate.month() ||
-        (now.month() == birthdate.month() && now.day() < birthdate.day())
+    } else if now.month() < birthdate.month()
+        || (now.month() == birthdate.month() && now.day() < birthdate.day())
     {
         // Before birthday
         now.year() - birthdate.year() - 1

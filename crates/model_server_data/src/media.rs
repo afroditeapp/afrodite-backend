@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_try_from;
 use utoipa::{IntoParams, ToSchema};
 
-
 #[derive(
     Debug,
     Clone,
@@ -48,7 +47,6 @@ impl TryFrom<i64> for ContentSlot {
 }
 
 diesel_i64_try_from!(ContentSlot);
-
 
 #[derive(
     Debug,

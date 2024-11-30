@@ -31,8 +31,7 @@ pub trait FileRead {
     fn files(&self) -> &crate::FileDir;
 }
 
-
-impl <I: InternalReading> FileRead for I {
+impl<I: InternalReading> FileRead for I {
     fn files(&self) -> &crate::FileDir {
         self.root().file_dir()
     }
@@ -42,7 +41,7 @@ pub trait FileWrite {
     fn files(&self) -> &crate::FileDir;
 }
 
-impl <I: InternalWriting> FileWrite for I {
+impl<I: InternalWriting> FileWrite for I {
     fn files(&self) -> &crate::FileDir {
         self.root().file_dir()
     }

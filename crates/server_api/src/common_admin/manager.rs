@@ -8,13 +8,14 @@ use manager_model::{
 };
 use model::{AccountIdInternal, Permissions};
 use obfuscate_api_macro::obfuscate_api;
-use crate::S;
 use simple_backend::{app::GetManagerApi, create_counters};
 use tracing::info;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    create_open_api_router, utils::{Json, StatusCode}
+    create_open_api_router,
+    utils::{Json, StatusCode},
+    S,
 };
 
 #[obfuscate_api]

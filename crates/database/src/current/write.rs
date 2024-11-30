@@ -7,7 +7,7 @@ pub trait GetDbWriteCommandsCommon {
     fn common(&mut self) -> CurrentWriteCommon<'_>;
 }
 
-impl <I: DbWriteAccessProvider> GetDbWriteCommandsCommon for I {
+impl<I: DbWriteAccessProvider> GetDbWriteCommandsCommon for I {
     fn common(&mut self) -> CurrentWriteCommon<'_> {
         CurrentWriteCommon::new(self.handle())
     }

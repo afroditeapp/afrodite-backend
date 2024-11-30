@@ -9,9 +9,7 @@ use model_media::{
 
 use crate::IntoDatabaseError;
 
-define_current_read_commands!(
-    CurrentReadMediaAdminModeration
-);
+define_current_read_commands!(CurrentReadMediaAdminModeration);
 
 impl CurrentReadMediaAdminModeration<'_> {
     pub fn get_in_progress_moderations(

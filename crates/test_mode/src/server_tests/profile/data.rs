@@ -18,11 +18,16 @@ async fn updating_profile_works(context: TestContext) -> TestResult {
     post_profile(account.account_api(), profile).await?;
     assert_eq(
         "A",
-        &get_profile(account.account_api(), &account.account_id_string(), None, None)
-            .await?
-            .p
-            .flatten()
-            .ok_or(TestError::MissingValue.report())?
-            .name,
+        &get_profile(
+            account.account_api(),
+            &account.account_id_string(),
+            None,
+            None,
+        )
+        .await?
+        .p
+        .flatten()
+        .ok_or(TestError::MissingValue.report())?
+        .name,
     )
 }

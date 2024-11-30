@@ -1,11 +1,8 @@
-
 use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update, upsert::excluded};
 use error_stack::Result;
 use model::{AccountIdInternal, SyncVersion, UnixTime};
-use model_account::{
-    AccountGlobalState, NewsId, NewsLocale, PublicationId, UpdateNewsTranslation,
-};
+use model_account::{AccountGlobalState, NewsId, NewsLocale, PublicationId, UpdateNewsTranslation};
 
 use crate::{current::read::GetDbReadCommandsAccount, IntoDatabaseError};
 
@@ -19,9 +16,7 @@ impl CurrentWriteAccountNewsAdmin<'_> {
         use model::schema::news::dsl::*;
 
         let news_id_value: NewsId = insert_into(news)
-            .values((
-                account_id_creator.eq(id_value.as_db_id()),
-            ))
+            .values((account_id_creator.eq(id_value.as_db_id()),))
             .returning(id)
             .get_result(self.conn())
             .into_db_error(())?;
@@ -29,10 +24,7 @@ impl CurrentWriteAccountNewsAdmin<'_> {
         Ok(news_id_value)
     }
 
-    pub fn delete_news_item(
-        &mut self,
-        id_value: NewsId,
-    ) -> Result<(), DieselDatabaseError> {
+    pub fn delete_news_item(&mut self, id_value: NewsId) -> Result<(), DieselDatabaseError> {
         use model::schema::news::dsl::*;
 
         delete(news)
@@ -101,7 +93,11 @@ impl CurrentWriteAccountNewsAdmin<'_> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::news::dsl::*;
 
-        let current_value = self.read().account_admin().news().news_translations(id_value)?;
+        let current_value = self
+            .read()
+            .account_admin()
+            .news()
+            .news_translations(id_value)?;
         let current_time = UnixTime::current_time();
         let first_publication = if is_public && current_value.first_publication_time.is_none() {
             Some(current_time)
@@ -138,9 +134,7 @@ impl CurrentWriteAccountNewsAdmin<'_> {
         Ok(())
     }
 
-    fn increment_news_sync_version_for_every_account(
-        &mut self,
-    ) -> Result<(), DieselDatabaseError> {
+    fn increment_news_sync_version_for_every_account(&mut self) -> Result<(), DieselDatabaseError> {
         use model::schema::account_state::dsl::*;
 
         update(account_state)
@@ -190,7 +184,8 @@ impl CurrentWriteAccountNewsAdmin<'_> {
     ) -> Result<PublicationId, DieselDatabaseError> {
         use model::schema::account_global_state::dsl::*;
 
-        let id = self.read()
+        let id = self
+            .read()
             .account()
             .data()
             .global_state()?

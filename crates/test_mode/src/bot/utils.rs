@@ -1,7 +1,7 @@
 pub mod assert;
+pub mod encrypt;
 pub mod image;
 pub mod location;
-pub mod encrypt;
 
 use std::{
     fmt::Debug,

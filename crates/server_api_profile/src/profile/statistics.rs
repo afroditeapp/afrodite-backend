@@ -2,16 +2,12 @@ use axum::{
     extract::{Query, State},
     Extension,
 };
-use model_profile::{
-    GetProfileStatisticsParams, GetProfileStatisticsResult, Permissions
-};
+use model_profile::{GetProfileStatisticsParams, GetProfileStatisticsResult, Permissions};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::create_open_api_router;
+use server_api::{app::ProfileStatisticsCacheProvider, create_open_api_router, S};
 use server_data_profile::{read::GetReadProfileCommands, statistics::ProfileStatisticsCacheUtils};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
-use server_api::app::ProfileStatisticsCacheProvider;
 
 use crate::{
     app::ReadData,
@@ -49,21 +45,24 @@ pub async fn get_profile_statistics(
     }
 
     let r = if params.contains_admin_settings() {
-        state.read().profile().statistics().profile_statistics(params.profile_visibility.unwrap_or_default()).await?
+        state
+            .read()
+            .profile()
+            .statistics()
+            .profile_statistics(params.profile_visibility.unwrap_or_default())
+            .await?
     } else {
-        state.profile_statistics_cache().get_or_update_statistics(state.read()).await?
+        state
+            .profile_statistics_cache()
+            .get_or_update_statistics(state.read())
+            .await?
     };
 
     Ok(r.into())
 }
 
-pub fn statistics_router(
-    s: S,
-) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
-        get_profile_statistics,
-    )
+pub fn statistics_router(s: S) -> OpenApiRouter {
+    create_open_api_router!(s, get_profile_statistics,)
 }
 
 create_counters!(

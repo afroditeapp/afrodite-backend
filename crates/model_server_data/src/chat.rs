@@ -15,15 +15,7 @@ pub enum LimitedActionStatus {
 }
 
 #[derive(
-    Debug,
-    Clone,
-    Copy,
-    Default,
-    Deserialize,
-    Serialize,
-    PartialEq,
-    FromSqlRow,
-    AsExpression,
+    Debug, Clone, Copy, Default, Deserialize, Serialize, PartialEq, FromSqlRow, AsExpression,
 )]
 #[diesel(sql_type = BigInt)]
 pub struct MatchId {
@@ -41,7 +33,9 @@ impl MatchId {
 
     /// Return new incremented value using `saturated_add`.
     pub fn increment(&self) -> Self {
-        Self { id: self.id.saturating_add(1) }
+        Self {
+            id: self.id.saturating_add(1),
+        }
     }
 
     /// This returns -1 if ID is not incremented.
@@ -57,7 +51,6 @@ impl From<MatchId> for i64 {
         value.id
     }
 }
-
 
 /// Session ID type for matches iterator so that client can detect
 /// server restarts and ask user to refresh matches.
@@ -85,31 +78,18 @@ pub struct MatchesIteratorSessionId {
 
 impl From<MatchesIteratorSessionIdInternal> for MatchesIteratorSessionId {
     fn from(value: MatchesIteratorSessionIdInternal) -> Self {
-        Self {
-            id: value.id,
-        }
+        Self { id: value.id }
     }
 }
 
 impl From<MatchesIteratorSessionId> for MatchesIteratorSessionIdInternal {
     fn from(value: MatchesIteratorSessionId) -> Self {
-        Self {
-            id: value.id,
-        }
+        Self { id: value.id }
     }
 }
 
-
 #[derive(
-    Debug,
-    Clone,
-    Copy,
-    Default,
-    Deserialize,
-    Serialize,
-    PartialEq,
-    FromSqlRow,
-    AsExpression,
+    Debug, Clone, Copy, Default, Deserialize, Serialize, PartialEq, FromSqlRow, AsExpression,
 )]
 #[diesel(sql_type = BigInt)]
 pub struct ReceivedLikeId {
@@ -127,7 +107,9 @@ impl ReceivedLikeId {
 
     /// Return new incremented value using `saturated_add`.
     pub fn increment(&self) -> Self {
-        Self { id: self.id.saturating_add(1) }
+        Self {
+            id: self.id.saturating_add(1),
+        }
     }
 
     /// This returns -1 if ID is not incremented.
@@ -144,12 +126,11 @@ impl From<ReceivedLikeId> for i64 {
     }
 }
 
-
 /// Session ID type for received likes iterator so that client can detect
 /// server restarts and ask user to refresh received likes.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ReceivedLikesIteratorSessionIdInternal {
-    id: i64
+    id: i64,
 }
 
 impl ReceivedLikesIteratorSessionIdInternal {
@@ -171,16 +152,12 @@ pub struct ReceivedLikesIteratorSessionId {
 
 impl From<ReceivedLikesIteratorSessionIdInternal> for ReceivedLikesIteratorSessionId {
     fn from(value: ReceivedLikesIteratorSessionIdInternal) -> Self {
-        Self {
-            id: value.id,
-        }
+        Self { id: value.id }
     }
 }
 
 impl From<ReceivedLikesIteratorSessionId> for ReceivedLikesIteratorSessionIdInternal {
     fn from(value: ReceivedLikesIteratorSessionId) -> Self {
-        Self {
-            id: value.id,
-        }
+        Self { id: value.id }
     }
 }

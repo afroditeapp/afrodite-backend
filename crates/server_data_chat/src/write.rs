@@ -12,7 +12,7 @@ pub trait GetWriteCommandsChat<'a> {
     fn chat_admin(self) -> WriteCommandsChatAdmin<'a>;
 }
 
-impl <'a, I: WriteAccessProvider<'a>> GetWriteCommandsChat<'a> for I {
+impl<'a, I: WriteAccessProvider<'a>> GetWriteCommandsChat<'a> for I {
     fn chat(self) -> WriteCommandsChat<'a> {
         WriteCommandsChat::new(self.handle())
     }

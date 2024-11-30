@@ -1,4 +1,6 @@
-use database::{current::write::GetDbWriteCommandsCommon, define_current_write_commands, DieselDatabaseError};
+use database::{
+    current::write::GetDbWriteCommandsCommon, define_current_write_commands, DieselDatabaseError,
+};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model_media::{
@@ -10,9 +12,7 @@ use simple_backend_utils::ContextExt;
 use super::DeletedSomething;
 use crate::{current::read::GetDbReadCommandsMedia, IntoDatabaseError};
 
-define_current_write_commands!(
-    CurrentWriteMediaModerationRequest
-);
+define_current_write_commands!(CurrentWriteMediaModerationRequest);
 
 impl CurrentWriteMediaModerationRequest<'_> {
     pub fn insert_content_id_to_slot(

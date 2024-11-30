@@ -1,6 +1,5 @@
-use crate::db_manager::{InternalReading, ReadAccessProvider};
-
 use self::common::ReadCommandsCommon;
+use crate::db_manager::{InternalReading, ReadAccessProvider};
 
 pub mod common;
 
@@ -8,7 +7,7 @@ pub trait GetReadCommandsCommon<'a> {
     fn common(self) -> ReadCommandsCommon<'a>;
 }
 
-impl <'a, C: ReadAccessProvider<'a>> GetReadCommandsCommon<'a> for C {
+impl<'a, C: ReadAccessProvider<'a>> GetReadCommandsCommon<'a> for C {
     fn common(self) -> ReadCommandsCommon<'a> {
         ReadCommandsCommon::new(self.handle())
     }
@@ -28,7 +27,7 @@ pub trait DbRead {
     ) -> error_stack::Result<R, database::DieselDatabaseError>;
 }
 
-impl <I: InternalReading> DbRead for I {
+impl<I: InternalReading> DbRead for I {
     async fn db_read<
         T: FnOnce(
                 database::DbReadMode<'_>,

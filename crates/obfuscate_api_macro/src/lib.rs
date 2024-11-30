@@ -1,7 +1,7 @@
 use base64::Engine;
-use sha1::Digest;
 use proc_macro::TokenStream;
 use quote::format_ident;
+use sha1::Digest;
 use syn::parse_macro_input;
 
 /// Obfuscate utoipa compatible API route path and generate
@@ -27,12 +27,18 @@ pub fn obfuscate_api(_attr: TokenStream, input: TokenStream) -> TokenStream {
     let path_name_axum = format_ident!("{}_AXUM", path_name);
 
     let string_literal_error = || {
-        syn::Error::new_spanned(&path.expr, "only string literals starting with '/' and without ':' characters are supported")
-            .to_compile_error()
-            .into()
+        syn::Error::new_spanned(
+            &path.expr,
+            "only string literals starting with '/' and without ':' characters are supported",
+        )
+        .to_compile_error()
+        .into()
     };
     let path_string = match path.expr.as_ref() {
-        syn::Expr::Lit(syn::ExprLit { lit: syn::Lit::Str(lit_str), ..}) => {
+        syn::Expr::Lit(syn::ExprLit {
+            lit: syn::Lit::Str(lit_str),
+            ..
+        }) => {
             let path_string = lit_str.value();
             if !path_string.starts_with('/') {
                 return string_literal_error();
@@ -62,17 +68,10 @@ pub fn obfuscate_api(_attr: TokenStream, input: TokenStream) -> TokenStream {
 fn obfuscate_path(path: &str) -> String {
     match path.split_once("/{") {
         Some((first, second)) => {
-            format!(
-                "/{}/{{{}",
-                obfuscate(first),
-                second,
-            )
+            format!("/{}/{{{}", obfuscate(first), second,)
         }
         None => {
-            format!(
-                "/{}",
-                obfuscate(path),
-            )
+            format!("/{}", obfuscate(path),)
         }
     }
 }

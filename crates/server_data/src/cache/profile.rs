@@ -1,16 +1,17 @@
 use config::Config;
-use error_stack::ResultExt;
-use model::AccountIdInternal;
-use model::{AccountId, NextNumberStorage, UnixTime};
-use model_server_data::{LastSeenTime, LocationIndexKey, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileIteratorSessionIdInternal, ProfileQueryMakerDetails, ProfileStateCached, SortedProfileAttributes};
-use server_common::data::cache::CacheError;
-use server_common::data::DataError;
-use crate::cache::CacheEntryCommon;
+use error_stack::{Result, ResultExt};
+use model::{AccountId, AccountIdInternal, NextNumberStorage, UnixTime};
+use model_server_data::{
+    LastSeenTime, LocationIndexKey, ProfileAttributeFilterValue, ProfileAttributeValue,
+    ProfileInternal, ProfileIteratorSessionIdInternal, ProfileQueryMakerDetails,
+    ProfileStateCached, SortedProfileAttributes,
+};
+use server_common::data::{cache::CacheError, DataError};
 
-use crate::db_manager::InternalWriting;
-use crate::index::location::LocationIndexIteratorState;
-
-use error_stack::Result;
+use crate::{
+    cache::CacheEntryCommon, db_manager::InternalWriting,
+    index::location::LocationIndexIteratorState,
+};
 
 #[derive(Debug)]
 pub struct CachedProfile {
@@ -78,14 +79,21 @@ pub trait UpdateLocationCacheState {
     async fn update_location_cache_profile(&self, id: AccountIdInternal) -> Result<(), DataError>;
 }
 
-impl <I: InternalWriting> UpdateLocationCacheState for I {
+impl<I: InternalWriting> UpdateLocationCacheState for I {
     async fn update_location_cache_profile(&self, id: AccountIdInternal) -> Result<(), DataError> {
         let (location, profile_data, profile_visibility) = self
             .cache()
             .read_cache(id.as_id(), |e| {
-                let profile_visibility = e.common.account_state_related_shared_state.profile_visibility();
+                let profile_visibility = e
+                    .common
+                    .account_state_related_shared_state
+                    .profile_visibility();
                 let p = e.profile.as_deref().ok_or(CacheError::FeatureNotEnabled)?;
-                Ok((p.location.current_position, e.location_index_profile_data()?, profile_visibility))
+                Ok((
+                    p.location.current_position,
+                    e.location_index_profile_data()?,
+                    profile_visibility,
+                ))
             })
             .await
             .change_context(DataError::Cache)?;

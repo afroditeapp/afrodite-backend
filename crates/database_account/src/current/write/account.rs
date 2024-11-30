@@ -2,13 +2,13 @@ use database::define_current_write_commands;
 
 mod data;
 mod demo;
-mod sign_in_with;
 mod email;
 mod news;
+mod sign_in_with;
 
 define_current_write_commands!(CurrentWriteAccount);
 
-impl <'a> CurrentWriteAccount<'a> {
+impl<'a> CurrentWriteAccount<'a> {
     pub fn data(self) -> data::CurrentWriteAccountData<'a> {
         data::CurrentWriteAccountData::new(self.cmds)
     }

@@ -2,7 +2,8 @@ use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
 use model_media::{
-    AccountIdInternal, ContentId, ContentIdDb, ContentState, MediaContentRaw, MediaContentType, ProfileContentVersion, SetProfileContent, SetProfileContentInternal
+    AccountIdInternal, ContentId, ContentIdDb, ContentState, MediaContentRaw, MediaContentType,
+    ProfileContentVersion, SetProfileContent, SetProfileContentInternal,
 };
 use simple_backend_utils::ContextExt;
 
@@ -20,11 +21,10 @@ impl CurrentWriteMediaContent<'_> {
         let version = ProfileContentVersion::new_random();
 
         insert_into(current_account_media)
-            .values(
-                (
-                    account_id.eq(id.as_db_id()),
-                    profile_content_version_uuid.eq(version),
-                ))
+            .values((
+                account_id.eq(id.as_db_id()),
+                profile_content_version_uuid.eq(version),
+            ))
             .execute(self.conn())
             .into_db_error(id)?;
 

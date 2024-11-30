@@ -26,9 +26,15 @@ impl ConnectedApp {
             .merge(api::profile::favorite_router(self.state.clone()))
             .merge(api::profile::iterate_profiles_router(self.state.clone()))
             .merge(api::profile::statistics_router(self.state.clone()))
-            .merge(api::profile_admin::admin_statistics_router(self.state.clone()))
-            .merge(api::profile_admin::admin_profile_name_allowlist_router(self.state.clone()))
-            .merge(api::profile_admin::admin_profile_text_router(self.state.clone()));
+            .merge(api::profile_admin::admin_statistics_router(
+                self.state.clone(),
+            ))
+            .merge(api::profile_admin::admin_profile_name_allowlist_router(
+                self.state.clone(),
+            ))
+            .merge(api::profile_admin::admin_profile_text_router(
+                self.state.clone(),
+            ));
 
         let private = if self.state.config().debug_mode() {
             private.merge(api::profile::benchmark_router(self.state.clone()))
@@ -37,10 +43,7 @@ impl ConnectedApp {
         };
 
         private.route_layer({
-            middleware::from_fn_with_state(
-                self.state(),
-                api::utils::authenticate_with_access_token,
-            )
+            middleware::from_fn_with_state(self.state(), api::utils::authenticate_with_access_token)
         })
     }
 }

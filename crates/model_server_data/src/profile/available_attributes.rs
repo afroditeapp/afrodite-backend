@@ -125,8 +125,8 @@ impl ModeAndIdSequenceNumber {
 
     fn set_value(&mut self, id: u16) -> Result<u16, String> {
         match self.mode {
-            AttributeMode::SelectSingleFilterSingle |
-            AttributeMode::SelectMultipleFilterMultipleNumberList => {
+            AttributeMode::SelectSingleFilterSingle
+            | AttributeMode::SelectMultipleFilterMultipleNumberList => {
                 Self::validate_integer_id(id)?;
                 self.current_id = Some(id);
             }
@@ -172,8 +172,8 @@ impl ModeAndIdSequenceNumber {
     /// Increment the current ID and return the updated current ID.
     fn increment_value(&mut self) -> Result<u16, String> {
         match self.mode {
-            AttributeMode::SelectSingleFilterSingle |
-            AttributeMode::SelectMultipleFilterMultipleNumberList => {
+            AttributeMode::SelectSingleFilterSingle
+            | AttributeMode::SelectMultipleFilterMultipleNumberList => {
                 let tmp = if let Some(current_id) = self.current_id {
                     current_id + 1
                 } else {
@@ -531,8 +531,8 @@ pub enum AttributeValueOrderMode {
 impl AttributeMode {
     pub fn is_bitflag_mode(&self) -> bool {
         match self {
-            AttributeMode::SelectSingleFilterSingle |
-            AttributeMode::SelectMultipleFilterMultipleNumberList => false,
+            AttributeMode::SelectSingleFilterSingle
+            | AttributeMode::SelectMultipleFilterMultipleNumberList => false,
             AttributeMode::SelectSingleFilterMultiple
             | AttributeMode::SelectMultipleFilterMultiple => true,
         }
@@ -540,9 +540,9 @@ impl AttributeMode {
 
     pub fn is_number_list(&self) -> bool {
         match self {
-            AttributeMode::SelectSingleFilterSingle |
-            AttributeMode::SelectSingleFilterMultiple |
-            AttributeMode::SelectMultipleFilterMultiple => false,
+            AttributeMode::SelectSingleFilterSingle
+            | AttributeMode::SelectSingleFilterMultiple
+            | AttributeMode::SelectMultipleFilterMultiple => false,
             AttributeMode::SelectMultipleFilterMultipleNumberList => true,
         }
     }

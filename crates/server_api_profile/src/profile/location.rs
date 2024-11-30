@@ -1,8 +1,7 @@
 use axum::{extract::State, Extension};
 use model_profile::{AccountIdInternal, Location};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::create_open_api_router;
+use server_api::{create_open_api_router, S};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
@@ -65,11 +64,7 @@ pub async fn put_location(
 }
 
 pub fn location_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
-        get_location,
-        put_location,
-    )
+    create_open_api_router!(s, get_location, put_location,)
 }
 
 create_counters!(

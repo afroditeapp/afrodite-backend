@@ -1,21 +1,22 @@
 use std::time::Duration;
 
 use axum::extract::State;
+use model_account::{AccessibleAccount, AccountId, LoginResult, SignInWithInfo};
 use model_server_state::{
-    DemoModeConfirmLogin, DemoModeConfirmLoginResult,
-    DemoModeLoginResult, DemoModeLoginToAccount, DemoModePassword, DemoModeToken,
-};
-use model_account::{
-    AccessibleAccount, AccountId, LoginResult, SignInWithInfo,
+    DemoModeConfirmLogin, DemoModeConfirmLoginResult, DemoModeLoginResult, DemoModeLoginToAccount,
+    DemoModePassword, DemoModeToken,
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::{create_open_api_router, db_write};
-use server_data_account::demo::{AccessibleAccountsInfoUtils, DemoModeUtils};
-use server_data_account::write::GetWriteCommandsAccount;
+use server_api::{
+    app::{GetConfig, ReadData},
+    create_open_api_router, db_write, S,
+};
+use server_data_account::{
+    demo::{AccessibleAccountsInfoUtils, DemoModeUtils},
+    write::GetWriteCommandsAccount,
+};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
-use server_api::app::{ReadData, GetConfig};
 
 use super::login_impl;
 use crate::{
@@ -71,13 +72,15 @@ pub async fn post_demo_mode_confirm_login(
     Json(info): Json<DemoModeConfirmLogin>,
 ) -> Result<Json<DemoModeConfirmLoginResult>, StatusCode> {
     ACCOUNT.post_demo_mode_confirm_login.incr();
-    let result = state.demo_mode().stage1_login(info.password, info.token).await?;
+    let result = state
+        .demo_mode()
+        .stage1_login(info.password, info.token)
+        .await?;
     Ok(result.into())
 }
 
 #[obfuscate_api]
-const PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS: &str =
-    "/account_api/demo_mode_accessible_accounts";
+const PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS: &str = "/account_api/demo_mode_accessible_accounts";
 
 // TODO: Return Unauthorized instead of internal server error on routes which
 // require DemoModeToken?
@@ -132,7 +135,10 @@ pub async fn post_demo_mode_register_account(
 
     let demo_mode_id = state.demo_mode().demo_mode_token_exists(&token).await?;
 
-    let id = state.data_all_access().register_impl(SignInWithInfo::default(), None).await?;
+    let id = state
+        .data_all_access()
+        .register_impl(SignInWithInfo::default(), None)
+        .await?;
 
     db_write!(state, move |cmds| cmds
         .account()
@@ -160,7 +166,10 @@ pub async fn post_demo_mode_login_to_account(
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT.post_demo_mode_login_to_account.incr();
 
-    let accessible_accounts = state.demo_mode().accessible_accounts_if_token_valid(&info.token).await?;
+    let accessible_accounts = state
+        .demo_mode()
+        .accessible_accounts_if_token_valid(&info.token)
+        .await?;
     accessible_accounts.contains(info.aid, state.read()).await?;
 
     let result = login_impl(info.aid, state).await?;
@@ -169,8 +178,7 @@ pub async fn post_demo_mode_login_to_account(
 }
 
 #[obfuscate_api]
-const PATH_POST_DEMO_MODE_LOGOUT: &str =
-    "/account_api/demo_mode_logout";
+const PATH_POST_DEMO_MODE_LOGOUT: &str = "/account_api/demo_mode_logout";
 
 #[utoipa::path(
     post,
@@ -191,9 +199,7 @@ pub async fn post_demo_mode_logout(
     Ok(())
 }
 
-pub fn demo_mode_router(
-    s: S,
-) -> OpenApiRouter {
+pub fn demo_mode_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
         post_demo_mode_accessible_accounts,

@@ -4,5 +4,5 @@
 #![warn(unused_crate_dependencies)]
 
 pub mod api;
-pub mod time;
 pub mod random_bytes;
+pub mod time;

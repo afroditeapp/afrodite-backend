@@ -3,7 +3,10 @@ use std::io::Write;
 use error_stack::{report, Result, ResultExt};
 use image::{DynamicImage, EncodableLayout, GrayImage, ImageDecoder, ImageReader};
 use serde::{Deserialize, Serialize};
-use simple_backend_config::{args::{ImageProcessModeArgs, InputFileType}, file::ImageProcessingConfig};
+use simple_backend_config::{
+    args::{ImageProcessModeArgs, InputFileType},
+    file::ImageProcessingConfig,
+};
 
 const SOURCE_IMG_MIN_WIDTH_AND_HEIGHT: u32 = 512;
 
@@ -54,12 +57,14 @@ pub fn handle_image(
         InputFileType::JpegImage => image::ImageFormat::Jpeg,
     };
 
-    let mut img_reader = ImageReader::open(&args.input)
-        .change_context(ImageProcessError::InputReadingFailed)?;
+    let mut img_reader =
+        ImageReader::open(&args.input).change_context(ImageProcessError::InputReadingFailed)?;
     img_reader.set_format(format);
-    let mut img_decoder = img_reader.into_decoder()
+    let mut img_decoder = img_reader
+        .into_decoder()
         .change_context(ImageProcessError::InputReadingFailed)?;
-    let orientation = img_decoder.orientation()
+    let orientation = img_decoder
+        .orientation()
         .change_context(ImageProcessError::ExifReadingFailed)?;
     let img = DynamicImage::from_decoder(img_decoder)
         .change_context(ImageProcessError::InputReadingFailed)?;
@@ -81,10 +86,8 @@ pub fn handle_image(
         let mut compress = mozjpeg::Compress::new(mozjpeg::ColorSpace::JCS_RGB);
 
         compress.set_size(
-            TryInto::<usize>::try_into(width)
-                .change_context(ImageProcessError::EncodingError)?,
-            TryInto::<usize>::try_into(height)
-                .change_context(ImageProcessError::EncodingError)?,
+            TryInto::<usize>::try_into(width).change_context(ImageProcessError::EncodingError)?,
+            TryInto::<usize>::try_into(height).change_context(ImageProcessError::EncodingError)?,
         );
 
         let quality = config.jpeg_quality().clamp(1.0, 100.0);
@@ -129,10 +132,8 @@ pub fn handle_image(
     };
 
     let mut stdout = std::io::stdout();
-    serde_json::to_writer(&stdout, &info)
-        .change_context(ImageProcessError::Stdout)?;
-    stdout.flush()
-        .change_context(ImageProcessError::Stdout)?;
+    serde_json::to_writer(&stdout, &info).change_context(ImageProcessError::Stdout)?;
+    stdout.flush().change_context(ImageProcessError::Stdout)?;
 
     Ok(())
 }
@@ -168,17 +169,18 @@ fn detect_face(
 
     let data = rustface::ImageData::new(&data, data.width(), data.height());
 
-    let result = std::panic::catch_unwind(|| -> Result<Vec<rustface::FaceInfo>, ImageProcessError> {
-        let mut model = rustface::create_detector(&config.model_file)
-            .change_context(ImageProcessError::FaceDetection)?;
+    let result =
+        std::panic::catch_unwind(|| -> Result<Vec<rustface::FaceInfo>, ImageProcessError> {
+            let mut model = rustface::create_detector(&config.model_file)
+                .change_context(ImageProcessError::FaceDetection)?;
 
-        model.set_score_thresh(config.detection_threshold);
-        model.set_pyramid_scale_factor(config.pyramid_scale_factor);
-        model.set_min_face_size(20);
-        model.set_slide_window_step(4, 4);
+            model.set_score_thresh(config.detection_threshold);
+            model.set_pyramid_scale_factor(config.pyramid_scale_factor);
+            model.set_min_face_size(20);
+            model.set_slide_window_step(4, 4);
 
-        Ok(model.detect(&data))
-    });
+            Ok(model.detect(&data))
+        });
 
     let data = match result {
         Ok(result) => result,

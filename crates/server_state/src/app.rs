@@ -1,13 +1,11 @@
 use std::net::SocketAddr;
 
-use model::{
-    AccessToken, AccountIdInternal, AccountState, Permissions
-};
+use model::{AccessToken, AccountIdInternal, AccountState, Permissions};
 use server_common::internal_api::InternalApiError;
-use server_data::{content_processing::ContentProcessingManagerData, DataError};
-use crate::internal_api::InternalApiClient;
-
 pub use server_data::app::*;
+use server_data::{content_processing::ContentProcessingManagerData, DataError};
+
+use crate::internal_api::InternalApiClient;
 
 // TODO(prod): Move push notifications to common
 

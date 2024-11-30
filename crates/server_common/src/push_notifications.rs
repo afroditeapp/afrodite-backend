@@ -6,15 +6,14 @@ use fcm::{
     response::{RecomendedAction, RecomendedWaitTime},
     FcmClient,
 };
-use model::{
-    AccountIdInternal, PendingNotificationFlags, PushNotificationStateInfoWithFlags,
-};
+use model::{AccountIdInternal, PendingNotificationFlags, PushNotificationStateInfoWithFlags};
 use serde_json::json;
 use simple_backend::ServerQuitWatcher;
 use simple_backend_config::SimpleBackendConfig;
 use tokio::{
     sync::mpsc::{error::TrySendError, Receiver, Sender},
-    task::JoinHandle, time::MissedTickBehavior,
+    task::JoinHandle,
+    time::MissedTickBehavior,
 };
 use tracing::{error, info, warn};
 
@@ -126,9 +125,16 @@ pub trait PushNotificationStateProvider {
 
 pub fn channel() -> (PushNotificationSender, PushNotificationReceiver) {
     let (sender, receiver) = tokio::sync::mpsc::channel(PUSH_NOTIFICATION_CHANNEL_BUFFER_SIZE);
-    let (sender_low_priority, receiver_low_priority) = tokio::sync::mpsc::channel(PUSH_NOTIFICATION_CHANNEL_BUFFER_SIZE);
-    let sender = PushNotificationSender { sender, sender_low_priority };
-    let receiver = PushNotificationReceiver { receiver, receiver_low_priority };
+    let (sender_low_priority, receiver_low_priority) =
+        tokio::sync::mpsc::channel(PUSH_NOTIFICATION_CHANNEL_BUFFER_SIZE);
+    let sender = PushNotificationSender {
+        sender,
+        sender_low_priority,
+    };
+    let receiver = PushNotificationReceiver {
+        receiver,
+        receiver_low_priority,
+    };
     (sender, receiver)
 }
 
@@ -198,7 +204,8 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
     pub async fn logic(&mut self) {
         let mut sending_logic = FcmSendingLogic::new();
         let mut low_priority_notification_allowed = false;
-        let mut low_priority_notification_interval = tokio::time::interval(Duration::from_millis(500));
+        let mut low_priority_notification_interval =
+            tokio::time::interval(Duration::from_millis(500));
         low_priority_notification_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
         loop {
             let notification = tokio::select! {
@@ -238,10 +245,16 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
         if self.started_with_fcm_enabled {
             // There might be unhandled or failed notifications, so save those
             // from cache to database.
-            match self.state.save_current_non_empty_notification_flags_from_cache_to_database().await {
+            match self
+                .state
+                .save_current_non_empty_notification_flags_from_cache_to_database()
+                .await
+            {
                 Ok(()) => (),
-                Err(e) =>
-                    error!("Saving pending push notifications to database failed: {:?}", e),
+                Err(e) => error!(
+                    "Saving pending push notifications to database failed: {:?}",
+                    e
+                ),
             }
         }
     }
@@ -272,9 +285,14 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
 
         if info.fcm_notification_sent {
             self.state
-                .remove_specific_notification_flags_from_cache(send_push_notification.account_id, flags)
+                .remove_specific_notification_flags_from_cache(
+                    send_push_notification.account_id,
+                    flags,
+                )
                 .await
-                .change_context(PushNotificationError::RemoveSpecificNotificationFlagsFromCacheFailed)?;
+                .change_context(
+                    PushNotificationError::RemoveSpecificNotificationFlagsFromCacheFailed,
+                )?;
             return Ok(());
         }
 
@@ -282,11 +300,16 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
             Some(token) => token,
             None => {
                 self.state
-                    .remove_specific_notification_flags_from_cache(send_push_notification.account_id, flags)
+                    .remove_specific_notification_flags_from_cache(
+                        send_push_notification.account_id,
+                        flags,
+                    )
                     .await
-                    .change_context(PushNotificationError::RemoveSpecificNotificationFlagsFromCacheFailed)?;
+                    .change_context(
+                        PushNotificationError::RemoveSpecificNotificationFlagsFromCacheFailed,
+                    )?;
                 return Ok(());
-            },
+            }
         };
 
         let message = Message {
@@ -308,9 +331,14 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
                     .await
                     .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)?;
                 self.state
-                    .remove_specific_notification_flags_from_cache(send_push_notification.account_id, flags)
+                    .remove_specific_notification_flags_from_cache(
+                        send_push_notification.account_id,
+                        flags,
+                    )
                     .await
-                    .change_context(PushNotificationError::RemoveSpecificNotificationFlagsFromCacheFailed)?;
+                    .change_context(
+                        PushNotificationError::RemoveSpecificNotificationFlagsFromCacheFailed,
+                    )?;
                 Ok(())
             }
             Err(action) => match action {
@@ -462,7 +490,6 @@ pub enum UnusualAction {
     DisablePushNotificationSupport,
     RemoveDeviceToken,
 }
-
 
 // TODO(prod): Limit push notification sending rate.
 //             Only one push notification should be sent

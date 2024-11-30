@@ -3,10 +3,16 @@ use std::ops::Deref;
 use axum::extract::ws::WebSocket;
 use config::Config;
 use futures::{future::BoxFuture, FutureExt};
-use model::{Account, AccountId, AccountIdInternal, EmailMessages, PendingNotification, PendingNotificationWithData, SyncDataVersionFromClient};
+use model::{
+    Account, AccountId, AccountIdInternal, EmailMessages, PendingNotification,
+    PendingNotificationWithData, SyncDataVersionFromClient,
+};
 use model_account::{EmailAddress, SignInWithInfo};
 use server_common::websocket::WebSocketError;
-use server_data::{app::DataAllUtils, db_manager::RouterDatabaseReadHandle, write_commands::WriteCommandRunnerHandle, DataError};
+use server_data::{
+    app::DataAllUtils, db_manager::RouterDatabaseReadHandle,
+    write_commands::WriteCommandRunnerHandle, DataError,
+};
 use server_data_account::write::GetWriteCommandsAccount;
 use server_data_chat::read::GetReadChatCommands;
 use server_data_media::read::GetReadMediaCommands;
@@ -23,13 +29,15 @@ impl DataAllUtils for DataAllUtilsImpl {
         unlimited_likes: bool,
     ) -> BoxFuture<'a, server_common::result::Result<(), DataError>> {
         async move {
-            write_command_runner.write(move |cmds| async move {
-                UnlimitedLikesUpdate::new(cmds.deref())
-                    .update_unlimited_likes_value(id, unlimited_likes)
-                    .await
-            })
-            .await
-        }.boxed()
+            write_command_runner
+                .write(move |cmds| async move {
+                    UnlimitedLikesUpdate::new(cmds.deref())
+                        .update_unlimited_likes_value(id, unlimited_likes)
+                        .await
+                })
+                .await
+        }
+        .boxed()
     }
 
     fn register_impl<'a>(
@@ -43,24 +51,26 @@ impl DataAllUtils for DataAllUtilsImpl {
             // to avoid database collisions.
             let id = AccountId::new_random();
 
-            let id = write_command_runner.write(move |cmds| async move {
-                let id = RegisterAccount::new(cmds.deref())
-                    .register(id, sign_in_with, email.clone())
-                    .await?;
+            let id = write_command_runner
+                .write(move |cmds| async move {
+                    let id = RegisterAccount::new(cmds.deref())
+                        .register(id, sign_in_with, email.clone())
+                        .await?;
 
-                if email.is_some() {
-                    cmds.account().email().send_email_if_not_already_sent(
-                        id,
-                        EmailMessages::AccountRegistered
-                    ).await?;
-                }
+                    if email.is_some() {
+                        cmds.account()
+                            .email()
+                            .send_email_if_not_already_sent(id, EmailMessages::AccountRegistered)
+                            .await?;
+                    }
 
-                Ok(id)
-            })
-            .await?;
+                    Ok(id)
+                })
+                .await?;
 
             Ok(id)
-        }.boxed()
+        }
+        .boxed()
     }
 
     fn handle_new_websocket_connection<'a>(
@@ -73,11 +83,7 @@ impl DataAllUtils for DataAllUtilsImpl {
         sync_versions: Vec<SyncDataVersionFromClient>,
     ) -> BoxFuture<'a, server_common::result::Result<(), WebSocketError>> {
         async move {
-            crate::websocket::reset_pending_notification(
-                config,
-                write_handle,
-                id
-            ).await?;
+            crate::websocket::reset_pending_notification(config, write_handle, id).await?;
             crate::websocket::sync_data_with_client_if_needed(
                 config,
                 read_handle,
@@ -86,15 +92,12 @@ impl DataAllUtils for DataAllUtilsImpl {
                 id,
                 sync_versions,
             )
+            .await?;
+            crate::websocket::send_new_messages_event_if_needed(config, read_handle, socket, id)
                 .await?;
-            crate::websocket::send_new_messages_event_if_needed(
-                config,
-                read_handle,
-                socket,
-                id,
-            ).await?;
             Ok(())
-        }.boxed()
+        }
+        .boxed()
     }
 
     fn check_moderation_request_for_account<'a>(
@@ -103,8 +106,12 @@ impl DataAllUtils for DataAllUtilsImpl {
         id: AccountIdInternal,
     ) -> BoxFuture<'a, server_common::result::Result<(), DataError>> {
         async move {
-            read_handle.media().check_moderation_request_for_account(id).await
-        }.boxed()
+            read_handle
+                .media()
+                .check_moderation_request_for_account(id)
+                .await
+        }
+        .boxed()
     }
 
     fn get_push_notification_data<'a>(
@@ -118,8 +125,10 @@ impl DataAllUtils for DataAllUtilsImpl {
                 read_handle,
                 id,
                 notification_value,
-            ).await
-        }.boxed()
+            )
+            .await
+        }
+        .boxed()
     }
 
     fn complete_initial_setup<'a>(
@@ -130,8 +139,10 @@ impl DataAllUtils for DataAllUtilsImpl {
         id: AccountIdInternal,
     ) -> BoxFuture<'a, server_common::result::Result<Account, DataError>> {
         async move {
-            crate::initial_setup::complete_initial_setup(config, read_handle, write_handle, id).await
-        }.boxed()
+            crate::initial_setup::complete_initial_setup(config, read_handle, write_handle, id)
+                .await
+        }
+        .boxed()
     }
 
     fn is_match<'a>(
@@ -141,12 +152,16 @@ impl DataAllUtils for DataAllUtilsImpl {
         account1: AccountIdInternal,
     ) -> BoxFuture<'a, server_common::result::Result<bool, DataError>> {
         async move {
-            let interaction = read_handle.chat().account_interaction(account0, account1).await?;
+            let interaction = read_handle
+                .chat()
+                .account_interaction(account0, account1)
+                .await?;
             if let Some(interaction) = interaction {
                 Ok(interaction.is_match() && !interaction.is_blocked())
             } else {
                 Ok(false)
             }
-        }.boxed()
+        }
+        .boxed()
     }
 }

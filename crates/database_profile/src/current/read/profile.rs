@@ -13,7 +13,9 @@ impl<'a> CurrentReadProfile<'a> {
     pub fn favorite(self) -> favorite::CurrentReadProfileFavorite<'a> {
         favorite::CurrentReadProfileFavorite::new(self.cmds)
     }
-    pub fn profile_name_allowlist(self) -> profile_name_allowlist::CurrentReadProfileNameAllowlist<'a> {
+    pub fn profile_name_allowlist(
+        self,
+    ) -> profile_name_allowlist::CurrentReadProfileNameAllowlist<'a> {
         profile_name_allowlist::CurrentReadProfileNameAllowlist::new(self.cmds)
     }
 }

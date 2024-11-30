@@ -47,7 +47,7 @@ pub trait GetWriteCommandsCommon<'a> {
     fn common(self) -> WriteCommandsCommon<'a>;
 }
 
-impl <'a, I: WriteAccessProvider<'a>> GetWriteCommandsCommon<'a> for I {
+impl<'a, I: WriteAccessProvider<'a>> GetWriteCommandsCommon<'a> for I {
     fn common(self) -> WriteCommandsCommon<'a> {
         WriteCommandsCommon::new(self.handle())
     }
@@ -56,7 +56,7 @@ impl <'a, I: WriteAccessProvider<'a>> GetWriteCommandsCommon<'a> for I {
 pub trait DbTransaction {
     async fn db_transaction<
         T: FnOnce(
-                database::DbWriteMode<'_>
+                database::DbWriteMode<'_>,
             ) -> error_stack::Result<R, database::DieselDatabaseError>
             + Send
             + 'static,
@@ -67,10 +67,10 @@ pub trait DbTransaction {
     ) -> error_stack::Result<R, database::DieselDatabaseError>;
 }
 
-impl <I: InternalWriting> DbTransaction for I {
+impl<I: InternalWriting> DbTransaction for I {
     async fn db_transaction<
         T: FnOnce(
-                database::DbWriteMode<'_>
+                database::DbWriteMode<'_>,
             ) -> error_stack::Result<R, database::DieselDatabaseError>
             + Send
             + 'static,
@@ -86,7 +86,7 @@ impl <I: InternalWriting> DbTransaction for I {
 pub trait DbTransactionHistory {
     async fn db_transaction_history<
         T: FnOnce(
-                database::DbWriteModeHistory<'_>
+                database::DbWriteModeHistory<'_>,
             ) -> error_stack::Result<R, database::DieselDatabaseError>
             + Send
             + 'static,
@@ -97,10 +97,10 @@ pub trait DbTransactionHistory {
     ) -> error_stack::Result<R, database::DieselDatabaseError>;
 }
 
-impl <I: InternalWriting> DbTransactionHistory for I {
+impl<I: InternalWriting> DbTransactionHistory for I {
     async fn db_transaction_history<
         T: FnOnce(
-                database::DbWriteModeHistory<'_>
+                database::DbWriteModeHistory<'_>,
             ) -> error_stack::Result<R, database::DieselDatabaseError>
             + Send
             + 'static,

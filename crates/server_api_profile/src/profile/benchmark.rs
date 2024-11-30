@@ -2,19 +2,18 @@ use axum::{
     extract::{Path, State},
     Extension,
 };
-use model_profile::{AccountId, AccountIdInternal, AccountState, Profile, ProfileUpdate, ProfileUpdateInternal};
+use model_profile::{
+    AccountId, AccountIdInternal, AccountState, Profile, ProfileUpdate, ProfileUpdateInternal,
+};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::create_open_api_router;
+use server_api::{create_open_api_router, S};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{
-        GetAccounts, GetConfig, ReadData, WriteData,
-    },
+    app::{GetAccounts, GetConfig, ReadData, WriteData},
     db_write,
     utils::{Json, StatusCode},
     DataError,
@@ -23,8 +22,7 @@ use crate::{
 // ------------------- Benchmark routes ----------------------------
 
 #[obfuscate_api]
-const PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK: &str =
-    "/profile_api/benchmark/profile/{aid}";
+const PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK: &str = "/profile_api/benchmark/profile/{aid}";
 
 /// Get account's current profile from database. Debug mode must be enabled
 /// that route can be used.
@@ -97,12 +95,20 @@ pub async fn post_profile_to_database_debug_mode_benchmark(
     PROFILE.post_profile_to_database_debug_mode_benchmark.incr();
     let old_profile = state.read().profile().profile(account_id).await?;
     let accepted_ages = if account_state != AccountState::InitialSetup {
-        state.read().profile().accepted_profile_ages(account_id).await?
+        state
+            .read()
+            .profile()
+            .accepted_profile_ages(account_id)
+            .await?
     } else {
         None
     };
     let profile = profile
-        .validate(state.config().profile_attributes(), &old_profile.profile, accepted_ages)
+        .validate(
+            state.config().profile_attributes(),
+            &old_profile.profile,
+            accepted_ages,
+        )
         .into_error_string(DataError::NotAllowed)?;
 
     if profile.equals_with(&old_profile.profile) {
@@ -119,9 +125,7 @@ pub async fn post_profile_to_database_debug_mode_benchmark(
 
 // ------------------- Benchmark routes end ----------------------------
 
-pub fn benchmark_router(
-    s: S,
-) -> OpenApiRouter {
+pub fn benchmark_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
         get_profile_from_database_debug_mode_benchmark,

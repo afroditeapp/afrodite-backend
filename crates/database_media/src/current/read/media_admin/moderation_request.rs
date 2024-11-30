@@ -1,13 +1,13 @@
 use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
-use model_media::{AccountIdInternal, ModerationQueueType, ModerationRequestId, NextQueueNumberType};
+use model_media::{
+    AccountIdInternal, ModerationQueueType, ModerationRequestId, NextQueueNumberType,
+};
 
 use crate::IntoDatabaseError;
 
-define_current_read_commands!(
-    CurrentReadMediaAdminModerationRequest
-);
+define_current_read_commands!(CurrentReadMediaAdminModerationRequest);
 
 impl CurrentReadMediaAdminModerationRequest<'_> {
     /// Get the next active moderation request from the initial moderation

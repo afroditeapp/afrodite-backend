@@ -7,8 +7,8 @@ use self::account::CurrentReadAccount;
 
 pub mod account;
 pub mod account_admin;
-pub mod profile;
 pub mod chat;
+pub mod profile;
 
 pub trait GetDbReadCommandsAccount {
     fn account(&mut self) -> CurrentReadAccount<'_>;
@@ -17,7 +17,7 @@ pub trait GetDbReadCommandsAccount {
     fn account_chat_utils(&mut self) -> CurrentReadChatUtils<'_>;
 }
 
-impl <I: DbReadAccessProvider> GetDbReadCommandsAccount for I {
+impl<I: DbReadAccessProvider> GetDbReadCommandsAccount for I {
     fn account(&mut self) -> CurrentReadAccount<'_> {
         CurrentReadAccount::new(self.handle())
     }

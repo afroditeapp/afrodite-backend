@@ -2,16 +2,24 @@ use std::{future::Future, sync::Arc};
 
 use axum::extract::ws::WebSocket;
 use config::{file::EmailAddress, Config};
-use model::{Account, AccountId, AccountIdInternal, PendingNotification, PendingNotificationWithData, SyncDataVersionFromClient};
-use model_server_data::SignInWithInfo;
-
 use futures::future::BoxFuture;
-
+use model::{
+    Account, AccountId, AccountIdInternal, PendingNotification, PendingNotificationWithData,
+    SyncDataVersionFromClient,
+};
+use model_server_data::SignInWithInfo;
 pub use server_common::app::*;
 use server_common::websocket::WebSocketError;
 
 use crate::{
-    db_manager::{InternalWriting, RouterDatabaseReadHandle}, event::EventManagerWithCacheReference, statistics::ProfileStatisticsCache, write_commands::{WriteCmds, WriteCommandRunnerHandle}, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle}, DataError
+    db_manager::{InternalWriting, RouterDatabaseReadHandle},
+    event::EventManagerWithCacheReference,
+    statistics::ProfileStatisticsCache,
+    write_commands::{WriteCmds, WriteCommandRunnerHandle},
+    write_concurrent::{
+        ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle,
+    },
+    DataError,
 };
 
 pub trait WriteData {
@@ -56,19 +64,18 @@ pub trait EventManagerProvider {
     fn event_manager(&self) -> EventManagerWithCacheReference<'_>;
 }
 
-impl <I: InternalWriting> EventManagerProvider for I {
+impl<I: InternalWriting> EventManagerProvider for I {
     fn event_manager(&self) -> EventManagerWithCacheReference<'_> {
         EventManagerWithCacheReference::new(self.cache(), self.push_notification_sender())
     }
 }
-
 
 pub trait GetConfig {
     fn config(&self) -> &Config;
     fn config_arc(&self) -> Arc<Config>;
 }
 
-impl <I: InternalWriting> GetConfig for I {
+impl<I: InternalWriting> GetConfig for I {
     fn config(&self) -> &config::Config {
         InternalWriting::config(self)
     }
@@ -82,7 +89,7 @@ pub trait GetEmailSender {
     fn email_sender(&self) -> &EmailSenderImpl;
 }
 
-impl <I: InternalWriting> GetEmailSender for I {
+impl<I: InternalWriting> GetEmailSender for I {
     fn email_sender(&self) -> &EmailSenderImpl {
         InternalWriting::email_sender(self)
     }

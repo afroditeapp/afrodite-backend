@@ -11,7 +11,7 @@ pub trait GetDbHistoryWriteCommandsChat {
     fn chat_admin_history(&mut self) -> HistoryWriteChatAdmin;
 }
 
-impl <I: DbWriteAccessProviderHistory> GetDbHistoryWriteCommandsChat for I {
+impl<I: DbWriteAccessProviderHistory> GetDbHistoryWriteCommandsChat for I {
     fn chat_history(&mut self) -> HistoryWriteChat {
         HistoryWriteChat::new(self.handle())
     }

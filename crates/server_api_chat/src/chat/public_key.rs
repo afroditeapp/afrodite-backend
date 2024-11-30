@@ -1,10 +1,17 @@
 //! Public key management related routes
 
-use axum::{extract::{Path, Query, State}, Extension};
-use model_chat::{AccountId, AccountIdInternal, GetPublicKey, PublicKeyId, PublicKeyVersion, SetPublicKey};
+use axum::{
+    extract::{Path, Query, State},
+    Extension,
+};
+use model_chat::{
+    AccountId, AccountIdInternal, GetPublicKey, PublicKeyId, PublicKeyVersion, SetPublicKey,
+};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::{app::{GetAccounts, WriteData}, create_open_api_router, db_write};
+use server_api::{
+    app::{GetAccounts, WriteData},
+    create_open_api_router, db_write, S,
+};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
@@ -35,7 +42,11 @@ async fn get_public_key(
     CHAT.get_public_key.incr();
 
     let requested_internal_id = state.get_internal_id(requested_id).await?;
-    let key = state.read().chat().get_public_key(requested_internal_id, key_version).await?;
+    let key = state
+        .read()
+        .chat()
+        .get_public_key(requested_internal_id, key_version)
+        .await?;
     Ok(key.into())
 }
 
@@ -79,11 +90,7 @@ async fn post_public_key(
 }
 
 pub fn public_key_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
-        get_public_key,
-        post_public_key,
-    )
+    create_open_api_router!(s, get_public_key, post_public_key,)
 }
 
 create_counters!(

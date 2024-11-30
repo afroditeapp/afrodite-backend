@@ -10,7 +10,11 @@ use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_
 use utils::random_bytes::random_128_bits;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{schema_sqlite_types::Integer, Account, AccountState, ContentProcessingId, ContentProcessingState, MessageNumber, ModerationQueueNumber, ModerationQueueType, ProfileVisibility, Permissions};
+use crate::{
+    schema_sqlite_types::Integer, Account, AccountState, ContentProcessingId,
+    ContentProcessingState, MessageNumber, ModerationQueueNumber, ModerationQueueType, Permissions,
+    ProfileVisibility,
+};
 
 pub mod sync_version;
 pub use sync_version::*;
@@ -229,7 +233,9 @@ impl From<NotificationEvent> for EventToClientInternal {
         match event {
             NotificationEvent::NewMessageReceived => EventToClientInternal::NewMessageReceived,
             NotificationEvent::ReceivedLikesChanged => EventToClientInternal::ReceivedLikesChanged,
-            NotificationEvent::ContentModerationRequestCompleted => EventToClientInternal::ContentModerationRequestCompleted,
+            NotificationEvent::ContentModerationRequestCompleted => {
+                EventToClientInternal::ContentModerationRequestCompleted
+            }
             NotificationEvent::NewsChanged => EventToClientInternal::NewsChanged,
         }
     }
@@ -311,7 +317,9 @@ pub struct AccountId {
 
 impl AccountId {
     pub fn new_random() -> Self {
-        Self { aid: simple_backend_utils::UuidBase64Url::new_random_id() }
+        Self {
+            aid: simple_backend_utils::UuidBase64Url::new_random_id(),
+        }
     }
 
     fn diesel_uuid_wrapper_new(aid: simple_backend_utils::UuidBase64Url) -> Self {

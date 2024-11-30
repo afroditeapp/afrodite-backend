@@ -6,9 +6,7 @@ use model_account::SignInWithInfo;
 
 use crate::IntoDatabaseError;
 
-define_current_write_commands!(
-    CurrentWriteAccountSignInWith
-);
+define_current_write_commands!(CurrentWriteAccountSignInWith);
 
 impl CurrentWriteAccountSignInWith<'_> {
     pub fn insert_sign_in_with_info(

@@ -7,7 +7,7 @@ pub mod chat_admin;
 
 define_history_read_commands!(HistorySyncReadCommands);
 
-impl <'a> HistorySyncReadCommands<'a> {
+impl<'a> HistorySyncReadCommands<'a> {
     pub fn into_chat(self) -> HistoryReadChat<'a> {
         HistoryReadChat::new(self.cmds)
     }

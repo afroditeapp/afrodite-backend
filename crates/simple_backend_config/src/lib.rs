@@ -16,7 +16,10 @@ use std::{
 
 use args::ServerModeArgs;
 use error_stack::{Result, ResultExt};
-use file::{DatabaseInfo, FirebaseCloudMessagingConfig, ImageProcessingConfig, ScheduledTasksConfig, TileMapConfig};
+use file::{
+    DatabaseInfo, FirebaseCloudMessagingConfig, ImageProcessingConfig, ScheduledTasksConfig,
+    TileMapConfig,
+};
 use reqwest::Url;
 use rustls_pemfile::certs;
 use tokio_rustls::rustls::ServerConfig;
@@ -100,7 +103,8 @@ impl SimpleBackendConfig {
             },
             String::new(),
             String::new(),
-        ).unwrap()
+        )
+        .unwrap()
     }
 
     /// Directory where SQLite databases and other files are stored.

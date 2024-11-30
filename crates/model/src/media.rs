@@ -1,6 +1,5 @@
-
 use diesel::{
-    sql_types::{Binary, BigInt},
+    sql_types::{BigInt, Binary},
     AsExpression, FromSqlRow,
 };
 use serde::{Deserialize, Serialize};
@@ -113,15 +112,15 @@ pub struct ContentProcessingId {
 
 impl ContentProcessingId {
     pub fn new_random_id() -> Self {
-        Self { id: simple_backend_utils::UuidBase64Url::new_random_id() }
+        Self {
+            id: simple_backend_utils::UuidBase64Url::new_random_id(),
+        }
     }
 
     pub fn to_content_id(&self) -> ContentId {
         ContentId::new_base_64_url(self.id)
     }
 }
-
-
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub enum ContentProcessingStateType {
@@ -177,11 +176,7 @@ impl ContentProcessingState {
         self.fd = None;
     }
 
-    pub fn change_to_completed(
-        &mut self,
-        content_id: ContentId,
-        face_detected: bool,
-    ) {
+    pub fn change_to_completed(&mut self, content_id: ContentId, face_detected: bool) {
         self.state = ContentProcessingStateType::Completed;
         self.wait_queue_position = None;
         self.cid = Some(content_id);
@@ -252,7 +247,9 @@ impl ProfileContentVersion {
     }
 
     pub fn new_random() -> Self {
-        Self { v: simple_backend_utils::UuidBase64Url::new_random_id() }
+        Self {
+            v: simple_backend_utils::UuidBase64Url::new_random_id(),
+        }
     }
 
     fn diesel_uuid_wrapper_as_uuid(&self) -> &simple_backend_utils::UuidBase64Url {

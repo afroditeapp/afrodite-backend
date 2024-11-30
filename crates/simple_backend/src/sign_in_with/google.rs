@@ -1,10 +1,11 @@
 use std::{sync::Arc, time::Instant};
 
 use error_stack::{Result, ResultExt};
-use jsonwebtoken::{
-    jwk::{Jwk, JwkSet}, DecodingKey, TokenData, Validation
-};
 use headers::{CacheControl, HeaderMapExt};
+use jsonwebtoken::{
+    jwk::{Jwk, JwkSet},
+    DecodingKey, TokenData, Validation,
+};
 use serde::Deserialize;
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_utils::ContextExt;
@@ -132,8 +133,9 @@ impl SignInWithGoogleManager {
             let mut validate_aud = Validation::new(not_validated_header.alg);
             validate_aud.set_required_spec_claims(&["aud"]);
             validate_aud.set_audience(&[&google_config.client_id_server]);
-            let _: TokenData<GoogleTokenClaims> = jsonwebtoken::decode::<GoogleTokenClaims>(&token, &key, &validate_aud)
-                .change_context(SignInWithGoogleError::InvalidToken)?;
+            let _: TokenData<GoogleTokenClaims> =
+                jsonwebtoken::decode::<GoogleTokenClaims>(&token, &key, &validate_aud)
+                    .change_context(SignInWithGoogleError::InvalidToken)?;
 
             let valid_client_ids = [
                 google_config.client_id_android.as_str(),

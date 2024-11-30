@@ -1,4 +1,6 @@
-use diesel::{deserialize::FromSqlRow, expression::AsExpression, prelude::Queryable, sql_types::BigInt};
+use diesel::{
+    deserialize::FromSqlRow, expression::AsExpression, prelude::Queryable, sql_types::BigInt,
+};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, UnixTime};
 use utoipa::{IntoParams, ToSchema};
@@ -7,15 +9,7 @@ use crate::StatisticsGender;
 
 /// Profile statistics save time ID
 #[derive(
-    Debug,
-    Clone,
-    Copy,
-    Deserialize,
-    Serialize,
-    PartialEq,
-    Default,
-    FromSqlRow,
-    AsExpression,
+    Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Default, FromSqlRow, AsExpression,
 )]
 #[diesel(sql_type = BigInt)]
 pub struct SaveTimeId {
@@ -74,7 +68,7 @@ pub enum ProfileStatisticsHistoryValueTypeInternal {
     AgeChange {
         gender: Option<StatisticsGender>,
         age: i64,
-    }
+    },
 }
 
 impl TryFrom<GetProfileStatisticsHistoryParams> for ProfileStatisticsHistoryValueTypeInternal {
@@ -84,13 +78,28 @@ impl TryFrom<GetProfileStatisticsHistoryParams> for ProfileStatisticsHistoryValu
         let internal = match (value.value_type, value.age) {
             (V::Accounts, _) => Self::Accounts,
             (V::Public, _) => Self::Public { gender: None },
-            (V::PublicMan, _) => Self::Public { gender: Some(StatisticsGender::Man) },
-            (V::PublicWoman, _) => Self::Public { gender: Some(StatisticsGender::Woman) },
-            (V::PublicNonBinary, _) => Self::Public { gender: Some(StatisticsGender::NonBinary) },
+            (V::PublicMan, _) => Self::Public {
+                gender: Some(StatisticsGender::Man),
+            },
+            (V::PublicWoman, _) => Self::Public {
+                gender: Some(StatisticsGender::Woman),
+            },
+            (V::PublicNonBinary, _) => Self::Public {
+                gender: Some(StatisticsGender::NonBinary),
+            },
             (V::AgeChange, Some(age)) => Self::AgeChange { gender: None, age },
-            (V::AgeChangeMan, Some(age)) => Self::AgeChange { gender: Some(StatisticsGender::Man), age },
-            (V::AgeChangeWoman, Some(age)) => Self::AgeChange { gender: Some(StatisticsGender::Woman), age },
-            (V::AgeChangeNonBinary, Some(age)) => Self::AgeChange { gender: Some(StatisticsGender::NonBinary), age },
+            (V::AgeChangeMan, Some(age)) => Self::AgeChange {
+                gender: Some(StatisticsGender::Man),
+                age,
+            },
+            (V::AgeChangeWoman, Some(age)) => Self::AgeChange {
+                gender: Some(StatisticsGender::Woman),
+                age,
+            },
+            (V::AgeChangeNonBinary, Some(age)) => Self::AgeChange {
+                gender: Some(StatisticsGender::NonBinary),
+                age,
+            },
             (_, None) => return Err("AgeChange history values require age value"),
         };
         Ok(internal)

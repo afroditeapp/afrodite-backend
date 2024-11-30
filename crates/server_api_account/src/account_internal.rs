@@ -2,7 +2,7 @@
 
 use axum::extract::State;
 use model_account::{AccountId, LoginResult, SignInWithInfo};
-use server_api::db_write;
+use server_api::{db_write, S};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::read::GetReadCommandsAccount;
 use simple_backend::create_counters;
@@ -12,8 +12,6 @@ use crate::{
     app::{GetAccounts, ReadData, WriteData},
     utils::{Json, StatusCode},
 };
-
-use server_api::S;
 
 pub const PATH_LOGIN: &str = "/account_api/login";
 
@@ -62,11 +60,12 @@ pub const PATH_REGISTER: &str = "/account_api/register";
         (status = 500, description = "Internal server error."),
     )
 )]
-pub async fn post_register(
-    State(state): State<S>,
-) -> Result<Json<AccountId>, StatusCode> {
+pub async fn post_register(State(state): State<S>) -> Result<Json<AccountId>, StatusCode> {
     ACCOUNT_INTERNAL.post_register.incr();
-    let new_account_id = state.data_all_access().register_impl(SignInWithInfo::default(), None).await?;
+    let new_account_id = state
+        .data_all_access()
+        .register_impl(SignInWithInfo::default(), None)
+        .await?;
 
     db_write!(state, move |cmds| {
         cmds.common().set_is_bot_account(new_account_id, true)

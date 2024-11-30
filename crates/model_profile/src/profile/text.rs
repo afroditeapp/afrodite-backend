@@ -41,7 +41,18 @@ impl ProfileTextModerationRejectedReasonCategory {
 
 diesel_i64_wrapper!(ProfileTextModerationRejectedReasonCategory);
 
-#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq, diesel::FromSqlRow, diesel::AsExpression)]
+#[derive(
+    Debug,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    Clone,
+    Eq,
+    Hash,
+    PartialEq,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+)]
 #[diesel(sql_type = Text)]
 pub struct ProfileTextModerationRejectedReasonDetails {
     value: String,
@@ -49,9 +60,7 @@ pub struct ProfileTextModerationRejectedReasonDetails {
 
 impl ProfileTextModerationRejectedReasonDetails {
     pub fn new(value: String) -> Self {
-        Self {
-            value
-        }
+        Self { value }
     }
 
     pub fn into_string(self) -> String {
@@ -65,14 +74,7 @@ impl ProfileTextModerationRejectedReasonDetails {
 
 diesel_string_wrapper!(ProfileTextModerationRejectedReasonDetails);
 
-#[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    Serialize,
-    Deserialize,
-    ToSchema,
-)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 pub struct ProfileTextModerationInfo {
     pub state: ProfileTextModerationState,
     pub rejected_reason_category: Option<ProfileTextModerationRejectedReasonCategory>,

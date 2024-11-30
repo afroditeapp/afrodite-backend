@@ -1,12 +1,15 @@
 use diesel::{prelude::*, sql_types::BigInt};
-use model::{MessageNumber, PublicKeyId, PublicKeyVersion};
+use model::{
+    FcmDeviceToken, MatchesSyncVersion, MessageNumber, NewReceivedLikesCount, PendingNotification,
+    PublicKeyId, PublicKeyVersion, ReceivedBlocksSyncVersion, ReceivedLikesSyncVersion,
+    SentBlocksSyncVersion, SentLikesSyncVersion,
+};
 use model_server_data::{LimitedActionStatus, MatchId, ReceivedLikeId};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use simple_backend_model::{diesel_i64_try_from, UnixTime};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{AccountId, AccountIdDb, AccountIdInternal, ClientId, ClientLocalId};
-use model::{ReceivedBlocksSyncVersion, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion, MatchesSyncVersion, PendingNotification, FcmDeviceToken, NewReceivedLikesCount};
 
 mod public_key;
 pub use public_key::*;
@@ -168,17 +171,20 @@ impl AccountInteractionInternal {
         id_block_sender: AccountIdInternal,
         id_block_receiver: AccountIdInternal,
     ) -> Self {
-        if self.account_id_block_sender == Some(id_block_sender.into_db_id()) &&
-            self.account_id_block_receiver == Some(id_block_receiver.into_db_id()) {
+        if self.account_id_block_sender == Some(id_block_sender.into_db_id())
+            && self.account_id_block_receiver == Some(id_block_receiver.into_db_id())
+        {
             // Already blocked
             self
-        } else if self.account_id_block_sender == Some(id_block_receiver.into_db_id()) &&
-            self.account_id_block_receiver == Some(id_block_sender.into_db_id()) &&
-            self.two_way_block {
+        } else if self.account_id_block_sender == Some(id_block_receiver.into_db_id())
+            && self.account_id_block_receiver == Some(id_block_sender.into_db_id())
+            && self.two_way_block
+        {
             // Already blocked
             self
-        } else if self.account_id_block_sender == Some(id_block_receiver.into_db_id()) &&
-            self.account_id_block_receiver == Some(id_block_sender.into_db_id()) {
+        } else if self.account_id_block_sender == Some(id_block_receiver.into_db_id())
+            && self.account_id_block_receiver == Some(id_block_sender.into_db_id())
+        {
             Self {
                 two_way_block: true,
                 ..self
@@ -197,8 +203,9 @@ impl AccountInteractionInternal {
         id_block_sender: AccountIdInternal,
         id_block_receiver: AccountIdInternal,
     ) -> Self {
-        if self.account_id_block_sender == Some(id_block_sender.into_db_id()) &&
-            self.account_id_block_receiver == Some(id_block_receiver.into_db_id()) {
+        if self.account_id_block_sender == Some(id_block_sender.into_db_id())
+            && self.account_id_block_receiver == Some(id_block_receiver.into_db_id())
+        {
             // Block detected
             if self.two_way_block {
                 Self {
@@ -214,9 +221,10 @@ impl AccountInteractionInternal {
                     ..self
                 }
             }
-        } else if self.account_id_block_sender == Some(id_block_receiver.into_db_id()) &&
-            self.account_id_block_receiver == Some(id_block_sender.into_db_id()) &&
-            self.two_way_block {
+        } else if self.account_id_block_sender == Some(id_block_receiver.into_db_id())
+            && self.account_id_block_receiver == Some(id_block_sender.into_db_id())
+            && self.two_way_block
+        {
             // Block detected
             Self {
                 two_way_block: false,
@@ -251,13 +259,15 @@ impl AccountInteractionInternal {
         id_block_sender: AccountIdInternal,
         id_block_receiver: AccountIdInternal,
     ) -> bool {
-        if self.account_id_block_sender == Some(id_block_sender.into_db_id()) &&
-            self.account_id_block_receiver == Some(id_block_receiver.into_db_id()) {
+        if self.account_id_block_sender == Some(id_block_sender.into_db_id())
+            && self.account_id_block_receiver == Some(id_block_receiver.into_db_id())
+        {
             // Already blocked
             true
-        } else if self.account_id_block_sender == Some(id_block_receiver.into_db_id()) &&
-            self.account_id_block_receiver == Some(id_block_sender.into_db_id()) &&
-            self.two_way_block {
+        } else if self.account_id_block_sender == Some(id_block_receiver.into_db_id())
+            && self.account_id_block_receiver == Some(id_block_sender.into_db_id())
+            && self.two_way_block
+        {
             // Already blocked
             true
         } else {
@@ -278,12 +288,9 @@ impl AccountInteractionInternal {
         }
     }
 
-    pub fn account_already_deleted_like(
-        &self,
-        id_like_deleter: AccountIdInternal,
-    ) -> bool {
-        self.account_id_previous_like_deleter_slot_0 == Some(id_like_deleter.into_db_id()) ||
-            self.account_id_previous_like_deleter_slot_1 == Some(id_like_deleter.into_db_id())
+    pub fn account_already_deleted_like(&self, id_like_deleter: AccountIdInternal) -> bool {
+        self.account_id_previous_like_deleter_slot_0 == Some(id_like_deleter.into_db_id())
+            || self.account_id_previous_like_deleter_slot_1 == Some(id_like_deleter.into_db_id())
     }
 }
 
@@ -292,14 +299,7 @@ impl AccountInteractionInternal {
 /// Possible state transitions:
 /// - Empty -> Like -> Match
 /// - Like -> Empty
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    diesel::FromSqlRow,
-    diesel::AsExpression,
-)]
+#[derive(Debug, Clone, Copy, PartialEq, diesel::FromSqlRow, diesel::AsExpression)]
 #[diesel(sql_type = BigInt)]
 pub enum AccountInteractionState {
     Empty = 0,
@@ -415,111 +415,87 @@ pub struct UpdateMessageViewStatus {
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, IntoParams)]
 pub struct SendMessageToAccountParams {
     /// Receiver of the message.
-    #[serde(serialize_with = "account_id_as_string", deserialize_with = "account_id_from_uuid")]
+    #[serde(
+        serialize_with = "account_id_as_string",
+        deserialize_with = "account_id_from_uuid"
+    )]
     #[param(value_type = String)]
     pub receiver: AccountId,
     /// Message receiver's public key ID for check
     /// to prevent sending message encrypted with outdated
     /// public key.
-    #[serde(serialize_with = "public_key_id_as_i64", deserialize_with = "public_key_id_from_i64")]
+    #[serde(
+        serialize_with = "public_key_id_as_i64",
+        deserialize_with = "public_key_id_from_i64"
+    )]
     #[param(value_type = i64)]
     pub receiver_public_key_id: PublicKeyId,
-    #[serde(serialize_with = "public_key_version_as_i64", deserialize_with = "public_key_version_from_i64")]
+    #[serde(
+        serialize_with = "public_key_version_as_i64",
+        deserialize_with = "public_key_version_from_i64"
+    )]
     #[param(value_type = i64)]
     pub receiver_public_key_version: PublicKeyVersion,
-    #[serde(serialize_with = "client_id_as_i64", deserialize_with = "client_id_from_i64")]
+    #[serde(
+        serialize_with = "client_id_as_i64",
+        deserialize_with = "client_id_from_i64"
+    )]
     #[param(value_type = i64)]
     pub client_id: ClientId,
-    #[serde(serialize_with = "client_local_id_as_i64", deserialize_with = "client_local_id_from_i64")]
+    #[serde(
+        serialize_with = "client_local_id_as_i64",
+        deserialize_with = "client_local_id_from_i64"
+    )]
     #[param(value_type = i64)]
     pub client_local_id: ClientLocalId,
 }
 
-pub fn account_id_as_string<
-    S: Serializer,
->(
-    value: &AccountId,
-    s: S,
-) -> Result<S::Ok, S::Error> {
+pub fn account_id_as_string<S: Serializer>(value: &AccountId, s: S) -> Result<S::Ok, S::Error> {
     value.aid.serialize(s)
 }
 
-pub fn public_key_id_as_i64<
-    S: Serializer,
->(
-    value: &PublicKeyId,
-    s: S,
-) -> Result<S::Ok, S::Error> {
+pub fn public_key_id_as_i64<S: Serializer>(value: &PublicKeyId, s: S) -> Result<S::Ok, S::Error> {
     value.id.serialize(s)
 }
 
-pub fn public_key_version_as_i64<
-    S: Serializer,
->(
+pub fn public_key_version_as_i64<S: Serializer>(
     value: &PublicKeyVersion,
     s: S,
 ) -> Result<S::Ok, S::Error> {
     value.version.serialize(s)
 }
 
-pub fn client_id_as_i64<
-    S: Serializer,
->(
-    value: &ClientId,
-    s: S,
-) -> Result<S::Ok, S::Error> {
+pub fn client_id_as_i64<S: Serializer>(value: &ClientId, s: S) -> Result<S::Ok, S::Error> {
     value.id.serialize(s)
 }
 
-pub fn client_local_id_as_i64<
-    S: Serializer,
->(
+pub fn client_local_id_as_i64<S: Serializer>(
     value: &ClientLocalId,
     s: S,
 ) -> Result<S::Ok, S::Error> {
     value.id.serialize(s)
 }
 
-pub fn account_id_from_uuid<
-    'de,
-    D: Deserializer<'de>,
->(
-    d: D,
-) -> Result<AccountId, D::Error> {
-    simple_backend_utils::UuidBase64Url::deserialize(d).map(|account_id| AccountId { aid: account_id })
+pub fn account_id_from_uuid<'de, D: Deserializer<'de>>(d: D) -> Result<AccountId, D::Error> {
+    simple_backend_utils::UuidBase64Url::deserialize(d)
+        .map(|account_id| AccountId { aid: account_id })
 }
 
-pub fn public_key_id_from_i64<
-    'de,
-    D: Deserializer<'de>,
->(
-    d: D,
-) -> Result<PublicKeyId, D::Error> {
+pub fn public_key_id_from_i64<'de, D: Deserializer<'de>>(d: D) -> Result<PublicKeyId, D::Error> {
     i64::deserialize(d).map(|id| PublicKeyId { id })
 }
 
-pub fn public_key_version_from_i64<
-    'de,
-    D: Deserializer<'de>,
->(
+pub fn public_key_version_from_i64<'de, D: Deserializer<'de>>(
     d: D,
 ) -> Result<PublicKeyVersion, D::Error> {
     i64::deserialize(d).map(|version| PublicKeyVersion { version })
 }
 
-pub fn client_id_from_i64<
-    'de,
-    D: Deserializer<'de>,
->(
-    d: D,
-) -> Result<ClientId, D::Error> {
+pub fn client_id_from_i64<'de, D: Deserializer<'de>>(d: D) -> Result<ClientId, D::Error> {
     i64::deserialize(d).map(|id| ClientId { id })
 }
 
-pub fn client_local_id_from_i64<
-    'de,
-    D: Deserializer<'de>,
->(
+pub fn client_local_id_from_i64<'de, D: Deserializer<'de>>(
     d: D,
 ) -> Result<ClientLocalId, D::Error> {
     i64::deserialize(d).map(|id| ClientLocalId { id })
@@ -548,10 +524,10 @@ pub struct SendMessageResult {
 
 impl SendMessageResult {
     pub fn is_err(&self) -> bool {
-        self.error_too_many_receiver_acknowledgements_missing ||
-        self.error_too_many_sender_acknowledgements_missing ||
-        self.error_receiver_public_key_outdated ||
-        self.error_receiver_blocked_sender_or_receiver_not_found
+        self.error_too_many_receiver_acknowledgements_missing
+            || self.error_too_many_sender_acknowledgements_missing
+            || self.error_receiver_public_key_outdated
+            || self.error_receiver_blocked_sender_or_receiver_not_found
     }
 
     pub fn too_many_receiver_acknowledgements_missing() -> Self {

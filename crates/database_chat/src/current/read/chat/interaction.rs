@@ -2,7 +2,8 @@ use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
 use model_chat::{
-    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, MatchId, PageItemCountForNewLikes, ProfileVisibility, ReceivedLikeId
+    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, MatchId,
+    PageItemCountForNewLikes, ProfileVisibility, ReceivedLikeId,
 };
 
 use crate::IntoDatabaseError;
@@ -85,7 +86,9 @@ impl CurrentReadChatInteraction<'_> {
 
         let mut first_list: Vec<AccountId> = account_interaction
             .inner_join(
-                account_id::table.on(account_id_block_receiver.assume_not_null().eq(account_id::id)),
+                account_id::table.on(account_id_block_receiver
+                    .assume_not_null()
+                    .eq(account_id::id)),
             )
             .filter(account_id_block_receiver.is_not_null())
             .filter(account_id_block_sender.eq(id_sender.as_db_id()))
@@ -144,44 +147,42 @@ impl CurrentReadChatInteraction<'_> {
 
         const PAGE_SIZE: i64 = 25;
 
-        let account_ids_and_received_like_ids: Vec<(AccountId, ReceivedLikeId)> = account_interaction
-            .inner_join(
-                account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)),
-            )
-            .filter(account_id_sender.is_not_null())
-            .filter(account_id_receiver.eq(id_receiver.as_db_id()))
-            .filter(state_number.eq(AccountInteractionState::Like))
-            .filter(received_like_id.is_not_null())
-            .filter(received_like_id.le(received_like_id_value))
-            .select((account_id::uuid, received_like_id.assume_not_null()))
-            .order((
-                received_like_id.desc(),
-            ))
-            .limit(PAGE_SIZE)
-            .offset(PAGE_SIZE.saturating_mul(page))
-            .load(self.conn())
-            .into_db_error(())?;
+        let account_ids_and_received_like_ids: Vec<(AccountId, ReceivedLikeId)> =
+            account_interaction
+                .inner_join(
+                    account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)),
+                )
+                .filter(account_id_sender.is_not_null())
+                .filter(account_id_receiver.eq(id_receiver.as_db_id()))
+                .filter(state_number.eq(AccountInteractionState::Like))
+                .filter(received_like_id.is_not_null())
+                .filter(received_like_id.le(received_like_id_value))
+                .select((account_id::uuid, received_like_id.assume_not_null()))
+                .order((received_like_id.desc(),))
+                .limit(PAGE_SIZE)
+                .offset(PAGE_SIZE.saturating_mul(page))
+                .load(self.conn())
+                .into_db_error(())?;
 
         let mut count = 0;
         let account_ids: Vec<AccountId> = if let Some(previous) = received_like_id_previous_value {
-            account_ids_and_received_like_ids.into_iter().map(|(aid, like_id)| {
-                if like_id.id > previous.id {
-                    count += 1;
-                }
-                aid
-            }).collect()
+            account_ids_and_received_like_ids
+                .into_iter()
+                .map(|(aid, like_id)| {
+                    if like_id.id > previous.id {
+                        count += 1;
+                    }
+                    aid
+                })
+                .collect()
         } else {
-            account_ids_and_received_like_ids.into_iter().map(|(aid, _)| {
-                aid
-            }).collect()
+            account_ids_and_received_like_ids
+                .into_iter()
+                .map(|(aid, _)| aid)
+                .collect()
         };
 
-        Ok((
-            account_ids,
-            PageItemCountForNewLikes {
-                c: count,
-            }
-        ))
+        Ok((account_ids, PageItemCountForNewLikes { c: count }))
     }
 
     /// Interaction ordering goes from recent to older starting
@@ -198,26 +199,28 @@ impl CurrentReadChatInteraction<'_> {
 
         let account_ids: Vec<AccountId> = account_interaction
             .inner_join(
-                account_id::table.on(
-                    (account_id_sender.assume_not_null().eq(account_id::id).and(account_id_receiver.eq(id_value.as_db_id())))
-                        .or(
-                            account_id_receiver.assume_not_null().eq(account_id::id).and(account_id_sender.eq(id_value.as_db_id()))
-                        )
-                ),
+                account_id::table.on((account_id_sender
+                    .assume_not_null()
+                    .eq(account_id::id)
+                    .and(account_id_receiver.eq(id_value.as_db_id())))
+                .or(account_id_receiver
+                    .assume_not_null()
+                    .eq(account_id::id)
+                    .and(account_id_sender.eq(id_value.as_db_id())))),
             )
             .filter(
-                (account_id_sender.is_not_null().and(account_id_receiver.eq(id_value.as_db_id())))
-                    .or(
-                        account_id_receiver.is_not_null().and(account_id_sender.eq(id_value.as_db_id()))
-                    )
+                (account_id_sender
+                    .is_not_null()
+                    .and(account_id_receiver.eq(id_value.as_db_id())))
+                .or(account_id_receiver
+                    .is_not_null()
+                    .and(account_id_sender.eq(id_value.as_db_id()))),
             )
             .filter(state_number.eq(AccountInteractionState::Match))
             .filter(match_id.is_not_null())
             .filter(match_id.le(match_id_value))
             .select(account_id::uuid)
-            .order((
-                match_id.desc(),
-            ))
+            .order((match_id.desc(),))
             .limit(PAGE_SIZE)
             .offset(PAGE_SIZE.saturating_mul(page))
             .load(self.conn())

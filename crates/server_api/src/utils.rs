@@ -10,16 +10,14 @@ use headers::{Header, HeaderValue};
 use hyper::{header, Request};
 use model::AccessToken;
 use serde::Serialize;
+pub use server_state::utils::StatusCode;
+use server_state::{app::GetAccessTokens, S};
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;
 pub use utils::api::ACCESS_TOKEN_HEADER_STR;
 use utoipa::{
     openapi::security::{ApiKeyValue, SecurityScheme},
     Modify,
 };
-
-use server_state::{app::GetAccessTokens, S};
-
-pub use server_state::utils::StatusCode;
 
 pub static ACCESS_TOKEN_HEADER: header::HeaderName =
     header::HeaderName::from_static(ACCESS_TOKEN_HEADER_STR);

@@ -1,8 +1,7 @@
 use axum::{extract::State, Extension};
 use model_account::{Account, AccountIdInternal, ClientId, LatestBirthdate};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::{app::WriteData, create_open_api_router, db_write};
+use server_api::{app::WriteData, create_open_api_router, db_write, S};
 use server_data::read::GetReadCommandsCommon;
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
@@ -55,9 +54,7 @@ pub async fn get_latest_birthdate(
 ) -> Result<Json<LatestBirthdate>, StatusCode> {
     ACCOUNT.get_latest_birthdate.incr();
     let birthdate = state.read().common().latest_birthdate(id).await?;
-    let birthdate = LatestBirthdate {
-        birthdate
-    };
+    let birthdate = LatestBirthdate { birthdate };
     Ok(birthdate.into())
 }
 
@@ -80,9 +77,7 @@ pub async fn post_get_next_client_id(
 ) -> Result<Json<ClientId>, StatusCode> {
     ACCOUNT.post_get_next_client_id.incr();
 
-    let client_id = db_write!(state, move |cmds| {
-        cmds.account().get_next_client_id(id)
-    })?;
+    let client_id = db_write!(state, move |cmds| { cmds.account().get_next_client_id(id) })?;
 
     Ok(client_id.into())
 }

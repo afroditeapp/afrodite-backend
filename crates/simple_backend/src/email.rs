@@ -1,12 +1,17 @@
-
-
-
-
-use std::{future::Future, num::NonZeroU32, str::FromStr, time::{Duration, Instant}};
+use std::{
+    future::Future,
+    num::NonZeroU32,
+    str::FromStr,
+    time::{Duration, Instant},
+};
 
 use data::EmailLimitStateStorage;
 use error_stack::{Result, ResultExt};
-use lettre::{message::Mailbox, transport::smtp::{authentication::Credentials, PoolConfig}, Address, AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor};
+use lettre::{
+    message::Mailbox,
+    transport::smtp::{authentication::Credentials, PoolConfig},
+    Address, AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
+};
 use simple_backend_config::{file::EmailSendingConfig, SimpleBackendConfig};
 use simple_backend_utils::ContextExt;
 use tokio::{
@@ -54,10 +59,7 @@ impl EmailManagerQuitHandle {
         match self.task.await {
             Ok(()) => (),
             Err(e) => {
-                warn!(
-                    "EmailManagerQuitHandle quit failed. Error: {:?}",
-                    e
-                );
+                warn!("EmailManagerQuitHandle quit failed. Error: {:?}", e);
             }
         }
     }
@@ -74,7 +76,7 @@ pub struct EmailSender<R, M> {
     sender: Sender<SendEmail<R, M>>,
 }
 
-impl <R, M> EmailSender<R, M> {
+impl<R, M> EmailSender<R, M> {
     pub fn send(&self, receiver: R, message: M) {
         let email_send_cmd = SendEmail { receiver, message };
         match self.sender.try_send(email_send_cmd) {
@@ -136,7 +138,12 @@ pub struct EmailManager<T, R, M> {
     state: T,
 }
 
-impl<T: EmailDataProvider<R, M> + Send + Sync + 'static, R: Clone + Send + 'static, M: Clone + Send + 'static> EmailManager<T, R, M> {
+impl<
+        T: EmailDataProvider<R, M> + Send + Sync + 'static,
+        R: Clone + Send + 'static,
+        M: Clone + Send + 'static,
+    > EmailManager<T, R, M>
+{
     pub async fn new_manager(
         simple_backend_config: &SimpleBackendConfig,
         quit_notification: ServerQuitWatcher,
@@ -151,26 +158,22 @@ impl<T: EmailDataProvider<R, M> + Send + Sync + 'static, R: Clone + Send + 'stat
             }
             .map(|builder| {
                 builder
-                    .credentials(
-                        Credentials::new(
-                            config.username.clone(),
-                            config.password.clone()
-                        )
-                    )
-                    .pool_config(
-                        PoolConfig::new()
-                            .max_size(1)
-                    )
+                    .credentials(Credentials::new(
+                        config.username.clone(),
+                        config.password.clone(),
+                    ))
+                    .pool_config(PoolConfig::new().max_size(1))
                     .build()
             });
 
-            let previous_state = match EmailLimitStateStorage::load_and_remove(simple_backend_config).await {
-                Ok(state) => state,
-                Err(e) => {
-                    error!("Loading previous state failed, error: {:?}", e);
-                    EmailLimitStateStorage::default()
-                }
-            };
+            let previous_state =
+                match EmailLimitStateStorage::load_and_remove(simple_backend_config).await {
+                    Ok(state) => state,
+                    Err(e) => {
+                        error!("Loading previous state failed, error: {:?}", e);
+                        EmailLimitStateStorage::default()
+                    }
+                };
 
             match email_sender {
                 Ok(email_sender) => Some(EmailSenderData {
@@ -202,7 +205,8 @@ impl<T: EmailDataProvider<R, M> + Send + Sync + 'static, R: Clone + Send + 'stat
     pub async fn run(mut self, mut quit_notification: ServerQuitWatcher) {
         let mut sending_logic = EmailSendingLogic::new();
         if let Some(sender_data) = &self.email_sender {
-            sending_logic.send_count_per_minute.count = sender_data.previous_state.emails_sent_per_minute;
+            sending_logic.send_count_per_minute.count =
+                sender_data.previous_state.emails_sent_per_minute;
             sending_logic.send_count_per_day.count = sender_data.previous_state.emails_sent_per_day;
         }
 
@@ -238,9 +242,7 @@ impl<T: EmailDataProvider<R, M> + Send + Sync + 'static, R: Clone + Send + 'stat
             let send_cmd = self.receiver.receiver.recv().await;
             match send_cmd {
                 Some(send_cmd) => {
-                    let result = self
-                        .send_email(send_cmd, sending_logic)
-                        .await;
+                    let result = self.send_email(send_cmd, sending_logic).await;
                     match result {
                         Ok(()) => (),
                         Err(e) => {
@@ -269,10 +271,7 @@ impl<T: EmailDataProvider<R, M> + Send + Sync + 'static, R: Clone + Send + 'stat
 
         let info = self
             .state
-            .get_email_data(
-                send_cmd.receiver.clone(),
-                send_cmd.message.clone(),
-            )
+            .get_email_data(send_cmd.receiver.clone(), send_cmd.message.clone())
             .await
             .change_context(EmailError::GettingEmailDataFailed)?;
 
@@ -295,10 +294,9 @@ impl<T: EmailDataProvider<R, M> + Send + Sync + 'static, R: Clone + Send + 'stat
 
         match sending_logic.send_email(message, email_sender).await {
             Ok(()) => {
-                self.state.mark_as_sent(
-                    send_cmd.receiver,
-                    send_cmd.message,
-                ).await
+                self.state
+                    .mark_as_sent(send_cmd.receiver, send_cmd.message)
+                    .await
             }
             e => e,
         }
@@ -313,7 +311,7 @@ pub struct EmailSendingLogic {
 impl EmailSendingLogic {
     pub fn new() -> Self {
         Self {
-            send_count_per_day: SendCounter::new(Duration::from_secs(60*60*24)),
+            send_count_per_day: SendCounter::new(Duration::from_secs(60 * 60 * 24)),
             send_count_per_minute: SendCounter::new(Duration::from_secs(60)),
         }
     }
@@ -323,13 +321,20 @@ impl EmailSendingLogic {
         message: Message,
         sender: &EmailSenderData,
     ) -> Result<(), EmailError> {
-        self.send_count_per_minute.wait_until_allowed(sender.config.send_limit_per_minute).await;
-        self.send_count_per_day.wait_until_allowed(sender.config.send_limit_per_day).await;
+        self.send_count_per_minute
+            .wait_until_allowed(sender.config.send_limit_per_minute)
+            .await;
+        self.send_count_per_day
+            .wait_until_allowed(sender.config.send_limit_per_day)
+            .await;
 
-        self.send_count_per_minute.increment(sender.config.send_limit_per_minute);
-        self.send_count_per_day.increment(sender.config.send_limit_per_day);
+        self.send_count_per_minute
+            .increment(sender.config.send_limit_per_minute);
+        self.send_count_per_day
+            .increment(sender.config.send_limit_per_day);
 
-        let response = sender.sender
+        let response = sender
+            .sender
             .send(message)
             .await
             .change_context(EmailError::SendingFailed)?;
@@ -338,11 +343,14 @@ impl EmailSendingLogic {
             Ok(())
         } else {
             let response_message = response.message().collect::<Vec<_>>().join(" ");
-            let error = format!("SMTP response not positive, code: {}, message: {}", response.code(), response_message);
-            Err(
-                EmailError::EmailSendingResponseNotPositive.report()
-                    .attach_printable(error)
-            )
+            let error = format!(
+                "SMTP response not positive, code: {}, message: {}",
+                response.code(),
+                response_message
+            );
+            Err(EmailError::EmailSendingResponseNotPositive
+                .report()
+                .attach_printable(error))
         }
     }
 }

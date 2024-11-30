@@ -1,12 +1,13 @@
-
 use error_stack::ResultExt;
 use model::{AccountIdInternal, PendingNotificationFlags, PushNotificationStateInfoWithFlags};
-use server_api::db_write_raw;
+use server_api::{
+    app::{ReadData, WriteData},
+    db_write_raw,
+};
 use server_common::push_notifications::{PushNotificationError, PushNotificationStateProvider};
 use server_data::read::GetReadCommandsCommon;
 use server_data_chat::write::GetWriteCommandsChat;
 use server_state::S;
-use server_api::app::{ReadData, WriteData};
 
 pub struct ServerPushNotificationStateProvider {
     state: S,
@@ -23,7 +24,8 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
         &self,
         account_id: AccountIdInternal,
     ) -> error_stack::Result<PushNotificationStateInfoWithFlags, PushNotificationError> {
-        let flags = self.state
+        let flags = self
+            .state
             .read()
             .common()
             .cached_pending_notification_flags(account_id)
@@ -48,10 +50,7 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
         .map_err(|e| e.into_report())
         .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)?;
 
-        Ok(PushNotificationStateInfoWithFlags::WithFlags {
-            info,
-            flags,
-        })
+        Ok(PushNotificationStateInfoWithFlags::WithFlags { info, flags })
     }
 
     async fn enable_push_notification_sent_flag(
@@ -91,19 +90,24 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
         account_id: AccountIdInternal,
         flags: PendingNotificationFlags,
     ) -> error_stack::Result<(), PushNotificationError> {
-        self.state.read().cache_read_write_access().write_cache(account_id, move |entry| {
-            entry.common.pending_notification_flags -= flags;
-            Ok(())
-        })
-        .await
-        .map_err(|e| e.into_error())
-        .change_context(PushNotificationError::RemoveSpecificNotificationFlagsFromCacheFailed)
+        self.state
+            .read()
+            .cache_read_write_access()
+            .write_cache(account_id, move |entry| {
+                entry.common.pending_notification_flags -= flags;
+                Ok(())
+            })
+            .await
+            .map_err(|e| e.into_error())
+            .change_context(PushNotificationError::RemoveSpecificNotificationFlagsFromCacheFailed)
     }
 
     async fn save_current_non_empty_notification_flags_from_cache_to_database(
         &self,
     ) -> error_stack::Result<(), PushNotificationError> {
-        let account_ids = self.state.read()
+        let account_ids = self
+            .state
+            .read()
             .common()
             .account_ids_internal_vec()
             .await

@@ -1,15 +1,13 @@
-use diesel::{
-    prelude::*,
-    sql_types::BigInt,
-    AsExpression, FromSqlRow,
-};
+use diesel::{prelude::*, sql_types::BigInt, AsExpression, FromSqlRow};
 use model::{ContentId, ModerationQueueNumber, ModerationRequestState, ProfileContentVersion};
 use model_server_data::{ContentSlot, MediaContentType};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{schema_sqlite_types::Integer, AccountId, AccountIdDb, EnumParsingError, NextQueueNumberType};
+use crate::{
+    schema_sqlite_types::Integer, AccountId, AccountIdDb, EnumParsingError, NextQueueNumberType,
+};
 
 /// Y coordinate of slippy map tile.
 ///
@@ -154,7 +152,6 @@ impl ModerationRequest {
     }
 }
 
-
 #[derive(
     Debug,
     Deserialize,
@@ -206,7 +203,6 @@ pub struct SlotId {
     pub slot_id: u8,
 }
 
-
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct ContentInfo {
     pub cid: ContentId,
@@ -231,7 +227,6 @@ pub struct ContentInfoDetailed {
     /// Face detected
     pub fd: bool,
 }
-
 
 #[derive(Debug, Clone, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::media_content)]
@@ -427,16 +422,9 @@ pub struct SetProfileContent {
 
 impl SetProfileContent {
     pub fn iter(&self) -> impl Iterator<Item = ContentId> {
-        [
-            Some(self.c0),
-            self.c1,
-            self.c2,
-            self.c3,
-            self.c4,
-            self.c5,
-        ]
-        .into_iter()
-        .filter_map(|c| c.as_ref().cloned())
+        [Some(self.c0), self.c1, self.c2, self.c3, self.c4, self.c5]
+            .into_iter()
+            .filter_map(|c| c.as_ref().cloned())
     }
 }
 
@@ -644,10 +632,7 @@ impl GetProfileContentResult {
     }
 
     pub fn empty() -> Self {
-        Self {
-            c: None,
-            v: None,
-        }
+        Self { c: None, v: None }
     }
 }
 
@@ -690,7 +675,6 @@ impl ModerationRequestIdDb {
 }
 
 diesel_i64_wrapper!(ModerationRequestIdDb);
-
 
 #[derive(
     Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, FromSqlRow, AsExpression,

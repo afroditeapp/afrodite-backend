@@ -4,7 +4,8 @@ use tracing::warn;
 use super::InternalApiError;
 use crate::{
     app::GetConfig,
-    result::{Result, WrappedContextExt}, S,
+    result::{Result, WrappedContextExt},
+    S,
 };
 
 /// Sync new Account to possible other servers.

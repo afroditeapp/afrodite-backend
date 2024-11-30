@@ -5,10 +5,7 @@ use error_stack::{Result, ResultExt};
 define_current_read_commands!(CurrentReadProfileNameAllowlist);
 
 impl CurrentReadProfileNameAllowlist<'_> {
-    pub fn is_on_database_allowlist(
-        &mut self,
-        name: &str,
-    ) -> Result<bool, DieselDatabaseError> {
+    pub fn is_on_database_allowlist(&mut self, name: &str) -> Result<bool, DieselDatabaseError> {
         use crate::schema::profile_name_allowlist::dsl::*;
 
         let exists = profile_name_allowlist

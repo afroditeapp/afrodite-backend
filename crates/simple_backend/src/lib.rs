@@ -9,7 +9,9 @@
 )]
 
 pub mod app;
+pub mod email;
 pub mod event;
+pub mod file_package;
 pub mod image;
 pub mod litestream;
 pub mod manager_client;
@@ -19,8 +21,6 @@ pub mod perf;
 pub mod sign_in_with;
 pub mod utils;
 pub mod web_socket;
-pub mod email;
-pub mod file_package;
 
 use std::{convert::Infallible, future::IntoFuture, net::SocketAddr, pin::Pin, sync::Arc};
 
@@ -154,7 +154,11 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         let log_without_timestamp_layer = if self.config.log_timestamp() {
             None
         } else {
-            Some(tracing_subscriber::fmt::layer().without_time().with_filter(EnvFilter::from_default_env()))
+            Some(
+                tracing_subscriber::fmt::layer()
+                    .without_time()
+                    .with_filter(EnvFilter::from_default_env()),
+            )
         };
 
         // tokio-console is disabled currently

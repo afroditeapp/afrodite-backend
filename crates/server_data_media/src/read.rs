@@ -10,7 +10,7 @@ pub trait GetReadMediaCommands<'a> {
     fn media_admin(self) -> ReadCommandsMediaAdmin<'a>;
 }
 
-impl <'a, I: ReadAccessProvider<'a>> GetReadMediaCommands<'a> for I {
+impl<'a, I: ReadAccessProvider<'a>> GetReadMediaCommands<'a> for I {
     fn media(self) -> ReadCommandsMedia<'a> {
         ReadCommandsMedia::new(self.handle())
     }

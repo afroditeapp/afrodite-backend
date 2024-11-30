@@ -5,9 +5,7 @@ use utoipa::ToSchema;
 
 use crate::sync_version_wrappers;
 
-sync_version_wrappers!(
-    NewsSyncVersion,
-);
+sync_version_wrappers!(NewsSyncVersion,);
 
 #[derive(
     Debug,
@@ -37,7 +35,6 @@ impl UnreadNewsCount {
 }
 
 diesel_i64_wrapper!(UnreadNewsCount);
-
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UnreadNewsCountResult {

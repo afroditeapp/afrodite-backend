@@ -1,13 +1,15 @@
 use axum::{extract::State, Extension};
 use model::{AccountIdInternal, BackendConfig, Permissions};
 use obfuscate_api_macro::obfuscate_api;
-use crate::S;
 use simple_backend::create_counters;
 use tracing::info;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{ReadDynamicConfig,WriteDynamicConfig}, create_open_api_router, utils::{Json, StatusCode}
+    app::{ReadDynamicConfig, WriteDynamicConfig},
+    create_open_api_router,
+    utils::{Json, StatusCode},
+    S,
 };
 
 #[obfuscate_api]
@@ -84,11 +86,7 @@ pub async fn post_backend_config(
 }
 
 pub fn config_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
-        get_backend_config,
-        post_backend_config,
-    )
+    create_open_api_router!(s, get_backend_config, post_backend_config,)
 }
 
 create_counters!(

@@ -11,7 +11,7 @@ mod token;
 
 define_current_write_commands!(CurrentWriteCommon);
 
-impl <'a> CurrentWriteCommon<'a> {
+impl<'a> CurrentWriteCommon<'a> {
     pub fn queue_number(self) -> queue_number::CurrentWriteCommonQueueNumber<'a> {
         queue_number::CurrentWriteCommonQueueNumber::new(self.cmds)
     }

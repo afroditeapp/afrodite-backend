@@ -5,8 +5,10 @@ mod profile_text;
 
 define_cmd_wrapper_read!(ReadCommandsProfileAdmin);
 
-impl <'a> ReadCommandsProfileAdmin<'a> {
-    pub fn profile_name_allowlist(self) -> profile_name_allowlist::ReadCommandsProfileNameAllowlist<'a> {
+impl<'a> ReadCommandsProfileAdmin<'a> {
+    pub fn profile_name_allowlist(
+        self,
+    ) -> profile_name_allowlist::ReadCommandsProfileNameAllowlist<'a> {
         profile_name_allowlist::ReadCommandsProfileNameAllowlist::new(self.0)
     }
 

@@ -1,8 +1,6 @@
 use database_account::current::read::GetDbReadCommandsAccount;
 use model_account::{AccountEmailSendingStateRaw, AccountIdInternal};
-use server_data::{
-    define_cmd_wrapper_read, read::DbRead, result::Result, DataError
-};
+use server_data::{define_cmd_wrapper_read, read::DbRead, result::Result, DataError};
 
 define_cmd_wrapper_read!(ReadCommandsAccountEmail);
 

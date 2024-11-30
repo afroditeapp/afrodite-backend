@@ -1,11 +1,8 @@
-
-
 use chrono::Datelike;
 use config::Config;
+use error_stack::Result;
 use model_server_data::LimitedActionStatus;
 use server_common::data::cache::CacheError;
-
-use error_stack::Result;
 
 const MAX_VALUE_1: u8 = 1;
 
@@ -39,7 +36,7 @@ pub struct AutoResetLimit<R: ResetLogic, const MAX_VALUE: u8> {
     reset_provider: R,
 }
 
-impl <R: ResetLogic, const MAX_VALUE: u8> AutoResetLimit<R, MAX_VALUE> {
+impl<R: ResetLogic, const MAX_VALUE: u8> AutoResetLimit<R, MAX_VALUE> {
     pub fn is_limit_not_reached(&mut self, config: &Config) -> Result<bool, CacheError> {
         if self.reset_provider.reset_can_be_done(config)? {
             self.value = 0;

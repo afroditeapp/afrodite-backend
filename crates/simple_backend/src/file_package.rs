@@ -1,5 +1,10 @@
-
-use std::{collections::HashMap, fs::File, io::{BufReader, Read}, path::Path, str::FromStr};
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::{BufReader, Read},
+    path::Path,
+    str::FromStr,
+};
 
 use axum::body::Bytes;
 use error_stack::ResultExt;
@@ -37,63 +42,80 @@ impl FilePackageManager {
             });
         };
 
-        let result: error_stack::Result<Self, FilePackageError> = tokio::task::spawn_blocking(move || {
-            let file_path = Path::new(&package_path.package);
-            if !file_path.exists() {
-                warn!("Static file hosting package does not exist at location {}", package_path.package.display());
-                return Ok(Self {
-                    file_path_and_data: HashMap::new(),
-                });
-            }
-            let mut read_files_only_from_dir = package_path.read_from_dir.clone();
-            if let Some(d) = &mut read_files_only_from_dir {
-                d.push('/');
-            }
+        let result: error_stack::Result<Self, FilePackageError> =
+            tokio::task::spawn_blocking(move || {
+                let file_path = Path::new(&package_path.package);
+                if !file_path.exists() {
+                    warn!(
+                        "Static file hosting package does not exist at location {}",
+                        package_path.package.display()
+                    );
+                    return Ok(Self {
+                        file_path_and_data: HashMap::new(),
+                    });
+                }
+                let mut read_files_only_from_dir = package_path.read_from_dir.clone();
+                if let Some(d) = &mut read_files_only_from_dir {
+                    d.push('/');
+                }
 
-            let mut file_path_and_data = HashMap::new();
-            let file = File::open(package_path.package)
-                .change_context(FilePackageError::PackageLoading)?;
-            let decoder = GzDecoder::new(BufReader::new(file));
-            let mut archive = Archive::new(decoder);
-            let entries = archive.entries().change_context(FilePackageError::PackageLoading)?;
-            for e in entries {
-                let mut e = e.change_context(FilePackageError::PackageLoading)?;
-                if e.header().entry_type() == EntryType::Directory {
-                    continue;
-                }
-                let path = e.path().change_context(FilePackageError::PackageLoading)?;
-                // Skip hidden files
-                if path.file_name().and_then(|v| v.to_str()).map(|v| v.starts_with('.')).unwrap_or_default() {
-                    continue;
-                }
-                let path_string = path.to_str().ok_or(FilePackageError::InvalidUtf8)?.to_string();
-                // Remove root directory from paths if needed
-                let path_string = if let Some(files_from_dir) = &read_files_only_from_dir {
-                    if path_string.starts_with(files_from_dir) {
-                        path_string.trim_start_matches(files_from_dir).to_string()
-                    } else {
+                let mut file_path_and_data = HashMap::new();
+                let file = File::open(package_path.package)
+                    .change_context(FilePackageError::PackageLoading)?;
+                let decoder = GzDecoder::new(BufReader::new(file));
+                let mut archive = Archive::new(decoder);
+                let entries = archive
+                    .entries()
+                    .change_context(FilePackageError::PackageLoading)?;
+                for e in entries {
+                    let mut e = e.change_context(FilePackageError::PackageLoading)?;
+                    if e.header().entry_type() == EntryType::Directory {
                         continue;
                     }
-                } else {
-                    path_string
-                };
-                let mut data = vec![];
-                e.read_to_end(&mut data).change_context(FilePackageError::PackageLoading)?;
-                let data_bytes: Bytes = data.into();
-                let content_type = Self::path_string_to_content_type(&mime_types, &path_string)?;
-                file_path_and_data.insert(path_string, (content_type, data_bytes));
-            }
-            Ok(Self {
-                file_path_and_data,
+                    let path = e.path().change_context(FilePackageError::PackageLoading)?;
+                    // Skip hidden files
+                    if path
+                        .file_name()
+                        .and_then(|v| v.to_str())
+                        .map(|v| v.starts_with('.'))
+                        .unwrap_or_default()
+                    {
+                        continue;
+                    }
+                    let path_string = path
+                        .to_str()
+                        .ok_or(FilePackageError::InvalidUtf8)?
+                        .to_string();
+                    // Remove root directory from paths if needed
+                    let path_string = if let Some(files_from_dir) = &read_files_only_from_dir {
+                        if path_string.starts_with(files_from_dir) {
+                            path_string.trim_start_matches(files_from_dir).to_string()
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        path_string
+                    };
+                    let mut data = vec![];
+                    e.read_to_end(&mut data)
+                        .change_context(FilePackageError::PackageLoading)?;
+                    let data_bytes: Bytes = data.into();
+                    let content_type =
+                        Self::path_string_to_content_type(&mime_types, &path_string)?;
+                    file_path_and_data.insert(path_string, (content_type, data_bytes));
+                }
+                Ok(Self { file_path_and_data })
             })
-        })
             .await
             .change_context(FilePackageError::PackageLoading)?;
 
         result
     }
 
-    fn path_string_to_content_type(mime_types: &ExtraMimeTypes, path: &str) -> error_stack::Result<ContentType, FilePackageError> {
+    fn path_string_to_content_type(
+        mime_types: &ExtraMimeTypes,
+        path: &str,
+    ) -> error_stack::Result<ContentType, FilePackageError> {
         let content_type = if path.ends_with(".html") {
             ContentType::html()
         } else if path.ends_with(".js") || path.ends_with(".mjs") {
@@ -117,10 +139,9 @@ impl FilePackageManager {
         } else if path.ends_with("/NOTICES") {
             mime::TEXT_PLAIN_UTF_8.into()
         } else {
-            return Err(
-                FilePackageError::PackageContainsUnknonwFileType.report()
-                    .attach_printable(path.to_string())
-            )
+            return Err(FilePackageError::PackageContainsUnknonwFileType
+                .report()
+                .attach_printable(path.to_string()));
         };
 
         Ok(content_type)
@@ -133,7 +154,7 @@ impl FilePackageManager {
 
 struct ExtraMimeTypes {
     otf: ContentType,
-    wasm: ContentType
+    wasm: ContentType,
 }
 
 impl ExtraMimeTypes {

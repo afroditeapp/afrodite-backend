@@ -4,8 +4,7 @@ use model_profile::{
     ProfileAttributeFilterListUpdate,
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::create_open_api_router;
+use server_api::{create_open_api_router, S};
 use server_data::DataError;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -13,7 +12,7 @@ use simple_backend_utils::IntoReportFromString;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{GetConfig, ReadData,WriteData},
+    app::{GetConfig, ReadData, WriteData},
     db_write,
     utils::{Json, StatusCode},
 };

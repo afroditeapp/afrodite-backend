@@ -1,15 +1,21 @@
-
-use axum::{extract::{Path, State}, Extension};
-use model_account::{AccountIdInternal, BooleanSetting, NewsId, NewsLocale, NotificationEvent, Permissions, UpdateNewsTranslation, UpdateNewsTranslationResult};
+use axum::{
+    extract::{Path, State},
+    Extension,
+};
+use model_account::{
+    AccountIdInternal, BooleanSetting, NewsId, NewsLocale, NotificationEvent, Permissions,
+    UpdateNewsTranslation, UpdateNewsTranslationResult,
+};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::{create_open_api_router, db_write, db_write_multiple, result::WrappedContextExt, DataError};
+use server_api::{
+    create_open_api_router, db_write, db_write_multiple, result::WrappedContextExt, DataError, S,
+};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
-use crate::app::{ReadData,WriteData};
+use crate::app::{ReadData, WriteData};
 
 #[obfuscate_api]
 const PATH_POST_CREATE_NEWS_ITEM: &str = "/account_api/admin/create_news_item";
@@ -35,9 +41,10 @@ pub async fn post_create_news_item(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let news_id = db_write!(state, move |cmds|
-        cmds.account_admin().news().create_news_item(account_id)
-    )?;
+    let news_id = db_write!(state, move |cmds| cmds
+        .account_admin()
+        .news()
+        .create_news_item(account_id))?;
     Ok(news_id.into())
 }
 
@@ -78,15 +85,17 @@ pub async fn delete_news_item(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    db_write!(state, move |cmds|
-        cmds.account_admin().news().delete_news_item(nid)
-    )?;
+    db_write!(state, move |cmds| cmds
+        .account_admin()
+        .news()
+        .delete_news_item(nid))?;
 
     Ok(())
 }
 
 #[obfuscate_api]
-const PATH_POST_UPDATE_NEWS_TRANSLATION: &str = "/account_api/admin/update_news_translation/{nid}/{locale}";
+const PATH_POST_UPDATE_NEWS_TRANSLATION: &str =
+    "/account_api/admin/update_news_translation/{nid}/{locale}";
 
 #[utoipa::path(
     post,
@@ -110,8 +119,7 @@ pub async fn post_update_news_translation(
 ) -> Result<Json<UpdateNewsTranslationResult>, StatusCode> {
     ACCOUNT.post_update_news_translation.incr();
 
-    if !permissions.some_admin_news_permissions_granted() ||
-        !locale.is_supported_locale() {
+    if !permissions.some_admin_news_permissions_granted() || !locale.is_supported_locale() {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
@@ -127,17 +135,19 @@ pub async fn post_update_news_translation(
             return Err(DataError::NotAllowed.report());
         }
 
-        let current_version = item.translations.into_iter().find(|t| t.locale == locale.locale).and_then(|t| t.version);
+        let current_version = item
+            .translations
+            .into_iter()
+            .find(|t| t.locale == locale.locale)
+            .and_then(|t| t.version);
         if current_version.is_some() && current_version != Some(news_translation.current_version) {
             return Ok(UpdateNewsTranslationResult::error_already_changed());
         }
 
-        cmds.account_admin().news().upsert_news_translation(
-            account_id,
-            nid,
-            locale,
-            news_translation,
-        ).await?;
+        cmds.account_admin()
+            .news()
+            .upsert_news_translation(account_id, nid, locale, news_translation)
+            .await?;
 
         Ok(UpdateNewsTranslationResult::success())
     })?;
@@ -146,7 +156,8 @@ pub async fn post_update_news_translation(
 }
 
 #[obfuscate_api]
-const PATH_DELETE_NEWS_TRANSLATION: &str = "/account_api/admin/delete_news_translation/{nid}/{locale}";
+const PATH_DELETE_NEWS_TRANSLATION: &str =
+    "/account_api/admin/delete_news_translation/{nid}/{locale}";
 
 #[utoipa::path(
     delete,
@@ -183,9 +194,10 @@ pub async fn delete_news_translation(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    db_write!(state, move |cmds|
-        cmds.account_admin().news().delete_news_translation(nid, locale)
-    )?;
+    db_write!(state, move |cmds| cmds
+        .account_admin()
+        .news()
+        .delete_news_translation(nid, locale))?;
 
     Ok(())
 }
@@ -234,15 +246,13 @@ pub async fn post_set_news_publicity(
             return Ok(());
         }
 
-        cmds.account_admin().news().set_news_publicity(
-            nid,
-            publicity.value,
-        ).await?;
+        cmds.account_admin()
+            .news()
+            .set_news_publicity(nid, publicity.value)
+            .await?;
 
         cmds.events()
-            .send_low_priority_notification_to_logged_in_clients(
-                NotificationEvent::NewsChanged
-            )
+            .send_low_priority_notification_to_logged_in_clients(NotificationEvent::NewsChanged)
             .await;
 
         Ok(())

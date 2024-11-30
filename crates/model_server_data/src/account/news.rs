@@ -76,16 +76,12 @@ pub struct NewsIteratorSessionId {
 
 impl From<NewsIteratorSessionIdInternal> for NewsIteratorSessionId {
     fn from(value: NewsIteratorSessionIdInternal) -> Self {
-        Self {
-            id: value.id,
-        }
+        Self { id: value.id }
     }
 }
 
 impl From<NewsIteratorSessionId> for NewsIteratorSessionIdInternal {
     fn from(value: NewsIteratorSessionId) -> Self {
-        Self {
-            id: value.id,
-        }
+        Self { id: value.id }
     }
 }

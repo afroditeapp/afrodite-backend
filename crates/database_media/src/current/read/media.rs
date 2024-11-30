@@ -15,9 +15,7 @@ impl<'a> CurrentReadMedia<'a> {
         media_content::CurrentReadMediaMediaContent::new(self.cmds)
     }
 
-    pub fn moderation_request(
-        self,
-    ) -> moderation_request::CurrentReadMediaModerationRequest<'a> {
+    pub fn moderation_request(self) -> moderation_request::CurrentReadMediaModerationRequest<'a> {
         moderation_request::CurrentReadMediaModerationRequest::new(self.cmds)
     }
 }

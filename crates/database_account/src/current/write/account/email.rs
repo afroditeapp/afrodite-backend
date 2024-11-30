@@ -12,7 +12,7 @@ impl CurrentWriteAccountEmail<'_> {
     pub fn modify_email_sending_states(
         &mut self,
         id: AccountIdInternal,
-        mut action: impl FnMut(&mut AccountEmailSendingStateRaw)
+        mut action: impl FnMut(&mut AccountEmailSendingStateRaw),
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account_email_sending_state::dsl::*;
 
@@ -21,10 +21,7 @@ impl CurrentWriteAccountEmail<'_> {
 
         let current_states_cloned = current_states.clone();
         insert_into(account_email_sending_state)
-            .values((
-                account_id.eq(id.as_db_id()),
-                current_states_cloned,
-            ))
+            .values((account_id.eq(id.as_db_id()), current_states_cloned))
             .on_conflict(account_id)
             .do_update()
             .set(current_states)

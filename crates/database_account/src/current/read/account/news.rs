@@ -2,7 +2,11 @@ use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::{alias, prelude::*};
 use error_stack::Result;
 use model::{AccountId, AccountIdInternal, NewsSyncVersion, UnreadNewsCount};
-use model_account::{NewsId, NewsItem, NewsItemInternal, NewsItemSimple, NewsLocale, NewsTranslationInternal, PageItemCountForNewPublicNews, PublicationId, RequireNewsLocale };
+use model_account::{
+    NewsId, NewsItem, NewsItemInternal, NewsItemSimple, NewsLocale, NewsTranslationInternal,
+    PageItemCountForNewPublicNews, PublicationId, RequireNewsLocale,
+};
+
 use crate::IntoDatabaseError;
 
 define_current_read_commands!(CurrentReadAccountNews);
@@ -46,61 +50,86 @@ impl CurrentReadAccountNews<'_> {
     ) -> Result<(Vec<NewsItemSimple>, PageItemCountForNewPublicNews), DieselDatabaseError> {
         use crate::schema::{news, news_translations};
 
-        let (requested_translation, default_translation) = alias!(news_translations as requested_translation, news_translations as default_translation);
+        let (requested_translation, default_translation) = alias!(
+            news_translations as requested_translation,
+            news_translations as default_translation
+        );
 
-        let private_rows: Vec<(NewsItemInternal, Option<String>, Option<String>)> = if page == 0 && include_private_news {
-            news::table
-                .left_outer_join(
-                    requested_translation.on(
-                        news::id.eq(requested_translation.field(news_translations::news_id)).and(
-                            requested_translation.field(news_translations::locale).eq(locale_value.locale.clone())
-                        )
-                    ),
-                )
-                .left_outer_join(
-                    default_translation.on(
-                        news::id.eq(default_translation.field(news_translations::news_id)).and(
-                            default_translation.field(news_translations::locale).eq(NewsLocale::ENGLISH)
-                        )
-                    ),
-                )
-                .filter(news::publication_id.is_null())
-                .select((
-                    NewsItemInternal::as_select(),
-                    requested_translation.field(news_translations::title).nullable(),
-                    default_translation.field(news_translations::title).nullable(),
-                ))
-                .order(news::id.desc())
-                .load(self.conn())
-                .into_db_error(())?
-        } else {
-            vec![]
-        };
+        let private_rows: Vec<(NewsItemInternal, Option<String>, Option<String>)> =
+            if page == 0 && include_private_news {
+                news::table
+                    .left_outer_join(
+                        requested_translation.on(news::id
+                            .eq(requested_translation.field(news_translations::news_id))
+                            .and(
+                                requested_translation
+                                    .field(news_translations::locale)
+                                    .eq(locale_value.locale.clone()),
+                            )),
+                    )
+                    .left_outer_join(
+                        default_translation.on(news::id
+                            .eq(default_translation.field(news_translations::news_id))
+                            .and(
+                                default_translation
+                                    .field(news_translations::locale)
+                                    .eq(NewsLocale::ENGLISH),
+                            )),
+                    )
+                    .filter(news::publication_id.is_null())
+                    .select((
+                        NewsItemInternal::as_select(),
+                        requested_translation
+                            .field(news_translations::title)
+                            .nullable(),
+                        default_translation
+                            .field(news_translations::title)
+                            .nullable(),
+                    ))
+                    .order(news::id.desc())
+                    .load(self.conn())
+                    .into_db_error(())?
+            } else {
+                vec![]
+            };
 
         const PAGE_SIZE: i64 = 25;
 
-        let public_rows: Vec<(NewsItemInternal, PublicationId, Option<String>, Option<String>)> = news::table
+        let public_rows: Vec<(
+            NewsItemInternal,
+            PublicationId,
+            Option<String>,
+            Option<String>,
+        )> = news::table
             .left_outer_join(
-                requested_translation.on(
-                    news::id.eq(requested_translation.field(news_translations::news_id)).and(
-                        requested_translation.field(news_translations::locale).eq(locale_value.locale.clone())
-                    )
-                ),
+                requested_translation.on(news::id
+                    .eq(requested_translation.field(news_translations::news_id))
+                    .and(
+                        requested_translation
+                            .field(news_translations::locale)
+                            .eq(locale_value.locale.clone()),
+                    )),
             )
             .left_outer_join(
-                default_translation.on(
-                    news::id.eq(default_translation.field(news_translations::news_id)).and(
-                        default_translation.field(news_translations::locale).eq(NewsLocale::ENGLISH)
-                    )
-                ),
+                default_translation.on(news::id
+                    .eq(default_translation.field(news_translations::news_id))
+                    .and(
+                        default_translation
+                            .field(news_translations::locale)
+                            .eq(NewsLocale::ENGLISH),
+                    )),
             )
             .filter(news::publication_id.is_not_null())
             .filter(news::publication_id.le(id_value))
             .select((
                 NewsItemInternal::as_select(),
                 news::publication_id.assume_not_null(),
-                requested_translation.field(news_translations::title).nullable(),
-                default_translation.field(news_translations::title).nullable(),
+                requested_translation
+                    .field(news_translations::title)
+                    .nullable(),
+                default_translation
+                    .field(news_translations::title)
+                    .nullable(),
             ))
             .order(news::publication_id.desc())
             .limit(PAGE_SIZE)
@@ -112,31 +141,25 @@ impl CurrentReadAccountNews<'_> {
 
         let items = private_rows
             .into_iter()
-            .map(|r| {
+            .map(|r| NewsItemSimple {
+                id: r.0.id,
+                title: r.1.or(r.2),
+                time: r.0.latest_publication_unix_time,
+                private: r.0.publication_id.is_none(),
+            })
+            .chain(public_rows.into_iter().map(|r| {
+                if let Some(previous_id_value) = previous_id_value {
+                    if r.1.id > previous_id_value.id {
+                        new_items_count += 1;
+                    }
+                }
                 NewsItemSimple {
                     id: r.0.id,
-                    title: r.1.or(r.2),
+                    title: r.2.or(r.3),
                     time: r.0.latest_publication_unix_time,
-                    private: r.0.publication_id.is_none()
+                    private: r.0.publication_id.is_none(),
                 }
-            })
-            .chain(
-                public_rows
-                    .into_iter()
-                    .map(|r| {
-                        if let Some(previous_id_value) = previous_id_value {
-                            if r.1.id > previous_id_value.id {
-                                new_items_count += 1;
-                            }
-                        }
-                        NewsItemSimple {
-                            id: r.0.id,
-                            title: r.2.or(r.3),
-                            time: r.0.latest_publication_unix_time,
-                            private: r.0.publication_id.is_none()
-                        }
-                    })
-            )
+            }))
             .collect();
 
         Ok((items, PageItemCountForNewPublicNews { c: new_items_count }))
@@ -168,29 +191,33 @@ impl CurrentReadAccountNews<'_> {
 
         let (creator_aid, editor_aid) = alias!(account_id as creator_aid, account_id as editor_aid);
 
-        let value: Option<(NewsItemInternal, NewsTranslationInternal, Option<AccountId>, Option<AccountId>)> = news::table
+        let value: Option<(
+            NewsItemInternal,
+            NewsTranslationInternal,
+            Option<AccountId>,
+            Option<AccountId>,
+        )> = news::table
             .inner_join(
-                news_translations::table.on(
-                    news::id.eq(news_translations::news_id)
-                        .and(news_translations::locale.eq(locale_value.locale.clone()))
-                ),
+                news_translations::table.on(news::id
+                    .eq(news_translations::news_id)
+                    .and(news_translations::locale.eq(locale_value.locale.clone()))),
             )
             .left_outer_join(
-                creator_aid.on(
-                    news_translations::account_id_creator.assume_not_null().eq(creator_aid.field(account_id::id))
-                ),
+                creator_aid.on(news_translations::account_id_creator
+                    .assume_not_null()
+                    .eq(creator_aid.field(account_id::id))),
             )
             .left_outer_join(
-                editor_aid.on(
-                    news_translations::account_id_editor.assume_not_null().eq(editor_aid.field(account_id::id))
-                ),
+                editor_aid.on(news_translations::account_id_editor
+                    .assume_not_null()
+                    .eq(editor_aid.field(account_id::id))),
             )
             .filter(news::id.eq(news_id_value))
             .select((
                 NewsItemInternal::as_select(),
                 NewsTranslationInternal::as_select(),
                 creator_aid.field(account_id::uuid).nullable(),
-                editor_aid.field(account_id::uuid).nullable()
+                editor_aid.field(account_id::uuid).nullable(),
             ))
             .first(self.conn())
             .optional()
@@ -216,10 +243,7 @@ impl CurrentReadAccountNews<'_> {
         Ok(Some(news_item))
     }
 
-    pub fn is_public(
-        &mut self,
-        news_id_value: NewsId,
-    ) -> Result<bool, DieselDatabaseError> {
+    pub fn is_public(&mut self, news_id_value: NewsId) -> Result<bool, DieselDatabaseError> {
         use crate::schema::news;
 
         let value = news::table

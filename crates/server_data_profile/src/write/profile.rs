@@ -1,12 +1,22 @@
 use database::current::read::GetDbReadCommandsCommon;
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
-    AccountIdInternal, Location, ProfileAttributeFilterListUpdateValidated, ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateInternal, ValidatedSearchGroups
+    AccountIdInternal, Location, ProfileAttributeFilterListUpdateValidated,
+    ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateInternal,
+    ValidatedSearchGroups,
 };
 use server_data::{
-    app::GetConfig, cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, index::{location::LocationIndexIteratorState, LocationWrite}, read::DbRead, result::Result, DataError, IntoDataError, write::DbTransaction,
+    app::GetConfig,
+    cache::profile::UpdateLocationCacheState,
+    define_cmd_wrapper_write,
+    index::{location::LocationIndexIteratorState, LocationWrite},
+    read::DbRead,
+    result::Result,
+    write::DbTransaction,
+    DataError, IntoDataError,
 };
 use tracing::info;
+
 use crate::cache::{CacheReadProfile, CacheWriteProfile};
 
 define_cmd_wrapper_write!(WriteCommandsProfile);
@@ -18,9 +28,7 @@ impl WriteCommandsProfile<'_> {
         coordinates: Location,
     ) -> Result<(), DataError> {
         let location = self
-            .read_cache_profile_and_common(id.as_id(), |p, _| {
-                Ok(p.location.clone())
-            })
+            .read_cache_profile_and_common(id.as_id(), |p, _| Ok(p.location.clone()))
             .await
             .into_data_error(id)?;
 
@@ -67,13 +75,15 @@ impl WriteCommandsProfile<'_> {
                 let current_profile = cmds.read().profile().data().profile(id)?;
                 (
                     current_profile.name != profile_data.new_data.name,
-                    current_profile.ptext != profile_data.new_data.ptext
+                    current_profile.ptext != profile_data.new_data.ptext,
                 )
             };
             cmds.profile().data().profile(id, &profile_data)?;
-            cmds.profile()
-                .data()
-                .upsert_profile_attributes(id, profile_data.new_data.attributes, config.profile_attributes())?;
+            cmds.profile().data().upsert_profile_attributes(
+                id,
+                profile_data.new_data.attributes,
+                config.profile_attributes(),
+            )?;
             cmds.profile().data().increment_profile_sync_version(id)?;
             if name_update_detected {
                 cmds.profile()
@@ -90,8 +100,8 @@ impl WriteCommandsProfile<'_> {
                         .profile_text()
                         .reset_profile_text_moderation_state(
                             id,
-                            profile_data.new_data.ptext.is_empty()
-                        )?
+                            profile_data.new_data.ptext.is_empty(),
+                        )?,
                 )
             } else {
                 None
@@ -99,18 +109,17 @@ impl WriteCommandsProfile<'_> {
             Ok(profile_text_moderation_state_update)
         })?;
 
-        self
-            .write_cache_profile(id.as_id(), |p| {
-                data.new_data.update_to_profile(&mut p.data);
-                data.new_data.update_to_attributes(&mut p.attributes);
-                p.data.version_uuid = data.version;
-                if let Some(update) = profile_text_moderation_state_update {
-                    p.state.profile_text_moderation_state = update;
-                }
-                Ok(())
-            })
-            .await
-            .into_data_error(id)?;
+        self.write_cache_profile(id.as_id(), |p| {
+            data.new_data.update_to_profile(&mut p.data);
+            data.new_data.update_to_attributes(&mut p.attributes);
+            p.data.version_uuid = data.version;
+            if let Some(update) = profile_text_moderation_state_update {
+                p.state.profile_text_moderation_state = update;
+            }
+            Ok(())
+        })
+        .await
+        .into_data_error(id)?;
 
         self.update_location_cache_profile(id).await?;
 
@@ -132,13 +141,12 @@ impl WriteCommandsProfile<'_> {
             cmds.read().common().account(id)
         })?;
 
-        self
-            .write_cache_profile(id.as_id(), |p| {
-                p.state = s.into();
-                Ok(())
-            })
-            .await
-            .into_data_error(id)?;
+        self.write_cache_profile(id.as_id(), |p| {
+            p.state = s.into();
+            Ok(())
+        })
+        .await
+        .into_data_error(id)?;
 
         self.update_location_cache_profile(id).await?;
 
@@ -152,9 +160,11 @@ impl WriteCommandsProfile<'_> {
     ) -> Result<(), DataError> {
         let config = self.config_arc().clone();
         let new_filters = db_transaction!(self, move |mut cmds| {
-            cmds.profile()
-                .data()
-                .upsert_profile_attribute_filters(id, filters.filters, config.profile_attributes())?;
+            cmds.profile().data().upsert_profile_attribute_filters(
+                id,
+                filters.filters,
+                config.profile_attributes(),
+            )?;
             cmds.profile()
                 .data()
                 .update_last_seen_time_filter(id, filters.last_seen_time_filter)?;
@@ -164,15 +174,14 @@ impl WriteCommandsProfile<'_> {
             cmds.read().profile().data().profile_attribute_filters(id)
         })?;
 
-        self
-            .write_cache_profile(id.as_id(), |p| {
-                p.filters = new_filters;
-                p.state.last_seen_time_filter = filters.last_seen_time_filter;
-                p.state.unlimited_likes_filter = filters.unlimited_likes_filter;
-                Ok(())
-            })
-            .await
-            .into_data_error(id)?;
+        self.write_cache_profile(id.as_id(), |p| {
+            p.filters = new_filters;
+            p.state.last_seen_time_filter = filters.last_seen_time_filter;
+            p.state.unlimited_likes_filter = filters.unlimited_likes_filter;
+            Ok(())
+        })
+        .await
+        .into_data_error(id)?;
 
         Ok(())
     }
@@ -183,13 +192,12 @@ impl WriteCommandsProfile<'_> {
             cmds.profile().data().profile_name(id, profile_data)
         })?;
 
-        self
-            .write_cache_profile(id.as_id(), |p| {
-                p.data.name = data;
-                Ok(())
-            })
-            .await
-            .into_data_error(id)?;
+        self.write_cache_profile(id.as_id(), |p| {
+            p.data.name = data;
+            Ok(())
+        })
+        .await
+        .into_data_error(id)?;
 
         Ok(())
     }
@@ -260,14 +268,9 @@ impl WriteCommandsProfile<'_> {
     }
 
     /// Only server WebSocket code should call this method.
-    pub async fn reset_profile_sync_version(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<(), DataError> {
+    pub async fn reset_profile_sync_version(&self, id: AccountIdInternal) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.profile()
-                .data()
-                .reset_profile_sync_version(id)
+            cmds.profile().data().reset_profile_sync_version(id)
         })
     }
 
@@ -311,7 +314,9 @@ impl WriteCommandsProfile<'_> {
             .await?;
 
         db_transaction!(self, move |mut cmds| {
-            cmds.profile().data().profile_last_seen_time(id, last_seen_time)
+            cmds.profile()
+                .data()
+                .profile_last_seen_time(id, last_seen_time)
         })
     }
 

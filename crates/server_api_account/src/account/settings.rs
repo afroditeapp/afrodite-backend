@@ -3,8 +3,7 @@ use model_account::{
     AccountData, AccountIdInternal, BooleanSetting, EventToClientInternal, ProfileVisibility,
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::{create_open_api_router, db_write, db_write_multiple};
+use server_api::{create_open_api_router, db_write, db_write_multiple, S};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
@@ -153,16 +152,17 @@ pub async fn put_setting_unlimited_likes(
 ) -> Result<(), StatusCode> {
     ACCOUNT.put_setting_unlimited_likes.incr();
 
-    state.data_all_access().update_unlimited_likes(id, new_value.value).await?;
+    state
+        .data_all_access()
+        .update_unlimited_likes(id, new_value.value)
+        .await?;
 
     internal_api::common::sync_unlimited_likes(&state, id).await?;
 
     Ok(())
 }
 
-pub fn settings_router(
-    s: S,
-) -> OpenApiRouter {
+pub fn settings_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
         get_account_data,

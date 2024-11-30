@@ -4,7 +4,8 @@ use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    schema_sqlite_types::Integer, AccountId, AccountStateRelatedSharedState, AccountSyncVersion, ProfileAge
+    schema_sqlite_types::Integer, AccountId, AccountStateRelatedSharedState, AccountSyncVersion,
+    ProfileAge,
 };
 
 mod news;
@@ -128,8 +129,6 @@ impl Default for AccountState {
     }
 }
 
-
-
 macro_rules! define_permissions {
     (struct $struct_name:ident, $( $( #[doc = $text:literal] )* $name:ident , )* ) => {
 
@@ -247,7 +246,6 @@ impl TryFrom<i64> for ProfileVisibility {
 
 diesel_i64_try_from!(ProfileVisibility);
 
-
 /// ID which client receives from server once.
 /// Next value is incremented compared to previous value, so
 /// in practice the ID can be used as unique ID even if it
@@ -324,16 +322,13 @@ impl ClientLocalId {
 
 diesel_i64_wrapper!(ClientLocalId);
 
-
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, Deserialize)]
 pub enum EmailMessages {
     AccountRegistered,
 }
 
 impl EmailMessages {
-    pub const VARIANTS: &'static [EmailMessages] = &[
-        EmailMessages::AccountRegistered,
-    ];
+    pub const VARIANTS: &'static [EmailMessages] = &[EmailMessages::AccountRegistered];
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]

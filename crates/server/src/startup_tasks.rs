@@ -1,9 +1,12 @@
 use model_account::{EmailMessages, EmailSendingState};
-use server_api::{app::{EmailSenderImpl, GetConfig, ReadData, WriteData}, db_write_raw};
+use server_api::{
+    app::{EmailSenderImpl, GetConfig, ReadData, WriteData},
+    db_write_raw,
+};
 use server_common::{data::DataError, result::Result};
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
-use server_data_profile::write::GetWriteCommandsProfile;
 use server_data_account::read::GetReadCommandsAccount;
+use server_data_profile::write::GetWriteCommandsProfile;
 use server_state::S;
 
 pub struct StartupTasks {
@@ -38,21 +41,24 @@ impl StartupTasks {
         .await
     }
 
-    async fn handle_account_specific_tasks(state: &S, email_sender: EmailSenderImpl) -> Result<(), DataError> {
+    async fn handle_account_specific_tasks(
+        state: &S,
+        email_sender: EmailSenderImpl,
+    ) -> Result<(), DataError> {
         let ids = state.read().common().account_ids_internal_vec().await?;
 
         for id in ids {
             // Email
             let email_state = state.read().account().email().email_state(id).await?;
-            let send_if_needed = |
-                state: &EmailSendingState,
-                message: EmailMessages
-            | {
+            let send_if_needed = |state: &EmailSendingState, message: EmailMessages| {
                 if *state == EmailSendingState::SendRequested {
                     email_sender.send(id, message)
                 }
             };
-            send_if_needed(&email_state.account_registered_state_number, EmailMessages::AccountRegistered);
+            send_if_needed(
+                &email_state.account_registered_state_number,
+                EmailMessages::AccountRegistered,
+            );
 
             db_write_raw!(state, move |cmds| {
                 // FCM
@@ -63,8 +69,7 @@ impl StartupTasks {
                     .await;
 
                 // Remove tmp files
-                cmds.common()
-                    .remove_tmp_files(id).await?;
+                cmds.common().remove_tmp_files(id).await?;
 
                 Ok(())
             })

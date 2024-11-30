@@ -1,4 +1,3 @@
-
 use axum::extract::ws::{Message, WebSocket};
 use config::Config;
 use model_chat::{
@@ -6,13 +5,14 @@ use model_chat::{
     SyncCheckDataType, SyncCheckResult, SyncDataVersionFromClient, SyncVersionFromClient,
     SyncVersionUtils,
 };
-
 use server_common::websocket::WebSocketError;
-use server_data::{db_manager::RouterDatabaseReadHandle, read::GetReadCommandsCommon, write_commands::WriteCommandRunnerHandle};
-
+use server_data::{
+    db_manager::RouterDatabaseReadHandle,
+    read::GetReadCommandsCommon,
+    result::{Result, WrappedResultExt},
+    write_commands::WriteCommandRunnerHandle,
+};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
-
-use server_data::result::{Result, WrappedResultExt};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 
@@ -75,7 +75,14 @@ pub async fn sync_data_with_client_if_needed(
         match version.data_type {
             SyncCheckDataType::Account => {
                 if config.components().account {
-                    handle_account_data_sync(read_handle, write_handle, socket, id, version.version).await?;
+                    handle_account_data_sync(
+                        read_handle,
+                        write_handle,
+                        socket,
+                        id,
+                        version.version,
+                    )
+                    .await?;
                 }
             }
             SyncCheckDataType::ReveivedBlocks => {
@@ -206,11 +213,12 @@ async fn handle_account_data_sync(
     let account = match account.sync_version().check_is_sync_required(sync_version) {
         SyncCheckResult::DoNothing => return Ok(()),
         SyncCheckResult::ResetVersionAndSync => {
-            write_handle.write(move |cmds| async move {
-                cmds.account().reset_syncable_account_data_version(id).await
-            })
-            .await
-            .change_context(WebSocketError::AccountDataVersionResetFailed)?;
+            write_handle
+                .write(move |cmds| async move {
+                    cmds.account().reset_syncable_account_data_version(id).await
+                })
+                .await
+                .change_context(WebSocketError::AccountDataVersionResetFailed)?;
 
             read_handle
                 .common()
@@ -262,16 +270,17 @@ async fn handle_chat_state_version_check<T: SyncVersionUtils>(
     let check_this_version = getter(&mut chat_state);
     match check_this_version.check_is_sync_required(sync_version) {
         SyncCheckResult::DoNothing => return Ok(()),
-        SyncCheckResult::ResetVersionAndSync => write_handle.write(move |cmds| async move {
-            cmds.chat()
-                .modify_chat_state(id, move |s| {
-                    let version_to_be_reseted = getter(s);
-                    *version_to_be_reseted = Default::default();
-                })
-                .await
-        })
-        .await
-        .change_context(WebSocketError::ChatDataVersionResetFailed)?,
+        SyncCheckResult::ResetVersionAndSync => write_handle
+            .write(move |cmds| async move {
+                cmds.chat()
+                    .modify_chat_state(id, move |s| {
+                        let version_to_be_reseted = getter(s);
+                        *version_to_be_reseted = Default::default();
+                    })
+                    .await
+            })
+            .await
+            .change_context(WebSocketError::ChatDataVersionResetFailed)?,
         SyncCheckResult::Sync => (),
     };
 
@@ -295,13 +304,14 @@ async fn handle_profile_attributes_sync_version_check(
         .profile_attributes_sync_version;
     match current.check_is_sync_required(sync_version) {
         SyncCheckResult::DoNothing => return Ok(()),
-        SyncCheckResult::ResetVersionAndSync => write_handle.write(move |cmds| async move {
-            cmds.profile()
-                .reset_profile_attributes_sync_version(id)
-                .await
-        })
-        .await
-        .change_context(WebSocketError::ProfileAttributesSyncVersionResetFailed)?,
+        SyncCheckResult::ResetVersionAndSync => write_handle
+            .write(move |cmds| async move {
+                cmds.profile()
+                    .reset_profile_attributes_sync_version(id)
+                    .await
+            })
+            .await
+            .change_context(WebSocketError::ProfileAttributesSyncVersionResetFailed)?,
         SyncCheckResult::Sync => (),
     };
 
@@ -329,21 +339,14 @@ async fn handle_profile_sync_version_check(
         .profile_sync_version;
     match current.check_is_sync_required(sync_version) {
         SyncCheckResult::DoNothing => return Ok(()),
-        SyncCheckResult::ResetVersionAndSync => write_handle.write(move |cmds| async move {
-            cmds.profile()
-                .reset_profile_sync_version(id)
-                .await
-        })
+        SyncCheckResult::ResetVersionAndSync => write_handle
+            .write(move |cmds| async move { cmds.profile().reset_profile_sync_version(id).await })
             .await
             .change_context(WebSocketError::ProfileSyncVersionResetFailed)?,
         SyncCheckResult::Sync => (),
     };
 
-    send_event(
-        socket,
-        EventToClientInternal::ProfileChanged,
-    )
-    .await?;
+    send_event(socket, EventToClientInternal::ProfileChanged).await?;
 
     Ok(())
 }
@@ -364,22 +367,19 @@ async fn handle_news_count_sync_version_check(
         .v;
     match current.check_is_sync_required(sync_version) {
         SyncCheckResult::DoNothing => return Ok(()),
-        SyncCheckResult::ResetVersionAndSync => write_handle.write(move |cmds| async move {
-            cmds.account()
-                .news()
-                .reset_news_count_sync_version(id)
-                .await
-        })
+        SyncCheckResult::ResetVersionAndSync => write_handle
+            .write(move |cmds| async move {
+                cmds.account()
+                    .news()
+                    .reset_news_count_sync_version(id)
+                    .await
+            })
             .await
             .change_context(WebSocketError::NewsCountSyncVersionResetFailed)?,
         SyncCheckResult::Sync => (),
     };
 
-    send_event(
-        socket,
-        EventToClientInternal::NewsChanged,
-    )
-    .await?;
+    send_event(socket, EventToClientInternal::NewsChanged).await?;
 
     Ok(())
 }

@@ -1,10 +1,13 @@
 use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
-use model_chat::{AccountIdInternal, AccountInteractionState, ClientId, ClientLocalId, MessageNumber, NewPendingMessageValues, PendingMessageIdInternal, SentMessageId, UnixTime};
-use crate::{current::write::GetDbWriteCommandsChat, IntoDatabaseError};
+use model_chat::{
+    AccountIdInternal, AccountInteractionState, ClientId, ClientLocalId, MessageNumber,
+    NewPendingMessageValues, PendingMessageIdInternal, SentMessageId, UnixTime,
+};
 
 use super::ReceiverBlockedSender;
+use crate::{current::write::GetDbWriteCommandsChat, IntoDatabaseError};
 
 define_current_write_commands!(CurrentWriteChatMessage);
 
@@ -73,8 +76,11 @@ impl CurrentWriteChatMessage<'_> {
         receiver: AccountIdInternal,
         message: Vec<u8>,
         client_id_value: ClientId,
-        client_local_id_value: ClientLocalId
-    ) -> Result<std::result::Result<NewPendingMessageValues, ReceiverBlockedSender>, DieselDatabaseError> {
+        client_local_id_value: ClientLocalId,
+    ) -> Result<
+        std::result::Result<NewPendingMessageValues, ReceiverBlockedSender>,
+        DieselDatabaseError,
+    > {
         use model::schema::{account_interaction, pending_messages::dsl::*};
         let time = UnixTime::current_time();
         let interaction = self
@@ -97,9 +103,7 @@ impl CurrentWriteChatMessage<'_> {
         }
 
         update(account_interaction::table.find(interaction.id))
-            .set((
-                account_interaction::message_counter.eq(new_message_number),
-            ))
+            .set((account_interaction::message_counter.eq(new_message_number),))
             .execute(self.conn())
             .into_db_error((sender, receiver, new_message_number))?;
 

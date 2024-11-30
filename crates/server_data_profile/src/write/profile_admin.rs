@@ -6,7 +6,9 @@ pub mod profile_text;
 define_cmd_wrapper_write!(WriteCommandsProfileAdmin);
 
 impl<'a> WriteCommandsProfileAdmin<'a> {
-    pub fn profile_name_allowlist(self) -> profile_name_allowlist::WriteCommandsProfileAdminProfileNameAllowlist<'a> {
+    pub fn profile_name_allowlist(
+        self,
+    ) -> profile_name_allowlist::WriteCommandsProfileAdminProfileNameAllowlist<'a> {
         profile_name_allowlist::WriteCommandsProfileAdminProfileNameAllowlist::new(self.0)
     }
 

@@ -1,4 +1,3 @@
-
 #[macro_export]
 macro_rules! define_cmd_wrapper_read {
     ($struct_name:ident) => {
@@ -27,7 +26,7 @@ macro_rules! define_cmd_wrapper_read {
                 self.0.cache()
             }
         }
-    }
+    };
 }
 
 #[macro_export]
@@ -58,11 +57,15 @@ macro_rules! define_cmd_wrapper_write {
                 $crate::db_manager::InternalWriting::root(&self.0)
             }
 
-            fn current_write_handle(&self) -> &$crate::db_manager::handle_types::CurrentWriteHandle {
+            fn current_write_handle(
+                &self,
+            ) -> &$crate::db_manager::handle_types::CurrentWriteHandle {
                 $crate::db_manager::InternalWriting::current_write_handle(&self.0)
             }
 
-            fn history_write_handle(&self) -> &$crate::db_manager::handle_types::HistoryWriteHandle {
+            fn history_write_handle(
+                &self,
+            ) -> &$crate::db_manager::handle_types::HistoryWriteHandle {
                 $crate::db_manager::InternalWriting::history_write_handle(&self.0)
             }
 
@@ -86,7 +89,9 @@ macro_rules! define_cmd_wrapper_write {
                 $crate::db_manager::InternalWriting::media_backup(&self.0)
             }
 
-            fn push_notification_sender(&self) -> &$crate::db_manager::handle_types::PushNotificationSender {
+            fn push_notification_sender(
+                &self,
+            ) -> &$crate::db_manager::handle_types::PushNotificationSender {
                 $crate::db_manager::InternalWriting::push_notification_sender(&self.0)
             }
 
@@ -94,5 +99,5 @@ macro_rules! define_cmd_wrapper_write {
                 $crate::db_manager::InternalWriting::email_sender(&self.0)
             }
         }
-    }
+    };
 }

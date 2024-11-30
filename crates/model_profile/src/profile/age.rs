@@ -1,4 +1,3 @@
-
 use model_server_data::ProfileSearchAgeRangeValidated;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;

@@ -15,7 +15,7 @@ pub trait GetWriteCommandsProfile<'a> {
     fn profile_admin_history(self) -> WriteCommandsProfileAdminHistory<'a>;
 }
 
-impl <'a, I: WriteAccessProvider<'a>> GetWriteCommandsProfile<'a> for I {
+impl<'a, I: WriteAccessProvider<'a>> GetWriteCommandsProfile<'a> for I {
     fn profile(self) -> WriteCommandsProfile<'a> {
         WriteCommandsProfile::new(self.handle())
     }

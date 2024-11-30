@@ -10,8 +10,7 @@ use manager::{ManagerEvent, ManagerEventReceiver, TestManager};
 use tokio::{select, signal};
 use tracing::{error, info};
 
-use crate::{
-    client::ApiClient, ServerTestError, TestFunction};
+use crate::{client::ApiClient, ServerTestError, TestFunction};
 
 pub mod assert;
 pub mod context;
@@ -60,13 +59,12 @@ impl QaTestRunner {
         let (manager_event_receiver, manager_quit_handle) = TestManager::new_manager(
             self.config.clone(),
             self.test_config.clone(),
-            test_functions.clone()
+            test_functions.clone(),
         );
 
-        RunnerUi::new(
-            test_functions,
-            manager_event_receiver,
-        ).run().await;
+        RunnerUi::new(test_functions, manager_event_receiver)
+            .run()
+            .await;
 
         manager_quit_handle.wait_quit().await;
     }
@@ -140,7 +138,8 @@ impl RunnerUi {
                 &mut self.manager_event_receiver,
                 &current_test,
                 &mut pending_events,
-            ).await;
+            )
+            .await;
 
             match result {
                 Ok(()) => println!("ok"),
@@ -207,12 +206,8 @@ async fn wait_that_correct_test_event_is_received(
 
 fn handle_event(e: ManagerEvent) -> Result<(), ErrorInfo> {
     match e {
-        ManagerEvent::Success { .. } => {
-            Ok(())
-        }
-        ManagerEvent::Fail { error, logs, .. } => {
-            Err(ErrorInfo { error, logs })
-        }
+        ManagerEvent::Success { .. } => Ok(()),
+        ManagerEvent::Fail { error, logs, .. } => Err(ErrorInfo { error, logs }),
     }
 }
 

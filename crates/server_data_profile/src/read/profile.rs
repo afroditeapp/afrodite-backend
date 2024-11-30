@@ -1,9 +1,11 @@
 use database_profile::current::read::GetDbReadCommandsProfile;
 use model_profile::{
-    AcceptedProfileAges, AccountIdInternal, GetMyProfileResult, Location, Profile, ProfileAndProfileVersion, ProfileAttributeFilterList, ProfileInternal, ProfileStateInternal, UnixTime
+    AcceptedProfileAges, AccountIdInternal, GetMyProfileResult, Location, Profile,
+    ProfileAndProfileVersion, ProfileAttributeFilterList, ProfileInternal, ProfileStateInternal,
+    UnixTime,
 };
 use server_data::{
-    define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError
+    define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError,
 };
 
 use crate::cache::CacheReadProfile;
@@ -23,14 +25,15 @@ impl ReadCommandsProfile<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<ProfileInternal, DataError> {
-        self.read_cache_profile_and_common(id, move |p, _| {
-            Ok(p.data.clone())
-        })
-        .await
-        .into_error()
+        self.read_cache_profile_and_common(id, move |p, _| Ok(p.data.clone()))
+            .await
+            .into_error()
     }
 
-    pub async fn profile(&self, id: AccountIdInternal) -> Result<ProfileAndProfileVersion, DataError> {
+    pub async fn profile(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<ProfileAndProfileVersion, DataError> {
         self.read_cache_profile_and_common(id, move |data, c| {
             Ok(ProfileAndProfileVersion {
                 profile: Profile::new(
@@ -49,10 +52,11 @@ impl ReadCommandsProfile<'_> {
     }
 
     pub async fn my_profile(&self, id: AccountIdInternal) -> Result<GetMyProfileResult, DataError> {
-        let last_seen_time = self.read_cache_profile_and_common(id, move |cache, common| {
-            Ok(cache.last_seen_time(common))
-        })
-        .await?;
+        let last_seen_time =
+            self.read_cache_profile_and_common(id, move |cache, common| {
+                Ok(cache.last_seen_time(common))
+            })
+            .await?;
 
         self.db_read(move |mut cmds| cmds.profile().data().my_profile(id, last_seen_time))
             .await

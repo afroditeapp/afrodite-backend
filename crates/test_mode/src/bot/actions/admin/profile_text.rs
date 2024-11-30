@@ -1,16 +1,19 @@
 use std::{fmt::Debug, time::Instant};
 
 use api_client::{apis::profile_admin_api, models::ProfileTextModerationRejectedReasonDetails};
-use async_openai::{config::OpenAIConfig, types::{ChatCompletionRequestMessage, CreateChatCompletionRequest}, Client};
+use async_openai::{
+    config::OpenAIConfig,
+    types::{ChatCompletionRequestMessage, CreateChatCompletionRequest},
+    Client,
+};
 use async_trait::async_trait;
 use config::{bot_config_file::ProfileTextModerationConfig, Config};
 use error_stack::{Result, ResultExt};
 use tracing::error;
 use unicode_segmentation::UnicodeSegmentation;
 
-use crate::client::{ApiClient, TestError};
-
 use super::{BotAction, BotState, EmptyPage};
+use crate::client::{ApiClient, TestError};
 
 #[derive(Debug)]
 pub struct ProfileTextModerationState {
@@ -59,37 +62,35 @@ impl AdminBotProfileTextModerationLogic {
                 continue;
             }
 
-            let profile_text_paragraph = request.text
-                .lines()
-                .collect::<Vec<&str>>()
-                .join(" ");
+            let profile_text_paragraph = request.text.lines().collect::<Vec<&str>>().join(" ");
 
             let user_text = config.user_text_template.replace(
                 ProfileTextModerationConfig::TEMPLATE_FORMAT_ARGUMENT,
                 &profile_text_paragraph,
             );
 
-            let r = client.chat().create(CreateChatCompletionRequest {
-                messages: vec![
-                    ChatCompletionRequestMessage::System(config.system_text.clone().into()),
-                    ChatCompletionRequestMessage::User(user_text.into()),
-                ],
-                model: config.model.clone(),
-                temperature: Some(0.0),
-                seed: Some(0),
-                max_tokens: Some(10_000),
-                ..Default::default()
-            }).await;
+            let r = client
+                .chat()
+                .create(CreateChatCompletionRequest {
+                    messages: vec![
+                        ChatCompletionRequestMessage::System(config.system_text.clone().into()),
+                        ChatCompletionRequestMessage::User(user_text.into()),
+                    ],
+                    model: config.model.clone(),
+                    temperature: Some(0.0),
+                    seed: Some(0),
+                    max_tokens: Some(10_000),
+                    ..Default::default()
+                })
+                .await;
             let response = match r.map(|r| r.choices.into_iter().next()) {
-                Ok(Some(r)) => {
-                    match r.message.content {
-                        Some(response) => response,
-                        None => {
-                            error!("Profile text moderation error: no response content from LLM");
-                            return Ok(Some(EmptyPage));
-                        }
+                Ok(Some(r)) => match r.message.content {
+                    Some(response) => response,
+                    None => {
+                        error!("Profile text moderation error: no response content from LLM");
+                        return Ok(Some(EmptyPage));
                     }
-                }
+                },
                 Ok(None) => {
                     error!("Profile text moderation error: no response from LLM");
                     return Ok(Some(EmptyPage));
@@ -102,10 +103,12 @@ impl AdminBotProfileTextModerationLogic {
 
             let response_lowercase = response.trim().to_lowercase();
             let response_first_line = response_lowercase.lines().next().unwrap_or_default();
-            let accepted = response_lowercase.starts_with(&expected_response_lowercase) ||
-                response_first_line.contains(&expected_response_lowercase);
+            let accepted = response_lowercase.starts_with(&expected_response_lowercase)
+                || response_first_line.contains(&expected_response_lowercase);
             let rejected_details = if !accepted && server_config.debug_mode() {
-                Some(Some(Box::new(ProfileTextModerationRejectedReasonDetails::new(response))))
+                Some(Some(Box::new(
+                    ProfileTextModerationRejectedReasonDetails::new(response),
+                )))
             } else {
                 None
             };
@@ -136,7 +139,6 @@ impl AdminBotProfileTextModerationLogic {
     }
 }
 
-
 #[async_trait]
 impl BotAction for AdminBotProfileTextModerationLogic {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
@@ -144,21 +146,25 @@ impl BotAction for AdminBotProfileTextModerationLogic {
             return Ok(());
         };
 
-        let moderation_state = state.admin.profile_text.get_or_insert_with(|| {
-            ProfileTextModerationState {
-                moderation_started: None,
-                client: Client::with_config(
-                    OpenAIConfig::new()
-                        .with_api_base(config.openai_api_url.to_string())
-                        .with_api_key("")
-                )
-            }
-        });
+        let moderation_state =
+            state
+                .admin
+                .profile_text
+                .get_or_insert_with(|| ProfileTextModerationState {
+                    moderation_started: None,
+                    client: Client::with_config(
+                        OpenAIConfig::new()
+                            .with_api_base(config.openai_api_url.to_string())
+                            .with_api_key(""),
+                    ),
+                });
 
         let start_time = Instant::now();
 
         if let Some(previous) = moderation_state.moderation_started {
-            if start_time.duration_since(previous).as_secs() < config.moderation_session_min_seconds.into() {
+            if start_time.duration_since(previous).as_secs()
+                < config.moderation_session_min_seconds.into()
+            {
                 return Ok(());
             }
         }
@@ -171,12 +177,16 @@ impl BotAction for AdminBotProfileTextModerationLogic {
                 config,
                 &moderation_state.client,
                 &state.server_config,
-            ).await? {
+            )
+            .await?
+            {
                 break;
             }
 
             let current_time = Instant::now();
-            if current_time.duration_since(start_time).as_secs() > config.moderation_session_max_seconds.into() {
+            if current_time.duration_since(start_time).as_secs()
+                > config.moderation_session_max_seconds.into()
+            {
                 return Ok(());
             }
         }

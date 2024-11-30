@@ -5,10 +5,12 @@ use server_api::{
     db_write_raw,
 };
 use server_common::result::{Result, WrappedResultExt};
-use server_data::content_processing::{notify_client, ContentProcessingReceiver, ProcessingState};
+use server_data::{
+    app::GetConfig,
+    content_processing::{notify_client, ContentProcessingReceiver, ProcessingState},
+};
 use server_data_media::write::GetWriteCommandsMedia;
 use server_state::S;
-use server_data::app::GetConfig;
 use simple_backend::{image::ImageProcess, ServerQuitWatcher};
 use simple_backend_config::args::InputFileType;
 use simple_backend_image_process::ImageProcessingInfo;
@@ -98,7 +100,9 @@ impl ContentProcessingManager {
 
         let mut write = self.state.content_processing().data().write().await;
         if let Some(state) = write.processing_states_mut().get_mut(&content.to_key()) {
-            let result = self.if_successful_save_to_database(self.state.config(), result, state).await;
+            let result = self
+                .if_successful_save_to_database(self.state.config(), result, state)
+                .await;
             match result {
                 Ok(face_detected) => {
                     state
@@ -134,11 +138,12 @@ impl ContentProcessingManager {
         state: &mut ProcessingState,
     ) -> Result<FaceDetected, ContentProcessingError> {
         let info = result?;
-        let face_detected = if let Some(face_detected) = config.simple_backend().override_face_detection_result() {
-            face_detected
-        } else {
-            info.face_detected
-        };
+        let face_detected =
+            if let Some(face_detected) = config.simple_backend().override_face_detection_result() {
+                face_detected
+            } else {
+                info.face_detected
+            };
 
         let state_copy = state.clone();
         db_write_raw!(self.state, move |cmds| {

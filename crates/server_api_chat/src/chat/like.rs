@@ -1,15 +1,19 @@
 use axum::{extract::State, Extension};
-use model_chat::{AccountId, AccountIdInternal, AccountInteractionState, CurrentAccountInteractionState, DeleteLikeResult, LimitedActionStatus, NewReceivedLikesCount, NewReceivedLikesCountResult, PageItemCountForNewLikes, PendingNotificationFlags, ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult, SendLikeResult, SentLikesPage};
+use model_chat::{
+    AccountId, AccountIdInternal, AccountInteractionState, CurrentAccountInteractionState,
+    DeleteLikeResult, LimitedActionStatus, NewReceivedLikesCount, NewReceivedLikesCountResult,
+    PageItemCountForNewLikes, PendingNotificationFlags, ReceivedLikesIteratorSessionId,
+    ReceivedLikesPage, ResetReceivedLikesIteratorResult, SendLikeResult, SentLikesPage,
+};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::{app::EventManagerProvider, create_open_api_router, db_write};
+use server_api::{app::EventManagerProvider, create_open_api_router, db_write, S};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
 use crate::{
-    app::{GetAccounts, ReadData,WriteData},
+    app::{GetAccounts, ReadData, WriteData},
     db_write_multiple,
 };
 
@@ -49,16 +53,18 @@ pub async fn post_send_like(
         if let Some(current_interaction) = current_interaction {
             match current_interaction.state_number {
                 AccountInteractionState::Empty => (),
-                AccountInteractionState::Match =>
+                AccountInteractionState::Match => {
                     return Ok(SendLikeResult::error_account_interaction_state_mismatch(
-                        CurrentAccountInteractionState::Match
-                    )),
-                AccountInteractionState::Like =>
+                        CurrentAccountInteractionState::Match,
+                    ))
+                }
+                AccountInteractionState::Like => {
                     if current_interaction.account_id_sender == Some(id.into_db_id()) {
                         return Ok(SendLikeResult::error_account_interaction_state_mismatch(
-                            CurrentAccountInteractionState::LikeSent
+                            CurrentAccountInteractionState::LikeSent,
                         ));
                     }
+                }
             }
         }
 
@@ -71,9 +77,10 @@ pub async fn post_send_like(
         let allow_action = if unlimited_likes_enabled_for_both {
             true
         } else {
-            cmds
-                .chat()
-                .modify_chat_limits(id, |limits| limits.like_limit.is_limit_not_reached(cmds.config()))
+            cmds.chat()
+                .modify_chat_limits(id, |limits| {
+                    limits.like_limit.is_limit_not_reached(cmds.config())
+                })
                 .await??
         };
 
@@ -93,9 +100,10 @@ pub async fn post_send_like(
         let status = if unlimited_likes_enabled_for_both {
             LimitedActionStatus::Success
         } else {
-            cmds
-                .chat()
-                .modify_chat_limits(id, |limits| limits.like_limit.increment_if_possible(cmds.config()))
+            cmds.chat()
+                .modify_chat_limits(id, |limits| {
+                    limits.like_limit.increment_if_possible(cmds.config())
+                })
                 .await??
                 .to_action_status()
         };
@@ -161,7 +169,10 @@ pub async fn post_get_new_received_likes_count(
 
     state
         .event_manager()
-        .remove_specific_pending_notification_flags_from_cache(id, PendingNotificationFlags::RECEIVED_LIKES_CHANGED)
+        .remove_specific_pending_notification_flags_from_cache(
+            id,
+            PendingNotificationFlags::RECEIVED_LIKES_CHANGED,
+        )
         .await;
 
     Ok(r.into())
@@ -248,12 +259,9 @@ pub async fn post_get_next_received_likes_page(
     CHAT.post_get_next_received_likes_page.incr();
 
     let data = state
-        .concurrent_write_profile_blocking(
-            account_id.as_id(),
-            move |cmds| {
-                cmds.next_received_likes_iterator_state(account_id, iterator_session_id)
-            }
-        )
+        .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {
+            cmds.next_received_likes_iterator_state(account_id, iterator_session_id)
+        })
         .await??;
 
     if let Some(data) = data {
@@ -267,13 +275,15 @@ pub async fn post_get_next_received_likes_page(
             n: new_likes_count,
             p: profiles,
             error_invalid_iterator_session_id: false,
-        }.into())
+        }
+        .into())
     } else {
         Ok(ReceivedLikesPage {
             n: PageItemCountForNewLikes::default(),
             p: vec![],
             error_invalid_iterator_session_id: true,
-        }.into())
+        }
+        .into())
     }
 }
 
@@ -311,14 +321,16 @@ pub async fn delete_like(
             .await?;
         if let Some(current_interaction) = current_interaction {
             match current_interaction.state_number {
-                AccountInteractionState::Empty =>
+                AccountInteractionState::Empty => {
                     return Ok(DeleteLikeResult::error_account_interaction_state_mismatch(
-                        CurrentAccountInteractionState::Empty
-                    )),
-                AccountInteractionState::Match =>
+                        CurrentAccountInteractionState::Empty,
+                    ))
+                }
+                AccountInteractionState::Match => {
                     return Ok(DeleteLikeResult::error_account_interaction_state_mismatch(
-                        CurrentAccountInteractionState::Match
-                    )),
+                        CurrentAccountInteractionState::Match,
+                    ))
+                }
                 AccountInteractionState::Like => (),
             }
         }
@@ -335,10 +347,7 @@ pub async fn delete_like(
             return Ok(DeleteLikeResult::error_delete_already_done_once_before());
         }
 
-        let changes = cmds
-            .chat()
-            .delete_like(id, requested_profile)
-            .await?;
+        let changes = cmds.chat().delete_like(id, requested_profile).await?;
         cmds.events()
             .handle_chat_state_changes(changes.sender)
             .await?;

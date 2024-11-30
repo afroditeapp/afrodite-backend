@@ -1,13 +1,21 @@
-use axum::{body::Body, extract::{Query, State}, Extension};
+use axum::{
+    body::Body,
+    extract::{Query, State},
+    Extension,
+};
 use axum_extra::TypedHeader;
 use headers::ContentType;
 use model_chat::{
-    AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber, NotificationEvent, PendingMessageAcknowledgementList, SendMessageResult, SendMessageToAccountParams, SentMessageIdList, UpdateMessageViewStatus
+    AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber,
+    NotificationEvent, PendingMessageAcknowledgementList, SendMessageResult,
+    SendMessageToAccountParams, SentMessageIdList, UpdateMessageViewStatus,
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::create_open_api_router;
-use server_data_chat::{read::GetReadChatCommands, write::{chat::PushNotificationAllowed, GetWriteCommandsChat}};
+use server_api::{create_open_api_router, S};
+use server_data_chat::{
+    read::GetReadChatCommands,
+    write::{chat::PushNotificationAllowed, GetWriteCommandsChat},
+};
 use simple_backend::create_counters;
 use tracing::error;
 use utoipa_axum::router::OpenApiRouter;
@@ -17,7 +25,7 @@ use super::super::{
     utils::{Json, StatusCode},
 };
 use crate::{
-    app::{GetAccounts, ReadData,WriteData},
+    app::{GetAccounts, ReadData, WriteData},
     db_write_multiple,
 };
 
@@ -68,26 +76,22 @@ pub async fn get_pending_messages(
                 return Err(StatusCode::INTERNAL_SERVER_ERROR);
             }
         };
-        let json_length: u16 = match pending_message_json
-            .len()
-            .try_into() {
-                Ok(len) => len,
-                Err(_) => {
-                    error!("Pending message JSON is too large");
-                    return Err(StatusCode::INTERNAL_SERVER_ERROR);
-                }
-            };
+        let json_length: u16 = match pending_message_json.len().try_into() {
+            Ok(len) => len,
+            Err(_) => {
+                error!("Pending message JSON is too large");
+                return Err(StatusCode::INTERNAL_SERVER_ERROR);
+            }
+        };
         bytes.extend_from_slice(&json_length.to_le_bytes());
         bytes.extend_from_slice(pending_message_json.as_bytes());
-        let message_length: u16 = match p.message
-            .len()
-            .try_into() {
-                Ok(len) => len,
-                Err(_) => {
-                    error!("Pending message data is too large");
-                    return Err(StatusCode::INTERNAL_SERVER_ERROR);
-                }
-            };
+        let message_length: u16 = match p.message.len().try_into() {
+            Ok(len) => len,
+            Err(_) => {
+                error!("Pending message data is too large");
+                return Err(StatusCode::INTERNAL_SERVER_ERROR);
+            }
+        };
         bytes.extend_from_slice(&message_length.to_le_bytes());
         bytes.extend_from_slice(&p.message);
     }
@@ -181,11 +185,7 @@ pub async fn post_message_number_of_latest_viewed_message(
     let message_sender = state.get_internal_id(update_info.sender).await?;
     db_write_multiple!(state, move |cmds| {
         cmds.chat()
-            .update_message_number_of_latest_viewed_message(
-                id,
-                message_sender,
-                update_info.mn,
-            )
+            .update_message_number_of_latest_viewed_message(id, message_sender, update_info.mn)
             .await?;
 
         cmds.events()
@@ -240,10 +240,11 @@ pub async fn post_send_message(
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     let Some(message_reciever) = state.get_internal_id_optional(query_params.receiver).await else {
-        return Ok(SendMessageResult::receiver_blocked_sender_or_receiver_not_found().into())
+        return Ok(SendMessageResult::receiver_blocked_sender_or_receiver_not_found().into());
     };
     let result = db_write_multiple!(state, move |cmds| {
-        let (result, push_notification_allowed) = cmds.chat()
+        let (result, push_notification_allowed) = cmds
+            .chat()
             .insert_pending_message_if_match_and_not_blocked(
                 id,
                 message_reciever,
@@ -257,16 +258,19 @@ pub async fn post_send_message(
 
         if !result.is_err() {
             match push_notification_allowed {
-                Some(PushNotificationAllowed) =>
-                    cmds.events()
-                        .send_notification(message_reciever, NotificationEvent::NewMessageReceived)
-                        .await
-                        .ignore_and_log_error(),
-                None =>
-                    cmds.events()
-                        .send_connected_event(message_reciever, EventToClientInternal::NewMessageReceived)
-                        .await
-                        .ignore_and_log_error(),
+                Some(PushNotificationAllowed) => cmds
+                    .events()
+                    .send_notification(message_reciever, NotificationEvent::NewMessageReceived)
+                    .await
+                    .ignore_and_log_error(),
+                None => cmds
+                    .events()
+                    .send_connected_event(
+                        message_reciever,
+                        EventToClientInternal::NewMessageReceived,
+                    )
+                    .await
+                    .ignore_and_log_error(),
             }
         }
 
@@ -277,8 +281,7 @@ pub async fn post_send_message(
 }
 
 #[obfuscate_api]
-const PATH_GET_SENT_MESSAGE_IDS: &str =
-    "/chat_api/sent_message_ids";
+const PATH_GET_SENT_MESSAGE_IDS: &str = "/chat_api/sent_message_ids";
 
 #[utoipa::path(
     get,
@@ -295,20 +298,13 @@ pub async fn get_sent_message_ids(
     Extension(id): Extension<AccountIdInternal>,
 ) -> Result<Json<SentMessageIdList>, StatusCode> {
     CHAT.get_sent_message_ids.incr();
-    let ids = state
-        .read()
-        .chat()
-        .all_sent_messages(id)
-        .await?;
-    let id_list = SentMessageIdList {
-        ids,
-    };
+    let ids = state.read().chat().all_sent_messages(id).await?;
+    let id_list = SentMessageIdList { ids };
     Ok(id_list.into())
 }
 
 #[obfuscate_api]
-const PATH_POST_ADD_SENDER_ACKNOWLEDGEMENT: &str =
-    "/chat_api/add_sender_acknowledgement";
+const PATH_POST_ADD_SENDER_ACKNOWLEDGEMENT: &str = "/chat_api/add_sender_acknowledgement";
 
 #[utoipa::path(
     post,
@@ -328,7 +324,11 @@ pub async fn post_add_sender_acknowledgement(
 ) -> Result<(), StatusCode> {
     CHAT.post_add_sender_acknowledgement.incr();
     db_write!(state, move |cmds| {
-        cmds.chat().add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(id, id_list.ids)
+        cmds.chat()
+            .add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(
+                id,
+                id_list.ids,
+            )
     })?;
     Ok(())
 }

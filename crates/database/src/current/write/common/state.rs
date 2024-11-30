@@ -2,12 +2,15 @@ use chrono::NaiveDate;
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    Account, AccountIdInternal, AccountState, AccountStateRelatedSharedState, AccountSyncVersion, Permissions, ProfileVisibility, SharedStateRaw, SyncVersionUtils
+    Account, AccountIdInternal, AccountState, AccountStateRelatedSharedState, AccountSyncVersion,
+    Permissions, ProfileVisibility, SharedStateRaw, SyncVersionUtils,
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
 
-use crate::{current::read::GetDbReadCommandsCommon, define_current_write_commands, IntoDatabaseError};
+use crate::{
+    current::read::GetDbReadCommandsCommon, define_current_write_commands, IntoDatabaseError,
+};
 
 define_current_write_commands!(CurrentWriteCommonState);
 
@@ -153,7 +156,8 @@ impl CurrentWriteCommonState<'_> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
-        let mut shared_state: AccountStateRelatedSharedState = self.read().common().account(id)?.into();
+        let mut shared_state: AccountStateRelatedSharedState =
+            self.read().common().account(id)?.into();
         shared_state.sync_version = AccountSyncVersion::default();
         self.update_account_related_shared_state(id, shared_state)?;
         Ok(())

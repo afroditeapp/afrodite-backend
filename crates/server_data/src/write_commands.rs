@@ -2,7 +2,8 @@
 //!
 
 use std::{
-    future::Future, sync::{Arc, OnceLock}
+    future::Future,
+    sync::{Arc, OnceLock},
 };
 
 use config::Config;
@@ -13,7 +14,10 @@ use super::write_concurrent::{
     ConcurrentWriteAction, ConcurrentWriteCommandHandle, ConcurrentWriteSelectorHandle,
 };
 use crate::{
-    db_manager::RouterDatabaseWriteHandle, result::{WrappedContextExt, WrappedResultExt}, write_concurrent::ConcurrentWriteProfileHandleBlocking, DataError
+    db_manager::RouterDatabaseWriteHandle,
+    result::{WrappedContextExt, WrappedResultExt},
+    write_concurrent::ConcurrentWriteProfileHandleBlocking,
+    DataError,
 };
 
 pub type WriteCmds = Cmds;
@@ -47,7 +51,10 @@ pub struct WriteCommandRunnerHandle {
 }
 
 impl WriteCommandRunnerHandle {
-    pub async fn new(write: Arc<RouterDatabaseWriteHandle>, config: &Config) -> (Self, WriteCmdWatcher) {
+    pub async fn new(
+        write: Arc<RouterDatabaseWriteHandle>,
+        config: &Config,
+    ) -> (Self, WriteCmdWatcher) {
         let (quit_lock, quit_handle) = mpsc::channel::<()>(1);
         *get_quit_lock().lock().await = Some(quit_lock);
 
@@ -133,7 +140,8 @@ impl WriteCommandRunnerHandle {
             .ok_or(DataError::ServerClosingInProgress.report())?;
         drop(quit_lock_storage);
 
-        let lock = self.concurrent_write
+        let lock = self
+            .concurrent_write
             .accquire(account)
             .await
             .profile_blocking()

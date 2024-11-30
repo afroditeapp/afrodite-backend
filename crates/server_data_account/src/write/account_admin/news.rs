@@ -1,26 +1,17 @@
 use database_account::current::write::GetDbWriteCommandsAccount;
 use model_account::{AccountIdInternal, NewsId, NewsLocale, UpdateNewsTranslation};
-use server_data::{
-    define_cmd_wrapper_write, result::Result, DataError, write::DbTransaction,
-};
+use server_data::{define_cmd_wrapper_write, result::Result, write::DbTransaction, DataError};
 
 define_cmd_wrapper_write!(WriteCommandsAccountNewsAdmin);
 
 impl WriteCommandsAccountNewsAdmin<'_> {
-
-    pub async fn create_news_item(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<NewsId, DataError> {
+    pub async fn create_news_item(&self, id: AccountIdInternal) -> Result<NewsId, DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.account_admin().news().create_new_news_item(id)
         })
     }
 
-    pub async fn delete_news_item(
-        &self,
-        id: NewsId,
-    ) -> Result<(), DataError> {
+    pub async fn delete_news_item(&self, id: NewsId) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.account_admin().news().delete_news_item(id)
         })
@@ -34,7 +25,9 @@ impl WriteCommandsAccountNewsAdmin<'_> {
         content: UpdateNewsTranslation,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.account_admin().news().upsert_news_translation(id, nid, locale, content)
+            cmds.account_admin()
+                .news()
+                .upsert_news_translation(id, nid, locale, content)
         })
     }
 
@@ -44,17 +37,17 @@ impl WriteCommandsAccountNewsAdmin<'_> {
         locale: NewsLocale,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.account_admin().news().delete_news_translation(nid, locale)
+            cmds.account_admin()
+                .news()
+                .delete_news_translation(nid, locale)
         })
     }
 
-    pub async fn set_news_publicity(
-        &self,
-        nid: NewsId,
-        is_public: bool,
-    ) -> Result<(), DataError> {
+    pub async fn set_news_publicity(&self, nid: NewsId, is_public: bool) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.account_admin().news().set_news_publicity(nid, is_public)
+            cmds.account_admin()
+                .news()
+                .set_news_publicity(nid, is_public)
         })
     }
 }

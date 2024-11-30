@@ -1,7 +1,10 @@
 use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::{prelude::*, SelectableHelper};
 use error_stack::Result;
-use model_chat::{AccountIdInternal, ChatGlobalState, ChatStateRaw, PublicKey, PublicKeyData, PublicKeyId, PublicKeyVersion, CHAT_GLOBAL_STATE_ROW_TYPE};
+use model_chat::{
+    AccountIdInternal, ChatGlobalState, ChatStateRaw, PublicKey, PublicKeyData, PublicKeyId,
+    PublicKeyVersion, CHAT_GLOBAL_STATE_ROW_TYPE,
+};
 
 use crate::IntoDatabaseError;
 
@@ -10,7 +13,7 @@ mod message;
 
 define_current_read_commands!(CurrentReadChat);
 
-impl <'a> CurrentReadChat<'a> {
+impl<'a> CurrentReadChat<'a> {
     pub fn interaction(self) -> interaction::CurrentReadChatInteraction<'a> {
         interaction::CurrentReadChatInteraction::new(self.cmds)
     }
@@ -44,26 +47,16 @@ impl CurrentReadChat<'_> {
         let query_result: Option<(Option<PublicKeyId>, Option<PublicKeyData>)> = public_key
             .filter(account_id.eq(account_id_value.as_db_id()))
             .filter(public_key_version.eq(version))
-            .select((
-                public_key_id,
-                public_key_data
-            ))
+            .select((public_key_id, public_key_data))
             .first(self.conn())
             .optional()
             .into_db_error(())?;
 
-        if let Some((Some(id), Some(data))) =
-            query_result {
-                Ok(Some(
-                    PublicKey {
-                        id,
-                        version,
-                        data
-                    }
-                ))
-            } else {
-                Ok(None)
-            }
+        if let Some((Some(id), Some(data))) = query_result {
+            Ok(Some(PublicKey { id, version, data }))
+        } else {
+            Ok(None)
+        }
     }
 
     pub fn global_state(&mut self) -> Result<ChatGlobalState, DieselDatabaseError> {

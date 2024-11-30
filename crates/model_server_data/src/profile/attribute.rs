@@ -1,9 +1,7 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::{
-    Attribute, ProfileAttributes
-};
+use crate::{Attribute, ProfileAttributes};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileAttributeValueUpdate {
@@ -30,7 +28,10 @@ pub struct ProfileAttributeValue {
 }
 
 impl ProfileAttributeValue {
-    pub fn try_from_update_and_sort(mut value: ProfileAttributeValueUpdate, attribute: &Attribute) -> Result<Self, String> {
+    pub fn try_from_update_and_sort(
+        mut value: ProfileAttributeValueUpdate,
+        attribute: &Attribute,
+    ) -> Result<Self, String> {
         if attribute.mode.is_number_list() {
             value.v.sort();
         }
@@ -39,7 +40,10 @@ impl ProfileAttributeValue {
 
     pub fn try_from_update(value: ProfileAttributeValueUpdate) -> Result<Self, String> {
         match value.v.first() {
-            Some(_) => Ok(Self { id: value.id, v: value.v }),
+            Some(_) => Ok(Self {
+                id: value.id,
+                v: value.v,
+            }),
             None => Err("Value part1 missing".to_string()),
         }
     }
@@ -96,13 +100,18 @@ pub struct SortedProfileAttributes {
 }
 
 impl SortedProfileAttributes {
-    pub fn new(attributes: Vec<ProfileAttributeValue>, all_attributes: Option<&ProfileAttributes>) -> Self {
+    pub fn new(
+        attributes: Vec<ProfileAttributeValue>,
+        all_attributes: Option<&ProfileAttributes>,
+    ) -> Self {
         let mut attributes = attributes;
         attributes.sort_by(|a, b| a.id.cmp(&b.id));
 
         for a in &mut attributes {
             let id_usize: usize = a.id.into();
-            if let Some(info) = all_attributes.and_then(|attributes| attributes.attributes.get(id_usize)) {
+            if let Some(info) =
+                all_attributes.and_then(|attributes| attributes.attributes.get(id_usize))
+            {
                 if info.mode.is_number_list() {
                     a.v.sort();
                 }

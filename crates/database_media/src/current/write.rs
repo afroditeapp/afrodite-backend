@@ -10,7 +10,7 @@ pub trait GetDbWriteCommandsMedia {
     fn media_admin(&mut self) -> CurrentWriteMediaAdmin;
 }
 
-impl <I: DbWriteAccessProvider> GetDbWriteCommandsMedia for I {
+impl<I: DbWriteAccessProvider> GetDbWriteCommandsMedia for I {
     fn media(&mut self) -> CurrentWriteMedia {
         CurrentWriteMedia::new(self.handle())
     }

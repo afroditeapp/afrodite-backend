@@ -1,18 +1,13 @@
 use axum::{extract::State, Extension};
 use model_account::{AccountIdInternal, AccountSetup, AccountState, SetAccountSetup};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::app::ValidateModerationRequest;
-use server_api::S;
-use server_api::create_open_api_router;
-use server_data_account::{
-    read::GetReadCommandsAccount,
-    write::GetWriteCommandsAccount,
-};
+use server_api::{app::ValidateModerationRequest, create_open_api_router, S};
+use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{ReadData,WriteData},
+    app::{ReadData, WriteData},
     db_write_multiple, internal_api,
     utils::{Json, StatusCode},
 };
@@ -141,9 +136,7 @@ pub async fn post_complete_setup(
 }
 
 /// Contains only routes which require authentication.
-pub fn register_router(
-    s: S,
-) -> OpenApiRouter {
+pub fn register_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
         get_account_setup,

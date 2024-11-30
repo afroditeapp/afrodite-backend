@@ -14,14 +14,17 @@ pub enum SleepUntilLocalClockIsAtError {
     DateTimeCreationForTomorrowFailed,
 }
 
-pub async fn sleep_until_current_time_is_at(wanted_time: UtcTimeValue) -> Result<(), SleepUntilLocalClockIsAtError> {
+pub async fn sleep_until_current_time_is_at(
+    wanted_time: UtcTimeValue,
+) -> Result<(), SleepUntilLocalClockIsAtError> {
     let now: chrono::DateTime<Utc> = Utc::now();
 
     let target_time =
         NaiveTime::from_hms_opt(wanted_time.0.hours.into(), wanted_time.0.minutes.into(), 0)
             .ok_or(SleepUntilLocalClockIsAtError::LocalTimeValueInvalid)?;
 
-    let target_date_time = now.with_time(target_time)
+    let target_date_time = now
+        .with_time(target_time)
         .single()
         .ok_or(SleepUntilLocalClockIsAtError::DateTimeCreationForTodayFailed)?;
 
@@ -29,7 +32,8 @@ pub async fn sleep_until_current_time_is_at(wanted_time: UtcTimeValue) -> Result
         target_date_time - now
     } else {
         let tomorrow = now + Duration::from_secs(24 * 60 * 60);
-        let tomorrow_target_date_time = tomorrow.with_time(target_time)
+        let tomorrow_target_date_time = tomorrow
+            .with_time(target_time)
             .single()
             .ok_or(SleepUntilLocalClockIsAtError::DateTimeCreationForTomorrowFailed)?;
         tomorrow_target_date_time - now

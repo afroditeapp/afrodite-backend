@@ -2,7 +2,8 @@
 
 use database_chat::current::write::chat::ChatStateChanges;
 use model::{
-    AccountId, AccountIdInternal, EventToClient, EventToClientInternal, NotificationEvent, PendingNotificationFlags
+    AccountId, AccountIdInternal, EventToClient, EventToClientInternal, NotificationEvent,
+    PendingNotificationFlags,
 };
 use server_common::{data::IntoDataError, push_notifications::PushNotificationSender};
 use tokio::sync::mpsc::{self, error::TrySendError};
@@ -95,21 +96,22 @@ impl<'a> EventManagerWithCacheReference<'a> {
         action: impl Fn(Option<&EventSender>),
     ) {
         self.cache
-            .read_cache_common_for_logged_in_clients(|entry| action(entry.connection_event_sender()))
+            .read_cache_common_for_logged_in_clients(|entry| {
+                action(entry.connection_event_sender())
+            })
             .await
     }
 
     /// Send only if the client is connected.
     ///
     /// Event will be skipped if event queue is full.
-    pub async fn send_connected_event_to_logged_in_clients(
-        &'a self,
-        event: EventToClientInternal,
-    ) {
+    pub async fn send_connected_event_to_logged_in_clients(&'a self, event: EventToClientInternal) {
         self.access_connection_event_sender_for_logged_in_clients(move |sender| {
             if let Some(sender) = sender {
                 // Ignore errors
-                let _ = sender.sender.try_send(InternalEventType::NormalEvent(event.clone()));
+                let _ = sender
+                    .sender
+                    .try_send(InternalEventType::NormalEvent(event.clone()));
             }
         })
         .await
@@ -126,7 +128,9 @@ impl<'a> EventManagerWithCacheReference<'a> {
         self.access_connection_event_sender(account.into(), move |sender| {
             if let Some(sender) = sender {
                 // Ignore errors
-                let _ = sender.sender.try_send(InternalEventType::NormalEvent(event));
+                let _ = sender
+                    .sender
+                    .try_send(InternalEventType::NormalEvent(event));
             }
         })
         .await
@@ -151,7 +155,10 @@ impl<'a> EventManagerWithCacheReference<'a> {
         let sent = self
             .access_connection_event_sender(account.into(), move |sender| {
                 if let Some(sender) = sender {
-                    match sender.sender.try_send(InternalEventType::Notification(event)) {
+                    match sender
+                        .sender
+                        .try_send(InternalEventType::Notification(event))
+                    {
                         Ok(()) => true,
                         Err(TrySendError::Closed(_) | TrySendError::Full(_)) => false,
                     }
@@ -177,7 +184,10 @@ impl<'a> EventManagerWithCacheReference<'a> {
             .write_cache_common_for_logged_in_clients(|account_id, entry| {
                 entry.pending_notification_flags |= event.into();
                 let sent = if let Some(sender) = entry.connection_event_sender() {
-                    match sender.sender.try_send(InternalEventType::Notification(event)) {
+                    match sender
+                        .sender
+                        .try_send(InternalEventType::Notification(event))
+                    {
                         Ok(()) => true,
                         Err(TrySendError::Closed(_) | TrySendError::Full(_)) => false,
                     }
@@ -196,16 +206,17 @@ impl<'a> EventManagerWithCacheReference<'a> {
         &'a self,
         account: AccountIdInternal,
     ) {
-        let flags_result = self.cache
-            .read_cache_common(account, move |entry| {
-                Ok(entry.pending_notification_flags)
-            })
+        let flags_result = self
+            .cache
+            .read_cache_common(account, move |entry| Ok(entry.pending_notification_flags))
             .await
             .into_data_error(account);
 
         match flags_result {
-            Ok(flags) => if !flags.is_empty() {
-                self.push_notification_sender.send(account);
+            Ok(flags) => {
+                if !flags.is_empty() {
+                    self.push_notification_sender.send(account);
+                }
             }
             Err(e) => error!("Failed to read pending notification flags: {:?}", e),
         }
@@ -216,7 +227,8 @@ impl<'a> EventManagerWithCacheReference<'a> {
         account: AccountIdInternal,
         flags: PendingNotificationFlags,
     ) {
-        let edit_result = self.cache
+        let edit_result = self
+            .cache
             .write_cache_common(account, move |entry| {
                 entry.pending_notification_flags -= flags;
                 Ok(())

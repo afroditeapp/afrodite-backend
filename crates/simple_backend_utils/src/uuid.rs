@@ -1,24 +1,16 @@
-
 use base64::{display::Base64Display, Engine};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(
-    Debug,
-    Copy,
-    Clone,
-    Serialize,
-    Deserialize,
-    Eq,
-    PartialEq,
-    Hash,
-    ToSchema,
-)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, Eq, PartialEq, Hash, ToSchema)]
 #[schema(value_type = String)]
 pub struct UuidBase64Url(
-    #[serde(serialize_with = "uuid_as_string_base_64_url", deserialize_with = "uuid_from_string_base_64_url")]
-    uuid::Uuid
+    #[serde(
+        serialize_with = "uuid_as_string_base_64_url",
+        deserialize_with = "uuid_from_string_base_64_url"
+    )]
+    uuid::Uuid,
 );
 
 impl UuidBase64Url {
@@ -55,9 +47,7 @@ impl std::fmt::Display for UuidBase64Url {
     }
 }
 
-pub fn uuid_as_string_base_64_url<
-    S: Serializer,
->(
+pub fn uuid_as_string_base_64_url<S: Serializer>(
     value: &uuid::Uuid,
     s: S,
 ) -> Result<S::Ok, S::Error> {
@@ -66,15 +56,11 @@ pub fn uuid_as_string_base_64_url<
         .serialize(s)
 }
 
-pub fn uuid_from_string_base_64_url<
-    'de,
-    D: Deserializer<'de>,
->(
-    d: D,
-) -> Result<Uuid, D::Error> {
-    let text  = <&'de str>::deserialize(d)?;
+pub fn uuid_from_string_base_64_url<'de, D: Deserializer<'de>>(d: D) -> Result<Uuid, D::Error> {
+    let text = <&'de str>::deserialize(d)?;
     let mut data_slice = [0u8; 16];
-    let _ = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode_slice(text, &mut data_slice)
+    let _ = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode_slice(text, &mut data_slice)
         .map_err(<D::Error as serde::de::Error>::custom)?;
     Ok(uuid::Uuid::from_bytes(data_slice))
 }

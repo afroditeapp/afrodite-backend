@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use error_stack::{Result, ResultExt};
+use serde::{Deserialize, Serialize};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_database::data::create_dirs_and_get_simple_backend_dir_path;
 use tokio::io::AsyncWriteExt;
@@ -22,9 +22,7 @@ pub struct EmailLimitStateStorage {
 }
 
 impl EmailLimitStateStorage {
-    pub async fn load_and_remove(
-        config: &SimpleBackendConfig,
-    ) -> Result<Self, EmailError> {
+    pub async fn load_and_remove(config: &SimpleBackendConfig) -> Result<Self, EmailError> {
         let config_dir = create_dirs_and_get_simple_backend_dir_path(config)
             .change_context(EmailError::LoadSavedStateFailed)?;
 
@@ -33,8 +31,8 @@ impl EmailLimitStateStorage {
             let loaded_file = tokio::fs::read_to_string(&config_file)
                 .await
                 .change_context(EmailError::LoadSavedStateFailed)?;
-            let loaded_config: EmailLimitStateStorage = toml::from_str(&loaded_file)
-                .change_context(EmailError::LoadSavedStateFailed)?;
+            let loaded_config: EmailLimitStateStorage =
+                toml::from_str(&loaded_file).change_context(EmailError::LoadSavedStateFailed)?;
 
             tokio::fs::remove_file(config_file)
                 .await
@@ -46,17 +44,14 @@ impl EmailLimitStateStorage {
         }
     }
 
-    pub async fn save(
-        &self,
-        config: &SimpleBackendConfig,
-    ) -> Result<(), EmailError> {
+    pub async fn save(&self, config: &SimpleBackendConfig) -> Result<(), EmailError> {
         let config_dir = create_dirs_and_get_simple_backend_dir_path(config)
             .change_context(EmailError::SavingStateFailed)?;
 
         let config_file = config_dir.join(EMAIL_SENDER_STATE_FILE);
 
-        let config_string = toml::to_string_pretty(self)
-            .change_context(EmailError::SavingStateFailed)?;
+        let config_string =
+            toml::to_string_pretty(self).change_context(EmailError::SavingStateFailed)?;
         let mut file = tokio::fs::File::create(config_file)
             .await
             .change_context(EmailError::SavingStateFailed)?;

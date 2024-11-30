@@ -12,25 +12,23 @@ pub use server_common::{
 use self::file::{utils::FileDir, FileError};
 
 pub mod app;
-pub mod id;
 pub mod cache;
 pub mod content_processing;
 pub mod db_manager;
+pub mod demo;
 pub mod event;
 pub mod file;
+pub mod id;
 pub mod index;
 pub mod macros;
 pub mod read;
+pub mod statistics;
 pub mod utils;
 pub mod write;
 pub mod write_commands;
 pub mod write_concurrent;
-pub mod demo;
-pub mod statistics;
 
 // TODO: Remove?
 pub type DatabeseEntryId = String;
 
-pub use database::{
-    DieselConnection, DieselDatabaseError,
-};
+pub use database::{DieselConnection, DieselDatabaseError};

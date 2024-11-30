@@ -11,7 +11,7 @@ pub trait GetDbHistoryWriteCommandsProfile {
     fn profile_admin_history(&mut self) -> HistoryWriteProfileAdmin;
 }
 
-impl <I: DbWriteAccessProviderHistory> GetDbHistoryWriteCommandsProfile for I {
+impl<I: DbWriteAccessProviderHistory> GetDbHistoryWriteCommandsProfile for I {
     fn profile_history(&mut self) -> HistoryWriteProfile {
         HistoryWriteProfile::new(self.handle())
     }

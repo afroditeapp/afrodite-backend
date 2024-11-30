@@ -3,11 +3,11 @@ use axum::{
     Extension,
 };
 use model_media::{
-    AccountId, AccountIdInternal, EventToClientInternal, HandleModerationRequest, ModerationList, ModerationQueueTypeParam, NotificationEvent, Permissions
+    AccountId, AccountIdInternal, EventToClientInternal, HandleModerationRequest, ModerationList,
+    ModerationQueueTypeParam, NotificationEvent, Permissions,
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::create_open_api_router;
+use server_api::{create_open_api_router, S};
 use server_data_media::write::GetWriteCommandsMedia;
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
@@ -141,9 +141,7 @@ pub async fn post_handle_moderation_request(
     Ok(())
 }
 
-pub fn admin_moderation_router(
-    s: S,
-) -> OpenApiRouter {
+pub fn admin_moderation_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
         patch_moderation_request_list,

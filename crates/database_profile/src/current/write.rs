@@ -11,7 +11,7 @@ pub trait GetDbWriteCommandsProfile {
     fn profile_admin(&mut self) -> CurrentWriteProfileAdmin;
 }
 
-impl <I: DbWriteAccessProvider> GetDbWriteCommandsProfile for I {
+impl<I: DbWriteAccessProvider> GetDbWriteCommandsProfile for I {
     fn profile(&mut self) -> CurrentWriteProfile {
         CurrentWriteProfile::new(self.handle())
     }

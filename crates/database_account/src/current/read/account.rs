@@ -4,11 +4,11 @@ define_current_read_commands!(CurrentReadAccount);
 
 mod data;
 mod demo;
-mod sign_in_with;
 mod email;
 mod news;
+mod sign_in_with;
 
-impl <'a> CurrentReadAccount<'a> {
+impl<'a> CurrentReadAccount<'a> {
     pub fn data(self) -> data::CurrentReadAccountData<'a> {
         data::CurrentReadAccountData::new(self.cmds)
     }

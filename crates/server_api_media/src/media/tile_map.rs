@@ -1,12 +1,12 @@
 use axum::{
-    body::Body, extract::{Path, State},
+    body::Body,
+    extract::{Path, State},
 };
 use axum_extra::TypedHeader;
 use headers::{ContentLength, ContentType};
 use model_media::{MapTileX, MapTileY, MapTileZ};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::create_open_api_router;
+use server_api::{create_open_api_router, S};
 use simple_backend::{app::GetTileMap, create_counters};
 use tracing::error;
 use utoipa_axum::router::OpenApiRouter;
@@ -53,17 +53,17 @@ pub async fn get_map_tile(
         })?;
 
     match byte_count_and_data_stream {
-        Some((byte_count, data_stream)) =>
-            Ok((TypedHeader(ContentType::png()), TypedHeader(ContentLength(byte_count)), Body::from_stream(data_stream))),
+        Some((byte_count, data_stream)) => Ok((
+            TypedHeader(ContentType::png()),
+            TypedHeader(ContentLength(byte_count)),
+            Body::from_stream(data_stream),
+        )),
         None => Err(StatusCode::NOT_FOUND),
     }
 }
 
 pub fn tile_map_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
-        get_map_tile,
-    )
+    create_open_api_router!(s, get_map_tile,)
 }
 
 create_counters!(

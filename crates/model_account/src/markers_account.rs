@@ -1,5 +1,4 @@
-
-use model::{enable_logging, disable_logging};
+use model::{disable_logging, enable_logging};
 
 enable_logging!(
     // Account

@@ -9,7 +9,7 @@ pub trait GetDbHistoryWriteCommandsAccount {
     fn account_history(&mut self) -> HistoryWriteAccount<'_>;
 }
 
-impl <I: DbWriteAccessProviderHistory> GetDbHistoryWriteCommandsAccount for I {
+impl<I: DbWriteAccessProviderHistory> GetDbHistoryWriteCommandsAccount for I {
     fn account_history(&mut self) -> HistoryWriteAccount<'_> {
         HistoryWriteAccount::new(self.handle())
     }

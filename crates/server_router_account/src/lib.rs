@@ -36,9 +36,7 @@ pub fn create_common_server_router(state: S, ws_manager: WebSocketManager) -> Ro
             api::common::PATH_CONNECT_AXUM, // This route checks the access token by itself.
             get({
                 move |state, param1, param2, param3| {
-                    api::common::get_connect_websocket(
-                        state, param1, param2, param3, ws_manager,
-                    )
+                    api::common::get_connect_websocket(state, param1, param2, param3, ws_manager)
                 }
             }),
         )

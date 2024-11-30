@@ -8,7 +8,12 @@ use server_common::{
     data::{DataError, IntoDataError, WrappedWithInfo},
     result::Result,
 };
-use server_data::{define_cmd_wrapper_read, file::{utils::ContentFile, FileRead}, read::DbRead, result::{WrappedContextExt, WrappedResultExt}};
+use server_data::{
+    define_cmd_wrapper_read,
+    file::{utils::ContentFile, FileRead},
+    read::DbRead,
+    result::{WrappedContextExt, WrappedResultExt},
+};
 
 define_cmd_wrapper_read!(ReadCommandsMedia);
 
@@ -18,8 +23,7 @@ impl ReadCommandsMedia<'_> {
         account_id: AccountId,
         content_id: ContentId,
     ) -> Result<ContentFile, DataError> {
-        let c = self.files()
-            .media_content(account_id, content_id);
+        let c = self.files().media_content(account_id, content_id);
         Ok(c)
     }
 

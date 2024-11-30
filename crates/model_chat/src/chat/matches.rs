@@ -2,9 +2,7 @@ use model_server_data::MatchesIteratorSessionId;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::AccountId;
-
-use crate::MatchesSyncVersion;
+use crate::{AccountId, MatchesSyncVersion};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct AllMatchesPage {

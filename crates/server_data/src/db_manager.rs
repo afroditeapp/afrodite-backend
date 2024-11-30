@@ -2,29 +2,39 @@ use std::{fmt::Debug, fs, path::Path, sync::Arc};
 
 use config::Config;
 use database::{
-    current::write::TransactionConnection, CurrentReadHandle, CurrentWriteHandle, DatabaseHandleCreator, DbReadCloseHandle, DbReaderHistoryRaw, DbReaderRaw, DbWriteCloseHandle, DbWriter, DbWriterHistory, DbWriterWithHistory, DieselDatabaseError, HistoryReadHandle, HistoryWriteHandle, TransactionError
+    current::write::TransactionConnection, CurrentReadHandle, CurrentWriteHandle,
+    DatabaseHandleCreator, DbReadCloseHandle, DbReaderHistoryRaw, DbReaderRaw, DbWriteCloseHandle,
+    DbWriter, DbWriterHistory, DbWriterWithHistory, DieselDatabaseError, HistoryReadHandle,
+    HistoryWriteHandle, TransactionError,
+};
+use server_common::{
+    app::EmailSenderImpl, push_notifications::PushNotificationSender, result::Result,
 };
 pub use server_common::{
     data::{DataError, IntoDataError},
     result,
 };
-use server_common::{app::EmailSenderImpl, push_notifications::PushNotificationSender, result::Result};
 use simple_backend::media_backup::MediaBackupHandle;
 use tracing::info;
 
 use crate::{
-    cache::DatabaseCache, event::EventManagerWithCacheReference, file::utils::FileDir, index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle}, utils::{AccessTokenManager, AccountIdManager}, write_concurrent::WriteCommandsConcurrent
+    cache::DatabaseCache,
+    event::EventManagerWithCacheReference,
+    file::utils::FileDir,
+    index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
+    utils::{AccessTokenManager, AccountIdManager},
+    write_concurrent::WriteCommandsConcurrent,
 };
 
 pub const DB_FILE_DIR_NAME: &str = "files";
 
-
 pub mod handle_types {
-    pub use database::{CurrentReadHandle, CurrentWriteHandle, HistoryReadHandle, HistoryWriteHandle};
     pub use config::Config;
+    pub use database::{
+        CurrentReadHandle, CurrentWriteHandle, HistoryReadHandle, HistoryWriteHandle,
+    };
+    pub use server_common::{app::EmailSenderImpl, push_notifications::PushNotificationSender};
     pub use simple_backend::media_backup::MediaBackupHandle;
-    pub use server_common::push_notifications::PushNotificationSender;
-    pub use server_common::app::EmailSenderImpl;
 
     pub type ReadHandleType = super::RouterDatabaseReadHandle;
     pub type WriteHandleType = super::RouterDatabaseWriteHandle;
@@ -193,9 +203,7 @@ impl RouterDatabaseWriteHandle {
     }
 
     pub fn read(&self) -> ReadAdapter<'_> {
-        ReadAdapter::new(
-            self
-        )
+        ReadAdapter::new(self)
     }
 
     pub fn events(&self) -> EventManagerWithCacheReference<'_> {
@@ -342,7 +350,7 @@ impl InternalWriting for &RouterDatabaseWriteHandle {
 pub trait WriteAccessProvider<'a> {
     fn handle(self) -> &'a RouterDatabaseWriteHandle;
 }
-impl <'a> WriteAccessProvider<'a> for &'a RouterDatabaseWriteHandle {
+impl<'a> WriteAccessProvider<'a> for &'a RouterDatabaseWriteHandle {
     fn handle(self) -> &'a RouterDatabaseWriteHandle {
         self
     }
@@ -387,12 +395,12 @@ impl<'a> ReadAdapter<'a> {
 pub trait ReadAccessProvider<'a> {
     fn handle(self) -> &'a RouterDatabaseReadHandle;
 }
-impl <'a> ReadAccessProvider<'a> for &'a RouterDatabaseReadHandle {
+impl<'a> ReadAccessProvider<'a> for &'a RouterDatabaseReadHandle {
     fn handle(self) -> &'a RouterDatabaseReadHandle {
         self
     }
 }
-impl <'a> ReadAccessProvider<'a> for ReadAdapter<'a> {
+impl<'a> ReadAccessProvider<'a> for ReadAdapter<'a> {
     fn handle(self) -> &'a RouterDatabaseReadHandle {
         &self.cmds.read
     }
@@ -413,7 +421,9 @@ pub trait InternalReading {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, DieselDatabaseError> {
-        DbReaderRaw::new(self.current_read_handle()).db_read(cmd).await
+        DbReaderRaw::new(self.current_read_handle())
+            .db_read(cmd)
+            .await
     }
 
     async fn db_read_history_raw<
@@ -425,10 +435,11 @@ pub trait InternalReading {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, DieselDatabaseError> {
-        DbReaderHistoryRaw::new(self.history_read_handle()).db_read_history(cmd).await
+        DbReaderHistoryRaw::new(self.history_read_handle())
+            .db_read_history(cmd)
+            .await
     }
 }
-
 
 impl InternalReading for &RouterDatabaseReadHandle {
     fn root(&self) -> &DatabaseRoot {
@@ -448,7 +459,7 @@ impl InternalReading for &RouterDatabaseReadHandle {
     }
 }
 
-impl <I: InternalWriting> InternalReading for I {
+impl<I: InternalWriting> InternalReading for I {
     fn root(&self) -> &DatabaseRoot {
         self.root()
     }
@@ -465,7 +476,6 @@ impl <I: InternalWriting> InternalReading for I {
         self.cache()
     }
 }
-
 
 impl InternalReading for ReadAdapter<'_> {
     fn root(&self) -> &DatabaseRoot {

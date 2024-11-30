@@ -3,11 +3,14 @@ use axum::{
     Extension,
 };
 use model_profile::{
-    AccountIdInternal, EventToClientInternal, GetProfileTextPendingModerationList, GetProfileTextPendingModerationParams, Permissions, PostModerateProfileText
+    AccountIdInternal, EventToClientInternal, GetProfileTextPendingModerationList,
+    GetProfileTextPendingModerationParams, Permissions, PostModerateProfileText,
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::{app::{GetAccounts, WriteData}, create_open_api_router, db_write_multiple};
+use server_api::{
+    app::{GetAccounts, WriteData},
+    create_open_api_router, db_write_multiple, S,
+};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
@@ -18,8 +21,8 @@ use crate::{
 };
 
 #[obfuscate_api]
-const PATH_GET_PROFILE_TEXT_PENDING_MODERATION_LIST: &str = "/profile_api/admin/profile_text_pending_moderation";
-
+const PATH_GET_PROFILE_TEXT_PENDING_MODERATION_LIST: &str =
+    "/profile_api/admin/profile_text_pending_moderation";
 
 /// Get first page of pending profile text moderations. Oldest item is first and count 25.
 #[utoipa::path(
@@ -61,7 +64,6 @@ pub async fn get_profile_text_pending_moderation_list(
 #[obfuscate_api]
 const PATH_POST_MODERATE_PROFILE_TEXT: &str = "/profile_api/admin/moderate_profile_text";
 
-
 /// Rejected category and details can be set only when the text is rejected.
 ///
 /// This route will fail if the text is already moderated or the users's
@@ -99,8 +101,7 @@ pub async fn post_moderate_profile_text(
     let name_owner_id = state.get_internal_id(data.id).await?;
 
     db_write_multiple!(state, move |cmds| {
-        cmds
-            .profile_admin()
+        cmds.profile_admin()
             .profile_text()
             .moderate_profile_text(
                 moderator_id,
@@ -110,7 +111,8 @@ pub async fn post_moderate_profile_text(
                 data.rejected_category,
                 data.rejected_details,
                 data.move_to_human.unwrap_or_default(),
-            ).await?;
+            )
+            .await?;
 
         cmds.events()
             .send_connected_event(name_owner_id, EventToClientInternal::ProfileChanged)
@@ -122,9 +124,7 @@ pub async fn post_moderate_profile_text(
     Ok(())
 }
 
-pub fn admin_profile_text_router(
-    s: S,
-) -> OpenApiRouter {
+pub fn admin_profile_text_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
         get_profile_text_pending_moderation_list,

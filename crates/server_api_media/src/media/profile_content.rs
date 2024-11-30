@@ -3,18 +3,19 @@ use axum::{
     Extension,
 };
 use model_media::{
-    AccountId, AccountIdInternal, AccountState, GetMyProfileContentResult, GetProfileContentQueryParams, GetProfileContentResult, MyProfileContent, PendingProfileContent, Permissions, ProfileContent, SetProfileContent
+    AccountId, AccountIdInternal, AccountState, GetMyProfileContentResult,
+    GetProfileContentQueryParams, GetProfileContentResult, MyProfileContent, PendingProfileContent,
+    Permissions, ProfileContent, SetProfileContent,
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::create_open_api_router;
+use server_api::{create_open_api_router, S};
 use server_data::read::GetReadCommandsCommon;
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{GetAccounts, ReadData,WriteData},
+    app::{GetAccounts, ReadData, WriteData},
     db_write,
     utils::{Json, StatusCode},
 };
@@ -71,9 +72,17 @@ pub async fn get_profile_content_info(
         let info: ProfileContent = internal.clone().into();
 
         match params.version() {
-            Some(param_version) if param_version == internal.profile_content_version_uuid =>
-                Ok(GetProfileContentResult::current_version_latest_response(internal.profile_content_version_uuid).into()),
-            _ => Ok(GetProfileContentResult::content_with_version(info, internal.profile_content_version_uuid).into()),
+            Some(param_version) if param_version == internal.profile_content_version_uuid => {
+                Ok(GetProfileContentResult::current_version_latest_response(
+                    internal.profile_content_version_uuid,
+                )
+                .into())
+            }
+            _ => Ok(GetProfileContentResult::content_with_version(
+                info,
+                internal.profile_content_version_uuid,
+            )
+            .into()),
         }
     };
 
@@ -93,9 +102,13 @@ pub async fn get_profile_content_info(
         .profile_visibility()
         .is_currently_public();
 
-    if visibility ||
-        permissions.admin_view_all_profiles ||
-        (params.allow_get_content_if_match() && state.data_all_access().is_match(account_id, requested_profile).await?)
+    if visibility
+        || permissions.admin_view_all_profiles
+        || (params.allow_get_content_if_match()
+            && state
+                .data_all_access()
+                .is_match(account_id, requested_profile)
+                .await?)
     {
         read_profile_action().await
     } else {
@@ -124,10 +137,10 @@ pub async fn get_my_profile_content_info(
     MEDIA.get_my_profile_content_info.incr();
 
     let internal = state
-            .read()
-            .media()
-            .current_account_media(account_id)
-            .await?;
+        .read()
+        .media()
+        .current_account_media(account_id)
+        .await?;
 
     let info: MyProfileContent = internal.clone().into();
 
@@ -173,8 +186,7 @@ pub async fn put_profile_content(
 }
 
 #[obfuscate_api]
-const PATH_GET_PENDING_PROFILE_CONTENT_INFO: &str =
-    "/media_api/pending_profile_content_info/{aid}";
+const PATH_GET_PENDING_PROFILE_CONTENT_INFO: &str = "/media_api/pending_profile_content_info/{aid}";
 
 /// Get pending profile content for selected profile
 #[utoipa::path(

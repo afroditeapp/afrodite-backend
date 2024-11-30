@@ -33,25 +33,21 @@ pub enum ProfileTextModerationState {
 impl ProfileTextModerationState {
     pub fn is_accepted(&self) -> bool {
         match self {
-            Self::Empty |
-            Self::AcceptedByBot |
-            Self::AcceptedByHuman => true,
-            Self::WaitingBotOrHumanModeration |
-            Self::WaitingHumanModeration |
-            Self::RejectedByBot |
-            Self::RejectedByHuman => false,
+            Self::Empty | Self::AcceptedByBot | Self::AcceptedByHuman => true,
+            Self::WaitingBotOrHumanModeration
+            | Self::WaitingHumanModeration
+            | Self::RejectedByBot
+            | Self::RejectedByHuman => false,
         }
     }
 
     pub fn is_moderated(&self) -> bool {
         match self {
-            Self::AcceptedByBot |
-            Self::AcceptedByHuman |
-            Self::RejectedByBot |
-            Self::RejectedByHuman => true,
-            Self::Empty |
-            Self::WaitingBotOrHumanModeration |
-            Self::WaitingHumanModeration => false,
+            Self::AcceptedByBot
+            | Self::AcceptedByHuman
+            | Self::RejectedByBot
+            | Self::RejectedByHuman => true,
+            Self::Empty | Self::WaitingBotOrHumanModeration | Self::WaitingHumanModeration => false,
         }
     }
 }

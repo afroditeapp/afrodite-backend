@@ -1,12 +1,10 @@
-use database::{current::write::GetDbWriteCommandsCommon, define_current_write_commands, DieselDatabaseError};
+use database::{
+    current::write::GetDbWriteCommandsCommon, define_current_write_commands, DieselDatabaseError,
+};
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{
-    AccountIdInternal, ClientId,
-};
-use model_account::{
-    AccountGlobalState, AccountInternal, EmailAddress, SetAccountSetup
-};
+use model::{AccountIdInternal, ClientId};
+use model_account::{AccountGlobalState, AccountInternal, EmailAddress, SetAccountSetup};
 
 use crate::IntoDatabaseError;
 
@@ -65,7 +63,10 @@ impl CurrentWriteAccountData<'_> {
         use model::schema::account_setup::dsl::*;
 
         if let Some(birthdate_value) = &data.birthdate {
-            self.write().common().state().update_birthdate(id, *birthdate_value)?;
+            self.write()
+                .common()
+                .state()
+                .update_birthdate(id, *birthdate_value)?;
         }
 
         update(account_setup.find(id.as_db_id()))
@@ -86,9 +87,7 @@ impl CurrentWriteAccountData<'_> {
         use model::schema::account_state::dsl::*;
 
         insert_into(account_state)
-            .values((
-                account_id.eq(id.as_db_id()),
-            ))
+            .values((account_id.eq(id.as_db_id()),))
             .execute(self.conn())
             .into_db_error(())?;
         Ok(())
@@ -145,10 +144,7 @@ impl CurrentWriteAccountData<'_> {
         let next = current.increment();
 
         insert_into(account_state)
-            .values((
-                account_id.eq(id.as_db_id()),
-                next_client_id.eq(next),
-            ))
+            .values((account_id.eq(id.as_db_id()), next_client_id.eq(next)))
             .on_conflict(account_id)
             .do_update()
             .set(next_client_id.eq(next))

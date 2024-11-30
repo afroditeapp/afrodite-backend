@@ -89,9 +89,7 @@ pub struct MediaBackupHandle {
 impl MediaBackupHandle {
     pub fn broken_handle_for_api_doc_json() -> Self {
         let (sender, _) = mpsc::channel(1);
-        Self {
-            sender
-        }
+        Self { sender }
     }
 
     /// The path must be relative to files dir

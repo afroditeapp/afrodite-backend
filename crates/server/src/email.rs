@@ -1,10 +1,12 @@
 use error_stack::ResultExt;
 use model::{AccountIdInternal, EmailMessages};
-use server_data_account::read::GetReadCommandsAccount;
+use server_api::{
+    app::{GetConfig, ReadData, WriteData},
+    db_write_raw,
+};
+use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use server_state::S;
 use simple_backend::email::{EmailData, EmailDataProvider, EmailError};
-use server_api::{app::{GetConfig, ReadData, WriteData}, db_write_raw};
-use server_data_account::write::GetWriteCommandsAccount;
 
 pub struct ServerEmailDataProvider {
     state: S,
@@ -42,7 +44,7 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
 
             email.0
         } else {
-            return Ok(None)
+            return Ok(None);
         };
 
         let email_content = self
@@ -52,7 +54,8 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
             .ok_or(EmailError::GettingEmailDataFailed)
             .attach_printable("Email content not configured")?;
 
-        let email_content = email_content.email
+        let email_content = email_content
+            .email
             .iter()
             .find(|e| e.message_type == message)
             .ok_or(EmailError::GettingEmailDataFailed)
@@ -73,11 +76,13 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
         message: EmailMessages,
     ) -> error_stack::Result<(), simple_backend::email::EmailError> {
         db_write_raw!(self.state, move |cmds| {
-            cmds.account().email().mark_email_as_sent(receiver, message).await
+            cmds.account()
+                .email()
+                .mark_email_as_sent(receiver, message)
+                .await
         })
-            .await
-            .map_err(|e| e.into_report())
-            .change_context(EmailError::MarkAsSentFailed)
-
+        .await
+        .map_err(|e| e.into_report())
+        .change_context(EmailError::MarkAsSentFailed)
     }
 }

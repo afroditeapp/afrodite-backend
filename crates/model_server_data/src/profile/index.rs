@@ -1,14 +1,15 @@
-
 use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU16, Ordering};
 
-use crate::{LastSeenTime, ProfileLink};
+use model::{AccountId, ProfileAge, ProfileContentVersion};
 use nalgebra::DMatrix;
 use simple_backend_model::UnixTime;
 
-use model::{AccountId, ProfileAge, ProfileContentVersion};
-
-use super::{LastSeenTimeFilter, ProfileAttributeFilterValue, ProfileAttributes, ProfileInternal, ProfileSearchAgeRangeValidated, ProfileStateCached, SearchGroupFlags, SearchGroupFlagsFilter, SortedProfileAttributes};
-
+use super::{
+    LastSeenTimeFilter, ProfileAttributeFilterValue, ProfileAttributes, ProfileInternal,
+    ProfileSearchAgeRangeValidated, ProfileStateCached, SearchGroupFlags, SearchGroupFlagsFilter,
+    SortedProfileAttributes,
+};
+use crate::{LastSeenTime, ProfileLink};
 
 #[derive(Debug)]
 pub struct ProfileQueryMakerDetails {

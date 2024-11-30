@@ -6,7 +6,8 @@ use simple_backend_utils::IntoReportFromString;
 
 use super::manager_client::{ManagerApiClient, ManagerApiManager};
 use crate::{
-    file_package::FilePackageManager, map::TileMapManager, perf::PerfCounterManagerData, sign_in_with::SignInWithManager
+    file_package::FilePackageManager, map::TileMapManager, perf::PerfCounterManagerData,
+    sign_in_with::SignInWithManager,
 };
 
 #[derive(thiserror::Error, Debug)]

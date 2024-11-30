@@ -1,10 +1,14 @@
 use chrono::NaiveDate;
 use database::current::read::GetDbReadCommandsCommon;
-use model::{AccessToken, Account, AccountId, AccountIdInternal, PendingNotificationFlags, RefreshToken};
+use model::{
+    AccessToken, Account, AccountId, AccountIdInternal, PendingNotificationFlags, RefreshToken,
+};
 use server_common::data::IntoDataError;
 
 use super::{super::DataError, DbRead};
-use crate::{cache::CacheReadCommon, define_cmd_wrapper_read, id::ToAccountIdInternal, result::Result};
+use crate::{
+    cache::CacheReadCommon, define_cmd_wrapper_read, id::ToAccountIdInternal, result::Result,
+};
 
 define_cmd_wrapper_read!(ReadCommandsCommon);
 
@@ -13,10 +17,7 @@ impl ReadCommandsCommon<'_> {
         &self,
         id: AccountId,
     ) -> Result<Option<AccessToken>, DataError> {
-        let id = self
-            .to_account_id_internal(id)
-            .await
-            .into_data_error(id)?;
+        let id = self.to_account_id_internal(id).await.into_data_error(id)?;
         self.db_read(move |mut cmds| cmds.common().token().access_token(id))
             .await
             .into_error()
@@ -33,10 +34,7 @@ impl ReadCommandsCommon<'_> {
 
     /// Account is available on all servers as account server will sync it to
     /// others if server is running in microservice mode.
-    pub async fn account(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<Account, DataError> {
+    pub async fn account(&self, id: AccountIdInternal) -> Result<Account, DataError> {
         let account = self
             .read_cache_common(id, |cache| {
                 Ok(Account::new_from_internal_types(
@@ -52,7 +50,8 @@ impl ReadCommandsCommon<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<PendingNotificationFlags, DataError> {
-        let flags = self.read_cache_common(id, |cache| Ok(cache.pending_notification_flags))
+        let flags = self
+            .read_cache_common(id, |cache| Ok(cache.pending_notification_flags))
             .await?;
         Ok(flags)
     }
@@ -67,17 +66,13 @@ impl ReadCommandsCommon<'_> {
             .map(|v| v.birthdate)
     }
 
-    pub async fn account_ids_vec(
-        &self,
-    ) -> Result<Vec<AccountId>, DataError> {
+    pub async fn account_ids_vec(&self) -> Result<Vec<AccountId>, DataError> {
         self.db_read(move |mut cmds| cmds.common().account_ids())
             .await
             .into_error()
     }
 
-    pub async fn account_ids_internal_vec(
-        &self,
-    ) -> Result<Vec<AccountIdInternal>, DataError> {
+    pub async fn account_ids_internal_vec(&self) -> Result<Vec<AccountIdInternal>, DataError> {
         self.db_read(move |mut cmds| cmds.common().account_ids_internal())
             .await
             .into_error()

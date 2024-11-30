@@ -1,11 +1,13 @@
 use database::current::read::GetDbReadCommandsCommon;
 use database_account::current::read::GetDbReadCommandsAccount;
 use model_account::{
-    AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountSetup,
-    GoogleAccountId, SignInWithInfo,
+    AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountSetup, GoogleAccountId,
+    SignInWithInfo,
 };
 use model_server_state::DemoModeId;
-use server_data::{define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError};
+use server_data::{
+    define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError,
+};
 
 pub mod email;
 pub mod news;
@@ -37,10 +39,7 @@ impl ReadCommandsAccount<'_> {
         .into_error()
     }
 
-    pub async fn is_bot_account(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<bool, DataError> {
+    pub async fn is_bot_account(&self, id: AccountIdInternal) -> Result<bool, DataError> {
         self.db_read(move |mut cmds| {
             cmds.common()
                 .state()
@@ -51,19 +50,13 @@ impl ReadCommandsAccount<'_> {
         .into_error()
     }
 
-    pub async fn account_data(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<AccountData, DataError> {
+    pub async fn account_data(&self, id: AccountIdInternal) -> Result<AccountData, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().account_data(id))
             .await
             .into_error()
     }
 
-    pub async fn account_setup(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<AccountSetup, DataError> {
+    pub async fn account_setup(&self, id: AccountIdInternal) -> Result<AccountSetup, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().account_setup(id))
             .await
             .into_error()
@@ -91,9 +84,7 @@ impl ReadCommandsAccount<'_> {
             .into_error()
     }
 
-    pub async fn global_state(
-        &self,
-    ) -> Result<AccountGlobalState, DataError> {
+    pub async fn global_state(&self) -> Result<AccountGlobalState, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().global_state())
             .await
             .into_error()

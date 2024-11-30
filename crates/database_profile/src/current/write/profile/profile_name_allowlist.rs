@@ -18,8 +18,9 @@ impl CurrentWriteProfileNameAllowlist<'_> {
         use model::schema::profile_state;
 
         let new_name = new_name.trim().to_lowercase();
-        let name_accepted = ram_allowlist.name_exists(&new_name) ||
-            self.read()
+        let name_accepted = ram_allowlist.name_exists(&new_name)
+            || self
+                .read()
                 .profile()
                 .profile_name_allowlist()
                 .is_on_database_allowlist(&new_name)?;
@@ -32,9 +33,7 @@ impl CurrentWriteProfileNameAllowlist<'_> {
 
         update(profile_state::table)
             .filter(profile_state::account_id.eq(id.as_db_id()))
-            .set((
-                profile_state::profile_name_moderation_state.eq(new_state),
-            ))
+            .set((profile_state::profile_name_moderation_state.eq(new_state),))
             .execute(self.conn())
             .into_db_error(id)?;
 

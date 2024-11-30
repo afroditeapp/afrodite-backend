@@ -1,10 +1,11 @@
-
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{AccountId, ProfileTextModerationRejectedReasonCategory, ProfileTextModerationRejectedReasonDetails};
-
+use crate::{
+    AccountId, ProfileTextModerationRejectedReasonCategory,
+    ProfileTextModerationRejectedReasonDetails,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct GetProfileTextPendingModerationList {

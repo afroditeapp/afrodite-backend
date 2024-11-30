@@ -10,7 +10,7 @@ pub trait GetDbWriteCommandsChat {
     fn chat_admin(&mut self) -> CurrentWriteChatAdmin;
 }
 
-impl <I: DbWriteAccessProvider> GetDbWriteCommandsChat for I {
+impl<I: DbWriteAccessProvider> GetDbWriteCommandsChat for I {
     fn chat(&mut self) -> CurrentWriteChat {
         CurrentWriteChat::new(self.handle())
     }

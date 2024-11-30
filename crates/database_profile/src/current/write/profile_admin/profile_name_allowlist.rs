@@ -1,4 +1,6 @@
-use database::{current::read::GetDbReadCommandsCommon, define_current_write_commands, DieselDatabaseError};
+use database::{
+    current::read::GetDbReadCommandsCommon, define_current_write_commands, DieselDatabaseError,
+};
 use diesel::{insert_into, prelude::*, update, ExpressionMethods};
 use error_stack::Result;
 use model_profile::{AccountIdInternal, ProfileNameModerationState};
@@ -17,7 +19,12 @@ impl CurrentWriteProfileAdminProfileNameAllowlist<'_> {
     ) -> Result<ProfileNameModerationState, DieselDatabaseError> {
         use model::schema::{profile_name_allowlist, profile_state};
 
-        let moderator_is_bot = self.read().common().state().other_shared_state(moderator_id)?.is_bot_account;
+        let moderator_is_bot = self
+            .read()
+            .common()
+            .state()
+            .other_shared_state(moderator_id)?
+            .is_bot_account;
 
         let next_state = if accepted {
             if moderator_is_bot {
@@ -47,9 +54,7 @@ impl CurrentWriteProfileAdminProfileNameAllowlist<'_> {
 
         update(profile_state::table)
             .filter(profile_state::account_id.eq(name_owner_id.as_db_id()))
-            .set((
-                profile_state::profile_name_moderation_state.eq(next_state),
-            ))
+            .set((profile_state::profile_name_moderation_state.eq(next_state),))
             .execute(self.conn())
             .into_db_error(())?;
 

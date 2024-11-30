@@ -30,7 +30,10 @@ impl ModerateContentModerationRequest {
     }
 
     pub const fn from_queue(queue: ModerationQueueType) -> Self {
-        Self { queue, moderate_all: false }
+        Self {
+            queue,
+            moderate_all: false,
+        }
     }
 }
 
@@ -38,9 +41,10 @@ impl ModerateContentModerationRequest {
 impl BotAction for ModerateContentModerationRequest {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         loop {
-            let list = media_admin_api::patch_moderation_request_list(state.api.media(), self.queue)
-                .await
-                .change_context(TestError::ApiRequest)?;
+            let list =
+                media_admin_api::patch_moderation_request_list(state.api.media(), self.queue)
+                    .await
+                    .change_context(TestError::ApiRequest)?;
 
             for request in list.list.clone() {
                 let images = [
@@ -66,11 +70,12 @@ impl BotAction for ModerateContentModerationRequest {
                     // when GetProfileList benchmark was running.
                     // When the error was noticed there was multiple
                     // admin bots moderating.
-                    .attach_printable_lazy(|| format!(
-                        "Request creator: {}, Content ID: {}",
-                        request.request_creator_id,
-                        content_id,
-                    ))?;
+                    .attach_printable_lazy(|| {
+                        format!(
+                            "Request creator: {}, Content ID: {}",
+                            request.request_creator_id, content_id,
+                        )
+                    })?;
                 }
                 media_admin_api::post_handle_moderation_request(
                     state.api.media(),
@@ -82,7 +87,7 @@ impl BotAction for ModerateContentModerationRequest {
             }
 
             if !self.moderate_all || list.list.is_empty() {
-                break
+                break;
             }
         }
         Ok(())
@@ -95,7 +100,10 @@ pub struct AdminBotContentModerationLogic;
 struct EmptyPage;
 
 impl AdminBotContentModerationLogic {
-    async fn moderate_one_page(state: &BotState, queue: ModerationQueueType) -> Result<Option<EmptyPage>, TestError> {
+    async fn moderate_one_page(
+        state: &BotState,
+        queue: ModerationQueueType,
+    ) -> Result<Option<EmptyPage>, TestError> {
         let list = media_admin_api::patch_moderation_request_list(state.api.media(), queue)
             .await
             .change_context(TestError::ApiRequest)?;
@@ -138,7 +146,6 @@ impl AdminBotContentModerationLogic {
     }
 }
 
-
 #[async_trait]
 impl BotAction for AdminBotContentModerationLogic {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
@@ -149,7 +156,9 @@ impl BotAction for AdminBotContentModerationLogic {
         let start_time = Instant::now();
 
         if let Some(previous) = state.admin.profile_content_moderation_started {
-            if start_time.duration_since(previous).as_secs() < config.moderation_session_min_seconds.into() {
+            if start_time.duration_since(previous).as_secs()
+                < config.moderation_session_min_seconds.into()
+            {
                 return Ok(());
             }
         }
@@ -158,12 +167,17 @@ impl BotAction for AdminBotContentModerationLogic {
 
         if config.initial_content {
             loop {
-                if let Some(EmptyPage) = Self::moderate_one_page(state, ModerationQueueType::InitialMediaModeration).await? {
+                if let Some(EmptyPage) =
+                    Self::moderate_one_page(state, ModerationQueueType::InitialMediaModeration)
+                        .await?
+                {
                     break;
                 }
 
                 let current_time = Instant::now();
-                if current_time.duration_since(start_time).as_secs() > config.moderation_session_max_seconds.into() {
+                if current_time.duration_since(start_time).as_secs()
+                    > config.moderation_session_max_seconds.into()
+                {
                     break;
                 }
             }
@@ -171,12 +185,16 @@ impl BotAction for AdminBotContentModerationLogic {
 
         if config.added_content {
             loop {
-                if let Some(EmptyPage) = Self::moderate_one_page(state, ModerationQueueType::MediaModeration).await? {
+                if let Some(EmptyPage) =
+                    Self::moderate_one_page(state, ModerationQueueType::MediaModeration).await?
+                {
                     break;
                 }
 
                 let current_time = Instant::now();
-                if current_time.duration_since(start_time).as_secs() > config.moderation_session_max_seconds.into() {
+                if current_time.duration_since(start_time).as_secs()
+                    > config.moderation_session_max_seconds.into()
+                {
                     return Ok(());
                 }
             }

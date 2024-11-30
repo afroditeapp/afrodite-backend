@@ -2,15 +2,13 @@
 
 use axum::extract::{Path, State};
 use model::AccountId;
-use server_api::app::ValidateModerationRequest;
+use server_api::{app::ValidateModerationRequest, S};
 use simple_backend::create_counters;
 
 use crate::{
     app::{GetAccounts, GetConfig},
     utils::StatusCode,
 };
-
-use server_api::S;
 
 pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
     "/internal/media_api/moderation/request/:account_id";

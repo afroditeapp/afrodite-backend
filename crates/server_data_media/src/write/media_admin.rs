@@ -1,11 +1,17 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
-use database_media::current::write::{media_admin::InitialModerationRequestIsNowAccepted, GetDbWriteCommandsMedia};
+use database_media::current::write::{
+    media_admin::InitialModerationRequestIsNowAccepted, GetDbWriteCommandsMedia,
+};
 use model_media::{
     Account, AccountIdInternal, HandleModerationRequest, Moderation, ModerationQueueType,
     ProfileVisibility,
 };
 use server_common::{data::DataError, result::Result};
-use server_data::{app::GetConfig, define_cmd_wrapper_write, write::GetWriteCommandsCommon, write::DbTransaction};
+use server_data::{
+    app::GetConfig,
+    define_cmd_wrapper_write,
+    write::{DbTransaction, GetWriteCommandsCommon},
+};
 
 use crate::cache::CacheWriteMedia;
 
@@ -95,17 +101,16 @@ impl WriteCommandsMediaAdmin<'_> {
         })?;
 
         if let Some(initial_request_accepted_status) = &info.initial_request_accepted {
-            self
-                .write_cache_media(moderation_request_owner, |e| {
-                    e.profile_content_version = initial_request_accepted_status.new_profile_content_version;
-                    Ok(())
-                })
-                .await?;
+            self.write_cache_media(moderation_request_owner, |e| {
+                e.profile_content_version =
+                    initial_request_accepted_status.new_profile_content_version;
+                Ok(())
+            })
+            .await?;
         }
 
         if let Some(accounts) = &info.cache_should_be_updated {
-            self
-                .handle()
+            self.handle()
                 .common()
                 .internal_handle_new_account_data_after_db_modification(
                     accounts.id,

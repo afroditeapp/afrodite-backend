@@ -1,16 +1,27 @@
 use std::time::Duration;
-use model_profile::{AccountIdInternal, AccountState, EventToClientInternal, ProfileAge, ProfileUpdate, ProfileUpdateInternal};
-use server_api::{db_write_raw, result::WrappedContextExt, DataError};
+
+use model_profile::{
+    AccountIdInternal, AccountState, EventToClientInternal, ProfileAge, ProfileUpdate,
+    ProfileUpdateInternal,
+};
+use server_api::{
+    app::{GetConfig, ProfileStatisticsCacheProvider, ReadData, WriteData},
+    db_write_raw,
+    result::WrappedContextExt,
+    DataError,
+};
 use server_common::result::{Result, WrappedResultExt};
 use server_data::read::GetReadCommandsCommon;
-use server_data_profile::{read::GetReadProfileCommands, statistics::ProfileStatisticsCacheUtils, write::GetWriteCommandsProfile};
+use server_data_profile::{
+    read::GetReadProfileCommands, statistics::ProfileStatisticsCacheUtils,
+    write::GetWriteCommandsProfile,
+};
 use server_state::S;
 use simple_backend::{utils::time::sleep_until_current_time_is_at, ServerQuitWatcher};
 use simple_backend_config::file::ScheduledTasksConfig;
 use simple_backend_utils::IntoReportFromString;
 use tokio::{sync::broadcast::error::TryRecvError, task::JoinHandle, time::sleep};
 use tracing::{error, info, warn};
-use server_api::app::{GetConfig, ReadData, WriteData, ProfileStatisticsCacheProvider};
 
 #[derive(thiserror::Error, Debug)]
 pub enum ScheduledTaskError {
@@ -59,10 +70,7 @@ impl ScheduledTaskManager {
         ScheduledTaskManagerQuitHandle { task }
     }
 
-    pub async fn run(
-        self,
-        mut quit_notification: ServerQuitWatcher,
-    ) {
+    pub async fn run(self, mut quit_notification: ServerQuitWatcher) {
         let mut check_cooldown = false;
         let config = self.state.config().simple_backend().scheduled_tasks();
 
@@ -105,8 +113,12 @@ impl ScheduledTaskManager {
         }
     }
 
-    pub async fn run_tasks_and_return_result(&self, quit_notification: &mut ServerQuitWatcher) -> Result<(), ScheduledTaskError> {
-        self.run_tasks_for_individual_accounts(quit_notification).await?;
+    pub async fn run_tasks_and_return_result(
+        &self,
+        quit_notification: &mut ServerQuitWatcher,
+    ) -> Result<(), ScheduledTaskError> {
+        self.run_tasks_for_individual_accounts(quit_notification)
+            .await?;
         self.save_profile_statistics().await?;
         // TODO(prod): SQLite database backups
         Ok(())
@@ -121,19 +133,22 @@ impl ScheduledTaskManager {
             .change_context(ScheduledTaskError::ProfileStatisticsError)?;
 
         db_write_raw!(self.state, move |cmds| {
-            cmds
-                .profile_admin_history()
+            cmds.profile_admin_history()
                 .save_profile_statistics(statistics)
                 .await
         })
-            .await
-            .change_context(ScheduledTaskError::DatabaseError)?;
+        .await
+        .change_context(ScheduledTaskError::DatabaseError)?;
 
         Ok(())
     }
 
-    pub async fn run_tasks_for_individual_accounts(&self, quit_notification: &mut ServerQuitWatcher) -> Result<(), ScheduledTaskError> {
-        let accounts = self.state
+    pub async fn run_tasks_for_individual_accounts(
+        &self,
+        quit_notification: &mut ServerQuitWatcher,
+    ) -> Result<(), ScheduledTaskError> {
+        let accounts = self
+            .state
             .read()
             .common()
             .account_ids_internal_vec()
@@ -144,10 +159,11 @@ impl ScheduledTaskManager {
 
         for id in accounts {
             if quit_notification.try_recv() != Err(TryRecvError::Empty) {
-                return Err(ScheduledTaskError::QuitRequested.report())
+                return Err(ScheduledTaskError::QuitRequested.report());
             }
 
-            let account = self.state
+            let account = self
+                .state
                 .read()
                 .common()
                 .account(id)
@@ -155,7 +171,8 @@ impl ScheduledTaskManager {
                 .change_context(ScheduledTaskError::DatabaseError)?;
 
             if account.state() != AccountState::InitialSetup {
-                self.update_profile_age_if_needed(id, &mut age_updated).await?;
+                self.update_profile_age_if_needed(id, &mut age_updated)
+                    .await?;
             }
         }
 
@@ -172,7 +189,8 @@ impl ScheduledTaskManager {
         id: AccountIdInternal,
         age_updated_count: &mut u64,
     ) -> Result<(), ScheduledTaskError> {
-        let ages = self.state
+        let ages = self
+            .state
             .read()
             .profile()
             .accepted_profile_ages(id)
@@ -182,16 +200,11 @@ impl ScheduledTaskManager {
         let ages = if let Some(ages) = ages {
             ages
         } else {
-            return Ok(())
+            return Ok(());
         };
 
         let age_updated = db_write_raw!(self.state, move |cmds| {
-            let profile = cmds
-                .read()
-                .profile()
-                .profile(id)
-                .await?
-                .profile;
+            let profile = cmds.read().profile().profile(id).await?.profile;
 
             if ages.is_age_valid(profile.age) {
                 // No update needed
@@ -201,7 +214,7 @@ impl ScheduledTaskManager {
             // Age update needed
 
             let age_plus_one = ProfileAge::new_clamped(profile.age.value() + 1);
-            if age_plus_one == profile.age || !ages.is_age_valid(age_plus_one)  {
+            if age_plus_one == profile.age || !ages.is_age_valid(age_plus_one) {
                 // Current profile age is 99 or incrementing age by one is not
                 // enough.
                 return Ok(false);
@@ -212,7 +225,8 @@ impl ScheduledTaskManager {
                 ptext: profile.ptext.clone(),
                 name: profile.name.clone(),
                 age: age_plus_one,
-                attributes: profile.attributes
+                attributes: profile
+                    .attributes
                     .iter()
                     .cloned()
                     .map(|v| v.into())
@@ -230,8 +244,8 @@ impl ScheduledTaskManager {
 
             Ok(true)
         })
-            .await
-            .change_context(ScheduledTaskError::DatabaseError)?;
+        .await
+        .change_context(ScheduledTaskError::DatabaseError)?;
 
         if age_updated {
             *age_updated_count += 1;

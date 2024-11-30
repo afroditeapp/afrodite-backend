@@ -42,9 +42,7 @@ async fn admin_rights_granting_only_grants_rights_once_by_default(
 async fn normal_account_does_not_have_admin_rights(context: TestContext) -> TestResult {
     let account1 = context.new_account().await?;
     assert_eq(
-        get_account_state(account1.account_api())
-            .await?
-            .permissions,
+        get_account_state(account1.account_api()).await?.permissions,
         Default::default(),
     )
 }

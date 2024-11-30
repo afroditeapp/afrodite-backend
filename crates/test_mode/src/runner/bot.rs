@@ -1,6 +1,10 @@
 //! Bot mode related test/bot runner.
 
-use std::{collections::{HashMap, HashSet}, path::PathBuf, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    path::PathBuf,
+    sync::Arc,
+};
 
 use config::{args::TestMode, bot_config_file::BotConfigFile, Config};
 use tokio::{
@@ -93,8 +97,10 @@ impl BotTestRunner {
                 // Special case for profile iterator benchmark:
                 // wait until profile index bot profiles are creates and
                 // then wait that images for those profiles are moderated.
-                if self.test_config.selected_benchmark() == Some(&config::args::SelectedBenchmark::GetProfileList)
-                    && task_number >= self.test_config.tasks() - 1 {
+                if self.test_config.selected_benchmark()
+                    == Some(&config::args::SelectedBenchmark::GetProfileList)
+                    && task_number >= self.test_config.tasks() - 1
+                {
                     select! {
                         result = signal::ctrl_c() => {
                             match result {
@@ -198,10 +204,7 @@ impl BotTestRunner {
         }
     }
 
-    fn merge_old_and_new_state_data(
-        old: Option<Arc<StateData>>,
-        new: StateData
-    ) -> StateData {
+    fn merge_old_and_new_state_data(old: Option<Arc<StateData>>, new: StateData) -> StateData {
         let mut bot_data: HashMap<(u32, u32), BotPersistentState> = HashMap::new();
         if let Some(old_state) = &old {
             for s in old_state.bot_states.iter().cloned() {

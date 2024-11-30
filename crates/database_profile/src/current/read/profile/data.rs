@@ -1,10 +1,14 @@
 use std::collections::HashMap;
 
-use database::{current::read::GetDbReadCommandsCommon, define_current_read_commands, DieselDatabaseError};
+use database::{
+    current::read::GetDbReadCommandsCommon, define_current_read_commands, DieselDatabaseError,
+};
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model_profile::{
-    AcceptedProfileAges, AccountIdInternal, GetMyProfileResult, LastSeenTime, Location, Profile, ProfileAge, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileStateInternal, UnixTime
+    AcceptedProfileAges, AccountIdInternal, GetMyProfileResult, LastSeenTime, Location, Profile,
+    ProfileAge, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal,
+    ProfileStateInternal, UnixTime,
 };
 
 define_current_read_commands!(CurrentReadProfileData);
@@ -142,8 +146,8 @@ impl CurrentReadProfileData<'_> {
                     Some(part1 as u16)
                         .into_iter()
                         .chain(part2.map(|v| v as u16))
-                        .collect()
-                    )
+                        .collect(),
+                )
             })
             .collect();
 
@@ -152,26 +156,18 @@ impl CurrentReadProfileData<'_> {
 
             profile_attributes_number_list
                 .filter(account_id.eq(id.as_db_id()))
-                .select((
-                    attribute_id,
-                    attribute_value,
-                ))
+                .select((attribute_id, attribute_value))
                 .load(self.conn())
                 .change_context(DieselDatabaseError::Execute)?
         };
 
         let mut number_list_attributes = HashMap::<u16, Vec<u16>>::new();
         for (id, value) in number_list_data {
-            let values = number_list_attributes
-                .entry(id as u16)
-                .or_default();
+            let values = number_list_attributes.entry(id as u16).or_default();
             values.push(value as u16);
         }
         for (id, number_list) in number_list_attributes {
-            data.push(ProfileAttributeValue::new_number_list(
-                id,
-                number_list
-            ));
+            data.push(ProfileAttributeValue::new_number_list(id, number_list));
         }
 
         Ok(data)
@@ -203,11 +199,11 @@ impl CurrentReadProfileData<'_> {
             .map(|(id, part1, part2, accept_missing)| {
                 ProfileAttributeFilterValue::new_not_number_list(
                     id as u16,
-                    part1.map(|v| v as u16)
+                    part1
+                        .map(|v| v as u16)
                         .into_iter()
                         .chain(part2.map(|v| v as u16))
                         .collect(),
-
                     accept_missing,
                 )
             })
@@ -218,18 +214,13 @@ impl CurrentReadProfileData<'_> {
 
             profile_attributes_number_list_filters
                 .filter(account_id.eq(id.as_db_id()))
-                .select((
-                    attribute_id,
-                    filter_value,
-                ))
+                .select((attribute_id, filter_value))
                 .load(self.conn())
                 .change_context(DieselDatabaseError::Execute)?
         };
         let mut number_list_attribute_filters = HashMap::<u16, Vec<u16>>::new();
         for (id, filter_value) in number_list_filters {
-            let values = number_list_attribute_filters
-                .entry(id as u16)
-                .or_default();
+            let values = number_list_attribute_filters.entry(id as u16).or_default();
             values.push(filter_value as u16);
         }
         for filter_value in &mut data {
@@ -253,10 +244,7 @@ impl CurrentReadProfileData<'_> {
 
         let r: (Option<ProfileAge>, Option<UnixTime>) = profile_state
             .filter(account_id.eq(id.as_db_id()))
-            .select((
-                profile_initial_age,
-                profile_initial_age_set_unix_time,
-            ))
+            .select((profile_initial_age, profile_initial_age_set_unix_time))
             .first(self.conn())
             .change_context(DieselDatabaseError::Execute)?;
 

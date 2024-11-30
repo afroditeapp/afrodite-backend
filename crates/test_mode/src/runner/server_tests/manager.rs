@@ -1,14 +1,14 @@
-
 use std::sync::{atomic::AtomicBool, Arc};
 
-use config::{
-    args::TestMode,
-    Config,
+use config::{args::TestMode, Config};
+use tokio::{
+    sync::{self, mpsc, OwnedSemaphorePermit},
+    task::JoinHandle,
 };
-use tokio::{sync::{self, mpsc, OwnedSemaphorePermit}, task::JoinHandle};
 
 use crate::{
-    server::{AdditionalSettings, ServerManager}, ServerTestError, TestContext, TestFunction, TestResult
+    server::{AdditionalSettings, ServerManager},
+    ServerTestError, TestContext, TestFunction, TestResult,
 };
 
 static TEST_FAILURE: AtomicBool = AtomicBool::new(false);
@@ -71,15 +71,19 @@ impl TestManager {
         (receiver, quit_handle)
     }
 
-    async fn run_tests(
-        self,
-        sender: mpsc::Sender<ManagerEvent>,
-    ) {
-        let task_count = self.test_config.qa_mode().as_ref().unwrap().tasks.unwrap_or(num_cpus::get());
+    async fn run_tests(self, sender: mpsc::Sender<ManagerEvent>) {
+        let task_count = self
+            .test_config
+            .qa_mode()
+            .as_ref()
+            .unwrap()
+            .tasks
+            .unwrap_or(num_cpus::get());
         let semaphore = Arc::new(sync::Semaphore::new(task_count));
 
         let max_port_number_count = task_count * 2;
-        let (port_number_sender, mut port_number_receiver) = port_number_channel(max_port_number_count);
+        let (port_number_sender, mut port_number_receiver) =
+            port_number_channel(max_port_number_count);
         let initial_port_number = 3100;
         for port_number in initial_port_number..initial_port_number + max_port_number_count as u16 {
             port_number_sender.send(port_number).await;
@@ -147,15 +151,21 @@ impl TestTask {
 
         match test_future.await {
             Ok(_) => {
-                self.sender.send(ManagerEvent::Success { test: self.test }).await.unwrap();
+                self.sender
+                    .send(ManagerEvent::Success { test: self.test })
+                    .await
+                    .unwrap();
             }
             Err(error) => {
                 TEST_FAILURE.store(true, std::sync::atomic::Ordering::Relaxed);
-                self.sender.send(ManagerEvent::Fail {
-                    test: self.test,
-                    error,
-                    logs: server_manager.logs_string().await
-                }).await.unwrap();
+                self.sender
+                    .send(ManagerEvent::Fail {
+                        test: self.test,
+                        error,
+                        logs: server_manager.logs_string().await,
+                    })
+                    .await
+                    .unwrap();
             }
         }
 
@@ -169,10 +179,12 @@ impl TestTask {
     }
 }
 
-
 fn port_number_channel(size: usize) -> (ServerPortNumberSender, ServerPortNumberReceiver) {
     let (sender, receiver) = mpsc::channel(size);
-    (ServerPortNumberSender { sender }, ServerPortNumberReceiver { receiver })
+    (
+        ServerPortNumberSender { sender },
+        ServerPortNumberReceiver { receiver },
+    )
 }
 
 /// Send free port number back to the manager.

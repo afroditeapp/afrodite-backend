@@ -1,18 +1,23 @@
-use std::{collections::HashMap, mem::size_of, num::{NonZeroU16, NonZeroU8}, sync::Arc};
+use std::{
+    collections::HashMap,
+    mem::size_of,
+    num::{NonZeroU16, NonZeroU8},
+    sync::Arc,
+};
 
 use config::{file::LocationConfig, Config};
 use error_stack::ResultExt;
+use model::{AccountId, UnixTime};
 use model_server_data::{
     CellData, Location, LocationIndexKey, LocationIndexProfileData, ProfileLink,
     ProfileQueryMakerDetails,
 };
-use model::{AccountId, UnixTime};
 use server_common::data::index::IndexError;
-use crate::{cache::LastSeenTimeUpdated, db_manager::InternalWriting};
 use tokio::sync::RwLock;
 use tracing::info;
 
 use self::location::{IndexUpdater, LocationIndex, LocationIndexIteratorState};
+use crate::{cache::LastSeenTimeUpdated, db_manager::InternalWriting};
 
 pub mod location;
 
@@ -21,7 +26,7 @@ pub trait LocationWrite {
     fn location_iterator(&self) -> crate::index::LocationIndexIteratorHandle<'_>;
 }
 
-impl <I: InternalWriting> LocationWrite for I {
+impl<I: InternalWriting> LocationWrite for I {
     fn location(&self) -> crate::index::LocationIndexWriteHandle<'_> {
         crate::index::LocationIndexWriteHandle::new(InternalWriting::location(self))
     }
@@ -37,15 +42,10 @@ pub struct LocationIndexInfoCreator {
 
 impl LocationIndexInfoCreator {
     pub fn new(config: LocationConfig) -> Self {
-        Self {
-            config,
-        }
+        Self { config }
     }
 
-    pub fn create_one(
-        &self,
-        index_cell_square_km: NonZeroU8,
-    ) -> String {
+    pub fn create_one(&self, index_cell_square_km: NonZeroU8) -> String {
         self.create_one_internal(index_cell_square_km, false)
     }
 
@@ -66,33 +66,23 @@ impl LocationIndexInfoCreator {
         let size = format!("Location index size: {}x{}, ", width, height);
         let bytes = format!("bytes: {}, ", format_size_in_bytes(byte_count));
         let zoom = format!("zoom: {}, ", coordinates.zoom_level());
-        let len = format!("tile side length: {:.2} km", coordinates.tile_side_length_km());
+        let len = format!(
+            "tile side length: {:.2} km",
+            coordinates.tile_side_length_km()
+        );
         if whitespace_padding {
-            format!(
-                "{:<35}{:<20}{:<10}{}",
-                size,
-                bytes,
-                zoom,
-                len,
-            )
+            format!("{:<35}{:<20}{:<10}{}", size, bytes, zoom, len,)
         } else {
-            format!(
-                "{}{}{}{}",
-                size,
-                bytes,
-                zoom,
-                len,
-            )
+            format!("{}{}{}{}", size, bytes, zoom, len,)
         }
-
     }
 
     pub fn create_all(&self) -> String {
         let mut info = String::new();
         for (_, tile_lenght) in ZOOM_LEVEL_AND_TILE_LENGHT {
             let tile_lenght_u64 = *tile_lenght as u64;
-            let converted = TryInto::<u8>::try_into(tile_lenght_u64)
-                .and_then(TryInto::<NonZeroU8>::try_into);
+            let converted =
+                TryInto::<u8>::try_into(tile_lenght_u64).and_then(TryInto::<NonZeroU8>::try_into);
             match converted {
                 Ok(lenght) => {
                     info.push_str(&self.create_one_internal(lenght, true));
@@ -192,17 +182,12 @@ impl<'a> LocationIndexIteratorHandle<'a> {
         &self,
         previous_iterator_state: LocationIndexIteratorState,
         query_maker_details: &ProfileQueryMakerDetails,
-    ) -> (LocationIndexIteratorState, Option<Vec<ProfileLink>>)
-    {
+    ) -> (LocationIndexIteratorState, Option<Vec<ProfileLink>>) {
         let current_time = UnixTime::current_time();
         let mut iterator_state = previous_iterator_state;
         loop {
-            let (new_state, result) = self
-                .next_profiles_internal(
-                    iterator_state,
-                    query_maker_details,
-                    &current_time,
-                );
+            let (new_state, result) =
+                self.next_profiles_internal(iterator_state, query_maker_details, &current_time);
             iterator_state = new_state;
             match result {
                 IteratorResultInternal::NoProfiles => {
@@ -367,16 +352,13 @@ impl<'a> LocationIndexWriteHandle<'a> {
         Ok(())
     }
 
-    pub async fn update_last_seen_time(
-        &self,
-        account_id: AccountId,
-        info: LastSeenTimeUpdated,
-    ) {
+    pub async fn update_last_seen_time(&self, account_id: AccountId, info: LastSeenTimeUpdated) {
         // TODO(perf): This is currently called also when profile does not exist
         // in location index. Most likely profile visibility check can be done
         // before creating LastSeenTimeUpdated.
         let profiles = self.profiles.read().await;
-        profiles.get(&info.current_position)
+        profiles
+            .get(&info.current_position)
             .and_then(|v| v.profiles.get(&account_id))
             .inspect(|data| data.update_last_seen_value(info.last_seen_time));
     }
@@ -545,18 +527,12 @@ impl CoordinateManager {
 
     // Max y tile number of the index area.
     fn y_max_tile(&self) -> u32 {
-        calculate_tile_y(
-            self.config.latitude_bottom_right,
-            self.zoom_level,
-        )
+        calculate_tile_y(self.config.latitude_bottom_right, self.zoom_level)
     }
 
     // Max x tile number of the index area.
     fn x_max_tile(&self) -> u32 {
-        calculate_tile_x(
-            self.config.longitude_bottom_right,
-            self.zoom_level,
-        )
+        calculate_tile_x(self.config.longitude_bottom_right, self.zoom_level)
     }
 
     fn height(&self) -> u16 {

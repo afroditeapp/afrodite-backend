@@ -1,8 +1,6 @@
 use std::collections::HashSet;
 
-use database::{
-    define_current_read_commands, DieselDatabaseError, IntoDatabaseErrorExt,
-};
+use database::{define_current_read_commands, DieselDatabaseError, IntoDatabaseErrorExt};
 use diesel::prelude::*;
 use error_stack::Result;
 use model_media::{
@@ -13,9 +11,7 @@ use model_media::{
 
 use crate::{current::read::GetDbReadCommandsMedia, IntoDatabaseError};
 
-define_current_read_commands!(
-    CurrentReadMediaModerationRequest
-);
+define_current_read_commands!(CurrentReadMediaModerationRequest);
 
 impl CurrentReadMediaModerationRequest<'_> {
     pub fn moderation_request(

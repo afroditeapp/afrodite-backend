@@ -1,11 +1,9 @@
-
 use database::current::write::GetDbWriteCommandsCommon;
 use database_profile::current::write::GetDbWriteCommandsProfile;
-use model_profile::{
-    AccountIdInternal, ProfileVersion,
-};
+use model_profile::{AccountIdInternal, ProfileVersion};
 use server_data::{
-    app::GetConfig, cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, result::Result, DataError, IntoDataError, write::DbTransaction
+    app::GetConfig, cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write,
+    result::Result, write::DbTransaction, DataError, IntoDataError,
 };
 use server_data_profile::cache::CacheWriteProfile;
 
@@ -26,23 +24,23 @@ impl UnlimitedLikesUpdate<'_> {
         let is_profile_component_enabled = self.config().components().profile;
         db_transaction!(self, move |mut cmds| {
             if is_profile_component_enabled {
-                cmds.profile().data().only_profile_version(id, new_profile_version)?;
+                cmds.profile()
+                    .data()
+                    .only_profile_version(id, new_profile_version)?;
                 cmds.profile().data().increment_profile_sync_version(id)?;
             }
-            cmds.common().state().update_unlimited_likes(
-                id,
-                unlimited_likes_value,
-            )
+            cmds.common()
+                .state()
+                .update_unlimited_likes(id, unlimited_likes_value)
         })?;
 
-        self
-            .write_cache_profile_and_common(id.as_id(), |p, e| {
-                e.other_shared_state.unlimited_likes = unlimited_likes_value;
-                p.data.version_uuid = new_profile_version;
-                Ok(())
-            })
-            .await
-            .into_data_error(id)?;
+        self.write_cache_profile_and_common(id.as_id(), |p, e| {
+            e.other_shared_state.unlimited_likes = unlimited_likes_value;
+            p.data.version_uuid = new_profile_version;
+            Ok(())
+        })
+        .await
+        .into_data_error(id)?;
 
         self.update_location_cache_profile(id).await?;
 

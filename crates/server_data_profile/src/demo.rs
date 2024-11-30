@@ -1,5 +1,8 @@
 use model_profile::{AccessibleAccount, AccountId};
-use server_data::{db_manager::{handle_types::Config, RouterDatabaseReadHandle}, DataError};
+use server_data::{
+    db_manager::{handle_types::Config, RouterDatabaseReadHandle},
+    DataError,
+};
 
 use crate::read::GetReadProfileCommands;
 

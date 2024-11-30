@@ -1,13 +1,13 @@
-use axum::{
-    extract::State,
-    Extension,
-};
+use axum::{extract::State, Extension};
 use model_profile::{
-    AccountIdInternal, EventToClientInternal, GetProfileNamePendingModerationList, Permissions, PostModerateProfileName
+    AccountIdInternal, EventToClientInternal, GetProfileNamePendingModerationList, Permissions,
+    PostModerateProfileName,
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::{app::{GetAccounts, WriteData}, create_open_api_router, db_write_multiple};
+use server_api::{
+    app::{GetAccounts, WriteData},
+    create_open_api_router, db_write_multiple, S,
+};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
@@ -18,7 +18,8 @@ use crate::{
 };
 
 #[obfuscate_api]
-const PATH_GET_PROFILE_NAME_PENDING_MODERATION_LIST: &str = "/profile_api/admin/profile_name_pending_moderation";
+const PATH_GET_PROFILE_NAME_PENDING_MODERATION_LIST: &str =
+    "/profile_api/admin/profile_name_pending_moderation";
 
 #[utoipa::path(
     get,
@@ -85,15 +86,10 @@ pub async fn post_moderate_profile_name(
     let name_owner_id = state.get_internal_id(data.id).await?;
 
     db_write_multiple!(state, move |cmds| {
-        cmds
-            .profile_admin()
+        cmds.profile_admin()
             .profile_name_allowlist()
-            .moderate_profile_name(
-                moderator_id,
-                name_owner_id,
-                data.name,
-                data.accept,
-            ).await?;
+            .moderate_profile_name(moderator_id, name_owner_id, data.name, data.accept)
+            .await?;
 
         cmds.events()
             .send_connected_event(name_owner_id, EventToClientInternal::ProfileChanged)
@@ -105,9 +101,7 @@ pub async fn post_moderate_profile_name(
     Ok(())
 }
 
-pub fn admin_profile_name_allowlist_router(
-    s: S,
-) -> OpenApiRouter {
+pub fn admin_profile_name_allowlist_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
         get_profile_name_pending_moderation_list,

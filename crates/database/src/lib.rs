@@ -12,8 +12,8 @@ use std::{fmt::Debug, marker::PhantomData};
 use current::write::TransactionConnection;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 use error_stack::{Context, Result, ResultExt};
-pub use model::schema;
 use model::markers::IsLoggingAllowed;
+pub use model::schema;
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;
 use simple_backend_database::{diesel_db::ObjectExtensions, DbReadHandle, DbWriteHandle};
 
@@ -243,10 +243,7 @@ impl<'a> DbReaderRaw<'a> {
         Self { db }
     }
 
-    fn transaction<
-        F: FnOnce(DbReadMode<'_>) -> std::result::Result<T, TransactionError>,
-        T,
-    >(
+    fn transaction<F: FnOnce(DbReadMode<'_>) -> std::result::Result<T, TransactionError>, T>(
         conn: &mut DieselConnection,
         transaction_actions: F,
     ) -> error_stack::Result<T, DieselDatabaseError> {
@@ -256,9 +253,7 @@ impl<'a> DbReaderRaw<'a> {
     }
 
     pub async fn db_read<
-        T: FnOnce(DbReadMode<'_>) -> error_stack::Result<R, DieselDatabaseError>
-            + Send
-            + 'static,
+        T: FnOnce(DbReadMode<'_>) -> error_stack::Result<R, DieselDatabaseError> + Send + 'static,
         R: Send + 'static,
     >(
         &self,
@@ -335,10 +330,7 @@ impl<'a> DbWriter<'a> {
         Self { db }
     }
 
-    fn transaction<
-        F: FnOnce(DbWriteMode<'_>) -> std::result::Result<T, TransactionError>,
-        T,
-    >(
+    fn transaction<F: FnOnce(DbWriteMode<'_>) -> std::result::Result<T, TransactionError>, T>(
         conn: &mut DieselConnection,
         transaction_actions: F,
     ) -> error_stack::Result<T, DieselDatabaseError> {
@@ -348,9 +340,7 @@ impl<'a> DbWriter<'a> {
     }
 
     pub async fn db_transaction_raw<
-        T: FnOnce(DbWriteMode<'_>) -> error_stack::Result<R, DieselDatabaseError>
-            + Send
-            + 'static,
+        T: FnOnce(DbWriteMode<'_>) -> error_stack::Result<R, DieselDatabaseError> + Send + 'static,
         R: Send + 'static,
     >(
         &self,
@@ -371,7 +361,6 @@ impl<'a> DbWriter<'a> {
         .await?
     }
 }
-
 
 pub struct DbWriterHistory<'a> {
     db: &'a HistoryWriteHandle,
@@ -476,7 +465,10 @@ impl<'a> DbWriterWithHistory<'a> {
         conn.interact(move |conn| {
             Self::transaction(conn, move |conn| {
                 let transaction_connection = TransactionConnection::new(DbWriteMode(conn));
-                cmd(transaction_connection, DbWriteModeHistory(conn_history.as_mut()))
+                cmd(
+                    transaction_connection,
+                    DbWriteModeHistory(conn_history.as_mut()),
+                )
             })
         })
         .await?

@@ -4,11 +4,10 @@ use config::file::DemoModeConfig;
 use error_stack::Result;
 use model::AccountId;
 use model_server_state::{
-    DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult,
+    AccessibleAccountsInfo, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult,
     DemoModeLoginToken, DemoModePassword, DemoModeToken,
 };
 use server_common::data::DataError;
-use model_server_state::AccessibleAccountsInfo;
 use simple_backend_utils::{ContextExt, IntoReportFromString};
 use tokio::sync::RwLock;
 use tracing::error;
@@ -212,10 +211,7 @@ impl DemoModeManager {
         }
     }
 
-    pub async fn demo_mode_logout(
-        &self,
-        token: &DemoModeToken,
-    ) -> Result<(), DataError> {
+    pub async fn demo_mode_logout(&self, token: &DemoModeToken) -> Result<(), DataError> {
         let mut w = self.state.write().await;
         let state = w.states.iter().enumerate().find_map(|(i, state)| {
             let result = state.token_equals(token);

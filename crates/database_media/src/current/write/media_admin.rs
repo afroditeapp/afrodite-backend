@@ -10,7 +10,7 @@ pub struct InitialModerationRequestIsNowAccepted {
 
 define_current_write_commands!(CurrentWriteMediaAdmin);
 
-impl <'a> CurrentWriteMediaAdmin<'a> {
+impl<'a> CurrentWriteMediaAdmin<'a> {
     pub fn moderation(self) -> moderation::CurrentWriteMediaAdminModeration<'a> {
         moderation::CurrentWriteMediaAdminModeration::new(self.cmds)
     }

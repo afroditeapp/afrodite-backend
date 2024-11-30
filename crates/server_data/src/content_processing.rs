@@ -6,12 +6,13 @@ use model::{
 };
 use model_server_data::{ContentSlot, NewContentParams};
 use server_common::result::WrappedResultExt;
-use tokio::sync::{mpsc::{self, UnboundedReceiver, UnboundedSender}, RwLock};
+use tokio::sync::{
+    mpsc::{self, UnboundedReceiver, UnboundedSender},
+    RwLock,
+};
 use tracing::warn;
 
-use crate::{event::EventManagerWithCacheReference, file::utils::TmpContentFile};
-
-use crate::result::Result;
+use crate::{event::EventManagerWithCacheReference, file::utils::TmpContentFile, result::Result};
 
 #[derive(thiserror::Error, Debug)]
 pub enum ContentProcessingError {
@@ -74,12 +75,14 @@ impl ContentProcessingManagerData {
             new_content_params,
             in_event_queue: true,
         };
-        let was_already_in_event_queue = processing_states.insert(key, state)
+        let was_already_in_event_queue = processing_states
+            .insert(key, state)
             .map(|v| v.in_event_queue)
             .unwrap_or_default();
 
         if !was_already_in_event_queue {
-            self.event_queue.send(key)
+            self.event_queue
+                .send(key)
                 .change_context(ContentProcessingError::EventSendingFailed)?
         }
 

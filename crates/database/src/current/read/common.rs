@@ -3,7 +3,9 @@ use error_stack::Result;
 use model::{Account, AccountId, AccountIdInternal, Permissions};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
-use crate::{current::read::GetDbReadCommandsCommon, define_current_read_commands, IntoDatabaseError};
+use crate::{
+    current::read::GetDbReadCommandsCommon, define_current_read_commands, IntoDatabaseError,
+};
 
 mod queue_number;
 mod state;
@@ -11,7 +13,7 @@ mod token;
 
 define_current_read_commands!(CurrentReadCommon);
 
-impl <'a> CurrentReadCommon<'a> {
+impl<'a> CurrentReadCommon<'a> {
     pub fn state(self) -> state::CurrentReadCommonState<'a> {
         state::CurrentReadCommonState::new(self.cmds)
     }
@@ -31,7 +33,11 @@ impl CurrentReadCommon<'_> {
     pub fn account(&mut self, id: AccountIdInternal) -> Result<Account, DieselDatabaseError> {
         use crate::schema::account_permissions;
 
-        let shared_state = self.read().common().state().account_state_related_shared_state(id)?;
+        let shared_state = self
+            .read()
+            .common()
+            .state()
+            .account_state_related_shared_state(id)?;
 
         let permissions: Permissions = account_permissions::table
             .filter(account_permissions::account_id.eq(id.as_db_id()))
@@ -54,8 +60,6 @@ impl CurrentReadCommon<'_> {
     pub fn account_ids(&mut self) -> Result<Vec<AccountId>, DieselDatabaseError> {
         use crate::schema::account_id::dsl::*;
 
-        account_id.select(uuid)
-            .load(self.conn())
-            .into_db_error(())
+        account_id.select(uuid).load(self.conn()).into_db_error(())
     }
 }

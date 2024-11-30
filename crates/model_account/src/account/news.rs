@@ -5,10 +5,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, UnixTime};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{
-    AccountId, AccountIdDb
-};
-
+use crate::{AccountId, AccountIdDb};
 
 #[derive(Debug, Clone, Default, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::news)]
@@ -201,16 +198,7 @@ impl Default for NewsLocale {
 /// Define how many returned news items counted from the first public
 /// news item are new news (news publicity changed to public after
 /// previous news iterator reset).
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    Default,
-    Deserialize,
-    Serialize,
-    ToSchema,
-    PartialEq,
-)]
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct PageItemCountForNewPublicNews {
     pub c: i64,
 }

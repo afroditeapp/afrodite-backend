@@ -41,15 +41,14 @@ impl UnixTime {
     }
 
     pub fn year(&self) -> Option<i32> {
-        chrono::DateTime::from_timestamp(self.ut, 0)
-            .map(|v| v.year())
+        chrono::DateTime::from_timestamp(self.ut, 0).map(|v| v.year())
     }
 
     /// Return decremented time value (self.ut - 1). Implemented using
     /// `saturating_sub`.
     pub fn decrement(self) -> Self {
         Self {
-            ut: self.ut.saturating_sub(1)
+            ut: self.ut.saturating_sub(1),
         }
     }
 }

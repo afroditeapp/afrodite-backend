@@ -7,10 +7,7 @@ pub struct CachedMedia {
 }
 
 impl CachedMedia {
-    pub fn new(
-        account_id: AccountId,
-        profile_content_version: ProfileContentVersion
-    ) -> Self {
+    pub fn new(account_id: AccountId, profile_content_version: ProfileContentVersion) -> Self {
         Self {
             account_id,
             profile_content_version,
