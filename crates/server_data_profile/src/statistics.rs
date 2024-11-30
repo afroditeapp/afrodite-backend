@@ -1,22 +1,18 @@
-use model_profile::{GetProfileStatisticsResult, StatisticsProfileVisibility};
-
-use tokio::sync::Mutex;
+use model_profile::GetProfileStatisticsResult;
 
 use server_data::{
-    db_manager::RouterDatabaseReadHandle, result::Result, DataError
+    db_manager::RouterDatabaseReadHandle, result::Result, statistics::ProfileStatisticsCache, DataError
 };
 
 use crate::read::GetReadProfileCommands;
 
-/// Cache publicly available profile statistics
-#[derive(Debug, Default)]
-pub struct ProfileStatisticsCache {
-    pub data: Mutex<Option<GetProfileStatisticsResult>>,
+pub trait ProfileStatisticsCacheUtils {
+    async fn get_or_update_statistics(&self, handle: &RouterDatabaseReadHandle) -> Result<GetProfileStatisticsResult, DataError>;
+    async fn update_statistics(&self, handle: &RouterDatabaseReadHandle) -> Result<GetProfileStatisticsResult, DataError>;
 }
 
-impl ProfileStatisticsCache {
-    const VISIBILITY: StatisticsProfileVisibility = StatisticsProfileVisibility::Public;
-    pub async fn get_or_update_statistics(&self, handle: &RouterDatabaseReadHandle) -> Result<GetProfileStatisticsResult, DataError> {
+impl ProfileStatisticsCacheUtils for ProfileStatisticsCache {
+    async fn get_or_update_statistics(&self, handle: &RouterDatabaseReadHandle) -> Result<GetProfileStatisticsResult, DataError> {
         let mut data = self.data.lock().await;
         let r = match data.as_mut() {
             Some(data) => data.clone(),
@@ -29,7 +25,7 @@ impl ProfileStatisticsCache {
         Ok(r)
     }
 
-    pub async fn update_statistics(&self, handle: &RouterDatabaseReadHandle) -> Result<GetProfileStatisticsResult, DataError> {
+    async fn update_statistics(&self, handle: &RouterDatabaseReadHandle) -> Result<GetProfileStatisticsResult, DataError> {
         let mut data = self.data.lock().await;
         let r = handle.profile().statistics().profile_statistics(Self::VISIBILITY).await?;
         *data = Some(r.clone());

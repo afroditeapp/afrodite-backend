@@ -366,7 +366,7 @@ async fn handle_socket_result(
         _ => return Err(WebSocketError::ProtocolError.report()),
     };
 
-    state.handle_new_websocket_connection(&mut socket, id, data_sync_versions).await?;
+    state.data_all_access().handle_new_websocket_connection(&mut socket, id, data_sync_versions).await?;
 
     // TODO(prod): Remove extra logging from this file.
 

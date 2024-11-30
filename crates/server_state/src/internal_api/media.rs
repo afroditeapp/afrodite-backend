@@ -22,7 +22,7 @@ pub async fn media_check_moderation_request_for_account(
     account_id: AccountIdInternal,
 ) -> Result<(), InternalApiError> {
     if state.config().components().media {
-        state.check_moderation_request_for_account(account_id)
+        state.data_all_access().check_moderation_request_for_account(account_id)
             .await
             .change_context(InternalApiError::DataError)
     } else {

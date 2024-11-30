@@ -4224,7 +4224,6 @@ dependencies = [
  "model_profile",
  "server_common",
  "server_data",
- "tokio",
  "tracing",
 ]
 
@@ -4287,7 +4286,6 @@ dependencies = [
  "server_data",
  "server_data_account",
  "server_data_chat",
- "server_data_profile",
  "simple_backend",
  "simple_backend_config",
  "simple_backend_utils",

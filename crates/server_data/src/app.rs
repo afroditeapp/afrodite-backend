@@ -2,7 +2,7 @@ use std::{future::Future, sync::Arc};
 
 use axum::extract::ws::WebSocket;
 use config::{file::EmailAddress, Config};
-use model::{AccountId, AccountIdInternal, PendingNotification, PendingNotificationWithData, SyncDataVersionFromClient};
+use model::{Account, AccountId, AccountIdInternal, PendingNotification, PendingNotificationWithData, SyncDataVersionFromClient};
 use model_server_data::SignInWithInfo;
 
 use futures::future::BoxFuture;
@@ -11,7 +11,7 @@ pub use server_common::app::*;
 use server_common::websocket::WebSocketError;
 
 use crate::{
-    db_manager::{InternalWriting, RouterDatabaseReadHandle}, event::EventManagerWithCacheReference, write_commands::{WriteCmds, WriteCommandRunnerHandle}, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle}, DataError
+    db_manager::{InternalWriting, RouterDatabaseReadHandle}, event::EventManagerWithCacheReference, statistics::ProfileStatisticsCache, write_commands::{WriteCmds, WriteCommandRunnerHandle}, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle}, DataError
 };
 
 pub trait WriteData {
@@ -46,6 +46,10 @@ pub trait WriteData {
 
 pub trait ReadData {
     fn read(&self) -> &RouterDatabaseReadHandle;
+}
+
+pub trait ProfileStatisticsCacheProvider {
+    fn profile_statistics_cache(&self) -> &ProfileStatisticsCache;
 }
 
 pub trait EventManagerProvider {
@@ -125,4 +129,12 @@ pub trait DataAllUtils: Send + Sync + 'static {
         id: AccountIdInternal,
         notification_value: PendingNotification,
     ) -> BoxFuture<'a, PendingNotificationWithData>;
+
+    fn complete_initial_setup<'a>(
+        &self,
+        config: &'a Config,
+        read_handle: &'a RouterDatabaseReadHandle,
+        write_handle: &'a WriteCommandRunnerHandle,
+        id: AccountIdInternal,
+    ) -> BoxFuture<'a, server_common::result::Result<Account, DataError>>;
 }

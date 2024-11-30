@@ -1,8 +1,9 @@
 use axum::{extract::State, Extension};
 use model_account::{AccountIdInternal, AccountSetup, AccountState, SetAccountSetup};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::app::ValidateModerationRequest;
 use server_api::S;
-use server_api::{app::CompleteInitialSetupCmd, create_open_api_router};
+use server_api::create_open_api_router;
 use server_data_account::{
     read::GetReadCommandsAccount,
     write::GetWriteCommandsAccount,
@@ -126,7 +127,15 @@ pub async fn post_complete_setup(
         return Err(StatusCode::NOT_ACCEPTABLE);
     }
 
-    state.complete_initial_setup(id).await?;
+    // Validate media moderation.
+    // Moderation request creation also validates that the initial request
+    // contains security content, so there is no possibility that user
+    // changes the request to be invalid just after this check.
+    state.media_check_moderation_request_for_account(id).await?;
+
+    let new_account = state.data_all_access().complete_initial_setup(id).await?;
+
+    internal_api::common::sync_account_state(&state, id, new_account).await?;
 
     Ok(())
 }

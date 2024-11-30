@@ -153,7 +153,7 @@ pub async fn put_setting_unlimited_likes(
 ) -> Result<(), StatusCode> {
     ACCOUNT.put_setting_unlimited_likes.incr();
 
-    state.update_unlimited_likes(id, new_value.value).await?;
+    state.data_all_access().update_unlimited_likes(id, new_value.value).await?;
 
     internal_api::common::sync_unlimited_likes(&state, id).await?;
 

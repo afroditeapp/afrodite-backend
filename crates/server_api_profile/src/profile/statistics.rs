@@ -8,9 +8,10 @@ use model_profile::{
 use obfuscate_api_macro::obfuscate_api;
 use server_api::S;
 use server_api::create_open_api_router;
-use server_data_profile::{app::ProfileStatisticsCacheProvider, read::GetReadProfileCommands};
+use server_data_profile::{read::GetReadProfileCommands, statistics::ProfileStatisticsCacheUtils};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
+use server_api::app::ProfileStatisticsCacheProvider;
 
 use crate::{
     app::ReadData,

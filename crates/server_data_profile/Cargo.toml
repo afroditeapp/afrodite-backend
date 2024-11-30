@@ -10,8 +10,6 @@ tracing = { workspace = true }
 
 error-stack = { workspace = true }
 
-tokio = { workspace = true }
-
 model_profile = { path = "../model_profile" }
 server_common = { path = "../server_common" }
 server_data = { path = "../server_data" }

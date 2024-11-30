@@ -81,7 +81,7 @@ pub async fn post_get_pending_notification(
         Err(_) => return PendingNotificationWithData::default().into(),
     };
 
-    state.get_push_notification_data(id, notification_value).await.into()
+    state.data_all_access().get_push_notification_data(id, notification_value).await.into()
 }
 
 pub fn push_notification_router_private(s: S) -> OpenApiRouter {

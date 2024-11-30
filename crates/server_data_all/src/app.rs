@@ -3,7 +3,7 @@ use std::ops::Deref;
 use axum::extract::ws::WebSocket;
 use config::Config;
 use futures::{future::BoxFuture, FutureExt};
-use model::{AccountId, AccountIdInternal, EmailMessages, PendingNotification, PendingNotificationWithData, SyncDataVersionFromClient};
+use model::{Account, AccountId, AccountIdInternal, EmailMessages, PendingNotification, PendingNotificationWithData, SyncDataVersionFromClient};
 use model_account::{EmailAddress, SignInWithInfo};
 use server_common::websocket::WebSocketError;
 use server_data::{app::DataAllUtils, db_manager::RouterDatabaseReadHandle, write_commands::WriteCommandRunnerHandle, DataError};
@@ -118,6 +118,18 @@ impl DataAllUtils for DataAllUtilsImpl {
                 id,
                 notification_value,
             ).await
+        }.boxed()
+    }
+
+    fn complete_initial_setup<'a>(
+        &self,
+        config: &'a Config,
+        read_handle: &'a RouterDatabaseReadHandle,
+        write_handle: &'a WriteCommandRunnerHandle,
+        id: AccountIdInternal,
+    ) -> BoxFuture<'a, server_common::result::Result<Account, DataError>> {
+        async move {
+            crate::initial_setup::complete_initial_setup(config, read_handle, write_handle, id).await
         }.boxed()
     }
 }

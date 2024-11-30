@@ -33,6 +33,5 @@ macro_rules! db_transaction_history {
 pub mod read;
 pub mod write;
 pub mod statistics;
-pub mod app;
 pub mod cache;
 pub mod demo;

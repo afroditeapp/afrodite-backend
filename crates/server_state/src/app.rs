@@ -5,7 +5,7 @@ use model::{
 };
 use server_common::internal_api::InternalApiError;
 use server_data::{content_processing::ContentProcessingManagerData, DataError};
-use crate::{internal_api::InternalApiClient, utils::StatusCode};
+use crate::internal_api::InternalApiClient;
 
 pub use server_data::app::*;
 
@@ -39,13 +39,6 @@ pub trait ValidateModerationRequest: GetConfig + ReadData + GetInternalApi {
         &self,
         account_id: AccountIdInternal,
     ) -> impl std::future::Future<Output = server_common::result::Result<(), InternalApiError>> + Send;
-}
-
-pub trait CompleteInitialSetupCmd: ReadData + WriteData + GetInternalApi + GetConfig + ValidateModerationRequest {
-    fn complete_initial_setup(
-        &self,
-        account_id: AccountIdInternal,
-    ) -> impl std::future::Future<Output = std::result::Result<(), StatusCode>> + Send;
 }
 
 pub trait ResetPushNotificationTokens: StateBase + WriteData {

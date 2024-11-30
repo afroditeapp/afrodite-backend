@@ -7,16 +7,15 @@ use std::sync::Arc;
 
 use axum::extract::ws::WebSocket;
 use config::Config;
-use model::{AccountIdInternal, PendingNotification, PendingNotificationWithData, SyncDataVersionFromClient};
+use model::{Account, AccountIdInternal, PendingNotification, PendingNotificationWithData, SyncDataVersionFromClient};
 use model_account::EmailAddress;
 use model_chat::SignInWithInfo;
 use self::internal_api::InternalApiClient;
 use server_common::{push_notifications::PushNotificationSender, websocket::WebSocketError};
 use server_data::{
-    app::DataAllUtils, content_processing::ContentProcessingManagerData, db_manager::RouterDatabaseReadHandle, write_commands::WriteCommandRunnerHandle
+    app::DataAllUtils, content_processing::ContentProcessingManagerData, db_manager::RouterDatabaseReadHandle, statistics::ProfileStatisticsCache, write_commands::WriteCommandRunnerHandle
 };
 use crate::demo::DemoModeManager;
-use server_data_profile::statistics::ProfileStatisticsCache;
 use simple_backend::app::SimpleBackendAppState;
 
 pub mod state_impl;
@@ -77,12 +76,42 @@ impl AppState {
         &self.demo_mode
     }
 
+    pub fn data_all_access(&self) -> DataAllAccess {
+        DataAllAccess { state: self }
+    }
+}
+
+pub struct DataAllAccess<'a> {
+    state: &'a S,
+}
+
+impl DataAllAccess<'_> {
+    fn config(&self) -> &Config {
+        &self.state.config
+    }
+
+    fn read(&self) ->  &RouterDatabaseReadHandle {
+        &self.state.database
+    }
+
+    fn write(&self) -> &WriteCommandRunnerHandle {
+        &self.state.write_queue
+    }
+
+    fn utils(&self) -> &'static dyn DataAllUtils {
+        self.state.data_all_utils
+    }
+
     pub async fn update_unlimited_likes(
         &self,
         id: AccountIdInternal,
         unlimited_likes: bool,
     ) -> server_common::result::Result<(), DataError> {
-        let cmd = self.data_all_utils.update_unlimited_likes(&self.write_queue, id, unlimited_likes);
+        let cmd = self.utils().update_unlimited_likes(
+            self.write(),
+            id,
+            unlimited_likes
+        );
         cmd.await
     }
 
@@ -91,7 +120,11 @@ impl AppState {
         sign_in_with: SignInWithInfo,
         email: Option<EmailAddress>,
     ) -> server_common::result::Result<AccountIdInternal, DataError> {
-        let cmd = self.data_all_utils.register_impl(&self.write_queue, sign_in_with, email);
+        let cmd = self.utils().register_impl(
+            self.write(),
+            sign_in_with,
+            email
+        );
         cmd.await
     }
 
@@ -101,10 +134,10 @@ impl AppState {
         id: AccountIdInternal,
         sync_versions: Vec<SyncDataVersionFromClient>,
     ) -> server_common::result::Result<(), WebSocketError> {
-        let cmd = self.data_all_utils.handle_new_websocket_connection(
-            &self.config,
-            &self.database,
-            &self.write_queue,
+        let cmd = self.utils().handle_new_websocket_connection(
+            self.config(),
+            self.read(),
+            self.write(),
             socket,
             id,
             sync_versions,
@@ -116,7 +149,10 @@ impl AppState {
         &self,
         id: AccountIdInternal,
     ) -> server_common::result::Result<(), DataError> {
-        let cmd = self.data_all_utils.check_moderation_request_for_account(&self.database, id);
+        let cmd = self.utils().check_moderation_request_for_account(
+            self.read(),
+            id
+        );
         cmd.await
     }
 
@@ -125,7 +161,24 @@ impl AppState {
         id: AccountIdInternal,
         notification_value: PendingNotification,
     ) -> PendingNotificationWithData {
-        let cmd = self.data_all_utils.get_push_notification_data(&self.database, id, notification_value);
+        let cmd = self.utils().get_push_notification_data(
+            self.read(),
+            id,
+            notification_value
+        );
+        cmd.await
+    }
+
+    pub async fn complete_initial_setup(
+        &self,
+        id: AccountIdInternal,
+    ) -> server_common::result::Result<Account, DataError> {
+        let cmd = self.utils().complete_initial_setup(
+            self.config(),
+            self.read(),
+            self.write(),
+            id
+        );
         cmd.await
     }
 }
