@@ -4,14 +4,12 @@ use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
 use error_stack::ResultExt;
 use futures::Future;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, PendingNotificationFlags, Permissions, PublicKeyIdAndVersion, PushNotificationStateInfoWithFlags
+    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, Permissions
 };
-use crate::{db_write_raw, internal_api::InternalApiClient};
-use server_common::push_notifications::{PushNotificationError, PushNotificationStateProvider};
+use crate::internal_api::InternalApiClient;
 use server_data::{
-    content_processing::ContentProcessingManagerData, db_manager::RouterDatabaseReadHandle, event::EventManagerWithCacheReference, read::GetReadCommandsCommon, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle}, DataError
+    content_processing::ContentProcessingManagerData, db_manager::RouterDatabaseReadHandle, event::EventManagerWithCacheReference, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle}, DataError
 };
-use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::{
     app::{FilePackageProvider, GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith}, file_package::FilePackageManager, manager_client::ManagerApiManager, map::TileMapManager, perf::PerfCounterManagerData, sign_in_with::SignInWithManager
 };
@@ -24,7 +22,7 @@ use super::S;
 
 impl EventManagerProvider for S {
     fn event_manager(&self) -> EventManagerWithCacheReference<'_> {
-        EventManagerWithCacheReference::new(self.database.cache(), &self.push_notification_sender)
+        EventManagerWithCacheReference::new(self.database.cache_read_write_access(), &self.push_notification_sender)
     }
 }
 
@@ -96,135 +94,6 @@ impl WriteDynamicConfig for S {
         .change_context(ConfigFileError::LoadConfig)??;
 
         Ok(())
-    }
-}
-
-impl PushNotificationStateProvider for S {
-    async fn get_push_notification_state_info_and_add_notification_value(
-        &self,
-        account_id: AccountIdInternal,
-    ) -> error_stack::Result<PushNotificationStateInfoWithFlags, PushNotificationError> {
-        let flags = self
-            .read()
-            .common()
-            .cached_pending_notification_flags(account_id)
-            .await
-            .map_err(|e| e.into_report())
-            .change_context(PushNotificationError::ReadingNotificationFlagsFromCacheFailed)?;
-
-        if flags.is_empty() {
-            return Ok(PushNotificationStateInfoWithFlags::EmptyFlags);
-        }
-
-        let info = db_write_raw!(self, move |cmds| {
-            cmds.chat()
-                .push_notifications()
-                .get_push_notification_state_info_and_add_notification_value(
-                    account_id,
-                    flags.into(),
-                )
-                .await
-        })
-        .await
-        .map_err(|e| e.into_report())
-        .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)?;
-
-        Ok(PushNotificationStateInfoWithFlags::WithFlags {
-            info,
-            flags,
-        })
-    }
-
-    async fn enable_push_notification_sent_flag(
-        &self,
-        account_id: AccountIdInternal,
-    ) -> error_stack::Result<(), PushNotificationError> {
-        db_write_raw!(self, move |cmds| {
-            cmds.chat()
-                .push_notifications()
-                .enable_push_notification_sent_flag(account_id)
-                .await
-        })
-        .await
-        .map_err(|e| e.into_report())
-        .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)?;
-
-        Ok(())
-    }
-
-    async fn remove_device_token(
-        &self,
-        account_id: AccountIdInternal,
-    ) -> error_stack::Result<(), PushNotificationError> {
-        db_write_raw!(self, move |cmds| {
-            cmds.chat()
-                .push_notifications()
-                .remove_fcm_device_token(account_id)
-                .await
-        })
-        .await
-        .map_err(|e| e.into_report())
-        .change_context(PushNotificationError::RemoveDeviceTokenFailed)
-    }
-
-    async fn remove_specific_notification_flags_from_cache(
-        &self,
-        account_id: AccountIdInternal,
-        flags: PendingNotificationFlags,
-    ) -> error_stack::Result<(), PushNotificationError> {
-        self.database.cache().write_cache(account_id, move |entry| {
-            entry.common.pending_notification_flags -= flags;
-            Ok(())
-        })
-        .await
-        .map_err(|e| e.into_error())
-        .change_context(PushNotificationError::RemoveSpecificNotificationFlagsFromCacheFailed)
-    }
-
-    async fn save_current_non_empty_notification_flags_from_cache_to_database(
-        &self,
-    ) -> error_stack::Result<(), PushNotificationError> {
-        let account_ids = self.read()
-            .common()
-            .account_ids_internal_vec()
-            .await
-            .map_err(|e| e.into_report())
-            .change_context(PushNotificationError::SaveToDatabaseFailed)?;
-
-        for account_id in account_ids {
-            db_write_raw!(self, move |cmds| {
-                cmds.chat()
-                    .push_notifications()
-                    .save_current_non_empty_notification_flags_from_cache_to_database(account_id)
-                    .await
-            })
-            .await
-            .map_err(|e| e.into_report())
-            .change_context(PushNotificationError::SaveToDatabaseFailed)?;
-        }
-
-        Ok(())
-    }
-}
-
-impl ResetPushNotificationTokens for S {
-    async fn reset_push_notification_tokens(
-        &self,
-        account_id: AccountIdInternal,
-    ) -> server_common::result::Result<(), DataError> {
-        db_write_raw!(self, move |cmds| {
-            cmds.chat().push_notifications().remove_fcm_device_token_and_pending_notification_token(account_id).await
-        })
-        .await
-    }
-}
-
-impl LatestPublicKeysInfo for S {
-    async fn latest_public_keys_info(
-        &self,
-        account_id: AccountIdInternal,
-    ) -> server_common::result::Result<Vec<PublicKeyIdAndVersion>, DataError> {
-        self.read().chat().get_latest_public_keys_info(account_id).await
     }
 }
 
@@ -334,21 +203,6 @@ impl ValidateModerationRequest for S {
     ) -> server_common::result::Result<(), server_common::internal_api::InternalApiError> {
         crate::internal_api::media::media_check_moderation_request_for_account(self, account_id)
             .await
-    }
-}
-
-impl IsMatch for S {
-    async fn is_match(
-        &self,
-        account0: AccountIdInternal,
-        account1: AccountIdInternal,
-    ) -> server_common::result::Result<bool, DataError> {
-        let interaction = self.read().chat().account_interaction(account0, account1).await?;
-        if let Some(interaction) = interaction {
-            Ok(interaction.is_match() && !interaction.is_blocked())
-        } else {
-            Ok(false)
-        }
     }
 }
 

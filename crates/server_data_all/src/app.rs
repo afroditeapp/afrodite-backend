@@ -8,6 +8,7 @@ use model_account::{EmailAddress, SignInWithInfo};
 use server_common::websocket::WebSocketError;
 use server_data::{app::DataAllUtils, db_manager::RouterDatabaseReadHandle, write_commands::WriteCommandRunnerHandle, DataError};
 use server_data_account::write::GetWriteCommandsAccount;
+use server_data_chat::read::GetReadChatCommands;
 use server_data_media::read::GetReadMediaCommands;
 
 use crate::{register::RegisterAccount, unlimited_likes::UnlimitedLikesUpdate};
@@ -130,6 +131,22 @@ impl DataAllUtils for DataAllUtilsImpl {
     ) -> BoxFuture<'a, server_common::result::Result<Account, DataError>> {
         async move {
             crate::initial_setup::complete_initial_setup(config, read_handle, write_handle, id).await
+        }.boxed()
+    }
+
+    fn is_match<'a>(
+        &self,
+        read_handle: &'a RouterDatabaseReadHandle,
+        account0: AccountIdInternal,
+        account1: AccountIdInternal,
+    ) -> BoxFuture<'a, server_common::result::Result<bool, DataError>> {
+        async move {
+            let interaction = read_handle.chat().account_interaction(account0, account1).await?;
+            if let Some(interaction) = interaction {
+                Ok(interaction.is_match() && !interaction.is_blocked())
+            } else {
+                Ok(false)
+            }
         }.boxed()
     }
 }

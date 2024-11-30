@@ -7,7 +7,7 @@ use model_media::{
 };
 use obfuscate_api_macro::obfuscate_api;
 use server_api::S;
-use server_api::{app::IsMatch, create_open_api_router};
+use server_api::create_open_api_router;
 use server_data::read::GetReadCommandsCommon;
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
@@ -95,7 +95,7 @@ pub async fn get_profile_content_info(
 
     if visibility ||
         permissions.admin_view_all_profiles ||
-        (params.allow_get_content_if_match() && state.is_match(account_id, requested_profile).await?)
+        (params.allow_get_content_if_match() && state.data_all_access().is_match(account_id, requested_profile).await?)
     {
         read_profile_action().await
     } else {

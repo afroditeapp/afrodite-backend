@@ -8,7 +8,7 @@ use model_media::{
 };
 use obfuscate_api_macro::obfuscate_api;
 use server_api::S;
-use server_api::{app::IsMatch, create_open_api_router, result::WrappedResultExt};
+use server_api::{create_open_api_router, result::WrappedResultExt};
 use server_data::{
     read::GetReadCommandsCommon, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle}, DataError
 };
@@ -113,7 +113,7 @@ pub async fn get_content(
         (
             params.is_match &&
             requested_content_is_profile_content &&
-            state.is_match(account_id, requested_profile_internal_id).await?
+            state.data_all_access().is_match(account_id, requested_profile_internal_id).await?
         )
     {
         send_content().await

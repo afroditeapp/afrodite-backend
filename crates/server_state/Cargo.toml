@@ -26,7 +26,6 @@ model_chat = { path = "../model_chat" }
 server_common = { path = "../server_common" }
 
 server_data = { path = "../server_data" }
-server_data_chat = { path = "../server_data_chat" }
 
 api_internal = { path = "../api_internal" }
 

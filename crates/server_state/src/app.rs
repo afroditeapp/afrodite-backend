@@ -1,13 +1,15 @@
 use std::net::SocketAddr;
 
 use model::{
-    AccessToken, AccountIdInternal, AccountState, Permissions, PublicKeyIdAndVersion
+    AccessToken, AccountIdInternal, AccountState, Permissions
 };
 use server_common::internal_api::InternalApiError;
 use server_data::{content_processing::ContentProcessingManagerData, DataError};
 use crate::internal_api::InternalApiClient;
 
 pub use server_data::app::*;
+
+// TODO(prod): Move push notifications to common
 
 pub trait GetInternalApi {
     fn internal_api_client(&self) -> &InternalApiClient;
@@ -41,13 +43,6 @@ pub trait ValidateModerationRequest: GetConfig + ReadData + GetInternalApi {
     ) -> impl std::future::Future<Output = server_common::result::Result<(), InternalApiError>> + Send;
 }
 
-pub trait ResetPushNotificationTokens: StateBase + WriteData {
-    fn reset_push_notification_tokens(
-        &self,
-        id: AccountIdInternal,
-    ) -> impl std::future::Future<Output = server_common::result::Result<(), DataError>> + Send;
-}
-
 pub trait IsMatch: StateBase + ReadData {
     /// Account interaction is in match state and there is no one or two way block.
     fn is_match(
@@ -55,11 +50,4 @@ pub trait IsMatch: StateBase + ReadData {
         account0: AccountIdInternal,
         account1: AccountIdInternal,
     ) -> impl std::future::Future<Output = server_common::result::Result<bool, DataError>> + Send;
-}
-
-pub trait LatestPublicKeysInfo: StateBase + WriteData {
-    fn latest_public_keys_info(
-        &self,
-        id: AccountIdInternal,
-    ) -> impl std::future::Future<Output = server_common::result::Result<Vec<PublicKeyIdAndVersion>, DataError>> + Send;
 }

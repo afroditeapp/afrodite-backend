@@ -365,7 +365,7 @@ impl RouterDatabaseReadHandle {
         AccountIdManager::new(&self.cache)
     }
 
-    pub fn cache(&self) -> &DatabaseCache {
+    pub fn cache_read_write_access(&self) -> &DatabaseCache {
         &self.cache
     }
 

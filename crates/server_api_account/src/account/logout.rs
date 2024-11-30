@@ -2,9 +2,10 @@
 use axum::{extract::State, Extension};
 use model::AccountIdInternal;
 use obfuscate_api_macro::obfuscate_api;
-use server_api::S;
-use server_api::{app::ResetPushNotificationTokens, create_open_api_router, db_write};
+use server_api::{db_write_multiple, S};
+use server_api::create_open_api_router;
 use server_data::write::GetWriteCommandsCommon;
+use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
@@ -30,10 +31,10 @@ pub async fn post_logout(
 ) -> Result<(), StatusCode> {
     ACCOUNT.post_logout.incr();
 
-    db_write!(state, move |cmds| cmds.common().logout(
-        account_id,
-    ))?;
-    state.reset_push_notification_tokens(account_id).await?;
+    db_write_multiple!(state, move |cmds| {
+        cmds.common().logout(account_id).await?;
+        cmds.account_chat_utils().remove_fcm_device_token_and_pending_notification_token(account_id).await
+    })?;
 
     Ok(())
 }

@@ -14,6 +14,7 @@ pub mod startup_tasks;
 pub mod shutdown_tasks;
 pub mod utils;
 pub mod email;
+pub mod push_notifications;
 
 use std::sync::Arc;
 
@@ -24,9 +25,10 @@ use content_processing::{ContentProcessingManager, ContentProcessingManagerQuitH
 use email::ServerEmailDataProvider;
 use model::{AccountIdInternal, EmailMessages};
 use perf::ALL_COUNTERS;
+use push_notifications::ServerPushNotificationStateProvider;
 use scheduled_tasks::{ScheduledTaskManager, ScheduledTaskManagerQuitHandle};
 use server_common::push_notifications::{
-    self, PushNotificationManager, PushNotificationManagerQuitHandle,
+    PushNotificationManager, PushNotificationManagerQuitHandle,
 };
 use server_data::{
     content_processing::ContentProcessingManagerData,
@@ -159,7 +161,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
         media_backup_handle: MediaBackupHandle,
         server_quit_watcher: ServerQuitWatcher,
     ) -> Self::AppState {
-        let (push_notification_sender, push_notification_receiver) = push_notifications::channel();
+        let (push_notification_sender, push_notification_receiver) = server_common::push_notifications::channel();
         let (email_sender, email_receiver) = simple_backend::email::channel::<AccountIdInternal, EmailMessages>();
         let (database_manager, router_database_handle, router_database_write_handle) =
             DatabaseManager::new(
@@ -173,7 +175,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
             .expect("Database init failed");
 
         DbDataToCacheLoader::load_to_cache(
-            router_database_handle.cache(),
+            router_database_handle.cache_read_write_access(),
             router_database_handle.read_handle_raw(),
             router_database_write_handle.location_raw(),
             &self.config,
@@ -212,7 +214,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
         let push_notifications_quit_handle = PushNotificationManager::new_manager(
             self.config.simple_backend(),
             server_quit_watcher.resubscribe(),
-            app_state.clone(),
+            ServerPushNotificationStateProvider::new(app_state.clone()),
             push_notification_receiver,
         )
         .await;

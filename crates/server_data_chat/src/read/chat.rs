@@ -4,7 +4,7 @@ use std::i64;
 
 use database_chat::current::read::GetDbReadCommandsChat;
 use model_chat::{
-    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, AllMatchesPage, ChatStateRaw, GetPublicKey, MatchId, MessageNumber, PageItemCountForNewLikes, PendingMessageAndMessageData, PublicKeyIdAndVersion, PublicKeyVersion, ReceivedBlocksPage, ReceivedLikeId, SentBlocksPage, SentLikesPage, SentMessageId
+    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, AllMatchesPage, ChatStateRaw, GetPublicKey, MatchId, MessageNumber, PageItemCountForNewLikes, PendingMessageAndMessageData, PublicKeyVersion, ReceivedBlocksPage, ReceivedLikeId, SentBlocksPage, SentLikesPage, SentMessageId
 };
 use server_data::{
     cache::{db_iterator::{new_count::DbIteratorStateNewCount, DbIteratorState}, CacheReadCommon}, define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError
@@ -236,15 +236,6 @@ impl ReadCommandsChat<'_> {
         self.db_read(move |mut cmds| cmds.chat().public_key(id, version))
             .await
             .map(|key| GetPublicKey { key })
-            .into_error()
-    }
-
-    pub async fn get_latest_public_keys_info(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<Vec<PublicKeyIdAndVersion>, DataError> {
-        self.db_read(move |mut cmds| cmds.chat().get_latest_public_keys_info(id))
-            .await
             .into_error()
     }
 }

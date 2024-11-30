@@ -4,8 +4,9 @@ use model_account::{
     SignInWithInfo, SignInWithLoginInfo,
 };
 use obfuscate_api_macro::obfuscate_api;
+use server_api::db_write_multiple;
 use server_api::S;
-use server_api::{app::{LatestPublicKeysInfo, ResetPushNotificationTokens}, db_write};
+use server_api::db_write;
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::{app::SignInWith, create_counters};
@@ -21,20 +22,21 @@ pub async fn login_impl(
 ) -> Result<LoginResult, StatusCode> {
     let id = state.get_internal_id(id).await?;
     let email = state.read().account().account_data(id).await?;
-    let latest_public_keys = state.latest_public_keys_info(id).await?;
+    let latest_public_keys = state.read().account_chat_utils().get_latest_public_keys_info(id).await?;
 
     let access = AccessToken::generate_new();
     let refresh = RefreshToken::generate_new();
     let account = AuthPair { access, refresh };
     let account_clone = account.clone();
 
-    state.reset_push_notification_tokens(id).await?;
-
-    db_write!(state, move |cmds| cmds.common().set_new_auth_pair(
-        id,
-        account_clone,
-        None
-    ))?;
+    db_write_multiple!(state, move |cmds| {
+        cmds.account_chat_utils().remove_fcm_device_token_and_pending_notification_token(id).await?;
+        cmds.common().set_new_auth_pair(
+            id,
+            account_clone,
+            None
+        ).await
+    })?;
 
     // TODO(microservice): microservice support
 

@@ -181,6 +181,19 @@ impl DataAllAccess<'_> {
         );
         cmd.await
     }
+
+    pub async fn is_match(
+        &self,
+        account0: AccountIdInternal,
+        account1: AccountIdInternal,
+    ) -> server_common::result::Result<bool, DataError> {
+        let cmd = self.utils().is_match(
+            self.read(),
+            account0,
+            account1,
+        );
+        cmd.await
+    }
 }
 
 #[derive(Clone)]

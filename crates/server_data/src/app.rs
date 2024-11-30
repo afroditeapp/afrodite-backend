@@ -137,4 +137,11 @@ pub trait DataAllUtils: Send + Sync + 'static {
         write_handle: &'a WriteCommandRunnerHandle,
         id: AccountIdInternal,
     ) -> BoxFuture<'a, server_common::result::Result<Account, DataError>>;
+
+    fn is_match<'a>(
+        &self,
+        read_handle: &'a RouterDatabaseReadHandle,
+        account0: AccountIdInternal,
+        account1: AccountIdInternal,
+    ) -> BoxFuture<'a, server_common::result::Result<bool, DataError>>;
 }

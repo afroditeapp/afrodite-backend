@@ -7,16 +7,6 @@ use server_data::{
 define_cmd_wrapper_write!(WriteCommandsChatPushNotifications);
 
 impl WriteCommandsChatPushNotifications<'_> {
-    pub async fn remove_fcm_device_token_and_pending_notification_token(&self, id: AccountIdInternal) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.chat()
-                .push_notifications()
-                .remove_fcm_device_token_and_pending_notification_token(id)
-        })?;
-
-        Ok(())
-    }
-
     pub async fn remove_fcm_device_token(&self, id: AccountIdInternal) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
