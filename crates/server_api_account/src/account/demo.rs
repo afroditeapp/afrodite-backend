@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use axum::extract::State;
 use model_server_state::{
-    DemoModeConfirmLogin, DemoModeConfirmLoginResult, DemoModeId,
+    DemoModeConfirmLogin, DemoModeConfirmLoginResult,
     DemoModeLoginResult, DemoModeLoginToAccount, DemoModePassword, DemoModeToken,
 };
 use model_account::{
@@ -11,13 +11,15 @@ use model_account::{
 use obfuscate_api_macro::obfuscate_api;
 use server_api::S;
 use server_api::{create_open_api_router, db_write};
+use server_data_account::demo::{AccessibleAccountsInfoUtils, DemoModeUtils};
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
+use server_api::app::{ReadData, GetConfig};
 
 use super::login_impl;
 use crate::{
-    app::{DemoModeManagerProvider, WriteData},
+    app::WriteData,
     utils::{Json, StatusCode},
 };
 
@@ -47,7 +49,7 @@ pub async fn post_demo_mode_login(
     ACCOUNT.post_demo_mode_login.incr();
     // TODO(prod): Increase to 5 seconds
     tokio::time::sleep(Duration::from_secs(1)).await;
-    let result = state.stage0_login(password).await?;
+    let result = state.demo_mode().stage0_login(password).await?;
     Ok(result.into())
 }
 
@@ -69,7 +71,7 @@ pub async fn post_demo_mode_confirm_login(
     Json(info): Json<DemoModeConfirmLogin>,
 ) -> Result<Json<DemoModeConfirmLoginResult>, StatusCode> {
     ACCOUNT.post_demo_mode_confirm_login.incr();
-    let result = state.stage1_login(info.password, info.token).await?;
+    let result = state.demo_mode().stage1_login(info.password, info.token).await?;
     Ok(result.into())
 }
 
@@ -98,9 +100,14 @@ pub async fn post_demo_mode_accessible_accounts(
     Json(token): Json<DemoModeToken>,
 ) -> Result<Json<Vec<AccessibleAccount>>, StatusCode> {
     ACCOUNT.post_demo_mode_accessible_accounts.incr();
-    let result = state
+
+    let info = state
+        .demo_mode()
         .accessible_accounts_if_token_valid(&token)
         .await?;
+    let accounts = info.into_accounts(state.read()).await?;
+    let result = DemoModeUtils::with_extra_info(accounts, state.config(), state.read()).await?;
+
     Ok(result.into())
 }
 
@@ -123,7 +130,7 @@ pub async fn post_demo_mode_register_account(
 ) -> Result<Json<AccountId>, StatusCode> {
     ACCOUNT.post_demo_mode_register_account.incr();
 
-    let demo_mode_id = state.demo_mode_token_exists(&token).await?;
+    let demo_mode_id = state.demo_mode().demo_mode_token_exists(&token).await?;
 
     let id = state.data_all_access().register_impl(SignInWithInfo::default(), None).await?;
 
@@ -153,7 +160,8 @@ pub async fn post_demo_mode_login_to_account(
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT.post_demo_mode_login_to_account.incr();
 
-    let _demo_mode_id: DemoModeId = state.demo_mode_token_exists(&info.token).await?;
+    let accessible_accounts = state.demo_mode().accessible_accounts_if_token_valid(&info.token).await?;
+    accessible_accounts.contains(info.aid, state.read()).await?;
 
     let result = login_impl(info.aid, state).await?;
 
@@ -179,7 +187,7 @@ pub async fn post_demo_mode_logout(
     Json(token): Json<DemoModeToken>,
 ) -> Result<(), StatusCode> {
     ACCOUNT.post_demo_mode_logout.incr();
-    state.demo_mode_logout(&token).await?;
+    state.demo_mode().demo_mode_logout(&token).await?;
     Ok(())
 }
 
