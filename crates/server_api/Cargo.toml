@@ -24,7 +24,7 @@ manager_model = { path = "../app-manager/crates/manager_model" }
 
 utils = { path = "../utils" }
 model = { path = "../model" }
-model_account = { path = "../model_account" }
+model_server_data = { path = "../model_server_data" }
 
 server_common = { path = "../server_common" }
 server_data = { path = "../server_data" }

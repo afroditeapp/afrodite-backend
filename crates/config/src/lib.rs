@@ -21,7 +21,7 @@ use file_dynamic::ConfigFileDynamic;
 use file_email_content::EmailContentFile;
 use profile_name_allowlist::{ProfileNameAllowlistBuilder, ProfileNameAllowlistData};
 use model::BotConfig;
-use model_profile::{AttributesFileInternal, ProfileAttributes};
+use model_server_data::{AttributesFileInternal, ProfileAttributes};
 use reqwest::Url;
 use sha2::{Digest, Sha256};
 use simple_backend_config::SimpleBackendConfig;

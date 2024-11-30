@@ -12,7 +12,7 @@ use axum_extra::TypedHeader;
 use headers::ContentType;
 use http::HeaderMap;
 use model::{AccessToken, AccountIdInternal, BackendVersion, EventToClient, PendingNotificationFlags, RefreshToken, SyncDataVersionFromClient};
-use model_account::AuthPair;
+use model_server_data::AuthPair;
 use obfuscate_api_macro::obfuscate_api;
 use server_common::websocket::WebSocketError;
 use crate::S;
