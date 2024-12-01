@@ -39,8 +39,8 @@ use crate::internal_api::InternalApiClient;
 impl EventManagerProvider for S {
     fn event_manager(&self) -> EventManagerWithCacheReference<'_> {
         EventManagerWithCacheReference::new(
-            self.database.cache_read_write_access(),
-            &self.push_notification_sender,
+            self.state.database.cache_read_write_access(),
+            &self.state.push_notification_sender,
         )
     }
 }
@@ -50,7 +50,7 @@ impl GetAccounts for S {
         &self,
         id: AccountId,
     ) -> error_stack::Result<AccountIdInternal, DataError> {
-        self.database
+        self.state.database
             .account_id_manager()
             .get_internal_id(id)
             .await
@@ -58,7 +58,7 @@ impl GetAccounts for S {
     }
 
     async fn get_internal_id_optional(&self, id: AccountId) -> Option<AccountIdInternal> {
-        self.database
+        self.state.database
             .account_id_manager()
             .get_internal_id_optional(id)
             .await
@@ -93,10 +93,10 @@ impl BackendVersionProvider for S {
 
 impl GetConfig for S {
     fn config(&self) -> &Config {
-        &self.config
+        &self.state.config
     }
     fn config_arc(&self) -> std::sync::Arc<Config> {
-        self.config.clone()
+        self.state.config.clone()
     }
 }
 
@@ -130,7 +130,7 @@ impl WriteData for S {
         &self,
         cmd: GetCmd,
     ) -> server_common::result::Result<CmdResult, DataError> {
-        self.write_queue.write(cmd).await
+        self.state.write_queue.write(cmd).await
     }
 
     // async fn write<
@@ -153,7 +153,7 @@ impl WriteData for S {
         account: AccountId,
         cmd: GetCmd,
     ) -> server_common::result::Result<CmdResult, DataError> {
-        self.write_queue.concurrent_write(account, cmd).await
+        self.state.write_queue.concurrent_write(account, cmd).await
     }
 
     async fn concurrent_write_profile_blocking<
@@ -164,7 +164,7 @@ impl WriteData for S {
         account: AccountId,
         write_cmd: WriteCmd,
     ) -> server_common::result::Result<CmdResult, DataError> {
-        self.write_queue
+        self.state.write_queue
             .concurrent_write_profile_blocking(account, write_cmd)
             .await
     }
@@ -172,7 +172,7 @@ impl WriteData for S {
 
 impl ReadData for S {
     fn read(&self) -> &RouterDatabaseReadHandle {
-        &self.database
+        &self.state.database
     }
 }
 
@@ -180,23 +180,21 @@ impl ReadData for S {
 
 impl ProfileStatisticsCacheProvider for S {
     fn profile_statistics_cache(&self) -> &server_data::statistics::ProfileStatisticsCache {
-        &self.profile_statistics_cache
+        &self.state.profile_statistics_cache
     }
 }
 
 // Server API
 
-impl StateBase for S {}
-
 impl GetInternalApi for S {
     fn internal_api_client(&self) -> &InternalApiClient {
-        &self.internal_api
+        &self.state.internal_api
     }
 }
 
 impl GetAccessTokens for S {
     async fn access_token_exists(&self, token: &AccessToken) -> Option<AccountIdInternal> {
-        self.database
+        self.state.database
             .access_token_manager()
             .access_token_exists(token)
             .await
@@ -207,7 +205,7 @@ impl GetAccessTokens for S {
         token: &AccessToken,
         connection: SocketAddr,
     ) -> Option<(AccountIdInternal, Permissions, AccountState)> {
-        self.database
+        self.state.database
             .access_token_manager()
             .access_token_and_connection_exists(token, connection)
             .await
@@ -216,7 +214,7 @@ impl GetAccessTokens for S {
 
 impl ContentProcessingProvider for S {
     fn content_processing(&self) -> &ContentProcessingManagerData {
-        &self.content_processing
+        &self.state.content_processing
     }
 }
 
@@ -234,36 +232,36 @@ impl ValidateModerationRequest for S {
 
 impl SignInWith for S {
     fn sign_in_with_manager(&self) -> &SignInWithManager {
-        &self.simple_backend_state.sign_in_with
+        &self.state.simple_backend_state.sign_in_with
     }
 }
 
 impl GetManagerApi for S {
     fn manager_api(&self) -> ManagerApiManager {
-        ManagerApiManager::new(&self.simple_backend_state.manager_api)
+        ManagerApiManager::new(&self.state.simple_backend_state.manager_api)
     }
 }
 
 impl GetSimpleBackendConfig for S {
     fn simple_backend_config(&self) -> &SimpleBackendConfig {
-        &self.simple_backend_state.config
+        &self.state.simple_backend_state.config
     }
 }
 
 impl GetTileMap for S {
     fn tile_map(&self) -> &TileMapManager {
-        &self.simple_backend_state.tile_map
+        &self.state.simple_backend_state.tile_map
     }
 }
 
 impl PerfCounterDataProvider for S {
     fn perf_counter_data(&self) -> &PerfCounterManagerData {
-        &self.simple_backend_state.perf_data
+        &self.state.simple_backend_state.perf_data
     }
 }
 
 impl FilePackageProvider for S {
     fn file_package(&self) -> &FilePackageManager {
-        &self.simple_backend_state.file_packages
+        &self.state.simple_backend_state.file_packages
     }
 }

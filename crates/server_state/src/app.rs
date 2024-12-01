@@ -32,8 +32,6 @@ pub trait ContentProcessingProvider {
     fn content_processing(&self) -> &ContentProcessingManagerData;
 }
 
-pub trait StateBase: Send + Sync + Clone + 'static {}
-
 pub trait ValidateModerationRequest: GetConfig + ReadData + GetInternalApi {
     fn media_check_moderation_request_for_account(
         &self,
@@ -41,7 +39,7 @@ pub trait ValidateModerationRequest: GetConfig + ReadData + GetInternalApi {
     ) -> impl std::future::Future<Output = server_common::result::Result<(), InternalApiError>> + Send;
 }
 
-pub trait IsMatch: StateBase + ReadData {
+pub trait IsMatch: ReadData {
     /// Account interaction is in match state and there is no one or two way block.
     fn is_match(
         &self,

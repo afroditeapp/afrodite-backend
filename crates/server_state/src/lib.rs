@@ -37,6 +37,10 @@ pub type S = AppState;
 
 #[derive(Clone)]
 pub struct AppState {
+    state: Arc<AppStateInternal>
+}
+
+struct AppStateInternal {
     database: Arc<RouterDatabaseReadHandle>,
     write_queue: Arc<WriteCommandRunnerHandle>,
     internal_api: Arc<InternalApiClient>,
@@ -62,7 +66,7 @@ impl AppState {
         data_all_utils: &'static dyn DataAllUtils,
     ) -> AppState {
         let database = Arc::new(database_handle);
-        let state = AppState {
+        let state = AppStateInternal {
             config: config.clone(),
             database: database.clone(),
             write_queue: Arc::new(write_queue),
@@ -75,20 +79,22 @@ impl AppState {
             data_all_utils,
         };
 
-        state
+        AppState {
+            state: state.into(),
+        }
     }
 
     pub fn demo_mode(&self) -> &DemoModeManager {
-        &self.demo_mode
+        &self.state.demo_mode
     }
 
     pub fn data_all_access(&self) -> DataAllAccess {
-        DataAllAccess { state: self }
+        DataAllAccess { state: &self.state }
     }
 }
 
 pub struct DataAllAccess<'a> {
-    state: &'a S,
+    state: &'a AppStateInternal,
 }
 
 impl DataAllAccess<'_> {
@@ -187,9 +193,6 @@ impl DataAllAccess<'_> {
         cmd.await
     }
 }
-
-#[derive(Clone)]
-pub struct AppStateEmpty;
 
 /// Macro for writing data with different code style.
 /// Makes "async move" and "await" keywords unnecessary.
