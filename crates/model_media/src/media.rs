@@ -532,6 +532,7 @@ impl GetProfileContentResult {
 pub struct GetMyProfileContentResult {
     pub c: MyProfileContent,
     pub v: ProfileContentVersion,
+    pub sv: ProfileContentSyncVersion,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]

@@ -14,6 +14,7 @@ use server_data::{
 };
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
+use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 
 pub async fn reset_pending_notification(
@@ -182,6 +183,18 @@ pub async fn sync_data_with_client_if_needed(
             SyncCheckDataType::News => {
                 if config.components().account {
                     handle_news_count_sync_version_check(
+                        read_handle,
+                        write_handle,
+                        socket,
+                        id,
+                        version.version,
+                    )
+                    .await?;
+                }
+            }
+            SyncCheckDataType::ProfileContent => {
+                if config.components().account {
+                    handle_profile_content_sync_version_check(
                         read_handle,
                         write_handle,
                         socket,
@@ -380,6 +393,37 @@ async fn handle_news_count_sync_version_check(
     };
 
     send_event(socket, EventToClientInternal::NewsChanged).await?;
+
+    Ok(())
+}
+
+
+async fn handle_profile_content_sync_version_check(
+    read_handle: &RouterDatabaseReadHandle,
+    write_handle: &WriteCommandRunnerHandle,
+    socket: &mut WebSocket,
+    id: AccountIdInternal,
+    sync_version: SyncVersionFromClient,
+) -> Result<(), WebSocketError> {
+    let current = read_handle
+        .media()
+        .profile_content_sync_version(id)
+        .await
+        .change_context(WebSocketError::DatabaseProfileContentSyncVersionQuery)?;
+    match current.check_is_sync_required(sync_version) {
+        SyncCheckResult::DoNothing => return Ok(()),
+        SyncCheckResult::ResetVersionAndSync => write_handle
+            .write(move |cmds| async move {
+                cmds.media()
+                    .reset_profile_content_sync_version(id)
+                    .await
+            })
+            .await
+            .change_context(WebSocketError::ProfileContentnSyncVersionResetFailed)?,
+        SyncCheckResult::Sync => (),
+    };
+
+    send_event(socket, EventToClientInternal::ProfileContentChanged).await?;
 
     Ok(())
 }

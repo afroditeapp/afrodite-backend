@@ -65,6 +65,7 @@ pub enum EventType {
     ProfileChanged,
     NewsCountChanged,
     InitialContentModerationCompleted,
+    ProfileContentChanged,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -159,6 +160,7 @@ pub enum EventToClientInternal {
     ProfileChanged,
     NewsChanged,
     InitialContentModerationCompleted,
+    ProfileContentChanged,
 }
 
 impl From<&EventToClientInternal> for EventType {
@@ -180,6 +182,7 @@ impl From<&EventToClientInternal> for EventType {
             ProfileChanged => Self::ProfileChanged,
             NewsChanged => Self::NewsCountChanged,
             InitialContentModerationCompleted => Self::InitialContentModerationCompleted,
+            ProfileContentChanged => Self::ProfileContentChanged,
         }
     }
 }
@@ -213,7 +216,8 @@ impl From<EventToClientInternal> for EventToClient {
             | AvailableProfileAttributesChanged
             | ProfileChanged
             | NewsChanged
-            | InitialContentModerationCompleted => (),
+            | InitialContentModerationCompleted
+            | ProfileContentChanged => (),
         }
 
         value

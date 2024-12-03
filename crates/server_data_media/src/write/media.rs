@@ -219,4 +219,13 @@ impl WriteCommandsMedia<'_> {
 
         Ok(info)
     }
+
+    pub async fn reset_profile_content_sync_version(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.media().reset_profile_content_sync_version(id)
+        })
+    }
 }

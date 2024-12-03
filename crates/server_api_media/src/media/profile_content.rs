@@ -144,9 +144,16 @@ pub async fn get_my_profile_content_info(
 
     let info: MyProfileContent = internal.clone().into();
 
+    let sv = state
+        .read()
+        .media()
+        .profile_content_sync_version(account_id)
+        .await?;
+
     let r = GetMyProfileContentResult {
         c: info,
         v: internal.profile_content_version_uuid,
+        sv,
     };
 
     Ok(r.into())
