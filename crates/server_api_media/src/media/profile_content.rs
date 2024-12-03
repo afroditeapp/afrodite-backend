@@ -2,16 +2,16 @@ use axum::{
     extract::{Path, Query, State},
     Extension,
 };
-use model::{EventToClientInternal, NotificationEvent};
+use model::{EventToClientInternal, InitialContentModerationCompletedResult, NotificationEvent, PendingNotificationFlags};
 use model_media::{
     AccountId, AccountIdInternal, AccountState, GetMyProfileContentResult,
     GetProfileContentQueryParams, GetProfileContentResult, MyProfileContent,
     Permissions, ProfileContent, SetProfileContent,
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{create_open_api_router, db_write_multiple, S};
+use server_api::{app::EventManagerProvider, create_open_api_router, db_write_multiple, S};
 use server_data::read::GetReadCommandsCommon;
-use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
+use server_data_media::{read::GetReadMediaCommands, write::{media::InitialContentModerationResult, GetWriteCommandsMedia}};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
@@ -186,25 +186,36 @@ pub async fn put_profile_content(
     MEDIA.put_profile_content.incr();
 
     db_write_multiple!(state, move |cmds| {
-        let visibility_change = cmds
+        let info = cmds
             .media()
             .update_profile_content(api_caller_account_id, new).await?;
 
-        if let Some(new_account) = visibility_change.new_account {
-            if cmds.config().components().account {
+        match info {
+            InitialContentModerationResult::AllAccepted { account_after_visibility_change } => {
+                if cmds.config().components().account {
+                    cmds.events()
+                        .send_connected_event(
+                            api_caller_account_id,
+                            EventToClientInternal::ProfileVisibilityChanged(account_after_visibility_change.profile_visibility()),
+                        )
+                        .await?;
+                }
                 cmds.events()
-                    .send_connected_event(
+                    .send_notification(
                         api_caller_account_id,
-                        EventToClientInternal::ProfileVisibilityChanged(new_account.profile_visibility()),
+                        NotificationEvent::InitialContentModerationCompleted,
                     )
                     .await?;
             }
-            cmds.events()
-                .send_notification(
-                    api_caller_account_id,
-                    NotificationEvent::InitialContentAccepted,
-                )
-                .await?;
+            InitialContentModerationResult::AllModeratedAndNotAccepted => {
+                cmds.events()
+                    .send_notification(
+                        api_caller_account_id,
+                        NotificationEvent::InitialContentModerationCompleted,
+                    )
+                    .await?;
+            }
+            InitialContentModerationResult::NoChange => (),
         }
 
         Ok(())
@@ -216,12 +227,49 @@ pub async fn put_profile_content(
     Ok(())
 }
 
+#[obfuscate_api]
+const PATH_POST_GET_INITIAL_CONTENT_MODERATION_COMPLETED_RESULT: &str = "/media_api/initial_content_moderation_completed_result";
+
+/// Get initial content moderation completed result.
+///
+#[utoipa::path(
+    post,
+    path = PATH_POST_GET_INITIAL_CONTENT_MODERATION_COMPLETED_RESULT,
+    responses(
+        (status = 200, description = "Successfull.", body = InitialContentModerationCompletedResult),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_get_initial_content_moderation_completed(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+) -> Result<Json<InitialContentModerationCompletedResult>, StatusCode> {
+    MEDIA.post_get_initial_content_moderation_completed.incr();
+
+    let accepted = state.read().media().profile_content_moderated_as_accepted(account_id).await?;
+
+    let request = InitialContentModerationCompletedResult { accepted };
+
+    state
+        .event_manager()
+        .remove_specific_pending_notification_flags_from_cache(
+            account_id,
+            PendingNotificationFlags::INITIAL_CONTENT_MODERATION_COMPLETED,
+        )
+        .await;
+
+    Ok(request.into())
+}
+
 pub fn profile_content_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
         get_profile_content_info,
         get_my_profile_content_info,
         put_profile_content,
+        post_get_initial_content_moderation_completed,
     )
 }
 
@@ -232,4 +280,5 @@ create_counters!(
     get_profile_content_info,
     get_my_profile_content_info,
     put_profile_content,
+    post_get_initial_content_moderation_completed,
 );

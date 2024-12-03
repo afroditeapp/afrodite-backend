@@ -183,3 +183,8 @@ impl ProfileContentVersion {
 }
 
 diesel_uuid_wrapper!(ProfileContentVersion);
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct InitialContentModerationCompletedResult {
+    pub accepted: bool,
+}

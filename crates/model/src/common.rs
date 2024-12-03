@@ -64,7 +64,7 @@ pub enum EventType {
     AvailableProfileAttributesChanged,
     ProfileChanged,
     NewsCountChanged,
-    InitialContentAccpeted,
+    InitialContentModerationCompleted,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -158,7 +158,7 @@ pub enum EventToClientInternal {
     AvailableProfileAttributesChanged,
     ProfileChanged,
     NewsChanged,
-    InitialContentAccepted,
+    InitialContentModerationCompleted,
 }
 
 impl From<&EventToClientInternal> for EventType {
@@ -179,7 +179,7 @@ impl From<&EventToClientInternal> for EventType {
             AvailableProfileAttributesChanged => Self::AvailableProfileAttributesChanged,
             ProfileChanged => Self::ProfileChanged,
             NewsChanged => Self::NewsCountChanged,
-            InitialContentAccepted => Self::InitialContentAccpeted,
+            InitialContentModerationCompleted => Self::InitialContentModerationCompleted,
         }
     }
 }
@@ -213,7 +213,7 @@ impl From<EventToClientInternal> for EventToClient {
             | AvailableProfileAttributesChanged
             | ProfileChanged
             | NewsChanged
-            | InitialContentAccepted => (),
+            | InitialContentModerationCompleted => (),
         }
 
         value
@@ -224,7 +224,7 @@ impl From<EventToClientInternal> for EventToClient {
 pub enum NotificationEvent {
     NewMessageReceived,
     ReceivedLikesChanged,
-    InitialContentAccepted,
+    InitialContentModerationCompleted,
     NewsChanged,
 }
 
@@ -233,8 +233,8 @@ impl From<NotificationEvent> for EventToClientInternal {
         match event {
             NotificationEvent::NewMessageReceived => EventToClientInternal::NewMessageReceived,
             NotificationEvent::ReceivedLikesChanged => EventToClientInternal::ReceivedLikesChanged,
-            NotificationEvent::InitialContentAccepted => {
-                EventToClientInternal::InitialContentAccepted
+            NotificationEvent::InitialContentModerationCompleted => {
+                EventToClientInternal::InitialContentModerationCompleted
             }
             NotificationEvent::NewsChanged => EventToClientInternal::NewsChanged,
         }

@@ -13,18 +13,13 @@ use server_data::{
 
 use crate::cache::CacheWriteMedia;
 
-pub struct ProfileVisibilityChange {
-    pub new_account: Option<Account>,
-}
-
-impl ProfileVisibilityChange {
-    fn no_change() -> Self {
-        Self { new_account: None }
-    }
-
-    fn change(account: Account) -> Self {
-        Self { new_account: Some(account) }
-    }
+pub enum InitialContentModerationResult {
+    /// Profile visibility changed from pending to normal.
+    AllAccepted {
+        account_after_visibility_change: Account,
+    },
+    AllModeratedAndNotAccepted,
+    NoChange,
 }
 
 define_cmd_wrapper_write!(WriteCommandsMedia);
@@ -102,7 +97,7 @@ impl WriteCommandsMedia<'_> {
         &self,
         id: AccountIdInternal,
         new: SetProfileContent,
-    ) -> Result<ProfileVisibilityChange, DataError> {
+    ) -> Result<InitialContentModerationResult, DataError> {
         let new_profile_content_version = ProfileContentVersion::new_random();
 
         db_transaction!(self, move |mut cmds| {
@@ -152,7 +147,7 @@ impl WriteCommandsMedia<'_> {
     pub async fn remove_pending_state_from_profile_visibility_if_needed(
         &self,
         content_owner: AccountIdInternal,
-    ) -> Result<ProfileVisibilityChange, DataError> {
+    ) -> Result<InitialContentModerationResult, DataError> {
         if !self.config().components().account {
             // TODO(microservice): The media server should request
             // profile visibility change from account server if
@@ -165,7 +160,7 @@ impl WriteCommandsMedia<'_> {
 
         let info = db_transaction!(self, move |mut cmds| {
             if !profile_visibility.is_pending() {
-                return Ok(ProfileVisibilityChange::no_change())
+                return Ok(InitialContentModerationResult::NoChange)
             }
 
             let current_media = cmds
@@ -175,9 +170,13 @@ impl WriteCommandsMedia<'_> {
                 .current_account_media(content_owner)?;
 
             let mut all_accepted = current_media.iter_current_profile_content().count() > 0;
-            for media in current_media.iter_current_profile_content() {
-                if !media.state().is_accepted() {
+            let mut all_moderated = current_media.iter_current_profile_content().count() > 0;
+            for c in current_media.iter_current_profile_content() {
+                if !c.state().is_accepted() {
                     all_accepted = false;
+                }
+                if !c.state().is_moderated() {
+                    all_moderated = false;
                 }
             }
 
@@ -199,19 +198,21 @@ impl WriteCommandsMedia<'_> {
                     },
                 )?;
 
-                Ok(ProfileVisibilityChange::change(new_account))
+                Ok(InitialContentModerationResult::AllAccepted { account_after_visibility_change: new_account})
+            } else if all_moderated {
+                Ok(InitialContentModerationResult::AllModeratedAndNotAccepted)
             } else {
-                Ok(ProfileVisibilityChange::no_change())
+                Ok(InitialContentModerationResult::NoChange)
             }
         })?;
 
-        if let Some(new_account) = &info.new_account {
+        if let InitialContentModerationResult::AllAccepted { account_after_visibility_change } = &info {
             self.handle()
                 .common()
                 .internal_handle_new_account_data_after_db_modification(
                     content_owner,
                     &current_account,
-                    new_account,
+                    account_after_visibility_change,
                 )
                 .await?;
         }

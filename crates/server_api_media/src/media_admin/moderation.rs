@@ -7,7 +7,7 @@ use model_media::{
 };
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
-use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
+use server_data_media::{read::GetReadMediaCommands, write::{media::InitialContentModerationResult, GetWriteCommandsMedia}};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 use server_api::app::ReadData;
@@ -111,21 +111,33 @@ pub async fn post_moderate_profile_content(
             .await?;
 
 
-        if let Some(new_account) = info.visibility_change.new_account {
-            if cmds.config().components().account {
+        match info.moderation_result {
+            InitialContentModerationResult::AllAccepted { account_after_visibility_change } => {
+                if cmds.config().components().account {
+                    cmds.events()
+                        .send_connected_event(
+                            info.content_owner_id,
+                            EventToClientInternal::ProfileVisibilityChanged(account_after_visibility_change.profile_visibility()),
+                        )
+                        .await?;
+                }
                 cmds.events()
-                    .send_connected_event(
+                    .send_notification(
                         info.content_owner_id,
-                        EventToClientInternal::ProfileVisibilityChanged(new_account.profile_visibility()),
+                        NotificationEvent::InitialContentModerationCompleted,
+                    )
+                    .await?;
+
+            }
+            InitialContentModerationResult::AllModeratedAndNotAccepted => {
+                cmds.events()
+                    .send_notification(
+                        info.content_owner_id,
+                        NotificationEvent::InitialContentModerationCompleted,
                     )
                     .await?;
             }
-            cmds.events()
-                .send_notification(
-                    info.content_owner_id,
-                    NotificationEvent::InitialContentAccepted,
-                )
-                .await?;
+            InitialContentModerationResult::NoChange => (),
         }
 
         Ok(())

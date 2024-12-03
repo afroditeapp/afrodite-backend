@@ -5,10 +5,10 @@ use server_data::{cache::profile::UpdateLocationCacheState, define_cmd_wrapper_w
 
 use server_common::result::Result;
 
-use crate::{cache::CacheWriteMedia, write::{media::ProfileVisibilityChange, GetWriteCommandsMedia}};
+use crate::{cache::CacheWriteMedia, write::{media::InitialContentModerationResult, GetWriteCommandsMedia}};
 
 pub struct ModerationResult {
-    pub visibility_change: ProfileVisibilityChange,
+    pub moderation_result: InitialContentModerationResult,
     pub content_owner_id: AccountIdInternal,
 }
 
@@ -72,7 +72,7 @@ impl WriteCommandsProfileAdminContent<'_> {
         let visibility_change = self.handle().media().remove_pending_state_from_profile_visibility_if_needed(content_owner_id).await?;
 
         Ok(ModerationResult {
-            visibility_change,
+            moderation_result: visibility_change,
             content_owner_id
         })
     }

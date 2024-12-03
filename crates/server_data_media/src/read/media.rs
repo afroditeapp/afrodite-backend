@@ -37,6 +37,28 @@ impl ReadCommandsMedia<'_> {
         .into_error()
     }
 
+    pub async fn profile_content_moderated_as_accepted(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> Result<bool, DataError> {
+        let content = self.db_read(move |mut cmds| {
+            cmds.media()
+                .media_content()
+                .current_account_media(account_id)
+        })
+        .await
+        .into_error()?;
+
+        let mut accepted = content.iter_current_profile_content().count() > 0;
+        for c in content.iter_current_profile_content() {
+            if !c.state().is_accepted() {
+                accepted = false;
+            }
+        }
+
+        Ok(accepted)
+    }
+
     pub async fn all_account_media_content(
         &self,
         account_id: AccountIdInternal,

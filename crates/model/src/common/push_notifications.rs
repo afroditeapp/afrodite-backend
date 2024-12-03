@@ -6,9 +6,7 @@ use utils::random_bytes::random_128_bits;
 use utoipa::ToSchema;
 
 use crate::{
-    schema_sqlite_types::{Integer, Text},
-    AccountId, NewReceivedLikesCountResult, NotificationEvent,
-    UnreadNewsCountResult,
+    schema_sqlite_types::{Integer, Text}, AccountId, InitialContentModerationCompletedResult, NewReceivedLikesCountResult, NotificationEvent, UnreadNewsCountResult
 };
 
 /// Pending notification (or multiple notifications which each have
@@ -19,7 +17,7 @@ use crate::{
 ///
 /// - const NEW_MESSAGE = 0x1;
 /// - const RECEIVED_LIKES_CHANGED = 0x2;
-/// - const CONTENT_MODERATION_REQUEST_COMPLETED = 0x4;
+/// - const INITIAL_CONTENT_MODERATION_COMPLETED = 0x4;
 /// - const NEWS_CHANGED = 0x8;
 ///
 #[derive(
@@ -58,7 +56,7 @@ bitflags::bitflags! {
     pub struct PendingNotificationFlags: i64 {
         const NEW_MESSAGE = 0x1;
         const RECEIVED_LIKES_CHANGED = 0x2;
-        const INITIAL_CONTENT_ACCEPTED = 0x4;
+        const INITIAL_CONTENT_MODERATION_COMPLETED = 0x4;
         const NEWS_CHANGED = 0x8;
     }
 }
@@ -74,8 +72,8 @@ impl From<NotificationEvent> for PendingNotificationFlags {
         match value {
             NotificationEvent::NewMessageReceived => Self::NEW_MESSAGE,
             NotificationEvent::ReceivedLikesChanged => Self::RECEIVED_LIKES_CHANGED,
-            NotificationEvent::InitialContentAccepted => {
-                Self::INITIAL_CONTENT_ACCEPTED
+            NotificationEvent::InitialContentModerationCompleted => {
+                Self::INITIAL_CONTENT_MODERATION_COMPLETED
             }
             NotificationEvent::NewsChanged => Self::NEWS_CHANGED,
         }
@@ -201,6 +199,8 @@ pub struct PendingNotificationWithData {
     pub new_message_received_from: Option<Vec<AccountId>>,
     /// Data for RECEIVED_LIKES_CHANGED notification.
     pub received_likes_changed: Option<NewReceivedLikesCountResult>,
+    /// Data for INITIAL_CONTENT_MODERATION_COMPLETED notification.
+    pub initial_content_moderation_completed: Option<InitialContentModerationCompletedResult>,
     /// Data for NEWS_CHANGED notification.
     pub news_changed: Option<UnreadNewsCountResult>,
 }
