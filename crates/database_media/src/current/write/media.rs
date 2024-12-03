@@ -6,7 +6,6 @@ use model_media::{AccountIdInternal, MediaStateRaw};
 use crate::IntoDatabaseError;
 
 mod media_content;
-mod moderation_request;
 
 define_current_write_commands!(CurrentWriteMedia);
 
@@ -15,10 +14,6 @@ pub struct DeletedSomething;
 impl<'a> CurrentWriteMedia<'a> {
     pub fn media_content(self) -> media_content::CurrentWriteMediaContent<'a> {
         media_content::CurrentWriteMediaContent::new(self.cmds)
-    }
-
-    pub fn moderation_request(self) -> moderation_request::CurrentWriteMediaModerationRequest<'a> {
-        moderation_request::CurrentWriteMediaModerationRequest::new(self.cmds)
     }
 }
 

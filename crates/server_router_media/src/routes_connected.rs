@@ -18,7 +18,6 @@ impl ConnectedApp {
             // Media
             .merge(api::media::profile_content_router(self.state.clone()))
             .merge(api::media::security_content_router(self.state.clone()))
-            .merge(api::media::moderation_request_router(self.state.clone()))
             .merge(api::media::content_router(self.state.clone()))
             .merge(api::media::tile_map_router(self.state.clone()))
             // Media admin

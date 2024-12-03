@@ -7,7 +7,7 @@ use utoipa::ToSchema;
 
 use crate::{
     schema_sqlite_types::{Integer, Text},
-    AccountId, ModerationRequestState, NewReceivedLikesCountResult, NotificationEvent,
+    AccountId, NewReceivedLikesCountResult, NotificationEvent,
     UnreadNewsCountResult,
 };
 
@@ -58,7 +58,7 @@ bitflags::bitflags! {
     pub struct PendingNotificationFlags: i64 {
         const NEW_MESSAGE = 0x1;
         const RECEIVED_LIKES_CHANGED = 0x2;
-        const CONTENT_MODERATION_REQUEST_COMPLETED = 0x4;
+        const INITIAL_CONTENT_ACCEPTED = 0x4;
         const NEWS_CHANGED = 0x8;
     }
 }
@@ -74,8 +74,8 @@ impl From<NotificationEvent> for PendingNotificationFlags {
         match value {
             NotificationEvent::NewMessageReceived => Self::NEW_MESSAGE,
             NotificationEvent::ReceivedLikesChanged => Self::RECEIVED_LIKES_CHANGED,
-            NotificationEvent::ContentModerationRequestCompleted => {
-                Self::CONTENT_MODERATION_REQUEST_COMPLETED
+            NotificationEvent::InitialContentAccepted => {
+                Self::INITIAL_CONTENT_ACCEPTED
             }
             NotificationEvent::NewsChanged => Self::NEWS_CHANGED,
         }
@@ -201,8 +201,6 @@ pub struct PendingNotificationWithData {
     pub new_message_received_from: Option<Vec<AccountId>>,
     /// Data for RECEIVED_LIKES_CHANGED notification.
     pub received_likes_changed: Option<NewReceivedLikesCountResult>,
-    /// Data for CONTENT_MODERATION_REQUEST_COMPLETED notification.
-    pub content_moderation_request_completed: Option<ModerationRequestState>,
     /// Data for NEWS_CHANGED notification.
     pub news_changed: Option<UnreadNewsCountResult>,
 }

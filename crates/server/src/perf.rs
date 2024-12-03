@@ -33,12 +33,11 @@ use crate::api::{
         COMMON_ADMIN_PERF_COUNTERS_LIST,
     },
     media::{
-        MEDIA_CONTENT_COUNTERS_LIST, MEDIA_MODERATION_REQUEST_COUNTERS_LIST,
+        MEDIA_CONTENT_COUNTERS_LIST,
         MEDIA_PROFILE_CONTENT_COUNTERS_LIST, MEDIA_SECURITY_CONTENT_COUNTERS_LIST,
         MEDIA_TILE_MAP_COUNTERS_LIST,
     },
     media_admin::MEDIA_ADMIN_MODERATION_COUNTERS_LIST,
-    media_internal::MEDIA_INTERNAL_COUNTERS_LIST,
     profile::{
         PROFILE_ATTRIBUTES_COUNTERS_LIST, PROFILE_BENCHMARK_COUNTERS_LIST,
         PROFILE_DATA_COUNTERS_LIST, PROFILE_FAVORITE_COUNTERS_LIST,
@@ -74,18 +73,12 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
         "media_security_content",
         MEDIA_SECURITY_CONTENT_COUNTERS_LIST,
     ),
-    &CounterCategory::new(
-        "media_moderation_request",
-        MEDIA_MODERATION_REQUEST_COUNTERS_LIST,
-    ),
     &CounterCategory::new("media_tile_map", MEDIA_TILE_MAP_COUNTERS_LIST),
     // Media admin
     &CounterCategory::new(
         "media_admin_moderation",
         MEDIA_ADMIN_MODERATION_COUNTERS_LIST,
     ),
-    // Media internal
-    &CounterCategory::new("media_internal", MEDIA_INTERNAL_COUNTERS_LIST),
     // Profile
     &CounterCategory::new("profile_attributes", PROFILE_ATTRIBUTES_COUNTERS_LIST),
     &CounterCategory::new("profile_iterate", PROFILE_ITERATE_PROFILES_COUNTERS_LIST),

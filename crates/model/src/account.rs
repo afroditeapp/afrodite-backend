@@ -160,8 +160,7 @@ macro_rules! define_permissions {
 define_permissions!(
     struct Permissions,
     admin_modify_permissions,
-    admin_moderate_profiles,
-    admin_moderate_images,
+    admin_moderate_profile_content,
     admin_moderate_profile_names,
     admin_moderate_profile_texts,
     /// View public and private profiles.

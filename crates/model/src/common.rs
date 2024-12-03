@@ -12,7 +12,7 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::{
     schema_sqlite_types::Integer, Account, AccountState, ContentProcessingId,
-    ContentProcessingState, MessageNumber, ModerationQueueNumber, ModerationQueueType, Permissions,
+    ContentProcessingState, MessageNumber, Permissions,
     ProfileVisibility,
 };
 
@@ -64,7 +64,7 @@ pub enum EventType {
     AvailableProfileAttributesChanged,
     ProfileChanged,
     NewsCountChanged,
-    ContentModerationRequestCompleted,
+    InitialContentAccpeted,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -158,7 +158,7 @@ pub enum EventToClientInternal {
     AvailableProfileAttributesChanged,
     ProfileChanged,
     NewsChanged,
-    ContentModerationRequestCompleted,
+    InitialContentAccepted,
 }
 
 impl From<&EventToClientInternal> for EventType {
@@ -179,7 +179,7 @@ impl From<&EventToClientInternal> for EventType {
             AvailableProfileAttributesChanged => Self::AvailableProfileAttributesChanged,
             ProfileChanged => Self::ProfileChanged,
             NewsChanged => Self::NewsCountChanged,
-            ContentModerationRequestCompleted => Self::ContentModerationRequestCompleted,
+            InitialContentAccepted => Self::InitialContentAccpeted,
         }
     }
 }
@@ -213,7 +213,7 @@ impl From<EventToClientInternal> for EventToClient {
             | AvailableProfileAttributesChanged
             | ProfileChanged
             | NewsChanged
-            | ContentModerationRequestCompleted => (),
+            | InitialContentAccepted => (),
         }
 
         value
@@ -224,7 +224,7 @@ impl From<EventToClientInternal> for EventToClient {
 pub enum NotificationEvent {
     NewMessageReceived,
     ReceivedLikesChanged,
-    ContentModerationRequestCompleted,
+    InitialContentAccepted,
     NewsChanged,
 }
 
@@ -233,8 +233,8 @@ impl From<NotificationEvent> for EventToClientInternal {
         match event {
             NotificationEvent::NewMessageReceived => EventToClientInternal::NewMessageReceived,
             NotificationEvent::ReceivedLikesChanged => EventToClientInternal::ReceivedLikesChanged,
-            NotificationEvent::ContentModerationRequestCompleted => {
-                EventToClientInternal::ContentModerationRequestCompleted
+            NotificationEvent::InitialContentAccepted => {
+                EventToClientInternal::InitialContentAccepted
             }
             NotificationEvent::NewsChanged => EventToClientInternal::NewsChanged,
         }
@@ -554,15 +554,6 @@ impl TryFrom<i64> for NextQueueNumberType {
 
 diesel_i64_try_from!(NextQueueNumberType);
 
-impl From<ModerationQueueType> for NextQueueNumberType {
-    fn from(value: ModerationQueueType) -> Self {
-        match value {
-            ModerationQueueType::MediaModeration => Self::MediaModeration,
-            ModerationQueueType::InitialMediaModeration => Self::InitialMediaModeration,
-        }
-    }
-}
-
 #[derive(Debug, Clone, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::queue_entry)]
 #[diesel(check_for_backend(crate::Db))]
@@ -586,12 +577,6 @@ impl QueueNumber {
 
     pub fn as_i64(&self) -> &i64 {
         &self.0
-    }
-}
-
-impl From<ModerationQueueNumber> for QueueNumber {
-    fn from(value: ModerationQueueNumber) -> Self {
-        Self(value.0)
     }
 }
 

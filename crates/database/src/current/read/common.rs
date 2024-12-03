@@ -1,6 +1,6 @@
 use diesel::{prelude::*, SelectableHelper};
 use error_stack::Result;
-use model::{Account, AccountId, AccountIdInternal, Permissions};
+use model::{Account, AccountId, AccountIdDb, AccountIdInternal, Permissions};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use crate::{
@@ -61,5 +61,17 @@ impl CurrentReadCommon<'_> {
         use crate::schema::account_id::dsl::*;
 
         account_id.select(uuid).load(self.conn()).into_db_error(())
+    }
+
+    pub fn db_id_to_internal_id(&mut self, db_id: AccountIdDb) -> Result<AccountIdInternal, DieselDatabaseError> {
+        use crate::schema::account_id::dsl::*;
+
+        let uuid_value = account_id
+            .filter(id.eq(db_id))
+            .select(uuid)
+            .first(self.conn())
+            .into_db_error(())?;
+
+        Ok(AccountIdInternal::new(db_id, uuid_value))
     }
 }

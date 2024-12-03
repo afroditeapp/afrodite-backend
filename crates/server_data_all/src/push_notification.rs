@@ -5,7 +5,6 @@ use model::{
 use server_data::db_manager::RouterDatabaseReadHandle;
 use server_data_account::read::GetReadCommandsAccount;
 use server_data_chat::read::GetReadChatCommands;
-use server_data_media::read::GetReadMediaCommands;
 
 pub async fn get_push_notification_data(
     read_handle: &RouterDatabaseReadHandle,
@@ -37,19 +36,6 @@ pub async fn get_push_notification_data(
         None
     };
 
-    let content_moderation_state =
-        if flags.contains(PendingNotificationFlags::CONTENT_MODERATION_REQUEST_COMPLETED) {
-            read_handle
-                .media()
-                .moderation_request(id)
-                .await
-                .ok()
-                .flatten()
-                .map(|content_moderation_request| content_moderation_request.state)
-        } else {
-            None
-        };
-
     let unread_news_count = if flags.contains(PendingNotificationFlags::NEWS_CHANGED) {
         read_handle
             .account()
@@ -65,7 +51,6 @@ pub async fn get_push_notification_data(
         value: notification_value,
         new_message_received_from: sender_info,
         received_likes_changed: received_likes_info,
-        content_moderation_request_completed: content_moderation_state,
         news_changed: unread_news_count,
     }
 }

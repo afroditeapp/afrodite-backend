@@ -2,13 +2,14 @@ use axum::{
     extract::{Path, Query, State},
     Extension,
 };
+use model::{EventToClientInternal, NotificationEvent};
 use model_media::{
     AccountId, AccountIdInternal, AccountState, GetMyProfileContentResult,
-    GetProfileContentQueryParams, GetProfileContentResult, MyProfileContent, PendingProfileContent,
+    GetProfileContentQueryParams, GetProfileContentResult, MyProfileContent,
     Permissions, ProfileContent, SetProfileContent,
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{create_open_api_router, S};
+use server_api::{create_open_api_router, db_write_multiple, S};
 use server_data::read::GetReadCommandsCommon;
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
@@ -16,7 +17,6 @@ use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{GetAccounts, ReadData, WriteData},
-    db_write,
     utils::{Json, StatusCode},
 };
 
@@ -157,8 +157,13 @@ const PATH_PUT_PROFILE_CONTENT: &str = "/media_api/profile_content";
 
 /// Set new profile content for current account.
 ///
+/// This also moves the content to moderation if it is not already
+/// in moderation or moderated.
+///
+/// Also profile visibility moves from pending to normal when
+/// all profile content is moderated as accepted.
+///
 /// # Restrictions
-/// - All content must be moderated as accepted.
 /// - All content must be owned by the account.
 /// - All content must be images.
 /// - First content must have face detected.
@@ -180,113 +185,35 @@ pub async fn put_profile_content(
 ) -> Result<(), StatusCode> {
     MEDIA.put_profile_content.incr();
 
-    db_write!(state, move |cmds| cmds
-        .media()
-        .update_profile_content(api_caller_account_id, new))
-}
+    db_write_multiple!(state, move |cmds| {
+        let visibility_change = cmds
+            .media()
+            .update_profile_content(api_caller_account_id, new).await?;
 
-#[obfuscate_api]
-const PATH_GET_PENDING_PROFILE_CONTENT_INFO: &str = "/media_api/pending_profile_content_info/{aid}";
+        if let Some(new_account) = visibility_change.new_account {
+            if cmds.config().components().account {
+                cmds.events()
+                    .send_connected_event(
+                        api_caller_account_id,
+                        EventToClientInternal::ProfileVisibilityChanged(new_account.profile_visibility()),
+                    )
+                    .await?;
+            }
+            cmds.events()
+                .send_notification(
+                    api_caller_account_id,
+                    NotificationEvent::InitialContentAccepted,
+                )
+                .await?;
+        }
 
-/// Get pending profile content for selected profile
-#[utoipa::path(
-    get,
-    path = PATH_GET_PENDING_PROFILE_CONTENT_INFO,
-    params(AccountId),
-    responses(
-        (status = 200, description = "Successful.", body = PendingProfileContent),
-        (status = 401, description = "Unauthorized."),
-        (status = 500),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn get_pending_profile_content_info(
-    State(state): State<S>,
-    Path(account_id): Path<AccountId>,
-    Extension(_api_caller_account_id): Extension<AccountIdInternal>,
-) -> Result<Json<PendingProfileContent>, StatusCode> {
-    MEDIA.get_pending_profile_content_info.incr();
+        Ok(())
+    })?;
 
-    // TODO: access restrictions
+    // TODO(microservice): Add profile visibility change notification
+    // to account internal API.
 
-    let internal_id = state.get_internal_id(account_id).await?;
-
-    let internal_current_media = state
-        .read()
-        .media()
-        .current_account_media(internal_id)
-        .await?;
-
-    let info: PendingProfileContent = internal_current_media.into();
-    Ok(info.into())
-}
-
-#[obfuscate_api]
-const PATH_PUT_PENDING_PROFILE_CONTENT: &str = "/media_api/pending_profile_content";
-
-/// Set new pending profile content for current account.
-/// Server will switch to pending content when next moderation request is
-/// accepted.
-///
-/// # Restrictions
-/// - All content must not be moderated as rejected.
-/// - All content must be owned by the account.
-/// - All content must be images.
-/// - First content must have face detected.
-#[utoipa::path(
-    put,
-    path = PATH_PUT_PENDING_PROFILE_CONTENT,
-    request_body(content = SetProfileContent),
-    responses(
-        (status = 200, description = "Successful."),
-        (status = 401, description = "Unauthorized."),
-        (status = 500),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn put_pending_profile_content(
-    State(state): State<S>,
-    Extension(api_caller_account_id): Extension<AccountIdInternal>,
-    Json(new): Json<SetProfileContent>,
-) -> Result<(), StatusCode> {
-    MEDIA.put_pending_profile_content.incr();
-
-    db_write!(state, move |cmds| cmds
-        .media()
-        .update_or_delete_pending_profile_content(
-            api_caller_account_id,
-            Some(new)
-        ))
-}
-
-#[obfuscate_api]
-const PATH_DELETE_PENDING_PROFILE_CONTENT: &str = "/media_api/pending_profile_content";
-
-/// Delete new pending profile content for current account.
-/// Server will not switch to pending content when next moderation request is
-/// accepted.
-#[utoipa::path(
-    delete,
-    path = PATH_DELETE_PENDING_PROFILE_CONTENT,
-    responses(
-        (status = 200, description = "Successful."),
-        (status = 401, description = "Unauthorized."),
-        (status = 500),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn delete_pending_profile_content(
-    State(state): State<S>,
-    Extension(api_caller_account_id): Extension<AccountIdInternal>,
-) -> Result<(), StatusCode> {
-    MEDIA.delete_pending_profile_content.incr();
-
-    db_write!(state, move |cmds| cmds
-        .media()
-        .update_or_delete_pending_profile_content(
-            api_caller_account_id,
-            None
-        ))
+    Ok(())
 }
 
 pub fn profile_content_router(s: S) -> OpenApiRouter {
@@ -295,9 +222,6 @@ pub fn profile_content_router(s: S) -> OpenApiRouter {
         get_profile_content_info,
         get_my_profile_content_info,
         put_profile_content,
-        get_pending_profile_content_info,
-        put_pending_profile_content,
-        delete_pending_profile_content,
     )
 }
 
@@ -308,7 +232,4 @@ create_counters!(
     get_profile_content_info,
     get_my_profile_content_info,
     put_profile_content,
-    get_pending_profile_content_info,
-    put_pending_profile_content,
-    delete_pending_profile_content,
 );

@@ -3,7 +3,7 @@ use axum::{
     Extension,
 };
 use model_media::{
-    AccountId, AccountIdInternal, ContentId, PendingSecurityContent, SecurityContent,
+    AccountId, AccountIdInternal, ContentId, SecurityContent,
 };
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
@@ -56,10 +56,12 @@ pub async fn get_security_content_info(
 #[obfuscate_api]
 const PATH_PUT_SECURITY_CONTENT_INFO: &str = "/media_api/security_content_info";
 
-/// Set current security content content for current account.
+/// Set current security content for current account.
+///
+/// This also moves the content to moderation if it is not already
+/// in moderation or moderated.
 ///
 /// # Restrictions
-/// - The content must be moderated as accepted.
 /// - The content must be owned by the account.
 /// - The content must be an image.
 /// - The content must be captured by client.
@@ -87,113 +89,11 @@ pub async fn put_security_content_info(
         .update_security_content(api_caller_account_id, content_id))
 }
 
-#[obfuscate_api]
-const PATH_GET_PENDING_SECURITY_CONTENT_INFO: &str =
-    "/media_api/pending_security_content_info/{aid}";
-
-/// Get pending security content for selected profile.
-#[utoipa::path(
-    get,
-    path = PATH_GET_PENDING_SECURITY_CONTENT_INFO,
-    params(AccountId),
-    responses(
-        (status = 200, description = "Successful.", body = PendingSecurityContent),
-        (status = 401, description = "Unauthorized."),
-        (status = 500),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn get_pending_security_content_info(
-    State(state): State<S>,
-    Path(requested_account_id): Path<AccountId>,
-    Extension(_api_caller_account_id): Extension<AccountIdInternal>,
-) -> Result<Json<PendingSecurityContent>, StatusCode> {
-    MEDIA.get_pending_security_content_info.incr();
-
-    // TODO: access restrictions
-
-    let internal_id = state.get_internal_id(requested_account_id).await?;
-
-    let internal_current_media = state
-        .read()
-        .media()
-        .current_account_media(internal_id)
-        .await?;
-
-    let info: PendingSecurityContent = internal_current_media.into();
-    Ok(info.into())
-}
-
-#[obfuscate_api]
-const PATH_PUT_PENDING_SECURITY_CONTENT_INFO: &str = "/media_api/pending_security_content_info";
-
-/// Set pending security content for current account.
-///
-/// Requires that the content has face detected.
-#[utoipa::path(
-    put,
-    path = PATH_PUT_PENDING_SECURITY_CONTENT_INFO,
-    request_body = ContentId,
-    responses(
-        (status = 200, description = "Successful."),
-        (status = 401, description = "Unauthorized."),
-        (status = 500),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn put_pending_security_content_info(
-    State(state): State<S>,
-    Extension(api_caller_account_id): Extension<AccountIdInternal>,
-    Json(content_id): Json<ContentId>,
-) -> Result<(), StatusCode> {
-    MEDIA.put_pending_security_content_info.incr();
-
-    db_write!(state, move |cmds| cmds
-        .media()
-        .update_or_delete_pending_security_content(
-            api_caller_account_id,
-            Some(content_id)
-        ))
-}
-
-#[obfuscate_api]
-const DELETE_PENDING_SECURITY_CONTENT_INFO: &str = "/media_api/pending_security_content_info";
-
-/// Delete pending security content for current account.
-/// Server will not change the security content when next moderation request
-/// is moderated as accepted.
-#[utoipa::path(
-    delete,
-    path = DELETE_PENDING_SECURITY_CONTENT_INFO,
-    responses(
-        (status = 200, description = "Successful."),
-        (status = 401, description = "Unauthorized."),
-        (status = 500),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn delete_pending_security_content_info(
-    State(state): State<S>,
-    Extension(api_caller_account_id): Extension<AccountIdInternal>,
-) -> Result<(), StatusCode> {
-    MEDIA.put_pending_security_content_info.incr();
-
-    db_write!(state, move |cmds| cmds
-        .media()
-        .update_or_delete_pending_security_content(
-            api_caller_account_id,
-            None
-        ))
-}
-
 pub fn security_content_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
         get_security_content_info,
         put_security_content_info,
-        get_pending_security_content_info,
-        put_pending_security_content_info,
-        delete_pending_security_content_info,
     )
 }
 
@@ -203,6 +103,4 @@ create_counters!(
     MEDIA_SECURITY_CONTENT_COUNTERS_LIST,
     get_security_content_info,
     put_security_content_info,
-    get_pending_security_content_info,
-    put_pending_security_content_info,
 );

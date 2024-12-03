@@ -1,7 +1,7 @@
 use axum::{extract::State, Extension};
 use model_account::{AccountIdInternal, AccountSetup, AccountState, SetAccountSetup};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{app::ValidateModerationRequest, create_open_api_router, S};
+use server_api::{create_open_api_router, S};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
@@ -93,10 +93,6 @@ const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
 /// Requirements:
 ///  - Account must be in `InitialSetup` state.
 ///  - Account must have a valid AccountSetup info set.
-///  - Account must have a moderation request.
-///  - The current or pending security image of the account is in the request.
-///  - The current or pending first profile image of the account is in the
-///    request.
 ///
 #[utoipa::path(
     post,
@@ -121,12 +117,6 @@ pub async fn post_complete_setup(
     if account_state != AccountState::InitialSetup {
         return Err(StatusCode::NOT_ACCEPTABLE);
     }
-
-    // Validate media moderation.
-    // Moderation request creation also validates that the initial request
-    // contains security content, so there is no possibility that user
-    // changes the request to be invalid just after this check.
-    state.media_check_moderation_request_for_account(id).await?;
 
     let new_account = state.data_all_access().complete_initial_setup(id).await?;
 

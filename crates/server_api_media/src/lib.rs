@@ -12,7 +12,6 @@ use self::utils::SecurityApiAccessTokenDefault;
 // Routes
 pub mod media;
 pub mod media_admin;
-pub mod media_internal;
 
 pub use server_api::{app, utils};
 pub use server_common::{data::DataError, result};
@@ -21,10 +20,7 @@ pub use server_common::{data::DataError, result};
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(
-        // Media internal
-        media_internal::internal_get_check_moderation_request_for_account,
-    ),
+    paths(),
     components(schemas(
         // Media admin
         model_media::ModerationQueueType,

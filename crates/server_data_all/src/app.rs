@@ -15,7 +15,6 @@ use server_data::{
 };
 use server_data_account::write::GetWriteCommandsAccount;
 use server_data_chat::read::GetReadChatCommands;
-use server_data_media::read::GetReadMediaCommands;
 
 use crate::{register::RegisterAccount, unlimited_likes::UnlimitedLikesUpdate};
 
@@ -96,20 +95,6 @@ impl DataAllUtils for DataAllUtilsImpl {
             crate::websocket::send_new_messages_event_if_needed(config, read_handle, socket, id)
                 .await?;
             Ok(())
-        }
-        .boxed()
-    }
-
-    fn check_moderation_request_for_account<'a>(
-        &self,
-        read_handle: &'a RouterDatabaseReadHandle,
-        id: AccountIdInternal,
-    ) -> BoxFuture<'a, server_common::result::Result<(), DataError>> {
-        async move {
-            read_handle
-                .media()
-                .check_moderation_request_for_account(id)
-                .await
         }
         .boxed()
     }

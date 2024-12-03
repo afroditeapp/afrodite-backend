@@ -1,79 +1,35 @@
-use database::current::read::GetDbReadCommandsCommon;
+use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
 use error_stack::ResultExt;
+use model::{Account, ProfileVisibility};
 use model_media::{
-    AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, ModerationRequestState,
-    NewContentParams, NextQueueNumberType, ProfileContentVersion, ProfileVisibility,
+    AccountIdInternal, ContentId, ContentSlot,
+    NewContentParams, ProfileContentVersion,
     SetProfileContent,
 };
 use server_data::{
-    cache::profile::UpdateLocationCacheState,
-    define_cmd_wrapper_write,
-    file::FileWrite,
-    read::DbRead,
-    result::{Result, WrappedContextExt},
-    write::DbTransaction,
-    DataError, DieselDatabaseError,
+    app::GetConfig, cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, file::FileWrite, read::DbRead, result::{Result, WrappedContextExt}, write::{DbTransaction, GetWriteCommandsCommon}, DataError, DieselDatabaseError
 };
 
 use crate::cache::CacheWriteMedia;
 
+pub struct ProfileVisibilityChange {
+    pub new_account: Option<Account>,
+}
+
+impl ProfileVisibilityChange {
+    fn no_change() -> Self {
+        Self { new_account: None }
+    }
+
+    fn change(account: Account) -> Self {
+        Self { new_account: Some(account) }
+    }
+}
+
 define_cmd_wrapper_write!(WriteCommandsMedia);
 
 impl WriteCommandsMedia<'_> {
-    pub async fn create_or_update_moderation_request(
-        &self,
-        account_id: AccountIdInternal,
-        request: ModerationRequestContent,
-    ) -> Result<(), DataError> {
-        let current_request = self
-            .db_read(move |mut cmds| {
-                cmds.media()
-                    .moderation_request()
-                    .moderation_request(account_id)
-            })
-            .await?;
-
-        let account = self
-            .db_read(move |mut cmds| cmds.common().account(account_id))
-            .await?;
-
-        let queue_num_type = match account.profile_visibility() {
-            ProfileVisibility::PendingPrivate | ProfileVisibility::PendingPublic => {
-                NextQueueNumberType::InitialMediaModeration
-            }
-            ProfileVisibility::Private | ProfileVisibility::Public => {
-                NextQueueNumberType::MediaModeration
-            }
-        };
-
-        if let Some(current_request) = current_request {
-            match current_request.state {
-                ModerationRequestState::Waiting => {
-                    db_transaction!(self, move |mut cmds| {
-                        cmds.media()
-                            .moderation_request()
-                            .update_moderation_request(account_id, request)
-                    })
-                }
-                ModerationRequestState::InProgress => Err(DataError::NotAllowed.report()),
-                ModerationRequestState::Accepted | ModerationRequestState::Rejected => {
-                    db_transaction!(self, move |mut cmds| {
-                        cmds.media()
-                            .moderation_request()
-                            .create_new_moderation_request(account_id, request, queue_num_type)
-                    })
-                }
-            }
-        } else {
-            db_transaction!(self, move |mut cmds| {
-                cmds.media()
-                    .moderation_request()
-                    .create_new_moderation_request(account_id, request, queue_num_type)
-            })
-        }
-    }
-
     /// Completes previous save_to_tmp.
     pub async fn save_to_slot(
         &self,
@@ -87,7 +43,7 @@ impl WriteCommandsMedia<'_> {
         let current_content_in_slot = self
             .db_read(move |mut cmds| {
                 cmds.media()
-                    .moderation_request()
+                    .media_content()
                     .get_media_content_from_slot(id, slot)
             })
             .await?;
@@ -99,7 +55,7 @@ impl WriteCommandsMedia<'_> {
                 .change_context(DataError::File)?;
             self.db_transaction(move |mut cmds| {
                 cmds.media()
-                    .moderation_request()
+                    .media_content()
                     .delete_content_from_slot(id, slot)
             })
             .await
@@ -114,7 +70,7 @@ impl WriteCommandsMedia<'_> {
 
         self.db_transaction(move |mut cmds| {
             cmds.media()
-                .moderation_request()
+                .media_content()
                 .insert_content_id_to_slot(
                     id,
                     content_id,
@@ -146,7 +102,7 @@ impl WriteCommandsMedia<'_> {
         &self,
         id: AccountIdInternal,
         new: SetProfileContent,
-    ) -> Result<(), DataError> {
+    ) -> Result<ProfileVisibilityChange, DataError> {
         let new_profile_content_version = ProfileContentVersion::new_random();
 
         db_transaction!(self, move |mut cmds| {
@@ -154,7 +110,8 @@ impl WriteCommandsMedia<'_> {
                 id,
                 new,
                 new_profile_content_version,
-            )
+            )?;
+            cmds.media().media_content().increment_profile_content_sync_version(id)
         })?;
 
         self.write_cache_media(id.as_id(), |e| {
@@ -165,19 +122,7 @@ impl WriteCommandsMedia<'_> {
 
         self.update_location_cache_profile(id).await?;
 
-        Ok(())
-    }
-
-    pub async fn update_or_delete_pending_profile_content(
-        &self,
-        id: AccountIdInternal,
-        new: Option<SetProfileContent>,
-    ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.media()
-                .media_content()
-                .update_or_delete_pending_profile_content(id, new)
-        })
+        self.remove_pending_state_from_profile_visibility_if_needed(id).await
     }
 
     pub async fn update_security_content(
@@ -189,18 +134,6 @@ impl WriteCommandsMedia<'_> {
             cmds.media()
                 .media_content()
                 .update_security_content(content_owner, content)
-        })
-    }
-
-    pub async fn update_or_delete_pending_security_content(
-        &self,
-        content_owner: AccountIdInternal,
-        content: Option<ContentId>,
-    ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.media()
-                .media_content()
-                .update_or_delete_pending_security_content(content_owner, content)
         })
     }
 
@@ -216,14 +149,73 @@ impl WriteCommandsMedia<'_> {
         })
     }
 
-    pub async fn delete_moderation_request_not_yet_in_moderation(
+    pub async fn remove_pending_state_from_profile_visibility_if_needed(
         &self,
-        moderation_request_owner: AccountIdInternal,
-    ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.media()
-                .moderation_request()
-                .delete_moderation_request_not_yet_in_moderation(moderation_request_owner)
-        })
+        content_owner: AccountIdInternal,
+    ) -> Result<ProfileVisibilityChange, DataError> {
+        if !self.config().components().account {
+            // TODO(microservice): The media server should request
+            // profile visibility change from account server if
+            // needed.
+            return Err(DataError::FeatureDisabled.report());
+        }
+
+        let current_account = self.db_read(move |mut cmds| cmds.common().account(content_owner)).await?;
+        let profile_visibility = current_account.profile_visibility();
+
+        let info = db_transaction!(self, move |mut cmds| {
+            if !profile_visibility.is_pending() {
+                return Ok(ProfileVisibilityChange::no_change())
+            }
+
+            let current_media = cmds
+                .read()
+                .media()
+                .media_content()
+                .current_account_media(content_owner)?;
+
+            let mut all_accepted = current_media.iter_current_profile_content().count() > 0;
+            for media in current_media.iter_current_profile_content() {
+                if !media.state().is_accepted() {
+                    all_accepted = false;
+                }
+            }
+
+            if all_accepted {
+                let current_account = cmds.read().common().account(content_owner)?;
+                let visibility = current_account.profile_visibility();
+                let new_visibility = match visibility {
+                    ProfileVisibility::Public => ProfileVisibility::Public,
+                    ProfileVisibility::Private => ProfileVisibility::Private,
+                    ProfileVisibility::PendingPublic => ProfileVisibility::Public,
+                    ProfileVisibility::PendingPrivate => ProfileVisibility::Private,
+                };
+                let new_account = cmds.common().state().update_syncable_account_data(
+                    content_owner,
+                    current_account.clone(),
+                    move |_, _, visibility| {
+                        *visibility = new_visibility;
+                        Ok(())
+                    },
+                )?;
+
+                Ok(ProfileVisibilityChange::change(new_account))
+            } else {
+                Ok(ProfileVisibilityChange::no_change())
+            }
+        })?;
+
+        if let Some(new_account) = &info.new_account {
+            self.handle()
+                .common()
+                .internal_handle_new_account_data_after_db_modification(
+                    content_owner,
+                    &current_account,
+                    new_account,
+                )
+                .await?;
+        }
+
+        Ok(info)
     }
 }

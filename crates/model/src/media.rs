@@ -1,12 +1,10 @@
 use diesel::{
-    sql_types::{BigInt, Binary},
+    sql_types::Binary,
     AsExpression, FromSqlRow,
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_wrapper};
+use simple_backend_model::diesel_uuid_wrapper;
 use utoipa::{IntoParams, ToSchema};
-
-use crate::{schema_sqlite_types::Integer, EnumParsingError};
 
 /// Content ID for media content for example images
 #[derive(
@@ -54,53 +52,6 @@ impl ContentId {
 
     pub fn not_in(&self, mut iter: impl Iterator<Item = ContentId>) -> bool {
         !iter.any(|c| c == *self)
-    }
-}
-
-#[derive(
-    Debug,
-    Deserialize,
-    Serialize,
-    Clone,
-    Copy,
-    ToSchema,
-    PartialEq,
-    diesel::FromSqlRow,
-    diesel::AsExpression,
-)]
-#[diesel(sql_type = Integer)]
-#[repr(i64)]
-pub enum ModerationRequestState {
-    /// Admin has not started progress on moderating.
-    Waiting = 0,
-    InProgress = 1,
-    Accepted = 2,
-    Rejected = 3,
-}
-
-diesel_i64_try_from!(ModerationRequestState);
-
-impl ModerationRequestState {
-    pub fn completed(&self) -> bool {
-        match self {
-            Self::Accepted | Self::Rejected => true,
-            Self::InProgress | Self::Waiting => false,
-        }
-    }
-}
-
-impl TryFrom<i64> for ModerationRequestState {
-    type Error = EnumParsingError;
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
-        let value = match value {
-            0 => Self::Waiting,
-            1 => Self::InProgress,
-            2 => Self::Accepted,
-            3 => Self::Rejected,
-            _ => return Err(EnumParsingError::ParsingError(value)),
-        };
-
-        Ok(value)
     }
 }
 
@@ -190,32 +141,6 @@ impl ContentProcessingState {
         self.fd = None;
     }
 }
-
-/// Subset of NextQueueNumberType containing only moderation queue types.
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
-pub enum ModerationQueueType {
-    MediaModeration,
-    InitialMediaModeration,
-}
-
-#[derive(
-    Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, FromSqlRow, AsExpression,
-)]
-#[diesel(sql_type = BigInt)]
-#[serde(transparent)]
-pub struct ModerationQueueNumber(pub i64);
-
-impl ModerationQueueNumber {
-    pub fn new(id: i64) -> Self {
-        Self(id)
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.0
-    }
-}
-
-diesel_i64_wrapper!(ModerationQueueNumber);
 
 /// Version UUID for public profile content.
 #[derive(

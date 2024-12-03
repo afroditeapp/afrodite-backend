@@ -84,8 +84,7 @@ diesel::table! {
     account_permissions (account_id) {
         account_id -> Integer,
         admin_modify_permissions -> Bool,
-        admin_moderate_profiles -> Bool,
-        admin_moderate_images -> Bool,
+        admin_moderate_profile_content -> Bool,
         admin_moderate_profile_names -> Bool,
         admin_moderate_profile_texts -> Bool,
         admin_view_all_profiles -> Bool,
@@ -171,16 +170,6 @@ diesel::table! {
         grid_crop_size -> Nullable<Double>,
         grid_crop_x -> Nullable<Double>,
         grid_crop_y -> Nullable<Double>,
-        pending_security_content_id -> Nullable<Integer>,
-        pending_profile_content_id_0 -> Nullable<Integer>,
-        pending_profile_content_id_1 -> Nullable<Integer>,
-        pending_profile_content_id_2 -> Nullable<Integer>,
-        pending_profile_content_id_3 -> Nullable<Integer>,
-        pending_profile_content_id_4 -> Nullable<Integer>,
-        pending_profile_content_id_5 -> Nullable<Integer>,
-        pending_grid_crop_size -> Nullable<Double>,
-        pending_grid_crop_x -> Nullable<Double>,
-        pending_grid_crop_y -> Nullable<Double>,
     }
 }
 
@@ -340,39 +329,16 @@ diesel::table! {
         id -> Integer,
         uuid -> Binary,
         account_id -> Integer,
-        content_state -> Integer,
         secure_capture -> Bool,
         face_detected -> Bool,
         content_type_number -> Integer,
         slot_number -> Integer,
-    }
-}
-
-diesel::table! {
-    use crate::schema_sqlite_types::*;
-
-    media_moderation (account_id, moderation_request_id) {
-        account_id -> Integer,
-        moderation_request_id -> Integer,
-        state_number -> Integer,
-    }
-}
-
-diesel::table! {
-    use crate::schema_sqlite_types::*;
-
-    media_moderation_request (id) {
-        id -> Integer,
-        account_id -> Integer,
-        queue_number -> Integer,
-        queue_number_type -> Integer,
-        content_id_0 -> Binary,
-        content_id_1 -> Nullable<Binary>,
-        content_id_2 -> Nullable<Binary>,
-        content_id_3 -> Nullable<Binary>,
-        content_id_4 -> Nullable<Binary>,
-        content_id_5 -> Nullable<Binary>,
-        content_id_6 -> Nullable<Binary>,
+        creation_unix_time -> Integer,
+        initial_content -> Bool,
+        moderation_state -> Integer,
+        moderation_rejected_reason_category -> Nullable<Integer>,
+        moderation_rejected_reason_details -> Nullable<Text>,
+        moderation_moderator_account_id -> Nullable<Integer>,
     }
 }
 
@@ -382,6 +348,7 @@ diesel::table! {
     media_state (account_id) {
         account_id -> Integer,
         initial_moderation_request_accepted -> Bool,
+        profile_content_sync_version -> Integer,
     }
 }
 
@@ -605,9 +572,6 @@ diesel::joinable!(history_profile_statistics_count_changes_man -> history_profil
 diesel::joinable!(history_profile_statistics_count_changes_non_binary -> history_profile_statistics_save_time (save_time_id));
 diesel::joinable!(history_profile_statistics_count_changes_woman -> history_profile_statistics_save_time (save_time_id));
 diesel::joinable!(media_content -> account_id (account_id));
-diesel::joinable!(media_moderation -> account_id (account_id));
-diesel::joinable!(media_moderation -> media_moderation_request (moderation_request_id));
-diesel::joinable!(media_moderation_request -> account_id (account_id));
 diesel::joinable!(media_state -> account_id (account_id));
 diesel::joinable!(news -> account_id (account_id_creator));
 diesel::joinable!(news_translations -> news (news_id));
@@ -651,8 +615,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     history_profile_statistics_count_changes_woman,
     history_profile_statistics_save_time,
     media_content,
-    media_moderation,
-    media_moderation_request,
     media_state,
     news,
     news_translations,

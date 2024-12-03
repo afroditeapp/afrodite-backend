@@ -1,13 +1,15 @@
-use database::{define_current_write_commands, DieselDatabaseError};
+use database::{current::read::GetDbReadCommandsCommon, define_current_write_commands, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update};
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
+use model::{SyncVersion, UnixTime};
 use model_media::{
-    AccountIdInternal, ContentId, ContentIdDb, ContentState, MediaContentRaw, MediaContentType,
-    ProfileContentVersion, SetProfileContent, SetProfileContentInternal,
+    AccountIdInternal, ContentId, ContentIdDb, ContentModerationState, ContentSlot, MediaContentRaw, MediaContentType, NewContentParams, ProfileContentVersion, SetProfileContent
 };
 use simple_backend_utils::ContextExt;
 
-use crate::{current::read::GetDbReadCommandsMedia, IntoDatabaseError};
+use crate::{current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia}, IntoDatabaseError};
+
+use super::DeletedSomething;
 
 define_current_write_commands!(CurrentWriteMediaContent);
 
@@ -31,8 +33,8 @@ impl CurrentWriteMediaContent<'_> {
         Ok(())
     }
 
-    /// Helper function for checking is ContentId valid to be set as current
-    /// or pending content.
+    /// Helper function for checking is ContentId valid to be set as profile
+    /// or security content.
     ///
     /// Requirements:
     /// - The content must be in the `available` content list.
@@ -60,10 +62,13 @@ impl CurrentWriteMediaContent<'_> {
         }
     }
 
-    /// Update or delete current profile content if possible
+    /// Update or delete current profile content if possible.
+    ///
+    /// Moves content to moderation if needed.
+    ///
+    /// Updates also [model_media::ProfileContentSyncVersion].
     ///
     /// Requirements:
-    ///  - The content must be moderated as accepted.
     ///  - The content must be of type JpegImage.
     ///  - The content must be in the account's media content.
     ///  - The first content must have face detected flag set.
@@ -82,12 +87,12 @@ impl CurrentWriteMediaContent<'_> {
             .get_account_media_content(id)?;
         let convert_first = |content_id: Option<ContentId>| {
             Self::check_content_id(content_id, &all_content, |c| {
-                c.state() == ContentState::ModeratedAsAccepted && c.face_detected
+                c.face_detected
             })
         };
         let convert = |content_id: Option<ContentId>| {
-            Self::check_content_id(content_id, &all_content, |c| {
-                c.state() == ContentState::ModeratedAsAccepted
+            Self::check_content_id(content_id, &all_content, |_| {
+                true
             })
         };
 
@@ -107,69 +112,29 @@ impl CurrentWriteMediaContent<'_> {
             .execute(self.conn())
             .into_db_error((id, new))?;
 
-        Ok(())
-    }
-
-    /// Update or delete pending profile content if possible
-    ///
-    /// Requirements:
-    ///  - The content must not be moderated as rejected.
-    ///  - The content must be of type JpegImage.
-    ///  - The content must be in the account's media content.
-    ///  - The first content must have face detected flag set.
-    pub fn update_or_delete_pending_profile_content(
-        &mut self,
-        id: AccountIdInternal,
-        new: Option<SetProfileContent>,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::current_account_media::dsl::*;
-
-        let new: SetProfileContentInternal = if let Some(new) = new {
-            // Update
-            new.into()
-        } else {
-            // Delete
-            SetProfileContentInternal::default()
-        };
-
-        let all_content = self
-            .read()
-            .media()
-            .media_content()
-            .get_account_media_content(id)?;
-        let convert_first = |content_id: Option<ContentId>| {
-            Self::check_content_id(content_id, &all_content, |c| {
-                c.state() != ContentState::ModeratedAsRejected && c.face_detected
-            })
-        };
-        let convert = |content_id: Option<ContentId>| {
-            Self::check_content_id(content_id, &all_content, |c| {
-                c.state() != ContentState::ModeratedAsRejected
-            })
-        };
-
-        update(current_account_media.find(id.as_db_id()))
-            .set((
-                pending_profile_content_id_0.eq(convert_first(new.c0)?),
-                pending_profile_content_id_1.eq(convert(new.c1)?),
-                pending_profile_content_id_2.eq(convert(new.c2)?),
-                pending_profile_content_id_3.eq(convert(new.c3)?),
-                pending_profile_content_id_4.eq(convert(new.c4)?),
-                pending_profile_content_id_5.eq(convert(new.c5)?),
-                pending_grid_crop_size.eq(new.grid_crop_size),
-                pending_grid_crop_x.eq(new.grid_crop_x),
-                pending_grid_crop_y.eq(new.grid_crop_y),
-            ))
-            .execute(self.conn())
-            .into_db_error((id, new))?;
+        for content_id in new.iter() {
+            let state = self
+                .read()
+                .media()
+                .media_content()
+                .get_media_content_raw(content_id)?;
+            if state.state().is_in_slot() {
+                self
+                    .write()
+                    .media_admin()
+                    .media_content()
+                    .update_content_moderation_state(content_id, ContentModerationState::WaitingBotOrHumanModeration)?;
+            }
+        }
 
         Ok(())
     }
 
-    /// Update security content if possible
+    /// Update security content if possible.
+    ///
+    /// Moves content to moderation if needed.
     ///
     /// Requirements:
-    /// - The content must be moderated as accepted.
     /// - The content must be of type JpegImage.
     /// - The content must be in the account's media content.
     /// - The content must have secure capture flag enabled.
@@ -188,7 +153,7 @@ impl CurrentWriteMediaContent<'_> {
             .get_account_media_content(content_owner)?;
 
         let content_db_id = Self::check_content_id(Some(content_id), &all_content, |c| {
-            c.state() == ContentState::ModeratedAsAccepted && c.secure_capture && c.face_detected
+            c.secure_capture && c.face_detected
         })?;
 
         update(current_account_media.find(content_owner.as_db_id()))
@@ -196,38 +161,18 @@ impl CurrentWriteMediaContent<'_> {
             .execute(self.conn())
             .into_db_error((content_owner, content_id))?;
 
-        Ok(())
-    }
-
-    /// Update or delete pending security content if possible
-    ///
-    /// Requirements:
-    /// - The content must not be moderated as rejected.
-    /// - The content must be of type JpegImage.
-    /// - The content must be in the account's media content.
-    /// - The content must have secure capture flag enabled.
-    /// - The content must have face detected flag enabled.
-    pub fn update_or_delete_pending_security_content(
-        &mut self,
-        content_owner: AccountIdInternal,
-        content_id: Option<ContentId>,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::current_account_media::dsl::*;
-
-        let all_content = self
+        let state = self
             .read()
             .media()
             .media_content()
-            .get_account_media_content(content_owner)?;
-
-        let content_db_id = Self::check_content_id(content_id, &all_content, |c| {
-            c.state() != ContentState::ModeratedAsRejected && c.secure_capture && c.face_detected
-        })?;
-
-        update(current_account_media.find(content_owner.as_db_id()))
-            .set((pending_security_content_id.eq(content_db_id),))
-            .execute(self.conn())
-            .into_db_error((content_owner, content_id))?;
+            .get_media_content_raw(content_id)?;
+        if state.state().is_in_slot() {
+            self
+                .write()
+                .media_admin()
+                .media_content()
+                .update_content_moderation_state(content_id, ContentModerationState::WaitingBotOrHumanModeration)?;
+        }
 
         Ok(())
     }
@@ -265,73 +210,102 @@ impl CurrentWriteMediaContent<'_> {
 
         if let Some(c) = found_content {
             // TODO(prod): Content not in use time tracking
-            match c.state() {
-                ContentState::InSlot
-                | ContentState::ModeratedAsRejected
-                | ContentState::ModeratedAsAccepted => {
-                    use model::schema::media_content::dsl::*;
-                    delete(media_content.filter(id.eq(c.content_row_id())))
-                        .execute(self.conn())
-                        .into_db_error((content_owner, content_id))?;
-                    Ok(())
-                }
-                ContentState::InModeration => Err(DieselDatabaseError::ContentIsInUse.report()),
+            if c.state().is_in_moderation()  {
+                Err(DieselDatabaseError::ContentIsInUse.report())
+            } else {
+                use model::schema::media_content::dsl::*;
+                delete(media_content.filter(id.eq(c.content_row_id())))
+                    .execute(self.conn())
+                    .into_db_error((content_owner, content_id))?;
+                Ok(())
             }
         } else {
             Err(DieselDatabaseError::NotAllowed.report())
         }
     }
 
-    pub fn move_pending_content_to_current_content(
+    pub fn insert_content_id_to_slot(
         &mut self,
-        content_owner: AccountIdInternal,
-        new_version: ProfileContentVersion,
+        content_uploader: AccountIdInternal,
+        content_id: ContentId,
+        slot: ContentSlot,
+        content_params: NewContentParams,
+        face_detected_value: bool,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::current_account_media::dsl::*;
-        let c = self
-            .read()
-            .media()
-            .media_content()
-            .current_account_media_raw(content_owner)?;
+        use model::schema::media_content::dsl::*;
 
-        // TODO(prod): Handle case where user creates initial moderation request,
-        //             uploads new image, and then updates pending content
-        //             with the new image. The current code seems to allow
-        //             that case which means that not moderated image can be
-        //             set as current content.
-        //             Fix: Check current content states here and do not allow
-        //             non moderated content to be set as current content.
-        //             Make also test for this case.
+        let current_time = UnixTime::current_time();
 
-        // TODO(prod): Check also that required security and primary content really is
-        // set in pending content.
+        let account = self.read().common().account(content_uploader)?;
+        let initial_content_value = account.profile_visibility().is_pending();
 
-        update(current_account_media.find(content_owner.as_db_id()))
-            .set((
-                security_content_id.eq(c.pending_security_content_id),
-                profile_content_version_uuid.eq(new_version),
-                profile_content_id_0.eq(c.pending_profile_content_id_0),
-                profile_content_id_1.eq(c.pending_profile_content_id_1),
-                profile_content_id_2.eq(c.pending_profile_content_id_2),
-                profile_content_id_3.eq(c.pending_profile_content_id_3),
-                profile_content_id_4.eq(c.pending_profile_content_id_4),
-                profile_content_id_5.eq(c.pending_profile_content_id_5),
-                grid_crop_size.eq(c.pending_grid_crop_size),
-                grid_crop_x.eq(c.pending_grid_crop_x),
-                grid_crop_y.eq(c.pending_grid_crop_y),
-                pending_security_content_id.eq(None::<ContentIdDb>),
-                pending_profile_content_id_0.eq(None::<ContentIdDb>),
-                pending_profile_content_id_1.eq(None::<ContentIdDb>),
-                pending_profile_content_id_2.eq(None::<ContentIdDb>),
-                pending_profile_content_id_3.eq(None::<ContentIdDb>),
-                pending_profile_content_id_4.eq(None::<ContentIdDb>),
-                pending_profile_content_id_5.eq(None::<ContentIdDb>),
-                pending_grid_crop_size.eq(None::<f64>),
-                pending_grid_crop_x.eq(None::<f64>),
-                pending_grid_crop_y.eq(None::<f64>),
+        insert_into(media_content)
+            .values((
+                account_id.eq(content_uploader.as_db_id()),
+                uuid.eq(content_id),
+                slot_number.eq(slot as i64),
+                secure_capture.eq(content_params.secure_capture),
+                face_detected.eq(face_detected_value),
+                content_type_number.eq(content_params.content_type),
+                initial_content.eq(initial_content_value),
+                creation_unix_time.eq(current_time),
             ))
             .execute(self.conn())
-            .into_db_error(content_owner)?;
+            .into_db_error((content_uploader, content_id, slot))?;
+
+        Ok(())
+    }
+
+    pub fn delete_content_from_slot(
+        &mut self,
+        request_creator: AccountIdInternal,
+        slot: ContentSlot,
+    ) -> Result<Option<DeletedSomething>, DieselDatabaseError> {
+        use model::schema::media_content::dsl::*;
+
+        let deleted_count = delete(
+            media_content
+                .filter(account_id.eq(request_creator.as_db_id()))
+                .filter(moderation_state.eq(ContentModerationState::InSlot))
+                .filter(slot_number.eq(slot as i64)),
+        )
+        .execute(self.conn())
+        .into_db_error((request_creator, slot))?;
+
+        if deleted_count > 0 {
+            Ok(Some(DeletedSomething))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn increment_profile_content_sync_version(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::media_state::dsl::*;
+
+        update(media_state)
+            .filter(account_id.eq(id.as_db_id()))
+            .filter(profile_content_sync_version.lt(SyncVersion::MAX_VALUE))
+            .set(profile_content_sync_version.eq(profile_content_sync_version + 1))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn only_profile_content_version(
+        &mut self,
+        id: AccountIdInternal,
+        data: ProfileContentVersion,
+    ) -> Result<(), DieselDatabaseError> {
+        use crate::schema::current_account_media::dsl::*;
+
+        update(current_account_media.find(id.as_db_id()))
+            .set(profile_content_version_uuid.eq(data))
+            .execute(self.conn())
+            .change_context(DieselDatabaseError::Execute)?;
 
         Ok(())
     }

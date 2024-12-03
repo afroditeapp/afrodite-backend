@@ -153,16 +153,6 @@ impl DataAllAccess<'_> {
         cmd.await
     }
 
-    pub async fn check_moderation_request_for_account(
-        &self,
-        id: AccountIdInternal,
-    ) -> server_common::result::Result<(), DataError> {
-        let cmd = self
-            .utils()
-            .check_moderation_request_for_account(self.read(), id);
-        cmd.await
-    }
-
     pub async fn get_push_notification_data(
         &self,
         id: AccountIdInternal,

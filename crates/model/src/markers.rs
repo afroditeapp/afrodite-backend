@@ -69,8 +69,6 @@ enable_logging!(
     // Media
     ContentId,
     Option<ContentId>,
-    ModerationQueueNumber,
-    ModerationQueueType,
     NextQueueNumberType,
     // General
     &'static str,

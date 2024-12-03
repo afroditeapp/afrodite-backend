@@ -34,7 +34,7 @@ pub enum ProfileNameModerationState {
 impl ProfileNameModerationState {
     pub fn is_accepted(&self) -> bool {
         match self {
-            Self::Empty
+            Self::Empty // TODO(prod): Check can this be here
             | Self::AcceptedByBot
             | Self::AcceptedByHuman
             | Self::AcceptedUsingAllowlist => true,

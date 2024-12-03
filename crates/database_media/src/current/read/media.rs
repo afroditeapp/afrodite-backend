@@ -6,17 +6,12 @@ use model_media::{AccountIdInternal, MediaStateRaw};
 use crate::IntoDatabaseError;
 
 mod media_content;
-mod moderation_request;
 
 define_current_read_commands!(CurrentReadMedia);
 
 impl<'a> CurrentReadMedia<'a> {
     pub fn media_content(self) -> media_content::CurrentReadMediaMediaContent<'a> {
         media_content::CurrentReadMediaMediaContent::new(self.cmds)
-    }
-
-    pub fn moderation_request(self) -> moderation_request::CurrentReadMediaModerationRequest<'a> {
-        moderation_request::CurrentReadMediaModerationRequest::new(self.cmds)
     }
 }
 

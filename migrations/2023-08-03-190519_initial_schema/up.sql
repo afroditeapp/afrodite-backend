@@ -40,8 +40,7 @@ CREATE TABLE IF NOT EXISTS refresh_token(
 CREATE TABLE IF NOT EXISTS account_permissions(
     account_id    INTEGER PRIMARY KEY NOT NULL,
     admin_modify_permissions                    BOOLEAN NOT NULL DEFAULT 0,
-    admin_moderate_profiles                      BOOLEAN NOT NULL DEFAULT 0,
-    admin_moderate_images                        BOOLEAN NOT NULL DEFAULT 0,
+    admin_moderate_profile_content               BOOLEAN NOT NULL DEFAULT 0,
     admin_moderate_profile_names                 BOOLEAN NOT NULL DEFAULT 0,
     admin_moderate_profile_texts                 BOOLEAN NOT NULL DEFAULT 0,
     admin_view_all_profiles                      BOOLEAN NOT NULL DEFAULT 0,
@@ -94,6 +93,8 @@ CREATE TABLE IF NOT EXISTS shared_state(
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
+
+-- TODO(prod): Remove queue number tables?
 
 -- All next new queue numbers are stored here.
 CREATE TABLE IF NOT EXISTS next_queue_number(
@@ -407,11 +408,13 @@ CREATE TABLE IF NOT EXISTS profile_name_allowlist(
 
 -- State specific to media component.
 CREATE TABLE IF NOT EXISTS media_state(
-    account_id              INTEGER PRIMARY KEY NOT NULL,
+    account_id                          INTEGER PRIMARY KEY NOT NULL,
     -- Media component sends this to account component when
     -- this turns to true. Account component then updates
     -- the profile visibility for both profile and media.
-    initial_moderation_request_accepted BOOLEAN           NOT NULL DEFAULT 0,
+    initial_moderation_request_accepted BOOLEAN             NOT NULL DEFAULT 0,
+    -- Sync version for profile content data for this account.
+    profile_content_sync_version        INTEGER             NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -439,16 +442,6 @@ CREATE TABLE IF NOT EXISTS current_account_media(
     -- Y coordinate for square top left corner.
     -- Counted from top left corner of the original image.
     grid_crop_y          DOUBLE,
-    pending_security_content_id  INTEGER,
-    pending_profile_content_id_0 INTEGER,
-    pending_profile_content_id_1 INTEGER,
-    pending_profile_content_id_2 INTEGER,
-    pending_profile_content_id_3 INTEGER,
-    pending_profile_content_id_4 INTEGER,
-    pending_profile_content_id_5 INTEGER,
-    pending_grid_crop_size       DOUBLE,
-    pending_grid_crop_x          DOUBLE,
-    pending_grid_crop_y          DOUBLE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -480,34 +473,6 @@ CREATE TABLE IF NOT EXISTS current_account_media(
     FOREIGN KEY (profile_content_id_5)
         REFERENCES media_content (id)
             ON DELETE SET NULL
-            ON UPDATE CASCADE,
-    FOREIGN KEY (pending_security_content_id)
-        REFERENCES media_content (id)
-            ON DELETE SET NULL
-            ON UPDATE CASCADE,
-    FOREIGN KEY (pending_profile_content_id_0)
-        REFERENCES media_content (id)
-            ON DELETE SET NULL
-            ON UPDATE CASCADE,
-    FOREIGN KEY (pending_profile_content_id_1)
-        REFERENCES media_content (id)
-            ON DELETE SET NULL
-            ON UPDATE CASCADE,
-    FOREIGN KEY (pending_profile_content_id_2)
-        REFERENCES media_content (id)
-            ON DELETE SET NULL
-            ON UPDATE CASCADE,
-    FOREIGN KEY (pending_profile_content_id_3)
-        REFERENCES media_content (id)
-            ON DELETE SET NULL
-            ON UPDATE CASCADE,
-    FOREIGN KEY (pending_profile_content_id_4)
-        REFERENCES media_content (id)
-            ON DELETE SET NULL
-            ON UPDATE CASCADE,
-    FOREIGN KEY (pending_profile_content_id_5)
-        REFERENCES media_content (id)
-            ON DELETE SET NULL
             ON UPDATE CASCADE
 );
 
@@ -516,13 +481,6 @@ CREATE TABLE IF NOT EXISTS media_content(
     id                  INTEGER PRIMARY KEY NOT NULL,
     uuid                BLOB                NOT NULL   UNIQUE,
     account_id          INTEGER             NOT NULL,
-    -- InSlot = 0, If user uploads new content to slot the current will be removed.
-    -- InModeration = 1, Content is in moderation. User can not remove the content.
-    -- ModeratedAsAccepted = 2, Content is moderated as accepted. User can not remove the content until
-    --                          specific time elapses.
-    -- ModeratedAsRejected = 3, Content is moderated as rejected. Content deleting
-    --                        is possible.
-    content_state       INTEGER             NOT NULL,
     -- Client captured this media
     secure_capture      BOOLEAN             NOT NULL,
     -- Face was detected from the content
@@ -531,50 +489,31 @@ CREATE TABLE IF NOT EXISTS media_content(
     content_type_number INTEGER             NOT NULL,
     -- Numbers from 0 to 6.
     slot_number         INTEGER             NOT NULL,
+    creation_unix_time  INTEGER             NOT NULL,
+    -- Content was uploaded when profile visibility is pending public or
+    -- pending private.
+    initial_content     BOOLEAN             NOT NULL,
+    -- State groups:
+    -- InSlot, If user uploads new content to slot the current will be removed.
+    -- InModeration, Content is in moderation. User can not remove the content.
+    -- ModeratedAsAccepted, Content is moderated as accepted. User can not remove the content until
+    --                      specific time elapses.
+    -- ModeratedAsRejected, Content is moderated as rejected. Content deleting
+    --                      is possible.
+    -- State values:
+    -- 0 = Empty (InSlot),
+    -- 1 = WaitingBotOrHumanModeration (InModeration)
+    -- 2 = WaitingHumanModeration (InModeration)
+    -- 3 = AcceptedByBot (ModeratedAsAccepted)
+    -- 4 = AcceptedByHuman (ModeratedAsAccepted)
+    -- 5 = RejectedByBot (ModeratedAsRejected)
+    -- 6 = RejectedByHuman (ModeratedAsRejected)
+    moderation_state     INTEGER            NOT NULL    DEFAULT 0,
+    moderation_rejected_reason_category INTEGER,
+    moderation_rejected_reason_details  TEXT,
+    moderation_moderator_account_id     INTEGER,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
-);
-
--- User made moderation request.
--- If media moderation for one row exists, then prevent
--- modifications to that row.
-CREATE TABLE IF NOT EXISTS media_moderation_request(
-    id                  INTEGER PRIMARY KEY NOT NULL,
-    -- Request owner Account ID. One request per account.
-    account_id          INTEGER             NOT NULL  UNIQUE,
-    -- Queue number which this media_moderation_request has.
-    queue_number        INTEGER             NOT NULL,
-    queue_number_type   INTEGER             NOT NULL,
-    content_id_0        BLOB                NOT NULL,
-    content_id_1        BLOB,
-    content_id_2        BLOB,
-    content_id_3        BLOB,
-    content_id_4        BLOB,
-    content_id_5        BLOB,
-    content_id_6        BLOB,
-    FOREIGN KEY (account_id)
-        REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
-);
-
--- Admin made moderation
-CREATE TABLE IF NOT EXISTS media_moderation(
-    -- What admin account is moderating
-    account_id              INTEGER NOT NULL,
-    -- What request is in moderation
-    moderation_request_id   INTEGER NOT NULL,
-    -- State of the moderation
-    state_number            INTEGER NOT NULL,
-    PRIMARY KEY (account_id, moderation_request_id),
-    FOREIGN KEY (account_id)
-        REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    FOREIGN KEY (moderation_request_id)
-        REFERENCES media_moderation_request (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );

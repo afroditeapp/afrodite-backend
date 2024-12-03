@@ -124,12 +124,6 @@ pub trait DataAllUtils: Send + Sync + 'static {
         sync_versions: Vec<SyncDataVersionFromClient>,
     ) -> BoxFuture<'a, server_common::result::Result<(), WebSocketError>>;
 
-    fn check_moderation_request_for_account<'a>(
-        &self,
-        read_handle: &'a RouterDatabaseReadHandle,
-        id: AccountIdInternal,
-    ) -> BoxFuture<'a, server_common::result::Result<(), DataError>>;
-
     fn get_push_notification_data<'a>(
         &self,
         read_handle: &'a RouterDatabaseReadHandle,

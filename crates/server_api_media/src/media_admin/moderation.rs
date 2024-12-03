@@ -1,142 +1,138 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Query, State},
     Extension,
 };
 use model_media::{
-    AccountId, AccountIdInternal, EventToClientInternal, HandleModerationRequest, ModerationList,
-    ModerationQueueTypeParam, NotificationEvent, Permissions,
+    AccountIdInternal, EventToClientInternal, GetProfileContentPendingModerationList, GetProfileContentPendingModerationParams, NotificationEvent, Permissions, PostModerateProfileContent
 };
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
-use server_data_media::write::GetWriteCommandsMedia;
+use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
+use server_api::app::ReadData;
 
 use crate::{
-    app::{GetAccounts, WriteData},
-    db_write, db_write_multiple,
+    app::WriteData,
+    db_write_multiple,
     utils::{Json, StatusCode},
 };
 
-// TODO: Add moderation content moderation weight to account and use it when moderating.
-//       Moderation should have some value which keeps track how much moderation
-//       request has moderation weight added. Perhaps this should not be in MVP?
-
 #[obfuscate_api]
-const PATH_ADMIN_MODERATION_PAGE_NEXT: &str = "/media_api/admin/moderation/page/next";
+const PATH_GET_PROFILE_CONTENT_PENDING_MODERATION_LIST: &str =
+    "/media_api/admin/profile_content_pending_moderation";
 
-/// Get current list of moderation requests in my moderation queue.
-/// Additional requests will be added to my queue if necessary.
-///
-/// ## Access
-///
-/// Account with `admin_moderate_images` permission is required to access this
-/// route.
-///
+/// Get first page of pending profile content moderations. Oldest item is first and count 25.
 #[utoipa::path(
-    patch,
-    path = PATH_ADMIN_MODERATION_PAGE_NEXT,
-    params(ModerationQueueTypeParam),
+    get,
+    path = PATH_GET_PROFILE_CONTENT_PENDING_MODERATION_LIST,
+    params(GetProfileContentPendingModerationParams),
     responses(
-        (status = 200, description = "Get moderation request list was successfull.", body = ModerationList),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
+        (status = 200, description = "Successful", body = GetProfileContentPendingModerationList),
+        (status = 401, description = "Unauthorized"),
+        (
+            status = 500,
+            description = "Internal server error",
+        ),
     ),
     security(("access_token" = [])),
 )]
-pub async fn patch_moderation_request_list(
+pub async fn get_profile_content_pending_moderation_list(
     State(state): State<S>,
-    Query(queue_type): Query<ModerationQueueTypeParam>,
-    Extension(account_id): Extension<AccountIdInternal>,
-) -> Result<Json<ModerationList>, StatusCode> {
-    MEDIA_ADMIN.patch_moderation_request_list.incr();
+    Extension(moderator_id): Extension<AccountIdInternal>,
+    Extension(permissions): Extension<Permissions>,
+    Query(params): Query<GetProfileContentPendingModerationParams>,
+) -> Result<Json<GetProfileContentPendingModerationList>, StatusCode> {
+    MEDIA_ADMIN.get_profile_content_pending_moderation_list.incr();
 
-    // TODO: Access restrictions
-
-    let data = db_write!(state, move |cmds| {
-        cmds.media_admin()
-            .moderation_get_list_and_create_new_if_necessary(account_id, queue_type.queue)
-    })?;
-
-    Ok(ModerationList { list: data }.into())
-}
-
-// TODO(prod): Check that make, get and moderate requests in both moderation
-//             queues.
-
-#[obfuscate_api]
-const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
-    "/media_api/admin/moderation/handle_request/{aid}";
-
-/// Handle moderation request of some account.
-///
-/// ## Access
-///
-/// Account with `admin_moderate_images` permission is required to access this
-/// route.
-///
-#[utoipa::path(
-    post,
-    path = PATH_ADMIN_MODERATION_HANDLE_REQUEST,
-    request_body(content = HandleModerationRequest),
-    params(AccountId),
-    responses(
-        (status = 200, description = "Handling moderation request was successfull."),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn post_handle_moderation_request(
-    State(state): State<S>,
-    Path(moderation_request_owner_account_id): Path<AccountId>,
-    Extension(admin_account_id): Extension<AccountIdInternal>,
-    Extension(api_caller_permissions): Extension<Permissions>,
-    Json(moderation_decision): Json<HandleModerationRequest>,
-) -> Result<(), StatusCode> {
-    MEDIA_ADMIN.post_handle_moderation_request.incr();
-
-    if !api_caller_permissions.admin_moderate_images {
-        return Err(StatusCode::UNAUTHORIZED);
+    if !permissions.admin_moderate_profile_content {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let moderation_request_owner = state
-        .get_internal_id(moderation_request_owner_account_id)
+    let r = state
+        .read()
+        .media_admin()
+        .profile_content_pending_moderation_list(moderator_id, params)
         .await?;
 
+    Ok(r.into())
+}
+
+#[obfuscate_api]
+const PATH_POST_MODERATE_PROFILE_CONTENT: &str = "/media_api/admin/moderate_profile_content";
+
+/// Rejected category and details can be set only when the content is rejected.
+///
+/// This route will fail if the content is already moderated.
+///
+/// Also profile visibility moves from pending to normal when
+/// all profile content is moderated as accepted.
+#[utoipa::path(
+    post,
+    path = PATH_POST_MODERATE_PROFILE_CONTENT,
+    request_body = PostModerateProfileContent,
+    responses(
+        (status = 200, description = "Successful"),
+        (status = 401, description = "Unauthorized"),
+        (
+            status = 500,
+            description = "Internal server error",
+        ),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_moderate_profile_content(
+    State(state): State<S>,
+    Extension(permissions): Extension<Permissions>,
+    Extension(moderator_id): Extension<AccountIdInternal>,
+    Json(data): Json<PostModerateProfileContent>,
+) -> Result<(), StatusCode> {
+    MEDIA_ADMIN.post_moderate_profile_content.incr();
+
+    if !permissions.admin_moderate_profile_content {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    if data.accept && (data.rejected_category.is_some() || data.rejected_details.is_some()) {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
     db_write_multiple!(state, move |cmds| {
-        let info = cmds
-            .media_admin()
-            .update_moderation(
-                admin_account_id,
-                moderation_request_owner,
-                moderation_decision,
+        let info = cmds.media_admin()
+            .content()
+            .moderate_profile_content(
+                moderator_id,
+                data.content_id,
+                data.accept,
+                data.rejected_category,
+                data.rejected_details,
+                data.move_to_human.unwrap_or_default(),
             )
             .await?;
 
-        if cmds.config().components().account {
-            if let Some(new_visibility) = info.new_visibility {
+
+        if let Some(new_account) = info.visibility_change.new_account {
+            if cmds.config().components().account {
                 cmds.events()
                     .send_connected_event(
-                        moderation_request_owner,
-                        EventToClientInternal::ProfileVisibilityChanged(new_visibility),
+                        info.content_owner_id,
+                        EventToClientInternal::ProfileVisibilityChanged(new_account.profile_visibility()),
                     )
                     .await?;
             }
+            cmds.events()
+                .send_notification(
+                    info.content_owner_id,
+                    NotificationEvent::InitialContentAccepted,
+                )
+                .await?;
         }
-
-        cmds.events()
-            .send_notification(
-                moderation_request_owner,
-                NotificationEvent::ContentModerationRequestCompleted,
-            )
-            .await?;
 
         Ok(())
     })?;
 
     // TODO(microservice): Add profile visibility change notification
-    //                     to account internal API.
+    // to account internal API.
 
     Ok(())
 }
@@ -144,8 +140,8 @@ pub async fn post_handle_moderation_request(
 pub fn admin_moderation_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        patch_moderation_request_list,
-        post_handle_moderation_request,
+        get_profile_content_pending_moderation_list,
+        post_moderate_profile_content,
     )
 }
 
@@ -153,6 +149,6 @@ create_counters!(
     MediaAdminCounters,
     MEDIA_ADMIN,
     MEDIA_ADMIN_MODERATION_COUNTERS_LIST,
-    patch_moderation_request_list,
-    post_handle_moderation_request,
+    get_profile_content_pending_moderation_list,
+    post_moderate_profile_content,
 );

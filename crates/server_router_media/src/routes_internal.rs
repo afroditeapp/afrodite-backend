@@ -1,10 +1,8 @@
 //! Routes for server to server connections
 
-use axum::{routing::post, Router};
+use axum::Router;
 use server_api::app::GetConfig;
 use server_state::S;
-
-use crate::api;
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
 //       sources.
@@ -14,13 +12,10 @@ pub struct InternalApp;
 
 impl InternalApp {
     pub fn create_media_server_router(state: S) -> Router {
-        let mut router = Router::new();
+        let router = Router::new();
 
         if state.config().internal_api_config().microservice {
-            router = router.route(
-                api::media_internal::PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT,
-                post(api::media_internal::internal_get_check_moderation_request_for_account),
-            );
+            // No routes at the moment
         }
 
         router.with_state(state)

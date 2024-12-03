@@ -33,7 +33,7 @@ pub enum ProfileTextModerationState {
 impl ProfileTextModerationState {
     pub fn is_accepted(&self) -> bool {
         match self {
-            Self::Empty | Self::AcceptedByBot | Self::AcceptedByHuman => true,
+            Self::Empty | Self::AcceptedByBot | Self::AcceptedByHuman => true, // TODO(prod): Check can Empty be here
             Self::WaitingBotOrHumanModeration
             | Self::WaitingHumanModeration
             | Self::RejectedByBot

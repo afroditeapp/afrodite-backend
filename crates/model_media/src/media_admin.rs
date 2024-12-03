@@ -1,53 +1,44 @@
 use diesel::prelude::*;
-use model::ModerationQueueType;
+use model::ContentId;
+use model_server_data::MediaContentType;
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    AccountId, AccountIdDb, AccountIdInternal, ModerationRequestContent, ModerationRequestIdDb,
-    ModerationRequestState,
+    ProfileContentModerationRejectedReasonCategory, ProfileContentModerationRejectedReasonDetails,
 };
 
-#[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
-pub struct ModerationList {
-    pub list: Vec<Moderation>,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
-pub struct HandleModerationRequest {
-    pub accept: bool,
-}
-
-#[derive(Debug, Copy, Clone)]
-pub struct ModerationId {
-    pub request_id: ModerationRequestId,
-    /// Moderator AccountId
-    pub account_id: AccountIdInternal,
-}
-
-#[derive(Debug, Clone, Queryable, Selectable)]
-#[diesel(table_name = crate::schema::media_moderation)]
-#[diesel(check_for_backend(crate::Db))]
-pub struct MediaModerationRaw {
-    pub account_id: AccountIdDb,
-    pub moderation_request_id: ModerationRequestIdDb,
-    pub state_number: ModerationRequestState,
-}
-
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct Moderation {
-    pub request_creator_id: AccountId,
-    pub request_id: ModerationRequestId,
-    pub moderator_id: AccountId,
-    pub content: ModerationRequestContent,
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
+pub enum ModerationQueueType {
+    MediaModeration,
+    InitialMediaModeration,
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
-pub struct ModerationRequestId {
-    pub request_row_id: ModerationRequestIdDb,
-}
-
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
-pub struct ModerationQueueTypeParam {
+pub struct GetProfileContentPendingModerationParams {
+    pub content_type: MediaContentType,
     pub queue: ModerationQueueType,
+    pub show_content_which_bots_can_moderate: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct GetProfileContentPendingModerationList {
+    pub values: Vec<ProfileContentPendingModeration>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Queryable)]
+pub struct ProfileContentPendingModeration {
+    pub content_id: ContentId,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Queryable)]
+pub struct PostModerateProfileContent {
+    pub content_id: ContentId,
+    pub text: String,
+    pub accept: bool,
+    pub rejected_category: Option<ProfileContentModerationRejectedReasonCategory>,
+    pub rejected_details: Option<ProfileContentModerationRejectedReasonDetails>,
+    /// If true, ignore accept, rejected_category, rejected_details and move
+    /// the content to waiting for human moderation state.
+    pub move_to_human: Option<bool>,
 }

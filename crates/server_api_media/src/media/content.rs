@@ -119,7 +119,7 @@ pub async fn get_content(
 
     if (visibility && requested_content_is_profile_content)
         || permissions.admin_view_all_profiles
-        || permissions.admin_moderate_images
+        || permissions.admin_moderate_profile_content
         || (params.is_match
             && requested_content_is_profile_content
             && state

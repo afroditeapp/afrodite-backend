@@ -218,16 +218,6 @@ impl ContentProcessingProvider for S {
     }
 }
 
-impl ValidateModerationRequest for S {
-    async fn media_check_moderation_request_for_account(
-        &self,
-        account_id: AccountIdInternal,
-    ) -> server_common::result::Result<(), server_common::internal_api::InternalApiError> {
-        crate::internal_api::media::media_check_moderation_request_for_account(self, account_id)
-            .await
-    }
-}
-
 // Simple backend
 
 impl SignInWith for S {

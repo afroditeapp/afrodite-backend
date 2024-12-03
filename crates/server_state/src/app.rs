@@ -1,7 +1,6 @@
 use std::net::SocketAddr;
 
 use model::{AccessToken, AccountIdInternal, AccountState, Permissions};
-use server_common::internal_api::InternalApiError;
 pub use server_data::app::*;
 use server_data::{content_processing::ContentProcessingManagerData, DataError};
 
@@ -30,13 +29,6 @@ pub trait GetAccessTokens {
 
 pub trait ContentProcessingProvider {
     fn content_processing(&self) -> &ContentProcessingManagerData;
-}
-
-pub trait ValidateModerationRequest: GetConfig + ReadData + GetInternalApi {
-    fn media_check_moderation_request_for_account(
-        &self,
-        account_id: AccountIdInternal,
-    ) -> impl std::future::Future<Output = server_common::result::Result<(), InternalApiError>> + Send;
 }
 
 pub trait IsMatch: ReadData {
