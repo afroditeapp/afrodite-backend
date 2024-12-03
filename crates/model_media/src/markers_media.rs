@@ -9,5 +9,4 @@ disable_logging!(
     // Media
     ProfileContent,
     SetProfileContent,
-    SetProfileContentInternal,
 );

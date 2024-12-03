@@ -345,71 +345,50 @@ impl CurrentAccountMediaInternal {
         .into_iter()
         .flatten()
     }
+
+    pub fn iter_current_profile_content_info(&self) -> impl Iterator<Item = ContentInfo> + '_ {
+        self.iter_current_profile_content().map(|v| ContentInfo {
+            cid: v.content_id(),
+            ctype: v.content_type()
+        })
+    }
+
+    pub fn iter_current_profile_content_info_fd(&self) -> impl Iterator<Item = ContentInfoWithFd> + '_ {
+        self.iter_current_profile_content().map(|v| ContentInfoWithFd {
+            cid: v.content_id(),
+            ctype: v.content_type(),
+            fd: v.face_detected,
+        })
+    }
 }
 
 /// Update normal or pending profile content
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct SetProfileContent {
     /// Primary profile image which is shown in grid view.
-    pub c0: ContentId,
-    pub c1: Option<ContentId>,
-    pub c2: Option<ContentId>,
-    pub c3: Option<ContentId>,
-    pub c4: Option<ContentId>,
-    pub c5: Option<ContentId>,
+    ///
+    /// One content ID is required.
+    ///
+    /// Max item count is 6. Extra items are ignored.
+    pub c: Vec<ContentId>,
     pub grid_crop_size: Option<f64>,
     pub grid_crop_x: Option<f64>,
     pub grid_crop_y: Option<f64>,
 }
 
 impl SetProfileContent {
-    pub fn iter(&self) -> impl Iterator<Item = ContentId> {
-        [Some(self.c0), self.c1, self.c2, self.c3, self.c4, self.c5]
-            .into_iter()
-            .filter_map(|c| c.as_ref().cloned())
-    }
-}
-
-#[derive(Debug, Copy, Clone, Default)]
-pub struct SetProfileContentInternal {
-    /// Primary profile image which is shown in grid view.
-    pub c0: Option<ContentId>,
-    pub c1: Option<ContentId>,
-    pub c2: Option<ContentId>,
-    pub c3: Option<ContentId>,
-    pub c4: Option<ContentId>,
-    pub c5: Option<ContentId>,
-    pub grid_crop_size: Option<f64>,
-    pub grid_crop_x: Option<f64>,
-    pub grid_crop_y: Option<f64>,
-}
-
-impl From<SetProfileContent> for SetProfileContentInternal {
-    fn from(value: SetProfileContent) -> Self {
-        Self {
-            c0: Some(value.c0),
-            c1: value.c1,
-            c2: value.c2,
-            c3: value.c3,
-            c4: value.c4,
-            c5: value.c5,
-            grid_crop_size: value.grid_crop_size,
-            grid_crop_x: value.grid_crop_x,
-            grid_crop_y: value.grid_crop_y,
-        }
+    pub fn iter(&self) -> impl Iterator<Item = ContentId> + '_ {
+        self.c
+            .iter()
+            .copied()
     }
 }
 
 /// Current content in public profile.
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct ProfileContent {
     /// Primary profile image which is shown in grid view.
-    pub c0: Option<ContentInfo>,
-    pub c1: Option<ContentInfo>,
-    pub c2: Option<ContentInfo>,
-    pub c3: Option<ContentInfo>,
-    pub c4: Option<ContentInfo>,
-    pub c5: Option<ContentInfo>,
+    pub c: Vec<ContentInfo>,
     pub grid_crop_size: Option<f64>,
     pub grid_crop_x: Option<f64>,
     pub grid_crop_y: Option<f64>,
@@ -418,12 +397,7 @@ pub struct ProfileContent {
 impl From<CurrentAccountMediaInternal> for ProfileContent {
     fn from(value: CurrentAccountMediaInternal) -> Self {
         Self {
-            c0: value.profile_content_id_0.map(|c| c.into()),
-            c1: value.profile_content_id_1.map(|c| c.into()),
-            c2: value.profile_content_id_2.map(|c| c.into()),
-            c3: value.profile_content_id_3.map(|c| c.into()),
-            c4: value.profile_content_id_4.map(|c| c.into()),
-            c5: value.profile_content_id_5.map(|c| c.into()),
+            c: value.iter_current_profile_content_info().collect(),
             grid_crop_size: value.grid_crop_size,
             grid_crop_x: value.grid_crop_x,
             grid_crop_y: value.grid_crop_y,
@@ -432,15 +406,10 @@ impl From<CurrentAccountMediaInternal> for ProfileContent {
 }
 
 /// Current content in public profile.
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct MyProfileContent {
     /// Primary profile image which is shown in grid view.
-    pub c0: Option<ContentInfoWithFd>,
-    pub c1: Option<ContentInfoWithFd>,
-    pub c2: Option<ContentInfoWithFd>,
-    pub c3: Option<ContentInfoWithFd>,
-    pub c4: Option<ContentInfoWithFd>,
-    pub c5: Option<ContentInfoWithFd>,
+    pub c: Vec<ContentInfoWithFd>,
     pub grid_crop_size: Option<f64>,
     pub grid_crop_x: Option<f64>,
     pub grid_crop_y: Option<f64>,
@@ -449,12 +418,7 @@ pub struct MyProfileContent {
 impl From<CurrentAccountMediaInternal> for MyProfileContent {
     fn from(value: CurrentAccountMediaInternal) -> Self {
         Self {
-            c0: value.profile_content_id_0.map(|c| c.into()),
-            c1: value.profile_content_id_1.map(|c| c.into()),
-            c2: value.profile_content_id_2.map(|c| c.into()),
-            c3: value.profile_content_id_3.map(|c| c.into()),
-            c4: value.profile_content_id_4.map(|c| c.into()),
-            c5: value.profile_content_id_5.map(|c| c.into()),
+            c: value.iter_current_profile_content_info_fd().collect(),
             grid_crop_size: value.grid_crop_size,
             grid_crop_x: value.grid_crop_x,
             grid_crop_y: value.grid_crop_y,
@@ -502,7 +466,7 @@ impl GetProfileContentQueryParams {
     }
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct GetProfileContentResult {
     pub c: Option<ProfileContent>,
     pub v: Option<ProfileContentVersion>,
@@ -528,7 +492,7 @@ impl GetProfileContentResult {
     }
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct GetMyProfileContentResult {
     pub c: MyProfileContent,
     pub v: ProfileContentVersion,

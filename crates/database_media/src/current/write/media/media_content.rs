@@ -85,32 +85,38 @@ impl CurrentWriteMediaContent<'_> {
             .media()
             .media_content()
             .get_account_media_content(id)?;
-        let convert_first = |content_id: Option<ContentId>| {
-            Self::check_content_id(content_id, &all_content, |c| {
+        let convert_first = |content_id: Option<&ContentId>| {
+            Self::check_content_id(content_id.copied(), &all_content, |c| {
                 c.face_detected
             })
         };
-        let convert = |content_id: Option<ContentId>| {
-            Self::check_content_id(content_id, &all_content, |_| {
+        let convert = |content_id: Option<&ContentId>| {
+            Self::check_content_id(content_id.copied(), &all_content, |_| {
                 true
             })
         };
 
+        let c = &new.c;
+
+        if c.is_empty() {
+            return Err(DieselDatabaseError::NotAllowed.report());
+        }
+
         update(current_account_media.find(id.as_db_id()))
             .set((
                 profile_content_version_uuid.eq(new_version),
-                profile_content_id_0.eq(convert_first(Some(new.c0))?),
-                profile_content_id_1.eq(convert(new.c1)?),
-                profile_content_id_2.eq(convert(new.c2)?),
-                profile_content_id_3.eq(convert(new.c3)?),
-                profile_content_id_4.eq(convert(new.c4)?),
-                profile_content_id_5.eq(convert(new.c5)?),
+                profile_content_id_0.eq(convert_first(c.first())?),
+                profile_content_id_1.eq(convert(c.get(1))?),
+                profile_content_id_2.eq(convert(c.get(2))?),
+                profile_content_id_3.eq(convert(c.get(3))?),
+                profile_content_id_4.eq(convert(c.get(4))?),
+                profile_content_id_5.eq(convert(c.get(5))?),
                 grid_crop_size.eq(new.grid_crop_size),
                 grid_crop_x.eq(new.grid_crop_x),
                 grid_crop_y.eq(new.grid_crop_y),
             ))
             .execute(self.conn())
-            .into_db_error((id, new))?;
+            .into_db_error(id)?;
 
         for content_id in new.iter() {
             let state = self
