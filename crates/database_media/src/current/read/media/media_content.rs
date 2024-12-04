@@ -114,6 +114,19 @@ impl CurrentReadMediaMediaContent<'_> {
             .into_db_error(media_owner_id)
     }
 
+    pub fn get_account_media_content_count(
+        &mut self,
+        media_owner_id: AccountIdInternal,
+    ) -> Result<i64, DieselDatabaseError> {
+        use crate::schema::media_content::dsl::*;
+
+        media_content
+            .filter(account_id.eq(media_owner_id.as_db_id()))
+            .count()
+            .get_result(self.conn())
+            .into_db_error(media_owner_id)
+    }
+
     pub fn get_media_content_from_slot(
         &mut self,
         slot_owner: AccountIdInternal,

@@ -228,6 +228,11 @@ pub async fn put_content_to_content_slot(
     let slot = TryInto::<ContentSlot>::try_into(slot_number.slot_id as i64)
         .map_err(|_| StatusCode::NOT_ACCEPTABLE)?;
 
+    let count = state.read().media().all_account_media_content_count(account_id).await?;
+    if count > state.config().limits_media().max_content_count.into() {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
     let stream = content_data.into_data_stream();
 
     let content_info = state

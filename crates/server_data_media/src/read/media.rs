@@ -84,4 +84,17 @@ impl ReadCommandsMedia<'_> {
         .await
         .into_error()
     }
+
+    pub async fn all_account_media_content_count(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> Result<i64, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.media()
+                .media_content()
+                .get_account_media_content_count(account_id)
+        })
+        .await
+        .into_error()
+    }
 }
