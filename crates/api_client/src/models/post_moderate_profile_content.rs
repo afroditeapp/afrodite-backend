@@ -24,19 +24,16 @@ pub struct PostModerateProfileContent {
     pub rejected_category: Option<Option<Box<models::ProfileContentModerationRejectedReasonCategory>>>,
     #[serde(rename = "rejected_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub rejected_details: Option<Option<Box<models::ProfileContentModerationRejectedReasonDetails>>>,
-    #[serde(rename = "text")]
-    pub text: String,
 }
 
 impl PostModerateProfileContent {
-    pub fn new(accept: bool, content_id: models::ContentId, text: String) -> PostModerateProfileContent {
+    pub fn new(accept: bool, content_id: models::ContentId) -> PostModerateProfileContent {
         PostModerateProfileContent {
             accept,
             content_id: Box::new(content_id),
             move_to_human: None,
             rejected_category: None,
             rejected_details: None,
-            text,
         }
     }
 }

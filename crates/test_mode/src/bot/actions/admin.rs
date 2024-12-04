@@ -75,7 +75,6 @@ impl BotAction for ModerateContentModerationRequest {
                         move_to_human: Some(Some(false)),
                         rejected_category: None,
                         rejected_details: None,
-                        text: "".to_string(),
                     },
                 )
                 .await
@@ -127,7 +126,6 @@ impl AdminBotContentModerationLogic {
                     move_to_human: Some(Some(false)),
                     rejected_category: None,
                     rejected_details: None,
-                    text: "".to_string(),
                 },
             )
             .await
