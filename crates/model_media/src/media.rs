@@ -1,9 +1,9 @@
-use diesel::{prelude::*, sql_types::{BigInt, Text}, AsExpression, FromSqlRow};
+use diesel::{prelude::*, sql_types::BigInt, AsExpression, FromSqlRow};
 use model::{sync_version_wrappers, ContentId, ProfileContentVersion, UnixTime};
 use model_server_data::{ContentSlot, MediaContentType};
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_string_wrapper};
+use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
@@ -25,14 +25,19 @@ pub struct SlotId {
 pub struct ContentInfo {
     pub cid: ContentId,
     pub ctype: MediaContentType,
+    /// Accepted
+    pub a: bool,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct ContentInfoWithFd {
     pub cid: ContentId,
     pub ctype: MediaContentType,
     /// Face detected
     pub fd: bool,
+    pub state: ContentModerationState,
+    pub rejected_reason_category: Option<ProfileContentModerationRejectedReasonCategory>,
+    pub rejected_reason_details: Option<ProfileContentModerationRejectedReasonDetails>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams)]
@@ -146,70 +151,6 @@ impl Default for ContentModerationState {
 
 diesel_i64_try_from!(ContentModerationState);
 
-#[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    ToSchema,
-    Clone,
-    Eq,
-    Hash,
-    PartialEq,
-    IntoParams,
-    Copy,
-    Default,
-    FromSqlRow,
-    AsExpression,
-)]
-#[diesel(sql_type = BigInt)]
-pub struct ContentModerationRejectedReasonCategory {
-    pub value: i64,
-}
-
-impl ContentModerationRejectedReasonCategory {
-    pub fn new(value: i64) -> Self {
-        Self { value }
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.value
-    }
-}
-
-diesel_i64_wrapper!(ContentModerationRejectedReasonCategory);
-
-#[derive(
-    Debug,
-    Deserialize,
-    Serialize,
-    ToSchema,
-    Clone,
-    Eq,
-    Hash,
-    PartialEq,
-    diesel::FromSqlRow,
-    diesel::AsExpression,
-)]
-#[diesel(sql_type = Text)]
-pub struct ContentModerationRejectedReasonDetails {
-    value: String,
-}
-
-impl ContentModerationRejectedReasonDetails {
-    pub fn new(value: String) -> Self {
-        Self { value }
-    }
-
-    pub fn into_string(self) -> String {
-        self.value
-    }
-
-    pub fn as_str(&self) -> &str {
-        &self.value
-    }
-}
-
-diesel_string_wrapper!(ContentModerationRejectedReasonDetails);
 
 #[derive(Debug, Clone, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::media_content)]
@@ -225,8 +166,8 @@ pub struct MediaContentRaw {
     pub creation_unix_time: UnixTime,
     pub initial_content: bool,
     pub moderation_state: ContentModerationState,
-    pub moderation_rejected_reason_category: Option<ContentModerationRejectedReasonCategory>,
-    pub moderation_rejected_reason_details: Option<ContentModerationRejectedReasonDetails>,
+    pub moderation_rejected_reason_category: Option<ProfileContentModerationRejectedReasonCategory>,
+    pub moderation_rejected_reason_details: Option<ProfileContentModerationRejectedReasonDetails>,
     pub moderation_moderator_account_id: Option<AccountIdDb>,
 }
 
@@ -267,6 +208,7 @@ impl From<MediaContentRaw> for ContentInfo {
         ContentInfo {
             cid: value.uuid,
             ctype: value.content_type_number,
+            a: value.state().is_accepted(),
         }
     }
 }
@@ -277,6 +219,9 @@ impl From<MediaContentRaw> for ContentInfoWithFd {
             cid: value.uuid,
             ctype: value.content_type_number,
             fd: value.face_detected,
+            state: value.state(),
+            rejected_reason_category: value.moderation_rejected_reason_category,
+            rejected_reason_details: value.moderation_rejected_reason_details,
         }
     }
 }
@@ -349,7 +294,8 @@ impl CurrentAccountMediaInternal {
     pub fn iter_current_profile_content_info(&self) -> impl Iterator<Item = ContentInfo> + '_ {
         self.iter_current_profile_content().map(|v| ContentInfo {
             cid: v.content_id(),
-            ctype: v.content_type()
+            ctype: v.content_type(),
+            a: v.state().is_accepted(),
         })
     }
 
@@ -358,6 +304,9 @@ impl CurrentAccountMediaInternal {
             cid: v.content_id(),
             ctype: v.content_type(),
             fd: v.face_detected,
+            state: v.state(),
+            rejected_reason_category: v.moderation_rejected_reason_category,
+            rejected_reason_details: v.moderation_rejected_reason_details.clone(),
         })
     }
 }
@@ -426,7 +375,7 @@ impl From<CurrentAccountMediaInternal> for MyProfileContent {
     }
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct SecurityContent {
     pub c0: Option<ContentInfoWithFd>,
 }
