@@ -24,33 +24,6 @@ pub enum DeleteContentError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`delete_moderation_request`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum DeleteModerationRequestError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`delete_pending_profile_content`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum DeletePendingProfileContentError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`delete_pending_security_content_info`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum DeletePendingSecurityContentInfoError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
 /// struct for typed errors of method [`get_all_account_media_content`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -88,28 +61,10 @@ pub enum GetMapTileError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_moderation_request`]
+/// struct for typed errors of method [`get_my_profile_content_info`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum GetModerationRequestError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`get_pending_profile_content_info`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum GetPendingProfileContentInfoError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`get_pending_security_content_info`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum GetPendingSecurityContentInfoError {
+pub enum GetMyProfileContentInfoError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -133,39 +88,21 @@ pub enum GetSecurityContentInfoError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`post_get_initial_content_moderation_completed`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostGetInitialContentModerationCompletedError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`put_content_to_content_slot`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PutContentToContentSlotError {
     Status401(),
     Status406(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`put_moderation_request`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum PutModerationRequestError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`put_pending_profile_content`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum PutPendingProfileContentError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`put_pending_security_content_info`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum PutPendingSecurityContentInfoError {
-    Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -189,12 +126,12 @@ pub enum PutSecurityContentInfoError {
 }
 
 
-pub async fn delete_content(configuration: &configuration::Configuration, aid: &str, cid: &str) -> Result<(), Error<DeleteContentError>> {
+pub async fn delete_content(configuration: &configuration::Configuration, cid: &str) -> Result<(), Error<DeleteContentError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/9ztWJZUmcnzICLL2gJ8qV8gVoR8/{aid}/{cid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid), cid=crate::apis::urlencode(cid));
+    let local_var_uri_str = format!("{}/9ztWJZUmcnzICLL2gJ8qV8gVoR8/{cid}", local_var_configuration.base_path, cid=crate::apis::urlencode(cid));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -224,111 +161,7 @@ pub async fn delete_content(configuration: &configuration::Configuration, aid: &
     }
 }
 
-pub async fn delete_moderation_request(configuration: &configuration::Configuration, ) -> Result<(), Error<DeleteModerationRequestError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/O6uTeSLARVqY1bvDxmX96ITtBCM", local_var_configuration.base_path);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
-    };
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        Ok(())
-    } else {
-        let local_var_entity: Option<DeleteModerationRequestError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
-pub async fn delete_pending_profile_content(configuration: &configuration::Configuration, ) -> Result<(), Error<DeletePendingProfileContentError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/6LYLKEUqrhj86bf2PXWOjUYHbls", local_var_configuration.base_path);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
-    };
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        Ok(())
-    } else {
-        let local_var_entity: Option<DeletePendingProfileContentError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
-pub async fn delete_pending_security_content_info(configuration: &configuration::Configuration, ) -> Result<(), Error<DeletePendingSecurityContentInfoError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/sO2QJPZs98Emtu1vW1k4iHD-gz8", local_var_configuration.base_path);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
-    };
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        Ok(())
-    } else {
-        let local_var_entity: Option<DeletePendingSecurityContentInfoError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
+/// # Access  - Own account
 pub async fn get_all_account_media_content(configuration: &configuration::Configuration, aid: &str) -> Result<models::AccountContent, Error<GetAllAccountMediaContentError>> {
     let local_var_configuration = configuration;
 
@@ -364,7 +197,7 @@ pub async fn get_all_account_media_content(configuration: &configuration::Config
     }
 }
 
-/// # Access  ## Own content Unrestricted access.  ## Public other content Normal account state required.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  If the previous is not true, then permission `admin_view_all_profiles` or `admin_moderate_images` is required.  
+/// # Access  ## Own content Unrestricted access.  ## Public other content Normal account state required.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  If the previous is not true, then permission `admin_view_all_profiles` or `admin_moderate_profile_content` is required.  
 pub async fn get_content(configuration: &configuration::Configuration, aid: &str, cid: &str, is_match: Option<bool>) -> Result<std::path::PathBuf, Error<GetContentError>> {
     let local_var_configuration = configuration;
 
@@ -475,12 +308,12 @@ pub async fn get_map_tile(configuration: &configuration::Configuration, z: i32, 
     }
 }
 
-pub async fn get_moderation_request(configuration: &configuration::Configuration, ) -> Result<models::CurrentModerationRequest, Error<GetModerationRequestError>> {
+pub async fn get_my_profile_content_info(configuration: &configuration::Configuration, ) -> Result<models::GetMyProfileContentResult, Error<GetMyProfileContentInfoError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/O6uTeSLARVqY1bvDxmX96ITtBCM", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/mEuodskjl_W4fjyo8iEkge7OTTU", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -504,77 +337,7 @@ pub async fn get_moderation_request(configuration: &configuration::Configuration
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<GetModerationRequestError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
-pub async fn get_pending_profile_content_info(configuration: &configuration::Configuration, aid: &str) -> Result<models::PendingProfileContent, Error<GetPendingProfileContentInfoError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/-NOw5oduzs2zI-cDLwFQKJkiO2U/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
-    };
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
-    } else {
-        let local_var_entity: Option<GetPendingProfileContentInfoError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
-pub async fn get_pending_security_content_info(configuration: &configuration::Configuration, aid: &str) -> Result<models::PendingSecurityContent, Error<GetPendingSecurityContentInfoError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/sO2QJPZs98Emtu1vW1k4iHD-gz8/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
-    };
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
-    } else {
-        let local_var_entity: Option<GetPendingSecurityContentInfoError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<GetMyProfileContentInfoError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
@@ -657,6 +420,41 @@ pub async fn get_security_content_info(configuration: &configuration::Configurat
     }
 }
 
+pub async fn post_get_initial_content_moderation_completed(configuration: &configuration::Configuration, ) -> Result<models::InitialContentModerationCompletedResult, Error<PostGetInitialContentModerationCompletedError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/F6vxr3u-OBwaCkVm_bzTaM4NmRc", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<PostGetInitialContentModerationCompletedError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
 /// The state of the processing can be also queired. The querying is required to receive the content ID.  Slots from 0 to 6 are available.  One account can only have one content in upload or processing state. New upload might potentially delete the previous if processing of it is not complete.  Content processing will fail if image content resolution width or height value is less than 512.  
 pub async fn put_content_to_content_slot(configuration: &configuration::Configuration, slot_id: i32, secure_capture: bool, content_type: models::MediaContentType, body: std::path::PathBuf) -> Result<models::ContentProcessingId, Error<PutContentToContentSlotError>> {
     let local_var_configuration = configuration;
@@ -696,118 +494,7 @@ pub async fn put_content_to_content_slot(configuration: &configuration::Configur
     }
 }
 
-/// Make sure that moderation request has content IDs which points to your own image slots.  
-pub async fn put_moderation_request(configuration: &configuration::Configuration, moderation_request_content: models::ModerationRequestContent) -> Result<(), Error<PutModerationRequestError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/O6uTeSLARVqY1bvDxmX96ITtBCM", local_var_configuration.base_path);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
-    };
-    local_var_req_builder = local_var_req_builder.json(&moderation_request_content);
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        Ok(())
-    } else {
-        let local_var_entity: Option<PutModerationRequestError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
-/// # Restrictions - All content must not be moderated as rejected. - All content must be owned by the account. - All content must be images. - First content must have face detected.
-pub async fn put_pending_profile_content(configuration: &configuration::Configuration, set_profile_content: models::SetProfileContent) -> Result<(), Error<PutPendingProfileContentError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/6LYLKEUqrhj86bf2PXWOjUYHbls", local_var_configuration.base_path);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
-    };
-    local_var_req_builder = local_var_req_builder.json(&set_profile_content);
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        Ok(())
-    } else {
-        let local_var_entity: Option<PutPendingProfileContentError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
-/// Requires that the content has face detected.
-pub async fn put_pending_security_content_info(configuration: &configuration::Configuration, content_id: models::ContentId) -> Result<(), Error<PutPendingSecurityContentInfoError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/sO2QJPZs98Emtu1vW1k4iHD-gz8", local_var_configuration.base_path);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
-    };
-    local_var_req_builder = local_var_req_builder.json(&content_id);
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        Ok(())
-    } else {
-        let local_var_entity: Option<PutPendingSecurityContentInfoError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
-/// # Restrictions - All content must be moderated as accepted. - All content must be owned by the account. - All content must be images. - First content must have face detected.
+/// This also moves the content to moderation if it is not already in moderation or moderated.  Also profile visibility moves from pending to normal when all profile content is moderated as accepted.  # Restrictions - All content must be owned by the account. - All content must be images. - First content must have face detected.
 pub async fn put_profile_content(configuration: &configuration::Configuration, set_profile_content: models::SetProfileContent) -> Result<(), Error<PutProfileContentError>> {
     let local_var_configuration = configuration;
 
@@ -844,7 +531,7 @@ pub async fn put_profile_content(configuration: &configuration::Configuration, s
     }
 }
 
-/// # Restrictions - The content must be moderated as accepted. - The content must be owned by the account. - The content must be an image. - The content must be captured by client. - The content must have face detected.
+/// This also moves the content to moderation if it is not already in moderation or moderated.  # Restrictions - The content must be owned by the account. - The content must be an image. - The content must be captured by client. - The content must have face detected.
 pub async fn put_security_content_info(configuration: &configuration::Configuration, content_id: models::ContentId) -> Result<(), Error<PutSecurityContentInfoError>> {
     let local_var_configuration = configuration;
 

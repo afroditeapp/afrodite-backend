@@ -7,5 +7,4 @@ edition = "2021"
 
 [dependencies]
 
-model = { path = "../model" }
 api_client = { path = "../api_client" }

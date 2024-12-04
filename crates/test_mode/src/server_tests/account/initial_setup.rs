@@ -8,8 +8,7 @@ use crate::{
     action_array,
     bot::actions::{
         account::SetAccountSetup,
-        media::{MakeModerationRequest, SendImageToSlot, SetPendingContent},
-        AssertFailure,
+        media::{SendImageToSlot, SetContent},
     },
     runner::server_tests::assert::{assert_eq, assert_failure},
     TestContext, TestResult,
@@ -29,81 +28,9 @@ async fn complete_setup_fails_if_no_setup_info_is_set(context: TestContext) -> T
         .run_actions(action_array![
             SendImageToSlot::slot(0),
             SendImageToSlot::slot(1),
-            SetPendingContent {
+            SetContent {
                 security_content_slot_i: Some(0),
                 content_0_slot_i: Some(1),
-            },
-            MakeModerationRequest {
-                slots_to_request: &[0, 1],
-            },
-        ])
-        .await?;
-
-    assert_failure(post_complete_setup(account.account_api()).await)?;
-    assert_eq(
-        AccountState::InitialSetup,
-        get_account_state(account.account_api()).await?.state,
-    )
-}
-
-#[server_test]
-async fn complete_setup_fails_if_no_image_moderation_request(context: TestContext) -> TestResult {
-    let mut account = context.new_account_in_initial_setup_state().await?;
-    account
-        .run_actions(action_array![
-            SendImageToSlot::slot(0),
-            SendImageToSlot::slot(1),
-            SetPendingContent {
-                security_content_slot_i: Some(0),
-                content_0_slot_i: Some(1),
-            },
-            SetAccountSetup::new(),
-        ])
-        .await?;
-    assert_failure(post_complete_setup(account.account_api()).await)?;
-    assert_eq(
-        AccountState::InitialSetup,
-        get_account_state(account.account_api()).await?.state,
-    )
-}
-
-#[server_test]
-async fn complete_setup_fails_if_image_request_does_not_contain_secure_capture_content(
-    context: TestContext,
-) -> TestResult {
-    let mut account = context.new_account_in_initial_setup_state().await?;
-    account
-        .run_actions(action_array![
-            SetAccountSetup::new(),
-            SendImageToSlot::slot(0),
-            SendImageToSlot::slot(1),
-            SetPendingContent {
-                security_content_slot_i: Some(0),
-                content_0_slot_i: Some(1),
-            },
-            AssertFailure(MakeModerationRequest {
-                slots_to_request: &[1],
-            }),
-        ])
-        .await?;
-
-    assert_failure(post_complete_setup(account.account_api()).await)?;
-    assert_eq(
-        AccountState::InitialSetup,
-        get_account_state(account.account_api()).await?.state,
-    )
-}
-
-#[server_test]
-async fn complete_setup_fails_if_no_pending_content_set(context: TestContext) -> TestResult {
-    let mut account = context.new_account_in_initial_setup_state().await?;
-    account
-        .run_actions(action_array![
-            SetAccountSetup::new(),
-            SendImageToSlot::slot(0),
-            SendImageToSlot::slot(1),
-            MakeModerationRequest {
-                slots_to_request: &[0, 1],
             },
         ])
         .await?;
@@ -123,12 +50,9 @@ async fn initial_setup_successful(context: TestContext) -> TestResult {
             SetAccountSetup::new(),
             SendImageToSlot::slot(0),
             SendImageToSlot::slot(1),
-            SetPendingContent {
+            SetContent {
                 security_content_slot_i: Some(0),
                 content_0_slot_i: Some(1),
-            },
-            MakeModerationRequest {
-                slots_to_request: &[0, 1],
             },
         ])
         .await?;

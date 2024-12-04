@@ -15,35 +15,36 @@ use crate::{apis::ResponseContent, models};
 use super::{Error, configuration};
 
 
-/// struct for typed errors of method [`patch_moderation_request_list`]
+/// struct for typed errors of method [`get_profile_content_pending_moderation_list`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PatchModerationRequestListError {
+pub enum GetProfileContentPendingModerationListError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_handle_moderation_request`]
+/// struct for typed errors of method [`post_moderate_profile_content`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostHandleModerationRequestError {
+pub enum PostModerateProfileContentError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
 
 
-/// ## Access  Account with `admin_moderate_images` permission is required to access this route.  
-pub async fn patch_moderation_request_list(configuration: &configuration::Configuration, queue: models::ModerationQueueType) -> Result<models::ModerationList, Error<PatchModerationRequestListError>> {
+pub async fn get_profile_content_pending_moderation_list(configuration: &configuration::Configuration, content_type: models::MediaContentType, queue: models::ModerationQueueType, show_content_which_bots_can_moderate: bool) -> Result<models::GetProfileContentPendingModerationList, Error<GetProfileContentPendingModerationListError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/6GF9AybnmCb3J1d4ZfTT95UoiSg", local_var_configuration.base_path);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::PATCH, local_var_uri_str.as_str());
+    let local_var_uri_str = format!("{}/Kfz_n_yfrXnIcEOjh0nDBdGEXTg", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
+    local_var_req_builder = local_var_req_builder.query(&[("content_type", &content_type.to_string())]);
     local_var_req_builder = local_var_req_builder.query(&[("queue", &queue.to_string())]);
+    local_var_req_builder = local_var_req_builder.query(&[("show_content_which_bots_can_moderate", &show_content_which_bots_can_moderate.to_string())]);
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
@@ -65,19 +66,19 @@ pub async fn patch_moderation_request_list(configuration: &configuration::Config
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<PatchModerationRequestListError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<GetProfileContentPendingModerationListError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
 }
 
-/// ## Access  Account with `admin_moderate_images` permission is required to access this route.  
-pub async fn post_handle_moderation_request(configuration: &configuration::Configuration, aid: &str, handle_moderation_request: models::HandleModerationRequest) -> Result<(), Error<PostHandleModerationRequestError>> {
+/// This route will fail if the content is in slot.  Also profile visibility moves from pending to normal when all profile content is moderated as accepted.
+pub async fn post_moderate_profile_content(configuration: &configuration::Configuration, post_moderate_profile_content: models::PostModerateProfileContent) -> Result<(), Error<PostModerateProfileContentError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/SiEktmT-jyNLA69x7qffV8c0YUk/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
+    let local_var_uri_str = format!("{}/_pTQ1YLcXEWy_Zfv5Fybbm-E0UE", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -91,7 +92,7 @@ pub async fn post_handle_moderation_request(configuration: &configuration::Confi
         };
         local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
-    local_var_req_builder = local_var_req_builder.json(&handle_moderation_request);
+    local_var_req_builder = local_var_req_builder.json(&post_moderate_profile_content);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -102,7 +103,7 @@ pub async fn post_handle_moderation_request(configuration: &configuration::Confi
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         Ok(())
     } else {
-        let local_var_entity: Option<PostHandleModerationRequestError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<PostModerateProfileContentError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }

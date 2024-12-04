@@ -12,7 +12,7 @@ use error_stack::{Result, ResultExt};
 
 use self::{
     account::{AssertAccountState, CompleteAccountSetup, Login, Register, SetAccountSetup},
-    media::{MakeModerationRequest, SendImageToSlot, SetPendingContent},
+    media::{SendImageToSlot, SetContent},
 };
 use super::{
     super::client::TestError, client_bot::ChangeBotAgeAndOtherSettings, BotState, TaskState,
@@ -439,12 +439,9 @@ pub const TO_NORMAL_STATE: ActionArray = action_array![
     Login,
     SetAccountSetup::new(),
     SendImageToSlot::slot(0),
-    SetPendingContent {
+    SetContent {
         security_content_slot_i: Some(0),
         content_0_slot_i: Some(0),
-    },
-    MakeModerationRequest {
-        slots_to_request: &[0],
     },
     ChangeBotAgeAndOtherSettings { admin: false },
     CompleteAccountSetup,
@@ -456,12 +453,9 @@ pub const TO_ADMIN_NORMAL_STATE: ActionArray = action_array![
     Login,
     SetAccountSetup::admin(),
     SendImageToSlot::slot(0),
-    SetPendingContent {
+    SetContent {
         security_content_slot_i: Some(0),
         content_0_slot_i: Some(0),
-    },
-    MakeModerationRequest {
-        slots_to_request: &[0],
     },
     ChangeBotAgeAndOtherSettings { admin: true },
     CompleteAccountSetup,

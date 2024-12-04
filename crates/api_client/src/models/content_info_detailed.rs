@@ -25,11 +25,15 @@ pub struct ContentInfoDetailed {
     #[serde(rename = "slot", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub slot: Option<Option<models::ContentSlot>>,
     #[serde(rename = "state")]
-    pub state: models::ContentState,
+    pub state: models::ContentModerationState,
+    #[serde(rename = "usage_end_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub usage_end_time: Option<Option<Box<models::UnixTime>>>,
+    #[serde(rename = "usage_start_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub usage_start_time: Option<Option<Box<models::UnixTime>>>,
 }
 
 impl ContentInfoDetailed {
-    pub fn new(cid: models::ContentId, ctype: models::MediaContentType, fd: bool, secure_capture: bool, state: models::ContentState) -> ContentInfoDetailed {
+    pub fn new(cid: models::ContentId, ctype: models::MediaContentType, fd: bool, secure_capture: bool, state: models::ContentModerationState) -> ContentInfoDetailed {
         ContentInfoDetailed {
             cid: Box::new(cid),
             ctype,
@@ -37,6 +41,8 @@ impl ContentInfoDetailed {
             secure_capture,
             slot: None,
             state,
+            usage_end_time: None,
+            usage_start_time: None,
         }
     }
 }

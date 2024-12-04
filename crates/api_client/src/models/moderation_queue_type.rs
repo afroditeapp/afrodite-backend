@@ -11,8 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// ModerationQueueType : Subset of NextQueueNumberType containing only moderation queue types.
-/// Subset of NextQueueNumberType containing only moderation queue types.
+/// 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum ModerationQueueType {
     #[serde(rename = "MediaModeration")]

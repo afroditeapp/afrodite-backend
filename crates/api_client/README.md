@@ -93,28 +93,20 @@ Class | Method | HTTP request | Description
 *CommonAdminApi* | [**post_request_build_software**](docs/CommonAdminApi.md#post_request_build_software) | **POST** /vGQvKiH7zbpopxyScZILldwiCsg | Request building new software from manager instance.
 *CommonAdminApi* | [**post_request_restart_or_reset_backend**](docs/CommonAdminApi.md#post_request_restart_or_reset_backend) | **POST** /rAIji-qOFiclUKWs_5JIR_-dLoI | Request restarting or reseting backend through app-manager instance.
 *CommonAdminApi* | [**post_request_update_software**](docs/CommonAdminApi.md#post_request_update_software) | **POST** /yFSS8sqNjFU8nfjNqoKN1qQ743w | Request updating new software from manager instance.
-*MediaApi* | [**delete_content**](docs/MediaApi.md#delete_content) | **DELETE** /9ztWJZUmcnzICLL2gJ8qV8gVoR8/{aid}/{cid} | Delete content data. Content can be removed after specific time has passed since removing all usage from it (content is not a security image or profile content).
-*MediaApi* | [**delete_moderation_request**](docs/MediaApi.md#delete_moderation_request) | **DELETE** /O6uTeSLARVqY1bvDxmX96ITtBCM | Delete current moderation request which is not yet in moderation.
-*MediaApi* | [**delete_pending_profile_content**](docs/MediaApi.md#delete_pending_profile_content) | **DELETE** /6LYLKEUqrhj86bf2PXWOjUYHbls | Delete new pending profile content for current account. Server will not switch to pending content when next moderation request is accepted.
-*MediaApi* | [**delete_pending_security_content_info**](docs/MediaApi.md#delete_pending_security_content_info) | **DELETE** /sO2QJPZs98Emtu1vW1k4iHD-gz8 | Delete pending security content for current account. Server will not change the security content when next moderation request is moderated as accepted.
+*MediaApi* | [**delete_content**](docs/MediaApi.md#delete_content) | **DELETE** /9ztWJZUmcnzICLL2gJ8qV8gVoR8/{cid} | Delete content data. Content can be removed after specific time has passed since removing all usage from it (content is not a security image or profile content).
 *MediaApi* | [**get_all_account_media_content**](docs/MediaApi.md#get_all_account_media_content) | **GET** /RzBkQfHdmWHdL0L1Uq-DVE6kiVY/{aid} | Get list of all media content on the server for one account.
 *MediaApi* | [**get_content**](docs/MediaApi.md#get_content) | **GET** /9ztWJZUmcnzICLL2gJ8qV8gVoR8/{aid}/{cid} | Get content data
 *MediaApi* | [**get_content_slot_state**](docs/MediaApi.md#get_content_slot_state) | **GET** /y5DgJJAaDZF89y6X4ge84klpBq0/{slot_id} | Get state of content slot.
 *MediaApi* | [**get_map_tile**](docs/MediaApi.md#get_map_tile) | **GET** /BoFh54UgWwlQvwJfb0TpJqd4gaM/{z}/{x}/{y} | Get map tile PNG file.
-*MediaApi* | [**get_moderation_request**](docs/MediaApi.md#get_moderation_request) | **GET** /O6uTeSLARVqY1bvDxmX96ITtBCM | Get current moderation request.
-*MediaApi* | [**get_pending_profile_content_info**](docs/MediaApi.md#get_pending_profile_content_info) | **GET** /-NOw5oduzs2zI-cDLwFQKJkiO2U/{aid} | Get pending profile content for selected profile
-*MediaApi* | [**get_pending_security_content_info**](docs/MediaApi.md#get_pending_security_content_info) | **GET** /sO2QJPZs98Emtu1vW1k4iHD-gz8/{aid} | Get pending security content for selected profile.
+*MediaApi* | [**get_my_profile_content_info**](docs/MediaApi.md#get_my_profile_content_info) | **GET** /mEuodskjl_W4fjyo8iEkge7OTTU | Get my profile content
 *MediaApi* | [**get_profile_content_info**](docs/MediaApi.md#get_profile_content_info) | **GET** /ZYlzEPvPMBx2V1S6Ee-kIhp2_rg/{aid} | Get current profile content for selected profile.
 *MediaApi* | [**get_security_content_info**](docs/MediaApi.md#get_security_content_info) | **GET** /6lWoyl4YuurCAEnkJbnSy1wP22M/{aid} | Get current security content for selected profile.
+*MediaApi* | [**post_get_initial_content_moderation_completed**](docs/MediaApi.md#post_get_initial_content_moderation_completed) | **POST** /F6vxr3u-OBwaCkVm_bzTaM4NmRc | Get initial content moderation completed result.
 *MediaApi* | [**put_content_to_content_slot**](docs/MediaApi.md#put_content_to_content_slot) | **PUT** /y5DgJJAaDZF89y6X4ge84klpBq0/{slot_id} | Set content to content processing slot. Processing ID will be returned and processing of the content will begin. Events about the content processing will be sent to the client.
-*MediaApi* | [**put_moderation_request**](docs/MediaApi.md#put_moderation_request) | **PUT** /O6uTeSLARVqY1bvDxmX96ITtBCM | Create new or override old moderation request.
-*MediaApi* | [**put_pending_profile_content**](docs/MediaApi.md#put_pending_profile_content) | **PUT** /6LYLKEUqrhj86bf2PXWOjUYHbls | Set new pending profile content for current account. Server will switch to pending content when next moderation request is accepted.
-*MediaApi* | [**put_pending_security_content_info**](docs/MediaApi.md#put_pending_security_content_info) | **PUT** /sO2QJPZs98Emtu1vW1k4iHD-gz8 | Set pending security content for current account.
 *MediaApi* | [**put_profile_content**](docs/MediaApi.md#put_profile_content) | **PUT** /_rsyG4gpvDy3O3Aj5hpLp3-8oPE | Set new profile content for current account.
-*MediaApi* | [**put_security_content_info**](docs/MediaApi.md#put_security_content_info) | **PUT** /6lWoyl4YuurCAEnkJbnSy1wP22M | Set current security content content for current account.
-*MediaAdminApi* | [**patch_moderation_request_list**](docs/MediaAdminApi.md#patch_moderation_request_list) | **PATCH** /6GF9AybnmCb3J1d4ZfTT95UoiSg | Get current list of moderation requests in my moderation queue. Additional requests will be added to my queue if necessary.
-*MediaAdminApi* | [**post_handle_moderation_request**](docs/MediaAdminApi.md#post_handle_moderation_request) | **POST** /SiEktmT-jyNLA69x7qffV8c0YUk/{aid} | Handle moderation request of some account.
-*MediaInternalApi* | [**internal_get_check_moderation_request_for_account**](docs/MediaInternalApi.md#internal_get_check_moderation_request_for_account) | **GET** /internal/media_api/moderation/request/{aid} | Check that media server has correct state for completing initial setup.
+*MediaApi* | [**put_security_content_info**](docs/MediaApi.md#put_security_content_info) | **PUT** /6lWoyl4YuurCAEnkJbnSy1wP22M | Set current security content for current account.
+*MediaAdminApi* | [**get_profile_content_pending_moderation_list**](docs/MediaAdminApi.md#get_profile_content_pending_moderation_list) | **GET** /Kfz_n_yfrXnIcEOjh0nDBdGEXTg | Get first page of pending profile content moderations. Oldest item is first and count 25.
+*MediaAdminApi* | [**post_moderate_profile_content**](docs/MediaAdminApi.md#post_moderate_profile_content) | **POST** /_pTQ1YLcXEWy_Zfv5Fybbm-E0UE | Rejected category and details can be set only when the content is rejected.
 *ProfileApi* | [**delete_favorite_profile**](docs/ProfileApi.md#delete_favorite_profile) | **DELETE** /yD1PtVhVvdk-usEran42JmCTFVQ | Delete favorite profile
 *ProfileApi* | [**get_available_profile_attributes**](docs/ProfileApi.md#get_available_profile_attributes) | **GET** /_lqy4YCINbw_RCxebKLGXdDq2AM | Get info what profile attributes server supports.
 *ProfileApi* | [**get_favorite_profiles**](docs/ProfileApi.md#get_favorite_profiles) | **GET** /Oep5nM7bWqTdRfRoULt-_FTkKJQ | Get list of all favorite profiles.
@@ -176,14 +168,14 @@ Class | Method | HTTP request | Description
  - [ContentId](docs/ContentId.md)
  - [ContentInfo](docs/ContentInfo.md)
  - [ContentInfoDetailed](docs/ContentInfoDetailed.md)
+ - [ContentInfoWithFd](docs/ContentInfoWithFd.md)
+ - [ContentModerationState](docs/ContentModerationState.md)
  - [ContentProcessingId](docs/ContentProcessingId.md)
  - [ContentProcessingState](docs/ContentProcessingState.md)
  - [ContentProcessingStateChanged](docs/ContentProcessingStateChanged.md)
  - [ContentProcessingStateType](docs/ContentProcessingStateType.md)
  - [ContentSlot](docs/ContentSlot.md)
- - [ContentState](docs/ContentState.md)
  - [CurrentAccountInteractionState](docs/CurrentAccountInteractionState.md)
- - [CurrentModerationRequest](docs/CurrentModerationRequest.md)
  - [DeleteLikeResult](docs/DeleteLikeResult.md)
  - [DeleteStatus](docs/DeleteStatus.md)
  - [DemoModeConfirmLogin](docs/DemoModeConfirmLogin.md)
@@ -198,8 +190,10 @@ Class | Method | HTTP request | Description
  - [FavoriteProfilesPage](docs/FavoriteProfilesPage.md)
  - [FcmDeviceToken](docs/FcmDeviceToken.md)
  - [GetInitialProfileAgeInfoResult](docs/GetInitialProfileAgeInfoResult.md)
+ - [GetMyProfileContentResult](docs/GetMyProfileContentResult.md)
  - [GetMyProfileResult](docs/GetMyProfileResult.md)
  - [GetNewsItemResult](docs/GetNewsItemResult.md)
+ - [GetProfileContentPendingModerationList](docs/GetProfileContentPendingModerationList.md)
  - [GetProfileContentResult](docs/GetProfileContentResult.md)
  - [GetProfileNamePendingModerationList](docs/GetProfileNamePendingModerationList.md)
  - [GetProfileResult](docs/GetProfileResult.md)
@@ -208,7 +202,7 @@ Class | Method | HTTP request | Description
  - [GetProfileTextPendingModerationList](docs/GetProfileTextPendingModerationList.md)
  - [GetPublicKey](docs/GetPublicKey.md)
  - [GroupValues](docs/GroupValues.md)
- - [HandleModerationRequest](docs/HandleModerationRequest.md)
+ - [InitialContentModerationCompletedResult](docs/InitialContentModerationCompletedResult.md)
  - [Language](docs/Language.md)
  - [LastSeenTimeFilter](docs/LastSeenTimeFilter.md)
  - [LatestBirthdate](docs/LatestBirthdate.md)
@@ -221,13 +215,8 @@ Class | Method | HTTP request | Description
  - [MatchesSyncVersion](docs/MatchesSyncVersion.md)
  - [MediaContentType](docs/MediaContentType.md)
  - [MessageNumber](docs/MessageNumber.md)
- - [Moderation](docs/Moderation.md)
- - [ModerationList](docs/ModerationList.md)
  - [ModerationQueueType](docs/ModerationQueueType.md)
- - [ModerationRequest](docs/ModerationRequest.md)
- - [ModerationRequestContent](docs/ModerationRequestContent.md)
- - [ModerationRequestId](docs/ModerationRequestId.md)
- - [ModerationRequestState](docs/ModerationRequestState.md)
+ - [MyProfileContent](docs/MyProfileContent.md)
  - [NewReceivedLikesCount](docs/NewReceivedLikesCount.md)
  - [NewReceivedLikesCountResult](docs/NewReceivedLikesCountResult.md)
  - [NewsId](docs/NewsId.md)
@@ -244,12 +233,11 @@ Class | Method | HTTP request | Description
  - [PendingMessageId](docs/PendingMessageId.md)
  - [PendingNotificationToken](docs/PendingNotificationToken.md)
  - [PendingNotificationWithData](docs/PendingNotificationWithData.md)
- - [PendingProfileContent](docs/PendingProfileContent.md)
- - [PendingSecurityContent](docs/PendingSecurityContent.md)
  - [PerfHistoryQueryResult](docs/PerfHistoryQueryResult.md)
  - [PerfHistoryValue](docs/PerfHistoryValue.md)
  - [PerfValueArea](docs/PerfValueArea.md)
  - [Permissions](docs/Permissions.md)
+ - [PostModerateProfileContent](docs/PostModerateProfileContent.md)
  - [PostModerateProfileName](docs/PostModerateProfileName.md)
  - [PostModerateProfileText](docs/PostModerateProfileText.md)
  - [Profile](docs/Profile.md)
@@ -263,6 +251,10 @@ Class | Method | HTTP request | Description
  - [ProfileAttributes](docs/ProfileAttributes.md)
  - [ProfileAttributesSyncVersion](docs/ProfileAttributesSyncVersion.md)
  - [ProfileContent](docs/ProfileContent.md)
+ - [ProfileContentModerationRejectedReasonCategory](docs/ProfileContentModerationRejectedReasonCategory.md)
+ - [ProfileContentModerationRejectedReasonDetails](docs/ProfileContentModerationRejectedReasonDetails.md)
+ - [ProfileContentPendingModeration](docs/ProfileContentPendingModeration.md)
+ - [ProfileContentSyncVersion](docs/ProfileContentSyncVersion.md)
  - [ProfileContentVersion](docs/ProfileContentVersion.md)
  - [ProfileIteratorSessionId](docs/ProfileIteratorSessionId.md)
  - [ProfileLink](docs/ProfileLink.md)

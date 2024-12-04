@@ -13,21 +13,21 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ContentInfo {
+    /// Accepted
+    #[serde(rename = "a")]
+    pub a: bool,
     #[serde(rename = "cid")]
     pub cid: Box<models::ContentId>,
     #[serde(rename = "ctype")]
     pub ctype: models::MediaContentType,
-    /// Face detected
-    #[serde(rename = "fd")]
-    pub fd: bool,
 }
 
 impl ContentInfo {
-    pub fn new(cid: models::ContentId, ctype: models::MediaContentType, fd: bool) -> ContentInfo {
+    pub fn new(a: bool, cid: models::ContentId, ctype: models::MediaContentType) -> ContentInfo {
         ContentInfo {
+            a,
             cid: Box::new(cid),
             ctype,
-            fd,
         }
     }
 }

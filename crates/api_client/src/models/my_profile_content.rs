@@ -11,12 +11,12 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// SetProfileContent : Update normal or pending profile content
+/// MyProfileContent : Current content in public profile.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct SetProfileContent {
-    /// Primary profile image which is shown in grid view.  One content ID is required.  Max item count is 6. Extra items are ignored.
+pub struct MyProfileContent {
+    /// Primary profile image which is shown in grid view.
     #[serde(rename = "c")]
-    pub c: Vec<models::ContentId>,
+    pub c: Vec<models::ContentInfoWithFd>,
     #[serde(rename = "grid_crop_size", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub grid_crop_size: Option<Option<f64>>,
     #[serde(rename = "grid_crop_x", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -25,10 +25,10 @@ pub struct SetProfileContent {
     pub grid_crop_y: Option<Option<f64>>,
 }
 
-impl SetProfileContent {
-    /// Update normal or pending profile content
-    pub fn new(c: Vec<models::ContentId>) -> SetProfileContent {
-        SetProfileContent {
+impl MyProfileContent {
+    /// Current content in public profile.
+    pub fn new(c: Vec<models::ContentInfoWithFd>) -> MyProfileContent {
+        MyProfileContent {
             c,
             grid_crop_size: None,
             grid_crop_x: None,

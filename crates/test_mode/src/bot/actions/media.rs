@@ -2,12 +2,11 @@ use std::{fmt::Debug, path::PathBuf};
 
 use api_client::{
     apis::media_api::{
-        get_content_slot_state, put_moderation_request, put_pending_profile_content,
-        put_pending_security_content_info,
+        get_content_slot_state, put_profile_content, put_security_content_info
     },
     manual_additions::put_content_to_content_slot_fixed,
     models::{
-        ContentId, ContentProcessingStateType, MediaContentType, ModerationRequestContent,
+        ContentId, ContentProcessingStateType, MediaContentType,
         SetProfileContent,
     },
 };
@@ -184,58 +183,17 @@ impl BotAction for SendImageToSlot {
 }
 
 #[derive(Debug)]
-pub struct MakeModerationRequest {
-    pub slots_to_request: &'static [usize],
-}
-
-#[async_trait]
-impl BotAction for MakeModerationRequest {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let mut content_ids: Vec<Option<Box<ContentId>>> = vec![];
-
-        for i in self.slots_to_request {
-            content_ids.push(
-                match state.media.slots[*i].clone() {
-                    Some(content_id) => Box::new(content_id),
-                    None => {
-                        return Err(TestError::MissingValue
-                            .report()
-                            .attach_printable(format!("Content ID is not set to index {i}")))
-                    }
-                }
-                .into(),
-            );
-        }
-
-        let new = ModerationRequestContent {
-            c0: content_ids[0].clone().expect("Content ID is missing"),
-            c1: content_ids.get(1).cloned(),
-            c2: content_ids.get(2).cloned(),
-            c3: None,
-            c4: None,
-            c5: None,
-            c6: None,
-        };
-
-        put_moderation_request(state.api.media(), new)
-            .await
-            .change_context(TestError::ApiRequest)?;
-        Ok(())
-    }
-}
-
-#[derive(Debug)]
-pub struct SetPendingContent {
+pub struct SetContent {
     pub security_content_slot_i: Option<usize>,
     pub content_0_slot_i: Option<usize>,
 }
 
 #[async_trait]
-impl BotAction for SetPendingContent {
+impl BotAction for SetContent {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         if let Some(i) = self.security_content_slot_i {
             let content_id = state.media.slots[i].clone().unwrap();
-            put_pending_security_content_info(state.api.media(), content_id)
+            put_security_content_info(state.api.media(), content_id)
                 .await
                 .change_context(TestError::ApiRequest)?;
         }
@@ -245,13 +203,12 @@ impl BotAction for SetPendingContent {
             let bot_info = state.get_bot_config();
 
             let info = SetProfileContent {
-                c0: content_id.into(),
+                c: vec![content_id],
                 grid_crop_size: bot_info.grid_crop_size.into(),
                 grid_crop_x: bot_info.grid_crop_x.into(),
                 grid_crop_y: bot_info.grid_crop_y.into(),
-                ..SetProfileContent::default()
             };
-            put_pending_profile_content(state.api.media(), info)
+            put_profile_content(state.api.media(), info)
                 .await
                 .change_context(TestError::ApiRequest)?;
         }

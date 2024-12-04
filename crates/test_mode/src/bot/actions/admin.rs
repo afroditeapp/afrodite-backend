@@ -1,6 +1,6 @@
 use std::{fmt::Debug, time::Instant};
 
-use api_client::{apis::media_admin_api, models::ModerationQueueType};
+use api_client::{apis::media_admin_api, models::{MediaContentType, ModerationQueueType}};
 use async_trait::async_trait;
 use error_stack::{Result, ResultExt};
 use profile_text::ProfileTextModerationState;
@@ -42,51 +42,47 @@ impl BotAction for ModerateContentModerationRequest {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         loop {
             let list =
-                media_admin_api::patch_moderation_request_list(state.api.media(), self.queue)
+                media_admin_api::get_profile_content_pending_moderation_list(state.api.media(), MediaContentType::JpegImage, self.queue, true)
                     .await
                     .change_context(TestError::ApiRequest)?;
 
-            for request in list.list.clone() {
-                let images = [
-                    Some(request.content.c0),
-                    request.content.c1.flatten(),
-                    request.content.c2.flatten(),
-                    request.content.c3.flatten(),
-                    request.content.c4.flatten(),
-                    request.content.c5.flatten(),
-                    request.content.c6.flatten(),
-                ];
-                for content_id in images.iter().flatten() {
-                    // Test that getting content data works
-                    api_client::manual_additions::get_content_fixed(
-                        state.api.media(),
-                        &request.request_creator_id.to_string(),
-                        &content_id.to_string(),
-                        false,
-                    )
-                    .await
-                    .change_context(TestError::ApiRequest)
-                    // This logging exists because this request failed
-                    // when GetProfileList benchmark was running.
-                    // When the error was noticed there was multiple
-                    // admin bots moderating.
-                    .attach_printable_lazy(|| {
-                        format!(
-                            "Request creator: {}, Content ID: {}",
-                            request.request_creator_id, content_id,
-                        )
-                    })?;
-                }
-                media_admin_api::post_handle_moderation_request(
+            for request in list.values.clone() {
+                // Test that getting content data works
+                api_client::manual_additions::get_content_fixed(
                     state.api.media(),
-                    &request.request_creator_id.to_string(),
-                    api_client::models::HandleModerationRequest { accept: true },
+                    &request.account_id.to_string(),
+                    &request.content_id.to_string(),
+                    false,
+                )
+                .await
+                .change_context(TestError::ApiRequest)
+                // This logging exists because this request failed
+                // when GetProfileList benchmark was running.
+                // When the error was noticed there was multiple
+                // admin bots moderating.
+                .attach_printable_lazy(|| {
+                    format!(
+                        "Request creator: {}, Content ID: {}",
+                        request.account_id, request.content_id,
+                    )
+                })?;
+
+                media_admin_api::post_moderate_profile_content(
+                    state.api.media(),
+                    api_client::models::PostModerateProfileContent {
+                        content_id: request.content_id,
+                        accept: true,
+                        move_to_human: Some(Some(false)),
+                        rejected_category: None,
+                        rejected_details: None,
+                        text: "".to_string(),
+                    },
                 )
                 .await
                 .change_context(TestError::ApiRequest)?;
             }
 
-            if !self.moderate_all || list.list.is_empty() {
+            if !self.moderate_all || list.values.is_empty() {
                 break;
             }
         }
@@ -104,39 +100,35 @@ impl AdminBotContentModerationLogic {
         state: &BotState,
         queue: ModerationQueueType,
     ) -> Result<Option<EmptyPage>, TestError> {
-        let list = media_admin_api::patch_moderation_request_list(state.api.media(), queue)
+        let list = media_admin_api::get_profile_content_pending_moderation_list(state.api.media(), MediaContentType::JpegImage, queue, true)
             .await
             .change_context(TestError::ApiRequest)?;
 
-        if list.list.is_empty() {
+        if list.values.is_empty() {
             return Ok(Some(EmptyPage));
         }
 
-        for request in list.list {
-            let images = [
-                Some(request.content.c0),
-                request.content.c1.flatten(),
-                request.content.c2.flatten(),
-                request.content.c3.flatten(),
-                request.content.c4.flatten(),
-                request.content.c5.flatten(),
-                request.content.c6.flatten(),
-            ];
-            for content_id in images.iter().flatten() {
-                // TODO: Check image
-                api_client::manual_additions::get_content_fixed(
-                    state.api.media(),
-                    &request.request_creator_id.to_string(),
-                    &content_id.to_string(),
-                    false,
-                )
-                .await
-                .change_context(TestError::ApiRequest)?;
-            }
-            media_admin_api::post_handle_moderation_request(
+        for request in list.values {
+            // TODO: Check image
+            api_client::manual_additions::get_content_fixed(
                 state.api.media(),
-                &request.request_creator_id.to_string(),
-                api_client::models::HandleModerationRequest { accept: true },
+                &request.account_id.to_string(),
+                &request.content_id.to_string(),
+                false,
+            )
+            .await
+            .change_context(TestError::ApiRequest)?;
+
+            media_admin_api::post_moderate_profile_content(
+                state.api.media(),
+                api_client::models::PostModerateProfileContent {
+                    content_id: request.content_id,
+                    accept: true,
+                    move_to_human: Some(Some(false)),
+                    rejected_category: None,
+                    rejected_details: None,
+                    text: "".to_string(),
+                },
             )
             .await
             .change_context(TestError::ApiRequest)?;

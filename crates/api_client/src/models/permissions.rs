@@ -13,14 +13,12 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Permissions {
-    #[serde(rename = "admin_moderate_images", skip_serializing_if = "Option::is_none")]
-    pub admin_moderate_images: Option<bool>,
+    #[serde(rename = "admin_moderate_profile_content", skip_serializing_if = "Option::is_none")]
+    pub admin_moderate_profile_content: Option<bool>,
     #[serde(rename = "admin_moderate_profile_names", skip_serializing_if = "Option::is_none")]
     pub admin_moderate_profile_names: Option<bool>,
     #[serde(rename = "admin_moderate_profile_texts", skip_serializing_if = "Option::is_none")]
     pub admin_moderate_profile_texts: Option<bool>,
-    #[serde(rename = "admin_moderate_profiles", skip_serializing_if = "Option::is_none")]
-    pub admin_moderate_profiles: Option<bool>,
     #[serde(rename = "admin_modify_permissions", skip_serializing_if = "Option::is_none")]
     pub admin_modify_permissions: Option<bool>,
     #[serde(rename = "admin_news_create", skip_serializing_if = "Option::is_none")]
@@ -54,10 +52,9 @@ pub struct Permissions {
 impl Permissions {
     pub fn new() -> Permissions {
         Permissions {
-            admin_moderate_images: None,
+            admin_moderate_profile_content: None,
             admin_moderate_profile_names: None,
             admin_moderate_profile_texts: None,
-            admin_moderate_profiles: None,
             admin_modify_permissions: None,
             admin_news_create: None,
             admin_news_edit_all: None,

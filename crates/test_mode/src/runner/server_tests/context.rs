@@ -7,8 +7,7 @@ use api_client::{
         profile_api::{post_profile, post_search_age_range, post_search_groups},
     },
     models::{
-        AccountId, EventToClient, ModerationQueueType, ProfileSearchAgeRange, ProfileUpdate,
-        SearchGroups,
+        AccountId, EventToClient, MediaContentType, ModerationQueueType, ProfileSearchAgeRange, ProfileUpdate, SearchGroups
     },
 };
 use config::{args::TestMode, bot_config_file::BotConfigFile, Config};
@@ -21,7 +20,7 @@ use crate::{
         actions::{
             account::{CompleteAccountSetup, Login, Register, SetAccountSetup},
             admin::ModerateContentModerationRequest,
-            media::{MakeModerationRequest, SendImageToSlot, SetPendingContent},
+            media::{SendImageToSlot, SetContent},
             BotAction,
         },
         AccountConnections, BotState,
@@ -87,12 +86,9 @@ impl TestContext {
             .run_actions(action_array![
                 SetAccountSetup::new(),
                 SendImageToSlot::slot(0),
-                SetPendingContent {
+                SetContent {
                     security_content_slot_i: Some(0),
                     content_0_slot_i: Some(0),
-                },
-                MakeModerationRequest {
-                    slots_to_request: &[0],
                 },
             ])
             .await?;
@@ -188,12 +184,9 @@ impl TestContext {
             .run_actions(action_array![
                 SetAccountSetup::admin(),
                 SendImageToSlot::slot(0),
-                SetPendingContent {
+                SetContent {
                     security_content_slot_i: Some(0),
                     content_0_slot_i: Some(0),
-                },
-                MakeModerationRequest {
-                    slots_to_request: &[0],
                 },
                 CompleteAccountSetup,
             ])
@@ -204,7 +197,7 @@ impl TestContext {
     /// Admin account with Normal state.
     pub async fn new_admin_and_moderate_initial_content(&self) -> Result<Admin, TestError> {
         let mut admin = self.new_admin().await?;
-        admin.accept_initial_content_moderation_requests().await?;
+        admin.accept_pending_content_moderations_for_initial_images().await?;
         Ok(admin)
     }
 
@@ -320,12 +313,12 @@ impl Admin {
         &mut self.account
     }
 
-    pub async fn accept_initial_content_moderation_requests(&mut self) -> Result<(), TestError> {
-        self.accept_content_moderation_requests(ModerationQueueType::InitialMediaModeration)
+    pub async fn accept_pending_content_moderations_for_initial_images(&mut self) -> Result<(), TestError> {
+        self.accept_pending_content_moderations(ModerationQueueType::InitialMediaModeration)
             .await
     }
 
-    pub async fn accept_content_moderation_requests(
+    pub async fn accept_pending_content_moderations(
         &mut self,
         queue: ModerationQueueType,
     ) -> Result<(), TestError> {
@@ -335,11 +328,16 @@ impl Admin {
                 .await?;
 
             let list =
-                media_admin_api::patch_moderation_request_list(self.account.media_api(), queue)
+                media_admin_api::get_profile_content_pending_moderation_list(
+                    self.account.media_api(),
+                    MediaContentType::JpegImage,
+                    queue,
+                    true
+                )
                     .await
                     .change_context(TestError::ApiRequest)?;
 
-            if list.list.is_empty() {
+            if list.values.is_empty() {
                 break;
             }
         }

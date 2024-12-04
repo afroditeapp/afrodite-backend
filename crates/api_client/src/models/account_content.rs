@@ -15,12 +15,19 @@ use serde::{Deserialize, Serialize};
 pub struct AccountContent {
     #[serde(rename = "data")]
     pub data: Vec<models::ContentInfoDetailed>,
+    #[serde(rename = "max_content_count")]
+    pub max_content_count: i32,
+    /// Content can be removed when - [ContentInfoDetailed::usage_end_time] and   [ContentInfoDetailed::usage_start_time] are empty - [ContentInfoDetailed::usage_end_time] is not empty   and [Self::unused_content_wait_seconds] has elapsed from the   [ContentInfoDetailed::usage_end_time]
+    #[serde(rename = "unused_content_wait_seconds")]
+    pub unused_content_wait_seconds: i32,
 }
 
 impl AccountContent {
-    pub fn new(data: Vec<models::ContentInfoDetailed>) -> AccountContent {
+    pub fn new(data: Vec<models::ContentInfoDetailed>, max_content_count: i32, unused_content_wait_seconds: i32) -> AccountContent {
         AccountContent {
             data,
+            max_content_count,
+            unused_content_wait_seconds,
         }
     }
 }
