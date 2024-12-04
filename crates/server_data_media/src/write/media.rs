@@ -1,11 +1,11 @@
+use std::collections::HashSet;
+
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
 use error_stack::ResultExt;
 use model::{Account, ProfileVisibility};
 use model_media::{
-    AccountIdInternal, ContentId, ContentSlot,
-    NewContentParams, ProfileContentVersion,
-    SetProfileContent,
+    AccountIdInternal, ContentId, ContentIdDb, ContentSlot, CurrentAccountMediaInternal, NewContentParams, ProfileContentVersion, SetProfileContent
 };
 use server_data::{
     app::GetConfig, cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, file::FileWrite, read::DbRead, result::{Result, WrappedContextExt}, write::{DbTransaction, GetWriteCommandsCommon}, DataError, DieselDatabaseError
@@ -98,6 +98,8 @@ impl WriteCommandsMedia<'_> {
         id: AccountIdInternal,
         new: SetProfileContent,
     ) -> Result<InitialContentModerationResult, DataError> {
+        let content_before_update = self.db_read(move |mut cmds| cmds.media().media_content().current_account_media(id)).await?;
+
         let new_profile_content_version = ProfileContentVersion::new_random();
 
         db_transaction!(self, move |mut cmds| {
@@ -117,6 +119,8 @@ impl WriteCommandsMedia<'_> {
 
         self.update_location_cache_profile(id).await?;
 
+        self.update_content_usage(id, content_before_update).await?;
+
         self.remove_pending_state_from_profile_visibility_if_needed(id).await
     }
 
@@ -125,23 +129,35 @@ impl WriteCommandsMedia<'_> {
         content_owner: AccountIdInternal,
         content: ContentId,
     ) -> Result<(), DataError> {
+        let content_before_update = self.db_read(move |mut cmds| cmds.media().media_content().current_account_media(content_owner)).await?;
+
         db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .media_content()
                 .update_security_content(content_owner, content)
-        })
+        })?;
+
+        self.update_content_usage(content_owner, content_before_update).await
     }
 
+    // TODO(prod): Admin is removing content from server. Should only image data
+    // be replaced or image data and content ID be removed?
+
+    /// The content must not be in use.
     pub async fn delete_content(
         &self,
-        content_owner: AccountIdInternal,
+        account_id: AccountIdInternal,
         content: ContentId,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .media_content()
-                .delete_content(content_owner, content)
-        })
+                .delete_content(content)
+        })?;
+
+        self.files().media_content(account_id.uuid, content).remove_if_exists().await?;
+
+        Ok(())
     }
 
     pub async fn remove_pending_state_from_profile_visibility_if_needed(
@@ -218,6 +234,31 @@ impl WriteCommandsMedia<'_> {
         }
 
         Ok(info)
+    }
+
+    pub async fn update_content_usage(
+        &self,
+        content_owner: AccountIdInternal,
+        previous: CurrentAccountMediaInternal,
+    ) -> Result<(), DataError> {
+
+        db_transaction!(self, move |mut cmds| {
+            let current = cmds.read().media().media_content().current_account_media(content_owner)?;
+            let current = HashSet::<ContentIdDb>::from_iter(current.iter_all_content().map(|v| v.id));
+            let previous = HashSet::<ContentIdDb>::from_iter(previous.iter_all_content().map(|v| v.id));
+
+            for removed in previous.difference(&current) {
+                cmds.media().media_content().change_usage_to_ended(*removed)?;
+            }
+
+            for added in current.difference(&previous) {
+                cmds.media().media_content().change_usage_to_started(*added)?;
+            }
+
+            Ok(())
+        })?;
+
+        Ok(())
     }
 
     pub async fn reset_profile_content_sync_version(

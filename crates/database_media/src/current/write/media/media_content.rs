@@ -183,51 +183,18 @@ impl CurrentWriteMediaContent<'_> {
         Ok(())
     }
 
-    /// Delete content from account's media content if possible
-    ///
-    /// Requirements:
-    /// - The content must be in the account's media content.
-    /// - The content must not be set in account's current or pending
-    ///   media content.
-    /// - The content must not be in moderation.
+    /// Delete content from account's media content
     pub fn delete_content(
         &mut self,
-        content_owner: AccountIdInternal,
         content_id: ContentId,
     ) -> Result<(), DieselDatabaseError> {
-        let selected_content = self
-            .read()
-            .media()
-            .media_content()
-            .current_account_media(content_owner)?;
-        let selected_content = selected_content
-            .iter_all_content()
-            .find(|c| c.content_id() == content_id);
-        if selected_content.is_some() {
-            return Err(DieselDatabaseError::ContentIsInUse.report());
-        }
+        use model::schema::media_content::dsl::*;
 
-        let all_content = self
-            .read()
-            .media()
-            .media_content()
-            .get_account_media_content(content_owner)?;
-        let found_content = all_content.iter().find(|c| c.content_id() == content_id);
+        delete(media_content.filter(uuid.eq(content_id)))
+            .execute(self.conn())
+            .into_db_error(content_id)?;
 
-        if let Some(c) = found_content {
-            // TODO(prod): Content not in use time tracking
-            if c.state().is_in_moderation()  {
-                Err(DieselDatabaseError::ContentIsInUse.report())
-            } else {
-                use model::schema::media_content::dsl::*;
-                delete(media_content.filter(id.eq(c.content_row_id())))
-                    .execute(self.conn())
-                    .into_db_error((content_owner, content_id))?;
-                Ok(())
-            }
-        } else {
-            Err(DieselDatabaseError::NotAllowed.report())
-        }
+        Ok(())
     }
 
     pub fn insert_content_id_to_slot(
@@ -312,6 +279,46 @@ impl CurrentWriteMediaContent<'_> {
             .set(profile_content_version_uuid.eq(data))
             .execute(self.conn())
             .change_context(DieselDatabaseError::Execute)?;
+
+        Ok(())
+    }
+
+    pub fn change_usage_to_started(
+        &mut self,
+        id_value: ContentIdDb,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::media_content::dsl::*;
+
+        let current_time = UnixTime::current_time();
+
+        update(media_content)
+            .filter(id.eq(id_value))
+            .set((
+                usage_end_unix_time.eq(None::<UnixTime>),
+                usage_start_unix_time.eq(current_time),
+            ))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn change_usage_to_ended(
+        &mut self,
+        id_value: ContentIdDb,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::media_content::dsl::*;
+
+        let current_time = UnixTime::current_time();
+
+        update(media_content)
+            .filter(id.eq(id_value))
+            .set((
+                usage_end_unix_time.eq(current_time),
+                usage_start_unix_time.eq(None::<UnixTime>),
+            ))
+            .execute(self.conn())
+            .into_db_error(())?;
 
         Ok(())
     }

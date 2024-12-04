@@ -512,6 +512,8 @@ CREATE TABLE IF NOT EXISTS media_content(
     moderation_rejected_reason_category INTEGER,
     moderation_rejected_reason_details  TEXT,
     moderation_moderator_account_id     INTEGER,
+    usage_start_unix_time  INTEGER,
+    usage_end_unix_time    INTEGER,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

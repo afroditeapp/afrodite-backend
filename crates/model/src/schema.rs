@@ -339,6 +339,8 @@ diesel::table! {
         moderation_rejected_reason_category -> Nullable<Integer>,
         moderation_rejected_reason_details -> Nullable<Text>,
         moderation_moderator_account_id -> Nullable<Integer>,
+        usage_start_unix_time -> Nullable<Integer>,
+        usage_end_unix_time -> Nullable<Integer>,
     }
 }
 

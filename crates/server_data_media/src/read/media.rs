@@ -72,6 +72,19 @@ impl ReadCommandsMedia<'_> {
         .into_error()
     }
 
+    pub async fn content_state(
+        &self,
+        content_id: ContentId,
+    ) -> Result<MediaContentRaw, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.media()
+                .media_content()
+                .get_media_content_raw(content_id)
+        })
+        .await
+        .into_error()
+    }
+
     pub async fn profile_content_sync_version(
         &self,
         account_id: AccountIdInternal,

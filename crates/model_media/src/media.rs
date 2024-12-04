@@ -49,6 +49,8 @@ pub struct ContentInfoDetailed {
     pub secure_capture: bool,
     /// Face detected
     pub fd: bool,
+    pub usage_start_time: Option<UnixTime>,
+    pub usage_end_time: Option<UnixTime>,
 }
 
 /// Content moderation states
@@ -169,6 +171,8 @@ pub struct MediaContentRaw {
     pub moderation_rejected_reason_category: Option<ProfileContentModerationRejectedReasonCategory>,
     pub moderation_rejected_reason_details: Option<ProfileContentModerationRejectedReasonDetails>,
     pub moderation_moderator_account_id: Option<AccountIdDb>,
+    pub usage_start_unix_time: Option<UnixTime>,
+    pub usage_end_unix_time: Option<UnixTime>,
 }
 
 impl MediaContentRaw {
@@ -194,6 +198,20 @@ impl MediaContentRaw {
 
     pub fn content_row_id(&self) -> ContentIdDb {
         self.id
+    }
+
+    pub fn removable_by_user(&self, remove_wait_time: u32) -> bool {
+        if self.usage_start_unix_time.is_some() {
+            return false;
+        }
+
+        if let Some(usage_end_time) = self.usage_end_unix_time {
+            let removing_allowed_time = *usage_end_time.as_i64() + remove_wait_time as i64;
+            let current_time = UnixTime::current_time();
+            *current_time.as_i64() > removing_allowed_time
+        } else {
+            true
+        }
     }
 }
 
@@ -235,6 +253,8 @@ impl From<MediaContentRaw> for ContentInfoDetailed {
             slot: value.slot_number(),
             secure_capture: value.secure_capture,
             fd: value.face_detected,
+            usage_end_time: value.usage_end_unix_time,
+            usage_start_time: value.usage_start_unix_time,
         }
     }
 }
@@ -452,6 +472,13 @@ pub struct GetMyProfileContentResult {
 pub struct AccountContent {
     pub data: Vec<ContentInfoDetailed>,
     pub max_content_count: u8,
+    /// Content can be removed when
+    /// - [ContentInfoDetailed::usage_end_time] and
+    ///   [ContentInfoDetailed::usage_start_time] are empty
+    /// - [ContentInfoDetailed::usage_end_time] is not empty
+    ///   and [Self::unused_content_wait_seconds] has elapsed from the
+    ///   [ContentInfoDetailed::usage_end_time]
+    pub unused_content_wait_seconds: u32,
 }
 
 #[derive(

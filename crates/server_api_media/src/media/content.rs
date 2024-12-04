@@ -180,6 +180,7 @@ pub async fn get_all_account_media_content(
     Ok(AccountContent {
         data,
         max_content_count: state.config().limits_media().max_content_count,
+        unused_content_wait_seconds: state.config().limits_media().unused_content_wait_time_seconds.seconds,
     }.into())
 }
 
@@ -291,7 +292,7 @@ pub async fn get_content_slot_state(
 }
 
 #[obfuscate_api]
-const PATH_DELETE_CONTENT: &str = "/media_api/content/{aid}/{cid}";
+const PATH_DELETE_CONTENT: &str = "/media_api/content/{cid}";
 
 /// Delete content data. Content can be removed after specific time has passed
 /// since removing all usage from it (content is not a security image or profile
@@ -299,7 +300,7 @@ const PATH_DELETE_CONTENT: &str = "/media_api/content/{aid}/{cid}";
 #[utoipa::path(
     delete,
     path = PATH_DELETE_CONTENT,
-    params(AccountId, ContentId),
+    params(ContentId),
     responses(
         (status = 200, description = "Content data deleted."),
         (status = 401, description = "Unauthorized."),
@@ -309,20 +310,25 @@ const PATH_DELETE_CONTENT: &str = "/media_api/content/{aid}/{cid}";
 )]
 pub async fn delete_content(
     State(state): State<S>,
-    Path(account_id): Path<AccountId>,
+    Extension(account_id): Extension<AccountIdInternal>,
     Path(content_id): Path<ContentId>,
 ) -> Result<(), StatusCode> {
     MEDIA.delete_content.incr();
 
-    // TODO: Add access restrictions.
+    let content = state.read().media().content_state(content_id).await?;
 
-    // TODO: Add database support for keeping track of content usage.
+    let owner_deleting_content = *account_id.as_db_id() == content.account_id;
+    if !owner_deleting_content {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
 
-    let internal_id = state.get_internal_id(account_id).await?;
+    if !content.removable_by_user(state.config().limits_media().unused_content_wait_time_seconds.seconds) {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
 
     db_write!(state, move |cmds| cmds
         .media()
-        .delete_content(internal_id, content_id))
+        .delete_content(account_id, content_id))
 }
 
 pub fn content_router(s: S) -> OpenApiRouter {
