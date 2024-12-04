@@ -1,5 +1,5 @@
 use diesel::prelude::*;
-use model::ContentId;
+use model::{AccountId, ContentId};
 use model_server_data::MediaContentType;
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
@@ -28,6 +28,7 @@ pub struct GetProfileContentPendingModerationList {
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Queryable)]
 pub struct ProfileContentPendingModeration {
+    pub account_id: AccountId,
     pub content_id: ContentId,
 }
 
