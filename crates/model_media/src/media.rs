@@ -451,6 +451,7 @@ pub struct GetMyProfileContentResult {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct AccountContent {
     pub data: Vec<ContentInfoDetailed>,
+    pub max_content_count: u8,
 }
 
 #[derive(

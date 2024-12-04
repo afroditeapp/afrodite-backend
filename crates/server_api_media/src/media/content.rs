@@ -11,7 +11,7 @@ use model_media::{
     SlotId,
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{create_open_api_router, result::WrappedResultExt, S};
+use server_api::{app::GetConfig, create_open_api_router, result::WrappedResultExt, S};
 use server_data::{
     read::GetReadCommandsCommon,
     write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle},
@@ -46,7 +46,7 @@ const PATH_GET_CONTENT: &str = "/media_api/content/{aid}/{cid}";
 /// if query parameter `is_match` is set to `true`.
 ///
 /// If the previous is not true, then permission `admin_view_all_profiles` or
-/// `admin_moderate_images` is required.
+/// `admin_moderate_profile_content` is required.
 ///
 #[utoipa::path(
     get,
@@ -137,6 +137,10 @@ pub async fn get_content(
 const PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT: &str = "/media_api/all_account_media_content/{aid}";
 
 /// Get list of all media content on the server for one account.
+///
+/// # Access
+///
+/// - Own account
 #[utoipa::path(
     get,
     path = PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT,
@@ -151,13 +155,16 @@ const PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT: &str = "/media_api/all_account_media_c
 pub async fn get_all_account_media_content(
     State(state): State<S>,
     Path(account_id): Path<AccountId>,
-    Extension(_api_caller_account_id): Extension<AccountIdInternal>,
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<AccountContent>, StatusCode> {
     MEDIA.get_all_account_media_content.incr();
 
-    // TODO: access restrictions
-
     let internal_id = state.get_internal_id(account_id).await?;
+
+    let access_allowed = api_caller_account_id == internal_id;
+    if !access_allowed {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
 
     let internal_current_media = state
         .read()
@@ -170,7 +177,10 @@ pub async fn get_all_account_media_content(
         .map(|m| m.into())
         .collect();
 
-    Ok(AccountContent { data }.into())
+    Ok(AccountContent {
+        data,
+        max_content_count: state.config().limits_media().max_content_count,
+    }.into())
 }
 
 #[obfuscate_api]
