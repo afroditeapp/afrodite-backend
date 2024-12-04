@@ -35,7 +35,6 @@ pub struct ProfileContentPendingModeration {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Queryable)]
 pub struct PostModerateProfileContent {
     pub content_id: ContentId,
-    pub text: String,
     pub accept: bool,
     pub rejected_category: Option<ProfileContentModerationRejectedReasonCategory>,
     pub rejected_details: Option<ProfileContentModerationRejectedReasonDetails>,
