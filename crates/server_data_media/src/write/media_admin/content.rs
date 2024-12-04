@@ -28,9 +28,9 @@ impl WriteCommandsProfileAdminContent<'_> {
         let (current_content, content_owner_id) = self
             .db_read(move |mut cmds| cmds.media().media_content().get_media_content_raw_with_account_id(content_id))
             .await?;
-        if !current_content
+        if current_content
             .state()
-            .is_in_moderation()
+            .is_in_slot()
         {
             return Err(DataError::NotAllowed.report());
         }

@@ -63,7 +63,7 @@ const PATH_POST_MODERATE_PROFILE_CONTENT: &str = "/media_api/admin/moderate_prof
 
 /// Rejected category and details can be set only when the content is rejected.
 ///
-/// This route will fail if the content is already moderated.
+/// This route will fail if the content is in slot.
 ///
 /// Also profile visibility moves from pending to normal when
 /// all profile content is moderated as accepted.
