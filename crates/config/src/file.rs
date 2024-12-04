@@ -11,6 +11,9 @@ use model_server_state::DemoModeId;
 use serde::{Deserialize, Serialize};
 use simple_backend_config::file::ConfigFileUtils;
 use url::Url;
+use utils::DurationValue;
+
+pub mod utils;
 
 // Kilpisjärvi ja Nuorgam
 // latitude_top_left = 70.1
@@ -57,11 +60,13 @@ chat = true
 # account_internal = "http://127.0.0.1:4000"
 # media_internal = "http://127.0.0.1:4000"
 
-# [queue_limits]
-# content_upload = 10
-
-# [limits]
+# [limits.chat]
 # like_limit_reset_time_utc_offset_hours = 0
+
+# [limits.media]
+# concurrent_content_uploads = 10
+# max_content_count = 20
+# unused_content_wait_time_seconds = "90d"
 
 # [[profile_name_allowlist]]
 # csv_file = "names.csv"
@@ -98,7 +103,6 @@ pub struct ConfigFile {
     pub location: Option<LocationConfig>,
     pub external_services: Option<ExternalServices>,
     pub internal_api: Option<InternalApiConfig>,
-    pub queue_limits: Option<QueueLimitsConfig>,
     pub demo_mode: Option<Vec<DemoModeConfig>>,
     pub limits: Option<LimitsConfig>,
     pub profile_name_allowlist: Option<Vec<ProfiletNameAllowlistConfig>>,
@@ -115,7 +119,6 @@ impl ConfigFile {
             location: None,
             external_services: None,
             internal_api: None,
-            queue_limits: None,
             demo_mode: None,
             limits: None,
             profile_name_allowlist: None,
@@ -200,26 +203,37 @@ pub struct InternalApiConfig {
     pub microservice: bool,
 }
 
-/// Server queue limits
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct QueueLimitsConfig {
-    /// Simultaneous media content uploads. Processing of the media content
-    /// will be done sequentially.
-    ///
-    /// Default: 10
-    pub content_upload: usize,
-}
-
-impl Default for QueueLimitsConfig {
-    fn default() -> Self {
-        Self { content_upload: 10 }
-    }
+/// Limits config
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+pub struct LimitsConfig {
+    pub chat: Option<ChatLimitsConfig>,
+    pub media: Option<MediaLimitsConfig>,
 }
 
 /// Limits config
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
-pub struct LimitsConfig {
+pub struct ChatLimitsConfig {
     pub like_limit_reset_time_utc_offset_hours: i8,
+}
+
+/// Media related limits config
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct MediaLimitsConfig {
+    /// Concurrent media content uploads. Processing of the media content
+    /// will be done sequentially.
+    pub concurrent_content_uploads: usize,
+    pub max_content_count: u8,
+    pub unused_content_wait_time_seconds: DurationValue,
+}
+
+impl Default for MediaLimitsConfig {
+    fn default() -> Self {
+        Self {
+            concurrent_content_uploads: 10,
+            max_content_count: 20,
+            unused_content_wait_time_seconds: DurationValue::from_days(90),
+        }
+    }
 }
 
 /// Demo mode configuration.

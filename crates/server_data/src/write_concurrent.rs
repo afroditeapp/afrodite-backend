@@ -82,7 +82,7 @@ impl ConcurrentWriteCommandHandle {
     pub fn new(write: Arc<RouterDatabaseWriteHandle>, config: &Config) -> Self {
         Self {
             write,
-            content_upload_queue: tokio::sync::Semaphore::new(config.queue_limits().content_upload)
+            content_upload_queue: tokio::sync::Semaphore::new(config.limits_media().concurrent_content_uploads)
                 .into(),
             profile_index_queue: tokio::sync::Semaphore::new(num_cpus::get()).into(),
             account_write_locks: AccountWriteLockManager::default(),

@@ -236,7 +236,6 @@ fn new_config(
             microservice: false,
         }
         .into(),
-        queue_limits: None,
         bot_config_file: None,
         profile_attributes_file: None,
         email_content_file: None,

@@ -16,7 +16,7 @@ use std::{path::Path, sync::Arc};
 use args::{AppMode, ArgsConfig};
 use chrono::FixedOffset;
 use error_stack::{Result, ResultExt};
-use file::{DemoModeConfig, GrantAdminAccessConfig, QueueLimitsConfig};
+use file::{ChatLimitsConfig, DemoModeConfig, GrantAdminAccessConfig, MediaLimitsConfig};
 use file_dynamic::ConfigFileDynamic;
 use file_email_content::EmailContentFile;
 use model::BotConfig;
@@ -148,8 +148,12 @@ impl Config {
         self.file.bot_config_file.as_deref()
     }
 
-    pub fn queue_limits(&self) -> QueueLimitsConfig {
-        self.file.queue_limits.clone().unwrap_or_default()
+    pub fn limits_chat(&self) -> ChatLimitsConfig {
+        self.file.limits.as_ref().and_then(|v| v.chat.as_ref().cloned()).unwrap_or_default()
+    }
+
+    pub fn limits_media(&self) -> MediaLimitsConfig {
+        self.file.limits.as_ref().and_then(|v| v.media.as_ref().cloned()).unwrap_or_default()
     }
 
     pub fn profile_attributes(&self) -> Option<&ProfileAttributes> {
@@ -253,7 +257,7 @@ pub fn get_config(
         );
     }
 
-    let limits = file_config.limits.clone().unwrap_or_default();
+    let limits = file_config.limits.as_ref().and_then(|v| v.chat.clone()).unwrap_or_default();
     let offset_hours = 60 * 60 * Into::<i32>::into(limits.like_limit_reset_time_utc_offset_hours);
     let Some(reset_likes_utc_offset) = FixedOffset::east_opt(offset_hours) else {
         return Err(GetConfigError::InvalidConfiguration)
