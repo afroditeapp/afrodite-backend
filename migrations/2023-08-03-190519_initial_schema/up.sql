@@ -413,8 +413,8 @@ CREATE TABLE IF NOT EXISTS media_state(
     -- this turns to true. Account component then updates
     -- the profile visibility for both profile and media.
     initial_moderation_request_accepted BOOLEAN             NOT NULL DEFAULT 0,
-    -- Sync version for profile content data for this account.
-    profile_content_sync_version        INTEGER             NOT NULL DEFAULT 0,
+    -- Sync version for profile and security content data for this account.
+    media_content_sync_version          INTEGER             NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

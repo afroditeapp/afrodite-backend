@@ -1,6 +1,6 @@
 use database_media::current::read::GetDbReadCommandsMedia;
 use model_media::{
-    AccountId, AccountIdInternal, ContentId, CurrentAccountMediaInternal, MediaContentRaw, ProfileContentSyncVersion,
+    AccountId, AccountIdInternal, ContentId, CurrentAccountMediaInternal, MediaContentRaw, MediaContentSyncVersion,
 };
 use server_common::{
     data::{DataError, IntoDataError},
@@ -85,14 +85,14 @@ impl ReadCommandsMedia<'_> {
         .into_error()
     }
 
-    pub async fn profile_content_sync_version(
+    pub async fn media_content_sync_version(
         &self,
         account_id: AccountIdInternal,
-    ) -> Result<ProfileContentSyncVersion, DataError> {
+    ) -> Result<MediaContentSyncVersion, DataError> {
         self.db_read(move |mut cmds| {
             cmds.media()
                 .get_media_state(account_id)
-                .map(|v| v.profile_content_sync_version)
+                .map(|v| v.media_content_sync_version)
         })
         .await
         .into_error()

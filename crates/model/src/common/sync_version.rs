@@ -2,6 +2,7 @@ use diesel::{sql_types::BigInt, AsExpression, FromSqlRow};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_wrapper;
 use utoipa::ToSchema;
+use num_enum::TryFromPrimitive;
 
 #[derive(Debug)]
 pub struct SyncDataVersionFromClient {
@@ -20,13 +21,13 @@ impl SyncDataVersionFromClient {
     }
 
     fn parse([data_type_u8, version_u8]: [u8; 2]) -> Result<Self, String> {
-        let data_type = SyncCheckDataType::try_from(data_type_u8)?;
+        let data_type = SyncCheckDataType::try_from(data_type_u8).map_err(|e| e.to_string())?;
         let version = SyncVersionFromClient(version_u8);
         Ok(Self { data_type, version })
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, TryFromPrimitive)]
 #[repr(u8)]
 pub enum SyncCheckDataType {
     Account = 0,
@@ -38,26 +39,7 @@ pub enum SyncCheckDataType {
     AvailableProfileAttributes = 6,
     Profile = 7,
     News = 8,
-    ProfileContent = 9,
-}
-
-impl TryFrom<u8> for SyncCheckDataType {
-    type Error = String;
-
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Self::Account),
-            1 => Ok(Self::ReveivedLikes),
-            2 => Ok(Self::ReveivedBlocks),
-            3 => Ok(Self::SentLikes),
-            4 => Ok(Self::SentBlocks),
-            5 => Ok(Self::Matches),
-            6 => Ok(Self::AvailableProfileAttributes),
-            7 => Ok(Self::Profile),
-            8 => Ok(Self::News),
-            _ => Err(format!("Unknown sync check data type {}", value)),
-        }
-    }
+    MediaContent = 9,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

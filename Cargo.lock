@@ -2453,6 +2453,7 @@ dependencies = [
  "bitflags 2.6.0",
  "chrono",
  "diesel",
+ "num_enum",
  "serde",
  "serde_json",
  "simple_backend_model",

@@ -32,8 +32,8 @@ pub enum WebSocketError {
     DatabaseProfileStateQuery,
     #[error("Database: News count state query failed")]
     DatabaseNewsCountQuery,
-    #[error("Database: Profile content sync version query failed")]
-    DatabaseProfileContentSyncVersionQuery,
+    #[error("Database: Media content sync version query failed")]
+    DatabaseMediaContentSyncVersionQuery,
     #[error("Database: Pending messages query failed")]
     DatabasePendingMessagesQuery,
     #[error("Database: Pending notification reset failed")]
@@ -54,6 +54,6 @@ pub enum WebSocketError {
     ProfileSyncVersionResetFailed,
     #[error("News count sync version number reset failed")]
     NewsCountSyncVersionResetFailed,
-    #[error("Profile content sync version number reset failed")]
-    ProfileContentnSyncVersionResetFailed,
+    #[error("Media content sync version number reset failed")]
+    MediaContentSyncVersionResetFailed,
 }

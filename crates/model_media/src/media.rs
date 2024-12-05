@@ -465,7 +465,7 @@ impl GetProfileContentResult {
 pub struct GetMyProfileContentResult {
     pub c: MyProfileContent,
     pub v: ProfileContentVersion,
-    pub sv: ProfileContentSyncVersion,
+    pub sv: MediaContentSyncVersion,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
@@ -505,7 +505,7 @@ diesel_i64_wrapper!(ContentIdDb);
 #[diesel(check_for_backend(crate::Db))]
 pub struct MediaStateRaw {
     pub initial_moderation_request_accepted: bool,
-    pub profile_content_sync_version: ProfileContentSyncVersion,
+    pub media_content_sync_version: MediaContentSyncVersion,
 }
 
 impl MediaStateRaw {
@@ -514,4 +514,7 @@ impl MediaStateRaw {
     }
 }
 
-sync_version_wrappers!(ProfileContentSyncVersion,);
+sync_version_wrappers!(
+    /// Sync version for profile and security content
+    MediaContentSyncVersion,
+);

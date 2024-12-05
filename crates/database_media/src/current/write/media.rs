@@ -47,14 +47,14 @@ impl CurrentWriteMedia<'_> {
         Ok(())
     }
 
-    pub fn reset_profile_content_sync_version(
+    pub fn reset_media_content_sync_version(
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::media_state::dsl::*;
 
         update(media_state.find(id.as_db_id()))
-            .set(profile_content_sync_version.eq(0))
+            .set(media_content_sync_version.eq(0))
             .execute(self.conn())
             .into_db_error(id)?;
 

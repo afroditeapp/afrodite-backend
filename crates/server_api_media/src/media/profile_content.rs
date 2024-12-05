@@ -147,7 +147,7 @@ pub async fn get_my_profile_content_info(
     let sv = state
         .read()
         .media()
-        .profile_content_sync_version(account_id)
+        .media_content_sync_version(account_id)
         .await?;
 
     let r = GetMyProfileContentResult {

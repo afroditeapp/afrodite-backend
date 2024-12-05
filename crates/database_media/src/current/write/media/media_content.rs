@@ -66,7 +66,7 @@ impl CurrentWriteMediaContent<'_> {
     ///
     /// Moves content to moderation if needed.
     ///
-    /// Updates also [model_media::ProfileContentSyncVersion].
+    /// Updates also [model_media::MediaContentSyncVersion].
     ///
     /// Requirements:
     ///  - The content must be of type JpegImage.
@@ -252,7 +252,7 @@ impl CurrentWriteMediaContent<'_> {
         }
     }
 
-    pub fn increment_profile_content_sync_version(
+    pub fn increment_media_content_sync_version(
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
@@ -260,8 +260,8 @@ impl CurrentWriteMediaContent<'_> {
 
         update(media_state)
             .filter(account_id.eq(id.as_db_id()))
-            .filter(profile_content_sync_version.lt(SyncVersion::MAX_VALUE))
-            .set(profile_content_sync_version.eq(profile_content_sync_version + 1))
+            .filter(media_content_sync_version.lt(SyncVersion::MAX_VALUE))
+            .set(media_content_sync_version.eq(media_content_sync_version + 1))
             .execute(self.conn())
             .into_db_error(())?;
 

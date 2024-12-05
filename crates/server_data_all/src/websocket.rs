@@ -192,9 +192,9 @@ pub async fn sync_data_with_client_if_needed(
                     .await?;
                 }
             }
-            SyncCheckDataType::ProfileContent => {
+            SyncCheckDataType::MediaContent => {
                 if config.components().account {
-                    handle_profile_content_sync_version_check(
+                    handle_media_content_sync_version_check(
                         read_handle,
                         write_handle,
                         socket,
@@ -398,7 +398,7 @@ async fn handle_news_count_sync_version_check(
 }
 
 
-async fn handle_profile_content_sync_version_check(
+async fn handle_media_content_sync_version_check(
     read_handle: &RouterDatabaseReadHandle,
     write_handle: &WriteCommandRunnerHandle,
     socket: &mut WebSocket,
@@ -407,19 +407,19 @@ async fn handle_profile_content_sync_version_check(
 ) -> Result<(), WebSocketError> {
     let current = read_handle
         .media()
-        .profile_content_sync_version(id)
+        .media_content_sync_version(id)
         .await
-        .change_context(WebSocketError::DatabaseProfileContentSyncVersionQuery)?;
+        .change_context(WebSocketError::DatabaseMediaContentSyncVersionQuery)?;
     match current.check_is_sync_required(sync_version) {
         SyncCheckResult::DoNothing => return Ok(()),
         SyncCheckResult::ResetVersionAndSync => write_handle
             .write(move |cmds| async move {
                 cmds.media()
-                    .reset_profile_content_sync_version(id)
+                    .reset_media_content_sync_version(id)
                     .await
             })
             .await
-            .change_context(WebSocketError::ProfileContentnSyncVersionResetFailed)?,
+            .change_context(WebSocketError::MediaContentSyncVersionResetFailed)?,
         SyncCheckResult::Sync => (),
     };
 

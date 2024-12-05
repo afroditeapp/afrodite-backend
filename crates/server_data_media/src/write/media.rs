@@ -108,7 +108,7 @@ impl WriteCommandsMedia<'_> {
                 new,
                 new_profile_content_version,
             )?;
-            cmds.media().media_content().increment_profile_content_sync_version(id)
+            cmds.media().media_content().increment_media_content_sync_version(id)
         })?;
 
         self.write_cache_media(id.as_id(), |e| {
@@ -261,12 +261,12 @@ impl WriteCommandsMedia<'_> {
         Ok(())
     }
 
-    pub async fn reset_profile_content_sync_version(
+    pub async fn reset_media_content_sync_version(
         &self,
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.media().reset_profile_content_sync_version(id)
+            cmds.media().reset_media_content_sync_version(id)
         })
     }
 }

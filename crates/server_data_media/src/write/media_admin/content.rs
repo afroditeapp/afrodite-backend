@@ -43,7 +43,7 @@ impl WriteCommandsProfileAdminContent<'_> {
                 .only_profile_content_version(content_owner_id, new_profile_content_version)?;
             cmds.media()
                 .media_content()
-                .increment_profile_content_sync_version(content_owner_id)?;
+                .increment_media_content_sync_version(content_owner_id)?;
             if move_to_human_moderation {
                 cmds.media_admin()
                     .media_content()
