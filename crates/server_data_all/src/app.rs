@@ -4,7 +4,7 @@ use axum::extract::ws::WebSocket;
 use config::Config;
 use futures::{future::BoxFuture, FutureExt};
 use model::{
-    Account, AccountId, AccountIdInternal, EmailMessages, PendingNotification,
+    Account, AccountIdInternal, EmailMessages, PendingNotification,
     PendingNotificationWithData, SyncDataVersionFromClient,
 };
 use model_account::{EmailAddress, SignInWithInfo};
@@ -46,12 +46,9 @@ impl DataAllUtils for DataAllUtilsImpl {
         email: Option<EmailAddress>,
     ) -> BoxFuture<'a, server_common::result::Result<AccountIdInternal, DataError>> {
         async move {
-            // New unique UUID is generated every time so no special handling needed
-            // to avoid database collisions.
-            let id = AccountId::new_random();
-
             let id = write_command_runner
                 .write(move |cmds| async move {
+                    let id = cmds.account().get_next_unique_account_id().await?;
                     let id = RegisterAccount::new(cmds.deref())
                         .register(id, sign_in_with, email.clone())
                         .await?;

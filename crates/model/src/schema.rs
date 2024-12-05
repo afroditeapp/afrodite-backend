@@ -197,28 +197,6 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    history_account (id) {
-        id -> Integer,
-        account_id -> Integer,
-        unix_time -> Integer,
-        json_text -> Text,
-    }
-}
-
-diesel::table! {
-    use crate::schema_sqlite_types::*;
-
-    history_account_setup (id) {
-        id -> Integer,
-        account_id -> Integer,
-        unix_time -> Integer,
-        json_text -> Text,
-    }
-}
-
-diesel::table! {
-    use crate::schema_sqlite_types::*;
-
     history_media_moderation_request (id) {
         id -> Integer,
         account_id -> Integer,
@@ -320,6 +298,15 @@ diesel::table! {
     history_profile_statistics_save_time (id) {
         id -> Integer,
         unix_time -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    history_used_account_ids (id) {
+        id -> Integer,
+        uuid -> Binary,
     }
 }
 
@@ -562,8 +549,6 @@ diesel::joinable!(account_setup -> account_id (account_id));
 diesel::joinable!(account_state -> account_id (account_id));
 diesel::joinable!(chat_state -> account_id (account_id));
 diesel::joinable!(current_account_media -> account_id (account_id));
-diesel::joinable!(history_account -> account_id (account_id));
-diesel::joinable!(history_account_setup -> account_id (account_id));
 diesel::joinable!(history_media_moderation_request -> account_id (account_id));
 diesel::joinable!(history_profile_statistics_age_changes_all_genders -> history_profile_statistics_save_time (save_time_id));
 diesel::joinable!(history_profile_statistics_age_changes_men -> history_profile_statistics_save_time (save_time_id));
@@ -604,8 +589,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     current_account_media,
     demo_mode_account_ids,
     favorite_profile,
-    history_account,
-    history_account_setup,
     history_media_moderation_request,
     history_profile_statistics_age_changes_all_genders,
     history_profile_statistics_age_changes_men,
@@ -617,6 +600,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     history_profile_statistics_count_changes_non_binary,
     history_profile_statistics_count_changes_woman,
     history_profile_statistics_save_time,
+    history_used_account_ids,
     media_content,
     media_state,
     news,

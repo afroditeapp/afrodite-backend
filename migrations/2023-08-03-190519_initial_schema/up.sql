@@ -677,28 +677,10 @@ CREATE TABLE IF NOT EXISTS chat_global_state(
 
 -- TODO(prod): Remove unnecessary history tables
 
-CREATE TABLE IF NOT EXISTS history_account(
+-- All used account IDs
+CREATE TABLE IF NOT EXISTS history_used_account_ids(
     id         INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    account_id INTEGER                           NOT NULL,
-    unix_time  INTEGER                           NOT NULL,
-    json_text  TEXT                              NOT NULL,
-    FOREIGN KEY (account_id)
-        REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
-);
-
--- TODO: Can be removed as account_setup state does not change after
--- initial setup?
-CREATE TABLE IF NOT EXISTS history_account_setup(
-    id         INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    account_id INTEGER                           NOT NULL,
-    unix_time  INTEGER                           NOT NULL,
-    json_text  TEXT                              NOT NULL,
-    FOREIGN KEY (account_id)
-        REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
+    uuid       BLOB                              NOT NULL UNIQUE
 );
 
 ---------- History tables for server component profile ----------
