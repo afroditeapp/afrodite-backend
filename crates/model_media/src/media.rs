@@ -397,13 +397,15 @@ impl From<CurrentAccountMediaInternal> for MyProfileContent {
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct SecurityContent {
-    pub c0: Option<ContentInfoWithFd>,
+    pub c: Option<ContentInfoWithFd>,
+    pub sv: MediaContentSyncVersion,
 }
 
-impl From<CurrentAccountMediaInternal> for SecurityContent {
-    fn from(value: CurrentAccountMediaInternal) -> Self {
+impl SecurityContent {
+    pub fn new(value: CurrentAccountMediaInternal, sv: MediaContentSyncVersion) -> Self {
         Self {
-            c0: value.security_content_id.map(|c| c.into()),
+            c: value.security_content_id.map(|c| c.into()),
+            sv,
         }
     }
 }

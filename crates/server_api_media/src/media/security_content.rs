@@ -2,6 +2,7 @@ use axum::{
     extract::{Path, State},
     Extension,
 };
+use model::Permissions;
 use model_media::{
     AccountId, AccountIdInternal, ContentId, SecurityContent,
 };
@@ -21,6 +22,11 @@ use crate::{
 const PATH_GET_SECURITY_CONTENT_INFO: &str = "/media_api/security_content_info/{aid}";
 
 /// Get current security content for selected profile.
+///
+/// # Access
+///
+/// - Own account
+/// - With permission `admin_moderate_profile_content`
 #[utoipa::path(
     get,
     path = PATH_GET_SECURITY_CONTENT_INFO,
@@ -35,13 +41,19 @@ const PATH_GET_SECURITY_CONTENT_INFO: &str = "/media_api/security_content_info/{
 pub async fn get_security_content_info(
     State(state): State<S>,
     Path(requested_account_id): Path<AccountId>,
-    Extension(_api_caller_account_id): Extension<AccountIdInternal>,
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    Extension(permissions): Extension<Permissions>,
 ) -> Result<Json<SecurityContent>, StatusCode> {
     MEDIA.get_security_content_info.incr();
 
-    // TODO: access restrictions
-
     let internal_id = state.get_internal_id(requested_account_id).await?;
+
+    let access_allowed = internal_id == api_caller_account_id ||
+        permissions.admin_moderate_profile_content;
+
+    if !access_allowed {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
 
     let internal_current_media = state
         .read()
@@ -49,7 +61,13 @@ pub async fn get_security_content_info(
         .current_account_media(internal_id)
         .await?;
 
-    let info: SecurityContent = internal_current_media.into();
+    let sv = state
+        .read()
+        .media()
+        .media_content_sync_version(internal_id)
+        .await?;
+
+    let info: SecurityContent = SecurityContent::new(internal_current_media, sv);
     Ok(info.into())
 }
 

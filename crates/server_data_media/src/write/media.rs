@@ -134,7 +134,9 @@ impl WriteCommandsMedia<'_> {
         db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .media_content()
-                .update_security_content(content_owner, content)
+                .update_security_content(content_owner, content)?;
+
+            cmds.media().media_content().increment_media_content_sync_version(content_owner)
         })?;
 
         self.update_content_usage(content_owner, content_before_update).await
