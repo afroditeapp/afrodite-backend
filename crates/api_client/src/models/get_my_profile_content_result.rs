@@ -16,13 +16,13 @@ pub struct GetMyProfileContentResult {
     #[serde(rename = "c")]
     pub c: Box<models::MyProfileContent>,
     #[serde(rename = "sv")]
-    pub sv: Box<models::ProfileContentSyncVersion>,
+    pub sv: Box<models::MediaContentSyncVersion>,
     #[serde(rename = "v")]
     pub v: Box<models::ProfileContentVersion>,
 }
 
 impl GetMyProfileContentResult {
-    pub fn new(c: models::MyProfileContent, sv: models::ProfileContentSyncVersion, v: models::ProfileContentVersion) -> GetMyProfileContentResult {
+    pub fn new(c: models::MyProfileContent, sv: models::MediaContentSyncVersion, v: models::ProfileContentVersion) -> GetMyProfileContentResult {
         GetMyProfileContentResult {
             c: Box::new(c),
             sv: Box::new(sv),

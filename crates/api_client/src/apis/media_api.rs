@@ -126,12 +126,13 @@ pub enum PutSecurityContentInfoError {
 }
 
 
-pub async fn delete_content(configuration: &configuration::Configuration, cid: &str) -> Result<(), Error<DeleteContentError>> {
+/// # Own account Content can be deleted after specific time has passed since removing all usage of it (content is not assigned as security or profile content).  # Admin Admin can remove content without restrictions with permission `admin_delete_media_content`.
+pub async fn delete_content(configuration: &configuration::Configuration, aid: &str, cid: &str) -> Result<(), Error<DeleteContentError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/9ztWJZUmcnzICLL2gJ8qV8gVoR8/{cid}", local_var_configuration.base_path, cid=crate::apis::urlencode(cid));
+    let local_var_uri_str = format!("{}/9ztWJZUmcnzICLL2gJ8qV8gVoR8/{aid}/{cid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid), cid=crate::apis::urlencode(cid));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -385,6 +386,7 @@ pub async fn get_profile_content_info(configuration: &configuration::Configurati
     }
 }
 
+/// # Access  - Own account - With permission `admin_moderate_profile_content`
 pub async fn get_security_content_info(configuration: &configuration::Configuration, aid: &str) -> Result<models::SecurityContent, Error<GetSecurityContentInfoError>> {
     let local_var_configuration = configuration;
 

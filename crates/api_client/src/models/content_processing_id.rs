@@ -14,15 +14,22 @@ use serde::{Deserialize, Serialize};
 /// ContentProcessingId : Content ID which is queued to be processed
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ContentProcessingId {
+    #[serde(rename = "aid")]
+    pub aid: Box<models::AccountId>,
+    /// Server process specific unique ID
     #[serde(rename = "id")]
-    pub id: String,
+    pub id: i64,
+    #[serde(rename = "slot")]
+    pub slot: models::ContentSlot,
 }
 
 impl ContentProcessingId {
     /// Content ID which is queued to be processed
-    pub fn new(id: String) -> ContentProcessingId {
+    pub fn new(aid: models::AccountId, id: i64, slot: models::ContentSlot) -> ContentProcessingId {
         ContentProcessingId {
+            aid: Box::new(aid),
             id,
+            slot,
         }
     }
 }

@@ -70,6 +70,7 @@ impl BotAction for ModerateContentModerationRequest {
                 media_admin_api::post_moderate_profile_content(
                     state.api.media(),
                     api_client::models::PostModerateProfileContent {
+                        account_id: request.account_id,
                         content_id: request.content_id,
                         accept: true,
                         move_to_human: Some(Some(false)),
@@ -121,6 +122,7 @@ impl AdminBotContentModerationLogic {
             media_admin_api::post_moderate_profile_content(
                 state.api.media(),
                 api_client::models::PostModerateProfileContent {
+                    account_id: request.account_id,
                     content_id: request.content_id,
                     accept: true,
                     move_to_human: Some(Some(false)),

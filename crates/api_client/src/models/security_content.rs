@@ -13,14 +13,17 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SecurityContent {
-    #[serde(rename = "c0", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub c0: Option<Option<Box<models::ContentInfoWithFd>>>,
+    #[serde(rename = "c", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub c: Option<Option<Box<models::ContentInfoWithFd>>>,
+    #[serde(rename = "sv")]
+    pub sv: Box<models::MediaContentSyncVersion>,
 }
 
 impl SecurityContent {
-    pub fn new() -> SecurityContent {
+    pub fn new(sv: models::MediaContentSyncVersion) -> SecurityContent {
         SecurityContent {
-            c0: None,
+            c: None,
+            sv: Box::new(sv),
         }
     }
 }

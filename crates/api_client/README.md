@@ -93,7 +93,7 @@ Class | Method | HTTP request | Description
 *CommonAdminApi* | [**post_request_build_software**](docs/CommonAdminApi.md#post_request_build_software) | **POST** /vGQvKiH7zbpopxyScZILldwiCsg | Request building new software from manager instance.
 *CommonAdminApi* | [**post_request_restart_or_reset_backend**](docs/CommonAdminApi.md#post_request_restart_or_reset_backend) | **POST** /rAIji-qOFiclUKWs_5JIR_-dLoI | Request restarting or reseting backend through app-manager instance.
 *CommonAdminApi* | [**post_request_update_software**](docs/CommonAdminApi.md#post_request_update_software) | **POST** /yFSS8sqNjFU8nfjNqoKN1qQ743w | Request updating new software from manager instance.
-*MediaApi* | [**delete_content**](docs/MediaApi.md#delete_content) | **DELETE** /9ztWJZUmcnzICLL2gJ8qV8gVoR8/{cid} | Delete content data. Content can be removed after specific time has passed since removing all usage from it (content is not a security image or profile content).
+*MediaApi* | [**delete_content**](docs/MediaApi.md#delete_content) | **DELETE** /9ztWJZUmcnzICLL2gJ8qV8gVoR8/{aid}/{cid} | Delete content data.
 *MediaApi* | [**get_all_account_media_content**](docs/MediaApi.md#get_all_account_media_content) | **GET** /RzBkQfHdmWHdL0L1Uq-DVE6kiVY/{aid} | Get list of all media content on the server for one account.
 *MediaApi* | [**get_content**](docs/MediaApi.md#get_content) | **GET** /9ztWJZUmcnzICLL2gJ8qV8gVoR8/{aid}/{cid} | Get content data
 *MediaApi* | [**get_content_slot_state**](docs/MediaApi.md#get_content_slot_state) | **GET** /y5DgJJAaDZF89y6X4ge84klpBq0/{slot_id} | Get state of content slot.
@@ -213,6 +213,7 @@ Class | Method | HTTP request | Description
  - [MatchesIteratorSessionId](docs/MatchesIteratorSessionId.md)
  - [MatchesPage](docs/MatchesPage.md)
  - [MatchesSyncVersion](docs/MatchesSyncVersion.md)
+ - [MediaContentSyncVersion](docs/MediaContentSyncVersion.md)
  - [MediaContentType](docs/MediaContentType.md)
  - [MessageNumber](docs/MessageNumber.md)
  - [ModerationQueueType](docs/ModerationQueueType.md)
@@ -254,7 +255,6 @@ Class | Method | HTTP request | Description
  - [ProfileContentModerationRejectedReasonCategory](docs/ProfileContentModerationRejectedReasonCategory.md)
  - [ProfileContentModerationRejectedReasonDetails](docs/ProfileContentModerationRejectedReasonDetails.md)
  - [ProfileContentPendingModeration](docs/ProfileContentPendingModeration.md)
- - [ProfileContentSyncVersion](docs/ProfileContentSyncVersion.md)
  - [ProfileContentVersion](docs/ProfileContentVersion.md)
  - [ProfileIteratorSessionId](docs/ProfileIteratorSessionId.md)
  - [ProfileLink](docs/ProfileLink.md)

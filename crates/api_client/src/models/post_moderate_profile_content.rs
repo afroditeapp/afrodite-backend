@@ -15,6 +15,8 @@ use serde::{Deserialize, Serialize};
 pub struct PostModerateProfileContent {
     #[serde(rename = "accept")]
     pub accept: bool,
+    #[serde(rename = "account_id")]
+    pub account_id: Box<models::AccountId>,
     #[serde(rename = "content_id")]
     pub content_id: Box<models::ContentId>,
     /// If true, ignore accept, rejected_category, rejected_details and move the content to waiting for human moderation state.
@@ -27,9 +29,10 @@ pub struct PostModerateProfileContent {
 }
 
 impl PostModerateProfileContent {
-    pub fn new(accept: bool, content_id: models::ContentId) -> PostModerateProfileContent {
+    pub fn new(accept: bool, account_id: models::AccountId, content_id: models::ContentId) -> PostModerateProfileContent {
         PostModerateProfileContent {
             accept,
+            account_id: Box::new(account_id),
             content_id: Box::new(content_id),
             move_to_human: None,
             rejected_category: None,

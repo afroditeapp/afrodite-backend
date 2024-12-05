@@ -91,6 +91,7 @@ src/models/login_result.rs
 src/models/matches_iterator_session_id.rs
 src/models/matches_page.rs
 src/models/matches_sync_version.rs
+src/models/media_content_sync_version.rs
 src/models/media_content_type.rs
 src/models/message_number.rs
 src/models/mod.rs
@@ -133,7 +134,6 @@ src/models/profile_content.rs
 src/models/profile_content_moderation_rejected_reason_category.rs
 src/models/profile_content_moderation_rejected_reason_details.rs
 src/models/profile_content_pending_moderation.rs
-src/models/profile_content_sync_version.rs
 src/models/profile_content_version.rs
 src/models/profile_iterator_session_id.rs
 src/models/profile_link.rs

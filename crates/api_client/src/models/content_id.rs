@@ -11,7 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// ContentId : Content ID for media content for example images
+/// ContentId : Content ID for media content.  Uniqueness is guaranteed for one account so other account might use the same ID for another content.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ContentId {
     #[serde(rename = "cid")]
@@ -19,7 +19,7 @@ pub struct ContentId {
 }
 
 impl ContentId {
-    /// Content ID for media content for example images
+    /// Content ID for media content.  Uniqueness is guaranteed for one account so other account might use the same ID for another content.
     pub fn new(cid: String) -> ContentId {
         ContentId {
             cid,
