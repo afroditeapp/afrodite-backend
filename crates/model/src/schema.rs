@@ -197,13 +197,9 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    history_media_moderation_request (id) {
+    history_account_id (id) {
         id -> Integer,
-        account_id -> Integer,
-        unix_time -> Integer,
-        moderation_request_id -> Integer,
-        state_number -> Integer,
-        json_text -> Text,
+        uuid -> Binary,
     }
 }
 
@@ -306,6 +302,15 @@ diesel::table! {
 
     history_used_account_ids (id) {
         id -> Integer,
+        uuid -> Binary,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    history_used_content_ids (account_id, uuid) {
+        account_id -> Integer,
         uuid -> Binary,
     }
 }
@@ -549,7 +554,6 @@ diesel::joinable!(account_setup -> account_id (account_id));
 diesel::joinable!(account_state -> account_id (account_id));
 diesel::joinable!(chat_state -> account_id (account_id));
 diesel::joinable!(current_account_media -> account_id (account_id));
-diesel::joinable!(history_media_moderation_request -> account_id (account_id));
 diesel::joinable!(history_profile_statistics_age_changes_all_genders -> history_profile_statistics_save_time (save_time_id));
 diesel::joinable!(history_profile_statistics_age_changes_men -> history_profile_statistics_save_time (save_time_id));
 diesel::joinable!(history_profile_statistics_age_changes_non_binary -> history_profile_statistics_save_time (save_time_id));
@@ -559,6 +563,7 @@ diesel::joinable!(history_profile_statistics_count_changes_all_genders -> histor
 diesel::joinable!(history_profile_statistics_count_changes_man -> history_profile_statistics_save_time (save_time_id));
 diesel::joinable!(history_profile_statistics_count_changes_non_binary -> history_profile_statistics_save_time (save_time_id));
 diesel::joinable!(history_profile_statistics_count_changes_woman -> history_profile_statistics_save_time (save_time_id));
+diesel::joinable!(history_used_content_ids -> history_account_id (account_id));
 diesel::joinable!(media_content -> account_id (account_id));
 diesel::joinable!(media_state -> account_id (account_id));
 diesel::joinable!(news -> account_id (account_id_creator));
@@ -589,7 +594,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     current_account_media,
     demo_mode_account_ids,
     favorite_profile,
-    history_media_moderation_request,
+    history_account_id,
     history_profile_statistics_age_changes_all_genders,
     history_profile_statistics_age_changes_men,
     history_profile_statistics_age_changes_non_binary,
@@ -601,6 +606,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     history_profile_statistics_count_changes_woman,
     history_profile_statistics_save_time,
     history_used_account_ids,
+    history_used_content_ids,
     media_content,
     media_state,
     news,

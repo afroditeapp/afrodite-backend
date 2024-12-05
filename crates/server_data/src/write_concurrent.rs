@@ -1,12 +1,12 @@
 //! Write commands that can be run concurrently also with synchronous
 //! write commands.
 
-use std::{collections::HashMap, fmt, fmt::Debug, sync::Arc};
+use std::{collections::HashMap, fmt::{self, Debug}, sync::{atomic::{AtomicI64, Ordering}, Arc}};
 
 use axum::body::BodyDataStream;
 use config::Config;
 use futures::Future;
-use model::{AccountId, AccountIdInternal, ContentProcessingId};
+use model::{AccountId, AccountIdInternal, ContentProcessingId, ContentSlot};
 use model_server_data::{
     MatchId, MatchesIteratorSessionId, NewsIteratorSessionId, ProfileIteratorSessionId,
     ProfileIteratorSessionIdInternal, ProfileLink, PublicationId, ReceivedLikeId,
@@ -29,6 +29,8 @@ use crate::{
 };
 
 const PROFILE_ITERATOR_PAGE_SIZE: usize = 25;
+
+static NEXT_CONTENT_PROCESSING_ID: AtomicI64 = AtomicI64::new(0);
 
 pub type OutputFuture<R> = Box<dyn Future<Output = R> + Send + 'static>;
 
@@ -181,11 +183,12 @@ impl ConcurrentWriteContentHandle {
     pub async fn save_to_tmp(
         &self,
         id: AccountIdInternal,
+        slot: ContentSlot,
         stream: BodyDataStream,
     ) -> Result<NewContentInfo, DataError> {
         self.write
             .user_write_commands_account()
-            .save_to_tmp(id, stream)
+            .save_to_tmp(id, slot, stream)
             .await
     }
 }
@@ -284,9 +287,11 @@ impl<'a> WriteCommandsConcurrent<'a> {
     pub async fn save_to_tmp(
         &self,
         id: AccountIdInternal,
+        slot: ContentSlot,
         stream: BodyDataStream,
     ) -> Result<NewContentInfo, DataError> {
-        let content_id = ContentProcessingId::new_random_id();
+        let processing_id_i64 = NEXT_CONTENT_PROCESSING_ID.fetch_add(1, Ordering::Relaxed);
+        let processing_id = ContentProcessingId::new(id.as_id(), slot, processing_id_i64);
 
         // Clear tmp dir in case previous content writing failed and there is no
         // content ID in the database about it.
@@ -297,15 +302,15 @@ impl<'a> WriteCommandsConcurrent<'a> {
 
         let tmp_raw_img = self
             .file_dir
-            .raw_content_upload(id.as_id(), content_id.to_content_id());
+            .raw_content_upload(id.as_id(), processing_id);
         tmp_raw_img.save_stream(stream).await?;
 
         let tmp_img = self
             .file_dir
-            .processed_content_upload(id.as_id(), content_id.to_content_id());
+            .processed_content_upload(id.as_id(), processing_id);
 
         Ok(NewContentInfo {
-            processing_id: content_id,
+            processing_id,
             tmp_raw_img,
             tmp_img,
         })

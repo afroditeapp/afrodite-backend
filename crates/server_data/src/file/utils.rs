@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use axum::body::BodyDataStream;
 use error_stack::{Result, ResultExt};
-use model::{AccountId, ContentId};
+use model::{AccountId, ContentId, ContentProcessingId};
 use simple_backend_utils::ContextExt;
 use tokio::io::AsyncWriteExt;
 use tokio_stream::{wrappers::ReadDirStream, StreamExt};
@@ -30,14 +30,14 @@ impl FileDir {
     }
 
     /// Unprocessed content upload.
-    pub fn raw_content_upload(&self, id: AccountId, content: ContentId) -> TmpContentFile {
-        self.account_dir(id).tmp_dir().raw_content_upload(content)
+    pub fn raw_content_upload(&self, id: AccountId, content_id: ContentProcessingId) -> TmpContentFile {
+        self.account_dir(id).tmp_dir().raw_content_upload(content_id)
     }
 
-    pub fn processed_content_upload(&self, id: AccountId, content: ContentId) -> TmpContentFile {
+    pub fn processed_content_upload(&self, id: AccountId, content_id: ContentProcessingId) -> TmpContentFile {
         self.account_dir(id)
             .tmp_dir()
-            .processed_content_upload(content)
+            .processed_content_upload(content_id)
     }
 
     pub fn media_content(&self, id: AccountId, content_id: ContentId) -> ContentFile {
@@ -123,14 +123,14 @@ impl TmpDir {
         }
     }
 
-    pub fn raw_content_upload(mut self, id: ContentId) -> TmpContentFile {
+    pub fn raw_content_upload(mut self, id: ContentProcessingId) -> TmpContentFile {
         self.dir.push(id.raw_content_file_name());
         TmpContentFile {
             path: PathToFile { path: self.dir },
         }
     }
 
-    pub fn processed_content_upload(mut self, id: ContentId) -> TmpContentFile {
+    pub fn processed_content_upload(mut self, id: ContentProcessingId) -> TmpContentFile {
         self.dir.push(id.content_file_name());
         TmpContentFile {
             path: PathToFile { path: self.dir },

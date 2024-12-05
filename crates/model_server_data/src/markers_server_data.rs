@@ -13,7 +13,6 @@ enable_logging!(
     // ModerationQueueNumber,
     // ModerationQueueType,
     // NextQueueNumberType,
-    ContentSlot,
 );
 
 disable_logging!(

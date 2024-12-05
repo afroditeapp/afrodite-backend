@@ -480,7 +480,7 @@ CREATE TABLE IF NOT EXISTS current_account_media(
 -- Information about uploaded media content
 CREATE TABLE IF NOT EXISTS media_content(
     id                  INTEGER PRIMARY KEY NOT NULL,
-    uuid                BLOB                NOT NULL   UNIQUE,
+    uuid                BLOB                NOT NULL,
     account_id          INTEGER             NOT NULL,
     -- Client captured this media
     secure_capture      BOOLEAN             NOT NULL,
@@ -673,11 +673,18 @@ CREATE TABLE IF NOT EXISTS chat_global_state(
     next_match_id         INTEGER             NOT NULL DEFAULT 0
 );
 
+---------- History tables for server component common ----------
+
+-- UUID for account
+CREATE TABLE IF NOT EXISTS history_account_id(
+    id    INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    uuid  BLOB                              NOT NULL  UNIQUE
+);
+
 ---------- History tables for server component account ----------
 
--- TODO(prod): Remove unnecessary history tables
-
--- All used account IDs
+-- All used account IDs. Account ID is not removed from here
+-- when account data is removed.
 CREATE TABLE IF NOT EXISTS history_used_account_ids(
     id         INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     uuid       BLOB                              NOT NULL UNIQUE
@@ -781,19 +788,12 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_all_genders(
 
 ---------- History tables for server component media ----------
 
--- TODO: History for new media tables.
-
--- Deletion is just ignored as it happens automatically when new
--- request is created.
-CREATE TABLE IF NOT EXISTS history_media_moderation_request(
-    id                    INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+CREATE TABLE IF NOT EXISTS history_used_content_ids(
     account_id            INTEGER                           NOT NULL,
-    unix_time             INTEGER                           NOT NULL,
-    moderation_request_id INTEGER                           NOT NULL,
-    state_number          INTEGER                           NOT NULL,
-    json_text             TEXT                              NOT NULL,
+    uuid                  BLOB                              NOT NULL,
+    PRIMARY KEY (account_id, uuid),
     FOREIGN KEY (account_id)
-        REFERENCES account_id (id)
+        REFERENCES history_account_id (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );

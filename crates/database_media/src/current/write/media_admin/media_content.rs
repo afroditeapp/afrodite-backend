@@ -1,8 +1,8 @@
 use database::{current::read::GetDbReadCommandsCommon, define_current_write_commands, DieselDatabaseError};
 use diesel::{prelude::*, update};
 use error_stack::Result;
-use model::AccountIdInternal;
-use model_media::{ContentId, ContentModerationState, ProfileContentModerationRejectedReasonCategory, ProfileContentModerationRejectedReasonDetails};
+use model::{ContentIdInternal, AccountIdInternal};
+use model_media::{ContentModerationState, ProfileContentModerationRejectedReasonCategory, ProfileContentModerationRejectedReasonDetails};
 
 use crate::IntoDatabaseError;
 
@@ -11,12 +11,13 @@ define_current_write_commands!(CurrentWriteMediaAdminMediaContent);
 impl CurrentWriteMediaAdminMediaContent<'_> {
     pub fn update_content_moderation_state(
         &mut self,
-        content_id: ContentId,
+        content_id: ContentIdInternal,
         new_state: ContentModerationState,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::media_content::dsl::*;
 
-        update(media_content.filter(uuid.eq(content_id)))
+        update(media_content)
+            .filter(id.eq(content_id.as_db_id()))
             .set(moderation_state.eq(new_state))
             .execute(self.conn())
             .into_db_error(content_id)?;
@@ -27,7 +28,7 @@ impl CurrentWriteMediaAdminMediaContent<'_> {
     pub fn moderate_profile_content(
         &mut self,
         moderator_id: AccountIdInternal,
-        content_id: ContentId,
+        content_id: ContentIdInternal,
         accepted: bool,
         rejected_category: Option<ProfileContentModerationRejectedReasonCategory>,
         rejected_details: Option<ProfileContentModerationRejectedReasonDetails>,
@@ -54,7 +55,7 @@ impl CurrentWriteMediaAdminMediaContent<'_> {
         };
 
         update(media_content::table)
-            .filter(media_content::uuid.eq(content_id))
+            .filter(media_content::id.eq(content_id.as_db_id()))
             .set((
                 media_content::moderation_state.eq(next_state),
                 media_content::moderation_rejected_reason_category
@@ -71,14 +72,14 @@ impl CurrentWriteMediaAdminMediaContent<'_> {
 
     pub fn move_to_human_moderation(
         &mut self,
-        content_id: ContentId,
+        content_id: ContentIdInternal,
     ) -> Result<ContentModerationState, DieselDatabaseError> {
         use model::schema::media_content;
 
         let next_state = ContentModerationState::WaitingHumanModeration;
 
         update(media_content::table)
-            .filter(media_content::uuid.eq(content_id))
+            .filter(media_content::id.eq(content_id.as_db_id()))
             .set(media_content::moderation_state.eq(next_state))
             .execute(self.conn())
             .into_db_error(())?;

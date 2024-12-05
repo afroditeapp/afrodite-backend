@@ -2,9 +2,9 @@ use std::collections::{HashMap, VecDeque};
 
 use model::{
     AccountIdDb, AccountIdInternal, ContentProcessingId, ContentProcessingState,
-    ContentProcessingStateChanged,
+    ContentProcessingStateChanged, ContentSlot,
 };
-use model_server_data::{ContentSlot, NewContentParams};
+use model_server_data::NewContentParams;
 use server_common::result::WrappedResultExt;
 use tokio::sync::{
     mpsc::{self, UnboundedReceiver, UnboundedSender},

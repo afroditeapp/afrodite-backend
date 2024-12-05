@@ -1,7 +1,7 @@
 use database::{current::read::GetDbReadCommandsCommon, define_current_write_commands, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
-use model::{SyncVersion, UnixTime};
+use model::{ContentIdInternal, SyncVersion, UnixTime};
 use model_media::{
     AccountIdInternal, ContentId, ContentIdDb, ContentModerationState, ContentSlot, MediaContentRaw, MediaContentType, NewContentParams, ProfileContentVersion, SetProfileContent
 };
@@ -119,6 +119,11 @@ impl CurrentWriteMediaContent<'_> {
             .into_db_error(id)?;
 
         for content_id in new.iter() {
+            let content_id = self
+                .read()
+                .media()
+                .media_content()
+                .content_id_internal(id, content_id)?;
             let state = self
                 .read()
                 .media()
@@ -147,31 +152,28 @@ impl CurrentWriteMediaContent<'_> {
     /// - The content must have face detected flag enabled.
     pub fn update_security_content(
         &mut self,
-        content_owner: AccountIdInternal,
-        content_id: ContentId,
+        content_id: ContentIdInternal,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::current_account_media::dsl::*;
-
-        let all_content = self
-            .read()
-            .media()
-            .media_content()
-            .get_account_media_content(content_owner)?;
-
-        let content_db_id = Self::check_content_id(Some(content_id), &all_content, |c| {
-            c.secure_capture && c.face_detected
-        })?;
-
-        update(current_account_media.find(content_owner.as_db_id()))
-            .set((security_content_id.eq(content_db_id),))
-            .execute(self.conn())
-            .into_db_error((content_owner, content_id))?;
 
         let state = self
             .read()
             .media()
             .media_content()
             .get_media_content_raw(content_id)?;
+
+        let accepted = state.content_type() == MediaContentType::JpegImage &&
+            state.secure_capture &&
+            state.face_detected;
+        if !accepted {
+            return Err(DieselDatabaseError::NotAllowed.report());
+        }
+
+        update(current_account_media.find(content_id.content_owner().as_db_id()))
+            .set((security_content_id.eq(content_id.as_db_id()),))
+            .execute(self.conn())
+            .into_db_error((content_id.content_owner(), content_id))?;
+
         if state.state().is_in_slot() {
             self
                 .write()
@@ -204,11 +206,11 @@ impl CurrentWriteMediaContent<'_> {
     /// Delete content from account's media content
     pub fn delete_content(
         &mut self,
-        content_id: ContentId,
+        content_id: ContentIdInternal,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::media_content::dsl::*;
 
-        delete(media_content.filter(uuid.eq(content_id)))
+        delete(media_content.find(content_id.as_db_id()))
             .execute(self.conn())
             .into_db_error(content_id)?;
 

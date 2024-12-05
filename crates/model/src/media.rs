@@ -3,10 +3,35 @@ use diesel::{
     AsExpression, FromSqlRow,
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::diesel_uuid_wrapper;
+use simple_backend_model::{diesel_i64_try_from, diesel_uuid_wrapper, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
-/// Content ID for media content for example images
+use crate::{schema_sqlite_types::Integer, AccountId, AccountIdInternal};
+
+/// media_content table primary key
+#[derive(
+    Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, FromSqlRow, AsExpression,
+)]
+#[diesel(sql_type = Integer)]
+#[serde(transparent)]
+pub struct ContentIdDb(pub i64);
+
+impl ContentIdDb {
+    pub fn new(id: i64) -> Self {
+        Self(id)
+    }
+
+    pub fn as_i64(&self) -> &i64 {
+        &self.0
+    }
+}
+
+diesel_i64_wrapper!(ContentIdDb);
+
+/// Content ID for media content.
+///
+/// Uniqueness is guaranteed for one account so other account might
+/// use the same ID for another content.
 #[derive(
     Debug,
     Clone,
@@ -29,8 +54,10 @@ pub struct ContentId {
 diesel_uuid_wrapper!(ContentId);
 
 impl ContentId {
-    fn new_base_64_url(content_id: simple_backend_utils::UuidBase64Url) -> Self {
-        Self { cid: content_id }
+    pub fn new_random() -> Self {
+        Self {
+            cid: simple_backend_utils::UuidBase64Url::new_random_id(),
+        }
     }
 
     fn diesel_uuid_wrapper_new(cid: simple_backend_utils::UuidBase64Url) -> Self {
@@ -55,21 +82,92 @@ impl ContentId {
     }
 }
 
-/// Content ID which is queued to be processed
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Deserialize, Serialize, ToSchema)]
-pub struct ContentProcessingId {
-    id: simple_backend_utils::UuidBase64Url,
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub struct ContentIdInternal {
+    aid: AccountIdInternal,
+    cid: ContentId,
+    cid_db: ContentIdDb,
 }
 
-impl ContentProcessingId {
-    pub fn new_random_id() -> Self {
+impl ContentIdInternal {
+    pub fn new(aid: AccountIdInternal, cid: ContentId, cid_db: ContentIdDb) -> Self {
         Self {
-            id: simple_backend_utils::UuidBase64Url::new_random_id(),
+            aid,
+            cid,
+            cid_db,
         }
     }
 
-    pub fn to_content_id(&self) -> ContentId {
-        ContentId::new_base_64_url(self.id)
+    pub fn as_db_id(&self) -> &ContentIdDb {
+        &self.cid_db
+    }
+
+    pub fn account_id(&self) -> AccountId {
+        self.aid.uuid
+    }
+
+    pub fn content_owner(&self) -> AccountIdInternal {
+        self.aid
+    }
+
+    pub fn content_id(&self) -> ContentId {
+        self.cid
+    }
+}
+
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    Serialize,
+    Deserialize,
+    ToSchema,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+    num_enum::TryFromPrimitive,
+)]
+#[diesel(sql_type = Integer)]
+#[repr(i64)]
+pub enum ContentSlot {
+    Content0 = 0,
+    Content1 = 1,
+    Content2 = 2,
+    Content3 = 3,
+    Content4 = 4,
+    Content5 = 5,
+    Content6 = 6,
+}
+
+diesel_i64_try_from!(ContentSlot);
+
+/// Content ID which is queued to be processed
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema)]
+pub struct ContentProcessingId {
+    aid: AccountId,
+    slot: ContentSlot,
+    /// Server process specific unique ID
+    id: i64,
+}
+
+impl ContentProcessingId {
+    pub fn new(aid: AccountId, slot: ContentSlot, id: i64) -> Self {
+        Self {
+            aid,
+            slot,
+            id,
+        }
+    }
+
+    /// File name for unprocessed user uploaded content.
+    pub fn raw_content_file_name(&self) -> String {
+        format!("{}_{}.raw", self.id, self.slot as i64)
+    }
+
+    pub fn content_file_name(&self) -> String {
+        format!("{}_{}", self.id, self.slot as i64)
     }
 }
 

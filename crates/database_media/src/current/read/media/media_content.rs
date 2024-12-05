@@ -1,6 +1,7 @@
-use database::{current::read::GetDbReadCommandsCommon, define_current_read_commands, DieselDatabaseError};
+use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
+use model::ContentIdInternal;
 use model_media::{
     AccountIdInternal, ContentId, ContentIdDb, ContentModerationState, ContentSlot, CurrentAccountMediaInternal, CurrentAccountMediaRaw, MediaContentRaw
 };
@@ -79,26 +80,32 @@ impl CurrentReadMediaMediaContent<'_> {
         })
     }
 
+    pub fn content_id_internal(
+        &mut self,
+        account_id_value: AccountIdInternal,
+        content_id_value: ContentId,
+    ) -> Result<ContentIdInternal, DieselDatabaseError> {
+        use crate::schema::media_content::dsl::*;
+        let id_value = media_content
+            .filter(account_id.eq(account_id_value.as_db_id()))
+            .filter(uuid.eq(content_id_value))
+            .select(id)
+            .first(self.conn())
+            .into_db_error((account_id_value, content_id_value))?;
+        Ok(ContentIdInternal::new(account_id_value, content_id_value, id_value))
+    }
+
     pub fn get_media_content_raw(
         &mut self,
-        content_id: ContentId,
+        content_id: ContentIdInternal,
     ) -> Result<MediaContentRaw, DieselDatabaseError> {
         use crate::schema::media_content::dsl::*;
         let content = media_content
-            .filter(uuid.eq(content_id))
+            .filter(id.eq(content_id.as_db_id()))
             .select(MediaContentRaw::as_select())
             .first(self.conn())
             .into_db_error(content_id)?;
         Ok(content)
-    }
-
-    pub fn get_media_content_raw_with_account_id(
-        &mut self,
-        content_id: ContentId,
-    ) -> Result<(MediaContentRaw, AccountIdInternal), DieselDatabaseError> {
-        let content = self.get_media_content_raw(content_id)?;
-        let account_id_value = self.read().common().db_id_to_internal_id(content.account_id)?;
-        Ok((content, account_id_value))
     }
 
     pub fn get_account_media_content(

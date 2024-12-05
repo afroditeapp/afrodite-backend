@@ -240,7 +240,7 @@ pub async fn put_content_to_content_slot(
         .write_concurrent(account_id.as_id(), move |cmds| async move {
             let out: ConcurrentWriteAction<crate::result::Result<_, DataError>> = cmds
                 .accquire_image(move |cmds: ConcurrentWriteContentHandle| {
-                    Box::new(async move { cmds.save_to_tmp(account_id, stream).await })
+                    Box::new(async move { cmds.save_to_tmp(account_id, slot, stream).await })
                 })
                 .await;
             out
@@ -324,8 +324,9 @@ pub async fn delete_content(
 ) -> Result<(), StatusCode> {
     MEDIA.delete_content.incr();
 
-    let content = state.read().media().content_state(content_id).await?;
     let content_owner_account_id = state.get_internal_id(content_owner_account_id).await?;
+    let content_id = state.read().media().content_id_internal(content_owner_account_id, content_id).await?;
+    let content = state.read().media().content_state(content_id).await?;
 
     if *content_owner_account_id.as_db_id() != content.account_id {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -345,7 +346,7 @@ pub async fn delete_content(
 
     db_write!(state, move |cmds| cmds
         .media()
-        .delete_content(content_owner_account_id, content_id))
+        .delete_content(content_id))
 }
 
 pub fn content_router(s: S) -> OpenApiRouter {

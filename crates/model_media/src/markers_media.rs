@@ -2,7 +2,6 @@ use super::*;
 
 enable_logging!(
     // Media
-    ContentIdDb,
 );
 
 disable_logging!(

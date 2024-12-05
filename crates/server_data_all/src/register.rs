@@ -2,17 +2,14 @@ use std::sync::Arc;
 
 use config::Config;
 use database::{
-    current::write::{GetDbWriteCommandsCommon, TransactionConnection},
-    DbWriteModeHistory, TransactionError,
+    current::write::{GetDbWriteCommandsCommon, TransactionConnection}, history::write::GetDbHistoryWriteCommandsCommon, DbWriteModeHistory, TransactionError
 };
-use database_account::{
-    current::write::GetDbWriteCommandsAccount, history::write::GetDbHistoryWriteCommandsAccount,
-};
+use database_account::current::write::GetDbWriteCommandsAccount;
 use database_chat::current::write::GetDbWriteCommandsChat;
 use database_media::current::write::GetDbWriteCommandsMedia;
 use database_profile::current::write::GetDbWriteCommandsProfile;
 use model_account::{
-    Account, AccountId, AccountIdInternal, AccountInternal, EmailAddress, SharedStateRaw,
+    AccountId, AccountIdInternal, AccountInternal, EmailAddress, SharedStateRaw,
     SignInWithInfo,
 };
 use server_data::{
@@ -67,8 +64,6 @@ impl RegisterAccount<'_> {
         transaction: TransactionConnection,
         history_conn: DbWriteModeHistory,
     ) -> std::result::Result<AccountIdInternal, TransactionError> {
-        let account = Account::default();
-
         let mut current = transaction.into_conn();
 
         // No transaction for history as it does not matter if some default
@@ -89,7 +84,7 @@ impl RegisterAccount<'_> {
             .insert_shared_state(id, SharedStateRaw::default())?;
 
         // Common history
-        history.account_history().insert_account_id(id)?;
+        history.common_history().insert_account_id(id)?;
 
         if config.components().account {
             current
@@ -105,9 +100,6 @@ impl RegisterAccount<'_> {
             if let Some(email) = email {
                 current.account().data().update_account_email(id, &email)?;
             }
-
-            // Account history
-            history.account_history().insert_account(id, &account)?;
         }
 
         if config.components().profile {

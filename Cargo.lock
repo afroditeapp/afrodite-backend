@@ -1067,8 +1067,6 @@ dependencies = [
  "model",
  "model_account",
  "model_server_state",
- "serde_json",
- "simple_backend_utils",
 ]
 
 [[package]]

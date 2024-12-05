@@ -68,8 +68,11 @@ enable_logging!(
     Option<AccountIdDb>,
     // Media
     ContentId,
+    ContentIdDb,
     Option<ContentId>,
+    ContentIdInternal,
     NextQueueNumberType,
+    ContentSlot,
     // General
     &'static str,
 );

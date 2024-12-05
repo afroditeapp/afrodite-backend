@@ -1,6 +1,6 @@
 use diesel::{prelude::*, sql_types::BigInt, AsExpression, FromSqlRow};
-use model::{sync_version_wrappers, ContentId, ProfileContentVersion, UnixTime};
-use model_server_data::{ContentSlot, MediaContentType};
+use model::{sync_version_wrappers, ContentId, ContentIdDb, ContentSlot, ProfileContentVersion, UnixTime};
+use model_server_data::MediaContentType;
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper};
@@ -482,25 +482,6 @@ pub struct AccountContent {
     ///   [ContentInfoDetailed::usage_end_time]
     pub unused_content_wait_seconds: u32,
 }
-
-#[derive(
-    Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, FromSqlRow, AsExpression,
-)]
-#[diesel(sql_type = BigInt)]
-#[serde(transparent)]
-pub struct ContentIdDb(pub i64);
-
-impl ContentIdDb {
-    pub fn new(id: i64) -> Self {
-        Self(id)
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.0
-    }
-}
-
-diesel_i64_wrapper!(ContentIdDb);
 
 #[derive(Debug, Clone, Default, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::media_state)]

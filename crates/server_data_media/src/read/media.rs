@@ -1,4 +1,5 @@
 use database_media::current::read::GetDbReadCommandsMedia;
+use model::ContentIdInternal;
 use model_media::{
     AccountId, AccountIdInternal, ContentId, CurrentAccountMediaInternal, MediaContentRaw, MediaContentSyncVersion,
 };
@@ -74,12 +75,26 @@ impl ReadCommandsMedia<'_> {
 
     pub async fn content_state(
         &self,
-        content_id: ContentId,
+        content_id: ContentIdInternal,
     ) -> Result<MediaContentRaw, DataError> {
         self.db_read(move |mut cmds| {
             cmds.media()
                 .media_content()
                 .get_media_content_raw(content_id)
+        })
+        .await
+        .into_error()
+    }
+
+    pub async fn content_id_internal(
+        &self,
+        account_id: AccountIdInternal,
+        content_id: ContentId,
+    ) -> Result<ContentIdInternal, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.media()
+                .media_content()
+                .content_id_internal(account_id, content_id)
         })
         .await
         .into_error()

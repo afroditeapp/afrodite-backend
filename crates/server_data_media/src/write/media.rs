@@ -1,14 +1,14 @@
 use std::collections::HashSet;
 
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
-use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
+use database_media::{current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia}, history::write::GetDbHistoryWriteCommandsMedia};
 use error_stack::ResultExt;
-use model::{Account, ProfileVisibility};
+use model::{Account, ContentIdInternal, ProfileVisibility};
 use model_media::{
     AccountIdInternal, ContentId, ContentIdDb, ContentSlot, CurrentAccountMediaInternal, NewContentParams, ProfileContentVersion, SetProfileContent
 };
 use server_data::{
-    app::GetConfig, cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, file::FileWrite, read::DbRead, result::{Result, WrappedContextExt}, write::{DbTransaction, GetWriteCommandsCommon}, DataError, DieselDatabaseError
+    app::GetConfig, cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, file::{utils::TmpContentFile, FileWrite}, read::DbRead, result::{Result, WrappedContextExt}, write::{DbTransaction, DbTransactionHistory, GetWriteCommandsCommon}, DataError, DieselDatabaseError
 };
 
 use crate::cache::CacheWriteMedia;
@@ -29,11 +29,11 @@ impl WriteCommandsMedia<'_> {
     pub async fn save_to_slot(
         &self,
         id: AccountIdInternal,
-        content_id: ContentId,
+        tmp_img: TmpContentFile,
         slot: ContentSlot,
         new_content_params: NewContentParams,
         face_detected: bool,
-    ) -> Result<(), DataError> {
+    ) -> Result<ContentId, DataError> {
         // Remove previous slot content.
         let current_content_in_slot = self
             .db_read(move |mut cmds| {
@@ -57,10 +57,14 @@ impl WriteCommandsMedia<'_> {
             .change_context(DataError::Sqlite)?;
         }
 
+        let content_id = self.db_transaction_history(move |mut cmds| {
+            cmds.media_history()
+                .get_next_unique_content_id(id)
+        })
+        .await
+        .change_context(DataError::Sqlite)?;
+
         // Paths related to moving content from tmp dir to content dir
-        let tmp_img = self
-            .files()
-            .processed_content_upload(id.as_id(), content_id);
         let processed_content_path = self.files().media_content(id.as_id(), content_id);
 
         self.db_transaction(move |mut cmds| {
@@ -90,7 +94,7 @@ impl WriteCommandsMedia<'_> {
         //     .await
         //     .change_context(DataError::MediaBackup)
 
-        Ok(())
+        Ok(content_id)
     }
 
     pub async fn update_profile_content(
@@ -126,46 +130,44 @@ impl WriteCommandsMedia<'_> {
 
     pub async fn update_security_content(
         &self,
-        content_owner: AccountIdInternal,
-        content: ContentId,
+        content_id: ContentIdInternal,
     ) -> Result<(), DataError> {
-        let content_before_update = self.db_read(move |mut cmds| cmds.media().media_content().current_account_media(content_owner)).await?;
+        let content_before_update = self.db_read(move |mut cmds| cmds.media().media_content().current_account_media(content_id.content_owner())).await?;
 
         db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .media_content()
-                .update_security_content(content_owner, content)?;
+                .update_security_content(content_id)?;
 
-            cmds.media().media_content().increment_media_content_sync_version(content_owner)
+            cmds.media().media_content().increment_media_content_sync_version(content_id.content_owner())
         })?;
 
-        self.update_content_usage(content_owner, content_before_update).await
+        self.update_content_usage(content_id.content_owner(), content_before_update).await
     }
 
     pub async fn delete_content(
         &self,
-        content_owner_id: AccountIdInternal,
-        content: ContentId,
+        content_id: ContentIdInternal,
     ) -> Result<(), DataError> {
         let new_profile_content_version = ProfileContentVersion::new_random();
 
         db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .media_content()
-                .update_profile_content_version(content_owner_id, new_profile_content_version)?;
-            cmds.media().media_content().increment_media_content_sync_version(content_owner_id)?;
+                .update_profile_content_version(content_id.content_owner(), new_profile_content_version)?;
+            cmds.media().media_content().increment_media_content_sync_version(content_id.content_owner())?;
             cmds.media()
                 .media_content()
-                .delete_content(content)
+                .delete_content(content_id)
         })?;
 
-        self.write_cache_media(content_owner_id.as_id(), |e| {
+        self.write_cache_media(content_id.content_owner(), |e| {
             e.profile_content_version = new_profile_content_version;
             Ok(())
         })
         .await?;
 
-        self.files().media_content(content_owner_id.uuid, content).remove_if_exists().await?;
+        self.files().media_content(content_id.content_owner().into(), content_id.content_id()).remove_if_exists().await?;
 
         Ok(())
     }

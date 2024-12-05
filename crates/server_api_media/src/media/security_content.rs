@@ -7,14 +7,13 @@ use model_media::{
     AccountId, AccountIdInternal, ContentId, SecurityContent,
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{create_open_api_router, S};
+use server_api::{create_open_api_router, db_write_multiple, S};
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{GetAccounts, ReadData, WriteData},
-    db_write,
     utils::{Json, StatusCode},
 };
 
@@ -102,9 +101,16 @@ pub async fn put_security_content_info(
 ) -> Result<(), StatusCode> {
     MEDIA.put_security_content_info.incr();
 
-    db_write!(state, move |cmds| cmds
-        .media()
-        .update_security_content(api_caller_account_id, content_id))
+    db_write_multiple!(state, move |cmds| {
+        let content_id = cmds
+            .read()
+            .media()
+            .content_id_internal(api_caller_account_id, content_id)
+            .await?;
+        cmds
+            .media()
+            .update_security_content(content_id).await
+    })
 }
 
 pub fn security_content_router(s: S) -> OpenApiRouter {

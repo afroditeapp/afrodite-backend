@@ -1,4 +1,5 @@
 use config::Config;
+use model::ContentId;
 use model_media::MediaContentType;
 use server_api::{
     app::{ContentProcessingProvider, EventManagerProvider, WriteData},
@@ -104,10 +105,10 @@ impl ContentProcessingManager {
                 .if_successful_save_to_database(self.state.config(), result, state)
                 .await;
             match result {
-                Ok(face_detected) => {
+                Ok(ImgInfo { face_detected, content_id }) => {
                     state
                         .processing_state
-                        .change_to_completed(state.processing_id.to_content_id(), face_detected.0);
+                        .change_to_completed(content_id, face_detected);
                 }
                 Err(e) => {
                     state.processing_state.change_to_failed();
@@ -136,7 +137,7 @@ impl ContentProcessingManager {
         config: &Config,
         result: Result<ImageProcessingInfo, ContentProcessingError>,
         state: &mut ProcessingState,
-    ) -> Result<FaceDetected, ContentProcessingError> {
+    ) -> Result<ImgInfo, ContentProcessingError> {
         let info = result?;
         let face_detected =
             if let Some(face_detected) = config.simple_backend().override_face_detection_result() {
@@ -146,11 +147,11 @@ impl ContentProcessingManager {
             };
 
         let state_copy = state.clone();
-        db_write_raw!(self.state, move |cmds| {
+        let content_id = db_write_raw!(self.state, move |cmds| {
             cmds.media()
                 .save_to_slot(
                     state_copy.content_owner,
-                    state_copy.processing_id.to_content_id(),
+                    state_copy.tmp_img,
                     state_copy.slot,
                     state_copy.new_content_params,
                     face_detected,
@@ -160,8 +161,14 @@ impl ContentProcessingManager {
         .await
         .change_context(ContentProcessingError::DatabaseError)?;
 
-        Ok(FaceDetected(face_detected))
+        Ok(ImgInfo {
+            face_detected,
+            content_id,
+        })
     }
 }
 
-struct FaceDetected(bool);
+struct ImgInfo {
+    face_detected: bool,
+    content_id: ContentId,
+}

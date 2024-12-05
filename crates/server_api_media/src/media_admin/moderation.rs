@@ -6,7 +6,7 @@ use model_media::{
     AccountIdInternal, EventToClientInternal, GetProfileContentPendingModerationList, GetProfileContentPendingModerationParams, NotificationEvent, Permissions, PostModerateProfileContent
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{create_open_api_router, S};
+use server_api::{create_open_api_router, S, app::GetAccounts};
 use server_data_media::{read::GetReadMediaCommands, write::{media::InitialContentModerationResult, GetWriteCommandsMedia}};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
@@ -97,12 +97,18 @@ pub async fn post_moderate_profile_content(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
+    let content_owner = state.get_internal_id(data.account_id).await?;
+
     db_write_multiple!(state, move |cmds| {
+        let content_id = cmds
+            .read()
+            .media()
+            .content_id_internal(content_owner, data.content_id).await?;
         let info = cmds.media_admin()
             .content()
             .moderate_profile_content(
                 moderator_id,
-                data.content_id,
+                content_id,
                 data.accept,
                 data.rejected_category,
                 data.rejected_details,
@@ -110,20 +116,19 @@ pub async fn post_moderate_profile_content(
             )
             .await?;
 
-
         match info.moderation_result {
             InitialContentModerationResult::AllAccepted { account_after_visibility_change } => {
                 if cmds.config().components().account {
                     cmds.events()
                         .send_connected_event(
-                            info.content_owner_id,
+                            content_id.content_owner(),
                             EventToClientInternal::ProfileVisibilityChanged(account_after_visibility_change.profile_visibility()),
                         )
                         .await?;
                 }
                 cmds.events()
                     .send_notification(
-                        info.content_owner_id,
+                        content_id.content_owner(),
                         NotificationEvent::InitialContentModerationCompleted,
                     )
                     .await?;
@@ -132,7 +137,7 @@ pub async fn post_moderate_profile_content(
             InitialContentModerationResult::AllModeratedAndNotAccepted => {
                 cmds.events()
                     .send_notification(
-                        info.content_owner_id,
+                        content_id.content_owner(),
                         NotificationEvent::InitialContentModerationCompleted,
                     )
                     .await?;
