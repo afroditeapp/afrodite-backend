@@ -142,22 +142,30 @@ impl WriteCommandsMedia<'_> {
         self.update_content_usage(content_owner, content_before_update).await
     }
 
-    // TODO(prod): Admin is removing content from server. Should only image data
-    // be replaced or image data and content ID be removed?
-
-    /// The content must not be in use.
     pub async fn delete_content(
         &self,
-        account_id: AccountIdInternal,
+        content_owner_id: AccountIdInternal,
         content: ContentId,
     ) -> Result<(), DataError> {
+        let new_profile_content_version = ProfileContentVersion::new_random();
+
         db_transaction!(self, move |mut cmds| {
+            cmds.media()
+                .media_content()
+                .update_profile_content_version(content_owner_id, new_profile_content_version)?;
+            cmds.media().media_content().increment_media_content_sync_version(content_owner_id)?;
             cmds.media()
                 .media_content()
                 .delete_content(content)
         })?;
 
-        self.files().media_content(account_id.uuid, content).remove_if_exists().await?;
+        self.write_cache_media(content_owner_id.as_id(), |e| {
+            e.profile_content_version = new_profile_content_version;
+            Ok(())
+        })
+        .await?;
+
+        self.files().media_content(content_owner_id.uuid, content).remove_if_exists().await?;
 
         Ok(())
     }

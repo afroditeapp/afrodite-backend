@@ -39,10 +39,11 @@ CREATE TABLE IF NOT EXISTS refresh_token(
 -- server as it propagates the changes to other components.
 CREATE TABLE IF NOT EXISTS account_permissions(
     account_id    INTEGER PRIMARY KEY NOT NULL,
-    admin_modify_permissions                    BOOLEAN NOT NULL DEFAULT 0,
+    admin_modify_permissions                     BOOLEAN NOT NULL DEFAULT 0,
     admin_moderate_profile_content               BOOLEAN NOT NULL DEFAULT 0,
     admin_moderate_profile_names                 BOOLEAN NOT NULL DEFAULT 0,
     admin_moderate_profile_texts                 BOOLEAN NOT NULL DEFAULT 0,
+    admin_delete_media_content                   BOOLEAN NOT NULL DEFAULT 0,
     admin_view_all_profiles                      BOOLEAN NOT NULL DEFAULT 0,
     admin_view_private_info                      BOOLEAN NOT NULL DEFAULT 0,
     admin_view_profile_history                   BOOLEAN NOT NULL DEFAULT 0,

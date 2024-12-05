@@ -163,6 +163,7 @@ define_permissions!(
     admin_moderate_profile_content,
     admin_moderate_profile_names,
     admin_moderate_profile_texts,
+    admin_delete_media_content,
     /// View public and private profiles.
     admin_view_all_profiles,
     admin_view_private_info,

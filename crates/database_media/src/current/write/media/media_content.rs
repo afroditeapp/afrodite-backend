@@ -183,6 +183,24 @@ impl CurrentWriteMediaContent<'_> {
         Ok(())
     }
 
+    /// Update profile content version.
+    pub fn update_profile_content_version(
+        &mut self,
+        id: AccountIdInternal,
+        new_version: ProfileContentVersion,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::current_account_media::dsl::*;
+
+        update(current_account_media.find(id.as_db_id()))
+            .set((
+                profile_content_version_uuid.eq(new_version),
+            ))
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
+    }
+
     /// Delete content from account's media content
     pub fn delete_content(
         &mut self,

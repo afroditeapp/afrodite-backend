@@ -292,15 +292,22 @@ pub async fn get_content_slot_state(
 }
 
 #[obfuscate_api]
-const PATH_DELETE_CONTENT: &str = "/media_api/content/{cid}";
+const PATH_DELETE_CONTENT: &str = "/media_api/content/{aid}/{cid}";
 
-/// Delete content data. Content can be removed after specific time has passed
-/// since removing all usage from it (content is not a security image or profile
-/// content).
+/// Delete content data.
+///
+/// # Own account
+/// Content can be deleted after specific time has passed
+/// since removing all usage of it (content is not assigned
+/// as security or profile content).
+///
+/// # Admin
+/// Admin can remove content without restrictions with
+/// permission `admin_delete_media_content`.
 #[utoipa::path(
     delete,
     path = PATH_DELETE_CONTENT,
-    params(ContentId),
+    params(AccountId, ContentId),
     responses(
         (status = 200, description = "Content data deleted."),
         (status = 401, description = "Unauthorized."),
@@ -310,25 +317,35 @@ const PATH_DELETE_CONTENT: &str = "/media_api/content/{cid}";
 )]
 pub async fn delete_content(
     State(state): State<S>,
-    Extension(account_id): Extension<AccountIdInternal>,
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    Extension(permissions): Extension<Permissions>,
+    Path(content_owner_account_id): Path<AccountId>,
     Path(content_id): Path<ContentId>,
 ) -> Result<(), StatusCode> {
     MEDIA.delete_content.incr();
 
     let content = state.read().media().content_state(content_id).await?;
+    let content_owner_account_id = state.get_internal_id(content_owner_account_id).await?;
 
-    let owner_deleting_content = *account_id.as_db_id() == content.account_id;
-    if !owner_deleting_content {
+    if *content_owner_account_id.as_db_id() != content.account_id {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    if !content.removable_by_user(state.config().limits_media().unused_content_wait_time_seconds.seconds) {
+    let owner_deleting_content = content_owner_account_id == api_caller_account_id;
+    let admin_access = permissions.admin_delete_media_content;
+    let route_access_allowed = owner_deleting_content || admin_access;
+
+    if !route_access_allowed {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    if owner_deleting_content && !admin_access && !content.removable_by_user(state.config().limits_media().unused_content_wait_time_seconds.seconds) {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
     db_write!(state, move |cmds| cmds
         .media()
-        .delete_content(account_id, content_id))
+        .delete_content(content_owner_account_id, content_id))
 }
 
 pub fn content_router(s: S) -> OpenApiRouter {
