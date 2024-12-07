@@ -60,13 +60,7 @@ pub async fn get_security_content_info(
         .current_account_media(internal_id)
         .await?;
 
-    let sv = state
-        .read()
-        .media()
-        .media_content_sync_version(internal_id)
-        .await?;
-
-    let info: SecurityContent = SecurityContent::new(internal_current_media, sv);
+    let info: SecurityContent = SecurityContent::new(internal_current_media);
     Ok(info.into())
 }
 

@@ -7,6 +7,7 @@ use server_api_account::{
     account_admin::ACCOUNT_ADMIN_NEWS_COUNTERS_LIST,
 };
 use server_api_chat::chat::CHAT_PUBLIC_KEY_COUNTERS_LIST;
+use server_api_media::media::MEDIA_MEDIA_CONTENT_COUNTERS_LIST;
 use server_api_profile::{
     profile::PROFILE_STATISTICS_COUNTERS_LIST,
     profile_admin::{
@@ -68,6 +69,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("account_internal", ACCOUNT_INTERNAL_COUNTERS_LIST),
     // Media
     &CounterCategory::new("media_content", MEDIA_CONTENT_COUNTERS_LIST),
+    &CounterCategory::new("media_media_content", MEDIA_MEDIA_CONTENT_COUNTERS_LIST),
     &CounterCategory::new("media_profile_content", MEDIA_PROFILE_CONTENT_COUNTERS_LIST),
     &CounterCategory::new(
         "media_security_content",

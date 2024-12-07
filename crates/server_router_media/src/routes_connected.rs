@@ -16,6 +16,7 @@ impl ConnectedApp {
     pub fn private_media_server_router(&self) -> Router {
         Router::new()
             // Media
+            .merge(api::media::media_content_router(self.state.clone()))
             .merge(api::media::profile_content_router(self.state.clone()))
             .merge(api::media::security_content_router(self.state.clone()))
             .merge(api::media::content_router(self.state.clone()))

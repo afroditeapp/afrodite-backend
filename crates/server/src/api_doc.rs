@@ -56,6 +56,9 @@ impl ApiDoc {
         let media = ApiDoc::openapi()
             .merge_from(server_api_media::media::content_router(state.clone()).into_openapi())
             .merge_from(
+                server_api_media::media::media_content_router(state.clone()).into_openapi(),
+            )
+            .merge_from(
                 server_api_media::media::profile_content_router(state.clone()).into_openapi(),
             )
             .merge_from(
