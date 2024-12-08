@@ -149,7 +149,7 @@ impl ContentProcessingManager {
         let state_copy = state.clone();
         let content_id = db_write_raw!(self.state, move |cmds| {
             cmds.media()
-                .save_to_slot(
+                .save_img(
                     state_copy.content_owner,
                     state_copy.tmp_img,
                     state_copy.slot,

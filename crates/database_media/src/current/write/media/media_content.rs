@@ -217,11 +217,11 @@ impl CurrentWriteMediaContent<'_> {
         Ok(())
     }
 
-    pub fn insert_content_id_to_slot(
+    pub fn insert_content_id(
         &mut self,
         content_uploader: AccountIdInternal,
         content_id: ContentId,
-        slot: ContentSlot,
+        slot: Option<ContentSlot>,
         content_params: NewContentParams,
         face_detected_value: bool,
     ) -> Result<(), DieselDatabaseError> {
@@ -231,20 +231,26 @@ impl CurrentWriteMediaContent<'_> {
 
         let account = self.read().common().account(content_uploader)?;
         let initial_content_value = account.profile_visibility().is_pending();
+        let (slot_number_value, state_value) = if let Some(slot) = slot {
+            (slot, ContentModerationState::InSlot)
+        } else {
+            (ContentSlot::Content0, ContentModerationState::WaitingBotOrHumanModeration)
+        };
 
         insert_into(media_content)
             .values((
                 account_id.eq(content_uploader.as_db_id()),
                 uuid.eq(content_id),
-                slot_number.eq(slot as i64),
+                slot_number.eq(slot_number_value),
                 secure_capture.eq(content_params.secure_capture),
                 face_detected.eq(face_detected_value),
                 content_type_number.eq(content_params.content_type),
                 initial_content.eq(initial_content_value),
                 creation_unix_time.eq(current_time),
+                moderation_state.eq(state_value),
             ))
             .execute(self.conn())
-            .into_db_error((content_uploader, content_id, slot))?;
+            .into_db_error((content_uploader, content_id))?;
 
         Ok(())
     }

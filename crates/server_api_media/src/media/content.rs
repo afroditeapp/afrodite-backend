@@ -187,10 +187,14 @@ pub async fn get_all_account_media_content(
 #[obfuscate_api]
 const PATH_PUT_CONTENT_TO_CONTENT_SLOT: &str = "/media_api/content_slot/{slot_id}";
 
-/// Set content to content processing slot.
+/// Upload content to server. The content is saved to content processing
+/// slot when account state is [model::AccountState::InitialSetup].
+/// In other states the slot number is ignored and content goes
+/// directly to moderation.
+///
 /// Processing ID will be returned and processing of the content
-/// will begin.
-/// Events about the content processing will be sent to the client.
+/// will begin. Events about the content processing will be sent
+/// to the client.
 ///
 /// The state of the processing can be also queired. The querying is
 /// required to receive the content ID.

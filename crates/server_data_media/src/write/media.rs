@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_media::{current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia}, history::write::GetDbHistoryWriteCommandsMedia};
 use error_stack::ResultExt;
-use model::{Account, ContentIdInternal, ProfileVisibility};
+use model::{Account, AccountState, ContentIdInternal, ProfileVisibility};
 use model_media::{
     AccountIdInternal, ContentId, ContentIdDb, ContentSlot, CurrentAccountMediaInternal, NewContentParams, ProfileContentVersion, SetProfileContent
 };
@@ -26,7 +26,7 @@ define_cmd_wrapper_write!(WriteCommandsMedia);
 
 impl WriteCommandsMedia<'_> {
     /// Completes previous save_to_tmp.
-    pub async fn save_to_slot(
+    pub async fn save_img(
         &self,
         id: AccountIdInternal,
         tmp_img: TmpContentFile,
@@ -34,27 +34,36 @@ impl WriteCommandsMedia<'_> {
         new_content_params: NewContentParams,
         face_detected: bool,
     ) -> Result<ContentId, DataError> {
-        // Remove previous slot content.
-        let current_content_in_slot = self
-            .db_read(move |mut cmds| {
-                cmds.media()
-                    .media_content()
-                    .get_media_content_from_slot(id, slot)
-            })
-            .await?;
+        let account = self.db_read(move |mut cmds| cmds.common().account(id)).await?;
+        let slot = if account.state() == AccountState::InitialSetup {
+            Some(slot)
+        } else {
+            None
+        };
 
-        if let Some(content) = current_content_in_slot {
-            let path = self.files().media_content(id.as_id(), content.into());
-            path.remove_if_exists()
+        if let Some(slot) = slot {
+            // Remove previous slot content.
+            let current_content_in_slot = self
+                .db_read(move |mut cmds| {
+                    cmds.media()
+                        .media_content()
+                        .get_media_content_from_slot(id, slot)
+                })
+                .await?;
+
+            if let Some(content) = current_content_in_slot {
+                let path = self.files().media_content(id.as_id(), content.into());
+                path.remove_if_exists()
+                    .await
+                    .change_context(DataError::File)?;
+                self.db_transaction(move |mut cmds| {
+                    cmds.media()
+                        .media_content()
+                        .delete_content_from_slot(id, slot)
+                })
                 .await
-                .change_context(DataError::File)?;
-            self.db_transaction(move |mut cmds| {
-                cmds.media()
-                    .media_content()
-                    .delete_content_from_slot(id, slot)
-            })
-            .await
-            .change_context(DataError::Sqlite)?;
+                .change_context(DataError::Sqlite)?;
+            }
         }
 
         let content_id = self.db_transaction_history(move |mut cmds| {
@@ -70,7 +79,7 @@ impl WriteCommandsMedia<'_> {
         self.db_transaction(move |mut cmds| {
             cmds.media()
                 .media_content()
-                .insert_content_id_to_slot(
+                .insert_content_id(
                     id,
                     content_id,
                     slot,
