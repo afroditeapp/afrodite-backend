@@ -54,6 +54,10 @@ pub async fn post_get_next_profile_page(
     }
 }
 
+// TODO(prod): Consider adding support for optional random iterator initial
+//             position and max distance. Could filtering settings
+//             include those?
+
 #[obfuscate_api]
 const PATH_POST_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
 
