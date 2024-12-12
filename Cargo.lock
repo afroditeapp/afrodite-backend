@@ -2500,6 +2500,7 @@ dependencies = [
  "model_server_data",
  "num_enum",
  "serde",
+ "serde_json",
  "simple_backend_model",
  "simple_backend_utils",
  "utoipa",

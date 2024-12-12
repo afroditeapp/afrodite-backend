@@ -24,9 +24,49 @@ pub struct SlotId {
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct ContentInfo {
     pub cid: ContentId,
+    /// Default value is not set to API doc as the API doc will then have
+    /// "oneOf" property and Dart code generator does not support it.
+    ///
+    /// Default value is [MediaContentType::JpegImage].
+    #[serde(default = "value_jpeg_image", skip_serializing_if = "value_is_jpeg_image")]
+    #[schema(value_type = Option<MediaContentType>)]
     pub ctype: MediaContentType,
+    #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
+    #[schema(default = true)]
     /// Accepted
     pub a: bool,
+    #[serde(default = "value_bool_false", skip_serializing_if = "value_is_false")]
+    #[schema(default = false)]
+    /// Primary content
+    ///
+    /// The first profile content is not primary content when admin
+    /// deletes the first profile content and the second content does
+    /// not have face detected.
+    pub p: bool,
+}
+
+fn value_bool_true() -> bool {
+    true
+}
+
+fn value_bool_false() -> bool {
+    false
+}
+
+fn value_jpeg_image() -> MediaContentType {
+    MediaContentType::JpegImage
+}
+
+fn value_is_true(v: &bool) -> bool {
+    *v
+}
+
+fn value_is_false(v: &bool) -> bool {
+    !*v
+}
+
+fn value_is_jpeg_image(v: &MediaContentType) -> bool {
+    *v == MediaContentType::JpegImage
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
@@ -223,16 +263,6 @@ impl From<MediaContentRaw> for ContentId {
     }
 }
 
-impl From<MediaContentRaw> for ContentInfo {
-    fn from(value: MediaContentRaw) -> Self {
-        ContentInfo {
-            cid: value.uuid,
-            ctype: value.content_type_number,
-            a: value.state().is_accepted(),
-        }
-    }
-}
-
 impl From<MediaContentRaw> for ContentInfoWithFd {
     fn from(value: MediaContentRaw) -> Self {
         ContentInfoWithFd {
@@ -316,10 +346,11 @@ impl CurrentAccountMediaInternal {
     }
 
     pub fn iter_current_profile_content_info(&self) -> impl Iterator<Item = ContentInfo> + '_ {
-        self.iter_current_profile_content().map(|v| ContentInfo {
+        self.iter_current_profile_content().enumerate().map(|(i, v)| ContentInfo {
             cid: v.content_id(),
             ctype: v.content_type(),
             a: v.state().is_accepted(),
+            p: (i == 0 && v.face_detected),
         })
     }
 
