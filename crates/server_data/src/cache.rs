@@ -114,7 +114,7 @@ impl DatabaseCache {
                 });
                 let last_seen_time_update = write.profile.as_ref().map(|v| LastSeenTimeUpdated {
                     last_seen_time: LastSeenTime::ONLINE,
-                    current_position: v.location.current_position,
+                    current_position: v.location.current_position.profile_location(),
                 });
                 Ok(Some((receiver, last_seen_time_update)))
             } else {
@@ -169,7 +169,7 @@ impl DatabaseCache {
                         .as_ref()
                         .map(|v| LastSeenTimeUpdated {
                             last_seen_time: last_seen_time.into(),
-                            current_position: v.location.current_position,
+                            current_position: v.location.current_position.profile_location(),
                         });
             }
         }

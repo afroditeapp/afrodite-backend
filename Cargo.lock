@@ -4149,6 +4149,7 @@ dependencies = [
  "model_server_data",
  "nalgebra",
  "num_cpus",
+ "rand",
  "server_common",
  "simple_backend",
  "simple_backend_model",

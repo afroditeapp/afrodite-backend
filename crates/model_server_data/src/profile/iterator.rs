@@ -1,6 +1,8 @@
+use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
 use model::{AccountId, NextNumberStorage, ProfileContentVersion};
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use simple_backend_model::diesel_i64_wrapper;
+use utoipa::{IntoParams, ToSchema};
 
 use super::{LastSeenTime, ProfileVersion};
 
@@ -68,3 +70,36 @@ impl ProfileLink {
         self.last_seen_time = Some(value);
     }
 }
+
+/// Profile iterator max distance in kilometers.
+///
+/// The value is equal or greater than 1.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    IntoParams,
+    PartialEq,
+    Eq,
+    FromSqlRow,
+    AsExpression,
+)]
+#[diesel(sql_type = BigInt)]
+pub struct MaxDistanceKm {
+    pub value: i64,
+}
+
+impl MaxDistanceKm {
+    pub fn new(value: i64) -> Self {
+        Self { value }
+    }
+
+    pub fn as_i64(&self) -> &i64 {
+        &self.value
+    }
+}
+
+diesel_i64_wrapper!(MaxDistanceKm);

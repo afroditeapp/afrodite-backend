@@ -265,6 +265,10 @@ CREATE TABLE IF NOT EXISTS profile_state(
     last_seen_time_filter      INTEGER,
     -- Filter setting for unlimited likes.
     unlimited_likes_filter     BOOLEAN,
+    -- Filter setting for profile iterator max distance in kilometers.
+    max_distance_km            INTEGER,
+    -- Profile iterator setting for random profile order.
+    random_profile_order       BOOLEAN              NOT NULL    DEFAULT 0,
     latitude                   DOUBLE               NOT NULL    DEFAULT 0.0,
     longitude                  DOUBLE               NOT NULL    DEFAULT 0.0,
     -- Sync version for profile attributes config file.

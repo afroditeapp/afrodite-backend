@@ -5,12 +5,12 @@ use std::{
     sync::Arc,
 };
 
+use area::LocationIndexArea;
 use config::{file::LocationConfig, Config};
 use error_stack::ResultExt;
 use model::{AccountId, UnixTime};
 use model_server_data::{
-    CellData, Location, LocationIndexKey, LocationIndexProfileData, ProfileLink,
-    ProfileQueryMakerDetails,
+    CellData, Location, LocationIndexKey, LocationIndexProfileData, LocationInternal, MaxDistanceKm, ProfileLink, ProfileQueryMakerDetails
 };
 use server_common::data::index::IndexError;
 use tokio::sync::RwLock;
@@ -20,6 +20,7 @@ use self::location::{IndexUpdater, LocationIndex, LocationIndexIteratorState};
 use crate::{cache::LastSeenTimeUpdated, db_manager::InternalWriting};
 
 pub mod location;
+pub mod area;
 
 pub trait LocationWrite {
     fn location(&self) -> crate::index::LocationIndexWriteHandle<'_>;
@@ -213,7 +214,7 @@ impl<'a> LocationIndexIteratorHandle<'a> {
     ) -> (LocationIndexIteratorState, IteratorResultInternal) {
         let index = self.index.clone();
         let (iterator, key) = {
-            let mut iterator = previous_iterator_state.to_iterator(index);
+            let mut iterator = previous_iterator_state.into_iterator(index);
             let key = iterator.next();
             (iterator, key)
         };
@@ -250,14 +251,12 @@ impl<'a> LocationIndexIteratorHandle<'a> {
         (iterator.into(), result)
     }
 
-    pub fn reset_iterator(
+    pub fn new_iterator_state(
         &self,
-        previous_iterator_state: LocationIndexIteratorState,
-        location: LocationIndexKey,
+        area: &LocationIndexArea,
+        random: bool,
     ) -> LocationIndexIteratorState {
-        let mut iterator = previous_iterator_state.to_iterator(self.index.clone());
-        iterator.reset(location.x, location.y);
-        iterator.into()
+        LocationIndexIteratorState::new(area, random, &self.index)
     }
 }
 
@@ -277,9 +276,13 @@ impl<'a> LocationIndexWriteHandle<'a> {
         }
     }
 
-    pub fn coordinates_to_key(&self, location: &Location) -> LocationIndexKey {
+    pub fn coordinates_to_area(
+        &self,
+        location: Location,
+        max_distance: Option<MaxDistanceKm>,
+    ) -> LocationIndexArea {
         self.coordinates
-            .to_index_key(location.latitude(), location.longitude())
+            .to_index_area(location.into(), max_distance)
     }
 
     /// Move LocationIndexProfileData to another index location
@@ -545,10 +548,25 @@ impl CoordinateManager {
         u32::max(1, self.x_max_tile() - x_start) as u16
     }
 
-    pub fn to_index_key(&self, latitude: f64, longitude: f64) -> LocationIndexKey {
+    pub fn to_index_area(&self, location: LocationInternal, max_distance: Option<MaxDistanceKm>) -> LocationIndexArea {
+        let profile_location = self.location_to_index_key(location);
+
+        if let Some(max_distance) = max_distance {
+            let distance = max_distance.value as f64;
+            LocationIndexArea {
+                top_left: self.location_to_index_key(location.move_kilometers(distance, -distance)),
+                bottom_right: self.location_to_index_key(location.move_kilometers(-distance, distance)),
+                profile_location,
+            }
+        } else {
+            LocationIndexArea::max_area(profile_location, self.width(), self.height())
+        }
+    }
+
+    pub fn location_to_index_key(&self, location: LocationInternal) -> LocationIndexKey {
         LocationIndexKey {
-            y: self.calculate_index_y_key(latitude),
-            x: self.calculate_index_x_key(longitude),
+            y: self.calculate_index_y_key(location.latitude()),
+            x: self.calculate_index_x_key(location.longitude()),
         }
     }
 

@@ -390,7 +390,10 @@ impl<'a> WriteCommandsConcurrent<'a> {
                 );
                 let next_state = self
                     .location
-                    .reset_iterator(p.location.current_iterator, p.location.current_position);
+                    .new_iterator_state(
+                        &p.location.current_position,
+                        p.state.random_profile_order
+                    );
                 p.location.current_iterator = next_state;
                 p.profile_iterator_session_id = Some(new_id);
                 Ok(new_id)

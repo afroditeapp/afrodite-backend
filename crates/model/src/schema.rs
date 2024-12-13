@@ -477,6 +477,8 @@ diesel::table! {
         search_group_flags -> Integer,
         last_seen_time_filter -> Nullable<Integer>,
         unlimited_likes_filter -> Nullable<Bool>,
+        max_distance_km -> Nullable<Integer>,
+        random_profile_order -> Bool,
         latitude -> Double,
         longitude -> Double,
         profile_attributes_sync_version -> Integer,

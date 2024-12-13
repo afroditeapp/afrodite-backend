@@ -9,7 +9,7 @@ use server_data::{
     app::GetConfig,
     cache::profile::UpdateLocationCacheState,
     define_cmd_wrapper_write,
-    index::{location::LocationIndexIteratorState, LocationWrite},
+    index::LocationWrite,
     read::DbRead,
     result::Result,
     write::DbTransaction,
@@ -27,25 +27,28 @@ impl WriteCommandsProfile<'_> {
         id: AccountIdInternal,
         coordinates: Location,
     ) -> Result<(), DataError> {
-        let location = self
-            .read_cache_profile_and_common(id.as_id(), |p, _| Ok(p.location.clone()))
+        let (location, max_distance, random_profile_order) = self
+            .read_cache_profile_and_common(id.as_id(), |p, _| Ok((p.location.clone(), p.state.max_distance_km, p.state.random_profile_order)))
             .await
             .into_data_error(id)?;
 
-        let new_location_key = self.location().coordinates_to_key(&coordinates);
+        let new_location_area = self.location().coordinates_to_area(coordinates, max_distance);
         db_transaction!(self, move |mut cmds| {
             cmds.profile().data().profile_location(id, coordinates)
         })?;
 
         self.location()
-            .update_profile_location(id.as_id(), location.current_position, new_location_key)
+            .update_profile_location(id.as_id(), location.current_position.profile_location(), new_location_area.profile_location())
             .await?;
 
         let new_iterator_state = self
             .location_iterator()
-            .reset_iterator(LocationIndexIteratorState::new(), new_location_key);
+            .new_iterator_state(
+                &new_location_area,
+                random_profile_order,
+            );
         self.write_cache_profile(id, |p| {
-            p.location.current_position = new_location_key;
+            p.location.current_position = new_location_area;
             p.location.current_iterator = new_iterator_state;
             Ok(())
         })
@@ -159,18 +162,13 @@ impl WriteCommandsProfile<'_> {
         filters: ProfileFilteringSettingsUpdateValidated,
     ) -> Result<(), DataError> {
         let config = self.config_arc().clone();
+        let filters_clone = filters.clone();
         let new_filters = db_transaction!(self, move |mut cmds| {
-            cmds.profile().data().upsert_profile_attribute_filters(
+            cmds.profile().data().update_profile_filtering_settings(
                 id,
-                filters.filters,
+                filters_clone,
                 config.profile_attributes(),
             )?;
-            cmds.profile()
-                .data()
-                .update_last_seen_time_filter(id, filters.last_seen_time_filter)?;
-            cmds.profile()
-                .data()
-                .update_unlimited_likes_filter(id, filters.unlimited_likes_filter)?;
             cmds.read().profile().data().profile_attribute_filters(id)
         })?;
 
@@ -178,6 +176,8 @@ impl WriteCommandsProfile<'_> {
             p.filters = new_filters;
             p.state.last_seen_time_filter = filters.last_seen_time_filter;
             p.state.unlimited_likes_filter = filters.unlimited_likes_filter;
+            p.state.max_distance_km = filters.max_distance_km;
+            p.state.random_profile_order = filters.random_profile_order;
             Ok(())
         })
         .await

@@ -159,10 +159,13 @@ impl DbDataToCacheLoader {
                 last_seen_unix_time,
             );
 
-            let location_key = index_writer.coordinates_to_key(&profile_location);
-            profile_data.location.current_position = location_key;
+            let location_area = index_writer.coordinates_to_area(profile_location, profile_data.state.max_distance_km);
+            profile_data.location.current_position = location_area.clone();
             profile_data.location.current_iterator =
-                index_iterator.reset_iterator(profile_data.location.current_iterator, location_key);
+                index_iterator.new_iterator_state(
+                    &location_area,
+                    profile_data.state.random_profile_order
+                );
 
             entry.profile = Some(Box::new(profile_data));
 
@@ -174,7 +177,7 @@ impl DbDataToCacheLoader {
                     .update_profile_data(
                         account_id.uuid,
                         entry.location_index_profile_data()?,
-                        location_key,
+                        location_area.profile_location(),
                     )
                     .await
                     .change_context(CacheError::Init)?;

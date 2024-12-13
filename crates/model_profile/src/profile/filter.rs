@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use model_server_data::ProfileAttributeFilterValue;
+use model_server_data::{MaxDistanceKm, ProfileAttributeFilterValue};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -12,6 +12,10 @@ pub struct ProfileFilteringSettingsUpdate {
     filters: Vec<ProfileAttributeFilterValueUpdate>,
     last_seen_time_filter: Option<LastSeenTimeFilter>,
     unlimited_likes_filter: Option<bool>,
+    max_distance_km: Option<MaxDistanceKm>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    random_profile_order: bool,
 }
 
 impl ProfileFilteringSettingsUpdate {
@@ -51,19 +55,29 @@ impl ProfileFilteringSettingsUpdate {
             }
         }
 
+        if let Some(value) = self.max_distance_km {
+            if value.value <= 0 {
+                return Err("Max distance can't be less or equal to 0".to_string());
+            }
+        }
+
         Ok(ProfileFilteringSettingsUpdateValidated {
             filters: self.filters,
             last_seen_time_filter: self.last_seen_time_filter,
             unlimited_likes_filter: self.unlimited_likes_filter,
+            max_distance_km: self.max_distance_km,
+            random_profile_order: self.random_profile_order,
         })
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProfileFilteringSettingsUpdateValidated {
     pub filters: Vec<ProfileAttributeFilterValueUpdate>,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
+    pub max_distance_km: Option<MaxDistanceKm>,
+    pub random_profile_order: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
@@ -85,4 +99,14 @@ pub struct GetProfileFilteringSettings {
     pub filters: Vec<ProfileAttributeFilterValue>,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
+    /// Show profiles until this far from current location. The value
+    /// is in kilometers.
+    ///
+    /// The value must be `None`, 1 or greater number.
+    pub max_distance_km: Option<MaxDistanceKm>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    /// Randomize iterator starting position within the profile index area which
+    /// current position and [Self::max_distance_km] defines.
+    pub random_profile_order: bool,
 }

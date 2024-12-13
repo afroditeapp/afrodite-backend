@@ -101,6 +101,8 @@ pub struct ProfileStateCached {
     pub search_group_flags: SearchGroupFlags,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
+    pub max_distance_km: Option<MaxDistanceKm>,
+    pub random_profile_order: bool,
     pub profile_name_moderation_state: ProfileNameModerationState,
     pub profile_text_moderation_state: ProfileTextModerationState,
 }

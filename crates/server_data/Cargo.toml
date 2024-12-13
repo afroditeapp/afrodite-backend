@@ -17,6 +17,7 @@ thiserror = { workspace = true }
 error-stack = { workspace = true }
 
 chrono = { workspace = true }
+rand = { workspace = true }
 
 nalgebra = { workspace = true }
 

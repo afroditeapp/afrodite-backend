@@ -220,26 +220,6 @@ impl CellData {
         }
     }
 
-    pub fn next_down(&self) -> usize {
-        self.next_down.load(Ordering::Relaxed) as usize
-    }
-
-    pub fn next_up(&self) -> usize {
-        self.next_up.load(Ordering::Relaxed) as usize
-    }
-
-    pub fn next_left(&self) -> usize {
-        self.next_left.load(Ordering::Relaxed) as usize
-    }
-
-    pub fn next_right(&self) -> usize {
-        self.next_right.load(Ordering::Relaxed) as usize
-    }
-
-    pub fn profiles(&self) -> bool {
-        self.profiles_in_this_area.load(Ordering::Relaxed)
-    }
-
     pub fn set_next_down(&self, i: usize) {
         self.next_down.store(i as u16, Ordering::Relaxed)
     }
@@ -258,5 +238,35 @@ impl CellData {
 
     pub fn set_profiles(&self, value: bool) {
         self.profiles_in_this_area.store(value, Ordering::Relaxed)
+    }
+}
+
+pub trait CellDataProvider {
+    fn next_down(&self) -> usize;
+    fn next_up(&self) -> usize;
+    fn next_left(&self) -> usize;
+    fn next_right(&self) -> usize;
+    fn profiles(&self) -> bool;
+}
+
+impl CellDataProvider for CellData {
+    fn next_down(&self) -> usize {
+        self.next_down.load(Ordering::Relaxed) as usize
+    }
+
+    fn next_up(&self) -> usize {
+        self.next_up.load(Ordering::Relaxed) as usize
+    }
+
+    fn next_left(&self) -> usize {
+        self.next_left.load(Ordering::Relaxed) as usize
+    }
+
+    fn next_right(&self) -> usize {
+        self.next_right.load(Ordering::Relaxed) as usize
+    }
+
+    fn profiles(&self) -> bool {
+        self.profiles_in_this_area.load(Ordering::Relaxed)
     }
 }

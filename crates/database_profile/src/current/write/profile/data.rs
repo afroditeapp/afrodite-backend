@@ -4,10 +4,7 @@ use diesel::{
 };
 use error_stack::{Result, ResultExt};
 use model_profile::{
-    AccountIdInternal, Attribute, LastSeenTimeFilter, Location, ProfileAge,
-    ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileAttributes,
-    ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion, SyncVersion,
-    UnixTime,
+    AccountIdInternal, Attribute, Location, ProfileAge, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileAttributes, ProfileFilteringSettingsUpdateValidated, ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion, SyncVersion, UnixTime
 };
 
 use crate::IntoDatabaseError;
@@ -235,34 +232,26 @@ impl CurrentWriteProfileData<'_> {
         Ok(())
     }
 
-    pub fn update_last_seen_time_filter(
+    pub fn update_profile_filtering_settings(
         &mut self,
         id: AccountIdInternal,
-        last_seen_time_filter_value: Option<LastSeenTimeFilter>,
+        settings: ProfileFilteringSettingsUpdateValidated,
+        attributes: Option<&ProfileAttributes>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::profile_state::dsl::*;
 
         update(profile_state)
             .filter(account_id.eq(id.as_db_id()))
-            .set(last_seen_time_filter.eq(last_seen_time_filter_value))
+            .set((
+                last_seen_time_filter.eq(settings.last_seen_time_filter),
+                unlimited_likes_filter.eq(settings.unlimited_likes_filter),
+                max_distance_km.eq(settings.max_distance_km),
+                random_profile_order.eq(settings.random_profile_order),
+            ))
             .execute(self.conn())
             .into_db_error(())?;
 
-        Ok(())
-    }
-
-    pub fn update_unlimited_likes_filter(
-        &mut self,
-        id: AccountIdInternal,
-        value: Option<bool>,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::profile_state::dsl::*;
-
-        update(profile_state)
-            .filter(account_id.eq(id.as_db_id()))
-            .set(unlimited_likes_filter.eq(value))
-            .execute(self.conn())
-            .into_db_error(())?;
+        self.upsert_profile_attribute_filters(id, settings.filters, attributes)?;
 
         Ok(())
     }
@@ -334,7 +323,7 @@ impl CurrentWriteProfileData<'_> {
         Ok(())
     }
 
-    pub fn upsert_profile_attribute_filters(
+    fn upsert_profile_attribute_filters(
         &mut self,
         id: AccountIdInternal,
         data: Vec<ProfileAttributeFilterValueUpdate>,

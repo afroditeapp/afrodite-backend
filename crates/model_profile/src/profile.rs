@@ -3,9 +3,7 @@ use std::collections::{HashMap, HashSet};
 use diesel::{prelude::*, sql_types::BigInt, AsExpression, FromSqlRow};
 use model::ProfileAge;
 use model_server_data::{
-    LastSeenTime, LastSeenTimeFilter, ProfileAttributeValue, ProfileAttributeValueUpdate,
-    ProfileAttributes, ProfileInternal, ProfileNameModerationState, ProfileStateCached,
-    ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes,
+    LastSeenTime, LastSeenTimeFilter, MaxDistanceKm, ProfileAttributeValue, ProfileAttributeValueUpdate, ProfileAttributes, ProfileInternal, ProfileNameModerationState, ProfileStateCached, ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes
 };
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, UnixTime};
@@ -116,6 +114,8 @@ pub struct ProfileStateInternal {
     pub search_group_flags: SearchGroupFlags,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
+    pub max_distance_km: Option<MaxDistanceKm>,
+    pub random_profile_order: bool,
     pub profile_attributes_sync_version: ProfileAttributesSyncVersion,
     pub profile_sync_version: ProfileSyncVersion,
     pub profile_name_moderation_state: ProfileNameModerationState,
@@ -135,6 +135,8 @@ impl From<ProfileStateInternal> for ProfileStateCached {
             search_group_flags: value.search_group_flags,
             last_seen_time_filter: value.last_seen_time_filter,
             unlimited_likes_filter: value.unlimited_likes_filter,
+            max_distance_km: value.max_distance_km,
+            random_profile_order: value.random_profile_order,
             profile_name_moderation_state: value.profile_name_moderation_state,
             profile_text_moderation_state: value.profile_text_moderation_state,
         }

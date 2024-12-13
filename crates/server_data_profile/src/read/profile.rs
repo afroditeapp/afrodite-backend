@@ -98,6 +98,8 @@ impl ReadCommandsProfile<'_> {
                 filters,
                 last_seen_time_filter: state.last_seen_time_filter,
                 unlimited_likes_filter: state.unlimited_likes_filter,
+                max_distance_km: state.max_distance_km,
+                random_profile_order: state.random_profile_order,
             })
         })
         .await

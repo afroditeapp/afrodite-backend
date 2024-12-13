@@ -176,7 +176,7 @@ impl<I: InternalWriting> UpdateLocationIndexVisibility for I {
                         model_server_data::LocationIndexProfileData,
                     ),
                     error_stack::Report<CacheError>,
-                >((p.location.current_position, index_data))
+                >((p.location.current_position.profile_location(), index_data))
             })
             .await
             .into_data_error(id)?;

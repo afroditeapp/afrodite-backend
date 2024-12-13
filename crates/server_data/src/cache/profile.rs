@@ -2,7 +2,7 @@ use config::Config;
 use error_stack::{Result, ResultExt};
 use model::{AccountId, AccountIdInternal, NextNumberStorage, UnixTime};
 use model_server_data::{
-    LastSeenTime, LocationIndexKey, ProfileAttributeFilterValue, ProfileAttributeValue,
+    LastSeenTime, ProfileAttributeFilterValue, ProfileAttributeValue,
     ProfileInternal, ProfileIteratorSessionIdInternal, ProfileQueryMakerDetails,
     ProfileStateCached, SortedProfileAttributes,
 };
@@ -10,7 +10,7 @@ use server_common::data::{cache::CacheError, DataError};
 
 use crate::{
     cache::CacheEntryCommon, db_manager::InternalWriting,
-    index::location::LocationIndexIteratorState,
+    index::{area::LocationIndexArea, location::LocationIndexIteratorState},
 };
 
 #[derive(Debug)]
@@ -41,8 +41,8 @@ impl CachedProfile {
             data,
             state,
             location: LocationData {
-                current_position: LocationIndexKey::default(),
-                current_iterator: LocationIndexIteratorState::new(),
+                current_position: LocationIndexArea::default(),
+                current_iterator: LocationIndexIteratorState::completed(),
             },
             attributes: SortedProfileAttributes::new(attributes, config.profile_attributes()),
             filters,
@@ -71,7 +71,7 @@ impl CachedProfile {
 
 #[derive(Debug, Clone)]
 pub struct LocationData {
-    pub current_position: LocationIndexKey,
+    pub current_position: LocationIndexArea,
     pub current_iterator: LocationIndexIteratorState,
 }
 
@@ -90,7 +90,7 @@ impl<I: InternalWriting> UpdateLocationCacheState for I {
                     .profile_visibility();
                 let p = e.profile.as_deref().ok_or(CacheError::FeatureNotEnabled)?;
                 Ok((
-                    p.location.current_position,
+                    p.location.current_position.profile_location(),
                     e.location_index_profile_data()?,
                     profile_visibility,
                 ))
