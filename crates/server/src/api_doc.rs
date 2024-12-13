@@ -78,7 +78,7 @@ impl ApiDoc {
         doc.merge(server_api_profile::ApiDocProfile::openapi());
         let profile = ApiDoc::openapi()
             .merge_from(
-                server_api_profile::profile::attributes_router(state.clone()).into_openapi(),
+                server_api_profile::profile::filters_router(state.clone()).into_openapi(),
             )
             .merge_from(server_api_profile::profile::benchmark_router(state.clone()).into_openapi())
             .merge_from(server_api_profile::profile::favorite_router(state.clone()).into_openapi())

@@ -40,7 +40,7 @@ use crate::api::{
     },
     media_admin::MEDIA_ADMIN_MODERATION_COUNTERS_LIST,
     profile::{
-        PROFILE_ATTRIBUTES_COUNTERS_LIST, PROFILE_BENCHMARK_COUNTERS_LIST,
+        PROFILE_FILTERS_COUNTERS_LIST, PROFILE_BENCHMARK_COUNTERS_LIST,
         PROFILE_DATA_COUNTERS_LIST, PROFILE_FAVORITE_COUNTERS_LIST,
         PROFILE_ITERATE_PROFILES_COUNTERS_LIST, PROFILE_LOCATION_COUNTERS_LIST,
     },
@@ -82,7 +82,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
         MEDIA_ADMIN_MODERATION_COUNTERS_LIST,
     ),
     // Profile
-    &CounterCategory::new("profile_attributes", PROFILE_ATTRIBUTES_COUNTERS_LIST),
+    &CounterCategory::new("profile_filters", PROFILE_FILTERS_COUNTERS_LIST),
     &CounterCategory::new("profile_iterate", PROFILE_ITERATE_PROFILES_COUNTERS_LIST),
     &CounterCategory::new("profile_location", PROFILE_LOCATION_COUNTERS_LIST),
     &CounterCategory::new("profile_favorite", PROFILE_FAVORITE_COUNTERS_LIST),

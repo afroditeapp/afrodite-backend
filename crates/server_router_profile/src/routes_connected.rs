@@ -20,7 +20,7 @@ impl ConnectedApp {
 
     pub fn private_profile_server_router(&self) -> Router {
         let private = Router::new()
-            .merge(api::profile::attributes_router(self.state.clone()))
+            .merge(api::profile::filters_router(self.state.clone()))
             .merge(api::profile::profile_data_router(self.state.clone()))
             .merge(api::profile::location_router(self.state.clone()))
             .merge(api::profile::favorite_router(self.state.clone()))

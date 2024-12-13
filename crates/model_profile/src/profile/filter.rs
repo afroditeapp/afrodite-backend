@@ -8,17 +8,17 @@ use super::NUMBER_LIST_ATTRIBUTE_MAX_VALUES;
 use crate::{LastSeenTimeFilter, ProfileAttributes};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
-pub struct ProfileAttributeFilterListUpdate {
+pub struct ProfileFilteringSettingsUpdate {
     filters: Vec<ProfileAttributeFilterValueUpdate>,
     last_seen_time_filter: Option<LastSeenTimeFilter>,
     unlimited_likes_filter: Option<bool>,
 }
 
-impl ProfileAttributeFilterListUpdate {
+impl ProfileFilteringSettingsUpdate {
     pub fn validate(
         self,
         attribute_info: Option<&ProfileAttributes>,
-    ) -> Result<ProfileAttributeFilterListUpdateValidated, String> {
+    ) -> Result<ProfileFilteringSettingsUpdateValidated, String> {
         let mut hash_set = HashSet::new();
         for a in &self.filters {
             if !hash_set.insert(a.id) {
@@ -51,7 +51,7 @@ impl ProfileAttributeFilterListUpdate {
             }
         }
 
-        Ok(ProfileAttributeFilterListUpdateValidated {
+        Ok(ProfileFilteringSettingsUpdateValidated {
             filters: self.filters,
             last_seen_time_filter: self.last_seen_time_filter,
             unlimited_likes_filter: self.unlimited_likes_filter,
@@ -60,7 +60,7 @@ impl ProfileAttributeFilterListUpdate {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
-pub struct ProfileAttributeFilterListUpdateValidated {
+pub struct ProfileFilteringSettingsUpdateValidated {
     pub filters: Vec<ProfileAttributeFilterValueUpdate>,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
@@ -81,7 +81,7 @@ pub struct ProfileAttributeFilterValueUpdate {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
-pub struct ProfileAttributeFilterList {
+pub struct GetProfileFilteringSettings {
     pub filters: Vec<ProfileAttributeFilterValue>,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,

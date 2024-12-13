@@ -1,7 +1,7 @@
 use database::current::read::GetDbReadCommandsCommon;
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
-    AccountIdInternal, Location, ProfileAttributeFilterListUpdateValidated,
+    AccountIdInternal, Location, ProfileFilteringSettingsUpdateValidated,
     ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateInternal,
     ValidatedSearchGroups,
 };
@@ -153,10 +153,10 @@ impl WriteCommandsProfile<'_> {
         Ok(())
     }
 
-    pub async fn update_profile_attribute_filters(
+    pub async fn update_profile_filtering_settings(
         &self,
         id: AccountIdInternal,
-        filters: ProfileAttributeFilterListUpdateValidated,
+        filters: ProfileFilteringSettingsUpdateValidated,
     ) -> Result<(), DataError> {
         let config = self.config_arc().clone();
         let new_filters = db_transaction!(self, move |mut cmds| {
