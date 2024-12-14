@@ -32,11 +32,11 @@ impl WriteCommandsProfile<'_> {
             .await
             .into_data_error(id)?;
 
-        let new_location_area = self.location().coordinates_to_area(coordinates, max_distance);
         db_transaction!(self, move |mut cmds| {
             cmds.profile().data().profile_location(id, coordinates)
         })?;
 
+        let new_location_area = self.location().coordinates_to_area(coordinates, max_distance);
         self.location()
             .update_profile_location(id.as_id(), location.current_position.profile_location(), new_location_area.profile_location())
             .await?;
@@ -163,13 +163,15 @@ impl WriteCommandsProfile<'_> {
     ) -> Result<(), DataError> {
         let config = self.config_arc().clone();
         let filters_clone = filters.clone();
-        let new_filters = db_transaction!(self, move |mut cmds| {
+        let (new_filters, location) = db_transaction!(self, move |mut cmds| {
             cmds.profile().data().update_profile_filtering_settings(
                 id,
                 filters_clone,
                 config.profile_attributes(),
             )?;
-            cmds.read().profile().data().profile_attribute_filters(id)
+            let attribute_filters = cmds.read().profile().data().profile_attribute_filters(id)?;
+            let location = cmds.read().profile().data().profile_location(id)?;
+            Ok((attribute_filters, location))
         })?;
 
         self.write_cache_profile(id.as_id(), |p| {
@@ -178,6 +180,9 @@ impl WriteCommandsProfile<'_> {
             p.state.unlimited_likes_filter = filters.unlimited_likes_filter;
             p.state.max_distance_km = filters.max_distance_km;
             p.state.random_profile_order = filters.random_profile_order;
+
+            p.location.current_position = self.location().coordinates_to_area(location, filters.max_distance_km);
+
             Ok(())
         })
         .await

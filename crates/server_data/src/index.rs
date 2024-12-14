@@ -576,9 +576,9 @@ impl CoordinateManager {
         let x_tile = calculate_tile_x(longitude, self.zoom_level);
         let x = (self.x_max_tile() - x_tile) as u16;
 
-        // Start from 1 because (0,0) will not appear in profile list for
-        // some reason.
-        x.clamp(1, self.width() - 1)
+        let x_max = self.width() - 1;
+        let x = x.clamp(0, x_max);
+        x_max - x
     }
 
     fn calculate_index_y_key(&self, latitude: f64) -> u16 {
@@ -587,9 +587,9 @@ impl CoordinateManager {
         let y_tile = calculate_tile_y(latitude, self.zoom_level);
         let y = (self.y_max_tile() - y_tile) as u16;
 
-        // Start from 1 because (0,0) will not appear in profile list for
-        // some reason.
-        y.clamp(1, self.height() - 1)
+        let y_max = self.height() - 1;
+        let y = y.clamp(0, y_max);
+        y_max - y
     }
 
     fn longitude_min(&self) -> f64 {
@@ -609,38 +609,45 @@ impl CoordinateManager {
     }
 }
 
-// TODO: Is there bug that if profile is put on same tile twice
-// it disappears? Update: this should now be fixed
-//
-// Config:
-// [location]
-// latitude_top_left = 70.1
-// longitude_top_left = 19.5
-// latitude_bottom_right = 59.8
-// longitude_bottom_right = 31.58
-// index_cell_square_km = 100
-//
-// Logs:
-// [crates/server/src/data/write/profile.rs:65] &coordinates = Location {
-//     latitude: 62.05558022857322,
-//     longitude: 25.613378651701765,
-// }
-// [crates/server/src/data/write/profile.rs:65] new_location_key = LocationIndexKey {
-//     y: 27,
-//     x: 34,
-// }
-// [crates/server/src/data/write/profile.rs:65] &coordinates = Location {
-//     latitude: 62.05028302388773,
-//     longitude: 25.489045893817828,
-// }
-// [crates/server/src/data/write/profile.rs:65] new_location_key = LocationIndexKey {
-//     y: 27,
-//     x: 34,
-// }
-//
-// And the profile disappeared.
-//
-// Seems to happen also with other locations.
-//
-// Preventing this by checking if profile is already in the correct location in
-// the index
+#[cfg(test)]
+mod test {
+    use std::num::NonZeroU8;
+
+    use config::file::LocationConfig;
+
+    use super::CoordinateManager;
+
+    fn manager() -> CoordinateManager {
+        CoordinateManager::new(LocationConfig {
+            latitude_top_left: 10.0,
+            longitude_top_left: 0.0,
+            latitude_bottom_right: 0.0,
+            longitude_bottom_right: 10.0,
+            index_cell_square_km: NonZeroU8::MAX,
+        })
+    }
+
+    #[test]
+    fn latitude_to_index_y_bottom() {
+        let manager = manager();
+        assert_eq!(manager.calculate_index_y_key(0.0), manager.height() - 1);
+    }
+
+    #[test]
+    fn latitude_to_index_y_top() {
+        let manager = manager();
+        assert_eq!(manager.calculate_index_y_key(10.0), 0);
+    }
+
+    #[test]
+    fn longitude_to_index_x_left() {
+        let manager = manager();
+        assert_eq!(manager.calculate_index_x_key(0.0), 0);
+    }
+
+    #[test]
+    fn longitude_to_index_x_right() {
+        let manager = manager();
+        assert_eq!(manager.calculate_index_x_key(10.0), manager.width() - 1);
+    }
+}
