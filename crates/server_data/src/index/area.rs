@@ -23,7 +23,7 @@ impl LocationIndexArea {
 
     pub fn index_iterator_start_location(&self, random: bool) -> LocationIndexKey {
         if random {
-            let y = rand::thread_rng().gen_range(self.bottom_right.y..=self.top_left.y);
+            let y = rand::thread_rng().gen_range(self.top_left.y..=self.bottom_right.y);
             let x = rand::thread_rng().gen_range(self.top_left.x..=self.bottom_right.x);
             LocationIndexKey {
                 y,
