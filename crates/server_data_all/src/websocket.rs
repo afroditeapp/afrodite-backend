@@ -423,7 +423,7 @@ async fn handle_media_content_sync_version_check(
         SyncCheckResult::Sync => (),
     };
 
-    send_event(socket, EventToClientInternal::ProfileContentChanged).await?;
+    send_event(socket, EventToClientInternal::MediaContentChanged).await?;
 
     Ok(())
 }

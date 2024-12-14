@@ -145,6 +145,13 @@ pub async fn post_moderate_profile_content(
             InitialContentModerationResult::NoChange => (),
         }
 
+        cmds.events()
+            .send_connected_event(
+                content_id.content_owner(),
+                EventToClientInternal::MediaContentChanged,
+            )
+            .await?;
+
         Ok(())
     })?;
 
