@@ -67,6 +67,9 @@ pub enum TestError {
 
     #[error("Message encryption error: {0:?}")]
     MessageEncryptionError(MessageEncryptionError),
+
+    #[error("Content moderation failed")]
+    ContentModerationFailed,
 }
 
 impl TestError {

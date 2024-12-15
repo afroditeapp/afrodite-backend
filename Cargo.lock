@@ -2788,6 +2788,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "nude"
+version = "0.3.0"
+source = "git+https://github.com/jutuon/nude-rs?rev=4cf5f66291706db20a53fac438da6566d5fc15e3#4cf5f66291706db20a53fac438da6566d5fc15e3"
+dependencies = [
+ "image",
+ "log",
+ "rand",
+]
+
+[[package]]
 name = "num"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4787,6 +4797,7 @@ dependencies = [
  "image",
  "inventory",
  "nix",
+ "nude",
  "num_cpus",
  "pgp",
  "rand",

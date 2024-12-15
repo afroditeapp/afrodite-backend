@@ -19,7 +19,7 @@ use crate::{
     bot::{
         actions::{
             account::{CompleteAccountSetup, Login, Register, SetAccountSetup},
-            admin::ModerateContentModerationRequest,
+            admin::content::ModerateContentModerationRequest,
             media::{SendImageToSlot, SetContent},
             BotAction,
         },

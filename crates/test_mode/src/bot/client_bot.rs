@@ -44,7 +44,7 @@ use crate::{
     action_array,
     bot::actions::{
         account::CompleteAccountSetup,
-        admin::{profile_text::AdminBotProfileTextModerationLogic, AdminBotContentModerationLogic},
+        admin::{profile_text::AdminBotProfileTextModerationLogic, content::AdminBotContentModerationLogic},
         media::SetContent,
         ActionArray,
     },

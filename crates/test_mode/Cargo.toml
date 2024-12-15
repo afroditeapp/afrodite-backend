@@ -46,6 +46,8 @@ inventory = { workspace = true }
 async-openai = { workspace = true }
 unicode-segmentation = { workspace = true }
 
+nude = { workspace = true }
+
 api_client = { path = "../api_client" }
 
 

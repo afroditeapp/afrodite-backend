@@ -150,6 +150,11 @@ git = "https://github.com/jutuon/rustface"
 rev = "271563b947d7906f2126e1dfaae292d900171bcb"
 default-features = false
 
+# Nude detection
+[workspace.dependencies.nude]
+git = "https://github.com/jutuon/nude-rs"
+rev = "4cf5f66291706db20a53fac438da6566d5fc15e3"
+
 # Make image processing faster for debug builds
 [profile.dev.package.image]
 opt-level = 3

@@ -291,4 +291,10 @@ pub struct ProfileContentModerationConfig {
     pub added_content: bool,
     pub moderation_session_max_seconds: u32,
     pub moderation_session_min_seconds: u32,
+    pub nude_detection: Option<NudeDetectionConfig>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct NudeDetectionConfig {
+    pub move_rejected_to_human_moderation: bool,
 }

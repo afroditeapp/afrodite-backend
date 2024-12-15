@@ -34,7 +34,7 @@ use super::{
 use crate::{
     action_array,
     bot::actions::{
-        admin::ModerateContentModerationRequest, ActionArray, RepeatUntilFnSimple, RunFn,
+        admin::content::ModerateContentModerationRequest, ActionArray, RepeatUntilFnSimple, RunFn,
         SleepMillis, TO_ADMIN_NORMAL_STATE,
     },
     client::TestError,
