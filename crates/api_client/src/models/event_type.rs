@@ -47,8 +47,8 @@ pub enum EventType {
     NewsCountChanged,
     #[serde(rename = "InitialContentModerationCompleted")]
     InitialContentModerationCompleted,
-    #[serde(rename = "ProfileContentChanged")]
-    ProfileContentChanged,
+    #[serde(rename = "MediaContentChanged")]
+    MediaContentChanged,
 
 }
 
@@ -71,7 +71,7 @@ impl std::fmt::Display for EventType {
             Self::ProfileChanged => write!(f, "ProfileChanged"),
             Self::NewsCountChanged => write!(f, "NewsCountChanged"),
             Self::InitialContentModerationCompleted => write!(f, "InitialContentModerationCompleted"),
-            Self::ProfileContentChanged => write!(f, "ProfileContentChanged"),
+            Self::MediaContentChanged => write!(f, "MediaContentChanged"),
         }
     }
 }

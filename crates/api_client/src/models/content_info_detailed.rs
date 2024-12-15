@@ -20,6 +20,10 @@ pub struct ContentInfoDetailed {
     /// Face detected
     #[serde(rename = "fd")]
     pub fd: bool,
+    #[serde(rename = "rejected_reason_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub rejected_reason_category: Option<Option<Box<models::ProfileContentModerationRejectedReasonCategory>>>,
+    #[serde(rename = "rejected_reason_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub rejected_reason_details: Option<Option<Box<models::ProfileContentModerationRejectedReasonDetails>>>,
     #[serde(rename = "secure_capture")]
     pub secure_capture: bool,
     #[serde(rename = "slot", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -38,6 +42,8 @@ impl ContentInfoDetailed {
             cid: Box::new(cid),
             ctype,
             fd,
+            rejected_reason_category: None,
+            rejected_reason_details: None,
             secure_capture,
             slot: None,
             state,

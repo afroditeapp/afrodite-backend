@@ -98,11 +98,11 @@ Class | Method | HTTP request | Description
 *MediaApi* | [**get_content**](docs/MediaApi.md#get_content) | **GET** /9ztWJZUmcnzICLL2gJ8qV8gVoR8/{aid}/{cid} | Get content data
 *MediaApi* | [**get_content_slot_state**](docs/MediaApi.md#get_content_slot_state) | **GET** /y5DgJJAaDZF89y6X4ge84klpBq0/{slot_id} | Get state of content slot.
 *MediaApi* | [**get_map_tile**](docs/MediaApi.md#get_map_tile) | **GET** /BoFh54UgWwlQvwJfb0TpJqd4gaM/{z}/{x}/{y} | Get map tile PNG file.
-*MediaApi* | [**get_my_profile_content_info**](docs/MediaApi.md#get_my_profile_content_info) | **GET** /mEuodskjl_W4fjyo8iEkge7OTTU | Get my profile content
+*MediaApi* | [**get_media_content_info**](docs/MediaApi.md#get_media_content_info) | **GET** /IVQB_zKtVtalr-77q1-670RgOpg | Get my profile and security content
 *MediaApi* | [**get_profile_content_info**](docs/MediaApi.md#get_profile_content_info) | **GET** /ZYlzEPvPMBx2V1S6Ee-kIhp2_rg/{aid} | Get current profile content for selected profile.
 *MediaApi* | [**get_security_content_info**](docs/MediaApi.md#get_security_content_info) | **GET** /6lWoyl4YuurCAEnkJbnSy1wP22M/{aid} | Get current security content for selected profile.
 *MediaApi* | [**post_get_initial_content_moderation_completed**](docs/MediaApi.md#post_get_initial_content_moderation_completed) | **POST** /F6vxr3u-OBwaCkVm_bzTaM4NmRc | Get initial content moderation completed result.
-*MediaApi* | [**put_content_to_content_slot**](docs/MediaApi.md#put_content_to_content_slot) | **PUT** /y5DgJJAaDZF89y6X4ge84klpBq0/{slot_id} | Set content to content processing slot. Processing ID will be returned and processing of the content will begin. Events about the content processing will be sent to the client.
+*MediaApi* | [**put_content_to_content_slot**](docs/MediaApi.md#put_content_to_content_slot) | **PUT** /y5DgJJAaDZF89y6X4ge84klpBq0/{slot_id} | Upload content to server. The content is saved to content processing slot when account state is [model::AccountState::InitialSetup]. In other states the slot number is ignored and content goes directly to moderation.
 *MediaApi* | [**put_profile_content**](docs/MediaApi.md#put_profile_content) | **PUT** /_rsyG4gpvDy3O3Aj5hpLp3-8oPE | Set new profile content for current account.
 *MediaApi* | [**put_security_content_info**](docs/MediaApi.md#put_security_content_info) | **PUT** /6lWoyl4YuurCAEnkJbnSy1wP22M | Set current security content for current account.
 *MediaAdminApi* | [**get_profile_content_pending_moderation_list**](docs/MediaAdminApi.md#get_profile_content_pending_moderation_list) | **GET** /Kfz_n_yfrXnIcEOjh0nDBdGEXTg | Get first page of pending profile content moderations. Oldest item is first and count 25.
@@ -114,7 +114,7 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**get_location**](docs/ProfileApi.md#get_location) | **GET** /lf5KMD9dBSVuaVcwjm4TB0d7bfY | Get location for account which makes this request.
 *ProfileApi* | [**get_my_profile**](docs/ProfileApi.md#get_my_profile) | **GET** /iu25rmmvUzADXhW5SsP_DBGY2_w | Get my profile
 *ProfileApi* | [**get_profile**](docs/ProfileApi.md#get_profile) | **GET** /5i55ZcY0jIPD7B6pyyridKY0j0Q/{aid} | Get account's current profile.
-*ProfileApi* | [**get_profile_attribute_filters**](docs/ProfileApi.md#get_profile_attribute_filters) | **GET** /AL531AoIDRcTSWC-pdxcexf6tOM | Get current profile attribute filter values.
+*ProfileApi* | [**get_profile_filtering_settings**](docs/ProfileApi.md#get_profile_filtering_settings) | **GET** /Hyav-PRHLoEreB67cVG_WbASOFI | Get current profile filtering settings.
 *ProfileApi* | [**get_profile_from_database_debug_mode_benchmark**](docs/ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /XDTSz35S_5tOKIsSpDITOc46MR4/{aid} | Get account's current profile from database. Debug mode must be enabled that route can be used.
 *ProfileApi* | [**get_profile_statistics**](docs/ProfileApi.md#get_profile_statistics) | **GET** /WJCHYdLNpydn1OkJNyZKKksc4Yw | Non default values for [model::GetProfileStatisticsParams] requires [model::Permissions::admin_profile_statistics].
 *ProfileApi* | [**get_search_age_range**](docs/ProfileApi.md#get_search_age_range) | **GET** /xTy-zcnl0LQlfPKQalAEnWQQ-rw | Get account's current search age range
@@ -122,7 +122,7 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**post_favorite_profile**](docs/ProfileApi.md#post_favorite_profile) | **POST** /yD1PtVhVvdk-usEran42JmCTFVQ | Add new favorite profile
 *ProfileApi* | [**post_get_next_profile_page**](docs/ProfileApi.md#post_get_next_profile_page) | **POST** /_XRgLHtmWtbgW3ZAlgfTH5bs6bE | Post (updates iterator) to get next page of profile list.
 *ProfileApi* | [**post_profile**](docs/ProfileApi.md#post_profile) | **POST** /5i55ZcY0jIPD7B6pyyridKY0j0Q | Update profile information.
-*ProfileApi* | [**post_profile_attribute_filters**](docs/ProfileApi.md#post_profile_attribute_filters) | **POST** /AL531AoIDRcTSWC-pdxcexf6tOM | Set profile attribute filter values.
+*ProfileApi* | [**post_profile_filtering_settings**](docs/ProfileApi.md#post_profile_filtering_settings) | **POST** /Hyav-PRHLoEreB67cVG_WbASOFI | Set profile filtering settings.
 *ProfileApi* | [**post_profile_to_database_debug_mode_benchmark**](docs/ProfileApi.md#post_profile_to_database_debug_mode_benchmark) | **POST** /XDTSz35S_5tOKIsSpDITOc46MR4 | Post account's current profile directly to database. Debug mode must be enabled that route can be used.
 *ProfileApi* | [**post_reset_profile_paging**](docs/ProfileApi.md#post_reset_profile_paging) | **POST** /uUYIl9C8DoXwTj1icArj0S4RTFI | Reset profile paging.
 *ProfileApi* | [**post_search_age_range**](docs/ProfileApi.md#post_search_age_range) | **POST** /xTy-zcnl0LQlfPKQalAEnWQQ-rw | Set account's current search age range
@@ -190,11 +190,12 @@ Class | Method | HTTP request | Description
  - [FavoriteProfilesPage](docs/FavoriteProfilesPage.md)
  - [FcmDeviceToken](docs/FcmDeviceToken.md)
  - [GetInitialProfileAgeInfoResult](docs/GetInitialProfileAgeInfoResult.md)
- - [GetMyProfileContentResult](docs/GetMyProfileContentResult.md)
+ - [GetMediaContentResult](docs/GetMediaContentResult.md)
  - [GetMyProfileResult](docs/GetMyProfileResult.md)
  - [GetNewsItemResult](docs/GetNewsItemResult.md)
  - [GetProfileContentPendingModerationList](docs/GetProfileContentPendingModerationList.md)
  - [GetProfileContentResult](docs/GetProfileContentResult.md)
+ - [GetProfileFilteringSettings](docs/GetProfileFilteringSettings.md)
  - [GetProfileNamePendingModerationList](docs/GetProfileNamePendingModerationList.md)
  - [GetProfileResult](docs/GetProfileResult.md)
  - [GetProfileStatisticsHistoryResult](docs/GetProfileStatisticsHistoryResult.md)
@@ -213,6 +214,7 @@ Class | Method | HTTP request | Description
  - [MatchesIteratorSessionId](docs/MatchesIteratorSessionId.md)
  - [MatchesPage](docs/MatchesPage.md)
  - [MatchesSyncVersion](docs/MatchesSyncVersion.md)
+ - [MaxDistanceKm](docs/MaxDistanceKm.md)
  - [MediaContentSyncVersion](docs/MediaContentSyncVersion.md)
  - [MediaContentType](docs/MediaContentType.md)
  - [MessageNumber](docs/MessageNumber.md)
@@ -243,8 +245,6 @@ Class | Method | HTTP request | Description
  - [PostModerateProfileText](docs/PostModerateProfileText.md)
  - [Profile](docs/Profile.md)
  - [ProfileAgeCounts](docs/ProfileAgeCounts.md)
- - [ProfileAttributeFilterList](docs/ProfileAttributeFilterList.md)
- - [ProfileAttributeFilterListUpdate](docs/ProfileAttributeFilterListUpdate.md)
  - [ProfileAttributeFilterValue](docs/ProfileAttributeFilterValue.md)
  - [ProfileAttributeFilterValueUpdate](docs/ProfileAttributeFilterValueUpdate.md)
  - [ProfileAttributeValue](docs/ProfileAttributeValue.md)
@@ -256,6 +256,7 @@ Class | Method | HTTP request | Description
  - [ProfileContentModerationRejectedReasonDetails](docs/ProfileContentModerationRejectedReasonDetails.md)
  - [ProfileContentPendingModeration](docs/ProfileContentPendingModeration.md)
  - [ProfileContentVersion](docs/ProfileContentVersion.md)
+ - [ProfileFilteringSettingsUpdate](docs/ProfileFilteringSettingsUpdate.md)
  - [ProfileIteratorSessionId](docs/ProfileIteratorSessionId.md)
  - [ProfileLink](docs/ProfileLink.md)
  - [ProfileNameModerationState](docs/ProfileNameModerationState.md)

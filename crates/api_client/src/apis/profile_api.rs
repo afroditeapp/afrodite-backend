@@ -78,10 +78,10 @@ pub enum GetProfileError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_profile_attribute_filters`]
+/// struct for typed errors of method [`get_profile_filtering_settings`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum GetProfileAttributeFiltersError {
+pub enum GetProfileFilteringSettingsError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -150,10 +150,10 @@ pub enum PostProfileError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_profile_attribute_filters`]
+/// struct for typed errors of method [`post_profile_filtering_settings`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostProfileAttributeFiltersError {
+pub enum PostProfileFilteringSettingsError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -458,12 +458,12 @@ pub async fn get_profile(configuration: &configuration::Configuration, aid: &str
     }
 }
 
-pub async fn get_profile_attribute_filters(configuration: &configuration::Configuration, ) -> Result<models::ProfileAttributeFilterList, Error<GetProfileAttributeFiltersError>> {
+pub async fn get_profile_filtering_settings(configuration: &configuration::Configuration, ) -> Result<models::GetProfileFilteringSettings, Error<GetProfileFilteringSettingsError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/AL531AoIDRcTSWC-pdxcexf6tOM", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/Hyav-PRHLoEreB67cVG_WbASOFI", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -487,7 +487,7 @@ pub async fn get_profile_attribute_filters(configuration: &configuration::Config
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<GetProfileAttributeFiltersError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<GetProfileFilteringSettingsError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
@@ -748,12 +748,12 @@ pub async fn post_profile(configuration: &configuration::Configuration, profile_
     }
 }
 
-pub async fn post_profile_attribute_filters(configuration: &configuration::Configuration, profile_attribute_filter_list_update: models::ProfileAttributeFilterListUpdate) -> Result<(), Error<PostProfileAttributeFiltersError>> {
+pub async fn post_profile_filtering_settings(configuration: &configuration::Configuration, profile_filtering_settings_update: models::ProfileFilteringSettingsUpdate) -> Result<(), Error<PostProfileFilteringSettingsError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/AL531AoIDRcTSWC-pdxcexf6tOM", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/Hyav-PRHLoEreB67cVG_WbASOFI", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -767,7 +767,7 @@ pub async fn post_profile_attribute_filters(configuration: &configuration::Confi
         };
         local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
-    local_var_req_builder = local_var_req_builder.json(&profile_attribute_filter_list_update);
+    local_var_req_builder = local_var_req_builder.json(&profile_filtering_settings_update);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -778,7 +778,7 @@ pub async fn post_profile_attribute_filters(configuration: &configuration::Confi
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         Ok(())
     } else {
-        let local_var_entity: Option<PostProfileAttributeFiltersError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<PostProfileFilteringSettingsError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }

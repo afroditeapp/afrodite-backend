@@ -15,15 +15,12 @@ use serde::{Deserialize, Serialize};
 pub struct SecurityContent {
     #[serde(rename = "c", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub c: Option<Option<Box<models::ContentInfoWithFd>>>,
-    #[serde(rename = "sv")]
-    pub sv: Box<models::MediaContentSyncVersion>,
 }
 
 impl SecurityContent {
-    pub fn new(sv: models::MediaContentSyncVersion) -> SecurityContent {
+    pub fn new() -> SecurityContent {
         SecurityContent {
             c: None,
-            sv: Box::new(sv),
         }
     }
 }

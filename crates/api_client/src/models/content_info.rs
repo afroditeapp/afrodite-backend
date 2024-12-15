@@ -14,20 +14,25 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ContentInfo {
     /// Accepted
-    #[serde(rename = "a")]
-    pub a: bool,
+    #[serde(rename = "a", skip_serializing_if = "Option::is_none")]
+    pub a: Option<bool>,
     #[serde(rename = "cid")]
     pub cid: Box<models::ContentId>,
-    #[serde(rename = "ctype")]
-    pub ctype: models::MediaContentType,
+    /// Default value is not set to API doc as the API doc will then have \"oneOf\" property and Dart code generator does not support it.  Default value is [MediaContentType::JpegImage].
+    #[serde(rename = "ctype", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub ctype: Option<Option<models::MediaContentType>>,
+    /// Primary content  The first profile content is not primary content when admin deletes the first profile content and the second content does not have face detected.
+    #[serde(rename = "p", skip_serializing_if = "Option::is_none")]
+    pub p: Option<bool>,
 }
 
 impl ContentInfo {
-    pub fn new(a: bool, cid: models::ContentId, ctype: models::MediaContentType) -> ContentInfo {
+    pub fn new(cid: models::ContentId) -> ContentInfo {
         ContentInfo {
-            a,
+            a: None,
             cid: Box::new(cid),
-            ctype,
+            ctype: None,
+            p: None,
         }
     }
 }

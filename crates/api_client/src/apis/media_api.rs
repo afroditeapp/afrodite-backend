@@ -61,10 +61,10 @@ pub enum GetMapTileError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_my_profile_content_info`]
+/// struct for typed errors of method [`get_media_content_info`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum GetMyProfileContentInfoError {
+pub enum GetMediaContentInfoError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -309,12 +309,12 @@ pub async fn get_map_tile(configuration: &configuration::Configuration, z: i32, 
     }
 }
 
-pub async fn get_my_profile_content_info(configuration: &configuration::Configuration, ) -> Result<models::GetMyProfileContentResult, Error<GetMyProfileContentInfoError>> {
+pub async fn get_media_content_info(configuration: &configuration::Configuration, ) -> Result<models::GetMediaContentResult, Error<GetMediaContentInfoError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/mEuodskjl_W4fjyo8iEkge7OTTU", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/IVQB_zKtVtalr-77q1-670RgOpg", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -338,7 +338,7 @@ pub async fn get_my_profile_content_info(configuration: &configuration::Configur
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<GetMyProfileContentInfoError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<GetMediaContentInfoError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
@@ -457,7 +457,7 @@ pub async fn post_get_initial_content_moderation_completed(configuration: &confi
     }
 }
 
-/// The state of the processing can be also queired. The querying is required to receive the content ID.  Slots from 0 to 6 are available.  One account can only have one content in upload or processing state. New upload might potentially delete the previous if processing of it is not complete.  Content processing will fail if image content resolution width or height value is less than 512.  
+/// Processing ID will be returned and processing of the content will begin. Events about the content processing will be sent to the client.  The state of the processing can be also queired. The querying is required to receive the content ID.  Slots from 0 to 6 are available.  One account can only have one content in upload or processing state. New upload might potentially delete the previous if processing of it is not complete.  Content processing will fail if image content resolution width or height value is less than 512.  
 pub async fn put_content_to_content_slot(configuration: &configuration::Configuration, slot_id: i32, secure_capture: bool, content_type: models::MediaContentType, body: std::path::PathBuf) -> Result<models::ContentProcessingId, Error<PutContentToContentSlotError>> {
     let local_var_configuration = configuration;
 
