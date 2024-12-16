@@ -16,7 +16,7 @@ pub struct BotConfigFile {
     #[serde(default)]
     pub bot: Vec<BotInstanceConfig>,
     pub profile_text_moderation: Option<ProfileTextModerationConfig>,
-    pub profile_content_moderation: Option<ProfileContentModerationConfig>,
+    pub content_moderation: Option<ContentModerationConfig>,
 }
 
 impl BotConfigFile {
@@ -110,6 +110,15 @@ impl BotConfigFile {
                 return Err(ConfigFileError::InvalidConfig).attach_printable(
                     "Profile text moderation user text template: '%s' format argument is missing",
                 );
+            }
+        }
+
+        if let Some(config) = &config.content_moderation {
+            if let Some(config) = &config.nsfw_detection {
+                if !config.model_file.exists() {
+                    return Err(ConfigFileError::InvalidConfig)
+                        .attach_printable(format!("NSFW model file {} does not exists", config.model_file.display()));
+                }
             }
         }
 
@@ -285,16 +294,50 @@ impl ProfileTextModerationConfig {
     pub const TEMPLATE_FORMAT_ARGUMENT: &'static str = "%s";
 }
 
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ContentModerationDefaultAction {
+    Accept,
+    Reject,
+    MoveToHuman,
+}
+
 #[derive(Debug, Deserialize)]
-pub struct ProfileContentModerationConfig {
+pub struct ContentModerationConfig {
     pub initial_content: bool,
     pub added_content: bool,
     pub moderation_session_max_seconds: u32,
     pub moderation_session_min_seconds: u32,
+    /// Skin color based detection.
+    /// Actions: reject and move_to_human
     pub nude_detection: Option<NudeDetectionConfig>,
+    /// Neural network based detection.
+    /// Actions: reject, move_to_human and accept
+    pub nsfw_detection: Option<NsfwDetectionConfig>,
+    pub default_action: ContentModerationDefaultAction,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct NudeDetectionConfig {
     pub move_rejected_to_human_moderation: bool,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct NsfwDetectionConfig {
+    pub model_file: PathBuf,
+    /// Thresholds for image rejection.
+    pub reject: Option<NsfwDetectionThresholds>,
+    /// Thresholds for moving image to human moderation.
+    pub move_to_human: Option<NsfwDetectionThresholds>,
+    /// Thresholds for accepting the image.
+    pub accept: Option<NsfwDetectionThresholds>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct NsfwDetectionThresholds {
+    pub drawings: Option<f32>,
+    pub hentai: Option<f32>,
+    pub neutral: Option<f32>,
+    pub porn: Option<f32>,
+    pub sexy: Option<f32>,
 }

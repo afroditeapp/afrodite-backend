@@ -1,14 +1,47 @@
-use std::{fmt::Debug, time::Instant};
+use std::{fmt::Debug, sync::Arc, time::Instant};
 
 use api_client::{apis::media_admin_api, models::{AccountId, ContentId, MediaContentType, ModerationQueueType, ProfileContentModerationRejectedReasonDetails}};
 use async_trait::async_trait;
-use config::bot_config_file::{NudeDetectionConfig, ProfileContentModerationConfig};
+use config::bot_config_file::{ContentModerationConfig, ContentModerationDefaultAction, NsfwDetectionConfig, NsfwDetectionThresholds, NudeDetectionConfig};
 use error_stack::{Result, ResultExt};
 use image::DynamicImage;
+use nsfw::model::Metric;
 use super::{BotAction, BotState, EmptyPage};
-use crate::client::TestError;
+use crate::client::{ApiClient, TestError};
 
 use tracing::error;
+
+#[derive(Debug, Default)]
+pub struct ContentModerationState {
+    content_moderation_started: Option<Instant>,
+    model: Option<Arc<nsfw::Model>>,
+}
+
+impl ContentModerationState {
+    async fn new(config: &ContentModerationConfig) -> Result<Self, TestError> {
+        let config = config.nsfw_detection.clone();
+        if let Some(config) = config {
+            let model = tokio::task::spawn_blocking(move || {
+                let file = std::fs::File::open(config.model_file)
+                    .change_context(TestError::ContentModerationFailed)?;
+                let model = nsfw::create_model(file)
+                    .map_err(|e| TestError::ContentModerationFailed
+                        .report()
+                        .attach_printable(e.to_string())
+                    )?;
+                Ok::<_, error_stack::Report<TestError>>(model)
+            })
+                .await
+                .change_context(TestError::ContentModerationFailed)??;
+            Ok(Self {
+                content_moderation_started: None,
+                model: Some(Arc::new(model)),
+            })
+        } else {
+            Ok(Self::default())
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct ModerateContentModerationRequest {
@@ -99,6 +132,30 @@ impl ContentModerationResult {
             rejected_details: Some("Error occurred. Try again and if this continues, please contact customer support.".to_string()),
         }
     }
+
+    fn reject(details: Option<&str>) -> Self {
+        Self {
+            accept: false,
+            move_to_human: false,
+            rejected_details: details.map(|text| text.to_string()),
+        }
+    }
+
+    fn accept() -> Self {
+        Self {
+            accept: true,
+            move_to_human: false,
+            rejected_details: None,
+        }
+    }
+
+    fn move_to_human() -> Self {
+        Self {
+            accept: false,
+            move_to_human: true,
+            rejected_details: None,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -106,11 +163,12 @@ pub struct AdminBotContentModerationLogic;
 
 impl AdminBotContentModerationLogic {
     async fn moderate_one_page(
-        state: &BotState,
+        api: &ApiClient,
         queue: ModerationQueueType,
-        config: &ProfileContentModerationConfig,
+        config: &ContentModerationConfig,
+        moderation_state: &ContentModerationState,
     ) -> Result<Option<EmptyPage>, TestError> {
-        let list = media_admin_api::get_profile_content_pending_moderation_list(state.api.media(), MediaContentType::JpegImage, queue, true)
+        let list = media_admin_api::get_profile_content_pending_moderation_list(api.media(), MediaContentType::JpegImage, queue, true)
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -120,7 +178,7 @@ impl AdminBotContentModerationLogic {
 
         for request in list.values {
             let data = api_client::manual_additions::get_content_fixed(
-                state.api.media(),
+                api.media(),
                 &request.account_id.aid,
                 &request.content_id.cid,
                 false,
@@ -131,12 +189,15 @@ impl AdminBotContentModerationLogic {
             let result = Self::moderate_image(
                 data,
                 config.nude_detection.clone(),
+                config.nsfw_detection.clone(),
+                moderation_state.model.clone(),
+                config.default_action,
                 &request.account_id,
                 &request.content_id,
             ).await;
 
             media_admin_api::post_moderate_profile_content(
-                state.api.media(),
+                api.media(),
                 api_client::models::PostModerateProfileContent {
                     account_id: request.account_id,
                     content_id: request.content_id,
@@ -156,11 +217,14 @@ impl AdminBotContentModerationLogic {
     async fn moderate_image(
         data: Vec<u8>,
         nude_config: Option<NudeDetectionConfig>,
+        nsfw_config: Option<NsfwDetectionConfig>,
+        nsfw_model: Option<Arc<nsfw::Model>>,
+        default_action: ContentModerationDefaultAction,
         account: &AccountId,
         content: &ContentId,
     ) -> ContentModerationResult {
-        let r = tokio::task::spawn_blocking(|| {
-            Self::handle_image_sync(data, nude_config)
+        let r = tokio::task::spawn_blocking(move || {
+            Self::handle_image_sync(data, nude_config, nsfw_config, nsfw_model, default_action)
         })
             .await;
 
@@ -186,6 +250,9 @@ impl AdminBotContentModerationLogic {
     fn handle_image_sync(
         data: Vec<u8>,
         nude_config: Option<NudeDetectionConfig>,
+        nsfw_config: Option<NsfwDetectionConfig>,
+        nsfw_model: Option<Arc<nsfw::Model>>,
+        default_action: ContentModerationDefaultAction,
     ) -> Result<ContentModerationResult, TestError> {
         let img = image::load_from_memory(&data)
             .change_context(TestError::ContentModerationFailed)?;
@@ -196,11 +263,19 @@ impl AdminBotContentModerationLogic {
             }
         }
 
-        Ok(ContentModerationResult {
-            accept: true,
-            move_to_human: false,
-            rejected_details: None,
-        })
+        if let (Some(c), Some(m)) = (nsfw_config, nsfw_model) {
+            if let Some(result) = Self::handle_nsfw_detection(img, c, &m)? {
+                return Ok(result);
+            }
+        }
+
+        let action = match default_action {
+            ContentModerationDefaultAction::Accept => ContentModerationResult::accept(),
+            ContentModerationDefaultAction::Reject => ContentModerationResult::reject(None),
+            ContentModerationDefaultAction::MoveToHuman => ContentModerationResult::move_to_human(),
+        };
+
+        Ok(action)
     }
 
     fn handle_nude_detection(
@@ -212,24 +287,85 @@ impl AdminBotContentModerationLogic {
             Ok(Some(ContentModerationResult {
                 accept: false,
                 move_to_human: nude_config.move_rejected_to_human_moderation,
-                rejected_details: Some("Nudity detected".to_string()),
+                rejected_details: Some("Nudity detected. If this is a false positive, please contact customer support.".to_string()),
             }))
         } else {
             Ok(None)
         }
+    }
+
+    fn handle_nsfw_detection(
+        img: DynamicImage,
+        nsfw_config: NsfwDetectionConfig,
+        model: &nsfw::Model,
+    ) -> Result<Option<ContentModerationResult>, TestError> {
+        let img = img.into_rgba8();
+        let results = nsfw::examine(model, &img)
+            .map_err(|e| TestError::ContentModerationFailed.report().attach_printable(e.to_string()))?;
+
+        fn threshold(m: &Metric, thresholds: &NsfwDetectionThresholds) -> Option<f32> {
+            match m {
+                Metric::Drawings => thresholds.drawings,
+                Metric::Hentai => thresholds.hentai,
+                Metric::Neutral => thresholds.neutral,
+                Metric::Porn => thresholds.porn,
+                Metric::Sexy => thresholds.sexy,
+            }
+        }
+
+        if let Some(thresholds) = &nsfw_config.reject {
+            for c in &results {
+                if let Some(threshold) = threshold(&c.metric, thresholds) {
+                    if c.score >= threshold {
+                        return Ok(Some(ContentModerationResult::reject(Some(
+                            "NSFW image detected. If this is a false positive, please contact customer support."
+                        ))));
+                    }
+                }
+            }
+        }
+
+        if let Some(thresholds) = &nsfw_config.move_to_human {
+            for c in &results {
+                if let Some(threshold) = threshold(&c.metric, thresholds) {
+                    if c.score >= threshold {
+                        return Ok(Some(ContentModerationResult::move_to_human()));
+                    }
+                }
+            }
+        }
+
+        if let Some(thresholds) = &nsfw_config.accept {
+            for c in results {
+                if let Some(threshold) = threshold(&c.metric, thresholds) {
+                    if c.score >= threshold {
+                        return Ok(Some(ContentModerationResult::accept()));
+                    }
+                }
+            }
+        }
+
+        Ok(None)
     }
 }
 
 #[async_trait]
 impl BotAction for AdminBotContentModerationLogic {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let Some(config) = &state.bot_config_file.profile_content_moderation else {
+        let Some(config) = &state.bot_config_file.content_moderation else {
             return Ok(());
+        };
+
+        let moderation_state = if let Some(state) = &mut state.admin.content {
+            state
+        } else {
+            let moderation_state = ContentModerationState::new(config).await?;
+            state.admin.content.get_or_insert(moderation_state)
         };
 
         let start_time = Instant::now();
 
-        if let Some(previous) = state.admin.profile_content_moderation_started {
+        if let Some(previous) = moderation_state.content_moderation_started {
             if start_time.duration_since(previous).as_secs()
                 < config.moderation_session_min_seconds.into()
             {
@@ -237,12 +373,12 @@ impl BotAction for AdminBotContentModerationLogic {
             }
         }
 
-        state.admin.profile_content_moderation_started = Some(start_time);
+        moderation_state.content_moderation_started = Some(start_time);
 
         if config.initial_content {
             loop {
                 if let Some(EmptyPage) =
-                    Self::moderate_one_page(state, ModerationQueueType::InitialMediaModeration, config)
+                    Self::moderate_one_page(&state.api, ModerationQueueType::InitialMediaModeration, config, moderation_state)
                         .await?
                 {
                     break;
@@ -260,7 +396,7 @@ impl BotAction for AdminBotContentModerationLogic {
         if config.added_content {
             loop {
                 if let Some(EmptyPage) =
-                    Self::moderate_one_page(state, ModerationQueueType::MediaModeration, config).await?
+                    Self::moderate_one_page(&state.api, ModerationQueueType::MediaModeration, config, moderation_state).await?
                 {
                     break;
                 }

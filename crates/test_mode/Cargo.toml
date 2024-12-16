@@ -47,6 +47,7 @@ async-openai = { workspace = true }
 unicode-segmentation = { workspace = true }
 
 nude = { workspace = true }
+nsfw = { workspace = true }
 
 api_client = { path = "../api_client" }
 

@@ -138,6 +138,7 @@ pgp = "0.13.2"
 bstr = "1.10.0"
 async-openai = "0.26.0"
 unicode-segmentation = "1.12.0"
+nsfw = { version = "0.2.0", default-features = false }
 
 # Firebase cloud messaging
 [workspace.dependencies.fcm]
