@@ -54,6 +54,8 @@ pub async fn login_impl(id: AccountId, state: S) -> Result<LoginResult, StatusCo
 #[obfuscate_api]
 pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
 
+// TODO(prod): Add error for unverified email address
+
 /// Start new session with sign in with Apple or Google. Creates new account if
 /// it does not exists.
 #[utoipa::path(
