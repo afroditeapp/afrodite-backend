@@ -79,7 +79,7 @@ impl AdminBotProfileTextModerationLogic {
                     model: config.model.clone(),
                     temperature: Some(0.0),
                     seed: Some(0),
-                    max_tokens: Some(10_000),
+                    max_tokens: Some(config.max_tokens),
                     ..Default::default()
                 })
                 .await;

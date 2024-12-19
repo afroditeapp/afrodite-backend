@@ -288,6 +288,12 @@ pub struct ProfileTextModerationConfig {
     pub move_rejected_to_human_moderation: bool,
     pub moderation_session_max_seconds: u32,
     pub moderation_session_min_seconds: u32,
+    #[serde(default = "max_tokens_default_value")]
+    pub max_tokens: u32,
+}
+
+fn max_tokens_default_value() -> u32 {
+    10_000
 }
 
 impl ProfileTextModerationConfig {
