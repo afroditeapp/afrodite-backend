@@ -14,6 +14,13 @@ CREATE TABLE IF NOT EXISTS account_id(
     uuid  BLOB                              NOT NULL  UNIQUE
 );
 
+-- All used account IDs. Account ID is not removed from here
+-- when account data is removed.
+CREATE TABLE IF NOT EXISTS used_account_ids(
+    id         INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    uuid       BLOB                              NOT NULL UNIQUE
+);
+
 -- API access token for account
 CREATE TABLE IF NOT EXISTS access_token(
     account_id   INTEGER PRIMARY KEY NOT NULL,
@@ -526,6 +533,16 @@ CREATE TABLE IF NOT EXISTS media_content(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS used_content_ids(
+    account_id            INTEGER                           NOT NULL,
+    uuid                  BLOB                              NOT NULL,
+    PRIMARY KEY (account_id, uuid),
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 ---------- Tables for server component chat ----------
 
 -- State specific to chat component.
@@ -680,20 +697,7 @@ CREATE TABLE IF NOT EXISTS chat_global_state(
 
 ---------- History tables for server component common ----------
 
--- UUID for account
-CREATE TABLE IF NOT EXISTS history_account_id(
-    id    INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    uuid  BLOB                              NOT NULL  UNIQUE
-);
-
 ---------- History tables for server component account ----------
-
--- All used account IDs. Account ID is not removed from here
--- when account data is removed.
-CREATE TABLE IF NOT EXISTS history_used_account_ids(
-    id         INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    uuid       BLOB                              NOT NULL UNIQUE
-);
 
 ---------- History tables for server component profile ----------
 
@@ -792,13 +796,3 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_all_genders(
 );
 
 ---------- History tables for server component media ----------
-
-CREATE TABLE IF NOT EXISTS history_used_content_ids(
-    account_id            INTEGER                           NOT NULL,
-    uuid                  BLOB                              NOT NULL,
-    PRIMARY KEY (account_id, uuid),
-    FOREIGN KEY (account_id)
-        REFERENCES history_account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
-);

@@ -1,14 +1,14 @@
 use std::collections::HashSet;
 
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
-use database_media::{current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia}, history::write::GetDbHistoryWriteCommandsMedia};
+use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
 use error_stack::ResultExt;
 use model::{Account, AccountState, ContentIdInternal, ProfileVisibility};
 use model_media::{
     AccountIdInternal, ContentId, ContentIdDb, ContentSlot, CurrentAccountMediaInternal, NewContentParams, ProfileContentVersion, SetProfileContent
 };
 use server_data::{
-    app::GetConfig, cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, file::{utils::TmpContentFile, FileWrite}, read::DbRead, result::{Result, WrappedContextExt}, write::{DbTransaction, DbTransactionHistory, GetWriteCommandsCommon}, DataError, DieselDatabaseError
+    app::GetConfig, cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, file::{utils::TmpContentFile, FileWrite}, read::DbRead, result::{Result, WrappedContextExt}, write::{DbTransaction, GetWriteCommandsCommon}, DataError, DieselDatabaseError
 };
 
 use crate::cache::CacheWriteMedia;
@@ -66,17 +66,14 @@ impl WriteCommandsMedia<'_> {
             }
         }
 
-        let content_id = self.db_transaction_history(move |mut cmds| {
-            cmds.media_history()
-                .get_next_unique_content_id(id)
-        })
-        .await
-        .change_context(DataError::Sqlite)?;
+        let files = self.files().clone();
+        let content_id = self.db_transaction(move |mut cmds| {
+            let content_id = cmds.media()
+                .get_next_unique_content_id(id)?;
 
-        // Paths related to moving content from tmp dir to content dir
-        let processed_content_path = self.files().media_content(id.as_id(), content_id);
+            // Paths related to moving content from tmp dir to content dir
+            let processed_content_path = files.media_content(id.as_id(), content_id);
 
-        self.db_transaction(move |mut cmds| {
             cmds.media()
                 .media_content()
                 .insert_content_id(
@@ -93,7 +90,7 @@ impl WriteCommandsMedia<'_> {
                 .map_err(|e| e.change_context(DieselDatabaseError::File))?;
             // If moving fails, diesel rollbacks the transaction.
 
-            Ok(())
+            Ok(content_id)
         })
         .await?;
 

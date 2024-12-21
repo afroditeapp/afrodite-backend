@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use config::Config;
 use database::{
-    current::write::{GetDbWriteCommandsCommon, TransactionConnection}, history::write::GetDbHistoryWriteCommandsCommon, DbWriteModeHistory, TransactionError
+    current::write::GetDbWriteCommandsCommon, DbWriteMode, DieselDatabaseError
 };
 use database_account::current::write::GetDbWriteCommandsAccount;
 use database_chat::current::write::GetDbWriteCommandsChat;
@@ -13,8 +13,7 @@ use model_account::{
     SignInWithInfo,
 };
 use server_data::{
-    db_manager::InternalWriting, define_cmd_wrapper_write, index::LocationIndexIteratorHandle,
-    result::Result, DataError, IntoDataError,
+    db_manager::InternalWriting, define_cmd_wrapper_write, index::LocationIndexIteratorHandle, result::Result, write::DbTransaction, DataError, IntoDataError
 };
 
 use crate::load::DbDataToCacheLoader;
@@ -30,14 +29,13 @@ impl RegisterAccount<'_> {
     ) -> Result<AccountIdInternal, DataError> {
         let config = self.config_arc().clone();
         let id: AccountIdInternal = self
-            .db_transaction_with_history(move |transaction, history_conn| {
+            .db_transaction(move |current| {
                 Self::register_db_action(
                     config,
                     account_id,
                     sign_in_with_info,
                     email,
-                    transaction,
-                    history_conn,
+                    current,
                 )
             })
             .await?;
@@ -61,15 +59,8 @@ impl RegisterAccount<'_> {
         account_id: AccountId,
         sign_in_with_info: SignInWithInfo,
         email: Option<EmailAddress>,
-        transaction: TransactionConnection,
-        history_conn: DbWriteModeHistory,
-    ) -> std::result::Result<AccountIdInternal, TransactionError> {
-        let mut current = transaction.into_conn();
-
-        // No transaction for history as it does not matter if some default
-        // data will be left there if there is some error.
-        let mut history = history_conn;
-
+        mut current: DbWriteMode,
+    ) -> error_stack::Result<AccountIdInternal, DieselDatabaseError> {
         // Common
         let id = current.common().insert_account_id(account_id)?;
         current.common().token().insert_access_token(id, None)?;
@@ -82,9 +73,6 @@ impl RegisterAccount<'_> {
             .common()
             .state()
             .insert_shared_state(id, SharedStateRaw::default())?;
-
-        // Common history
-        history.common_history().insert_account_id(id)?;
 
         if config.components().account {
             current
@@ -103,17 +91,8 @@ impl RegisterAccount<'_> {
         }
 
         if config.components().profile {
-            let _profile = current.profile().data().insert_profile(id)?;
+            current.profile().data().insert_profile(id)?;
             current.profile().data().insert_profile_state(id)?;
-
-            // // Profile history
-            // let attributes = current
-            //     .read()
-            //     .profile()
-            //     .data()
-            //     .profile_attribute_values(id)?;
-            // let profile = Profile::new(profile, attributes);
-            // history.profile().insert_profile(id, &profile)?;
         }
 
         if config.components().media {

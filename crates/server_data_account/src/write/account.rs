@@ -1,5 +1,5 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
-use database_account::{current::write::GetDbWriteCommandsAccount, history::write::GetDbHistoryWriteCommandsAccount};
+use database_account::current::write::GetDbWriteCommandsAccount;
 use delete::WriteCommandsAccountDelete;
 use email::WriteCommandsAccountEmail;
 use model::AccountStateContainer;
@@ -13,7 +13,7 @@ use server_data::{
     define_cmd_wrapper_write,
     read::DbRead,
     result::Result,
-    write::{DbTransaction, GetWriteCommandsCommon, DbTransactionHistory},
+    write::{DbTransaction, GetWriteCommandsCommon},
     DataError, DieselDatabaseError,
 };
 
@@ -142,8 +142,8 @@ impl WriteCommandsAccount<'_> {
     }
 
     pub async fn get_next_unique_account_id(&self) -> Result<AccountId, DataError> {
-        db_transaction_history!(self, move |mut cmds| {
-            cmds.account_history().new_unique_account_id()
+        db_transaction!(self, move |mut cmds| {
+            cmds.account().data().new_unique_account_id()
         })
     }
 }

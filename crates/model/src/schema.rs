@@ -200,15 +200,6 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    history_account_id (id) {
-        id -> Integer,
-        uuid -> Binary,
-    }
-}
-
-diesel::table! {
-    use crate::schema_sqlite_types::*;
-
     history_profile_statistics_age_changes_all_genders (save_time_id, age) {
         save_time_id -> Integer,
         age -> Integer,
@@ -297,24 +288,6 @@ diesel::table! {
     history_profile_statistics_save_time (id) {
         id -> Integer,
         unix_time -> Integer,
-    }
-}
-
-diesel::table! {
-    use crate::schema_sqlite_types::*;
-
-    history_used_account_ids (id) {
-        id -> Integer,
-        uuid -> Binary,
-    }
-}
-
-diesel::table! {
-    use crate::schema_sqlite_types::*;
-
-    history_used_content_ids (account_id, uuid) {
-        account_id -> Integer,
-        uuid -> Binary,
     }
 }
 
@@ -552,6 +525,24 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    used_account_ids (id) {
+        id -> Integer,
+        uuid -> Binary,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    used_content_ids (account_id, uuid) {
+        account_id -> Integer,
+        uuid -> Binary,
+    }
+}
+
 diesel::joinable!(access_token -> account_id (account_id));
 diesel::joinable!(account -> account_id (account_id));
 diesel::joinable!(account_email_sending_state -> account_id (account_id));
@@ -570,7 +561,6 @@ diesel::joinable!(history_profile_statistics_count_changes_all_genders -> histor
 diesel::joinable!(history_profile_statistics_count_changes_man -> history_profile_statistics_save_time (save_time_id));
 diesel::joinable!(history_profile_statistics_count_changes_non_binary -> history_profile_statistics_save_time (save_time_id));
 diesel::joinable!(history_profile_statistics_count_changes_woman -> history_profile_statistics_save_time (save_time_id));
-diesel::joinable!(history_used_content_ids -> history_account_id (account_id));
 diesel::joinable!(media_content -> account_id (account_id));
 diesel::joinable!(media_state -> account_id (account_id));
 diesel::joinable!(news -> account_id (account_id_creator));
@@ -584,6 +574,7 @@ diesel::joinable!(queue_entry -> account_id (account_id));
 diesel::joinable!(refresh_token -> account_id (account_id));
 diesel::joinable!(shared_state -> account_id (account_id));
 diesel::joinable!(sign_in_with_info -> account_id (account_id));
+diesel::joinable!(used_content_ids -> account_id (account_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     access_token,
@@ -601,7 +592,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     current_account_media,
     demo_mode_account_ids,
     favorite_profile,
-    history_account_id,
     history_profile_statistics_age_changes_all_genders,
     history_profile_statistics_age_changes_men,
     history_profile_statistics_age_changes_non_binary,
@@ -612,8 +602,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     history_profile_statistics_count_changes_non_binary,
     history_profile_statistics_count_changes_woman,
     history_profile_statistics_save_time,
-    history_used_account_ids,
-    history_used_content_ids,
     media_content,
     media_state,
     news,
@@ -632,4 +620,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     refresh_token,
     shared_state,
     sign_in_with_info,
+    used_account_ids,
+    used_content_ids,
 );

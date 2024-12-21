@@ -3,7 +3,7 @@ use database::{
 };
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{AccountIdInternal, ClientId};
+use model::{AccountId, AccountIdInternal, ClientId};
 use model_account::{AccountGlobalState, AccountInternal, EmailAddress, SetAccountSetup};
 
 use crate::IntoDatabaseError;
@@ -152,5 +152,22 @@ impl CurrentWriteAccountData<'_> {
             .into_db_error(())?;
 
         Ok(current)
+    }
+
+    pub fn new_unique_account_id(
+        &mut self,
+    ) -> Result<AccountId, DieselDatabaseError> {
+        use model::schema::used_account_ids::dsl::*;
+
+        let random_aid = AccountId::new_random();
+
+        insert_into(used_account_ids)
+            .values((
+                uuid.eq(random_aid),
+            ))
+            .execute(self.conn())
+            .into_db_error(random_aid)?;
+
+        Ok(random_aid)
     }
 }

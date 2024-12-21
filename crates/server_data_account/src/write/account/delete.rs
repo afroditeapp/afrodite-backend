@@ -1,16 +1,10 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
-use database_account::{current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount}, history::write::GetDbHistoryWriteCommandsAccount};
+use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
 use model::Account;
 use model_account::AccountIdInternal;
 use server_data::{
     db_manager::InternalWriting, define_cmd_wrapper_write, file::FileWrite, read::DbRead, result::Result, write::{DbTransaction, GetWriteCommandsCommon}, DataError
 };
-
-// TODO(prod): Consider removing history DB as it is not possible
-//             to start with a new history DB when it takes too much disk space.
-//             That also increases reliability where currently both DBs are
-//             modified. Probably best to move the tables which prevents the
-//             previous use case to current DB.
 
 define_cmd_wrapper_write!(WriteCommandsAccountDelete);
 
@@ -61,12 +55,9 @@ impl WriteCommandsAccountDelete<'_> {
     ) -> Result<(), DataError> {
         self.handle().common().logout(id).await?;
 
-        self.db_transaction_with_history(move |transaction, mut history_conn| {
-            history_conn.account_history().delete_account(id)?;
-            let mut current = transaction.into_conn();
-            current.account().delete().delete_account(id)?;
-            Ok(())
-        }).await?;
+        db_transaction!(self, move |mut cmds| {
+            cmds.account().delete().delete_account(id)
+        })?;
 
         self.cache().delete_account_which_is_logged_out(id.as_id()).await;
 
