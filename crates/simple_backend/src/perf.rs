@@ -14,6 +14,7 @@ use std::{
 use simple_backend_model::{
     PerfHistoryQueryResult, PerfHistoryValue, PerfValueArea, TimeGranularity, UnixTime,
 };
+use sysinfo::MemoryRefreshKind;
 use tokio::{sync::RwLock, task::JoinHandle};
 use tracing::{error, warn};
 
@@ -134,6 +135,20 @@ pub struct CounterKey {
     counter: &'static str,
 }
 
+impl CounterKey {
+    const SYSTEM_CATEGORY: &str = "system";
+
+    pub const SYSTEM_CPU_USAGE: Self = Self {
+        category: Self::SYSTEM_CATEGORY,
+        counter: "cpu_usage",
+    };
+
+    pub const SYSTEM_RAM_USAGE_MIB: Self = Self {
+        category: Self::SYSTEM_CATEGORY,
+        counter: "ram_usage_mib",
+    };
+}
+
 const MINUTES_PER_DAY: usize = 24 * 60;
 
 /// History has counter values every minute 24 hours
@@ -143,6 +158,26 @@ pub struct PerformanceCounterHistory {
     pub next_index: usize,
     pub data: Vec<HashMap<CounterKey, u32>>,
     pub counters: AllCounters,
+    pub system: Option<Box<sysinfo::System>>,
+}
+
+struct SystemInfo {
+    cpu_usage: u32,
+    ram_usage_mib: u32,
+}
+
+impl SystemInfo {
+    fn new(mut system: Box<sysinfo::System>) -> (Box<sysinfo::System>, SystemInfo) {
+        system.refresh_cpu_usage();
+        std::thread::sleep(sysinfo::MINIMUM_CPU_UPDATE_INTERVAL);
+        system.refresh_cpu_usage();
+        system.refresh_memory_specifics(MemoryRefreshKind::nothing().with_ram());
+        let info = SystemInfo {
+            cpu_usage: system.global_cpu_usage() as u32,
+            ram_usage_mib: (system.used_memory() / 1024 / 1024) as u32,
+        };
+        (system, info)
+    }
 }
 
 impl PerformanceCounterHistory {
@@ -158,10 +193,11 @@ impl PerformanceCounterHistory {
             previous_start_time: None,
             next_index: 0,
             counters,
+            system: Some(Box::new(sysinfo::System::new())),
         }
     }
 
-    pub fn append_and_reset_counters(&mut self) {
+    pub async fn append_and_reset_counters(&mut self) {
         if self.start_time.is_none() {
             self.start_time = Some(UnixTime::current_time())
         }
@@ -177,6 +213,23 @@ impl PerformanceCounterHistory {
                 } else {
                     error!("Index {} not available", self.next_index);
                 }
+            }
+        }
+
+        let system = self.system.take();
+        let result = tokio::task::spawn_blocking(|| {
+            SystemInfo::new(system.unwrap())
+        }).await;
+        match result {
+            Ok((system, info)) => {
+                self.system = Some(system);
+                if let Some(map) = self.data.get_mut(self.next_index) {
+                    map.insert(CounterKey::SYSTEM_CPU_USAGE, info.cpu_usage);
+                    map.insert(CounterKey::SYSTEM_RAM_USAGE_MIB, info.ram_usage_mib);
+                }
+            }
+            Err(e) => {
+                error!("Getting system info failed: {e}");
             }
         }
 
@@ -326,7 +379,7 @@ impl PerfCounterManager {
                 // as wrong information in data and original tick timing will recover
                 // eventually.
                 _ = timer.tick() => {
-                    self.data.history.write().await.append_and_reset_counters();
+                    self.data.history.write().await.append_and_reset_counters().await;
                 }
                 _ = quit_notification.recv() => {
                     return;

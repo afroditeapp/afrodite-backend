@@ -49,6 +49,8 @@ error-stack = { workspace = true }
 
 jsonwebtoken = { workspace = true }
 
+sysinfo = { workspace = true }
+
 manager_api = { path = "../app-manager/crates/manager_api" }
 manager_model = { path = "../app-manager/crates/manager_model" }
 
