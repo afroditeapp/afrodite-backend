@@ -47,11 +47,11 @@ pub async fn post_set_account_deletion_request_state(
     db_write_multiple!(state, move |cmds| {
         let new_account = cmds.account().delete().set_account_deletion_request_state(internal_id, value.value).await?;
 
-        if let Some(new_account) = new_account {
+        if new_account.is_some() {
             cmds.events()
                 .send_connected_event(
                     internal_id.uuid,
-                    EventToClientInternal::AccountStateChanged(new_account.state_container()),
+                    EventToClientInternal::AccountStateChanged,
                 )
                 .await?;
         }

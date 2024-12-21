@@ -11,7 +11,7 @@ use utils::random_bytes::random_128_bits;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    schema_sqlite_types::Integer, Account, AccountStateContainer, ContentProcessingId, ContentProcessingState, MessageNumber, Permissions, ProfileVisibility
+    schema_sqlite_types::Integer, Account, AccountStateContainer, ContentProcessingId, ContentProcessingState, MessageNumber, ProfileVisibility
 };
 
 pub mod sync_version;
@@ -33,27 +33,11 @@ pub struct BackendVersion {
     pub protocol_version: String,
 }
 
-// TODO(prod): Consider changing [model::Account] syncing to happend
-//             like other data with sync version for consistency and
-//             to avoid extra sync when for example profile visibility
-//             is changed as AccountSyncVersionChanged is not sent
-//             when profile visibility changes.
-
 /// Identifier for event.
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub enum EventType {
-    /// New account state for client.
-    /// Data: account_state
+    /// Account state, profile visibility or permissions changed.
     AccountStateChanged,
-    /// New permissions for client.
-    /// Data: permissions
-    AccountPermissionsChanged,
-    /// New profile visiblity for client.
-    /// Data: visibility
-    ProfileVisibilityChanged,
-    /// New account sync version value for client.
-    /// Data: account_sync_version
-    AccountSyncVersionChanged,
     NewMessageReceived,
     ReceivedLikesChanged,
     ReceivedBlocksChanged,
@@ -93,50 +77,10 @@ pub struct ContentProcessingStateChanged {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct EventToClient {
     event: EventType,
-    /// Data for event AccountStateChanged
-    account_state: Option<AccountStateContainer>,
-    /// Data for event AccountPermissionsChanged
-    permissions: Option<Permissions>,
-    /// Data for event ProfileVisibilityChanged
-    visibility: Option<ProfileVisibility>,
-    /// Data for event AccountSyncVersionChanged
-    account_sync_version: Option<AccountSyncVersion>,
     /// Data for event LatestViewedMessageChanged
     latest_viewed_message_changed: Option<LatestViewedMessageChanged>,
     /// Data for event ContentProcessingStateChanged
     content_processing_state_changed: Option<ContentProcessingStateChanged>,
-}
-
-/// Events which only WebSocket code can send.
-pub enum SpecialEventToClient {
-    /// New account sync version value for client.
-    ///
-    /// Only WebSocket code must send this event to avoid data races which
-    /// would make client think that older data is newer.
-    AccountSyncVersionChanged(AccountSyncVersion),
-}
-
-impl From<SpecialEventToClient> for EventToClient {
-    fn from(internal: SpecialEventToClient) -> Self {
-        let mut value = Self {
-            event: EventType::AccountStateChanged,
-            account_state: None,
-            permissions: None,
-            visibility: None,
-            account_sync_version: None,
-            latest_viewed_message_changed: None,
-            content_processing_state_changed: None,
-        };
-
-        match internal {
-            SpecialEventToClient::AccountSyncVersionChanged(sync_version) => {
-                value.event = EventType::AccountSyncVersionChanged;
-                value.account_sync_version = Some(sync_version);
-            }
-        }
-
-        value
-    }
 }
 
 /// Internal data type for events.
@@ -146,12 +90,8 @@ impl From<SpecialEventToClient> for EventToClient {
 /// depending on network connection speed.
 #[derive(Debug, Clone)]
 pub enum EventToClientInternal {
-    /// New account state for client
-    AccountStateChanged(AccountStateContainer),
-    /// New permissions for client
-    AccountPermissionsChanged(Permissions),
-    /// New profile visiblity for client
-    ProfileVisibilityChanged(ProfileVisibility),
+    /// Account state, profile visibility or permissions changed.
+    AccountStateChanged,
     LatestViewedMessageChanged(LatestViewedMessageChanged),
     ContentProcessingStateChanged(ContentProcessingStateChanged),
     NewMessageReceived,
@@ -171,11 +111,9 @@ impl From<&EventToClientInternal> for EventType {
     fn from(value: &EventToClientInternal) -> Self {
         use EventToClientInternal::*;
         match value {
-            AccountStateChanged(_) => Self::AccountStateChanged,
-            AccountPermissionsChanged(_) => Self::AccountPermissionsChanged,
-            ProfileVisibilityChanged(_) => Self::ProfileVisibilityChanged,
             LatestViewedMessageChanged(_) => Self::LatestViewedMessageChanged,
             ContentProcessingStateChanged(_) => Self::ContentProcessingStateChanged,
+            AccountStateChanged => Self::AccountStateChanged,
             NewMessageReceived => Self::NewMessageReceived,
             ReceivedLikesChanged => Self::ReceivedLikesChanged,
             ReceivedBlocksChanged => Self::ReceivedBlocksChanged,
@@ -195,10 +133,6 @@ impl From<EventToClientInternal> for EventToClient {
     fn from(internal: EventToClientInternal) -> Self {
         let mut value = Self {
             event: (&internal).into(),
-            account_state: None,
-            permissions: None,
-            visibility: None,
-            account_sync_version: None,
             latest_viewed_message_changed: None,
             content_processing_state_changed: None,
         };
@@ -206,12 +140,10 @@ impl From<EventToClientInternal> for EventToClient {
         use EventToClientInternal::*;
 
         match internal {
-            AccountStateChanged(v) => value.account_state = Some(v),
-            AccountPermissionsChanged(v) => value.permissions = Some(v),
-            ProfileVisibilityChanged(v) => value.visibility = Some(v),
             LatestViewedMessageChanged(v) => value.latest_viewed_message_changed = Some(v),
             ContentProcessingStateChanged(v) => value.content_processing_state_changed = Some(v),
-            NewMessageReceived
+            AccountStateChanged
+            | NewMessageReceived
             | ReceivedLikesChanged
             | ReceivedBlocksChanged
             | SentLikesChanged

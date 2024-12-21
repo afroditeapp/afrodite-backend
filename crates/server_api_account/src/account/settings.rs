@@ -120,7 +120,7 @@ pub async fn put_setting_profile_visiblity(
         cmds.events()
             .send_connected_event(
                 id.uuid,
-                EventToClientInternal::ProfileVisibilityChanged(new_account.profile_visibility()),
+                EventToClientInternal::AccountStateChanged,
             )
             .await?;
         Ok(new_account)

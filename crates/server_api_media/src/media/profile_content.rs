@@ -155,12 +155,12 @@ pub async fn put_profile_content(
             .update_profile_content(api_caller_account_id, new).await?;
 
         match info {
-            InitialContentModerationResult::AllAccepted { account_after_visibility_change } => {
+            InitialContentModerationResult::AllAccepted { .. } => {
                 if cmds.config().components().account {
                     cmds.events()
                         .send_connected_event(
                             api_caller_account_id,
-                            EventToClientInternal::ProfileVisibilityChanged(account_after_visibility_change.profile_visibility()),
+                            EventToClientInternal::AccountStateChanged,
                         )
                         .await?;
                 }

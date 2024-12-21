@@ -117,12 +117,12 @@ pub async fn post_moderate_profile_content(
             .await?;
 
         match info.moderation_result {
-            InitialContentModerationResult::AllAccepted { account_after_visibility_change } => {
+            InitialContentModerationResult::AllAccepted { .. } => {
                 if cmds.config().components().account {
                     cmds.events()
                         .send_connected_event(
                             content_id.content_owner(),
-                            EventToClientInternal::ProfileVisibilityChanged(account_after_visibility_change.profile_visibility()),
+                            EventToClientInternal::AccountStateChanged,
                         )
                         .await?;
                 }

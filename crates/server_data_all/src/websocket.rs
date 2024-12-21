@@ -1,7 +1,7 @@
 use axum::extract::ws::{Message, WebSocket};
 use config::Config;
 use model_chat::{
-    AccountIdInternal, ChatStateRaw, EventToClient, EventToClientInternal, SpecialEventToClient,
+    AccountIdInternal, ChatStateRaw, EventToClient, EventToClientInternal,
     SyncCheckDataType, SyncCheckResult, SyncDataVersionFromClient, SyncVersionFromClient,
     SyncVersionUtils,
 };
@@ -223,7 +223,7 @@ async fn handle_account_data_sync(
         .await
         .change_context(WebSocketError::DatabaseAccountStateQuery)?;
 
-    let account = match account.sync_version().check_is_sync_required(sync_version) {
+    match account.sync_version().check_is_sync_required(sync_version) {
         SyncCheckResult::DoNothing => return Ok(()),
         SyncCheckResult::ResetVersionAndSync => {
             write_handle
@@ -232,39 +232,13 @@ async fn handle_account_data_sync(
                 })
                 .await
                 .change_context(WebSocketError::AccountDataVersionResetFailed)?;
-
-            read_handle
-                .common()
-                .account(id)
-                .await
-                .change_context(WebSocketError::DatabaseAccountStateQuery)?
         }
-        SyncCheckResult::Sync => account,
+        SyncCheckResult::Sync => (),
     };
 
     send_event(
         socket,
-        EventToClientInternal::AccountStateChanged(account.state_container()),
-    )
-    .await?;
-
-    send_event(
-        socket,
-        EventToClientInternal::AccountPermissionsChanged(account.permissions().clone()),
-    )
-    .await?;
-
-    send_event(
-        socket,
-        EventToClientInternal::ProfileVisibilityChanged(account.profile_visibility()),
-    )
-    .await?;
-
-    // This must be the last to make sure that client has
-    // reveived all sync data.
-    send_event(
-        socket,
-        SpecialEventToClient::AccountSyncVersionChanged(account.sync_version()),
+        EventToClientInternal::AccountStateChanged,
     )
     .await?;
 

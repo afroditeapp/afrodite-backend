@@ -80,22 +80,22 @@ pub async fn complete_initial_setup(
                 };
 
                 let new_account = cmds
-            .account()
-            .update_syncable_account_data(
-                id,
-                enable_all_permissions,
-                move |state, permissions, _| {
-                    if state.account_state() == AccountState::InitialSetup {
-                        state.complete_initial_setup();
-                        if enable_all_permissions.is_some() {
-                            warn!("Account detected as admin account. Enabling all permissions");
-                            *permissions = Permissions::all_enabled();
-                        }
-                    }
-                    Ok(())
-                },
-            )
-            .await?;
+                    .account()
+                    .update_syncable_account_data(
+                        id,
+                        enable_all_permissions,
+                        move |state, permissions, _| {
+                            if state.account_state() == AccountState::InitialSetup {
+                                state.complete_initial_setup();
+                                if enable_all_permissions.is_some() {
+                                    warn!("Account detected as admin account. Enabling all permissions");
+                                    *permissions = Permissions::all_enabled();
+                                }
+                            }
+                            Ok(())
+                        },
+                    )
+                    .await?;
 
                 if !is_bot_account && !sign_in_with_info.some_sign_in_with_method_is_set() {
                     // Account registered email is not yet sent if email address
@@ -109,14 +109,7 @@ pub async fn complete_initial_setup(
                 cmds.events()
                     .send_connected_event(
                         id.uuid,
-                        EventToClientInternal::AccountStateChanged(new_account.state_container()),
-                    )
-                    .await?;
-
-                cmds.events()
-                    .send_connected_event(
-                        id.uuid,
-                        EventToClientInternal::AccountPermissionsChanged(new_account.permissions()),
+                        EventToClientInternal::AccountStateChanged,
                     )
                     .await?;
 
