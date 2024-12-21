@@ -16,7 +16,7 @@ pub struct Account {
     #[serde(rename = "permissions")]
     pub permissions: Box<models::Permissions>,
     #[serde(rename = "state")]
-    pub state: models::AccountState,
+    pub state: Box<models::AccountStateContainer>,
     #[serde(rename = "sync_version")]
     pub sync_version: Box<models::AccountSyncVersion>,
     #[serde(rename = "visibility")]
@@ -24,10 +24,10 @@ pub struct Account {
 }
 
 impl Account {
-    pub fn new(permissions: models::Permissions, state: models::AccountState, sync_version: models::AccountSyncVersion, visibility: models::ProfileVisibility) -> Account {
+    pub fn new(permissions: models::Permissions, state: models::AccountStateContainer, sync_version: models::AccountSyncVersion, visibility: models::ProfileVisibility) -> Account {
         Account {
             permissions: Box::new(permissions),
-            state,
+            state: Box::new(state),
             sync_version: Box::new(sync_version),
             visibility,
         }

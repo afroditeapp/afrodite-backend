@@ -6,7 +6,7 @@ use api_client::{
         account_internal_api::{post_login, post_register},
     },
     models::{
-        auth_pair, AccountData, AccountState, BooleanSetting, EventToClient, ProfileVisibility,
+        auth_pair, Account, AccountData, AccountStateContainer, BooleanSetting, EventToClient, ProfileVisibility
     },
 };
 use async_trait::async_trait;
@@ -252,6 +252,62 @@ async fn handle_connection(stream: &mut WsStream, sender: &EventSender) {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum AccountState {
+    InitialSetup,
+    Normal,
+    Banned,
+    PendingDeletion,
+}
+
+impl AccountState {
+    fn to_container(self) -> AccountStateContainer {
+        match self {
+            Self::InitialSetup => AccountStateContainer {
+                initial_setup_completed: Some(true),
+                banned: None,
+                pending_deletion: None,
+            },
+            Self::Normal => AccountStateContainer {
+                initial_setup_completed: None,
+                banned: None,
+                pending_deletion: None,
+            },
+            Self::Banned => AccountStateContainer {
+                initial_setup_completed: None,
+                banned: Some(true),
+                pending_deletion: None,
+            },
+            Self::PendingDeletion => AccountStateContainer {
+                initial_setup_completed: None,
+                banned: None,
+                pending_deletion: Some(true),
+            }
+        }
+    }
+}
+
+impl From<AccountStateContainer> for AccountState {
+    fn from(value: AccountStateContainer) -> Self {
+        if value.pending_deletion.unwrap_or_default() {
+            Self::PendingDeletion
+        } else if value.banned.unwrap_or_default() {
+            Self::Banned
+        } else if !value.initial_setup_completed.unwrap_or(true) {
+            Self::InitialSetup
+        } else {
+            Self::Normal
+        }
+    }
+}
+
+impl From<Account> for AccountState {
+    fn from(value: Account) -> Self {
+        let state: AccountStateContainer = *value.state;
+        state.into()
+    }
+}
+
 #[derive(Debug)]
 pub struct AssertAccountState {
     pub account: AccountState,
@@ -288,7 +344,7 @@ impl BotAction for AssertAccountState {
             bot_assert_eq(state.visibility, wanted_visibility)?;
         }
 
-        bot_assert_eq(state.state, self.account)
+        bot_assert_eq(state.state, self.account.to_container().into())
     }
 }
 

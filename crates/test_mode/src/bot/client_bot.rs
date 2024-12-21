@@ -17,7 +17,7 @@ use api_client::{
     },
     manual_additions::{get_pending_messages_fixed, post_send_message_fixed},
     models::{
-        AccountId, AccountState, AttributeMode, ClientId, ClientLocalId, PendingMessage,
+        AccountId, AttributeMode, ClientId, ClientLocalId, PendingMessage,
         PendingMessageAcknowledgementList, ProfileAttributeValueUpdate, ProfileSearchAgeRange,
         ProfileUpdate, PublicKeyData, PublicKeyVersion, SearchGroups, SentMessageId,
         SentMessageIdList, SetPublicKey,
@@ -31,7 +31,7 @@ use tracing::warn;
 use super::{
     actions::{
         account::{
-            AssertAccountState, Login, Register, SetAccountSetup, SetProfileVisibility, DEFAULT_AGE,
+            AssertAccountState, Login, Register, SetAccountSetup, SetProfileVisibility, DEFAULT_AGE, AccountState
         },
         media::SendImageToSlot,
         profile::{ChangeProfileText, GetProfile, ProfileText, UpdateLocationRandom},
@@ -153,7 +153,7 @@ impl BotAction for DoInitialSetupIfNeeded {
             .await
             .change_context(TestError::ApiRequest)?;
 
-        if account_state.state == AccountState::InitialSetup {
+        if account_state.state.initial_setup_completed.unwrap_or_default() {
             let email = format!("bot{}@example.com", state.bot_id);
             if self.admin {
                 SetAccountSetup::admin()

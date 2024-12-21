@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 pub struct EventToClient {
     /// Data for event AccountStateChanged
     #[serde(rename = "account_state", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub account_state: Option<Option<models::AccountState>>,
+    pub account_state: Option<Option<Box<models::AccountStateContainer>>>,
     /// Data for event AccountSyncVersionChanged
     #[serde(rename = "account_sync_version", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub account_sync_version: Option<Option<Box<models::AccountSyncVersion>>>,

@@ -23,7 +23,7 @@ src/models/account_content.rs
 src/models/account_data.rs
 src/models/account_id.rs
 src/models/account_setup.rs
-src/models/account_state.rs
+src/models/account_state_container.rs
 src/models/account_sync_version.rs
 src/models/all_matches_page.rs
 src/models/attribute.rs
@@ -55,7 +55,6 @@ src/models/content_processing_state_type.rs
 src/models/content_slot.rs
 src/models/current_account_interaction_state.rs
 src/models/delete_like_result.rs
-src/models/delete_status.rs
 src/models/demo_mode_confirm_login.rs
 src/models/demo_mode_confirm_login_result.rs
 src/models/demo_mode_login_result.rs
@@ -67,6 +66,7 @@ src/models/event_to_client.rs
 src/models/event_type.rs
 src/models/favorite_profiles_page.rs
 src/models/fcm_device_token.rs
+src/models/get_account_deletion_request_result.rs
 src/models/get_initial_profile_age_info_result.rs
 src/models/get_media_content_result.rs
 src/models/get_my_profile_result.rs

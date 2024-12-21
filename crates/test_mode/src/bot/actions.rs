@@ -6,7 +6,8 @@ pub mod profile;
 
 use std::{collections::HashSet, fmt::Debug, time::Duration};
 
-use api_client::models::{Account, AccountState, Location, Profile};
+use account::AccountState;
+use api_client::models::{Account, Location, Profile};
 use async_trait::async_trait;
 use error_stack::{Result, ResultExt};
 

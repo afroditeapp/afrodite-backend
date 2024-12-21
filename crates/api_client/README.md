@@ -26,17 +26,15 @@ All URIs are relative to *http://localhost*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
-*AccountApi* | [**delete_cancel_deletion**](docs/AccountApi.md#delete_cancel_deletion) | **DELETE** /_aiEAY0WZCquNl_WQ5fDORGuHwA | Cancel account deletion.
 *AccountApi* | [**get_account_data**](docs/AccountApi.md#get_account_data) | **GET** /Ln3_j2LpJIbQABKwnMMhUEtio5k | Get changeable user information to account.
+*AccountApi* | [**get_account_deletion_request_state**](docs/AccountApi.md#get_account_deletion_request_state) | **GET** /xRKw2cu2b8kk8Vkdpo8SdsaFWhQ/{aid} | Get account deletion request state
 *AccountApi* | [**get_account_setup**](docs/AccountApi.md#get_account_setup) | **GET** /RNb6qhf_lZU8t6kOm5kQY7Y34ok | Get non-changeable user information to account.
 *AccountApi* | [**get_account_state**](docs/AccountApi.md#get_account_state) | **GET** /C9sCP6O2IfIBQCu8LM1_SCybuW0 | Get current account state.
-*AccountApi* | [**get_deletion_status**](docs/AccountApi.md#get_deletion_status) | **GET** /_aiEAY0WZCquNl_WQ5fDORGuHwA | Get deletion status.
 *AccountApi* | [**get_latest_birthdate**](docs/AccountApi.md#get_latest_birthdate) | **GET** /Hg2W1drXZ94YVp3Uh38hnQzYIng | 
 *AccountApi* | [**get_news_item**](docs/AccountApi.md#get_news_item) | **GET** /2OHF85k7hpH2tAibkA0V9YLwpF4/{nid} | Get news item content using specific locale and fallback to locale \"en\" if news translation is not found.
 *AccountApi* | [**post_account_data**](docs/AccountApi.md#post_account_data) | **POST** /Ln3_j2LpJIbQABKwnMMhUEtio5k | Set changeable user information to account.
 *AccountApi* | [**post_account_setup**](docs/AccountApi.md#post_account_setup) | **POST** /RNb6qhf_lZU8t6kOm5kQY7Y34ok | Setup non-changeable user information during `initial setup` state.
 *AccountApi* | [**post_complete_setup**](docs/AccountApi.md#post_complete_setup) | **POST** /VzPyCXS5Hx50SbAApdpUYfCY-Iw | Complete initial setup.
-*AccountApi* | [**post_delete**](docs/AccountApi.md#post_delete) | **PUT** /_aiEAY0WZCquNl_WQ5fDORGuHwA | Delete account.
 *AccountApi* | [**post_demo_mode_accessible_accounts**](docs/AccountApi.md#post_demo_mode_accessible_accounts) | **POST** /xyG8kH6eLanLiKYXdnOx1xxeAdA | Get demo account's available accounts.
 *AccountApi* | [**post_demo_mode_confirm_login**](docs/AccountApi.md#post_demo_mode_confirm_login) | **POST** /3KlEajKOIo1Drd3uW-IzQ1L3qlE | 
 *AccountApi* | [**post_demo_mode_login**](docs/AccountApi.md#post_demo_mode_login) | **POST** /TYbxniP-G9ibgdoAkpvVWTKkxaU | Access demo mode, which allows accessing all or specific accounts depending on the server configuration.
@@ -48,12 +46,14 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_get_unread_news_count**](docs/AccountApi.md#post_get_unread_news_count) | **POST** /ljfyAP7CbP0864cA6nZX7ESufjY | The unread news count for public news.
 *AccountApi* | [**post_logout**](docs/AccountApi.md#post_logout) | **POST** /g2UxTGqbCXXzUsALaE6udVrIh2U | 
 *AccountApi* | [**post_reset_news_paging**](docs/AccountApi.md#post_reset_news_paging) | **POST** /BQwxuLNWbM8vN0-p-Wu-QCRy3x0 | 
+*AccountApi* | [**post_set_account_deletion_request_state**](docs/AccountApi.md#post_set_account_deletion_request_state) | **POST** /hpXIJMoxKOZo-Fp577gOdSf1pm4/{aid} | Request account deletion or cancel the deletion
 *AccountApi* | [**post_sign_in_with_login**](docs/AccountApi.md#post_sign_in_with_login) | **POST** /ijts6B4AAg_6Dyjhaw85iBnw5Bo | Start new session with sign in with Apple or Google. Creates new account if it does not exists.
 *AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /yG0OQXcMed-EGdvhSoq3qlXTYQc | Update current or pending profile visiblity value.
 *AccountApi* | [**put_setting_unlimited_likes**](docs/AccountApi.md#put_setting_unlimited_likes) | **PUT** /oKbgnRxyzLb50Y2_ZCuLJYtEIcM | 
 *AccountAdminApi* | [**delete_news_item**](docs/AccountAdminApi.md#delete_news_item) | **DELETE** /ca0uk9qgmQ82WCpd83_WNNn8qOY/{nid} | 
 *AccountAdminApi* | [**delete_news_translation**](docs/AccountAdminApi.md#delete_news_translation) | **DELETE** /jo1Lboa4U8YVA07py8NJebpu1zo/{nid}/{locale} | 
 *AccountAdminApi* | [**post_create_news_item**](docs/AccountAdminApi.md#post_create_news_item) | **POST** /XEss8YDw9lPgwKoH6K9THZIF_N4 | 
+*AccountAdminApi* | [**post_delete_account**](docs/AccountAdminApi.md#post_delete_account) | **POST** /bdvzsZZOVVO89-enOb3tFnpU7yk/{aid} | Delete account instantly
 *AccountAdminApi* | [**post_set_news_publicity**](docs/AccountAdminApi.md#post_set_news_publicity) | **DELETE** /McvctMKFEqrUfola2WlvkbigBDU/{nid} | 
 *AccountAdminApi* | [**post_update_news_translation**](docs/AccountAdminApi.md#post_update_news_translation) | **POST** /4pD-Q4FhZGTNkUGYExHmZN6TxjU/{nid}/{locale} | 
 *AccountInternalApi* | [**post_login**](docs/AccountInternalApi.md#post_login) | **POST** /account_api/login | Get new AccessToken for a bot account. If the account is not registered as a bot account, then the request will fail.
@@ -145,7 +145,7 @@ Class | Method | HTTP request | Description
  - [AccountData](docs/AccountData.md)
  - [AccountId](docs/AccountId.md)
  - [AccountSetup](docs/AccountSetup.md)
- - [AccountState](docs/AccountState.md)
+ - [AccountStateContainer](docs/AccountStateContainer.md)
  - [AccountSyncVersion](docs/AccountSyncVersion.md)
  - [AllMatchesPage](docs/AllMatchesPage.md)
  - [Attribute](docs/Attribute.md)
@@ -177,7 +177,6 @@ Class | Method | HTTP request | Description
  - [ContentSlot](docs/ContentSlot.md)
  - [CurrentAccountInteractionState](docs/CurrentAccountInteractionState.md)
  - [DeleteLikeResult](docs/DeleteLikeResult.md)
- - [DeleteStatus](docs/DeleteStatus.md)
  - [DemoModeConfirmLogin](docs/DemoModeConfirmLogin.md)
  - [DemoModeConfirmLoginResult](docs/DemoModeConfirmLoginResult.md)
  - [DemoModeLoginResult](docs/DemoModeLoginResult.md)
@@ -189,6 +188,7 @@ Class | Method | HTTP request | Description
  - [EventType](docs/EventType.md)
  - [FavoriteProfilesPage](docs/FavoriteProfilesPage.md)
  - [FcmDeviceToken](docs/FcmDeviceToken.md)
+ - [GetAccountDeletionRequestResult](docs/GetAccountDeletionRequestResult.md)
  - [GetInitialProfileAgeInfoResult](docs/GetInitialProfileAgeInfoResult.md)
  - [GetMediaContentResult](docs/GetMediaContentResult.md)
  - [GetMyProfileResult](docs/GetMyProfileResult.md)

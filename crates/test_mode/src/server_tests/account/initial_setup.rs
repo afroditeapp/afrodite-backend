@@ -1,13 +1,10 @@
-use api_client::{
-    apis::account_api::{get_account_state, post_complete_setup},
-    models::AccountState,
-};
+use api_client::apis::account_api::{get_account_state, post_complete_setup};
 use test_mode_macro::server_test;
 
 use crate::{
     action_array,
     bot::actions::{
-        account::SetAccountSetup,
+        account::{AccountState, SetAccountSetup},
         media::{SendImageToSlot, SetContent},
     },
     runner::server_tests::assert::{assert_eq, assert_failure},
@@ -18,7 +15,7 @@ use crate::{
 async fn account_state_is_initial_setup_after_login(context: TestContext) -> TestResult {
     let account = context.new_account_in_initial_setup_state().await?;
     let state = get_account_state(account.account_api()).await?;
-    assert_eq(AccountState::InitialSetup, state.state)
+    assert_eq(AccountState::InitialSetup, state.into())
 }
 
 #[server_test]
@@ -38,7 +35,7 @@ async fn complete_setup_fails_if_no_setup_info_is_set(context: TestContext) -> T
     assert_failure(post_complete_setup(account.account_api()).await)?;
     assert_eq(
         AccountState::InitialSetup,
-        get_account_state(account.account_api()).await?.state,
+        get_account_state(account.account_api()).await?.into(),
     )
 }
 
@@ -60,6 +57,6 @@ async fn initial_setup_successful(context: TestContext) -> TestResult {
     post_complete_setup(account.account_api()).await?;
     assert_eq(
         AccountState::Normal,
-        get_account_state(account.account_api()).await?.state,
+        get_account_state(account.account_api()).await?.into(),
     )
 }
