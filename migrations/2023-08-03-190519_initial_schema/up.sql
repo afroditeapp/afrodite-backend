@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_moderate_profile_texts                 BOOLEAN NOT NULL DEFAULT 0,
     admin_delete_media_content                   BOOLEAN NOT NULL DEFAULT 0,
     admin_delete_account                         BOOLEAN NOT NULL DEFAULT 0,
+    admin_ban_account                            BOOLEAN NOT NULL DEFAULT 0,
     admin_request_account_deletion               BOOLEAN NOT NULL DEFAULT 0,
     admin_view_all_profiles                      BOOLEAN NOT NULL DEFAULT 0,
     admin_view_private_info                      BOOLEAN NOT NULL DEFAULT 0,
@@ -187,6 +188,7 @@ CREATE TABLE IF NOT EXISTS account_state(
     account_id                         INTEGER PRIMARY KEY NOT NULL,
     next_client_id                     INTEGER             NOT NULL DEFAULT 0,
     account_deletion_request_unix_time INTEGER,
+    account_banned_until_unix_time     INTEGER,
     -- Sync version for news.
     news_sync_version                  INTEGER             NOT NULL DEFAULT 0,
     unread_news_count                  INTEGER             NOT NULL DEFAULT 0,

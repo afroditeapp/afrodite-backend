@@ -164,6 +164,12 @@ pub struct GetAccountDeletionRequestResult {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct GetAccountBanTimeResult {
+    /// If `None` the account is not banned.
+    pub banned_until: Option<UnixTime>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct SignInWithLoginInfo {
     pub client_info: ClientInfo,
     pub apple_token: Option<String>,

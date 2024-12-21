@@ -2,6 +2,7 @@ use database::define_current_read_commands;
 
 define_current_read_commands!(CurrentReadAccount);
 
+mod ban;
 mod data;
 mod delete;
 mod demo;
@@ -10,6 +11,10 @@ mod news;
 mod sign_in_with;
 
 impl<'a> CurrentReadAccount<'a> {
+    pub fn ban(self) -> ban::CurrentReadAccountBan<'a> {
+        ban::CurrentReadAccountBan::new(self.cmds)
+    }
+
     pub fn data(self) -> data::CurrentReadAccountData<'a> {
         data::CurrentReadAccountData::new(self.cmds)
     }

@@ -30,10 +30,12 @@ impl ConnectedApp {
         let private = Router::new()
             .merge(api::account::register_router(self.state.clone()))
             .merge(api::account::logout_router(self.state.clone()))
+            .merge(api::account::ban_router(self.state.clone()))
             .merge(api::account::delete_router(self.state.clone()))
             .merge(api::account::settings_router(self.state.clone()))
             .merge(api::account::state_router(self.state.clone()))
             .merge(api::account::news_router(self.state.clone()))
+            .merge(api::account_admin::admin_ban_router(self.state.clone()))
             .merge(api::account_admin::admin_delete_router(self.state.clone()))
             .merge(api::account_admin::admin_news_router(self.state.clone()));
 

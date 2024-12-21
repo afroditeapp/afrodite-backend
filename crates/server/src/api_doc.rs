@@ -36,6 +36,7 @@ impl ApiDoc {
         // Account
         doc.merge(server_api_account::ApiDocAccount::openapi());
         let account = ApiDoc::openapi()
+            .merge_from(server_api_account::account::ban_router(state.clone()).into_openapi())
             .merge_from(server_api_account::account::delete_router(state.clone()).into_openapi())
             .merge_from(server_api_account::account::demo_mode_router(state.clone()).into_openapi())
             .merge_from(server_api_account::account::logout_router(state.clone()).into_openapi())
@@ -46,6 +47,9 @@ impl ApiDoc {
             .tag_routes("account");
         doc.merge(account);
         let account_admin = ApiDoc::openapi()
+            .merge_from(
+                server_api_account::account_admin::admin_ban_router(state.clone()).into_openapi(),
+            )
             .merge_from(
                 server_api_account::account_admin::admin_delete_router(state.clone()).into_openapi(),
             )

@@ -172,33 +172,17 @@ impl ScheduledTaskManager {
                 .await
                 .change_context(ScheduledTaskError::DatabaseError)?;
 
-            if account.state() != AccountState::InitialSetup {
+            let account_state = account.state();
+
+            if account_state != AccountState::InitialSetup {
                 self.update_profile_age_if_needed(id, &mut age_updated)
                     .await?;
             }
 
-            if account.state() == AccountState::PendingDeletion {
-                let deletion_allowed_time = self
-                    .state
-                    .read()
-                    .account()
-                    .delete()
-                    .account_deleteion_state(id)
-                    .await
-                    .change_context(ScheduledTaskError::DatabaseError)?;
-                if let Some(deletion_allowed_time) = deletion_allowed_time.automatic_deletion_allowed {
-                    let current_time = UnixTime::current_time();
-                    if current_time.ut >= deletion_allowed_time.ut {
-                        db_write_raw!(self.state, move |cmds| {
-                            cmds.account()
-                                .delete()
-                                .delete_account(id)
-                                .await
-                            })
-                        .await
-                        .change_context(ScheduledTaskError::DatabaseError)?;
-                    }
-                }
+            if account_state == AccountState::PendingDeletion {
+                self.delete_account_if_needed(id).await?;
+            } else if account_state == AccountState::Banned {
+                self.unban_account_if_needed(id).await?;
             }
         }
 
@@ -275,6 +259,66 @@ impl ScheduledTaskManager {
 
         if age_updated {
             *age_updated_count += 1;
+        }
+
+        Ok(())
+    }
+
+    pub async fn delete_account_if_needed(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), ScheduledTaskError> {
+        let deletion_allowed_time = self
+            .state
+            .read()
+            .account()
+            .delete()
+            .account_deleteion_state(id)
+            .await
+            .change_context(ScheduledTaskError::DatabaseError)?;
+
+        if let Some(deletion_allowed_time) = deletion_allowed_time.automatic_deletion_allowed {
+            let current_time = UnixTime::current_time();
+            if current_time.ut >= deletion_allowed_time.ut {
+                db_write_raw!(self.state, move |cmds| {
+                    cmds.account()
+                        .delete()
+                        .delete_account(id)
+                        .await
+                    })
+                .await
+                .change_context(ScheduledTaskError::DatabaseError)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    pub async fn unban_account_if_needed(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), ScheduledTaskError> {
+        let banned_until_time = self
+            .state
+            .read()
+            .account()
+            .ban()
+            .ban_time(id)
+            .await
+            .change_context(ScheduledTaskError::DatabaseError)?;
+
+        if let Some(banned_until) = banned_until_time.banned_until {
+            let current_time = UnixTime::current_time();
+            if current_time.ut >= banned_until.ut {
+                db_write_raw!(self.state, move |cmds| {
+                    cmds.account_admin()
+                        .ban()
+                        .set_account_ban_state(id, None)
+                        .await
+                    })
+                .await
+                .change_context(ScheduledTaskError::DatabaseError)?;
+            }
         }
 
         Ok(())

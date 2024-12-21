@@ -1,3 +1,4 @@
+pub mod ban;
 pub mod delete;
 pub mod demo;
 pub mod login;
@@ -7,6 +8,7 @@ pub mod register;
 pub mod settings;
 pub mod state;
 
+pub use ban::*;
 pub use delete::*;
 pub use demo::*;
 pub use login::*;

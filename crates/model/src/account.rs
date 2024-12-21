@@ -130,6 +130,10 @@ impl AccountStateContainer {
     pub fn set_pending_deletion(&mut self, value: bool) {
         self.pending_deletion = value;
     }
+
+    pub fn set_banned(&mut self, value: bool) {
+        self.banned = value;
+    }
 }
 
 macro_rules! define_permissions {
@@ -168,6 +172,7 @@ define_permissions!(
     admin_moderate_profile_texts,
     admin_delete_media_content,
     admin_delete_account,
+    admin_ban_account,
     admin_request_account_deletion,
     /// View public and private profiles.
     admin_view_all_profiles,
