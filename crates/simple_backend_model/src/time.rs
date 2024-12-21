@@ -51,6 +51,13 @@ impl UnixTime {
             ut: self.ut.saturating_sub(1),
         }
     }
+
+    pub fn add_seconds(&self, seconds: u32) -> Self {
+        let seconds: i64 = seconds.into();
+        Self {
+            ut: self.ut + seconds,
+        }
+    }
 }
 
 diesel_i64_wrapper!(UnixTime);

@@ -85,8 +85,8 @@ pub async fn complete_initial_setup(
                 id,
                 enable_all_permissions,
                 move |state, permissions, _| {
-                    if *state == AccountState::InitialSetup {
-                        *state = AccountState::Normal;
+                    if state.account_state() == AccountState::InitialSetup {
+                        state.complete_initial_setup();
                         if enable_all_permissions.is_some() {
                             warn!("Account detected as admin account. Enabling all permissions");
                             *permissions = Permissions::all_enabled();
@@ -109,7 +109,7 @@ pub async fn complete_initial_setup(
                 cmds.events()
                     .send_connected_event(
                         id.uuid,
-                        EventToClientInternal::AccountStateChanged(new_account.state()),
+                        EventToClientInternal::AccountStateChanged(new_account.state_container()),
                     )
                     .await?;
 

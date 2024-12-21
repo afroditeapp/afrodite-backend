@@ -11,9 +11,7 @@ use utils::random_bytes::random_128_bits;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    schema_sqlite_types::Integer, Account, AccountState, ContentProcessingId,
-    ContentProcessingState, MessageNumber, Permissions,
-    ProfileVisibility,
+    schema_sqlite_types::Integer, Account, AccountStateContainer, ContentProcessingId, ContentProcessingState, MessageNumber, Permissions, ProfileVisibility
 };
 
 pub mod sync_version;
@@ -34,6 +32,12 @@ pub struct BackendVersion {
     /// Semver version of the protocol used by the backend.
     pub protocol_version: String,
 }
+
+// TODO(prod): Consider changing [model::Account] syncing to happend
+//             like other data with sync version for consistency and
+//             to avoid extra sync when for example profile visibility
+//             is changed as AccountSyncVersionChanged is not sent
+//             when profile visibility changes.
 
 /// Identifier for event.
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -90,7 +94,7 @@ pub struct ContentProcessingStateChanged {
 pub struct EventToClient {
     event: EventType,
     /// Data for event AccountStateChanged
-    account_state: Option<AccountState>,
+    account_state: Option<AccountStateContainer>,
     /// Data for event AccountPermissionsChanged
     permissions: Option<Permissions>,
     /// Data for event ProfileVisibilityChanged
@@ -143,7 +147,7 @@ impl From<SpecialEventToClient> for EventToClient {
 #[derive(Debug, Clone)]
 pub enum EventToClientInternal {
     /// New account state for client
-    AccountStateChanged(AccountState),
+    AccountStateChanged(AccountStateContainer),
     /// New permissions for client
     AccountPermissionsChanged(Permissions),
     /// New profile visiblity for client
@@ -487,7 +491,9 @@ diesel_i64_wrapper!(AccountIdDb);
 #[diesel(check_for_backend(crate::Db))]
 pub struct SharedStateRaw {
     pub profile_visibility_state_number: ProfileVisibility,
-    pub account_state_number: AccountState,
+    pub account_state_initial_setup_completed: bool,
+    pub account_state_banned: bool,
+    pub account_state_pending_deletion: bool,
     pub sync_version: AccountSyncVersion,
     pub unlimited_likes: bool,
 }
@@ -497,7 +503,9 @@ pub struct SharedStateRaw {
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountStateRelatedSharedState {
     pub profile_visibility_state_number: ProfileVisibility,
-    pub account_state_number: AccountState,
+    pub account_state_initial_setup_completed: bool,
+    pub account_state_banned: bool,
+    pub account_state_pending_deletion: bool,
     pub sync_version: AccountSyncVersion,
 }
 
@@ -514,13 +522,23 @@ impl AccountStateRelatedSharedState {
     pub fn profile_visibility(&self) -> ProfileVisibility {
         self.profile_visibility_state_number
     }
+
+    pub fn state_container(&self) -> AccountStateContainer {
+        AccountStateContainer {
+            initial_setup_completed: self.account_state_initial_setup_completed,
+            banned: self.account_state_banned,
+            pending_deletion: self.account_state_pending_deletion,
+        }
+    }
 }
 
 impl From<Account> for AccountStateRelatedSharedState {
     fn from(account: Account) -> Self {
         Self {
             profile_visibility_state_number: account.profile_visibility(),
-            account_state_number: account.state(),
+            account_state_initial_setup_completed: account.state_container().initial_setup_completed,
+            account_state_banned: account.state_container().banned,
+            account_state_pending_deletion: account.state_container().pending_deletion,
             sync_version: account.sync_version(),
         }
     }

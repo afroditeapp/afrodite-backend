@@ -88,6 +88,8 @@ diesel::table! {
         admin_moderate_profile_names -> Bool,
         admin_moderate_profile_texts -> Bool,
         admin_delete_media_content -> Bool,
+        admin_delete_account -> Bool,
+        admin_request_account_deletion -> Bool,
         admin_view_all_profiles -> Bool,
         admin_view_private_info -> Bool,
         admin_view_profile_history -> Bool,
@@ -119,6 +121,7 @@ diesel::table! {
     account_state (account_id) {
         account_id -> Integer,
         next_client_id -> Integer,
+        account_deletion_request_unix_time -> Nullable<Integer>,
         news_sync_version -> Integer,
         unread_news_count -> Integer,
         publication_id_at_news_iterator_reset -> Nullable<Integer>,
@@ -529,7 +532,9 @@ diesel::table! {
 
     shared_state (account_id) {
         account_id -> Integer,
-        account_state_number -> Integer,
+        account_state_initial_setup_completed -> Bool,
+        account_state_banned -> Bool,
+        account_state_pending_deletion -> Bool,
         profile_visibility_state_number -> Integer,
         sync_version -> Integer,
         unlimited_likes -> Bool,

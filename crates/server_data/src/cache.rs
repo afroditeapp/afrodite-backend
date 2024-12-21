@@ -182,6 +182,11 @@ impl DatabaseCache {
         Ok(last_seen_time_updated)
     }
 
+    /// Account logout must be done before calling this.
+    pub async fn delete_account_which_is_logged_out(&self, id: AccountId) {
+        self.accounts.write().await.remove(&id);
+    }
+
     pub async fn access_token_exists(&self, token: &AccessToken) -> Option<AccountIdInternal> {
         let tokens = self.access_tokens.read().await;
         tokens.get(token).map(|entry| entry.account_id_internal)
@@ -208,7 +213,8 @@ impl DatabaseCache {
                     r.common.permissions.clone(),
                     r.common
                         .account_state_related_shared_state
-                        .account_state_number,
+                        .state_container()
+                        .account_state(),
                 ))
             } else {
                 None

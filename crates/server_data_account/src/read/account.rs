@@ -9,12 +9,17 @@ use server_data::{
     define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError,
 };
 
+pub mod delete;
 pub mod email;
 pub mod news;
 
 define_cmd_wrapper_read!(ReadCommandsAccount);
 
 impl<'a> ReadCommandsAccount<'a> {
+    pub fn delete(self) -> delete::ReadCommandsAccountDelete<'a> {
+        delete::ReadCommandsAccountDelete::new(self.0)
+    }
+
     pub fn email(self) -> email::ReadCommandsAccountEmail<'a> {
         email::ReadCommandsAccountEmail::new(self.0)
     }

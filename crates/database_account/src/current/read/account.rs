@@ -3,6 +3,7 @@ use database::define_current_read_commands;
 define_current_read_commands!(CurrentReadAccount);
 
 mod data;
+mod delete;
 mod demo;
 mod email;
 mod news;
@@ -11,6 +12,10 @@ mod sign_in_with;
 impl<'a> CurrentReadAccount<'a> {
     pub fn data(self) -> data::CurrentReadAccountData<'a> {
         data::CurrentReadAccountData::new(self.cmds)
+    }
+
+    pub fn delete(self) -> delete::CurrentReadAccountDelete<'a> {
+        delete::CurrentReadAccountDelete::new(self.cmds)
     }
 
     pub fn sign_in_with(self) -> sign_in_with::CurrentReadAccountSignInWith<'a> {

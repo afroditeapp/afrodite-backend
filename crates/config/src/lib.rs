@@ -16,7 +16,7 @@ use std::{path::Path, sync::Arc};
 use args::{AppMode, ArgsConfig};
 use chrono::FixedOffset;
 use error_stack::{Result, ResultExt};
-use file::{ChatLimitsConfig, DemoModeConfig, GrantAdminAccessConfig, MediaLimitsConfig};
+use file::{AccountLimitsConfig, ChatLimitsConfig, DemoModeConfig, GrantAdminAccessConfig, MediaLimitsConfig};
 use file_dynamic::ConfigFileDynamic;
 use file_email_content::EmailContentFile;
 use model::BotConfig;
@@ -146,6 +146,10 @@ impl Config {
 
     pub fn bot_config_file(&self) -> Option<&Path> {
         self.file.bot_config_file.as_deref()
+    }
+
+    pub fn limits_account(&self) -> AccountLimitsConfig {
+        self.file.limits.as_ref().and_then(|v| v.account.as_ref().cloned()).unwrap_or_default()
     }
 
     pub fn limits_chat(&self) -> ChatLimitsConfig {

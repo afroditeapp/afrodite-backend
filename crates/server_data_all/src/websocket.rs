@@ -244,7 +244,7 @@ async fn handle_account_data_sync(
 
     send_event(
         socket,
-        EventToClientInternal::AccountStateChanged(account.state()),
+        EventToClientInternal::AccountStateChanged(account.state_container()),
     )
     .await?;
 

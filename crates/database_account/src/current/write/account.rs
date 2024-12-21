@@ -1,6 +1,7 @@
 use database::define_current_write_commands;
 
 mod data;
+mod delete;
 mod demo;
 mod email;
 mod news;
@@ -11,6 +12,10 @@ define_current_write_commands!(CurrentWriteAccount);
 impl<'a> CurrentWriteAccount<'a> {
     pub fn data(self) -> data::CurrentWriteAccountData<'a> {
         data::CurrentWriteAccountData::new(self.cmds)
+    }
+
+    pub fn delete(self) -> delete::CurrentWriteAccountDelete<'a> {
+        delete::CurrentWriteAccountDelete::new(self.cmds)
     }
 
     pub fn sign_in_with(self) -> sign_in_with::CurrentWriteAccountSignInWith<'a> {

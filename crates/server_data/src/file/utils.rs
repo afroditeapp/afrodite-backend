@@ -80,6 +80,16 @@ impl AccountDir {
         self.dir.push(CONTENT_DIR_NAME);
         ContentDir { dir: self.dir }
     }
+
+    pub async fn delete_if_exists(self) -> Result<(), FileError> {
+        if self.dir.exists() {
+            tokio::fs::remove_dir_all(self.dir)
+                .await
+                .change_context(FileError::IoFileRemove)
+        } else {
+            Ok(())
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

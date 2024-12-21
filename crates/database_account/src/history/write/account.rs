@@ -1,7 +1,7 @@
 use database::{define_history_write_commands, DieselDatabaseError};
-use diesel::{insert_into, prelude::*};
+use diesel::{delete, insert_into, prelude::*};
 use error_stack::Result;
-use model::AccountId;
+use model::{AccountId, AccountIdInternal};
 
 use crate::IntoDatabaseError;
 
@@ -23,5 +23,19 @@ impl HistoryWriteAccount<'_> {
             .into_db_error(random_aid)?;
 
         Ok(random_aid)
+    }
+
+    pub fn delete_account(
+        &mut self,
+        id_value: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::history_account_id::dsl::*;
+
+        delete(history_account_id)
+            .filter(id.eq(id_value.as_db_id()))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
     }
 }

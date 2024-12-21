@@ -44,6 +44,8 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_moderate_profile_names                 BOOLEAN NOT NULL DEFAULT 0,
     admin_moderate_profile_texts                 BOOLEAN NOT NULL DEFAULT 0,
     admin_delete_media_content                   BOOLEAN NOT NULL DEFAULT 0,
+    admin_delete_account                         BOOLEAN NOT NULL DEFAULT 0,
+    admin_request_account_deletion               BOOLEAN NOT NULL DEFAULT 0,
     admin_view_all_profiles                      BOOLEAN NOT NULL DEFAULT 0,
     admin_view_private_info                      BOOLEAN NOT NULL DEFAULT 0,
     admin_view_profile_history                   BOOLEAN NOT NULL DEFAULT 0,
@@ -69,11 +71,9 @@ CREATE TABLE IF NOT EXISTS account_permissions(
 -- server as it propagates the changes to other components.
 CREATE TABLE IF NOT EXISTS shared_state(
     account_id                INTEGER PRIMARY KEY NOT NULL,
-    -- initial setup = 0
-    -- normal = 1
-    -- banned = 2
-    -- pending deletion = 3
-    account_state_number      INTEGER              NOT NULL DEFAULT 0,
+    account_state_initial_setup_completed   BOOLEAN             NOT NULL DEFAULT 0,
+    account_state_banned                    BOOLEAN             NOT NULL DEFAULT 0,
+    account_state_pending_deletion          BOOLEAN             NOT NULL DEFAULT 0,
     -- pending private = 0
     -- pending public = 1
     -- private = 2
@@ -177,11 +177,12 @@ CREATE TABLE IF NOT EXISTS account_email_sending_state(
 
 -- State specific to account component.
 CREATE TABLE IF NOT EXISTS account_state(
-    account_id            INTEGER PRIMARY KEY NOT NULL,
-    next_client_id        INTEGER             NOT NULL DEFAULT 0,
+    account_id                         INTEGER PRIMARY KEY NOT NULL,
+    next_client_id                     INTEGER             NOT NULL DEFAULT 0,
+    account_deletion_request_unix_time INTEGER,
     -- Sync version for news.
-    news_sync_version     INTEGER             NOT NULL DEFAULT 0,
-    unread_news_count     INTEGER             NOT NULL DEFAULT 0,
+    news_sync_version                  INTEGER             NOT NULL DEFAULT 0,
+    unread_news_count                  INTEGER             NOT NULL DEFAULT 0,
     publication_id_at_news_iterator_reset INTEGER,
     publication_id_at_unread_news_count_incrementing INTEGER,
     FOREIGN KEY (account_id)

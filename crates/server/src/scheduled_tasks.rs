@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use model::UnixTime;
 use model_profile::{
     AccountIdInternal, AccountState, EventToClientInternal, ProfileAge, ProfileUpdate,
     ProfileUpdateInternal,
@@ -12,6 +13,7 @@ use server_api::{
 };
 use server_common::result::{Result, WrappedResultExt};
 use server_data::read::GetReadCommandsCommon;
+use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use server_data_profile::{
     read::GetReadProfileCommands, statistics::ProfileStatisticsCacheUtils,
     write::GetWriteCommandsProfile,
@@ -173,6 +175,30 @@ impl ScheduledTaskManager {
             if account.state() != AccountState::InitialSetup {
                 self.update_profile_age_if_needed(id, &mut age_updated)
                     .await?;
+            }
+
+            if account.state() == AccountState::PendingDeletion {
+                let deletion_allowed_time = self
+                    .state
+                    .read()
+                    .account()
+                    .delete()
+                    .account_deleteion_state(id)
+                    .await
+                    .change_context(ScheduledTaskError::DatabaseError)?;
+                if let Some(deletion_allowed_time) = deletion_allowed_time.automatic_deletion_allowed {
+                    let current_time = UnixTime::current_time();
+                    if current_time.ut >= deletion_allowed_time.ut {
+                        db_write_raw!(self.state, move |cmds| {
+                            cmds.account()
+                                .delete()
+                                .delete_account(id)
+                                .await
+                            })
+                        .await
+                        .change_context(ScheduledTaskError::DatabaseError)?;
+                    }
+                }
             }
         }
 

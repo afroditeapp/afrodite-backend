@@ -60,6 +60,9 @@ chat = true
 # account_internal = "http://127.0.0.1:4000"
 # media_internal = "http://127.0.0.1:4000"
 
+# [limits.account]
+# account_deletion_wait_time_seconds = "90d"
+
 # [limits.chat]
 # like_limit_reset_time_utc_offset_hours = 0
 
@@ -206,11 +209,26 @@ pub struct InternalApiConfig {
 /// Limits config
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct LimitsConfig {
+    pub account: Option<AccountLimitsConfig>,
     pub chat: Option<ChatLimitsConfig>,
     pub media: Option<MediaLimitsConfig>,
 }
 
-/// Limits config
+/// Account related limits config
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct AccountLimitsConfig {
+    pub account_deletion_wait_time_seconds: DurationValue,
+}
+
+impl Default for AccountLimitsConfig {
+    fn default() -> Self {
+        Self {
+            account_deletion_wait_time_seconds: DurationValue::from_days(90),
+        }
+    }
+}
+
+/// Chat releated limits config
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct ChatLimitsConfig {
     pub like_limit_reset_time_utc_offset_hours: i8,

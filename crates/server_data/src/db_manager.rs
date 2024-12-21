@@ -141,6 +141,7 @@ impl DatabaseManager {
                 history_read_handle: history_write_handle.to_read_handle(),
                 root: root.into(),
                 cache: cache.into(),
+                config: config.clone(),
             },
             config: config.clone(),
             current_write_handle: current_write_handle.clone(),
@@ -158,6 +159,7 @@ impl DatabaseManager {
             history_read_handle: history_read_handle.clone(),
             root,
             cache,
+            config,
         };
 
         let database_manager = DatabaseManager {
@@ -362,6 +364,7 @@ pub struct RouterDatabaseReadHandle {
     current_read_handle: CurrentReadHandle,
     history_read_handle: HistoryReadHandle,
     cache: Arc<DatabaseCache>,
+    config: Arc<Config>,
 }
 
 impl RouterDatabaseReadHandle {
@@ -411,6 +414,7 @@ pub trait InternalReading {
     fn current_read_handle(&self) -> &CurrentReadHandle;
     fn history_read_handle(&self) -> &HistoryReadHandle;
     fn cache(&self) -> &DatabaseCache;
+    fn config(&self) -> &Config;
 
     async fn db_read_raw<
         T: FnOnce(database::DbReadMode<'_>) -> error_stack::Result<R, DieselDatabaseError>
@@ -457,6 +461,10 @@ impl InternalReading for &RouterDatabaseReadHandle {
     fn cache(&self) -> &DatabaseCache {
         &self.cache
     }
+
+    fn config(&self) -> &Config {
+        &self.config
+    }
 }
 
 impl<I: InternalWriting> InternalReading for I {
@@ -475,6 +483,10 @@ impl<I: InternalWriting> InternalReading for I {
     fn cache(&self) -> &DatabaseCache {
         self.cache()
     }
+
+    fn config(&self) -> &Config {
+        InternalWriting::config(self)
+    }
 }
 
 impl InternalReading for ReadAdapter<'_> {
@@ -492,5 +504,9 @@ impl InternalReading for ReadAdapter<'_> {
 
     fn cache(&self) -> &DatabaseCache {
         &self.cmds.read.cache
+    }
+
+    fn config(&self) -> &Config {
+        &self.cmds.read.config
     }
 }

@@ -1,5 +1,6 @@
 use chrono::NaiveDate;
 use diesel::{prelude::*, Associations};
+use model::UnixTime;
 use model_server_data::{AuthPair, EmailAddress, GoogleAccountId, PublicationId, SignInWithInfo};
 use serde::{Deserialize, Serialize};
 use utils::time::age_in_years_from_birthdate;
@@ -158,8 +159,8 @@ pub struct BooleanSetting {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
-pub struct DeleteStatus {
-    delete_date: String,
+pub struct GetAccountDeletionRequestResult {
+    pub automatic_deletion_allowed: Option<UnixTime>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]

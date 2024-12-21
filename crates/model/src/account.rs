@@ -13,7 +13,7 @@ pub use news::*;
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct Account {
-    state: AccountState,
+    state: AccountStateContainer,
     permissions: Permissions,
     visibility: ProfileVisibility,
     sync_version: AccountSyncVersion,
@@ -29,7 +29,11 @@ impl Account {
         shared_state: AccountStateRelatedSharedState,
     ) -> Self {
         Self {
-            state: shared_state.account_state_number,
+            state: AccountStateContainer {
+                initial_setup_completed: shared_state.account_state_initial_setup_completed,
+                banned: shared_state.account_state_banned,
+                pending_deletion: shared_state.account_state_pending_deletion,
+            },
             permissions,
             visibility: shared_state.profile_visibility(),
             sync_version: shared_state.sync_version,
@@ -38,7 +42,7 @@ impl Account {
 
     pub fn new_from(
         permissions: Permissions,
-        state: AccountState,
+        state: AccountStateContainer,
         visibility: ProfileVisibility,
         sync_version: AccountSyncVersion,
     ) -> Self {
@@ -50,8 +54,12 @@ impl Account {
         }
     }
 
-    pub fn state(&self) -> AccountState {
+    pub fn state_container(&self) -> AccountStateContainer {
         self.state
+    }
+
+    pub fn state(&self) -> AccountState {
+        self.state.account_state()
     }
 
     pub fn permissions(&self) -> Permissions {
@@ -67,28 +75,17 @@ impl Account {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum AccountStateError {
-    WrongStateNumber(i64),
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum AccountState {
+    InitialSetup,
+    Normal,
+    Banned,
+    PendingDeletion,
 }
-impl AccountStateError {
-    pub fn wrong_state_number(number: i64) -> Self {
-        Self::WrongStateNumber(number)
-    }
-}
-impl std::fmt::Display for AccountStateError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            AccountStateError::WrongStateNumber(number) => {
-                write!(f, "Wrong state number: {}", number)
-            }
-        }
-    }
-}
-impl std::error::Error for AccountStateError {}
 
 #[derive(
     Debug,
+    Default,
     Clone,
     Copy,
     Deserialize,
@@ -96,36 +93,42 @@ impl std::error::Error for AccountStateError {}
     ToSchema,
     PartialEq,
     Eq,
-    diesel::FromSqlRow,
-    diesel::AsExpression,
 )]
-#[diesel(sql_type = Integer)]
-pub enum AccountState {
-    InitialSetup = 0,
-    Normal = 1,
-    Banned = 2,
-    PendingDeletion = 3,
+pub struct AccountStateContainer {
+    #[serde(default, skip_serializing_if = "value_is_true")]
+    #[schema(default = true)]
+    pub(crate) initial_setup_completed: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub(crate) banned: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub(crate) pending_deletion: bool,
 }
 
-impl TryFrom<i64> for AccountState {
-    type Error = AccountStateError;
+fn value_is_true(v: &bool) -> bool {
+    *v
+}
 
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Self::InitialSetup),
-            1 => Ok(Self::Normal),
-            2 => Ok(Self::Banned),
-            3 => Ok(Self::PendingDeletion),
-            _ => Err(AccountStateError::WrongStateNumber(value)),
+impl AccountStateContainer {
+    pub fn account_state(&self) -> AccountState {
+        if self.pending_deletion {
+            AccountState::PendingDeletion
+        } else if self.banned {
+            AccountState::Banned
+        } else if !self.initial_setup_completed {
+            AccountState::InitialSetup
+        } else {
+            AccountState::Normal
         }
     }
-}
 
-diesel_i64_try_from!(AccountState);
+    pub fn complete_initial_setup(&mut self) {
+        self.initial_setup_completed = true;
+    }
 
-impl Default for AccountState {
-    fn default() -> Self {
-        Self::InitialSetup
+    pub fn set_pending_deletion(&mut self, value: bool) {
+        self.pending_deletion = value;
     }
 }
 
@@ -164,6 +167,8 @@ define_permissions!(
     admin_moderate_profile_names,
     admin_moderate_profile_texts,
     admin_delete_media_content,
+    admin_delete_account,
+    admin_request_account_deletion,
     /// View public and private profiles.
     admin_view_all_profiles,
     admin_view_private_info,

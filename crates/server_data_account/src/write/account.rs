@@ -1,8 +1,10 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_account::{current::write::GetDbWriteCommandsAccount, history::write::GetDbHistoryWriteCommandsAccount};
+use delete::WriteCommandsAccountDelete;
 use email::WriteCommandsAccountEmail;
+use model::AccountStateContainer;
 use model_account::{
-    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountState, ClientId,
+    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, ClientId,
     Permissions, ProfileVisibility, SetAccountSetup,
 };
 use model_server_state::DemoModeId;
@@ -15,6 +17,7 @@ use server_data::{
     DataError, DieselDatabaseError,
 };
 
+pub mod delete;
 pub mod email;
 pub mod news;
 
@@ -24,6 +27,10 @@ pub struct IncrementAdminAccessGrantedCount;
 define_cmd_wrapper_write!(WriteCommandsAccount);
 
 impl<'a> WriteCommandsAccount<'a> {
+    pub fn delete(self) -> WriteCommandsAccountDelete<'a> {
+        WriteCommandsAccountDelete::new(self.0)
+    }
+
     pub fn email(self) -> WriteCommandsAccountEmail<'a> {
         WriteCommandsAccountEmail::new(self.0)
     }
@@ -44,7 +51,7 @@ impl WriteCommandsAccount<'_> {
         id: AccountIdInternal,
         increment_admin_access_granted: Option<IncrementAdminAccessGrantedCount>,
         modify_action: impl FnOnce(
-                &mut AccountState,
+                &mut AccountStateContainer,
                 &mut Permissions,
                 &mut ProfileVisibility,
             ) -> error_stack::Result<(), DieselDatabaseError>

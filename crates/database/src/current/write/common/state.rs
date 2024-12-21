@@ -2,8 +2,7 @@ use chrono::NaiveDate;
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    Account, AccountIdInternal, AccountState, AccountStateRelatedSharedState, AccountSyncVersion,
-    Permissions, ProfileVisibility, SharedStateRaw, SyncVersionUtils,
+    Account, AccountIdInternal, AccountStateContainer, AccountStateRelatedSharedState, AccountSyncVersion, Permissions, ProfileVisibility, SharedStateRaw, SyncVersionUtils
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
@@ -119,7 +118,7 @@ impl CurrentWriteCommonState<'_> {
         Ok(())
     }
 
-    /// The only method which can modify AccountState, Permissions and
+    /// The only method which can modify AccountStateContainer, Permissions and
     /// ProfileVisibility. Updates automatically the AccountSyncVersion number.
     ///
     /// Returns the modified Account.
@@ -128,14 +127,14 @@ impl CurrentWriteCommonState<'_> {
         id: AccountIdInternal,
         account: Account,
         modify_action: impl FnOnce(
-                &mut AccountState,
+                &mut AccountStateContainer,
                 &mut Permissions,
                 &mut ProfileVisibility,
             ) -> error_stack::Result<(), DieselDatabaseError>
             + Send
             + 'static,
     ) -> Result<Account, DieselDatabaseError> {
-        let mut state = account.state();
+        let mut state = account.state_container();
         let mut permissions = account.permissions();
         let mut profile_visibility = account.profile_visibility();
         modify_action(&mut state, &mut permissions, &mut profile_visibility)

@@ -25,6 +25,10 @@ macro_rules! define_cmd_wrapper_read {
             fn cache(&self) -> &$crate::cache::DatabaseCache {
                 self.0.cache()
             }
+
+            fn config(&self) -> &$crate::db_manager::handle_types::Config {
+                self.0.config()
+            }
         }
     };
 }

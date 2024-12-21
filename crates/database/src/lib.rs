@@ -156,11 +156,6 @@ impl<Ok> IntoDatabaseErrorExt<DieselDatabaseError>
 {
 }
 
-impl<Ok> IntoDatabaseErrorExt<DieselDatabaseError>
-    for std::result::Result<Ok, model::account::AccountStateError>
-{
-}
-
 // Workaround because it is not possible to implement From<diesel::result::Error>
 // to error_stack::Report from here.
 pub struct TransactionError(error_stack::Report<DieselDatabaseError>);
