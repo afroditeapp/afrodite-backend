@@ -313,7 +313,7 @@ impl ScheduledTaskManager {
                 db_write_raw!(self.state, move |cmds| {
                     cmds.account_admin()
                         .ban()
-                        .set_account_ban_state(id, None)
+                        .set_account_ban_state(id, None, None, None, None)
                         .await
                     })
                 .await

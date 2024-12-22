@@ -1,7 +1,7 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
 use model::{Account, UnixTime};
-use model_account::AccountIdInternal;
+use model_account::{AccountBanReasonCategory, AccountBanReasonDetails, AccountIdInternal};
 use server_data::{
     define_cmd_wrapper_write, read::DbRead, result::Result, write::{DbTransaction, GetWriteCommandsCommon}, DataError
 };
@@ -12,7 +12,10 @@ impl WriteCommandsAccountBan<'_> {
     pub async fn set_account_ban_state(
         &self,
         id: AccountIdInternal,
+        admin_id: Option<AccountIdInternal>,
         banned_until: Option<UnixTime>,
+        reason_category: Option<AccountBanReasonCategory>,
+        reason_details: Option<AccountBanReasonDetails>,
     ) -> Result<Option<Account>, DataError> {
         let (ban_state, current_account) = self.db_read(move |mut cmds| {
             let ban_state = cmds.account().ban().account_ban_time(id)?;
@@ -32,7 +35,7 @@ impl WriteCommandsAccountBan<'_> {
                     Ok(())
                 })?;
 
-            cmds.account_admin().ban().set_banned_until_time(id, banned_until)?;
+            cmds.account_admin().ban().set_banned_state(id, admin_id, banned_until, reason_category, reason_details)?;
 
             Ok(a)
         })?;

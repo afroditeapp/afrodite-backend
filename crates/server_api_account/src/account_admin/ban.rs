@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension};
-use model::{EventToClientInternal, Permissions};
+use model::{AccountIdInternal, EventToClientInternal, Permissions};
 use model_account::SetAccountBanState;
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::{GetAccounts, WriteData}, create_open_api_router, db_write_multiple, S};
@@ -30,6 +30,7 @@ const PATH_POST_SET_BAN_STATE: &str = "/account_api/set_ban_state";
 )]
 pub async fn post_set_ban_state(
     State(state): State<S>,
+    Extension(api_caller_id): Extension<AccountIdInternal>,
     Extension(permissions): Extension<Permissions>,
     Json(ban_info): Json<SetAccountBanState>,
 ) -> Result<(), StatusCode> {
@@ -42,7 +43,13 @@ pub async fn post_set_ban_state(
     let internal_id = state.get_internal_id(ban_info.account).await?;
 
     db_write_multiple!(state, move |cmds| {
-        let new_account = cmds.account_admin().ban().set_account_ban_state(internal_id, ban_info.ban_until).await?;
+        let new_account = cmds.account_admin().ban().set_account_ban_state(
+            internal_id,
+            Some(api_caller_id),
+            ban_info.ban_until,
+            ban_info.reason_category,
+            ban_info.reason_details
+        ).await?;
 
         if new_account.is_some() {
             cmds.events()

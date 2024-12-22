@@ -17,9 +17,13 @@ impl CurrentReadAccountBan<'_> {
 
         account_state
             .filter(account_id.eq(id.as_db_id()))
-            .select(account_banned_until_unix_time)
+            .select((
+                account_banned_until_unix_time,
+                account_banned_reason_category,
+                account_banned_reason_details,
+            ))
             .first(self.conn())
             .into_db_error(id)
-            .map(|banned_until| GetAccountBanTimeResult { banned_until })
+            .map(|(banned_until, reason_category, reason_details)| GetAccountBanTimeResult { banned_until, reason_category, reason_details })
     }
 }

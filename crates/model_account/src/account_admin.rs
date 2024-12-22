@@ -6,6 +6,8 @@ mod news;
 
 pub use news::*;
 
+use crate::{AccountBanReasonCategory, AccountBanReasonDetails};
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct CurrentVersions {
     pub versions: String,
@@ -16,4 +18,6 @@ pub struct SetAccountBanState {
     pub account: AccountId,
     /// `Some` value bans the account and `None` value unbans the account.
     pub ban_until: Option<UnixTime>,
+    pub reason_category: Option<AccountBanReasonCategory>,
+    pub reason_details: Option<AccountBanReasonDetails>,
 }

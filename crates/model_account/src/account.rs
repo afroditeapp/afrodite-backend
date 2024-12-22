@@ -14,6 +14,9 @@ pub use email::*;
 mod news;
 pub use news::*;
 
+mod ban;
+pub use ban::*;
+
 // TODO(prod): Also add info what sign in with service is used?
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, PartialEq)]
@@ -167,6 +170,8 @@ pub struct GetAccountDeletionRequestResult {
 pub struct GetAccountBanTimeResult {
     /// If `None` the account is not banned.
     pub banned_until: Option<UnixTime>,
+    pub reason_category: Option<AccountBanReasonCategory>,
+    pub reason_details: Option<AccountBanReasonDetails>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]

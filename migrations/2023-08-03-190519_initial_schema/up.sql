@@ -188,7 +188,11 @@ CREATE TABLE IF NOT EXISTS account_state(
     account_id                         INTEGER PRIMARY KEY NOT NULL,
     next_client_id                     INTEGER             NOT NULL DEFAULT 0,
     account_deletion_request_unix_time INTEGER,
+    account_banned_reason_category     INTEGER,
+    account_banned_reason_details      TEXT,
+    account_banned_admin_account_id    INTEGER,
     account_banned_until_unix_time     INTEGER,
+    account_banned_state_change_unix_time INTEGER,
     -- Sync version for news.
     news_sync_version                  INTEGER             NOT NULL DEFAULT 0,
     unread_news_count                  INTEGER             NOT NULL DEFAULT 0,
@@ -197,6 +201,10 @@ CREATE TABLE IF NOT EXISTS account_state(
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (account_banned_admin_account_id)
+        REFERENCES account_id (id)
+            ON DELETE SET NULL
             ON UPDATE CASCADE
 );
 
