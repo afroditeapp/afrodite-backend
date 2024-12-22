@@ -1,4 +1,4 @@
-use model_profile::GetProfileStatisticsResult;
+use model_profile::ProfileStatisticsInternal;
 use server_data::{
     db_manager::RouterDatabaseReadHandle, result::Result, statistics::ProfileStatisticsCache,
     DataError,
@@ -10,18 +10,18 @@ pub trait ProfileStatisticsCacheUtils {
     async fn get_or_update_statistics(
         &self,
         handle: &RouterDatabaseReadHandle,
-    ) -> Result<GetProfileStatisticsResult, DataError>;
+    ) -> Result<ProfileStatisticsInternal, DataError>;
     async fn update_statistics(
         &self,
         handle: &RouterDatabaseReadHandle,
-    ) -> Result<GetProfileStatisticsResult, DataError>;
+    ) -> Result<ProfileStatisticsInternal, DataError>;
 }
 
 impl ProfileStatisticsCacheUtils for ProfileStatisticsCache {
     async fn get_or_update_statistics(
         &self,
         handle: &RouterDatabaseReadHandle,
-    ) -> Result<GetProfileStatisticsResult, DataError> {
+    ) -> Result<ProfileStatisticsInternal, DataError> {
         let mut data = self.data.lock().await;
         let r = match data.as_mut() {
             Some(data) => data.clone(),
@@ -41,7 +41,7 @@ impl ProfileStatisticsCacheUtils for ProfileStatisticsCache {
     async fn update_statistics(
         &self,
         handle: &RouterDatabaseReadHandle,
-    ) -> Result<GetProfileStatisticsResult, DataError> {
+    ) -> Result<ProfileStatisticsInternal, DataError> {
         let mut data = self.data.lock().await;
         let r = handle
             .profile()

@@ -44,18 +44,20 @@ pub async fn get_profile_statistics(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let r = if params.contains_admin_settings() {
+    let r: GetProfileStatisticsResult = if params.contains_admin_settings() {
         state
             .read()
             .profile()
             .statistics()
             .profile_statistics(params.profile_visibility.unwrap_or_default())
             .await?
+            .into()
     } else {
         state
             .profile_statistics_cache()
             .get_or_update_statistics(state.read())
             .await?
+            .into()
     };
 
     Ok(r.into())

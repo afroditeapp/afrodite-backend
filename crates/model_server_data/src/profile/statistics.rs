@@ -29,7 +29,7 @@ impl Default for StatisticsProfileVisibility {
     }
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Default)]
 pub struct PublicProfileCounts {
     pub man: i64,
     pub woman: i64,
@@ -71,15 +71,15 @@ impl ProfileAgeCounts {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct GetProfileStatisticsResult {
+#[derive(Debug, Clone)]
+pub struct ProfileStatisticsInternal {
     pub generation_time: UnixTime,
     pub age_counts: ProfileAgeCounts,
     pub account_count: i64,
     pub public_profile_counts: PublicProfileCounts,
 }
 
-impl GetProfileStatisticsResult {
+impl ProfileStatisticsInternal {
     pub fn new(
         generation_time: UnixTime,
         age_counts: ProfileAgeCounts,
@@ -92,5 +92,29 @@ impl GetProfileStatisticsResult {
             account_count,
             public_profile_counts,
         }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct GetProfileStatisticsResult {
+    pub generation_time: UnixTime,
+    pub age_counts: ProfileAgeCounts,
+}
+
+impl GetProfileStatisticsResult {
+    pub fn new(
+        generation_time: UnixTime,
+        age_counts: ProfileAgeCounts,
+    ) -> Self {
+        Self {
+            generation_time,
+            age_counts,
+        }
+    }
+}
+
+impl From<ProfileStatisticsInternal> for GetProfileStatisticsResult {
+    fn from(value: ProfileStatisticsInternal) -> Self {
+        Self::new(value.generation_time, value.age_counts)
     }
 }

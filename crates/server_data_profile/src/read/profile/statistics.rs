@@ -1,6 +1,5 @@
 use model_profile::{
-    GetProfileStatisticsResult, ProfileAgeCounts, PublicProfileCounts, StatisticsGender,
-    StatisticsProfileVisibility, UnixTime,
+    ProfileAgeCounts, ProfileStatisticsInternal, PublicProfileCounts, StatisticsGender, StatisticsProfileVisibility, UnixTime
 };
 use server_data::{define_cmd_wrapper_read, result::Result, DataError};
 
@@ -12,7 +11,7 @@ impl ReadCommandsProfileStatistics<'_> {
     pub async fn profile_statistics(
         &self,
         profile_visibility: StatisticsProfileVisibility,
-    ) -> Result<GetProfileStatisticsResult, DataError> {
+    ) -> Result<ProfileStatisticsInternal, DataError> {
         let generation_time = UnixTime::current_time();
         let mut account_count = 0;
         let mut public_profile_counts = PublicProfileCounts::default();
@@ -59,7 +58,7 @@ impl ReadCommandsProfileStatistics<'_> {
         })
         .await?;
 
-        Ok(GetProfileStatisticsResult::new(
+        Ok(ProfileStatisticsInternal::new(
             generation_time,
             age_counts,
             account_count,

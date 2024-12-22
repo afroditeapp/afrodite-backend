@@ -1,14 +1,14 @@
 use database::{define_history_write_commands, DieselDatabaseError, IntoDatabaseError};
 use diesel::{insert_into, prelude::*};
 use error_stack::Result;
-use model_profile::{GetProfileStatisticsResult, SaveTimeId, UnixTime};
+use model_profile::{ProfileStatisticsInternal, SaveTimeId, UnixTime};
 
 define_history_write_commands!(HistoryWriteProfileAdminStatistics);
 
 impl<'a> HistoryWriteProfileAdminStatistics<'a> {
     pub fn save_statistics(
         &mut self,
-        r: GetProfileStatisticsResult,
+        r: ProfileStatisticsInternal,
     ) -> Result<(), DieselDatabaseError> {
         let time_id = self.save_time(r.generation_time)?;
         self.save_count_if_needed_account(time_id, r.account_count)?;
