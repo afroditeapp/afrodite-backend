@@ -20,7 +20,7 @@ use file::{AccountLimitsConfig, ChatLimitsConfig, DemoModeConfig, GrantAdminAcce
 use file_dynamic::ConfigFileDynamic;
 use file_email_content::EmailContentFile;
 use model::BotConfig;
-use model_server_data::{AttributesFileInternal, ProfileAttributes};
+use model_server_data::{AttributesFileInternal, ProfileAttributesInternal};
 use profile_name_allowlist::{ProfileNameAllowlistBuilder, ProfileNameAllowlistData};
 use reqwest::Url;
 use sha2::{Digest, Sha256};
@@ -67,7 +67,7 @@ pub struct Config {
 
     // Other configs
     mode: Option<AppMode>,
-    profile_attributes: Option<ProfileAttributes>,
+    profile_attributes: Option<ProfileAttributesInternal>,
     profile_attributes_sha256: Option<String>,
     email_content: Option<EmailContentFile>,
 
@@ -160,7 +160,7 @@ impl Config {
         self.file.limits.as_ref().and_then(|v| v.media.as_ref().cloned()).unwrap_or_default()
     }
 
-    pub fn profile_attributes(&self) -> Option<&ProfileAttributes> {
+    pub fn profile_attributes(&self) -> Option<&ProfileAttributesInternal> {
         self.profile_attributes.as_ref()
     }
 

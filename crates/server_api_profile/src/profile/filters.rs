@@ -1,7 +1,6 @@
 use axum::{extract::State, Extension};
 use model_profile::{
-    AccountIdInternal, AvailableProfileAttributes, GetProfileFilteringSettings,
-    ProfileFilteringSettingsUpdate,
+    AccountIdInternal, AvailableProfileAttributes, GetProfileFilteringSettings, ProfileAttributeQuery, ProfileAttributeQueryResult, ProfileFilteringSettingsUpdate
 };
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
@@ -38,8 +37,34 @@ pub async fn get_available_profile_attributes(
     PROFILE.get_available_profile_attributes.incr();
     let profile_state = state.read().profile().profile_state(account_id).await?;
     let info = AvailableProfileAttributes {
-        info: state.config().profile_attributes().cloned(),
+        info: state.config().profile_attributes().map(|a| a.info_for_client()).cloned(),
         sync_version: profile_state.profile_attributes_sync_version,
+    };
+    Ok(info.into())
+}
+
+#[obfuscate_api]
+const PATH_GET_QUERY_AVAILABLE_PROFILE_ATTRIBUTES: &str = "/profile_api/query_available_profile_attributes";
+
+/// Query profile attributes using attribute ID list.
+#[utoipa::path(
+    get,
+    path = PATH_GET_QUERY_AVAILABLE_PROFILE_ATTRIBUTES,
+    request_body = ProfileAttributeQuery,
+    responses(
+        (status = 200, description = "Successfull.", body = ProfileAttributeQueryResult),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_query_available_profile_attributes(
+    State(state): State<S>,
+    Json(query): Json<ProfileAttributeQuery>,
+) -> Result<Json<ProfileAttributeQueryResult>, StatusCode> {
+    PROFILE.get_query_available_profile_attributes.incr();
+    let info = ProfileAttributeQueryResult {
+        values: state.config().profile_attributes().map(|a| a.query_attributes(query.values)).unwrap_or_default(),
     };
     Ok(info.into())
 }
@@ -104,6 +129,7 @@ pub fn filters_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
         get_available_profile_attributes,
+        get_query_available_profile_attributes,
         get_profile_filtering_settings,
         post_profile_filtering_settings,
     )
@@ -114,6 +140,7 @@ create_counters!(
     PROFILE,
     PROFILE_FILTERS_COUNTERS_LIST,
     get_available_profile_attributes,
+    get_query_available_profile_attributes,
     get_profile_attribute_filters,
     post_profile_filtering_settings,
 );

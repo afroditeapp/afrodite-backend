@@ -1,6 +1,8 @@
 use std::{collections::HashSet, str::FromStr};
 
+use base64::Engine;
 use serde::{Deserialize, Serialize};
+use sha2::{Sha256, Digest};
 use utoipa::ToSchema;
 
 use super::AttributeId;
@@ -53,8 +55,8 @@ impl AttributesFileInternal {
         Ok((self.attribute_order, self.attribute))
     }
 
-    pub fn validate(self) -> Result<ProfileAttributes, String> {
-        ProfileAttributes::from_file(self)
+    pub fn validate(self) -> Result<ProfileAttributesInternal, String> {
+        ProfileAttributesInternal::from_file(self)
     }
 }
 
@@ -607,6 +609,30 @@ impl From<IconResource> for String {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct ProfileAttributeHash {
+    h: String,
+}
+
+impl ProfileAttributeHash {
+    pub fn hash_attribute(a: &Attribute) -> Result<Self, String> {
+        let attribute_json = serde_json::to_string(a)
+            .map_err(|e| e.to_string())?;
+
+        let mut hasher = Sha256::new();
+        hasher.update(attribute_json);
+        let result = hasher.finalize();
+
+        let h = base64::engine::general_purpose::URL_SAFE_NO_PAD
+            .encode(result);
+
+        Ok(Self {
+            h
+        })
+    }
+}
+
+/// Client uses this to store the attributes as JSON.
+#[derive(ToSchema)]
 pub struct ProfileAttributes {
     pub attribute_order: AttributeOrderMode,
     /// List of attributes.
@@ -616,15 +642,26 @@ pub struct ProfileAttributes {
     pub attributes: Vec<Attribute>,
 }
 
-impl ProfileAttributes {
+#[derive(Debug, Clone)]
+pub struct ProfileAttributesInternal {
+    /// List of attributes.
+    ///
+    /// Attributes are sorted by Attribute ID and ID can be used to
+    /// index this list.
+    attributes: Vec<(Attribute, ProfileAttributeHash)>,
+    info: ProfileAttributeInfo,
+}
+
+impl ProfileAttributesInternal {
     pub fn get_attribute(&self, id: AttributeId) -> Option<&Attribute> {
-        self.attributes.get(id.to_usize())
+        self.attributes.get(id.to_usize()).map(|v| &v.0)
     }
 
     pub fn from_file(file: AttributesFileInternal) -> Result<Self, String> {
         let (attribute_order, internal_attributes) = file.validate_attributes()?;
 
         let mut attributes = vec![];
+        let mut attributes_for_info = vec![];
         for a in internal_attributes {
             let info = a.validate()?;
             let a = Attribute {
@@ -641,13 +678,59 @@ impl ProfileAttributes {
                 values: info.values,
                 translations: info.translations,
             };
-            attributes.push(a);
+            let hash = ProfileAttributeHash::hash_attribute(&a)?;
+            let id_and_hash = AttributeIdAndHash {
+                id: a.id,
+                h: hash.clone(),
+            };
+            attributes.push((a, hash.clone()));
+            attributes_for_info.push(id_and_hash);
         }
         Ok(Self {
-            attribute_order,
             attributes,
+            info: ProfileAttributeInfo {
+                attribute_order,
+                attributes: attributes_for_info,
+            },
         })
     }
+
+    pub fn info_for_client(&self) -> &ProfileAttributeInfo {
+        &self.info
+    }
+
+    pub fn query_attributes(&self, ids: Vec<AttributeId>) -> Vec<ProfileAttributeQueryItem> {
+        ids
+            .into_iter()
+            .filter_map(|id| {
+                self.attributes
+                    .get(id.to_usize())
+                    .cloned()
+                    .map(|(a, h)| ProfileAttributeQueryItem {
+                        a,
+                        h,
+                    })
+            })
+            .collect()
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct ProfileAttributeInfo {
+    pub attribute_order: AttributeOrderMode,
+    pub attributes: Vec<AttributeIdAndHash>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct AttributeIdAndHash {
+    pub id: AttributeId,
+    pub h: ProfileAttributeHash,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct ProfileAttributeQueryItem {
+    pub a: Attribute,
+    pub h: ProfileAttributeHash,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

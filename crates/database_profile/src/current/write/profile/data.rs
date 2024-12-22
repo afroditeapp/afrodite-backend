@@ -4,7 +4,7 @@ use diesel::{
 };
 use error_stack::{Result, ResultExt};
 use model_profile::{
-    AccountIdInternal, Attribute, Location, ProfileAge, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileAttributes, ProfileFilteringSettingsUpdateValidated, ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion, SyncVersion, UnixTime
+    AccountIdInternal, Attribute, Location, ProfileAge, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileAttributesInternal, ProfileFilteringSettingsUpdateValidated, ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion, SyncVersion, UnixTime
 };
 
 use crate::IntoDatabaseError;
@@ -236,7 +236,7 @@ impl CurrentWriteProfileData<'_> {
         &mut self,
         id: AccountIdInternal,
         settings: ProfileFilteringSettingsUpdateValidated,
-        attributes: Option<&ProfileAttributes>,
+        attributes: Option<&ProfileAttributesInternal>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::profile_state::dsl::*;
 
@@ -260,7 +260,7 @@ impl CurrentWriteProfileData<'_> {
         &mut self,
         id: AccountIdInternal,
         data: Vec<ProfileAttributeValueUpdate>,
-        attributes: Option<&ProfileAttributes>,
+        attributes: Option<&ProfileAttributesInternal>,
     ) -> Result<(), DieselDatabaseError> {
         // Using for loop here because this:
         // https://github.com/diesel-rs/diesel/discussions/3115
@@ -326,7 +326,7 @@ impl CurrentWriteProfileData<'_> {
         &mut self,
         id: AccountIdInternal,
         data: Vec<ProfileAttributeFilterValueUpdate>,
-        attributes: Option<&ProfileAttributes>,
+        attributes: Option<&ProfileAttributesInternal>,
     ) -> Result<(), DieselDatabaseError> {
         // Using for loop here because this:
         // https://github.com/diesel-rs/diesel/discussions/3115

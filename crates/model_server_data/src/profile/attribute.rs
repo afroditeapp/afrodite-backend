@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_struct_try_from;
 use utoipa::ToSchema;
 
-use crate::{Attribute, ProfileAttributes};
+use crate::{Attribute, ProfileAttributesInternal};
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq, PartialOrd, Ord, Hash, FromSqlRow, AsExpression)]
 #[diesel(sql_type = BigInt)]
@@ -152,7 +152,7 @@ pub struct SortedProfileAttributes {
 impl SortedProfileAttributes {
     pub fn new(
         attributes: Vec<ProfileAttributeValue>,
-        all_attributes: Option<&ProfileAttributes>,
+        all_attributes: Option<&ProfileAttributesInternal>,
     ) -> Self {
         let mut attributes = attributes;
         attributes.sort_by(|a, b| a.id.cmp(&b.id));

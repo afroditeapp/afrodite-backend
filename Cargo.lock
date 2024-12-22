@@ -2842,6 +2842,7 @@ dependencies = [
 name = "model_server_data"
 version = "0.0.0"
 dependencies = [
+ "base64 0.22.1",
  "bitflags",
  "diesel",
  "model",
@@ -2849,6 +2850,7 @@ dependencies = [
  "num_enum",
  "serde",
  "serde_json",
+ "sha2",
  "simple_backend_model",
  "simple_backend_utils",
  "toml",

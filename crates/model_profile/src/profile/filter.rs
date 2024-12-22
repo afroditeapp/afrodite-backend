@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::NUMBER_LIST_ATTRIBUTE_MAX_VALUES;
-use crate::{LastSeenTimeFilter, ProfileAttributes};
+use crate::{LastSeenTimeFilter, ProfileAttributesInternal};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileFilteringSettingsUpdate {
@@ -21,7 +21,7 @@ pub struct ProfileFilteringSettingsUpdate {
 impl ProfileFilteringSettingsUpdate {
     pub fn validate(
         self,
-        attribute_info: Option<&ProfileAttributes>,
+        attribute_info: Option<&ProfileAttributesInternal>,
     ) -> Result<ProfileFilteringSettingsUpdateValidated, String> {
         let mut hash_set = HashSet::new();
         for a in &self.filters {

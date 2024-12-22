@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use diesel::{prelude::*, sql_types::BigInt, AsExpression, FromSqlRow};
 use model::ProfileAge;
 use model_server_data::{
-    AttributeId, LastSeenTime, LastSeenTimeFilter, MaxDistanceKm, ProfileAttributeValue, ProfileAttributeValueUpdate, ProfileAttributes, ProfileInternal, ProfileNameModerationState, ProfileStateCached, ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes
+    AttributeId, LastSeenTime, LastSeenTimeFilter, MaxDistanceKm, ProfileAttributeValue, ProfileAttributeValueUpdate, ProfileAttributesInternal, ProfileInternal, ProfileNameModerationState, ProfileStateCached, ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes
 };
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, UnixTime};
@@ -159,7 +159,7 @@ impl ProfileUpdate {
     /// `AcceptedProfileAges` is checked only if it is Some.
     pub fn validate(
         mut self,
-        attribute_info: Option<&ProfileAttributes>,
+        attribute_info: Option<&ProfileAttributesInternal>,
         current_profile: &Profile,
         accepted_profile_ages: Option<AcceptedProfileAges>,
     ) -> Result<ProfileUpdateValidated, String> {

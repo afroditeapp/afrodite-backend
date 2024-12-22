@@ -5,7 +5,7 @@ use nalgebra::DMatrix;
 use simple_backend_model::UnixTime;
 
 use super::{
-    LastSeenTimeFilter, ProfileAttributeFilterValue, ProfileAttributes, ProfileInternal,
+    LastSeenTimeFilter, ProfileAttributeFilterValue, ProfileAttributesInternal, ProfileInternal,
     ProfileSearchAgeRangeValidated, ProfileStateCached, SearchGroupFlags, SearchGroupFlagsFilter,
     SortedProfileAttributes,
 };
@@ -103,7 +103,7 @@ impl LocationIndexProfileData {
     pub fn is_match(
         &self,
         query_maker_details: &ProfileQueryMakerDetails,
-        attribute_info: Option<&ProfileAttributes>,
+        attribute_info: Option<&ProfileAttributesInternal>,
         current_time: &UnixTime,
     ) -> bool {
         let mut is_match = self.search_age_range.is_match(query_maker_details.age)
@@ -151,7 +151,7 @@ impl LocationIndexProfileData {
     fn attribute_filters_match(
         &self,
         query_maker_details: &ProfileQueryMakerDetails,
-        attribute_info: &ProfileAttributes,
+        attribute_info: &ProfileAttributesInternal,
     ) -> bool {
         for filter in &query_maker_details.attribute_filters {
             let attribute_info =
