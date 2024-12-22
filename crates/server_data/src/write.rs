@@ -5,9 +5,13 @@ use common::WriteCommandsCommon;
 use crate::db_manager::{InternalWriting, WriteAccessProvider};
 
 pub mod common;
+pub mod common_history;
 
 /// One Account can do only one write command at a time.
 pub struct AccountWriteLock;
+
+// TODO(refactor): Remove duplicate db_transaction and db_transaction_history
+//                 macros.
 
 /// Macro for writing to current database with transaction.
 /// Calls await automatically.
@@ -43,13 +47,37 @@ macro_rules! db_transaction {
 // Make db_transaction available in all modules
 pub(crate) use db_transaction;
 
+macro_rules! db_transaction_history {
+    ($state:expr, move |mut $cmds:ident| $commands:expr) => {{
+        server_common::data::IntoDataError::into_error(
+            $state
+                .db_transaction_history(move |mut $cmds| ($commands))
+                .await,
+        )
+    }};
+    ($state:expr, move |$cmds:ident| $commands:expr) => {{
+        $crate::data::IntoDataError::into_error(
+            $state
+                .db_transaction_history(move |$cmds| ($commands))
+                .await,
+        )
+    }};
+}
+
+pub(crate) use db_transaction_history;
+
 pub trait GetWriteCommandsCommon<'a> {
     fn common(self) -> WriteCommandsCommon<'a>;
+    fn common_history(self) -> common_history::WriteCommandsCommonHistory<'a>;
 }
 
 impl<'a, I: WriteAccessProvider<'a>> GetWriteCommandsCommon<'a> for I {
     fn common(self) -> WriteCommandsCommon<'a> {
         WriteCommandsCommon::new(self.handle())
+    }
+
+    fn common_history(self) -> common_history::WriteCommandsCommonHistory<'a> {
+        common_history::WriteCommandsCommonHistory::new(self.handle())
     }
 }
 

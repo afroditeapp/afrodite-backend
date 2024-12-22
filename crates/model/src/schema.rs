@@ -126,8 +126,8 @@ diesel::table! {
         account_banned_reason_category -> Nullable<Integer>,
         account_banned_reason_details -> Nullable<Text>,
         account_banned_admin_account_id -> Nullable<Integer>,
-        account_banned_state_change_unix_time -> Nullable<Integer>,
         account_banned_until_unix_time -> Nullable<Integer>,
+        account_banned_state_change_unix_time -> Nullable<Integer>,
         news_sync_version -> Integer,
         unread_news_count -> Integer,
         publication_id_at_news_iterator_reset -> Nullable<Integer>,
@@ -199,6 +199,34 @@ diesel::table! {
     favorite_profile (account_id, favorite_account_id) {
         account_id -> Integer,
         favorite_account_id -> Integer,
+        unix_time -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    history_performance_statistics_metric_name (id) {
+        id -> Integer,
+        metric_name -> Text,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    history_performance_statistics_metric_value (time_id, metric_id) {
+        time_id -> Integer,
+        metric_id -> Integer,
+        metric_value -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    history_performance_statistics_save_time (id) {
+        id -> Integer,
         unix_time -> Integer,
     }
 }
@@ -557,6 +585,8 @@ diesel::joinable!(account_permissions -> account_id (account_id));
 diesel::joinable!(account_setup -> account_id (account_id));
 diesel::joinable!(chat_state -> account_id (account_id));
 diesel::joinable!(current_account_media -> account_id (account_id));
+diesel::joinable!(history_performance_statistics_metric_value -> history_performance_statistics_metric_name (metric_id));
+diesel::joinable!(history_performance_statistics_metric_value -> history_performance_statistics_save_time (time_id));
 diesel::joinable!(history_profile_statistics_age_changes_all_genders -> history_profile_statistics_save_time (save_time_id));
 diesel::joinable!(history_profile_statistics_age_changes_men -> history_profile_statistics_save_time (save_time_id));
 diesel::joinable!(history_profile_statistics_age_changes_non_binary -> history_profile_statistics_save_time (save_time_id));
@@ -597,6 +627,9 @@ diesel::allow_tables_to_appear_in_same_query!(
     current_account_media,
     demo_mode_account_ids,
     favorite_profile,
+    history_performance_statistics_metric_name,
+    history_performance_statistics_metric_value,
+    history_performance_statistics_save_time,
     history_profile_statistics_age_changes_all_genders,
     history_profile_statistics_age_changes_men,
     history_profile_statistics_age_changes_non_binary,

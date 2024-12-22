@@ -25,7 +25,7 @@ use simple_backend::{
     file_package::FilePackageManager,
     manager_client::ManagerApiManager,
     map::TileMapManager,
-    perf::PerfCounterManagerData,
+    perf::PerfMetricsManagerData,
     sign_in_with::SignInWithManager,
 };
 use simple_backend_config::SimpleBackendConfig;
@@ -245,7 +245,7 @@ impl GetTileMap for S {
 }
 
 impl PerfCounterDataProvider for S {
-    fn perf_counter_data(&self) -> &PerfCounterManagerData {
+    fn perf_counter_data(&self) -> &PerfMetricsManagerData {
         &self.state.simple_backend_state.perf_data
     }
 }

@@ -1104,6 +1104,7 @@ dependencies = [
  "serde_json",
  "simple_backend_config",
  "simple_backend_database",
+ "simple_backend_model",
  "simple_backend_utils",
 ]
 

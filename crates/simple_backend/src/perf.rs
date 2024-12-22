@@ -3,7 +3,7 @@
 //!
 
 use std::{
-    collections::HashMap,
+    collections::{HashMap, VecDeque},
     sync::{
         atomic::{AtomicU32, Ordering},
         Arc,
@@ -12,7 +12,7 @@ use std::{
 };
 
 use simple_backend_model::{
-    PerfHistoryQueryResult, PerfHistoryValue, PerfValueArea, TimeGranularity, UnixTime,
+    MetricKey, PerfMetricQueryResult, PerfMetricValueArea, PerfMetricValues, TimeGranularity, UnixTime
 };
 use sysinfo::MemoryRefreshKind;
 use tokio::{sync::RwLock, task::JoinHandle};
@@ -129,38 +129,6 @@ impl CounterCategory {
     }
 }
 
-#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
-pub struct CounterKey {
-    category: &'static str,
-    counter: &'static str,
-}
-
-impl CounterKey {
-    const SYSTEM_CATEGORY: &str = "system";
-
-    pub const SYSTEM_CPU_USAGE: Self = Self {
-        category: Self::SYSTEM_CATEGORY,
-        counter: "cpu_usage",
-    };
-
-    pub const SYSTEM_RAM_USAGE_MIB: Self = Self {
-        category: Self::SYSTEM_CATEGORY,
-        counter: "ram_usage_mib",
-    };
-}
-
-const MINUTES_PER_DAY: usize = 24 * 60;
-
-/// History has counter values every minute 24 hours
-pub struct PerformanceCounterHistory {
-    pub previous_start_time: Option<UnixTime>,
-    pub start_time: Option<UnixTime>,
-    pub next_index: usize,
-    pub data: Vec<HashMap<CounterKey, u32>>,
-    pub counters: AllCounters,
-    pub system: Option<Box<sysinfo::System>>,
-}
-
 struct SystemInfo {
     cpu_usage: u32,
     ram_usage_mib: u32,
@@ -180,39 +148,42 @@ impl SystemInfo {
     }
 }
 
-impl PerformanceCounterHistory {
-    pub fn new(counters: AllCounters) -> Self {
-        let mut data = vec![];
-        for _ in 0..MINUTES_PER_DAY {
-            data.push(HashMap::new());
+/// History has performance metric values every minute 24 hours
+pub struct PerformanceMetricsHistory {
+    first_item_time: Option<UnixTime>,
+    data: VecDeque<HashMap<MetricKey, u32>>,
+    counters: AllCounters,
+    system: Option<Box<sysinfo::System>>,
+}
+
+impl PerformanceMetricsHistory {
+    const MINUTES_PER_DAY: usize = 24 * 60;
+
+    fn new(counters: AllCounters) -> Self {
+        let mut data = VecDeque::new();
+        for _ in 0..Self::MINUTES_PER_DAY {
+            data.push_front(HashMap::new());
         }
 
         Self {
             data,
-            start_time: None,
-            previous_start_time: None,
-            next_index: 0,
+            first_item_time: None,
             counters,
             system: Some(Box::new(sysinfo::System::new())),
         }
     }
 
-    pub async fn append_and_reset_counters(&mut self) {
-        if self.start_time.is_none() {
-            self.start_time = Some(UnixTime::current_time())
-        }
+    async fn append_and_reset_counters(&mut self) {
+        self.first_item_time = Some(UnixTime::current_time());
+        let mut first_item = self.data.pop_back().expect("Buffer is empty");
 
         for category in self.counters {
             for counter in category.counter_list {
-                let key = CounterKey {
-                    category: category.name,
-                    counter: counter.name,
-                };
-                if let Some(map) = self.data.get_mut(self.next_index) {
-                    map.insert(key, counter.load_and_reset());
-                } else {
-                    error!("Index {} not available", self.next_index);
-                }
+                let key = MetricKey::new(
+                    category.name,
+                    counter.name,
+                );
+                first_item.insert(key, counter.load_and_reset());
             }
         }
 
@@ -223,108 +194,61 @@ impl PerformanceCounterHistory {
         match result {
             Ok((system, info)) => {
                 self.system = Some(system);
-                if let Some(map) = self.data.get_mut(self.next_index) {
-                    map.insert(CounterKey::SYSTEM_CPU_USAGE, info.cpu_usage);
-                    map.insert(CounterKey::SYSTEM_RAM_USAGE_MIB, info.ram_usage_mib);
-                }
+                first_item.insert(MetricKey::SYSTEM_CPU_USAGE, info.cpu_usage);
+                first_item.insert(MetricKey::SYSTEM_RAM_USAGE_MIB, info.ram_usage_mib);
             }
             Err(e) => {
                 error!("Getting system info failed: {e}");
             }
         }
 
-        self.next_index += 1;
-
-        if self.next_index >= self.data.len() {
-            self.next_index = 0;
-            self.previous_start_time = self.start_time;
-        }
+        self.data.push_front(first_item);
     }
 
-    pub fn get_history(&self) -> PerfHistoryQueryResult {
-        let mut counter_data: HashMap<String, Vec<PerfValueArea>> = HashMap::new();
+    fn get_history(&self, only_latest_hour: bool) -> HashMap<MetricKey, PerfMetricValueArea> {
+        let mut counter_data = HashMap::new();
 
-        self.handle_area(&mut counter_data, self.previous_area());
-        self.handle_area(&mut counter_data, self.current_area());
+        self.copy_current_data_to(&mut counter_data, only_latest_hour);
 
-        let mut counters = vec![];
-        for (counter_name, values) in counter_data {
-            let value = PerfHistoryValue {
-                counter_name,
-                values,
-            };
-            counters.push(value);
-        }
-
-        PerfHistoryQueryResult { counters }
+        counter_data
     }
 
-    pub fn handle_area(
+    fn copy_current_data_to(
         &self,
-        counter_data: &mut HashMap<String, Vec<PerfValueArea>>,
-        area: Option<(UnixTime, &[HashMap<CounterKey, u32>])>,
+        counter_data: &mut HashMap<MetricKey, PerfMetricValueArea>,
+        only_latest_hour: bool,
     ) {
-        if let Some((start_time, data)) = area {
-            for counter_values in data.iter() {
-                for (k, &v) in counter_values.iter() {
-                    let key = format!("{}_{}", k.category, k.counter);
-                    if let Some(area) = counter_data.get_mut(&key) {
-                        area[0].values.push(v);
-                    } else {
-                        let area = PerfValueArea {
-                            start_time,
-                            time_granularity: TimeGranularity::Minutes,
-                            values: vec![v],
-                        };
-                        counter_data.insert(key, vec![area]);
-                    }
+        let Some(start_time) = self.first_item_time else {
+            return;
+        };
+        let max_count = if only_latest_hour {
+            60
+        } else {
+            Self::MINUTES_PER_DAY
+        };
+        for counter_values in self.data.iter().take(max_count) {
+            for (k, &v) in counter_values.iter() {
+                if let Some(area) = counter_data.get_mut(k) {
+                    area.values.push(v);
+                } else {
+                    let area = PerfMetricValueArea {
+                        start_time,
+                        time_granularity: TimeGranularity::Minutes,
+                        values: vec![v],
+                    };
+                    counter_data.insert(*k, area);
                 }
             }
-        }
-    }
-
-    pub fn current_area(&self) -> Option<(UnixTime, &[HashMap<CounterKey, u32>])> {
-        if let Some(start_time) = self.start_time {
-            if self.next_index == 0 {
-                None
-            } else {
-                let seconds = 60 * ((self.next_index as i64) - 1);
-                let area_start_time = UnixTime {
-                    ut: start_time.ut + seconds,
-                };
-                let data = &self.data[..self.next_index];
-                Some((area_start_time, data))
-            }
-        } else {
-            None
-        }
-    }
-
-    /// Start time for previous area. Also the data.
-    pub fn previous_area(&self) -> Option<(UnixTime, &[HashMap<CounterKey, u32>])> {
-        if let Some(previous_start_time) = self.previous_start_time {
-            if self.next_index == 0 {
-                Some((previous_start_time, &self.data))
-            } else {
-                let seconds = 60 * self.next_index as i64;
-                let area_start_time = UnixTime {
-                    ut: previous_start_time.ut + seconds,
-                };
-                let data = &self.data[self.next_index..];
-                Some((area_start_time, data))
-            }
-        } else {
-            None
         }
     }
 }
 
 #[derive(Debug)]
-pub struct PerfCounterManagerQuitHandle {
+pub struct PerfMetricsManagerQuitHandle {
     task: JoinHandle<()>,
 }
 
-impl PerfCounterManagerQuitHandle {
+impl PerfMetricsManagerQuitHandle {
     pub async fn wait_quit(self) {
         match self.task.await {
             Ok(()) => (),
@@ -335,38 +259,50 @@ impl PerfCounterManagerQuitHandle {
     }
 }
 
-pub struct PerfCounterManagerData {
-    history: RwLock<PerformanceCounterHistory>,
+pub struct PerfMetricsManagerData {
+    history: RwLock<PerformanceMetricsHistory>,
 }
 
-impl PerfCounterManagerData {
+impl PerfMetricsManagerData {
     pub fn new(counters: AllCounters) -> Self {
         Self {
-            history: RwLock::new(PerformanceCounterHistory::new(counters)),
+            history: RwLock::new(PerformanceMetricsHistory::new(counters)),
         }
     }
 
-    pub async fn get_history(&self) -> PerfHistoryQueryResult {
-        self.history.read().await.get_history()
+    pub async fn get_history(&self, only_latest_hour: bool) -> PerfMetricQueryResult {
+        let counter_data = self.history.read().await.get_history(only_latest_hour);
+        let mut counters = vec![];
+        for (counter_name, values) in counter_data {
+            let value = PerfMetricValues {
+                name: counter_name.to_name(),
+                values: vec![values],
+            };
+            counters.push(value);
+        }
+
+        PerfMetricQueryResult { metrics: counters }
+    }
+
+    pub async fn get_history_raw(&self, only_latest_hour: bool) -> HashMap<MetricKey, PerfMetricValueArea> {
+        self.history.read().await.get_history(only_latest_hour)
     }
 }
 
-// TODO: Database for perf counters (hourly granularity)
-
-pub struct PerfCounterManager {
-    data: Arc<PerfCounterManagerData>,
+pub struct PerfMetricsManager {
+    data: Arc<PerfMetricsManagerData>,
 }
 
-impl PerfCounterManager {
+impl PerfMetricsManager {
     pub fn new_manager(
-        data: Arc<PerfCounterManagerData>,
+        data: Arc<PerfMetricsManagerData>,
         quit_notification: ServerQuitWatcher,
-    ) -> PerfCounterManagerQuitHandle {
+    ) -> PerfMetricsManagerQuitHandle {
         let manager = Self { data };
 
         let task = tokio::spawn(manager.run(quit_notification));
 
-        PerfCounterManagerQuitHandle { task }
+        PerfMetricsManagerQuitHandle { task }
     }
 
     pub async fn run(self, mut quit_notification: ServerQuitWatcher) {

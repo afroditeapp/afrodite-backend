@@ -583,7 +583,7 @@ CREATE TABLE IF NOT EXISTS public_key(
     public_key_version           INTEGER NOT NULL,
     public_key_id                INTEGER,
     public_key_data              TEXT,
-    PRIMARY KEY (account_id, public_key_version)
+    PRIMARY KEY (account_id, public_key_version),
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -707,6 +707,31 @@ CREATE TABLE IF NOT EXISTS chat_global_state(
 
 ---------- History tables for server component common ----------
 
+CREATE TABLE IF NOT EXISTS history_performance_statistics_save_time(
+    id           INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    unix_time    INTEGER                           NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS history_performance_statistics_metric_name(
+    id           INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    metric_name  TEXT                              NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS history_performance_statistics_metric_value(
+    time_id      INTEGER                           NOT NULL,
+    metric_id    INTEGER                           NOT NULL,
+    metric_value INTEGER                           NOT NULL,
+    PRIMARY KEY (time_id, metric_id),
+    FOREIGN KEY (time_id)
+        REFERENCES history_performance_statistics_save_time (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (metric_id)
+        REFERENCES history_performance_statistics_metric_name (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 ---------- History tables for server component account ----------
 
 ---------- History tables for server component profile ----------
@@ -720,7 +745,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_men(
     save_time_id  INTEGER NOT NULL,
     age           INTEGER NOT NULL,
     count         INTEGER NOT NULL,
-    PRIMARY KEY (save_time_id, age)
+    PRIMARY KEY (save_time_id, age),
     FOREIGN KEY (save_time_id)
         REFERENCES history_profile_statistics_save_time (id)
             ON DELETE CASCADE
@@ -731,7 +756,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_woman(
     save_time_id  INTEGER NOT NULL,
     age           INTEGER NOT NULL,
     count         INTEGER NOT NULL,
-    PRIMARY KEY (save_time_id, age)
+    PRIMARY KEY (save_time_id, age),
     FOREIGN KEY (save_time_id)
         REFERENCES history_profile_statistics_save_time (id)
             ON DELETE CASCADE
@@ -742,7 +767,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_non_binary(
     save_time_id  INTEGER NOT NULL,
     age           INTEGER NOT NULL,
     count         INTEGER NOT NULL,
-    PRIMARY KEY (save_time_id, age)
+    PRIMARY KEY (save_time_id, age),
     FOREIGN KEY (save_time_id)
         REFERENCES history_profile_statistics_save_time (id)
             ON DELETE CASCADE
@@ -753,7 +778,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_all_genders(
     save_time_id  INTEGER NOT NULL,
     age           INTEGER NOT NULL,
     count         INTEGER NOT NULL,
-    PRIMARY KEY (save_time_id, age)
+    PRIMARY KEY (save_time_id, age),
     FOREIGN KEY (save_time_id)
         REFERENCES history_profile_statistics_save_time (id)
             ON DELETE CASCADE

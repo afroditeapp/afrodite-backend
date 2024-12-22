@@ -59,7 +59,7 @@ use utoipa_swagger_ui::SwaggerUi;
 use self::web_socket::WebSocketManager;
 use crate::{
     media_backup::MediaBackupManager,
-    perf::{PerfCounterManager, PerfCounterManagerData},
+    perf::{PerfMetricsManager, PerfMetricsManagerData},
 };
 
 pub const HTTPS_DEFAULT_PORT: u16 = 443;
@@ -208,9 +208,9 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         let (media_backup_quit, media_backup_handle) =
             MediaBackupManager::new_manager(self.config.clone(), server_quit_watcher.resubscribe());
 
-        let perf_data = Arc::new(PerfCounterManagerData::new(self.logic.all_counters()));
+        let perf_data = Arc::new(PerfMetricsManagerData::new(self.logic.all_counters()));
         let perf_manager_quit_handle =
-            PerfCounterManager::new_manager(perf_data.clone(), server_quit_watcher.resubscribe());
+            PerfMetricsManager::new_manager(perf_data.clone(), server_quit_watcher.resubscribe());
 
         let simple_state = SimpleBackendAppState::new(self.config.clone(), perf_data)
             .await

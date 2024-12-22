@@ -5,7 +5,7 @@ use axum::{
 use model::Permissions;
 use obfuscate_api_macro::obfuscate_api;
 use simple_backend::{app::PerfCounterDataProvider, create_counters};
-use simple_backend_model::{PerfHistoryQuery, PerfHistoryQueryResult};
+use simple_backend_model::{PerfMetricQuery, PerfMetricQueryResult};
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
@@ -24,9 +24,9 @@ const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
 #[utoipa::path(
     get,
     path = PATH_GET_PERF_DATA,
-    params(PerfHistoryQuery),
+    params(PerfMetricQuery),
     responses(
-        (status = 200, description = "Get was successfull.", body = PerfHistoryQueryResult),
+        (status = 200, description = "Get was successfull.", body = PerfMetricQueryResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -35,11 +35,11 @@ const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
 pub async fn get_perf_data(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
-    Query(_query): Query<PerfHistoryQuery>,
-) -> Result<Json<PerfHistoryQueryResult>, StatusCode> {
+    Query(_query): Query<PerfMetricQuery>,
+) -> Result<Json<PerfMetricQueryResult>, StatusCode> {
     COMMON_ADMIN.get_perf_data.incr();
     if api_caller_permissions.admin_server_maintenance_view_info {
-        let data = state.perf_counter_data().get_history().await;
+        let data = state.perf_counter_data().get_history(false).await;
         Ok(data.into())
     } else {
         Err(StatusCode::UNAUTHORIZED)

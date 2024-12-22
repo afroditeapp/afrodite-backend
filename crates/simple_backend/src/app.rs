@@ -6,7 +6,7 @@ use simple_backend_utils::IntoReportFromString;
 
 use super::manager_client::{ManagerApiClient, ManagerApiManager};
 use crate::{
-    file_package::FilePackageManager, map::TileMapManager, perf::PerfCounterManagerData,
+    file_package::FilePackageManager, map::TileMapManager, perf::PerfMetricsManagerData,
     sign_in_with::SignInWithManager,
 };
 
@@ -25,14 +25,14 @@ pub struct SimpleBackendAppState {
     pub config: Arc<SimpleBackendConfig>,
     pub sign_in_with: Arc<SignInWithManager>,
     pub tile_map: Arc<TileMapManager>,
-    pub perf_data: Arc<PerfCounterManagerData>,
+    pub perf_data: Arc<PerfMetricsManagerData>,
     pub file_packages: Arc<FilePackageManager>,
 }
 
 impl SimpleBackendAppState {
     pub async fn new(
         config: Arc<SimpleBackendConfig>,
-        perf_data: Arc<PerfCounterManagerData>,
+        perf_data: Arc<PerfMetricsManagerData>,
     ) -> error_stack::Result<Self, AppStateCreationError> {
         let manager_api = ManagerApiClient::new(&config)
             .into_error_string(AppStateCreationError::ManagerClientError)?
@@ -68,7 +68,7 @@ pub trait GetTileMap {
 }
 
 pub trait PerfCounterDataProvider {
-    fn perf_counter_data(&self) -> &PerfCounterManagerData;
+    fn perf_counter_data(&self) -> &PerfMetricsManagerData;
 }
 
 pub trait FilePackageProvider {
