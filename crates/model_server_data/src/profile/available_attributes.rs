@@ -3,6 +3,8 @@ use std::{collections::HashSet, str::FromStr};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+use super::AttributeId;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttributesFileInternal {
     attribute_order: AttributeOrderMode,
@@ -24,7 +26,7 @@ impl AttributesFileInternal {
             keys.insert(attribute.key.clone());
 
             if ids.contains(&attribute.id) {
-                return Err(format!("Duplicate id {}", attribute.id));
+                return Err(format!("Duplicate id {}", attribute.id.to_usize()));
             }
             ids.insert(attribute.id);
 
@@ -36,8 +38,9 @@ impl AttributesFileInternal {
 
         // Check that correct IDs are used.
         for i in 0..self.attribute.len() {
-            let i = i as u16;
-            if !ids.contains(&i) {
+            let i: u16 = i.try_into().map_err(|e: std::num::TryFromIntError| e.to_string())?;
+            let id = AttributeId::new(i);
+            if !ids.contains(&id) {
                 return Err(format!(
                     "ID {} is missing from attribute ID values, all numbers between 0 and {} should be used",
                     i,
@@ -67,7 +70,7 @@ pub struct AttributeInternal {
     #[serde(default = "value_bool_false", skip_serializing_if = "value_is_false")]
     pub required: bool,
     pub icon: Option<IconResource>,
-    pub id: u16,
+    pub id: AttributeId,
     pub order_number: u16,
     pub value_order: AttributeValueOrderMode,
     /// Array of strings or objects
@@ -614,8 +617,9 @@ pub struct ProfileAttributes {
 }
 
 impl ProfileAttributes {
-    // TODO: Add method for indexing the attribute list with other
-    // types. Add wrapper type for the ID?
+    pub fn get_attribute(&self, id: AttributeId) -> Option<&Attribute> {
+        self.attributes.get(id.to_usize())
+    }
 
     pub fn from_file(file: AttributesFileInternal) -> Result<Self, String> {
         let (attribute_order, internal_attributes) = file.validate_attributes()?;
@@ -670,7 +674,7 @@ pub struct Attribute {
     #[schema(value_type = Option<String>)]
     pub icon: Option<IconResource>,
     /// Numeric unique identifier for the attribute.
-    pub id: u16,
+    pub id: AttributeId,
     /// Attribute order number.
     pub order_number: u16,
     /// Attribute value ordering mode for client to determine in what order

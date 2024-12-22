@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use super::{Attribute, ProfileAttributeValue};
+use super::{Attribute, AttributeId, ProfileAttributeValue, SubLevelAttributeValueId, TopLevelAttributeValueId};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileAttributeFilterValue {
     /// Attribute ID
-    id: u16,
+    id: AttributeId,
     /// - First value is bitflags value or top level attribute value ID or first number list value.
     /// - Second value is sub level attribute value ID or second number list value.
     /// - Third and rest are number list values.
@@ -18,7 +18,7 @@ pub struct ProfileAttributeFilterValue {
 
 impl ProfileAttributeFilterValue {
     pub fn new_not_number_list(
-        id: u16,
+        id: AttributeId,
         filter_values: Vec<u16>,
         accept_missing_attribute: bool,
     ) -> Self {
@@ -29,7 +29,7 @@ impl ProfileAttributeFilterValue {
         }
     }
 
-    pub fn id(&self) -> u16 {
+    pub fn id(&self) -> AttributeId {
         self.id
     }
 
@@ -43,13 +43,13 @@ impl ProfileAttributeFilterValue {
     }
 
     /// ID number for top level AttributeValue ID.
-    pub fn as_top_level_id(&self) -> Option<u16> {
-        self.filter_values.first().copied()
+    pub fn as_top_level_id(&self) -> Option<TopLevelAttributeValueId> {
+        self.filter_values.first().copied().map(TopLevelAttributeValueId::new)
     }
 
     /// ID number for sub level AttributeValue ID.
-    pub fn as_sub_level_id(&self) -> Option<u16> {
-        self.filter_values.get(1).copied()
+    pub fn as_sub_level_id(&self) -> Option<SubLevelAttributeValueId> {
+        self.filter_values.get(1).copied().map(SubLevelAttributeValueId::new)
     }
 
     pub fn as_number_list(&self) -> &[u16] {

@@ -6,9 +6,7 @@ use database::{
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model_profile::{
-    AcceptedProfileAges, AccountIdInternal, GetMyProfileResult, LastSeenTime, Location, Profile,
-    ProfileAge, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal,
-    ProfileStateInternal, UnixTime,
+    AcceptedProfileAges, AccountIdInternal, AttributeId, GetMyProfileResult, LastSeenTime, Location, Profile, ProfileAge, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileStateInternal, UnixTime
 };
 
 define_current_read_commands!(CurrentReadProfileData);
@@ -124,7 +122,7 @@ impl CurrentReadProfileData<'_> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<Vec<ProfileAttributeValue>, DieselDatabaseError> {
-        let data: Vec<(i64, i64, Option<i64>)> = {
+        let data: Vec<(AttributeId, i64, Option<i64>)> = {
             use crate::schema::profile_attributes::dsl::*;
             profile_attributes
                 .filter(account_id.eq(id.as_db_id()))
@@ -142,7 +140,7 @@ impl CurrentReadProfileData<'_> {
             .into_iter()
             .map(|(id, part1, part2)| {
                 ProfileAttributeValue::new_not_number_list(
-                    id as u16,
+                    id,
                     Some(part1 as u16)
                         .into_iter()
                         .chain(part2.map(|v| v as u16))
@@ -151,7 +149,7 @@ impl CurrentReadProfileData<'_> {
             })
             .collect();
 
-        let number_list_data: Vec<(i64, i64)> = {
+        let number_list_data: Vec<(AttributeId, i64)> = {
             use crate::schema::profile_attributes_number_list::dsl::*;
 
             profile_attributes_number_list
@@ -161,9 +159,9 @@ impl CurrentReadProfileData<'_> {
                 .change_context(DieselDatabaseError::Execute)?
         };
 
-        let mut number_list_attributes = HashMap::<u16, Vec<u16>>::new();
+        let mut number_list_attributes = HashMap::<AttributeId, Vec<u16>>::new();
         for (id, value) in number_list_data {
-            let values = number_list_attributes.entry(id as u16).or_default();
+            let values = number_list_attributes.entry(id).or_default();
             values.push(value as u16);
         }
         for (id, number_list) in number_list_attributes {
@@ -178,7 +176,7 @@ impl CurrentReadProfileData<'_> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<Vec<ProfileAttributeFilterValue>, DieselDatabaseError> {
-        let data: Vec<(i64, Option<i64>, Option<i64>, bool)> = {
+        let data: Vec<(AttributeId, Option<i64>, Option<i64>, bool)> = {
             use crate::schema::profile_attributes::dsl::*;
 
             profile_attributes
@@ -198,7 +196,7 @@ impl CurrentReadProfileData<'_> {
             .into_iter()
             .map(|(id, part1, part2, accept_missing)| {
                 ProfileAttributeFilterValue::new_not_number_list(
-                    id as u16,
+                    id,
                     part1
                         .map(|v| v as u16)
                         .into_iter()
@@ -209,7 +207,7 @@ impl CurrentReadProfileData<'_> {
             })
             .collect();
 
-        let number_list_filters: Vec<(i64, i64)> = {
+        let number_list_filters: Vec<(AttributeId, i64)> = {
             use crate::schema::profile_attributes_number_list_filters::dsl::*;
 
             profile_attributes_number_list_filters
@@ -218,9 +216,9 @@ impl CurrentReadProfileData<'_> {
                 .load(self.conn())
                 .change_context(DieselDatabaseError::Execute)?
         };
-        let mut number_list_attribute_filters = HashMap::<u16, Vec<u16>>::new();
+        let mut number_list_attribute_filters = HashMap::<AttributeId, Vec<u16>>::new();
         for (id, filter_value) in number_list_filters {
-            let values = number_list_attribute_filters.entry(id as u16).or_default();
+            let values = number_list_attribute_filters.entry(id).or_default();
             values.push(filter_value as u16);
         }
         for filter_value in &mut data {

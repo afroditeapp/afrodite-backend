@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use diesel::{prelude::*, sql_types::BigInt, AsExpression, FromSqlRow};
 use model::ProfileAge;
 use model_server_data::{
-    LastSeenTime, LastSeenTimeFilter, MaxDistanceKm, ProfileAttributeValue, ProfileAttributeValueUpdate, ProfileAttributes, ProfileInternal, ProfileNameModerationState, ProfileStateCached, ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes
+    AttributeId, LastSeenTime, LastSeenTimeFilter, MaxDistanceKm, ProfileAttributeValue, ProfileAttributeValueUpdate, ProfileAttributes, ProfileInternal, ProfileNameModerationState, ProfileStateCached, ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes
 };
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, UnixTime};
@@ -170,7 +170,7 @@ impl ProfileUpdate {
             }
 
             if let Some(info) = attribute_info {
-                let attribute_info = info.attributes.get(a.id as usize);
+                let attribute_info = info.get_attribute(a.id);
                 match attribute_info {
                     None => return Err("Unknown attribute ID".to_string()),
                     Some(info) => {
@@ -238,9 +238,9 @@ impl ProfileUpdateValidated {
     pub fn equals_with(&self, other: &Profile) -> bool {
         let basic = self.name == other.name && self.ptext == other.ptext && self.age == other.age;
         if basic {
-            let a1: HashMap<u16, ProfileAttributeValueUpdate> =
+            let a1: HashMap<AttributeId, ProfileAttributeValueUpdate> =
                 HashMap::from_iter(self.attributes.iter().map(|v| (v.id, v.clone())));
-            let a2: HashMap<u16, ProfileAttributeValueUpdate> =
+            let a2: HashMap<AttributeId, ProfileAttributeValueUpdate> =
                 HashMap::from_iter(other.attributes.iter().map(|v| (v.id(), v.clone().into())));
 
             a1 == a2

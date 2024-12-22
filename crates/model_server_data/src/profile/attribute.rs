@@ -1,12 +1,62 @@
+use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
 use serde::{Deserialize, Serialize};
+use simple_backend_model::diesel_i64_struct_try_from;
 use utoipa::ToSchema;
 
 use crate::{Attribute, ProfileAttributes};
 
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq, PartialOrd, Ord, Hash, FromSqlRow, AsExpression)]
+#[diesel(sql_type = BigInt)]
+pub struct AttributeId(u16);
+
+impl AttributeId {
+    pub fn new(id: u16) -> Self {
+        Self(id)
+    }
+
+    pub fn to_usize(&self) -> usize {
+        self.0.into()
+    }
+}
+
+impl TryFrom<i64> for AttributeId {
+    type Error = String;
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        let value: u16 = value.try_into().map_err(|e: std::num::TryFromIntError| e.to_string())?;
+        Ok(Self(value))
+    }
+}
+
+impl From<AttributeId> for i64 {
+    fn from(value: AttributeId) -> Self {
+        value.0.into()
+    }
+}
+
+diesel_i64_struct_try_from!(AttributeId);
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TopLevelAttributeValueId(u16);
+
+impl TopLevelAttributeValueId {
+    pub fn new(id: u16) -> Self {
+        Self(id)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SubLevelAttributeValueId(u16);
+
+impl SubLevelAttributeValueId {
+    pub fn new(id: u16) -> Self {
+        Self(id)
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileAttributeValueUpdate {
     /// Attribute ID
-    pub id: u16,
+    pub id: AttributeId,
     /// Empty list removes the attribute.
     ///
     /// - First value is bitflags value or top level attribute value ID or first number list value.
@@ -18,7 +68,7 @@ pub struct ProfileAttributeValueUpdate {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileAttributeValue {
     /// Attribute ID
-    id: u16,
+    id: AttributeId,
     /// - First value is bitflags value or top level attribute value ID or first number list value.
     /// - Second value is sub level attribute value ID or second number list value.
     /// - Third and rest are number list values.
@@ -48,16 +98,16 @@ impl ProfileAttributeValue {
         }
     }
 
-    pub fn new_not_number_list(id: u16, values: Vec<u16>) -> Self {
+    pub fn new_not_number_list(id: AttributeId, values: Vec<u16>) -> Self {
         Self { id, v: values }
     }
 
-    pub fn new_number_list(id: u16, mut values: Vec<u16>) -> Self {
+    pub fn new_number_list(id: AttributeId, mut values: Vec<u16>) -> Self {
         values.sort();
         Self { id, v: values }
     }
 
-    pub fn id(&self) -> u16 {
+    pub fn id(&self) -> AttributeId {
         self.id
     }
 
@@ -70,13 +120,13 @@ impl ProfileAttributeValue {
     }
 
     /// ID number for top level AttributeValue ID.
-    pub fn as_top_level_id(&self) -> u16 {
-        self.v.first().copied().unwrap_or(0)
+    pub fn as_top_level_id(&self) -> TopLevelAttributeValueId {
+        TopLevelAttributeValueId(self.v.first().copied().unwrap_or(0))
     }
 
     /// ID number for sub level AttributeValue ID.
-    pub fn as_sub_level_id(&self) -> Option<u16> {
-        self.v.get(1).copied()
+    pub fn as_sub_level_id(&self) -> Option<SubLevelAttributeValueId> {
+        self.v.get(1).copied().map(SubLevelAttributeValueId)
     }
 
     pub fn as_number_list(&self) -> &[u16] {
@@ -108,9 +158,8 @@ impl SortedProfileAttributes {
         attributes.sort_by(|a, b| a.id.cmp(&b.id));
 
         for a in &mut attributes {
-            let id_usize: usize = a.id.into();
             if let Some(info) =
-                all_attributes.and_then(|attributes| attributes.attributes.get(id_usize))
+                all_attributes.and_then(|attributes| attributes.get_attribute(a.id))
             {
                 if info.mode.is_number_list() {
                     a.v.sort();
@@ -125,7 +174,7 @@ impl SortedProfileAttributes {
         &self.attributes
     }
 
-    pub fn find_id(&self, id: u16) -> Option<&ProfileAttributeValue> {
+    pub fn find_id(&self, id: AttributeId) -> Option<&ProfileAttributeValue> {
         self.attributes
             .binary_search_by(|a| a.id.cmp(&id))
             .ok()

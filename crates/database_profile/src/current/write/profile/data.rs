@@ -269,9 +269,8 @@ impl CurrentWriteProfileData<'_> {
         //  to NULL)
 
         for a in data {
-            let id_usize: usize = a.id.into();
             let is_number_list = attributes
-                .and_then(|attributes| attributes.attributes.get(id_usize))
+                .and_then(|attributes| attributes.get_attribute(a.id))
                 .map(|attribute: &Attribute| attribute.mode.is_number_list())
                 .unwrap_or_default();
 
@@ -280,7 +279,7 @@ impl CurrentWriteProfileData<'_> {
 
                 delete(profile_attributes_number_list)
                     .filter(account_id.eq(id.as_db_id()))
-                    .filter(attribute_id.eq(a.id as i64))
+                    .filter(attribute_id.eq(a.id))
                     .execute(self.conn())
                     .into_db_error(())?;
 
@@ -289,7 +288,7 @@ impl CurrentWriteProfileData<'_> {
                         .map(|value| {
                             (
                                 account_id.eq(id.as_db_id()),
-                                attribute_id.eq(a.id as i64),
+                                attribute_id.eq(a.id),
                                 attribute_value.eq(value as i64),
                             )
                         })
@@ -305,7 +304,7 @@ impl CurrentWriteProfileData<'_> {
                 insert_into(profile_attributes)
                     .values((
                         account_id.eq(id.as_db_id()),
-                        attribute_id.eq(a.id as i64),
+                        attribute_id.eq(a.id),
                         attribute_value_part1.eq(a.v.first().copied().map(|v| v as i64)),
                         attribute_value_part2.eq(a.v.get(1).copied().map(|v| v as i64)),
                     ))
@@ -336,9 +335,8 @@ impl CurrentWriteProfileData<'_> {
         //  to NULL)
 
         for a in data {
-            let id_usize: usize = a.id.into();
             let is_number_list = attributes
-                .and_then(|attributes| attributes.attributes.get(id_usize))
+                .and_then(|attributes| attributes.get_attribute(a.id))
                 .map(|attribute: &Attribute| attribute.mode.is_number_list())
                 .unwrap_or_default();
 
@@ -347,7 +345,7 @@ impl CurrentWriteProfileData<'_> {
 
                 delete(profile_attributes_number_list_filters)
                     .filter(account_id.eq(id.as_db_id()))
-                    .filter(attribute_id.eq(a.id as i64))
+                    .filter(attribute_id.eq(a.id))
                     .execute(self.conn())
                     .into_db_error(())?;
 
@@ -357,7 +355,7 @@ impl CurrentWriteProfileData<'_> {
                     .map(|value| {
                         (
                             account_id.eq(id.as_db_id()),
-                            attribute_id.eq(a.id as i64),
+                            attribute_id.eq(a.id),
                             filter_value.eq(value as i64),
                         )
                     })
@@ -382,7 +380,7 @@ impl CurrentWriteProfileData<'_> {
                 insert_into(profile_attributes)
                     .values((
                         account_id.eq(id.as_db_id()),
-                        attribute_id.eq(a.id as i64),
+                        attribute_id.eq(a.id),
                         filter_value_part1.eq(part1),
                         filter_value_part2.eq(part2),
                         filter_accept_missing_attribute.eq(a.accept_missing_attribute),

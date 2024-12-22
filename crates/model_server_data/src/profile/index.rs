@@ -155,7 +155,7 @@ impl LocationIndexProfileData {
     ) -> bool {
         for filter in &query_maker_details.attribute_filters {
             let attribute_info =
-                if let Some(info) = attribute_info.attributes.get(filter.id() as usize) {
+                if let Some(info) = attribute_info.get_attribute(filter.id()) {
                     info
                 } else {
                     return false;

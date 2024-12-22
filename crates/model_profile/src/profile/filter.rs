@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use model_server_data::{MaxDistanceKm, ProfileAttributeFilterValue};
+use model_server_data::{AttributeId, MaxDistanceKm, ProfileAttributeFilterValue};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -30,7 +30,7 @@ impl ProfileFilteringSettingsUpdate {
             }
 
             if let Some(info) = attribute_info {
-                let attribute_info = info.attributes.get(a.id as usize);
+                let attribute_info = info.get_attribute(a.id);
                 match attribute_info {
                     None => return Err("Unknown attribute ID".to_string()),
                     Some(info) => {
@@ -83,7 +83,7 @@ pub struct ProfileFilteringSettingsUpdateValidated {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileAttributeFilterValueUpdate {
     /// Attribute ID
-    pub id: u16,
+    pub id: AttributeId,
     /// - First value is bitflags value or top level attribute value ID or first number list value.
     /// - Second value is sub level attribute value ID or second number list value.
     /// - Third and rest are number list values.
