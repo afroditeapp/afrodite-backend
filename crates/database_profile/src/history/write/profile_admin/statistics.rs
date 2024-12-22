@@ -64,6 +64,8 @@ impl<'a> HistoryWriteProfileAdminStatistics<'a> {
 
         insert_into(history_profile_statistics_save_time)
             .values(unix_time.eq(time))
+            .on_conflict(unix_time)
+            .do_nothing()
             .returning(id)
             .get_result(self.conn())
             .into_db_error(())

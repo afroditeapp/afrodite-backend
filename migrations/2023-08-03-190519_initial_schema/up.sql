@@ -738,7 +738,7 @@ CREATE TABLE IF NOT EXISTS history_performance_statistics_metric_value(
 
 CREATE TABLE IF NOT EXISTS history_profile_statistics_save_time(
     id         INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    unix_time  INTEGER                           NOT NULL
+    unix_time  INTEGER                           NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_men(
