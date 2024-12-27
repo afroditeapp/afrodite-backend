@@ -258,6 +258,7 @@ pub fn sqlite_setup_connection(
         "PRAGMA journal_mode=WAL;",
         "PRAGMA synchronous=NORMAL;",
         "PRAGMA foreign_keys=ON;",
+        "PRAGMA secure_delete=ON;",
     ];
 
     let litestram_pragmas = if config.litestream().is_some() {
