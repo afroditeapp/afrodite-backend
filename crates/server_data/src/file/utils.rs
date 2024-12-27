@@ -105,7 +105,7 @@ impl TmpDir {
     /// Remove dir contents
     ///
     /// Does not do anything if dir does not exists.
-    pub async fn remove_contents_if_exists(&self) -> Result<(), FileError> {
+    pub async fn overwrite_and_remove_contents_if_exists(&self) -> Result<(), FileError> {
         if !self.dir.exists() {
             return Ok(());
         }
@@ -123,9 +123,10 @@ impl TmpDir {
             let mut s = ReadDirStream::new(iter);
             while let Some(entry) = s.next().await {
                 let entry = entry.change_context(FileError::IoDirIter)?;
-                tokio::fs::remove_file(entry.path())
-                    .await
-                    .change_context(FileError::IoFileRemove)?;
+                let path = PathToFile {
+                    path: entry.path(),
+                };
+                path.overwrite_and_remove_if_exists().await?;
             }
             Ok(())
         } else {
@@ -187,8 +188,8 @@ impl ContentFile {
         self.path.as_path()
     }
 
-    pub async fn remove_if_exists(self) -> Result<(), FileError> {
-        self.path.remove_if_exists().await
+    pub async fn overwrite_and_remove_if_exists(self) -> Result<(), FileError> {
+        self.path.overwrite_and_remove_if_exists().await
     }
 
     pub async fn byte_count_and_read_stream(
@@ -220,8 +221,8 @@ impl TmpContentFile {
         self.path.move_to_blocking(&new_location.path)
     }
 
-    pub async fn remove_if_exists(self) -> Result<(), FileError> {
-        self.path.remove_if_exists().await
+    pub async fn overwrite_and_remove_if_exists(self) -> Result<(), FileError> {
+        self.path.overwrite_and_remove_if_exists().await
     }
 
     pub fn as_path(&self) -> &Path {
@@ -324,17 +325,113 @@ impl PathToFile {
         std::fs::rename(self.path, new_location.as_path()).change_context(FileError::IoFileRename)
     }
 
-    pub async fn remove_if_exists(self) -> Result<(), FileError> {
+    pub async fn overwrite_and_remove_if_exists(self) -> Result<(), FileError> {
         if !self.exists() {
             return Ok(());
         }
+
+        self.overwrite_file().await?;
 
         tokio::fs::remove_file(&self.path)
             .await
             .change_context(FileError::IoFileRemove)
     }
 
+    /// This is enough for Ext4 file system as data=journal is
+    /// not the default.
+    ///
+    /// https://manpages.ubuntu.com/manpages/focal/man1/shred.1.html
+    /// https://www.kernel.org/doc/Documentation/filesystems/ext4.txt
+    async fn overwrite_file(&self) -> Result<(), FileError> {
+        let mut file = tokio::fs::File::options().write(true).open(&self.path)
+            .await
+            .change_context(FileError::IoFileOpen)?;
+
+        let data = file.metadata()
+            .await
+            .change_context(FileError::IoFileMetadata)?;
+        let file_len: usize = TryInto::<usize>::try_into(data.len())
+            .change_context(FileError::FileOverwritingFailed)?;
+
+        for zeros in buffered_zero_iter(file_len) {
+            file.write_all(zeros)
+                .await
+                .change_context(FileError::IoFileWrite)?;
+        }
+
+        Ok(())
+    }
+
     pub fn exists(&self) -> bool {
         self.path.exists()
+    }
+}
+
+const ZERO_ITER_CHUNK_SIZE: usize = 4096;
+
+fn buffered_zero_iter(
+    bytes: usize,
+) -> impl Iterator<Item=&'static [u8]> {
+    const ZERO_BUFFER: [u8; ZERO_ITER_CHUNK_SIZE] = [0; ZERO_ITER_CHUNK_SIZE];
+    let iter = std::iter::repeat(ZERO_BUFFER.as_slice())
+        .take(bytes/ZERO_ITER_CHUNK_SIZE);
+    let remaining_bytes =
+        [&ZERO_BUFFER[..(bytes % ZERO_ITER_CHUNK_SIZE)]].into_iter().take_while(|v| !v.is_empty());
+    iter
+        .chain(remaining_bytes)
+}
+
+#[cfg(test)]
+mod test {
+    use super::{buffered_zero_iter, ZERO_ITER_CHUNK_SIZE};
+
+    fn assert_eq_iter(
+        mut value: impl Iterator<Item=&'static [u8]>,
+        expected: impl IntoIterator<Item=&'static [u8]>,
+    ) {
+        let mut expected = expected.into_iter();
+        loop {
+            match (value.next(), expected.next()) {
+                (None, None) => break,
+                (Some(value), Some(expected)) if value == expected => continue,
+                _ => panic!("Values differ"),
+            }
+        }
+    }
+
+    #[test]
+    fn zero_iter_empty() {
+        const SIZE: usize = 0;
+        assert_eq_iter(
+            buffered_zero_iter(SIZE),
+            [],
+        )
+    }
+
+    #[test]
+    fn zero_iter_less_than_buffer_size() {
+        const SIZE: usize = ZERO_ITER_CHUNK_SIZE - 1;
+        assert_eq_iter(
+            buffered_zero_iter(SIZE),
+            [[0u8; SIZE].as_slice()],
+        )
+    }
+
+    #[test]
+    fn zero_iter_equal_size_as_buffer_size() {
+        const SIZE: usize = ZERO_ITER_CHUNK_SIZE;
+        assert_eq_iter(
+            buffered_zero_iter(SIZE),
+            [[0u8; SIZE].as_slice()],
+        );
+    }
+
+    #[test]
+    fn zero_iter_larger_size_than_buffer_size() {
+        const SIZE: usize = ZERO_ITER_CHUNK_SIZE + 1;
+        assert_eq_iter(
+            buffered_zero_iter(SIZE),
+            [[0u8; ZERO_ITER_CHUNK_SIZE].as_slice(), [0u8; 1].as_slice()],
+        );
     }
 }

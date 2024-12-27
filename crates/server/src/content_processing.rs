@@ -127,7 +127,7 @@ impl ContentProcessingManager {
             }
         }
 
-        if let Err(e) = content.tmp_raw_img.remove_if_exists().await {
+        if let Err(e) = content.tmp_raw_img.overwrite_and_remove_if_exists().await {
             warn!("content.tmp_raw_img removing failed {:?}", e)
         }
     }

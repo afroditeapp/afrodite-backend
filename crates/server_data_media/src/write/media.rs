@@ -53,7 +53,7 @@ impl WriteCommandsMedia<'_> {
 
             if let Some(content) = current_content_in_slot {
                 let path = self.files().media_content(id.as_id(), content.into());
-                path.remove_if_exists()
+                path.overwrite_and_remove_if_exists()
                     .await
                     .change_context(DataError::File)?;
                 self.db_transaction(move |mut cmds| {
@@ -173,7 +173,7 @@ impl WriteCommandsMedia<'_> {
         })
         .await?;
 
-        self.files().media_content(content_id.content_owner().into(), content_id.content_id()).remove_if_exists().await?;
+        self.files().media_content(content_id.content_owner().into(), content_id.content_id()).overwrite_and_remove_if_exists().await?;
 
         Ok(())
     }

@@ -50,4 +50,7 @@ pub enum FileError {
     StreamReadFailed,
     #[error("File upload max file size reached")]
     FileUploadMaxFileSizeReached,
+
+    #[error("File overwriteing failed")]
+    FileOverwritingFailed,
 }

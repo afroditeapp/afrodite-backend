@@ -297,7 +297,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
         // content ID in the database about it.
         self.file_dir
             .tmp_dir(id.as_id())
-            .remove_contents_if_exists()
+            .overwrite_and_remove_contents_if_exists()
             .await?;
 
         let tmp_raw_img = self

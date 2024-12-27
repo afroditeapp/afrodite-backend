@@ -99,7 +99,7 @@ impl WriteCommandsCommon<'_> {
     pub async fn remove_tmp_files(&self, id: AccountIdInternal) -> Result<(), DataError> {
         self.files()
             .tmp_dir(id.into())
-            .remove_contents_if_exists()
+            .overwrite_and_remove_contents_if_exists()
             .await
             .into_data_error(id)
     }
