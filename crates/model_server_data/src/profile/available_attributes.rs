@@ -631,17 +631,6 @@ impl ProfileAttributeHash {
     }
 }
 
-/// Client uses this to store the attributes as JSON.
-#[derive(ToSchema)]
-pub struct ProfileAttributes {
-    pub attribute_order: AttributeOrderMode,
-    /// List of attributes.
-    ///
-    /// Attributes are sorted by Attribute ID and ID can be used to
-    /// index this list.
-    pub attributes: Vec<Attribute>,
-}
-
 #[derive(Debug, Clone)]
 pub struct ProfileAttributesInternal {
     /// List of attributes.
