@@ -24,7 +24,8 @@ impl HistoryWriteCommon<'_> {
                     unix_time.eq(current_time),
                 ))
                 .on_conflict(unix_time)
-                .do_nothing()
+                .do_update()
+                .set(unix_time.eq(unix_time))
                 .returning(id)
                 .get_result(self.conn())
                 .into_db_error(())?
@@ -41,10 +42,11 @@ impl HistoryWriteCommon<'_> {
                 use model::schema::history_performance_statistics_metric_name::dsl::*;
                 insert_into(history_performance_statistics_metric_name)
                     .values((
-                        metric_name.eq(name),
+                        metric_name.eq(&name),
                     ))
                     .on_conflict(metric_name)
-                    .do_nothing()
+                    .do_update()
+                    .set(metric_name.eq(metric_name))
                     .returning(id)
                     .get_result(self.conn())
                     .into_db_error(())?
