@@ -149,7 +149,7 @@ impl BotAction for DoInitialSetupIfNeeded {
             .await
             .change_context(TestError::ApiRequest)?;
 
-        if account_state.state.initial_setup_completed.unwrap_or_default() {
+        if !account_state.state.initial_setup_completed.unwrap_or(true) {
             let email = format!("bot{}@example.com", state.bot_id);
             if self.admin {
                 SetAccountSetup::admin()
