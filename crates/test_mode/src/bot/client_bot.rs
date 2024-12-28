@@ -11,7 +11,7 @@ use api_client::{
             post_send_like,
         },
         profile_api::{
-            get_available_profile_attributes, get_query_available_profile_attributes, post_profile, post_search_age_range, post_search_groups
+            get_available_profile_attributes, post_get_query_available_profile_attributes, post_profile, post_search_age_range, post_search_groups
         },
     },
     manual_additions::{get_pending_messages_fixed, post_send_message_fixed},
@@ -346,7 +346,7 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             .map(|v| v.attributes)
             .unwrap_or_default();
 
-        let available_attributes = get_query_available_profile_attributes(
+        let available_attributes = post_get_query_available_profile_attributes(
             state.api.profile(),
             ProfileAttributeQuery {
                 values: available_attributes.iter().map(|v| v.id).collect(),

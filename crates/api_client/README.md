@@ -119,11 +119,11 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**get_profile_filtering_settings**](docs/ProfileApi.md#get_profile_filtering_settings) | **GET** /Hyav-PRHLoEreB67cVG_WbASOFI | Get current profile filtering settings.
 *ProfileApi* | [**get_profile_from_database_debug_mode_benchmark**](docs/ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /XDTSz35S_5tOKIsSpDITOc46MR4/{aid} | Get account's current profile from database. Debug mode must be enabled that route can be used.
 *ProfileApi* | [**get_profile_statistics**](docs/ProfileApi.md#get_profile_statistics) | **GET** /WJCHYdLNpydn1OkJNyZKKksc4Yw | Non default values for [model::GetProfileStatisticsParams] requires [model::Permissions::admin_profile_statistics].
-*ProfileApi* | [**get_query_available_profile_attributes**](docs/ProfileApi.md#get_query_available_profile_attributes) | **GET** /CO3Oaim0dDWLcVuGqqJoVG-ybXE | Query profile attributes using attribute ID list.
 *ProfileApi* | [**get_search_age_range**](docs/ProfileApi.md#get_search_age_range) | **GET** /xTy-zcnl0LQlfPKQalAEnWQQ-rw | Get account's current search age range
 *ProfileApi* | [**get_search_groups**](docs/ProfileApi.md#get_search_groups) | **GET** /p1KA-sqKKtU3FHvUqYRZnQgj7RQ | Get account's current search groups (gender and what gender user is looking for)
 *ProfileApi* | [**post_favorite_profile**](docs/ProfileApi.md#post_favorite_profile) | **POST** /yD1PtVhVvdk-usEran42JmCTFVQ | Add new favorite profile
 *ProfileApi* | [**post_get_next_profile_page**](docs/ProfileApi.md#post_get_next_profile_page) | **POST** /_XRgLHtmWtbgW3ZAlgfTH5bs6bE | Post (updates iterator) to get next page of profile list.
+*ProfileApi* | [**post_get_query_available_profile_attributes**](docs/ProfileApi.md#post_get_query_available_profile_attributes) | **POST** /CO3Oaim0dDWLcVuGqqJoVG-ybXE | Query profile attributes using attribute ID list.
 *ProfileApi* | [**post_profile**](docs/ProfileApi.md#post_profile) | **POST** /5i55ZcY0jIPD7B6pyyridKY0j0Q | Update profile information.
 *ProfileApi* | [**post_profile_filtering_settings**](docs/ProfileApi.md#post_profile_filtering_settings) | **POST** /Hyav-PRHLoEreB67cVG_WbASOFI | Set profile filtering settings.
 *ProfileApi* | [**post_profile_to_database_debug_mode_benchmark**](docs/ProfileApi.md#post_profile_to_database_debug_mode_benchmark) | **POST** /XDTSz35S_5tOKIsSpDITOc46MR4 | Post account's current profile directly to database. Debug mode must be enabled that route can be used.
