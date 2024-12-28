@@ -13,6 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Permissions {
+    #[serde(rename = "admin_ban_account", skip_serializing_if = "Option::is_none")]
+    pub admin_ban_account: Option<bool>,
     #[serde(rename = "admin_delete_account", skip_serializing_if = "Option::is_none")]
     pub admin_delete_account: Option<bool>,
     #[serde(rename = "admin_delete_media_content", skip_serializing_if = "Option::is_none")]
@@ -58,6 +60,7 @@ pub struct Permissions {
 impl Permissions {
     pub fn new() -> Permissions {
         Permissions {
+            admin_ban_account: None,
             admin_delete_account: None,
             admin_delete_media_content: None,
             admin_moderate_profile_content: None,

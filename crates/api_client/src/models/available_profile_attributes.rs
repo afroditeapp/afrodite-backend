@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AvailableProfileAttributes {
     #[serde(rename = "info", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub info: Option<Option<Box<models::ProfileAttributes>>>,
+    pub info: Option<Option<Box<models::ProfileAttributeInfo>>>,
     #[serde(rename = "sync_version")]
     pub sync_version: Box<models::ProfileAttributesSyncVersion>,
 }

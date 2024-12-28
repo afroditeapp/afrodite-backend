@@ -19,6 +19,8 @@ src/models/accepted_profile_ages.rs
 src/models/access_token.rs
 src/models/accessible_account.rs
 src/models/account.rs
+src/models/account_ban_reason_category.rs
+src/models/account_ban_reason_details.rs
 src/models/account_content.rs
 src/models/account_data.rs
 src/models/account_id.rs
@@ -27,6 +29,7 @@ src/models/account_state_container.rs
 src/models/account_sync_version.rs
 src/models/all_matches_page.rs
 src/models/attribute.rs
+src/models/attribute_id_and_hash.rs
 src/models/attribute_mode.rs
 src/models/attribute_order_mode.rs
 src/models/attribute_value.rs
@@ -66,6 +69,7 @@ src/models/event_to_client.rs
 src/models/event_type.rs
 src/models/favorite_profiles_page.rs
 src/models/fcm_device_token.rs
+src/models/get_account_ban_time_result.rs
 src/models/get_account_deletion_request_result.rs
 src/models/get_initial_profile_age_info_result.rs
 src/models/get_media_content_result.rs
@@ -115,9 +119,9 @@ src/models/pending_message_acknowledgement_list.rs
 src/models/pending_message_id.rs
 src/models/pending_notification_token.rs
 src/models/pending_notification_with_data.rs
-src/models/perf_history_query_result.rs
-src/models/perf_history_value.rs
-src/models/perf_value_area.rs
+src/models/perf_metric_query_result.rs
+src/models/perf_metric_value_area.rs
+src/models/perf_metric_values.rs
 src/models/permissions.rs
 src/models/post_moderate_profile_content.rs
 src/models/post_moderate_profile_name.rs
@@ -126,9 +130,13 @@ src/models/profile.rs
 src/models/profile_age_counts.rs
 src/models/profile_attribute_filter_value.rs
 src/models/profile_attribute_filter_value_update.rs
+src/models/profile_attribute_hash.rs
+src/models/profile_attribute_info.rs
+src/models/profile_attribute_query.rs
+src/models/profile_attribute_query_item.rs
+src/models/profile_attribute_query_result.rs
 src/models/profile_attribute_value.rs
 src/models/profile_attribute_value_update.rs
-src/models/profile_attributes.rs
 src/models/profile_attributes_sync_version.rs
 src/models/profile_content.rs
 src/models/profile_content_moderation_rejected_reason_category.rs
@@ -158,7 +166,6 @@ src/models/public_key_data.rs
 src/models/public_key_id.rs
 src/models/public_key_id_and_version.rs
 src/models/public_key_version.rs
-src/models/public_profile_counts.rs
 src/models/received_blocks_page.rs
 src/models/received_blocks_sync_version.rs
 src/models/received_likes_iterator_session_id.rs
@@ -178,6 +185,7 @@ src/models/sent_likes_page.rs
 src/models/sent_likes_sync_version.rs
 src/models/sent_message_id.rs
 src/models/sent_message_id_list.rs
+src/models/set_account_ban_state.rs
 src/models/set_account_setup.rs
 src/models/set_profile_content.rs
 src/models/set_public_key.rs

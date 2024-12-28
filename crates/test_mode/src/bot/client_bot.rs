@@ -11,16 +11,12 @@ use api_client::{
             post_send_like,
         },
         profile_api::{
-            get_available_profile_attributes, post_profile, post_search_age_range,
-            post_search_groups,
+            get_available_profile_attributes, get_query_available_profile_attributes, post_profile, post_search_age_range, post_search_groups
         },
     },
     manual_additions::{get_pending_messages_fixed, post_send_message_fixed},
     models::{
-        AccountId, AttributeMode, ClientId, ClientLocalId, PendingMessage,
-        PendingMessageAcknowledgementList, ProfileAttributeValueUpdate, ProfileSearchAgeRange,
-        ProfileUpdate, PublicKeyData, PublicKeyVersion, SearchGroups, SentMessageId,
-        SentMessageIdList, SetPublicKey,
+        AccountId, AttributeMode, ClientId, ClientLocalId, PendingMessage, PendingMessageAcknowledgementList, ProfileAttributeQuery, ProfileAttributeValueUpdate, ProfileSearchAgeRange, ProfileUpdate, PublicKeyData, PublicKeyVersion, SearchGroups, SentMessageId, SentMessageIdList, SetPublicKey
     },
 };
 use async_trait::async_trait;
@@ -349,6 +345,18 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             .flatten()
             .map(|v| v.attributes)
             .unwrap_or_default();
+
+        let available_attributes = get_query_available_profile_attributes(
+            state.api.profile(),
+            ProfileAttributeQuery {
+                values: available_attributes.iter().map(|v| v.id).collect(),
+            },
+        )
+            .await
+            .change_context(TestError::ApiRequest)?
+            .values
+            .into_iter()
+            .map(|v| v.a);
 
         let mut attributes: Vec<ProfileAttributeValueUpdate> = vec![];
         for attribute in available_attributes {

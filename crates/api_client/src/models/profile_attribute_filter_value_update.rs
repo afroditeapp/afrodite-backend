@@ -19,7 +19,6 @@ pub struct ProfileAttributeFilterValueUpdate {
     /// - First value is bitflags value or top level attribute value ID or first number list value. - Second value is sub level attribute value ID or second number list value. - Third and rest are number list values.
     #[serde(rename = "filter_values")]
     pub filter_values: Vec<i32>,
-    /// Attribute ID
     #[serde(rename = "id")]
     pub id: i32,
 }

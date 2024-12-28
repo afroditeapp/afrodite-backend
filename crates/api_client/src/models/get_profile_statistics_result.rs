@@ -13,23 +13,17 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetProfileStatisticsResult {
-    #[serde(rename = "account_count")]
-    pub account_count: i64,
     #[serde(rename = "age_counts")]
     pub age_counts: Box<models::ProfileAgeCounts>,
     #[serde(rename = "generation_time")]
     pub generation_time: Box<models::UnixTime>,
-    #[serde(rename = "public_profile_counts")]
-    pub public_profile_counts: Box<models::PublicProfileCounts>,
 }
 
 impl GetProfileStatisticsResult {
-    pub fn new(account_count: i64, age_counts: models::ProfileAgeCounts, generation_time: models::UnixTime, public_profile_counts: models::PublicProfileCounts) -> GetProfileStatisticsResult {
+    pub fn new(age_counts: models::ProfileAgeCounts, generation_time: models::UnixTime) -> GetProfileStatisticsResult {
         GetProfileStatisticsResult {
-            account_count,
             age_counts: Box::new(age_counts),
             generation_time: Box::new(generation_time),
-            public_profile_counts: Box::new(public_profile_counts),
         }
     }
 }

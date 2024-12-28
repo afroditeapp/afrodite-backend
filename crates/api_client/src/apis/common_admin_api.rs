@@ -170,7 +170,7 @@ pub async fn get_latest_build_info(configuration: &configuration::Configuration,
 }
 
 /// # Permissions Requires admin_server_maintenance_view_info.
-pub async fn get_perf_data(configuration: &configuration::Configuration, start_time: Option<models::UnixTime>, end_time: Option<models::UnixTime>) -> Result<models::PerfHistoryQueryResult, Error<GetPerfDataError>> {
+pub async fn get_perf_data(configuration: &configuration::Configuration, start_time: Option<models::UnixTime>, end_time: Option<models::UnixTime>) -> Result<models::PerfMetricQueryResult, Error<GetPerfDataError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;

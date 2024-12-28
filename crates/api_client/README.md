@@ -26,6 +26,7 @@ All URIs are relative to *http://localhost*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+*AccountApi* | [**get_account_ban_time**](docs/AccountApi.md#get_account_ban_time) | **GET** /VWEg82SMW2nbZNsujKsrEXdsYCQ | 
 *AccountApi* | [**get_account_data**](docs/AccountApi.md#get_account_data) | **GET** /Ln3_j2LpJIbQABKwnMMhUEtio5k | Get changeable user information to account.
 *AccountApi* | [**get_account_deletion_request_state**](docs/AccountApi.md#get_account_deletion_request_state) | **GET** /xRKw2cu2b8kk8Vkdpo8SdsaFWhQ/{aid} | Get account deletion request state
 *AccountApi* | [**get_account_setup**](docs/AccountApi.md#get_account_setup) | **GET** /RNb6qhf_lZU8t6kOm5kQY7Y34ok | Get non-changeable user information to account.
@@ -54,6 +55,7 @@ Class | Method | HTTP request | Description
 *AccountAdminApi* | [**delete_news_translation**](docs/AccountAdminApi.md#delete_news_translation) | **DELETE** /jo1Lboa4U8YVA07py8NJebpu1zo/{nid}/{locale} | 
 *AccountAdminApi* | [**post_create_news_item**](docs/AccountAdminApi.md#post_create_news_item) | **POST** /XEss8YDw9lPgwKoH6K9THZIF_N4 | 
 *AccountAdminApi* | [**post_delete_account**](docs/AccountAdminApi.md#post_delete_account) | **POST** /bdvzsZZOVVO89-enOb3tFnpU7yk/{aid} | Delete account instantly
+*AccountAdminApi* | [**post_set_ban_state**](docs/AccountAdminApi.md#post_set_ban_state) | **POST** /R5G1j887_zSwcgInJG5Y7mz73nE | Ban or unban account
 *AccountAdminApi* | [**post_set_news_publicity**](docs/AccountAdminApi.md#post_set_news_publicity) | **DELETE** /McvctMKFEqrUfola2WlvkbigBDU/{nid} | 
 *AccountAdminApi* | [**post_update_news_translation**](docs/AccountAdminApi.md#post_update_news_translation) | **POST** /4pD-Q4FhZGTNkUGYExHmZN6TxjU/{nid}/{locale} | 
 *AccountInternalApi* | [**post_login**](docs/AccountInternalApi.md#post_login) | **POST** /account_api/login | Get new AccessToken for a bot account. If the account is not registered as a bot account, then the request will fail.
@@ -117,6 +119,7 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**get_profile_filtering_settings**](docs/ProfileApi.md#get_profile_filtering_settings) | **GET** /Hyav-PRHLoEreB67cVG_WbASOFI | Get current profile filtering settings.
 *ProfileApi* | [**get_profile_from_database_debug_mode_benchmark**](docs/ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /XDTSz35S_5tOKIsSpDITOc46MR4/{aid} | Get account's current profile from database. Debug mode must be enabled that route can be used.
 *ProfileApi* | [**get_profile_statistics**](docs/ProfileApi.md#get_profile_statistics) | **GET** /WJCHYdLNpydn1OkJNyZKKksc4Yw | Non default values for [model::GetProfileStatisticsParams] requires [model::Permissions::admin_profile_statistics].
+*ProfileApi* | [**get_query_available_profile_attributes**](docs/ProfileApi.md#get_query_available_profile_attributes) | **GET** /CO3Oaim0dDWLcVuGqqJoVG-ybXE | Query profile attributes using attribute ID list.
 *ProfileApi* | [**get_search_age_range**](docs/ProfileApi.md#get_search_age_range) | **GET** /xTy-zcnl0LQlfPKQalAEnWQQ-rw | Get account's current search age range
 *ProfileApi* | [**get_search_groups**](docs/ProfileApi.md#get_search_groups) | **GET** /p1KA-sqKKtU3FHvUqYRZnQgj7RQ | Get account's current search groups (gender and what gender user is looking for)
 *ProfileApi* | [**post_favorite_profile**](docs/ProfileApi.md#post_favorite_profile) | **POST** /yD1PtVhVvdk-usEran42JmCTFVQ | Add new favorite profile
@@ -141,6 +144,8 @@ Class | Method | HTTP request | Description
  - [AccessToken](docs/AccessToken.md)
  - [AccessibleAccount](docs/AccessibleAccount.md)
  - [Account](docs/Account.md)
+ - [AccountBanReasonCategory](docs/AccountBanReasonCategory.md)
+ - [AccountBanReasonDetails](docs/AccountBanReasonDetails.md)
  - [AccountContent](docs/AccountContent.md)
  - [AccountData](docs/AccountData.md)
  - [AccountId](docs/AccountId.md)
@@ -149,6 +154,7 @@ Class | Method | HTTP request | Description
  - [AccountSyncVersion](docs/AccountSyncVersion.md)
  - [AllMatchesPage](docs/AllMatchesPage.md)
  - [Attribute](docs/Attribute.md)
+ - [AttributeIdAndHash](docs/AttributeIdAndHash.md)
  - [AttributeMode](docs/AttributeMode.md)
  - [AttributeOrderMode](docs/AttributeOrderMode.md)
  - [AttributeValue](docs/AttributeValue.md)
@@ -188,6 +194,7 @@ Class | Method | HTTP request | Description
  - [EventType](docs/EventType.md)
  - [FavoriteProfilesPage](docs/FavoriteProfilesPage.md)
  - [FcmDeviceToken](docs/FcmDeviceToken.md)
+ - [GetAccountBanTimeResult](docs/GetAccountBanTimeResult.md)
  - [GetAccountDeletionRequestResult](docs/GetAccountDeletionRequestResult.md)
  - [GetInitialProfileAgeInfoResult](docs/GetInitialProfileAgeInfoResult.md)
  - [GetMediaContentResult](docs/GetMediaContentResult.md)
@@ -236,9 +243,9 @@ Class | Method | HTTP request | Description
  - [PendingMessageId](docs/PendingMessageId.md)
  - [PendingNotificationToken](docs/PendingNotificationToken.md)
  - [PendingNotificationWithData](docs/PendingNotificationWithData.md)
- - [PerfHistoryQueryResult](docs/PerfHistoryQueryResult.md)
- - [PerfHistoryValue](docs/PerfHistoryValue.md)
- - [PerfValueArea](docs/PerfValueArea.md)
+ - [PerfMetricQueryResult](docs/PerfMetricQueryResult.md)
+ - [PerfMetricValueArea](docs/PerfMetricValueArea.md)
+ - [PerfMetricValues](docs/PerfMetricValues.md)
  - [Permissions](docs/Permissions.md)
  - [PostModerateProfileContent](docs/PostModerateProfileContent.md)
  - [PostModerateProfileName](docs/PostModerateProfileName.md)
@@ -247,9 +254,13 @@ Class | Method | HTTP request | Description
  - [ProfileAgeCounts](docs/ProfileAgeCounts.md)
  - [ProfileAttributeFilterValue](docs/ProfileAttributeFilterValue.md)
  - [ProfileAttributeFilterValueUpdate](docs/ProfileAttributeFilterValueUpdate.md)
+ - [ProfileAttributeHash](docs/ProfileAttributeHash.md)
+ - [ProfileAttributeInfo](docs/ProfileAttributeInfo.md)
+ - [ProfileAttributeQuery](docs/ProfileAttributeQuery.md)
+ - [ProfileAttributeQueryItem](docs/ProfileAttributeQueryItem.md)
+ - [ProfileAttributeQueryResult](docs/ProfileAttributeQueryResult.md)
  - [ProfileAttributeValue](docs/ProfileAttributeValue.md)
  - [ProfileAttributeValueUpdate](docs/ProfileAttributeValueUpdate.md)
- - [ProfileAttributes](docs/ProfileAttributes.md)
  - [ProfileAttributesSyncVersion](docs/ProfileAttributesSyncVersion.md)
  - [ProfileContent](docs/ProfileContent.md)
  - [ProfileContentModerationRejectedReasonCategory](docs/ProfileContentModerationRejectedReasonCategory.md)
@@ -279,7 +290,6 @@ Class | Method | HTTP request | Description
  - [PublicKeyId](docs/PublicKeyId.md)
  - [PublicKeyIdAndVersion](docs/PublicKeyIdAndVersion.md)
  - [PublicKeyVersion](docs/PublicKeyVersion.md)
- - [PublicProfileCounts](docs/PublicProfileCounts.md)
  - [ReceivedBlocksPage](docs/ReceivedBlocksPage.md)
  - [ReceivedBlocksSyncVersion](docs/ReceivedBlocksSyncVersion.md)
  - [ReceivedLikesIteratorSessionId](docs/ReceivedLikesIteratorSessionId.md)
@@ -299,6 +309,7 @@ Class | Method | HTTP request | Description
  - [SentLikesSyncVersion](docs/SentLikesSyncVersion.md)
  - [SentMessageId](docs/SentMessageId.md)
  - [SentMessageIdList](docs/SentMessageIdList.md)
+ - [SetAccountBanState](docs/SetAccountBanState.md)
  - [SetAccountSetup](docs/SetAccountSetup.md)
  - [SetProfileContent](docs/SetProfileContent.md)
  - [SetPublicKey](docs/SetPublicKey.md)

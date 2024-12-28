@@ -14,12 +14,6 @@ use serde::{Deserialize, Serialize};
 /// EventToClient : Event to client which is sent through websocket.  This is not an enum to make generated API bindings more easier to use.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct EventToClient {
-    /// Data for event AccountStateChanged
-    #[serde(rename = "account_state", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub account_state: Option<Option<Box<models::AccountStateContainer>>>,
-    /// Data for event AccountSyncVersionChanged
-    #[serde(rename = "account_sync_version", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub account_sync_version: Option<Option<Box<models::AccountSyncVersion>>>,
     /// Data for event ContentProcessingStateChanged
     #[serde(rename = "content_processing_state_changed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub content_processing_state_changed: Option<Option<Box<models::ContentProcessingStateChanged>>>,
@@ -28,25 +22,15 @@ pub struct EventToClient {
     /// Data for event LatestViewedMessageChanged
     #[serde(rename = "latest_viewed_message_changed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub latest_viewed_message_changed: Option<Option<Box<models::LatestViewedMessageChanged>>>,
-    /// Data for event AccountPermissionsChanged
-    #[serde(rename = "permissions", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub permissions: Option<Option<Box<models::Permissions>>>,
-    /// Data for event ProfileVisibilityChanged
-    #[serde(rename = "visibility", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub visibility: Option<Option<models::ProfileVisibility>>,
 }
 
 impl EventToClient {
     /// Event to client which is sent through websocket.  This is not an enum to make generated API bindings more easier to use.
     pub fn new(event: models::EventType) -> EventToClient {
         EventToClient {
-            account_state: None,
-            account_sync_version: None,
             content_processing_state_changed: None,
             event,
             latest_viewed_message_changed: None,
-            permissions: None,
-            visibility: None,
         }
     }
 }
