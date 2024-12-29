@@ -1,211 +1,150 @@
 # Afrodite
 Afrodite is a permissively licensed dating app based on profile browsing. This
-repository contains the backend part.
+repository contains the backend part. [Frontend repository](https://github.com/jutuon/afrodite-frontend)
 
 The app is under development and it is not ready for production.
 
-## Running
+<img src="https://raw.githubusercontent.com/jutuon/afrodite-frontend/refs/heads/images/profiles-view.jpg" alt="Profiles view screenshot" width="30%">
+
+## Features
+
+Check [features.md](docs/features.md).
+
+## Building and running
+
+Tagged development preview versions (0.x) of frontend and backend
+with the same minor version number are compatible with each other.
+Main branch might be broken or incompatible with the frontend.
+
+1. Update Git submodule `crates/app-manager`.
 
 ```
-make run
+git submodule update --init
 ```
 
-Add `debug = true` to config file and restart server.
+2. Install [dependencies](#dependencies).
 
-<http://localhost:3000/swagger-ui/>
-
-### Ubuntu 20.04
+3. Build and run the backend.
 
 ```
-sudo apt install libssl-dev
+make run-release
+```
+
+4. Configure backend using [config files](#config-files) and restart it.
+
+5. Optionally install [development dependencies](#development-dependencies).
+
+### Dependencies
+
+#### Ubuntu 22.04
+
+1. Install [Rust](https://www.rust-lang.org/learn/get-started).
+
+2. Install other dependencies.
+
+```
+sudo apt install build-essential libssl-dev pkg-config
+```
+
+#### MacOS
+
+1. Install [Rust](https://www.rust-lang.org/learn/get-started) and
+   [Homebrew](https://brew.sh).
+
+2. Install other dependencies.
+
+```
+brew install openssl@3
+```
+
+### Development dependencies
+
+Command `make reset-database` requires `diesel_cli`.
+
+```
 cargo install diesel_cli --no-default-features --features sqlite
 ```
 
-### MacOS
-
-Install OpenSSL <https://docs.rs/openssl/latest/openssl/>
-```
-brew install openssl@1.1
-```
-
-```
-cargo install diesel_cli --no-default-features --features sqlite
-```
-
-
-## Update server API bindings
+Command `make update-api-bindings` requires `openapi-generator-cli`.
 
 1. Install node version manager (nvm) <https://github.com/nvm-sh/nvm>
 2. Install latest node LTS with nvm. For example `nvm install 18`
 3. Install openapi-generator from npm.
    `npm install @openapitools/openapi-generator-cli -g`
-4. Start the backend in debug mode.
-5. Generate bindings
+
+## Config files
+
+Check backend code located at `crates/config` and `crates/simple_backend_config`
+for all available config file options.
+
+### Debugging and development configuration options
+
+`server_config.toml`
+
+```toml
+[[demo_mode]]
+database_id = 0
+password_stage0 = "test"
+password_stage1 = "tThlYqVHIiY="
+access_all_accounts = true
+
+[grant_admin_access]
+email = "admin@example.com"
+for_every_matching_new_account = true
+
+# ...
 ```
-openapi-generator-cli generate -i http://localhost:3000/api-doc/app_api.json -g rust -o crates/api_client --package-name api_client
-```
+`simple_backend_config.toml`
+```toml
+# Run backend in debug mode which
+#  - disables TLS config check,
+#  - enables better error messages,
+#  - enables Swagger UI on server internal API port and
+#  - changes other things as well.
+# Check backend code for details.
+debug = true
+debug_override_face_detection_result = true
 
-## Reset database
+[socket]
+public_api = "127.0.0.1:3000"
+internal_api = "127.0.0.1:3001"
 
-```
-make reset-database
-```
-
-## Manual database modifications
-
-Open database with sqlite3 `sqlite3 database.file`.
-
-Run command `PRAGMA foreign_keys = ON;`
-
-All data: `.dump`
-
-## Count lines of code
-
-`find src -name '*.rs' | xargs wc -l`
-
-Commit count:
-
-```
-git rev-list --count HEAD
-```
-
-
-# TLS certificate generation
-
-## Root certificate
-
-Generate private key:
-
-```
-openssl genrsa -out root-private-key.key 4096
-```
-
-Create certificate signing request (CSR):
-```
-openssl req -new -sha256 -key root-private-key.key -out root-csr.csr
+# ...
 ```
 
-100 years = 36500 days
+With the above options Swagger UI will be available on
+<http://localhost:3001/swagger-ui>.
 
-Sign root certificate:
-```
-openssl x509 -req -sha256 -days 36500 -in root-csr.csr -signkey root-private-key.key -out root.crt
-```
+## Questions and answers
 
-## Server certificate
+### Where the name comes from?
 
-Use domain as Common Name. IP address does not work with Dart and Rustls.
+The name is [Aphrodite](https://en.wikipedia.org/wiki/Aphrodite) in Finnish.
 
-```
-openssl genrsa -out server-private-key.key 4096
-openssl req -new -sha256 -key server-private-key.key -out server.csr
-openssl x509 -req -in server.csr -CA ../root/root.crt -CAkey ../root/root-private-key.key -CAcreateserial -out server.crt -days 365 -sha256
-```
+### Why the project is permissively licensed?
 
-## Viewing certificates
+That will make easier for businesses to modify, extend and
+host their own versions of the service. This helps businesses
+to enter to the dating app market without huge technical investments.
 
-```
-openssl x509 -in server.crt -text -noout
-```
+It is also possible to reduce bot users with security by obscurity. Backend
+API can be modified and the modified frontend and backend code can be hidden.
+(Yes, I know that this is not a reliable solution for preventing bots. I have
+planned to implement support for EU digital wallet when that is possible.
+It will most likely solve bot user issues if all users must verify their
+identity with the wallet.)
 
-# Bot mode
+### Where can I download the app?
 
-```
-RUST_LOG=debug cargo run -- test --tasks 10 --save-state --no-servers --test bot
-```
+It is not available anywhere yet.
 
-# Update app-manager submodule to latest
+A release for Finland with another branding will happen when the app
+is considered ready for production.
 
-git submodule update --remote --merge
-
-
-# Building script for Multipass VM
-
-Script which can be used when when app-manager is installed to multipass VM
-and source files are mounted. Replace SRC_DIR_LOCATION with the location of
-mouted source directory.
-
-```bash
-#!/bin/bash -eux
-
-cd
-mkdir -p backend_src
-rsync -av --delete --progress --exclude="/target" /SRC_DIR_LOCATION/ ~/backend_src
-
-cd ~/backend_src
-cargo build --bin dating_app_backend --release
-sudo -u app mkdir -p /app-secure-storage/app/binaries
-sudo -u app mkdir -p /app-secure-storage/app/backend-working-dir
-sudo systemctl stop app-backend
-sudo cp target/release/dating_app_backend /app-secure-storage/app/binaries
-sudo chown app:app /app-secure-storage/app/binaries/dating_app_backend
-sudo systemctl restart app-backend
-sudo journalctl -u app-backend.service -b -e -f
-```
-
-Edit config file script:
-
-```bash
-#!/bin/bash -eux
-
-sudo -u app vim /app-secure-storage/app/backend-working-dir/server_config.toml
-```
-
-# Litestream
-
-Example config file:
-```yml
-dbs:
- - path: /app-secure-storage/app/backend-working-dir/database/current/current.db
-   replicas:
-     - type:    sftp
-       host:    192.168.64.77:22
-       user:    ubuntu
-       path:    /home/ubuntu/litestream/current
-       key-path: /app-secure-storage/app/.ssh/id_ed25519
-```
-
-# Diesel
-
-Reset current database:
-
-DATABASE_URL="database/current/current.db" diesel database reset
-
-# Profiling build
-
-cargo build --bin dating_app_backend --timings
-
-https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/self-profile.html
-Command for this is in Makefile.
-
-https://github.com/rust-lang/measureme/blob/master/crox/README.md
-Covert .mm_profdata to .json with
-crox file.mm_profdata
-Then open it in https://ui.perfetto.dev/
-
-# Debugging with tokio-console
-
-Only on debug builds.
-
-The .cargo/config.toml has the required build flag.
-
-```
-cargo install --locked tokio-console
-make
-tokio-console
-```
-
-# Sign in with Google
-
-If another Email is wanted to be visible in the Sign in with Google dialog, then
-Google Cloud project needs to have another Google Account added with
-permissions:
-
-```
-Access Context Manager Reader
-OAuth Config Editor
-Service Usage Viewer
-```
+Global app releases are not planned and are not possible in practice
+as the backend is monolithic. Also the backend profile iterator API uses
+2D matrix with jump info for iterating profiles from nearest to farthest, so
+it might use a lot of RAM depending on how large the matrix is.
 
 ## Contributions
 
