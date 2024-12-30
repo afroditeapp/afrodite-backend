@@ -30,7 +30,7 @@ use super::{
             AssertAccountState, Login, Register, SetAccountSetup, SetProfileVisibility, DEFAULT_AGE, AccountState
         },
         media::SendImageToSlot,
-        profile::{ChangeProfileText, GetProfile, ProfileText, UpdateLocationRandom},
+        profile::{ChangeProfileText, GetProfile, ProfileText, UpdateLocationRandomOrConfigured},
         BotAction, RunActions, RunActionsIf,
     },
     utils::encrypt::encrypt_data,
@@ -84,14 +84,14 @@ impl ClientBot {
                 Register,
                 Login,
                 DoInitialSetupIfNeeded { admin: false },
-                UpdateLocationRandom::new(None),
+                UpdateLocationRandomOrConfigured::new(None),
                 SetProfileVisibility(true),
                 SendLikeIfNeeded,
             ];
             const ACTION_LOOP: ActionArray = action_array![
                 ActionsBeforeIteration,
                 GetProfile,
-                RunActionsIf(action_array!(UpdateLocationRandom::new(None)), |s| {
+                RunActionsIf(action_array!(UpdateLocationRandomOrConfigured::new(None)), |s| {
                     s.get_bot_config().change_location() && rand::random::<f32>() < 0.2
                 }),
                 // TODO: Toggle the profile visiblity in the future?

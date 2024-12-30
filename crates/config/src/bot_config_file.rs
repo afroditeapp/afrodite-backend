@@ -153,6 +153,8 @@ impl BotConfigFile {
                 grid_crop_size: c.grid_crop_size.or(base.grid_crop_size),
                 grid_crop_x: c.grid_crop_x.or(base.grid_crop_x),
                 grid_crop_y: c.grid_crop_y.or(base.grid_crop_y),
+                lat: c.lat.or(base.lat),
+                lon: c.lon.or(base.lon),
                 send_like_to_account_id: c.send_like_to_account_id.or(base.send_like_to_account_id),
                 change_visibility: c.change_visibility.or(base.random_color_image),
                 change_location: c.change_location.or(base.change_location),
@@ -205,6 +207,10 @@ pub struct BaseBotConfig {
     pub grid_crop_size: Option<f64>,
     pub grid_crop_x: Option<f64>,
     pub grid_crop_y: Option<f64>,
+    /// Latitude
+    pub lat: Option<f64>,
+    /// Longitude
+    pub lon: Option<f64>,
     /// All bots will try to send like to this account ID
     pub send_like_to_account_id: Option<simple_backend_utils::UuidBase64Url>,
     change_visibility: Option<bool>,

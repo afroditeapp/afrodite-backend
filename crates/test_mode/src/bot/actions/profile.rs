@@ -130,18 +130,19 @@ impl BotAction for GetLocation {
     }
 }
 
-/// Updates location with random values.
+/// Updates location with random values if bot is not configured to specific
+/// location.
 /// If None is passed, then area for random location is
 /// from Config.
 ///
 /// Updates PreviousValue to a new location.
 #[derive(Debug)]
-pub struct UpdateLocationRandom {
+pub struct UpdateLocationRandomOrConfigured {
     pub config: Option<LocationConfig>,
     pub deterministic: bool,
 }
 
-impl UpdateLocationRandom {
+impl UpdateLocationRandomOrConfigured {
     pub const fn new(config: Option<LocationConfig>) -> Self {
         Self {
             config,
@@ -158,17 +159,23 @@ impl UpdateLocationRandom {
 }
 
 #[async_trait]
-impl BotAction for UpdateLocationRandom {
+impl BotAction for UpdateLocationRandomOrConfigured {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let config = self
             .config
             .clone()
             .unwrap_or(state.server_config.location().clone());
-        let location = config.generate_random_location(if self.deterministic {
+        let mut location = config.generate_random_location(if self.deterministic {
             Some(&mut state.deterministic_rng)
         } else {
             None
         });
+        if let Some(lat) = state.get_bot_config().lat {
+            location.latitude = lat;
+        }
+        if let Some(lon) = state.get_bot_config().lon {
+            location.longitude = lon;
+        }
         profile_api::put_location(state.api.profile(), location)
             .await
             .change_context(TestError::ApiRequest)?;

@@ -24,7 +24,7 @@ use super::{
         account::{Login, Register, SetProfileVisibility},
         profile::{
             ChangeProfileText, GetProfileList, ProfileText, ResetProfileIterator,
-            UpdateLocationRandom,
+            UpdateLocationRandomOrConfigured,
         },
         BotAction, RepeatUntilFn, RunActions, TO_NORMAL_STATE,
     },
@@ -159,7 +159,7 @@ impl Benchmark {
     pub fn benchmark_get_profile_list_bot(state: BotState) -> Self {
         const ACTIONS: ActionArray = action_array![
             RunActions(TO_NORMAL_STATE),
-            UpdateLocationRandom::new_deterministic(Some(DEFAULT_LOCATION_CONFIG_BENCHMARK)),
+            UpdateLocationRandomOrConfigured::new_deterministic(Some(DEFAULT_LOCATION_CONFIG_BENCHMARK)),
             SetProfileVisibility(true),
         ];
         let iter = ACTIONS.iter().copied();
