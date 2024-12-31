@@ -1,5 +1,5 @@
 # Afrodite
-Afrodite is a permissively licensed dating app based on profile browsing. This
+Afrodite is a dating app. This
 repository contains the backend part. [Frontend repository](https://github.com/jutuon/afrodite-frontend)
 
 The app is under development and it is not ready for production.
@@ -46,7 +46,7 @@ make run-release
 sudo apt install build-essential libssl-dev pkg-config
 ```
 
-#### MacOS
+#### macOS
 
 1. Install [Rust](https://www.rust-lang.org/learn/get-started) and
    [Homebrew](https://brew.sh).
