@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use model_server_data::{AttributeId, MaxDistanceKm, ProfileAttributeFilterValue};
+use model_server_data::{AccountCreatedTimeFilter, AttributeId, MaxDistanceKm, ProfileAttributeFilterValue, ProfileEditedTimeFilter};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -12,7 +12,9 @@ pub struct ProfileFilteringSettingsUpdate {
     filters: Vec<ProfileAttributeFilterValueUpdate>,
     last_seen_time_filter: Option<LastSeenTimeFilter>,
     unlimited_likes_filter: Option<bool>,
-    max_distance_km: Option<MaxDistanceKm>,
+    max_distance_km_filter: Option<MaxDistanceKm>,
+    account_created_filter: Option<AccountCreatedTimeFilter>,
+    profile_edited_filter: Option<ProfileEditedTimeFilter>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     random_profile_order: bool,
@@ -55,9 +57,21 @@ impl ProfileFilteringSettingsUpdate {
             }
         }
 
-        if let Some(value) = self.max_distance_km {
+        if let Some(value) = self.max_distance_km_filter {
             if value.value <= 0 {
                 return Err("Max distance can't be less or equal to 0".to_string());
+            }
+        }
+
+        if let Some(value) = self.account_created_filter {
+            if value.value < 0 {
+                return Err("Account created time filter can't be less than zero".to_string());
+            }
+        }
+
+        if let Some(value) = self.profile_edited_filter {
+            if value.value < 0 {
+                return Err("Profile edited time filter can't be less than zero".to_string());
             }
         }
 
@@ -65,7 +79,9 @@ impl ProfileFilteringSettingsUpdate {
             filters: self.filters,
             last_seen_time_filter: self.last_seen_time_filter,
             unlimited_likes_filter: self.unlimited_likes_filter,
-            max_distance_km: self.max_distance_km,
+            max_distance_km_filter: self.max_distance_km_filter,
+            account_created_filter: self.account_created_filter,
+            profile_edited_filter: self.profile_edited_filter,
             random_profile_order: self.random_profile_order,
         })
     }
@@ -76,7 +92,9 @@ pub struct ProfileFilteringSettingsUpdateValidated {
     pub filters: Vec<ProfileAttributeFilterValueUpdate>,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
-    pub max_distance_km: Option<MaxDistanceKm>,
+    pub max_distance_km_filter: Option<MaxDistanceKm>,
+    pub account_created_filter: Option<AccountCreatedTimeFilter>,
+    pub profile_edited_filter: Option<ProfileEditedTimeFilter>,
     pub random_profile_order: bool,
 }
 
@@ -103,7 +121,9 @@ pub struct GetProfileFilteringSettings {
     /// is in kilometers.
     ///
     /// The value must be `None`, 1 or greater number.
-    pub max_distance_km: Option<MaxDistanceKm>,
+    pub max_distance_km_filter: Option<MaxDistanceKm>,
+    pub account_created_filter: Option<AccountCreatedTimeFilter>,
+    pub profile_edited_filter: Option<ProfileEditedTimeFilter>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     /// Randomize iterator starting position within the profile index area which

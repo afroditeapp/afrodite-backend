@@ -122,8 +122,14 @@ impl DbDataToCacheLoader {
                         .current_account_media_raw(account_id)
                 })
                 .await?;
+            let media_state = db
+                .db_read(move |mut cmds| {
+                    cmds.media()
+                        .get_media_state(account_id)
+                })
+                .await?;
             let media_data =
-                CachedMedia::new(account_id.uuid, media_content.profile_content_version_uuid);
+                CachedMedia::new(account_id.uuid, media_content.profile_content_version_uuid, media_state.profile_content_edited_unix_time);
             entry.media = Some(Box::new(media_data));
         }
 
@@ -159,7 +165,7 @@ impl DbDataToCacheLoader {
                 last_seen_unix_time,
             );
 
-            let location_area = index_writer.coordinates_to_area(profile_location, profile_data.state.max_distance_km);
+            let location_area = index_writer.coordinates_to_area(profile_location, profile_data.state.max_distance_km_filter);
             profile_data.location.current_position = location_area.clone();
             profile_data.location.current_iterator =
                 index_iterator.new_iterator_state(

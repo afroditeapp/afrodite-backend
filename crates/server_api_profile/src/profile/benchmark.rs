@@ -3,7 +3,7 @@ use axum::{
     Extension,
 };
 use model_profile::{
-    AccountId, AccountIdInternal, AccountState, Profile, ProfileUpdate, ProfileUpdateInternal,
+    AccountId, AccountIdInternal, AccountState, Profile, ProfileUpdate,
 };
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
@@ -115,11 +115,9 @@ pub async fn post_profile_to_database_debug_mode_benchmark(
         return Ok(());
     }
 
-    let new = ProfileUpdateInternal::new(profile);
-
     db_write!(state, move |cmds| {
         cmds.profile()
-            .benchmark_update_profile_bypassing_cache(account_id, new)
+            .benchmark_update_profile_bypassing_cache(account_id, profile)
     })
 }
 

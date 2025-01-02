@@ -1,6 +1,6 @@
 use diesel::{prelude::*, sql_types::BigInt, AsExpression, FromSqlRow};
 use model::{sync_version_wrappers, ContentId, ContentIdDb, ContentSlot, ProfileContentVersion, UnixTime};
-use model_server_data::MediaContentType;
+use model_server_data::{MediaContentType, ProfileContentEditedTime};
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper};
@@ -21,7 +21,7 @@ pub struct SlotId {
     pub slot_id: u8,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams)]
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct ContentInfo {
     pub cid: ContentId,
     /// Default value is not set to API doc as the API doc will then have
@@ -196,7 +196,7 @@ impl Default for ContentModerationState {
 diesel_i64_try_from!(ContentModerationState);
 
 
-#[derive(Debug, Clone, Queryable, Selectable)]
+#[derive(Debug, Clone, PartialEq, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::media_content)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct MediaContentRaw {
@@ -311,7 +311,7 @@ pub struct CurrentAccountMediaRaw {
     pub grid_crop_y: Option<f64>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct CurrentAccountMediaInternal {
     pub security_content_id: Option<MediaContentRaw>,
     pub profile_content_version_uuid: ProfileContentVersion,
@@ -389,7 +389,7 @@ impl SetProfileContent {
 }
 
 /// Current content in public profile.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct ProfileContent {
     /// Primary profile image which is shown in grid view.
     pub c: Vec<ContentInfo>,
@@ -523,6 +523,7 @@ pub struct AccountContent {
 pub struct MediaStateRaw {
     pub initial_moderation_request_accepted: bool,
     pub media_content_sync_version: MediaContentSyncVersion,
+    pub profile_content_edited_unix_time: ProfileContentEditedTime,
 }
 
 impl MediaStateRaw {

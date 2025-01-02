@@ -19,6 +19,12 @@ pub use index::*;
 mod last_time_seen;
 pub use last_time_seen::*;
 
+mod account_created_time;
+pub use account_created_time::*;
+
+mod profile_edited_time;
+pub use profile_edited_time::*;
+
 mod iterator;
 pub use iterator::*;
 
@@ -101,8 +107,11 @@ pub struct ProfileStateCached {
     pub search_group_flags: SearchGroupFlags,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
-    pub max_distance_km: Option<MaxDistanceKm>,
+    pub account_created_time_filter: Option<AccountCreatedTimeFilter>,
+    pub profile_edited_time_filter: Option<ProfileEditedTimeFilter>,
+    pub max_distance_km_filter: Option<MaxDistanceKm>,
     pub random_profile_order: bool,
     pub profile_name_moderation_state: ProfileNameModerationState,
     pub profile_text_moderation_state: ProfileTextModerationState,
+    pub profile_edited_time: ProfileEditedTime,
 }

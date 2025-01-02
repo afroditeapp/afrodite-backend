@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    Account, AccountIdInternal, AccountStateContainer, AccountStateRelatedSharedState, AccountSyncVersion, Permissions, ProfileVisibility, SharedStateRaw, SyncVersionUtils
+    Account, AccountCreatedTime, AccountIdInternal, AccountStateContainer, AccountStateRelatedSharedState, AccountSyncVersion, Permissions, ProfileVisibility, SharedStateRaw, SyncVersionUtils
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
@@ -159,6 +159,22 @@ impl CurrentWriteCommonState<'_> {
             self.read().common().account(id)?.into();
         shared_state.sync_version = AccountSyncVersion::default();
         self.update_account_related_shared_state(id, shared_state)?;
+        Ok(())
+    }
+
+    pub fn update_account_created_unix_time(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::shared_state::dsl::*;
+
+        let current_time = AccountCreatedTime::current_time();
+
+        update(shared_state.find(id.as_db_id()))
+            .set(account_created_unix_time.eq(current_time))
+            .execute(self.conn())
+            .into_db_error(id)?;
+
         Ok(())
     }
 }

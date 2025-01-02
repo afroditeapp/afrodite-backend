@@ -5,8 +5,7 @@ use chat::CachedChatComponentData;
 use error_stack::Result;
 use media::CachedMedia;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState,
-    OtherSharedState, PendingNotificationFlags, Permissions,
+    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, OtherSharedState, PendingNotificationFlags, Permissions
 };
 use model_server_data::{LastSeenTime, LocationIndexKey, LocationIndexProfileData};
 use profile::CachedProfile;
@@ -629,6 +628,8 @@ impl CacheEntry {
             self.media.as_ref().map(|m| m.profile_content_version),
             self.common.other_shared_state.unlimited_likes,
             profile.last_seen_time(&self.common),
+            self.common.other_shared_state.account_created_unix_time,
+            self.media.as_ref().map(|m| m.profile_content_edited_time),
         ))
     }
 }

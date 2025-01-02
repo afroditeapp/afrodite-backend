@@ -354,6 +354,7 @@ diesel::table! {
         account_id -> Integer,
         initial_moderation_request_accepted -> Bool,
         media_content_sync_version -> Integer,
+        profile_content_edited_unix_time -> Integer,
     }
 }
 
@@ -487,7 +488,9 @@ diesel::table! {
         search_group_flags -> Integer,
         last_seen_time_filter -> Nullable<Integer>,
         unlimited_likes_filter -> Nullable<Bool>,
-        max_distance_km -> Nullable<Integer>,
+        max_distance_km_filter -> Nullable<Integer>,
+        account_created_time_filter -> Nullable<Integer>,
+        profile_edited_time_filter -> Nullable<Integer>,
         random_profile_order -> Bool,
         latitude -> Double,
         longitude -> Double,
@@ -501,6 +504,7 @@ diesel::table! {
         profile_text_moderation_rejected_reason_details -> Nullable<Text>,
         profile_text_moderation_moderator_account_id -> Nullable<Integer>,
         profile_text_edit_time_unix_time -> Nullable<Integer>,
+        profile_edited_unix_time -> Integer,
     }
 }
 
@@ -547,6 +551,7 @@ diesel::table! {
         unlimited_likes -> Bool,
         birthdate -> Nullable<Date>,
         is_bot_account -> Bool,
+        account_created_unix_time -> Integer,
     }
 }
 

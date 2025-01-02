@@ -97,6 +97,8 @@ CREATE TABLE IF NOT EXISTS shared_state(
     -- someday.
     birthdate                 DATE,
     is_bot_account            BOOLEAN              NOT NULL DEFAULT 0,
+    -- Profile component uses this info for profile filtering.
+    account_created_unix_time INTEGER              NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -284,7 +286,11 @@ CREATE TABLE IF NOT EXISTS profile_state(
     -- Filter setting for unlimited likes.
     unlimited_likes_filter     BOOLEAN,
     -- Filter setting for profile iterator max distance in kilometers.
-    max_distance_km            INTEGER,
+    max_distance_km_filter     INTEGER,
+    -- Filter setting for account created time in seconds.
+    account_created_time_filter INTEGER,
+    -- Filter setting for profile edited time in seconds.
+    profile_edited_time_filter INTEGER,
     -- Profile iterator setting for random profile order.
     random_profile_order       BOOLEAN              NOT NULL    DEFAULT 0,
     latitude                   DOUBLE               NOT NULL    DEFAULT 0.0,
@@ -317,6 +323,9 @@ CREATE TABLE IF NOT EXISTS profile_state(
     profile_text_moderation_rejected_reason_details  TEXT,
     profile_text_moderation_moderator_account_id     INTEGER,
     profile_text_edit_time_unix_time                 INTEGER,
+    -- Edit time for public profile changes. This updates from both
+    -- user and admin made changes.
+    profile_edited_unix_time          INTEGER       NOT NULL    DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -438,6 +447,9 @@ CREATE TABLE IF NOT EXISTS media_state(
     initial_moderation_request_accepted BOOLEAN             NOT NULL DEFAULT 0,
     -- Sync version for profile and security content data for this account.
     media_content_sync_version          INTEGER             NOT NULL DEFAULT 0,
+    -- Edit time for profile content changes. This updates from both
+    -- user and admin made changes.
+    profile_content_edited_unix_time    INTEGER             NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

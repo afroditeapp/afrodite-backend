@@ -50,6 +50,8 @@ Also optional filters can be set.
 * Max distance
 * Profile attributes (logical AND operation)
 * Last seen time
+* Account created time
+* Profile edited time
 * Unlimited chat requests enabled boolean
 
 ### Favorite profiles

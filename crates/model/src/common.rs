@@ -11,7 +11,7 @@ use utils::random_bytes::random_128_bits;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    schema_sqlite_types::Integer, Account, AccountStateContainer, ContentProcessingId, ContentProcessingState, MessageNumber, ProfileVisibility
+    schema_sqlite_types::Integer, Account, AccountCreatedTime, AccountStateContainer, ContentProcessingId, ContentProcessingState, MessageNumber, ProfileVisibility
 };
 
 pub mod sync_version;
@@ -422,12 +422,15 @@ diesel_i64_wrapper!(AccountIdDb);
 #[diesel(table_name = crate::schema::shared_state)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct SharedStateRaw {
-    pub profile_visibility_state_number: ProfileVisibility,
     pub account_state_initial_setup_completed: bool,
     pub account_state_banned: bool,
     pub account_state_pending_deletion: bool,
+    pub profile_visibility_state_number: ProfileVisibility,
     pub sync_version: AccountSyncVersion,
     pub unlimited_likes: bool,
+    pub birthdate: Option<NaiveDate>,
+    pub is_bot_account: bool,
+    pub account_created_unix_time: AccountCreatedTime,
 }
 
 #[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
@@ -448,6 +451,7 @@ pub struct OtherSharedState {
     pub unlimited_likes: bool,
     pub birthdate: Option<NaiveDate>,
     pub is_bot_account: bool,
+    pub account_created_unix_time: AccountCreatedTime,
 }
 
 impl AccountStateRelatedSharedState {

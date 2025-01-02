@@ -3,7 +3,6 @@ use std::time::Duration;
 use model::UnixTime;
 use model_profile::{
     AccountIdInternal, AccountState, EventToClientInternal, ProfileAge, ProfileUpdate,
-    ProfileUpdateInternal,
 };
 use server_api::{
     app::{GetConfig, ProfileStatisticsCacheProvider, ReadData, WriteData},
@@ -245,7 +244,6 @@ impl ScheduledTaskManager {
             let profile_update = profile_update
                 .validate(cmds.config().profile_attributes(), &profile, None)
                 .into_error_string(DataError::NotAllowed)?;
-            let profile_update = ProfileUpdateInternal::new(profile_update);
             cmds.profile().profile(id, profile_update).await?;
 
             cmds.events()

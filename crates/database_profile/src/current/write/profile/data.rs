@@ -4,7 +4,7 @@ use diesel::{
 };
 use error_stack::{Result, ResultExt};
 use model_profile::{
-    AccountIdInternal, Attribute, Location, ProfileAge, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileAttributesInternal, ProfileFilteringSettingsUpdateValidated, ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion, SyncVersion, UnixTime
+    AccountIdInternal, Attribute, Location, ProfileAge, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileAttributesInternal, ProfileEditedTime, ProfileFilteringSettingsUpdateValidated, ProfileInternal, ProfileStateInternal, ProfileUpdateValidated, ProfileVersion, SyncVersion, UnixTime
 };
 
 use crate::IntoDatabaseError;
@@ -32,8 +32,12 @@ impl CurrentWriteProfileData<'_> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::profile_state::dsl::*;
 
+        let edit_time = ProfileEditedTime::current_time();
         insert_into(profile_state)
-            .values(account_id.eq(id.as_db_id()))
+            .values((
+                account_id.eq(id.as_db_id()),
+                profile_edited_unix_time.eq(edit_time),
+            ))
             .execute(self.conn())
             .into_db_error(id)?;
 
@@ -43,32 +47,16 @@ impl CurrentWriteProfileData<'_> {
     pub fn profile(
         &mut self,
         id: AccountIdInternal,
-        data: &ProfileUpdateInternal,
+        data: &ProfileUpdateValidated,
     ) -> Result<(), DieselDatabaseError> {
         use crate::schema::profile::dsl::*;
 
         update(profile.find(id.as_db_id()))
             .set((
-                version_uuid.eq(data.version),
-                name.eq(&data.new_data.name),
-                age.eq(&data.new_data.age),
-                profile_text.eq(&data.new_data.ptext),
+                name.eq(&data.name),
+                age.eq(&data.age),
+                profile_text.eq(&data.ptext),
             ))
-            .execute(self.conn())
-            .change_context(DieselDatabaseError::Execute)?;
-
-        Ok(())
-    }
-
-    pub fn only_profile_version(
-        &mut self,
-        id: AccountIdInternal,
-        data: ProfileVersion,
-    ) -> Result<(), DieselDatabaseError> {
-        use crate::schema::profile::dsl::*;
-
-        update(profile.find(id.as_db_id()))
-            .set(version_uuid.eq(data))
             .execute(self.conn())
             .change_context(DieselDatabaseError::Execute)?;
 
@@ -201,18 +189,46 @@ impl CurrentWriteProfileData<'_> {
         Ok(())
     }
 
-    pub fn increment_profile_sync_version(
+    /// Update profile version, increment profile sync version and
+    /// update profile edited time.
+    pub fn required_changes_for_profile_update(
         &mut self,
         id: AccountIdInternal,
+        data: ProfileVersion,
+        time: ProfileEditedTime,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::profile_state::dsl::*;
 
-        update(profile_state)
-            .filter(account_id.eq(id.as_db_id()))
-            .filter(profile_sync_version.lt(SyncVersion::MAX_VALUE))
-            .set(profile_sync_version.eq(profile_sync_version + 1))
-            .execute(self.conn())
-            .into_db_error(())?;
+        // Update profile version
+        {
+            use crate::schema::profile::dsl::*;
+
+            update(profile.find(id.as_db_id()))
+                .set(version_uuid.eq(data))
+                .execute(self.conn())
+                .change_context(DieselDatabaseError::Execute)?;
+        }
+
+        // Increment profile sync version
+        {
+            use model::schema::profile_state::dsl::*;
+
+            update(profile_state)
+                .filter(account_id.eq(id.as_db_id()))
+                .filter(profile_sync_version.lt(SyncVersion::MAX_VALUE))
+                .set(profile_sync_version.eq(profile_sync_version + 1))
+                .execute(self.conn())
+                .into_db_error(())?;
+        }
+
+        // Update profile edited time
+        {
+            use crate::schema::profile_state::dsl::*;
+
+            update(profile_state.find(id.as_db_id()))
+                .set(profile_edited_unix_time.eq(time))
+                .execute(self.conn())
+                .change_context(DieselDatabaseError::Execute)?;
+        }
 
         Ok(())
     }
@@ -245,7 +261,9 @@ impl CurrentWriteProfileData<'_> {
             .set((
                 last_seen_time_filter.eq(settings.last_seen_time_filter),
                 unlimited_likes_filter.eq(settings.unlimited_likes_filter),
-                max_distance_km.eq(settings.max_distance_km),
+                max_distance_km_filter.eq(settings.max_distance_km_filter),
+                account_created_time_filter.eq(settings.account_created_filter),
+                profile_edited_time_filter.eq(settings.profile_edited_filter),
                 random_profile_order.eq(settings.random_profile_order),
             ))
             .execute(self.conn())

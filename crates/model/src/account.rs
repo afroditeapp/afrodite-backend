@@ -11,6 +11,9 @@ use crate::{
 mod news;
 pub use news::*;
 
+mod account_created_time;
+pub use account_created_time::*;
+
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct Account {
     state: AccountStateContainer,

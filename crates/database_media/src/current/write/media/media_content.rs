@@ -3,7 +3,7 @@ use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::{ContentIdInternal, SyncVersion, UnixTime};
 use model_media::{
-    AccountIdInternal, ContentId, ContentIdDb, ContentModerationState, ContentSlot, MediaContentRaw, MediaContentType, NewContentParams, ProfileContentVersion, SetProfileContent
+    AccountIdInternal, ContentId, ContentIdDb, ContentModerationState, ContentSlot, MediaContentRaw, MediaContentType, NewContentParams, ProfileContentEditedTime, ProfileContentVersion, SetProfileContent
 };
 use simple_backend_utils::ContextExt;
 
@@ -12,6 +12,9 @@ use crate::{current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMed
 use super::DeletedSomething;
 
 define_current_write_commands!(CurrentWriteMediaContent);
+
+// TODO(refactor): New type for ProfileContentVersion::new_random() and
+//                 ProfileContentEditedTime::current_time().
 
 impl CurrentWriteMediaContent<'_> {
     pub fn insert_current_account_media(
@@ -66,8 +69,6 @@ impl CurrentWriteMediaContent<'_> {
     ///
     /// Moves content to moderation if needed.
     ///
-    /// Updates also [model_media::MediaContentSyncVersion].
-    ///
     /// Requirements:
     ///  - The content must be of type JpegImage.
     ///  - The content must be in the account's media content.
@@ -76,7 +77,6 @@ impl CurrentWriteMediaContent<'_> {
         &mut self,
         id: AccountIdInternal,
         new: SetProfileContent,
-        new_version: ProfileContentVersion,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::current_account_media::dsl::*;
 
@@ -104,7 +104,6 @@ impl CurrentWriteMediaContent<'_> {
 
         update(current_account_media.find(id.as_db_id()))
             .set((
-                profile_content_version_uuid.eq(new_version),
                 profile_content_id_0.eq(convert_first(c.first())?),
                 profile_content_id_1.eq(convert(c.get(1))?),
                 profile_content_id_2.eq(convert(c.get(2))?),
@@ -181,24 +180,6 @@ impl CurrentWriteMediaContent<'_> {
                 .media_content()
                 .update_content_moderation_state(content_id, ContentModerationState::WaitingBotOrHumanModeration)?;
         }
-
-        Ok(())
-    }
-
-    /// Update profile content version.
-    pub fn update_profile_content_version(
-        &mut self,
-        id: AccountIdInternal,
-        new_version: ProfileContentVersion,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::current_account_media::dsl::*;
-
-        update(current_account_media.find(id.as_db_id()))
-            .set((
-                profile_content_version_uuid.eq(new_version),
-            ))
-            .execute(self.conn())
-            .into_db_error(id)?;
 
         Ok(())
     }
@@ -294,17 +275,29 @@ impl CurrentWriteMediaContent<'_> {
         Ok(())
     }
 
-    pub fn only_profile_content_version(
+    pub fn required_changes_for_public_profile_content_update(
         &mut self,
         id: AccountIdInternal,
         data: ProfileContentVersion,
+        edit_time: ProfileContentEditedTime,
     ) -> Result<(), DieselDatabaseError> {
-        use crate::schema::current_account_media::dsl::*;
+        {
+            use crate::schema::current_account_media::dsl::*;
 
-        update(current_account_media.find(id.as_db_id()))
-            .set(profile_content_version_uuid.eq(data))
-            .execute(self.conn())
-            .change_context(DieselDatabaseError::Execute)?;
+            update(current_account_media.find(id.as_db_id()))
+                .set(profile_content_version_uuid.eq(data),)
+                .execute(self.conn())
+                .change_context(DieselDatabaseError::Execute)?;
+        }
+
+        {
+            use crate::schema::media_state::dsl::*;
+
+            update(media_state.find(id.as_db_id()))
+                .set(profile_content_edited_unix_time.eq(edit_time))
+                .execute(self.conn())
+                .change_context(DieselDatabaseError::Execute)?;
+        }
 
         Ok(())
     }

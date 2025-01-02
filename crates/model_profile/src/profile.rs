@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use diesel::{prelude::*, sql_types::BigInt, AsExpression, FromSqlRow};
 use model::ProfileAge;
 use model_server_data::{
-    AttributeId, LastSeenTime, LastSeenTimeFilter, MaxDistanceKm, ProfileAttributeValue, ProfileAttributeValueUpdate, ProfileAttributesInternal, ProfileInternal, ProfileNameModerationState, ProfileStateCached, ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes
+    AccountCreatedTimeFilter, AttributeId, LastSeenTime, LastSeenTimeFilter, MaxDistanceKm, ProfileAttributeValue, ProfileAttributeValueUpdate, ProfileAttributesInternal, ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal, ProfileNameModerationState, ProfileStateCached, ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes
 };
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, UnixTime};
@@ -114,7 +114,9 @@ pub struct ProfileStateInternal {
     pub search_group_flags: SearchGroupFlags,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
-    pub max_distance_km: Option<MaxDistanceKm>,
+    pub max_distance_km_filter: Option<MaxDistanceKm>,
+    pub account_created_time_filter: Option<AccountCreatedTimeFilter>,
+    pub profile_edited_time_filter: Option<ProfileEditedTimeFilter>,
     pub random_profile_order: bool,
     pub profile_attributes_sync_version: ProfileAttributesSyncVersion,
     pub profile_sync_version: ProfileSyncVersion,
@@ -125,6 +127,7 @@ pub struct ProfileStateInternal {
     pub profile_text_moderation_rejected_reason_details:
         Option<ProfileTextModerationRejectedReasonDetails>,
     pub profile_text_moderation_moderator_account_id: Option<AccountIdDb>,
+    pub profile_edited_unix_time: ProfileEditedTime,
 }
 
 impl From<ProfileStateInternal> for ProfileStateCached {
@@ -135,10 +138,13 @@ impl From<ProfileStateInternal> for ProfileStateCached {
             search_group_flags: value.search_group_flags,
             last_seen_time_filter: value.last_seen_time_filter,
             unlimited_likes_filter: value.unlimited_likes_filter,
-            max_distance_km: value.max_distance_km,
+            max_distance_km_filter: value.max_distance_km_filter,
+            account_created_time_filter: value.account_created_time_filter,
+            profile_edited_time_filter: value.profile_edited_time_filter,
             random_profile_order: value.random_profile_order,
             profile_name_moderation_state: value.profile_name_moderation_state,
             profile_text_moderation_state: value.profile_text_moderation_state,
+            profile_edited_time: value.profile_edited_unix_time,
         }
     }
 }
@@ -265,48 +271,6 @@ impl ProfileUpdateValidated {
         target.set_attributes(attributes);
     }
 }
-
-#[derive(Debug, Clone)]
-pub struct ProfileUpdateInternal {
-    pub new_data: ProfileUpdateValidated,
-    /// Version used for caching profile in client side.
-    pub version: ProfileVersion,
-}
-
-impl ProfileUpdateInternal {
-    pub fn new(new_data: ProfileUpdateValidated) -> Self {
-        Self {
-            new_data,
-            version: ProfileVersion::new_random(),
-        }
-    }
-}
-
-// TODO: Create ProfileInternal and have all attributes there.
-
-// #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, Default)]
-// pub struct ProfileInternal {
-//     profile: Profile,
-//     /// Profile visibility. Set true to make profile public.
-//     public: Option<bool>,
-// }
-
-// impl ProfileInternal {
-//     pub fn new(name: String) -> Self {
-//         Self {
-//             profile: Profile::new(name),
-//             public: None,
-//         }
-//     }
-
-//     pub fn profile(&self) -> &Profile {
-//         &self.profile
-//     }
-
-//     pub fn public(&self) -> bool {
-//         self.public.unwrap_or_default()
-//     }
-// }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct FavoriteProfilesPage {

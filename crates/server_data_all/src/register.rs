@@ -76,6 +76,10 @@ impl RegisterAccount<'_> {
 
         if config.components().account {
             current
+                .common()
+                .state()
+                .update_account_created_unix_time(id)?;
+            current
                 .account()
                 .data()
                 .insert_account(id, AccountInternal::default())?;

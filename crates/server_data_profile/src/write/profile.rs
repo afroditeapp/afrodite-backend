@@ -1,9 +1,7 @@
 use database::current::read::GetDbReadCommandsCommon;
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
-    AccountIdInternal, Location, ProfileFilteringSettingsUpdateValidated,
-    ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateInternal,
-    ValidatedSearchGroups,
+    AccountIdInternal, Location, ProfileEditedTime, ProfileFilteringSettingsUpdateValidated, ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateValidated, ProfileVersion, ValidatedSearchGroups
 };
 use server_data::{
     app::GetConfig,
@@ -28,7 +26,7 @@ impl WriteCommandsProfile<'_> {
         coordinates: Location,
     ) -> Result<(), DataError> {
         let (location, max_distance, random_profile_order) = self
-            .read_cache_profile_and_common(id.as_id(), |p, _| Ok((p.location.clone(), p.state.max_distance_km, p.state.random_profile_order)))
+            .read_cache_profile_and_common(id.as_id(), |p, _| Ok((p.location.clone(), p.state.max_distance_km_filter, p.state.random_profile_order)))
             .await
             .into_data_error(id)?;
 
@@ -57,6 +55,9 @@ impl WriteCommandsProfile<'_> {
         Ok(())
     }
 
+    // TODO(refactor): New type for ProfileVersion::new_random() and
+    //                 ProfileEditedTime::current_time().
+
     /// Updates [model::Profile].
     ///
     /// Updates also [model::ProfileSyncVersion].
@@ -69,31 +70,33 @@ impl WriteCommandsProfile<'_> {
     pub async fn profile(
         &self,
         id: AccountIdInternal,
-        data: ProfileUpdateInternal,
+        data: ProfileUpdateValidated,
     ) -> Result<(), DataError> {
         let profile_data = data.clone();
         let config = self.config_arc().clone();
+        let profile_version = ProfileVersion::new_random();
+        let edit_time = ProfileEditedTime::current_time();
         let profile_text_moderation_state_update = db_transaction!(self, move |mut cmds| {
             let (name_update_detected, text_update_detected) = {
                 let current_profile = cmds.read().profile().data().profile(id)?;
                 (
-                    current_profile.name != profile_data.new_data.name,
-                    current_profile.ptext != profile_data.new_data.ptext,
+                    current_profile.name != profile_data.name,
+                    current_profile.ptext != profile_data.ptext,
                 )
             };
             cmds.profile().data().profile(id, &profile_data)?;
             cmds.profile().data().upsert_profile_attributes(
                 id,
-                profile_data.new_data.attributes,
+                profile_data.attributes,
                 config.profile_attributes(),
             )?;
-            cmds.profile().data().increment_profile_sync_version(id)?;
+            cmds.profile().data().required_changes_for_profile_update(id, profile_version, edit_time)?;
             if name_update_detected {
                 cmds.profile()
                     .profile_name_allowlist()
                     .reset_profile_name_moderation_state(
                         id,
-                        &profile_data.new_data.name,
+                        &profile_data.name,
                         config.profile_name_allowlist(),
                     )?;
             }
@@ -103,7 +106,7 @@ impl WriteCommandsProfile<'_> {
                         .profile_text()
                         .reset_profile_text_moderation_state(
                             id,
-                            profile_data.new_data.ptext.is_empty(),
+                            profile_data.ptext.is_empty(),
                         )?,
                 )
             } else {
@@ -113,9 +116,10 @@ impl WriteCommandsProfile<'_> {
         })?;
 
         self.write_cache_profile(id.as_id(), |p| {
-            data.new_data.update_to_profile(&mut p.data);
-            data.new_data.update_to_attributes(&mut p.attributes);
-            p.data.version_uuid = data.version;
+            data.update_to_profile(&mut p.data);
+            data.update_to_attributes(&mut p.attributes);
+            p.data.version_uuid = profile_version;
+            p.state.profile_edited_time = edit_time;
             if let Some(update) = profile_text_moderation_state_update {
                 p.state.profile_text_moderation_state = update;
             }
@@ -178,10 +182,12 @@ impl WriteCommandsProfile<'_> {
             p.filters = new_filters;
             p.state.last_seen_time_filter = filters.last_seen_time_filter;
             p.state.unlimited_likes_filter = filters.unlimited_likes_filter;
-            p.state.max_distance_km = filters.max_distance_km;
+            p.state.max_distance_km_filter = filters.max_distance_km_filter;
+            p.state.account_created_time_filter = filters.account_created_filter;
+            p.state.profile_edited_time_filter = filters.profile_edited_filter;
             p.state.random_profile_order = filters.random_profile_order;
 
-            p.location.current_position = self.location().coordinates_to_area(location, filters.max_distance_km);
+            p.location.current_position = self.location().coordinates_to_area(location, filters.max_distance_km_filter);
 
             Ok(())
         })
@@ -303,7 +309,7 @@ impl WriteCommandsProfile<'_> {
     pub async fn benchmark_update_profile_bypassing_cache(
         &self,
         id: AccountIdInternal,
-        data: ProfileUpdateInternal,
+        data: ProfileUpdateValidated,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.profile().data().profile(id, &data)

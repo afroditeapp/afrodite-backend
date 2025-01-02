@@ -5,7 +5,7 @@ use axum::{
 use model_profile::{
     AccountId, AccountIdInternal, AccountState, GetInitialProfileAgeInfoResult, GetMyProfileResult,
     GetProfileQueryParam, GetProfileResult, Permissions, ProfileSearchAgeRange,
-    ProfileSearchAgeRangeValidated, ProfileUpdate, ProfileUpdateInternal, SearchGroups,
+    ProfileSearchAgeRangeValidated, ProfileUpdate, SearchGroups,
     ValidatedSearchGroups,
 };
 use obfuscate_api_macro::obfuscate_api;
@@ -201,9 +201,7 @@ pub async fn post_profile(
             return Err(DataError::NotAllowed.report());
         }
 
-        let new = ProfileUpdateInternal::new(profile);
-
-        cmds.profile().profile(account_id, new).await?;
+        cmds.profile().profile(account_id, profile).await?;
 
         Ok(())
     })?;

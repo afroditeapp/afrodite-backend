@@ -5,7 +5,7 @@ use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCom
 use error_stack::ResultExt;
 use model::{Account, AccountState, ContentIdInternal, ProfileVisibility};
 use model_media::{
-    AccountIdInternal, ContentId, ContentIdDb, ContentSlot, CurrentAccountMediaInternal, NewContentParams, ProfileContentVersion, SetProfileContent
+    AccountIdInternal, ContentId, ContentIdDb, ContentSlot, CurrentAccountMediaInternal, NewContentParams, ProfileContent, ProfileContentEditedTime, ProfileContentVersion, SetProfileContent
 };
 use server_data::{
     app::GetConfig, cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, file::{utils::TmpContentFile, FileWrite}, read::DbRead, result::{Result, WrappedContextExt}, write::{DbTransaction, GetWriteCommandsCommon}, DataError, DieselDatabaseError
@@ -20,6 +20,12 @@ pub enum InitialContentModerationResult {
     },
     AllModeratedAndNotAccepted,
     NoChange,
+}
+
+pub struct DeleteContentResult {
+    /// User can't remove in use images so this is true
+    /// only when admin removes in use image.
+    pub current_media_content_refresh_needed: bool,
 }
 
 define_cmd_wrapper_write!(WriteCommandsMedia);
@@ -110,24 +116,23 @@ impl WriteCommandsMedia<'_> {
     ) -> Result<InitialContentModerationResult, DataError> {
         let content_before_update = self.db_read(move |mut cmds| cmds.media().media_content().current_account_media(id)).await?;
 
-        let new_profile_content_version = ProfileContentVersion::new_random();
+        let version = ProfileContentVersion::new_random();
+        let edit_time = ProfileContentEditedTime::current_time();
 
         db_transaction!(self, move |mut cmds| {
+            cmds.media().media_content().required_changes_for_public_profile_content_update(
+                id,
+                version,
+                edit_time,
+            )?;
             cmds.media().media_content().update_profile_content(
                 id,
                 new,
-                new_profile_content_version,
             )?;
             cmds.media().media_content().increment_media_content_sync_version(id)
         })?;
 
-        self.write_cache_media(id.as_id(), |e| {
-            e.profile_content_version = new_profile_content_version;
-            Ok(())
-        })
-        .await?;
-
-        self.update_location_cache_profile(id).await?;
+        self.public_profile_content_cache_update(id, (version, edit_time)).await?;
 
         self.update_content_usage(id, content_before_update).await?;
 
@@ -154,26 +159,62 @@ impl WriteCommandsMedia<'_> {
     pub async fn delete_content(
         &self,
         content_id: ContentIdInternal,
-    ) -> Result<(), DataError> {
-        let new_profile_content_version = ProfileContentVersion::new_random();
+    ) -> Result<DeleteContentResult, DataError> {
+        let (r, cache_update) = db_transaction!(self, move |mut cmds| {
+            let media_content = cmds.read().media().media_content().current_account_media(content_id.content_owner())?;
+            cmds.media()
+                .media_content()
+                .delete_content(content_id)?;
+            let media_content_new = cmds.read().media().media_content().current_account_media(content_id.content_owner())?;
+            let current_media_changed = media_content != media_content_new;
+            let cache_update = if current_media_changed {
+                // Admin removed in use image, so current media content changed
+                cmds.media().media_content().increment_media_content_sync_version(content_id.content_owner())?;
 
-        db_transaction!(self, move |mut cmds| {
-            cmds.media()
-                .media_content()
-                .update_profile_content_version(content_id.content_owner(), new_profile_content_version)?;
-            cmds.media().media_content().increment_media_content_sync_version(content_id.content_owner())?;
-            cmds.media()
-                .media_content()
-                .delete_content(content_id)
+                let public_content: ProfileContent = media_content.into();
+                let public_content_new: ProfileContent = media_content_new.into();
+
+                if public_content != public_content_new {
+                    let version = ProfileContentVersion::new_random();
+                    let edit_time = ProfileContentEditedTime::current_time();
+                    cmds.media()
+                        .media_content()
+                        .required_changes_for_public_profile_content_update(content_id.content_owner(), version, edit_time)?;
+                    Some((version, edit_time))
+                } else {
+                    None
+                }
+            } else {
+                None
+            };
+            let r = DeleteContentResult {
+                current_media_content_refresh_needed: current_media_changed,
+            };
+            Ok((r, cache_update))
         })?;
 
-        self.write_cache_media(content_id.content_owner(), |e| {
-            e.profile_content_version = new_profile_content_version;
+        if let Some(update) = cache_update {
+            self.public_profile_content_cache_update(content_id.content_owner(), update).await?;
+        }
+
+        self.files().media_content(content_id.content_owner().into(), content_id.content_id()).overwrite_and_remove_if_exists().await?;
+
+        Ok(r)
+    }
+
+    pub async fn public_profile_content_cache_update(
+        &self,
+        id: AccountIdInternal,
+        (version, edit_time): (ProfileContentVersion, ProfileContentEditedTime),
+    ) -> Result<(), DataError> {
+        self.write_cache_media(id, |e| {
+            e.profile_content_version = version;
+            e.profile_content_edited_time = edit_time;
             Ok(())
         })
         .await?;
 
-        self.files().media_content(content_id.content_owner().into(), content_id.content_id()).overwrite_and_remove_if_exists().await?;
+        self.update_location_cache_profile(id).await?;
 
         Ok(())
     }

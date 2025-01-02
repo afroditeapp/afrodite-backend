@@ -5,13 +5,14 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use headers::{ContentLength, ContentType};
+use model::EventToClientInternal;
 use model_media::{
     AccountContent, AccountId, AccountIdInternal, AccountState, ContentId, ContentProcessingId,
     ContentProcessingState, ContentSlot, GetContentQueryParams, NewContentParams, Permissions,
     SlotId,
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{app::GetConfig, create_open_api_router, result::WrappedResultExt, S};
+use server_api::{app::GetConfig, create_open_api_router, db_write_multiple, result::WrappedResultExt, S};
 use server_data::{
     read::GetReadCommandsCommon,
     write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle},
@@ -23,7 +24,6 @@ use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{ContentProcessingProvider, GetAccounts, ReadData, WriteData},
-    db_write,
     utils::{Json, StatusCode},
 };
 
@@ -348,9 +348,23 @@ pub async fn delete_content(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    db_write!(state, move |cmds| cmds
-        .media()
-        .delete_content(content_id))
+    db_write_multiple!(state, move |cmds| {
+        let r = cmds
+            .media()
+            .delete_content(content_id)
+            .await?;
+
+        if r.current_media_content_refresh_needed {
+            cmds.events()
+                .send_connected_event(
+                    api_caller_account_id,
+                    EventToClientInternal::MediaContentChanged,
+                )
+                .await?;
+        }
+
+        Ok(())
+    })
 }
 
 pub fn content_router(s: S) -> OpenApiRouter {
