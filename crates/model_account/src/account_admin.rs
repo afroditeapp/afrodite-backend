@@ -3,8 +3,10 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 mod news;
+mod search;
 
 pub use news::*;
+pub use search::*;
 
 use crate::{AccountBanReasonCategory, AccountBanReasonDetails};
 

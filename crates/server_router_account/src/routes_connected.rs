@@ -37,7 +37,8 @@ impl ConnectedApp {
             .merge(api::account::news_router(self.state.clone()))
             .merge(api::account_admin::admin_ban_router(self.state.clone()))
             .merge(api::account_admin::admin_delete_router(self.state.clone()))
-            .merge(api::account_admin::admin_news_router(self.state.clone()));
+            .merge(api::account_admin::admin_news_router(self.state.clone()))
+            .merge(api::account_admin::admin_search_router(self.state.clone()));
 
         private.route_layer({
             middleware::from_fn_with_state(
