@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS sign_in_with_info(
 -- Account information which can change
 CREATE TABLE IF NOT EXISTS account(
     account_id   INTEGER PRIMARY KEY NOT NULL,
-    email        TEXT,
+    email        TEXT                                UNIQUE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

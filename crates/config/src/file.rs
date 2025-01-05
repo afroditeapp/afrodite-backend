@@ -6,7 +6,6 @@ use std::{
 use error_stack::{Result, ResultExt};
 // Re-export for test-mode crate
 pub use model_server_data::EmailAddress;
-use model_server_data::GoogleAccountId;
 use model_server_state::DemoModeId;
 use serde::{Deserialize, Serialize};
 use simple_backend_config::file::ConfigFileUtils;
@@ -35,15 +34,14 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # bot_config_file = "server_config_bots.toml"
 # email_content_file = "server_config_email_content.toml"
 
-[grant_admin_access]
-email = "admin@example.com"
-google_account_id = "TODO"
-
 [components]
 account = true
 profile = true
 media = true
 chat = true
+
+# [grant_admin_access]
+# email = "admin@example.com"
 
 # [location]
 # latitude_top_left = 70.1
@@ -146,14 +144,15 @@ pub struct Components {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct GrantAdminAccessConfig {
-    /// Grant admin access to every new account which matches with email and
-    /// Google account ID. If only either is set, then only that must match.
+    /// Grant admin access to every new account which matches with email.
     ///
     /// By default admin access is granted for once only.
     #[serde(default)]
-    pub for_every_matching_new_account: bool,
-    pub email: Option<EmailAddress>,
-    pub google_account_id: Option<GoogleAccountId>,
+    pub debug_for_every_matching_new_account: bool,
+    /// Change matching to check only email domain.
+    #[serde(default)]
+    pub debug_match_only_email_domain: bool,
+    pub email: EmailAddress,
 }
 
 /// Base URLs for external services

@@ -207,9 +207,9 @@ fn new_config(
 ) -> (ConfigFile, SimpleBackendConfigFile) {
     let config = ConfigFile {
         grant_admin_access: GrantAdminAccessConfig {
-            for_every_matching_new_account: false,
-            email: Some(EmailAddress(TEST_ADMIN_ACCESS_EMAIL.to_string())),
-            google_account_id: None,
+            debug_for_every_matching_new_account: false,
+            debug_match_only_email_domain: false,
+            email: EmailAddress(TEST_ADMIN_ACCESS_EMAIL.to_string()),
         }
         .into(),
         components,

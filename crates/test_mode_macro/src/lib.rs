@@ -28,7 +28,7 @@ use syn::parse_macro_input;
 /// inventory::collect!(TestFunction);
 ///
 /// #[server_test]
-/// async fn hello_register(context: TestContext) -> TestResult {
+/// async fn hello_register(mut context: TestContext) -> TestResult {
 ///     Ok(())
 /// }
 ///

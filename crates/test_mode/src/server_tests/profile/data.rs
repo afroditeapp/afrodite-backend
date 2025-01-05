@@ -7,7 +7,7 @@ use test_mode_macro::server_test;
 use crate::{client::TestError, runner::server_tests::assert::assert_eq, TestContext, TestResult};
 
 #[server_test]
-async fn updating_profile_works(context: TestContext) -> TestResult {
+async fn updating_profile_works(mut context: TestContext) -> TestResult {
     let account = context.new_account_in_initial_setup_state().await?;
     let profile = ProfileUpdate {
         attributes: vec![],

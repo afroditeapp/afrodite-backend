@@ -90,7 +90,8 @@ access_all_accounts = true
 
 [grant_admin_access]
 email = "admin@example.com"
-for_every_matching_new_account = true
+debug_for_every_matching_new_account = true
+debug_match_only_email_domain = true
 
 # ...
 ```

@@ -22,26 +22,30 @@ pub async fn complete_initial_setup(
     let account_data = read_handle.account().account_data(id).await?;
     let sign_in_with_info = read_handle.account().account_sign_in_with_info(id).await?;
     let (matches_with_grant_admin_access_config, grant_admin_access_more_than_once) =
-        if let Some(grant_admin_access_config) = config.grant_admin_access_config() {
-            let matches = match (
-                grant_admin_access_config.email.as_ref(),
-                grant_admin_access_config.google_account_id.as_ref(),
-            ) {
-                (wanted_email @ Some(_), Some(wanted_google_account_id)) => {
-                    wanted_email == account_data.email.as_ref()
-                        && sign_in_with_info
-                            .google_account_id_matches_with(wanted_google_account_id)
+        if let (Some(grant_admin_access_config), Some(email)) = (config.grant_admin_access_config(), account_data.email.as_ref()) {
+            let matches = if grant_admin_access_config.debug_match_only_email_domain {
+                let mut wanted_email_iter = grant_admin_access_config.email.0.split('@');
+                let mut email_iter = email.0.split('@');
+                wanted_email_iter.next();
+                email_iter.next();
+                let wanted_domain = wanted_email_iter.next();
+                let email_domain = email_iter.next();
+                if wanted_email_iter.next().is_some() || email_iter.next().is_some() {
+                    // Multiple '@' characters
+                    false
+                } else if wanted_domain.is_none() || email_domain.is_none() {
+                    // Missing '@' character
+                    false
+                } else {
+                    wanted_domain == email_domain
                 }
-                (wanted_email @ Some(_), None) => wanted_email == account_data.email.as_ref(),
-                (None, Some(wanted_google_account_id)) => {
-                    sign_in_with_info.google_account_id_matches_with(wanted_google_account_id)
-                }
-                (None, None) => false,
+            } else {
+                grant_admin_access_config.email == *email
             };
 
             (
                 matches,
-                grant_admin_access_config.for_every_matching_new_account,
+                grant_admin_access_config.debug_for_every_matching_new_account,
             )
         } else {
             (false, false)

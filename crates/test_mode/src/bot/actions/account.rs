@@ -349,30 +349,30 @@ impl BotAction for AssertAccountState {
 }
 
 #[derive(Debug)]
-pub struct SetAccountSetup<'a> {
-    pub email: Option<&'a str>,
+pub struct SetAccountSetup {
+    admin: bool,
 }
 
-impl SetAccountSetup<'static> {
+impl SetAccountSetup {
     pub const fn new() -> Self {
-        Self { email: None }
+        Self { admin: false }
     }
 
     pub const fn admin() -> Self {
         Self {
-            email: Some(TEST_ADMIN_ACCESS_EMAIL),
+            admin: true,
         }
     }
 }
 
-impl Default for SetAccountSetup<'static> {
+impl Default for SetAccountSetup {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[async_trait]
-impl BotAction for SetAccountSetup<'_> {
+impl BotAction for SetAccountSetup {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let setup = api_client::models::SetAccountSetup {
             birthdate: None,
@@ -382,10 +382,11 @@ impl BotAction for SetAccountSetup<'_> {
             .await
             .change_context(TestError::ApiRequest)?;
 
-        let email = self
-            .email
-            .map(|email| email.to_string())
-            .unwrap_or("default@example.com".to_string());
+        let email = if !self.admin || state.bot_id > 0 {
+            format!("bot{}@example.com", state.bot_id)
+        } else {
+            TEST_ADMIN_ACCESS_EMAIL.to_string()
+        };
 
         let account_data = AccountData { email: Some(email) };
 

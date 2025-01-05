@@ -41,6 +41,8 @@ pub struct TestContext {
     state: Arc<Mutex<State>>,
     account_server_public_api_port: Option<u16>,
     account_server_internal_api_port: Option<u16>,
+    next_bot_id: u32,
+    admin_access_granted: bool,
 }
 
 impl TestContext {
@@ -58,6 +60,8 @@ impl TestContext {
             test_config,
             account_server_public_api_port,
             account_server_internal_api_port,
+            next_bot_id: 1, // 0 is for admin bot
+            admin_access_granted: false,
         }
     }
 
@@ -71,17 +75,17 @@ impl TestContext {
     }
 
     /// Account with InitialSetup state.
-    pub async fn new_account_in_initial_setup_state(&self) -> Result<Account, TestError> {
-        Account::register_and_login(self.clone()).await
+    pub async fn new_account_in_initial_setup_state(&mut self) -> Result<Account, TestError> {
+        Account::register_and_login(self, false).await
     }
 
     /// Account with Normal state, age 30 and name "Test".
-    pub async fn new_account(&self) -> Result<Account, TestError> {
+    pub async fn new_account(&mut self) -> Result<Account, TestError> {
         self.new_account_internal(30, "Test").await
     }
 
-    async fn new_account_internal(&self, age: i64, name: &str) -> Result<Account, TestError> {
-        let mut account = Account::register_and_login(self.clone()).await?;
+    async fn new_account_internal(&mut self, age: i64, name: &str) -> Result<Account, TestError> {
+        let mut account = Account::register_and_login(self, false).await?;
         account
             .run_actions(action_array![
                 SetAccountSetup::new(),
@@ -111,7 +115,7 @@ impl TestContext {
     }
 
     pub async fn new_account_with_settings(
-        &self,
+        &mut self,
         age: i64,
         name: &str,
         min_age: i32,
@@ -135,7 +139,7 @@ impl TestContext {
         Ok(account)
     }
 
-    pub async fn new_man_18_years(&self) -> Result<Account, TestError> {
+    pub async fn new_man_18_years(&mut self) -> Result<Account, TestError> {
         self.new_account_with_settings(
             18,
             "M",
@@ -149,7 +153,7 @@ impl TestContext {
         .await
     }
 
-    pub async fn new_man_4_man_18_years(&self) -> Result<Account, TestError> {
+    pub async fn new_man_4_man_18_years(&mut self) -> Result<Account, TestError> {
         self.new_account_with_settings(
             18,
             "M",
@@ -163,7 +167,7 @@ impl TestContext {
         .await
     }
 
-    pub async fn new_woman_18_years(&self) -> Result<Account, TestError> {
+    pub async fn new_woman_18_years(&mut self) -> Result<Account, TestError> {
         self.new_account_with_settings(
             18,
             "W",
@@ -178,8 +182,8 @@ impl TestContext {
     }
 
     /// Admin account with Normal state.
-    pub async fn new_admin(&self) -> Result<Admin, TestError> {
-        let mut account = Account::register_and_login(self.clone()).await?;
+    pub async fn new_admin(&mut self) -> Result<Admin, TestError> {
+        let mut account = Account::register_and_login(self, true).await?;
         account
             .run_actions(action_array![
                 SetAccountSetup::admin(),
@@ -195,7 +199,7 @@ impl TestContext {
     }
 
     /// Admin account with Normal state.
-    pub async fn new_admin_and_moderate_initial_content(&self) -> Result<Admin, TestError> {
+    pub async fn new_admin_and_moderate_initial_content(&mut self) -> Result<Admin, TestError> {
         let mut admin = self.new_admin().await?;
         admin.accept_pending_content_moderations_for_initial_images().await?;
         Ok(admin)
@@ -212,7 +216,7 @@ pub struct Account {
 }
 
 impl Account {
-    pub async fn register_and_login(mut test_context: TestContext) -> Result<Self, TestError> {
+    pub async fn register_and_login(test_context: &mut TestContext, admin: bool) -> Result<Self, TestError> {
         let urls = test_context
             .test_config
             .server
@@ -224,13 +228,23 @@ impl Account {
             )
             .map_err(|_| TestError::ApiUrlPortConfigFailed.report())?;
 
+        let bot_id = if admin && !test_context.admin_access_granted {
+            let id = 0;
+            test_context.admin_access_granted = true;
+            id
+        } else {
+            let id = test_context.next_bot_id;
+            test_context.next_bot_id += 1;
+            id
+        };
+
         let mut state = BotState::new(
             None,
             test_context.config.clone(),
             test_context.test_config.clone(),
             Arc::new(BotConfigFile::default()),
             0,
-            0,
+            bot_id,
             ApiClient::new(urls.clone()),
             urls,
         );
