@@ -212,7 +212,7 @@ fn new_config(
             email: EmailAddress(TEST_ADMIN_ACCESS_EMAIL.to_string()),
         }
         .into(),
-        components,
+        components: Some(components),
         location: if let Some(SelectedBenchmark::GetProfileList) = config.selected_benchmark() {
             let mut location = DEFAULT_LOCATION_CONFIG_BENCHMARK;
             if let Some(index_cell_size) = config.overridden_index_cell_size() {

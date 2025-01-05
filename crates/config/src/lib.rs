@@ -64,6 +64,7 @@ pub struct Config {
     // Server related configs
     external_services: ExternalServices,
     client_api_urls: InternalApiUrls,
+    components: Components,
 
     // Other configs
     mode: Option<AppMode>,
@@ -85,6 +86,7 @@ impl Config {
             simple_backend_config,
             external_services: ExternalServices::default(),
             client_api_urls: InternalApiUrls::new(None, None),
+            components: Components::default(),
             mode: None,
             profile_attributes: None,
             profile_attributes_sha256: None,
@@ -94,8 +96,8 @@ impl Config {
         }
     }
 
-    pub fn components(&self) -> &Components {
-        &self.file.components
+    pub fn components(&self) -> Components {
+        self.components
     }
 
     pub fn location(&self) -> LocationConfig {
@@ -111,8 +113,11 @@ impl Config {
     /// * Axum JSON extractor shows errors.
     /// * Admin bot profile text moderation saves LLM response text to server
     ///   when the text is rejected.
+    /// * Allow disabling some server component. This enables running the
+    ///   server in microservice mode but the mode is unsupported
+    ///   and currently broken.
     ///
-    /// Check also `SimpleBackendConfig::debug_mode`.
+    /// Check also [SimpleBackendConfig::debug_mode].
     pub fn debug_mode(&self) -> bool {
         self.simple_backend_config.debug_mode()
     }
@@ -215,7 +220,15 @@ pub fn get_config(
         .take()
         .unwrap_or_default();
 
-    let client_api_urls = create_client_api_urls(&file_config.components, &external_services)?;
+    let components = file_config.components.unwrap_or(Components::all_enabled());
+
+    if components != Components::all_enabled() && !simple_backend_config.debug_mode() {
+        return Err(GetConfigError::InvalidConfiguration).attach_printable(
+            "Disabling some server component is possible only in debug mode",
+        );
+    }
+
+    let client_api_urls = create_client_api_urls(&components, &external_services)?;
 
     let file_dynamic =
         ConfigFileDynamic::load(current_dir).change_context(GetConfigError::LoadFileError)?;
@@ -287,6 +300,7 @@ pub fn get_config(
         file_dynamic,
         external_services,
         client_api_urls,
+        components,
         mode: args_config.mode.clone(),
         profile_attributes,
         profile_attributes_sha256,

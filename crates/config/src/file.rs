@@ -34,12 +34,6 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # bot_config_file = "server_config_bots.toml"
 # email_content_file = "server_config_email_content.toml"
 
-[components]
-account = true
-profile = true
-media = true
-chat = true
-
 # [grant_admin_access]
 # email = "admin@example.com"
 
@@ -99,7 +93,7 @@ pub struct ConfigFile {
     pub profile_attributes_file: Option<PathBuf>,
     pub email_content_file: Option<PathBuf>,
 
-    pub components: Components,
+    pub components: Option<Components>,
     pub grant_admin_access: Option<GrantAdminAccessConfig>,
     pub location: Option<LocationConfig>,
     pub external_services: Option<ExternalServices>,
@@ -115,7 +109,7 @@ impl ConfigFile {
             bot_config_file: None,
             profile_attributes_file: None,
             email_content_file: None,
-            components: Components::default(),
+            components: Some(Components::default()),
             grant_admin_access: None,
             location: None,
             external_services: None,
@@ -134,12 +128,24 @@ impl ConfigFile {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Default)]
+/// Enabled server components
+#[derive(Debug, Clone, Copy, Default, PartialEq, Deserialize, Serialize)]
 pub struct Components {
     pub account: bool,
     pub profile: bool,
     pub media: bool,
     pub chat: bool,
+}
+
+impl Components {
+    pub fn all_enabled() -> Self {
+        Self {
+            account: true,
+            profile: true,
+            media: true,
+            chat: true,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
