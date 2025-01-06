@@ -12,6 +12,7 @@ use model::AccessToken;
 use serde::Serialize;
 pub use server_state::utils::StatusCode;
 use server_state::{app::GetAccessTokens, S};
+use simple_backend::create_counters;
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;
 pub use utils::api::ACCESS_TOKEN_HEADER_STR;
 use utoipa::{
@@ -51,14 +52,24 @@ pub async fn authenticate_with_access_token(
     if let Some((id, permissions, account_state)) =
         state.access_token_and_connection_exists(&key, addr).await
     {
+        API.access_token_found.incr();
         req.extensions_mut().insert(id);
         req.extensions_mut().insert(permissions);
         req.extensions_mut().insert(account_state);
         Ok(next.run(req).await)
     } else {
+        API.access_token_not_found.incr();
         Err(StatusCode::UNAUTHORIZED)
     }
 }
+
+create_counters!(
+    ApiCounters,
+    API,
+    API_COUNTERS_LIST,
+    access_token_found,
+    access_token_not_found,
+);
 
 pub struct AccessTokenHeader(AccessToken);
 

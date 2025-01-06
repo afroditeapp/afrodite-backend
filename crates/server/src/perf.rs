@@ -2,6 +2,7 @@
 //!
 //!
 
+use server_api::utils::API_COUNTERS_LIST;
 use server_api_account::{
     account::{ACCOUNT_BAN_COUNTERS_LIST, ACCOUNT_LOGOUT_COUNTERS_LIST, ACCOUNT_NEWS_COUNTERS_LIST},
     account_admin::{ACCOUNT_ADMIN_BAN_COUNTERS_LIST, ACCOUNT_ADMIN_DELETE_COUNTERS_LIST, ACCOUNT_ADMIN_NEWS_COUNTERS_LIST, ACCOUNT_ADMIN_PERMISSIONS_COUNTERS_LIST, ACCOUNT_ADMIN_SEARCH_COUNTERS_LIST, ACCOUNT_ADMIN_STATE_COUNTERS_LIST},
@@ -50,6 +51,7 @@ use crate::api::{
 pub static ALL_COUNTERS: &[&CounterCategory] = &[
     // Common
     &CounterCategory::new("common", COMMON_COUNTERS_LIST),
+    &CounterCategory::new("api", API_COUNTERS_LIST),
     // Common admin
     &CounterCategory::new("common_admin_manager", COMMON_ADMIN_MANAGER_COUNTERS_LIST),
     &CounterCategory::new("common_admin_config", COMMON_ADMIN_CONFIG_COUNTERS_LIST),

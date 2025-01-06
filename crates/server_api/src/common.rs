@@ -174,7 +174,10 @@ pub async fn get_connect_websocket(
         state
             .access_token_exists(&access_token)
             .await
-            .ok_or(StatusCode::UNAUTHORIZED)?
+            .ok_or_else(|| {
+                COMMON.websocket_access_token_not_found.incr();
+                StatusCode::UNAUTHORIZED
+            })?
     } else {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     };
@@ -264,6 +267,8 @@ async fn handle_socket(
         id.id.as_i64(),
         address
     );
+
+    COMMON.websocket_disconnected.incr();
 }
 
 async fn handle_socket_result(
@@ -327,6 +332,7 @@ async fn handle_socket_result(
     {
         Message::Binary(refresh_token) => {
             if refresh_token != current_refresh_token {
+                COMMON.websocket_refresh_token_not_found.incr();
                 // Returning error does the logout, so it is not needed here.
                 // For this case the logout is needed to prevent refresh
                 // token quessing.
@@ -407,6 +413,8 @@ async fn handle_socket_result(
         .await?;
 
     // TODO(prod): Remove extra logging from this file.
+
+    COMMON.websocket_connected.incr();
 
     let mut timeout_timer = ConnectionPingTracker::new();
 
@@ -508,4 +516,8 @@ create_counters!(
     get_file_package_access,
     get_file_package_access_root,
     get_connect_websocket,
+    websocket_access_token_not_found,
+    websocket_refresh_token_not_found,
+    websocket_connected,
+    websocket_disconnected,
 );
