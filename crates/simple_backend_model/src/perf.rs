@@ -56,6 +56,7 @@ pub struct MetricKey {
 
 impl MetricKey {
     const SYSTEM_CATEGORY: &str = "system";
+    const SERVER_CATEGORY: &str = "server";
 
     pub const SYSTEM_CPU_USAGE: Self = Self {
         category: Self::SYSTEM_CATEGORY,
@@ -65,6 +66,11 @@ impl MetricKey {
     pub const SYSTEM_RAM_USAGE_MIB: Self = Self {
         category: Self::SYSTEM_CATEGORY,
         name: "ram_usage_mib",
+    };
+
+    pub const SERVER_WEBSOCKET_CONNECTIONS: Self = Self {
+        category: Self::SERVER_CATEGORY,
+        name: "websocket_connections",
     };
 
     pub fn new(category: &'static str, name: &'static str) -> MetricKey {

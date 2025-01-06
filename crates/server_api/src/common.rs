@@ -30,7 +30,7 @@ use server_state::{
     app::GetAccessTokens,
     state_impl::{ReadData, WriteData},
 };
-use simple_backend::{app::FilePackageProvider, create_counters, web_socket::WebSocketManager};
+use simple_backend::{app::FilePackageProvider, create_counters, perf::websocket::WebSocketConnectionTracker, web_socket::WebSocketManager};
 use simple_backend_utils::IntoReportFromString;
 use tokio::time::Instant;
 use tracing::{error, info};
@@ -415,6 +415,7 @@ async fn handle_socket_result(
     // TODO(prod): Remove extra logging from this file.
 
     COMMON.websocket_connected.incr();
+    let connection_tracker = WebSocketConnectionTracker::create();
 
     let mut timeout_timer = ConnectionPingTracker::new();
 
@@ -478,6 +479,9 @@ async fn handle_socket_result(
             }
         }
     }
+
+    // Make sure that the tracker is not dropped right after it is created
+    drop(connection_tracker);
 
     Ok(())
 }
