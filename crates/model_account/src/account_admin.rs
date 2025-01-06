@@ -4,9 +4,11 @@ use utoipa::ToSchema;
 
 mod news;
 mod search;
+mod permissions;
 
 pub use news::*;
 pub use search::*;
+pub use permissions::*;
 
 use crate::{AccountBanReasonCategory, AccountBanReasonDetails};
 

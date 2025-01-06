@@ -59,6 +59,12 @@ impl ApiDoc {
             .merge_from(
                 server_api_account::account_admin::admin_search_router(state.clone()).into_openapi(),
             )
+            .merge_from(
+                server_api_account::account_admin::admin_permissions_router(state.clone()).into_openapi(),
+            )
+            .merge_from(
+                server_api_account::account_admin::admin_state_router(state.clone()).into_openapi(),
+            )
             .tag_routes("account_admin");
         doc.merge(account_admin);
         // Media

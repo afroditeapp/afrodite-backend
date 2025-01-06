@@ -4,7 +4,7 @@
 
 use server_api_account::{
     account::{ACCOUNT_BAN_COUNTERS_LIST, ACCOUNT_LOGOUT_COUNTERS_LIST, ACCOUNT_NEWS_COUNTERS_LIST},
-    account_admin::{ACCOUNT_ADMIN_BAN_COUNTERS_LIST, ACCOUNT_ADMIN_DELETE_COUNTERS_LIST, ACCOUNT_ADMIN_NEWS_COUNTERS_LIST, ACCOUNT_ADMIN_SEARCH_COUNTERS_LIST},
+    account_admin::{ACCOUNT_ADMIN_BAN_COUNTERS_LIST, ACCOUNT_ADMIN_DELETE_COUNTERS_LIST, ACCOUNT_ADMIN_NEWS_COUNTERS_LIST, ACCOUNT_ADMIN_PERMISSIONS_COUNTERS_LIST, ACCOUNT_ADMIN_SEARCH_COUNTERS_LIST, ACCOUNT_ADMIN_STATE_COUNTERS_LIST},
 };
 use server_api_chat::chat::CHAT_PUBLIC_KEY_COUNTERS_LIST;
 use server_api_media::media::MEDIA_MEDIA_CONTENT_COUNTERS_LIST;
@@ -69,6 +69,8 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("account_admin_delete", ACCOUNT_ADMIN_DELETE_COUNTERS_LIST),
     &CounterCategory::new("account_admin_news", ACCOUNT_ADMIN_NEWS_COUNTERS_LIST),
     &CounterCategory::new("account_admin_search", ACCOUNT_ADMIN_SEARCH_COUNTERS_LIST),
+    &CounterCategory::new("account_admin_permissions", ACCOUNT_ADMIN_PERMISSIONS_COUNTERS_LIST),
+    &CounterCategory::new("account_admin_state", ACCOUNT_ADMIN_STATE_COUNTERS_LIST),
     // Account internal
     &CounterCategory::new("account_internal", ACCOUNT_INTERNAL_COUNTERS_LIST),
     // Media

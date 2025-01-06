@@ -40,7 +40,7 @@ impl<R: InternalReading> CacheReadProfile for R {
         mut cache_operation: impl FnMut(&CachedProfile, &CacheEntryCommon),
     ) -> Result<(), CacheError> {
         self.cache()
-            .read_cache_for_all_accounts(|e| {
+            .read_cache_for_all_accounts(|_, e| {
                 let p = e
                     .profile
                     .as_deref()
