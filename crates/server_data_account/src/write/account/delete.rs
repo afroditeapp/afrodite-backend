@@ -1,6 +1,6 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
-use model::Account;
+use model::{Account, ProfileVisibility};
 use model_account::AccountIdInternal;
 use server_data::{
     db_manager::InternalWriting, define_cmd_wrapper_write, file::FileWrite, read::DbRead, result::Result, write::{DbTransaction, GetWriteCommandsCommon}, DataError
@@ -27,8 +27,17 @@ impl WriteCommandsAccountDelete<'_> {
         let new_account = db_transaction!(self, move |mut cmds| {
             let a = cmds.common()
                 .state()
-                .update_syncable_account_data(id, a, move |state_container, _, _| {
+                .update_syncable_account_data(id, a, move |state_container, _, visibility| {
                     state_container.set_pending_deletion(value);
+                    if value {
+                        let new_visibility = match *visibility {
+                            ProfileVisibility::Public |
+                            ProfileVisibility::Private => ProfileVisibility::Private,
+                            ProfileVisibility::PendingPublic |
+                            ProfileVisibility::PendingPrivate => ProfileVisibility::PendingPrivate,
+                        };
+                        *visibility = new_visibility;
+                    }
                     Ok(())
                 })?;
 
