@@ -241,6 +241,15 @@ impl ProfileVisibility {
     pub fn is_pending(&self) -> bool {
         *self == Self::PendingPrivate || *self == Self::PendingPublic
     }
+
+    pub fn change_to_private_or_pending_private(&mut self) {
+        match *self {
+            Self::Public |
+            Self::Private => *self = Self::Private,
+            Self::PendingPublic |
+            Self::PendingPrivate => *self = Self::PendingPrivate,
+        };
+    }
 }
 
 impl TryFrom<i64> for ProfileVisibility {

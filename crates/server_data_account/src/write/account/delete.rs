@@ -1,10 +1,12 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
-use model::{Account, ProfileVisibility};
+use model::Account;
 use model_account::AccountIdInternal;
 use server_data::{
     db_manager::InternalWriting, define_cmd_wrapper_write, file::FileWrite, read::DbRead, result::Result, write::{DbTransaction, GetWriteCommandsCommon}, DataError
 };
+
+use crate::write::GetWriteCommandsAccount;
 
 define_cmd_wrapper_write!(WriteCommandsAccountDelete);
 
@@ -30,13 +32,7 @@ impl WriteCommandsAccountDelete<'_> {
                 .update_syncable_account_data(id, a, move |state_container, _, visibility| {
                     state_container.set_pending_deletion(value);
                     if value {
-                        let new_visibility = match *visibility {
-                            ProfileVisibility::Public |
-                            ProfileVisibility::Private => ProfileVisibility::Private,
-                            ProfileVisibility::PendingPublic |
-                            ProfileVisibility::PendingPrivate => ProfileVisibility::PendingPrivate,
-                        };
-                        *visibility = new_visibility;
+                        visibility.change_to_private_or_pending_private();
                     }
                     Ok(())
                 })?;
@@ -63,6 +59,12 @@ impl WriteCommandsAccountDelete<'_> {
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
         self.handle().common().logout(id).await?;
+
+        // Delete account from location index
+        self.handle().account().update_syncable_account_data(id, None, |_, _, visibility| {
+            visibility.change_to_private_or_pending_private();
+            Ok(())
+        }).await?;
 
         db_transaction!(self, move |mut cmds| {
             cmds.account().delete().delete_account(id)
