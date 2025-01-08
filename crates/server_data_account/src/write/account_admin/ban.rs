@@ -1,6 +1,6 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
-use model::{Account, UnixTime};
+use model::{Account, ProfileVisibility, UnixTime};
 use model_account::{AccountBanReasonCategory, AccountBanReasonDetails, AccountIdInternal};
 use server_data::{
     define_cmd_wrapper_write, read::DbRead, result::Result, write::{DbTransaction, GetWriteCommandsCommon}, DataError
@@ -30,8 +30,17 @@ impl WriteCommandsAccountBan<'_> {
         let new_account = db_transaction!(self, move |mut cmds| {
             let a = cmds.common()
                 .state()
-                .update_syncable_account_data(id, a, move |state_container, _, _| {
+                .update_syncable_account_data(id, a, move |state_container, _, visibility| {
                     state_container.set_banned(banned_until.is_some());
+                    if banned_until.is_some() {
+                        let new_visibility = match *visibility {
+                            ProfileVisibility::Public |
+                            ProfileVisibility::Private => ProfileVisibility::Private,
+                            ProfileVisibility::PendingPublic |
+                            ProfileVisibility::PendingPrivate => ProfileVisibility::PendingPrivate,
+                        };
+                        *visibility = new_visibility;
+                    }
                     Ok(())
                 })?;
 
