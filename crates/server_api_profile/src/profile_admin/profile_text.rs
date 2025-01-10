@@ -66,8 +66,8 @@ const PATH_POST_MODERATE_PROFILE_TEXT: &str = "/profile_api/admin/moderate_profi
 
 /// Rejected category and details can be set only when the text is rejected.
 ///
-/// This route will fail if the text is already moderated or the users's
-/// profile text is not the same text that was moderated.
+/// This route will fail if the users's profile text is empty or it is not
+/// the same text that was moderated.
 #[utoipa::path(
     post,
     path = PATH_POST_MODERATE_PROFILE_TEXT,

@@ -38,7 +38,7 @@ impl WriteCommandsProfileAdminProfileText<'_> {
         }
         if current_profile_state
             .profile_text_moderation_state
-            .is_moderated()
+            .is_empty()
         {
             return Err(DataError::NotAllowed.report());
         }

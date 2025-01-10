@@ -21,6 +21,7 @@ use crate::schema_sqlite_types::Integer;
 #[diesel(sql_type = Integer)]
 #[repr(i64)]
 pub enum ProfileTextModerationState {
+    /// Profile text is empty
     Empty = 0,
     WaitingBotOrHumanModeration = 1,
     WaitingHumanModeration = 2,
@@ -33,7 +34,7 @@ pub enum ProfileTextModerationState {
 impl ProfileTextModerationState {
     pub fn is_accepted(&self) -> bool {
         match self {
-            Self::Empty | Self::AcceptedByBot | Self::AcceptedByHuman => true, // TODO(prod): Check can Empty be here
+            Self::Empty | Self::AcceptedByBot | Self::AcceptedByHuman => true,
             Self::WaitingBotOrHumanModeration
             | Self::WaitingHumanModeration
             | Self::RejectedByBot
@@ -41,14 +42,8 @@ impl ProfileTextModerationState {
         }
     }
 
-    pub fn is_moderated(&self) -> bool {
-        match self {
-            Self::AcceptedByBot
-            | Self::AcceptedByHuman
-            | Self::RejectedByBot
-            | Self::RejectedByHuman => true,
-            Self::Empty | Self::WaitingBotOrHumanModeration | Self::WaitingHumanModeration => false,
-        }
+    pub fn is_empty(&self) -> bool {
+        *self == Self::Empty
     }
 }
 
