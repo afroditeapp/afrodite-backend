@@ -3,8 +3,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    AccountId, ProfileTextModerationRejectedReasonCategory,
-    ProfileTextModerationRejectedReasonDetails,
+    AccountId, ProfileTextModerationInfo, ProfileTextModerationRejectedReasonCategory, ProfileTextModerationRejectedReasonDetails
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -33,4 +32,11 @@ pub struct PostModerateProfileText {
     /// If true, ignore accept, rejected_category, rejected_details and move
     /// the text to waiting for human moderation state.
     pub move_to_human: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct GetProfileTextState {
+    /// If empty, the profile text is not set.
+    pub text: String,
+    pub moderation_info: ProfileTextModerationInfo,
 }

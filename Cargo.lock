@@ -4599,6 +4599,7 @@ name = "server_api_profile"
 version = "0.0.0"
 dependencies = [
  "axum",
+ "model",
  "model_profile",
  "obfuscate_api_macro",
  "server_api",

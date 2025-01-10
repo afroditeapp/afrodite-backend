@@ -11,6 +11,7 @@ axum = { workspace = true }
 utoipa = { workspace = true }
 utoipa-axum = { workspace = true }
 
+model = { path = "../model" }
 model_profile = { path = "../model_profile" }
 
 server_common = { path = "../server_common" }
