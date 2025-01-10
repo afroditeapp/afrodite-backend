@@ -12,8 +12,7 @@ use server_api_media::media::MEDIA_MEDIA_CONTENT_COUNTERS_LIST;
 use server_api_profile::{
     profile::PROFILE_STATISTICS_COUNTERS_LIST,
     profile_admin::{
-        PROFILE_ADMIN_PROFILE_NAME_ALLOWLIST_COUNTERS_LIST,
-        PROFILE_ADMIN_PROFILE_TEXT_COUNTERS_LIST, PROFILE_ADMIN_STATISTICS_COUNTERS_LIST,
+        PROFILE_ADMIN_PROFILE_DATA_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_NAME_ALLOWLIST_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_TEXT_COUNTERS_LIST, PROFILE_ADMIN_STATISTICS_COUNTERS_LIST
     },
 };
 use simple_backend::{perf::CounterCategory, SIMPLE_CONNECTION_COUNTERS_LIST};
@@ -101,6 +100,10 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new(
         "profile_admin_statistics",
         PROFILE_ADMIN_STATISTICS_COUNTERS_LIST,
+    ),
+    &CounterCategory::new(
+        "profile_admin_profile_data",
+        PROFILE_ADMIN_PROFILE_DATA_COUNTERS_LIST,
     ),
     &CounterCategory::new(
         "profile_admin_profile_name_allowlist",
