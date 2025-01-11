@@ -13,7 +13,6 @@ use server_api::{app::EventManagerProvider, create_open_api_router, db_write_mul
 use server_data::read::GetReadCommandsCommon;
 use server_data_media::{read::GetReadMediaCommands, write::{media::InitialContentModerationResult, GetWriteCommandsMedia}};
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{GetAccounts, ReadData, WriteData},
@@ -227,14 +226,12 @@ pub async fn post_get_initial_content_moderation_completed(
     Ok(request.into())
 }
 
-pub fn profile_content_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_profile_content,
         get_profile_content_info,
         put_profile_content,
         post_get_initial_content_moderation_completed,
-    )
-}
+);
 
 create_counters!(
     MediaCounters,

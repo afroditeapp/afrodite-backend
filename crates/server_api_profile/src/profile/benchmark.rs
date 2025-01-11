@@ -10,7 +10,6 @@ use server_api::{create_open_api_router, S};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{GetAccounts, GetConfig, ReadData, WriteData},
@@ -123,13 +122,11 @@ pub async fn post_profile_to_database_debug_mode_benchmark(
 
 // ------------------- Benchmark routes end ----------------------------
 
-pub fn benchmark_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_benchmark,
         get_profile_from_database_debug_mode_benchmark,
         post_profile_to_database_debug_mode_benchmark,
-    )
-}
+);
 
 create_counters!(
     ProfileCounters,

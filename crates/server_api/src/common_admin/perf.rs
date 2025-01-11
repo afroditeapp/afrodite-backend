@@ -6,7 +6,6 @@ use model::Permissions;
 use obfuscate_api_macro::obfuscate_api;
 use simple_backend::{app::PerfCounterDataProvider, create_counters};
 use simple_backend_model::{PerfMetricQuery, PerfMetricQueryResult};
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     create_open_api_router,
@@ -46,9 +45,7 @@ pub async fn get_perf_data(
     }
 }
 
-pub fn perf_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(s, get_perf_data,)
-}
+create_open_api_router!(fn router_perf, get_perf_data,);
 
 create_counters!(
     CommonAdminCounters,

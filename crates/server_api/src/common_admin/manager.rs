@@ -10,7 +10,6 @@ use model::{AccountIdInternal, Permissions};
 use obfuscate_api_macro::obfuscate_api;
 use simple_backend::{app::GetManagerApi, create_counters};
 use tracing::info;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     create_open_api_router,
@@ -248,17 +247,15 @@ pub async fn post_request_restart_or_reset_backend(
     }
 }
 
-pub fn manager_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_manager,
         get_system_info,
         get_software_info,
         get_latest_build_info,
         post_request_build_software,
         post_request_update_software,
         post_request_restart_or_reset_backend,
-    )
-}
+);
 
 create_counters!(
     CommonAdminCounters,

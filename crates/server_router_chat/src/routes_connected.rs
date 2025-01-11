@@ -16,13 +16,13 @@ impl ConnectedApp {
     pub fn private_chat_server_router(&self) -> Router {
         Router::new()
             // Chat
-            .merge(api::chat::like::like_router(self.state.clone()))
-            .merge(api::chat::block::block_router(self.state.clone()))
-            .merge(api::chat::match_routes::match_router(self.state.clone()))
-            .merge(api::chat::message::message_router(self.state.clone()))
-            .merge(api::chat::public_key::public_key_router(self.state.clone()))
+            .merge(api::chat::like::router_like(self.state.clone()))
+            .merge(api::chat::block::router_block(self.state.clone()))
+            .merge(api::chat::match_routes::router_match(self.state.clone()))
+            .merge(api::chat::message::router_message(self.state.clone()))
+            .merge(api::chat::public_key::router_public_key(self.state.clone()))
             .merge(
-                api::chat::push_notifications::push_notification_router_private(self.state.clone()),
+                api::chat::push_notifications::router_push_notification_private(self.state.clone()),
             )
             .route_layer({
                 middleware::from_fn_with_state(

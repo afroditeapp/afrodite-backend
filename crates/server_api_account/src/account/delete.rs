@@ -5,7 +5,6 @@ use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::{GetAccounts, WriteData, ReadData}, create_open_api_router, db_write_multiple, S};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::utils::{Json, StatusCode};
 
@@ -100,9 +99,7 @@ pub async fn get_account_deletion_request_state(
     Ok(result.into())
 }
 
-pub fn delete_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(s, post_set_account_deletion_request_state, get_account_deletion_request_state,)
-}
+create_open_api_router!(fn router_delete, post_set_account_deletion_request_state, get_account_deletion_request_state,);
 
 create_counters!(
     AccountCounters,

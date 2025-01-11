@@ -9,7 +9,6 @@ use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S, app::GetAccounts};
 use server_data_media::{read::GetReadMediaCommands, write::{media::InitialContentModerationResult, GetWriteCommandsMedia}};
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 use server_api::app::ReadData;
 
 use crate::{
@@ -164,13 +163,11 @@ pub async fn post_moderate_profile_content(
     Ok(())
 }
 
-pub fn admin_moderation_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_admin_moderation,
         get_profile_content_pending_moderation_list,
         post_moderate_profile_content,
-    )
-}
+);
 
 create_counters!(
     MediaAdminCounters,

@@ -12,7 +12,6 @@ use server_api::{
 };
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
 use crate::app::{ReadData, WriteData};
@@ -261,16 +260,14 @@ pub async fn post_set_news_publicity(
     Ok(())
 }
 
-pub fn admin_news_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_admin_news,
         post_create_news_item,
         delete_news_item,
         post_update_news_translation,
         delete_news_translation,
         post_set_news_publicity,
-    )
-}
+);
 
 create_counters!(
     AccountCounters,

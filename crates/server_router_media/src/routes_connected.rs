@@ -16,13 +16,13 @@ impl ConnectedApp {
     pub fn private_media_server_router(&self) -> Router {
         Router::new()
             // Media
-            .merge(api::media::media_content_router(self.state.clone()))
-            .merge(api::media::profile_content_router(self.state.clone()))
-            .merge(api::media::security_content_router(self.state.clone()))
-            .merge(api::media::content_router(self.state.clone()))
-            .merge(api::media::tile_map_router(self.state.clone()))
+            .merge(api::media::router_media_content(self.state.clone()))
+            .merge(api::media::router_profile_content(self.state.clone()))
+            .merge(api::media::router_security_content(self.state.clone()))
+            .merge(api::media::router_content(self.state.clone()))
+            .merge(api::media::router_tile_map(self.state.clone()))
             // Media admin
-            .merge(api::media_admin::admin_moderation_router(
+            .merge(api::media_admin::router_admin_moderation(
                 self.state.clone(),
             ))
             .route_layer({

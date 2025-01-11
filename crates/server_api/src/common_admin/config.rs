@@ -3,7 +3,6 @@ use model::{AccountIdInternal, BackendConfig, Permissions};
 use obfuscate_api_macro::obfuscate_api;
 use simple_backend::create_counters;
 use tracing::info;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{ReadDynamicConfig, WriteDynamicConfig},
@@ -85,9 +84,7 @@ pub async fn post_backend_config(
     }
 }
 
-pub fn config_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(s, get_backend_config, post_backend_config,)
-}
+create_open_api_router!(fn router_config, get_backend_config, post_backend_config,);
 
 create_counters!(
     CommonAdminCounters,

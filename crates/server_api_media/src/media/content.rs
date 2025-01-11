@@ -20,7 +20,6 @@ use server_data::{
 };
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{ContentProcessingProvider, GetAccounts, ReadData, WriteData},
@@ -370,16 +369,14 @@ pub async fn delete_content(
     })
 }
 
-pub fn content_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_content,
         get_content,
         get_all_account_media_content,
         put_content_to_content_slot,
         get_content_slot_state,
         delete_content,
-    )
-}
+);
 
 create_counters!(
     MediaCounters,

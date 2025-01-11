@@ -6,7 +6,6 @@ use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, db_write, db_write_multiple, S};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{ReadData, WriteData},
@@ -162,15 +161,13 @@ pub async fn put_setting_unlimited_likes(
     Ok(())
 }
 
-pub fn settings_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_settings,
         get_account_data,
         post_account_data,
         put_setting_profile_visiblity,
         put_setting_unlimited_likes,
-    )
-}
+);
 
 create_counters!(
     AccountCounters,

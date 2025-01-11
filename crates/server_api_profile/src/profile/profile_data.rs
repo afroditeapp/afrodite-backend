@@ -14,7 +14,6 @@ use server_data::read::GetReadCommandsCommon;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{GetAccounts, ReadData, WriteData},
@@ -382,9 +381,8 @@ pub async fn get_initial_profile_age_info(
     Ok(r.into())
 }
 
-pub fn profile_data_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_profile_data,
         get_profile,
         get_search_groups,
         get_search_age_range,
@@ -393,8 +391,7 @@ pub fn profile_data_router(s: S) -> OpenApiRouter {
         post_search_age_range,
         get_my_profile,
         get_initial_profile_age_info,
-    )
-}
+);
 
 create_counters!(
     ProfileCounters,

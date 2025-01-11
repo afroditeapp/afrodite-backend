@@ -4,7 +4,6 @@ use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{ReadData, WriteData},
@@ -125,15 +124,13 @@ pub async fn post_complete_setup(
     Ok(())
 }
 
-/// Contains only routes which require authentication.
-pub fn register_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        /// Contains only routes which require authentication.
+        fn router_register,
         get_account_setup,
         post_account_setup,
         post_complete_setup,
-    )
-}
+);
 
 create_counters!(
     AccountCounters,

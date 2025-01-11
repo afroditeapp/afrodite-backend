@@ -6,7 +6,6 @@ use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
 use server_data_chat::write::GetWriteCommandsChat;
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
 use crate::{app::WriteData, db_write};
@@ -86,13 +85,9 @@ pub async fn post_get_pending_notification(
         .into()
 }
 
-pub fn push_notification_router_private(s: S) -> OpenApiRouter {
-    create_open_api_router!(s, post_set_device_token,)
-}
+create_open_api_router!(fn router_push_notification_private, post_set_device_token,);
 
-pub fn push_notification_router_public(s: S) -> OpenApiRouter {
-    create_open_api_router!(s, post_get_pending_notification,)
-}
+create_open_api_router!(fn router_push_notification_public, post_get_pending_notification,);
 
 create_counters!(
     ChatCounters,

@@ -3,7 +3,6 @@ use model_profile::{AccountIdInternal, ProfileIteratorSessionId, ProfilePage};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::WriteData,
@@ -90,9 +89,7 @@ pub async fn post_reset_profile_paging(
     Ok(iterator_session_id.into())
 }
 
-pub fn iterate_profiles_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(s, post_get_next_profile_page, post_reset_profile_paging,)
-}
+create_open_api_router!(fn router_iterate_profiles, post_get_next_profile_page, post_reset_profile_paging,);
 
 create_counters!(
     ProfileCounters,

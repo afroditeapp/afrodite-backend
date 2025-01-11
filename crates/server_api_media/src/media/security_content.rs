@@ -10,7 +10,6 @@ use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, db_write_multiple, S};
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{GetAccounts, ReadData, WriteData},
@@ -107,13 +106,11 @@ pub async fn put_security_content_info(
     })
 }
 
-pub fn security_content_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_security_content,
         get_security_content_info,
         put_security_content_info,
-    )
-}
+);
 
 create_counters!(
     MediaCounters,

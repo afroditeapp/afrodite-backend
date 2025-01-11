@@ -10,7 +10,6 @@ use server_api::{
 };
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::ReadData,
@@ -101,13 +100,11 @@ pub async fn post_moderate_profile_name(
     Ok(())
 }
 
-pub fn admin_profile_name_allowlist_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_admin_profile_name_allowlist,
         get_profile_name_pending_moderation_list,
         post_moderate_profile_name,
-    )
-}
+);
 
 create_counters!(
     ProfileCounters,

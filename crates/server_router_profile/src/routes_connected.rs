@@ -20,27 +20,27 @@ impl ConnectedApp {
 
     pub fn private_profile_server_router(&self) -> Router {
         let private = Router::new()
-            .merge(api::profile::filters_router(self.state.clone()))
-            .merge(api::profile::profile_data_router(self.state.clone()))
-            .merge(api::profile::location_router(self.state.clone()))
-            .merge(api::profile::favorite_router(self.state.clone()))
-            .merge(api::profile::iterate_profiles_router(self.state.clone()))
-            .merge(api::profile::statistics_router(self.state.clone()))
-            .merge(api::profile_admin::admin_statistics_router(
+            .merge(api::profile::router_filters(self.state.clone()))
+            .merge(api::profile::router_profile_data(self.state.clone()))
+            .merge(api::profile::router_location(self.state.clone()))
+            .merge(api::profile::router_favorite(self.state.clone()))
+            .merge(api::profile::router_iterate_profiles(self.state.clone()))
+            .merge(api::profile::router_statistics(self.state.clone()))
+            .merge(api::profile_admin::router_admin_statistics(
                 self.state.clone(),
             ))
-            .merge(api::profile_admin::admin_profile_data_router(
+            .merge(api::profile_admin::router_admin_profile_data(
                 self.state.clone(),
             ))
-            .merge(api::profile_admin::admin_profile_name_allowlist_router(
+            .merge(api::profile_admin::router_admin_profile_name_allowlist(
                 self.state.clone(),
             ))
-            .merge(api::profile_admin::admin_profile_text_router(
+            .merge(api::profile_admin::router_admin_profile_text(
                 self.state.clone(),
             ));
 
         let private = if self.state.config().debug_mode() {
-            private.merge(api::profile::benchmark_router(self.state.clone()))
+            private.merge(api::profile::router_benchmark(self.state.clone()))
         } else {
             private
         };

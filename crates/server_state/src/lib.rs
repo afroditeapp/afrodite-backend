@@ -31,6 +31,7 @@ pub mod state_impl;
 pub mod utils;
 
 pub use server_common::{data::DataError, result};
+pub use utoipa_axum::router::OpenApiRouter;
 
 /// State type for route handlers.
 pub type S = AppState;
@@ -256,17 +257,19 @@ macro_rules! db_write_raw {
 #[macro_export]
 macro_rules! create_open_api_router {
     (
-        $state_instance:ident,
+        $( #[doc = $text:literal] )*
+        fn $fn_name:ident,
         $(
             $path:ident,
         )*
     ) => {
-        {
+        $(#[doc = $text])?
+        pub fn $fn_name(s: $crate::S) -> $crate::OpenApiRouter {
             utoipa_axum::router::OpenApiRouter::new()
             $(
                 .merge(utoipa_axum::router::OpenApiRouter::new().routes(utoipa_axum::routes!($path)))
             )*
-            .with_state($state_instance)
+            .with_state(s)
         }
     };
 }

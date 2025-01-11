@@ -16,7 +16,6 @@ use server_data_account::{
     write::GetWriteCommandsAccount,
 };
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use super::login_impl;
 use crate::{
@@ -199,17 +198,15 @@ pub async fn post_demo_mode_logout(
     Ok(())
 }
 
-pub fn demo_mode_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_demo_mode,
         post_demo_mode_accessible_accounts,
         post_demo_mode_login,
         post_demo_mode_confirm_login,
         post_demo_mode_register_account,
         post_demo_mode_login_to_account,
         post_demo_mode_logout,
-    )
-}
+);
 
 create_counters!(
     AccountCounters,

@@ -18,7 +18,6 @@ use server_data_chat::{
 };
 use simple_backend::create_counters;
 use tracing::error;
-use utoipa_axum::router::OpenApiRouter;
 
 use super::super::{
     db_write,
@@ -333,9 +332,8 @@ pub async fn post_add_sender_acknowledgement(
     Ok(())
 }
 
-pub fn message_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_message,
         get_pending_messages,
         post_add_receiver_acknowledgement,
         get_message_number_of_latest_viewed_message,
@@ -343,8 +341,7 @@ pub fn message_router(s: S) -> OpenApiRouter {
         post_send_message,
         get_sent_message_ids,
         post_add_sender_acknowledgement,
-    )
-}
+);
 
 create_counters!(
     ChatCounters,

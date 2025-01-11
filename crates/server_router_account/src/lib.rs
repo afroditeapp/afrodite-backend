@@ -54,7 +54,7 @@ pub fn create_account_server_router(state: S) -> Router {
         .with_state(state.clone());
 
     let public = if state.config().demo_mode_config().is_some() {
-        public.merge(api::account::demo_mode_router(state.clone()))
+        public.merge(api::account::router_demo_mode(state.clone()))
     } else {
         public
     };

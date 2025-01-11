@@ -11,6 +11,8 @@ tokio = { workspace = true }
 axum = { workspace = true }
 tracing = { workspace = true }
 
+utoipa-axum = { workspace = true }
+
 hyper = { workspace = true }
 reqwest = { workspace = true }
 

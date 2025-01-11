@@ -11,7 +11,6 @@ use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::EventManagerProvider, create_open_api_router, db_write, S};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
 use crate::app::{ReadData, WriteData};
@@ -183,15 +182,13 @@ pub async fn get_news_item(
     Ok(news.into())
 }
 
-pub fn news_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_news,
         post_get_unread_news_count,
         post_reset_news_paging,
         post_get_next_news_page,
         get_news_item,
-    )
-}
+);
 
 create_counters!(
     AccountCounters,

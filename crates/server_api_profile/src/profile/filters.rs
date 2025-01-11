@@ -8,7 +8,6 @@ use server_data::DataError;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{GetConfig, ReadData, WriteData},
@@ -127,15 +126,13 @@ pub async fn post_profile_filtering_settings(
         .update_profile_filtering_settings(account_id, validated))
 }
 
-pub fn filters_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_filters,
         get_available_profile_attributes,
         post_get_query_available_profile_attributes,
         get_profile_filtering_settings,
         post_profile_filtering_settings,
-    )
-}
+);
 
 create_counters!(
     ProfileCounters,

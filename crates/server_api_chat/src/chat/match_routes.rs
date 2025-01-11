@@ -9,7 +9,6 @@ use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::WriteData, create_open_api_router, db_write, S};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
 use crate::app::ReadData;
@@ -113,14 +112,12 @@ pub async fn post_get_next_matches_page(
     }
 }
 
-pub fn match_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_match,
         get_matches,
         post_reset_matches_paging,
         post_get_next_matches_page,
-    )
-}
+);
 
 create_counters!(
     ChatCounters,

@@ -4,7 +4,6 @@ use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::{GetAccounts, ReadData}, create_open_api_router, S};
 use server_data::read::GetReadCommandsCommon;
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::utils::{Json, StatusCode};
 
@@ -45,9 +44,7 @@ pub async fn get_account_state_admin(
     Ok(permissions.into())
 }
 
-pub fn admin_state_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(s, get_account_state_admin,)
-}
+create_open_api_router!(fn router_admin_state, get_account_state_admin,);
 
 create_counters!(
     AccountCounters,

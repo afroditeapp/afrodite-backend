@@ -5,7 +5,6 @@ use server_api::{create_open_api_router, db_write_multiple, S};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::StatusCode;
 use crate::app::WriteData;
@@ -39,9 +38,7 @@ pub async fn post_logout(
     Ok(())
 }
 
-pub fn logout_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(s, post_logout,)
-}
+create_open_api_router!(fn router_logout, post_logout,);
 
 create_counters!(
     AccountCounters,

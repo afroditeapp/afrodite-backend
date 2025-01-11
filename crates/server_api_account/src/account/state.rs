@@ -5,7 +5,6 @@ use server_api::{app::WriteData, create_open_api_router, db_write, S};
 use server_data::read::GetReadCommandsCommon;
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::ReadData,
@@ -82,14 +81,12 @@ pub async fn post_get_next_client_id(
     Ok(client_id.into())
 }
 
-pub fn state_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_state,
         get_account_state,
         get_latest_birthdate,
         post_get_next_client_id,
-    )
-}
+);
 
 create_counters!(
     AccountCounters,

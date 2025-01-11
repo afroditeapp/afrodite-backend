@@ -12,7 +12,7 @@ mod routes_connected;
 
 pub fn create_chat_server_router(state: S) -> Router {
     let public = Router::new()
-        .merge(api::chat::push_notifications::push_notification_router_public(state.clone()));
+        .merge(api::chat::push_notifications::router_push_notification_public(state.clone()));
 
     public.merge(ConnectedApp::new(state).private_chat_server_router())
 }

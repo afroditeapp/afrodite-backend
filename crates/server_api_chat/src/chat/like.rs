@@ -9,7 +9,6 @@ use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::EventManagerProvider, create_open_api_router, db_write, S};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
 use crate::{
@@ -361,17 +360,15 @@ pub async fn delete_like(
     Ok(r.into())
 }
 
-pub fn like_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_like,
         post_send_like,
         get_sent_likes,
         post_get_new_received_likes_count,
         post_reset_received_likes_paging,
         post_get_next_received_likes_page,
         delete_like,
-    )
-}
+);
 
 create_counters!(
     ChatCounters,

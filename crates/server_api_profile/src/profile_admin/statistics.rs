@@ -10,7 +10,6 @@ use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
 use server_data_profile::read::GetReadProfileCommands;
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::ReadData,
@@ -59,9 +58,7 @@ pub async fn get_profile_statistics_history(
     Ok(r.into())
 }
 
-pub fn admin_statistics_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(s, get_profile_statistics_history,)
-}
+create_open_api_router!(fn router_admin_statistics, get_profile_statistics_history,);
 
 create_counters!(
     ProfileCounters,

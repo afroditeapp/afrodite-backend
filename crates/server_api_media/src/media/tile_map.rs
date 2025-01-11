@@ -9,7 +9,6 @@ use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
 use simple_backend::{app::GetTileMap, create_counters};
 use tracing::error;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::utils::StatusCode;
 
@@ -62,9 +61,7 @@ pub async fn get_map_tile(
     }
 }
 
-pub fn tile_map_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(s, get_map_tile,)
-}
+create_open_api_router!(fn router_tile_map, get_map_tile,);
 
 create_counters!(
     MediaCounters,

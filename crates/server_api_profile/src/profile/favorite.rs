@@ -4,7 +4,6 @@ use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{GetAccounts, ReadData, WriteData},
@@ -99,14 +98,12 @@ pub async fn delete_favorite_profile(
     Ok(())
 }
 
-pub fn favorite_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_favorite,
         get_favorite_profiles,
         post_favorite_profile,
         delete_favorite_profile,
-    )
-}
+);
 
 create_counters!(
     ProfileCounters,

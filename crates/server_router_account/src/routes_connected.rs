@@ -15,9 +15,9 @@ impl ConnectedApp {
 
     pub fn private_common_router(&self) -> Router {
         Router::new()
-            .merge(api::common_admin::manager_router(self.state.clone()))
-            .merge(api::common_admin::config_router(self.state.clone()))
-            .merge(api::common_admin::perf_router(self.state.clone()))
+            .merge(api::common_admin::router_manager(self.state.clone()))
+            .merge(api::common_admin::router_config(self.state.clone()))
+            .merge(api::common_admin::router_perf(self.state.clone()))
             .route_layer({
                 middleware::from_fn_with_state(
                     self.state.clone(),
@@ -28,19 +28,19 @@ impl ConnectedApp {
 
     pub fn private_account_server_router(&self) -> Router {
         let private = Router::new()
-            .merge(api::account::register_router(self.state.clone()))
-            .merge(api::account::logout_router(self.state.clone()))
-            .merge(api::account::ban_router(self.state.clone()))
-            .merge(api::account::delete_router(self.state.clone()))
-            .merge(api::account::settings_router(self.state.clone()))
-            .merge(api::account::state_router(self.state.clone()))
-            .merge(api::account::news_router(self.state.clone()))
-            .merge(api::account_admin::admin_ban_router(self.state.clone()))
-            .merge(api::account_admin::admin_delete_router(self.state.clone()))
-            .merge(api::account_admin::admin_news_router(self.state.clone()))
-            .merge(api::account_admin::admin_search_router(self.state.clone()))
-            .merge(api::account_admin::admin_permissions_router(self.state.clone()))
-            .merge(api::account_admin::admin_state_router(self.state.clone()));
+            .merge(api::account::router_register(self.state.clone()))
+            .merge(api::account::router_logout(self.state.clone()))
+            .merge(api::account::router_ban(self.state.clone()))
+            .merge(api::account::router_delete(self.state.clone()))
+            .merge(api::account::router_settings(self.state.clone()))
+            .merge(api::account::router_state(self.state.clone()))
+            .merge(api::account::router_news(self.state.clone()))
+            .merge(api::account_admin::router_admin_ban(self.state.clone()))
+            .merge(api::account_admin::router_admin_delete(self.state.clone()))
+            .merge(api::account_admin::router_admin_news(self.state.clone()))
+            .merge(api::account_admin::router_admin_search(self.state.clone()))
+            .merge(api::account_admin::router_admin_permissions(self.state.clone()))
+            .merge(api::account_admin::router_admin_state(self.state.clone()));
 
         private.route_layer({
             middleware::from_fn_with_state(

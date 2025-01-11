@@ -13,7 +13,6 @@ use server_api::{
 };
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::ReadData,
@@ -167,14 +166,12 @@ pub async fn get_profile_text_state(
     Ok(r.into())
 }
 
-pub fn admin_profile_text_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_admin_profile_text,
         get_profile_text_pending_moderation_list,
         post_moderate_profile_text,
         get_profile_text_state,
-    )
-}
+);
 
 create_counters!(
     ProfileCounters,

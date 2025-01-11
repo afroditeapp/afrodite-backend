@@ -14,7 +14,6 @@ use server_api::{
 };
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
 use crate::app::ReadData;
@@ -89,9 +88,7 @@ async fn post_public_key(
     Ok(new_key.into())
 }
 
-pub fn public_key_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(s, get_public_key, post_public_key,)
-}
+create_open_api_router!(fn router_public_key, get_public_key, post_public_key,);
 
 create_counters!(
     ChatCounters,

@@ -6,7 +6,6 @@ use server_api::{app::{GetAccounts, WriteData, ReadData}, create_open_api_router
 use server_data::read::GetReadCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::utils::{Json, StatusCode};
 
@@ -133,9 +132,7 @@ pub async fn post_set_permissions(
     Ok(())
 }
 
-pub fn admin_permissions_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(s, get_permissions, get_all_admins, post_set_permissions,)
-}
+create_open_api_router!(fn router_admin_permissions, get_permissions, get_all_admins, post_set_permissions,);
 
 create_counters!(
     AccountCounters,

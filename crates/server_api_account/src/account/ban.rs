@@ -5,7 +5,6 @@ use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::{ReadData, GetAccounts}, create_open_api_router, S};
 use server_data_account::read::GetReadCommandsAccount;
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::utils::{Json, StatusCode};
 
@@ -47,9 +46,7 @@ pub async fn get_account_ban_time(
     Ok(result.into())
 }
 
-pub fn ban_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(s, get_account_ban_time,)
-}
+create_open_api_router!(fn router_ban, get_account_ban_time,);
 
 create_counters!(
     AccountCounters,

@@ -4,7 +4,6 @@ use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
 use crate::{
@@ -139,15 +138,13 @@ pub async fn get_received_blocks(
     Ok(page.into())
 }
 
-pub fn block_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_block,
         post_block_profile,
         post_unblock_profile,
         get_sent_blocks,
         get_received_blocks,
-    )
-}
+);
 
 create_counters!(
     ChatCounters,

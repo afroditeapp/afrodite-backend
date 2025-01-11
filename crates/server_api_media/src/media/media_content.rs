@@ -9,7 +9,6 @@ use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
 use server_data_media::read::GetReadMediaCommands;
 use simple_backend::create_counters;
-use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::ReadData,
@@ -62,12 +61,10 @@ pub async fn get_media_content_info(
     Ok(r.into())
 }
 
-pub fn media_content_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(
-        s,
+create_open_api_router!(
+        fn router_media_content,
         get_media_content_info,
-    )
-}
+);
 
 create_counters!(
     MediaCounters,
