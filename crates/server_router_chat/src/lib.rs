@@ -5,12 +5,12 @@
 
 use axum::Router;
 use routes_connected::ConnectedApp;
-use server_state::S;
+use server_state::StateForRouterCreation;
 
 mod api;
 mod routes_connected;
 
-pub fn create_chat_server_router(state: S) -> Router {
+pub fn create_chat_server_router(state: StateForRouterCreation) -> Router {
     let public = Router::new()
         .merge(api::chat::push_notifications::router_push_notification_public(state.clone()));
 

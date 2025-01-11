@@ -5,12 +5,12 @@
 
 use axum::Router;
 use routes_connected::ConnectedApp;
-use server_state::S;
+use server_state::StateForRouterCreation;
 
 mod api;
 mod routes_connected;
 
-pub fn create_profile_server_router(state: S) -> Router {
+pub fn create_profile_server_router(state: StateForRouterCreation) -> Router {
     let public = Router::new();
 
     public.merge(ConnectedApp::new(state).private_profile_server_router())

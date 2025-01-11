@@ -7,7 +7,7 @@ use server_data::{
     write_commands::WriteCommandRunnerHandle,
 };
 use server_data_all::app::DataAllUtilsImpl;
-use server_state::{demo::DemoModeManager, S};
+use server_state::{demo::DemoModeManager, StateForRouterCreation, S};
 use simple_backend::{
     app::SimpleBackendAppState, media_backup::MediaBackupHandle, perf::PerfMetricsManagerData,
 };
@@ -24,7 +24,7 @@ use utoipa::OpenApi;
 pub struct ApiDoc;
 
 impl ApiDoc {
-    pub fn all(state: S) -> utoipa::openapi::OpenApi {
+    pub fn all(state: StateForRouterCreation) -> utoipa::openapi::OpenApi {
         let mut doc = ApiDoc::openapi();
         doc.merge(server_api::ApiDocCommon::openapi());
         let common_admin = ApiDoc::openapi()
@@ -196,7 +196,12 @@ impl ApiDoc {
         )
         .await;
 
-        Self::all(app_state).to_pretty_json()
+        let state = StateForRouterCreation {
+            s: app_state,
+            disable_api_obfuscation: true,
+        };
+
+        Self::all(state).to_pretty_json()
     }
 }
 

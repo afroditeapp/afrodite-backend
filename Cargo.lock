@@ -3216,9 +3216,7 @@ dependencies = [
 name = "obfuscate_api_macro"
 version = "0.0.0"
 dependencies = [
- "base64 0.22.1",
  "quote",
- "sha1",
  "syn 2.0.90",
 ]
 
@@ -4786,6 +4784,7 @@ version = "0.0.0"
 dependencies = [
  "api_internal",
  "axum",
+ "base64 0.22.1",
  "config",
  "error-stack",
  "futures",
@@ -4797,6 +4796,7 @@ dependencies = [
  "reqwest",
  "server_common",
  "server_data",
+ "sha1",
  "simple_backend",
  "simple_backend_config",
  "simple_backend_utils",

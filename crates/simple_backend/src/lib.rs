@@ -92,6 +92,7 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
         &self,
         _web_socket_manager: WebSocketManager,
         _state: &Self::AppState,
+        _disable_api_obfuscation: bool,
     ) -> Router {
         Router::new()
     }
@@ -305,7 +306,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         app_state: &T::AppState,
     ) -> JoinHandle<()> {
         let router = {
-            let router = self.logic.public_api_router(web_socket_manager, app_state);
+            let router = self.logic.public_api_router(web_socket_manager, app_state, false);
             if self.config.debug_mode() {
                 router.route_layer(TraceLayer::new_for_http())
             } else {

@@ -9,7 +9,7 @@ use axum::{
 };
 use routes_connected::ConnectedApp;
 use server_api::app::GetConfig;
-use server_state::S;
+use server_state::StateForRouterCreation;
 
 mod api;
 mod routes_connected;
@@ -18,7 +18,7 @@ mod routes_internal;
 pub use routes_internal::InternalApp;
 use simple_backend::web_socket::WebSocketManager;
 
-pub fn create_common_server_router(state: S, ws_manager: WebSocketManager) -> Router {
+pub fn create_common_server_router(state: StateForRouterCreation, ws_manager: WebSocketManager) -> Router {
     let public = Router::new()
         .route(
             api::common::PATH_GET_VERSION_AXUM, // TODO(prod): Make private?
@@ -40,20 +40,20 @@ pub fn create_common_server_router(state: S, ws_manager: WebSocketManager) -> Ro
                 }
             }),
         )
-        .with_state(state.clone());
+        .with_state(state.s.clone());
 
     public.merge(ConnectedApp::new(state).private_common_router())
 }
 
-pub fn create_account_server_router(state: S) -> Router {
+pub fn create_account_server_router(state: StateForRouterCreation) -> Router {
     let public = Router::new()
         .route(
             api::account::PATH_SIGN_IN_WITH_LOGIN_AXUM,
             post(api::account::post_sign_in_with_login),
         )
-        .with_state(state.clone());
+        .with_state(state.s.clone());
 
-    let public = if state.config().demo_mode_config().is_some() {
+    let public = if state.s.config().demo_mode_config().is_some() {
         public.merge(api::account::router_demo_mode(state.clone()))
     } else {
         public

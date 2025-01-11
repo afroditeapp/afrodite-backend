@@ -29,6 +29,7 @@ use model::{AccountIdInternal, EmailMessages};
 use perf::ALL_COUNTERS;
 use push_notifications::ServerPushNotificationStateProvider;
 use scheduled_tasks::{ScheduledTaskManager, ScheduledTaskManagerQuitHandle};
+use server_api::app::GetConfig;
 use server_common::push_notifications::{
     PushNotificationManager, PushNotificationManagerQuitHandle,
 };
@@ -38,7 +39,7 @@ use server_data::{
     write_commands::{WriteCmdWatcher, WriteCommandRunnerHandle},
 };
 use server_data_all::{app::DataAllUtilsImpl, load::DbDataToCacheLoader};
-use server_state::{demo::DemoModeManager, AppState};
+use server_state::{demo::DemoModeManager, AppState, StateForRouterCreation};
 use shutdown_tasks::ShutdownTasks;
 use simple_backend::{
     app::SimpleBackendAppState,
@@ -107,7 +108,12 @@ impl BusinessLogic for DatingAppBusinessLogic {
         &self,
         web_socket_manager: WebSocketManager,
         state: &Self::AppState,
+        disable_api_obfuscation: bool,
     ) -> Router {
+        let state = StateForRouterCreation {
+            s: state.clone(),
+            disable_api_obfuscation,
+        };
         let mut router =
             server_router_account::create_common_server_router(state.clone(), web_socket_manager);
 
@@ -154,13 +160,29 @@ impl BusinessLogic for DatingAppBusinessLogic {
 
     fn create_swagger_ui(&self, state: &Self::AppState) -> Option<SwaggerUi> {
         const API_DOC_URL: &str = "/api-doc/app_api.json";
+        const API_DOC_URL_OBFUSCATION_DISABLED: &str = "/api-doc/app_api_obfuscation_disabled.json";
+        let router_state = StateForRouterCreation {
+            s: state.clone(),
+            disable_api_obfuscation: false,
+        };
+        let mut swagger = SwaggerUi::new("/swagger-ui")
+            .url(API_DOC_URL, ApiDoc::all(router_state.clone()));
+
+        let swagger_config = if state.config().api_obfuscation_salt().is_some() {
+            let router_state = StateForRouterCreation {
+                s: state.clone(),
+                disable_api_obfuscation: true,
+            };
+            swagger = swagger.url(API_DOC_URL_OBFUSCATION_DISABLED, ApiDoc::all(router_state.clone()));
+            utoipa_swagger_ui::Config::new([API_DOC_URL, API_DOC_URL_OBFUSCATION_DISABLED])
+        } else {
+            utoipa_swagger_ui::Config::new([API_DOC_URL])
+        };
         Some(
-            SwaggerUi::new("/swagger-ui")
-                .url(API_DOC_URL, ApiDoc::all(state.clone()))
+            swagger
                 .config(
-                    utoipa_swagger_ui::Config::from(API_DOC_URL)
-                        .display_operation_id(true)
-                        .use_base_layout(),
+                    swagger_config
+                        .display_operation_id(true),
                 ),
         )
     }

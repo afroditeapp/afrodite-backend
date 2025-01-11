@@ -1,7 +1,5 @@
-use base64::Engine;
 use proc_macro::TokenStream;
 use quote::format_ident;
-use sha1::Digest;
 use syn::parse_macro_input;
 
 /// Obfuscate utoipa compatible API route path and generate
@@ -53,7 +51,7 @@ pub fn obfuscate_api(_attr: TokenStream, input: TokenStream) -> TokenStream {
         }
     };
 
-    let new_path_string = obfuscate_path(&path_string);
+    let new_path_string = path_string;
     let new_path_string_axum = convert_to_axum_style_path(&new_path_string);
     let visibility = path.vis;
 
@@ -63,17 +61,6 @@ pub fn obfuscate_api(_attr: TokenStream, input: TokenStream) -> TokenStream {
     };
 
     TokenStream::from(expanded)
-}
-
-fn obfuscate_path(path: &str) -> String {
-    match path.split_once("/{") {
-        Some((first, second)) => {
-            format!("/{}/{{{}", obfuscate(first), second,)
-        }
-        None => {
-            format!("/{}", obfuscate(path),)
-        }
-    }
 }
 
 fn convert_to_axum_style_path(path: &str) -> String {
@@ -88,11 +75,4 @@ fn convert_to_axum_style_path(path: &str) -> String {
         })
         .collect::<Vec<_>>()
         .join("/")
-}
-
-fn obfuscate(text: &str) -> String {
-    let mut hasher = sha1::Sha1::new();
-    hasher.update(text.as_bytes());
-    let hash = hasher.finalize();
-    base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(hash)
 }

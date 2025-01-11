@@ -15,7 +15,7 @@ use model_chat::SignInWithInfo;
 use model_server_data::EmailAddress;
 use server_common::{push_notifications::PushNotificationSender, websocket::WebSocketError};
 use server_data::{
-    app::DataAllUtils, content_processing::ContentProcessingManagerData,
+    app::{DataAllUtils, GetConfig}, content_processing::ContentProcessingManagerData,
     db_manager::RouterDatabaseReadHandle, statistics::ProfileStatisticsCache,
     write_commands::WriteCommandRunnerHandle,
 };
@@ -254,6 +254,12 @@ macro_rules! db_write_raw {
     }};
 }
 
+#[derive(Clone)]
+pub struct StateForRouterCreation {
+    pub s: S,
+    pub disable_api_obfuscation: bool,
+}
+
 #[macro_export]
 macro_rules! create_open_api_router {
     (
@@ -264,12 +270,70 @@ macro_rules! create_open_api_router {
         )*
     ) => {
         $(#[doc = $text])?
-        pub fn $fn_name(s: $crate::S) -> $crate::OpenApiRouter {
+        pub fn $fn_name(state: $crate::StateForRouterCreation) -> $crate::OpenApiRouter {
             utoipa_axum::router::OpenApiRouter::new()
             $(
-                .merge(utoipa_axum::router::OpenApiRouter::new().routes(utoipa_axum::routes!($path)))
+                .merge(utoipa_axum::router::OpenApiRouter::new().routes($crate::__route!(state, $path)))
             )*
-            .with_state(s)
+            .with_state(state.s)
         }
     };
+}
+
+/// Modified version of [utoipa_axum::routes] macro for only one route
+/// and runtime API path obfuscation supported.
+#[macro_export]
+macro_rules! __route {
+    ($state:ident, $route_name:ident) => {
+        {
+            use utoipa_axum::PathItemExt;
+            let mut paths = utoipa::openapi::path::Paths::new();
+            let mut schemas = Vec::<(String, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>)>::new();
+            let (path, item, types) = utoipa_axum::routes!(@resolve_types $route_name : schemas);
+            let path = $crate::obfuscate_api_path(&$state, path);
+            #[allow(unused_mut)]
+            let mut method_router = types.iter().by_ref().fold(axum::routing::MethodRouter::new(), |router, path_type| {
+                router.on(path_type.to_method_filter(), $route_name)
+            });
+            paths.add_path_operation(&path, types, item);
+            (schemas, paths, method_router)
+        }
+    }
+}
+
+pub fn obfuscate_api_path(
+    state: &StateForRouterCreation,
+    path: String,
+) -> String {
+    if state.disable_api_obfuscation {
+        return path;
+    }
+
+    if let Some(salt) = state.s.config().api_obfuscation_salt() {
+        obfuscate_path(&path, salt)
+    } else {
+        path
+    }
+}
+
+fn obfuscate_path(path: &str, salt: &str) -> String {
+    match path.split_once("/{") {
+        Some((first, second)) => {
+            format!("/{}/{{{}", obfuscate(first, salt), second)
+        }
+        None => {
+            format!("/{}", obfuscate(path, salt))
+        }
+    }
+}
+
+fn obfuscate(text: &str, salt: &str) -> String {
+    use sha1::Digest;
+    use base64::Engine;
+
+    let mut hasher = sha1::Sha1::new();
+    hasher.update(text.as_bytes());
+    hasher.update(salt.as_bytes());
+    let hash = hasher.finalize();
+    base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(hash)
 }

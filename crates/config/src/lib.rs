@@ -196,6 +196,10 @@ impl Config {
     pub fn profile_name_allowlist(&self) -> &ProfileNameAllowlistData {
         &self.profile_name_allowlist
     }
+
+    pub fn api_obfuscation_salt(&self) -> Option<&str> {
+        self.file.api_obfuscation_salt.as_deref()
+    }
 }
 
 pub fn get_config(

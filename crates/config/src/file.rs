@@ -93,6 +93,7 @@ pub struct ConfigFile {
     pub profile_attributes_file: Option<PathBuf>,
     pub email_content_file: Option<PathBuf>,
 
+    pub api_obfuscation_salt: Option<String>,
     pub components: Option<Components>,
     pub grant_admin_access: Option<GrantAdminAccessConfig>,
     pub location: Option<LocationConfig>,
@@ -109,6 +110,7 @@ impl ConfigFile {
             bot_config_file: None,
             profile_attributes_file: None,
             email_content_file: None,
+            api_obfuscation_salt: None,
             components: Some(Components::default()),
             grant_admin_access: None,
             location: None,

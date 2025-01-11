@@ -1,21 +1,23 @@
 use axum::{middleware, Router};
 use server_api::app::GetConfig;
-use server_state::S;
+use server_state::{StateForRouterCreation, S};
 
 use crate::api;
 
 /// Private routes only accessible when WebSocket is connected.
 pub struct ConnectedApp {
-    state: S,
+    state: StateForRouterCreation,
 }
 
 impl ConnectedApp {
-    pub fn new(state: S) -> Self {
-        Self { state }
+    pub fn new(state: StateForRouterCreation) -> Self {
+        Self {
+            state,
+        }
     }
 
     pub fn state(&self) -> S {
-        self.state.clone()
+        self.state.s.clone()
     }
 
     pub fn private_profile_server_router(&self) -> Router {
@@ -39,7 +41,7 @@ impl ConnectedApp {
                 self.state.clone(),
             ));
 
-        let private = if self.state.config().debug_mode() {
+        let private = if self.state.s.config().debug_mode() {
             private.merge(api::profile::router_benchmark(self.state.clone()))
         } else {
             private
