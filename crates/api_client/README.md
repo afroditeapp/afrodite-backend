@@ -26,123 +26,123 @@ All URIs are relative to *http://localhost*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
-*AccountApi* | [**get_account_ban_time**](docs/AccountApi.md#get_account_ban_time) | **GET** /VWEg82SMW2nbZNsujKsrEXdsYCQ/{aid} | Get account ban time
-*AccountApi* | [**get_account_data**](docs/AccountApi.md#get_account_data) | **GET** /Ln3_j2LpJIbQABKwnMMhUEtio5k | Get changeable user information to account.
-*AccountApi* | [**get_account_deletion_request_state**](docs/AccountApi.md#get_account_deletion_request_state) | **GET** /xRKw2cu2b8kk8Vkdpo8SdsaFWhQ/{aid} | Get account deletion request state
-*AccountApi* | [**get_account_setup**](docs/AccountApi.md#get_account_setup) | **GET** /RNb6qhf_lZU8t6kOm5kQY7Y34ok | Get non-changeable user information to account.
-*AccountApi* | [**get_account_state**](docs/AccountApi.md#get_account_state) | **GET** /C9sCP6O2IfIBQCu8LM1_SCybuW0 | Get current account state.
-*AccountApi* | [**get_latest_birthdate**](docs/AccountApi.md#get_latest_birthdate) | **GET** /Hg2W1drXZ94YVp3Uh38hnQzYIng | 
-*AccountApi* | [**get_news_item**](docs/AccountApi.md#get_news_item) | **GET** /2OHF85k7hpH2tAibkA0V9YLwpF4/{nid} | Get news item content using specific locale and fallback to locale \"en\" if news translation is not found.
-*AccountApi* | [**post_account_data**](docs/AccountApi.md#post_account_data) | **POST** /Ln3_j2LpJIbQABKwnMMhUEtio5k | Set changeable user information to account.
-*AccountApi* | [**post_account_setup**](docs/AccountApi.md#post_account_setup) | **POST** /RNb6qhf_lZU8t6kOm5kQY7Y34ok | Setup non-changeable user information during `initial setup` state.
-*AccountApi* | [**post_complete_setup**](docs/AccountApi.md#post_complete_setup) | **POST** /VzPyCXS5Hx50SbAApdpUYfCY-Iw | Complete initial setup.
-*AccountApi* | [**post_demo_mode_accessible_accounts**](docs/AccountApi.md#post_demo_mode_accessible_accounts) | **POST** /xyG8kH6eLanLiKYXdnOx1xxeAdA | Get demo account's available accounts.
-*AccountApi* | [**post_demo_mode_confirm_login**](docs/AccountApi.md#post_demo_mode_confirm_login) | **POST** /3KlEajKOIo1Drd3uW-IzQ1L3qlE | 
-*AccountApi* | [**post_demo_mode_login**](docs/AccountApi.md#post_demo_mode_login) | **POST** /TYbxniP-G9ibgdoAkpvVWTKkxaU | Access demo mode, which allows accessing all or specific accounts depending on the server configuration.
-*AccountApi* | [**post_demo_mode_login_to_account**](docs/AccountApi.md#post_demo_mode_login_to_account) | **POST** /sBH-LyNGOOFXivrv5clCpNrkwcA | 
-*AccountApi* | [**post_demo_mode_logout**](docs/AccountApi.md#post_demo_mode_logout) | **POST** /C4cOpRmlYJh2YBXbEHQGkcz3iMY | 
-*AccountApi* | [**post_demo_mode_register_account**](docs/AccountApi.md#post_demo_mode_register_account) | **POST** /oDv1gK4Y6nMrPgEo5nArQAckh6Q | 
-*AccountApi* | [**post_get_next_client_id**](docs/AccountApi.md#post_get_next_client_id) | **POST** /b5kd4x8_ybr1Rj_tprU5BxF_xGo | 
-*AccountApi* | [**post_get_next_news_page**](docs/AccountApi.md#post_get_next_news_page) | **POST** /i9QOC8N-Nx9PdWvjKyAz8tXD2Q0 | 
-*AccountApi* | [**post_get_unread_news_count**](docs/AccountApi.md#post_get_unread_news_count) | **POST** /ljfyAP7CbP0864cA6nZX7ESufjY | The unread news count for public news.
-*AccountApi* | [**post_logout**](docs/AccountApi.md#post_logout) | **POST** /g2UxTGqbCXXzUsALaE6udVrIh2U | 
-*AccountApi* | [**post_reset_news_paging**](docs/AccountApi.md#post_reset_news_paging) | **POST** /BQwxuLNWbM8vN0-p-Wu-QCRy3x0 | 
-*AccountApi* | [**post_set_account_deletion_request_state**](docs/AccountApi.md#post_set_account_deletion_request_state) | **POST** /hpXIJMoxKOZo-Fp577gOdSf1pm4/{aid} | Request account deletion or cancel the deletion
-*AccountApi* | [**post_sign_in_with_login**](docs/AccountApi.md#post_sign_in_with_login) | **POST** /ijts6B4AAg_6Dyjhaw85iBnw5Bo | Start new session with sign in with Apple or Google. Creates new account if it does not exists.
-*AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /yG0OQXcMed-EGdvhSoq3qlXTYQc | Update current or pending profile visiblity value.
-*AccountApi* | [**put_setting_unlimited_likes**](docs/AccountApi.md#put_setting_unlimited_likes) | **PUT** /oKbgnRxyzLb50Y2_ZCuLJYtEIcM | 
-*AccountAdminApi* | [**delete_news_item**](docs/AccountAdminApi.md#delete_news_item) | **DELETE** /ca0uk9qgmQ82WCpd83_WNNn8qOY/{nid} | 
-*AccountAdminApi* | [**delete_news_translation**](docs/AccountAdminApi.md#delete_news_translation) | **DELETE** /jo1Lboa4U8YVA07py8NJebpu1zo/{nid}/{locale} | 
-*AccountAdminApi* | [**get_account_id_from_email**](docs/AccountAdminApi.md#get_account_id_from_email) | **GET** /QOWhJ4V6cg9BzbwLCnopDKA6eEM/{email} | Get account ID from email
-*AccountAdminApi* | [**get_account_state_admin**](docs/AccountAdminApi.md#get_account_state_admin) | **GET** /SJd6qnB7ZOLWObvYpZvSEAQlV9E/{aid} | Get [model::Account] for specific account.
-*AccountAdminApi* | [**get_all_admins**](docs/AccountAdminApi.md#get_all_admins) | **GET** /S08JTRmVrgj4MoI2AYsbMMcfpoU | Get all admins
-*AccountAdminApi* | [**get_permissions**](docs/AccountAdminApi.md#get_permissions) | **GET** /gNXvEk_GxY-Rj3l4Ja9T8Gh3BHk/{aid} | Get [model::Permissions] for specific account.
-*AccountAdminApi* | [**post_create_news_item**](docs/AccountAdminApi.md#post_create_news_item) | **POST** /XEss8YDw9lPgwKoH6K9THZIF_N4 | 
-*AccountAdminApi* | [**post_delete_account**](docs/AccountAdminApi.md#post_delete_account) | **POST** /bdvzsZZOVVO89-enOb3tFnpU7yk/{aid} | Delete account instantly
-*AccountAdminApi* | [**post_set_ban_state**](docs/AccountAdminApi.md#post_set_ban_state) | **POST** /R5G1j887_zSwcgInJG5Y7mz73nE | Ban or unban account
-*AccountAdminApi* | [**post_set_news_publicity**](docs/AccountAdminApi.md#post_set_news_publicity) | **DELETE** /McvctMKFEqrUfola2WlvkbigBDU/{nid} | 
-*AccountAdminApi* | [**post_set_permissions**](docs/AccountAdminApi.md#post_set_permissions) | **POST** /dVzZRtEelHVDz6bG4AcjaZSQVFo/{aid} | Set permissions for account
-*AccountAdminApi* | [**post_update_news_translation**](docs/AccountAdminApi.md#post_update_news_translation) | **POST** /4pD-Q4FhZGTNkUGYExHmZN6TxjU/{nid}/{locale} | 
+*AccountApi* | [**get_account_ban_time**](docs/AccountApi.md#get_account_ban_time) | **GET** /account_api/account_ban_time/{aid} | Get account ban time
+*AccountApi* | [**get_account_data**](docs/AccountApi.md#get_account_data) | **GET** /account_api/account_data | Get changeable user information to account.
+*AccountApi* | [**get_account_deletion_request_state**](docs/AccountApi.md#get_account_deletion_request_state) | **GET** /account_api/get_account_deletion_request_state/{aid} | Get account deletion request state
+*AccountApi* | [**get_account_setup**](docs/AccountApi.md#get_account_setup) | **GET** /account_api/account_setup | Get non-changeable user information to account.
+*AccountApi* | [**get_account_state**](docs/AccountApi.md#get_account_state) | **GET** /account_api/state | Get current account state.
+*AccountApi* | [**get_latest_birthdate**](docs/AccountApi.md#get_latest_birthdate) | **GET** /account_api/latest_birthdate | 
+*AccountApi* | [**get_news_item**](docs/AccountApi.md#get_news_item) | **GET** /account_api/news_item/{nid} | Get news item content using specific locale and fallback to locale \"en\" if news translation is not found.
+*AccountApi* | [**post_account_data**](docs/AccountApi.md#post_account_data) | **POST** /account_api/account_data | Set changeable user information to account.
+*AccountApi* | [**post_account_setup**](docs/AccountApi.md#post_account_setup) | **POST** /account_api/account_setup | Setup non-changeable user information during `initial setup` state.
+*AccountApi* | [**post_complete_setup**](docs/AccountApi.md#post_complete_setup) | **POST** /account_api/complete_setup | Complete initial setup.
+*AccountApi* | [**post_demo_mode_accessible_accounts**](docs/AccountApi.md#post_demo_mode_accessible_accounts) | **POST** /account_api/demo_mode_accessible_accounts | Get demo account's available accounts.
+*AccountApi* | [**post_demo_mode_confirm_login**](docs/AccountApi.md#post_demo_mode_confirm_login) | **POST** /account_api/demo_mode_confirm_login | 
+*AccountApi* | [**post_demo_mode_login**](docs/AccountApi.md#post_demo_mode_login) | **POST** /account_api/demo_mode_login | Access demo mode, which allows accessing all or specific accounts depending on the server configuration.
+*AccountApi* | [**post_demo_mode_login_to_account**](docs/AccountApi.md#post_demo_mode_login_to_account) | **POST** /account_api/demo_mode_login_to_account | 
+*AccountApi* | [**post_demo_mode_logout**](docs/AccountApi.md#post_demo_mode_logout) | **POST** /account_api/demo_mode_logout | 
+*AccountApi* | [**post_demo_mode_register_account**](docs/AccountApi.md#post_demo_mode_register_account) | **POST** /account_api/demo_mode_register_account | 
+*AccountApi* | [**post_get_next_client_id**](docs/AccountApi.md#post_get_next_client_id) | **POST** /account_api/next_client_id | 
+*AccountApi* | [**post_get_next_news_page**](docs/AccountApi.md#post_get_next_news_page) | **POST** /account_api/next_news_page | 
+*AccountApi* | [**post_get_unread_news_count**](docs/AccountApi.md#post_get_unread_news_count) | **POST** /account_api/news_count | The unread news count for public news.
+*AccountApi* | [**post_logout**](docs/AccountApi.md#post_logout) | **POST** /account_api/logout | 
+*AccountApi* | [**post_reset_news_paging**](docs/AccountApi.md#post_reset_news_paging) | **POST** /account_api/reset_news_paging | 
+*AccountApi* | [**post_set_account_deletion_request_state**](docs/AccountApi.md#post_set_account_deletion_request_state) | **POST** /account_api/set_account_deletion_request_state/{aid} | Request account deletion or cancel the deletion
+*AccountApi* | [**post_sign_in_with_login**](docs/AccountApi.md#post_sign_in_with_login) | **POST** /account_api/sign_in_with_login | Start new session with sign in with Apple or Google. Creates new account if it does not exists.
+*AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update current or pending profile visiblity value.
+*AccountApi* | [**put_setting_unlimited_likes**](docs/AccountApi.md#put_setting_unlimited_likes) | **PUT** /account_api/settings/unlimited_likes | 
+*AccountAdminApi* | [**delete_news_item**](docs/AccountAdminApi.md#delete_news_item) | **DELETE** /account_api/admin/delete_news/{nid} | 
+*AccountAdminApi* | [**delete_news_translation**](docs/AccountAdminApi.md#delete_news_translation) | **DELETE** /account_api/admin/delete_news_translation/{nid}/{locale} | 
+*AccountAdminApi* | [**get_account_id_from_email**](docs/AccountAdminApi.md#get_account_id_from_email) | **GET** /account_api/get_account_id_from_email/{email} | Get account ID from email
+*AccountAdminApi* | [**get_account_state_admin**](docs/AccountAdminApi.md#get_account_state_admin) | **GET** /account_api/get_account_state_admin/{aid} | Get [model::Account] for specific account.
+*AccountAdminApi* | [**get_all_admins**](docs/AccountAdminApi.md#get_all_admins) | **GET** /account_api/get_all_admins | Get all admins
+*AccountAdminApi* | [**get_permissions**](docs/AccountAdminApi.md#get_permissions) | **GET** /account_api/get_permissions/{aid} | Get [model::Permissions] for specific account.
+*AccountAdminApi* | [**post_create_news_item**](docs/AccountAdminApi.md#post_create_news_item) | **POST** /account_api/admin/create_news_item | 
+*AccountAdminApi* | [**post_delete_account**](docs/AccountAdminApi.md#post_delete_account) | **POST** /account_api/delete_account/{aid} | Delete account instantly
+*AccountAdminApi* | [**post_set_ban_state**](docs/AccountAdminApi.md#post_set_ban_state) | **POST** /account_api/set_ban_state | Ban or unban account
+*AccountAdminApi* | [**post_set_news_publicity**](docs/AccountAdminApi.md#post_set_news_publicity) | **DELETE** /account_api/admin/set_news_publicity/{nid} | 
+*AccountAdminApi* | [**post_set_permissions**](docs/AccountAdminApi.md#post_set_permissions) | **POST** /account_api/set_permissions/{aid} | Set permissions for account
+*AccountAdminApi* | [**post_update_news_translation**](docs/AccountAdminApi.md#post_update_news_translation) | **POST** /account_api/admin/update_news_translation/{nid}/{locale} | 
 *AccountInternalApi* | [**post_login**](docs/AccountInternalApi.md#post_login) | **POST** /account_api/login | Get new AccessToken for a bot account. If the account is not registered as a bot account, then the request will fail.
 *AccountInternalApi* | [**post_register**](docs/AccountInternalApi.md#post_register) | **POST** /account_api/register | Register a new bot account. Returns new account ID which is UUID.
-*ChatApi* | [**delete_like**](docs/ChatApi.md#delete_like) | **DELETE** /O3DZlGOjDYbQ8PlCorta0onQDLI | Delete sent like.
-*ChatApi* | [**get_matches**](docs/ChatApi.md#get_matches) | **GET** /kzySqAe9qYi69MoCBnFGKdn76-Q | Get matches
-*ChatApi* | [**get_message_number_of_latest_viewed_message**](docs/ChatApi.md#get_message_number_of_latest_viewed_message) | **GET** /gas7m77c7kw7N7TKyMQVzUKy3AQ | Get message number of the most recent message that the recipient has viewed.
-*ChatApi* | [**get_pending_messages**](docs/ChatApi.md#get_pending_messages) | **GET** /7sKe87sefWrLYS0JvbPS10_F8oc | Get list of pending messages.
-*ChatApi* | [**get_public_key**](docs/ChatApi.md#get_public_key) | **GET** /e-r4VrqWJD1kIttg1McD9kv5o0k/{aid} | Get current public key of some account
-*ChatApi* | [**get_received_blocks**](docs/ChatApi.md#get_received_blocks) | **GET** /hjP9LovH2kBxnbwWKSyVgFL4o58 | Get list of received blocks
-*ChatApi* | [**get_sent_blocks**](docs/ChatApi.md#get_sent_blocks) | **GET** /3qT3qSKKzXHjo8LGEphwMLF8vjk | Get list of sent blocks
-*ChatApi* | [**get_sent_likes**](docs/ChatApi.md#get_sent_likes) | **GET** /pTybb424uGsXvCyOLljsPujVe5Y | Get sent likes.
-*ChatApi* | [**get_sent_message_ids**](docs/ChatApi.md#get_sent_message_ids) | **GET** /-sDy1a8MS72uNy3UUtX9K8-wYWU | 
-*ChatApi* | [**post_add_receiver_acknowledgement**](docs/ChatApi.md#post_add_receiver_acknowledgement) | **POST** /PBreZU5Cmo7tTtNMMb58yN_xFZ8 | 
-*ChatApi* | [**post_add_sender_acknowledgement**](docs/ChatApi.md#post_add_sender_acknowledgement) | **POST** /E-yVIcGOLJyZ7nsT_Lh4KPCRkQg | 
-*ChatApi* | [**post_block_profile**](docs/ChatApi.md#post_block_profile) | **POST** /MpWSY01lXj7KaDK1KCNHLWRg9k4 | Block profile
-*ChatApi* | [**post_get_new_received_likes_count**](docs/ChatApi.md#post_get_new_received_likes_count) | **POST** /dCPla4TZep6KONk57U2J7p7s6jw | 
-*ChatApi* | [**post_get_next_matches_page**](docs/ChatApi.md#post_get_next_matches_page) | **POST** /dci4ZhBnUr5EXK09jAQMfsKE9EM | Update matches iterator and get next page of matches. If the page is empty there is no more matches available.
-*ChatApi* | [**post_get_next_received_likes_page**](docs/ChatApi.md#post_get_next_received_likes_page) | **POST** /eEB4pq6DGUYlMVAYwPCm2RT5HP0 | Update received likes iterator and get next page of received likes. If the page is empty there is no more received likes available.
-*ChatApi* | [**post_get_pending_notification**](docs/ChatApi.md#post_get_pending_notification) | **POST** /MhQXhJMKgrUh0s95FueOgalQg-o | Get pending notification and reset pending notification.
-*ChatApi* | [**post_message_number_of_latest_viewed_message**](docs/ChatApi.md#post_message_number_of_latest_viewed_message) | **POST** /gas7m77c7kw7N7TKyMQVzUKy3AQ | Update message number of the most recent message that the recipient has viewed.
-*ChatApi* | [**post_public_key**](docs/ChatApi.md#post_public_key) | **POST** /e-r4VrqWJD1kIttg1McD9kv5o0k | Replace current public key with a new public key. Returns public key ID number which server increments. This must be called only when needed as this route will fail every time if current public key ID number is i64::MAX.
-*ChatApi* | [**post_reset_matches_paging**](docs/ChatApi.md#post_reset_matches_paging) | **POST** /kxGkIkvlKvyWPvovHYRtlC7fYXI | 
-*ChatApi* | [**post_reset_received_likes_paging**](docs/ChatApi.md#post_reset_received_likes_paging) | **POST** /B75BRIylLV-JmwoB4YiOYSlyO-A | 
-*ChatApi* | [**post_send_like**](docs/ChatApi.md#post_send_like) | **POST** /sXq6ko76GtT7DuNXnkTTtFL6isY | Send a like to some account. If both will like each other, then the accounts will be a match.
-*ChatApi* | [**post_send_message**](docs/ChatApi.md#post_send_message) | **POST** /YEFESgzw0YxQUETcUmnmfWCaF1g | Send message to a match.
-*ChatApi* | [**post_set_device_token**](docs/ChatApi.md#post_set_device_token) | **POST** /CBoGGZ4HDW0REbM6SxasDCvXJNM | 
-*ChatApi* | [**post_unblock_profile**](docs/ChatApi.md#post_unblock_profile) | **POST** /j2Ofh-WeAFmjCQqO_AyHIM1eZEo | Unblock profile
-*CommonApi* | [**get_connect_websocket**](docs/CommonApi.md#get_connect_websocket) | **GET** /6qQZ2jQO5exMKFI2jCzGAdMysxE | Connect to server using WebSocket after getting refresh and access tokens. Connection is required as API access is allowed for connected clients.
-*CommonApi* | [**get_version**](docs/CommonApi.md#get_version) | **GET** /0E_N3KS0gI2PPBujveMhHLv292Y | Get backend version.
-*CommonAdminApi* | [**get_backend_config**](docs/CommonAdminApi.md#get_backend_config) | **GET** /E1D6g_Gvk0QMUdCm5KecTU_CfxY | Get dynamic backend config.
-*CommonAdminApi* | [**get_latest_build_info**](docs/CommonAdminApi.md#get_latest_build_info) | **GET** /iTg7lktGRkK6vDTVhYAZcnfGSQk | Get latest software build information available for update from manager instance.
-*CommonAdminApi* | [**get_perf_data**](docs/CommonAdminApi.md#get_perf_data) | **GET** /LFF7-r3TWVsPUnfVzncXBphb0CM | Get performance data
-*CommonAdminApi* | [**get_software_info**](docs/CommonAdminApi.md#get_software_info) | **GET** /uAURrHBf-ePlVvcYS0FslKy5pV8 | Get software version information from manager instance.
-*CommonAdminApi* | [**get_system_info**](docs/CommonAdminApi.md#get_system_info) | **GET** /NZCbtziElAJucvGefGs9Z6btUrQ | Get system information from manager instance.
-*CommonAdminApi* | [**post_backend_config**](docs/CommonAdminApi.md#post_backend_config) | **POST** /E1D6g_Gvk0QMUdCm5KecTU_CfxY | Save dynamic backend config.
-*CommonAdminApi* | [**post_request_build_software**](docs/CommonAdminApi.md#post_request_build_software) | **POST** /vGQvKiH7zbpopxyScZILldwiCsg | Request building new software from manager instance.
-*CommonAdminApi* | [**post_request_restart_or_reset_backend**](docs/CommonAdminApi.md#post_request_restart_or_reset_backend) | **POST** /rAIji-qOFiclUKWs_5JIR_-dLoI | Request restarting or reseting backend through app-manager instance.
-*CommonAdminApi* | [**post_request_update_software**](docs/CommonAdminApi.md#post_request_update_software) | **POST** /yFSS8sqNjFU8nfjNqoKN1qQ743w | Request updating new software from manager instance.
-*MediaApi* | [**delete_content**](docs/MediaApi.md#delete_content) | **DELETE** /9ztWJZUmcnzICLL2gJ8qV8gVoR8/{aid}/{cid} | Delete content data.
-*MediaApi* | [**get_all_account_media_content**](docs/MediaApi.md#get_all_account_media_content) | **GET** /RzBkQfHdmWHdL0L1Uq-DVE6kiVY/{aid} | Get list of all media content on the server for one account.
-*MediaApi* | [**get_content**](docs/MediaApi.md#get_content) | **GET** /9ztWJZUmcnzICLL2gJ8qV8gVoR8/{aid}/{cid} | Get content data
-*MediaApi* | [**get_content_slot_state**](docs/MediaApi.md#get_content_slot_state) | **GET** /y5DgJJAaDZF89y6X4ge84klpBq0/{slot_id} | Get state of content slot.
-*MediaApi* | [**get_map_tile**](docs/MediaApi.md#get_map_tile) | **GET** /BoFh54UgWwlQvwJfb0TpJqd4gaM/{z}/{x}/{y} | Get map tile PNG file.
-*MediaApi* | [**get_media_content_info**](docs/MediaApi.md#get_media_content_info) | **GET** /IVQB_zKtVtalr-77q1-670RgOpg | Get my profile and security content
-*MediaApi* | [**get_profile_content_info**](docs/MediaApi.md#get_profile_content_info) | **GET** /ZYlzEPvPMBx2V1S6Ee-kIhp2_rg/{aid} | Get current profile content for selected profile.
-*MediaApi* | [**get_security_content_info**](docs/MediaApi.md#get_security_content_info) | **GET** /6lWoyl4YuurCAEnkJbnSy1wP22M/{aid} | Get current security content for selected profile.
-*MediaApi* | [**post_get_initial_content_moderation_completed**](docs/MediaApi.md#post_get_initial_content_moderation_completed) | **POST** /F6vxr3u-OBwaCkVm_bzTaM4NmRc | Get initial content moderation completed result.
-*MediaApi* | [**put_content_to_content_slot**](docs/MediaApi.md#put_content_to_content_slot) | **PUT** /y5DgJJAaDZF89y6X4ge84klpBq0/{slot_id} | Upload content to server. The content is saved to content processing slot when account state is [model::AccountState::InitialSetup]. In other states the slot number is ignored and content goes directly to moderation.
-*MediaApi* | [**put_profile_content**](docs/MediaApi.md#put_profile_content) | **PUT** /_rsyG4gpvDy3O3Aj5hpLp3-8oPE | Set new profile content for current account.
-*MediaApi* | [**put_security_content_info**](docs/MediaApi.md#put_security_content_info) | **PUT** /6lWoyl4YuurCAEnkJbnSy1wP22M | Set current security content for current account.
-*MediaAdminApi* | [**get_profile_content_pending_moderation_list**](docs/MediaAdminApi.md#get_profile_content_pending_moderation_list) | **GET** /Kfz_n_yfrXnIcEOjh0nDBdGEXTg | Get first page of pending profile content moderations. Oldest item is first and count 25.
-*MediaAdminApi* | [**post_moderate_profile_content**](docs/MediaAdminApi.md#post_moderate_profile_content) | **POST** /_pTQ1YLcXEWy_Zfv5Fybbm-E0UE | Rejected category and details can be set only when the content is rejected.
-*ProfileApi* | [**delete_favorite_profile**](docs/ProfileApi.md#delete_favorite_profile) | **DELETE** /yD1PtVhVvdk-usEran42JmCTFVQ | Delete favorite profile
-*ProfileApi* | [**get_available_profile_attributes**](docs/ProfileApi.md#get_available_profile_attributes) | **GET** /_lqy4YCINbw_RCxebKLGXdDq2AM | Get info what profile attributes server supports.
-*ProfileApi* | [**get_favorite_profiles**](docs/ProfileApi.md#get_favorite_profiles) | **GET** /Oep5nM7bWqTdRfRoULt-_FTkKJQ | Get list of all favorite profiles.
-*ProfileApi* | [**get_initial_profile_age_info**](docs/ProfileApi.md#get_initial_profile_age_info) | **GET** /NWOWjOlm6oTYsXiPsbhBDgknan0 | Get initial profile age information which can be used for calculating current accepted profile ages.
-*ProfileApi* | [**get_location**](docs/ProfileApi.md#get_location) | **GET** /lf5KMD9dBSVuaVcwjm4TB0d7bfY | Get location for account which makes this request.
-*ProfileApi* | [**get_my_profile**](docs/ProfileApi.md#get_my_profile) | **GET** /iu25rmmvUzADXhW5SsP_DBGY2_w | Get my profile
-*ProfileApi* | [**get_profile**](docs/ProfileApi.md#get_profile) | **GET** /5i55ZcY0jIPD7B6pyyridKY0j0Q/{aid} | Get account's current profile.
-*ProfileApi* | [**get_profile_filtering_settings**](docs/ProfileApi.md#get_profile_filtering_settings) | **GET** /Hyav-PRHLoEreB67cVG_WbASOFI | Get current profile filtering settings.
-*ProfileApi* | [**get_profile_from_database_debug_mode_benchmark**](docs/ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /XDTSz35S_5tOKIsSpDITOc46MR4/{aid} | Get account's current profile from database. Debug mode must be enabled that route can be used.
-*ProfileApi* | [**get_profile_statistics**](docs/ProfileApi.md#get_profile_statistics) | **GET** /WJCHYdLNpydn1OkJNyZKKksc4Yw | Non default values for [model::GetProfileStatisticsParams] requires [model::Permissions::admin_profile_statistics].
-*ProfileApi* | [**get_search_age_range**](docs/ProfileApi.md#get_search_age_range) | **GET** /xTy-zcnl0LQlfPKQalAEnWQQ-rw | Get account's current search age range
-*ProfileApi* | [**get_search_groups**](docs/ProfileApi.md#get_search_groups) | **GET** /p1KA-sqKKtU3FHvUqYRZnQgj7RQ | Get account's current search groups (gender and what gender user is looking for)
-*ProfileApi* | [**post_favorite_profile**](docs/ProfileApi.md#post_favorite_profile) | **POST** /yD1PtVhVvdk-usEran42JmCTFVQ | Add new favorite profile
-*ProfileApi* | [**post_get_next_profile_page**](docs/ProfileApi.md#post_get_next_profile_page) | **POST** /_XRgLHtmWtbgW3ZAlgfTH5bs6bE | Post (updates iterator) to get next page of profile list.
-*ProfileApi* | [**post_get_query_available_profile_attributes**](docs/ProfileApi.md#post_get_query_available_profile_attributes) | **POST** /CO3Oaim0dDWLcVuGqqJoVG-ybXE | Query profile attributes using attribute ID list.
-*ProfileApi* | [**post_profile**](docs/ProfileApi.md#post_profile) | **POST** /5i55ZcY0jIPD7B6pyyridKY0j0Q | Update profile information.
-*ProfileApi* | [**post_profile_filtering_settings**](docs/ProfileApi.md#post_profile_filtering_settings) | **POST** /Hyav-PRHLoEreB67cVG_WbASOFI | Set profile filtering settings.
-*ProfileApi* | [**post_profile_to_database_debug_mode_benchmark**](docs/ProfileApi.md#post_profile_to_database_debug_mode_benchmark) | **POST** /XDTSz35S_5tOKIsSpDITOc46MR4 | Post account's current profile directly to database. Debug mode must be enabled that route can be used.
-*ProfileApi* | [**post_reset_profile_paging**](docs/ProfileApi.md#post_reset_profile_paging) | **POST** /uUYIl9C8DoXwTj1icArj0S4RTFI | Reset profile paging.
-*ProfileApi* | [**post_search_age_range**](docs/ProfileApi.md#post_search_age_range) | **POST** /xTy-zcnl0LQlfPKQalAEnWQQ-rw | Set account's current search age range
-*ProfileApi* | [**post_search_groups**](docs/ProfileApi.md#post_search_groups) | **POST** /p1KA-sqKKtU3FHvUqYRZnQgj7RQ | Set account's current search groups (gender and what gender user is looking for)
-*ProfileApi* | [**put_location**](docs/ProfileApi.md#put_location) | **PUT** /lf5KMD9dBSVuaVcwjm4TB0d7bfY | Update location for account which makes this request.
-*ProfileAdminApi* | [**get_profile_age_and_name**](docs/ProfileAdminApi.md#get_profile_age_and_name) | **GET** /vaT3tB2QTgv7HaJl4pxFaQR7dEQ/{aid} | Get profile age and name
-*ProfileAdminApi* | [**get_profile_name_pending_moderation_list**](docs/ProfileAdminApi.md#get_profile_name_pending_moderation_list) | **GET** /82woXm_Kq9yEtRHP7KAcXkgRWnU | 
-*ProfileAdminApi* | [**get_profile_statistics_history**](docs/ProfileAdminApi.md#get_profile_statistics_history) | **GET** /6CGbSNdoURdJRTBxb3Hb_OGw9ME | 
-*ProfileAdminApi* | [**get_profile_text_pending_moderation_list**](docs/ProfileAdminApi.md#get_profile_text_pending_moderation_list) | **GET** /pdEU3ussEDsELfe6TOtjqrDojOc | Get first page of pending profile text moderations. Oldest item is first and count 25.
-*ProfileAdminApi* | [**get_profile_text_state**](docs/ProfileAdminApi.md#get_profile_text_state) | **GET** /zJnMNwOsdHxzZfSNNFzubM-Gess/{aid} | Get profile text state
-*ProfileAdminApi* | [**post_moderate_profile_name**](docs/ProfileAdminApi.md#post_moderate_profile_name) | **POST** /bnrAbC2DpwIftQouXUAVR1W6g8Y | 
-*ProfileAdminApi* | [**post_moderate_profile_text**](docs/ProfileAdminApi.md#post_moderate_profile_text) | **POST** /53BBFzgF9dZhb7_HvZSqLidsqbg | Rejected category and details can be set only when the text is rejected.
+*ChatApi* | [**delete_like**](docs/ChatApi.md#delete_like) | **DELETE** /chat_api/delete_like | Delete sent like.
+*ChatApi* | [**get_matches**](docs/ChatApi.md#get_matches) | **GET** /chat_api/matches | Get matches
+*ChatApi* | [**get_message_number_of_latest_viewed_message**](docs/ChatApi.md#get_message_number_of_latest_viewed_message) | **GET** /chat_api/message_number_of_latest_viewed_message | Get message number of the most recent message that the recipient has viewed.
+*ChatApi* | [**get_pending_messages**](docs/ChatApi.md#get_pending_messages) | **GET** /chat_api/pending_messages | Get list of pending messages.
+*ChatApi* | [**get_public_key**](docs/ChatApi.md#get_public_key) | **GET** /chat_api/public_key/{aid} | Get current public key of some account
+*ChatApi* | [**get_received_blocks**](docs/ChatApi.md#get_received_blocks) | **GET** /chat_api/received_blocks | Get list of received blocks
+*ChatApi* | [**get_sent_blocks**](docs/ChatApi.md#get_sent_blocks) | **GET** /chat_api/sent_blocks | Get list of sent blocks
+*ChatApi* | [**get_sent_likes**](docs/ChatApi.md#get_sent_likes) | **GET** /chat_api/sent_likes | Get sent likes.
+*ChatApi* | [**get_sent_message_ids**](docs/ChatApi.md#get_sent_message_ids) | **GET** /chat_api/sent_message_ids | 
+*ChatApi* | [**post_add_receiver_acknowledgement**](docs/ChatApi.md#post_add_receiver_acknowledgement) | **POST** /chat_api/add_receiver_acknowledgement | 
+*ChatApi* | [**post_add_sender_acknowledgement**](docs/ChatApi.md#post_add_sender_acknowledgement) | **POST** /chat_api/add_sender_acknowledgement | 
+*ChatApi* | [**post_block_profile**](docs/ChatApi.md#post_block_profile) | **POST** /chat_api/block_profile | Block profile
+*ChatApi* | [**post_get_new_received_likes_count**](docs/ChatApi.md#post_get_new_received_likes_count) | **POST** /chat_api/new_received_likes_count | 
+*ChatApi* | [**post_get_next_matches_page**](docs/ChatApi.md#post_get_next_matches_page) | **POST** /chat_api/matches_page | Update matches iterator and get next page of matches. If the page is empty there is no more matches available.
+*ChatApi* | [**post_get_next_received_likes_page**](docs/ChatApi.md#post_get_next_received_likes_page) | **POST** /chat_api/received_likes | Update received likes iterator and get next page of received likes. If the page is empty there is no more received likes available.
+*ChatApi* | [**post_get_pending_notification**](docs/ChatApi.md#post_get_pending_notification) | **POST** /chat_api/get_pending_notification | Get pending notification and reset pending notification.
+*ChatApi* | [**post_message_number_of_latest_viewed_message**](docs/ChatApi.md#post_message_number_of_latest_viewed_message) | **POST** /chat_api/message_number_of_latest_viewed_message | Update message number of the most recent message that the recipient has viewed.
+*ChatApi* | [**post_public_key**](docs/ChatApi.md#post_public_key) | **POST** /chat_api/public_key | Replace current public key with a new public key. Returns public key ID number which server increments. This must be called only when needed as this route will fail every time if current public key ID number is i64::MAX.
+*ChatApi* | [**post_reset_matches_paging**](docs/ChatApi.md#post_reset_matches_paging) | **POST** /chat_api/matches/reset | 
+*ChatApi* | [**post_reset_received_likes_paging**](docs/ChatApi.md#post_reset_received_likes_paging) | **POST** /chat_api/received_likes/reset | 
+*ChatApi* | [**post_send_like**](docs/ChatApi.md#post_send_like) | **POST** /chat_api/send_like | Send a like to some account. If both will like each other, then the accounts will be a match.
+*ChatApi* | [**post_send_message**](docs/ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match.
+*ChatApi* | [**post_set_device_token**](docs/ChatApi.md#post_set_device_token) | **POST** /chat_api/set_device_token | 
+*ChatApi* | [**post_unblock_profile**](docs/ChatApi.md#post_unblock_profile) | **POST** /chat_api/unblock_profile | Unblock profile
+*CommonApi* | [**get_connect_websocket**](docs/CommonApi.md#get_connect_websocket) | **GET** /common_api/connect | Connect to server using WebSocket after getting refresh and access tokens. Connection is required as API access is allowed for connected clients.
+*CommonApi* | [**get_version**](docs/CommonApi.md#get_version) | **GET** /common_api/version | Get backend version.
+*CommonAdminApi* | [**get_backend_config**](docs/CommonAdminApi.md#get_backend_config) | **GET** /common_api/backend_config | Get dynamic backend config.
+*CommonAdminApi* | [**get_latest_build_info**](docs/CommonAdminApi.md#get_latest_build_info) | **GET** /common_api/get_latest_build_info | Get latest software build information available for update from manager instance.
+*CommonAdminApi* | [**get_perf_data**](docs/CommonAdminApi.md#get_perf_data) | **GET** /common_api/perf_data | Get performance data
+*CommonAdminApi* | [**get_software_info**](docs/CommonAdminApi.md#get_software_info) | **GET** /common_api/software_info | Get software version information from manager instance.
+*CommonAdminApi* | [**get_system_info**](docs/CommonAdminApi.md#get_system_info) | **GET** /common_api/system_info | Get system information from manager instance.
+*CommonAdminApi* | [**post_backend_config**](docs/CommonAdminApi.md#post_backend_config) | **POST** /common_api/backend_config | Save dynamic backend config.
+*CommonAdminApi* | [**post_request_build_software**](docs/CommonAdminApi.md#post_request_build_software) | **POST** /common_api/request_build_software | Request building new software from manager instance.
+*CommonAdminApi* | [**post_request_restart_or_reset_backend**](docs/CommonAdminApi.md#post_request_restart_or_reset_backend) | **POST** /common_api/request_restart_or_reset_backend | Request restarting or reseting backend through app-manager instance.
+*CommonAdminApi* | [**post_request_update_software**](docs/CommonAdminApi.md#post_request_update_software) | **POST** /common_api/request_update_software | Request updating new software from manager instance.
+*MediaApi* | [**delete_content**](docs/MediaApi.md#delete_content) | **DELETE** /media_api/content/{aid}/{cid} | Delete content data.
+*MediaApi* | [**get_all_account_media_content**](docs/MediaApi.md#get_all_account_media_content) | **GET** /media_api/all_account_media_content/{aid} | Get list of all media content on the server for one account.
+*MediaApi* | [**get_content**](docs/MediaApi.md#get_content) | **GET** /media_api/content/{aid}/{cid} | Get content data
+*MediaApi* | [**get_content_slot_state**](docs/MediaApi.md#get_content_slot_state) | **GET** /media_api/content_slot/{slot_id} | Get state of content slot.
+*MediaApi* | [**get_map_tile**](docs/MediaApi.md#get_map_tile) | **GET** /media_api/map_tile/{z}/{x}/{y} | Get map tile PNG file.
+*MediaApi* | [**get_media_content_info**](docs/MediaApi.md#get_media_content_info) | **GET** /media_api/media_content_info | Get my profile and security content
+*MediaApi* | [**get_profile_content_info**](docs/MediaApi.md#get_profile_content_info) | **GET** /media_api/profile_content_info/{aid} | Get current profile content for selected profile.
+*MediaApi* | [**get_security_content_info**](docs/MediaApi.md#get_security_content_info) | **GET** /media_api/security_content_info/{aid} | Get current security content for selected profile.
+*MediaApi* | [**post_get_initial_content_moderation_completed**](docs/MediaApi.md#post_get_initial_content_moderation_completed) | **POST** /media_api/initial_content_moderation_completed_result | Get initial content moderation completed result.
+*MediaApi* | [**put_content_to_content_slot**](docs/MediaApi.md#put_content_to_content_slot) | **PUT** /media_api/content_slot/{slot_id} | Upload content to server. The content is saved to content processing slot when account state is [model::AccountState::InitialSetup]. In other states the slot number is ignored and content goes directly to moderation.
+*MediaApi* | [**put_profile_content**](docs/MediaApi.md#put_profile_content) | **PUT** /media_api/profile_content | Set new profile content for current account.
+*MediaApi* | [**put_security_content_info**](docs/MediaApi.md#put_security_content_info) | **PUT** /media_api/security_content_info | Set current security content for current account.
+*MediaAdminApi* | [**get_profile_content_pending_moderation_list**](docs/MediaAdminApi.md#get_profile_content_pending_moderation_list) | **GET** /media_api/admin/profile_content_pending_moderation | Get first page of pending profile content moderations. Oldest item is first and count 25.
+*MediaAdminApi* | [**post_moderate_profile_content**](docs/MediaAdminApi.md#post_moderate_profile_content) | **POST** /media_api/admin/moderate_profile_content | Rejected category and details can be set only when the content is rejected.
+*ProfileApi* | [**delete_favorite_profile**](docs/ProfileApi.md#delete_favorite_profile) | **DELETE** /profile_api/favorite_profile | Delete favorite profile
+*ProfileApi* | [**get_available_profile_attributes**](docs/ProfileApi.md#get_available_profile_attributes) | **GET** /profile_api/available_profile_attributes | Get info what profile attributes server supports.
+*ProfileApi* | [**get_favorite_profiles**](docs/ProfileApi.md#get_favorite_profiles) | **GET** /profile_api/favorite_profiles | Get list of all favorite profiles.
+*ProfileApi* | [**get_initial_profile_age_info**](docs/ProfileApi.md#get_initial_profile_age_info) | **GET** /profile_api/initial_profile_age_info | Get initial profile age information which can be used for calculating current accepted profile ages.
+*ProfileApi* | [**get_location**](docs/ProfileApi.md#get_location) | **GET** /profile_api/location | Get location for account which makes this request.
+*ProfileApi* | [**get_my_profile**](docs/ProfileApi.md#get_my_profile) | **GET** /profile_api/my_profile | Get my profile
+*ProfileApi* | [**get_profile**](docs/ProfileApi.md#get_profile) | **GET** /profile_api/profile/{aid} | Get account's current profile.
+*ProfileApi* | [**get_profile_filtering_settings**](docs/ProfileApi.md#get_profile_filtering_settings) | **GET** /profile_api/profile_filtering_settings | Get current profile filtering settings.
+*ProfileApi* | [**get_profile_from_database_debug_mode_benchmark**](docs/ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /profile_api/benchmark/profile/{aid} | Get account's current profile from database. Debug mode must be enabled that route can be used.
+*ProfileApi* | [**get_profile_statistics**](docs/ProfileApi.md#get_profile_statistics) | **GET** /profile_api/profile_statistics | Non default values for [model::GetProfileStatisticsParams] requires [model::Permissions::admin_profile_statistics].
+*ProfileApi* | [**get_search_age_range**](docs/ProfileApi.md#get_search_age_range) | **GET** /profile_api/search_age_range | Get account's current search age range
+*ProfileApi* | [**get_search_groups**](docs/ProfileApi.md#get_search_groups) | **GET** /profile_api/search_groups | Get account's current search groups (gender and what gender user is looking for)
+*ProfileApi* | [**post_favorite_profile**](docs/ProfileApi.md#post_favorite_profile) | **POST** /profile_api/favorite_profile | Add new favorite profile
+*ProfileApi* | [**post_get_next_profile_page**](docs/ProfileApi.md#post_get_next_profile_page) | **POST** /profile_api/page/next | Post (updates iterator) to get next page of profile list.
+*ProfileApi* | [**post_get_query_available_profile_attributes**](docs/ProfileApi.md#post_get_query_available_profile_attributes) | **POST** /profile_api/query_available_profile_attributes | Query profile attributes using attribute ID list.
+*ProfileApi* | [**post_profile**](docs/ProfileApi.md#post_profile) | **POST** /profile_api/profile | Update profile information.
+*ProfileApi* | [**post_profile_filtering_settings**](docs/ProfileApi.md#post_profile_filtering_settings) | **POST** /profile_api/profile_filtering_settings | Set profile filtering settings.
+*ProfileApi* | [**post_profile_to_database_debug_mode_benchmark**](docs/ProfileApi.md#post_profile_to_database_debug_mode_benchmark) | **POST** /profile_api/benchmark/profile | Post account's current profile directly to database. Debug mode must be enabled that route can be used.
+*ProfileApi* | [**post_reset_profile_paging**](docs/ProfileApi.md#post_reset_profile_paging) | **POST** /profile_api/page/reset | Reset profile paging.
+*ProfileApi* | [**post_search_age_range**](docs/ProfileApi.md#post_search_age_range) | **POST** /profile_api/search_age_range | Set account's current search age range
+*ProfileApi* | [**post_search_groups**](docs/ProfileApi.md#post_search_groups) | **POST** /profile_api/search_groups | Set account's current search groups (gender and what gender user is looking for)
+*ProfileApi* | [**put_location**](docs/ProfileApi.md#put_location) | **PUT** /profile_api/location | Update location for account which makes this request.
+*ProfileAdminApi* | [**get_profile_age_and_name**](docs/ProfileAdminApi.md#get_profile_age_and_name) | **GET** /profile_api/get_profile_age_and_name/{aid} | Get profile age and name
+*ProfileAdminApi* | [**get_profile_name_pending_moderation_list**](docs/ProfileAdminApi.md#get_profile_name_pending_moderation_list) | **GET** /profile_api/admin/profile_name_pending_moderation | 
+*ProfileAdminApi* | [**get_profile_statistics_history**](docs/ProfileAdminApi.md#get_profile_statistics_history) | **GET** /profile_api/profile_statistics_history | 
+*ProfileAdminApi* | [**get_profile_text_pending_moderation_list**](docs/ProfileAdminApi.md#get_profile_text_pending_moderation_list) | **GET** /profile_api/admin/profile_text_pending_moderation | Get first page of pending profile text moderations. Oldest item is first and count 25.
+*ProfileAdminApi* | [**get_profile_text_state**](docs/ProfileAdminApi.md#get_profile_text_state) | **GET** /profile_api/get_profile_text_state/{aid} | Get profile text state
+*ProfileAdminApi* | [**post_moderate_profile_name**](docs/ProfileAdminApi.md#post_moderate_profile_name) | **POST** /profile_api/admin/moderate_profile_name | 
+*ProfileAdminApi* | [**post_moderate_profile_text**](docs/ProfileAdminApi.md#post_moderate_profile_text) | **POST** /profile_api/admin/moderate_profile_text | Rejected category and details can be set only when the text is rejected.
 
 
 ## Documentation For Models
@@ -211,6 +211,7 @@ Class | Method | HTTP request | Description
  - [GetMediaContentResult](docs/GetMediaContentResult.md)
  - [GetMyProfileResult](docs/GetMyProfileResult.md)
  - [GetNewsItemResult](docs/GetNewsItemResult.md)
+ - [GetPerfDataEndTimeParameter](docs/GetPerfDataEndTimeParameter.md)
  - [GetProfileAgeAndName](docs/GetProfileAgeAndName.md)
  - [GetProfileContentPendingModerationList](docs/GetProfileContentPendingModerationList.md)
  - [GetProfileContentResult](docs/GetProfileContentResult.md)

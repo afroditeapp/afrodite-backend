@@ -219,7 +219,7 @@ pub async fn delete_favorite_profile(configuration: &configuration::Configuratio
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/yD1PtVhVvdk-usEran42JmCTFVQ", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/favorite_profile", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -255,7 +255,7 @@ pub async fn get_available_profile_attributes(configuration: &configuration::Con
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/_lqy4YCINbw_RCxebKLGXdDq2AM", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/available_profile_attributes", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -290,7 +290,7 @@ pub async fn get_favorite_profiles(configuration: &configuration::Configuration,
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/Oep5nM7bWqTdRfRoULt-_FTkKJQ", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/favorite_profiles", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -325,7 +325,7 @@ pub async fn get_initial_profile_age_info(configuration: &configuration::Configu
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/NWOWjOlm6oTYsXiPsbhBDgknan0", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/initial_profile_age_info", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -360,7 +360,7 @@ pub async fn get_location(configuration: &configuration::Configuration, ) -> Res
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/lf5KMD9dBSVuaVcwjm4TB0d7bfY", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/location", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -395,7 +395,7 @@ pub async fn get_my_profile(configuration: &configuration::Configuration, ) -> R
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/iu25rmmvUzADXhW5SsP_DBGY2_w", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/my_profile", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -431,7 +431,7 @@ pub async fn get_profile(configuration: &configuration::Configuration, aid: &str
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/5i55ZcY0jIPD7B6pyyridKY0j0Q/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
+    let local_var_uri_str = format!("{}/profile_api/profile/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_str) = v {
@@ -472,7 +472,7 @@ pub async fn get_profile_filtering_settings(configuration: &configuration::Confi
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/Hyav-PRHLoEreB67cVG_WbASOFI", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/profile_filtering_settings", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -507,7 +507,7 @@ pub async fn get_profile_from_database_debug_mode_benchmark(configuration: &conf
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/XDTSz35S_5tOKIsSpDITOc46MR4/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
+    let local_var_uri_str = format!("{}/profile_api/benchmark/profile/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -542,7 +542,7 @@ pub async fn get_profile_statistics(configuration: &configuration::Configuration
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/WJCHYdLNpydn1OkJNyZKKksc4Yw", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/profile_statistics", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_str) = profile_visibility {
@@ -583,7 +583,7 @@ pub async fn get_search_age_range(configuration: &configuration::Configuration, 
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/xTy-zcnl0LQlfPKQalAEnWQQ-rw", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/search_age_range", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -618,7 +618,7 @@ pub async fn get_search_groups(configuration: &configuration::Configuration, ) -
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/p1KA-sqKKtU3FHvUqYRZnQgj7RQ", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/search_groups", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -653,7 +653,7 @@ pub async fn post_favorite_profile(configuration: &configuration::Configuration,
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/yD1PtVhVvdk-usEran42JmCTFVQ", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/favorite_profile", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -689,7 +689,7 @@ pub async fn post_get_next_profile_page(configuration: &configuration::Configura
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/_XRgLHtmWtbgW3ZAlgfTH5bs6bE", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/page/next", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -726,7 +726,7 @@ pub async fn post_get_query_available_profile_attributes(configuration: &configu
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/CO3Oaim0dDWLcVuGqqJoVG-ybXE", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/query_available_profile_attributes", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -763,7 +763,7 @@ pub async fn post_profile(configuration: &configuration::Configuration, profile_
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/5i55ZcY0jIPD7B6pyyridKY0j0Q", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/profile", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -799,7 +799,7 @@ pub async fn post_profile_filtering_settings(configuration: &configuration::Conf
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/Hyav-PRHLoEreB67cVG_WbASOFI", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/profile_filtering_settings", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -835,7 +835,7 @@ pub async fn post_profile_to_database_debug_mode_benchmark(configuration: &confi
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/XDTSz35S_5tOKIsSpDITOc46MR4", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/benchmark/profile", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -872,7 +872,7 @@ pub async fn post_reset_profile_paging(configuration: &configuration::Configurat
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/uUYIl9C8DoXwTj1icArj0S4RTFI", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/page/reset", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -907,7 +907,7 @@ pub async fn post_search_age_range(configuration: &configuration::Configuration,
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/xTy-zcnl0LQlfPKQalAEnWQQ-rw", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/search_age_range", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -943,7 +943,7 @@ pub async fn post_search_groups(configuration: &configuration::Configuration, se
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/p1KA-sqKKtU3FHvUqYRZnQgj7RQ", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/search_groups", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -979,7 +979,7 @@ pub async fn put_location(configuration: &configuration::Configuration, location
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/lf5KMD9dBSVuaVcwjm4TB0d7bfY", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/location", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {

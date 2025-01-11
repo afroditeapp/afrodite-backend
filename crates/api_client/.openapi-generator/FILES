@@ -79,6 +79,7 @@ src/models/get_initial_profile_age_info_result.rs
 src/models/get_media_content_result.rs
 src/models/get_my_profile_result.rs
 src/models/get_news_item_result.rs
+src/models/get_perf_data_end_time_parameter.rs
 src/models/get_profile_age_and_name.rs
 src/models/get_profile_content_pending_moderation_list.rs
 src/models/get_profile_content_result.rs

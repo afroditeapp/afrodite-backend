@@ -103,7 +103,7 @@ pub async fn get_backend_config(configuration: &configuration::Configuration, ) 
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/E1D6g_Gvk0QMUdCm5KecTU_CfxY", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/common_api/backend_config", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -138,7 +138,7 @@ pub async fn get_latest_build_info(configuration: &configuration::Configuration,
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/iTg7lktGRkK6vDTVhYAZcnfGSQk", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/common_api/get_latest_build_info", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     local_var_req_builder = local_var_req_builder.query(&[("software_options", &software_options.to_string())]);
@@ -170,12 +170,12 @@ pub async fn get_latest_build_info(configuration: &configuration::Configuration,
 }
 
 /// # Permissions Requires admin_server_maintenance_view_info.
-pub async fn get_perf_data(configuration: &configuration::Configuration, start_time: Option<models::UnixTime>, end_time: Option<models::UnixTime>) -> Result<models::PerfMetricQueryResult, Error<GetPerfDataError>> {
+pub async fn get_perf_data(configuration: &configuration::Configuration, start_time: Option<models::UnixTime>, end_time: Option<models::GetPerfDataEndTimeParameter>) -> Result<models::PerfMetricQueryResult, Error<GetPerfDataError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/LFF7-r3TWVsPUnfVzncXBphb0CM", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/common_api/perf_data", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_str) = start_time {
@@ -216,7 +216,7 @@ pub async fn get_software_info(configuration: &configuration::Configuration, ) -
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/uAURrHBf-ePlVvcYS0FslKy5pV8", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/common_api/software_info", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -251,7 +251,7 @@ pub async fn get_system_info(configuration: &configuration::Configuration, ) -> 
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/NZCbtziElAJucvGefGs9Z6btUrQ", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/common_api/system_info", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -287,7 +287,7 @@ pub async fn post_backend_config(configuration: &configuration::Configuration, b
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/E1D6g_Gvk0QMUdCm5KecTU_CfxY", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/common_api/backend_config", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -323,7 +323,7 @@ pub async fn post_request_build_software(configuration: &configuration::Configur
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/vGQvKiH7zbpopxyScZILldwiCsg", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/common_api/request_build_software", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     local_var_req_builder = local_var_req_builder.query(&[("software_options", &software_options.to_string())]);
@@ -360,7 +360,7 @@ pub async fn post_request_restart_or_reset_backend(configuration: &configuration
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/rAIji-qOFiclUKWs_5JIR_-dLoI", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/common_api/request_restart_or_reset_backend", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     local_var_req_builder = local_var_req_builder.query(&[("reset_data", &reset_data.to_string())]);
@@ -397,7 +397,7 @@ pub async fn post_request_update_software(configuration: &configuration::Configu
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/yFSS8sqNjFU8nfjNqoKN1qQ743w", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/common_api/request_update_software", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     local_var_req_builder = local_var_req_builder.query(&[("software_options", &software_options.to_string())]);
