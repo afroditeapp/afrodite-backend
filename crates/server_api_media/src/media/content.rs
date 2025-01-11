@@ -46,7 +46,7 @@ const PATH_GET_CONTENT: &str = "/media_api/content/{aid}/{cid}";
 /// if query parameter `is_match` is set to `true`.
 ///
 /// If the previous is not true, then permission `admin_view_all_profiles` or
-/// `admin_moderate_profile_content` is required.
+/// `admin_moderate_media_content` is required.
 ///
 #[utoipa::path(
     get,
@@ -119,7 +119,7 @@ pub async fn get_content(
 
     if (visibility && requested_content_is_profile_content)
         || permissions.admin_view_all_profiles
-        || permissions.admin_moderate_profile_content
+        || permissions.admin_moderate_media_content
         || (params.is_match
             && requested_content_is_profile_content
             && state
@@ -141,7 +141,7 @@ const PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT: &str = "/media_api/all_account_media_c
 /// # Access
 ///
 /// - Own account
-/// - Permission [model::Permissions::admin_moderate_profile_content]
+/// - Permission [model::Permissions::admin_moderate_media_content]
 #[utoipa::path(
     get,
     path = PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT,
@@ -164,7 +164,7 @@ pub async fn get_all_account_media_content(
     let internal_id = state.get_internal_id(account_id).await?;
 
     let access_allowed = api_caller_account_id == internal_id ||
-        api_caller_permissions.admin_moderate_profile_content;
+        api_caller_permissions.admin_moderate_media_content;
     if !access_allowed {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }

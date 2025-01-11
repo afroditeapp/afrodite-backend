@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS refresh_token(
 CREATE TABLE IF NOT EXISTS account_permissions(
     account_id    INTEGER PRIMARY KEY NOT NULL,
     admin_modify_permissions                     BOOLEAN NOT NULL DEFAULT 0,
-    admin_moderate_profile_content               BOOLEAN NOT NULL DEFAULT 0,
+    admin_moderate_media_content                 BOOLEAN NOT NULL DEFAULT 0,
     admin_moderate_profile_names                 BOOLEAN NOT NULL DEFAULT 0,
     admin_moderate_profile_texts                 BOOLEAN NOT NULL DEFAULT 0,
     admin_delete_media_content                   BOOLEAN NOT NULL DEFAULT 0,

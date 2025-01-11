@@ -25,7 +25,7 @@ const PATH_GET_SECURITY_CONTENT_INFO: &str = "/media_api/security_content_info/{
 /// # Access
 ///
 /// - Own account
-/// - With permission `admin_moderate_profile_content`
+/// - Permission [model::Permissions::admin_moderate_media_content]
 #[utoipa::path(
     get,
     path = PATH_GET_SECURITY_CONTENT_INFO,
@@ -48,7 +48,7 @@ pub async fn get_security_content_info(
     let internal_id = state.get_internal_id(requested_account_id).await?;
 
     let access_allowed = internal_id == api_caller_account_id ||
-        permissions.admin_moderate_profile_content;
+        permissions.admin_moderate_media_content;
 
     if !access_allowed {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);

@@ -84,7 +84,7 @@ diesel::table! {
     account_permissions (account_id) {
         account_id -> Integer,
         admin_modify_permissions -> Bool,
-        admin_moderate_profile_content -> Bool,
+        admin_moderate_media_content -> Bool,
         admin_moderate_profile_names -> Bool,
         admin_moderate_profile_texts -> Bool,
         admin_delete_media_content -> Bool,

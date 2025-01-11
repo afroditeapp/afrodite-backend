@@ -18,6 +18,9 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
+// TODO(prod): Change moderation related API naming from
+//             profile content to media content.
+
 #[obfuscate_api]
 const PATH_GET_PROFILE_CONTENT_PENDING_MODERATION_LIST: &str =
     "/media_api/admin/profile_content_pending_moderation";
@@ -45,7 +48,7 @@ pub async fn get_profile_content_pending_moderation_list(
 ) -> Result<Json<GetProfileContentPendingModerationList>, StatusCode> {
     MEDIA_ADMIN.get_profile_content_pending_moderation_list.incr();
 
-    if !permissions.admin_moderate_profile_content {
+    if !permissions.admin_moderate_media_content {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
@@ -89,7 +92,7 @@ pub async fn post_moderate_profile_content(
 ) -> Result<(), StatusCode> {
     MEDIA_ADMIN.post_moderate_profile_content.incr();
 
-    if !permissions.admin_moderate_profile_content {
+    if !permissions.admin_moderate_media_content {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
