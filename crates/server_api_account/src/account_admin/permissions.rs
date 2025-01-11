@@ -3,12 +3,49 @@ use model::{AccountId, EventToClientInternal, Permissions};
 use model_account::GetAllAdminsResult;
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::{GetAccounts, WriteData, ReadData}, create_open_api_router, db_write_multiple, S};
+use server_data::read::GetReadCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::utils::{Json, StatusCode};
 
+#[obfuscate_api]
+const PATH_GET_PERMISSIONS: &str = "/account_api/get_permissions/{aid}";
+
+/// Get [model::Permissions] for specific account.
+///
+/// # Access
+///
+/// Permission [model::Permissions::admin_view_permissions] is required.
+#[utoipa::path(
+    get,
+    path = PATH_GET_PERMISSIONS,
+    params(AccountId),
+    responses(
+        (status = 200, description = "Successfull.", body = Permissions),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_permissions(
+    State(state): State<S>,
+    Extension(permissions): Extension<Permissions>,
+    Path(account_id): Path<AccountId>,
+) -> Result<Json<Permissions>, StatusCode> {
+    ACCOUNT_ADMIN.get_permissions.incr();
+
+    if !permissions.admin_view_permissions {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let internal_id = state.get_internal_id(account_id).await?;
+
+    let permissions = state.read().common().account(internal_id).await?;
+
+    Ok(permissions.permissions().into())
+}
 
 #[obfuscate_api]
 const PATH_GET_ALL_ADMINS: &str = "/account_api/get_all_admins";
@@ -17,7 +54,7 @@ const PATH_GET_ALL_ADMINS: &str = "/account_api/get_all_admins";
 ///
 /// # Access
 ///
-/// Permission [model_account::Permissions::admin_view_private_info] is required.
+/// Permission [model_account::Permissions::admin_view_permissions] is required.
 #[utoipa::path(
     get,
     path = PATH_GET_ALL_ADMINS,
@@ -34,7 +71,7 @@ pub async fn get_all_admins(
 ) -> Result<Json<GetAllAdminsResult>, StatusCode> {
     ACCOUNT_ADMIN.get_all_admins.incr();
 
-    if !permissions.admin_view_private_info {
+    if !permissions.admin_view_permissions {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
@@ -97,13 +134,14 @@ pub async fn post_set_permissions(
 }
 
 pub fn admin_permissions_router(s: S) -> OpenApiRouter {
-    create_open_api_router!(s, get_all_admins, post_set_permissions,)
+    create_open_api_router!(s, get_permissions, get_all_admins, post_set_permissions,)
 }
 
 create_counters!(
     AccountCounters,
     ACCOUNT_ADMIN,
     ACCOUNT_ADMIN_PERMISSIONS_COUNTERS_LIST,
+    get_permissions,
     get_all_admins,
     post_set_permissions,
 );

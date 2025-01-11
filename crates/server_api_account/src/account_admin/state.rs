@@ -15,7 +15,7 @@ const PATH_GET_ACCOUNT_STATE_ADMIN: &str = "/account_api/get_account_state_admin
 ///
 /// # Access
 ///
-/// Permission [model_account::Permissions::admin_view_private_info] is required.
+/// Permission [model::Permissions::admin_view_private_info] is required.
 #[utoipa::path(
     get,
     path = PATH_GET_ACCOUNT_STATE_ADMIN,

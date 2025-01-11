@@ -181,6 +181,7 @@ define_permissions!(
     admin_view_all_profiles,
     admin_view_private_info,
     admin_view_profile_history,
+    admin_view_permissions,
     admin_find_account_by_email,
     /// View server infrastructure related info like logs and
     /// software versions.
