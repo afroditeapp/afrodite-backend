@@ -97,7 +97,11 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
         Router::new()
     }
     /// Create router for internal API
-    fn internal_api_router(&self, _state: &Self::AppState) -> Router {
+    fn internal_api_router(
+        &self,
+        _web_socket_manager: WebSocketManager,
+        _state: &Self::AppState,
+    ) -> Router {
         Router::new()
     }
 
@@ -230,13 +234,14 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             WebSocketManager::new(server_quit_watcher.resubscribe()).await;
 
         let server_task = self
-            .create_public_api_server_task(server_quit_watcher.resubscribe(), ws_manager, &state)
+            .create_public_api_server_task(server_quit_watcher.resubscribe(), ws_manager.clone(), &state)
             .await;
         let internal_server_task =
             if let Some(internal_api_addr) = self.config.socket().internal_api {
                 Some(
                     self.create_internal_api_server_task(
                         server_quit_watcher.resubscribe(),
+                        ws_manager,
                         &state,
                         internal_api_addr,
                     )
@@ -469,10 +474,11 @@ impl<T: BusinessLogic> SimpleBackend<T> {
     async fn create_internal_api_server_task(
         &self,
         quit_notification: ServerQuitWatcher,
+        web_socket_manager: WebSocketManager,
         state: &T::AppState,
         addr: SocketAddr,
     ) -> JoinHandle<()> {
-        let router = self.logic.internal_api_router(state);
+        let router = self.logic.internal_api_router(web_socket_manager, state);
         let router = if self.config.debug_mode() {
             if let Some(swagger) = self.logic.create_swagger_ui(state) {
                 router.merge(swagger)
