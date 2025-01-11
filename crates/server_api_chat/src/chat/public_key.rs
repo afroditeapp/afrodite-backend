@@ -7,7 +7,6 @@ use axum::{
 use model_chat::{
     AccountId, AccountIdInternal, GetPublicKey, PublicKeyId, PublicKeyVersion, SetPublicKey,
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{
     app::{GetAccounts, WriteData},
     create_open_api_router, db_write, S,
@@ -18,7 +17,6 @@ use simple_backend::create_counters;
 use super::super::utils::{Json, StatusCode};
 use crate::app::ReadData;
 
-#[obfuscate_api]
 const PATH_GET_PUBLIC_KEY: &str = "/chat_api/public_key/{aid}";
 
 /// Get current public key of some account
@@ -49,7 +47,6 @@ async fn get_public_key(
     Ok(key.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_PUBLIC_KEY: &str = "/chat_api/public_key";
 
 /// Replace current public key with a new public key.

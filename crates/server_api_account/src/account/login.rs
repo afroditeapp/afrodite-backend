@@ -3,7 +3,6 @@ use model_account::{
     AccessToken, AccountId, AuthPair, EmailAddress, GoogleAccountId, LoginResult, RefreshToken,
     SignInWithInfo, SignInWithLoginInfo,
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{db_write, db_write_multiple, S};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
@@ -51,7 +50,6 @@ pub async fn login_impl(id: AccountId, state: S) -> Result<LoginResult, StatusCo
     Ok(result)
 }
 
-#[obfuscate_api]
 pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
 
 // TODO(prod): Add error for unverified email address

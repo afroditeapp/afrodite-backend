@@ -6,7 +6,6 @@ use model::Permissions;
 use model_media::{
     AccountId, AccountIdInternal, ContentId, SecurityContent,
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, db_write_multiple, S};
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
@@ -16,7 +15,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-#[obfuscate_api]
 const PATH_GET_SECURITY_CONTENT_INFO: &str = "/media_api/security_content_info/{aid}";
 
 /// Get current security content for selected profile.
@@ -63,7 +61,6 @@ pub async fn get_security_content_info(
     Ok(info.into())
 }
 
-#[obfuscate_api]
 const PATH_PUT_SECURITY_CONTENT_INFO: &str = "/media_api/security_content_info";
 
 /// Set current security content for current account.

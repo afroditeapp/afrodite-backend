@@ -1,6 +1,5 @@
 use axum::{extract::State, Extension};
 use model_profile::{AccountIdInternal, ProfileIteratorSessionId, ProfilePage};
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
 use simple_backend::create_counters;
 
@@ -9,7 +8,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-#[obfuscate_api]
 const PATH_POST_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
 
 /// Post (updates iterator) to get next page of profile list.
@@ -57,7 +55,6 @@ pub async fn post_get_next_profile_page(
 //             position and max distance. Could filtering settings
 //             include those?
 
-#[obfuscate_api]
 const PATH_POST_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
 
 /// Reset profile paging.

@@ -1,6 +1,5 @@
 use axum::{extract::State, Extension};
 use model::AccountIdInternal;
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, db_write_multiple, S};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::write::GetWriteCommandsAccount;
@@ -9,7 +8,6 @@ use simple_backend::create_counters;
 use super::super::utils::StatusCode;
 use crate::app::WriteData;
 
-#[obfuscate_api]
 const PATH_POST_LOGOUT: &str = "/account_api/logout";
 
 #[utoipa::path(

@@ -2,7 +2,6 @@ use axum::{extract::State, Extension};
 use model_account::{
     AccountData, AccountIdInternal, BooleanSetting, EventToClientInternal, ProfileVisibility,
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, db_write, db_write_multiple, S};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
@@ -13,7 +12,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-#[obfuscate_api]
 const PATH_GET_ACCOUNT_DATA: &str = "/account_api/account_data";
 
 /// Get changeable user information to account.
@@ -40,7 +38,6 @@ pub async fn get_account_data(
     Ok(data.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_ACCOUNT_DATA: &str = "/account_api/account_data";
 
 /// Set changeable user information to account.
@@ -74,7 +71,6 @@ pub async fn post_account_data(
         .account_data(api_caller_account_id, data))
 }
 
-#[obfuscate_api]
 const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile_visibility";
 
 /// Update current or pending profile visiblity value.
@@ -130,7 +126,6 @@ pub async fn put_setting_profile_visiblity(
     Ok(())
 }
 
-#[obfuscate_api]
 const PATH_SETTING_UNLIMITED_LIKES: &str = "/account_api/settings/unlimited_likes";
 
 #[utoipa::path(

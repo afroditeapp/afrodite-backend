@@ -1,6 +1,5 @@
 use axum::{extract::State, Extension};
 use model_profile::{AccountId, AccountIdInternal, FavoriteProfilesPage};
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -11,7 +10,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-#[obfuscate_api]
 const PATH_GET_FAVORITE_PROFILES: &str = "/profile_api/favorite_profiles";
 
 /// Get list of all favorite profiles.
@@ -39,7 +37,6 @@ pub async fn get_favorite_profiles(
     Ok(page.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_FAVORITE_PROFILE: &str = "/profile_api/favorite_profile";
 
 /// Add new favorite profile
@@ -69,7 +66,6 @@ pub async fn post_favorite_profile(
     Ok(())
 }
 
-#[obfuscate_api]
 const PATH_DELETE_FAVORITE_PROFILE: &str = "/profile_api/favorite_profile";
 
 /// Delete favorite profile

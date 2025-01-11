@@ -26,5 +26,3 @@ server_api = { path = "../server_api" }
 server_data_chat = { path = "../server_data_chat" }
 
 simple_backend = { path = "../simple_backend" }
-
-obfuscate_api_macro = { path = "../obfuscate_api_macro" }

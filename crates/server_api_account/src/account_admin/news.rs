@@ -6,7 +6,6 @@ use model_account::{
     AccountIdInternal, BooleanSetting, NewsId, NewsLocale, NotificationEvent, Permissions,
     UpdateNewsTranslation, UpdateNewsTranslationResult,
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{
     create_open_api_router, db_write, db_write_multiple, result::WrappedContextExt, DataError, S,
 };
@@ -16,7 +15,6 @@ use simple_backend::create_counters;
 use super::super::utils::{Json, StatusCode};
 use crate::app::{ReadData, WriteData};
 
-#[obfuscate_api]
 const PATH_POST_CREATE_NEWS_ITEM: &str = "/account_api/admin/create_news_item";
 
 #[utoipa::path(
@@ -47,7 +45,6 @@ pub async fn post_create_news_item(
     Ok(news_id.into())
 }
 
-#[obfuscate_api]
 const PATH_DELETE_NEWS_ITEM: &str = "/account_api/admin/delete_news/{nid}";
 
 #[utoipa::path(
@@ -92,7 +89,6 @@ pub async fn delete_news_item(
     Ok(())
 }
 
-#[obfuscate_api]
 const PATH_POST_UPDATE_NEWS_TRANSLATION: &str =
     "/account_api/admin/update_news_translation/{nid}/{locale}";
 
@@ -154,7 +150,6 @@ pub async fn post_update_news_translation(
     Ok(result.into())
 }
 
-#[obfuscate_api]
 const PATH_DELETE_NEWS_TRANSLATION: &str =
     "/account_api/admin/delete_news_translation/{nid}/{locale}";
 
@@ -201,7 +196,6 @@ pub async fn delete_news_translation(
     Ok(())
 }
 
-#[obfuscate_api]
 const PATH_POST_SET_NEWS_PUBLICITY: &str = "/account_api/admin/set_news_publicity/{nid}";
 
 #[utoipa::path(

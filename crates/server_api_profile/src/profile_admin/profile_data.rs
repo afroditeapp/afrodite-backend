@@ -6,7 +6,6 @@ use model::AccountId;
 use model_profile::{
     GetProfileAgeAndName, Permissions,
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{
     app::GetAccounts,
     create_open_api_router, S,
@@ -19,7 +18,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-#[obfuscate_api]
 const PATH_GET_PROFILE_AGE_AND_NAME: &str = "/profile_api/get_profile_age_and_name/{aid}";
 
 /// Get profile age and name

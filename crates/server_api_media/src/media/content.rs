@@ -11,7 +11,6 @@ use model_media::{
     ContentProcessingState, ContentSlot, GetContentQueryParams, NewContentParams, Permissions,
     SlotId,
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::GetConfig, create_open_api_router, db_write_multiple, result::WrappedResultExt, S};
 use server_data::{
     read::GetReadCommandsCommon,
@@ -26,7 +25,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-#[obfuscate_api]
 const PATH_GET_CONTENT: &str = "/media_api/content/{aid}/{cid}";
 
 /// Get content data
@@ -132,7 +130,6 @@ pub async fn get_content(
     }
 }
 
-#[obfuscate_api]
 const PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT: &str = "/media_api/all_account_media_content/{aid}";
 
 /// Get list of all media content on the server for one account.
@@ -186,7 +183,6 @@ pub async fn get_all_account_media_content(
     }.into())
 }
 
-#[obfuscate_api]
 const PATH_PUT_CONTENT_TO_CONTENT_SLOT: &str = "/media_api/content_slot/{slot_id}";
 
 /// Upload content to server. The content is saved to content processing
@@ -261,7 +257,6 @@ pub async fn put_content_to_content_slot(
     Ok(content_info.processing_id.into())
 }
 
-#[obfuscate_api]
 const PATH_GET_CONTENT_SLOT_STATE: &str = "/media_api/content_slot/{slot_id}";
 
 /// Get state of content slot.
@@ -297,7 +292,6 @@ pub async fn get_content_slot_state(
     }
 }
 
-#[obfuscate_api]
 const PATH_DELETE_CONTENT: &str = "/media_api/content/{aid}/{cid}";
 
 /// Delete content data.

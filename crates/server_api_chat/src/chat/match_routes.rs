@@ -5,7 +5,6 @@ use model_chat::{
     AccountIdInternal, AllMatchesPage, MatchesIteratorSessionId, MatchesPage,
     ResetMatchesIteratorResult,
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::WriteData, create_open_api_router, db_write, S};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
@@ -13,7 +12,6 @@ use simple_backend::create_counters;
 use super::super::utils::{Json, StatusCode};
 use crate::app::ReadData;
 
-#[obfuscate_api]
 const PATH_GET_MATCHES: &str = "/chat_api/matches";
 
 /// Get matches
@@ -37,7 +35,6 @@ pub async fn get_matches(
     Ok(page.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_RESET_MATCHES_PAGING: &str = "/chat_api/matches/reset";
 
 #[utoipa::path(
@@ -65,7 +62,6 @@ pub async fn post_reset_matches_paging(
     Ok(r.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_GET_NEXT_MATCHES_PAGE: &str = "/chat_api/matches_page";
 
 /// Update matches iterator and get next page

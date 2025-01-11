@@ -7,7 +7,6 @@ use manager_model::{
     SystemInfoList,
 };
 use model::{AccountIdInternal, Permissions};
-use obfuscate_api_macro::obfuscate_api;
 use simple_backend::{app::GetManagerApi, create_counters};
 use tracing::info;
 
@@ -17,7 +16,6 @@ use crate::{
     S,
 };
 
-#[obfuscate_api]
 const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
 
 /// Get system information from manager instance.
@@ -45,7 +43,6 @@ pub async fn get_system_info(
     }
 }
 
-#[obfuscate_api]
 const PATH_GET_SOFTWARE_INFO: &str = "/common_api/software_info";
 
 /// Get software version information from manager instance.
@@ -73,7 +70,6 @@ pub async fn get_software_info(
     }
 }
 
-#[obfuscate_api]
 const PATH_GET_LATEST_BUILD_INFO: &str = "/common_api/get_latest_build_info";
 
 /// Get latest software build information available for update from manager
@@ -107,7 +103,6 @@ pub async fn get_latest_build_info(
     }
 }
 
-#[obfuscate_api]
 const PATH_POST_REQUEST_BUILD_SOFTWARE: &str = "/common_api/request_build_software";
 
 /// Request building new software from manager instance.
@@ -140,7 +135,6 @@ pub async fn post_request_build_software(
     }
 }
 
-#[obfuscate_api]
 const PATH_POST_REQUEST_UPDATE_SOFTWARE: &str = "/common_api/request_update_software";
 
 /// Request updating new software from manager instance.
@@ -199,7 +193,6 @@ pub async fn post_request_update_software(
     }
 }
 
-#[obfuscate_api]
 const PATH_POST_REQUEST_RESTART_OR_RESET_BACKEND: &str =
     "/common_api/request_restart_or_reset_backend";
 

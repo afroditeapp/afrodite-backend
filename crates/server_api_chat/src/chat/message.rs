@@ -10,7 +10,6 @@ use model_chat::{
     NotificationEvent, PendingMessageAcknowledgementList, SendMessageResult,
     SendMessageToAccountParams, SentMessageIdList, UpdateMessageViewStatus,
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
 use server_data_chat::{
     read::GetReadChatCommands,
@@ -39,7 +38,6 @@ use crate::{
 //   should be 1024.
 // - Update pgp to new version and change keys to use X25519 and Ed25519.
 
-#[obfuscate_api]
 const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
 
 /// Get list of pending messages.
@@ -98,7 +96,6 @@ pub async fn get_pending_messages(
     Ok((TypedHeader(ContentType::octet_stream()), bytes))
 }
 
-#[obfuscate_api]
 const PATH_POST_ADD_RECEIVER_ACKNOWLEDGEMENT: &str = "/chat_api/add_receiver_acknowledgement";
 
 #[utoipa::path(
@@ -126,7 +123,6 @@ pub async fn post_add_receiver_acknowledgement(
     Ok(())
 }
 
-#[obfuscate_api]
 const PATH_GET_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE: &str =
     "/chat_api/message_number_of_latest_viewed_message";
 
@@ -158,7 +154,6 @@ pub async fn get_message_number_of_latest_viewed_message(
     Ok(number.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE: &str =
     "/chat_api/message_number_of_latest_viewed_message";
 
@@ -203,7 +198,6 @@ pub async fn post_message_number_of_latest_viewed_message(
     Ok(())
 }
 
-#[obfuscate_api]
 const PATH_POST_SEND_MESSAGE: &str = "/chat_api/send_message";
 
 /// Send message to a match.
@@ -279,7 +273,6 @@ pub async fn post_send_message(
     Ok(result.into())
 }
 
-#[obfuscate_api]
 const PATH_GET_SENT_MESSAGE_IDS: &str = "/chat_api/sent_message_ids";
 
 #[utoipa::path(
@@ -302,7 +295,6 @@ pub async fn get_sent_message_ids(
     Ok(id_list.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_ADD_SENDER_ACKNOWLEDGEMENT: &str = "/chat_api/add_sender_acknowledgement";
 
 #[utoipa::path(

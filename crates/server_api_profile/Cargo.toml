@@ -22,5 +22,3 @@ server_data_profile = { path = "../server_data_profile" }
 
 simple_backend = { path = "../simple_backend" }
 simple_backend_utils = { path = "../simple_backend_utils" }
-
-obfuscate_api_macro = { path = "../obfuscate_api_macro" }

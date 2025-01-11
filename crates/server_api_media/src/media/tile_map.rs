@@ -5,14 +5,12 @@ use axum::{
 use axum_extra::TypedHeader;
 use headers::{ContentLength, ContentType};
 use model_media::{MapTileX, MapTileY, MapTileZ};
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
 use simple_backend::{app::GetTileMap, create_counters};
 use tracing::error;
 
 use crate::utils::StatusCode;
 
-#[obfuscate_api]
 const PATH_GET_MAP_TILE: &str = "/media_api/map_tile/{z}/{x}/{y}";
 
 /// Get map tile PNG file.

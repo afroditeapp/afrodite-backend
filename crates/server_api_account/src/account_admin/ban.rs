@@ -1,14 +1,12 @@
 use axum::{extract::State, Extension};
 use model::{AccountIdInternal, EventToClientInternal, Permissions};
 use model_account::SetAccountBanState;
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::{GetAccounts, WriteData}, create_open_api_router, db_write_multiple, S};
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
 
 use crate::utils::{Json, StatusCode};
 
-#[obfuscate_api]
 const PATH_POST_SET_BAN_STATE: &str = "/account_api/set_ban_state";
 
 /// Ban or unban account

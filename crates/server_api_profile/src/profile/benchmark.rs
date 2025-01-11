@@ -5,7 +5,6 @@ use axum::{
 use model_profile::{
     AccountId, AccountIdInternal, AccountState, Profile, ProfileUpdate,
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -20,7 +19,6 @@ use crate::{
 
 // ------------------- Benchmark routes ----------------------------
 
-#[obfuscate_api]
 const PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK: &str = "/profile_api/benchmark/profile/{aid}";
 
 /// Get account's current profile from database. Debug mode must be enabled
@@ -66,7 +64,6 @@ pub async fn get_profile_from_database_debug_mode_benchmark(
     }
 }
 
-#[obfuscate_api]
 const PATH_POST_PROFILE_TO_DATABASE_BENCHMARK: &str = "/profile_api/benchmark/profile";
 
 /// Post account's current profile directly to database. Debug mode must be enabled

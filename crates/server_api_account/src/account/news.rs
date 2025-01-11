@@ -7,7 +7,6 @@ use model_account::{
     PageItemCountForNewPublicNews, PendingNotificationFlags, Permissions, RequireNewsLocale,
     ResetNewsIteratorResult, UnreadNewsCountResult,
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::EventManagerProvider, create_open_api_router, db_write, S};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
@@ -15,7 +14,6 @@ use simple_backend::create_counters;
 use super::super::utils::{Json, StatusCode};
 use crate::app::{ReadData, WriteData};
 
-#[obfuscate_api]
 const PATH_GET_UNREAD_NEWS_COUNT: &str = "/account_api/news_count";
 
 /// The unread news count for public news.
@@ -48,7 +46,6 @@ pub async fn post_get_unread_news_count(
     Ok(r.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_RESET_NEWS_PAGING: &str = "/account_api/reset_news_paging";
 
 #[utoipa::path(
@@ -75,7 +72,6 @@ pub async fn post_reset_news_paging(
 
 /// For admins the first items on the first page are all
 /// private news.
-#[obfuscate_api]
 const PATH_POST_GET_NEXT_NEWS_PAGE: &str = "/account_api/next_news_page";
 
 #[utoipa::path(
@@ -133,7 +129,6 @@ pub async fn post_get_next_news_page(
     }
 }
 
-#[obfuscate_api]
 const PATH_GET_NEWS_ITEM: &str = "/account_api/news_item/{nid}";
 
 /// Get news item content using specific locale and fallback to locale "en"

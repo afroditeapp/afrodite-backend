@@ -1,6 +1,5 @@
 use axum::{extract::State, Extension};
 use model_profile::{AccountIdInternal, Location};
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -11,7 +10,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-#[obfuscate_api]
 const PATH_GET_LOCATION: &str = "/profile_api/location";
 
 /// Get location for account which makes this request.
@@ -35,7 +33,6 @@ pub async fn get_location(
     Ok(location.into())
 }
 
-#[obfuscate_api]
 const PATH_PUT_LOCATION: &str = "/profile_api/location";
 
 /// Update location for account which makes this request.

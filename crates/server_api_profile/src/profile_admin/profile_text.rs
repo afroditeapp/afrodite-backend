@@ -6,7 +6,6 @@ use model::AccountId;
 use model_profile::{
     AccountIdInternal, EventToClientInternal, GetProfileTextPendingModerationList, GetProfileTextPendingModerationParams, GetProfileTextState, Permissions, PostModerateProfileText
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{
     app::{GetAccounts, WriteData},
     create_open_api_router, db_write_multiple, S,
@@ -19,7 +18,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-#[obfuscate_api]
 const PATH_GET_PROFILE_TEXT_PENDING_MODERATION_LIST: &str =
     "/profile_api/admin/profile_text_pending_moderation";
 
@@ -60,7 +58,6 @@ pub async fn get_profile_text_pending_moderation_list(
     Ok(r.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_MODERATE_PROFILE_TEXT: &str = "/profile_api/admin/moderate_profile_text";
 
 /// Rejected category and details can be set only when the text is rejected.
@@ -123,7 +120,6 @@ pub async fn post_moderate_profile_text(
     Ok(())
 }
 
-#[obfuscate_api]
 const PATH_GET_PROFILE_TEXT_STATE: &str = "/profile_api/get_profile_text_state/{aid}";
 
 /// Get profile text state

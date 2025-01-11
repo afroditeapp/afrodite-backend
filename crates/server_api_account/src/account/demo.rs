@@ -6,7 +6,6 @@ use model_server_state::{
     DemoModeConfirmLogin, DemoModeConfirmLoginResult, DemoModeLoginResult, DemoModeLoginToAccount,
     DemoModePassword, DemoModeToken,
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{
     app::{GetConfig, ReadData},
     create_open_api_router, db_write, S,
@@ -27,7 +26,6 @@ use crate::{
 //             password? Also info about locked account only if password
 //             is correct?
 
-#[obfuscate_api]
 const PATH_POST_DEMO_MODE_LOGIN: &str = "/account_api/demo_mode_login";
 
 /// Access demo mode, which allows accessing all or specific accounts
@@ -53,7 +51,6 @@ pub async fn post_demo_mode_login(
     Ok(result.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_DEMO_MODE_CONFIRM_LOGIN: &str = "/account_api/demo_mode_confirm_login";
 
 #[utoipa::path(
@@ -78,7 +75,6 @@ pub async fn post_demo_mode_confirm_login(
     Ok(result.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS: &str = "/account_api/demo_mode_accessible_accounts";
 
 // TODO: Return Unauthorized instead of internal server error on routes which
@@ -113,7 +109,6 @@ pub async fn post_demo_mode_accessible_accounts(
     Ok(result.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_DEMO_MODE_REGISTER_ACCOUNT: &str = "/account_api/demo_mode_register_account";
 
 #[utoipa::path(
@@ -146,7 +141,6 @@ pub async fn post_demo_mode_register_account(
     Ok(id.as_id().into())
 }
 
-#[obfuscate_api]
 const PATH_POST_DEMO_MODE_LOGIN_TO_ACCOUNT: &str = "/account_api/demo_mode_login_to_account";
 
 #[utoipa::path(
@@ -176,7 +170,6 @@ pub async fn post_demo_mode_login_to_account(
     Ok(result.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_DEMO_MODE_LOGOUT: &str = "/account_api/demo_mode_logout";
 
 #[utoipa::path(

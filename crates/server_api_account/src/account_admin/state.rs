@@ -1,13 +1,11 @@
 use axum::{extract::{Path, State}, Extension};
 use model::{Account, AccountId, Permissions};
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::{GetAccounts, ReadData}, create_open_api_router, S};
 use server_data::read::GetReadCommandsCommon;
 use simple_backend::create_counters;
 
 use crate::utils::{Json, StatusCode};
 
-#[obfuscate_api]
 const PATH_GET_ACCOUNT_STATE_ADMIN: &str = "/account_api/get_account_state_admin/{aid}";
 
 /// Get [model::Account] for specific account.

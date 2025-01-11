@@ -5,7 +5,6 @@ use axum::{
 use model_media::{
     AccountIdInternal, GetMediaContentResult, MyProfileContent,
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
 use server_data_media::read::GetReadMediaCommands;
 use simple_backend::create_counters;
@@ -15,7 +14,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-#[obfuscate_api]
 const PATH_GET_MEDIA_CONTENT_INFO: &str = "/media_api/media_content_info";
 
 /// Get my profile and security content

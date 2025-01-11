@@ -34,5 +34,3 @@ simple_backend = { path = "../simple_backend" }
 simple_backend_config = { path = "../simple_backend_config" }
 simple_backend_model = { path = "../simple_backend_model" }
 simple_backend_utils = { path = "../simple_backend_utils" }
-
-obfuscate_api_macro = { path = "../obfuscate_api_macro" }

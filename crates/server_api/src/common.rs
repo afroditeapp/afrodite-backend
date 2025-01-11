@@ -19,7 +19,6 @@ use model::{
     RefreshToken, SyncDataVersionFromClient,
 };
 use model_server_data::AuthPair;
-use obfuscate_api_macro::obfuscate_api;
 use server_common::websocket::WebSocketError;
 use server_data::{
     app::{BackendVersionProvider, EventManagerProvider},
@@ -42,7 +41,6 @@ use crate::{
     S,
 };
 
-#[obfuscate_api]
 pub const PATH_GET_VERSION: &str = "/common_api/version";
 
 /// Get backend version.
@@ -89,7 +87,7 @@ pub async fn get_file_package_access_root(
     Ok((TypedHeader(content_type), data))
 }
 
-pub use utils::api::{PATH_CONNECT, PATH_CONNECT_AXUM};
+pub use utils::api::PATH_CONNECT;
 
 // ------------------------- WebSocket -------------------------
 

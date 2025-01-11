@@ -3,7 +3,6 @@ use axum::{
     Extension,
 };
 use model::Permissions;
-use obfuscate_api_macro::obfuscate_api;
 use simple_backend::{app::PerfCounterDataProvider, create_counters};
 use simple_backend_model::{PerfMetricQuery, PerfMetricQueryResult};
 
@@ -13,7 +12,6 @@ use crate::{
     S,
 };
 
-#[obfuscate_api]
 const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
 
 /// Get performance data

@@ -1,6 +1,5 @@
 use axum::{extract::State, Extension};
 use model_account::{Account, AccountIdInternal, ClientId, LatestBirthdate};
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::WriteData, create_open_api_router, db_write, S};
 use server_data::read::GetReadCommandsCommon;
 use server_data_account::write::GetWriteCommandsAccount;
@@ -11,7 +10,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-#[obfuscate_api]
 const PATH_ACCOUNT_STATE: &str = "/account_api/state";
 
 /// Get current account state.
@@ -34,7 +32,6 @@ pub async fn get_account_state(
     Ok(account.into())
 }
 
-#[obfuscate_api]
 const PATH_LATEST_BIRTHDATE: &str = "/account_api/latest_birthdate";
 
 #[utoipa::path(
@@ -57,7 +54,6 @@ pub async fn get_latest_birthdate(
     Ok(birthdate.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_GET_NEXT_CLIENT_ID: &str = "/account_api/next_client_id";
 
 #[utoipa::path(

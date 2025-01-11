@@ -1,14 +1,12 @@
 use axum::{extract::{Path, State}, Extension};
 use model::{AccountId, AccountIdInternal, Permissions};
 use model_account::GetAccountBanTimeResult;
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::{ReadData, GetAccounts}, create_open_api_router, S};
 use server_data_account::read::GetReadCommandsAccount;
 use simple_backend::create_counters;
 
 use crate::utils::{Json, StatusCode};
 
-#[obfuscate_api]
 const PATH_GET_ACCOUNT_BAN_TIME: &str = "/account_api/account_ban_time/{aid}";
 
 /// Get account ban time

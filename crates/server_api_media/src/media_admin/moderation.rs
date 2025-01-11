@@ -5,7 +5,6 @@ use axum::{
 use model_media::{
     AccountIdInternal, EventToClientInternal, GetProfileContentPendingModerationList, GetProfileContentPendingModerationParams, NotificationEvent, Permissions, PostModerateProfileContent
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S, app::GetAccounts};
 use server_data_media::{read::GetReadMediaCommands, write::{media::InitialContentModerationResult, GetWriteCommandsMedia}};
 use simple_backend::create_counters;
@@ -20,7 +19,6 @@ use crate::{
 // TODO(prod): Change moderation related API naming from
 //             profile content to media content.
 
-#[obfuscate_api]
 const PATH_GET_PROFILE_CONTENT_PENDING_MODERATION_LIST: &str =
     "/media_api/admin/profile_content_pending_moderation";
 
@@ -60,7 +58,6 @@ pub async fn get_profile_content_pending_moderation_list(
     Ok(r.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_MODERATE_PROFILE_CONTENT: &str = "/media_api/admin/moderate_profile_content";
 
 /// Rejected category and details can be set only when the content is rejected.

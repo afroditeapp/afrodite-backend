@@ -8,7 +8,6 @@ use model_profile::{
     ProfileSearchAgeRangeValidated, ProfileUpdate, SearchGroups,
     ValidatedSearchGroups,
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, db_write_multiple, result::WrappedContextExt, S};
 use server_data::read::GetReadCommandsCommon;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
@@ -24,7 +23,6 @@ use crate::{
 
 // TODO: Add timeout for database commands
 
-#[obfuscate_api]
 const PATH_GET_PROFILE: &str = "/profile_api/profile/{aid}";
 
 /// Get account's current profile.
@@ -119,7 +117,6 @@ pub async fn get_profile(
     }
 }
 
-#[obfuscate_api]
 const PATH_POST_PROFILE: &str = "/profile_api/profile";
 
 /// Update profile information.
@@ -208,7 +205,6 @@ pub async fn post_profile(
     Ok(())
 }
 
-#[obfuscate_api]
 const PATH_GET_SEARCH_GROUPS: &str = "/profile_api/search_groups";
 
 /// Get account's current search groups
@@ -232,7 +228,6 @@ pub async fn get_search_groups(
     Ok(Json(profile_state.search_group_flags.into()))
 }
 
-#[obfuscate_api]
 const PATH_POST_SEARCH_GROUPS: &str = "/profile_api/search_groups";
 
 /// Set account's current search groups
@@ -264,7 +259,6 @@ pub async fn post_search_groups(
         .update_search_groups(account_id, validated))
 }
 
-#[obfuscate_api]
 const PATH_GET_SEARCH_AGE_RANGE: &str = "/profile_api/search_age_range";
 
 /// Get account's current search age range
@@ -287,7 +281,6 @@ pub async fn get_search_age_range(
     Ok(Json(profile_state.into()))
 }
 
-#[obfuscate_api]
 const PATH_POST_SEARCH_AGE_RANGE: &str = "/profile_api/search_age_range";
 
 /// Set account's current search age range
@@ -318,7 +311,6 @@ pub async fn post_search_age_range(
         .update_search_age_range(account_id, validated))
 }
 
-#[obfuscate_api]
 const PATH_GET_MY_PROFILE: &str = "/profile_api/my_profile";
 
 /// Get my profile
@@ -346,7 +338,6 @@ pub async fn get_my_profile(
     Ok(r.into())
 }
 
-#[obfuscate_api]
 const PATH_GET_INITIAL_PROFILE_AGE_INFO: &str = "/profile_api/initial_profile_age_info";
 
 /// Get initial profile age information which can be used for calculating

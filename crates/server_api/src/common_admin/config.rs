@@ -1,6 +1,5 @@
 use axum::{extract::State, Extension};
 use model::{AccountIdInternal, BackendConfig, Permissions};
-use obfuscate_api_macro::obfuscate_api;
 use simple_backend::create_counters;
 use tracing::info;
 
@@ -11,7 +10,6 @@ use crate::{
     S,
 };
 
-#[obfuscate_api]
 const PATH_GET_BACKEND_CONFIG: &str = "/common_api/backend_config";
 
 /// Get dynamic backend config.
@@ -43,7 +41,6 @@ pub async fn get_backend_config(
     }
 }
 
-#[obfuscate_api]
 const PATH_POST_BACKEND_CONFIG: &str = "/common_api/backend_config";
 
 /// Save dynamic backend config.

@@ -3,7 +3,6 @@ use model_profile::{
     AccountIdInternal, EventToClientInternal, GetProfileNamePendingModerationList, Permissions,
     PostModerateProfileName,
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{
     app::{GetAccounts, WriteData},
     create_open_api_router, db_write_multiple, S,
@@ -16,7 +15,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-#[obfuscate_api]
 const PATH_GET_PROFILE_NAME_PENDING_MODERATION_LIST: &str =
     "/profile_api/admin/profile_name_pending_moderation";
 
@@ -53,7 +51,6 @@ pub async fn get_profile_name_pending_moderation_list(
     Ok(r.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_MODERATE_PROFILE_NAME: &str = "/profile_api/admin/moderate_profile_name";
 
 #[utoipa::path(

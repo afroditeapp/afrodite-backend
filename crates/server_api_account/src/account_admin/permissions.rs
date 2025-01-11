@@ -1,7 +1,6 @@
 use axum::{extract::{Path, State}, Extension};
 use model::{AccountId, EventToClientInternal, Permissions};
 use model_account::GetAllAdminsResult;
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::{GetAccounts, WriteData, ReadData}, create_open_api_router, db_write_multiple, S};
 use server_data::read::GetReadCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
@@ -9,7 +8,6 @@ use simple_backend::create_counters;
 
 use crate::utils::{Json, StatusCode};
 
-#[obfuscate_api]
 const PATH_GET_PERMISSIONS: &str = "/account_api/get_permissions/{aid}";
 
 /// Get [model::Permissions] for specific account.
@@ -46,7 +44,6 @@ pub async fn get_permissions(
     Ok(permissions.permissions().into())
 }
 
-#[obfuscate_api]
 const PATH_GET_ALL_ADMINS: &str = "/account_api/get_all_admins";
 
 /// Get all admins
@@ -79,7 +76,6 @@ pub async fn get_all_admins(
     Ok(admins.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_SET_PERMISSIONS: &str = "/account_api/set_permissions/{aid}";
 
 /// Set permissions for account

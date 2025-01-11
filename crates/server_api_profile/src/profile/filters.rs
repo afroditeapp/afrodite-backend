@@ -2,7 +2,6 @@ use axum::{extract::State, Extension};
 use model_profile::{
     AccountIdInternal, AvailableProfileAttributes, GetProfileFilteringSettings, ProfileAttributeQuery, ProfileAttributeQueryResult, ProfileFilteringSettingsUpdate
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
 use server_data::DataError;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
@@ -15,7 +14,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-#[obfuscate_api]
 const PATH_GET_AVAILABLE_PROFILE_ATTRIBUTES: &str = "/profile_api/available_profile_attributes";
 
 /// Get info what profile attributes server supports.
@@ -42,7 +40,6 @@ pub async fn get_available_profile_attributes(
     Ok(info.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_GET_QUERY_AVAILABLE_PROFILE_ATTRIBUTES: &str = "/profile_api/query_available_profile_attributes";
 
 /// Query profile attributes using attribute ID list.
@@ -70,7 +67,6 @@ pub async fn post_get_query_available_profile_attributes(
     Ok(info.into())
 }
 
-#[obfuscate_api]
 const PATH_GET_PROFILE_FILTERING_SETTINGS: &str = "/profile_api/profile_filtering_settings";
 
 /// Get current profile filtering settings.
@@ -97,7 +93,6 @@ pub async fn get_profile_filtering_settings(
     Ok(filters.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_PROFILE_FILTERING_SETTINGS: &str = "/profile_api/profile_filtering_settings";
 
 /// Set profile filtering settings.

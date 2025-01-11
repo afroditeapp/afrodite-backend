@@ -1,6 +1,5 @@
 use axum::{extract::State, Extension};
 use model_account::{AccountIdInternal, AccountSetup, AccountState, SetAccountSetup};
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
@@ -13,7 +12,6 @@ use crate::{
 
 // TODO: Update register and login to support Apple and Google single sign on.
 
-#[obfuscate_api]
 const PATH_GET_ACCOUNT_SETUP: &str = "/account_api/account_setup";
 
 /// Get non-changeable user information to account.
@@ -40,7 +38,6 @@ pub async fn get_account_setup(
     Ok(data.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_ACCOUNT_SETUP: &str = "/account_api/account_setup";
 
 /// Setup non-changeable user information during `initial setup` state.
@@ -84,7 +81,6 @@ pub async fn post_account_setup(
     }
 }
 
-#[obfuscate_api]
 const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
 
 /// Complete initial setup.

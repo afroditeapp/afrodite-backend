@@ -3213,14 +3213,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "obfuscate_api_macro"
-version = "0.0.0"
-dependencies = [
- "quote",
- "syn 2.0.90",
-]
-
-[[package]]
 name = "object"
 version = "0.36.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4515,7 +4507,6 @@ dependencies = [
  "manager_model",
  "model",
  "model_server_data",
- "obfuscate_api_macro",
  "serde",
  "serde_json",
  "server_common",
@@ -4540,7 +4531,6 @@ dependencies = [
  "model",
  "model_account",
  "model_server_state",
- "obfuscate_api_macro",
  "server_api",
  "server_common",
  "server_data",
@@ -4560,7 +4550,6 @@ dependencies = [
  "headers",
  "model",
  "model_chat",
- "obfuscate_api_macro",
  "serde_json",
  "server_api",
  "server_common",
@@ -4581,7 +4570,6 @@ dependencies = [
  "headers",
  "model",
  "model_media",
- "obfuscate_api_macro",
  "server_api",
  "server_common",
  "server_data",
@@ -4599,7 +4587,6 @@ dependencies = [
  "axum",
  "model",
  "model_profile",
- "obfuscate_api_macro",
  "server_api",
  "server_common",
  "server_data",
@@ -5929,7 +5916,6 @@ name = "utils"
 version = "0.0.0"
 dependencies = [
  "chrono",
- "obfuscate_api_macro",
  "rand",
 ]
 

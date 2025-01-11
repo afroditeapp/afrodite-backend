@@ -5,7 +5,6 @@ use model_chat::{
     PageItemCountForNewLikes, PendingNotificationFlags, ReceivedLikesIteratorSessionId,
     ReceivedLikesPage, ResetReceivedLikesIteratorResult, SendLikeResult, SentLikesPage,
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::EventManagerProvider, create_open_api_router, db_write, S};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
@@ -16,7 +15,6 @@ use crate::{
     db_write_multiple,
 };
 
-#[obfuscate_api]
 const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
 
 /// Send a like to some account. If both will like each other, then
@@ -112,7 +110,6 @@ pub async fn post_send_like(
     Ok(r.into())
 }
 
-#[obfuscate_api]
 const PATH_GET_SENT_LIKES: &str = "/chat_api/sent_likes";
 
 /// Get sent likes.
@@ -141,7 +138,6 @@ pub async fn get_sent_likes(
     Ok(page.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_GET_NEW_RECEIVED_LIKES_COUNT: &str = "/chat_api/new_received_likes_count";
 
 #[utoipa::path(
@@ -199,7 +195,6 @@ pub async fn post_get_new_received_likes_count(
 
 // TODO(prod): Store date and time when account was created.
 
-#[obfuscate_api]
 const PATH_POST_RESET_RECEIVED_LIKES_PAGING: &str = "/chat_api/received_likes/reset";
 
 #[utoipa::path(
@@ -229,7 +224,6 @@ pub async fn post_reset_received_likes_paging(
     Ok(r.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_GET_NEXT_RECEIVED_LIKES_PAGE: &str = "/chat_api/received_likes";
 
 /// Update received likes iterator and get next page
@@ -286,7 +280,6 @@ pub async fn post_get_next_received_likes_page(
     }
 }
 
-#[obfuscate_api]
 const PATH_DELETE_LIKE: &str = "/chat_api/delete_like";
 
 /// Delete sent like.

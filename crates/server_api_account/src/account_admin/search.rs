@@ -1,14 +1,12 @@
 use axum::{extract::{Path, State}, Extension};
 use model::Permissions;
 use model_account::{GetAccountIdFromEmailParams, GetAccountIdFromEmailResult};
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::ReadData, create_open_api_router, S};
 use server_data_account::read::GetReadCommandsAccount;
 use simple_backend::create_counters;
 
 use crate::utils::{Json, StatusCode};
 
-#[obfuscate_api]
 const PATH_GET_ACCOUNT_ID_FROM_EMAIL: &str = "/account_api/get_account_id_from_email/{email}";
 
 /// Get account ID from email

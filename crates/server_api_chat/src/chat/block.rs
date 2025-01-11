@@ -1,6 +1,5 @@
 use axum::{extract::State, Extension};
 use model_chat::{AccountId, AccountIdInternal, ReceivedBlocksPage, SentBlocksPage};
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
@@ -11,7 +10,6 @@ use crate::{
     db_write_multiple,
 };
 
-#[obfuscate_api]
 const PATH_POST_BLOCK_PROFILE: &str = "/chat_api/block_profile";
 
 /// Block profile
@@ -49,7 +47,6 @@ pub async fn post_block_profile(
     Ok(())
 }
 
-#[obfuscate_api]
 const PATH_POST_UNBLOCK_PROFILE: &str = "/chat_api/unblock_profile";
 
 /// Unblock profile
@@ -87,7 +84,6 @@ pub async fn post_unblock_profile(
     Ok(())
 }
 
-#[obfuscate_api]
 const PATH_GET_SENT_BLOCKS: &str = "/chat_api/sent_blocks";
 
 /// Get list of sent blocks
@@ -114,7 +110,6 @@ pub async fn get_sent_blocks(
 // TODO: Add some block query info, so that server can send sync received blocks
 //       list command to client.
 
-#[obfuscate_api]
 const PATH_GET_RECEIVED_BLOCKS: &str = "/chat_api/received_blocks";
 
 /// Get list of received blocks

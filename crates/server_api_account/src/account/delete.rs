@@ -1,14 +1,12 @@
 use axum::{extract::{Path, State}, Extension};
 use model::{AccountId, AccountIdInternal, EventToClientInternal, Permissions};
 use model_account::{BooleanSetting, GetAccountDeletionRequestResult};
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::{GetAccounts, WriteData, ReadData}, create_open_api_router, db_write_multiple, S};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 
 use crate::utils::{Json, StatusCode};
 
-#[obfuscate_api]
 const PATH_POST_SET_ACCOUNT_DELETION_REQUEST_STATE: &str = "/account_api/set_account_deletion_request_state/{aid}";
 
 /// Request account deletion or cancel the deletion
@@ -61,7 +59,6 @@ pub async fn post_set_account_deletion_request_state(
     Ok(())
 }
 
-#[obfuscate_api]
 const PATH_GET_ACCOUNT_DELETION_REQUEST_STATE: &str = "/account_api/get_account_deletion_request_state/{aid}";
 
 /// Get account deletion request state

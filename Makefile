@@ -40,7 +40,6 @@ CARGO_CRATE_ARGS = 	-p api_internal \
 					-p simple_backend_config \
 					-p simple_backend_database \
 					-p simple_backend_image_process \
-					-p obfuscate_api_macro \
 					-p dating_app_backend
 
 ifdef CONTINUE_FROM
@@ -152,7 +151,6 @@ code-stats:
 	crates/simple_backend_config \
 	crates/simple_backend_database \
 	crates/simple_backend_image_process \
-	crates/obfuscate_api_macro \
 	crates/dating_app_backend \
 	-name '*.rs' | xargs wc -l | tail -n 1
 	@echo "\nCommits:   `git rev-list --count HEAD` total"

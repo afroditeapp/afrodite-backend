@@ -6,7 +6,6 @@ use model_profile::{
     GetProfileStatisticsHistoryParams, GetProfileStatisticsHistoryResult, Permissions,
     ProfileStatisticsHistoryValueTypeInternal,
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
 use server_data_profile::read::GetReadProfileCommands;
 use simple_backend::create_counters;
@@ -16,7 +15,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-#[obfuscate_api]
 const PATH_GET_PROFILE_STATISTICS_HISTORY: &str = "/profile_api/profile_statistics_history";
 
 #[utoipa::path(

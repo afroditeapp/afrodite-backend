@@ -2,7 +2,6 @@ use axum::{extract::State, Extension};
 use model::{
     AccountIdInternal, FcmDeviceToken, PendingNotificationToken, PendingNotificationWithData,
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, S};
 use server_data_chat::write::GetWriteCommandsChat;
 use simple_backend::create_counters;
@@ -15,7 +14,6 @@ use crate::{app::WriteData, db_write};
 // TOOD(microservice): Most likely public ID will not be sent from account
 // to other servers.
 
-#[obfuscate_api]
 const PATH_POST_SET_DEVICE_TOKEN: &str = "/chat_api/set_device_token";
 
 #[utoipa::path(
@@ -45,7 +43,6 @@ pub async fn post_set_device_token(
     Ok(pending_notification_token.into())
 }
 
-#[obfuscate_api]
 const PATH_POST_GET_PENDING_NOTIFICATION: &str = "/chat_api/get_pending_notification";
 
 /// Get pending notification and reset pending notification.

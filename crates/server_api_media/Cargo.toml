@@ -24,5 +24,3 @@ server_api = { path = "../server_api" }
 server_data_media = { path = "../server_data_media" }
 
 simple_backend = { path = "../simple_backend" }
-
-obfuscate_api_macro = { path = "../obfuscate_api_macro" }

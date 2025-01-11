@@ -1,13 +1,11 @@
 use axum::{extract::{Path, State}, Extension};
 use model::{AccountId, Permissions};
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::{GetAccounts, WriteData}, create_open_api_router, db_write_multiple, S};
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
 
 use crate::utils::StatusCode;
 
-#[obfuscate_api]
 const PATH_POST_DELETE_ACCOUNT: &str = "/account_api/delete_account/{aid}";
 
 /// Delete account instantly

@@ -49,7 +49,6 @@ members = [
     "crates/simple_backend_utils",
     "crates/simple_backend_database",
     "crates/simple_backend_model",
-    "crates/obfuscate_api_macro",
 ]
 
 [workspace.dependencies]
@@ -72,6 +71,7 @@ image = { version = "0.25.5", default-features = false, features = ["jpeg"] }
 mozjpeg = "0.10.9"
 bitflags = "2.6.0"
 num_enum = "0.7.3"
+sha1 = "0.10.6"
 sha2 = "0.10.8"
 sysinfo = { version = "0.33.0", default-features = false, features = ["system"] }
 
@@ -130,7 +130,6 @@ rustls-acme = { version = "0.10.1", default-features = false, features = ["tokio
 # Procedural macros
 syn = { version = "2.0.74", features = ["full"] }
 quote = "1.0.36"
-sha1 = "0.10.6"
 
 # Test mode
 inventory = "0.3.15"

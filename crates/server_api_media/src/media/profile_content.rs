@@ -8,7 +8,6 @@ use model_media::{
     GetProfileContentQueryParams, GetProfileContentResult,
     Permissions, ProfileContent, SetProfileContent,
 };
-use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::EventManagerProvider, create_open_api_router, db_write_multiple, S};
 use server_data::read::GetReadCommandsCommon;
 use server_data_media::{read::GetReadMediaCommands, write::{media::InitialContentModerationResult, GetWriteCommandsMedia}};
@@ -19,7 +18,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-#[obfuscate_api]
 const PATH_GET_PROFILE_CONTENT_INFO: &str = "/media_api/profile_content_info/{aid}";
 
 /// Get current profile content for selected profile.
@@ -115,7 +113,6 @@ pub async fn get_profile_content_info(
     }
 }
 
-#[obfuscate_api]
 const PATH_PUT_PROFILE_CONTENT: &str = "/media_api/profile_content";
 
 /// Set new profile content for current account.
@@ -190,7 +187,6 @@ pub async fn put_profile_content(
     Ok(())
 }
 
-#[obfuscate_api]
 const PATH_POST_GET_INITIAL_CONTENT_MODERATION_COMPLETED_RESULT: &str = "/media_api/initial_content_moderation_completed_result";
 
 /// Get initial content moderation completed result.
