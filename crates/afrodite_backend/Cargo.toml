@@ -1,5 +1,5 @@
 [package]
-name = "dating_app_backend"
+name = "afrodite_backend"
 description = "Afrodite dating app backend"
 version = "0.6.0"
 edition = "2021"

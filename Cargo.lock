@@ -53,6 +53,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "afrodite_backend"
+version = "0.6.0"
+dependencies = [
+ "clap",
+ "config",
+ "manager",
+ "server",
+ "server_data",
+ "simple_backend_config",
+ "simple_backend_image_process",
+ "test_mode",
+ "tokio",
+ "tokio-rustls",
+ "vergen-gitcl",
+]
+
+[[package]]
 name = "ahash"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1156,23 +1173,6 @@ dependencies = [
  "model",
  "model_profile",
  "simple_backend_utils",
-]
-
-[[package]]
-name = "dating_app_backend"
-version = "0.6.0"
-dependencies = [
- "clap",
- "config",
- "manager",
- "server",
- "server_data",
- "simple_backend_config",
- "simple_backend_image_process",
- "test_mode",
- "tokio",
- "tokio-rustls",
- "vergen-gitcl",
 ]
 
 [[package]]

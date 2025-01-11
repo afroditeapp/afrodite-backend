@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
     # Binary crates
-    "crates/dating_app_backend",
+    "crates/afrodite_backend",
     # Library crates
     "crates/api_client",
     "crates/api_internal",
