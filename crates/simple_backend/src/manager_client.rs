@@ -97,15 +97,6 @@ impl<'a> ManagerApiManager<'a> {
             .change_context(ManagerClientError::ApiRequest)
     }
 
-    pub async fn request_build_software_from_build_server(
-        &self,
-        options: SoftwareOptions,
-    ) -> Result<(), ManagerClientError> {
-        ManagerApi::request_build_software_from_build_server(self.api_client.manager()?, options)
-            .await
-            .change_context(ManagerClientError::ApiRequest)
-    }
-
     pub async fn request_update_software(
         &self,
         options: SoftwareOptions,

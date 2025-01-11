@@ -16,23 +16,17 @@ Tagged development preview versions (0.x) of frontend and backend
 with the same minor version number are compatible with each other.
 Main branch might be broken or incompatible with the frontend.
 
-1. Update Git submodule `crates/app-manager`.
+1. Install [dependencies](#dependencies).
 
-```
-git submodule update --init
-```
-
-2. Install [dependencies](#dependencies).
-
-3. Build and run the backend.
+2. Build and run the backend.
 
 ```
 make run-release
 ```
 
-4. Configure backend using [config files](#config-files) and restart it.
+3. Configure backend using [config files](#config-files) and restart it.
 
-5. Optionally install [development dependencies](#development-dependencies).
+4. Optionally install [development dependencies](#development-dependencies).
 
 ### Dependencies
 

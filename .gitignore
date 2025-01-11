@@ -10,6 +10,7 @@ server_config_dynamic.toml
 server_config_profile_attributes.toml
 server_config_email_content.toml
 simple_backend_config.toml
+manager_config.toml
 
 .vscode
 .idea

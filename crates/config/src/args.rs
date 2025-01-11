@@ -3,6 +3,7 @@
 use std::{fmt, num::NonZeroU8, path::PathBuf};
 
 use clap::{arg, command, Args, Parser, ValueEnum};
+use manager::config::args::ManagerApiClientMode;
 use reqwest::Url;
 use simple_backend_config::args::{ImageProcessModeArgs, ServerModeArgs};
 
@@ -32,6 +33,10 @@ pub enum AppMode {
     ImageProcess(ImageProcessModeArgs),
     /// Print API documentation JSON to stdout
     OpenApi,
+    /// Manager mode
+    Manager,
+    /// Manager API client mode
+    ManagerApi(ManagerApiClientMode),
 }
 
 #[derive(Parser, Debug, Clone)]

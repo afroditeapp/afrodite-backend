@@ -20,7 +20,7 @@ http = { workspace = true }
 utoipa = { workspace = true }
 utoipa-axum = { workspace = true }
 
-manager_model = { path = "../app-manager/crates/manager_model" }
+manager_model = { path = "../manager_model" }
 
 utils = { path = "../utils" }
 model = { path = "../model" }

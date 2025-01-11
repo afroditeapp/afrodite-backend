@@ -51,8 +51,8 @@ jsonwebtoken = { workspace = true }
 
 sysinfo = { workspace = true }
 
-manager_api = { path = "../app-manager/crates/manager_api" }
-manager_model = { path = "../app-manager/crates/manager_model" }
+manager_api = { path = "../manager_api" }
+manager_model = { path = "../manager_model" }
 
 simple_backend_utils = { path = "../simple_backend_utils" }
 simple_backend_config = { path = "../simple_backend_config" }

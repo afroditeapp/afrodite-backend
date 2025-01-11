@@ -103,38 +103,6 @@ pub async fn get_latest_build_info(
     }
 }
 
-const PATH_POST_REQUEST_BUILD_SOFTWARE: &str = "/common_api/request_build_software";
-
-/// Request building new software from manager instance.
-#[utoipa::path(
-    post,
-    path = PATH_POST_REQUEST_BUILD_SOFTWARE,
-    params(SoftwareOptionsQueryParam),
-    responses(
-        (status = 200, description = "Request was successfull."),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn post_request_build_software(
-    State(state): State<S>,
-    Query(software): Query<SoftwareOptionsQueryParam>,
-    Extension(api_caller_permissions): Extension<Permissions>,
-) -> Result<(), StatusCode> {
-    COMMON_ADMIN.post_request_build_software.incr();
-
-    if api_caller_permissions.admin_server_maintenance_update_software {
-        state
-            .manager_api()
-            .request_build_software_from_build_server(software.software_options)
-            .await?;
-        Ok(())
-    } else {
-        Err(StatusCode::UNAUTHORIZED)
-    }
-}
-
 const PATH_POST_REQUEST_UPDATE_SOFTWARE: &str = "/common_api/request_update_software";
 
 /// Request updating new software from manager instance.
@@ -245,7 +213,6 @@ create_open_api_router!(
         get_system_info,
         get_software_info,
         get_latest_build_info,
-        post_request_build_software,
         post_request_update_software,
         post_request_restart_or_reset_backend,
 );

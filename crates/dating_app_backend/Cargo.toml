@@ -16,8 +16,10 @@ config = { path = "../config" }
 test_mode = { path = "../test_mode" }
 server = { path = "../server" }
 server_data = { path = "../server_data" }
-simple_backend_image_process = { path = "../simple_backend_image_process" }
 
+manager = { path = "../manager" }
+
+simple_backend_image_process = { path = "../simple_backend_image_process" }
 simple_backend_config = { path = "../simple_backend_config" }
 
 [build-dependencies]

@@ -1,0 +1,13 @@
+[package]
+name = "manager_api"
+version = "0.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+serde_json = { workspace = true }
+
+manager_model = { path = "../manager_model" }
+manager_api_client = { path = "../manager_api_client" }

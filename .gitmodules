@@ -1,3 +1,0 @@
-[submodule "app-manager"]
-	path = crates/app-manager
-	url = https://github.com/jutuon/app-manager

@@ -870,6 +870,7 @@ dependencies = [
  "clap",
  "csv",
  "error-stack",
+ "manager",
  "model",
  "model_server_data",
  "model_server_state",
@@ -1163,6 +1164,7 @@ version = "0.6.0"
 dependencies = [
  "clap",
  "config",
+ "manager",
  "server",
  "server_data",
  "simple_backend_config",
@@ -2613,6 +2615,38 @@ name = "log"
 version = "0.4.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
+
+[[package]]
+name = "manager"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "clap",
+ "error-stack",
+ "futures",
+ "headers",
+ "hyper",
+ "hyper-util",
+ "manager_api",
+ "manager_model",
+ "reqwest",
+ "rustls-pemfile",
+ "serde",
+ "serde_json",
+ "simple_backend",
+ "simple_backend_config",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-rustls",
+ "toml",
+ "tower 0.4.13",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "utoipa",
+ "utoipa-swagger-ui",
+]
 
 [[package]]
 name = "manager_api"
