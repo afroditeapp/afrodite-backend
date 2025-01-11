@@ -19,8 +19,10 @@ pub struct Permissions {
     pub admin_delete_account: Option<bool>,
     #[serde(rename = "admin_delete_media_content", skip_serializing_if = "Option::is_none")]
     pub admin_delete_media_content: Option<bool>,
-    #[serde(rename = "admin_moderate_profile_content", skip_serializing_if = "Option::is_none")]
-    pub admin_moderate_profile_content: Option<bool>,
+    #[serde(rename = "admin_find_account_by_email", skip_serializing_if = "Option::is_none")]
+    pub admin_find_account_by_email: Option<bool>,
+    #[serde(rename = "admin_moderate_media_content", skip_serializing_if = "Option::is_none")]
+    pub admin_moderate_media_content: Option<bool>,
     #[serde(rename = "admin_moderate_profile_names", skip_serializing_if = "Option::is_none")]
     pub admin_moderate_profile_names: Option<bool>,
     #[serde(rename = "admin_moderate_profile_texts", skip_serializing_if = "Option::is_none")]
@@ -51,6 +53,8 @@ pub struct Permissions {
     /// View public and private profiles.
     #[serde(rename = "admin_view_all_profiles", skip_serializing_if = "Option::is_none")]
     pub admin_view_all_profiles: Option<bool>,
+    #[serde(rename = "admin_view_permissions", skip_serializing_if = "Option::is_none")]
+    pub admin_view_permissions: Option<bool>,
     #[serde(rename = "admin_view_private_info", skip_serializing_if = "Option::is_none")]
     pub admin_view_private_info: Option<bool>,
     #[serde(rename = "admin_view_profile_history", skip_serializing_if = "Option::is_none")]
@@ -63,7 +67,8 @@ impl Permissions {
             admin_ban_account: None,
             admin_delete_account: None,
             admin_delete_media_content: None,
-            admin_moderate_profile_content: None,
+            admin_find_account_by_email: None,
+            admin_moderate_media_content: None,
             admin_moderate_profile_names: None,
             admin_moderate_profile_texts: None,
             admin_modify_permissions: None,
@@ -78,6 +83,7 @@ impl Permissions {
             admin_server_maintenance_view_backend_config: None,
             admin_server_maintenance_view_info: None,
             admin_view_all_profiles: None,
+            admin_view_permissions: None,
             admin_view_private_info: None,
             admin_view_profile_history: None,
         }

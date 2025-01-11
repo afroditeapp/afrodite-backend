@@ -26,7 +26,7 @@ All URIs are relative to *http://localhost*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
-*AccountApi* | [**get_account_ban_time**](docs/AccountApi.md#get_account_ban_time) | **GET** /VWEg82SMW2nbZNsujKsrEXdsYCQ | 
+*AccountApi* | [**get_account_ban_time**](docs/AccountApi.md#get_account_ban_time) | **GET** /VWEg82SMW2nbZNsujKsrEXdsYCQ/{aid} | Get account ban time
 *AccountApi* | [**get_account_data**](docs/AccountApi.md#get_account_data) | **GET** /Ln3_j2LpJIbQABKwnMMhUEtio5k | Get changeable user information to account.
 *AccountApi* | [**get_account_deletion_request_state**](docs/AccountApi.md#get_account_deletion_request_state) | **GET** /xRKw2cu2b8kk8Vkdpo8SdsaFWhQ/{aid} | Get account deletion request state
 *AccountApi* | [**get_account_setup**](docs/AccountApi.md#get_account_setup) | **GET** /RNb6qhf_lZU8t6kOm5kQY7Y34ok | Get non-changeable user information to account.
@@ -53,10 +53,15 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**put_setting_unlimited_likes**](docs/AccountApi.md#put_setting_unlimited_likes) | **PUT** /oKbgnRxyzLb50Y2_ZCuLJYtEIcM | 
 *AccountAdminApi* | [**delete_news_item**](docs/AccountAdminApi.md#delete_news_item) | **DELETE** /ca0uk9qgmQ82WCpd83_WNNn8qOY/{nid} | 
 *AccountAdminApi* | [**delete_news_translation**](docs/AccountAdminApi.md#delete_news_translation) | **DELETE** /jo1Lboa4U8YVA07py8NJebpu1zo/{nid}/{locale} | 
+*AccountAdminApi* | [**get_account_id_from_email**](docs/AccountAdminApi.md#get_account_id_from_email) | **GET** /QOWhJ4V6cg9BzbwLCnopDKA6eEM/{email} | Get account ID from email
+*AccountAdminApi* | [**get_account_state_admin**](docs/AccountAdminApi.md#get_account_state_admin) | **GET** /SJd6qnB7ZOLWObvYpZvSEAQlV9E/{aid} | Get [model::Account] for specific account.
+*AccountAdminApi* | [**get_all_admins**](docs/AccountAdminApi.md#get_all_admins) | **GET** /S08JTRmVrgj4MoI2AYsbMMcfpoU | Get all admins
+*AccountAdminApi* | [**get_permissions**](docs/AccountAdminApi.md#get_permissions) | **GET** /gNXvEk_GxY-Rj3l4Ja9T8Gh3BHk/{aid} | Get [model::Permissions] for specific account.
 *AccountAdminApi* | [**post_create_news_item**](docs/AccountAdminApi.md#post_create_news_item) | **POST** /XEss8YDw9lPgwKoH6K9THZIF_N4 | 
 *AccountAdminApi* | [**post_delete_account**](docs/AccountAdminApi.md#post_delete_account) | **POST** /bdvzsZZOVVO89-enOb3tFnpU7yk/{aid} | Delete account instantly
 *AccountAdminApi* | [**post_set_ban_state**](docs/AccountAdminApi.md#post_set_ban_state) | **POST** /R5G1j887_zSwcgInJG5Y7mz73nE | Ban or unban account
 *AccountAdminApi* | [**post_set_news_publicity**](docs/AccountAdminApi.md#post_set_news_publicity) | **DELETE** /McvctMKFEqrUfola2WlvkbigBDU/{nid} | 
+*AccountAdminApi* | [**post_set_permissions**](docs/AccountAdminApi.md#post_set_permissions) | **POST** /dVzZRtEelHVDz6bG4AcjaZSQVFo/{aid} | Set permissions for account
 *AccountAdminApi* | [**post_update_news_translation**](docs/AccountAdminApi.md#post_update_news_translation) | **POST** /4pD-Q4FhZGTNkUGYExHmZN6TxjU/{nid}/{locale} | 
 *AccountInternalApi* | [**post_login**](docs/AccountInternalApi.md#post_login) | **POST** /account_api/login | Get new AccessToken for a bot account. If the account is not registered as a bot account, then the request will fail.
 *AccountInternalApi* | [**post_register**](docs/AccountInternalApi.md#post_register) | **POST** /account_api/register | Register a new bot account. Returns new account ID which is UUID.
@@ -131,9 +136,11 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**post_search_age_range**](docs/ProfileApi.md#post_search_age_range) | **POST** /xTy-zcnl0LQlfPKQalAEnWQQ-rw | Set account's current search age range
 *ProfileApi* | [**post_search_groups**](docs/ProfileApi.md#post_search_groups) | **POST** /p1KA-sqKKtU3FHvUqYRZnQgj7RQ | Set account's current search groups (gender and what gender user is looking for)
 *ProfileApi* | [**put_location**](docs/ProfileApi.md#put_location) | **PUT** /lf5KMD9dBSVuaVcwjm4TB0d7bfY | Update location for account which makes this request.
+*ProfileAdminApi* | [**get_profile_age_and_name**](docs/ProfileAdminApi.md#get_profile_age_and_name) | **GET** /vaT3tB2QTgv7HaJl4pxFaQR7dEQ/{aid} | Get profile age and name
 *ProfileAdminApi* | [**get_profile_name_pending_moderation_list**](docs/ProfileAdminApi.md#get_profile_name_pending_moderation_list) | **GET** /82woXm_Kq9yEtRHP7KAcXkgRWnU | 
 *ProfileAdminApi* | [**get_profile_statistics_history**](docs/ProfileAdminApi.md#get_profile_statistics_history) | **GET** /6CGbSNdoURdJRTBxb3Hb_OGw9ME | 
 *ProfileAdminApi* | [**get_profile_text_pending_moderation_list**](docs/ProfileAdminApi.md#get_profile_text_pending_moderation_list) | **GET** /pdEU3ussEDsELfe6TOtjqrDojOc | Get first page of pending profile text moderations. Oldest item is first and count 25.
+*ProfileAdminApi* | [**get_profile_text_state**](docs/ProfileAdminApi.md#get_profile_text_state) | **GET** /zJnMNwOsdHxzZfSNNFzubM-Gess/{aid} | Get profile text state
 *ProfileAdminApi* | [**post_moderate_profile_name**](docs/ProfileAdminApi.md#post_moderate_profile_name) | **POST** /bnrAbC2DpwIftQouXUAVR1W6g8Y | 
 *ProfileAdminApi* | [**post_moderate_profile_text**](docs/ProfileAdminApi.md#post_moderate_profile_text) | **POST** /53BBFzgF9dZhb7_HvZSqLidsqbg | Rejected category and details can be set only when the text is rejected.
 
@@ -147,11 +154,13 @@ Class | Method | HTTP request | Description
  - [AccountBanReasonCategory](docs/AccountBanReasonCategory.md)
  - [AccountBanReasonDetails](docs/AccountBanReasonDetails.md)
  - [AccountContent](docs/AccountContent.md)
+ - [AccountCreatedTimeFilter](docs/AccountCreatedTimeFilter.md)
  - [AccountData](docs/AccountData.md)
  - [AccountId](docs/AccountId.md)
  - [AccountSetup](docs/AccountSetup.md)
  - [AccountStateContainer](docs/AccountStateContainer.md)
  - [AccountSyncVersion](docs/AccountSyncVersion.md)
+ - [AdminInfo](docs/AdminInfo.md)
  - [AllMatchesPage](docs/AllMatchesPage.md)
  - [Attribute](docs/Attribute.md)
  - [AttributeIdAndHash](docs/AttributeIdAndHash.md)
@@ -196,10 +205,13 @@ Class | Method | HTTP request | Description
  - [FcmDeviceToken](docs/FcmDeviceToken.md)
  - [GetAccountBanTimeResult](docs/GetAccountBanTimeResult.md)
  - [GetAccountDeletionRequestResult](docs/GetAccountDeletionRequestResult.md)
+ - [GetAccountIdFromEmailResult](docs/GetAccountIdFromEmailResult.md)
+ - [GetAllAdminsResult](docs/GetAllAdminsResult.md)
  - [GetInitialProfileAgeInfoResult](docs/GetInitialProfileAgeInfoResult.md)
  - [GetMediaContentResult](docs/GetMediaContentResult.md)
  - [GetMyProfileResult](docs/GetMyProfileResult.md)
  - [GetNewsItemResult](docs/GetNewsItemResult.md)
+ - [GetProfileAgeAndName](docs/GetProfileAgeAndName.md)
  - [GetProfileContentPendingModerationList](docs/GetProfileContentPendingModerationList.md)
  - [GetProfileContentResult](docs/GetProfileContentResult.md)
  - [GetProfileFilteringSettings](docs/GetProfileFilteringSettings.md)
@@ -208,6 +220,7 @@ Class | Method | HTTP request | Description
  - [GetProfileStatisticsHistoryResult](docs/GetProfileStatisticsHistoryResult.md)
  - [GetProfileStatisticsResult](docs/GetProfileStatisticsResult.md)
  - [GetProfileTextPendingModerationList](docs/GetProfileTextPendingModerationList.md)
+ - [GetProfileTextState](docs/GetProfileTextState.md)
  - [GetPublicKey](docs/GetPublicKey.md)
  - [GroupValues](docs/GroupValues.md)
  - [InitialContentModerationCompletedResult](docs/InitialContentModerationCompletedResult.md)
@@ -267,6 +280,7 @@ Class | Method | HTTP request | Description
  - [ProfileContentModerationRejectedReasonDetails](docs/ProfileContentModerationRejectedReasonDetails.md)
  - [ProfileContentPendingModeration](docs/ProfileContentPendingModeration.md)
  - [ProfileContentVersion](docs/ProfileContentVersion.md)
+ - [ProfileEditedTimeFilter](docs/ProfileEditedTimeFilter.md)
  - [ProfileFilteringSettingsUpdate](docs/ProfileFilteringSettingsUpdate.md)
  - [ProfileIteratorSessionId](docs/ProfileIteratorSessionId.md)
  - [ProfileLink](docs/ProfileLink.md)

@@ -236,12 +236,13 @@ pub enum PutSettingUnlimitedLikesError {
 }
 
 
-pub async fn get_account_ban_time(configuration: &configuration::Configuration, ) -> Result<models::GetAccountBanTimeResult, Error<GetAccountBanTimeError>> {
+/// # Access - Account owner - Permission [model::Permissions::admin_ban_account]
+pub async fn get_account_ban_time(configuration: &configuration::Configuration, aid: &str) -> Result<models::GetAccountBanTimeResult, Error<GetAccountBanTimeError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/VWEg82SMW2nbZNsujKsrEXdsYCQ", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/VWEg82SMW2nbZNsujKsrEXdsYCQ/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {

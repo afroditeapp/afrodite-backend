@@ -13,12 +13,16 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProfileFilteringSettingsUpdate {
+    #[serde(rename = "account_created_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub account_created_filter: Option<Option<Box<models::AccountCreatedTimeFilter>>>,
     #[serde(rename = "filters")]
     pub filters: Vec<models::ProfileAttributeFilterValueUpdate>,
     #[serde(rename = "last_seen_time_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub last_seen_time_filter: Option<Option<Box<models::LastSeenTimeFilter>>>,
-    #[serde(rename = "max_distance_km", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub max_distance_km: Option<Option<Box<models::MaxDistanceKm>>>,
+    #[serde(rename = "max_distance_km_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub max_distance_km_filter: Option<Option<Box<models::MaxDistanceKm>>>,
+    #[serde(rename = "profile_edited_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub profile_edited_filter: Option<Option<Box<models::ProfileEditedTimeFilter>>>,
     #[serde(rename = "random_profile_order", skip_serializing_if = "Option::is_none")]
     pub random_profile_order: Option<bool>,
     #[serde(rename = "unlimited_likes_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -28,9 +32,11 @@ pub struct ProfileFilteringSettingsUpdate {
 impl ProfileFilteringSettingsUpdate {
     pub fn new(filters: Vec<models::ProfileAttributeFilterValueUpdate>) -> ProfileFilteringSettingsUpdate {
         ProfileFilteringSettingsUpdate {
+            account_created_filter: None,
             filters,
             last_seen_time_filter: None,
-            max_distance_km: None,
+            max_distance_km_filter: None,
+            profile_edited_filter: None,
             random_profile_order: None,
             unlimited_likes_filter: None,
         }

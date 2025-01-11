@@ -162,7 +162,7 @@ pub async fn delete_content(configuration: &configuration::Configuration, aid: &
     }
 }
 
-/// # Access  - Own account
+/// # Access  - Own account - Permission [model::Permissions::admin_moderate_media_content]
 pub async fn get_all_account_media_content(configuration: &configuration::Configuration, aid: &str) -> Result<models::AccountContent, Error<GetAllAccountMediaContentError>> {
     let local_var_configuration = configuration;
 
@@ -198,7 +198,7 @@ pub async fn get_all_account_media_content(configuration: &configuration::Config
     }
 }
 
-/// # Access  ## Own content Unrestricted access.  ## Public other content Normal account state required.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  If the previous is not true, then permission `admin_view_all_profiles` or `admin_moderate_profile_content` is required.  
+/// # Access  ## Own content Unrestricted access.  ## Public other content Normal account state required.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  If the previous is not true, then permission `admin_view_all_profiles` or `admin_moderate_media_content` is required.  
 pub async fn get_content(configuration: &configuration::Configuration, aid: &str, cid: &str, is_match: Option<bool>) -> Result<std::path::PathBuf, Error<GetContentError>> {
     let local_var_configuration = configuration;
 
@@ -386,7 +386,7 @@ pub async fn get_profile_content_info(configuration: &configuration::Configurati
     }
 }
 
-/// # Access  - Own account - With permission `admin_moderate_profile_content`
+/// # Access  - Own account - Permission [model::Permissions::admin_moderate_media_content]
 pub async fn get_security_content_info(configuration: &configuration::Configuration, aid: &str) -> Result<models::SecurityContent, Error<GetSecurityContentInfoError>> {
     let local_var_configuration = configuration;
 
