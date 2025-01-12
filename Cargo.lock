@@ -1641,7 +1641,7 @@ checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
 [[package]]
 name = "fcm"
 version = "1.0.0"
-source = "git+https://github.com/jutuon/fcm-rust?rev=1788092b8db6aeb50945ff4e279899d9b9336b2e#1788092b8db6aeb50945ff4e279899d9b9336b2e"
+source = "git+https://github.com/jutuon/fcm-rust?rev=713e744005ccb9456f77655a2480a806e29e1b77#713e744005ccb9456f77655a2480a806e29e1b77"
 dependencies = [
  "chrono",
  "dotenvy",
@@ -4585,7 +4585,6 @@ dependencies = [
  "thiserror 2.0.11",
  "tokio",
  "tracing",
- "yup-oauth2",
 ]
 
 [[package]]

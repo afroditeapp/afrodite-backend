@@ -16,7 +16,6 @@ error-stack = { workspace = true }
 
 # Firebase cloud messaging
 fcm = { workspace = true }
-yup-oauth2 = { workspace = true }
 
 config = { path = "../config" }
 database = { path = "../database" }
