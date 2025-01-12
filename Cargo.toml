@@ -101,7 +101,7 @@ tokio-stream = { version = "0.1.17", features = ["sync", "fs"] }
 tokio-util = { version = "0.7.13", features = ["io"]}
 async-trait = "0.1.85"
 
-reqwest = { version = "0.12.12", features = ["json"] }
+reqwest = { version = "0.12.12", default-features = false, features = ["rustls-tls-native-roots", "json", "charset", "http2", "macos-system-configuration"] }
 utoipa = { version = "5.3.1", features = ["axum_extras", "uuid", "chrono"] }
 utoipa-axum = { version = "0.1.4" }
 utoipa-swagger-ui = { version = "8.1.1", features = ["axum", "vendored"] }
@@ -117,7 +117,7 @@ tower = "0.5.2"
 tower-http = { version = "0.6.2", features = ["trace"] }
 
 # Email sending
-lettre = { version = "0.11.11", features = ["tokio1", "tokio1-native-tls"] }
+lettre = { version = "0.11.11", default-features = false, features = ["tokio1-rustls-tls", "smtp-transport", "pool", "hostname", "builder"] }
 
 # File hosting package extracting
 flate2 = "1.0.35"
@@ -135,7 +135,7 @@ quote = "1.0.38"
 
 # Test mode
 inventory = "0.3.17"
-tokio-tungstenite = { version = "0.26.1", features = ["native-tls", "url"] }
+tokio-tungstenite = { version = "0.26.1", features = ["rustls-tls-native-roots", "url"] }
 pgp = "0.14.2"
 bstr = "1.11.3"
 async-openai = "0.27.0"
@@ -143,9 +143,13 @@ unicode-segmentation = "1.12.0"
 nsfw = { version = "0.2.0", default-features = false }
 
 # Firebase cloud messaging
+yup-oauth2 = { version = "11.0.0", features = ["service-account", "ring", "hyper-rustls"], default-features = false }
+
+# Firebase cloud messaging
 [workspace.dependencies.fcm]
 git = "https://github.com/jutuon/fcm-rust"
 rev = "1788092b8db6aeb50945ff4e279899d9b9336b2e"
+default-features = false
 
 # Face detection
 [workspace.dependencies.rustface]

@@ -37,19 +37,12 @@ make run-release
 2. Install other dependencies.
 
 ```
-sudo apt install build-essential libssl-dev pkg-config
+sudo apt install build-essential pkg-config
 ```
 
 #### macOS
 
-1. Install [Rust](https://www.rust-lang.org/learn/get-started) and
-   [Homebrew](https://brew.sh).
-
-2. Install other dependencies.
-
-```
-brew install openssl@3
-```
+1. Install [Rust](https://www.rust-lang.org/learn/get-started).
 
 ### Development dependencies
 
