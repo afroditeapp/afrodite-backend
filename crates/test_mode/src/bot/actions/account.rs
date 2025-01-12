@@ -161,7 +161,7 @@ async fn connect_websocket(
     version_bytes.extend_from_slice(&minor_version.to_le_bytes());
     version_bytes.extend_from_slice(&patch_version.to_le_bytes());
     stream
-        .send(Message::Binary(version_bytes))
+        .send(Message::Binary(version_bytes.into()))
         .await
         .change_context(TestError::WebSocket)?;
 
@@ -169,7 +169,7 @@ async fn connect_websocket(
         .decode(auth.refresh.token)
         .change_context(TestError::WebSocket)?;
     stream
-        .send(Message::Binary(binary_token))
+        .send(Message::Binary(binary_token.into()))
         .await
         .change_context(TestError::WebSocket)?;
 
@@ -179,7 +179,7 @@ async fn connect_websocket(
         .ok_or(TestError::WebSocket.report())?
         .change_context(TestError::WebSocket)?;
     match refresh_token {
-        Message::Binary(refresh_token) => state.refresh_token = Some(refresh_token),
+        Message::Binary(refresh_token) => state.refresh_token = Some(refresh_token.into()),
         _ => return Err(TestError::WebSocketWrongValue.report()),
     }
 
@@ -199,7 +199,7 @@ async fn connect_websocket(
 
     // Send empty sync data list
     stream
-        .send(Message::Binary(vec![]))
+        .send(Message::Binary(vec![].into()))
         .await
         .change_context(TestError::WebSocket)?;
 
@@ -213,7 +213,7 @@ async fn connect_websocket(
                 _ = handle_connection(&mut stream, &events.event_sender) => (),
                 _ = ping_timer.tick() => {
                     match stream
-                        .send(Message::Ping(vec![]))
+                        .send(Message::Ping(vec![].into()))
                         .await {
                             Ok(_) => (),
                             Err(e) => panic!("Sending ping message to websocket failed, error: {}", e),

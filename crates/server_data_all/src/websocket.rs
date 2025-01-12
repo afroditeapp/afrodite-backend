@@ -409,7 +409,7 @@ async fn send_event(
     let event: EventToClient = event.into();
     let event = serde_json::to_string(&event).change_context(WebSocketError::Serialize)?;
     socket
-        .send(Message::Text(event))
+        .send(Message::Text(event.into()))
         .await
         .change_context(WebSocketError::Send)?;
 

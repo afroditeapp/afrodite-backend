@@ -12,12 +12,12 @@ use tracing::{info, error};
 use super::{utils::StatusCode, GetApiManager, GetConfig, GetUpdateManager};
 use crate::server::{info::SystemInfoGetter, update::UpdateDirCreator};
 
-pub const PATH_GET_ENCRYPTION_KEY: &str = "/manager_api/encryption_key/:server";
+pub const PATH_GET_ENCRYPTION_KEY: &str = "/manager_api/encryption_key/{server}";
 
 /// Get encryption key for some server
 #[utoipa::path(
     get,
-    path = "/manager_api/encryption_key/{server}",
+    path = PATH_GET_ENCRYPTION_KEY,
     params(ServerNameText),
     responses(
         (status = 200, description = "Encryption key found.", body = DataEncryptionKey),

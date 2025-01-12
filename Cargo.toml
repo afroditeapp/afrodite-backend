@@ -102,19 +102,19 @@ tokio-util = { version = "0.7.13", features = ["io"]}
 async-trait = "0.1.85"
 
 reqwest = { version = "0.12.12", features = ["json"] }
-utoipa = { version = "5.1.1", features = ["axum_extras", "uuid", "chrono"] }
-utoipa-axum = { version = "0.1.1" }
-utoipa-swagger-ui = { version = "8.0.1", features = ["axum", "vendored"] }
+utoipa = { version = "5.3.1", features = ["axum_extras", "uuid", "chrono"] }
+utoipa-axum = { version = "0.1.4" }
+utoipa-swagger-ui = { version = "8.1.1", features = ["axum", "vendored"] }
 url = { version = "2.5.4", features = ["serde"] }
 http = "1.2.0"
 headers = "0.4.0"
 jsonwebtoken = "9.3.0"
 hyper = { version = "1.5.2", features = ["full"] }
 hyper-util = { version = "0.1.10", features = ["full"] }
-axum = { version = "0.7.5", features = ["ws", "macros"] }
-axum-extra = { version = "0.9.3", features = ["typed-header"] }
-tower = "0.4.13"
-tower-http = { version = "0.5.2", features = ["trace"] }
+axum = { version = "0.8.1", features = ["ws", "macros"] }
+axum-extra = { version = "0.10.0", features = ["typed-header"] }
+tower = "0.5.2"
+tower-http = { version = "0.6.2", features = ["trace"] }
 
 # Email sending
 lettre = { version = "0.11.11", features = ["tokio1", "tokio1-native-tls"] }
@@ -135,7 +135,7 @@ quote = "1.0.38"
 
 # Test mode
 inventory = "0.3.17"
-tokio-tungstenite = { version = "0.22.0", features = ["native-tls"] }
+tokio-tungstenite = { version = "0.26.1", features = ["native-tls", "url"] }
 pgp = "0.14.2"
 bstr = "1.11.3"
 async-openai = "0.27.0"

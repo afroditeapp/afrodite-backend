@@ -59,7 +59,7 @@ pub async fn get_version(State(state): State<S>) -> Json<BackendVersion> {
 
 // TODO(prod): HTTP cache header support for file package access
 
-pub const PATH_FILE_PACKAGE_ACCESS: &str = "/*path";
+pub const PATH_FILE_PACKAGE_ACCESS: &str = "/{*path}";
 
 pub async fn get_file_package_access(
     State(state): State<S>,
@@ -107,7 +107,7 @@ pub use utils::api::PATH_CONNECT;
 /// 3. If server supports the client, the server sends next refresh token
 ///    as Binary message.
 ///    If server does not support the client, the server sends Text message
-///    and closes the connection.
+///    and closes the connection without WebSocket Close message.
 /// 4. Server sends new access token as Binary message. The client must
 ///    convert the token to base64url encoding without padding.
 ///    (At this point API can be used.)
@@ -289,7 +289,7 @@ async fn handle_socket_result(
         .change_context(WebSocketError::Receive)?
     {
         Message::Binary(version) => {
-            match version.as_slice() {
+            match version.to_vec().as_slice() {
                 [0, info_bytes @ ..] => {
                     let info = model::WebSocketClientInfo::parse(info_bytes)
                         .into_error_string(WebSocketError::ProtocolError)?;
@@ -342,10 +342,10 @@ async fn handle_socket_result(
 
     if !client_is_supported {
         socket
-            .send(Message::Text(String::new()))
+            .send(Message::Text(String::new().into()))
             .await
             .change_context(WebSocketError::Send)?;
-        socket.close().await.change_context(WebSocketError::Close)?;
+        drop(socket);
         return Err(WebSocketError::ClientVersionUnsupported.report());
     }
 
@@ -355,7 +355,7 @@ async fn handle_socket_result(
     let (new_access_token, new_access_token_bytes) = AccessToken::generate_new_with_bytes();
 
     socket
-        .send(Message::Binary(new_refresh_token_bytes))
+        .send(Message::Binary(new_refresh_token_bytes.into()))
         .await
         .change_context(WebSocketError::Send)?;
 
@@ -387,7 +387,7 @@ async fn handle_socket_result(
         .ok_or(WebSocketError::EventChannelCreationFailed.report())?;
 
     socket
-        .send(Message::Binary(new_access_token_bytes))
+        .send(Message::Binary(new_access_token_bytes.into()))
         .await
         .change_context(WebSocketError::Send)?;
 
@@ -455,7 +455,7 @@ async fn handle_socket_result(
                         let event: EventToClient = internal_event.to_client_event();
                         let event = serde_json::to_string(&event)
                             .change_context(WebSocketError::Serialize)?;
-                        socket.send(Message::Text(event))
+                        socket.send(Message::Text(event.into()))
                             .await
                             .change_context(WebSocketError::Send)?;
                         // If event is pending notification related, the cached
