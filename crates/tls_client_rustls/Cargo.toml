@@ -1,0 +1,21 @@
+[package]
+name = "tls_client_rustls"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+
+# HTTP client TLS
+fcm = { workspace = true }
+reqwest = { workspace = true }
+lettre = { workspace = true }
+tokio-tungstenite = { workspace = true }
+
+[features]
+enable = [
+    "fcm/rustls-tls-native-roots",
+    "reqwest/rustls-tls-native-roots",
+    "lettre/tokio1-rustls-tls",
+    "lettre/rustls-native-certs",
+    "tokio-tungstenite/rustls-tls-native-roots",
+]

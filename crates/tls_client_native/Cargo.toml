@@ -1,0 +1,20 @@
+[package]
+name = "tls_client_native"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+
+# HTTP client TLS
+fcm = { workspace = true }
+reqwest = { workspace = true }
+lettre = { workspace = true }
+tokio-tungstenite = { workspace = true }
+
+[features]
+enable = [
+    "fcm/native-tls",
+    "reqwest/native-tls",
+    "lettre/tokio1-native-tls",
+    "tokio-tungstenite/native-tls",
+]

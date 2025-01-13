@@ -40,9 +40,19 @@ make run-release
 sudo apt install build-essential pkg-config
 ```
 
+   If building with feature `tls-client-native` enabled then package
+   `libssl-dev` is also required.
+
 #### macOS
 
-1. Install [Rust](https://www.rust-lang.org/learn/get-started).
+1. Install [Rust](https://www.rust-lang.org/learn/get-started) and
+   [Homebrew](https://brew.sh).
+
+2. Install other dependencies.
+
+```
+brew install openssl@3
+```
 
 ### Development dependencies
 

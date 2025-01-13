@@ -22,5 +22,32 @@ manager = { path = "../manager" }
 simple_backend_image_process = { path = "../simple_backend_image_process" }
 simple_backend_config = { path = "../simple_backend_config" }
 
+# HTTP client TLS
+tls_client_native = { path = "../tls_client_native", optional = true }
+tls_client_rustls = { path = "../tls_client_rustls", optional = true }
+
 [build-dependencies]
 vergen-gitcl = { workspace = true }
+
+[features]
+default = [
+    "tls_client_native?/enable",
+    "tls_client_rustls?/enable",
+]
+
+tls-client-native = [
+    "dep:tls_client_native",
+    "tls_client_native/enable",
+]
+
+tls-client-rustls = [
+    "dep:tls_client_rustls",
+    "tls_client_rustls/enable",
+]
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# Running "make test" is faster with native TLS client on macOS.
+tls_client_native = { path = "../tls_client_native", optional = false }
+
+[target.'cfg(not(target_os = "macos"))'.dependencies]
+tls_client_rustls = { path = "../tls_client_rustls", optional = false }

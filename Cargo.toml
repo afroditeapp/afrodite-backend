@@ -51,6 +51,9 @@ members = [
     "crates/manager_api",
     "crates/manager_api_client",
     "crates/manager_model",
+    # TLS client config
+    "crates/tls_client_native",
+    "crates/tls_client_rustls",
 ]
 
 [workspace.dependencies]
@@ -101,7 +104,8 @@ tokio-stream = { version = "0.1.17", features = ["sync", "fs"] }
 tokio-util = { version = "0.7.13", features = ["io"]}
 async-trait = "0.1.85"
 
-reqwest = { version = "0.12.12", default-features = false, features = ["rustls-tls-native-roots", "json", "charset", "http2", "macos-system-configuration"] }
+# tls_client_rustls and tls_client_rustls configures TLS
+reqwest = { version = "0.12.12", default-features = false, features = ["json", "charset", "http2", "macos-system-configuration"] }
 utoipa = { version = "5.3.1", features = ["axum_extras", "uuid", "chrono"] }
 utoipa-axum = { version = "0.1.4" }
 utoipa-swagger-ui = { version = "8.1.1", features = ["axum", "vendored"] }
@@ -116,8 +120,8 @@ axum-extra = { version = "0.10.0", features = ["typed-header"] }
 tower = "0.5.2"
 tower-http = { version = "0.6.2", features = ["trace"] }
 
-# Email sending
-lettre = { version = "0.11.11", default-features = false, features = ["tokio1-rustls-tls", "rustls-native-certs", "smtp-transport", "pool", "hostname", "builder"] }
+# Email sending, tls_client_rustls and tls_client_rustls configures TLS
+lettre = { version = "0.11.11", default-features = false, features = ["smtp-transport", "pool", "hostname", "builder"] }
 
 # File hosting package extracting
 flate2 = "1.0.35"
@@ -135,19 +139,19 @@ quote = "1.0.38"
 
 # Test mode
 inventory = "0.3.17"
-tokio-tungstenite = { version = "0.26.1", features = ["rustls-tls-native-roots", "url"] }
+# tls_client_rustls and tls_client_rustls configures TLS
+tokio-tungstenite = { version = "0.26.1", features = ["url"] }
 pgp = "0.14.2"
 bstr = "1.11.3"
 async-openai = "0.27.0"
 unicode-segmentation = "1.12.0"
 nsfw = { version = "0.2.0", default-features = false }
 
-# Firebase cloud messaging
+# Firebase cloud messaging, tls_client_rustls and tls_client_rustls configures TLS
 [workspace.dependencies.fcm]
 git = "https://github.com/jutuon/fcm-rust"
 rev = "713e744005ccb9456f77655a2480a806e29e1b77"
 default-features = false
-features = ["rustls-tls-native-roots"]
 
 # Face detection
 [workspace.dependencies.rustface]
