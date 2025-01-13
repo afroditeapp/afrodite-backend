@@ -37,7 +37,7 @@ make run-release
 2. Install other dependencies.
 
 ```
-sudo apt install build-essential pkg-config
+sudo apt install build-essential pkg-config libsqlite3-dev
 ```
 
    If building with feature `tls-client-native` enabled then package
