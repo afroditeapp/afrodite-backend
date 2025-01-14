@@ -23,7 +23,7 @@ use crate::api::{
         ACCOUNT_REGISTER_COUNTERS_LIST, ACCOUNT_SETTINGS_COUNTERS_LIST,
         ACCOUNT_STATE_COUNTERS_LIST,
     },
-    account_internal::ACCOUNT_INTERNAL_COUNTERS_LIST,
+    account_bot::ACCOUNT_BOT_COUNTERS_LIST,
     chat::{
         CHAT_BLOCK_COUNTERS_LIST, CHAT_LIKE_COUNTERS_LIST, CHAT_MATCH_COUNTERS_LIST,
         CHAT_MESSAGE_COUNTERS_LIST, CHAT_PUSH_NOTIFICATION_COUNTERS_LIST,
@@ -73,7 +73,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("account_admin_permissions", ACCOUNT_ADMIN_PERMISSIONS_COUNTERS_LIST),
     &CounterCategory::new("account_admin_state", ACCOUNT_ADMIN_STATE_COUNTERS_LIST),
     // Account internal
-    &CounterCategory::new("account_internal", ACCOUNT_INTERNAL_COUNTERS_LIST),
+    &CounterCategory::new("account_internal", ACCOUNT_BOT_COUNTERS_LIST),
     // Media
     &CounterCategory::new("media_content", MEDIA_CONTENT_COUNTERS_LIST),
     &CounterCategory::new("media_media_content", MEDIA_MEDIA_CONTENT_COUNTERS_LIST),

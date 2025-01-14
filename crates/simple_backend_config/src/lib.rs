@@ -127,10 +127,11 @@ impl SimpleBackendConfig {
     /// Server should run in debug mode.
     ///
     /// Debug mode changes:
-    /// * Swagger UI is enabled on internal API.
+    /// * Swagger UI is enabled on bot API port.
     /// * Disabling HTTPS is possbile.
     /// * SQLite in RAM mode is allowed.
     /// * Atomic boolean `RUNNING_IN_DEBUG_MODE` is set to `true`.
+    /// * Experimental internal API can be enabled.
     pub fn debug_mode(&self) -> bool {
         self.file.debug.unwrap_or(false)
     }
@@ -232,13 +233,9 @@ pub fn get_config(
         file_config.data.dir.clone()
     };
 
-    if let Some(internal_api_socket) = file_config.socket.internal_api {
-        if !file_config.socket.internal_api_allow_non_localhost_ip
-            && !internal_api_socket.ip().is_loopback()
-        {
-            return Err(GetConfigError::InvalidConfiguration)
-                .attach_printable("By default, internal API socket config only allows an localhost address. Use config 'internal_api_allow_non_localhost_ip = true' to allow other addresses.");
-        }
+    if file_config.socket.experimental_internal_api.is_some() && !file_config.debug.unwrap_or(false) {
+        return Err(GetConfigError::InvalidConfiguration)
+            .attach_printable("Internal API can be enabled only when debug mode is enabled");
     }
 
     if let Some(config) = file_config.firebase_cloud_messaging.as_ref() {

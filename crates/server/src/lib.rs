@@ -142,12 +142,30 @@ impl BusinessLogic for DatingAppBusinessLogic {
         router
     }
 
-    fn internal_api_router(
+    fn bot_api_router(
         &self,
         web_socket_manager: WebSocketManager,
         state: &Self::AppState,
     ) -> Router {
         let mut router = Router::new();
+
+        if self.config.components().account {
+            router = router.merge(
+                server_router_account::BotApp::create_account_server_router(state.clone()),
+            )
+        }
+
+        router = router.merge(self.public_api_router(web_socket_manager, state, true));
+
+        router
+    }
+
+    fn internal_api_router(
+        &self,
+        state: &Self::AppState,
+    ) -> Router {
+        let mut router = Router::new();
+
         if self.config.components().account {
             router = router.merge(
                 server_router_account::InternalApp::create_account_server_router(state.clone()),
@@ -158,8 +176,6 @@ impl BusinessLogic for DatingAppBusinessLogic {
             router = router
                 .merge(server_router_media::InternalApp::create_media_server_router(state.clone()))
         }
-
-        router = router.merge(self.public_api_router(web_socket_manager, state, true));
 
         router
     }

@@ -27,7 +27,7 @@ use sha2::{Digest, Sha256};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_utils::{ContextExt, IntoReportFromString};
 
-use self::file::{Components, ConfigFile, ExternalServices, InternalApiConfig, LocationConfig};
+use self::file::{Components, ConfigFile, ExternalServices, LocationConfig};
 
 pub const DATABASE_MESSAGE_CHANNEL_BUFFER: usize = 32;
 
@@ -141,10 +141,6 @@ impl Config {
         self.file.grant_admin_access.as_ref()
     }
 
-    pub fn internal_api_config(&self) -> InternalApiConfig {
-        self.file.internal_api.clone().unwrap_or_default()
-    }
-
     pub fn bot_config(&self) -> Option<&BotConfig> {
         self.file_dynamic.backend_config.bots.as_ref()
     }
@@ -236,18 +232,6 @@ pub fn get_config(
 
     let file_dynamic =
         ConfigFileDynamic::load(current_dir).change_context(GetConfigError::LoadFileError)?;
-
-    if file_dynamic.backend_config.bots.is_some()
-        && !file_config
-            .internal_api
-            .as_ref()
-            .map(|c| c.bot_login)
-            .unwrap_or_default()
-    {
-        return Err(GetConfigError::InvalidConfiguration).attach_printable(
-            "When bots are enabled, internal API bot login must be also enabled",
-        );
-    }
 
     let (profile_attributes, profile_attributes_sha256) =
         if let Some(path) = &file_config.profile_attributes_file {

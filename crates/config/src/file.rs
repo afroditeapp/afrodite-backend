@@ -44,10 +44,6 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # longitude_bottom_right = 31.58
 # index_cell_square_km = 255       # 1-255 and area width and height must be larger than 255 km
 
-# [internal_api]
-# Enable login and register route for bots
-# bot_login = false
-
 # [external_services]
 # account_internal = "http://127.0.0.1:4000"
 # media_internal = "http://127.0.0.1:4000"
@@ -98,7 +94,6 @@ pub struct ConfigFile {
     pub grant_admin_access: Option<GrantAdminAccessConfig>,
     pub location: Option<LocationConfig>,
     pub external_services: Option<ExternalServices>,
-    pub internal_api: Option<InternalApiConfig>,
     pub demo_mode: Option<Vec<DemoModeConfig>>,
     pub limits: Option<LimitsConfig>,
     pub profile_name_allowlist: Option<Vec<ProfiletNameAllowlistConfig>>,
@@ -115,7 +110,6 @@ impl ConfigFile {
             grant_admin_access: None,
             location: None,
             external_services: None,
-            internal_api: None,
             demo_mode: None,
             limits: None,
             profile_name_allowlist: None,
@@ -201,16 +195,6 @@ impl Default for LocationConfig {
             index_cell_square_km: NonZeroU8::MAX,
         }
     }
-}
-
-#[derive(Debug, Deserialize, Default, Serialize, Clone)]
-pub struct InternalApiConfig {
-    /// Enable register and login HTTP routes for bots through internal API socket.
-    /// Note that debug option with this makes no authentication logins possible.
-    pub bot_login: bool,
-    /// Enable microservice mode related internal routes.
-    #[serde(default)]
-    pub microservice: bool,
 }
 
 /// Limits config

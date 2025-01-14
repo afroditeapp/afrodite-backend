@@ -7,7 +7,7 @@ use config::{
     args::{SelectedBenchmark, TestMode},
     file::{
         Components, ConfigFile, EmailAddress, ExternalServices, GrantAdminAccessConfig,
-        InternalApiConfig, LocationConfig, CONFIG_FILE_NAME,
+        LocationConfig, CONFIG_FILE_NAME,
     },
     Config,
 };
@@ -230,13 +230,6 @@ fn new_config(
         }
         .into(),
         external_services,
-        internal_api: InternalApiConfig {
-            bot_login: true,
-            // TODO(microservice): this should be enabled if microservice mode
-            // is enabled
-            microservice: false,
-        }
-        .into(),
         bot_config_file: None,
         profile_attributes_file: None,
         email_content_file: None,
@@ -262,8 +255,9 @@ fn new_config(
         },
         socket: SocketConfig {
             public_api: public_api.into(),
-            internal_api: Some(internal_api.into()),
-            internal_api_allow_non_localhost_ip: false,
+            bot_api_localhost_port: Some(internal_api.port()),
+            // TODO(microservice): Configure internal API properly
+            experimental_internal_api: None,
         },
         sign_in_with_google: None,
         manager: None,

@@ -22,7 +22,7 @@ pub mod sign_in_with;
 pub mod utils;
 pub mod web_socket;
 
-use std::{convert::Infallible, future::IntoFuture, net::SocketAddr, pin::Pin, sync::Arc};
+use std::{convert::Infallible, future::IntoFuture, net::{Ipv4Addr, SocketAddr, SocketAddrV4}, pin::Pin, sync::Arc};
 
 use app::{
     GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith,
@@ -96,10 +96,17 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
     ) -> Router {
         Router::new()
     }
+    /// Create router for bot API
+    fn bot_api_router(
+        &self,
+        _web_socket_manager: WebSocketManager,
+        _state: &Self::AppState,
+    ) -> Router {
+        Router::new()
+    }
     /// Create router for internal API
     fn internal_api_router(
         &self,
-        _web_socket_manager: WebSocketManager,
         _state: &Self::AppState,
     ) -> Router {
         Router::new()
@@ -233,15 +240,28 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         let (ws_manager, mut ws_watcher) =
             WebSocketManager::new(server_quit_watcher.resubscribe()).await;
 
-        let server_task = self
+        let public_api_server_task = self
             .create_public_api_server_task(server_quit_watcher.resubscribe(), ws_manager.clone(), &state)
             .await;
-        let internal_server_task =
-            if let Some(internal_api_addr) = self.config.socket().internal_api {
+        let bot_api_server_task =
+            if let Some(port) = self.config.socket().bot_api_localhost_port {
+                Some(
+                    self.create_bot_api_server_task(
+                        server_quit_watcher.resubscribe(),
+                        ws_manager,
+                        &state,
+                        port,
+                    )
+                    .await,
+                )
+            } else {
+                None
+            };
+        let internal_api_server_task =
+            if let Some(internal_api_addr) = self.config.socket().experimental_internal_api {
                 Some(
                     self.create_internal_api_server_task(
                         server_quit_watcher.resubscribe(),
-                        ws_manager,
                         &state,
                         internal_api_addr,
                     )
@@ -265,11 +285,16 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         drop(server_quit_handle);
 
         // Wait until all tasks quit
-        server_task
+        public_api_server_task
             .await
             .expect("Public API server task panic detected");
-        if let Some(internal_server_task) = internal_server_task {
-            internal_server_task
+        if let Some(task) = bot_api_server_task {
+            task
+                .await
+                .expect("Bot API server task panic detected");
+        }
+        if let Some(task) = internal_api_server_task {
+            task
                 .await
                 .expect("Internal API server task panic detected");
         }
@@ -470,15 +495,15 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         })
     }
 
-    // Internal server to server API. This must be only LAN accessible.
-    async fn create_internal_api_server_task(
+    // Bot API for local bot clients. Only available from localhost.
+    async fn create_bot_api_server_task(
         &self,
         quit_notification: ServerQuitWatcher,
         web_socket_manager: WebSocketManager,
         state: &T::AppState,
-        addr: SocketAddr,
+        localhost_port: u16,
     ) -> JoinHandle<()> {
-        let router = self.logic.internal_api_router(web_socket_manager, state);
+        let router = self.logic.bot_api_router(web_socket_manager, state);
         let router = if self.config.debug_mode() {
             if let Some(swagger) = self.logic.create_swagger_ui(state) {
                 router.merge(swagger)
@@ -489,6 +514,20 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             router
         };
 
+        let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::LOCALHOST, localhost_port));
+        info!("Bot API is available on {}", addr);
+        self.create_server_task_no_tls(router, addr, "Bot API", quit_notification)
+            .await
+    }
+
+    // Internal server to server API. This must be only LAN accessible.
+    async fn create_internal_api_server_task(
+        &self,
+        quit_notification: ServerQuitWatcher,
+        state: &T::AppState,
+        addr: SocketAddr,
+    ) -> JoinHandle<()> {
+        let router = self.logic.internal_api_router(state);
         info!("Internal API is available on {}", addr);
         if let Some(tls_config) = self.config.internal_api_tls_config() {
             self.create_server_task_with_tls(

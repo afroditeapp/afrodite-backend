@@ -12,7 +12,7 @@ use self::utils::SecurityApiAccessTokenDefault;
 // Routes
 pub mod account;
 pub mod account_admin;
-pub mod account_internal;
+pub mod account_bot;
 pub mod app;
 
 pub use server_api::{internal_api, utils};
@@ -25,9 +25,9 @@ pub use server_common::{data::DataError, result};
     paths(
         // Account
         account::post_sign_in_with_login,
-        // Account internal
-        account_internal::post_register,
-        account_internal::post_login,
+        // Account bot API
+        account_bot::post_register,
+        account_bot::post_login,
     ),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

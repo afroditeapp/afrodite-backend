@@ -26,7 +26,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
 [socket]
 public_api = "127.0.0.1:3000"
-internal_api = "127.0.0.1:3001"
+bot_api_localhost_port = 3001
 
 [data]
 dir = "data"
@@ -159,8 +159,8 @@ impl SimpleBackendConfigFile {
             },
             socket: SocketConfig {
                 public_api: localhost,
-                internal_api: None,
-                internal_api_allow_non_localhost_ip: false,
+                bot_api_localhost_port: None,
+                experimental_internal_api: None,
             },
             email_sending: None,
             tile_map: None,
@@ -277,9 +277,11 @@ impl From<SqliteDatabase> for DatabaseInfo {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SocketConfig {
     pub public_api: SocketAddr,
-    pub internal_api: Option<SocketAddr>,
-    #[serde(default)]
-    pub internal_api_allow_non_localhost_ip: bool,
+    pub bot_api_localhost_port: Option<u16>,
+    /// Socket address for server to server API which is only used
+    /// when backend is running in microservice mode.
+    /// The microservice mode is not currently working properly.
+    pub experimental_internal_api: Option<SocketAddr>,
 }
 
 /// App manager config

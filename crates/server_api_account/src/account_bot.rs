@@ -18,8 +18,7 @@ pub const PATH_LOGIN: &str = "/account_api/login";
 /// Get new AccessToken for a bot account. If the account is not registered
 /// as a bot account, then the request will fail.
 ///
-/// Available only if server internal API is enabled with
-/// bot_login from config file.
+/// Available only from bot API port.
 #[utoipa::path(
     post,
     path = "/account_api/login",
@@ -34,7 +33,7 @@ pub async fn post_login(
     State(state): State<S>,
     Json(id): Json<AccountId>,
 ) -> Result<Json<LoginResult>, StatusCode> {
-    ACCOUNT_INTERNAL.post_login.incr();
+    ACCOUNT_BOT.post_login.incr();
 
     let internal_id = state.get_internal_id(id).await?;
     let is_bot = state.read().account().is_bot_account(internal_id).await?;
@@ -49,8 +48,7 @@ pub const PATH_REGISTER: &str = "/account_api/register";
 
 /// Register a new bot account. Returns new account ID which is UUID.
 ///
-/// Available only if server internal API is enabled with
-/// bot_login from config file.
+/// Available only from bot API port.
 #[utoipa::path(
     post,
     path = "/account_api/register",
@@ -61,7 +59,7 @@ pub const PATH_REGISTER: &str = "/account_api/register";
     )
 )]
 pub async fn post_register(State(state): State<S>) -> Result<Json<AccountId>, StatusCode> {
-    ACCOUNT_INTERNAL.post_register.incr();
+    ACCOUNT_BOT.post_register.incr();
     let new_account_id = state
         .data_all_access()
         .register_impl(SignInWithInfo::default(), None)
@@ -78,9 +76,9 @@ pub async fn post_register(State(state): State<S>) -> Result<Json<AccountId>, St
 }
 
 create_counters!(
-    AccountInternalCounters,
-    ACCOUNT_INTERNAL,
-    ACCOUNT_INTERNAL_COUNTERS_LIST,
+    AccountBotCounters,
+    ACCOUNT_BOT,
+    ACCOUNT_BOT_COUNTERS_LIST,
     post_login,
     post_register,
 );

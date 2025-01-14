@@ -1,6 +1,6 @@
 //! Bot client
 
-use std::{env, net::SocketAddr, os::unix::process::CommandExt, process::Stdio};
+use std::{env, net::{Ipv4Addr, SocketAddr}, os::unix::process::CommandExt, process::Stdio};
 
 use config::Config;
 use error_stack::{Result, ResultExt};
@@ -68,16 +68,12 @@ impl BotClient {
             ));
         }
 
-        let internal_api_socket =
-            if let Some(internal_api_socket) = config.simple_backend().socket().internal_api {
-                if !internal_api_socket.ip().is_loopback() {
-                    return Err(BotClientError::LaunchCommand)
-                        .attach_printable("Only localhost IP address is allowed for internal API");
-                }
-                internal_api_socket
+        let bot_api_socket =
+            if let Some(port) = config.simple_backend().socket().bot_api_localhost_port {
+                SocketAddr::new(Ipv4Addr::LOCALHOST.into(), port)
             } else {
                 return Err(BotClientError::LaunchCommand)
-                    .attach_printable("Internal API must be enabled");
+                    .attach_printable("Bot API must be enabled");
             };
 
         let bot_data_dir = config.simple_backend().data_dir().join(BOT_DATA_DIR_NAME);
@@ -90,15 +86,15 @@ impl BotClient {
             .arg("--no-servers")
             // Urls
             .arg("--url-register")
-            .arg(Self::internal_api_url(internal_api_socket))
+            .arg(Self::bot_api_url(bot_api_socket))
             .arg("--url-account")
-            .arg(Self::internal_api_url(internal_api_socket))
+            .arg(Self::bot_api_url(bot_api_socket))
             .arg("--url-profile")
-            .arg(Self::internal_api_url(internal_api_socket))
+            .arg(Self::bot_api_url(bot_api_socket))
             .arg("--url-media")
-            .arg(Self::internal_api_url(internal_api_socket))
+            .arg(Self::bot_api_url(bot_api_socket))
             .arg("--url-chat")
-            .arg(Self::internal_api_url(internal_api_socket));
+            .arg(Self::bot_api_url(bot_api_socket));
 
         if let Some(bot_config_file) = &config.bot_config_file() {
             let dir = std::fs::canonicalize(bot_config_file)
@@ -205,11 +201,11 @@ impl BotClient {
         Ok(())
     }
 
-    fn internal_api_url(internal_api_socket: SocketAddr) -> String {
+    fn bot_api_url(api_socket: SocketAddr) -> String {
         format!(
             "http://{}:{}",
             LOCALHOST_HOSTNAME,
-            internal_api_socket.port()
+            api_socket.port()
         )
     }
 }

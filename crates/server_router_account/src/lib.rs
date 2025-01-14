@@ -13,8 +13,10 @@ use server_state::StateForRouterCreation;
 
 mod api;
 mod routes_connected;
+mod routes_bot;
 mod routes_internal;
 
+pub use routes_bot::BotApp;
 pub use routes_internal::InternalApp;
 use simple_backend::web_socket::WebSocketManager;
 
