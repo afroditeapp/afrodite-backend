@@ -1,7 +1,7 @@
 /*
- * app-manager
+ * afrodite-manager
  *
- * App manager API
+ * Afrodite manager API
  *
  * The version of the OpenAPI document: 0.1.0
  * 
@@ -14,8 +14,6 @@ use serde::{Deserialize, Serialize};
 /// 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum SoftwareOptions {
-    #[serde(rename = "Manager")]
-    Manager,
     #[serde(rename = "Backend")]
     Backend,
 
@@ -24,7 +22,6 @@ pub enum SoftwareOptions {
 impl std::fmt::Display for SoftwareOptions {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::Manager => write!(f, "Manager"),
             Self::Backend => write!(f, "Backend"),
         }
     }
@@ -32,7 +29,7 @@ impl std::fmt::Display for SoftwareOptions {
 
 impl Default for SoftwareOptions {
     fn default() -> SoftwareOptions {
-        Self::Manager
+        Self::Backend
     }
 }
 

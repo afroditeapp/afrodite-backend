@@ -1,7 +1,7 @@
 /*
- * app-manager
+ * afrodite-manager
  *
- * App manager API
+ * Afrodite manager API
  *
  * The version of the OpenAPI document: 0.1.0
  * 
@@ -16,8 +16,6 @@ use serde::{Deserialize, Serialize};
 pub enum DownloadType {
     #[serde(rename = "Info")]
     Info,
-    #[serde(rename = "EncryptedBinary")]
-    EncryptedBinary,
 
 }
 
@@ -25,7 +23,6 @@ impl std::fmt::Display for DownloadType {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::Info => write!(f, "Info"),
-            Self::EncryptedBinary => write!(f, "EncryptedBinary"),
         }
     }
 }

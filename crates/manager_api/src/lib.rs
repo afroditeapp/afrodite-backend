@@ -10,7 +10,7 @@ pub use manager_api_client::apis::{
     configuration::{ApiKey, Configuration},
     manager_api::{
         GetEncryptionKeyError, GetSoftwareInfoError, GetSystemInfoAllError, GetSystemInfoError,
-        PostRequestBuildSoftwareError, PostRequestRestartOrResetBackendError,
+        PostRequestRestartOrResetBackendError,
         PostRequestSoftwareUpdateError,
     },
     Error,

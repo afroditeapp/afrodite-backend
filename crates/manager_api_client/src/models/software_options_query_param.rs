@@ -1,7 +1,7 @@
 /*
- * app-manager
+ * afrodite-manager
  *
- * App manager API
+ * Afrodite manager API
  *
  * The version of the OpenAPI document: 0.1.0
  * 
