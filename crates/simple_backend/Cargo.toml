@@ -42,7 +42,8 @@ lettre = { workspace = true }
 
 # Server TLS
 tokio-rustls = { workspace = true }
-rustls-acme = { workspace = true }
+tokio-rustls-acme = { workspace = true }
+rustls-platform-verifier = { workspace = true }
 
 thiserror = { workspace = true }
 error-stack = { workspace = true }

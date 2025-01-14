@@ -34,10 +34,10 @@ use hyper::body::Incoming;
 use hyper_util::rt::{TokioExecutor, TokioIo};
 use media_backup::MediaBackupHandle;
 use perf::AllCounters;
-use rustls_acme::{caches::DirCache, is_tls_alpn_challenge, AcmeConfig};
+use rustls_platform_verifier::ConfigVerifierExt;
+use tokio_rustls_acme::{caches::DirCache, AcmeAcceptor, AcmeConfig};
 use simple_backend_config::{file::LetsEncryptConfig, SimpleBackendConfig};
 use tokio::{
-    io::AsyncWriteExt,
     net::TcpListener,
     signal::{
         self,
@@ -47,7 +47,7 @@ use tokio::{
     task::JoinHandle,
 };
 use tokio_rustls::{
-    rustls::{server::Acceptor, ServerConfig},
+    rustls::{server::Acceptor, ClientConfig, ServerConfig},
     LazyConfigAcceptor, TlsAcceptor,
 };
 use tower::Service;
@@ -381,7 +381,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
 
         let public_api_tls_config =
             if addr.port() != HTTPS_DEFAULT_PORT && tls_config.is_lets_encrypt() {
-                tls_config.clone().remove_challenge_config()
+                tls_config.clone().remove_acme_acceptor()
             } else {
                 tls_config.clone()
             };
@@ -587,13 +587,13 @@ async fn handle_tls_related_tcp_stream(
             }
         }
         SimpleBackendTlsConfigAcmeTaskRunning::LetsEncrypt {
-            challenge_config,
-            default_config,
+            tls_config,
+            acceptor,
         } => {
             handle_lets_encrypt_related_tcp_stream(
                 tcp_stream,
-                challenge_config,
-                default_config,
+                tls_config,
+                acceptor,
                 app_service_with_connect_info,
             )
             .await;
@@ -603,43 +603,47 @@ async fn handle_tls_related_tcp_stream(
 
 async fn handle_lets_encrypt_related_tcp_stream(
     tcp_stream: tokio::net::TcpStream,
-    challenge_config: Option<Arc<ServerConfig>>,
-    default_config: Arc<ServerConfig>,
+    tls_config: Arc<ServerConfig>,
+    acceptor: Option<AcmeAcceptor>,
     app_service_with_connect_info: Option<
         axum::middleware::AddExtension<Router, axum::extract::ConnectInfo<SocketAddr>>,
     >,
 ) {
-    let empty_acceptor: Acceptor = Default::default();
-    let start_handshake = match LazyConfigAcceptor::new(empty_acceptor, tcp_stream).await {
-        Ok(v) => v,
-        Err(_) => {
-            // This error seems to be quite frequent when this port is on
-            // public internet so do not log anything.
-            SIMPLE_CONNECTION
-                .lets_encrypt_port_start_handshake_failed
-                .incr();
-            return;
+    let handshake = if let Some(acme_acceptor) = acceptor {
+        match acme_acceptor.accept(tcp_stream).await {
+            Ok(None) => {
+                info!("TLS-ALPN-01 challenge received");
+                return;
+            }
+            Ok(Some(handshake)) => handshake,
+            Err(_) => {
+                // This error seems to be quite frequent when this port is on
+                // public internet so do not log anything.
+                SIMPLE_CONNECTION
+                    .lets_encrypt_port_443_error
+                    .incr();
+                return;
+            }
+        }
+    } else {
+        let empty_acceptor: Acceptor = Default::default();
+        match LazyConfigAcceptor::new(empty_acceptor, tcp_stream).await {
+            Ok(v) => v,
+            Err(_) => {
+                // This error seems to be quite frequent when this port is on
+                // public internet so do not log anything.
+                SIMPLE_CONNECTION
+                    .lets_encrypt_non_default_port_error
+                    .incr();
+                return;
+            }
         }
     };
 
-    if let Some(challenge_config) = challenge_config {
-        if is_tls_alpn_challenge(&start_handshake.client_hello()) {
-            info!("TLS-ALPN-01 challenge received");
-            match start_handshake.into_stream(challenge_config).await {
-                Ok(mut v) => match v.shutdown().await {
-                    Ok(()) => (),
-                    Err(e) => error!("Challenge connection shutdown failed: {}", e),
-                },
-                Err(e) => error!("Challenge connection failed: {}", e),
-            }
-            return;
-        }
-    }
-
     if let Some(app_service_with_connect_info) = app_service_with_connect_info {
-        match start_handshake.into_stream(default_config).await {
+        match handshake.into_stream(tls_config).await {
             Ok(v) => handle_ready_tls_connection(v, app_service_with_connect_info).await,
-            Err(e) => error!("Normal connection failed: {}", e),
+            Err(e) => error!("Into TlsStream failed: {}", e),
         }
     }
 }
@@ -702,12 +706,16 @@ impl SimpleBackendTlsConfig {
             }
             SimpleBackendTlsConfig::LetsEncrypt(lets_encrypt) => {
                 let mut state = AcmeConfig::new(lets_encrypt.domains)
+                    .client_tls_config(ClientConfig::with_platform_verifier().into())
                     .contact([format!("mailto:{}", lets_encrypt.email)])
                     .cache(DirCache::new(lets_encrypt.cache_dir))
                     .directory_lets_encrypt(lets_encrypt.production_servers)
                     .state();
-                let challenge_config = state.challenge_rustls_config();
-                let default_config = state.default_rustls_config();
+                let acceptor = state.acceptor();
+                let tls_config = ServerConfig::builder()
+                    .with_no_client_auth()
+                    .with_cert_resolver(state.resolver())
+                    .into();
 
                 tokio::spawn(async move {
                     loop {
@@ -726,20 +734,20 @@ impl SimpleBackendTlsConfig {
                 });
 
                 SimpleBackendTlsConfigAcmeTaskRunning::LetsEncrypt {
-                    challenge_config: Some(challenge_config),
-                    default_config,
+                    tls_config,
+                    acceptor: Some(acceptor),
                 }
             }
         }
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 enum SimpleBackendTlsConfigAcmeTaskRunning {
     ManualSertificates(Arc<ServerConfig>),
     LetsEncrypt {
-        challenge_config: Option<Arc<ServerConfig>>,
-        default_config: Arc<ServerConfig>,
+        tls_config: Arc<ServerConfig>,
+        acceptor: Option<AcmeAcceptor>,
     },
 }
 
@@ -751,17 +759,17 @@ impl SimpleBackendTlsConfigAcmeTaskRunning {
         )
     }
 
-    fn remove_challenge_config(self) -> SimpleBackendTlsConfigAcmeTaskRunning {
+    fn remove_acme_acceptor(self) -> SimpleBackendTlsConfigAcmeTaskRunning {
         match self {
             SimpleBackendTlsConfigAcmeTaskRunning::ManualSertificates(manual) => {
                 SimpleBackendTlsConfigAcmeTaskRunning::ManualSertificates(manual)
             }
             SimpleBackendTlsConfigAcmeTaskRunning::LetsEncrypt {
-                challenge_config: _,
-                default_config,
+                tls_config,
+                ..
             } => SimpleBackendTlsConfigAcmeTaskRunning::LetsEncrypt {
-                challenge_config: None,
-                default_config,
+                tls_config,
+                acceptor: None,
             },
         }
     }
@@ -771,5 +779,6 @@ create_counters!(
     SimpleConnectionCounters,
     SIMPLE_CONNECTION,
     SIMPLE_CONNECTION_COUNTERS_LIST,
-    lets_encrypt_port_start_handshake_failed,
+    lets_encrypt_port_443_error,
+    lets_encrypt_non_default_port_error,
 );

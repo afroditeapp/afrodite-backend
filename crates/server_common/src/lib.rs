@@ -3,7 +3,8 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
-// TODO(prod): Remove webpki-roots dependency
+// TODO: Fix lettre to not include unused webpki-roots dependency
+//       in dependency tree when rustls and native certificates are enabled.
 
 pub mod app;
 pub mod data;
