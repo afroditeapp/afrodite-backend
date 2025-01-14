@@ -57,7 +57,13 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         ),
     ),
 )]
-pub struct ApiDoc;
+pub struct ManagerApiDoc;
+
+impl ManagerApiDoc {
+    pub fn api_doc_json() -> Result<String, serde_json::Error> {
+        Self::openapi().to_pretty_json()
+    }
+}
 
 // App state getters
 

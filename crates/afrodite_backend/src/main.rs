@@ -15,7 +15,7 @@ use std::process::ExitCode;
 
 use build_info::{BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE};
 use config::{args::AppMode, get_config};
-use manager::config::args::ManagerApiClientMode;
+use manager::{api::ManagerApiDoc, config::args::ManagerApiClientMode};
 use server::{api_doc::ApiDoc, DatingAppServer};
 use server_data::index::LocationIndexInfoCreator;
 use simple_backend_config::{args::ImageProcessModeArgs, file::ImageProcessingConfig};
@@ -61,6 +61,14 @@ fn main() -> ExitCode {
         return ExitCode::SUCCESS;
     }
 
+    if let Some(AppMode::ManagerOpenApi) = args.mode {
+        let runtime = tokio::runtime::Runtime::new().unwrap();
+        runtime.block_on(async {
+            println!("{}", ManagerApiDoc::api_doc_json().unwrap());
+        });
+        return ExitCode::SUCCESS;
+    }
+
     let index_info = args.index_info;
     let config = get_config(
         args,
@@ -82,6 +90,7 @@ fn main() -> ExitCode {
     match config.current_mode() {
         Some(config::args::AppMode::Manager) |
         Some(config::args::AppMode::ManagerApi(_)) |
+        Some(config::args::AppMode::ManagerOpenApi) |
         Some(config::args::AppMode::ImageProcess(_)) |
         Some(config::args::AppMode::OpenApi) => {
             unreachable!()

@@ -29,7 +29,7 @@ use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
-    api::ApiDoc,
+    api::ManagerApiDoc,
     config::Config,
     server::{
         app::App, backend_controller::BackendController, client::ApiClient,
@@ -440,7 +440,7 @@ impl AppServer {
     }
 
     pub fn create_swagger_ui() -> SwaggerUi {
-        SwaggerUi::new("/swagger-ui").url("/api-doc/app_api.json", ApiDoc::openapi())
+        SwaggerUi::new("/swagger-ui").url("/api-doc/app_api.json", ManagerApiDoc::openapi())
     }
 }
 
