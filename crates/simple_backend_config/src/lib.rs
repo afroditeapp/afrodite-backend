@@ -246,40 +246,40 @@ pub fn get_config(
         }
     }
 
-    let public_api_tls_config = match file_config.tls.clone() {
+    let public_api_tls_config = match file_config.tls.clone().and_then(|v| v.public_api) {
         Some(tls_config) => Some(Arc::new(generate_server_config(
-            tls_config.public_api_key.as_path(),
-            tls_config.public_api_cert.as_path(),
+            tls_config.key.as_path(),
+            tls_config.cert.as_path(),
         )?)),
         None => None,
     };
 
-    let internal_api_tls_config = match file_config.tls.clone() {
+    let internal_api_tls_config = match file_config.tls.clone().and_then(|v| v.internal_api) {
         Some(tls_config) => Some(Arc::new(generate_server_config(
-            tls_config.internal_api_key.as_path(),
-            tls_config.internal_api_cert.as_path(),
+            tls_config.key.as_path(),
+            tls_config.cert.as_path(),
         )?)),
         None => None,
     };
 
     if public_api_tls_config.is_some() && file_config.lets_encrypt.is_some() {
         return Err(GetConfigError::TlsConfigMissing).attach_printable(
-            "Only either public API TLS certificates or Let's Encrypt should be configured",
+            "Only either TLS certificate or Let's Encrypt should be configured for public API",
         );
     }
 
-    if public_api_tls_config.is_none()
+    if public_api_tls_config.as_ref().is_none()
         && file_config.lets_encrypt.is_none()
         && !file_config.debug.unwrap_or_default()
     {
         return Err(GetConfigError::TlsConfigMissing).attach_printable(
-            "TLS certificates or Let's Encrypt must be configured when debug mode is false",
+            "TLS certificate or Let's Encrypt must be configured for public API when debug mode is false",
         );
     }
 
-    let internal_api_root_certificate = match file_config.tls.clone() {
+    let internal_api_root_certificate = match file_config.tls.clone().and_then(|v| v.internal_api) {
         Some(tls_config) => Some(load_root_certificate(
-            &tls_config.internal_api_root_certificate,
+            &tls_config.root_certificate,
         )?),
         None => None,
     };

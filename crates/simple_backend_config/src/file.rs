@@ -64,12 +64,14 @@ name = "history"
 # send_limit_per_minute = 1, # optional, by default no limit
 # send_limit_per_day = 10,   # optional, by default no limit
 
-# [tls]
-# public_api_cert = "server_config/public_api.crt"
-# public_api_key = "server_config/public_api.key"
-# internal_api_cert = "server_config/internal_api.crt"
-# internal_api_key = "server_config/internal_api.key"
-# internal_api_root_certificate = "server_config/root_certificate.crt"
+# [tls.public_api]
+# cert = "server_config/public_api.crt"
+# key = "server_config/public_api.key"
+
+# [tls.internal_api]
+# cert = "server_config/internal_api.crt"
+# key = "server_config/internal_api.key"
+# root_certificate = "server_config/root_certificate.crt"
 
 # Configuring Let's Encrypt will create socket public_api:443 if public API
 # is not on port 443.
@@ -135,8 +137,16 @@ pub struct SimpleBackendConfigFile {
     pub sign_in_with_google: Option<SignInWithGoogleConfig>,
     pub firebase_cloud_messaging: Option<FirebaseCloudMessagingConfig>,
     pub email_sending: Option<EmailSendingConfig>,
-    /// TLS sertificates or Let's Encrypt is required if debug setting is false.
+
+    /// Manual TLS certificates.
+    ///
+    /// TLS certificate or Let's Encrypt must be configured for public API
+    /// when debug mode is disabled.
     pub tls: Option<TlsConfig>,
+    /// Let's Encrypt TLS certificates for public API.
+    ///
+    /// TLS certificate or Let's Encrypt must be configured for public API
+    /// when debug mode is disabled.
     pub lets_encrypt: Option<LetsEncryptConfig>,
 
     pub media_backup: Option<MediaBackupConfig>,
@@ -353,11 +363,22 @@ impl std::convert::TryFrom<String> for EmailFromHeader {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct TlsConfig {
-    pub public_api_cert: PathBuf,
-    pub public_api_key: PathBuf,
-    pub internal_api_cert: PathBuf,
-    pub internal_api_key: PathBuf,
-    pub internal_api_root_certificate: PathBuf,
+    pub public_api: Option<PublicApiTlsConfig>,
+    pub internal_api: Option<InternalApiTlsConfig>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct PublicApiTlsConfig {
+    pub cert: PathBuf,
+    pub key: PathBuf,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct InternalApiTlsConfig {
+    pub cert: PathBuf,
+    pub key: PathBuf,
+    /// Root certificate for internal API client
+    pub root_certificate: PathBuf,
 }
 
 /// Let's Encrypt configuration for public API. If public API is not on
