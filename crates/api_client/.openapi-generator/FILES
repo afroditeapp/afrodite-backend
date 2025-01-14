@@ -1,6 +1,5 @@
 .gitignore
 .travis.yml
-Cargo.toml
 README.md
 git_push.sh
 src/apis/account_admin_api.rs

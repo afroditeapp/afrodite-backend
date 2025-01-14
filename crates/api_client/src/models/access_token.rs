@@ -11,7 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// AccessToken : AccessToken is used as a short lived token for API access.  The token is 256 bit random value which is base64url encoded without padding. The token lenght in characters is 44.  OWASP recommends at least 128 bit session IDs. https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
+/// AccessToken : AccessToken is used as a short lived token for API access.  The token is 256 bit random value which is base64url encoded without padding. The previous format is used because the token is transferred as HTTP header value. The token lenght in characters is 43.  OWASP recommends at least 128 bit session IDs. https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AccessToken {
     /// API token which server generates.
@@ -20,7 +20,7 @@ pub struct AccessToken {
 }
 
 impl AccessToken {
-    /// AccessToken is used as a short lived token for API access.  The token is 256 bit random value which is base64url encoded without padding. The token lenght in characters is 44.  OWASP recommends at least 128 bit session IDs. https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
+    /// AccessToken is used as a short lived token for API access.  The token is 256 bit random value which is base64url encoded without padding. The previous format is used because the token is transferred as HTTP header value. The token lenght in characters is 43.  OWASP recommends at least 128 bit session IDs. https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
     pub fn new(access_token: String) -> AccessToken {
         AccessToken {
             access_token,
