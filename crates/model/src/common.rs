@@ -299,7 +299,9 @@ pub struct AccessTokenRaw {
 /// AccessToken is used as a short lived token for API access.
 ///
 /// The token is 256 bit random value which is base64url encoded
-/// without padding. The token lenght in characters is 44.
+/// without padding. The previous format is used because
+/// the token is transferred as HTTP header value.
+/// The token lenght in characters is 43.
 ///
 /// OWASP recommends at least 128 bit session IDs.
 /// https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
@@ -546,22 +548,30 @@ mod tests {
 
     use crate::{AccessToken, RefreshToken};
 
+    fn is_base64url_no_padding_character(c: char) -> bool {
+        c.is_ascii_alphanumeric() || c == '-' || c == '_'
+    }
+
+    fn is_base64_character(c: char) -> bool {
+        c.is_ascii_alphanumeric() || c == '+' || c == '/' || c == '='
+    }
+
     #[test]
     fn access_token_lenght_is_256_bits() {
         let data_256_bit = [0u8; 256 / 8];
-        let wanted_len = base64::engine::general_purpose::STANDARD
+        let wanted_len = base64::engine::general_purpose::URL_SAFE_NO_PAD
             .encode(data_256_bit)
             .len();
         let token = AccessToken::generate_new();
         assert_eq!(token.access_token.len(), wanted_len);
-        assert_eq!(token.access_token.len(), 44);
+        assert_eq!(token.access_token.len(), 43);
     }
 
     #[test]
     fn access_token_contains_only_allowed_characters() {
         let token = AccessToken::generate_new();
         for c in token.access_token.chars() {
-            assert!(c.is_ascii_alphanumeric() || c == '+' || c == '/' || c == '=');
+            assert!(is_base64url_no_padding_character(c));
         }
     }
 
@@ -580,7 +590,7 @@ mod tests {
     fn refresh_token_contains_only_allowed_characters() {
         let token = RefreshToken::generate_new();
         for c in token.token.chars() {
-            assert!(c.is_ascii_alphanumeric() || c == '+' || c == '/' || c == '=');
+            assert!(is_base64_character(c));
         }
     }
 }

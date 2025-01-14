@@ -197,10 +197,10 @@ impl DataAllAccess<'_> {
 /// Example usage:
 ///
 /// ```
-/// use server_api::db_write;
-/// use server_api::utils::StatusCode;
-/// use server_api::app::WriteData;
-/// use server_api::S;
+/// use server_state::db_write;
+/// use server_state::utils::StatusCode;
+/// use server_state::app::WriteData;
+/// use server_state::S;
 /// pub async fn axum_route_handler(
 ///     state: S,
 /// ) -> std::result::Result<(), StatusCode> {
