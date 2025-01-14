@@ -68,8 +68,6 @@ unit-test:
 	mkdir -p database/sqlite/current
 	DATABASE_URL="sqlite:database/sqlite/current/current.db" cargo test
 
-update-manager-submodule:
-	git submodule update --remote --merge
 update-api-bindings-step-update-binary:
 	cargo build --bin afrodite_backend
 update-api-bindings-step-generate-bindings:
