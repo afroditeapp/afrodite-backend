@@ -15,12 +15,13 @@ use serde::{Deserialize, Serialize};
 pub struct NewReceivedLikesCountResult {
     #[serde(rename = "c")]
     pub c: Box<models::NewReceivedLikesCount>,
+    /// Sync version for new received likes count
     #[serde(rename = "v")]
-    pub v: Box<models::ReceivedLikesSyncVersion>,
+    pub v: Box<models::SyncVersion>,
 }
 
 impl NewReceivedLikesCountResult {
-    pub fn new(c: models::NewReceivedLikesCount, v: models::ReceivedLikesSyncVersion) -> NewReceivedLikesCountResult {
+    pub fn new(c: models::NewReceivedLikesCount, v: models::SyncVersion) -> NewReceivedLikesCountResult {
         NewReceivedLikesCountResult {
             c: Box::new(c),
             v: Box::new(v),
