@@ -4,12 +4,6 @@ use utoipa::{IntoParams, ToSchema};
 
 pub const BACKEND_REPOSITORY_NAME: &str = "backend";
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
-pub struct DataEncryptionKey {
-    /// Base64 key
-    pub key: String,
-}
-
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, IntoParams)]
 pub struct ServerNameText {
     pub server: String,
@@ -82,21 +76,4 @@ pub struct BuildInfo {
     ///
     /// Binary must support --build-info command line argument.
     pub build_info: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, ToSchema)]
-pub struct SystemInfoList {
-    pub info: Vec<SystemInfo>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, ToSchema)]
-pub struct SystemInfo {
-    pub name: String,
-    pub info: Vec<CommandOutput>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, ToSchema)]
-pub struct CommandOutput {
-    pub name: String,
-    pub output: String,
 }

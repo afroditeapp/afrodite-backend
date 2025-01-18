@@ -4,6 +4,7 @@
 #![warn(unused_crate_dependencies)]
 
 #![allow(
+    async_fn_in_trait,
     clippy::single_match,
     clippy::while_let_loop,
 )]

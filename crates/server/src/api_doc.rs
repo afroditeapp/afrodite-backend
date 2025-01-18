@@ -9,7 +9,7 @@ use server_data::{
 use server_data_all::app::DataAllUtilsImpl;
 use server_state::{demo::DemoModeManager, StateForRouterCreation, S};
 use simple_backend::{
-    app::SimpleBackendAppState, media_backup::MediaBackupHandle, perf::PerfMetricsManagerData,
+    app::SimpleBackendAppState, manager_client::ManagerApiClient, media_backup::MediaBackupHandle, perf::PerfMetricsManagerData
 };
 use simple_backend_config::SimpleBackendConfig;
 use utoipa::OpenApi;
@@ -155,7 +155,8 @@ impl ApiDoc {
     pub async fn open_api_json_string() -> Result<String, serde_json::Error> {
         let config = Arc::new(SimpleBackendConfig::load_from_file_with_in_ram_database());
         let perf_data = PerfMetricsManagerData::new(&[]).into();
-        let simple_state = SimpleBackendAppState::new(config.clone(), perf_data)
+        let manager = ManagerApiClient::empty();
+        let simple_state = SimpleBackendAppState::new(config.clone(), perf_data, manager.into())
             .await
             .unwrap();
 

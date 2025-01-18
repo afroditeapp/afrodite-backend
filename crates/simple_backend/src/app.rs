@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
 use error_stack::ResultExt;
+use manager_api::{ClientError, ManagerClientWithRequestReceiver};
 use simple_backend_config::SimpleBackendConfig;
-use simple_backend_utils::IntoReportFromString;
 
-use super::manager_client::{ManagerApiClient, ManagerApiManager};
+use super::manager_client::ManagerApiClient;
 use crate::{
     file_package::FilePackageManager, map::TileMapManager, perf::PerfMetricsManagerData,
     sign_in_with::SignInWithManager,
@@ -12,9 +12,6 @@ use crate::{
 
 #[derive(thiserror::Error, Debug)]
 pub enum AppStateCreationError {
-    #[error("Manager client creation error")]
-    ManagerClientError,
-
     #[error("File package manager error")]
     FilePackageManagerError,
 }
@@ -33,10 +30,8 @@ impl SimpleBackendAppState {
     pub async fn new(
         config: Arc<SimpleBackendConfig>,
         perf_data: Arc<PerfMetricsManagerData>,
+        manager_api: Arc<ManagerApiClient>,
     ) -> error_stack::Result<Self, AppStateCreationError> {
-        let manager_api = ManagerApiClient::new(&config)
-            .into_error_string(AppStateCreationError::ManagerClientError)?
-            .into();
         Ok(SimpleBackendAppState {
             tile_map: TileMapManager::new(&config).into(),
             sign_in_with: SignInWithManager::new(config.clone()).into(),
@@ -56,7 +51,7 @@ pub trait SignInWith {
 }
 
 pub trait GetManagerApi {
-    fn manager_api(&self) -> ManagerApiManager;
+    async fn manager_api(&self) -> error_stack::Result<ManagerClientWithRequestReceiver, ClientError>;
 }
 
 pub trait GetSimpleBackendConfig {

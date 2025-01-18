@@ -1,16 +1,12 @@
 use std::{
-    convert::Infallible,
-    future::IntoFuture,
     net::{IpAddr, Ipv4Addr, SocketAddr},
     pin::Pin,
     sync::Arc,
     time::Duration,
 };
 
-use axum::Router;
+use app::S;
 use futures::future::poll_fn;
-use hyper::body::Incoming;
-use hyper_util::rt::{TokioExecutor, TokioIo};
 use tokio::{
     net::TcpListener,
     signal::{
@@ -21,18 +17,14 @@ use tokio::{
     task::JoinHandle,
 };
 use tokio_rustls::{rustls::ServerConfig, TlsAcceptor};
-use tower::Service;
-use tower_http::trace::TraceLayer;
 use tracing::{error, info, log::warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
-use utoipa::OpenApi;
-use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
-    api::ManagerApiDoc,
+    api::server::handle_connection_to_server,
     config::Config,
     server::{
-        app::App, backend_controller::BackendController, client::ApiClient,
+        app::App, backend_controller::BackendController,
         mount::MountManager, state::StateStorage,
     },
 };
@@ -96,14 +88,12 @@ impl AppServer {
 
         // Create API client
 
-        let api_client: Arc<ApiClient> = ApiClient::new(&self.config).unwrap().into();
         let state: Arc<StateStorage> = StateStorage::new().into();
 
         // Start reboot manager
 
         let (reboot_manager_quit_handle, reboot_manager_handle) = reboot::RebootManager::new_manager(
             self.config.clone(),
-            api_client.clone(),
             state.clone(),
             server_quit_watcher.resubscribe(),
         );
@@ -113,7 +103,6 @@ impl AppServer {
         let (update_manager_quit_handle, update_manager_handle) = update::UpdateManager::new_manager(
             self.config.clone(),
             server_quit_watcher.resubscribe(),
-            api_client.clone(),
             reboot_manager_handle,
         );
 
@@ -121,7 +110,6 @@ impl AppServer {
 
         let mut app = App::new(
             self.config.clone(),
-            api_client,
             update_manager_handle.into(),
         )
         .await;
@@ -259,34 +247,20 @@ impl AppServer {
         app: &mut App,
         quit_notification: ServerQuitWatcher,
     ) -> (JoinHandle<()>, Option<JoinHandle<()>>) {
-        let router = {
-            let router = self.create_public_router(app);
-            let router = if self.config.debug_mode() {
-                router.merge(Self::create_swagger_ui())
-            } else {
-                router
-            };
-            if self.config.debug_mode() {
-                router.route_layer(TraceLayer::new_for_http())
-            } else {
-                router
-            }
-        };
-
         let addr = self.config.socket().public_api;
         info!("Public API is available on {}", addr);
 
         let join_handle = if let Some(tls_config) = self.config.public_api_tls_config() {
             self.create_server_task_with_tls(
+                app.state(),
                 addr,
-                router.clone(),
                 tls_config.clone(),
                 quit_notification.resubscribe(),
             )
             .await
         } else {
             self.create_server_task_no_tls(
-                router.clone(),
+                app.state(),
                 addr,
                 "Public API",
                 quit_notification.resubscribe(),
@@ -299,7 +273,7 @@ impl AppServer {
                 let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), port);
                 info!("Public API is available also on {}", addr);
                 let handle = self
-                    .create_server_task_no_tls(router, addr, "Second public API", quit_notification)
+                    .create_server_task_no_tls(app.state(), addr, "Second public API", quit_notification)
                     .await;
                 Some(handle)
             } else {
@@ -311,8 +285,8 @@ impl AppServer {
 
     pub async fn create_server_task_with_tls(
         &self,
+        state: S,
         addr: SocketAddr,
-        router: Router,
         tls_config: Arc<ServerConfig>,
         mut quit_notification: ServerQuitWatcher,
     ) -> JoinHandle<()> {
@@ -320,7 +294,6 @@ impl AppServer {
             .await
             .expect("Address not available");
         let acceptor = TlsAcceptor::from(tls_config);
-        let app_service = router.into_make_service_with_connect_info::<SocketAddr>();
 
         tokio::spawn(async move {
             let (drop_after_connection, mut wait_all_connections) = mpsc::channel::<()>(1);
@@ -340,7 +313,7 @@ impl AppServer {
                             Err(e) => {
                                 // TODO: Can this happen if there is no more
                                 //       file descriptors available?
-                                error!("Address stream error {e}");
+                                error!("TLS task address stream error {e}");
                                 return;
                             }
                         }
@@ -348,35 +321,24 @@ impl AppServer {
                 };
 
                 let acceptor = acceptor.clone();
-                let app_service_with_connect_info =
-                    unwrap_infallible_result(app_service.clone().call(addr).await);
+                let state = state.clone();
 
                 let mut quit_notification = quit_notification.resubscribe();
                 let drop_on_quit = drop_after_connection.clone();
                 tokio::spawn(async move {
                     tokio::select! {
-                        _ = quit_notification.recv() => {} // Graceful shutdown for connections?
+                        _ = quit_notification.recv() => {}
                         connection = acceptor.accept(tcp_stream) => {
                             match connection {
                                 Ok(tls_connection) => {
-                                    let data_stream = TokioIo::new(tls_connection);
-
-                                    let hyper_service = hyper::service::service_fn(move |request: hyper::Request<Incoming>| {
-                                        app_service_with_connect_info.clone().call(request)
-                                    });
-
-                                    let connection_serving_result =
-                                        hyper_util::server::conn::auto::Builder::new(TokioExecutor::new())
-                                            .serve_connection_with_upgrades(data_stream, hyper_service)
-                                            .await;
-
-                                    match connection_serving_result {
-                                        Ok(()) => {},
-                                        Err(e) => {
-                                            // TODO: Remove to avoid log spam?
-                                            error!("Connection serving error: {}", e);
-                                        }
-                                    }
+                                    tokio::select! {
+                                        _ = quit_notification.recv() => (),
+                                        _ = handle_connection_to_server(
+                                            tls_connection,
+                                            addr,
+                                            state
+                                        ) => (),
+                                    };
                                 }
                                 Err(_) => {}, // TLS handshake failed
                             }
@@ -400,53 +362,65 @@ impl AppServer {
 
     pub async fn create_server_task_no_tls(
         &self,
-        router: Router,
+        state: S,
         addr: SocketAddr,
         name_for_log_message: &'static str,
         mut quit_notification: ServerQuitWatcher,
     ) -> JoinHandle<()> {
-        let normal_api_server = {
-            let listener = tokio::net::TcpListener::bind(addr)
-                .await
-                .expect("Address not available");
-            axum::serve(
-                listener,
-                router.into_make_service_with_connect_info::<SocketAddr>(),
-            )
-        };
+        let mut listener = TcpListener::bind(addr)
+            .await
+            .expect("Address not available");
 
         tokio::spawn(async move {
-            // TODO: Is graceful shutdown needed?
-            tokio::select! {
-                _ = quit_notification.recv() => {
-                    info!("{name_for_log_message} server quit signal received");
-                }
-                result = normal_api_server.into_future() => {
-                    match result {
-                        Ok(()) => {
-                            info!("{name_for_log_message} server quit by itself");
-                        }
-                        Err(e) => {
-                            error!("{name_for_log_message} server quit by error: {}", e);
+            let (drop_after_connection, mut wait_all_connections) = mpsc::channel::<()>(1);
+
+            loop {
+                let next_addr_stream = poll_fn(|cx| Pin::new(&mut listener).poll_accept(cx));
+
+                let (tcp_stream, addr) = tokio::select! {
+                    _ = quit_notification.recv() => {
+                        break;
+                    }
+                    addr = next_addr_stream => {
+                        match addr {
+                            Ok(stream_and_addr) => {
+                                stream_and_addr
+                            }
+                            Err(e) => {
+                                // TODO: Can this happen if there is no more
+                                //       file descriptors available?
+                                error!("{name_for_log_message}, address stream error {e}");
+                                return;
+                            }
                         }
                     }
+                };
+
+                let state = state.clone();
+
+                let mut quit_notification = quit_notification.resubscribe();
+                let drop_on_quit = drop_after_connection.clone();
+                tokio::spawn(async move {
+                    tokio::select! {
+                        _ = quit_notification.recv() => (),
+                        _ = handle_connection_to_server(
+                            tcp_stream,
+                            addr,
+                            state
+                        ) => (),
+                    };
+                    drop(drop_on_quit);
+                });
+            }
+            drop(drop_after_connection);
+            drop(quit_notification);
+
+            loop {
+                match wait_all_connections.recv().await {
+                    Some(()) => (),
+                    None => break,
                 }
             }
         })
-    }
-
-    pub fn create_public_router(&self, app: &mut App) -> Router {
-        app.create_manager_server_router()
-    }
-
-    pub fn create_swagger_ui() -> SwaggerUi {
-        SwaggerUi::new("/swagger-ui").url("/api-doc/app_api.json", ManagerApiDoc::openapi())
-    }
-}
-
-fn unwrap_infallible_result<T>(r: Result<T, Infallible>) -> T {
-    match r {
-        Ok(v) => v,
-        Err(i) => match i {},
     }
 }

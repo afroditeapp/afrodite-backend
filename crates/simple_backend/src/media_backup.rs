@@ -8,11 +8,11 @@ use std::{
 use error_stack::{Result, ResultExt};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_database::data::create_dirs_and_get_files_dir_path;
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{time::sleep_until_current_time_is_at, ContextExt};
 use tokio::{io::AsyncWriteExt, process::Command, sync::mpsc, task::JoinHandle, time::sleep};
 use tracing::log::{error, info, warn};
 
-use crate::{utils::time::sleep_until_current_time_is_at, ServerQuitWatcher};
+use crate::ServerQuitWatcher;
 
 pub const MEDIA_BACKUP_MANAGER_QUEUE_SIZE: usize = 64;
 

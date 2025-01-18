@@ -8,6 +8,7 @@ use std::fmt::Display;
 use error_stack::{Context, Report, Result, ResultExt};
 
 mod uuid;
+pub mod time;
 
 pub use uuid::UuidBase64Url;
 

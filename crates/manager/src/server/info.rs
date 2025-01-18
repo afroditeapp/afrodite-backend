@@ -48,22 +48,22 @@ impl SystemInfoGetter {
 
         if let Some(info_config) = config.system_info() {
             for service in info_config.remote_managers.iter().flatten() {
-                match api.system_info(&service.name).await {
-                    Ok(info) => {
-                        let info = SystemInfo {
-                            name: format!(
-                                "Remote manager {}, remote name: {}",
-                                service.name, info.name
-                            ),
-                            info: info.info,
-                        };
-                        system_infos.push(info);
-                    }
-                    Err(e) => {
-                        tracing::error!("Failed to get system info from {}: {:?}", service.name, e);
-                        let _error = e.to_string();
-                    }
-                }
+                // match api.system_info(&service.name).await {
+                //     Ok(info) => {
+                //         let info = SystemInfo {
+                //             name: format!(
+                //                 "Remote manager {}, remote name: {}",
+                //                 service.name, info.name
+                //             ),
+                //             info: info.info,
+                //         };
+                //         system_infos.push(info);
+                //     }
+                //     Err(e) => {
+                //         tracing::error!("Failed to get system info from {}: {:?}", service.name, e);
+                //         let _error = e.to_string();
+                //     }
+                // }
             }
         }
 

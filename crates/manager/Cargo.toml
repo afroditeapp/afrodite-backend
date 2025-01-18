@@ -22,23 +22,12 @@ toml = { workspace = true }
 futures = { workspace = true }
 tokio = { workspace = true }
 
-reqwest = { workspace = true }
-utoipa = { workspace = true }
-utoipa-swagger-ui = { workspace = true }
 url = { workspace = true }
-headers = { workspace = true }
-hyper = { workspace = true }
-hyper-util = { workspace = true }
-axum = { workspace = true }
-tower = { workspace = true }
-tower-http = { workspace = true }
 
 # Server TLS
 tokio-rustls = { workspace = true }
 rustls-pemfile = { workspace = true }
 
-manager_api = { path = "../manager_api" }
 manager_model = { path = "../manager_model" }
 
-simple_backend = { path = "../simple_backend" }
-simple_backend_config = { path = "../simple_backend_config" }
+simple_backend_utils = { path = "../simple_backend_utils" }

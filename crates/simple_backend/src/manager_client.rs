@@ -1,119 +1,141 @@
-use error_stack::{Result, ResultExt};
-use manager_api::{ApiKey, Configuration, ManagerApi};
+use std::sync::{atomic::{AtomicI64, Ordering}, Arc};
+
+use error_stack::Result;
+use manager_api::{ClientConfig, ClientError, ManagerClient, ManagerClientWithRequestReceiver, ServerEventListerner};
 use manager_model::{
-    BuildInfo, ResetDataQueryParam, SoftwareInfo, SoftwareOptions, SystemInfoList,
+    ManagerInstanceName, ServerEventType
 };
 use simple_backend_config::SimpleBackendConfig;
+use simple_backend_model::UnixTime;
 use simple_backend_utils::ContextExt;
-use tracing::{error, info};
+use tokio::task::JoinHandle;
+use tracing::{info, warn, error};
 
-#[derive(thiserror::Error, Debug)]
-pub enum ManagerClientError {
-    #[error("API request failed")]
-    ApiRequest,
+use crate::ServerQuitWatcher;
 
-    #[error("API URL not configured")]
-    ApiUrlNotConfigured,
-
-    #[error("Client build failed")]
-    ClientBuildFailed,
-
-    #[error("Missing value")]
-    MissingValue,
-
-    #[error("Invalid value")]
-    InvalidValue,
-}
-
+#[derive(Debug)]
 pub struct ManagerApiClient {
-    manager: Option<Configuration>,
+    manager: Option<(ClientConfig, ManagerInstanceName)>,
+    latest_scheduled_reboot: AtomicI64,
 }
 
 impl ManagerApiClient {
-    pub fn new(config: &SimpleBackendConfig) -> Result<Self, ManagerClientError> {
-        let mut client = reqwest::ClientBuilder::new().tls_built_in_root_certs(false);
-        if let Some(cert) = config.manager_api_root_certificate() {
-            client = client.add_root_certificate(cert.clone());
+    pub fn empty() -> Self {
+        Self {
+            manager: None,
+            latest_scheduled_reboot: AtomicI64::new(0),
         }
-        let client = client
-            .build()
-            .change_context(ManagerClientError::ClientBuildFailed)?;
+    }
 
-        let manager = config.manager_config().map(|c| {
-            let token = ApiKey {
-                prefix: None,
-                key: c.api_key.to_string(),
+    pub async fn new(config: &SimpleBackendConfig) -> Result<Self, ClientError> {
+        let manager = if let Some(c) = config.manager_config() {
+            let certificate = if let Some(certificate) = &c.root_certificate {
+                Some(ManagerClient::load_root_certificate(certificate)?)
+            } else {
+                None
             };
 
-            let url = c.address.as_str().trim_end_matches('/').to_string();
+            let config = ClientConfig {
+                api_key: c.api_key.to_string(),
+                url: c.address.clone(),
+                root_certificate: certificate,
+            };
 
-            info!("Manager API base url: {}", url);
+            info!("Manager API URL: {}", c.address);
 
-            Configuration {
-                base_path: url,
-                client: client.clone(),
-                api_key: Some(token),
-                ..Configuration::default()
+            Some((config, c.name.clone()))
+        } else {
+            None
+        };
+
+        Ok(Self {
+            manager,
+            latest_scheduled_reboot: AtomicI64::new(0),
+        })
+    }
+
+    pub async fn new_request(&self) -> Result<ManagerClientWithRequestReceiver, ClientError> {
+        if let Some((c, name)) = self.manager.clone() {
+            let c = ManagerClient::connect(c)
+                .await?
+                .request_to(name);
+            Ok(c)
+        } else {
+            Err(ClientError::MissingConfiguration.report())
+        }
+    }
+
+    pub async fn listen_events(&self) -> Result<ServerEventListerner, ClientError> {
+        if let Some((c, _)) = self.manager.clone() {
+            let c = ManagerClient::connect(c)
+                .await?
+                .listen_events()
+                .await?;
+            Ok(c)
+        } else {
+            Err(ClientError::MissingConfiguration.report())
+        }
+    }
+
+    pub fn latest_scheduled_reboot(&self) -> UnixTime {
+        let v = self.latest_scheduled_reboot.load(Ordering::Relaxed);
+        UnixTime::new(v)
+    }
+}
+
+#[derive(Debug)]
+pub struct ManagerConnectionManagerQuitHandle {
+    task: JoinHandle<()>,
+}
+
+impl ManagerConnectionManagerQuitHandle {
+    pub async fn wait_quit(self) {
+        match self.task.await {
+            Ok(()) => (),
+            Err(e) => {
+                warn!("ManagerConnectionManager quit failed. Error: {:?}", e);
             }
-        });
-
-        Ok(Self { manager })
-    }
-
-    pub fn manager(&self) -> Result<&Configuration, ManagerClientError> {
-        self.manager
-            .as_ref()
-            .ok_or(ManagerClientError::ApiUrlNotConfigured.report())
+        }
     }
 }
 
-pub struct ManagerApiManager<'a> {
-    api_client: &'a ManagerApiClient,
+pub struct ManagerConnectionManager {
+    client: Arc<ManagerApiClient>,
 }
 
-impl<'a> ManagerApiManager<'a> {
-    pub fn new(api_client: &'a ManagerApiClient) -> Self {
-        Self { api_client }
+impl ManagerConnectionManager {
+    pub async fn new_manager(
+        config: &SimpleBackendConfig,
+        quit_notification: ServerQuitWatcher,
+    ) -> Result<(Arc<ManagerApiClient>, ManagerConnectionManagerQuitHandle), ClientError> {
+        let client = Arc::new(ManagerApiClient::new(config).await?);
+        let manager = Self { client: client.clone() };
+
+        let task = tokio::spawn(manager.run(quit_notification));
+
+        Ok((client, ManagerConnectionManagerQuitHandle { task }))
     }
 
-    pub async fn system_info(&self) -> Result<SystemInfoList, ManagerClientError> {
-        ManagerApi::system_info_all(self.api_client.manager()?)
-            .await
-            .change_context(ManagerClientError::ApiRequest)
+    async fn run(self, mut quit_notification: ServerQuitWatcher) {
+        tokio::select! {
+            r = self.handle_connection() => {
+                match r {
+                    Ok(()) => (),
+                    Err(e) => error!("{:?}", e),
+                }
+            },
+            _ = quit_notification.recv() => (),
+        }
     }
 
-    pub async fn software_info(&self) -> Result<SoftwareInfo, ManagerClientError> {
-        ManagerApi::software_info(self.api_client.manager()?)
-            .await
-            .change_context(ManagerClientError::ApiRequest)
-    }
-
-    pub async fn get_latest_build_info(
-        &self,
-        options: SoftwareOptions,
-    ) -> Result<BuildInfo, ManagerClientError> {
-        ManagerApi::get_latest_build_info(self.api_client.manager()?, options)
-            .await
-            .change_context(ManagerClientError::ApiRequest)
-    }
-
-    pub async fn request_update_software(
-        &self,
-        options: SoftwareOptions,
-        reboot: bool,
-        reset_data: ResetDataQueryParam,
-    ) -> Result<(), ManagerClientError> {
-        ManagerApi::request_update_software(self.api_client.manager()?, options, reboot, reset_data)
-            .await
-            .change_context(ManagerClientError::ApiRequest)
-    }
-
-    pub async fn request_restart_or_reset_backend(
-        &self,
-        reset_data: ResetDataQueryParam,
-    ) -> Result<(), ManagerClientError> {
-        ManagerApi::restart_backend(self.api_client.manager()?, reset_data)
-            .await
-            .change_context(ManagerClientError::ApiRequest)
+    async fn handle_connection(&self) -> Result<(), ClientError> {
+        let mut listener = self.client.listen_events().await?;
+        loop {
+            match listener.next_event().await?.event() {
+                ServerEventType::RebootScheduled(time) => {
+                    self.client.latest_scheduled_reboot.store(time.0.ut, Ordering::Relaxed);
+                }
+            }
+        }
     }
 }

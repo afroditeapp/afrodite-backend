@@ -3,6 +3,7 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 #![allow(
+    async_fn_in_trait,
     clippy::single_match,
     clippy::while_let_loop,
     clippy::large_enum_variant
@@ -32,6 +33,7 @@ use axum::Router;
 use futures::{future::poll_fn, StreamExt};
 use hyper::body::Incoming;
 use hyper_util::rt::{TokioExecutor, TokioIo};
+use manager_client::ManagerConnectionManager;
 use media_backup::MediaBackupHandle;
 use perf::AllCounters;
 use rustls_platform_verifier::ConfigVerifierExt;
@@ -224,7 +226,11 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         let perf_manager_quit_handle =
             PerfMetricsManager::new_manager(perf_data.clone(), server_quit_watcher.resubscribe());
 
-        let simple_state = SimpleBackendAppState::new(self.config.clone(), perf_data)
+        let (manager, manager_quit_handle) = ManagerConnectionManager::new_manager(&self.config, server_quit_watcher.resubscribe())
+            .await
+            .expect("Manager connection manager init failed");
+
+        let simple_state = SimpleBackendAppState::new(self.config.clone(), perf_data, manager)
             .await
             .expect("State builder init failed");
 
@@ -302,6 +308,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         ws_watcher.wait_for_quit().await;
 
         drop(state);
+        manager_quit_handle.wait_quit().await;
         perf_manager_quit_handle.wait_quit().await;
         media_backup_quit.wait_quit().await;
         self.logic.on_after_server_quit().await;

@@ -2,8 +2,6 @@ use error_stack::{Context, Report, Result};
 use simple_backend_database::SimpleDatabaseError;
 use tokio::sync::oneshot;
 
-pub mod time;
-
 /// Sender only used for quit request message sending.
 pub type QuitSender = oneshot::Sender<()>;
 

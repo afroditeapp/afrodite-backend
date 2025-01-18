@@ -11,12 +11,12 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
-use simple_backend::utils::time::sleep_until_current_time_is_at;
+use simple_backend_utils::time::sleep_until_current_time_is_at;
 use tokio::{process::Command, sync::mpsc, task::JoinHandle, time::sleep};
 use tracing::{info, warn};
 
 use super::{
-    client::{ApiClient, ApiManager},
+    client::ApiManager,
     state::StateStorage,
     ServerQuitWatcher,
 };
@@ -95,7 +95,6 @@ impl RebootManagerHandle {
 
 pub struct RebootManager {
     config: Arc<Config>,
-    api_client: Arc<ApiClient>,
     state: Arc<StateStorage>,
     receiver: mpsc::Receiver<RebootManagerMessage>,
 }
@@ -103,7 +102,6 @@ pub struct RebootManager {
 impl RebootManager {
     pub fn new_manager(
         config: Arc<Config>,
-        api_client: Arc<ApiClient>,
         state: Arc<StateStorage>,
         quit_notification: ServerQuitWatcher,
     ) -> (RebootManagerQuitHandle, RebootManagerHandle) {
@@ -112,7 +110,6 @@ impl RebootManager {
         let manager = Self {
             config,
             receiver,
-            api_client,
             state,
         };
 
@@ -248,6 +245,6 @@ impl RebootManager {
     }
 
     fn api_manager(&self) -> ApiManager<'_> {
-        ApiManager::new(&self.config, &self.api_client)
+        ApiManager::new(&self.config)
     }
 }

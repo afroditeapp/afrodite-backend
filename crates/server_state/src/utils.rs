@@ -1,11 +1,9 @@
 use axum::response::{IntoResponse, Response};
 use config::file::ConfigFileError;
+use manager_api::ClientError;
 use server_common::{data::cache::CacheError, internal_api::InternalApiError};
 use server_data::{content_processing::ContentProcessingError, event::EventError};
-use simple_backend::{
-    manager_client::ManagerClientError,
-    sign_in_with::{apple::SignInWithAppleError, google::SignInWithGoogleError},
-};
+use simple_backend::sign_in_with::{apple::SignInWithAppleError, google::SignInWithGoogleError};
 
 use crate::DataError;
 
@@ -127,7 +125,7 @@ impl_error_to_status_code!(CacheError, RequestError::Cache);
 impl_error_to_status_code!(SignInWithGoogleError, RequestError::SignInWithGoogle);
 impl_error_to_status_code!(SignInWithAppleError, RequestError::SignInWithApple);
 impl_error_to_status_code!(InternalApiError, RequestError::InternalApiError);
-impl_error_to_status_code!(ManagerClientError, RequestError::ManagerClientError);
+impl_error_to_status_code!(ClientError, RequestError::ManagerClientError);
 impl_error_to_status_code!(ConfigFileError, RequestError::ConfigFileError);
 impl_error_to_status_code!(EventError, RequestError::EventError);
 impl_error_to_status_code!(ContentProcessingError, RequestError::ContentProcessingError);

@@ -6,9 +6,13 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
+use file::ManagerInstance;
+use manager_model::ManagerInstanceName;
 use rustls_pemfile::certs;
-use tokio_rustls::rustls::ServerConfig;
+use tokio_rustls::rustls::{RootCertStore, ServerConfig};
 use tracing::{info, log::warn};
+
+use crate::api::client::ManagerClient;
 
 use self::file::{
     ConfigFile, RebootIfNeededConfig, SecureStorageConfig, ServerEncryptionKey, SocketConfig,
@@ -59,7 +63,7 @@ pub struct Config {
 
     // TLS
     public_api_tls_config: Option<Arc<ServerConfig>>,
-    root_certificate: Option<reqwest::Certificate>,
+    root_certificate: Option<RootCertStore>,
 }
 
 impl Config {
@@ -79,9 +83,8 @@ impl Config {
 
     pub fn encryption_keys(&self) -> &[ServerEncryptionKey] {
         self.file
-            .server_encryption_keys
-            .as_deref()
-            .unwrap_or(&[])
+            .server_encryption_key
+            .as_slice()
     }
 
     pub fn secure_storage_config(&self) -> Option<&SecureStorageConfig> {
@@ -100,8 +103,8 @@ impl Config {
         self.public_api_tls_config.as_ref()
     }
 
-    pub fn root_certificate(&self) -> Option<&reqwest::Certificate> {
-        self.root_certificate.as_ref()
+    pub fn root_certificate(&self) -> Option<RootCertStore> {
+        self.root_certificate.clone()
     }
 
     pub fn script_locations(&self) -> &ScriptLocations {
@@ -132,6 +135,18 @@ impl Config {
     pub fn backend_semver_version(&self) -> &str {
         &self.backend_semver_version
     }
+
+    pub fn remote_managers(&self) -> &[ManagerInstance] {
+        &self.file.remote_manager
+    }
+
+    pub fn find_remote_manager(&self, name: &ManagerInstanceName) -> Option<&ManagerInstance> {
+        self.remote_managers().iter().find(|v| v.manager_name == *name)
+    }
+
+    pub fn manager_name(&self) -> ManagerInstanceName {
+        self.file.manager_name.clone()
+    }
 }
 
 pub fn get_config(
@@ -151,7 +166,11 @@ pub fn get_config(
     };
 
     let root_certificate = match file_config.tls.clone() {
-        Some(tls_config) => Some(load_root_certificate(&tls_config.root_certificate)?),
+        Some(tls_config) => {
+            let root_store = ManagerClient::load_root_certificate(tls_config.root_certificate)
+                .change_context(GetConfigError::ReadCertificateError)?;
+            Some(root_store)
+        },
         None => None,
     };
 
@@ -235,26 +254,6 @@ fn check_script_locations(
     } else {
         Err(GetConfigError::ScriptLocationError).attach_printable(errors.join("\n"))
     }
-}
-
-fn load_root_certificate(cert_path: &Path) -> Result<reqwest::Certificate, GetConfigError> {
-    let mut cert_reader = BufReader::new(
-        std::fs::File::open(cert_path).change_context(GetConfigError::CreateTlsConfig)?,
-    );
-    let all_certs: Vec<_> = certs(&mut cert_reader).collect();
-    let mut cert_iter = all_certs.into_iter();
-    let cert = if let Some(cert) = cert_iter.next() {
-        let cert = cert.change_context(GetConfigError::CreateTlsConfig)?;
-        reqwest::Certificate::from_der(&cert).change_context(GetConfigError::CreateTlsConfig)?
-    } else {
-        return Err(GetConfigError::CreateTlsConfig).attach_printable("No cert found");
-    };
-
-    if cert_iter.next().is_some() {
-        return Err(GetConfigError::CreateTlsConfig).attach_printable("Only one cert supported");
-    }
-
-    Ok(cert)
 }
 
 fn generate_server_config(

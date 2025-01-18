@@ -98,24 +98,6 @@ validate-openapi:
 	openapi-generator-cli validate \
 	-i $(TMP_FILE)
 
-manager-update-api-bindings-step-generate-bindings:
-	./target/debug/afrodite_backend manager-open-api > $(TMP_FILE)
-	openapi-generator-cli generate \
-	-i $(TMP_FILE) \
-	-g rust \
-	-o crates/manager_api_client \
-	--package-name manager_api_client \
-	--global-property apiDocs=false,modelDocs=false
-manager-update-api-bindings: update-api-bindings-step-update-binary manager-update-api-bindings-step-generate-bindings
-	echo "API bindings updated"
-manager-update-api-bindings-with-existing-binary: manager-update-api-bindings-step-generate-bindings
-	echo "API bindings updated"
-manager-validate-openapi:
-	cargo build --bin afrodite_backend
-	./target/debug/afrodite_backend manager-open-api > $(TMP_FILE)
-	openapi-generator-cli validate \
-	-i $(TMP_FILE)
-
 migrations-run:
 	mkdir -p database/sqlite/current
 	DATABASE_URL="database/sqlite/current/current.db" diesel migration run

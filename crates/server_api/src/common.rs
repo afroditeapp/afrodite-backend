@@ -91,6 +91,8 @@ pub use utils::api::PATH_CONNECT;
 
 // ------------------------- WebSocket -------------------------
 
+// TODO(prod): Change WebSocket protocol version to 1?
+
 /// Connect to server using WebSocket after getting refresh and access tokens.
 /// Connection is required as API access is allowed for connected clients.
 ///

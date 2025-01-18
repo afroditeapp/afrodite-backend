@@ -36,8 +36,9 @@ pub async fn get_system_info(
     COMMON_ADMIN.get_system_info.incr();
 
     if api_caller_permissions.admin_server_maintenance_view_info {
-        let info = state.manager_api().system_info().await?;
-        Ok(info.into())
+        // let info = state.manager_api().system_info().await?;
+        // Ok(info.into())
+        Err(StatusCode::UNAUTHORIZED)
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }
@@ -63,8 +64,9 @@ pub async fn get_software_info(
     COMMON_ADMIN.get_software_info.incr();
 
     if api_caller_permissions.admin_server_maintenance_view_info {
-        let info = state.manager_api().software_info().await?;
-        Ok(info.into())
+        // let info = state.manager_api().software_info().await?;
+        // Ok(info.into())
+        Err(StatusCode::UNAUTHORIZED)
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }
@@ -93,11 +95,12 @@ pub async fn get_latest_build_info(
     COMMON_ADMIN.get_latest_build_info.incr();
 
     if api_caller_permissions.admin_server_maintenance_view_info {
-        let info = state
-            .manager_api()
-            .get_latest_build_info(software.software_options)
-            .await?;
-        Ok(info.into())
+        // let info = state
+        //     .manager_api()
+        //     .get_latest_build_info(software.software_options)
+        //     .await?;
+        // Ok(info.into())
+        Err(StatusCode::UNAUTHORIZED)
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }
@@ -151,10 +154,10 @@ pub async fn post_request_update_software(
             reboot.reboot,
             reset_data.reset_data,
         );
-        state
-            .manager_api()
-            .request_update_software(software.software_options, reboot.reboot, reset_data)
-            .await?;
+        // state
+        //     .manager_api()
+        //     .request_update_software(software.software_options, reboot.reboot, reset_data)
+        //     .await?;
         Ok(())
     } else {
         Err(StatusCode::UNAUTHORIZED)
@@ -198,10 +201,10 @@ pub async fn post_request_restart_or_reset_backend(
             api_caller_account_id.as_id(),
             reset_data.reset_data,
         );
-        state
-            .manager_api()
-            .request_restart_or_reset_backend(reset_data)
-            .await?;
+        // state
+        //     .manager_api()
+        //     .request_restart_or_reset_backend(reset_data)
+        //     .await?;
         Ok(())
     } else {
         Err(StatusCode::UNAUTHORIZED)

@@ -5,9 +5,9 @@ use std::{
 };
 
 use error_stack::{Report, Result, ResultExt};
-use manager_model::DataEncryptionKey;
+use manager_model::{ManagerInstanceName, SecureStorageEncryptionKey};
 use serde::{Deserialize, Serialize};
-use simple_backend_config::file::UtcTimeValue;
+use simple_backend_utils::time::UtcTimeValue;
 use url::Url;
 
 use super::GetConfigError;
@@ -17,6 +17,7 @@ pub const CONFIG_FILE_NAME: &str = "manager_config.toml";
 pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
 # Required
+# manager_name = "default"
 # api_key = "password"
 # scripts_dir = "/app-server-tools/manager-tools"
 # storage_dir = "/app-secure-storage/app/app-manager-storage"
@@ -28,21 +29,24 @@ public_api = "127.0.0.1:5000"
 # Second API has no TLS even if it is configured
 # second_public_api_localhost_only_port = 5001
 
+# [[remote_manager]]
+# manager_name = "backup"
+# url = "tls://127.0.0.1:5000"
+
 # [secure_storage]
-# manager_base_url = "http://127.0.0.1:5000"
-# encryption_key_name = "test-server"
+# key_storage_manager_name = "default"
 # availability_check_path = "/app-secure-storage/app"
 # -------- Optional --------
 # Fall back to local encryption key if the manager instance is not available.
 # Should not be used in production.
 # encryption_key_text = ""
 
-# [[server_encryption_keys]]
-# name = "test-server"
+# [[server_encryption_key]]
+# manager_name = "default"
 # key_path = "data-key.key"
 
 # [software_update_provider]
-# manager_base_url = "http://127.0.0.1:5000"
+# manager_base_url = "tls://127.0.0.1:5000"
 # backend_install_location = "/app-secure-storage/app/binaries/app-backend"
 # backend_data_reset_dir = "/path/to/backend/data" # Optional
 
@@ -53,7 +57,7 @@ public_api = "127.0.0.1:5000"
 # log_services = ["app-manager", "app-backend"]
 # [[system_info.remote_managers]]
 # name = "test-server"
-# manager_base_url = "http://127.0.0.1:5000"
+# url = "tls://127.0.0.1:5000"
 
 # [tls]
 # public_api_cert = "tls/server.crt"
@@ -81,10 +85,14 @@ pub struct ConfigFile {
     /// Directory for build and update files.
     pub storage_dir: PathBuf,
     pub scripts_dir: PathBuf,
+    pub manager_name: ManagerInstanceName,
     pub socket: SocketConfig,
 
     // Optional configs
-    pub server_encryption_keys: Option<Vec<ServerEncryptionKey>>,
+    #[serde(default)]
+    pub remote_manager: Vec<ManagerInstance>,
+    #[serde(default)]
+    pub server_encryption_key: Vec<ServerEncryptionKey>,
     pub secure_storage: Option<SecureStorageConfig>,
     pub reboot_if_needed: Option<RebootIfNeededConfig>,
     pub software_update_provider: Option<SoftwareUpdateProviderConfig>,
@@ -161,16 +169,16 @@ pub struct TlsConfig {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ServerEncryptionKey {
-    pub name: String,
+    pub manager_name: ManagerInstanceName,
     pub key_path: PathBuf,
 }
 
 impl ServerEncryptionKey {
-    pub async fn read_encryption_key(&self) -> Result<DataEncryptionKey, GetConfigError> {
+    pub async fn read_encryption_key(&self) -> Result<SecureStorageEncryptionKey, GetConfigError> {
         tokio::fs::read_to_string(self.key_path.as_path())
             .await
             .change_context(GetConfigError::EncryptionKeyLoadingFailed)
-            .map(|key| DataEncryptionKey {
+            .map(|key| SecureStorageEncryptionKey {
                 key: key.trim().to_string(),
             })
     }
@@ -178,21 +186,16 @@ impl ServerEncryptionKey {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SecureStorageConfig {
-    /// Url to app-manager instance used for requesting an encryption
-    /// key for secure storage.
-    pub manager_base_url: Url,
-    /// Name of key which will be requested from the manager
-    /// instance.
-    pub encryption_key_name: String,
+    /// Name of manager instance which stores the encryption key
+    /// for the secure storage.
+    pub key_storage_manager_name: ManagerInstanceName,
     /// Path to file or directory which is used to
     /// check if the secure storage is mounted or not.
     pub availability_check_path: PathBuf,
-
     /// Optional. If the manager instance is not available, this key
     /// will be used for opening the encryption.
     /// Should not be used in production.
     pub encryption_key_text: Option<String>,
-
     /// Optional. Configure timeout for downloading the encryption key.
     pub key_download_timeout_seconds: Option<u32>,
 }
@@ -228,6 +231,6 @@ pub struct SystemInfoConfig {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ManagerInstance {
-    pub name: String,
-    pub manager_base_url: Url,
+    pub manager_name: ManagerInstanceName,
+    pub url: Url,
 }

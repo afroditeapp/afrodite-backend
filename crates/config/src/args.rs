@@ -35,8 +35,6 @@ pub enum AppMode {
     OpenApi,
     /// Manager mode
     Manager,
-    /// Print manager API documentation JSON to stdout
-    ManagerOpenApi,
     /// Manager API client mode
     ManagerApi(ManagerApiClientMode),
 }

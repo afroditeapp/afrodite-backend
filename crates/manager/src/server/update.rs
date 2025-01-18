@@ -13,7 +13,6 @@ use tracing::{info, warn};
 
 use super::{
     backend_controller::BackendController,
-    client::{ApiClient, ApiManager},
     reboot::{RebootManagerHandle, REBOOT_ON_NEXT_CHECK},
     ServerQuitWatcher,
 };
@@ -156,7 +155,6 @@ impl UpdateManagerHandle {
 #[derive(Debug)]
 pub struct UpdateManager {
     config: Arc<Config>,
-    api_client: Arc<ApiClient>,
     receiver: InProgressReceiver<UpdateManagerMessage>,
     reboot_manager_handle: RebootManagerHandle,
 }
@@ -165,14 +163,12 @@ impl UpdateManager {
     pub fn new_manager(
         config: Arc<Config>,
         quit_notification: ServerQuitWatcher,
-        api_client: Arc<ApiClient>,
         reboot_manager_handle: RebootManagerHandle,
     ) -> (UpdateManagerQuitHandle, UpdateManagerHandle) {
         let (sender, receiver) = InProgressChannel::create();
 
         let manager = Self {
             config,
-            api_client,
             receiver,
             reboot_manager_handle,
         };
@@ -255,10 +251,11 @@ impl UpdateManager {
         &self,
         software: SoftwareOptions,
     ) -> Result<BuildInfo, UpdateError> {
-        let api = ApiManager::new(&self.config, &self.api_client);
-        api.get_latest_build_info(software)
-            .await
-            .change_context(UpdateError::ApiRequest)
+        // let api = ApiManager::new(&self.config, &self.api_client);
+        // api.get_latest_build_info(software)
+        //     .await
+        //     .change_context(UpdateError::ApiRequest)
+        Ok(BuildInfo::default())
     }
 
     /// Returns empty BuildInfo if it does not exists.

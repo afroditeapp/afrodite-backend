@@ -7,7 +7,4 @@ edition = "2021"
 
 [dependencies]
 
-serde_json = { workspace = true }
-
-manager_model = { path = "../manager_model" }
-manager_api_client = { path = "../manager_api_client" }
+manager = { path = "../manager" }

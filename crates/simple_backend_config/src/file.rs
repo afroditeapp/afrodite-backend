@@ -8,8 +8,9 @@ use std::{
 };
 
 use error_stack::{Report, Result, ResultExt};
+use manager_model::ManagerInstanceName;
 use serde::{Deserialize, Serialize};
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{time::{TimeValue, UtcTimeValue}, ContextExt};
 use url::Url;
 
 use crate::GetConfigError;
@@ -38,6 +39,7 @@ name = "current"
 name = "history"
 
 # [manager]
+# name = "default"
 # address = "http://127.0.0.1:5000"
 # api_key = "TODO"
 # root_certificate = "server_config/root_certificate.crt"
@@ -297,6 +299,7 @@ pub struct SocketConfig {
 /// App manager config
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AppManagerConfig {
+    pub name: ManagerInstanceName,
     pub address: Url,
     pub api_key: String,
     pub root_certificate: Option<PathBuf>,
@@ -430,68 +433,6 @@ impl TryFrom<String> for SshAddress {
     }
 }
 
-/// UTC time value
-#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
-pub struct UtcTimeValue(pub TimeValue);
-
-#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
-#[serde(try_from = "String")]
-pub struct TimeValue {
-    pub hours: u8,
-    pub minutes: u8,
-}
-
-impl TimeValue {
-    const MAX_HOURS: u8 = 23;
-    const MAX_MINUTES: u8 = 59;
-    const DEFAULT_SCHEDULED_TASKS_TIME: Self = Self::new(3, 0);
-
-    /// Panics if values are out of range
-    const fn new(hours: u8, minutes: u8) -> Self {
-        if hours > Self::MAX_HOURS {
-            panic!("Hours value is not valid");
-        }
-
-        if minutes > Self::MAX_MINUTES {
-            panic!("Minutes value is not valid");
-        }
-
-        Self { hours, minutes }
-    }
-}
-
-impl TryFrom<String> for TimeValue {
-    type Error = String;
-    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
-        let iter = value.trim().split(':');
-        let values: Vec<&str> = iter.collect();
-        match values[..] {
-            [hours, minutes] => {
-                let hours: u8 = hours
-                    .parse()
-                    .map_err(|e: std::num::ParseIntError| e.to_string())?;
-                if hours > Self::MAX_HOURS {
-                    return Err(format!(
-                        "Max value for hours is {}, current value: {hours}",
-                        Self::MAX_HOURS
-                    ));
-                }
-                let minutes: u8 = minutes
-                    .parse()
-                    .map_err(|e: std::num::ParseIntError| e.to_string())?;
-                if minutes > Self::MAX_MINUTES {
-                    return Err(format!(
-                        "Max value for minutes is {}, current value: {minutes}",
-                        Self::MAX_MINUTES
-                    ));
-                }
-                Ok(TimeValue { hours, minutes })
-            }
-            _ => Err(format!("Unknown values: {:?}", values)),
-        }
-    }
-}
-
 /// Config for Litestream SQLite backups
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct LitestreamConfig {
@@ -561,8 +502,10 @@ pub struct ScheduledTasksConfig {
 
 impl Default for ScheduledTasksConfig {
     fn default() -> Self {
+        const DEFAULT_SCHEDULED_TASKS_TIME: TimeValue = TimeValue::new(3, 0);
+
         Self {
-            daily_run_time: UtcTimeValue(TimeValue::DEFAULT_SCHEDULED_TASKS_TIME),
+            daily_run_time: UtcTimeValue(DEFAULT_SCHEDULED_TASKS_TIME),
         }
     }
 }

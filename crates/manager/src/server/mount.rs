@@ -7,13 +7,12 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
-use manager_model::DataEncryptionKey;
+use manager_model::SecureStorageEncryptionKey;
 use tokio::{io::AsyncWriteExt, process::Command};
 use tracing::{error, info, warn};
 
 use super::{app::AppState, state::StateStorage};
 use crate::{
-    api::GetApiManager,
     config::{file::SecureStorageConfig, Config},
     utils::ContextExt,
 };
@@ -98,12 +97,14 @@ impl MountManager {
             return Ok(());
         }
 
-        let key = self
-            .app_state
-            .api_manager()
-            .get_encryption_key()
-            .await
-            .change_context(MountError::GetKeyFailed);
+        // let key = self
+        //     .app_state
+        //     .api_manager()
+        //     .get_encryption_key()
+        //     .await
+        //     .change_context(MountError::GetKeyFailed);
+
+        let key: Result<SecureStorageEncryptionKey, MountError> = unimplemented!();
 
         let (key, mut mode) = match key {
             Ok(key) => (Some(key), MountMode::MountedWithRemoteKey),
@@ -112,7 +113,7 @@ impl MountManager {
                 if let Some(text) = &storage_config.encryption_key_text {
                     warn!("Using local encryption key. This shouldn't be done in production!");
                     (
-                        Some(DataEncryptionKey {
+                        Some(SecureStorageEncryptionKey {
                             key: text.to_string(),
                         }),
                         MountMode::MountedWithLocalKey,
@@ -134,7 +135,7 @@ impl MountManager {
             None => {
                 if self.is_default_password().await? {
                     warn!("Mounting secure storage using default password");
-                    self.mount_secure_storage(DataEncryptionKey {
+                    self.mount_secure_storage(SecureStorageEncryptionKey {
                         key: "password\n".to_string(),
                     })
                     .await?;
@@ -150,7 +151,7 @@ impl MountManager {
         Ok(())
     }
 
-    pub async fn mount_secure_storage(&self, key: DataEncryptionKey) -> Result<(), MountError> {
+    pub async fn mount_secure_storage(&self, key: SecureStorageEncryptionKey) -> Result<(), MountError> {
         let mut c = Command::new("sudo")
             .arg(self.config.script_locations().open_encryption())
             .stdin(Stdio::piped())
@@ -223,7 +224,7 @@ impl MountManager {
         Ok(c.success())
     }
 
-    async fn change_default_password(&self, key: DataEncryptionKey) -> Result<(), MountError> {
+    async fn change_default_password(&self, key: SecureStorageEncryptionKey) -> Result<(), MountError> {
         let mut c = Command::new("sudo")
             .arg(self.config.script_locations().change_encryption_password())
             .stdin(Stdio::piped())

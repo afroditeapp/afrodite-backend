@@ -37,3 +37,4 @@ api_internal = { path = "../api_internal" }
 simple_backend = { path = "../simple_backend" }
 simple_backend_config = { path = "../simple_backend_config" }
 simple_backend_utils = { path = "../simple_backend_utils" }
+manager_api = { path = "../manager_api" }

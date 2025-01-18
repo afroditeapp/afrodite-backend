@@ -4,11 +4,13 @@ use std::path::PathBuf;
 
 use clap::{arg, command, Args, Parser};
 use error_stack::{Result, ResultExt};
-use manager_model::SoftwareOptions;
-use reqwest::Certificate;
+use manager_model::{ManagerInstanceName, SoftwareOptions};
+use tokio_rustls::rustls::RootCertStore;
 use url::Url;
 
-use super::{file::ConfigFile, load_root_certificate, GetConfigError};
+use crate::api::client::ManagerClient;
+
+use super::{file::ConfigFile, GetConfigError};
 
 const DEFAULT_HTTP_LOCALHOST_URL: &str = "http://localhost:5000";
 const DEFAULT_HTTPS_LOCALHOST_URL: &str = "https://localhost:5000";
@@ -33,6 +35,9 @@ pub struct ManagerApiClientMode {
     /// uses system root certificates.
     #[arg(short = 'c', long, value_name = "FILE")]
     pub root_certificate: Option<PathBuf>,
+    /// Manager name
+    #[arg(short = 'n', long, value_name = "NAME")]
+    pub name: Option<String>,
 
     #[command(subcommand)]
     pub api_command: ApiCommand,
@@ -97,13 +102,26 @@ impl ManagerApiClientMode {
         }
     }
 
-    pub fn root_certificate(&self) -> Result<Option<Certificate>, GetConfigError> {
+    pub fn root_certificate(&self) -> Result<Option<RootCertStore>, GetConfigError> {
         if let Some(root_certificate_file) = self.root_certificate_file()? {
-            let cert = load_root_certificate(&root_certificate_file)
+            let cert = ManagerClient::load_root_certificate(root_certificate_file)
                 .change_context(GetConfigError::ReadCertificateError)?;
             Ok(Some(cert))
         } else {
             Ok(None)
+        }
+    }
+
+    pub fn manager_name(&self) -> Result<ManagerInstanceName, GetConfigError> {
+        if let Some(name) = self.name.clone() {
+            Ok(ManagerInstanceName(name))
+        } else {
+            let current_dir =
+                std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
+            let file_config = ConfigFile::load_config(current_dir)
+                .change_context(GetConfigError::LoadFileError)?;
+
+            Ok(file_config.manager_name)
         }
     }
 }

@@ -3,6 +3,7 @@ use std::net::SocketAddr;
 use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
 use error_stack::ResultExt;
 use futures::Future;
+use manager_api::{ClientError, ManagerClientWithRequestReceiver};
 use model::{
     AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion,
     Permissions,
@@ -23,7 +24,6 @@ use simple_backend::{
         PerfCounterDataProvider, SignInWith,
     },
     file_package::FilePackageManager,
-    manager_client::ManagerApiManager,
     map::TileMapManager,
     perf::PerfMetricsManagerData,
     sign_in_with::SignInWithManager,
@@ -227,8 +227,8 @@ impl SignInWith for S {
 }
 
 impl GetManagerApi for S {
-    fn manager_api(&self) -> ManagerApiManager {
-        ManagerApiManager::new(&self.state.simple_backend_state.manager_api)
+    async fn manager_api(&self) -> error_stack::Result<ManagerClientWithRequestReceiver, ClientError> {
+        self.state.simple_backend_state.manager_api.new_request().await
     }
 }
 

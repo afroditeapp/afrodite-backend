@@ -8,5 +8,9 @@ edition = "2021"
 [dependencies]
 clap = { workspace = true }
 
+num_enum = { workspace = true }
+
 serde = { workspace = true }
 utoipa = { workspace = true }
+
+simple_backend_model = { path = "../simple_backend_model" }
