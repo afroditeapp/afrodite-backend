@@ -74,7 +74,6 @@ impl Config {
     /// Server should run in debug mode.
     ///
     /// Debug mode changes:
-    /// * Swagger UI is enabled.
     /// * Disabling HTTPS is possbile.
     /// * Checking available scripts is disabled.
     pub fn debug_mode(&self) -> bool {
