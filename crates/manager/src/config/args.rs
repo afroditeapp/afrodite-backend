@@ -12,8 +12,8 @@ use crate::api::client::ManagerClient;
 
 use super::{file::ConfigFile, GetConfigError};
 
-const DEFAULT_HTTP_LOCALHOST_URL: &str = "http://localhost:5000";
-const DEFAULT_HTTPS_LOCALHOST_URL: &str = "https://localhost:5000";
+const DEFAULT_TCP_LOCALHOST_URL: &str = "tcp://localhost:5000";
+const DEFAULT_TLS_LOCALHOST_URL: &str = "tls://localhost:5000";
 
 #[derive(Args, Debug, Clone)]
 pub struct ManagerApiClientMode {
@@ -23,10 +23,8 @@ pub struct ManagerApiClientMode {
     api_key: Option<String>,
     /// API URL for accessing the manager API. If not present, config file
     /// TLS config is red from current directory. If it exists, then
-    /// "https://localhost:5000" is used as the default value. If not, then
-    /// "http://localhost:5000" is used as the default value.
-    /// If config file does not exist, then "https://localhost:5000" is the
-    /// default value.
+    /// "tls://localhost:5000" is used as the default value. If not, then
+    /// "tcp://localhost:5000" is used as the default value.
     #[arg(short = 'u', long, value_name = "URL")]
     pub api_url: Option<Url>,
     /// Root certificate for HTTP client. If not present, config file
@@ -64,19 +62,13 @@ impl ManagerApiClientMode {
 
         let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
 
-        let url_str = if ConfigFile::exists(&current_dir)
-            .change_context(GetConfigError::CheckConfigFileExistanceError)?
-        {
-            let file_config = super::file::ConfigFile::load_config(current_dir)
-                .change_context(GetConfigError::LoadFileError)?;
+        let file_config = super::file::ConfigFile::load_config(current_dir)
+            .change_context(GetConfigError::LoadFileError)?;
 
-            if file_config.tls.is_some() {
-                DEFAULT_HTTPS_LOCALHOST_URL
-            } else {
-                DEFAULT_HTTP_LOCALHOST_URL
-            }
+        let url_str = if file_config.tls.is_some() {
+            DEFAULT_TLS_LOCALHOST_URL
         } else {
-            DEFAULT_HTTPS_LOCALHOST_URL
+            DEFAULT_TCP_LOCALHOST_URL
         };
 
         Url::parse(url_str).change_context(GetConfigError::InvalidConstant)
