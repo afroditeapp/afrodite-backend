@@ -12,28 +12,22 @@ use crate::api::client::ManagerClient;
 
 use super::{file::ConfigFile, GetConfigError};
 
-const DEFAULT_TCP_LOCALHOST_URL: &str = "tcp://localhost:5000";
-const DEFAULT_TLS_LOCALHOST_URL: &str = "tls://localhost:5000";
-
 #[derive(Args, Debug, Clone)]
 pub struct ManagerApiClientMode {
-    /// API key for accessing the manager API. If not present, config file
-    /// api_key is tried to accessed from current directory.
+    /// API key for accessing the manager API. If not present, value from
+    /// current directory's config file is used.
     #[arg(short = 'k', long, value_name = "KEY")]
     api_key: Option<String>,
-    /// API URL for accessing the manager API. If not present, config file
-    /// TLS config is red from current directory. If it exists, then
-    /// "tls://localhost:5000" is used as the default value. If not, then
-    /// "tcp://localhost:5000" is used as the default value.
+    /// API URL for accessing the manager API. If not present, value from
+    /// current directory's config file is used.
     #[arg(short = 'u', long, value_name = "URL")]
     pub api_url: Option<Url>,
-    /// Root certificate for HTTP client. If not present, config file
-    /// TLS config is red from current directory. If it exists, then
-    /// root certificate value from there is used. If not, then HTTP client
-    /// uses system root certificates.
+    /// Root certificate for API client. If not present, value from
+    /// current directory's config file is used.
     #[arg(short = 'c', long, value_name = "FILE")]
     pub root_certificate: Option<PathBuf>,
-    /// Manager name
+    /// Name of the manager instance which receives the API request. If not
+    /// present, value from current directory's config file is used.
     #[arg(short = 'n', long, value_name = "NAME")]
     pub name: Option<String>,
 
@@ -65,13 +59,15 @@ impl ManagerApiClientMode {
         let file_config = super::file::ConfigFile::load_config(current_dir)
             .change_context(GetConfigError::LoadFileError)?;
 
-        let url_str = if file_config.tls.is_some() {
-            DEFAULT_TLS_LOCALHOST_URL
+        let scheme = if file_config.tls.is_some() {
+            "tls"
         } else {
-            DEFAULT_TCP_LOCALHOST_URL
+            "tcp"
         };
 
-        Url::parse(url_str).change_context(GetConfigError::InvalidConstant)
+        let url = format!("{}://localhost:{}", scheme, file_config.socket.public_api.port());
+
+        Url::parse(&url).change_context(GetConfigError::InvalidConstant)
     }
 
     fn root_certificate_file(&self) -> Result<Option<PathBuf>, GetConfigError> {
