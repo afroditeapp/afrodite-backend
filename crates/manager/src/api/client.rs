@@ -3,7 +3,7 @@ use std::{future::Future, path::Path, sync::Arc};
 
 use error_stack::{report, ResultExt};
 use futures::FutureExt;
-use manager_model::{JsonRpcRequest, JsonRpcResponse, JsonRpcResponseType, ManagerInstanceName, ManagerProtocolMode, ManagerProtocolVersion, SecureStorageEncryptionKey, ServerEvent};
+use manager_model::{JsonRpcRequest, JsonRpcRequestType, JsonRpcResponse, JsonRpcResponseType, ManagerInstanceName, ManagerInstanceNameList, ManagerProtocolMode, ManagerProtocolVersion, SecureStorageEncryptionKey, ServerEvent, SystemInfo};
 use tokio::net::TcpStream;
 use tokio_rustls::{rustls::pki_types::{pem::PemObject, CertificateDer, ServerName}, TlsConnector};
 use url::Url;
@@ -266,14 +266,47 @@ pub trait RequestSenderCmds: Sized {
         request: JsonRpcRequest,
     ) -> Result<JsonRpcResponse, ClientError>;
 
+    async fn get_available_instances(
+        self,
+    ) -> Result<ManagerInstanceNameList, ClientError> {
+        let request = JsonRpcRequest::new(
+            self.request_receiver_name(),
+            JsonRpcRequestType::GetManagerInstanceNames,
+        );
+        let response = self.send_request(request).await?;
+        if let JsonRpcResponseType::ManagerInstanceNames(info) = response.into_response() {
+            Ok(info)
+        } else {
+            Err(report!(ClientError::InvalidResponse))
+        }
+    }
+
     async fn get_secure_storage_encryption_key(
         self,
         key: ManagerInstanceName,
     ) -> Result<SecureStorageEncryptionKey, ClientError> {
-        let request = JsonRpcRequest::get_secure_storage_encryption_key(self.request_receiver_name(), key);
+        let request = JsonRpcRequest::new(
+            self.request_receiver_name(),
+            JsonRpcRequestType::GetSecureStorageEncryptionKey(key),
+        );
         let response = self.send_request(request).await?;
         if let JsonRpcResponseType::SecureStorageEncryptionKey(key) = response.into_response() {
             Ok(key)
+        } else {
+            Err(report!(ClientError::InvalidResponse))
+        }
+    }
+
+    async fn get_system_info(
+        self,
+    ) -> Result<SystemInfo, ClientError> {
+        let request = JsonRpcRequest::new(
+            self.request_receiver_name(),
+            JsonRpcRequestType::GetSystemInfo,
+        );
+        let response = self.send_request(request).await?;
+        if let JsonRpcResponseType::SystemInfo(info) = response.into_response() {
+            Ok(info)
         } else {
             Err(report!(ClientError::InvalidResponse))
         }

@@ -102,7 +102,7 @@ impl ManagerApiClientMode {
 
     pub fn manager_name(&self) -> Result<ManagerInstanceName, GetConfigError> {
         if let Some(name) = self.name.clone() {
-            Ok(ManagerInstanceName(name))
+            Ok(ManagerInstanceName::new(name))
         } else {
             let current_dir =
                 std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
@@ -116,6 +116,7 @@ impl ManagerApiClientMode {
 
 #[derive(Parser, Debug, Clone)]
 pub enum ApiCommand {
+    AvailableInstances,
     EncryptionKey {
         encryption_key_name: String,
     },
@@ -135,7 +136,6 @@ pub enum ApiCommand {
         #[arg(long)]
         reset_data: bool,
     },
-    SystemInfoAll,
     SystemInfo,
     SoftwareInfo,
 }

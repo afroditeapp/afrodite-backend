@@ -13,7 +13,7 @@ use super::JsonRpcError;
 pub async fn get_manager_instance_names(
     config: &Config,
 ) -> Result<JsonRpcResponse, JsonRpcError> {
-    let current_manager = [ManagerInstanceName(config.manager_name().to_string())];
+    let current_manager = [ManagerInstanceName::new(config.manager_name().to_string())];
 
     let accessible_instances = config
         .remote_managers()

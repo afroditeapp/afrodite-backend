@@ -2,14 +2,8 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
-pub struct SystemInfoList {
-    pub info: Vec<SystemInfo>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
 pub struct SystemInfo {
-    pub name: String,
     pub info: Vec<CommandOutput>,
 }
 

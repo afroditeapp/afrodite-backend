@@ -22,11 +22,7 @@ use simple_backend::{
     app::{
         FilePackageProvider, GetManagerApi, GetSimpleBackendConfig, GetTileMap,
         PerfCounterDataProvider, SignInWith,
-    },
-    file_package::FilePackageManager,
-    map::TileMapManager,
-    perf::PerfMetricsManagerData,
-    sign_in_with::SignInWithManager,
+    }, file_package::FilePackageManager, manager_client::ManagerApiClient, map::TileMapManager, perf::PerfMetricsManagerData, sign_in_with::SignInWithManager
 };
 use simple_backend_config::SimpleBackendConfig;
 
@@ -227,8 +223,8 @@ impl SignInWith for S {
 }
 
 impl GetManagerApi for S {
-    async fn manager_api(&self) -> error_stack::Result<ManagerClientWithRequestReceiver, ClientError> {
-        self.state.simple_backend_state.manager_api.new_request().await
+    fn manager_api_client(&self) -> &ManagerApiClient {
+        &self.state.simple_backend_state.manager_api
     }
 }
 

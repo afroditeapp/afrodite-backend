@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use error_stack::ResultExt;
 use manager_api::{ClientError, ManagerClientWithRequestReceiver};
+use manager_model::ManagerInstanceName;
 use simple_backend_config::SimpleBackendConfig;
 
 use super::manager_client::ManagerApiClient;
@@ -51,7 +52,20 @@ pub trait SignInWith {
 }
 
 pub trait GetManagerApi {
-    async fn manager_api(&self) -> error_stack::Result<ManagerClientWithRequestReceiver, ClientError>;
+    fn manager_api_client(&self) -> &ManagerApiClient;
+
+    async fn manager_request(
+        &self
+    ) -> error_stack::Result<ManagerClientWithRequestReceiver, ClientError> {
+        self.manager_api_client().new_request().await
+    }
+
+    async fn manager_request_to(
+        &self,
+        name: ManagerInstanceName
+    ) -> error_stack::Result<ManagerClientWithRequestReceiver, ClientError> {
+        self.manager_api_client().new_request_to_instance(name).await
+    }
 }
 
 pub trait GetSimpleBackendConfig {

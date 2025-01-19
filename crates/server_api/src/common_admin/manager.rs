@@ -3,12 +3,12 @@ use axum::{
     Extension,
 };
 use manager_model::{
-    BuildInfo, RebootQueryParam, ResetDataQueryParam, SoftwareInfo, SoftwareOptionsQueryParam,
-    SystemInfoList,
+    BuildInfo, ManagerInstanceName, ManagerInstanceNameList, RebootQueryParam, ResetDataQueryParam, SoftwareInfo, SoftwareOptionsQueryParam, SystemInfo
 };
 use model::{AccountIdInternal, Permissions};
 use simple_backend::{app::GetManagerApi, create_counters};
 use tracing::info;
+use manager_api::RequestSenderCmds;
 
 use crate::{
     create_open_api_router,
@@ -16,14 +16,41 @@ use crate::{
     S,
 };
 
+const PATH_GET_MANAGER_INSTANCE_NAMES: &str = "/common_api/manager_instance_names";
+
+#[utoipa::path(
+    get,
+    path = PATH_GET_MANAGER_INSTANCE_NAMES,
+    responses(
+        (status = 200, description = "Successful.", body = ManagerInstanceNameList),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_manager_instance_names(
+    State(state): State<S>,
+    Extension(api_caller_permissions): Extension<Permissions>,
+) -> Result<Json<ManagerInstanceNameList>, StatusCode> {
+    COMMON_ADMIN.get_manager_instance_names.incr();
+
+    if api_caller_permissions.admin_server_maintenance_view_info {
+        let info = state.manager_request().await?.get_available_instances().await?;
+        Ok(info.into())
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
+}
+
 const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
 
 /// Get system information from manager instance.
 #[utoipa::path(
     get,
     path = PATH_GET_SYSTEM_INFO,
+    params(ManagerInstanceName),
     responses(
-        (status = 200, description = "Get was successfull.", body = SystemInfoList),
+        (status = 200, description = "Successful.", body = SystemInfo),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -32,13 +59,13 @@ const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
 pub async fn get_system_info(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
-) -> Result<Json<SystemInfoList>, StatusCode> {
+    Query(manager): Query<ManagerInstanceName>,
+) -> Result<Json<SystemInfo>, StatusCode> {
     COMMON_ADMIN.get_system_info.incr();
 
     if api_caller_permissions.admin_server_maintenance_view_info {
-        // let info = state.manager_api().system_info().await?;
-        // Ok(info.into())
-        Err(StatusCode::UNAUTHORIZED)
+        let info = state.manager_request_to(manager).await?.get_system_info().await?;
+        Ok(info.into())
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }
@@ -213,6 +240,7 @@ pub async fn post_request_restart_or_reset_backend(
 
 create_open_api_router!(
         fn router_manager,
+        get_manager_instance_names,
         get_system_info,
         get_software_info,
         get_latest_build_info,
@@ -224,6 +252,7 @@ create_counters!(
     CommonAdminCounters,
     COMMON_ADMIN,
     COMMON_ADMIN_MANAGER_COUNTERS_LIST,
+    get_manager_instance_names,
     get_system_info,
     get_software_info,
     get_latest_build_info,

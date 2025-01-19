@@ -54,10 +54,7 @@ public_api = "127.0.0.1:4000"
 # time = "12:00"
 
 # [system_info]
-# log_services = ["app-manager", "app-backend"]
-# [[system_info.remote_managers]]
-# name = "test-server"
-# url = "tls://127.0.0.1:4000"
+# log_services = ["afrodite-manager", "afrodite-backend"]
 
 # [tls]
 # public_api_cert = "tls/server.crt"
@@ -226,7 +223,6 @@ pub struct RebootIfNeededConfig {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SystemInfoConfig {
     pub log_services: Vec<String>,
-    pub remote_managers: Option<Vec<ManagerInstance>>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

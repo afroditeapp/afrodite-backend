@@ -34,11 +34,17 @@ pub async fn handle_api_client_mode(args: ManagerApiClientMode) -> Result<(), Cl
         .request_to(manager_name);
 
     match args.api_command {
+        ApiCommand::AvailableInstances => {
+            let list = client.get_available_instances()
+                .await
+                .change_context(ClientError::RemoteApiRequest)?;
+            println!("{:#?}", list);
+        }
         ApiCommand::EncryptionKey {
             encryption_key_name,
         } => {
             let key = client.get_secure_storage_encryption_key(
-                ManagerInstanceName(encryption_key_name.clone()),
+                ManagerInstanceName::new(encryption_key_name.clone()),
             )
                 .await
                 .change_context(ClientError::RemoteApiRequest)?;
@@ -75,17 +81,11 @@ pub async fn handle_api_client_mode(args: ManagerApiClientMode) -> Result<(), Cl
             //     .change_context(ClientError::RemoteApiRequest)?;
             // println!("Restart backend requested, reset_data: {}", reset_data);
         }
-        ApiCommand::SystemInfoAll => {
-            // let info = ManagerApi::system_info_all(&configuration)
-            //     .await
-            //     .change_context(ClientError::RemoteApiRequest)?;
-            // println!("{:#?}", info);
-        }
         ApiCommand::SystemInfo => {
-            // let info = ManagerApi::system_info(&configuration)
-            //     .await
-            //     .change_context(ClientError::RemoteApiRequest)?;
-            // println!("{:#?}", info);
+            let info = client.get_system_info()
+                .await
+                .change_context(ClientError::RemoteApiRequest)?;
+            println!("{:#?}", info);
         }
         ApiCommand::SoftwareInfo => {
             // let info = ManagerApi::software_info(&configuration)

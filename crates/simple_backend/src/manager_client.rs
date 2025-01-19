@@ -65,6 +65,20 @@ impl ManagerApiClient {
         }
     }
 
+    pub async fn new_request_to_instance(
+        &self,
+        name: ManagerInstanceName,
+    ) -> Result<ManagerClientWithRequestReceiver, ClientError> {
+        if let Some((c, _)) = self.manager.clone() {
+            let c = ManagerClient::connect(c)
+                .await?
+                .request_to(name);
+            Ok(c)
+        } else {
+            Err(ClientError::MissingConfiguration.report())
+        }
+    }
+
     pub async fn listen_events(&self) -> Result<ServerEventListerner, ClientError> {
         if let Some((c, _)) = self.manager.clone() {
             let c = ManagerClient::connect(c)

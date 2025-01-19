@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
 use simple_backend_model::UnixTime;
+use utoipa::{IntoParams, ToSchema};
 
-use crate::{SecureStorageEncryptionKey, SoftwareUpdateStatus, SystemInfo, SystemInfoList};
+use crate::{SecureStorageEncryptionKey, SoftwareUpdateStatus, SystemInfo};
 
 #[derive(Debug, Clone, Copy, PartialEq, num_enum::TryFromPrimitive)]
 #[repr(u8)]
@@ -25,13 +26,10 @@ pub struct JsonRpcRequest {
 }
 
 impl JsonRpcRequest {
-    pub fn get_secure_storage_encryption_key(
-        receiver: ManagerInstanceName,
-        key: ManagerInstanceName,
-    ) -> Self {
+    pub fn new(receiver: ManagerInstanceName, request: JsonRpcRequestType) -> Self {
         Self {
             receiver,
-            request: JsonRpcRequestType::GetSecureStorageEncryptionKey(key),
+            request,
         }
     }
 }
@@ -42,7 +40,7 @@ pub enum JsonRpcRequestType {
     GetManagerInstanceNames,
     /// Response [JsonRpcResponseType::SecureStorageEncryptionKey]
     GetSecureStorageEncryptionKey(ManagerInstanceName),
-    /// Response [JsonRpcResponseType::SystemInfoList]
+    /// Response [JsonRpcResponseType::SystemInfo]
     GetSystemInfo,
     /// Response [JsonRpcResponseType::SoftwareUpdateStatus]
     GetSoftwareUpdateStatus,
@@ -92,11 +90,7 @@ impl JsonRpcResponse {
         info: SystemInfo,
     ) -> Self {
         Self {
-            response: JsonRpcResponseType::SystemInfoList(
-                SystemInfoList {
-                    info: vec![info],
-                }
-            )
+            response: JsonRpcResponseType::SystemInfo(info)
         }
     }
 
@@ -130,19 +124,26 @@ impl ServerEvent {
 pub enum JsonRpcResponseType {
     ManagerInstanceNames(ManagerInstanceNameList),
     SecureStorageEncryptionKey(SecureStorageEncryptionKey),
-    SystemInfoList(SystemInfoList),
+    SystemInfo(SystemInfo),
     SoftwareUpdateStatus(SoftwareUpdateStatus),
     Successful,
     RequestReceiverNotFound,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, ToSchema)]
 pub struct ManagerInstanceNameList {
     pub names: Vec<ManagerInstanceName>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, Hash, IntoParams, ToSchema)]
+#[into_params(names("name"))]
 pub struct ManagerInstanceName(pub String);
+
+impl ManagerInstanceName {
+    pub fn new(name: String) -> Self {
+        Self(name)
+    }
+}
 
 impl std::fmt::Display for ManagerInstanceName {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

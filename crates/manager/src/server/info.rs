@@ -3,10 +3,9 @@
 use std::process::ExitStatus;
 
 use error_stack::{Result, ResultExt};
-use manager_model::{CommandOutput, SystemInfo, SystemInfoList};
+use manager_model::{CommandOutput, SystemInfo};
 use tokio::process::Command;
 
-use super::client::ApiManager;
 use crate::config::Config;
 
 #[derive(thiserror::Error, Debug)]
@@ -39,38 +38,11 @@ pub enum SystemInfoError {
 pub struct SystemInfoGetter;
 
 impl SystemInfoGetter {
-    pub async fn system_info_all(
-        config: &Config,
-        api: &ApiManager<'_>,
-    ) -> Result<SystemInfoList, SystemInfoError> {
-        let system_info = Self::system_info(config).await?;
-        let mut system_infos = vec![system_info];
-
-        if let Some(info_config) = config.system_info() {
-            for service in info_config.remote_managers.iter().flatten() {
-                // match api.system_info(&service.name).await {
-                //     Ok(info) => {
-                //         let info = SystemInfo {
-                //             name: format!(
-                //                 "Remote manager {}, remote name: {}",
-                //                 service.name, info.name
-                //             ),
-                //             info: info.info,
-                //         };
-                //         system_infos.push(info);
-                //     }
-                //     Err(e) => {
-                //         tracing::error!("Failed to get system info from {}: {:?}", service.name, e);
-                //         let _error = e.to_string();
-                //     }
-                // }
-            }
+    pub async fn system_info(config: &Config) -> Result<SystemInfo, SystemInfoError> {
+        if config.system_info().is_none() {
+            return Ok(SystemInfo::default());
         }
 
-        Ok(SystemInfoList { info: system_infos })
-    }
-
-    pub async fn system_info(config: &Config) -> Result<SystemInfo, SystemInfoError> {
         let df = Self::run_df().await?;
         let df_inodes = Self::run_df_inodes().await?;
         let uptime = Self::run_uptime().await?;
@@ -90,9 +62,7 @@ impl SystemInfoGetter {
             }
         }
 
-        let hostname = Self::run_hostname().await?;
         Ok(SystemInfo {
-            name: hostname.output.trim().to_string(),
             info: commands,
         })
     }
@@ -107,10 +77,6 @@ impl SystemInfoGetter {
 
     async fn run_uptime() -> Result<CommandOutput, SystemInfoError> {
         Self::run_cmd_with_args("uptime", &[]).await
-    }
-
-    async fn run_hostname() -> Result<CommandOutput, SystemInfoError> {
-        Self::run_cmd_with_args("hostname", &[]).await
     }
 
     async fn run_whoami() -> Result<CommandOutput, SystemInfoError> {
@@ -132,32 +98,50 @@ impl SystemInfoGetter {
     /// Run print-logs.sh script which prints some logs requiring sudo.
     async fn run_print_logs(config: &Config) -> Result<CommandOutput, SystemInfoError> {
         let script = config.script_locations().print_logs();
+        if !script.exists() {
+            return Ok(CommandOutput {
+                name: "print-logs.sh".to_string(),
+                output: "Script does not exists".to_string(),
+            })
+        }
         let script_str = script.to_str().ok_or(SystemInfoError::InvalidInput)?;
         Self::run_cmd_with_args("sudo", &[script_str]).await
     }
 
     async fn run_cmd_with_args(cmd: &str, args: &[&str]) -> Result<CommandOutput, SystemInfoError> {
+        let cmd_exists = Command::new("which")
+            .arg(cmd)
+            .output()
+            .await
+            .change_context(SystemInfoError::ProcessWaitFailed)?;
+
+        let cmd_and_args_string = format!("{} {}", cmd, args.join(" "));
+        if !cmd_exists.status.success() {
+            return Ok(CommandOutput {
+                name: cmd_and_args_string,
+                output: "Command does not exists".to_string(),
+            })
+        }
+
         let output = Command::new(cmd)
             .args(args)
             .output()
             .await
             .change_context(SystemInfoError::ProcessWaitFailed)?;
 
-        if !output.status.success() {
-            tracing::error!(
+        let output = if output.status.success() {
+            String::from_utf8(output.stdout).change_context(SystemInfoError::InvalidOutput)?
+        } else {
+            format!(
                 "{} {} failed with status: {:?}",
                 cmd,
                 args.join(" "),
                 output.status
-            );
-            return Err(SystemInfoError::CommandFailed(output.status).into());
-        }
-
-        let output =
-            String::from_utf8(output.stdout).change_context(SystemInfoError::InvalidOutput)?;
+            )
+        };
 
         Ok(CommandOutput {
-            name: format!("{} {}", cmd, args.join(" ")),
+            name: cmd_and_args_string,
             output,
         })
     }
