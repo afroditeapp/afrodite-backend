@@ -44,10 +44,6 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # longitude_bottom_right = 31.58
 # index_cell_square_km = 255       # 1-255 and area width and height must be larger than 255 km
 
-# [external_services]
-# account_internal = "http://127.0.0.1:4000"
-# media_internal = "http://127.0.0.1:4000"
-
 # [limits.account]
 # account_deletion_wait_time_seconds = "90d"
 
@@ -157,7 +153,8 @@ pub struct GrantAdminAccessConfig {
     pub email: EmailAddress,
 }
 
-/// Base URLs for external services
+/// Base URLs for defining server to server connections.
+/// Only used in microservice mode.
 #[derive(Debug, Deserialize, Default, Serialize, Clone)]
 pub struct ExternalServices {
     pub account_internal: Option<Url>,
