@@ -40,7 +40,7 @@ name = "history"
 
 # [manager]
 # name = "default"
-# address = "http://127.0.0.1:5000"
+# address = "http://127.0.0.1:4000"
 # api_key = "TODO"
 # root_certificate = "server_config/root_certificate.crt"
 

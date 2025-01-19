@@ -25,13 +25,13 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # log_timestamp = true # optional
 
 [socket]
-public_api = "127.0.0.1:5000"
+public_api = "127.0.0.1:4000"
 # Second API has no TLS even if it is configured
-# second_public_api_localhost_only_port = 5001
+# second_public_api_localhost_only_port = 4001
 
 # [[remote_manager]]
 # manager_name = "backup"
-# url = "tls://127.0.0.1:5000"
+# url = "tls://127.0.0.1:4000"
 
 # [secure_storage]
 # key_storage_manager_name = "default"
@@ -46,7 +46,7 @@ public_api = "127.0.0.1:5000"
 # key_path = "data-key.key"
 
 # [software_update_provider]
-# manager_base_url = "tls://127.0.0.1:5000"
+# manager_base_url = "tls://127.0.0.1:4000"
 # backend_install_location = "/app-secure-storage/app/binaries/app-backend"
 # backend_data_reset_dir = "/path/to/backend/data" # Optional
 
@@ -57,7 +57,7 @@ public_api = "127.0.0.1:5000"
 # log_services = ["app-manager", "app-backend"]
 # [[system_info.remote_managers]]
 # name = "test-server"
-# url = "tls://127.0.0.1:5000"
+# url = "tls://127.0.0.1:4000"
 
 # [tls]
 # public_api_cert = "tls/server.crt"
