@@ -299,7 +299,7 @@ pub struct SocketConfig {
 /// App manager config
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AppManagerConfig {
-    pub name: ManagerInstanceName,
+    pub manager_name: ManagerInstanceName,
     pub address: Url,
     pub api_key: String,
     pub root_certificate: Option<PathBuf>,

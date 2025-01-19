@@ -43,7 +43,7 @@ impl ManagerApiClient {
 
             info!("Manager API URL: {}", c.address);
 
-            Some((config, c.name.clone()))
+            Some((config, c.manager_name.clone()))
         } else {
             None
         };
