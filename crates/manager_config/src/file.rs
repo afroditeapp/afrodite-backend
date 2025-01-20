@@ -53,6 +53,7 @@ public_api = "127.0.0.1:4000"
 # owner = "TODO"
 # repository = "TODO"
 # file_name_ending = "TODO"
+# uploader = "TODO" # Optional
 
 # [reboot_if_needed]
 # time = "12:00"
@@ -221,6 +222,8 @@ pub struct SoftwareUpdateGitHubConfig {
     pub repository: String,
     /// Select release asset which name ends with this text.
     pub file_name_ending: String,
+    /// Require specific release asset uploader.
+    pub uploader: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

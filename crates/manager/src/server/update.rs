@@ -91,6 +91,10 @@ pub enum UpdateError {
 
     #[error("Latest software with matching file name not found from GitHub")]
     SoftwareDownloadFailedNoMatchingFile,
+
+    #[error("Software download failed. Unknown file uploader.")]
+    SotwareDownloadFailedUnknownFileUploader,
+
 }
 
 #[derive(Debug)]
@@ -596,6 +600,12 @@ impl UpdateManager {
                 .and_then(|v| v.as_str()) else {
                     return Err(report!(UpdateError::GitHubApi));
                 };
+            let Some(uploader) = a.as_object()
+                .and_then(|v| v.get("uploader"))
+                .and_then(|v| v.get("login"))
+                .and_then(|v| v.as_str()) else {
+                    return Err(report!(UpdateError::GitHubApi));
+                };
 
             if name.ends_with(&config.github.file_name_ending) {
                 if let Some((selected_name, _)) = selected_download {
@@ -605,6 +615,14 @@ impl UpdateManager {
                             .attach_printable(name.to_string())
                     );
                 } else {
+                    if let Some(required_uploader) = &config.github.uploader {
+                        if uploader != required_uploader {
+                            return Err(
+                                report!(UpdateError::SotwareDownloadFailedUnknownFileUploader)
+                                    .attach_printable(format!("uploader: {}, expected: {}", uploader, required_uploader))
+                            );
+                        }
+                    }
                     selected_download = Some((name.to_string(), download_url.to_string()));
                 }
             }
