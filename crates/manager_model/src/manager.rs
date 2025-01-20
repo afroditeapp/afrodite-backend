@@ -69,11 +69,5 @@ pub struct SoftwareInfo {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, ToSchema)]
 pub struct BuildInfo {
-    pub commit_sha: String,
     pub name: String,
-    pub timestamp: String,
-    /// Build info output from the built binary.
-    ///
-    /// Binary must support --build-info command line argument.
-    pub build_info: String,
 }

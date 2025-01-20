@@ -2,7 +2,7 @@
 //!
 
 use error_stack::{Result, ResultExt};
-use manager_model::ManagerInstanceName;
+use manager_model::{ManagerInstanceName, SoftwareInfoNew};
 
 use crate::{
     api::client::{ClientConfig, ClientError, ManagerClient, RequestSenderCmds}, config::args::{ApiCommand, ManagerApiClientMode}
@@ -51,47 +51,27 @@ pub async fn handle_api_client_mode(args: ManagerApiClientMode) -> Result<(), Cl
             println!("Name: {}", encryption_key_name);
             println!("Key:  {}", key.key);
         }
-        ApiCommand::LatestBuildInfo { software } => {
-            // let info = ManagerApi::get_latest_build_info(&configuration, software)
-            //     .await
-            //     .change_context(ClientError::RemoteApiRequest)?;
-            // println!("{:#?}", info);
-        }
-        ApiCommand::RequestUpdateSoftware {
-            software,
-            reboot,
-            reset_data,
-        } => {
-            // ManagerApi::request_update_software(
-            //     &configuration,
-            //     software,
-            //     reboot,
-            //     ResetDataQueryParam { reset_data },
-            // )
-            // .await
-            // .change_context(ClientError::RemoteApiRequest)?;
-            // println!(
-            //     "Update requested for {:?}, reboot: {}, reset_data: {}",
-            //     software, reboot, reset_data
-            // );
-        }
-        ApiCommand::RequestRestartBackend { reset_data } => {
-            // ManagerApi::restart_backend(&configuration, ResetDataQueryParam { reset_data })
-            //     .await
-            //     .change_context(ClientError::RemoteApiRequest)?;
-            // println!("Restart backend requested, reset_data: {}", reset_data);
-        }
         ApiCommand::SystemInfo => {
             let info = client.get_system_info()
                 .await
                 .change_context(ClientError::RemoteApiRequest)?;
             println!("{:#?}", info);
         }
-        ApiCommand::SoftwareInfo => {
-            // let info = ManagerApi::software_info(&configuration)
-            //     .await
-            //     .change_context(ClientError::RemoteApiRequest)?;
-            // println!("{:#?}", info);
+        ApiCommand::SoftwareStatus => {
+            let info = client.get_software_update_status()
+                .await
+                .change_context(ClientError::RemoteApiRequest)?;
+            println!("{:#?}", info);
+        }
+        ApiCommand::SoftwareDownload => {
+            client.trigger_software_update_download()
+                .await
+                .change_context(ClientError::RemoteApiRequest)?
+        }
+        ApiCommand::SoftwareInstall { name, hash } => {
+            client.trigger_software_update_install(SoftwareInfoNew { name, hash })
+                .await
+                .change_context(ClientError::RemoteApiRequest)?
         }
     }
 

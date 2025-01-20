@@ -1,52 +1,26 @@
 
 
 use manager_model::JsonRpcResponse;
-use crate::config::Config;
+use crate::{api::{GetConfig, GetUpdateManager}, server::update::UpdateManagerMessage};
 
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 
 use super::JsonRpcError;
 
+pub trait RpcSoftware: GetConfig + GetUpdateManager {
+    async fn rpc_get_software_update_status(&self) -> Result<JsonRpcResponse, JsonRpcError> {
+        Ok(JsonRpcResponse::software_update_status(self.update_manager().read_state().await))
+    }
 
-pub async fn get_software_update_status(
-    config: &Config,
-) -> Result<JsonRpcResponse, JsonRpcError> {
-    // Ok(JsonRpcResponse::software_update_status(status))
-    todo!()
+    async fn rpc_trigger_update_manager_related_action(
+        &self,
+        message: UpdateManagerMessage,
+    ) -> Result<JsonRpcResponse, JsonRpcError> {
+        self.update_manager().send_message(message)
+            .await
+            .change_context(JsonRpcError::UpdateManager)?;
+        Ok(JsonRpcResponse::successful())
+    }
 }
 
-pub async fn trigger_software_update_download(
-    config: &Config,
-) -> Result<JsonRpcResponse, JsonRpcError> {
-    // Ok(JsonRpcResponse::software_update_status(status))
-    todo!()
-}
-
-pub async fn trigger_software_update_install(
-    config: &Config,
-) -> Result<JsonRpcResponse, JsonRpcError> {
-    // Ok(JsonRpcResponse::software_update_status(status))
-    todo!()
-}
-
-pub async fn trigger_system_reboot(
-    config: &Config,
-) -> Result<JsonRpcResponse, JsonRpcError> {
-    // Ok(JsonRpcResponse::software_update_status(status))
-    todo!()
-}
-
-
-pub async fn trigger_backend_data_reset(
-    config: &Config,
-) -> Result<JsonRpcResponse, JsonRpcError> {
-    // Ok(JsonRpcResponse::software_update_status(status))
-    todo!()
-}
-
-pub async fn schedule_reboot(
-    config: &Config,
-) -> Result<JsonRpcResponse, JsonRpcError> {
-    // Ok(JsonRpcResponse::software_update_status(status))
-    todo!()
-}
+impl <T: GetConfig + GetUpdateManager> RpcSoftware for T {}

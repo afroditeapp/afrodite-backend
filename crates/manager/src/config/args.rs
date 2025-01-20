@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use clap::{arg, command, Args, Parser};
 use error_stack::{Result, ResultExt};
-use manager_model::{ManagerInstanceName, SoftwareOptions};
+use manager_model::ManagerInstanceName;
 use tokio_rustls::rustls::RootCertStore;
 use url::Url;
 
@@ -120,22 +120,11 @@ pub enum ApiCommand {
     EncryptionKey {
         encryption_key_name: String,
     },
-    LatestBuildInfo {
-        #[arg(value_enum)]
-        software: SoftwareOptions,
-    },
-    RequestUpdateSoftware {
-        #[arg(value_enum)]
-        software: SoftwareOptions,
-        #[arg(short, long)]
-        reboot: bool,
-        #[arg(long)]
-        reset_data: bool,
-    },
-    RequestRestartBackend {
-        #[arg(long)]
-        reset_data: bool,
-    },
     SystemInfo,
-    SoftwareInfo,
+    SoftwareStatus,
+    SoftwareDownload,
+    SoftwareInstall {
+        name: String,
+        hash: String,
+    },
 }

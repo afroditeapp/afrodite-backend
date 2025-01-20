@@ -45,10 +45,14 @@ public_api = "127.0.0.1:4000"
 # manager_name = "default"
 # key_path = "data-key.key"
 
-# [software_update_provider]
-# manager_base_url = "tls://127.0.0.1:4000"
+# [software_update]
 # backend_install_location = "/app-secure-storage/app/binaries/app-backend"
 # backend_data_reset_dir = "/path/to/backend/data" # Optional
+
+# [software_update.github]
+# owner = "TODO"
+# repository = "TODO"
+# file_name_ending = "TODO"
 
 # [reboot_if_needed]
 # time = "12:00"
@@ -92,7 +96,7 @@ pub struct ConfigFile {
     pub server_encryption_key: Vec<ServerEncryptionKey>,
     pub secure_storage: Option<SecureStorageConfig>,
     pub reboot_if_needed: Option<RebootIfNeededConfig>,
-    pub software_update_provider: Option<SoftwareUpdateProviderConfig>,
+    pub software_update: Option<SoftwareUpdateConfig>,
     pub system_info: Option<SystemInfoConfig>,
     /// TLS is required if debug setting is false.
     pub tls: Option<TlsConfig>,
@@ -197,19 +201,26 @@ pub struct SecureStorageConfig {
     pub key_download_timeout_seconds: Option<u32>,
 }
 
-// TODO: Make build and update configs generic. Does API need changes?
-
 #[derive(Debug, Deserialize, Serialize)]
-pub struct SoftwareUpdateProviderConfig {
-    /// Manager instance URL which is used to
-    /// check if new software is available.
-    pub manager_base_url: Url,
+pub struct SoftwareUpdateConfig {
     pub backend_install_location: PathBuf,
     /// Optional. Enableds data reset support for backend. This
     /// directory will be moved next to the original dir with postfix
     /// "-old" when backend is updated. If there is already a directory
     /// with that name, it will be deleted.
     pub backend_data_reset_dir: Option<PathBuf>,
+    pub github: SoftwareUpdateGitHubConfig,
+}
+
+/// Download latest release from GitHub repository.
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SoftwareUpdateGitHubConfig {
+    /// GitHub API access token for private repositories.
+    pub token: Option<String>,
+    pub owner: String,
+    pub repository: String,
+    /// Select release asset which name ends with this text.
+    pub file_name_ending: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

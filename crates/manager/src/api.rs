@@ -2,7 +2,7 @@
 
 use crate::{
     config::Config,
-    server::{client::ApiManager, update::UpdateManagerHandle},
+    server::{client::ApiManager, reboot::RebootManagerHandle, update::UpdateManagerHandle},
 };
 
 pub mod server;
@@ -21,4 +21,8 @@ pub trait GetApiManager {
 
 pub trait GetUpdateManager {
     fn update_manager(&self) -> &UpdateManagerHandle;
+}
+
+pub trait GetRebootManager {
+    fn reboot_manager(&self) -> &RebootManagerHandle;
 }

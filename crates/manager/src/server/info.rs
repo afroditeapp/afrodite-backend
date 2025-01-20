@@ -100,8 +100,8 @@ impl SystemInfoGetter {
         let script = config.script_locations().print_logs();
         if !script.exists() {
             return Ok(CommandOutput {
-                name: "print-logs.sh".to_string(),
-                output: "Script does not exists".to_string(),
+                name: "Print logs script".to_string(),
+                output: "The script does not exists".to_string(),
             })
         }
         let script_str = script.to_str().ok_or(SystemInfoError::InvalidInput)?;

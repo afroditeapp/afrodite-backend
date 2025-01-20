@@ -13,7 +13,7 @@ pub mod build_info;
 
 use std::process::ExitCode;
 
-use build_info::{BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE};
+use build_info::{BUILD_INFO_CARGO_PKG_NAME, BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE};
 use config::{args::AppMode, get_config};
 use manager::config::args::ManagerApiClientMode;
 use server::{api_doc::ApiDoc, DatingAppServer};
@@ -37,6 +37,7 @@ fn main() -> ExitCode {
         let config = manager::config::get_config(
             BUILD_INFO_GIT_DESCRIBE.to_string(),
             BUILD_INFO_CARGO_PKG_VERSION.to_string(),
+            BUILD_INFO_CARGO_PKG_NAME.to_string(),
         ).unwrap();
         let runtime = tokio::runtime::Runtime::new().unwrap();
         runtime.block_on(async { manager::server::AppServer::new(config).run().await });

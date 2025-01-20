@@ -7,6 +7,16 @@ pub struct SoftwareUpdateStatus {
     pub installed: Option<SoftwareInfoNew>,
 }
 
+impl SoftwareUpdateStatus {
+    pub fn new_idle() -> Self {
+        Self {
+            state: SoftwareUpdateState::Idle,
+            downloaded: None,
+            installed: None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub enum SoftwareUpdateState {
     Idle,
@@ -16,6 +26,6 @@ pub enum SoftwareUpdateState {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SoftwareInfoNew {
-    pub file_name: String,
-    pub sha256: String,
+    pub name: String,
+    pub hash: String,
 }

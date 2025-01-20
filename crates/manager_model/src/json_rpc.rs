@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::UnixTime;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{SecureStorageEncryptionKey, SoftwareUpdateStatus, SystemInfo};
+use crate::{SecureStorageEncryptionKey, SoftwareInfoNew, SoftwareUpdateStatus, SystemInfo};
 
 #[derive(Debug, Clone, Copy, PartialEq, num_enum::TryFromPrimitive)]
 #[repr(u8)]
@@ -47,13 +47,19 @@ pub enum JsonRpcRequestType {
     /// Response [JsonRpcResponseType::Successful]
     TriggerSoftwareUpdateDownload,
     /// Response [JsonRpcResponseType::Successful]
-    TriggerSoftwareUpdateInstall,
+    TriggerSoftwareUpdateInstall(SoftwareInfoNew),
     /// Response [JsonRpcResponseType::Successful]
     TriggerSystemReboot,
     /// Response [JsonRpcResponseType::Successful]
     TriggerBackendDataReset,
     /// Response [JsonRpcResponseType::Successful]
-    ScheduleReboot,
+    ScheduleBackendRestart,
+    /// Response [JsonRpcResponseType::Successful]
+    ScheduleBackendRestartHidden,
+    /// Response [JsonRpcResponseType::Successful]
+    ScheduleSystemReboot,
+    /// Response [JsonRpcResponseType::Successful]
+    ScheduleSystemRebootHidden,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
@@ -62,6 +68,12 @@ pub struct JsonRpcResponse {
 }
 
 impl JsonRpcResponse {
+    pub fn successful() -> Self {
+        Self {
+            response: JsonRpcResponseType::Successful,
+        }
+    }
+
     pub fn request_receiver_not_found() -> Self {
         Self {
             response: JsonRpcResponseType::RequestReceiverNotFound,

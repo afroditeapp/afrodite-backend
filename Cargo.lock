@@ -2555,6 +2555,7 @@ dependencies = [
  "error-stack",
  "futures",
  "manager_model",
+ "reqwest",
  "rustls-pemfile",
  "serde",
  "serde_json",

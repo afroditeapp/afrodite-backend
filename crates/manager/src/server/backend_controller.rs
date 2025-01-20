@@ -4,6 +4,7 @@ use std::process::ExitStatus;
 
 use error_stack::{Result, ResultExt};
 use tokio::process::Command;
+use tracing::warn;
 
 use crate::config::Config;
 
@@ -32,8 +33,15 @@ impl<'a> BackendController<'a> {
     }
 
     pub async fn start_backend(&self) -> Result<(), ControllerError> {
+        let script = self.config.script_locations().start_backend();
+
+        if !script.exists() {
+            warn!("Script for starting the backend does not exist");
+            return Ok(());
+        }
+
         let status = Command::new("sudo")
-            .arg(self.config.script_locations().start_backend())
+            .arg(script)
             .status()
             .await
             .change_context(ControllerError::ProcessWaitFailed)?;
@@ -47,8 +55,15 @@ impl<'a> BackendController<'a> {
     }
 
     pub async fn stop_backend(&self) -> Result<(), ControllerError> {
+        let script = self.config.script_locations().stop_backend();
+
+        if !script.exists() {
+            warn!("Script for stopping the backend does not exist");
+            return Ok(());
+        }
+
         let status = Command::new("sudo")
-            .arg(self.config.script_locations().stop_backend())
+            .arg(script)
             .status()
             .await
             .change_context(ControllerError::ProcessWaitFailed)?;

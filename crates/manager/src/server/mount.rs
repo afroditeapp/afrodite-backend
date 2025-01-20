@@ -11,10 +11,9 @@ use manager_model::SecureStorageEncryptionKey;
 use tokio::{io::AsyncWriteExt, process::Command};
 use tracing::{error, info, warn};
 
-use super::{app::AppState, state::StateStorage};
+use super::{app::S, state::MountStateStorage};
 use crate::{
-    config::{file::SecureStorageConfig, Config},
-    utils::ContextExt,
+    api::GetApiManager, config::{file::SecureStorageConfig, Config}, utils::ContextExt
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -72,16 +71,16 @@ impl Default for MountState {
 
 pub struct MountManager {
     config: Arc<Config>,
-    app_state: AppState,
-    state: Arc<StateStorage>,
+    state: S,
+    mount_state: Arc<MountStateStorage>,
 }
 
 impl MountManager {
-    pub fn new(config: Arc<Config>, app_state: AppState, state: Arc<StateStorage>) -> Self {
+    pub fn new(config: Arc<Config>, state: S, mount_state: Arc<MountStateStorage>) -> Self {
         Self {
             config,
-            app_state,
             state,
+            mount_state,
         }
     }
 
@@ -91,20 +90,16 @@ impl MountManager {
     ) -> Result<(), MountError> {
         if storage_config.availability_check_path.exists() {
             info!("Secure storage is already mounted");
-            self.state
+            self.mount_state
                 .modify(|s| s.mount_state.set_mode(MountMode::MountedWithUnknownKey))
                 .await;
             return Ok(());
         }
 
-        // let key = self
-        //     .app_state
-        //     .api_manager()
-        //     .get_encryption_key()
-        //     .await
-        //     .change_context(MountError::GetKeyFailed);
-
-        let key: Result<SecureStorageEncryptionKey, MountError> = unimplemented!();
+        let key = self.state.api_manager()
+            .get_encryption_key()
+            .await
+            .change_context(MountError::GetKeyFailed);
 
         let (key, mut mode) = match key {
             Ok(key) => (Some(key), MountMode::MountedWithRemoteKey),
@@ -146,14 +141,21 @@ impl MountManager {
             }
         };
 
-        self.state.modify(|s| s.mount_state.set_mode(mode)).await;
+        self.mount_state.modify(|s| s.mount_state.set_mode(mode)).await;
 
         Ok(())
     }
 
     pub async fn mount_secure_storage(&self, key: SecureStorageEncryptionKey) -> Result<(), MountError> {
+        let script = self.config.script_locations().open_encryption();
+
+        if !script.exists() {
+            warn!("Script for mounting secure storage does not exist");
+            return Ok(());
+        }
+
         let mut c = Command::new("sudo")
-            .arg(self.config.script_locations().open_encryption())
+            .arg(script)
             .stdin(Stdio::piped())
             .spawn()
             .change_context(MountError::ProcessStartFailed)?;
@@ -194,9 +196,16 @@ impl MountManager {
 
         info!("Unmounting secure storage");
 
+        let script = self.config.script_locations().close_encryption();
+
+        if !script.exists() {
+            warn!("Script for unmounting secure storage does not exist");
+            return Ok(());
+        }
+
         // Run command.
         let c = Command::new("sudo")
-            .arg(self.config.script_locations().close_encryption())
+            .arg(script)
             .status()
             .await
             .change_context(MountError::ProcessStartFailed)?;
@@ -211,12 +220,17 @@ impl MountManager {
     }
 
     async fn is_default_password(&self) -> Result<bool, MountError> {
+        let script = self.config
+            .script_locations()
+            .is_default_encryption_password();
+
+        if !script.exists() {
+            warn!("Script for checking secure storage password does not exist");
+            return Ok(true);
+        }
+
         let c = Command::new("sudo")
-            .arg(
-                self.config
-                    .script_locations()
-                    .is_default_encryption_password(),
-            )
+            .arg(script)
             .status()
             .await
             .change_context(MountError::ProcessStartFailed)?;
@@ -225,8 +239,15 @@ impl MountManager {
     }
 
     async fn change_default_password(&self, key: SecureStorageEncryptionKey) -> Result<(), MountError> {
+        let script = self.config.script_locations().change_encryption_password();
+
+        if !script.exists() {
+            warn!("Script for changing secure storage password does not exist");
+            return Ok(());
+        }
+
         let mut c = Command::new("sudo")
-            .arg(self.config.script_locations().change_encryption_password())
+            .arg(script)
             .stdin(Stdio::piped())
             .spawn()
             .change_context(MountError::ProcessStartFailed)?;

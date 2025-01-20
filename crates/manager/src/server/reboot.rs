@@ -16,11 +16,9 @@ use tokio::{process::Command, sync::mpsc, task::JoinHandle, time::sleep};
 use tracing::{info, warn};
 
 use super::{
-    client::ApiManager,
-    state::StateStorage,
-    ServerQuitWatcher,
+    app::S, client::ApiManager, state::MountStateStorage, ServerQuitWatcher
 };
-use crate::{config::Config, server::mount::MountMode};
+use crate::{api::GetConfig, config::Config, server::mount::MountMode};
 
 /// If this file exists reboot system at some point. Works at least on Ubuntu.
 const REBOOT_REQUIRED_PATH: &str = "/var/run/reboot-required";
@@ -93,42 +91,55 @@ impl RebootManagerHandle {
     }
 }
 
-pub struct RebootManager {
-    config: Arc<Config>,
-    state: Arc<StateStorage>,
+pub struct RebootManagerInternalState {
+    sender: mpsc::Sender<RebootManagerMessage>,
     receiver: mpsc::Receiver<RebootManagerMessage>,
 }
 
-impl RebootManager {
-    pub fn new_manager(
-        config: Arc<Config>,
-        state: Arc<StateStorage>,
-        quit_notification: ServerQuitWatcher,
-    ) -> (RebootManagerQuitHandle, RebootManagerHandle) {
-        let (sender, receiver) = mpsc::channel(1);
+pub struct RebootManager {
+    internal_state: RebootManagerInternalState,
+    state: S,
+    mount_state: Arc<MountStateStorage>,
+}
 
-        let manager = Self {
-            config,
+impl RebootManager {
+    pub fn new_channel() -> (RebootManagerHandle, RebootManagerInternalState) {
+        let (sender, receiver) = mpsc::channel(1);
+        let handle = RebootManagerHandle {
+            sender: sender.clone(),
+        };
+        let state = RebootManagerInternalState {
+            sender,
             receiver,
+        };
+        (handle, state)
+    }
+
+    pub fn new_manager(
+        internal_state: RebootManagerInternalState,
+        state: S,
+        mount_state: Arc<MountStateStorage>,
+        quit_notification: ServerQuitWatcher,
+    ) -> RebootManagerQuitHandle {
+        let quit_handle_sender = internal_state.sender.clone();
+        let manager = Self {
+            internal_state,
             state,
+            mount_state,
         };
 
         let task = tokio::spawn(manager.run(quit_notification));
 
-        let handle = RebootManagerHandle { sender };
-
-        let quit_handle = RebootManagerQuitHandle {
+        RebootManagerQuitHandle {
             task,
-            _sender: handle.sender.clone(),
-        };
-
-        (quit_handle, handle)
+            _sender: quit_handle_sender,
+        }
     }
 
     pub async fn run(mut self, mut quit_notification: ServerQuitWatcher) {
         info!(
             "Automatic reboot status: {:?}",
-            self.config.reboot_if_needed().is_some()
+            self.state.config().reboot_if_needed().is_some()
         );
 
         let mut check_cooldown = false;
@@ -138,7 +149,7 @@ impl RebootManager {
                 _ = sleep(Duration::from_secs(120)), if check_cooldown => {
                     check_cooldown = false;
                 }
-                result = Self::sleep_until_reboot_check(&self.config), if !check_cooldown => {
+                result = Self::sleep_until_reboot_check(self.state.config()), if !check_cooldown => {
                     match result {
                         Ok(()) => {
                             self.reboot_if_needed().await;
@@ -149,7 +160,7 @@ impl RebootManager {
                     }
                     check_cooldown = true;
                 }
-                message = self.receiver.recv() => {
+                message = self.internal_state.receiver.recv() => {
                     match message {
                         Some(message) => {
                             self.handle_message(message).await;
@@ -207,7 +218,7 @@ impl RebootManager {
     }
 
     pub async fn run_reboot(&self) -> Result<(), RebootError> {
-        match self.state.get(|s| s.mount_state.mode()).await {
+        match self.mount_state.get(|s| s.mount_state.mode()).await {
             MountMode::MountedWithRemoteKey => {
                 info!("Remote encryption key detected. Checking encryption key availability before rebooting");
                 self.api_manager()
@@ -220,6 +231,12 @@ impl RebootManager {
         }
 
         info!("Rebooting system");
+
+        if self.state.config().debug_mode() {
+            warn!("Skipping reboot because debug mode is enabled");
+            return Ok(());
+        }
+
         let status = Command::new("sudo")
             .arg("reboot")
             .status()
@@ -245,6 +262,6 @@ impl RebootManager {
     }
 
     fn api_manager(&self) -> ApiManager<'_> {
-        ApiManager::new(&self.config)
+        ApiManager::new(&self.state)
     }
 }

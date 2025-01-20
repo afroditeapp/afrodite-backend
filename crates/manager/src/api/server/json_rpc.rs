@@ -4,12 +4,16 @@ use std::net::SocketAddr;
 use manager_model::JsonRpcRequest;
 use manager_model::JsonRpcRequestType;
 use manager_model::JsonRpcResponse;
+use reboot::RpcReboot;
+use secure_storage::RpcSecureStorage;
+use software::RpcSoftware;
+use system_info::RpcSystemInfo;
 use tracing::info;
 use crate::api::client::ClientConfig;
 use crate::api::client::ManagerClient;
 use crate::api::server::ConnectionUtilsWrite;
 use crate::api::GetConfig;
-use crate::config::Config;
+use crate::server::update::UpdateManagerMessage;
 
 use tracing::error;
 
@@ -23,6 +27,7 @@ use super::ServerError;
 pub mod software;
 pub mod secure_storage;
 pub mod system_info;
+pub mod reboot;
 
 
 #[derive(thiserror::Error, Debug)]
@@ -33,6 +38,10 @@ pub enum JsonRpcError {
     SecureStorageEncryptionKeyRead,
     #[error("System info error")]
     SystemInfo,
+    #[error("Reboot manager error")]
+    RebootManager,
+    #[error("Update manager error")]
+    UpdateManager,
 }
 
 
@@ -69,7 +78,7 @@ async fn handle_request(
         info!("Running RPC {:?} from {}", &request.request, address);
         handle_request_type(
             request.request,
-            state.config()
+            state,
         )
             .await
             .change_context(ServerError::JsonRpcFailed)
@@ -94,29 +103,37 @@ async fn handle_request(
 
 pub async fn handle_request_type(
     request: JsonRpcRequestType,
-    config: &Config,
+    state: &S,
 ) -> Result<JsonRpcResponse, JsonRpcError> {
     match request {
         JsonRpcRequestType::GetManagerInstanceNames =>
-            system_info::get_manager_instance_names(config).await,
+            state.rpc_get_manager_instance_names().await,
         JsonRpcRequestType::GetSecureStorageEncryptionKey(name) =>
-            secure_storage::get_secure_storage_encryption_key(
-                config,
+            state.rpc_get_secure_storage_encryption_key(
                 name,
             ).await,
         JsonRpcRequestType::GetSystemInfo =>
-            system_info::get_system_info(config).await,
+            state.rpc_get_system_info().await,
         JsonRpcRequestType::GetSoftwareUpdateStatus =>
-            software::get_software_update_status(config).await,
+            state.rpc_get_software_update_status().await,
         JsonRpcRequestType::TriggerSoftwareUpdateDownload =>
-            software::trigger_software_update_download(config).await,
-        JsonRpcRequestType::TriggerSoftwareUpdateInstall =>
-            software::trigger_software_update_install(config).await,
-        JsonRpcRequestType::TriggerSystemReboot =>
-            software::trigger_system_reboot(config).await,
+            state.rpc_trigger_update_manager_related_action(
+                UpdateManagerMessage::SoftwareDownload,
+            ).await,
+        JsonRpcRequestType::TriggerSoftwareUpdateInstall(info) =>
+            state.rpc_trigger_update_manager_related_action(
+                UpdateManagerMessage::SoftwareInstall(info),
+            ).await,
         JsonRpcRequestType::TriggerBackendDataReset =>
-            software::trigger_backend_data_reset(config).await,
-        JsonRpcRequestType::ScheduleReboot =>
-            software::schedule_reboot(config).await,
+            state.rpc_trigger_update_manager_related_action(
+                UpdateManagerMessage::BackendResetData,
+            ).await,
+        JsonRpcRequestType::TriggerSystemReboot =>
+            state.rpc_trigger_system_reboot().await,
+        JsonRpcRequestType::ScheduleBackendRestart |
+        JsonRpcRequestType::ScheduleBackendRestartHidden |
+        JsonRpcRequestType::ScheduleSystemReboot |
+        JsonRpcRequestType::ScheduleSystemRebootHidden =>
+            todo!(),
     }
 }

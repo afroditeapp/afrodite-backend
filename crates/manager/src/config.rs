@@ -16,7 +16,7 @@ use crate::api::client::ManagerClient;
 
 use self::file::{
     ConfigFile, RebootIfNeededConfig, SecureStorageConfig, ServerEncryptionKey, SocketConfig,
-    SoftwareUpdateProviderConfig, SystemInfoConfig,
+    SoftwareUpdateConfig, SystemInfoConfig,
 };
 
 pub mod args;
@@ -57,6 +57,10 @@ pub struct Config {
     backend_code_version: String,
     /// Semver version of the backend.
     backend_semver_version: String,
+    /// Backend binary Cargo package name.
+    ///
+    /// Used in `User-Agent` HTTP header for GitHub API.
+    backend_pkg_name: String,
 
     file: ConfigFile,
     script_locations: ScriptLocations,
@@ -76,6 +80,7 @@ impl Config {
     /// Debug mode changes:
     /// * Disabling HTTPS is possbile.
     /// * Checking available scripts is disabled.
+    /// * Reboot command will not run.
     pub fn debug_mode(&self) -> bool {
         self.file.debug.unwrap_or(false)
     }
@@ -90,8 +95,8 @@ impl Config {
         self.file.secure_storage.as_ref()
     }
 
-    pub fn software_update_provider(&self) -> Option<&SoftwareUpdateProviderConfig> {
-        self.file.software_update_provider.as_ref()
+    pub fn software_update_provider(&self) -> Option<&SoftwareUpdateConfig> {
+        self.file.software_update.as_ref()
     }
 
     pub fn api_key(&self) -> &str {
@@ -135,6 +140,10 @@ impl Config {
         &self.backend_semver_version
     }
 
+    pub fn backend_pkg_name(&self) -> &str {
+        &self.backend_pkg_name
+    }
+
     pub fn remote_managers(&self) -> &[ManagerInstance] {
         &self.file.remote_manager
     }
@@ -151,6 +160,7 @@ impl Config {
 pub fn get_config(
     backend_code_version: String,
     backend_semver_version: String,
+    backend_pkg_name: String,
 ) -> Result<Config, GetConfigError> {
     let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
     let file_config = file::ConfigFile::save_default_if_not_exist_and_load(current_dir)
@@ -186,6 +196,7 @@ pub fn get_config(
     Ok(Config {
         backend_code_version,
         backend_semver_version,
+        backend_pkg_name,
         file: file_config,
         script_locations,
         public_api_tls_config,

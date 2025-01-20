@@ -7,6 +7,7 @@ use std::{
 
 use app::S;
 use futures::future::poll_fn;
+use reboot::RebootManager;
 use tokio::{
     net::TcpListener,
     signal::{
@@ -19,13 +20,14 @@ use tokio::{
 use tokio_rustls::{rustls::ServerConfig, TlsAcceptor};
 use tracing::{error, info, log::warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
+use update::UpdateManager;
 
 use crate::{
     api::server::handle_connection_to_server,
     config::Config,
     server::{
         app::App, backend_controller::BackendController,
-        mount::MountManager, state::StateStorage,
+        mount::MountManager, state::MountStateStorage,
     },
 };
 
@@ -86,33 +88,35 @@ impl AppServer {
         let (server_quit_handle, server_quit_watcher) = broadcast::channel(1);
         let mut terminate_signal = signal::unix::signal(SignalKind::terminate()).unwrap();
 
-        // Create API client
+        let state: Arc<MountStateStorage> = MountStateStorage::new().into();
+        let (reboot_manager_handle, reboot_manager_internal_state) =
+            RebootManager::new_channel();
+        let (update_manager_handle, update_manager_internal_state) =
+            UpdateManager::new_channel();
 
-        let state: Arc<StateStorage> = StateStorage::new().into();
+        let mut app = App::new(
+            self.config.clone(),
+            update_manager_handle.into(),
+            reboot_manager_handle.into(),
+        )
+        .await;
 
         // Start reboot manager
 
-        let (reboot_manager_quit_handle, reboot_manager_handle) = reboot::RebootManager::new_manager(
-            self.config.clone(),
+        let reboot_manager_quit_handle = reboot::RebootManager::new_manager(
+            reboot_manager_internal_state,
+            app.state(),
             state.clone(),
             server_quit_watcher.resubscribe(),
         );
 
         // Start update manager
 
-        let (update_manager_quit_handle, update_manager_handle) = update::UpdateManager::new_manager(
-            self.config.clone(),
+        let update_manager_quit_handle = update::UpdateManager::new_manager(
+            update_manager_internal_state,
+            app.state(),
             server_quit_watcher.resubscribe(),
-            reboot_manager_handle,
         );
-
-        // Create app
-
-        let mut app = App::new(
-            self.config.clone(),
-            update_manager_handle.into(),
-        )
-        .await;
 
         // Start API server
 

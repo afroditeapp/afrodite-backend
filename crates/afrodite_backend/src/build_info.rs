@@ -1,6 +1,7 @@
 //! Build info
 //!
 
+pub const BUILD_INFO_CARGO_PKG_NAME: &str = env!("CARGO_PKG_NAME");
 pub const BUILD_INFO_CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub const BUILD_INFO_GIT_COMMIT_HASH: &str = env!("VERGEN_GIT_SHA");
@@ -15,7 +16,8 @@ pub const BUILD_INFO_CARGO_OPT_LEVEL: &str = env!("VERGEN_CARGO_OPT_LEVEL");
 
 pub fn build_info() -> String {
     format!(
-        "version: {}\ngit commit hash: {}\ngit describe: {}\ngit branch: {}\nrustc semver: {}\nrustc host triple: {}\ncargo target triple: {}\ncargo debug: {}\ncargo features: {}\ncargo opt level: {}",
+        "name:{}\nversion: {}\ngit commit hash: {}\ngit describe: {}\ngit branch: {}\nrustc semver: {}\nrustc host triple: {}\ncargo target triple: {}\ncargo debug: {}\ncargo features: {}\ncargo opt level: {}",
+        BUILD_INFO_CARGO_PKG_NAME,
         BUILD_INFO_CARGO_PKG_VERSION,
         BUILD_INFO_GIT_COMMIT_HASH,
         BUILD_INFO_GIT_DESCRIBE,

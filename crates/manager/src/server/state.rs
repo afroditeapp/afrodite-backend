@@ -21,11 +21,11 @@ impl Default for State {
     }
 }
 
-pub struct StateStorage {
+pub struct MountStateStorage {
     state: tokio::sync::Mutex<State>,
 }
 
-impl StateStorage {
+impl MountStateStorage {
     pub fn new() -> Self {
         Self {
             state: tokio::sync::Mutex::new(State::new()),
@@ -43,7 +43,7 @@ impl StateStorage {
     }
 }
 
-impl Default for StateStorage {
+impl Default for MountStateStorage {
     fn default() -> Self {
         Self::new()
     }

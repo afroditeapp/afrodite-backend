@@ -3,7 +3,7 @@ use std::{future::Future, path::Path, sync::Arc};
 
 use error_stack::{report, ResultExt};
 use futures::FutureExt;
-use manager_model::{JsonRpcRequest, JsonRpcRequestType, JsonRpcResponse, JsonRpcResponseType, ManagerInstanceName, ManagerInstanceNameList, ManagerProtocolMode, ManagerProtocolVersion, SecureStorageEncryptionKey, ServerEvent, SystemInfo};
+use manager_model::{JsonRpcRequest, JsonRpcRequestType, JsonRpcResponse, JsonRpcResponseType, ManagerInstanceName, ManagerInstanceNameList, ManagerProtocolMode, ManagerProtocolVersion, SecureStorageEncryptionKey, ServerEvent, SoftwareInfoNew, SoftwareUpdateStatus, SystemInfo};
 use tokio::net::TcpStream;
 use tokio_rustls::{rustls::pki_types::{pem::PemObject, CertificateDer, ServerName}, TlsConnector};
 use url::Url;
@@ -11,9 +11,9 @@ use url::Url;
 
 use error_stack::Result;
 
-use crate::config::Config;
+use crate::server::app::S;
 
-use super::server::{json_rpc::handle_request_type, ClientConnectionReadWrite, ConnectionUtilsRead, ConnectionUtilsWrite};
+use super::{server::{json_rpc::handle_request_type, ClientConnectionReadWrite, ConnectionUtilsRead, ConnectionUtilsWrite}, GetConfig};
 
 pub use tokio_rustls::rustls::RootCertStore;
 
@@ -174,10 +174,13 @@ impl ManagerClient {
         Ok(ServerEventListerner { stream: self.stream })
     }
 
-    pub fn request_to(self, name: ManagerInstanceName) -> ManagerClientWithRequestReceiver {
+    pub fn request_to(
+        self,
+        request_receiver: ManagerInstanceName
+    ) -> ManagerClientWithRequestReceiver {
         ManagerClientWithRequestReceiver {
             client: self,
-            name,
+            request_receiver,
         }
     }
 }
@@ -211,15 +214,18 @@ impl RequestSendingSupport for ManagerClient {
 }
 
 pub struct LocalOrRemoteApiClient<'a> {
-    config: &'a Config,
-    name: ManagerInstanceName,
+    request_receiver: ManagerInstanceName,
+    state: &'a S,
 }
 
 impl<'a> LocalOrRemoteApiClient<'a> {
-    pub fn new(config: &'a Config, request_receiver: ManagerInstanceName) -> Self {
+    pub fn new(
+        request_receiver: ManagerInstanceName,
+        state: &'a S,
+    ) -> Self {
         Self {
-            config,
-            name: request_receiver,
+            request_receiver,
+            state,
         }
     }
 
@@ -227,18 +233,18 @@ impl<'a> LocalOrRemoteApiClient<'a> {
         &self,
         request: JsonRpcRequest,
     ) -> Result<JsonRpcResponse, ClientError> {
-        if self.config.manager_name() == request.receiver {
+        if self.state.config().manager_name() == request.receiver {
             handle_request_type(
                 request.request,
-                self.config,
+                self.state,
             )
                 .await
                 .change_context(ClientError::LocalApiRequest)
-        } else if let Some(m) = self.config.find_remote_manager(&request.receiver)  {
+        } else if let Some(m) = self.state.config().find_remote_manager(&request.receiver)  {
             let config = ClientConfig {
                 url: m.url.clone(),
-                root_certificate: self.config.root_certificate(),
-                api_key: self.config.api_key().to_string(),
+                root_certificate: self.state.config().root_certificate(),
+                api_key: self.state.config().api_key().to_string(),
             };
             let client = ManagerClient::connect(config)
                 .await
@@ -253,10 +259,9 @@ impl<'a> LocalOrRemoteApiClient<'a> {
     }
 }
 
-
 pub struct ManagerClientWithRequestReceiver {
     client: ManagerClient,
-    name: ManagerInstanceName,
+    request_receiver: ManagerInstanceName,
 }
 
 pub trait RequestSenderCmds: Sized {
@@ -311,11 +316,61 @@ pub trait RequestSenderCmds: Sized {
             Err(report!(ClientError::InvalidResponse))
         }
     }
+
+    async fn get_software_update_status(
+        self,
+    ) -> Result<SoftwareUpdateStatus, ClientError> {
+        let request = JsonRpcRequest::new(
+            self.request_receiver_name(),
+            JsonRpcRequestType::GetSoftwareUpdateStatus,
+        );
+        let response = self.send_request(request).await?;
+        if let JsonRpcResponseType::SoftwareUpdateStatus(status) = response.into_response() {
+            Ok(status)
+        } else {
+            Err(report!(ClientError::InvalidResponse))
+        }
+    }
+
+    async fn trigger_software_update_download(
+        self,
+    ) -> Result<(), ClientError> {
+        let request = JsonRpcRequest::new(
+            self.request_receiver_name(),
+            JsonRpcRequestType::TriggerSoftwareUpdateDownload,
+        );
+        self.send_request(request).await?.require_successful()
+    }
+
+    async fn trigger_software_update_install(
+        self,
+        info: SoftwareInfoNew,
+    ) -> Result<(), ClientError> {
+        let request = JsonRpcRequest::new(
+            self.request_receiver_name(),
+            JsonRpcRequestType::TriggerSoftwareUpdateInstall(info),
+        );
+        self.send_request(request).await?.require_successful()
+    }
+}
+
+trait RpcResponseExtensions: Sized {
+    fn require_successful(self) -> Result<(), ClientError>;
+}
+
+impl RpcResponseExtensions for JsonRpcResponse {
+    fn require_successful(self) -> Result<(), ClientError> {
+        if let JsonRpcResponseType::Successful = self.into_response() {
+            Ok(())
+        } else {
+            Err(report!(ClientError::InvalidResponse))
+        }
+    }
 }
 
 impl RequestSenderCmds for ManagerClientWithRequestReceiver {
     fn request_receiver_name(&self) -> ManagerInstanceName {
-        self.name.clone()
+        self.request_receiver.clone()
     }
     async fn send_request(
         self,
@@ -325,10 +380,9 @@ impl RequestSenderCmds for ManagerClientWithRequestReceiver {
     }
 }
 
-
 impl RequestSenderCmds for LocalOrRemoteApiClient<'_> {
     fn request_receiver_name(&self) -> ManagerInstanceName {
-        self.name.clone()
+        self.request_receiver.clone()
     }
     async fn send_request(
         self,
