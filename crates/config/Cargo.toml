@@ -30,4 +30,4 @@ model_server_state = { path = "../model_server_state" }
 simple_backend_config = { path = "../simple_backend_config" }
 simple_backend_utils = { path = "../simple_backend_utils" }
 
-manager = { path = "../manager" }
+manager_config = { path = "../manager_config" }

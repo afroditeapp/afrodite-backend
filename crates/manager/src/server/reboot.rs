@@ -11,6 +11,7 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
+use manager_config::Config;
 use simple_backend_utils::time::sleep_until_current_time_is_at;
 use tokio::{process::Command, sync::mpsc, task::JoinHandle, time::sleep};
 use tracing::{info, warn};
@@ -18,7 +19,7 @@ use tracing::{info, warn};
 use super::{
     app::S, client::ApiManager, state::MountStateStorage, ServerQuitWatcher
 };
-use crate::{api::GetConfig, config::Config, server::mount::MountMode};
+use crate::{api::GetConfig, server::mount::MountMode};
 
 /// If this file exists reboot system at some point. Works at least on Ubuntu.
 const REBOOT_REQUIRED_PATH: &str = "/var/run/reboot-required";

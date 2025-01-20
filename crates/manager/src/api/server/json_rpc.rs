@@ -1,6 +1,8 @@
 
 
 use std::net::SocketAddr;
+use manager_api::ClientConfig;
+use manager_api::ManagerClient;
 use manager_model::JsonRpcRequest;
 use manager_model::JsonRpcRequestType;
 use manager_model::JsonRpcResponse;
@@ -9,11 +11,10 @@ use secure_storage::RpcSecureStorage;
 use software::RpcSoftware;
 use system_info::RpcSystemInfo;
 use tracing::info;
-use crate::api::client::ClientConfig;
-use crate::api::client::ManagerClient;
-use crate::api::server::ConnectionUtilsWrite;
 use crate::api::GetConfig;
 use crate::server::update::UpdateManagerMessage;
+
+use manager_api::protocol::{ConnectionUtilsRead, ConnectionUtilsWrite};
 
 use tracing::error;
 
@@ -21,7 +22,6 @@ use crate::server::app::S;
 
 use error_stack::{Result, ResultExt};
 use super::ClientConnectionReadWrite;
-use super::ConnectionUtilsRead;
 use super::ServerError;
 
 pub mod software;

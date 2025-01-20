@@ -3,7 +3,6 @@ use std::net::SocketAddr;
 use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
 use error_stack::ResultExt;
 use futures::Future;
-use manager_api::{ClientError, ManagerClientWithRequestReceiver};
 use model::{
     AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion,
     Permissions,

@@ -4,11 +4,10 @@ use std::path::PathBuf;
 
 use clap::{arg, command, Args, Parser};
 use error_stack::{Result, ResultExt};
+use manager_api::ManagerClient;
 use manager_model::ManagerInstanceName;
 use tokio_rustls::rustls::RootCertStore;
 use url::Url;
-
-use crate::api::client::ManagerClient;
 
 use super::{file::ConfigFile, GetConfigError};
 

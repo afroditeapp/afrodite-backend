@@ -1,3 +1,8 @@
+#![deny(unsafe_code)]
+#![deny(unused_must_use)]
+#![deny(unused_features)]
+#![warn(unused_crate_dependencies)]
+
 use std::{
     io::BufReader,
     path::{Path, PathBuf},
@@ -12,7 +17,7 @@ use rustls_pemfile::certs;
 use tokio_rustls::rustls::{RootCertStore, ServerConfig};
 use tracing::{info, log::warn};
 
-use crate::api::client::ManagerClient;
+use manager_api::ManagerClient;
 
 use self::file::{
     ConfigFile, RebootIfNeededConfig, SecureStorageConfig, ServerEncryptionKey, SocketConfig,

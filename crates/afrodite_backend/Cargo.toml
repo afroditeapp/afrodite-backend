@@ -18,6 +18,7 @@ server = { path = "../server" }
 server_data = { path = "../server_data" }
 
 manager = { path = "../manager" }
+manager_config = { path = "../manager_config" }
 
 simple_backend_image_process = { path = "../simple_backend_image_process" }
 simple_backend_config = { path = "../simple_backend_config" }

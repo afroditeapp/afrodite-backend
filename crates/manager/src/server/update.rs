@@ -17,8 +17,9 @@ use super::{
     app::S, backend_controller::BackendController, ServerQuitWatcher
 };
 use crate::{
-    api::GetConfig, config::{file::SoftwareUpdateConfig, Config}, utils::{ContextExt, InProgressChannel, InProgressReceiver, InProgressSender}
+    api::GetConfig, utils::{ContextExt, InProgressChannel, InProgressReceiver, InProgressSender}
 };
+use manager_config::{file::SoftwareUpdateConfig, Config};
 
 #[derive(thiserror::Error, Debug)]
 pub enum UpdateError {

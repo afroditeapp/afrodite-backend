@@ -4,9 +4,8 @@
 use error_stack::{Result, ResultExt};
 use manager_model::{ManagerInstanceName, SoftwareInfoNew};
 
-use crate::{
-    api::client::{ClientConfig, ClientError, ManagerClient, RequestSenderCmds}, config::args::{ApiCommand, ManagerApiClientMode}
-};
+use manager_config::args::{ApiCommand, ManagerApiClientMode};
+use manager_api::{ClientConfig, ClientError, ManagerClient, protocol::RequestSenderCmds};
 
 pub async fn handle_api_client_mode(args: ManagerApiClientMode) -> Result<(), ClientError> {
     let api_key = args

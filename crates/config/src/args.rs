@@ -3,7 +3,7 @@
 use std::{fmt, num::NonZeroU8, path::PathBuf};
 
 use clap::{arg, command, Args, Parser, ValueEnum};
-use manager::config::args::ManagerApiClientMode;
+use manager_config::args::ManagerApiClientMode;
 use reqwest::Url;
 use simple_backend_config::args::{ImageProcessModeArgs, ServerModeArgs};
 

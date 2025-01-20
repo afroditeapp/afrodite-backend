@@ -1,10 +1,9 @@
 use std::sync::Arc;
 
+use manager_config::Config;
+
 use super::{client::ApiManager, reboot::RebootManagerHandle, update::UpdateManagerHandle};
-use crate::{
-    api::{GetApiManager, GetConfig, GetRebootManager, GetUpdateManager},
-    config::Config,
-};
+use crate::api::{GetApiManager, GetConfig, GetRebootManager, GetUpdateManager};
 
 pub type S = AppState;
 

@@ -15,11 +15,11 @@ use std::process::ExitCode;
 
 use build_info::{BUILD_INFO_CARGO_PKG_NAME, BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE};
 use config::{args::AppMode, get_config};
-use manager::config::args::ManagerApiClientMode;
 use server::{api_doc::ApiDoc, DatingAppServer};
 use server_data::index::LocationIndexInfoCreator;
 use simple_backend_config::{args::ImageProcessModeArgs, file::ImageProcessingConfig};
 use test_mode::TestRunner;
+use manager_config::args::ManagerApiClientMode;
 
 fn main() -> ExitCode {
     tokio_rustls::rustls::crypto::ring::default_provider();
@@ -34,7 +34,7 @@ fn main() -> ExitCode {
     }
 
     if let Some(AppMode::Manager) = args.mode {
-        let config = manager::config::get_config(
+        let config = manager_config::get_config(
             BUILD_INFO_GIT_DESCRIBE.to_string(),
             BUILD_INFO_CARGO_PKG_VERSION.to_string(),
             BUILD_INFO_CARGO_PKG_NAME.to_string(),

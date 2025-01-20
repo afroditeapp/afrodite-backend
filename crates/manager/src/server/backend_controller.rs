@@ -6,7 +6,7 @@ use error_stack::{Result, ResultExt};
 use tokio::process::Command;
 use tracing::warn;
 
-use crate::config::Config;
+use manager_config::Config;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ControllerError {

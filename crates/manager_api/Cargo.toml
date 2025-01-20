@@ -7,4 +7,15 @@ edition = "2021"
 
 [dependencies]
 
-manager = { path = "../manager" }
+error-stack = { workspace = true }
+thiserror = { workspace = true }
+
+futures = { workspace = true }
+tokio = { workspace = true }
+
+url = { workspace = true }
+tokio-rustls = { workspace = true }
+
+serde_json = { workspace = true }
+
+manager_model = { path = "../manager_model" }

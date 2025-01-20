@@ -6,7 +6,7 @@ use error_stack::{Result, ResultExt};
 use manager_model::{CommandOutput, SystemInfo};
 use tokio::process::Command;
 
-use crate::config::Config;
+use manager_config::Config;
 
 #[derive(thiserror::Error, Debug)]
 pub enum SystemInfoError {

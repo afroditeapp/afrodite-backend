@@ -13,8 +13,10 @@ use tracing::{error, info, warn};
 
 use super::{app::S, state::MountStateStorage};
 use crate::{
-    api::GetApiManager, config::{file::SecureStorageConfig, Config}, utils::ContextExt
+    api::GetApiManager, utils::ContextExt
 };
+
+use manager_config::{file::SecureStorageConfig, Config};
 
 #[derive(thiserror::Error, Debug)]
 pub enum MountError {

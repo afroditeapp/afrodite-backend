@@ -42,6 +42,7 @@ CARGO_CRATE_ARGS = 	-p api_internal \
 					-p simple_backend_image_process \
 					-p manager \
 					-p manager_api \
+					-p manager_config \
 					-p manager_model \
 					-p afrodite_backend
 
@@ -153,6 +154,7 @@ code-stats:
 	crates/simple_backend_image_process \
 	crates/manager \
 	crates/manager_api \
+	crates/manager_config \
 	crates/manager_model \
 	crates/afrodite_backend \
 	-name '*.rs' | xargs wc -l | tail -n 1

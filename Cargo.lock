@@ -68,6 +68,7 @@ dependencies = [
  "clap",
  "config",
  "manager",
+ "manager_config",
  "server",
  "server_data",
  "simple_backend_config",
@@ -800,7 +801,7 @@ dependencies = [
  "clap",
  "csv",
  "error-stack",
- "manager",
+ "manager_config",
  "model",
  "model_server_data",
  "model_server_state",
@@ -2551,29 +2552,52 @@ checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
 name = "manager"
 version = "0.0.0"
 dependencies = [
- "clap",
  "error-stack",
  "futures",
+ "manager_api",
+ "manager_config",
  "manager_model",
  "reqwest",
- "rustls-pemfile",
- "serde",
  "serde_json",
  "simple_backend_utils",
  "thiserror 2.0.11",
  "tokio",
  "tokio-rustls",
- "toml",
  "tracing",
  "tracing-subscriber",
- "url",
 ]
 
 [[package]]
 name = "manager_api"
 version = "0.0.0"
 dependencies = [
- "manager",
+ "error-stack",
+ "futures",
+ "manager_model",
+ "serde_json",
+ "thiserror 2.0.11",
+ "tokio",
+ "tokio-rustls",
+ "url",
+]
+
+[[package]]
+name = "manager_config"
+version = "0.0.0"
+dependencies = [
+ "clap",
+ "error-stack",
+ "manager_api",
+ "manager_model",
+ "rustls-pemfile",
+ "serde",
+ "simple_backend_utils",
+ "thiserror 2.0.11",
+ "tokio",
+ "tokio-rustls",
+ "toml",
+ "tracing",
+ "url",
 ]
 
 [[package]]

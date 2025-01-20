@@ -1,9 +1,10 @@
 use std::time::Duration;
 
 use error_stack::{report, Result, ResultExt};
+use manager_api::protocol::RequestSenderCmds;
 use manager_model::SecureStorageEncryptionKey;
 
-use crate::api::{client::{LocalOrRemoteApiClient, RequestSenderCmds}, GetConfig};
+use crate::api::{client::LocalOrRemoteApiClient, GetConfig};
 
 use super::app::S;
 

@@ -1,9 +1,8 @@
 //! HTTP API types and request handlers for all servers.
 
-use crate::{
-    config::Config,
-    server::{client::ApiManager, reboot::RebootManagerHandle, update::UpdateManagerHandle},
-};
+use manager_config::Config;
+
+use crate::server::{client::ApiManager, reboot::RebootManagerHandle, update::UpdateManagerHandle};
 
 pub mod server;
 pub mod client;

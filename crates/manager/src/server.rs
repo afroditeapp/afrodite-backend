@@ -7,6 +7,7 @@ use std::{
 
 use app::S;
 use futures::future::poll_fn;
+use manager_config::Config;
 use reboot::RebootManager;
 use tokio::{
     net::TcpListener,
@@ -24,7 +25,6 @@ use update::UpdateManager;
 
 use crate::{
     api::server::handle_connection_to_server,
-    config::Config,
     server::{
         app::App, backend_controller::BackendController,
         mount::MountManager, state::MountStateStorage,
