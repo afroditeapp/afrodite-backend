@@ -1,5 +1,5 @@
 use error_stack::{report, Result, ResultExt};
-use manager_model::{JsonRpcRequest, JsonRpcRequestType, JsonRpcResponse, JsonRpcResponseType, ManagerInstanceName, ManagerInstanceNameList, ManagerProtocolMode, ManagerProtocolVersion, SecureStorageEncryptionKey, ServerEvent, SoftwareInfoNew, SoftwareUpdateStatus, SystemInfo};
+use manager_model::{JsonRpcRequest, JsonRpcRequestType, JsonRpcResponse, JsonRpcResponseType, ManagerInstanceName, ManagerInstanceNameList, ManagerProtocolMode, ManagerProtocolVersion, SecureStorageEncryptionKey, ServerEvent, SoftwareInfo, SoftwareUpdateStatus, SystemInfo};
 
 use tokio::io::AsyncWriteExt;
 use tokio::io::AsyncReadExt;
@@ -196,11 +196,31 @@ pub trait RequestSenderCmds: Sized {
 
     async fn trigger_software_update_install(
         self,
-        info: SoftwareInfoNew,
+        info: SoftwareInfo,
     ) -> Result<(), ClientError> {
         let request = JsonRpcRequest::new(
             self.request_receiver_name(),
             JsonRpcRequestType::TriggerSoftwareUpdateInstall(info),
+        );
+        self.send_request(request).await?.require_successful()
+    }
+
+    async fn trigger_backend_data_reset(
+        self,
+    ) -> Result<(), ClientError> {
+        let request = JsonRpcRequest::new(
+            self.request_receiver_name(),
+            JsonRpcRequestType::TriggerBackendDataReset,
+        );
+        self.send_request(request).await?.require_successful()
+    }
+
+    async fn trigger_backend_restart(
+        self,
+    ) -> Result<(), ClientError> {
+        let request = JsonRpcRequest::new(
+            self.request_receiver_name(),
+            JsonRpcRequestType::TriggerBackendRestart,
         );
         self.send_request(request).await?.require_successful()
     }

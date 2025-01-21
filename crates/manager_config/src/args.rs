@@ -124,6 +124,6 @@ pub enum ApiCommand {
     SoftwareDownload,
     SoftwareInstall {
         name: String,
-        hash: String,
+        sha256: String,
     },
 }

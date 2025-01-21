@@ -202,7 +202,7 @@ pub struct SecureStorageConfig {
     pub key_download_timeout_seconds: Option<u32>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SoftwareUpdateConfig {
     pub backend_install_location: PathBuf,
     /// Optional. Enableds data reset support for backend. This
@@ -214,7 +214,7 @@ pub struct SoftwareUpdateConfig {
 }
 
 /// Download latest release from GitHub repository.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SoftwareUpdateGitHubConfig {
     /// GitHub API access token for private repositories.
     pub token: Option<String>,

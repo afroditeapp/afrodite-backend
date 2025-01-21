@@ -6,20 +6,25 @@ use std::{
     sync::Arc,
 };
 
+use backend::BackendUtils;
 use error_stack::{report, Result, ResultExt};
-use manager_model::{BuildInfo, ResetDataQueryParam, SoftwareInfo, SoftwareInfoNew, SoftwareOptions, SoftwareUpdateState, SoftwareUpdateStatus};
-use reqwest::{header::{ACCEPT, USER_AGENT}, StatusCode};
-use serde_json::Value;
-use tokio::{process::Command, sync::Mutex, task::JoinHandle};
+use github::GitHubApi;
+use manager_model::{SoftwareInfo, SoftwareUpdateState, SoftwareUpdateStatus};
+use sha2::Digest;
+use simple_backend_utils::ContextExt;
+use tokio::{sync::Mutex, task::JoinHandle};
 use tracing::{info, warn, error};
 
 use super::{
     app::S, backend_controller::BackendController, ServerQuitWatcher
 };
 use crate::{
-    api::GetConfig, utils::{ContextExt, InProgressChannel, InProgressReceiver, InProgressSender}
+    api::GetConfig, utils::{InProgressChannel, InProgressReceiver, InProgressSender}
 };
 use manager_config::{file::SoftwareUpdateConfig, Config};
+
+pub mod github;
+pub mod backend;
 
 #[derive(thiserror::Error, Debug)]
 pub enum UpdateError {
@@ -95,6 +100,17 @@ pub enum UpdateError {
     #[error("Software download failed. Unknown file uploader.")]
     SotwareDownloadFailedUnknownFileUploader,
 
+    #[error("Software downaload failed")]
+    SoftwareDownloadFailed,
+
+    #[error("Blocking task failed")]
+    BlockingTaskFailed,
+
+    #[error("Serialization failed")]
+    Serialize,
+
+    #[error("Selected backend version not found")]
+    SelectedVersionNotFound,
 }
 
 #[derive(Debug)]
@@ -118,7 +134,7 @@ impl UpdateManagerQuitHandle {
 #[derive(Debug, Clone)]
 pub enum UpdateManagerMessage {
     SoftwareDownload,
-    SoftwareInstall(SoftwareInfoNew),
+    SoftwareInstall(SoftwareInfo),
     BackendRestart,
     BackendResetData,
 }
@@ -154,7 +170,8 @@ pub struct UpdateManagerInternalState {
 
 #[derive(Debug)]
 pub struct UpdateManager {
-    internal_state: UpdateManagerInternalState,
+    receiver: InProgressReceiver<UpdateManagerMessage>,
+    internal_state: Arc<Mutex<SoftwareUpdateStatus>>,
     state: S,
     client: reqwest::Client,
 }
@@ -183,9 +200,10 @@ impl UpdateManager {
         state: S,
         quit_notification: ServerQuitWatcher,
     ) -> UpdateManagerQuitHandle {
-        let quit_handle_sender = internal_state.sender.clone();
+        let quit_handle_sender = internal_state.sender;
         let manager = Self {
-            internal_state,
+            internal_state: internal_state.state,
+            receiver: internal_state.receiver,
             state,
             client: reqwest::Client::new(),
         };
@@ -199,9 +217,31 @@ impl UpdateManager {
     }
 
     pub async fn run(mut self, mut quit_notification: ServerQuitWatcher) {
+        let manager = self.state.config()
+            .software_update_provider()
+            .cloned()
+            .map(|config| {
+                UpdateManagerInternal {
+                    user_agent: self.state.config().update_manager_user_agent(),
+                    internal_state: self.internal_state,
+                    state: self.state,
+                    client: self.client,
+                    config: config.clone(),
+                }
+            });
+
+        if let Some(manager) = &manager {
+            match manager.init().await {
+                Ok(()) => (),
+                Err(e) => {
+                    error!("Update manager init failed: {:?}", e);
+                }
+            }
+        }
+
         loop {
             tokio::select! {
-                result = self.internal_state.receiver.is_new_message_available() => {
+                result = self.receiver.is_new_message_available() => {
                     match result {
                         Ok(()) => (),
                         Err(e) => {
@@ -210,11 +250,15 @@ impl UpdateManager {
                         }
                     }
 
-                    let container = self.internal_state.receiver.lock_message_container().await;
+                    let container = self.receiver.lock_message_container().await;
 
                     match container.get_message() {
                         Some(message) => {
-                            self.handle_message(message).await;
+                            if let Some(manager) = &manager {
+                                manager.handle_message(message, ).await;
+                            } else {
+                                warn!("Skipping message {:?}, update manager is not enabled", message);
+                            }
                         }
                         None => {
                             warn!("Unexpected empty container");
@@ -226,6 +270,28 @@ impl UpdateManager {
                 }
             }
         }
+    }
+}
+
+#[derive(Debug)]
+pub struct UpdateManagerInternal {
+    internal_state: Arc<Mutex<SoftwareUpdateStatus>>,
+    state: S,
+    client: reqwest::Client,
+    config: SoftwareUpdateConfig,
+    user_agent: String,
+}
+
+impl UpdateManagerInternal {
+    async fn init(
+        &self,
+    ) -> Result<(), UpdateError> {
+        let downloaded = self.update_dir().downloaded_backend_info().await?;
+        let installed = self.update_dir().installed_backend_info().await?;
+        let mut state = self.internal_state.lock().await;
+        state.downloaded = downloaded;
+        state.installed = installed;
+        Ok(())
     }
 
     async fn handle_message(&self, message: &UpdateManagerMessage) {
@@ -250,11 +316,6 @@ impl UpdateManager {
         }
     }
 
-    async fn set_internal_state_to(&self, new_state: SoftwareUpdateState) {
-        let mut state = self.internal_state.state.lock().await;
-        state.state = new_state;
-    }
-
     async fn software_download(
         &self,
     ) -> Result<(), UpdateError> {
@@ -264,19 +325,9 @@ impl UpdateManager {
         r
     }
 
-    async fn software_download_impl(
-        &self,
-    ) -> Result<(), UpdateError> {
-        let Some((file_name, url)) = self.get_latest_release_file_name_and_url().await? else {
-            return Err(report!(UpdateError::SoftwareDownloadFailedNoMatchingFile));
-        };
-
-        Ok(())
-    }
-
     async fn software_install(
         &self,
-        info: SoftwareInfoNew,
+        info: SoftwareInfo,
     ) -> Result<(), UpdateError> {
         self.set_internal_state_to(SoftwareUpdateState::Installing).await;
         let r = self.software_install_impl(info).await;
@@ -284,10 +335,86 @@ impl UpdateManager {
         r
     }
 
+    async fn set_internal_state_to(&self, new_state: SoftwareUpdateState) {
+        let mut state = self.internal_state.lock().await;
+        state.state = new_state;
+    }
+
+    async fn software_download_impl(
+        &self,
+    ) -> Result<(), UpdateError> {
+        let github_api = GitHubApi {
+            client: &self.client,
+            updater_config: &self.config,
+            user_agent: &self.user_agent,
+        };
+
+        let Some(asset) = github_api.get_latest_release_asset().await? else {
+            return Err(report!(UpdateError::SoftwareDownloadFailedNoMatchingFile));
+        };
+
+        if let Some(downloaded) = self.update_dir().downloaded_backend_info().await? {
+            if downloaded.name == asset.name {
+                // Already downloaded
+                return Ok(());
+            }
+        }
+
+        self.update_dir().remove_downloaded_backend_and_info_json().await?;
+
+        self.internal_state.lock().await.downloaded = None;
+
+        github_api.download_asset(
+            &asset,
+            self.update_dir().downloaded_backend_path(),
+        ).await?;
+
+        let sha256 = self.update_dir().calculate_backend_sha256().await?;
+
+        let info = SoftwareInfo {
+            name: asset.name,
+            sha256,
+        };
+
+        UpdateDirUtils::save_info_json(
+            &info,
+            self.update_dir().downloaded_backend_info_json_path(),
+        ).await?;
+
+        self.internal_state.lock().await.downloaded = Some(info);
+
+        Ok(())
+    }
+
     async fn software_install_impl(
         &self,
-        info: SoftwareInfoNew,
+        info: SoftwareInfo,
     ) -> Result<(), UpdateError> {
+        if let Some(installed) = self.update_dir().installed_backend_info().await? {
+            if info == installed {
+                // Already installed
+                return Ok(());
+            }
+        }
+
+        let Some(downloaded) = self.update_dir().downloaded_backend_info().await? else {
+            return Err(UpdateError::SelectedVersionNotFound.report());
+        };
+
+        if info != downloaded {
+            return Err(UpdateError::SelectedVersionNotFound.report());
+        }
+
+        self.backend_utils().replace_backend_binary(
+            &self.update_dir().downloaded_backend_path()
+        ).await?;
+
+        UpdateDirUtils::save_info_json(
+            &info,
+            self.update_dir().installed_backend_info_json_path(),
+        ).await?;
+
+        self.internal_state.lock().await.installed = Some(info);
 
         Ok(())
     }
@@ -304,7 +431,7 @@ impl UpdateManager {
             .change_context(UpdateError::StopBackendFailed)?;
 
         if data_reset {
-            self.reset_data(SoftwareOptions::Backend).await?;
+            self.backend_utils().reset_backend_data().await?;
         }
 
         backend_controller
@@ -313,334 +440,30 @@ impl UpdateManager {
             .change_context(UpdateError::StartBackendFailed)
     }
 
-    /// Returns empty BuildInfo if it does not exists.
-    async fn read_latest_installed_build_info(
-        &self,
-        software: SoftwareOptions,
-    ) -> Result<BuildInfo, UpdateError> {
-        let update_dir = UpdateDirCreator::create_update_dir_if_needed(self.state.config());
-        let current_info = update_dir.join(UpdateDirCreator::installed_build_info_json_name(
-            software.to_str(),
-        ));
-        self.read_build_info(&current_info).await
+    fn backend_utils(&self) -> BackendUtils {
+        BackendUtils {
+            config: &self.config,
+        }
     }
 
-    /// Returns empty BuildInfo if it does not exists.
-    async fn read_build_info(&self, current_info: &Path) -> Result<BuildInfo, UpdateError> {
-        if !current_info.exists() {
-            return Ok(BuildInfo::default());
+    fn update_dir(&self) -> UpdateDirUtils {
+        UpdateDirUtils {
+            config: self.state.config(),
         }
-
-        let current_build_info = tokio::fs::read_to_string(&current_info)
-            .await
-            .change_context(UpdateError::FileReadingFailed)?;
-
-        let current_build_info =
-            serde_json::from_str(&current_build_info).change_context(UpdateError::InvalidInput)?;
-
-        Ok(current_build_info)
-    }
-
-    async fn download_and_verify_latest_software(
-        &self,
-        _latest_version: &BuildInfo,
-        _software: SoftwareOptions,
-    ) -> Result<(), UpdateError> {
-        // let encrypted_binary = self.download_latest_encrypted_binary(software).await?;
-
-        // let update_dir = UpdateDirCreator::create_update_dir_if_needed(&self.config);
-        // let encrypted_binary_path =
-        //     update_dir.join(BuildDirCreator::encrypted_binary_name(software.to_str()));
-        // tokio::fs::write(&encrypted_binary_path, encrypted_binary)
-        //     .await
-        //     .change_context(UpdateError::FileWritingFailed)?;
-
-        // self.import_gpg_key_if_configured().await?;
-        // let binary_path = update_dir.join(software.to_str());
-        // self.decrypt_encrypted_binary(&encrypted_binary_path, &binary_path)
-        //     .await?;
-
-        // let latest_build_info_path =
-        //     update_dir.join(BuildDirCreator::build_info_json_name(software.to_str()));
-        // tokio::fs::write(
-        //     &latest_build_info_path,
-        //     serde_json::to_string_pretty(&latest_version)
-        //         .change_context(UpdateError::InvalidInput)?,
-        // )
-        // .await
-        // .change_context(UpdateError::FileWritingFailed)?;
-
-        // TODO(prod): Implement dowloading binary from GitHub and verifying
-        //             it.
-
-        Ok(())
-    }
-
-    async fn install_latest_software(
-        &self,
-        latest_version: &BuildInfo,
-        force_reboot: bool,
-        reset_data: ResetDataQueryParam,
-        software: SoftwareOptions,
-    ) -> Result<(), UpdateError> {
-        let update_dir = UpdateDirCreator::create_update_dir_if_needed(self.state.config());
-        let binary_path = update_dir.join(software.to_str());
-
-        let installed_build_info_path = update_dir.join(
-            UpdateDirCreator::installed_build_info_json_name(software.to_str()),
-        );
-
-        if installed_build_info_path.exists() {
-            let installed_old_build_info_path = update_dir.join(
-                UpdateDirCreator::installed_old_build_info_json_name(software.to_str()),
-            );
-            tokio::fs::rename(&installed_build_info_path, &installed_old_build_info_path)
-                .await
-                .change_context(UpdateError::FileMovingFailed)?;
-        }
-
-        self.replace_binary(&binary_path, software).await?;
-
-        tokio::fs::write(
-            &installed_build_info_path,
-            serde_json::to_string_pretty(&latest_version)
-                .change_context(UpdateError::InvalidInput)?,
-        )
-        .await
-        .change_context(UpdateError::FileWritingFailed)?;
-
-        if reset_data.reset_data {
-            self.reset_data(software).await?;
-        }
-
-        Ok(())
-    }
-
-    async fn update_software(
-        &self,
-        force_reboot: bool,
-        reset_data: ResetDataQueryParam,
-        software: SoftwareOptions,
-    ) -> Result<(), UpdateError> {
-        // let current_version = self.read_latest_build_info(software).await?;
-        // let latest_version = self.download_latest_info(software).await?;
-
-        // if current_version != latest_version {
-        //     info!(
-        //         "Downloading and verifying software...\n{:#?}",
-        //         latest_version
-        //     );
-        //     self.download_and_verify_latest_software(&latest_version, software)
-        //         .await?;
-        //     info!("Software is now downloaded and verified.");
-        // } else {
-        //     info!("Downloaded software is up to date.\n{:#?}", current_version);
-        // }
-
-        // let latest_installed_version = self.read_latest_installed_build_info(software).await?;
-        // if latest_version != latest_installed_version {
-        //     info!("Installing software.\n{:#?}", latest_version);
-        //     self.install_latest_software(&latest_version, force_reboot, reset_data, software)
-        //         .await?;
-        //     info!("Software installation completed.");
-        // } else {
-        //     info!(
-        //         "Installed software is up to date.\n{:#?}",
-        //         latest_installed_version
-        //     );
-        // }
-
-        Ok(())
-    }
-
-    async fn replace_binary(
-        &self,
-        binary: &Path,
-        software: SoftwareOptions,
-    ) -> Result<(), UpdateError> {
-        let target = match software {
-            SoftwareOptions::Backend => self.updater_config()?.backend_install_location.clone(),
-        };
-
-        if target.exists() {
-            tokio::fs::rename(&target, &target.with_extension("old"))
-                .await
-                .change_context(UpdateError::FileMovingFailed)?;
-        }
-
-        tokio::fs::copy(&binary, &target)
-            .await
-            .change_context(UpdateError::FileCopyingFailed)?;
-
-        let status = Command::new("chmod")
-            .arg("u+x")
-            .arg(&target)
-            .status()
-            .await
-            .change_context(UpdateError::ProcessWaitFailed)?;
-        if !status.success() {
-            return Err(UpdateError::CommandFailed(status))
-                .attach_printable("Changing binary permissions failed");
-        }
-
-        Ok(())
-    }
-
-    async fn reset_data(&self, software: SoftwareOptions) -> Result<(), UpdateError> {
-        if software != SoftwareOptions::Backend {
-            return Ok(());
-        }
-
-        let backend_reset_data_dir = match &self.updater_config()?.backend_data_reset_dir {
-            Some(dir) => dir,
-            None => return Ok(()),
-        };
-
-        if !backend_reset_data_dir.is_dir() {
-            return Err(UpdateError::ResetDataDirectoryWasNotDirectory)
-                .attach_printable(backend_reset_data_dir.display().to_string());
-        }
-
-        let mut old_dir_name = backend_reset_data_dir
-            .file_name()
-            .ok_or(UpdateError::ResetDataDirectoryNoFileName.report())?
-            .to_string_lossy()
-            .to_string();
-        old_dir_name.push_str("-old");
-        let old_data_dir = backend_reset_data_dir.with_file_name(old_dir_name);
-        if old_data_dir.is_dir() {
-            info!(
-                "Data reset was requested. Removing existing old data directory {}",
-                old_data_dir.display()
-            );
-            tokio::fs::remove_dir_all(&old_data_dir)
-                .await
-                .change_context(UpdateError::FileRemovingFailed)
-                .attach_printable(old_data_dir.display().to_string())?;
-        }
-
-        info!(
-            "Data reset was requested. Moving {} to {}",
-            backend_reset_data_dir.display(),
-            old_data_dir.display()
-        );
-        tokio::fs::rename(&backend_reset_data_dir, &old_data_dir)
-            .await
-            .change_context(UpdateError::FileMovingFailed)
-            .attach_printable(format!(
-                "{} -> {}",
-                backend_reset_data_dir.display(),
-                old_data_dir.display()
-            ))?;
-
-        Ok(())
-    }
-
-    fn updater_config(&self) -> Result<&SoftwareUpdateConfig, UpdateError> {
-        self.state.config()
-            .software_update_provider()
-            .ok_or(UpdateError::SoftwareUpdaterConfigMissing.into())
-    }
-
-    async fn get_latest_release_file_name_and_url(&self) -> Result<Option<(String, String)>, UpdateError> {
-        let config = self.updater_config()?;
-
-        let url = format!("https://api.github.com/repos/{}/{}/releases/latest", config.github.owner, config.github.repository);
-        let user_agent = format!("{}/{}", self.state.config().backend_pkg_name(), self.state.config().backend_semver_version());
-        let request = self.client.get(url)
-            .header(ACCEPT, "application/vnd.github+json")
-            .header(USER_AGENT, user_agent)
-            .header("X-GitHub-Api-Version", "2022-11-28");
-
-        let request = if let Some(token) = config.github.token.clone() {
-            request.bearer_auth(token)
-        } else {
-            request
-        };
-
-        let request = request.build()
-            .change_context(UpdateError::GitHubApi)?;
-
-        let response = self.client.execute(request)
-            .await
-            .change_context(UpdateError::GitHubApi)?;
-
-        let status = response.status();
-        if status != StatusCode::OK {
-            let text = response.text()
-                .await
-                .change_context(UpdateError::GitHubApi)?;
-
-            return Err(
-                report!(UpdateError::GitHubApi)
-                    .attach_printable(status)
-                    .attach_printable(text)
-            );
-        }
-
-        let json: Value = response.json()
-            .await
-            .change_context(UpdateError::GitHubApi)?;
-
-        let assets = json
-            .get("assets")
-            .and_then(|v| v.as_array())
-            .map(|v| v.as_slice())
-            .unwrap_or_default();
-
-        let mut selected_download: Option<(String, String)> = None;
-        for a in assets {
-            let Some(name) = a.as_object()
-                .and_then(|v| v.get("name"))
-                .and_then(|v| v.as_str()) else {
-                    return Err(report!(UpdateError::GitHubApi));
-                };
-            let Some(download_url) = a.as_object()
-                .and_then(|v| v.get("browser_download_url"))
-                .and_then(|v| v.as_str()) else {
-                    return Err(report!(UpdateError::GitHubApi));
-                };
-            let Some(uploader) = a.as_object()
-                .and_then(|v| v.get("uploader"))
-                .and_then(|v| v.get("login"))
-                .and_then(|v| v.as_str()) else {
-                    return Err(report!(UpdateError::GitHubApi));
-                };
-
-            if name.ends_with(&config.github.file_name_ending) {
-                if let Some((selected_name, _)) = selected_download {
-                    return Err(
-                        report!(UpdateError::SotwareDownloadFailedAmbiguousFileName)
-                            .attach_printable(selected_name.to_string())
-                            .attach_printable(name.to_string())
-                    );
-                } else {
-                    if let Some(required_uploader) = &config.github.uploader {
-                        if uploader != required_uploader {
-                            return Err(
-                                report!(UpdateError::SotwareDownloadFailedUnknownFileUploader)
-                                    .attach_printable(format!("uploader: {}, expected: {}", uploader, required_uploader))
-                            );
-                        }
-                    }
-                    selected_download = Some((name.to_string(), download_url.to_string()));
-                }
-            }
-        }
-
-        Ok(selected_download)
     }
 }
 
-pub struct UpdateDirCreator;
+struct UpdateDirUtils<'a> {
+    config: &'a Config,
+}
 
-impl UpdateDirCreator {
-    pub fn create_update_dir_if_needed(config: &Config) -> PathBuf {
-        let build_dir = config.storage_dir().join("update");
+impl UpdateDirUtils<'_> {
+    fn create_update_dir_if_needed(&self) -> PathBuf {
+        let dir = self.config.storage_dir().join("update");
 
-        if !Path::new(&build_dir).exists() {
+        if !Path::new(&dir).exists() {
             info!("Creating update directory");
-            match std::fs::create_dir(&build_dir) {
+            match std::fs::create_dir(&dir) {
                 Ok(()) => {
                     info!("Update directory created");
                 }
@@ -648,41 +471,100 @@ impl UpdateDirCreator {
                     warn!(
                         "Update directory creation failed. Error: {:?}, Directory: {}",
                         e,
-                        build_dir.display()
+                        dir.display()
                     );
                 }
             }
         }
 
-        build_dir
+        dir
     }
 
-    pub fn installed_build_info_json_name(binary: &str) -> String {
-        format!("{}.json.installed", binary)
+    fn downloaded_backend_path(&self) -> PathBuf {
+        self.create_update_dir_if_needed()
+            .join("downloaded_backend.bin")
     }
 
-    pub fn installed_old_build_info_json_name(binary: &str) -> String {
-        format!("{}.json.installed.old", binary)
+    fn downloaded_backend_info_json_path(&self) -> PathBuf {
+        self.create_update_dir_if_needed()
+            .join("downloaded_backend.json")
     }
 
-    pub async fn current_software(config: &Config) -> Result<SoftwareInfo, UpdateError> {
-        let update_dir = Self::create_update_dir_if_needed(config);
-        let backend_info_path = update_dir.join(Self::installed_build_info_json_name(
-            SoftwareOptions::Backend.to_str(),
-        ));
-        let mut info_vec = Vec::new();
+    fn installed_backend_info_json_path(&self) -> PathBuf {
+        self.create_update_dir_if_needed()
+            .join("installed_backend.json")
+    }
 
-        if backend_info_path.exists() {
-            let backend_info = tokio::fs::read_to_string(&backend_info_path)
-                .await
-                .change_context(UpdateError::FileReadingFailed)?;
-            let backend_info =
-                serde_json::from_str(&backend_info).change_context(UpdateError::InvalidInput)?;
-            info_vec.push(backend_info);
+    pub async fn downloaded_backend_info(&self) -> Result<Option<SoftwareInfo>, UpdateError> {
+        Self::read_and_parse_info(
+            self.downloaded_backend_info_json_path()
+        ).await
+    }
+
+    pub async fn installed_backend_info(&self) -> Result<Option<SoftwareInfo>, UpdateError> {
+        Self::read_and_parse_info(
+            self.installed_backend_info_json_path()
+        ).await
+    }
+
+    async fn read_and_parse_info(path: PathBuf) -> Result<Option<SoftwareInfo>, UpdateError> {
+        if !path.exists() {
+            return Ok(None);
         }
 
-        Ok(SoftwareInfo {
-            current_software: info_vec,
+        let info = tokio::fs::read_to_string(path)
+            .await
+            .change_context(UpdateError::FileReadingFailed)?;
+        let info = serde_json::from_str(&info)
+            .change_context(UpdateError::InvalidInput)?;
+        Ok(Some(info))
+    }
+
+    pub async fn remove_downloaded_backend_and_info_json(
+        &self,
+    ) -> Result<(), UpdateError> {
+        let downloaded = self.downloaded_backend_path();
+        if downloaded.exists() {
+            tokio::fs::remove_file(self.downloaded_backend_path())
+                .await
+                .change_context(UpdateError::FileRemovingFailed)?;
+        }
+
+        let info = self.downloaded_backend_info_json_path();
+        if info.exists() {
+            tokio::fs::remove_file(info)
+                .await
+                .change_context(UpdateError::FileRemovingFailed)?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn save_info_json(
+        info: &SoftwareInfo,
+        path: impl AsRef<Path>,
+    ) -> Result<(), UpdateError> {
+        let serialized = serde_json::to_string_pretty(info)
+            .change_context(UpdateError::Serialize)?;
+        tokio::fs::write(path, serialized)
+            .await
+            .change_context(UpdateError::FileWritingFailed)?;
+        Ok(())
+    }
+
+    async fn calculate_backend_sha256(&self) -> Result<String, UpdateError> {
+        let file = self.downloaded_backend_path();
+        tokio::task::spawn_blocking(move || {
+            let mut file = std::fs::File::open(file)
+                .change_context(UpdateError::FileReadingFailed)?;
+            let mut hasher = sha2::Sha256::new();
+            std::io::copy(&mut file, &mut hasher)
+                .change_context(UpdateError::FileReadingFailed)?;
+            let hash = hasher.finalize();
+            let hash_string = base16ct::lower::encode_string(&hash);
+            Ok(hash_string)
         })
+            .await
+            .change_context(UpdateError::BlockingTaskFailed)?
     }
 }

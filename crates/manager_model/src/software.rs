@@ -1,10 +1,11 @@
 use serde::{Deserialize, Serialize};
+use utoipa::{IntoParams, ToSchema};
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, ToSchema)]
 pub struct SoftwareUpdateStatus {
     pub state: SoftwareUpdateState,
-    pub downloaded: Option<SoftwareInfoNew>,
-    pub installed: Option<SoftwareInfoNew>,
+    pub downloaded: Option<SoftwareInfo>,
+    pub installed: Option<SoftwareInfo>,
 }
 
 impl SoftwareUpdateStatus {
@@ -17,15 +18,15 @@ impl SoftwareUpdateStatus {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, ToSchema)]
 pub enum SoftwareUpdateState {
     Idle,
     Downloading,
     Installing,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct SoftwareInfoNew {
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema, IntoParams)]
+pub struct SoftwareInfo {
     pub name: String,
-    pub hash: String,
+    pub sha256: String,
 }

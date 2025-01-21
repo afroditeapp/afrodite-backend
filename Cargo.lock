@@ -2552,6 +2552,7 @@ checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
 name = "manager"
 version = "0.0.0"
 dependencies = [
+ "base16ct",
  "error-stack",
  "futures",
  "manager_api",
@@ -2559,6 +2560,7 @@ dependencies = [
  "manager_model",
  "reqwest",
  "serde_json",
+ "sha2",
  "simple_backend_utils",
  "thiserror 2.0.11",
  "tokio",
@@ -2604,7 +2606,6 @@ dependencies = [
 name = "manager_model"
 version = "0.0.0"
 dependencies = [
- "clap",
  "num_enum",
  "serde",
  "simple_backend_model",

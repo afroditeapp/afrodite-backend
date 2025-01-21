@@ -160,6 +160,10 @@ impl Config {
     pub fn manager_name(&self) -> ManagerInstanceName {
         self.file.manager_name.clone()
     }
+
+    pub fn update_manager_user_agent(&self) -> String {
+        format!("{}/{}", self.backend_pkg_name(), self.backend_semver_version())
+    }
 }
 
 pub fn get_config(

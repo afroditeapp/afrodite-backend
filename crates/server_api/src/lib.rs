@@ -37,8 +37,6 @@ pub mod app {
     components(schemas(
         // Common
         model::common::EventToClient,
-        // Manager
-        manager_model::SoftwareOptions,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

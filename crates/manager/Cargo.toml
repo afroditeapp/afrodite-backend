@@ -19,6 +19,8 @@ futures = { workspace = true }
 tokio = { workspace = true }
 
 reqwest = { workspace = true }
+sha2 = { workspace = true }
+base16ct = { workspace = true }
 
 # Server TLS
 tokio-rustls = { workspace = true }

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::UnixTime;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{SecureStorageEncryptionKey, SoftwareInfoNew, SoftwareUpdateStatus, SystemInfo};
+use crate::{SecureStorageEncryptionKey, SoftwareInfo, SoftwareUpdateStatus, SystemInfo};
 
 #[derive(Debug, Clone, Copy, PartialEq, num_enum::TryFromPrimitive)]
 #[repr(u8)]
@@ -47,11 +47,13 @@ pub enum JsonRpcRequestType {
     /// Response [JsonRpcResponseType::Successful]
     TriggerSoftwareUpdateDownload,
     /// Response [JsonRpcResponseType::Successful]
-    TriggerSoftwareUpdateInstall(SoftwareInfoNew),
+    TriggerSoftwareUpdateInstall(SoftwareInfo),
     /// Response [JsonRpcResponseType::Successful]
     TriggerSystemReboot,
     /// Response [JsonRpcResponseType::Successful]
     TriggerBackendDataReset,
+    /// Response [JsonRpcResponseType::Successful]
+    TriggerBackendRestart,
     /// Response [JsonRpcResponseType::Successful]
     ScheduleBackendRestart,
     /// Response [JsonRpcResponseType::Successful]

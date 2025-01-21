@@ -128,6 +128,10 @@ pub async fn handle_request_type(
             state.rpc_trigger_update_manager_related_action(
                 UpdateManagerMessage::BackendResetData,
             ).await,
+        JsonRpcRequestType::TriggerBackendRestart =>
+            state.rpc_trigger_update_manager_related_action(
+                UpdateManagerMessage::BackendRestart,
+            ).await,
         JsonRpcRequestType::TriggerSystemReboot =>
             state.rpc_trigger_system_reboot().await,
         JsonRpcRequestType::ScheduleBackendRestart |
