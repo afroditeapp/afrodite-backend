@@ -2,7 +2,7 @@
 
 use manager_config::Config;
 
-use crate::server::{client::ApiManager, reboot::RebootManagerHandle, update::UpdateManagerHandle};
+use crate::server::{client::ApiManager, scheduled_task::ScheduledTaskManagerHandle, task::TaskManagerHandle, update::UpdateManagerHandle};
 
 pub mod server;
 pub mod client;
@@ -22,6 +22,10 @@ pub trait GetUpdateManager {
     fn update_manager(&self) -> &UpdateManagerHandle;
 }
 
-pub trait GetRebootManager {
-    fn reboot_manager(&self) -> &RebootManagerHandle;
+pub trait GetTaskManager {
+    fn task_manager(&self) -> &TaskManagerHandle;
+}
+
+pub trait GetScheduledTaskManager {
+    fn scheduled_task_manager(&self) -> &ScheduledTaskManagerHandle;
 }

@@ -96,7 +96,7 @@ name = "history"
 # config_file = "litestream.yml"
 
 # [scheduled_tasks]
-# daily_run_time = "3:00"
+# daily_start_time = "3:00"
 
 # [static_file_package_hosting]
 # package = "frontend.tar.gz"
@@ -497,7 +497,7 @@ fn validate_path(input: &Path) -> std::result::Result<(), String> {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ScheduledTasksConfig {
-    pub daily_run_time: UtcTimeValue,
+    pub daily_start_time: UtcTimeValue,
 }
 
 impl Default for ScheduledTasksConfig {
@@ -505,7 +505,7 @@ impl Default for ScheduledTasksConfig {
         const DEFAULT_SCHEDULED_TASKS_TIME: TimeValue = TimeValue::new(3, 0);
 
         Self {
-            daily_run_time: UtcTimeValue(DEFAULT_SCHEDULED_TASKS_TIME),
+            daily_start_time: UtcTimeValue(DEFAULT_SCHEDULED_TASKS_TIME),
         }
     }
 }

@@ -6,10 +6,11 @@ use manager_api::ManagerClient;
 use manager_model::JsonRpcRequest;
 use manager_model::JsonRpcRequestType;
 use manager_model::JsonRpcResponse;
-use reboot::RpcReboot;
+use scheduled_task::RpcScheduledTask;
 use secure_storage::RpcSecureStorage;
 use software::RpcSoftware;
 use system_info::RpcSystemInfo;
+use task::RpcTask;
 use tracing::info;
 use crate::api::GetConfig;
 use crate::server::update::UpdateManagerMessage;
@@ -27,7 +28,8 @@ use super::ServerError;
 pub mod software;
 pub mod secure_storage;
 pub mod system_info;
-pub mod reboot;
+pub mod task;
+pub mod scheduled_task;
 
 
 #[derive(thiserror::Error, Debug)]
@@ -38,8 +40,10 @@ pub enum JsonRpcError {
     SecureStorageEncryptionKeyRead,
     #[error("System info error")]
     SystemInfo,
-    #[error("Reboot manager error")]
-    RebootManager,
+    #[error("Task manager error")]
+    TaskManager,
+    #[error("Scheduled task manager error")]
+    ScheduledTaskManager,
     #[error("Update manager error")]
     UpdateManager,
 }
@@ -125,19 +129,20 @@ pub async fn handle_request_type(
                 UpdateManagerMessage::SoftwareInstall(info),
             ).await,
         JsonRpcRequestType::TriggerBackendDataReset =>
-            state.rpc_trigger_update_manager_related_action(
-                UpdateManagerMessage::BackendResetData,
-            ).await,
+            state.rpc_trigger_backend_data_reset().await,
         JsonRpcRequestType::TriggerBackendRestart =>
-            state.rpc_trigger_update_manager_related_action(
-                UpdateManagerMessage::BackendRestart,
-            ).await,
+            state.rpc_trigger_backend_restart().await,
         JsonRpcRequestType::TriggerSystemReboot =>
             state.rpc_trigger_system_reboot().await,
-        JsonRpcRequestType::ScheduleBackendRestart |
-        JsonRpcRequestType::ScheduleBackendRestartHidden |
-        JsonRpcRequestType::ScheduleSystemReboot |
-        JsonRpcRequestType::ScheduleSystemRebootHidden =>
-            todo!(),
+        JsonRpcRequestType::ScheduleBackendRestart(notify_backend) =>
+            state.rpc_schedule_backend_restart(notify_backend.notify_backend).await,
+        JsonRpcRequestType::ScheduleSystemReboot(notify_backend) =>
+            state.rpc_schedule_system_reboot(notify_backend.notify_backend).await,
+        JsonRpcRequestType::UncheduleBackendRestart =>
+            state.rpc_unschedule_backend_restart().await,
+        JsonRpcRequestType::UncheduleSystemReboot =>
+            state.rpc_unschedule_system_reboot().await,
+        JsonRpcRequestType::GetScheduledTasksStatus =>
+            state.rpc_get_scheduled_tasks_status().await,
     }
 }

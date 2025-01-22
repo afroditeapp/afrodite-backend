@@ -33,11 +33,12 @@
 use std::net::SocketAddr;
 use json_rpc::handle_json_rpc;
 use manager_api::protocol::ClientConnectionReadWrite;
-use manager_model::ManagerProtocolMode;
+use manager_model::{ManagerProtocolMode, ServerEvent};
 
 use manager_api::protocol::{ConnectionUtilsRead, ConnectionUtilsWrite};
+use tracing::info;
 
-use crate::server::app::S;
+use crate::{server::app::S, utils::ContextExt};
 
 use error_stack::{Result, ResultExt};
 use manager_model::ManagerProtocolVersion;
@@ -78,6 +79,8 @@ pub enum ServerError {
     JsonRpcFailed,
     #[error("Client error")]
     Client,
+    #[error("Server event channel is broken")]
+    ServerEventChannelBroken,
 }
 
 pub async fn handle_connection_to_server<
@@ -132,6 +135,32 @@ async fn handle_connection_to_server_with_error<
 
     match mode {
         ManagerProtocolMode::JsonRpc => handle_json_rpc(c, address, state).await,
-        ManagerProtocolMode::ListenServerEvents => todo!(),
+        ManagerProtocolMode::ListenServerEvents => handle_server_events(c, address, state).await,
+    }
+}
+
+pub async fn handle_server_events<
+    C: ClientConnectionReadWrite,
+>(
+    mut c: C,
+    address: SocketAddr,
+    state: S,
+) -> Result<(), ServerError> {
+    info!("Sending server events to {}", address);
+
+    let mut receiver = state.backend_events_receiver();
+
+    loop {
+        let events: Vec<ServerEvent> = receiver.borrow_and_update().clone();
+
+        for e in events.iter() {
+            c.send_server_event(e)
+                .await
+                .change_context(ServerError::Write)?;
+        }
+
+        if receiver.changed().await.is_err() {
+            return Err(ServerError::ServerEventChannelBroken.report());
+        }
     }
 }

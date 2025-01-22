@@ -1,9 +1,11 @@
 use std::sync::Arc;
 
 use manager_config::Config;
+use manager_model::{ServerEvent, ServerEventType};
+use tokio::sync::watch;
 
-use super::{client::ApiManager, reboot::RebootManagerHandle, update::UpdateManagerHandle};
-use crate::api::{GetApiManager, GetConfig, GetRebootManager, GetUpdateManager};
+use super::{backend_events::BackendEventsHandle, client::ApiManager, scheduled_task::ScheduledTaskManagerHandle, task::TaskManagerHandle, update::UpdateManagerHandle};
+use crate::api::{GetApiManager, GetConfig, GetScheduledTaskManager, GetTaskManager, GetUpdateManager};
 
 pub type S = AppState;
 
@@ -11,7 +13,28 @@ pub type S = AppState;
 pub struct AppState {
     config: Arc<Config>,
     update_manager: Arc<UpdateManagerHandle>,
-    reboot_manager: Arc<RebootManagerHandle>,
+    task_manager: Arc<TaskManagerHandle>,
+    scheduled_task_manager: Arc<ScheduledTaskManagerHandle>,
+    backend_events: Arc<BackendEventsHandle>,
+}
+
+impl AppState {
+    async fn current_state_as_server_events(&self) -> Vec<ServerEvent> {
+        let event = ServerEvent {
+            event: ServerEventType::MaintenanceSchedulingStatus(
+                self.scheduled_task_manager.maintenance_time().await
+            ),
+        };
+        vec![event]
+    }
+
+    pub async fn refresh_state_to_backend(&self) {
+        self.backend_events.send(self.current_state_as_server_events().await);
+    }
+
+    pub fn backend_events_receiver(&self) -> watch::Receiver<Vec<ServerEvent>> {
+        self.backend_events.receiver()
+    }
 }
 
 impl GetConfig for AppState {
@@ -26,9 +49,15 @@ impl GetUpdateManager for AppState {
     }
 }
 
-impl GetRebootManager for AppState {
-    fn reboot_manager(&self) -> &RebootManagerHandle {
-        &self.reboot_manager
+impl GetTaskManager for AppState {
+    fn task_manager(&self) -> &TaskManagerHandle {
+        &self.task_manager
+    }
+}
+
+impl GetScheduledTaskManager for AppState {
+    fn scheduled_task_manager(&self) -> &ScheduledTaskManagerHandle {
+        &self.scheduled_task_manager
     }
 }
 
@@ -47,13 +76,18 @@ impl App {
     pub async fn new(
         config: Arc<Config>,
         update_manager: Arc<UpdateManagerHandle>,
-        reboot_manager: Arc<RebootManagerHandle>,
+        task_manager: Arc<TaskManagerHandle>,
+        scheduled_task_manager: Arc<ScheduledTaskManagerHandle>,
     ) -> Self {
         let state = AppState {
             config: config.clone(),
             update_manager,
-            reboot_manager,
+            task_manager,
+            scheduled_task_manager,
+            backend_events: BackendEventsHandle::new(vec![]).into(),
         };
+
+        state.refresh_state_to_backend().await;
 
         Self { state }
     }

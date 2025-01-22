@@ -7,7 +7,7 @@ use std::{
 use error_stack::{Report, Result, ResultExt};
 use manager_model::{ManagerInstanceName, SecureStorageEncryptionKey};
 use serde::{Deserialize, Serialize};
-use simple_backend_utils::time::UtcTimeValue;
+use simple_backend_utils::{time::UtcTimeValue, ContextExt};
 use url::Url;
 
 use super::GetConfigError;
@@ -47,7 +47,6 @@ public_api = "127.0.0.1:4000"
 
 # [software_update]
 # backend_install_location = "/app-secure-storage/app/binaries/app-backend"
-# backend_data_reset_dir = "/path/to/backend/data" # Optional
 
 # [software_update.github]
 # owner = "TODO"
@@ -55,8 +54,21 @@ public_api = "127.0.0.1:4000"
 # file_name_ending = "TODO"
 # uploader = "TODO" # Optional
 
-# [reboot_if_needed]
-# time = "12:00"
+# [manual_tasks]
+# allow_backend_restart = true
+# allow_system_reboot = true
+
+# [manual_tasks.allow_backend_data_reset]
+# backend_data_dir = "/path/to/backend/data"
+
+# [scheduled_tasks]
+# daily_start_time = "12:00"
+# allow_backend_restart = true
+# allow_system_reboot = true
+
+# [automatic_system_reboot]
+# scheduling_time = "11:00"
+# notify_backend = true
 
 # [system_info]
 # log_services = ["afrodite-manager", "afrodite-backend"]
@@ -75,6 +87,8 @@ pub enum ConfigFileError {
     NotDirectory,
     #[error("Load config file")]
     LoadConfig,
+    #[error("Invalid config")]
+    InvalidConfig,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -96,7 +110,9 @@ pub struct ConfigFile {
     #[serde(default)]
     pub server_encryption_key: Vec<ServerEncryptionKey>,
     pub secure_storage: Option<SecureStorageConfig>,
-    pub reboot_if_needed: Option<RebootIfNeededConfig>,
+    pub manual_tasks: Option<ManualTasksConfig>,
+    pub scheduled_tasks: Option<ScheduledTasksConfig>,
+    pub automatic_system_reboot: Option<AutomaticSystemRebootConfig>,
     pub software_update: Option<SoftwareUpdateConfig>,
     pub system_info: Option<SystemInfoConfig>,
     /// TLS is required if debug setting is false.
@@ -135,7 +151,18 @@ impl ConfigFile {
 
         let config_string =
             std::fs::read_to_string(file_path).change_context(ConfigFileError::LoadConfig)?;
-        toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)
+        let file: ConfigFile = toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)?;
+
+        let system_reboot_scheduled_tasks_enabled = file.scheduled_tasks
+            .as_ref()
+            .map(|v| v.allow_system_reboot)
+            .unwrap_or_default();
+        if file.automatic_system_reboot.is_some() && !system_reboot_scheduled_tasks_enabled {
+            return Err(ConfigFileError::InvalidConfig.report())
+                .attach_printable("Automatic system reboot requires enabling scheduled tasks with system reboot")
+        }
+
+        Ok(file)
     }
 
     pub fn default_config_file_path(dir: impl AsRef<Path>) -> Result<PathBuf, ConfigFileError> {
@@ -205,11 +232,6 @@ pub struct SecureStorageConfig {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SoftwareUpdateConfig {
     pub backend_install_location: PathBuf,
-    /// Optional. Enableds data reset support for backend. This
-    /// directory will be moved next to the original dir with postfix
-    /// "-old" when backend is updated. If there is already a directory
-    /// with that name, it will be deleted.
-    pub backend_data_reset_dir: Option<PathBuf>,
     pub github: SoftwareUpdateGitHubConfig,
 }
 
@@ -226,12 +248,41 @@ pub struct SoftwareUpdateGitHubConfig {
     pub uploader: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct RebootIfNeededConfig {
-    /// Time when reboot should be done. Format "hh:mm". For example "12:00".
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+pub struct ManualTasksConfig {
+    /// Allow manual backend data reset
+    pub allow_backend_data_reset: Option<BackendDataResetConfig>,
+    /// Allow manual backend restart
+    pub allow_backend_restart: bool,
+    /// Allow manaual system reboot
+    pub allow_system_reboot: bool,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct BackendDataResetConfig {
+    /// This directory will be moved next to the original dir with postfix
+    /// "-old" when backend is updated. If there is already a directory
+    /// with that name, it will be deleted.
+    pub backend_data_dir: PathBuf,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ScheduledTasksConfig {
+    /// Time when scheduled tasks are started.
     ///
-    /// This is an UTC time value without UTC offset.
-    pub time: UtcTimeValue,
+    /// This is an UTC time value without UTC offset and with format
+    /// "hh:mm". For example "12:00".
+    pub daily_start_time: UtcTimeValue,
+    /// Allow scheduled backend restart
+    pub allow_backend_restart: bool,
+    /// Allow scheduled backend restart
+    pub allow_system_reboot: bool,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct AutomaticSystemRebootConfig {
+    pub scheduling_time: UtcTimeValue,
+    pub notify_backend: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

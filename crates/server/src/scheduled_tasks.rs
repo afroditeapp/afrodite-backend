@@ -99,7 +99,7 @@ impl ScheduledTaskManager {
     }
 
     pub async fn sleep_until(config: &ScheduledTasksConfig) -> Result<(), ScheduledTaskError> {
-        sleep_until_current_time_is_at(config.daily_run_time)
+        sleep_until_current_time_is_at(config.daily_start_time)
             .await
             .change_context(ScheduledTaskError::TimeError)?;
         Ok(())

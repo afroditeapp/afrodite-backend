@@ -8,7 +8,8 @@ use std::{
 use app::S;
 use futures::future::poll_fn;
 use manager_config::Config;
-use reboot::RebootManager;
+use scheduled_task::ScheduledTaskManager;
+use task::TaskManager;
 use tokio::{
     net::TcpListener,
     signal::{
@@ -33,9 +34,12 @@ use crate::{
 
 pub mod app;
 pub mod backend_controller;
+pub mod backend_events;
 pub mod client;
 pub mod info;
 pub mod mount;
+pub mod task;
+pub mod scheduled_task;
 pub mod reboot;
 pub mod state;
 pub mod update;
@@ -89,24 +93,40 @@ impl AppServer {
         let mut terminate_signal = signal::unix::signal(SignalKind::terminate()).unwrap();
 
         let state: Arc<MountStateStorage> = MountStateStorage::new().into();
-        let (reboot_manager_handle, reboot_manager_internal_state) =
-            RebootManager::new_channel();
+        let (task_manager_handle, task_manager_internal_state) =
+            TaskManager::new_channel();
+        let (scheduled_task_manager_handle, scheduled_task_manager_internal_state) =
+            ScheduledTaskManager::new_channel();
         let (update_manager_handle, update_manager_internal_state) =
             UpdateManager::new_channel();
 
         let mut app = App::new(
             self.config.clone(),
             update_manager_handle.into(),
-            reboot_manager_handle.into(),
+            task_manager_handle.into(),
+            scheduled_task_manager_handle.into(),
         )
         .await;
 
-        // Start reboot manager
+        // Start task manager
 
-        let reboot_manager_quit_handle = reboot::RebootManager::new_manager(
-            reboot_manager_internal_state,
+        let task_manager_quit_handle = task::TaskManager::new_manager(
+            task_manager_internal_state,
             app.state(),
             state.clone(),
+            server_quit_watcher.resubscribe(),
+        );
+
+        // Start scheduled task manager
+
+        let scheduled_task_manager_quit_handle = scheduled_task::ScheduledTaskManager::new_manager(
+            scheduled_task_manager_internal_state,
+            app.state(),
+            server_quit_watcher.resubscribe(),
+        );
+
+        let reboot_manager_quit_handle = reboot::RebootManager::new_manager(
+            app.state(),
             server_quit_watcher.resubscribe(),
         );
 
@@ -203,6 +223,8 @@ impl AppServer {
         }
 
         reboot_manager_quit_handle.wait_quit().await;
+        scheduled_task_manager_quit_handle.wait_quit().await;
+        task_manager_quit_handle.wait_quit().await;
         update_manager_quit_handle.wait_quit().await;
 
         if self.config.software_update_provider().is_some() {

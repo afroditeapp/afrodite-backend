@@ -9,10 +9,8 @@ pub use model_server_data::EmailAddress;
 use model_server_state::DemoModeId;
 use serde::{Deserialize, Serialize};
 use simple_backend_config::file::ConfigFileUtils;
+use simple_backend_utils::time::DurationValue;
 use url::Url;
-use utils::DurationValue;
-
-pub mod utils;
 
 // Kilpisjärvi ja Nuorgam
 // latitude_top_left = 70.1
@@ -45,7 +43,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # index_cell_square_km = 255       # 1-255 and area width and height must be larger than 255 km
 
 # [limits.account]
-# account_deletion_wait_time_seconds = "90d"
+# account_deletion_wait_duration = "90d"
 
 # [limits.chat]
 # like_limit_reset_time_utc_offset_hours = 0
@@ -53,7 +51,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # [limits.media]
 # concurrent_content_uploads = 10
 # max_content_count = 20
-# unused_content_wait_time_seconds = "90d"
+# unused_content_wait_duration = "90d"
 
 # [[profile_name_allowlist]]
 # csv_file = "names.csv"
@@ -205,13 +203,13 @@ pub struct LimitsConfig {
 /// Account related limits config
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct AccountLimitsConfig {
-    pub account_deletion_wait_time_seconds: DurationValue,
+    pub account_deletion_wait_duration: DurationValue,
 }
 
 impl Default for AccountLimitsConfig {
     fn default() -> Self {
         Self {
-            account_deletion_wait_time_seconds: DurationValue::from_days(90),
+            account_deletion_wait_duration: DurationValue::from_days(90),
         }
     }
 }
@@ -229,7 +227,7 @@ pub struct MediaLimitsConfig {
     /// will be done sequentially.
     pub concurrent_content_uploads: usize,
     pub max_content_count: u8,
-    pub unused_content_wait_time_seconds: DurationValue,
+    pub unused_content_wait_duration: DurationValue,
 }
 
 impl Default for MediaLimitsConfig {
@@ -237,7 +235,7 @@ impl Default for MediaLimitsConfig {
         Self {
             concurrent_content_uploads: 10,
             max_content_count: 20,
-            unused_content_wait_time_seconds: DurationValue::from_days(90),
+            unused_content_wait_duration: DurationValue::from_days(90),
         }
     }
 }

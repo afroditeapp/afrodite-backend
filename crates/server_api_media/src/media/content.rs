@@ -179,7 +179,7 @@ pub async fn get_all_account_media_content(
     Ok(AccountContent {
         data,
         max_content_count: state.config().limits_media().max_content_count,
-        unused_content_wait_seconds: state.config().limits_media().unused_content_wait_time_seconds.seconds,
+        unused_content_wait_seconds: state.config().limits_media().unused_content_wait_duration.seconds,
     }.into())
 }
 
@@ -340,7 +340,7 @@ pub async fn delete_content(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    if owner_deleting_content && !admin_access && !content.removable_by_user(state.config().limits_media().unused_content_wait_time_seconds.seconds) {
+    if owner_deleting_content && !admin_access && !content.removable_by_user(state.config().limits_media().unused_content_wait_duration.seconds) {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 

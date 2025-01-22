@@ -105,6 +105,18 @@ pub trait ConnectionUtilsWrite: tokio::io::AsyncWrite + Unpin  {
         self.flush().await.change_context(ClientError::Flush)?;
         Ok(())
     }
+
+    async fn send_server_event(
+        &mut self,
+        server_event: &ServerEvent,
+    ) -> Result<(), ClientError> {
+        let text = serde_json::to_string(server_event)
+            .change_context(ClientError::Serialize)?;
+        self.send_string_with_u32_len(text).await
+            .change_context(ClientError::Write)?;
+        self.flush().await.change_context(ClientError::Flush)?;
+        Ok(())
+    }
 }
 
 impl <T: tokio::io::AsyncWrite + Unpin> ConnectionUtilsWrite for T {}

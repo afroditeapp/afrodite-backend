@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::UnixTime;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{SecureStorageEncryptionKey, SoftwareInfo, SoftwareUpdateStatus, SystemInfo};
+use crate::{NotifyBackend, ScheduledTaskStatus, SecureStorageEncryptionKey, SoftwareInfo, SoftwareUpdateStatus, SystemInfo};
 
 #[derive(Debug, Clone, Copy, PartialEq, num_enum::TryFromPrimitive)]
 #[repr(u8)]
@@ -49,19 +49,21 @@ pub enum JsonRpcRequestType {
     /// Response [JsonRpcResponseType::Successful]
     TriggerSoftwareUpdateInstall(SoftwareInfo),
     /// Response [JsonRpcResponseType::Successful]
-    TriggerSystemReboot,
-    /// Response [JsonRpcResponseType::Successful]
     TriggerBackendDataReset,
     /// Response [JsonRpcResponseType::Successful]
     TriggerBackendRestart,
     /// Response [JsonRpcResponseType::Successful]
-    ScheduleBackendRestart,
+    TriggerSystemReboot,
+    /// Response [JsonRpcResponseType::ScheduledTasksStatus]
+    GetScheduledTasksStatus,
     /// Response [JsonRpcResponseType::Successful]
-    ScheduleBackendRestartHidden,
+    ScheduleBackendRestart(NotifyBackend),
     /// Response [JsonRpcResponseType::Successful]
-    ScheduleSystemReboot,
+    ScheduleSystemReboot(NotifyBackend),
     /// Response [JsonRpcResponseType::Successful]
-    ScheduleSystemRebootHidden,
+    UncheduleBackendRestart,
+    /// Response [JsonRpcResponseType::Successful]
+    UncheduleSystemReboot,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
@@ -118,6 +120,16 @@ impl JsonRpcResponse {
         }
     }
 
+    pub fn scheduled_tasks_status(
+        status: ScheduledTaskStatus,
+    ) -> Self {
+        Self {
+            response: JsonRpcResponseType::ScheduledTasksStatus(
+                status
+            ),
+        }
+    }
+
     pub fn into_response(self) -> JsonRpcResponseType {
         self.response
     }
@@ -125,7 +137,7 @@ impl JsonRpcResponse {
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct ServerEvent {
-    event: ServerEventType,
+    pub event: ServerEventType,
 }
 
 impl ServerEvent {
@@ -140,6 +152,7 @@ pub enum JsonRpcResponseType {
     SecureStorageEncryptionKey(SecureStorageEncryptionKey),
     SystemInfo(SystemInfo),
     SoftwareUpdateStatus(SoftwareUpdateStatus),
+    ScheduledTasksStatus(ScheduledTaskStatus),
     Successful,
     RequestReceiverNotFound,
 }
@@ -167,8 +180,8 @@ impl std::fmt::Display for ManagerInstanceName {
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub enum ServerEventType {
-    RebootScheduled(RebootTime),
+    MaintenanceSchedulingStatus(Option<MaintenanceTime>),
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
-pub struct RebootTime(pub UnixTime);
+pub struct MaintenanceTime(pub UnixTime);

@@ -3,6 +3,8 @@ use std::sync::Arc;
 use error_stack::{Context, Report, Result, ResultExt};
 use tokio::sync::{oneshot, Mutex, OwnedMutexGuard};
 
+// TODO(refactor): Remove duplicate code
+
 /// Sender only used for quit request message sending.
 pub type QuitSender = oneshot::Sender<()>;
 

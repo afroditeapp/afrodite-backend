@@ -11,7 +11,7 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
-use file::ManagerInstance;
+use file::{AutomaticSystemRebootConfig, ManagerInstance, ScheduledTasksConfig};
 use manager_model::ManagerInstanceName;
 use rustls_pemfile::certs;
 use tokio_rustls::rustls::{RootCertStore, ServerConfig};
@@ -20,7 +20,7 @@ use tracing::{info, log::warn};
 use manager_api::ManagerClient;
 
 use self::file::{
-    ConfigFile, RebootIfNeededConfig, SecureStorageConfig, ServerEncryptionKey, SocketConfig,
+    ConfigFile, ManualTasksConfig, SecureStorageConfig, ServerEncryptionKey, SocketConfig,
     SoftwareUpdateConfig, SystemInfoConfig,
 };
 
@@ -129,8 +129,16 @@ impl Config {
         &self.file.storage_dir
     }
 
-    pub fn reboot_if_needed(&self) -> &Option<RebootIfNeededConfig> {
-        &self.file.reboot_if_needed
+    pub fn manual_tasks_config(&self) -> ManualTasksConfig {
+        self.file.manual_tasks.as_ref().cloned().unwrap_or_default()
+    }
+
+    pub fn scheduled_tasks(&self) -> Option<&ScheduledTasksConfig> {
+        self.file.scheduled_tasks.as_ref()
+    }
+
+    pub fn automatic_system_reboot(&self) -> Option<&AutomaticSystemRebootConfig> {
+        self.file.automatic_system_reboot.as_ref()
     }
 
     pub fn log_timestamp(&self) -> bool {

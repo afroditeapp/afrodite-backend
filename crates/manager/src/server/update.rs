@@ -16,7 +16,7 @@ use tokio::{sync::Mutex, task::JoinHandle};
 use tracing::{info, warn, error};
 
 use super::{
-    app::S, backend_controller::BackendController, ServerQuitWatcher
+    app::S, ServerQuitWatcher
 };
 use crate::{
     api::GetConfig, utils::{InProgressChannel, InProgressReceiver, InProgressSender}
@@ -82,11 +82,6 @@ pub enum UpdateError {
     #[error("Reset data directory missing file name")]
     ResetDataDirectoryNoFileName,
 
-    #[error("Stop backend failed")]
-    StopBackendFailed,
-
-    #[error("Start backend failed")]
-    StartBackendFailed,
 
     #[error("GitHub API related error")]
     GitHubApi,
@@ -111,6 +106,9 @@ pub enum UpdateError {
 
     #[error("Selected backend version not found")]
     SelectedVersionNotFound,
+
+    #[error("Backend utils error")]
+    BackendUtils,
 }
 
 #[derive(Debug)]
@@ -135,8 +133,6 @@ impl UpdateManagerQuitHandle {
 pub enum UpdateManagerMessage {
     SoftwareDownload,
     SoftwareInstall(SoftwareInfo),
-    BackendRestart,
-    BackendResetData,
 }
 
 #[derive(Debug)]
@@ -300,10 +296,6 @@ impl UpdateManagerInternal {
                 self.software_download().await,
             UpdateManagerMessage::SoftwareInstall(info) =>
                 self.software_install(info).await,
-            UpdateManagerMessage::BackendRestart =>
-                self.backend_restart_and_optional_data_reset(false).await,
-            UpdateManagerMessage::BackendResetData =>
-                self.backend_restart_and_optional_data_reset(true).await,
         };
 
         match result {
@@ -407,7 +399,9 @@ impl UpdateManagerInternal {
 
         self.backend_utils().replace_backend_binary(
             &self.update_dir().downloaded_backend_path()
-        ).await?;
+        )
+            .await
+            .change_context(UpdateError::BackendUtils)?;
 
         UpdateDirUtils::save_info_json(
             &info,
@@ -417,27 +411,6 @@ impl UpdateManagerInternal {
         self.internal_state.lock().await.installed = Some(info);
 
         Ok(())
-    }
-
-    async fn backend_restart_and_optional_data_reset(
-        &self,
-        data_reset: bool,
-    ) -> Result<(), UpdateError> {
-        let backend_controller = BackendController::new(self.state.config());
-
-        backend_controller
-            .stop_backend()
-            .await
-            .change_context(UpdateError::StopBackendFailed)?;
-
-        if data_reset {
-            self.backend_utils().reset_backend_data().await?;
-        }
-
-        backend_controller
-            .start_backend()
-            .await
-            .change_context(UpdateError::StartBackendFailed)
     }
 
     fn backend_utils(&self) -> BackendUtils {

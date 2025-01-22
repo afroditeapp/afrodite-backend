@@ -146,8 +146,13 @@ impl ManagerConnectionManager {
         let mut listener = self.client.listen_events().await?;
         loop {
             match listener.next_event().await?.event() {
-                ServerEventType::RebootScheduled(time) => {
-                    self.client.latest_scheduled_reboot.store(time.0.ut, Ordering::Relaxed);
+                ServerEventType::MaintenanceSchedulingStatus(time) => {
+                    let ut = if let Some(time) = time {
+                        time.0.ut
+                    } else {
+                        0
+                    };
+                    self.client.latest_scheduled_reboot.store(ut, Ordering::Relaxed);
                 }
             }
         }
