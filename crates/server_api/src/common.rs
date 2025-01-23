@@ -16,7 +16,7 @@ use headers::ContentType;
 use http::HeaderMap;
 use model::{
     AccessToken, AccountIdInternal, BackendVersion, EventToClient, PendingNotificationFlags,
-    RefreshToken, SyncDataVersionFromClient,
+    RefreshToken, SyncDataVersionFromClient, WebSocketClientTypeNumber,
 };
 use model_server_data::AuthPair;
 use server_common::websocket::WebSocketError;
@@ -296,6 +296,17 @@ async fn handle_socket_result(
                     let info = model::WebSocketClientInfo::parse(info_bytes)
                         .into_error_string(WebSocketError::ProtocolError)?;
 
+                    match info.client_type {
+                        WebSocketClientTypeNumber::Android =>
+                            COMMON.websocket_client_type_android.incr(),
+                        WebSocketClientTypeNumber::Ios =>
+                            COMMON.websocket_client_type_ios.incr(),
+                        WebSocketClientTypeNumber::Web =>
+                            COMMON.websocket_client_type_web.incr(),
+                        WebSocketClientTypeNumber::TestModeBot =>
+                            COMMON.websocket_client_type_test_mode_bot.incr(),
+                    }
+
                     if let Some(min_version) = state.config().min_client_version() {
                         min_version.received_version_is_accepted(info)
                     } else {
@@ -519,4 +530,8 @@ create_counters!(
     websocket_refresh_token_not_found,
     websocket_connected,
     websocket_disconnected,
+    websocket_client_type_android,
+    websocket_client_type_ios,
+    websocket_client_type_web,
+    websocket_client_type_test_mode_bot,
 );
