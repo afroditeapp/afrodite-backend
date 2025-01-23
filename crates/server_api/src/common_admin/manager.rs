@@ -120,7 +120,7 @@ pub async fn get_software_update_status(
     }
 }
 
-const PATH_POST_TRIGGER_SOFTWARE_UPDATE_DOWNLOAD: &str = "/common_api/trigger_software_download";
+const PATH_POST_TRIGGER_SOFTWARE_UPDATE_DOWNLOAD: &str = "/common_api/trigger_software_update_download";
 
 /// Trigger software update download.
 ///
@@ -155,7 +155,7 @@ pub async fn post_trigger_software_update_download(
     }
 }
 
-const PATH_POST_TRIGGER_SOFTWARE_UPDATE_INSTALL: &str = "/common_api/trigger_software_install";
+const PATH_POST_TRIGGER_SOFTWARE_UPDATE_INSTALL: &str = "/common_api/trigger_software_update_install";
 
 /// Trigger software update install.
 ///
