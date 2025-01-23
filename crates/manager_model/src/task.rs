@@ -32,7 +32,7 @@ pub enum ScheduledTaskType {
     SystemReboot,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, IntoParams)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, ToSchema, IntoParams)]
 pub struct ScheduledTaskTypeValue {
     pub scheduled_task_type: ScheduledTaskType,
 }

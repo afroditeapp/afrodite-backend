@@ -37,6 +37,8 @@ pub mod app {
     components(schemas(
         // Common
         model::common::EventToClient,
+        // Manager
+        manager_model::ScheduledTaskTypeValue,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

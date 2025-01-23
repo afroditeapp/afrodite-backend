@@ -153,7 +153,7 @@ pub struct ManagerInstanceNameList {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, Hash, IntoParams, ToSchema)]
-#[into_params(names("name"))]
+#[into_params(names("manager_name"))]
 pub struct ManagerInstanceName(pub String);
 
 impl ManagerInstanceName {
