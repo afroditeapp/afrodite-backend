@@ -31,3 +31,8 @@ pub enum ScheduledTaskType {
     BackendRestart,
     SystemReboot,
 }
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, IntoParams)]
+pub struct ScheduledTaskTypeValue {
+    pub scheduled_task_type: ScheduledTaskType,
+}

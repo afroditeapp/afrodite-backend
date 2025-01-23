@@ -3,7 +3,7 @@ use axum::{
     Extension,
 };
 use manager_model::{
-    ManagerInstanceName, ManagerInstanceNameList, ManualTaskType, SoftwareInfo, SoftwareUpdateStatus, SoftwareUpdateTaskType, SystemInfo
+    ManagerInstanceName, ManagerInstanceNameList, ManualTaskType, NotifyBackend, ScheduledTaskStatus, ScheduledTaskType, ScheduledTaskTypeValue, SoftwareInfo, SoftwareUpdateStatus, SoftwareUpdateTaskType, SystemInfo
 };
 use model::Permissions;
 use simple_backend::{app::GetManagerApi, create_counters};
@@ -15,6 +15,10 @@ use crate::{
     S,
 };
 
+// TODO(prod): Rename admin_server_maintenance_reset_data to admin_server_maintenance_data_reset?
+// TODO(prod): Rename admin_server_maintenance_reboot_backend to
+// admin_server_maintenance_backend_restart or admin_server_maintenance_reboot_and_restart?
+
 const PATH_GET_MANAGER_INSTANCE_NAMES: &str = "/common_api/manager_instance_names";
 
 /// Get available manager instances.
@@ -22,6 +26,8 @@ const PATH_GET_MANAGER_INSTANCE_NAMES: &str = "/common_api/manager_instance_name
 /// # Access
 /// * Permission [model::Permissions::admin_server_maintenance_view_info]
 /// * Permission [model::Permissions::admin_server_maintenance_update_software]
+/// * Permission [model::Permissions::admin_server_maintenance_reset_data]
+/// * Permission [model::Permissions::admin_server_maintenance_reboot_backend]
 #[utoipa::path(
     get,
     path = PATH_GET_MANAGER_INSTANCE_NAMES,
@@ -39,7 +45,9 @@ pub async fn get_manager_instance_names(
     COMMON_ADMIN.get_manager_instance_names.incr();
 
     if api_caller_permissions.admin_server_maintenance_view_info ||
-        api_caller_permissions.admin_server_maintenance_update_software
+        api_caller_permissions.admin_server_maintenance_update_software ||
+        api_caller_permissions.admin_server_maintenance_reset_data ||
+        api_caller_permissions.admin_server_maintenance_reboot_backend
     {
         let info = state.manager_request().await?.get_available_instances().await?;
         Ok(info.into())
@@ -288,6 +296,111 @@ pub async fn post_trigger_system_reboot(
     }
 }
 
+const PATH_GET_SCHEDULED_TASKS_STATUS: &str = "/common_api/scheduled_tasks_status";
+
+/// Get scheduled tasks status from manager instance.
+///
+/// # Access
+/// * Permission [model::Permissions::admin_server_maintenance_reboot_backend]
+#[utoipa::path(
+    get,
+    path = PATH_GET_SCHEDULED_TASKS_STATUS,
+    params(ManagerInstanceName),
+    responses(
+        (status = 200, description = "Successful.", body = ScheduledTaskStatus),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_scheduled_tasks_status(
+    State(state): State<S>,
+    Extension(api_caller_permissions): Extension<Permissions>,
+    Query(manager): Query<ManagerInstanceName>,
+) -> Result<Json<ScheduledTaskStatus>, StatusCode> {
+    COMMON_ADMIN.get_software_update_status.incr();
+
+    if api_caller_permissions.admin_server_maintenance_reboot_backend {
+        let info = state.manager_request_to(manager).await?.get_scheduled_tasks_status().await?;
+        Ok(info.into())
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
+}
+
+const PATH_POST_SCHEDULE_TASK: &str = "/common_api/schedule_task";
+
+/// Schedule task.
+///
+/// # Access
+/// * Permission [model::Permissions::admin_server_maintenance_reboot_backend]
+#[utoipa::path(
+    post,
+    path = PATH_POST_SCHEDULE_TASK,
+    params(ManagerInstanceName, ScheduledTaskTypeValue, NotifyBackend),
+    responses(
+        (status = 200, description = "Successful."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_schedule_task(
+    State(state): State<S>,
+    Extension(api_caller_permissions): Extension<Permissions>,
+    Query(manager): Query<ManagerInstanceName>,
+    Query(task): Query<ScheduledTaskTypeValue>,
+    Query(notify_backend): Query<NotifyBackend>,
+) -> Result<(), StatusCode> {
+    COMMON_ADMIN.post_schedule_task.incr();
+
+    if api_caller_permissions.admin_server_maintenance_reboot_backend {
+        state.manager_request_to(manager)
+            .await?
+            .schedule_task(task.scheduled_task_type, notify_backend)
+            .await?;
+        Ok(())
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
+}
+
+const PATH_POST_UNSCHEDULE_TASK: &str = "/common_api/unschedule_task";
+
+/// Unschedule task.
+///
+/// # Access
+/// * Permission [model::Permissions::admin_server_maintenance_reboot_backend]
+#[utoipa::path(
+    post,
+    path = PATH_POST_UNSCHEDULE_TASK,
+    params(ManagerInstanceName, ScheduledTaskTypeValue),
+    responses(
+        (status = 200, description = "Successful."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_unschedule_task(
+    State(state): State<S>,
+    Extension(api_caller_permissions): Extension<Permissions>,
+    Query(manager): Query<ManagerInstanceName>,
+    Query(task): Query<ScheduledTaskTypeValue>,
+) -> Result<(), StatusCode> {
+    COMMON_ADMIN.post_unschedule_task.incr();
+
+    if api_caller_permissions.admin_server_maintenance_reboot_backend {
+        state.manager_request_to(manager)
+            .await?
+            .unschedule_task(task.scheduled_task_type)
+            .await?;
+        Ok(())
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
+}
+
 create_open_api_router!(
         fn router_manager,
         get_manager_instance_names,
@@ -298,6 +411,9 @@ create_open_api_router!(
         post_trigger_backend_data_reset,
         post_trigger_backend_restart,
         post_trigger_system_reboot,
+        get_scheduled_tasks_status,
+        post_schedule_task,
+        post_unschedule_task,
 );
 
 create_counters!(
@@ -314,4 +430,7 @@ create_counters!(
     post_trigger_backend_data_reset,
     post_trigger_backend_restart,
     post_trigger_system_reboot,
+    get_scheduled_tasks_status,
+    post_schedule_task,
+    post_unschedule_task,
 );

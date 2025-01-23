@@ -1,5 +1,5 @@
 use error_stack::{report, Result, ResultExt};
-use manager_model::{ManualTaskType, SoftwareUpdateTaskType};
+use manager_model::{ManualTaskType, NotifyBackend, ScheduledTaskStatus, ScheduledTaskType, SoftwareUpdateTaskType};
 use manager_model::{JsonRpcRequest, JsonRpcRequestType, JsonRpcResponse, JsonRpcResponseType, ManagerInstanceName, ManagerInstanceNameList, ManagerProtocolMode, ManagerProtocolVersion, SecureStorageEncryptionKey, ServerEvent, SoftwareUpdateStatus, SystemInfo};
 
 use tokio::io::AsyncWriteExt;
@@ -215,6 +215,44 @@ pub trait RequestSenderCmds: Sized {
         let request = JsonRpcRequest::new(
             self.request_receiver_name(),
             JsonRpcRequestType::TriggerManualTask(task),
+        );
+        self.send_request(request).await?.require_successful()
+    }
+
+    async fn get_scheduled_tasks_status(
+        self,
+    ) -> Result<ScheduledTaskStatus, ClientError> {
+        let request = JsonRpcRequest::new(
+            self.request_receiver_name(),
+            JsonRpcRequestType::GetScheduledTasksStatus,
+        );
+        let response = self.send_request(request).await?;
+        if let JsonRpcResponseType::ScheduledTasksStatus(status) = response.into_response() {
+            Ok(status)
+        } else {
+            Err(report!(ClientError::InvalidResponse))
+        }
+    }
+
+    async fn schedule_task(
+        self,
+        task: ScheduledTaskType,
+        notify_backend: NotifyBackend,
+    ) -> Result<(), ClientError> {
+        let request = JsonRpcRequest::new(
+            self.request_receiver_name(),
+            JsonRpcRequestType::ScheduleTask(task, notify_backend),
+        );
+        self.send_request(request).await?.require_successful()
+    }
+
+    async fn unschedule_task(
+        self,
+        task: ScheduledTaskType,
+    ) -> Result<(), ClientError> {
+        let request = JsonRpcRequest::new(
+            self.request_receiver_name(),
+            JsonRpcRequestType::UnscheduleTask(task),
         );
         self.send_request(request).await?.require_successful()
     }
