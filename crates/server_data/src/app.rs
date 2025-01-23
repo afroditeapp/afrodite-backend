@@ -10,6 +10,7 @@ use model::{
 use model_server_data::SignInWithInfo;
 pub use server_common::app::*;
 use server_common::websocket::WebSocketError;
+use simple_backend::manager_client::ManagerApiClient;
 
 use crate::{
     db_manager::{InternalWriting, RouterDatabaseReadHandle},
@@ -114,11 +115,13 @@ pub trait DataAllUtils: Send + Sync + 'static {
         email: Option<EmailAddress>,
     ) -> BoxFuture<'a, server_common::result::Result<AccountIdInternal, DataError>>;
 
+    #[allow(clippy::too_many_arguments)]
     fn handle_new_websocket_connection<'a>(
         &self,
         config: &'a Config,
         read_handle: &'a RouterDatabaseReadHandle,
         write_handle: &'a WriteCommandRunnerHandle,
+        manager_api_client: &'a ManagerApiClient,
         socket: &'a mut WebSocket,
         id: AccountIdInternal,
         sync_versions: Vec<SyncDataVersionFromClient>,

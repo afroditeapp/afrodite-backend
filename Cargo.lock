@@ -4608,6 +4608,7 @@ dependencies = [
  "server_data_chat",
  "server_data_media",
  "server_data_profile",
+ "simple_backend",
  "tracing",
 ]
 

@@ -33,3 +33,5 @@ database_account = { path = "../database_account" }
 database_profile = { path = "../database_profile" }
 database_media = { path = "../database_media" }
 database_chat = { path = "../database_chat" }
+
+simple_backend = { path = "../simple_backend" }

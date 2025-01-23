@@ -91,9 +91,13 @@ impl ManagerApiClient {
         }
     }
 
-    pub fn latest_scheduled_reboot(&self) -> UnixTime {
+    pub fn latest_scheduled_reboot(&self) -> Option<UnixTime> {
         let v = self.latest_scheduled_reboot.load(Ordering::Relaxed);
-        UnixTime::new(v)
+        if v == 0 {
+            None
+        } else {
+            Some(UnixTime::new(v))
+        }
     }
 }
 

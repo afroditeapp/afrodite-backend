@@ -6,7 +6,7 @@ use diesel::{
     AsExpression, FromSqlRow,
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_wrapper};
+use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_wrapper, UnixTime};
 use utils::random_bytes::random_128_bits;
 use utoipa::{IntoParams, ToSchema};
 
@@ -54,6 +54,7 @@ pub enum EventType {
     NewsCountChanged,
     InitialContentModerationCompleted,
     MediaContentChanged,
+    ScheduledMaintenanceStatus,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -70,6 +71,11 @@ pub struct ContentProcessingStateChanged {
     pub new_state: ContentProcessingState,
 }
 
+#[derive(Debug, Default, Clone, Deserialize, Serialize, PartialEq, ToSchema)]
+pub struct ScheduledMaintenanceStatus {
+    pub scheduled_maintenance: Option<UnixTime>,
+}
+
 /// Event to client which is sent through websocket.
 ///
 /// This is not an enum to make generated API bindings more easier to
@@ -81,6 +87,8 @@ pub struct EventToClient {
     latest_viewed_message_changed: Option<LatestViewedMessageChanged>,
     /// Data for event ContentProcessingStateChanged
     content_processing_state_changed: Option<ContentProcessingStateChanged>,
+    /// Data for event ScheduledMaintenanceStatus
+    scheduled_maintenance_status: Option<ScheduledMaintenanceStatus>,
 }
 
 /// Internal data type for events.
@@ -105,6 +113,7 @@ pub enum EventToClientInternal {
     NewsChanged,
     InitialContentModerationCompleted,
     MediaContentChanged,
+    ScheduledMaintenanceStatus(ScheduledMaintenanceStatus),
 }
 
 impl From<&EventToClientInternal> for EventType {
@@ -125,6 +134,7 @@ impl From<&EventToClientInternal> for EventType {
             NewsChanged => Self::NewsCountChanged,
             InitialContentModerationCompleted => Self::InitialContentModerationCompleted,
             MediaContentChanged => Self::MediaContentChanged,
+            ScheduledMaintenanceStatus(_) => Self::ScheduledMaintenanceStatus,
         }
     }
 }
@@ -135,6 +145,7 @@ impl From<EventToClientInternal> for EventToClient {
             event: (&internal).into(),
             latest_viewed_message_changed: None,
             content_processing_state_changed: None,
+            scheduled_maintenance_status: None,
         };
 
         use EventToClientInternal::*;
@@ -142,6 +153,7 @@ impl From<EventToClientInternal> for EventToClient {
         match internal {
             LatestViewedMessageChanged(v) => value.latest_viewed_message_changed = Some(v),
             ContentProcessingStateChanged(v) => value.content_processing_state_changed = Some(v),
+            ScheduledMaintenanceStatus(v) => value.scheduled_maintenance_status = Some(v),
             AccountStateChanged
             | NewMessageReceived
             | ReceivedLikesChanged

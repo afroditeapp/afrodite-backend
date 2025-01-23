@@ -1,5 +1,6 @@
 use axum::extract::ws::{Message, WebSocket};
 use config::Config;
+use model::ScheduledMaintenanceStatus;
 use model_chat::{
     AccountIdInternal, ChatStateRaw, EventToClient, EventToClientInternal,
     SyncCheckDataType, SyncCheckResult, SyncDataVersionFromClient, SyncVersionFromClient,
@@ -16,6 +17,7 @@ use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsA
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
+use simple_backend::manager_client::ManagerApiClient;
 
 pub async fn reset_pending_notification(
     config: &Config,
@@ -37,9 +39,10 @@ pub async fn reset_pending_notification(
     Ok(())
 }
 
-pub async fn send_new_messages_event_if_needed(
+pub async fn send_new_messages_and_server_maintenance_events_if_needed(
     config: &Config,
     read_handle: &RouterDatabaseReadHandle,
+    manager_api_client: &ManagerApiClient,
     socket: &mut WebSocket,
     id: AccountIdInternal,
 ) -> Result<(), WebSocketError> {
@@ -55,6 +58,17 @@ pub async fn send_new_messages_event_if_needed(
         }
     }
 
+    if let Some(time) = manager_api_client.latest_scheduled_reboot() {
+        send_event(
+            socket,
+            EventToClientInternal::ScheduledMaintenanceStatus(
+                ScheduledMaintenanceStatus {
+                    scheduled_maintenance: Some(time),
+                }
+            ),
+        ).await?;
+    }
+
     Ok(())
 }
 
@@ -62,6 +76,7 @@ pub async fn sync_data_with_client_if_needed(
     config: &Config,
     read_handle: &RouterDatabaseReadHandle,
     write_handle: &WriteCommandRunnerHandle,
+    manager_api_client: &ManagerApiClient,
     socket: &mut WebSocket,
     id: AccountIdInternal,
     sync_versions: Vec<SyncDataVersionFromClient>,
@@ -203,6 +218,13 @@ pub async fn sync_data_with_client_if_needed(
                     )
                     .await?;
                 }
+            }
+            SyncCheckDataType::ServerMaintenanceIsScheduled => {
+                handle_maintenance_info_removing_if_needed(
+                    manager_api_client,
+                    socket,
+                )
+                .await?;
             }
         }
     }
@@ -398,6 +420,22 @@ async fn handle_media_content_sync_version_check(
     };
 
     send_event(socket, EventToClientInternal::MediaContentChanged).await?;
+
+    Ok(())
+}
+
+async fn handle_maintenance_info_removing_if_needed(
+    manager_api_client: &ManagerApiClient,
+    socket: &mut WebSocket,
+) -> Result<(), WebSocketError> {
+    if manager_api_client.latest_scheduled_reboot().is_none() {
+        send_event(
+            socket,
+            EventToClientInternal::ScheduledMaintenanceStatus(
+                ScheduledMaintenanceStatus::default()
+            ),
+        ).await?;
+    }
 
     Ok(())
 }

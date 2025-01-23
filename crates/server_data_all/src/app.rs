@@ -15,6 +15,7 @@ use server_data::{
 };
 use server_data_account::write::GetWriteCommandsAccount;
 use server_data_chat::read::GetReadChatCommands;
+use simple_backend::manager_client::ManagerApiClient;
 
 use crate::{register::RegisterAccount, unlimited_likes::UnlimitedLikesUpdate};
 
@@ -74,6 +75,7 @@ impl DataAllUtils for DataAllUtilsImpl {
         config: &'a Config,
         read_handle: &'a RouterDatabaseReadHandle,
         write_handle: &'a WriteCommandRunnerHandle,
+        manager_api: &'a ManagerApiClient,
         socket: &'a mut WebSocket,
         id: AccountIdInternal,
         sync_versions: Vec<SyncDataVersionFromClient>,
@@ -84,12 +86,19 @@ impl DataAllUtils for DataAllUtilsImpl {
                 config,
                 read_handle,
                 write_handle,
+                manager_api,
                 socket,
                 id,
                 sync_versions,
             )
             .await?;
-            crate::websocket::send_new_messages_event_if_needed(config, read_handle, socket, id)
+            crate::websocket::send_new_messages_and_server_maintenance_events_if_needed(
+                config,
+                read_handle,
+                manager_api,
+                socket,
+                id
+            )
                 .await?;
             Ok(())
         }

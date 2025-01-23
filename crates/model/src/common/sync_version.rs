@@ -27,6 +27,8 @@ impl SyncDataVersionFromClient {
     }
 }
 
+// TODO(prod): Remove unused [SyncCheckDataType] values
+
 #[derive(Debug, Clone, Copy, PartialEq, TryFromPrimitive)]
 #[repr(u8)]
 pub enum SyncCheckDataType {
@@ -40,6 +42,9 @@ pub enum SyncCheckDataType {
     Profile = 7,
     News = 8,
     MediaContent = 9,
+    /// Special value without valid [SyncVersionFromClient] informing
+    /// the server that client has info that server maintenance is scheduled.
+    ServerMaintenanceIsScheduled = 255,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

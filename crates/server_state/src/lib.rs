@@ -147,6 +147,7 @@ impl DataAllAccess<'_> {
             self.config(),
             self.read(),
             self.write(),
+            &self.state.simple_backend_state.manager_api,
             socket,
             id,
             sync_versions,
