@@ -21,7 +21,7 @@ use model::{
 use model_server_data::AuthPair;
 use server_common::websocket::WebSocketError;
 use server_data::{
-    app::{BackendVersionProvider, EventManagerProvider},
+    app::{BackendVersionProvider, EventManagerProvider, GetConfig},
     read::GetReadCommandsCommon,
     write::GetWriteCommandsCommon,
 };
@@ -295,17 +295,12 @@ async fn handle_socket_result(
                 [0, info_bytes @ ..] => {
                     let info = model::WebSocketClientInfo::parse(info_bytes)
                         .into_error_string(WebSocketError::ProtocolError)?;
-                    // TODO: remove after client is tested to work with the
-                    // new protocol
-                    info!(
-                        "{:#?}, for '{}', address: {}",
-                        info,
-                        id.id.as_i64(),
-                        address
-                    );
-                    // In the future there is possibility to blacklist some
-                    // old client versions.
-                    true
+
+                    if let Some(min_version) = state.config().min_client_version() {
+                        min_version.received_version_is_accepted(info)
+                    } else {
+                        true
+                    }
                 }
                 _ => return Err(WebSocketError::ProtocolError.report()),
             }

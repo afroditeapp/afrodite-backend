@@ -213,6 +213,7 @@ fn new_config(
         }
         .into(),
         api_obfuscation_salt: None,
+        min_client_version: None,
         components: Some(components),
         location: if let Some(SelectedBenchmark::GetProfileList) = config.selected_benchmark() {
             let mut location = DEFAULT_LOCATION_CONFIG_BENCHMARK;

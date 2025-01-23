@@ -4,6 +4,7 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
+use model::WebSocketClientInfo;
 // Re-export for test-mode crate
 pub use model_server_data::EmailAddress;
 use model_server_state::DemoModeId;
@@ -84,6 +85,7 @@ pub struct ConfigFile {
     pub email_content_file: Option<PathBuf>,
 
     pub api_obfuscation_salt: Option<String>,
+    pub min_client_version: Option<MinClientVersion>,
     pub components: Option<Components>,
     pub grant_admin_access: Option<GrantAdminAccessConfig>,
     pub location: Option<LocationConfig>,
@@ -100,6 +102,7 @@ impl ConfigFile {
             profile_attributes_file: None,
             email_content_file: None,
             api_obfuscation_salt: None,
+            min_client_version: None,
             components: Some(Components::default()),
             grant_admin_access: None,
             location: None,
@@ -273,4 +276,54 @@ pub struct ProfiletNameAllowlistConfig {
     /// Index for first row where data reading starts. The index values
     /// starts from zero.
     pub start_row_index: usize,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Copy)]
+#[serde(try_from = "String")]
+pub struct MinClientVersion {
+    pub major_version: u16,
+    pub minor_version: u16,
+    pub patch_version: u16,
+}
+
+impl MinClientVersion {
+    pub fn received_version_is_accepted(&self, received: WebSocketClientInfo) -> bool {
+        if received.major_version > self.major_version  {
+            true
+        } else if received.major_version < self.major_version {
+            false
+        } else if received.minor_version > self.minor_version {
+            true
+        } else if received.minor_version < self.minor_version {
+            false
+        } else if received.patch_version > self.patch_version {
+            true
+        } else if received.patch_version < self.patch_version {
+            false
+        } else {
+            // Versions are equal
+            true
+        }
+    }
+}
+
+impl TryFrom<String> for MinClientVersion {
+    type Error = String;
+    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
+        let mut numbers = value.split('.');
+        let error = || format!("Version {} is not formatted like 1.0.0", value);
+        let major_str = numbers.next().ok_or_else(error)?;
+        let minor_str = numbers.next().ok_or_else(error)?;
+        let patch_str = numbers.next().ok_or_else(error)?;
+
+        let major_version = major_str.parse::<u16>().map_err(|e| e.to_string())?;
+        let minor_version = minor_str.parse::<u16>().map_err(|e| e.to_string())?;
+        let patch_version = patch_str.parse::<u16>().map_err(|e| e.to_string())?;
+
+        Ok(MinClientVersion {
+            major_version,
+            minor_version,
+            patch_version,
+        })
+    }
 }

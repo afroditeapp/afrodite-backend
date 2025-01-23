@@ -3,7 +3,7 @@ use axum::{
     Extension,
 };
 use manager_model::{
-    ManagerInstanceName, ManagerInstanceNameList, ManualTaskType, NotifyBackend, ScheduledTaskStatus, ScheduledTaskType, ScheduledTaskTypeValue, SoftwareInfo, SoftwareUpdateStatus, SoftwareUpdateTaskType, SystemInfo
+    ManagerInstanceName, ManagerInstanceNameList, ManualTaskType, NotifyBackend, ScheduledTaskStatus, ScheduledTaskTypeValue, SoftwareInfo, SoftwareUpdateStatus, SoftwareUpdateTaskType, SystemInfo
 };
 use model::Permissions;
 use simple_backend::{app::GetManagerApi, create_counters};
