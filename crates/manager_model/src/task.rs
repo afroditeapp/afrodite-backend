@@ -8,7 +8,7 @@ pub struct ScheduledTaskStatus {
     pub backend_restart: Option<MaintenanceTask>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, ToSchema)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, ToSchema)]
 pub struct MaintenanceTask {
     pub time: UnixTime,
     pub notify_backend: bool,

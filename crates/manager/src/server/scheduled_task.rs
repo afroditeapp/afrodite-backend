@@ -96,14 +96,21 @@ impl ScheduledTaskManagerHandle {
         self.state.lock().await.clone()
     }
 
-    pub async fn maintenance_time(&self) -> Option<MaintenanceTime> {
+    pub async fn maintenance_time_for_backend_event(&self) -> Option<MaintenanceTime> {
         let state = self.state.lock().await;
-        let r = state.backend_restart
-            .as_ref()
-            .map(|v| v.time)
-            .or(state.system_reboot.as_ref().map(|v| v.time));
+        if let Some(t) = state.backend_restart {
+            if t.notify_backend {
+                return Some(MaintenanceTime(t.time));
+            }
+        }
 
-        r.map(MaintenanceTime)
+        if let Some(t) = state.system_reboot {
+            if t.notify_backend {
+                return Some(MaintenanceTime(t.time));
+            }
+        }
+
+        None
     }
 }
 

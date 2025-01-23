@@ -22,7 +22,7 @@ impl AppState {
     async fn current_state_as_server_events(&self) -> Vec<ServerEvent> {
         let event = ServerEvent {
             event: ServerEventType::MaintenanceSchedulingStatus(
-                self.scheduled_task_manager.maintenance_time().await
+                self.scheduled_task_manager.maintenance_time_for_backend_event().await
             ),
         };
         vec![event]
