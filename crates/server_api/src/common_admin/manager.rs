@@ -253,6 +253,41 @@ pub async fn post_trigger_backend_restart(
     }
 }
 
+const PATH_POST_TRIGGER_SYSTEM_REBOOT: &str = "/common_api/trigger_system_reboot";
+
+/// Trigger system reboot.
+///
+/// # Access
+/// * Permission [model::Permissions::admin_server_maintenance_reboot_backend]
+#[utoipa::path(
+    post,
+    path = PATH_POST_TRIGGER_SYSTEM_REBOOT,
+    params(ManagerInstanceName),
+    responses(
+        (status = 200, description = "Successful."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_trigger_system_reboot(
+    State(state): State<S>,
+    Extension(api_caller_permissions): Extension<Permissions>,
+    Query(manager): Query<ManagerInstanceName>,
+) -> Result<(), StatusCode> {
+    COMMON_ADMIN.post_trigger_system_reboot.incr();
+
+    if api_caller_permissions.admin_server_maintenance_reboot_backend {
+        state.manager_request_to(manager)
+            .await?
+            .trigger_manual_task(ManualTaskType::SystemReboot)
+            .await?;
+        Ok(())
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
+}
+
 create_open_api_router!(
         fn router_manager,
         get_manager_instance_names,
@@ -262,6 +297,7 @@ create_open_api_router!(
         post_trigger_software_update_install,
         post_trigger_backend_data_reset,
         post_trigger_backend_restart,
+        post_trigger_system_reboot,
 );
 
 create_counters!(
@@ -277,4 +313,5 @@ create_counters!(
     post_trigger_software_update_install,
     post_trigger_backend_data_reset,
     post_trigger_backend_restart,
+    post_trigger_system_reboot,
 );
