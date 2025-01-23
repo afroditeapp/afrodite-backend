@@ -32,10 +32,11 @@
 
 use std::net::SocketAddr;
 use json_rpc::handle_json_rpc;
-use manager_api::protocol::ClientConnectionReadWrite;
+use manager_api::protocol::{ClientConnectionReadWrite, ClientConnectionWrite};
 use manager_model::{ManagerProtocolMode, ServerEvent};
 
 use manager_api::protocol::{ConnectionUtilsRead, ConnectionUtilsWrite};
+use tokio::io::AsyncReadExt;
 use tracing::info;
 
 use crate::{server::app::S, utils::ContextExt};
@@ -139,15 +140,38 @@ async fn handle_connection_to_server_with_error<
     }
 }
 
-pub async fn handle_server_events<
+async fn handle_server_events<
     C: ClientConnectionReadWrite,
 >(
-    mut c: C,
+    c: C,
     address: SocketAddr,
     state: S,
 ) -> Result<(), ServerError> {
-    info!("Sending server events to {}", address);
+    info!("Server events: {} connected", address);
 
+    let (mut reader, writer) = tokio::io::split(c);
+
+    let mut read_buffer = [0u8];
+    let r = tokio::select! {
+        _ = reader.read(&mut read_buffer) => {
+            // Server disconnected
+            Ok(())
+        }
+        r = send_server_events(writer, state) => {
+            r
+        },
+    };
+
+    info!("Server events: {} disconnected", address);
+    r
+}
+
+async fn send_server_events<
+    C: ClientConnectionWrite,
+>(
+    mut c: C,
+    state: S,
+) -> Result<(), ServerError> {
     let mut receiver = state.backend_events_receiver();
 
     loop {
