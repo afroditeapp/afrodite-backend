@@ -1,7 +1,7 @@
 
 
-use manager_model::JsonRpcResponse;
-use crate::{api::{GetConfig, GetUpdateManager}, server::update::UpdateManagerMessage};
+use manager_model::{JsonRpcResponse, SoftwareUpdateTaskType};
+use crate::api::{GetConfig, GetUpdateManager};
 
 use error_stack::{Result, ResultExt};
 
@@ -14,7 +14,7 @@ pub trait RpcSoftware: GetConfig + GetUpdateManager {
 
     async fn rpc_trigger_update_manager_related_action(
         &self,
-        message: UpdateManagerMessage,
+        message: SoftwareUpdateTaskType,
     ) -> Result<JsonRpcResponse, JsonRpcError> {
         self.update_manager().send_message(message)
             .await

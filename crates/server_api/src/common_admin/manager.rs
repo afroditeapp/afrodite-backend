@@ -3,7 +3,7 @@ use axum::{
     Extension,
 };
 use manager_model::{
-    ManagerInstanceName, ManagerInstanceNameList, SoftwareInfo, SoftwareUpdateStatus, SystemInfo
+    ManagerInstanceName, ManagerInstanceNameList, ManualTaskType, SoftwareInfo, SoftwareUpdateStatus, SoftwareUpdateTaskType, SystemInfo
 };
 use model::Permissions;
 use simple_backend::{app::GetManagerApi, create_counters};
@@ -137,7 +137,10 @@ pub async fn post_trigger_software_update_download(
     COMMON_ADMIN.post_trigger_software_update_download.incr();
 
     if api_caller_permissions.admin_server_maintenance_update_software {
-        state.manager_request_to(manager).await?.trigger_software_update_download().await?;
+        state.manager_request_to(manager)
+            .await?
+            .trigger_software_update_task(SoftwareUpdateTaskType::Download)
+            .await?;
         Ok(())
     } else {
         Err(StatusCode::UNAUTHORIZED)
@@ -170,7 +173,10 @@ pub async fn post_trigger_software_update_install(
     COMMON_ADMIN.post_trigger_software_update_install.incr();
 
     if api_caller_permissions.admin_server_maintenance_update_software {
-        state.manager_request_to(manager).await?.trigger_software_update_install(info).await?;
+        state.manager_request_to(manager)
+            .await?
+            .trigger_software_update_task(SoftwareUpdateTaskType::Install(info))
+            .await?;
         Ok(())
     } else {
         Err(StatusCode::UNAUTHORIZED)
@@ -202,7 +208,10 @@ pub async fn post_trigger_backend_data_reset(
     COMMON_ADMIN.post_trigger_backend_data_reset.incr();
 
     if api_caller_permissions.admin_server_maintenance_reset_data {
-        state.manager_request_to(manager).await?.trigger_backend_data_reset().await?;
+        state.manager_request_to(manager)
+            .await?
+            .trigger_manual_task(ManualTaskType::BackendDataReset)
+            .await?;
         Ok(())
     } else {
         Err(StatusCode::UNAUTHORIZED)
@@ -234,7 +243,10 @@ pub async fn post_trigger_backend_restart(
     COMMON_ADMIN.post_trigger_backend_restart.incr();
 
     if api_caller_permissions.admin_server_maintenance_reboot_backend {
-        state.manager_request_to(manager).await?.trigger_backend_restart().await?;
+        state.manager_request_to(manager)
+            .await?
+            .trigger_manual_task(ManualTaskType::BackendRestart)
+            .await?;
         Ok(())
     } else {
         Err(StatusCode::UNAUTHORIZED)

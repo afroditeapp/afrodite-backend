@@ -30,3 +30,9 @@ pub struct SoftwareInfo {
     pub name: String,
     pub sha256: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
+pub enum SoftwareUpdateTaskType {
+    Download,
+    Install(SoftwareInfo),
+}

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::UnixTime;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{NotifyBackend, ScheduledTaskStatus, SecureStorageEncryptionKey, SoftwareInfo, SoftwareUpdateStatus, SystemInfo};
+use crate::{ManualTaskType, NotifyBackend, ScheduledTaskStatus, ScheduledTaskType, SecureStorageEncryptionKey, SoftwareUpdateStatus, SoftwareUpdateTaskType, SystemInfo};
 
 #[derive(Debug, Clone, Copy, PartialEq, num_enum::TryFromPrimitive)]
 #[repr(u8)]
@@ -45,25 +45,15 @@ pub enum JsonRpcRequestType {
     /// Response [JsonRpcResponseType::SoftwareUpdateStatus]
     GetSoftwareUpdateStatus,
     /// Response [JsonRpcResponseType::Successful]
-    TriggerSoftwareUpdateDownload,
+    TriggerSoftwareUpdateTask(SoftwareUpdateTaskType),
     /// Response [JsonRpcResponseType::Successful]
-    TriggerSoftwareUpdateInstall(SoftwareInfo),
-    /// Response [JsonRpcResponseType::Successful]
-    TriggerBackendDataReset,
-    /// Response [JsonRpcResponseType::Successful]
-    TriggerBackendRestart,
-    /// Response [JsonRpcResponseType::Successful]
-    TriggerSystemReboot,
+    TriggerManualTask(ManualTaskType),
     /// Response [JsonRpcResponseType::ScheduledTasksStatus]
     GetScheduledTasksStatus,
     /// Response [JsonRpcResponseType::Successful]
-    ScheduleBackendRestart(NotifyBackend),
+    ScheduleTask(ScheduledTaskType, NotifyBackend),
     /// Response [JsonRpcResponseType::Successful]
-    ScheduleSystemReboot(NotifyBackend),
-    /// Response [JsonRpcResponseType::Successful]
-    UncheduleBackendRestart,
-    /// Response [JsonRpcResponseType::Successful]
-    UncheduleSystemReboot,
+    UnscheduleTask(ScheduledTaskType),
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]

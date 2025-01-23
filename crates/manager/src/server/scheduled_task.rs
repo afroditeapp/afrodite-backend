@@ -8,14 +8,14 @@ use std::{
 use error_stack::{Result, ResultExt};
 use futures::lock::Mutex;
 use manager_config::file::ScheduledTasksConfig;
-use manager_model::{MaintenanceTask, MaintenanceTime, ScheduledTaskStatus};
+use manager_model::{MaintenanceTask, MaintenanceTime, ManualTaskType, ScheduledTaskStatus, ScheduledTaskType};
 use simple_backend_model::UnixTime;
 use simple_backend_utils::time::{seconds_until_current_time_is_at, sleep_until_current_time_is_at};
 use tokio::{sync::mpsc, task::JoinHandle, time::sleep};
 use tracing::{info, warn};
 
 use super::{
-    app::S, task::TaskManagerMessage, ServerQuitWatcher
+    app::S, ServerQuitWatcher
 };
 use crate::api::{GetConfig, GetTaskManager};
 
@@ -65,16 +65,15 @@ impl ScheduledTaskManagerQuitHandle {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum ScheduledTaskManagerMessage {
-    ScheduleBackendRestart {
+    Schedule {
+        task: ScheduledTaskType,
         notify_backend: bool,
     },
-    ScheduleSystemReboot {
-        notify_backend: bool,
+    Unschedule {
+        task: ScheduledTaskType,
     },
-    UnscheduleBackendRestart,
-    UnscheduleSystemReboot,
 }
 
 #[derive(Debug, Clone)]
@@ -257,12 +256,12 @@ impl ScheduledTaksManagerInternal {
         let result = if state.backend_restart.is_some() {
             self.state
                 .task_manager()
-                .send_message(TaskManagerMessage::BackendRestart)
+                .send_message(ManualTaskType::BackendRestart)
                 .await
         } else if state.system_reboot.is_some() {
             self.state
                 .task_manager()
-                .send_message(TaskManagerMessage::SystemReboot)
+                .send_message(ManualTaskType::SystemReboot)
                 .await
         } else {
             return;
@@ -281,14 +280,20 @@ impl ScheduledTaksManagerInternal {
 
     async fn handle_message(&self, message: ScheduledTaskManagerMessage) {
         let result = match message {
-            ScheduledTaskManagerMessage::ScheduleBackendRestart { notify_backend } =>
-                self.schedule_backend_restart(notify_backend).await,
-            ScheduledTaskManagerMessage::ScheduleSystemReboot { notify_backend } =>
-                self.schedule_system_reboot(notify_backend).await,
-            ScheduledTaskManagerMessage::UnscheduleBackendRestart =>
-                self.unschedule_backend_restart().await,
-            ScheduledTaskManagerMessage::UnscheduleSystemReboot =>
-                self.unschedule_system_reboot().await,
+            ScheduledTaskManagerMessage::Schedule { task, notify_backend } =>
+                match task {
+                    ScheduledTaskType::BackendRestart =>
+                        self.schedule_backend_restart(notify_backend).await,
+                    ScheduledTaskType::SystemReboot =>
+                        self.schedule_system_reboot(notify_backend).await,
+                }
+            ScheduledTaskManagerMessage::Unschedule { task } =>
+                match task {
+                    ScheduledTaskType::BackendRestart =>
+                        self.unschedule_backend_restart().await,
+                    ScheduledTaskType::SystemReboot =>
+                        self.unschedule_system_reboot().await,
+                }
         };
 
         self.state.refresh_state_to_backend().await;

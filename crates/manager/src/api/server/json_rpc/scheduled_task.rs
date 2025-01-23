@@ -1,6 +1,5 @@
 
-
-use manager_model::JsonRpcResponse;
+use manager_model::{JsonRpcResponse, ScheduledTaskType};
 use crate::{api::{GetConfig, GetScheduledTaskManager}, server::scheduled_task::ScheduledTaskManagerMessage};
 
 use error_stack::{Result, ResultExt};
@@ -8,43 +7,24 @@ use error_stack::{Result, ResultExt};
 use super::JsonRpcError;
 
 pub trait RpcScheduledTask: GetConfig + GetScheduledTaskManager {
-    async fn rpc_schedule_backend_restart(
+    async fn rpc_schedule_task(
         &self,
+        task: ScheduledTaskType,
         notify_backend: bool,
     ) -> Result<JsonRpcResponse, JsonRpcError> {
         self.scheduled_task_manager()
-            .send_message(ScheduledTaskManagerMessage::ScheduleBackendRestart { notify_backend })
+            .send_message(ScheduledTaskManagerMessage::Schedule { task, notify_backend })
             .await
             .change_context(JsonRpcError::ScheduledTaskManager)?;
         Ok(JsonRpcResponse::successful())
     }
 
-    async fn rpc_schedule_system_reboot(
+    async fn rpc_unschedule_task(
         &self,
-        notify_backend: bool,
+        task: ScheduledTaskType,
     ) -> Result<JsonRpcResponse, JsonRpcError> {
         self.scheduled_task_manager()
-            .send_message(ScheduledTaskManagerMessage::ScheduleSystemReboot { notify_backend })
-            .await
-            .change_context(JsonRpcError::ScheduledTaskManager)?;
-        Ok(JsonRpcResponse::successful())
-    }
-
-    async fn rpc_unschedule_backend_restart(
-        &self,
-    ) -> Result<JsonRpcResponse, JsonRpcError> {
-        self.scheduled_task_manager()
-            .send_message(ScheduledTaskManagerMessage::UnscheduleBackendRestart)
-            .await
-            .change_context(JsonRpcError::ScheduledTaskManager)?;
-        Ok(JsonRpcResponse::successful())
-    }
-
-    async fn rpc_unschedule_system_reboot(
-        &self,
-    ) -> Result<JsonRpcResponse, JsonRpcError> {
-        self.scheduled_task_manager()
-            .send_message(ScheduledTaskManagerMessage::UnscheduleSystemReboot)
+            .send_message(ScheduledTaskManagerMessage::Unschedule { task })
             .await
             .change_context(JsonRpcError::ScheduledTaskManager)?;
         Ok(JsonRpcResponse::successful())

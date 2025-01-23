@@ -6,6 +6,7 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
+use manager_model::ManualTaskType;
 use tokio::{process::Command, sync::mpsc, task::JoinHandle};
 use tracing::{info, warn};
 
@@ -54,7 +55,7 @@ pub enum TaskError {
 pub struct TaskManagerQuitHandle {
     task: JoinHandle<()>,
     // Make sure Receiver works until the manager quits.
-    _sender: mpsc::Sender<TaskManagerMessage>,
+    _sender: mpsc::Sender<ManualTaskType>,
 }
 
 impl TaskManagerQuitHandle {
@@ -68,20 +69,13 @@ impl TaskManagerQuitHandle {
     }
 }
 
-#[derive(Debug)]
-pub enum TaskManagerMessage {
-    BackendRestart,
-    BackendDataReset,
-    SystemReboot,
-}
-
 #[derive(Debug, Clone)]
 pub struct TaskManagerHandle {
-    sender: mpsc::Sender<TaskManagerMessage>,
+    sender: mpsc::Sender<ManualTaskType>,
 }
 
 impl TaskManagerHandle {
-    pub async fn send_message(&self, message: TaskManagerMessage) -> Result<(), TaskError> {
+    pub async fn send_message(&self, message: ManualTaskType) -> Result<(), TaskError> {
         self.sender
             .send(message)
             .await
@@ -92,12 +86,12 @@ impl TaskManagerHandle {
 }
 
 pub struct TaskManagerInternalState {
-    sender: mpsc::Sender<TaskManagerMessage>,
-    receiver: mpsc::Receiver<TaskManagerMessage>,
+    sender: mpsc::Sender<ManualTaskType>,
+    receiver: mpsc::Receiver<ManualTaskType>,
 }
 
 pub struct TaskManager {
-    receiver: mpsc::Receiver<TaskManagerMessage>,
+    receiver: mpsc::Receiver<ManualTaskType>,
     state: S,
     mount_state: Arc<MountStateStorage>,
 }
@@ -157,13 +151,13 @@ impl TaskManager {
         }
     }
 
-    pub async fn handle_message(&self, message: TaskManagerMessage) {
+    pub async fn handle_message(&self, message: ManualTaskType) {
         let result = match message {
-            TaskManagerMessage::SystemReboot =>
+            ManualTaskType::SystemReboot =>
                 self.run_reboot().await,
-            TaskManagerMessage::BackendRestart =>
+            ManualTaskType::BackendRestart =>
                 self.backend_restart_and_optional_data_reset(false).await,
-            TaskManagerMessage::BackendDataReset =>
+            ManualTaskType::BackendDataReset =>
                 self.backend_restart_and_optional_data_reset(true).await,
         };
 

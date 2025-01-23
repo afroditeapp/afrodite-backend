@@ -18,3 +18,16 @@ pub struct MaintenanceTask {
 pub struct NotifyBackend {
     pub notify_backend: bool,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
+pub enum ManualTaskType {
+    BackendDataReset,
+    BackendRestart,
+    SystemReboot,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, ToSchema)]
+pub enum ScheduledTaskType {
+    BackendRestart,
+    SystemReboot,
+}

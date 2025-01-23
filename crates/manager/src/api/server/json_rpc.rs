@@ -13,7 +13,6 @@ use system_info::RpcSystemInfo;
 use task::RpcTask;
 use tracing::info;
 use crate::api::GetConfig;
-use crate::server::update::UpdateManagerMessage;
 
 use manager_api::protocol::{ConnectionUtilsRead, ConnectionUtilsWrite};
 
@@ -120,28 +119,16 @@ pub async fn handle_request_type(
             state.rpc_get_system_info().await,
         JsonRpcRequestType::GetSoftwareUpdateStatus =>
             state.rpc_get_software_update_status().await,
-        JsonRpcRequestType::TriggerSoftwareUpdateDownload =>
+        JsonRpcRequestType::TriggerSoftwareUpdateTask(task) =>
             state.rpc_trigger_update_manager_related_action(
-                UpdateManagerMessage::SoftwareDownload,
+                task,
             ).await,
-        JsonRpcRequestType::TriggerSoftwareUpdateInstall(info) =>
-            state.rpc_trigger_update_manager_related_action(
-                UpdateManagerMessage::SoftwareInstall(info),
-            ).await,
-        JsonRpcRequestType::TriggerBackendDataReset =>
-            state.rpc_trigger_backend_data_reset().await,
-        JsonRpcRequestType::TriggerBackendRestart =>
-            state.rpc_trigger_backend_restart().await,
-        JsonRpcRequestType::TriggerSystemReboot =>
-            state.rpc_trigger_system_reboot().await,
-        JsonRpcRequestType::ScheduleBackendRestart(notify_backend) =>
-            state.rpc_schedule_backend_restart(notify_backend.notify_backend).await,
-        JsonRpcRequestType::ScheduleSystemReboot(notify_backend) =>
-            state.rpc_schedule_system_reboot(notify_backend.notify_backend).await,
-        JsonRpcRequestType::UncheduleBackendRestart =>
-            state.rpc_unschedule_backend_restart().await,
-        JsonRpcRequestType::UncheduleSystemReboot =>
-            state.rpc_unschedule_system_reboot().await,
+        JsonRpcRequestType::TriggerManualTask(task) =>
+            state.rpc_trigger_manual_task(task).await,
+        JsonRpcRequestType::ScheduleTask(task, notify_backend) =>
+            state.rpc_schedule_task(task, notify_backend.notify_backend).await,
+        JsonRpcRequestType::UnscheduleTask(task) =>
+            state.rpc_unschedule_task(task).await,
         JsonRpcRequestType::GetScheduledTasksStatus =>
             state.rpc_get_scheduled_tasks_status().await,
     }

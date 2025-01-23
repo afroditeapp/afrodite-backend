@@ -2,7 +2,7 @@
 //!
 
 use error_stack::{Result, ResultExt};
-use manager_model::{ManagerInstanceName, SoftwareInfo};
+use manager_model::{ManagerInstanceName, SoftwareInfo, SoftwareUpdateTaskType};
 
 use manager_config::args::{ApiCommand, ManagerApiClientMode};
 use manager_api::{ClientConfig, ClientError, ManagerClient, protocol::RequestSenderCmds};
@@ -63,12 +63,12 @@ pub async fn handle_api_client_mode(args: ManagerApiClientMode) -> Result<(), Cl
             println!("{:#?}", info);
         }
         ApiCommand::SoftwareDownload => {
-            client.trigger_software_update_download()
+            client.trigger_software_update_task(SoftwareUpdateTaskType::Download)
                 .await
                 .change_context(ClientError::RemoteApiRequest)?
         }
         ApiCommand::SoftwareInstall { name, sha256 } => {
-            client.trigger_software_update_install(SoftwareInfo { name, sha256 })
+            client.trigger_software_update_task(SoftwareUpdateTaskType::Install(SoftwareInfo { name, sha256 }))
                 .await
                 .change_context(ClientError::RemoteApiRequest)?
         }

@@ -9,7 +9,7 @@ use std::{
 use backend::BackendUtils;
 use error_stack::{report, Result, ResultExt};
 use github::GitHubApi;
-use manager_model::{SoftwareInfo, SoftwareUpdateState, SoftwareUpdateStatus};
+use manager_model::{SoftwareInfo, SoftwareUpdateState, SoftwareUpdateStatus, SoftwareUpdateTaskType};
 use sha2::Digest;
 use simple_backend_utils::ContextExt;
 use tokio::{sync::Mutex, task::JoinHandle};
@@ -115,7 +115,7 @@ pub enum UpdateError {
 pub struct UpdateManagerQuitHandle {
     task: JoinHandle<()>,
     // Make sure Receiver works until the manager quits.
-    _sender: InProgressSender<UpdateManagerMessage>,
+    _sender: InProgressSender<SoftwareUpdateTaskType>,
 }
 
 impl UpdateManagerQuitHandle {
@@ -129,20 +129,14 @@ impl UpdateManagerQuitHandle {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum UpdateManagerMessage {
-    SoftwareDownload,
-    SoftwareInstall(SoftwareInfo),
-}
-
 #[derive(Debug)]
 pub struct UpdateManagerHandle {
-    sender: InProgressSender<UpdateManagerMessage>,
+    sender: InProgressSender<SoftwareUpdateTaskType>,
     state: Arc<Mutex<SoftwareUpdateStatus>>,
 }
 
 impl UpdateManagerHandle {
-    pub async fn send_message(&self, message: UpdateManagerMessage) -> Result<(), UpdateError> {
+    pub async fn send_message(&self, message: SoftwareUpdateTaskType) -> Result<(), UpdateError> {
         self.sender
             .send_message(message)
             .await
@@ -159,14 +153,14 @@ impl UpdateManagerHandle {
 
 #[derive(Debug)]
 pub struct UpdateManagerInternalState {
-    sender: InProgressSender<UpdateManagerMessage>,
-    receiver: InProgressReceiver<UpdateManagerMessage>,
+    sender: InProgressSender<SoftwareUpdateTaskType>,
+    receiver: InProgressReceiver<SoftwareUpdateTaskType>,
     state: Arc<Mutex<SoftwareUpdateStatus>>,
 }
 
 #[derive(Debug)]
 pub struct UpdateManager {
-    receiver: InProgressReceiver<UpdateManagerMessage>,
+    receiver: InProgressReceiver<SoftwareUpdateTaskType>,
     internal_state: Arc<Mutex<SoftwareUpdateStatus>>,
     state: S,
     client: reqwest::Client,
@@ -290,11 +284,11 @@ impl UpdateManagerInternal {
         Ok(())
     }
 
-    async fn handle_message(&self, message: &UpdateManagerMessage) {
+    async fn handle_message(&self, message: &SoftwareUpdateTaskType) {
         let result = match message.clone() {
-            UpdateManagerMessage::SoftwareDownload =>
+            SoftwareUpdateTaskType::Download =>
                 self.software_download().await,
-            UpdateManagerMessage::SoftwareInstall(info) =>
+            SoftwareUpdateTaskType::Install(info) =>
                 self.software_install(info).await,
         };
 

@@ -7,6 +7,7 @@ use std::{
 
 use error_stack::{Result, ResultExt};
 use manager_config::Config;
+use manager_model::ScheduledTaskType;
 use simple_backend_utils::time::sleep_until_current_time_is_at;
 use tokio::{task::JoinHandle, time::sleep};
 use tracing::{info, warn, error};
@@ -107,7 +108,7 @@ impl RebootManager {
                 .unwrap_or_default();
             let result = self.state
                 .scheduled_task_manager()
-                .send_message(ScheduledTaskManagerMessage::ScheduleSystemReboot { notify_backend })
+                .send_message(ScheduledTaskManagerMessage::Schedule { task: ScheduledTaskType::SystemReboot, notify_backend })
                 .await
                 .change_context(RebootError::ScheduledTask);
 
