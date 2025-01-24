@@ -25,6 +25,9 @@ const PATH_GET_PROFILE_AGE_AND_NAME: &str = "/profile_api/get_profile_age_and_na
 /// # Access
 /// - Permission [model::Permissions::admin_find_account_by_email]
 /// - Permission [model::Permissions::admin_view_permissions]
+/// - Permission [model::Permissions::admin_moderate_media_content]
+/// - Permission [model::Permissions::admin_moderate_profile_names]
+/// - Permission [model::Permissions::admin_moderate_profile_texts]
 #[utoipa::path(
     get,
     path = PATH_GET_PROFILE_AGE_AND_NAME,
@@ -46,7 +49,14 @@ pub async fn get_profile_age_and_name(
 ) -> Result<Json<GetProfileAgeAndName>, StatusCode> {
     PROFILE.get_profile_age_and_name.incr();
 
-    if !(permissions.admin_find_account_by_email || permissions.admin_view_permissions) {
+    let access_allowed =
+        permissions.admin_find_account_by_email ||
+        permissions.admin_view_permissions ||
+        permissions.admin_moderate_media_content ||
+        permissions.admin_moderate_profile_names ||
+        permissions.admin_moderate_profile_texts;
+
+    if !access_allowed {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
