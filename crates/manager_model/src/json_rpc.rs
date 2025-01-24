@@ -152,8 +152,7 @@ pub struct ManagerInstanceNameList {
     pub names: Vec<ManagerInstanceName>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, Hash, IntoParams, ToSchema)]
-#[into_params(names("manager_name"))]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, Hash, ToSchema)]
 pub struct ManagerInstanceName(pub String);
 
 impl ManagerInstanceName {
@@ -166,6 +165,11 @@ impl std::fmt::Display for ManagerInstanceName {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.0)
     }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, ToSchema, IntoParams)]
+pub struct ManagerInstanceNameValue {
+    pub manager_name: ManagerInstanceName,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]

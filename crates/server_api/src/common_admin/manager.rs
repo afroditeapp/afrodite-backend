@@ -3,7 +3,7 @@ use axum::{
     Extension,
 };
 use manager_model::{
-    ManagerInstanceName, ManagerInstanceNameList, ManualTaskType, NotifyBackend, ScheduledTaskStatus, ScheduledTaskTypeValue, SoftwareInfo, SoftwareUpdateStatus, SoftwareUpdateTaskType, SystemInfo
+    ManagerInstanceNameValue, ManagerInstanceNameList, ManualTaskType, NotifyBackend, ScheduledTaskStatus, ScheduledTaskTypeValue, SoftwareInfo, SoftwareUpdateStatus, SoftwareUpdateTaskType, SystemInfo
 };
 use model::Permissions;
 use simple_backend::{app::GetManagerApi, create_counters};
@@ -65,7 +65,7 @@ const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
 #[utoipa::path(
     get,
     path = PATH_GET_SYSTEM_INFO,
-    params(ManagerInstanceName),
+    params(ManagerInstanceNameValue),
     responses(
         (status = 200, description = "Successful.", body = SystemInfo),
         (status = 401, description = "Unauthorized."),
@@ -76,7 +76,7 @@ const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
 pub async fn get_system_info(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
-    Query(manager): Query<ManagerInstanceName>,
+    Query(manager): Query<ManagerInstanceNameValue>,
 ) -> Result<Json<SystemInfo>, StatusCode> {
     COMMON_ADMIN.get_system_info.incr();
 
@@ -97,7 +97,7 @@ const PATH_GET_SOFTWARE_INFO: &str = "/common_api/software_info";
 #[utoipa::path(
     get,
     path = PATH_GET_SOFTWARE_INFO,
-    params(ManagerInstanceName),
+    params(ManagerInstanceNameValue),
     responses(
         (status = 200, description = "Get was successfull.", body = SoftwareUpdateStatus),
         (status = 401, description = "Unauthorized."),
@@ -108,7 +108,7 @@ const PATH_GET_SOFTWARE_INFO: &str = "/common_api/software_info";
 pub async fn get_software_update_status(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
-    Query(manager): Query<ManagerInstanceName>,
+    Query(manager): Query<ManagerInstanceNameValue>,
 ) -> Result<Json<SoftwareUpdateStatus>, StatusCode> {
     COMMON_ADMIN.get_software_update_status.incr();
 
@@ -129,7 +129,7 @@ const PATH_POST_TRIGGER_SOFTWARE_UPDATE_DOWNLOAD: &str = "/common_api/trigger_so
 #[utoipa::path(
     post,
     path = PATH_POST_TRIGGER_SOFTWARE_UPDATE_DOWNLOAD,
-    params(ManagerInstanceName),
+    params(ManagerInstanceNameValue),
     responses(
         (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
@@ -140,7 +140,7 @@ const PATH_POST_TRIGGER_SOFTWARE_UPDATE_DOWNLOAD: &str = "/common_api/trigger_so
 pub async fn post_trigger_software_update_download(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
-    Query(manager): Query<ManagerInstanceName>,
+    Query(manager): Query<ManagerInstanceNameValue>,
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_trigger_software_update_download.incr();
 
@@ -164,7 +164,7 @@ const PATH_POST_TRIGGER_SOFTWARE_UPDATE_INSTALL: &str = "/common_api/trigger_sof
 #[utoipa::path(
     post,
     path = PATH_POST_TRIGGER_SOFTWARE_UPDATE_INSTALL,
-    params(ManagerInstanceName, SoftwareInfo),
+    params(ManagerInstanceNameValue, SoftwareInfo),
     responses(
         (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
@@ -175,7 +175,7 @@ const PATH_POST_TRIGGER_SOFTWARE_UPDATE_INSTALL: &str = "/common_api/trigger_sof
 pub async fn post_trigger_software_update_install(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
-    Query(manager): Query<ManagerInstanceName>,
+    Query(manager): Query<ManagerInstanceNameValue>,
     Query(info): Query<SoftwareInfo>,
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_trigger_software_update_install.incr();
@@ -200,7 +200,7 @@ const PATH_POST_TRIGGER_BACKEND_DATA_RESET: &str = "/common_api/trigger_backend_
 #[utoipa::path(
     post,
     path = PATH_POST_TRIGGER_BACKEND_DATA_RESET,
-    params(ManagerInstanceName),
+    params(ManagerInstanceNameValue),
     responses(
         (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
@@ -211,7 +211,7 @@ const PATH_POST_TRIGGER_BACKEND_DATA_RESET: &str = "/common_api/trigger_backend_
 pub async fn post_trigger_backend_data_reset(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
-    Query(manager): Query<ManagerInstanceName>,
+    Query(manager): Query<ManagerInstanceNameValue>,
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_trigger_backend_data_reset.incr();
 
@@ -235,7 +235,7 @@ const PATH_POST_TRIGGER_BACKEND_RESTART: &str = "/common_api/trigger_backend_res
 #[utoipa::path(
     post,
     path = PATH_POST_TRIGGER_BACKEND_RESTART,
-    params(ManagerInstanceName),
+    params(ManagerInstanceNameValue),
     responses(
         (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
@@ -246,7 +246,7 @@ const PATH_POST_TRIGGER_BACKEND_RESTART: &str = "/common_api/trigger_backend_res
 pub async fn post_trigger_backend_restart(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
-    Query(manager): Query<ManagerInstanceName>,
+    Query(manager): Query<ManagerInstanceNameValue>,
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_trigger_backend_restart.incr();
 
@@ -270,7 +270,7 @@ const PATH_POST_TRIGGER_SYSTEM_REBOOT: &str = "/common_api/trigger_system_reboot
 #[utoipa::path(
     post,
     path = PATH_POST_TRIGGER_SYSTEM_REBOOT,
-    params(ManagerInstanceName),
+    params(ManagerInstanceNameValue),
     responses(
         (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
@@ -281,7 +281,7 @@ const PATH_POST_TRIGGER_SYSTEM_REBOOT: &str = "/common_api/trigger_system_reboot
 pub async fn post_trigger_system_reboot(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
-    Query(manager): Query<ManagerInstanceName>,
+    Query(manager): Query<ManagerInstanceNameValue>,
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_trigger_system_reboot.incr();
 
@@ -305,7 +305,7 @@ const PATH_GET_SCHEDULED_TASKS_STATUS: &str = "/common_api/scheduled_tasks_statu
 #[utoipa::path(
     get,
     path = PATH_GET_SCHEDULED_TASKS_STATUS,
-    params(ManagerInstanceName),
+    params(ManagerInstanceNameValue),
     responses(
         (status = 200, description = "Successful.", body = ScheduledTaskStatus),
         (status = 401, description = "Unauthorized."),
@@ -316,7 +316,7 @@ const PATH_GET_SCHEDULED_TASKS_STATUS: &str = "/common_api/scheduled_tasks_statu
 pub async fn get_scheduled_tasks_status(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
-    Query(manager): Query<ManagerInstanceName>,
+    Query(manager): Query<ManagerInstanceNameValue>,
 ) -> Result<Json<ScheduledTaskStatus>, StatusCode> {
     COMMON_ADMIN.get_software_update_status.incr();
 
@@ -337,7 +337,7 @@ const PATH_POST_SCHEDULE_TASK: &str = "/common_api/schedule_task";
 #[utoipa::path(
     post,
     path = PATH_POST_SCHEDULE_TASK,
-    params(ManagerInstanceName, ScheduledTaskTypeValue, NotifyBackend),
+    params(ManagerInstanceNameValue, ScheduledTaskTypeValue, NotifyBackend),
     responses(
         (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
@@ -348,7 +348,7 @@ const PATH_POST_SCHEDULE_TASK: &str = "/common_api/schedule_task";
 pub async fn post_schedule_task(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
-    Query(manager): Query<ManagerInstanceName>,
+    Query(manager): Query<ManagerInstanceNameValue>,
     Query(task): Query<ScheduledTaskTypeValue>,
     Query(notify_backend): Query<NotifyBackend>,
 ) -> Result<(), StatusCode> {
@@ -374,7 +374,7 @@ const PATH_POST_UNSCHEDULE_TASK: &str = "/common_api/unschedule_task";
 #[utoipa::path(
     post,
     path = PATH_POST_UNSCHEDULE_TASK,
-    params(ManagerInstanceName, ScheduledTaskTypeValue),
+    params(ManagerInstanceNameValue, ScheduledTaskTypeValue),
     responses(
         (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
@@ -385,7 +385,7 @@ const PATH_POST_UNSCHEDULE_TASK: &str = "/common_api/unschedule_task";
 pub async fn post_unschedule_task(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
-    Query(manager): Query<ManagerInstanceName>,
+    Query(manager): Query<ManagerInstanceNameValue>,
     Query(task): Query<ScheduledTaskTypeValue>,
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_unschedule_task.incr();

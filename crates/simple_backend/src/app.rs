@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use error_stack::ResultExt;
 use manager_api::{ClientError, ManagerClientWithRequestReceiver};
-use manager_model::ManagerInstanceName;
+use manager_model::ManagerInstanceNameValue;
 use simple_backend_config::SimpleBackendConfig;
 
 use super::manager_client::ManagerApiClient;
@@ -62,9 +62,9 @@ pub trait GetManagerApi {
 
     async fn manager_request_to(
         &self,
-        name: ManagerInstanceName
+        name: ManagerInstanceNameValue,
     ) -> error_stack::Result<ManagerClientWithRequestReceiver, ClientError> {
-        self.manager_api_client().new_request_to_instance(name).await
+        self.manager_api_client().new_request_to_instance(name.manager_name).await
     }
 }
 
