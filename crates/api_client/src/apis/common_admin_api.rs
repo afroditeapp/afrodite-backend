@@ -24,10 +24,10 @@ pub enum GetBackendConfigError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_latest_build_info`]
+/// struct for typed errors of method [`get_manager_instance_names`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum GetLatestBuildInfoError {
+pub enum GetManagerInstanceNamesError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -42,10 +42,19 @@ pub enum GetPerfDataError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_software_info`]
+/// struct for typed errors of method [`get_scheduled_tasks_status`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum GetSoftwareInfoError {
+pub enum GetScheduledTasksStatusError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`get_software_update_status`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetSoftwareUpdateStatusError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -69,19 +78,64 @@ pub enum PostBackendConfigError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_request_restart_or_reset_backend`]
+/// struct for typed errors of method [`post_schedule_task`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostRequestRestartOrResetBackendError {
+pub enum PostScheduleTaskError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_request_update_software`]
+/// struct for typed errors of method [`post_trigger_backend_data_reset`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostRequestUpdateSoftwareError {
+pub enum PostTriggerBackendDataResetError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_trigger_backend_restart`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostTriggerBackendRestartError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_trigger_software_update_download`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostTriggerSoftwareUpdateDownloadError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_trigger_software_update_install`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostTriggerSoftwareUpdateInstallError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_trigger_system_reboot`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostTriggerSystemRebootError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_unschedule_task`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostUnscheduleTaskError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -124,15 +178,15 @@ pub async fn get_backend_config(configuration: &configuration::Configuration, ) 
     }
 }
 
-pub async fn get_latest_build_info(configuration: &configuration::Configuration, software_options: models::SoftwareOptions) -> Result<models::BuildInfo, Error<GetLatestBuildInfoError>> {
+/// # Access * Permission [model::Permissions::admin_server_maintenance_view_info] * Permission [model::Permissions::admin_server_maintenance_update_software] * Permission [model::Permissions::admin_server_maintenance_reset_data] * Permission [model::Permissions::admin_server_maintenance_reboot_backend]
+pub async fn get_manager_instance_names(configuration: &configuration::Configuration, ) -> Result<models::ManagerInstanceNameList, Error<GetManagerInstanceNamesError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/common_api/get_latest_build_info", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/common_api/manager_instance_names", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
-    local_var_req_builder = local_var_req_builder.query(&[("software_options", &software_options.to_string())]);
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
@@ -154,7 +208,7 @@ pub async fn get_latest_build_info(configuration: &configuration::Configuration,
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<GetLatestBuildInfoError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<GetManagerInstanceNamesError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
@@ -202,14 +256,16 @@ pub async fn get_perf_data(configuration: &configuration::Configuration, start_t
     }
 }
 
-pub async fn get_software_info(configuration: &configuration::Configuration, ) -> Result<models::SoftwareInfo, Error<GetSoftwareInfoError>> {
+/// # Access * Permission [model::Permissions::admin_server_maintenance_reboot_backend]
+pub async fn get_scheduled_tasks_status(configuration: &configuration::Configuration, manager_name: &str) -> Result<models::ScheduledTaskStatus, Error<GetScheduledTasksStatusError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/common_api/software_info", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/common_api/scheduled_tasks_status", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
+    local_var_req_builder = local_var_req_builder.query(&[("manager_name", &manager_name.to_string())]);
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
@@ -231,13 +287,51 @@ pub async fn get_software_info(configuration: &configuration::Configuration, ) -
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<GetSoftwareInfoError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<GetScheduledTasksStatusError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
 }
 
-pub async fn get_system_info(configuration: &configuration::Configuration, ) -> Result<models::SystemInfoList, Error<GetSystemInfoError>> {
+/// # Access * Permission [model::Permissions::admin_server_maintenance_view_info]
+pub async fn get_software_update_status(configuration: &configuration::Configuration, manager_name: &str) -> Result<models::SoftwareUpdateStatus, Error<GetSoftwareUpdateStatusError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/common_api/software_info", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+    local_var_req_builder = local_var_req_builder.query(&[("manager_name", &manager_name.to_string())]);
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<GetSoftwareUpdateStatusError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+/// # Access * Permission [model::Permissions::admin_server_maintenance_view_info]
+pub async fn get_system_info(configuration: &configuration::Configuration, manager_name: &str) -> Result<models::SystemInfo, Error<GetSystemInfoError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -245,6 +339,7 @@ pub async fn get_system_info(configuration: &configuration::Configuration, ) -> 
     let local_var_uri_str = format!("{}/common_api/system_info", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
+    local_var_req_builder = local_var_req_builder.query(&[("manager_name", &manager_name.to_string())]);
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
@@ -309,16 +404,18 @@ pub async fn post_backend_config(configuration: &configuration::Configuration, b
     }
 }
 
-/// # Permissions Requires admin_server_maintenance_restart_backend. Also requires admin_server_maintenance_reset_data if reset_data is true.
-pub async fn post_request_restart_or_reset_backend(configuration: &configuration::Configuration, reset_data: bool) -> Result<(), Error<PostRequestRestartOrResetBackendError>> {
+/// # Access * Permission [model::Permissions::admin_server_maintenance_reboot_backend]
+pub async fn post_schedule_task(configuration: &configuration::Configuration, manager_name: &str, scheduled_task_type: models::ScheduledTaskType, notify_backend: bool) -> Result<(), Error<PostScheduleTaskError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/common_api/request_restart_or_reset_backend", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/common_api/schedule_task", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
-    local_var_req_builder = local_var_req_builder.query(&[("reset_data", &reset_data.to_string())]);
+    local_var_req_builder = local_var_req_builder.query(&[("manager_name", &manager_name.to_string())]);
+    local_var_req_builder = local_var_req_builder.query(&[("scheduled_task_type", &scheduled_task_type.to_string())]);
+    local_var_req_builder = local_var_req_builder.query(&[("notify_backend", &notify_backend.to_string())]);
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
@@ -340,24 +437,22 @@ pub async fn post_request_restart_or_reset_backend(configuration: &configuration
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         Ok(())
     } else {
-        let local_var_entity: Option<PostRequestRestartOrResetBackendError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<PostScheduleTaskError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
 }
 
-/// Reboot query parameter will force reboot of the server after update. If it is off, the server will be rebooted when the usual reboot check is done.  Reset data query parameter will reset data like defined in current app-manager version. If this is true then specific permission is needed for completing this request.  # Permissions Requires admin_server_maintenance_update_software. Also requires admin_server_maintenance_reset_data if reset_data is true.
-pub async fn post_request_update_software(configuration: &configuration::Configuration, software_options: models::SoftwareOptions, reboot: bool, reset_data: bool) -> Result<(), Error<PostRequestUpdateSoftwareError>> {
+/// # Access * Permission [model::Permissions::admin_server_maintenance_reset_data]
+pub async fn post_trigger_backend_data_reset(configuration: &configuration::Configuration, manager_name: &str) -> Result<(), Error<PostTriggerBackendDataResetError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/common_api/request_update_software", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/common_api/trigger_backend_data_reset", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
-    local_var_req_builder = local_var_req_builder.query(&[("software_options", &software_options.to_string())]);
-    local_var_req_builder = local_var_req_builder.query(&[("reboot", &reboot.to_string())]);
-    local_var_req_builder = local_var_req_builder.query(&[("reset_data", &reset_data.to_string())]);
+    local_var_req_builder = local_var_req_builder.query(&[("manager_name", &manager_name.to_string())]);
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
@@ -379,7 +474,195 @@ pub async fn post_request_update_software(configuration: &configuration::Configu
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         Ok(())
     } else {
-        let local_var_entity: Option<PostRequestUpdateSoftwareError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<PostTriggerBackendDataResetError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+/// # Access * Permission [model::Permissions::admin_server_maintenance_reboot_backend]
+pub async fn post_trigger_backend_restart(configuration: &configuration::Configuration, manager_name: &str) -> Result<(), Error<PostTriggerBackendRestartError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/common_api/trigger_backend_restart", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+    local_var_req_builder = local_var_req_builder.query(&[("manager_name", &manager_name.to_string())]);
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        Ok(())
+    } else {
+        let local_var_entity: Option<PostTriggerBackendRestartError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+/// # Access * Permission [model::Permissions::admin_server_maintenance_update_software]
+pub async fn post_trigger_software_update_download(configuration: &configuration::Configuration, manager_name: &str) -> Result<(), Error<PostTriggerSoftwareUpdateDownloadError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/common_api/trigger_software_update_download", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+    local_var_req_builder = local_var_req_builder.query(&[("manager_name", &manager_name.to_string())]);
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        Ok(())
+    } else {
+        let local_var_entity: Option<PostTriggerSoftwareUpdateDownloadError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+/// # Access * Permission [model::Permissions::admin_server_maintenance_update_software]
+pub async fn post_trigger_software_update_install(configuration: &configuration::Configuration, manager_name: &str, name: &str, sha256: &str) -> Result<(), Error<PostTriggerSoftwareUpdateInstallError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/common_api/trigger_software_update_install", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+    local_var_req_builder = local_var_req_builder.query(&[("manager_name", &manager_name.to_string())]);
+    local_var_req_builder = local_var_req_builder.query(&[("name", &name.to_string())]);
+    local_var_req_builder = local_var_req_builder.query(&[("sha256", &sha256.to_string())]);
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        Ok(())
+    } else {
+        let local_var_entity: Option<PostTriggerSoftwareUpdateInstallError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+/// # Access * Permission [model::Permissions::admin_server_maintenance_reboot_backend]
+pub async fn post_trigger_system_reboot(configuration: &configuration::Configuration, manager_name: &str) -> Result<(), Error<PostTriggerSystemRebootError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/common_api/trigger_system_reboot", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+    local_var_req_builder = local_var_req_builder.query(&[("manager_name", &manager_name.to_string())]);
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        Ok(())
+    } else {
+        let local_var_entity: Option<PostTriggerSystemRebootError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+/// # Access * Permission [model::Permissions::admin_server_maintenance_reboot_backend]
+pub async fn post_unschedule_task(configuration: &configuration::Configuration, manager_name: &str, scheduled_task_type: models::ScheduledTaskType) -> Result<(), Error<PostUnscheduleTaskError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/common_api/unschedule_task", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+    local_var_req_builder = local_var_req_builder.query(&[("manager_name", &manager_name.to_string())]);
+    local_var_req_builder = local_var_req_builder.query(&[("scheduled_task_type", &scheduled_task_type.to_string())]);
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        Ok(())
+    } else {
+        let local_var_entity: Option<PostUnscheduleTaskError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }

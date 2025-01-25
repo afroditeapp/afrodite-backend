@@ -15,21 +15,15 @@ use serde::{Deserialize, Serialize};
 pub struct ClientInfo {
     #[serde(rename = "client_type")]
     pub client_type: models::ClientType,
-    #[serde(rename = "major_version")]
-    pub major_version: i32,
-    #[serde(rename = "minor_version")]
-    pub minor_version: i32,
-    #[serde(rename = "patch_version")]
-    pub patch_version: i32,
+    #[serde(rename = "client_version")]
+    pub client_version: Box<models::ClientVersion>,
 }
 
 impl ClientInfo {
-    pub fn new(client_type: models::ClientType, major_version: i32, minor_version: i32, patch_version: i32) -> ClientInfo {
+    pub fn new(client_type: models::ClientType, client_version: models::ClientVersion) -> ClientInfo {
         ClientInfo {
             client_type,
-            major_version,
-            minor_version,
-            patch_version,
+            client_version: Box::new(client_version),
         }
     }
 }

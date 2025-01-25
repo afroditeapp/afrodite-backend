@@ -43,6 +43,8 @@ pub enum EventType {
     InitialContentModerationCompleted,
     #[serde(rename = "MediaContentChanged")]
     MediaContentChanged,
+    #[serde(rename = "ScheduledMaintenanceStatus")]
+    ScheduledMaintenanceStatus,
 
 }
 
@@ -63,6 +65,7 @@ impl std::fmt::Display for EventType {
             Self::NewsCountChanged => write!(f, "NewsCountChanged"),
             Self::InitialContentModerationCompleted => write!(f, "InitialContentModerationCompleted"),
             Self::MediaContentChanged => write!(f, "MediaContentChanged"),
+            Self::ScheduledMaintenanceStatus => write!(f, "ScheduledMaintenanceStatus"),
         }
     }
 }

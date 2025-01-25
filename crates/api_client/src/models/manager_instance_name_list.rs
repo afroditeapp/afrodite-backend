@@ -12,18 +12,15 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct SoftwareInfo {
-    #[serde(rename = "name")]
-    pub name: String,
-    #[serde(rename = "sha256")]
-    pub sha256: String,
+pub struct ManagerInstanceNameList {
+    #[serde(rename = "names")]
+    pub names: Vec<String>,
 }
 
-impl SoftwareInfo {
-    pub fn new(name: String, sha256: String) -> SoftwareInfo {
-        SoftwareInfo {
-            name,
-            sha256,
+impl ManagerInstanceNameList {
+    pub fn new(names: Vec<String>) -> ManagerInstanceNameList {
+        ManagerInstanceNameList {
+            names,
         }
     }
 }

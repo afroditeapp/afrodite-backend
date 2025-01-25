@@ -79,7 +79,7 @@ pub enum PostModerateProfileTextError {
 }
 
 
-/// # Access - Permission [model::Permissions::admin_find_account_by_email] - Permission [model::Permissions::admin_view_permissions]
+/// # Access - Permission [model::Permissions::admin_find_account_by_email] - Permission [model::Permissions::admin_view_permissions] - Permission [model::Permissions::admin_moderate_media_content] - Permission [model::Permissions::admin_moderate_profile_names] - Permission [model::Permissions::admin_moderate_profile_texts]
 pub async fn get_profile_age_and_name(configuration: &configuration::Configuration, aid: &str) -> Result<models::GetProfileAgeAndName, Error<GetProfileAgeAndNameError>> {
     let local_var_configuration = configuration;
 

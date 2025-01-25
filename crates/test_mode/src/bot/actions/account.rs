@@ -3,7 +3,7 @@ use std::{fmt::Debug, time::Duration};
 use api_client::{
     apis::{
         account_api::{self, get_account_state, post_account_setup, post_complete_setup},
-        account_internal_api::{post_login, post_register},
+        account_bot_api::{post_login, post_register},
     },
     models::{
         auth_pair, Account, AccountData, AccountStateContainer, BooleanSetting, EventToClient, ProfileVisibility

@@ -22,6 +22,9 @@ pub struct EventToClient {
     /// Data for event LatestViewedMessageChanged
     #[serde(rename = "latest_viewed_message_changed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub latest_viewed_message_changed: Option<Option<Box<models::LatestViewedMessageChanged>>>,
+    /// Data for event ScheduledMaintenanceStatus
+    #[serde(rename = "scheduled_maintenance_status", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub scheduled_maintenance_status: Option<Option<Box<models::ScheduledMaintenanceStatus>>>,
 }
 
 impl EventToClient {
@@ -31,6 +34,7 @@ impl EventToClient {
             content_processing_state_changed: None,
             event,
             latest_viewed_message_changed: None,
+            scheduled_maintenance_status: None,
         }
     }
 }

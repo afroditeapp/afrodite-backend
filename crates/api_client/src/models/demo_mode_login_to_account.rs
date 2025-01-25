@@ -15,14 +15,17 @@ use serde::{Deserialize, Serialize};
 pub struct DemoModeLoginToAccount {
     #[serde(rename = "aid")]
     pub aid: Box<models::AccountId>,
+    #[serde(rename = "client_info")]
+    pub client_info: Box<models::ClientInfo>,
     #[serde(rename = "token")]
     pub token: Box<models::DemoModeToken>,
 }
 
 impl DemoModeLoginToAccount {
-    pub fn new(aid: models::AccountId, token: models::DemoModeToken) -> DemoModeLoginToAccount {
+    pub fn new(aid: models::AccountId, client_info: models::ClientInfo, token: models::DemoModeToken) -> DemoModeLoginToAccount {
         DemoModeLoginToAccount {
             aid: Box::new(aid),
+            client_info: Box::new(client_info),
             token: Box::new(token),
         }
     }

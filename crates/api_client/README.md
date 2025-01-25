@@ -63,8 +63,8 @@ Class | Method | HTTP request | Description
 *AccountAdminApi* | [**post_set_news_publicity**](docs/AccountAdminApi.md#post_set_news_publicity) | **DELETE** /account_api/admin/set_news_publicity/{nid} | 
 *AccountAdminApi* | [**post_set_permissions**](docs/AccountAdminApi.md#post_set_permissions) | **POST** /account_api/set_permissions/{aid} | Set permissions for account
 *AccountAdminApi* | [**post_update_news_translation**](docs/AccountAdminApi.md#post_update_news_translation) | **POST** /account_api/admin/update_news_translation/{nid}/{locale} | 
-*AccountInternalApi* | [**post_login**](docs/AccountInternalApi.md#post_login) | **POST** /account_api/login | Get new AccessToken for a bot account. If the account is not registered as a bot account, then the request will fail.
-*AccountInternalApi* | [**post_register**](docs/AccountInternalApi.md#post_register) | **POST** /account_api/register | Register a new bot account. Returns new account ID which is UUID.
+*AccountBotApi* | [**post_login**](docs/AccountBotApi.md#post_login) | **POST** /account_api/login | Get new AccessToken for a bot account. If the account is not registered as a bot account, then the request will fail.
+*AccountBotApi* | [**post_register**](docs/AccountBotApi.md#post_register) | **POST** /account_api/register | Register a new bot account. Returns new account ID which is UUID.
 *ChatApi* | [**delete_like**](docs/ChatApi.md#delete_like) | **DELETE** /chat_api/delete_like | Delete sent like.
 *ChatApi* | [**get_matches**](docs/ChatApi.md#get_matches) | **GET** /chat_api/matches | Get matches
 *ChatApi* | [**get_message_number_of_latest_viewed_message**](docs/ChatApi.md#get_message_number_of_latest_viewed_message) | **GET** /chat_api/message_number_of_latest_viewed_message | Get message number of the most recent message that the recipient has viewed.
@@ -92,13 +92,19 @@ Class | Method | HTTP request | Description
 *CommonApi* | [**get_connect_websocket**](docs/CommonApi.md#get_connect_websocket) | **GET** /common_api/connect | Connect to server using WebSocket after getting refresh and access tokens. Connection is required as API access is allowed for connected clients.
 *CommonApi* | [**get_version**](docs/CommonApi.md#get_version) | **GET** /common_api/version | Get backend version.
 *CommonAdminApi* | [**get_backend_config**](docs/CommonAdminApi.md#get_backend_config) | **GET** /common_api/backend_config | Get dynamic backend config.
-*CommonAdminApi* | [**get_latest_build_info**](docs/CommonAdminApi.md#get_latest_build_info) | **GET** /common_api/get_latest_build_info | Get latest software build information available for update from manager instance.
+*CommonAdminApi* | [**get_manager_instance_names**](docs/CommonAdminApi.md#get_manager_instance_names) | **GET** /common_api/manager_instance_names | Get available manager instances.
 *CommonAdminApi* | [**get_perf_data**](docs/CommonAdminApi.md#get_perf_data) | **GET** /common_api/perf_data | Get performance data
-*CommonAdminApi* | [**get_software_info**](docs/CommonAdminApi.md#get_software_info) | **GET** /common_api/software_info | Get software version information from manager instance.
+*CommonAdminApi* | [**get_scheduled_tasks_status**](docs/CommonAdminApi.md#get_scheduled_tasks_status) | **GET** /common_api/scheduled_tasks_status | Get scheduled tasks status from manager instance.
+*CommonAdminApi* | [**get_software_update_status**](docs/CommonAdminApi.md#get_software_update_status) | **GET** /common_api/software_info | Get software version information from manager instance.
 *CommonAdminApi* | [**get_system_info**](docs/CommonAdminApi.md#get_system_info) | **GET** /common_api/system_info | Get system information from manager instance.
 *CommonAdminApi* | [**post_backend_config**](docs/CommonAdminApi.md#post_backend_config) | **POST** /common_api/backend_config | Save dynamic backend config.
-*CommonAdminApi* | [**post_request_restart_or_reset_backend**](docs/CommonAdminApi.md#post_request_restart_or_reset_backend) | **POST** /common_api/request_restart_or_reset_backend | Request restarting or reseting backend through app-manager instance.
-*CommonAdminApi* | [**post_request_update_software**](docs/CommonAdminApi.md#post_request_update_software) | **POST** /common_api/request_update_software | Request updating new software from manager instance.
+*CommonAdminApi* | [**post_schedule_task**](docs/CommonAdminApi.md#post_schedule_task) | **POST** /common_api/schedule_task | Schedule task.
+*CommonAdminApi* | [**post_trigger_backend_data_reset**](docs/CommonAdminApi.md#post_trigger_backend_data_reset) | **POST** /common_api/trigger_backend_data_reset | Trigger backend data reset which also restarts the backend.
+*CommonAdminApi* | [**post_trigger_backend_restart**](docs/CommonAdminApi.md#post_trigger_backend_restart) | **POST** /common_api/trigger_backend_restart | Trigger backend restart.
+*CommonAdminApi* | [**post_trigger_software_update_download**](docs/CommonAdminApi.md#post_trigger_software_update_download) | **POST** /common_api/trigger_software_update_download | Trigger software update download.
+*CommonAdminApi* | [**post_trigger_software_update_install**](docs/CommonAdminApi.md#post_trigger_software_update_install) | **POST** /common_api/trigger_software_update_install | Trigger software update install.
+*CommonAdminApi* | [**post_trigger_system_reboot**](docs/CommonAdminApi.md#post_trigger_system_reboot) | **POST** /common_api/trigger_system_reboot | Trigger system reboot.
+*CommonAdminApi* | [**post_unschedule_task**](docs/CommonAdminApi.md#post_unschedule_task) | **POST** /common_api/unschedule_task | Unschedule task.
 *MediaApi* | [**delete_content**](docs/MediaApi.md#delete_content) | **DELETE** /media_api/content/{aid}/{cid} | Delete content data.
 *MediaApi* | [**get_all_account_media_content**](docs/MediaApi.md#get_all_account_media_content) | **GET** /media_api/all_account_media_content/{aid} | Get list of all media content on the server for one account.
 *MediaApi* | [**get_content**](docs/MediaApi.md#get_content) | **GET** /media_api/content/{aid}/{cid} | Get content data
@@ -173,11 +179,11 @@ Class | Method | HTTP request | Description
  - [BackendVersion](docs/BackendVersion.md)
  - [BooleanSetting](docs/BooleanSetting.md)
  - [BotConfig](docs/BotConfig.md)
- - [BuildInfo](docs/BuildInfo.md)
  - [ClientId](docs/ClientId.md)
  - [ClientInfo](docs/ClientInfo.md)
  - [ClientLocalId](docs/ClientLocalId.md)
  - [ClientType](docs/ClientType.md)
+ - [ClientVersion](docs/ClientVersion.md)
  - [CommandOutput](docs/CommandOutput.md)
  - [ContentId](docs/ContentId.md)
  - [ContentInfo](docs/ContentInfo.md)
@@ -231,6 +237,8 @@ Class | Method | HTTP request | Description
  - [LimitedActionStatus](docs/LimitedActionStatus.md)
  - [Location](docs/Location.md)
  - [LoginResult](docs/LoginResult.md)
+ - [MaintenanceTask](docs/MaintenanceTask.md)
+ - [ManagerInstanceNameList](docs/ManagerInstanceNameList.md)
  - [MatchesIteratorSessionId](docs/MatchesIteratorSessionId.md)
  - [MatchesPage](docs/MatchesPage.md)
  - [MatchesSyncVersion](docs/MatchesSyncVersion.md)
@@ -313,6 +321,10 @@ Class | Method | HTTP request | Description
  - [ResetMatchesIteratorResult](docs/ResetMatchesIteratorResult.md)
  - [ResetNewsIteratorResult](docs/ResetNewsIteratorResult.md)
  - [ResetReceivedLikesIteratorResult](docs/ResetReceivedLikesIteratorResult.md)
+ - [ScheduledMaintenanceStatus](docs/ScheduledMaintenanceStatus.md)
+ - [ScheduledTaskStatus](docs/ScheduledTaskStatus.md)
+ - [ScheduledTaskType](docs/ScheduledTaskType.md)
+ - [ScheduledTaskTypeValue](docs/ScheduledTaskTypeValue.md)
  - [SearchGroups](docs/SearchGroups.md)
  - [SecurityContent](docs/SecurityContent.md)
  - [SendLikeResult](docs/SendLikeResult.md)
@@ -329,11 +341,11 @@ Class | Method | HTTP request | Description
  - [SetPublicKey](docs/SetPublicKey.md)
  - [SignInWithLoginInfo](docs/SignInWithLoginInfo.md)
  - [SoftwareInfo](docs/SoftwareInfo.md)
- - [SoftwareOptions](docs/SoftwareOptions.md)
+ - [SoftwareUpdateState](docs/SoftwareUpdateState.md)
+ - [SoftwareUpdateStatus](docs/SoftwareUpdateStatus.md)
  - [StatisticsProfileVisibility](docs/StatisticsProfileVisibility.md)
  - [SyncVersion](docs/SyncVersion.md)
  - [SystemInfo](docs/SystemInfo.md)
- - [SystemInfoList](docs/SystemInfoList.md)
  - [TimeGranularity](docs/TimeGranularity.md)
  - [Translation](docs/Translation.md)
  - [UnixTime](docs/UnixTime.md)

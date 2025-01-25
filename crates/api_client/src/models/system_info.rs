@@ -15,15 +15,12 @@ use serde::{Deserialize, Serialize};
 pub struct SystemInfo {
     #[serde(rename = "info")]
     pub info: Vec<models::CommandOutput>,
-    #[serde(rename = "name")]
-    pub name: String,
 }
 
 impl SystemInfo {
-    pub fn new(info: Vec<models::CommandOutput>, name: String) -> SystemInfo {
+    pub fn new(info: Vec<models::CommandOutput>) -> SystemInfo {
         SystemInfo {
             info,
-            name,
         }
     }
 }

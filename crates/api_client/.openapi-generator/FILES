@@ -4,7 +4,7 @@ README.md
 git_push.sh
 src/apis/account_admin_api.rs
 src/apis/account_api.rs
-src/apis/account_internal_api.rs
+src/apis/account_bot_api.rs
 src/apis/chat_api.rs
 src/apis/common_admin_api.rs
 src/apis/common_api.rs
@@ -41,11 +41,11 @@ src/models/backend_config.rs
 src/models/backend_version.rs
 src/models/boolean_setting.rs
 src/models/bot_config.rs
-src/models/build_info.rs
 src/models/client_id.rs
 src/models/client_info.rs
 src/models/client_local_id.rs
 src/models/client_type.rs
+src/models/client_version.rs
 src/models/command_output.rs
 src/models/content_id.rs
 src/models/content_info.rs
@@ -99,6 +99,8 @@ src/models/latest_viewed_message_changed.rs
 src/models/limited_action_status.rs
 src/models/location.rs
 src/models/login_result.rs
+src/models/maintenance_task.rs
+src/models/manager_instance_name_list.rs
 src/models/matches_iterator_session_id.rs
 src/models/matches_page.rs
 src/models/matches_sync_version.rs
@@ -182,6 +184,10 @@ src/models/refresh_token.rs
 src/models/reset_matches_iterator_result.rs
 src/models/reset_news_iterator_result.rs
 src/models/reset_received_likes_iterator_result.rs
+src/models/scheduled_maintenance_status.rs
+src/models/scheduled_task_status.rs
+src/models/scheduled_task_type.rs
+src/models/scheduled_task_type_value.rs
 src/models/search_groups.rs
 src/models/security_content.rs
 src/models/send_like_result.rs
@@ -198,11 +204,11 @@ src/models/set_profile_content.rs
 src/models/set_public_key.rs
 src/models/sign_in_with_login_info.rs
 src/models/software_info.rs
-src/models/software_options.rs
+src/models/software_update_state.rs
+src/models/software_update_status.rs
 src/models/statistics_profile_visibility.rs
 src/models/sync_version.rs
 src/models/system_info.rs
-src/models/system_info_list.rs
 src/models/time_granularity.rs
 src/models/translation.rs
 src/models/unix_time.rs
