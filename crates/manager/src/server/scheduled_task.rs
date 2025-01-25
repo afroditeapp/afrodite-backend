@@ -253,15 +253,15 @@ struct ScheduledTaksManagerInternal {
 impl ScheduledTaksManagerInternal {
     async fn run_scheduled_tasks(&self) {
         let mut state = self.internal_state.lock().await;
-        let result = if state.backend_restart.is_some() {
-            self.state
-                .task_manager()
-                .send_message(ManualTaskType::BackendRestart)
-                .await
-        } else if state.system_reboot.is_some() {
+        let result = if state.system_reboot.is_some() {
             self.state
                 .task_manager()
                 .send_message(ManualTaskType::SystemReboot)
+                .await
+        } else if state.backend_restart.is_some() {
+            self.state
+                .task_manager()
+                .send_message(ManualTaskType::BackendRestart)
                 .await
         } else {
             return;
