@@ -1,3 +1,6 @@
+use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[repr(u8)]
 pub enum WebSocketClientTypeNumber {
@@ -28,9 +31,7 @@ impl TryFrom<u8> for WebSocketClientTypeNumber {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct WebSocketClientInfo {
     pub client_type: WebSocketClientTypeNumber,
-    pub major_version: u16,
-    pub minor_version: u16,
-    pub patch_version: u16,
+    pub client_version: ClientVersion,
 }
 
 impl WebSocketClientInfo {
@@ -38,17 +39,26 @@ impl WebSocketClientInfo {
         match bytes {
             [client_type0, major0, major1, minor0, minor1, patch0, patch1] => {
                 let client_type = WebSocketClientTypeNumber::try_from(*client_type0)?;
-                let major_version = u16::from_le_bytes([*major0, *major1]);
-                let minor_version = u16::from_le_bytes([*minor0, *minor1]);
-                let patch_version = u16::from_le_bytes([*patch0, *patch1]);
+                let major = u16::from_le_bytes([*major0, *major1]);
+                let minor = u16::from_le_bytes([*minor0, *minor1]);
+                let patch = u16::from_le_bytes([*patch0, *patch1]);
                 Ok(Self {
                     client_type,
-                    major_version,
-                    minor_version,
-                    patch_version,
+                    client_version: ClientVersion {
+                        major,
+                        minor,
+                        patch,
+                    }
                 })
             }
             _ => Err(format!("Invalid input byte count {}", bytes.len())),
         }
     }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, ToSchema)]
+pub struct ClientVersion {
+    pub major: u16,
+    pub minor: u16,
+    pub patch: u16,
 }

@@ -3,7 +3,7 @@ use model_account::{
     AccessToken, AccountId, AuthPair, EmailAddress, GoogleAccountId, LoginResult, RefreshToken,
     SignInWithInfo, SignInWithLoginInfo,
 };
-use server_api::{db_write, db_write_multiple, S};
+use server_api::{app::GetConfig, db_write, db_write_multiple, S};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::{app::SignInWith, create_counters};
@@ -72,8 +72,10 @@ pub async fn post_sign_in_with_login(
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT.post_sign_in_with_login.incr();
 
-    if tokens.client_info.is_unsupported_client() {
-        return Ok(LoginResult::error_unsupported_client().into());
+    if let Some(min_version) = state.config().min_client_version() {
+        if !min_version.received_version_is_accepted(tokens.client_info.client_version) {
+            return Ok(LoginResult::error_unsupported_client().into());
+        }
     }
 
     if let Some(google) = tokens.google_token {

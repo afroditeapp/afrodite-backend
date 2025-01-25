@@ -1,9 +1,9 @@
 use std::time::Duration;
 
 use axum::extract::State;
-use model_account::{AccessibleAccount, AccountId, LoginResult, SignInWithInfo};
+use model_account::{AccessibleAccount, AccountId, DemoModeLoginToAccount, LoginResult, SignInWithInfo};
 use model_server_state::{
-    DemoModeConfirmLogin, DemoModeConfirmLoginResult, DemoModeLoginResult, DemoModeLoginToAccount,
+    DemoModeConfirmLogin, DemoModeConfirmLoginResult, DemoModeLoginResult,
     DemoModePassword, DemoModeToken,
 };
 use server_api::{
@@ -158,6 +158,12 @@ pub async fn post_demo_mode_login_to_account(
     Json(info): Json<DemoModeLoginToAccount>,
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT.post_demo_mode_login_to_account.incr();
+
+    if let Some(min_version) = state.config().min_client_version() {
+        if !min_version.received_version_is_accepted(info.client_info.client_version) {
+            return Ok(LoginResult::error_unsupported_client().into());
+        }
+    }
 
     let accessible_accounts = state
         .demo_mode()

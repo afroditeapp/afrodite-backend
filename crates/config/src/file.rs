@@ -4,7 +4,7 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
-use model::WebSocketClientInfo;
+use model::ClientVersion;
 // Re-export for test-mode crate
 pub use model_server_data::EmailAddress;
 use model_server_state::DemoModeId;
@@ -287,18 +287,18 @@ pub struct MinClientVersion {
 }
 
 impl MinClientVersion {
-    pub fn received_version_is_accepted(&self, received: WebSocketClientInfo) -> bool {
-        if received.major_version > self.major  {
+    pub fn received_version_is_accepted(&self, received: ClientVersion) -> bool {
+        if received.major > self.major  {
             true
-        } else if received.major_version < self.major {
+        } else if received.major < self.major {
             false
-        } else if received.minor_version > self.minor {
+        } else if received.minor > self.minor {
             true
-        } else if received.minor_version < self.minor {
+        } else if received.minor < self.minor {
             false
-        } else if received.patch_version > self.patch {
+        } else if received.patch > self.patch {
             true
-        } else if received.patch_version < self.patch {
+        } else if received.patch < self.patch {
             false
         } else {
             // Versions are equal

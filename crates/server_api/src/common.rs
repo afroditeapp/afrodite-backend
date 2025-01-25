@@ -308,7 +308,7 @@ async fn handle_socket_result(
                     }
 
                     if let Some(min_version) = state.config().min_client_version() {
-                        min_version.received_version_is_accepted(info)
+                        min_version.received_version_is_accepted(info.client_version)
                     } else {
                         true
                     }

@@ -2758,6 +2758,7 @@ dependencies = [
  "diesel",
  "model",
  "model_server_data",
+ "model_server_state",
  "serde",
  "simple_backend_model",
  "utils",

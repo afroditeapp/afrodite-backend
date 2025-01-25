@@ -89,12 +89,6 @@ impl DemoModeToken {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
-pub struct DemoModeLoginToAccount {
-    pub token: DemoModeToken,
-    pub aid: AccountId,
-}
-
 #[derive(
     Debug,
     Clone,

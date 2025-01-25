@@ -1,7 +1,8 @@
 use chrono::NaiveDate;
 use diesel::{prelude::*, Associations};
-use model::UnixTime;
+use model::{ClientVersion, UnixTime};
 use model_server_data::{AuthPair, EmailAddress, GoogleAccountId, PublicationId, SignInWithInfo};
+use model_server_state::DemoModeToken;
 use serde::{Deserialize, Serialize};
 use utils::time::age_in_years_from_birthdate;
 use utoipa::{IntoParams, ToSchema};
@@ -76,15 +77,14 @@ pub enum ClientType {
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, ToSchema)]
 pub struct ClientInfo {
     pub client_type: ClientType,
-    pub major_version: u16,
-    pub minor_version: u16,
-    pub patch_version: u16,
+    pub client_version: ClientVersion,
 }
 
-impl ClientInfo {
-    pub fn is_unsupported_client(&self) -> bool {
-        false
-    }
+#[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
+pub struct DemoModeLoginToAccount {
+    pub token: DemoModeToken,
+    pub aid: AccountId,
+    pub client_info: ClientInfo,
 }
 
 #[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
