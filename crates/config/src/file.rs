@@ -281,24 +281,24 @@ pub struct ProfiletNameAllowlistConfig {
 #[derive(Debug, Deserialize, Serialize, Clone, Copy)]
 #[serde(try_from = "String")]
 pub struct MinClientVersion {
-    pub major_version: u16,
-    pub minor_version: u16,
-    pub patch_version: u16,
+    pub major: u16,
+    pub minor: u16,
+    pub patch: u16,
 }
 
 impl MinClientVersion {
     pub fn received_version_is_accepted(&self, received: WebSocketClientInfo) -> bool {
-        if received.major_version > self.major_version  {
+        if received.major_version > self.major  {
             true
-        } else if received.major_version < self.major_version {
+        } else if received.major_version < self.major {
             false
-        } else if received.minor_version > self.minor_version {
+        } else if received.minor_version > self.minor {
             true
-        } else if received.minor_version < self.minor_version {
+        } else if received.minor_version < self.minor {
             false
-        } else if received.patch_version > self.patch_version {
+        } else if received.patch_version > self.patch {
             true
-        } else if received.patch_version < self.patch_version {
+        } else if received.patch_version < self.patch {
             false
         } else {
             // Versions are equal
@@ -316,14 +316,14 @@ impl TryFrom<String> for MinClientVersion {
         let minor_str = numbers.next().ok_or_else(error)?;
         let patch_str = numbers.next().ok_or_else(error)?;
 
-        let major_version = major_str.parse::<u16>().map_err(|e| e.to_string())?;
-        let minor_version = minor_str.parse::<u16>().map_err(|e| e.to_string())?;
-        let patch_version = patch_str.parse::<u16>().map_err(|e| e.to_string())?;
+        let major = major_str.parse::<u16>().map_err(|e| e.to_string())?;
+        let minor = minor_str.parse::<u16>().map_err(|e| e.to_string())?;
+        let patch = patch_str.parse::<u16>().map_err(|e| e.to_string())?;
 
         Ok(MinClientVersion {
-            major_version,
-            minor_version,
-            patch_version,
+            major,
+            minor,
+            patch,
         })
     }
 }

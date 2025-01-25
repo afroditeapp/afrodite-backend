@@ -11,6 +11,7 @@ use api_client::{
 };
 use async_trait::async_trait;
 use base64::Engine;
+use config::file::MinClientVersion;
 use error_stack::{Result, ResultExt};
 use futures::SinkExt;
 use headers::HeaderValue;
@@ -153,13 +154,15 @@ async fn connect_websocket(
 
     let web_socket_protocol_version: u8 = 0;
     let client_type_number = u8::MAX; // Test mode bot client type
-    let major_version = 0u16;
-    let minor_version = 0u16;
-    let patch_version = 0u16;
+    let version = state.server_config.min_client_version().unwrap_or(MinClientVersion {
+        major: 0,
+        minor: 0,
+        patch: 0,
+    });
     let mut version_bytes: Vec<u8> = vec![web_socket_protocol_version, client_type_number];
-    version_bytes.extend_from_slice(&major_version.to_le_bytes());
-    version_bytes.extend_from_slice(&minor_version.to_le_bytes());
-    version_bytes.extend_from_slice(&patch_version.to_le_bytes());
+    version_bytes.extend_from_slice(&version.major.to_le_bytes());
+    version_bytes.extend_from_slice(&version.minor.to_le_bytes());
+    version_bytes.extend_from_slice(&version.patch.to_le_bytes());
     stream
         .send(Message::Binary(version_bytes.into()))
         .await
