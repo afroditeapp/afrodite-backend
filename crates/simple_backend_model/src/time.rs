@@ -61,3 +61,11 @@ impl UnixTime {
 }
 
 diesel_i64_wrapper!(UnixTime);
+
+impl From<chrono::DateTime<chrono::Utc>> for UnixTime {
+    fn from(value: chrono::DateTime<chrono::Utc>) -> Self {
+        Self {
+            ut: value.timestamp()
+        }
+    }
+}

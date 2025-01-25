@@ -8,46 +8,54 @@ use tokio::time::sleep;
 pub enum SleepUntilClockIsAtError {
     #[error("Target time value is invalid")]
     TargetTimeValueInvalid,
-    #[error("Creating todays' target date time failed")]
-    DateTimeCreationForTodayFailed,
-    #[error("Creating tomorrow's target date time failed")]
-    DateTimeCreationForTomorrowFailed,
+    #[error("Creating tomorrow's date failed")]
+    DateCreationForTomorrowFailed,
 }
 
 pub async fn sleep_until_current_time_is_at(
     wanted_time: UtcTimeValue,
 ) -> Result<(), SleepUntilClockIsAtError> {
-    let duration_seconds = Duration::from_secs(seconds_until_current_time_is_at(wanted_time)?);
+    let current_time = Utc::now();
+    let duration_seconds = Duration::from_secs(seconds_until_current_time_is_at(current_time, wanted_time)?);
     sleep(duration_seconds).await;
     Ok(())
 }
 
-pub fn seconds_until_current_time_is_at(
+pub fn next_possible_utc_date_time_value_using_current_time(
     wanted_time: UtcTimeValue,
-) -> Result<u64, SleepUntilClockIsAtError> {
-    let now: chrono::DateTime<Utc> = Utc::now();
+) -> Result<chrono::DateTime<Utc>, SleepUntilClockIsAtError> {
+    next_possible_utc_date_time_value(Utc::now(), wanted_time)
+}
 
+fn next_possible_utc_date_time_value(
+    current_time: chrono::DateTime<Utc>,
+    wanted_time: UtcTimeValue,
+) -> Result<chrono::DateTime<Utc>, SleepUntilClockIsAtError> {
     let target_time =
         NaiveTime::from_hms_opt(wanted_time.0.hours.into(), wanted_time.0.minutes.into(), 0)
             .ok_or(SleepUntilClockIsAtError::TargetTimeValueInvalid)?;
 
-    let target_date_time = now
-        .with_time(target_time)
-        .single()
-        .ok_or(SleepUntilClockIsAtError::DateTimeCreationForTodayFailed)?;
+    let today_date = Utc::now().date_naive();
+    let tomorrow_date = today_date.succ_opt()
+        .ok_or(SleepUntilClockIsAtError::DateCreationForTomorrowFailed)?;
 
-    let duration = if target_date_time > now {
-        target_date_time - now
+    let today = today_date.and_time(target_time).and_utc();
+    let tomorrow = tomorrow_date.and_time(target_time).and_utc();
+
+    if current_time <= today {
+        Ok(today)
     } else {
-        let tomorrow = now + Duration::from_secs(24 * 60 * 60);
-        let tomorrow_target_date_time = tomorrow
-            .with_time(target_time)
-            .single()
-            .ok_or(SleepUntilClockIsAtError::DateTimeCreationForTomorrowFailed)?;
-        tomorrow_target_date_time - now
-    };
+        Ok(tomorrow)
+    }
+}
 
-    Ok(duration.abs().num_seconds() as u64)
+fn seconds_until_current_time_is_at(
+    current_time: chrono::DateTime<Utc>,
+    wanted_time: UtcTimeValue,
+) -> Result<u64, SleepUntilClockIsAtError> {
+    let next_time = next_possible_utc_date_time_value(current_time, wanted_time)?;
+    let time_until_wanted_time = next_time - current_time;
+    Ok(time_until_wanted_time.abs().num_seconds() as u64)
 }
 
 /// UTC time value

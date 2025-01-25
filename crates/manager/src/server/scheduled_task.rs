@@ -10,7 +10,7 @@ use futures::lock::Mutex;
 use manager_config::file::ScheduledTasksConfig;
 use manager_model::{MaintenanceTask, MaintenanceTime, ManualTaskType, ScheduledTaskStatus, ScheduledTaskType};
 use simple_backend_model::UnixTime;
-use simple_backend_utils::time::{seconds_until_current_time_is_at, sleep_until_current_time_is_at};
+use simple_backend_utils::time::{next_possible_utc_date_time_value_using_current_time, sleep_until_current_time_is_at};
 use tokio::{sync::mpsc, task::JoinHandle, time::sleep};
 use tracing::{info, warn};
 
@@ -346,10 +346,11 @@ impl ScheduledTaksManagerInternal {
     }
 
     fn task_start_time(&self) -> Result<UnixTime, ScheduledTaskError> {
-        let seconds = seconds_until_current_time_is_at(self.config.daily_start_time)
-            .change_context(ScheduledTaskError::TimeError)?;
-        let seconds = TryInto::<u32>::try_into(seconds)
-            .change_context(ScheduledTaskError::TimeError)?;
-        Ok(UnixTime::current_time().add_seconds(seconds))
+        let time = next_possible_utc_date_time_value_using_current_time(
+            self.config.daily_start_time
+        )
+            .change_context(ScheduledTaskError::TimeError)?
+            .into();
+        Ok(time)
     }
 }
