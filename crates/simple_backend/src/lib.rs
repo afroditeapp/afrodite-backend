@@ -33,7 +33,7 @@ use axum::Router;
 use futures::{future::poll_fn, StreamExt};
 use hyper::body::Incoming;
 use hyper_util::rt::{TokioExecutor, TokioIo};
-use manager_client::ManagerConnectionManager;
+use manager_client::{ManagerApiClient, ManagerConnectionManager, ManagerEventHandler};
 use media_backup::MediaBackupHandle;
 use perf::AllCounters;
 use rustls_platform_verifier::ConfigVerifierExt;
@@ -79,6 +79,7 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
         + GetSimpleBackendConfig
         + GetTileMap
         + PerfCounterDataProvider
+        + ManagerEventHandler
         + Send
         + Sync
         + Clone
@@ -226,11 +227,12 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         let perf_manager_quit_handle =
             PerfMetricsManager::new_manager(perf_data.clone(), server_quit_watcher.resubscribe());
 
-        let (manager, manager_quit_handle) = ManagerConnectionManager::new_manager(&self.config, server_quit_watcher.resubscribe())
+        let manager: Arc<ManagerApiClient> = ManagerApiClient::new(&self.config)
             .await
-            .expect("Manager connection manager init failed");
+            .expect("Creating manager API client failed")
+            .into();
 
-        let simple_state = SimpleBackendAppState::new(self.config.clone(), perf_data, manager)
+        let simple_state = SimpleBackendAppState::new(self.config.clone(), perf_data, manager.clone())
             .await
             .expect("State builder init failed");
 
@@ -242,6 +244,10 @@ impl<T: BusinessLogic> SimpleBackend<T> {
                 server_quit_watcher.resubscribe(),
             )
             .await;
+
+        let manager_quit_handle = ManagerConnectionManager::new_manager(manager, state.clone(), server_quit_watcher.resubscribe())
+            .await
+            .expect("Manager connection manager init failed");
 
         let (ws_manager, mut ws_watcher) =
             WebSocketManager::new(server_quit_watcher.resubscribe()).await;

@@ -3,9 +3,9 @@ use std::net::SocketAddr;
 use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
 use error_stack::ResultExt;
 use futures::Future;
+use manager_model::ServerEventType;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion,
-    Permissions,
+    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, EventToClientInternal, Permissions, ScheduledMaintenanceStatus
 };
 use server_data::{
     content_processing::ContentProcessingManagerData,
@@ -21,7 +21,7 @@ use simple_backend::{
     app::{
         FilePackageProvider, GetManagerApi, GetSimpleBackendConfig, GetTileMap,
         PerfCounterDataProvider, SignInWith,
-    }, file_package::FilePackageManager, manager_client::ManagerApiClient, map::TileMapManager, perf::PerfMetricsManagerData, sign_in_with::SignInWithManager
+    }, file_package::FilePackageManager, manager_client::{ManagerApiClient, ManagerEventHandler}, map::TileMapManager, perf::PerfMetricsManagerData, sign_in_with::SignInWithManager
 };
 use simple_backend_config::SimpleBackendConfig;
 
@@ -248,5 +248,20 @@ impl PerfCounterDataProvider for S {
 impl FilePackageProvider for S {
     fn file_package(&self) -> &FilePackageManager {
         &self.state.simple_backend_state.file_packages
+    }
+}
+
+impl ManagerEventHandler for S {
+    async fn handle(&self, event: &ServerEventType) {
+        match event {
+            ServerEventType::MaintenanceSchedulingStatus(status) => {
+                let status = ScheduledMaintenanceStatus {
+                    scheduled_maintenance: status.map(|v| v.0)
+                };
+                self.event_manager().send_connected_event_to_logged_in_clients(
+                    EventToClientInternal::ScheduledMaintenanceStatus(status),
+                ).await
+            }
+        }
     }
 }

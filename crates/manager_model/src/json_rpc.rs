@@ -177,5 +177,5 @@ pub enum ServerEventType {
     MaintenanceSchedulingStatus(Option<MaintenanceTime>),
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq)]
 pub struct MaintenanceTime(pub UnixTime);

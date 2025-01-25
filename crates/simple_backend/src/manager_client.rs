@@ -117,21 +117,22 @@ impl ManagerConnectionManagerQuitHandle {
     }
 }
 
-pub struct ManagerConnectionManager {
+pub struct ManagerConnectionManager<T: ManagerEventHandler> {
     client: Arc<ManagerApiClient>,
+    event_handler: T,
 }
 
-impl ManagerConnectionManager {
+impl <T: ManagerEventHandler> ManagerConnectionManager<T> {
     pub async fn new_manager(
-        config: &SimpleBackendConfig,
+        client: Arc<ManagerApiClient>,
+        event_handler: T,
         quit_notification: ServerQuitWatcher,
-    ) -> Result<(Arc<ManagerApiClient>, ManagerConnectionManagerQuitHandle), ClientError> {
-        let client = Arc::new(ManagerApiClient::new(config).await?);
-        let manager = Self { client: client.clone() };
+    ) -> Result<ManagerConnectionManagerQuitHandle, ClientError> {
+        let manager = Self { client: client.clone(), event_handler };
 
         let task = tokio::spawn(manager.run(quit_notification));
 
-        Ok((client, ManagerConnectionManagerQuitHandle { task }))
+        Ok(ManagerConnectionManagerQuitHandle { task })
     }
 
     async fn run(self, mut quit_notification: ServerQuitWatcher) {
@@ -149,7 +150,8 @@ impl ManagerConnectionManager {
     async fn handle_connection(&self) -> Result<(), ClientError> {
         let mut listener = self.client.listen_events().await?;
         loop {
-            match listener.next_event().await?.event() {
+            let event = listener.next_event().await?;
+            match event.event() {
                 ServerEventType::MaintenanceSchedulingStatus(time) => {
                     let ut = if let Some(time) = time {
                         time.0.ut
@@ -159,6 +161,11 @@ impl ManagerConnectionManager {
                     self.client.latest_scheduled_reboot.store(ut, Ordering::Relaxed);
                 }
             }
+            self.event_handler.handle(event.event()).await;
         }
     }
+}
+
+pub trait ManagerEventHandler: Send + Sync + 'static {
+    fn handle(&self, event: &ServerEventType) -> impl std::future::Future<Output = ()> + std::marker::Send;
 }
