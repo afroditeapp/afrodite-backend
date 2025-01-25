@@ -69,6 +69,9 @@ impl AdminBotProfileTextModerationLogic {
                 &profile_text_paragraph,
             );
 
+            // Hide warning about max_tokens as Ollama does not yet
+            // support max_completion_tokens.
+            #[allow(deprecated)]
             let r = client
                 .chat()
                 .create(CreateChatCompletionRequest {
@@ -80,6 +83,7 @@ impl AdminBotProfileTextModerationLogic {
                     temperature: Some(0.0),
                     seed: Some(0),
                     max_completion_tokens: Some(config.max_tokens),
+                    max_tokens: Some(config.max_tokens),
                     ..Default::default()
                 })
                 .await;
