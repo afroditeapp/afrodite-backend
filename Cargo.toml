@@ -144,7 +144,7 @@ inventory = "0.3.17"
 tokio-tungstenite = { version = "0.26.1", features = ["url"] }
 pgp = "0.14.2"
 bstr = "1.11.3"
-async-openai = "0.27.0"
+async-openai = "0.27.2"
 unicode-segmentation = "1.12.0"
 nsfw = { version = "0.2.0", default-features = false }
 
