@@ -10,6 +10,7 @@ fcm = { workspace = true }
 reqwest = { workspace = true }
 lettre = { workspace = true }
 tokio-tungstenite = { workspace = true }
+async-openai = { workspace = true }
 
 [features]
 enable = [
@@ -18,4 +19,5 @@ enable = [
     "lettre/tokio1-rustls-tls",
     "lettre/rustls-native-certs",
     "tokio-tungstenite/rustls-tls-native-roots",
+    "async-openai/rustls",
 ]
