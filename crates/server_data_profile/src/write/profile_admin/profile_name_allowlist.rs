@@ -32,9 +32,8 @@ impl WriteCommandsProfileAdminProfileNameAllowlist<'_> {
         }
         if current_profile_state
             .profile_name_moderation_state
-            .is_moderated()
+            .is_empty()
         {
-            // Already moderated
             return Err(DataError::NotAllowed.report());
         }
 

@@ -34,7 +34,7 @@ pub enum ProfileNameModerationState {
 impl ProfileNameModerationState {
     pub fn is_accepted(&self) -> bool {
         match self {
-            Self::Empty // TODO(prod): Check can this be here
+            Self::Empty
             | Self::AcceptedByBot
             | Self::AcceptedByHuman
             | Self::AcceptedUsingAllowlist => true,
@@ -45,15 +45,8 @@ impl ProfileNameModerationState {
         }
     }
 
-    pub fn is_moderated(&self) -> bool {
-        match self {
-            Self::AcceptedByBot
-            | Self::AcceptedByHuman
-            | Self::AcceptedUsingAllowlist
-            | Self::RejectedByBot
-            | Self::RejectedByHuman => true,
-            Self::Empty | Self::WaitingBotOrHumanModeration | Self::WaitingHumanModeration => false,
-        }
+    pub fn is_empty(&self) -> bool {
+        *self == Self::Empty
     }
 }
 
