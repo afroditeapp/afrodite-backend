@@ -1,12 +1,12 @@
-use axum::{extract::State, Extension};
+use axum::{extract::{Path, State}, Extension};
 use model_profile::{
-    AccountIdInternal, EventToClientInternal, GetProfileNamePendingModerationList, Permissions,
-    PostModerateProfileName,
+    AccountIdInternal, EventToClientInternal, GetProfileNamePendingModerationList, GetProfileNameState, Permissions, PostModerateProfileName
 };
 use server_api::{
     app::{GetAccounts, WriteData},
     create_open_api_router, db_write_multiple, S,
 };
+use model_profile::AccountId;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 
@@ -97,10 +97,54 @@ pub async fn post_moderate_profile_name(
     Ok(())
 }
 
+const PATH_GET_PROFILE_NAME_STATE: &str = "/profile_api/get_profile_name_state/{aid}";
+
+/// Get profile name state
+///
+/// # Access
+/// - Permission [model::Permissions::admin_moderate_profile_names]
+#[utoipa::path(
+    get,
+    path = PATH_GET_PROFILE_NAME_STATE,
+    params(AccountId),
+    responses(
+        (status = 200, description = "Successful.", body = GetProfileNameState),
+        (status = 401, description = "Unauthorized."),
+        (
+            status = 500,
+            description = "Internal server error.",
+        ),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_profile_name_state(
+    State(state): State<S>,
+    Extension(permissions): Extension<Permissions>,
+    Path(account_id): Path<AccountId>,
+) -> Result<Json<GetProfileNameState>, StatusCode> {
+    PROFILE.get_profile_name_state.incr();
+
+    if !permissions.admin_moderate_profile_names {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let name_owner_id = state.get_internal_id(account_id).await?;
+
+    let r = state.read().profile().my_profile(name_owner_id).await?;
+    let r = GetProfileNameState {
+        name: r.p.name,
+        state: r.name_moderation_state,
+    };
+
+    Ok(r.into())
+}
+
+
 create_open_api_router!(
         fn router_admin_profile_name_allowlist,
         get_profile_name_pending_moderation_list,
         post_moderate_profile_name,
+        get_profile_name_state,
 );
 
 create_counters!(
@@ -109,4 +153,5 @@ create_counters!(
     PROFILE_ADMIN_PROFILE_NAME_ALLOWLIST_COUNTERS_LIST,
     get_profile_name_pending_moderation_list,
     post_moderate_profile_name,
+    get_profile_name_state,
 );

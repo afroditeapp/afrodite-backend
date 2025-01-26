@@ -1,4 +1,5 @@
 use diesel::prelude::*;
+use model_server_data::ProfileNameModerationState;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -30,4 +31,11 @@ pub struct PostModerateProfileName {
     pub id: AccountId,
     pub name: String,
     pub accept: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct GetProfileNameState {
+    /// If empty, the profile name is not set.
+    pub name: String,
+    pub state: ProfileNameModerationState,
 }
