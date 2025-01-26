@@ -3,8 +3,7 @@ use model::{
     Account, AccountIdInternal, AccountState, EmailMessages, EventToClientInternal, Permissions,
 };
 use server_data::{
-    db_manager::RouterDatabaseReadHandle, read::GetReadCommandsCommon, result::WrappedContextExt,
-    write_commands::WriteCommandRunnerHandle, DataError,
+    cache::profile::UpdateLocationCacheState, db_manager::RouterDatabaseReadHandle, read::GetReadCommandsCommon, result::WrappedContextExt, write::GetWriteCommandsCommon, write_commands::WriteCommandRunnerHandle, DataError
 };
 use server_data_account::{
     read::GetReadCommandsAccount,
@@ -73,6 +72,10 @@ pub async fn complete_initial_setup(
                     .set_initial_profile_age_from_current_profile(id)
                     .await?;
 
+                cmds.common()
+                    .update_initial_setup_completed_unix_time(id)
+                    .await?;
+
                 let global_state = cmds.read().account().global_state().await?;
                 let enable_all_permissions = if matches_with_grant_admin_access_config
                     && (global_state.admin_access_granted_count == 0
@@ -100,6 +103,9 @@ pub async fn complete_initial_setup(
                         },
                     )
                     .await?;
+
+                // Update initial setup completed time to profile index
+                (&cmds.profile()).update_location_cache_profile(id).await?;
 
                 if !is_bot_account && !sign_in_with_info.some_sign_in_with_method_is_set() {
                     // Account registered email is not yet sent if email address

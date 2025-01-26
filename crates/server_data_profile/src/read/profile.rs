@@ -99,7 +99,7 @@ impl ReadCommandsProfile<'_> {
                 last_seen_time_filter: state.last_seen_time_filter,
                 unlimited_likes_filter: state.unlimited_likes_filter,
                 max_distance_km_filter: state.max_distance_km_filter,
-                account_created_filter: state.account_created_time_filter,
+                profile_created_filter: state.profile_created_time_filter,
                 profile_edited_filter: state.profile_edited_time_filter,
                 random_profile_order: state.random_profile_order,
             })

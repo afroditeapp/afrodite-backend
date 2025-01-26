@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use model_server_data::{AccountCreatedTimeFilter, AttributeId, MaxDistanceKm, ProfileAttributeFilterValue, ProfileEditedTimeFilter};
+use model_server_data::{ProfileCreatedTimeFilter, AttributeId, MaxDistanceKm, ProfileAttributeFilterValue, ProfileEditedTimeFilter};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -13,7 +13,7 @@ pub struct ProfileFilteringSettingsUpdate {
     last_seen_time_filter: Option<LastSeenTimeFilter>,
     unlimited_likes_filter: Option<bool>,
     max_distance_km_filter: Option<MaxDistanceKm>,
-    account_created_filter: Option<AccountCreatedTimeFilter>,
+    profile_created_filter: Option<ProfileCreatedTimeFilter>,
     profile_edited_filter: Option<ProfileEditedTimeFilter>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -63,9 +63,9 @@ impl ProfileFilteringSettingsUpdate {
             }
         }
 
-        if let Some(value) = self.account_created_filter {
+        if let Some(value) = self.profile_created_filter {
             if value.value < 0 {
-                return Err("Account created time filter can't be less than zero".to_string());
+                return Err("Profile created time filter can't be less than zero".to_string());
             }
         }
 
@@ -80,7 +80,7 @@ impl ProfileFilteringSettingsUpdate {
             last_seen_time_filter: self.last_seen_time_filter,
             unlimited_likes_filter: self.unlimited_likes_filter,
             max_distance_km_filter: self.max_distance_km_filter,
-            account_created_filter: self.account_created_filter,
+            profile_created_filter: self.profile_created_filter,
             profile_edited_filter: self.profile_edited_filter,
             random_profile_order: self.random_profile_order,
         })
@@ -93,7 +93,7 @@ pub struct ProfileFilteringSettingsUpdateValidated {
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
     pub max_distance_km_filter: Option<MaxDistanceKm>,
-    pub account_created_filter: Option<AccountCreatedTimeFilter>,
+    pub profile_created_filter: Option<ProfileCreatedTimeFilter>,
     pub profile_edited_filter: Option<ProfileEditedTimeFilter>,
     pub random_profile_order: bool,
 }
@@ -122,7 +122,7 @@ pub struct GetProfileFilteringSettings {
     ///
     /// The value must be `None`, 1 or greater number.
     pub max_distance_km_filter: Option<MaxDistanceKm>,
-    pub account_created_filter: Option<AccountCreatedTimeFilter>,
+    pub profile_created_filter: Option<ProfileCreatedTimeFilter>,
     pub profile_edited_filter: Option<ProfileEditedTimeFilter>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]

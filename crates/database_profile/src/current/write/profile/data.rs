@@ -262,7 +262,7 @@ impl CurrentWriteProfileData<'_> {
                 last_seen_time_filter.eq(settings.last_seen_time_filter),
                 unlimited_likes_filter.eq(settings.unlimited_likes_filter),
                 max_distance_km_filter.eq(settings.max_distance_km_filter),
-                account_created_time_filter.eq(settings.account_created_filter),
+                profile_created_time_filter.eq(settings.profile_created_filter),
                 profile_edited_time_filter.eq(settings.profile_edited_filter),
                 random_profile_order.eq(settings.random_profile_order),
             ))

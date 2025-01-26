@@ -115,6 +115,7 @@ pub async fn post_complete_setup(
 
     let new_account = state.data_all_access().complete_initial_setup(id).await?;
 
+    // TODO(microservice): initial setup completed time sync
     internal_api::common::sync_account_state(&state, id, new_account).await?;
 
     Ok(())

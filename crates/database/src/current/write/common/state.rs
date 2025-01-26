@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    Account, AccountCreatedTime, AccountIdInternal, AccountStateContainer, AccountStateRelatedSharedState, AccountSyncVersion, Permissions, ProfileVisibility, SharedStateRaw, SyncVersionUtils
+    Account, AccountIdInternal, AccountStateContainer, AccountStateRelatedSharedState, AccountSyncVersion, InitialSetupCompletedTime, Permissions, ProfileVisibility, SharedStateRaw, SyncVersionUtils
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
@@ -162,19 +162,19 @@ impl CurrentWriteCommonState<'_> {
         Ok(())
     }
 
-    pub fn update_account_created_unix_time(
+    pub fn update_initial_setup_completed_unix_time(
         &mut self,
         id: AccountIdInternal,
-    ) -> Result<(), DieselDatabaseError> {
+    ) -> Result<InitialSetupCompletedTime, DieselDatabaseError> {
         use model::schema::shared_state::dsl::*;
 
-        let current_time = AccountCreatedTime::current_time();
+        let current_time = InitialSetupCompletedTime::current_time();
 
         update(shared_state.find(id.as_db_id()))
-            .set(account_created_unix_time.eq(current_time))
+            .set(initial_setup_completed_unix_time.eq(current_time))
             .execute(self.conn())
             .into_db_error(id)?;
 
-        Ok(())
+        Ok(current_time)
     }
 }

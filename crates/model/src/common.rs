@@ -11,7 +11,7 @@ use utils::random_bytes::random_128_bits;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    schema_sqlite_types::Integer, Account, AccountCreatedTime, AccountStateContainer, ContentProcessingId, ContentProcessingState, MessageNumber, ProfileVisibility
+    schema_sqlite_types::Integer, Account, AccountStateContainer, ContentProcessingId, ContentProcessingState, InitialSetupCompletedTime, MessageNumber, ProfileVisibility
 };
 
 pub mod sync_version;
@@ -444,7 +444,7 @@ pub struct SharedStateRaw {
     pub unlimited_likes: bool,
     pub birthdate: Option<NaiveDate>,
     pub is_bot_account: bool,
-    pub account_created_unix_time: AccountCreatedTime,
+    pub initial_setup_completed_unix_time: InitialSetupCompletedTime,
 }
 
 #[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
@@ -465,7 +465,7 @@ pub struct OtherSharedState {
     pub unlimited_likes: bool,
     pub birthdate: Option<NaiveDate>,
     pub is_bot_account: bool,
-    pub account_created_unix_time: AccountCreatedTime,
+    pub initial_setup_completed_unix_time: InitialSetupCompletedTime,
 }
 
 impl AccountStateRelatedSharedState {

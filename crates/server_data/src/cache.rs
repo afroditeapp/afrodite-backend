@@ -628,7 +628,7 @@ impl CacheEntry {
             self.media.as_ref().map(|m| m.profile_content_version),
             self.common.other_shared_state.unlimited_likes,
             profile.last_seen_time(&self.common),
-            self.common.other_shared_state.account_created_unix_time,
+            self.common.other_shared_state.initial_setup_completed_unix_time,
             self.media.as_ref().map(|m| m.profile_content_edited_time),
         ))
     }

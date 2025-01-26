@@ -19,8 +19,8 @@ pub use index::*;
 mod last_time_seen;
 pub use last_time_seen::*;
 
-mod account_created_time;
-pub use account_created_time::*;
+mod profile_created_time;
+pub use profile_created_time::*;
 
 mod profile_edited_time;
 pub use profile_edited_time::*;
@@ -107,7 +107,7 @@ pub struct ProfileStateCached {
     pub search_group_flags: SearchGroupFlags,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
-    pub account_created_time_filter: Option<AccountCreatedTimeFilter>,
+    pub profile_created_time_filter: Option<ProfileCreatedTimeFilter>,
     pub profile_edited_time_filter: Option<ProfileEditedTimeFilter>,
     pub max_distance_km_filter: Option<MaxDistanceKm>,
     pub random_profile_order: bool,

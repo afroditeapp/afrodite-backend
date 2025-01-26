@@ -134,6 +134,7 @@ diesel::table! {
         unread_news_count -> Integer,
         publication_id_at_news_iterator_reset -> Nullable<Integer>,
         publication_id_at_unread_news_count_incrementing -> Nullable<Integer>,
+        account_created_unix_time -> Integer,
     }
 }
 
@@ -491,7 +492,7 @@ diesel::table! {
         last_seen_time_filter -> Nullable<Integer>,
         unlimited_likes_filter -> Nullable<Bool>,
         max_distance_km_filter -> Nullable<Integer>,
-        account_created_time_filter -> Nullable<Integer>,
+        profile_created_time_filter -> Nullable<Integer>,
         profile_edited_time_filter -> Nullable<Integer>,
         random_profile_order -> Bool,
         latitude -> Double,
@@ -553,7 +554,7 @@ diesel::table! {
         unlimited_likes -> Bool,
         birthdate -> Nullable<Date>,
         is_bot_account -> Bool,
-        account_created_unix_time -> Integer,
+        initial_setup_completed_unix_time -> Integer,
     }
 }
 

@@ -76,8 +76,8 @@ impl RegisterAccount<'_> {
 
         if config.components().account {
             current
-                .common()
-                .state()
+                .account()
+                .data()
                 .update_account_created_unix_time(id)?;
             current
                 .account()

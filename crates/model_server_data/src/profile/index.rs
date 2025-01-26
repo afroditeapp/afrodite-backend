@@ -1,11 +1,11 @@
 use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU16, Ordering};
 
-use model::{AccountCreatedTime, AccountId, ProfileAge, ProfileContentVersion};
+use model::{AccountId, InitialSetupCompletedTime, ProfileAge, ProfileContentVersion};
 use nalgebra::DMatrix;
 use simple_backend_model::UnixTime;
 
 use super::{
-    AccountCreatedTimeFilter, LastSeenTimeFilter, ProfileAttributeFilterValue, ProfileAttributesInternal, ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal, ProfileSearchAgeRangeValidated, ProfileStateCached, SearchGroupFlags, SearchGroupFlagsFilter, SortedProfileAttributes
+    ProfileCreatedTimeFilter, LastSeenTimeFilter, ProfileAttributeFilterValue, ProfileAttributesInternal, ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal, ProfileSearchAgeRangeValidated, ProfileStateCached, SearchGroupFlags, SearchGroupFlagsFilter, SortedProfileAttributes
 };
 use crate::{LastSeenTime, ProfileContentEditedTime, ProfileLink};
 
@@ -17,7 +17,7 @@ pub struct ProfileQueryMakerDetails {
     pub attribute_filters: Vec<ProfileAttributeFilterValue>,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
-    pub account_created_time_filter: Option<AccountCreatedTimeFilter>,
+    pub profile_created_time_filter: Option<ProfileCreatedTimeFilter>,
     pub profile_edited_time_filter: Option<ProfileEditedTimeFilter>,
 }
 
@@ -37,7 +37,7 @@ impl ProfileQueryMakerDetails {
             attribute_filters,
             last_seen_time_filter: state.last_seen_time_filter,
             unlimited_likes_filter: state.unlimited_likes_filter,
-            account_created_time_filter: state.account_created_time_filter,
+            profile_created_time_filter: state.profile_created_time_filter,
             profile_edited_time_filter: state.profile_edited_time_filter,
         }
     }
@@ -59,7 +59,7 @@ pub struct LocationIndexProfileData {
     /// - Value -1 is currently online
     /// - i64::MIN is None
     last_seen_time: AtomicI64,
-    account_created_time: AccountCreatedTime,
+    profile_created_time: InitialSetupCompletedTime,
     profile_edited_time: ProfileEditedTime,
     /// Option because media component might not be enabled
     profile_content_edited_time: Option<ProfileContentEditedTime>,
@@ -75,7 +75,7 @@ impl LocationIndexProfileData {
         profile_content_version: Option<ProfileContentVersion>,
         unlimited_likes: bool,
         last_seen_value: Option<LastSeenTime>,
-        account_created_time: AccountCreatedTime,
+        profile_created_time: InitialSetupCompletedTime,
         profile_content_edited_time: Option<ProfileContentEditedTime>,
     ) -> Self {
         Self {
@@ -93,7 +93,7 @@ impl LocationIndexProfileData {
             } else {
                 AtomicI64::new(i64::MIN)
             },
-            account_created_time,
+            profile_created_time,
             profile_edited_time: state.profile_edited_time,
             profile_content_edited_time,
         }
@@ -137,8 +137,8 @@ impl LocationIndexProfileData {
         }
 
         if is_match {
-            if let Some(account_created_time_filter) = query_maker_details.account_created_time_filter {
-                is_match &= account_created_time_filter.is_match(self.account_created_time, current_time);
+            if let Some(profile_created_time_filter) = query_maker_details.profile_created_time_filter {
+                is_match &= profile_created_time_filter.is_match(self.profile_created_time, current_time);
             }
         }
 

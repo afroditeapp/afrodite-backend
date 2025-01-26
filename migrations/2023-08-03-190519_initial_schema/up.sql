@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS shared_state(
     birthdate                 DATE,
     is_bot_account            BOOLEAN              NOT NULL DEFAULT 0,
     -- Profile component uses this info for profile filtering.
-    account_created_unix_time INTEGER              NOT NULL DEFAULT 0,
+    initial_setup_completed_unix_time INTEGER      NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -202,6 +202,7 @@ CREATE TABLE IF NOT EXISTS account_state(
     unread_news_count                  INTEGER             NOT NULL DEFAULT 0,
     publication_id_at_news_iterator_reset INTEGER,
     publication_id_at_unread_news_count_incrementing INTEGER,
+    account_created_unix_time          INTEGER             NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -289,8 +290,8 @@ CREATE TABLE IF NOT EXISTS profile_state(
     unlimited_likes_filter     BOOLEAN,
     -- Filter setting for profile iterator max distance in kilometers.
     max_distance_km_filter     INTEGER,
-    -- Filter setting for account created time in seconds.
-    account_created_time_filter INTEGER,
+    -- Filter setting for profile created time in seconds.
+    profile_created_time_filter INTEGER,
     -- Filter setting for profile edited time in seconds.
     profile_edited_time_filter INTEGER,
     -- Profile iterator setting for random profile order.

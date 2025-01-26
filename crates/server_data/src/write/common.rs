@@ -143,6 +143,23 @@ impl WriteCommandsCommon<'_> {
 
         Ok(())
     }
+
+    pub async fn update_initial_setup_completed_unix_time(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        let time = db_transaction!(self, move |mut cmds| {
+            cmds.common().state().update_initial_setup_completed_unix_time(id)
+        })?;
+
+        self.write_cache_common(id, |e| {
+            e.other_shared_state.initial_setup_completed_unix_time = time;
+            Ok(())
+        })
+        .await?;
+
+        Ok(())
+    }
 }
 
 pub trait UpdateLocationIndexVisibility {

@@ -11,8 +11,8 @@ use crate::{
 mod news;
 pub use news::*;
 
-mod account_created_time;
-pub use account_created_time::*;
+mod time;
+pub use time::*;
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct Account {

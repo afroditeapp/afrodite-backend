@@ -183,7 +183,7 @@ impl WriteCommandsProfile<'_> {
             p.state.last_seen_time_filter = filters.last_seen_time_filter;
             p.state.unlimited_likes_filter = filters.unlimited_likes_filter;
             p.state.max_distance_km_filter = filters.max_distance_km_filter;
-            p.state.account_created_time_filter = filters.account_created_filter;
+            p.state.profile_created_time_filter = filters.profile_created_filter;
             p.state.profile_edited_time_filter = filters.profile_edited_filter;
             p.state.random_profile_order = filters.random_profile_order;
 

@@ -3,7 +3,7 @@ use database::{
 };
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{AccountId, AccountIdInternal, ClientId};
+use model::{AccountCreatedTime, AccountId, AccountIdInternal, ClientId};
 use model_account::{AccountGlobalState, AccountInternal, EmailAddress, SetAccountSetup};
 
 use crate::IntoDatabaseError;
@@ -169,5 +169,21 @@ impl CurrentWriteAccountData<'_> {
             .into_db_error(random_aid)?;
 
         Ok(random_aid)
+    }
+
+    pub fn update_account_created_unix_time(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account_state::dsl::*;
+
+        let current_time = AccountCreatedTime::current_time();
+
+        update(account_state.find(id.as_db_id()))
+            .set(account_created_unix_time.eq(current_time))
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
     }
 }
