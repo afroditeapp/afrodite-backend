@@ -414,7 +414,7 @@ impl RefreshToken {
 }
 
 #[derive(
-    Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, FromSqlRow, AsExpression,
+    Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, FromSqlRow, AsExpression, ToSchema
 )]
 #[diesel(sql_type = BigInt)]
 #[serde(transparent)]

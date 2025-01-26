@@ -116,6 +116,10 @@ impl ApiDoc {
                     .into_openapi(),
             )
             .merge_from(
+                server_api_profile::profile_admin::router_admin_iterate_profiles(state.clone())
+                    .into_openapi(),
+            )
+            .merge_from(
                 server_api_profile::profile_admin::router_admin_profile_data(state.clone())
                     .into_openapi(),
             )
