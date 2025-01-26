@@ -119,6 +119,9 @@ pub async fn get_profile(
 
 const PATH_POST_PROFILE: &str = "/profile_api/profile";
 
+// TODO(prod): Consider requiring that the first letter in profile name is
+//             a capital letter.
+
 /// Update profile information.
 ///
 /// Writes the profile to the database only if it is changed.
