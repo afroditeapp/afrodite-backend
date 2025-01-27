@@ -16,7 +16,7 @@ use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(info(
-    title = "dating-app-backend",
+    title = "afrodite-backend",
     description = "Dating app backend API",
     version = "0.1.0",
     license(name = "", url = "https://example.com"),
