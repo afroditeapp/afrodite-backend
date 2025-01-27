@@ -141,8 +141,11 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**post_search_age_range**](docs/ProfileApi.md#post_search_age_range) | **POST** /profile_api/search_age_range | Set account's current search age range
 *ProfileApi* | [**post_search_groups**](docs/ProfileApi.md#post_search_groups) | **POST** /profile_api/search_groups | Set account's current search groups (gender and what gender user is looking for)
 *ProfileApi* | [**put_location**](docs/ProfileApi.md#put_location) | **PUT** /profile_api/location | Update location for account which makes this request.
+*ProfileAdminApi* | [**get_admin_profile_iterator_page**](docs/ProfileAdminApi.md#get_admin_profile_iterator_page) | **GET** /profile_api/get_admin_profile_iterator_page | Get admin profile iterator page
+*ProfileAdminApi* | [**get_latest_created_account_id_db**](docs/ProfileAdminApi.md#get_latest_created_account_id_db) | **GET** /profile_api/get_latest_created_account_id_db | Get latest created account ID DB
 *ProfileAdminApi* | [**get_profile_age_and_name**](docs/ProfileAdminApi.md#get_profile_age_and_name) | **GET** /profile_api/get_profile_age_and_name/{aid} | Get profile age and name
 *ProfileAdminApi* | [**get_profile_name_pending_moderation_list**](docs/ProfileAdminApi.md#get_profile_name_pending_moderation_list) | **GET** /profile_api/admin/profile_name_pending_moderation | 
+*ProfileAdminApi* | [**get_profile_name_state**](docs/ProfileAdminApi.md#get_profile_name_state) | **GET** /profile_api/get_profile_name_state/{aid} | Get profile name state
 *ProfileAdminApi* | [**get_profile_statistics_history**](docs/ProfileAdminApi.md#get_profile_statistics_history) | **GET** /profile_api/profile_statistics_history | 
 *ProfileAdminApi* | [**get_profile_text_pending_moderation_list**](docs/ProfileAdminApi.md#get_profile_text_pending_moderation_list) | **GET** /profile_api/admin/profile_text_pending_moderation | Get first page of pending profile text moderations. Oldest item is first and count 25.
 *ProfileAdminApi* | [**get_profile_text_state**](docs/ProfileAdminApi.md#get_profile_text_state) | **GET** /profile_api/get_profile_text_state/{aid} | Get profile text state
@@ -159,9 +162,9 @@ Class | Method | HTTP request | Description
  - [AccountBanReasonCategory](docs/AccountBanReasonCategory.md)
  - [AccountBanReasonDetails](docs/AccountBanReasonDetails.md)
  - [AccountContent](docs/AccountContent.md)
- - [AccountCreatedTimeFilter](docs/AccountCreatedTimeFilter.md)
  - [AccountData](docs/AccountData.md)
  - [AccountId](docs/AccountId.md)
+ - [AccountIdDbValue](docs/AccountIdDbValue.md)
  - [AccountSetup](docs/AccountSetup.md)
  - [AccountStateContainer](docs/AccountStateContainer.md)
  - [AccountSyncVersion](docs/AccountSyncVersion.md)
@@ -222,6 +225,7 @@ Class | Method | HTTP request | Description
  - [GetProfileContentResult](docs/GetProfileContentResult.md)
  - [GetProfileFilteringSettings](docs/GetProfileFilteringSettings.md)
  - [GetProfileNamePendingModerationList](docs/GetProfileNamePendingModerationList.md)
+ - [GetProfileNameState](docs/GetProfileNameState.md)
  - [GetProfileResult](docs/GetProfileResult.md)
  - [GetProfileStatisticsHistoryResult](docs/GetProfileStatisticsHistoryResult.md)
  - [GetProfileStatisticsResult](docs/GetProfileStatisticsResult.md)
@@ -288,8 +292,11 @@ Class | Method | HTTP request | Description
  - [ProfileContentModerationRejectedReasonDetails](docs/ProfileContentModerationRejectedReasonDetails.md)
  - [ProfileContentPendingModeration](docs/ProfileContentPendingModeration.md)
  - [ProfileContentVersion](docs/ProfileContentVersion.md)
+ - [ProfileCreatedTimeFilter](docs/ProfileCreatedTimeFilter.md)
  - [ProfileEditedTimeFilter](docs/ProfileEditedTimeFilter.md)
  - [ProfileFilteringSettingsUpdate](docs/ProfileFilteringSettingsUpdate.md)
+ - [ProfileIteratorPage](docs/ProfileIteratorPage.md)
+ - [ProfileIteratorPageValue](docs/ProfileIteratorPageValue.md)
  - [ProfileIteratorSessionId](docs/ProfileIteratorSessionId.md)
  - [ProfileLink](docs/ProfileLink.md)
  - [ProfileNameModerationState](docs/ProfileNameModerationState.md)
