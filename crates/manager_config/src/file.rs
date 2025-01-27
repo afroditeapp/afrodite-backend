@@ -19,8 +19,8 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # Required
 # manager_name = "default"
 # api_key = "password"
-# scripts_dir = "/app-server-tools/manager-tools"
-# storage_dir = "/app-secure-storage/app/app-manager-storage"
+# scripts_dir = "/afrodite-server-tools/manager-tools"
+# storage_dir = "/afrodite-secure-storage/afrodite/manager"
 
 # log_timestamp = true # optional
 
@@ -35,7 +35,7 @@ public_api = "127.0.0.1:4000"
 
 # [secure_storage]
 # key_storage_manager_name = "default"
-# availability_check_path = "/app-secure-storage/app"
+# availability_check_path = "/afrodite-secure-storage/afrodite"
 # -------- Optional --------
 # Fall back to local encryption key if the manager instance is not available.
 # Should not be used in production.
@@ -46,7 +46,7 @@ public_api = "127.0.0.1:4000"
 # key_path = "data-key.key"
 
 # [software_update]
-# backend_install_location = "/app-secure-storage/app/binaries/app-backend"
+# backend_install_location = "/home/afrodite/afrodite-backend"
 
 # [software_update.github]
 # owner = "TODO"
