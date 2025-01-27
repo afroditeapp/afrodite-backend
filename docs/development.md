@@ -44,56 +44,18 @@ openssl x509 -in server.crt -text -noout
 RUST_LOG=debug cargo run -- test --tasks 10 --save-state --no-servers --test bot
 ```
 
-# Update app-manager submodule to latest
-
-git submodule update --remote --merge
-
-
-# Building script for Multipass VM
-
-Script which can be used when when app-manager is installed to multipass VM
-and source files are mounted. Replace SRC_DIR_LOCATION with the location of
-mouted source directory.
-
-```bash
-#!/bin/bash -eux
-
-cd
-mkdir -p backend_src
-rsync -av --delete --progress --exclude="/target" /SRC_DIR_LOCATION/ ~/backend_src
-
-cd ~/backend_src
-cargo build --bin afrodite-backend --release
-sudo -u app mkdir -p /app-secure-storage/app/binaries
-sudo -u app mkdir -p /app-secure-storage/app/backend-working-dir
-sudo systemctl stop app-backend
-sudo cp target/release/afrodite-backend /app-secure-storage/app/binaries
-sudo chown app:app /app-secure-storage/app/binaries/afrodite-backend
-sudo systemctl restart app-backend
-sudo journalctl -u app-backend.service -b -e -f
-```
-
-Edit config file script:
-
-```bash
-#!/bin/bash -eux
-
-sudo -u app vim /app-secure-storage/app/backend-working-dir/server_config.toml
-```
-
-
 # Litestream
 
 Example config file:
 ```yml
 dbs:
- - path: /app-secure-storage/app/backend-working-dir/database/current/current.db
+ - path: /afrodite-secure-storage/afrodite/backend/database/current/current.db
    replicas:
      - type:    sftp
        host:    192.168.64.77:22
        user:    ubuntu
        path:    /home/ubuntu/litestream/current
-       key-path: /app-secure-storage/app/.ssh/id_ed25519
+       key-path: /afrodite-secure-storage/afrodite/.ssh/id_ed25519
 ```
 
 # Profiling build

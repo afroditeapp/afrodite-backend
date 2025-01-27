@@ -48,11 +48,13 @@ settings.
 Also optional filters can be set.
 
 * Max distance
-* Profile attributes (logical AND operation)
+* Profile attributes
 * Last seen time
-* Account created time
+* Profile created time
 * Profile edited time
 * Unlimited chat requests enabled boolean
+
+All enabled filters are chained together using logical AND operation.
 
 ### Favorite profiles
 
@@ -123,18 +125,30 @@ users about app version changelogs and terms of service updates.
 * Profile text moderation
 * Bot count configuration
 * Server performance metrics
+  * API usage
+  * WebSocket connection count
+  * CPU and RAM usage
 * Profile statistics
   * Private
   * History
 
-### With app-manager
+### With manager mode
 
-<https://github.com/jutuon/app-manager>
-
-* Backend restart
-* Backend reset
-* Software update
+* Backend data reset (for development only)
+* Backend restart (manual and scheduled)
+* System reboot (manual and scheduled)
+* Update backend binary from GitHub (manual)
 * Server logs
+
+## Manager mode
+
+The backend binary can be started in manager mode which for example
+can start the backend in server mode.
+
+* [Admin API related manager mode features](#with-manager-mode)
+* Maintenance break notifications
+* Automatic system reboot scheduling for Ubuntu
+* Secure storage management
 
 ## Bots
 
@@ -152,6 +166,11 @@ moderation.
 * Skin color based image moderation ([nude library](https://github.com/kpcyrd/nude-rs))
 * Neural network based image moderation ([nsfw library](https://github.com/Fyko/nsfw))
 * Large language model (LLM) based text moderation (OpenAI API compatible)
+
+## Other
+
+* Configurable minimum client version
+* Configurable API path obfuscation
 
 # Missing backend features
 
@@ -190,27 +209,13 @@ moderation.
 Admin can create automated and optional sweepstakes
 for users.
 
-## Performance metrics
+## Analytics
 
-* Active websocket connections
+* Client version tracking
 
 ## Backups
 
 * Daily backups
-
-## Backend management
-
-Move secure storage management, log viewing, backend restarting and reseting to
-backend binary so that app-manager is no longer needed when hosting on VPS.
-Software building related features from app-manager are not needed as backend
-updates are rare so manual updates are enough.
-
-<https://github.com/jutuon/app-manager>
-
-Consider also changing API obfuscation to happen from compile time to runtime
-so that public binary releases would be possible. The internal API port should
-host the non obfuscated API in this case to allow using the same generated API
-bindings for bots for example.
 
 # Possible future backend features
 
