@@ -44,7 +44,7 @@ CARGO_CRATE_ARGS = 	-p api_internal \
 					-p manager_api \
 					-p manager_config \
 					-p manager_model \
-					-p afrodite_backend
+					-p afrodite-backend
 
 ifdef CONTINUE_FROM
 TEST_QA_ARGS = --continue-from $(CONTINUE_FROM)
@@ -54,25 +54,25 @@ TMP_FILE = ./target/tmp_file_for_makefile
 
 # Default rule
 run:
-	RUST_LOG=$${RUST_LOG:-info} cargo run --bin afrodite_backend
+	RUST_LOG=$${RUST_LOG:-info} cargo run --bin afrodite-backend
 
 run-release:
-	RUST_LOG=$${RUST_LOG:-info} cargo run --bin afrodite_backend --release
+	RUST_LOG=$${RUST_LOG:-info} cargo run --bin afrodite-backend --release
 
 fmt:
 	cargo +nightly fmt $(CARGO_CRATE_ARGS)
 fix:
 	cargo fix ${CARGO_CRATE_ARGS}
 test:
-	RUST_LOG=info cargo run --bin afrodite_backend -- --sqlite-in-ram test ${TEST_ARGS} qa ${TEST_QA_ARGS}
+	RUST_LOG=info cargo run --bin afrodite-backend -- --sqlite-in-ram test ${TEST_ARGS} qa ${TEST_QA_ARGS}
 unit-test:
 	mkdir -p database/sqlite/current
 	DATABASE_URL="sqlite:database/sqlite/current/current.db" cargo test
 
 update-api-bindings-step-update-binary:
-	cargo build --bin afrodite_backend
+	cargo build --bin afrodite-backend
 update-api-bindings-step-generate-bindings:
-	./target/debug/afrodite_backend open-api > $(TMP_FILE)
+	./target/debug/afrodite-backend open-api > $(TMP_FILE)
 	openapi-generator-cli generate \
 	-i $(TMP_FILE) \
 	-g rust \
@@ -94,8 +94,8 @@ update-api-bindings: update-api-bindings-step-update-binary update-api-bindings-
 update-api-bindings-with-existing-binary: update-api-bindings-step-generate-bindings
 	echo "API bindings updated"
 validate-openapi:
-	cargo build --bin afrodite_backend
-	./target/debug/afrodite_backend open-api > $(TMP_FILE)
+	cargo build --bin afrodite-backend
+	./target/debug/afrodite-backend open-api > $(TMP_FILE)
 	openapi-generator-cli validate \
 	-i $(TMP_FILE)
 
@@ -107,7 +107,7 @@ reset-database:
 	DATABASE_URL="database/sqlite/current/current.db" diesel database reset
 
 profile-build:
-	RUSTC_BOOTSTRAP=1 RUSTFLAGS=-Zself-profile=target/profile-build cargo build --bin afrodite_backend
+	RUSTC_BOOTSTRAP=1 RUSTFLAGS=-Zself-profile=target/profile-build cargo build --bin afrodite-backend
 
 code-stats:
 	@/bin/echo -n "Lines:"
@@ -156,6 +156,6 @@ code-stats:
 	crates/manager_api \
 	crates/manager_config \
 	crates/manager_model \
-	crates/afrodite_backend \
+	crates/afrodite-backend \
 	-name '*.rs' | xargs wc -l | tail -n 1
 	@echo "\nCommits:   `git rev-list --count HEAD` total"

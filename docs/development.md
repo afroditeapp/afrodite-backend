@@ -63,12 +63,12 @@ mkdir -p backend_src
 rsync -av --delete --progress --exclude="/target" /SRC_DIR_LOCATION/ ~/backend_src
 
 cd ~/backend_src
-cargo build --bin afrodite_backend --release
+cargo build --bin afrodite-backend --release
 sudo -u app mkdir -p /app-secure-storage/app/binaries
 sudo -u app mkdir -p /app-secure-storage/app/backend-working-dir
 sudo systemctl stop app-backend
-sudo cp target/release/afrodite_backend /app-secure-storage/app/binaries
-sudo chown app:app /app-secure-storage/app/binaries/afrodite_backend
+sudo cp target/release/afrodite-backend /app-secure-storage/app/binaries
+sudo chown app:app /app-secure-storage/app/binaries/afrodite-backend
 sudo systemctl restart app-backend
 sudo journalctl -u app-backend.service -b -e -f
 ```
@@ -98,7 +98,7 @@ dbs:
 
 # Profiling build
 
-cargo build --bin afrodite_backend --timings
+cargo build --bin afrodite-backend --timings
 
 https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/self-profile.html
 Command for this is in Makefile.
