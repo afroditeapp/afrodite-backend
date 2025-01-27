@@ -16,7 +16,7 @@ pub const BUILD_INFO_CARGO_OPT_LEVEL: &str = env!("VERGEN_CARGO_OPT_LEVEL");
 
 pub fn build_info() -> String {
     format!(
-        "name:{}\nversion: {}\ngit commit hash: {}\ngit describe: {}\ngit branch: {}\nrustc semver: {}\nrustc host triple: {}\ncargo target triple: {}\ncargo debug: {}\ncargo features: {}\ncargo opt level: {}",
+        "name: {}\nversion: {}\ngit commit hash: {}\ngit describe: {}\ngit branch: {}\nrustc semver: {}\nrustc host triple: {}\ncargo target triple: {}\ncargo debug: {}\ncargo features: {}\ncargo opt level: {}",
         BUILD_INFO_CARGO_PKG_NAME,
         BUILD_INFO_CARGO_PKG_VERSION,
         BUILD_INFO_GIT_COMMIT_HASH,
