@@ -1,5 +1,5 @@
 /*
- * dating-app-backend
+ * afrodite-backend
  *
  * Dating app backend API
  *
