@@ -6,6 +6,7 @@ use std::{
     sync::Arc,
 };
 
+use archive::extract_backend_binary;
 use backend::BackendUtils;
 use error_stack::{report, Result, ResultExt};
 use github::GitHubApi;
@@ -23,6 +24,7 @@ use crate::{
 };
 use manager_config::{file::SoftwareUpdateConfig, Config};
 
+pub mod archive;
 pub mod github;
 pub mod backend;
 
@@ -109,6 +111,15 @@ pub enum UpdateError {
 
     #[error("Backend utils error")]
     BackendUtils,
+
+    #[error("Archive error")]
+    Archive,
+
+    #[error("Backend is not found from the archive")]
+    ArchiveBackendNotFound,
+
+    #[error("Multiple matching files in the archive")]
+    ArchiveMultipleMatchingFiles,
 }
 
 #[derive(Debug)]
@@ -341,7 +352,7 @@ impl UpdateManagerInternal {
 
         if let Some(downloaded) = self.update_dir().downloaded_backend_info().await? {
             if downloaded.name == asset.name {
-                // Already downloaded
+                info!("Already downloaded");
                 return Ok(());
             }
         }
@@ -378,7 +389,7 @@ impl UpdateManagerInternal {
     ) -> Result<(), UpdateError> {
         if let Some(installed) = self.update_dir().installed_backend_info().await? {
             if info == installed {
-                // Already installed
+                info!("Already installed");
                 return Ok(());
             }
         }
@@ -391,8 +402,20 @@ impl UpdateManagerInternal {
             return Err(UpdateError::SelectedVersionNotFound.report());
         }
 
+        let backend_binary = if let Some(archive_file_path) = &self.config.github.archive_backend_binary_path {
+            let extracted = self.update_dir().extracted_backend_path();
+            extract_backend_binary(
+                self.update_dir().downloaded_backend_path(),
+                archive_file_path.clone(),
+                extracted.clone(),
+            ).await?;
+            extracted
+        } else {
+            self.update_dir().downloaded_backend_path()
+        };
+
         self.backend_utils().replace_backend_binary(
-            &self.update_dir().downloaded_backend_path()
+            &backend_binary
         )
             .await
             .change_context(UpdateError::BackendUtils)?;
@@ -449,12 +472,17 @@ impl UpdateDirUtils<'_> {
 
     fn downloaded_backend_path(&self) -> PathBuf {
         self.create_update_dir_if_needed()
-            .join("downloaded_backend.bin")
+            .join("downloaded_backend")
     }
 
     fn downloaded_backend_info_json_path(&self) -> PathBuf {
         self.create_update_dir_if_needed()
             .join("downloaded_backend.json")
+    }
+
+    fn extracted_backend_path(&self) -> PathBuf {
+        self.create_update_dir_if_needed()
+            .join("extracted_backend")
     }
 
     fn installed_backend_info_json_path(&self) -> PathBuf {

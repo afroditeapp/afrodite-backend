@@ -53,6 +53,7 @@ public_api = "127.0.0.1:4000"
 # repository = "TODO"
 # file_name_ending = "TODO"
 # uploader = "TODO" # Optional
+# archive_backend_binary_path = "TODO" # Optional
 
 # [manual_tasks]
 # allow_backend_restart = true
@@ -246,7 +247,20 @@ pub struct SoftwareUpdateGitHubConfig {
     pub file_name_ending: String,
     /// Require specific release asset uploader.
     pub uploader: Option<String>,
+    /// Selected release asset is an `.tar.gz`
+    /// archive and backend binary is in the archive at
+    /// this path.
+    ///
+    /// If path component is `*` then any string will match it.
+    /// If the archive has multiple matching files the extracting
+    /// will fail.
+    pub archive_backend_binary_path: Option<SimplePatternPath>,
 }
+
+/// File path where path components might be equal with `*` string value.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(transparent)]
+pub struct SimplePatternPath(pub PathBuf);
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
 pub struct ManualTasksConfig {
