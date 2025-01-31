@@ -75,9 +75,9 @@ public_api = "127.0.0.1:4000"
 # log_services = ["afrodite-manager", "afrodite-backend"]
 
 # [tls]
-# public_api_cert = "tls/server.crt"
-# public_api_key = "tls/server.key"
-# root_certificate = "tls/root.crt"
+# public_api_cert = "manager-tls/server.crt"
+# public_api_key = "manager-tls/server.key"
+# root_certificate = "manager-tls/root.crt"
 "#;
 
 #[derive(thiserror::Error, Debug)]
