@@ -12,6 +12,8 @@ use url::Url;
 
 use super::GetConfigError;
 
+// TODO(prod): Add secure storage expanding support
+
 pub const CONFIG_FILE_NAME: &str = "manager_config.toml";
 
 pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
