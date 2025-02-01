@@ -445,7 +445,9 @@ fn generate_server_config(
 
 fn load_root_certificate(cert_path: &Path) -> Result<reqwest::Certificate, GetConfigError> {
     let mut cert_reader = BufReader::new(
-        std::fs::File::open(cert_path).change_context(GetConfigError::CreateTlsConfig)?,
+        std::fs::File::open(cert_path)
+            .change_context(GetConfigError::CreateTlsConfig)
+            .attach_printable_lazy(|| cert_path.to_string_lossy().to_string())?
     );
     let all_certs: Vec<_> = certs(&mut cert_reader).collect();
     let mut cert_iter = all_certs.into_iter();
