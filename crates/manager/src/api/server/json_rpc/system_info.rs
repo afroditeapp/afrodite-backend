@@ -12,14 +12,14 @@ use super::JsonRpcError;
 
 pub trait RpcSystemInfo: GetConfig {
     async fn rpc_get_manager_instance_names(&self) -> Result<JsonRpcResponse, JsonRpcError> {
-        let current_manager = [ManagerInstanceName::new(self.config().manager_name().to_string())];
+        let mut accessible_instances = vec![ManagerInstanceName::new(self.config().manager_name().to_string())];
 
-        let accessible_instances = self.config()
+        let remote_managers = self.config()
             .remote_managers()
             .iter()
-            .map(|v| v.manager_name.clone())
-            .chain(current_manager)
-            .collect::<Vec<ManagerInstanceName>>();
+            .map(|v| v.manager_name.clone());
+
+        accessible_instances.extend(remote_managers);
 
         Ok(JsonRpcResponse::manager_instance_names(accessible_instances))
     }
