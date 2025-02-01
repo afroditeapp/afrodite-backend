@@ -40,9 +40,9 @@ name = "history"
 
 # [manager]
 # manager_name = "default"
-# address = "http://127.0.0.1:4000"
+# address = "tls://localhost:4000"
 # api_key = "TODO"
-# root_certificate = "server_config/root_certificate.crt"
+# root_certificate = "/home/afrodite/manager-tls/root.crt"
 
 # [tile_map]
 # tile_dir = "/map_tiles"
