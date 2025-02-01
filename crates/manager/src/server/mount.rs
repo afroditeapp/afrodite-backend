@@ -106,7 +106,7 @@ impl MountManager {
         let (key, mut mode) = match key {
             Ok(key) => (Some(key), MountMode::MountedWithRemoteKey),
             Err(e) => {
-                error!("Getting encryption key failed: {}", e);
+                error!("Getting encryption key failed: {:?}", e);
                 if let Some(text) = &storage_config.encryption_key_text {
                     warn!("Using local encryption key. This shouldn't be done in production!");
                     (
