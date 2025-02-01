@@ -39,7 +39,7 @@ name = "current"
 name = "history"
 
 # [manager]
-# name = "default"
+# manager_name = "default"
 # address = "http://127.0.0.1:4000"
 # api_key = "TODO"
 # root_certificate = "server_config/root_certificate.crt"
@@ -112,6 +112,10 @@ name = "history"
 # pyramid_scale_factor = 0.5
 
 "#;
+
+// TODO(prod): Consider changing manager config
+// remote_manager.manager_name to remote_manager.name and
+// simple backend config manager.manager_name to manager.name.
 
 #[derive(thiserror::Error, Debug)]
 pub enum ConfigFileError {
