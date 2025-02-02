@@ -186,6 +186,8 @@ impl AppServer {
 
         // Start backend if it is installed
 
+        // TODO(prod): Add specific config for backend automatic starting
+
         if let Some(update_config) = self.config.software_update_provider() {
             if update_config.backend_install_location.exists() {
                 info!("Starting backend");
