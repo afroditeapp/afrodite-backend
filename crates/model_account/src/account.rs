@@ -211,3 +211,9 @@ impl AccountGlobalState {
     /// Key for the only row in the table
     pub const ACCOUNT_GLOBAL_STATE_ROW_TYPE: i64 = 0;
 }
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct RemoteBotLogin {
+    pub aid: AccountId,
+    pub password: String,
+}

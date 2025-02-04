@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 tokio = { workspace = true }
 axum = { workspace = true }
+tracing = { workspace = true }
 
 utoipa = { workspace = true }
 utoipa-axum = { workspace = true }

@@ -1,11 +1,16 @@
 //! Account related internal API routes
 
+use std::{collections::HashSet, sync::LazyLock};
+
 use axum::extract::State;
-use model_account::{AccountId, LoginResult, SignInWithInfo};
-use server_api::{db_write, S};
+use model_account::{AccountId, RemoteBotLogin, LoginResult, SignInWithInfo};
+use server_api::{app::GetConfig, db_write, S};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::read::GetReadCommandsAccount;
 use simple_backend::create_counters;
+use tokio::sync::Mutex;
+
+use tracing::info;
 
 use super::account::login_impl;
 use crate::{
@@ -75,10 +80,66 @@ pub async fn post_register(State(state): State<S>) -> Result<Json<AccountId>, St
     Ok(new_account_id.as_id().into())
 }
 
+pub struct RemoteBotLoginState {
+    blocked: HashSet<AccountId>,
+}
+
+static REMOTE_BOT_LOGIN_STATE: LazyLock<Mutex<RemoteBotLoginState>> = std::sync::LazyLock::new(
+    || Mutex::new(
+        RemoteBotLoginState { blocked: HashSet::new() }
+    )
+);
+
+pub const PATH_REMOTE_BOT_LOGIN: &str = "/account_api/remote_bot_login";
+
+/// Login for remote bots which are listed in server config file.
+#[utoipa::path(
+    post,
+    path = PATH_REMOTE_BOT_LOGIN,
+    security(),
+    request_body = RemoteBotLogin,
+    responses(
+        (status = 200, description = "Login successful.", body = LoginResult),
+        (status = 500, description = "Internal server error."),
+    ),
+)]
+pub async fn post_remote_bot_login(
+    State(state): State<S>,
+    Json(info): Json<RemoteBotLogin>,
+) -> Result<Json<LoginResult>, StatusCode> {
+    ACCOUNT_BOT.post_remote_bot_login.incr();
+
+    let internal_id = state.get_internal_id(info.aid).await?;
+    let is_bot = state.read().account().is_bot_account(internal_id).await?;
+    if !is_bot {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let mut bot_login_state = REMOTE_BOT_LOGIN_STATE.lock().await;
+    if bot_login_state.blocked.contains(&info.aid) {
+        info!("Remote bot login is blocked for account {}", info.aid);
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let bots = state.config().remote_bots();
+    let Some(configured_bot) = bots.iter().find(|v| v.account_id == info.aid) else {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    };
+
+    if configured_bot.password != info.password {
+        info!("Remote bot login failed. Wrong password for account {}", info.aid);
+        bot_login_state.blocked.insert(info.aid);
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    login_impl(info.aid, state).await.map(|d| d.into())
+}
+
 create_counters!(
     AccountBotCounters,
     ACCOUNT_BOT,
     ACCOUNT_BOT_COUNTERS_LIST,
     post_login,
     post_register,
+    post_remote_bot_login,
 );

@@ -16,7 +16,7 @@ use std::{path::Path, sync::Arc};
 use args::{AppMode, ArgsConfig};
 use chrono::FixedOffset;
 use error_stack::{Result, ResultExt};
-use file::{AccountLimitsConfig, ChatLimitsConfig, DemoModeConfig, GrantAdminAccessConfig, MediaLimitsConfig, MinClientVersion};
+use file::{AccountLimitsConfig, ChatLimitsConfig, DemoModeConfig, GrantAdminAccessConfig, MediaLimitsConfig, MinClientVersion, RemoteBotConfig};
 use file_dynamic::ConfigFileDynamic;
 use file_email_content::EmailContentFile;
 use model::BotConfig;
@@ -199,6 +199,10 @@ impl Config {
 
     pub fn min_client_version(&self) -> Option<MinClientVersion> {
         self.file.min_client_version
+    }
+
+    pub fn remote_bots(&self) -> Vec<RemoteBotConfig> {
+        self.file.remote_bot.clone().unwrap_or_default()
     }
 }
 

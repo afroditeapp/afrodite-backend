@@ -237,6 +237,7 @@ fn new_config(
         demo_mode: None,
         limits: None,
         profile_name_allowlist: None,
+        remote_bot: None,
     };
 
     let simple_backend_config = SimpleBackendConfigFile {

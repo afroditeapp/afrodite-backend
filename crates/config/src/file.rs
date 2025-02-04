@@ -1,16 +1,15 @@
 use std::{
-    num::NonZeroU8,
-    path::{Path, PathBuf},
+    collections::HashSet, num::NonZeroU8, path::{Path, PathBuf}
 };
 
 use error_stack::{Result, ResultExt};
-use model::ClientVersion;
+use model::{AccountId, ClientVersion};
 // Re-export for test-mode crate
 pub use model_server_data::EmailAddress;
 use model_server_state::DemoModeId;
 use serde::{Deserialize, Serialize};
 use simple_backend_config::file::ConfigFileUtils;
-use simple_backend_utils::time::DurationValue;
+use simple_backend_utils::{time::DurationValue, ContextExt};
 use url::Url;
 
 // Kilpisjärvi ja Nuorgam
@@ -60,6 +59,10 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # column_index = 0
 # start_row_index = 1
 
+# [[remote_bot]]
+# account_id = "TODO"
+# password = "TODO"
+
 "#;
 
 #[derive(thiserror::Error, Debug)]
@@ -93,6 +96,7 @@ pub struct ConfigFile {
     pub demo_mode: Option<Vec<DemoModeConfig>>,
     pub limits: Option<LimitsConfig>,
     pub profile_name_allowlist: Option<Vec<ProfiletNameAllowlistConfig>>,
+    pub remote_bot: Option<Vec<RemoteBotConfig>>,
 }
 
 impl ConfigFile {
@@ -110,6 +114,7 @@ impl ConfigFile {
             demo_mode: None,
             limits: None,
             profile_name_allowlist: None,
+            remote_bot: None,
         }
     }
 
@@ -117,7 +122,21 @@ impl ConfigFile {
         let config_string =
             ConfigFileUtils::load_string(dir, CONFIG_FILE_NAME, DEFAULT_CONFIG_FILE_TEXT)
                 .change_context(ConfigFileError::SimpleBackendError)?;
-        toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)
+        let file: ConfigFile = toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)?;
+
+        if let Some(remote_bots) = &file.remote_bot {
+            let mut set = HashSet::<AccountId>::new();
+
+            for b in remote_bots {
+                if set.contains(&b.account_id) {
+                    return Err(ConfigFileError::InvalidConfig.report())
+                        .attach_printable(format!("Duplicate remote bot config for account {}", b.account_id))
+                }
+                set.insert(b.account_id);
+            }
+        }
+
+        Ok(file)
     }
 }
 
@@ -326,4 +345,11 @@ impl TryFrom<String> for MinClientVersion {
             patch,
         })
     }
+}
+
+/// Remote bot config
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct RemoteBotConfig {
+    pub account_id: AccountId,
+    pub password: String,
 }
