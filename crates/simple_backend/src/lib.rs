@@ -22,6 +22,7 @@ pub mod perf;
 pub mod sign_in_with;
 pub mod utils;
 pub mod web_socket;
+pub mod tls;
 
 use std::{convert::Infallible, future::IntoFuture, net::{Ipv4Addr, SocketAddr, SocketAddrV4}, pin::Pin, sync::Arc};
 
@@ -30,15 +31,15 @@ use app::{
     SimpleBackendAppState,
 };
 use axum::Router;
-use futures::{future::poll_fn, StreamExt};
+use futures::future::poll_fn;
 use hyper::body::Incoming;
 use hyper_util::rt::{TokioExecutor, TokioIo};
 use manager_client::{ManagerApiClient, ManagerConnectionManager, ManagerEventHandler};
 use media_backup::MediaBackupHandle;
 use perf::AllCounters;
-use rustls_platform_verifier::ConfigVerifierExt;
-use tokio_rustls_acme::{caches::DirCache, AcmeAcceptor, AcmeConfig};
-use simple_backend_config::{file::LetsEncryptConfig, SimpleBackendConfig};
+use tls::{LetsEncryptAcmeSocketUtils, SimpleBackendTlsConfig, TlsManager};
+use tokio_rustls_acme::AcmeAcceptor;
+use simple_backend_config::SimpleBackendConfig;
 use tokio::{
     net::TcpListener,
     signal::{
@@ -49,8 +50,8 @@ use tokio::{
     task::JoinHandle,
 };
 use tokio_rustls::{
-    rustls::{server::Acceptor, ClientConfig, ServerConfig},
-    LazyConfigAcceptor, TlsAcceptor,
+    rustls::{server::Acceptor, ServerConfig},
+    LazyConfigAcceptor,
 };
 use tower::Service;
 use tower_http::trace::TraceLayer;
@@ -96,6 +97,14 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
         _web_socket_manager: WebSocketManager,
         _state: &Self::AppState,
         _disable_api_obfuscation: bool,
+    ) -> Router {
+        Router::new()
+    }
+    /// Create router for public bot API
+    fn public_bot_api_router(
+        &self,
+        _web_socket_manager: WebSocketManager,
+        _state: &Self::AppState,
     ) -> Router {
         Router::new()
     }
@@ -252,15 +261,38 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         let (ws_manager, mut ws_watcher) =
             WebSocketManager::new(server_quit_watcher.resubscribe()).await;
 
+        let (mut tls_manager, tls_manager_quit_handle) = TlsManager::new(&self.config, server_quit_watcher.resubscribe()).await;
+
         let public_api_server_task = self
-            .create_public_api_server_task(server_quit_watcher.resubscribe(), ws_manager.clone(), &state)
+            .create_api_server_task(
+                server_quit_watcher.resubscribe(),
+                &mut tls_manager,
+                self.config.socket().public_api,
+                self.logic.public_api_router(ws_manager.clone(), &state, false),
+                "Public API",
+            )
             .await;
+        let public_bot_api_server_task =
+            if let Some(addr) = self.config.socket().public_bot_api {
+                Some(
+                    self.create_api_server_task(
+                        server_quit_watcher.resubscribe(),
+                        &mut tls_manager,
+                        addr,
+                        self.logic.public_bot_api_router(ws_manager.clone(), &state),
+                        "Public bot API",
+                    )
+                    .await,
+                )
+            } else {
+                None
+            };
         let bot_api_server_task =
             if let Some(port) = self.config.socket().bot_api_localhost_port {
                 Some(
                     self.create_bot_api_server_task(
                         server_quit_watcher.resubscribe(),
-                        ws_manager,
+                        ws_manager.clone(),
                         &state,
                         port,
                     )
@@ -272,19 +304,23 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         let internal_api_server_task =
             if let Some(internal_api_addr) = self.config.socket().experimental_internal_api {
                 Some(
-                    self.create_internal_api_server_task(
+                    self.create_api_server_task(
                         server_quit_watcher.resubscribe(),
-                        &state,
+                        &mut tls_manager,
                         internal_api_addr,
+                        self.logic.public_bot_api_router(ws_manager.clone(), &state),
+                        "Internal API",
                     )
                     .await,
                 )
+
             } else {
                 None
             };
 
         self.logic.on_after_server_start().await;
         // Use println to make sure that this message is visible in logs.
+        // Test mode backend starting requires this.
         println!("{SERVER_START_MESSAGE}");
 
         Self::wait_quit_signal(&mut terminate_signal).await;
@@ -297,20 +333,26 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         drop(server_quit_handle);
 
         // Wait until all tasks quit
-        public_api_server_task
-            .await
-            .expect("Public API server task panic detected");
-        if let Some(task) = bot_api_server_task {
-            task
-                .await
-                .expect("Bot API server task panic detected");
-        }
         if let Some(task) = internal_api_server_task {
             task
                 .await
                 .expect("Internal API server task panic detected");
         }
+        if let Some(task) = bot_api_server_task {
+            task
+                .await
+                .expect("Bot API server task panic detected");
+        }
+        if let Some(task) = public_bot_api_server_task {
+            task
+                .await
+                .expect("Public bot API server task panic detected");
+        }
+        public_api_server_task
+            .await
+            .expect("Public API server task panic detected");
 
+        tls_manager_quit_handle.wait_quit().await;
         ws_watcher.wait_for_quit().await;
 
         drop(state);
@@ -341,102 +383,108 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         }
     }
 
-    /// Public API. This can have WAN access.
-    async fn create_public_api_server_task(
+    async fn create_api_server_task(
         &self,
         quit_notification: ServerQuitWatcher,
-        web_socket_manager: WebSocketManager,
-        app_state: &T::AppState,
+        tls_manager: &mut TlsManager,
+        addr: SocketAddr,
+        api_router: Router,
+        server_name: &'static str,
     ) -> JoinHandle<()> {
         let router = {
-            let router = self.logic.public_api_router(web_socket_manager, app_state, false);
             if self.config.debug_mode() {
-                router.route_layer(TraceLayer::new_for_http())
+                api_router.route_layer(TraceLayer::new_for_http())
             } else {
-                router
+                api_router
             }
         };
 
-        let addr = self.config.socket().public_api;
-        info!("Public API is available on {}", addr);
+        info!("{} is available on {}", server_name, addr);
 
-        if let Some(tls_config) = self.config.public_api_tls_config() {
+        if let Some(tls_config) = tls_manager.config_mut() {
             self.create_server_task_with_tls(
                 addr,
                 router,
-                SimpleBackendTlsConfig::ManualSertificates(tls_config.clone()),
-                quit_notification,
-            )
-            .await
-        } else if let Some(lets_encrypt) = self.config.lets_encrypt_config() {
-            self.create_server_task_with_tls(
-                addr,
-                router,
-                SimpleBackendTlsConfig::LetsEncrypt(lets_encrypt.clone()),
+                tls_config,
+                server_name,
                 quit_notification,
             )
             .await
         } else {
-            self.create_server_task_no_tls(router, addr, "Public API", quit_notification)
+            self.create_server_task_no_tls(router, addr, server_name, quit_notification)
                 .await
         }
+    }
+
+    // Bot API for local bot clients. Only available from localhost.
+    async fn create_bot_api_server_task(
+        &self,
+        quit_notification: ServerQuitWatcher,
+        web_socket_manager: WebSocketManager,
+        state: &T::AppState,
+        localhost_port: u16,
+    ) -> JoinHandle<()> {
+        let router = self.logic.bot_api_router(web_socket_manager, state);
+        let router = if self.config.debug_mode() {
+            if let Some(swagger) = self.logic.create_swagger_ui(state) {
+                router.merge(swagger)
+            } else {
+                router
+            }
+        } else {
+            router
+        };
+
+        let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::LOCALHOST, localhost_port));
+        info!("Bot API is available on {}", addr);
+        self.create_server_task_no_tls(router, addr, "Bot API", quit_notification)
+            .await
     }
 
     async fn create_server_task_with_tls(
         &self,
         addr: SocketAddr,
         router: Router,
-        tls_config: SimpleBackendTlsConfig,
+        tls_config: &mut SimpleBackendTlsConfig,
+        name_for_log_message: &'static str,
         mut quit_notification: ServerQuitWatcher,
     ) -> JoinHandle<()> {
-        let public_api_listener = TcpListener::bind(addr)
-            .await
-            .expect("Address not available");
-
-        let https_socket_listener =
-            if addr.port() != HTTPS_DEFAULT_PORT && tls_config.is_lets_encrypt() {
-                let mut https_addr = addr;
-                https_addr.set_port(HTTPS_DEFAULT_PORT);
-                info!(
-                    "HTTPS socket for Let's Encrypt ACME challenge is available on {}",
-                    https_addr
-                );
-                Some(
-                    TcpListener::bind(https_addr)
+        let (listener_for_router, acme_only_listener) =
+            if let Some(utils) = tls_config.take_acme_utils() {
+                if addr.port() == HTTPS_DEFAULT_PORT {
+                    (ListenerAndConfig::with_acme_acceptor(utils, tls_config), None)
+                } else {
+                    let listener = TcpListener::bind(addr)
                         .await
-                        .expect("Address not available"),
-                )
+                        .expect("Address not available");
+                    (
+                        ListenerAndConfig::new(listener, tls_config),
+                        Some(ListenerAndConfig::with_acme_acceptor(utils, tls_config)),
+                    )
+                }
             } else {
-                None
+                let listener = TcpListener::bind(addr)
+                    .await
+                    .expect("Address not available");
+                (
+                    ListenerAndConfig::new(listener, tls_config),
+                    None,
+                )
             };
 
         let (drop_after_connection, mut wait_all_connections) = mpsc::channel::<()>(1);
 
-        let tls_config = tls_config.start_acme_task_if_needed(
-            quit_notification.resubscribe(),
-            drop_after_connection.clone(),
-        );
-
-        let public_api_tls_config =
-            if addr.port() != HTTPS_DEFAULT_PORT && tls_config.is_lets_encrypt() {
-                tls_config.clone().remove_acme_acceptor()
-            } else {
-                tls_config.clone()
-            };
-
-        let public_api_server = create_tls_listening_task(
-            public_api_listener,
+        let router_task = create_tls_listening_task(
+            listener_for_router,
             Some(router),
-            public_api_tls_config,
             drop_after_connection.clone(),
             quit_notification.resubscribe(),
         );
 
-        let https_socket_server = https_socket_listener.map(|https_socket_listener| {
+        let acme_only_task = acme_only_listener.map(|acme_only_listener| {
             create_tls_listening_task(
-                https_socket_listener,
+                acme_only_listener,
                 None,
-                tls_config,
                 drop_after_connection.clone(),
                 quit_notification.resubscribe(),
             )
@@ -445,18 +493,18 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         tokio::spawn(async move {
             let _ = quit_notification.recv().await;
 
-            match public_api_server.await {
+            match router_task.await {
                 Ok(()) => (),
                 Err(e) => {
-                    error!("Public API server quit error: {}", e);
+                    error!("{name_for_log_message} router task server quit error: {e}");
                 }
             }
 
-            if let Some(https_socket_server) = https_socket_server {
-                match https_socket_server.await {
+            if let Some(task) = acme_only_task {
+                match task.await {
                     Ok(()) => (),
                     Err(e) => {
-                        error!("HTTPS socket server quit error: {}", e);
+                        error!("{name_for_log_message} ACME only task quit error: {e}");
                     }
                 }
             }
@@ -488,8 +536,8 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         };
 
         tokio::spawn(async move {
-            // There is no graceful shutdown because data writing is done in
-            // separate tasks.
+            // There is no graceful shutdown for connections because
+            // data writing is done in separate tasks.
             tokio::select! {
                 _ = quit_notification.recv() => {
                     info!("{name_for_log_message} server quit signal received");
@@ -507,64 +555,16 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             }
         })
     }
-
-    // Bot API for local bot clients. Only available from localhost.
-    async fn create_bot_api_server_task(
-        &self,
-        quit_notification: ServerQuitWatcher,
-        web_socket_manager: WebSocketManager,
-        state: &T::AppState,
-        localhost_port: u16,
-    ) -> JoinHandle<()> {
-        let router = self.logic.bot_api_router(web_socket_manager, state);
-        let router = if self.config.debug_mode() {
-            if let Some(swagger) = self.logic.create_swagger_ui(state) {
-                router.merge(swagger)
-            } else {
-                router
-            }
-        } else {
-            router
-        };
-
-        let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::LOCALHOST, localhost_port));
-        info!("Bot API is available on {}", addr);
-        self.create_server_task_no_tls(router, addr, "Bot API", quit_notification)
-            .await
-    }
-
-    // Internal server to server API. This must be only LAN accessible.
-    async fn create_internal_api_server_task(
-        &self,
-        quit_notification: ServerQuitWatcher,
-        state: &T::AppState,
-        addr: SocketAddr,
-    ) -> JoinHandle<()> {
-        let router = self.logic.internal_api_router(state);
-        info!("Internal API is available on {}", addr);
-        if let Some(tls_config) = self.config.internal_api_tls_config() {
-            self.create_server_task_with_tls(
-                addr,
-                router,
-                SimpleBackendTlsConfig::ManualSertificates(tls_config.clone()),
-                quit_notification,
-            )
-            .await
-        } else {
-            self.create_server_task_no_tls(router, addr, "Internal API", quit_notification)
-                .await
-        }
-    }
 }
 
 fn create_tls_listening_task(
-    mut listener: TcpListener,
+    config: ListenerAndConfig,
     router: Option<Router>,
-    tls_config: SimpleBackendTlsConfigAcmeTaskRunning,
     drop_after_connection: mpsc::Sender<()>,
     mut quit_notification: ServerQuitWatcher,
 ) -> JoinHandle<()> {
     let app_service = router.map(|v| v.into_make_service_with_connect_info::<SocketAddr>());
+    let mut listener = config.listener;
 
     tokio::spawn(async move {
         loop {
@@ -589,7 +589,8 @@ fn create_tls_listening_task(
                 }
             };
 
-            let config_clone = tls_config.clone();
+            let config_clone = config.tls_config.clone();
+            let acme_acceptor_clone = config.acme_acceptor.clone();
             let app_service_with_connect_info: Option<
                 axum::middleware::AddExtension<Router, axum::extract::ConnectInfo<SocketAddr>>,
             > = if let Some(mut app_service) = app_service.clone() {
@@ -602,10 +603,13 @@ fn create_tls_listening_task(
             let drop_on_quit = drop_after_connection.clone();
             tokio::spawn(async move {
                 tokio::select! {
-                    _ = quit_notification.recv() => {} // Graceful shutdown for connections?
+                    // There is no graceful shutdown for connections because
+                    // data writing is done in separate tasks.
+                    _ = quit_notification.recv() => {}
                     _ = handle_tls_related_tcp_stream(
                         tcp_stream,
                         config_clone,
+                        acme_acceptor_clone,
                         app_service_with_connect_info,
                     ) => (),
                 }
@@ -619,49 +623,13 @@ fn create_tls_listening_task(
 
 async fn handle_tls_related_tcp_stream(
     tcp_stream: tokio::net::TcpStream,
-    config: SimpleBackendTlsConfigAcmeTaskRunning,
-    app_service_with_connect_info: Option<
-        axum::middleware::AddExtension<Router, axum::extract::ConnectInfo<SocketAddr>>,
-    >,
-) {
-    match config {
-        SimpleBackendTlsConfigAcmeTaskRunning::ManualSertificates(manual) => {
-            if let Some(app_service_with_connect_info) = app_service_with_connect_info {
-                let acceptor = TlsAcceptor::from(manual);
-                let connection = acceptor.accept(tcp_stream).await;
-                match connection {
-                    Ok(tls_connection) => {
-                        handle_ready_tls_connection(tls_connection, app_service_with_connect_info)
-                            .await
-                    }
-                    Err(_) => {} // TLS handshake failed
-                }
-            }
-        }
-        SimpleBackendTlsConfigAcmeTaskRunning::LetsEncrypt {
-            tls_config,
-            acceptor,
-        } => {
-            handle_lets_encrypt_related_tcp_stream(
-                tcp_stream,
-                tls_config,
-                acceptor,
-                app_service_with_connect_info,
-            )
-            .await;
-        }
-    }
-}
-
-async fn handle_lets_encrypt_related_tcp_stream(
-    tcp_stream: tokio::net::TcpStream,
     tls_config: Arc<ServerConfig>,
-    acceptor: Option<AcmeAcceptor>,
+    acme_acceptor: Option<AcmeAcceptor>,
     app_service_with_connect_info: Option<
         axum::middleware::AddExtension<Router, axum::extract::ConnectInfo<SocketAddr>>,
     >,
 ) {
-    let handshake = if let Some(acme_acceptor) = acceptor {
+    let handshake = if let Some(acme_acceptor) = acme_acceptor {
         match acme_acceptor.accept(tcp_stream).await {
             Ok(None) => {
                 info!("TLS-ALPN-01 challenge received");
@@ -736,93 +704,32 @@ fn unwrap_infallible_result<T>(r: Result<T, Infallible>) -> T {
     }
 }
 
-#[derive(Debug, Clone)]
-enum SimpleBackendTlsConfig {
-    ManualSertificates(Arc<ServerConfig>),
-    LetsEncrypt(LetsEncryptConfig),
+struct ListenerAndConfig {
+    listener: TcpListener,
+    tls_config: Arc<ServerConfig>,
+    acme_acceptor: Option<AcmeAcceptor>,
 }
 
-impl SimpleBackendTlsConfig {
-    fn is_lets_encrypt(&self) -> bool {
-        matches!(self, SimpleBackendTlsConfig::LetsEncrypt(_))
-    }
-
-    fn start_acme_task_if_needed(
-        self,
-        mut quit_notification: ServerQuitWatcher,
-        drop_on_quit: mpsc::Sender<()>,
-    ) -> SimpleBackendTlsConfigAcmeTaskRunning {
-        match self {
-            SimpleBackendTlsConfig::ManualSertificates(manual) => {
-                SimpleBackendTlsConfigAcmeTaskRunning::ManualSertificates(manual)
-            }
-            SimpleBackendTlsConfig::LetsEncrypt(lets_encrypt) => {
-                let mut state = AcmeConfig::new(lets_encrypt.domains)
-                    .client_tls_config(ClientConfig::with_platform_verifier().into())
-                    .contact([format!("mailto:{}", lets_encrypt.email)])
-                    .cache(DirCache::new(lets_encrypt.cache_dir))
-                    .directory_lets_encrypt(lets_encrypt.production_servers)
-                    .state();
-                let acceptor = state.acceptor();
-                let tls_config = ServerConfig::builder()
-                    .with_no_client_auth()
-                    .with_cert_resolver(state.resolver())
-                    .into();
-
-                tokio::spawn(async move {
-                    loop {
-                        tokio::select! {
-                            _ = quit_notification.recv() => break,
-                            next_state = state.next() => {
-                                match next_state {
-                                    None => break,
-                                    Some(Ok(value)) => info!("ACME state updated: {:?}", value),
-                                    Some(Err(e)) => error!("ACME state error: {}", e),
-                                }
-                            }
-                        }
-                    }
-                    drop(drop_on_quit);
-                });
-
-                SimpleBackendTlsConfigAcmeTaskRunning::LetsEncrypt {
-                    tls_config,
-                    acceptor: Some(acceptor),
-                }
-            }
+impl ListenerAndConfig {
+    fn with_acme_acceptor(
+        utils: LetsEncryptAcmeSocketUtils,
+        config: &SimpleBackendTlsConfig,
+    ) -> Self {
+        Self {
+            listener: utils.https_listener,
+            tls_config: config.tls_config(),
+            acme_acceptor: Some(utils.acceptor),
         }
     }
-}
 
-#[derive(Clone)]
-enum SimpleBackendTlsConfigAcmeTaskRunning {
-    ManualSertificates(Arc<ServerConfig>),
-    LetsEncrypt {
-        tls_config: Arc<ServerConfig>,
-        acceptor: Option<AcmeAcceptor>,
-    },
-}
-
-impl SimpleBackendTlsConfigAcmeTaskRunning {
-    fn is_lets_encrypt(&self) -> bool {
-        matches!(
-            self,
-            SimpleBackendTlsConfigAcmeTaskRunning::LetsEncrypt { .. }
-        )
-    }
-
-    fn remove_acme_acceptor(self) -> SimpleBackendTlsConfigAcmeTaskRunning {
-        match self {
-            SimpleBackendTlsConfigAcmeTaskRunning::ManualSertificates(manual) => {
-                SimpleBackendTlsConfigAcmeTaskRunning::ManualSertificates(manual)
-            }
-            SimpleBackendTlsConfigAcmeTaskRunning::LetsEncrypt {
-                tls_config,
-                ..
-            } => SimpleBackendTlsConfigAcmeTaskRunning::LetsEncrypt {
-                tls_config,
-                acceptor: None,
-            },
+    fn new(
+        listener: TcpListener,
+        config: &SimpleBackendTlsConfig
+    ) -> Self {
+        Self {
+            listener,
+            tls_config: config.tls_config(),
+            acme_acceptor: None,
         }
     }
 }

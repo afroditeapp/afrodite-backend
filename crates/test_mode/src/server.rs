@@ -257,6 +257,7 @@ fn new_config(
         },
         socket: SocketConfig {
             public_api: public_api.into(),
+            public_bot_api: None,
             bot_api_localhost_port: Some(internal_api.port()),
             // TODO(microservice): Configure internal API properly
             experimental_internal_api: None,
