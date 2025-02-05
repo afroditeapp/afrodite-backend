@@ -24,12 +24,12 @@ impl BotApp {
     pub fn create_account_server_router(state: S) -> Router {
         Router::new()
             .route(
-                api::account_bot::PATH_REGISTER,
-                post(api::account_bot::post_register),
+                api::account_bot::PATH_BOT_REGISTER,
+                post(api::account_bot::post_bot_register),
             )
             .route(
-                api::account_bot::PATH_LOGIN,
-                post(api::account_bot::post_login),
+                api::account_bot::PATH_BOT_LOGIN,
+                post(api::account_bot::post_bot_login),
             )
             .with_state(state)
     }

@@ -18,7 +18,7 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-pub const PATH_LOGIN: &str = "/account_api/login";
+pub const PATH_BOT_LOGIN: &str = "/account_api/bot_login";
 
 /// Get new AccessToken for a bot account. If the account is not registered
 /// as a bot account, then the request will fail.
@@ -26,7 +26,7 @@ pub const PATH_LOGIN: &str = "/account_api/login";
 /// Available only from bot API port.
 #[utoipa::path(
     post,
-    path = "/account_api/login",
+    path = PATH_BOT_LOGIN,
     security(),
     request_body = AccountId,
     responses(
@@ -34,11 +34,11 @@ pub const PATH_LOGIN: &str = "/account_api/login";
         (status = 500, description = "Internal server error."),
     ),
 )]
-pub async fn post_login(
+pub async fn post_bot_login(
     State(state): State<S>,
     Json(id): Json<AccountId>,
 ) -> Result<Json<LoginResult>, StatusCode> {
-    ACCOUNT_BOT.post_login.incr();
+    ACCOUNT_BOT.post_bot_login.incr();
 
     let internal_id = state.get_internal_id(id).await?;
     let is_bot = state.read().account().is_bot_account(internal_id).await?;
@@ -49,22 +49,22 @@ pub async fn post_login(
     login_impl(id, state).await.map(|d| d.into())
 }
 
-pub const PATH_REGISTER: &str = "/account_api/register";
+pub const PATH_BOT_REGISTER: &str = "/account_api/bot_register";
 
 /// Register a new bot account. Returns new account ID which is UUID.
 ///
 /// Available only from bot API port.
 #[utoipa::path(
     post,
-    path = "/account_api/register",
+    path = PATH_BOT_REGISTER,
     security(),
     responses(
         (status = 200, description = "New profile created.", body = AccountId),
         (status = 500, description = "Internal server error."),
     )
 )]
-pub async fn post_register(State(state): State<S>) -> Result<Json<AccountId>, StatusCode> {
-    ACCOUNT_BOT.post_register.incr();
+pub async fn post_bot_register(State(state): State<S>) -> Result<Json<AccountId>, StatusCode> {
+    ACCOUNT_BOT.post_bot_register.incr();
     let new_account_id = state
         .data_all_access()
         .register_impl(SignInWithInfo::default(), None)
@@ -144,7 +144,7 @@ create_counters!(
     AccountBotCounters,
     ACCOUNT_BOT,
     ACCOUNT_BOT_COUNTERS_LIST,
-    post_login,
-    post_register,
+    post_bot_login,
+    post_bot_register,
     post_remote_bot_login,
 );
