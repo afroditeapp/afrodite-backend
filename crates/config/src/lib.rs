@@ -145,6 +145,10 @@ impl Config {
         self.file_dynamic.backend_config.bots.as_ref()
     }
 
+    pub fn remote_bot_login_allowed(&self) -> bool {
+        self.file_dynamic.backend_config.remote_bot_login.unwrap_or_default()
+    }
+
     pub fn bot_config_file(&self) -> Option<&Path> {
         self.file.bot_config_file.as_deref()
     }

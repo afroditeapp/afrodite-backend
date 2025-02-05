@@ -1,9 +1,16 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct BackendConfig {
     pub bots: Option<BotConfig>,
+    pub remote_bot_login: Option<bool>,
+}
+
+impl BackendConfig {
+    pub fn empty() -> Self {
+        BackendConfig::default()
+    }
 }
 
 /// Enable automatic bots when server starts.

@@ -109,6 +109,11 @@ pub async fn post_remote_bot_login(
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT_BOT.post_remote_bot_login.incr();
 
+    if !state.config().remote_bot_login_allowed() {
+        info!("Remote bot login is disabled from dynamic config");
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
     let internal_id = state.get_internal_id(info.aid).await?;
     let is_bot = state.read().account().is_bot_account(internal_id).await?;
     if !is_bot {

@@ -101,8 +101,11 @@ impl WriteDynamicConfig for S {
         config: BackendConfig,
     ) -> error_stack::Result<(), ConfigFileError> {
         tokio::task::spawn_blocking(move || {
-            if let Some(bots) = config.bots {
-                ConfigFileDynamic::edit_bot_config_from_current_dir(bots)?
+            if BackendConfig::empty() != config {
+                ConfigFileDynamic::edit_config_from_current_dir(
+                    config.bots,
+                    config.remote_bot_login,
+                )?
             }
 
             error_stack::Result::<(), ConfigFileError>::Ok(())

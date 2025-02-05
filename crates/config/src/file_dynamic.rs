@@ -17,12 +17,14 @@ pub const DEFAULT_CONFIG_FILE_DYNAMIC_TEXT: &str = r#"
 # Server can edit this config file at runtime.
 
 # Enable automatic bots when server starts.
-# Set also internal API setting bot_login to true to allow bots
-# to connect to the server. Server can edit this table only if
-# it is uncommented.
+# Server can edit this table only if it is uncommented.
 # [bots]
 # users = 5
 # admin = false
+
+# Enable remote bot login API route.
+# Server can edit this value only if it is uncommented.
+# remote_bot_login = true
 
 "#;
 
@@ -35,7 +37,10 @@ pub struct ConfigFileDynamic {
 impl ConfigFileDynamic {
     pub fn minimal_config_for_api_doc_json() -> Self {
         Self {
-            backend_config: BackendConfig { bots: None },
+            backend_config: BackendConfig {
+                bots: None,
+                remote_bot_login: None,
+            },
         }
     }
 
@@ -54,7 +59,10 @@ impl ConfigFileDynamic {
         Self::load(current_dir)
     }
 
-    pub fn edit_bot_config_from_current_dir(bot_config: BotConfig) -> Result<(), ConfigFileError> {
+    pub fn edit_config_from_current_dir(
+        bot_config: Option<BotConfig>,
+        remote_bot_login: Option<bool>,
+    ) -> Result<(), ConfigFileError> {
         let dir = std::env::current_dir().change_context(ConfigFileError::LoadConfig)?;
 
         let config = ConfigFileUtils::load_string(
@@ -68,7 +76,12 @@ impl ConfigFileDynamic {
             .parse::<DocumentMut>()
             .change_context(ConfigFileError::EditConfig)?;
 
-        edit_document_bot_config(&mut config_document, bot_config)?;
+        if let Some(v) = bot_config {
+            edit_document_bot_config(&mut config_document, v)?;
+        }
+        if let Some(v) = remote_bot_login {
+            edit_document_remote_bot_login(&mut config_document, v)?;
+        }
 
         let new_config = config_document.to_string();
         let file_path = dir.join(CONFIG_FILE_DYNAMIC_NAME);
@@ -106,6 +119,21 @@ fn edit_document_bot_config(
     }
 }
 
+/// Edit `remote_bot_login` field. Note that if the field does not already
+/// exist in the document, the document will not be edited.
+fn edit_document_remote_bot_login(
+    config_document: &mut DocumentMut,
+    remote_bot_login: bool,
+) -> Result<(), ConfigFileError> {
+    if let Some(Item::Value(value)) = config_document.get_mut("remote_bot_login") {
+        *value = remote_bot_login.into();
+        Ok(())
+    } else {
+        Err(ConfigFileError::EditConfig)
+            .attach_printable("The config file does not have a 'remote_bot_login' field")
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
@@ -114,7 +142,7 @@ mod tests {
 
     #[test]
     pub fn editing_bots_section_works() {
-        let toml_with_no_bots_section = r#"
+        let initial_document = r#"
             test = 1
             [test2]
             test3 = 1
@@ -122,7 +150,7 @@ mod tests {
             users = 0
             admin = false
         "#;
-        let mut document = toml_edit::DocumentMut::from_str(toml_with_no_bots_section).unwrap();
+        let mut document = toml_edit::DocumentMut::from_str(initial_document).unwrap();
 
         let new_config = model::BotConfig {
             users: 1,
@@ -139,6 +167,29 @@ mod tests {
             [bots]
             users = 1
             admin = true
+        "#;
+
+        assert_eq!(expected, edited_document);
+    }
+
+    #[test]
+    pub fn editing_remote_bot_login_field_works() {
+        let initial_document = r#"
+            remote_bot_login = false
+            test = 1
+            [test2]
+            test3 = 1
+        "#;
+        let mut document = toml_edit::DocumentMut::from_str(initial_document).unwrap();
+
+        edit_document_remote_bot_login(&mut document, true).unwrap();
+
+        let edited_document = document.to_string();
+        let expected = r#"
+            remote_bot_login = true
+            test = 1
+            [test2]
+            test3 = 1
         "#;
 
         assert_eq!(expected, edited_document);
