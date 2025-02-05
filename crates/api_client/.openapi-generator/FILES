@@ -185,6 +185,7 @@ src/models/received_likes_iterator_session_id.rs
 src/models/received_likes_page.rs
 src/models/received_likes_sync_version.rs
 src/models/refresh_token.rs
+src/models/remote_bot_login.rs
 src/models/reset_matches_iterator_result.rs
 src/models/reset_news_iterator_result.rs
 src/models/reset_received_likes_iterator_result.rs

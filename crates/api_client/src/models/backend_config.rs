@@ -15,12 +15,15 @@ use serde::{Deserialize, Serialize};
 pub struct BackendConfig {
     #[serde(rename = "bots", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub bots: Option<Option<Box<models::BotConfig>>>,
+    #[serde(rename = "remote_bot_login", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub remote_bot_login: Option<Option<bool>>,
 }
 
 impl BackendConfig {
     pub fn new() -> BackendConfig {
         BackendConfig {
             bots: None,
+            remote_bot_login: None,
         }
     }
 }

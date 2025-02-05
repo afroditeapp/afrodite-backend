@@ -338,6 +338,8 @@ pub mod received_likes_sync_version;
 pub use self::received_likes_sync_version::ReceivedLikesSyncVersion;
 pub mod refresh_token;
 pub use self::refresh_token::RefreshToken;
+pub mod remote_bot_login;
+pub use self::remote_bot_login::RemoteBotLogin;
 pub mod reset_matches_iterator_result;
 pub use self::reset_matches_iterator_result::ResetMatchesIteratorResult;
 pub mod reset_news_iterator_result;

@@ -3,7 +3,7 @@ use std::{fmt::Debug, time::Duration};
 use api_client::{
     apis::{
         account_api::{self, get_account_state, post_account_setup, post_complete_setup},
-        account_bot_api::{post_login, post_register},
+        account_bot_api::{post_bot_login, post_bot_register},
     },
     models::{
         auth_pair, Account, AccountData, AccountStateContainer, BooleanSetting, EventToClient, ProfileVisibility
@@ -41,7 +41,7 @@ impl BotAction for Register {
             return Ok(());
         }
 
-        let id = post_register(state.api.register())
+        let id = post_bot_register(state.api.register())
             .await
             .change_context(TestError::ApiRequest)?;
         state.id = Some(id);
@@ -58,7 +58,7 @@ impl BotAction for Login {
         if state.api.is_access_token_available() {
             return Ok(());
         }
-        let login_result = post_login(state.api.register(), state.account_id()?)
+        let login_result = post_bot_login(state.api.register(), state.account_id()?)
             .await
             .change_context(TestError::ApiRequest)?;
 
