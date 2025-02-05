@@ -1,0 +1,26 @@
+[package]
+name = "tls_client"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+
+# HTTP client TLS
+tls_client_native = { path = "../tls_client_native", optional = true }
+tls_client_rustls = { path = "../tls_client_rustls", optional = true }
+
+[features]
+default = [
+    "tls_client_native?/enable",
+    "tls_client_rustls?/enable",
+]
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# Running "make test" is faster with native TLS client on macOS.
+# TODO(future): Consider creating only one reqwest::Client per process
+#               and using https://github.com/rustls/rustls-platform-verifier
+#               instead of native certs.
+tls_client_native = { path = "../tls_client_native", optional = false }
+
+[target.'cfg(not(target_os = "macos"))'.dependencies]
+tls_client_rustls = { path = "../tls_client_rustls", optional = false }

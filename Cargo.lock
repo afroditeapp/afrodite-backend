@@ -74,8 +74,7 @@ dependencies = [
  "simple_backend_config",
  "simple_backend_image_process",
  "test_mode",
- "tls_client_native",
- "tls_client_rustls",
+ "tls_client",
  "tokio",
  "tokio-rustls",
  "vergen-gitcl",
@@ -801,6 +800,7 @@ dependencies = [
  "simple_backend_config",
  "simple_backend_utils",
  "thiserror 2.0.11",
+ "tls_client",
  "toml",
  "toml_edit",
  "url",
@@ -5295,6 +5295,14 @@ name = "tinyvec_macros"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
+
+[[package]]
+name = "tls_client"
+version = "0.0.0"
+dependencies = [
+ "tls_client_native",
+ "tls_client_rustls",
+]
 
 [[package]]
 name = "tls_client_native"

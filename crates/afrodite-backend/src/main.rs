@@ -3,10 +3,7 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
-#[cfg(any(target_os = "macos", feature = "tls-client-native"))]
-use tls_client_native as _;
-#[cfg(any(not(target_os = "macos"), feature = "tls-client-rustls"))]
-use tls_client_rustls as _;
+use tls_client as _;
 
 pub mod args;
 pub mod build_info;

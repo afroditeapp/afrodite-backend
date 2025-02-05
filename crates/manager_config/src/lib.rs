@@ -15,7 +15,7 @@ use file::{AutomaticSystemRebootConfig, ManagerInstance, ScheduledTasksConfig};
 use manager_model::ManagerInstanceName;
 use rustls_pemfile::certs;
 use tokio_rustls::rustls::{RootCertStore, ServerConfig};
-use tracing::{info, log::warn};
+use tracing::{info, warn};
 
 use manager_api::ManagerClient;
 

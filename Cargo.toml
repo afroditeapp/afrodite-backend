@@ -52,6 +52,7 @@ members = [
     "crates/manager_config",
     "crates/manager_model",
     # TLS client config
+    "crates/tls_client",
     "crates/tls_client_native",
     "crates/tls_client_rustls",
 ]

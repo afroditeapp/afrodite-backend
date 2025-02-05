@@ -31,3 +31,6 @@ simple_backend_config = { path = "../simple_backend_config" }
 simple_backend_utils = { path = "../simple_backend_utils" }
 
 manager_config = { path = "../manager_config" }
+
+# Allow building tests
+tls_client = { path = "../tls_client" }

@@ -4,6 +4,9 @@
 #![warn(unused_crate_dependencies)]
 #![allow(clippy::large_enum_variant, clippy::manual_range_contains)]
 
+// Ignore unused depenency warning
+use tls_client as _;
+
 pub mod args;
 pub mod bot_config_file;
 pub mod file;

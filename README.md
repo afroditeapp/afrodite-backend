@@ -40,9 +40,6 @@ make run-release
 sudo apt install build-essential pkg-config libsqlite3-dev
 ```
 
-   If building with feature `tls-client-native` enabled then package
-   `libssl-dev` is also required.
-
 #### macOS
 
 1. Install [Rust](https://www.rust-lang.org/learn/get-started) and
