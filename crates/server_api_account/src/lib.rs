@@ -28,6 +28,7 @@ pub use server_common::{data::DataError, result};
         // Account bot API
         account_bot::post_register,
         account_bot::post_login,
+        account_bot::post_remote_bot_login,
     ),
     modifiers(&SecurityApiAccessTokenDefault),
 )]
