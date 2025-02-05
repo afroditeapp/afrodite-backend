@@ -11,6 +11,7 @@ pub struct BotConfigFile {
     pub man_image_dir: Option<PathBuf>,
     pub woman_image_dir: Option<PathBuf>,
     /// Config for user bots
+    #[serde(default)]
     pub bot_config: BaseBotConfig,
     /// Override config for specific user bots.
     #[serde(default)]
