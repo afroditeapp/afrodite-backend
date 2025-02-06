@@ -128,11 +128,12 @@ impl ConfigFile {
             let mut set = HashSet::<AccountId>::new();
 
             for b in remote_bots {
-                if set.contains(&b.account_id) {
+                let aid = b.account_id();
+                if set.contains(&aid) {
                     return Err(ConfigFileError::InvalidConfig.report())
-                        .attach_printable(format!("Duplicate remote bot config for account {}", b.account_id))
+                        .attach_printable(format!("Duplicate remote bot config for account {}", aid))
                 }
-                set.insert(b.account_id);
+                set.insert(aid);
             }
         }
 
@@ -350,6 +351,18 @@ impl TryFrom<String> for MinClientVersion {
 /// Remote bot config
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RemoteBotConfig {
-    pub account_id: AccountId,
-    pub password: String,
+    account_id: simple_backend_utils::UuidBase64UrlToml,
+    password: String,
+}
+
+impl RemoteBotConfig {
+    pub fn account_id(&self) -> AccountId {
+        AccountId {
+            aid: self.account_id.into(),
+        }
+    }
+
+    pub fn password(&self) -> String {
+        self.password.clone()
+    }
 }

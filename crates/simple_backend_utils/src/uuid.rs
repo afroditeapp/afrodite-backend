@@ -64,3 +64,36 @@ pub fn uuid_from_string_base_64_url<'de, D: Deserializer<'de>>(d: D) -> Result<U
         .map_err(<D::Error as serde::de::Error>::custom)?;
     Ok(uuid::Uuid::from_bytes(data_slice))
 }
+
+/// Workaround the "expected a borrowed string" error
+/// when deserializing TOML.
+#[derive(Debug, Copy, Clone, Deserialize, Serialize)]
+pub struct UuidBase64UrlToml(
+    #[serde(
+        serialize_with = "uuid_as_string_base_64_url_toml",
+        deserialize_with = "uuid_from_string_base_64_url_toml"
+    )]
+    UuidBase64Url,
+);
+
+fn uuid_as_string_base_64_url_toml<S: Serializer>(
+    value: &UuidBase64Url,
+    s: S,
+) -> Result<S::Ok, S::Error> {
+    uuid_as_string_base_64_url(&value.0, s)
+}
+
+fn uuid_from_string_base_64_url_toml<'de, D: Deserializer<'de>>(d: D) -> Result<UuidBase64Url, D::Error> {
+    let text = String::deserialize(d)?;
+    let mut data_slice = [0u8; 16];
+    let _ = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode_slice(text, &mut data_slice)
+        .map_err(<D::Error as serde::de::Error>::custom)?;
+    Ok(UuidBase64Url(uuid::Uuid::from_bytes(data_slice)))
+}
+
+impl From<UuidBase64UrlToml> for UuidBase64Url {
+    fn from(value: UuidBase64UrlToml) -> Self {
+        value.0
+    }
+}

@@ -127,11 +127,11 @@ pub async fn post_remote_bot_login(
     }
 
     let bots = state.config().remote_bots();
-    let Some(configured_bot) = bots.iter().find(|v| v.account_id == info.aid) else {
+    let Some(configured_bot) = bots.iter().find(|v| v.account_id() == info.aid) else {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     };
 
-    if configured_bot.password != info.password {
+    if configured_bot.password() != info.password {
         info!("Remote bot login failed. Wrong password for account {}", info.aid);
         bot_login_state.blocked.insert(info.aid);
         return Err(StatusCode::INTERNAL_SERVER_ERROR);

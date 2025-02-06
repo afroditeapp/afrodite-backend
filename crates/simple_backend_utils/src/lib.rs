@@ -10,7 +10,7 @@ use error_stack::{Context, Report, Result, ResultExt};
 mod uuid;
 pub mod time;
 
-pub use uuid::UuidBase64Url;
+pub use uuid::{UuidBase64Url, UuidBase64UrlToml};
 
 pub trait IntoReportFromString {
     type Ok;
