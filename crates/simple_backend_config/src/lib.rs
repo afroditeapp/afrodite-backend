@@ -133,7 +133,7 @@ impl SimpleBackendConfig {
     /// * Atomic boolean `RUNNING_IN_DEBUG_MODE` is set to `true`.
     /// * Experimental internal API can be enabled.
     pub fn debug_mode(&self) -> bool {
-        self.file.debug.unwrap_or(false)
+        self.file.general.debug.unwrap_or(false)
     }
 
     pub fn sign_in_with_urls(&self) -> &SignInWithUrls {
@@ -193,7 +193,7 @@ impl SimpleBackendConfig {
     }
 
     pub fn log_timestamp(&self) -> bool {
-        self.file.log_timestamp.unwrap_or(true)
+        self.file.general.log_timestamp.unwrap_or(true)
     }
 
     pub fn email_sending(&self) -> Option<&file::EmailSendingConfig> {
@@ -213,7 +213,7 @@ impl SimpleBackendConfig {
     }
 
     pub fn override_face_detection_result(&self) -> Option<bool> {
-        self.file.debug_override_face_detection_result
+        self.file.general.debug_override_face_detection_result
     }
 }
 
@@ -233,7 +233,7 @@ pub fn get_config(
         file_config.data.dir.clone()
     };
 
-    if file_config.socket.experimental_internal_api.is_some() && !file_config.debug.unwrap_or(false) {
+    if file_config.socket.experimental_internal_api.is_some() && !file_config.general.debug.unwrap_or(false) {
         return Err(GetConfigError::InvalidConfiguration)
             .attach_printable("Internal API can be enabled only when debug mode is enabled");
     }
@@ -270,7 +270,7 @@ pub fn get_config(
 
     if public_api_tls_config.as_ref().is_none()
         && file_config.lets_encrypt.is_none()
-        && !file_config.debug.unwrap_or_default()
+        && !file_config.general.debug.unwrap_or_default()
     {
         return Err(GetConfigError::TlsConfigMissing).attach_printable(
             "TLS certificate or Let's Encrypt must be configured for public API when debug mode is false",
@@ -327,7 +327,7 @@ pub fn get_config(
     }
 
     let sqlite_in_ram = if args_config.sqlite_in_ram {
-        if file_config.debug.unwrap_or_default() {
+        if file_config.general.debug.unwrap_or_default() {
             true
         } else {
             return Err(GetConfigError::SqliteInRamNotAllowed)

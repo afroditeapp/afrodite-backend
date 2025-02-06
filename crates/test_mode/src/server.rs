@@ -14,7 +14,7 @@ use nix::{sys::signal::Signal, unistd::Pid};
 use reqwest::Url;
 use server_data::index::LocationIndexInfoCreator;
 use simple_backend_config::file::{
-    DataConfig, SimpleBackendConfigFile, SocketConfig, SqliteDatabase,
+    DataConfig, GeneralConfig, SimpleBackendConfigFile, SocketConfig, SqliteDatabase
 };
 use tokio::{
     io::{AsyncBufReadExt, AsyncRead},
@@ -237,9 +237,11 @@ fn new_config(
     };
 
     let simple_backend_config = SimpleBackendConfigFile {
-        debug: Some(true),
-        debug_override_face_detection_result: Some(true),
-        log_timestamp: None,
+        general: GeneralConfig {
+            debug: Some(true),
+            debug_override_face_detection_result: Some(true),
+            log_timestamp: None,
+        },
         data: DataConfig {
             dir: "database_dir".into(),
             sqlite: vec![

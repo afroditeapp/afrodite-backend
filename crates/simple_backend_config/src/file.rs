@@ -23,6 +23,7 @@ pub const CONFIG_FILE_NAME: &str = "simple_backend_config.toml";
 
 pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
+# [general]
 # log_timestamp = true
 
 [socket]
@@ -132,11 +133,9 @@ pub enum ConfigFileError {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SimpleBackendConfigFile {
-    pub debug: Option<bool>,
-    /// Override face detection result with this value
-    pub debug_override_face_detection_result: Option<bool>,
-    /// Write timestamp to log messages. Enabled by default.
-    pub log_timestamp: Option<bool>,
+    #[serde(default)]
+    pub general: GeneralConfig,
+
     pub data: DataConfig,
     pub socket: SocketConfig,
     pub tile_map: Option<TileMapConfig>,
@@ -167,9 +166,7 @@ impl SimpleBackendConfigFile {
     pub fn minimal_config_for_api_doc_json() -> Self {
         let localhost = "127.0.0.1:8080".parse().unwrap();
         Self {
-            debug: None,
-            debug_override_face_detection_result: None,
-            log_timestamp: None,
+            general: GeneralConfig::default(),
             data: DataConfig {
                 dir: PathBuf::new(),
                 sqlite: vec![],
@@ -237,6 +234,15 @@ impl ConfigFileUtils {
 
         std::fs::read_to_string(&file_path).change_context(ConfigFileError::LoadConfig)
     }
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct GeneralConfig {
+    pub debug: Option<bool>,
+    /// Override face detection result with this value
+    pub debug_override_face_detection_result: Option<bool>,
+    /// Write timestamp to log messages. Enabled by default.
+    pub log_timestamp: Option<bool>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
