@@ -112,6 +112,31 @@ impl RemoteBotMode {
                 .attach_printable("Remote bot mode config not found")
         };
 
+        for b in &config.bot {
+            if b.account_id.is_none() {
+                return Err(ConfigFileError::InvalidConfig.report())
+                    .attach_printable(format!("Account ID is missing from bot {}", b.id))
+            }
+
+            if b.remote_bot_login_password.is_none() {
+                return Err(ConfigFileError::InvalidConfig.report())
+                    .attach_printable(format!("Remote bot login password is missing from bot {}", b.id))
+            }
+        }
+
+        let admin_config = config.admin_bot_config;
+        if admin_config.account_id.is_some() || admin_config.remote_bot_login_password.is_some() {
+            if admin_config.account_id.is_none() {
+                return Err(ConfigFileError::InvalidConfig.report())
+                    .attach_printable("Account ID is missing from admin bot")
+            }
+
+            if admin_config.remote_bot_login_password.is_none() {
+                return Err(ConfigFileError::InvalidConfig.report())
+                    .attach_printable("Remote bot login password is missing from admin bot")
+            }
+        }
+
         Ok(TestMode {
             server: ServerConfig {
                 api_urls: PublicApiUrls::new(server_url),
@@ -128,7 +153,8 @@ impl RemoteBotMode {
             mode: TestModeSubMode::Bot(BotModeConfig {
                 users: TryInto::<u32>::try_into(config.bot.len())
                     .change_context(ConfigFileError::InvalidConfig)?,
-                admin: config.admin_bot_config.remote_bot_login_password.is_some(),
+                admin: admin_config.account_id.is_some() &&
+                    admin_config.remote_bot_login_password.is_some(),
                 no_sleep: false,
                 save_state: false,
             }),
