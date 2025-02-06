@@ -153,7 +153,7 @@ impl Config {
     }
 
     pub fn bot_config_file(&self) -> Option<&Path> {
-        self.file.bot_config_file.as_deref()
+        self.file.config_files.bot.as_deref()
     }
 
     pub fn limits_account(&self) -> AccountLimitsConfig {
@@ -201,11 +201,11 @@ impl Config {
     }
 
     pub fn api_obfuscation_salt(&self) -> Option<&str> {
-        self.file.api_obfuscation_salt.as_deref()
+        self.file.api.obfuscation_salt.as_deref()
     }
 
     pub fn min_client_version(&self) -> Option<MinClientVersion> {
-        self.file.min_client_version
+        self.file.api.min_client_version
     }
 
     pub fn remote_bots(&self) -> Vec<RemoteBotConfig> {
@@ -249,7 +249,7 @@ pub fn get_config(
         ConfigFileDynamic::load(current_dir).change_context(GetConfigError::LoadFileError)?;
 
     let (profile_attributes, profile_attributes_sha256) =
-        if let Some(path) = &file_config.profile_attributes_file {
+        if let Some(path) = &file_config.config_files.profile_attributes {
             let attributes =
                 std::fs::read_to_string(path).change_context(GetConfigError::LoadFileError)?;
             let profile_attributes_sha256 = format!("{:x}", Sha256::digest(attributes.as_bytes()));
@@ -263,7 +263,7 @@ pub fn get_config(
             (None, None)
         };
 
-    let email_content = if let Some(path) = &file_config.email_content_file {
+    let email_content = if let Some(path) = &file_config.config_files.email_content {
         let email_content =
             EmailContentFile::load(path).change_context(GetConfigError::LoadFileError)?;
         Some(email_content)

@@ -28,9 +28,10 @@ pub const CONFIG_FILE_NAME: &str = "server_config.toml";
 
 pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
-# profile_attributes_file = "server_config_profile_attributes.toml"
-# bot_config_file = "server_config_bots.toml"
-# email_content_file = "server_config_email_content.toml"
+# [config_files]
+# bot = "server_config_bots.toml"
+# email_content = "server_config_email_content.toml"
+# profile_attributes = "server_config_profile_attributes.toml"
 
 # [grant_admin_access]
 # email = "admin@example.com"
@@ -83,12 +84,11 @@ pub enum ConfigFileError {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ConfigFile {
-    pub bot_config_file: Option<PathBuf>,
-    pub profile_attributes_file: Option<PathBuf>,
-    pub email_content_file: Option<PathBuf>,
+    #[serde(default)]
+    pub config_files: ConfigFileConfig,
+    #[serde(default)]
+    pub api: ApiConfig,
 
-    pub api_obfuscation_salt: Option<String>,
-    pub min_client_version: Option<MinClientVersion>,
     pub components: Option<Components>,
     pub grant_admin_access: Option<GrantAdminAccessConfig>,
     pub location: Option<LocationConfig>,
@@ -102,11 +102,8 @@ pub struct ConfigFile {
 impl ConfigFile {
     pub fn minimal_config_for_api_doc_json() -> Self {
         Self {
-            bot_config_file: None,
-            profile_attributes_file: None,
-            email_content_file: None,
-            api_obfuscation_salt: None,
-            min_client_version: None,
+            config_files: ConfigFileConfig::default(),
+            api: ApiConfig::default(),
             components: Some(Components::default()),
             grant_admin_access: None,
             location: None,
@@ -139,6 +136,19 @@ impl ConfigFile {
 
         Ok(file)
     }
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct ApiConfig {
+    pub obfuscation_salt: Option<String>,
+    pub min_client_version: Option<MinClientVersion>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct ConfigFileConfig {
+    pub bot: Option<PathBuf>,
+    pub email_content: Option<PathBuf>,
+    pub profile_attributes: Option<PathBuf>,
 }
 
 /// Enabled server components

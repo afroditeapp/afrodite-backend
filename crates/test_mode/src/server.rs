@@ -6,8 +6,7 @@ use std::{
 use config::{
     args::{SelectedBenchmark, TestMode},
     file::{
-        Components, ConfigFile, EmailAddress, ExternalServices, GrantAdminAccessConfig,
-        LocationConfig, CONFIG_FILE_NAME,
+        ApiConfig, Components, ConfigFile, ConfigFileConfig, EmailAddress, ExternalServices, GrantAdminAccessConfig, LocationConfig, CONFIG_FILE_NAME
     },
     Config,
 };
@@ -212,8 +211,8 @@ fn new_config(
             email: EmailAddress(TEST_ADMIN_ACCESS_EMAIL.to_string()),
         }
         .into(),
-        api_obfuscation_salt: None,
-        min_client_version: None,
+        api: ApiConfig::default(),
+        config_files: ConfigFileConfig::default(),
         components: Some(components),
         location: if let Some(SelectedBenchmark::GetProfileList) = config.selected_benchmark() {
             let mut location = DEFAULT_LOCATION_CONFIG_BENCHMARK;
@@ -231,9 +230,6 @@ fn new_config(
         }
         .into(),
         external_services,
-        bot_config_file: None,
-        profile_attributes_file: None,
-        email_content_file: None,
         demo_mode: None,
         limits: None,
         profile_name_allowlist: None,
