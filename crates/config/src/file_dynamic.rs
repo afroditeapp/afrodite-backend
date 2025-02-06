@@ -16,15 +16,15 @@ pub const DEFAULT_CONFIG_FILE_DYNAMIC_TEXT: &str = r#"
 
 # Server can edit this config file at runtime.
 
+# Enable remote bot login API route.
+# Server can edit this value only if it is uncommented.
+# remote_bot_login = true
+
 # Enable automatic bots when server starts.
 # Server can edit this table only if it is uncommented.
 # [bots]
 # users = 5
 # admin = false
-
-# Enable remote bot login API route.
-# Server can edit this value only if it is uncommented.
-# remote_bot_login = true
 
 "#;
 
