@@ -17,7 +17,7 @@ pub trait RpcSystemInfo: GetConfig {
         let remote_managers = self.config()
             .remote_managers()
             .iter()
-            .map(|v| v.manager_name.clone());
+            .map(|v| v.name.clone());
 
         accessible_instances.extend(remote_managers);
 

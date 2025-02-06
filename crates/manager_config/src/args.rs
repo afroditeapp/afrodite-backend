@@ -44,7 +44,7 @@ impl ManagerApiClientMode {
             let file_config = ConfigFile::load_config(current_dir)
                 .change_context(GetConfigError::LoadFileError)?;
 
-            Ok(file_config.api_key)
+            Ok(file_config.manager.api_key)
         }
     }
 
@@ -108,7 +108,7 @@ impl ManagerApiClientMode {
             let file_config = ConfigFile::load_config(current_dir)
                 .change_context(GetConfigError::LoadFileError)?;
 
-            Ok(file_config.manager_name)
+            Ok(file_config.manager.name)
         }
     }
 }

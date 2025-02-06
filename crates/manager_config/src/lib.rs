@@ -87,7 +87,7 @@ impl Config {
     /// * Checking available scripts is disabled.
     /// * Reboot command will not run.
     pub fn debug_mode(&self) -> bool {
-        self.file.debug.unwrap_or(false)
+        self.file.general.debug()
     }
 
     pub fn encryption_keys(&self) -> &[ServerEncryptionKey] {
@@ -105,7 +105,7 @@ impl Config {
     }
 
     pub fn api_key(&self) -> &str {
-        &self.file.api_key
+        &self.file.manager.api_key
     }
 
     pub fn public_api_tls_config(&self) -> Option<&Arc<ServerConfig>> {
@@ -126,7 +126,7 @@ impl Config {
 
     /// Directory for build and update files
     pub fn storage_dir(&self) -> &Path {
-        &self.file.storage_dir
+        &self.file.dir.storage
     }
 
     pub fn manual_tasks_config(&self) -> ManualTasksConfig {
@@ -142,7 +142,7 @@ impl Config {
     }
 
     pub fn log_timestamp(&self) -> bool {
-        self.file.log_timestamp.unwrap_or(true)
+        self.file.general.log_timestamp()
     }
 
     pub fn backend_code_version(&self) -> &str {
@@ -162,11 +162,11 @@ impl Config {
     }
 
     pub fn find_remote_manager(&self, name: &ManagerInstanceName) -> Option<&ManagerInstance> {
-        self.remote_managers().iter().find(|v| v.manager_name == *name)
+        self.remote_managers().iter().find(|v| v.name == *name)
     }
 
     pub fn manager_name(&self) -> ManagerInstanceName {
-        self.file.manager_name.clone()
+        self.file.manager.name.clone()
     }
 
     pub fn update_manager_user_agent(&self) -> String {
@@ -200,14 +200,14 @@ pub fn get_config(
         None => None,
     };
 
-    if public_api_tls_config.is_none() && !file_config.debug.unwrap_or_default() {
+    if public_api_tls_config.is_none() && !file_config.general.debug() {
         return Err(GetConfigError::TlsConfigMissing)
             .attach_printable("TLS must be configured when debug mode is false");
     }
 
     let script_locations = check_script_locations(
-        &file_config.scripts_dir,
-        file_config.debug.unwrap_or_default(),
+        &file_config.dir.scripts,
+        file_config.general.debug(),
     )?;
 
     Ok(Config {

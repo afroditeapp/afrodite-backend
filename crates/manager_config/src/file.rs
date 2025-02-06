@@ -18,13 +18,16 @@ pub const CONFIG_FILE_NAME: &str = "manager_config.toml";
 
 pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
-# Required
-# manager_name = "default"
+# [manager]
+# name = "default"
 # api_key = "password"
-# scripts_dir = "/afrodite-server-tools/manager-tools"
-# storage_dir = "/afrodite-secure-storage/afrodite/manager"
 
-# log_timestamp = true # optional
+# [dir]
+# storage = "/afrodite-secure-storage/afrodite/manager"
+# scripts = "/afrodite-server-tools/manager-tools"
+
+# [general]
+# log_timestamp = true # Optional
 
 [socket]
 public_api = "127.0.0.1:4000"
@@ -32,7 +35,7 @@ public_api = "127.0.0.1:4000"
 # second_public_api_localhost_only_port = 4001
 
 # [[remote_manager]]
-# manager_name = "backup"
+# name = "backup"
 # url = "tls://127.0.0.1:4000"
 
 # [secure_storage]
@@ -96,18 +99,13 @@ pub enum ConfigFileError {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ConfigFile {
-    pub debug: Option<bool>,
-    /// API key for manager API. All managers instances must use the same key.
-    ///
-    /// If the key is wrong the API access is denied untill manager is restarted.
-    pub api_key: String,
-    /// Directory for build and update files.
-    pub storage_dir: PathBuf,
-    pub scripts_dir: PathBuf,
-    pub manager_name: ManagerInstanceName,
+    pub manager: ManagerConfig,
+    pub dir: DirConfig,
     pub socket: SocketConfig,
 
     // Optional configs
+    #[serde(default)]
+    pub general: GeneralConfig,
     #[serde(default)]
     pub remote_manager: Vec<ManagerInstance>,
     #[serde(default)]
@@ -120,8 +118,6 @@ pub struct ConfigFile {
     pub system_info: Option<SystemInfoConfig>,
     /// TLS is required if debug setting is false.
     pub tls: Option<TlsConfig>,
-    /// Write timestamp to log messages. Enabled by default.
-    pub log_timestamp: Option<bool>,
 }
 
 impl ConfigFile {
@@ -181,6 +177,39 @@ impl ConfigFile {
         let file_path =
             Self::default_config_file_path(&dir).change_context(ConfigFileError::LoadConfig)?;
         Ok(file_path.exists())
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ManagerConfig {
+    /// API key for manager API. All managers instances must use the same key.
+    ///
+    /// If the key is wrong the API access is denied untill manager is restarted.
+    pub api_key: String,
+    pub name: ManagerInstanceName,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct DirConfig {
+    /// Directory for build and update files.
+    pub storage: PathBuf,
+    pub scripts: PathBuf,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct GeneralConfig {
+    /// Write timestamp to log messages. Enabled by default.
+    log_timestamp: Option<bool>,
+    debug: Option<bool>,
+}
+
+impl GeneralConfig {
+    pub fn log_timestamp(&self) -> bool {
+        self.log_timestamp.unwrap_or(true)
+    }
+
+    pub fn debug(&self) -> bool {
+        self.debug.unwrap_or_default()
     }
 }
 
@@ -308,6 +337,6 @@ pub struct SystemInfoConfig {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ManagerInstance {
-    pub manager_name: ManagerInstanceName,
+    pub name: ManagerInstanceName,
     pub url: Url,
 }
