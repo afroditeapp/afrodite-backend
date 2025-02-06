@@ -84,6 +84,10 @@ fn main() -> ExitCode {
         Some(config::args::AppMode::OpenApi) => {
             unreachable!()
         }
+        Some(config::args::AppMode::RemoteBot(test_mode_config)) => {
+            let test_mode_config = test_mode_config.to_test_mode().unwrap();
+            runtime.block_on(async { TestRunner::new(config, test_mode_config).run().await })
+        }
         Some(config::args::AppMode::Test(test_mode_config)) => {
             runtime.block_on(async { TestRunner::new(config, test_mode_config).run().await })
         }

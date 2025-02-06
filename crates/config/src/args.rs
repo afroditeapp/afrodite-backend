@@ -3,9 +3,13 @@
 use std::{fmt, num::NonZeroU8, path::PathBuf};
 
 use clap::{arg, command, Args, Parser, ValueEnum};
+use error_stack::ResultExt;
 use manager_config::args::ManagerApiClientMode;
 use reqwest::Url;
 use simple_backend_config::args::{ImageProcessModeArgs, ServerModeArgs};
+use simple_backend_utils::ContextExt;
+
+use crate::{bot_config_file::BotConfigFile, file::ConfigFileError};
 
 #[derive(Args, Debug, Clone)]
 pub struct ArgsConfig {
@@ -27,6 +31,8 @@ pub struct ArgsConfig {
 
 #[derive(Parser, Debug, Clone)]
 pub enum AppMode {
+    /// Run remote bot mode
+    RemoteBot(RemoteBotMode),
     /// Run test, benchmark or bot mode
     Test(TestMode),
     /// Process received image
@@ -63,6 +69,16 @@ pub struct PublicApiUrls {
 }
 
 impl PublicApiUrls {
+    pub fn new(url: Url) -> Self {
+        Self {
+            url_register: url.clone(),
+            url_account: url.clone(),
+            url_profile: url.clone(),
+            url_media: url.clone(),
+            url_chat: url.clone(),
+        }
+    }
+
     #[allow(clippy::result_unit_err)]
     pub fn change_ports(
         mut self,
@@ -79,6 +95,44 @@ impl PublicApiUrls {
             self.url_chat.set_port(Some(other_ports))?;
         }
         Ok(self)
+    }
+}
+
+#[derive(Args, Debug, Clone)]
+pub struct RemoteBotMode {
+    #[arg(long, value_name = "FILE")]
+    pub bot_config_file: PathBuf,
+}
+
+impl RemoteBotMode {
+    pub fn to_test_mode(&self) -> error_stack::Result<TestMode, ConfigFileError> {
+        let config = BotConfigFile::load(self.bot_config_file.clone())?;
+        let Some(server_url) = config.remote_bot_mode.map(|v| v.api_url) else {
+            return Err(ConfigFileError::InvalidConfig.report())
+                .attach_printable("Remote bot mode config not found")
+        };
+
+        Ok(TestMode {
+            server: ServerConfig {
+                api_urls: PublicApiUrls::new(server_url),
+                test_database: PathBuf::from("tmp_databases"),
+                microservice_media: false,
+                microservice_profile: false,
+                microservice_chat: false,
+                log_debug: false,
+            },
+            bot_config_file: Some(self.bot_config_file.clone()),
+            no_clean: false,
+            no_servers: true,
+            early_quit: false,
+            mode: TestModeSubMode::Bot(BotModeConfig {
+                users: TryInto::<u32>::try_into(config.bot.len())
+                    .change_context(ConfigFileError::InvalidConfig)?,
+                admin: config.admin_bot_config.remote_bot_login_password.is_some(),
+                no_sleep: false,
+                save_state: false,
+            }),
+        })
     }
 }
 

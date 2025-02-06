@@ -21,6 +21,9 @@ pub struct BotConfigFile {
     pub bot: Vec<BotInstanceConfig>,
     pub profile_text_moderation: Option<ProfileTextModerationConfig>,
     pub content_moderation: Option<ContentModerationConfig>,
+    /// Config required for starting backend in remote bot mode.
+    /// Ignored when backend starts in test mode.
+    pub remote_bot_mode: Option<RemoteBotModeConfig>,
 }
 
 impl BotConfigFile {
@@ -32,6 +35,12 @@ impl BotConfigFile {
             return Ok(BotConfigFile::default());
         }
 
+        Self::load(file)
+    }
+
+    pub(crate) fn load(
+        file: impl AsRef<Path>,
+    ) -> Result<BotConfigFile, ConfigFileError> {
         let config_content =
             std::fs::read_to_string(file).change_context(ConfigFileError::LoadConfig)?;
         let mut config: BotConfigFile =
@@ -376,4 +385,9 @@ pub struct AdminBotConfig {
     pub account_id: Option<String>,
     // Use remote bot login API.
     pub remote_bot_login_password: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RemoteBotModeConfig {
+    pub api_url: Url,
 }
