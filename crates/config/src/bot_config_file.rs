@@ -8,8 +8,8 @@ use crate::{args::TestMode, file::ConfigFileError};
 
 #[derive(Debug, Default, Deserialize)]
 pub struct BotConfigFile {
-    pub man_image_dir: Option<PathBuf>,
-    pub woman_image_dir: Option<PathBuf>,
+    #[serde(default)]
+    pub image_dir: ImageDirConfig,
     /// Config for admin bots
     #[serde(default)]
     pub admin_bot_config: AdminBotConfig,
@@ -62,13 +62,13 @@ impl BotConfigFile {
             if bot.image.is_some() {
                 match bot.img_dir_gender() {
                     Gender::Man => {
-                        if config.man_image_dir.is_none() {
+                        if config.image_dir.man.is_none() {
                             return Err(ConfigFileError::InvalidConfig)
                                 .attach_printable(format!("{} Image file name configured but man image directory is not configured", error_location));
                         }
                     }
                     Gender::Woman => {
-                        if config.woman_image_dir.is_none() {
+                        if config.image_dir.woman.is_none() {
                             return Err(ConfigFileError::InvalidConfig)
                                 .attach_printable(format!("{} Image file name configured but woman image directory is not configured", error_location));
                         }
@@ -102,11 +102,11 @@ impl BotConfigFile {
             ids.insert(bot.id);
         }
 
-        if let Some(img_dir) = &config.man_image_dir {
+        if let Some(img_dir) = &config.image_dir.man {
             check_imgs_exist(&config, img_dir, Gender::Man)?
         }
 
-        if let Some(img_dir) = &config.woman_image_dir {
+        if let Some(img_dir) = &config.image_dir.woman {
             check_imgs_exist(&config, img_dir, Gender::Woman)?
         }
 
@@ -209,6 +209,12 @@ fn check_imgs_exist(
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
+pub struct ImageDirConfig {
+    pub man: Option<PathBuf>,
+    pub woman: Option<PathBuf>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
 pub struct BaseBotConfig {
     pub age: Option<u8>,
     pub gender: Option<Gender>,
@@ -240,8 +246,8 @@ impl BaseBotConfig {
     pub fn get_img(&self, config: &BotConfigFile) -> Option<PathBuf> {
         if let Some(img) = self.image.as_ref() {
             match self.img_dir_gender() {
-                Gender::Man => config.man_image_dir.as_ref().map(|dir| dir.join(img)),
-                Gender::Woman => config.woman_image_dir.as_ref().map(|dir| dir.join(img)),
+                Gender::Man => config.image_dir.man.as_ref().map(|dir| dir.join(img)),
+                Gender::Woman => config.image_dir.woman.as_ref().map(|dir| dir.join(img)),
             }
         } else {
             None

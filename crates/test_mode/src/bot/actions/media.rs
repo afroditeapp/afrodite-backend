@@ -156,8 +156,8 @@ fn img_for_bot(
         Ok(Some(image))
     } else {
         let dir = match bot.img_dir_gender() {
-            Gender::Man => config.man_image_dir.clone(),
-            Gender::Woman => config.woman_image_dir.clone(),
+            Gender::Man => config.image_dir.man.clone(),
+            Gender::Woman => config.image_dir.woman.clone(),
         };
         if let Some(dir) = dir {
             ImageProvider::random_image_from_directory(&dir)
