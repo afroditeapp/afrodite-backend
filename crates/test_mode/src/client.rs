@@ -82,6 +82,9 @@ impl TestError {
 #[derive(Debug, Clone)]
 pub struct ApiClient {
     /// Where Account API reqister and login is available
+    /// TODO(prod): Remove register `Configuration`?
+    ///             Register and login APIs are available from
+    ///             account `Configuration` currently.
     register: Configuration,
     account: Configuration,
     profile: Configuration,

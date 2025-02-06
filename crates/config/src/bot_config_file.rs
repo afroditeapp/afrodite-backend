@@ -10,6 +10,9 @@ use crate::{args::TestMode, file::ConfigFileError};
 pub struct BotConfigFile {
     pub man_image_dir: Option<PathBuf>,
     pub woman_image_dir: Option<PathBuf>,
+    /// Config for admin bots
+    #[serde(default)]
+    pub admin_bot_config: AdminBotConfig,
     /// Config for user bots
     #[serde(default)]
     pub bot_config: BaseBotConfig,
@@ -162,6 +165,12 @@ impl BotConfigFile {
             };
         }
     }
+
+    pub fn find_bot_config(&self, bot_id: u32) -> Option<&BotInstanceConfig> {
+        self.bot
+            .iter()
+            .find(|v| Into::<u32>::into(v.id) == bot_id)
+    }
 }
 
 fn check_imgs_exist(
@@ -253,6 +262,11 @@ impl BaseBotConfig {
 #[derive(Debug, Deserialize)]
 pub struct BotInstanceConfig {
     pub id: u16,
+    /// If `None` and account ID is not in saved state, register
+    /// a new account.
+    pub account_id: Option<String>,
+    // Use remote bot login API.
+    pub remote_bot_login_password: Option<String>,
     #[serde(flatten)]
     pub config: BaseBotConfig,
 }
@@ -353,4 +367,13 @@ pub struct NsfwDetectionThresholds {
     pub neutral: Option<f32>,
     pub porn: Option<f32>,
     pub sexy: Option<f32>,
+}
+
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct AdminBotConfig {
+    /// If `None` and account ID is not in saved state, register
+    /// a new account.
+    pub account_id: Option<String>,
+    // Use remote bot login API.
+    pub remote_bot_login_password: Option<String>,
 }

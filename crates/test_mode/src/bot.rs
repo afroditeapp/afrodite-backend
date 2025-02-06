@@ -322,11 +322,23 @@ impl BotState {
     /// [TestModeSubMode::Bot] even if the bot config file exists.
     pub fn get_bot_config(&self) -> &BaseBotConfig {
         self.bot_config_file
-            .bot
-            .iter()
-            .find(|v| Into::<u32>::into(v.id) == self.bot_id)
+            .find_bot_config(self.bot_id)
             .map(|v| &v.config)
             .unwrap_or(&self.bot_config_file.bot_config)
+    }
+
+    pub fn remote_bot_password(&self) -> Option<String> {
+        if self.config.bot_mode().is_some() {
+            if self.is_bot_mode_admin_bot() {
+                self.bot_config_file.admin_bot_config.remote_bot_login_password.clone()
+            } else {
+                self.bot_config_file
+                    .find_bot_config(self.bot_id)
+                    .and_then(|v| v.remote_bot_login_password.clone())
+            }
+        } else {
+            None
+        }
     }
 }
 
@@ -422,11 +434,24 @@ impl BotManager {
     ) -> Self {
         let mut bots = Vec::<Box<dyn BotStruct>>::new();
         for bot_i in 0..config.bots(task_id) {
+            let account_id = if config.bot_mode().is_some() {
+                if task_id == 1 {
+                    bot_config_file.admin_bot_config.account_id.clone()
+                } else {
+                    bot_config_file
+                        .find_bot_config(bot_i)
+                        .and_then(|v| v.account_id.clone())
+                }
+            } else {
+                None
+            };
+            let account_id = account_id.or_else(
+                || old_state.as_ref()
+                    .and_then(|v| v.find_matching(task_id, bot_i))
+                    .map(|v| v.account_id.clone())
+            );
             let state = BotState::new(
-                old_state.as_ref().and_then(|d| {
-                    d.find_matching(task_id, bot_i)
-                        .map(|s| AccountId::new(s.account_id.clone()))
-                }),
+                account_id.map(AccountId::new),
                 server_config.clone(),
                 config.clone(),
                 bot_config_file.clone(),
