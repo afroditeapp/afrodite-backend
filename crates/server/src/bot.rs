@@ -85,8 +85,6 @@ impl BotClient {
             .arg(bot_data_dir)
             .arg("--no-servers")
             // Urls
-            .arg("--url-register")
-            .arg(Self::bot_api_url(bot_api_socket))
             .arg("--url-account")
             .arg(Self::bot_api_url(bot_api_socket))
             .arg("--url-profile")

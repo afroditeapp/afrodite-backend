@@ -47,10 +47,6 @@ pub enum AppMode {
 
 #[derive(Parser, Debug, Clone)]
 pub struct PublicApiUrls {
-    /// Base URL for account API for register and login
-    #[arg(long, default_value = "http://127.0.0.1:3001", value_name = "URL")]
-    pub url_register: Url,
-
     /// Base URL for account API
     #[arg(long, default_value = "http://127.0.0.1:3000", value_name = "URL")]
     pub url_account: Url,
@@ -71,7 +67,6 @@ pub struct PublicApiUrls {
 impl PublicApiUrls {
     pub fn new(url: Url) -> Self {
         Self {
-            url_register: url.clone(),
             url_account: url.clone(),
             url_profile: url.clone(),
             url_media: url.clone(),
@@ -82,17 +77,13 @@ impl PublicApiUrls {
     #[allow(clippy::result_unit_err)]
     pub fn change_ports(
         mut self,
-        register_api_port: Option<u16>,
-        other_ports: Option<u16>,
+        port: Option<u16>,
     ) -> Result<Self, ()> {
-        if let Some(register_api_port) = register_api_port {
-            self.url_register.set_port(Some(register_api_port))?;
-        }
-        if let Some(other_ports) = other_ports {
-            self.url_account.set_port(Some(other_ports))?;
-            self.url_profile.set_port(Some(other_ports))?;
-            self.url_media.set_port(Some(other_ports))?;
-            self.url_chat.set_port(Some(other_ports))?;
+        if let Some(port) = port {
+            self.url_account.set_port(Some(port))?;
+            self.url_profile.set_port(Some(port))?;
+            self.url_media.set_port(Some(port))?;
+            self.url_chat.set_port(Some(port))?;
         }
         Ok(self)
     }

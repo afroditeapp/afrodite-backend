@@ -96,8 +96,7 @@ impl TestManager {
                 break;
             }
 
-            let public_api_port = port_number_receiver.receive().await;
-            let internal_api_port = port_number_receiver.receive().await;
+            let api_port = port_number_receiver.receive().await;
 
             let test_task = TestTask {
                 config: self.config.clone(),
@@ -106,8 +105,7 @@ impl TestManager {
                 sender: sender.clone(),
                 port_sender: port_number_sender.clone(),
                 test,
-                public_api_port,
-                internal_api_port,
+                api_port,
             };
             tokio::spawn(test_task.run());
         }
@@ -121,8 +119,7 @@ struct TestTask {
     sender: mpsc::Sender<ManagerEvent>,
     port_sender: ServerPortNumberSender,
     test: &'static TestFunction,
-    public_api_port: u16,
-    internal_api_port: u16,
+    api_port: u16,
 }
 
 impl TestTask {
@@ -130,8 +127,7 @@ impl TestTask {
         let mut test_context = TestContext::new(
             self.config.clone(),
             self.test_config.clone(),
-            Some(self.public_api_port),
-            Some(self.internal_api_port),
+            Some(self.api_port),
         );
 
         let server_manager = ServerManager::new(
@@ -139,8 +135,7 @@ impl TestTask {
             self.test_config.clone(),
             Some(AdditionalSettings {
                 log_to_memory: true,
-                account_server_public_api_port: Some(self.public_api_port),
-                account_server_internal_api_port: Some(self.internal_api_port),
+                account_server_api_port: Some(self.api_port),
             }),
         )
         .await;
@@ -172,8 +167,7 @@ impl TestTask {
         test_context.close_websocket_connections().await;
         server_manager.close().await;
 
-        self.port_sender.send(self.public_api_port).await;
-        self.port_sender.send(self.internal_api_port).await;
+        self.port_sender.send(self.api_port).await;
 
         drop(self.permit);
     }

@@ -1,5 +1,5 @@
 use std::{
-    env, net::SocketAddrV4, num::NonZeroU8, os::unix::process::CommandExt, path::PathBuf,
+    env, num::NonZeroU8, os::unix::process::CommandExt, path::PathBuf,
     process::Stdio, sync::Arc,
 };
 
@@ -22,7 +22,7 @@ use tokio::{
     sync::Mutex,
     task::JoinHandle,
 };
-use tracing::info;
+use tracing::{info, warn};
 
 use crate::runner::bot::DataDirUtils;
 
@@ -50,8 +50,7 @@ pub const DEFAULT_LOCATION_CONFIG_BENCHMARK: LocationConfig = LocationConfig {
 pub struct AdditionalSettings {
     /// Store logs in RAM instead of using standard output or error.
     pub log_to_memory: bool,
-    pub account_server_public_api_port: Option<u16>,
-    pub account_server_internal_api_port: Option<u16>,
+    pub account_server_api_port: Option<u16>,
 }
 
 pub struct ServerManager {
@@ -78,43 +77,20 @@ impl ServerManager {
         check_host(&config.api_urls.url_account, "account server");
         check_host(&config.api_urls.url_profile, "profile server");
         check_host(&config.api_urls.url_media, "media server");
+        check_host(&config.api_urls.url_chat, "chat server");
 
-        let account_port = config.api_urls.url_account.port().unwrap();
-        let media_port = config.api_urls.url_media.port().unwrap();
-        let profile_port = config.api_urls.url_profile.port().unwrap();
-
-        let external_services = Some(ExternalServices {
-            account_internal: format!("http://127.0.0.1:{}", account_port + 1)
-                .parse::<Url>()
-                .unwrap()
-                .into(),
-            media_internal: format!("http://127.0.0.1:{}", media_port + 1)
-                .parse::<Url>()
-                .unwrap()
-                .into(),
-        });
-
-        let localhost_ip = "127.0.0.1".parse().unwrap();
-
-        let account_public_api_port = settings
-            .account_server_public_api_port
-            .unwrap_or(account_port);
-        let account_internal_api_port = settings
-            .account_server_internal_api_port
-            .unwrap_or(account_port + 1);
+        let bot_api_port = settings
+            .account_server_api_port
+            .unwrap_or(
+                config.api_urls.url_account.port().unwrap()
+            );
         let account_config = new_config(
             &config,
-            SocketAddrV4::new(localhost_ip, account_public_api_port),
-            SocketAddrV4::new(localhost_ip, account_internal_api_port),
-            Components {
-                account: true,
-                profile: !config.server.microservice_profile,
-                media: !config.server.microservice_media,
-                chat: !config.server.microservice_chat,
-            },
-            external_services.clone(),
+            bot_api_port,
+            Components::all_enabled(),
+            None,
         );
-        let mut servers = vec![
+        let servers = vec![
             ServerInstance::new(
                 dir.clone(),
                 all_config,
@@ -125,53 +101,13 @@ impl ServerManager {
             .await,
         ];
 
-        if config.server.microservice_media {
-            let server_config = new_config(
-                &config,
-                SocketAddrV4::new(localhost_ip, media_port),
-                SocketAddrV4::new(localhost_ip, media_port + 1),
-                Components {
-                    media: true,
-                    ..Components::default()
-                },
-                external_services.clone(),
-            );
-            servers.push(
-                ServerInstance::new(
-                    dir.clone(),
-                    all_config,
-                    server_config,
-                    &config,
-                    settings.clone(),
-                )
-                .await,
-            );
+        if config.server.microservice_profile ||
+            config.server.microservice_media ||
+            config.server.microservice_chat {
+            warn!("Starting server in microservice mode is unsupported");
         }
 
-        if config.server.microservice_profile {
-            let server_config = new_config(
-                &config,
-                SocketAddrV4::new(localhost_ip, profile_port),
-                SocketAddrV4::new(localhost_ip, profile_port + 1),
-                Components {
-                    profile: true,
-                    ..Components::default()
-                },
-                external_services,
-            );
-            servers.push(
-                ServerInstance::new(
-                    dir.clone(),
-                    all_config,
-                    server_config,
-                    &config,
-                    settings.clone(),
-                )
-                .await,
-            );
-        }
-
-        // TODO: Chat microservice
+        // TODO(microservice): Start microservice server instances
 
         Self { servers, config }
     }
@@ -198,8 +134,7 @@ impl ServerManager {
 
 fn new_config(
     config: &TestMode,
-    public_api: SocketAddrV4,
-    internal_api: SocketAddrV4,
+    bot_api_port: u16,
     components: Components,
     external_services: Option<ExternalServices>,
 ) -> (ConfigFile, SimpleBackendConfigFile) {
@@ -253,9 +188,9 @@ fn new_config(
             ],
         },
         socket: SocketConfig {
-            public_api: Some(public_api.into()),
+            public_api: None,
             public_bot_api: None,
-            bot_api_localhost_port: Some(internal_api.port()),
+            bot_api_localhost_port: Some(bot_api_port),
             // TODO(microservice): Configure internal API properly
             experimental_internal_api: None,
         },

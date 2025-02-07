@@ -81,11 +81,6 @@ impl TestError {
 
 #[derive(Debug, Clone)]
 pub struct ApiClient {
-    /// Where Account API reqister and login is available
-    /// TODO(prod): Remove register `Configuration`?
-    ///             Register and login APIs are available from
-    ///             account `Configuration` currently.
-    register: Configuration,
     account: Configuration,
     profile: Configuration,
     media: Configuration,
@@ -97,7 +92,6 @@ impl ApiClient {
         let client = reqwest::Client::new();
 
         Self {
-            register: Self::create_configuration(&client, base_urls.url_register.as_str()),
             account: Self::create_configuration(&client, base_urls.url_account.as_str()),
             profile: Self::create_configuration(&client, base_urls.url_profile.as_str()),
             media: Self::create_configuration(&client, base_urls.url_media.as_str()),
@@ -115,15 +109,10 @@ impl ApiClient {
     }
 
     pub fn print_to_log(&self) {
-        info!("Register API base url: {}", self.register.base_path);
         info!("Account API base url: {}", self.account.base_path);
         info!("Profile API base url: {}", self.profile.base_path);
         info!("Media API base url: {}", self.media.base_path);
         info!("Chat API base url: {}", self.chat.base_path);
-    }
-
-    pub fn register(&self) -> &Configuration {
-        &self.register
     }
 
     pub fn account(&self) -> &Configuration {

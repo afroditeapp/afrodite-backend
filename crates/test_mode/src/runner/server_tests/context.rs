@@ -39,8 +39,7 @@ pub struct TestContext {
     config: Arc<Config>,
     test_config: Arc<TestMode>,
     state: Arc<Mutex<State>>,
-    account_server_public_api_port: Option<u16>,
-    account_server_internal_api_port: Option<u16>,
+    account_server_api_port: Option<u16>,
     next_bot_id: u32,
     admin_access_granted: bool,
 }
@@ -49,8 +48,7 @@ impl TestContext {
     pub fn new(
         config: Arc<Config>,
         test_config: Arc<TestMode>,
-        account_server_public_api_port: Option<u16>,
-        account_server_internal_api_port: Option<u16>,
+        account_server_api_port: Option<u16>,
     ) -> Self {
         Self {
             state: Arc::new(Mutex::new(State {
@@ -58,8 +56,7 @@ impl TestContext {
             })),
             config,
             test_config,
-            account_server_public_api_port,
-            account_server_internal_api_port,
+            account_server_api_port,
             next_bot_id: 1, // 0 is for admin bot
             admin_access_granted: false,
         }
@@ -221,12 +218,8 @@ impl Account {
             .test_config
             .api_urls
             .clone()
-            // TODO(prod): Two different ports is probably
-            //             unnecessary at here as now all needed APIs are
-            //             available from single port.
             .change_ports(
-                test_context.account_server_internal_api_port,
-                test_context.account_server_public_api_port,
+                test_context.account_server_api_port,
             )
             .map_err(|_| TestError::ApiUrlPortConfigFailed.report())?;
 
@@ -259,10 +252,6 @@ impl Account {
         test_context.add_account_connections(connections).await;
 
         Ok(Self { bot_state: state })
-    }
-
-    pub fn register_api(&self) -> &Configuration {
-        self.bot_state.api.register()
     }
 
     pub fn account_api(&self) -> &Configuration {

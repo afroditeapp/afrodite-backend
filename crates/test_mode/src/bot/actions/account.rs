@@ -41,7 +41,7 @@ impl BotAction for Register {
             return Ok(());
         }
 
-        let id = post_bot_register(state.api.register())
+        let id = post_bot_register(state.api.account())
             .await
             .change_context(TestError::ApiRequest)?;
         state.id = Some(id);
@@ -60,7 +60,7 @@ impl BotAction for Login {
         }
         let login_result = if let Some(password) = state.remote_bot_password() {
             post_remote_bot_login(
-                state.api.register(),
+                state.api.account(),
                 RemoteBotLogin::new(
                     state.account_id()?,
                     password,
@@ -69,7 +69,7 @@ impl BotAction for Login {
                 .await
                 .change_context(TestError::ApiRequest)?
         } else {
-            post_bot_login(state.api.register(), state.account_id()?)
+            post_bot_login(state.api.account(), state.account_id()?)
                 .await
                 .change_context(TestError::ApiRequest)?
         };
