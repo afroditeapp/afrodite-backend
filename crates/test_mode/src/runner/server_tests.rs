@@ -48,7 +48,7 @@ impl QaTestRunner {
     }
 
     async fn run_tests(&self) {
-        let api_client = ApiClient::new(self.test_config.server.api_urls.clone());
+        let api_client = ApiClient::new(self.test_config.api_urls.clone());
         api_client.print_to_log();
 
         let test_functions: Vec<&'static TestFunction> = match get_test_functions(&self.qa_config) {

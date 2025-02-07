@@ -24,6 +24,8 @@ use tokio::{
 };
 use tracing::info;
 
+use crate::runner::bot::DataDirUtils;
+
 pub const TEST_ADMIN_ACCESS_EMAIL: &str = "admin@example.com";
 
 pub const SERVER_INSTANCE_DIR_START: &str = "server_instance_";
@@ -65,10 +67,7 @@ impl ServerManager {
     ) -> Self {
         let settings = settings.unwrap_or_default();
 
-        let dir = config.server.test_database.clone();
-        if !dir.exists() {
-            std::fs::create_dir_all(&dir).unwrap();
-        }
+        let dir = DataDirUtils::create_data_dir_if_needed(&config);
 
         let check_host = |url: &Url, name| {
             let host = url.host_str().unwrap();
@@ -76,13 +75,13 @@ impl ServerManager {
                 panic!("{} address was not 127.0.0.1. value: {}", name, host);
             }
         };
-        check_host(&config.server.api_urls.url_account, "account server");
-        check_host(&config.server.api_urls.url_profile, "profile server");
-        check_host(&config.server.api_urls.url_media, "media server");
+        check_host(&config.api_urls.url_account, "account server");
+        check_host(&config.api_urls.url_profile, "profile server");
+        check_host(&config.api_urls.url_media, "media server");
 
-        let account_port = config.server.api_urls.url_account.port().unwrap();
-        let media_port = config.server.api_urls.url_media.port().unwrap();
-        let profile_port = config.server.api_urls.url_profile.port().unwrap();
+        let account_port = config.api_urls.url_account.port().unwrap();
+        let media_port = config.api_urls.url_media.port().unwrap();
+        let profile_port = config.api_urls.url_profile.port().unwrap();
 
         let external_services = Some(ExternalServices {
             account_internal: format!("http://127.0.0.1:{}", account_port + 1)

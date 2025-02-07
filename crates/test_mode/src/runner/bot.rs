@@ -42,7 +42,7 @@ impl BotTestRunner {
 
     pub async fn run(self) {
         info!("Testing mode - bot test runner");
-        info!("data dir: {:?}", self.test_config.server.test_database);
+        info!("data dir: {:?}", self.test_config.data_dir);
         let start_cmd = std::env::args().next().unwrap();
         let start_cmd = std::fs::canonicalize(&start_cmd).unwrap();
         info!("Path to server binary: {:?}", &start_cmd);
@@ -53,7 +53,7 @@ impl BotTestRunner {
             None
         };
 
-        ApiClient::new(self.test_config.server.api_urls.clone()).print_to_log();
+        ApiClient::new(self.test_config.api_urls.clone()).print_to_log();
 
         let (quit_now, server) = if !self.test_config.no_servers {
             info!("Creating ServerManager...");
@@ -249,9 +249,21 @@ impl BotTestRunner {
 
     fn state_data_file(&self) -> PathBuf {
         let data_file = format!("test_{}_state_data.json", self.test_config.test_name());
-        if !self.test_config.server.test_database.exists() {
-            std::fs::create_dir_all(&self.test_config.server.test_database).unwrap();
+        DataDirUtils::create_data_dir_if_needed(&self.test_config)
+            .join(data_file)
+    }
+}
+
+pub struct DataDirUtils;
+
+impl DataDirUtils {
+    pub fn create_data_dir_if_needed(config: &TestMode) -> PathBuf {
+        let Some(dir) = config.data_dir.clone() else {
+            panic!("Test mode data dir is not configured");
+        };
+        if !dir.exists() {
+            std::fs::create_dir_all(&dir).unwrap();
         }
-        self.test_config.server.test_database.join(data_file)
+        dir
     }
 }

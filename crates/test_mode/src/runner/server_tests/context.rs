@@ -219,7 +219,6 @@ impl Account {
     pub async fn register_and_login(test_context: &mut TestContext, admin: bool) -> Result<Self, TestError> {
         let urls = test_context
             .test_config
-            .server
             .api_urls
             .clone()
             // TODO(prod): Two different ports is probably

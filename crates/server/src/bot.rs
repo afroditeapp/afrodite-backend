@@ -81,7 +81,7 @@ impl BotClient {
         let mut command = std::process::Command::new(start_cmd);
         command
             .arg("test")
-            .arg("--test-database")
+            .arg("--data-dir")
             .arg(bot_data_dir)
             .arg("--no-servers")
             // Urls

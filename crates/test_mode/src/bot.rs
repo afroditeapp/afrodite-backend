@@ -457,8 +457,8 @@ impl BotManager {
                 bot_config_file.clone(),
                 task_id,
                 bot_i,
-                ApiClient::new(config.server.api_urls.clone()),
-                config.server.api_urls.clone(),
+                ApiClient::new(config.api_urls.clone()),
+                config.api_urls.clone(),
             );
 
             match (config.selected_benchmark(), config.bot_mode()) {

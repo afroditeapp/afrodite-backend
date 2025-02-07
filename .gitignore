@@ -3,6 +3,7 @@
 /data
 /database-media
 /tmp_databases
+/tmp_data
 
 server_config.toml
 server_config_bots.toml

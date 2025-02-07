@@ -138,15 +138,10 @@ impl RemoteBotMode {
         }
 
         Ok(TestMode {
-            server: ServerConfig {
-                api_urls: PublicApiUrls::new(server_url),
-                test_database: PathBuf::from("tmp_databases"),
-                microservice_media: false,
-                microservice_profile: false,
-                microservice_chat: false,
-                log_debug: false,
-            },
+            server: ServerConfig::default(),
+            api_urls: PublicApiUrls::new(server_url),
             bot_config_file: Some(self.bot_config_file.clone()),
+            data_dir: None,
             no_clean: false,
             no_servers: true,
             early_quit: false,
@@ -167,8 +162,15 @@ pub struct TestMode {
     #[command(flatten)]
     pub server: ServerConfig,
 
+    #[command(flatten)]
+    pub api_urls: PublicApiUrls,
+
     #[arg(long, value_name = "FILE")]
     pub bot_config_file: Option<PathBuf>,
+
+    /// Directory for test mode files
+    #[arg(long, default_value = "tmp_data", value_name = "DIR")]
+    pub data_dir: Option<PathBuf>,
 
     // Boolean flags
     /// Do not remove server instance database files
@@ -273,15 +275,8 @@ pub enum TestModeSubMode {
     Bot(BotModeConfig),
 }
 
-#[derive(Parser, Debug, Clone)]
+#[derive(Parser, Debug, Clone, Default)]
 pub struct ServerConfig {
-    #[command(flatten)]
-    pub api_urls: PublicApiUrls,
-
-    /// Directory for test database
-    #[arg(long, default_value = "tmp_databases", value_name = "DIR")]
-    pub test_database: PathBuf,
-
     /// Start media API as microservice
     #[arg(long)]
     pub microservice_media: bool,
