@@ -135,9 +135,10 @@ pub enum ConfigFileError {
 pub struct SimpleBackendConfigFile {
     #[serde(default)]
     pub general: GeneralConfig,
+    #[serde(default)]
+    pub socket: SocketConfig,
 
     pub data: DataConfig,
-    pub socket: SocketConfig,
     pub tile_map: Option<TileMapConfig>,
     pub manager: Option<AppManagerConfig>,
     pub sign_in_with_google: Option<SignInWithGoogleConfig>,
@@ -297,7 +298,7 @@ impl From<SqliteDatabase> for DatabaseInfo {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct SocketConfig {
     pub public_api: Option<SocketAddr>,
     /// Bot remote login and unobfuscated API access.
