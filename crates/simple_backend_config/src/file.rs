@@ -310,6 +310,14 @@ pub struct SocketConfig {
     pub experimental_internal_api: Option<SocketAddr>,
 }
 
+impl SocketConfig {
+    pub fn public_api_enabled(&self) -> bool {
+        self.public_api.is_some() ||
+        self.public_bot_api.is_some() ||
+        self.experimental_internal_api.is_some()
+    }
+}
+
 /// App manager config
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AppManagerConfig {
