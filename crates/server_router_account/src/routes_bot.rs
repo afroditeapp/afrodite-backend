@@ -31,6 +31,10 @@ impl BotApp {
                 api::account_bot::PATH_BOT_LOGIN,
                 post(api::account_bot::post_bot_login),
             )
+            .route(
+                api::account_bot::PATH_REMOTE_BOT_LOGIN,
+                post(api::account_bot::post_remote_bot_login),
+            )
             .with_state(state)
     }
 }

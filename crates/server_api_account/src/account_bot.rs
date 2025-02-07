@@ -23,7 +23,7 @@ pub const PATH_BOT_LOGIN: &str = "/account_api/bot_login";
 /// Get new AccessToken for a bot account. If the account is not registered
 /// as a bot account, then the request will fail.
 ///
-/// Available only from bot API port.
+/// Available only from localhost bot API port.
 #[utoipa::path(
     post,
     path = PATH_BOT_LOGIN,
@@ -53,7 +53,7 @@ pub const PATH_BOT_REGISTER: &str = "/account_api/bot_register";
 
 /// Register a new bot account. Returns new account ID which is UUID.
 ///
-/// Available only from bot API port.
+/// Available only from localhost bot API port.
 #[utoipa::path(
     post,
     path = PATH_BOT_REGISTER,
@@ -93,6 +93,8 @@ static REMOTE_BOT_LOGIN_STATE: LazyLock<Mutex<RemoteBotLoginState>> = std::sync:
 pub const PATH_REMOTE_BOT_LOGIN: &str = "/account_api/remote_bot_login";
 
 /// Login for remote bots which are listed in server config file.
+///
+/// Available only from localhost and remote bot API ports.
 #[utoipa::path(
     post,
     path = PATH_REMOTE_BOT_LOGIN,
