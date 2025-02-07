@@ -105,8 +105,11 @@ impl BotClient {
             .arg("bot")
             .arg("--save-state")
             .arg("--users")
-            .arg(bot_config.users.to_string())
-            .arg("--admin");
+            .arg(bot_config.users.to_string());
+
+        if bot_config.admin {
+            command.arg("--admin");
+        }
 
         // Setup logging and prevent signal propagation
         command.env("RUST_LOG", "info").process_group(0);
