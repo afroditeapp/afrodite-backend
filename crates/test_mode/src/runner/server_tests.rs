@@ -10,7 +10,7 @@ use manager::{ManagerEvent, ManagerEventReceiver, TestManager};
 use tokio::{select, signal};
 use tracing::{error, info};
 
-use crate::{client::ApiClient, ServerTestError, TestFunction};
+use crate::{ServerTestError, TestFunction};
 
 pub mod assert;
 pub mod context;
@@ -48,9 +48,6 @@ impl QaTestRunner {
     }
 
     async fn run_tests(&self) {
-        let api_client = ApiClient::new(self.test_config.api_urls.clone());
-        api_client.print_to_log();
-
         let test_functions: Vec<&'static TestFunction> = match get_test_functions(&self.qa_config) {
             Ok(test_functions) => test_functions,
             Err(()) => return,
