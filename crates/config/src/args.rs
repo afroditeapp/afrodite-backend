@@ -48,19 +48,19 @@ pub enum AppMode {
 #[derive(Parser, Debug, Clone)]
 pub struct PublicApiUrls {
     /// Base URL for account API
-    #[arg(long, default_value = "http://127.0.0.1:3000", value_name = "URL")]
+    #[arg(long, default_value = "http://127.0.0.1:3002", value_name = "URL")]
     pub url_account: Url,
 
     /// Base URL for profile API
-    #[arg(long, default_value = "http://127.0.0.1:3000", value_name = "URL")]
+    #[arg(long, default_value = "http://127.0.0.1:3002", value_name = "URL")]
     pub url_profile: Url,
 
     /// Base URL for media API
-    #[arg(long, default_value = "http://127.0.0.1:3000", value_name = "URL")]
+    #[arg(long, default_value = "http://127.0.0.1:3002", value_name = "URL")]
     pub url_media: Url,
 
     /// Base URL for chat API
-    #[arg(long, default_value = "http://127.0.0.1:3000", value_name = "URL")]
+    #[arg(long, default_value = "http://127.0.0.1:3002", value_name = "URL")]
     pub url_chat: Url,
 }
 
