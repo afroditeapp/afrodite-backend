@@ -29,7 +29,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 [socket]
 public_api = "127.0.0.1:3000"
 public_bot_api = "127.0.0.1:3001"
-bot_api_localhost_port = 3002
+local_bot_api_port = 3002
 
 [data]
 dir = "data"
@@ -173,7 +173,7 @@ impl SimpleBackendConfigFile {
             socket: SocketConfig {
                 public_api: None,
                 public_bot_api: None,
-                bot_api_localhost_port: None,
+                local_bot_api_port: None,
                 experimental_internal_api: None,
             },
             email_sending: None,
@@ -300,10 +300,10 @@ impl From<SqliteDatabase> for DatabaseInfo {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SocketConfig {
     pub public_api: Option<SocketAddr>,
-    /// Remote bot login access with unobfuscated API.
+    /// Bot remote login and unobfuscated API access.
     pub public_bot_api: Option<SocketAddr>,
-    /// Local bot register and login access with unobfuscated API.
-    pub bot_api_localhost_port: Option<u16>,
+    /// Bot register, login, remote login and unobfuscated API access.
+    pub local_bot_api_port: Option<u16>,
     /// Socket address for server to server API which is only used
     /// when backend is running in microservice mode.
     /// The microservice mode is not currently working properly.

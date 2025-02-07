@@ -294,7 +294,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
                 None
             };
         let bot_api_server_task =
-            if let Some(port) = self.config.socket().bot_api_localhost_port {
+            if let Some(port) = self.config.socket().local_bot_api_port {
                 Some(
                     self.create_bot_api_server_task(
                         server_quit_watcher.resubscribe(),

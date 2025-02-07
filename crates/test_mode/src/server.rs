@@ -190,7 +190,7 @@ fn new_config(
         socket: SocketConfig {
             public_api: None,
             public_bot_api: None,
-            bot_api_localhost_port: Some(bot_api_port),
+            local_bot_api_port: Some(bot_api_port),
             // TODO(microservice): Configure internal API properly
             experimental_internal_api: None,
         },

@@ -69,7 +69,7 @@ impl BotClient {
         }
 
         let bot_api_socket =
-            if let Some(port) = config.simple_backend().socket().bot_api_localhost_port {
+            if let Some(port) = config.simple_backend().socket().local_bot_api_port {
                 SocketAddr::new(Ipv4Addr::LOCALHOST.into(), port)
             } else {
                 return Err(BotClientError::LaunchCommand)
