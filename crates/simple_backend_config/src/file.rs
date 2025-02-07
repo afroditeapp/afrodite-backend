@@ -164,7 +164,6 @@ pub struct SimpleBackendConfigFile {
 
 impl SimpleBackendConfigFile {
     pub fn minimal_config_for_api_doc_json() -> Self {
-        let localhost = "127.0.0.1:8080".parse().unwrap();
         Self {
             general: GeneralConfig::default(),
             data: DataConfig {
@@ -172,7 +171,7 @@ impl SimpleBackendConfigFile {
                 sqlite: vec![],
             },
             socket: SocketConfig {
-                public_api: localhost,
+                public_api: None,
                 public_bot_api: None,
                 bot_api_localhost_port: None,
                 experimental_internal_api: None,
@@ -300,7 +299,7 @@ impl From<SqliteDatabase> for DatabaseInfo {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SocketConfig {
-    pub public_api: SocketAddr,
+    pub public_api: Option<SocketAddr>,
     /// Remote bot login access with unobfuscated API.
     pub public_bot_api: Option<SocketAddr>,
     /// Local bot register and login access with unobfuscated API.

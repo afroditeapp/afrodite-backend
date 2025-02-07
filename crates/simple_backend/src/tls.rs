@@ -59,7 +59,9 @@ impl TlsManager {
                 .with_cert_resolver(state.resolver())
                 .into();
 
-            let mut https_addr = config.socket().public_api;
+            let Some(mut https_addr) = config.socket().public_api else {
+                panic!("Public API must be enabled when using Let's Encrypt TLS");
+            };
             https_addr.set_port(HTTPS_DEFAULT_PORT);
             info!(
                 "HTTPS socket for Let's Encrypt ACME challenge is available on {}",

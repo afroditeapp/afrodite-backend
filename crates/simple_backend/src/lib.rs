@@ -263,15 +263,21 @@ impl<T: BusinessLogic> SimpleBackend<T> {
 
         let (mut tls_manager, tls_manager_quit_handle) = TlsManager::new(&self.config, server_quit_watcher.resubscribe()).await;
 
-        let public_api_server_task = self
-            .create_api_server_task(
-                server_quit_watcher.resubscribe(),
-                &mut tls_manager,
-                self.config.socket().public_api,
-                self.logic.public_api_router(ws_manager.clone(), &state, false),
-                "Public API",
-            )
-            .await;
+        let public_api_server_task =
+            if let Some(addr) = self.config.socket().public_api {
+                Some(
+                    self.create_api_server_task(
+                        server_quit_watcher.resubscribe(),
+                        &mut tls_manager,
+                        addr,
+                        self.logic.public_api_router(ws_manager.clone(), &state, false),
+                        "Public API",
+                    )
+                    .await
+                )
+            } else {
+                None
+            };
         let public_bot_api_server_task =
             if let Some(addr) = self.config.socket().public_bot_api {
                 Some(
@@ -318,6 +324,13 @@ impl<T: BusinessLogic> SimpleBackend<T> {
                 None
             };
 
+        if public_api_server_task.is_none() &&
+            public_bot_api_server_task.is_none() &&
+            bot_api_server_task.is_none() &&
+            internal_api_server_task.is_none() {
+                warn!("No enabled APIs in config file");
+            }
+
         self.logic.on_after_server_start().await;
         // Use println to make sure that this message is visible in logs.
         // Test mode backend starting requires this.
@@ -348,9 +361,11 @@ impl<T: BusinessLogic> SimpleBackend<T> {
                 .await
                 .expect("Public bot API server task panic detected");
         }
-        public_api_server_task
-            .await
-            .expect("Public API server task panic detected");
+        if let Some(task) = public_api_server_task {
+            task
+                .await
+                .expect("Public API server task panic detected");
+        }
 
         tls_manager_quit_handle.wait_quit().await;
         ws_watcher.wait_for_quit().await;
