@@ -324,13 +324,17 @@ impl BusinessLogic for DatingAppBusinessLogic {
 
     async fn on_after_server_start(&mut self) {
         let bot_client = if let Some(bot_config) = self.config.bot_config() {
-            let result = BotClient::start_bots(&self.config, bot_config).await;
+            if !bot_config.admin && bot_config.users == 0 {
+                None
+            } else {
+                let result = BotClient::start_bots(&self.config, bot_config).await;
 
-            match result {
-                Ok(bot_manager) => Some(bot_manager),
-                Err(e) => {
-                    error!("Bot client start failed: {:?}", e);
-                    None
+                match result {
+                    Ok(bot_manager) => Some(bot_manager),
+                    Err(e) => {
+                        error!("Bot client start failed: {:?}", e);
+                        None
+                    }
                 }
             }
         } else {
