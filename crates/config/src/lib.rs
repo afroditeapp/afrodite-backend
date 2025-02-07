@@ -110,8 +110,6 @@ impl Config {
     /// Server should run in debug mode.
     ///
     /// Debug mode changes:
-    /// * Completing initial setup will check only email when adding admin permissions.
-    ///   Normally it also requires Google Account ID.
     /// * Routes for only related to benchmarking are available.
     /// * Axum JSON extractor shows errors.
     /// * Admin bot profile text moderation saves LLM response text to server
