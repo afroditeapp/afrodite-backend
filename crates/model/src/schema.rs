@@ -88,6 +88,7 @@ diesel::table! {
         admin_moderate_profile_names -> Bool,
         admin_moderate_profile_texts -> Bool,
         admin_process_profile_reports -> Bool,
+        admin_process_media_reports -> Bool,
         admin_delete_media_content -> Bool,
         admin_delete_account -> Bool,
         admin_ban_account -> Bool,
@@ -348,6 +349,26 @@ diesel::table! {
         moderation_moderator_account_id -> Nullable<Integer>,
         usage_start_unix_time -> Nullable<Integer>,
         usage_end_unix_time -> Nullable<Integer>,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    media_report (creator_account_id, target_account_id) {
+        creator_account_id -> Integer,
+        target_account_id -> Integer,
+        creation_unix_time -> Integer,
+        content_edit_unix_time -> Integer,
+        moderator_account_id -> Nullable<Integer>,
+        processing_state -> Integer,
+        processing_state_change_unix_time -> Integer,
+        profile_content_uuid_0 -> Nullable<Binary>,
+        profile_content_uuid_1 -> Nullable<Binary>,
+        profile_content_uuid_2 -> Nullable<Binary>,
+        profile_content_uuid_3 -> Nullable<Binary>,
+        profile_content_uuid_4 -> Nullable<Binary>,
+        profile_content_uuid_5 -> Nullable<Binary>,
     }
 }
 
@@ -665,6 +686,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     history_profile_statistics_count_changes_woman,
     history_profile_statistics_save_time,
     media_content,
+    media_report,
     media_state,
     news,
     news_translations,

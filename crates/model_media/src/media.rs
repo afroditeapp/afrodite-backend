@@ -16,6 +16,9 @@ pub use map::*;
 mod content;
 pub use content::*;
 
+mod report;
+pub use report::*;
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct SlotId {
     pub slot_id: u8,

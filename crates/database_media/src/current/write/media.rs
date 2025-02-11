@@ -7,6 +7,7 @@ use model_media::{AccountIdInternal, MediaStateRaw, ProfileContentEditedTime};
 use crate::IntoDatabaseError;
 
 mod media_content;
+mod report;
 
 define_current_write_commands!(CurrentWriteMedia);
 
@@ -15,6 +16,9 @@ pub struct DeletedSomething;
 impl<'a> CurrentWriteMedia<'a> {
     pub fn media_content(self) -> media_content::CurrentWriteMediaContent<'a> {
         media_content::CurrentWriteMediaContent::new(self.cmds)
+    }
+    pub fn report(self) -> report::CurrentWriteMediaReport<'a> {
+        report::CurrentWriteMediaReport::new(self.cmds)
     }
 }
 

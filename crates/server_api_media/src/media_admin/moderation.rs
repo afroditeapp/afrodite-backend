@@ -6,7 +6,7 @@ use model_media::{
     AccountIdInternal, EventToClientInternal, GetProfileContentPendingModerationList, GetProfileContentPendingModerationParams, NotificationEvent, Permissions, PostModerateProfileContent
 };
 use server_api::{create_open_api_router, S, app::GetAccounts};
-use server_data_media::{read::GetReadMediaCommands, write::{media::InitialContentModerationResult, GetWriteCommandsMedia}};
+use server_data_media::{read::GetReadMediaCommands, write::{media::InitialContentModerationResult, media_admin::content::ContentModerationMode, GetWriteCommandsMedia}};
 use simple_backend::create_counters;
 use server_api::app::ReadData;
 
@@ -98,6 +98,17 @@ pub async fn post_moderate_profile_content(
 
     let content_owner = state.get_internal_id(data.account_id).await?;
 
+    let mode = if data.move_to_human.unwrap_or_default() {
+        ContentModerationMode::MoveToHumanModeration
+    } else {
+        ContentModerationMode::Moderate {
+            moderator_id,
+            accept: data.accept,
+            rejected_category: data.rejected_category,
+            rejected_details: data.rejected_details,
+        }
+    };
+
     db_write_multiple!(state, move |cmds| {
         let content_id = cmds
             .read()
@@ -106,12 +117,8 @@ pub async fn post_moderate_profile_content(
         let info = cmds.media_admin()
             .content()
             .moderate_profile_content(
-                moderator_id,
+                mode,
                 content_id,
-                data.accept,
-                data.rejected_category,
-                data.rejected_details,
-                data.move_to_human.unwrap_or_default(),
             )
             .await?;
 

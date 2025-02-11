@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_moderate_profile_names                 BOOLEAN NOT NULL DEFAULT 0,
     admin_moderate_profile_texts                 BOOLEAN NOT NULL DEFAULT 0,
     admin_process_profile_reports                BOOLEAN NOT NULL DEFAULT 0,
+    admin_process_media_reports                  BOOLEAN NOT NULL DEFAULT 0,
     admin_delete_media_content                   BOOLEAN NOT NULL DEFAULT 0,
     admin_delete_account                         BOOLEAN NOT NULL DEFAULT 0,
     admin_ban_account                            BOOLEAN NOT NULL DEFAULT 0,
@@ -594,6 +595,43 @@ CREATE TABLE IF NOT EXISTS used_content_ids(
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS media_report(
+    creator_account_id      INTEGER           NOT NULL,
+    target_account_id       INTEGER           NOT NULL,
+    creation_unix_time      INTEGER           NOT NULL,
+    content_edit_unix_time  INTEGER           NOT NULL,
+    moderator_account_id    INTEGER,
+    -- 0 = Empty
+    -- 1 = Waiting
+    -- 2 = Done
+    processing_state        INTEGER           NOT NULL    DEFAULT 0,
+    processing_state_change_unix_time INTEGER NOT NULL,
+    -- Report content. Image UUIDs are unique for one account, so it is
+    -- used instead of row ID. If the row ID would be stored, the image
+    -- deletion would require some additional logic to handle
+    -- report edit time update (with foreign key) or
+    -- avoiding row ID reusage (without foreign key).
+    profile_content_uuid_0         BLOB,
+    profile_content_uuid_1         BLOB,
+    profile_content_uuid_2         BLOB,
+    profile_content_uuid_3         BLOB,
+    profile_content_uuid_4         BLOB,
+    profile_content_uuid_5         BLOB,
+    PRIMARY KEY (creator_account_id, target_account_id),
+    FOREIGN KEY (creator_account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (target_account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (moderator_account_id)
+        REFERENCES account_id (id)
+            ON DELETE SET NULL
             ON UPDATE CASCADE
 );
 

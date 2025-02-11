@@ -13,6 +13,8 @@ use server_data::{
 
 use crate::cache::CacheWriteMedia;
 
+mod report;
+
 pub enum InitialContentModerationResult {
     /// Profile visibility changed from pending to normal.
     AllAccepted {
@@ -29,6 +31,12 @@ pub struct DeleteContentResult {
 }
 
 define_cmd_wrapper_write!(WriteCommandsMedia);
+
+impl<'a> WriteCommandsMedia<'a> {
+    pub fn report(self) -> report::WriteCommandsMediaReport<'a> {
+        report::WriteCommandsMediaReport::new(self.0)
+    }
+}
 
 impl WriteCommandsMedia<'_> {
     /// Completes previous save_to_tmp.

@@ -23,8 +23,12 @@ impl ConnectedApp {
             .merge(api::media::router_security_content(self.state.clone()))
             .merge(api::media::router_content(self.state.clone()))
             .merge(api::media::router_tile_map(self.state.clone()))
+            .merge(api::media::router_media_report(self.state.clone()))
             // Media admin
             .merge(api::media_admin::router_admin_moderation(
+                self.state.clone(),
+            ))
+            .merge(api::media_admin::router_admin_media_report(
                 self.state.clone(),
             ))
             .route_layer({
