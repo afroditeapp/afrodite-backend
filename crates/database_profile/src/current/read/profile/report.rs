@@ -7,7 +7,7 @@ use model_profile::ProfileReport;
 define_current_read_commands!(CurrentReadProfileReport);
 
 impl CurrentReadProfileReport<'_> {
-    pub fn profile_report(
+    pub fn get_report(
         &mut self,
         creator: AccountIdInternal,
         target: AccountIdInternal,

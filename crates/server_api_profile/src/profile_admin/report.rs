@@ -44,7 +44,7 @@ pub async fn get_profile_report_pending_processing_list(
         .read()
         .profile_admin()
         .report()
-        .get_profile_report_list()
+        .get_report_list()
         .await?;
 
     Ok(r.into())
@@ -84,7 +84,7 @@ pub async fn post_process_profile_report(
     db_write_multiple!(state, move |cmds| {
         cmds.profile_admin()
             .report()
-            .process_profile_report(moderator_id, creator, target, data.profile_text)
+            .process_report(moderator_id, creator, target, data.profile_text)
             .await?;
         Ok(())
     })?;

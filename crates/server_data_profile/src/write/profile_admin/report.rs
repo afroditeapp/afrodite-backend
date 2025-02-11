@@ -11,7 +11,7 @@ use server_data::{
 define_cmd_wrapper_write!(WriteCommandsProfileReport);
 
 impl WriteCommandsProfileReport<'_> {
-    pub async fn process_profile_report(
+    pub async fn process_report(
         &self,
         moderator_id: AccountIdInternal,
         creator: AccountIdInternal,
@@ -19,7 +19,7 @@ impl WriteCommandsProfileReport<'_> {
         profile_text: Option<String>,
     ) -> Result<(), DataError> {
         let current_report = self
-            .db_read(move |mut cmds| cmds.profile().report().profile_report(creator, target))
+            .db_read(move |mut cmds| cmds.profile().report().get_report(creator, target))
             .await?;
         if current_report.profile_text != profile_text {
             return Err(DataError::NotAllowed.report());

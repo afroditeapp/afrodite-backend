@@ -7,7 +7,7 @@ use model_profile::{GetProfileReportList, ProfileReportDetailed};
 define_current_read_commands!(CurrentReadProfileReport);
 
 impl CurrentReadProfileReport<'_> {
-    pub fn profile_report_list(
+    pub fn get_report_list(
         &mut self,
     ) -> Result<GetProfileReportList, DieselDatabaseError> {
         use crate::schema::{account_id, profile_report::dsl::*};

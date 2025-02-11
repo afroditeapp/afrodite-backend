@@ -44,3 +44,24 @@ impl Default for ReportProcessingState {
 }
 
 diesel_i64_try_from!(ReportProcessingState);
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct UpdateReportResult {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub error_outdated_report_content: bool,
+}
+
+impl UpdateReportResult {
+    pub fn success() -> Self {
+        Self {
+            error_outdated_report_content: false,
+        }
+    }
+
+    pub fn outdated_report_content() -> Self {
+        Self {
+            error_outdated_report_content: true
+        }
+    }
+}

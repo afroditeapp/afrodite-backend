@@ -15,27 +15,6 @@ pub struct UpdateMediaReport {
     pub profile_content: Vec<ContentId>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct UpdateMediaReportResult {
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub error_outdated_report_content: bool,
-}
-
-impl UpdateMediaReportResult {
-    pub fn success() -> Self {
-        Self {
-            error_outdated_report_content: false,
-        }
-    }
-
-    pub fn outdated_report_content() -> Self {
-        Self {
-            error_outdated_report_content: true
-        }
-    }
-}
-
 #[derive(Debug, Selectable, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name = crate::schema::media_report)]
 #[diesel(check_for_backend(crate::Db))]

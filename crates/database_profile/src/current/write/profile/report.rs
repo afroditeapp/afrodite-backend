@@ -9,7 +9,7 @@ use crate::IntoDatabaseError;
 define_current_write_commands!(CurrentWriteProfileReport);
 
 impl CurrentWriteProfileReport<'_> {
-    pub fn upsert_profile_report(
+    pub fn upsert_report(
         &mut self,
         creator: AccountIdInternal,
         target: AccountIdInternal,

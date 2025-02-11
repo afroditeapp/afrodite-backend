@@ -1,6 +1,6 @@
 use axum::{extract::{Query, State}, Extension};
-use model::ReportQueryParams;
-use model_media::{AccountIdInternal, MediaReport, UpdateMediaReport, UpdateMediaReportResult};
+use model::{ReportQueryParams, UpdateReportResult};
+use model_media::{AccountIdInternal, MediaReport, UpdateMediaReport};
 use server_api::{create_open_api_router, S};
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
@@ -60,7 +60,7 @@ const PATH_POST_MEDIA_REPORT: &str = "/media_api/media_report";
     path = PATH_POST_MEDIA_REPORT,
     request_body = UpdateMediaReport,
     responses(
-        (status = 200, description = "Successfull.", body = UpdateMediaReportResult),
+        (status = 200, description = "Successfull.", body = UpdateReportResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -70,7 +70,7 @@ pub async fn post_media_report(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(update): Json<UpdateMediaReport>,
-) -> Result<Json<UpdateMediaReportResult>, StatusCode> {
+) -> Result<Json<UpdateReportResult>, StatusCode> {
     MEDIA.post_media_report.incr();
 
     let target = state.get_internal_id(update.target).await?;

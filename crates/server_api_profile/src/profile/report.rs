@@ -1,6 +1,6 @@
 use axum::{extract::{Query, State}, Extension};
-use model::ReportQueryParams;
-use model_profile::{AccountIdInternal, FavoriteProfilesPage, ProfileReport, UpdateProfileReport, UpdateProfileReportResult};
+use model::{ReportQueryParams, UpdateReportResult};
+use model_profile::{AccountIdInternal, ProfileReport, UpdateProfileReport};
 use server_api::{create_open_api_router, S};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -19,7 +19,7 @@ const PATH_GET_PROFILE_REPORT: &str = "/profile_api/profile_report";
     path = PATH_GET_PROFILE_REPORT,
     params(ReportQueryParams),
     responses(
-        (status = 200, description = "Successfull.", body = FavoriteProfilesPage),
+        (status = 200, description = "Successfull.", body = ProfileReport),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -40,7 +40,7 @@ pub async fn get_profile_report(
 
     let target = state.get_internal_id(report.target).await?;
 
-    let report = state.read().profile().report().profile_report(
+    let report = state.read().profile().report().get_report(
         creator,
         target,
     ).await?;
@@ -60,7 +60,7 @@ const PATH_POST_PROFILE_REPORT: &str = "/profile_api/profile_report";
     path = PATH_POST_PROFILE_REPORT,
     request_body = UpdateProfileReport,
     responses(
-        (status = 200, description = "Successfull.", body = UpdateProfileReportResult),
+        (status = 200, description = "Successfull.", body = UpdateReportResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -70,7 +70,7 @@ pub async fn post_profile_report(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(update): Json<UpdateProfileReport>,
-) -> Result<Json<UpdateProfileReportResult>, StatusCode> {
+) -> Result<Json<UpdateReportResult>, StatusCode> {
     PROFILE.post_profile_report.incr();
 
     let target = state.get_internal_id(update.target).await?;
@@ -78,7 +78,7 @@ pub async fn post_profile_report(
     let result = db_write!(state, move |cmds| cmds
         .profile()
         .report()
-        .report_profile(account_id, target, update.profile_text))?;
+        .update_report(account_id, target, update.profile_text))?;
 
     Ok(result.into())
 }

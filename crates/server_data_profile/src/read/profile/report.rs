@@ -5,12 +5,12 @@ use server_data::{define_cmd_wrapper_read, read::DbRead, result::Result, DataErr
 define_cmd_wrapper_read!(ReadCommandsProfileReport);
 
 impl ReadCommandsProfileReport<'_> {
-    pub async fn profile_report(
+    pub async fn get_report(
         &self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
     ) -> Result<ProfileReport, DataError> {
-        self.db_read(move |mut cmds| cmds.profile().report().profile_report(creator, target))
+        self.db_read(move |mut cmds| cmds.profile().report().get_report(creator, target))
             .await
             .into_error()
     }

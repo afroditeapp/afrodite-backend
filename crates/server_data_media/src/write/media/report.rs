@@ -1,6 +1,6 @@
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
-use model::{ContentId, ContentIdInternal};
-use model_media::{AccountIdInternal, ContentModerationState, EventToClientInternal, UpdateMediaReportResult};
+use model::{ContentId, ContentIdInternal, UpdateReportResult};
+use model_media::{AccountIdInternal, ContentModerationState, EventToClientInternal};
 use server_data::{
     define_cmd_wrapper_write,
     read::DbRead,
@@ -19,7 +19,7 @@ impl WriteCommandsMediaReport<'_> {
         creator: AccountIdInternal,
         target: AccountIdInternal,
         content: Vec<ContentId>,
-    ) -> Result<UpdateMediaReportResult, DataError> {
+    ) -> Result<UpdateReportResult, DataError> {
         let target_data = self
             .db_read(move |mut cmds| cmds.media().media_content().current_account_media(target))
             .await?;
@@ -38,7 +38,7 @@ impl WriteCommandsMediaReport<'_> {
                         send_event = true;
                     }
                 } else {
-                    return Ok(UpdateMediaReportResult::outdated_report_content())
+                    return Ok(UpdateReportResult::outdated_report_content())
                 }
             }
         }
@@ -60,6 +60,6 @@ impl WriteCommandsMediaReport<'_> {
             Ok(())
         })?;
 
-        Ok(UpdateMediaReportResult::success())
+        Ok(UpdateReportResult::success())
     }
 }
