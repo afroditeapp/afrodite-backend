@@ -10,8 +10,6 @@ use super::AccountId;
 
 #[derive(Debug, Clone, Deserialize, Serialize, IntoParams, PartialEq)]
 pub struct ReportQueryParams {
-    /// Report creator
-    pub creator: AccountId,
     /// Report target
     pub target: AccountId,
 }

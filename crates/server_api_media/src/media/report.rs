@@ -32,16 +32,10 @@ pub async fn get_media_report(
 ) -> Result<Json<MediaReport>, StatusCode> {
     MEDIA.get_media_report.incr();
 
-    let creator = state.get_internal_id(report.creator).await?;
-
-    if account_id != creator {
-        return Err(StatusCode::INTERNAL_SERVER_ERROR);
-    }
-
     let target = state.get_internal_id(report.target).await?;
 
     let report = state.read().media().report().get_report(
-        creator,
+        account_id,
         target,
     ).await?;
 

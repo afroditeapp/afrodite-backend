@@ -32,16 +32,10 @@ pub async fn get_profile_report(
 ) -> Result<Json<ProfileReport>, StatusCode> {
     PROFILE.get_profile_report.incr();
 
-    let creator = state.get_internal_id(report.creator).await?;
-
-    if account_id != creator {
-        return Err(StatusCode::INTERNAL_SERVER_ERROR);
-    }
-
     let target = state.get_internal_id(report.target).await?;
 
     let report = state.read().profile().report().get_report(
-        creator,
+        account_id,
         target,
     ).await?;
 
