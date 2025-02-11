@@ -32,6 +32,9 @@ pub use statistics::*;
 mod text;
 pub use text::*;
 
+mod report;
+pub use report::*;
+
 const NUMBER_LIST_ATTRIBUTE_MAX_VALUES: usize = 8;
 
 /// Public profile info

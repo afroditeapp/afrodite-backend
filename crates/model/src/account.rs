@@ -173,6 +173,7 @@ define_permissions!(
     admin_moderate_media_content,
     admin_moderate_profile_names,
     admin_moderate_profile_texts,
+    admin_process_profile_reports,
     admin_delete_media_content,
     admin_delete_account,
     admin_ban_account,

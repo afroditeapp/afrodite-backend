@@ -3,6 +3,7 @@ use database::define_current_read_commands;
 mod data;
 mod favorite;
 mod profile_name_allowlist;
+mod report;
 
 define_current_read_commands!(CurrentReadProfile);
 
@@ -17,5 +18,8 @@ impl<'a> CurrentReadProfile<'a> {
         self,
     ) -> profile_name_allowlist::CurrentReadProfileNameAllowlist<'a> {
         profile_name_allowlist::CurrentReadProfileNameAllowlist::new(self.cmds)
+    }
+    pub fn report(self) -> report::CurrentReadProfileReport<'a> {
+        report::CurrentReadProfileReport::new(self.cmds)
     }
 }

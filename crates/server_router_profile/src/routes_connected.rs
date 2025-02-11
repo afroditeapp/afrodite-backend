@@ -24,6 +24,7 @@ impl ConnectedApp {
         let private = Router::new()
             .merge(api::profile::router_filters(self.state.clone()))
             .merge(api::profile::router_profile_data(self.state.clone()))
+            .merge(api::profile::router_profile_report(self.state.clone()))
             .merge(api::profile::router_location(self.state.clone()))
             .merge(api::profile::router_favorite(self.state.clone()))
             .merge(api::profile::router_iterate_profiles(self.state.clone()))
@@ -35,6 +36,9 @@ impl ConnectedApp {
                 self.state.clone(),
             ))
             .merge(api::profile_admin::router_admin_profile_data(
+                self.state.clone(),
+            ))
+            .merge(api::profile_admin::router_admin_profile_report(
                 self.state.clone(),
             ))
             .merge(api::profile_admin::router_admin_profile_name_allowlist(

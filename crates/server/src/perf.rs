@@ -10,9 +10,9 @@ use server_api_account::{
 use server_api_chat::chat::CHAT_PUBLIC_KEY_COUNTERS_LIST;
 use server_api_media::media::MEDIA_MEDIA_CONTENT_COUNTERS_LIST;
 use server_api_profile::{
-    profile::PROFILE_STATISTICS_COUNTERS_LIST,
+    profile::{PROFILE_REPORT_COUNTERS_LIST, PROFILE_STATISTICS_COUNTERS_LIST},
     profile_admin::{
-        PROFILE_ADMIN_ITERATE_PROFILES_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_DATA_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_NAME_ALLOWLIST_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_TEXT_COUNTERS_LIST, PROFILE_ADMIN_STATISTICS_COUNTERS_LIST
+        PROFILE_ADMIN_ITERATE_PROFILES_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_DATA_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_NAME_ALLOWLIST_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_REPORT, PROFILE_ADMIN_PROFILE_TEXT_COUNTERS_LIST, PROFILE_ADMIN_STATISTICS_COUNTERS_LIST
     },
 };
 use simple_backend::{perf::CounterCategory, SIMPLE_CONNECTION_COUNTERS_LIST};
@@ -94,6 +94,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("profile_location", PROFILE_LOCATION_COUNTERS_LIST),
     &CounterCategory::new("profile_favorite", PROFILE_FAVORITE_COUNTERS_LIST),
     &CounterCategory::new("profile_data", PROFILE_DATA_COUNTERS_LIST),
+    &CounterCategory::new("profile_report", PROFILE_REPORT_COUNTERS_LIST),
     &CounterCategory::new("profile_benchmark", PROFILE_BENCHMARK_COUNTERS_LIST),
     &CounterCategory::new("profile_statistics", PROFILE_STATISTICS_COUNTERS_LIST),
     // Profile admin
@@ -108,6 +109,10 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new(
         "profile_admin_profile_data",
         PROFILE_ADMIN_PROFILE_DATA_COUNTERS_LIST,
+    ),
+    &CounterCategory::new(
+        "profile_admin_profile_report",
+        PROFILE_ADMIN_PROFILE_REPORT,
     ),
     &CounterCategory::new(
         "profile_admin_profile_name_allowlist",

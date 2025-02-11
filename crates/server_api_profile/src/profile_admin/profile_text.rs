@@ -10,7 +10,7 @@ use server_api::{
     app::{GetAccounts, WriteData},
     create_open_api_router, db_write_multiple, S,
 };
-use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
+use server_data_profile::{read::GetReadProfileCommands, write::{profile_admin::profile_text::ModerateProfileTextMode, GetWriteCommandsProfile}};
 use simple_backend::create_counters;
 
 use crate::{
@@ -96,17 +96,24 @@ pub async fn post_moderate_profile_text(
 
     let text_owner_id = state.get_internal_id(data.id).await?;
 
+    let mode = if data.move_to_human.unwrap_or_default() {
+        ModerateProfileTextMode::MoveToHumanModeration
+    } else {
+        ModerateProfileTextMode::Moderate {
+            moderator_id,
+            accept: data.accept,
+            rejected_category: data.rejected_category,
+            rejected_details: data.rejected_details,
+        }
+    };
+
     db_write_multiple!(state, move |cmds| {
         cmds.profile_admin()
             .profile_text()
             .moderate_profile_text(
-                moderator_id,
+                mode,
                 text_owner_id,
                 data.text,
-                data.accept,
-                data.rejected_category,
-                data.rejected_details,
-                data.move_to_human.unwrap_or_default(),
             )
             .await?;
 

@@ -87,6 +87,7 @@ diesel::table! {
         admin_moderate_media_content -> Bool,
         admin_moderate_profile_names -> Bool,
         admin_moderate_profile_texts -> Bool,
+        admin_process_profile_reports -> Bool,
         admin_delete_media_content -> Bool,
         admin_delete_account -> Bool,
         admin_ban_account -> Bool,
@@ -484,6 +485,21 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    profile_report (creator_account_id, target_account_id) {
+        creator_account_id -> Integer,
+        target_account_id -> Integer,
+        creation_unix_time -> Integer,
+        content_edit_unix_time -> Integer,
+        moderator_account_id -> Nullable<Integer>,
+        processing_state -> Integer,
+        processing_state_change_unix_time -> Integer,
+        profile_text -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     profile_state (account_id) {
         account_id -> Integer,
         search_age_range_min -> Integer,
@@ -660,6 +676,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     profile_attributes_number_list,
     profile_attributes_number_list_filters,
     profile_name_allowlist,
+    profile_report,
     profile_state,
     public_key,
     queue_entry,

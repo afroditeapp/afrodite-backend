@@ -106,6 +106,9 @@ impl ApiDoc {
                 server_api_profile::profile::router_profile_data(state.clone()).into_openapi(),
             )
             .merge_from(
+                server_api_profile::profile::router_profile_report(state.clone()).into_openapi(),
+            )
+            .merge_from(
                 server_api_profile::profile::router_statistics(state.clone()).into_openapi(),
             )
             .tag_routes("profile");
@@ -121,6 +124,10 @@ impl ApiDoc {
             )
             .merge_from(
                 server_api_profile::profile_admin::router_admin_profile_data(state.clone())
+                    .into_openapi(),
+            )
+            .merge_from(
+                server_api_profile::profile_admin::router_admin_profile_report(state.clone())
                     .into_openapi(),
             )
             .merge_from(

@@ -23,6 +23,9 @@ pub use version::*;
 pub mod push_notifications;
 pub use push_notifications::*;
 
+pub mod report;
+pub use report::*;
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct BackendVersion {
     /// Backend code version.

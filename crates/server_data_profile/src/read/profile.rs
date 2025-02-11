@@ -11,12 +11,17 @@ use server_data::{
 use crate::cache::CacheReadProfile;
 
 mod statistics;
+mod report;
 
 define_cmd_wrapper_read!(ReadCommandsProfile);
 
 impl<'a> ReadCommandsProfile<'a> {
     pub fn statistics(self) -> statistics::ReadCommandsProfileStatistics<'a> {
         statistics::ReadCommandsProfileStatistics::new(self.0)
+    }
+
+    pub fn report(self) -> report::ReadCommandsProfileReport<'a> {
+        report::ReadCommandsProfileReport::new(self.0)
     }
 }
 

@@ -3,6 +3,7 @@ use server_data::define_cmd_wrapper_read;
 mod profile_name_allowlist;
 mod profile_text;
 mod iterator;
+mod report;
 
 define_cmd_wrapper_read!(ReadCommandsProfileAdmin);
 
@@ -19,5 +20,9 @@ impl<'a> ReadCommandsProfileAdmin<'a> {
 
     pub fn iterator(self) -> iterator::ReadCommandsProfileIterator<'a> {
         iterator::ReadCommandsProfileIterator::new(self.0)
+    }
+
+    pub fn report(self) -> report::ReadCommandsProfileReport<'a> {
+        report::ReadCommandsProfileReport::new(self.0)
     }
 }

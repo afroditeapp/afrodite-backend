@@ -17,7 +17,15 @@ use tracing::info;
 
 use crate::cache::{CacheReadProfile, CacheWriteProfile};
 
+pub mod report;
+
 define_cmd_wrapper_write!(WriteCommandsProfile);
+
+impl<'a> WriteCommandsProfile<'a> {
+    pub fn report(self) -> report::WriteCommandsProfileReport<'a> {
+        report::WriteCommandsProfileReport::new(self.0)
+    }
+}
 
 impl WriteCommandsProfile<'_> {
     pub async fn profile_update_location(
