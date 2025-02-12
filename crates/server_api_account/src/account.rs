@@ -7,6 +7,7 @@ pub mod news;
 pub mod register;
 pub mod settings;
 pub mod state;
+pub mod report;
 
 pub use ban::*;
 pub use delete::*;
@@ -17,3 +18,4 @@ pub use news::*;
 pub use register::*;
 pub use settings::*;
 pub use state::*;
+pub use report::*;

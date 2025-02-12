@@ -37,12 +37,14 @@ impl ConnectedApp {
             .merge(api::account::router_settings(self.state.clone()))
             .merge(api::account::router_state(self.state.clone()))
             .merge(api::account::router_news(self.state.clone()))
+            .merge(api::account::router_account_report(self.state.clone()))
             .merge(api::account_admin::router_admin_ban(self.state.clone()))
             .merge(api::account_admin::router_admin_delete(self.state.clone()))
             .merge(api::account_admin::router_admin_news(self.state.clone()))
             .merge(api::account_admin::router_admin_search(self.state.clone()))
             .merge(api::account_admin::router_admin_permissions(self.state.clone()))
-            .merge(api::account_admin::router_admin_state(self.state.clone()));
+            .merge(api::account_admin::router_admin_state(self.state.clone()))
+            .merge(api::account_admin::router_admin_account_report(self.state.clone()));
 
         private.route_layer({
             middleware::from_fn_with_state(

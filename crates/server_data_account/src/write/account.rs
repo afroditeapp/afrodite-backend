@@ -20,6 +20,7 @@ use server_data::{
 pub mod delete;
 pub mod email;
 pub mod news;
+pub mod report;
 
 #[derive(Debug, Clone, Copy)]
 pub struct IncrementAdminAccessGrantedCount;
@@ -37,6 +38,10 @@ impl<'a> WriteCommandsAccount<'a> {
 
     pub fn news(self) -> WriteCommandsAccountNews<'a> {
         WriteCommandsAccountNews::new(self.0)
+    }
+
+    pub fn report(self) -> report::WriteCommandsAccountReport<'a> {
+        report::WriteCommandsAccountReport::new(self.0)
     }
 }
 

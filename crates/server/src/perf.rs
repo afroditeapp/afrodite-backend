@@ -4,8 +4,8 @@
 
 use server_api::utils::API_COUNTERS_LIST;
 use server_api_account::{
-    account::{ACCOUNT_BAN_COUNTERS_LIST, ACCOUNT_LOGOUT_COUNTERS_LIST, ACCOUNT_NEWS_COUNTERS_LIST},
-    account_admin::{ACCOUNT_ADMIN_BAN_COUNTERS_LIST, ACCOUNT_ADMIN_DELETE_COUNTERS_LIST, ACCOUNT_ADMIN_NEWS_COUNTERS_LIST, ACCOUNT_ADMIN_PERMISSIONS_COUNTERS_LIST, ACCOUNT_ADMIN_SEARCH_COUNTERS_LIST, ACCOUNT_ADMIN_STATE_COUNTERS_LIST},
+    account::{ACCOUNT_BAN_COUNTERS_LIST, ACCOUNT_LOGOUT_COUNTERS_LIST, ACCOUNT_NEWS_COUNTERS_LIST, ACCOUNT_REPORT_COUNTERS_LIST},
+    account_admin::{ACCOUNT_ADMIN_ACCOUNT_REPORT_LIST, ACCOUNT_ADMIN_BAN_COUNTERS_LIST, ACCOUNT_ADMIN_DELETE_COUNTERS_LIST, ACCOUNT_ADMIN_NEWS_COUNTERS_LIST, ACCOUNT_ADMIN_PERMISSIONS_COUNTERS_LIST, ACCOUNT_ADMIN_SEARCH_COUNTERS_LIST, ACCOUNT_ADMIN_STATE_COUNTERS_LIST},
 };
 use server_api_chat::chat::CHAT_PUBLIC_KEY_COUNTERS_LIST;
 use server_api_media::{media::{MEDIA_MEDIA_CONTENT_COUNTERS_LIST, MEDIA_REPORT_MEDIA_REPORT}, media_admin::MEDIA_ADMIN_MEDIA_REPORT};
@@ -65,6 +65,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("account_state", ACCOUNT_STATE_COUNTERS_LIST),
     &CounterCategory::new("account_demo_mode", ACCOUNT_DEMO_MODE_COUNTERS_LIST),
     &CounterCategory::new("account_news", ACCOUNT_NEWS_COUNTERS_LIST),
+    &CounterCategory::new("account_report", ACCOUNT_REPORT_COUNTERS_LIST),
     // Account admin
     &CounterCategory::new("account_admin_ban", ACCOUNT_ADMIN_BAN_COUNTERS_LIST),
     &CounterCategory::new("account_admin_delete", ACCOUNT_ADMIN_DELETE_COUNTERS_LIST),
@@ -72,6 +73,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("account_admin_search", ACCOUNT_ADMIN_SEARCH_COUNTERS_LIST),
     &CounterCategory::new("account_admin_permissions", ACCOUNT_ADMIN_PERMISSIONS_COUNTERS_LIST),
     &CounterCategory::new("account_admin_state", ACCOUNT_ADMIN_STATE_COUNTERS_LIST),
+    &CounterCategory::new("account_admin_account_report", ACCOUNT_ADMIN_ACCOUNT_REPORT_LIST),
     // Account internal
     &CounterCategory::new("account_internal", ACCOUNT_BOT_COUNTERS_LIST),
     // Media

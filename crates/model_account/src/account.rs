@@ -18,6 +18,9 @@ pub use news::*;
 mod ban;
 pub use ban::*;
 
+mod report;
+pub use report::*;
+
 // TODO(prod): Also add info what sign in with service is used?
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, PartialEq)]

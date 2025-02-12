@@ -6,6 +6,7 @@ mod demo;
 mod email;
 mod news;
 mod sign_in_with;
+mod report;
 
 define_current_write_commands!(CurrentWriteAccount);
 
@@ -32,5 +33,9 @@ impl<'a> CurrentWriteAccount<'a> {
 
     pub fn news(self) -> news::CurrentWriteAccountNews<'a> {
         news::CurrentWriteAccountNews::new(self.cmds)
+    }
+
+    pub fn report(self) -> report::CurrentWriteAccountReport<'a> {
+        report::CurrentWriteAccountReport::new(self.cmds)
     }
 }

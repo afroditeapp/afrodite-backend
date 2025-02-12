@@ -9,6 +9,7 @@ mod demo;
 mod email;
 mod news;
 mod sign_in_with;
+mod report;
 
 impl<'a> CurrentReadAccount<'a> {
     pub fn ban(self) -> ban::CurrentReadAccountBan<'a> {
@@ -37,5 +38,9 @@ impl<'a> CurrentReadAccount<'a> {
 
     pub fn news(self) -> news::CurrentReadAccountNews<'a> {
         news::CurrentReadAccountNews::new(self.cmds)
+    }
+
+    pub fn report(self) -> report::CurrentReadAccountReport<'a> {
+        report::CurrentReadAccountReport::new(self.cmds)
     }
 }
