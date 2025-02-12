@@ -1,5 +1,5 @@
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
-use model_profile::{AccountIdInternal, EventToClientInternal, ProfileTextModerationState, UpdateReportResult};
+use model_profile::{AccountIdInternal, EventToClientInternal, ProfileReportContent, ProfileTextModerationState, UpdateReportResult};
 use server_data::{
     define_cmd_wrapper_write,
     read::DbRead,
@@ -17,13 +17,13 @@ impl WriteCommandsProfileReport<'_> {
         &self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
-        reported_profile_text: Option<String>,
+        reported_content: ProfileReportContent,
     ) -> Result<UpdateReportResult, DataError> {
         let target_data = self
             .db_read(move |mut cmds| cmds.profile().data().my_profile(target, None))
             .await?;
 
-        if let Some(reported_text) = reported_profile_text.as_deref() {
+        if let Some(reported_text) = reported_content.profile_text.as_deref() {
             if reported_text != target_data.p.ptext {
                 return Ok(UpdateReportResult::outdated_report_content());
             }
@@ -45,7 +45,7 @@ impl WriteCommandsProfileReport<'_> {
         db_transaction!(self, move |mut cmds| {
             cmds.profile()
                 .report()
-                .upsert_report(creator, target, reported_profile_text)?;
+                .upsert_report(creator, target, reported_content)?;
             Ok(())
         })?;
 

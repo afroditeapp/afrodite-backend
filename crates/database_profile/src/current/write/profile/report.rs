@@ -2,6 +2,7 @@ use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{insert_into, prelude::*, ExpressionMethods};
 use error_stack::Result;
 use model::{AccountIdInternal, ReportProcessingState};
+use model_profile::ProfileReportContent;
 use simple_backend_utils::current_unix_time;
 
 use crate::IntoDatabaseError;
@@ -13,13 +14,13 @@ impl CurrentWriteProfileReport<'_> {
         &mut self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
-        text: Option<String>,
+        content: ProfileReportContent,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::profile_report::dsl::*;
 
         let time = current_unix_time();
 
-        let state = if text.is_some() {
+        let state = if content.profile_text.is_some() {
             ReportProcessingState::Empty
         } else {
             ReportProcessingState::Waiting
@@ -33,7 +34,7 @@ impl CurrentWriteProfileReport<'_> {
                 content_edit_unix_time.eq(time),
                 processing_state.eq(state),
                 processing_state_change_unix_time.eq(time),
-                profile_text.eq(&text),
+                profile_text.eq(&content.profile_text),
             ))
             .on_conflict((creator_account_id, target_account_id))
             .do_update()
@@ -41,7 +42,7 @@ impl CurrentWriteProfileReport<'_> {
                 content_edit_unix_time.eq(time),
                 processing_state.eq(state),
                 processing_state_change_unix_time.eq(time),
-                profile_text.eq(&text),
+                profile_text.eq(&content.profile_text),
             ))
             .execute(self.conn())
             .into_db_error((creator, target))?;

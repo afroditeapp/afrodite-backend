@@ -2,7 +2,7 @@ use database::{define_current_read_commands, DieselDatabaseError, IntoDatabaseEr
 use diesel::{alias, prelude::*};
 use error_stack::Result;
 use model::{AccountId, ReportProcessingState};
-use model_profile::{GetProfileReportList, ProfileReportDetailed};
+use model_profile::{GetProfileReportList, ProfileReportContent, ProfileReportDetailed};
 
 define_current_read_commands!(CurrentReadProfileReport);
 
@@ -39,7 +39,9 @@ impl CurrentReadProfileReport<'_> {
                 creator,
                 target,
                 processing_state: state,
-                profile_text: text,
+                content: ProfileReportContent {
+                    profile_text: text,
+                }
             }
         }).collect();
 

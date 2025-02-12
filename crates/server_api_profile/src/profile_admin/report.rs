@@ -84,7 +84,7 @@ pub async fn post_process_profile_report(
     db_write_multiple!(state, move |cmds| {
         cmds.profile_admin()
             .report()
-            .process_report(moderator_id, creator, target, data.profile_text)
+            .process_report(moderator_id, creator, target, data.content)
             .await?;
         Ok(())
     })?;

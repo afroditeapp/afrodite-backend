@@ -72,7 +72,7 @@ pub async fn post_profile_report(
     let result = db_write!(state, move |cmds| cmds
         .profile()
         .report()
-        .update_report(account_id, target, update.profile_text))?;
+        .update_report(account_id, target, update.content))?;
 
     Ok(result.into())
 }

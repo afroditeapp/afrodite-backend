@@ -2,7 +2,7 @@ use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, ReportProcessingState};
-use model_profile::ProfileReport;
+use model_profile::{ProfileReport, ProfileReportContent};
 
 define_current_read_commands!(CurrentReadProfileReport);
 
@@ -25,7 +25,9 @@ impl CurrentReadProfileReport<'_> {
         let report = if let Some((state, text)) = report {
             ProfileReport {
                 processing_state: state,
-                profile_text: text,
+                content: ProfileReportContent {
+                    profile_text: text,
+                },
             }
         } else {
             ProfileReport::default()
