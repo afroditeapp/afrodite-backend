@@ -101,7 +101,7 @@ create_open_api_router!(
 create_counters!(
     ProfileCounters,
     PROFILE,
-    PROFILE_ADMIN_PROFILE_REPORT,
+    PROFILE_ADMIN_PROFILE_REPORT_COUNTERS_LIST,
     get_profile_report_pending_processing_list,
     post_process_profile_report,
 );

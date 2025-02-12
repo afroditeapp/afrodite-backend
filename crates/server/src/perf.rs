@@ -5,14 +5,14 @@
 use server_api::utils::API_COUNTERS_LIST;
 use server_api_account::{
     account::{ACCOUNT_BAN_COUNTERS_LIST, ACCOUNT_LOGOUT_COUNTERS_LIST, ACCOUNT_NEWS_COUNTERS_LIST, ACCOUNT_REPORT_COUNTERS_LIST},
-    account_admin::{ACCOUNT_ADMIN_ACCOUNT_REPORT_LIST, ACCOUNT_ADMIN_BAN_COUNTERS_LIST, ACCOUNT_ADMIN_DELETE_COUNTERS_LIST, ACCOUNT_ADMIN_NEWS_COUNTERS_LIST, ACCOUNT_ADMIN_PERMISSIONS_COUNTERS_LIST, ACCOUNT_ADMIN_SEARCH_COUNTERS_LIST, ACCOUNT_ADMIN_STATE_COUNTERS_LIST},
+    account_admin::{ACCOUNT_ADMIN_ACCOUNT_REPORT_COUNTERS_LIST, ACCOUNT_ADMIN_BAN_COUNTERS_LIST, ACCOUNT_ADMIN_DELETE_COUNTERS_LIST, ACCOUNT_ADMIN_NEWS_COUNTERS_LIST, ACCOUNT_ADMIN_PERMISSIONS_COUNTERS_LIST, ACCOUNT_ADMIN_SEARCH_COUNTERS_LIST, ACCOUNT_ADMIN_STATE_COUNTERS_LIST},
 };
 use server_api_chat::chat::CHAT_PUBLIC_KEY_COUNTERS_LIST;
-use server_api_media::{media::{MEDIA_MEDIA_CONTENT_COUNTERS_LIST, MEDIA_REPORT_MEDIA_REPORT}, media_admin::MEDIA_ADMIN_MEDIA_REPORT};
+use server_api_media::{media::{MEDIA_MEDIA_CONTENT_COUNTERS_LIST, MEDIA_REPORT_MEDIA_REPORT_COUNTERS_LIST}, media_admin::MEDIA_ADMIN_MEDIA_REPORT_COUNTERS_LIST};
 use server_api_profile::{
     profile::{PROFILE_REPORT_COUNTERS_LIST, PROFILE_STATISTICS_COUNTERS_LIST},
     profile_admin::{
-        PROFILE_ADMIN_ITERATE_PROFILES_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_DATA_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_NAME_ALLOWLIST_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_REPORT, PROFILE_ADMIN_PROFILE_TEXT_COUNTERS_LIST, PROFILE_ADMIN_STATISTICS_COUNTERS_LIST
+        PROFILE_ADMIN_ITERATE_PROFILES_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_DATA_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_NAME_ALLOWLIST_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_REPORT_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_TEXT_COUNTERS_LIST, PROFILE_ADMIN_STATISTICS_COUNTERS_LIST
     },
 };
 use simple_backend::{perf::CounterCategory, SIMPLE_CONNECTION_COUNTERS_LIST};
@@ -73,7 +73,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("account_admin_search", ACCOUNT_ADMIN_SEARCH_COUNTERS_LIST),
     &CounterCategory::new("account_admin_permissions", ACCOUNT_ADMIN_PERMISSIONS_COUNTERS_LIST),
     &CounterCategory::new("account_admin_state", ACCOUNT_ADMIN_STATE_COUNTERS_LIST),
-    &CounterCategory::new("account_admin_account_report", ACCOUNT_ADMIN_ACCOUNT_REPORT_LIST),
+    &CounterCategory::new("account_admin_account_report", ACCOUNT_ADMIN_ACCOUNT_REPORT_COUNTERS_LIST),
     // Account internal
     &CounterCategory::new("account_internal", ACCOUNT_BOT_COUNTERS_LIST),
     // Media
@@ -85,7 +85,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
         MEDIA_SECURITY_CONTENT_COUNTERS_LIST,
     ),
     &CounterCategory::new("media_tile_map", MEDIA_TILE_MAP_COUNTERS_LIST),
-    &CounterCategory::new("media_report", MEDIA_REPORT_MEDIA_REPORT),
+    &CounterCategory::new("media_report", MEDIA_REPORT_MEDIA_REPORT_COUNTERS_LIST),
     // Media admin
     &CounterCategory::new(
         "media_admin_moderation",
@@ -93,7 +93,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     ),
     &CounterCategory::new(
         "media_admin_media_report",
-        MEDIA_ADMIN_MEDIA_REPORT,
+        MEDIA_ADMIN_MEDIA_REPORT_COUNTERS_LIST,
     ),
     // Profile
     &CounterCategory::new("profile_filters", PROFILE_FILTERS_COUNTERS_LIST),
@@ -119,7 +119,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     ),
     &CounterCategory::new(
         "profile_admin_profile_report",
-        PROFILE_ADMIN_PROFILE_REPORT,
+        PROFILE_ADMIN_PROFILE_REPORT_COUNTERS_LIST,
     ),
     &CounterCategory::new(
         "profile_admin_profile_name_allowlist",

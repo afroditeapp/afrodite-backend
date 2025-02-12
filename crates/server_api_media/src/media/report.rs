@@ -86,7 +86,7 @@ create_open_api_router!(
 create_counters!(
     MediaCounters,
     MEDIA,
-    MEDIA_REPORT_MEDIA_REPORT,
+    MEDIA_REPORT_MEDIA_REPORT_COUNTERS_LIST,
     get_media_report,
     post_media_report,
 );

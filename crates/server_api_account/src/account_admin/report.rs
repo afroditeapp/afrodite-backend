@@ -101,7 +101,7 @@ create_open_api_router!(
 create_counters!(
     AccountCounters,
     ACCOUNT,
-    ACCOUNT_ADMIN_ACCOUNT_REPORT_LIST,
+    ACCOUNT_ADMIN_ACCOUNT_REPORT_COUNTERS_LIST,
     get_account_report_pending_processing_list,
     post_process_account_report,
 );

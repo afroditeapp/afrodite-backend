@@ -101,7 +101,7 @@ create_open_api_router!(
 create_counters!(
     MediaCounters,
     MEDIA,
-    MEDIA_ADMIN_MEDIA_REPORT,
+    MEDIA_ADMIN_MEDIA_REPORT_COUNTERS_LIST,
     get_media_report_pending_processing_list,
     post_process_media_report,
 );
