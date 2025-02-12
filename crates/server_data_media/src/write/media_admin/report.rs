@@ -1,6 +1,5 @@
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
-use model::ContentId;
-use model_media::AccountIdInternal;
+use model_media::{AccountIdInternal, MediaReportContent};
 use server_data::{
     define_cmd_wrapper_write,
     read::DbRead,
@@ -17,12 +16,12 @@ impl WriteCommandsMediaReport<'_> {
         moderator_id: AccountIdInternal,
         creator: AccountIdInternal,
         target: AccountIdInternal,
-        content: Vec<ContentId>,
+        content: MediaReportContent,
     ) -> Result<(), DataError> {
         let current_report = self
             .db_read(move |mut cmds| cmds.media().report().get_report(creator, target))
             .await?;
-        if current_report.profile_content != content {
+        if current_report.content.profile_content != content.profile_content {
             return Err(DataError::NotAllowed.report());
         }
 

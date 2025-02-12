@@ -84,7 +84,7 @@ pub async fn post_process_media_report(
     db_write_multiple!(state, move |cmds| {
         cmds.media_admin()
             .report()
-            .process_report(moderator_id, creator, target, data.profile_content)
+            .process_report(moderator_id, creator, target, data.content)
             .await?;
         Ok(())
     })?;

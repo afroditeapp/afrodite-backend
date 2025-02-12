@@ -1,8 +1,8 @@
 use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{insert_into, prelude::*, ExpressionMethods};
 use error_stack::Result;
-use model::{AccountIdInternal, ContentId, ReportProcessingState};
-use model_media::MediaReportContentRaw;
+use model::{AccountIdInternal, ReportProcessingState};
+use model_media::{MediaReportContent, MediaReportContentRaw};
 use simple_backend_utils::{current_unix_time, ContextExt};
 
 use crate::IntoDatabaseError;
@@ -14,19 +14,19 @@ impl CurrentWriteMediaReport<'_> {
         &mut self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
-        content: Vec<ContentId>,
+        content: MediaReportContent,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::media_report::dsl::*;
 
         let time = current_unix_time();
 
-        let state = if content.is_empty() {
+        let state = if content.profile_content.is_empty() {
             ReportProcessingState::Empty
         } else {
             ReportProcessingState::Waiting
         };
 
-        let mut iter = content.into_iter();
+        let mut iter = content.profile_content.into_iter();
         let content_raw = MediaReportContentRaw {
             profile_content_uuid_0: iter.next(),
             profile_content_uuid_1: iter.next(),

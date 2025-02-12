@@ -1,6 +1,6 @@
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
-use model::{ContentId, ContentIdInternal, UpdateReportResult};
-use model_media::{AccountIdInternal, ContentModerationState, EventToClientInternal};
+use model::{ContentIdInternal, UpdateReportResult};
+use model_media::{AccountIdInternal, ContentModerationState, EventToClientInternal, MediaReportContent};
 use server_data::{
     define_cmd_wrapper_write,
     read::DbRead,
@@ -18,15 +18,15 @@ impl WriteCommandsMediaReport<'_> {
         &self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
-        content: Vec<ContentId>,
+        content: MediaReportContent,
     ) -> Result<UpdateReportResult, DataError> {
         let target_data = self
             .db_read(move |mut cmds| cmds.media().media_content().current_account_media(target))
             .await?;
 
         let mut send_event = false;
-        if !content.is_empty() {
-            for c in &content {
+        if !content.profile_content.is_empty() {
+            for c in &content.profile_content {
                 let profile_content = target_data.iter_current_profile_content().find(|v| v.uuid == *c);
                 if let Some(profile_content) = profile_content {
                     if profile_content.state() == ContentModerationState::AcceptedByBot {

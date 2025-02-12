@@ -72,7 +72,7 @@ pub async fn post_media_report(
     let result = db_write!(state, move |cmds| cmds
         .media()
         .report()
-        .update_report(account_id, target, update.profile_content))?;
+        .update_report(account_id, target, update.content))?;
 
     Ok(result.into())
 }

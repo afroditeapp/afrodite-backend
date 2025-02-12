@@ -6,12 +6,17 @@ use utoipa::ToSchema;
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
 pub struct MediaReport {
     pub processing_state: ReportProcessingState,
-    pub profile_content: Vec<ContentId>,
+    pub content: MediaReportContent,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateMediaReport {
     pub target: AccountId,
+    pub content: MediaReportContent,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
+pub struct MediaReportContent {
     pub profile_content: Vec<ContentId>,
 }
 

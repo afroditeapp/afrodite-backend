@@ -2,7 +2,7 @@ use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, ReportProcessingState};
-use model_media::{MediaReport, MediaReportContentRaw};
+use model_media::{MediaReport, MediaReportContent, MediaReportContentRaw};
 
 define_current_read_commands!(CurrentReadMediaReport);
 
@@ -25,7 +25,9 @@ impl CurrentReadMediaReport<'_> {
         let report = if let Some((state, content)) = report {
             MediaReport {
                 processing_state: state,
-                profile_content: content.iter().collect(),
+                content: MediaReportContent {
+                    profile_content: content.iter().collect(),
+                },
             }
         } else {
             MediaReport::default()

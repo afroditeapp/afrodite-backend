@@ -2,7 +2,7 @@ use database::{define_current_read_commands, DieselDatabaseError, IntoDatabaseEr
 use diesel::{alias, prelude::*};
 use error_stack::Result;
 use model::{AccountId, ReportProcessingState};
-use model_media::{GetMediaReportList, MediaReportContentRaw, MediaReportDetailed};
+use model_media::{GetMediaReportList, MediaReportContent, MediaReportContentRaw, MediaReportDetailed};
 
 define_current_read_commands!(CurrentReadMediaAdminReport);
 
@@ -39,7 +39,9 @@ impl CurrentReadMediaAdminReport<'_> {
                 creator,
                 target,
                 processing_state: state,
-                profile_content: content.iter().collect(),
+                content: MediaReportContent {
+                    profile_content: content.iter().collect(),
+                },
             }
         }).collect();
 
