@@ -341,6 +341,8 @@ CREATE TABLE IF NOT EXISTS profile_state(
             ON UPDATE CASCADE
 );
 
+-- TODO(prod): Change name and profile_text to be nullable
+
 -- Profile information which can be sent to clients if
 -- profile visibility is public.
 CREATE TABLE IF NOT EXISTS profile(
