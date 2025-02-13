@@ -20,6 +20,9 @@ pub use received_likes::*;
 mod matches;
 pub use matches::*;
 
+mod report;
+pub use report::*;
+
 #[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
 #[diesel(table_name = crate::schema::chat_state)]
 #[diesel(check_for_backend(crate::Db))]

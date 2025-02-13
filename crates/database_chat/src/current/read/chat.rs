@@ -10,6 +10,7 @@ use crate::IntoDatabaseError;
 
 mod interaction;
 mod message;
+mod report;
 
 define_current_read_commands!(CurrentReadChat);
 
@@ -20,6 +21,10 @@ impl<'a> CurrentReadChat<'a> {
 
     pub fn message(self) -> message::CurrentReadChatMessage<'a> {
         message::CurrentReadChatMessage::new(self.cmds)
+    }
+
+    pub fn report(self) -> report::CurrentReadChatReport<'a> {
+        report::CurrentReadChatReport::new(self.cmds)
     }
 }
 

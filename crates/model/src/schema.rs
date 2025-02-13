@@ -90,6 +90,7 @@ diesel::table! {
         admin_process_account_reports -> Bool,
         admin_process_profile_reports -> Bool,
         admin_process_media_reports -> Bool,
+        admin_process_chat_reports -> Bool,
         admin_delete_media_content -> Bool,
         admin_delete_account -> Bool,
         admin_ban_account -> Bool,
@@ -166,6 +167,21 @@ diesel::table! {
     chat_global_state (row_type) {
         row_type -> Integer,
         next_match_id -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    chat_report (creator_account_id, target_account_id) {
+        creator_account_id -> Integer,
+        target_account_id -> Integer,
+        creation_unix_time -> Integer,
+        content_edit_unix_time -> Integer,
+        moderator_account_id -> Nullable<Integer>,
+        processing_state -> Integer,
+        processing_state_change_unix_time -> Integer,
+        is_against_video_calling -> Bool,
     }
 }
 
@@ -689,6 +705,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     account_setup,
     account_state,
     chat_global_state,
+    chat_report,
     chat_state,
     current_account_media,
     demo_mode_account_ids,

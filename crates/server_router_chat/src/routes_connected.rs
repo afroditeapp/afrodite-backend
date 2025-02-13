@@ -27,6 +27,13 @@ impl ConnectedApp {
             .merge(
                 api::chat::push_notifications::router_push_notification_private(self.state.clone()),
             )
+            .merge(
+                api::chat::report::router_chat_report(self.state.clone()),
+            )
+            // Chat admin
+            .merge(
+                api::chat_admin::report::router_admin_chat_report(self.state.clone()),
+            )
             .route_layer({
                 middleware::from_fn_with_state(
                     self.state.s.clone(),

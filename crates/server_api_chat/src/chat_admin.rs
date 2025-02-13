@@ -1,3 +1,2 @@
-
-mod report;
+pub mod report;
 pub use report::*;

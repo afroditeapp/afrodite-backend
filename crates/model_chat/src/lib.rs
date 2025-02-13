@@ -11,3 +11,4 @@ pub mod chat;
 pub mod chat_admin;
 
 pub use chat::*;
+pub use chat_admin::*;

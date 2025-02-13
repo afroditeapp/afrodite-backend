@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_process_account_reports                BOOLEAN NOT NULL DEFAULT 0,
     admin_process_profile_reports                BOOLEAN NOT NULL DEFAULT 0,
     admin_process_media_reports                  BOOLEAN NOT NULL DEFAULT 0,
+    admin_process_chat_reports                   BOOLEAN NOT NULL DEFAULT 0,
     admin_delete_media_content                   BOOLEAN NOT NULL DEFAULT 0,
     admin_delete_account                         BOOLEAN NOT NULL DEFAULT 0,
     admin_ban_account                            BOOLEAN NOT NULL DEFAULT 0,
@@ -813,6 +814,34 @@ CREATE TABLE IF NOT EXISTS pending_messages(
     FOREIGN KEY (account_id_receiver)
         REFERENCES account_id (id)
             ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS chat_report(
+    creator_account_id      INTEGER           NOT NULL,
+    target_account_id       INTEGER           NOT NULL,
+    creation_unix_time      INTEGER           NOT NULL,
+    content_edit_unix_time  INTEGER           NOT NULL,
+    moderator_account_id    INTEGER,
+    -- 0 = Empty
+    -- 1 = Waiting
+    -- 2 = Done
+    processing_state        INTEGER           NOT NULL    DEFAULT 0,
+    processing_state_change_unix_time INTEGER NOT NULL,
+    -- Report content
+    is_against_video_calling BOOLEAN          NOT NULL,
+    PRIMARY KEY (creator_account_id, target_account_id),
+    FOREIGN KEY (creator_account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (target_account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (moderator_account_id)
+        REFERENCES account_id (id)
+            ON DELETE SET NULL
             ON UPDATE CASCADE
 );
 
