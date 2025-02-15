@@ -1,5 +1,5 @@
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
-use model_profile::{AccountIdInternal, EventToClientInternal, ProfileReportContent, ProfileTextModerationState, UpdateReportResult};
+use model_profile::{AccountIdInternal, EventToClientInternal, ProfileNameModerationState, ProfileTextModerationState, UpdateReportResult};
 use server_data::{
     define_cmd_wrapper_write,
     read::DbRead,
@@ -7,60 +7,71 @@ use server_data::{
     write::DbTransaction,
     DataError,
 };
+use tracing::warn;
 
 use crate::write::{profile_admin::profile_text::ModerateProfileTextMode, GetWriteCommandsProfile};
 
 define_cmd_wrapper_write!(WriteCommandsProfileReport);
 
 impl WriteCommandsProfileReport<'_> {
+    pub async fn report_profile_name(
+        &self,
+        creator: AccountIdInternal,
+        target: AccountIdInternal,
+        profile_name: String,
+    ) -> Result<UpdateReportResult, DataError> {
+        let target_data = self
+            .db_read(move |mut cmds| cmds.profile().data().my_profile(target, None))
+            .await?;
+
+        if profile_name != target_data.p.name {
+            return Ok(UpdateReportResult::outdated_report_content());
+        }
+
+        if target_data.name_moderation_state == ProfileNameModerationState::AcceptedByBot {
+            // TODO(future): Profile name bot moderation
+            warn!("Profile name bot moderations are unsupported currently");
+        }
+
+        db_transaction!(self, move |mut cmds| {
+            cmds.profile().report().upsert_profile_name_report(creator, target, profile_name)?;
+            Ok(())
+        })?;
+
+        Ok(UpdateReportResult::success())
+    }
+
     pub async fn report_profile_text(
         &self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
         profile_text: String,
     ) -> Result<UpdateReportResult, DataError> {
-        let mut current_report = self
-            .db_read(move |mut cmds| cmds.profile().report().get_report(creator, target))
-            .await?;
-
-        current_report.content.profile_text = Some(profile_text);
-
-        self.update_report(creator, target, current_report.content).await
-    }
-
-    pub async fn update_report(
-        &self,
-        creator: AccountIdInternal,
-        target: AccountIdInternal,
-        reported_content: ProfileReportContent,
-    ) -> Result<UpdateReportResult, DataError> {
         let target_data = self
             .db_read(move |mut cmds| cmds.profile().data().my_profile(target, None))
             .await?;
 
-        if let Some(reported_text) = reported_content.profile_text.as_deref() {
-            if reported_text != target_data.p.ptext {
-                return Ok(UpdateReportResult::outdated_report_content());
-            }
+        if profile_text != target_data.p.ptext {
+            return Ok(UpdateReportResult::outdated_report_content());
+        }
 
-            if target_data.text_moderation_info.state == ProfileTextModerationState::AcceptedByBot {
-                self.handle().profile_admin().profile_text().moderate_profile_text(
-                    ModerateProfileTextMode::MoveToHumanModeration,
-                    target,
-                    reported_text.to_string(),
-                ).await?;
+        if target_data.text_moderation_info.state == ProfileTextModerationState::AcceptedByBot {
+            self.handle().profile_admin().profile_text().moderate_profile_text(
+                ModerateProfileTextMode::MoveToHumanModeration,
+                target,
+                profile_text.to_string(),
+            ).await?;
 
-                self.handle()
-                    .events()
-                    .send_connected_event(target, EventToClientInternal::ProfileChanged)
-                    .await?;
-            }
+            self.handle()
+                .events()
+                .send_connected_event(target, EventToClientInternal::ProfileChanged)
+                .await?;
         }
 
         db_transaction!(self, move |mut cmds| {
             cmds.profile()
                 .report()
-                .upsert_report(creator, target, reported_content)?;
+                .upsert_profile_text_report(creator, target, profile_text)?;
             Ok(())
         })?;
 

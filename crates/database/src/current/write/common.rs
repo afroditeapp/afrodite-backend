@@ -8,6 +8,7 @@ use crate::{define_current_write_commands, IntoDatabaseError};
 mod queue_number;
 mod state;
 mod token;
+mod report;
 
 define_current_write_commands!(CurrentWriteCommon);
 
@@ -22,6 +23,10 @@ impl<'a> CurrentWriteCommon<'a> {
 
     pub fn token(self) -> token::CurrentWriteAccountToken<'a> {
         token::CurrentWriteAccountToken::new(self.cmds)
+    }
+
+    pub fn report(self) -> report::CurrentWriteCommonReport<'a> {
+        report::CurrentWriteCommonReport::new(self.cmds)
     }
 }
 

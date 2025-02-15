@@ -1,60 +1,26 @@
-use axum::{extract::{Query, State}, Extension};
-use model::{ReportQueryParams, UpdateReportResult};
-use model_profile::{AccountIdInternal, ProfileReport, ReportProfileText, UpdateProfileReport};
+use axum::{extract::State, Extension};
+use model::UpdateReportResult;
+use model_profile::{AccountIdInternal, UpdateProfileNameReport, UpdateProfileTextReport};
 use server_api::{create_open_api_router, S};
-use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
+use server_data_profile::write::GetWriteCommandsProfile;
 use simple_backend::create_counters;
 
 use crate::{
-    app::{GetAccounts, ReadData, WriteData},
+    app::{GetAccounts, WriteData},
     db_write,
     utils::{Json, StatusCode},
 };
 
 // TODO(prod): Remove unused report APIs
+// TODO(prod): Add bot moderation support to profile name?
 
-const PATH_GET_PROFILE_REPORT: &str = "/profile_api/profile_report";
+const PATH_POST_REPORT_PROFILE_NAME: &str = "/profile_api/report_profile_name";
 
-/// Get profile report
-#[utoipa::path(
-    get,
-    path = PATH_GET_PROFILE_REPORT,
-    params(ReportQueryParams),
-    responses(
-        (status = 200, description = "Successfull.", body = ProfileReport),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn get_profile_report(
-    State(state): State<S>,
-    Extension(account_id): Extension<AccountIdInternal>,
-    Query(report): Query<ReportQueryParams>,
-) -> Result<Json<ProfileReport>, StatusCode> {
-    PROFILE.get_profile_report.incr();
-
-    let target = state.get_internal_id(report.target).await?;
-
-    let report = state.read().profile().report().get_report(
-        account_id,
-        target,
-    ).await?;
-
-    Ok(report.into())
-}
-
-const PATH_POST_PROFILE_REPORT: &str = "/profile_api/profile_report";
-
-/// Update profile report.
-///
-/// If profile text is reported and it is bot moderated, the text's
-/// moderation state changes to
-/// [model_profile::ProfileTextModerationState::WaitingHumanModeration].
+/// Report profile name
 #[utoipa::path(
     post,
-    path = PATH_POST_PROFILE_REPORT,
-    request_body = UpdateProfileReport,
+    path = PATH_POST_REPORT_PROFILE_NAME,
+    request_body = UpdateProfileNameReport,
     responses(
         (status = 200, description = "Successfull.", body = UpdateReportResult),
         (status = 401, description = "Unauthorized."),
@@ -62,19 +28,19 @@ const PATH_POST_PROFILE_REPORT: &str = "/profile_api/profile_report";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_profile_report(
+pub async fn post_report_profile_name(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-    Json(update): Json<UpdateProfileReport>,
+    Json(update): Json<UpdateProfileNameReport>,
 ) -> Result<Json<UpdateReportResult>, StatusCode> {
-    PROFILE.post_profile_report.incr();
+    PROFILE.post_report_profile_name.incr();
 
     let target = state.get_internal_id(update.target).await?;
 
     let result = db_write!(state, move |cmds| cmds
         .profile()
         .report()
-        .update_report(account_id, target, update.content))?;
+        .report_profile_name(account_id, target, update.profile_name))?;
 
     Ok(result.into())
 }
@@ -89,7 +55,7 @@ const PATH_POST_REPORT_PROFILE_TEXT: &str = "/profile_api/report_profile_text";
 #[utoipa::path(
     post,
     path = PATH_POST_REPORT_PROFILE_TEXT,
-    request_body = ReportProfileText,
+    request_body = UpdateProfileTextReport,
     responses(
         (status = 200, description = "Successfull.", body = UpdateReportResult),
         (status = 401, description = "Unauthorized."),
@@ -100,7 +66,7 @@ const PATH_POST_REPORT_PROFILE_TEXT: &str = "/profile_api/report_profile_text";
 pub async fn post_report_profile_text(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-    Json(update): Json<ReportProfileText>,
+    Json(update): Json<UpdateProfileTextReport>,
 ) -> Result<Json<UpdateReportResult>, StatusCode> {
     PROFILE.post_report_profile_text.incr();
 
@@ -114,11 +80,9 @@ pub async fn post_report_profile_text(
     Ok(result.into())
 }
 
-
 create_open_api_router!(
         fn router_profile_report,
-        get_profile_report,
-        post_profile_report,
+        post_report_profile_name,
         post_report_profile_text,
 );
 
@@ -126,7 +90,6 @@ create_counters!(
     ProfileCounters,
     PROFILE,
     PROFILE_REPORT_COUNTERS_LIST,
-    get_profile_report,
-    post_profile_report,
+    post_report_profile_name,
     post_report_profile_text,
 );

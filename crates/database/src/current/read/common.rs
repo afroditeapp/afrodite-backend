@@ -10,6 +10,7 @@ use crate::{
 mod queue_number;
 mod state;
 mod token;
+mod report;
 
 define_current_read_commands!(CurrentReadCommon);
 
@@ -24,6 +25,10 @@ impl<'a> CurrentReadCommon<'a> {
 
     pub fn token(self) -> token::CurrentReadAccountToken<'a> {
         token::CurrentReadAccountToken::new(self.cmds)
+    }
+
+    pub fn report(self) -> report::CurrentReadCommonReport<'a> {
+        report::CurrentReadCommonReport::new(self.cmds)
     }
 }
 

@@ -1,48 +1,68 @@
-use database::{define_current_write_commands, DieselDatabaseError};
+use database::{current::write::GetDbWriteCommandsCommon, define_current_write_commands, DieselDatabaseError};
 use diesel::{insert_into, prelude::*, ExpressionMethods};
 use error_stack::Result;
-use model::{AccountIdInternal, ReportProcessingState};
-use model_profile::ProfileReportContent;
-use simple_backend_utils::current_unix_time;
+use model::{AccountIdInternal, ReportProcessingState, ReportTypeNumber};
 
 use crate::IntoDatabaseError;
 
 define_current_write_commands!(CurrentWriteProfileReport);
 
 impl CurrentWriteProfileReport<'_> {
-    pub fn upsert_report(
+    pub fn upsert_profile_name_report(
         &mut self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
-        content: ProfileReportContent,
+        name: String,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::profile_report::dsl::*;
+        use model::schema::profile_report_profile_name::dsl::*;
 
-        let time = current_unix_time();
-
-        let state = if content.profile_text.is_some() {
-            ReportProcessingState::Empty
-        } else {
+        let id = self.write().common().report().upsert_report_content(
+            creator,
+            target,
+            ReportTypeNumber::ProfileName,
             ReportProcessingState::Waiting
-        };
+        )?;
 
-        insert_into(profile_report)
+        insert_into(profile_report_profile_name)
             .values((
-                creator_account_id.eq(creator.as_db_id()),
-                target_account_id.eq(target.as_db_id()),
-                creation_unix_time.eq(time),
-                content_edit_unix_time.eq(time),
-                processing_state.eq(state),
-                processing_state_change_unix_time.eq(time),
-                profile_text.eq(&content.profile_text),
+                report_id.eq(id),
+                profile_name.eq(&name),
             ))
-            .on_conflict((creator_account_id, target_account_id))
+            .on_conflict(report_id)
             .do_update()
             .set((
-                content_edit_unix_time.eq(time),
-                processing_state.eq(state),
-                processing_state_change_unix_time.eq(time),
-                profile_text.eq(&content.profile_text),
+                profile_name.eq(&name),
+            ))
+            .execute(self.conn())
+            .into_db_error((creator, target))?;
+
+        Ok(())
+    }
+
+    pub fn upsert_profile_text_report(
+        &mut self,
+        creator: AccountIdInternal,
+        target: AccountIdInternal,
+        text: String,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::profile_report_profile_text::dsl::*;
+
+        let id = self.write().common().report().upsert_report_content(
+            creator,
+            target,
+            ReportTypeNumber::ProfileText,
+            ReportProcessingState::Waiting
+        )?;
+
+        insert_into(profile_report_profile_text)
+            .values((
+                report_id.eq(id),
+                profile_text.eq(&text),
+            ))
+            .on_conflict(report_id)
+            .do_update()
+            .set((
+                profile_text.eq(&text),
             ))
             .execute(self.conn())
             .into_db_error((creator, target))?;

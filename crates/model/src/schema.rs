@@ -208,6 +208,22 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    common_report (id) {
+        id -> Integer,
+        creator_account_id -> Integer,
+        target_account_id -> Integer,
+        report_type_number -> Integer,
+        creation_unix_time -> Integer,
+        content_edit_unix_time -> Integer,
+        moderator_account_id -> Nullable<Integer>,
+        processing_state -> Integer,
+        processing_state_change_unix_time -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     current_account_media (account_id) {
         account_id -> Integer,
         security_content_id -> Nullable<Integer>,
@@ -542,14 +558,17 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    profile_report (creator_account_id, target_account_id) {
-        creator_account_id -> Integer,
-        target_account_id -> Integer,
-        creation_unix_time -> Integer,
-        content_edit_unix_time -> Integer,
-        moderator_account_id -> Nullable<Integer>,
-        processing_state -> Integer,
-        processing_state_change_unix_time -> Integer,
+    profile_report_profile_name (report_id) {
+        report_id -> Integer,
+        profile_name -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    profile_report_profile_text (report_id) {
+        report_id -> Integer,
         profile_text -> Nullable<Text>,
     }
 }
@@ -685,6 +704,8 @@ diesel::joinable!(profile -> account_id (account_id));
 diesel::joinable!(profile_attributes -> account_id (account_id));
 diesel::joinable!(profile_attributes_number_list -> account_id (account_id));
 diesel::joinable!(profile_attributes_number_list_filters -> account_id (account_id));
+diesel::joinable!(profile_report_profile_name -> common_report (report_id));
+diesel::joinable!(profile_report_profile_text -> common_report (report_id));
 diesel::joinable!(public_key -> account_id (account_id));
 diesel::joinable!(queue_entry -> account_id (account_id));
 diesel::joinable!(refresh_token -> account_id (account_id));
@@ -707,6 +728,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     chat_global_state,
     chat_report,
     chat_state,
+    common_report,
     current_account_media,
     demo_mode_account_ids,
     favorite_profile,
@@ -736,7 +758,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     profile_attributes_number_list,
     profile_attributes_number_list_filters,
     profile_name_allowlist,
-    profile_report,
+    profile_report_profile_name,
+    profile_report_profile_text,
     profile_state,
     public_key,
     queue_entry,
