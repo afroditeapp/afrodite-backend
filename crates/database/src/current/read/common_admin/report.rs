@@ -19,7 +19,7 @@ impl CurrentReadCommonAdminReport<'_> {
 
         let values: Vec<(AccountId, AccountId, ReportIdDb)> = common_report
             .inner_join(creator_aid.on(creator_account_id.eq(creator_aid.field(account_id::id))))
-            .inner_join(target_aid.on(target_account_id.eq(creator_aid.field(account_id::id))))
+            .inner_join(target_aid.on(target_account_id.eq(target_aid.field(account_id::id))))
             .filter(
                 processing_state.eq(ReportProcessingState::Waiting)
             )
