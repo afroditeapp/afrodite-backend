@@ -13,6 +13,21 @@ use crate::write::{profile_admin::profile_text::ModerateProfileTextMode, GetWrit
 define_cmd_wrapper_write!(WriteCommandsProfileReport);
 
 impl WriteCommandsProfileReport<'_> {
+    pub async fn report_profile_text(
+        &self,
+        creator: AccountIdInternal,
+        target: AccountIdInternal,
+        profile_text: String,
+    ) -> Result<UpdateReportResult, DataError> {
+        let mut current_report = self
+            .db_read(move |mut cmds| cmds.profile().report().get_report(creator, target))
+            .await?;
+
+        current_report.content.profile_text = Some(profile_text);
+
+        self.update_report(creator, target, current_report.content).await
+    }
+
     pub async fn update_report(
         &self,
         creator: AccountIdInternal,

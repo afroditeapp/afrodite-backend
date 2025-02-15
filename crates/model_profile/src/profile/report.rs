@@ -18,3 +18,9 @@ pub struct UpdateProfileReport {
 pub struct ProfileReportContent {
     pub profile_text: Option<String>,
 }
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct ReportProfileText {
+    pub target: AccountId,
+    pub profile_text: String,
+}
