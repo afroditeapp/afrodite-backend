@@ -36,7 +36,7 @@ pub async fn get_chat_report_pending_processing_list(
 ) -> Result<Json<GetChatReportList>, StatusCode> {
     CHAT.get_chat_report_pending_processing_list.incr();
 
-    if !permissions.admin_process_chat_reports {
+    if !permissions.admin_process_reports {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
@@ -74,7 +74,7 @@ pub async fn post_process_chat_report(
 ) -> Result<(), StatusCode> {
     CHAT.post_process_chat_report.incr();
 
-    if !permissions.admin_process_chat_reports {
+    if !permissions.admin_process_reports {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 

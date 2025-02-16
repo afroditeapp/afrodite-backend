@@ -31,6 +31,7 @@ impl ApiDoc {
             .merge_from(server_api::common_admin::router_perf(state.clone()).into_openapi())
             .merge_from(server_api::common_admin::router_config(state.clone()).into_openapi())
             .merge_from(server_api::common_admin::router_manager(state.clone()).into_openapi())
+            .merge_from(server_api::common_admin::router_report(state.clone()).into_openapi())
             .tag_routes("common_admin");
         doc.merge(common_admin);
         // Account
@@ -133,10 +134,6 @@ impl ApiDoc {
             )
             .merge_from(
                 server_api_profile::profile_admin::router_admin_profile_data(state.clone())
-                    .into_openapi(),
-            )
-            .merge_from(
-                server_api_profile::profile_admin::router_admin_profile_report(state.clone())
                     .into_openapi(),
             )
             .merge_from(

@@ -1,10 +1,12 @@
 //! Synchronous write commands combining cache and database operations.
 
 use common::WriteCommandsCommon;
+use common_admin::WriteCommandsCommonAdmin;
 
 use crate::db_manager::{InternalWriting, WriteAccessProvider};
 
 pub mod common;
+pub mod common_admin;
 pub mod common_history;
 
 /// One Account can do only one write command at a time.
@@ -68,12 +70,17 @@ pub(crate) use db_transaction_history;
 
 pub trait GetWriteCommandsCommon<'a> {
     fn common(self) -> WriteCommandsCommon<'a>;
+    fn common_admin(self) -> WriteCommandsCommonAdmin<'a>;
     fn common_history(self) -> common_history::WriteCommandsCommonHistory<'a>;
 }
 
 impl<'a, I: WriteAccessProvider<'a>> GetWriteCommandsCommon<'a> for I {
     fn common(self) -> WriteCommandsCommon<'a> {
         WriteCommandsCommon::new(self.handle())
+    }
+
+    fn common_admin(self) -> WriteCommandsCommonAdmin<'a> {
+        WriteCommandsCommonAdmin::new(self.handle())
     }
 
     fn common_history(self) -> common_history::WriteCommandsCommonHistory<'a> {

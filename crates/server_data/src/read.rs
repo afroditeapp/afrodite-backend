@@ -1,15 +1,22 @@
+use common_admin::ReadCommandsCommonAdmin;
+
 use self::common::ReadCommandsCommon;
 use crate::db_manager::{InternalReading, ReadAccessProvider};
 
 pub mod common;
+mod common_admin;
 
 pub trait GetReadCommandsCommon<'a> {
     fn common(self) -> ReadCommandsCommon<'a>;
+    fn common_admin(self) -> ReadCommandsCommonAdmin<'a>;
 }
 
 impl<'a, C: ReadAccessProvider<'a>> GetReadCommandsCommon<'a> for C {
     fn common(self) -> ReadCommandsCommon<'a> {
         ReadCommandsCommon::new(self.handle())
+    }
+    fn common_admin(self) -> ReadCommandsCommonAdmin<'a> {
+        ReadCommandsCommonAdmin::new(self.handle())
     }
 }
 

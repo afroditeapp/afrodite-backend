@@ -38,9 +38,6 @@ impl ConnectedApp {
             .merge(api::profile_admin::router_admin_profile_data(
                 self.state.clone(),
             ))
-            .merge(api::profile_admin::router_admin_profile_report(
-                self.state.clone(),
-            ))
             .merge(api::profile_admin::router_admin_profile_name_allowlist(
                 self.state.clone(),
             ))

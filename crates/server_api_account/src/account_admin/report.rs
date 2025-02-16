@@ -36,7 +36,7 @@ pub async fn get_account_report_pending_processing_list(
 ) -> Result<Json<GetAccountReportList>, StatusCode> {
     ACCOUNT.get_account_report_pending_processing_list.incr();
 
-    if !permissions.admin_process_account_reports {
+    if !permissions.admin_process_reports {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
@@ -74,7 +74,7 @@ pub async fn post_process_account_report(
 ) -> Result<(), StatusCode> {
     ACCOUNT.post_process_account_report.incr();
 
-    if !permissions.admin_process_account_reports {
+    if !permissions.admin_process_reports {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 

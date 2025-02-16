@@ -1,12 +1,12 @@
 use axum::{extract::State, Extension};
-use model_media::{
-    AccountIdInternal, GetMediaReportList, Permissions, ProcessMediaReport
+use model::{
+    AccountIdInternal, GetReportList, Permissions, ReportDetailed,
 };
-use server_api::{
+use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
+use crate::{
     app::{GetAccounts, WriteData},
     create_open_api_router, db_write_multiple, S,
 };
-use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
 
 use crate::{
@@ -14,14 +14,14 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-const PATH_GET_MEDIA_REPORT_PENDING_PROCESSING_LIST: &str =
-    "/media_api/admin/media_report_pending_processing";
+const PATH_GET_WAITING_REPORT_PAGE: &str =
+    "/common_api/admin/waiting_report_page";
 
 #[utoipa::path(
     get,
-    path = PATH_GET_MEDIA_REPORT_PENDING_PROCESSING_LIST,
+    path = PATH_GET_WAITING_REPORT_PAGE,
     responses(
-        (status = 200, description = "Successful", body = GetMediaReportList),
+        (status = 200, description = "Successful", body = GetReportList),
         (status = 401, description = "Unauthorized"),
         (
             status = 500,
@@ -30,11 +30,11 @@ const PATH_GET_MEDIA_REPORT_PENDING_PROCESSING_LIST: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_media_report_pending_processing_list(
+pub async fn get_waiting_report_page(
     State(state): State<S>,
     Extension(permissions): Extension<Permissions>,
-) -> Result<Json<GetMediaReportList>, StatusCode> {
-    MEDIA.get_media_report_pending_processing_list.incr();
+) -> Result<Json<GetReportList>, StatusCode> {
+    COMMON.get_waiting_report_page.incr();
 
     if !permissions.admin_process_reports {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -42,20 +42,20 @@ pub async fn get_media_report_pending_processing_list(
 
     let r = state
         .read()
-        .media_admin()
+        .common_admin()
         .report()
-        .get_report_list()
+        .get_waiting_report_list()
         .await?;
 
     Ok(r.into())
 }
 
-const PATH_POST_PROCESS_MEDIA_REPORT: &str = "/media_api/admin/process_media_report";
+const PATH_POST_PROCESS_REPORT: &str = "/common_api/admin/process_report";
 
 #[utoipa::path(
     post,
-    path = PATH_POST_PROCESS_MEDIA_REPORT,
-    request_body = ProcessMediaReport,
+    path = PATH_POST_PROCESS_REPORT,
+    request_body = ReportDetailed,
     responses(
         (status = 200, description = "Successful"),
         (status = 401, description = "Unauthorized"),
@@ -66,25 +66,25 @@ const PATH_POST_PROCESS_MEDIA_REPORT: &str = "/media_api/admin/process_media_rep
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_process_media_report(
+pub async fn post_process_report(
     State(state): State<S>,
     Extension(permissions): Extension<Permissions>,
     Extension(moderator_id): Extension<AccountIdInternal>,
-    Json(data): Json<ProcessMediaReport>,
+    Json(data): Json<ReportDetailed>,
 ) -> Result<(), StatusCode> {
-    MEDIA.post_process_media_report.incr();
+    COMMON.post_process_report.incr();
 
     if !permissions.admin_process_reports {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let creator = state.get_internal_id(data.creator).await?;
-    let target = state.get_internal_id(data.target).await?;
+    let creator = state.get_internal_id(data.info.creator).await?;
+    let target = state.get_internal_id(data.info.target).await?;
 
     db_write_multiple!(state, move |cmds| {
-        cmds.media_admin()
+        cmds.common_admin()
             .report()
-            .process_report(moderator_id, creator, target, data.content)
+            .process_report(moderator_id, creator, target, data.info.report_type, data.content)
             .await?;
         Ok(())
     })?;
@@ -93,15 +93,15 @@ pub async fn post_process_media_report(
 }
 
 create_open_api_router!(
-        fn router_admin_media_report,
-        get_media_report_pending_processing_list,
-        post_process_media_report,
+        fn router_report,
+        get_waiting_report_page,
+        post_process_report,
 );
 
 create_counters!(
-    MediaCounters,
-    MEDIA,
-    MEDIA_ADMIN_MEDIA_REPORT_COUNTERS_LIST,
-    get_media_report_pending_processing_list,
-    post_process_media_report,
+    CommonCounters,
+    COMMON,
+    COMMON_ADMIN_REPORT_COUNTERS_LIST,
+    get_waiting_report_page,
+    post_process_report,
 );
