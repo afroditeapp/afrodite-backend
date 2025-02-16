@@ -19,20 +19,22 @@ impl WriteCommandsCommonAdminReport<'_> {
         report_type: ReportTypeNumber,
         content: ReportContent,
     ) -> Result<(), DataError> {
-        let current_report = self
-            .db_read(move |mut cmds| cmds.common_admin().report().get_detailed_report(creator, target, report_type))
+        let current_reports = self
+            .db_read(move |mut cmds| cmds.common().report().get_all_detailed_reports(creator, target, report_type))
             .await?;
-        if current_report.map(|v| v.content) != Some(content) {
-            return Err(DataError::NotAllowed.report());
-        }
 
-        db_transaction!(self, move |mut cmds| {
-            cmds.common_admin()
-                .report()
-                .mark_report_done(moderator_id, creator, target, report_type)?;
+        let matching_report = current_reports.iter().find(|v| v.report.content == content);
+        if let Some(report) = matching_report {
+            let id = report.id;
+            db_transaction!(self, move |mut cmds| {
+                cmds.common_admin()
+                    .report()
+                    .mark_report_done(moderator_id, id)?;
+                Ok(())
+            })?;
             Ok(())
-        })?;
-
-        Ok(())
+        } else {
+            Err(DataError::NotAllowed.report())
+        }
     }
 }

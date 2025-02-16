@@ -24,6 +24,12 @@ pub struct ReportDetailedInfo {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct ReportDetailedWithId {
+    pub id: ReportIdDb,
+    pub report: ReportDetailed,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ReportDetailed {
     pub info: ReportDetailedInfo,
     pub content: ReportContent,

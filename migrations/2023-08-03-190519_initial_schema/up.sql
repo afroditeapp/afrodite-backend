@@ -154,7 +154,6 @@ CREATE TABLE IF NOT EXISTS common_report(
     -- 2 = Done
     processing_state        INTEGER             NOT NULL    DEFAULT 0,
     processing_state_change_unix_time INTEGER   NOT NULL,
-    UNIQUE (creator_account_id, target_account_id, report_type_number),
     FOREIGN KEY (creator_account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

@@ -8,7 +8,7 @@ use crate::{define_current_read_commands, DieselDatabaseError, IntoDatabaseError
 define_current_read_commands!(CurrentWriteCommonReport);
 
 impl CurrentWriteCommonReport<'_> {
-    pub fn upsert_report_content(
+    pub fn insert_report_content(
         &mut self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
@@ -25,13 +25,6 @@ impl CurrentWriteCommonReport<'_> {
                 target_account_id.eq(target.as_db_id()),
                 report_type_number.eq(type_number),
                 creation_unix_time.eq(time),
-                content_edit_unix_time.eq(time),
-                processing_state.eq(state),
-                processing_state_change_unix_time.eq(time),
-            ))
-            .on_conflict((creator_account_id, target_account_id, report_type_number))
-            .do_update()
-            .set((
                 content_edit_unix_time.eq(time),
                 processing_state.eq(state),
                 processing_state_change_unix_time.eq(time),

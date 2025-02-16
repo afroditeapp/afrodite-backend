@@ -1,5 +1,6 @@
+use database::current::read::GetDbReadCommandsCommon;
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
-use model_profile::{AccountIdInternal, EventToClientInternal, ProfileNameModerationState, ProfileTextModerationState, UpdateReportResult};
+use model_profile::{AccountIdInternal, EventToClientInternal, ProfileNameModerationState, ProfileTextModerationState, ReportTypeNumber, UpdateReportResult};
 use server_data::{
     define_cmd_wrapper_write,
     read::DbRead,
@@ -33,8 +34,21 @@ impl WriteCommandsProfileReport<'_> {
             warn!("Profile name bot moderations are unsupported currently");
         }
 
+        let reports = self
+            .db_read(move |mut cmds| cmds.common().report().get_all_detailed_reports(creator, target, ReportTypeNumber::ProfileName))
+            .await?;
+        if reports.len() >= ReportTypeNumber::MAX_COUNT {
+            return Ok(UpdateReportResult::too_many_reports());
+        }
+
+        let current_report = reports.iter().find(|v| v.report.content.profile_name.as_deref() == Some(&profile_name));
+        if current_report.is_some() {
+            // Already reported
+            return Ok(UpdateReportResult::success());
+        }
+
         db_transaction!(self, move |mut cmds| {
-            cmds.profile().report().upsert_profile_name_report(creator, target, profile_name)?;
+            cmds.profile().report().insert_profile_name_report(creator, target, profile_name)?;
             Ok(())
         })?;
 
@@ -68,10 +82,23 @@ impl WriteCommandsProfileReport<'_> {
                 .await?;
         }
 
+        let reports = self
+            .db_read(move |mut cmds| cmds.common().report().get_all_detailed_reports(creator, target, ReportTypeNumber::ProfileText))
+            .await?;
+        if reports.len() >= ReportTypeNumber::MAX_COUNT {
+            return Ok(UpdateReportResult::too_many_reports());
+        }
+
+        let current_report = reports.iter().find(|v| v.report.content.profile_text.as_deref() == Some(&profile_text));
+        if current_report.is_some() {
+            // Already reported
+            return Ok(UpdateReportResult::success());
+        }
+
         db_transaction!(self, move |mut cmds| {
             cmds.profile()
                 .report()
-                .upsert_profile_text_report(creator, target, profile_text)?;
+                .insert_profile_text_report(creator, target, profile_text)?;
             Ok(())
         })?;
 
