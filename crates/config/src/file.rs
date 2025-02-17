@@ -43,6 +43,10 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # longitude_bottom_right = 31.58
 # index_cell_square_km = 255       # 1-255 and area width and height must be larger than 255 km
 
+# [limits.common.processed_report_deletion_wait_duration]
+# profile_name = "90d"
+# profile_text = "90d"
+
 # [limits.account]
 # account_deletion_wait_duration = "90d"
 
@@ -228,9 +232,31 @@ impl Default for LocationConfig {
 /// Limits config
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct LimitsConfig {
+    pub common: Option<CommonLimitsConfig>,
     pub account: Option<AccountLimitsConfig>,
     pub chat: Option<ChatLimitsConfig>,
     pub media: Option<MediaLimitsConfig>,
+}
+
+/// Common limits config for all server components
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+pub struct CommonLimitsConfig {
+    pub processed_report_deletion_wait_duration: ProcessedReportDeletionConfig,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ProcessedReportDeletionConfig {
+    pub profile_name: DurationValue,
+    pub profile_text: DurationValue,
+}
+
+impl Default for ProcessedReportDeletionConfig {
+    fn default() -> Self {
+        Self {
+            profile_name: DurationValue::from_days(90),
+            profile_text: DurationValue::from_days(90),
+        }
+    }
 }
 
 /// Account related limits config

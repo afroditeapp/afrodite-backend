@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use model::UnixTime;
+use model::{ReportTypeNumber, UnixTime};
 use model_profile::{
     AccountIdInternal, AccountState, EventToClientInternal, ProfileAge, ProfileUpdate,
 };
@@ -11,7 +11,7 @@ use server_api::{
     DataError,
 };
 use server_common::result::{Result, WrappedResultExt};
-use server_data::read::GetReadCommandsCommon;
+use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use server_data_profile::{
     read::GetReadProfileCommands, statistics::ProfileStatisticsCacheUtils,
@@ -121,6 +121,7 @@ impl ScheduledTaskManager {
         self.run_tasks_for_individual_accounts(quit_notification)
             .await?;
         self.save_profile_statistics().await?;
+        self.delete_processed_reports_which_have_user_data().await?;
         // TODO(prod): SQLite database backups
         Ok(())
     }
@@ -141,6 +142,26 @@ impl ScheduledTaskManager {
         .await
         .change_context(ScheduledTaskError::DatabaseError)?;
 
+        Ok(())
+    }
+
+    pub async fn delete_processed_reports_which_have_user_data(&self) -> Result<(), ScheduledTaskError> {
+        let run_delete = |report_type, deletion_wait_time| {
+            async move {
+                db_write_raw!(self.state, move |cmds| {
+                    cmds.common()
+                        .delete_processed_reports_if_needed(report_type, deletion_wait_time)
+                        .await
+                })
+                .await
+                .change_context(ScheduledTaskError::DatabaseError)?;
+                Result::Ok(())
+            }
+        };
+
+        let durations = self.state.config().limits_common().processed_report_deletion_wait_duration;
+        run_delete(ReportTypeNumber::ProfileName, durations.profile_name).await?;
+        run_delete(ReportTypeNumber::ProfileText, durations.profile_text).await?;
         Ok(())
     }
 

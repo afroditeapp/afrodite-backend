@@ -1,9 +1,10 @@
 use std::net::SocketAddr;
 
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
-use model::{Account, AccountId, AccountIdInternal};
+use model::{Account, AccountId, AccountIdInternal, ReportTypeNumber, UnixTime};
 use model_server_data::AuthPair;
 use server_common::data::cache::CacheError;
+use simple_backend_utils::time::DurationValue;
 
 use super::DbTransaction;
 use crate::{
@@ -157,6 +158,22 @@ impl WriteCommandsCommon<'_> {
             Ok(())
         })
         .await?;
+
+        Ok(())
+    }
+
+    pub async fn delete_processed_reports_if_needed(
+        &self,
+        report_type: ReportTypeNumber,
+        deletion_wait_time: DurationValue,
+    ) -> Result<(), DataError> {
+        let automatic_deletion_allowed = UnixTime::current_time()
+            .add_seconds(deletion_wait_time.seconds);
+
+        db_transaction!(self, move |mut cmds| {
+            cmds.common().report().delete_old_reports(report_type, automatic_deletion_allowed)?;
+            Ok(())
+        })?;
 
         Ok(())
     }
