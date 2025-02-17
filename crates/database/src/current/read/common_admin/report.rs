@@ -1,7 +1,7 @@
 use crate::{current::read::GetDbReadCommandsCommon, define_current_read_commands, DieselDatabaseError, IntoDatabaseError};
 use diesel::{alias, prelude::*};
 use error_stack::Result;
-use model::{AccountId, GetReportList, ReportDetailedInfo, ReportIdDb, ReportInternal, ReportIteratorMode, ReportIteratorQueryInternal, ReportProcessingState, ReportTypeNumber};
+use model::{AccountId, AccountIdDb, GetReportList, ReportDetailedInfo, ReportIdDb, ReportInternal, ReportIteratorMode, ReportIteratorQueryInternal, ReportProcessingState, ReportTypeNumber};
 
 define_current_read_commands!(CurrentReadCommonAdminReport);
 
@@ -14,7 +14,7 @@ impl CurrentReadCommonAdminReport<'_> {
         let mut page = vec![];
 
         for r in reports {
-            let detailed = self.read().common().report().convert_to_detailed_report(r.info, r.id)?;
+            let detailed = self.read().common().report().convert_to_detailed_report(r)?;
             page.push(detailed);
         }
 
@@ -33,7 +33,7 @@ impl CurrentReadCommonAdminReport<'_> {
 
         const PAGE_SIZE: i64 = 25;
 
-        let values: Vec<(AccountId, AccountId, ReportIdDb, ReportTypeNumber)> = common_report
+        let values: Vec<(AccountId, AccountIdDb, AccountId, AccountIdDb, ReportIdDb, ReportTypeNumber)> = common_report
             .inner_join(creator_aid.on(creator_account_id.eq(creator_aid.field(account_id::id))))
             .inner_join(target_aid.on(target_account_id.eq(target_aid.field(account_id::id))))
             .filter(
@@ -41,7 +41,9 @@ impl CurrentReadCommonAdminReport<'_> {
             )
             .select((
                 creator_aid.field(account_id::uuid),
+                creator_account_id,
                 target_aid.field(account_id::uuid),
+                target_account_id,
                 id,
                 report_type_number,
             ))
@@ -53,7 +55,7 @@ impl CurrentReadCommonAdminReport<'_> {
             .load(self.conn())
             .into_db_error(())?;
 
-        let values = values.into_iter().map(|(creator, target, report_id, report_type)| {
+        let values = values.into_iter().map(|(creator, creator_db_id, target, target_db_id, report_id, report_type)| {
             ReportInternal {
                 info: ReportDetailedInfo {
                     creator,
@@ -62,6 +64,8 @@ impl CurrentReadCommonAdminReport<'_> {
                     report_type,
                 },
                 id: report_id,
+                creator_db_id,
+                target_db_id,
             }
         }).collect();
 
@@ -77,7 +81,7 @@ impl CurrentReadCommonAdminReport<'_> {
         let mut page = vec![];
 
         for r in reports {
-            let detailed = self.read().common().report().convert_to_detailed_report(r.info, r.id)?;
+            let detailed = self.read().common().report().convert_to_detailed_report(r)?;
             page.push(detailed);
         }
 
@@ -101,13 +105,15 @@ impl CurrentReadCommonAdminReport<'_> {
             .inner_join(creator_aid.on(creator_account_id.eq(creator_aid.field(account_id::id))))
             .inner_join(target_aid.on(target_account_id.eq(target_aid.field(account_id::id))));
 
-        let values: Vec<(AccountId, AccountId, ReportIdDb, ReportProcessingState, ReportTypeNumber)> = match query.mode {
+        let values: Vec<(AccountId, AccountIdDb, AccountId, AccountIdDb, ReportIdDb, ReportProcessingState, ReportTypeNumber)> = match query.mode {
             ReportIteratorMode::Received => db_query
                 .filter(target_account_id.eq(query.aid.as_db_id()))
                 .filter(creation_unix_time.le(query.start_position))
                 .select((
                     creator_aid.field(account_id::uuid),
+                    creator_account_id,
                     target_aid.field(account_id::uuid),
+                    target_account_id,
                     id,
                     processing_state,
                     report_type_number,
@@ -125,7 +131,9 @@ impl CurrentReadCommonAdminReport<'_> {
                 .filter(creation_unix_time.le(query.start_position))
                 .select((
                     creator_aid.field(account_id::uuid),
+                    creator_account_id,
                     target_aid.field(account_id::uuid),
+                    target_account_id,
                     id,
                     processing_state,
                     report_type_number,
@@ -140,7 +148,7 @@ impl CurrentReadCommonAdminReport<'_> {
                 .into_db_error(())?,
         };
 
-        let values = values.into_iter().map(|(creator, target, report_id, report_state, report_type)| {
+        let values = values.into_iter().map(|(creator, creator_db_id, target, target_db_id, report_id, report_state, report_type)| {
             ReportInternal {
                 info: ReportDetailedInfo {
                     creator,
@@ -149,6 +157,8 @@ impl CurrentReadCommonAdminReport<'_> {
                     report_type,
                 },
                 id: report_id,
+                creator_db_id,
+                target_db_id,
             }
         }).collect();
 

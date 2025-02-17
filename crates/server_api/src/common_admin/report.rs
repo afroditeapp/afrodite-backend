@@ -1,6 +1,6 @@
 use axum::{extract::{Query, State}, Extension};
 use model::{
-    AccountIdInternal, GetReportList, Permissions, ReportDetailed, ReportIteratorQuery, ReportIteratorQueryInternal, UnixTime
+    AccountIdInternal, GetReportList, Permissions, ProcessReport, ReportIteratorQuery, ReportIteratorQueryInternal, UnixTime
 };
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use crate::{
@@ -55,7 +55,7 @@ const PATH_POST_PROCESS_REPORT: &str = "/common_api/admin/process_report";
 #[utoipa::path(
     post,
     path = PATH_POST_PROCESS_REPORT,
-    request_body = ReportDetailed,
+    request_body = ProcessReport,
     responses(
         (status = 200, description = "Successful"),
         (status = 401, description = "Unauthorized"),
@@ -70,7 +70,7 @@ pub async fn post_process_report(
     State(state): State<S>,
     Extension(permissions): Extension<Permissions>,
     Extension(moderator_id): Extension<AccountIdInternal>,
-    Json(data): Json<ReportDetailed>,
+    Json(data): Json<ProcessReport>,
 ) -> Result<(), StatusCode> {
     COMMON.post_process_report.incr();
 
@@ -78,13 +78,13 @@ pub async fn post_process_report(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let creator = state.get_internal_id(data.info.creator).await?;
-    let target = state.get_internal_id(data.info.target).await?;
+    let creator = state.get_internal_id(data.creator).await?;
+    let target = state.get_internal_id(data.target).await?;
 
     db_write_multiple!(state, move |cmds| {
         cmds.common_admin()
             .report()
-            .process_report(moderator_id, creator, target, data.info.report_type, data.content)
+            .process_report(moderator_id, creator, target, data.report_type, data.content)
             .await?;
         Ok(())
     })?;

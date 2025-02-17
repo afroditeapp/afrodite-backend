@@ -2,12 +2,14 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::UnixTime;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{AccountId, AccountIdInternal, ReportIdDb, ReportProcessingState, ReportTypeNumber};
+use crate::{AccountId, AccountIdDb, AccountIdInternal, ProfileAge, ReportIdDb, ReportProcessingState, ReportTypeNumber};
 
 #[derive(Debug, Clone)]
 pub struct ReportInternal {
     pub info: ReportDetailedInfo,
     pub id: ReportIdDb,
+    pub creator_db_id: AccountIdDb,
+    pub target_db_id: AccountIdDb,
 }
 
 impl ReportInternal {
@@ -25,6 +27,13 @@ pub struct ReportDetailedInfo {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct ReportAccountInfo {
+    #[schema(value_type = i64)]
+    pub age: ProfileAge,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ReportDetailedWithId {
     pub id: ReportIdDb,
     pub report: ReportDetailed,
@@ -34,6 +43,10 @@ pub struct ReportDetailedWithId {
 pub struct ReportDetailed {
     pub info: ReportDetailedInfo,
     pub content: ReportContent,
+    /// Only available when profile component is enabled.
+    pub creator_info: Option<ReportAccountInfo>,
+    /// Only available when profile component is enabled.
+    pub target_info: Option<ReportAccountInfo>,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize, ToSchema)]
@@ -45,6 +58,14 @@ pub struct ReportContent {
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
 pub struct GetReportList {
     pub values: Vec<ReportDetailed>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct ProcessReport {
+    pub creator: AccountId,
+    pub target: AccountId,
+    pub report_type: ReportTypeNumber,
+    pub content: ReportContent,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
