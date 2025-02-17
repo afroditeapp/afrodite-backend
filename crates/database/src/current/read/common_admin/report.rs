@@ -46,7 +46,7 @@ impl CurrentReadCommonAdminReport<'_> {
                 report_type_number,
             ))
             .order((
-                content_edit_unix_time.asc(),
+                creation_unix_time.asc(),
                 creator_account_id.asc(),
             ))
             .limit(PAGE_SIZE)

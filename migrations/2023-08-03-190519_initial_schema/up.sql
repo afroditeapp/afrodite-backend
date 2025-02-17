@@ -147,7 +147,6 @@ CREATE TABLE IF NOT EXISTS common_report(
     -- 1 = profile text
     report_type_number      INTEGER             NOT NULL,
     creation_unix_time      INTEGER             NOT NULL,
-    content_edit_unix_time  INTEGER             NOT NULL,
     moderator_account_id    INTEGER,
     -- 0 = Empty
     -- 1 = Waiting

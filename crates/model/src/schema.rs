@@ -211,7 +211,6 @@ diesel::table! {
         target_account_id -> Integer,
         report_type_number -> Integer,
         creation_unix_time -> Integer,
-        content_edit_unix_time -> Integer,
         moderator_account_id -> Nullable<Integer>,
         processing_state -> Integer,
         processing_state_change_unix_time -> Integer,
