@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use simple_backend_model::UnixTime;
+use utoipa::{IntoParams, ToSchema};
 
-use crate::{AccountId, ReportIdDb, ReportProcessingState, ReportTypeNumber};
+use crate::{AccountId, AccountIdInternal, ReportIdDb, ReportProcessingState, ReportTypeNumber};
 
 #[derive(Debug, Clone)]
 pub struct ReportInternal {
@@ -44,4 +45,26 @@ pub struct ReportContent {
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
 pub struct GetReportList {
     pub values: Vec<ReportDetailed>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub enum ReportIteratorMode {
+    Received,
+    Sent,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
+pub struct ReportIteratorQuery {
+    pub start_position: UnixTime,
+    pub page: i64,
+    pub aid: AccountId,
+    pub mode: ReportIteratorMode,
+}
+
+#[derive(Debug, Clone)]
+pub struct ReportIteratorQueryInternal {
+    pub start_position: UnixTime,
+    pub page: i64,
+    pub aid: AccountIdInternal,
+    pub mode: ReportIteratorMode,
 }
