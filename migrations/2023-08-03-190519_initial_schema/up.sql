@@ -42,6 +42,8 @@ CREATE TABLE IF NOT EXISTS refresh_token(
             ON UPDATE CASCADE
 );
 
+-- TODO(prod): rename admin_modify_permissions to admin_edit_permissions?
+
 -- Account permissions are shared between server components.
 -- If the data is located in this table it should be set through account
 -- server as it propagates the changes to other components.
@@ -67,6 +69,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_server_maintenance_reset_data          BOOLEAN NOT NULL DEFAULT 0,
     admin_server_maintenance_reboot_backend      BOOLEAN NOT NULL DEFAULT 0,
     admin_server_maintenance_save_backend_config BOOLEAN NOT NULL DEFAULT 0,
+    admin_server_maintenance_edit_notification   BOOLEAN NOT NULL DEFAULT 0,
     admin_news_create                            BOOLEAN NOT NULL DEFAULT 0,
     admin_news_edit_all                          BOOLEAN NOT NULL DEFAULT 0,
     admin_profile_statistics                     BOOLEAN NOT NULL DEFAULT 0,

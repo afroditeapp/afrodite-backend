@@ -17,6 +17,7 @@ impl ConnectedApp {
 
     pub fn private_common_router(&self) -> Router {
         Router::new()
+            .merge(api::common_admin::router_maintenance(self.state.clone()))
             .merge(api::common_admin::router_manager(self.state.clone()))
             .merge(api::common_admin::router_config(self.state.clone()))
             .merge(api::common_admin::router_perf(self.state.clone()))

@@ -192,6 +192,7 @@ define_permissions!(
     admin_server_maintenance_reset_data,
     admin_server_maintenance_reboot_backend,
     admin_server_maintenance_save_backend_config,
+    admin_server_maintenance_edit_notification,
     admin_news_create,
     admin_news_edit_all,
     admin_profile_statistics,

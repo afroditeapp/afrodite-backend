@@ -99,6 +99,11 @@ impl ManagerApiClient {
             Some(UnixTime::new(v))
         }
     }
+
+    pub fn set_latest_scheduled_reboot(&self, ut: Option<UnixTime>) {
+        let v = ut.map(|v| v.ut).unwrap_or_default();
+        self.latest_scheduled_reboot.store(v, Ordering::Relaxed);
+    }
 }
 
 #[derive(Debug)]
