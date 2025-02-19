@@ -1,4 +1,4 @@
-use axum::{extract::{Query, State}, Extension};
+use axum::{extract::State, Extension};
 use model::{
     AccountIdInternal, GetReportList, Permissions, ProcessReport, ReportIteratorQuery, ReportIteratorQueryInternal, UnixTime
 };
@@ -122,13 +122,16 @@ pub async fn get_latest_report_iterator_start_position(
     Ok(previous_time.into())
 }
 
-const PATH_GET_REPORT_ITERATOR_PAGE: &str =
+const PATH_POST_GET_REPORT_ITERATOR_PAGE: &str =
     "/common_api/admin/report_iterator_page";
 
+/// Get report iterator page.
+///
+/// The HTTP method is POST because HTTP GET does not allow request body.
 #[utoipa::path(
-    get,
-    path = PATH_GET_REPORT_ITERATOR_PAGE,
-    params(ReportIteratorQuery),
+    post,
+    path = PATH_POST_GET_REPORT_ITERATOR_PAGE,
+    request_body = ReportIteratorQuery,
     responses(
         (status = 200, description = "Successful", body = GetReportList),
         (status = 401, description = "Unauthorized"),
@@ -139,12 +142,12 @@ const PATH_GET_REPORT_ITERATOR_PAGE: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_report_iterator_page(
+pub async fn post_get_report_iterator_page(
     State(state): State<S>,
     Extension(permissions): Extension<Permissions>,
-    Query(query): Query<ReportIteratorQuery>,
+    Json(query): Json<ReportIteratorQuery>,
 ) -> Result<Json<GetReportList>, StatusCode> {
-    COMMON.get_report_iterator_page.incr();
+    COMMON.post_get_report_iterator_page.incr();
 
     if !permissions.admin_process_reports {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -174,7 +177,7 @@ create_open_api_router!(
         get_waiting_report_page,
         post_process_report,
         get_latest_report_iterator_start_position,
-        get_report_iterator_page,
+        post_get_report_iterator_page,
 );
 
 create_counters!(
@@ -184,5 +187,5 @@ create_counters!(
     get_waiting_report_page,
     post_process_report,
     get_latest_report_iterator_start_position,
-    get_report_iterator_page,
+    post_get_report_iterator_page,
 );

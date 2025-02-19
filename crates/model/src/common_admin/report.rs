@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use simple_backend_model::UnixTime;
-use utoipa::{IntoParams, ToSchema};
+use utoipa::ToSchema;
 
 use crate::{AccountId, AccountIdDb, AccountIdInternal, ProfileAge, ReportIdDb, ReportProcessingState, ReportTypeNumber};
 
@@ -74,7 +74,7 @@ pub enum ReportIteratorMode {
     Sent,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ReportIteratorQuery {
     pub start_position: UnixTime,
     pub page: i64,
