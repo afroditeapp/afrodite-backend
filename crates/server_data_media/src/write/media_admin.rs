@@ -1,7 +1,6 @@
 use server_data::define_cmd_wrapper_write;
 
 pub mod content;
-pub mod report;
 
 define_cmd_wrapper_write!(WriteCommandsMediaAdmin);
 
@@ -12,8 +11,5 @@ define_cmd_wrapper_write!(WriteCommandsMediaAdmin);
 impl<'a> WriteCommandsMediaAdmin<'a> {
     pub fn content(self) -> content::WriteCommandsProfileAdminContent<'a> {
         content::WriteCommandsProfileAdminContent::new(self.0)
-    }
-    pub fn report(self) -> report::WriteCommandsMediaReport<'a> {
-        report::WriteCommandsMediaReport::new(self.0)
     }
 }

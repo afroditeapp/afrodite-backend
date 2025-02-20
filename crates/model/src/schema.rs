@@ -404,20 +404,9 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    media_report (creator_account_id, target_account_id) {
-        creator_account_id -> Integer,
-        target_account_id -> Integer,
-        creation_unix_time -> Integer,
-        content_edit_unix_time -> Integer,
-        moderator_account_id -> Nullable<Integer>,
-        processing_state -> Integer,
-        processing_state_change_unix_time -> Integer,
-        profile_content_uuid_0 -> Nullable<Binary>,
-        profile_content_uuid_1 -> Nullable<Binary>,
-        profile_content_uuid_2 -> Nullable<Binary>,
-        profile_content_uuid_3 -> Nullable<Binary>,
-        profile_content_uuid_4 -> Nullable<Binary>,
-        profile_content_uuid_5 -> Nullable<Binary>,
+    media_report_profile_content (report_id) {
+        report_id -> Integer,
+        profile_content_uuid -> Nullable<Binary>,
     }
 }
 
@@ -694,6 +683,7 @@ diesel::joinable!(history_profile_statistics_count_changes_man -> history_profil
 diesel::joinable!(history_profile_statistics_count_changes_non_binary -> history_profile_statistics_save_time (save_time_id));
 diesel::joinable!(history_profile_statistics_count_changes_woman -> history_profile_statistics_save_time (save_time_id));
 diesel::joinable!(media_content -> account_id (account_id));
+diesel::joinable!(media_report_profile_content -> common_report (report_id));
 diesel::joinable!(media_state -> account_id (account_id));
 diesel::joinable!(news -> account_id (account_id_creator));
 diesel::joinable!(news_translations -> news (news_id));
@@ -743,7 +733,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     history_profile_statistics_count_changes_woman,
     history_profile_statistics_save_time,
     media_content,
-    media_report,
+    media_report_profile_content,
     media_state,
     news,
     news_translations,

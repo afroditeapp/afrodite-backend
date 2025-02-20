@@ -95,10 +95,6 @@ impl ApiDoc {
                 server_api_media::media_admin::router_admin_moderation(state.clone())
                     .into_openapi(),
             )
-            .merge_from(
-                server_api_media::media_admin::router_admin_media_report(state.clone())
-                    .into_openapi(),
-            )
             .tag_routes("media_admin");
         doc.merge(media_admin);
         // Profile

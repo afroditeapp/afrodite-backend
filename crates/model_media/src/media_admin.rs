@@ -4,9 +4,6 @@ use model_server_data::MediaContentType;
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
-mod report;
-pub use report::*;
-
 use crate::{
     ProfileContentModerationRejectedReasonCategory, ProfileContentModerationRejectedReasonDetails,
 };

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::UnixTime;
 use utoipa::ToSchema;
 
-use crate::{AccountId, AccountIdDb, AccountIdInternal, ProfileAge, ReportIdDb, ReportProcessingState, ReportTypeNumber};
+use crate::{AccountId, AccountIdDb, AccountIdInternal, ContentId, ProfileAge, ReportIdDb, ReportProcessingState, ReportTypeNumber};
 
 #[derive(Debug, Clone)]
 pub struct ReportInternal {
@@ -53,6 +53,7 @@ pub struct ReportDetailed {
 pub struct ReportContent {
     pub profile_name: Option<String>,
     pub profile_text: Option<String>,
+    pub profile_content: Option<ContentId>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]

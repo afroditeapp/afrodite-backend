@@ -1,6 +1,6 @@
 use diesel::{alias, prelude::*};
 use error_stack::Result;
-use model::{AccountId, AccountIdDb, AccountIdInternal, ReportAccountInfo, ReportContent, ReportDetailed, ReportDetailedInfo, ReportDetailedWithId, ReportIdDb, ReportInternal, ReportProcessingState, ReportTypeNumber};
+use model::{AccountId, AccountIdDb, AccountIdInternal, ContentId, ReportAccountInfo, ReportContent, ReportDetailed, ReportDetailedInfo, ReportDetailedWithId, ReportIdDb, ReportInternal, ReportProcessingState, ReportTypeNumber};
 
 use crate::{define_current_read_commands, DieselDatabaseError, IntoDatabaseError};
 
@@ -85,6 +85,11 @@ impl CurrentReadCommonReport<'_> {
                 } else {
                     None
                 },
+                profile_content: if report.info.report_type == ReportTypeNumber::ProfileContent {
+                    self.profile_content_report(report.id)?
+                } else {
+                    None
+                },
             },
             info: report.info,
             creator_info: self.get_report_account_info(report.creator_db_id)?,
@@ -121,6 +126,20 @@ impl CurrentReadCommonReport<'_> {
 
         profile_report_profile_text.find(id)
             .select(profile_text)
+            .first(self.conn())
+            .optional()
+            .into_db_error(())
+            .map(|v| v.flatten())
+    }
+
+    fn profile_content_report(
+        &mut self,
+        id: ReportIdDb
+    ) -> Result<Option<ContentId>, DieselDatabaseError> {
+        use crate::schema::media_report_profile_content::dsl::*;
+
+        media_report_profile_content.find(id)
+            .select(profile_content_uuid)
             .first(self.conn())
             .optional()
             .into_db_error(())

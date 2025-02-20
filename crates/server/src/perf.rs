@@ -8,7 +8,7 @@ use server_api_account::{
     account_admin::{ACCOUNT_ADMIN_ACCOUNT_REPORT_COUNTERS_LIST, ACCOUNT_ADMIN_BAN_COUNTERS_LIST, ACCOUNT_ADMIN_DELETE_COUNTERS_LIST, ACCOUNT_ADMIN_NEWS_COUNTERS_LIST, ACCOUNT_ADMIN_PERMISSIONS_COUNTERS_LIST, ACCOUNT_ADMIN_SEARCH_COUNTERS_LIST, ACCOUNT_ADMIN_STATE_COUNTERS_LIST},
 };
 use server_api_chat::{chat::{CHAT_PUBLIC_KEY_COUNTERS_LIST, CHAT_REPORT_COUNTERS_LIST}, chat_admin::CHAT_ADMIN_CHAT_REPORT_COUNTERS_LIST};
-use server_api_media::{media::{MEDIA_MEDIA_CONTENT_COUNTERS_LIST, MEDIA_REPORT_MEDIA_REPORT_COUNTERS_LIST}, media_admin::MEDIA_ADMIN_MEDIA_REPORT_COUNTERS_LIST};
+use server_api_media::media::{MEDIA_MEDIA_CONTENT_COUNTERS_LIST, MEDIA_REPORT_MEDIA_REPORT_COUNTERS_LIST};
 use server_api_profile::{
     profile::{PROFILE_REPORT_COUNTERS_LIST, PROFILE_STATISTICS_COUNTERS_LIST},
     profile_admin::{
@@ -92,10 +92,6 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new(
         "media_admin_moderation",
         MEDIA_ADMIN_MODERATION_COUNTERS_LIST,
-    ),
-    &CounterCategory::new(
-        "media_admin_media_report",
-        MEDIA_ADMIN_MEDIA_REPORT_COUNTERS_LIST,
     ),
     // Profile
     &CounterCategory::new("profile_filters", PROFILE_FILTERS_COUNTERS_LIST),

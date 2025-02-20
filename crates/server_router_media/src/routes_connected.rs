@@ -28,9 +28,6 @@ impl ConnectedApp {
             .merge(api::media_admin::router_admin_moderation(
                 self.state.clone(),
             ))
-            .merge(api::media_admin::router_admin_media_report(
-                self.state.clone(),
-            ))
             .route_layer({
                 middleware::from_fn_with_state(
                     self.state.s.clone(),

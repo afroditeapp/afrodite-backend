@@ -1,58 +1,27 @@
-use axum::{extract::{Query, State}, Extension};
-use model::{ReportQueryParams, UpdateReportResult};
-use model_media::{AccountIdInternal, MediaReport, UpdateMediaReport};
+use axum::{extract::State, Extension};
+use model::UpdateReportResult;
+use model_media::{AccountIdInternal, UpdateProfileContentReport};
 use server_api::{create_open_api_router, S};
-use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
+use server_data_media::write::GetWriteCommandsMedia;
 use simple_backend::create_counters;
 
 use crate::{
-    app::{GetAccounts, ReadData, WriteData},
+    app::{GetAccounts, WriteData},
     db_write,
     utils::{Json, StatusCode},
 };
 
-const PATH_GET_MEDIA_REPORT: &str = "/media_api/media_report";
+const PATH_POST_PROFILE_CONTENT_REPORT: &str = "/media_api/profile_content_report";
 
-/// Get media report
-#[utoipa::path(
-    get,
-    path = PATH_GET_MEDIA_REPORT,
-    params(ReportQueryParams),
-    responses(
-        (status = 200, description = "Successfull.", body = MediaReport),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn get_media_report(
-    State(state): State<S>,
-    Extension(account_id): Extension<AccountIdInternal>,
-    Query(report): Query<ReportQueryParams>,
-) -> Result<Json<MediaReport>, StatusCode> {
-    MEDIA.get_media_report.incr();
-
-    let target = state.get_internal_id(report.target).await?;
-
-    let report = state.read().media().report().get_report(
-        account_id,
-        target,
-    ).await?;
-
-    Ok(report.into())
-}
-
-const PATH_POST_MEDIA_REPORT: &str = "/media_api/media_report";
-
-/// Update media report.
+/// Report profile content.
 ///
 /// If profile content is reported and it is bot moderated, the content's
 /// moderation state changes to
 /// [model_media::ContentModerationState::WaitingHumanModeration].
 #[utoipa::path(
     post,
-    path = PATH_POST_MEDIA_REPORT,
-    request_body = UpdateMediaReport,
+    path = PATH_POST_PROFILE_CONTENT_REPORT,
+    request_body = UpdateProfileContentReport,
     responses(
         (status = 200, description = "Successfull.", body = UpdateReportResult),
         (status = 401, description = "Unauthorized."),
@@ -60,12 +29,12 @@ const PATH_POST_MEDIA_REPORT: &str = "/media_api/media_report";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_media_report(
+pub async fn post_profile_content_report(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-    Json(update): Json<UpdateMediaReport>,
+    Json(update): Json<UpdateProfileContentReport>,
 ) -> Result<Json<UpdateReportResult>, StatusCode> {
-    MEDIA.post_media_report.incr();
+    MEDIA.post_profile_content_report.incr();
 
     let target = state.get_internal_id(update.target).await?;
 
@@ -79,14 +48,12 @@ pub async fn post_media_report(
 
 create_open_api_router!(
         fn router_media_report,
-        get_media_report,
-        post_media_report,
+        post_profile_content_report,
 );
 
 create_counters!(
     MediaCounters,
     MEDIA,
     MEDIA_REPORT_MEDIA_REPORT_COUNTERS_LIST,
-    get_media_report,
-    post_media_report,
+    post_profile_content_report,
 );

@@ -46,6 +46,7 @@ diesel_i64_wrapper!(ReportIdDb);
 pub enum ReportTypeNumber {
     ProfileName = 0,
     ProfileText = 1,
+    ProfileContent = 2,
 }
 
 impl ReportTypeNumber {
