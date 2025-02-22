@@ -47,6 +47,7 @@ pub enum ReportTypeNumber {
     ProfileName = 0,
     ProfileText = 1,
     ProfileContent = 2,
+    ChatMessage = 3,
 }
 
 impl ReportTypeNumber {

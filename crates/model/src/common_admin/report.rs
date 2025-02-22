@@ -54,6 +54,7 @@ pub struct ReportContent {
     pub profile_name: Option<String>,
     pub profile_text: Option<String>,
     pub profile_content: Option<ContentId>,
+    pub chat_message: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]

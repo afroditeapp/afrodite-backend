@@ -90,6 +90,11 @@ impl CurrentReadCommonReport<'_> {
                 } else {
                     None
                 },
+                chat_message: if report.info.report_type == ReportTypeNumber::ChatMessage {
+                    self.chat_message_report(report.id)?
+                } else {
+                    None
+                },
             },
             info: report.info,
             creator_info: self.get_report_account_info(report.creator_db_id)?,
@@ -140,6 +145,20 @@ impl CurrentReadCommonReport<'_> {
 
         media_report_profile_content.find(id)
             .select(profile_content_uuid)
+            .first(self.conn())
+            .optional()
+            .into_db_error(())
+            .map(|v| v.flatten())
+    }
+
+    fn chat_message_report(
+        &mut self,
+        id: ReportIdDb
+    ) -> Result<Option<String>, DieselDatabaseError> {
+        use crate::schema::chat_report_chat_message::dsl::*;
+
+        chat_report_chat_message.find(id)
+            .select(chat_message)
             .first(self.conn())
             .optional()
             .into_db_error(())

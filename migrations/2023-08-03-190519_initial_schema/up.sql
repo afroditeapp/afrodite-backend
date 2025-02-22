@@ -810,31 +810,12 @@ CREATE TABLE IF NOT EXISTS pending_messages(
             ON UPDATE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS chat_report(
-    creator_account_id      INTEGER           NOT NULL,
-    target_account_id       INTEGER           NOT NULL,
-    creation_unix_time      INTEGER           NOT NULL,
-    content_edit_unix_time  INTEGER           NOT NULL,
-    moderator_account_id    INTEGER,
-    -- 0 = Empty
-    -- 1 = Waiting
-    -- 2 = Done
-    processing_state        INTEGER           NOT NULL    DEFAULT 0,
-    processing_state_change_unix_time INTEGER NOT NULL,
-    -- Report content
-    is_against_video_calling BOOLEAN          NOT NULL,
-    PRIMARY KEY (creator_account_id, target_account_id),
-    FOREIGN KEY (creator_account_id)
-        REFERENCES account_id (id)
+CREATE TABLE IF NOT EXISTS chat_report_chat_message(
+    report_id                INTEGER PRIMARY KEY NOT NULL,
+    chat_message             TEXT,
+    FOREIGN KEY (report_id)
+        REFERENCES common_report (id)
             ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    FOREIGN KEY (target_account_id)
-        REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    FOREIGN KEY (moderator_account_id)
-        REFERENCES account_id (id)
-            ON DELETE SET NULL
             ON UPDATE CASCADE
 );
 

@@ -1,6 +1,3 @@
-mod push_notifications;
-mod report;
-
 use database_chat::current::read::GetDbReadCommandsChat;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState,
@@ -21,15 +18,13 @@ use server_data::{
 
 use self::push_notifications::ReadCommandsChatPushNotifications;
 
+mod push_notifications;
+
 define_cmd_wrapper_read!(ReadCommandsChat);
 
 impl<'a> ReadCommandsChat<'a> {
     pub fn push_notifications(self) -> ReadCommandsChatPushNotifications<'a> {
         ReadCommandsChatPushNotifications::new(self.0)
-    }
-
-    pub fn report(self) -> report::ReadCommandsChatReport<'a> {
-        report::ReadCommandsChatReport::new(self.0)
     }
 }
 

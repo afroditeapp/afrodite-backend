@@ -171,15 +171,9 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    chat_report (creator_account_id, target_account_id) {
-        creator_account_id -> Integer,
-        target_account_id -> Integer,
-        creation_unix_time -> Integer,
-        content_edit_unix_time -> Integer,
-        moderator_account_id -> Nullable<Integer>,
-        processing_state -> Integer,
-        processing_state_change_unix_time -> Integer,
-        is_against_video_calling -> Bool,
+    chat_report_chat_message (report_id) {
+        report_id -> Integer,
+        chat_message -> Nullable<Text>,
     }
 }
 
@@ -669,6 +663,7 @@ diesel::joinable!(account_email_sending_state -> account_id (account_id));
 diesel::joinable!(account_interaction_index -> account_interaction (interaction_id));
 diesel::joinable!(account_permissions -> account_id (account_id));
 diesel::joinable!(account_setup -> account_id (account_id));
+diesel::joinable!(chat_report_chat_message -> common_report (report_id));
 diesel::joinable!(chat_state -> account_id (account_id));
 diesel::joinable!(current_account_media -> account_id (account_id));
 diesel::joinable!(history_performance_statistics_metric_value -> history_performance_statistics_metric_name (metric_id));
@@ -713,7 +708,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     account_setup,
     account_state,
     chat_global_state,
-    chat_report,
+    chat_report_chat_message,
     chat_state,
     common_report,
     current_account_media,

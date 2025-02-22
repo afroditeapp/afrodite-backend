@@ -8,7 +8,4 @@ pub use model::*;
 pub use model_server_data::*;
 
 pub mod chat;
-pub mod chat_admin;
-
 pub use chat::*;
-pub use chat_admin::*;

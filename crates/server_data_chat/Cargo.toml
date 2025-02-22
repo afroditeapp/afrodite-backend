@@ -13,6 +13,7 @@ model_chat = { path = "../model_chat" }
 server_common = { path = "../server_common" }
 server_data = { path = "../server_data" }
 
+database = { path = "../database" }
 database_chat = { path = "../database_chat" }
 
 simple_backend_utils = { path = "../simple_backend_utils" }
