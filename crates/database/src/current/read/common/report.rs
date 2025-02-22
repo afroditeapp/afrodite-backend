@@ -1,6 +1,7 @@
+use config::file::Components;
 use diesel::{alias, prelude::*};
 use error_stack::Result;
-use model::{AccountId, AccountIdDb, AccountIdInternal, ContentId, ReportAccountInfo, ReportContent, ReportDetailed, ReportDetailedInfo, ReportDetailedWithId, ReportIdDb, ReportInternal, ReportProcessingState, ReportTypeNumber};
+use model::{AccountId, AccountIdDb, AccountIdInternal, AccountInteractionInternal, ContentId, ReportAccountInfo, ReportChatInfo, ReportChatInfoInteractionState, ReportContent, ReportDetailed, ReportDetailedInfo, ReportDetailedWithId, ReportIdDb, ReportInternal, ReportProcessingState, ReportTypeNumber};
 
 use crate::{define_current_read_commands, DieselDatabaseError, IntoDatabaseError};
 
@@ -57,12 +58,16 @@ impl CurrentReadCommonReport<'_> {
         creator: AccountIdInternal,
         target: AccountIdInternal,
         report_type: ReportTypeNumber,
+        components: Components,
     ) -> Result<Vec<ReportDetailedWithId>, DieselDatabaseError> {
         let internal = self.get_all_internal_reports(creator, target, report_type)?;
 
         let mut reports = vec![];
         for r in internal {
-            let detailed = self.convert_to_detailed_report(r)?;
+            let detailed = self.convert_to_detailed_report(
+                r,
+                components,
+            )?;
             reports.push(detailed);
         }
 
@@ -72,6 +77,7 @@ impl CurrentReadCommonReport<'_> {
     pub fn convert_to_detailed_report(
         &mut self,
         report: ReportInternal,
+        components: Components,
     ) -> Result<ReportDetailedWithId, DieselDatabaseError> {
         let detailed = ReportDetailed {
             content: ReportContent {
@@ -97,8 +103,21 @@ impl CurrentReadCommonReport<'_> {
                 },
             },
             info: report.info,
-            creator_info: self.get_report_account_info(report.creator_db_id)?,
-            target_info: self.get_report_account_info(report.target_db_id)?,
+            creator_info: if components.profile {
+                self.get_report_account_info(report.creator_db_id)?
+            } else {
+                None
+            },
+            target_info: if components.profile {
+                self.get_report_account_info(report.target_db_id)?
+            } else {
+                None
+            },
+            chat_info: if components.chat {
+                self.get_report_chat_info(report.creator_db_id, report.target_db_id)?
+            } else {
+                None
+            }
         };
 
         let detailed = ReportDetailedWithId {
@@ -182,5 +201,51 @@ impl CurrentReadCommonReport<'_> {
         );
 
         Ok(info)
+    }
+
+    fn get_report_chat_info(
+        &mut self,
+        creator: AccountIdDb,
+        target: AccountIdDb,
+    ) -> Result<Option<ReportChatInfo>, DieselDatabaseError> {
+        let interaction_id = {
+            use crate::schema::account_interaction_index::dsl::*;
+
+            account_interaction_index.find((creator, target))
+                .select(interaction_id)
+                .first(self.conn())
+                .optional()
+                .into_db_error(())?
+        };
+
+        let interaction_id: i64 = match interaction_id {
+            Some(id_value) => id_value,
+            None => return Ok(Some(ReportChatInfo::default())),
+        };
+
+        use crate::schema::account_interaction::dsl::*;
+
+        let Some(interaction): Option<AccountInteractionInternal> = account_interaction.find(interaction_id)
+            .select(AccountInteractionInternal::as_select())
+            .first(self.conn())
+            .optional()
+            .into_db_error(())? else {
+                return Ok(Some(ReportChatInfo::default()))
+            };
+
+        Ok(Some(ReportChatInfo {
+            state: if interaction.is_match() {
+                ReportChatInfoInteractionState::Match
+            } else if interaction.is_direction_liked(creator, target) {
+                ReportChatInfoInteractionState::CreatorLiked
+            } else if interaction.is_direction_liked(target, creator) {
+                ReportChatInfoInteractionState::TargetLiked
+            } else {
+                ReportChatInfoInteractionState::Match
+            },
+            creator_blocked_target: interaction.is_direction_blocked(creator, target),
+            target_blocked_creator: interaction.is_direction_blocked(target, creator),
+            message_sent: interaction.message_counter > 0,
+        }))
     }
 }

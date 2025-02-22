@@ -3,7 +3,7 @@ use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommands
 use model::{AccountIdInternal, ReportContent, ReportTypeNumber};
 
 use crate::{
-    define_cmd_wrapper_write, read::DbRead, result::{Result, WrappedContextExt}, write::db_transaction, DataError
+    app::GetConfig, define_cmd_wrapper_write, read::DbRead, result::{Result, WrappedContextExt}, write::db_transaction, DataError
 };
 
 use crate::write::DbTransaction;
@@ -19,8 +19,9 @@ impl WriteCommandsCommonAdminReport<'_> {
         report_type: ReportTypeNumber,
         content: ReportContent,
     ) -> Result<(), DataError> {
+        let components = self.config().components();
         let current_reports = self
-            .db_read(move |mut cmds| cmds.common().report().get_all_detailed_reports(creator, target, report_type))
+            .db_read(move |mut cmds| cmds.common().report().get_all_detailed_reports(creator, target, report_type, components))
             .await?;
 
         let matching_report = current_reports.iter().find(|v| v.report.content == content);

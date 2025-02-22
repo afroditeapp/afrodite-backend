@@ -1019,6 +1019,7 @@ name = "database"
 version = "0.0.0"
 dependencies = [
  "chrono",
+ "config",
  "diesel",
  "diesel_migrations",
  "error-stack",

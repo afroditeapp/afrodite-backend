@@ -1,4 +1,5 @@
 use crate::{current::read::GetDbReadCommandsCommon, define_current_read_commands, DieselDatabaseError, IntoDatabaseError};
+use config::file::Components;
 use diesel::{alias, prelude::*};
 use error_stack::Result;
 use model::{AccountId, AccountIdDb, GetReportList, ReportDetailedInfo, ReportIdDb, ReportInternal, ReportIteratorMode, ReportIteratorQueryInternal, ReportProcessingState, ReportTypeNumber};
@@ -8,13 +9,14 @@ define_current_read_commands!(CurrentReadCommonAdminReport);
 impl CurrentReadCommonAdminReport<'_> {
     pub fn get_reports_page(
         &mut self,
+        components: Components,
     ) -> Result<GetReportList, DieselDatabaseError> {
         let reports = self.get_waiting_reports_page()?;
 
         let mut page = vec![];
 
         for r in reports {
-            let detailed = self.read().common().report().convert_to_detailed_report(r)?;
+            let detailed = self.read().common().report().convert_to_detailed_report(r, components)?;
             page.push(detailed);
         }
 
@@ -75,13 +77,14 @@ impl CurrentReadCommonAdminReport<'_> {
     pub fn get_report_iterator_page(
         &mut self,
         query: ReportIteratorQueryInternal,
+        components: Components,
     ) -> Result<GetReportList, DieselDatabaseError> {
         let reports = self.get_report_iterator_page_internal(query)?;
 
         let mut page = vec![];
 
         for r in reports {
-            let detailed = self.read().common().report().convert_to_detailed_report(r)?;
+            let detailed = self.read().common().report().convert_to_detailed_report(r, components)?;
             page.push(detailed);
         }
 

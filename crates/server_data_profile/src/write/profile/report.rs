@@ -2,11 +2,7 @@ use database::current::read::GetDbReadCommandsCommon;
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{AccountIdInternal, EventToClientInternal, ProfileNameModerationState, ProfileTextModerationState, ReportTypeNumber, UpdateReportResult};
 use server_data::{
-    define_cmd_wrapper_write,
-    read::DbRead,
-    result::Result,
-    write::DbTransaction,
-    DataError,
+    app::GetConfig, define_cmd_wrapper_write, read::DbRead, result::Result, write::DbTransaction, DataError
 };
 use tracing::warn;
 
@@ -34,8 +30,9 @@ impl WriteCommandsProfileReport<'_> {
             warn!("Profile name bot moderations are unsupported currently");
         }
 
+        let components = self.config().components();
         let reports = self
-            .db_read(move |mut cmds| cmds.common().report().get_all_detailed_reports(creator, target, ReportTypeNumber::ProfileName))
+            .db_read(move |mut cmds| cmds.common().report().get_all_detailed_reports(creator, target, ReportTypeNumber::ProfileName, components))
             .await?;
         if reports.len() >= ReportTypeNumber::MAX_COUNT {
             return Ok(UpdateReportResult::too_many_reports());
@@ -82,8 +79,9 @@ impl WriteCommandsProfileReport<'_> {
                 .await?;
         }
 
+        let components = self.config().components();
         let reports = self
-            .db_read(move |mut cmds| cmds.common().report().get_all_detailed_reports(creator, target, ReportTypeNumber::ProfileText))
+            .db_read(move |mut cmds| cmds.common().report().get_all_detailed_reports(creator, target, ReportTypeNumber::ProfileText, components))
             .await?;
         if reports.len() >= ReportTypeNumber::MAX_COUNT {
             return Ok(UpdateReportResult::too_many_reports());

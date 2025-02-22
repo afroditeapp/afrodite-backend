@@ -5,35 +5,8 @@ use utoipa::{IntoParams, ToSchema};
 
 use super::sync_version_wrappers;
 
-/// Message order number in a conversation.
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    Deserialize,
-    Serialize,
-    ToSchema,
-    PartialEq,
-    Default,
-    FromSqlRow,
-    AsExpression,
-)]
-#[diesel(sql_type = BigInt)]
-pub struct MessageNumber {
-    pub mn: i64,
-}
-
-impl MessageNumber {
-    pub fn new(id: i64) -> Self {
-        Self { mn: id }
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.mn
-    }
-}
-
-diesel_i64_wrapper!(MessageNumber);
+mod interaction;
+pub use interaction::*;
 
 #[derive(
     Debug,

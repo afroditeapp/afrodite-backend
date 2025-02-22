@@ -6,10 +6,10 @@ use std::{collections::HashMap, fmt::{self, Debug}, sync::{atomic::{AtomicI64, O
 use axum::body::BodyDataStream;
 use config::Config;
 use futures::Future;
-use model::{AccountId, AccountIdInternal, ContentProcessingId, ContentSlot};
+use model::{AccountId, AccountIdInternal, ContentProcessingId, ContentSlot, MatchId, ReceivedLikeId};
 use model_server_data::{
-    MatchId, MatchesIteratorSessionId, NewsIteratorSessionId, ProfileIteratorSessionId,
-    ProfileIteratorSessionIdInternal, ProfileLink, PublicationId, ReceivedLikeId,
+    MatchesIteratorSessionId, NewsIteratorSessionId, ProfileIteratorSessionId,
+    ProfileIteratorSessionIdInternal, ProfileLink, PublicationId,
     ReceivedLikesIteratorSessionId,
 };
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};

@@ -34,6 +34,35 @@ pub struct ReportAccountInfo {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub enum ReportChatInfoInteractionState {
+    None,
+    CreatorLiked,
+    TargetLiked,
+    Match,
+}
+
+impl Default for ReportChatInfoInteractionState {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
+pub struct ReportChatInfo {
+    pub state: ReportChatInfoInteractionState,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub creator_blocked_target: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub target_blocked_creator: bool,
+    /// Creator or target have sent at least one message.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub message_sent: bool,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ReportDetailedWithId {
     pub id: ReportIdDb,
     pub report: ReportDetailed,
@@ -47,6 +76,9 @@ pub struct ReportDetailed {
     pub creator_info: Option<ReportAccountInfo>,
     /// Only available when profile component is enabled.
     pub target_info: Option<ReportAccountInfo>,
+    /// Only available when chat component is enabled and account interaction
+    /// exists.
+    pub chat_info: Option<ReportChatInfo>
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize, ToSchema)]

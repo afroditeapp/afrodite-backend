@@ -1,6 +1,7 @@
 use limit::ChatLimits;
+use model::{MatchId, ReceivedLikeId};
 use model_server_data::{
-    MatchId, MatchesIteratorSessionIdInternal, ReceivedLikeId,
+    MatchesIteratorSessionIdInternal,
     ReceivedLikesIteratorSessionIdInternal,
 };
 

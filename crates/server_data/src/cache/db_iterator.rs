@@ -1,7 +1,7 @@
-use model::NextNumberStorage;
+use model::{MatchId, NextNumberStorage, ReceivedLikeId};
 use model_server_data::{
-    MatchId, MatchesIteratorSessionIdInternal, NewsIteratorSessionIdInternal, PublicationId,
-    ReceivedLikeId, ReceivedLikesIteratorSessionIdInternal,
+    MatchesIteratorSessionIdInternal, NewsIteratorSessionIdInternal, PublicationId,
+    ReceivedLikesIteratorSessionIdInternal,
 };
 
 pub mod new_count;

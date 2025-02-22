@@ -239,6 +239,12 @@ impl AccountIdInternal {
     }
 }
 
+impl From<AccountIdInternal> for AccountIdDb {
+    fn from(value: AccountIdInternal) -> Self {
+        *value.as_db_id()
+    }
+}
+
 impl From<AccountIdInternal> for AccountId {
     fn from(value: AccountIdInternal) -> Self {
         value.as_id()

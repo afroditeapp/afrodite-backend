@@ -15,6 +15,7 @@ diesel_migrations = { workspace = true }
 chrono = { workspace = true }
 error-stack = { workspace = true }
 
+config = { path = "../config" }
 model = { path = "../model" }
 
 simple_backend_config = { path = "../simple_backend_config" }
