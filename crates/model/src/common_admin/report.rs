@@ -56,6 +56,7 @@ pub struct ReportChatInfo {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub target_blocked_creator: bool,
+    // TODO(prod): Remove or replace with message counts for creator and target?
     /// Creator or target have sent at least one message.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
