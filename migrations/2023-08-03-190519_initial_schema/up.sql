@@ -730,11 +730,13 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     -- 1 = like
     -- 2 = match
     state_number                    INTEGER NOT NULL DEFAULT 0,
-    -- The account which started the interaction (e.g. sent a like).
-    -- Can be null for example if a like is removed afterwards.
+    -- The account which sent a like.
+    -- This changes back to null when the like is removed.
+    -- This can't change to null once accounts are a match.
     account_id_sender               INTEGER,
-    -- The target of the interaction (e.g. received a like).
-    -- Can be null for example if a like is removed afterwards.
+    -- The account which received a like.
+    -- This changes back to null when the like is removed.
+    -- This can't change to null once accounts are a match.
     account_id_receiver             INTEGER,
     -- The account which started the block.
     account_id_block_sender         INTEGER,
@@ -742,14 +744,14 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     account_id_block_receiver       INTEGER,
     -- If this is true, then both sides have blocked each other.
     two_way_block                   BOOLEAN NOT NULL DEFAULT 0,
-    -- Incrementing counter for getting order number for conversation messages.
-    message_counter                 INTEGER NOT NULL DEFAULT 0,
-    -- Sender's latest viewed message number in the conversation.
-    -- Can be null for example if account is blocked.
-    sender_latest_viewed_message    INTEGER,
-    -- Receivers's latest viewed message number in the conversation.
-    -- Can be null for example if account is blocked.
-    receiver_latest_viewed_message  INTEGER,
+    -- Incrementing counters for tracking sent message count for both accounts.
+    message_counter_sender          INTEGER NOT NULL DEFAULT 0,
+    message_counter_receiver        INTEGER NOT NULL DEFAULT 0,
+    -- Latest viewed message number for sender and receiver.
+    -- Message numbers start from 1 to avoid having the first message
+    -- to appear already viewed.
+    sender_latest_viewed_message    INTEGER NOT NULL DEFAULT 0,
+    receiver_latest_viewed_message  INTEGER NOT NULL DEFAULT 0,
     -- Track is the received like included in the receiver's
     -- new_received_likes_count.
     included_in_received_new_likes_count  BOOLEAN NOT NULL DEFAULT 0,

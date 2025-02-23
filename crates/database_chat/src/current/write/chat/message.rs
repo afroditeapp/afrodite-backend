@@ -2,7 +2,7 @@ use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
 use model_chat::{
-    AccountIdInternal, AccountInteractionState, ClientId, ClientLocalId, MessageNumber,
+    AccountIdInternal, AccountInteractionState, ClientId, ClientLocalId,
     NewPendingMessageValues, PendingMessageIdInternal, SentMessageId, UnixTime,
 };
 
@@ -88,9 +88,6 @@ impl CurrentWriteChatMessage<'_> {
             .chat()
             .interaction()
             .get_or_create_account_interaction(sender, receiver)?;
-        // Skip message number 0, so that latest viewed message number
-        // does not have that message already viewed.
-        let new_message_number = MessageNumber::new(interaction.message_counter + 1);
 
         if interaction.is_direction_blocked(receiver, sender) {
             return Ok(Err(ReceiverBlockedSender));
@@ -102,10 +99,19 @@ impl CurrentWriteChatMessage<'_> {
             return Err(DieselDatabaseError::NotAllowed.into());
         }
 
-        update(account_interaction::table.find(interaction.id))
-            .set((account_interaction::message_counter.eq(new_message_number),))
-            .execute(self.conn())
-            .into_db_error((sender, receiver, new_message_number))?;
+        let new_message_number = interaction.next_message_number();
+
+        if interaction.account_id_sender == Some(*sender.as_db_id()) {
+            update(account_interaction::table.find(interaction.id))
+                .set(account_interaction::message_counter_sender.eq(account_interaction::message_counter_sender + 1))
+                .execute(self.conn())
+                .into_db_error((sender, receiver, new_message_number))?;
+        } else {
+            update(account_interaction::table.find(interaction.id))
+                .set(account_interaction::message_counter_receiver.eq(account_interaction::message_counter_receiver + 1))
+                .execute(self.conn())
+                .into_db_error((sender, receiver, new_message_number))?;
+        }
 
         insert_into(pending_messages)
             .values((

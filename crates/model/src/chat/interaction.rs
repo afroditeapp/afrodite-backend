@@ -187,11 +187,16 @@ pub struct AccountInteractionInternal {
     pub account_id_block_sender: Option<AccountIdDb>,
     pub account_id_block_receiver: Option<AccountIdDb>,
     pub two_way_block: bool,
-    /// Message counter is incrementing for each message sent.
-    /// The counter does not reset. Zero means that no messages are sent.
-    pub message_counter: i64,
-    pub sender_latest_viewed_message: Option<MessageNumber>,
-    pub receiver_latest_viewed_message: Option<MessageNumber>,
+    /// Message counter for [Self::account_id_sender] which increments for each
+    /// message. The counter does not reset. Zero means that no messages are
+    /// sent.
+    pub message_counter_sender: i64,
+    /// Message counter for [Self::account_id_receiver] which increments for each
+    /// message. The counter does not reset. Zero means that no messages are
+    /// sent.
+    pub message_counter_receiver: i64,
+    pub sender_latest_viewed_message: MessageNumber,
+    pub receiver_latest_viewed_message: MessageNumber,
     pub included_in_received_new_likes_count: bool,
     pub received_like_id: Option<ReceivedLikeId>,
     pub match_id: Option<MatchId>,
@@ -213,8 +218,6 @@ impl AccountInteractionInternal {
                 state_number: target,
                 account_id_sender: Some(id_like_sender.into_db_id()),
                 account_id_receiver: Some(id_like_receiver.into_db_id()),
-                sender_latest_viewed_message: None,
-                receiver_latest_viewed_message: None,
                 included_in_received_new_likes_count: !self.is_blocked(),
                 received_like_id: Some(received_like_id),
                 ..self
@@ -232,8 +235,6 @@ impl AccountInteractionInternal {
         match state {
             AccountInteractionState::Like => Ok(Self {
                 state_number: target,
-                sender_latest_viewed_message: Some(MessageNumber::default()),
-                receiver_latest_viewed_message: Some(MessageNumber::default()),
                 included_in_received_new_likes_count: false,
                 received_like_id: None,
                 match_id: Some(match_id),
@@ -254,8 +255,6 @@ impl AccountInteractionInternal {
                 state_number: target,
                 account_id_sender: None,
                 account_id_receiver: None,
-                sender_latest_viewed_message: None,
-                receiver_latest_viewed_message: None,
                 included_in_received_new_likes_count: false,
                 received_like_id: None,
                 ..self
@@ -407,5 +406,17 @@ impl AccountInteractionInternal {
     pub fn account_already_deleted_like(&self, id_like_deleter: AccountIdInternal) -> bool {
         self.account_id_previous_like_deleter_slot_0 == Some(id_like_deleter.into_db_id())
             || self.account_id_previous_like_deleter_slot_1 == Some(id_like_deleter.into_db_id())
+    }
+
+    /// Total sent messages for [Self::message_counter_sender] and
+    /// [Self::message_counter_receiver].
+    pub fn message_counter(&self) -> i64 {
+        self.message_counter_receiver.saturating_add(self.message_counter_sender)
+    }
+
+    /// Skip message number 0, so that latest viewed message number
+    /// does not have that message already viewed.
+    pub fn next_message_number(&self) -> MessageNumber {
+        MessageNumber::new(self.message_counter().saturating_add(1))
     }
 }

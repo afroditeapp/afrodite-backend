@@ -340,23 +340,22 @@ impl WriteCommandsChat<'_> {
                 .ok_or(DieselDatabaseError::NotFound.report())?;
 
             // Prevent marking future messages as viewed
-            if new_message_number.mn > interaction.message_counter {
+            if new_message_number.mn > interaction.message_counter() {
+                return Err(DieselDatabaseError::NotAllowed.report());
+            }
+
+            // Prevent changing the values when accounts are not a match.
+            if !interaction.is_match() {
                 return Err(DieselDatabaseError::NotAllowed.report());
             }
 
             // Who is sender and receiver in the interaction data depends
             // on who did the first like
-            let modify_number = if interaction.account_id_sender == Some(id_my_account.into_db_id())
+            if interaction.account_id_sender == Some(id_my_account.into_db_id())
             {
-                interaction.sender_latest_viewed_message.as_mut()
+                interaction.sender_latest_viewed_message = new_message_number;
             } else {
-                interaction.receiver_latest_viewed_message.as_mut()
-            };
-
-            if let Some(number) = modify_number {
-                *number = new_message_number;
-            } else {
-                return Err(DieselDatabaseError::NotAllowed.report());
+                interaction.receiver_latest_viewed_message = new_message_number;
             }
 
             cmds.chat()

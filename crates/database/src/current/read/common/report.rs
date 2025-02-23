@@ -245,7 +245,8 @@ impl CurrentReadCommonReport<'_> {
             },
             creator_blocked_target: interaction.is_direction_blocked(creator, target),
             target_blocked_creator: interaction.is_direction_blocked(target, creator),
-            message_sent: interaction.message_counter > 0,
+            message_sent: interaction.message_counter_sender > 0 ||
+                interaction.message_counter_receiver > 0 ,
         }))
     }
 }

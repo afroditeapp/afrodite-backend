@@ -194,7 +194,7 @@ impl ReadCommandsChat<'_> {
                     .account_interaction(id_message_sender, id_message_receiver)
             })
             .await?
-            .and_then(|interaction| {
+            .map(|interaction| {
                 // Who is sender and receiver in the interaction data depends
                 // on who did the first like
                 if interaction.account_id_sender == Some(id_message_sender.into_db_id()) {
