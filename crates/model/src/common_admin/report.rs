@@ -56,11 +56,16 @@ pub struct ReportChatInfo {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub target_blocked_creator: bool,
-    // TODO(prod): Remove or replace with message counts for creator and target?
-    /// Creator or target have sent at least one message.
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub message_sent: bool,
+    #[serde(default, skip_serializing_if = "is_zero")]
+    #[schema(default = 0)]
+    pub creator_sent_messages_count: i64,
+    #[serde(default, skip_serializing_if = "is_zero")]
+    #[schema(default = 0)]
+    pub target_sent_messages_count: i64,
+}
+
+fn is_zero(value: &i64) -> bool {
+    *value == 0
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]

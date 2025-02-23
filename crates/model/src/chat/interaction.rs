@@ -419,4 +419,15 @@ impl AccountInteractionInternal {
     pub fn next_message_number(&self) -> MessageNumber {
         MessageNumber::new(self.message_counter().saturating_add(1))
     }
+
+    pub fn message_count_for_account(&self, account: impl Into<AccountIdDb>) -> i64 {
+        let account = account.into();
+        if self.account_id_sender == Some(account) {
+            self.message_counter_sender
+        } else if self.account_id_receiver == Some(account) {
+            self.message_counter_receiver
+        } else {
+            0
+        }
+    }
 }
