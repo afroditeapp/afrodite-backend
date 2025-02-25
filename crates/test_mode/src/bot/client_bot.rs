@@ -388,7 +388,11 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             name,
             age: age.into(),
             attributes,
-            ..Default::default()
+            ptext: state
+                .get_bot_config()
+                .text
+                .clone()
+                .unwrap_or_default(),
         };
 
         post_profile(state.api.profile(), update)

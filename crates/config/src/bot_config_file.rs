@@ -161,6 +161,7 @@ impl BotConfigFile {
                 age: c.age.or(base.age),
                 gender: c.gender.or(base.gender),
                 name: c.name.or(base.name),
+                text: c.text.or(base.text),
                 image: c.image.or(base_image),
                 random_color_image: c.random_color_image.or(base_random_color_image),
                 grid_crop_size: c.grid_crop_size.or(base.grid_crop_size),
@@ -219,6 +220,7 @@ pub struct BaseBotConfig {
     pub age: Option<u8>,
     pub gender: Option<Gender>,
     pub name: Option<String>,
+    pub text: Option<String>,
     /// Image file name.
     ///
     /// The image is loaded from directory which matches gender config.

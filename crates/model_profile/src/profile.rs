@@ -156,7 +156,6 @@ sync_version_wrappers!(ProfileAttributesSyncVersion, ProfileSyncVersion,);
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
 pub struct ProfileUpdate {
-    /// This must be empty because profile text support is disabled.
     pub ptext: String,
     pub name: String,
     #[schema(value_type = i64)]
