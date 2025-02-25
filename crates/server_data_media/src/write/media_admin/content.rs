@@ -34,12 +34,12 @@ impl WriteCommandsProfileAdminContent<'_> {
             cmds.media()
                 .media_content()
                 .increment_media_content_sync_version(content_id.content_owner())?;
-            let cache_update = match mode {
+
+            match mode {
                 ContentModerationMode::MoveToHumanModeration => {
                     cmds.media_admin()
                         .media_content()
                         .move_to_human_moderation(content_id)?;
-                    None
                 }
                 ContentModerationMode::Moderate {
                     moderator_id,
@@ -54,24 +54,23 @@ impl WriteCommandsProfileAdminContent<'_> {
                         rejected_category,
                         rejected_details,
                     )?;
-
-                    let current_account_media = cmds.read().media().media_content().current_account_media(content_id.content_owner())?;
-                    if current_account_media.iter_current_profile_content().any(|v| v.content_id() == content_id.content_id()) {
-                        // Public profile content accepted value might have
-                        // changed, so update public profile content version
-                        // and edit time.
-                        let version = ProfileContentVersion::new_random();
-                        let edit_time = ProfileContentEditedTime::current_time();
-                        cmds.media()
-                            .media_content()
-                            .required_changes_for_public_profile_content_update(content_id.content_owner(), version, edit_time)?;
-                        Some((version, edit_time))
-                    } else {
-                        None
-                    }
                 }
             };
-            Ok(cache_update)
+
+            let current_account_media = cmds.read().media().media_content().current_account_media(content_id.content_owner())?;
+            if current_account_media.iter_current_profile_content().any(|v| v.content_id() == content_id.content_id()) {
+                // Public profile content accepted value might have
+                // changed, so update public profile content version
+                // and edit time.
+                let version = ProfileContentVersion::new_random();
+                let edit_time = ProfileContentEditedTime::current_time();
+                cmds.media()
+                    .media_content()
+                    .required_changes_for_public_profile_content_update(content_id.content_owner(), version, edit_time)?;
+                Ok(Some((version, edit_time)))
+            } else {
+                Ok(None)
+            }
         })?;
 
         if let Some(update) = cache_update {
