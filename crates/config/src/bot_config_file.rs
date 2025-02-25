@@ -110,7 +110,7 @@ impl BotConfigFile {
             check_imgs_exist(&config, img_dir, Gender::Woman)?
         }
 
-        if let Some(config) = &config.profile_text_moderation {
+        if let Some(config) = config.profile_text_moderation.as_ref().and_then(|v| v.llm.as_ref()) {
             let count = config
                 .user_text_template
                 .split(ProfileTextModerationConfig::TEMPLATE_FORMAT_ARGUMENT)
@@ -118,10 +118,10 @@ impl BotConfigFile {
             #[allow(clippy::comparison_chain)]
             if count > 2 {
                 return Err(ConfigFileError::InvalidConfig)
-                    .attach_printable("Profile text moderation user text template: only one '%s' format argument is allowed");
+                    .attach_printable("Profile text LLM moderation user text template: only one '%s' format argument is allowed");
             } else if count < 2 {
                 return Err(ConfigFileError::InvalidConfig).attach_printable(
-                    "Profile text moderation user text template: '%s' format argument is missing",
+                    "Profile text LLM moderation user text template: '%s' format argument is missing",
                 );
             }
         }
@@ -311,6 +311,18 @@ impl<'de> Deserialize<'de> for Gender {
 
 #[derive(Debug, Deserialize)]
 pub struct ProfileTextModerationConfig {
+    /// Accept all texts which only have single visible character.
+    pub accept_single_visible_character: bool,
+    pub moderation_session_max_seconds: u32,
+    pub moderation_session_min_seconds: u32,
+    /// Large language model based moderation.
+    /// Actions: reject (or move_to_human) and accept
+    pub llm: Option<LlmModerationConfig>,
+    pub default_action: ModerationAction,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct LlmModerationConfig {
     /// For example "http://localhost:11434/v1"
     pub openai_api_url: Url,
     pub model: String,
@@ -321,11 +333,8 @@ pub struct ProfileTextModerationConfig {
     /// line of the response contains this text, the profile text
     /// is moderated as accepted. The comparisons are case insensitive.
     pub expected_response: String,
-    /// Accept all texts which only have single visible character.
-    pub accept_single_visible_character: bool,
     pub move_rejected_to_human_moderation: bool,
-    pub moderation_session_max_seconds: u32,
-    pub moderation_session_min_seconds: u32,
+    pub debug_show_llm_output_when_rejected: bool,
     #[serde(default = "max_tokens_default_value")]
     pub max_tokens: u32,
 }
@@ -340,7 +349,7 @@ impl ProfileTextModerationConfig {
 
 #[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum ContentModerationDefaultAction {
+pub enum ModerationAction {
     Accept,
     Reject,
     MoveToHuman,
@@ -358,7 +367,7 @@ pub struct ContentModerationConfig {
     /// Neural network based detection.
     /// Actions: reject, move_to_human and accept
     pub nsfw_detection: Option<NsfwDetectionConfig>,
-    pub default_action: ContentModerationDefaultAction,
+    pub default_action: ModerationAction,
 }
 
 #[derive(Debug, Clone, Deserialize)]

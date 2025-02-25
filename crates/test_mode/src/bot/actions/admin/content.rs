@@ -2,11 +2,11 @@ use std::{fmt::Debug, sync::Arc, time::Instant};
 
 use api_client::{apis::media_admin_api, models::{AccountId, ContentId, MediaContentType, ModerationQueueType, ProfileContentModerationRejectedReasonDetails}};
 use async_trait::async_trait;
-use config::bot_config_file::{ContentModerationConfig, ContentModerationDefaultAction, NsfwDetectionConfig, NsfwDetectionThresholds, NudeDetectionConfig};
+use config::bot_config_file::{ContentModerationConfig, ModerationAction, NsfwDetectionConfig, NsfwDetectionThresholds, NudeDetectionConfig};
 use error_stack::{Result, ResultExt};
 use image::DynamicImage;
 use nsfw::model::Metric;
-use super::{BotAction, BotState, EmptyPage};
+use super::{BotAction, BotState, EmptyPage, ModerationResult};
 use crate::client::{ApiClient, TestError};
 
 use tracing::error;
@@ -118,46 +118,6 @@ impl BotAction for ModerateContentModerationRequest {
     }
 }
 
-struct ContentModerationResult {
-    accept: bool,
-    move_to_human: bool,
-    rejected_details: Option<String>,
-}
-
-impl ContentModerationResult {
-    fn error() -> Self {
-        Self {
-            accept: false,
-            move_to_human: false,
-            rejected_details: Some("Error occurred. Try again and if this continues, please contact customer support.".to_string()),
-        }
-    }
-
-    fn reject(details: Option<&str>) -> Self {
-        Self {
-            accept: false,
-            move_to_human: false,
-            rejected_details: details.map(|text| text.to_string()),
-        }
-    }
-
-    fn accept() -> Self {
-        Self {
-            accept: true,
-            move_to_human: false,
-            rejected_details: None,
-        }
-    }
-
-    fn move_to_human() -> Self {
-        Self {
-            accept: false,
-            move_to_human: true,
-            rejected_details: None,
-        }
-    }
-}
-
 #[derive(Debug)]
 pub struct AdminBotContentModerationLogic;
 
@@ -219,10 +179,10 @@ impl AdminBotContentModerationLogic {
         nude_config: Option<NudeDetectionConfig>,
         nsfw_config: Option<NsfwDetectionConfig>,
         nsfw_model: Option<Arc<nsfw::Model>>,
-        default_action: ContentModerationDefaultAction,
+        default_action: ModerationAction,
         account: &AccountId,
         content: &ContentId,
-    ) -> ContentModerationResult {
+    ) -> ModerationResult {
         let r = tokio::task::spawn_blocking(move || {
             Self::handle_image_sync(data, nude_config, nsfw_config, nsfw_model, default_action)
         })
@@ -238,11 +198,11 @@ impl AdminBotContentModerationLogic {
             Ok(Ok(r)) => r,
             Err(e) => {
                 log_error(&e);
-                ContentModerationResult::error()
+                ModerationResult::error()
             }
             Ok(Err(e)) => {
                 log_error(&e);
-                ContentModerationResult::error()
+                ModerationResult::error()
             }
         }
     }
@@ -252,8 +212,8 @@ impl AdminBotContentModerationLogic {
         nude_config: Option<NudeDetectionConfig>,
         nsfw_config: Option<NsfwDetectionConfig>,
         nsfw_model: Option<Arc<nsfw::Model>>,
-        default_action: ContentModerationDefaultAction,
-    ) -> Result<ContentModerationResult, TestError> {
+        default_action: ModerationAction,
+    ) -> Result<ModerationResult, TestError> {
         let img = image::load_from_memory(&data)
             .change_context(TestError::ContentModerationFailed)?;
 
@@ -270,9 +230,9 @@ impl AdminBotContentModerationLogic {
         }
 
         let action = match default_action {
-            ContentModerationDefaultAction::Accept => ContentModerationResult::accept(),
-            ContentModerationDefaultAction::Reject => ContentModerationResult::reject(None),
-            ContentModerationDefaultAction::MoveToHuman => ContentModerationResult::move_to_human(),
+            ModerationAction::Accept => ModerationResult::accept(),
+            ModerationAction::Reject => ModerationResult::reject(None),
+            ModerationAction::MoveToHuman => ModerationResult::move_to_human(),
         };
 
         Ok(action)
@@ -281,10 +241,10 @@ impl AdminBotContentModerationLogic {
     fn handle_nude_detection(
         img: &DynamicImage,
         nude_config: NudeDetectionConfig,
-    ) -> Result<Option<ContentModerationResult>, TestError> {
+    ) -> Result<Option<ModerationResult>, TestError> {
         let analysis = nude::scan(img).analyse();
         if analysis.nude {
-            Ok(Some(ContentModerationResult {
+            Ok(Some(ModerationResult {
                 accept: false,
                 move_to_human: nude_config.move_rejected_to_human_moderation,
                 rejected_details: Some("Nudity detected. If this is a false positive, please contact customer support.".to_string()),
@@ -298,7 +258,7 @@ impl AdminBotContentModerationLogic {
         img: DynamicImage,
         nsfw_config: NsfwDetectionConfig,
         model: &nsfw::Model,
-    ) -> Result<Option<ContentModerationResult>, TestError> {
+    ) -> Result<Option<ModerationResult>, TestError> {
         let img = img.into_rgba8();
         let results = nsfw::examine(model, &img)
             .map_err(|e| TestError::ContentModerationFailed.report().attach_printable(e.to_string()))?;
@@ -317,7 +277,7 @@ impl AdminBotContentModerationLogic {
             for c in &results {
                 if let Some(threshold) = threshold(&c.metric, thresholds) {
                     if c.score >= threshold {
-                        return Ok(Some(ContentModerationResult::reject(Some(
+                        return Ok(Some(ModerationResult::reject(Some(
                             "NSFW image detected. If this is a false positive, please contact customer support."
                         ))));
                     }
@@ -329,7 +289,7 @@ impl AdminBotContentModerationLogic {
             for c in &results {
                 if let Some(threshold) = threshold(&c.metric, thresholds) {
                     if c.score >= threshold {
-                        return Ok(Some(ContentModerationResult::move_to_human()));
+                        return Ok(Some(ModerationResult::move_to_human()));
                     }
                 }
             }
@@ -339,7 +299,7 @@ impl AdminBotContentModerationLogic {
             for c in results {
                 if let Some(threshold) = threshold(&c.metric, thresholds) {
                     if c.score >= threshold {
-                        return Ok(Some(ContentModerationResult::accept()));
+                        return Ok(Some(ModerationResult::accept()));
                     }
                 }
             }

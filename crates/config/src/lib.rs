@@ -112,8 +112,6 @@ impl Config {
     /// Debug mode changes:
     /// * Routes for only related to benchmarking are available.
     /// * Axum JSON extractor shows errors.
-    /// * Admin bot profile text moderation saves LLM response text to server
-    ///   when the text is rejected.
     /// * Allow disabling some server component. This enables running the
     ///   server in microservice mode but the mode is unsupported
     ///   and currently broken.
