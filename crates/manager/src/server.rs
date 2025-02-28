@@ -214,9 +214,11 @@ impl AppServer {
         drop(server_quit_handle);
 
         // Wait until all tasks quit
-        server_task1
-            .await
-            .expect("Manager API server task panic detected");
+        if let Some(server_task1) = server_task1 {
+            server_task1
+                .await
+                .expect("Manager API server task panic detected");
+        }
 
         if let Some(server_task2) = server_task2 {
             server_task2
@@ -274,27 +276,33 @@ impl AppServer {
         &self,
         app: &mut App,
         quit_notification: ServerQuitWatcher,
-    ) -> (JoinHandle<()>, Option<JoinHandle<()>>) {
-        let addr = self.config.socket().public_api;
-        info!("Public API is available on {}", addr);
+    ) -> (Option<JoinHandle<()>>, Option<JoinHandle<()>>) {
+        let join_handle = if let Some(addr) = self.config.socket().public_api {
+            info!("Public API is available on {}", addr);
 
-        let join_handle = if let Some(tls_config) = self.config.public_api_tls_config() {
-            self.create_server_task_with_tls(
-                app.state(),
-                addr,
-                tls_config.clone(),
-                quit_notification.resubscribe(),
-            )
-            .await
+            let handle = if let Some(tls_config) = self.config.public_api_tls_config() {
+                self.create_server_task_with_tls(
+                    app.state(),
+                    addr,
+                    tls_config.clone(),
+                    quit_notification.resubscribe(),
+                )
+                .await
+            } else {
+                self.create_server_task_no_tls(
+                    app.state(),
+                    addr,
+                    "Public API",
+                    quit_notification.resubscribe(),
+                )
+                .await
+            };
+
+            Some(handle)
         } else {
-            self.create_server_task_no_tls(
-                app.state(),
-                addr,
-                "Public API",
-                quit_notification.resubscribe(),
-            )
-            .await
+            None
         };
+
 
         let second_join_handle =
             if let Some(port) = self.config.socket().second_public_api_localhost_only_port {

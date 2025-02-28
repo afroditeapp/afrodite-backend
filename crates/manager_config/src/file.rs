@@ -101,9 +101,10 @@ pub enum ConfigFileError {
 pub struct ConfigFile {
     pub manager: ManagerConfig,
     pub dir: DirConfig,
-    pub socket: SocketConfig,
 
     // Optional configs
+    #[serde(default)]
+    pub socket: SocketConfig,
     #[serde(default)]
     pub general: GeneralConfig,
     #[serde(default)]
@@ -213,9 +214,11 @@ impl GeneralConfig {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct SocketConfig {
-    pub public_api: SocketAddr,
+    /// TCP or TLS depending on is TLS configured
+    pub public_api: Option<SocketAddr>,
+    /// TCP only
     pub second_public_api_localhost_only_port: Option<u16>,
 }
 
@@ -335,6 +338,7 @@ pub struct SystemInfoConfig {
     pub log_services: Vec<String>,
 }
 
+/// Manager instance which has server enabled
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ManagerInstance {
     pub name: ManagerInstanceName,

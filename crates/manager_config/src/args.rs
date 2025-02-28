@@ -6,6 +6,7 @@ use clap::{arg, command, Args, Parser};
 use error_stack::{Result, ResultExt};
 use manager_api::ManagerClient;
 use manager_model::ManagerInstanceName;
+use simple_backend_utils::ContextExt;
 use tokio_rustls::rustls::RootCertStore;
 use url::Url;
 
@@ -58,13 +59,19 @@ impl ManagerApiClientMode {
         let file_config = super::file::ConfigFile::load_config(current_dir)
             .change_context(GetConfigError::LoadFileError)?;
 
-        let scheme = if file_config.tls.is_some() {
-            "tls"
+        let url = if let Some(port) = file_config.socket.second_public_api_localhost_only_port {
+            format!("tcp://localhost:{}", port)
+        } else if let Some(addr) = file_config.socket.public_api {
+            let scheme = if file_config.tls.is_some() {
+                "tls"
+            } else {
+                "tcp"
+            };
+            format!("{}://localhost:{}", scheme, addr.port())
         } else {
-            "tcp"
+            return Err(GetConfigError::LoadConfig.report())
+                .attach_printable("No manager API server enabled from config file");
         };
-
-        let url = format!("{}://localhost:{}", scheme, file_config.socket.public_api.port());
 
         Url::parse(&url).change_context(GetConfigError::InvalidConstant)
     }
