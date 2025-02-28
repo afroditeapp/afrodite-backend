@@ -13,6 +13,7 @@ use system_info::RpcSystemInfo;
 use task::RpcTask;
 use tracing::info;
 use crate::api::GetConfig;
+use crate::api::GetJsonRcpLinkManager;
 
 use manager_api::protocol::{ConnectionUtilsRead, ConnectionUtilsWrite};
 
@@ -47,7 +48,6 @@ pub enum JsonRpcError {
     UpdateManager,
 }
 
-
 pub async fn handle_json_rpc<
     C: ClientConnectionReadWrite,
 >(
@@ -77,8 +77,19 @@ async fn handle_request(
     address: SocketAddr,
     state: &S,
 ) -> Result<JsonRpcResponse, ServerError> {
-    if request.receiver == state.config().manager_name() {
-        info!("Running RPC {:?} from {}", &request.request, address);
+    handle_rpc_request(request, Some(address.to_string()), state)
+        .await
+}
+
+pub async fn handle_rpc_request(
+    request: JsonRpcRequest,
+    log_address: Option<String>,
+    state: &S,
+) -> Result<JsonRpcResponse, ServerError> {
+    if state.config().manager_name() == request.receiver {
+        if let Some(address) = log_address {
+            info!("Running RPC {:?} from {}", &request.request, address);
+        }
         handle_request_type(
             request.request,
             state,
@@ -86,7 +97,9 @@ async fn handle_request(
             .await
             .change_context(ServerError::JsonRpcFailed)
     } else if let Some(m) = state.config().find_remote_manager(&request.receiver)  {
-        info!("Forwarding RPC {:?} from {}", &request.request, address);
+        if let Some(address) = log_address {
+            info!("Forwarding RPC {:?} from {}", &request.request, address);
+        }
         let config = ClientConfig {
             url: m.url.clone(),
             root_certificate: state.config().root_certificate(),
@@ -99,6 +112,13 @@ async fn handle_request(
             .await
             .change_context(ServerError::Client)?;
         Ok(response)
+    } else if state.config().json_rpc_link().accepted_login_name() == Some(&request.receiver)  {
+        if let Some(address) = log_address {
+            info!("Forwarding RPC {:?} from {}", &request.request, address);
+        }
+        state.json_rpc_link_server().do_request(request)
+            .await
+            .change_context(ServerError::JsonRpcLink)
     } else {
         Ok(JsonRpcResponse::request_receiver_not_found())
     }

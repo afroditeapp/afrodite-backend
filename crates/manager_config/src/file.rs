@@ -38,6 +38,14 @@ public_api = "127.0.0.1:4000"
 # name = "backup"
 # url = "tls://127.0.0.1:4000"
 
+# [json_rpc_link.client]
+# password = "password"
+# url = "tls://127.0.0.1:4000"
+
+# [json_rpc_link.server]
+# name = "backup"
+# password = "password"
+
 # [secure_storage]
 # key_storage_manager_name = "default"
 # availability_check_path = "/afrodite-secure-storage/afrodite"
@@ -109,6 +117,8 @@ pub struct ConfigFile {
     pub general: GeneralConfig,
     #[serde(default)]
     pub remote_manager: Vec<ManagerInstance>,
+    #[serde(default)]
+    pub json_rpc_link: JsonRpcLinkConfig,
     #[serde(default)]
     pub server_encryption_key: Vec<ServerEncryptionKey>,
     pub secure_storage: Option<SecureStorageConfig>,
@@ -342,5 +352,35 @@ pub struct SystemInfoConfig {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ManagerInstance {
     pub name: ManagerInstanceName,
+    pub url: Url,
+}
+
+/// Create connection between managers for
+/// JSON RPCs from server to client.
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct JsonRpcLinkConfig {
+    pub client: Option<JsonRpcLinkConfigClient>,
+    pub server: Option<JsonRpcLinkConfigServer>,
+}
+
+impl JsonRpcLinkConfig {
+    pub fn accepted_login_name(&self) -> Option<&ManagerInstanceName> {
+        self.server.as_ref().map(|v| &v.name)
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct JsonRpcLinkConfigServer {
+    /// Accepted login name
+    pub name: ManagerInstanceName,
+    /// Accepted login password
+    pub password: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct JsonRpcLinkConfigClient {
+    /// Link login password
+    pub password: String,
+    /// Manager server address
     pub url: Url,
 }

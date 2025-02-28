@@ -11,7 +11,7 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
-use file::{AutomaticSystemRebootConfig, ManagerInstance, ScheduledTasksConfig};
+use file::{AutomaticSystemRebootConfig, JsonRpcLinkConfig, ManagerInstance, ScheduledTasksConfig};
 use manager_model::ManagerInstanceName;
 use rustls_pemfile::certs;
 use tokio_rustls::rustls::{RootCertStore, ServerConfig};
@@ -159,6 +159,10 @@ impl Config {
 
     pub fn remote_managers(&self) -> &[ManagerInstance] {
         &self.file.remote_manager
+    }
+
+    pub fn json_rpc_link(&self) -> &JsonRpcLinkConfig {
+        &self.file.json_rpc_link
     }
 
     pub fn find_remote_manager(&self, name: &ManagerInstanceName) -> Option<&ManagerInstance> {

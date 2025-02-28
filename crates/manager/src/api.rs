@@ -2,7 +2,7 @@
 
 use manager_config::Config;
 
-use crate::server::{client::ApiManager, scheduled_task::ScheduledTaskManagerHandle, task::TaskManagerHandle, update::UpdateManagerHandle};
+use crate::server::{client::ApiManager, link::json_rpc::server::JsonRcpLinkManagerHandleServer, scheduled_task::ScheduledTaskManagerHandle, task::TaskManagerHandle, update::UpdateManagerHandle};
 
 pub mod server;
 pub mod client;
@@ -28,4 +28,8 @@ pub trait GetTaskManager {
 
 pub trait GetScheduledTaskManager {
     fn scheduled_task_manager(&self) -> &ScheduledTaskManagerHandle;
+}
+
+pub trait GetJsonRcpLinkManager {
+    fn json_rpc_link_server(&self) -> &JsonRcpLinkManagerHandleServer;
 }

@@ -29,9 +29,44 @@
 //! 1. Server sends u32 little-endian JSON length in bytes.
 //! 2. Server sends UTF-8 JSON bytes.
 //! 3. Move to step 1.
+//!
+//! ## [manager_model::ManagerProtocolMode::JsonRpcLink]
+//!
+//! 1. Client sends u32 little-endian manager name length in bytes.
+//! 2. Client sends UTF-8 manager name.
+//! 3. Client sends u32 little-endian link password length in bytes.
+//! 4. Client sends UTF-8 link password.
+//! 5. Server sends byte 1 if login is correct. Byte 0 is sent and
+//!    connection is closed when login is incorrect.
+//!
+//! Both server and client can send messages with the following format:
+//!
+//! - Message type (u8)
+//! - Sequence number (u32 little-endian)
+//! - JSON length (u32 little-endian)
+//! - JSON data
+//!
+//! ### Message types
+//!
+//! #### [manager_model::JsonRpcLinkMessageType::Empty] (type 0)
+//!
+//! Used for connection keep-alive logic. Sequence number and JSON length are 0.
+//!
+//! ### [manager_model::JsonRpcLinkMessageType::ServerRequest] (type 1)
+//!
+//! Sequence numbers starts from 0 for new link connections
+//! and the number will wrap. The number is incremented
+//! after it is used.
+//!
+//! ### [manager_model::JsonRpcLinkMessageType::ServerResponse] (type 2)
+//!
+//! The response for [manager_model::JsonRpcLinkMessageType::ServerRequest].
+//! The sequence number is the same as in the request.
+//!
 
 use std::net::SocketAddr;
 use json_rpc::handle_json_rpc;
+use link::handle_json_rpc_link;
 use manager_api::protocol::{ClientConnectionReadWrite, ClientConnectionWrite};
 use manager_model::{ManagerProtocolMode, ServerEvent};
 
@@ -47,6 +82,7 @@ use manager_model::ManagerProtocolVersion;
 use super::utils::validate_api_key;
 
 pub mod json_rpc;
+pub mod link;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ServerError {
@@ -82,6 +118,8 @@ pub enum ServerError {
     Client,
     #[error("Server event channel is broken")]
     ServerEventChannelBroken,
+    #[error("JSON RPC link related error")]
+    JsonRpcLink,
 }
 
 pub async fn handle_connection_to_server<
@@ -137,6 +175,7 @@ async fn handle_connection_to_server_with_error<
     match mode {
         ManagerProtocolMode::JsonRpc => handle_json_rpc(c, address, state).await,
         ManagerProtocolMode::ListenServerEvents => handle_server_events(c, address, state).await,
+        ManagerProtocolMode::JsonRpcLink => handle_json_rpc_link(c, address, state).await,
     }
 }
 

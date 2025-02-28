@@ -7,6 +7,7 @@ use std::{
 
 use app::S;
 use futures::future::poll_fn;
+use link::json_rpc::{client::JsonRcpLinkManagerClient, server::JsonRcpLinkManagerServer};
 use manager_config::Config;
 use scheduled_task::ScheduledTaskManager;
 use task::TaskManager;
@@ -43,6 +44,7 @@ pub mod scheduled_task;
 pub mod reboot;
 pub mod state;
 pub mod update;
+pub mod link;
 
 /// Drop this when quit starts
 pub type ServerQuitHandle = broadcast::Sender<()>;
@@ -99,12 +101,15 @@ impl AppServer {
             ScheduledTaskManager::new_channel();
         let (update_manager_handle, update_manager_internal_state) =
             UpdateManager::new_channel();
+        let (json_rpc_link_manager_server_handle, json_rpc_link_manager_server_internal_state) =
+            JsonRcpLinkManagerServer::new_channel();
 
         let mut app = App::new(
             self.config.clone(),
             update_manager_handle.into(),
             task_manager_handle.into(),
             scheduled_task_manager_handle.into(),
+            json_rpc_link_manager_server_handle.into(),
         )
         .await;
 
@@ -134,6 +139,20 @@ impl AppServer {
 
         let update_manager_quit_handle = update::UpdateManager::new_manager(
             update_manager_internal_state,
+            app.state(),
+            server_quit_watcher.resubscribe(),
+        );
+
+        // Start JSON RPC link manager server logic
+
+        let json_rpc_link_manager_server_quit_handle = JsonRcpLinkManagerServer::new_manager(
+            json_rpc_link_manager_server_internal_state,
+            server_quit_watcher.resubscribe(),
+        );
+
+        // Start JSON RPC link manager client logic
+
+        let json_rpc_link_manager_client_quit_handle = JsonRcpLinkManagerClient::new_manager(
             app.state(),
             server_quit_watcher.resubscribe(),
         );
@@ -226,6 +245,8 @@ impl AppServer {
                 .expect("Second Manager API server task panic detected");
         }
 
+        json_rpc_link_manager_client_quit_handle.wait_quit().await;
+        json_rpc_link_manager_server_quit_handle.wait_quit().await;
         update_manager_quit_handle.wait_quit().await;
         reboot_manager_quit_handle.wait_quit().await;
         scheduled_task_manager_quit_handle.wait_quit().await;

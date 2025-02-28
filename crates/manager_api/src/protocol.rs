@@ -1,5 +1,5 @@
 use error_stack::{report, Result, ResultExt};
-use manager_model::{ManualTaskType, NotifyBackend, ScheduledTaskStatus, ScheduledTaskType, SoftwareUpdateTaskType};
+use manager_model::{JsonRpcLinkHeader, JsonRpcLinkMessage, JsonRpcLinkMessageType, ManualTaskType, NotifyBackend, ScheduledTaskStatus, ScheduledTaskType, SoftwareUpdateTaskType};
 use manager_model::{JsonRpcRequest, JsonRpcRequestType, JsonRpcResponse, JsonRpcResponseType, ManagerInstanceName, ManagerInstanceNameList, ManagerProtocolMode, ManagerProtocolVersion, SecureStorageEncryptionKey, ServerEvent, SoftwareUpdateStatus, SystemInfo};
 
 use tokio::io::AsyncWriteExt;
@@ -19,6 +19,19 @@ pub trait ClientConnectionWrite: tokio::io::AsyncWrite + Send + std::marker::Unp
 impl <T: tokio::io::AsyncWrite + Send + std::marker::Unpin + 'static> ClientConnectionWrite for T {}
 
 pub trait ConnectionUtilsRead: tokio::io::AsyncRead + Unpin  {
+    async fn receive_u8_optional(&mut self) -> Result<Option<u8>, ClientError> {
+        let mut buf = [0u8];
+        let size = self.read(&mut buf).await.change_context(ClientError::Read)?;
+        if size == 0 {
+            Ok(None)
+        } else if size == 1 {
+            Ok(Some(buf[0]))
+        } else {
+            Err(report!(ClientError::Read))
+                .attach_printable(format!("Unknown reading result size {}", size))
+        }
+    }
+
     async fn receive_u8(&mut self) -> Result<u8, ClientError> {
         self.read_u8().await.change_context(ClientError::Read)
     }
@@ -60,6 +73,26 @@ pub trait ConnectionUtilsRead: tokio::io::AsyncRead + Unpin  {
             .change_context(ClientError::Read)?;
         serde_json::from_str(&s)
             .change_context(ClientError::Parse)
+    }
+
+    /// If None, connection is disconnected
+    async fn receive_json_rpc_link_message(&mut self) -> Result<Option<JsonRpcLinkMessage>, ClientError> {
+        let Some(message_type) = self.receive_u8_optional().await? else {
+            return Ok(None);
+        };
+        let message_type = TryInto::<JsonRpcLinkMessageType>::try_into(message_type)
+            .change_context(ClientError::Parse)?;
+        let sequence_number = self.read_u32_le().await.change_context(ClientError::Read)?;
+        let data = self.receive_string_with_u32_len().await
+            .change_context(ClientError::Read)?;
+
+        Ok(Some(JsonRpcLinkMessage {
+            header: JsonRpcLinkHeader {
+                sequence_number: std::num::Wrapping(sequence_number),
+                message_type,
+            },
+            data,
+        }))
     }
 }
 
@@ -116,6 +149,22 @@ pub trait ConnectionUtilsWrite: tokio::io::AsyncWrite + Unpin  {
         self.send_string_with_u32_len(text).await
             .change_context(ClientError::Write)?;
         self.flush().await.change_context(ClientError::Flush)?;
+        Ok(())
+    }
+
+    async fn send_json_rpc_link_message(
+        &mut self,
+        message: JsonRpcLinkMessage,
+    ) -> Result<(), ClientError> {
+        self.send_u8(message.header.message_type as u8).await
+            .change_context(ClientError::Write)?;
+        self.write_u32_le(message.header.sequence_number.0).await
+            .change_context(ClientError::Write)?;
+        self.send_string_with_u32_len(message.data).await
+            .change_context(ClientError::Write)?;
+
+        self.flush().await.change_context(ClientError::Flush)?;
+
         Ok(())
     }
 }

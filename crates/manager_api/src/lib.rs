@@ -12,7 +12,7 @@ use std::{future::Future, path::Path, sync::Arc};
 use error_stack::{report, ResultExt};
 use futures::FutureExt;
 use manager_model::{JsonRpcRequest, JsonRpcResponse, ManagerInstanceName, ManagerProtocolMode, ManagerProtocolVersion, ServerEvent};
-use protocol::{ClientConnectionReadWrite, ConnectionUtilsRead, ConnectionUtilsWrite};
+use protocol::{ClientConnectionRead, ClientConnectionReadWrite, ClientConnectionWrite, ConnectionUtilsRead, ConnectionUtilsWrite};
 use tokio::net::TcpStream;
 use tokio_rustls::{rustls::pki_types::{pem::PemObject, CertificateDer, ServerName}, TlsConnector};
 use url::Url;
@@ -54,17 +54,22 @@ pub enum ClientError {
     RootCertificateLoadingError,
     #[error("Invalid API key")]
     InvalidApiKey,
+    #[error("Invalid login")]
+    InvalidLogin,
     #[error("Invalid API response")]
     InvalidResponse,
     #[error("Remote API request failed")]
     RemoteApiRequest,
     #[error("Local API request failed")]
     LocalApiRequest,
+    #[error("JSON RPC link related error")]
+    JsonRpcLink,
+    #[error("JSON RPC related error")]
+    JsonRpc,
 
     #[error("Missing configuration")]
     MissingConfiguration,
 }
-
 
 #[derive(Debug, Clone)]
 pub struct ClientConfig {
@@ -75,9 +80,9 @@ pub struct ClientConfig {
 }
 
 pub struct ManagerClient {
-    stream: Box<dyn ClientConnectionReadWrite>,
+    reader: Box<dyn ClientConnectionRead>,
+    writer: Box<dyn ClientConnectionWrite>,
 }
-
 
 impl ManagerClient {
     pub fn load_root_certificate(root_certificate: impl AsRef<Path>) -> Result<RootCertStore, ClientError> {
@@ -153,8 +158,11 @@ impl ManagerClient {
             return Err(report!(ClientError::InvalidApiKey));
         }
 
+        let (reader, writer) = tokio::io::split(stream);
+
         Ok(ManagerClient {
-            stream,
+            reader: Box::new(reader),
+            writer: Box::new(writer),
         })
     }
 
@@ -169,13 +177,13 @@ impl ManagerClient {
         &mut self,
         request: JsonRpcRequest
     ) -> Result<JsonRpcResponse, ClientError> {
-        self.stream.send_u8(ManagerProtocolMode::JsonRpc as u8)
+        self.writer.send_u8(ManagerProtocolMode::JsonRpc as u8)
             .await
             .change_context(ClientError::Write)?;
-        self.stream.send_json_rpc_request(request)
+        self.writer.send_json_rpc_request(request)
             .await
             .change_context(ClientError::Write)?;
-        self.stream.receive_json_rpc_response()
+        self.reader.receive_json_rpc_response()
             .await
             .change_context(ClientError::Write)
     }
@@ -183,10 +191,10 @@ impl ManagerClient {
     pub async fn listen_events(
         mut self,
     ) -> Result<ServerEventListerner, ClientError> {
-        self.stream.send_u8(ManagerProtocolMode::ListenServerEvents as u8)
+        self.writer.send_u8(ManagerProtocolMode::ListenServerEvents as u8)
             .await
             .change_context(ClientError::Write)?;
-        Ok(ServerEventListerner { stream: self.stream })
+        Ok(ServerEventListerner { reader: self.reader })
     }
 
     pub fn request_to(
@@ -198,15 +206,39 @@ impl ManagerClient {
             request_receiver,
         }
     }
+
+    pub async fn json_rpc_link(
+        mut self,
+        name: ManagerInstanceName,
+        password: String,
+    ) -> Result<(Box<dyn ClientConnectionRead>, Box<dyn ClientConnectionWrite>), ClientError> {
+        self.writer.send_u8(ManagerProtocolMode::JsonRpcLink as u8)
+            .await
+            .change_context(ClientError::Write)?;
+        self.writer.send_string_with_u32_len(name.0)
+            .await
+            .change_context(ClientError::Write)?;
+        self.writer.send_string_with_u32_len(password)
+            .await
+            .change_context(ClientError::Write)?;
+        let result = self.reader.receive_u8()
+            .await
+            .change_context(ClientError::Read)?;
+        if result != 1 {
+            return Err(report!(ClientError::InvalidLogin));
+        }
+
+        Ok((self.reader, self.writer))
+    }
 }
 
 pub struct ServerEventListerner {
-    stream: Box<dyn ClientConnectionReadWrite>,
+    reader: Box<dyn ClientConnectionRead>,
 }
 
 impl ServerEventListerner {
     pub async fn next_event(&mut self) -> Result<ServerEvent, ClientError> {
-        self.stream.receive_server_event()
+        self.reader.receive_server_event()
             .await
             .change_context(ClientError::Read)
     }
