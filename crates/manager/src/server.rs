@@ -226,10 +226,10 @@ impl AppServer {
                 .expect("Second Manager API server task panic detected");
         }
 
+        update_manager_quit_handle.wait_quit().await;
         reboot_manager_quit_handle.wait_quit().await;
         scheduled_task_manager_quit_handle.wait_quit().await;
         task_manager_quit_handle.wait_quit().await;
-        update_manager_quit_handle.wait_quit().await;
 
         if self.config.software_update_provider().is_some() {
             info!("Stopping backend");
