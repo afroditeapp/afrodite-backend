@@ -2571,6 +2571,7 @@ dependencies = [
  "futures",
  "manager_model",
  "serde_json",
+ "simple_backend_utils",
  "thiserror 2.0.11",
  "tokio",
  "tokio-rustls",
@@ -2603,6 +2604,7 @@ dependencies = [
  "num_enum",
  "serde",
  "simple_backend_model",
+ "simple_backend_utils",
  "utoipa",
 ]
 
@@ -4380,6 +4382,7 @@ dependencies = [
  "axum",
  "config",
  "error-stack",
+ "manager_model",
  "model",
  "model_account",
  "model_media",

@@ -45,6 +45,7 @@ name = "history"
 # address = "tls://localhost:4000"
 # api_key = "TODO"
 # root_certificate = "/home/afrodite/manager-tls/root.crt"
+# backup_link_password = "password"
 
 # [tile_map]
 # tile_dir = "/map_tiles"
@@ -129,7 +130,7 @@ pub struct SimpleBackendConfigFile {
 
     pub data: DataConfig,
     pub tile_map: Option<TileMapConfig>,
-    pub manager: Option<AppManagerConfig>,
+    pub manager: Option<ManagerConfig>,
     pub sign_in_with_google: Option<SignInWithGoogleConfig>,
     pub firebase_cloud_messaging: Option<FirebaseCloudMessagingConfig>,
     pub email_sending: Option<EmailSendingConfig>,
@@ -306,11 +307,12 @@ impl SocketConfig {
 
 /// App manager config
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct AppManagerConfig {
+pub struct ManagerConfig {
     pub manager_name: ManagerInstanceName,
     pub address: Url,
     pub api_key: String,
     pub root_certificate: Option<PathBuf>,
+    pub backup_link_password: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Default, Serialize, Clone)]

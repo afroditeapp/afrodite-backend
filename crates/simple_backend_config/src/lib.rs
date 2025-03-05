@@ -25,7 +25,7 @@ use rustls_pemfile::certs;
 use tokio_rustls::rustls::ServerConfig;
 
 use self::file::{
-    AppManagerConfig, SignInWithGoogleConfig,
+    ManagerConfig, SignInWithGoogleConfig,
     SimpleBackendConfigFile, SocketConfig,
 };
 
@@ -148,7 +148,7 @@ impl SimpleBackendConfig {
         self.file.firebase_cloud_messaging.as_ref()
     }
 
-    pub fn manager_config(&self) -> Option<&AppManagerConfig> {
+    pub fn manager_config(&self) -> Option<&ManagerConfig> {
         self.file.manager.as_ref()
     }
 

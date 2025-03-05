@@ -1,12 +1,12 @@
 
-use std::{io::{ErrorKind, Read}, num::Wrapping, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 
 use backup::SaveContentBackup;
 use error_stack::{FutureExt, Result, ResultExt};
 use manager_api::{protocol::{ClientConnectionRead, ClientConnectionWrite, ConnectionUtilsRead, ConnectionUtilsWrite}, ClientConfig, ManagerClient};
 use manager_config::{file::BackupLinkConfigTarget, Config};
-use manager_model::{BackupMessage, BackupMessageHeader, BackupMessageType};
-use simple_backend_utils::{ContextExt, UuidBase64Url};
+use manager_model::{AccountAndContent, BackupMessage, BackupMessageType, SourceToTargetMessage, TargetToSourceMessage};
+use simple_backend_utils::{ContextExt, IntoReportFromString};
 use tokio::{sync::mpsc, task::JoinHandle};
 use tracing::{error, info, warn};
 
@@ -130,7 +130,7 @@ impl BackupLinkManagerTarget {
             .change_context(BackupTargetError::Client)?;
 
         let (reader, writer) = client
-            .json_rpc_link(self.state.config().manager_name(), config.password.clone())
+            .backup_link(config.password.clone())
             .change_context(BackupTargetError::Client)
             .await?;
 
@@ -182,6 +182,7 @@ impl BackupLinkManagerTarget {
                         m.header.backup_session.0,
                     );
                     target_state = Some(state);
+                    continue;
                 }
                 _ => (),
             }
@@ -196,19 +197,7 @@ impl BackupLinkManagerTarget {
                 return Ok(());
             }
 
-            match m.header.message_type {
-                // Already handled
-                BackupMessageType::Empty |
-                BackupMessageType::StartBackupSession => (),
-                // Source client only messages
-                BackupMessageType::ContentListSyncDone |
-                BackupMessageType::ContentQuery =>
-                    warn!("Ignoring {:?} message. Only backup source client should send that", m.header.message_type),
-                BackupMessageType::ContentList =>
-                    target_state.handle_content_list(m.data).await?,
-                BackupMessageType::ContentQueryAnswer =>
-                    target_state.handle_content_query_answer(m.data).await?,
-            }
+            target_state.handle_source_to_target_message(m).await?
         }
     }
 
@@ -230,7 +219,7 @@ impl BackupLinkManagerTarget {
 }
 
 struct BackupTargetState {
-    sender: mpsc::Sender<TargetMessage>,
+    sender: mpsc::Sender<SourceToTargetMessage>,
     current_backup_session: u32,
 }
 
@@ -250,80 +239,25 @@ impl BackupTargetState {
         }
     }
 
-    async fn handle_content_list(
+    async fn handle_source_to_target_message(
         &mut self,
-        data: Vec<u8>,
+        m: BackupMessage,
     ) -> Result<(), BackupTargetError> {
-        let mut parsed = vec![];
-
-        let mut data_reader = data.as_slice();
-
-        loop {
-            let mut bytes = [0u8; 16];
-            match data_reader.read_exact(&mut bytes) {
-                Ok(()) => (),
-                Err(e) if e.kind() == ErrorKind::UnexpectedEof => break,
-                r @ Err(_) => return r.change_context(BackupTargetError::Deserialize),
-            }
-            let account_id = UuidBase64Url::from_bytes(bytes);
-
-            let mut bytes = [0u8; 1];
-            data_reader.read_exact(&mut bytes)
-                .change_context(BackupTargetError::Deserialize)?;
-            let content_count = bytes[0];
-
-            let mut content_ids = vec![];
-            for _ in 0..content_count {
-                let mut bytes = [0u8; 16];
-                data_reader.read_exact(&mut bytes)
-                    .change_context(BackupTargetError::Deserialize)?;
-                content_ids.push(UuidBase64Url::from_bytes(bytes));
-            }
-
-            parsed.push(AccountAndContent {
-                account_id,
-                content_ids,
-            });
-        }
-
-        self.sender.send(TargetMessage::ContentList { data: parsed })
+        let m = m.try_into()
+            .into_error_string(BackupTargetError::Deserialize)?;
+        self.sender.send(m)
             .await
             .change_context(BackupTargetError::Deserialize)?;
 
         Ok(())
     }
-
-    async fn handle_content_query_answer(
-        &mut self,
-        data: Vec<u8>,
-    ) -> Result<(), BackupTargetError> {
-        self.sender.send(TargetMessage::ContentQueryAnswer { data })
-            .await
-            .change_context(BackupTargetError::Deserialize)?;
-
-        Ok(())
-    }
-}
-
-enum TargetMessage {
-    ContentList {
-        data: Vec<AccountAndContent>,
-    },
-    ContentQueryAnswer {
-        data: Vec<u8>,
-    }
-}
-
-struct AccountAndContent {
-    account_id: UuidBase64Url,
-    content_ids: Vec<UuidBase64Url>,
 }
 
 
 struct BackupSessionTaskTarget {
     config: Arc<Config>,
     sender: mpsc::Sender<BackupMessage>,
-    receiver: mpsc::Receiver<TargetMessage>,
+    receiver: mpsc::Receiver<SourceToTargetMessage>,
     current_backup_session: u32,
     synced_accounts: u64,
     synced_content: u64,
@@ -333,7 +267,7 @@ impl BackupSessionTaskTarget {
     pub fn new(
         config: Arc<Config>,
         sender: mpsc::Sender<BackupMessage>,
-        receiver: mpsc::Receiver<TargetMessage>,
+        receiver: mpsc::Receiver<SourceToTargetMessage>,
         current_backup_session: u32,
     ) -> Self {
         Self {
@@ -352,7 +286,7 @@ impl BackupSessionTaskTarget {
         info!("Backup session started");
         match self.run_and_result().await {
             Ok(()) => (),
-            Err(e) => eprintln!("Backup session error: {:?}", e),
+            Err(e) => error!("Backup session error: {:?}", e),
         }
         info!("Backup session completed, accounts: {}, content: {}", self.synced_accounts, self.synced_content);
     }
@@ -372,7 +306,12 @@ impl BackupSessionTaskTarget {
                     if content_state.exists(c) {
                         content_state.mark_as_still_existing(c);
                     } else {
-                        self.send_receive_content_message(a.account_id, c).await?;
+                        self.send_message(
+                            TargetToSourceMessage::ContentQuery {
+                                account_id: a.account_id,
+                                content_id: c
+                            }
+                        ).await?;
                         let data = self.receive_content().await?;
                         content_state.new_content(c, data).await?;
                     }
@@ -387,7 +326,9 @@ impl BackupSessionTaskTarget {
                 break;
             }
 
-            self.send_content_list_sync_done().await?;
+            self.send_message(
+                TargetToSourceMessage::ContentListSyncDone
+            ).await?;
         }
 
         backup.finalize().await?;
@@ -400,7 +341,7 @@ impl BackupSessionTaskTarget {
             return Err(BackupTargetError::BrokenMessageChannel.report());
         };
         match m {
-            TargetMessage::ContentList { data } => Ok(data),
+            SourceToTargetMessage::ContentList { data } => Ok(data),
             _ => Err(BackupTargetError::Protocol.report()),
         }
     }
@@ -410,38 +351,16 @@ impl BackupSessionTaskTarget {
             return Err(BackupTargetError::BrokenMessageChannel.report());
         };
         match m {
-            TargetMessage::ContentQueryAnswer { data } => Ok(data),
+            SourceToTargetMessage::ContentQueryAnswer { data } => Ok(data),
             _ => Err(BackupTargetError::Protocol.report()),
         }
     }
 
-    pub async fn send_receive_content_message(
+    pub async fn send_message(
         &mut self,
-        account: UuidBase64Url,
-        content: UuidBase64Url,
+        message: TargetToSourceMessage,
     ) -> Result<(), BackupTargetError> {
-        let data = account.as_bytes().iter().chain(content.as_bytes()).copied().collect::<Vec<u8>>();
-        self.sender.send(BackupMessage {
-            header: BackupMessageHeader {
-                backup_session: Wrapping(self.current_backup_session),
-                message_type: BackupMessageType::ContentQuery,
-            },
-            data,
-        })
-            .await
-            .change_context(BackupTargetError::BrokenMessageChannel)
-    }
-
-    pub async fn send_content_list_sync_done(
-        &mut self,
-    ) -> Result<(), BackupTargetError> {
-        self.sender.send(BackupMessage {
-            header: BackupMessageHeader {
-                backup_session: Wrapping(self.current_backup_session),
-                message_type: BackupMessageType::ContentListSyncDone,
-            },
-            data: vec![],
-        })
+        self.sender.send(message.into_message(self.current_backup_session))
             .await
             .change_context(BackupTargetError::BrokenMessageChannel)
     }

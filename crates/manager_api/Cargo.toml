@@ -19,3 +19,5 @@ tokio-rustls = { workspace = true }
 serde_json = { workspace = true }
 
 manager_model = { path = "../manager_model" }
+
+simple_backend_utils = { path = "../simple_backend_utils" }

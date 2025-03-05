@@ -12,3 +12,4 @@ serde = { workspace = true }
 utoipa = { workspace = true }
 
 simple_backend_model = { path = "../simple_backend_model" }
+simple_backend_utils = { path = "../simple_backend_utils" }

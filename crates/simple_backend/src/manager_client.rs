@@ -1,7 +1,7 @@
 use std::sync::{atomic::{AtomicI64, Ordering}, Arc};
 
 use error_stack::Result;
-use manager_api::{ClientConfig, ClientError, ManagerClient, ManagerClientWithRequestReceiver, ServerEventListerner};
+use manager_api::{backup::BackupSourceClient, ClientConfig, ClientError, ManagerClient, ManagerClientWithRequestReceiver, ServerEventListerner};
 use manager_model::{
     ManagerInstanceName, ServerEventType
 };
@@ -13,9 +13,12 @@ use tracing::{info, warn, error};
 
 use crate::ServerQuitWatcher;
 
+#[derive(Debug, Clone)]
+struct BackupLinkPassword(String);
+
 #[derive(Debug)]
 pub struct ManagerApiClient {
-    manager: Option<(ClientConfig, ManagerInstanceName)>,
+    manager: Option<(ClientConfig, ManagerInstanceName, Option<BackupLinkPassword>)>,
     latest_scheduled_reboot: AtomicI64,
 }
 
@@ -43,7 +46,7 @@ impl ManagerApiClient {
 
             info!("Manager API URL: {}", c.address);
 
-            Some((config, c.manager_name.clone()))
+            Some((config, c.manager_name.clone(), c.backup_link_password.clone().map(BackupLinkPassword)))
         } else {
             None
         };
@@ -55,7 +58,7 @@ impl ManagerApiClient {
     }
 
     pub async fn new_request(&self) -> Result<ManagerClientWithRequestReceiver, ClientError> {
-        if let Some((c, name)) = self.manager.clone() {
+        if let Some((c, name, _)) = self.manager.clone() {
             let c = ManagerClient::connect(c)
                 .await?
                 .request_to(name);
@@ -69,7 +72,7 @@ impl ManagerApiClient {
         &self,
         name: ManagerInstanceName,
     ) -> Result<ManagerClientWithRequestReceiver, ClientError> {
-        if let Some((c, _)) = self.manager.clone() {
+        if let Some((c, _, _)) = self.manager.clone() {
             let c = ManagerClient::connect(c)
                 .await?
                 .request_to(name);
@@ -79,8 +82,25 @@ impl ManagerApiClient {
         }
     }
 
+    /// None is returned when the backup link password is not configured
+    pub async fn new_backup_connection(&self, backup_session: u32) -> Result<Option<BackupSourceClient>, ClientError> {
+        if let Some((c, _, password)) = self.manager.clone() {
+            if let Some(password) = password {
+                let (reader, writer) = ManagerClient::connect(c)
+                    .await?
+                    .backup_link(password.0)
+                    .await?;
+                Ok(Some(BackupSourceClient::new(reader, writer, backup_session)))
+            } else {
+                Ok(None)
+            }
+        } else {
+            Err(ClientError::MissingConfiguration.report())
+        }
+    }
+
     pub async fn listen_events(&self) -> Result<ServerEventListerner, ClientError> {
-        if let Some((c, _)) = self.manager.clone() {
+        if let Some((c, _, _)) = self.manager.clone() {
             let c = ManagerClient::connect(c)
                 .await?
                 .listen_events()

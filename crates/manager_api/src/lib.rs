@@ -20,6 +20,7 @@ use url::Url;
 use error_stack::Result;
 
 pub mod protocol;
+pub mod backup;
 
 pub use protocol::{ManagerClientWithRequestReceiver, RequestSenderCmds};
 pub use tokio_rustls::rustls::RootCertStore;
@@ -68,6 +69,8 @@ pub enum ClientError {
     JsonRpcLink,
     #[error("JSON RPC related error")]
     JsonRpc,
+    #[error("Timeout")]
+    Timeout,
 
     #[error("Missing configuration")]
     MissingConfiguration,

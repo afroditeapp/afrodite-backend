@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use backup::backup_data;
 use model::{ReportTypeNumber, UnixTime};
 use model_profile::{
     AccountIdInternal, AccountState, EventToClientInternal, ProfileAge, ProfileUpdate,
@@ -24,19 +25,27 @@ use simple_backend_utils::{IntoReportFromString, time::sleep_until_current_time_
 use tokio::{sync::broadcast::error::TryRecvError, task::JoinHandle, time::sleep};
 use tracing::{error, info, warn};
 
+mod backup;
+
 #[derive(thiserror::Error, Debug)]
 pub enum ScheduledTaskError {
     #[error("Sleep until next run of scheduled tasks failed")]
     TimeError,
 
-    #[error("Database update error")]
+    #[error("Database error")]
     DatabaseError,
+
+    #[error("File reading error")]
+    FileReadingError,
 
     #[error("Profile statistics error")]
     ProfileStatisticsError,
 
     #[error("Unexpected server quit request detected while scheduled tasks were running")]
     QuitRequested,
+
+    #[error("Backup related error")]
+    Backup,
 }
 
 #[derive(Debug)]
@@ -122,7 +131,7 @@ impl ScheduledTaskManager {
             .await?;
         self.save_profile_statistics().await?;
         self.delete_processed_reports_which_have_user_data().await?;
-        // TODO(prod): SQLite database backups
+        backup_data(&self.state, quit_notification).await?;
         Ok(())
     }
 
