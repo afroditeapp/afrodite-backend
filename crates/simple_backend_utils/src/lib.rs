@@ -9,6 +9,7 @@ use error_stack::{Context, Report, Result, ResultExt};
 
 mod uuid;
 pub mod time;
+pub mod file;
 
 pub use uuid::{UuidBase64Url, UuidBase64UrlToml};
 

@@ -4,8 +4,8 @@ use manager_config::Config;
 use manager_model::{ServerEvent, ServerEventType};
 use tokio::sync::watch;
 
-use super::{backend_events::BackendEventsHandle, client::ApiManager, link::json_rpc::server::JsonRcpLinkManagerHandleServer, scheduled_task::ScheduledTaskManagerHandle, task::TaskManagerHandle, update::UpdateManagerHandle};
-use crate::api::{GetApiManager, GetConfig, GetJsonRcpLinkManager, GetScheduledTaskManager, GetTaskManager, GetUpdateManager};
+use super::{backend_events::BackendEventsHandle, client::ApiManager, link::{backup::server::BackupLinkManagerHandleServer, json_rpc::server::JsonRcpLinkManagerHandleServer}, scheduled_task::ScheduledTaskManagerHandle, task::TaskManagerHandle, update::UpdateManagerHandle};
+use crate::api::{GetApiManager, GetBackupLinkManager, GetConfig, GetJsonRcpLinkManager, GetScheduledTaskManager, GetTaskManager, GetUpdateManager};
 
 pub type S = AppState;
 
@@ -17,6 +17,7 @@ pub struct AppState {
     scheduled_task_manager: Arc<ScheduledTaskManagerHandle>,
     backend_events: Arc<BackendEventsHandle>,
     json_rpc_link_handle_server: Arc<JsonRcpLinkManagerHandleServer>,
+    backup_link_handle_server: Arc<BackupLinkManagerHandleServer>,
 }
 
 impl AppState {
@@ -41,6 +42,10 @@ impl AppState {
 impl GetConfig for AppState {
     fn config(&self) -> &Config {
         &self.config
+    }
+
+    fn config_arc(&self) -> Arc<Config> {
+        self.config.clone()
     }
 }
 
@@ -74,6 +79,12 @@ impl GetJsonRcpLinkManager for AppState {
     }
 }
 
+impl GetBackupLinkManager for AppState {
+    fn backup_link_server(&self) -> &super::link::backup::server::BackupLinkManagerHandleServer {
+        &self.backup_link_handle_server
+    }
+}
+
 pub struct App {
     pub state: AppState,
 }
@@ -85,6 +96,7 @@ impl App {
         task_manager: Arc<TaskManagerHandle>,
         scheduled_task_manager: Arc<ScheduledTaskManagerHandle>,
         json_rpc_link_handle_server: Arc<JsonRcpLinkManagerHandleServer>,
+        backup_link_handle_server: Arc<BackupLinkManagerHandleServer>,
     ) -> Self {
         let state = AppState {
             config: config.clone(),
@@ -93,6 +105,7 @@ impl App {
             scheduled_task_manager,
             backend_events: BackendEventsHandle::new(vec![]).into(),
             json_rpc_link_handle_server,
+            backup_link_handle_server,
         };
 
         state.refresh_state_to_backend().await;

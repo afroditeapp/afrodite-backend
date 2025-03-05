@@ -1,13 +1,12 @@
+
 use error_stack::{report, Result, ResultExt};
-use manager_model::{JsonRpcLinkHeader, JsonRpcLinkMessage, JsonRpcLinkMessageType, ManualTaskType, NotifyBackend, ScheduledTaskStatus, ScheduledTaskType, SoftwareUpdateTaskType};
+use manager_model::{BackupMessage, BackupMessageHeader, BackupMessageType, JsonRpcLinkHeader, JsonRpcLinkMessage, JsonRpcLinkMessageType, ManualTaskType, NotifyBackend, ScheduledTaskStatus, ScheduledTaskType, SoftwareUpdateTaskType};
 use manager_model::{JsonRpcRequest, JsonRpcRequestType, JsonRpcResponse, JsonRpcResponseType, ManagerInstanceName, ManagerInstanceNameList, ManagerProtocolMode, ManagerProtocolVersion, SecureStorageEncryptionKey, ServerEvent, SoftwareUpdateStatus, SystemInfo};
 
 use tokio::io::AsyncWriteExt;
 use tokio::io::AsyncReadExt;
 
 use crate::{ClientError, ManagerClient};
-
-
 
 pub trait ClientConnectionReadWrite: ClientConnectionRead + ClientConnectionWrite {}
 impl <T: ClientConnectionRead + ClientConnectionWrite> ClientConnectionReadWrite for T {}
@@ -34,6 +33,14 @@ pub trait ConnectionUtilsRead: tokio::io::AsyncRead + Unpin  {
 
     async fn receive_u8(&mut self) -> Result<u8, ClientError> {
         self.read_u8().await.change_context(ClientError::Read)
+    }
+
+    async fn receive_vec_with_u32_len(&mut self) -> Result<Vec<u8>, ClientError> {
+        let len = self.read_u32_le().await.change_context(ClientError::Read)?;
+        let len_usize: usize = TryInto::<usize>::try_into(len).change_context(ClientError::UnsupportedDataSize)?;
+        let mut vec: Vec<u8> = vec![0; len_usize];
+        self.read_exact(&mut vec).await.change_context(ClientError::Read)?;
+        Ok(vec)
     }
 
     async fn receive_string_with_u32_len(&mut self) -> Result<String, ClientError> {
@@ -94,6 +101,26 @@ pub trait ConnectionUtilsRead: tokio::io::AsyncRead + Unpin  {
             data,
         }))
     }
+
+    /// If None, connection is disconnected
+    async fn receive_backup_link_message(&mut self) -> Result<Option<BackupMessage>, ClientError> {
+        let Some(message_type) = self.receive_u8_optional().await? else {
+            return Ok(None);
+        };
+        let message_type = TryInto::<BackupMessageType>::try_into(message_type)
+            .change_context(ClientError::Parse)?;
+        let backup_session = self.read_u32_le().await.change_context(ClientError::Read)?;
+        let data = self.receive_vec_with_u32_len().await
+            .change_context(ClientError::Read)?;
+
+        Ok(Some(BackupMessage {
+            header: BackupMessageHeader {
+                backup_session: std::num::Wrapping(backup_session),
+                message_type,
+            },
+            data,
+        }))
+    }
 }
 
 impl <T: tokio::io::AsyncRead + Unpin> ConnectionUtilsRead for T {}
@@ -101,6 +128,17 @@ impl <T: tokio::io::AsyncRead + Unpin> ConnectionUtilsRead for T {}
 pub trait ConnectionUtilsWrite: tokio::io::AsyncWrite + Unpin  {
     async fn send_u8(&mut self, byte: u8) -> Result<(), ClientError> {
         self.write_u8(byte).await.change_context(ClientError::Write)?;
+        self.flush().await.change_context(ClientError::Flush)?;
+        Ok(())
+    }
+
+    async fn send_vec_with_u32_len(&mut self, data: Vec<u8>) -> Result<(), ClientError> {
+        let len_u32: u32 = TryInto::<u32>::try_into(data.len())
+            .change_context(ClientError::UnsupportedDataSize)?;
+        self.write_u32_le(len_u32)
+            .await
+            .change_context(ClientError::Write)?;
+        self.write_all(&data).await.change_context(ClientError::Write)?;
         self.flush().await.change_context(ClientError::Flush)?;
         Ok(())
     }
@@ -161,6 +199,22 @@ pub trait ConnectionUtilsWrite: tokio::io::AsyncWrite + Unpin  {
         self.write_u32_le(message.header.sequence_number.0).await
             .change_context(ClientError::Write)?;
         self.send_string_with_u32_len(message.data).await
+            .change_context(ClientError::Write)?;
+
+        self.flush().await.change_context(ClientError::Flush)?;
+
+        Ok(())
+    }
+
+    async fn send_backup_link_message(
+        &mut self,
+        message: BackupMessage,
+    ) -> Result<(), ClientError> {
+        self.send_u8(message.header.message_type as u8).await
+            .change_context(ClientError::Write)?;
+        self.write_u32_le(message.header.backup_session.0).await
+            .change_context(ClientError::Write)?;
+        self.send_vec_with_u32_len(message.data).await
             .change_context(ClientError::Write)?;
 
         self.flush().await.change_context(ClientError::Flush)?;

@@ -1,8 +1,10 @@
 //! HTTP API types and request handlers for all servers.
 
+use std::sync::Arc;
+
 use manager_config::Config;
 
-use crate::server::{client::ApiManager, link::json_rpc::server::JsonRcpLinkManagerHandleServer, scheduled_task::ScheduledTaskManagerHandle, task::TaskManagerHandle, update::UpdateManagerHandle};
+use crate::server::{client::ApiManager, link::{backup::server::BackupLinkManagerHandleServer, json_rpc::server::JsonRcpLinkManagerHandleServer}, scheduled_task::ScheduledTaskManagerHandle, task::TaskManagerHandle, update::UpdateManagerHandle};
 
 pub mod server;
 pub mod client;
@@ -12,6 +14,7 @@ pub mod utils;
 
 pub trait GetConfig {
     fn config(&self) -> &Config;
+    fn config_arc(&self) -> Arc<Config>;
 }
 
 pub trait GetApiManager {
@@ -32,4 +35,8 @@ pub trait GetScheduledTaskManager {
 
 pub trait GetJsonRcpLinkManager {
     fn json_rpc_link_server(&self) -> &JsonRcpLinkManagerHandleServer;
+}
+
+pub trait GetBackupLinkManager {
+    fn backup_link_server(&self) -> &BackupLinkManagerHandleServer;
 }

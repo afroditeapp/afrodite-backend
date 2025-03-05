@@ -7,7 +7,7 @@ use std::{
 
 use app::S;
 use futures::future::poll_fn;
-use link::json_rpc::{client::JsonRcpLinkManagerClient, server::JsonRcpLinkManagerServer};
+use link::{backup::{server::BackupLinkManagerServer, target::BackupLinkManagerTarget}, json_rpc::{client::JsonRcpLinkManagerClient, server::JsonRcpLinkManagerServer}};
 use manager_config::Config;
 use scheduled_task::ScheduledTaskManager;
 use task::TaskManager;
@@ -103,6 +103,8 @@ impl AppServer {
             UpdateManager::new_channel();
         let (json_rpc_link_manager_server_handle, json_rpc_link_manager_server_internal_state) =
             JsonRcpLinkManagerServer::new_channel();
+        let (backup_link_manager_server_handle, backup_link_manager_server_internal_state) =
+            BackupLinkManagerServer::new_channel();
 
         let mut app = App::new(
             self.config.clone(),
@@ -110,6 +112,7 @@ impl AppServer {
             task_manager_handle.into(),
             scheduled_task_manager_handle.into(),
             json_rpc_link_manager_server_handle.into(),
+            backup_link_manager_server_handle.into(),
         )
         .await;
 
@@ -153,6 +156,20 @@ impl AppServer {
         // Start JSON RPC link manager client logic
 
         let json_rpc_link_manager_client_quit_handle = JsonRcpLinkManagerClient::new_manager(
+            app.state(),
+            server_quit_watcher.resubscribe(),
+        );
+
+        // Start backup link manager server logic
+
+        let backup_link_manager_server_quit_handle = BackupLinkManagerServer::new_manager(
+            backup_link_manager_server_internal_state,
+            server_quit_watcher.resubscribe(),
+        );
+
+        // Start backup target client logic
+
+        let backup_target_quit_handle = BackupLinkManagerTarget::new_manager(
             app.state(),
             server_quit_watcher.resubscribe(),
         );
@@ -245,6 +262,8 @@ impl AppServer {
                 .expect("Second Manager API server task panic detected");
         }
 
+        backup_target_quit_handle.wait_quit().await;
+        backup_link_manager_server_quit_handle.wait_quit().await;
         json_rpc_link_manager_client_quit_handle.wait_quit().await;
         json_rpc_link_manager_server_quit_handle.wait_quit().await;
         update_manager_quit_handle.wait_quit().await;

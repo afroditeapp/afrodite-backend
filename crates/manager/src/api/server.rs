@@ -63,10 +63,27 @@
 //! The response for [manager_model::JsonRpcLinkMessageType::ServerRequest].
 //! The sequence number is the same as in the request.
 //!
+//! ## [manager_model::ManagerProtocolMode::BackupLink]
+//!
+//! 1. Client sends u32 little-endian link password length in bytes.
+//! 2. Client sends UTF-8 link password.
+//! 3. Server sends byte 1 if login is correct. Byte 0 is sent and
+//!    connection is closed when login is incorrect.
+//!
+//! When two clients are connected, the traffic from one client is forwarded
+//! to the another.
+//!
+//! The clients can send messages to each other with the following format:
+//!
+//! - Message type (u8)
+//! - Sequence number (u32 little-endian)
+//! - Data length (u32 little-endian)
+//! - Data bytes
 
 use std::net::SocketAddr;
 use json_rpc::handle_json_rpc;
-use link::handle_json_rpc_link;
+use link::json_rpc::handle_json_rpc_link;
+use link::backup::handle_backup_link;
 use manager_api::protocol::{ClientConnectionReadWrite, ClientConnectionWrite};
 use manager_model::{ManagerProtocolMode, ServerEvent};
 
@@ -120,6 +137,8 @@ pub enum ServerError {
     ServerEventChannelBroken,
     #[error("JSON RPC link related error")]
     JsonRpcLink,
+    #[error("Backup link related error")]
+    BackupLink,
 }
 
 pub async fn handle_connection_to_server<
@@ -176,6 +195,7 @@ async fn handle_connection_to_server_with_error<
         ManagerProtocolMode::JsonRpc => handle_json_rpc(c, address, state).await,
         ManagerProtocolMode::ListenServerEvents => handle_server_events(c, address, state).await,
         ManagerProtocolMode::JsonRpcLink => handle_json_rpc_link(c, address, state).await,
+        ManagerProtocolMode::BackupLink => handle_backup_link(c, address, state).await,
     }
 }
 

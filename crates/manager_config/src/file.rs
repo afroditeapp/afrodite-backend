@@ -46,6 +46,14 @@ public_api = "127.0.0.1:4000"
 # name = "backup"
 # password = "password"
 
+# [backup_link.target]
+# password = "password"
+# url = "tls://127.0.0.1:4000"
+
+# [backup_link.server]
+# password_target = "password"
+# password_source = "password"
+
 # [secure_storage]
 # key_storage_manager_name = "default"
 # availability_check_path = "/afrodite-secure-storage/afrodite"
@@ -119,6 +127,8 @@ pub struct ConfigFile {
     pub remote_manager: Vec<ManagerInstance>,
     #[serde(default)]
     pub json_rpc_link: JsonRpcLinkConfig,
+    #[serde(default)]
+    pub backup_link: BackupLinkConfig,
     #[serde(default)]
     pub server_encryption_key: Vec<ServerEncryptionKey>,
     pub secure_storage: Option<SecureStorageConfig>,
@@ -383,4 +393,39 @@ pub struct JsonRpcLinkConfigClient {
     pub password: String,
     /// Manager server address
     pub url: Url,
+}
+
+/// Create connection between remote manager and backend for
+/// transferring backups.
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct BackupLinkConfig {
+    pub target: Option<BackupLinkConfigTarget>,
+    pub server: Option<BackupLinkConfigServer>,
+}
+
+impl BackupLinkConfig {
+    pub fn accepted_password_target(&self) -> Option<&str> {
+        self.server.as_ref().map(|v| v.password_target.as_str())
+    }
+
+    pub fn accepted_password_source(&self) -> Option<&str> {
+        self.server.as_ref().map(|v| v.password_source.as_str())
+    }
+}
+
+/// Remote manager which connects to server and receives the backups.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct BackupLinkConfigTarget {
+    /// Link login password
+    pub password: String,
+    /// Manager server address
+    pub url: Url,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct BackupLinkConfigServer {
+    /// Accepted password for client which receives the backups
+    pub password_target: String,
+    /// Accepted password for client which sends the backups
+    pub password_source: String,
 }

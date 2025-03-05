@@ -58,3 +58,38 @@ pub fn validate_json_rpc_link_login(
         Err(())
     }
 }
+
+/// If true then password has been guessed and backup link is now locked.
+static BACKUP_LINK_API_SECURITY_LOCK: AtomicBool = AtomicBool::new(false);
+
+#[allow(clippy::result_unit_err)]
+pub fn validate_backup_link_login(
+    state: &S,
+    address: SocketAddr,
+    password: &str,
+) -> Result<BackupLinkClient, ()> {
+    if BACKUP_LINK_API_SECURITY_LOCK.load(Ordering::Relaxed) {
+        Err(())
+    } else if let Some(config) = &state.config().backup_link().server {
+        if config.password_source == *password {
+            Ok(BackupLinkClient::Source)
+        } else if config.password_target == *password {
+            Ok(BackupLinkClient::Target)
+        } else {
+            API_SECURITY_LOCK.store(true, Ordering::Relaxed);
+            tracing::error!(
+                "Backup link login password has been guessed. Login is now locked. Guesser information, addr: {}",
+                address
+            );
+            Err(())
+        }
+    } else {
+        Err(())
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum BackupLinkClient {
+    Target,
+    Source,
+}

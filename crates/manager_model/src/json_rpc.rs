@@ -16,6 +16,7 @@ pub enum ManagerProtocolMode {
     JsonRpc = 0,
     ListenServerEvents = 1,
     JsonRpcLink = 2,
+    BackupLink = 3,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]

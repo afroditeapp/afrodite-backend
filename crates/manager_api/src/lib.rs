@@ -38,6 +38,8 @@ pub enum ClientError {
     Serialize,
     #[error("Unsupported string length")]
     UnsupportedStringLength,
+    #[error("Unsupported data size")]
+    UnsupportedDataSize,
     #[error("Unsupported scheme")]
     UnsupportedScheme,
     #[error("Url host part is missing")]
@@ -216,6 +218,26 @@ impl ManagerClient {
             .await
             .change_context(ClientError::Write)?;
         self.writer.send_string_with_u32_len(name.0)
+            .await
+            .change_context(ClientError::Write)?;
+        self.writer.send_string_with_u32_len(password)
+            .await
+            .change_context(ClientError::Write)?;
+        let result = self.reader.receive_u8()
+            .await
+            .change_context(ClientError::Read)?;
+        if result != 1 {
+            return Err(report!(ClientError::InvalidLogin));
+        }
+
+        Ok((self.reader, self.writer))
+    }
+
+    pub async fn backup_link(
+        mut self,
+        password: String,
+    ) -> Result<(Box<dyn ClientConnectionRead>, Box<dyn ClientConnectionWrite>), ClientError> {
+        self.writer.send_u8(ManagerProtocolMode::BackupLink as u8)
             .await
             .change_context(ClientError::Write)?;
         self.writer.send_string_with_u32_len(password)

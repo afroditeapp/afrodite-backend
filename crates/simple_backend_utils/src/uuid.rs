@@ -29,6 +29,22 @@ impl UuidBase64Url {
     pub fn for_debugging_only_zero() -> Self {
         Self(uuid::Uuid::nil())
     }
+
+    pub fn from_bytes(bytes: [u8; 16]) -> Self {
+        UuidBase64Url(Uuid::from_bytes(bytes))
+    }
+
+    pub fn from_text(text: &str) -> Result<Self, String> {
+        let mut data_slice = [0u8; 16];
+        let _ = base64::engine::general_purpose::URL_SAFE_NO_PAD
+            .decode_slice(text, &mut data_slice)
+            .map_err(|v| v.to_string())?;
+        Ok(Self::from_bytes(data_slice))
+    }
+
+    pub fn as_bytes(&self) -> &[u8; 16] {
+        self.0.as_bytes()
+    }
 }
 
 impl From<uuid::Uuid> for UuidBase64Url {

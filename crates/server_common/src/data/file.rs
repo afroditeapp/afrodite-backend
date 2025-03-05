@@ -51,6 +51,6 @@ pub enum FileError {
     #[error("File upload max file size reached")]
     FileUploadMaxFileSizeReached,
 
-    #[error("File overwriteing failed")]
-    FileOverwritingFailed,
+    #[error("File overwriting and removing failed")]
+    FileOverwritingAndRemovingFailed,
 }
