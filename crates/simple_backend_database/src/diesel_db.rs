@@ -154,7 +154,7 @@ async fn create_pool(
     for _ in 0..connection_count {
         let mut conn =
             SqliteConnection::establish(&db_str).change_context(DieselDatabaseError::Connect)?;
-        sqlite_setup_connection(config, &mut conn)?;
+        sqlite_setup_connection(&mut conn)?;
         pool.add(conn)
             .await
             .map_err(|(_, e)| e)
@@ -251,7 +251,6 @@ impl DieselReadCloseHandle {
 }
 
 pub fn sqlite_setup_connection(
-    config: &SimpleBackendConfig,
     conn: &mut SqliteConnection,
 ) -> Result<(), DieselDatabaseError> {
     let pragmas = &[
@@ -261,18 +260,7 @@ pub fn sqlite_setup_connection(
         "PRAGMA secure_delete=ON;",
     ];
 
-    let litestram_pragmas = if config.litestream().is_some() {
-        &[
-            // Litestream docs recommend 5 second timeout
-            "PRAGMA busy_timeout=5000;",
-            // Prevent backend from removing WAL files
-            "PRAGMA wal_autocheckpoint=0;",
-        ]
-    } else {
-        [].as_slice()
-    };
-
-    for pragma_str in pragmas.iter().chain(litestram_pragmas) {
+    for pragma_str in pragmas.iter() {
         diesel::sql_query(*pragma_str)
             .execute(conn)
             .change_context(DieselDatabaseError::Setup)?;

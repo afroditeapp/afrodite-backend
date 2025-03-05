@@ -14,7 +14,6 @@ pub mod email;
 pub mod event;
 pub mod file_package;
 pub mod image;
-pub mod litestream;
 pub mod manager_client;
 pub mod map;
 pub mod media_backup;
@@ -216,17 +215,6 @@ impl<T: BusinessLogic> SimpleBackend<T> {
 
         let mut terminate_signal = signal::unix::signal(SignalKind::terminate()).unwrap();
 
-        // let mut litestream = None;
-        // if let Some(litestream_config) = self.config.litestream() {
-        //     let mut litestream_manager =
-        //         LitestreamManager::new(self.config.clone(), litestream_config.clone());
-        //     litestream_manager
-        //         .start_litestream()
-        //         .await
-        //         .expect("Litestream start failed");
-        //     litestream = Some(litestream_manager);
-        // }
-
         let (server_quit_handle, server_quit_watcher) = broadcast::channel(1);
 
         let (media_backup_quit, media_backup_handle) =
@@ -375,13 +363,6 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         perf_manager_quit_handle.wait_quit().await;
         media_backup_quit.wait_quit().await;
         self.logic.on_after_server_quit().await;
-
-        // if let Some(litestream) = litestream {
-        //     match litestream.stop_litestream().await {
-        //         Ok(()) => (),
-        //         Err(e) => error!("Litestream stop failed: {:?}", e),
-        //     }
-        // }
 
         info!("Server quit done");
     }

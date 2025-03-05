@@ -16,5 +16,3 @@ manager_config.toml
 .vscode
 .idea
 .DS_STORE
-
-litestream.yml

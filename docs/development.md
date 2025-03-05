@@ -44,20 +44,6 @@ openssl x509 -in server.crt -text -noout
 RUST_LOG=debug cargo run -- test --tasks 10 --save-state --no-servers --test bot
 ```
 
-# Litestream
-
-Example config file:
-```yml
-dbs:
- - path: /afrodite-secure-storage/afrodite/backend/database/current/current.db
-   replicas:
-     - type:    sftp
-       host:    192.168.64.77:22
-       user:    ubuntu
-       path:    /home/ubuntu/litestream/current
-       key-path: /afrodite-secure-storage/afrodite/.ssh/id_ed25519
-```
-
 # Profiling build
 
 cargo build --bin afrodite-backend --timings

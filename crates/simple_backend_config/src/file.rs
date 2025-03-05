@@ -92,11 +92,6 @@ name = "history"
 # ssh_private_key = "/home/local/.ssh/id_ed25519"
 # rsync_time = "7:00"
 
-# Backup SQLite database files using litestream tool
-# [litestream]
-# binary = "/usr/bin/litestream"
-# config_file = "litestream.yml"
-
 # [scheduled_tasks]
 # daily_start_time = "3:00"
 
@@ -157,7 +152,6 @@ pub struct SimpleBackendConfigFile {
     pub lets_encrypt: Option<LetsEncryptConfig>,
 
     pub media_backup: Option<MediaBackupConfig>,
-    pub litestream: Option<LitestreamConfig>,
     pub scheduled_tasks: Option<ScheduledTasksConfig>,
     pub static_file_package_hosting: Option<StaticFilePackageHostingConfig>,
     pub image_processing: Option<ImageProcessingConfig>,
@@ -185,7 +179,6 @@ impl SimpleBackendConfigFile {
             tls: None,
             lets_encrypt: None,
             media_backup: None,
-            litestream: None,
             scheduled_tasks: None,
             static_file_package_hosting: None,
             image_processing: None,
@@ -454,15 +447,6 @@ impl TryFrom<String> for SshAddress {
             _ => Err(format!("Unknown values: {:?}", values)),
         }
     }
-}
-
-/// Config for Litestream SQLite backups
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct LitestreamConfig {
-    /// Path to Litestream binary.
-    pub binary: PathBuf,
-    /// Path to Litestream config file.
-    pub config_file: PathBuf,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

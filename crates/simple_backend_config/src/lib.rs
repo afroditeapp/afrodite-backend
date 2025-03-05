@@ -25,7 +25,7 @@ use rustls_pemfile::certs;
 use tokio_rustls::rustls::ServerConfig;
 
 use self::file::{
-    AppManagerConfig, LitestreamConfig, MediaBackupConfig, SignInWithGoogleConfig,
+    AppManagerConfig, MediaBackupConfig, SignInWithGoogleConfig,
     SimpleBackendConfigFile, SocketConfig,
 };
 
@@ -174,10 +174,6 @@ impl SimpleBackendConfig {
 
     pub fn media_backup(&self) -> Option<&MediaBackupConfig> {
         self.file.media_backup.as_ref()
-    }
-
-    pub fn litestream(&self) -> Option<&LitestreamConfig> {
-        self.file.litestream.as_ref()
     }
 
     pub fn backend_code_version(&self) -> &str {
