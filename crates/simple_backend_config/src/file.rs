@@ -86,12 +86,6 @@ name = "history"
 # production_servers = false
 # cache_dir = "lets_encrypt_cache"
 
-# [media_backup]
-# ssh_address = "user@192.168.64.1"
-# target_location = "/home/user/media_backup"
-# ssh_private_key = "/home/local/.ssh/id_ed25519"
-# rsync_time = "7:00"
-
 # [scheduled_tasks]
 # daily_start_time = "3:00"
 
@@ -151,7 +145,6 @@ pub struct SimpleBackendConfigFile {
     /// when debug mode is disabled.
     pub lets_encrypt: Option<LetsEncryptConfig>,
 
-    pub media_backup: Option<MediaBackupConfig>,
     pub scheduled_tasks: Option<ScheduledTasksConfig>,
     pub static_file_package_hosting: Option<StaticFilePackageHostingConfig>,
     pub image_processing: Option<ImageProcessingConfig>,
@@ -178,7 +171,6 @@ impl SimpleBackendConfigFile {
             firebase_cloud_messaging: None,
             tls: None,
             lets_encrypt: None,
-            media_backup: None,
             scheduled_tasks: None,
             static_file_package_hosting: None,
             image_processing: None,
@@ -415,38 +407,6 @@ pub struct LetsEncryptConfig {
     ///
     /// The directory is created automatically if it does not exist.
     pub cache_dir: PathBuf,
-}
-
-/// Backup media files to remote server using SSH
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct MediaBackupConfig {
-    /// For example "user@host"
-    pub ssh_address: SshAddress,
-    /// Target media backup location on remote server.
-    pub target_location: PathBuf,
-    pub ssh_private_key: AbsolutePathNoWhitespace,
-    pub rsync_time: UtcTimeValue,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
-#[serde(try_from = "String")]
-pub struct SshAddress {
-    pub username: String,
-    pub address: String,
-}
-
-impl TryFrom<String> for SshAddress {
-    type Error = String;
-    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
-        let values = value.trim().split(&['@']).collect::<Vec<&str>>();
-        match values[..] {
-            [username, address] => Ok(Self {
-                username: username.to_string(),
-                address: address.to_string(),
-            }),
-            _ => Err(format!("Unknown values: {:?}", values)),
-        }
-    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

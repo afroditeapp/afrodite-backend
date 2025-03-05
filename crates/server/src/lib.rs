@@ -44,7 +44,6 @@ use shutdown_tasks::ShutdownTasks;
 use simple_backend::{
     app::SimpleBackendAppState,
     email::{EmailManager, EmailManagerQuitHandle},
-    media_backup::MediaBackupHandle,
     perf::AllCounters,
     web_socket::WebSocketManager,
     BusinessLogic, ServerQuitWatcher,
@@ -230,7 +229,6 @@ impl BusinessLogic for DatingAppBusinessLogic {
     async fn on_before_server_start(
         &mut self,
         simple_state: SimpleBackendAppState,
-        media_backup_handle: MediaBackupHandle,
         server_quit_watcher: ServerQuitWatcher,
     ) -> Self::AppState {
         let (push_notification_sender, push_notification_receiver) =
@@ -241,7 +239,6 @@ impl BusinessLogic for DatingAppBusinessLogic {
             DatabaseManager::new(
                 self.config.simple_backend().data_dir().to_path_buf(),
                 self.config.clone(),
-                media_backup_handle,
                 push_notification_sender.clone(),
                 email_sender.clone(),
             )

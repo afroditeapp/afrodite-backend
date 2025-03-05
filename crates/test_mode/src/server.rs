@@ -198,7 +198,6 @@ fn new_config(
         manager: None,
         tls: None,
         lets_encrypt: None,
-        media_backup: None,
         tile_map: None,
         firebase_cloud_messaging: None,
         email_sending: None,

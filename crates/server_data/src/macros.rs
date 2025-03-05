@@ -89,10 +89,6 @@ macro_rules! define_cmd_wrapper_write {
                 $crate::db_manager::InternalWriting::location(&self.0)
             }
 
-            fn media_backup(&self) -> &$crate::db_manager::handle_types::MediaBackupHandle {
-                $crate::db_manager::InternalWriting::media_backup(&self.0)
-            }
-
             fn push_notification_sender(
                 &self,
             ) -> &$crate::db_manager::handle_types::PushNotificationSender {

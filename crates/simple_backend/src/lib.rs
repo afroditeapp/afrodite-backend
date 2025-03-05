@@ -16,7 +16,6 @@ pub mod file_package;
 pub mod image;
 pub mod manager_client;
 pub mod map;
-pub mod media_backup;
 pub mod perf;
 pub mod sign_in_with;
 pub mod utils;
@@ -34,7 +33,6 @@ use futures::future::poll_fn;
 use hyper::body::Incoming;
 use hyper_util::rt::{TokioExecutor, TokioIo};
 use manager_client::{ManagerApiClient, ManagerConnectionManager, ManagerEventHandler};
-use media_backup::MediaBackupHandle;
 use perf::AllCounters;
 use tls::{LetsEncryptAcmeSocketUtils, SimpleBackendTlsConfig, TlsManager};
 use tokio_rustls_acme::AcmeAcceptor;
@@ -59,10 +57,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilte
 use utoipa_swagger_ui::SwaggerUi;
 
 use self::web_socket::WebSocketManager;
-use crate::{
-    media_backup::MediaBackupManager,
-    perf::{PerfMetricsManager, PerfMetricsManagerData},
-};
+use crate::perf::{PerfMetricsManager, PerfMetricsManagerData};
 
 pub const HTTPS_DEFAULT_PORT: u16 = 443;
 pub const SERVER_START_MESSAGE: &str = "Server start complete";
@@ -135,7 +130,6 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
     fn on_before_server_start(
         &mut self,
         simple_state: SimpleBackendAppState,
-        media_backup_handle: MediaBackupHandle,
         quit_notification: ServerQuitWatcher,
     ) -> impl std::future::Future<Output = Self::AppState> + Send;
 
@@ -217,9 +211,6 @@ impl<T: BusinessLogic> SimpleBackend<T> {
 
         let (server_quit_handle, server_quit_watcher) = broadcast::channel(1);
 
-        let (media_backup_quit, media_backup_handle) =
-            MediaBackupManager::new_manager(self.config.clone(), server_quit_watcher.resubscribe());
-
         let perf_data = Arc::new(PerfMetricsManagerData::new(self.logic.all_counters()));
         let perf_manager_quit_handle =
             PerfMetricsManager::new_manager(perf_data.clone(), server_quit_watcher.resubscribe());
@@ -237,7 +228,6 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             .logic
             .on_before_server_start(
                 simple_state,
-                media_backup_handle,
                 server_quit_watcher.resubscribe(),
             )
             .await;
@@ -361,7 +351,6 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         drop(state);
         manager_quit_handle.wait_quit().await;
         perf_manager_quit_handle.wait_quit().await;
-        media_backup_quit.wait_quit().await;
         self.logic.on_after_server_quit().await;
 
         info!("Server quit done");

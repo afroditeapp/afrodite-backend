@@ -25,7 +25,7 @@ use rustls_pemfile::certs;
 use tokio_rustls::rustls::ServerConfig;
 
 use self::file::{
-    AppManagerConfig, MediaBackupConfig, SignInWithGoogleConfig,
+    AppManagerConfig, SignInWithGoogleConfig,
     SimpleBackendConfigFile, SocketConfig,
 };
 
@@ -170,10 +170,6 @@ impl SimpleBackendConfig {
 
     pub fn manager_api_root_certificate(&self) -> Option<&reqwest::Certificate> {
         self.manager_api_root_certificate.as_ref()
-    }
-
-    pub fn media_backup(&self) -> Option<&MediaBackupConfig> {
-        self.file.media_backup.as_ref()
     }
 
     pub fn backend_code_version(&self) -> &str {

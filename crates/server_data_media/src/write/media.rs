@@ -108,12 +108,6 @@ impl WriteCommandsMedia<'_> {
         })
         .await?;
 
-        // TODO(prod): Update media backup code
-        // self.media_backup()
-        //     .backup_jpeg_image(id.as_id(), content_id)
-        //     .await
-        //     .change_context(DataError::MediaBackup)
-
         Ok(content_id)
     }
 

@@ -14,7 +14,6 @@ pub use server_common::{
     data::{DataError, IntoDataError},
     result,
 };
-use simple_backend::media_backup::MediaBackupHandle;
 use tracing::info;
 
 use crate::{
@@ -34,7 +33,6 @@ pub mod handle_types {
         CurrentReadHandle, CurrentWriteHandle, HistoryReadHandle, HistoryWriteHandle,
     };
     pub use server_common::{app::EmailSenderImpl, push_notifications::PushNotificationSender};
-    pub use simple_backend::media_backup::MediaBackupHandle;
 
     pub type ReadHandleType = super::RouterDatabaseReadHandle;
     pub type WriteHandleType = super::RouterDatabaseWriteHandle;
@@ -80,7 +78,6 @@ impl DatabaseManager {
     pub async fn new<T: AsRef<Path>>(
         database_dir: T,
         config: Arc<Config>,
-        media_backup: MediaBackupHandle,
         push_notification_sender: PushNotificationSender,
         email_sender: EmailSenderImpl,
     ) -> Result<(Self, RouterDatabaseReadHandle, RouterDatabaseWriteHandle), DataError> {
@@ -147,7 +144,6 @@ impl DatabaseManager {
             current_write_handle: current_write_handle.clone(),
             history_write_handle: history_write_handle.clone(),
             location: index.into(),
-            media_backup,
             push_notification_sender,
             email_sender,
         };
@@ -190,7 +186,6 @@ pub struct RouterDatabaseWriteHandle {
     current_write_handle: CurrentWriteHandle,
     history_write_handle: HistoryWriteHandle,
     location: Arc<LocationIndexManager>,
-    media_backup: MediaBackupHandle,
     push_notification_sender: PushNotificationSender,
     email_sender: EmailSenderImpl,
 }
@@ -231,7 +226,6 @@ pub trait InternalWriting {
     fn history_read_handle(&self) -> &HistoryReadHandle;
     fn cache(&self) -> &DatabaseCache;
     fn location(&self) -> &LocationIndexManager;
-    fn media_backup(&self) -> &MediaBackupHandle;
     fn push_notification_sender(&self) -> &PushNotificationSender;
     fn email_sender(&self) -> &EmailSenderImpl;
 
@@ -334,10 +328,6 @@ impl InternalWriting for &RouterDatabaseWriteHandle {
 
     fn location(&self) -> &LocationIndexManager {
         &self.location
-    }
-
-    fn media_backup(&self) -> &MediaBackupHandle {
-        &self.media_backup
     }
 
     fn push_notification_sender(&self) -> &PushNotificationSender {

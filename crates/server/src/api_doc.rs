@@ -9,7 +9,7 @@ use server_data::{
 use server_data_all::app::DataAllUtilsImpl;
 use server_state::{demo::DemoModeManager, StateForRouterCreation, S};
 use simple_backend::{
-    app::SimpleBackendAppState, manager_client::ManagerApiClient, media_backup::MediaBackupHandle, perf::PerfMetricsManagerData
+    app::SimpleBackendAppState, manager_client::ManagerApiClient, perf::PerfMetricsManagerData
 };
 use simple_backend_config::SimpleBackendConfig;
 use utoipa::OpenApi;
@@ -186,7 +186,6 @@ impl ApiDoc {
         let (_, router_database_handle, router_database_write_handle) = DatabaseManager::new(
             config.simple_backend().data_dir().to_path_buf(),
             config.clone(),
-            MediaBackupHandle::broken_handle_for_api_doc_json(),
             push_notification_sender.clone(),
             email_sender.clone(),
         )

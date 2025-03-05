@@ -24,8 +24,6 @@ pub enum DataError {
     Io,
     #[error("Profile index error")]
     ProfileIndex,
-    #[error("Media backup error")]
-    MediaBackup,
     #[error("Image process error")]
     ImageProcess,
 
