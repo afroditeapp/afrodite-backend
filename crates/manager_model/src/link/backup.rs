@@ -19,17 +19,17 @@ pub enum BackupMessageType {
     /// - Content ID UUID count (u8)
     /// - Content ID UUID (16 bytes, big-endian)
     ContentList = 2,
-    /// Source sends this to target when answering to content query.
-    ///
-    /// Data is content bytes or empty if there is some failure.
-    ContentQueryAnswer = 3,
     /// Target sends this to source if it does not have data for the content.
     ///
     /// Data:
     ///
     /// - Account ID UUID (16 bytes, big-endian)
     /// - Content ID UUID (16 bytes, big-endian)
-    ContentQuery = 4,
+    ContentQuery = 3,
+    /// Source sends this to target when answering to content query.
+    ///
+    /// Data is content bytes or empty if there is some failure.
+    ContentQueryAnswer = 4,
     /// When target is handled the received content list the target
     /// sends this to source.
     ContentListSyncDone = 5,
