@@ -7,7 +7,7 @@ use std::{
 use error_stack::{Report, Result, ResultExt};
 use manager_model::{ManagerInstanceName, SecureStorageEncryptionKey};
 use serde::{Deserialize, Serialize};
-use simple_backend_utils::{time::UtcTimeValue, ContextExt};
+use simple_backend_utils::{time::{DurationValue, UtcTimeValue}, ContextExt};
 use url::Url;
 
 use super::GetConfigError;
@@ -49,6 +49,7 @@ public_api = "127.0.0.1:4000"
 # [backup_link.target]
 # password = "password"
 # url = "tls://127.0.0.1:4000"
+# file_backup_retention_time = "30d" # Default
 
 # [backup_link.server]
 # password_target = "password"
@@ -411,6 +412,10 @@ impl BackupLinkConfig {
     pub fn accepted_password_source(&self) -> Option<&str> {
         self.server.as_ref().map(|v| v.password_source.as_str())
     }
+
+    pub fn file_backup_retention_time(&self) -> DurationValue {
+        self.target.as_ref().and_then(|v| v.file_backup_retention_time).unwrap_or(DurationValue::from_days(30))
+    }
 }
 
 /// Remote manager which connects to server and receives the backups.
@@ -420,6 +425,7 @@ pub struct BackupLinkConfigTarget {
     pub password: String,
     /// Manager server address
     pub url: Url,
+    file_backup_retention_time: Option<DurationValue>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

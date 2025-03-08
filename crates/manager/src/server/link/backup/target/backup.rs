@@ -1,7 +1,8 @@
-use std::{collections::HashSet, num::Wrapping, path::{Path, PathBuf}, sync::Arc};
+use std::{collections::HashSet, num::Wrapping, path::{Path, PathBuf}, sync::Arc, time::SystemTime};
 
 use chrono::Utc;
 use manager_config::Config;
+use simple_backend_model::UnixTime;
 use simple_backend_utils::{file::overwrite_and_remove_if_exists, ContextExt, IntoReportFromString, UuidBase64Url};
 use tokio::io::AsyncWriteExt;
 use tracing::warn;
@@ -233,7 +234,7 @@ impl SaveFileBackup {
             .change_context(BackupTargetError::Write)?;
 
         let time = Utc::now().format("%Y-%m-%d_%H-%M-%S");
-        let name = format!("{}_{}", backup_name, time);
+        let name = format!("backup_{}_{}", backup_name, time);
         let target_path = BackupDirUtils::new(&config)
             .file_path(&name);
 
@@ -295,5 +296,58 @@ impl SaveFileBackup {
             .change_context(BackupTargetError::FileRename)?;
 
         Ok(())
+    }
+}
+
+pub struct DeleteOldFileBackups;
+
+impl DeleteOldFileBackups {
+    /// Returns how many files were deleted.
+    pub async fn run(config: Arc<Config>) -> Result<u64, BackupTargetError> {
+        let dir = BackupDirUtils::new(&config).create_files_dir_if_needed();
+
+        let mut iterator = tokio::fs::read_dir(dir)
+            .await
+            .change_context(BackupTargetError::Read)?;
+
+        let current_time = TryInto::<u64>::try_into(UnixTime::current_time().ut)
+            .change_context(BackupTargetError::Time)?;
+
+        let mut deleted_count = 0;
+
+        while let Some(e) = iterator.next_entry().await.change_context(BackupTargetError::Read)? {
+            if !e.path().is_file() {
+                continue;
+            }
+
+            let name = e.file_name();
+            let Some(text) = name.to_str() else {
+                return Err(BackupTargetError::InvalidFileName.report());
+            };
+
+            if !text.starts_with("backup_") {
+                continue;
+            }
+
+            let unix_time_seconds = e.metadata()
+                .await
+                .change_context(BackupTargetError::Read)?
+                .created()
+                .change_context(BackupTargetError::Read)?
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .change_context(BackupTargetError::Read)?
+                .as_secs();
+
+            let deletion_allowed_seconds = unix_time_seconds + Into::<u64>::into(config.backup_link().file_backup_retention_time().seconds);
+
+            if current_time >= deletion_allowed_seconds {
+                overwrite_and_remove_if_exists(&e.path())
+                    .await
+                    .change_context(BackupTargetError::FileOverwritingAndRemovingFailed)?;
+                deleted_count += 1;
+            }
+        }
+
+        Ok(deleted_count)
     }
 }

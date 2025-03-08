@@ -1,7 +1,7 @@
 
 use std::{num::Wrapping, sync::Arc, time::Duration};
 
-use backup::{SaveContentBackup, SaveFileBackup};
+use backup::{DeleteOldFileBackups, SaveContentBackup, SaveFileBackup};
 use error_stack::{FutureExt, Result, ResultExt};
 use manager_api::{protocol::{ClientConnectionRead, ClientConnectionWrite, ConnectionUtilsRead, ConnectionUtilsWrite}, ClientConfig, ManagerClient};
 use manager_config::{file::BackupLinkConfigTarget, Config};
@@ -42,6 +42,9 @@ enum BackupTargetError {
     #[error("Invalid content ID")]
     InvalidContentId,
 
+    #[error("Invalid file name")]
+    InvalidFileName,
+
     #[error("File overwriting and removing failed")]
     FileOverwritingAndRemovingFailed,
 
@@ -62,6 +65,9 @@ enum BackupTargetError {
 
     #[error("File rename")]
     FileRename,
+
+    #[error("Time related error")]
+    Time,
 }
 
 #[derive(Debug)]
@@ -276,6 +282,7 @@ struct BackupSessionTaskTarget {
     synced_accounts: u64,
     synced_content: u64,
     received_files: u64,
+    deleted_files: u64,
 }
 
 impl BackupSessionTaskTarget {
@@ -293,6 +300,7 @@ impl BackupSessionTaskTarget {
             synced_accounts: 0,
             synced_content: 0,
             received_files: 0,
+            deleted_files: 0,
         }
     }
 
@@ -304,7 +312,13 @@ impl BackupSessionTaskTarget {
             Ok(()) => (),
             Err(e) => error!("Backup session error: {:?}", e),
         }
-        info!("Backup session completed, accounts: {}, content: {}, files: {}", self.synced_accounts, self.synced_content, self.received_files);
+        info!(
+            "Backup session completed, accounts: {}, content: {}, files: {}, deleted files: {}",
+            self.synced_accounts,
+            self.synced_content,
+            self.received_files,
+            self.deleted_files,
+        );
     }
 
     pub async fn run_and_result(
@@ -366,6 +380,9 @@ impl BackupSessionTaskTarget {
                 }
             }
         }
+
+        self.deleted_files = DeleteOldFileBackups::run(self.config.clone())
+            .await?;
 
         Ok(())
     }
