@@ -1,7 +1,7 @@
 
-use std::{sync::Arc, time::Duration};
+use std::{num::Wrapping, sync::Arc, time::Duration};
 
-use backup::SaveContentBackup;
+use backup::{SaveContentBackup, SaveFileBackup};
 use error_stack::{FutureExt, Result, ResultExt};
 use manager_api::{protocol::{ClientConnectionRead, ClientConnectionWrite, ConnectionUtilsRead, ConnectionUtilsWrite}, ClientConfig, ManagerClient};
 use manager_config::{file::BackupLinkConfigTarget, Config};
@@ -47,6 +47,21 @@ enum BackupTargetError {
 
     #[error("Directory removing failed")]
     RemoveDir,
+
+    #[error("File backup already exists")]
+    FileBackupAlreadyExists,
+
+    #[error("File backup packet number mismatch")]
+    FileBackupPacketNumberMismatch,
+
+    #[error("File flush")]
+    FileFlush,
+
+    #[error("File sync")]
+    FileSync,
+
+    #[error("File rename")]
+    FileRename,
 }
 
 #[derive(Debug)]
@@ -253,7 +268,6 @@ impl BackupTargetState {
     }
 }
 
-
 struct BackupSessionTaskTarget {
     config: Arc<Config>,
     sender: mpsc::Sender<BackupMessage>,
@@ -261,6 +275,7 @@ struct BackupSessionTaskTarget {
     current_backup_session: u32,
     synced_accounts: u64,
     synced_content: u64,
+    received_files: u64,
 }
 
 impl BackupSessionTaskTarget {
@@ -277,6 +292,7 @@ impl BackupSessionTaskTarget {
             current_backup_session,
             synced_accounts: 0,
             synced_content: 0,
+            received_files: 0,
         }
     }
 
@@ -288,7 +304,7 @@ impl BackupSessionTaskTarget {
             Ok(()) => (),
             Err(e) => error!("Backup session error: {:?}", e),
         }
-        info!("Backup session completed, accounts: {}, content: {}", self.synced_accounts, self.synced_content);
+        info!("Backup session completed, accounts: {}, content: {}, files: {}", self.synced_accounts, self.synced_content, self.received_files);
     }
 
     pub async fn run_and_result(
@@ -333,6 +349,24 @@ impl BackupSessionTaskTarget {
 
         backup.finalize().await?;
 
+        loop {
+            let file_name = self.receive_start_file_backup().await?;
+            if file_name.is_empty() {
+                break;
+            }
+            let mut state = SaveFileBackup::new(self.config.clone(), &file_name).await?;
+            loop {
+                let (packet_number, data) = self.receive_file_backup_data().await?;
+                if data.is_empty() {
+                    state.finalize(packet_number).await?;
+                    self.received_files += 1;
+                    break;
+                } else {
+                    state.save_packet(packet_number, data).await?;
+                }
+            }
+        }
+
         Ok(())
     }
 
@@ -352,6 +386,26 @@ impl BackupSessionTaskTarget {
         };
         match m {
             SourceToTargetMessage::ContentQueryAnswer { data } => Ok(data),
+            _ => Err(BackupTargetError::Protocol.report()),
+        }
+    }
+
+    pub async fn receive_start_file_backup(&mut self) -> Result<String, BackupTargetError> {
+        let Some(m) = self.receiver.recv().await else {
+            return Err(BackupTargetError::BrokenMessageChannel.report());
+        };
+        match m {
+            SourceToTargetMessage::StartFileBackup { file_name } => Ok(file_name),
+            _ => Err(BackupTargetError::Protocol.report()),
+        }
+    }
+
+    pub async fn receive_file_backup_data(&mut self) -> Result<(Wrapping<u32>, Vec<u8>), BackupTargetError> {
+        let Some(m) = self.receiver.recv().await else {
+            return Err(BackupTargetError::BrokenMessageChannel.report());
+        };
+        match m {
+            SourceToTargetMessage::FileBackupData { package_number, data } => Ok((package_number, data)),
             _ => Err(BackupTargetError::Protocol.report()),
         }
     }

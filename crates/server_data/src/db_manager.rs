@@ -348,6 +348,8 @@ impl<'a> WriteAccessProvider<'a> for &'a RouterDatabaseWriteHandle {
     }
 }
 
+/// Read only access to SQLite databases and
+/// read and write access to cache.
 #[derive(Debug)]
 pub struct RouterDatabaseReadHandle {
     root: Arc<DatabaseRoot>,
@@ -420,6 +422,21 @@ pub trait InternalReading {
             .await
     }
 
+    /// Use only for database backups
+    async fn db_read_raw_no_transaction<
+        T: FnOnce(database::DbReadMode<'_>) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        DbReaderRaw::new(self.current_read_handle())
+            .db_read_no_transaction(cmd)
+            .await
+    }
+
     async fn db_read_history_raw<
         T: FnOnce(database::DbReadModeHistory<'_>) -> error_stack::Result<R, DieselDatabaseError>
             + Send
@@ -431,6 +448,21 @@ pub trait InternalReading {
     ) -> error_stack::Result<R, DieselDatabaseError> {
         DbReaderHistoryRaw::new(self.history_read_handle())
             .db_read_history(cmd)
+            .await
+    }
+
+    /// Use only for database backups
+    async fn db_read_history_raw_no_transaction<
+        T: FnOnce(database::DbReadModeHistory<'_>) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        DbReaderHistoryRaw::new(self.history_read_handle())
+            .db_read_history_no_transaction(cmd)
             .await
     }
 }

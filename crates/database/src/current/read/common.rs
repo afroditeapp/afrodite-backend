@@ -1,4 +1,4 @@
-use diesel::{prelude::*, SelectableHelper};
+use diesel::{prelude::*, sql_query, sql_types::Text, SelectableHelper};
 use error_stack::Result;
 use model::{Account, AccountId, AccountIdDb, AccountIdInternal, Permissions};
 use simple_backend_database::diesel_db::DieselDatabaseError;
@@ -78,5 +78,13 @@ impl CurrentReadCommon<'_> {
             .into_db_error(())?;
 
         Ok(AccountIdInternal::new(db_id, uuid_value))
+    }
+
+    pub fn backup_current_database(&mut self, file_name: String) -> Result<(), DieselDatabaseError> {
+        sql_query("VACUUM INTO ?")
+            .bind::<Text, _>(file_name)
+            .execute(self.conn())
+            .into_db_error(())?;
+        Ok(())
     }
 }

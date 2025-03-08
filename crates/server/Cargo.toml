@@ -49,6 +49,7 @@ server_router_media = { path = "../server_router_media" }
 server_router_chat = { path = "../server_router_chat" }
 
 manager_model = { path = "../manager_model" }
+manager_api = { path = "../manager_api" }
 
 simple_backend = { path = "../simple_backend" }
 simple_backend_utils = { path = "../simple_backend_utils" }

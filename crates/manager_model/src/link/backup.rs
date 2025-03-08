@@ -33,6 +33,22 @@ pub enum BackupMessageType {
     /// When target is handled the received content list the target
     /// sends this to source.
     ContentListSyncDone = 5,
+    /// Start file backup transfer. Backup source client sends this
+    /// after the last [BackupMessageType::ContentList]. When file name
+    /// is empty all files are backuped.
+    ///
+    /// Data:
+    ///
+    /// - File name UTF-8 bytes
+    StartFileBackup = 6,
+    /// File backup data package. Empty package means that transfer is
+    /// completed.
+    ///
+    /// Data:
+    ///
+    /// - Package number (u32, little-endian, can wrap)
+    /// - Data
+    FileBackupData = 7,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -73,6 +89,13 @@ pub enum SourceToTargetMessage {
     ContentQueryAnswer {
         data: Vec<u8>,
     },
+    StartFileBackup {
+        file_name: String,
+    },
+    FileBackupData {
+        package_number: Wrapping<u32>,
+        data: Vec<u8>,
+    },
 }
 
 impl SourceToTargetMessage {
@@ -81,6 +104,8 @@ impl SourceToTargetMessage {
             Self::StartBackupSession => BackupMessageType::StartBackupSession,
             Self::ContentList { .. } => BackupMessageType::ContentList,
             Self::ContentQueryAnswer { .. } => BackupMessageType::ContentQueryAnswer,
+            Self::StartFileBackup { .. } => BackupMessageType::StartFileBackup,
+            Self::FileBackupData { .. } => BackupMessageType::FileBackupData,
         };
 
         let data = match self {
@@ -99,6 +124,10 @@ impl SourceToTargetMessage {
             }
             Self::ContentQueryAnswer { data } =>
                 data,
+            Self::StartFileBackup { file_name } =>
+                file_name.into(),
+            Self::FileBackupData { package_number, data } =>
+                package_number.0.to_le_bytes().into_iter().chain(data).collect()
         };
 
         Ok(BackupMessage {
@@ -158,6 +187,20 @@ impl TryFrom<BackupMessage> for SourceToTargetMessage {
             }
             BackupMessageType::ContentQueryAnswer =>
                 SourceToTargetMessage::ContentQueryAnswer { data: value.data },
+            BackupMessageType::StartFileBackup => {
+                let file_name = String::from_utf8(value.data)
+                    .map_err(|e| e.to_string())?;
+                SourceToTargetMessage::StartFileBackup { file_name }
+            }
+            BackupMessageType::FileBackupData => {
+                let Some((package_number, data)) = value.data.split_at_checked(4) else {
+                    return Err("No enough data".to_string());
+                };
+                let package_number = TryInto::<[u8; 4]>::try_into(package_number).map_err(|e| e.to_string())?;
+                let package_number = Wrapping(u32::from_le_bytes(package_number));
+                let data = data.to_vec();
+                SourceToTargetMessage::FileBackupData { package_number, data }
+            }
         };
 
         Ok(m)
@@ -208,7 +251,9 @@ impl TryFrom<BackupMessage> for TargetToSourceMessage {
             BackupMessageType::Empty |
             BackupMessageType::StartBackupSession |
             BackupMessageType::ContentList |
-            BackupMessageType::ContentQueryAnswer =>
+            BackupMessageType::ContentQueryAnswer |
+            BackupMessageType::StartFileBackup |
+            BackupMessageType::FileBackupData =>
                 return Err(format!("Type conversion for message type {:?} is not supported", value.header.message_type)),
             BackupMessageType::ContentListSyncDone =>
                 Self::ContentListSyncDone,

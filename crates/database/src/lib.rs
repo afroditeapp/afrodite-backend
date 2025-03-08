@@ -268,6 +268,28 @@ impl<'a> DbReaderRaw<'a> {
         })
         .await?
     }
+
+    pub async fn db_read_no_transaction<
+        T: FnOnce(DbReadMode<'_>) -> error_stack::Result<R, DieselDatabaseError> + Send + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        let conn = self
+            .db
+            .0
+            .diesel()
+            .pool()
+            .get()
+            .await
+            .change_context(DieselDatabaseError::GetConnection)?;
+
+        conn.interact(move |conn| {
+            cmd(DbReadMode(conn))
+        })
+        .await?
+    }
 }
 
 pub struct DbReaderHistoryRaw<'a> {
@@ -311,6 +333,30 @@ impl<'a> DbReaderHistoryRaw<'a> {
 
         conn.interact(move |conn| {
             Self::transaction(conn, move |conn| cmd(conn).map_err(|err| err.into()))
+        })
+        .await?
+    }
+
+    pub async fn db_read_history_no_transaction<
+        T: FnOnce(DbReadModeHistory<'_>) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        let conn = self
+            .db
+            .0
+            .diesel()
+            .pool()
+            .get()
+            .await
+            .change_context(DieselDatabaseError::GetConnection)?;
+
+        conn.interact(move |conn| {
+            cmd(DbReadModeHistory(conn))
         })
         .await?
     }

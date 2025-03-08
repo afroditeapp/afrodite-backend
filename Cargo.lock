@@ -2544,6 +2544,7 @@ name = "manager"
 version = "0.0.0"
 dependencies = [
  "base16ct",
+ "chrono",
  "error-stack",
  "flate2",
  "futures",
@@ -4382,6 +4383,7 @@ dependencies = [
  "axum",
  "config",
  "error-stack",
+ "manager_api",
  "manager_model",
  "model",
  "model_account",

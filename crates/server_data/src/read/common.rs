@@ -7,7 +7,7 @@ use server_common::data::IntoDataError;
 
 use super::{super::DataError, DbRead};
 use crate::{
-    cache::CacheReadCommon, define_cmd_wrapper_read, id::ToAccountIdInternal, result::Result
+    cache::CacheReadCommon, db_manager::InternalReading, define_cmd_wrapper_read, id::ToAccountIdInternal, result::Result
 };
 
 define_cmd_wrapper_read!(ReadCommandsCommon);
@@ -74,6 +74,12 @@ impl ReadCommandsCommon<'_> {
 
     pub async fn account_ids_internal_vec(&self) -> Result<Vec<AccountIdInternal>, DataError> {
         self.db_read(move |mut cmds| cmds.common().account_ids_internal())
+            .await
+            .into_error()
+    }
+
+    pub async fn backup_current_database(&self, file_name: String) -> Result<(), DataError> {
+        self.db_read_raw_no_transaction(move |mut cmds| cmds.common().backup_current_database(file_name))
             .await
             .into_error()
     }

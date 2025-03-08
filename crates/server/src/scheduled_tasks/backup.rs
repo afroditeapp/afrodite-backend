@@ -1,9 +1,12 @@
 
 
+use std::num::Wrapping;
 use std::sync::atomic::{AtomicU32, Ordering};
 
+use manager_api::backup::BackupSourceClient;
 use manager_model::{AccountAndContent, SourceToTargetMessage, TargetToSourceMessage};
 use model::{AccountId, ContentId};
+use server_api::app::GetConfig;
 use server_api::{
     app::ReadData,
     result::WrappedContextExt,
@@ -14,9 +17,15 @@ use server_data_media::read::GetReadMediaCommands;
 use server_state::S;
 use simple_backend::ServerQuitWatcher;
 use simple_backend::app::GetManagerApi;
+use simple_backend_config::file::DatabaseInfo;
+use simple_backend_utils::file::overwrite_and_remove_if_exists;
+use tokio::io::AsyncReadExt;
 use tokio::sync::broadcast::error::TryRecvError;
+use tracing::warn;
 
 use super::ScheduledTaskError;
+
+const DATABASE_BACKUP_TMP_FILE_NAME: &str = "database_backup.tmp";
 
 static BACKUP_SESSION: AtomicU32 = AtomicU32::new(0);
 
@@ -97,11 +106,103 @@ pub async fn backup_data(
         }
     }
 
+    // Empty file name ends content backup waiting
     backup_client.send_message(SourceToTargetMessage::ContentList { data: vec![] })
         .await
         .change_context(ScheduledTaskError::Backup)?;
 
-    // TODO(prod): SQLite database backups
+    let tmp_db = tmp_db_path_string(state)?;
+
+    for db in state.config().simple_backend().databases() {
+        let name = db.file_name();
+        let tmp_db_clone = tmp_db.clone();
+
+        overwrite_and_remove_if_exists(tmp_db.as_ref())
+            .await
+            .change_context(ScheduledTaskError::Backup)?;
+
+        match name.as_str() {
+            "current" => {
+                state
+                    .read()
+                    .common()
+                    .backup_current_database(tmp_db_clone)
+                    .await
+                    .change_context(ScheduledTaskError::DatabaseError)?;
+            }
+            "history" => {
+                state
+                    .read()
+                    .common_history()
+                    .backup_history_database(tmp_db_clone)
+                    .await
+                    .change_context(ScheduledTaskError::DatabaseError)?;
+            }
+            unknown_name => {
+                warn!("Unknown database {}", unknown_name);
+                continue;
+            }
+        };
+
+        send_backup_db(db, &tmp_db, &mut backup_client).await?;
+
+        overwrite_and_remove_if_exists(tmp_db.as_ref())
+            .await
+            .change_context(ScheduledTaskError::Backup)?;
+    }
+
+    // Empty file name ends file backup waiting
+    backup_client.send_message(SourceToTargetMessage::StartFileBackup { file_name: String::new() })
+        .await
+        .change_context(ScheduledTaskError::Backup)?;
 
     Ok(())
+}
+
+async fn send_backup_db(
+    info: &DatabaseInfo,
+    tmp_db_path: &str,
+    backup_client: &mut BackupSourceClient,
+) -> Result<(), ScheduledTaskError> {
+    backup_client.send_message(SourceToTargetMessage::StartFileBackup { file_name: info.file_name() })
+        .await
+        .change_context(ScheduledTaskError::Backup)?;
+
+    let mut file = tokio::fs::File::open(tmp_db_path)
+        .await
+        .change_context(ScheduledTaskError::Backup)?;
+
+    let buffer_size: usize = 1024 * 1024;
+    let mut read_buffer: Vec<u8> = vec![0; buffer_size];
+    let mut next_packet_number: Wrapping<u32> = Wrapping(0);
+
+    loop {
+        let size = file.read(&mut read_buffer)
+            .await
+            .change_context(ScheduledTaskError::Backup)?;
+        let data = read_buffer[..size].to_vec();
+
+        backup_client.send_message(SourceToTargetMessage::FileBackupData { package_number: next_packet_number, data })
+            .await
+            .change_context(ScheduledTaskError::Backup)?;
+
+        next_packet_number += 1;
+
+        if size == 0 {
+            break;
+        }
+    }
+
+    Ok(())
+}
+
+fn tmp_db_path_string(state: &S) -> Result<String, ScheduledTaskError> {
+    state
+        .config()
+        .simple_backend()
+        .data_dir()
+        .join(DATABASE_BACKUP_TMP_FILE_NAME)
+        .to_str()
+        .map(|v| v.to_string())
+        .ok_or(ScheduledTaskError::Backup.report())
 }

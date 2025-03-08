@@ -24,6 +24,7 @@ base16ct = { workspace = true }
 
 flate2 = { workspace = true }
 tar = { workspace = true }
+chrono = { workspace = true }
 
 # Server TLS
 tokio-rustls = { workspace = true }
