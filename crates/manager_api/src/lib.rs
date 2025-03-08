@@ -12,7 +12,7 @@ use std::{future::Future, path::Path, sync::Arc};
 use error_stack::{report, ResultExt};
 use futures::FutureExt;
 use manager_model::{JsonRpcRequest, JsonRpcResponse, ManagerInstanceName, ManagerProtocolMode, ManagerProtocolVersion, ServerEvent};
-use protocol::{ClientConnectionRead, ClientConnectionReadWrite, ClientConnectionWrite, ConnectionUtilsRead, ConnectionUtilsWrite};
+use protocol::{ClientConnectionReadSend, ClientConnectionReadWriteSend, ClientConnectionWriteSend, ConnectionUtilsRead, ConnectionUtilsWrite};
 use tokio::net::TcpStream;
 use tokio_rustls::{rustls::pki_types::{pem::PemObject, CertificateDer, PrivateKeyDer, ServerName}, TlsConnector};
 use url::Url;
@@ -132,8 +132,8 @@ pub struct ClientConfig {
 }
 
 pub struct ManagerClient {
-    reader: Box<dyn ClientConnectionRead>,
-    writer: Box<dyn ClientConnectionWrite>,
+    reader: Box<dyn ClientConnectionReadSend>,
+    writer: Box<dyn ClientConnectionWriteSend>,
 }
 
 impl ManagerClient {
@@ -180,7 +180,7 @@ impl ManagerClient {
 
     async fn init_connection(
         config: ClientConfig,
-        mut stream: Box<dyn ClientConnectionReadWrite>
+        mut stream: Box<dyn ClientConnectionReadWriteSend>
     ) -> Result<Self, ClientError> {
         stream.send_u8(ManagerProtocolVersion::V1 as u8)
             .await
@@ -248,7 +248,7 @@ impl ManagerClient {
         mut self,
         name: ManagerInstanceName,
         password: String,
-    ) -> Result<(Box<dyn ClientConnectionRead>, Box<dyn ClientConnectionWrite>), ClientError> {
+    ) -> Result<(Box<dyn ClientConnectionReadSend>, Box<dyn ClientConnectionWriteSend>), ClientError> {
         self.writer.send_u8(ManagerProtocolMode::JsonRpcLink as u8)
             .await
             .change_context(ClientError::Write)?;
@@ -271,7 +271,7 @@ impl ManagerClient {
     pub async fn backup_link(
         mut self,
         password: String,
-    ) -> Result<(Box<dyn ClientConnectionRead>, Box<dyn ClientConnectionWrite>), ClientError> {
+    ) -> Result<(Box<dyn ClientConnectionReadSend>, Box<dyn ClientConnectionWriteSend>), ClientError> {
         self.writer.send_u8(ManagerProtocolMode::BackupLink as u8)
             .await
             .change_context(ClientError::Write)?;
@@ -290,7 +290,7 @@ impl ManagerClient {
 }
 
 pub struct ServerEventListerner {
-    reader: Box<dyn ClientConnectionRead>,
+    reader: Box<dyn ClientConnectionReadSend>,
 }
 
 impl ServerEventListerner {

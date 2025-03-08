@@ -4,20 +4,20 @@ use std::time::Duration;
 use error_stack::ResultExt;
 use manager_model::{BackupMessageType, SourceToTargetMessage, TargetToSourceMessage};
 use simple_backend_utils::{ContextExt, IntoReportFromString};
-use crate::{protocol::{ClientConnectionRead, ClientConnectionWrite, ConnectionUtilsRead, ConnectionUtilsWrite}, ClientError};
+use crate::{protocol::{ClientConnectionReadSend, ClientConnectionWriteSend, ConnectionUtilsRead, ConnectionUtilsWrite}, ClientError};
 
 use error_stack::Result;
 
 pub struct BackupSourceClient {
-    reader: Box<dyn ClientConnectionRead>,
-    writer: Box<dyn ClientConnectionWrite>,
+    reader: Box<dyn ClientConnectionReadSend>,
+    writer: Box<dyn ClientConnectionWriteSend>,
     backup_session: u32,
 }
 
 impl BackupSourceClient {
     pub fn new(
-        reader: Box<dyn ClientConnectionRead>,
-        writer: Box<dyn ClientConnectionWrite>,
+        reader: Box<dyn ClientConnectionReadSend>,
+        writer: Box<dyn ClientConnectionWriteSend>,
         backup_session: u32,
     ) -> Self {
         Self {

@@ -2,7 +2,7 @@
 use std::time::Duration;
 
 use error_stack::{FutureExt, Result, ResultExt};
-use manager_api::{protocol::{ClientConnectionRead, ClientConnectionWrite, ConnectionUtilsRead, ConnectionUtilsWrite}, ClientConfig, ManagerClient};
+use manager_api::{protocol::{ClientConnectionReadSend, ClientConnectionWriteSend, ConnectionUtilsRead, ConnectionUtilsWrite}, ClientConfig, ManagerClient};
 use manager_config::file::JsonRpcLinkConfigClient;
 use manager_model::{JsonRpcLinkHeader, JsonRpcLinkMessage, JsonRpcLinkMessageType, JsonRpcRequest};
 use simple_backend_utils::ContextExt;
@@ -145,7 +145,7 @@ impl JsonRcpLinkManagerClient {
 
     async fn handle_reading(
         &self,
-        mut reader: Box<dyn ClientConnectionRead>,
+        mut reader: Box<dyn ClientConnectionReadSend>,
         sender: mpsc::Sender<JsonRpcLinkMessage>,
     ) -> Result<(), JsonRcpLinkClientError> {
         loop {
@@ -189,7 +189,7 @@ impl JsonRcpLinkManagerClient {
 
     async fn handle_writing(
         &self,
-        mut writer: Box<dyn ClientConnectionWrite>,
+        mut writer: Box<dyn ClientConnectionWriteSend>,
         mut receiver: mpsc::Receiver<JsonRpcLinkMessage>,
     ) -> Result<(), JsonRcpLinkClientError> {
         loop {

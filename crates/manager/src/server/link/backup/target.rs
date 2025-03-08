@@ -3,7 +3,7 @@ use std::{num::Wrapping, sync::Arc, time::Duration};
 
 use backup::{DeleteOldFileBackups, SaveContentBackup, SaveFileBackup};
 use error_stack::{FutureExt, Result, ResultExt};
-use manager_api::{protocol::{ClientConnectionRead, ClientConnectionWrite, ConnectionUtilsRead, ConnectionUtilsWrite}, ClientConfig, ManagerClient};
+use manager_api::{protocol::{ClientConnectionReadSend, ClientConnectionWriteSend, ConnectionUtilsRead, ConnectionUtilsWrite}, ClientConfig, ManagerClient};
 use manager_config::{file::BackupLinkConfigTarget, Config};
 use manager_model::{AccountAndContent, BackupMessage, BackupMessageType, SourceToTargetMessage, TargetToSourceMessage};
 use simple_backend_utils::{ContextExt, IntoReportFromString};
@@ -180,7 +180,7 @@ impl BackupLinkManagerTarget {
 
     async fn handle_reading(
         &self,
-        mut reader: Box<dyn ClientConnectionRead>,
+        mut reader: Box<dyn ClientConnectionReadSend>,
         sender: mpsc::Sender<BackupMessage>,
     ) -> Result<(), BackupTargetError> {
         let mut target_state: Option<BackupTargetState> = None;
@@ -224,7 +224,7 @@ impl BackupLinkManagerTarget {
 
     async fn handle_writing(
         &self,
-        mut writer: Box<dyn ClientConnectionWrite>,
+        mut writer: Box<dyn ClientConnectionWriteSend>,
         mut receiver: mpsc::Receiver<BackupMessage>,
     ) -> Result<(), BackupTargetError> {
         loop {

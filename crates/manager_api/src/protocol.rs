@@ -11,11 +11,20 @@ use crate::{ClientError, ManagerClient};
 pub trait ClientConnectionReadWrite: ClientConnectionRead + ClientConnectionWrite {}
 impl <T: ClientConnectionRead + ClientConnectionWrite> ClientConnectionReadWrite for T {}
 
-pub trait ClientConnectionRead: tokio::io::AsyncRead + Send + std::marker::Unpin + 'static {}
-impl <T: tokio::io::AsyncRead + Send + std::marker::Unpin + 'static> ClientConnectionRead for T {}
+pub trait ClientConnectionRead: tokio::io::AsyncRead + std::marker::Unpin {}
+impl <T: tokio::io::AsyncRead + std::marker::Unpin> ClientConnectionRead for T {}
 
-pub trait ClientConnectionWrite: tokio::io::AsyncWrite + Send + std::marker::Unpin + 'static {}
-impl <T: tokio::io::AsyncWrite + Send + std::marker::Unpin + 'static> ClientConnectionWrite for T {}
+pub trait ClientConnectionWrite: tokio::io::AsyncWrite + std::marker::Unpin {}
+impl <T: tokio::io::AsyncWrite + std::marker::Unpin> ClientConnectionWrite for T {}
+
+pub trait ClientConnectionReadWriteSend: ClientConnectionReadSend + ClientConnectionWriteSend {}
+impl <T: ClientConnectionReadSend + ClientConnectionWriteSend> ClientConnectionReadWriteSend for T {}
+
+pub trait ClientConnectionReadSend: ClientConnectionRead + Send + 'static {}
+impl <T: ClientConnectionRead + Send + 'static> ClientConnectionReadSend for T {}
+
+pub trait ClientConnectionWriteSend: ClientConnectionWrite + Send + 'static {}
+impl <T: ClientConnectionWrite + Send + 'static> ClientConnectionWriteSend for T {}
 
 pub trait ConnectionUtilsRead: tokio::io::AsyncRead + Unpin  {
     async fn receive_u8_optional(&mut self) -> Result<Option<u8>, ClientError> {

@@ -12,13 +12,10 @@ use manager_config::Config;
 use scheduled_task::ScheduledTaskManager;
 use task::TaskManager;
 use tokio::{
-    net::TcpListener,
-    signal::{
+    io::AsyncWriteExt, net::TcpListener, signal::{
         self,
         unix::{Signal, SignalKind},
-    },
-    sync::{broadcast, mpsc},
-    task::JoinHandle,
+    }, sync::{broadcast, mpsc}, task::JoinHandle
 };
 use tokio_rustls::{rustls::ServerConfig, TlsAcceptor};
 use tracing::{error, info, log::warn};
@@ -91,7 +88,10 @@ impl AppServer {
             warn!("Debug mode is enabled");
         }
 
+        // Quit handle for Manager API server (dropped first)
         let (server_quit_handle, server_quit_watcher) = broadcast::channel(1);
+        // Quit handle for internal managers (dropped second)
+        let (services_quit_handle, services_quit_watcher) = broadcast::channel(1);
         let mut terminate_signal = signal::unix::signal(SignalKind::terminate()).unwrap();
 
         let state: Arc<MountStateStorage> = MountStateStorage::new().into();
@@ -122,7 +122,7 @@ impl AppServer {
             task_manager_internal_state,
             app.state(),
             state.clone(),
-            server_quit_watcher.resubscribe(),
+            services_quit_watcher.resubscribe(),
         );
 
         // Start scheduled task manager
@@ -130,12 +130,12 @@ impl AppServer {
         let scheduled_task_manager_quit_handle = scheduled_task::ScheduledTaskManager::new_manager(
             scheduled_task_manager_internal_state,
             app.state(),
-            server_quit_watcher.resubscribe(),
+            services_quit_watcher.resubscribe(),
         );
 
         let reboot_manager_quit_handle = reboot::RebootManager::new_manager(
             app.state(),
-            server_quit_watcher.resubscribe(),
+            services_quit_watcher.resubscribe(),
         );
 
         // Start update manager
@@ -143,35 +143,35 @@ impl AppServer {
         let update_manager_quit_handle = update::UpdateManager::new_manager(
             update_manager_internal_state,
             app.state(),
-            server_quit_watcher.resubscribe(),
+            services_quit_watcher.resubscribe(),
         );
 
         // Start JSON RPC link manager server logic
 
         let json_rpc_link_manager_server_quit_handle = JsonRcpLinkManagerServer::new_manager(
             json_rpc_link_manager_server_internal_state,
-            server_quit_watcher.resubscribe(),
+            services_quit_watcher.resubscribe(),
         );
 
         // Start JSON RPC link manager client logic
 
         let json_rpc_link_manager_client_quit_handle = JsonRcpLinkManagerClient::new_manager(
             app.state(),
-            server_quit_watcher.resubscribe(),
+            services_quit_watcher.resubscribe(),
         );
 
         // Start backup link manager server logic
 
         let backup_link_manager_server_quit_handle = BackupLinkManagerServer::new_manager(
             backup_link_manager_server_internal_state,
-            server_quit_watcher.resubscribe(),
+            services_quit_watcher.resubscribe(),
         );
 
         // Start backup target client logic
 
         let backup_target_quit_handle = BackupLinkManagerTarget::new_manager(
             app.state(),
-            server_quit_watcher.resubscribe(),
+            services_quit_watcher.resubscribe(),
         );
 
         // Start API server
@@ -261,6 +261,9 @@ impl AppServer {
                 .await
                 .expect("Second Manager API server task panic detected");
         }
+
+        // Drop after waiting server tasks to avoid broken channel errors
+        drop(services_quit_handle);
 
         backup_target_quit_handle.wait_quit().await;
         backup_link_manager_server_quit_handle.wait_quit().await;
@@ -406,15 +409,16 @@ impl AppServer {
                         _ = quit_notification.recv() => {}
                         connection = acceptor.accept(tcp_stream) => {
                             match connection {
-                                Ok(tls_connection) => {
+                                Ok(mut tls_connection) => {
                                     tokio::select! {
                                         _ = quit_notification.recv() => (),
                                         _ = handle_connection_to_server(
-                                            tls_connection,
+                                            &mut tls_connection,
                                             addr,
                                             state
                                         ) => (),
                                     };
+                                    let _ = tls_connection.shutdown().await;
                                 }
                                 Err(_) => {}, // TLS handshake failed
                             }
