@@ -44,8 +44,12 @@ name = "history"
 # manager_name = "default"
 # address = "tls://localhost:4000"
 # api_key = "TODO"
-# root_certificate = "/home/afrodite/manager-tls/root.crt"
 # backup_link_password = "password"
+
+# [manager.tls]
+# client_auth_cert = "/home/afrodite/manager-tls/server.crt"
+# client_auth_cert_private_key = "/home/afrodite/manager-tls/server.key"
+# root_cert = "/home/afrodite/manager-tls/root.crt"
 
 # [tile_map]
 # tile_dir = "/map_tiles"
@@ -76,7 +80,7 @@ name = "history"
 # [tls.internal_api]
 # cert = "server_config/internal_api.crt"
 # key = "server_config/internal_api.key"
-# root_certificate = "server_config/root_certificate.crt"
+# root_cert = "server_config/root_cert.crt"
 
 # Configuring Let's Encrypt will create socket public_api:443 if public API
 # is not on port 443.
@@ -311,8 +315,18 @@ pub struct ManagerConfig {
     pub manager_name: ManagerInstanceName,
     pub address: Url,
     pub api_key: String,
-    pub root_certificate: Option<PathBuf>,
+    pub tls: Option<ManagerTlsConfig>,
     pub backup_link_password: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ManagerTlsConfig {
+    /// TLS certificate which manager instance will check
+    pub client_auth_cert: PathBuf,
+    /// Private key of TLS certificate which manager instance will check
+    pub client_auth_cert_private_key: PathBuf,
+    /// Manager instance's root TLS certificate
+    pub root_cert: PathBuf,
 }
 
 #[derive(Debug, Deserialize, Default, Serialize, Clone)]
@@ -391,7 +405,7 @@ pub struct InternalApiTlsConfig {
     pub cert: PathBuf,
     pub key: PathBuf,
     /// Root certificate for internal API client
-    pub root_certificate: PathBuf,
+    pub root_cert: PathBuf,
 }
 
 /// Let's Encrypt configuration for public API. If public API is not on

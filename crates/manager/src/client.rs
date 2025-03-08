@@ -14,9 +14,9 @@ pub async fn handle_api_client_mode(args: ManagerApiClientMode) -> Result<(), Cl
     let api_url = args
         .api_url()
         .change_context(ClientError::MissingConfiguration)?;
-    let certificate = args
-        .root_certificate()
-        .change_context(ClientError::RootCertificateLoadingError)?;
+    let tls_config = args
+        .tls_config()
+        .change_context(ClientError::InvalidConfiguration)?;
     let manager_name = args
         .manager_name()
         .change_context(ClientError::MissingConfiguration)?;
@@ -24,7 +24,7 @@ pub async fn handle_api_client_mode(args: ManagerApiClientMode) -> Result<(), Cl
     let config = ClientConfig {
         api_key,
         url: api_url,
-        root_certificate: certificate,
+        tls_config,
     };
 
     let client = ManagerClient::connect(config)

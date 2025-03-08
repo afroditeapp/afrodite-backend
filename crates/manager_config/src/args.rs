@@ -4,10 +4,9 @@ use std::path::PathBuf;
 
 use clap::{arg, command, Args, Parser};
 use error_stack::{Result, ResultExt};
-use manager_api::ManagerClient;
+use manager_api::TlsConfig;
 use manager_model::ManagerInstanceName;
 use simple_backend_utils::ContextExt;
-use tokio_rustls::rustls::RootCertStore;
 use url::Url;
 
 use super::{file::ConfigFile, GetConfigError};
@@ -22,10 +21,18 @@ pub struct ManagerApiClientMode {
     /// current directory's config file is used.
     #[arg(short = 'u', long, value_name = "URL")]
     pub api_url: Option<Url>,
-    /// Root certificate for API client. If not present, value from
+    /// TLS root certificate for API client. If not present, value from
     /// current directory's config file is used.
     #[arg(short = 'c', long, value_name = "FILE")]
-    pub root_certificate: Option<PathBuf>,
+    pub tls_root_cert: Option<PathBuf>,
+    /// TLS client authentication certificate for API client.
+    /// If not present, value from current directory's config file is used.
+    #[arg(long, value_name = "FILE")]
+    pub tls_client_auth_cert: Option<PathBuf>,
+    /// TLS client authentication certificate private key for API client.
+    /// If not present, value from current directory's config file is used.
+    #[arg(long, value_name = "FILE")]
+    pub tls_client_auth_cert_private_key: Option<PathBuf>,
     /// Name of the manager instance which receives the API request. If not
     /// present, value from current directory's config file is used.
     #[arg(short = 'n', long, value_name = "NAME")]
@@ -76,9 +83,12 @@ impl ManagerApiClientMode {
         Url::parse(&url).change_context(GetConfigError::InvalidConstant)
     }
 
-    fn root_certificate_file(&self) -> Result<Option<PathBuf>, GetConfigError> {
-        if let Some(root_certificate) = self.root_certificate.clone() {
-            return Ok(Some(root_certificate));
+    pub fn tls_config(&self) -> Result<Option<TlsConfig>, GetConfigError> {
+        let tls_arg_config = (self.tls_root_cert.clone(), self.tls_client_auth_cert.clone(), self.tls_client_auth_cert_private_key.clone());
+        if let (Some(root), Some(client_auth), Some(client_auth_private_key)) = tls_arg_config {
+            let config = TlsConfig::new(root, client_auth, client_auth_private_key)
+                    .change_context(GetConfigError::ReadCertificateError)?;
+            return Ok(Some(config));
         }
 
         let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
@@ -90,17 +100,17 @@ impl ManagerApiClientMode {
                 super::file::ConfigFile::save_default_if_not_exist_and_load(current_dir)
                     .change_context(GetConfigError::LoadFileError)?;
 
-            Ok(file_config.tls.map(|v| v.root_certificate))
-        } else {
-            Ok(None)
-        }
-    }
-
-    pub fn root_certificate(&self) -> Result<Option<RootCertStore>, GetConfigError> {
-        if let Some(root_certificate_file) = self.root_certificate_file()? {
-            let cert = ManagerClient::load_root_certificate(root_certificate_file)
-                .change_context(GetConfigError::ReadCertificateError)?;
-            Ok(Some(cert))
+            if let Some(tls) = file_config.tls {
+                let config = TlsConfig::new(
+                    self.tls_root_cert.clone().unwrap_or(tls.root_cert),
+                    self.tls_client_auth_cert.clone().unwrap_or(tls.public_api_cert),
+                    self.tls_client_auth_cert_private_key.clone().unwrap_or(tls.public_api_key),
+                )
+                    .change_context(GetConfigError::ReadCertificateError)?;
+                Ok(Some(config))
+            } else {
+                Ok(None)
+            }
         } else {
             Ok(None)
         }

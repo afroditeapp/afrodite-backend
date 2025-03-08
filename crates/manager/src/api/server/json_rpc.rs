@@ -102,7 +102,7 @@ pub async fn handle_rpc_request(
         }
         let config = ClientConfig {
             url: m.url.clone(),
-            root_certificate: state.config().root_certificate(),
+            tls_config: state.config().client_tls_config(),
             api_key: state.config().api_key().to_string(),
         };
         let client = ManagerClient::connect(config)

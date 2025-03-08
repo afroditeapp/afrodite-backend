@@ -1,7 +1,7 @@
 use std::sync::{atomic::{AtomicI64, Ordering}, Arc};
 
 use error_stack::Result;
-use manager_api::{backup::BackupSourceClient, ClientConfig, ClientError, ManagerClient, ManagerClientWithRequestReceiver, ServerEventListerner};
+use manager_api::{backup::BackupSourceClient, ClientConfig, ClientError, ManagerClient, ManagerClientWithRequestReceiver, ServerEventListerner, TlsConfig};
 use manager_model::{
     ManagerInstanceName, ServerEventType
 };
@@ -32,8 +32,12 @@ impl ManagerApiClient {
 
     pub async fn new(config: &SimpleBackendConfig) -> Result<Self, ClientError> {
         let manager = if let Some(c) = config.manager_config() {
-            let certificate = if let Some(certificate) = &c.root_certificate {
-                Some(ManagerClient::load_root_certificate(certificate)?)
+            let certificate = if let Some(config) = c.tls.clone() {
+                Some(TlsConfig::new(
+                    config.root_cert,
+                    config.client_auth_cert,
+                    config.client_auth_cert_private_key
+                )?)
             } else {
                 None
             };
@@ -41,7 +45,7 @@ impl ManagerApiClient {
             let config = ClientConfig {
                 api_key: c.api_key.to_string(),
                 url: c.address.clone(),
-                root_certificate: certificate,
+                tls_config: certificate,
             };
 
             info!("Manager API URL: {}", c.address);

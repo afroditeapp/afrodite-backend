@@ -14,7 +14,7 @@ use futures::FutureExt;
 use manager_model::{JsonRpcRequest, JsonRpcResponse, ManagerInstanceName, ManagerProtocolMode, ManagerProtocolVersion, ServerEvent};
 use protocol::{ClientConnectionRead, ClientConnectionReadWrite, ClientConnectionWrite, ConnectionUtilsRead, ConnectionUtilsWrite};
 use tokio::net::TcpStream;
-use tokio_rustls::{rustls::pki_types::{pem::PemObject, CertificateDer, ServerName}, TlsConnector};
+use tokio_rustls::{rustls::pki_types::{pem::PemObject, CertificateDer, PrivateKeyDer, ServerName}, TlsConnector};
 use url::Url;
 
 use error_stack::Result;
@@ -55,6 +55,10 @@ pub enum ClientError {
     RootCertificateIsNotConfigured,
     #[error("Root certificate loading error")]
     RootCertificateLoadingError,
+    #[error("Client authentication certificate loading error")]
+    ClientAuthenticationCertificate,
+    #[error("Client authentication certificate private key loading error")]
+    ClientAuthenticationCertificatePrivateKey,
     #[error("Invalid API key")]
     InvalidApiKey,
     #[error("Invalid login")]
@@ -74,13 +78,56 @@ pub enum ClientError {
 
     #[error("Missing configuration")]
     MissingConfiguration,
+    #[error("Invalid configuration")]
+    InvalidConfiguration,
+}
+
+#[derive(Debug, Clone)]
+pub struct TlsConfig {
+    tls_config: Arc<tokio_rustls::rustls::ClientConfig>,
+}
+
+impl TlsConfig {
+    pub fn new(
+        root_certificate: impl AsRef<Path>,
+        server_certificate: impl AsRef<Path>,
+        server_certificate_private_key: impl AsRef<Path>,
+    ) -> Result<Self, ClientError> {
+        let certificate = CertificateDer::from_pem_file(root_certificate)
+            .change_context(ClientError::RootCertificateLoadingError)?;
+
+        let mut root_store = RootCertStore::empty();
+        root_store.add( certificate)
+            .change_context(ClientError::RootCertificateLoadingError)?;
+
+        let certificate_iter = CertificateDer::pem_file_iter(server_certificate)
+            .change_context(ClientError::ClientAuthenticationCertificate)?;
+        let mut client_auth_cert_chain = vec![];
+        for c in certificate_iter {
+            let c = c.change_context(ClientError::ClientAuthenticationCertificate)?;
+            client_auth_cert_chain.push(c);
+        }
+
+        let client_auth_private_key = PrivateKeyDer::from_pem_file(server_certificate_private_key)
+            .change_context(ClientError::ClientAuthenticationCertificatePrivateKey)?;
+
+        let tls_config = tokio_rustls::rustls::ClientConfig::builder()
+            .with_root_certificates(root_store)
+            .with_client_auth_cert(client_auth_cert_chain, client_auth_private_key)
+            .change_context(ClientError::ClientAuthenticationCertificatePrivateKey)?
+            .into();
+
+        Ok(Self {
+            tls_config,
+        })
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct ClientConfig {
     pub url: Url,
     /// Required for TLS connections
-    pub root_certificate: Option<RootCertStore>,
+    pub tls_config: Option<TlsConfig>,
     pub api_key: String,
 }
 
@@ -90,17 +137,6 @@ pub struct ManagerClient {
 }
 
 impl ManagerClient {
-    pub fn load_root_certificate(root_certificate: impl AsRef<Path>) -> Result<RootCertStore, ClientError> {
-        let certificate = CertificateDer::from_pem_file(root_certificate)
-            .change_context(ClientError::RootCertificateLoadingError)?;
-
-        let mut root_store = RootCertStore::empty();
-        root_store.add( certificate)
-            .change_context(ClientError::RootCertificateLoadingError)?;
-
-        Ok(root_store)
-    }
-
     pub async fn connect(config: ClientConfig) -> Result<Self, ClientError> {
         let host = config.url.host_str()
             .map(|v| v.to_string())
@@ -127,18 +163,14 @@ impl ManagerClient {
         let domain = ServerName::try_from(host_and_port.0.clone())
             .change_context(ClientError::UrlHostInvalid)?;
 
-        let Some(root_store) = config.root_certificate.clone() else {
+        let Some(tls_config) = config.tls_config.clone() else {
             return Err(report!(ClientError::RootCertificateIsNotConfigured));
         };
-
-        let tls_config = tokio_rustls::rustls::ClientConfig::builder()
-            .with_root_certificates(root_store)
-            .with_no_client_auth();
 
         let stream = TcpStream::connect(host_and_port)
             .await
             .change_context(ClientError::Connect)?;
-        let connector = TlsConnector::from(Arc::new(tls_config));
+        let connector = TlsConnector::from(tls_config.tls_config.clone());
         let stream = connector.connect(domain, stream)
             .await
             .change_context(ClientError::Connect)?;

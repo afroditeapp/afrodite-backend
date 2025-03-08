@@ -99,7 +99,7 @@ public_api = "127.0.0.1:4000"
 # [tls]
 # public_api_cert = "manager-tls/server.crt"
 # public_api_key = "manager-tls/server.key"
-# root_certificate = "manager-tls/root.crt"
+# root_cert = "manager-tls/root.crt"
 "#;
 
 #[derive(thiserror::Error, Debug)]
@@ -249,7 +249,7 @@ pub struct TlsConfig {
     pub public_api_key: PathBuf,
 
     /// Root certificate for HTTP client for checking API calls.
-    pub root_certificate: PathBuf,
+    pub root_cert: PathBuf,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

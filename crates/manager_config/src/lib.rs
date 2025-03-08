@@ -14,10 +14,10 @@ use error_stack::{Result, ResultExt};
 use file::{AutomaticSystemRebootConfig, BackupLinkConfig, JsonRpcLinkConfig, ManagerInstance, ScheduledTasksConfig};
 use manager_model::ManagerInstanceName;
 use rustls_pemfile::certs;
-use tokio_rustls::rustls::{RootCertStore, ServerConfig};
+use tokio_rustls::rustls::{pki_types::{pem::PemObject, CertificateDer}, server::WebPkiClientVerifier, ServerConfig};
 use tracing::{info, warn};
 
-use manager_api::ManagerClient;
+use manager_api::{RootCertStore, TlsConfig};
 
 use self::file::{
     ConfigFile, ManualTasksConfig, SecureStorageConfig, ServerEncryptionKey, SocketConfig,
@@ -72,7 +72,7 @@ pub struct Config {
 
     // TLS
     public_api_tls_config: Option<Arc<ServerConfig>>,
-    root_certificate: Option<RootCertStore>,
+    client_tls_config: Option<TlsConfig>,
 }
 
 impl Config {
@@ -112,8 +112,8 @@ impl Config {
         self.public_api_tls_config.as_ref()
     }
 
-    pub fn root_certificate(&self) -> Option<RootCertStore> {
-        self.root_certificate.clone()
+    pub fn client_tls_config(&self) -> Option<TlsConfig> {
+        self.client_tls_config.clone()
     }
 
     pub fn script_locations(&self) -> &ScriptLocations {
@@ -193,17 +193,22 @@ pub fn get_config(
 
     let public_api_tls_config = match file_config.tls.clone() {
         Some(tls_config) => Some(Arc::new(generate_server_config(
-            tls_config.public_api_key.as_path(),
+            tls_config.root_cert.as_path(),
             tls_config.public_api_cert.as_path(),
+            tls_config.public_api_key.as_path(),
         )?)),
         None => None,
     };
 
-    let root_certificate = match file_config.tls.clone() {
+    let client_tls_config = match file_config.tls.clone() {
         Some(tls_config) => {
-            let root_store = ManagerClient::load_root_certificate(tls_config.root_certificate)
+            let config = TlsConfig::new(
+                tls_config.root_cert,
+                tls_config.public_api_cert,
+                tls_config.public_api_key,
+            )
                 .change_context(GetConfigError::ReadCertificateError)?;
-            Some(root_store)
+            Some(config)
         },
         None => None,
     };
@@ -225,7 +230,7 @@ pub fn get_config(
         file: file_config,
         script_locations,
         public_api_tls_config,
-        root_certificate,
+        client_tls_config,
     })
 }
 
@@ -292,9 +297,19 @@ fn check_script_locations(
 }
 
 fn generate_server_config(
-    key_path: &Path,
+    root_cert_path: &Path,
     cert_path: &Path,
+    key_path: &Path,
 ) -> Result<ServerConfig, GetConfigError> {
+    let client_auth_root_certificate = CertificateDer::from_pem_file(root_cert_path)
+        .change_context(GetConfigError::CreateTlsConfig)?;
+    let mut client_auth_root_store = RootCertStore::empty();
+    client_auth_root_store.add( client_auth_root_certificate)
+        .change_context(GetConfigError::CreateTlsConfig)?;
+    let client_verifier = WebPkiClientVerifier::builder(client_auth_root_store.into())
+        .build()
+        .change_context(GetConfigError::CreateTlsConfig)?;
+
     let mut key_reader = BufReader::new(
         std::fs::File::open(key_path).change_context(GetConfigError::CreateTlsConfig)?,
     );
@@ -334,7 +349,7 @@ fn generate_server_config(
     }
 
     let config = ServerConfig::builder()
-        .with_no_client_auth() // TODO: configure at some point
+        .with_client_cert_verifier(client_verifier)
         .with_single_cert(vec![cert], key)
         .change_context(GetConfigError::CreateTlsConfig)?;
 

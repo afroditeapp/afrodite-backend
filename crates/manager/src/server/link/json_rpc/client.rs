@@ -109,7 +109,7 @@ impl JsonRcpLinkManagerClient {
         let client = ManagerClient::connect(
             ClientConfig {
                 url: config.url.clone(),
-                root_certificate: self.state.config().root_certificate(),
+                tls_config: self.state.config().client_tls_config(),
                 api_key: self.state.config().api_key().to_string(),
             }
         )   .await
