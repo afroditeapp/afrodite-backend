@@ -17,10 +17,6 @@ use crate::GetConfigError;
 
 pub const CONFIG_FILE_NAME: &str = "simple_backend_config.toml";
 
-// Optional configs not in default file for safety:
-// debug = false
-//
-
 pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
 # [general]
