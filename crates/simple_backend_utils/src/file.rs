@@ -1,6 +1,7 @@
 use std::path::Path;
 
 use error_stack::{Result, ResultExt};
+use serde::{Deserialize, Serialize};
 use tokio::io::AsyncWriteExt;
 
 #[derive(thiserror::Error, Debug)]
@@ -84,6 +85,58 @@ fn buffered_zero_iter(
     iter
         .chain(remaining_bytes)
 }
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+#[serde(try_from = "String")]
+pub struct FileSizeValue {
+    /// Use signed integer so that Bash supports it.
+    pub bytes: i64,
+}
+
+impl TryFrom<String> for FileSizeValue {
+    type Error = String;
+    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
+        let input = value.trim();
+        let units = ['K', 'M', 'G'];
+
+        let mut unit_found = false;
+        for u in units {
+            if input.ends_with(u) {
+                unit_found = true;
+            }
+        }
+
+        let bytes: i64 = if unit_found {
+            let Some((number, unit)) = input.split_at_checked(input.len() - 1) else {
+                return Err(format!(
+                    "Parsing file size failed, current value: {}, example value: 1G",
+                    input
+                ));
+            };
+            let number: i64 = number
+                .parse()
+                .map_err(|e: std::num::ParseIntError| e.to_string())?;
+            let overflow_error = || format!("File size too large, current value: {}, max value: i64::MAX bytes", input);
+            match unit {
+                "K" => number,
+                "M" => number.checked_mul(1024).ok_or_else(overflow_error)?,
+                "G" => number.checked_mul(1024 * 1024).ok_or_else(overflow_error)?,
+                unit => return Err(format!("Unknown size unit: {}, supported units: K, M, G", unit)),
+            }
+        } else {
+            input
+                .parse()
+                .map_err(|e: std::num::ParseIntError| e.to_string())?
+        };
+
+        if bytes < 0 {
+            return Err(format!("File size is negative. current value: {}", input));
+        }
+
+        Ok(FileSizeValue { bytes })
+    }
+}
+
 
 #[cfg(test)]
 mod test {

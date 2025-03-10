@@ -7,12 +7,10 @@ use std::{
 use error_stack::{Report, Result, ResultExt};
 use manager_model::{ManagerInstanceName, SecureStorageEncryptionKey};
 use serde::{Deserialize, Serialize};
-use simple_backend_utils::{time::{DurationValue, UtcTimeValue}, ContextExt};
+use simple_backend_utils::{file::FileSizeValue, time::{DurationValue, UtcTimeValue}, ContextExt};
 use url::Url;
 
 use super::GetConfigError;
-
-// TODO(prod): Add secure storage expanding support
 
 pub const CONFIG_FILE_NAME: &str = "manager_config.toml";
 
@@ -63,6 +61,7 @@ public_api = "127.0.0.1:4000"
 # Fall back to local encryption key if the manager instance is not available.
 # Should not be used in production.
 # encryption_key_text = ""
+# extend_size_to = "1G"
 
 # [[server_encryption_key]]
 # manager_name = "default"
@@ -287,6 +286,8 @@ pub struct SecureStorageConfig {
     pub encryption_key_text: Option<String>,
     /// Optional. Configure timeout for downloading the encryption key.
     pub key_download_timeout_seconds: Option<u32>,
+    /// Optional. Extend secure storage size.
+    pub extend_size_to: Option<FileSizeValue>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
