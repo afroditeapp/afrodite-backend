@@ -33,7 +33,7 @@ impl<'a> BackendController<'a> {
     }
 
     pub async fn start_backend(&self) -> Result<(), ControllerError> {
-        let script = self.config.script_locations().start_backend();
+        let script = self.config.script_locations().systemctl_access();
 
         if !script.exists() {
             warn!("Script for starting the backend does not exist");
@@ -42,6 +42,8 @@ impl<'a> BackendController<'a> {
 
         let status = Command::new("sudo")
             .arg(script)
+            .arg("start")
+            .arg("afrodite-backend.service")
             .status()
             .await
             .change_context(ControllerError::ProcessWaitFailed)?;
@@ -55,7 +57,7 @@ impl<'a> BackendController<'a> {
     }
 
     pub async fn stop_backend(&self) -> Result<(), ControllerError> {
-        let script = self.config.script_locations().stop_backend();
+        let script = self.config.script_locations().systemctl_access();
 
         if !script.exists() {
             warn!("Script for stopping the backend does not exist");
@@ -64,6 +66,8 @@ impl<'a> BackendController<'a> {
 
         let status = Command::new("sudo")
             .arg(script)
+            .arg("stop")
+            .arg("afrodite-backend.service")
             .status()
             .await
             .change_context(ControllerError::ProcessWaitFailed)?;

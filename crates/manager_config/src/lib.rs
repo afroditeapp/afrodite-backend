@@ -238,41 +238,19 @@ fn check_script_locations(
     script_dir: &Path,
     is_debug: bool,
 ) -> Result<ScriptLocations, GetConfigError> {
-    let open_encryption = script_dir.join("open-encryption.sh");
-    let close_encryption = script_dir.join("close-encryption.sh");
-    let is_default_encryption_password = script_dir.join("is-default-encryption-password.sh");
-    let change_encryption_password = script_dir.join("change-encryption-password.sh");
-    let start_backend = script_dir.join("start-backend.sh");
-    let stop_backend = script_dir.join("stop-backend.sh");
     let print_logs = script_dir.join("print-logs.sh");
+    let secure_storage = script_dir.join("secure-storage.sh");
+    let systemctl_access = script_dir.join("systemctl-access.sh");
 
     let mut errors = vec![];
 
-    if !open_encryption.exists() {
-        errors.push(format!("Script not found: {}", open_encryption.display()));
-    }
-    if !close_encryption.exists() {
-        errors.push(format!("Script not found: {}", close_encryption.display()));
-    }
-    if !is_default_encryption_password.exists() {
-        errors.push(format!(
-            "Script not found: {}",
-            is_default_encryption_password.display()
-        ));
-    }
-    if !change_encryption_password.exists() {
-        errors.push(format!(
-            "Script not found: {}",
-            change_encryption_password.display()
-        ));
-    }
-    if !start_backend.exists() {
-        errors.push(format!("Script not found: {}", start_backend.display()));
-    }
-    if !stop_backend.exists() {
-        errors.push(format!("Script not found: {}", stop_backend.display()));
-    }
     if !print_logs.exists() {
+        errors.push(format!("Script not found: {}", print_logs.display()));
+    }
+    if !secure_storage.exists() {
+        errors.push(format!("Script not found: {}", print_logs.display()));
+    }
+    if !systemctl_access.exists() {
         errors.push(format!("Script not found: {}", print_logs.display()));
     }
 
@@ -283,13 +261,9 @@ fn check_script_locations(
             warn!("Some scripts are missing.\n{}", errors.join("\n"));
         }
         Ok(ScriptLocations {
-            open_encryption,
-            close_encryption,
-            is_default_encryption_password,
-            change_encryption_password,
-            start_backend,
-            stop_backend,
             print_logs,
+            secure_storage,
+            systemctl_access,
         })
     } else {
         Err(GetConfigError::ScriptLocationError).attach_printable(errors.join("\n"))
@@ -358,41 +332,21 @@ fn generate_server_config(
 
 #[derive(Debug)]
 pub struct ScriptLocations {
-    pub open_encryption: PathBuf,
-    pub close_encryption: PathBuf,
-    pub is_default_encryption_password: PathBuf,
-    pub change_encryption_password: PathBuf,
-    pub start_backend: PathBuf,
-    pub stop_backend: PathBuf,
     pub print_logs: PathBuf,
+    pub secure_storage: PathBuf,
+    pub systemctl_access: PathBuf,
 }
 
 impl ScriptLocations {
-    pub fn open_encryption(&self) -> &Path {
-        &self.open_encryption
-    }
-
-    pub fn close_encryption(&self) -> &Path {
-        &self.close_encryption
-    }
-
-    pub fn is_default_encryption_password(&self) -> &Path {
-        &self.is_default_encryption_password
-    }
-
-    pub fn change_encryption_password(&self) -> &Path {
-        &self.change_encryption_password
-    }
-
-    pub fn start_backend(&self) -> &Path {
-        &self.start_backend
-    }
-
-    pub fn stop_backend(&self) -> &Path {
-        &self.stop_backend
-    }
-
     pub fn print_logs(&self) -> &Path {
         &self.print_logs
+    }
+
+    pub fn secure_storage(&self) -> &Path {
+        &self.secure_storage
+    }
+
+    pub fn systemctl_access(&self) -> &Path {
+        &self.systemctl_access
     }
 }
