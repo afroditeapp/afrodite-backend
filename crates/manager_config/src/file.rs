@@ -58,6 +58,7 @@ public_api = "127.0.0.1:4000"
 # [secure_storage]
 # key_storage_manager_name = "default"
 # availability_check_path = "/afrodite-secure-storage/afrodite"
+# dir = "/afrodite-secure-storage"
 # -------- Optional --------
 # Fall back to local encryption key if the manager instance is not available.
 # Should not be used in production.
@@ -277,6 +278,9 @@ pub struct SecureStorageConfig {
     /// Path to file or directory which is used to
     /// check if the secure storage is mounted or not.
     pub availability_check_path: PathBuf,
+    /// Secure storage root directory. The secure-storage.sh script
+    /// defines possible values for this.
+    pub dir: PathBuf,
     /// Optional. If the manager instance is not available, this key
     /// will be used for opening the encryption.
     /// Should not be used in production.

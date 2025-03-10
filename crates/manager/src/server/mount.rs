@@ -123,18 +123,21 @@ impl MountManager {
 
         match key {
             Some(key) => {
-                if self.is_default_password().await? {
+                if self.is_default_password(storage_config).await? {
                     info!("Default password is used. Password will be changed.");
-                    self.change_default_password(key.clone()).await?;
+                    self.change_default_password(storage_config, key.clone()).await?;
                 }
-                self.mount_secure_storage(key).await?;
+                self.mount_secure_storage(storage_config, key).await?;
             }
             None => {
-                if self.is_default_password().await? {
+                if self.is_default_password(storage_config).await? {
                     warn!("Mounting secure storage using default password");
-                    self.mount_secure_storage(SecureStorageEncryptionKey {
-                        key: "password\n".to_string(),
-                    })
+                    self.mount_secure_storage(
+                        storage_config,
+                        SecureStorageEncryptionKey {
+                            key: "password\n".to_string(),
+                        }
+                    )
                     .await?;
                     mode = MountMode::MountedWithDefaultKey;
                 } else {
@@ -148,7 +151,11 @@ impl MountManager {
         Ok(())
     }
 
-    pub async fn mount_secure_storage(&self, key: SecureStorageEncryptionKey) -> Result<(), MountError> {
+    pub async fn mount_secure_storage(
+        &self,
+        storage_config: &SecureStorageConfig,
+        key: SecureStorageEncryptionKey,
+    ) -> Result<(), MountError> {
         let script = self.config.script_locations().secure_storage();
 
         if !script.exists() {
@@ -159,7 +166,7 @@ impl MountManager {
         let mut c = Command::new("sudo")
             .arg(script)
             .arg("extend-size-and-open")
-            .arg("/afrodite-secure-storage")
+            .arg(&storage_config.dir)
             .stdin(Stdio::piped())
             .spawn()
             .change_context(MountError::ProcessStartFailed)?;
@@ -211,7 +218,7 @@ impl MountManager {
         let c = Command::new("sudo")
             .arg(script)
             .arg("close")
-            .arg("/afrodite-secure-storage")
+            .arg(&storage_config.dir)
             .status()
             .await
             .change_context(MountError::ProcessStartFailed)?;
@@ -225,7 +232,10 @@ impl MountManager {
         }
     }
 
-    async fn is_default_password(&self) -> Result<bool, MountError> {
+    async fn is_default_password(
+        &self,
+        storage_config: &SecureStorageConfig,
+    ) -> Result<bool, MountError> {
         let script = self.config
             .script_locations()
             .secure_storage();
@@ -238,7 +248,7 @@ impl MountManager {
         let c = Command::new("sudo")
             .arg(script)
             .arg("is-default-password")
-            .arg("/afrodite-secure-storage")
+            .arg(&storage_config.dir)
             .status()
             .await
             .change_context(MountError::ProcessStartFailed)?;
@@ -246,7 +256,11 @@ impl MountManager {
         Ok(c.success())
     }
 
-    async fn change_default_password(&self, key: SecureStorageEncryptionKey) -> Result<(), MountError> {
+    async fn change_default_password(
+        &self,
+        storage_config: &SecureStorageConfig,
+        key: SecureStorageEncryptionKey,
+    ) -> Result<(), MountError> {
         let script = self.config.script_locations().secure_storage();
 
         if !script.exists() {
@@ -257,7 +271,7 @@ impl MountManager {
         let mut c = Command::new("sudo")
             .arg(script)
             .arg("change-default-password")
-            .arg("/afrodite-secure-storage")
+            .arg(&storage_config.dir)
             .stdin(Stdio::piped())
             .spawn()
             .change_context(MountError::ProcessStartFailed)?;
