@@ -11,9 +11,9 @@ use tokio::{process::Command, sync::mpsc, task::JoinHandle};
 use tracing::{info, warn};
 
 use super::{
-    app::S, backend_controller::BackendController, client::ApiManager, state::MountStateStorage, update::backend::reset_backend_data, ServerQuitWatcher
+    app::S, client::ApiManager, state::MountStateStorage, update::backend::reset_backend_data, ServerQuitWatcher
 };
-use crate::{api::GetConfig, server::mount::MountMode};
+use crate::{api::{GetBackendManager, GetConfig}, server::mount::MountMode};
 
 #[derive(thiserror::Error, Debug)]
 pub enum TaskError {
@@ -208,9 +208,8 @@ impl TaskManager {
         &self,
         data_reset: bool,
     ) -> Result<(), TaskError> {
-        let backend_controller = BackendController::new(self.state.config());
-
-        backend_controller
+        self.state
+            .backend_manager()
             .stop_backend()
             .await
             .change_context(TaskError::StopBackendFailed)?;
@@ -225,10 +224,13 @@ impl TaskManager {
             }
         }
 
-        backend_controller
+        self.state
+            .backend_manager()
             .start_backend()
             .await
-            .change_context(TaskError::StartBackendFailed)
+            .change_context(TaskError::StartBackendFailed)?;
+
+        Ok(())
     }
 
     fn api_manager(&self) -> ApiManager<'_> {

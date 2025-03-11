@@ -6,6 +6,7 @@ use std::{
 };
 
 use app::S;
+use backend_manager::BackendManager;
 use futures::future::poll_fn;
 use link::{backup::{server::BackupLinkManagerServer, target::BackupLinkManagerTarget}, json_rpc::{client::JsonRcpLinkManagerClient, server::JsonRcpLinkManagerServer}};
 use manager_config::Config;
@@ -23,15 +24,15 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilte
 use update::UpdateManager;
 
 use crate::{
-    api::server::handle_connection_to_server,
+    api::{server::handle_connection_to_server, GetBackendManager},
     server::{
-        app::App, backend_controller::BackendController,
+        app::App,
         mount::MountManager, state::MountStateStorage,
     },
 };
 
 pub mod app;
-pub mod backend_controller;
+pub mod backend_manager;
 pub mod backend_events;
 pub mod client;
 pub mod info;
@@ -105,6 +106,8 @@ impl AppServer {
             JsonRcpLinkManagerServer::new_channel();
         let (backup_link_manager_server_handle, backup_link_manager_server_internal_state) =
             BackupLinkManagerServer::new_channel();
+        let (backend_manager_handle, backend_manager_internal_state) =
+            BackendManager::new_channel();
 
         let mut app = App::new(
             self.config.clone(),
@@ -113,6 +116,7 @@ impl AppServer {
             scheduled_task_manager_handle.into(),
             json_rpc_link_manager_server_handle.into(),
             backup_link_manager_server_handle.into(),
+            backend_manager_handle.into(),
         )
         .await;
 
@@ -174,6 +178,14 @@ impl AppServer {
             services_quit_watcher.resubscribe(),
         );
 
+        // Start backend manager
+
+        let backend_manager_quit_handle = BackendManager::new_manager(
+            app.state(),
+            backend_manager_internal_state,
+            services_quit_watcher.resubscribe(),
+        );
+
         // Start API server
 
         let (server_task1, server_task2) = self
@@ -222,21 +234,9 @@ impl AppServer {
 
         // Start backend if it is installed
 
-        // TODO(prod): Add specific config for backend automatic starting
-
-        if let Some(update_config) = self.config.software_update_provider() {
-            if update_config.backend_install_location.exists() {
-                info!("Starting backend");
-                match BackendController::new(&self.config).start_backend().await {
-                    Ok(()) => {
-                        info!("Backend started");
-                    }
-                    Err(e) => {
-                        warn!("Backend start failed. Error: {:?}", e);
-                    }
-                }
-            } else {
-                warn!("Backend starting failed. Backend is not installed");
+        if self.config.control_backend().is_some() {
+            if let Err(e) = app.state.backend_manager().trigger_start_backend().await {
+                error!("Backend starting failed. Error: {:?}", e);
             }
         }
 
@@ -265,6 +265,7 @@ impl AppServer {
         // Drop after waiting server tasks to avoid broken channel errors
         drop(services_quit_handle);
 
+        backend_manager_quit_handle.wait_quit().await;
         backup_target_quit_handle.wait_quit().await;
         backup_link_manager_server_quit_handle.wait_quit().await;
         json_rpc_link_manager_client_quit_handle.wait_quit().await;
@@ -273,18 +274,6 @@ impl AppServer {
         reboot_manager_quit_handle.wait_quit().await;
         scheduled_task_manager_quit_handle.wait_quit().await;
         task_manager_quit_handle.wait_quit().await;
-
-        if self.config.software_update_provider().is_some() {
-            info!("Stopping backend");
-            match BackendController::new(&self.config).stop_backend().await {
-                Ok(()) => {
-                    info!("Backend stopped");
-                }
-                Err(e) => {
-                    warn!("Backend stopping failed. Error: {:?}", e);
-                }
-            }
-        }
 
         drop(app);
 

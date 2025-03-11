@@ -11,7 +11,7 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
-use file::{AutomaticSystemRebootConfig, BackupLinkConfig, JsonRpcLinkConfig, ManagerInstance, ScheduledTasksConfig};
+use file::{AutomaticSystemRebootConfig, BackupLinkConfig, JsonRpcLinkConfig, ControlBackendConfig, ManagerInstance, ScheduledTasksConfig};
 use manager_model::ManagerInstanceName;
 use rustls_pemfile::certs;
 use tokio_rustls::rustls::{pki_types::{pem::PemObject, CertificateDer}, server::WebPkiClientVerifier, ServerConfig};
@@ -139,6 +139,10 @@ impl Config {
 
     pub fn automatic_system_reboot(&self) -> Option<&AutomaticSystemRebootConfig> {
         self.file.automatic_system_reboot.as_ref()
+    }
+
+    pub fn control_backend(&self) -> Option<&ControlBackendConfig> {
+        self.file.control_backend.as_ref()
     }
 
     pub fn log_timestamp(&self) -> bool {

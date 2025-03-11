@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use manager_config::Config;
 
-use crate::server::{client::ApiManager, link::{backup::server::BackupLinkManagerHandleServer, json_rpc::server::JsonRcpLinkManagerHandleServer}, scheduled_task::ScheduledTaskManagerHandle, task::TaskManagerHandle, update::UpdateManagerHandle};
+use crate::server::{backend_manager::BackendManagerHandle, client::ApiManager, link::{backup::server::BackupLinkManagerHandleServer, json_rpc::server::JsonRcpLinkManagerHandleServer}, scheduled_task::ScheduledTaskManagerHandle, task::TaskManagerHandle, update::UpdateManagerHandle};
 
 pub mod server;
 pub mod client;
@@ -39,4 +39,8 @@ pub trait GetJsonRcpLinkManager {
 
 pub trait GetBackupLinkManager {
     fn backup_link_server(&self) -> &BackupLinkManagerHandleServer;
+}
+
+pub trait GetBackendManager {
+    fn backend_manager(&self) -> &BackendManagerHandle;
 }

@@ -4,8 +4,8 @@ use manager_config::Config;
 use manager_model::{ServerEvent, ServerEventType};
 use tokio::sync::watch;
 
-use super::{backend_events::BackendEventsHandle, client::ApiManager, link::{backup::server::BackupLinkManagerHandleServer, json_rpc::server::JsonRcpLinkManagerHandleServer}, scheduled_task::ScheduledTaskManagerHandle, task::TaskManagerHandle, update::UpdateManagerHandle};
-use crate::api::{GetApiManager, GetBackupLinkManager, GetConfig, GetJsonRcpLinkManager, GetScheduledTaskManager, GetTaskManager, GetUpdateManager};
+use super::{backend_events::BackendEventsHandle, backend_manager::BackendManagerHandle, client::ApiManager, link::{backup::server::BackupLinkManagerHandleServer, json_rpc::server::JsonRcpLinkManagerHandleServer}, scheduled_task::ScheduledTaskManagerHandle, task::TaskManagerHandle, update::UpdateManagerHandle};
+use crate::api::{GetApiManager, GetBackendManager, GetBackupLinkManager, GetConfig, GetJsonRcpLinkManager, GetScheduledTaskManager, GetTaskManager, GetUpdateManager};
 
 pub type S = AppState;
 
@@ -18,6 +18,7 @@ pub struct AppState {
     backend_events: Arc<BackendEventsHandle>,
     json_rpc_link_handle_server: Arc<JsonRcpLinkManagerHandleServer>,
     backup_link_handle_server: Arc<BackupLinkManagerHandleServer>,
+    backend_manager: Arc<BackendManagerHandle>,
 }
 
 impl AppState {
@@ -85,6 +86,12 @@ impl GetBackupLinkManager for AppState {
     }
 }
 
+impl GetBackendManager for AppState {
+    fn backend_manager(&self) -> &BackendManagerHandle {
+        &self.backend_manager
+    }
+}
+
 pub struct App {
     pub state: AppState,
 }
@@ -97,6 +104,7 @@ impl App {
         scheduled_task_manager: Arc<ScheduledTaskManagerHandle>,
         json_rpc_link_handle_server: Arc<JsonRcpLinkManagerHandleServer>,
         backup_link_handle_server: Arc<BackupLinkManagerHandleServer>,
+        backend_manager: Arc<BackendManagerHandle>,
     ) -> Self {
         let state = AppState {
             config: config.clone(),
@@ -106,6 +114,7 @@ impl App {
             backend_events: BackendEventsHandle::new(vec![]).into(),
             json_rpc_link_handle_server,
             backup_link_handle_server,
+            backend_manager,
         };
 
         state.refresh_state_to_backend().await;

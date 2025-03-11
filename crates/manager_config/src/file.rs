@@ -27,6 +27,9 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # [general]
 # log_timestamp = true # Optional
 
+# [control_backend]
+# service = "afrodite-backend.service"
+
 [socket]
 public_api = "127.0.0.1:4000"
 # Second API has no TLS even if it is configured
@@ -124,6 +127,7 @@ pub struct ConfigFile {
     pub socket: SocketConfig,
     #[serde(default)]
     pub general: GeneralConfig,
+    pub control_backend: Option<ControlBackendConfig>,
     #[serde(default)]
     pub remote_manager: Vec<ManagerInstance>,
     #[serde(default)]
@@ -439,4 +443,10 @@ pub struct BackupLinkConfigServer {
     pub password_target: String,
     /// Accepted password for client which sends the backups
     pub password_source: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ControlBackendConfig {
+    /// Backend service name which `systemctl-access.sh` script accepts.
+    pub service: String,
 }
