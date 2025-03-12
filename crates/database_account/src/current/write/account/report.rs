@@ -48,4 +48,21 @@ impl CurrentWriteAccountReport<'_> {
 
         Ok(())
     }
+
+    pub fn upsert_custom_reports_file_hash(
+        &mut self,
+        sha256_custom_reports_file_hash: &str,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::custom_reports_file_hash::dsl::*;
+
+        insert_into(custom_reports_file_hash)
+            .values((row_type.eq(0), sha256_hash.eq(sha256_custom_reports_file_hash)))
+            .on_conflict(row_type)
+            .do_update()
+            .set(sha256_hash.eq(sha256_custom_reports_file_hash))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
 }

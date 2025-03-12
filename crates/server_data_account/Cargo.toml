@@ -8,6 +8,8 @@ edition = "2021"
 [dependencies]
 error-stack = { workspace = true }
 
+tracing = { workspace = true }
+
 model = { path = "../model" }
 model_account = { path = "../model_account" }
 model_server_state = { path = "../model_server_state" }

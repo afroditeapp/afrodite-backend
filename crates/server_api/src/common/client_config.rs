@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension};
-use model::{AccountIdInternal, ClientConfig};
+use model::{AccountIdInternal, ClientConfig, CustomReportsFileHash};
 use server_data::{app::GetConfig, read::GetReadCommandsCommon};
 use simple_backend::create_counters;
 
@@ -29,6 +29,7 @@ pub async fn get_client_config(
     COMMON.get_client_config.incr();
     let sync_version = state.read().common().client_config_sync_version(account_id).await?;
     let info = ClientConfig {
+        custom_reports: state.config().custom_reports_sha256().map(|v| CustomReportsFileHash::new(v.to_string())),
         profile_attributes: state.config().profile_attributes().map(|a| a.info_for_client()).cloned(),
         sync_version,
     };

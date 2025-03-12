@@ -245,7 +245,7 @@ impl WriteCommandsProfile<'_> {
         })
     }
 
-    /// Updates the profile attributes sha256 and sync version for it for every
+    /// Updates the profile attributes sha256 and related sync version for it for every
     /// account if needed.
     pub async fn update_profile_attributes_sha256_and_sync_versions(
         &self,

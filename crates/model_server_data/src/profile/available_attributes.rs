@@ -426,7 +426,7 @@ impl AttributeInternal {
             for l in t.values {
                 if !keys.contains(&l.key) {
                     return Err(format!(
-                        "Missing attribute value definition for key {}",
+                        "Missing attribute key definition for translation key {}",
                         l.key
                     ));
                 }

@@ -244,6 +244,15 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    custom_reports_file_hash (row_type) {
+        row_type -> Integer,
+        sha256_hash -> Text,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     demo_mode_account_ids (id) {
         id -> Integer,
         demo_mode_id -> Integer,
@@ -723,6 +732,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     common_report,
     common_state,
     current_account_media,
+    custom_reports_file_hash,
     demo_mode_account_ids,
     favorite_profile,
     history_performance_statistics_metric_name,

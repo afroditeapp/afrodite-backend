@@ -1,5 +1,5 @@
 use diesel::{prelude::{AsChangeset, Insertable, Queryable}, Selectable};
-use model::{AccountId, ReportProcessingState};
+use model::{AccountId, CustomReportsConfig, ReportProcessingState};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -38,4 +38,9 @@ impl AccountReportContent {
     pub fn is_empty(&self) -> bool {
         *self == Self::default()
     }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct GetCustomReportsConfigResult {
+    pub config: Option<CustomReportsConfig>,
 }

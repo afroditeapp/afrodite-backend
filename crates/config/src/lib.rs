@@ -22,7 +22,7 @@ use error_stack::{Result, ResultExt};
 use file::{AccountLimitsConfig, ChatLimitsConfig, CommonLimitsConfig, DemoModeConfig, GrantAdminAccessConfig, MediaLimitsConfig, MinClientVersion, RemoteBotConfig};
 use file_dynamic::ConfigFileDynamic;
 use file_email_content::EmailContentFile;
-use model::BotConfig;
+use model::{BotConfig, CustomReportsConfig};
 use model_server_data::{AttributesFileInternal, ProfileAttributesInternal};
 use profile_name_allowlist::{ProfileNameAllowlistBuilder, ProfileNameAllowlistData};
 use reqwest::Url;
@@ -73,6 +73,8 @@ pub struct Config {
     mode: Option<AppMode>,
     profile_attributes: Option<ProfileAttributesInternal>,
     profile_attributes_sha256: Option<String>,
+    custom_reports: Option<CustomReportsConfig>,
+    custom_reports_sha256: Option<String>,
     email_content: Option<EmailContentFile>,
 
     reset_likes_utc_offset: FixedOffset,
@@ -93,6 +95,8 @@ impl Config {
             mode: None,
             profile_attributes: None,
             profile_attributes_sha256: None,
+            custom_reports: None,
+            custom_reports_sha256: None,
             email_content: None,
             reset_likes_utc_offset: FixedOffset::east_opt(0).unwrap(),
             profile_name_allowlist: ProfileNameAllowlistData::default(),
@@ -174,6 +178,14 @@ impl Config {
 
     pub fn profile_attributes_sha256(&self) -> Option<&str> {
         self.profile_attributes_sha256.as_deref()
+    }
+
+    pub fn custom_reports(&self) -> Option<&CustomReportsConfig> {
+        self.custom_reports.as_ref()
+    }
+
+    pub fn custom_reports_sha256(&self) -> Option<&str> {
+        self.custom_reports_sha256.as_deref()
     }
 
     pub fn email_content(&self) -> Option<&EmailContentFile> {
@@ -263,6 +275,21 @@ pub fn get_config(
             (None, None)
         };
 
+    let (custom_reports, custom_reports_sha256) =
+        if let Some(path) = &file_config.config_files.custom_reports {
+            let custom_reports =
+                std::fs::read_to_string(path).change_context(GetConfigError::LoadFileError)?;
+            let custom_reports_sha256 = format!("{:x}", Sha256::digest(custom_reports.as_bytes()));
+            let mut custom_reports: CustomReportsConfig =
+                toml::from_str(&custom_reports).change_context(GetConfigError::InvalidConfiguration)?;
+            custom_reports
+                .validate_and_sort_by_id()
+                .into_error_string(GetConfigError::InvalidConfiguration)?;
+            (Some(custom_reports), Some(custom_reports_sha256))
+        } else {
+            (None, None)
+        };
+
     let email_content = if let Some(path) = &file_config.config_files.email_content {
         let email_content =
             EmailContentFile::load(path).change_context(GetConfigError::LoadFileError)?;
@@ -307,6 +334,8 @@ pub fn get_config(
         mode: args_config.mode.clone(),
         profile_attributes,
         profile_attributes_sha256,
+        custom_reports,
+        custom_reports_sha256,
         email_content,
         reset_likes_utc_offset,
         profile_name_allowlist,

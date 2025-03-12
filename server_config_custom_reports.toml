@@ -1,0 +1,15 @@
+
+report_order = "OrderNumber"
+
+[[report]]
+key = "scammer"
+name = "Scammer"
+report_type = "Boolean"
+id = 0
+order_number = 0
+visible = true # Optional
+translations = [ # Optional
+    { lang = "fi", values = [
+        { key = "scammer", value = "Huijari" },
+    ] },
+]

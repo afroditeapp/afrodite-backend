@@ -346,6 +346,14 @@ CREATE TABLE IF NOT EXISTS account_global_state(
     next_news_publication_id   INTEGER             NOT NULL DEFAULT 0
 );
 
+-- Store custom reports file hash, so that changes to it can be detected
+-- when server starts.
+CREATE TABLE IF NOT EXISTS custom_reports_file_hash(
+    -- 0 = custom reports file hash
+    row_type      INTEGER PRIMARY KEY NOT NULL,
+    sha256_hash   TEXT                NOT NULL
+);
+
 ---------- Tables for server component profile ----------
 
 -- Private profile related state for some account.

@@ -32,6 +32,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # bot = "server_config_bots.toml"
 # email_content = "server_config_email_content.toml"
 # profile_attributes = "server_config_profile_attributes.toml"
+# custom_reports = "server_config_custom_reports.toml"
 
 # [grant_admin_access]
 # email = "admin@example.com"
@@ -153,6 +154,7 @@ pub struct ConfigFileConfig {
     pub bot: Option<PathBuf>,
     pub email_content: Option<PathBuf>,
     pub profile_attributes: Option<PathBuf>,
+    pub custom_reports: Option<PathBuf>,
 }
 
 /// Enabled server components
