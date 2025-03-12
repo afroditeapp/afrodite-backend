@@ -15,8 +15,7 @@ use axum_extra::TypedHeader;
 use headers::ContentType;
 use http::HeaderMap;
 use model::{
-    AccessToken, AccountIdInternal, BackendVersion, EventToClient, PendingNotificationFlags,
-    RefreshToken, SyncDataVersionFromClient, WebSocketClientTypeNumber,
+    AccessToken, AccountIdInternal, BackendVersion, EventToClient, PendingNotificationFlags, RefreshToken, SyncDataVersionFromClient, WebSocketClientTypeNumber
 };
 use model_server_data::AuthPair;
 use server_common::websocket::WebSocketError;
@@ -40,6 +39,9 @@ use crate::{
     utils::Json,
     S,
 };
+
+mod client_config;
+pub use client_config::*;
 
 pub const PATH_GET_VERSION: &str = "/common_api/version";
 

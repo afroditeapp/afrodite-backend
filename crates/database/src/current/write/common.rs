@@ -9,6 +9,7 @@ mod queue_number;
 mod state;
 mod token;
 mod report;
+mod client_config;
 
 define_current_write_commands!(CurrentWriteCommon);
 
@@ -27,6 +28,10 @@ impl<'a> CurrentWriteCommon<'a> {
 
     pub fn report(self) -> report::CurrentWriteCommonReport<'a> {
         report::CurrentWriteCommonReport::new(self.cmds)
+    }
+
+    pub fn client_config(self) -> client_config::CurrentWriteCommonClientConfig<'a> {
+        client_config::CurrentWriteCommonClientConfig::new(self.cmds)
     }
 }
 
@@ -47,5 +52,21 @@ impl CurrentWriteCommon<'_> {
             uuid: account_uuid,
             id: db_id,
         })
+    }
+
+    pub fn insert_common_state(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::common_state::dsl::*;
+
+        insert_into(common_state)
+            .values((
+                account_id.eq(id.as_db_id()),
+            ))
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
     }
 }

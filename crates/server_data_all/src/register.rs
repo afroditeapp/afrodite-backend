@@ -73,6 +73,9 @@ impl RegisterAccount<'_> {
             .common()
             .state()
             .insert_shared_state(id, SharedStateRaw::default())?;
+        current
+            .common()
+            .insert_common_state(id)?;
 
         if config.components().account {
             current

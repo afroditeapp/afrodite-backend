@@ -1,6 +1,6 @@
 use axum::{extract::State, Extension};
 use model_profile::{
-    AccountIdInternal, AvailableProfileAttributes, GetProfileFilteringSettings, ProfileAttributeQuery, ProfileAttributeQueryResult, ProfileFilteringSettingsUpdate
+    AccountIdInternal, GetProfileFilteringSettings, ProfileAttributeQuery, ProfileAttributeQueryResult, ProfileFilteringSettingsUpdate
 };
 use server_api::{create_open_api_router, S};
 use server_data::DataError;
@@ -13,32 +13,6 @@ use crate::{
     db_write,
     utils::{Json, StatusCode},
 };
-
-const PATH_GET_AVAILABLE_PROFILE_ATTRIBUTES: &str = "/profile_api/available_profile_attributes";
-
-/// Get info what profile attributes server supports.
-#[utoipa::path(
-    get,
-    path = PATH_GET_AVAILABLE_PROFILE_ATTRIBUTES,
-    responses(
-        (status = 200, description = "Get successfull.", body = AvailableProfileAttributes),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn get_available_profile_attributes(
-    State(state): State<S>,
-    Extension(account_id): Extension<AccountIdInternal>,
-) -> Result<Json<AvailableProfileAttributes>, StatusCode> {
-    PROFILE.get_available_profile_attributes.incr();
-    let profile_state = state.read().profile().profile_state(account_id).await?;
-    let info = AvailableProfileAttributes {
-        info: state.config().profile_attributes().map(|a| a.info_for_client()).cloned(),
-        sync_version: profile_state.profile_attributes_sync_version,
-    };
-    Ok(info.into())
-}
 
 const PATH_POST_GET_QUERY_AVAILABLE_PROFILE_ATTRIBUTES: &str = "/profile_api/query_available_profile_attributes";
 
@@ -123,7 +97,6 @@ pub async fn post_profile_filtering_settings(
 
 create_open_api_router!(
         fn router_filters,
-        get_available_profile_attributes,
         post_get_query_available_profile_attributes,
         get_profile_filtering_settings,
         post_profile_filtering_settings,
@@ -133,7 +106,6 @@ create_counters!(
     ProfileCounters,
     PROFILE,
     PROFILE_FILTERS_COUNTERS_LIST,
-    get_available_profile_attributes,
     post_get_query_available_profile_attributes,
     get_profile_attribute_filters,
     post_profile_filtering_settings,

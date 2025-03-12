@@ -11,6 +11,7 @@ mod queue_number;
 mod state;
 mod token;
 mod report;
+mod client_config;
 
 define_current_read_commands!(CurrentReadCommon);
 
@@ -29,6 +30,10 @@ impl<'a> CurrentReadCommon<'a> {
 
     pub fn report(self) -> report::CurrentReadCommonReport<'a> {
         report::CurrentReadCommonReport::new(self.cmds)
+    }
+
+    pub fn client_config(self) -> client_config::CurrentReadCommonClientConfig<'a> {
+        client_config::CurrentReadCommonClientConfig::new(self.cmds)
     }
 }
 

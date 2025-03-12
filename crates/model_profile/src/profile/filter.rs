@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
-use model_server_data::{ProfileCreatedTimeFilter, AttributeId, MaxDistanceKm, ProfileAttributeFilterValue, ProfileEditedTimeFilter};
+use model::AttributeId;
+use model_server_data::{ProfileCreatedTimeFilter, MaxDistanceKm, ProfileAttributeFilterValue, ProfileEditedTimeFilter};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 

@@ -1,9 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
 use diesel::{prelude::*, sql_types::BigInt, AsExpression, FromSqlRow};
-use model::ProfileAge;
+use model::{AttributeId, ProfileAge};
 use model_server_data::{
-    ProfileCreatedTimeFilter, AttributeId, LastSeenTime, LastSeenTimeFilter, MaxDistanceKm, ProfileAttributeValue, ProfileAttributeValueUpdate, ProfileAttributesInternal, ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal, ProfileNameModerationState, ProfileStateCached, ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes
+    ProfileCreatedTimeFilter, LastSeenTime, LastSeenTimeFilter, MaxDistanceKm, ProfileAttributeValue, ProfileAttributeValueUpdate, ProfileAttributesInternal, ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal, ProfileNameModerationState, ProfileStateCached, ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes
 };
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, UnixTime};
@@ -121,7 +121,6 @@ pub struct ProfileStateInternal {
     pub profile_created_time_filter: Option<ProfileCreatedTimeFilter>,
     pub profile_edited_time_filter: Option<ProfileEditedTimeFilter>,
     pub random_profile_order: bool,
-    pub profile_attributes_sync_version: ProfileAttributesSyncVersion,
     pub profile_sync_version: ProfileSyncVersion,
     pub profile_name_moderation_state: ProfileNameModerationState,
     pub profile_text_moderation_state: ProfileTextModerationState,
@@ -152,7 +151,7 @@ impl From<ProfileStateInternal> for ProfileStateCached {
     }
 }
 
-sync_version_wrappers!(ProfileAttributesSyncVersion, ProfileSyncVersion,);
+sync_version_wrappers!(ProfileSyncVersion,);
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
 pub struct ProfileUpdate {

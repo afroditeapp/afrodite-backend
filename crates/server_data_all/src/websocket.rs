@@ -8,10 +8,7 @@ use model_chat::{
 };
 use server_common::websocket::WebSocketError;
 use server_data::{
-    db_manager::RouterDatabaseReadHandle,
-    read::GetReadCommandsCommon,
-    result::{Result, WrappedResultExt},
-    write_commands::WriteCommandRunnerHandle,
+    db_manager::RouterDatabaseReadHandle, read::GetReadCommandsCommon, result::{Result, WrappedResultExt}, write::GetWriteCommandsCommon, write_commands::WriteCommandRunnerHandle
 };
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
@@ -171,17 +168,15 @@ pub async fn sync_data_with_client_if_needed(
                     .await?;
                 }
             }
-            SyncCheckDataType::AvailableProfileAttributes => {
-                if config.components().profile {
-                    handle_profile_attributes_sync_version_check(
-                        read_handle,
-                        write_handle,
-                        socket,
-                        id,
-                        version.version,
-                    )
-                    .await?;
-                }
+            SyncCheckDataType::ClientConfig => {
+                handle_client_config_sync_version_check(
+                    read_handle,
+                    write_handle,
+                    socket,
+                    id,
+                    version.version,
+                )
+                .await?;
             }
             SyncCheckDataType::Profile => {
                 if config.components().profile {
@@ -298,7 +293,7 @@ async fn handle_chat_state_version_check<T: SyncVersionUtils>(
     Ok(())
 }
 
-async fn handle_profile_attributes_sync_version_check(
+async fn handle_client_config_sync_version_check(
     read_handle: &RouterDatabaseReadHandle,
     write_handle: &WriteCommandRunnerHandle,
     socket: &mut WebSocket,
@@ -306,17 +301,16 @@ async fn handle_profile_attributes_sync_version_check(
     sync_version: SyncVersionFromClient,
 ) -> Result<(), WebSocketError> {
     let current = read_handle
-        .profile()
-        .profile_state(id)
+        .common()
+        .client_config_sync_version(id)
         .await
-        .change_context(WebSocketError::DatabaseProfileStateQuery)?
-        .profile_attributes_sync_version;
+        .change_context(WebSocketError::DatabaseProfileStateQuery)?;
     match current.check_is_sync_required(sync_version) {
         SyncCheckResult::DoNothing => return Ok(()),
         SyncCheckResult::ResetVersionAndSync => write_handle
             .write(move |cmds| async move {
-                cmds.profile()
-                    .reset_profile_attributes_sync_version(id)
+                cmds.common()
+                    .reset_client_config_sync_version(id)
                     .await
             })
             .await
@@ -326,7 +320,7 @@ async fn handle_profile_attributes_sync_version_check(
 
     send_event(
         socket,
-        EventToClientInternal::AvailableProfileAttributesChanged,
+        EventToClientInternal::ClientConfigChanged,
     )
     .await?;
 

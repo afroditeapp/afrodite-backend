@@ -27,6 +27,11 @@ impl ApiDoc {
     pub fn all(state: StateForRouterCreation) -> utoipa::openapi::OpenApi {
         let mut doc = ApiDoc::openapi();
         doc.merge(server_api::ApiDocCommon::openapi());
+        // Common
+        let common = ApiDoc::openapi()
+            .merge_from(server_api::common::router_client_config(state.clone()).into_openapi())
+            .tag_routes("common");
+        doc.merge(common);
         let common_admin = ApiDoc::openapi()
             .merge_from(server_api::common_admin::router_perf(state.clone()).into_openapi())
             .merge_from(server_api::common_admin::router_config(state.clone()).into_openapi())

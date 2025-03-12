@@ -160,35 +160,6 @@ impl CurrentWriteProfileData<'_> {
         Ok(())
     }
 
-    pub fn increment_profile_attributes_sync_version_for_every_account(
-        &mut self,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::profile_state::dsl::*;
-
-        update(profile_state)
-            .filter(profile_attributes_sync_version.lt(SyncVersion::MAX_VALUE))
-            .set(profile_attributes_sync_version.eq(profile_attributes_sync_version + 1))
-            .execute(self.conn())
-            .into_db_error(())?;
-
-        Ok(())
-    }
-
-    pub fn reset_profile_attributes_sync_version(
-        &mut self,
-        id: AccountIdInternal,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::profile_state::dsl::*;
-
-        update(profile_state)
-            .filter(account_id.eq(id.as_db_id()))
-            .set(profile_attributes_sync_version.eq(0))
-            .execute(self.conn())
-            .into_db_error(())?;
-
-        Ok(())
-    }
-
     /// Update profile version, increment profile sync version and
     /// update profile edited time.
     pub fn required_changes_for_profile_update(

@@ -38,7 +38,7 @@ pub enum SyncCheckDataType {
     SentLikes = 3,
     SentBlocks = 4,
     Matches = 5,
-    AvailableProfileAttributes = 6,
+    ClientConfig = 6,
     Profile = 7,
     News = 8,
     MediaContent = 9,
@@ -202,4 +202,4 @@ macro_rules! sync_version_wrappers {
 
 pub(crate) use sync_version_wrappers;
 
-sync_version_wrappers!(AccountSyncVersion,);
+sync_version_wrappers!(AccountSyncVersion, ClientConfigSyncVersion,);

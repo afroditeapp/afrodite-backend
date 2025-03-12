@@ -170,6 +170,17 @@ CREATE TABLE IF NOT EXISTS common_report(
             ON UPDATE CASCADE
 );
 
+-- State specific to all components.
+CREATE TABLE IF NOT EXISTS common_state(
+    account_id                         INTEGER PRIMARY KEY NOT NULL,
+    -- Sync version for client config.
+    client_config_sync_version         INTEGER             NOT NULL    DEFAULT 0,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 ---------- Tables for server component account ----------
 
 -- Sign in with related IDs for account
@@ -363,8 +374,6 @@ CREATE TABLE IF NOT EXISTS profile_state(
     random_profile_order       BOOLEAN              NOT NULL    DEFAULT 0,
     latitude                   DOUBLE               NOT NULL    DEFAULT 0.0,
     longitude                  DOUBLE               NOT NULL    DEFAULT 0.0,
-    -- Sync version for profile attributes config file.
-    profile_attributes_sync_version   INTEGER       NOT NULL    DEFAULT 0,
     -- Sync version for profile data for this account.
     profile_sync_version              INTEGER       NOT NULL    DEFAULT 0,
     -- Profile age when initial setup is completed

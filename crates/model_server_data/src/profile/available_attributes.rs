@@ -1,11 +1,10 @@
 use std::{collections::HashSet, str::FromStr};
 
 use base64::Engine;
+use model::{AttributeId, AttributeIdAndHash, AttributeOrderMode, ProfileAttributeHash, ProfileAttributeInfo};
 use serde::{Deserialize, Serialize};
 use sha2::{Sha256, Digest};
 use utoipa::ToSchema;
-
-use super::AttributeId;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttributesFileInternal {
@@ -522,11 +521,6 @@ pub enum AttributeMode {
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
-pub enum AttributeOrderMode {
-    OrderNumber,
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
 pub enum AttributeValueOrderMode {
     AlphabethicalKey,
     AlphabethicalValue,
@@ -608,29 +602,6 @@ impl From<IconResource> for String {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct ProfileAttributeHash {
-    h: String,
-}
-
-impl ProfileAttributeHash {
-    pub fn hash_attribute(a: &Attribute) -> Result<Self, String> {
-        let attribute_json = serde_json::to_string(a)
-            .map_err(|e| e.to_string())?;
-
-        let mut hasher = Sha256::new();
-        hasher.update(attribute_json);
-        let result = hasher.finalize();
-
-        let h = base64::engine::general_purpose::URL_SAFE_NO_PAD
-            .encode(result);
-
-        Ok(Self {
-            h
-        })
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct ProfileAttributesInternal {
     /// List of attributes.
@@ -667,7 +638,7 @@ impl ProfileAttributesInternal {
                 values: info.values,
                 translations: info.translations,
             };
-            let hash = ProfileAttributeHash::hash_attribute(&a)?;
+            let hash = a.hash()?;
             let id_and_hash = AttributeIdAndHash {
                 id: a.id,
                 h: hash.clone(),
@@ -702,18 +673,6 @@ impl ProfileAttributesInternal {
             })
             .collect()
     }
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct ProfileAttributeInfo {
-    pub attribute_order: AttributeOrderMode,
-    pub attributes: Vec<AttributeIdAndHash>,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct AttributeIdAndHash {
-    pub id: AttributeId,
-    pub h: ProfileAttributeHash,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -761,4 +720,20 @@ pub struct Attribute {
     #[serde(default = "value_empty_vec", skip_serializing_if = "value_is_empty")]
     #[schema(default = json!([]))]
     pub translations: Vec<Language>,
+}
+
+impl Attribute {
+    pub fn hash(&self) -> Result<ProfileAttributeHash, String> {
+        let attribute_json = serde_json::to_string(self)
+            .map_err(|e| e.to_string())?;
+
+        let mut hasher = Sha256::new();
+        hasher.update(attribute_json);
+        let result = hasher.finalize();
+
+        let h = base64::engine::general_purpose::URL_SAFE_NO_PAD
+            .encode(result);
+
+        Ok(ProfileAttributeHash::new(h))
+    }
 }

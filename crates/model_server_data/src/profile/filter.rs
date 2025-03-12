@@ -1,7 +1,8 @@
+use model::AttributeId;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use super::{Attribute, AttributeId, ProfileAttributeValue, SubLevelAttributeValueId, TopLevelAttributeValueId};
+use super::{Attribute, ProfileAttributeValue, SubLevelAttributeValueId, TopLevelAttributeValueId};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileAttributeFilterValue {

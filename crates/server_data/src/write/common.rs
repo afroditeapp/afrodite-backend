@@ -177,6 +177,18 @@ impl WriteCommandsCommon<'_> {
 
         Ok(())
     }
+
+    /// Only server WebSocket code should call this method.
+    pub async fn reset_client_config_sync_version(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.common()
+                .client_config()
+                .reset_client_config_sync_version(id)
+        })
+    }
 }
 
 pub trait UpdateLocationIndexVisibility {

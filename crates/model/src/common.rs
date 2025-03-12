@@ -26,6 +26,9 @@ pub use push_notifications::*;
 pub mod report;
 pub use report::*;
 
+pub mod client_config;
+pub use client_config::*;
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct BackendVersion {
     /// Backend code version.
@@ -52,7 +55,7 @@ pub enum EventType {
     LatestViewedMessageChanged,
     /// Data: content_processing_state_changed
     ContentProcessingStateChanged,
-    AvailableProfileAttributesChanged,
+    ClientConfigChanged,
     ProfileChanged,
     NewsCountChanged,
     InitialContentModerationCompleted,
@@ -111,7 +114,7 @@ pub enum EventToClientInternal {
     SentLikesChanged,
     SentBlocksChanged,
     MatchesChanged,
-    AvailableProfileAttributesChanged,
+    ClientConfigChanged,
     ProfileChanged,
     NewsChanged,
     InitialContentModerationCompleted,
@@ -132,7 +135,7 @@ impl From<&EventToClientInternal> for EventType {
             SentLikesChanged => Self::SentLikesChanged,
             SentBlocksChanged => Self::SentBlocksChanged,
             MatchesChanged => Self::MatchesChanged,
-            AvailableProfileAttributesChanged => Self::AvailableProfileAttributesChanged,
+            ClientConfigChanged => Self::ClientConfigChanged,
             ProfileChanged => Self::ProfileChanged,
             NewsChanged => Self::NewsCountChanged,
             InitialContentModerationCompleted => Self::InitialContentModerationCompleted,
@@ -164,7 +167,7 @@ impl From<EventToClientInternal> for EventToClient {
             | SentLikesChanged
             | SentBlocksChanged
             | MatchesChanged
-            | AvailableProfileAttributesChanged
+            | ClientConfigChanged
             | ProfileChanged
             | NewsChanged
             | InitialContentModerationCompleted

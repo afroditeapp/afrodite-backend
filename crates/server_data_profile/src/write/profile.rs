@@ -1,4 +1,4 @@
-use database::current::read::GetDbReadCommandsCommon;
+use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
     AccountIdInternal, Location, ProfileEditedTime, ProfileFilteringSettingsUpdateValidated, ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateValidated, ProfileVersion, ValidatedSearchGroups
@@ -265,24 +265,12 @@ impl WriteCommandsProfile<'_> {
                     .data()
                     .upsert_profile_attributes_file_hash(&sha256)?;
 
-                cmds.profile()
-                    .data()
-                    .increment_profile_attributes_sync_version_for_every_account()?;
+                cmds.common()
+                    .client_config()
+                    .increment_client_config_sync_version_for_every_account()?;
             }
 
             Ok(())
-        })
-    }
-
-    /// Only server WebSocket code should call this method.
-    pub async fn reset_profile_attributes_sync_version(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.profile()
-                .data()
-                .reset_profile_attributes_sync_version(id)
         })
     }
 

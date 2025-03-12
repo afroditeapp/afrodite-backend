@@ -216,6 +216,15 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    common_state (account_id) {
+        account_id -> Integer,
+        client_config_sync_version -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     current_account_media (account_id) {
         account_id -> Integer,
         security_content_id -> Nullable<Integer>,
@@ -570,7 +579,6 @@ diesel::table! {
         random_profile_order -> Bool,
         latitude -> Double,
         longitude -> Double,
-        profile_attributes_sync_version -> Integer,
         profile_sync_version -> Integer,
         profile_initial_age -> Nullable<Integer>,
         profile_initial_age_set_unix_time -> Nullable<Integer>,
@@ -666,6 +674,7 @@ diesel::joinable!(account_permissions -> account_id (account_id));
 diesel::joinable!(account_setup -> account_id (account_id));
 diesel::joinable!(chat_report_chat_message -> common_report (report_id));
 diesel::joinable!(chat_state -> account_id (account_id));
+diesel::joinable!(common_state -> account_id (account_id));
 diesel::joinable!(current_account_media -> account_id (account_id));
 diesel::joinable!(history_performance_statistics_metric_value -> history_performance_statistics_metric_name (metric_id));
 diesel::joinable!(history_performance_statistics_metric_value -> history_performance_statistics_save_time (time_id));
@@ -712,6 +721,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     chat_report_chat_message,
     chat_state,
     common_report,
+    common_state,
     current_account_media,
     demo_mode_account_ids,
     favorite_profile,
