@@ -257,35 +257,12 @@ CREATE TABLE IF NOT EXISTS account_state(
             ON UPDATE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS account_report(
-    creator_account_id      INTEGER           NOT NULL,
-    target_account_id       INTEGER           NOT NULL,
-    creation_unix_time      INTEGER           NOT NULL,
-    content_edit_unix_time  INTEGER           NOT NULL,
-    moderator_account_id    INTEGER,
-    -- 0 = Empty
-    -- 1 = Waiting
-    -- 2 = Done
-    processing_state        INTEGER           NOT NULL    DEFAULT 0,
-    processing_state_change_unix_time INTEGER NOT NULL,
-    -- Report content
-    is_bot             BOOLEAN                NOT NULL,
-    is_scammer         BOOLEAN                NOT NULL,
-    is_spammer         BOOLEAN                NOT NULL,
-    is_underaged       BOOLEAN                NOT NULL,
-    details            TEXT,
-    PRIMARY KEY (creator_account_id, target_account_id),
-    FOREIGN KEY (creator_account_id)
-        REFERENCES account_id (id)
+CREATE TABLE IF NOT EXISTS account_custom_report(
+    report_id               INTEGER PRIMARY KEY NOT NULL,
+    boolean_value           BOOLEAN,
+    FOREIGN KEY (report_id)
+        REFERENCES common_report (id)
             ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    FOREIGN KEY (target_account_id)
-        REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    FOREIGN KEY (moderator_account_id)
-        REFERENCES account_id (id)
-            ON DELETE SET NULL
             ON UPDATE CASCADE
 );
 
@@ -522,6 +499,9 @@ CREATE TABLE IF NOT EXISTS profile_name_allowlist(
             ON DELETE SET NULL
             ON UPDATE CASCADE
 );
+
+-- TODO(prod): Add NOT NULL to report related values
+--             except account_custom_report?
 
 CREATE TABLE IF NOT EXISTS profile_report_profile_name(
     report_id               INTEGER PRIMARY KEY NOT NULL,

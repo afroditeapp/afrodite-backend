@@ -1,6 +1,6 @@
 use diesel::{delete, insert_into, prelude::*};
 use error_stack::Result;
-use model::{AccountIdInternal, ReportIdDb, ReportProcessingState, ReportTypeNumber, UnixTime};
+use model::{AccountIdInternal, ReportIdDb, ReportProcessingState, ReportTypeNumberInternal, UnixTime};
 use simple_backend_utils::current_unix_time;
 
 use crate::{define_current_read_commands, DieselDatabaseError, IntoDatabaseError};
@@ -12,7 +12,7 @@ impl CurrentWriteCommonReport<'_> {
         &mut self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
-        type_number: ReportTypeNumber,
+        type_number: ReportTypeNumberInternal,
         state: ReportProcessingState,
     ) -> Result<ReportIdDb, DieselDatabaseError> {
         use model::schema::common_report::dsl::*;
@@ -23,7 +23,7 @@ impl CurrentWriteCommonReport<'_> {
             .values((
                 creator_account_id.eq(creator.as_db_id()),
                 target_account_id.eq(target.as_db_id()),
-                report_type_number.eq(type_number),
+                report_type_number.eq(type_number.db_value()),
                 creation_unix_time.eq(time),
                 processing_state.eq(state),
                 processing_state_change_unix_time.eq(time),
@@ -37,13 +37,13 @@ impl CurrentWriteCommonReport<'_> {
 
     pub fn delete_old_reports(
         &mut self,
-        type_number: ReportTypeNumber,
+        type_number: ReportTypeNumberInternal,
         deletion_allowed_time: UnixTime,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::common_report::dsl::*;
 
         delete(common_report)
-            .filter(report_type_number.eq(type_number))
+            .filter(report_type_number.eq(type_number.db_value()))
             .filter(processing_state.eq(ReportProcessingState::Done))
             .filter(processing_state_change_unix_time.ge(deletion_allowed_time))
             .execute(self.conn())

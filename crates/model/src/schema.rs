@@ -21,6 +21,15 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    account_custom_report (report_id) {
+        report_id -> Integer,
+        boolean_value -> Nullable<Bool>,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     account_email_sending_state (account_id) {
         account_id -> Integer,
         account_registered_state_number -> Integer,
@@ -108,25 +117,6 @@ diesel::table! {
         admin_news_create -> Bool,
         admin_news_edit_all -> Bool,
         admin_profile_statistics -> Bool,
-    }
-}
-
-diesel::table! {
-    use crate::schema_sqlite_types::*;
-
-    account_report (creator_account_id, target_account_id) {
-        creator_account_id -> Integer,
-        target_account_id -> Integer,
-        creation_unix_time -> Integer,
-        content_edit_unix_time -> Integer,
-        moderator_account_id -> Nullable<Integer>,
-        processing_state -> Integer,
-        processing_state_change_unix_time -> Integer,
-        is_bot -> Bool,
-        is_scammer -> Bool,
-        is_spammer -> Bool,
-        is_underaged -> Bool,
-        details -> Nullable<Text>,
     }
 }
 
@@ -677,6 +667,7 @@ diesel::table! {
 
 diesel::joinable!(access_token -> account_id (account_id));
 diesel::joinable!(account -> account_id (account_id));
+diesel::joinable!(account_custom_report -> common_report (report_id));
 diesel::joinable!(account_email_sending_state -> account_id (account_id));
 diesel::joinable!(account_interaction_index -> account_interaction (interaction_id));
 diesel::joinable!(account_permissions -> account_id (account_id));
@@ -717,13 +708,13 @@ diesel::joinable!(used_content_ids -> account_id (account_id));
 diesel::allow_tables_to_appear_in_same_query!(
     access_token,
     account,
+    account_custom_report,
     account_email_sending_state,
     account_global_state,
     account_id,
     account_interaction,
     account_interaction_index,
     account_permissions,
-    account_report,
     account_setup,
     account_state,
     chat_global_state,

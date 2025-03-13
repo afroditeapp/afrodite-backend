@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
-use model::{Account, AccountId, AccountIdInternal, ReportTypeNumber, UnixTime};
+use model::{Account, AccountId, AccountIdInternal, ReportTypeNumberInternal, UnixTime};
 use model_server_data::AuthPair;
 use server_common::data::cache::CacheError;
 use simple_backend_utils::time::DurationValue;
@@ -164,7 +164,7 @@ impl WriteCommandsCommon<'_> {
 
     pub async fn delete_processed_reports_if_needed(
         &self,
-        report_type: ReportTypeNumber,
+        report_type: ReportTypeNumberInternal,
         deletion_wait_time: DurationValue,
     ) -> Result<(), DataError> {
         let automatic_deletion_allowed = UnixTime::current_time()

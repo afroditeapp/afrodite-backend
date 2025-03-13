@@ -1,5 +1,5 @@
 use database_chat::current::write::GetDbWriteCommandsChat;
-use model::{AccountIdInternal, ReportTypeNumber, UpdateReportResult};
+use model::{AccountIdInternal, ReportTypeNumber, ReportTypeNumberInternal, UpdateReportResult};
 use server_data::{
     app::GetConfig, define_cmd_wrapper_write, read::DbRead, result::{Result, WrappedContextExt}, write::DbTransaction, DataError
 };
@@ -25,7 +25,7 @@ impl WriteCommandsChatReport<'_> {
 
         let components = self.config().components();
         let reports = self
-            .db_read(move |mut cmds| cmds.common().report().get_all_detailed_reports(creator, target, ReportTypeNumber::ChatMessage, components))
+            .db_read(move |mut cmds| cmds.common().report().get_all_detailed_reports(creator, target, ReportTypeNumberInternal::ChatMessage, components))
             .await?;
 
         if reports.len() >= ReportTypeNumber::MAX_COUNT {

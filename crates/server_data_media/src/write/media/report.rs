@@ -1,6 +1,6 @@
 use database::current::read::GetDbReadCommandsCommon;
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
-use model::{ContentId, ContentIdInternal, ReportTypeNumber, UpdateReportResult};
+use model::{ContentId, ContentIdInternal, ReportTypeNumber, ReportTypeNumberInternal, UpdateReportResult};
 use model_media::{AccountIdInternal, ContentModerationState, EventToClientInternal};
 use server_data::{
     app::GetConfig, define_cmd_wrapper_write, read::DbRead, result::Result, write::DbTransaction, DataError
@@ -49,7 +49,7 @@ impl WriteCommandsMediaReport<'_> {
 
         let components = self.config().components();
         let reports = self
-            .db_read(move |mut cmds| cmds.common().report().get_all_detailed_reports(creator, target, ReportTypeNumber::ProfileContent, components))
+            .db_read(move |mut cmds| cmds.common().report().get_all_detailed_reports(creator, target, ReportTypeNumberInternal::ProfileContent, components))
             .await?;
         if reports.len() >= ReportTypeNumber::MAX_COUNT {
             return Ok(UpdateReportResult::too_many_reports());

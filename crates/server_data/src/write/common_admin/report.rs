@@ -1,6 +1,7 @@
 
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
-use model::{AccountIdInternal, ReportContent, ReportTypeNumber};
+use model::{AccountIdInternal, ReportContent, ReportTypeNumber, ReportTypeNumberInternal};
+use simple_backend_utils::IntoReportFromString;
 
 use crate::{
     app::GetConfig, define_cmd_wrapper_write, read::DbRead, result::{Result, WrappedContextExt}, write::db_transaction, DataError
@@ -19,6 +20,9 @@ impl WriteCommandsCommonAdminReport<'_> {
         report_type: ReportTypeNumber,
         content: ReportContent,
     ) -> Result<(), DataError> {
+        let report_type = TryInto::<ReportTypeNumberInternal>::try_into(report_type)
+            .into_error_string(DataError::NotAllowed)?;
+
         let components = self.config().components();
         let current_reports = self
             .db_read(move |mut cmds| cmds.common().report().get_all_detailed_reports(creator, target, report_type, components))

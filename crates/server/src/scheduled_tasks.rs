@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use backup::backup_data;
-use model::{ReportTypeNumber, UnixTime};
+use model::{ReportTypeNumberInternal, UnixTime};
 use model_profile::{
     AccountIdInternal, AccountState, EventToClientInternal, ProfileAge, ProfileUpdate,
 };
@@ -169,8 +169,8 @@ impl ScheduledTaskManager {
         };
 
         let durations = self.state.config().limits_common().processed_report_deletion_wait_duration;
-        run_delete(ReportTypeNumber::ProfileName, durations.profile_name).await?;
-        run_delete(ReportTypeNumber::ProfileText, durations.profile_text).await?;
+        run_delete(ReportTypeNumberInternal::ProfileName, durations.profile_name).await?;
+        run_delete(ReportTypeNumberInternal::ProfileText, durations.profile_text).await?;
         Ok(())
     }
 

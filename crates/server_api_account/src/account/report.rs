@@ -1,76 +1,45 @@
-use axum::{extract::{Query, State}, Extension};
-use model::{AccountIdInternal, CustomReportsFileHash, ReportQueryParams};
-use model_account::{AccountReport, GetCustomReportsConfigResult, UpdateAccountReport};
+use axum::{extract::State, Extension};
+use model::{AccountIdInternal, CustomReportsFileHash, UpdateReportResult};
+use model_account::{GetCustomReportsConfigResult, UpdateCustomReportBoolean};
 use server_api::{app::GetConfig, create_open_api_router, S};
-use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
+use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
 
 use crate::{
-    app::{GetAccounts, ReadData, WriteData},
+    app::{GetAccounts, WriteData},
     db_write,
     utils::{Json, StatusCode},
 };
 
-const PATH_GET_ACCOUNT_REPORT: &str = "/account_api/account_report";
+const PATH_POST_CUSTOM_REPORT_BOOLEAN: &str = "/account_api/custom_report_boolean";
 
-/// Get account report
-#[utoipa::path(
-    get,
-    path = PATH_GET_ACCOUNT_REPORT,
-    params(ReportQueryParams),
-    responses(
-        (status = 200, description = "Successfull.", body = AccountReport),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn get_account_report(
-    State(state): State<S>,
-    Extension(account_id): Extension<AccountIdInternal>,
-    Query(report): Query<ReportQueryParams>,
-) -> Result<Json<AccountReport>, StatusCode> {
-    ACCOUNT.get_account_report.incr();
-
-    let target = state.get_internal_id(report.target).await?;
-
-    let report = state.read().account().report().get_report(
-        account_id,
-        target,
-    ).await?;
-
-    Ok(report.into())
-}
-
-const PATH_POST_ACCOUNT_REPORT: &str = "/account_api/account_report";
-
-/// Update account report.
+/// Send custom report
 #[utoipa::path(
     post,
-    path = PATH_POST_ACCOUNT_REPORT,
-    request_body = UpdateAccountReport,
+    path = PATH_POST_CUSTOM_REPORT_BOOLEAN,
+    request_body = UpdateCustomReportBoolean,
     responses(
-        (status = 200, description = "Successfull."),
+        (status = 200, description = "Successfull.", body = UpdateReportResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_account_report(
+pub async fn post_custom_report_boolean(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-    Json(update): Json<UpdateAccountReport>,
-) -> Result<(), StatusCode> {
-    ACCOUNT.post_account_report.incr();
+    Json(update): Json<UpdateCustomReportBoolean>,
+) -> Result<Json<UpdateReportResult>, StatusCode> {
+    ACCOUNT.post_custom_report_boolean.incr();
 
     let target = state.get_internal_id(update.target).await?;
 
-    db_write!(state, move |cmds| cmds
+    let r = db_write!(state, move |cmds| cmds
         .account()
         .report()
-        .update_report(account_id, target, update.content))?;
+        .report_custom_report_boolean(account_id, target, update.custom_report_id, update.value))?;
 
-    Ok(())
+    Ok(r.into())
 }
 
 const PATH_POST_GET_CUSTOM_CONFIG_REPORTS: &str = "/account_api/custom_reports_config";
@@ -107,8 +76,7 @@ pub async fn post_get_custom_reports_config(
 
 create_open_api_router!(
         fn router_account_report,
-        get_account_report,
-        post_account_report,
+        post_custom_report_boolean,
         post_get_custom_reports_config,
 );
 
@@ -116,7 +84,6 @@ create_counters!(
     AccountCounters,
     ACCOUNT,
     ACCOUNT_REPORT_COUNTERS_LIST,
-    get_account_report,
-    post_account_report,
+    post_custom_report_boolean,
     post_get_custom_reports_config,
 );

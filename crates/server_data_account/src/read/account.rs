@@ -13,7 +13,6 @@ pub mod ban;
 pub mod delete;
 pub mod email;
 pub mod news;
-pub mod report;
 
 define_cmd_wrapper_read!(ReadCommandsAccount);
 
@@ -32,10 +31,6 @@ impl<'a> ReadCommandsAccount<'a> {
 
     pub fn news(self) -> news::ReadCommandsAccountNews<'a> {
         news::ReadCommandsAccountNews::new(self.0)
-    }
-
-    pub fn report(self) -> report::ReadCommandsAccountReport<'a> {
-        report::ReadCommandsAccountReport::new(self.0)
     }
 }
 

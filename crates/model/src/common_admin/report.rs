@@ -2,11 +2,11 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::UnixTime;
 use utoipa::ToSchema;
 
-use crate::{AccountId, AccountIdDb, AccountIdInternal, ContentId, ProfileAge, ReportIdDb, ReportProcessingState, ReportTypeNumber};
+use crate::{AccountId, AccountIdDb, AccountIdInternal, ContentId, ProfileAge, ReportIdDb, ReportProcessingState, ReportTypeNumber, ReportTypeNumberInternal};
 
 #[derive(Debug, Clone)]
 pub struct ReportInternal {
-    pub info: ReportDetailedInfo,
+    pub info: ReportDetailedInfoInternal,
     pub id: ReportIdDb,
     pub creator_db_id: AccountIdDb,
     pub target_db_id: AccountIdDb,
@@ -16,6 +16,14 @@ impl ReportInternal {
     pub fn state(&self) -> ReportProcessingState {
         ReportProcessingState::Waiting
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct ReportDetailedInfoInternal {
+    pub creator: AccountId,
+    pub target: AccountId,
+    pub processing_state: ReportProcessingState,
+    pub report_type: ReportTypeNumberInternal,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -93,6 +101,12 @@ pub struct ReportContent {
     pub profile_text: Option<String>,
     pub profile_content: Option<ContentId>,
     pub chat_message: Option<String>,
+    pub custom_report: Option<CustomReportContent>,
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize, ToSchema)]
+pub struct CustomReportContent {
+    pub boolean_value: Option<bool>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]

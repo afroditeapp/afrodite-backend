@@ -2,7 +2,7 @@ use crate::{current::read::GetDbReadCommandsCommon, define_current_read_commands
 use config::file::Components;
 use diesel::{alias, prelude::*};
 use error_stack::Result;
-use model::{AccountId, AccountIdDb, GetReportList, ReportDetailedInfo, ReportIdDb, ReportInternal, ReportIteratorMode, ReportIteratorQueryInternal, ReportProcessingState, ReportTypeNumber};
+use model::{AccountId, AccountIdDb, GetReportList, ReportDetailedInfoInternal, ReportIdDb, ReportInternal, ReportIteratorMode, ReportIteratorQueryInternal, ReportProcessingState, ReportTypeNumberInternal};
 
 define_current_read_commands!(CurrentReadCommonAdminReport);
 
@@ -35,7 +35,7 @@ impl CurrentReadCommonAdminReport<'_> {
 
         const PAGE_SIZE: i64 = 25;
 
-        let values: Vec<(AccountId, AccountIdDb, AccountId, AccountIdDb, ReportIdDb, ReportTypeNumber)> = common_report
+        let values: Vec<(AccountId, AccountIdDb, AccountId, AccountIdDb, ReportIdDb, ReportTypeNumberInternal)> = common_report
             .inner_join(creator_aid.on(creator_account_id.eq(creator_aid.field(account_id::id))))
             .inner_join(target_aid.on(target_account_id.eq(target_aid.field(account_id::id))))
             .filter(
@@ -59,7 +59,7 @@ impl CurrentReadCommonAdminReport<'_> {
 
         let values = values.into_iter().map(|(creator, creator_db_id, target, target_db_id, report_id, report_type)| {
             ReportInternal {
-                info: ReportDetailedInfo {
+                info: ReportDetailedInfoInternal {
                     creator,
                     target,
                     processing_state: ReportProcessingState::Waiting,
@@ -108,7 +108,7 @@ impl CurrentReadCommonAdminReport<'_> {
             .inner_join(creator_aid.on(creator_account_id.eq(creator_aid.field(account_id::id))))
             .inner_join(target_aid.on(target_account_id.eq(target_aid.field(account_id::id))));
 
-        let values: Vec<(AccountId, AccountIdDb, AccountId, AccountIdDb, ReportIdDb, ReportProcessingState, ReportTypeNumber)> = match query.mode {
+        let values: Vec<(AccountId, AccountIdDb, AccountId, AccountIdDb, ReportIdDb, ReportProcessingState, ReportTypeNumberInternal)> = match query.mode {
             ReportIteratorMode::Received => db_query
                 .filter(target_account_id.eq(query.aid.as_db_id()))
                 .filter(creation_unix_time.le(query.start_position))
@@ -153,7 +153,7 @@ impl CurrentReadCommonAdminReport<'_> {
 
         let values = values.into_iter().map(|(creator, creator_db_id, target, target_db_id, report_id, report_state, report_type)| {
             ReportInternal {
-                info: ReportDetailedInfo {
+                info: ReportDetailedInfoInternal {
                     creator,
                     target,
                     processing_state: report_state,

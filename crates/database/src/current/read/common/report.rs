@@ -1,7 +1,7 @@
 use config::file::Components;
 use diesel::{alias, prelude::*};
 use error_stack::Result;
-use model::{AccountId, AccountIdDb, AccountIdInternal, AccountInteractionInternal, ContentId, ReportAccountInfo, ReportChatInfo, ReportChatInfoInteractionState, ReportContent, ReportDetailed, ReportDetailedInfo, ReportDetailedWithId, ReportIdDb, ReportInternal, ReportProcessingState, ReportTypeNumber};
+use model::{AccountId, AccountIdDb, AccountIdInternal, AccountInteractionInternal, ContentId, CustomReportContent, ReportAccountInfo, ReportChatInfo, ReportChatInfoInteractionState, ReportContent, ReportDetailed, ReportDetailedInfo, ReportDetailedInfoInternal, ReportDetailedWithId, ReportIdDb, ReportInternal, ReportProcessingState, ReportTypeNumberInternal};
 
 use crate::{define_current_read_commands, DieselDatabaseError, IntoDatabaseError};
 
@@ -12,7 +12,7 @@ impl CurrentReadCommonReport<'_> {
         &mut self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
-        report_type: ReportTypeNumber,
+        report_type: ReportTypeNumberInternal,
     ) -> Result<Vec<ReportInternal>, DieselDatabaseError> {
         use crate::schema::{account_id, common_report::dsl::*};
 
@@ -24,7 +24,7 @@ impl CurrentReadCommonReport<'_> {
             .inner_join(target_aid.on(target_account_id.eq(target_aid.field(account_id::id))))
             .filter(creator_account_id.eq(creator.as_db_id()))
             .filter(target_account_id.eq(target.as_db_id()))
-            .filter(report_type_number.eq(report_type))
+            .filter(report_type_number.eq(report_type.db_value()))
             .select((
                 creator_aid.field(account_id::uuid),
                 creator_account_id,
@@ -38,7 +38,7 @@ impl CurrentReadCommonReport<'_> {
 
         let values = values.into_iter().map(|(creator, creator_db_id, target, target_db_id, report_id, state)| {
             ReportInternal {
-                info: ReportDetailedInfo {
+                info: ReportDetailedInfoInternal {
                     creator,
                     target,
                     processing_state: state,
@@ -57,7 +57,7 @@ impl CurrentReadCommonReport<'_> {
         &mut self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
-        report_type: ReportTypeNumber,
+        report_type: ReportTypeNumberInternal,
         components: Components,
     ) -> Result<Vec<ReportDetailedWithId>, DieselDatabaseError> {
         let internal = self.get_all_internal_reports(creator, target, report_type)?;
@@ -79,30 +79,34 @@ impl CurrentReadCommonReport<'_> {
         report: ReportInternal,
         components: Components,
     ) -> Result<ReportDetailedWithId, DieselDatabaseError> {
+        let mut profile_name = None;
+        let mut profile_text = None;
+        let mut profile_content = None;
+        let mut chat_message = None;
+        let mut custom_report = None;
+
+        match report.info.report_type {
+            ReportTypeNumberInternal::ProfileName => profile_name = self.profile_name_report(report.id)?,
+            ReportTypeNumberInternal::ProfileText => profile_text = self.profile_text_report(report.id)?,
+            ReportTypeNumberInternal::ProfileContent => profile_content = self.profile_content_report(report.id)?,
+            ReportTypeNumberInternal::ChatMessage => chat_message = self.chat_message_report(report.id)?,
+            ReportTypeNumberInternal::CustomReport(_) => custom_report = self.custom_report(report.id)?,
+        }
+
         let detailed = ReportDetailed {
             content: ReportContent {
-                profile_name: if report.info.report_type == ReportTypeNumber::ProfileName {
-                    self.profile_name_report(report.id)?
-                } else {
-                    None
-                },
-                profile_text: if report.info.report_type == ReportTypeNumber::ProfileText {
-                    self.profile_text_report(report.id)?
-                } else {
-                    None
-                },
-                profile_content: if report.info.report_type == ReportTypeNumber::ProfileContent {
-                    self.profile_content_report(report.id)?
-                } else {
-                    None
-                },
-                chat_message: if report.info.report_type == ReportTypeNumber::ChatMessage {
-                    self.chat_message_report(report.id)?
-                } else {
-                    None
-                },
+                profile_name,
+                profile_text,
+                profile_content,
+                chat_message,
+                custom_report,
             },
-            info: report.info,
+            info: ReportDetailedInfo {
+                creator: report.info.creator,
+                target: report.info.target,
+                processing_state: report.info.processing_state,
+                report_type: report.info.report_type.into(),
+            },
             creator_info: if components.profile {
                 self.get_report_account_info(report.creator_db_id)?
             } else {
@@ -182,6 +186,21 @@ impl CurrentReadCommonReport<'_> {
             .optional()
             .into_db_error(())
             .map(|v| v.flatten())
+    }
+
+    fn custom_report(
+        &mut self,
+        id: ReportIdDb
+    ) -> Result<Option<CustomReportContent>, DieselDatabaseError> {
+        use crate::schema::account_custom_report::dsl::*;
+
+        let value: Option<Option<bool>> = account_custom_report.find(id)
+            .select(boolean_value)
+            .first(self.conn())
+            .optional()
+            .into_db_error(())?;
+
+        Ok(value.map(|v| CustomReportContent { boolean_value: v }))
     }
 
     fn get_report_account_info(

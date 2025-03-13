@@ -1,6 +1,6 @@
 use database::current::read::GetDbReadCommandsCommon;
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
-use model_profile::{AccountIdInternal, EventToClientInternal, ProfileNameModerationState, ProfileTextModerationState, ReportTypeNumber, UpdateReportResult};
+use model_profile::{AccountIdInternal, EventToClientInternal, ProfileNameModerationState, ProfileTextModerationState, ReportTypeNumber, ReportTypeNumberInternal, UpdateReportResult};
 use server_data::{
     app::GetConfig, define_cmd_wrapper_write, read::DbRead, result::Result, write::DbTransaction, DataError
 };
@@ -32,7 +32,7 @@ impl WriteCommandsProfileReport<'_> {
 
         let components = self.config().components();
         let reports = self
-            .db_read(move |mut cmds| cmds.common().report().get_all_detailed_reports(creator, target, ReportTypeNumber::ProfileName, components))
+            .db_read(move |mut cmds| cmds.common().report().get_all_detailed_reports(creator, target, ReportTypeNumberInternal::ProfileName, components))
             .await?;
         if reports.len() >= ReportTypeNumber::MAX_COUNT {
             return Ok(UpdateReportResult::too_many_reports());
@@ -81,7 +81,7 @@ impl WriteCommandsProfileReport<'_> {
 
         let components = self.config().components();
         let reports = self
-            .db_read(move |mut cmds| cmds.common().report().get_all_detailed_reports(creator, target, ReportTypeNumber::ProfileText, components))
+            .db_read(move |mut cmds| cmds.common().report().get_all_detailed_reports(creator, target, ReportTypeNumberInternal::ProfileText, components))
             .await?;
         if reports.len() >= ReportTypeNumber::MAX_COUNT {
             return Ok(UpdateReportResult::too_many_reports());
