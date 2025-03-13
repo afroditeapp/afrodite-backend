@@ -12,24 +12,18 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct ProfileUpdate {
+pub struct ReportAccountInfo {
     #[serde(rename = "age")]
     pub age: i64,
-    #[serde(rename = "attributes")]
-    pub attributes: Vec<models::ProfileAttributeValueUpdate>,
     #[serde(rename = "name")]
     pub name: String,
-    #[serde(rename = "ptext")]
-    pub ptext: String,
 }
 
-impl ProfileUpdate {
-    pub fn new(age: i64, attributes: Vec<models::ProfileAttributeValueUpdate>, name: String, ptext: String) -> ProfileUpdate {
-        ProfileUpdate {
+impl ReportAccountInfo {
+    pub fn new(age: i64, name: String) -> ReportAccountInfo {
+        ReportAccountInfo {
             age,
-            attributes,
             name,
-            ptext,
         }
     }
 }

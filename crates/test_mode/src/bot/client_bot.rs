@@ -4,15 +4,13 @@ use std::{fmt::Debug, iter::Peekable, time::Instant};
 
 use api_client::{
     apis::{
-        account_api::get_account_state,
-        chat_api::{
+        account_api::get_account_state, chat_api::{
             get_public_key, post_add_receiver_acknowledgement, post_add_sender_acknowledgement,
             post_get_next_received_likes_page, post_public_key, post_reset_received_likes_paging,
             post_send_like,
-        },
-        profile_api::{
-            get_available_profile_attributes, post_get_query_available_profile_attributes, post_profile, post_search_age_range, post_search_groups
-        },
+        }, common_api::get_client_config, profile_api::{
+            post_get_query_available_profile_attributes, post_profile, post_search_age_range, post_search_groups
+        }
     },
     manual_additions::{get_pending_messages_fixed, post_send_message_fixed},
     models::{
@@ -335,10 +333,10 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             }
         };
 
-        let available_attributes = get_available_profile_attributes(state.api.profile())
+        let available_attributes = get_client_config(state.api.profile())
             .await
             .change_context(TestError::ApiRequest)?
-            .info
+            .profile_attributes
             .flatten()
             .map(|v| v.attributes)
             .unwrap_or_default();

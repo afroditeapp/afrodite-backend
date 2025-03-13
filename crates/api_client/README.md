@@ -36,12 +36,14 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_account_data**](docs/AccountApi.md#post_account_data) | **POST** /account_api/account_data | Set changeable user information to account.
 *AccountApi* | [**post_account_setup**](docs/AccountApi.md#post_account_setup) | **POST** /account_api/account_setup | Setup non-changeable user information during `initial setup` state.
 *AccountApi* | [**post_complete_setup**](docs/AccountApi.md#post_complete_setup) | **POST** /account_api/complete_setup | Complete initial setup.
+*AccountApi* | [**post_custom_report_boolean**](docs/AccountApi.md#post_custom_report_boolean) | **POST** /account_api/custom_report_boolean | Send custom report
 *AccountApi* | [**post_demo_mode_accessible_accounts**](docs/AccountApi.md#post_demo_mode_accessible_accounts) | **POST** /account_api/demo_mode_accessible_accounts | Get demo account's available accounts.
 *AccountApi* | [**post_demo_mode_confirm_login**](docs/AccountApi.md#post_demo_mode_confirm_login) | **POST** /account_api/demo_mode_confirm_login | 
 *AccountApi* | [**post_demo_mode_login**](docs/AccountApi.md#post_demo_mode_login) | **POST** /account_api/demo_mode_login | Access demo mode, which allows accessing all or specific accounts depending on the server configuration.
 *AccountApi* | [**post_demo_mode_login_to_account**](docs/AccountApi.md#post_demo_mode_login_to_account) | **POST** /account_api/demo_mode_login_to_account | 
 *AccountApi* | [**post_demo_mode_logout**](docs/AccountApi.md#post_demo_mode_logout) | **POST** /account_api/demo_mode_logout | 
 *AccountApi* | [**post_demo_mode_register_account**](docs/AccountApi.md#post_demo_mode_register_account) | **POST** /account_api/demo_mode_register_account | 
+*AccountApi* | [**post_get_custom_reports_config**](docs/AccountApi.md#post_get_custom_reports_config) | **POST** /account_api/custom_reports_config | 
 *AccountApi* | [**post_get_next_client_id**](docs/AccountApi.md#post_get_next_client_id) | **POST** /account_api/next_client_id | 
 *AccountApi* | [**post_get_next_news_page**](docs/AccountApi.md#post_get_next_news_page) | **POST** /account_api/next_news_page | 
 *AccountApi* | [**post_get_unread_news_count**](docs/AccountApi.md#post_get_unread_news_count) | **POST** /account_api/news_count | The unread news count for public news.
@@ -78,6 +80,7 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**post_add_receiver_acknowledgement**](docs/ChatApi.md#post_add_receiver_acknowledgement) | **POST** /chat_api/add_receiver_acknowledgement | 
 *ChatApi* | [**post_add_sender_acknowledgement**](docs/ChatApi.md#post_add_sender_acknowledgement) | **POST** /chat_api/add_sender_acknowledgement | 
 *ChatApi* | [**post_block_profile**](docs/ChatApi.md#post_block_profile) | **POST** /chat_api/block_profile | Block profile
+*ChatApi* | [**post_chat_message_report**](docs/ChatApi.md#post_chat_message_report) | **POST** /chat_api/chat_message_report | Report chat message.
 *ChatApi* | [**post_get_new_received_likes_count**](docs/ChatApi.md#post_get_new_received_likes_count) | **POST** /chat_api/new_received_likes_count | 
 *ChatApi* | [**post_get_next_matches_page**](docs/ChatApi.md#post_get_next_matches_page) | **POST** /chat_api/matches_page | Update matches iterator and get next page of matches. If the page is empty there is no more matches available.
 *ChatApi* | [**post_get_next_received_likes_page**](docs/ChatApi.md#post_get_next_received_likes_page) | **POST** /chat_api/received_likes | Update received likes iterator and get next page of received likes. If the page is empty there is no more received likes available.
@@ -90,15 +93,22 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**post_send_message**](docs/ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match.
 *ChatApi* | [**post_set_device_token**](docs/ChatApi.md#post_set_device_token) | **POST** /chat_api/set_device_token | 
 *ChatApi* | [**post_unblock_profile**](docs/ChatApi.md#post_unblock_profile) | **POST** /chat_api/unblock_profile | Unblock profile
+*CommonApi* | [**get_client_config**](docs/CommonApi.md#get_client_config) | **GET** /common_api/client_config | 
 *CommonApi* | [**get_connect_websocket**](docs/CommonApi.md#get_connect_websocket) | **GET** /common_api/connect | Connect to server using WebSocket after getting refresh and access tokens. Connection is required as API access is allowed for connected clients.
 *CommonApi* | [**get_version**](docs/CommonApi.md#get_version) | **GET** /common_api/version | Get backend version.
 *CommonAdminApi* | [**get_backend_config**](docs/CommonAdminApi.md#get_backend_config) | **GET** /common_api/backend_config | Get dynamic backend config.
+*CommonAdminApi* | [**get_latest_report_iterator_start_position**](docs/CommonAdminApi.md#get_latest_report_iterator_start_position) | **GET** /common_api/admin/latest_report_iterator_start_position | 
+*CommonAdminApi* | [**get_maintenance_notification**](docs/CommonAdminApi.md#get_maintenance_notification) | **GET** /common_api/maintenance_notification | Get maintenance notification.
 *CommonAdminApi* | [**get_manager_instance_names**](docs/CommonAdminApi.md#get_manager_instance_names) | **GET** /common_api/manager_instance_names | Get available manager instances.
 *CommonAdminApi* | [**get_perf_data**](docs/CommonAdminApi.md#get_perf_data) | **GET** /common_api/perf_data | Get performance data
 *CommonAdminApi* | [**get_scheduled_tasks_status**](docs/CommonAdminApi.md#get_scheduled_tasks_status) | **GET** /common_api/scheduled_tasks_status | Get scheduled tasks status from manager instance.
 *CommonAdminApi* | [**get_software_update_status**](docs/CommonAdminApi.md#get_software_update_status) | **GET** /common_api/software_info | Get software version information from manager instance.
 *CommonAdminApi* | [**get_system_info**](docs/CommonAdminApi.md#get_system_info) | **GET** /common_api/system_info | Get system information from manager instance.
+*CommonAdminApi* | [**get_waiting_report_page**](docs/CommonAdminApi.md#get_waiting_report_page) | **GET** /common_api/admin/waiting_report_page | 
 *CommonAdminApi* | [**post_backend_config**](docs/CommonAdminApi.md#post_backend_config) | **POST** /common_api/backend_config | Save dynamic backend config.
+*CommonAdminApi* | [**post_edit_maintenance_notification**](docs/CommonAdminApi.md#post_edit_maintenance_notification) | **POST** /common_api/edit_maintenance_notification | Edit maintenance notification
+*CommonAdminApi* | [**post_get_report_iterator_page**](docs/CommonAdminApi.md#post_get_report_iterator_page) | **POST** /common_api/admin/report_iterator_page | Get report iterator page.
+*CommonAdminApi* | [**post_process_report**](docs/CommonAdminApi.md#post_process_report) | **POST** /common_api/admin/process_report | 
 *CommonAdminApi* | [**post_schedule_task**](docs/CommonAdminApi.md#post_schedule_task) | **POST** /common_api/schedule_task | Schedule task.
 *CommonAdminApi* | [**post_trigger_backend_data_reset**](docs/CommonAdminApi.md#post_trigger_backend_data_reset) | **POST** /common_api/trigger_backend_data_reset | Trigger backend data reset which also restarts the backend.
 *CommonAdminApi* | [**post_trigger_backend_restart**](docs/CommonAdminApi.md#post_trigger_backend_restart) | **POST** /common_api/trigger_backend_restart | Trigger backend restart.
@@ -115,13 +125,13 @@ Class | Method | HTTP request | Description
 *MediaApi* | [**get_profile_content_info**](docs/MediaApi.md#get_profile_content_info) | **GET** /media_api/profile_content_info/{aid} | Get current profile content for selected profile.
 *MediaApi* | [**get_security_content_info**](docs/MediaApi.md#get_security_content_info) | **GET** /media_api/security_content_info/{aid} | Get current security content for selected profile.
 *MediaApi* | [**post_get_initial_content_moderation_completed**](docs/MediaApi.md#post_get_initial_content_moderation_completed) | **POST** /media_api/initial_content_moderation_completed_result | Get initial content moderation completed result.
+*MediaApi* | [**post_profile_content_report**](docs/MediaApi.md#post_profile_content_report) | **POST** /media_api/profile_content_report | Report profile content.
 *MediaApi* | [**put_content_to_content_slot**](docs/MediaApi.md#put_content_to_content_slot) | **PUT** /media_api/content_slot/{slot_id} | Upload content to server. The content is saved to content processing slot when account state is [model::AccountState::InitialSetup]. In other states the slot number is ignored and content goes directly to moderation.
 *MediaApi* | [**put_profile_content**](docs/MediaApi.md#put_profile_content) | **PUT** /media_api/profile_content | Set new profile content for current account.
 *MediaApi* | [**put_security_content_info**](docs/MediaApi.md#put_security_content_info) | **PUT** /media_api/security_content_info | Set current security content for current account.
 *MediaAdminApi* | [**get_profile_content_pending_moderation_list**](docs/MediaAdminApi.md#get_profile_content_pending_moderation_list) | **GET** /media_api/admin/profile_content_pending_moderation | Get first page of pending profile content moderations. Oldest item is first and count 25.
 *MediaAdminApi* | [**post_moderate_profile_content**](docs/MediaAdminApi.md#post_moderate_profile_content) | **POST** /media_api/admin/moderate_profile_content | Rejected category and details can be set only when the content is rejected.
 *ProfileApi* | [**delete_favorite_profile**](docs/ProfileApi.md#delete_favorite_profile) | **DELETE** /profile_api/favorite_profile | Delete favorite profile
-*ProfileApi* | [**get_available_profile_attributes**](docs/ProfileApi.md#get_available_profile_attributes) | **GET** /profile_api/available_profile_attributes | Get info what profile attributes server supports.
 *ProfileApi* | [**get_favorite_profiles**](docs/ProfileApi.md#get_favorite_profiles) | **GET** /profile_api/favorite_profiles | Get list of all favorite profiles.
 *ProfileApi* | [**get_initial_profile_age_info**](docs/ProfileApi.md#get_initial_profile_age_info) | **GET** /profile_api/initial_profile_age_info | Get initial profile age information which can be used for calculating current accepted profile ages.
 *ProfileApi* | [**get_location**](docs/ProfileApi.md#get_location) | **GET** /profile_api/location | Get location for account which makes this request.
@@ -138,6 +148,8 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**post_profile**](docs/ProfileApi.md#post_profile) | **POST** /profile_api/profile | Update profile information.
 *ProfileApi* | [**post_profile_filtering_settings**](docs/ProfileApi.md#post_profile_filtering_settings) | **POST** /profile_api/profile_filtering_settings | Set profile filtering settings.
 *ProfileApi* | [**post_profile_to_database_debug_mode_benchmark**](docs/ProfileApi.md#post_profile_to_database_debug_mode_benchmark) | **POST** /profile_api/benchmark/profile | Post account's current profile directly to database. Debug mode must be enabled that route can be used.
+*ProfileApi* | [**post_report_profile_name**](docs/ProfileApi.md#post_report_profile_name) | **POST** /profile_api/report_profile_name | Report profile name
+*ProfileApi* | [**post_report_profile_text**](docs/ProfileApi.md#post_report_profile_text) | **POST** /profile_api/report_profile_text | Report profile text
 *ProfileApi* | [**post_reset_profile_paging**](docs/ProfileApi.md#post_reset_profile_paging) | **POST** /profile_api/page/reset | Reset profile paging.
 *ProfileApi* | [**post_search_age_range**](docs/ProfileApi.md#post_search_age_range) | **POST** /profile_api/search_age_range | Set account's current search age range
 *ProfileApi* | [**post_search_groups**](docs/ProfileApi.md#post_search_groups) | **POST** /profile_api/search_groups | Set account's current search groups (gender and what gender user is looking for)
@@ -178,11 +190,12 @@ Class | Method | HTTP request | Description
  - [AttributeValue](docs/AttributeValue.md)
  - [AttributeValueOrderMode](docs/AttributeValueOrderMode.md)
  - [AuthPair](docs/AuthPair.md)
- - [AvailableProfileAttributes](docs/AvailableProfileAttributes.md)
  - [BackendConfig](docs/BackendConfig.md)
  - [BackendVersion](docs/BackendVersion.md)
  - [BooleanSetting](docs/BooleanSetting.md)
  - [BotConfig](docs/BotConfig.md)
+ - [ClientConfig](docs/ClientConfig.md)
+ - [ClientConfigSyncVersion](docs/ClientConfigSyncVersion.md)
  - [ClientId](docs/ClientId.md)
  - [ClientInfo](docs/ClientInfo.md)
  - [ClientLocalId](docs/ClientLocalId.md)
@@ -200,6 +213,14 @@ Class | Method | HTTP request | Description
  - [ContentProcessingStateType](docs/ContentProcessingStateType.md)
  - [ContentSlot](docs/ContentSlot.md)
  - [CurrentAccountInteractionState](docs/CurrentAccountInteractionState.md)
+ - [CustomReport](docs/CustomReport.md)
+ - [CustomReportContent](docs/CustomReportContent.md)
+ - [CustomReportLanguage](docs/CustomReportLanguage.md)
+ - [CustomReportTranslation](docs/CustomReportTranslation.md)
+ - [CustomReportType](docs/CustomReportType.md)
+ - [CustomReportsConfig](docs/CustomReportsConfig.md)
+ - [CustomReportsFileHash](docs/CustomReportsFileHash.md)
+ - [CustomReportsOrderMode](docs/CustomReportsOrderMode.md)
  - [DeleteLikeResult](docs/DeleteLikeResult.md)
  - [DemoModeConfirmLogin](docs/DemoModeConfirmLogin.md)
  - [DemoModeConfirmLoginResult](docs/DemoModeConfirmLoginResult.md)
@@ -216,6 +237,7 @@ Class | Method | HTTP request | Description
  - [GetAccountDeletionRequestResult](docs/GetAccountDeletionRequestResult.md)
  - [GetAccountIdFromEmailResult](docs/GetAccountIdFromEmailResult.md)
  - [GetAllAdminsResult](docs/GetAllAdminsResult.md)
+ - [GetCustomReportsConfigResult](docs/GetCustomReportsConfigResult.md)
  - [GetInitialProfileAgeInfoResult](docs/GetInitialProfileAgeInfoResult.md)
  - [GetMediaContentResult](docs/GetMediaContentResult.md)
  - [GetMyProfileResult](docs/GetMyProfileResult.md)
@@ -233,6 +255,7 @@ Class | Method | HTTP request | Description
  - [GetProfileTextPendingModerationList](docs/GetProfileTextPendingModerationList.md)
  - [GetProfileTextState](docs/GetProfileTextState.md)
  - [GetPublicKey](docs/GetPublicKey.md)
+ - [GetReportList](docs/GetReportList.md)
  - [GroupValues](docs/GroupValues.md)
  - [InitialContentModerationCompletedResult](docs/InitialContentModerationCompletedResult.md)
  - [Language](docs/Language.md)
@@ -276,6 +299,7 @@ Class | Method | HTTP request | Description
  - [PostModerateProfileContent](docs/PostModerateProfileContent.md)
  - [PostModerateProfileName](docs/PostModerateProfileName.md)
  - [PostModerateProfileText](docs/PostModerateProfileText.md)
+ - [ProcessReport](docs/ProcessReport.md)
  - [Profile](docs/Profile.md)
  - [ProfileAgeCounts](docs/ProfileAgeCounts.md)
  - [ProfileAttributeFilterValue](docs/ProfileAttributeFilterValue.md)
@@ -287,7 +311,6 @@ Class | Method | HTTP request | Description
  - [ProfileAttributeQueryResult](docs/ProfileAttributeQueryResult.md)
  - [ProfileAttributeValue](docs/ProfileAttributeValue.md)
  - [ProfileAttributeValueUpdate](docs/ProfileAttributeValueUpdate.md)
- - [ProfileAttributesSyncVersion](docs/ProfileAttributesSyncVersion.md)
  - [ProfileContent](docs/ProfileContent.md)
  - [ProfileContentModerationRejectedReasonCategory](docs/ProfileContentModerationRejectedReasonCategory.md)
  - [ProfileContentModerationRejectedReasonDetails](docs/ProfileContentModerationRejectedReasonDetails.md)
@@ -327,6 +350,16 @@ Class | Method | HTTP request | Description
  - [ReceivedLikesSyncVersion](docs/ReceivedLikesSyncVersion.md)
  - [RefreshToken](docs/RefreshToken.md)
  - [RemoteBotLogin](docs/RemoteBotLogin.md)
+ - [ReportAccountInfo](docs/ReportAccountInfo.md)
+ - [ReportChatInfo](docs/ReportChatInfo.md)
+ - [ReportChatInfoInteractionState](docs/ReportChatInfoInteractionState.md)
+ - [ReportContent](docs/ReportContent.md)
+ - [ReportDetailed](docs/ReportDetailed.md)
+ - [ReportDetailedInfo](docs/ReportDetailedInfo.md)
+ - [ReportIteratorMode](docs/ReportIteratorMode.md)
+ - [ReportIteratorQuery](docs/ReportIteratorQuery.md)
+ - [ReportProcessingState](docs/ReportProcessingState.md)
+ - [ReportTypeNumber](docs/ReportTypeNumber.md)
  - [ResetMatchesIteratorResult](docs/ResetMatchesIteratorResult.md)
  - [ResetNewsIteratorResult](docs/ResetNewsIteratorResult.md)
  - [ResetReceivedLikesIteratorResult](docs/ResetReceivedLikesIteratorResult.md)
@@ -360,9 +393,15 @@ Class | Method | HTTP request | Description
  - [UnixTime](docs/UnixTime.md)
  - [UnreadNewsCount](docs/UnreadNewsCount.md)
  - [UnreadNewsCountResult](docs/UnreadNewsCountResult.md)
+ - [UpdateChatMessageReport](docs/UpdateChatMessageReport.md)
+ - [UpdateCustomReportBoolean](docs/UpdateCustomReportBoolean.md)
  - [UpdateMessageViewStatus](docs/UpdateMessageViewStatus.md)
  - [UpdateNewsTranslation](docs/UpdateNewsTranslation.md)
  - [UpdateNewsTranslationResult](docs/UpdateNewsTranslationResult.md)
+ - [UpdateProfileContentReport](docs/UpdateProfileContentReport.md)
+ - [UpdateProfileNameReport](docs/UpdateProfileNameReport.md)
+ - [UpdateProfileTextReport](docs/UpdateProfileTextReport.md)
+ - [UpdateReportResult](docs/UpdateReportResult.md)
 
 
 To get access to the crate's generated documentation, use:

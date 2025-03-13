@@ -40,7 +40,7 @@ pub enum PostRemoteBotLoginError {
 }
 
 
-/// Available only from bot API port.
+/// Available only from local bot API port.
 pub async fn post_bot_login(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<models::LoginResult, Error<PostBotLoginError>> {
     let local_var_configuration = configuration;
 
@@ -69,7 +69,7 @@ pub async fn post_bot_login(configuration: &configuration::Configuration, accoun
     }
 }
 
-/// Available only from bot API port.
+/// Available only from local bot API port.
 pub async fn post_bot_register(configuration: &configuration::Configuration, ) -> Result<models::AccountId, Error<PostBotRegisterError>> {
     let local_var_configuration = configuration;
 
@@ -97,6 +97,7 @@ pub async fn post_bot_register(configuration: &configuration::Configuration, ) -
     }
 }
 
+/// Available only from public and local bot API ports.
 pub async fn post_remote_bot_login(configuration: &configuration::Configuration, remote_bot_login: models::RemoteBotLogin) -> Result<models::LoginResult, Error<PostRemoteBotLoginError>> {
     let local_var_configuration = configuration;
 

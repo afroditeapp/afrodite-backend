@@ -33,10 +33,14 @@ pub struct Permissions {
     pub admin_news_create: Option<bool>,
     #[serde(rename = "admin_news_edit_all", skip_serializing_if = "Option::is_none")]
     pub admin_news_edit_all: Option<bool>,
+    #[serde(rename = "admin_process_reports", skip_serializing_if = "Option::is_none")]
+    pub admin_process_reports: Option<bool>,
     #[serde(rename = "admin_profile_statistics", skip_serializing_if = "Option::is_none")]
     pub admin_profile_statistics: Option<bool>,
     #[serde(rename = "admin_request_account_deletion", skip_serializing_if = "Option::is_none")]
     pub admin_request_account_deletion: Option<bool>,
+    #[serde(rename = "admin_server_maintenance_edit_notification", skip_serializing_if = "Option::is_none")]
+    pub admin_server_maintenance_edit_notification: Option<bool>,
     #[serde(rename = "admin_server_maintenance_reboot_backend", skip_serializing_if = "Option::is_none")]
     pub admin_server_maintenance_reboot_backend: Option<bool>,
     #[serde(rename = "admin_server_maintenance_reset_data", skip_serializing_if = "Option::is_none")]
@@ -74,8 +78,10 @@ impl Permissions {
             admin_modify_permissions: None,
             admin_news_create: None,
             admin_news_edit_all: None,
+            admin_process_reports: None,
             admin_profile_statistics: None,
             admin_request_account_deletion: None,
+            admin_server_maintenance_edit_notification: None,
             admin_server_maintenance_reboot_backend: None,
             admin_server_maintenance_reset_data: None,
             admin_server_maintenance_save_backend_config: None,

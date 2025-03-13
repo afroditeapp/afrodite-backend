@@ -33,8 +33,8 @@ pub enum EventType {
     LatestViewedMessageChanged,
     #[serde(rename = "ContentProcessingStateChanged")]
     ContentProcessingStateChanged,
-    #[serde(rename = "AvailableProfileAttributesChanged")]
-    AvailableProfileAttributesChanged,
+    #[serde(rename = "ClientConfigChanged")]
+    ClientConfigChanged,
     #[serde(rename = "ProfileChanged")]
     ProfileChanged,
     #[serde(rename = "NewsCountChanged")]
@@ -60,7 +60,7 @@ impl std::fmt::Display for EventType {
             Self::MatchesChanged => write!(f, "MatchesChanged"),
             Self::LatestViewedMessageChanged => write!(f, "LatestViewedMessageChanged"),
             Self::ContentProcessingStateChanged => write!(f, "ContentProcessingStateChanged"),
-            Self::AvailableProfileAttributesChanged => write!(f, "AvailableProfileAttributesChanged"),
+            Self::ClientConfigChanged => write!(f, "ClientConfigChanged"),
             Self::ProfileChanged => write!(f, "ProfileChanged"),
             Self::NewsCountChanged => write!(f, "NewsCountChanged"),
             Self::InitialContentModerationCompleted => write!(f, "InitialContentModerationCompleted"),
