@@ -112,6 +112,12 @@ users about app version changelogs and terms of service updates.
 * [Image security](#image-security)
 * Account banning
 * Account removing wait time (90 days by default)
+* Reporting
+  * Profile name
+  * Profile text
+  * Profile images
+  * Chat messages
+  * Custom reports (configured like profile attributes)
 
 ## Privacy
 
@@ -149,6 +155,9 @@ can start the backend in server mode.
 * Maintenance break notifications
 * Automatic system reboot scheduling for Ubuntu
 * Secure storage management
+* Daily backend data backups
+  * Media content (image files) syncing
+  * Database file backups with retention period
 
 ## Bots
 
@@ -191,8 +200,7 @@ moderation.
 
 ## Security
 
-* Profile text and image reporting
-* Chat message reporting
+* Validity check for reported chat messages
 * Account specific API usage statistics
 * IP address history
 
@@ -212,10 +220,6 @@ for users.
 ## Analytics
 
 * Client version tracking
-
-## Backups
-
-* Daily backups
 
 # Possible future backend features
 
