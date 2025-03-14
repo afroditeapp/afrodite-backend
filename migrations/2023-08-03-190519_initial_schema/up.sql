@@ -257,6 +257,10 @@ CREATE TABLE IF NOT EXISTS account_state(
             ON UPDATE CASCADE
 );
 
+-- TODO(prod): Add custom report type 'NoValue'
+--             and remove the boolean value type as
+--             false values are not used.
+
 CREATE TABLE IF NOT EXISTS account_custom_report(
     report_id               INTEGER PRIMARY KEY NOT NULL,
     boolean_value           BOOLEAN,
