@@ -7,8 +7,7 @@ use model_server_state::{
     DemoModePassword, DemoModeToken,
 };
 use server_api::{
-    app::{GetConfig, ReadData},
-    create_open_api_router, db_write, S,
+    app::{GetConfig, ReadData}, create_open_api_router, db_write_multiple, S
 };
 use server_data_account::{
     demo::{AccessibleAccountsInfoUtils, DemoModeUtils},
@@ -134,9 +133,10 @@ pub async fn post_demo_mode_register_account(
         .register_impl(SignInWithInfo::default(), None)
         .await?;
 
-    db_write!(state, move |cmds| cmds
+    db_write_multiple!(state, move |cmds| cmds
         .account()
-        .insert_demo_mode_related_account_ids(demo_mode_id, id.as_id()))?;
+        .insert_demo_mode_related_account_ids(demo_mode_id, id.as_id())
+        .await)?;
 
     Ok(id.as_id().into())
 }

@@ -5,7 +5,7 @@ use model_chat::{
     PageItemCountForNewLikes, PendingNotificationFlags, ReceivedLikesIteratorSessionId,
     ReceivedLikesPage, ResetReceivedLikesIteratorResult, SendLikeResult, SentLikesPage,
 };
-use server_api::{app::EventManagerProvider, create_open_api_router, db_write, S};
+use server_api::{app::EventManagerProvider, create_open_api_router, S};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 
@@ -212,8 +212,8 @@ pub async fn post_reset_received_likes_paging(
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ResetReceivedLikesIteratorResult>, StatusCode> {
     CHAT.post_reset_received_likes_paging.incr();
-    let (iterator_session_id, new_version) = db_write!(state, move |cmds| {
-        cmds.chat().handle_reset_received_likes_iterator(account_id)
+    let (iterator_session_id, new_version) = db_write_multiple!(state, move |cmds| {
+        cmds.chat().handle_reset_received_likes_iterator(account_id).await
     })?;
     let r = ResetReceivedLikesIteratorResult {
         v: new_version,

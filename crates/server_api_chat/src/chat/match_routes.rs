@@ -5,7 +5,7 @@ use model_chat::{
     AccountIdInternal, AllMatchesPage, MatchesIteratorSessionId, MatchesPage,
     ResetMatchesIteratorResult,
 };
-use server_api::{app::WriteData, create_open_api_router, db_write, S};
+use server_api::{app::WriteData, create_open_api_router, db_write_multiple, S};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 
@@ -52,8 +52,8 @@ pub async fn post_reset_matches_paging(
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ResetMatchesIteratorResult>, StatusCode> {
     CHAT.post_reset_matches_paging.incr();
-    let iterator_session_id = db_write!(state, move |cmds| {
-        cmds.chat().handle_reset_matches_iterator(account_id)
+    let iterator_session_id = db_write_multiple!(state, move |cmds| {
+        cmds.chat().handle_reset_matches_iterator(account_id).await
     })?;
     let r = ResetMatchesIteratorResult {
         s: iterator_session_id.into(),

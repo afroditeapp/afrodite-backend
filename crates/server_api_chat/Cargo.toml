@@ -1,7 +1,7 @@
 [package]
 name = "server_api_chat"
 version = "0.0.0"
-edition = "2021"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -20,7 +20,6 @@ model = { path = "../model" }
 model_chat = { path = "../model_chat" }
 
 server_common = { path = "../server_common" }
-server_data = { path = "../server_data" }
 server_api = { path = "../server_api" }
 
 server_data_chat = { path = "../server_data_chat" }

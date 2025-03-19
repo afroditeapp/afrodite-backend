@@ -1,12 +1,11 @@
 use axum::{extract::State, Extension};
 use model_profile::{AccountId, AccountIdInternal, FavoriteProfilesPage};
-use server_api::{create_open_api_router, S};
+use server_api::{create_open_api_router, db_write_multiple, S};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 
 use crate::{
     app::{GetAccounts, ReadData, WriteData},
-    db_write,
     utils::{Json, StatusCode},
 };
 
@@ -59,9 +58,10 @@ pub async fn post_favorite_profile(
     PROFILE.post_favorite_profile.incr();
 
     let favorite_account_id = state.get_internal_id(favorite).await?;
-    db_write!(state, move |cmds| cmds
+    db_write_multiple!(state, move |cmds| cmds
         .profile()
-        .insert_favorite_profile(account_id, favorite_account_id))?;
+        .insert_favorite_profile(account_id, favorite_account_id)
+        .await)?;
 
     Ok(())
 }
@@ -87,9 +87,10 @@ pub async fn delete_favorite_profile(
 ) -> Result<(), StatusCode> {
     PROFILE.delete_favorite_profile.incr();
     let favorite_account_id = state.get_internal_id(favorite).await?;
-    db_write!(state, move |cmds| cmds
+    db_write_multiple!(state, move |cmds| cmds
         .profile()
-        .remove_favorite_profile(account_id, favorite_account_id))?;
+        .remove_favorite_profile(account_id, favorite_account_id)
+        .await)?;
 
     Ok(())
 }

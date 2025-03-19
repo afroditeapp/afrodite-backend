@@ -1,13 +1,12 @@
 use axum::{extract::State, Extension};
 use model::{AccountIdInternal, CustomReportsFileHash, UpdateReportResult};
 use model_account::{GetCustomReportsConfigResult, UpdateCustomReportBoolean};
-use server_api::{app::GetConfig, create_open_api_router, S};
+use server_api::{app::GetConfig, create_open_api_router, db_write_multiple, S};
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
 
 use crate::{
     app::{GetAccounts, WriteData},
-    db_write,
     utils::{Json, StatusCode},
 };
 
@@ -34,10 +33,11 @@ pub async fn post_custom_report_boolean(
 
     let target = state.get_internal_id(update.target).await?;
 
-    let r = db_write!(state, move |cmds| cmds
+    let r = db_write_multiple!(state, move |cmds| cmds
         .account()
         .report()
-        .report_custom_report_boolean(account_id, target, update.custom_report_id, update.value))?;
+        .report_custom_report_boolean(account_id, target, update.custom_report_id, update.value)
+        .await)?;
 
     Ok(r.into())
 }

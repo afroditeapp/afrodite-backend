@@ -4479,7 +4479,6 @@ dependencies = [
  "serde_json",
  "server_api",
  "server_common",
- "server_data",
  "server_data_chat",
  "simple_backend",
  "tracing",

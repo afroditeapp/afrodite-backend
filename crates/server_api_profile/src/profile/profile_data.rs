@@ -16,7 +16,6 @@ use simple_backend_utils::IntoReportFromString;
 
 use crate::{
     app::{GetAccounts, ReadData, WriteData},
-    db_write,
     utils::{Json, StatusCode},
     DataError,
 };
@@ -257,9 +256,9 @@ pub async fn post_search_groups(
         .try_into()
         .into_error_string(DataError::NotAllowed)?;
 
-    db_write!(state, move |cmds| cmds
+    db_write_multiple!(state, move |cmds| cmds
         .profile()
-        .update_search_groups(account_id, validated))
+        .update_search_groups(account_id, validated).await)
 }
 
 const PATH_GET_SEARCH_AGE_RANGE: &str = "/profile_api/search_age_range";
@@ -309,9 +308,9 @@ pub async fn post_search_age_range(
         .try_into()
         .into_error_string(DataError::NotAllowed)?;
 
-    db_write!(state, move |cmds| cmds
+    db_write_multiple!(state, move |cmds| cmds
         .profile()
-        .update_search_age_range(account_id, validated))
+        .update_search_age_range(account_id, validated).await)
 }
 
 const PATH_GET_MY_PROFILE: &str = "/profile_api/my_profile";

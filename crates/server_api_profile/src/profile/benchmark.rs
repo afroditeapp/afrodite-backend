@@ -5,14 +5,13 @@ use axum::{
 use model_profile::{
     AccountId, AccountIdInternal, AccountState, Profile, ProfileUpdate,
 };
-use server_api::{create_open_api_router, S};
+use server_api::{create_open_api_router, db_write_multiple, S};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
 
 use crate::{
     app::{GetAccounts, GetConfig, ReadData, WriteData},
-    db_write,
     utils::{Json, StatusCode},
     DataError,
 };
@@ -111,9 +110,10 @@ pub async fn post_profile_to_database_debug_mode_benchmark(
         return Ok(());
     }
 
-    db_write!(state, move |cmds| {
+    db_write_multiple!(state, move |cmds| {
         cmds.profile()
             .benchmark_update_profile_bypassing_cache(account_id, profile)
+            .await
     })
 }
 

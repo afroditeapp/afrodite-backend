@@ -4,7 +4,7 @@ use std::{collections::HashSet, sync::LazyLock};
 
 use axum::extract::State;
 use model_account::{AccountId, RemoteBotLogin, LoginResult, SignInWithInfo};
-use server_api::{app::GetConfig, db_write, S};
+use server_api::{app::GetConfig, db_write_multiple, S};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::read::GetReadCommandsAccount;
 use simple_backend::create_counters;
@@ -70,8 +70,8 @@ pub async fn post_bot_register(State(state): State<S>) -> Result<Json<AccountId>
         .register_impl(SignInWithInfo::default(), None)
         .await?;
 
-    db_write!(state, move |cmds| {
-        cmds.common().set_is_bot_account(new_account_id, true)
+    db_write_multiple!(state, move |cmds| {
+        cmds.common().set_is_bot_account(new_account_id, true).await
     })?;
 
     // TODO(microservice): The is_bot_account is currently not synced

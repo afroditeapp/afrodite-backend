@@ -1,13 +1,12 @@
 use axum::{extract::State, Extension};
 use model::UpdateReportResult;
 use model_media::{AccountIdInternal, UpdateProfileContentReport};
-use server_api::{create_open_api_router, S};
+use server_api::{create_open_api_router, db_write_multiple, S};
 use server_data_media::write::GetWriteCommandsMedia;
 use simple_backend::create_counters;
 
 use crate::{
     app::{GetAccounts, WriteData},
-    db_write,
     utils::{Json, StatusCode},
 };
 
@@ -38,10 +37,11 @@ pub async fn post_profile_content_report(
 
     let target = state.get_internal_id(update.target).await?;
 
-    let result = db_write!(state, move |cmds| cmds
+    let result = db_write_multiple!(state, move |cmds| cmds
         .media()
         .report()
-        .update_report(account_id, target, update.content))?;
+        .update_report(account_id, target, update.content)
+        .await)?;
 
     Ok(result.into())
 }

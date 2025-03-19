@@ -18,10 +18,7 @@ use server_data_chat::{
 use simple_backend::create_counters;
 use tracing::error;
 
-use super::super::{
-    db_write,
-    utils::{Json, StatusCode},
-};
+use super::super::utils::{Json, StatusCode};
 use crate::{
     app::{GetAccounts, ReadData, WriteData},
     db_write_multiple,
@@ -116,9 +113,9 @@ pub async fn post_add_receiver_acknowledgement(
 ) -> Result<(), StatusCode> {
     CHAT.delete_pending_messages.incr();
 
-    db_write!(state, move |cmds| {
+    db_write_multiple!(state, move |cmds| {
         cmds.chat()
-            .add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(id, list.ids)
+            .add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(id, list.ids).await
     })?;
     Ok(())
 }
@@ -314,12 +311,13 @@ pub async fn post_add_sender_acknowledgement(
     Json(id_list): Json<SentMessageIdList>,
 ) -> Result<(), StatusCode> {
     CHAT.post_add_sender_acknowledgement.incr();
-    db_write!(state, move |cmds| {
+    db_write_multiple!(state, move |cmds| {
         cmds.chat()
             .add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(
                 id,
                 id_list.ids,
             )
+            .await
     })?;
     Ok(())
 }

@@ -1,13 +1,12 @@
 use axum::{extract::State, Extension};
 use model::UpdateReportResult;
 use model_chat::{AccountIdInternal, UpdateChatMessageReport};
-use server_api::{create_open_api_router, S};
+use server_api::{create_open_api_router, db_write_multiple, S};
 use server_data_chat::write::GetWriteCommandsChat;
 use simple_backend::create_counters;
 
 use crate::{
     app::{GetAccounts, WriteData},
-    db_write,
     utils::{Json, StatusCode},
 };
 
@@ -36,10 +35,11 @@ pub async fn post_chat_message_report(
 
     let target = state.get_internal_id(update.target).await?;
 
-    let result = db_write!(state, move |cmds| cmds
+    let result = db_write_multiple!(state, move |cmds| cmds
         .chat()
         .report()
-        .report_chat_message(account_id, target, update.message))?;
+        .report_chat_message(account_id, target, update.message)
+        .await)?;
 
     Ok(result.into())
 }

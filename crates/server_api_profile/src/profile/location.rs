@@ -1,12 +1,11 @@
 use axum::{extract::State, Extension};
 use model_profile::{AccountIdInternal, Location};
-use server_api::{create_open_api_router, S};
+use server_api::{create_open_api_router, db_write_multiple, S};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 
 use crate::{
     app::{ReadData, WriteData},
-    db_write,
     utils::{Json, StatusCode},
 };
 
@@ -54,9 +53,10 @@ pub async fn put_location(
 ) -> Result<(), StatusCode> {
     PROFILE.put_location.incr();
 
-    db_write!(state, move |cmds| cmds
+    db_write_multiple!(state, move |cmds| cmds
         .profile()
-        .profile_update_location(account_id, location))
+        .profile_update_location(account_id, location)
+        .await)
 }
 
 create_open_api_router!(fn router_location, get_location, put_location,);

@@ -3,7 +3,7 @@ use model_account::{
     AccessToken, AccountId, AuthPair, EmailAddress, GoogleAccountId, LoginResult, RefreshToken,
     SignInWithInfo, SignInWithLoginInfo,
 };
-use server_api::{app::GetConfig, db_write, db_write_multiple, S};
+use server_api::{app::GetConfig, db_write_multiple, S};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::{app::SignInWith, create_counters};
@@ -97,10 +97,10 @@ pub async fn post_sign_in_with_login(
             .await?;
 
         if let Some(already_existing_account) = already_existing_account {
-            db_write!(state, move |cmds| cmds
+            db_write_multiple!(state, move |cmds| cmds
                 .account()
                 .email()
-                .account_email(already_existing_account, email))?;
+                .account_email(already_existing_account, email).await)?;
 
             login_impl(already_existing_account.as_id(), state)
                 .await

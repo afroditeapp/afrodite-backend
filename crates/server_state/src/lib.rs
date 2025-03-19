@@ -186,6 +186,9 @@ impl DataAllAccess<'_> {
     }
 }
 
+// TODO(future): Change write method to have async closure parameter
+//               and remove db_write macros.
+
 /// Macro for writing data with different code style.
 /// Makes "async move" and "await" keywords unnecessary.
 /// The macro "closure" should work like a real closure.
@@ -194,6 +197,8 @@ impl DataAllAccess<'_> {
 /// completely even if HTTP connection fails when closure is running.
 ///
 /// Converts crate::data::DataError to crate::api::utils::StatusCode.
+///
+/// Does not work in Rust 2024 edition because of drop order changes.
 ///
 /// Example usage:
 ///
@@ -215,7 +220,7 @@ macro_rules! db_write {
     ($state:expr, move |$cmds:ident| $commands:expr) => {{
         let r = async {
             let r: $crate::result::Result<_, server_data::DataError> = $state
-                .write(move |$cmds| async move { ($commands).await })
+                .write(move |$cmds| async move { ($commands) })
                 .await;
             r
         }

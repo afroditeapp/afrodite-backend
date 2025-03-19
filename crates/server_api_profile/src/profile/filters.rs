@@ -2,7 +2,7 @@ use axum::{extract::State, Extension};
 use model_profile::{
     AccountIdInternal, GetProfileFilteringSettings, ProfileAttributeQuery, ProfileAttributeQueryResult, ProfileFilteringSettingsUpdate
 };
-use server_api::{create_open_api_router, S};
+use server_api::{create_open_api_router, db_write_multiple, S};
 use server_data::DataError;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -10,7 +10,6 @@ use simple_backend_utils::IntoReportFromString;
 
 use crate::{
     app::{GetConfig, ReadData, WriteData},
-    db_write,
     utils::{Json, StatusCode},
 };
 
@@ -90,9 +89,10 @@ pub async fn post_profile_filtering_settings(
     let validated = data
         .validate(state.config().profile_attributes())
         .into_error_string(DataError::NotAllowed)?;
-    db_write!(state, move |cmds| cmds
+    db_write_multiple!(state, move |cmds| cmds
         .profile()
-        .update_profile_filtering_settings(account_id, validated))
+        .update_profile_filtering_settings(account_id, validated)
+        .await)
 }
 
 create_open_api_router!(

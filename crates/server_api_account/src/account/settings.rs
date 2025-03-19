@@ -2,7 +2,7 @@ use axum::{extract::State, Extension};
 use model_account::{
     AccountData, AccountIdInternal, BooleanSetting, EventToClientInternal, ProfileVisibility,
 };
-use server_api::{create_open_api_router, db_write, db_write_multiple, S};
+use server_api::{create_open_api_router, db_write_multiple, S};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 
@@ -66,9 +66,10 @@ pub async fn post_account_data(
     // allow that only if account state is in initial setup and
     // sign in with login is not used.
 
-    db_write!(state, move |cmds| cmds
+    db_write_multiple!(state, move |cmds| cmds
         .account()
-        .account_data(api_caller_account_id, data))
+        .account_data(api_caller_account_id, data)
+        .await)
 }
 
 const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile_visibility";

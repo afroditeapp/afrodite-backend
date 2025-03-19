@@ -8,8 +8,7 @@ use model_chat::{
     AccountId, AccountIdInternal, GetPublicKey, PublicKeyId, PublicKeyVersion, SetPublicKey,
 };
 use server_api::{
-    app::{GetAccounts, WriteData},
-    create_open_api_router, db_write, S,
+    app::{GetAccounts, WriteData}, create_open_api_router, db_write_multiple, S
 };
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
@@ -78,8 +77,8 @@ async fn post_public_key(
         return Err(StatusCode::NOT_ACCEPTABLE);
     }
 
-    let new_key = db_write!(state, move |cmds| {
-        cmds.chat().set_public_key(id, new_key)
+    let new_key = db_write_multiple!(state, move |cmds| {
+        cmds.chat().set_public_key(id, new_key).await
     })?;
 
     Ok(new_key.into())

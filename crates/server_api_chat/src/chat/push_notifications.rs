@@ -2,12 +2,12 @@ use axum::{extract::State, Extension};
 use model::{
     AccountIdInternal, FcmDeviceToken, PendingNotificationToken, PendingNotificationWithData,
 };
-use server_api::{create_open_api_router, S};
+use server_api::{create_open_api_router, db_write_multiple, S};
 use server_data_chat::write::GetWriteCommandsChat;
 use simple_backend::create_counters;
 
 use super::super::utils::{Json, StatusCode};
-use crate::{app::WriteData, db_write};
+use crate::app::WriteData;
 
 // TODO(prod): Logout route should remove the device and pending notification
 // tokens.
@@ -34,10 +34,11 @@ pub async fn post_set_device_token(
 ) -> Result<Json<PendingNotificationToken>, StatusCode> {
     CHAT.post_set_device_token.incr();
 
-    let pending_notification_token = db_write!(state, move |cmds| {
+    let pending_notification_token = db_write_multiple!(state, move |cmds| {
         cmds.chat()
             .push_notifications()
             .set_device_token(id, device_token)
+            .await
     })?;
 
     Ok(pending_notification_token.into())
@@ -64,10 +65,11 @@ pub async fn post_get_pending_notification(
 ) -> Json<PendingNotificationWithData> {
     CHAT.post_get_pending_notification.incr();
 
-    let result = db_write!(state, move |cmds| {
+    let result = db_write_multiple!(state, move |cmds| {
         cmds.chat()
             .push_notifications()
             .get_and_reset_pending_notification_with_notification_token(token)
+            .await
     });
 
     let (id, notification_value) = match result {
