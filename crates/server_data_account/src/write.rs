@@ -9,22 +9,22 @@ pub mod account;
 pub mod account_admin;
 pub mod chat;
 
-pub trait GetWriteCommandsAccount<'a> {
-    fn account(self) -> WriteCommandsAccount<'a>;
-    fn account_admin(self) -> WriteCommandsAccountAdmin<'a>;
-    fn account_chat_utils(self) -> WriteCommandsChatUtils<'a>;
+pub trait GetWriteCommandsAccount {
+    fn account(&self) -> WriteCommandsAccount<'_>;
+    fn account_admin(&self) -> WriteCommandsAccountAdmin<'_>;
+    fn account_chat_utils(&self) -> WriteCommandsChatUtils<'_>;
 }
 
-impl<'a, C: WriteAccessProvider<'a>> GetWriteCommandsAccount<'a> for C {
-    fn account(self) -> WriteCommandsAccount<'a> {
+impl<C: WriteAccessProvider> GetWriteCommandsAccount for C {
+    fn account(&self) -> WriteCommandsAccount<'_> {
         WriteCommandsAccount::new(self.handle())
     }
 
-    fn account_admin(self) -> WriteCommandsAccountAdmin<'a> {
+    fn account_admin(&self) -> WriteCommandsAccountAdmin<'_> {
         WriteCommandsAccountAdmin::new(self.handle())
     }
 
-    fn account_chat_utils(self) -> WriteCommandsChatUtils<'a> {
+    fn account_chat_utils(&self) -> WriteCommandsChatUtils<'_> {
         WriteCommandsChatUtils::new(self.handle())
     }
 }

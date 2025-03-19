@@ -5,7 +5,7 @@ use model_chat::{
     PageItemCountForNewLikes, PendingNotificationFlags, ReceivedLikesIteratorSessionId,
     ReceivedLikesPage, ResetReceivedLikesIteratorResult, SendLikeResult, SentLikesPage,
 };
-use server_api::{app::EventManagerProvider, create_open_api_router, S};
+use server_api::{app::{EventManagerProvider, GetConfig}, create_open_api_router, S};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 

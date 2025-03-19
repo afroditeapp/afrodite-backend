@@ -17,12 +17,7 @@ pub use server_common::{
 use tracing::info;
 
 use crate::{
-    cache::DatabaseCache,
-    event::EventManagerWithCacheReference,
-    file::utils::FileDir,
-    index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
-    utils::{AccessTokenManager, AccountIdManager},
-    write_concurrent::WriteCommandsConcurrent,
+    cache::DatabaseCache, event::EventManagerWithCacheReference, file::utils::FileDir, index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle}, utils::{AccessTokenManager, AccountIdManager}, write_commands::Cmds, write_concurrent::WriteCommandsConcurrent
 };
 
 pub const DB_FILE_DIR_NAME: &str = "files";
@@ -293,7 +288,7 @@ pub trait InternalWriting {
     }
 }
 
-impl InternalWriting for &RouterDatabaseWriteHandle {
+impl InternalWriting for RouterDatabaseWriteHandle {
     fn config(&self) -> &Config {
         &self.config
     }
@@ -339,12 +334,63 @@ impl InternalWriting for &RouterDatabaseWriteHandle {
     }
 }
 
-pub trait WriteAccessProvider<'a> {
-    fn handle(self) -> &'a RouterDatabaseWriteHandle;
+impl InternalWriting for Cmds {
+    fn config(&self) -> &Config {
+        InternalWriting::config(self.write_handle())
+    }
+
+    fn config_arc(&self) -> Arc<Config> {
+        InternalWriting::config_arc(self.write_handle())
+    }
+
+    fn root(&self) -> &DatabaseRoot {
+        InternalWriting::root(self.write_handle())
+    }
+
+    fn current_write_handle(&self) -> &CurrentWriteHandle {
+        InternalWriting::current_write_handle(self.write_handle())
+    }
+
+    fn history_write_handle(&self) -> &HistoryWriteHandle {
+        InternalWriting::history_write_handle(self.write_handle())
+    }
+
+    fn current_read_handle(&self) -> &CurrentReadHandle {
+        InternalWriting::current_read_handle(self.write_handle())
+    }
+
+    fn history_read_handle(&self) -> &HistoryReadHandle {
+        InternalWriting::history_read_handle(self.write_handle())
+    }
+
+    fn cache(&self) -> &DatabaseCache {
+        InternalWriting::cache(self.write_handle())
+    }
+
+    fn location(&self) -> &LocationIndexManager {
+        InternalWriting::location(self.write_handle())
+    }
+
+    fn push_notification_sender(&self) -> &PushNotificationSender {
+        InternalWriting::push_notification_sender(self.write_handle())
+    }
+
+    fn email_sender(&self) -> &EmailSenderImpl {
+        InternalWriting::email_sender(self.write_handle())
+    }
 }
-impl<'a> WriteAccessProvider<'a> for &'a RouterDatabaseWriteHandle {
-    fn handle(self) -> &'a RouterDatabaseWriteHandle {
+
+pub trait WriteAccessProvider {
+    fn handle(&self) -> &RouterDatabaseWriteHandle;
+}
+impl WriteAccessProvider for &RouterDatabaseWriteHandle {
+    fn handle(&self) -> &RouterDatabaseWriteHandle {
         self
+    }
+}
+impl WriteAccessProvider for Cmds {
+    fn handle(&self) -> &RouterDatabaseWriteHandle {
+        self.write_handle()
     }
 }
 

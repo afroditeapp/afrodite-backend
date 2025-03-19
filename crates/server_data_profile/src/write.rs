@@ -9,22 +9,22 @@ pub mod profile;
 pub mod profile_admin;
 pub mod profile_admin_history;
 
-pub trait GetWriteCommandsProfile<'a> {
-    fn profile(self) -> WriteCommandsProfile<'a>;
-    fn profile_admin(self) -> WriteCommandsProfileAdmin<'a>;
-    fn profile_admin_history(self) -> WriteCommandsProfileAdminHistory<'a>;
+pub trait GetWriteCommandsProfile {
+    fn profile(&self) -> WriteCommandsProfile<'_>;
+    fn profile_admin(&self) -> WriteCommandsProfileAdmin<'_>;
+    fn profile_admin_history(&self) -> WriteCommandsProfileAdminHistory<'_>;
 }
 
-impl<'a, I: WriteAccessProvider<'a>> GetWriteCommandsProfile<'a> for I {
-    fn profile(self) -> WriteCommandsProfile<'a> {
+impl<I: WriteAccessProvider> GetWriteCommandsProfile for I {
+    fn profile(&self) -> WriteCommandsProfile<'_> {
         WriteCommandsProfile::new(self.handle())
     }
 
-    fn profile_admin(self) -> WriteCommandsProfileAdmin<'a> {
+    fn profile_admin(&self) -> WriteCommandsProfileAdmin<'_> {
         WriteCommandsProfileAdmin::new(self.handle())
     }
 
-    fn profile_admin_history(self) -> WriteCommandsProfileAdminHistory<'a> {
+    fn profile_admin_history(&self) -> WriteCommandsProfileAdminHistory<'_> {
         WriteCommandsProfileAdminHistory::new(self.handle())
     }
 }

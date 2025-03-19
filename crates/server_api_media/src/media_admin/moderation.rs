@@ -5,7 +5,7 @@ use axum::{
 use model_media::{
     AccountIdInternal, EventToClientInternal, GetProfileContentPendingModerationList, GetProfileContentPendingModerationParams, NotificationEvent, Permissions, PostModerateProfileContent
 };
-use server_api::{create_open_api_router, S, app::GetAccounts};
+use server_api::{app::{GetAccounts, GetConfig}, create_open_api_router, S};
 use server_data_media::{read::GetReadMediaCommands, write::{media::InitialContentModerationResult, media_admin::content::ContentModerationMode, GetWriteCommandsMedia}};
 use simple_backend::create_counters;
 use server_api::app::ReadData;

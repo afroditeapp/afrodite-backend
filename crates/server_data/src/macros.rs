@@ -50,53 +50,53 @@ macro_rules! define_cmd_wrapper_write {
 
         impl $crate::db_manager::InternalWriting for &$struct_name<'_> {
             fn config(&self) -> &$crate::db_manager::handle_types::Config {
-                $crate::db_manager::InternalWriting::config(&self.0)
+                $crate::db_manager::InternalWriting::config(self.0)
             }
 
             fn config_arc(&self) -> std::sync::Arc<$crate::db_manager::handle_types::Config> {
-                $crate::db_manager::InternalWriting::config_arc(&self.0)
+                $crate::db_manager::InternalWriting::config_arc(self.0)
             }
 
             fn root(&self) -> &$crate::db_manager::DatabaseRoot {
-                $crate::db_manager::InternalWriting::root(&self.0)
+                $crate::db_manager::InternalWriting::root(self.0)
             }
 
             fn current_write_handle(
                 &self,
             ) -> &$crate::db_manager::handle_types::CurrentWriteHandle {
-                $crate::db_manager::InternalWriting::current_write_handle(&self.0)
+                $crate::db_manager::InternalWriting::current_write_handle(self.0)
             }
 
             fn history_write_handle(
                 &self,
             ) -> &$crate::db_manager::handle_types::HistoryWriteHandle {
-                $crate::db_manager::InternalWriting::history_write_handle(&self.0)
+                $crate::db_manager::InternalWriting::history_write_handle(self.0)
             }
 
             fn current_read_handle(&self) -> &$crate::db_manager::handle_types::CurrentReadHandle {
-                $crate::db_manager::InternalWriting::current_read_handle(&self.0)
+                $crate::db_manager::InternalWriting::current_read_handle(self.0)
             }
 
             fn history_read_handle(&self) -> &$crate::db_manager::handle_types::HistoryReadHandle {
-                $crate::db_manager::InternalWriting::history_read_handle(&self.0)
+                $crate::db_manager::InternalWriting::history_read_handle(self.0)
             }
 
             fn cache(&self) -> &$crate::cache::DatabaseCache {
-                $crate::db_manager::InternalWriting::cache(&self.0)
+                $crate::db_manager::InternalWriting::cache(self.0)
             }
 
             fn location(&self) -> &$crate::index::LocationIndexManager {
-                $crate::db_manager::InternalWriting::location(&self.0)
+                $crate::db_manager::InternalWriting::location(self.0)
             }
 
             fn push_notification_sender(
                 &self,
             ) -> &$crate::db_manager::handle_types::PushNotificationSender {
-                $crate::db_manager::InternalWriting::push_notification_sender(&self.0)
+                $crate::db_manager::InternalWriting::push_notification_sender(self.0)
             }
 
             fn email_sender(&self) -> &$crate::db_manager::handle_types::EmailSenderImpl {
-                $crate::db_manager::InternalWriting::email_sender(&self.0)
+                $crate::db_manager::InternalWriting::email_sender(self.0)
             }
         }
     };

@@ -7,17 +7,17 @@ use server_data::db_manager::WriteAccessProvider;
 pub mod media;
 pub mod media_admin;
 
-pub trait GetWriteCommandsMedia<'a> {
-    fn media(self) -> WriteCommandsMedia<'a>;
-    fn media_admin(self) -> WriteCommandsMediaAdmin<'a>;
+pub trait GetWriteCommandsMedia {
+    fn media(&self) -> WriteCommandsMedia<'_>;
+    fn media_admin(&self) -> WriteCommandsMediaAdmin<'_>;
 }
 
-impl<'a, I: WriteAccessProvider<'a>> GetWriteCommandsMedia<'a> for I {
-    fn media(self) -> WriteCommandsMedia<'a> {
+impl<I: WriteAccessProvider> GetWriteCommandsMedia for I {
+    fn media(&self) -> WriteCommandsMedia<'_> {
         WriteCommandsMedia::new(self.handle())
     }
 
-    fn media_admin(self) -> WriteCommandsMediaAdmin<'a> {
+    fn media_admin(&self) -> WriteCommandsMediaAdmin<'_> {
         WriteCommandsMediaAdmin::new(self.handle())
     }
 }

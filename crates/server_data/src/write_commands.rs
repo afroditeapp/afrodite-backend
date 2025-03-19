@@ -14,10 +14,7 @@ use super::write_concurrent::{
     ConcurrentWriteAction, ConcurrentWriteCommandHandle, ConcurrentWriteSelectorHandle,
 };
 use crate::{
-    db_manager::RouterDatabaseWriteHandle,
-    result::{WrappedContextExt, WrappedResultExt},
-    write_concurrent::ConcurrentWriteProfileHandleBlocking,
-    DataError,
+    db_manager::{ReadAdapter, RouterDatabaseWriteHandle}, event::EventManagerWithCacheReference, result::{WrappedContextExt, WrappedResultExt}, write_concurrent::ConcurrentWriteProfileHandleBlocking, DataError
 };
 
 pub type WriteCmds = Cmds;
@@ -33,14 +30,20 @@ fn get_quit_lock() -> &'static Mutex<Option<mpsc::Sender<()>>> {
 /// Make VSCode rust-analyzer code type annotation shorter.
 /// The annotation is displayed when calling write() method.
 pub struct Cmds {
-    pub write: OwnedMutexGuard<Arc<RouterDatabaseWriteHandle>>,
+    write: OwnedMutexGuard<Arc<RouterDatabaseWriteHandle>>,
 }
 
-impl std::ops::Deref for Cmds {
-    type Target = RouterDatabaseWriteHandle;
-
-    fn deref(&self) -> &Self::Target {
+impl Cmds {
+    pub fn write_handle(&self) -> &RouterDatabaseWriteHandle {
         &self.write
+    }
+
+    pub fn read(&self) -> ReadAdapter<'_> {
+        ReadAdapter::new(&self.write)
+    }
+
+    pub fn events(&self) -> EventManagerWithCacheReference<'_> {
+        self.write_handle().events()
     }
 }
 

@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use axum::extract::ws::WebSocket;
 use config::Config;
 use futures::{future::BoxFuture, FutureExt};
@@ -31,7 +29,7 @@ impl DataAllUtils for DataAllUtilsImpl {
         async move {
             write_command_runner
                 .write(move |cmds| async move {
-                    UnlimitedLikesUpdate::new(cmds.deref())
+                    UnlimitedLikesUpdate::new(cmds.write_handle())
                         .update_unlimited_likes_value(id, unlimited_likes)
                         .await
                 })
@@ -50,7 +48,7 @@ impl DataAllUtils for DataAllUtilsImpl {
             let id = write_command_runner
                 .write(move |cmds| async move {
                     let id = cmds.account().get_next_unique_account_id().await?;
-                    let id = RegisterAccount::new(cmds.deref())
+                    let id = RegisterAccount::new(cmds.write_handle())
                         .register(id, sign_in_with, email.clone())
                         .await?;
 

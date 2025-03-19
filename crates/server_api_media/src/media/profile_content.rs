@@ -8,7 +8,7 @@ use model_media::{
     GetProfileContentQueryParams, GetProfileContentResult,
     Permissions, ProfileContent, SetProfileContent,
 };
-use server_api::{app::EventManagerProvider, create_open_api_router, db_write_multiple, S};
+use server_api::{app::{EventManagerProvider, GetConfig}, create_open_api_router, db_write_multiple, S};
 use server_data::read::GetReadCommandsCommon;
 use server_data_media::{read::GetReadMediaCommands, write::{media::InitialContentModerationResult, GetWriteCommandsMedia}};
 use simple_backend::create_counters;

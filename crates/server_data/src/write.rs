@@ -68,22 +68,22 @@ macro_rules! db_transaction_history {
 
 pub(crate) use db_transaction_history;
 
-pub trait GetWriteCommandsCommon<'a> {
-    fn common(self) -> WriteCommandsCommon<'a>;
-    fn common_admin(self) -> WriteCommandsCommonAdmin<'a>;
-    fn common_history(self) -> common_history::WriteCommandsCommonHistory<'a>;
+pub trait GetWriteCommandsCommon {
+    fn common(&self) -> WriteCommandsCommon<'_>;
+    fn common_admin(&self) -> WriteCommandsCommonAdmin<'_>;
+    fn common_history(&self) -> common_history::WriteCommandsCommonHistory<'_>;
 }
 
-impl<'a, I: WriteAccessProvider<'a>> GetWriteCommandsCommon<'a> for I {
-    fn common(self) -> WriteCommandsCommon<'a> {
+impl<I: WriteAccessProvider> GetWriteCommandsCommon for I {
+    fn common(&self) -> WriteCommandsCommon<'_> {
         WriteCommandsCommon::new(self.handle())
     }
 
-    fn common_admin(self) -> WriteCommandsCommonAdmin<'a> {
+    fn common_admin(&self) -> WriteCommandsCommonAdmin<'_> {
         WriteCommandsCommonAdmin::new(self.handle())
     }
 
-    fn common_history(self) -> common_history::WriteCommandsCommonHistory<'a> {
+    fn common_history(&self) -> common_history::WriteCommandsCommonHistory<'_> {
         common_history::WriteCommandsCommonHistory::new(self.handle())
     }
 }
