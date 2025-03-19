@@ -19,7 +19,7 @@ use tokio::{
     }, sync::{broadcast, mpsc}, task::JoinHandle
 };
 use tokio_rustls::{rustls::ServerConfig, TlsAcceptor};
-use tracing::{error, info, log::warn};
+use tracing::{error, info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
 use update::UpdateManager;
 
