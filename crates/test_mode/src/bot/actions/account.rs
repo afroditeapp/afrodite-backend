@@ -398,7 +398,11 @@ impl BotAction for SetAccountSetup {
             .change_context(TestError::ApiRequest)?;
 
         let email = if !self.admin || state.bot_id > 0 {
-            format!("bot{}@example.com", state.bot_id)
+            if state.task_id > 0 {
+                format!("bot{}task{}@example.com", state.bot_id, state.task_id)
+            } else {
+                format!("bot{}@example.com", state.bot_id)
+            }
         } else {
             TEST_ADMIN_ACCESS_EMAIL.to_string()
         };
