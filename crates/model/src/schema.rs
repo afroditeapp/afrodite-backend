@@ -191,6 +191,15 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    client_features_file_hash (row_type) {
+        row_type -> Integer,
+        sha256_hash -> Text,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     common_report (id) {
         id -> Integer,
         creator_account_id -> Integer,
@@ -720,6 +729,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     chat_global_state,
     chat_report_chat_message,
     chat_state,
+    client_features_file_hash,
     common_report,
     common_state,
     current_account_media,

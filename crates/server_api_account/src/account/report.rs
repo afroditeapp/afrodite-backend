@@ -42,11 +42,11 @@ pub async fn post_custom_report_boolean(
     Ok(r.into())
 }
 
-const PATH_POST_GET_CUSTOM_CONFIG_REPORTS: &str = "/account_api/custom_reports_config";
+const PATH_POST_GET_CUSTOM_REPORTS_CONFIG: &str = "/account_api/custom_reports_config";
 
 #[utoipa::path(
     post,
-    path = PATH_POST_GET_CUSTOM_CONFIG_REPORTS,
+    path = PATH_POST_GET_CUSTOM_REPORTS_CONFIG,
     request_body = CustomReportsFileHash,
     responses(
         (status = 200, description = "Successfull.", body = GetCustomReportsConfigResult),

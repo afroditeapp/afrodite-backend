@@ -1,12 +1,15 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::{CustomReportsFileHash, ProfileAttributeInfo};
+use crate::{ClientFeaturesFileHash, CustomReportsFileHash, ProfileAttributeInfo};
 
 use super::ClientConfigSyncVersion;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ClientConfig {
+    /// Account component specific config. It is also possible
+    /// that client features are not configured.
+    pub client_features: Option<ClientFeaturesFileHash>,
     /// Account component specific config. It is also possible
     /// that custom reports are not configured.
     pub custom_reports: Option<CustomReportsFileHash>,

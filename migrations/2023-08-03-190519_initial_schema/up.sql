@@ -335,6 +335,14 @@ CREATE TABLE IF NOT EXISTS custom_reports_file_hash(
     sha256_hash   TEXT                NOT NULL
 );
 
+-- Store client features file hash, so that changes to it can be detected
+-- when server starts.
+CREATE TABLE IF NOT EXISTS client_features_file_hash(
+    -- 0 = client features file hash
+    row_type      INTEGER PRIMARY KEY NOT NULL,
+    sha256_hash   TEXT                NOT NULL
+);
+
 ---------- Tables for server component profile ----------
 
 -- Private profile related state for some account.

@@ -41,6 +41,7 @@ impl ConnectedApp {
             .merge(api::account::router_state(self.state.clone()))
             .merge(api::account::router_news(self.state.clone()))
             .merge(api::account::router_account_report(self.state.clone()))
+            .merge(api::account::router_client_features(self.state.clone()))
             .merge(api::account_admin::router_admin_ban(self.state.clone()))
             .merge(api::account_admin::router_admin_delete(self.state.clone()))
             .merge(api::account_admin::router_admin_news(self.state.clone()))

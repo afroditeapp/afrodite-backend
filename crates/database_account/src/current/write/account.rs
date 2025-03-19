@@ -7,6 +7,7 @@ mod email;
 mod news;
 mod sign_in_with;
 mod report;
+mod client_features;
 
 define_current_write_commands!(CurrentWriteAccount);
 
@@ -37,5 +38,9 @@ impl<'a> CurrentWriteAccount<'a> {
 
     pub fn report(self) -> report::CurrentWriteAccountReport<'a> {
         report::CurrentWriteAccountReport::new(self.cmds)
+    }
+
+    pub fn client_features(self) -> client_features::CurrentWriteAccountClientFeatures<'a> {
+        client_features::CurrentWriteAccountClientFeatures::new(self.cmds)
     }
 }

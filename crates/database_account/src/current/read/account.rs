@@ -10,6 +10,7 @@ mod email;
 mod news;
 mod sign_in_with;
 mod report;
+mod client_features;
 
 impl<'a> CurrentReadAccount<'a> {
     pub fn ban(self) -> ban::CurrentReadAccountBan<'a> {
@@ -42,5 +43,9 @@ impl<'a> CurrentReadAccount<'a> {
 
     pub fn report(self) -> report::CurrentReadAccountReport<'a> {
         report::CurrentReadAccountReport::new(self.cmds)
+    }
+
+    pub fn client_features(self) -> client_features::CurrentReadAccountClientFeatures<'a> {
+        client_features::CurrentReadAccountClientFeatures::new(self.cmds)
     }
 }

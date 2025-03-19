@@ -34,6 +34,8 @@ use self::file::{Components, ConfigFile, ExternalServices, LocationConfig};
 
 pub const DATABASE_MESSAGE_CHANNEL_BUFFER: usize = 32;
 
+pub use model::ClientFeaturesConfig;
+
 #[derive(thiserror::Error, Debug)]
 pub enum GetConfigError {
     #[error("Simple backend error")]
@@ -75,6 +77,8 @@ pub struct Config {
     profile_attributes_sha256: Option<String>,
     custom_reports: Option<CustomReportsConfig>,
     custom_reports_sha256: Option<String>,
+    client_features: Option<ClientFeaturesConfig>,
+    client_features_sha256: Option<String>,
     email_content: Option<EmailContentFile>,
 
     reset_likes_utc_offset: FixedOffset,
@@ -97,6 +101,8 @@ impl Config {
             profile_attributes_sha256: None,
             custom_reports: None,
             custom_reports_sha256: None,
+            client_features: None,
+            client_features_sha256: None,
             email_content: None,
             reset_likes_utc_offset: FixedOffset::east_opt(0).unwrap(),
             profile_name_allowlist: ProfileNameAllowlistData::default(),
@@ -186,6 +192,14 @@ impl Config {
 
     pub fn custom_reports_sha256(&self) -> Option<&str> {
         self.custom_reports_sha256.as_deref()
+    }
+
+    pub fn client_features(&self) -> Option<&ClientFeaturesConfig> {
+        self.client_features.as_ref()
+    }
+
+    pub fn client_features_sha256(&self) -> Option<&str> {
+        self.client_features_sha256.as_deref()
     }
 
     pub fn email_content(&self) -> Option<&EmailContentFile> {
@@ -289,6 +303,20 @@ pub fn get_config(
             (None, None)
         };
 
+    let (client_features, client_features_sha256) =
+        if let Some(path) = &file_config.config_files.client_features {
+            let features =
+                std::fs::read_to_string(path)
+                    .change_context(GetConfigError::LoadFileError)
+                    .attach_printable_lazy(|| path.to_string_lossy().to_string())?;
+            let sha256 = format!("{:x}", Sha256::digest(features.as_bytes()));
+            let features: ClientFeaturesConfig =
+                toml::from_str(&features).change_context(GetConfigError::InvalidConfiguration)?;
+            (Some(features), Some(sha256))
+        } else {
+            (None, None)
+        };
+
     let email_content = if let Some(path) = &file_config.config_files.email_content {
         let email_content =
             EmailContentFile::load(path).change_context(GetConfigError::LoadFileError)?;
@@ -335,6 +363,8 @@ pub fn get_config(
         profile_attributes_sha256,
         custom_reports,
         custom_reports_sha256,
+        client_features,
+        client_features_sha256,
         email_content,
         reset_likes_utc_offset,
         profile_name_allowlist,
