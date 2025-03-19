@@ -244,7 +244,6 @@ pub fn get_config(
     let external_services = file_config
         .external_services
         .clone()
-        .take()
         .unwrap_or_default();
 
     let components = file_config.components.unwrap_or(Components::all_enabled());
