@@ -126,7 +126,7 @@ impl SimpleBackendConfig {
     /// Server should run in debug mode.
     ///
     /// Debug mode changes:
-    /// * Swagger UI is enabled on bot API port.
+    /// * Swagger UI is enabled on local bot API port.
     /// * Disabling HTTPS is possbile.
     /// * SQLite in RAM mode is allowed.
     /// * Atomic boolean `RUNNING_IN_DEBUG_MODE` is set to `true`.

@@ -159,7 +159,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
         router
     }
 
-    fn bot_api_router(
+    fn local_bot_api_router(
         &self,
         web_socket_manager: WebSocketManager,
         state: &Self::AppState,
