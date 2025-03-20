@@ -14,7 +14,7 @@ use nix::{sys::signal::Signal, unistd::Pid};
 use reqwest::Url;
 use server_data::index::LocationIndexInfoCreator;
 use simple_backend_config::file::{
-    DataConfig, GeneralConfig, SimpleBackendConfigFile, SocketConfig, SqliteDatabase
+    DataConfig, GeneralConfig, SimpleBackendConfigFile, SocketConfig
 };
 use tokio::{
     io::{AsyncBufReadExt, AsyncRead},
@@ -178,14 +178,6 @@ fn new_config(
         },
         data: DataConfig {
             dir: "database_dir".into(),
-            sqlite: vec![
-                SqliteDatabase {
-                    name: "current".into(),
-                },
-                SqliteDatabase {
-                    name: "history".into(),
-                },
-            ],
         },
         socket: SocketConfig {
             public_api: None,

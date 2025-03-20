@@ -17,7 +17,7 @@ use std::{
 use args::ServerModeArgs;
 use error_stack::{Result, ResultExt};
 use file::{
-    DatabaseInfo, FirebaseCloudMessagingConfig, ImageProcessingConfig, ScheduledTasksConfig,
+    FirebaseCloudMessagingConfig, ImageProcessingConfig, ScheduledTasksConfig,
     TileMapConfig,
 };
 use reqwest::Url;
@@ -83,7 +83,6 @@ pub struct SimpleBackendConfig {
 
     // Server related configs
     data_dir: PathBuf,
-    databases: Vec<DatabaseInfo>,
     sign_in_with_urls: SignInWithUrls,
     sqlite_in_ram: bool,
 
@@ -111,8 +110,8 @@ impl SimpleBackendConfig {
         &self.data_dir
     }
 
-    pub fn databases(&self) -> &Vec<DatabaseInfo> {
-        &self.databases
+    pub fn databases(&self) -> &DatabaseInfo {
+        &DATABASES
     }
 
     pub fn socket(&self) -> &SocketConfig {
@@ -316,12 +315,9 @@ pub fn get_config(
         false
     };
 
-    let databases = file_config.data.get_databases()?;
-
     let config = SimpleBackendConfig {
         file: file_config,
         data_dir,
-        databases,
         sqlite_in_ram,
         sign_in_with_urls: SignInWithUrls::new()?,
         public_api_tls_config,
@@ -441,4 +437,20 @@ fn load_root_certificate(cert_path: &Path) -> Result<reqwest::Certificate, GetCo
     }
 
     Ok(cert)
+}
+
+const DATABASES: DatabaseInfo = DatabaseInfo {
+    current: SqliteDatabase { name: "current" },
+    history: SqliteDatabase { name: "history" },
+};
+
+#[derive(Debug, Clone, Copy)]
+pub struct DatabaseInfo {
+    pub current: SqliteDatabase,
+    pub history: SqliteDatabase,
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct SqliteDatabase {
+    pub name: &'static str,
 }

@@ -3,7 +3,7 @@ use std::{fmt, path::PathBuf};
 use diesel::{Connection, RunQueryDsl, SqliteConnection};
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness};
 use error_stack::{Result, ResultExt};
-use simple_backend_config::{file::SqliteDatabase, SimpleBackendConfig};
+use simple_backend_config::{SimpleBackendConfig, SqliteDatabase};
 use simple_backend_utils::{ComponentError, ContextExt, IntoReportFromString};
 use tracing::error;
 

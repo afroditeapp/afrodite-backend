@@ -13,8 +13,7 @@ use diesel_db::{
 };
 use diesel_migrations::EmbeddedMigrations;
 use error_stack::{Result, ResultExt};
-use simple_backend_config::SimpleBackendConfig;
-use simple_backend_utils::ContextExt;
+use simple_backend_config::{SimpleBackendConfig, SqliteDatabase};
 
 pub type PoolObject = diesel_db::PoolObject;
 
@@ -22,8 +21,6 @@ pub type PoolObject = diesel_db::PoolObject;
 pub enum SimpleDatabaseError {
     #[error("Diesel error")]
     Diesel,
-    #[error("Matching database not found from config")]
-    MatchingDatabaseNotFoundFromConfig,
     #[error("File path creation failed")]
     FilePathCreationFailed,
 }
@@ -86,23 +83,12 @@ impl DatabaseHandleCreator {
     /// Create the write handle first. Only that runs migrations.
     pub async fn create_read_handle_from_config(
         config: &SimpleBackendConfig,
-        name: &'static str,
+        name: &SqliteDatabase,
     ) -> Result<(DbReadHandle, DbReadCloseHandle), SimpleDatabaseError> {
-        let info = config
-            .databases()
-            .iter()
-            .find(|db| db.file_name() == name)
-            .ok_or(SimpleDatabaseError::MatchingDatabaseNotFoundFromConfig.report())?;
-        if info.file_name() != name {
-            return Err(SimpleDatabaseError::MatchingDatabaseNotFoundFromConfig.report());
-        }
-
-        let info = info.to_sqlite_database();
-
-        let db_file_path = data::create_dirs_and_get_sqlite_database_file_path(config, &info)?;
+        let db_file_path = data::create_dirs_and_get_sqlite_database_file_path(config, name)?;
 
         let (diesel_read, diesel_read_close) =
-            DieselReadHandle::new(config, &info, db_file_path.clone())
+            DieselReadHandle::new(config, name, db_file_path.clone())
                 .await
                 .change_context(SimpleDatabaseError::Diesel)?;
 
@@ -117,24 +103,13 @@ impl DatabaseHandleCreator {
     /// Runs migrations.
     pub async fn create_write_handle_from_config(
         config: &SimpleBackendConfig,
-        name: &'static str,
+        name: &SqliteDatabase,
         migrations: EmbeddedMigrations,
     ) -> Result<(DbWriteHandle, DbWriteCloseHandle), SimpleDatabaseError> {
-        let info = config
-            .databases()
-            .iter()
-            .find(|db| db.file_name() == name)
-            .ok_or(SimpleDatabaseError::MatchingDatabaseNotFoundFromConfig.report())?;
-        if info.file_name() != name {
-            return Err(SimpleDatabaseError::MatchingDatabaseNotFoundFromConfig.report());
-        }
-
-        let info = info.to_sqlite_database();
-
-        let db_file_path = data::create_dirs_and_get_sqlite_database_file_path(config, &info)?;
+        let db_file_path = data::create_dirs_and_get_sqlite_database_file_path(config, name)?;
 
         let (diesel_write, diesel_write_close) =
-            DieselWriteHandle::new(config, &info, db_file_path.clone(), migrations)
+            DieselWriteHandle::new(config, name, db_file_path.clone(), migrations)
                 .await
                 .change_context(SimpleDatabaseError::Diesel)?;
 

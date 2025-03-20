@@ -7,6 +7,7 @@ use manager_api::backup::BackupSourceClient;
 use manager_model::{AccountAndContent, SourceToTargetMessage, TargetToSourceMessage};
 use model::{AccountId, ContentId};
 use server_api::app::GetConfig;
+use server_api::DataError;
 use server_api::{
     app::ReadData,
     result::WrappedContextExt,
@@ -17,11 +18,10 @@ use server_data_media::read::GetReadMediaCommands;
 use server_state::S;
 use simple_backend::ServerQuitWatcher;
 use simple_backend::app::GetManagerApi;
-use simple_backend_config::file::DatabaseInfo;
+use simple_backend_config::SqliteDatabase;
 use simple_backend_utils::file::overwrite_and_remove_if_exists;
 use tokio::io::AsyncReadExt;
 use tokio::sync::broadcast::error::TryRecvError;
-use tracing::warn;
 
 use super::ScheduledTaskError;
 
@@ -113,43 +113,26 @@ pub async fn backup_data(
 
     let tmp_db = tmp_db_path_string(state)?;
 
-    for db in state.config().simple_backend().databases() {
-        let name = db.file_name();
-        let tmp_db_clone = tmp_db.clone();
+    let databases = state.config().simple_backend().databases();
 
-        overwrite_and_remove_if_exists(tmp_db.as_ref())
-            .await
-            .change_context(ScheduledTaskError::Backup)?;
-
-        match name.as_str() {
-            "current" => {
-                state
-                    .read()
-                    .common()
-                    .backup_current_database(tmp_db_clone)
-                    .await
-                    .change_context(ScheduledTaskError::DatabaseError)?;
-            }
-            "history" => {
-                state
-                    .read()
-                    .common_history()
-                    .backup_history_database(tmp_db_clone)
-                    .await
-                    .change_context(ScheduledTaskError::DatabaseError)?;
-            }
-            unknown_name => {
-                warn!("Unknown database {}", unknown_name);
-                continue;
-            }
-        };
-
-        send_backup_db(db, &tmp_db, &mut backup_client).await?;
-
-        overwrite_and_remove_if_exists(tmp_db.as_ref())
-            .await
-            .change_context(ScheduledTaskError::Backup)?;
-    }
+    handle_db(
+        &mut backup_client,
+        &tmp_db,
+        &databases.current,
+        state
+            .read()
+            .common()
+            .backup_current_database(tmp_db.clone()),
+    ).await?;
+    handle_db(
+        &mut backup_client,
+        &tmp_db,
+        &databases.history,
+        state
+            .read()
+            .common_history()
+            .backup_history_database(tmp_db.clone()),
+    ).await?;
 
     // Empty file name ends file backup waiting
     backup_client.send_message(SourceToTargetMessage::StartFileBackup { file_name: String::new() })
@@ -159,12 +142,35 @@ pub async fn backup_data(
     Ok(())
 }
 
+async fn handle_db(
+    backup_client: &mut BackupSourceClient,
+    tmp_db: &str,
+    db_name: &SqliteDatabase,
+    create_backup_file: impl Future<Output=Result<(), DataError>>,
+) -> Result<(), ScheduledTaskError> {
+    overwrite_and_remove_if_exists(tmp_db.as_ref())
+        .await
+        .change_context(ScheduledTaskError::Backup)?;
+
+    create_backup_file
+        .await
+        .change_context(ScheduledTaskError::DatabaseError)?;
+
+    send_backup_db(db_name, tmp_db, backup_client).await?;
+
+    overwrite_and_remove_if_exists(tmp_db.as_ref())
+        .await
+        .change_context(ScheduledTaskError::Backup)?;
+
+    Ok(())
+}
+
 async fn send_backup_db(
-    info: &DatabaseInfo,
+    info: &SqliteDatabase,
     tmp_db_path: &str,
     backup_client: &mut BackupSourceClient,
 ) -> Result<(), ScheduledTaskError> {
-    backup_client.send_message(SourceToTargetMessage::StartFileBackup { file_name: info.file_name() })
+    backup_client.send_message(SourceToTargetMessage::StartFileBackup { file_name: info.name.to_string() })
         .await
         .change_context(ScheduledTaskError::Backup)?;
 

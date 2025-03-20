@@ -1,5 +1,4 @@
 use std::{
-    collections::HashMap,
     io::Write,
     net::SocketAddr,
     num::NonZeroU32,
@@ -10,10 +9,8 @@ use std::{
 use error_stack::{Report, Result, ResultExt};
 use manager_model::ManagerInstanceName;
 use serde::{Deserialize, Serialize};
-use simple_backend_utils::{time::{TimeValue, UtcTimeValue}, ContextExt};
+use simple_backend_utils::time::{TimeValue, UtcTimeValue};
 use url::Url;
-
-use crate::GetConfigError;
 
 pub const CONFIG_FILE_NAME: &str = "simple_backend_config.toml";
 
@@ -29,12 +26,6 @@ local_bot_api_port = 3002
 
 [data]
 dir = "data"
-
-[[data.sqlite]]
-name = "current"
-
-[[data.sqlite]]
-name = "history"
 
 # [manager]
 # manager_name = "default"
@@ -157,7 +148,6 @@ impl SimpleBackendConfigFile {
             general: GeneralConfig::default(),
             data: DataConfig {
                 dir: PathBuf::new(),
-                sqlite: vec![],
             },
             socket: SocketConfig {
                 public_api: None,
@@ -235,53 +225,6 @@ pub struct GeneralConfig {
 pub struct DataConfig {
     /// Data directory for SQLite databases and other files.
     pub dir: PathBuf,
-    pub sqlite: Vec<SqliteDatabase>,
-}
-
-impl DataConfig {
-    pub fn get_databases(&self) -> Result<Vec<DatabaseInfo>, GetConfigError> {
-        let mut databases = HashMap::<String, DatabaseInfo>::new();
-        for db in &self.sqlite {
-            let old = databases.insert(db.name.clone(), Into::<DatabaseInfo>::into(db.clone()));
-            if old.is_some() {
-                return Err(GetConfigError::InvalidConfiguration.report())
-                    .attach_printable(format!("Duplicate database name: {}", db.name));
-            }
-        }
-
-        let databases = databases.values().cloned().collect::<Vec<DatabaseInfo>>();
-        Ok(databases)
-    }
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct SqliteDatabase {
-    pub name: String,
-}
-
-#[derive(Debug, Clone)]
-pub enum DatabaseInfo {
-    Sqlite { name: String },
-}
-
-impl DatabaseInfo {
-    pub fn file_name(&self) -> String {
-        match self {
-            Self::Sqlite { name, .. } => name.clone(),
-        }
-    }
-
-    pub fn to_sqlite_database(&self) -> SqliteDatabase {
-        SqliteDatabase {
-            name: self.file_name(),
-        }
-    }
-}
-
-impl From<SqliteDatabase> for DatabaseInfo {
-    fn from(value: SqliteDatabase) -> Self {
-        Self::Sqlite { name: value.name }
-    }
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]

@@ -1,7 +1,7 @@
 use std::{fs, path::PathBuf};
 
 use error_stack::{Result, ResultExt};
-use simple_backend_config::{file::SqliteDatabase, SimpleBackendConfig};
+use simple_backend_config::{SimpleBackendConfig, SqliteDatabase};
 
 use crate::SimpleDatabaseError;
 
@@ -23,7 +23,7 @@ pub fn create_dirs_and_get_sqlite_database_file_path(
         fs::create_dir(&sqlite).change_context(SimpleDatabaseError::FilePathCreationFailed)?;
     }
 
-    let db_dir = sqlite.join(database_info.name.clone());
+    let db_dir = sqlite.join(database_info.name);
     if !db_dir.exists() {
         fs::create_dir(&db_dir).change_context(SimpleDatabaseError::FilePathCreationFailed)?;
     }

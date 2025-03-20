@@ -79,13 +79,13 @@ impl DatabaseManager {
         info!("Creating DatabaseManager");
 
         let root = DatabaseRoot::new(database_dir)?;
-
+        let databases = config.simple_backend().databases();
         // Write handles
 
         let (current_write, current_write_close) =
             DatabaseHandleCreator::create_write_handle_from_config(
                 config.simple_backend(),
-                "current",
+                &databases.current,
                 database::DIESEL_MIGRATIONS,
             )
             .await?;
@@ -96,7 +96,7 @@ impl DatabaseManager {
         let (history_write, history_write_close) =
             DatabaseHandleCreator::create_write_handle_from_config(
                 config.simple_backend(),
-                "history",
+                &databases.history,
                 database::DIESEL_MIGRATIONS,
             )
             .await?;
@@ -106,14 +106,14 @@ impl DatabaseManager {
         let (current_read, current_read_close) =
             DatabaseHandleCreator::create_read_handle_from_config(
                 config.simple_backend(),
-                "current",
+                &databases.current,
             )
             .await?;
 
         let (history_read, history_read_close) =
             DatabaseHandleCreator::create_read_handle_from_config(
                 config.simple_backend(),
-                "history",
+                &databases.history,
             )
             .await?;
 
