@@ -172,7 +172,6 @@ moderation.
 
 ### Admin bots
 
-* Skin color based image moderation ([nude library](https://github.com/kpcyrd/nude-rs))
 * Neural network based image moderation ([nsfw library](https://github.com/Fyko/nsfw))
 * Large language model (LLM) based text moderation (OpenAI API compatible)
 

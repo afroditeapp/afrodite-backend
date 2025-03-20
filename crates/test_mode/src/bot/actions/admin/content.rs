@@ -2,7 +2,7 @@ use std::{fmt::Debug, sync::Arc, time::Instant};
 
 use api_client::{apis::media_admin_api, models::{AccountId, ContentId, MediaContentType, ModerationQueueType, ProfileContentModerationRejectedReasonDetails}};
 use async_trait::async_trait;
-use config::bot_config_file::{ContentModerationConfig, ModerationAction, NsfwDetectionConfig, NsfwDetectionThresholds, NudeDetectionConfig};
+use config::bot_config_file::{ContentModerationConfig, ModerationAction, NsfwDetectionConfig, NsfwDetectionThresholds};
 use error_stack::{Result, ResultExt};
 use image::DynamicImage;
 use nsfw::model::Metric;
@@ -148,7 +148,6 @@ impl AdminBotContentModerationLogic {
 
             let result = Self::moderate_image(
                 data,
-                config.nude_detection.clone(),
                 config.nsfw_detection.clone(),
                 moderation_state.model.clone(),
                 config.default_action,
@@ -176,7 +175,6 @@ impl AdminBotContentModerationLogic {
 
     async fn moderate_image(
         data: Vec<u8>,
-        nude_config: Option<NudeDetectionConfig>,
         nsfw_config: Option<NsfwDetectionConfig>,
         nsfw_model: Option<Arc<nsfw::Model>>,
         default_action: ModerationAction,
@@ -184,7 +182,7 @@ impl AdminBotContentModerationLogic {
         content: &ContentId,
     ) -> ModerationResult {
         let r = tokio::task::spawn_blocking(move || {
-            Self::handle_image_sync(data, nude_config, nsfw_config, nsfw_model, default_action)
+            Self::handle_image_sync(data, nsfw_config, nsfw_model, default_action)
         })
             .await;
 
@@ -209,19 +207,12 @@ impl AdminBotContentModerationLogic {
 
     fn handle_image_sync(
         data: Vec<u8>,
-        nude_config: Option<NudeDetectionConfig>,
         nsfw_config: Option<NsfwDetectionConfig>,
         nsfw_model: Option<Arc<nsfw::Model>>,
         default_action: ModerationAction,
     ) -> Result<ModerationResult, TestError> {
         let img = image::load_from_memory(&data)
             .change_context(TestError::ContentModerationFailed)?;
-
-        if let Some(nude_config) = nude_config {
-            if let Some(result) = Self::handle_nude_detection(&img, nude_config)? {
-                return Ok(result);
-            }
-        }
 
         if let (Some(c), Some(m)) = (nsfw_config, nsfw_model) {
             if let Some(result) = Self::handle_nsfw_detection(img, c, &m)? {
@@ -236,22 +227,6 @@ impl AdminBotContentModerationLogic {
         };
 
         Ok(action)
-    }
-
-    fn handle_nude_detection(
-        img: &DynamicImage,
-        nude_config: NudeDetectionConfig,
-    ) -> Result<Option<ModerationResult>, TestError> {
-        let analysis = nude::scan(img).analyse();
-        if analysis.nude {
-            Ok(Some(ModerationResult {
-                accept: false,
-                move_to_human: nude_config.move_rejected_to_human_moderation,
-                rejected_details: Some("Nudity detected. If this is a false positive, please contact customer support.".to_string()),
-            }))
-        } else {
-            Ok(None)
-        }
     }
 
     fn handle_nsfw_detection(

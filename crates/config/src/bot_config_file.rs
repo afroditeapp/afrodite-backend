@@ -361,18 +361,10 @@ pub struct ContentModerationConfig {
     pub added_content: bool,
     pub moderation_session_max_seconds: u32,
     pub moderation_session_min_seconds: u32,
-    /// Skin color based detection.
-    /// Actions: reject and move_to_human
-    pub nude_detection: Option<NudeDetectionConfig>,
     /// Neural network based detection.
     /// Actions: reject, move_to_human and accept
     pub nsfw_detection: Option<NsfwDetectionConfig>,
     pub default_action: ModerationAction,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct NudeDetectionConfig {
-    pub move_rejected_to_human_moderation: bool,
 }
 
 #[derive(Debug, Clone, Deserialize)]
