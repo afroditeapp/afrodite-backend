@@ -176,9 +176,7 @@ fn new_config(
             debug_override_face_detection_result: Some(true),
             log_timestamp: None,
         },
-        data: DataConfig {
-            dir: "database_dir".into(),
-        },
+        data: DataConfig::default(),
         socket: SocketConfig {
             public_api: None,
             public_bot_api: None,

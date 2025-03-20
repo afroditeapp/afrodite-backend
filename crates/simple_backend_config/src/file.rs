@@ -24,9 +24,6 @@ public_api = "127.0.0.1:3000"
 public_bot_api = "127.0.0.1:3001"
 local_bot_api_port = 3002
 
-[data]
-dir = "data"
-
 # [manager]
 # manager_name = "default"
 # address = "tls://localhost:4000"
@@ -118,8 +115,9 @@ pub struct SimpleBackendConfigFile {
     pub general: GeneralConfig,
     #[serde(default)]
     pub socket: SocketConfig,
-
+    #[serde(default)]
     pub data: DataConfig,
+
     pub tile_map: Option<TileMapConfig>,
     pub manager: Option<ManagerConfig>,
     pub sign_in_with_google: Option<SignInWithGoogleConfig>,
@@ -225,6 +223,14 @@ pub struct GeneralConfig {
 pub struct DataConfig {
     /// Data directory for SQLite databases and other files.
     pub dir: PathBuf,
+}
+
+impl Default for DataConfig {
+    fn default() -> Self {
+        Self {
+            dir: "data".to_string().into()
+        }
+    }
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
