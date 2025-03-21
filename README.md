@@ -3,7 +3,8 @@
 Afrodite is a dating app aiming to change dating app market to offer more
 ethical, private and secure dating apps. Written using modern technologies,
 Flutter and Rust, the app offers ethical profile browsing centered UI together
-with private and secure end-to-end encrypted chat messaging.
+with private and secure end-to-end encrypted chat messaging. The app supports
+Android and iOS platforms.
 
 This repository contains the backend part. [Frontend repository](https://github.com/afroditeapp/afrodite-frontend)
 
@@ -76,7 +77,7 @@ Command `make update-api-bindings` requires `openapi-generator-cli`.
 Check backend code located at `crates/config` and `crates/simple_backend_config`
 for all available config file options.
 
-### Debugging and development configuration options
+### Simple config for debugging and development
 
 `server_config.toml`
 
@@ -91,15 +92,16 @@ access_all_accounts = true
 email = "admin@example.com"
 debug_for_every_matching_new_account = true
 debug_match_only_email_domain = true
-
-# ...
 ```
+
 `simple_backend_config.toml`
+
 ```toml
+[general]
 # Run backend in debug mode which
 #  - disables TLS config check,
-#  - enables better error messages,
-#  - enables Swagger UI on server internal API port and
+#  - adds additional info to some error messages,
+#  - enables Swagger UI on local bot API port and
 #  - changes other things as well.
 # Check backend code for details.
 debug = true
@@ -107,13 +109,11 @@ debug_override_face_detection_result = true
 
 [socket]
 public_api = "127.0.0.1:3000"
-internal_api = "127.0.0.1:3001"
-
-# ...
+local_bot_api_port = 3002
 ```
 
 With the above options Swagger UI will be available on
-<http://localhost:3001/swagger-ui>.
+<http://localhost:3002/swagger-ui>.
 
 ## Questions and answers
 
@@ -148,10 +148,15 @@ it might use a lot of RAM depending on how large the matrix is.
 
 ## Contributions
 
-Only bug fixes or documentation improvements are accepted at the moment.
+Bug fixes or documentation improvements are usually welcome. For new features,
+please open a new issue and ask could the new feature be accepted. The
+feature might not be accepted for example if it is considered unethical
+or adds too much maintenance burden.
 
 Contributions must have the same license as the project (dual-licensed with
 MIT and Apache 2.0).
+
+Also note that TODO comments and documentation might be outdated.
 
 ## License
 
