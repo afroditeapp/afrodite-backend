@@ -135,6 +135,9 @@ pub enum ApiCommand {
     AvailableInstances,
     EncryptionKey {
         encryption_key_name: String,
+
+        #[arg(short = 's', long, value_name = "FILE")]
+        save_to: Option<PathBuf>,
     },
     SystemInfo,
     SoftwareStatus,

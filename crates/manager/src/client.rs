@@ -41,15 +41,22 @@ pub async fn handle_api_client_mode(args: ManagerApiClientMode) -> Result<(), Cl
         }
         ApiCommand::EncryptionKey {
             encryption_key_name,
+            save_to,
         } => {
             let key = client.get_secure_storage_encryption_key(
                 ManagerInstanceName::new(encryption_key_name.clone()),
             )
                 .await
                 .change_context(ClientError::RemoteApiRequest)?;
-            println!("Name: {}", encryption_key_name);
-            println!("Key: {}", key.key);
-            println!("Key bytes: {}", key.key.len());
+            if let Some(path) = save_to {
+                tokio::fs::write(path, key.key.as_bytes())
+                    .await
+                    .change_context(ClientError::Write)?;
+            } else {
+                println!("Name: {}", encryption_key_name);
+                println!("Key: {}", key.key);
+                println!("Key bytes: {}", key.key.len());
+            }
         }
         ApiCommand::SystemInfo => {
             let info = client.get_system_info()
