@@ -48,7 +48,8 @@ pub async fn handle_api_client_mode(args: ManagerApiClientMode) -> Result<(), Cl
                 .await
                 .change_context(ClientError::RemoteApiRequest)?;
             println!("Name: {}", encryption_key_name);
-            println!("Key:  {}", key.key);
+            println!("Key: {}", key.key);
+            println!("Key bytes: {}", key.key.len());
         }
         ApiCommand::SystemInfo => {
             let info = client.get_system_info()
