@@ -334,6 +334,7 @@ pub struct LlmModerationConfig {
     /// is moderated as accepted. The comparisons are case insensitive.
     pub expected_response: String,
     pub move_rejected_to_human_moderation: bool,
+    #[serde(default)]
     pub debug_show_llm_output_when_rejected: bool,
     #[serde(default = "max_tokens_default_value")]
     pub max_tokens: u32,
