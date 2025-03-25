@@ -25,7 +25,7 @@ use server_data::{
     write::GetWriteCommandsCommon,
 };
 use server_state::{
-    app::GetAccessTokens,
+    app::{ClientVersionTrackerProvider, GetAccessTokens},
     state_impl::{ReadData, WriteData},
 };
 use simple_backend::{app::FilePackageProvider, create_counters, perf::websocket::WebSocketConnectionTracker, web_socket::WebSocketManager};
@@ -308,6 +308,8 @@ async fn handle_socket_result(
                         WebSocketClientTypeNumber::TestModeBot =>
                             COMMON.websocket_client_type_test_mode_bot.incr(),
                     }
+
+                    state.client_version_tracker().track_version(info.client_version).await;
 
                     if let Some(min_version) = state.config().min_client_version() {
                         min_version.received_version_is_accepted(info.client_version)

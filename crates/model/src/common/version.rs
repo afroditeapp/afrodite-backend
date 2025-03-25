@@ -56,7 +56,7 @@ impl WebSocketClientInfo {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, ToSchema)]
+#[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, Eq, Hash, ToSchema)]
 pub struct ClientVersion {
     pub major: u16,
     pub minor: u16,

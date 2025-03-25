@@ -272,6 +272,36 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    history_client_version_statistics (save_time_id, version_id) {
+        save_time_id -> Integer,
+        version_id -> Integer,
+        count -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    history_client_version_statistics_save_time (id) {
+        id -> Integer,
+        unix_time -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    history_client_version_statistics_version_number (id) {
+        id -> Integer,
+        major -> Integer,
+        minor -> Integer,
+        patch -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     history_performance_statistics_metric_name (id) {
         id -> Integer,
         metric_name -> Text,
@@ -685,6 +715,8 @@ diesel::joinable!(chat_report_chat_message -> common_report (report_id));
 diesel::joinable!(chat_state -> account_id (account_id));
 diesel::joinable!(common_state -> account_id (account_id));
 diesel::joinable!(current_account_media -> account_id (account_id));
+diesel::joinable!(history_client_version_statistics -> history_client_version_statistics_save_time (save_time_id));
+diesel::joinable!(history_client_version_statistics -> history_client_version_statistics_version_number (version_id));
 diesel::joinable!(history_performance_statistics_metric_value -> history_performance_statistics_metric_name (metric_id));
 diesel::joinable!(history_performance_statistics_metric_value -> history_performance_statistics_save_time (time_id));
 diesel::joinable!(history_profile_statistics_age_changes_all_genders -> history_profile_statistics_save_time (save_time_id));
@@ -736,6 +768,9 @@ diesel::allow_tables_to_appear_in_same_query!(
     custom_reports_file_hash,
     demo_mode_account_ids,
     favorite_profile,
+    history_client_version_statistics,
+    history_client_version_statistics_save_time,
+    history_client_version_statistics_version_number,
     history_performance_statistics_metric_name,
     history_performance_statistics_metric_value,
     history_performance_statistics_save_time,

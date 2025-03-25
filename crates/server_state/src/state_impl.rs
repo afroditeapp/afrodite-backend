@@ -27,7 +27,7 @@ use simple_backend_config::SimpleBackendConfig;
 
 use super::S;
 pub use crate::app::*;
-use crate::internal_api::InternalApiClient;
+use crate::{client_version::ClientVersionTracker, internal_api::InternalApiClient};
 
 // Server common
 
@@ -213,6 +213,12 @@ impl GetAccessTokens for S {
 impl ContentProcessingProvider for S {
     fn content_processing(&self) -> &ContentProcessingManagerData {
         &self.state.content_processing
+    }
+}
+
+impl ClientVersionTrackerProvider for S {
+    fn client_version_tracker(&self) -> &ClientVersionTracker {
+        &self.state.client_version_tracker
     }
 }
 

@@ -865,6 +865,34 @@ CREATE TABLE IF NOT EXISTS history_performance_statistics_metric_value(
 
 ---------- History tables for server component account ----------
 
+CREATE TABLE IF NOT EXISTS history_client_version_statistics_save_time(
+    id         INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    unix_time  INTEGER                           NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS history_client_version_statistics_version_number(
+    id            INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    major         INTEGER NOT NULL,
+    minor         INTEGER NOT NULL,
+    patch         INTEGER NOT NULL,
+    UNIQUE (major, minor, patch)
+);
+
+CREATE TABLE IF NOT EXISTS history_client_version_statistics(
+    save_time_id  INTEGER NOT NULL,
+    version_id    INTEGER NOT NULL,
+    count         INTEGER NOT NULL,
+    PRIMARY KEY (save_time_id, version_id),
+    FOREIGN KEY (save_time_id)
+        REFERENCES history_client_version_statistics_save_time (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (version_id)
+        REFERENCES history_client_version_statistics_version_number (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 ---------- History tables for server component profile ----------
 
 CREATE TABLE IF NOT EXISTS history_profile_statistics_save_time(

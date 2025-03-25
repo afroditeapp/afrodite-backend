@@ -6,6 +6,7 @@
 use std::sync::Arc;
 
 use axum::extract::ws::WebSocket;
+use client_version::ClientVersionTracker;
 use config::Config;
 use model::{
     Account, AccountIdInternal, PendingNotification, PendingNotificationWithData,
@@ -26,6 +27,7 @@ use crate::demo::DemoModeManager;
 
 pub mod app;
 pub mod demo;
+pub mod client_version;
 pub mod internal_api;
 pub mod state_impl;
 pub mod utils;
@@ -52,6 +54,7 @@ struct AppStateInternal {
     simple_backend_state: SimpleBackendAppState,
     profile_statistics_cache: Arc<ProfileStatisticsCache>,
     data_all_utils: &'static dyn DataAllUtils,
+    client_version_tracker: ClientVersionTracker,
 }
 
 impl AppState {
@@ -78,6 +81,7 @@ impl AppState {
             simple_backend_state,
             profile_statistics_cache: ProfileStatisticsCache::default().into(),
             data_all_utils,
+            client_version_tracker: ClientVersionTracker::new(),
         };
 
         AppState {

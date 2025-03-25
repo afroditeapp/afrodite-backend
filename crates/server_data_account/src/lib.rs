@@ -17,7 +17,7 @@ macro_rules! db_transaction {
     }};
 }
 
-macro_rules! _db_transaction_history {
+macro_rules! db_transaction_history {
     ($state:expr, move |mut $cmds:ident| $commands:expr) => {{
         server_common::data::IntoDataError::into_error(
             $state.db_transaction_history(move |mut $cmds| ($commands)).await,

@@ -4,7 +4,7 @@ use model::{AccessToken, AccountIdInternal, AccountState, Permissions};
 pub use server_data::app::*;
 use server_data::{content_processing::ContentProcessingManagerData, DataError};
 
-use crate::internal_api::InternalApiClient;
+use crate::{client_version::ClientVersionTracker, internal_api::InternalApiClient};
 
 // TODO(prod): Move push notifications to common
 
@@ -38,4 +38,8 @@ pub trait IsMatch: ReadData {
         account0: AccountIdInternal,
         account1: AccountIdInternal,
     ) -> impl std::future::Future<Output = server_common::result::Result<bool, DataError>> + Send;
+}
+
+pub trait ClientVersionTrackerProvider {
+    fn client_version_tracker(&self) -> &ClientVersionTracker;
 }

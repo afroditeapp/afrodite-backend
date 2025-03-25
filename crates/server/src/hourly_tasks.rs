@@ -1,11 +1,12 @@
 use std::time::Duration;
 
 use server_api::{
-    app::WriteData,
+    app::{ClientVersionTrackerProvider, GetConfig, WriteData},
     db_write_raw,
 };
 use server_common::result::{Result, WrappedResultExt};
 use server_data::write::GetWriteCommandsCommon;
+use server_data_account::write::GetWriteCommandsAccount;
 use server_state::S;
 use simple_backend::{app::PerfCounterDataProvider, ServerQuitWatcher};
 
@@ -86,6 +87,9 @@ impl HourlyTaskManager {
         &self,
     ) -> Result<(), HourlyTaskError> {
         self.save_profile_statistics().await?;
+        if self.state.config().components().account {
+            self.save_client_version_statistics().await?;
+        }
         Ok(())
     }
 
@@ -99,6 +103,24 @@ impl HourlyTaskManager {
         db_write_raw!(self.state, move |cmds| {
             cmds.common_history()
                 .write_perf_data(statistics)
+                .await
+        })
+        .await
+        .change_context(HourlyTaskError::DatabaseError)?;
+
+        Ok(())
+    }
+
+    pub async fn save_client_version_statistics(&self) -> Result<(), HourlyTaskError> {
+        let statistics = self
+            .state
+            .client_version_tracker()
+            .get_current_state_and_reset()
+            .await;
+
+        db_write_raw!(self.state, move |cmds| {
+            cmds.account_admin_history()
+                .save_client_version_statistics(statistics)
                 .await
         })
         .await

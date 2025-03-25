@@ -2,16 +2,19 @@
 
 use account::WriteCommandsAccount;
 use account_admin::WriteCommandsAccountAdmin;
+use account_admin_history::WriteCommandsAccountAdminHistory;
 use chat::WriteCommandsChatUtils;
 use server_data::db_manager::WriteAccessProvider;
 
 pub mod account;
 pub mod account_admin;
+pub mod account_admin_history;
 pub mod chat;
 
 pub trait GetWriteCommandsAccount {
     fn account(&self) -> WriteCommandsAccount<'_>;
     fn account_admin(&self) -> WriteCommandsAccountAdmin<'_>;
+    fn account_admin_history(&self) -> WriteCommandsAccountAdminHistory<'_>;
     fn account_chat_utils(&self) -> WriteCommandsChatUtils<'_>;
 }
 
@@ -22,6 +25,10 @@ impl<C: WriteAccessProvider> GetWriteCommandsAccount for C {
 
     fn account_admin(&self) -> WriteCommandsAccountAdmin<'_> {
         WriteCommandsAccountAdmin::new(self.handle())
+    }
+
+    fn account_admin_history(&self) -> WriteCommandsAccountAdminHistory<'_> {
+        WriteCommandsAccountAdminHistory::new(self.handle())
     }
 
     fn account_chat_utils(&self) -> WriteCommandsChatUtils<'_> {
