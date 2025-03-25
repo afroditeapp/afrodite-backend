@@ -86,14 +86,14 @@ impl HourlyTaskManager {
     pub async fn run_tasks_and_return_result(
         &self,
     ) -> Result<(), HourlyTaskError> {
-        self.save_profile_statistics().await?;
+        self.save_performance_statistics().await?;
         if self.state.config().components().account {
             self.save_client_version_statistics().await?;
         }
         Ok(())
     }
 
-    pub async fn save_profile_statistics(&self) -> Result<(), HourlyTaskError> {
+    pub async fn save_performance_statistics(&self) -> Result<(), HourlyTaskError> {
         let statistics = self
             .state
             .perf_counter_data()
