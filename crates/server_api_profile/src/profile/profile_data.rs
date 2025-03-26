@@ -8,7 +8,7 @@ use model_profile::{
     ProfileSearchAgeRangeValidated, ProfileUpdate, SearchGroups,
     ValidatedSearchGroups,
 };
-use server_api::{app::GetConfig, create_open_api_router, db_write_multiple, result::WrappedContextExt, S};
+use server_api::{app::{ApiUsageTrackerProvider, GetConfig}, create_open_api_router, db_write_multiple, result::WrappedContextExt, S};
 use server_data::read::GetReadCommandsCommon;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -69,6 +69,7 @@ pub async fn get_profile(
     Query(params): Query<GetProfileQueryParam>,
 ) -> Result<Json<GetProfileResult>, StatusCode> {
     PROFILE.get_profile.incr();
+    state.api_usage_tracker().incr(account_id, |u| &u.get_profile).await;
 
     let requested_profile = state.get_internal_id(requested_profile).await?;
 

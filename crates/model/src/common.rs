@@ -14,6 +14,9 @@ use crate::{
     schema_sqlite_types::Integer, Account, AccountStateContainer, ContentProcessingId, ContentProcessingState, InitialSetupCompletedTime, MessageNumber, ProfileVisibility
 };
 
+pub mod api_usage;
+pub use api_usage::*;
+
 pub mod sync_version;
 pub use sync_version::*;
 

@@ -11,7 +11,7 @@ use model_media::{
     ContentProcessingState, ContentSlot, GetContentQueryParams, NewContentParams, Permissions,
     SlotId,
 };
-use server_api::{app::GetConfig, create_open_api_router, db_write_multiple, result::WrappedResultExt, S};
+use server_api::{app::{ApiUsageTrackerProvider, GetConfig}, create_open_api_router, db_write_multiple, result::WrappedResultExt, S};
 use server_data::{
     read::GetReadCommandsCommon,
     write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle},
@@ -66,6 +66,7 @@ pub async fn get_content(
     Query(params): Query<GetContentQueryParams>,
 ) -> Result<(TypedHeader<ContentType>, TypedHeader<ContentLength>, Body), StatusCode> {
     MEDIA.get_content.incr();
+    state.api_usage_tracker().incr(account_id, |u| &u.get_content).await;
 
     let send_content = || async {
         let data = state

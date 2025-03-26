@@ -181,6 +181,36 @@ CREATE TABLE IF NOT EXISTS common_state(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS api_usage_statistics_save_time(
+    id           INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    unix_time    INTEGER                           NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS api_usage_statistics_metric_name(
+    id           INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    metric_name  TEXT                              NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS api_usage_statistics_metric_value(
+    account_id   INTEGER                           NOT NULL,
+    time_id      INTEGER                           NOT NULL,
+    metric_id    INTEGER                           NOT NULL,
+    metric_value INTEGER                           NOT NULL,
+    PRIMARY KEY (account_id, time_id, metric_id),
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (time_id)
+        REFERENCES api_usage_statistics_save_time (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (metric_id)
+        REFERENCES api_usage_statistics_metric_name (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 ---------- Tables for server component account ----------
 
 -- Sign in with related IDs for account
@@ -892,6 +922,8 @@ CREATE TABLE IF NOT EXISTS history_client_version_statistics(
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
+
+-- TODO(prod): Renambe save_time_id to time_id
 
 ---------- History tables for server component profile ----------
 

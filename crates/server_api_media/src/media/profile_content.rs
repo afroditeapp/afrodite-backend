@@ -8,7 +8,7 @@ use model_media::{
     GetProfileContentQueryParams, GetProfileContentResult,
     Permissions, ProfileContent, SetProfileContent,
 };
-use server_api::{app::{EventManagerProvider, GetConfig}, create_open_api_router, db_write_multiple, S};
+use server_api::{app::{ApiUsageTrackerProvider, EventManagerProvider, GetConfig}, create_open_api_router, db_write_multiple, S};
 use server_data::read::GetReadCommandsCommon;
 use server_data_media::{read::GetReadMediaCommands, write::{media::InitialContentModerationResult, GetWriteCommandsMedia}};
 use simple_backend::create_counters;
@@ -56,6 +56,7 @@ pub async fn get_profile_content_info(
     Query(params): Query<GetProfileContentQueryParams>,
 ) -> Result<Json<GetProfileContentResult>, StatusCode> {
     MEDIA.get_profile_content_info.incr();
+    state.api_usage_tracker().incr(account_id, |u| &u.get_profile_content_info).await;
 
     let requested_profile = state.get_internal_id(requested_profile).await?;
 

@@ -4,7 +4,7 @@ use model::{AccessToken, AccountIdInternal, AccountState, Permissions};
 pub use server_data::app::*;
 use server_data::{content_processing::ContentProcessingManagerData, DataError};
 
-use crate::{client_version::ClientVersionTracker, internal_api::InternalApiClient};
+use crate::{api_usage::ApiUsageTracker, client_version::ClientVersionTracker, internal_api::InternalApiClient};
 
 // TODO(prod): Move push notifications to common
 
@@ -42,4 +42,8 @@ pub trait IsMatch: ReadData {
 
 pub trait ClientVersionTrackerProvider {
     fn client_version_tracker(&self) -> &ClientVersionTracker;
+}
+
+pub trait ApiUsageTrackerProvider {
+    fn api_usage_tracker(&self) -> &ApiUsageTracker;
 }

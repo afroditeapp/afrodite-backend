@@ -10,7 +10,7 @@ use model_chat::{
     NotificationEvent, PendingMessageAcknowledgementList, SendMessageResult,
     SendMessageToAccountParams, SentMessageIdList, UpdateMessageViewStatus,
 };
-use server_api::{create_open_api_router, S};
+use server_api::{app::ApiUsageTrackerProvider, create_open_api_router, S};
 use server_data_chat::{
     read::GetReadChatCommands,
     write::{chat::PushNotificationAllowed, GetWriteCommandsChat},
@@ -224,6 +224,7 @@ pub async fn post_send_message(
     message_bytes: Body,
 ) -> Result<Json<SendMessageResult>, StatusCode> {
     CHAT.post_send_message.incr();
+    state.api_usage_tracker().incr(id, |u| &u.post_send_message).await;
 
     let bytes = axum::body::to_bytes(message_bytes, u16::MAX.into())
         .await

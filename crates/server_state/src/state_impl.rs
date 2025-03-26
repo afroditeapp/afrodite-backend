@@ -27,7 +27,7 @@ use simple_backend_config::SimpleBackendConfig;
 
 use super::S;
 pub use crate::app::*;
-use crate::{client_version::ClientVersionTracker, internal_api::InternalApiClient};
+use crate::{api_usage::ApiUsageTracker, client_version::ClientVersionTracker, internal_api::InternalApiClient};
 
 // Server common
 
@@ -219,6 +219,12 @@ impl ContentProcessingProvider for S {
 impl ClientVersionTrackerProvider for S {
     fn client_version_tracker(&self) -> &ClientVersionTracker {
         &self.state.client_version_tracker
+    }
+}
+
+impl ApiUsageTrackerProvider for S {
+    fn api_usage_tracker(&self) -> &ApiUsageTracker {
+        &self.state.api_usage_tracker
     }
 }
 

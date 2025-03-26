@@ -5,7 +5,7 @@ use model_chat::{
     PageItemCountForNewLikes, PendingNotificationFlags, ReceivedLikesIteratorSessionId,
     ReceivedLikesPage, ResetReceivedLikesIteratorResult, SendLikeResult, SentLikesPage,
 };
-use server_api::{app::{EventManagerProvider, GetConfig}, create_open_api_router, S};
+use server_api::{app::{ApiUsageTrackerProvider, EventManagerProvider, GetConfig}, create_open_api_router, S};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 
@@ -36,6 +36,7 @@ pub async fn post_send_like(
     Json(requested_profile): Json<AccountId>,
 ) -> Result<Json<SendLikeResult>, StatusCode> {
     CHAT.post_send_like.incr();
+    state.api_usage_tracker().incr(id, |u| &u.post_send_like).await;
 
     // TODO(prod): Check is profile public and is age ok.
 

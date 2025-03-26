@@ -5,6 +5,7 @@
 
 use std::sync::Arc;
 
+use api_usage::ApiUsageTracker;
 use axum::extract::ws::WebSocket;
 use client_version::ClientVersionTracker;
 use config::Config;
@@ -25,6 +26,7 @@ use simple_backend::app::SimpleBackendAppState;
 use self::internal_api::InternalApiClient;
 use crate::demo::DemoModeManager;
 
+pub mod api_usage;
 pub mod app;
 pub mod demo;
 pub mod client_version;
@@ -55,6 +57,7 @@ struct AppStateInternal {
     profile_statistics_cache: Arc<ProfileStatisticsCache>,
     data_all_utils: &'static dyn DataAllUtils,
     client_version_tracker: ClientVersionTracker,
+    api_usage_tracker: ApiUsageTracker,
 }
 
 impl AppState {
@@ -82,6 +85,7 @@ impl AppState {
             profile_statistics_cache: ProfileStatisticsCache::default().into(),
             data_all_utils,
             client_version_tracker: ClientVersionTracker::new(),
+            api_usage_tracker: ApiUsageTracker::new(),
         };
 
         AppState {

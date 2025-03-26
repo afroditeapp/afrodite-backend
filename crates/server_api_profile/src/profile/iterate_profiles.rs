@@ -1,6 +1,6 @@
 use axum::{extract::State, Extension};
 use model_profile::{AccountIdInternal, ProfileIteratorSessionId, ProfilePage};
-use server_api::{create_open_api_router, S};
+use server_api::{app::ApiUsageTrackerProvider, create_open_api_router, S};
 use simple_backend::create_counters;
 
 use crate::{
@@ -28,6 +28,7 @@ pub async fn post_get_next_profile_page(
     Json(iterator_session_id): Json<ProfileIteratorSessionId>,
 ) -> Result<Json<ProfilePage>, StatusCode> {
     PROFILE.post_get_next_profile_page.incr();
+    state.api_usage_tracker().incr(account_id, |u| &u.post_get_next_profile_page).await;
 
     let data = state
         .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {
@@ -76,6 +77,8 @@ pub async fn post_reset_profile_paging(
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ProfileIteratorSessionId>, StatusCode> {
     PROFILE.post_reset_profile_paging.incr();
+    state.api_usage_tracker().incr(account_id, |u| &u.post_reset_profile_paging).await;
+
     let iterator_session_id: ProfileIteratorSessionId = state
         .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {
             cmds.reset_profile_iterator(account_id)
