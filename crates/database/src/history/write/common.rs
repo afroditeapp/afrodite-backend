@@ -6,9 +6,9 @@ use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_model::{MetricKey, PerfMetricValueArea};
 use error_stack::Result;
 
-use crate::{define_current_write_commands, IntoDatabaseError};
+use crate::{define_history_write_commands, IntoDatabaseError};
 
-define_current_write_commands!(HistoryWriteCommon);
+define_history_write_commands!(HistoryWriteCommon);
 
 impl HistoryWriteCommon<'_> {
     pub fn write_perf_data(

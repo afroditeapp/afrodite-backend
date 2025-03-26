@@ -60,11 +60,11 @@ macro_rules! define_history_read_commands {
                 Self { cmds }
             }
 
-            pub fn conn(&mut self) -> &mut database::DieselConnection {
+            pub fn conn(&mut self) -> &mut $crate::DieselConnection {
                 self.cmds
             }
 
-            pub fn read(conn: &mut database::DieselConnection) -> $crate::DbReadModeHistory<'_> {
+            pub fn read(conn: &mut $crate::DieselConnection) -> $crate::DbReadModeHistory<'_> {
                 $crate::DbReadModeHistory(conn)
             }
         }
