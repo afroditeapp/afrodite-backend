@@ -12,6 +12,9 @@ use crate::{
     S,
 };
 
+// TODO(prod): Check that does PerfMetricQuery value deserialization work
+//             with when making API requests with generated API code.
+
 const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
 
 /// Get performance data

@@ -1,18 +1,20 @@
 use account::HistoryReadAccount;
 use account_admin::HistoryReadAccountAdmin;
-use database::define_history_read_commands;
+use database::DbReadAccessProviderHistory;
 
 pub mod account;
 pub mod account_admin;
 
-define_history_read_commands!(HistorySyncReadCommands);
+pub trait GetDbHistoryReadCommandsAccount {
+    fn account_history(&mut self) -> HistoryReadAccount<'_>;
+    fn account_admin_history(&mut self) -> HistoryReadAccountAdmin<'_>;
+}
 
-impl<'a> HistorySyncReadCommands<'a> {
-    pub fn into_account(self) -> HistoryReadAccount<'a> {
-        HistoryReadAccount::new(self.cmds)
+impl<I: DbReadAccessProviderHistory> GetDbHistoryReadCommandsAccount for I {
+    fn account_history(&mut self) -> HistoryReadAccount<'_> {
+        HistoryReadAccount::new(self.handle())
     }
-
-    pub fn into_account_admin(self) -> HistoryReadAccountAdmin<'a> {
-        HistoryReadAccountAdmin::new(self.cmds)
+    fn account_admin_history(&mut self) -> HistoryReadAccountAdmin<'_> {
+        HistoryReadAccountAdmin::new(self.handle())
     }
 }
