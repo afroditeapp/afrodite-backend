@@ -79,6 +79,9 @@ impl DataAllUtils for DataAllUtilsImpl {
         sync_versions: Vec<SyncDataVersionFromClient>,
     ) -> BoxFuture<'a, server_common::result::Result<(), WebSocketError>> {
         async move {
+            // TODO(prod): Could data writing be avoided on every websocket
+            // connection or could it happen once? The server_api crate
+            // also does writing using write handle.
             crate::websocket::reset_pending_notification(config, write_handle, id).await?;
             crate::websocket::sync_data_with_client_if_needed(
                 config,
