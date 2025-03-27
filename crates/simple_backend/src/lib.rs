@@ -52,7 +52,7 @@ use tokio_rustls::{
 };
 use tower::Service;
 use tower_http::trace::TraceLayer;
-use tracing::{error, info, warn};
+use tracing::{debug, error, info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -648,7 +648,8 @@ async fn handle_tls_related_tcp_stream(
     if let Some(app_service_with_connect_info) = app_service_with_connect_info {
         match handshake.into_stream(tls_config).await {
             Ok(v) => handle_ready_tls_connection(v, app_service_with_connect_info).await,
-            Err(e) => error!("Into TlsStream failed: {}", e),
+            // Use debug log level as this happens quite often on internet
+            Err(e) => debug!("Into TlsStream failed: {}", e),
         }
     }
 }
