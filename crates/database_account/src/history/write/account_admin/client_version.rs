@@ -14,7 +14,7 @@ impl HistoryWriteAccountClientVersion<'_> {
         statistics: HashMap<ClientVersion, i64>,
     ) -> Result<(), DieselDatabaseError> {
 
-        let time_id: i64 = {
+        let time_id_value: i64 = {
             use crate::schema::history_client_version_statistics_save_time::dsl::*;
 
             let current_time = UnixTime::current_time();
@@ -56,7 +56,7 @@ impl HistoryWriteAccountClientVersion<'_> {
 
                 insert_into(history_client_version_statistics)
                     .values((
-                        save_time_id.eq(time_id),
+                        time_id.eq(time_id_value),
                         version_id.eq(version_id_value),
                         count.eq(v),
                     ))

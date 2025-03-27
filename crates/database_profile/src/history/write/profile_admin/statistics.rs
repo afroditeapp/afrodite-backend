@@ -81,14 +81,14 @@ macro_rules! define_integer_change_method {
         impl HistoryWriteProfileAdminStatistics<'_> {
             fn $method_name(
                 &mut self,
-                time_id: SaveTimeId,
+                time_id_value: SaveTimeId,
                 count_value: i64,
             ) -> Result<(), DieselDatabaseError> {
                 use crate::schema::$table_name::dsl::*;
 
                 let latest = $table_name
                     .select(count)
-                    .order(save_time_id.desc())
+                    .order(time_id.desc())
                     .first::<i64>(self.conn())
                     .optional()
                     .into_db_error(())?;
@@ -100,7 +100,7 @@ macro_rules! define_integer_change_method {
                 }
 
                 insert_into($table_name)
-                    .values((save_time_id.eq(time_id), count.eq(count_value)))
+                    .values((time_id.eq(time_id_value), count.eq(count_value)))
                     .execute(self.conn())
                     .into_db_error(())?;
 
@@ -143,7 +143,7 @@ macro_rules! define_age_change_method {
         impl HistoryWriteProfileAdminStatistics<'_> {
             fn $method_name(
                 &mut self,
-                time_id: SaveTimeId,
+                time_id_value: SaveTimeId,
                 age_value: i64,
                 count_value: i64,
             ) -> Result<(), DieselDatabaseError> {
@@ -152,7 +152,7 @@ macro_rules! define_age_change_method {
                 let latest = $table_name
                     .filter(age.eq(age_value))
                     .select(count)
-                    .order(save_time_id.desc())
+                    .order(time_id.desc())
                     .first::<i64>(self.conn())
                     .optional()
                     .into_db_error(())?;
@@ -165,7 +165,7 @@ macro_rules! define_age_change_method {
 
                 insert_into($table_name)
                     .values((
-                        save_time_id.eq(time_id),
+                        time_id.eq(time_id_value),
                         age.eq(age_value),
                         count.eq(count_value),
                     ))
