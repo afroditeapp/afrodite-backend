@@ -31,7 +31,7 @@ use crate::api::{
     common::COMMON_COUNTERS_LIST,
     common_admin::{
         COMMON_ADMIN_CONFIG_COUNTERS_LIST, COMMON_ADMIN_MANAGER_COUNTERS_LIST,
-        COMMON_ADMIN_PERF_COUNTERS_LIST,
+        COMMON_ADMIN_STATISTICS_COUNTERS_LIST,
     },
     media::{
         MEDIA_CONTENT_COUNTERS_LIST,
@@ -56,7 +56,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("common_admin_maintenance", COMMON_ADMIN_MAINTENANCE_COUNTERS_LIST),
     &CounterCategory::new("common_admin_manager", COMMON_ADMIN_MANAGER_COUNTERS_LIST),
     &CounterCategory::new("common_admin_config", COMMON_ADMIN_CONFIG_COUNTERS_LIST),
-    &CounterCategory::new("common_admin_perf", COMMON_ADMIN_PERF_COUNTERS_LIST),
+    &CounterCategory::new("common_admin_statistics", COMMON_ADMIN_STATISTICS_COUNTERS_LIST),
     &CounterCategory::new("common_admin_report", COMMON_ADMIN_REPORT_COUNTERS_LIST),
     // Account
     &CounterCategory::new("account_register", ACCOUNT_REGISTER_COUNTERS_LIST),

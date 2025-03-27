@@ -4,6 +4,9 @@ use utoipa::ToSchema;
 mod report;
 pub use report::*;
 
+mod api_usage;
+pub use api_usage::*;
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct BackendConfig {
     pub bots: Option<BotConfig>,

@@ -33,7 +33,7 @@ impl ApiDoc {
             .tag_routes("common");
         doc.merge(common);
         let common_admin = ApiDoc::openapi()
-            .merge_from(server_api::common_admin::router_perf(state.clone()).into_openapi())
+            .merge_from(server_api::common_admin::router_statistics(state.clone()).into_openapi())
             .merge_from(server_api::common_admin::router_config(state.clone()).into_openapi())
             .merge_from(server_api::common_admin::router_maintenance(state.clone()).into_openapi())
             .merge_from(server_api::common_admin::router_manager(state.clone()).into_openapi())
