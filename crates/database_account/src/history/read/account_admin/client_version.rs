@@ -19,8 +19,8 @@ impl HistoryReadAccountClientVersion<'_> {
             history_client_version_statistics_version_number,
         };
 
-        let max_time = settings.start_time.unwrap_or(UnixTime::new(i64::MAX));
-        let min_time = settings.end_time.unwrap_or(UnixTime::new(0));
+        let max_time = settings.max_time.unwrap_or(UnixTime::new(i64::MAX));
+        let min_time = settings.min_time.unwrap_or(UnixTime::new(0));
 
         let values: Vec<(UnixTime, i64, i64, i64, i64)> = history_client_version_statistics
             .inner_join(history_client_version_statistics_save_time::table.on(time_id.eq(history_client_version_statistics_save_time::id)))

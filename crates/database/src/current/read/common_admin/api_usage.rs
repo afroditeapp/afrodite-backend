@@ -7,8 +7,6 @@ use model::{AccountIdInternal, ApiUsageCount, ApiUsageStatistics, GetApiUsageSta
 
 use crate::define_current_read_commands;
 
-// TODO(prod): Rename start_time and end_time to max_time and min_time.
-
 define_current_read_commands!(CurrentReadAccountAdminApiUsage);
 
 impl CurrentReadAccountAdminApiUsage<'_> {
@@ -17,8 +15,8 @@ impl CurrentReadAccountAdminApiUsage<'_> {
         account: AccountIdInternal,
         settings: GetApiUsageStatisticsSettings,
     ) -> Result<GetApiUsageStatisticsResult, DieselDatabaseError> {
-        let max_time = settings.start_time.unwrap_or(UnixTime::new(i64::MAX));
-        let min_time = settings.end_time.unwrap_or(UnixTime::new(0));
+        let max_time = settings.max_time.unwrap_or(UnixTime::new(i64::MAX));
+        let min_time = settings.min_time.unwrap_or(UnixTime::new(0));
 
         let values: Vec<(UnixTime, i64, i64)> = {
             use crate::schema::{

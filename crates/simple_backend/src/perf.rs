@@ -226,7 +226,7 @@ impl PerformanceMetricsHistory {
         counter_data: &mut HashMap<MetricKey, PerfMetricValueArea>,
         only_latest_hour: bool,
     ) {
-        let Some(start_time) = self.first_item_time else {
+        let Some(first_time_value) = self.first_item_time else {
             return;
         };
         let max_count = if only_latest_hour {
@@ -240,7 +240,7 @@ impl PerformanceMetricsHistory {
                     area.values.push(v);
                 } else {
                     let area = PerfMetricValueArea {
-                        start_time,
+                        first_time_value,
                         time_granularity: TimeGranularity::Minutes,
                         values: vec![v],
                     };

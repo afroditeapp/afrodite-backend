@@ -12,16 +12,17 @@ pub enum TimeGranularity {
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, ToSchema)]
 pub struct PerfMetricQuery {
-    /// Start time for query results.
-    pub start_time: Option<UnixTime>,
-    /// End time for query results.
-    pub end_time: Option<UnixTime>,
+    /// Max value for inclusive time range.
+    pub max_time: Option<UnixTime>,
+    /// Min value for inclusive time range.
+    pub min_time: Option<UnixTime>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, ToSchema)]
 pub struct PerfMetricValueArea {
-    /// Time for first data point in values.
-    pub start_time: UnixTime,
+    /// Time value for the first data point. Every next time value is
+    /// increased with [Self::time_granularity].
+    pub first_time_value: UnixTime,
     /// Time granularity for values in between start time and time points.
     pub time_granularity: TimeGranularity,
     pub values: Vec<u32>,

@@ -2,12 +2,12 @@ use model::{ClientVersion, UnixTime};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-/// Time range is inclusive. [Self::start_time] must be
-/// greater or equal to [Self::end_time].
+/// Time range is inclusive. [Self::max_time] must be
+/// greater or equal to [Self::min_time].
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct GetClientVersionStatisticsSettings {
-    pub start_time: Option<UnixTime>,
-    pub end_time: Option<UnixTime>,
+    pub max_time: Option<UnixTime>,
+    pub min_time: Option<UnixTime>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
