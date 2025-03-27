@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Query, State},
+    extract::State,
     Extension,
 };
 use model::{GetApiUsageStatisticsResult, GetApiUsageStatisticsSettings, Permissions};
@@ -15,32 +15,31 @@ use crate::{
     S,
 };
 
-// TODO(prod): Check that does PerfMetricQuery value deserialization work
-//             with when making API requests with generated API code.
-
-const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
+const PATH_POST_GET_PERF_DATA: &str = "/common_api/perf_data";
 
 /// Get performance data
+///
+/// HTTP method is POST because JSON request body requires it.
 ///
 /// # Permissions
 /// Requires admin_server_maintenance_view_info.
 #[utoipa::path(
-    get,
-    path = PATH_GET_PERF_DATA,
-    params(PerfMetricQuery),
+    post,
+    path = PATH_POST_GET_PERF_DATA,
+    request_body = PerfMetricQuery,
     responses(
-        (status = 200, description = "Get was successfull.", body = PerfMetricQueryResult),
+        (status = 200, description = "Successful.", body = PerfMetricQueryResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_perf_data(
+pub async fn post_get_perf_data(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
-    Query(_query): Query<PerfMetricQuery>,
+    Json(_query): Json<PerfMetricQuery>,
 ) -> Result<Json<PerfMetricQueryResult>, StatusCode> {
-    COMMON_ADMIN.get_perf_data.incr();
+    COMMON_ADMIN.post_get_perf_data.incr();
     if api_caller_permissions.admin_server_maintenance_view_info {
         let data = state.perf_counter_data().get_history(false).await;
         Ok(data.into())
@@ -91,12 +90,12 @@ pub async fn post_get_api_usage_data(
     Ok(data.into())
 }
 
-create_open_api_router!(fn router_statistics, get_perf_data, post_get_api_usage_data,);
+create_open_api_router!(fn router_statistics, post_get_perf_data, post_get_api_usage_data,);
 
 create_counters!(
     CommonAdminCounters,
     COMMON_ADMIN,
     COMMON_ADMIN_STATISTICS_COUNTERS_LIST,
-    get_perf_data,
+    post_get_perf_data,
     post_get_api_usage_data,
 );

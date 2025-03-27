@@ -1,6 +1,6 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::Text};
 use serde::{Deserialize, Serialize};
-use utoipa::{IntoParams, ToSchema};
+use utoipa::ToSchema;
 
 use crate::{diesel_string_wrapper, UnixTime};
 
@@ -10,7 +10,7 @@ pub enum TimeGranularity {
     Hours,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, ToSchema, IntoParams)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, ToSchema)]
 pub struct PerfMetricQuery {
     /// Start time for query results.
     pub start_time: Option<UnixTime>,
