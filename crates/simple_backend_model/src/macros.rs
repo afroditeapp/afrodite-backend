@@ -297,3 +297,40 @@ macro_rules! diesel_i64_struct_try_from {
         }
     };
 }
+
+/// Version of diesel_i64_struct_try_from! for bytes.
+/// The struct or enum needs to have `AsRef<&[u8]>` implementation.
+#[macro_export]
+macro_rules! diesel_bytes_try_from {
+    ($name:ty) => {
+        impl<DB: diesel::backend::Backend>
+            diesel::deserialize::FromSql<diesel::sql_types::Binary, DB> for $name
+        where
+            Vec<u8>: diesel::deserialize::FromSql<diesel::sql_types::Binary, DB>,
+        {
+            fn from_sql(
+                value: <DB as diesel::backend::Backend>::RawValue<'_>,
+            ) -> diesel::deserialize::Result<Self> {
+                let value = Vec::<u8>::from_sql(value)?;
+                TryInto::<$name>::try_into(value.as_slice()).map_err(|e| e.into())
+            }
+        }
+
+        // TODO: Support other databases?
+        // https://docs.diesel.rs/2.0.x/diesel/serialize/trait.ToSql.html
+
+        impl diesel::serialize::ToSql<diesel::sql_types::Binary, diesel::sqlite::Sqlite> for $name
+        where
+            [u8]: diesel::serialize::ToSql<diesel::sql_types::Binary, diesel::sqlite::Sqlite>,
+        {
+            fn to_sql<'b>(
+                &'b self,
+                out: &mut diesel::serialize::Output<'b, '_, diesel::sqlite::Sqlite>,
+            ) -> diesel::serialize::Result {
+                let value = AsRef::<[u8]>::as_ref(self);
+                out.set_value(value);
+                Ok(diesel::serialize::IsNull::No)
+            }
+        }
+    };
+}

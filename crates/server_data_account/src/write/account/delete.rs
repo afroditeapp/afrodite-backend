@@ -54,6 +54,9 @@ impl WriteCommandsAccountDelete<'_> {
         Ok(Some(new_account))
     }
 
+    /// NOTE: IpAddressUsageTracker also ApiUsageTracker
+    /// in RAM data for account but that is processed hourly and that
+    /// deletes the data for non existing accounts.
     pub async fn delete_account(
         &self,
         id: AccountIdInternal,

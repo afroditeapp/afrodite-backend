@@ -25,7 +25,7 @@ use server_data::{
     write::GetWriteCommandsCommon,
 };
 use server_state::{
-    app::{ApiUsageTrackerProvider, ClientVersionTrackerProvider, GetAccessTokens},
+    app::{ApiUsageTrackerProvider, ClientVersionTrackerProvider, GetAccessTokens, IpAddressUsageTrackerProvider},
     state_impl::{ReadData, WriteData},
 };
 use simple_backend::{app::FilePackageProvider, create_counters, perf::websocket::WebSocketConnectionTracker, web_socket::WebSocketManager};
@@ -185,6 +185,7 @@ pub async fn get_connect_websocket(
     };
 
     state.api_usage_tracker().incr(id, |u| &u.get_connect_websocket).await;
+    state.ip_address_usage_tracker().mark_ip_used(id, addr.ip()).await;
 
     info!("get_connect_websocket for '{}'", id.id.as_i64());
 

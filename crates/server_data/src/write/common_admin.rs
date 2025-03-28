@@ -1,6 +1,6 @@
 use crate::define_cmd_wrapper_write;
 
-mod api_usage;
+mod statistics;
 mod report;
 
 define_cmd_wrapper_write!(WriteCommandsCommonAdmin);
@@ -10,7 +10,7 @@ impl<'a> WriteCommandsCommonAdmin<'a> {
         report::WriteCommandsCommonAdminReport::new(self.0)
     }
 
-    pub fn api_usage(self) -> api_usage::WriteCommandsCommonAdminApiUsage<'a> {
-        api_usage::WriteCommandsCommonAdminApiUsage::new(self.0)
+    pub fn statistics(self) -> statistics::WriteCommandsCommonAdminStatistics<'a> {
+        statistics::WriteCommandsCommonAdminStatistics::new(self.0)
     }
 }

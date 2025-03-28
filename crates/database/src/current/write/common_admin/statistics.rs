@@ -1,17 +1,17 @@
 
 use std::collections::HashMap;
 use diesel::{insert_into, query_dsl::methods::{FindDsl, SelectDsl}, ExpressionMethods, OptionalExtension, RunQueryDsl};
-use model::{AccountIdDb, ApiUsage, UnixTime};
+use model::{AccountIdDb, ApiUsage, IpAddressStorage, UnixTime};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use error_stack::Result;
 
 use crate::{define_current_write_commands, IntoDatabaseError};
 
-define_current_write_commands!(CurrentWriteCommonApiUsage);
+define_current_write_commands!(CurrentWriteCommonStatistics);
 
 // TODO(prod): Change other statistics to save time value lazily
 
-impl CurrentWriteCommonApiUsage<'_> {
+impl CurrentWriteCommonStatistics<'_> {
     pub fn save_api_usage_data(
         mut self,
         data: HashMap<AccountIdDb, ApiUsage>,
@@ -86,6 +86,49 @@ impl CurrentWriteCommonApiUsage<'_> {
                         .execute(self.conn())
                         .into_db_error(())?
                 };
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn save_ip_address_data(
+        mut self,
+        data: HashMap<AccountIdDb, IpAddressStorage>,
+    ) -> Result<(), DieselDatabaseError> {
+        for (k, v) in data.into_iter() {
+            {
+                use model::schema::account_id::dsl::*;
+                let account_exists: Option<i64> = account_id
+                    .find(k)
+                    .select(id)
+                    .first(self.conn())
+                    .optional()
+                    .into_db_error(())?;
+                if account_exists.is_none() {
+                    // Account is removed
+                    continue;
+                }
+            }
+
+            for (ip, info) in v.ips.into_iter() {
+                use model::schema::ip_address_usage_statistics::dsl::*;
+                insert_into(ip_address_usage_statistics)
+                    .values((
+                        account_id.eq(k),
+                        ip_address.eq(ip),
+                        usage_count.eq(info.usage_count()),
+                        first_usage_unix_time.eq(info.first_usage()),
+                        latest_usage_unix_time.eq(info.latest_usage()),
+                    ))
+                    .on_conflict((account_id, ip_address))
+                    .do_update()
+                    .set((
+                        usage_count.eq(usage_count + info.usage_count()),
+                        latest_usage_unix_time.eq(info.latest_usage()),
+                    ))
+                    .execute(self.conn())
+                    .into_db_error(())?;
             }
         }
 

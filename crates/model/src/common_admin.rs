@@ -7,6 +7,9 @@ pub use report::*;
 mod api_usage;
 pub use api_usage::*;
 
+mod ip_address;
+pub use ip_address::*;
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct BackendConfig {
     pub bots: Option<BotConfig>,

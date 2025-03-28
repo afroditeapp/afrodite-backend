@@ -453,6 +453,18 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    ip_address_usage_statistics (account_id, ip_address) {
+        account_id -> Integer,
+        ip_address -> Binary,
+        usage_count -> Integer,
+        first_usage_unix_time -> Integer,
+        latest_usage_unix_time -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     media_content (id) {
         id -> Integer,
         uuid -> Binary,
@@ -760,6 +772,7 @@ diesel::joinable!(history_profile_statistics_count_changes_all_genders -> histor
 diesel::joinable!(history_profile_statistics_count_changes_man -> history_profile_statistics_save_time (time_id));
 diesel::joinable!(history_profile_statistics_count_changes_non_binary -> history_profile_statistics_save_time (time_id));
 diesel::joinable!(history_profile_statistics_count_changes_woman -> history_profile_statistics_save_time (time_id));
+diesel::joinable!(ip_address_usage_statistics -> account_id (account_id));
 diesel::joinable!(media_content -> account_id (account_id));
 diesel::joinable!(media_report_profile_content -> common_report (report_id));
 diesel::joinable!(media_state -> account_id (account_id));
@@ -819,6 +832,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     history_profile_statistics_count_changes_non_binary,
     history_profile_statistics_count_changes_woman,
     history_profile_statistics_save_time,
+    ip_address_usage_statistics,
     media_content,
     media_report_profile_content,
     media_state,

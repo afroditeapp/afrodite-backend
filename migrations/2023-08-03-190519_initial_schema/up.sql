@@ -211,6 +211,20 @@ CREATE TABLE IF NOT EXISTS api_usage_statistics_metric_value(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS ip_address_usage_statistics(
+    account_id             INTEGER                 NOT NULL,
+    -- 4 or 16 bytes
+    ip_address             BLOB                    NOT NULL,
+    usage_count            INTEGER                 NOT NULL,
+    first_usage_unix_time  INTEGER                 NOT NULL,
+    latest_usage_unix_time INTEGER                 NOT NULL,
+    PRIMARY KEY (account_id, ip_address),
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 ---------- Tables for server component account ----------
 
 -- Sign in with related IDs for account

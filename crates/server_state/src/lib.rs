@@ -9,6 +9,7 @@ use api_usage::ApiUsageTracker;
 use axum::extract::ws::WebSocket;
 use client_version::ClientVersionTracker;
 use config::Config;
+use ip_address::IpAddressUsageTracker;
 use model::{
     Account, AccountIdInternal, PendingNotification, PendingNotificationWithData,
     SyncDataVersionFromClient,
@@ -31,6 +32,7 @@ pub mod app;
 pub mod demo;
 pub mod client_version;
 pub mod internal_api;
+pub mod ip_address;
 pub mod state_impl;
 pub mod utils;
 
@@ -58,6 +60,7 @@ struct AppStateInternal {
     data_all_utils: &'static dyn DataAllUtils,
     client_version_tracker: ClientVersionTracker,
     api_usage_tracker: ApiUsageTracker,
+    ip_address_usage_tracker: IpAddressUsageTracker,
 }
 
 impl AppState {
@@ -86,6 +89,7 @@ impl AppState {
             data_all_utils,
             client_version_tracker: ClientVersionTracker::new(),
             api_usage_tracker: ApiUsageTracker::new(),
+            ip_address_usage_tracker: IpAddressUsageTracker::new(),
         };
 
         AppState {

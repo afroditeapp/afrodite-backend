@@ -228,6 +228,12 @@ impl ApiUsageTrackerProvider for S {
     }
 }
 
+impl IpAddressUsageTrackerProvider for S {
+    fn ip_address_usage_tracker(&self) -> &crate::ip_address::IpAddressUsageTracker {
+        &self.state.ip_address_usage_tracker
+    }
+}
+
 // Simple backend
 
 impl SignInWith for S {

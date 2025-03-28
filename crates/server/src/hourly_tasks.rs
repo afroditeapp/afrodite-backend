@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use server_api::{
-    app::{ApiUsageTrackerProvider, ClientVersionTrackerProvider, GetConfig, WriteData},
+    app::{ApiUsageTrackerProvider, ClientVersionTrackerProvider, GetConfig, IpAddressUsageTrackerProvider, WriteData},
     db_write_raw,
 };
 use server_common::result::{Result, WrappedResultExt};
@@ -91,6 +91,7 @@ impl HourlyTaskManager {
             self.save_client_version_statistics().await?;
         }
         self.save_api_usage_statistics().await?;
+        self.save_ip_address_statistics().await?;
         Ok(())
     }
 
@@ -139,8 +140,27 @@ impl HourlyTaskManager {
 
         db_write_raw!(self.state, move |cmds| {
             cmds.common_admin()
-                .api_usage()
+                .statistics()
                 .save_api_usage_data(statistics)
+                .await
+        })
+        .await
+        .change_context(HourlyTaskError::DatabaseError)?;
+
+        Ok(())
+    }
+
+    pub async fn save_ip_address_statistics(&self) -> Result<(), HourlyTaskError> {
+        let statistics = self
+            .state
+            .ip_address_usage_tracker()
+            .get_current_state_and_reset()
+            .await;
+
+        db_write_raw!(self.state, move |cmds| {
+            cmds.common_admin()
+                .statistics()
+                .save_ip_address_data(statistics)
                 .await
         })
         .await
