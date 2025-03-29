@@ -3,13 +3,13 @@ use std::collections::HashMap;
 use crate::{DieselDatabaseError, IntoDatabaseError};
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, ApiUsageCount, ApiUsageStatistics, GetApiUsageStatisticsResult, GetApiUsageStatisticsSettings, UnixTime};
+use model::{AccountIdInternal, ApiUsageCount, ApiUsageStatistics, GetApiUsageStatisticsResult, GetApiUsageStatisticsSettings, GetIpAddressStatisticsResult, IpAddressInfo, IpAddressInfoInternal, UnixTime};
 
 use crate::define_current_read_commands;
 
-define_current_read_commands!(CurrentReadAccountAdminApiUsage);
+define_current_read_commands!(CurrentReadAccountAdminStatistics);
 
-impl CurrentReadAccountAdminApiUsage<'_> {
+impl CurrentReadAccountAdminStatistics<'_> {
     pub fn api_usage_statistics(
         &mut self,
         account: AccountIdInternal,
@@ -59,5 +59,35 @@ impl CurrentReadAccountAdminApiUsage<'_> {
         }
 
         Ok(GetApiUsageStatisticsResult { values: data.into_values().collect::<Vec<_>>() })
+    }
+
+    pub fn ip_address_statistics(
+        &mut self,
+        account: AccountIdInternal,
+    ) -> Result<GetIpAddressStatisticsResult, DieselDatabaseError> {
+        let values: Vec<IpAddressInfoInternal> = {
+            use crate::schema::ip_address_usage_statistics::dsl::*;
+
+            ip_address_usage_statistics
+                .filter(account_id.eq(account.as_db_id()))
+                .select(IpAddressInfoInternal::as_select())
+                .order(latest_usage_unix_time.desc())
+                .load(self.conn())
+                .change_context(DieselDatabaseError::Execute)?
+        };
+
+        Ok(GetIpAddressStatisticsResult {
+            values: values
+                .into_iter()
+                .map(|v| {
+                    IpAddressInfo {
+                        a: v.ip_address.to_ip_addr().to_string(),
+                        c: v.usage_count,
+                        f: v.first_usage_unix_time,
+                        l: v.latest_usage_unix_time,
+                    }
+                })
+                .collect::<Vec<_>>()
+        })
     }
 }

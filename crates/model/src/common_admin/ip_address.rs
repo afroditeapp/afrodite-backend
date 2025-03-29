@@ -1,10 +1,14 @@
 
 use std::{collections::HashMap, net::{IpAddr, Ipv4Addr, Ipv6Addr}};
 
-use diesel::{sql_types::Binary, Selectable};
+use diesel::{prelude::Queryable, sql_types::Binary, Selectable};
+use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_bytes_try_from, UnixTime};
+use utoipa::ToSchema;
 
-#[derive(Debug, Clone, Selectable)]
+use crate::AccountId;
+
+#[derive(Debug, Clone, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::ip_address_usage_statistics)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct IpAddressInfoInternal {
@@ -115,4 +119,27 @@ impl IpAddressStorage {
             ips: map,
         }
     }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct GetIpAddressStatisticsSettings {
+    pub account: AccountId,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct GetIpAddressStatisticsResult {
+    /// Latest used IP address is the first value.
+    pub values: Vec<IpAddressInfo>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct IpAddressInfo {
+    /// IP address
+    pub a: String,
+    /// Usage count
+    pub c: i64,
+    /// First usage time
+    pub f: UnixTime,
+    /// Latest usage time
+    pub l: UnixTime,
 }

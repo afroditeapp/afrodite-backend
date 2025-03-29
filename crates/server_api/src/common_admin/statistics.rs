@@ -2,7 +2,7 @@ use axum::{
     extract::State,
     Extension,
 };
-use model::{GetApiUsageStatisticsResult, GetApiUsageStatisticsSettings, Permissions};
+use model::{GetApiUsageStatisticsResult, GetApiUsageStatisticsSettings, GetIpAddressStatisticsResult, GetIpAddressStatisticsSettings, Permissions};
 use simple_backend::{app::PerfCounterDataProvider, create_counters};
 use simple_backend_model::{PerfMetricQuery, PerfMetricQueryResult};
 
@@ -83,14 +83,56 @@ pub async fn post_get_api_usage_data(
     let data = state
         .read()
         .common_admin()
-        .api_usage()
+        .statistics()
         .get_api_usage_statistics(requested_account, settings)
         .await?;
 
     Ok(data.into())
 }
 
-create_open_api_router!(fn router_statistics, post_get_perf_data, post_get_api_usage_data,);
+const PATH_POST_GET_IP_ADDRESS_USAGE_DATA: &str = "/common_api/ip_address_usage_data";
+
+/// Get IP address usage data for account
+///
+/// HTTP method is POST because JSON request body requires it.
+///
+/// # Permissions
+/// Requires [Permissions::admin_view_private_info].
+#[utoipa::path(
+    post,
+    path = PATH_POST_GET_IP_ADDRESS_USAGE_DATA,
+    request_body = GetIpAddressStatisticsSettings,
+    responses(
+        (status = 200, description = "Successful.", body = GetIpAddressStatisticsResult),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_get_ip_address_usage_data(
+    State(state): State<S>,
+    Extension(api_caller_permissions): Extension<Permissions>,
+    Json(settings): Json<GetIpAddressStatisticsSettings>,
+) -> Result<Json<GetIpAddressStatisticsResult>, StatusCode> {
+    COMMON_ADMIN.post_get_ip_address_usage_data.incr();
+
+    if !api_caller_permissions.admin_view_private_info {
+        return Err(StatusCode::UNAUTHORIZED);
+    }
+
+    let requested_account = state.get_internal_id(settings.account).await?;
+
+    let data = state
+        .read()
+        .common_admin()
+        .statistics()
+        .get_ip_address_statistics(requested_account)
+        .await?;
+
+    Ok(data.into())
+}
+
+create_open_api_router!(fn router_statistics, post_get_perf_data, post_get_api_usage_data, post_get_ip_address_usage_data,);
 
 create_counters!(
     CommonAdminCounters,
@@ -98,4 +140,5 @@ create_counters!(
     COMMON_ADMIN_STATISTICS_COUNTERS_LIST,
     post_get_perf_data,
     post_get_api_usage_data,
+    post_get_ip_address_usage_data,
 );
