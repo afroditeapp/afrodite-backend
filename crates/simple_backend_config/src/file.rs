@@ -91,6 +91,10 @@ local_bot_api_port = 3002
 # detection_threshold = 2.8
 # pyramid_scale_factor = 0.5
 
+# [[ip_info.list]]
+# name = "test"
+# file = "ip-list.txt"
+
 "#;
 
 // TODO(prod): Consider changing manager config
@@ -138,6 +142,9 @@ pub struct SimpleBackendConfigFile {
     pub scheduled_tasks: Option<ScheduledTasksConfig>,
     pub static_file_package_hosting: Option<StaticFilePackageHostingConfig>,
     pub image_processing: Option<ImageProcessingConfig>,
+
+    #[serde(default)]
+    pub ip_info: IpInfoConfig,
 }
 
 impl SimpleBackendConfigFile {
@@ -163,6 +170,7 @@ impl SimpleBackendConfigFile {
             scheduled_tasks: None,
             static_file_package_hosting: None,
             image_processing: None,
+            ip_info: IpInfoConfig::default(),
         }
     }
 
@@ -471,4 +479,26 @@ pub struct SeetaFaceConfig {
     pub model_file: String,
     pub detection_threshold: f64,
     pub pyramid_scale_factor: f32,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+pub struct IpInfoConfig {
+    #[serde(default)]
+    pub list: Vec<IpListConfig>,
+}
+
+/// IP list file
+///
+/// # Example file
+/// ```text
+/// # Comment
+///
+/// 192.168.0.1
+/// 192.168.0.2-192.168.0.20
+/// 192.168.1.0/24
+/// ```
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct IpListConfig {
+    pub name: String,
+    pub file: PathBuf,
 }

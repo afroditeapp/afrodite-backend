@@ -462,6 +462,7 @@ pub trait InternalReading {
     fn history_read_handle(&self) -> &HistoryReadHandle;
     fn cache(&self) -> &DatabaseCache;
     fn config(&self) -> &Config;
+    fn config_arc(&self) -> Arc<Config>;
 
     async fn db_read_raw<
         T: FnOnce(database::DbReadMode<'_>) -> error_stack::Result<R, DieselDatabaseError>
@@ -542,6 +543,10 @@ impl InternalReading for &RouterDatabaseReadHandle {
     fn config(&self) -> &Config {
         &self.config
     }
+
+    fn config_arc(&self) -> Arc<Config> {
+        self.config.clone()
+    }
 }
 
 impl<I: InternalWriting> InternalReading for I {
@@ -564,6 +569,10 @@ impl<I: InternalWriting> InternalReading for I {
     fn config(&self) -> &Config {
         InternalWriting::config(self)
     }
+
+    fn config_arc(&self) -> Arc<Config> {
+        InternalWriting::config_arc(self)
+    }
 }
 
 impl InternalReading for ReadAdapter<'_> {
@@ -585,5 +594,9 @@ impl InternalReading for ReadAdapter<'_> {
 
     fn config(&self) -> &Config {
         &self.cmds.read.config
+    }
+
+    fn config_arc(&self) -> Arc<Config> {
+        self.cmds.read.config.clone()
     }
 }

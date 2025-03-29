@@ -5,6 +5,7 @@
 
 pub mod args;
 pub mod file;
+pub mod ip;
 
 use std::{
     fs,
@@ -20,6 +21,7 @@ use file::{
     FirebaseCloudMessagingConfig, ImageProcessingConfig, ScheduledTasksConfig,
     TileMapConfig,
 };
+use ip::IpList;
 use reqwest::Url;
 use rustls_pemfile::certs;
 use tokio_rustls::rustls::ServerConfig;
@@ -90,6 +92,9 @@ pub struct SimpleBackendConfig {
     public_api_tls_config: Option<Arc<ServerConfig>>,
     internal_api_tls_config: Option<Arc<ServerConfig>>,
     internal_api_root_certificate: Option<reqwest::Certificate>,
+
+    // IP info
+    ip_lists: Vec<IpList>,
 }
 
 impl SimpleBackendConfig {
@@ -200,6 +205,10 @@ impl SimpleBackendConfig {
 
     pub fn override_face_detection_result(&self) -> Option<bool> {
         self.file.general.debug_override_face_detection_result
+    }
+
+    pub fn ip_lists(&self) -> &[IpList] {
+        &self.ip_lists
     }
 }
 
@@ -315,6 +324,11 @@ pub fn get_config(
         false
     };
 
+    let mut ip_lists = vec![];
+    for l in &file_config.ip_info.list {
+        ip_lists.push(IpList::new(l)?);
+    }
+
     let config = SimpleBackendConfig {
         file: file_config,
         data_dir,
@@ -325,6 +339,7 @@ pub fn get_config(
         internal_api_root_certificate,
         backend_code_version,
         backend_semver_version,
+        ip_lists,
     };
 
     if config.debug_mode() {

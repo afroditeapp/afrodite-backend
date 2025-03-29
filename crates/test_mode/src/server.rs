@@ -14,7 +14,7 @@ use nix::{sys::signal::Signal, unistd::Pid};
 use reqwest::Url;
 use server_data::index::LocationIndexInfoCreator;
 use simple_backend_config::file::{
-    DataConfig, GeneralConfig, SimpleBackendConfigFile, SocketConfig
+    DataConfig, GeneralConfig, IpInfoConfig, SimpleBackendConfigFile, SocketConfig
 };
 use tokio::{
     io::{AsyncBufReadExt, AsyncRead},
@@ -194,6 +194,7 @@ fn new_config(
         scheduled_tasks: None,
         static_file_package_hosting: None,
         image_processing: None,
+        ip_info: IpInfoConfig::default(),
     };
 
     (config, simple_backend_config)

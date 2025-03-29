@@ -29,6 +29,10 @@ macro_rules! define_cmd_wrapper_read {
             fn config(&self) -> &$crate::db_manager::handle_types::Config {
                 self.0.config()
             }
+
+            fn config_arc(&self) -> std::sync::Arc<$crate::db_manager::handle_types::Config> {
+                self.0.config_arc()
+            }
         }
     };
 }

@@ -1,6 +1,7 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use crate::{DieselDatabaseError, IntoDatabaseError};
+use config::Config;
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, ApiUsageCount, ApiUsageStatistics, GetApiUsageStatisticsResult, GetApiUsageStatisticsSettings, GetIpAddressStatisticsResult, IpAddressInfo, IpAddressInfoInternal, UnixTime};
@@ -64,6 +65,7 @@ impl CurrentReadAccountAdminStatistics<'_> {
     pub fn ip_address_statistics(
         &mut self,
         account: AccountIdInternal,
+        config: Arc<Config>,
     ) -> Result<GetIpAddressStatisticsResult, DieselDatabaseError> {
         let values: Vec<IpAddressInfoInternal> = {
             use crate::schema::ip_address_usage_statistics::dsl::*;
@@ -80,11 +82,19 @@ impl CurrentReadAccountAdminStatistics<'_> {
             values: values
                 .into_iter()
                 .map(|v| {
+                    let ip_address = v.ip_address.to_ip_addr();
+                    let mut lists = vec![];
+                    for l in config.simple_backend().ip_lists() {
+                        if l.contains(ip_address) {
+                            lists.push(l.name().to_string());
+                        }
+                    }
                     IpAddressInfo {
-                        a: v.ip_address.to_ip_addr().to_string(),
+                        a: ip_address.to_string(),
                         c: v.usage_count,
                         f: v.first_usage_unix_time,
                         l: v.latest_usage_unix_time,
+                        lists,
                     }
                 })
                 .collect::<Vec<_>>()

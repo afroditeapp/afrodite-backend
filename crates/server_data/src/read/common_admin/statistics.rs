@@ -1,7 +1,7 @@
 use database::current::read::GetDbReadCommandsCommon;
 use model::{AccountIdInternal, GetApiUsageStatisticsResult, GetApiUsageStatisticsSettings, GetIpAddressStatisticsResult};
 use crate::{
-    define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError,
+    db_manager::InternalReading, define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError
 };
 
 define_cmd_wrapper_read!(ReadCommandsCommonAdminStatistics);
@@ -21,7 +21,8 @@ impl ReadCommandsCommonAdminStatistics<'_> {
         &self,
         account: AccountIdInternal,
     ) -> Result<GetIpAddressStatisticsResult, DataError> {
-        self.db_read(move |mut cmds| cmds.common_admin().statistics().ip_address_statistics(account))
+        let config = self.config_arc();
+        self.db_read(move |mut cmds| cmds.common_admin().statistics().ip_address_statistics(account, config))
             .await
             .into_error()
     }
