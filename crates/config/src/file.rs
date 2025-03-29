@@ -267,12 +267,15 @@ impl Default for ProcessedReportDeletionConfig {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct AccountLimitsConfig {
     pub account_deletion_wait_duration: DurationValue,
+    pub init_deletion_for_inactive_accounts_wait_duration: DurationValue,
 }
 
 impl Default for AccountLimitsConfig {
     fn default() -> Self {
         Self {
             account_deletion_wait_duration: DurationValue::from_days(90),
+            init_deletion_for_inactive_accounts_wait_duration:
+                DurationValue::from_days(365 * 10), // About 10 years
         }
     }
 }

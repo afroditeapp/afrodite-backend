@@ -1,5 +1,5 @@
 use axum::{extract::{Path, State}, Extension};
-use model::{AccountId, AccountIdInternal, EventToClientInternal, Permissions};
+use model::{AccountId, AccountIdInternal, Permissions};
 use model_account::{BooleanSetting, GetAccountDeletionRequestResult};
 use server_api::{app::{GetAccounts, WriteData, ReadData}, create_open_api_router, db_write_multiple, S};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
@@ -42,18 +42,7 @@ pub async fn post_set_account_deletion_request_state(
     let internal_id = state.get_internal_id(account).await?;
 
     db_write_multiple!(state, move |cmds| {
-        let new_account = cmds.account().delete().set_account_deletion_request_state(internal_id, value.value).await?;
-
-        if new_account.is_some() {
-            cmds.events()
-                .send_connected_event(
-                    internal_id.uuid,
-                    EventToClientInternal::AccountStateChanged,
-                )
-                .await?;
-        }
-
-        Ok(())
+        cmds.account().delete().set_account_deletion_request_state(internal_id, value.value).await
     })?;
 
     Ok(())

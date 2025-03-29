@@ -1,6 +1,6 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
-use model::Account;
+use model::EventToClientInternal;
 use model_account::AccountIdInternal;
 use server_data::{
     db_manager::InternalWriting, define_cmd_wrapper_write, file::FileWrite, read::DbRead, result::Result, write::{DbTransaction, GetWriteCommandsCommon}, DataError
@@ -15,7 +15,7 @@ impl WriteCommandsAccountDelete<'_> {
         &self,
         id: AccountIdInternal,
         value: bool,
-    ) -> Result<Option<Account>, DataError> {
+    ) -> Result<(), DataError> {
         let (deletion_requested, current_account) = self.db_read(move |mut cmds| {
             let deletion_requested = cmds.account().delete().account_deletion_requested(id)?;
             let current_account = cmds.common().account(id)?;
@@ -23,7 +23,7 @@ impl WriteCommandsAccountDelete<'_> {
         }).await?;
         if value == deletion_requested.is_some() {
             // Already in correct state
-            return Ok(None);
+            return Ok(());
         }
         let a = current_account.clone();
         let new_account = db_transaction!(self, move |mut cmds| {
@@ -51,7 +51,14 @@ impl WriteCommandsAccountDelete<'_> {
             )
             .await?;
 
-        Ok(Some(new_account))
+        self.events()
+            .send_connected_event(
+                id.uuid,
+                EventToClientInternal::AccountStateChanged,
+            )
+            .await?;
+
+        Ok(())
     }
 
     /// NOTE: IpAddressUsageTracker also ApiUsageTracker

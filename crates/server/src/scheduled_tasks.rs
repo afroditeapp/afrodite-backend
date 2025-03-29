@@ -208,6 +208,11 @@ impl ScheduledTaskManager {
                     .await?;
             }
 
+            if account_state != AccountState::PendingDeletion {
+                self.init_deletion_for_unused_account(id)
+                    .await?;
+            }
+
             if account_state == AccountState::PendingDeletion {
                 self.delete_account_if_needed(id).await?;
             } else if account_state == AccountState::Banned {
@@ -287,6 +292,44 @@ impl ScheduledTaskManager {
 
         if age_updated {
             *age_updated_count += 1;
+        }
+
+        Ok(())
+    }
+
+    pub async fn init_deletion_for_unused_account(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), ScheduledTaskError> {
+        // TODO(prod): Avoid Option<LastSeenTime> as it complicates things.
+        //             Use account created time as the initial value and
+        //             remove Option?
+        let last_seen_time = self
+            .state
+            .read()
+            .profile()
+            .profile(id)
+            .await
+            .change_context(ScheduledTaskError::DatabaseError)?
+            .last_seen_time;
+
+        // TODO(prod): When subscription feature is added prevent requesting
+        //             deletion when subscription is active.
+
+        if let Some(last_seen_time) = last_seen_time {
+            let inactive_account = UnixTime::current_time().add_seconds(
+                self.state.config().limits_account().init_deletion_for_inactive_accounts_wait_duration.seconds
+            );
+            if last_seen_time.raw() >= inactive_account.ut {
+                db_write_raw!(self.state, move |cmds| {
+                    cmds.account()
+                        .delete()
+                        .set_account_deletion_request_state(id, true)
+                        .await
+                    })
+                .await
+                .change_context(ScheduledTaskError::DatabaseError)?;
+            }
         }
 
         Ok(())

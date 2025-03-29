@@ -98,6 +98,10 @@ macro_rules! define_cmd_wrapper_write {
             fn email_sender(&self) -> &$crate::db_manager::handle_types::EmailSenderImpl {
                 $crate::db_manager::InternalWriting::email_sender(self.0)
             }
+
+            fn events(&self) -> $crate::event::EventManagerWithCacheReference<'_> {
+                $crate::db_manager::InternalWriting::events(self.0)
+            }
         }
     };
 }

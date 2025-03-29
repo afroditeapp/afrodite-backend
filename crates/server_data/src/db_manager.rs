@@ -223,6 +223,7 @@ pub trait InternalWriting {
     fn location(&self) -> &LocationIndexManager;
     fn push_notification_sender(&self) -> &PushNotificationSender;
     fn email_sender(&self) -> &EmailSenderImpl;
+    fn events(&self) -> EventManagerWithCacheReference<'_>;
 
     fn location_index_write_handle(&self) -> LocationIndexWriteHandle {
         LocationIndexWriteHandle::new(self.location())
@@ -332,6 +333,10 @@ impl InternalWriting for RouterDatabaseWriteHandle {
     fn email_sender(&self) -> &EmailSenderImpl {
         &self.email_sender
     }
+
+    fn events(&self) -> EventManagerWithCacheReference<'_> {
+        EventManagerWithCacheReference::new(&self.read.cache, &self.push_notification_sender)
+    }
 }
 
 impl InternalWriting for Cmds {
@@ -377,6 +382,10 @@ impl InternalWriting for Cmds {
 
     fn email_sender(&self) -> &EmailSenderImpl {
         InternalWriting::email_sender(self.write_handle())
+    }
+
+    fn events(&self) -> EventManagerWithCacheReference<'_> {
+        InternalWriting::events(self.write_handle())
     }
 }
 
