@@ -1,11 +1,13 @@
 use server_api::{
-    app::{IpAddressUsageTrackerProvider, ReadData, WriteData},
+    app::{GetConfig, ReadData, WriteData},
     db_write_raw,
 };
 use server_common::{data::DataError, result::Result};
-use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
+use server_data::read::GetReadCommandsCommon;
 use server_data_profile::write::GetWriteCommandsProfile;
 use server_state::S;
+
+use crate::task_utils::TaskUtils;
 
 pub struct ShutdownTasks {
     state: S,
@@ -21,7 +23,11 @@ impl ShutdownTasks {
     /// - [server_common::push_notifications::PushNotificationManager::quit_logic]
     pub async fn run_and_wait_completion(self) -> Result<(), DataError> {
         Self::handle_account_specific_tasks(&self.state).await?;
-        Self::save_ip_address_statistics(&self.state).await
+        if self.state.config().components().account {
+            TaskUtils::save_client_version_statistics(&self.state).await?;
+        }
+        TaskUtils::save_api_usage_statistics(&self.state).await?;
+        TaskUtils::save_ip_address_statistics(&self.state).await
     }
 
     async fn handle_account_specific_tasks(state: &S) -> Result<(), DataError> {
@@ -35,23 +41,6 @@ impl ShutdownTasks {
             })
             .await?;
         }
-
-        Ok(())
-    }
-
-    pub async fn save_ip_address_statistics(state: &S) -> Result<(), DataError> {
-        let statistics = state
-            .ip_address_usage_tracker()
-            .get_current_state_and_reset()
-            .await;
-
-        db_write_raw!(state, move |cmds| {
-            cmds.common_admin()
-                .statistics()
-                .save_ip_address_data(statistics)
-                .await
-        })
-        .await?;
 
         Ok(())
     }

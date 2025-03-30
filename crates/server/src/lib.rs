@@ -15,6 +15,7 @@ pub mod hourly_tasks;
 pub mod scheduled_tasks;
 pub mod shutdown_tasks;
 pub mod startup_tasks;
+pub mod task_utils;
 pub mod utils;
 
 use std::sync::Arc;
