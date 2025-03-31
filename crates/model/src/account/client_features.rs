@@ -19,6 +19,12 @@ impl ClientFeaturesFileHash {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ClientFeaturesConfig {
+    #[serde(default)]
+    pub features: FeaturesConfig,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
+pub struct FeaturesConfig {
     /// Enable news UI
     pub news: bool,
 }
