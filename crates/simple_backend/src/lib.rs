@@ -621,11 +621,11 @@ async fn handle_tls_related_tcp_stream(
                 return;
             }
             Ok(Some(handshake)) => handshake,
-            Err(_) => {
-                // This error seems to be quite frequent when this port is on
-                // public internet so do not log anything.
+            Err(e) => {
+                // Use debug log level as this happens quite often on internet
+                debug!("TLS ACME acceptor error: {}", e);
                 SIMPLE_CONNECTION
-                    .lets_encrypt_port_443_error
+                    .tls_acme_acceptor_error
                     .incr();
                 return;
             }
@@ -634,11 +634,11 @@ async fn handle_tls_related_tcp_stream(
         let empty_acceptor: Acceptor = Default::default();
         match LazyConfigAcceptor::new(empty_acceptor, tcp_stream).await {
             Ok(v) => v,
-            Err(_) => {
-                // This error seems to be quite frequent when this port is on
-                // public internet so do not log anything.
+            Err(e) => {
+                // Use debug log level as this happens quite often on internet
+                debug!("TLS acceptor error: {}", e);
                 SIMPLE_CONNECTION
-                    .lets_encrypt_non_default_port_error
+                    .tls_acceptor_error
                     .incr();
                 return;
             }
@@ -648,8 +648,13 @@ async fn handle_tls_related_tcp_stream(
     if let Some(app_service_with_connect_info) = app_service_with_connect_info {
         match handshake.into_stream(tls_config).await {
             Ok(v) => handle_ready_tls_connection(v, app_service_with_connect_info).await,
-            // Use debug log level as this happens quite often on internet
-            Err(e) => debug!("Into TlsStream failed: {}", e),
+            Err(e) => {
+                // Use debug log level as this happens quite often on internet
+                debug!("Into TlsStream failed: {}", e);
+                SIMPLE_CONNECTION
+                    .tls_into_stream_error
+                    .incr();
+            }
         }
     }
 }
@@ -724,6 +729,7 @@ create_counters!(
     SimpleConnectionCounters,
     SIMPLE_CONNECTION,
     SIMPLE_CONNECTION_COUNTERS_LIST,
-    lets_encrypt_port_443_error,
-    lets_encrypt_non_default_port_error,
+    tls_acme_acceptor_error,
+    tls_acceptor_error,
+    tls_into_stream_error,
 );
