@@ -34,7 +34,7 @@ use self::file::{Components, ConfigFile, ExternalServices, LocationConfig};
 
 pub const DATABASE_MESSAGE_CHANNEL_BUFFER: usize = 32;
 
-pub use model::ClientFeaturesConfig;
+pub use model::{ClientFeaturesConfig, ClientFeaturesConfigInternal};
 
 #[derive(thiserror::Error, Debug)]
 pub enum GetConfigError {
@@ -310,9 +310,9 @@ pub fn get_config(
                     .change_context(GetConfigError::LoadFileError)
                     .attach_printable_lazy(|| path.to_string_lossy().to_string())?;
             let sha256 = format!("{:x}", Sha256::digest(features.as_bytes()));
-            let features: ClientFeaturesConfig =
+            let features: ClientFeaturesConfigInternal =
                 toml::from_str(&features).change_context(GetConfigError::InvalidConfiguration)?;
-            (Some(features), Some(sha256))
+            (Some(features.into()), Some(sha256))
         } else {
             (None, None)
         };

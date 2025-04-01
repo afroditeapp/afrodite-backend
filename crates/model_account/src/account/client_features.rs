@@ -1,8 +1,8 @@
 use model::ClientFeaturesConfig;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use utoipa::ToSchema;
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct GetClientFeaturesConfigResult {
     pub config: Option<ClientFeaturesConfig>,
 }
