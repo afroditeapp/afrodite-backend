@@ -176,6 +176,7 @@ macro_rules! define_permissions {
 define_permissions!(
     struct Permissions,
     admin_modify_permissions,
+    admin_edit_profile_name,
     admin_moderate_media_content,
     admin_moderate_profile_names,
     admin_moderate_profile_texts,
