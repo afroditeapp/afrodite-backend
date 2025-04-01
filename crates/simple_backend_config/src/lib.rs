@@ -106,6 +106,7 @@ impl SimpleBackendConfig {
             },
             String::new(),
             String::new(),
+            true,
         )
         .unwrap()
     }
@@ -210,6 +211,10 @@ impl SimpleBackendConfig {
     pub fn ip_lists(&self) -> &[IpList] {
         &self.ip_lists
     }
+
+    pub fn parsed_file(&self) -> &SimpleBackendConfigFile {
+        &self.file
+    }
 }
 
 /// Read config file from current directory.
@@ -217,9 +222,10 @@ pub fn get_config(
     args_config: args::ServerModeArgs,
     backend_code_version: String,
     backend_semver_version: String,
+    save_default_config_if_not_found: bool,
 ) -> Result<SimpleBackendConfig, GetConfigError> {
     let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
-    let file_config = file::SimpleBackendConfigFile::load(current_dir)
+    let file_config = file::SimpleBackendConfigFile::load(current_dir, save_default_config_if_not_found)
         .change_context(GetConfigError::LoadFileError)?;
 
     let data_dir = if let Some(dir) = args_config.data_dir {

@@ -29,6 +29,17 @@ pub struct ArgsConfig {
     pub mode: Option<AppMode>,
 }
 
+impl Default for ArgsConfig {
+    fn default() -> Self {
+        Self {
+            build_info: false,
+            index_info: false,
+            server: ServerModeArgs { data_dir: None, sqlite_in_ram: false },
+            mode: None,
+        }
+    }
+}
+
 #[derive(Parser, Debug, Clone)]
 pub enum AppMode {
     /// Run remote bot mode
@@ -43,6 +54,11 @@ pub enum AppMode {
     Manager,
     /// Manager API client mode
     ManagerApi(ManagerApiClientMode),
+    /// Config related commands
+    Config {
+        #[command(subcommand)]
+        mode: ConfigMode,
+    },
 }
 
 #[derive(Parser, Debug, Clone)]
@@ -359,4 +375,22 @@ impl fmt::Display for SelectedBenchmark {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
     }
+}
+
+#[derive(Parser, Debug, Clone)]
+pub enum ConfigMode {
+    /// Check config. This loads the config like normally (includes
+    /// directory creation for example) but does not save default config files.
+    Check {
+        /// Try to read config files from this directory. Use current directory
+        /// if the argument does not exists.
+        dir: Option<PathBuf>,
+    },
+    /// View config. This loads the config like normally (includes
+    /// directory creation for example) but does not save default config files.
+    View {
+        /// Try to read config files from this directory. Use current directory
+        /// if the argument does not exists.
+        dir: Option<PathBuf>,
+    },
 }

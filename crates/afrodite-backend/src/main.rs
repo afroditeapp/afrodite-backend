@@ -7,6 +7,7 @@ use tls_client as _;
 
 pub mod args;
 pub mod build_info;
+pub mod config_tools;
 
 use std::process::ExitCode;
 
@@ -46,6 +47,7 @@ fn main() -> ExitCode {
             args.server,
             BUILD_INFO_GIT_DESCRIBE.to_string(),
             BUILD_INFO_CARGO_PKG_VERSION.to_string(),
+            true,
         )
         .unwrap();
         return handle_image_process_mode(settings, config.image_processing());
@@ -59,11 +61,17 @@ fn main() -> ExitCode {
         return ExitCode::SUCCESS;
     }
 
+    if let Some(AppMode::Config { mode }) = args.mode {
+        config_tools::handle_config_tools(mode).unwrap();
+        return ExitCode::SUCCESS;
+    }
+
     let index_info = args.index_info;
     let config = get_config(
         args,
         BUILD_INFO_GIT_DESCRIBE.to_string(),
         BUILD_INFO_CARGO_PKG_VERSION.to_string(),
+        true,
     )
     .unwrap();
 
@@ -78,6 +86,7 @@ fn main() -> ExitCode {
     let runtime = tokio::runtime::Runtime::new().unwrap();
 
     match config.current_mode() {
+        Some(config::args::AppMode::Config { .. }) |
         Some(config::args::AppMode::Manager) |
         Some(config::args::AppMode::ManagerApi(_)) |
         Some(config::args::AppMode::ImageProcess(_)) |

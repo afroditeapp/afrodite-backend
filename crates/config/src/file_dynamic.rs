@@ -44,19 +44,25 @@ impl ConfigFileDynamic {
         }
     }
 
-    pub fn load(dir: impl AsRef<Path>) -> Result<ConfigFileDynamic, ConfigFileError> {
+    pub fn load(
+        dir: impl AsRef<Path>,
+        save_default_if_not_found: bool,
+    ) -> Result<ConfigFileDynamic, ConfigFileError> {
         let config_string = ConfigFileUtils::load_string(
             dir,
             CONFIG_FILE_DYNAMIC_NAME,
             DEFAULT_CONFIG_FILE_DYNAMIC_TEXT,
+            save_default_if_not_found,
         )
         .change_context(ConfigFileError::SimpleBackendError)?;
         toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)
     }
 
-    pub fn load_from_current_dir() -> Result<ConfigFileDynamic, ConfigFileError> {
+    pub fn load_from_current_dir(
+        save_default_if_not_found: bool,
+    ) -> Result<ConfigFileDynamic, ConfigFileError> {
         let current_dir = std::env::current_dir().change_context(ConfigFileError::LoadConfig)?;
-        Self::load(current_dir)
+        Self::load(current_dir, save_default_if_not_found)
     }
 
     pub fn edit_config_from_current_dir(
@@ -69,6 +75,7 @@ impl ConfigFileDynamic {
             &dir,
             CONFIG_FILE_DYNAMIC_NAME,
             DEFAULT_CONFIG_FILE_DYNAMIC_TEXT,
+            true,
         )
         .change_context(ConfigFileError::SimpleBackendError)?;
 

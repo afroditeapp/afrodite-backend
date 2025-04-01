@@ -27,11 +27,13 @@ use model_server_data::{AttributesFileInternal, ProfileAttributesInternal};
 use profile_name_allowlist::{ProfileNameAllowlistBuilder, ProfileNameAllowlistData};
 use reqwest::Url;
 use sha2::{Digest, Sha256};
-use simple_backend_config::SimpleBackendConfig;
+use simple_backend_config::{file::SimpleBackendConfigFile, SimpleBackendConfig};
 use simple_backend_utils::{ContextExt, IntoReportFromString};
+use bot_config_file::BotConfigFile;
 
 use self::file::{Components, ConfigFile, ExternalServices, LocationConfig};
 
+// TODO(prod): Remove
 pub const DATABASE_MESSAGE_CHANNEL_BUFFER: usize = 32;
 
 pub use model::{ClientFeaturesConfig, ClientFeaturesConfigInternal};
@@ -61,6 +63,18 @@ pub enum GetConfigError {
 }
 
 #[derive(Debug)]
+pub struct ParsedFiles<'a> {
+    pub server: &'a ConfigFile,
+    pub dynamic: &'a ConfigFileDynamic,
+    pub simple_backend: &'a SimpleBackendConfigFile,
+    pub profile_attributes: Option<&'a AttributesFileInternal>,
+    pub custom_reports: Option<&'a CustomReportsConfig>,
+    pub client_features: Option<&'a ClientFeaturesConfig>,
+    pub email_content: Option<&'a EmailContentFile>,
+    pub bot: Option<&'a BotConfigFile>,
+}
+
+#[derive(Debug)]
 pub struct Config {
     file: ConfigFile,
     file_dynamic: ConfigFileDynamic,
@@ -83,6 +97,10 @@ pub struct Config {
 
     reset_likes_utc_offset: FixedOffset,
     profile_name_allowlist: ProfileNameAllowlistData,
+
+    // Used only for config utils
+    bot_config: Option<BotConfigFile>,
+    profile_attributes_file: Option<AttributesFileInternal>,
 }
 
 impl Config {
@@ -106,6 +124,8 @@ impl Config {
             email_content: None,
             reset_likes_utc_offset: FixedOffset::east_opt(0).unwrap(),
             profile_name_allowlist: ProfileNameAllowlistData::default(),
+            bot_config: None,
+            profile_attributes_file: None,
         }
     }
 
@@ -237,23 +257,39 @@ impl Config {
     pub fn remote_bots(&self) -> Vec<RemoteBotConfig> {
         self.file.remote_bot.clone().unwrap_or_default()
     }
+
+    pub fn parsed_files(&self) -> ParsedFiles {
+        ParsedFiles {
+            server: &self.file,
+            dynamic: &self.file_dynamic,
+            simple_backend: self.simple_backend().parsed_file(),
+            profile_attributes: self.profile_attributes_file.as_ref(),
+            custom_reports: self.custom_reports(),
+            client_features: self.client_features(),
+            email_content: self.email_content(),
+            bot: self.bot_config.as_ref(),
+        }
+    }
 }
 
 pub fn get_config(
     args_config: ArgsConfig,
     backend_code_version: String,
     backend_semver_version: String,
+    save_default_config_if_not_found: bool,
 ) -> Result<Config, GetConfigError> {
     let simple_backend_config = simple_backend_config::get_config(
         args_config.server,
         backend_code_version,
         backend_semver_version,
+        save_default_config_if_not_found,
     )
     .change_context(GetConfigError::SimpleBackendError)?;
 
     let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
     let file_config =
-        file::ConfigFile::load(&current_dir).change_context(GetConfigError::LoadFileError)?;
+        file::ConfigFile::load(&current_dir, save_default_config_if_not_found)
+            .change_context(GetConfigError::LoadFileError)?;
 
     let external_services = file_config
         .external_services
@@ -270,22 +306,27 @@ pub fn get_config(
 
     let client_api_urls = create_client_api_urls(&components, &external_services)?;
 
-    let file_dynamic =
-        ConfigFileDynamic::load(current_dir).change_context(GetConfigError::LoadFileError)?;
+    // TODO(prod): Consider adding file path for ConfigFileDynamic
+    //             to server config.
 
-    let (profile_attributes, profile_attributes_sha256) =
+    let file_dynamic =
+        ConfigFileDynamic::load(current_dir, save_default_config_if_not_found)
+            .change_context(GetConfigError::LoadFileError)?;
+
+    let (profile_attributes, profile_attributes_sha256, profile_attributes_file) =
         if let Some(path) = &file_config.config_files.profile_attributes {
             let attributes =
                 std::fs::read_to_string(path).change_context(GetConfigError::LoadFileError)?;
             let profile_attributes_sha256 = format!("{:x}", Sha256::digest(attributes.as_bytes()));
-            let attributes: AttributesFileInternal =
+            let attributes_file: AttributesFileInternal =
                 toml::from_str(&attributes).change_context(GetConfigError::InvalidConfiguration)?;
-            let attributes = attributes
+            let attributes = attributes_file
+                .clone()
                 .validate()
                 .into_error_string(GetConfigError::InvalidConfiguration)?;
-            (Some(attributes), Some(profile_attributes_sha256))
+            (Some(attributes), Some(profile_attributes_sha256), Some(attributes_file))
         } else {
-            (None, None)
+            (None, None, None)
         };
 
     let (custom_reports, custom_reports_sha256) =
@@ -351,6 +392,15 @@ pub fn get_config(
     }
     let profile_name_allowlist = allowlist_builder.build();
 
+    let bot_config = if let Some(bot_config_file) = &file_config.config_files.bot {
+        // Check that bot config file loads correctly
+        let bot_config = BotConfigFile::load(bot_config_file)
+            .change_context(GetConfigError::LoadFileError)?;
+        Some(bot_config)
+    } else {
+        None
+    };
+
     let config = Config {
         simple_backend_config: simple_backend_config.into(),
         file: file_config,
@@ -368,6 +418,8 @@ pub fn get_config(
         email_content,
         reset_likes_utc_offset,
         profile_name_allowlist,
+        bot_config,
+        profile_attributes_file,
     };
 
     Ok(config)

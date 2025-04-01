@@ -174,9 +174,12 @@ impl SimpleBackendConfigFile {
         }
     }
 
-    pub fn load(dir: impl AsRef<Path>) -> Result<SimpleBackendConfigFile, ConfigFileError> {
+    pub fn load(
+        dir: impl AsRef<Path>,
+        save_default_if_not_found: bool,
+    ) -> Result<SimpleBackendConfigFile, ConfigFileError> {
         let config_string =
-            ConfigFileUtils::load_string(dir, CONFIG_FILE_NAME, DEFAULT_CONFIG_FILE_TEXT)?;
+            ConfigFileUtils::load_string(dir, CONFIG_FILE_NAME, DEFAULT_CONFIG_FILE_TEXT, save_default_if_not_found)?;
         toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)
     }
 }
@@ -207,10 +210,11 @@ impl ConfigFileUtils {
         dir: impl AsRef<Path>,
         file_name: &str,
         default: &str,
+        save_default_if_not_found: bool,
     ) -> Result<String, ConfigFileError> {
         let file_path = Self::join_dir_path_and_file_name(&dir, file_name)
             .change_context(ConfigFileError::LoadConfig)?;
-        if !file_path.exists() {
+        if !file_path.exists() && save_default_if_not_found {
             Self::save_string(&file_path, default).change_context(ConfigFileError::SaveDefault)?;
         }
 

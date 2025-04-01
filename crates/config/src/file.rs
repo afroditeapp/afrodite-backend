@@ -121,9 +121,12 @@ impl ConfigFile {
         }
     }
 
-    pub fn load(dir: impl AsRef<Path>) -> Result<ConfigFile, ConfigFileError> {
+    pub fn load(
+        dir: impl AsRef<Path>,
+        save_default_if_not_found: bool,
+    ) -> Result<ConfigFile, ConfigFileError> {
         let config_string =
-            ConfigFileUtils::load_string(dir, CONFIG_FILE_NAME, DEFAULT_CONFIG_FILE_TEXT)
+            ConfigFileUtils::load_string(dir, CONFIG_FILE_NAME, DEFAULT_CONFIG_FILE_TEXT, save_default_if_not_found)
                 .change_context(ConfigFileError::SimpleBackendError)?;
         let file: ConfigFile = toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)?;
 

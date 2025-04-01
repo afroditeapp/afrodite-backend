@@ -184,6 +184,10 @@ impl Config {
     pub fn update_manager_user_agent(&self) -> String {
         format!("{}/{}", self.backend_pkg_name(), self.backend_semver_version())
     }
+
+    pub fn parsed_file(&self) -> &ConfigFile {
+        &self.file
+    }
 }
 
 pub fn get_config(
