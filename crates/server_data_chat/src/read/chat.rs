@@ -1,10 +1,11 @@
 use database_chat::current::read::GetDbReadCommandsChat;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState,
-    AllMatchesPage, ChatStateRaw, GetPublicKey, MatchId, MessageNumber, PageItemCountForNewLikes,
-    PendingMessageAndMessageData, PublicKeyVersion, ReceivedBlocksPage, ReceivedLikeId,
+    AllMatchesPage, ChatStateRaw, MatchId, MessageNumber, PageItemCountForNewLikes,
+    PendingMessageAndMessageData, ReceivedBlocksPage, ReceivedLikeId,
     SentBlocksPage, SentLikesPage, SentMessageId,
 };
+use public_key::ReadCommandsChatPublicKey;
 use server_data::{
     cache::{
         db_iterator::{new_count::DbIteratorStateNewCount, DbIteratorState},
@@ -19,12 +20,16 @@ use server_data::{
 use self::push_notifications::ReadCommandsChatPushNotifications;
 
 mod push_notifications;
+mod public_key;
 
 define_cmd_wrapper_read!(ReadCommandsChat);
 
 impl<'a> ReadCommandsChat<'a> {
     pub fn push_notifications(self) -> ReadCommandsChatPushNotifications<'a> {
         ReadCommandsChatPushNotifications::new(self.0)
+    }
+    pub fn public_key(self) -> ReadCommandsChatPublicKey<'a> {
+        ReadCommandsChatPublicKey::new(self.0)
     }
 }
 
@@ -240,16 +245,5 @@ impl ReadCommandsChat<'_> {
             .await?;
 
         Ok(unlimited_likes_a0 == unlimited_likes_a1)
-    }
-
-    pub async fn get_public_key(
-        &self,
-        id: AccountIdInternal,
-        version: PublicKeyVersion,
-    ) -> Result<GetPublicKey, DataError> {
-        self.db_read(move |mut cmds| cmds.chat().public_key(id, version))
-            .await
-            .map(|key| GetPublicKey { key })
-            .into_error()
     }
 }

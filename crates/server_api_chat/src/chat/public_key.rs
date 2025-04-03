@@ -4,8 +4,9 @@ use axum::{
     extract::{Path, Query, State},
     Extension,
 };
+use model::Permissions;
 use model_chat::{
-    AccountId, AccountIdInternal, GetPublicKey, PublicKeyId, PublicKeyVersion, SetPublicKey,
+    AccountId, AccountIdInternal, GetPrivatePublicKeyInfo, GetPublicKey, PublicKeyId, PublicKeyVersion, SetPublicKey
 };
 use server_api::{
     app::{GetAccounts, WriteData}, create_open_api_router, db_write_multiple, S
@@ -41,6 +42,7 @@ async fn get_public_key(
     let key = state
         .read()
         .chat()
+        .public_key()
         .get_public_key(requested_internal_id, key_version)
         .await?;
     Ok(key.into())
@@ -84,7 +86,51 @@ async fn post_public_key(
     Ok(new_key.into())
 }
 
-create_open_api_router!(fn router_public_key, get_public_key, post_public_key,);
+const PATH_GET_PRIVATE_PUBLIC_KEY_INFO: &str = "/chat_api/private_public_key_info/{aid}";
+
+/// Get private public key info
+///
+/// # Access
+/// * Owner of the requested account
+/// * Permission [model::Permissions::admin_edit_max_public_key_count]
+#[utoipa::path(
+    get,
+    path = PATH_GET_PRIVATE_PUBLIC_KEY_INFO,
+    params(AccountId),
+    responses(
+        (status = 200, description = "Success.", body = GetPrivatePublicKeyInfo),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+async fn get_private_public_key_info(
+    State(state): State<S>,
+    Extension(api_caller): Extension<AccountIdInternal>,
+    Extension(api_caller_permissions): Extension<Permissions>,
+    Path(requested_id): Path<AccountId>,
+) -> Result<Json<GetPrivatePublicKeyInfo>, StatusCode> {
+    CHAT.get_private_public_key_info.incr();
+
+    let access_allowed =
+        api_caller.as_id() == requested_id ||
+        api_caller_permissions.admin_edit_max_public_key_count;
+
+    if !access_allowed {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let requested_internal_id = state.get_internal_id(requested_id).await?;
+    let info = state
+        .read()
+        .chat()
+        .public_key()
+        .get_private_public_key_info(requested_internal_id)
+        .await?;
+    Ok(info.into())
+}
+
+create_open_api_router!(fn router_public_key, get_public_key, post_public_key, get_private_public_key_info,);
 
 create_counters!(
     ChatCounters,
@@ -92,4 +138,5 @@ create_counters!(
     CHAT_PUBLIC_KEY_COUNTERS_LIST,
     get_public_key,
     post_public_key,
+    get_private_public_key_info,
 );

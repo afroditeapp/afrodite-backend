@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     account_id    INTEGER PRIMARY KEY NOT NULL,
     admin_modify_permissions                     BOOLEAN NOT NULL DEFAULT 0,
     admin_edit_profile_name                      BOOLEAN NOT NULL DEFAULT 0,
+    admin_edit_max_public_key_count              BOOLEAN NOT NULL DEFAULT 0,
     admin_moderate_media_content                 BOOLEAN NOT NULL DEFAULT 0,
     admin_moderate_profile_names                 BOOLEAN NOT NULL DEFAULT 0,
     admin_moderate_profile_texts                 BOOLEAN NOT NULL DEFAULT 0,
@@ -737,6 +738,7 @@ CREATE TABLE IF NOT EXISTS chat_state(
     new_received_likes_count     INTEGER        NOT NULL DEFAULT 0,
     next_received_like_id        INTEGER        NOT NULL DEFAULT 0,
     received_like_id_at_received_likes_iterator_reset           INTEGER,
+    max_public_key_count         INTEGER        NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

@@ -9,3 +9,6 @@ pub use model_server_data::*;
 
 pub mod chat;
 pub use chat::*;
+
+pub mod chat_admin;
+pub use chat_admin::*;

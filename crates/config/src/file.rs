@@ -54,6 +54,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
 # [limits.chat]
 # like_limit_reset_time_utc_offset_hours = 0
+# max_public_key_count = 100
 
 # [limits.media]
 # concurrent_content_uploads = 10
@@ -284,9 +285,19 @@ impl Default for AccountLimitsConfig {
 }
 
 /// Chat releated limits config
-#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ChatLimitsConfig {
     pub like_limit_reset_time_utc_offset_hours: i8,
+    pub max_public_key_count: u16,
+}
+
+impl Default for ChatLimitsConfig {
+    fn default() -> Self {
+        Self {
+            like_limit_reset_time_utc_offset_hours: 0,
+            max_public_key_count: 100,
+        }
+    }
 }
 
 /// Media related limits config

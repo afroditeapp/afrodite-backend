@@ -2,14 +2,15 @@ use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::{prelude::*, SelectableHelper};
 use error_stack::Result;
 use model_chat::{
-    AccountIdInternal, ChatGlobalState, ChatStateRaw, PublicKey, PublicKeyData, PublicKeyId,
-    PublicKeyVersion, CHAT_GLOBAL_STATE_ROW_TYPE,
+    AccountIdInternal, ChatGlobalState, ChatStateRaw,
+    CHAT_GLOBAL_STATE_ROW_TYPE,
 };
 
 use crate::IntoDatabaseError;
 
 mod interaction;
 mod message;
+mod public_key;
 
 define_current_read_commands!(CurrentReadChat);
 
@@ -20,6 +21,10 @@ impl<'a> CurrentReadChat<'a> {
 
     pub fn message(self) -> message::CurrentReadChatMessage<'a> {
         message::CurrentReadChatMessage::new(self.cmds)
+    }
+
+    pub fn public_key(self) -> public_key::CurrentReadChatPublicKey<'a> {
+        public_key::CurrentReadChatPublicKey::new(self.cmds)
     }
 }
 
@@ -35,28 +40,6 @@ impl CurrentReadChat<'_> {
             .select(ChatStateRaw::as_select())
             .first(self.conn())
             .into_db_error(())
-    }
-
-    pub fn public_key(
-        &mut self,
-        account_id_value: AccountIdInternal,
-        version: PublicKeyVersion,
-    ) -> Result<Option<PublicKey>, DieselDatabaseError> {
-        use crate::schema::public_key::dsl::*;
-
-        let query_result: Option<(Option<PublicKeyId>, Option<PublicKeyData>)> = public_key
-            .filter(account_id.eq(account_id_value.as_db_id()))
-            .filter(public_key_version.eq(version))
-            .select((public_key_id, public_key_data))
-            .first(self.conn())
-            .optional()
-            .into_db_error(())?;
-
-        if let Some((Some(id), Some(data))) = query_result {
-            Ok(Some(PublicKey { id, version, data }))
-        } else {
-            Ok(None)
-        }
     }
 
     pub fn global_state(&mut self) -> Result<ChatGlobalState, DieselDatabaseError> {

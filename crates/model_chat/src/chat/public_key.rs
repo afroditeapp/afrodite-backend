@@ -58,3 +58,9 @@ pub struct SetPublicKey {
     pub version: PublicKeyVersion,
     pub data: PublicKeyData,
 }
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct GetPrivatePublicKeyInfo {
+    pub max_public_key_count_from_backend_config: i64,
+    pub max_public_key_count_from_account_config: i64,
+}

@@ -95,6 +95,7 @@ diesel::table! {
         account_id -> Integer,
         admin_modify_permissions -> Bool,
         admin_edit_profile_name -> Bool,
+        admin_edit_max_public_key_count -> Bool,
         admin_moderate_media_content -> Bool,
         admin_moderate_profile_names -> Bool,
         admin_moderate_profile_texts -> Bool,
@@ -215,6 +216,7 @@ diesel::table! {
         new_received_likes_count -> Integer,
         next_received_like_id -> Integer,
         received_like_id_at_received_likes_iterator_reset -> Nullable<Integer>,
+        max_public_key_count -> Integer,
     }
 }
 

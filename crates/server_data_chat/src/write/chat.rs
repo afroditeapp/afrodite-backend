@@ -391,6 +391,7 @@ impl WriteCommandsChat<'_> {
             let current_key = cmds
                 .read()
                 .chat()
+                .public_key()
                 .public_key(receiver, receiver_public_key_version_from_client)?;
             if Some(receiver_public_key_from_client) != current_key.map(|v| v.id) {
                 return Ok((SendMessageResult::public_key_outdated(), None));

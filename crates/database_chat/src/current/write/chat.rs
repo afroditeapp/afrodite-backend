@@ -97,7 +97,7 @@ impl CurrentWriteChat<'_> {
     ) -> Result<PublicKeyId, DieselDatabaseError> {
         use model::schema::public_key::dsl::*;
 
-        let current = self.read().chat().public_key(id, new_key.version)?;
+        let current = self.read().chat().public_key().public_key(id, new_key.version)?;
         let new_id = if let Some(current) = current {
             if current.id.id == i64::MAX {
                 return Err(DieselDatabaseError::NoAvailableIds.report());

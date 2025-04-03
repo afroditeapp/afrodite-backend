@@ -177,6 +177,7 @@ define_permissions!(
     struct Permissions,
     admin_modify_permissions,
     admin_edit_profile_name,
+    admin_edit_max_public_key_count,
     admin_moderate_media_content,
     admin_moderate_profile_names,
     admin_moderate_profile_texts,
