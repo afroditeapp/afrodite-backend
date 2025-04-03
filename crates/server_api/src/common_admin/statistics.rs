@@ -75,7 +75,7 @@ pub async fn post_get_api_usage_data(
     COMMON_ADMIN.post_get_api_usage_data.incr();
 
     if !api_caller_permissions.admin_view_private_info {
-        return Err(StatusCode::UNAUTHORIZED);
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
     let requested_account = state.get_internal_id(settings.account).await?;
@@ -117,7 +117,7 @@ pub async fn post_get_ip_address_usage_data(
     COMMON_ADMIN.post_get_ip_address_usage_data.incr();
 
     if !api_caller_permissions.admin_view_private_info {
-        return Err(StatusCode::UNAUTHORIZED);
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
     let requested_account = state.get_internal_id(settings.account).await?;
