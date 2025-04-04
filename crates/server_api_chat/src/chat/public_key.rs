@@ -7,6 +7,7 @@ use model::Permissions;
 use model_chat::{
     AccountId, AccountIdInternal, AddPublicKeyResult, GetPrivatePublicKeyInfo, PublicKeyId
 };
+use pgp::{Deserializable, SignedPublicKey};
 use server_api::{
     app::{GetAccounts, WriteData}, create_open_api_router, db_write_multiple, S
 };
@@ -65,6 +66,11 @@ const PATH_POST_ADD_PUBLIC_KEY: &str = "/chat_api/add_public_key";
 /// Max value between the two previous values is used to check is adding the
 /// key allowed.
 ///
+/// Max key size is 8192 bytes.
+///
+/// The key must be OpenPGP public key with one signed user which ID
+/// is [model::AccountId] string.
+///
 #[utoipa::path(
     post,
     path = PATH_POST_ADD_PUBLIC_KEY,
@@ -87,6 +93,15 @@ async fn post_add_public_key(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .to_vec();
+
+    let public_key =
+        SignedPublicKey::from_bytes(key_data.as_slice())
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let account_id_string = id.as_id().to_string();
+    match public_key.details.users.as_slice() {
+        [v] if v.id.id() == account_id_string.as_bytes() => (),
+        _ => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
 
     let new_key = db_write_multiple!(state, move |cmds| {
         cmds.chat().add_public_key(id, key_data).await

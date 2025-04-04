@@ -16,6 +16,8 @@ utoipa = { workspace = true }
 utoipa-axum = { workspace = true }
 serde_json = { workspace = true }
 
+pgp = { workspace = true }
+
 model = { path = "../model" }
 model_chat = { path = "../model_chat" }
 

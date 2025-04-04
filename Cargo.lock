@@ -4466,6 +4466,7 @@ dependencies = [
  "headers",
  "model",
  "model_chat",
+ "pgp",
  "serde_json",
  "server_api",
  "server_common",
