@@ -24,6 +24,7 @@ use crate::{
 // TODO(prod): Use one route for login and change wording to user ID and
 //             password? Also info about locked account only if password
 //             is correct?
+// TODO(prod): Add counter for password guessing.
 
 const PATH_POST_DEMO_MODE_LOGIN: &str = "/account_api/demo_mode_login";
 
