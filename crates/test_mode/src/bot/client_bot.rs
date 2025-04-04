@@ -5,7 +5,7 @@ use std::{fmt::Debug, iter::Peekable, time::Instant};
 use api_client::{
     apis::{
         account_api::get_account_state, chat_api::{
-            post_add_receiver_acknowledgement, post_add_sender_acknowledgement, post_get_next_received_likes_page, post_reset_received_likes_paging, post_send_like
+            get_latest_public_key_id, post_add_receiver_acknowledgement, post_add_sender_acknowledgement, post_get_next_received_likes_page, post_reset_received_likes_paging, post_send_like
         }, common_api::get_client_config, profile_api::{
             post_get_query_available_profile_attributes, post_profile, post_search_age_range, post_search_groups
         }
@@ -515,7 +515,17 @@ async fn send_message(
     receiver: AccountId,
     msg: String,
 ) -> Result<(), TestError> {
-    let latest_key_id: i64 = 0; // TODO
+    let latest_key_id = get_latest_public_key_id(state.api.chat(), &receiver.aid.to_string())
+        .await
+        .change_context(TestError::ApiRequest)?;
+
+    let latest_key_id = match latest_key_id.id.flatten().map(|v| v.id) {
+        Some(value) => value,
+        None => {
+            warn!("Receiver public key is missing");
+            return Ok(());
+        }
+    };
 
     let public_key = get_public_key_fixed(state.api.chat(), &receiver.aid.to_string(), latest_key_id)
         .await

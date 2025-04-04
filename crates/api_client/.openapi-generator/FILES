@@ -101,6 +101,7 @@ src/models/get_custom_reports_config_result.rs
 src/models/get_initial_profile_age_info_result.rs
 src/models/get_ip_address_statistics_result.rs
 src/models/get_ip_address_statistics_settings.rs
+src/models/get_latest_public_key_id.rs
 src/models/get_media_content_result.rs
 src/models/get_my_profile_result.rs
 src/models/get_news_item_result.rs

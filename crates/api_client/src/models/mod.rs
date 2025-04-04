@@ -170,6 +170,8 @@ pub mod get_ip_address_statistics_result;
 pub use self::get_ip_address_statistics_result::GetIpAddressStatisticsResult;
 pub mod get_ip_address_statistics_settings;
 pub use self::get_ip_address_statistics_settings::GetIpAddressStatisticsSettings;
+pub mod get_latest_public_key_id;
+pub use self::get_latest_public_key_id::GetLatestPublicKeyId;
 pub mod get_media_content_result;
 pub use self::get_media_content_result::GetMediaContentResult;
 pub mod get_my_profile_result;
