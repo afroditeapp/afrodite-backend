@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use utils::time::age_in_years_from_birthdate;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{AccountId, AccountIdDb, AccountIdInternal, PublicKeyIdAndVersion};
+use crate::{AccountId, AccountIdDb, AccountIdInternal};
 
 mod email;
 pub use email::*;
@@ -46,14 +46,6 @@ pub struct LoginResult {
     /// set or the client version is unsupported.
     pub email: Option<EmailAddress>,
 
-    /// Info about latest public keys. Client can use this value to
-    /// ask if user wants to copy existing private and public key from
-    /// other device. If empty, public key is not set or the client
-    /// is unsupported.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    #[schema(default = json!([]))]
-    pub latest_public_keys: Vec<PublicKeyIdAndVersion>,
-
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub error_unsupported_client: bool,
@@ -67,7 +59,6 @@ impl LoginResult {
             media: None,
             aid: None,
             email: None,
-            latest_public_keys: vec![],
             error_unsupported_client: true,
         }
     }

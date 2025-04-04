@@ -16,11 +16,6 @@ use crate::{
 pub async fn login_impl(id: AccountId, state: S) -> Result<LoginResult, StatusCode> {
     let id = state.get_internal_id(id).await?;
     let email = state.read().account().account_data(id).await?;
-    let latest_public_keys = state
-        .read()
-        .account_chat_utils()
-        .get_latest_public_keys_info(id)
-        .await?;
 
     let access = AccessToken::generate_new();
     let refresh = RefreshToken::generate_new();
@@ -44,7 +39,6 @@ pub async fn login_impl(id: AccountId, state: S) -> Result<LoginResult, StatusCo
         media: None,
         aid: Some(id.as_id()),
         email: email.email,
-        latest_public_keys,
         error_unsupported_client: false,
     };
     Ok(result)

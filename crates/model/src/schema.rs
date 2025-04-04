@@ -677,11 +677,11 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    public_key (account_id, public_key_version) {
+    public_key (account_id, key_id) {
         account_id -> Integer,
-        public_key_version -> Integer,
-        public_key_id -> Nullable<Integer>,
-        public_key_data -> Nullable<Text>,
+        key_id -> Integer,
+        key_data -> Binary,
+        key_added_unix_time -> Integer,
     }
 }
 

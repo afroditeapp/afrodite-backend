@@ -1,36 +1,47 @@
 use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{PublicKeyId, PublicKeyVersion};
-use model_chat::{
-    AccountIdInternal, PublicKey, PublicKeyData
-};
+use model::PublicKeyId;
+use model_chat::AccountIdInternal;
 
 use crate::IntoDatabaseError;
 
 define_current_read_commands!(CurrentReadChatPublicKey);
 
 impl CurrentReadChatPublicKey<'_> {
-    pub fn public_key(
+    pub fn latest_public_key_id(
         &mut self,
         account_id_value: AccountIdInternal,
-        version: PublicKeyVersion,
-    ) -> Result<Option<PublicKey>, DieselDatabaseError> {
+    ) -> Result<Option<PublicKeyId>, DieselDatabaseError> {
         use crate::schema::public_key::dsl::*;
 
-        let query_result: Option<(Option<PublicKeyId>, Option<PublicKeyData>)> = public_key
+        let query_result: Option<PublicKeyId> = public_key
             .filter(account_id.eq(account_id_value.as_db_id()))
-            .filter(public_key_version.eq(version))
-            .select((public_key_id, public_key_data))
+            .select(key_id)
+            .order(key_id.desc())
             .first(self.conn())
             .optional()
             .into_db_error(())?;
 
-        if let Some((Some(id), Some(data))) = query_result {
-            Ok(Some(PublicKey { id, version, data }))
-        } else {
-            Ok(None)
-        }
+        Ok(query_result)
+    }
+
+    pub fn public_key_data(
+        &mut self,
+        account_id_value: AccountIdInternal,
+        key_id_value: PublicKeyId,
+    ) -> Result<Option<Vec<u8>>, DieselDatabaseError> {
+        use crate::schema::public_key::dsl::*;
+
+        let query_result: Option<Vec<u8>> = public_key
+            .filter(account_id.eq(account_id_value.as_db_id()))
+            .filter(key_id.eq(key_id_value))
+            .select(key_data)
+            .first(self.conn())
+            .optional()
+            .into_db_error(())?;
+
+        Ok(query_result)
     }
 
     pub fn max_public_key_count_account_config(

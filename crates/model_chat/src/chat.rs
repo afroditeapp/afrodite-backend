@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 use model::{
-    FcmDeviceToken, MatchId, MatchesSyncVersion, MessageNumber, NewReceivedLikesCount, PendingNotification, PublicKeyId, PublicKeyVersion, ReceivedBlocksSyncVersion, ReceivedLikeId, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion
+    FcmDeviceToken, MatchId, MatchesSyncVersion, MessageNumber, NewReceivedLikesCount, PendingNotification, PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikeId, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion
 };
 use model_server_data::LimitedActionStatus;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -148,12 +148,6 @@ pub struct SendMessageToAccountParams {
     #[param(value_type = i64)]
     pub receiver_public_key_id: PublicKeyId,
     #[serde(
-        serialize_with = "public_key_version_as_i64",
-        deserialize_with = "public_key_version_from_i64"
-    )]
-    #[param(value_type = i64)]
-    pub receiver_public_key_version: PublicKeyVersion,
-    #[serde(
         serialize_with = "client_id_as_i64",
         deserialize_with = "client_id_from_i64"
     )]
@@ -175,13 +169,6 @@ pub fn public_key_id_as_i64<S: Serializer>(value: &PublicKeyId, s: S) -> Result<
     value.id.serialize(s)
 }
 
-pub fn public_key_version_as_i64<S: Serializer>(
-    value: &PublicKeyVersion,
-    s: S,
-) -> Result<S::Ok, S::Error> {
-    value.version.serialize(s)
-}
-
 pub fn client_id_as_i64<S: Serializer>(value: &ClientId, s: S) -> Result<S::Ok, S::Error> {
     value.id.serialize(s)
 }
@@ -200,12 +187,6 @@ pub fn account_id_from_uuid<'de, D: Deserializer<'de>>(d: D) -> Result<AccountId
 
 pub fn public_key_id_from_i64<'de, D: Deserializer<'de>>(d: D) -> Result<PublicKeyId, D::Error> {
     i64::deserialize(d).map(|id| PublicKeyId { id })
-}
-
-pub fn public_key_version_from_i64<'de, D: Deserializer<'de>>(
-    d: D,
-) -> Result<PublicKeyVersion, D::Error> {
-    i64::deserialize(d).map(|version| PublicKeyVersion { version })
 }
 
 pub fn client_id_from_i64<'de, D: Deserializer<'de>>(d: D) -> Result<ClientId, D::Error> {

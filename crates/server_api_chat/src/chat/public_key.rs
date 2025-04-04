@@ -1,12 +1,11 @@
 //! Public key management related routes
 
 use axum::{
-    extract::{Path, Query, State},
-    Extension,
+    body::{to_bytes, Body}, extract::{Path, Query, State}, Extension
 };
 use model::Permissions;
 use model_chat::{
-    AccountId, AccountIdInternal, GetPrivatePublicKeyInfo, GetPublicKey, PublicKeyId, PublicKeyVersion, SetPublicKey
+    AccountId, AccountIdInternal, AddPublicKeyResult, GetPrivatePublicKeyInfo, PublicKeyId
 };
 use server_api::{
     app::{GetAccounts, WriteData}, create_open_api_router, db_write_multiple, S
@@ -23,9 +22,9 @@ const PATH_GET_PUBLIC_KEY: &str = "/chat_api/public_key/{aid}";
 #[utoipa::path(
     get,
     path = PATH_GET_PUBLIC_KEY,
-    params(AccountId, PublicKeyVersion),
+    params(AccountId, PublicKeyId),
     responses(
-        (status = 200, description = "Success.", body = GetPublicKey),
+        (status = 200, description = "Success.", body = inline(model::BinaryData), content_type = "application/octet-stream"),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -34,8 +33,8 @@ const PATH_GET_PUBLIC_KEY: &str = "/chat_api/public_key/{aid}";
 async fn get_public_key(
     State(state): State<S>,
     Path(requested_id): Path<AccountId>,
-    Query(key_version): Query<PublicKeyVersion>,
-) -> Result<Json<GetPublicKey>, StatusCode> {
+    Query(key_id): Query<PublicKeyId>,
+) -> Result<Vec<u8>, StatusCode> {
     CHAT.get_public_key.incr();
 
     let requested_internal_id = state.get_internal_id(requested_id).await?;
@@ -43,44 +42,54 @@ async fn get_public_key(
         .read()
         .chat()
         .public_key()
-        .get_public_key(requested_internal_id, key_version)
+        .get_public_key_data(requested_internal_id, key_id)
         .await?;
-    Ok(key.into())
+
+    if let Some(key_data) = key {
+        Ok(key_data)
+    } else {
+        Err(StatusCode::INTERNAL_SERVER_ERROR)
+    }
 }
 
-const PATH_POST_PUBLIC_KEY: &str = "/chat_api/public_key";
+const PATH_POST_ADD_PUBLIC_KEY: &str = "/chat_api/add_public_key";
 
-/// Replace current public key with a new public key.
-/// Returns public key ID number which server increments.
-/// This must be called only when needed as this route will
-/// fail every time if current public key ID number is i64::MAX.
+/// Add new public key.
 ///
-/// Only version 1 public keys are currently supported.
+/// Returns next public key ID number.
+///
+/// # Limits
+///
+/// Server can store limited amount of public keys. The limit is
+/// configurable from server config file and also user specific config exists.
+/// Max value between the two previous values is used to check is adding the
+/// key allowed.
+///
 #[utoipa::path(
     post,
-    path = PATH_POST_PUBLIC_KEY,
-    request_body(content = SetPublicKey),
+    path = PATH_POST_ADD_PUBLIC_KEY,
+    request_body(content = inline(model::BinaryData), content_type = "application/octet-stream"),
     responses(
-        (status = 200, description = "Success.", body = PublicKeyId),
+        (status = 200, description = "Success.", body = AddPublicKeyResult),
         (status = 401, description = "Unauthorized."),
-        (status = 406, description = "Unsupported public key version"),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
 )]
-async fn post_public_key(
+async fn post_add_public_key(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    Json(new_key): Json<SetPublicKey>,
-) -> Result<Json<PublicKeyId>, StatusCode> {
-    CHAT.post_public_key.incr();
+    key_data: Body,
+) -> Result<Json<AddPublicKeyResult>, StatusCode> {
+    CHAT.post_add_public_key.incr();
 
-    if new_key.version.version != 1 {
-        return Err(StatusCode::NOT_ACCEPTABLE);
-    }
+    let key_data = to_bytes(key_data, 1024 * 8)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .to_vec();
 
     let new_key = db_write_multiple!(state, move |cmds| {
-        cmds.chat().set_public_key(id, new_key).await
+        cmds.chat().add_public_key(id, key_data).await
     })?;
 
     Ok(new_key.into())
@@ -130,13 +139,13 @@ async fn get_private_public_key_info(
     Ok(info.into())
 }
 
-create_open_api_router!(fn router_public_key, get_public_key, post_public_key, get_private_public_key_info,);
+create_open_api_router!(fn router_public_key, get_public_key, post_add_public_key, get_private_public_key_info,);
 
 create_counters!(
     ChatCounters,
     CHAT,
     CHAT_PUBLIC_KEY_COUNTERS_LIST,
     get_public_key,
-    post_public_key,
+    post_add_public_key,
     get_private_public_key_info,
 );

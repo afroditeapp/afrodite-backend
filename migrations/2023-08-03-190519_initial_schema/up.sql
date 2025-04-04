@@ -746,11 +746,11 @@ CREATE TABLE IF NOT EXISTS chat_state(
 );
 
 CREATE TABLE IF NOT EXISTS public_key(
-    account_id                   INTEGER NOT NULL,
-    public_key_version           INTEGER NOT NULL,
-    public_key_id                INTEGER,
-    public_key_data              TEXT,
-    PRIMARY KEY (account_id, public_key_version),
+    account_id            INTEGER NOT NULL,
+    key_id                INTEGER NOT NULL,
+    key_data              BLOB    NOT NULL,
+    key_added_unix_time   INTEGER NOT NULL,
+    PRIMARY KEY (account_id, key_id),
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

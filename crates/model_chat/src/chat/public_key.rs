@@ -1,66 +1,39 @@
-use diesel::sql_types::Text;
-use model::{PublicKeyId, PublicKeyVersion};
+use model::PublicKeyId;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::diesel_string_wrapper;
 use utoipa::ToSchema;
 
-// TOOD(prod): Public key data lenght limit
-
-/// Data for asymmetric encryption public key. Client defines the
-/// format for the public key.
-#[derive(
-    Debug,
-    Deserialize,
-    Serialize,
-    ToSchema,
-    Clone,
-    Eq,
-    Hash,
-    PartialEq,
-    diesel::FromSqlRow,
-    diesel::AsExpression,
-)]
-#[diesel(sql_type = Text)]
-pub struct PublicKeyData {
-    data: String,
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct AddPublicKeyResult {
+    pub key_id: Option<PublicKeyId>,
+    pub error_too_many_public_keys: bool,
 }
 
-impl PublicKeyData {
-    pub fn new(data: String) -> Self {
-        Self { data }
+impl AddPublicKeyResult {
+    pub fn success(key_id: PublicKeyId) -> Self {
+        Self {
+            key_id: Some(key_id),
+            error_too_many_public_keys: false,
+        }
     }
 
-    pub fn into_string(self) -> String {
-        self.data
+    pub fn error_too_many_keys() -> Self {
+        Self {
+            key_id: None,
+            error_too_many_public_keys: true
+        }
     }
-
-    pub fn as_str(&self) -> &str {
-        &self.data
-    }
-}
-
-diesel_string_wrapper!(PublicKeyData);
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
-pub struct PublicKey {
-    pub id: PublicKeyId,
-    pub version: PublicKeyVersion,
-    pub data: PublicKeyData,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
-pub struct GetPublicKey {
-    pub key: Option<PublicKey>,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
-pub struct SetPublicKey {
-    pub version: PublicKeyVersion,
-    pub data: PublicKeyData,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct GetPrivatePublicKeyInfo {
+    pub latest_public_key_id: Option<PublicKeyId>,
     pub max_public_key_count_from_backend_config: i64,
     pub max_public_key_count_from_account_config: i64,
+}
+
+impl GetPrivatePublicKeyInfo {
+    pub fn public_key_count_limit(&self) -> i64 {
+        self.max_public_key_count_from_backend_config
+            .max(self.max_public_key_count_from_account_config)
+    }
 }

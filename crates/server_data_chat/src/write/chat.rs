@@ -10,11 +10,7 @@ use database_chat::current::{
 };
 use error_stack::ResultExt;
 use model_chat::{
-    AccountIdInternal, ChatStateRaw, ClientId, ClientLocalId, MatchesIteratorSessionIdInternal,
-    MessageNumber, NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal,
-    PendingNotificationFlags, PublicKeyId, PublicKeyVersion,
-    ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion, SendMessageResult,
-    SentMessageId, SetPublicKey, SyncVersionUtils,
+    AccountIdInternal, AddPublicKeyResult, ChatStateRaw, ClientId, ClientLocalId, MatchesIteratorSessionIdInternal, MessageNumber, NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId, ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion, SendMessageResult, SentMessageId, SyncVersionUtils
 };
 use server_data::{
     app::EventManagerProvider, cache::chat::limit::ChatLimits, define_cmd_wrapper_write,
@@ -24,7 +20,7 @@ use server_data::{
 use simple_backend_utils::ContextExt;
 
 use self::push_notifications::WriteCommandsChatPushNotifications;
-use crate::cache::CacheWriteChat;
+use crate::{cache::CacheWriteChat, read::GetReadChatCommands};
 
 define_cmd_wrapper_write!(WriteCommandsChat);
 
@@ -383,7 +379,6 @@ impl WriteCommandsChat<'_> {
         receiver: AccountIdInternal,
         message: Vec<u8>,
         receiver_public_key_from_client: PublicKeyId,
-        receiver_public_key_version_from_client: PublicKeyVersion,
         client_id_value: ClientId,
         client_local_id_value: ClientLocalId,
     ) -> Result<(SendMessageResult, Option<PushNotificationAllowed>), DataError> {
@@ -392,8 +387,8 @@ impl WriteCommandsChat<'_> {
                 .read()
                 .chat()
                 .public_key()
-                .public_key(receiver, receiver_public_key_version_from_client)?;
-            if Some(receiver_public_key_from_client) != current_key.map(|v| v.id) {
+                .latest_public_key_id(receiver)?;
+            if Some(receiver_public_key_from_client) != current_key {
                 return Ok((SendMessageResult::public_key_outdated(), None));
             }
 
@@ -457,14 +452,32 @@ impl WriteCommandsChat<'_> {
         })
     }
 
-    pub async fn set_public_key(
+    pub async fn add_public_key(
         &self,
         id: AccountIdInternal,
-        data: SetPublicKey,
-    ) -> Result<PublicKeyId, DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.chat().set_public_key(id, data)
-        })
+        new_key: Vec<u8>,
+    ) -> Result<AddPublicKeyResult, DataError> {
+        let info = self.handle().read().chat().public_key().get_private_public_key_info(id).await?;
+
+        let key_count = if let Some(id) = info.latest_public_key_id {
+            if *id.as_i64() >= 0 && *id.as_i64() < i64::MAX {
+                *id.as_i64() + 1
+            } else {
+                return Err(DataError::NotAllowed.report().into())
+            }
+        } else {
+            0
+        };
+
+        if key_count >= info.public_key_count_limit() {
+            return Ok(AddPublicKeyResult::error_too_many_keys());
+        }
+
+        let key = db_transaction!(self, move |mut cmds| {
+            cmds.chat().add_public_key(id, new_key)
+        })?;
+
+        Ok(AddPublicKeyResult::success(key))
     }
 
     /// Resets new received likes count if needed and updates received likes

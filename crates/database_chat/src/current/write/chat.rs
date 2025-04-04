@@ -4,7 +4,7 @@ use error_stack::Result;
 use model_chat::{
     AccountIdInternal, ChatStateRaw, MatchId, MatchesSyncVersion, NewReceivedLikesCount,
     PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikesSyncVersion, SentBlocksSyncVersion,
-    SentLikesSyncVersion, SetPublicKey, SyncVersionUtils, CHAT_GLOBAL_STATE_ROW_TYPE,
+    SentLikesSyncVersion, SyncVersionUtils, CHAT_GLOBAL_STATE_ROW_TYPE,
 };
 use simple_backend_utils::ContextExt;
 
@@ -90,20 +90,20 @@ impl CurrentWriteChat<'_> {
         Ok(changes)
     }
 
-    pub fn set_public_key(
+    pub fn add_public_key(
         &mut self,
         id: AccountIdInternal,
-        new_key: SetPublicKey,
+        new_key: Vec<u8>,
     ) -> Result<PublicKeyId, DieselDatabaseError> {
         use model::schema::public_key::dsl::*;
 
-        let current = self.read().chat().public_key().public_key(id, new_key.version)?;
+        let current = self.read().chat().public_key().latest_public_key_id(id)?;
         let new_id = if let Some(current) = current {
-            if current.id.id == i64::MAX {
+            if current.id == i64::MAX {
                 return Err(DieselDatabaseError::NoAvailableIds.report());
             } else {
                 PublicKeyId {
-                    id: current.id.id + 1,
+                    id: current.id + 1,
                 }
             }
         } else {
@@ -113,13 +113,9 @@ impl CurrentWriteChat<'_> {
         insert_into(public_key)
             .values((
                 account_id.eq(id.as_db_id()),
-                public_key_version.eq(new_key.version),
-                public_key_id.eq(new_id),
-                public_key_data.eq(new_key.data.clone()),
+                key_id.eq(new_id),
+                key_data.eq(&new_key),
             ))
-            .on_conflict((account_id, public_key_version))
-            .do_update()
-            .set((public_key_id.eq(new_id), public_key_data.eq(new_key.data)))
             .execute(self.conn())
             .into_db_error(id)?;
 

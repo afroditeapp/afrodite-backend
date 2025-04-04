@@ -241,7 +241,6 @@ pub async fn post_send_message(
                 message_reciever,
                 bytes.into(),
                 query_params.receiver_public_key_id,
-                query_params.receiver_public_key_version,
                 query_params.client_id,
                 query_params.client_local_id,
             )

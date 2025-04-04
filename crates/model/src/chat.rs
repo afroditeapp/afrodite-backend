@@ -39,45 +39,6 @@ impl PublicKeyId {
 
 diesel_i64_wrapper!(PublicKeyId);
 
-/// Version number for asymmetric encryption public key data which
-/// client defines. This allows changing client's end-to-end crypto
-/// implementation.
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    Deserialize,
-    Serialize,
-    ToSchema,
-    IntoParams,
-    PartialEq,
-    Default,
-    FromSqlRow,
-    AsExpression,
-)]
-#[diesel(sql_type = BigInt)]
-pub struct PublicKeyVersion {
-    pub version: i64,
-}
-
-impl PublicKeyVersion {
-    pub fn new(id: i64) -> Self {
-        Self { version: id }
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.version
-    }
-}
-
-diesel_i64_wrapper!(PublicKeyVersion);
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
-pub struct PublicKeyIdAndVersion {
-    pub id: PublicKeyId,
-    pub version: PublicKeyVersion,
-}
-
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct NewReceivedLikesCountResult {
     pub v: ReceivedLikesSyncVersion,
