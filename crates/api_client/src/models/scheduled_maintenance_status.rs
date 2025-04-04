@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ScheduledMaintenanceStatus {
     #[serde(rename = "scheduled_maintenance", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub scheduled_maintenance: Option<Option<Box<models::GetPerfDataEndTimeParameter>>>,
+    pub scheduled_maintenance: Option<Option<Box<models::UnixTime>>>,
 }
 
 impl ScheduledMaintenanceStatus {

@@ -23,9 +23,6 @@ pub struct LoginResult {
     pub email: Option<String>,
     #[serde(rename = "error_unsupported_client", skip_serializing_if = "Option::is_none")]
     pub error_unsupported_client: Option<bool>,
-    /// Info about latest public keys. Client can use this value to ask if user wants to copy existing private and public key from other device. If empty, public key is not set or the client is unsupported.
-    #[serde(rename = "latest_public_keys", skip_serializing_if = "Option::is_none")]
-    pub latest_public_keys: Option<Vec<models::PublicKeyIdAndVersion>>,
     /// If `None`, media microservice is disabled or the client version is unsupported.
     #[serde(rename = "media", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub media: Option<Option<Box<models::AuthPair>>>,
@@ -41,7 +38,6 @@ impl LoginResult {
             aid: None,
             email: None,
             error_unsupported_client: None,
-            latest_public_keys: None,
             media: None,
             profile: None,
         }

@@ -43,6 +43,7 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_demo_mode_login_to_account**](docs/AccountApi.md#post_demo_mode_login_to_account) | **POST** /account_api/demo_mode_login_to_account | 
 *AccountApi* | [**post_demo_mode_logout**](docs/AccountApi.md#post_demo_mode_logout) | **POST** /account_api/demo_mode_logout | 
 *AccountApi* | [**post_demo_mode_register_account**](docs/AccountApi.md#post_demo_mode_register_account) | **POST** /account_api/demo_mode_register_account | 
+*AccountApi* | [**post_get_client_features_config**](docs/AccountApi.md#post_get_client_features_config) | **POST** /account_api/client_features_config | 
 *AccountApi* | [**post_get_custom_reports_config**](docs/AccountApi.md#post_get_custom_reports_config) | **POST** /account_api/custom_reports_config | 
 *AccountApi* | [**post_get_next_client_id**](docs/AccountApi.md#post_get_next_client_id) | **POST** /account_api/next_client_id | 
 *AccountApi* | [**post_get_next_news_page**](docs/AccountApi.md#post_get_next_news_page) | **POST** /account_api/next_news_page | 
@@ -61,6 +62,7 @@ Class | Method | HTTP request | Description
 *AccountAdminApi* | [**get_permissions**](docs/AccountAdminApi.md#get_permissions) | **GET** /account_api/get_permissions/{aid} | Get [model::Permissions] for specific account.
 *AccountAdminApi* | [**post_create_news_item**](docs/AccountAdminApi.md#post_create_news_item) | **POST** /account_api/admin/create_news_item | 
 *AccountAdminApi* | [**post_delete_account**](docs/AccountAdminApi.md#post_delete_account) | **POST** /account_api/delete_account/{aid} | Delete account instantly
+*AccountAdminApi* | [**post_get_client_version_statistics**](docs/AccountAdminApi.md#post_get_client_version_statistics) | **POST** /account_api/client_version_statistics | Get client version statistics.
 *AccountAdminApi* | [**post_set_ban_state**](docs/AccountAdminApi.md#post_set_ban_state) | **POST** /account_api/set_ban_state | Ban or unban account
 *AccountAdminApi* | [**post_set_news_publicity**](docs/AccountAdminApi.md#post_set_news_publicity) | **DELETE** /account_api/admin/set_news_publicity/{nid} | 
 *AccountAdminApi* | [**post_set_permissions**](docs/AccountAdminApi.md#post_set_permissions) | **POST** /account_api/set_permissions/{aid} | Set permissions for account
@@ -72,11 +74,13 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**get_matches**](docs/ChatApi.md#get_matches) | **GET** /chat_api/matches | Get matches
 *ChatApi* | [**get_message_number_of_latest_viewed_message**](docs/ChatApi.md#get_message_number_of_latest_viewed_message) | **GET** /chat_api/message_number_of_latest_viewed_message | Get message number of the most recent message that the recipient has viewed.
 *ChatApi* | [**get_pending_messages**](docs/ChatApi.md#get_pending_messages) | **GET** /chat_api/pending_messages | Get list of pending messages.
+*ChatApi* | [**get_private_public_key_info**](docs/ChatApi.md#get_private_public_key_info) | **GET** /chat_api/private_public_key_info/{aid} | Get private public key info
 *ChatApi* | [**get_public_key**](docs/ChatApi.md#get_public_key) | **GET** /chat_api/public_key/{aid} | Get current public key of some account
 *ChatApi* | [**get_received_blocks**](docs/ChatApi.md#get_received_blocks) | **GET** /chat_api/received_blocks | Get list of received blocks
 *ChatApi* | [**get_sent_blocks**](docs/ChatApi.md#get_sent_blocks) | **GET** /chat_api/sent_blocks | Get list of sent blocks
 *ChatApi* | [**get_sent_likes**](docs/ChatApi.md#get_sent_likes) | **GET** /chat_api/sent_likes | Get sent likes.
 *ChatApi* | [**get_sent_message_ids**](docs/ChatApi.md#get_sent_message_ids) | **GET** /chat_api/sent_message_ids | 
+*ChatApi* | [**post_add_public_key**](docs/ChatApi.md#post_add_public_key) | **POST** /chat_api/add_public_key | Add new public key.
 *ChatApi* | [**post_add_receiver_acknowledgement**](docs/ChatApi.md#post_add_receiver_acknowledgement) | **POST** /chat_api/add_receiver_acknowledgement | 
 *ChatApi* | [**post_add_sender_acknowledgement**](docs/ChatApi.md#post_add_sender_acknowledgement) | **POST** /chat_api/add_sender_acknowledgement | 
 *ChatApi* | [**post_block_profile**](docs/ChatApi.md#post_block_profile) | **POST** /chat_api/block_profile | Block profile
@@ -86,13 +90,13 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**post_get_next_received_likes_page**](docs/ChatApi.md#post_get_next_received_likes_page) | **POST** /chat_api/received_likes | Update received likes iterator and get next page of received likes. If the page is empty there is no more received likes available.
 *ChatApi* | [**post_get_pending_notification**](docs/ChatApi.md#post_get_pending_notification) | **POST** /chat_api/get_pending_notification | Get pending notification and reset pending notification.
 *ChatApi* | [**post_message_number_of_latest_viewed_message**](docs/ChatApi.md#post_message_number_of_latest_viewed_message) | **POST** /chat_api/message_number_of_latest_viewed_message | Update message number of the most recent message that the recipient has viewed.
-*ChatApi* | [**post_public_key**](docs/ChatApi.md#post_public_key) | **POST** /chat_api/public_key | Replace current public key with a new public key. Returns public key ID number which server increments. This must be called only when needed as this route will fail every time if current public key ID number is i64::MAX.
 *ChatApi* | [**post_reset_matches_paging**](docs/ChatApi.md#post_reset_matches_paging) | **POST** /chat_api/matches/reset | 
 *ChatApi* | [**post_reset_received_likes_paging**](docs/ChatApi.md#post_reset_received_likes_paging) | **POST** /chat_api/received_likes/reset | 
 *ChatApi* | [**post_send_like**](docs/ChatApi.md#post_send_like) | **POST** /chat_api/send_like | Send a like to some account. If both will like each other, then the accounts will be a match.
 *ChatApi* | [**post_send_message**](docs/ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match.
 *ChatApi* | [**post_set_device_token**](docs/ChatApi.md#post_set_device_token) | **POST** /chat_api/set_device_token | 
 *ChatApi* | [**post_unblock_profile**](docs/ChatApi.md#post_unblock_profile) | **POST** /chat_api/unblock_profile | Unblock profile
+*ChatAdminApi* | [**post_set_max_public_key_count**](docs/ChatAdminApi.md#post_set_max_public_key_count) | **POST** /chat_api/set_max_public_key_count | Set max public key count
 *CommonApi* | [**get_client_config**](docs/CommonApi.md#get_client_config) | **GET** /common_api/client_config | 
 *CommonApi* | [**get_connect_websocket**](docs/CommonApi.md#get_connect_websocket) | **GET** /common_api/connect | Connect to server using WebSocket after getting refresh and access tokens. Connection is required as API access is allowed for connected clients.
 *CommonApi* | [**get_version**](docs/CommonApi.md#get_version) | **GET** /common_api/version | Get backend version.
@@ -100,13 +104,15 @@ Class | Method | HTTP request | Description
 *CommonAdminApi* | [**get_latest_report_iterator_start_position**](docs/CommonAdminApi.md#get_latest_report_iterator_start_position) | **GET** /common_api/admin/latest_report_iterator_start_position | 
 *CommonAdminApi* | [**get_maintenance_notification**](docs/CommonAdminApi.md#get_maintenance_notification) | **GET** /common_api/maintenance_notification | Get maintenance notification.
 *CommonAdminApi* | [**get_manager_instance_names**](docs/CommonAdminApi.md#get_manager_instance_names) | **GET** /common_api/manager_instance_names | Get available manager instances.
-*CommonAdminApi* | [**get_perf_data**](docs/CommonAdminApi.md#get_perf_data) | **GET** /common_api/perf_data | Get performance data
 *CommonAdminApi* | [**get_scheduled_tasks_status**](docs/CommonAdminApi.md#get_scheduled_tasks_status) | **GET** /common_api/scheduled_tasks_status | Get scheduled tasks status from manager instance.
 *CommonAdminApi* | [**get_software_update_status**](docs/CommonAdminApi.md#get_software_update_status) | **GET** /common_api/software_info | Get software version information from manager instance.
 *CommonAdminApi* | [**get_system_info**](docs/CommonAdminApi.md#get_system_info) | **GET** /common_api/system_info | Get system information from manager instance.
 *CommonAdminApi* | [**get_waiting_report_page**](docs/CommonAdminApi.md#get_waiting_report_page) | **GET** /common_api/admin/waiting_report_page | 
 *CommonAdminApi* | [**post_backend_config**](docs/CommonAdminApi.md#post_backend_config) | **POST** /common_api/backend_config | Save dynamic backend config.
 *CommonAdminApi* | [**post_edit_maintenance_notification**](docs/CommonAdminApi.md#post_edit_maintenance_notification) | **POST** /common_api/edit_maintenance_notification | Edit maintenance notification
+*CommonAdminApi* | [**post_get_api_usage_data**](docs/CommonAdminApi.md#post_get_api_usage_data) | **POST** /common_api/api_usage_data | Get API usage data for account
+*CommonAdminApi* | [**post_get_ip_address_usage_data**](docs/CommonAdminApi.md#post_get_ip_address_usage_data) | **POST** /common_api/ip_address_usage_data | Get IP address usage data for account
+*CommonAdminApi* | [**post_get_perf_data**](docs/CommonAdminApi.md#post_get_perf_data) | **POST** /common_api/perf_data | Get performance data
 *CommonAdminApi* | [**post_get_report_iterator_page**](docs/CommonAdminApi.md#post_get_report_iterator_page) | **POST** /common_api/admin/report_iterator_page | Get report iterator page.
 *CommonAdminApi* | [**post_process_report**](docs/CommonAdminApi.md#post_process_report) | **POST** /common_api/admin/process_report | 
 *CommonAdminApi* | [**post_schedule_task**](docs/CommonAdminApi.md#post_schedule_task) | **POST** /common_api/schedule_task | Schedule task.
@@ -164,6 +170,7 @@ Class | Method | HTTP request | Description
 *ProfileAdminApi* | [**get_profile_text_state**](docs/ProfileAdminApi.md#get_profile_text_state) | **GET** /profile_api/get_profile_text_state/{aid} | Get profile text state
 *ProfileAdminApi* | [**post_moderate_profile_name**](docs/ProfileAdminApi.md#post_moderate_profile_name) | **POST** /profile_api/admin/moderate_profile_name | 
 *ProfileAdminApi* | [**post_moderate_profile_text**](docs/ProfileAdminApi.md#post_moderate_profile_text) | **POST** /profile_api/admin/moderate_profile_text | Rejected category and details can be set only when the text is rejected.
+*ProfileAdminApi* | [**post_set_profile_name**](docs/ProfileAdminApi.md#post_set_profile_name) | **POST** /profile_api/set_profile_name | Set profile name
 
 
 ## Documentation For Models
@@ -181,8 +188,11 @@ Class | Method | HTTP request | Description
  - [AccountSetup](docs/AccountSetup.md)
  - [AccountStateContainer](docs/AccountStateContainer.md)
  - [AccountSyncVersion](docs/AccountSyncVersion.md)
+ - [AddPublicKeyResult](docs/AddPublicKeyResult.md)
  - [AdminInfo](docs/AdminInfo.md)
  - [AllMatchesPage](docs/AllMatchesPage.md)
+ - [ApiUsageCount](docs/ApiUsageCount.md)
+ - [ApiUsageStatistics](docs/ApiUsageStatistics.md)
  - [Attribute](docs/Attribute.md)
  - [AttributeIdAndHash](docs/AttributeIdAndHash.md)
  - [AttributeMode](docs/AttributeMode.md)
@@ -196,11 +206,15 @@ Class | Method | HTTP request | Description
  - [BotConfig](docs/BotConfig.md)
  - [ClientConfig](docs/ClientConfig.md)
  - [ClientConfigSyncVersion](docs/ClientConfigSyncVersion.md)
+ - [ClientFeaturesConfig](docs/ClientFeaturesConfig.md)
+ - [ClientFeaturesFileHash](docs/ClientFeaturesFileHash.md)
  - [ClientId](docs/ClientId.md)
  - [ClientInfo](docs/ClientInfo.md)
  - [ClientLocalId](docs/ClientLocalId.md)
  - [ClientType](docs/ClientType.md)
  - [ClientVersion](docs/ClientVersion.md)
+ - [ClientVersionCount](docs/ClientVersionCount.md)
+ - [ClientVersionStatistics](docs/ClientVersionStatistics.md)
  - [CommandOutput](docs/CommandOutput.md)
  - [ContentId](docs/ContentId.md)
  - [ContentInfo](docs/ContentInfo.md)
@@ -233,16 +247,24 @@ Class | Method | HTTP request | Description
  - [EventType](docs/EventType.md)
  - [FavoriteProfilesPage](docs/FavoriteProfilesPage.md)
  - [FcmDeviceToken](docs/FcmDeviceToken.md)
+ - [FeaturesConfig](docs/FeaturesConfig.md)
  - [GetAccountBanTimeResult](docs/GetAccountBanTimeResult.md)
  - [GetAccountDeletionRequestResult](docs/GetAccountDeletionRequestResult.md)
  - [GetAccountIdFromEmailResult](docs/GetAccountIdFromEmailResult.md)
  - [GetAllAdminsResult](docs/GetAllAdminsResult.md)
+ - [GetApiUsageStatisticsResult](docs/GetApiUsageStatisticsResult.md)
+ - [GetApiUsageStatisticsSettings](docs/GetApiUsageStatisticsSettings.md)
+ - [GetClientFeaturesConfigResult](docs/GetClientFeaturesConfigResult.md)
+ - [GetClientVersionStatisticsResult](docs/GetClientVersionStatisticsResult.md)
+ - [GetClientVersionStatisticsSettings](docs/GetClientVersionStatisticsSettings.md)
  - [GetCustomReportsConfigResult](docs/GetCustomReportsConfigResult.md)
  - [GetInitialProfileAgeInfoResult](docs/GetInitialProfileAgeInfoResult.md)
+ - [GetIpAddressStatisticsResult](docs/GetIpAddressStatisticsResult.md)
+ - [GetIpAddressStatisticsSettings](docs/GetIpAddressStatisticsSettings.md)
  - [GetMediaContentResult](docs/GetMediaContentResult.md)
  - [GetMyProfileResult](docs/GetMyProfileResult.md)
  - [GetNewsItemResult](docs/GetNewsItemResult.md)
- - [GetPerfDataEndTimeParameter](docs/GetPerfDataEndTimeParameter.md)
+ - [GetPrivatePublicKeyInfo](docs/GetPrivatePublicKeyInfo.md)
  - [GetProfileAgeAndName](docs/GetProfileAgeAndName.md)
  - [GetProfileContentPendingModerationList](docs/GetProfileContentPendingModerationList.md)
  - [GetProfileContentResult](docs/GetProfileContentResult.md)
@@ -254,10 +276,10 @@ Class | Method | HTTP request | Description
  - [GetProfileStatisticsResult](docs/GetProfileStatisticsResult.md)
  - [GetProfileTextPendingModerationList](docs/GetProfileTextPendingModerationList.md)
  - [GetProfileTextState](docs/GetProfileTextState.md)
- - [GetPublicKey](docs/GetPublicKey.md)
  - [GetReportList](docs/GetReportList.md)
  - [GroupValues](docs/GroupValues.md)
  - [InitialContentModerationCompletedResult](docs/InitialContentModerationCompletedResult.md)
+ - [IpAddressInfo](docs/IpAddressInfo.md)
  - [Language](docs/Language.md)
  - [LastSeenTimeFilter](docs/LastSeenTimeFilter.md)
  - [LatestBirthdate](docs/LatestBirthdate.md)
@@ -267,6 +289,10 @@ Class | Method | HTTP request | Description
  - [LoginResult](docs/LoginResult.md)
  - [MaintenanceTask](docs/MaintenanceTask.md)
  - [ManagerInstanceNameList](docs/ManagerInstanceNameList.md)
+ - [MapBounds](docs/MapBounds.md)
+ - [MapConfig](docs/MapConfig.md)
+ - [MapCoordinate](docs/MapCoordinate.md)
+ - [MapZoom](docs/MapZoom.md)
  - [MatchesIteratorSessionId](docs/MatchesIteratorSessionId.md)
  - [MatchesPage](docs/MatchesPage.md)
  - [MatchesSyncVersion](docs/MatchesSyncVersion.md)
@@ -292,6 +318,7 @@ Class | Method | HTTP request | Description
  - [PendingMessageId](docs/PendingMessageId.md)
  - [PendingNotificationToken](docs/PendingNotificationToken.md)
  - [PendingNotificationWithData](docs/PendingNotificationWithData.md)
+ - [PerfMetricQuery](docs/PerfMetricQuery.md)
  - [PerfMetricQueryResult](docs/PerfMetricQueryResult.md)
  - [PerfMetricValueArea](docs/PerfMetricValueArea.md)
  - [PerfMetricValues](docs/PerfMetricValues.md)
@@ -338,11 +365,7 @@ Class | Method | HTTP request | Description
  - [ProfileUpdate](docs/ProfileUpdate.md)
  - [ProfileVersion](docs/ProfileVersion.md)
  - [ProfileVisibility](docs/ProfileVisibility.md)
- - [PublicKey](docs/PublicKey.md)
- - [PublicKeyData](docs/PublicKeyData.md)
  - [PublicKeyId](docs/PublicKeyId.md)
- - [PublicKeyIdAndVersion](docs/PublicKeyIdAndVersion.md)
- - [PublicKeyVersion](docs/PublicKeyVersion.md)
  - [ReceivedBlocksPage](docs/ReceivedBlocksPage.md)
  - [ReceivedBlocksSyncVersion](docs/ReceivedBlocksSyncVersion.md)
  - [ReceivedLikesIteratorSessionId](docs/ReceivedLikesIteratorSessionId.md)
@@ -379,8 +402,9 @@ Class | Method | HTTP request | Description
  - [SentMessageIdList](docs/SentMessageIdList.md)
  - [SetAccountBanState](docs/SetAccountBanState.md)
  - [SetAccountSetup](docs/SetAccountSetup.md)
+ - [SetMaxPublicKeyCount](docs/SetMaxPublicKeyCount.md)
  - [SetProfileContent](docs/SetProfileContent.md)
- - [SetPublicKey](docs/SetPublicKey.md)
+ - [SetProfileName](docs/SetProfileName.md)
  - [SignInWithLoginInfo](docs/SignInWithLoginInfo.md)
  - [SoftwareInfo](docs/SoftwareInfo.md)
  - [SoftwareUpdateState](docs/SoftwareUpdateState.md)

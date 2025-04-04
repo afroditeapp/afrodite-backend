@@ -70,6 +70,9 @@ pub enum TestError {
 
     #[error("Content moderation failed")]
     ContentModerationFailed,
+
+    #[error("OpenPGP related error")]
+    OpenPgp,
 }
 
 impl TestError {

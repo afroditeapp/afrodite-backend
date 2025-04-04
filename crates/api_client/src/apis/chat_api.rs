@@ -51,6 +51,15 @@ pub enum GetPendingMessagesError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_private_public_key_info`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetPrivatePublicKeyInfoError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_public_key`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -91,6 +100,15 @@ pub enum GetSentLikesError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetSentMessageIdsError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_add_public_key`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostAddPublicKeyError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -171,16 +189,6 @@ pub enum PostGetPendingNotificationError {
 #[serde(untagged)]
 pub enum PostMessageNumberOfLatestViewedMessageError {
     Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`post_public_key`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum PostPublicKeyError {
-    Status401(),
-    Status406(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -384,7 +392,43 @@ pub async fn get_pending_messages(configuration: &configuration::Configuration, 
     }
 }
 
-pub async fn get_public_key(configuration: &configuration::Configuration, aid: &str, version: i64) -> Result<models::GetPublicKey, Error<GetPublicKeyError>> {
+/// # Access * Owner of the requested account * Permission [model::Permissions::admin_edit_max_public_key_count]
+pub async fn get_private_public_key_info(configuration: &configuration::Configuration, aid: &str) -> Result<models::GetPrivatePublicKeyInfo, Error<GetPrivatePublicKeyInfoError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/chat_api/private_public_key_info/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<GetPrivatePublicKeyInfoError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+pub async fn get_public_key(configuration: &configuration::Configuration, aid: &str, id: i64) -> Result<std::path::PathBuf, Error<GetPublicKeyError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -392,7 +436,7 @@ pub async fn get_public_key(configuration: &configuration::Configuration, aid: &
     let local_var_uri_str = format!("{}/chat_api/public_key/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
-    local_var_req_builder = local_var_req_builder.query(&[("version", &version.to_string())]);
+    local_var_req_builder = local_var_req_builder.query(&[("id", &id.to_string())]);
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
@@ -556,6 +600,43 @@ pub async fn get_sent_message_ids(configuration: &configuration::Configuration, 
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
         let local_var_entity: Option<GetSentMessageIdsError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+/// Returns next public key ID number.  # Limits  Server can store limited amount of public keys. The limit is configurable from server config file and also user specific config exists. Max value between the two previous values is used to check is adding the key allowed.  Max key size is 8192 bytes.  The key must be OpenPGP public key with one signed user which ID is [model::AccountId] string.  
+pub async fn post_add_public_key(configuration: &configuration::Configuration, body: std::path::PathBuf) -> Result<models::AddPublicKeyResult, Error<PostAddPublicKeyError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/chat_api/add_public_key", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+    local_var_req_builder = local_var_req_builder.json(&body);
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<PostAddPublicKeyError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
@@ -879,43 +960,6 @@ pub async fn post_message_number_of_latest_viewed_message(configuration: &config
     }
 }
 
-/// Only version 1 public keys are currently supported.
-pub async fn post_public_key(configuration: &configuration::Configuration, set_public_key: models::SetPublicKey) -> Result<models::PublicKeyId, Error<PostPublicKeyError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/chat_api/public_key", local_var_configuration.base_path);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
-    };
-    local_var_req_builder = local_var_req_builder.json(&set_public_key);
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
-    } else {
-        let local_var_entity: Option<PostPublicKeyError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
 pub async fn post_reset_matches_paging(configuration: &configuration::Configuration, ) -> Result<models::ResetMatchesIteratorResult, Error<PostResetMatchesPagingError>> {
     let local_var_configuration = configuration;
 
@@ -1023,7 +1067,7 @@ pub async fn post_send_like(configuration: &configuration::Configuration, accoun
 }
 
 /// Max pending message count is 50. Max message size is u16::MAX.  The sender message ID must be value which server expects.  Sending will fail if one or two way block exists.
-pub async fn post_send_message(configuration: &configuration::Configuration, receiver: &str, receiver_public_key_id: i64, receiver_public_key_version: i64, client_id: i64, client_local_id: i64, body: std::path::PathBuf) -> Result<models::SendMessageResult, Error<PostSendMessageError>> {
+pub async fn post_send_message(configuration: &configuration::Configuration, receiver: &str, receiver_public_key_id: i64, client_id: i64, client_local_id: i64, body: std::path::PathBuf) -> Result<models::SendMessageResult, Error<PostSendMessageError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -1033,7 +1077,6 @@ pub async fn post_send_message(configuration: &configuration::Configuration, rec
 
     local_var_req_builder = local_var_req_builder.query(&[("receiver", &receiver.to_string())]);
     local_var_req_builder = local_var_req_builder.query(&[("receiver_public_key_id", &receiver_public_key_id.to_string())]);
-    local_var_req_builder = local_var_req_builder.query(&[("receiver_public_key_version", &receiver_public_key_version.to_string())]);
     local_var_req_builder = local_var_req_builder.query(&[("client_id", &client_id.to_string())]);
     local_var_req_builder = local_var_req_builder.query(&[("client_local_id", &client_local_id.to_string())]);
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {

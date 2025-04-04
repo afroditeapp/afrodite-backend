@@ -40,13 +40,13 @@ pub enum MessageEncryptionError {
 pub fn encrypt_data(
     // The sender private key can be used for signing the message
     data_sender_armored_private_key: &str,
-    data_receiver_armored_public_key: &str,
+    data_receive_public_key: Vec<u8>,
     data: &[u8],
 ) -> Result<Vec<u8>, MessageEncryptionError> {
     let (my_private_key, _) = SignedSecretKey::from_string(data_sender_armored_private_key)
         .map_err(|_| MessageEncryptionError::EncryptDataPrivateKeyParse)?;
-    let (other_person_public_key, _) =
-        SignedPublicKey::from_string(data_receiver_armored_public_key)
+    let other_person_public_key =
+        SignedPublicKey::from_bytes(data_receive_public_key.as_slice())
             .map_err(|_| MessageEncryptionError::EncryptDataPublicKeyParse)?;
 
     let empty_file_name: &BStr = b"".into();

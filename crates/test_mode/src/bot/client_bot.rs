@@ -5,21 +5,20 @@ use std::{fmt::Debug, iter::Peekable, time::Instant};
 use api_client::{
     apis::{
         account_api::get_account_state, chat_api::{
-            get_public_key, post_add_receiver_acknowledgement, post_add_sender_acknowledgement,
-            post_get_next_received_likes_page, post_public_key, post_reset_received_likes_paging,
-            post_send_like,
+            post_add_receiver_acknowledgement, post_add_sender_acknowledgement, post_get_next_received_likes_page, post_reset_received_likes_paging, post_send_like
         }, common_api::get_client_config, profile_api::{
             post_get_query_available_profile_attributes, post_profile, post_search_age_range, post_search_groups
         }
     },
-    manual_additions::{get_pending_messages_fixed, post_send_message_fixed},
+    manual_additions::{get_pending_messages_fixed, get_public_key_fixed, post_add_public_key_fixed, post_send_message_fixed},
     models::{
-        AccountId, AttributeMode, ClientId, ClientLocalId, PendingMessage, PendingMessageAcknowledgementList, ProfileAttributeQuery, ProfileAttributeValueUpdate, ProfileSearchAgeRange, ProfileUpdate, PublicKeyData, PublicKeyVersion, SearchGroups, SentMessageId, SentMessageIdList, SetPublicKey
+        AccountId, AttributeMode, ClientId, ClientLocalId, PendingMessage, PendingMessageAcknowledgementList, ProfileAttributeQuery, ProfileAttributeValueUpdate, ProfileSearchAgeRange, ProfileUpdate, SearchGroups, SentMessageId, SentMessageIdList
     },
 };
 use async_trait::async_trait;
 use config::bot_config_file::Gender;
 use error_stack::{Result, ResultExt};
+use pgp::{ser::Serialize, Deserializable, SignedPublicKey};
 use tracing::warn;
 
 use super::{
@@ -256,12 +255,14 @@ pub struct SetBotPublicKey;
 #[async_trait]
 impl BotAction for SetBotPublicKey {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        post_public_key(
+        let (public_key, _) = SignedPublicKey::from_string(BOT_PUBLIC_KEY)
+            .change_context(TestError::OpenPgp)?;
+        let public_key_bytes = public_key.to_bytes()
+            .change_context(TestError::OpenPgp)?;
+
+        post_add_public_key_fixed(
             state.api.chat(),
-            SetPublicKey {
-                version: PublicKeyVersion::new(1).into(),
-                data: PublicKeyData::new(BOT_PUBLIC_KEY.to_string()).into(),
-            },
+            public_key_bytes,
         )
         .await
         .change_context(TestError::ApiRequest)?;
@@ -514,51 +515,49 @@ async fn send_message(
     receiver: AccountId,
     msg: String,
 ) -> Result<(), TestError> {
-    let public_key = get_public_key(state.api.chat(), &receiver.aid.to_string(), 1)
+    let latest_key_id: i64 = 0; // TODO
+
+    let public_key = get_public_key_fixed(state.api.chat(), &receiver.aid.to_string(), latest_key_id)
         .await
         .change_context(TestError::ApiRequest)?;
 
-    if let Some(receiver_public_key) = public_key.key.flatten() {
-        let mut message_bytes = vec![0]; // Text message
-        let len_u16 = msg.len() as u16;
-        message_bytes.extend_from_slice(&len_u16.to_le_bytes());
-        message_bytes.extend_from_slice(msg.as_bytes());
-        let encrypted_bytes = encrypt_data(
-            BOT_PRIVATE_KEY,
-            &receiver_public_key.data.data,
-            &message_bytes,
-        )
-        .map_err(|e| TestError::MessageEncryptionError(e).report())?;
+    let mut message_bytes = vec![0]; // Text message
+    let len_u16 = msg.len() as u16;
+    message_bytes.extend_from_slice(&len_u16.to_le_bytes());
+    message_bytes.extend_from_slice(msg.as_bytes());
+    let encrypted_bytes = encrypt_data(
+        BOT_PRIVATE_KEY,
+        public_key,
+        &message_bytes,
+    )
+    .map_err(|e| TestError::MessageEncryptionError(e).report())?;
 
-        let mut type_number_and_message = vec![0]; // Message type PGP
-        type_number_and_message.extend_from_slice(&encrypted_bytes);
+    let mut type_number_and_message = vec![0]; // Message type PGP
+    type_number_and_message.extend_from_slice(&encrypted_bytes);
 
-        post_send_message_fixed(
-            state.api.chat(),
-            &receiver.aid.to_string(),
-            receiver_public_key.id.id,
-            receiver_public_key.version.version,
-            0,
-            0,
-            type_number_and_message,
-        )
-        .await
-        .change_context(TestError::ApiRequest)?;
+    post_send_message_fixed(
+        state.api.chat(),
+        &receiver.aid.to_string(),
+        latest_key_id,
+        0,
+        0,
+        type_number_and_message,
+    )
+    .await
+    .change_context(TestError::ApiRequest)?;
 
-        post_add_sender_acknowledgement(
-            state.api.chat(),
-            SentMessageIdList {
-                ids: vec![SentMessageId {
-                    c: ClientId::new(0).into(),
-                    l: ClientLocalId::new(0).into(),
-                }],
-            },
-        )
-        .await
-        .change_context(TestError::ApiRequest)?;
-    } else {
-        warn!("Receiver public key is missing");
-    }
+    post_add_sender_acknowledgement(
+        state.api.chat(),
+        SentMessageIdList {
+            ids: vec![SentMessageId {
+                c: ClientId::new(0).into(),
+                l: ClientLocalId::new(0).into(),
+            }],
+        },
+    )
+    .await
+    .change_context(TestError::ApiRequest)?;
+
 
     Ok(())
 }

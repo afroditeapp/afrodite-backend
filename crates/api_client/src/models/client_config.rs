@@ -13,6 +13,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ClientConfig {
+    /// Account component specific config. It is also possible that client features are not configured.
+    #[serde(rename = "client_features", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub client_features: Option<Option<Box<models::ClientFeaturesFileHash>>>,
     /// Account component specific config. It is also possible that custom reports are not configured.
     #[serde(rename = "custom_reports", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub custom_reports: Option<Option<Box<models::CustomReportsFileHash>>>,
@@ -26,6 +29,7 @@ pub struct ClientConfig {
 impl ClientConfig {
     pub fn new(sync_version: models::ClientConfigSyncVersion) -> ClientConfig {
         ClientConfig {
+            client_features: None,
             custom_reports: None,
             profile_attributes: None,
             sync_version: Box::new(sync_version),
