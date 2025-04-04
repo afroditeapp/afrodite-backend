@@ -1,6 +1,6 @@
 use database_chat::current::read::GetDbReadCommandsChat;
 use model::{AccountIdInternal, PublicKeyId};
-use model_chat::GetPrivatePublicKeyInfo;
+use model_chat::{GetLatestPublicKeyId, GetPrivatePublicKeyInfo};
 use server_data::{db_manager::InternalReading, define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError};
 
 define_cmd_wrapper_read!(ReadCommandsChatPublicKey);
@@ -14,6 +14,21 @@ impl ReadCommandsChatPublicKey<'_> {
         self.db_read(move |mut cmds| cmds.chat().public_key().public_key_data(id, key_id))
             .await
             .into_error()
+    }
+
+    pub async fn get_latest_public_key_id(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<GetLatestPublicKeyId, DataError> {
+        let latest_public_key_id = self
+            .db_read(move |mut cmds| {
+                cmds.chat().public_key().latest_public_key_id(id)
+        })
+            .await?;
+
+        Ok(GetLatestPublicKeyId {
+            id: latest_public_key_id,
+        })
     }
 
     pub async fn get_private_public_key_info(

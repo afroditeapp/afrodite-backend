@@ -25,6 +25,11 @@ impl AddPublicKeyResult {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct GetLatestPublicKeyId {
+    pub id: Option<PublicKeyId>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct GetPrivatePublicKeyInfo {
     pub latest_public_key_id: Option<PublicKeyId>,
     pub max_public_key_count_from_backend_config: i64,

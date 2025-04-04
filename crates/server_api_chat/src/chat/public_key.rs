@@ -5,7 +5,7 @@ use axum::{
 };
 use model::Permissions;
 use model_chat::{
-    AccountId, AccountIdInternal, AddPublicKeyResult, GetPrivatePublicKeyInfo, PublicKeyId
+    AccountId, AccountIdInternal, AddPublicKeyResult, GetLatestPublicKeyId, GetPrivatePublicKeyInfo, PublicKeyId
 };
 use pgp::{Deserializable, SignedPublicKey};
 use server_api::{
@@ -51,6 +51,37 @@ async fn get_public_key(
     } else {
         Err(StatusCode::INTERNAL_SERVER_ERROR)
     }
+}
+
+const PATH_GET_LATEST_PUBLIC_KEY_ID: &str = "/chat_api/latest_public_key_id/{aid}";
+
+/// Get latest public key ID for some account
+#[utoipa::path(
+    get,
+    path = PATH_GET_LATEST_PUBLIC_KEY_ID,
+    params(AccountId),
+    responses(
+        (status = 200, description = "Success.", body = GetLatestPublicKeyId),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+async fn get_latest_public_key_id(
+    State(state): State<S>,
+    Path(requested_id): Path<AccountId>,
+) -> Result<Json<GetLatestPublicKeyId>, StatusCode> {
+    CHAT.get_latest_public_key_id.incr();
+
+    let requested_internal_id = state.get_internal_id(requested_id).await?;
+    let info = state
+        .read()
+        .chat()
+        .public_key()
+        .get_latest_public_key_id(requested_internal_id)
+        .await?;
+
+    Ok(info.into())
 }
 
 const PATH_POST_ADD_PUBLIC_KEY: &str = "/chat_api/add_public_key";
@@ -154,13 +185,14 @@ async fn get_private_public_key_info(
     Ok(info.into())
 }
 
-create_open_api_router!(fn router_public_key, get_public_key, post_add_public_key, get_private_public_key_info,);
+create_open_api_router!(fn router_public_key, get_public_key, get_latest_public_key_id, post_add_public_key, get_private_public_key_info,);
 
 create_counters!(
     ChatCounters,
     CHAT,
     CHAT_PUBLIC_KEY_COUNTERS_LIST,
     get_public_key,
+    get_latest_public_key_id,
     post_add_public_key,
     get_private_public_key_info,
 );
