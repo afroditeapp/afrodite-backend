@@ -20,6 +20,17 @@ impl StateData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BotPersistentState {
     pub account_id: String,
+    pub keys: Option<BotEncryptionKeys>,
     pub task: u32,
     pub bot: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BotEncryptionKeys {
+    /// Armored OpenPGP private key
+    pub private: String,
+    /// Armored OpenPGP public key
+    pub public: String,
+    /// Server assigned public key ID on server
+    pub public_key_id: i64,
 }

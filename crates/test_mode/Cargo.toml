@@ -33,6 +33,7 @@ num_cpus = { workspace = true }
 chrono = { workspace = true }
 
 base64 = { workspace = true }
+smallvec = { workspace = true }
 
 pgp = { workspace = true }
 bstr = { workspace = true }

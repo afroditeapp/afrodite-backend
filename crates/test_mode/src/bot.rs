@@ -12,7 +12,7 @@ use std::{
     vec,
 };
 
-use actions::{admin::AdminBotState, profile::ProfileState};
+use actions::{admin::AdminBotState, chat::ChatState, profile::ProfileState};
 use api_client::models::{AccountId, EventToClient};
 use async_trait::async_trait;
 use config::{
@@ -31,6 +31,8 @@ use tokio::{
 };
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 use tracing::{error, info};
+
+use crate::state::BotEncryptionKeys;
 
 use self::{
     actions::{media::MediaState, BotAction, DoNothing, PreviousValue},
@@ -213,6 +215,7 @@ pub struct BotState {
     pub benchmark: BenchmarkState,
     pub media: MediaState,
     pub profile: ProfileState,
+    pub chat: ChatState,
     pub admin: AdminBotState,
     pub connections: BotConnections,
     pub refresh_token: Option<Vec<u8>>,
@@ -223,6 +226,7 @@ impl BotState {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: Option<AccountId>,
+        keys: Option<BotEncryptionKeys>,
         server_config: Arc<Config>,
         config: Arc<TestMode>,
         bot_config_file: Arc<BotConfigFile>,
@@ -246,6 +250,9 @@ impl BotState {
             action_history: vec![],
             media: MediaState::new(),
             profile: ProfileState::new(),
+            chat: ChatState {
+                keys,
+            },
             admin: AdminBotState::default(),
             connections: BotConnections::default(),
             refresh_token: None,
@@ -306,6 +313,7 @@ impl BotState {
     pub fn persistent_state(&self) -> Option<BotPersistentState> {
         self.id.clone().map(|id| BotPersistentState {
             account_id: id.aid,
+            keys: self.chat.keys.clone(),
             task: self.task_id,
             bot: self.bot_id,
         })
@@ -450,8 +458,12 @@ impl BotManager {
                     .and_then(|v| v.find_matching(task_id, bot_i))
                     .map(|v| v.account_id.clone())
             );
+            let keys = old_state.as_ref()
+                .and_then(|v| v.find_matching(task_id, bot_i))
+                .and_then(|v| v.keys.clone());
             let state = BotState::new(
                 account_id.map(AccountId::new),
+                keys,
                 server_config.clone(),
                 config.clone(),
                 bot_config_file.clone(),

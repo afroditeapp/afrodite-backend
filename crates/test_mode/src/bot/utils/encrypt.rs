@@ -2,10 +2,10 @@
 
 use bstr::BStr;
 use pgp::{
-    crypto::hash::HashAlgorithm, ser::Serialize, Deserializable, Message, SignedPublicKey,
-    SignedSecretKey,
+    crypto::{hash::HashAlgorithm, sym::SymmetricKeyAlgorithm}, ser::Serialize, types::SecretKeyTrait, ArmorOptions, Deserializable, KeyType, Message, SecretKeyParamsBuilder, SignedPublicKey, SignedSecretKey, SubkeyParamsBuilder
 };
 use rand::rngs::OsRng;
+use smallvec::smallvec;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[repr(u8)]
@@ -62,15 +62,72 @@ pub fn encrypt_data(
         // If the data would be compressed, then denial of service attacks
         // would be possible.
         .encrypt_to_keys_seipdv1(
-            &mut OsRng,
+            OsRng,
             pgp::crypto::sym::SymmetricKeyAlgorithm::AES128,
             &[encryption_public_subkey],
         )
         .map_err(|_| MessageEncryptionError::EncryptDataEncrypt)?
-        .sign(&mut OsRng, &my_private_key, String::new, HashAlgorithm::SHA2_256)
+        .sign(OsRng, &my_private_key, String::new, HashAlgorithm::SHA2_256)
         .map_err(|_| MessageEncryptionError::EncryptDataSign)?
         .to_bytes()
         .map_err(|_| MessageEncryptionError::EncryptDataToBytes)?;
 
     Ok(armored_message)
+}
+
+pub fn generate_keys(
+    account_id: String,
+) -> Result<GeneratedKeys, MessageEncryptionError>  {
+    let params = SecretKeyParamsBuilder::default()
+        .key_type(KeyType::Ed25519)
+        .can_encrypt(false)
+        .can_certify(false)
+        .can_sign(true)
+        .primary_user_id(account_id)
+        .preferred_symmetric_algorithms(smallvec![
+            SymmetricKeyAlgorithm::AES128,
+        ])
+        .preferred_hash_algorithms(smallvec![
+            HashAlgorithm::SHA2_256,
+        ])
+        .preferred_compression_algorithms(smallvec![])
+        .subkey(
+            SubkeyParamsBuilder::default()
+                .key_type(KeyType::X25519)
+                .can_authenticate(false)
+                .can_certify(false)
+                .can_encrypt(true)
+                .can_sign(false)
+                .build()
+                .map_err(|_| MessageEncryptionError::GenerateKeysPrivateKeySubKeyParams)?
+        )
+        .build()
+        .map_err(|_| MessageEncryptionError::GenerateKeysPrivateKeyParams)?;
+    let private_key = params
+        .generate(OsRng)
+        .map_err(|_| MessageEncryptionError::GenerateKeysPrivateKeyGenerate)?;
+    let signed_private_key = private_key
+        .sign(OsRng, String::new)
+        .map_err(|_| MessageEncryptionError::GenerateKeysPrivateKeySign)?;
+    let private = signed_private_key
+        .to_armored_string(ArmorOptions::default())
+        .map_err(|_| MessageEncryptionError::GenerateKeysPrivateKeyArmor)?;
+
+    let signed_public_key = signed_private_key
+        .public_key()
+        .sign(OsRng, &signed_private_key, String::new)
+        .map_err(|_| MessageEncryptionError::GenerateKeysPublicKeySign)?;
+    let public = signed_public_key
+        .to_armored_string(ArmorOptions::default())
+        .map_err(|_| MessageEncryptionError::GenerateKeysPublicKeyArmor)?;
+
+    Ok(GeneratedKeys {
+        private,
+        public,
+    })
+}
+
+pub struct GeneratedKeys {
+    pub private: String,
+    pub public: String,
 }

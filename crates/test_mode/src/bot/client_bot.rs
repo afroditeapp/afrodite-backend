@@ -24,24 +24,24 @@ use tracing::warn;
 use super::{
     actions::{
         account::{
-            AssertAccountState, Login, Register, SetAccountSetup, SetProfileVisibility, DEFAULT_AGE, AccountState
+            AccountState, AssertAccountState, Login, Register, SetAccountSetup, SetProfileVisibility, DEFAULT_AGE
         },
         media::SendImageToSlot,
         profile::{ChangeProfileText, GetProfile, ProfileText, UpdateLocationRandomOrConfigured},
         BotAction, RunActions, RunActionsIf,
     },
-    utils::encrypt::encrypt_data,
+    utils::encrypt::{encrypt_data, generate_keys},
     BotState, BotStruct, TaskState,
 };
 use crate::{
     action_array,
     bot::actions::{
         account::CompleteAccountSetup,
-        admin::{profile_text::AdminBotProfileTextModerationLogic, content::AdminBotContentModerationLogic},
+        admin::{content::AdminBotContentModerationLogic, profile_text::AdminBotProfileTextModerationLogic},
         media::SetContent,
         ActionArray,
     },
-    client::TestError,
+    client::TestError, state::BotEncryptionKeys,
 };
 
 pub struct ClientBot {
@@ -186,87 +186,68 @@ impl BotAction for DoInitialSetupIfNeeded {
     }
 }
 
-/*
-The key is generated with pgp library using following settings:
-
-let mut key_params = SecretKeyParamsBuilder::default();
-key_params
-    .key_type(KeyType::ECDSA(ECCCurve::P256))
-    .can_encrypt(false)
-    .can_certify(false)
-    .can_sign(true)
-    .primary_user_id("User ID".to_string())
-    .preferred_symmetric_algorithms(smallvec![
-        SymmetricKeyAlgorithm::AES128,
-    ])
-    .preferred_hash_algorithms(smallvec![
-        HashAlgorithm::SHA2_256,
-    ])
-    .preferred_compression_algorithms(smallvec![])
-    .subkey(
-        SubkeyParamsBuilder::default()
-            .key_type(KeyType::ECDH(ECCCurve::P256))
-            .can_authenticate(false)
-            .can_certify(false)
-            .can_encrypt(true)
-            .can_sign(false)
-            .build()
-            .unwrap()
-    );
-*/
-const BOT_PUBLIC_KEY: &str = "
------BEGIN PGP PUBLIC KEY BLOCK-----
-
-xlIEZrUithMIKoZIzj0DAQcCAwQPyfhOjBpuNHTfc3RLX2jkK6kPD2awvT1M32Ye
-WNb2TnlS/GQkMPiO8FzIM4HeOhH8gCFPF2Zdx4sKPJmliNsyzQdVc2VyIElEwoME
-EBMIACsCGQEFAma1IrYCGwICCwcCFQgBFhYhBHZlmH4QZ4iaqMhnaWXPEpaBFVLg
-AAoJEGXPEpaBFVLgAQcBALaroQGcjCGJagYl394YnDLgLrU4x65vrMBTkUWJPTlF
-AQCMJXAIcJzdAE8granlxSUyECfAOxdav8N0ZEkFY15BMs5WBGa1IrYSCCqGSM49
-AwEHAgMEiuP4c3Y99j9iA8KsVGY5a/g1PFCDJCTOi/ISjY4bg5Y3Qt0ZildT8gyo
-5h8QUadvRciIFEPe1/5/uaMTuPfD1gMBCAfCeAQYEwgAIAUCZrUitgIbDBYhBHZl
-mH4QZ4iaqMhnaWXPEpaBFVLgAAoJEGXPEpaBFVLgZRoA/2h6zKOrtMoqdg07d+yI
-pLFJWGK6aPpk4axuljBPjHxSAQCoggKkU+Bf4vFqbwJQuVbh/G+tJG8w0YtF/Jfp
-qzmprA==
-=xgPw
------END PGP PUBLIC KEY BLOCK-----
-";
-
-const BOT_PRIVATE_KEY: &str = "
------BEGIN PGP PRIVATE KEY BLOCK-----
-
-xXcEZrUithMIKoZIzj0DAQcCAwQPyfhOjBpuNHTfc3RLX2jkK6kPD2awvT1M32Ye
-WNb2TnlS/GQkMPiO8FzIM4HeOhH8gCFPF2Zdx4sKPJmliNsyAAEAhfnLqgKe8T/V
-YxvmviGU5dh7r1kUdNpO1f82f4d9pnsSDs0HVXNlciBJRMKDBBATCAArAhkBBQJm
-tSK2AhsCAgsHAhUIARYWIQR2ZZh+EGeImqjIZ2llzxKWgRVS4AAKCRBlzxKWgRVS
-4AEHAQC2q6EBnIwhiWoGJd/eGJwy4C61OMeub6zAU5FFiT05RQEAjCVwCHCc3QBP
-IK2p5cUlMhAnwDsXWr/DdGRJBWNeQTLHewRmtSK2EggqhkjOPQMBBwIDBIrj+HN2
-PfY/YgPCrFRmOWv4NTxQgyQkzovyEo2OG4OWN0LdGYpXU/IMqOYfEFGnb0XIiBRD
-3tf+f7mjE7j3w9YDAQgHAAEAoIh5mtDadAnwyL/2ZHTYPHwBbGQACc9eqFu3JKOV
-hg0P6MJ4BBgTCAAgBQJmtSK2AhsMFiEEdmWYfhBniJqoyGdpZc8SloEVUuAACgkQ
-Zc8SloEVUuBlGgD/aHrMo6u0yip2DTt37IiksUlYYrpo+mThrG6WME+MfFIBAKiC
-AqRT4F/i8WpvAlC5VuH8b60kbzDRi0X8l+mrOams
-=JeHT
------END PGP PRIVATE KEY BLOCK-----
-";
-
 #[derive(Debug)]
 pub struct SetBotPublicKey;
 
-#[async_trait]
-impl BotAction for SetBotPublicKey {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let (public_key, _) = SignedPublicKey::from_string(BOT_PUBLIC_KEY)
+impl SetBotPublicKey {
+    async fn setup_bot_keys_if_needed(state: &mut BotState) -> Result<BotEncryptionKeys, TestError> {
+        let account_id_string = state.account_id_string()?;
+        let latest_public_key_id = get_latest_public_key_id(
+            state.api.chat(),
+            &account_id_string,
+        )
+            .await
+            .change_context(TestError::ApiRequest)?
+            .id
+            .flatten()
+            .map(|v| v.id);
+
+        if let Some(keys) = state.chat.keys.clone() {
+            if latest_public_key_id == Some(keys.public_key_id) {
+                return Ok(keys);
+            }
+        }
+
+        let keys = generate_keys(account_id_string)
+            .map_err(|e| TestError::MessageEncryptionError(e).report())?;
+
+        let (public_key, _) = SignedPublicKey::from_string(&keys.public)
             .change_context(TestError::OpenPgp)?;
         let public_key_bytes = public_key.to_bytes()
             .change_context(TestError::OpenPgp)?;
 
-        post_add_public_key_fixed(
+        let r = post_add_public_key_fixed(
             state.api.chat(),
             public_key_bytes,
         )
         .await
         .change_context(TestError::ApiRequest)?;
 
+        if r.error_too_many_public_keys {
+            return Err(TestError::ApiRequest.report())
+                .attach_printable("Too many public keys");
+        }
+
+        let Some(public_key_id) = r.key_id.flatten().map(|v| v.id) else {
+            return Err(TestError::ApiRequest.report())
+                .attach_printable("Public key ID not found");
+        };
+
+        let keys = BotEncryptionKeys {
+            private: keys.private,
+            public: keys.public,
+            public_key_id,
+        };
+        state.chat.keys = Some(keys.clone());
+
+        Ok(keys)
+    }
+}
+
+#[async_trait]
+impl BotAction for SetBotPublicKey {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        Self::setup_bot_keys_if_needed(state).await?;
         Ok(())
     }
 }
@@ -531,12 +512,14 @@ async fn send_message(
         .await
         .change_context(TestError::ApiRequest)?;
 
+    let keys = SetBotPublicKey::setup_bot_keys_if_needed(state).await?;
+
     let mut message_bytes = vec![0]; // Text message
     let len_u16 = msg.len() as u16;
     message_bytes.extend_from_slice(&len_u16.to_le_bytes());
     message_bytes.extend_from_slice(msg.as_bytes());
     let encrypted_bytes = encrypt_data(
-        BOT_PRIVATE_KEY,
+        &keys.private,
         public_key,
         &message_bytes,
     )
@@ -567,7 +550,6 @@ async fn send_message(
     )
     .await
     .change_context(TestError::ApiRequest)?;
-
 
     Ok(())
 }

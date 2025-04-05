@@ -235,6 +235,7 @@ impl Account {
 
         let mut state = BotState::new(
             None,
+            None,
             test_context.config.clone(),
             test_context.test_config.clone(),
             Arc::new(BotConfigFile::default()),
