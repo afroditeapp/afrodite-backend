@@ -1,6 +1,7 @@
 use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
+use model::UnixTime;
 use model_chat::{
     AccountIdInternal, ChatStateRaw, MatchId, MatchesSyncVersion, NewReceivedLikesCount,
     PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikesSyncVersion, SentBlocksSyncVersion,
@@ -97,6 +98,8 @@ impl CurrentWriteChat<'_> {
     ) -> Result<PublicKeyId, DieselDatabaseError> {
         use model::schema::public_key::dsl::*;
 
+        let current_time = UnixTime::current_time();
+
         let current = self.read().chat().public_key().latest_public_key_id(id)?;
         let new_id = if let Some(current) = current {
             if current.id == i64::MAX {
@@ -115,6 +118,7 @@ impl CurrentWriteChat<'_> {
                 account_id.eq(id.as_db_id()),
                 key_id.eq(new_id),
                 key_data.eq(&new_key),
+                key_added_unix_time.eq(current_time),
             ))
             .execute(self.conn())
             .into_db_error(id)?;
