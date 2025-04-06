@@ -2,7 +2,7 @@
 
 use bstr::BStr;
 use pgp::{
-    crypto::{hash::HashAlgorithm, sym::SymmetricKeyAlgorithm}, ser::Serialize, types::SecretKeyTrait, ArmorOptions, Deserializable, KeyType, Message, SecretKeyParamsBuilder, SignedPublicKey, SignedSecretKey, SubkeyParamsBuilder
+    crypto::{aead::AeadAlgorithm, hash::HashAlgorithm, sym::SymmetricKeyAlgorithm}, ser::Serialize, types::SecretKeyTrait, ArmorOptions, Deserializable, KeyType, Message, SecretKeyParamsBuilder, SignedPublicKey, SignedSecretKey, SubkeyParamsBuilder
 };
 use rand::rngs::OsRng;
 use smallvec::smallvec;
@@ -61,9 +61,13 @@ pub fn encrypt_data(
         // have possibility to limit decompressed data size.
         // If the data would be compressed, then denial of service attacks
         // would be possible.
-        .encrypt_to_keys_seipdv1(
+        .encrypt_to_keys_seipdv2(
             OsRng,
-            pgp::crypto::sym::SymmetricKeyAlgorithm::AES128,
+            SymmetricKeyAlgorithm::AES128,
+            AeadAlgorithm::Gcm,
+            // Use max chunk size as message size is small
+            // and streaming decryption is not needed.
+            16,
             &[encryption_public_subkey],
         )
         .map_err(|_| MessageEncryptionError::EncryptDataEncrypt)?
