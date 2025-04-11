@@ -21,6 +21,7 @@ pub mod sign_in_with;
 pub mod utils;
 pub mod web_socket;
 pub mod tls;
+pub mod maxmind_db;
 
 use std::{convert::Infallible, future::IntoFuture, net::{Ipv4Addr, SocketAddr, SocketAddrV4}, pin::Pin, sync::Arc};
 
@@ -33,6 +34,7 @@ use futures::future::poll_fn;
 use hyper::body::Incoming;
 use hyper_util::rt::{TokioExecutor, TokioIo};
 use manager_client::{ManagerApiClient, ManagerConnectionManager, ManagerEventHandler};
+use maxmind_db::{MaxMindDbManager, MaxMindDbManagerData};
 use perf::AllCounters;
 use tls::{LetsEncryptAcmeSocketUtils, SimpleBackendTlsConfig, TlsManager};
 use tokio_rustls_acme::AcmeAcceptor;
@@ -215,12 +217,19 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         let perf_manager_quit_handle =
             PerfMetricsManager::new_manager(perf_data.clone(), server_quit_watcher.resubscribe());
 
+        // TODO(refactor): Add to SimpleBackendAppState and change code to use
+        // only this client.
+        let client = Arc::new(reqwest::Client::new());
+        let maxmind_db_data = Arc::new(MaxMindDbManagerData::new());
+        let maxmind_db_quit_handle =
+            MaxMindDbManager::new_manager(maxmind_db_data.clone(), server_quit_watcher.resubscribe(), self.config.clone(), client);
+
         let manager: Arc<ManagerApiClient> = ManagerApiClient::new(&self.config)
             .await
             .expect("Creating manager API client failed")
             .into();
 
-        let simple_state = SimpleBackendAppState::new(self.config.clone(), perf_data, manager.clone())
+        let simple_state = SimpleBackendAppState::new(self.config.clone(), perf_data, manager.clone(), maxmind_db_data)
             .await
             .expect("State builder init failed");
 
@@ -350,6 +359,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
 
         drop(state);
         manager_quit_handle.wait_quit().await;
+        maxmind_db_quit_handle.wait_quit().await;
         perf_manager_quit_handle.wait_quit().await;
         self.logic.on_after_server_quit().await;
 

@@ -8,6 +8,7 @@ use simple_backend_model::{PerfMetricQuery, PerfMetricQueryResult};
 
 use server_common::app::GetAccounts;
 use server_data::{app::ReadData, read::GetReadCommandsCommon};
+use simple_backend::app::MaxMindDbDataProvider;
 
 use crate::{
     create_open_api_router,
@@ -122,11 +123,12 @@ pub async fn post_get_ip_address_usage_data(
 
     let requested_account = state.get_internal_id(settings.account).await?;
 
+    let ip_db = state.maxmind_db().current_db().await;
     let data = state
         .read()
         .common_admin()
         .statistics()
-        .get_ip_address_statistics(requested_account)
+        .get_ip_address_statistics(requested_account, ip_db)
         .await?;
 
     Ok(data.into())

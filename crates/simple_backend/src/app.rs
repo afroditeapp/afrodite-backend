@@ -7,8 +7,7 @@ use simple_backend_config::SimpleBackendConfig;
 
 use super::manager_client::ManagerApiClient;
 use crate::{
-    file_package::FilePackageManager, map::TileMapManager, perf::PerfMetricsManagerData,
-    sign_in_with::SignInWithManager,
+    file_package::FilePackageManager, map::TileMapManager, maxmind_db::MaxMindDbManagerData, perf::PerfMetricsManagerData, sign_in_with::SignInWithManager
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -25,6 +24,7 @@ pub struct SimpleBackendAppState {
     pub tile_map: Arc<TileMapManager>,
     pub perf_data: Arc<PerfMetricsManagerData>,
     pub file_packages: Arc<FilePackageManager>,
+    pub maxmind_db: Arc<MaxMindDbManagerData>,
 }
 
 impl SimpleBackendAppState {
@@ -32,6 +32,7 @@ impl SimpleBackendAppState {
         config: Arc<SimpleBackendConfig>,
         perf_data: Arc<PerfMetricsManagerData>,
         manager_api: Arc<ManagerApiClient>,
+        maxmind_db: Arc<MaxMindDbManagerData>,
     ) -> error_stack::Result<Self, AppStateCreationError> {
         Ok(SimpleBackendAppState {
             tile_map: TileMapManager::new(&config).into(),
@@ -43,6 +44,7 @@ impl SimpleBackendAppState {
             config,
             manager_api,
             perf_data,
+            maxmind_db,
         })
     }
 }
@@ -82,4 +84,8 @@ pub trait PerfCounterDataProvider {
 
 pub trait FilePackageProvider {
     fn file_package(&self) -> &FilePackageManager;
+}
+
+pub trait MaxMindDbDataProvider {
+    fn maxmind_db(&self) -> &MaxMindDbManagerData;
 }

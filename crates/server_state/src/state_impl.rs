@@ -19,8 +19,7 @@ use server_data::{
 };
 use simple_backend::{
     app::{
-        FilePackageProvider, GetManagerApi, GetSimpleBackendConfig, GetTileMap,
-        PerfCounterDataProvider, SignInWith,
+        FilePackageProvider, GetManagerApi, GetSimpleBackendConfig, GetTileMap, MaxMindDbDataProvider, PerfCounterDataProvider, SignInWith
     }, file_package::FilePackageManager, manager_client::{ManagerApiClient, ManagerEventHandler}, map::TileMapManager, perf::PerfMetricsManagerData, sign_in_with::SignInWithManager
 };
 use simple_backend_config::SimpleBackendConfig;
@@ -269,6 +268,12 @@ impl PerfCounterDataProvider for S {
 impl FilePackageProvider for S {
     fn file_package(&self) -> &FilePackageManager {
         &self.state.simple_backend_state.file_packages
+    }
+}
+
+impl MaxMindDbDataProvider for S {
+    fn maxmind_db(&self) -> &simple_backend::maxmind_db::MaxMindDbManagerData {
+        &self.state.simple_backend_state.maxmind_db
     }
 }
 

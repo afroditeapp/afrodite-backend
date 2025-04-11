@@ -146,4 +146,5 @@ pub struct IpAddressInfo {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     #[schema(default = json!([]))]
     pub lists: Vec<String>,
+    pub country: Option<String>,
 }

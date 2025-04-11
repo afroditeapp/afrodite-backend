@@ -1025,6 +1025,7 @@ dependencies = [
  "error-stack",
  "model",
  "serde_json",
+ "simple_backend",
  "simple_backend_config",
  "simple_backend_database",
  "simple_backend_model",
@@ -2222,6 +2223,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "469fb0b9cefa57e3ef31275ee7cacb78f2fdca44e4765491884a2b119d4eb130"
 
 [[package]]
+name = "ipnetwork"
+version = "0.21.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cf370abdafd54d13e54a620e8c3e1145f28e46cc9d704bc6d94414559df41763"
+
+[[package]]
 name = "is_terminal_polyfill"
 version = "1.70.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2621,6 +2628,19 @@ checksum = "9380b911e3e96d10c1f415da0876389aaf1b56759054eeb0de7df940c456ba1a"
 dependencies = [
  "autocfg",
  "rawpointer",
+]
+
+[[package]]
+name = "maxminddb"
+version = "0.26.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a197e44322788858682406c74b0b59bf8d9b4954fe1f224d9a25147f1880bba"
+dependencies = [
+ "ipnetwork",
+ "log",
+ "memchr",
+ "serde",
+ "thiserror 2.0.11",
 ]
 
 [[package]]
@@ -4813,6 +4833,7 @@ dependencies = [
  "lettre",
  "manager_api",
  "manager_model",
+ "maxminddb",
  "mime",
  "reqwest",
  "rustls-platform-verifier",

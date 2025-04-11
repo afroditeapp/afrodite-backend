@@ -39,6 +39,8 @@ mime = { workspace = true }
 # Email sending
 lettre = { workspace = true }
 
+maxminddb = { workspace = true }
+
 # Server TLS
 tokio-rustls = { workspace = true }
 tokio-rustls-acme = { workspace = true }

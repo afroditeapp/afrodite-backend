@@ -5,6 +5,7 @@ use config::Config;
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, ApiUsageCount, ApiUsageStatistics, GetApiUsageStatisticsResult, GetApiUsageStatisticsSettings, GetIpAddressStatisticsResult, IpAddressInfo, IpAddressInfoInternal, UnixTime};
+use simple_backend::maxmind_db::IpDb;
 
 use crate::define_current_read_commands;
 
@@ -66,6 +67,7 @@ impl CurrentReadAccountAdminStatistics<'_> {
         &mut self,
         account: AccountIdInternal,
         config: Arc<Config>,
+        ip_db: Option<Arc<IpDb>>,
     ) -> Result<GetIpAddressStatisticsResult, DieselDatabaseError> {
         let values: Vec<IpAddressInfoInternal> = {
             use crate::schema::ip_address_usage_statistics::dsl::*;
@@ -95,6 +97,11 @@ impl CurrentReadAccountAdminStatistics<'_> {
                         f: v.first_usage_unix_time,
                         l: v.latest_usage_unix_time,
                         lists,
+                        country: if let Some(ip_db) = &ip_db {
+                            ip_db.get_country(ip_address)
+                        } else {
+                            None
+                        },
                     }
                 })
                 .collect::<Vec<_>>()

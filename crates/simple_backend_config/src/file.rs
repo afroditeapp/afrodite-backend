@@ -95,6 +95,9 @@ local_bot_api_port = 3002
 # name = "test"
 # file = "ip-list.txt"
 
+# [ip_info.maxmind_db]
+# download_url = "example.com"
+
 "#;
 
 // TODO(prod): Consider changing manager config
@@ -489,6 +492,7 @@ pub struct SeetaFaceConfig {
 pub struct IpInfoConfig {
     #[serde(default)]
     pub list: Vec<IpListConfig>,
+    pub maxmind_db: Option<MaxMindDbConfig>,
 }
 
 /// IP list file
@@ -505,4 +509,12 @@ pub struct IpInfoConfig {
 pub struct IpListConfig {
     pub name: String,
     pub file: PathBuf,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct MaxMindDbConfig {
+    /// Download URL for latest GeoLite2 database file with IP country info.
+    /// Note that the URL must point to the latest database and not to
+    /// some specific version so that the DB is updated weekly.
+    pub download_url: Url,
 }
