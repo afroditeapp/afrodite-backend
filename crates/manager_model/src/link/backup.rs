@@ -28,7 +28,12 @@ pub enum BackupMessageType {
     ContentQuery = 3,
     /// Source sends this to target when answering to content query.
     ///
-    /// Data is content bytes or empty if there is some failure.
+    /// Content data is empty when error occurs.
+    ///
+    /// Data:
+    ///
+    /// - Content SHA-256 (32 bytes)
+    /// - Content data
     ContentQueryAnswer = 4,
     /// When target is handled the received content list the target
     /// sends this to source.
@@ -88,6 +93,7 @@ pub enum SourceToTargetMessage {
         data: Vec<AccountAndContent>,
     },
     ContentQueryAnswer {
+        sha256: Sha256Bytes,
         data: Vec<u8>,
     },
     StartFileBackup {
@@ -124,8 +130,8 @@ impl SourceToTargetMessage {
                 }
                 serialized
             }
-            Self::ContentQueryAnswer { data } =>
-                data,
+            Self::ContentQueryAnswer { sha256, data } =>
+                sha256.0.iter().chain(data.iter()).copied().collect(),
             Self::StartFileBackup { sha256, file_name } =>
                 sha256.0.iter().chain(file_name.as_bytes()).copied().collect(),
             Self::FileBackupData { package_number, data } =>
@@ -187,8 +193,13 @@ impl TryFrom<BackupMessage> for SourceToTargetMessage {
 
                 SourceToTargetMessage::ContentList { data: parsed }
             }
-            BackupMessageType::ContentQueryAnswer =>
-                SourceToTargetMessage::ContentQueryAnswer { data: value.data },
+            BackupMessageType::ContentQueryAnswer => {
+                let Some((sha256, data)) = value.data.split_at_checked(32) else {
+                    return Err("No enough data".to_string());
+                };
+                let sha256: [u8; 32] = TryInto::<[u8; 32]>::try_into(sha256).map_err(|v| v.to_string())?;
+                SourceToTargetMessage::ContentQueryAnswer { sha256: Sha256Bytes(sha256), data: data.to_vec() }
+            }
             BackupMessageType::StartFileBackup => {
                 let Some((sha256, file_name)) = value.data.split_at_checked(32) else {
                     return Err("No enough data".to_string());

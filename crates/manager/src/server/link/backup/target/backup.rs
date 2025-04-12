@@ -65,6 +65,10 @@ impl<'a> BackupDirUtils<'a> {
         self.create_account_content_dir_if_needed(account).join(content.to_string())
     }
 
+    fn content_file_checksum_path(&self, account: UuidBase64Url, content: UuidBase64Url) -> PathBuf {
+        self.create_account_content_dir_if_needed(account).join(format!("{}.sha256", content))
+    }
+
     fn create_files_dir_if_needed(&self) -> PathBuf {
         self.create_dir_if_needed(&self.create_backup_dir_if_needed(), FILES_DIR_NAME)
     }
@@ -195,10 +199,22 @@ impl UpdateAccountContent {
         self.initial_content.remove(&content);
     }
 
-    pub async fn new_content(&self, content: UuidBase64Url, data: Vec<u8>) -> Result<(), BackupTargetError> {
+    pub async fn new_content(&self, content: UuidBase64Url, sha256: Sha256Bytes, data: Vec<u8>) -> Result<(), BackupTargetError> {
+        let mut hasher = Sha256::new();
+        hasher.update(&data);
+        let result = hasher.finalize();
+        if result.as_slice() != sha256.0 {
+            return Err(BackupTargetError::ContentDataCorruptionDetected.report())
+        }
+
+        let f = BackupDirUtils::new(&self.config)
+            .content_file_checksum_path(self.account, content);
+        tokio::fs::write(f, sha256.to_shasum_tool_compatible_checksum(&content.to_string()))
+            .await
+            .change_context( BackupTargetError::Write)?;
         let f = BackupDirUtils::new(&self.config)
             .content_file_path(self.account, content);
-        tokio::fs::write(&f, data)
+        tokio::fs::write(f, data)
             .await
             .change_context( BackupTargetError::Write)
     }
@@ -206,8 +222,13 @@ impl UpdateAccountContent {
     pub async fn finalize(self) -> Result<(), BackupTargetError> {
         for c in self.initial_content {
             let f = BackupDirUtils::new(&self.config)
+                .content_file_checksum_path(self.account, c);
+            overwrite_and_remove_if_exists(f)
+                .await
+                .change_context(BackupTargetError::FileOverwritingAndRemovingFailed)?;
+            let f = BackupDirUtils::new(&self.config)
                 .content_file_path(self.account, c);
-            overwrite_and_remove_if_exists(&f)
+            overwrite_and_remove_if_exists(f)
                 .await
                 .change_context(BackupTargetError::FileOverwritingAndRemovingFailed)?;
         }

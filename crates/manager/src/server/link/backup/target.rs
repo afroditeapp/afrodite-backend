@@ -71,6 +71,9 @@ enum BackupTargetError {
 
     #[error("Time related error")]
     Time,
+
+    #[error("Content data corruption detected")]
+    ContentDataCorruptionDetected,
 }
 
 #[derive(Debug)]
@@ -345,8 +348,8 @@ impl BackupSessionTaskTarget {
                                 content_id: c
                             }
                         ).await?;
-                        let data = self.receive_content().await?;
-                        content_state.new_content(c, data).await?;
+                        let (sha256, data) = self.receive_content().await?;
+                        content_state.new_content(c, sha256, data).await?;
                     }
                     self.synced_content += 1;
                 }
@@ -400,12 +403,12 @@ impl BackupSessionTaskTarget {
         }
     }
 
-    pub async fn receive_content(&mut self) -> Result<Vec<u8>, BackupTargetError> {
+    pub async fn receive_content(&mut self) -> Result<(Sha256Bytes, Vec<u8>), BackupTargetError> {
         let Some(m) = self.receiver.recv().await else {
             return Err(BackupTargetError::BrokenMessageChannel.report());
         };
         match m {
-            SourceToTargetMessage::ContentQueryAnswer { data } => Ok(data),
+            SourceToTargetMessage::ContentQueryAnswer { sha256, data } => Ok((sha256, data)),
             _ => Err(BackupTargetError::Protocol.report()),
         }
     }

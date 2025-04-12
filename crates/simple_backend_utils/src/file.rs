@@ -25,7 +25,8 @@ pub enum OverwriteFileError {
 }
 
 
-pub async fn overwrite_and_remove_if_exists(path: &Path) -> Result<(), OverwriteFileError> {
+pub async fn overwrite_and_remove_if_exists(path: impl AsRef<Path>) -> Result<(), OverwriteFileError> {
+    let path = path.as_ref();
     if !path.exists() {
         return Ok(());
     }

@@ -99,7 +99,10 @@ pub async fn backup_data(
                         .read_all()
                         .await
                         .change_context(ScheduledTaskError::FileReadingError)?;
-                    backup_client.send_message(SourceToTargetMessage::ContentQueryAnswer { data })
+                    let mut hasher = Sha256::new();
+                    hasher.update(&data);
+                    let result = hasher.finalize();
+                    backup_client.send_message(SourceToTargetMessage::ContentQueryAnswer { sha256: Sha256Bytes(result.into()), data })
                         .await
                         .change_context(ScheduledTaskError::Backup)?;
                 }
@@ -149,7 +152,7 @@ async fn handle_db(
     db_name: &SqliteDatabase,
     create_backup_file: impl Future<Output=Result<(), DataError>>,
 ) -> Result<(), ScheduledTaskError> {
-    overwrite_and_remove_if_exists(tmp_db.as_ref())
+    overwrite_and_remove_if_exists(tmp_db)
         .await
         .change_context(ScheduledTaskError::Backup)?;
 
@@ -159,7 +162,7 @@ async fn handle_db(
 
     send_backup_db(db_name, tmp_db, backup_client).await?;
 
-    overwrite_and_remove_if_exists(tmp_db.as_ref())
+    overwrite_and_remove_if_exists(tmp_db)
         .await
         .change_context(ScheduledTaskError::Backup)?;
 
