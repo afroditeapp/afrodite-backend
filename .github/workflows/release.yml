@@ -43,7 +43,7 @@ jobs:
           mkdir "$NAME"
           mv "../release/$BINARY" "$NAME"
           tar --owner=0 --group=0 -czf "$ASSET" "$NAME"
-          shasum -a 256 "$ASSET" > "$ASSET.sha256"
+          shasum -ba 256 "$ASSET" > "$ASSET.sha256"
           CHECKSUM=$(cut -d " " -f 1 "$ASSET.sha256")
           ID="${{ matrix.id }}"
           echo "asset-$ID=$ASSET" >> "$GITHUB_OUTPUT"
