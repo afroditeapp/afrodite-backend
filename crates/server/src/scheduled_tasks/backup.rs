@@ -4,7 +4,7 @@ use std::num::Wrapping;
 use std::sync::atomic::{AtomicU32, Ordering};
 
 use manager_api::backup::BackupSourceClient;
-use manager_model::{AccountAndContent, SourceToTargetMessage, TargetToSourceMessage};
+use manager_model::{AccountAndContent, Sha256Bytes, SourceToTargetMessage, TargetToSourceMessage};
 use model::{AccountId, ContentId};
 use server_api::app::GetConfig;
 use server_api::DataError;
@@ -16,6 +16,7 @@ use server_common::result::{Result, WrappedResultExt};
 use server_data::read::GetReadCommandsCommon;
 use server_data_media::read::GetReadMediaCommands;
 use server_state::S;
+use sha2::{Digest, Sha256};
 use simple_backend::ServerQuitWatcher;
 use simple_backend::app::GetManagerApi;
 use simple_backend_config::SqliteDatabase;
@@ -135,7 +136,7 @@ pub async fn backup_data(
     ).await?;
 
     // Empty file name ends file backup waiting
-    backup_client.send_message(SourceToTargetMessage::StartFileBackup { file_name: String::new() })
+    backup_client.send_message(SourceToTargetMessage::StartFileBackup { sha256: Sha256Bytes([0; 32]), file_name: String::new() })
         .await
         .change_context(ScheduledTaskError::Backup)?;
 
@@ -170,7 +171,8 @@ async fn send_backup_db(
     tmp_db_path: &str,
     backup_client: &mut BackupSourceClient,
 ) -> Result<(), ScheduledTaskError> {
-    backup_client.send_message(SourceToTargetMessage::StartFileBackup { file_name: info.name.to_string() })
+    let sha256 = calculate_hash(tmp_db_path).await?;
+    backup_client.send_message(SourceToTargetMessage::StartFileBackup { sha256, file_name: info.name.to_string() })
         .await
         .change_context(ScheduledTaskError::Backup)?;
 
@@ -200,6 +202,34 @@ async fn send_backup_db(
     }
 
     Ok(())
+}
+
+async fn calculate_hash(
+    tmp_db_path: &str,
+) -> Result<Sha256Bytes, ScheduledTaskError> {
+    let mut hasher = Sha256::new();
+
+    let mut file = tokio::fs::File::open(tmp_db_path)
+        .await
+        .change_context(ScheduledTaskError::Backup)?;
+
+    let buffer_size: usize = 1024 * 1024;
+    let mut read_buffer: Vec<u8> = vec![0; buffer_size];
+
+    loop {
+        let size = file.read(&mut read_buffer)
+            .await
+            .change_context(ScheduledTaskError::Backup)?;
+        let data = &read_buffer[..size];
+        hasher.update(data);
+
+        if size == 0 {
+            break;
+        }
+    }
+
+    let result = hasher.finalize();
+    Ok(Sha256Bytes(result.into()))
 }
 
 fn tmp_db_path_string(state: &S) -> Result<String, ScheduledTaskError> {

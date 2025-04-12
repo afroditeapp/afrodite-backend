@@ -5,7 +5,7 @@ use backup::{DeleteOldFileBackups, SaveContentBackup, SaveFileBackup};
 use error_stack::{FutureExt, Result, ResultExt};
 use manager_api::{protocol::{ClientConnectionReadSend, ClientConnectionWriteSend, ConnectionUtilsRead, ConnectionUtilsWrite}, ClientConfig, ManagerClient};
 use manager_config::{file::BackupLinkConfigTarget, Config};
-use manager_model::{AccountAndContent, BackupMessage, BackupMessageType, SourceToTargetMessage, TargetToSourceMessage};
+use manager_model::{AccountAndContent, BackupMessage, BackupMessageType, Sha256Bytes, SourceToTargetMessage, TargetToSourceMessage};
 use simple_backend_utils::{ContextExt, IntoReportFromString};
 use tokio::{sync::mpsc, task::JoinHandle};
 use tracing::{error, info, warn};
@@ -56,6 +56,9 @@ enum BackupTargetError {
 
     #[error("File backup packet number mismatch")]
     FileBackupPacketNumberMismatch,
+
+    #[error("File backup data corruption detected")]
+    FileBackupDataCorruptionDetected,
 
     #[error("File flush")]
     FileFlush,
@@ -364,11 +367,11 @@ impl BackupSessionTaskTarget {
         backup.finalize().await?;
 
         loop {
-            let file_name = self.receive_start_file_backup().await?;
+            let (sha256, file_name) = self.receive_start_file_backup().await?;
             if file_name.is_empty() {
                 break;
             }
-            let mut state = SaveFileBackup::new(self.config.clone(), &file_name).await?;
+            let mut state = SaveFileBackup::new(self.config.clone(), sha256, &file_name).await?;
             loop {
                 let (packet_number, data) = self.receive_file_backup_data().await?;
                 if data.is_empty() {
@@ -407,12 +410,12 @@ impl BackupSessionTaskTarget {
         }
     }
 
-    pub async fn receive_start_file_backup(&mut self) -> Result<String, BackupTargetError> {
+    pub async fn receive_start_file_backup(&mut self) -> Result<(Sha256Bytes, String), BackupTargetError> {
         let Some(m) = self.receiver.recv().await else {
             return Err(BackupTargetError::BrokenMessageChannel.report());
         };
         match m {
-            SourceToTargetMessage::StartFileBackup { file_name } => Ok(file_name),
+            SourceToTargetMessage::StartFileBackup { sha256, file_name } => Ok((sha256, file_name)),
             _ => Err(BackupTargetError::Protocol.report()),
         }
     }

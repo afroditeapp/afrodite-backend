@@ -39,6 +39,7 @@ pub enum BackupMessageType {
     ///
     /// Data:
     ///
+    /// - File SHA-256 (32 bytes)
     /// - File name UTF-8 bytes
     StartFileBackup = 6,
     /// File backup data package. Empty package means that transfer is
@@ -90,6 +91,7 @@ pub enum SourceToTargetMessage {
         data: Vec<u8>,
     },
     StartFileBackup {
+        sha256: Sha256Bytes,
         file_name: String,
     },
     FileBackupData {
@@ -124,8 +126,8 @@ impl SourceToTargetMessage {
             }
             Self::ContentQueryAnswer { data } =>
                 data,
-            Self::StartFileBackup { file_name } =>
-                file_name.into(),
+            Self::StartFileBackup { sha256, file_name } =>
+                sha256.0.iter().chain(file_name.as_bytes()).copied().collect(),
             Self::FileBackupData { package_number, data } =>
                 package_number.0.to_le_bytes().into_iter().chain(data).collect()
         };
@@ -188,9 +190,13 @@ impl TryFrom<BackupMessage> for SourceToTargetMessage {
             BackupMessageType::ContentQueryAnswer =>
                 SourceToTargetMessage::ContentQueryAnswer { data: value.data },
             BackupMessageType::StartFileBackup => {
-                let file_name = String::from_utf8(value.data)
+                let Some((sha256, file_name)) = value.data.split_at_checked(32) else {
+                    return Err("No enough data".to_string());
+                };
+                let sha256: [u8; 32] = TryInto::<[u8; 32]>::try_into(sha256).map_err(|v| v.to_string())?;
+                let file_name = String::from_utf8(file_name.to_vec())
                     .map_err(|e| e.to_string())?;
-                SourceToTargetMessage::StartFileBackup { file_name }
+                SourceToTargetMessage::StartFileBackup { sha256: Sha256Bytes(sha256), file_name }
             }
             BackupMessageType::FileBackupData => {
                 let Some((package_number, data)) = value.data.split_at_checked(4) else {
@@ -278,5 +284,17 @@ impl TryFrom<BackupMessage> for TargetToSourceMessage {
         };
 
         Ok(m)
+    }
+}
+
+pub struct Sha256Bytes(pub [u8; 32]);
+
+impl Sha256Bytes {
+    pub fn to_shasum_tool_compatible_checksum(&self, file_name: &str) -> String {
+        format!(
+            "{} *{}\n",
+            base16ct::lower::encode_string(&self.0),
+            file_name,
+        )
     }
 }

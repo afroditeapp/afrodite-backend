@@ -2,6 +2,8 @@ use std::{collections::HashSet, num::Wrapping, path::{Path, PathBuf}, sync::Arc,
 
 use chrono::Utc;
 use manager_config::Config;
+use manager_model::Sha256Bytes;
+use sha2::{Digest, Sha256};
 use simple_backend_model::UnixTime;
 use simple_backend_utils::{file::overwrite_and_remove_if_exists, ContextExt, IntoReportFromString, UuidBase64Url};
 use tokio::io::AsyncWriteExt;
@@ -217,13 +219,18 @@ impl UpdateAccountContent {
 pub struct SaveFileBackup {
     expected_packet_number: Wrapping<u32>,
     target_path: PathBuf,
+    target_checksum_path: PathBuf,
+    target_checksum_file_content: String,
     tmp_file_path: PathBuf,
     tmp_file: tokio::fs::File,
+    expected_sha256: Sha256Bytes,
+    sha256_state: Sha256,
 }
 
 impl SaveFileBackup {
     pub async fn new(
         config: Arc<Config>,
+        expected_sha256: Sha256Bytes,
         backup_name: &str,
     ) -> Result<Self, BackupTargetError> {
         let tmp_file_path = BackupDirUtils::new(&config)
@@ -243,11 +250,20 @@ impl SaveFileBackup {
                 .attach_printable(name);
         }
 
+        let checksum_file_name = format!("{}.sha256", name);
+        let target_checksum_path = BackupDirUtils::new(&config)
+            .file_path(&checksum_file_name);
+        let target_checksum_file_content = expected_sha256.to_shasum_tool_compatible_checksum(&name);
+
         Ok(Self {
             expected_packet_number: Wrapping(0),
             target_path,
+            target_checksum_path,
+            target_checksum_file_content,
             tmp_file_path,
             tmp_file,
+            expected_sha256,
+            sha256_state: Sha256::new(),
         })
     }
 
@@ -267,6 +283,8 @@ impl SaveFileBackup {
 
         self.expected_packet_number += 1;
 
+        self.sha256_state.update(&data);
+
         Ok(())
     }
 
@@ -278,6 +296,15 @@ impl SaveFileBackup {
             return Err(BackupTargetError::FileBackupPacketNumberMismatch.report())
                 .attach_printable(format!("expected: {}, actual: {}", self.expected_packet_number, packet_number))
         }
+
+        let received_file_hash = self.sha256_state.finalize();
+        if received_file_hash.as_slice() != self.expected_sha256.0 {
+            return Err(BackupTargetError::FileBackupDataCorruptionDetected.report())
+        }
+
+        tokio::fs::write(self.target_checksum_path, self.target_checksum_file_content)
+            .await
+            .change_context(BackupTargetError::Write)?;
 
         self.tmp_file
             .flush()

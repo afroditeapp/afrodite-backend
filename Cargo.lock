@@ -2592,6 +2592,7 @@ dependencies = [
 name = "manager_model"
 version = "0.0.0"
 dependencies = [
+ "base16ct",
  "num_enum",
  "serde",
  "simple_backend_model",
@@ -4394,6 +4395,7 @@ dependencies = [
  "server_router_media",
  "server_router_profile",
  "server_state",
+ "sha2",
  "simple_backend",
  "simple_backend_config",
  "simple_backend_image_process",
