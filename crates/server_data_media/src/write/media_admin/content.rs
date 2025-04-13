@@ -14,7 +14,6 @@ pub struct ModerationResult {
 define_cmd_wrapper_write!(WriteCommandsProfileAdminContent);
 
 impl WriteCommandsProfileAdminContent<'_> {
-    #[allow(clippy::too_many_arguments)]
     pub async fn moderate_profile_content(
         &self,
         mode: ContentModerationMode,
@@ -82,6 +81,52 @@ impl WriteCommandsProfileAdminContent<'_> {
         Ok(ModerationResult {
             moderation_result: visibility_change,
         })
+    }
+
+    pub async fn change_face_detected_value(
+        &self,
+        content_id: ContentIdInternal,
+        value: bool,
+    ) -> Result<(), DataError> {
+        let current_content = self
+            .db_read(move |mut cmds| cmds.media().media_content().get_media_content_raw(content_id))
+            .await?;
+        if current_content.face_detected == value {
+            // Already done
+            return Ok(());
+        }
+
+        let cache_update = db_transaction!(self, move |mut cmds| {
+            cmds.media()
+                .media_content()
+                .increment_media_content_sync_version(content_id.content_owner())?;
+
+            cmds.media_admin().media_content().change_face_detected_value(
+                content_id,
+                value,
+            )?;
+
+            let current_account_media = cmds.read().media().media_content().current_account_media(content_id.content_owner())?;
+            if current_account_media.iter_current_profile_content().any(|v| v.content_id() == content_id.content_id()) {
+                // Public profile content [model_media::ContentInfo::p] value might have
+                // changed, so update public profile content version
+                // and edit time.
+                let version = ProfileContentVersion::new_random();
+                let edit_time = ProfileContentEditedTime::current_time();
+                cmds.media()
+                    .media_content()
+                    .required_changes_for_public_profile_content_update(content_id.content_owner(), version, edit_time)?;
+                Ok(Some((version, edit_time)))
+            } else {
+                Ok(None)
+            }
+        })?;
+
+        if let Some(update) = cache_update {
+            self.handle().media().public_profile_content_cache_update(content_id.content_owner(), update).await?;
+        }
+
+        Ok(())
     }
 }
 

@@ -43,3 +43,10 @@ pub struct PostModerateProfileContent {
     /// the content to waiting for human moderation state.
     pub move_to_human: Option<bool>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Queryable)]
+pub struct PostMediaContentFaceDetectedValue {
+    pub account_id: AccountId,
+    pub content_id: ContentId,
+    pub value: bool,
+}

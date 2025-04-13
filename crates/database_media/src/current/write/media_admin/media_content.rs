@@ -86,4 +86,22 @@ impl CurrentWriteMediaAdminMediaContent<'_> {
 
         Ok(next_state)
     }
+
+    pub fn change_face_detected_value(
+        &mut self,
+        content_id: ContentIdInternal,
+        value: bool,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::media_content;
+
+        update(media_content::table)
+            .filter(media_content::id.eq(content_id.as_db_id()))
+            .set((
+                media_content::face_detected.eq(value),
+            ))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
 }

@@ -96,6 +96,7 @@ diesel::table! {
         admin_modify_permissions -> Bool,
         admin_edit_profile_name -> Bool,
         admin_edit_max_public_key_count -> Bool,
+        admin_edit_media_content_face_detected_value -> Bool,
         admin_moderate_media_content -> Bool,
         admin_moderate_profile_names -> Bool,
         admin_moderate_profile_texts -> Bool,
