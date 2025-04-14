@@ -1,4 +1,4 @@
-use config::profile_name_allowlist::ProfileNameAllowlistData;
+use config::csv::profile_name_allowlist::ProfileNameAllowlistData;
 use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{prelude::*, update, ExpressionMethods};
 use error_stack::Result;

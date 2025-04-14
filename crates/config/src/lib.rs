@@ -12,7 +12,7 @@ pub mod bot_config_file;
 pub mod file;
 pub mod file_dynamic;
 pub mod file_email_content;
-pub mod profile_name_allowlist;
+pub mod csv;
 
 use std::{path::Path, sync::Arc};
 
@@ -24,7 +24,7 @@ use file_dynamic::ConfigFileDynamic;
 use file_email_content::EmailContentFile;
 use model::{BotConfig, CustomReportsConfig};
 use model_server_data::{AttributesFileInternal, ProfileAttributesInternal};
-use profile_name_allowlist::{ProfileNameAllowlistBuilder, ProfileNameAllowlistData};
+use csv::{attribute_values::AttributeValuesCsvLoader, profile_name_allowlist::{ProfileNameAllowlistBuilder, ProfileNameAllowlistData}};
 use reqwest::Url;
 use sha2::{Digest, Sha256};
 use simple_backend_config::{file::SimpleBackendConfigFile, SimpleBackendConfig};
@@ -317,9 +317,13 @@ pub fn get_config(
         if let Some(path) = &file_config.config_files.profile_attributes {
             let attributes =
                 std::fs::read_to_string(path).change_context(GetConfigError::LoadFileError)?;
-            let profile_attributes_sha256 = format!("{:x}", Sha256::digest(attributes.as_bytes()));
-            let attributes_file: AttributesFileInternal =
+            let mut profile_attributes_sha256 = Sha256::new();
+            profile_attributes_sha256.update(attributes.as_bytes());
+            let mut attributes_file: AttributesFileInternal =
                 toml::from_str(&attributes).change_context(GetConfigError::InvalidConfiguration)?;
+            AttributeValuesCsvLoader::load_if_needed(&mut attributes_file, &mut profile_attributes_sha256)
+                .change_context(GetConfigError::LoadFileError)?;
+            let profile_attributes_sha256 = format!("{:x}", profile_attributes_sha256.finalize());
             let attributes = attributes_file
                 .clone()
                 .validate()

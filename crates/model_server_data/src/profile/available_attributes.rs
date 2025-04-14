@@ -1,4 +1,4 @@
-use std::{collections::HashSet, str::FromStr};
+use std::{collections::HashSet, path::PathBuf, str::FromStr};
 
 use base64::Engine;
 use model::{AttributeId, AttributeIdAndHash, AttributeOrderMode, ProfileAttributeHash, ProfileAttributeInfo};
@@ -9,7 +9,7 @@ use utoipa::ToSchema;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttributesFileInternal {
     attribute_order: AttributeOrderMode,
-    attribute: Vec<AttributeInternal>,
+    pub attribute: Vec<AttributeInternal>,
 }
 
 impl AttributesFileInternal {
@@ -75,11 +75,13 @@ pub struct AttributeInternal {
     pub order_number: u16,
     pub value_order: AttributeValueOrderMode,
     /// Array of strings or objects
+    #[serde(default = "value_empty_vec")]
     pub values: toml::value::Array,
     #[serde(default = "value_empty_vec")]
     pub group_values: Vec<GroupValuesInternal>,
     #[serde(default = "value_empty_vec")]
     pub translations: Vec<Language>,
+    pub group_values_csv: Option<GroupValuesCsv>,
 }
 
 fn value_bool_true() -> bool {
@@ -104,6 +106,31 @@ fn value_empty_vec<T>() -> Vec<T> {
 
 fn value_is_empty<T>(v: &[T]) -> bool {
     v.is_empty()
+}
+
+/// Load atribute values from CSV file
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GroupValuesCsv {
+    pub csv_file: PathBuf,
+    pub delimiter: char,
+    /// Column index starting from zero.
+    pub values_column_index: usize,
+    /// Column index starting from zero.
+    pub group_values_column_index: usize,
+    /// Index for first row where data reading starts. The index values
+    /// starts from zero.
+    pub start_row_index: usize,
+    #[serde(default = "value_empty_vec")]
+    pub translations: Vec<GroupValuesCsvTranslationColumn>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GroupValuesCsvTranslationColumn {
+    pub lang: String,
+    /// Column index starting from zero.
+    pub values_column_index: usize,
+    /// Column index starting from zero.
+    pub group_values_column_index: usize,
 }
 
 struct ModeAndIdSequenceNumber {
@@ -207,11 +234,11 @@ struct AttributeInfoValidated {
     translations: Vec<Language>,
 }
 
-fn english_text_to_key(s: &str) -> String {
-    s.to_lowercase().replace(' ', "_")
-}
-
 impl AttributeInternal {
+    pub fn english_text_to_attribute_key(s: &str) -> String {
+        s.to_lowercase().replace(' ', "_")
+    }
+
     fn validate(&self) -> Result<AttributeInfoValidated, String> {
         fn handle_attribute_value(
             v: toml::Value,
@@ -238,7 +265,7 @@ impl AttributeInternal {
 
                     let key = match value.key {
                         Some(key) => key,
-                        None => english_text_to_key(&value.value),
+                        None => AttributeInternal::english_text_to_attribute_key(&value.value),
                     };
                     if all_keys.contains(&key) {
                         return Err(format!("Duplicate key {}", key));
@@ -268,7 +295,7 @@ impl AttributeInternal {
                 }
                 toml::Value::String(s) => {
                     let value = AttributeValue {
-                        key: english_text_to_key(&s),
+                        key: AttributeInternal::english_text_to_attribute_key(&s),
                         value: s,
                         id: id_state.increment_value()?,
                         order_number: order_number_state.increment_value()?,
