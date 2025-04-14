@@ -1,23 +1,37 @@
-use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{prelude::*, update};
 use error_stack::Result;
-use model::{
-    AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken,
-    PushNotificationStateInfo,
-};
+use model::{AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken, PushNotificationStateInfo};
 
-use crate::IntoDatabaseError;
+use crate::{define_current_read_commands, DieselDatabaseError, IntoDatabaseError};
 
-define_current_write_commands!(CurrentWriteChatPushNotifications);
+define_current_read_commands!(CurrentWriteCommonPushNotification);
 
-impl CurrentWriteChatPushNotifications<'_> {
+impl CurrentWriteCommonPushNotification<'_> {
+    pub fn remove_fcm_device_token_and_pending_notification_token(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::common_state::dsl::*;
+
+        update(common_state.find(id.as_db_id()))
+            .set((
+                fcm_device_token.eq(None::<FcmDeviceToken>),
+                fcm_notification_sent.eq(false),
+                pending_notification_token.eq(None::<PendingNotificationToken>),
+            ))
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
+    }
+
     pub fn remove_fcm_device_token(
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::chat_state::dsl::*;
+        use model::schema::common_state::dsl::*;
 
-        update(chat_state.find(id.as_db_id()))
+        update(common_state.find(id.as_db_id()))
             .set((
                 fcm_device_token.eq(None::<FcmDeviceToken>),
                 fcm_notification_sent.eq(false),
@@ -33,18 +47,18 @@ impl CurrentWriteChatPushNotifications<'_> {
         id: AccountIdInternal,
         token: FcmDeviceToken,
     ) -> Result<PendingNotificationToken, DieselDatabaseError> {
-        use model::schema::chat_state::dsl::*;
+        use model::schema::common_state::dsl::*;
 
         // Remove the token from other accounts. It is possible that
         // same device is used for multiple accounts.
-        update(chat_state.filter(fcm_device_token.eq(token.clone())))
+        update(common_state.filter(fcm_device_token.eq(token.clone())))
             .set(fcm_device_token.eq(None::<FcmDeviceToken>))
             .execute(self.conn())
             .into_db_error(())?;
 
         let notification_token = PendingNotificationToken::generate_new();
 
-        update(chat_state.find(id.as_db_id()))
+        update(common_state.find(id.as_db_id()))
             .set((
                 fcm_device_token.eq(token),
                 fcm_notification_sent.eq(false),
@@ -61,9 +75,9 @@ impl CurrentWriteChatPushNotifications<'_> {
         id: AccountIdInternal,
         fcm_notification_sent_value: bool,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::chat_state::dsl::*;
+        use model::schema::common_state::dsl::*;
 
-        update(chat_state.find(id.as_db_id()))
+        update(common_state.find(id.as_db_id()))
             .set(fcm_notification_sent.eq(fcm_notification_sent_value))
             .execute(self.conn())
             .into_db_error(id)?;
@@ -75,9 +89,9 @@ impl CurrentWriteChatPushNotifications<'_> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::chat_state::dsl::*;
+        use model::schema::common_state::dsl::*;
 
-        update(chat_state.find(id.as_db_id()))
+        update(common_state.find(id.as_db_id()))
             .set((pending_notification.eq(0), fcm_notification_sent.eq(false)))
             .execute(self.conn())
             .into_db_error(())?;
@@ -89,23 +103,23 @@ impl CurrentWriteChatPushNotifications<'_> {
         &mut self,
         token: PendingNotificationToken,
     ) -> Result<(AccountIdInternal, PendingNotification), DieselDatabaseError> {
-        use model::schema::{account_id, chat_state};
+        use model::schema::{account_id, common_state};
 
         let token_clone = token.clone();
-        let (id, notification) = chat_state::table
+        let (id, notification) = common_state::table
             .inner_join(account_id::table)
-            .filter(chat_state::pending_notification_token.eq(token_clone))
+            .filter(common_state::pending_notification_token.eq(token_clone))
             .select((
                 AccountIdInternal::as_select(),
-                chat_state::pending_notification,
+                common_state::pending_notification,
             ))
             .first(self.conn())
             .into_db_error(())?;
 
-        update(chat_state::table.filter(chat_state::pending_notification_token.eq(token)))
+        update(common_state::table.filter(common_state::pending_notification_token.eq(token)))
             .set((
-                chat_state::pending_notification.eq(0),
-                chat_state::fcm_notification_sent.eq(false),
+                common_state::pending_notification.eq(0),
+                common_state::fcm_notification_sent.eq(false),
             ))
             .execute(self.conn())
             .into_db_error(())?;
@@ -117,9 +131,9 @@ impl CurrentWriteChatPushNotifications<'_> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::chat_state::dsl::*;
+        use model::schema::common_state::dsl::*;
 
-        update(chat_state.find(id.as_db_id()))
+        update(common_state.find(id.as_db_id()))
             .set((fcm_notification_sent.eq(true),))
             .execute(self.conn())
             .into_db_error(())?;
@@ -132,9 +146,9 @@ impl CurrentWriteChatPushNotifications<'_> {
         id: AccountIdInternal,
         notification_to_be_added: PendingNotification,
     ) -> Result<PushNotificationStateInfo, DieselDatabaseError> {
-        use model::schema::chat_state::dsl::*;
+        use model::schema::common_state::dsl::*;
 
-        let notification: i64 = chat_state
+        let notification: i64 = common_state
             .filter(account_id.eq(id.as_db_id()))
             .select(pending_notification)
             .first(self.conn())
@@ -142,7 +156,7 @@ impl CurrentWriteChatPushNotifications<'_> {
 
         let new_notification_value = notification | *notification_to_be_added.as_i64();
 
-        let (token, notification_sent) = update(chat_state.find(id.as_db_id()))
+        let (token, notification_sent) = update(common_state.find(id.as_db_id()))
             .set((pending_notification.eq(new_notification_value),))
             .returning((fcm_device_token, fcm_notification_sent))
             .get_result(self.conn())

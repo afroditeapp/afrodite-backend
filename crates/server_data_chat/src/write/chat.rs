@@ -1,4 +1,3 @@
-mod push_notifications;
 mod report;
 
 use database_chat::current::{
@@ -19,16 +18,11 @@ use server_data::{
 };
 use simple_backend_utils::ContextExt;
 
-use self::push_notifications::WriteCommandsChatPushNotifications;
 use crate::{cache::CacheWriteChat, read::GetReadChatCommands};
 
 define_cmd_wrapper_write!(WriteCommandsChat);
 
 impl<'a> WriteCommandsChat<'a> {
-    pub fn push_notifications(self) -> WriteCommandsChatPushNotifications<'a> {
-        WriteCommandsChatPushNotifications::new(self.0)
-    }
-
     pub fn report(self) -> report::WriteCommandsChatReport<'a> {
         report::WriteCommandsChatReport::new(self.0)
     }

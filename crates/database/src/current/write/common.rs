@@ -10,6 +10,7 @@ mod state;
 mod token;
 mod report;
 mod client_config;
+mod push_notification;
 
 define_current_write_commands!(CurrentWriteCommon);
 
@@ -32,6 +33,10 @@ impl<'a> CurrentWriteCommon<'a> {
 
     pub fn client_config(self) -> client_config::CurrentWriteCommonClientConfig<'a> {
         client_config::CurrentWriteCommonClientConfig::new(self.cmds)
+    }
+
+    pub fn push_notification(self) -> push_notification::CurrentWriteCommonPushNotification<'a> {
+        push_notification::CurrentWriteCommonPushNotification::new(self.cmds)
     }
 }
 

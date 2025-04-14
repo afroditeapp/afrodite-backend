@@ -18,7 +18,15 @@ use crate::{
     DataError, IntoDataError,
 };
 
+mod push_notification;
+
 define_cmd_wrapper_write!(WriteCommandsCommon);
+
+impl WriteCommandsCommon<'_> {
+    pub fn push_notification(&mut self) -> push_notification::WriteCommandsCommonPushNotification {
+        push_notification::WriteCommandsCommonPushNotification::new(self.handle())
+    }
+}
 
 impl WriteCommandsCommon<'_> {
     /// Creates new event channel if address is Some.

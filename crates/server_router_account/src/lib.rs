@@ -42,7 +42,8 @@ pub fn create_common_server_router(state: StateForRouterCreation, ws_manager: We
                 }
             }),
         )
-        .with_state(state.s.clone());
+        .with_state(state.s.clone())
+        .merge(api::common::router_push_notification_public(state.clone()));
 
     public.merge(ConnectedApp::new(state).private_common_router())
 }

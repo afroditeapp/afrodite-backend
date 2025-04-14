@@ -24,8 +24,8 @@ pub async fn reset_pending_notification(
     if config.components().chat {
         write_handle
             .write(move |cmds| async move {
-                cmds.chat()
-                    .push_notifications()
+                cmds.common()
+                    .push_notification()
                     .reset_pending_notification(id)
                     .await
             })

@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 use model::{
-    FcmDeviceToken, MatchId, MatchesSyncVersion, MessageNumber, NewReceivedLikesCount, PendingNotification, PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikeId, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion
+    MatchId, MatchesSyncVersion, MessageNumber, NewReceivedLikesCount, PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikeId, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion
 };
 use model_server_data::LimitedActionStatus;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -31,9 +31,6 @@ pub struct ChatStateRaw {
     pub sent_blocks_sync_version: SentBlocksSyncVersion,
     pub sent_likes_sync_version: SentLikesSyncVersion,
     pub matches_sync_version: MatchesSyncVersion,
-    pub pending_notification: PendingNotification,
-    pub fcm_notification_sent: bool,
-    pub fcm_device_token: Option<FcmDeviceToken>,
     pub new_received_likes_count: NewReceivedLikesCount,
     pub next_received_like_id: ReceivedLikeId,
     pub received_like_id_at_received_likes_iterator_reset: Option<ReceivedLikeId>,

@@ -210,10 +210,6 @@ diesel::table! {
         sent_blocks_sync_version -> Integer,
         sent_likes_sync_version -> Integer,
         matches_sync_version -> Integer,
-        pending_notification -> Integer,
-        pending_notification_token -> Nullable<Text>,
-        fcm_notification_sent -> Bool,
-        fcm_device_token -> Nullable<Text>,
         new_received_likes_count -> Integer,
         next_received_like_id -> Integer,
         received_like_id_at_received_likes_iterator_reset -> Nullable<Integer>,
@@ -251,6 +247,10 @@ diesel::table! {
     common_state (account_id) {
         account_id -> Integer,
         client_config_sync_version -> Integer,
+        pending_notification -> Integer,
+        pending_notification_token -> Nullable<Text>,
+        fcm_notification_sent -> Bool,
+        fcm_device_token -> Nullable<Text>,
     }
 }
 

@@ -5,8 +5,7 @@ use server_api::{
     db_write_raw,
 };
 use server_common::push_notifications::{PushNotificationError, PushNotificationStateProvider};
-use server_data::read::GetReadCommandsCommon;
-use server_data_chat::write::GetWriteCommandsChat;
+use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use server_state::S;
 
 pub struct ServerPushNotificationStateProvider {
@@ -38,8 +37,8 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
         }
 
         let info = db_write_raw!(self.state, move |cmds| {
-            cmds.chat()
-                .push_notifications()
+            cmds.common()
+                .push_notification()
                 .get_push_notification_state_info_and_add_notification_value(
                     account_id,
                     flags.into(),
@@ -58,8 +57,8 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
         account_id: AccountIdInternal,
     ) -> error_stack::Result<(), PushNotificationError> {
         db_write_raw!(self.state, move |cmds| {
-            cmds.chat()
-                .push_notifications()
+            cmds.common()
+                .push_notification()
                 .enable_push_notification_sent_flag(account_id)
                 .await
         })
@@ -75,8 +74,8 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
         account_id: AccountIdInternal,
     ) -> error_stack::Result<(), PushNotificationError> {
         db_write_raw!(self.state, move |cmds| {
-            cmds.chat()
-                .push_notifications()
+            cmds.common()
+                .push_notification()
                 .remove_fcm_device_token(account_id)
                 .await
         })
@@ -116,8 +115,8 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
 
         for account_id in account_ids {
             db_write_raw!(self.state, move |cmds| {
-                cmds.chat()
-                    .push_notifications()
+                cmds.common()
+                    .push_notification()
                     .save_current_non_empty_notification_flags_from_cache_to_database(account_id)
                     .await
             })

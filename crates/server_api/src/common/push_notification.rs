@@ -2,9 +2,9 @@ use axum::{extract::State, Extension};
 use model::{
     AccountIdInternal, FcmDeviceToken, PendingNotificationToken, PendingNotificationWithData,
 };
-use server_api::{create_open_api_router, db_write_multiple, S};
-use server_data_chat::write::GetWriteCommandsChat;
+use crate::{create_open_api_router, db_write_multiple, S};
 use simple_backend::create_counters;
+use server_data::write::GetWriteCommandsCommon;
 
 use super::super::utils::{Json, StatusCode};
 use crate::app::WriteData;
@@ -14,7 +14,7 @@ use crate::app::WriteData;
 // TOOD(microservice): Most likely public ID will not be sent from account
 // to other servers.
 
-const PATH_POST_SET_DEVICE_TOKEN: &str = "/chat_api/set_device_token";
+const PATH_POST_SET_DEVICE_TOKEN: &str = "/common_api/set_device_token";
 
 #[utoipa::path(
     post,
@@ -32,11 +32,11 @@ pub async fn post_set_device_token(
     Extension(id): Extension<AccountIdInternal>,
     Json(device_token): Json<FcmDeviceToken>,
 ) -> Result<Json<PendingNotificationToken>, StatusCode> {
-    CHAT.post_set_device_token.incr();
+    COMMON.post_set_device_token.incr();
 
     let pending_notification_token = db_write_multiple!(state, move |cmds| {
-        cmds.chat()
-            .push_notifications()
+        cmds.common()
+            .push_notification()
             .set_device_token(id, device_token)
             .await
     })?;
@@ -44,7 +44,7 @@ pub async fn post_set_device_token(
     Ok(pending_notification_token.into())
 }
 
-const PATH_POST_GET_PENDING_NOTIFICATION: &str = "/chat_api/get_pending_notification";
+const PATH_POST_GET_PENDING_NOTIFICATION: &str = "/common_api/get_pending_notification";
 
 /// Get pending notification and reset pending notification.
 ///
@@ -63,11 +63,11 @@ pub async fn post_get_pending_notification(
     State(state): State<S>,
     Json(token): Json<PendingNotificationToken>,
 ) -> Json<PendingNotificationWithData> {
-    CHAT.post_get_pending_notification.incr();
+    COMMON.post_get_pending_notification.incr();
 
     let result = db_write_multiple!(state, move |cmds| {
-        cmds.chat()
-            .push_notifications()
+        cmds.common()
+            .push_notification()
             .get_and_reset_pending_notification_with_notification_token(token)
             .await
     });
@@ -89,9 +89,9 @@ create_open_api_router!(fn router_push_notification_private, post_set_device_tok
 create_open_api_router!(fn router_push_notification_public, post_get_pending_notification,);
 
 create_counters!(
-    ChatCounters,
-    CHAT,
-    CHAT_PUSH_NOTIFICATION_COUNTERS_LIST,
+    CommonCounters,
+    COMMON,
+    COMMON_PUSH_NOTIFICATION_COUNTERS_LIST,
     post_set_device_token,
     post_get_pending_notification,
 );

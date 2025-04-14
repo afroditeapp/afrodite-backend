@@ -17,17 +17,11 @@ use server_data::{
     DataError, IntoDataError,
 };
 
-use self::push_notifications::ReadCommandsChatPushNotifications;
-
-mod push_notifications;
 mod public_key;
 
 define_cmd_wrapper_read!(ReadCommandsChat);
 
 impl<'a> ReadCommandsChat<'a> {
-    pub fn push_notifications(self) -> ReadCommandsChatPushNotifications<'a> {
-        ReadCommandsChatPushNotifications::new(self.0)
-    }
     pub fn public_key(self) -> ReadCommandsChatPublicKey<'a> {
         ReadCommandsChatPublicKey::new(self.0)
     }

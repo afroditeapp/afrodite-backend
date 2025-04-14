@@ -178,6 +178,12 @@ CREATE TABLE IF NOT EXISTS common_state(
     account_id                         INTEGER PRIMARY KEY NOT NULL,
     -- Sync version for client config.
     client_config_sync_version         INTEGER             NOT NULL    DEFAULT 0,
+    -- Bitflag value for pending notification
+    pending_notification         INTEGER        NOT NULL DEFAULT 0,
+    -- Access token for getting pending notifications from server.
+    pending_notification_token   TEXT           UNIQUE,
+    fcm_notification_sent        BOOLEAN        NOT NULL DEFAULT 0,
+    fcm_device_token             TEXT           UNIQUE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -730,12 +736,6 @@ CREATE TABLE IF NOT EXISTS chat_state(
     sent_blocks_sync_version     INTEGER        NOT NULL DEFAULT 0,
     sent_likes_sync_version      INTEGER        NOT NULL DEFAULT 0,
     matches_sync_version         INTEGER        NOT NULL DEFAULT 0,
-    -- Bitflag value for pending notification
-    pending_notification         INTEGER        NOT NULL DEFAULT 0,
-    -- Access token for getting pending notifications from server.
-    pending_notification_token   TEXT           UNIQUE,
-    fcm_notification_sent        BOOLEAN        NOT NULL DEFAULT 0,
-    fcm_device_token             TEXT           UNIQUE,
     new_received_likes_count     INTEGER        NOT NULL DEFAULT 0,
     next_received_like_id        INTEGER        NOT NULL DEFAULT 0,
     received_like_id_at_received_likes_iterator_reset           INTEGER,

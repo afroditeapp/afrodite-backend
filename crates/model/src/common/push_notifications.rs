@@ -131,7 +131,7 @@ impl FcmDeviceToken {
 diesel_string_wrapper!(FcmDeviceToken);
 
 #[derive(Debug, Selectable, Queryable)]
-#[diesel(table_name = crate::schema::chat_state)]
+#[diesel(table_name = crate::schema::common_state)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct PendingNotificationTokenRaw {
     pub pending_notification_token: Option<PendingNotificationToken>,
@@ -203,4 +203,14 @@ pub struct PendingNotificationWithData {
     pub initial_content_moderation_completed: Option<InitialContentModerationCompletedResult>,
     /// Data for NEWS_CHANGED notification.
     pub news_changed: Option<UnreadNewsCountResult>,
+}
+
+#[derive(Debug, Clone, Default, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::common_state)]
+#[diesel(check_for_backend(crate::Db))]
+#[diesel(treat_none_as_null = true)]
+pub struct PushNotificationDbState {
+    pub pending_notification: PendingNotification,
+    pub fcm_notification_sent: bool,
+    pub fcm_device_token: Option<FcmDeviceToken>,
 }

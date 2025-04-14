@@ -92,4 +92,14 @@ impl ReadCommandsCommon<'_> {
             .await
             .into_error()
     }
+
+    pub async fn push_notification_already_sent(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<bool, DataError> {
+        self
+            .db_read(move |mut cmds| cmds.common().push_notification().push_notification_already_sent(id))
+            .await
+            .into_error()
+    }
 }

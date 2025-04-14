@@ -25,9 +25,6 @@ impl ConnectedApp {
             .merge(api::chat::message::router_message(self.state.clone()))
             .merge(api::chat::public_key::router_public_key(self.state.clone()))
             .merge(
-                api::chat::push_notifications::router_push_notification_private(self.state.clone()),
-            )
-            .merge(
                 api::chat::report::router_chat_report(self.state.clone()),
             )
             // Chat admin

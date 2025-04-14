@@ -23,7 +23,8 @@ pub async fn login_impl(id: AccountId, state: S) -> Result<LoginResult, StatusCo
     let account_clone = account.clone();
 
     db_write_multiple!(state, move |cmds| {
-        cmds.account_chat_utils()
+        cmds.common()
+            .push_notification()
             .remove_fcm_device_token_and_pending_notification_token(id)
             .await?;
         cmds.common()

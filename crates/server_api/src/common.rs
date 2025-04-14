@@ -43,6 +43,9 @@ use crate::{
 mod client_config;
 pub use client_config::*;
 
+mod push_notification;
+pub use push_notification::*;
+
 pub const PATH_GET_VERSION: &str = "/common_api/version";
 
 /// Get backend version.

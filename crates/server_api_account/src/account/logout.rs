@@ -2,7 +2,6 @@ use axum::{extract::State, Extension};
 use model::AccountIdInternal;
 use server_api::{create_open_api_router, db_write_multiple, S};
 use server_data::write::GetWriteCommandsCommon;
-use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
 
 use super::super::utils::StatusCode;
@@ -28,7 +27,8 @@ pub async fn post_logout(
 
     db_write_multiple!(state, move |cmds| {
         cmds.common().logout(account_id).await?;
-        cmds.account_chat_utils()
+        cmds.common()
+            .push_notification()
             .remove_fcm_device_token_and_pending_notification_token(account_id)
             .await
     })?;

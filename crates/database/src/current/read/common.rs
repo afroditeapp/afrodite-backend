@@ -12,6 +12,7 @@ mod state;
 mod token;
 mod report;
 mod client_config;
+mod push_notification;
 
 define_current_read_commands!(CurrentReadCommon);
 
@@ -34,6 +35,10 @@ impl<'a> CurrentReadCommon<'a> {
 
     pub fn client_config(self) -> client_config::CurrentReadCommonClientConfig<'a> {
         client_config::CurrentReadCommonClientConfig::new(self.cmds)
+    }
+
+    pub fn push_notification(self) -> push_notification::CurrentReadCommonPushNotification<'a> {
+        push_notification::CurrentReadCommonPushNotification::new(self.cmds)
     }
 }
 

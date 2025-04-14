@@ -30,6 +30,14 @@ impl ApiDoc {
         // Common
         let common = ApiDoc::openapi()
             .merge_from(server_api::common::router_client_config(state.clone()).into_openapi())
+            .merge_from(
+                server_api::common::router_push_notification_private(state.clone())
+                    .into_openapi(),
+            )
+            .merge_from(
+                server_api::common::router_push_notification_public(state.clone())
+                    .into_openapi(),
+            )
             .tag_routes("common");
         doc.merge(common);
         let common_admin = ApiDoc::openapi()
@@ -163,14 +171,6 @@ impl ApiDoc {
             .merge_from(server_api_chat::chat::router_match(state.clone()).into_openapi())
             .merge_from(server_api_chat::chat::router_message(state.clone()).into_openapi())
             .merge_from(server_api_chat::chat::router_public_key(state.clone()).into_openapi())
-            .merge_from(
-                server_api_chat::chat::router_push_notification_private(state.clone())
-                    .into_openapi(),
-            )
-            .merge_from(
-                server_api_chat::chat::router_push_notification_public(state.clone())
-                    .into_openapi(),
-            )
             .merge_from(
                 server_api_chat::chat::router_chat_report(state.clone())
                     .into_openapi(),
