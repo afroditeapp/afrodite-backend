@@ -10,9 +10,7 @@ use tokio::sync::mpsc::{self, error::TrySendError};
 use tracing::error;
 
 use crate::{
-    cache::DatabaseCache,
-    result::{Result, WrappedResultExt},
-    DataError,
+    cache::DatabaseCache, result::{Result, WrappedResultExt}, DataError
 };
 
 // TODO(prod): Automatic logout if no activity for some months
@@ -142,8 +140,12 @@ impl<'a> EventManagerWithCacheReference<'a> {
     pub async fn send_notification(
         &'a self,
         account: AccountIdInternal,
-        event: NotificationEvent,
+        event: Option<NotificationEvent>,
     ) -> Result<(), DataError> {
+        let Some(event) = event else {
+            return Ok(());
+        };
+
         self.cache
             .write_cache_common(account, move |entry| {
                 entry.pending_notification_flags |= event.into();
@@ -176,6 +178,11 @@ impl<'a> EventManagerWithCacheReference<'a> {
         Ok(())
     }
 
+    /// This does not have notification sending allowed check because
+    /// there was some lifetime issue when adding
+    /// sending_allowed: impl AsyncFn(AccountIdInternal) -> Option<NotificationEvent>
+    /// was tried. If the check is wanted in the future consider adding all
+    /// notification settings to cache.
     pub async fn send_low_priority_notification_to_logged_in_clients(
         &'a self,
         event: NotificationEvent,
@@ -242,14 +249,14 @@ impl<'a> EventManagerWithCacheReference<'a> {
         }
     }
 
-    pub async fn handle_chat_state_changes(&'a self, c: ChatStateChanges) -> Result<(), DataError> {
+    pub async fn handle_chat_state_changes(&'a self, c: &ChatStateChanges, likes: Option<NotificationEvent>) -> Result<(), DataError> {
         if c.received_blocks_sync_version.is_some() {
             self.send_connected_event(c.id, EventToClientInternal::ReceivedBlocksChanged)
                 .await?;
         }
-        if let Some(info) = c.received_likes_change {
+        if let Some(info) = &c.received_likes_change {
             if info.previous_count.c == 0 && info.current_count.c == 1 {
-                self.send_notification(c.id, NotificationEvent::ReceivedLikesChanged)
+                self.send_notification(c.id, likes)
                     .await?;
             } else {
                 self.send_connected_event(c.id, EventToClientInternal::ReceivedLikesChanged)

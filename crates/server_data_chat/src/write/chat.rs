@@ -1,4 +1,5 @@
 mod report;
+mod notification;
 
 use database_chat::current::{
     read::GetDbReadCommandsChat,
@@ -25,6 +26,9 @@ define_cmd_wrapper_write!(WriteCommandsChat);
 impl<'a> WriteCommandsChat<'a> {
     pub fn report(self) -> report::WriteCommandsChatReport<'a> {
         report::WriteCommandsChatReport::new(self.0)
+    }
+    pub fn notification(self) -> notification::WriteCommandsChatNotification<'a> {
+        notification::WriteCommandsChatNotification::new(self.0)
     }
 }
 

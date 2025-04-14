@@ -24,6 +24,9 @@ pub use report::*;
 mod client_features;
 pub use client_features::*;
 
+mod notification;
+pub use notification::*;
+
 // TODO(prod): Also add info what sign in with service is used?
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, PartialEq)]

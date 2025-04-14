@@ -22,6 +22,7 @@ pub mod email;
 pub mod news;
 pub mod report;
 pub mod client_features;
+pub mod notification;
 
 #[derive(Debug, Clone, Copy)]
 pub struct IncrementAdminAccessGrantedCount;
@@ -47,6 +48,10 @@ impl<'a> WriteCommandsAccount<'a> {
 
     pub fn client_featues(self) -> client_features::WriteCommandsAccountClientFeatures<'a> {
         client_features::WriteCommandsAccountClientFeatures::new(self.0)
+    }
+
+    pub fn notification(self) -> notification::WriteCommandsAccountNotification<'a> {
+        notification::WriteCommandsAccountNotification::new(self.0)
     }
 }
 

@@ -9,6 +9,7 @@ pub mod settings;
 pub mod state;
 pub mod report;
 pub mod client_features;
+pub mod notification;
 
 pub use ban::*;
 pub use delete::*;
@@ -21,3 +22,4 @@ pub use settings::*;
 pub use state::*;
 pub use report::*;
 pub use client_features::*;
+pub use notification::*;

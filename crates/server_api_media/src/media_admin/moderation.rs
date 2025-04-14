@@ -135,7 +135,7 @@ pub async fn post_moderate_profile_content(
                 cmds.events()
                     .send_notification(
                         content_id.content_owner(),
-                        NotificationEvent::InitialContentModerationCompleted,
+                        Some(NotificationEvent::InitialContentModerationCompleted),
                     )
                     .await?;
 
@@ -144,7 +144,7 @@ pub async fn post_moderate_profile_content(
                 cmds.events()
                     .send_notification(
                         content_id.content_owner(),
-                        NotificationEvent::InitialContentModerationCompleted,
+                        Some(NotificationEvent::InitialContentModerationCompleted),
                     )
                     .await?;
             }

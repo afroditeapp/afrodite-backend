@@ -11,6 +11,7 @@ mod news;
 mod sign_in_with;
 mod report;
 mod client_features;
+mod notification;
 
 impl<'a> CurrentReadAccount<'a> {
     pub fn ban(self) -> ban::CurrentReadAccountBan<'a> {
@@ -47,5 +48,9 @@ impl<'a> CurrentReadAccount<'a> {
 
     pub fn client_features(self) -> client_features::CurrentReadAccountClientFeatures<'a> {
         client_features::CurrentReadAccountClientFeatures::new(self.cmds)
+    }
+
+    pub fn notification(self) -> notification::CurrentReadAccountNotification<'a> {
+        notification::CurrentReadAccountNotification::new(self.cmds)
     }
 }

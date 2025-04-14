@@ -310,6 +310,15 @@ CREATE TABLE IF NOT EXISTS account_state(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS account_app_notification_settings(
+    account_id                         INTEGER PRIMARY KEY NOT NULL,
+    news                               BOOLEAN             NOT NULL,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 -- TODO(prod): Add custom report type 'NoValue'
 --             and remove the boolean value type as
 --             false values are not used.
@@ -874,6 +883,16 @@ CREATE TABLE IF NOT EXISTS chat_report_chat_message(
     chat_message             TEXT,
     FOREIGN KEY (report_id)
         REFERENCES common_report (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS chat_app_notification_settings(
+    account_id                         INTEGER PRIMARY KEY NOT NULL,
+    likes                              BOOLEAN             NOT NULL,
+    messages                           BOOLEAN             NOT NULL,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );

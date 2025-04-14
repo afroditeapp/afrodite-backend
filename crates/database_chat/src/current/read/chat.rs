@@ -11,6 +11,7 @@ use crate::IntoDatabaseError;
 mod interaction;
 mod message;
 mod public_key;
+mod notification;
 
 define_current_read_commands!(CurrentReadChat);
 
@@ -25,6 +26,10 @@ impl<'a> CurrentReadChat<'a> {
 
     pub fn public_key(self) -> public_key::CurrentReadChatPublicKey<'a> {
         public_key::CurrentReadChatPublicKey::new(self.cmds)
+    }
+
+    pub fn notification(self) -> notification::CurrentReadChatNotification<'a> {
+        notification::CurrentReadChatNotification::new(self.cmds)
     }
 }
 

@@ -61,6 +61,7 @@ impl ApiDoc {
             .merge_from(server_api_account::account::router_state(state.clone()).into_openapi())
             .merge_from(server_api_account::account::router_account_report(state.clone()).into_openapi())
             .merge_from(server_api_account::account::router_client_features(state.clone()).into_openapi())
+            .merge_from(server_api_account::account::router_notification(state.clone()).into_openapi())
             .tag_routes("account");
         doc.merge(account);
         let account_admin = ApiDoc::openapi()
@@ -173,6 +174,10 @@ impl ApiDoc {
             .merge_from(server_api_chat::chat::router_public_key(state.clone()).into_openapi())
             .merge_from(
                 server_api_chat::chat::router_chat_report(state.clone())
+                    .into_openapi(),
+            )
+            .merge_from(
+                server_api_chat::chat::router_notification(state.clone())
                     .into_openapi(),
             )
             .tag_routes("chat");

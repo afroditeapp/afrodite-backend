@@ -164,7 +164,7 @@ pub async fn put_profile_content(
                 cmds.events()
                     .send_notification(
                         api_caller_account_id,
-                        NotificationEvent::InitialContentModerationCompleted,
+                        Some(NotificationEvent::InitialContentModerationCompleted),
                     )
                     .await?;
             }
@@ -172,7 +172,7 @@ pub async fn put_profile_content(
                 cmds.events()
                     .send_notification(
                         api_caller_account_id,
-                        NotificationEvent::InitialContentModerationCompleted,
+                        Some(NotificationEvent::InitialContentModerationCompleted),
                     )
                     .await?;
             }

@@ -88,10 +88,16 @@ pub async fn post_send_like(
                 .like_or_match_profile(id, requested_profile)
                 .await?;
             cmds.events()
-                .handle_chat_state_changes(changes.sender)
+                .handle_chat_state_changes(
+                    &changes.sender,
+                    cmds.read().chat().notification().likes(changes.sender.id).await?,
+                )
                 .await?;
             cmds.events()
-                .handle_chat_state_changes(changes.receiver)
+                .handle_chat_state_changes(
+                    &changes.receiver,
+                    cmds.read().chat().notification().likes(changes.receiver.id).await?,
+                )
                 .await?;
         }
 
@@ -342,10 +348,16 @@ pub async fn delete_like(
 
         let changes = cmds.chat().delete_like(id, requested_profile).await?;
         cmds.events()
-            .handle_chat_state_changes(changes.sender)
+            .handle_chat_state_changes(
+                &changes.sender,
+                cmds.read().chat().notification().likes(changes.sender.id).await?,
+            )
             .await?;
         cmds.events()
-            .handle_chat_state_changes(changes.receiver)
+            .handle_chat_state_changes(
+                &changes.receiver,
+                cmds.read().chat().notification().likes(changes.receiver.id).await?,
+            )
             .await?;
 
         Ok(DeleteLikeResult::success())

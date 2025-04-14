@@ -5,7 +5,6 @@ use model_chat::{
     PendingMessageAndMessageData, ReceivedBlocksPage, ReceivedLikeId,
     SentBlocksPage, SentLikesPage, SentMessageId,
 };
-use public_key::ReadCommandsChatPublicKey;
 use server_data::{
     cache::{
         db_iterator::{new_count::DbIteratorStateNewCount, DbIteratorState},
@@ -18,12 +17,16 @@ use server_data::{
 };
 
 mod public_key;
+mod notification;
 
 define_cmd_wrapper_read!(ReadCommandsChat);
 
 impl<'a> ReadCommandsChat<'a> {
-    pub fn public_key(self) -> ReadCommandsChatPublicKey<'a> {
-        ReadCommandsChatPublicKey::new(self.0)
+    pub fn public_key(self) -> public_key::ReadCommandsChatPublicKey<'a> {
+        public_key::ReadCommandsChatPublicKey::new(self.0)
+    }
+    pub fn notification(self) -> notification::ReadCommandsChatNotification<'a> {
+        notification::ReadCommandsChatNotification::new(self.0)
     }
 }
 

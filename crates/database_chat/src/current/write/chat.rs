@@ -14,6 +14,7 @@ use crate::{current::read::GetDbReadCommandsChat, IntoDatabaseError};
 mod interaction;
 mod message;
 mod report;
+mod notification;
 
 define_current_write_commands!(CurrentWriteChat);
 
@@ -28,6 +29,10 @@ impl<'a> CurrentWriteChat<'a> {
 
     pub fn report(self) -> report::CurrentWriteChatReport<'a> {
         report::CurrentWriteChatReport::new(self.cmds)
+    }
+
+    pub fn notification(self) -> notification::CurrentWriteChatNotification<'a> {
+        notification::CurrentWriteChatNotification::new(self.cmds)
     }
 }
 

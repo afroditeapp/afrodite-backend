@@ -7,7 +7,7 @@ use axum_extra::TypedHeader;
 use headers::ContentType;
 use model_chat::{
     AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber,
-    NotificationEvent, PendingMessageAcknowledgementList, SendMessageResult,
+    PendingMessageAcknowledgementList, SendMessageResult,
     SendMessageToAccountParams, SentMessageIdList, UpdateMessageViewStatus,
 };
 use server_api::{app::ApiUsageTrackerProvider, create_open_api_router, S};
@@ -250,7 +250,10 @@ pub async fn post_send_message(
             match push_notification_allowed {
                 Some(PushNotificationAllowed) => cmds
                     .events()
-                    .send_notification(message_reciever, NotificationEvent::NewMessageReceived)
+                    .send_notification(
+                        message_reciever,
+                        cmds.read().chat().notification().messages(message_reciever).await?,
+                    )
                     .await
                     .ignore_and_log_error(),
                 None => cmds
