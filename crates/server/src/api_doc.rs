@@ -103,6 +103,7 @@ impl ApiDoc {
             )
             .merge_from(server_api_media::media::router_tile_map(state.clone()).into_openapi())
             .merge_from(server_api_media::media::router_media_report(state.clone()).into_openapi())
+            .merge_from(server_api_media::media::router_notification(state.clone()).into_openapi())
             .tag_routes("media");
         doc.merge(media);
         let media_admin = ApiDoc::openapi()

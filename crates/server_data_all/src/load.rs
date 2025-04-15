@@ -122,6 +122,10 @@ impl DbDataToCacheLoader {
                 .db_read(move |mut cmds| cmds.account().notification().app_notification_settings(account_id))
                 .await?;
             entry.common.app_notification_settings.account = account;
+            let media = db
+                .db_read(move |mut cmds| cmds.media().notification().app_notification_settings(account_id))
+                .await?;
+            entry.common.app_notification_settings.media = media;
             let chat = db
                 .db_read(move |mut cmds| cmds.chat().notification().app_notification_settings(account_id))
                 .await?;

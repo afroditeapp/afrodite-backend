@@ -14,6 +14,7 @@ use server_data::{
 use crate::cache::CacheWriteMedia;
 
 mod report;
+mod notification;
 
 pub enum InitialContentModerationResult {
     /// Profile visibility changed from pending to normal.
@@ -35,6 +36,9 @@ define_cmd_wrapper_write!(WriteCommandsMedia);
 impl<'a> WriteCommandsMedia<'a> {
     pub fn report(self) -> report::WriteCommandsMediaReport<'a> {
         report::WriteCommandsMediaReport::new(self.0)
+    }
+    pub fn notification(self) -> notification::WriteCommandsMediaNotification<'a> {
+        notification::WriteCommandsMediaNotification::new(self.0)
     }
 }
 

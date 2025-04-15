@@ -8,6 +8,7 @@ use crate::IntoDatabaseError;
 
 mod media_content;
 mod report;
+mod notification;
 
 define_current_write_commands!(CurrentWriteMedia);
 
@@ -19,6 +20,9 @@ impl<'a> CurrentWriteMedia<'a> {
     }
     pub fn report(self) -> report::CurrentWriteMediaReport<'a> {
         report::CurrentWriteMediaReport::new(self.cmds)
+    }
+    pub fn notification(self) -> notification::CurrentWriteMediaNotification<'a> {
+        notification::CurrentWriteMediaNotification::new(self.cmds)
     }
 }
 

@@ -13,7 +13,15 @@ use server_data::{
     read::DbRead,
 };
 
+mod notification;
+
 define_cmd_wrapper_read!(ReadCommandsMedia);
+
+impl<'a> ReadCommandsMedia<'a> {
+    pub fn notification(self) -> notification::ReadCommandsMediaNotification<'a> {
+        notification::ReadCommandsMediaNotification::new(self.0)
+    }
+}
 
 impl ReadCommandsMedia<'_> {
     pub async fn content_data(

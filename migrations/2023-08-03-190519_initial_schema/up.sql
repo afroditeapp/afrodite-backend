@@ -735,6 +735,15 @@ CREATE TABLE IF NOT EXISTS media_report_profile_content(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS media_app_notification_settings(
+    account_id                         INTEGER PRIMARY KEY NOT NULL,
+    media_content_moderation           BOOLEAN             NOT NULL,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 ---------- Tables for server component chat ----------
 
 -- State specific to chat component.
