@@ -1,6 +1,5 @@
-use database_account::current::read::GetDbReadCommandsAccount;
 use model_account::{AccountAppNotificationSettings, AccountIdInternal};
-use server_data::{define_cmd_wrapper_read, read::DbRead, result::Result, DataError};
+use server_data::{cache::CacheReadCommon, define_cmd_wrapper_read, result::Result, DataError, IntoDataError};
 
 define_cmd_wrapper_read!(ReadCommandsAccountNotification);
 
@@ -9,9 +8,8 @@ impl ReadCommandsAccountNotification<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<AccountAppNotificationSettings, DataError> {
-        let state = self
-            .db_read(move |mut cmds| cmds.account().notification().app_notification_settings(id))
-            .await?;
-        Ok(state)
+        self.read_cache_common(id, |entry| Ok(entry.app_notification_settings.account))
+            .await
+            .into_error()
     }
 }

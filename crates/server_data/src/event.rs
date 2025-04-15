@@ -140,11 +140,16 @@ impl<'a> EventManagerWithCacheReference<'a> {
     pub async fn send_notification(
         &'a self,
         account: AccountIdInternal,
-        event: Option<NotificationEvent>,
+        event: NotificationEvent,
     ) -> Result<(), DataError> {
-        let Some(event) = event else {
+        let allow_notification = self.cache
+            .read_cache_common(account, |entry| Ok(entry.app_notification_settings.get_setting(event)))
+            .await
+            .into_data_error(account)?;
+
+        if !allow_notification {
             return Ok(());
-        };
+        }
 
         self.cache
             .write_cache_common(account, move |entry| {
@@ -178,17 +183,16 @@ impl<'a> EventManagerWithCacheReference<'a> {
         Ok(())
     }
 
-    /// This does not have notification sending allowed check because
-    /// there was some lifetime issue when adding
-    /// sending_allowed: impl AsyncFn(AccountIdInternal) -> Option<NotificationEvent>
-    /// was tried. If the check is wanted in the future consider adding all
-    /// notification settings to cache.
     pub async fn send_low_priority_notification_to_logged_in_clients(
         &'a self,
         event: NotificationEvent,
     ) {
         self.cache
             .write_cache_common_for_logged_in_clients(|account_id, entry| {
+                if !entry.app_notification_settings.get_setting(event) {
+                    return;
+                }
+
                 entry.pending_notification_flags |= event.into();
                 let sent = if let Some(sender) = entry.connection_event_sender() {
                     match sender
@@ -249,14 +253,14 @@ impl<'a> EventManagerWithCacheReference<'a> {
         }
     }
 
-    pub async fn handle_chat_state_changes(&'a self, c: &ChatStateChanges, likes: Option<NotificationEvent>) -> Result<(), DataError> {
+    pub async fn handle_chat_state_changes(&'a self, c: &ChatStateChanges) -> Result<(), DataError> {
         if c.received_blocks_sync_version.is_some() {
             self.send_connected_event(c.id, EventToClientInternal::ReceivedBlocksChanged)
                 .await?;
         }
         if let Some(info) = &c.received_likes_change {
             if info.previous_count.c == 0 && info.current_count.c == 1 {
-                self.send_notification(c.id, likes)
+                self.send_notification(c.id, NotificationEvent::ReceivedLikesChanged)
                     .await?;
             } else {
                 self.send_connected_event(c.id, EventToClientInternal::ReceivedLikesChanged)

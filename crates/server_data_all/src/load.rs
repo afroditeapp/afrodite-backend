@@ -4,6 +4,8 @@ use config::Config;
 use database::{
     current::read::GetDbReadCommandsCommon, CurrentReadHandle, DbReaderRaw, DieselDatabaseError,
 };
+use database_account::current::read::GetDbReadCommandsAccount;
+use database_chat::current::read::GetDbReadCommandsChat;
 use database_media::current::read::GetDbReadCommandsMedia;
 use database_profile::current::read::GetDbReadCommandsProfile;
 use error_stack::{Result, ResultExt};
@@ -112,6 +114,18 @@ impl DbDataToCacheLoader {
         // Try retry sending of not already sent notifications
         if !push_notification_state.fcm_notification_sent {
             entry.common.pending_notification_flags = push_notification_state.pending_notification.into();
+        }
+
+        // App notification settings
+        {
+            let account = db
+                .db_read(move |mut cmds| cmds.account().notification().app_notification_settings(account_id))
+                .await?;
+            entry.common.app_notification_settings.account = account;
+            let chat = db
+                .db_read(move |mut cmds| cmds.chat().notification().app_notification_settings(account_id))
+                .await?;
+            entry.common.app_notification_settings.chat = chat;
         }
 
         if config.components().account {

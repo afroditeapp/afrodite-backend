@@ -5,6 +5,7 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use headers::ContentType;
+use model::NotificationEvent;
 use model_chat::{
     AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber,
     PendingMessageAcknowledgementList, SendMessageResult,
@@ -252,7 +253,7 @@ pub async fn post_send_message(
                     .events()
                     .send_notification(
                         message_reciever,
-                        cmds.read().chat().notification().messages(message_reciever).await?,
+                        NotificationEvent::NewMessageReceived,
                     )
                     .await
                     .ignore_and_log_error(),

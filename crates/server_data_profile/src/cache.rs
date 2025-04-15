@@ -1,7 +1,7 @@
 use error_stack::Result;
 use model_profile::AccountId;
 use server_data::{
-    cache::{profile::CachedProfile, CacheEntryCommon, CacheError},
+    cache::{profile::CachedProfile, common::CacheEntryCommon, CacheError},
     db_manager::{InternalReading, InternalWriting},
 };
 

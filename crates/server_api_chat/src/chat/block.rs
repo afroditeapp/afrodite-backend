@@ -36,16 +36,10 @@ pub async fn post_block_profile(
     db_write_multiple!(state, move |cmds| {
         let changes = cmds.chat().block_profile(id, requested_profile).await?;
         cmds.events()
-            .handle_chat_state_changes(
-                &changes.sender,
-                cmds.read().chat().notification().likes(changes.sender.id).await?,
-            )
+            .handle_chat_state_changes(&changes.sender)
             .await?;
         cmds.events()
-            .handle_chat_state_changes(
-                &changes.receiver,
-                cmds.read().chat().notification().likes(changes.receiver.id).await?,
-            )
+            .handle_chat_state_changes(&changes.receiver)
             .await?;
         Ok(())
     })?;
@@ -79,16 +73,10 @@ pub async fn post_unblock_profile(
     db_write_multiple!(state, move |cmds| {
         let changes = cmds.chat().delete_block(id, requested_profile).await?;
         cmds.events()
-            .handle_chat_state_changes(
-                &changes.sender,
-                cmds.read().chat().notification().likes(changes.sender.id).await?,
-            )
+            .handle_chat_state_changes(&changes.sender)
             .await?;
         cmds.events()
-            .handle_chat_state_changes(
-                &changes.receiver,
-                cmds.read().chat().notification().likes(changes.receiver.id).await?,
-            )
+            .handle_chat_state_changes(&changes.receiver)
             .await?;
         Ok(())
     })?;

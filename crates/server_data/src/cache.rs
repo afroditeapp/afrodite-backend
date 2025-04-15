@@ -2,10 +2,11 @@ use std::{collections::HashMap, fmt::Debug, net::SocketAddr, sync::Arc};
 
 use account::CachedAccountComponentData;
 use chat::CachedChatComponentData;
+use common::CacheEntryCommon;
 use error_stack::Result;
 use media::CachedMedia;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, OtherSharedState, PendingNotificationFlags, Permissions
+    AccessToken, AccountId, AccountIdInternal, AccountState, Permissions
 };
 use model_server_data::{LastSeenTime, LocationIndexKey, LocationIndexProfileData};
 use profile::CachedProfile;
@@ -23,6 +24,7 @@ pub mod chat;
 pub mod db_iterator;
 pub mod media;
 pub mod profile;
+pub mod common;
 
 /// If this exists update last seen time atomic variable in location
 /// index.
@@ -513,26 +515,6 @@ pub struct ConnectionInfo {
 }
 
 #[derive(Debug)]
-pub struct CacheEntryCommon {
-    pub permissions: Permissions,
-    pub account_state_related_shared_state: AccountStateRelatedSharedState,
-    pub other_shared_state: OtherSharedState,
-    pub current_connection: Option<ConnectionInfo>,
-    /// The cached pending notification flags indicates not yet handled
-    /// notification which PushNotificationManager will handle as soon as
-    /// possible.
-    pub pending_notification_flags: PendingNotificationFlags,
-}
-
-impl CacheEntryCommon {
-    pub fn connection_event_sender(&self) -> Option<&EventSender> {
-        self.current_connection
-            .as_ref()
-            .map(|info| &info.event_sender)
-    }
-}
-
-#[derive(Debug)]
 pub struct CacheEntry {
     pub account: Option<Box<CachedAccountComponentData>>,
     pub profile: Option<Box<CachedProfile>>,
@@ -548,13 +530,7 @@ impl CacheEntry {
             profile: None,
             media: None,
             chat: None,
-            common: CacheEntryCommon {
-                permissions: Permissions::default(),
-                account_state_related_shared_state: AccountStateRelatedSharedState::default(),
-                other_shared_state: OtherSharedState::default(),
-                current_connection: None,
-                pending_notification_flags: PendingNotificationFlags::empty(),
-            },
+            common: CacheEntryCommon::default(),
         }
     }
     // TODO(refactor): Add helper functions to get data related do features
