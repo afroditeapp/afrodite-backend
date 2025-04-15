@@ -18,12 +18,16 @@ use tracing::info;
 use crate::cache::{CacheReadProfile, CacheWriteProfile};
 
 pub mod report;
+mod notification;
 
 define_cmd_wrapper_write!(WriteCommandsProfile);
 
 impl<'a> WriteCommandsProfile<'a> {
     pub fn report(self) -> report::WriteCommandsProfileReport<'a> {
         report::WriteCommandsProfileReport::new(self.0)
+    }
+    pub fn notification(self) -> notification::WriteCommandsProfileNotification<'a> {
+        notification::WriteCommandsProfileNotification::new(self.0)
     }
 }
 

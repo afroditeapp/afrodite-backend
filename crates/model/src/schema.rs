@@ -606,6 +606,15 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    profile_app_notification_settings (account_id) {
+        account_id -> Integer,
+        profile_text_moderation -> Bool,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     profile_attributes (account_id, attribute_id) {
         account_id -> Integer,
         attribute_id -> Integer,
@@ -814,6 +823,7 @@ diesel::joinable!(media_state -> account_id (account_id));
 diesel::joinable!(news -> account_id (account_id_creator));
 diesel::joinable!(news_translations -> news (news_id));
 diesel::joinable!(profile -> account_id (account_id));
+diesel::joinable!(profile_app_notification_settings -> account_id (account_id));
 diesel::joinable!(profile_attributes -> account_id (account_id));
 diesel::joinable!(profile_attributes_number_list -> account_id (account_id));
 diesel::joinable!(profile_attributes_number_list_filters -> account_id (account_id));
@@ -879,6 +889,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     next_queue_number,
     pending_messages,
     profile,
+    profile_app_notification_settings,
     profile_attributes,
     profile_attributes_file_hash,
     profile_attributes_number_list,

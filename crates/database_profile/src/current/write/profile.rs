@@ -5,6 +5,7 @@ mod favorite;
 mod profile_name_allowlist;
 mod profile_text;
 mod report;
+mod notification;
 
 define_current_write_commands!(CurrentWriteProfile);
 
@@ -29,5 +30,9 @@ impl<'a> CurrentWriteProfile<'a> {
 
     pub fn report(self) -> report::CurrentWriteProfileReport<'a> {
         report::CurrentWriteProfileReport::new(self.cmds)
+    }
+
+    pub fn notification(self) -> notification::CurrentWriteProfileNotification<'a> {
+        notification::CurrentWriteProfileNotification::new(self.cmds)
     }
 }

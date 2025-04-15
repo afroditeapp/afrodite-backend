@@ -29,6 +29,7 @@ impl ConnectedApp {
             .merge(api::profile::router_favorite(self.state.clone()))
             .merge(api::profile::router_iterate_profiles(self.state.clone()))
             .merge(api::profile::router_statistics(self.state.clone()))
+            .merge(api::profile::router_notification(self.state.clone()))
             .merge(api::profile_admin::router_admin_statistics(
                 self.state.clone(),
             ))

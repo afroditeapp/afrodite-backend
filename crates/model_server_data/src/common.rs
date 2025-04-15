@@ -20,6 +20,21 @@ impl Default for AccountAppNotificationSettings {
 }
 
 #[derive(Debug, Clone, Copy, Queryable, Selectable, AsChangeset, Insertable, Deserialize, Serialize, ToSchema)]
+#[diesel(table_name = crate::schema::profile_app_notification_settings)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct ProfileAppNotificationSettings {
+    pub profile_text_moderation: bool,
+}
+
+impl Default for ProfileAppNotificationSettings {
+    fn default() -> Self {
+        Self {
+            profile_text_moderation: true,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Queryable, Selectable, AsChangeset, Insertable, Deserialize, Serialize, ToSchema)]
 #[diesel(table_name = crate::schema::media_app_notification_settings)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct MediaAppNotificationSettings {
@@ -54,6 +69,7 @@ impl Default for ChatAppNotificationSettings {
 #[derive(Debug, Default)]
 pub struct AppNotificationSettingsInternal {
     pub account: AccountAppNotificationSettings,
+    pub profile: ProfileAppNotificationSettings,
     pub media: MediaAppNotificationSettings,
     pub chat: ChatAppNotificationSettings,
 }

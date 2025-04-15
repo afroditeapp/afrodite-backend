@@ -4,6 +4,7 @@ mod data;
 mod favorite;
 mod profile_name_allowlist;
 mod report;
+mod notification;
 
 define_current_read_commands!(CurrentReadProfile);
 
@@ -21,5 +22,8 @@ impl<'a> CurrentReadProfile<'a> {
     }
     pub fn report(self) -> report::CurrentReadProfileReport<'a> {
         report::CurrentReadProfileReport::new(self.cmds)
+    }
+    pub fn notification(self) -> notification::CurrentReadProfileNotification<'a> {
+        notification::CurrentReadProfileNotification::new(self.cmds)
     }
 }

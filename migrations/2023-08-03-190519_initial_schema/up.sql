@@ -595,6 +595,15 @@ CREATE TABLE IF NOT EXISTS profile_report_profile_text(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS profile_app_notification_settings(
+    account_id                         INTEGER PRIMARY KEY NOT NULL,
+    profile_text_moderation            BOOLEAN             NOT NULL,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 ---------- Tables for server component media ----------
 
 -- State specific to media component.
