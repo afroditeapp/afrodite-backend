@@ -54,6 +54,6 @@ create_open_api_router!(
 create_counters!(
     MediaCounters,
     MEDIA,
-    MEDIA_REPORT_MEDIA_REPORT_COUNTERS_LIST,
+    MEDIA_REPORT_COUNTERS_LIST,
     post_profile_content_report,
 );
