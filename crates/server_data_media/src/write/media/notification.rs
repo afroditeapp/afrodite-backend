@@ -24,4 +24,18 @@ impl WriteCommandsMediaNotification<'_> {
             .await
             .into_error()
     }
+
+    pub async fn reset_notifications(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.media()
+                .notification()
+                .reset_notifications(id)?;
+            Ok(())
+        })?;
+
+        Ok(())
+    }
 }

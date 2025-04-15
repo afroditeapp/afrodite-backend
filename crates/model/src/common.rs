@@ -61,7 +61,7 @@ pub enum EventType {
     ClientConfigChanged,
     ProfileChanged,
     NewsCountChanged,
-    InitialContentModerationCompleted,
+    MediaContentModerationCompleted,
     MediaContentChanged,
     ScheduledMaintenanceStatus,
 }
@@ -120,7 +120,7 @@ pub enum EventToClientInternal {
     ClientConfigChanged,
     ProfileChanged,
     NewsChanged,
-    InitialContentModerationCompleted,
+    MediaContentModerationCompleted,
     MediaContentChanged,
     ScheduledMaintenanceStatus(ScheduledMaintenanceStatus),
 }
@@ -141,7 +141,7 @@ impl From<&EventToClientInternal> for EventType {
             ClientConfigChanged => Self::ClientConfigChanged,
             ProfileChanged => Self::ProfileChanged,
             NewsChanged => Self::NewsCountChanged,
-            InitialContentModerationCompleted => Self::InitialContentModerationCompleted,
+            MediaContentModerationCompleted => Self::MediaContentModerationCompleted,
             MediaContentChanged => Self::MediaContentChanged,
             ScheduledMaintenanceStatus(_) => Self::ScheduledMaintenanceStatus,
         }
@@ -173,7 +173,7 @@ impl From<EventToClientInternal> for EventToClient {
             | ClientConfigChanged
             | ProfileChanged
             | NewsChanged
-            | InitialContentModerationCompleted
+            | MediaContentModerationCompleted
             | MediaContentChanged => (),
         }
 
@@ -185,7 +185,7 @@ impl From<EventToClientInternal> for EventToClient {
 pub enum NotificationEvent {
     NewMessageReceived,
     ReceivedLikesChanged,
-    InitialContentModerationCompleted,
+    MediaContentModerationCompleted,
     NewsChanged,
 }
 
@@ -194,9 +194,8 @@ impl From<NotificationEvent> for EventToClientInternal {
         match event {
             NotificationEvent::NewMessageReceived => EventToClientInternal::NewMessageReceived,
             NotificationEvent::ReceivedLikesChanged => EventToClientInternal::ReceivedLikesChanged,
-            NotificationEvent::InitialContentModerationCompleted => {
-                EventToClientInternal::InitialContentModerationCompleted
-            }
+            NotificationEvent::MediaContentModerationCompleted =>
+                EventToClientInternal::MediaContentModerationCompleted,
             NotificationEvent::NewsChanged => EventToClientInternal::NewsChanged,
         }
     }

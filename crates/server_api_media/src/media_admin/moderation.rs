@@ -2,8 +2,9 @@ use axum::{
     extract::{Query, State},
     Extension,
 };
+use model::NotificationEvent;
 use model_media::{
-    AccountIdInternal, EventToClientInternal, GetProfileContentPendingModerationList, GetProfileContentPendingModerationParams, NotificationEvent, Permissions, PostModerateProfileContent
+    AccountIdInternal, EventToClientInternal, GetProfileContentPendingModerationList, GetProfileContentPendingModerationParams, Permissions, PostModerateProfileContent
 };
 use server_api::{app::{GetAccounts, GetConfig}, create_open_api_router, S};
 use server_data_media::{read::GetReadMediaCommands, write::{media::InitialContentModerationResult, media_admin::content::ContentModerationMode, GetWriteCommandsMedia}};
@@ -132,22 +133,8 @@ pub async fn post_moderate_profile_content(
                         )
                         .await?;
                 }
-                cmds.events()
-                    .send_notification(
-                        content_id.content_owner(),
-                        NotificationEvent::InitialContentModerationCompleted,
-                    )
-                    .await?;
-
             }
-            InitialContentModerationResult::AllModeratedAndNotAccepted => {
-                cmds.events()
-                    .send_notification(
-                        content_id.content_owner(),
-                        NotificationEvent::InitialContentModerationCompleted,
-                    )
-                    .await?;
-            }
+            InitialContentModerationResult::AllModeratedAndNotAccepted |
             InitialContentModerationResult::NoChange => (),
         }
 
@@ -157,6 +144,33 @@ pub async fn post_moderate_profile_content(
                 EventToClientInternal::MediaContentChanged,
             )
             .await?;
+
+        if !data.move_to_human.unwrap_or_default() {
+            // Accepted or rejected
+
+            if data.accept {
+                cmds.media_admin()
+                    .notification()
+                    .show_media_content_accepted_notification(
+                        content_id.content_owner(),
+                    )
+                    .await?;
+            } else {
+                cmds.media_admin()
+                    .notification()
+                    .show_media_content_rejected_notification(
+                        content_id.content_owner(),
+                    )
+                    .await?;
+            }
+
+            cmds.events()
+                .send_notification(
+                    content_id.content_owner(),
+                    NotificationEvent::MediaContentModerationCompleted,
+                )
+                .await?;
+        }
 
         Ok(())
     })?;

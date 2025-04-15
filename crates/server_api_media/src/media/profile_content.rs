@@ -2,13 +2,13 @@ use axum::{
     extract::{Path, Query, State},
     Extension,
 };
-use model::{EventToClientInternal, InitialContentModerationCompletedResult, NotificationEvent, PendingNotificationFlags};
+use model::EventToClientInternal;
 use model_media::{
     AccountId, AccountIdInternal, AccountState,
     GetProfileContentQueryParams, GetProfileContentResult,
     Permissions, ProfileContent, SetProfileContent,
 };
-use server_api::{app::{ApiUsageTrackerProvider, EventManagerProvider, GetConfig}, create_open_api_router, db_write_multiple, S};
+use server_api::{app::{ApiUsageTrackerProvider, GetConfig}, create_open_api_router, db_write_multiple, S};
 use server_data::read::GetReadCommandsCommon;
 use server_data_media::{read::GetReadMediaCommands, write::{media::InitialContentModerationResult, GetWriteCommandsMedia}};
 use simple_backend::create_counters;
@@ -161,21 +161,8 @@ pub async fn put_profile_content(
                         )
                         .await?;
                 }
-                cmds.events()
-                    .send_notification(
-                        api_caller_account_id,
-                        NotificationEvent::InitialContentModerationCompleted,
-                    )
-                    .await?;
             }
-            InitialContentModerationResult::AllModeratedAndNotAccepted => {
-                cmds.events()
-                    .send_notification(
-                        api_caller_account_id,
-                        NotificationEvent::InitialContentModerationCompleted,
-                    )
-                    .await?;
-            }
+            InitialContentModerationResult::AllModeratedAndNotAccepted |
             InitialContentModerationResult::NoChange => (),
         }
 
@@ -188,46 +175,11 @@ pub async fn put_profile_content(
     Ok(())
 }
 
-const PATH_POST_GET_INITIAL_CONTENT_MODERATION_COMPLETED_RESULT: &str = "/media_api/initial_content_moderation_completed_result";
-
-/// Get initial content moderation completed result.
-///
-#[utoipa::path(
-    post,
-    path = PATH_POST_GET_INITIAL_CONTENT_MODERATION_COMPLETED_RESULT,
-    responses(
-        (status = 200, description = "Successfull.", body = InitialContentModerationCompletedResult),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn post_get_initial_content_moderation_completed(
-    State(state): State<S>,
-    Extension(account_id): Extension<AccountIdInternal>,
-) -> Result<Json<InitialContentModerationCompletedResult>, StatusCode> {
-    MEDIA.post_get_initial_content_moderation_completed.incr();
-
-    let accepted = state.read().media().profile_content_moderated_as_accepted(account_id).await?;
-
-    let request = InitialContentModerationCompletedResult { accepted };
-
-    state
-        .event_manager()
-        .remove_specific_pending_notification_flags_from_cache(
-            account_id,
-            PendingNotificationFlags::INITIAL_CONTENT_MODERATION_COMPLETED,
-        )
-        .await;
-
-    Ok(request.into())
-}
 
 create_open_api_router!(
         fn router_profile_content,
         get_profile_content_info,
         put_profile_content,
-        post_get_initial_content_moderation_completed,
 );
 
 create_counters!(
@@ -236,5 +188,4 @@ create_counters!(
     MEDIA_PROFILE_CONTENT_COUNTERS_LIST,
     get_profile_content_info,
     put_profile_content,
-    post_get_initial_content_moderation_completed,
 );

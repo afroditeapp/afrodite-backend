@@ -1,6 +1,7 @@
 use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
+use model::MediaContentModerationCompletedResult;
 use model_media::{AccountIdInternal, MediaAppNotificationSettings};
 
 use crate::IntoDatabaseError;
@@ -17,6 +18,22 @@ impl CurrentReadMediaNotification<'_> {
         let query_result = media_app_notification_settings
             .filter(account_id.eq(account_id_value.as_db_id()))
             .select(MediaAppNotificationSettings::as_select())
+            .first(self.conn())
+            .optional()
+            .into_db_error(())?;
+
+        Ok(query_result.unwrap_or_default())
+    }
+
+    pub fn media_content_moderation_completed(
+        &mut self,
+        account_id_value: AccountIdInternal,
+    ) -> Result<MediaContentModerationCompletedResult, DieselDatabaseError> {
+        use crate::schema::media_app_notification_state::dsl::*;
+
+        let query_result = media_app_notification_state
+            .filter(account_id.eq(account_id_value.as_db_id()))
+            .select(MediaContentModerationCompletedResult::as_select())
             .first(self.conn())
             .optional()
             .into_db_error(())?;

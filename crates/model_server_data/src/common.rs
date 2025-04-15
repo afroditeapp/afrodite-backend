@@ -80,7 +80,7 @@ impl AppNotificationSettingsInternal {
             NotificationEvent::NewsChanged => self.account.news,
             NotificationEvent::ReceivedLikesChanged => self.chat.likes,
             NotificationEvent::NewMessageReceived => self.chat.messages,
-            NotificationEvent::InitialContentModerationCompleted => true,
+            NotificationEvent::MediaContentModerationCompleted => self.media.media_content_moderation,
         }
     }
 }

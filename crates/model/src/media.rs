@@ -1,6 +1,5 @@
 use diesel::{
-    sql_types::Binary,
-    AsExpression, FromSqlRow,
+    prelude::{AsChangeset, Insertable, Queryable, Selectable}, sql_types::Binary, AsExpression, FromSqlRow
 };
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_try_from, diesel_uuid_wrapper, diesel_i64_wrapper};
@@ -282,7 +281,12 @@ impl ProfileContentVersion {
 
 diesel_uuid_wrapper!(ProfileContentVersion);
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct InitialContentModerationCompletedResult {
-    pub accepted: bool,
+#[derive(Debug, Clone, Copy, Default, Queryable, Selectable, AsChangeset, Insertable, Deserialize, Serialize, ToSchema)]
+#[diesel(table_name = crate::schema::media_app_notification_state)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct MediaContentModerationCompletedResult {
+    /// Show accepted notification
+    pub media_content_accepted: bool,
+    /// Show rejected notification
+    pub media_content_rejected: bool,
 }

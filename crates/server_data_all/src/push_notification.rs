@@ -1,5 +1,5 @@
 use model::{
-    AccountIdInternal, InitialContentModerationCompletedResult, NewReceivedLikesCountResult, PendingNotification, PendingNotificationFlags, PendingNotificationWithData
+    AccountIdInternal, NewReceivedLikesCountResult, PendingNotification, PendingNotificationFlags, PendingNotificationWithData
 };
 use server_data::db_manager::RouterDatabaseReadHandle;
 use server_data_account::read::GetReadCommandsAccount;
@@ -36,15 +36,13 @@ pub async fn get_push_notification_data(
         None
     };
 
-    let initial_content_accepted = if flags.contains(PendingNotificationFlags::INITIAL_CONTENT_MODERATION_COMPLETED) {
+    let media_content_moderation_completed = if flags.contains(PendingNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED) {
         read_handle
             .media()
-            .profile_content_moderated_as_accepted(id)
+            .notification()
+            .media_content_moderation_completed(id)
             .await
             .ok()
-            .map(|accepted| InitialContentModerationCompletedResult {
-                accepted
-            })
     } else {
         None
     };
@@ -64,7 +62,7 @@ pub async fn get_push_notification_data(
         value: notification_value,
         new_message_received_from: sender_info,
         received_likes_changed: received_likes_info,
-        initial_content_moderation_completed: initial_content_accepted,
+        media_content_moderation_completed,
         news_changed: unread_news_count,
     }
 }

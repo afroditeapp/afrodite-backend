@@ -1,11 +1,12 @@
 use axum::{
     extract::State, Extension
 };
+use model::{MediaContentModerationCompletedResult, PendingNotificationFlags};
 use model_media::{
     AccountIdInternal, MediaAppNotificationSettings
 };
 use server_api::{
-    app::WriteData, create_open_api_router, db_write_multiple, S
+    app::{EventManagerProvider, WriteData}, create_open_api_router, db_write_multiple, S
 };
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
@@ -66,7 +67,45 @@ async fn post_media_app_notification_settings(
     Ok(())
 }
 
-create_open_api_router!(fn router_notification, get_media_app_notification_settings, post_media_app_notification_settings,);
+
+const PATH_POST_GET_MEDIA_CONTENT_MODERATION_COMPLETED_RESULT: &str = "/media_api/media_content_moderation_completed_result";
+
+/// Get media content moderation completed result.
+///
+#[utoipa::path(
+    post,
+    path = PATH_POST_GET_MEDIA_CONTENT_MODERATION_COMPLETED_RESULT,
+    responses(
+        (status = 200, description = "Successfull.", body = MediaContentModerationCompletedResult),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_get_media_content_moderation_completed(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+) -> Result<Json<MediaContentModerationCompletedResult>, StatusCode> {
+    MEDIA.post_get_media_content_moderation_completed.incr();
+
+    let info = state.read().media().notification().media_content_moderation_completed(account_id).await?;
+
+    db_write_multiple!(state, move |cmds| {
+        cmds.media().notification().reset_notifications(account_id).await
+    })?;
+
+    state
+        .event_manager()
+        .remove_specific_pending_notification_flags_from_cache(
+            account_id,
+            PendingNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED,
+        )
+        .await;
+
+    Ok(info.into())
+}
+
+create_open_api_router!(fn router_notification, get_media_app_notification_settings, post_media_app_notification_settings, post_get_media_content_moderation_completed,);
 
 create_counters!(
     MediaCounters,
@@ -74,4 +113,5 @@ create_counters!(
     MEDIA_NOTIFICATION_COUNTERS_LIST,
     get_media_app_notification_settings,
     post_media_app_notification_settings,
+    post_get_media_content_moderation_completed,
 );
