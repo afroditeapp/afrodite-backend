@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, Query, State},
     Extension,
 };
-use model::AccountId;
+use model::{AccountId, NotificationEvent};
 use model_profile::{
     AccountIdInternal, EventToClientInternal, GetProfileTextPendingModerationList, GetProfileTextPendingModerationParams, GetProfileTextState, Permissions, PostModerateProfileText
 };
@@ -120,6 +120,33 @@ pub async fn post_moderate_profile_text(
         cmds.events()
             .send_connected_event(text_owner_id, EventToClientInternal::ProfileChanged)
             .await?;
+
+        if !data.move_to_human.unwrap_or_default() {
+            // Accepted or rejected
+
+            if data.accept {
+                cmds.profile_admin()
+                    .notification()
+                    .show_profile_text_accepted_notification(
+                        text_owner_id,
+                    )
+                    .await?;
+            } else {
+                cmds.profile_admin()
+                    .notification()
+                    .show_profile_text_rejected_notification(
+                        text_owner_id,
+                    )
+                    .await?;
+            }
+
+            cmds.events()
+                .send_notification(
+                    text_owner_id,
+                    NotificationEvent::ProfileTextModerationCompleted,
+                )
+                .await?;
+        }
 
         Ok(())
     })?;

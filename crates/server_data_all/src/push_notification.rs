@@ -5,6 +5,7 @@ use server_data::db_manager::RouterDatabaseReadHandle;
 use server_data_account::read::GetReadCommandsAccount;
 use server_data_chat::read::GetReadChatCommands;
 use server_data_media::read::GetReadMediaCommands;
+use server_data_profile::read::GetReadProfileCommands;
 
 pub async fn get_push_notification_data(
     read_handle: &RouterDatabaseReadHandle,
@@ -58,11 +59,23 @@ pub async fn get_push_notification_data(
         None
     };
 
+    let profile_text_moderation_completed = if flags.contains(PendingNotificationFlags::PROFILE_TEXT_MODERATION_COMPLETED) {
+        read_handle
+            .profile()
+            .notification()
+            .profile_text_moderation_completed(id)
+            .await
+            .ok()
+    } else {
+        None
+    };
+
     PendingNotificationWithData {
         value: notification_value,
         new_message_received_from: sender_info,
         received_likes_changed: received_likes_info,
         media_content_moderation_completed,
         news_changed: unread_news_count,
+        profile_text_moderation_completed,
     }
 }

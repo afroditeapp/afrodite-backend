@@ -74,3 +74,30 @@ impl From<ProfileAge> for i64 {
 }
 
 diesel_i64_struct_try_from!(ProfileAge);
+
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
+pub struct ProfileTextModerationCompletedNotification {
+    /// Wrapping notification ID
+    pub accepted: i8,
+    /// Wrapping notification ID
+    pub accepted_viewed: i8,
+    /// Wrapping notification ID
+    pub rejected: i8,
+    /// Wrapping notification ID
+    pub rejected_viewed: i8,
+}
+
+impl ProfileTextModerationCompletedNotification {
+    pub fn notifications_viewed(&self) -> bool {
+        self.accepted == self.accepted_viewed &&
+            self.rejected == self.rejected_viewed
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
+pub struct ProfileTextModerationCompletedNotificationViewed {
+    /// Wrapping notification ID
+    pub accepted: i8,
+    /// Wrapping notification ID
+    pub rejected: i8,
+}

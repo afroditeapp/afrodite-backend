@@ -36,13 +36,26 @@ pub async fn reset_pending_notification(
     Ok(())
 }
 
-pub async fn send_new_messages_and_server_maintenance_events_if_needed(
+pub async fn send_events_if_needed(
     config: &Config,
     read_handle: &RouterDatabaseReadHandle,
     manager_api_client: &ManagerApiClient,
     socket: &mut WebSocket,
     id: AccountIdInternal,
 ) -> Result<(), WebSocketError> {
+    if config.components().profile {
+        let notification = read_handle
+            .profile()
+            .notification()
+            .profile_text_moderation_completed(id)
+            .await
+            .change_context(WebSocketError::DatabaseProfileTextModerationCompletedNotificationQuery)?;
+
+        if !notification.notifications_viewed() {
+            send_event(socket, EventToClientInternal::ProfileTextModerationCompleted).await?;
+        }
+    }
+
     if config.components().chat {
         let pending_messages = read_handle
             .chat()

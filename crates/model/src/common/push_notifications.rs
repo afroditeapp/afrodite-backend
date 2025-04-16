@@ -6,7 +6,7 @@ use utils::random_bytes::random_128_bits;
 use utoipa::ToSchema;
 
 use crate::{
-    schema_sqlite_types::{Integer, Text}, AccountId, MediaContentModerationCompletedResult, NewReceivedLikesCountResult, NotificationEvent, UnreadNewsCountResult
+    schema_sqlite_types::{Integer, Text}, AccountId, MediaContentModerationCompletedResult, NewReceivedLikesCountResult, NotificationEvent, ProfileTextModerationCompletedNotification, UnreadNewsCountResult
 };
 
 /// Pending notification (or multiple notifications which each have
@@ -58,6 +58,7 @@ bitflags::bitflags! {
         const RECEIVED_LIKES_CHANGED = 0x2;
         const MEDIA_CONTENT_MODERATION_COMPLETED = 0x4;
         const NEWS_CHANGED = 0x8;
+        const PROFILE_TEXT_MODERATION_COMPLETED = 0x10;
     }
 }
 
@@ -75,6 +76,7 @@ impl From<NotificationEvent> for PendingNotificationFlags {
             NotificationEvent::MediaContentModerationCompleted =>
                 Self::MEDIA_CONTENT_MODERATION_COMPLETED,
             NotificationEvent::NewsChanged => Self::NEWS_CHANGED,
+            NotificationEvent::ProfileTextModerationCompleted => Self::PROFILE_TEXT_MODERATION_COMPLETED,
         }
     }
 }
@@ -202,6 +204,8 @@ pub struct PendingNotificationWithData {
     pub media_content_moderation_completed: Option<MediaContentModerationCompletedResult>,
     /// Data for NEWS_CHANGED notification.
     pub news_changed: Option<UnreadNewsCountResult>,
+    /// Data for PROFILE_TEXT_MODERATION_COMPLETED notification.
+    pub profile_text_moderation_completed: Option<ProfileTextModerationCompletedNotification>,
 }
 
 #[derive(Debug, Clone, Default, Queryable, Selectable)]

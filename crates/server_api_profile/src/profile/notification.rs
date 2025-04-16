@@ -1,11 +1,12 @@
 use axum::{
     extract::State, Extension
 };
+use model::{PendingNotificationFlags, ProfileTextModerationCompletedNotification, ProfileTextModerationCompletedNotificationViewed};
 use model_profile::{
     AccountIdInternal, ProfileAppNotificationSettings
 };
 use server_api::{
-    app::WriteData, create_open_api_router, db_write_multiple, S
+    app::{EventManagerProvider, WriteData}, create_open_api_router, db_write_multiple, S
 };
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -66,7 +67,70 @@ async fn post_profile_app_notification_settings(
     Ok(())
 }
 
-create_open_api_router!(fn router_notification, get_profile_app_notification_settings, post_profile_app_notification_settings,);
+
+const PATH_POST_GET_PROFILE_TEXT_MODERATION_COMPLETED_NOTIFICATION: &str = "/profile_api/profile_text_moderation_completed_notification";
+
+/// Get profile text moderation completed notification.
+///
+#[utoipa::path(
+    post,
+    path = PATH_POST_GET_PROFILE_TEXT_MODERATION_COMPLETED_NOTIFICATION,
+    responses(
+        (status = 200, description = "Successfull.", body = ProfileTextModerationCompletedNotification),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_get_profile_text_moderation_completed_notification(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+) -> Result<Json<ProfileTextModerationCompletedNotification>, StatusCode> {
+    PROFILE.post_get_profile_text_moderation_completed_notification.incr();
+
+    let info = state.read().profile().notification().profile_text_moderation_completed(account_id).await?;
+
+    state
+        .event_manager()
+        .remove_specific_pending_notification_flags_from_cache(
+            account_id,
+            PendingNotificationFlags::PROFILE_TEXT_MODERATION_COMPLETED,
+        )
+        .await;
+
+    Ok(info.into())
+}
+
+const PATH_POST_MARK_PROFILE_TEXT_MODERATION_COMPLETED_NOTIFICATION_VIEWED: &str = "/profile_api/mark_profile_text_moderation_completed_notification_viewed";
+
+/// The viewed values must be updated to prevent WebSocket code from sending
+/// unnecessary event about new notification.
+#[utoipa::path(
+    post,
+    path = PATH_POST_MARK_PROFILE_TEXT_MODERATION_COMPLETED_NOTIFICATION_VIEWED,
+    request_body = ProfileTextModerationCompletedNotificationViewed,
+    responses(
+        (status = 200, description = "Successfull."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_mark_profile_text_moderation_completed_notification_viewed(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+    Json(viewed): Json<ProfileTextModerationCompletedNotificationViewed>,
+) -> Result<(), StatusCode> {
+    PROFILE.post_mark_profile_text_moderation_completed_notification_viewed.incr();
+
+    db_write_multiple!(state, move |cmds| {
+        cmds.profile().notification().update_notification_viewed_values(account_id, viewed).await
+    })?;
+
+    Ok(())
+}
+
+create_open_api_router!(fn router_notification, get_profile_app_notification_settings, post_profile_app_notification_settings, post_get_profile_text_moderation_completed_notification, post_mark_profile_text_moderation_completed_notification_viewed, );
 
 create_counters!(
     ProfileCounters,
@@ -74,4 +138,6 @@ create_counters!(
     PROFILE_NOTIFICATION_COUNTERS_LIST,
     get_profile_app_notification_settings,
     post_profile_app_notification_settings,
+    post_get_profile_text_moderation_completed_notification,
+    post_mark_profile_text_moderation_completed_notification_viewed,
 );

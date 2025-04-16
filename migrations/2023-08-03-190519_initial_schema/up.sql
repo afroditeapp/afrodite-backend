@@ -604,6 +604,18 @@ CREATE TABLE IF NOT EXISTS profile_app_notification_settings(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS profile_app_notification_state(
+    account_id                         INTEGER PRIMARY KEY NOT NULL,
+    profile_text_accepted              INTEGER             NOT NULL DEFAULT 0,
+    profile_text_accepted_viewed       INTEGER             NOT NULL DEFAULT 0,
+    profile_text_rejected              INTEGER             NOT NULL DEFAULT 0,
+    profile_text_rejected_viewed       INTEGER             NOT NULL DEFAULT 0,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 ---------- Tables for server component media ----------
 
 -- State specific to media component.

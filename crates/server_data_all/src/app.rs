@@ -93,7 +93,7 @@ impl DataAllUtils for DataAllUtilsImpl {
                 sync_versions,
             )
             .await?;
-            crate::websocket::send_new_messages_and_server_maintenance_events_if_needed(
+            crate::websocket::send_events_if_needed(
                 config,
                 read_handle,
                 manager_api,

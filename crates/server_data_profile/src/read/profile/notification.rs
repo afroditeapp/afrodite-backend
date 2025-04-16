@@ -1,5 +1,8 @@
+use database_profile::current::read::GetDbReadCommandsProfile;
 use model_profile::AccountIdInternal;
 use model_profile::ProfileAppNotificationSettings;
+use model_profile::ProfileTextModerationCompletedNotification;
+use server_data::read::DbRead;
 use server_data::{cache::CacheReadCommon, define_cmd_wrapper_read, result::Result, DataError, IntoDataError};
 
 define_cmd_wrapper_read!(ReadCommandsProfileNotification);
@@ -12,5 +15,20 @@ impl ReadCommandsProfileNotification<'_> {
         self.read_cache_common(id, |entry| Ok(entry.app_notification_settings.profile))
             .await
             .into_error()
+    }
+
+    pub async fn profile_text_moderation_completed(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> Result<ProfileTextModerationCompletedNotification, DataError> {
+        let info = self.db_read(move |mut cmds| {
+            cmds.profile()
+                .notification()
+                .profile_text_moderation_completed(account_id)
+        })
+        .await
+        .into_error()?;
+
+        Ok(info)
     }
 }
