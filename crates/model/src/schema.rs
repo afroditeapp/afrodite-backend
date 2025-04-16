@@ -499,8 +499,10 @@ diesel::table! {
 
     media_app_notification_state (account_id) {
         account_id -> Integer,
-        media_content_accepted -> Bool,
-        media_content_rejected -> Bool,
+        media_content_accepted -> Integer,
+        media_content_accepted_viewed -> Integer,
+        media_content_rejected -> Integer,
+        media_content_rejected_viewed -> Integer,
     }
 }
 

@@ -1,7 +1,7 @@
 use axum::{
     extract::State, Extension
 };
-use model::{MediaContentModerationCompletedResult, PendingNotificationFlags};
+use model::{MediaContentModerationCompletedNotification, MediaContentModerationCompletedNotificationViewed, PendingNotificationFlags};
 use model_media::{
     AccountIdInternal, MediaAppNotificationSettings
 };
@@ -67,32 +67,27 @@ async fn post_media_app_notification_settings(
     Ok(())
 }
 
+const PATH_POST_GET_MEDIA_CONTENT_MODERATION_COMPLETED_NOTIFICATION: &str = "/media_api/media_content_moderation_completed_notification";
 
-const PATH_POST_GET_MEDIA_CONTENT_MODERATION_COMPLETED_RESULT: &str = "/media_api/media_content_moderation_completed_result";
-
-/// Get media content moderation completed result.
+/// Get media content moderation completed notification.
 ///
 #[utoipa::path(
     post,
-    path = PATH_POST_GET_MEDIA_CONTENT_MODERATION_COMPLETED_RESULT,
+    path = PATH_POST_GET_MEDIA_CONTENT_MODERATION_COMPLETED_NOTIFICATION,
     responses(
-        (status = 200, description = "Successfull.", body = MediaContentModerationCompletedResult),
+        (status = 200, description = "Successfull.", body = MediaContentModerationCompletedNotification),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_get_media_content_moderation_completed(
+pub async fn post_get_media_content_moderation_completed_notification(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-) -> Result<Json<MediaContentModerationCompletedResult>, StatusCode> {
-    MEDIA.post_get_media_content_moderation_completed.incr();
+) -> Result<Json<MediaContentModerationCompletedNotification>, StatusCode> {
+    MEDIA.post_get_media_content_moderation_completed_notification.incr();
 
     let info = state.read().media().notification().media_content_moderation_completed(account_id).await?;
-
-    db_write_multiple!(state, move |cmds| {
-        cmds.media().notification().reset_notifications(account_id).await
-    })?;
 
     state
         .event_manager()
@@ -105,7 +100,36 @@ pub async fn post_get_media_content_moderation_completed(
     Ok(info.into())
 }
 
-create_open_api_router!(fn router_notification, get_media_app_notification_settings, post_media_app_notification_settings, post_get_media_content_moderation_completed,);
+const PATH_POST_MARK_MEDIA_CONTENT_MODERATION_COMPLETED_NOTIFICATION_VIEWED: &str = "/media_api/mark_media_content_moderation_completed_notification_viewed";
+
+/// The viewed values must be updated to prevent WebSocket code from sending
+/// unnecessary event about new notification.
+#[utoipa::path(
+    post,
+    path = PATH_POST_MARK_MEDIA_CONTENT_MODERATION_COMPLETED_NOTIFICATION_VIEWED,
+    request_body = MediaContentModerationCompletedNotificationViewed,
+    responses(
+        (status = 200, description = "Successfull."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_mark_media_content_moderation_completed_notification_viewed(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+    Json(viewed): Json<MediaContentModerationCompletedNotificationViewed>,
+) -> Result<(), StatusCode> {
+    MEDIA.post_mark_media_content_moderation_completed_notification_viewed.incr();
+
+    db_write_multiple!(state, move |cmds| {
+        cmds.media().notification().update_notification_viewed_values(account_id, viewed).await
+    })?;
+
+    Ok(())
+}
+
+create_open_api_router!(fn router_notification, get_media_app_notification_settings, post_media_app_notification_settings, post_get_media_content_moderation_completed_notification, post_mark_media_content_moderation_completed_notification_viewed,);
 
 create_counters!(
     MediaCounters,
@@ -113,5 +137,6 @@ create_counters!(
     MEDIA_NOTIFICATION_COUNTERS_LIST,
     get_media_app_notification_settings,
     post_media_app_notification_settings,
-    post_get_media_content_moderation_completed,
+    post_get_media_content_moderation_completed_notification,
+    post_mark_media_content_moderation_completed_notification_viewed,
 );

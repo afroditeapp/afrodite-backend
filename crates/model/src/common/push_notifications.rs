@@ -6,7 +6,7 @@ use utils::random_bytes::random_128_bits;
 use utoipa::ToSchema;
 
 use crate::{
-    schema_sqlite_types::{Integer, Text}, AccountId, MediaContentModerationCompletedResult, NewReceivedLikesCountResult, NotificationEvent, ProfileTextModerationCompletedNotification, UnreadNewsCountResult
+    schema_sqlite_types::{Integer, Text}, AccountId, MediaContentModerationCompletedNotification, NewReceivedLikesCountResult, NotificationEvent, ProfileTextModerationCompletedNotification, UnreadNewsCountResult
 };
 
 /// Pending notification (or multiple notifications which each have
@@ -201,7 +201,7 @@ pub struct PendingNotificationWithData {
     /// Data for RECEIVED_LIKES_CHANGED notification.
     pub received_likes_changed: Option<NewReceivedLikesCountResult>,
     /// Data for MEDIA_CONTENT_MODERATION_COMPLETED notification.
-    pub media_content_moderation_completed: Option<MediaContentModerationCompletedResult>,
+    pub media_content_moderation_completed: Option<MediaContentModerationCompletedNotification>,
     /// Data for NEWS_CHANGED notification.
     pub news_changed: Option<UnreadNewsCountResult>,
     /// Data for PROFILE_TEXT_MODERATION_COMPLETED notification.

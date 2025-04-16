@@ -38,6 +38,8 @@ pub enum WebSocketError {
     DatabasePendingMessagesQuery,
     #[error("Database: Profile text moderation completed notification query failed")]
     DatabaseProfileTextModerationCompletedNotificationQuery,
+    #[error("Database: Media content moderation completed notification query failed")]
+    DatabaseMediaContentModerationCompletedNotificationQuery,
     #[error("Database: Pending notification reset failed")]
     DatabasePendingNotificationReset,
 

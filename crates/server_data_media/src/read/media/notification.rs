@@ -1,5 +1,5 @@
 use database_media::current::read::GetDbReadCommandsMedia;
-use model::{AccountIdInternal, MediaContentModerationCompletedResult};
+use model::{AccountIdInternal, MediaContentModerationCompletedNotification};
 use model_media::MediaAppNotificationSettings;
 use server_data::{cache::CacheReadCommon, define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError};
 
@@ -18,7 +18,7 @@ impl ReadCommandsMediaNotification<'_> {
     pub async fn media_content_moderation_completed(
         &self,
         account_id: AccountIdInternal,
-    ) -> Result<MediaContentModerationCompletedResult, DataError> {
+    ) -> Result<MediaContentModerationCompletedNotification, DataError> {
         let info = self.db_read(move |mut cmds| {
             cmds.media()
                 .notification()

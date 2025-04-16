@@ -1,9 +1,11 @@
+use std::num::Wrapping;
+
 use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{insert_into, prelude::*, ExpressionMethods};
 use error_stack::Result;
 use model::AccountIdInternal;
 
-use crate::IntoDatabaseError;
+use crate::{current::read::GetDbReadCommandsMedia, IntoDatabaseError};
 
 define_current_write_commands!(CurrentWriteMediaAdminNotification);
 
@@ -14,14 +16,19 @@ impl CurrentWriteMediaAdminNotification<'_> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::media_app_notification_state::dsl::*;
 
+        let current = self.read().media().notification().media_content_moderation_completed(id)?;
+
+        let new_value = Wrapping(current.accepted) + Wrapping(1);
+        let new_value: i64 = new_value.0.into();
+
         insert_into(media_app_notification_state)
             .values((
                 account_id.eq(id.as_db_id()),
-                media_content_accepted.eq(true),
+                media_content_accepted.eq(new_value),
             ))
             .on_conflict(account_id)
             .do_update()
-            .set(media_content_accepted.eq(true))
+            .set(media_content_accepted.eq(new_value))
             .execute(self.conn())
             .into_db_error(())?;
 
@@ -34,14 +41,19 @@ impl CurrentWriteMediaAdminNotification<'_> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::media_app_notification_state::dsl::*;
 
+        let current = self.read().media().notification().media_content_moderation_completed(id)?;
+
+        let new_value = Wrapping(current.rejected) + Wrapping(1);
+        let new_value: i64 = new_value.0.into();
+
         insert_into(media_app_notification_state)
             .values((
                 account_id.eq(id.as_db_id()),
-                media_content_rejected.eq(true),
+                media_content_rejected.eq(new_value),
             ))
             .on_conflict(account_id)
             .do_update()
-            .set(media_content_rejected.eq(true))
+            .set(media_content_rejected.eq(new_value))
             .execute(self.conn())
             .into_db_error(())?;
 

@@ -56,6 +56,19 @@ pub async fn send_events_if_needed(
         }
     }
 
+    if config.components().media {
+        let notification = read_handle
+            .media()
+            .notification()
+            .media_content_moderation_completed(id)
+            .await
+            .change_context(WebSocketError::DatabaseMediaContentModerationCompletedNotificationQuery)?;
+
+        if !notification.notifications_viewed() {
+            send_event(socket, EventToClientInternal::MediaContentModerationCompleted).await?;
+        }
+    }
+
     if config.components().chat {
         let pending_messages = read_handle
             .chat()

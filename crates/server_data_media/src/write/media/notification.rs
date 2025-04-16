@@ -1,5 +1,5 @@
 use database_media::current::write::GetDbWriteCommandsMedia;
-use model::AccountIdInternal;
+use model::{AccountIdInternal, MediaContentModerationCompletedNotificationViewed};
 use model_media::MediaAppNotificationSettings;
 use server_data::{
     cache::CacheWriteCommon, define_cmd_wrapper_write, result::Result, write::DbTransaction, DataError, IntoDataError
@@ -25,14 +25,15 @@ impl WriteCommandsMediaNotification<'_> {
             .into_error()
     }
 
-    pub async fn reset_notifications(
+    pub async fn update_notification_viewed_values(
         &self,
         id: AccountIdInternal,
+        values: MediaContentModerationCompletedNotificationViewed,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .notification()
-                .reset_notifications(id)?;
+                .update_notification_viewed_values(id, values)?;
             Ok(())
         })?;
 

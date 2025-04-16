@@ -1,7 +1,7 @@
 use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{insert_into, prelude::*, ExpressionMethods};
 use error_stack::Result;
-use model::AccountIdInternal;
+use model::{AccountIdInternal, MediaContentModerationCompletedNotificationViewed};
 use model_media::MediaAppNotificationSettings;
 
 use crate::IntoDatabaseError;
@@ -30,9 +30,10 @@ impl CurrentWriteMediaNotification<'_> {
         Ok(())
     }
 
-    pub fn reset_notifications(
+    pub fn update_notification_viewed_values(
         &mut self,
         id: AccountIdInternal,
+        values: MediaContentModerationCompletedNotificationViewed,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::media_app_notification_state::dsl::*;
 
@@ -43,8 +44,8 @@ impl CurrentWriteMediaNotification<'_> {
             .on_conflict(account_id)
             .do_update()
             .set((
-                media_content_accepted.eq(false),
-                media_content_rejected.eq(false),
+                media_content_accepted_viewed.eq(Into::<i64>::into(values.accepted)),
+                media_content_rejected_viewed.eq(Into::<i64>::into(values.rejected)),
             ))
             .execute(self.conn())
             .into_db_error(())?;
