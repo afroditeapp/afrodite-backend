@@ -19,7 +19,7 @@ use std::{path::Path, sync::Arc};
 use args::{AppMode, ArgsConfig};
 use chrono::FixedOffset;
 use error_stack::{Result, ResultExt};
-use file::{AccountLimitsConfig, ChatLimitsConfig, CommonLimitsConfig, DemoModeConfig, GrantAdminAccessConfig, MediaLimitsConfig, MinClientVersion, RemoteBotConfig};
+use file::{AccountLimitsConfig, AutomaticProfileSearchConfig, ChatLimitsConfig, CommonLimitsConfig, DemoModeConfig, GrantAdminAccessConfig, MediaLimitsConfig, MinClientVersion, RemoteBotConfig};
 use file_dynamic::ConfigFileDynamic;
 use file_email_content::EmailContentFile;
 use model::{BotConfig, CustomReportsConfig};
@@ -256,6 +256,10 @@ impl Config {
 
     pub fn remote_bots(&self) -> Vec<RemoteBotConfig> {
         self.file.remote_bot.clone().unwrap_or_default()
+    }
+
+    pub fn automatic_profile_search(&self) -> &AutomaticProfileSearchConfig {
+        &self.file.automatic_profile_search
     }
 
     pub fn parsed_files(&self) -> ParsedFiles {

@@ -3,6 +3,7 @@ use database::define_current_write_commands;
 mod profile_name_allowlist;
 mod profile_text;
 mod notification;
+mod search;
 
 define_current_write_commands!(CurrentWriteProfileAdmin);
 
@@ -17,5 +18,8 @@ impl<'a> CurrentWriteProfileAdmin<'a> {
     }
     pub fn notification(self) -> notification::CurrentWriteProfileAdminNotification<'a> {
         notification::CurrentWriteProfileAdminNotification::new(self.cmds)
+    }
+    pub fn search(self) -> search::CurrentWriteProfileAdminSearch<'a> {
+        search::CurrentWriteProfileAdminSearch::new(self.cmds)
     }
 }

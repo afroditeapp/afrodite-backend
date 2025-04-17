@@ -24,12 +24,14 @@ impl Default for AccountAppNotificationSettings {
 #[diesel(check_for_backend(crate::Db))]
 pub struct ProfileAppNotificationSettings {
     pub profile_text_moderation: bool,
+    pub automatic_profile_search: bool,
 }
 
 impl Default for ProfileAppNotificationSettings {
     fn default() -> Self {
         Self {
             profile_text_moderation: true,
+            automatic_profile_search: true,
         }
     }
 }
@@ -82,6 +84,7 @@ impl AppNotificationSettingsInternal {
             NotificationEvent::NewMessageReceived => self.chat.messages,
             NotificationEvent::MediaContentModerationCompleted => self.media.media_content_moderation,
             NotificationEvent::ProfileTextModerationCompleted => self.profile.profile_text_moderation,
+            NotificationEvent::AutomaticProfileSearchCompleted => self.profile.automatic_profile_search,
         }
     }
 }

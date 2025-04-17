@@ -65,6 +65,7 @@ pub enum EventType {
     MediaContentChanged,
     ScheduledMaintenanceStatus,
     ProfileTextModerationCompleted,
+    AutomaticProfileSearchCompleted,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -125,6 +126,7 @@ pub enum EventToClientInternal {
     MediaContentChanged,
     ScheduledMaintenanceStatus(ScheduledMaintenanceStatus),
     ProfileTextModerationCompleted,
+    AutomaticProfileSearchCompleted,
 }
 
 impl From<&EventToClientInternal> for EventType {
@@ -147,6 +149,7 @@ impl From<&EventToClientInternal> for EventType {
             MediaContentChanged => Self::MediaContentChanged,
             ScheduledMaintenanceStatus(_) => Self::ScheduledMaintenanceStatus,
             ProfileTextModerationCompleted => Self::ProfileTextModerationCompleted,
+            AutomaticProfileSearchCompleted => Self::AutomaticProfileSearchCompleted,
         }
     }
 }
@@ -178,7 +181,8 @@ impl From<EventToClientInternal> for EventToClient {
             | NewsChanged
             | MediaContentModerationCompleted
             | MediaContentChanged
-            | ProfileTextModerationCompleted => (),
+            | ProfileTextModerationCompleted
+            | AutomaticProfileSearchCompleted => (),
         }
 
         value
@@ -192,6 +196,7 @@ pub enum NotificationEvent {
     MediaContentModerationCompleted,
     NewsChanged,
     ProfileTextModerationCompleted,
+    AutomaticProfileSearchCompleted,
 }
 
 impl From<NotificationEvent> for EventToClientInternal {
@@ -203,6 +208,7 @@ impl From<NotificationEvent> for EventToClientInternal {
                 EventToClientInternal::MediaContentModerationCompleted,
             NotificationEvent::NewsChanged => EventToClientInternal::NewsChanged,
             NotificationEvent::ProfileTextModerationCompleted => EventToClientInternal::ProfileTextModerationCompleted,
+            NotificationEvent::AutomaticProfileSearchCompleted => EventToClientInternal::AutomaticProfileSearchCompleted,
         }
     }
 }

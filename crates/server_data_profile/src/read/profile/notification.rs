@@ -1,9 +1,12 @@
 use database_profile::current::read::GetDbReadCommandsProfile;
 use model_profile::AccountIdInternal;
+use model_profile::AutomaticProfileSearchCompletedNotification;
 use model_profile::ProfileAppNotificationSettings;
 use model_profile::ProfileTextModerationCompletedNotification;
 use server_data::read::DbRead;
 use server_data::{cache::CacheReadCommon, define_cmd_wrapper_read, result::Result, DataError, IntoDataError};
+
+use crate::cache::CacheReadProfile;
 
 define_cmd_wrapper_read!(ReadCommandsProfileNotification);
 
@@ -30,5 +33,16 @@ impl ReadCommandsProfileNotification<'_> {
         .into_error()?;
 
         Ok(info)
+    }
+
+    pub async fn automatic_profile_search_completed(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> Result<AutomaticProfileSearchCompletedNotification, DataError> {
+        self.read_cache_profile_and_common(account_id, |p, _| {
+            Ok(p.automatic_profile_search.notification)
+        })
+            .await
+            .into_error()
     }
 }

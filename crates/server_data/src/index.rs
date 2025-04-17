@@ -8,6 +8,7 @@ use std::{
 use area::LocationIndexArea;
 use config::{file::LocationConfig, Config};
 use error_stack::ResultExt;
+use location::ReadIndex;
 use model::{AccountId, UnixTime};
 use model_server_data::{
     CellData, Location, LocationIndexKey, LocationIndexProfileData, LocationInternal, MaxDistanceKm, ProfileLink, ProfileQueryMakerDetails
@@ -257,6 +258,14 @@ impl<'a> LocationIndexIteratorHandle<'a> {
         random: bool,
     ) -> LocationIndexIteratorState {
         LocationIndexIteratorState::new(area, random, &self.index)
+    }
+
+    pub fn index_width(&self) -> u16 {
+        self.index.width() as u16
+    }
+
+    pub fn index_height(&self) -> u16 {
+        self.index.height() as u16
     }
 }
 

@@ -1,7 +1,7 @@
 use axum::{
     extract::State, Extension
 };
-use model::{PendingNotificationFlags, ProfileTextModerationCompletedNotification, ProfileTextModerationCompletedNotificationViewed};
+use model::{AutomaticProfileSearchCompletedNotification, AutomaticProfileSearchCompletedNotificationViewed, PendingNotificationFlags, ProfileTextModerationCompletedNotification, ProfileTextModerationCompletedNotificationViewed};
 use model_profile::{
     AccountIdInternal, ProfileAppNotificationSettings
 };
@@ -130,7 +130,75 @@ pub async fn post_mark_profile_text_moderation_completed_notification_viewed(
     Ok(())
 }
 
-create_open_api_router!(fn router_notification, get_profile_app_notification_settings, post_profile_app_notification_settings, post_get_profile_text_moderation_completed_notification, post_mark_profile_text_moderation_completed_notification_viewed, );
+const PATH_POST_GET_AUTOMATIC_PROFILE_SEARCH_COMPLETED_NOTIFICATION: &str = "/profile_api/automatic_profile_search_completed_notification";
+
+#[utoipa::path(
+    post,
+    path = PATH_POST_GET_AUTOMATIC_PROFILE_SEARCH_COMPLETED_NOTIFICATION,
+    responses(
+        (status = 200, description = "Successfull.", body = AutomaticProfileSearchCompletedNotification),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_get_automatic_profile_search_completed_notification(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+) -> Result<Json<AutomaticProfileSearchCompletedNotification>, StatusCode> {
+    PROFILE.post_get_automatic_profile_search_completed_notification.incr();
+
+    let info = state.read().profile().notification().automatic_profile_search_completed(account_id).await?;
+
+    state
+        .event_manager()
+        .remove_specific_pending_notification_flags_from_cache(
+            account_id,
+            PendingNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED,
+        )
+        .await;
+
+    Ok(info.into())
+}
+
+const PATH_POST_MARK_AUTOMATIC_PROFILE_SEARCH_COMPLETED_NOTIFICATION_VIEWED: &str = "/profile_api/mark_automatic_profile_search_completed_notification_viewed";
+
+/// The viewed values must be updated to prevent WebSocket code from sending
+/// unnecessary event about new notification.
+#[utoipa::path(
+    post,
+    path = PATH_POST_MARK_AUTOMATIC_PROFILE_SEARCH_COMPLETED_NOTIFICATION_VIEWED,
+    request_body = AutomaticProfileSearchCompletedNotificationViewed,
+    responses(
+        (status = 200, description = "Successfull."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_mark_automatic_profile_search_completed_notification_viewed(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+    Json(viewed): Json<AutomaticProfileSearchCompletedNotificationViewed>,
+) -> Result<(), StatusCode> {
+    PROFILE.post_mark_automatic_profile_search_completed_notification_viewed.incr();
+
+    db_write_multiple!(state, move |cmds| {
+        cmds.profile().notification().update_automatic_profile_search_notification_viewed_values(account_id, viewed).await
+    })?;
+
+    Ok(())
+}
+
+create_open_api_router!(
+    fn router_notification,
+    get_profile_app_notification_settings,
+    post_profile_app_notification_settings,
+    post_get_profile_text_moderation_completed_notification,
+    post_mark_profile_text_moderation_completed_notification_viewed,
+    post_get_automatic_profile_search_completed_notification,
+    post_mark_automatic_profile_search_completed_notification_viewed,
+ );
 
 create_counters!(
     ProfileCounters,
@@ -140,4 +208,6 @@ create_counters!(
     post_profile_app_notification_settings,
     post_get_profile_text_moderation_completed_notification,
     post_mark_profile_text_moderation_completed_notification_viewed,
+    post_get_automatic_profile_search_completed_notification,
+    post_mark_automatic_profile_search_completed_notification_viewed,
 );

@@ -101,3 +101,23 @@ pub struct ProfileTextModerationCompletedNotificationViewed {
     /// Wrapping notification ID
     pub rejected: i8,
 }
+
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
+pub struct AutomaticProfileSearchCompletedNotification {
+    /// Wrapping notification ID
+    pub profiles_found: i8,
+    /// Wrapping notification ID
+    pub profiles_found_viewed: i8,
+}
+
+impl AutomaticProfileSearchCompletedNotification {
+    pub fn notifications_viewed(&self) -> bool {
+        self.profiles_found == self.profiles_found_viewed
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
+pub struct AutomaticProfileSearchCompletedNotificationViewed {
+    /// Wrapping notification ID
+    pub profiles_found: i8,
+}

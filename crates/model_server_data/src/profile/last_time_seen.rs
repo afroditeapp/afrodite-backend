@@ -22,6 +22,15 @@ impl LastSeenTime {
     pub fn raw(&self) -> i64 {
         self.0
     }
+
+    /// Return None if account is currently online.
+    pub fn last_seen_unix_time(&self) -> Option<UnixTime> {
+        if *self != Self::ONLINE {
+            Some(UnixTime::new(self.raw()))
+        } else {
+            None
+        }
+    }
 }
 
 impl From<UnixTime> for LastSeenTime {

@@ -7,6 +7,8 @@ pub struct ApiUsage {
     // Profile
     pub post_get_next_profile_page: AtomicU32,
     pub post_reset_profile_paging: AtomicU32,
+    pub post_automatic_profile_search_get_next_profile_page: AtomicU32,
+    pub post_automatic_profile_search_reset_profile_paging: AtomicU32,
     pub get_profile: AtomicU32,
     // Media
     pub get_content: AtomicU32,
@@ -22,6 +24,8 @@ impl Default for ApiUsage {
             get_connect_websocket: AtomicU32::new(0),
             post_get_next_profile_page: AtomicU32::new(0),
             post_reset_profile_paging: AtomicU32::new(0),
+            post_automatic_profile_search_get_next_profile_page: AtomicU32::new(0),
+            post_automatic_profile_search_reset_profile_paging: AtomicU32::new(0),
             get_profile: AtomicU32::new(0),
             get_content: AtomicU32::new(0),
             get_profile_content_info: AtomicU32::new(0),
@@ -56,6 +60,8 @@ impl ApiUsage {
             get_connect_websocket,
             post_get_next_profile_page,
             post_reset_profile_paging,
+            post_automatic_profile_search_get_next_profile_page,
+            post_automatic_profile_search_reset_profile_paging,
             get_profile,
             get_content,
             get_profile_content_info,

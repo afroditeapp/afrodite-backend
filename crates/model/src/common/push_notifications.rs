@@ -6,7 +6,7 @@ use utils::random_bytes::random_128_bits;
 use utoipa::ToSchema;
 
 use crate::{
-    schema_sqlite_types::{Integer, Text}, AccountId, MediaContentModerationCompletedNotification, NewReceivedLikesCountResult, NotificationEvent, ProfileTextModerationCompletedNotification, UnreadNewsCountResult
+    schema_sqlite_types::{Integer, Text}, AccountId, AutomaticProfileSearchCompletedNotification, MediaContentModerationCompletedNotification, NewReceivedLikesCountResult, NotificationEvent, ProfileTextModerationCompletedNotification, UnreadNewsCountResult
 };
 
 /// Pending notification (or multiple notifications which each have
@@ -19,6 +19,8 @@ use crate::{
 /// - const RECEIVED_LIKES_CHANGED = 0x2;
 /// - const MEDIA_CONTENT_MODERATION_COMPLETED = 0x4;
 /// - const NEWS_CHANGED = 0x8;
+/// - const PROFILE_TEXT_MODERATION_COMPLETED = 0x10;
+/// - const AUTOMATIC_PROFILE_SEARCH_COMPLETED = 0x20;
 ///
 #[derive(
     Debug,
@@ -59,6 +61,7 @@ bitflags::bitflags! {
         const MEDIA_CONTENT_MODERATION_COMPLETED = 0x4;
         const NEWS_CHANGED = 0x8;
         const PROFILE_TEXT_MODERATION_COMPLETED = 0x10;
+        const AUTOMATIC_PROFILE_SEARCH_COMPLETED = 0x20;
     }
 }
 
@@ -77,6 +80,7 @@ impl From<NotificationEvent> for PendingNotificationFlags {
                 Self::MEDIA_CONTENT_MODERATION_COMPLETED,
             NotificationEvent::NewsChanged => Self::NEWS_CHANGED,
             NotificationEvent::ProfileTextModerationCompleted => Self::PROFILE_TEXT_MODERATION_COMPLETED,
+            NotificationEvent::AutomaticProfileSearchCompleted => Self::AUTOMATIC_PROFILE_SEARCH_COMPLETED,
         }
     }
 }
@@ -206,6 +210,8 @@ pub struct PendingNotificationWithData {
     pub news_changed: Option<UnreadNewsCountResult>,
     /// Data for PROFILE_TEXT_MODERATION_COMPLETED notification.
     pub profile_text_moderation_completed: Option<ProfileTextModerationCompletedNotification>,
+    /// Data for AUTOMATIC_PROFILE_SEARCH_COMPLETED notification.
+    pub automatic_profile_search_completed: Option<AutomaticProfileSearchCompletedNotification>,
 }
 
 #[derive(Debug, Clone, Default, Queryable, Selectable)]

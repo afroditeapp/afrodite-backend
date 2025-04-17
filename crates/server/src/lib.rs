@@ -6,6 +6,7 @@
 
 pub mod api;
 pub mod api_doc;
+pub mod profile_search;
 pub mod bot;
 pub mod content_processing;
 pub mod email;
@@ -28,6 +29,7 @@ use email::ServerEmailDataProvider;
 use hourly_tasks::{HourlyTaskManager, HourlyTaskManagerQuitHandle};
 use model::{AccountIdInternal, EmailMessages};
 use perf::ALL_COUNTERS;
+use profile_search::{ProfileSearchManager, ProfileSearchManagerQuitHandle};
 use push_notifications::ServerPushNotificationStateProvider;
 use scheduled_tasks::{ScheduledTaskManager, ScheduledTaskManagerQuitHandle};
 use server_api::app::GetConfig;
@@ -78,6 +80,7 @@ impl DatingAppServer {
             shutdown_tasks: None,
             scheduled_tasks: None,
             hourly_tasks: None,
+            profile_search: None,
         };
         let server = simple_backend::SimpleBackend::new(logic, self.config.simple_backend_arc());
         server.run().await;
@@ -95,6 +98,7 @@ pub struct DatingAppBusinessLogic {
     shutdown_tasks: Option<ShutdownTasks>,
     scheduled_tasks: Option<ScheduledTaskManagerQuitHandle>,
     hourly_tasks: Option<HourlyTaskManagerQuitHandle>,
+    profile_search: Option<ProfileSearchManagerQuitHandle>,
 }
 
 impl BusinessLogic for DatingAppBusinessLogic {
@@ -308,6 +312,8 @@ impl BusinessLogic for DatingAppBusinessLogic {
             ScheduledTaskManager::new_manager(app_state.clone(), server_quit_watcher.resubscribe());
         let hourly_tasks =
             HourlyTaskManager::new_manager(app_state.clone(), server_quit_watcher.resubscribe());
+        let profile_search =
+            ProfileSearchManager::new_manager(app_state.clone(), server_quit_watcher.resubscribe());
 
         self.database_manager = Some(database_manager);
         self.write_cmd_waiter = Some(write_cmd_waiter);
@@ -317,6 +323,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
         self.shutdown_tasks = Some(ShutdownTasks::new(app_state.clone()));
         self.scheduled_tasks = Some(scheduled_tasks);
         self.hourly_tasks = Some(hourly_tasks);
+        self.profile_search = Some(profile_search);
         app_state
     }
 
@@ -364,6 +371,10 @@ impl BusinessLogic for DatingAppBusinessLogic {
             .await;
 
         // Avoid running tasks simultaneously with shutdown tasks.
+        self.profile_search
+            .expect("Not initialized")
+            .wait_quit()
+            .await;
         self.hourly_tasks
             .expect("Not initialized")
             .wait_quit()

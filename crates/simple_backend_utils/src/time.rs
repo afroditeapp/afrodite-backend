@@ -16,9 +16,17 @@ pub async fn sleep_until_current_time_is_at(
     wanted_time: UtcTimeValue,
 ) -> Result<(), SleepUntilClockIsAtError> {
     let current_time = Utc::now();
-    let duration_seconds = Duration::from_secs(seconds_until_current_time_is_at(current_time, wanted_time)?);
+    let duration_seconds = Duration::from_secs(seconds_until_current_time_is_at_internal(current_time, wanted_time)?);
     sleep(duration_seconds).await;
     Ok(())
+}
+
+pub fn seconds_until_current_time_is_at(
+    wanted_time: UtcTimeValue,
+) -> Result<u64, SleepUntilClockIsAtError> {
+    let current_time = Utc::now();
+    let seconds = seconds_until_current_time_is_at_internal(current_time, wanted_time)?;
+    Ok(seconds)
 }
 
 pub fn next_possible_utc_date_time_value_using_current_time(
@@ -49,7 +57,7 @@ fn next_possible_utc_date_time_value(
     }
 }
 
-fn seconds_until_current_time_is_at(
+fn seconds_until_current_time_is_at_internal(
     current_time: chrono::DateTime<Utc>,
     wanted_time: UtcTimeValue,
 ) -> Result<u64, SleepUntilClockIsAtError> {
@@ -64,6 +72,7 @@ pub struct UtcTimeValue(pub TimeValue);
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize)]
 #[serde(try_from = "String")]
+#[serde(into = "String")]
 pub struct TimeValue {
     pub hours: u8,
     pub minutes: u8,
@@ -116,6 +125,12 @@ impl TryFrom<String> for TimeValue {
             }
             _ => Err(format!("Unknown values: {:?}", values)),
         }
+    }
+}
+
+impl From<TimeValue> for String {
+    fn from(value: TimeValue) -> Self {
+        format!("{:0>2}:{:0>2}", value.hours, value.minutes)
     }
 }
 

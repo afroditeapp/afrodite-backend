@@ -54,6 +54,17 @@ pub async fn send_events_if_needed(
         if !notification.notifications_viewed() {
             send_event(socket, EventToClientInternal::ProfileTextModerationCompleted).await?;
         }
+
+        let notification = read_handle
+            .profile()
+            .notification()
+            .automatic_profile_search_completed(id)
+            .await
+            .change_context(WebSocketError::DatabaseAutomaticProfileSearchCompletedNotificationQuery)?;
+
+        if !notification.notifications_viewed() {
+            send_event(socket, EventToClientInternal::AutomaticProfileSearchCompleted).await?;
+        }
     }
 
     if config.components().media {

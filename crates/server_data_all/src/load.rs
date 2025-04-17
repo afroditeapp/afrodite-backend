@@ -183,6 +183,9 @@ impl DbDataToCacheLoader {
             let last_seen_unix_time = db
                 .db_read(move |mut cmds| cmds.profile().data().profile_last_seen_time(account_id))
                 .await?;
+            let automatic_profile_search_last_seen_time = db
+                .db_read(move |mut cmds| cmds.profile_admin().search().automatic_profile_search_last_seen_time(account_id))
+                .await?;
 
             let mut profile_data = CachedProfile::new(
                 account_id.uuid,
@@ -201,6 +204,7 @@ impl DbDataToCacheLoader {
                     &location_area,
                     profile_data.state.random_profile_order
                 );
+            profile_data.automatic_profile_search.last_seen_unix_time = automatic_profile_search_last_seen_time;
 
             entry.profile = Some(Box::new(profile_data));
 

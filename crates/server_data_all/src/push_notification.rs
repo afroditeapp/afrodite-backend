@@ -70,6 +70,17 @@ pub async fn get_push_notification_data(
         None
     };
 
+    let automatic_profile_search_completed = if flags.contains(PendingNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED) {
+        read_handle
+            .profile()
+            .notification()
+            .automatic_profile_search_completed(id)
+            .await
+            .ok()
+    } else {
+        None
+    };
+
     PendingNotificationWithData {
         value: notification_value,
         new_message_received_from: sender_info,
@@ -77,5 +88,6 @@ pub async fn get_push_notification_data(
         media_content_moderation_completed,
         news_changed: unread_news_count,
         profile_text_moderation_completed,
+        automatic_profile_search_completed,
     }
 }

@@ -78,6 +78,10 @@ impl ReadCommandsCommon<'_> {
             .into_error()
     }
 
+    pub async fn account_ids_for_logged_in_clients(&self) -> Vec<AccountIdInternal> {
+        self.cache().logged_in_clients().await
+    }
+
     pub async fn client_config_sync_version(
         &self,
         id: AccountIdInternal,

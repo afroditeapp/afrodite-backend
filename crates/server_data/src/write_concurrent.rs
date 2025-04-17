@@ -226,6 +226,25 @@ impl ConcurrentWriteProfileHandleBlocking {
             .reset_profile_iterator(id)
     }
 
+    pub fn automatic_profile_search_next_profiles(
+        &self,
+        id: AccountIdInternal,
+        iterator_id: ProfileIteratorSessionId,
+    ) -> Result<Option<Vec<ProfileLink>>, DataError> {
+        self.write
+            .user_write_commands_account()
+            .automatic_profile_search_next_profiles(id, iterator_id)
+    }
+
+    pub fn automatic_profile_search_reset_profile_iterator(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<ProfileIteratorSessionIdInternal, DataError> {
+        self.write
+            .user_write_commands_account()
+            .automatic_profile_search_reset_profile_iterator(id)
+    }
+
     pub fn next_received_likes_iterator_state(
         &self,
         id: AccountIdInternal,
@@ -396,6 +415,94 @@ impl<'a> WriteCommandsConcurrent<'a> {
                     );
                 p.location.current_iterator = next_state;
                 p.profile_iterator_session_id = Some(new_id);
+                Ok(new_id)
+            })
+            .into_data_error(id)
+    }
+
+    /// Returns None if profile iterator session ID is
+    /// invalid.
+    pub fn automatic_profile_search_next_profiles(
+        &self,
+        id: AccountIdInternal,
+        iterator_id_from_client: ProfileIteratorSessionId,
+    ) -> Result<Option<Vec<ProfileLink>>, DataError> {
+        let (iterator_state, query_maker_filters, iterator_id_current) = self
+            .cache
+            .read_cache_blocking(id.as_id(), |e| {
+                let p = e.profile.as_ref().ok_or(CacheError::FeatureNotEnabled)?;
+                error_stack::Result::<_, CacheError>::Ok((
+                    p.automatic_profile_search.current_iterator.clone(),
+                    p.automatic_profile_search_filters(),
+                    p.automatic_profile_search.profile_iterator_session_id,
+                ))
+            })
+            .into_data_error(id)??;
+
+        let iterator_id_current: Option<ProfileIteratorSessionId> =
+            iterator_id_current.map(|v| v.into());
+        if iterator_id_current != Some(iterator_id_from_client) {
+            return Ok(None);
+        }
+
+        let (mut next_state, profiles) = self
+            .location
+            .next_profiles(iterator_state, &query_maker_filters);
+
+        let (next_state, profiles) = if let Some(mut profiles) = profiles {
+            loop {
+                if profiles.len() >= PROFILE_ITERATOR_PAGE_SIZE {
+                    break (next_state, profiles);
+                } else {
+                    let (new_next_state, new_profiles) = self
+                        .location
+                        .next_profiles(next_state, &query_maker_filters);
+                    next_state = new_next_state;
+
+                    if let Some(new_profiles) = new_profiles {
+                        profiles.extend(new_profiles);
+                    } else {
+                        break (next_state, profiles);
+                    }
+                }
+            }
+        } else {
+            (next_state, vec![])
+        };
+
+        self.cache
+            .write_cache_blocking(id.as_id(), |e| {
+                if let Some(p) = e.profile.as_mut() {
+                    p.automatic_profile_search.current_iterator = next_state;
+                }
+                Ok(())
+            })
+            .into_data_error(id)?;
+
+        Ok(Some(profiles))
+    }
+
+    pub fn automatic_profile_search_reset_profile_iterator(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<ProfileIteratorSessionIdInternal, DataError> {
+        self.cache
+            .write_cache_blocking(id.as_id(), |e| {
+                let p = e.profile_data_mut()?;
+                let new_id = ProfileIteratorSessionIdInternal::create(
+                    &mut p.automatic_profile_search.profile_iterator_session_id_storage,
+                );
+                let next_state = self
+                    .location
+                    .new_iterator_state(
+                        &p.location.current_position.with_max_area(
+                            self.location.index_width(),
+                            self.location.index_height(),
+                        ),
+                        false,
+                    );
+                p.automatic_profile_search.current_iterator = next_state;
+                p.automatic_profile_search.profile_iterator_session_id = Some(new_id);
                 Ok(new_id)
             })
             .into_data_error(id)

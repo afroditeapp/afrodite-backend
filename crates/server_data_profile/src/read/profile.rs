@@ -12,6 +12,7 @@ use crate::cache::CacheReadProfile;
 
 mod statistics;
 mod notification;
+mod search;
 
 define_cmd_wrapper_read!(ReadCommandsProfile);
 
@@ -21,6 +22,9 @@ impl<'a> ReadCommandsProfile<'a> {
     }
     pub fn notification(self) -> notification::ReadCommandsProfileNotification<'a> {
         notification::ReadCommandsProfileNotification::new(self.0)
+    }
+    pub fn search(self) -> search::ReadCommandsProfileSearch<'a> {
+        search::ReadCommandsProfileSearch::new(self.0)
     }
 }
 

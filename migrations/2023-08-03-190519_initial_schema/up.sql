@@ -598,6 +598,7 @@ CREATE TABLE IF NOT EXISTS profile_report_profile_text(
 CREATE TABLE IF NOT EXISTS profile_app_notification_settings(
     account_id                         INTEGER PRIMARY KEY NOT NULL,
     profile_text_moderation            BOOLEAN             NOT NULL,
+    automatic_profile_search           BOOLEAN             NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -610,6 +611,15 @@ CREATE TABLE IF NOT EXISTS profile_app_notification_state(
     profile_text_accepted_viewed       INTEGER             NOT NULL DEFAULT 0,
     profile_text_rejected              INTEGER             NOT NULL DEFAULT 0,
     profile_text_rejected_viewed       INTEGER             NOT NULL DEFAULT 0,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS profile_automatic_profile_search_state(
+    account_id                         INTEGER PRIMARY KEY NOT NULL,
+    last_seen_unix_time                INTEGER             NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

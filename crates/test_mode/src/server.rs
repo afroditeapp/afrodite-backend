@@ -6,7 +6,7 @@ use std::{
 use config::{
     args::{SelectedBenchmark, TestMode},
     file::{
-        ApiConfig, Components, ConfigFile, ConfigFileConfig, EmailAddress, ExternalServices, GrantAdminAccessConfig, LocationConfig, CONFIG_FILE_NAME
+        ApiConfig, AutomaticProfileSearchConfig, Components, ConfigFile, ConfigFileConfig, EmailAddress, ExternalServices, GrantAdminAccessConfig, LocationConfig, CONFIG_FILE_NAME
     },
     Config,
 };
@@ -147,6 +147,7 @@ fn new_config(
         .into(),
         api: ApiConfig::default(),
         config_files: ConfigFileConfig::default(),
+        automatic_profile_search: AutomaticProfileSearchConfig::default(),
         components: Some(components),
         location: if let Some(SelectedBenchmark::GetProfileList) = config.selected_benchmark() {
             let mut location = DEFAULT_LOCATION_CONFIG_BENCHMARK;

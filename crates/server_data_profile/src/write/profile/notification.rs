@@ -1,8 +1,10 @@
 use database_profile::current::write::GetDbWriteCommandsProfile;
-use model_profile::{AccountIdInternal, ProfileAppNotificationSettings, ProfileTextModerationCompletedNotificationViewed};
+use model_profile::{AccountIdInternal, AutomaticProfileSearchCompletedNotificationViewed, ProfileAppNotificationSettings, ProfileTextModerationCompletedNotificationViewed};
 use server_data::{
     cache::CacheWriteCommon, define_cmd_wrapper_write, result::Result, write::DbTransaction, DataError, IntoDataError
 };
+
+use crate::cache::CacheWriteProfile;
 
 define_cmd_wrapper_write!(WriteCommandsProfileNotification);
 
@@ -37,5 +39,18 @@ impl WriteCommandsProfileNotification<'_> {
         })?;
 
         Ok(())
+    }
+
+    pub async fn update_automatic_profile_search_notification_viewed_values(
+        &self,
+        id: AccountIdInternal,
+        values: AutomaticProfileSearchCompletedNotificationViewed,
+    ) -> Result<(), DataError> {
+        self.write_cache_profile(id, |p| {
+            p.automatic_profile_search.notification.profiles_found_viewed = values.profiles_found;
+            Ok(())
+        })
+            .await
+            .into_error()
     }
 }

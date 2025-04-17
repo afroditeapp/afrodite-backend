@@ -1,10 +1,8 @@
 use config::Config;
 use error_stack::{Result, ResultExt};
-use model::{AccountId, AccountIdInternal, NextNumberStorage, UnixTime};
+use model::{AccountId, AccountIdInternal, AutomaticProfileSearchCompletedNotification, NextNumberStorage, UnixTime};
 use model_server_data::{
-    LastSeenTime, ProfileAttributeFilterValue, ProfileAttributeValue,
-    ProfileInternal, ProfileIteratorSessionIdInternal, ProfileQueryMakerDetails,
-    ProfileStateCached, SortedProfileAttributes,
+    LastSeenTime, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileEditedTimeFilter, ProfileInternal, ProfileIteratorSessionIdInternal, ProfileQueryMakerDetails, ProfileStateCached, SortedProfileAttributes
 };
 use server_common::data::{cache::CacheError, DataError};
 
@@ -24,6 +22,7 @@ pub struct CachedProfile {
     pub last_seen_time: Option<UnixTime>,
     pub profile_iterator_session_id: Option<ProfileIteratorSessionIdInternal>,
     pub profile_iterator_session_id_storage: NextNumberStorage,
+    pub automatic_profile_search: AutomaticProifleSearch,
 }
 
 impl CachedProfile {
@@ -40,20 +39,28 @@ impl CachedProfile {
             account_id,
             data,
             state,
-            location: LocationData {
-                current_position: LocationIndexArea::default(),
-                current_iterator: LocationIndexIteratorState::completed(),
-            },
+            location: LocationData::default(),
             attributes: SortedProfileAttributes::new(attributes, config.profile_attributes()),
             filters,
             last_seen_time,
             profile_iterator_session_id: None,
             profile_iterator_session_id_storage: NextNumberStorage::default(),
+            automatic_profile_search: AutomaticProifleSearch::default(),
         }
     }
 
     pub fn filters(&self) -> ProfileQueryMakerDetails {
         ProfileQueryMakerDetails::new(&self.data, &self.state, self.filters.clone())
+    }
+
+    pub fn automatic_profile_search_filters(&self) -> ProfileQueryMakerDetails {
+        let mut filters = ProfileQueryMakerDetails::new(&self.data, &self.state, self.filters.clone());
+        filters.attribute_filters = vec![];
+        filters.last_seen_time_filter = None;
+        filters.unlimited_likes_filter = None;
+        filters.profile_created_time_filter = None;
+        filters.profile_edited_time_filter = self.automatic_profile_search.profile_edited_time_filter();
+        filters
     }
 
     pub fn last_seen_time_for_db(&self) -> Option<UnixTime> {
@@ -73,6 +80,15 @@ impl CachedProfile {
 pub struct LocationData {
     pub current_position: LocationIndexArea,
     pub current_iterator: LocationIndexIteratorState,
+}
+
+impl Default for LocationData {
+    fn default() -> Self {
+        Self {
+            current_position: LocationIndexArea::default(),
+            current_iterator: LocationIndexIteratorState::completed(),
+        }
+    }
 }
 
 pub trait UpdateLocationCacheState {
@@ -106,5 +122,36 @@ impl<I: InternalWriting> UpdateLocationCacheState for I {
         }
 
         Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct AutomaticProifleSearch {
+    pub current_iterator: LocationIndexIteratorState,
+    pub profile_iterator_session_id: Option<ProfileIteratorSessionIdInternal>,
+    pub profile_iterator_session_id_storage: NextNumberStorage,
+    pub last_seen_unix_time: Option<UnixTime>,
+    pub notification: AutomaticProfileSearchCompletedNotification,
+}
+
+impl Default for AutomaticProifleSearch {
+    fn default() -> Self {
+        Self {
+            current_iterator: LocationIndexIteratorState::completed(),
+            profile_iterator_session_id: None,
+            profile_iterator_session_id_storage: NextNumberStorage::default(),
+            last_seen_unix_time: None,
+            notification: AutomaticProfileSearchCompletedNotification::default(),
+        }
+    }
+}
+
+impl AutomaticProifleSearch {
+    fn profile_edited_time_filter(&self) -> Option<ProfileEditedTimeFilter> {
+        self.last_seen_unix_time.map(|v| {
+            let current_time = UnixTime::current_time();
+            let seconds_since_last_seen = *current_time.as_i64() - *v.as_i64();
+            ProfileEditedTimeFilter { value: seconds_since_last_seen }
+        })
     }
 }

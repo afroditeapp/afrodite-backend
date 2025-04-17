@@ -1,8 +1,10 @@
 use database_profile::current::write::GetDbWriteCommandsProfile;
 use model_profile::AccountIdInternal;
 use server_data::{
-    define_cmd_wrapper_write, result::Result, write::DbTransaction, DataError
+    define_cmd_wrapper_write, result::Result, write::DbTransaction, DataError, IntoDataError
 };
+
+use crate::cache::CacheWriteProfile;
 
 define_cmd_wrapper_write!(WriteCommandsProfileAdminNotification);
 
@@ -33,5 +35,18 @@ impl WriteCommandsProfileAdminNotification<'_> {
         })?;
 
         Ok(())
+    }
+
+    pub async fn show_automatic_profile_search_notification(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        self.write_cache_profile(id, |p| {
+            p.automatic_profile_search.notification.profiles_found =
+                p.automatic_profile_search.notification.profiles_found.wrapping_add(1);
+            Ok(())
+        })
+            .await
+            .into_error()
     }
 }

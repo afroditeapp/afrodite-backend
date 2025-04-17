@@ -37,4 +37,16 @@ impl LocationIndexArea {
     pub fn profile_location(&self) -> LocationIndexKey {
         self.profile_location
     }
+
+    pub fn with_max_area(
+        &self,
+        width: u16,
+        height: u16,
+    ) -> Self {
+        Self::max_area(
+            self.profile_location,
+            width,
+            height,
+        )
+    }
 }

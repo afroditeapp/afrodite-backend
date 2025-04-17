@@ -242,6 +242,11 @@ impl DatabaseCache {
         guard.get(&id).map(|e| e.account_id_internal)
     }
 
+    pub async fn logged_in_clients(&self) -> Vec<AccountIdInternal> {
+        let guard = self.access_tokens.read().await;
+        guard.values().map(|v| v.account_id_internal).collect()
+    }
+
     pub async fn read_cache_for_logged_in_clients(&self, cache_operation: impl Fn(&CacheEntry)) {
         let guard = self.access_tokens.read().await;
         for v in guard.values() {

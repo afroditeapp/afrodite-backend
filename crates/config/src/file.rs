@@ -9,7 +9,7 @@ pub use model_server_data::EmailAddress;
 use model_server_state::DemoModeId;
 use serde::{Deserialize, Serialize};
 use simple_backend_config::file::ConfigFileUtils;
-use simple_backend_utils::{time::DurationValue, ContextExt};
+use simple_backend_utils::{time::{DurationValue, TimeValue, UtcTimeValue}, ContextExt};
 use url::Url;
 
 // Kilpisjärvi ja Nuorgam
@@ -71,6 +71,10 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # account_id = "TODO"
 # password = "TODO"
 
+# [automatic_profile_search]
+# daily_start_time = "9:00"
+# daily_end_time = "21:00"
+
 "#;
 
 #[derive(thiserror::Error, Debug)]
@@ -95,6 +99,8 @@ pub struct ConfigFile {
     pub config_files: ConfigFileConfig,
     #[serde(default)]
     pub api: ApiConfig,
+    #[serde(default)]
+    pub automatic_profile_search: AutomaticProfileSearchConfig,
 
     pub components: Option<Components>,
     pub grant_admin_access: Option<GrantAdminAccessConfig>,
@@ -111,6 +117,7 @@ impl ConfigFile {
         Self {
             config_files: ConfigFileConfig::default(),
             api: ApiConfig::default(),
+            automatic_profile_search: AutomaticProfileSearchConfig::default(),
             components: Some(Components::default()),
             grant_admin_access: None,
             location: None,
@@ -421,5 +428,23 @@ impl RemoteBotConfig {
 
     pub fn password(&self) -> String {
         self.password.clone()
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct AutomaticProfileSearchConfig {
+    pub daily_start_time: UtcTimeValue,
+    pub daily_end_time: UtcTimeValue,
+}
+
+impl Default for AutomaticProfileSearchConfig {
+    fn default() -> Self {
+        const DEFAULT_START_TIME: TimeValue = TimeValue::new(9, 0);
+        const DEFAULT_END_TIME: TimeValue = TimeValue::new(21, 0);
+
+        Self {
+            daily_start_time: UtcTimeValue(DEFAULT_START_TIME),
+            daily_end_time: UtcTimeValue(DEFAULT_END_TIME),
+        }
     }
 }
