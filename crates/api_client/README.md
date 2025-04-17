@@ -26,6 +26,7 @@ All URIs are relative to *http://localhost*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+*AccountApi* | [**get_account_app_notification_settings**](docs/AccountApi.md#get_account_app_notification_settings) | **GET** /account_api/get_account_app_notification_settings | 
 *AccountApi* | [**get_account_ban_time**](docs/AccountApi.md#get_account_ban_time) | **GET** /account_api/account_ban_time/{aid} | Get account ban time
 *AccountApi* | [**get_account_data**](docs/AccountApi.md#get_account_data) | **GET** /account_api/account_data | Get changeable user information to account.
 *AccountApi* | [**get_account_deletion_request_state**](docs/AccountApi.md#get_account_deletion_request_state) | **GET** /account_api/get_account_deletion_request_state/{aid} | Get account deletion request state
@@ -33,6 +34,7 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**get_account_state**](docs/AccountApi.md#get_account_state) | **GET** /account_api/state | Get current account state.
 *AccountApi* | [**get_latest_birthdate**](docs/AccountApi.md#get_latest_birthdate) | **GET** /account_api/latest_birthdate | 
 *AccountApi* | [**get_news_item**](docs/AccountApi.md#get_news_item) | **GET** /account_api/news_item/{nid} | Get news item content using specific locale and fallback to locale \"en\" if news translation is not found.
+*AccountApi* | [**post_account_app_notification_settings**](docs/AccountApi.md#post_account_app_notification_settings) | **POST** /account_api/post_account_app_notification_settings | 
 *AccountApi* | [**post_account_data**](docs/AccountApi.md#post_account_data) | **POST** /account_api/account_data | Set changeable user information to account.
 *AccountApi* | [**post_account_setup**](docs/AccountApi.md#post_account_setup) | **POST** /account_api/account_setup | Setup non-changeable user information during `initial setup` state.
 *AccountApi* | [**post_complete_setup**](docs/AccountApi.md#post_complete_setup) | **POST** /account_api/complete_setup | Complete initial setup.
@@ -71,6 +73,7 @@ Class | Method | HTTP request | Description
 *AccountBotApi* | [**post_bot_register**](docs/AccountBotApi.md#post_bot_register) | **POST** /account_api/bot_register | Register a new bot account. Returns new account ID which is UUID.
 *AccountBotApi* | [**post_remote_bot_login**](docs/AccountBotApi.md#post_remote_bot_login) | **POST** /account_api/remote_bot_login | Login for remote bots which are listed in server config file.
 *ChatApi* | [**delete_like**](docs/ChatApi.md#delete_like) | **DELETE** /chat_api/delete_like | Delete sent like.
+*ChatApi* | [**get_chat_app_notification_settings**](docs/ChatApi.md#get_chat_app_notification_settings) | **GET** /chat_api/get_chat_app_notification_settings | 
 *ChatApi* | [**get_latest_public_key_id**](docs/ChatApi.md#get_latest_public_key_id) | **GET** /chat_api/latest_public_key_id/{aid} | Get latest public key ID for some account
 *ChatApi* | [**get_matches**](docs/ChatApi.md#get_matches) | **GET** /chat_api/matches | Get matches
 *ChatApi* | [**get_message_number_of_latest_viewed_message**](docs/ChatApi.md#get_message_number_of_latest_viewed_message) | **GET** /chat_api/message_number_of_latest_viewed_message | Get message number of the most recent message that the recipient has viewed.
@@ -85,22 +88,23 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**post_add_receiver_acknowledgement**](docs/ChatApi.md#post_add_receiver_acknowledgement) | **POST** /chat_api/add_receiver_acknowledgement | 
 *ChatApi* | [**post_add_sender_acknowledgement**](docs/ChatApi.md#post_add_sender_acknowledgement) | **POST** /chat_api/add_sender_acknowledgement | 
 *ChatApi* | [**post_block_profile**](docs/ChatApi.md#post_block_profile) | **POST** /chat_api/block_profile | Block profile
+*ChatApi* | [**post_chat_app_notification_settings**](docs/ChatApi.md#post_chat_app_notification_settings) | **POST** /chat_api/post_chat_app_notification_settings | 
 *ChatApi* | [**post_chat_message_report**](docs/ChatApi.md#post_chat_message_report) | **POST** /chat_api/chat_message_report | Report chat message.
 *ChatApi* | [**post_get_new_received_likes_count**](docs/ChatApi.md#post_get_new_received_likes_count) | **POST** /chat_api/new_received_likes_count | 
 *ChatApi* | [**post_get_next_matches_page**](docs/ChatApi.md#post_get_next_matches_page) | **POST** /chat_api/matches_page | Update matches iterator and get next page of matches. If the page is empty there is no more matches available.
 *ChatApi* | [**post_get_next_received_likes_page**](docs/ChatApi.md#post_get_next_received_likes_page) | **POST** /chat_api/received_likes | Update received likes iterator and get next page of received likes. If the page is empty there is no more received likes available.
-*ChatApi* | [**post_get_pending_notification**](docs/ChatApi.md#post_get_pending_notification) | **POST** /chat_api/get_pending_notification | Get pending notification and reset pending notification.
 *ChatApi* | [**post_message_number_of_latest_viewed_message**](docs/ChatApi.md#post_message_number_of_latest_viewed_message) | **POST** /chat_api/message_number_of_latest_viewed_message | Update message number of the most recent message that the recipient has viewed.
 *ChatApi* | [**post_reset_matches_paging**](docs/ChatApi.md#post_reset_matches_paging) | **POST** /chat_api/matches/reset | 
 *ChatApi* | [**post_reset_received_likes_paging**](docs/ChatApi.md#post_reset_received_likes_paging) | **POST** /chat_api/received_likes/reset | 
 *ChatApi* | [**post_send_like**](docs/ChatApi.md#post_send_like) | **POST** /chat_api/send_like | Send a like to some account. If both will like each other, then the accounts will be a match.
 *ChatApi* | [**post_send_message**](docs/ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match.
-*ChatApi* | [**post_set_device_token**](docs/ChatApi.md#post_set_device_token) | **POST** /chat_api/set_device_token | 
 *ChatApi* | [**post_unblock_profile**](docs/ChatApi.md#post_unblock_profile) | **POST** /chat_api/unblock_profile | Unblock profile
 *ChatAdminApi* | [**post_set_max_public_key_count**](docs/ChatAdminApi.md#post_set_max_public_key_count) | **POST** /chat_api/set_max_public_key_count | Set max public key count
 *CommonApi* | [**get_client_config**](docs/CommonApi.md#get_client_config) | **GET** /common_api/client_config | 
 *CommonApi* | [**get_connect_websocket**](docs/CommonApi.md#get_connect_websocket) | **GET** /common_api/connect | Connect to server using WebSocket after getting refresh and access tokens. Connection is required as API access is allowed for connected clients.
 *CommonApi* | [**get_version**](docs/CommonApi.md#get_version) | **GET** /common_api/version | Get backend version.
+*CommonApi* | [**post_get_pending_notification**](docs/CommonApi.md#post_get_pending_notification) | **POST** /common_api/get_pending_notification | Get pending notification and reset pending notification.
+*CommonApi* | [**post_set_device_token**](docs/CommonApi.md#post_set_device_token) | **POST** /common_api/set_device_token | 
 *CommonAdminApi* | [**get_backend_config**](docs/CommonAdminApi.md#get_backend_config) | **GET** /common_api/backend_config | Get dynamic backend config.
 *CommonAdminApi* | [**get_latest_report_iterator_start_position**](docs/CommonAdminApi.md#get_latest_report_iterator_start_position) | **GET** /common_api/admin/latest_report_iterator_start_position | 
 *CommonAdminApi* | [**get_maintenance_notification**](docs/CommonAdminApi.md#get_maintenance_notification) | **GET** /common_api/maintenance_notification | Get maintenance notification.
@@ -128,15 +132,19 @@ Class | Method | HTTP request | Description
 *MediaApi* | [**get_content**](docs/MediaApi.md#get_content) | **GET** /media_api/content/{aid}/{cid} | Get content data
 *MediaApi* | [**get_content_slot_state**](docs/MediaApi.md#get_content_slot_state) | **GET** /media_api/content_slot/{slot_id} | Get state of content slot.
 *MediaApi* | [**get_map_tile**](docs/MediaApi.md#get_map_tile) | **GET** /media_api/map_tile/{z}/{x}/{y} | Get map tile PNG file.
+*MediaApi* | [**get_media_app_notification_settings**](docs/MediaApi.md#get_media_app_notification_settings) | **GET** /media_api/get_media_app_notification_settings | 
 *MediaApi* | [**get_media_content_info**](docs/MediaApi.md#get_media_content_info) | **GET** /media_api/media_content_info | Get my profile and security content
 *MediaApi* | [**get_profile_content_info**](docs/MediaApi.md#get_profile_content_info) | **GET** /media_api/profile_content_info/{aid} | Get current profile content for selected profile.
 *MediaApi* | [**get_security_content_info**](docs/MediaApi.md#get_security_content_info) | **GET** /media_api/security_content_info/{aid} | Get current security content for selected profile.
-*MediaApi* | [**post_get_initial_content_moderation_completed**](docs/MediaApi.md#post_get_initial_content_moderation_completed) | **POST** /media_api/initial_content_moderation_completed_result | Get initial content moderation completed result.
+*MediaApi* | [**post_get_media_content_moderation_completed_notification**](docs/MediaApi.md#post_get_media_content_moderation_completed_notification) | **POST** /media_api/media_content_moderation_completed_notification | Get media content moderation completed notification.
+*MediaApi* | [**post_mark_media_content_moderation_completed_notification_viewed**](docs/MediaApi.md#post_mark_media_content_moderation_completed_notification_viewed) | **POST** /media_api/mark_media_content_moderation_completed_notification_viewed | The viewed values must be updated to prevent WebSocket code from sending unnecessary event about new notification.
+*MediaApi* | [**post_media_app_notification_settings**](docs/MediaApi.md#post_media_app_notification_settings) | **POST** /media_api/post_media_app_notification_settings | 
 *MediaApi* | [**post_profile_content_report**](docs/MediaApi.md#post_profile_content_report) | **POST** /media_api/profile_content_report | Report profile content.
 *MediaApi* | [**put_content_to_content_slot**](docs/MediaApi.md#put_content_to_content_slot) | **PUT** /media_api/content_slot/{slot_id} | Upload content to server. The content is saved to content processing slot when account state is [model::AccountState::InitialSetup]. In other states the slot number is ignored and content goes directly to moderation.
 *MediaApi* | [**put_profile_content**](docs/MediaApi.md#put_profile_content) | **PUT** /media_api/profile_content | Set new profile content for current account.
 *MediaApi* | [**put_security_content_info**](docs/MediaApi.md#put_security_content_info) | **PUT** /media_api/security_content_info | Set current security content for current account.
 *MediaAdminApi* | [**get_profile_content_pending_moderation_list**](docs/MediaAdminApi.md#get_profile_content_pending_moderation_list) | **GET** /media_api/admin/profile_content_pending_moderation | Get first page of pending profile content moderations. Oldest item is first and count 25.
+*MediaAdminApi* | [**post_media_content_face_detected_value**](docs/MediaAdminApi.md#post_media_content_face_detected_value) | **POST** /media_api/media_content_face_detected_value | Change media content face detected value
 *MediaAdminApi* | [**post_moderate_profile_content**](docs/MediaAdminApi.md#post_moderate_profile_content) | **POST** /media_api/admin/moderate_profile_content | Rejected category and details can be set only when the content is rejected.
 *ProfileApi* | [**delete_favorite_profile**](docs/ProfileApi.md#delete_favorite_profile) | **DELETE** /profile_api/favorite_profile | Delete favorite profile
 *ProfileApi* | [**get_favorite_profiles**](docs/ProfileApi.md#get_favorite_profiles) | **GET** /profile_api/favorite_profiles | Get list of all favorite profiles.
@@ -144,15 +152,23 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**get_location**](docs/ProfileApi.md#get_location) | **GET** /profile_api/location | Get location for account which makes this request.
 *ProfileApi* | [**get_my_profile**](docs/ProfileApi.md#get_my_profile) | **GET** /profile_api/my_profile | Get my profile
 *ProfileApi* | [**get_profile**](docs/ProfileApi.md#get_profile) | **GET** /profile_api/profile/{aid} | Get account's current profile.
+*ProfileApi* | [**get_profile_app_notification_settings**](docs/ProfileApi.md#get_profile_app_notification_settings) | **GET** /profile_api/get_profile_app_notification_settings | 
 *ProfileApi* | [**get_profile_filtering_settings**](docs/ProfileApi.md#get_profile_filtering_settings) | **GET** /profile_api/profile_filtering_settings | Get current profile filtering settings.
 *ProfileApi* | [**get_profile_from_database_debug_mode_benchmark**](docs/ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /profile_api/benchmark/profile/{aid} | Get account's current profile from database. Debug mode must be enabled that route can be used.
 *ProfileApi* | [**get_profile_statistics**](docs/ProfileApi.md#get_profile_statistics) | **GET** /profile_api/profile_statistics | Non default values for [model::GetProfileStatisticsParams] requires [model::Permissions::admin_profile_statistics].
 *ProfileApi* | [**get_search_age_range**](docs/ProfileApi.md#get_search_age_range) | **GET** /profile_api/search_age_range | Get account's current search age range
 *ProfileApi* | [**get_search_groups**](docs/ProfileApi.md#get_search_groups) | **GET** /profile_api/search_groups | Get account's current search groups (gender and what gender user is looking for)
+*ProfileApi* | [**post_automatic_profile_search_get_next_profile_page**](docs/ProfileApi.md#post_automatic_profile_search_get_next_profile_page) | **POST** /profile_api/automatic_profile_search/next | Post (updates iterator) to get next page of automatic profile search profile list.
+*ProfileApi* | [**post_automatic_profile_search_reset_profile_paging**](docs/ProfileApi.md#post_automatic_profile_search_reset_profile_paging) | **POST** /profile_api/automatic_profile_search/reset | Reset automatic profile search profile paging.
 *ProfileApi* | [**post_favorite_profile**](docs/ProfileApi.md#post_favorite_profile) | **POST** /profile_api/favorite_profile | Add new favorite profile
+*ProfileApi* | [**post_get_automatic_profile_search_completed_notification**](docs/ProfileApi.md#post_get_automatic_profile_search_completed_notification) | **POST** /profile_api/automatic_profile_search_completed_notification | 
 *ProfileApi* | [**post_get_next_profile_page**](docs/ProfileApi.md#post_get_next_profile_page) | **POST** /profile_api/page/next | Post (updates iterator) to get next page of profile list.
+*ProfileApi* | [**post_get_profile_text_moderation_completed_notification**](docs/ProfileApi.md#post_get_profile_text_moderation_completed_notification) | **POST** /profile_api/profile_text_moderation_completed_notification | Get profile text moderation completed notification.
 *ProfileApi* | [**post_get_query_available_profile_attributes**](docs/ProfileApi.md#post_get_query_available_profile_attributes) | **POST** /profile_api/query_available_profile_attributes | Query profile attributes using attribute ID list.
+*ProfileApi* | [**post_mark_automatic_profile_search_completed_notification_viewed**](docs/ProfileApi.md#post_mark_automatic_profile_search_completed_notification_viewed) | **POST** /profile_api/mark_automatic_profile_search_completed_notification_viewed | The viewed values must be updated to prevent WebSocket code from sending unnecessary event about new notification.
+*ProfileApi* | [**post_mark_profile_text_moderation_completed_notification_viewed**](docs/ProfileApi.md#post_mark_profile_text_moderation_completed_notification_viewed) | **POST** /profile_api/mark_profile_text_moderation_completed_notification_viewed | The viewed values must be updated to prevent WebSocket code from sending unnecessary event about new notification.
 *ProfileApi* | [**post_profile**](docs/ProfileApi.md#post_profile) | **POST** /profile_api/profile | Update profile information.
+*ProfileApi* | [**post_profile_app_notification_settings**](docs/ProfileApi.md#post_profile_app_notification_settings) | **POST** /profile_api/post_profile_app_notification_settings | 
 *ProfileApi* | [**post_profile_filtering_settings**](docs/ProfileApi.md#post_profile_filtering_settings) | **POST** /profile_api/profile_filtering_settings | Set profile filtering settings.
 *ProfileApi* | [**post_profile_to_database_debug_mode_benchmark**](docs/ProfileApi.md#post_profile_to_database_debug_mode_benchmark) | **POST** /profile_api/benchmark/profile | Post account's current profile directly to database. Debug mode must be enabled that route can be used.
 *ProfileApi* | [**post_report_profile_name**](docs/ProfileApi.md#post_report_profile_name) | **POST** /profile_api/report_profile_name | Report profile name
@@ -180,6 +196,7 @@ Class | Method | HTTP request | Description
  - [AccessToken](docs/AccessToken.md)
  - [AccessibleAccount](docs/AccessibleAccount.md)
  - [Account](docs/Account.md)
+ - [AccountAppNotificationSettings](docs/AccountAppNotificationSettings.md)
  - [AccountBanReasonCategory](docs/AccountBanReasonCategory.md)
  - [AccountBanReasonDetails](docs/AccountBanReasonDetails.md)
  - [AccountContent](docs/AccountContent.md)
@@ -201,10 +218,13 @@ Class | Method | HTTP request | Description
  - [AttributeValue](docs/AttributeValue.md)
  - [AttributeValueOrderMode](docs/AttributeValueOrderMode.md)
  - [AuthPair](docs/AuthPair.md)
+ - [AutomaticProfileSearchCompletedNotification](docs/AutomaticProfileSearchCompletedNotification.md)
+ - [AutomaticProfileSearchCompletedNotificationViewed](docs/AutomaticProfileSearchCompletedNotificationViewed.md)
  - [BackendConfig](docs/BackendConfig.md)
  - [BackendVersion](docs/BackendVersion.md)
  - [BooleanSetting](docs/BooleanSetting.md)
  - [BotConfig](docs/BotConfig.md)
+ - [ChatAppNotificationSettings](docs/ChatAppNotificationSettings.md)
  - [ClientConfig](docs/ClientConfig.md)
  - [ClientConfigSyncVersion](docs/ClientConfigSyncVersion.md)
  - [ClientFeaturesConfig](docs/ClientFeaturesConfig.md)
@@ -280,7 +300,6 @@ Class | Method | HTTP request | Description
  - [GetProfileTextState](docs/GetProfileTextState.md)
  - [GetReportList](docs/GetReportList.md)
  - [GroupValues](docs/GroupValues.md)
- - [InitialContentModerationCompletedResult](docs/InitialContentModerationCompletedResult.md)
  - [IpAddressInfo](docs/IpAddressInfo.md)
  - [Language](docs/Language.md)
  - [LastSeenTimeFilter](docs/LastSeenTimeFilter.md)
@@ -299,6 +318,9 @@ Class | Method | HTTP request | Description
  - [MatchesPage](docs/MatchesPage.md)
  - [MatchesSyncVersion](docs/MatchesSyncVersion.md)
  - [MaxDistanceKm](docs/MaxDistanceKm.md)
+ - [MediaAppNotificationSettings](docs/MediaAppNotificationSettings.md)
+ - [MediaContentModerationCompletedNotification](docs/MediaContentModerationCompletedNotification.md)
+ - [MediaContentModerationCompletedNotificationViewed](docs/MediaContentModerationCompletedNotificationViewed.md)
  - [MediaContentSyncVersion](docs/MediaContentSyncVersion.md)
  - [MediaContentType](docs/MediaContentType.md)
  - [MessageNumber](docs/MessageNumber.md)
@@ -325,12 +347,14 @@ Class | Method | HTTP request | Description
  - [PerfMetricValueArea](docs/PerfMetricValueArea.md)
  - [PerfMetricValues](docs/PerfMetricValues.md)
  - [Permissions](docs/Permissions.md)
+ - [PostMediaContentFaceDetectedValue](docs/PostMediaContentFaceDetectedValue.md)
  - [PostModerateProfileContent](docs/PostModerateProfileContent.md)
  - [PostModerateProfileName](docs/PostModerateProfileName.md)
  - [PostModerateProfileText](docs/PostModerateProfileText.md)
  - [ProcessReport](docs/ProcessReport.md)
  - [Profile](docs/Profile.md)
  - [ProfileAgeCounts](docs/ProfileAgeCounts.md)
+ - [ProfileAppNotificationSettings](docs/ProfileAppNotificationSettings.md)
  - [ProfileAttributeFilterValue](docs/ProfileAttributeFilterValue.md)
  - [ProfileAttributeFilterValueUpdate](docs/ProfileAttributeFilterValueUpdate.md)
  - [ProfileAttributeHash](docs/ProfileAttributeHash.md)
@@ -359,6 +383,8 @@ Class | Method | HTTP request | Description
  - [ProfileStatisticsHistoryValue](docs/ProfileStatisticsHistoryValue.md)
  - [ProfileStatisticsHistoryValueType](docs/ProfileStatisticsHistoryValueType.md)
  - [ProfileSyncVersion](docs/ProfileSyncVersion.md)
+ - [ProfileTextModerationCompletedNotification](docs/ProfileTextModerationCompletedNotification.md)
+ - [ProfileTextModerationCompletedNotificationViewed](docs/ProfileTextModerationCompletedNotificationViewed.md)
  - [ProfileTextModerationInfo](docs/ProfileTextModerationInfo.md)
  - [ProfileTextModerationRejectedReasonCategory](docs/ProfileTextModerationRejectedReasonCategory.md)
  - [ProfileTextModerationRejectedReasonDetails](docs/ProfileTextModerationRejectedReasonDetails.md)
