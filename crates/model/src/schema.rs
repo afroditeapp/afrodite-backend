@@ -622,6 +622,10 @@ diesel::table! {
         account_id -> Integer,
         profile_text_moderation -> Bool,
         automatic_profile_search -> Bool,
+        automatic_profile_search_new_profiles -> Bool,
+        automatic_profile_search_filters -> Bool,
+        automatic_profile_search_distance -> Bool,
+        automatic_profile_search_weekdays -> Integer,
     }
 }
 

@@ -1,6 +1,6 @@
 
 use diesel::{prelude::{AsChangeset, Insertable, Queryable}, Selectable};
-use model::NotificationEvent;
+use model::{NotificationEvent, SelectedWeekdays};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -25,6 +25,11 @@ impl Default for AccountAppNotificationSettings {
 pub struct ProfileAppNotificationSettings {
     pub profile_text_moderation: bool,
     pub automatic_profile_search: bool,
+    pub automatic_profile_search_new_profiles: bool,
+    pub automatic_profile_search_filters: bool,
+    pub automatic_profile_search_distance: bool,
+    pub automatic_profile_search_weekdays: SelectedWeekdays,
+
 }
 
 impl Default for ProfileAppNotificationSettings {
@@ -32,6 +37,10 @@ impl Default for ProfileAppNotificationSettings {
         Self {
             profile_text_moderation: true,
             automatic_profile_search: true,
+            automatic_profile_search_new_profiles: false,
+            automatic_profile_search_filters: false,
+            automatic_profile_search_distance: false,
+            automatic_profile_search_weekdays: SelectedWeekdays::all(),
         }
     }
 }

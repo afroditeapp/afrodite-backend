@@ -7,6 +7,9 @@ use crate::schema_sqlite_types::Integer;
 mod attribute;
 pub use attribute::*;
 
+mod search;
+pub use search::*;
+
 /// Profile age value which is in inclusive range `[18, 99]`.
 ///
 /// This serializes to i64, so this must not be added to API doc.
@@ -100,24 +103,4 @@ pub struct ProfileTextModerationCompletedNotificationViewed {
     pub accepted: i8,
     /// Wrapping notification ID
     pub rejected: i8,
-}
-
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
-pub struct AutomaticProfileSearchCompletedNotification {
-    /// Wrapping notification ID
-    pub profiles_found: i8,
-    /// Wrapping notification ID
-    pub profiles_found_viewed: i8,
-}
-
-impl AutomaticProfileSearchCompletedNotification {
-    pub fn notifications_viewed(&self) -> bool {
-        self.profiles_found == self.profiles_found_viewed
-    }
-}
-
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
-pub struct AutomaticProfileSearchCompletedNotificationViewed {
-    /// Wrapping notification ID
-    pub profiles_found: i8,
 }

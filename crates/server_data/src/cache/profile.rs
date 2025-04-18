@@ -2,7 +2,7 @@ use config::Config;
 use error_stack::{Result, ResultExt};
 use model::{AccountId, AccountIdInternal, AutomaticProfileSearchCompletedNotification, NextNumberStorage, UnixTime};
 use model_server_data::{
-    LastSeenTime, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileEditedTimeFilter, ProfileInternal, ProfileIteratorSessionIdInternal, ProfileQueryMakerDetails, ProfileStateCached, SortedProfileAttributes
+    LastSeenTime, ProfileAppNotificationSettings, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileCreatedTimeFilter, ProfileEditedTimeFilter, ProfileInternal, ProfileIteratorSessionIdInternal, ProfileQueryMakerDetails, ProfileStateCached, SortedProfileAttributes
 };
 use server_common::data::{cache::CacheError, DataError};
 
@@ -53,13 +53,23 @@ impl CachedProfile {
         ProfileQueryMakerDetails::new(&self.data, &self.state, self.filters.clone())
     }
 
-    pub fn automatic_profile_search_filters(&self) -> ProfileQueryMakerDetails {
+    pub fn automatic_profile_search_filters(
+        &self,
+        settings: &ProfileAppNotificationSettings,
+    ) -> ProfileQueryMakerDetails {
         let mut filters = ProfileQueryMakerDetails::new(&self.data, &self.state, self.filters.clone());
-        filters.attribute_filters = vec![];
+        if !settings.automatic_profile_search_filters {
+            filters.attribute_filters = vec![];
+        }
         filters.last_seen_time_filter = None;
         filters.unlimited_likes_filter = None;
-        filters.profile_created_time_filter = None;
-        filters.profile_edited_time_filter = self.automatic_profile_search.profile_edited_time_filter();
+        if settings.automatic_profile_search_new_profiles {
+            filters.profile_created_time_filter = self.automatic_profile_search.profile_created_time_filter();
+            filters.profile_edited_time_filter = None;
+        } else {
+            filters.profile_created_time_filter = None;
+            filters.profile_edited_time_filter = self.automatic_profile_search.profile_edited_time_filter();
+        }
         filters
     }
 
@@ -152,6 +162,14 @@ impl AutomaticProifleSearch {
             let current_time = UnixTime::current_time();
             let seconds_since_last_seen = *current_time.as_i64() - *v.as_i64();
             ProfileEditedTimeFilter { value: seconds_since_last_seen }
+        })
+    }
+
+    fn profile_created_time_filter(&self) -> Option<ProfileCreatedTimeFilter> {
+        self.last_seen_unix_time.map(|v| {
+            let current_time = UnixTime::current_time();
+            let seconds_since_last_seen = *current_time.as_i64() - *v.as_i64();
+            ProfileCreatedTimeFilter { value: seconds_since_last_seen }
         })
     }
 }

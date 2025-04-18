@@ -599,6 +599,10 @@ CREATE TABLE IF NOT EXISTS profile_app_notification_settings(
     account_id                         INTEGER PRIMARY KEY NOT NULL,
     profile_text_moderation            BOOLEAN             NOT NULL,
     automatic_profile_search           BOOLEAN             NOT NULL,
+    automatic_profile_search_new_profiles BOOLEAN             NOT NULL,
+    automatic_profile_search_filters      BOOLEAN             NOT NULL,
+    automatic_profile_search_distance     BOOLEAN             NOT NULL,
+    automatic_profile_search_weekdays     INTEGER             NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

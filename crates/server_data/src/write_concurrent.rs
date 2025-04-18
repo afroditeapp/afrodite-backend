@@ -433,7 +433,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
                 let p = e.profile.as_ref().ok_or(CacheError::FeatureNotEnabled)?;
                 error_stack::Result::<_, CacheError>::Ok((
                     p.automatic_profile_search.current_iterator.clone(),
-                    p.automatic_profile_search_filters(),
+                    p.automatic_profile_search_filters(&e.common.app_notification_settings.profile),
                     p.automatic_profile_search.profile_iterator_session_id,
                 ))
             })
@@ -488,17 +488,23 @@ impl<'a> WriteCommandsConcurrent<'a> {
     ) -> Result<ProfileIteratorSessionIdInternal, DataError> {
         self.cache
             .write_cache_blocking(id.as_id(), |e| {
+                let distance_filter_enabled = e.common.app_notification_settings.profile.automatic_profile_search_distance;
                 let p = e.profile_data_mut()?;
                 let new_id = ProfileIteratorSessionIdInternal::create(
                     &mut p.automatic_profile_search.profile_iterator_session_id_storage,
                 );
+                let area = if distance_filter_enabled {
+                    &p.location.current_position
+                } else {
+                    &p.location.current_position.with_max_area(
+                        self.location.index_width(),
+                        self.location.index_height(),
+                    )
+                };
                 let next_state = self
                     .location
                     .new_iterator_state(
-                        &p.location.current_position.with_max_area(
-                            self.location.index_width(),
-                            self.location.index_height(),
-                        ),
+                        area,
                         false,
                     );
                 p.automatic_profile_search.current_iterator = next_state;

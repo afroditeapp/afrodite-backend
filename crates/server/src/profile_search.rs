@@ -1,7 +1,8 @@
 use std::time::Duration;
 
+use chrono::{Datelike, Utc, Weekday};
 use config::file::AutomaticProfileSearchConfig;
-use model::NotificationEvent;
+use model::{NotificationEvent, WeekdayFlags};
 use model_media::ProfileIteratorSessionId;
 use model_profile::AccountIdInternal;
 use server_api::{
@@ -166,6 +167,20 @@ impl ProfileSearchManager {
             return Ok(());
         }
 
+        let current_weekday = match Utc::now().weekday() {
+            Weekday::Mon => WeekdayFlags::MONDAY,
+            Weekday::Tue => WeekdayFlags::TUESDAY,
+            Weekday::Wed => WeekdayFlags::WEDNESDAY,
+            Weekday::Thu => WeekdayFlags::THURSDAY,
+            Weekday::Fri => WeekdayFlags::FRIDAY,
+            Weekday::Sat => WeekdayFlags::SATURDAY,
+            Weekday::Sun => WeekdayFlags::SUNDAY,
+        };
+        let selected_weekdays: WeekdayFlags = settings.automatic_profile_search_weekdays.into();
+        if !selected_weekdays.contains(current_weekday) {
+            return Ok(());
+        }
+
         let Some(last_seen_time) = self
             .state
             .read()
@@ -189,8 +204,8 @@ impl ProfileSearchManager {
         let Some(data) = self
             .state
             .concurrent_write_profile_blocking(account.as_id(), move |cmds| {
-                let iterator_session_id: ProfileIteratorSessionId = cmds.reset_profile_iterator(account)?.into();
-                cmds.next_profiles(account, iterator_session_id)
+                let iterator_session_id: ProfileIteratorSessionId = cmds.automatic_profile_search_reset_profile_iterator(account)?.into();
+                cmds.automatic_profile_search_next_profiles(account, iterator_session_id)
             })
             .await
             .change_context(ProfileSearchError::ConcurrentWriteCommand)?
