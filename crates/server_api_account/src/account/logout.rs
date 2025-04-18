@@ -26,11 +26,7 @@ pub async fn post_logout(
     ACCOUNT.post_logout.incr();
 
     db_write_multiple!(state, move |cmds| {
-        cmds.common().logout(account_id).await?;
-        cmds.common()
-            .push_notification()
-            .remove_fcm_device_token_and_pending_notification_token(account_id)
-            .await
+        cmds.common().logout(account_id).await
     })?;
 
     Ok(())

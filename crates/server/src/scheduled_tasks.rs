@@ -129,6 +129,8 @@ impl ScheduledTaskManager {
     ) -> Result<(), ScheduledTaskError> {
         self.run_tasks_for_individual_accounts(quit_notification)
             .await?;
+        self.run_tasks_for_logged_in_clients(quit_notification)
+            .await?;
         self.save_profile_statistics().await?;
         self.delete_processed_reports_which_have_user_data().await?;
         backup_data(&self.state, quit_notification).await?;
@@ -316,11 +318,11 @@ impl ScheduledTaskManager {
         // TODO(prod): When subscription feature is added prevent requesting
         //             deletion when subscription is active.
 
-        if let Some(last_seen_time) = last_seen_time {
-            let inactive_account = UnixTime::current_time().add_seconds(
+        if let Some(last_seen_time) = last_seen_time.and_then(|v| v.last_seen_unix_time()) {
+            let inactive_account = last_seen_time.add_seconds(
                 self.state.config().limits_account().init_deletion_for_inactive_accounts_wait_duration.seconds
             );
-            if last_seen_time.raw() >= inactive_account.ut {
+            if UnixTime::current_time().ut >= inactive_account.ut {
                 db_write_raw!(self.state, move |cmds| {
                     cmds.account()
                         .delete()
@@ -379,8 +381,7 @@ impl ScheduledTaskManager {
             .change_context(ScheduledTaskError::DatabaseError)?;
 
         if let Some(banned_until) = banned_until_time.banned_until {
-            let current_time = UnixTime::current_time();
-            if current_time.ut >= banned_until.ut {
+            if UnixTime::current_time().ut >= banned_until.ut {
                 db_write_raw!(self.state, move |cmds| {
                     cmds.account_admin()
                         .ban()
@@ -389,6 +390,50 @@ impl ScheduledTaskManager {
                     })
                 .await
                 .change_context(ScheduledTaskError::DatabaseError)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    pub async fn run_tasks_for_logged_in_clients(
+        &self,
+        quit_notification: &mut ServerQuitWatcher,
+    ) -> Result<(), ScheduledTaskError> {
+        let accounts = self
+            .state
+            .read()
+            .common()
+            .account_ids_for_logged_in_clients()
+            .await;
+
+        for id in accounts {
+            if quit_notification.try_recv() != Err(TryRecvError::Empty) {
+                return Err(ScheduledTaskError::QuitRequested.report());
+            }
+
+            let last_seen_time = self
+                .state
+                .read()
+                .profile()
+                .profile(id)
+                .await
+                .change_context(ScheduledTaskError::DatabaseError)?
+                .last_seen_time;
+
+            if let Some(last_seen_time) = last_seen_time.and_then(|v| v.last_seen_unix_time()) {
+                let inactive_account = last_seen_time.add_seconds(
+                    self.state.config().limits_account().inactivity_logout_wait_duration.seconds
+                );
+                if UnixTime::current_time().ut >= inactive_account.ut {
+                    db_write_raw!(self.state, move |cmds| {
+                        cmds.common()
+                            .logout(id)
+                            .await
+                        })
+                    .await
+                    .change_context(ScheduledTaskError::DatabaseError)?;
+                }
             }
         }
 

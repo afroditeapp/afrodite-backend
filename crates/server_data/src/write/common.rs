@@ -6,7 +6,7 @@ use model_server_data::AuthPair;
 use server_common::data::cache::CacheError;
 use simple_backend_utils::time::DurationValue;
 
-use super::DbTransaction;
+use super::{DbTransaction, GetWriteCommandsCommon};
 use crate::{
     cache::{CacheWriteCommon, LastSeenTimeUpdated, TopLevelCacheOperations},
     db_manager::InternalWriting,
@@ -64,7 +64,6 @@ impl WriteCommandsCommon<'_> {
         Ok(option.map(|v| v.0))
     }
 
-    /// Remove current connection address, access and refresh tokens.
     pub async fn logout(&self, id: AccountIdInternal) -> Result<(), DataError> {
         let current_access_token = db_transaction!(self, move |mut cmds| {
             let current_access_token = cmds.read().common().token().access_token(id);
@@ -82,6 +81,12 @@ impl WriteCommandsCommon<'_> {
             self.update_last_seen_time(id.uuid, last_seen_time_update)
                 .await;
         }
+
+        self.handle()
+            .common()
+            .push_notification()
+            .remove_fcm_device_token_and_pending_notification_token(id)
+            .await?;
 
         Ok(())
     }

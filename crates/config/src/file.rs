@@ -277,6 +277,7 @@ impl Default for ProcessedReportDeletionConfig {
 /// Account related limits config
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct AccountLimitsConfig {
+    pub inactivity_logout_wait_duration: DurationValue,
     pub account_deletion_wait_duration: DurationValue,
     pub init_deletion_for_inactive_accounts_wait_duration: DurationValue,
 }
@@ -284,6 +285,7 @@ pub struct AccountLimitsConfig {
 impl Default for AccountLimitsConfig {
     fn default() -> Self {
         Self {
+            inactivity_logout_wait_duration: DurationValue::from_days(365),
             account_deletion_wait_duration: DurationValue::from_days(90),
             init_deletion_for_inactive_accounts_wait_duration:
                 DurationValue::from_days(365 * 10), // About 10 years
