@@ -142,18 +142,16 @@ impl<'a> EventManagerWithCacheReference<'a> {
         account: AccountIdInternal,
         event: NotificationEvent,
     ) -> Result<(), DataError> {
-        let allow_notification = self.cache
+        let push_notification_sending_allowed = self.cache
             .read_cache_common(account, |entry| Ok(entry.app_notification_settings.get_setting(event)))
             .await
             .into_data_error(account)?;
 
-        if !allow_notification {
-            return Ok(());
-        }
-
         self.cache
             .write_cache_common(account, move |entry| {
-                entry.pending_notification_flags |= event.into();
+                if push_notification_sending_allowed {
+                    entry.pending_notification_flags |= event.into();
+                }
                 Ok(())
             })
             .await
@@ -176,7 +174,7 @@ impl<'a> EventManagerWithCacheReference<'a> {
             .await
             .change_context(DataError::EventModeAccessFailed)?;
 
-        if !sent {
+        if !sent && push_notification_sending_allowed {
             self.push_notification_sender.send(account)
         }
 
@@ -189,11 +187,11 @@ impl<'a> EventManagerWithCacheReference<'a> {
     ) {
         self.cache
             .write_cache_common_for_logged_in_clients(|account_id, entry| {
-                if !entry.app_notification_settings.get_setting(event) {
-                    return;
-                }
+                let push_notification_sending_allowed = entry.app_notification_settings.get_setting(event);
 
-                entry.pending_notification_flags |= event.into();
+                if push_notification_sending_allowed {
+                    entry.pending_notification_flags |= event.into();
+                }
                 let sent = if let Some(sender) = entry.connection_event_sender() {
                     match sender
                         .sender
@@ -206,7 +204,7 @@ impl<'a> EventManagerWithCacheReference<'a> {
                     false
                 };
 
-                if !sent {
+                if !sent && push_notification_sending_allowed {
                     self.push_notification_sender.send_low_priority(account_id)
                 }
             })
