@@ -1,10 +1,11 @@
-use std::{collections::HashSet, fmt::Debug};
+use std::{collections::HashSet, fmt::Debug, time::Instant};
 
 use api_client::{
     apis::profile_api::{self, get_location, get_profile, post_profile},
     models::{Location, ProfileAttributeValueUpdate, ProfileIteratorSessionId, ProfileUpdate},
 };
 use async_trait::async_trait;
+use chrono::Utc;
 use config::file::LocationConfig;
 use error_stack::{Result, ResultExt};
 
@@ -14,6 +15,7 @@ use crate::bot::utils::location::LocationConfigUtils;
 #[derive(Debug, Default)]
 pub struct ProfileState {
     profile_iterator_session_id: Option<ProfileIteratorSessionId>,
+    change_profile_text_daily: Option<Instant>,
 }
 
 impl ProfileState {
@@ -72,6 +74,39 @@ impl BotAction for ChangeProfileText {
         post_profile(state.api.profile(), update)
             .await
             .change_context(TestError::ApiRequest)?;
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct ChangeProfileTextDaily;
+
+#[async_trait]
+impl BotAction for ChangeProfileTextDaily {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        const SECONDS_IN_DAY: u64 = 24 * 60 * 60;
+
+        let current_time = Instant::now();
+        let update = if let Some(previous) = state.profile.change_profile_text_daily {
+            current_time.duration_since(previous).as_secs() >= SECONDS_IN_DAY
+        } else {
+            true
+        };
+
+        if update {
+            state.profile.change_profile_text_daily = Some(current_time);
+            let config = state.get_bot_config();
+            let time_text = Utc::now().to_rfc2822();
+            let new_text = if let Some(text) = &config.text {
+                format!("{}\n{}", text, time_text)
+            } else {
+                time_text
+            };
+            ChangeProfileText {
+                mode: ProfileText::String(new_text),
+            }.excecute_impl(state).await?;
+        }
+
         Ok(())
     }
 }

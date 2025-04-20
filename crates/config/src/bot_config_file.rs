@@ -172,6 +172,7 @@ impl BotConfigFile {
                 send_like_to_account_id: c.send_like_to_account_id.or(base.send_like_to_account_id),
                 change_visibility: c.change_visibility.or(base.random_color_image),
                 change_location: c.change_location.or(base.change_location),
+                change_profile_text_daily: c.change_profile_text_daily.or(base.change_profile_text_daily),
             };
         }
     }
@@ -242,6 +243,7 @@ pub struct BaseBotConfig {
     pub send_like_to_account_id: Option<simple_backend_utils::UuidBase64Url>,
     change_visibility: Option<bool>,
     change_location: Option<bool>,
+    change_profile_text_daily: Option<bool>,
 }
 
 impl BaseBotConfig {
@@ -273,6 +275,10 @@ impl BaseBotConfig {
 
     pub fn change_location(&self) -> bool {
         self.change_location.unwrap_or_default()
+    }
+
+    pub fn change_profile_text_daily(&self) -> bool {
+        self.change_profile_text_daily.unwrap_or_default()
     }
 }
 

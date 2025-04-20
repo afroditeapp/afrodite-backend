@@ -36,10 +36,7 @@ use super::{
 use crate::{
     action_array,
     bot::actions::{
-        account::CompleteAccountSetup,
-        admin::{content::AdminBotContentModerationLogic, profile_text::AdminBotProfileTextModerationLogic},
-        media::SetContent,
-        ActionArray,
+        account::CompleteAccountSetup, admin::{content::AdminBotContentModerationLogic, profile_text::AdminBotProfileTextModerationLogic}, media::SetContent, profile::ChangeProfileTextDaily, ActionArray
     },
     client::TestError, state::BotEncryptionKeys,
 };
@@ -97,6 +94,9 @@ impl ClientBot {
                 }),
                 RunActionsIf(action_array!(SetProfileVisibility(false)), |s| {
                     s.get_bot_config().change_visibility() && rand::random::<f32>() < 0.1
+                }),
+                RunActionsIf(action_array!(ChangeProfileTextDaily), |s| {
+                    s.get_bot_config().change_profile_text_daily()
                 }),
                 AcceptReceivedLikesAndSendMessage,
                 AnswerReceivedMessages,
