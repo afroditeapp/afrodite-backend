@@ -46,6 +46,9 @@ pub use location::*;
 mod statistics;
 pub use statistics::*;
 
+mod search;
+pub use search::*;
+
 /// Profile's database data
 #[derive(Debug, Clone, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::profile)]

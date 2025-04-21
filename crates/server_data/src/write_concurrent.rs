@@ -8,9 +8,7 @@ use config::Config;
 use futures::Future;
 use model::{AccountId, AccountIdInternal, ContentProcessingId, ContentSlot, MatchId, ReceivedLikeId};
 use model_server_data::{
-    MatchesIteratorSessionId, NewsIteratorSessionId, ProfileIteratorSessionId,
-    ProfileIteratorSessionIdInternal, ProfileLink, PublicationId,
-    ReceivedLikesIteratorSessionId,
+    AutomaticProfileSearchIteratorSessionId, AutomaticProfileSearchIteratorSessionIdInternal, MatchesIteratorSessionId, NewsIteratorSessionId, ProfileIteratorSessionId, ProfileIteratorSessionIdInternal, ProfileLink, PublicationId, ReceivedLikesIteratorSessionId
 };
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
@@ -229,7 +227,7 @@ impl ConcurrentWriteProfileHandleBlocking {
     pub fn automatic_profile_search_next_profiles(
         &self,
         id: AccountIdInternal,
-        iterator_id: ProfileIteratorSessionId,
+        iterator_id: AutomaticProfileSearchIteratorSessionId,
     ) -> Result<Option<Vec<ProfileLink>>, DataError> {
         self.write
             .user_write_commands_account()
@@ -239,7 +237,7 @@ impl ConcurrentWriteProfileHandleBlocking {
     pub fn automatic_profile_search_reset_profile_iterator(
         &self,
         id: AccountIdInternal,
-    ) -> Result<ProfileIteratorSessionIdInternal, DataError> {
+    ) -> Result<AutomaticProfileSearchIteratorSessionIdInternal, DataError> {
         self.write
             .user_write_commands_account()
             .automatic_profile_search_reset_profile_iterator(id)
@@ -425,7 +423,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
     pub fn automatic_profile_search_next_profiles(
         &self,
         id: AccountIdInternal,
-        iterator_id_from_client: ProfileIteratorSessionId,
+        iterator_id_from_client: AutomaticProfileSearchIteratorSessionId,
     ) -> Result<Option<Vec<ProfileLink>>, DataError> {
         let (iterator_state, query_maker_filters, iterator_id_current) = self
             .cache
@@ -434,12 +432,12 @@ impl<'a> WriteCommandsConcurrent<'a> {
                 error_stack::Result::<_, CacheError>::Ok((
                     p.automatic_profile_search.current_iterator.clone(),
                     p.automatic_profile_search_filters(&e.common.app_notification_settings.profile),
-                    p.automatic_profile_search.profile_iterator_session_id,
+                    p.automatic_profile_search.iterator_session_id,
                 ))
             })
             .into_data_error(id)??;
 
-        let iterator_id_current: Option<ProfileIteratorSessionId> =
+        let iterator_id_current: Option<AutomaticProfileSearchIteratorSessionId> =
             iterator_id_current.map(|v| v.into());
         if iterator_id_current != Some(iterator_id_from_client) {
             return Ok(None);
@@ -485,13 +483,13 @@ impl<'a> WriteCommandsConcurrent<'a> {
     pub fn automatic_profile_search_reset_profile_iterator(
         &self,
         id: AccountIdInternal,
-    ) -> Result<ProfileIteratorSessionIdInternal, DataError> {
+    ) -> Result<AutomaticProfileSearchIteratorSessionIdInternal, DataError> {
         self.cache
             .write_cache_blocking(id.as_id(), |e| {
                 let distance_filter_enabled = e.common.app_notification_settings.profile.automatic_profile_search_distance;
                 let p = e.profile_data_mut()?;
-                let new_id = ProfileIteratorSessionIdInternal::create(
-                    &mut p.automatic_profile_search.profile_iterator_session_id_storage,
+                let new_id = AutomaticProfileSearchIteratorSessionIdInternal::create(
+                    &mut p.automatic_profile_search.iterator_session_id_storage,
                 );
                 let area = if distance_filter_enabled {
                     &p.location.current_position
@@ -508,7 +506,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
                         false,
                     );
                 p.automatic_profile_search.current_iterator = next_state;
-                p.automatic_profile_search.profile_iterator_session_id = Some(new_id);
+                p.automatic_profile_search.iterator_session_id = Some(new_id);
                 Ok(new_id)
             })
             .into_data_error(id)

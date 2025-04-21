@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension};
-use model_profile::{AccountIdInternal, ProfileIteratorSessionId, ProfilePage};
+use model_profile::{AccountIdInternal, AutomaticProfileSearchIteratorSessionId, ProfileIteratorSessionId, ProfilePage};
 use server_api::{app::ApiUsageTrackerProvider, create_open_api_router, S};
 use server_data_profile::read::GetReadProfileCommands;
 use simple_backend::create_counters;
@@ -92,7 +92,7 @@ const PATH_POST_AUTOMATIC_PROFILE_SEARCH_GET_NEXT_PROFILE_PAGE: &str = "/profile
 #[utoipa::path(
     post,
     path = PATH_POST_AUTOMATIC_PROFILE_SEARCH_GET_NEXT_PROFILE_PAGE,
-    request_body(content = ProfileIteratorSessionId),
+    request_body(content = AutomaticProfileSearchIteratorSessionId),
     responses(
         (status = 200, description = "Update successfull.", body = ProfilePage),
         (status = 401, description = "Unauthorized."),
@@ -103,7 +103,7 @@ const PATH_POST_AUTOMATIC_PROFILE_SEARCH_GET_NEXT_PROFILE_PAGE: &str = "/profile
 pub async fn post_automatic_profile_search_get_next_profile_page(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-    Json(iterator_session_id): Json<ProfileIteratorSessionId>,
+    Json(iterator_session_id): Json<AutomaticProfileSearchIteratorSessionId>,
 ) -> Result<Json<ProfilePage>, StatusCode> {
     PROFILE.post_automatic_profile_search_get_next_profile_page.incr();
     state.api_usage_tracker().incr(account_id, |u| &u.post_automatic_profile_search_get_next_profile_page).await;
@@ -149,7 +149,7 @@ const PATH_POST_AUTOMATIC_PROFILE_SEARCH_RESET_PROFILE_PAGING: &str = "/profile_
     post,
     path = PATH_POST_AUTOMATIC_PROFILE_SEARCH_RESET_PROFILE_PAGING,
     responses(
-        (status = 200, description = "Update successfull.", body = ProfileIteratorSessionId),
+        (status = 200, description = "Update successfull.", body = AutomaticProfileSearchIteratorSessionId),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -158,11 +158,11 @@ const PATH_POST_AUTOMATIC_PROFILE_SEARCH_RESET_PROFILE_PAGING: &str = "/profile_
 pub async fn post_automatic_profile_search_reset_profile_paging(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-) -> Result<Json<ProfileIteratorSessionId>, StatusCode> {
+) -> Result<Json<AutomaticProfileSearchIteratorSessionId>, StatusCode> {
     PROFILE.post_automatic_profile_search_reset_profile_paging.incr();
     state.api_usage_tracker().incr(account_id, |u| &u.post_automatic_profile_search_reset_profile_paging).await;
 
-    let iterator_session_id: ProfileIteratorSessionId = state
+    let iterator_session_id: AutomaticProfileSearchIteratorSessionId = state
         .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {
             cmds.automatic_profile_search_reset_profile_iterator(account_id)
         })

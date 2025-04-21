@@ -3,7 +3,7 @@ use std::time::Duration;
 use chrono::{Datelike, Utc, Weekday};
 use config::file::AutomaticProfileSearchConfig;
 use model::{NotificationEvent, WeekdayFlags};
-use model_media::ProfileIteratorSessionId;
+use model_media::AutomaticProfileSearchIteratorSessionId;
 use model_profile::AccountIdInternal;
 use server_api::{
     app::{EventManagerProvider, GetConfig, ReadData, WriteData},
@@ -204,7 +204,7 @@ impl ProfileSearchManager {
         let Some(data) = self
             .state
             .concurrent_write_profile_blocking(account.as_id(), move |cmds| {
-                let iterator_session_id: ProfileIteratorSessionId = cmds.automatic_profile_search_reset_profile_iterator(account)?.into();
+                let iterator_session_id: AutomaticProfileSearchIteratorSessionId = cmds.automatic_profile_search_reset_profile_iterator(account)?.into();
                 cmds.automatic_profile_search_next_profiles(account, iterator_session_id)
             })
             .await

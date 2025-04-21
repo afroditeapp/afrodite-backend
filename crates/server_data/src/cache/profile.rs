@@ -2,7 +2,7 @@ use config::Config;
 use error_stack::{Result, ResultExt};
 use model::{AccountId, AccountIdInternal, AutomaticProfileSearchCompletedNotification, NextNumberStorage, UnixTime};
 use model_server_data::{
-    LastSeenTime, ProfileAppNotificationSettings, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileCreatedTimeFilter, ProfileEditedTimeFilter, ProfileInternal, ProfileIteratorSessionIdInternal, ProfileQueryMakerDetails, ProfileStateCached, SortedProfileAttributes
+    AutomaticProfileSearchIteratorSessionIdInternal, LastSeenTime, ProfileAppNotificationSettings, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileCreatedTimeFilter, ProfileEditedTimeFilter, ProfileInternal, ProfileIteratorSessionIdInternal, ProfileQueryMakerDetails, ProfileStateCached, SortedProfileAttributes
 };
 use server_common::data::{cache::CacheError, DataError};
 
@@ -138,8 +138,8 @@ impl<I: InternalWriting> UpdateLocationCacheState for I {
 #[derive(Debug)]
 pub struct AutomaticProifleSearch {
     pub current_iterator: LocationIndexIteratorState,
-    pub profile_iterator_session_id: Option<ProfileIteratorSessionIdInternal>,
-    pub profile_iterator_session_id_storage: NextNumberStorage,
+    pub iterator_session_id: Option<AutomaticProfileSearchIteratorSessionIdInternal>,
+    pub iterator_session_id_storage: NextNumberStorage,
     pub last_seen_unix_time: Option<UnixTime>,
     pub notification: AutomaticProfileSearchCompletedNotification,
 }
@@ -148,8 +148,8 @@ impl Default for AutomaticProifleSearch {
     fn default() -> Self {
         Self {
             current_iterator: LocationIndexIteratorState::completed(),
-            profile_iterator_session_id: None,
-            profile_iterator_session_id_storage: NextNumberStorage::default(),
+            iterator_session_id: None,
+            iterator_session_id_storage: NextNumberStorage::default(),
             last_seen_unix_time: None,
             notification: AutomaticProfileSearchCompletedNotification::default(),
         }
