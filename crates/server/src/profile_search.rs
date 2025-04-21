@@ -163,10 +163,6 @@ impl ProfileSearchManager {
             .await
             .change_context(ProfileSearchError::DatabaseError)?;
 
-        if !settings.automatic_profile_search {
-            return Ok(());
-        }
-
         let current_weekday = match Utc::now().weekday() {
             Weekday::Mon => WeekdayFlags::MONDAY,
             Weekday::Tue => WeekdayFlags::TUESDAY,
