@@ -18,7 +18,6 @@ use api_client::{
 use async_trait::async_trait;
 use config::bot_config_file::Gender;
 use error_stack::{Result, ResultExt};
-use pgp::{ser::Serialize, Deserializable, SignedPublicKey};
 use tracing::warn;
 
 use super::{
@@ -30,9 +29,9 @@ use super::{
         profile::{ChangeProfileText, GetProfile, ProfileText, UpdateLocationRandomOrConfigured},
         BotAction, RunActions, RunActionsIf,
     },
-    utils::encrypt::{encrypt_data, generate_keys},
     BotState, BotStruct, TaskState,
 };
+use utils::encrypt::{encrypt_data, generate_keys};
 use crate::{
     action_array,
     bot::actions::{
@@ -210,11 +209,8 @@ impl SetBotPublicKey {
 
         let keys = generate_keys(account_id_string)
             .map_err(|e| TestError::MessageEncryptionError(e).report())?;
-
-        let (public_key, _) = SignedPublicKey::from_string(&keys.public)
-            .change_context(TestError::OpenPgp)?;
-        let public_key_bytes = public_key.to_bytes()
-            .change_context(TestError::OpenPgp)?;
+        let public_key_bytes = keys.public_key_bytes()
+            .map_err(|e| TestError::MessageEncryptionError(e).report())?;
 
         let r = post_add_public_key_fixed(
             state.api.chat(),

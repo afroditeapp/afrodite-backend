@@ -1,5 +1,4 @@
 pub mod assert;
-pub mod encrypt;
 pub mod image;
 pub mod location;
 

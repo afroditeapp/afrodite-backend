@@ -6,3 +6,4 @@
 pub mod api;
 pub mod random_bytes;
 pub mod time;
+pub mod encrypt;

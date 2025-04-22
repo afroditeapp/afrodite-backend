@@ -35,6 +35,8 @@ pub enum MessageEncryptionError {
     DecryptDataDataNotFound = 25,
     DecryptDataDecryptedMessageLenTooLarge = 26,
     DecryptDataDecryptedMessageCapacityTooLarge = 27,
+    PublicKeyReadFromString = 30,
+    PublicKeyToBytes = 31,
 }
 
 pub fn encrypt_data(
@@ -80,14 +82,14 @@ pub fn encrypt_data(
 }
 
 pub fn generate_keys(
-    account_id: String,
+    primary_user_id: String,
 ) -> Result<GeneratedKeys, MessageEncryptionError>  {
     let params = SecretKeyParamsBuilder::default()
         .key_type(KeyType::Ed25519)
         .can_encrypt(false)
         .can_certify(false)
         .can_sign(true)
-        .primary_user_id(account_id)
+        .primary_user_id(primary_user_id)
         .preferred_symmetric_algorithms(smallvec![
             SymmetricKeyAlgorithm::AES128,
         ])
@@ -132,6 +134,17 @@ pub fn generate_keys(
 }
 
 pub struct GeneratedKeys {
+    /// ASCII armored PGP private key
     pub private: String,
+    /// ASCII armored PGP public key
     pub public: String,
+}
+
+impl GeneratedKeys {
+    pub fn public_key_bytes(&self) -> Result<Vec<u8>, MessageEncryptionError> {
+        let (public_key, _) = SignedPublicKey::from_string(&self.public)
+            .map_err(|_| MessageEncryptionError::PublicKeyReadFromString)?;
+        public_key.to_bytes()
+            .map_err(|_| MessageEncryptionError::PublicKeyToBytes)
+    }
 }

@@ -8,3 +8,6 @@ edition = "2024"
 [dependencies]
 chrono = { workspace = true }
 rand = { workspace = true }
+pgp = { workspace = true }
+bstr = { workspace = true }
+smallvec = { workspace = true }

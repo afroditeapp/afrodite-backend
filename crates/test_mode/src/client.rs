@@ -9,7 +9,7 @@ use hyper::StatusCode;
 use reqwest::{Client, Url};
 use tracing::info;
 
-use crate::bot::utils::encrypt::MessageEncryptionError;
+use utils::encrypt::MessageEncryptionError;
 
 #[derive(thiserror::Error, Debug)]
 #[error("Wrong status code: {0}")]
@@ -70,9 +70,6 @@ pub enum TestError {
 
     #[error("Content moderation failed")]
     ContentModerationFailed,
-
-    #[error("OpenPGP related error")]
-    OpenPgp,
 }
 
 impl TestError {
