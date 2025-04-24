@@ -12,12 +12,13 @@ use api_client::{
     },
     manual_additions::{get_pending_messages_fixed, get_public_key_fixed, post_add_public_key_fixed, post_send_message_fixed},
     models::{
-        AccountId, AttributeMode, ClientId, ClientLocalId, PendingMessage, PendingMessageAcknowledgementList, ProfileAttributeQuery, ProfileAttributeValueUpdate, ProfileSearchAgeRange, ProfileUpdate, SearchGroups, SentMessageId, SentMessageIdList
+        AccountId, AttributeMode, ClientId, ClientLocalId, MessageNumber, PendingMessageAcknowledgementList, PendingMessageId, ProfileAttributeQuery, ProfileAttributeValueUpdate, ProfileSearchAgeRange, ProfileUpdate, SearchGroups, SentMessageId, SentMessageIdList
     },
 };
 use async_trait::async_trait;
 use config::bot_config_file::Gender;
 use error_stack::{Result, ResultExt};
+use simple_backend_utils::UuidBase64Url;
 use tracing::warn;
 
 use super::{
@@ -31,7 +32,7 @@ use super::{
     },
     BotState, BotStruct, TaskState,
 };
-use utils::encrypt::{encrypt_data, generate_keys};
+use utils::encrypt::{encrypt_data, generate_keys, unwrap_signed_binary_message};
 use crate::{
     action_array,
     bot::actions::{
@@ -438,28 +439,64 @@ impl BotAction for AnswerReceivedMessages {
             return Ok(());
         }
 
-        fn parse_messages(messages: &[u8]) -> Option<Vec<PendingMessage>> {
+        fn parse_minimal_i64(d: &mut impl Iterator<Item=u8>) -> Option<i64> {
+            let count = d.next()?;
+            let number: i64 = if count == 1 {
+                i8::from_le_bytes([d.next()?]).into()
+            } else if count == 2 {
+                i16::from_le_bytes([d.next()?, d.next()?]).into()
+            } else if count == 4 {
+                i32::from_le_bytes([
+                    d.next()?,
+                    d.next()?,
+                    d.next()?,
+                    d.next()?,
+                ]).into()
+            } else if count == 8 {
+                i64::from_le_bytes([
+                    d.next()?,
+                    d.next()?,
+                    d.next()?,
+                    d.next()?,
+                    d.next()?,
+                    d.next()?,
+                    d.next()?,
+                    d.next()?,
+                ])
+            } else {
+                return None;
+            };
+
+            Some(number)
+        }
+
+        fn parse_messages(messages: &[u8]) -> Option<Vec<PendingMessageId>> {
             let mut list_iterator = messages.iter().cloned();
-            let mut pending_messages: Vec<PendingMessage> = vec![];
-            loop {
-                let pending_message_json_len = [
-                    match list_iterator.next() {
-                        Some(v) => v,
-                        None => break,
-                    },
-                    list_iterator.next()?,
-                ];
-                let pending_message_json_len = u16::from_le_bytes(pending_message_json_len);
-                let pending_message_json = list_iterator
+            let mut pending_messages: Vec<PendingMessageId> = vec![];
+            while let Some(data_len) = parse_minimal_i64(&mut list_iterator) {
+                let data_len = match TryInto::<usize>::try_into(data_len) {
+                    Ok(len) => len,
+                    Err(_) => break,
+                };
+                let data = list_iterator
                     .by_ref()
-                    .take(pending_message_json_len.into())
+                    .take(data_len)
                     .collect::<Vec<u8>>();
-                let pending_message: PendingMessage =
-                    serde_json::from_slice(&pending_message_json).ok()?;
-                pending_messages.push(pending_message);
-                let data_len = [list_iterator.next()?, list_iterator.next()?];
-                let data_len = u16::from_le_bytes(data_len);
-                list_iterator.by_ref().skip(data_len.into()).for_each(drop);
+                let data = unwrap_signed_binary_message(&data)
+                    .ok()?;
+
+                let sender_account_id = data.iter().take(16).copied().collect::<Vec<u8>>();
+                let sender_account_id = TryInto::<[u8; 16]>::try_into(sender_account_id)
+                    .ok()?;
+                let sender_account_id = UuidBase64Url::from_bytes(sender_account_id);
+                let sender_account_id = AccountId::new(sender_account_id.to_string());
+
+                let message_number = parse_minimal_i64(&mut data.iter().copied().skip(16).skip(16))?;
+
+                pending_messages.push(PendingMessageId {
+                    sender: sender_account_id.into(),
+                    mn: MessageNumber::new(message_number).into(),
+                });
             }
 
             Some(pending_messages)
@@ -467,12 +504,7 @@ impl BotAction for AnswerReceivedMessages {
 
         let pending_messages = parse_messages(&messages).ok_or(TestError::MissingValue)?;
 
-        let messages_ids = pending_messages
-            .iter()
-            .map(|msg| msg.id.as_ref().clone())
-            .collect::<Vec<_>>();
-
-        let delete_list = PendingMessageAcknowledgementList { ids: messages_ids };
+        let delete_list = PendingMessageAcknowledgementList { ids: pending_messages.clone() };
 
         post_add_receiver_acknowledgement(state.api.chat(), delete_list)
             .await
@@ -480,7 +512,7 @@ impl BotAction for AnswerReceivedMessages {
 
         for msg in pending_messages {
             let new_msg = "Hello!".to_string();
-            send_message(state, *msg.id.sender, new_msg).await?;
+            send_message(state, *msg.sender, new_msg).await?;
         }
 
         Ok(())

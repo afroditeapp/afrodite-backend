@@ -42,6 +42,9 @@ pub enum MessageEncryptionError {
     PrivateKeyReadFromString = 40,
     SignData = 50,
     SignDataToBytes = 51,
+    UnwrapSignedMessageFromBytes = 60,
+    UnwrapSignedMessageGetContent = 61,
+    UnwrapSignedMessageNoContent = 62,
 }
 
 impl Display for MessageEncryptionError {
@@ -185,4 +188,12 @@ impl ParsedKeys {
         message.to_bytes()
             .map_err(|_| MessageEncryptionError::SignDataToBytes)
     }
+}
+
+pub fn unwrap_signed_binary_message(data: &[u8]) -> Result<Vec<u8>, MessageEncryptionError> {
+    let message = pgp::message::Message::from_bytes(data)
+        .map_err(|_| MessageEncryptionError::UnwrapSignedMessageFromBytes)?;
+    message.get_content()
+        .map_err(|_| MessageEncryptionError::UnwrapSignedMessageGetContent)?
+        .ok_or(MessageEncryptionError::UnwrapSignedMessageNoContent)
 }
