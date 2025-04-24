@@ -233,6 +233,12 @@ impl IpAddressUsageTrackerProvider for S {
     }
 }
 
+impl DataSignerProvider for S {
+    fn data_signer(&self) -> &crate::data_signer::DataSigner {
+        &self.state.data_signer
+    }
+}
+
 // Simple backend
 
 impl SignInWith for S {

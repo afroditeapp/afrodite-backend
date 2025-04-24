@@ -208,9 +208,9 @@ impl SetBotPublicKey {
         }
 
         let keys = generate_keys(account_id_string)
-            .map_err(|e| TestError::MessageEncryptionError(e).report())?;
+            .change_context( TestError::MessageEncryptionError)?;
         let public_key_bytes = keys.public_key_bytes()
-            .map_err(|e| TestError::MessageEncryptionError(e).report())?;
+            .change_context( TestError::MessageEncryptionError)?;
 
         let r = post_add_public_key_fixed(
             state.api.chat(),
@@ -519,7 +519,7 @@ async fn send_message(
         public_key,
         &message_bytes,
     )
-    .map_err(|e| TestError::MessageEncryptionError(e).report())?;
+        .change_context( TestError::MessageEncryptionError)?;
 
     let mut type_number_and_message = vec![0]; // Message type PGP
     type_number_and_message.extend_from_slice(&encrypted_bytes);

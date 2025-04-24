@@ -20,10 +20,7 @@ pub use server_common::{data::DataError, result};
 
 #[derive(OpenApi)]
 #[openapi(
-    components(schemas(
-        // Chat
-        model_chat::chat::PendingMessage,
-    )),
+    components(schemas()),
     modifiers(&SecurityApiAccessTokenDefault),
 )]
 pub struct ApiDocChat;

@@ -1,5 +1,7 @@
 //! Message encrypting code from client
 
+use std::{error::Error, fmt::Display};
+
 use bstr::BStr;
 use pgp::{
     crypto::{aead::AeadAlgorithm, hash::HashAlgorithm, sym::SymmetricKeyAlgorithm}, ser::Serialize, types::SecretKeyTrait, ArmorOptions, Deserializable, KeyType, Message, SecretKeyParamsBuilder, SignedPublicKey, SignedSecretKey, SubkeyParamsBuilder
@@ -37,7 +39,17 @@ pub enum MessageEncryptionError {
     DecryptDataDecryptedMessageCapacityTooLarge = 27,
     PublicKeyReadFromString = 30,
     PublicKeyToBytes = 31,
+    PrivateKeyReadFromString = 40,
+    SignData = 50,
+    SignDataToBytes = 51,
 }
+
+impl Display for MessageEncryptionError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+impl Error for MessageEncryptionError {}
 
 pub fn encrypt_data(
     // The sender private key can be used for signing the message
@@ -146,5 +158,31 @@ impl GeneratedKeys {
             .map_err(|_| MessageEncryptionError::PublicKeyReadFromString)?;
         public_key.to_bytes()
             .map_err(|_| MessageEncryptionError::PublicKeyToBytes)
+    }
+
+    pub fn to_parsed_keys(&self) -> Result<ParsedKeys, MessageEncryptionError> {
+        let (public, _) = SignedPublicKey::from_string(&self.public)
+            .map_err(|_| MessageEncryptionError::PublicKeyReadFromString)?;
+        let (private, _) = SignedSecretKey::from_string(&self.public)
+            .map_err(|_| MessageEncryptionError::PrivateKeyReadFromString)?;
+
+        Ok(ParsedKeys { private, _public: public })
+    }
+}
+
+pub struct ParsedKeys {
+    private: SignedSecretKey,
+    _public: SignedPublicKey,
+}
+
+impl ParsedKeys {
+    pub fn sign(&self, data: &[u8]) -> Result<Vec<u8>, MessageEncryptionError> {
+        let empty_file_name: &BStr = b"".into();
+        let message = pgp::message::Message::new_literal_bytes(empty_file_name, data)
+            .sign(OsRng, &self.private, String::new, HashAlgorithm::SHA2_256)
+            .map_err(|_| MessageEncryptionError::SignData)?;
+
+        message.to_bytes()
+            .map_err(|_| MessageEncryptionError::SignDataToBytes)
     }
 }

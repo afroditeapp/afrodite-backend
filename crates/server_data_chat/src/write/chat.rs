@@ -1,6 +1,8 @@
 mod report;
 mod notification;
 
+use std::sync::Arc;
+
 use database_chat::current::{
     read::GetDbReadCommandsChat,
     write::{
@@ -18,6 +20,7 @@ use server_data::{
     DieselDatabaseError, IntoDataError,
 };
 use simple_backend_utils::ContextExt;
+use utils::encrypt::ParsedKeys;
 
 use crate::{cache::CacheWriteChat, read::GetReadChatCommands};
 
@@ -379,6 +382,7 @@ impl WriteCommandsChat<'_> {
         receiver_public_key_from_client: PublicKeyId,
         client_id_value: ClientId,
         client_local_id_value: ClientLocalId,
+        keys: Arc<ParsedKeys>,
     ) -> Result<(SendMessageResult, Option<PushNotificationAllowed>), DataError> {
         db_transaction!(self, move |mut cmds| {
             let current_key = cmds
@@ -425,6 +429,7 @@ impl WriteCommandsChat<'_> {
                     message,
                     client_id_value,
                     client_local_id_value,
+                    keys,
                 )?;
 
             let message_values = match message_values {

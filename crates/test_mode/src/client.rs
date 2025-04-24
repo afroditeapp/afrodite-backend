@@ -9,8 +9,6 @@ use hyper::StatusCode;
 use reqwest::{Client, Url};
 use tracing::info;
 
-use utils::encrypt::MessageEncryptionError;
-
 #[derive(thiserror::Error, Debug)]
 #[error("Wrong status code: {0}")]
 pub struct StatusCodeError(StatusCode);
@@ -65,8 +63,8 @@ pub enum TestError {
     #[error("Server integration test failed.")]
     ServerTestFailed,
 
-    #[error("Message encryption error: {0:?}")]
-    MessageEncryptionError(MessageEncryptionError),
+    #[error("Message encryption error")]
+    MessageEncryptionError,
 
     #[error("Content moderation failed")]
     ContentModerationFailed,

@@ -2,7 +2,7 @@ use database_chat::current::read::GetDbReadCommandsChat;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState,
     AllMatchesPage, ChatStateRaw, MatchId, MessageNumber, PageItemCountForNewLikes,
-    PendingMessageAndMessageData, ReceivedBlocksPage, ReceivedLikeId,
+    ReceivedBlocksPage, ReceivedLikeId,
     SentBlocksPage, SentLikesPage, SentMessageId,
 };
 use server_data::{
@@ -155,7 +155,7 @@ impl ReadCommandsChat<'_> {
     pub async fn all_pending_messages(
         &self,
         id: AccountIdInternal,
-    ) -> Result<Vec<PendingMessageAndMessageData>, DataError> {
+    ) -> Result<Vec<Vec<u8>>, DataError> {
         self.db_read(move |mut cmds| cmds.chat().message().all_pending_messages(id))
             .await
             .into_error()

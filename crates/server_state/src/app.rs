@@ -4,7 +4,7 @@ use model::{AccessToken, AccountIdInternal, AccountState, Permissions};
 pub use server_data::app::*;
 use server_data::{content_processing::ContentProcessingManagerData, DataError};
 
-use crate::{api_usage::ApiUsageTracker, client_version::ClientVersionTracker, internal_api::InternalApiClient, ip_address::IpAddressUsageTracker};
+use crate::{api_usage::ApiUsageTracker, client_version::ClientVersionTracker, data_signer::DataSigner, internal_api::InternalApiClient, ip_address::IpAddressUsageTracker};
 
 // TODO(prod): Move push notifications to common
 
@@ -50,4 +50,8 @@ pub trait ApiUsageTrackerProvider {
 
 pub trait IpAddressUsageTrackerProvider {
     fn ip_address_usage_tracker(&self) -> &IpAddressUsageTracker;
+}
+
+pub trait DataSignerProvider {
+    fn data_signer(&self) -> &DataSigner;
 }

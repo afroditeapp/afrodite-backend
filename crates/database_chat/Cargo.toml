@@ -16,4 +16,5 @@ model_chat = { path = "../model_chat" }
 
 database = { path = "../database" }
 
+utils = { path = "../utils" }
 simple_backend_utils = { path = "../simple_backend_utils" }

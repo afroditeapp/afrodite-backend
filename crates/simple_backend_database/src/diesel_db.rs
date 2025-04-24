@@ -83,6 +83,9 @@ pub enum DieselDatabaseError {
 
     #[error("Transaction error")]
     FromStdErrorToTransactionError,
+
+    #[error("Message encryption error")]
+    MessageEncryptionError,
 }
 
 async fn close_connections(pool: &DieselPool, connections: usize) {

@@ -42,6 +42,7 @@ impl UuidBase64Url {
         Ok(Self::from_bytes(data_slice))
     }
 
+    // UUID data with big-endian byte order
     pub fn as_bytes(&self) -> &[u8; 16] {
         self.0.as_bytes()
     }

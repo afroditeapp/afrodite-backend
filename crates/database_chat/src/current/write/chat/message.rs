@@ -1,10 +1,12 @@
+use std::sync::Arc;
+
 use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update};
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use model_chat::{
-    AccountIdInternal, AccountInteractionState, ClientId, ClientLocalId,
-    NewPendingMessageValues, PendingMessageIdInternal, SentMessageId, UnixTime,
+    AccountIdInternal, AccountInteractionState, ClientId, ClientLocalId, NewPendingMessageValues, PendingMessageIdInternal, SentMessageId, SignedMessageData, UnixTime
 };
+use utils::encrypt::ParsedKeys;
 
 use super::ReceiverBlockedSender;
 use crate::{current::write::GetDbWriteCommandsChat, IntoDatabaseError};
@@ -77,6 +79,7 @@ impl CurrentWriteChatMessage<'_> {
         message: Vec<u8>,
         client_id_value: ClientId,
         client_local_id_value: ClientLocalId,
+        keys: Arc<ParsedKeys>,
     ) -> Result<
         std::result::Result<NewPendingMessageValues, ReceiverBlockedSender>,
         DieselDatabaseError,
@@ -113,13 +116,24 @@ impl CurrentWriteChatMessage<'_> {
                 .into_db_error((sender, receiver, new_message_number))?;
         }
 
+        let data_for_signing = SignedMessageData {
+            sender: sender.as_id(),
+            receiver: receiver.as_id(),
+            mn: new_message_number,
+            unix_time: time,
+            message,
+        };
+
+        let signed = keys.sign(&data_for_signing.to_bytes())
+            .change_context(DieselDatabaseError::MessageEncryptionError)?;
+
         insert_into(pending_messages)
             .values((
                 account_id_sender.eq(sender.as_db_id()),
                 account_id_receiver.eq(receiver.as_db_id()),
                 unix_time.eq(time),
                 message_number.eq(new_message_number),
-                message_bytes.eq(message),
+                message_bytes.eq(signed),
                 sender_client_id.eq(client_id_value),
                 sender_client_local_id.eq(client_local_id_value),
             ))

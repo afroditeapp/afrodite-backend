@@ -7,6 +7,8 @@ use simple_backend::sign_in_with::{apple::SignInWithAppleError, google::SignInWi
 
 use crate::DataError;
 
+use crate::data_signer::DataSignerError;
+
 #[allow(non_camel_case_types)]
 pub enum StatusCode {
     /// 400
@@ -63,6 +65,8 @@ enum RequestError {
     EventError,
     #[error("Content processing error")]
     ContentProcessingError,
+    #[error("Data signer error")]
+    DataSignerError,
 }
 
 /// Convert error to status code. This is workaround for track_caller seems
@@ -129,3 +133,4 @@ impl_error_to_status_code!(ClientError, RequestError::ManagerClientError);
 impl_error_to_status_code!(ConfigFileError, RequestError::ConfigFileError);
 impl_error_to_status_code!(EventError, RequestError::EventError);
 impl_error_to_status_code!(ContentProcessingError, RequestError::ContentProcessingError);
+impl_error_to_status_code!(DataSignerError, RequestError::DataSignerError);

@@ -7,11 +7,9 @@ use axum_extra::TypedHeader;
 use headers::ContentType;
 use model::NotificationEvent;
 use model_chat::{
-    AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber,
-    PendingMessageAcknowledgementList, SendMessageResult,
-    SendMessageToAccountParams, SentMessageIdList, UpdateMessageViewStatus,
+    add_minimal_i64, AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber, PendingMessageAcknowledgementList, SendMessageResult, SendMessageToAccountParams, SentMessageIdList, UpdateMessageViewStatus
 };
-use server_api::{app::ApiUsageTrackerProvider, create_open_api_router, S};
+use server_api::{app::{ApiUsageTrackerProvider, DataSignerProvider}, create_open_api_router, S};
 use server_data_chat::{
     read::GetReadChatCommands,
     write::{chat::PushNotificationAllowed, GetWriteCommandsChat},
@@ -41,10 +39,21 @@ const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
 /// Get list of pending messages.
 ///
 /// The returned bytes is list of objects with following data:
-/// - UTF-8 text length encoded as 16 bit little endian number.
-/// - UTF-8 text which is PendingMessage JSON.
-/// - Binary message data length as 16 bit little endian number.
-/// - Binary message data
+/// - Binary data length as minimal i64
+/// - Binary data
+///
+/// Minimal i64 has this format:
+/// - i64 byte count (u8, values: 1, 2, 4, 8)
+/// - i64 bytes (little-endian)
+///
+/// Binary data is binary PGP message which contains backend signed
+/// binary data. The binary data contains:
+/// - Version (u8, values: 1)
+/// - Sender AccountId UUID big-endian bytes (16 bytes)
+/// - Receiver AccountId UUID big-endian bytes (16 bytes)
+/// - Message number (minimal i64)
+/// - Unix time (minimal i64)
+/// - Message data
 #[utoipa::path(
     get,
     path = PATH_GET_PENDING_MESSAGES,
@@ -63,32 +72,16 @@ pub async fn get_pending_messages(
     let pending_messages = state.read().chat().all_pending_messages(id).await?;
 
     let mut bytes: Vec<u8> = vec![];
-    for p in pending_messages {
-        let pending_message_json = match serde_json::to_string(&p.pending_message) {
-            Ok(s) => s,
-            Err(_) => {
-                error!("Deserializing pending message failed");
-                return Err(StatusCode::INTERNAL_SERVER_ERROR);
-            }
-        };
-        let json_length: u16 = match pending_message_json.len().try_into() {
-            Ok(len) => len,
-            Err(_) => {
-                error!("Pending message JSON is too large");
-                return Err(StatusCode::INTERNAL_SERVER_ERROR);
-            }
-        };
-        bytes.extend_from_slice(&json_length.to_le_bytes());
-        bytes.extend_from_slice(pending_message_json.as_bytes());
-        let message_length: u16 = match p.message.len().try_into() {
+    for m in pending_messages {
+        let message_length: i64 = match m.len().try_into() {
             Ok(len) => len,
             Err(_) => {
                 error!("Pending message data is too large");
                 return Err(StatusCode::INTERNAL_SERVER_ERROR);
             }
         };
-        bytes.extend_from_slice(&message_length.to_le_bytes());
-        bytes.extend_from_slice(&p.message);
+        add_minimal_i64(&mut bytes, message_length);
+        bytes.extend_from_slice(&m);
     }
 
     Ok((TypedHeader(ContentType::octet_stream()), bytes))
@@ -234,6 +227,7 @@ pub async fn post_send_message(
     let Some(message_reciever) = state.get_internal_id_optional(query_params.receiver).await else {
         return Ok(SendMessageResult::receiver_blocked_sender_or_receiver_not_found().into());
     };
+    let keys = state.data_signer().keys().await?;
     let result = db_write_multiple!(state, move |cmds| {
         let (result, push_notification_allowed) = cmds
             .chat()
@@ -244,6 +238,7 @@ pub async fn post_send_message(
                 query_params.receiver_public_key_id,
                 query_params.client_id,
                 query_params.client_local_id,
+                keys,
             )
             .await?;
 

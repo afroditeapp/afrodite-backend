@@ -2,7 +2,7 @@ use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
 use model_chat::{
-    AccountId, AccountIdInternal, PendingMessage, PendingMessageAndMessageData, PendingMessageId,
+    AccountId, AccountIdInternal,
     PendingMessageInternal, SentMessageId,
 };
 
@@ -14,34 +14,20 @@ impl CurrentReadChatMessage<'_> {
     pub fn all_pending_messages(
         &mut self,
         id_message_receiver: AccountIdInternal,
-    ) -> Result<Vec<PendingMessageAndMessageData>, DieselDatabaseError> {
+    ) -> Result<Vec<Vec<u8>>, DieselDatabaseError> {
         use crate::schema::{account_id, pending_messages::dsl::*};
 
-        let value: Vec<(AccountId, PendingMessageInternal)> = pending_messages
+        let value: Vec<Vec<u8>> = pending_messages
             .inner_join(
                 account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)),
             )
             .filter(account_id_receiver.eq(id_message_receiver.as_db_id()))
             .filter(receiver_acknowledgement.eq(false))
-            .select((account_id::uuid, PendingMessageInternal::as_select()))
+            .select(message_bytes)
             .load(self.conn())
             .into_db_error(())?;
 
-        let messages = value
-            .into_iter()
-            .map(|(sender_uuid, msg)| PendingMessageAndMessageData {
-                pending_message: PendingMessage {
-                    id: PendingMessageId {
-                        sender: sender_uuid,
-                        mn: msg.message_number,
-                    },
-                    unix_time: msg.unix_time,
-                },
-                message: msg.message_bytes,
-            })
-            .collect();
-
-        Ok(messages)
+        Ok(value)
     }
 
     pub fn all_pending_message_sender_account_ids(

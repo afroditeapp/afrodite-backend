@@ -21,6 +21,9 @@ pub use matches::*;
 mod report;
 pub use report::*;
 
+mod message;
+pub use message::*;
+
 #[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
 #[diesel(table_name = crate::schema::chat_state)]
 #[diesel(check_for_backend(crate::Db))]
@@ -72,20 +75,6 @@ pub struct ReceivedBlocksPage {
     /// data sync is happening.
     pub version: ReceivedBlocksSyncVersion,
     pub profiles: Vec<AccountId>,
-}
-
-/// Client uses this type even if it is not directly in API routes
-#[derive(Debug, Serialize, Clone, ToSchema)]
-pub struct PendingMessage {
-    pub id: PendingMessageId,
-    /// Unix time when server received the message.
-    pub unix_time: UnixTime,
-}
-
-#[derive(Debug, Clone)]
-pub struct PendingMessageAndMessageData {
-    pub pending_message: PendingMessage,
-    pub message: Vec<u8>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]

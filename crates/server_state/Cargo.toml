@@ -30,6 +30,7 @@ model_chat = { path = "../model_chat" }
 
 server_common = { path = "../server_common" }
 
+utils = { path = "../utils" }
 server_data = { path = "../server_data" }
 
 api_internal = { path = "../api_internal" }
