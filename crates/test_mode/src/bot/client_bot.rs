@@ -470,8 +470,31 @@ impl BotAction for AnswerReceivedMessages {
             Some(number)
         }
 
+        fn parse_account_id(d: &mut impl Iterator<Item=u8>) -> Option<AccountId> {
+            let id = d.by_ref().take(16).collect::<Vec<u8>>();
+            let id = TryInto::<[u8; 16]>::try_into(id)
+                .ok()?;
+            let id = UuidBase64Url::from_bytes(id);
+            let id = AccountId::new(id.to_string());
+            Some(id)
+        }
+
+        fn parse_signed_message_data(data: Vec<u8>) -> Option<PendingMessageId> {
+            let d = &mut data.iter().copied();
+            let sender = parse_account_id(d)?;
+            let _ = parse_account_id(d)?;
+            let _ = parse_minimal_i64(d)?;
+            let _ = parse_minimal_i64(d)?;
+            let message_number = parse_minimal_i64(d)?;
+
+            Some(PendingMessageId {
+                sender: sender.into(),
+                mn: MessageNumber::new(message_number).into(),
+            })
+        }
+
         fn parse_messages(messages: &[u8]) -> Option<Vec<PendingMessageId>> {
-            let mut list_iterator = messages.iter().cloned();
+            let mut list_iterator = messages.iter().copied();
             let mut pending_messages: Vec<PendingMessageId> = vec![];
             while let Some(data_len) = parse_minimal_i64(&mut list_iterator) {
                 let data_len = match TryInto::<usize>::try_into(data_len) {
@@ -484,19 +507,7 @@ impl BotAction for AnswerReceivedMessages {
                     .collect::<Vec<u8>>();
                 let data = unwrap_signed_binary_message(&data)
                     .ok()?;
-
-                let sender_account_id = data.iter().take(16).copied().collect::<Vec<u8>>();
-                let sender_account_id = TryInto::<[u8; 16]>::try_into(sender_account_id)
-                    .ok()?;
-                let sender_account_id = UuidBase64Url::from_bytes(sender_account_id);
-                let sender_account_id = AccountId::new(sender_account_id.to_string());
-
-                let message_number = parse_minimal_i64(&mut data.iter().copied().skip(16).skip(16))?;
-
-                pending_messages.push(PendingMessageId {
-                    sender: sender_account_id.into(),
-                    mn: MessageNumber::new(message_number).into(),
-                });
+                pending_messages.push(parse_signed_message_data(data)?);
             }
 
             Some(pending_messages)

@@ -379,6 +379,7 @@ impl WriteCommandsChat<'_> {
         sender: AccountIdInternal,
         receiver: AccountIdInternal,
         message: Vec<u8>,
+        sender_public_key_from_client: PublicKeyId,
         receiver_public_key_from_client: PublicKeyId,
         client_id_value: ClientId,
         client_local_id_value: ClientLocalId,
@@ -426,6 +427,8 @@ impl WriteCommandsChat<'_> {
                 .insert_pending_message_if_match_and_not_blocked(
                     sender,
                     receiver,
+                    sender_public_key_from_client,
+                    receiver_public_key_from_client,
                     message,
                     client_id_value,
                     client_local_id_value,

@@ -3,12 +3,12 @@ use base64::Engine;
 use model::UpdateReportResult;
 use model_chat::{AccountIdInternal, NewChatMessageReportInternal, SignedMessageData, UpdateChatMessageReport};
 use server_api::{app::DataSignerProvider, create_open_api_router, db_write_multiple, S};
-use server_data_chat::write::GetWriteCommandsChat;
+use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
-use utils::encrypt::{decrypt_binary_message, unwrap_signed_binary_message};
+use utils::encrypt::{decrypt_binary_message, verify_signed_binary_message};
 
 use crate::{
-    app::{GetAccounts, WriteData},
+    app::{GetAccounts, WriteData, ReadData},
     utils::{Json, StatusCode},
 };
 
@@ -49,10 +49,18 @@ pub async fn post_chat_message_report(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
+    let sender_account_id_internal = state.get_internal_id(data.sender).await?;
+    let sender_public_key = state
+        .read()
+        .chat()
+        .public_key()
+        .get_public_key_data(sender_account_id_internal, data.sender_public_key_id).await?
+        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+
     let signed_pgp_message = decrypt_binary_message(&data.message, &decryption_key)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    // TODO(prod): Verify sender
-    let decrypted_pgp_message = unwrap_signed_binary_message(&signed_pgp_message)
+
+    let client_message_bytes = verify_signed_binary_message(&signed_pgp_message, &sender_public_key)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     let target = state.get_internal_id(update.target).await?;
@@ -62,7 +70,7 @@ pub async fn post_chat_message_report(
         message_number: data.mn,
         message_unix_time: data.unix_time,
         message_symmetric_key: decryption_key,
-        client_message_bytes: decrypted_pgp_message,
+        client_message_bytes,
         backend_signed_message_bytes: signed_message,
     };
 

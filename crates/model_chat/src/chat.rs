@@ -117,6 +117,12 @@ pub struct UpdateMessageViewStatus {
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, IntoParams)]
 pub struct SendMessageToAccountParams {
+    #[serde(
+        serialize_with = "public_key_id_as_i64",
+        deserialize_with = "public_key_id_from_i64"
+    )]
+    #[param(value_type = i64)]
+    pub sender_public_key_id: PublicKeyId,
     /// Receiver of the message.
     #[serde(
         serialize_with = "account_id_as_string",

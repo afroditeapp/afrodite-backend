@@ -3,6 +3,7 @@ use std::sync::Arc;
 use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
+use model::PublicKeyId;
 use model_chat::{
     AccountIdInternal, AccountInteractionState, ClientId, ClientLocalId, NewPendingMessageValues, PendingMessageIdInternal, SentMessageId, SignedMessageData, UnixTime
 };
@@ -72,10 +73,13 @@ impl CurrentWriteChatMessage<'_> {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn insert_pending_message_if_match_and_not_blocked(
         &mut self,
         sender: AccountIdInternal,
         receiver: AccountIdInternal,
+        sender_public_key_id: PublicKeyId,
+        receiver_public_key_id: PublicKeyId,
         message: Vec<u8>,
         client_id_value: ClientId,
         client_local_id_value: ClientLocalId,
@@ -119,6 +123,8 @@ impl CurrentWriteChatMessage<'_> {
         let data_for_signing = SignedMessageData {
             sender: sender.as_id(),
             receiver: receiver.as_id(),
+            sender_public_key_id,
+            receiver_public_key_id,
             mn: new_message_number,
             unix_time: time,
             message,
@@ -126,6 +132,8 @@ impl CurrentWriteChatMessage<'_> {
 
         let signed = keys.sign(&data_for_signing.to_bytes())
             .change_context(DieselDatabaseError::MessageEncryptionError)?;
+
+        // TODO(prod): Remove extra columns like unix_time?
 
         insert_into(pending_messages)
             .values((

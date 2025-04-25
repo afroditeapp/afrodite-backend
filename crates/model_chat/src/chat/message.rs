@@ -1,4 +1,4 @@
-use model::{AccountId, MessageNumber, UnixTime};
+use model::{AccountId, MessageNumber, PublicKeyId, UnixTime};
 use simple_backend_utils::UuidBase64Url;
 
 pub struct SignedMessageData {
@@ -6,6 +6,8 @@ pub struct SignedMessageData {
     pub sender: AccountId,
     /// Receiver of the message.
     pub receiver: AccountId,
+    pub sender_public_key_id: PublicKeyId,
+    pub receiver_public_key_id: PublicKeyId,
     pub mn: MessageNumber,
     /// Unix time when server received the message.
     pub unix_time: UnixTime,
@@ -27,6 +29,8 @@ impl SignedMessageData {
         }
         let sender = parse_account_id(&mut d)?;
         let receiver = parse_account_id(&mut d)?;
+        let sender_public_key_id = parse_minimal_i64(&mut d)?;
+        let receiver_public_key_id = parse_minimal_i64(&mut d)?;
         let mn = parse_minimal_i64(&mut d)?;
         let ut = parse_minimal_i64(&mut d)?;
         let message = d.collect();
@@ -34,6 +38,8 @@ impl SignedMessageData {
         Some(Ok(SignedMessageData {
             sender,
             receiver,
+            sender_public_key_id: PublicKeyId { id: sender_public_key_id },
+            receiver_public_key_id: PublicKeyId { id: receiver_public_key_id},
             mn: MessageNumber { mn },
             unix_time: UnixTime { ut },
             message,
@@ -48,9 +54,9 @@ impl SignedMessageData {
         bytes.extend_from_slice(self.sender.aid.as_bytes());
         // Receiver UUID big-endian bytes (16 bytes)
         bytes.extend_from_slice(self.receiver.aid.as_bytes());
-        // Variable lenght i64 value (u8 byte count and litle-endian data)
+        add_minimal_i64(&mut bytes, self.sender_public_key_id.id);
+        add_minimal_i64(&mut bytes, self.receiver_public_key_id.id);
         add_minimal_i64(&mut bytes, self.mn.mn);
-        // Variable lenght i64 value (u8 byte count and litle-endian data)
         add_minimal_i64(&mut bytes, self.unix_time.ut);
         // Sent message data
         bytes.extend_from_slice(&self.message);
