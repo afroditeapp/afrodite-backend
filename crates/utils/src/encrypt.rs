@@ -175,7 +175,7 @@ impl GeneratedKeys {
     pub fn to_parsed_keys(&self) -> Result<ParsedKeys, MessageEncryptionError> {
         let (public, _) = SignedPublicKey::from_string(&self.public)
             .map_err(|_| MessageEncryptionError::PublicKeyReadFromString)?;
-        let (private, _) = SignedSecretKey::from_string(&self.public)
+        let (private, _) = SignedSecretKey::from_string(&self.private)
             .map_err(|_| MessageEncryptionError::PrivateKeyReadFromString)?;
 
         Ok(ParsedKeys { private, public })

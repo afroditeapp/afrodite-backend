@@ -32,7 +32,7 @@ use perf::ALL_COUNTERS;
 use profile_search::{ProfileSearchManager, ProfileSearchManagerQuitHandle};
 use push_notifications::ServerPushNotificationStateProvider;
 use scheduled_tasks::{ScheduledTaskManager, ScheduledTaskManagerQuitHandle};
-use server_api::app::GetConfig;
+use server_api::app::{DataSignerProvider, GetConfig};
 use server_common::push_notifications::{
     PushNotificationManager, PushNotificationManagerQuitHandle,
 };
@@ -280,6 +280,10 @@ impl BusinessLogic for DatingAppBusinessLogic {
             &DataAllUtilsImpl,
         )
         .await;
+
+        app_state.data_signer().load_or_generate_keys(self.config.simple_backend())
+            .await
+            .expect("Data signer init failed");
 
         let content_processing_quit_handle = ContentProcessingManager::new_manager(
             content_processing_receiver,
