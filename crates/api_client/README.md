@@ -93,6 +93,7 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**post_get_new_received_likes_count**](docs/ChatApi.md#post_get_new_received_likes_count) | **POST** /chat_api/new_received_likes_count | 
 *ChatApi* | [**post_get_next_matches_page**](docs/ChatApi.md#post_get_next_matches_page) | **POST** /chat_api/matches_page | Update matches iterator and get next page of matches. If the page is empty there is no more matches available.
 *ChatApi* | [**post_get_next_received_likes_page**](docs/ChatApi.md#post_get_next_received_likes_page) | **POST** /chat_api/received_likes | Update received likes iterator and get next page of received likes. If the page is empty there is no more received likes available.
+*ChatApi* | [**post_get_sent_message**](docs/ChatApi.md#post_get_sent_message) | **POST** /chat_api/sent_message | Receive unreceived [model_chat::SignedMessageData] for sent message.
 *ChatApi* | [**post_message_number_of_latest_viewed_message**](docs/ChatApi.md#post_message_number_of_latest_viewed_message) | **POST** /chat_api/message_number_of_latest_viewed_message | Update message number of the most recent message that the recipient has viewed.
 *ChatApi* | [**post_reset_matches_paging**](docs/ChatApi.md#post_reset_matches_paging) | **POST** /chat_api/matches/reset | 
 *ChatApi* | [**post_reset_received_likes_paging**](docs/ChatApi.md#post_reset_received_likes_paging) | **POST** /chat_api/received_likes/reset | 
@@ -220,11 +221,13 @@ Class | Method | HTTP request | Description
  - [AuthPair](docs/AuthPair.md)
  - [AutomaticProfileSearchCompletedNotification](docs/AutomaticProfileSearchCompletedNotification.md)
  - [AutomaticProfileSearchCompletedNotificationViewed](docs/AutomaticProfileSearchCompletedNotificationViewed.md)
+ - [AutomaticProfileSearchIteratorSessionId](docs/AutomaticProfileSearchIteratorSessionId.md)
  - [BackendConfig](docs/BackendConfig.md)
  - [BackendVersion](docs/BackendVersion.md)
  - [BooleanSetting](docs/BooleanSetting.md)
  - [BotConfig](docs/BotConfig.md)
  - [ChatAppNotificationSettings](docs/ChatAppNotificationSettings.md)
+ - [ChatMessageReport](docs/ChatMessageReport.md)
  - [ClientConfig](docs/ClientConfig.md)
  - [ClientConfigSyncVersion](docs/ClientConfigSyncVersion.md)
  - [ClientFeaturesConfig](docs/ClientFeaturesConfig.md)
@@ -299,6 +302,7 @@ Class | Method | HTTP request | Description
  - [GetProfileTextPendingModerationList](docs/GetProfileTextPendingModerationList.md)
  - [GetProfileTextState](docs/GetProfileTextState.md)
  - [GetReportList](docs/GetReportList.md)
+ - [GetSentMessage](docs/GetSentMessage.md)
  - [GroupValues](docs/GroupValues.md)
  - [IpAddressInfo](docs/IpAddressInfo.md)
  - [Language](docs/Language.md)
@@ -337,7 +341,6 @@ Class | Method | HTTP request | Description
  - [NewsTranslationVersion](docs/NewsTranslationVersion.md)
  - [PageItemCountForNewLikes](docs/PageItemCountForNewLikes.md)
  - [PageItemCountForNewPublicNews](docs/PageItemCountForNewPublicNews.md)
- - [PendingMessage](docs/PendingMessage.md)
  - [PendingMessageAcknowledgementList](docs/PendingMessageAcknowledgementList.md)
  - [PendingMessageId](docs/PendingMessageId.md)
  - [PendingNotificationToken](docs/PendingNotificationToken.md)

@@ -13,16 +13,19 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct UpdateChatMessageReport {
-    #[serde(rename = "message")]
-    pub message: String,
+    #[serde(rename = "backend_signed_message_base64")]
+    pub backend_signed_message_base64: String,
+    #[serde(rename = "decryption_key_base64")]
+    pub decryption_key_base64: String,
     #[serde(rename = "target")]
     pub target: Box<models::AccountId>,
 }
 
 impl UpdateChatMessageReport {
-    pub fn new(message: String, target: models::AccountId) -> UpdateChatMessageReport {
+    pub fn new(backend_signed_message_base64: String, decryption_key_base64: String, target: models::AccountId) -> UpdateChatMessageReport {
         UpdateChatMessageReport {
-            message,
+            backend_signed_message_base64,
+            decryption_key_base64,
             target: Box::new(target),
         }
     }

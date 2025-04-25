@@ -729,7 +729,7 @@ pub async fn get_search_groups(configuration: &configuration::Configuration, ) -
     }
 }
 
-pub async fn post_automatic_profile_search_get_next_profile_page(configuration: &configuration::Configuration, profile_iterator_session_id: models::ProfileIteratorSessionId) -> Result<models::ProfilePage, Error<PostAutomaticProfileSearchGetNextProfilePageError>> {
+pub async fn post_automatic_profile_search_get_next_profile_page(configuration: &configuration::Configuration, automatic_profile_search_iterator_session_id: models::AutomaticProfileSearchIteratorSessionId) -> Result<models::ProfilePage, Error<PostAutomaticProfileSearchGetNextProfilePageError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -748,7 +748,7 @@ pub async fn post_automatic_profile_search_get_next_profile_page(configuration: 
         };
         local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
-    local_var_req_builder = local_var_req_builder.json(&profile_iterator_session_id);
+    local_var_req_builder = local_var_req_builder.json(&automatic_profile_search_iterator_session_id);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -766,7 +766,7 @@ pub async fn post_automatic_profile_search_get_next_profile_page(configuration: 
 }
 
 /// After this request getting next profiles will continue from the nearest profiles.
-pub async fn post_automatic_profile_search_reset_profile_paging(configuration: &configuration::Configuration, ) -> Result<models::ProfileIteratorSessionId, Error<PostAutomaticProfileSearchResetProfilePagingError>> {
+pub async fn post_automatic_profile_search_reset_profile_paging(configuration: &configuration::Configuration, ) -> Result<models::AutomaticProfileSearchIteratorSessionId, Error<PostAutomaticProfileSearchResetProfilePagingError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;

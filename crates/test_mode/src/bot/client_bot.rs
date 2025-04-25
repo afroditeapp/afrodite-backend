@@ -569,6 +569,7 @@ async fn send_message(
 
     post_send_message_fixed(
         state.api.chat(),
+        keys.public_key_id,
         &receiver.aid.to_string(),
         latest_key_id,
         0,

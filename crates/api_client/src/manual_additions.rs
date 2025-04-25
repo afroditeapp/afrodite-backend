@@ -191,7 +191,7 @@ pub async fn get_public_key_fixed(configuration: &configuration::Configuration, 
 }
 
 /// Max pending message count is 50. Max message size is u16::MAX.  The sender message ID must be value which server expects.  Sending will fail if one or two way block exists.
-pub async fn post_send_message_fixed(configuration: &configuration::Configuration, receiver: &str, receiver_public_key_id: i64, client_id: i64, client_local_id: i64, body: Vec<u8>) -> Result<crate::models::SendMessageResult, Error<PostSendMessageError>> {
+pub async fn post_send_message_fixed(configuration: &configuration::Configuration, sender_public_key_id: i64, receiver: &str, receiver_public_key_id: i64, client_id: i64, client_local_id: i64, body: Vec<u8>) -> Result<crate::models::SendMessageResult, Error<PostSendMessageError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -199,6 +199,7 @@ pub async fn post_send_message_fixed(configuration: &configuration::Configuratio
     let local_var_uri_str = format!("{}/chat_api/send_message", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
+    local_var_req_builder = local_var_req_builder.query(&[("sender_public_key_id", &sender_public_key_id.to_string())]);
     local_var_req_builder = local_var_req_builder.query(&[("receiver", &receiver.to_string())]);
     local_var_req_builder = local_var_req_builder.query(&[("receiver_public_key_id", &receiver_public_key_id.to_string())]);
     local_var_req_builder = local_var_req_builder.query(&[("client_id", &client_id.to_string())]);

@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ReportContent {
     #[serde(rename = "chat_message", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub chat_message: Option<Option<String>>,
+    pub chat_message: Option<Option<Box<models::ChatMessageReport>>>,
     #[serde(rename = "custom_report", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub custom_report: Option<Option<Box<models::CustomReportContent>>>,
     #[serde(rename = "profile_content", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]

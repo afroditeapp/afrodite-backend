@@ -43,11 +43,13 @@ src/models/attribute_value_order_mode.rs
 src/models/auth_pair.rs
 src/models/automatic_profile_search_completed_notification.rs
 src/models/automatic_profile_search_completed_notification_viewed.rs
+src/models/automatic_profile_search_iterator_session_id.rs
 src/models/backend_config.rs
 src/models/backend_version.rs
 src/models/boolean_setting.rs
 src/models/bot_config.rs
 src/models/chat_app_notification_settings.rs
+src/models/chat_message_report.rs
 src/models/client_config.rs
 src/models/client_config_sync_version.rs
 src/models/client_features_config.rs
@@ -122,6 +124,7 @@ src/models/get_profile_statistics_result.rs
 src/models/get_profile_text_pending_moderation_list.rs
 src/models/get_profile_text_state.rs
 src/models/get_report_list.rs
+src/models/get_sent_message.rs
 src/models/group_values.rs
 src/models/ip_address_info.rs
 src/models/language.rs
@@ -161,7 +164,6 @@ src/models/news_sync_version.rs
 src/models/news_translation_version.rs
 src/models/page_item_count_for_new_likes.rs
 src/models/page_item_count_for_new_public_news.rs
-src/models/pending_message.rs
 src/models/pending_message_acknowledgement_list.rs
 src/models/pending_message_id.rs
 src/models/pending_notification_token.rs
