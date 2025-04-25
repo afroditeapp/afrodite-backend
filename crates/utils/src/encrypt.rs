@@ -52,8 +52,7 @@ pub enum MessageEncryptionError {
     DecryptWithKeyFromBytes = 80,
     DecryptWithKeyDecrypt = 81,
     DecryptWithKeyNotEncrypted = 82,
-    DecryptWithKeyGetContent = 83,
-    DecryptWithKeyNoContent = 84,
+    DecryptWithKeyToBytes = 83,
 }
 
 impl Display for MessageEncryptionError {
@@ -87,6 +86,8 @@ pub fn encrypt_data(
         // have possibility to limit decompressed data size.
         // If the data would be compressed, then denial of service attacks
         // would be possible.
+        .sign(OsRng, &my_private_key, String::new, HashAlgorithm::SHA2_256)
+        .map_err(|_| MessageEncryptionError::EncryptDataSign)?
         .encrypt_to_keys_seipdv2(
             OsRng,
             SymmetricKeyAlgorithm::AES128,
@@ -97,8 +98,6 @@ pub fn encrypt_data(
             &[encryption_public_subkey],
         )
         .map_err(|_| MessageEncryptionError::EncryptDataEncrypt)?
-        .sign(OsRng, &my_private_key, String::new, HashAlgorithm::SHA2_256)
-        .map_err(|_| MessageEncryptionError::EncryptDataSign)?
         .to_bytes()
         .map_err(|_| MessageEncryptionError::EncryptDataToBytes)?;
 
@@ -228,11 +227,10 @@ pub fn decrypt_binary_message(data: &[u8], key: &[u8]) -> Result<Vec<u8>, Messag
     let key = PlainSessionKey::V6 { key: key.to_vec() };
 
     if let Message::Encrypted { edata, .. } = message {
-        let message = edata.decrypt(key)
-            .map_err(|_| MessageEncryptionError::DecryptWithKeyDecrypt)?;
-        message.get_content()
-            .map_err(|_| MessageEncryptionError::DecryptWithKeyGetContent)?
-            .ok_or(MessageEncryptionError::DecryptWithKeyNoContent)
+        edata.decrypt(key)
+            .map_err(|_| MessageEncryptionError::DecryptWithKeyDecrypt)?
+            .to_bytes()
+            .map_err(|_| MessageEncryptionError::DecryptWithKeyToBytes)
     } else {
         Err(MessageEncryptionError::DecryptWithKeyNotEncrypted)
     }

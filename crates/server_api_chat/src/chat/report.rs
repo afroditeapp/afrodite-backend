@@ -49,9 +49,10 @@ pub async fn post_chat_message_report(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let encrypted_pgp_message = unwrap_signed_binary_message(&data.message)
+    let signed_pgp_message = decrypt_binary_message(&data.message, &decryption_key)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    let decrypted_pgp_message = decrypt_binary_message(&encrypted_pgp_message, &decryption_key)
+    // TODO(prod): Verify sender
+    let decrypted_pgp_message = unwrap_signed_binary_message(&signed_pgp_message)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     let target = state.get_internal_id(update.target).await?;
