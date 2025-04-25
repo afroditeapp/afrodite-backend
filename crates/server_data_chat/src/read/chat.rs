@@ -1,9 +1,6 @@
 use database_chat::current::read::GetDbReadCommandsChat;
 use model_chat::{
-    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState,
-    AllMatchesPage, ChatStateRaw, MatchId, MessageNumber, PageItemCountForNewLikes,
-    ReceivedBlocksPage, ReceivedLikeId,
-    SentBlocksPage, SentLikesPage, SentMessageId,
+    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, AllMatchesPage, ChatStateRaw, GetSentMessage, MatchId, MessageNumber, PageItemCountForNewLikes, ReceivedBlocksPage, ReceivedLikeId, SentBlocksPage, SentLikesPage, SentMessageId
 };
 use server_data::{
     cache::{
@@ -179,6 +176,16 @@ impl ReadCommandsChat<'_> {
         id: AccountIdInternal,
     ) -> Result<Vec<SentMessageId>, DataError> {
         self.db_read(move |mut cmds| cmds.chat().message().all_sent_messages(id))
+            .await
+            .into_error()
+    }
+
+    pub async fn get_sent_message(
+        &self,
+        id: AccountIdInternal,
+        message: SentMessageId,
+    ) -> Result<GetSentMessage, DataError> {
+        self.db_read(move |mut cmds| cmds.chat().message().get_sent_message(id, message))
             .await
             .into_error()
     }

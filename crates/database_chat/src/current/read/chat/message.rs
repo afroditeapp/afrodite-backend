@@ -2,8 +2,7 @@ use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
 use model_chat::{
-    AccountId, AccountIdInternal,
-    PendingMessageInternal, SentMessageId,
+    AccountId, AccountIdInternal, GetSentMessage, PendingMessageInternal, SentMessageId
 };
 
 use crate::IntoDatabaseError;
@@ -74,6 +73,25 @@ impl CurrentReadChatMessage<'_> {
             .collect();
 
         Ok(messages)
+    }
+
+    pub fn get_sent_message(
+        &mut self,
+        id_message_sender: AccountIdInternal,
+        message: SentMessageId,
+    ) -> Result<GetSentMessage, DieselDatabaseError> {
+        use crate::schema::pending_messages::dsl::*;
+
+        let value: Vec<u8> = pending_messages
+            .filter(account_id_sender.eq(id_message_sender.as_db_id()))
+            .filter(sender_acknowledgement.eq(false))
+            .filter(sender_client_id.eq(message.c))
+            .filter(sender_client_local_id.eq(message.l))
+            .select(message_bytes)
+            .first(self.conn())
+            .into_db_error(())?;
+
+        Ok(GetSentMessage::new(value))
     }
 
     pub fn receiver_acknowledgements_missing_count_for_one_conversation(

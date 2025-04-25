@@ -1,3 +1,4 @@
+use base64::Engine;
 use diesel::prelude::*;
 use model::{
     MatchId, MatchesSyncVersion, MessageNumber, NewReceivedLikesCount, PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikeId, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion
@@ -193,10 +194,8 @@ pub fn client_local_id_from_i64<'de, D: Deserializer<'de>>(
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct SendMessageResult {
-    /// None if error happened
-    ut: Option<UnixTime>,
-    /// None if error happened
-    mn: Option<MessageNumber>,
+    /// Base64 encoded PGP signed message containing [SignedMessageData].
+    d: Option<String>,
     // Errors
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -248,11 +247,25 @@ impl SendMessageResult {
         }
     }
 
-    pub fn successful(values: NewPendingMessageValues) -> Self {
+    pub fn successful(data: Vec<u8>) -> Self {
         Self {
-            ut: Some(values.unix_time),
-            mn: Some(values.message_number),
+            d: Some(base64::engine::general_purpose::STANDARD.encode(data)),
             ..Self::default()
+        }
+    }
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct GetSentMessage {
+    /// Base64 encoded PGP signed message containing [SignedMessageData].
+    #[allow(dead_code)]
+    data: String,
+}
+
+impl GetSentMessage {
+    pub fn new(data: Vec<u8>) -> Self {
+        Self {
+            data: base64::engine::general_purpose::STANDARD.encode(data)
         }
     }
 }
@@ -289,11 +302,6 @@ impl DeleteLikeResult {
             error_account_interaction_state_mismatch: Some(state),
         }
     }
-}
-
-pub struct NewPendingMessageValues {
-    pub unix_time: UnixTime,
-    pub message_number: MessageNumber,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]

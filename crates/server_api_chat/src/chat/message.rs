@@ -7,7 +7,7 @@ use axum_extra::TypedHeader;
 use headers::ContentType;
 use model::NotificationEvent;
 use model_chat::{
-    add_minimal_i64, AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber, PendingMessageAcknowledgementList, SendMessageResult, SendMessageToAccountParams, SentMessageIdList, UpdateMessageViewStatus
+    add_minimal_i64, AccountId, AccountIdInternal, EventToClientInternal, GetSentMessage, LatestViewedMessageChanged, MessageNumber, PendingMessageAcknowledgementList, SendMessageResult, SendMessageToAccountParams, SentMessageId, SentMessageIdList, UpdateMessageViewStatus
 };
 use server_api::{app::{ApiUsageTrackerProvider, DataSignerProvider}, create_open_api_router, S};
 use server_data_chat::{
@@ -272,6 +272,33 @@ pub async fn post_send_message(
     Ok(result.into())
 }
 
+const PATH_POST_GET_SENT_MESSAGE: &str = "/chat_api/sent_message";
+
+/// Receive unreceived [model_chat::SignedMessageData]
+/// for sent message.
+///
+/// This is HTTP POST route only to allow JSON request body.
+#[utoipa::path(
+    post,
+    path = PATH_POST_GET_SENT_MESSAGE,
+    request_body = SentMessageId,
+    responses(
+        (status = 200, description = "Success.", body = GetSentMessage),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_get_sent_message(
+    State(state): State<S>,
+    Extension(id): Extension<AccountIdInternal>,
+    Json(message): Json<SentMessageId>,
+) -> Result<Json<GetSentMessage>, StatusCode> {
+    CHAT.post_get_sent_message.incr();
+    let data = state.read().chat().get_sent_message(id, message).await?;
+    Ok(data.into())
+}
+
 const PATH_GET_SENT_MESSAGE_IDS: &str = "/chat_api/sent_message_ids";
 
 #[utoipa::path(
@@ -331,6 +358,7 @@ create_open_api_router!(
         get_message_number_of_latest_viewed_message,
         post_message_number_of_latest_viewed_message,
         post_send_message,
+        post_get_sent_message,
         get_sent_message_ids,
         post_add_sender_acknowledgement,
 );
@@ -344,6 +372,7 @@ create_counters!(
     get_message_number_of_latest_viewed_message,
     post_message_number_of_latest_viewed_message,
     post_send_message,
+    post_get_sent_message,
     get_sent_message_ids,
     post_add_sender_acknowledgement,
 );

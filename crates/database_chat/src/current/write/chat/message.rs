@@ -5,7 +5,7 @@ use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::PublicKeyId;
 use model_chat::{
-    AccountIdInternal, AccountInteractionState, ClientId, ClientLocalId, NewPendingMessageValues, PendingMessageIdInternal, SentMessageId, SignedMessageData, UnixTime
+    AccountIdInternal, AccountInteractionState, ClientId, ClientLocalId, PendingMessageIdInternal, SentMessageId, SignedMessageData, UnixTime
 };
 use utils::encrypt::ParsedKeys;
 
@@ -73,6 +73,8 @@ impl CurrentWriteChatMessage<'_> {
         Ok(())
     }
 
+    /// Returns PGP signed message containing [SignedMessageData]
+    /// in binary format.
     #[allow(clippy::too_many_arguments)]
     pub fn insert_pending_message_if_match_and_not_blocked(
         &mut self,
@@ -85,7 +87,7 @@ impl CurrentWriteChatMessage<'_> {
         client_local_id_value: ClientLocalId,
         keys: Arc<ParsedKeys>,
     ) -> Result<
-        std::result::Result<NewPendingMessageValues, ReceiverBlockedSender>,
+        std::result::Result<Vec<u8>, ReceiverBlockedSender>,
         DieselDatabaseError,
     > {
         use model::schema::{account_interaction, pending_messages::dsl::*};
@@ -141,16 +143,13 @@ impl CurrentWriteChatMessage<'_> {
                 account_id_receiver.eq(receiver.as_db_id()),
                 unix_time.eq(time),
                 message_number.eq(new_message_number),
-                message_bytes.eq(signed),
+                message_bytes.eq(&signed),
                 sender_client_id.eq(client_id_value),
                 sender_client_local_id.eq(client_local_id_value),
             ))
             .execute(self.conn())
             .into_db_error((sender, receiver, new_message_number))?;
 
-        Ok(Ok(NewPendingMessageValues {
-            unix_time: time,
-            message_number: new_message_number,
-        }))
+        Ok(Ok(signed))
     }
 }
