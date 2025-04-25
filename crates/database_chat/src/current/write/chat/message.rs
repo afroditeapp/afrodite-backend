@@ -135,13 +135,10 @@ impl CurrentWriteChatMessage<'_> {
         let signed = keys.sign(&data_for_signing.to_bytes())
             .change_context(DieselDatabaseError::MessageEncryptionError)?;
 
-        // TODO(prod): Remove extra columns like unix_time?
-
         insert_into(pending_messages)
             .values((
                 account_id_sender.eq(sender.as_db_id()),
                 account_id_receiver.eq(receiver.as_db_id()),
-                unix_time.eq(time),
                 message_number.eq(new_message_number),
                 message_bytes.eq(&signed),
                 sender_client_id.eq(client_id_value),

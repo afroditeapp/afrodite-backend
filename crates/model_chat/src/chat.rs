@@ -5,7 +5,6 @@ use model::{
 };
 use model_server_data::LimitedActionStatus;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use simple_backend_model::UnixTime;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{AccountId, AccountIdDb, AccountIdInternal, ClientId, ClientLocalId};
@@ -47,7 +46,6 @@ pub struct PendingMessageInternal {
     pub id: i64,
     pub account_id_sender: AccountIdDb,
     pub account_id_receiver: AccountIdDb,
-    pub unix_time: UnixTime,
     pub message_number: MessageNumber,
     pub message_bytes: Vec<u8>,
     pub sender_client_id: ClientId,

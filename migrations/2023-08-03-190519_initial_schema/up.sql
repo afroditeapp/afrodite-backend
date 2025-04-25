@@ -913,8 +913,6 @@ CREATE TABLE IF NOT EXISTS pending_messages(
     -- Acknowledgement from sender and receiver
     sender_acknowledgement          BOOLEAN NOT NULL DEFAULT 0,
     receiver_acknowledgement        BOOLEAN NOT NULL DEFAULT 0,
-    -- Receiving time of the message.
-    unix_time                       INTEGER NOT NULL,
     -- Order number for the message in the conversation.
     message_number                  INTEGER NOT NULL,
     -- Client ID and client local ID together makes
