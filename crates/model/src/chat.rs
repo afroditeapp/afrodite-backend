@@ -1,7 +1,9 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::diesel_i64_wrapper;
+use simple_backend_model::{diesel_i64_wrapper, UnixTime};
 use utoipa::{IntoParams, ToSchema};
+
+use crate::AccountId;
 
 use super::sync_version_wrappers;
 
@@ -96,3 +98,14 @@ impl NewReceivedLikesCount {
 }
 
 diesel_i64_wrapper!(NewReceivedLikesCount);
+
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize, ToSchema)]
+pub struct ChatMessageReport {
+    pub sender: AccountId,
+    pub receiver: AccountId,
+    pub message_time: UnixTime,
+    pub message_number: MessageNumber,
+    /// Message without encryption and signing
+    pub message_base64: String,
+}

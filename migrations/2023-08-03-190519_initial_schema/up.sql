@@ -935,8 +935,14 @@ CREATE TABLE IF NOT EXISTS pending_messages(
 );
 
 CREATE TABLE IF NOT EXISTS chat_report_chat_message(
-    report_id                INTEGER PRIMARY KEY NOT NULL,
-    chat_message             TEXT,
+    report_id                          INTEGER PRIMARY KEY NOT NULL,
+    message_sender_account_id_uuid     BLOB                NOT NULL,
+    message_receiver_account_id_uuid   BLOB                NOT NULL,
+    message_unix_time                  INTEGER             NOT NULL,
+    message_number                     INTEGER             NOT NULL,
+    message_symmetric_key              BLOB                NOT NULL,
+    client_message_bytes               BLOB                NOT NULL,
+    backend_signed_message_bytes       BLOB                NOT NULL,
     FOREIGN KEY (report_id)
         REFERENCES common_report (id)
             ON DELETE CASCADE

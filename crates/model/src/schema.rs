@@ -215,7 +215,13 @@ diesel::table! {
 
     chat_report_chat_message (report_id) {
         report_id -> Integer,
-        chat_message -> Nullable<Text>,
+        message_sender_account_id_uuid -> Binary,
+        message_receiver_account_id_uuid -> Binary,
+        message_unix_time -> Integer,
+        message_number -> Integer,
+        message_symmetric_key -> Binary,
+        client_message_bytes -> Binary,
+        backend_signed_message_bytes -> Binary,
     }
 }
 

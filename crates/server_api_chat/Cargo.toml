@@ -15,6 +15,7 @@ headers = { workspace = true }
 utoipa = { workspace = true }
 utoipa-axum = { workspace = true }
 
+base64 = { workspace = true }
 pgp = { workspace = true }
 
 model = { path = "../model" }
@@ -25,4 +26,5 @@ server_api = { path = "../server_api" }
 
 server_data_chat = { path = "../server_data_chat" }
 
+utils = { path = "../utils" }
 simple_backend = { path = "../simple_backend" }

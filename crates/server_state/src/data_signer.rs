@@ -113,4 +113,14 @@ impl DataSigner {
         };
         Ok(keys.clone())
     }
+
+    pub async fn verify_and_extract_backend_signed_data(&self, data: &[u8]) -> Result<Vec<u8>, DataSignerError> {
+        let lock = self.state.lock().await;
+        let Some(keys) = &lock.keys else {
+            return Err(DataSignerError::KeysNotLoaded.report());
+        };
+        let data = keys.verify_signed_message_and_extract_data(data)
+            .change_context(DataSignerError::MessageEncryptionError)?;
+        Ok(data)
+    }
 }

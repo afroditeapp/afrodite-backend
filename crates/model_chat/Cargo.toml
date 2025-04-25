@@ -7,6 +7,7 @@ edition = "2024"
 
 [dependencies]
 
+base64 = { workspace = true }
 serde = { workspace = true }
 utoipa = { workspace = true }
 diesel = { workspace = true }

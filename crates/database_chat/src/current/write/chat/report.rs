@@ -2,6 +2,7 @@ use database::{current::write::GetDbWriteCommandsCommon, define_current_write_co
 use diesel::{insert_into, prelude::*, ExpressionMethods};
 use error_stack::Result;
 use model::{AccountIdInternal, ReportProcessingState, ReportTypeNumberInternal};
+use model_chat::NewChatMessageReportInternal;
 
 use crate::IntoDatabaseError;
 
@@ -12,7 +13,7 @@ impl CurrentWriteChatReport<'_> {
         &mut self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
-        message: String,
+        message: NewChatMessageReportInternal,
     ) -> Result<(), DieselDatabaseError> {
         let id = self.write().common().report().insert_report_content(
             creator,
@@ -27,7 +28,7 @@ impl CurrentWriteChatReport<'_> {
             insert_into(chat_report_chat_message)
                 .values((
                     report_id.eq(id),
-                    chat_message.eq(message),
+                    message,
                 ))
                 .execute(self.conn())
                 .into_db_error((creator, target))?;

@@ -1,7 +1,8 @@
+use base64::Engine;
 use config::file::Components;
 use diesel::{alias, prelude::*};
 use error_stack::Result;
-use model::{AccountId, AccountIdDb, AccountIdInternal, AccountInteractionInternal, ContentId, CustomReportContent, ReportAccountInfo, ReportChatInfo, ReportChatInfoInteractionState, ReportContent, ReportDetailed, ReportDetailedInfo, ReportDetailedInfoInternal, ReportDetailedWithId, ReportIdDb, ReportInternal, ReportProcessingState, ReportTypeNumberInternal};
+use model::{AccountId, AccountIdDb, AccountIdInternal, AccountInteractionInternal, ChatMessageReport, ContentId, CustomReportContent, MessageNumber, ReportAccountInfo, ReportChatInfo, ReportChatInfoInteractionState, ReportContent, ReportDetailed, ReportDetailedInfo, ReportDetailedInfoInternal, ReportDetailedWithId, ReportIdDb, ReportInternal, ReportProcessingState, ReportTypeNumberInternal, UnixTime};
 
 use crate::{define_current_read_commands, DieselDatabaseError, IntoDatabaseError};
 
@@ -176,16 +177,33 @@ impl CurrentReadCommonReport<'_> {
 
     fn chat_message_report(
         &mut self,
-        id: ReportIdDb
-    ) -> Result<Option<String>, DieselDatabaseError> {
+        id: ReportIdDb,
+    ) -> Result<Option<ChatMessageReport>, DieselDatabaseError> {
         use crate::schema::chat_report_chat_message::dsl::*;
 
-        chat_report_chat_message.find(id)
-            .select(chat_message)
+        let value: Option<(AccountId, AccountId, UnixTime, MessageNumber, Vec<u8>)> = chat_report_chat_message.find(id)
+            .select((
+                message_sender_account_id_uuid,
+                message_receiver_account_id_uuid,
+                message_unix_time,
+                message_number,
+                client_message_bytes,
+            ))
             .first(self.conn())
             .optional()
-            .into_db_error(())
-            .map(|v| v.flatten())
+            .into_db_error(())?;
+
+        if let Some((sender, receiver, message_time, mn, data)) = value {
+            Ok(Some(ChatMessageReport {
+                sender,
+                receiver,
+                message_time,
+                message_number: mn,
+                message_base64: base64::engine::general_purpose::STANDARD.encode(data),
+            }))
+        } else {
+            Ok(None)
+        }
     }
 
     fn custom_report(

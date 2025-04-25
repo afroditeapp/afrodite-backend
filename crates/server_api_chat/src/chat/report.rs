@@ -1,9 +1,11 @@
 use axum::{extract::State, Extension};
+use base64::Engine;
 use model::UpdateReportResult;
-use model_chat::{AccountIdInternal, UpdateChatMessageReport};
-use server_api::{create_open_api_router, db_write_multiple, S};
+use model_chat::{AccountIdInternal, NewChatMessageReportInternal, SignedMessageData, UpdateChatMessageReport};
+use server_api::{app::DataSignerProvider, create_open_api_router, db_write_multiple, S};
 use server_data_chat::write::GetWriteCommandsChat;
 use simple_backend::create_counters;
+use utils::encrypt::{decrypt_binary_message, unwrap_signed_binary_message};
 
 use crate::{
     app::{GetAccounts, WriteData},
@@ -33,12 +35,40 @@ pub async fn post_chat_message_report(
 ) -> Result<Json<UpdateReportResult>, StatusCode> {
     CHAT.post_chat_message_report.incr();
 
+    let signed_message = base64::engine::general_purpose::STANDARD.decode(update.backend_signed_message_base64)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let decryption_key = base64::engine::general_purpose::STANDARD.decode(update.decryption_key_base64)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let data = state.data_signer().verify_and_extract_backend_signed_data(&signed_message).await?;
+    let data = SignedMessageData::parse(&data)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    if data.receiver != update.target && data.sender != update.target {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let encrypted_pgp_message = unwrap_signed_binary_message(&data.message)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let decrypted_pgp_message = decrypt_binary_message(&encrypted_pgp_message, &decryption_key)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
     let target = state.get_internal_id(update.target).await?;
+    let report = NewChatMessageReportInternal {
+        message_sender_account_id_uuid: data.sender,
+        message_receiver_account_id_uuid: data.receiver,
+        message_number: data.mn,
+        message_unix_time: data.unix_time,
+        message_symmetric_key: decryption_key,
+        client_message_bytes: decrypted_pgp_message,
+        backend_signed_message_bytes: signed_message,
+    };
 
     let result = db_write_multiple!(state, move |cmds| cmds
         .chat()
         .report()
-        .report_chat_message(account_id, target, update.message)
+        .report_chat_message(account_id, target, report)
         .await)?;
 
     Ok(result.into())

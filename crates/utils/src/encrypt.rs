@@ -4,7 +4,7 @@ use std::{error::Error, fmt::Display};
 
 use bstr::BStr;
 use pgp::{
-    crypto::{aead::AeadAlgorithm, hash::HashAlgorithm, sym::SymmetricKeyAlgorithm}, ser::Serialize, types::SecretKeyTrait, ArmorOptions, Deserializable, KeyType, Message, SecretKeyParamsBuilder, SignedPublicKey, SignedSecretKey, SubkeyParamsBuilder
+    crypto::{aead::AeadAlgorithm, hash::HashAlgorithm, sym::SymmetricKeyAlgorithm}, ser::Serialize, types::SecretKeyTrait, ArmorOptions, Deserializable, KeyType, Message, PlainSessionKey, SecretKeyParamsBuilder, SignedPublicKey, SignedSecretKey, SubkeyParamsBuilder
 };
 use rand::rngs::OsRng;
 use smallvec::smallvec;
@@ -45,6 +45,15 @@ pub enum MessageEncryptionError {
     UnwrapSignedMessageFromBytes = 60,
     UnwrapSignedMessageGetContent = 61,
     UnwrapSignedMessageNoContent = 62,
+    VerifySignedMessageFromBytes = 70,
+    VerifySignedMessageVerify = 71,
+    VerifySignedMessageGetContent = 72,
+    VerifySignedMessageNoContent = 73,
+    DecryptWithKeyFromBytes = 80,
+    DecryptWithKeyDecrypt = 81,
+    DecryptWithKeyNotEncrypted = 82,
+    DecryptWithKeyGetContent = 83,
+    DecryptWithKeyNoContent = 84,
 }
 
 impl Display for MessageEncryptionError {
@@ -169,13 +178,13 @@ impl GeneratedKeys {
         let (private, _) = SignedSecretKey::from_string(&self.public)
             .map_err(|_| MessageEncryptionError::PrivateKeyReadFromString)?;
 
-        Ok(ParsedKeys { private, _public: public })
+        Ok(ParsedKeys { private, public })
     }
 }
 
 pub struct ParsedKeys {
     private: SignedSecretKey,
-    _public: SignedPublicKey,
+    public: SignedPublicKey,
 }
 
 impl ParsedKeys {
@@ -188,6 +197,20 @@ impl ParsedKeys {
         message.to_bytes()
             .map_err(|_| MessageEncryptionError::SignDataToBytes)
     }
+
+    pub fn verify_signed_message_and_extract_data(&self, data: &[u8]) -> Result<Vec<u8>, MessageEncryptionError> {
+        let message = pgp::message::Message::from_bytes(data)
+            .map_err(|_| MessageEncryptionError::VerifySignedMessageFromBytes)?;
+
+        message.verify(&self.public)
+            .map_err(|_| MessageEncryptionError::VerifySignedMessageVerify)?;
+
+        let data = message.get_content()
+            .map_err(|_| MessageEncryptionError::VerifySignedMessageGetContent)?
+            .ok_or(MessageEncryptionError::VerifySignedMessageNoContent)?;
+
+        Ok(data)
+    }
 }
 
 pub fn unwrap_signed_binary_message(data: &[u8]) -> Result<Vec<u8>, MessageEncryptionError> {
@@ -196,4 +219,21 @@ pub fn unwrap_signed_binary_message(data: &[u8]) -> Result<Vec<u8>, MessageEncry
     message.get_content()
         .map_err(|_| MessageEncryptionError::UnwrapSignedMessageGetContent)?
         .ok_or(MessageEncryptionError::UnwrapSignedMessageNoContent)
+}
+
+pub fn decrypt_binary_message(data: &[u8], key: &[u8]) -> Result<Vec<u8>, MessageEncryptionError> {
+    let message = pgp::message::Message::from_bytes(data)
+        .map_err(|_| MessageEncryptionError::DecryptWithKeyFromBytes)?;
+
+    let key = PlainSessionKey::V6 { key: key.to_vec() };
+
+    if let Message::Encrypted { edata, .. } = message {
+        let message = edata.decrypt(key)
+            .map_err(|_| MessageEncryptionError::DecryptWithKeyDecrypt)?;
+        message.get_content()
+            .map_err(|_| MessageEncryptionError::DecryptWithKeyGetContent)?
+            .ok_or(MessageEncryptionError::DecryptWithKeyNoContent)
+    } else {
+        Err(MessageEncryptionError::DecryptWithKeyNotEncrypted)
+    }
 }
