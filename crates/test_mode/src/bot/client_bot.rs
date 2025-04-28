@@ -564,9 +564,6 @@ async fn send_message(
     )
         .change_context( TestError::MessageEncryptionError)?;
 
-    let mut type_number_and_message = vec![0]; // Message type PGP
-    type_number_and_message.extend_from_slice(&encrypted_bytes);
-
     post_send_message_fixed(
         state.api.chat(),
         keys.public_key_id,
@@ -574,7 +571,7 @@ async fn send_message(
         latest_key_id,
         0,
         0,
-        type_number_and_message,
+        encrypted_bytes,
     )
     .await
     .change_context(TestError::ApiRequest)?;
