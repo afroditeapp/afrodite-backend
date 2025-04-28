@@ -481,6 +481,7 @@ impl BotAction for AnswerReceivedMessages {
 
         fn parse_signed_message_data(data: Vec<u8>) -> Option<PendingMessageId> {
             let d = &mut data.iter().copied();
+            let _version = d.next()?;
             let sender = parse_account_id(d)?;
             let _ = parse_account_id(d)?;
             let _ = parse_minimal_i64(d)?;
