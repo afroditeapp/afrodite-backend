@@ -386,13 +386,22 @@ impl WriteCommandsChat<'_> {
         keys: Arc<ParsedKeys>,
     ) -> Result<(SendMessageResult, Option<PushNotificationAllowed>), DataError> {
         db_transaction!(self, move |mut cmds| {
-            let current_key = cmds
+            let sender_current_key = cmds
+                .read()
+                .chat()
+                .public_key()
+                .latest_public_key_id(sender)?;
+            if Some(sender_public_key_from_client) != sender_current_key {
+                return Ok((SendMessageResult::sender_public_key_outdated(), None));
+            }
+
+            let receiver_current_key = cmds
                 .read()
                 .chat()
                 .public_key()
                 .latest_public_key_id(receiver)?;
-            if Some(receiver_public_key_from_client) != current_key {
-                return Ok((SendMessageResult::public_key_outdated(), None));
+            if Some(receiver_public_key_from_client) != receiver_current_key {
+                return Ok((SendMessageResult::receiver_public_key_outdated(), None));
             }
 
             let receiver_acknowledgements_missing = cmds

@@ -203,6 +203,9 @@ pub struct SendMessageResult {
     pub error_too_many_sender_acknowledgements_missing: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
+    pub error_sender_public_key_outdated: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
     pub error_receiver_public_key_outdated: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -213,6 +216,7 @@ impl SendMessageResult {
     pub fn is_err(&self) -> bool {
         self.error_too_many_receiver_acknowledgements_missing
             || self.error_too_many_sender_acknowledgements_missing
+            || self.error_sender_public_key_outdated
             || self.error_receiver_public_key_outdated
             || self.error_receiver_blocked_sender_or_receiver_not_found
     }
@@ -231,7 +235,14 @@ impl SendMessageResult {
         }
     }
 
-    pub fn public_key_outdated() -> Self {
+    pub fn sender_public_key_outdated() -> Self {
+        Self {
+            error_sender_public_key_outdated: true,
+            ..Self::default()
+        }
+    }
+
+    pub fn receiver_public_key_outdated() -> Self {
         Self {
             error_receiver_public_key_outdated: true,
             ..Self::default()
