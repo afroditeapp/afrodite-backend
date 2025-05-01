@@ -1,6 +1,6 @@
 use axum::{extract::State, Extension};
 use model::{
-    AccountIdInternal, GetReportList, Permissions, ProcessReport, ReportIteratorQuery, ReportIteratorQueryInternal, UnixTime
+    AccountIdInternal, GetChatMessageReports, GetChatMessageReportsInternal, GetReportList, Permissions, ProcessReport, ReportIteratorQuery, ReportIteratorQueryInternal, UnixTime
 };
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use crate::{
@@ -172,12 +172,58 @@ pub async fn post_get_report_iterator_page(
     Ok(r.into())
 }
 
+const PATH_POST_GET_CHAT_MESSAGE_REPORTS: &str = "/chat_api/get_chat_message_reports";
+
+/// Get all chat message reports. The reports are ordered by message
+/// sending order from oldest to latest.
+#[utoipa::path(
+    post,
+    path = PATH_POST_GET_CHAT_MESSAGE_REPORTS,
+    request_body = GetChatMessageReports,
+    responses(
+        (status = 200, description = "Successfull.", body = GetReportList),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_get_chat_message_reports(
+    State(state): State<S>,
+    Extension(permissions): Extension<Permissions>,
+    Json(settings): Json<GetChatMessageReports>,
+) -> Result<Json<GetReportList>, StatusCode> {
+    COMMON.post_get_chat_message_reports.incr();
+
+    if !permissions.admin_process_reports {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let creator = state.get_internal_id(settings.creator).await?;
+    let target = state.get_internal_id(settings.target).await?;
+
+    let query_internal = GetChatMessageReportsInternal {
+        creator,
+        target,
+        only_not_processed: settings.only_not_processed,
+    };
+
+    let r = state
+        .read()
+        .common_admin()
+        .report()
+        .get_chat_message_reports(query_internal)
+        .await?;
+
+    Ok(r.into())
+}
+
 create_open_api_router!(
         fn router_report,
         get_waiting_report_page,
         post_process_report,
         get_latest_report_iterator_start_position,
         post_get_report_iterator_page,
+        post_get_chat_message_reports,
 );
 
 create_counters!(
@@ -188,4 +234,5 @@ create_counters!(
     post_process_report,
     get_latest_report_iterator_start_position,
     post_get_report_iterator_page,
+    post_get_chat_message_reports,
 );

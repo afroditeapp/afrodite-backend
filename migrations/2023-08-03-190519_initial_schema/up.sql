@@ -151,10 +151,13 @@ CREATE TABLE IF NOT EXISTS common_report(
     target_account_id       INTEGER             NOT NULL,
     -- 0 = profile name
     -- 1 = profile text
+    -- 2 = profile content
+    -- 3 = chat message
+    -- Values from 64 to 127 are reserved for custom reports.
     report_type_number      INTEGER             NOT NULL,
     creation_unix_time      INTEGER             NOT NULL,
     moderator_account_id    INTEGER,
-    -- 0 = Empty
+    -- 0 = Empty // TODO(prod): Remove Empty?
     -- 1 = Waiting
     -- 2 = Done
     processing_state        INTEGER             NOT NULL    DEFAULT 0,

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, UnixTime};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::AccountId;
+use crate::{AccountId, AccountIdInternal};
 
 use super::sync_version_wrappers;
 
@@ -108,4 +108,17 @@ pub struct ChatMessageReport {
     pub message_number: MessageNumber,
     /// Message without encryption and signing
     pub message_base64: String,
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct GetChatMessageReports {
+    pub creator: AccountId,
+    pub target: AccountId,
+    pub only_not_processed: bool,
+}
+
+pub struct GetChatMessageReportsInternal {
+    pub creator: AccountIdInternal,
+    pub target: AccountIdInternal,
+    pub only_not_processed: bool,
 }
