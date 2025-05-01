@@ -103,6 +103,7 @@ impl CurrentReadCommonReport<'_> {
                 custom_report,
             },
             info: ReportDetailedInfo {
+                id: report.id.into(),
                 creator: report.info.creator,
                 target: report.info.target,
                 processing_state: report.info.processing_state,

@@ -2,9 +2,8 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::UnixTime;
 use utoipa::ToSchema;
 
-use crate::{AccountId, AccountIdDb, AccountIdInternal, ChatMessageReport, ContentId, ProfileAge, ReportIdDb, ReportProcessingState, ReportTypeNumber, ReportTypeNumberInternal};
+use crate::{AccountId, AccountIdDb, AccountIdInternal, ChatMessageReport, ContentId, ProfileAge, ReportId, ReportIdDb, ReportProcessingState, ReportTypeNumber, ReportTypeNumberInternal};
 
-#[derive(Debug, Clone)]
 pub struct ReportInternal {
     pub info: ReportDetailedInfoInternal,
     pub id: ReportIdDb,
@@ -26,8 +25,9 @@ pub struct ReportDetailedInfoInternal {
     pub report_type: ReportTypeNumberInternal,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[derive(Serialize, ToSchema)]
 pub struct ReportDetailedInfo {
+    pub id: ReportId,
     pub creator: AccountId,
     pub target: AccountId,
     pub processing_state: ReportProcessingState,
@@ -76,13 +76,12 @@ fn is_zero(value: &i64) -> bool {
     *value == 0
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ReportDetailedWithId {
     pub id: ReportIdDb,
     pub report: ReportDetailed,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[derive(Serialize, ToSchema)]
 pub struct ReportDetailed {
     pub info: ReportDetailedInfo,
     pub content: ReportContent,
@@ -109,7 +108,7 @@ pub struct CustomReportContent {
     pub boolean_value: Option<bool>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
+#[derive(Serialize, ToSchema)]
 pub struct GetReportList {
     pub values: Vec<ReportDetailed>,
 }

@@ -10,10 +10,9 @@ use crate::{schema_sqlite_types::Integer, CustomReportId};
 use super::AccountId;
 
 #[derive(
-    Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, FromSqlRow, AsExpression, ToSchema
+    Debug, Clone, Copy, PartialEq, Eq, FromSqlRow, AsExpression
 )]
 #[diesel(sql_type = BigInt)]
-#[serde(transparent)]
 pub struct ReportIdDb(pub i64);
 
 impl ReportIdDb {
@@ -27,6 +26,27 @@ impl ReportIdDb {
 }
 
 diesel_i64_wrapper!(ReportIdDb);
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ReportId {
+    id: i64,
+}
+
+impl ReportId {
+    pub fn new(id: i64) -> Self {
+        Self {
+            id,
+        }
+    }
+}
+
+impl From<ReportIdDb> for ReportId {
+    fn from(value: ReportIdDb) -> Self {
+        Self {
+            id: value.0,
+        }
+    }
+}
 
 /// Values from 64 to 127
 #[derive(Debug, Clone, Copy)]
