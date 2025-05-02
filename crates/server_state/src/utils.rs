@@ -4,6 +4,7 @@ use manager_api::ClientError;
 use server_common::{data::cache::CacheError, internal_api::InternalApiError};
 use server_data::{content_processing::ContentProcessingError, event::EventError};
 use simple_backend::sign_in_with::{apple::SignInWithAppleError, google::SignInWithGoogleError};
+use simple_backend::jitsi_meet::JitsiMeetUrlCreatorError;
 
 use crate::DataError;
 
@@ -67,6 +68,8 @@ enum RequestError {
     ContentProcessingError,
     #[error("Data signer error")]
     DataSignerError,
+    #[error("Jitsi Meet URL creator error")]
+    JitsiMeetUrlCreatorError,
 }
 
 /// Convert error to status code. This is workaround for track_caller seems
@@ -134,3 +137,4 @@ impl_error_to_status_code!(ConfigFileError, RequestError::ConfigFileError);
 impl_error_to_status_code!(EventError, RequestError::EventError);
 impl_error_to_status_code!(ContentProcessingError, RequestError::ContentProcessingError);
 impl_error_to_status_code!(DataSignerError, RequestError::DataSignerError);
+impl_error_to_status_code!(JitsiMeetUrlCreatorError, RequestError::JitsiMeetUrlCreatorError);

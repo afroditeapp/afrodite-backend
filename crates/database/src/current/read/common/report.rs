@@ -222,7 +222,7 @@ impl CurrentReadCommonReport<'_> {
         Ok(value.map(|v| CustomReportContent { boolean_value: v }))
     }
 
-    fn get_report_account_info(
+    pub fn get_report_account_info(
         &mut self,
         id: AccountIdDb
     ) -> Result<Option<ReportAccountInfo>, DieselDatabaseError> {

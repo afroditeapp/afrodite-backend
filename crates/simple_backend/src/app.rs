@@ -7,7 +7,7 @@ use simple_backend_config::SimpleBackendConfig;
 
 use super::manager_client::ManagerApiClient;
 use crate::{
-    file_package::FilePackageManager, map::TileMapManager, maxmind_db::MaxMindDbManagerData, perf::PerfMetricsManagerData, sign_in_with::SignInWithManager
+    file_package::FilePackageManager, jitsi_meet::JitsiMeetUrlCreator, map::TileMapManager, maxmind_db::MaxMindDbManagerData, perf::PerfMetricsManagerData, sign_in_with::SignInWithManager
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -88,4 +88,8 @@ pub trait FilePackageProvider {
 
 pub trait MaxMindDbDataProvider {
     fn maxmind_db(&self) -> &MaxMindDbManagerData;
+}
+
+pub trait JitsiMeetUrlCreatorProvider {
+    fn jitsi_meet_url_creator(&self) -> JitsiMeetUrlCreator;
 }

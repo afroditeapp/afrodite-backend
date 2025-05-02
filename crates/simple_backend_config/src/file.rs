@@ -9,7 +9,7 @@ use std::{
 use error_stack::{Report, Result, ResultExt};
 use manager_model::ManagerInstanceName;
 use serde::{Deserialize, Serialize};
-use simple_backend_utils::time::{TimeValue, UtcTimeValue};
+use simple_backend_utils::time::{DurationValue, TimeValue, UtcTimeValue};
 use url::Url;
 
 pub const CONFIG_FILE_NAME: &str = "simple_backend_config.toml";
@@ -98,6 +98,13 @@ local_bot_api_port = 3002
 # [ip_info.maxmind_db]
 # download_url = "example.com"
 
+# [jitsi_meet]
+# url = "https://jitsi.example.com"
+# jwt_secret = "TODO"
+# jwt_aud = "afrodite"
+# jwt_iss = "afrodite"
+# jwt_validity_time = "1h"
+
 "#;
 
 // TODO(prod): Consider changing manager config
@@ -148,6 +155,8 @@ pub struct SimpleBackendConfigFile {
 
     #[serde(default)]
     pub ip_info: IpInfoConfig,
+
+    pub jitsi_meet: Option<JitsiMeetConfig>,
 }
 
 impl SimpleBackendConfigFile {
@@ -174,6 +183,7 @@ impl SimpleBackendConfigFile {
             static_file_package_hosting: None,
             image_processing: None,
             ip_info: IpInfoConfig::default(),
+            jitsi_meet: None,
         }
     }
 
@@ -517,4 +527,13 @@ pub struct MaxMindDbConfig {
     /// Note that the URL must point to the latest database and not to
     /// some specific version so that the DB is updated weekly.
     pub download_url: Url,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct JitsiMeetConfig {
+    pub url: Url,
+    pub jwt_secret: String,
+    pub jwt_aud: String,
+    pub jwt_iss: String,
+    pub jwt_validity_time: DurationValue,
 }

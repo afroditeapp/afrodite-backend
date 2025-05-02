@@ -19,8 +19,8 @@ use server_data::{
 };
 use simple_backend::{
     app::{
-        FilePackageProvider, GetManagerApi, GetSimpleBackendConfig, GetTileMap, MaxMindDbDataProvider, PerfCounterDataProvider, SignInWith
-    }, file_package::FilePackageManager, manager_client::{ManagerApiClient, ManagerEventHandler}, map::TileMapManager, perf::PerfMetricsManagerData, sign_in_with::SignInWithManager
+        FilePackageProvider, GetManagerApi, GetSimpleBackendConfig, GetTileMap, JitsiMeetUrlCreatorProvider, MaxMindDbDataProvider, PerfCounterDataProvider, SignInWith
+    }, file_package::FilePackageManager, jitsi_meet::JitsiMeetUrlCreator, manager_client::{ManagerApiClient, ManagerEventHandler}, map::TileMapManager, perf::PerfMetricsManagerData, sign_in_with::SignInWithManager
 };
 use simple_backend_config::SimpleBackendConfig;
 
@@ -280,6 +280,12 @@ impl FilePackageProvider for S {
 impl MaxMindDbDataProvider for S {
     fn maxmind_db(&self) -> &simple_backend::maxmind_db::MaxMindDbManagerData {
         &self.state.simple_backend_state.maxmind_db
+    }
+}
+
+impl JitsiMeetUrlCreatorProvider for S {
+    fn jitsi_meet_url_creator(&self) -> JitsiMeetUrlCreator {
+        JitsiMeetUrlCreator::new(&self.state.simple_backend_state.config)
     }
 }
 

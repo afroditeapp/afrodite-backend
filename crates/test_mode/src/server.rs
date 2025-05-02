@@ -196,6 +196,7 @@ fn new_config(
         static_file_package_hosting: None,
         image_processing: None,
         ip_info: IpInfoConfig::default(),
+        jitsi_meet: None,
     };
 
     (config, simple_backend_config)

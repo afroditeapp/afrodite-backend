@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use database::current::read::GetDbReadCommandsCommon;
 use model::{
-    AccessToken, Account, AccountId, AccountIdInternal, ClientConfigSyncVersion, PendingNotificationFlags, RefreshToken
+    AccessToken, Account, AccountId, AccountIdInternal, ClientConfigSyncVersion, PendingNotificationFlags, RefreshToken, ReportAccountInfo
 };
 use server_common::data::IntoDataError;
 
@@ -103,6 +103,16 @@ impl ReadCommandsCommon<'_> {
     ) -> Result<bool, DataError> {
         self
             .db_read(move |mut cmds| cmds.common().push_notification().push_notification_already_sent(id))
+            .await
+            .into_error()
+    }
+
+    pub async fn get_profile_age_and_name_if_profile_component_is_enabled(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Option<ReportAccountInfo>, DataError> {
+        self
+            .db_read(move |mut cmds| cmds.common().report().get_report_account_info(*id.as_db_id()))
             .await
             .into_error()
     }

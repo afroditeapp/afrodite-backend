@@ -50,6 +50,7 @@ thiserror = { workspace = true }
 error-stack = { workspace = true }
 
 jsonwebtoken = { workspace = true }
+sha2 = { workspace = true }
 
 sysinfo = { workspace = true }
 

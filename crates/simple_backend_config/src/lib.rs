@@ -18,7 +18,7 @@ use std::{
 use args::ServerModeArgs;
 use error_stack::{Result, ResultExt};
 use file::{
-    FirebaseCloudMessagingConfig, ImageProcessingConfig, MaxMindDbConfig, ScheduledTasksConfig, TileMapConfig
+    FirebaseCloudMessagingConfig, ImageProcessingConfig, JitsiMeetConfig, MaxMindDbConfig, ScheduledTasksConfig, TileMapConfig
 };
 use ip::IpList;
 use reqwest::Url;
@@ -213,6 +213,10 @@ impl SimpleBackendConfig {
 
     pub fn maxmind_db_config(&self) -> Option<&MaxMindDbConfig> {
         self.file.ip_info.maxmind_db.as_ref()
+    }
+
+    pub fn jitsi_meet(&self) -> Option<&JitsiMeetConfig> {
+        self.file.jitsi_meet.as_ref()
     }
 
     pub fn parsed_file(&self) -> &SimpleBackendConfigFile {

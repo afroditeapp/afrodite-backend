@@ -24,6 +24,9 @@ pub use report::*;
 mod message;
 pub use message::*;
 
+mod video_call;
+pub use video_call::*;
+
 #[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
 #[diesel(table_name = crate::schema::chat_state)]
 #[diesel(check_for_backend(crate::Db))]

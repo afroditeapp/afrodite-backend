@@ -22,6 +22,7 @@ pub mod utils;
 pub mod web_socket;
 pub mod tls;
 pub mod maxmind_db;
+pub mod jitsi_meet;
 
 use std::{convert::Infallible, future::IntoFuture, net::{Ipv4Addr, SocketAddr, SocketAddrV4}, pin::Pin, sync::Arc};
 

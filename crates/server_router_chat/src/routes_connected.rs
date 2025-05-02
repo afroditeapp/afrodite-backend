@@ -30,6 +30,9 @@ impl ConnectedApp {
             .merge(
                 api::chat::notification::router_notification(self.state.clone()),
             )
+            .merge(
+                api::chat::video_call::router_video_call(self.state.clone()),
+            )
             // Chat admin
             .merge(
                 api::chat_admin::router_admin_public_key(self.state.clone()),

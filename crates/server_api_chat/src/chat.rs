@@ -5,6 +5,7 @@ pub mod message;
 pub mod public_key;
 pub mod report;
 pub mod notification;
+pub mod video_call;
 
 pub use block::*;
 pub use like::*;
@@ -13,3 +14,4 @@ pub use message::*;
 pub use public_key::*;
 pub use report::*;
 pub use notification::*;
+pub use video_call::*;
