@@ -44,6 +44,8 @@ impl From<ClientFeaturesConfigInternal> for ClientFeaturesConfig {
 pub struct FeaturesConfig {
     /// Enable news UI
     pub news: bool,
+    /// Enable video calls
+    pub video_calls: bool,
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
