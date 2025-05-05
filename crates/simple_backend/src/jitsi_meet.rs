@@ -52,7 +52,11 @@ impl<'a> JitsiMeetUrlCreator<'a> {
             return Err(JitsiMeetUrlCreatorError::NotConfigured.report());
         };
 
-        let room = url_requester.create_room(&callee);
+        let room = format!(
+            "{}{}",
+            config.room_prefix,
+            url_requester.create_room(&callee),
+        );
 
         let exp = UnixTime::current_time().add_seconds(config.jwt_validity_time.seconds);
 

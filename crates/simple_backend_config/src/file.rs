@@ -104,6 +104,7 @@ local_bot_api_port = 3002
 # jwt_aud = "afrodite"
 # jwt_iss = "afrodite"
 # jwt_validity_time = "1h"
+# room_prefix = "Afrodite_meeting_"
 
 "#;
 
@@ -536,4 +537,5 @@ pub struct JitsiMeetConfig {
     pub jwt_aud: String,
     pub jwt_iss: String,
     pub jwt_validity_time: DurationValue,
+    pub room_prefix: String,
 }
