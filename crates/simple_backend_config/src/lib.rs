@@ -342,6 +342,17 @@ pub fn get_config(
         ip_lists.push(IpList::new(l)?);
     }
 
+    if let Some(template) = file_config.jitsi_meet.as_ref().and_then(|v| v.custom_url.as_ref()) {
+        if !template.contains("{room}") {
+            return Err(GetConfigError::InvalidConfiguration)
+                .attach_printable("{room} is missing from Jitsi Meet custom URL config");
+        }
+        if !template.contains("{jwt}") {
+            return Err(GetConfigError::InvalidConfiguration)
+                .attach_printable("{jwt} is missing from Jitsi Meet custom URL config");
+        }
+    }
+
     let config = SimpleBackendConfig {
         file: file_config,
         data_dir,

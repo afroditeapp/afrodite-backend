@@ -3,7 +3,7 @@ use axum::{
 };
 use model::AccountId;
 use model_chat::{
-    AccountIdInternal, GetVideoCallUrlResult
+    AccountIdInternal, GetVideoCallUrlsResult
 };
 use server_api::{
     app::{ReadData, GetAccounts}, create_open_api_router, S
@@ -14,28 +14,28 @@ use server_data::read::GetReadCommandsCommon;
 
 use super::super::utils::{Json, StatusCode};
 
-const PATH_GET_VIDEO_CALL_URL: &str = "/chat_api/get_video_call_url";
+const PATH_GET_VIDEO_CALL_URLS: &str = "/chat_api/get_video_call_urls";
 
-/// Create Jitsi Meet video call URL to a meeting with an user.
+/// Create Jitsi Meet video call URLs to a meeting with an user.
 ///
 /// The user must be a match.
 #[utoipa::path(
     get,
-    path = PATH_GET_VIDEO_CALL_URL,
+    path = PATH_GET_VIDEO_CALL_URLS,
     params(AccountId),
     responses(
-        (status = 200, description = "Success.", body = GetVideoCallUrlResult),
+        (status = 200, description = "Success.", body = GetVideoCallUrlsResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
 )]
-async fn get_video_call_url(
+async fn get_video_call_urls(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Query(other_user): Query<AccountId>,
-) -> Result<Json<GetVideoCallUrlResult>, StatusCode> {
-    CHAT.get_video_call_url.incr();
+) -> Result<Json<GetVideoCallUrlsResult>, StatusCode> {
+    CHAT.get_video_call_urls.incr();
 
     let other_user = state.get_internal_id(other_user).await?;
 
@@ -66,7 +66,7 @@ async fn get_video_call_url(
         .map(|v| v.name);
 
 
-    let url = state.jitsi_meet_url_creator().create_url(
+    let urls = state.jitsi_meet_url_creator().create_url(
         VideoCallUserInfo {
             id: id.as_id().to_string(),
             name: name.unwrap_or_else(|| "Caller".to_string()),
@@ -77,14 +77,17 @@ async fn get_video_call_url(
         },
     )?;
 
-    Ok(GetVideoCallUrlResult { url }.into())
+    Ok(GetVideoCallUrlsResult {
+        url: urls.url,
+        custom_url: urls.custom_url
+    }.into())
 }
 
-create_open_api_router!(fn router_video_call, get_video_call_url,);
+create_open_api_router!(fn router_video_call, get_video_call_urls,);
 
 create_counters!(
     ChatCounters,
     CHAT,
     CHAT_VIDEO_CALL_COUNTERS_LIST,
-    get_video_call_url,
+    get_video_call_urls,
 );

@@ -538,4 +538,8 @@ pub struct JitsiMeetConfig {
     pub jwt_iss: String,
     pub jwt_validity_time: DurationValue,
     pub room_prefix: String,
+    /// Template URL which contains "{room}" and "{jwt}".
+    /// Client opens this URL when configured and Jitsi Meet App
+    /// is not installed.
+    pub custom_url: Option<String>,
 }

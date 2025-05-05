@@ -24,6 +24,11 @@ impl VideoCallUserInfo {
     }
 }
 
+pub struct MeetingUrls {
+    pub url: String,
+    pub custom_url: Option<String>,
+}
+
 #[derive(thiserror::Error, Debug)]
 pub enum JitsiMeetUrlCreatorError {
     #[error("Not configured")]
@@ -48,7 +53,7 @@ impl<'a> JitsiMeetUrlCreator<'a> {
         &self,
         url_requester: VideoCallUserInfo,
         callee: VideoCallUserInfo,
-    ) -> Result<String, JitsiMeetUrlCreatorError> {
+    ) -> Result<MeetingUrls, JitsiMeetUrlCreatorError> {
         let Some(config) = self.config.jitsi_meet() else {
             return Err(JitsiMeetUrlCreatorError::NotConfigured.report());
         };
@@ -81,9 +86,19 @@ impl<'a> JitsiMeetUrlCreator<'a> {
 
         let mut url = config.url.clone();
         url.set_path(&room);
-        let query = format!("jwt={}", jwt);
+        let query = format!("jwt={}", &jwt);
         url.set_query(Some(&query));
-        Ok(url.to_string())
+        Ok(MeetingUrls {
+            url: url.to_string(),
+            custom_url: config
+                .custom_url
+                .as_ref()
+                .map(|v|
+                    v
+                        .replace("{room}", &room)
+                        .replace("{jwt}", &jwt)
+                ),
+        })
     }
 }
 
