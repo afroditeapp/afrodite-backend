@@ -1,3 +1,4 @@
+use base64::Engine;
 use jsonwebtoken::{EncodingKey, Header};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
@@ -19,7 +20,7 @@ impl VideoCallUserInfo {
         let mut hasher = Sha256::new();
         hasher.update(ids[0]);
         hasher.update(ids[1]);
-        format!("{:x}", hasher.finalize())
+        base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(hasher.finalize())
     }
 }
 
