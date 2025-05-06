@@ -3,7 +3,7 @@ use axum::{
 };
 use model::AccountId;
 use model_chat::{
-    AccountIdInternal, GetVideoCallUrlsResult
+    AccountIdInternal, GetVideoCallUrlsResult, JitsiMeetUrls
 };
 use server_api::{
     app::{ReadData, GetAccounts}, create_open_api_router, S
@@ -19,6 +19,8 @@ const PATH_GET_VIDEO_CALL_URLS: &str = "/chat_api/get_video_call_urls";
 /// Create Jitsi Meet video call URLs to a meeting with an user.
 ///
 /// The user must be a match.
+///
+/// If result value is empty then video calling is disabled.
 #[utoipa::path(
     get,
     path = PATH_GET_VIDEO_CALL_URLS,
@@ -77,10 +79,16 @@ async fn get_video_call_urls(
         },
     )?;
 
-    Ok(GetVideoCallUrlsResult {
-        url: urls.url,
-        custom_url: urls.custom_url
-    }.into())
+    let r = urls
+        .map(|urls| GetVideoCallUrlsResult {
+            jitsi_meet: Some(JitsiMeetUrls {
+                url: urls.url,
+                custom_url: urls.custom_url
+            }),
+        })
+        .unwrap_or_default();
+
+    Ok(r.into())
 }
 
 create_open_api_router!(fn router_video_call, get_video_call_urls,);

@@ -98,7 +98,7 @@ local_bot_api_port = 3002
 # [ip_info.maxmind_db]
 # download_url = "example.com"
 
-# [jitsi_meet]
+# [video_calling.jitsi_meet]
 # url = "https://jitsi.example.com"
 # jwt_secret = "TODO"
 # jwt_aud = "afrodite"
@@ -156,8 +156,8 @@ pub struct SimpleBackendConfigFile {
 
     #[serde(default)]
     pub ip_info: IpInfoConfig,
-
-    pub jitsi_meet: Option<JitsiMeetConfig>,
+    #[serde(default)]
+    pub video_calling: VideoCallingConfig,
 }
 
 impl SimpleBackendConfigFile {
@@ -184,7 +184,7 @@ impl SimpleBackendConfigFile {
             static_file_package_hosting: None,
             image_processing: None,
             ip_info: IpInfoConfig::default(),
-            jitsi_meet: None,
+            video_calling: VideoCallingConfig::default(),
         }
     }
 
@@ -528,6 +528,11 @@ pub struct MaxMindDbConfig {
     /// Note that the URL must point to the latest database and not to
     /// some specific version so that the DB is updated weekly.
     pub download_url: Url,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+pub struct VideoCallingConfig {
+    pub jitsi_meet: Option<JitsiMeetConfig>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

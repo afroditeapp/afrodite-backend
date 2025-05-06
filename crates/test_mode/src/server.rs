@@ -14,7 +14,7 @@ use nix::{sys::signal::Signal, unistd::Pid};
 use reqwest::Url;
 use server_data::index::LocationIndexInfoCreator;
 use simple_backend_config::file::{
-    DataConfig, GeneralConfig, IpInfoConfig, SimpleBackendConfigFile, SocketConfig
+    DataConfig, GeneralConfig, IpInfoConfig, SimpleBackendConfigFile, SocketConfig, VideoCallingConfig
 };
 use tokio::{
     io::{AsyncBufReadExt, AsyncRead},
@@ -196,7 +196,7 @@ fn new_config(
         static_file_package_hosting: None,
         image_processing: None,
         ip_info: IpInfoConfig::default(),
-        jitsi_meet: None,
+        video_calling: VideoCallingConfig::default(),
     };
 
     (config, simple_backend_config)

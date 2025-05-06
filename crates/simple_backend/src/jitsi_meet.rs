@@ -5,7 +5,6 @@ use sha2::{Digest, Sha256};
 use simple_backend_config::SimpleBackendConfig;
 use error_stack::{Result, ResultExt};
 use simple_backend_model::UnixTime;
-use simple_backend_utils::ContextExt;
 
 pub struct VideoCallUserInfo {
     pub id: String,
@@ -31,9 +30,6 @@ pub struct MeetingUrls {
 
 #[derive(thiserror::Error, Debug)]
 pub enum JitsiMeetUrlCreatorError {
-    #[error("Not configured")]
-    NotConfigured,
-
     #[error("Token encoding failed")]
     TokenEncoding,
 }
@@ -49,13 +45,14 @@ impl<'a> JitsiMeetUrlCreator<'a> {
         }
     }
 
+    /// None is returned when video calls are not configured
     pub fn create_url(
         &self,
         url_requester: VideoCallUserInfo,
         callee: VideoCallUserInfo,
-    ) -> Result<MeetingUrls, JitsiMeetUrlCreatorError> {
-        let Some(config) = self.config.jitsi_meet() else {
-            return Err(JitsiMeetUrlCreatorError::NotConfigured.report());
+    ) -> Result<Option<MeetingUrls>, JitsiMeetUrlCreatorError> {
+        let Some(config) = &self.config.video_calling().jitsi_meet else {
+            return Ok(None);
         };
 
         let room = format!(
@@ -88,7 +85,7 @@ impl<'a> JitsiMeetUrlCreator<'a> {
         url.set_path(&room);
         let query = format!("jwt={}", &jwt);
         url.set_query(Some(&query));
-        Ok(MeetingUrls {
+        Ok(Some(MeetingUrls {
             url: url.to_string(),
             custom_url: config
                 .custom_url
@@ -98,7 +95,7 @@ impl<'a> JitsiMeetUrlCreator<'a> {
                         .replace("{room}", &room)
                         .replace("{jwt}", &jwt)
                 ),
-        })
+        }))
     }
 }
 

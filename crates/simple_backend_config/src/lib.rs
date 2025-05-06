@@ -18,7 +18,7 @@ use std::{
 use args::ServerModeArgs;
 use error_stack::{Result, ResultExt};
 use file::{
-    FirebaseCloudMessagingConfig, ImageProcessingConfig, JitsiMeetConfig, MaxMindDbConfig, ScheduledTasksConfig, TileMapConfig
+    FirebaseCloudMessagingConfig, ImageProcessingConfig, MaxMindDbConfig, ScheduledTasksConfig, TileMapConfig, VideoCallingConfig
 };
 use ip::IpList;
 use reqwest::Url;
@@ -215,8 +215,8 @@ impl SimpleBackendConfig {
         self.file.ip_info.maxmind_db.as_ref()
     }
 
-    pub fn jitsi_meet(&self) -> Option<&JitsiMeetConfig> {
-        self.file.jitsi_meet.as_ref()
+    pub fn video_calling(&self) -> &VideoCallingConfig {
+        &self.file.video_calling
     }
 
     pub fn parsed_file(&self) -> &SimpleBackendConfigFile {
@@ -342,7 +342,7 @@ pub fn get_config(
         ip_lists.push(IpList::new(l)?);
     }
 
-    if let Some(template) = file_config.jitsi_meet.as_ref().and_then(|v| v.custom_url.as_ref()) {
+    if let Some(template) = file_config.video_calling.jitsi_meet.as_ref().and_then(|v| v.custom_url.as_ref()) {
         if !template.contains("{room}") {
             return Err(GetConfigError::InvalidConfiguration)
                 .attach_printable("{room} is missing from Jitsi Meet custom URL config");
