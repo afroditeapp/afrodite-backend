@@ -5,6 +5,8 @@ use utoipa::ToSchema;
 
 use crate::{AccountIdDb, AccountIdInternal};
 
+// TODO(prod): Rename MessageNumber to MessageId?
+
 /// Message order number in a conversation.
 #[derive(
     Debug,
