@@ -9,7 +9,7 @@ use jsonwebtoken::{
 use serde::Deserialize;
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_utils::ContextExt;
-use tokio::sync::RwLock;
+use tokio::sync::Mutex;
 use tracing::error;
 
 /// Possible Google ID token (from client) iss field (issuer) values.
@@ -72,10 +72,6 @@ pub struct GoogleAccountInfo {
     pub id: String,
     pub email: String,
 }
-struct GooglePublicKeys {
-    keys: JwkSet,
-    valid_until_this: std::time::Instant,
-}
 
 enum KeyStatus {
     Found(Jwk),
@@ -83,17 +79,18 @@ enum KeyStatus {
 }
 
 pub struct SignInWithGoogleManager {
-    client: reqwest::Client,
     config: Arc<SimpleBackendConfig>,
-    google_public_keys: RwLock<Option<GooglePublicKeys>>,
+    key_state: GooglePublicKeysState,
 }
 
 impl SignInWithGoogleManager {
-    pub fn new(config: Arc<SimpleBackendConfig>, client: reqwest::Client) -> Self {
+    pub fn new(
+        config: Arc<SimpleBackendConfig>,
+        client: reqwest::Client,
+    ) -> Self {
         Self {
-            client,
-            config,
-            google_public_keys: RwLock::new(None),
+            config: config.clone(),
+            key_state: GooglePublicKeysState::new(config, client),
         }
     }
 
@@ -112,7 +109,7 @@ impl SignInWithGoogleManager {
             .kid
             .ok_or(SignInWithGoogleError::MissingJwtKid)?;
 
-        let google_public_key = self.get_google_public_key(&wanted_kid).await?;
+        let google_public_key = self.key_state.get_google_public_key(&wanted_kid).await?;
 
         let key = DecodingKey::from_jwk(&google_public_key)
             .change_context(SignInWithGoogleError::DecodingKeyGenerationFailed)?;
@@ -155,14 +152,40 @@ impl SignInWithGoogleManager {
         })
     }
 
+}
+
+struct GooglePublicKeys {
+    keys: JwkSet,
+    valid_until_this: std::time::Instant,
+}
+
+struct GooglePublicKeysState {
+    config: Arc<SimpleBackendConfig>,
+    client: reqwest::Client,
+    keys: Mutex<Option<GooglePublicKeys>>,
+}
+
+impl GooglePublicKeysState {
+    fn new(
+        config: Arc<SimpleBackendConfig>,
+        client: reqwest::Client,
+    ) -> Self {
+        Self {
+            client,
+            config,
+            keys: Mutex::new(None),
+        }
+    }
+
     async fn get_google_public_key(&self, wanted_kid: &str) -> Result<Jwk, SignInWithGoogleError> {
+        let mut state = self.keys.lock().await;
         match self
-            .get_google_public_key_from_local_keys(wanted_kid)
+            .get_google_public_key_from_local_keys(state.as_ref(), wanted_kid)
             .await?
         {
             KeyStatus::Found(key) => Ok(key),
             KeyStatus::KeyRefreshNeeded => {
-                self.download_google_public_keys_and_get_key(wanted_kid)
+                self.download_google_public_keys_and_get_key(&mut state, wanted_kid)
                     .await
             }
         }
@@ -170,9 +193,9 @@ impl SignInWithGoogleManager {
 
     async fn get_google_public_key_from_local_keys(
         &self,
+        keys: Option<&GooglePublicKeys>,
         wanted_kid: &str,
     ) -> Result<KeyStatus, SignInWithGoogleError> {
-        let keys = self.google_public_keys.read().await;
         match keys.as_ref() {
             None => Ok(KeyStatus::KeyRefreshNeeded),
             Some(keys) => {
@@ -192,6 +215,7 @@ impl SignInWithGoogleManager {
 
     async fn download_google_public_keys_and_get_key(
         &self,
+        key_store: &mut Option<GooglePublicKeys>,
         wanted_kid: &str,
     ) -> Result<Jwk, SignInWithGoogleError> {
         let download_request = reqwest::Request::new(
@@ -222,7 +246,7 @@ impl SignInWithGoogleManager {
             .json()
             .await
             .change_context(SignInWithGoogleError::JwkSetParsingFailed)?;
-        let mut key_store = self.google_public_keys.write().await;
+
         *key_store = Some(GooglePublicKeys {
             keys: jwk_set.clone(),
             valid_until_this,

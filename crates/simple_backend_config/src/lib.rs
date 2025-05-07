@@ -392,6 +392,7 @@ impl InternalApiUrls {
 
 const GOOGLE_PUBLIC_KEY_URL: &str = "https://www.googleapis.com/oauth2/v3/certs";
 
+/// This exists to avoid URL parsing erros when backend is running.
 #[derive(Debug, Clone)]
 pub struct SignInWithUrls {
     /// Request to this should return JwkSet.
