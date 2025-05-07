@@ -1,12 +1,12 @@
 use axum::extract::State;
+use model::AccountIdInternal;
 use model_account::{
-    AccessToken, AccountId, AuthPair, EmailAddress, GoogleAccountId, LoginResult, RefreshToken,
-    SignInWithInfo, SignInWithLoginInfo,
+    AccessToken, AccountId, AppleAccountId, AuthPair, EmailAddress, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo, SignInWithLoginInfo
 };
 use server_api::{app::GetConfig, db_write_multiple, S};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
-use simple_backend::{app::SignInWith, create_counters};
+use simple_backend::{app::SignInWith, create_counters, sign_in_with::{apple::AppleAccountInfo, google::GoogleAccountInfo}};
 
 use crate::{
     app::{GetAccounts, ReadData, WriteData},
@@ -49,6 +49,58 @@ pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
 
 // TODO(prod): Add error for unverified email address
 
+trait SignInWithInfoTrait {
+    fn email(&self) -> String;
+    fn sign_in_with_info(&self) -> SignInWithInfo;
+    async fn already_existing_account(&self, state: &S) -> Result<Option<AccountIdInternal>, StatusCode>;
+}
+
+impl SignInWithInfoTrait for GoogleAccountInfo {
+    fn email(&self) -> String {
+        self.email.clone()
+    }
+
+    fn sign_in_with_info(&self) -> SignInWithInfo {
+        SignInWithInfo {
+            google_account_id: Some(GoogleAccountId(self.id.clone())),
+            ..Default::default()
+        }
+    }
+
+    async fn already_existing_account(&self, state: &S) -> Result<Option<AccountIdInternal>, StatusCode> {
+        let already_existing_account = state
+            .read()
+            .account()
+            .google_account_id_to_account_id(GoogleAccountId(self.id.clone()))
+            .await?;
+
+        Ok(already_existing_account)
+    }
+}
+
+impl SignInWithInfoTrait for AppleAccountInfo {
+    fn email(&self) -> String {
+        self.email.clone()
+    }
+
+    fn sign_in_with_info(&self) -> SignInWithInfo {
+        SignInWithInfo {
+            apple_account_id: Some(AppleAccountId(self.id.clone())),
+            ..Default::default()
+        }
+    }
+
+    async fn already_existing_account(&self, state: &S) -> Result<Option<AccountIdInternal>, StatusCode> {
+        let already_existing_account = state
+            .read()
+            .account()
+            .apple_account_id_to_account_id(AppleAccountId(self.id.clone()))
+            .await?;
+
+        Ok(already_existing_account)
+    }
+}
+
 /// Start new session with sign in with Apple or Google. Creates new account if
 /// it does not exists.
 #[utoipa::path(
@@ -73,60 +125,53 @@ pub async fn post_sign_in_with_login(
         }
     }
 
-    if let Some(google) = tokens.google_token {
+    if let Some(apple) = tokens.apple_token {
+        let info = state
+            .sign_in_with_manager()
+            .validate_apple_token(apple)
+            .await?;
+        handle_sign_in_with_info(state, info).await
+    } else if let Some(google) = tokens.google_token {
         let info = state
             .sign_in_with_manager()
             .validate_google_token(google)
             .await?;
-
-        let email: EmailAddress = info
-            .email
-            .try_into()
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-        let google_id = GoogleAccountId(info.id);
-        let already_existing_account = state
-            .read()
-            .account()
-            .google_account_id_to_account_id(google_id.clone())
-            .await?;
-
-        if let Some(already_existing_account) = already_existing_account {
-            db_write_multiple!(state, move |cmds| cmds
-                .account()
-                .email()
-                .account_email(already_existing_account, email).await)?;
-
-            login_impl(already_existing_account.as_id(), state)
-                .await
-                .map(|d| d.into())
-        } else {
-            let id = state
-                .data_all_access()
-                .register_impl(
-                    SignInWithInfo {
-                        google_account_id: Some(google_id),
-                    },
-                    Some(email),
-                )
-                .await?;
-            login_impl(id.as_id(), state).await.map(|d| d.into())
-        }
-    } else if let Some(apple) = tokens.apple_token {
-        let _info = state
-            .sign_in_with_manager()
-            .validate_apple_token(apple)
-            .await?;
-
-        // if validate_sign_in_with_apple_token(apple).await.unwrap() {
-        //     let key = AccessToken::generate_new();
-        //     Ok(key.into())
-        // } else {
-        //     Err(StatusCode::INTERNAL_SERVER_ERROR)
-        // }
-        Err(StatusCode::INTERNAL_SERVER_ERROR)
+        handle_sign_in_with_info(state, info).await
     } else {
         Err(StatusCode::INTERNAL_SERVER_ERROR)
+    }
+}
+
+async fn handle_sign_in_with_info(
+    state: S,
+    info: impl SignInWithInfoTrait,
+) -> Result<Json<LoginResult>, StatusCode> {
+    let email: EmailAddress = info
+        .email()
+        .try_into()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let already_existing_account = info.already_existing_account(&state)
+        .await?;
+
+    if let Some(already_existing_account) = already_existing_account {
+        db_write_multiple!(state, move |cmds| cmds
+            .account()
+            .email()
+            .account_email(already_existing_account, email).await)?;
+
+        login_impl(already_existing_account.as_id(), state)
+            .await
+            .map(|d| d.into())
+    } else {
+        let id = state
+            .data_all_access()
+            .register_impl(
+                info.sign_in_with_info(),
+                Some(email),
+            )
+            .await?;
+        login_impl(id.as_id(), state).await.map(|d| d.into())
     }
 }
 

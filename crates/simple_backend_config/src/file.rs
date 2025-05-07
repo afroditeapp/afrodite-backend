@@ -38,6 +38,9 @@ local_bot_api_port = 3002
 # [tile_map]
 # tile_dir = "/map_tiles"
 
+# [sign_in_with_apple]
+# app_bundle_id = "id"
+
 # [sign_in_with_google]
 # client_id_android = "id"
 # client_id_ios = "id"
@@ -135,6 +138,7 @@ pub struct SimpleBackendConfigFile {
 
     pub tile_map: Option<TileMapConfig>,
     pub manager: Option<ManagerConfig>,
+    pub sign_in_with_apple: Option<SignInWithAppleConfig>,
     pub sign_in_with_google: Option<SignInWithGoogleConfig>,
     pub firebase_cloud_messaging: Option<FirebaseCloudMessagingConfig>,
     pub email_sending: Option<EmailSendingConfig>,
@@ -176,6 +180,7 @@ impl SimpleBackendConfigFile {
             email_sending: None,
             tile_map: None,
             manager: None,
+            sign_in_with_apple: None,
             sign_in_with_google: None,
             firebase_cloud_messaging: None,
             tls: None,
@@ -305,6 +310,11 @@ pub struct TileMapConfig {
     /// Directory for map tiles.
     /// Tiles must be stored in z/x/y.png format.
     pub tile_dir: PathBuf,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct SignInWithAppleConfig {
+    pub app_bundle_id: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

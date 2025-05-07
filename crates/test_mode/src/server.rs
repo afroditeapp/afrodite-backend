@@ -185,6 +185,7 @@ fn new_config(
             // TODO(microservice): Configure internal API properly
             experimental_internal_api: None,
         },
+        sign_in_with_apple: None,
         sign_in_with_google: None,
         manager: None,
         tls: None,

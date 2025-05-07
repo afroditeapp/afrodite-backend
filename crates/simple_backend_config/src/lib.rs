@@ -18,7 +18,7 @@ use std::{
 use args::ServerModeArgs;
 use error_stack::{Result, ResultExt};
 use file::{
-    FirebaseCloudMessagingConfig, ImageProcessingConfig, MaxMindDbConfig, ScheduledTasksConfig, TileMapConfig, VideoCallingConfig
+    FirebaseCloudMessagingConfig, ImageProcessingConfig, MaxMindDbConfig, ScheduledTasksConfig, SignInWithAppleConfig, TileMapConfig, VideoCallingConfig
 };
 use ip::IpList;
 use reqwest::Url;
@@ -141,6 +141,10 @@ impl SimpleBackendConfig {
 
     pub fn sign_in_with_urls(&self) -> &SignInWithUrls {
         &self.sign_in_with_urls
+    }
+
+    pub fn sign_in_with_apple_config(&self) -> Option<&SignInWithAppleConfig> {
+        self.file.sign_in_with_apple.as_ref()
     }
 
     pub fn sign_in_with_google_config(&self) -> Option<&SignInWithGoogleConfig> {
@@ -390,11 +394,14 @@ impl InternalApiUrls {
     }
 }
 
+const APPLE_PUBLIC_KEY_URL: &str = "https://appleid.apple.com/auth/keys";
 const GOOGLE_PUBLIC_KEY_URL: &str = "https://www.googleapis.com/oauth2/v3/certs";
 
 /// This exists to avoid URL parsing erros when backend is running.
 #[derive(Debug, Clone)]
 pub struct SignInWithUrls {
+    /// Request to this should return JwkSet.
+    pub apple_public_keys: Url,
     /// Request to this should return JwkSet.
     pub google_public_keys: Url,
 }
@@ -402,6 +409,8 @@ pub struct SignInWithUrls {
 impl SignInWithUrls {
     pub fn new() -> Result<Self, GetConfigError> {
         Ok(Self {
+            apple_public_keys: Url::parse(APPLE_PUBLIC_KEY_URL)
+                .change_context(GetConfigError::ConstUrlParsingFailed)?,
             google_public_keys: Url::parse(GOOGLE_PUBLIC_KEY_URL)
                 .change_context(GetConfigError::ConstUrlParsingFailed)?,
         })

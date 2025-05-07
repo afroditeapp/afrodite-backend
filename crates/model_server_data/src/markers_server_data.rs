@@ -17,6 +17,7 @@ enable_logging!(
 
 disable_logging!(
     // Account
+    AppleAccountId,
     GoogleAccountId,
     // Chat
     // MessageNumber,

@@ -807,6 +807,7 @@ diesel::table! {
 
     sign_in_with_info (account_id) {
         account_id -> Integer,
+        apple_account_id -> Nullable<Text>,
         google_account_id -> Nullable<Text>,
     }
 }

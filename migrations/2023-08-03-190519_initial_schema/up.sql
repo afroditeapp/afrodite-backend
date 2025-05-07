@@ -242,6 +242,7 @@ CREATE TABLE IF NOT EXISTS ip_address_usage_statistics(
 -- Sign in with related IDs for account
 CREATE TABLE IF NOT EXISTS sign_in_with_info(
     account_id         INTEGER PRIMARY KEY NOT NULL,
+    apple_account_id   TEXT                          UNIQUE,
     google_account_id  TEXT                          UNIQUE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)

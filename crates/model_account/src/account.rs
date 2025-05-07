@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use diesel::{prelude::*, Associations};
 use model::{ClientVersion, UnixTime};
-use model_server_data::{AuthPair, EmailAddress, GoogleAccountId, PublicationId, SignInWithInfo};
+use model_server_data::{AppleAccountId, AuthPair, EmailAddress, GoogleAccountId, PublicationId, SignInWithInfo};
 use model_server_state::DemoModeToken;
 use serde::{Deserialize, Serialize};
 use utils::time::age_in_years_from_birthdate;
@@ -178,6 +178,8 @@ pub struct SignInWithLoginInfo {
     pub google_token: Option<String>,
 }
 
+// TODO(prod): Remove unused belongs_to?
+
 #[derive(Debug, Clone, PartialEq, Queryable, Selectable, Associations)]
 #[diesel(belongs_to(AccountIdInternal, foreign_key = account_id))]
 #[diesel(table_name = crate::schema::sign_in_with_info)]
@@ -185,12 +187,14 @@ pub struct SignInWithLoginInfo {
 pub struct SignInWithInfoRaw {
     pub account_id: AccountIdDb,
     pub google_account_id: Option<GoogleAccountId>,
+    pub apple_account_id: Option<AppleAccountId>,
 }
 
 impl From<SignInWithInfoRaw> for SignInWithInfo {
     fn from(raw: SignInWithInfoRaw) -> Self {
         Self {
             google_account_id: raw.google_account_id,
+            apple_account_id: raw.apple_account_id,
         }
     }
 }

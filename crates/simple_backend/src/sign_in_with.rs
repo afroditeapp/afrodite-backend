@@ -1,10 +1,11 @@
 use std::sync::Arc;
 
+use apple::AppleAccountInfo;
 use error_stack::Result;
 use simple_backend_config::SimpleBackendConfig;
 
 use self::{
-    apple::{AppleAccountId, SignInWithAppleError, SignInWithAppleManager},
+    apple::{SignInWithAppleError, SignInWithAppleManager},
     google::{GoogleAccountInfo, SignInWithGoogleError, SignInWithGoogleManager},
 };
 
@@ -35,7 +36,7 @@ impl SignInWithManager {
     pub async fn validate_apple_token(
         &self,
         token: String,
-    ) -> Result<AppleAccountId, SignInWithAppleError> {
+    ) -> Result<AppleAccountInfo, SignInWithAppleError> {
         self.apple.validate_apple_token(token).await
     }
 }
