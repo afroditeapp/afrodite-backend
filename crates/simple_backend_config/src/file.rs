@@ -40,6 +40,7 @@ local_bot_api_port = 3002
 
 # [sign_in_with_apple]
 # app_bundle_id = "id"
+# android_package_id = "id"
 
 # [sign_in_with_google]
 # client_id_android = "id"
@@ -315,6 +316,9 @@ pub struct TileMapConfig {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct SignInWithAppleConfig {
     pub app_bundle_id: String,
+    /// Android app package ID. This value is used in HTTP redirect
+    /// back to the app.
+    pub android_package_id: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

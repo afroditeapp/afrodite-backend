@@ -54,6 +54,10 @@ pub fn create_account_server_router(state: StateForRouterCreation) -> Router {
             api::account::PATH_SIGN_IN_WITH_LOGIN,
             post(api::account::post_sign_in_with_login),
         )
+        .route(
+            api::account::PATH_SIGN_IN_WITH_APPLE_REDIRECT_TO_APP,
+            post(api::account::post_sign_in_with_apple_redirect_to_app),
+        )
         .with_state(state.s.clone());
 
     let public = if state.s.config().demo_mode_config().is_some() {

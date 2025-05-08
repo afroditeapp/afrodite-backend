@@ -1,4 +1,6 @@
-use axum::extract::State;
+use std::collections::HashMap;
+
+use axum::{extract::State, response::Redirect, Form};
 use model::AccountIdInternal;
 use model_account::{
     AccessToken, AccountId, AppleAccountId, AuthPair, EmailAddress, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo, SignInWithLoginInfo
@@ -175,9 +177,42 @@ async fn handle_sign_in_with_info(
     }
 }
 
+pub const PATH_SIGN_IN_WITH_APPLE_REDIRECT_TO_APP: &str = "/account_api/sign_in_with_apple_redirect_to_app";
+
+/// Sign in with Apple related redirect back to Android app.
+///
+/// This is specific to <https://pub.dev/packages/sign_in_with_apple> library.
+pub async fn post_sign_in_with_apple_redirect_to_app(
+    State(state): State<S>,
+    Form(form): Form<HashMap<String, String>>,
+) -> Result<Redirect, StatusCode> {
+    ACCOUNT.post_sign_in_with_apple_redirect_to_app.incr();
+
+    let package_id = state
+        .config()
+        .simple_backend()
+        .sign_in_with_apple_config()
+        .map(|v| &v.android_package_id)
+        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let query_params: String = serde_urlencoded::to_string(form)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let redirect = format!(
+        "intent://callback?{}#Intent;package={};scheme=signinwithapple;end",
+        query_params,
+        package_id,
+    );
+
+    // Temporary redirect reuses current HTTP method POST which
+    // means that URL is not displayed in web browser address bar.
+    Ok(Redirect::temporary(&redirect))
+}
+
 create_counters!(
     AccountCounters,
     ACCOUNT,
     ACCOUNT_LOGIN_COUNTERS_LIST,
     post_sign_in_with_login,
+    post_sign_in_with_apple_redirect_to_app,
 );
