@@ -1,6 +1,6 @@
 use std::{
     io::Write,
-    net::SocketAddr,
+    net::{IpAddr, SocketAddr},
     num::NonZeroU32,
     path::{Path, PathBuf},
     str::FromStr,
@@ -86,6 +86,8 @@ local_bot_api_port = 3002
 # [static_file_package_hosting]
 # package = "frontend.tar.gz"
 # read_from_dir = "" # optional, by default disabled
+# disable_ip_allowlist = false # optional
+# ip_allowlist = [] # optional
 
 # [image_processing]
 # jpeg_quality = 60 # optional
@@ -420,6 +422,11 @@ pub struct StaticFilePackageHostingConfig {
     pub package: PathBuf,
     /// Read files only from specific directory in the package.
     pub read_from_dir: Option<String>,
+    #[serde(default)]
+    pub disable_ip_allowlist: bool,
+    /// Allow accessing files only from specific IP addresses.
+    #[serde(default)]
+    pub ip_allowlist: Vec<IpAddr>,
 }
 
 /// Absolute path with no whitespace.

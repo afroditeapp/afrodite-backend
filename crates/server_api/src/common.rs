@@ -69,8 +69,10 @@ pub const PATH_FILE_PACKAGE_ACCESS: &str = "/{*path}";
 pub async fn get_file_package_access(
     State(state): State<S>,
     Path(path_parts): Path<Vec<String>>,
+    ConnectInfo(address): ConnectInfo<SocketAddr>,
 ) -> Result<(TypedHeader<ContentType>, Bytes), StatusCode> {
     COMMON.get_file_package_access.incr();
+    check_ip_allowlist(&state, address)?;
     let wanted_file = path_parts.join("/");
     let (content_type, data) = state
         .file_package()
@@ -83,13 +85,28 @@ pub const PATH_FILE_PACKAGE_ACCESS_ROOT: &str = "/";
 
 pub async fn get_file_package_access_root(
     State(state): State<S>,
+    ConnectInfo(address): ConnectInfo<SocketAddr>,
 ) -> Result<(TypedHeader<ContentType>, Bytes), StatusCode> {
     COMMON.get_file_package_access_root.incr();
+    check_ip_allowlist(&state, address)?;
     let (content_type, data) = state
         .file_package()
         .data("index.html")
         .ok_or(StatusCode::NOT_FOUND)?;
     Ok((TypedHeader(content_type), data))
+}
+
+fn check_ip_allowlist(state: &S, address: SocketAddr) -> Result<(), StatusCode> {
+    if let Some(config) = state.config().simple_backend().file_package() {
+        if config.disable_ip_allowlist ||
+            config.ip_allowlist.iter().any(|v| *v == address.ip()) {
+            Ok(())
+        } else {
+            Err(StatusCode::NOT_FOUND)
+        }
+    } else {
+        Err(StatusCode::NOT_FOUND)
+    }
 }
 
 pub use utils::api::PATH_CONNECT;
