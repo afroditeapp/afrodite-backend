@@ -1,9 +1,11 @@
 use std::{sync::Arc, time::{Duration, Instant}};
 
+use base64::Engine;
 use error_stack::{Result, ResultExt};
 use futures::lock::Mutex;
 use jsonwebtoken::{jwk::{Jwk, JwkSet}, DecodingKey, Validation};
 use serde::Deserialize;
+use sha2::{Digest, Sha256};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_utils::ContextExt;
 use tracing::error;
@@ -45,6 +47,9 @@ struct AppleTokenClaims {
     email: String,
     /// Email verification status
     email_verified: serde_json::Value,
+    /// Base64 URL (with possible padding) encoded SHA-256 of client generated
+    /// nonce.
+    nonce: String,
 }
 
 impl AppleTokenClaims {
@@ -74,6 +79,7 @@ impl SignInWithAppleManager {
     pub async fn validate_apple_token(
         &self,
         token: String,
+        nonce: Vec<u8>,
     ) -> Result<AppleAccountInfo, SignInWithAppleError> {
         let config = self
             .config
@@ -98,7 +104,9 @@ impl SignInWithAppleManager {
         let data = jsonwebtoken::decode::<AppleTokenClaims>(&token, &key, &v)
             .change_context(SignInWithAppleError::InvalidToken)?;
 
-        if data.claims.email_verified() {
+        let token_nonce = base64::engine::general_purpose::URL_SAFE.encode(Sha256::digest(nonce));
+
+        if data.claims.email_verified() && data.claims.nonce == token_nonce {
             Ok(AppleAccountInfo {
                 id: data.claims.sub,
                 email: data.claims.email,

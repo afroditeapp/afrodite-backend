@@ -4443,6 +4443,7 @@ name = "server_api_account"
 version = "0.0.0"
 dependencies = [
  "axum",
+ "base64 0.22.1",
  "model",
  "model_account",
  "model_server_state",

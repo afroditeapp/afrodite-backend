@@ -171,11 +171,23 @@ pub struct GetAccountBanTimeResult {
     pub reason_details: Option<AccountBanReasonDetails>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+// TODO(prod): Add nonce support to Sign in with Google?
+
+#[derive(Deserialize, ToSchema)]
 pub struct SignInWithLoginInfo {
     pub client_info: ClientInfo,
-    pub apple_token: Option<String>,
+    pub apple: Option<SignInWithAppleInfo>,
     pub google_token: Option<String>,
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct SignInWithAppleInfo {
+    pub token: String,
+    /// Base64 URL (with possible padding) encoded nonce.
+    ///
+    /// The token contains Base64 URL (with possible padding) encoded SHA-256
+    /// of the nonce.
+    pub nonce: String,
 }
 
 // TODO(prod): Remove unused belongs_to?

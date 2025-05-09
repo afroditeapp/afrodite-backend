@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use axum::{extract::State, response::Redirect, Form};
+use base64::Engine;
 use model::AccountIdInternal;
 use model_account::{
     AccessToken, AccountId, AppleAccountId, AuthPair, EmailAddress, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo, SignInWithLoginInfo
@@ -127,10 +128,12 @@ pub async fn post_sign_in_with_login(
         }
     }
 
-    if let Some(apple) = tokens.apple_token {
+    if let Some(apple) = tokens.apple {
+        let nonce_bytes = base64::engine::general_purpose::URL_SAFE.decode(apple.nonce)
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
         let info = state
             .sign_in_with_manager()
-            .validate_apple_token(apple)
+            .validate_apple_token(apple.token, nonce_bytes)
             .await?;
         handle_sign_in_with_info(state, info).await
     } else if let Some(google) = tokens.google_token {

@@ -36,7 +36,8 @@ impl SignInWithManager {
     pub async fn validate_apple_token(
         &self,
         token: String,
+        nonce: Vec<u8>,
     ) -> Result<AppleAccountInfo, SignInWithAppleError> {
-        self.apple.validate_apple_token(token).await
+        self.apple.validate_apple_token(token, nonce).await
     }
 }
