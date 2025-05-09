@@ -93,7 +93,7 @@ impl SignInWithAppleManager {
         let mut v = Validation::new(not_validated_header.alg);
         v.set_required_spec_claims(&["exp", "iss", "aud"]);
         v.set_issuer(&[APPLE_JWT_ISS_VALUE]);
-        v.set_audience(&[&config.ios_bundle_id]);
+        v.set_audience(&[&config.ios_bundle_id, &config.service_id]);
 
         let data = jsonwebtoken::decode::<AppleTokenClaims>(&token, &key, &v)
             .change_context(SignInWithAppleError::InvalidToken)?;

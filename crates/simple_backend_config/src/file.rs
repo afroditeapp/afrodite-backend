@@ -40,6 +40,7 @@ local_bot_api_port = 3002
 
 # [sign_in_with_apple]
 # ios_bundle_id = "id"
+# service_id = "id"
 # android_package_id = "id"
 
 # [sign_in_with_google]
@@ -316,6 +317,9 @@ pub struct TileMapConfig {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct SignInWithAppleConfig {
     pub ios_bundle_id: String,
+    /// Sign in with Apple web login service ID. This value is in JWT token
+    /// aud field when login happens using Android or web app.
+    pub service_id: String,
     /// Android app package ID. This value is used in HTTP redirect
     /// back to the app.
     pub android_package_id: String,
