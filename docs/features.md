@@ -3,6 +3,7 @@
 
 ## Account
 
+* Sign in with Apple
 * Sign in with Google
 * Demo mode accounts for developers (access multiple normal accounts)
 
@@ -11,7 +12,14 @@
 * Email
   * Email notifying that account was created
 * Push notifications (Firebase)
+  * Messages
+  * Likes
+  * Image moderation completed
+  * Profile text moderation completed
+  * Automatic profile search results available
+  * News
 * WebSocket
+  * Used for event sending instead of push notifications if connected
 
 ## Profile
 
@@ -30,6 +38,9 @@
 Profile attributes are predefined questions and answers which are visible on
 user's profile. The attributes are configurable from server side. Check
 [profile_attributes_spec.md](./profile_attributes_spec.md) for details.
+
+For attributes with groups an CSV file can be used to load the attribute
+values.
 
 ### Profile iterator
 
@@ -66,6 +77,17 @@ example if daily chat request is already used.
 Age and gender statistics for public profiles. Admins can also access
 statistics for private profiles and profile statistics history (updated daily).
 
+### Automatic profile search
+
+Backend searches for updated profiles on every weekday by default.
+User sees an notification if profiles are found. User can configure
+the search with these options:
+
+* Search only new profiles
+* Use current max distance filter
+* Use current profile attribute filters
+* Search on specific weekdays
+
 ## Chat
 
 * One-to-one conversations
@@ -74,7 +96,8 @@ statistics for private profiles and profile statistics history (updated daily).
 
 * Messages are removed from server when sending and delivery is confirmed by
   clients
-* Public key management (allows client to implement end-to-end encryption)
+* End-to-end encrypted messages (OpenPGP)
+* Authenticy verification for reported messages
 
 ## User interaction
 
@@ -112,6 +135,12 @@ users about app version changelogs and terms of service updates.
 * [Image security](#image-security)
 * Account banning
 * Account removing wait time (90 days by default)
+* Inactive account automatic logout (365 days by default)
+* Account specific API usage statistics
+* IP address history
+  * IP country info (MaxMind GeoLite2 database support)
+  * Configure manual IP range and network lists and
+    see is the IP on some of the lists
 * Reporting
   * Profile name
   * Profile text
@@ -168,12 +197,20 @@ moderation.
 
 * Partially configurable profile
 * Random profile images (random color or random image from directory)
-* End-to-end message encryption (OpenPGP)
+* Automatic actions (for example send a message if a message is received)
 
 ### Admin bots
 
 * Neural network based image moderation ([nsfw library](https://github.com/Fyko/nsfw))
 * Large language model (LLM) based text moderation (OpenAI API compatible)
+
+## Analytics
+
+* Client version tracking
+
+## Video calls
+
+* Jitsi Meet integration (JWT token and meeting room name generation)
 
 ## Other
 
@@ -184,45 +221,31 @@ moderation.
 
 ## Account
 
-* Sign in with Apple
-* Subscription management
+* Possibility to enable email and password login after account creation
+  * Email login code sending and weekly sending limit
+* Profile age, name and picture verification using
+  EU digital wallet
+* Login method management
 
 ## Email
 
-* Email address confirmation
+* Email address verification
+* Email address changing
 * Notification emails for chat requests and messages
-
-## Chat
-
-* Server message signing (to make sure that server assigned metadata is valid
-  when message is reported)
-
-## Security
-
-* Validity check for reported chat messages
-* Account specific API usage statistics
-* IP address history
+* Email language selection
 
 ## Data export
 
 * Export account related data to ZIP archive
 
-## Video calls
+# Possible future backend features
 
-* Jitsi Meet integration
+## Account
+
+* EU digital wallet login method
+* Subscription management
 
 ## Sweepstakes
 
 Admin can create automated and optional sweepstakes
 for users.
-
-## Analytics
-
-* Client version tracking
-
-# Possible future backend features
-
-## Account
-
-* Email and password login with two factor authentication
-* EU digital wallet
