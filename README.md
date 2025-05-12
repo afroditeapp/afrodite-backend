@@ -10,7 +10,8 @@ This repository contains the backend part. [Frontend repository](https://github.
 
 The app is under development and it is not ready for production.
 
-<img src="https://raw.githubusercontent.com/afroditeapp/afrodite-frontend/refs/heads/images/profiles-view.jpg" alt="Profiles view screenshot" width="30%">
+[Screenshots](https://github.com/afroditeapp#screenshots) |
+[Video](https://afroditeapp.github.io/videos/basic-usage.webm)
 
 ## Features
 
