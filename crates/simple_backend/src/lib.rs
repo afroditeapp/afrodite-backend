@@ -24,7 +24,7 @@ pub mod tls;
 pub mod maxmind_db;
 pub mod jitsi_meet;
 
-use std::{convert::Infallible, future::IntoFuture, net::{Ipv4Addr, SocketAddr, SocketAddrV4}, pin::Pin, sync::Arc};
+use std::{convert::Infallible, future::IntoFuture, net::{IpAddr, Ipv4Addr, SocketAddr}, pin::Pin, sync::Arc};
 
 use app::{
     GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith,
@@ -283,11 +283,17 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             };
         let local_bot_api_server_task =
             if let Some(port) = self.config.socket().local_bot_api_port {
+                let ip = self
+                    .config
+                    .socket()
+                    .debug_local_bot_api_ip
+                    .unwrap_or(IpAddr::V4(Ipv4Addr::LOCALHOST));
                 Some(
                     self.create_local_bot_api_server_task(
                         server_quit_watcher.resubscribe(),
                         ws_manager.clone(),
                         &state,
+                        ip,
                         port,
                     )
                     .await,
@@ -418,7 +424,8 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         quit_notification: ServerQuitWatcher,
         web_socket_manager: WebSocketManager,
         state: &T::AppState,
-        localhost_port: u16,
+        ip: IpAddr,
+        port: u16,
     ) -> JoinHandle<()> {
         let router = self.logic.local_bot_api_router(web_socket_manager, state);
         let router = if self.config.debug_mode() {
@@ -431,7 +438,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             router
         };
 
-        let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::LOCALHOST, localhost_port));
+        let addr = SocketAddr::new(ip, port);
         info!("Bot API is available on {}", addr);
         self.create_server_task_no_tls(router, addr, "Bot API", quit_notification)
             .await

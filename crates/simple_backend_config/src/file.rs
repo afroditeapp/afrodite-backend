@@ -179,6 +179,7 @@ impl SimpleBackendConfigFile {
                 public_api: None,
                 public_bot_api: None,
                 local_bot_api_port: None,
+                debug_local_bot_api_ip: None,
                 experimental_internal_api: None,
             },
             email_sending: None,
@@ -275,6 +276,10 @@ pub struct SocketConfig {
     pub public_bot_api: Option<SocketAddr>,
     /// Bot register, login, remote login and unobfuscated API access.
     pub local_bot_api_port: Option<u16>,
+    /// Bot register, login, remote login and unobfuscated API access.
+    ///
+    /// Overrides the default localhost IP address.
+    pub debug_local_bot_api_ip: Option<IpAddr>,
     /// Socket address for server to server API which is only used
     /// when backend is running in microservice mode.
     /// The microservice mode is not currently working properly.

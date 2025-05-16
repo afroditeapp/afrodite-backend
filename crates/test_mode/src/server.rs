@@ -182,6 +182,7 @@ fn new_config(
             public_api: None,
             public_bot_api: None,
             local_bot_api_port: Some(bot_api_port),
+            debug_local_bot_api_ip: None,
             // TODO(microservice): Configure internal API properly
             experimental_internal_api: None,
         },
