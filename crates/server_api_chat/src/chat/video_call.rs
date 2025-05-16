@@ -6,7 +6,7 @@ use model_chat::{
     AccountIdInternal, GetVideoCallUrlsResult, JitsiMeetUrls
 };
 use server_api::{
-    app::{ReadData, GetAccounts}, create_open_api_router, S
+    app::{ApiUsageTrackerProvider, GetAccounts, ReadData}, create_open_api_router, S
 };
 use server_data_chat::read::GetReadChatCommands;
 use simple_backend::{app::JitsiMeetUrlCreatorProvider, create_counters, jitsi_meet::VideoCallUserInfo};
@@ -38,6 +38,7 @@ async fn get_video_call_urls(
     Query(other_user): Query<AccountId>,
 ) -> Result<Json<GetVideoCallUrlsResult>, StatusCode> {
     CHAT.get_video_call_urls.incr();
+    state.api_usage_tracker().incr(id, |u| &u.get_video_call_urls).await;
 
     let other_user = state.get_internal_id(other_user).await?;
 

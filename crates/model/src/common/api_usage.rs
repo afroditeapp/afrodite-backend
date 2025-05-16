@@ -16,6 +16,7 @@ pub struct ApiUsage {
     // Chat
     pub post_send_like: AtomicU32,
     pub post_send_message: AtomicU32,
+    pub get_video_call_urls: AtomicU32,
 }
 
 impl Default for ApiUsage {
@@ -31,6 +32,7 @@ impl Default for ApiUsage {
             get_profile_content_info: AtomicU32::new(0),
             post_send_like: AtomicU32::new(0),
             post_send_message: AtomicU32::new(0),
+            get_video_call_urls: AtomicU32::new(0),
         }
     }
 }
@@ -67,6 +69,7 @@ impl ApiUsage {
             get_profile_content_info,
             post_send_like,
             post_send_message,
+            get_video_call_urls,
         );
 
         array.into_iter()
