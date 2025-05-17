@@ -106,7 +106,7 @@ debug_match_only_email_domain = true
 #  - changes other things as well.
 # Check backend code for details.
 debug = true
-debug_override_face_detection_result = true
+debug_face_detection_result = true
 
 [socket]
 public_api = "127.0.0.1:3000"

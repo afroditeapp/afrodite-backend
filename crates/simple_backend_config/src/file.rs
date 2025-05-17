@@ -250,7 +250,7 @@ impl ConfigFileUtils {
 pub struct GeneralConfig {
     pub debug: Option<bool>,
     /// Override face detection result with this value
-    pub debug_override_face_detection_result: Option<bool>,
+    pub debug_face_detection_result: Option<bool>,
     /// Write timestamp to log messages. Enabled by default.
     pub log_timestamp: Option<bool>,
 }

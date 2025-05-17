@@ -207,8 +207,8 @@ impl SimpleBackendConfig {
         self.file.image_processing.clone().unwrap_or_default()
     }
 
-    pub fn override_face_detection_result(&self) -> Option<bool> {
-        self.file.general.debug_override_face_detection_result
+    pub fn debug_face_detection_result(&self) -> Option<bool> {
+        self.file.general.debug_face_detection_result
     }
 
     pub fn ip_lists(&self) -> &[IpList] {

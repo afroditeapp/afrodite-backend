@@ -174,7 +174,7 @@ fn new_config(
     let simple_backend_config = SimpleBackendConfigFile {
         general: GeneralConfig {
             debug: Some(true),
-            debug_override_face_detection_result: Some(true),
+            debug_face_detection_result: Some(true),
             log_timestamp: None,
         },
         data: DataConfig::default(),
