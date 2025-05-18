@@ -6,6 +6,10 @@ filters are dynamically specified on the server using TOML file. That file
 is then converted to a JSON object which client uses to implement
 displaying and editing of the attributes.
 
+All ID and order number values start from 1 for consistency so 0 can be used
+as null value for creating filter integer for group values. For example u32
+with most significant bits have u16 attribute value ID and least significant
+bits have u16 zero value for indicating that match with all group values.
 
 ## TOML file format
 
@@ -21,14 +25,14 @@ editable = true # Optional
 visible = true # Optional
 required = false # Optional
 icon = "material:location_city"
-id = 0
-order_number = 0
+id = 1
+order_number = 1
 value_order = "AlphabeticalValue"
 values = [
     {
         key = "helsinki",
         value = "Helsinki",
-        id = 0, # Optional
+        id = 1, # Optional
         editable = true, # Optional
         visible = true, # Optional
         icon = null # Optional
@@ -42,7 +46,7 @@ group_values = [ # Optional
         {
             key = "kallio",
             value = "Kallio",
-            id = 0, # Optional
+            id = 1, # Optional
             editable = true, # Optional
             visible = true, # Optional
             icon = null # Optional
@@ -67,8 +71,8 @@ key = "favorite_color"
 name = "Favorite Color"
 mode = "SelectSingleFilterMultiple"
 icon = "material:color_lens"
-id = 1
-order_number = 1
+id = 2
+order_number = 2
 values = [
     "Red",   # id = 0x2
     "Green", # id = 0x4
@@ -121,8 +125,8 @@ values = [
     - `id` - Unique ID number for the value for the value. Beharior is
         is different depending on the `type` attribute.
         - Behavior for `SelectSingleFilterSingle` - Default value starts
-            from 0 and default value for next list item is the previous + 1.
-            Max value is i16::MAX.
+            from 1 and default value for next list item is the previous + 1.
+            Max value is u16::MAX.
         - Behavior for `SelectSingleFilterMultiple` - Default value starts
             from 0x1 and default value for next list item is the
             previous << 1. Last value is 0x8000 so 16 values are possible
@@ -132,8 +136,8 @@ values = [
         This field has the same format as the attribute `icon` field.
         (default: null)
     - `order_number` - Display order number for the value.
-        0 is the first value.
-        Default value starts from 0 and default value for next
+        1 is the first value.
+        Default value starts from 1 and default value for next
         list item is the previous + 1.
         The field is optional.
     - `editable` - boolean value to state if the value is visible
@@ -173,16 +177,16 @@ possible to set:
         - `id` - Unique ID number for the value for the value. Beharior is
             is different depending on the `type` attribute.
             - Behavior for `SelectSingleFilterSingle` - Default value starts
-                from 0 and default value for next list item is the previous + 1.
-                Max value is i16::MAX.
+                from 1 and default value for next list item is the previous + 1.
+                Max value is u16::MAX.
             - Behavior for `SelectSingleFilterMultiple` - Not possible to set.
             The field is optional.
         - `icon` - Icon to be used for the attribute.
             This field has the same format as the attribute `icon` field.
             (default: null)
         - `order_number` - Display order number for the value.
-            0 is the first value.
-            Default value starts from 0 and default value for next
+            1 is the first value.
+            Default value starts from 1 and default value for next
             list item is the previous + 1.
             The field is optional.
         - `editable` - boolean value to state if the value is visible

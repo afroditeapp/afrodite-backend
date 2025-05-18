@@ -38,14 +38,14 @@ impl AttributesFileInternal {
         }
 
         // Check that correct IDs are used.
-        for i in 0..self.attribute.len() {
+        for i in 1..=self.attribute.len() {
             let i: u16 = i.try_into().map_err(|e: std::num::TryFromIntError| e.to_string())?;
             let id = AttributeId::new(i);
             if !ids.contains(&id) {
                 return Err(format!(
-                    "ID {} is missing from attribute ID values, all numbers between 0 and {} should be used",
+                    "ID {} is missing from attribute ID values, all numbers between 1 and {} should be used",
                     i,
-                    self.attribute.len() - 1
+                    self.attribute.len()
                 ));
             }
         }
@@ -139,7 +139,7 @@ struct ModeAndIdSequenceNumber {
 }
 
 impl ModeAndIdSequenceNumber {
-    const LAST_INTEGER_ID: u16 = i16::MAX as u16;
+    const FIRST_INTEGER_ID: u16 = 1;
     const FIRST_BITFLAG_ID: u16 = 1;
     const LAST_BITFLAG_ID: u32 = 0x8000;
 
@@ -172,8 +172,8 @@ impl ModeAndIdSequenceNumber {
     }
 
     fn validate_integer_id(id: u16) -> Result<(), String> {
-        if id > Self::LAST_INTEGER_ID {
-            return Err(format!("Invalid ID {}, id > {}", id, Self::LAST_INTEGER_ID));
+        if id < Self::FIRST_INTEGER_ID {
+            return Err(format!("Invalid ID {}, id < {}", id, Self::FIRST_INTEGER_ID));
         }
 
         Ok(())
@@ -208,7 +208,7 @@ impl ModeAndIdSequenceNumber {
                 let tmp = if let Some(current_id) = self.current_id {
                     current_id + 1
                 } else {
-                    0
+                    1
                 };
                 Self::validate_integer_id(tmp)?;
                 self.current_id = Some(tmp);
@@ -368,14 +368,14 @@ impl AttributeInternal {
                 current <<= 1;
             }
         } else {
-            for i in 0..self.values.len() {
+            for i in 1..=self.values.len() {
                 let i = i as u16;
                 if !top_level_ids.contains(&i) {
                     return Err(format!(
-                        "ID {} is missing from attribute value IDs for attribute {}, all numbers between 0 and {} should be used",
+                        "ID {} is missing from attribute value IDs for attribute {}, all numbers between 1 and {} should be used",
                         i,
                         self.key,
-                        self.values.len() - 1
+                        self.values.len()
                     ));
                 }
             }
@@ -419,15 +419,15 @@ impl AttributeInternal {
             }
 
             // Check that correct IDs are used.
-            for i in 0..values.len() {
+            for i in 1..=values.len() {
                 let i = i as u16;
                 if !sub_level_ids.contains(&i) {
                     return Err(format!(
-                            "ID {} is missing from value IDs for value group {}, all numbers between 0 and {} should be used",
-                            i,
-                            g.key,
-                            values.len() - 1
-                        ));
+                        "ID {} is missing from value IDs for value group {}, all numbers between 1 and {} should be used",
+                        i,
+                        g.key,
+                        values.len()
+                    ));
                 }
             }
             values.sort_by(|a, b| a.id.cmp(&b.id));
