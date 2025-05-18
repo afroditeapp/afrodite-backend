@@ -22,7 +22,7 @@ visible = true # Optional
 required = false # Optional
 icon = "material:location_city"
 id = 0
-order = 0
+order_number = 0
 value_order = "AlphabeticalValue"
 values = [
     {
@@ -68,7 +68,7 @@ name = "Favorite Color"
 mode = "SelectSingleFilterMultiple"
 icon = "material:color_lens"
 id = 1
-order = 1
+order_number = 1
 values = [
     "Red",   # id = 0x2
     "Green", # id = 0x4
