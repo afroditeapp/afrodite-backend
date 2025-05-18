@@ -1,4 +1,3 @@
-use config::Config;
 use error_stack::{Result, ResultExt};
 use model::{AccountId, AccountIdInternal, AutomaticProfileSearchCompletedNotification, NextNumberStorage, UnixTime};
 use model_server_data::{
@@ -32,7 +31,6 @@ impl CachedProfile {
         state: ProfileStateCached,
         attributes: Vec<ProfileAttributeValue>,
         filters: Vec<ProfileAttributeFilterValue>,
-        config: &Config,
         last_seen_time: Option<UnixTime>,
     ) -> Self {
         Self {
@@ -40,7 +38,7 @@ impl CachedProfile {
             data,
             state,
             location: LocationData::default(),
-            attributes: SortedProfileAttributes::new(attributes, config.profile_attributes()),
+            attributes: SortedProfileAttributes::new(attributes),
             filters,
             last_seen_time,
             profile_iterator_session_id: None,

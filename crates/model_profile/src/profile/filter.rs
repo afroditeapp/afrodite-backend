@@ -5,7 +5,7 @@ use model_server_data::{ProfileCreatedTimeFilter, MaxDistanceKm, ProfileAttribut
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use super::NUMBER_LIST_ATTRIBUTE_MAX_VALUES;
+use super::ATTRIBUTE_MAX_VALUES;
 use crate::{LastSeenTimeFilter, ProfileAttributesInternal};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
@@ -37,12 +37,12 @@ impl ProfileFilteringSettingsUpdate {
                 match attribute_info {
                     None => return Err("Unknown attribute ID".to_string()),
                     Some(info) => {
-                        if info.mode.is_number_list()
-                            && a.filter_values.len() > NUMBER_LIST_ATTRIBUTE_MAX_VALUES
+                        if !info.mode.data_type().is_bitflag()
+                            && a.filter_values.len() > ATTRIBUTE_MAX_VALUES
                         {
                             return Err(format!(
-                                "Number list attribute supports max {} filters",
-                                NUMBER_LIST_ATTRIBUTE_MAX_VALUES
+                                "Non bitflag attributes supports max {} filters",
+                                ATTRIBUTE_MAX_VALUES
                             ));
                         }
                     }
@@ -103,10 +103,15 @@ pub struct ProfileFilteringSettingsUpdateValidated {
 pub struct ProfileAttributeFilterValueUpdate {
     /// Attribute ID
     pub id: AttributeId,
-    /// - First value is bitflags value or top level attribute value ID or first number list value.
-    /// - Second value is sub level attribute value ID or second number list value.
-    /// - Third and rest are number list values.
-    pub filter_values: Vec<u16>,
+    /// For bitflag filters the list only has one u16 value.
+    ///
+    /// For one level attributes the values are u16 attribute value
+    /// IDs.
+    ///
+    /// For two level attributes the values are u32 values
+    /// with most significant u16 containing attribute value ID and
+    /// least significant u16 containing group value ID.
+    pub filter_values: Vec<u32>,
     /// Defines should missing attribute be accepted.
     ///
     /// Setting this to `None` disables the filter.

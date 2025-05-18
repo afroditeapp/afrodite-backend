@@ -652,10 +652,6 @@ diesel::table! {
     profile_attributes (account_id, attribute_id) {
         account_id -> Integer,
         attribute_id -> Integer,
-        attribute_value_part1 -> Nullable<Integer>,
-        attribute_value_part2 -> Nullable<Integer>,
-        filter_value_part1 -> Nullable<Integer>,
-        filter_value_part2 -> Nullable<Integer>,
         filter_accept_missing_attribute -> Nullable<Bool>,
     }
 }
@@ -672,20 +668,20 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    profile_attributes_number_list (account_id, attribute_id, attribute_value) {
+    profile_attributes_filter_list (account_id, attribute_id, filter_value) {
         account_id -> Integer,
         attribute_id -> Integer,
-        attribute_value -> Integer,
+        filter_value -> Integer,
     }
 }
 
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    profile_attributes_number_list_filters (account_id, attribute_id, filter_value) {
+    profile_attributes_value_list (account_id, attribute_id, attribute_value) {
         account_id -> Integer,
         attribute_id -> Integer,
-        filter_value -> Integer,
+        attribute_value -> Integer,
     }
 }
 
@@ -871,8 +867,8 @@ diesel::joinable!(profile -> account_id (account_id));
 diesel::joinable!(profile_app_notification_settings -> account_id (account_id));
 diesel::joinable!(profile_app_notification_state -> account_id (account_id));
 diesel::joinable!(profile_attributes -> account_id (account_id));
-diesel::joinable!(profile_attributes_number_list -> account_id (account_id));
-diesel::joinable!(profile_attributes_number_list_filters -> account_id (account_id));
+diesel::joinable!(profile_attributes_filter_list -> account_id (account_id));
+diesel::joinable!(profile_attributes_value_list -> account_id (account_id));
 diesel::joinable!(profile_automatic_profile_search_state -> account_id (account_id));
 diesel::joinable!(profile_report_profile_name -> common_report (report_id));
 diesel::joinable!(profile_report_profile_text -> common_report (report_id));
@@ -941,8 +937,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     profile_app_notification_state,
     profile_attributes,
     profile_attributes_file_hash,
-    profile_attributes_number_list,
-    profile_attributes_number_list_filters,
+    profile_attributes_filter_list,
+    profile_attributes_value_list,
     profile_automatic_profile_search_state,
     profile_name_allowlist,
     profile_report_profile_name,

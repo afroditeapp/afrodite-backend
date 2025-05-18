@@ -2,25 +2,7 @@ use model::AttributeId;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::{Attribute, ProfileAttributesInternal};
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct TopLevelAttributeValueId(u16);
-
-impl TopLevelAttributeValueId {
-    pub fn new(id: u16) -> Self {
-        Self(id)
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct SubLevelAttributeValueId(u16);
-
-impl SubLevelAttributeValueId {
-    pub fn new(id: u16) -> Self {
-        Self(id)
-    }
-}
+use super::AttributeDataType;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileAttributeValueUpdate {
@@ -28,36 +10,39 @@ pub struct ProfileAttributeValueUpdate {
     pub id: AttributeId,
     /// Empty list removes the attribute.
     ///
-    /// - First value is bitflags value or top level attribute value ID or first number list value.
-    /// - Second value is sub level attribute value ID or second number list value.
-    /// - Third and rest are number list values.
-    pub v: Vec<u16>,
+    /// For bitflag filters the list only has one u16 value.
+    ///
+    /// For one level attributes the values are u16 attribute value
+    /// IDs.
+    ///
+    /// For two level attributes the values are u32 values
+    /// with most significant u16 containing attribute value ID and
+    /// least significant u16 containing group value ID.
+    pub v: Vec<u32>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileAttributeValue {
     /// Attribute ID
     id: AttributeId,
-    /// - First value is bitflags value or top level attribute value ID or first number list value.
-    /// - Second value is sub level attribute value ID or second number list value.
-    /// - Third and rest are number list values.
+    /// For bitflag filters the list only has one u16 value.
     ///
-    /// The number list values are in ascending order.
-    v: Vec<u16>,
+    /// For one level attributes the values are u16 attribute value
+    /// IDs.
+    ///
+    /// For two level attributes the values are u32 values
+    /// with most significant u16 containing attribute value ID and
+    /// least significant u16 containing group value ID.
+    ///
+    /// Values are in ascending order.
+    v: Vec<u32>,
 }
 
 impl ProfileAttributeValue {
-    pub fn try_from_update_and_sort(
+    pub fn try_from_update(
         mut value: ProfileAttributeValueUpdate,
-        attribute: &Attribute,
     ) -> Result<Self, String> {
-        if attribute.mode.is_number_list() {
-            value.v.sort();
-        }
-        Self::try_from_update(value)
-    }
-
-    pub fn try_from_update(value: ProfileAttributeValueUpdate) -> Result<Self, String> {
+        value.v.sort();
         match value.v.first() {
             Some(_) => Ok(Self {
                 id: value.id,
@@ -67,11 +52,7 @@ impl ProfileAttributeValue {
         }
     }
 
-    pub fn new_not_number_list(id: AttributeId, values: Vec<u16>) -> Self {
-        Self { id, v: values }
-    }
-
-    pub fn new_number_list(id: AttributeId, mut values: Vec<u16>) -> Self {
+    pub fn new(id: AttributeId, mut values: Vec<u32>) -> Self {
         values.sort();
         Self { id, v: values }
     }
@@ -80,25 +61,7 @@ impl ProfileAttributeValue {
         self.id
     }
 
-    pub fn into_raw(self) -> Vec<u16> {
-        self.v
-    }
-
-    pub fn as_bitflags(&self) -> u16 {
-        self.v.first().copied().unwrap_or(0)
-    }
-
-    /// ID number for top level AttributeValue ID.
-    pub fn as_top_level_id(&self) -> TopLevelAttributeValueId {
-        TopLevelAttributeValueId(self.v.first().copied().unwrap_or(0))
-    }
-
-    /// ID number for sub level AttributeValue ID.
-    pub fn as_sub_level_id(&self) -> Option<SubLevelAttributeValueId> {
-        self.v.get(1).copied().map(SubLevelAttributeValueId)
-    }
-
-    pub fn as_number_list(&self) -> &[u16] {
+    pub fn raw_values(&self) -> &[u32] {
         &self.v
     }
 }
@@ -112,7 +75,7 @@ impl From<ProfileAttributeValue> for ProfileAttributeValueUpdate {
     }
 }
 
-/// The profile attributes and possible number list values are sorted.
+/// The profile attributes and attribute values are sorted.
 #[derive(Debug, Clone, PartialEq)]
 pub struct SortedProfileAttributes {
     attributes: Vec<ProfileAttributeValue>,
@@ -121,21 +84,9 @@ pub struct SortedProfileAttributes {
 impl SortedProfileAttributes {
     pub fn new(
         attributes: Vec<ProfileAttributeValue>,
-        all_attributes: Option<&ProfileAttributesInternal>,
     ) -> Self {
         let mut attributes = attributes;
         attributes.sort_by(|a, b| a.id.cmp(&b.id));
-
-        for a in &mut attributes {
-            if let Some(info) =
-                all_attributes.and_then(|attributes| attributes.get_attribute(a.id))
-            {
-                if info.mode.is_number_list() {
-                    a.v.sort();
-                }
-            }
-        }
-
         Self { attributes }
     }
 
@@ -152,5 +103,107 @@ impl SortedProfileAttributes {
 
     pub fn set_attributes(&mut self, value: Vec<ProfileAttributeValue>) {
         self.attributes = value;
+    }
+}
+
+pub struct AttributeValueReader;
+
+impl AttributeValueReader {
+    pub fn is_match(
+        data_type: AttributeDataType,
+        filter_data: &[u32],
+        attribute_data: &[u32],
+        logical_and: bool,
+    ) -> bool {
+        match data_type {
+            AttributeDataType::Bitflag => {
+                let filter = filter_data.first().copied().unwrap_or_default() as u16;
+                let attribute = attribute_data.first().copied().unwrap_or_default() as u16;
+                if logical_and {
+                    filter & attribute == filter
+                } else {
+                    filter & attribute != 0
+                }
+            }
+            AttributeDataType::OneLevel =>
+                Self::is_number_lists_match(
+                    filter_data,
+                    attribute_data,
+                    logical_and,
+                    NumberExistence::one_level_attribute_find_from_sorted,
+                ),
+            AttributeDataType::TwoLevel =>
+                Self::is_number_lists_match(
+                    filter_data,
+                    attribute_data,
+                    logical_and,
+                    NumberExistence::two_level_attribute_find_from_sorted,
+                ),
+        }
+    }
+
+    fn is_number_lists_match<'a, F: Fn(u32, &mut std::iter::Copied<std::slice::Iter<'a, u32>>) -> NumberExistence>(
+        filter_data: &[u32],
+        attribute_data: &'a [u32],
+        logical_and: bool,
+        existence_check: F,
+    ) -> bool {
+        if filter_data.is_empty() {
+            return false;
+        }
+
+        // Assume that both number lists are sorted
+        let mut value_iter = attribute_data.iter().copied();
+        if logical_and {
+            for filter_number in filter_data {
+                match existence_check(*filter_number, &mut value_iter) {
+                    NumberExistence::Found => continue,
+                    NumberExistence::NotFound => return false,
+                }
+            }
+            true
+        } else {
+            for filter_number in filter_data {
+                match existence_check(*filter_number, &mut value_iter) {
+                    NumberExistence::Found => return true,
+                    NumberExistence::NotFound => continue,
+                }
+            }
+            false
+        }
+    }
+}
+
+enum NumberExistence {
+    Found,
+    NotFound,
+}
+
+impl NumberExistence {
+    fn one_level_attribute_find_from_sorted<T: Iterator<Item=u32>>(filter_number: u32, value_iter: &mut T) -> Self {
+        for value_number in value_iter {
+            if value_number < filter_number {
+                // Can be found still
+                continue;
+            } else if value_number == filter_number {
+                // Found
+                return NumberExistence::Found;
+            } else {
+                // Not found
+                return NumberExistence::NotFound;
+            }
+        }
+        NumberExistence::NotFound
+    }
+
+    fn two_level_attribute_find_from_sorted<T: Iterator<Item=u32>>(filter_number: u32, value_iter: &mut T) -> Self {
+        let filter_group_value = (filter_number & 0xFFFF) as u16;
+        if filter_group_value == 0 {
+            // Compare only with attribute value
+            let filter_number = filter_number & 0xFFFF0000;
+            Self::one_level_attribute_find_from_sorted(filter_number, &mut value_iter.by_ref().map(|v| v & 0xFFFF0000))
+        } else {
+            Self::one_level_attribute_find_from_sorted(filter_number, value_iter)
+        }
     }
 }

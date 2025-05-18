@@ -4,7 +4,7 @@ use diesel::{
 };
 use error_stack::{Result, ResultExt};
 use model_profile::{
-    AccountIdInternal, Attribute, Location, ProfileAge, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileAttributesInternal, ProfileEditedTime, ProfileFilteringSettingsUpdateValidated, ProfileInternal, ProfileStateInternal, ProfileUpdateValidated, ProfileVersion, SyncVersion, UnixTime
+    AccountIdInternal, Location, ProfileAge, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileEditedTime, ProfileFilteringSettingsUpdateValidated, ProfileInternal, ProfileStateInternal, ProfileUpdateValidated, ProfileVersion, SyncVersion, UnixTime
 };
 
 use crate::IntoDatabaseError;
@@ -223,7 +223,6 @@ impl CurrentWriteProfileData<'_> {
         &mut self,
         id: AccountIdInternal,
         settings: ProfileFilteringSettingsUpdateValidated,
-        attributes: Option<&ProfileAttributesInternal>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::profile_state::dsl::*;
 
@@ -240,7 +239,7 @@ impl CurrentWriteProfileData<'_> {
             .execute(self.conn())
             .into_db_error(())?;
 
-        self.upsert_profile_attribute_filters(id, settings.filters, attributes)?;
+        self.upsert_profile_attribute_filters(id, settings.filters)?;
 
         Ok(())
     }
@@ -249,63 +248,31 @@ impl CurrentWriteProfileData<'_> {
         &mut self,
         id: AccountIdInternal,
         data: Vec<ProfileAttributeValueUpdate>,
-        attributes: Option<&ProfileAttributesInternal>,
     ) -> Result<(), DieselDatabaseError> {
-        // Using for loop here because this:
-        // https://github.com/diesel-rs/diesel/discussions/3115
-        // (SQLite does not support DEFAULT keyword when inserting data
-        //  and Diesel seems to not support setting empty columns explicitly
-        //  to NULL)
-
         for a in data {
-            let is_number_list = attributes
-                .and_then(|attributes| attributes.get_attribute(a.id))
-                .map(|attribute: &Attribute| attribute.mode.is_number_list())
-                .unwrap_or_default();
+            use model::schema::profile_attributes_value_list::dsl::*;
 
-            if is_number_list {
-                use model::schema::profile_attributes_number_list::dsl::*;
+            delete(profile_attributes_value_list)
+                .filter(account_id.eq(id.as_db_id()))
+                .filter(attribute_id.eq(a.id))
+                .execute(self.conn())
+                .into_db_error(())?;
 
-                delete(profile_attributes_number_list)
-                    .filter(account_id.eq(id.as_db_id()))
-                    .filter(attribute_id.eq(a.id))
-                    .execute(self.conn())
-                    .into_db_error(())?;
+            let values: Vec<_> =
+                a.v.into_iter()
+                    .map(|value| {
+                        (
+                            account_id.eq(id.as_db_id()),
+                            attribute_id.eq(a.id),
+                            attribute_value.eq(value as i64),
+                        )
+                    })
+                    .collect();
 
-                let values: Vec<_> =
-                    a.v.into_iter()
-                        .map(|value| {
-                            (
-                                account_id.eq(id.as_db_id()),
-                                attribute_id.eq(a.id),
-                                attribute_value.eq(value as i64),
-                            )
-                        })
-                        .collect();
-
-                insert_into(profile_attributes_number_list)
-                    .values(values)
-                    .execute(self.conn())
-                    .into_db_error(())?;
-            } else {
-                use model::schema::profile_attributes::dsl::*;
-
-                insert_into(profile_attributes)
-                    .values((
-                        account_id.eq(id.as_db_id()),
-                        attribute_id.eq(a.id),
-                        attribute_value_part1.eq(a.v.first().copied().map(|v| v as i64)),
-                        attribute_value_part2.eq(a.v.get(1).copied().map(|v| v as i64)),
-                    ))
-                    .on_conflict((account_id, attribute_id))
-                    .do_update()
-                    .set((
-                        attribute_value_part1.eq(excluded(attribute_value_part1)),
-                        attribute_value_part2.eq(excluded(attribute_value_part2)),
-                    ))
-                    .execute(self.conn())
-                    .into_db_error(())?;
-            }
+            insert_into(profile_attributes_value_list)
+                .values(values)
+                .execute(self.conn())
+                .into_db_error(())?;
         }
 
         Ok(())
@@ -315,53 +282,32 @@ impl CurrentWriteProfileData<'_> {
         &mut self,
         id: AccountIdInternal,
         data: Vec<ProfileAttributeFilterValueUpdate>,
-        attributes: Option<&ProfileAttributesInternal>,
     ) -> Result<(), DieselDatabaseError> {
-        // Using for loop here because this:
-        // https://github.com/diesel-rs/diesel/discussions/3115
-        // (SQLite does not support DEFAULT keyword when inserting data
-        //  and Diesel seems to not support setting empty columns explicitly
-        //  to NULL)
-
         for a in data {
-            let is_number_list = attributes
-                .and_then(|attributes| attributes.get_attribute(a.id))
-                .map(|attribute: &Attribute| attribute.mode.is_number_list())
-                .unwrap_or_default();
+            use model::schema::profile_attributes_filter_list::dsl::*;
 
-            let (part1, part2) = if is_number_list {
-                use model::schema::profile_attributes_number_list_filters::dsl::*;
+            delete(profile_attributes_filter_list)
+                .filter(account_id.eq(id.as_db_id()))
+                .filter(attribute_id.eq(a.id))
+                .execute(self.conn())
+                .into_db_error(())?;
 
-                delete(profile_attributes_number_list_filters)
-                    .filter(account_id.eq(id.as_db_id()))
-                    .filter(attribute_id.eq(a.id))
-                    .execute(self.conn())
-                    .into_db_error(())?;
+            let values: Vec<_> = a
+                .filter_values
+                .into_iter()
+                .map(|value| {
+                    (
+                        account_id.eq(id.as_db_id()),
+                        attribute_id.eq(a.id),
+                        filter_value.eq(value as i64),
+                    )
+                })
+                .collect();
 
-                let values: Vec<_> = a
-                    .filter_values
-                    .into_iter()
-                    .map(|value| {
-                        (
-                            account_id.eq(id.as_db_id()),
-                            attribute_id.eq(a.id),
-                            filter_value.eq(value as i64),
-                        )
-                    })
-                    .collect();
-
-                insert_into(profile_attributes_number_list_filters)
-                    .values(values)
-                    .execute(self.conn())
-                    .into_db_error(())?;
-
-                (None, None)
-            } else {
-                (
-                    a.filter_values.first().copied().map(|v| v as i64),
-                    a.filter_values.get(1).copied().map(|v| v as i64),
-                )
-            };
+            insert_into(profile_attributes_filter_list)
+                .values(values)
+                .execute(self.conn())
+                .into_db_error(())?;
 
             {
                 use model::schema::profile_attributes::dsl::*;
@@ -370,15 +316,11 @@ impl CurrentWriteProfileData<'_> {
                     .values((
                         account_id.eq(id.as_db_id()),
                         attribute_id.eq(a.id),
-                        filter_value_part1.eq(part1),
-                        filter_value_part2.eq(part2),
                         filter_accept_missing_attribute.eq(a.accept_missing_attribute),
                     ))
                     .on_conflict((account_id, attribute_id))
                     .do_update()
                     .set((
-                        filter_value_part1.eq(excluded(filter_value_part1)),
-                        filter_value_part2.eq(excluded(filter_value_part2)),
                         filter_accept_missing_attribute
                             .eq(excluded(filter_accept_missing_attribute)),
                     ))

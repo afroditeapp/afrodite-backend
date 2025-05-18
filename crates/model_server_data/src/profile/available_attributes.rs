@@ -150,24 +150,21 @@ impl ModeAndIdSequenceNumber {
         }
     }
 
+    /// Increment next value.
+    ///
+    /// (Other mode is bit shifting for bitflags attribute value IDs.)
     fn new_increment_only_mode() -> Self {
-        Self::new(AttributeMode::SelectSingleFilterSingle)
+        Self::new(AttributeMode::OneLevelSelectSingle)
     }
 
     fn set_value(&mut self, id: u16) -> Result<u16, String> {
-        match self.mode {
-            AttributeMode::SelectSingleFilterSingle
-            | AttributeMode::SelectMultipleFilterMultipleNumberList => {
-                Self::validate_integer_id(id)?;
-                self.current_id = Some(id);
-            }
-            AttributeMode::SelectSingleFilterMultiple
-            | AttributeMode::SelectMultipleFilterMultiple => {
-                Self::validate_bitflag_id(id)?;
-                self.current_id = Some(id);
-            }
+        if self.mode.data_type().is_bitflag() {
+            Self::validate_bitflag_id(id)?;
+            self.current_id = Some(id);
+        } else {
+            Self::validate_integer_id(id)?;
+            self.current_id = Some(id);
         }
-
         Ok(id)
     }
 
@@ -202,29 +199,24 @@ impl ModeAndIdSequenceNumber {
 
     /// Increment the current ID and return the updated current ID.
     fn increment_value(&mut self) -> Result<u16, String> {
-        match self.mode {
-            AttributeMode::SelectSingleFilterSingle
-            | AttributeMode::SelectMultipleFilterMultipleNumberList => {
-                let tmp = if let Some(current_id) = self.current_id {
-                    current_id + 1
-                } else {
-                    1
-                };
-                Self::validate_integer_id(tmp)?;
-                self.current_id = Some(tmp);
-                Ok(tmp)
-            }
-            AttributeMode::SelectSingleFilterMultiple
-            | AttributeMode::SelectMultipleFilterMultiple => {
-                let tmp = if let Some(current_id) = self.current_id {
-                    current_id << 1
-                } else {
-                    1
-                };
-                Self::validate_bitflag_id(tmp)?;
-                self.current_id = Some(tmp);
-                Ok(tmp)
-            }
+        if self.mode.data_type().is_bitflag() {
+            let tmp = if let Some(current_id) = self.current_id {
+                current_id << 1
+            } else {
+                1
+            };
+            Self::validate_bitflag_id(tmp)?;
+            self.current_id = Some(tmp);
+            Ok(tmp)
+        } else {
+            let tmp = if let Some(current_id) = self.current_id {
+                current_id + 1
+            } else {
+                1
+            };
+            Self::validate_integer_id(tmp)?;
+            self.current_id = Some(tmp);
+            Ok(tmp)
         }
     }
 }
@@ -354,7 +346,7 @@ impl AttributeInternal {
         }
 
         // Check that correct IDs are used.
-        if self.mode.is_bitflag_mode() {
+        if self.mode.data_type().is_bitflag() {
             let mut current = 1;
             for _ in 0..values.len() {
                 if !top_level_ids.contains(&current) {
@@ -435,12 +427,12 @@ impl AttributeInternal {
             group_values.push(GroupValues { key: g.key, values });
         }
 
-        if self.mode.is_bitflag_mode() && !group_values.is_empty() {
+        if self.mode.data_type().is_bitflag() && !group_values.is_empty() {
             return Err("Bitflag mode cannot have group values".to_string());
         }
 
-        if self.mode.is_number_list() && !group_values.is_empty() {
-            return Err("Number list mode cannot have group values".to_string());
+        if self.mode.data_type().is_one_level() && !group_values.is_empty() {
+            return Err("One level attribute cannot have group values".to_string());
         }
 
         for g in group_values.into_iter() {
@@ -541,10 +533,43 @@ pub struct Translation {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
 pub enum AttributeMode {
-    SelectSingleFilterSingle,
-    SelectSingleFilterMultiple,
-    SelectMultipleFilterMultiple,
-    SelectMultipleFilterMultipleNumberList,
+    BitflagSelectSingle,
+    BitflagSelectMultiple,
+    OneLevelSelectSingle,
+    OneLevelSelectMultiple,
+    TwoLevelSelectSingle,
+    TwoLevelSelectMultiple,
+}
+
+impl AttributeMode {
+    pub fn is_select_multiple(&self) -> bool {
+        matches!(
+            *self,
+            Self::BitflagSelectMultiple |
+            Self::OneLevelSelectMultiple |
+            Self::TwoLevelSelectMultiple
+        )
+    }
+}
+
+#[derive(PartialEq)]
+pub enum AttributeDataType {
+    /// u16 bitflag
+    Bitflag,
+    /// u16 values
+    OneLevel,
+    /// u32 values
+    TwoLevel,
+}
+
+impl AttributeDataType {
+    pub fn is_bitflag(&self) -> bool {
+        *self == Self::Bitflag
+    }
+
+    pub fn is_one_level(&self) -> bool {
+        *self == Self::OneLevel
+    }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
@@ -555,21 +580,14 @@ pub enum AttributeValueOrderMode {
 }
 
 impl AttributeMode {
-    pub fn is_bitflag_mode(&self) -> bool {
+    pub fn data_type(&self) -> AttributeDataType {
         match self {
-            AttributeMode::SelectSingleFilterSingle
-            | AttributeMode::SelectMultipleFilterMultipleNumberList => false,
-            AttributeMode::SelectSingleFilterMultiple
-            | AttributeMode::SelectMultipleFilterMultiple => true,
-        }
-    }
-
-    pub fn is_number_list(&self) -> bool {
-        match self {
-            AttributeMode::SelectSingleFilterSingle
-            | AttributeMode::SelectSingleFilterMultiple
-            | AttributeMode::SelectMultipleFilterMultiple => false,
-            AttributeMode::SelectMultipleFilterMultipleNumberList => true,
+            AttributeMode::BitflagSelectSingle |
+            AttributeMode::BitflagSelectMultiple => AttributeDataType::Bitflag,
+            AttributeMode::OneLevelSelectSingle |
+            AttributeMode::OneLevelSelectMultiple => AttributeDataType::OneLevel,
+            AttributeMode::TwoLevelSelectSingle |
+            AttributeMode::TwoLevelSelectMultiple => AttributeDataType::TwoLevel,
         }
     }
 }

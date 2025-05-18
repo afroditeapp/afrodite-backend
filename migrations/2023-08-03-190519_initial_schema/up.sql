@@ -494,18 +494,10 @@ CREATE TABLE IF NOT EXISTS profile(
             ON UPDATE CASCADE
 );
 
--- Store profile attributes which config file defines.
+-- Store profile attribute related values
 CREATE TABLE IF NOT EXISTS profile_attributes(
     account_id      INTEGER             NOT NULL,
     attribute_id    INTEGER             NOT NULL,
-    -- Bitflags value or top level attribute value
-    attribute_value_part1 INTEGER,
-    -- Sub level attribute value
-    attribute_value_part2 INTEGER,
-    -- Bitflags value or top level attribute value
-    filter_value_part1    INTEGER,
-    -- Sub level attribute value
-    filter_value_part2    INTEGER,
     filter_accept_missing_attribute BOOLEAN,
     PRIMARY KEY (account_id, attribute_id),
     FOREIGN KEY (account_id)
@@ -514,8 +506,7 @@ CREATE TABLE IF NOT EXISTS profile_attributes(
             ON UPDATE CASCADE
 );
 
--- Store profile attribute number list values which config file defines.
-CREATE TABLE IF NOT EXISTS profile_attributes_number_list(
+CREATE TABLE IF NOT EXISTS profile_attributes_value_list(
     account_id      INTEGER             NOT NULL,
     attribute_id    INTEGER             NOT NULL,
     attribute_value INTEGER             NOT NULL,
@@ -526,8 +517,7 @@ CREATE TABLE IF NOT EXISTS profile_attributes_number_list(
             ON UPDATE CASCADE
 );
 
--- Store profile attribute number list filter values which config file defines.
-CREATE TABLE IF NOT EXISTS profile_attributes_number_list_filters(
+CREATE TABLE IF NOT EXISTS profile_attributes_filter_list(
     account_id      INTEGER             NOT NULL,
     attribute_id    INTEGER             NOT NULL,
     filter_value    INTEGER             NOT NULL,

@@ -10,6 +10,8 @@ All ID and order number values start from 1 for consistency so 0 can be used
 as null value for creating filter integer for group values. For example u32
 with most significant bits have u16 attribute value ID and least significant
 bits have u16 zero value for indicating that match with all group values.
+The attribute value ID is the significant value so that values have correct
+order.
 
 ## TOML file format
 
@@ -93,17 +95,20 @@ values = [
 - `key` - unique identifier of the attribute
 - `name` - English name for the attribute
 - `mode` - mode of the attribute. Possible values are
-    - `SelectSingleFilterSingle` - single value select filter. Top and sub
-        level values are possible to set. Max value count for top and sub
-        level are u16::MAX.
-    - `SelectSingleFilterMultiple` - multiple values in select filter.
-        Only top level values are possible to set. Max value count is 16.
-    - `SelectMultipleFilterMultiple` - same as `SelectSingleFilterMultiple`
-        but selecting multiple bitflags are possible.
-    - `SelectMultipleFilterMultipleNumberList` - Similar as
-        `SelectMultipleFilterMultiple`, but implemented with list of u16 values.
+    - `BitflagSelectSingle` or `BitflagSelectMultiple` - Select one or more u16 bitflags.
         Only top level values are possible to set.
-        It is possible to select and filter max 8 values.
+        Selected max selected values: 1 or 16.
+        Filter max selected values: 16.
+    - `OneLevelSelectSingle` or `OneLevelSelectMultiple` - Select one or more u16 values.
+        Only top level values are possible to set.
+        Max value count: u16::MAX.
+        Selected max selected values: 1 or 8.
+        Filter max selected values: 8.
+    - `TwoLevelSelectSingle` or `TwoLevelSelectMultiple` - Select one or more u32 values.
+        Top and sub level values are possible to set.
+        Max value count for top and sub level are u16::MAX.
+        Selected max selected values: 1 or 8.
+        Filter max selected values: 8.
 - `order_number` - Unique order number for the attribute.
         0 is the first attribute.
 - `value_order` - Display order mode for the attribute values.
@@ -124,13 +129,13 @@ values = [
     - `value` - English translation for the value
     - `id` - Unique ID number for the value for the value. Beharior is
         is different depending on the `type` attribute.
-        - Behavior for `SelectSingleFilterSingle` - Default value starts
-            from 1 and default value for next list item is the previous + 1.
-            Max value is u16::MAX.
-        - Behavior for `SelectSingleFilterMultiple` - Default value starts
+        - Behavior for bitflag attributes - Default value starts
             from 0x1 and default value for next list item is the
             previous << 1. Last value is 0x8000 so 16 values are possible
             to define.
+        - Behavior for other attributes - Default value starts
+            from 1 and default value for next list item is the previous + 1.
+            Max value is u16::MAX.
         The field is optional.
     - `icon` - Icon to be used for the attribute.
         This field has the same format as the attribute `icon` field.
@@ -164,7 +169,7 @@ values = [
         - `key` - key of the attribute or value
         - `value` - translation for the key
 
-If attirbute `type` is `SelectSingleFilterSingle` the following fields is
+If attirbute `type` is two level attribute the following fields is
 possible to set:
 
 - `group_values` - list of possible sub values for top level values.
@@ -174,12 +179,10 @@ possible to set:
         Contains objects with fields
         - `key` - unique identifier for the value
         - `value` - English translation for the value
-        - `id` - Unique ID number for the value for the value. Beharior is
-            is different depending on the `type` attribute.
-            - Behavior for `SelectSingleFilterSingle` - Default value starts
-                from 1 and default value for next list item is the previous + 1.
-                Max value is u16::MAX.
-            - Behavior for `SelectSingleFilterMultiple` - Not possible to set.
+        - `id` - Unique ID number for the value for the value.
+            Default value starts from 1 and default value for
+            next list item is the previous + 1.
+            Max value is u16::MAX.
             The field is optional.
         - `icon` - Icon to be used for the attribute.
             This field has the same format as the attribute `icon` field.

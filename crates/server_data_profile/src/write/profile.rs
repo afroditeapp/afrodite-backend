@@ -100,7 +100,6 @@ impl WriteCommandsProfile<'_> {
             cmds.profile().data().upsert_profile_attributes(
                 id,
                 profile_data.attributes,
-                config.profile_attributes(),
             )?;
             cmds.profile().data().required_changes_for_profile_update(id, profile_version, edit_time)?;
             if name_update_detected {
@@ -177,13 +176,11 @@ impl WriteCommandsProfile<'_> {
         id: AccountIdInternal,
         filters: ProfileFilteringSettingsUpdateValidated,
     ) -> Result<(), DataError> {
-        let config = self.config_arc().clone();
         let filters_clone = filters.clone();
         let (new_filters, location) = db_transaction!(self, move |mut cmds| {
             cmds.profile().data().update_profile_filtering_settings(
                 id,
                 filters_clone,
-                config.profile_attributes(),
             )?;
             let attribute_filters = cmds.read().profile().data().profile_attribute_filters(id)?;
             let location = cmds.read().profile().data().profile_location(id)?;

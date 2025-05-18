@@ -193,7 +193,6 @@ impl DbDataToCacheLoader {
                 state.into(),
                 attributes,
                 filters,
-                config,
                 last_seen_unix_time,
             );
 

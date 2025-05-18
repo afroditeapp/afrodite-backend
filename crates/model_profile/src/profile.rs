@@ -35,10 +35,10 @@ pub use text::*;
 mod report;
 pub use report::*;
 
-const NUMBER_LIST_ATTRIBUTE_MAX_VALUES: usize = 8;
+const ATTRIBUTE_MAX_VALUES: usize = 8;
 
 /// Public profile info
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, ToSchema, PartialEq, Eq)]
 pub struct Profile {
     pub name: String,
     /// Profile text support is disabled for now.
@@ -54,21 +54,13 @@ pub struct Profile {
     #[schema(default = false)]
     unlimited_likes: bool,
     /// The name has been accepted using allowlist or manual moderation.
-    #[serde(default = "name_accepted_default", skip_serializing_if = "is_true")]
+    #[serde(skip_serializing_if = "is_true")]
     #[schema(default = true)]
     name_accepted: bool,
     /// The profile text has been accepted by bot or human moderator.
-    #[serde(default = "ptext_accepted_default", skip_serializing_if = "is_true")]
+    #[serde(skip_serializing_if = "is_true")]
     #[schema(default = true)]
     ptext_accepted: bool,
-}
-
-fn name_accepted_default() -> bool {
-    true
-}
-
-fn ptext_accepted_default() -> bool {
-    true
 }
 
 fn is_true(value: &bool) -> bool {
@@ -181,17 +173,16 @@ impl ProfileUpdate {
                 match attribute_info {
                     None => return Err("Unknown attribute ID".to_string()),
                     Some(info) => {
-                        if info.mode.is_number_list()
-                            && a.v.len() > NUMBER_LIST_ATTRIBUTE_MAX_VALUES
-                        {
+                        let max_len = if !info.mode.data_type().is_bitflag() && info.mode.is_select_multiple() {
+                            ATTRIBUTE_MAX_VALUES
+                        } else {
+                            1
+                        };
+                        if a.v.len() > max_len {
                             return Err(format!(
-                                "Number list attribute supports max {} values",
-                                NUMBER_LIST_ATTRIBUTE_MAX_VALUES
+                                "Attribute supports max {} values",
+                                ATTRIBUTE_MAX_VALUES
                             ));
-                        }
-
-                        if info.mode.is_number_list() {
-                            a.v.sort();
                         }
                     }
                 }
@@ -298,7 +289,7 @@ impl GetProfileQueryParam {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Debug, Clone, Serialize, ToSchema, IntoParams)]
 pub struct GetProfileResult {
     /// Profile data if it is newer than the version in the query.
     pub p: Option<Profile>,
@@ -337,7 +328,7 @@ impl GetProfileResult {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct GetMyProfileResult {
     pub p: Profile,
     pub v: ProfileVersion,

@@ -122,51 +122,33 @@ impl CurrentReadProfileData<'_> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<Vec<ProfileAttributeValue>, DieselDatabaseError> {
-        let data: Vec<(AttributeId, i64, Option<i64>)> = {
-            use crate::schema::profile_attributes::dsl::*;
-            profile_attributes
-                .filter(account_id.eq(id.as_db_id()))
-                .filter(attribute_value_part1.is_not_null())
-                .select((
-                    attribute_id,
-                    attribute_value_part1.assume_not_null(),
-                    attribute_value_part2,
-                ))
-                .load(self.conn())
-                .change_context(DieselDatabaseError::Execute)?
-        };
+        let attribute_values_data: Vec<(AttributeId, i64)> = {
+            use crate::schema::profile_attributes_value_list::dsl::*;
 
-        let mut data: Vec<ProfileAttributeValue> = data
-            .into_iter()
-            .map(|(id, part1, part2)| {
-                ProfileAttributeValue::new_not_number_list(
-                    id,
-                    Some(part1 as u16)
-                        .into_iter()
-                        .chain(part2.map(|v| v as u16))
-                        .collect(),
-                )
-            })
-            .collect();
-
-        let number_list_data: Vec<(AttributeId, i64)> = {
-            use crate::schema::profile_attributes_number_list::dsl::*;
-
-            profile_attributes_number_list
+            profile_attributes_value_list
                 .filter(account_id.eq(id.as_db_id()))
                 .select((attribute_id, attribute_value))
                 .load(self.conn())
                 .change_context(DieselDatabaseError::Execute)?
         };
 
-        let mut number_list_attributes = HashMap::<AttributeId, Vec<u16>>::new();
-        for (id, value) in number_list_data {
-            let values = number_list_attributes.entry(id).or_default();
-            values.push(value as u16);
+        let mut attributes = HashMap::<AttributeId, Vec<u32>>::new();
+        for (id, value) in attribute_values_data {
+            let values = attributes.entry(id).or_default();
+            values.push(value as u32);
         }
-        for (id, number_list) in number_list_attributes {
-            data.push(ProfileAttributeValue::new_number_list(id, number_list));
-        }
+
+        let mut data: Vec<ProfileAttributeValue> = attributes
+            .into_iter()
+            .map(|(id, data)| {
+                ProfileAttributeValue::new(
+                    id,
+                    data,
+                )
+            })
+            .collect();
+
+        data.sort_by_key(|v| v.id());
 
         Ok(data)
     }
@@ -176,7 +158,7 @@ impl CurrentReadProfileData<'_> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<Vec<ProfileAttributeFilterValue>, DieselDatabaseError> {
-        let data: Vec<(AttributeId, Option<i64>, Option<i64>, bool)> = {
+        let data: Vec<(AttributeId, bool)> = {
             use crate::schema::profile_attributes::dsl::*;
 
             profile_attributes
@@ -184,50 +166,40 @@ impl CurrentReadProfileData<'_> {
                 .filter(filter_accept_missing_attribute.is_not_null())
                 .select((
                     attribute_id,
-                    filter_value_part1,
-                    filter_value_part2,
                     filter_accept_missing_attribute.assume_not_null(),
                 ))
                 .load(self.conn())
                 .change_context(DieselDatabaseError::Execute)?
         };
 
-        let mut data: Vec<ProfileAttributeFilterValue> = data
-            .into_iter()
-            .map(|(id, part1, part2, accept_missing)| {
-                ProfileAttributeFilterValue::new_not_number_list(
-                    id,
-                    part1
-                        .map(|v| v as u16)
-                        .into_iter()
-                        .chain(part2.map(|v| v as u16))
-                        .collect(),
-                    accept_missing,
-                )
-            })
-            .collect();
+        let attribute_filters_data: Vec<(AttributeId, i64)> = {
+            use crate::schema::profile_attributes_filter_list::dsl::*;
 
-        let number_list_filters: Vec<(AttributeId, i64)> = {
-            use crate::schema::profile_attributes_number_list_filters::dsl::*;
-
-            profile_attributes_number_list_filters
+            profile_attributes_filter_list
                 .filter(account_id.eq(id.as_db_id()))
                 .select((attribute_id, filter_value))
                 .load(self.conn())
                 .change_context(DieselDatabaseError::Execute)?
         };
-        let mut number_list_attribute_filters = HashMap::<AttributeId, Vec<u16>>::new();
-        for (id, filter_value) in number_list_filters {
-            let values = number_list_attribute_filters.entry(id).or_default();
-            values.push(filter_value as u16);
+
+        let mut filters = HashMap::<AttributeId, Vec<u32>>::new();
+        for (id, value) in attribute_filters_data {
+            let values = filters.entry(id).or_default();
+            values.push(value as u32);
         }
-        for filter_value in &mut data {
-            for (id, number_list) in &number_list_attribute_filters {
-                if filter_value.id() == *id {
-                    filter_value.set_number_list_filter_value(number_list.clone());
-                }
-            }
-        }
+
+        let mut data: Vec<ProfileAttributeFilterValue> = data
+            .into_iter()
+            .map(|(id, accept_missing_attribute)| {
+                ProfileAttributeFilterValue::new(
+                    id,
+                    filters.remove(&id).unwrap_or_default(),
+                    accept_missing_attribute,
+                )
+            })
+            .collect();
+
+        data.sort_by_key(|v| v.id());
 
         Ok(data)
     }
