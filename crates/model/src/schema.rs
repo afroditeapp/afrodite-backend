@@ -653,6 +653,7 @@ diesel::table! {
         account_id -> Integer,
         attribute_id -> Integer,
         filter_accept_missing_attribute -> Nullable<Bool>,
+        filter_use_logical_operator_and -> Bool,
     }
 }
 

@@ -499,6 +499,7 @@ CREATE TABLE IF NOT EXISTS profile_attributes(
     account_id      INTEGER             NOT NULL,
     attribute_id    INTEGER             NOT NULL,
     filter_accept_missing_attribute BOOLEAN,
+    filter_use_logical_operator_and BOOLEAN NOT NULL DEFAULT 0,
     PRIMARY KEY (account_id, attribute_id),
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)

@@ -20,6 +20,7 @@ pub struct ProfileAttributeFilterValue {
     /// The values are stored in ascending order.
     filter_values: Vec<u32>,
     accept_missing_attribute: bool,
+    use_logical_operator_and: bool,
 }
 
 impl ProfileAttributeFilterValue {
@@ -27,12 +28,14 @@ impl ProfileAttributeFilterValue {
         id: AttributeId,
         mut filter_values: Vec<u32>,
         accept_missing_attribute: bool,
+        use_logical_operator_and: bool,
     ) -> Self {
         filter_values.sort();
         Self {
             id,
             filter_values,
             accept_missing_attribute,
+            use_logical_operator_and,
         }
     }
 
@@ -58,7 +61,7 @@ impl ProfileAttributeFilterValue {
             attribute_info.mode.data_type(),
             &self.filter_values,
             value.raw_values(),
-            false,
+            self.use_logical_operator_and,
         )
     }
 }

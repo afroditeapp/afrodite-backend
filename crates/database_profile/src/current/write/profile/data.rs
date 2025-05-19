@@ -317,12 +317,15 @@ impl CurrentWriteProfileData<'_> {
                         account_id.eq(id.as_db_id()),
                         attribute_id.eq(a.id),
                         filter_accept_missing_attribute.eq(a.accept_missing_attribute),
+                        filter_use_logical_operator_and.eq(a.use_logical_operator_and),
                     ))
                     .on_conflict((account_id, attribute_id))
                     .do_update()
                     .set((
                         filter_accept_missing_attribute
                             .eq(excluded(filter_accept_missing_attribute)),
+                        filter_use_logical_operator_and
+                            .eq(excluded(filter_use_logical_operator_and)),
                     ))
                     .execute(self.conn())
                     .into_db_error(())?;

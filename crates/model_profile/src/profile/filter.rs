@@ -116,6 +116,10 @@ pub struct ProfileAttributeFilterValueUpdate {
     ///
     /// Setting this to `None` disables the filter.
     pub accept_missing_attribute: Option<bool>,
+    /// Defines should attribute values be checked with logical operator AND.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub use_logical_operator_and: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]

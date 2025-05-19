@@ -158,15 +158,17 @@ impl CurrentReadProfileData<'_> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<Vec<ProfileAttributeFilterValue>, DieselDatabaseError> {
-        let data: Vec<(AttributeId, bool)> = {
+        let data: Vec<(AttributeId, bool, bool)> = {
             use crate::schema::profile_attributes::dsl::*;
 
             profile_attributes
                 .filter(account_id.eq(id.as_db_id()))
                 .filter(filter_accept_missing_attribute.is_not_null())
+                .filter(filter_use_logical_operator_and)
                 .select((
                     attribute_id,
                     filter_accept_missing_attribute.assume_not_null(),
+                    filter_use_logical_operator_and,
                 ))
                 .load(self.conn())
                 .change_context(DieselDatabaseError::Execute)?
@@ -190,11 +192,12 @@ impl CurrentReadProfileData<'_> {
 
         let mut data: Vec<ProfileAttributeFilterValue> = data
             .into_iter()
-            .map(|(id, accept_missing_attribute)| {
+            .map(|(id, accept_missing_attribute, use_logical_operator_and)| {
                 ProfileAttributeFilterValue::new(
                     id,
                     filters.remove(&id).unwrap_or_default(),
                     accept_missing_attribute,
+                    use_logical_operator_and,
                 )
             })
             .collect();
