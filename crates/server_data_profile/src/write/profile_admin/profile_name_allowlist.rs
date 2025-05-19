@@ -53,7 +53,7 @@ impl WriteCommandsProfileAdminProfileNameAllowlist<'_> {
 
         self.write_cache_profile(name_owner_id.as_id(), |p| {
             p.state.profile_name_moderation_state = new_state;
-            p.data.version_uuid = new_profile_version;
+            p.update_profile_version_uuid(new_profile_version);
             p.state.profile_edited_time = edit_time;
             Ok(())
         })

@@ -746,6 +746,8 @@ diesel::table! {
         max_distance_km_filter -> Nullable<Integer>,
         profile_created_time_filter -> Nullable<Integer>,
         profile_edited_time_filter -> Nullable<Integer>,
+        profile_text_min_characters_filter -> Nullable<Integer>,
+        profile_text_max_characters_filter -> Nullable<Integer>,
         random_profile_order -> Bool,
         latitude -> Double,
         longitude -> Double,

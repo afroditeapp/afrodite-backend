@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use diesel::{prelude::*, sql_types::BigInt, AsExpression, FromSqlRow};
 use model::{AttributeId, ProfileAge};
 use model_server_data::{
-    ProfileCreatedTimeFilter, LastSeenTime, LastSeenTimeFilter, MaxDistanceKm, ProfileAttributeValue, ProfileAttributeValueUpdate, ProfileAttributesInternal, ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal, ProfileNameModerationState, ProfileStateCached, ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes
+    LastSeenTime, LastSeenTimeFilter, MaxDistanceKm, ProfileAttributeValue, ProfileAttributeValueUpdate, ProfileAttributesInternal, ProfileCreatedTimeFilter, ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal, ProfileNameModerationState, ProfileStateCached, ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter, ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes
 };
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, UnixTime};
@@ -110,6 +110,8 @@ pub struct ProfileStateInternal {
     pub max_distance_km_filter: Option<MaxDistanceKm>,
     pub profile_created_time_filter: Option<ProfileCreatedTimeFilter>,
     pub profile_edited_time_filter: Option<ProfileEditedTimeFilter>,
+    pub profile_text_min_characters_filter: Option<ProfileTextMinCharactersFilter>,
+    pub profile_text_max_characters_filter: Option<ProfileTextMaxCharactersFilter>,
     pub random_profile_order: bool,
     pub profile_sync_version: ProfileSyncVersion,
     pub profile_name_moderation_state: ProfileNameModerationState,
@@ -133,6 +135,8 @@ impl From<ProfileStateInternal> for ProfileStateCached {
             max_distance_km_filter: value.max_distance_km_filter,
             profile_created_time_filter: value.profile_created_time_filter,
             profile_edited_time_filter: value.profile_edited_time_filter,
+            profile_text_min_characters_filter: value.profile_text_min_characters_filter,
+            profile_text_max_characters_filter: value.profile_text_max_characters_filter,
             random_profile_order: value.random_profile_order,
             profile_name_moderation_state: value.profile_name_moderation_state,
             profile_text_moderation_state: value.profile_text_moderation_state,

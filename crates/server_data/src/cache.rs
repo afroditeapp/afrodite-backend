@@ -603,7 +603,7 @@ impl CacheEntry {
 
         Ok(LocationIndexProfileData::new(
             profile.account_id,
-            &profile.data,
+            profile.profile_internal(),
             &profile.state,
             profile.attributes.clone(),
             self.media.as_ref().map(|m| m.profile_content_version),
@@ -611,6 +611,7 @@ impl CacheEntry {
             profile.last_seen_time(&self.common),
             self.common.other_shared_state.initial_setup_completed_unix_time,
             self.media.as_ref().map(|m| m.profile_content_edited_time),
+            profile.profile_text_character_count(),
         ))
     }
 }

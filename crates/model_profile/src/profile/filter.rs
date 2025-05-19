@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use model::AttributeId;
 use model_server_data::{
-    MaxDistanceKm, ProfileAttributeFilterValue, ProfileCreatedTimeFilter, ProfileEditedTimeFilter,
+    MaxDistanceKm, ProfileAttributeFilterValue, ProfileCreatedTimeFilter, ProfileEditedTimeFilter, ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -17,6 +17,8 @@ pub struct ProfileFilteringSettingsUpdate {
     max_distance_km_filter: Option<MaxDistanceKm>,
     profile_created_filter: Option<ProfileCreatedTimeFilter>,
     profile_edited_filter: Option<ProfileEditedTimeFilter>,
+    profile_text_min_characters_filter: Option<ProfileTextMinCharactersFilter>,
+    profile_text_max_characters_filter: Option<ProfileTextMaxCharactersFilter>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     random_profile_order: bool,
@@ -95,6 +97,8 @@ impl ProfileFilteringSettingsUpdate {
             max_distance_km_filter: self.max_distance_km_filter,
             profile_created_filter: self.profile_created_filter,
             profile_edited_filter: self.profile_edited_filter,
+            profile_text_min_characters_filter: self.profile_text_min_characters_filter,
+            profile_text_max_characters_filter: self.profile_text_max_characters_filter,
             random_profile_order: self.random_profile_order,
         })
     }
@@ -108,6 +112,8 @@ pub struct ProfileFilteringSettingsUpdateValidated {
     pub max_distance_km_filter: Option<MaxDistanceKm>,
     pub profile_created_filter: Option<ProfileCreatedTimeFilter>,
     pub profile_edited_filter: Option<ProfileEditedTimeFilter>,
+    pub profile_text_min_characters_filter: Option<ProfileTextMinCharactersFilter>,
+    pub profile_text_max_characters_filter: Option<ProfileTextMaxCharactersFilter>,
     pub random_profile_order: bool,
 }
 
@@ -159,6 +165,8 @@ pub struct GetProfileFilteringSettings {
     pub max_distance_km_filter: Option<MaxDistanceKm>,
     pub profile_created_filter: Option<ProfileCreatedTimeFilter>,
     pub profile_edited_filter: Option<ProfileEditedTimeFilter>,
+    pub profile_text_min_characters_filter: Option<ProfileTextMinCharactersFilter>,
+    pub profile_text_max_characters_filter: Option<ProfileTextMaxCharactersFilter>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     /// Randomize iterator starting position within the profile index area which

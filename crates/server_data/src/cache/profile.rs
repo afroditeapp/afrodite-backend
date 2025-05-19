@@ -1,7 +1,7 @@
 use error_stack::{Result, ResultExt};
 use model::{AccountId, AccountIdInternal, AutomaticProfileSearchCompletedNotification, NextNumberStorage, UnixTime};
 use model_server_data::{
-    AutomaticProfileSearchIteratorSessionIdInternal, LastSeenTime, ProfileAppNotificationSettings, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileCreatedTimeFilter, ProfileEditedTimeFilter, ProfileInternal, ProfileIteratorSessionIdInternal, ProfileQueryMakerDetails, ProfileStateCached, SortedProfileAttributes
+    AutomaticProfileSearchIteratorSessionIdInternal, LastSeenTime, ProfileAppNotificationSettings, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileCreatedTimeFilter, ProfileEditedTimeFilter, ProfileInternal, ProfileIteratorSessionIdInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileTextCharacterCount, ProfileVersion, SortedProfileAttributes
 };
 use server_common::data::{cache::CacheError, DataError};
 
@@ -13,7 +13,7 @@ use crate::{
 #[derive(Debug)]
 pub struct CachedProfile {
     pub account_id: AccountId,
-    pub data: ProfileInternal,
+    data: ProfileInternal,
     pub state: ProfileStateCached,
     pub location: LocationData,
     pub attributes: SortedProfileAttributes,
@@ -22,6 +22,7 @@ pub struct CachedProfile {
     pub profile_iterator_session_id: Option<ProfileIteratorSessionIdInternal>,
     pub profile_iterator_session_id_storage: NextNumberStorage,
     pub automatic_profile_search: AutomaticProifleSearch,
+    profile_text_character_count: ProfileTextCharacterCount,
 }
 
 impl CachedProfile {
@@ -35,6 +36,7 @@ impl CachedProfile {
     ) -> Self {
         Self {
             account_id,
+            profile_text_character_count: ProfileTextCharacterCount::new(&data),
             data,
             state,
             location: LocationData::default(),
@@ -45,6 +47,27 @@ impl CachedProfile {
             profile_iterator_session_id_storage: NextNumberStorage::default(),
             automatic_profile_search: AutomaticProifleSearch::default(),
         }
+    }
+
+    pub fn profile_internal(&self) -> &ProfileInternal {
+        &self.data
+    }
+
+    pub fn profile_text_character_count(&self) -> ProfileTextCharacterCount {
+        self.profile_text_character_count
+    }
+
+    pub fn update_profile_version_uuid(&mut self, v: ProfileVersion) {
+        self.data.version_uuid = v;
+    }
+
+    pub fn update_profile_name(&mut self, v: String) {
+        self.data.name = v;
+    }
+
+    pub fn update_profile_internal(&mut self, action: impl FnOnce(&mut ProfileInternal)) {
+        action(&mut self.data);
+        self.profile_text_character_count = ProfileTextCharacterCount::new(&self.data);
     }
 
     pub fn filters(&self) -> ProfileQueryMakerDetails {

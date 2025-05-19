@@ -112,6 +112,8 @@ pub struct ProfileStateCached {
     pub unlimited_likes_filter: Option<bool>,
     pub profile_created_time_filter: Option<ProfileCreatedTimeFilter>,
     pub profile_edited_time_filter: Option<ProfileEditedTimeFilter>,
+    pub profile_text_min_characters_filter: Option<ProfileTextMinCharactersFilter>,
+    pub profile_text_max_characters_filter: Option<ProfileTextMaxCharactersFilter>,
     pub max_distance_km_filter: Option<MaxDistanceKm>,
     pub random_profile_order: bool,
     pub profile_name_moderation_state: ProfileNameModerationState,

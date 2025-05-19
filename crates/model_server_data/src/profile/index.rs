@@ -5,7 +5,7 @@ use nalgebra::DMatrix;
 use simple_backend_model::UnixTime;
 
 use super::{
-    ProfileCreatedTimeFilter, LastSeenTimeFilter, ProfileAttributeFilterValue, ProfileAttributesInternal, ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal, ProfileSearchAgeRangeValidated, ProfileStateCached, SearchGroupFlags, SearchGroupFlagsFilter, SortedProfileAttributes
+    LastSeenTimeFilter, ProfileAttributeFilterValue, ProfileAttributesInternal, ProfileCreatedTimeFilter, ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal, ProfileSearchAgeRangeValidated, ProfileStateCached, ProfileTextCharacterCount, ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter, SearchGroupFlags, SearchGroupFlagsFilter, SortedProfileAttributes
 };
 use crate::{LastSeenTime, ProfileContentEditedTime, ProfileLink};
 
@@ -19,6 +19,8 @@ pub struct ProfileQueryMakerDetails {
     pub unlimited_likes_filter: Option<bool>,
     pub profile_created_time_filter: Option<ProfileCreatedTimeFilter>,
     pub profile_edited_time_filter: Option<ProfileEditedTimeFilter>,
+    pub profile_text_min_characters_filter: Option<ProfileTextMinCharactersFilter>,
+    pub profile_text_max_characters_filter: Option<ProfileTextMaxCharactersFilter>,
 }
 
 impl ProfileQueryMakerDetails {
@@ -39,6 +41,8 @@ impl ProfileQueryMakerDetails {
             unlimited_likes_filter: state.unlimited_likes_filter,
             profile_created_time_filter: state.profile_created_time_filter,
             profile_edited_time_filter: state.profile_edited_time_filter,
+            profile_text_min_characters_filter: state.profile_text_min_characters_filter,
+            profile_text_max_characters_filter: state.profile_text_max_characters_filter,
         }
     }
 }
@@ -63,6 +67,7 @@ pub struct LocationIndexProfileData {
     profile_edited_time: ProfileEditedTime,
     /// Option because media component might not be enabled
     profile_content_edited_time: Option<ProfileContentEditedTime>,
+    profile_text_character_count: ProfileTextCharacterCount,
 }
 
 impl LocationIndexProfileData {
@@ -77,6 +82,7 @@ impl LocationIndexProfileData {
         last_seen_value: Option<LastSeenTime>,
         profile_created_time: InitialSetupCompletedTime,
         profile_content_edited_time: Option<ProfileContentEditedTime>,
+        profile_text_character_count: ProfileTextCharacterCount,
     ) -> Self {
         Self {
             profile_link: ProfileLink::new(id, profile.version_uuid, profile_content_version, None),
@@ -96,6 +102,7 @@ impl LocationIndexProfileData {
             profile_created_time,
             profile_edited_time: state.profile_edited_time,
             profile_content_edited_time,
+            profile_text_character_count,
         }
     }
 
@@ -145,6 +152,18 @@ impl LocationIndexProfileData {
         if is_match {
             if let Some(profile_edited_time_filter) = query_maker_details.profile_edited_time_filter {
                 is_match &= profile_edited_time_filter.is_match(self.profile_edited_time, self.profile_content_edited_time, current_time);
+            }
+        }
+
+        if is_match {
+            if let Some(filter) = query_maker_details.profile_text_min_characters_filter {
+                is_match &= filter.is_match(self.profile_text_character_count);
+            }
+        }
+
+        if is_match {
+            if let Some(filter) = query_maker_details.profile_text_max_characters_filter {
+                is_match &= filter.is_match(self.profile_text_character_count);
             }
         }
 

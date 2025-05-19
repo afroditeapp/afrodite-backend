@@ -234,6 +234,8 @@ impl CurrentWriteProfileData<'_> {
                 max_distance_km_filter.eq(settings.max_distance_km_filter),
                 profile_created_time_filter.eq(settings.profile_created_filter),
                 profile_edited_time_filter.eq(settings.profile_edited_filter),
+                profile_text_min_characters_filter.eq(settings.profile_text_min_characters_filter),
+                profile_text_max_characters_filter.eq(settings.profile_text_max_characters_filter),
                 random_profile_order.eq(settings.random_profile_order),
             ))
             .execute(self.conn())

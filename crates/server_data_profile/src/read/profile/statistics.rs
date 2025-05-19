@@ -49,11 +49,11 @@ impl ReadCommandsProfileStatistics<'_> {
             }
 
             if groups.is_man() {
-                age_counts.increment_age(StatisticsGender::Man, p.data.age.value());
+                age_counts.increment_age(StatisticsGender::Man, p.profile_internal().age.value());
             } else if groups.is_woman() {
-                age_counts.increment_age(StatisticsGender::Woman, p.data.age.value());
+                age_counts.increment_age(StatisticsGender::Woman, p.profile_internal().age.value());
             } else if groups.is_non_binary() {
-                age_counts.increment_age(StatisticsGender::NonBinary, p.data.age.value());
+                age_counts.increment_age(StatisticsGender::NonBinary, p.profile_internal().age.value());
             }
         })
         .await?;

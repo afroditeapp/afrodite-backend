@@ -127,9 +127,9 @@ impl WriteCommandsProfile<'_> {
         })?;
 
         self.write_cache_profile(id.as_id(), |p| {
-            data.update_to_profile(&mut p.data);
+            p.update_profile_internal(|p|data.update_to_profile(p));
             data.update_to_attributes(&mut p.attributes);
-            p.data.version_uuid = profile_version;
+            p.update_profile_version_uuid(profile_version);
             p.state.profile_edited_time = edit_time;
             if let Some(update) = profile_text_moderation_state_update {
                 p.state.profile_text_moderation_state = update;
@@ -194,6 +194,8 @@ impl WriteCommandsProfile<'_> {
             p.state.max_distance_km_filter = filters.max_distance_km_filter;
             p.state.profile_created_time_filter = filters.profile_created_filter;
             p.state.profile_edited_time_filter = filters.profile_edited_filter;
+            p.state.profile_text_min_characters_filter = filters.profile_text_min_characters_filter;
+            p.state.profile_text_max_characters_filter = filters.profile_text_max_characters_filter;
             p.state.random_profile_order = filters.random_profile_order;
 
             p.location.current_position = self.location().coordinates_to_area(location, filters.max_distance_km_filter);
@@ -213,7 +215,7 @@ impl WriteCommandsProfile<'_> {
         })?;
 
         self.write_cache_profile(id.as_id(), |p| {
-            p.data.name = data;
+            p.update_profile_name(data);
             Ok(())
         })
         .await

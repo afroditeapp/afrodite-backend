@@ -69,7 +69,7 @@ impl WriteCommandsProfileAdminProfileText<'_> {
 
         self.write_cache_profile(data_owner_id.as_id(), |p| {
             p.state.profile_text_moderation_state = new_state;
-            p.data.version_uuid = new_profile_version;
+            p.update_profile_version_uuid(new_profile_version);
             p.state.profile_edited_time = edit_time;
             Ok(())
         })

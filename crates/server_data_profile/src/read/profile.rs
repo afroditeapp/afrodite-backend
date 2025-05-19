@@ -33,7 +33,7 @@ impl ReadCommandsProfile<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<ProfileInternal, DataError> {
-        self.read_cache_profile_and_common(id, move |p, _| Ok(p.data.clone()))
+        self.read_cache_profile_and_common(id, move |p, _| Ok(p.profile_internal().clone()))
             .await
             .into_error()
     }
@@ -45,13 +45,13 @@ impl ReadCommandsProfile<'_> {
         self.read_cache_profile_and_common(id, move |data, c| {
             Ok(ProfileAndProfileVersion {
                 profile: Profile::new(
-                    data.data.clone(),
+                    data.profile_internal().clone(),
                     data.state.profile_name_moderation_state,
                     data.state.profile_text_moderation_state,
                     data.attributes.attributes().clone(),
                     c.other_shared_state.unlimited_likes,
                 ),
-                version: data.data.version_uuid,
+                version: data.profile_internal().version_uuid,
                 last_seen_time: data.last_seen_time(c),
             })
         })
@@ -109,6 +109,8 @@ impl ReadCommandsProfile<'_> {
                 max_distance_km_filter: state.max_distance_km_filter,
                 profile_created_filter: state.profile_created_time_filter,
                 profile_edited_filter: state.profile_edited_time_filter,
+                profile_text_min_characters_filter: state.profile_text_min_characters_filter,
+                profile_text_max_characters_filter: state.profile_text_max_characters_filter,
                 random_profile_order: state.random_profile_order,
             })
         })

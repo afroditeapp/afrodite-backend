@@ -433,6 +433,10 @@ CREATE TABLE IF NOT EXISTS profile_state(
     profile_created_time_filter INTEGER,
     -- Filter setting for profile edited time in seconds.
     profile_edited_time_filter INTEGER,
+    -- Filter setting for profile text min character count.
+    profile_text_min_characters_filter INTEGER,
+    -- Filter setting for profile text max character count.
+    profile_text_max_characters_filter INTEGER,
     -- Profile iterator setting for random profile order.
     random_profile_order       BOOLEAN              NOT NULL    DEFAULT 0,
     latitude                   DOUBLE               NOT NULL    DEFAULT 0.0,

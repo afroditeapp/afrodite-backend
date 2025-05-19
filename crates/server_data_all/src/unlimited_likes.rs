@@ -35,7 +35,7 @@ impl UnlimitedLikesUpdate<'_> {
 
         self.write_cache_profile_and_common(id.as_id(), |p, e| {
             e.other_shared_state.unlimited_likes = unlimited_likes_value;
-            p.data.version_uuid = new_profile_version;
+            p.update_profile_version_uuid(new_profile_version);
             p.state.profile_edited_time = edited_time;
             Ok(())
         })

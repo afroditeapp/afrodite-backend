@@ -2823,6 +2823,7 @@ dependencies = [
  "simple_backend_model",
  "simple_backend_utils",
  "toml",
+ "unicode-segmentation",
  "utoipa",
  "uuid",
 ]
