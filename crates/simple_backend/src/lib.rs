@@ -700,8 +700,11 @@ async fn handle_ready_tls_connection<
     match connection_serving_result {
         Ok(()) => {}
         Err(e) => {
-            // TODO: Remove to avoid log spam?
-            error!("Ready TLS connection serving error: {}", e);
+            // Use debug log level as this happens quite often on internet
+            debug!("Ready TLS connection serving error: {}", e);
+            SIMPLE_CONNECTION
+                .tls_connection_serving_error
+                .incr();
         }
     }
 }
@@ -750,4 +753,5 @@ create_counters!(
     tls_acme_acceptor_error,
     tls_acceptor_error,
     tls_into_stream_error,
+    tls_connection_serving_error,
 );
