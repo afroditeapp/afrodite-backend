@@ -95,20 +95,19 @@ values = [
 - `key` - unique identifier of the attribute
 - `name` - English name for the attribute
 - `mode` - mode of the attribute. Possible values are
-    - `BitflagSelectSingle` or `BitflagSelectMultiple` - Select one or more u16 bitflags.
+    - `Bitflag` - u16 bitflags.
         Only top level values are possible to set.
-        Selected max selected values: 1 or 16.
-        Filter max selected values: 16.
-    - `OneLevelSelectSingle` or `OneLevelSelectMultiple` - Select one or more u16 values.
+        Max value count: 16.
+    - `OneLevel` - u16 values.
         Only top level values are possible to set.
         Max value count: u16::MAX.
-        Selected max selected values: 1 or 8.
-        Filter max selected values: 8.
-    - `TwoLevelSelectSingle` or `TwoLevelSelectMultiple` - Select one or more u32 values.
+    - `TwoLevel` - u32 values.
         Top and sub level values are possible to set.
         Max value count for top and sub level are u16::MAX.
-        Selected max selected values: 1 or 8.
-        Filter max selected values: 8.
+- `max_selected` - Optional max value count for selected attribute values.
+    Default and min value is 1.
+- `max_filters` - Optional max value count for selected filter values.
+    Default and min value is 1.
 - `order_number` - Unique order number for the attribute.
         0 is the first attribute.
 - `value_order` - Display order mode for the attribute values.

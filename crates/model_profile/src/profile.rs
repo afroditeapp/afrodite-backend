@@ -35,8 +35,6 @@ pub use text::*;
 mod report;
 pub use report::*;
 
-const ATTRIBUTE_MAX_VALUES: usize = 8;
-
 /// Public profile info
 #[derive(Debug, Clone, Serialize, ToSchema, PartialEq, Eq)]
 pub struct Profile {
@@ -173,16 +171,17 @@ impl ProfileUpdate {
                 match attribute_info {
                     None => return Err("Unknown attribute ID".to_string()),
                     Some(info) => {
-                        let max_len = if !info.mode.data_type().is_bitflag() && info.mode.is_select_multiple() {
-                            ATTRIBUTE_MAX_VALUES
-                        } else {
-                            1
-                        };
-                        if a.v.len() > max_len {
-                            return Err(format!(
-                                "Attribute supports max {} values",
-                                ATTRIBUTE_MAX_VALUES
-                            ));
+                        let error = || Err(format!(
+                            "Attribute supports max {} selected values",
+                            info.max_selected,
+                        ));
+                        if info.mode.is_bitflag() {
+                            let selected = a.v.first().copied().unwrap_or_default().count_ones();
+                            if selected > info.max_selected.into() {
+                                return error();
+                            }
+                        } else if a.v.len() > info.max_selected.into() {
+                            return error();
                         }
                     }
                 }

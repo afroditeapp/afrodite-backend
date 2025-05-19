@@ -64,7 +64,7 @@ impl ProfileAttributeFilterValue {
             true
         } else {
             AttributeValueReader::is_match(
-                attribute_info.mode.data_type(),
+                attribute_info.mode,
                 &self.filter_values,
                 value.raw_values(),
                 self.use_logical_operator_and,
@@ -75,7 +75,7 @@ impl ProfileAttributeFilterValue {
             true
         } else {
             AttributeValueReader::is_match_nonselected(
-                attribute_info.mode.data_type(),
+                attribute_info.mode,
                 &self.filter_values,
                 value.raw_values(),
             )

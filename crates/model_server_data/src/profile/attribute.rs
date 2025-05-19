@@ -2,7 +2,7 @@ use model::AttributeId;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use super::AttributeDataType;
+use super::AttributeMode;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileAttributeValueUpdate {
@@ -112,13 +112,13 @@ pub struct AttributeValueReader;
 impl AttributeValueReader {
     /// The filter_data must not be empty
     pub fn is_match(
-        data_type: AttributeDataType,
+        mode: AttributeMode,
         filter_data: &[u32],
         attribute_data: &[u32],
         logical_and: bool,
     ) -> bool {
-        match data_type {
-            AttributeDataType::Bitflag => {
+        match mode {
+            AttributeMode::Bitflag => {
                 let filter = filter_data.first().copied().unwrap_or_default() as u16;
                 let attribute = attribute_data.first().copied().unwrap_or_default() as u16;
                 if logical_and {
@@ -127,14 +127,14 @@ impl AttributeValueReader {
                     filter & attribute != 0
                 }
             }
-            AttributeDataType::OneLevel =>
+            AttributeMode::OneLevel =>
                 Self::is_number_lists_match(
                     filter_data,
                     attribute_data,
                     logical_and,
                     NumberExistence::one_level_attribute_find_from_sorted,
                 ),
-            AttributeDataType::TwoLevel =>
+            AttributeMode::TwoLevel =>
                 Self::is_number_lists_match(
                     filter_data,
                     attribute_data,
@@ -174,23 +174,23 @@ impl AttributeValueReader {
 
     /// The filter_data must not be empty
     pub fn is_match_nonselected(
-        data_type: AttributeDataType,
+        mode: AttributeMode,
         filter_data: &[u32],
         attribute_data: &[u32],
     ) -> bool {
-        match data_type {
-            AttributeDataType::Bitflag => {
+        match mode {
+            AttributeMode::Bitflag => {
                 let filter = filter_data.first().copied().unwrap_or_default() as u16;
                 let attribute = !(attribute_data.first().copied().unwrap_or_default() as u16);
                 filter & attribute == filter
             }
-            AttributeDataType::OneLevel =>
+            AttributeMode::OneLevel =>
                 Self::is_number_lists_match_nonselected(
                     filter_data,
                     attribute_data,
                     NumberExistence::one_level_attribute_find_from_sorted,
                 ),
-            AttributeDataType::TwoLevel =>
+            AttributeMode::TwoLevel =>
                 Self::is_number_lists_match_nonselected(
                     filter_data,
                     attribute_data,

@@ -1,4 +1,4 @@
-use std::{collections::HashSet, path::PathBuf, str::FromStr};
+use std::{collections::HashSet, num::NonZeroU8, path::PathBuf, str::FromStr};
 
 use base64::Engine;
 use model::{AttributeId, AttributeIdAndHash, AttributeOrderMode, ProfileAttributeHash, ProfileAttributeInfo};
@@ -64,6 +64,10 @@ pub struct AttributeInternal {
     pub key: String,
     pub name: String,
     pub mode: AttributeMode,
+    #[serde(default = "value_non_zero_u8_one", skip_serializing_if = "value_non_zero_u8_is_one")]
+    pub max_selected: NonZeroU8,
+    #[serde(default = "value_non_zero_u8_one", skip_serializing_if = "value_non_zero_u8_is_one")]
+    pub max_filters: NonZeroU8,
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
     pub editable: bool,
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
@@ -107,6 +111,23 @@ fn value_empty_vec<T>() -> Vec<T> {
 fn value_is_empty<T>(v: &[T]) -> bool {
     v.is_empty()
 }
+
+fn value_non_zero_u8_one() -> NonZeroU8 {
+    NonZeroU8::new(1).unwrap()
+}
+
+fn value_non_zero_u8_is_one(v: &NonZeroU8) -> bool {
+    v.get() == 1
+}
+
+fn value_u8_one() -> u8 {
+    1
+}
+
+fn value_u8_is_one(v: &u8) -> bool {
+    *v == 1
+}
+
 
 /// Load atribute values from CSV file
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -154,11 +175,11 @@ impl ModeAndIdSequenceNumber {
     ///
     /// (Other mode is bit shifting for bitflags attribute value IDs.)
     fn new_increment_only_mode() -> Self {
-        Self::new(AttributeMode::OneLevelSelectSingle)
+        Self::new(AttributeMode::OneLevel)
     }
 
     fn set_value(&mut self, id: u16) -> Result<u16, String> {
-        if self.mode.data_type().is_bitflag() {
+        if self.mode.is_bitflag() {
             Self::validate_bitflag_id(id)?;
             self.current_id = Some(id);
         } else {
@@ -199,7 +220,7 @@ impl ModeAndIdSequenceNumber {
 
     /// Increment the current ID and return the updated current ID.
     fn increment_value(&mut self) -> Result<u16, String> {
-        if self.mode.data_type().is_bitflag() {
+        if self.mode.is_bitflag() {
             let tmp = if let Some(current_id) = self.current_id {
                 current_id << 1
             } else {
@@ -346,7 +367,7 @@ impl AttributeInternal {
         }
 
         // Check that correct IDs are used.
-        if self.mode.data_type().is_bitflag() {
+        if self.mode.is_bitflag() {
             let mut current = 1;
             for _ in 0..values.len() {
                 if !top_level_ids.contains(&current) {
@@ -427,11 +448,11 @@ impl AttributeInternal {
             group_values.push(GroupValues { key: g.key, values });
         }
 
-        if self.mode.data_type().is_bitflag() && !group_values.is_empty() {
+        if self.mode.is_bitflag() && !group_values.is_empty() {
             return Err("Bitflag mode cannot have group values".to_string());
         }
 
-        if self.mode.data_type().is_one_level() && !group_values.is_empty() {
+        if self.mode.is_one_level() && !group_values.is_empty() {
             return Err("One level attribute cannot have group values".to_string());
         }
 
@@ -531,29 +552,8 @@ pub struct Translation {
     pub value: String,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, ToSchema)]
 pub enum AttributeMode {
-    BitflagSelectSingle,
-    BitflagSelectMultiple,
-    OneLevelSelectSingle,
-    OneLevelSelectMultiple,
-    TwoLevelSelectSingle,
-    TwoLevelSelectMultiple,
-}
-
-impl AttributeMode {
-    pub fn is_select_multiple(&self) -> bool {
-        matches!(
-            *self,
-            Self::BitflagSelectMultiple |
-            Self::OneLevelSelectMultiple |
-            Self::TwoLevelSelectMultiple
-        )
-    }
-}
-
-#[derive(PartialEq)]
-pub enum AttributeDataType {
     /// u16 bitflag
     Bitflag,
     /// u16 values
@@ -562,7 +562,7 @@ pub enum AttributeDataType {
     TwoLevel,
 }
 
-impl AttributeDataType {
+impl AttributeMode {
     pub fn is_bitflag(&self) -> bool {
         *self == Self::Bitflag
     }
@@ -577,19 +577,6 @@ pub enum AttributeValueOrderMode {
     AlphabethicalKey,
     AlphabethicalValue,
     OrderNumber,
-}
-
-impl AttributeMode {
-    pub fn data_type(&self) -> AttributeDataType {
-        match self {
-            AttributeMode::BitflagSelectSingle |
-            AttributeMode::BitflagSelectMultiple => AttributeDataType::Bitflag,
-            AttributeMode::OneLevelSelectSingle |
-            AttributeMode::OneLevelSelectMultiple => AttributeDataType::OneLevel,
-            AttributeMode::TwoLevelSelectSingle |
-            AttributeMode::TwoLevelSelectMultiple => AttributeDataType::TwoLevel,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -673,6 +660,8 @@ impl ProfileAttributesInternal {
                 key: a.key,
                 name: a.name,
                 mode: a.mode,
+                max_selected: a.max_selected.into(),
+                max_filters: a.max_filters.into(),
                 editable: a.editable,
                 visible: a.visible,
                 required: a.required,
@@ -734,6 +723,12 @@ pub struct Attribute {
     pub name: String,
     /// Mode of the attribute.
     pub mode: AttributeMode,
+    #[serde(default = "value_u8_one", skip_serializing_if = "value_u8_is_one")]
+    #[schema(default = 1)]
+    pub max_selected: u8,
+    #[serde(default = "value_u8_one", skip_serializing_if = "value_u8_is_one")]
+    #[schema(default = 1)]
+    pub max_filters: u8,
     /// Client should show this attribute when editing a profile.
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
     #[schema(default = true)]

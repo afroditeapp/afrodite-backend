@@ -7,7 +7,6 @@ use model_server_data::{
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use super::ATTRIBUTE_MAX_VALUES;
 use crate::{LastSeenTimeFilter, ProfileAttributesInternal};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
@@ -39,22 +38,25 @@ impl ProfileFilteringSettingsUpdate {
                 match attribute_info {
                     None => return Err("Unknown attribute ID".to_string()),
                     Some(info) => {
-                        if !info.mode.data_type().is_bitflag()
-                            && a.filter_values.len() > ATTRIBUTE_MAX_VALUES
-                        {
-                            return Err(format!(
-                                "Non bitflag attributes supports max {} filters",
-                                ATTRIBUTE_MAX_VALUES
+                        let check = |values: &[u32]| {
+                            let error = || Err(format!(
+                                "Attribute supports max {} filter values",
+                                info.max_filters,
                             ));
-                        }
-                        if !info.mode.data_type().is_bitflag()
-                            && a.filter_values_nonselected.len() > ATTRIBUTE_MAX_VALUES
-                        {
-                            return Err(format!(
-                                "Non bitflag attributes supports max {} filters for nonselected values",
-                                ATTRIBUTE_MAX_VALUES
-                            ));
-                        }
+                            if info.mode.is_bitflag() {
+                                let selected = values.first().copied().unwrap_or_default().count_ones();
+                                if selected > info.max_selected.into() {
+                                    return error();
+                                }
+                            } else if values.len() > info.max_selected.into() {
+                                return error();
+                            }
+
+                            Ok(())
+                        };
+
+                        check(&a.filter_values)?;
+                        check(&a.filter_values_nonselected)?;
                     }
                 }
             } else {
