@@ -304,8 +304,32 @@ impl CurrentWriteProfileData<'_> {
                     .into_db_error(())?;
             }
 
+            {
+                use model::schema::profile_attributes_filter_list_nonselected::dsl::*;
+
+                delete(profile_attributes_filter_list_nonselected)
+                    .filter(account_id.eq(id.as_db_id()))
+                    .filter(attribute_id.eq(a.id))
+                    .execute(self.conn())
+                    .into_db_error(())?;
+            }
+
             if !a.enabled {
                 continue;
+            }
+
+            {
+                use model::schema::profile_attributes_filter_settings::dsl::*;
+
+                insert_into(profile_attributes_filter_settings)
+                    .values((
+                        account_id.eq(id.as_db_id()),
+                        attribute_id.eq(a.id),
+                        filter_accept_missing_attribute.eq(a.accept_missing_attribute),
+                        filter_use_logical_operator_and.eq(a.use_logical_operator_and),
+                    ))
+                    .execute(self.conn())
+                    .into_db_error(())?;
             }
 
             {
@@ -330,15 +354,22 @@ impl CurrentWriteProfileData<'_> {
             }
 
             {
-                use model::schema::profile_attributes_filter_settings::dsl::*;
+                use model::schema::profile_attributes_filter_list_nonselected::dsl::*;
 
-                insert_into(profile_attributes_filter_settings)
-                    .values((
-                        account_id.eq(id.as_db_id()),
-                        attribute_id.eq(a.id),
-                        filter_accept_missing_attribute.eq(a.accept_missing_attribute),
-                        filter_use_logical_operator_and.eq(a.use_logical_operator_and),
-                    ))
+                let values: Vec<_> = a
+                    .filter_values_nonselected
+                    .into_iter()
+                    .map(|value| {
+                        (
+                            account_id.eq(id.as_db_id()),
+                            attribute_id.eq(a.id),
+                            filter_value.eq(value as i64),
+                        )
+                    })
+                    .collect();
+
+                insert_into(profile_attributes_filter_list_nonselected)
+                    .values(values)
                     .execute(self.conn())
                     .into_db_error(())?;
             }

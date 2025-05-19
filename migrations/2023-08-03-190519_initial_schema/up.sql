@@ -529,6 +529,17 @@ CREATE TABLE IF NOT EXISTS profile_attributes_filter_list(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS profile_attributes_filter_list_nonselected(
+    account_id      INTEGER             NOT NULL,
+    attribute_id    INTEGER             NOT NULL,
+    filter_value    INTEGER             NOT NULL,
+    PRIMARY KEY (account_id, attribute_id, filter_value),
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 -- Store profile attributes file hash, so that changes to it can be detected
 -- when server starts.
 CREATE TABLE IF NOT EXISTS profile_attributes_file_hash(

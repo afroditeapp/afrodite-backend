@@ -47,6 +47,14 @@ impl ProfileFilteringSettingsUpdate {
                                 ATTRIBUTE_MAX_VALUES
                             ));
                         }
+                        if !info.mode.data_type().is_bitflag()
+                            && a.filter_values_nonselected.len() > ATTRIBUTE_MAX_VALUES
+                        {
+                            return Err(format!(
+                                "Non bitflag attributes supports max {} filters for nonselected values",
+                                ATTRIBUTE_MAX_VALUES
+                            ));
+                        }
                     }
                 }
             } else {
@@ -121,6 +129,12 @@ pub struct ProfileAttributeFilterValueUpdate {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     #[schema(default = json!([]))]
     pub filter_values: Vec<u32>,
+    /// Same as [Self::filter_values] but for nonselected values.
+    ///
+    /// The nonselected values are checked always with AND operator.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[schema(default = json!([]))]
+    pub filter_values_nonselected: Vec<u32>,
     /// Defines should missing attribute be accepted.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]

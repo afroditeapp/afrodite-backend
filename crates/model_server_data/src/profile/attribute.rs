@@ -110,6 +110,7 @@ impl SortedProfileAttributes {
 pub struct AttributeValueReader;
 
 impl AttributeValueReader {
+    /// The filter_data must not be empty
     pub fn is_match(
         data_type: AttributeDataType,
         filter_data: &[u32],
@@ -143,16 +144,13 @@ impl AttributeValueReader {
         }
     }
 
+    /// The filter_data must not be empty
     fn is_number_lists_match<'a, F: Fn(u32, &mut std::iter::Copied<std::slice::Iter<'a, u32>>) -> NumberExistence>(
         filter_data: &[u32],
         attribute_data: &'a [u32],
         logical_and: bool,
         existence_check: F,
     ) -> bool {
-        if filter_data.is_empty() {
-            return false;
-        }
-
         // Assume that both number lists are sorted
         let mut value_iter = attribute_data.iter().copied();
         if logical_and {
@@ -172,6 +170,50 @@ impl AttributeValueReader {
             }
             false
         }
+    }
+
+    /// The filter_data must not be empty
+    pub fn is_match_nonselected(
+        data_type: AttributeDataType,
+        filter_data: &[u32],
+        attribute_data: &[u32],
+    ) -> bool {
+        match data_type {
+            AttributeDataType::Bitflag => {
+                let filter = filter_data.first().copied().unwrap_or_default() as u16;
+                let attribute = !(attribute_data.first().copied().unwrap_or_default() as u16);
+                filter & attribute == filter
+            }
+            AttributeDataType::OneLevel =>
+                Self::is_number_lists_match_nonselected(
+                    filter_data,
+                    attribute_data,
+                    NumberExistence::one_level_attribute_find_from_sorted,
+                ),
+            AttributeDataType::TwoLevel =>
+                Self::is_number_lists_match_nonselected(
+                    filter_data,
+                    attribute_data,
+                    NumberExistence::two_level_attribute_find_from_sorted,
+                ),
+        }
+    }
+
+    /// The filter_data must not be empty
+    fn is_number_lists_match_nonselected<'a, F: Fn(u32, &mut std::iter::Copied<std::slice::Iter<'a, u32>>) -> NumberExistence>(
+        filter_data: &[u32],
+        attribute_data: &'a [u32],
+        existence_check: F,
+    ) -> bool {
+        // Assume that both number lists are sorted
+        let mut value_iter = attribute_data.iter().copied();
+        for filter_number in filter_data {
+            match existence_check(*filter_number, &mut value_iter) {
+                NumberExistence::Found => return false,
+                NumberExistence::NotFound => continue,
+            }
+        }
+        true
     }
 }
 

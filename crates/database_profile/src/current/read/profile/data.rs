@@ -174,28 +174,52 @@ impl CurrentReadProfileData<'_> {
                 .change_context(DieselDatabaseError::Execute)?
         };
 
-        let attribute_filters_data: Vec<(AttributeId, i64)> = {
+        #[derive(Default)]
+        struct FilterValues {
+            selected: Vec<u32>,
+            nonselected: Vec<u32>,
+        }
+
+        let mut all_values = HashMap::<AttributeId, FilterValues>::new();
+
+        {
             use crate::schema::profile_attributes_filter_list::dsl::*;
 
-            profile_attributes_filter_list
+            let attribute_filters_data: Vec<(AttributeId, i64)> = profile_attributes_filter_list
                 .filter(account_id.eq(id.as_db_id()))
                 .select((attribute_id, filter_value))
                 .load(self.conn())
-                .change_context(DieselDatabaseError::Execute)?
-        };
+                .change_context(DieselDatabaseError::Execute)?;
 
-        let mut filters = HashMap::<AttributeId, Vec<u32>>::new();
-        for (id, value) in attribute_filters_data {
-            let values = filters.entry(id).or_default();
-            values.push(value as u32);
+            for (id, value) in attribute_filters_data {
+                let values = all_values.entry(id).or_default();
+                values.selected.push(value as u32);
+            }
         }
+
+        {
+            use crate::schema::profile_attributes_filter_list_nonselected::dsl::*;
+
+            let attribute_filters_data_nonselected: Vec<(AttributeId, i64)> = profile_attributes_filter_list_nonselected
+                .filter(account_id.eq(id.as_db_id()))
+                .select((attribute_id, filter_value))
+                .load(self.conn())
+                .change_context(DieselDatabaseError::Execute)?;
+
+                for (id, value) in attribute_filters_data_nonselected {
+                    let values = all_values.entry(id).or_default();
+                    values.nonselected.push(value as u32);
+                }
+        };
 
         let mut data: Vec<ProfileAttributeFilterValue> = data
             .into_iter()
             .map(|(id, accept_missing_attribute, use_logical_operator_and)| {
+                let values = all_values.remove(&id).unwrap_or_default();
                 ProfileAttributeFilterValue::new(
                     id,
-                    filters.remove(&id).unwrap_or_default(),
+                    values.selected,
+                    values.nonselected,
                     accept_missing_attribute,
                     use_logical_operator_and,
                 )

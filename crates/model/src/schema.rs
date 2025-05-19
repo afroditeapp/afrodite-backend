@@ -668,6 +668,16 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    profile_attributes_filter_list_nonselected (account_id, attribute_id, filter_value) {
+        account_id -> Integer,
+        attribute_id -> Integer,
+        filter_value -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     profile_attributes_filter_settings (account_id, attribute_id) {
         account_id -> Integer,
         attribute_id -> Integer,
@@ -868,6 +878,7 @@ diesel::joinable!(profile -> account_id (account_id));
 diesel::joinable!(profile_app_notification_settings -> account_id (account_id));
 diesel::joinable!(profile_app_notification_state -> account_id (account_id));
 diesel::joinable!(profile_attributes_filter_list -> account_id (account_id));
+diesel::joinable!(profile_attributes_filter_list_nonselected -> account_id (account_id));
 diesel::joinable!(profile_attributes_filter_settings -> account_id (account_id));
 diesel::joinable!(profile_attributes_value_list -> account_id (account_id));
 diesel::joinable!(profile_automatic_profile_search_state -> account_id (account_id));
@@ -938,6 +949,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     profile_app_notification_state,
     profile_attributes_file_hash,
     profile_attributes_filter_list,
+    profile_attributes_filter_list_nonselected,
     profile_attributes_filter_settings,
     profile_attributes_value_list,
     profile_automatic_profile_search_state,
