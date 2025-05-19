@@ -649,17 +649,6 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    profile_attributes (account_id, attribute_id) {
-        account_id -> Integer,
-        attribute_id -> Integer,
-        filter_accept_missing_attribute -> Nullable<Bool>,
-        filter_use_logical_operator_and -> Bool,
-    }
-}
-
-diesel::table! {
-    use crate::schema_sqlite_types::*;
-
     profile_attributes_file_hash (row_type) {
         row_type -> Integer,
         sha256_hash -> Text,
@@ -673,6 +662,17 @@ diesel::table! {
         account_id -> Integer,
         attribute_id -> Integer,
         filter_value -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    profile_attributes_filter_settings (account_id, attribute_id) {
+        account_id -> Integer,
+        attribute_id -> Integer,
+        filter_accept_missing_attribute -> Bool,
+        filter_use_logical_operator_and -> Bool,
     }
 }
 
@@ -867,8 +867,8 @@ diesel::joinable!(news_translations -> news (news_id));
 diesel::joinable!(profile -> account_id (account_id));
 diesel::joinable!(profile_app_notification_settings -> account_id (account_id));
 diesel::joinable!(profile_app_notification_state -> account_id (account_id));
-diesel::joinable!(profile_attributes -> account_id (account_id));
 diesel::joinable!(profile_attributes_filter_list -> account_id (account_id));
+diesel::joinable!(profile_attributes_filter_settings -> account_id (account_id));
 diesel::joinable!(profile_attributes_value_list -> account_id (account_id));
 diesel::joinable!(profile_automatic_profile_search_state -> account_id (account_id));
 diesel::joinable!(profile_report_profile_name -> common_report (report_id));
@@ -936,9 +936,9 @@ diesel::allow_tables_to_appear_in_same_query!(
     profile,
     profile_app_notification_settings,
     profile_app_notification_state,
-    profile_attributes,
     profile_attributes_file_hash,
     profile_attributes_filter_list,
+    profile_attributes_filter_settings,
     profile_attributes_value_list,
     profile_automatic_profile_search_state,
     profile_name_allowlist,

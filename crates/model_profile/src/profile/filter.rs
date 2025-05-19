@@ -1,7 +1,9 @@
 use std::collections::HashSet;
 
 use model::AttributeId;
-use model_server_data::{ProfileCreatedTimeFilter, MaxDistanceKm, ProfileAttributeFilterValue, ProfileEditedTimeFilter};
+use model_server_data::{
+    MaxDistanceKm, ProfileAttributeFilterValue, ProfileCreatedTimeFilter, ProfileEditedTimeFilter,
+};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -103,6 +105,11 @@ pub struct ProfileFilteringSettingsUpdateValidated {
 pub struct ProfileAttributeFilterValueUpdate {
     /// Attribute ID
     pub id: AttributeId,
+    /// Value `false` ignores the settings in this object and
+    /// removes current filter settings for this attribute.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub enabled: bool,
     /// For bitflag filters the list only has one u16 value.
     ///
     /// For one level attributes the values are u16 attribute value
@@ -111,11 +118,13 @@ pub struct ProfileAttributeFilterValueUpdate {
     /// For two level attributes the values are u32 values
     /// with most significant u16 containing attribute value ID and
     /// least significant u16 containing group value ID.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[schema(default = json!([]))]
     pub filter_values: Vec<u32>,
     /// Defines should missing attribute be accepted.
-    ///
-    /// Setting this to `None` disables the filter.
-    pub accept_missing_attribute: Option<bool>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub accept_missing_attribute: bool,
     /// Defines should attribute values be checked with logical operator AND.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]

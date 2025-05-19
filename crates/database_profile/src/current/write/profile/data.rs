@@ -1,6 +1,6 @@
 use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{
-    delete, insert_into, prelude::*, update, upsert::excluded, ExpressionMethods, QueryDsl,
+    delete, insert_into, prelude::*, update, ExpressionMethods, QueryDsl,
 };
 use error_stack::{Result, ResultExt};
 use model_profile::{
@@ -284,48 +284,60 @@ impl CurrentWriteProfileData<'_> {
         data: Vec<ProfileAttributeFilterValueUpdate>,
     ) -> Result<(), DieselDatabaseError> {
         for a in data {
-            use model::schema::profile_attributes_filter_list::dsl::*;
+             {
+                use model::schema::profile_attributes_filter_settings::dsl::*;
 
-            delete(profile_attributes_filter_list)
-                .filter(account_id.eq(id.as_db_id()))
-                .filter(attribute_id.eq(a.id))
-                .execute(self.conn())
-                .into_db_error(())?;
-
-            let values: Vec<_> = a
-                .filter_values
-                .into_iter()
-                .map(|value| {
-                    (
-                        account_id.eq(id.as_db_id()),
-                        attribute_id.eq(a.id),
-                        filter_value.eq(value as i64),
-                    )
-                })
-                .collect();
-
-            insert_into(profile_attributes_filter_list)
-                .values(values)
-                .execute(self.conn())
-                .into_db_error(())?;
+                delete(profile_attributes_filter_settings)
+                    .filter(account_id.eq(id.as_db_id()))
+                    .filter(attribute_id.eq(a.id))
+                    .execute(self.conn())
+                    .into_db_error(())?;
+            }
 
             {
-                use model::schema::profile_attributes::dsl::*;
+                use model::schema::profile_attributes_filter_list::dsl::*;
 
-                insert_into(profile_attributes)
+                delete(profile_attributes_filter_list)
+                    .filter(account_id.eq(id.as_db_id()))
+                    .filter(attribute_id.eq(a.id))
+                    .execute(self.conn())
+                    .into_db_error(())?;
+            }
+
+            if !a.enabled {
+                continue;
+            }
+
+            {
+                use model::schema::profile_attributes_filter_list::dsl::*;
+
+                let values: Vec<_> = a
+                    .filter_values
+                    .into_iter()
+                    .map(|value| {
+                        (
+                            account_id.eq(id.as_db_id()),
+                            attribute_id.eq(a.id),
+                            filter_value.eq(value as i64),
+                        )
+                    })
+                    .collect();
+
+                insert_into(profile_attributes_filter_list)
+                    .values(values)
+                    .execute(self.conn())
+                    .into_db_error(())?;
+            }
+
+            {
+                use model::schema::profile_attributes_filter_settings::dsl::*;
+
+                insert_into(profile_attributes_filter_settings)
                     .values((
                         account_id.eq(id.as_db_id()),
                         attribute_id.eq(a.id),
                         filter_accept_missing_attribute.eq(a.accept_missing_attribute),
                         filter_use_logical_operator_and.eq(a.use_logical_operator_and),
-                    ))
-                    .on_conflict((account_id, attribute_id))
-                    .do_update()
-                    .set((
-                        filter_accept_missing_attribute
-                            .eq(excluded(filter_accept_missing_attribute)),
-                        filter_use_logical_operator_and
-                            .eq(excluded(filter_use_logical_operator_and)),
                     ))
                     .execute(self.conn())
                     .into_db_error(())?;

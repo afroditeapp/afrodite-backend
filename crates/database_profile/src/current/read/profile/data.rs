@@ -159,15 +159,15 @@ impl CurrentReadProfileData<'_> {
         id: AccountIdInternal,
     ) -> Result<Vec<ProfileAttributeFilterValue>, DieselDatabaseError> {
         let data: Vec<(AttributeId, bool, bool)> = {
-            use crate::schema::profile_attributes::dsl::*;
+            use crate::schema::profile_attributes_filter_settings::dsl::*;
 
-            profile_attributes
+            profile_attributes_filter_settings
                 .filter(account_id.eq(id.as_db_id()))
-                .filter(filter_accept_missing_attribute.is_not_null())
+                .filter(filter_accept_missing_attribute)
                 .filter(filter_use_logical_operator_and)
                 .select((
                     attribute_id,
-                    filter_accept_missing_attribute.assume_not_null(),
+                    filter_accept_missing_attribute,
                     filter_use_logical_operator_and,
                 ))
                 .load(self.conn())

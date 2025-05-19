@@ -494,11 +494,11 @@ CREATE TABLE IF NOT EXISTS profile(
             ON UPDATE CASCADE
 );
 
--- Store profile attribute related values
-CREATE TABLE IF NOT EXISTS profile_attributes(
+-- Store profile attribute specific filter settings
+CREATE TABLE IF NOT EXISTS profile_attributes_filter_settings(
     account_id      INTEGER             NOT NULL,
     attribute_id    INTEGER             NOT NULL,
-    filter_accept_missing_attribute BOOLEAN,
+    filter_accept_missing_attribute BOOLEAN NOT NULL DEFAULT 0,
     filter_use_logical_operator_and BOOLEAN NOT NULL DEFAULT 0,
     PRIMARY KEY (account_id, attribute_id),
     FOREIGN KEY (account_id)
