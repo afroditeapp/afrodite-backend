@@ -101,7 +101,8 @@ impl SortedProfileAttributes {
             .and_then(|i| self.attributes.get(i))
     }
 
-    pub fn set_attributes(&mut self, value: Vec<ProfileAttributeValue>) {
+    pub fn set_attributes(&mut self, mut value: Vec<ProfileAttributeValue>) {
+        value.sort_by_key(|a| a.id());
         self.attributes = value;
     }
 }

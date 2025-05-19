@@ -254,12 +254,11 @@ impl ProfileUpdateValidated {
     }
 
     pub fn update_to_attributes(&self, target: &mut SortedProfileAttributes) {
-        let mut attributes = self
+        let attributes = self
             .attributes
             .iter()
             .filter_map(|v| ProfileAttributeValue::try_from_update(v.clone()).ok())
             .collect::<Vec<_>>();
-        attributes.sort_by_key(|a| a.id());
         target.set_attributes(attributes);
     }
 }
