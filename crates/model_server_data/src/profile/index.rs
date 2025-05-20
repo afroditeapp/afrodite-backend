@@ -7,7 +7,7 @@ use simple_backend_model::UnixTime;
 use super::{
     LastSeenTimeFilter, ProfileAttributeFilterValue, ProfileAttributesInternal, ProfileCreatedTimeFilter, ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal, ProfileSearchAgeRangeValidated, ProfileStateCached, ProfileTextCharacterCount, ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter, SearchGroupFlags, SearchGroupFlagsFilter, SortedProfileAttributes
 };
-use crate::{LastSeenTime, ProfileContentEditedTime, ProfileLink};
+use crate::{LastSeenTime, ProfileAppNotificationSettings, ProfileContentEditedTime, ProfileLink};
 
 #[derive(Debug)]
 pub struct ProfileQueryMakerDetails {
@@ -43,6 +43,43 @@ impl ProfileQueryMakerDetails {
             profile_edited_time_filter: state.profile_edited_time_filter,
             profile_text_min_characters_filter: state.profile_text_min_characters_filter,
             profile_text_max_characters_filter: state.profile_text_max_characters_filter,
+        }
+    }
+
+    pub fn new_for_automatic_profile_search(
+        profile: &ProfileInternal,
+        state: &ProfileStateCached,
+        attribute_filters: &[ProfileAttributeFilterValue],
+        settings: &ProfileAppNotificationSettings,
+        profile_created_time_filter: impl FnOnce() -> Option<ProfileCreatedTimeFilter>,
+        profile_edited_time_filter: impl FnOnce() -> Option<ProfileEditedTimeFilter>,
+    ) -> Self {
+        Self {
+            age: profile.age,
+            search_age_range: ProfileSearchAgeRangeValidated::new(
+                state.search_age_range_min,
+                state.search_age_range_max,
+            ),
+            search_groups_filter: state.search_group_flags.to_filter(),
+            attribute_filters: if settings.automatic_profile_search_filters {
+                attribute_filters.to_vec()
+            } else {
+                vec![]
+            },
+            last_seen_time_filter: None,
+            unlimited_likes_filter: None,
+            profile_created_time_filter: if settings.automatic_profile_search_new_profiles {
+                profile_created_time_filter()
+            } else {
+                None
+            },
+            profile_edited_time_filter: if settings.automatic_profile_search_new_profiles {
+                None
+            } else {
+                profile_edited_time_filter()
+            },
+            profile_text_min_characters_filter: None,
+            profile_text_max_characters_filter: None,
         }
     }
 }

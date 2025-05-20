@@ -78,20 +78,14 @@ impl CachedProfile {
         &self,
         settings: &ProfileAppNotificationSettings,
     ) -> ProfileQueryMakerDetails {
-        let mut filters = ProfileQueryMakerDetails::new(&self.data, &self.state, self.filters.clone());
-        if !settings.automatic_profile_search_filters {
-            filters.attribute_filters = vec![];
-        }
-        filters.last_seen_time_filter = None;
-        filters.unlimited_likes_filter = None;
-        if settings.automatic_profile_search_new_profiles {
-            filters.profile_created_time_filter = self.automatic_profile_search.profile_created_time_filter();
-            filters.profile_edited_time_filter = None;
-        } else {
-            filters.profile_created_time_filter = None;
-            filters.profile_edited_time_filter = self.automatic_profile_search.profile_edited_time_filter();
-        }
-        filters
+        ProfileQueryMakerDetails::new_for_automatic_profile_search(
+            &self.data,
+            &self.state,
+            &self.filters,
+            settings,
+            || self.automatic_profile_search.profile_created_time_filter(),
+            || self.automatic_profile_search.profile_edited_time_filter(),
+        )
     }
 
     pub fn last_seen_time_for_db(&self) -> Option<UnixTime> {
