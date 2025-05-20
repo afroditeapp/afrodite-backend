@@ -100,6 +100,7 @@ src/models/get_account_id_from_email_result.rs
 src/models/get_all_admins_result.rs
 src/models/get_api_usage_statistics_result.rs
 src/models/get_api_usage_statistics_settings.rs
+src/models/get_chat_message_reports.rs
 src/models/get_client_features_config_result.rs
 src/models/get_client_version_statistics_result.rs
 src/models/get_client_version_statistics_settings.rs
@@ -125,8 +126,10 @@ src/models/get_profile_text_pending_moderation_list.rs
 src/models/get_profile_text_state.rs
 src/models/get_report_list.rs
 src/models/get_sent_message.rs
+src/models/get_video_call_urls_result.rs
 src/models/group_values.rs
 src/models/ip_address_info.rs
+src/models/jitsi_meet_urls.rs
 src/models/language.rs
 src/models/last_seen_time_filter.rs
 src/models/latest_birthdate.rs
@@ -209,6 +212,8 @@ src/models/profile_search_age_range.rs
 src/models/profile_statistics_history_value.rs
 src/models/profile_statistics_history_value_type.rs
 src/models/profile_sync_version.rs
+src/models/profile_text_max_characters_filter.rs
+src/models/profile_text_min_characters_filter.rs
 src/models/profile_text_moderation_completed_notification.rs
 src/models/profile_text_moderation_completed_notification_viewed.rs
 src/models/profile_text_moderation_info.rs
@@ -233,6 +238,7 @@ src/models/report_chat_info_interaction_state.rs
 src/models/report_content.rs
 src/models/report_detailed.rs
 src/models/report_detailed_info.rs
+src/models/report_id.rs
 src/models/report_iterator_mode.rs
 src/models/report_iterator_query.rs
 src/models/report_processing_state.rs
@@ -259,6 +265,7 @@ src/models/set_account_setup.rs
 src/models/set_max_public_key_count.rs
 src/models/set_profile_content.rs
 src/models/set_profile_name.rs
+src/models/sign_in_with_apple_info.rs
 src/models/sign_in_with_login_info.rs
 src/models/software_info.rs
 src/models/software_update_state.rs

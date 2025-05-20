@@ -15,19 +15,26 @@ use serde::{Deserialize, Serialize};
 pub struct ProfileAttributeFilterValue {
     #[serde(rename = "accept_missing_attribute")]
     pub accept_missing_attribute: bool,
-    /// - First value is bitflags value or top level attribute value ID or first number list value. - Second value is sub level attribute value ID or second number list value. - Third and rest are number list values.  The number list values are in ascending order.
+    /// For bitflag filters the list only has one u16 value.  For one level attributes the values are u16 attribute value IDs.  For two level attributes the values are u32 values with most significant u16 containing attribute value ID and least significant u16 containing group value ID.  The values are stored in ascending order.
     #[serde(rename = "filter_values")]
     pub filter_values: Vec<i32>,
+    /// Same as [Self::filter_values] but for nonselected values.  The nonselected values are checked always with AND operator.
+    #[serde(rename = "filter_values_nonselected")]
+    pub filter_values_nonselected: Vec<i32>,
     #[serde(rename = "id")]
     pub id: i32,
+    #[serde(rename = "use_logical_operator_and")]
+    pub use_logical_operator_and: bool,
 }
 
 impl ProfileAttributeFilterValue {
-    pub fn new(accept_missing_attribute: bool, filter_values: Vec<i32>, id: i32) -> ProfileAttributeFilterValue {
+    pub fn new(accept_missing_attribute: bool, filter_values: Vec<i32>, filter_values_nonselected: Vec<i32>, id: i32, use_logical_operator_and: bool) -> ProfileAttributeFilterValue {
         ProfileAttributeFilterValue {
             accept_missing_attribute,
             filter_values,
+            filter_values_nonselected,
             id,
+            use_logical_operator_and,
         }
     }
 }

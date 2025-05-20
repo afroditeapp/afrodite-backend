@@ -16,12 +16,16 @@ pub struct FeaturesConfig {
     /// Enable news UI
     #[serde(rename = "news")]
     pub news: bool,
+    /// Enable video calls
+    #[serde(rename = "video_calls")]
+    pub video_calls: bool,
 }
 
 impl FeaturesConfig {
-    pub fn new(news: bool) -> FeaturesConfig {
+    pub fn new(news: bool, video_calls: bool) -> FeaturesConfig {
         FeaturesConfig {
             news,
+            video_calls,
         }
     }
 }

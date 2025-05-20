@@ -335,7 +335,7 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
         let mut attributes: Vec<ProfileAttributeValueUpdate> = vec![];
         for attribute in available_attributes {
             if attribute.required.unwrap_or_default()
-                && attribute.mode == AttributeMode::SelectMultipleFilterMultiple
+                && attribute.mode == AttributeMode::Bitflag
             {
                 let mut select_all = 0;
                 for value in attribute.values {

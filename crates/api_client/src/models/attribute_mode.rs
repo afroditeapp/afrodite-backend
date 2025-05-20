@@ -14,31 +14,28 @@ use serde::{Deserialize, Serialize};
 /// 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum AttributeMode {
-    #[serde(rename = "SelectSingleFilterSingle")]
-    SelectSingleFilterSingle,
-    #[serde(rename = "SelectSingleFilterMultiple")]
-    SelectSingleFilterMultiple,
-    #[serde(rename = "SelectMultipleFilterMultiple")]
-    SelectMultipleFilterMultiple,
-    #[serde(rename = "SelectMultipleFilterMultipleNumberList")]
-    SelectMultipleFilterMultipleNumberList,
+    #[serde(rename = "Bitflag")]
+    Bitflag,
+    #[serde(rename = "OneLevel")]
+    OneLevel,
+    #[serde(rename = "TwoLevel")]
+    TwoLevel,
 
 }
 
 impl std::fmt::Display for AttributeMode {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::SelectSingleFilterSingle => write!(f, "SelectSingleFilterSingle"),
-            Self::SelectSingleFilterMultiple => write!(f, "SelectSingleFilterMultiple"),
-            Self::SelectMultipleFilterMultiple => write!(f, "SelectMultipleFilterMultiple"),
-            Self::SelectMultipleFilterMultipleNumberList => write!(f, "SelectMultipleFilterMultipleNumberList"),
+            Self::Bitflag => write!(f, "Bitflag"),
+            Self::OneLevel => write!(f, "OneLevel"),
+            Self::TwoLevel => write!(f, "TwoLevel"),
         }
     }
 }
 
 impl Default for AttributeMode {
     fn default() -> AttributeMode {
-        Self::SelectSingleFilterSingle
+        Self::Bitflag
     }
 }
 

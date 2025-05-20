@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 pub struct ProfileAttributeValueUpdate {
     #[serde(rename = "id")]
     pub id: i32,
-    /// Empty list removes the attribute.  - First value is bitflags value or top level attribute value ID or first number list value. - Second value is sub level attribute value ID or second number list value. - Third and rest are number list values.
+    /// Empty list removes the attribute.  For bitflag filters the list only has one u16 value.  For one level attributes the values are u16 attribute value IDs.  For two level attributes the values are u32 values with most significant u16 containing attribute value ID and least significant u16 containing group value ID.
     #[serde(rename = "v")]
     pub v: Vec<i32>,
 }

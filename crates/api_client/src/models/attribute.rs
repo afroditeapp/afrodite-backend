@@ -24,6 +24,10 @@ pub struct Attribute {
     /// String unique identifier for the attribute.
     #[serde(rename = "key")]
     pub key: String,
+    #[serde(rename = "max_filters", skip_serializing_if = "Option::is_none")]
+    pub max_filters: Option<i32>,
+    #[serde(rename = "max_selected", skip_serializing_if = "Option::is_none")]
+    pub max_selected: Option<i32>,
     /// Mode of the attribute.
     #[serde(rename = "mode")]
     pub mode: models::AttributeMode,
@@ -57,6 +61,8 @@ impl Attribute {
             icon: None,
             id,
             key,
+            max_filters: None,
+            max_selected: None,
             mode,
             name,
             order_number,

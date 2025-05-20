@@ -24,6 +24,10 @@ pub struct GetProfileFilteringSettings {
     pub profile_created_filter: Option<Option<Box<models::ProfileCreatedTimeFilter>>>,
     #[serde(rename = "profile_edited_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub profile_edited_filter: Option<Option<Box<models::ProfileEditedTimeFilter>>>,
+    #[serde(rename = "profile_text_max_characters_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub profile_text_max_characters_filter: Option<Option<Box<models::ProfileTextMaxCharactersFilter>>>,
+    #[serde(rename = "profile_text_min_characters_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub profile_text_min_characters_filter: Option<Option<Box<models::ProfileTextMinCharactersFilter>>>,
     /// Randomize iterator starting position within the profile index area which current position and [Self::max_distance_km] defines.
     #[serde(rename = "random_profile_order", skip_serializing_if = "Option::is_none")]
     pub random_profile_order: Option<bool>,
@@ -39,6 +43,8 @@ impl GetProfileFilteringSettings {
             max_distance_km_filter: None,
             profile_created_filter: None,
             profile_edited_filter: None,
+            profile_text_max_characters_filter: None,
+            profile_text_min_characters_filter: None,
             random_profile_order: None,
             unlimited_likes_filter: None,
         }

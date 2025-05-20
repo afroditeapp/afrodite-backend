@@ -15,6 +15,8 @@ use serde::{Deserialize, Serialize};
 pub struct ReportDetailedInfo {
     #[serde(rename = "creator")]
     pub creator: Box<models::AccountId>,
+    #[serde(rename = "id")]
+    pub id: Box<models::ReportId>,
     #[serde(rename = "processing_state")]
     pub processing_state: models::ReportProcessingState,
     #[serde(rename = "report_type")]
@@ -24,9 +26,10 @@ pub struct ReportDetailedInfo {
 }
 
 impl ReportDetailedInfo {
-    pub fn new(creator: models::AccountId, processing_state: models::ReportProcessingState, report_type: models::ReportTypeNumber, target: models::AccountId) -> ReportDetailedInfo {
+    pub fn new(creator: models::AccountId, id: models::ReportId, processing_state: models::ReportProcessingState, report_type: models::ReportTypeNumber, target: models::AccountId) -> ReportDetailedInfo {
         ReportDetailedInfo {
             creator: Box::new(creator),
+            id: Box::new(id),
             processing_state,
             report_type: Box::new(report_type),
             target: Box::new(target),

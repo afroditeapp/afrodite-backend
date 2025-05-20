@@ -13,22 +13,34 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProfileAttributeFilterValueUpdate {
-    /// Defines should missing attribute be accepted.  Setting this to `None` disables the filter.
-    #[serde(rename = "accept_missing_attribute", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub accept_missing_attribute: Option<Option<bool>>,
-    /// - First value is bitflags value or top level attribute value ID or first number list value. - Second value is sub level attribute value ID or second number list value. - Third and rest are number list values.
-    #[serde(rename = "filter_values")]
-    pub filter_values: Vec<i32>,
+    /// Defines should missing attribute be accepted.
+    #[serde(rename = "accept_missing_attribute", skip_serializing_if = "Option::is_none")]
+    pub accept_missing_attribute: Option<bool>,
+    /// Value `false` ignores the settings in this object and removes current filter settings for this attribute.
+    #[serde(rename = "enabled", skip_serializing_if = "Option::is_none")]
+    pub enabled: Option<bool>,
+    /// For bitflag filters the list only has one u16 value.  For one level attributes the values are u16 attribute value IDs.  For two level attributes the values are u32 values with most significant u16 containing attribute value ID and least significant u16 containing group value ID.
+    #[serde(rename = "filter_values", skip_serializing_if = "Option::is_none")]
+    pub filter_values: Option<Vec<i32>>,
+    /// Same as [Self::filter_values] but for nonselected values.  The nonselected values are checked always with AND operator.
+    #[serde(rename = "filter_values_nonselected", skip_serializing_if = "Option::is_none")]
+    pub filter_values_nonselected: Option<Vec<i32>>,
     #[serde(rename = "id")]
     pub id: i32,
+    /// Defines should attribute values be checked with logical operator AND.
+    #[serde(rename = "use_logical_operator_and", skip_serializing_if = "Option::is_none")]
+    pub use_logical_operator_and: Option<bool>,
 }
 
 impl ProfileAttributeFilterValueUpdate {
-    pub fn new(filter_values: Vec<i32>, id: i32) -> ProfileAttributeFilterValueUpdate {
+    pub fn new(id: i32) -> ProfileAttributeFilterValueUpdate {
         ProfileAttributeFilterValueUpdate {
             accept_missing_attribute: None,
-            filter_values,
+            enabled: None,
+            filter_values: None,
+            filter_values_nonselected: None,
             id,
+            use_logical_operator_and: None,
         }
     }
 }

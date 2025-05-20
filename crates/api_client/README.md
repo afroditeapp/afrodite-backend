@@ -84,6 +84,7 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**get_sent_blocks**](docs/ChatApi.md#get_sent_blocks) | **GET** /chat_api/sent_blocks | Get list of sent blocks
 *ChatApi* | [**get_sent_likes**](docs/ChatApi.md#get_sent_likes) | **GET** /chat_api/sent_likes | Get sent likes.
 *ChatApi* | [**get_sent_message_ids**](docs/ChatApi.md#get_sent_message_ids) | **GET** /chat_api/sent_message_ids | 
+*ChatApi* | [**get_video_call_urls**](docs/ChatApi.md#get_video_call_urls) | **GET** /chat_api/get_video_call_urls | Create Jitsi Meet video call URLs to a meeting with an user.
 *ChatApi* | [**post_add_public_key**](docs/ChatApi.md#post_add_public_key) | **POST** /chat_api/add_public_key | Add new public key.
 *ChatApi* | [**post_add_receiver_acknowledgement**](docs/ChatApi.md#post_add_receiver_acknowledgement) | **POST** /chat_api/add_receiver_acknowledgement | 
 *ChatApi* | [**post_add_sender_acknowledgement**](docs/ChatApi.md#post_add_sender_acknowledgement) | **POST** /chat_api/add_sender_acknowledgement | 
@@ -117,6 +118,7 @@ Class | Method | HTTP request | Description
 *CommonAdminApi* | [**post_backend_config**](docs/CommonAdminApi.md#post_backend_config) | **POST** /common_api/backend_config | Save dynamic backend config.
 *CommonAdminApi* | [**post_edit_maintenance_notification**](docs/CommonAdminApi.md#post_edit_maintenance_notification) | **POST** /common_api/edit_maintenance_notification | Edit maintenance notification
 *CommonAdminApi* | [**post_get_api_usage_data**](docs/CommonAdminApi.md#post_get_api_usage_data) | **POST** /common_api/api_usage_data | Get API usage data for account
+*CommonAdminApi* | [**post_get_chat_message_reports**](docs/CommonAdminApi.md#post_get_chat_message_reports) | **POST** /chat_api/get_chat_message_reports | Get all chat message reports. The reports are ordered by message sending order from oldest to latest.
 *CommonAdminApi* | [**post_get_ip_address_usage_data**](docs/CommonAdminApi.md#post_get_ip_address_usage_data) | **POST** /common_api/ip_address_usage_data | Get IP address usage data for account
 *CommonAdminApi* | [**post_get_perf_data**](docs/CommonAdminApi.md#post_get_perf_data) | **POST** /common_api/perf_data | Get performance data
 *CommonAdminApi* | [**post_get_report_iterator_page**](docs/CommonAdminApi.md#post_get_report_iterator_page) | **POST** /common_api/admin/report_iterator_page | Get report iterator page.
@@ -278,6 +280,7 @@ Class | Method | HTTP request | Description
  - [GetAllAdminsResult](docs/GetAllAdminsResult.md)
  - [GetApiUsageStatisticsResult](docs/GetApiUsageStatisticsResult.md)
  - [GetApiUsageStatisticsSettings](docs/GetApiUsageStatisticsSettings.md)
+ - [GetChatMessageReports](docs/GetChatMessageReports.md)
  - [GetClientFeaturesConfigResult](docs/GetClientFeaturesConfigResult.md)
  - [GetClientVersionStatisticsResult](docs/GetClientVersionStatisticsResult.md)
  - [GetClientVersionStatisticsSettings](docs/GetClientVersionStatisticsSettings.md)
@@ -303,8 +306,10 @@ Class | Method | HTTP request | Description
  - [GetProfileTextState](docs/GetProfileTextState.md)
  - [GetReportList](docs/GetReportList.md)
  - [GetSentMessage](docs/GetSentMessage.md)
+ - [GetVideoCallUrlsResult](docs/GetVideoCallUrlsResult.md)
  - [GroupValues](docs/GroupValues.md)
  - [IpAddressInfo](docs/IpAddressInfo.md)
+ - [JitsiMeetUrls](docs/JitsiMeetUrls.md)
  - [Language](docs/Language.md)
  - [LastSeenTimeFilter](docs/LastSeenTimeFilter.md)
  - [LatestBirthdate](docs/LatestBirthdate.md)
@@ -386,6 +391,8 @@ Class | Method | HTTP request | Description
  - [ProfileStatisticsHistoryValue](docs/ProfileStatisticsHistoryValue.md)
  - [ProfileStatisticsHistoryValueType](docs/ProfileStatisticsHistoryValueType.md)
  - [ProfileSyncVersion](docs/ProfileSyncVersion.md)
+ - [ProfileTextMaxCharactersFilter](docs/ProfileTextMaxCharactersFilter.md)
+ - [ProfileTextMinCharactersFilter](docs/ProfileTextMinCharactersFilter.md)
  - [ProfileTextModerationCompletedNotification](docs/ProfileTextModerationCompletedNotification.md)
  - [ProfileTextModerationCompletedNotificationViewed](docs/ProfileTextModerationCompletedNotificationViewed.md)
  - [ProfileTextModerationInfo](docs/ProfileTextModerationInfo.md)
@@ -410,6 +417,7 @@ Class | Method | HTTP request | Description
  - [ReportContent](docs/ReportContent.md)
  - [ReportDetailed](docs/ReportDetailed.md)
  - [ReportDetailedInfo](docs/ReportDetailedInfo.md)
+ - [ReportId](docs/ReportId.md)
  - [ReportIteratorMode](docs/ReportIteratorMode.md)
  - [ReportIteratorQuery](docs/ReportIteratorQuery.md)
  - [ReportProcessingState](docs/ReportProcessingState.md)
@@ -436,6 +444,7 @@ Class | Method | HTTP request | Description
  - [SetMaxPublicKeyCount](docs/SetMaxPublicKeyCount.md)
  - [SetProfileContent](docs/SetProfileContent.md)
  - [SetProfileName](docs/SetProfileName.md)
+ - [SignInWithAppleInfo](docs/SignInWithAppleInfo.md)
  - [SignInWithLoginInfo](docs/SignInWithLoginInfo.md)
  - [SoftwareInfo](docs/SoftwareInfo.md)
  - [SoftwareUpdateState](docs/SoftwareUpdateState.md)

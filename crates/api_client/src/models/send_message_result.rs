@@ -20,6 +20,8 @@ pub struct SendMessageResult {
     pub error_receiver_blocked_sender_or_receiver_not_found: Option<bool>,
     #[serde(rename = "error_receiver_public_key_outdated", skip_serializing_if = "Option::is_none")]
     pub error_receiver_public_key_outdated: Option<bool>,
+    #[serde(rename = "error_sender_public_key_outdated", skip_serializing_if = "Option::is_none")]
+    pub error_sender_public_key_outdated: Option<bool>,
     #[serde(rename = "error_too_many_receiver_acknowledgements_missing", skip_serializing_if = "Option::is_none")]
     pub error_too_many_receiver_acknowledgements_missing: Option<bool>,
     #[serde(rename = "error_too_many_sender_acknowledgements_missing", skip_serializing_if = "Option::is_none")]
@@ -32,6 +34,7 @@ impl SendMessageResult {
             d: None,
             error_receiver_blocked_sender_or_receiver_not_found: None,
             error_receiver_public_key_outdated: None,
+            error_sender_public_key_outdated: None,
             error_too_many_receiver_acknowledgements_missing: None,
             error_too_many_sender_acknowledgements_missing: None,
         }
