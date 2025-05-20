@@ -394,14 +394,11 @@ pub trait BotStruct: Debug + Send + 'static {
             }
         }
     }
-
-    fn notify_task_bot_count_decreased(&mut self, bot_count: usize) {
-        let _ = bot_count;
-    }
 }
 
 pub struct BotManager {
     bots: Vec<Box<dyn BotStruct>>,
+    removed_bots: Vec<Box<dyn BotStruct>>,
     bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
     task_id: u32,
     config: Arc<TestMode>,
@@ -515,6 +512,7 @@ impl BotManager {
 
         Self {
             bots,
+            removed_bots: vec![],
             bot_running_handle,
             task_id,
             config,
@@ -535,14 +533,19 @@ impl BotManager {
             }
         }
 
-        let data = self.iter_persistent_state();
+        let data = self.persistent_state_for_all_bots();
         self.bot_running_handle.send(data).await.unwrap();
     }
 
-    fn iter_persistent_state(&self) -> Vec<BotPersistentState> {
+    fn persistent_state_for_all_bots(&self) -> Vec<BotPersistentState> {
         self.bots
             .iter()
             .filter_map(|bot| bot.state().persistent_state())
+            .chain(
+                self.removed_bots
+                    .iter()
+                    .filter_map(|bot| bot.state().persistent_state())
+            )
             .collect()
     }
 
@@ -568,9 +571,7 @@ impl BotManager {
             }
 
             if let Some(remove_i) = self.iter_bot_list(&mut errors, &mut task_state).await {
-                self.bots
-                    .swap_remove(remove_i)
-                    .notify_task_bot_count_decreased(self.bots.len());
+                self.removed_bots.push(self.bots.swap_remove(remove_i));
             }
 
             if let Some(bot_mode_config) = self.config.bot_mode() {
