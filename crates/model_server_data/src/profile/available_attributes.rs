@@ -492,9 +492,9 @@ pub struct GroupValues {
     pub key: String,
     /// Values for this group.
     ///
-    /// Values are sorted by AttributeValue ID related to this group
-    /// and ID can be used to index this list.
-    pub values: Vec<AttributeValue>,
+    /// Values are sorted by AttributeValue ID related to this group.
+    /// Indexing with the ID is not possible as ID values start from 1.
+    values: Vec<AttributeValue>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -638,15 +638,19 @@ impl From<IconResource> for String {
 pub struct ProfileAttributesInternal {
     /// List of attributes.
     ///
-    /// Attributes are sorted by Attribute ID and ID can be used to
-    /// index this list.
+    /// Attributes are sorted by Attribute ID.
+    /// Indexing with the ID is not possible as ID values start from 1.
     attributes: Vec<(Attribute, ProfileAttributeHash)>,
     info: ProfileAttributeInfo,
 }
 
 impl ProfileAttributesInternal {
     pub fn get_attribute(&self, id: AttributeId) -> Option<&Attribute> {
-        self.attributes.get(id.to_usize()).map(|v| &v.0)
+        self.get_attribute_and_hash(id).map(|v| &v.0)
+    }
+
+    fn get_attribute_and_hash(&self, id: AttributeId) -> Option<&(Attribute, ProfileAttributeHash)> {
+        self.attributes.get(id.to_usize().saturating_sub(1))
     }
 
     pub fn from_file(file: AttributesFileInternal) -> Result<Self, String> {
@@ -697,8 +701,7 @@ impl ProfileAttributesInternal {
         ids
             .into_iter()
             .filter_map(|id| {
-                self.attributes
-                    .get(id.to_usize())
+                self.get_attribute_and_hash(id)
                     .cloned()
                     .map(|(a, h)| ProfileAttributeQueryItem {
                         a,
