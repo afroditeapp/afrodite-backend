@@ -260,7 +260,7 @@ impl ProfileUpdateValidated {
         let attributes = self
             .attributes
             .iter()
-            .filter_map(|v| ProfileAttributeValue::try_from_update(v.clone()).ok())
+            .filter_map(|v| ProfileAttributeValue::from_update(v.clone()))
             .collect::<Vec<_>>();
         target.set_attributes(attributes);
     }

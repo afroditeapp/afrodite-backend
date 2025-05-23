@@ -39,16 +39,18 @@ pub struct ProfileAttributeValue {
 }
 
 impl ProfileAttributeValue {
-    pub fn try_from_update(
+    /// None is returned if [ProfileAttributeValueUpdate] disables
+    /// the attribute.
+    pub fn from_update(
         mut value: ProfileAttributeValueUpdate,
-    ) -> Result<Self, String> {
+    ) -> Option<Self> {
         value.v.sort();
         match value.v.first() {
-            Some(_) => Ok(Self {
+            Some(_) => Some(Self {
                 id: value.id,
                 v: value.v,
             }),
-            None => Err("Value part1 missing".to_string()),
+            None => None,
         }
     }
 
