@@ -47,10 +47,10 @@ impl ProfileFilteringSettingsUpdate {
                             ));
                             if info.mode.is_bitflag() {
                                 let selected = values.first().copied().unwrap_or_default().count_ones();
-                                if selected > info.max_selected.into() {
+                                if selected > info.max_filters.into() {
                                     return error();
                                 }
-                            } else if values.len() > info.max_selected.into() {
+                            } else if values.len() > info.max_filters.into() {
                                 return error();
                             }
 
