@@ -163,8 +163,6 @@ impl CurrentReadProfileData<'_> {
 
             profile_attributes_filter_settings
                 .filter(account_id.eq(id.as_db_id()))
-                .filter(filter_accept_missing_attribute)
-                .filter(filter_use_logical_operator_and)
                 .select((
                     attribute_id,
                     filter_accept_missing_attribute,
