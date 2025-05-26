@@ -1,13 +1,15 @@
-use std::{collections::HashSet, fmt::Debug, time::Instant};
+use std::{collections::HashSet, fmt::Debug};
 
 use api_client::{
     apis::profile_api::{self, get_location, get_profile, post_profile},
     models::{Location, ProfileAttributeValueUpdate, ProfileIteratorSessionId, ProfileUpdate},
 };
 use async_trait::async_trait;
-use chrono::Utc;
+use chrono::{DateTime, NaiveTime, Utc};
 use config::file::LocationConfig;
 use error_stack::{Result, ResultExt};
+
+use tracing::error;
 
 use super::{super::super::client::TestError, BotAction, BotState, PreviousValue};
 use crate::bot::utils::location::LocationConfigUtils;
@@ -15,7 +17,7 @@ use crate::bot::utils::location::LocationConfigUtils;
 #[derive(Debug, Default)]
 pub struct ProfileState {
     profile_iterator_session_id: Option<ProfileIteratorSessionId>,
-    change_profile_text_daily: Option<Instant>,
+    change_profile_text_daily: Option<DateTime<Utc>>,
 }
 
 impl ProfileState {
@@ -84,19 +86,31 @@ pub struct ChangeProfileTextDaily;
 #[async_trait]
 impl BotAction for ChangeProfileTextDaily {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        const SECONDS_IN_DAY: u64 = 24 * 60 * 60;
+        let Some(config) = state.get_bot_config().change_profile_text_time() else {
+            return Ok(());
+        };
 
-        let current_time = Instant::now();
+        let Some(time) = NaiveTime::from_hms_opt(config.0.hours.into(), config.0.minutes.into(), 0) else {
+            error!("NaiveTime creation failed");
+            return Ok(());
+        };
+
+        let current_time = Utc::now();
+        let Some(next) = current_time.with_time(time).single() else {
+            error!("Next profile text update time creation failed");
+            return Ok(());
+        };
+
         let update = if let Some(previous) = state.profile.change_profile_text_daily {
-            current_time.duration_since(previous).as_secs() >= SECONDS_IN_DAY
+            previous.date_naive() != next.date_naive() && current_time > next
         } else {
-            true
+            current_time > next
         };
 
         if update {
             state.profile.change_profile_text_daily = Some(current_time);
             let config = state.get_bot_config();
-            let time_text = Utc::now().to_rfc2822();
+            let time_text = current_time.to_rfc2822();
             let new_text = if let Some(text) = &config.text {
                 format!("{}\n{}", text, time_text)
             } else {

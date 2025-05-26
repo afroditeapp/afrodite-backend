@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 
 use error_stack::{Result, ResultExt};
 use serde::{Deserialize, Deserializer};
+use simple_backend_utils::time::UtcTimeValue;
 use url::Url;
 
 use crate::{args::TestMode, file::ConfigFileError};
@@ -172,7 +173,7 @@ impl BotConfigFile {
                 send_like_to_account_id: c.send_like_to_account_id.or(base.send_like_to_account_id),
                 change_visibility: c.change_visibility.or(base.random_color_image),
                 change_location: c.change_location.or(base.change_location),
-                change_profile_text_daily: c.change_profile_text_daily.or(base.change_profile_text_daily),
+                change_profile_text_time: c.change_profile_text_time.or(base.change_profile_text_time),
             };
         }
     }
@@ -243,7 +244,7 @@ pub struct BaseBotConfig {
     pub send_like_to_account_id: Option<simple_backend_utils::UuidBase64Url>,
     change_visibility: Option<bool>,
     change_location: Option<bool>,
-    change_profile_text_daily: Option<bool>,
+    change_profile_text_time: Option<UtcTimeValue>,
 }
 
 impl BaseBotConfig {
@@ -277,8 +278,8 @@ impl BaseBotConfig {
         self.change_location.unwrap_or_default()
     }
 
-    pub fn change_profile_text_daily(&self) -> bool {
-        self.change_profile_text_daily.unwrap_or_default()
+    pub fn change_profile_text_time(&self) -> Option<UtcTimeValue> {
+        self.change_profile_text_time
     }
 }
 

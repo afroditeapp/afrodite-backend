@@ -96,7 +96,7 @@ impl ClientBot {
                     s.get_bot_config().change_visibility() && rand::random::<f32>() < 0.1
                 }),
                 RunActionsIf(action_array!(ChangeProfileTextDaily), |s| {
-                    s.get_bot_config().change_profile_text_daily()
+                    s.get_bot_config().change_profile_text_time().is_some()
                 }),
                 AcceptReceivedLikesAndSendMessage,
                 AnswerReceivedMessages,
