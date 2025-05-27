@@ -196,7 +196,11 @@ impl DbDataToCacheLoader {
                 last_seen_unix_time,
             );
 
-            let location_area = index_writer.coordinates_to_area(profile_location, profile_data.state.max_distance_km_filter);
+            let location_area = index_writer.coordinates_to_area(
+                profile_location,
+                profile_data.state.min_distance_km_filter,
+                profile_data.state.max_distance_km_filter,
+            );
             profile_data.location.current_position = location_area.clone();
             profile_data.location.current_iterator =
                 index_iterator.new_iterator_state(

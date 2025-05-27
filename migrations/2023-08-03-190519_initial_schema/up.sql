@@ -427,6 +427,8 @@ CREATE TABLE IF NOT EXISTS profile_state(
     last_seen_time_filter      INTEGER,
     -- Filter setting for unlimited likes.
     unlimited_likes_filter     BOOLEAN,
+    -- Filter setting for profile iterator min distance in kilometers.
+    min_distance_km_filter     INTEGER,
     -- Filter setting for profile iterator max distance in kilometers.
     max_distance_km_filter     INTEGER,
     -- Filter setting for profile created time in seconds.

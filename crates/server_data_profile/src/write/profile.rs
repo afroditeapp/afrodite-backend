@@ -37,8 +37,13 @@ impl WriteCommandsProfile<'_> {
         id: AccountIdInternal,
         coordinates: Location,
     ) -> Result<(), DataError> {
-        let (location, max_distance, random_profile_order) = self
-            .read_cache_profile_and_common(id.as_id(), |p, _| Ok((p.location.clone(), p.state.max_distance_km_filter, p.state.random_profile_order)))
+        let (location, min_distance, max_distance, random_profile_order) = self
+            .read_cache_profile_and_common(id.as_id(), |p, _| Ok((
+                p.location.clone(),
+                p.state.min_distance_km_filter,
+                p.state.max_distance_km_filter,
+                p.state.random_profile_order
+            )))
             .await
             .into_data_error(id)?;
 
@@ -46,7 +51,7 @@ impl WriteCommandsProfile<'_> {
             cmds.profile().data().profile_location(id, coordinates)
         })?;
 
-        let new_location_area = self.location().coordinates_to_area(coordinates, max_distance);
+        let new_location_area = self.location().coordinates_to_area(coordinates, min_distance, max_distance);
         self.location()
             .update_profile_location(id.as_id(), location.current_position.profile_location(), new_location_area.profile_location())
             .await?;
@@ -191,6 +196,7 @@ impl WriteCommandsProfile<'_> {
             p.filters = new_filters;
             p.state.last_seen_time_filter = filters.last_seen_time_filter;
             p.state.unlimited_likes_filter = filters.unlimited_likes_filter;
+            p.state.min_distance_km_filter = filters.min_distance_km_filter;
             p.state.max_distance_km_filter = filters.max_distance_km_filter;
             p.state.profile_created_time_filter = filters.profile_created_filter;
             p.state.profile_edited_time_filter = filters.profile_edited_filter;
@@ -198,7 +204,11 @@ impl WriteCommandsProfile<'_> {
             p.state.profile_text_max_characters_filter = filters.profile_text_max_characters_filter;
             p.state.random_profile_order = filters.random_profile_order;
 
-            p.location.current_position = self.location().coordinates_to_area(location, filters.max_distance_km_filter);
+            p.location.current_position = self.location().coordinates_to_area(
+                location,
+                filters.min_distance_km_filter,
+                filters.max_distance_km_filter,
+            );
 
             Ok(())
         })

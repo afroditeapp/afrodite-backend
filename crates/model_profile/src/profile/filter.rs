@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use model::AttributeId;
 use model_server_data::{
-    MaxDistanceKm, ProfileAttributeFilterValue, ProfileCreatedTimeFilter, ProfileEditedTimeFilter, ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter
+    MaxDistanceKm, MinDistanceKm, ProfileAttributeFilterValue, ProfileCreatedTimeFilter, ProfileEditedTimeFilter, ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -14,6 +14,7 @@ pub struct ProfileFilteringSettingsUpdate {
     filters: Vec<ProfileAttributeFilterValueUpdate>,
     last_seen_time_filter: Option<LastSeenTimeFilter>,
     unlimited_likes_filter: Option<bool>,
+    min_distance_km_filter: Option<MinDistanceKm>,
     max_distance_km_filter: Option<MaxDistanceKm>,
     profile_created_filter: Option<ProfileCreatedTimeFilter>,
     profile_edited_filter: Option<ProfileEditedTimeFilter>,
@@ -72,6 +73,12 @@ impl ProfileFilteringSettingsUpdate {
             }
         }
 
+        if let Some(value) = self.min_distance_km_filter {
+            if value.value <= 0 {
+                return Err("Min distance can't be less or equal to 0".to_string());
+            }
+        }
+
         if let Some(value) = self.max_distance_km_filter {
             if value.value <= 0 {
                 return Err("Max distance can't be less or equal to 0".to_string());
@@ -94,6 +101,7 @@ impl ProfileFilteringSettingsUpdate {
             filters: self.filters,
             last_seen_time_filter: self.last_seen_time_filter,
             unlimited_likes_filter: self.unlimited_likes_filter,
+            min_distance_km_filter: self.min_distance_km_filter,
             max_distance_km_filter: self.max_distance_km_filter,
             profile_created_filter: self.profile_created_filter,
             profile_edited_filter: self.profile_edited_filter,
@@ -109,6 +117,7 @@ pub struct ProfileFilteringSettingsUpdateValidated {
     pub filters: Vec<ProfileAttributeFilterValueUpdate>,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
+    pub min_distance_km_filter: Option<MinDistanceKm>,
     pub max_distance_km_filter: Option<MaxDistanceKm>,
     pub profile_created_filter: Option<ProfileCreatedTimeFilter>,
     pub profile_edited_filter: Option<ProfileEditedTimeFilter>,
@@ -158,6 +167,11 @@ pub struct GetProfileFilteringSettings {
     pub filters: Vec<ProfileAttributeFilterValue>,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
+    /// Show profiles starting this far from current location. The value
+    /// is in kilometers.
+    ///
+    /// The value must be `None`, 1 or greater number.
+    pub min_distance_km_filter: Option<MinDistanceKm>,
     /// Show profiles until this far from current location. The value
     /// is in kilometers.
     ///

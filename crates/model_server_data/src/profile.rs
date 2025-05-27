@@ -114,6 +114,7 @@ pub struct ProfileStateCached {
     pub profile_edited_time_filter: Option<ProfileEditedTimeFilter>,
     pub profile_text_min_characters_filter: Option<ProfileTextMinCharactersFilter>,
     pub profile_text_max_characters_filter: Option<ProfileTextMaxCharactersFilter>,
+    pub min_distance_km_filter: Option<MinDistanceKm>,
     pub max_distance_km_filter: Option<MaxDistanceKm>,
     pub random_profile_order: bool,
     pub profile_name_moderation_state: ProfileNameModerationState,

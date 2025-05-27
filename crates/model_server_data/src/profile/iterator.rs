@@ -71,6 +71,39 @@ impl ProfileLink {
     }
 }
 
+/// Profile iterator min distance in kilometers.
+///
+/// The value is equal or greater than 1.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    IntoParams,
+    PartialEq,
+    Eq,
+    FromSqlRow,
+    AsExpression,
+)]
+#[diesel(sql_type = BigInt)]
+pub struct MinDistanceKm {
+    pub value: i64,
+}
+
+impl MinDistanceKm {
+    pub fn new(value: i64) -> Self {
+        Self { value }
+    }
+
+    pub fn as_i64(&self) -> &i64 {
+        &self.value
+    }
+}
+
+diesel_i64_wrapper!(MinDistanceKm);
+
 /// Profile iterator max distance in kilometers.
 ///
 /// The value is equal or greater than 1.

@@ -5,13 +5,13 @@ use std::{
     sync::Arc,
 };
 
-use area::LocationIndexArea;
+use area::{IndexArea, LocationIndexArea};
 use config::{file::LocationConfig, Config};
 use error_stack::ResultExt;
 use location::ReadIndex;
 use model::{AccountId, UnixTime};
 use model_server_data::{
-    CellData, Location, LocationIndexKey, LocationIndexProfileData, LocationInternal, MaxDistanceKm, ProfileLink, ProfileQueryMakerDetails
+    CellData, Location, LocationIndexKey, LocationIndexProfileData, LocationInternal, MaxDistanceKm, MinDistanceKm, ProfileLink, ProfileQueryMakerDetails
 };
 use server_common::data::index::IndexError;
 use tokio::sync::RwLock;
@@ -288,10 +288,11 @@ impl<'a> LocationIndexWriteHandle<'a> {
     pub fn coordinates_to_area(
         &self,
         location: Location,
+        min_distance: Option<MinDistanceKm>,
         max_distance: Option<MaxDistanceKm>,
     ) -> LocationIndexArea {
         self.coordinates
-            .to_index_area(location.into(), max_distance)
+            .to_index_area(location.into(), min_distance, max_distance)
     }
 
     /// Move LocationIndexProfileData to another index location
@@ -557,18 +558,28 @@ impl CoordinateManager {
         u32::max(1, self.x_max_tile() - x_start) as u16
     }
 
-    pub fn to_index_area(&self, location: LocationInternal, max_distance: Option<MaxDistanceKm>) -> LocationIndexArea {
+    pub fn to_index_area(
+        &self,
+        location: LocationInternal,
+        min_distance: Option<MinDistanceKm>,
+        max_distance: Option<MaxDistanceKm>,
+    ) -> LocationIndexArea {
         let profile_location = self.location_to_index_key(location);
 
-        if let Some(max_distance) = max_distance {
-            let distance = max_distance.value as f64;
-            LocationIndexArea {
-                top_left: self.location_to_index_key(location.move_kilometers(distance, -distance)),
-                bottom_right: self.location_to_index_key(location.move_kilometers(-distance, distance)),
-                profile_location,
-            }
+        let area_inner = min_distance.map(
+            |min_distance| IndexArea::new(self, location, min_distance.value)
+        );
+
+        let area_outer = if let Some(max_distance) = max_distance {
+            IndexArea::new(self, location, max_distance.value)
         } else {
-            LocationIndexArea::max_area(profile_location, self.width(), self.height())
+            IndexArea::max_area(self.width(), self.height())
+        };
+
+        LocationIndexArea {
+            area_inner,
+            area_outer,
+            profile_location,
         }
     }
 

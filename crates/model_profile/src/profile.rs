@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use diesel::{prelude::*, sql_types::BigInt, AsExpression, FromSqlRow};
 use model::{AttributeId, ProfileAge};
 use model_server_data::{
-    LastSeenTime, LastSeenTimeFilter, MaxDistanceKm, ProfileAttributeValue, ProfileAttributeValueUpdate, ProfileAttributesInternal, ProfileCreatedTimeFilter, ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal, ProfileNameModerationState, ProfileStateCached, ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter, ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes
+    LastSeenTime, LastSeenTimeFilter, MaxDistanceKm, MinDistanceKm, ProfileAttributeValue, ProfileAttributeValueUpdate, ProfileAttributesInternal, ProfileCreatedTimeFilter, ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal, ProfileNameModerationState, ProfileStateCached, ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter, ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes
 };
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, UnixTime};
@@ -107,6 +107,7 @@ pub struct ProfileStateInternal {
     pub search_group_flags: SearchGroupFlags,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
+    pub min_distance_km_filter: Option<MinDistanceKm>,
     pub max_distance_km_filter: Option<MaxDistanceKm>,
     pub profile_created_time_filter: Option<ProfileCreatedTimeFilter>,
     pub profile_edited_time_filter: Option<ProfileEditedTimeFilter>,
@@ -132,6 +133,7 @@ impl From<ProfileStateInternal> for ProfileStateCached {
             search_group_flags: value.search_group_flags,
             last_seen_time_filter: value.last_seen_time_filter,
             unlimited_likes_filter: value.unlimited_likes_filter,
+            min_distance_km_filter: value.min_distance_km_filter,
             max_distance_km_filter: value.max_distance_km_filter,
             profile_created_time_filter: value.profile_created_time_filter,
             profile_edited_time_filter: value.profile_edited_time_filter,

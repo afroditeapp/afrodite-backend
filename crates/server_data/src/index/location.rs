@@ -127,17 +127,55 @@ impl VisitedMaxCorners {
 }
 
 #[derive(Debug, Clone, Default)]
-struct IndexLimit {
+struct IndexLimitCoordinates {
     x: isize,
     y: isize,
 }
 
-impl IndexLimit {
+impl IndexLimitCoordinates {
     fn new(key: LocationIndexKey) -> Self {
         Self {
             x: key.x as isize,
             y: key.y as isize,
         }
+    }
+}
+
+impl From<LocationIndexKey> for IndexLimitCoordinates {
+    fn from(value: LocationIndexKey) -> Self {
+        Self::new(value)
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+struct IndexLimit {
+    top_left: IndexLimitCoordinates,
+    bottom_right: IndexLimitCoordinates,
+}
+
+#[derive(Debug, Clone, Default)]
+struct IndexLimitInner(pub IndexLimit);
+
+impl IndexLimitInner {
+    fn is_inside(&self, x: isize, y: isize) -> bool {
+        // Use > and < operators to make index cells at the limit border
+        // accessible when min and max distance limits have the same value.
+        x > self.0.top_left.x  &&
+        x < self.0.bottom_right.x &&
+        y > self.0.top_left.y &&
+        y < self.0.bottom_right.y
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+struct IndexLimitOuter(pub IndexLimit);
+
+impl IndexLimitOuter {
+    fn is_outside(&self, x: isize, y: isize) -> bool {
+        x < self.0.top_left.x  ||
+        x > self.0.bottom_right.x ||
+        y < self.0.top_left.y ||
+        y > self.0.bottom_right.y
     }
 }
 
@@ -161,8 +199,8 @@ pub struct LocationIndexIteratorState {
     /// No more new cells available.
     completed: bool,
     visited_max_corners: VisitedMaxCorners,
-    index_limit_top_left: IndexLimit,
-    index_limit_bottom_right: IndexLimit,
+    limit_inner: Option<IndexLimitInner>,
+    limit_outer: IndexLimitOuter,
 }
 
 impl LocationIndexIteratorState {
@@ -178,8 +216,8 @@ impl LocationIndexIteratorState {
             direction: Direction::Down,
             completed: true,
             visited_max_corners: VisitedMaxCorners::default(),
-            index_limit_top_left: IndexLimit::default(),
-            index_limit_bottom_right: IndexLimit::default(),
+            limit_inner: None,
+            limit_outer: IndexLimitOuter::default(),
         }
     }
 
@@ -203,8 +241,14 @@ impl LocationIndexIteratorState {
             direction: Direction::Down,
             completed: false,
             visited_max_corners: VisitedMaxCorners::default(),
-            index_limit_top_left: IndexLimit::new(area.top_left),
-            index_limit_bottom_right: IndexLimit::new(area.bottom_right),
+            limit_inner: area.area_inner.as_ref().map(|a| IndexLimitInner(IndexLimit {
+                top_left: a.top_left.into(),
+                bottom_right: a.bottom_right.into(),
+            })),
+            limit_outer: IndexLimitOuter(IndexLimit {
+                top_left: area.area_outer.top_left.into(),
+                bottom_right: area.area_outer.bottom_right.into(),
+            }),
         }
     }
 
@@ -275,11 +319,15 @@ impl LocationIndexIteratorState {
     }
 
     fn current_cell_has_profiles(&self, index: &impl ReadIndex) -> bool {
-        // Make area outside limits appear empty
-        if self.x < self.index_limit_top_left.x  ||
-            self.x > self.index_limit_bottom_right.x ||
-            self.y < self.index_limit_top_left.y ||
-            self.y > self.index_limit_bottom_right.y {
+        // Make area inside inner limit appear empty
+        if let Some(limit) = &self.limit_inner {
+            if limit.is_inside(self.x, self.y) {
+                return false;
+            }
+        }
+
+        // Make area outside outer limit appear empty
+        if self.limit_outer.is_outside(self.x, self.y) {
             return false;
         }
 
@@ -418,16 +466,17 @@ impl LocationIndexIteratorState {
     }
 
     fn update_visited_max_corners(&mut self) {
-        if self.y <= self.index_limit_top_left.y && self.x <= self.index_limit_top_left.x {
+        let outer = &self.limit_outer.0;
+        if self.y <= outer.top_left.y && self.x <= outer.top_left.x {
             self.visited_max_corners.top_left = true;
         }
-        if self.y <= self.index_limit_top_left.y && self.x >= self.index_limit_bottom_right.x {
+        if self.y <= outer.top_left.y && self.x >= outer.bottom_right.x {
             self.visited_max_corners.top_right = true;
         }
-        if self.y >= self.index_limit_bottom_right.y && self.x <= self.index_limit_top_left.x {
+        if self.y >= outer.bottom_right.y && self.x <= outer.top_left.x {
             self.visited_max_corners.bottom_left = true;
         }
-        if self.y >= self.index_limit_bottom_right.y && self.x >= self.index_limit_bottom_right.x {
+        if self.y >= outer.bottom_right.y && self.x >= outer.bottom_right.x {
             self.visited_max_corners.bottom_right = true;
         }
     }
