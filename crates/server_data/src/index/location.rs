@@ -216,6 +216,19 @@ impl IndexLimitOuter {
     }
 }
 
+/// Updates when round changes.
+#[derive(Debug, Clone)]
+struct CurrentMaxIndexes {
+    /// Top side max area index.
+    top: isize,
+    /// Bottom side max area index.
+    bottom: isize,
+    /// Left side max area index.
+    left: isize,
+    /// Right side max area index.
+    right: isize,
+}
+
 /// Iterator for location index
 ///
 /// Start from one cell and enlarge area clockwise.
@@ -238,6 +251,7 @@ pub struct LocationIndexIteratorState {
     visited_max_corners: VisitedMaxCorners,
     limit_inner: Option<IndexLimitInner>,
     limit_outer: IndexLimitOuter,
+    current_max_indexes: CurrentMaxIndexes,
 }
 
 impl LocationIndexIteratorState {
@@ -255,6 +269,12 @@ impl LocationIndexIteratorState {
             visited_max_corners: VisitedMaxCorners::default(),
             limit_inner: None,
             limit_outer: IndexLimitOuter::default(),
+            current_max_indexes: CurrentMaxIndexes {
+                top: 0,
+                bottom: 0,
+                left: 0,
+                right: 0,
+            },
         }
     }
 
@@ -286,6 +306,12 @@ impl LocationIndexIteratorState {
                 top_left: area.area_outer.top_left.into(),
                 bottom_right: area.area_outer.bottom_right.into(),
             }),
+            current_max_indexes: CurrentMaxIndexes {
+                top: y,
+                bottom: y,
+                left: x,
+                right: x,
+            },
         }
     }
 
@@ -355,26 +381,6 @@ impl LocationIndexIteratorState {
         }
     }
 
-    /// Left side max area index.
-    fn current_left_max_index(&self) -> isize {
-        self.init_position_x - self.iteration_count
-    }
-
-    /// Right side max area index.
-    fn current_right_max_index(&self) -> isize {
-        self.init_position_x + self.iteration_count
-    }
-
-    /// Top side max area index.
-    fn current_top_max_index(&self) -> isize {
-        self.init_position_y - self.iteration_count
-    }
-
-    /// Bottom side max area index.
-    fn current_bottom_max_index(&self) -> isize {
-        self.init_position_y + self.iteration_count
-    }
-
     fn current_cell_state(&self, index: &impl ReadIndex) -> CellState {
         self.current_cell(index)
             .map(|cell| cell.state())
@@ -412,22 +418,22 @@ impl LocationIndexIteratorState {
                     self.y = index.last_row_index() as isize;
                 } else if self.y <= 0 {
                     // Top: top line or outside matrix
-                    self.y = self.current_top_max_index();
+                    self.y = self.current_max_indexes.top;
                 } else {
                     // Normal: inside matrix area and not the first row.
-                    self.y = state.next_up().max(self.current_top_max_index())
+                    self.y = state.next_up().max(self.current_max_indexes.top);
                 }
             }
             Direction::Down => {
                 if self.y >= index.last_row_index() as isize {
                     // Bottom: outside matrix or bottom row
-                    self.y = self.current_bottom_max_index();
+                    self.y = self.current_max_indexes.bottom;
                 } else if self.y < 0 {
                     // Top: top line or outside matrix
                     self.y = 0;
                 } else {
                     // Normal: inside matrix area and not the last row.
-                    self.y = state.next_down().min(self.current_bottom_max_index())
+                    self.y = state.next_down().min(self.current_max_indexes.bottom)
                 }
             }
             Direction::Left => {
@@ -436,38 +442,38 @@ impl LocationIndexIteratorState {
                     self.x = index.last_column_index() as isize;
                 } else if self.x <= 0 {
                     // Left: left column or outside matrix
-                    self.x = self.current_left_max_index();
+                    self.x = self.current_max_indexes.left;
                 } else {
                     // Normal: inside matrix area and not the left column.
-                    self.x = state.next_left().max(self.current_left_max_index())
+                    self.x = state.next_left().max(self.current_max_indexes.left)
                 }
             }
             Direction::Right => {
                 if self.x >= index.last_column_index() as isize {
                     // Right: outside matrix or last column
-                    self.x = self.current_right_max_index();
+                    self.x = self.current_max_indexes.right;
                 } else if self.x < 0 {
                     // Left: outside matrix
                     self.x = 0;
                 } else {
                     // Normal: inside matrix area and not the right column.
-                    self.x = state.next_right().min(self.current_right_max_index())
+                    self.x = state.next_right().min(self.current_max_indexes.right)
                 }
             }
         }
 
         // Change direction if needed
-        if self.x == self.current_right_max_index() && self.y == self.current_top_max_index() {
+        if self.x == self.current_max_indexes.right && self.y == self.current_max_indexes.top {
             self.direction = Direction::Down;
-        } else if self.x == self.current_right_max_index()
-            && self.y == self.current_bottom_max_index()
+        } else if self.x == self.current_max_indexes.right
+            && self.y == self.current_max_indexes.bottom
         {
             self.direction = Direction::Left;
-        } else if self.x == self.current_left_max_index()
-            && self.y == self.current_bottom_max_index()
+        } else if self.x == self.current_max_indexes.left
+            && self.y == self.current_max_indexes.bottom
         {
             self.direction = Direction::Up;
-        } else if self.x == self.current_left_max_index() && self.y == self.current_top_max_index()
+        } else if self.x == self.current_max_indexes.left && self.y == self.current_max_indexes.top
         {
             self.direction = Direction::Right;
         }
@@ -486,10 +492,18 @@ impl LocationIndexIteratorState {
     /// Top right corner starts the round
     fn move_to_next_round_init_pos(&mut self) {
         self.iteration_count += 1;
+
+        self.current_max_indexes = CurrentMaxIndexes {
+            top: self.init_position_y - self.iteration_count,
+            bottom: self.init_position_y + self.iteration_count,
+            left: self.init_position_x - self.iteration_count,
+            right: self.init_position_x + self.iteration_count,
+        };
+
         self.direction = Direction::Down;
         self.visited_max_corners = VisitedMaxCorners::default();
-        self.x = self.current_right_max_index();
-        self.y = self.current_top_max_index();
+        self.x = self.current_max_indexes.right;
+        self.y = self.current_max_indexes.top;
         self.iter_init_position_x = self.x;
         self.iter_init_position_y = self.y;
 
