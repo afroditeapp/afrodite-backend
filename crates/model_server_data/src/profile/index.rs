@@ -321,20 +321,21 @@ impl CellData {
     const PROFILES_IN_THIS_AREA_MASK: u64 = 0x8000;
 
     pub fn new(width: NonZeroU16, height: NonZeroU16) -> Self {
-        let mut state: u64 = 0;
-        state |= ((height.get() - 1) as u64) << Self::NEXT_DOWN.shift;
-        state |= ((width.get() - 1) as u64) << Self::NEXT_RIGHT.shift;
+        let state = CellState::new(
+            (height.get() - 1) as u64,
+            (width.get() - 1) as u64,
+        );
         Self {
-            state: AtomicU64::new(state),
+            state: AtomicU64::new(state.0),
         }
     }
 
-    fn state(&self) -> u64 {
+    fn state_raw(&self) -> u64 {
         self.state.load(Ordering::Relaxed)
     }
 
     fn update_bit_field(&self, i: usize, info: BitFieldInfo) {
-        let mut state = self.state() & !info.mask;
+        let mut state = self.state_raw() & !info.mask;
         state |= ((i as u64) & 0x7FFF) << info.shift;
         self.state.store(state, Ordering::Relaxed)
     }
@@ -363,40 +364,45 @@ impl CellData {
         }
     }
 
-    fn parser(&self) -> CellDataParser {
-        CellDataParser(self.state())
+    fn state(&self) -> CellState {
+        CellState(self.state_raw())
     }
 }
 
-pub struct CellDataParser(u64);
+pub struct CellState(u64);
 
-impl CellDataParser {
-    fn read_bit_field(&self, field: BitFieldInfo) -> u64 {
-        (self.0 & field.mask) >> field.shift
+impl CellState {
+    pub fn new(
+        next_down: u64,
+        next_right: u64,
+    ) -> Self {
+        let mut state: u64 = 0;
+        state |= next_down << CellData::NEXT_DOWN.shift;
+        state |= next_right << CellData::NEXT_RIGHT.shift;
+        Self(state)
     }
-    fn next_up(&self) -> u64 {
+
+    fn read_bit_field(&self, field: BitFieldInfo) -> isize {
+        ((self.0 & field.mask) >> field.shift) as isize
+    }
+    pub fn next_up(&self) -> isize {
         self.read_bit_field(CellData::NEXT_UP)
     }
-    fn next_down(&self) -> u64 {
+    pub fn next_down(&self) -> isize {
         self.read_bit_field(CellData::NEXT_DOWN)
     }
-    fn next_left(&self) -> u64 {
+    pub fn next_left(&self) -> isize {
         self.read_bit_field(CellData::NEXT_LEFT)
     }
-    fn next_right(&self) -> u64 {
+    pub fn next_right(&self) -> isize {
         self.read_bit_field(CellData::NEXT_RIGHT)
     }
-    fn profiles(&self) -> bool {
+    pub fn profiles(&self) -> bool {
         (self.0 & CellData::PROFILES_IN_THIS_AREA_MASK) != 0
     }
-}
-
-pub struct CellState {
-    pub next_up: isize,
-    pub next_down: isize,
-    pub next_left: isize,
-    pub next_right: isize,
-    pub profiles_in_this_area: bool,
+    pub fn disable_profiles_flag(&mut self) {
+        self.0 &= !CellData::PROFILES_IN_THIS_AREA_MASK;
+    }
 }
 
 pub trait CellDataProvider {
@@ -410,33 +416,26 @@ pub trait CellDataProvider {
 
 impl CellDataProvider for CellData {
     fn next_up(&self) -> usize {
-        self.parser().next_up() as usize
+        self.state().next_up() as usize
     }
 
     fn next_down(&self) -> usize {
-        self.parser().next_down() as usize
+        self.state().next_down() as usize
     }
 
     fn next_left(&self) -> usize {
-        self.parser().next_left() as usize
+        self.state().next_left() as usize
     }
 
     fn next_right(&self) -> usize {
-        self.parser().next_right() as usize
+        self.state().next_right() as usize
     }
 
     fn profiles(&self) -> bool {
-        self.parser().profiles()
+        self.state().profiles()
     }
 
     fn state(&self) -> CellState {
-        let parser = self.parser();
-        CellState {
-            next_up: parser.next_up() as isize,
-            next_down: parser.next_down() as isize,
-            next_left: parser.next_left() as isize,
-            next_right: parser.next_right() as isize,
-            profiles_in_this_area: parser.profiles(),
-        }
+        self.state()
     }
 }

@@ -293,10 +293,32 @@ impl LocationIndexIteratorState {
         LocationIndexIterator::new(self, reader)
     }
 
+    pub fn current_position(&self) -> LocationIndexKey {
+        LocationIndexKey { y: self.y as u16, x: self.x as u16 }
+    }
+
+    pub fn get_current_position_if_contains_profiles(&self, state: &CellState) -> Option<LocationIndexKey> {
+        if !state.profiles() {
+            return None;
+        }
+
+        // Make area inside inner limit appear empty
+        if let Some(limit) = &self.limit_inner {
+            if limit.is_inside(self.x, self.y) {
+                return None;
+            }
+        }
+
+        // Make area outside outer limit appear empty
+        if self.limit_outer.is_outside(self.x, self.y) {
+            return None;
+        }
+
+        Some(self.current_position())
+    }
+
     /// Get next cell where are profiles.
-    ///
-    /// Returns key for HashMap. Key is (y, x)
-    fn next_raw(&mut self, index: &impl ReadIndex) -> Option<(u16, u16)> {
+    fn next(&mut self, index: &impl ReadIndex) -> Option<LocationIndexKey> {
         if self.completed {
             return None;
         }
@@ -305,11 +327,8 @@ impl LocationIndexIteratorState {
 
         loop {
             let state = self.current_cell_state(index);
-            let data_position = if state.profiles_in_this_area {
-                Some((self.y as u16, self.x as u16))
-            } else {
-                None
-            };
+            let data_position =
+                self.get_current_position_if_contains_profiles(&state);
 
             match self.move_next_position(index, state) {
                 Ok(()) => (),
@@ -357,33 +376,12 @@ impl LocationIndexIteratorState {
     }
 
     fn current_cell_state(&self, index: &impl ReadIndex) -> CellState {
-        let mut state = self.current_cell(index)
+        self.current_cell(index)
             .map(|cell| cell.state())
-            .unwrap_or(CellState {
-                next_up: 0,
-                next_down: index.last_row_index() as isize,
-                next_left: 0,
-                next_right: index.last_column_index() as isize,
-                profiles_in_this_area: false,
-            });
-
-        if !state.profiles_in_this_area {
-            return state;
-        }
-
-        // Make area inside inner limit appear empty
-        if let Some(limit) = &self.limit_inner {
-            if limit.is_inside(self.x, self.y) {
-                state.profiles_in_this_area = false;
-            }
-        }
-
-        // Make area outside outer limit appear empty
-        if self.limit_outer.is_outside(self.x, self.y) {
-            state.profiles_in_this_area = false;
-        }
-
-        state
+            .unwrap_or(CellState::new(
+                index.last_row_index() as u64,
+                index.last_column_index() as u64,
+            ))
     }
 
     fn current_cell<'a, A: ReadIndex>(&self, index: &'a A) -> Option<&'a A::C> {
@@ -417,7 +415,7 @@ impl LocationIndexIteratorState {
                     self.y = self.current_top_max_index();
                 } else {
                     // Normal: inside matrix area and not the first row.
-                    self.y = state.next_up.max(self.current_top_max_index())
+                    self.y = state.next_up().max(self.current_top_max_index())
                 }
             }
             Direction::Down => {
@@ -429,7 +427,7 @@ impl LocationIndexIteratorState {
                     self.y = 0;
                 } else {
                     // Normal: inside matrix area and not the last row.
-                    self.y = state.next_down.min(self.current_bottom_max_index())
+                    self.y = state.next_down().min(self.current_bottom_max_index())
                 }
             }
             Direction::Left => {
@@ -441,7 +439,7 @@ impl LocationIndexIteratorState {
                     self.x = self.current_left_max_index();
                 } else {
                     // Normal: inside matrix area and not the left column.
-                    self.x = state.next_left.max(self.current_left_max_index())
+                    self.x = state.next_left().max(self.current_left_max_index())
                 }
             }
             Direction::Right => {
@@ -453,7 +451,7 @@ impl LocationIndexIteratorState {
                     self.x = 0;
                 } else {
                     // Normal: inside matrix area and not the right column.
-                    self.x = state.next_right.min(self.current_right_max_index())
+                    self.x = state.next_right().min(self.current_right_max_index())
                 }
             }
         }
@@ -538,8 +536,10 @@ impl <T: ReadIndex> LocationIndexIterator<T> {
         }
     }
 
+    #[cfg(test)]
+    /// Return next index key as (y, x) tuple.
     pub fn next_raw(&mut self) -> Option<(u16, u16)> {
-        self.state.next_raw(&self.area)
+        self.state.next(&self.area).map(|v| (v.y, v.x))
     }
 }
 
@@ -550,7 +550,7 @@ impl <T: ReadIndex> Iterator for LocationIndexIterator<T> {
     ///
     /// If None then there is not any more cells with profiles.
     fn next(&mut self) -> Option<LocationIndexKey> {
-        self.state.next_raw(&self.area).map(|(y, x)| LocationIndexKey { y, x })
+        self.state.next(&self.area)
     }
 }
 
