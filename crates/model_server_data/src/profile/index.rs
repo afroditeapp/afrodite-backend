@@ -321,12 +321,21 @@ impl CellData {
     }
 }
 
+pub struct CellState {
+    pub next_up: isize,
+    pub next_down: isize,
+    pub next_left: isize,
+    pub next_right: isize,
+    pub profiles_in_this_area: bool,
+}
+
 pub trait CellDataProvider {
     fn next_down(&self) -> usize;
     fn next_up(&self) -> usize;
     fn next_left(&self) -> usize;
     fn next_right(&self) -> usize;
     fn profiles(&self) -> bool;
+    fn state(&self) -> CellState;
 }
 
 impl CellDataProvider for CellData {
@@ -348,5 +357,15 @@ impl CellDataProvider for CellData {
 
     fn profiles(&self) -> bool {
         self.profiles_in_this_area.load(Ordering::Relaxed)
+    }
+
+    fn state(&self) -> CellState {
+        CellState {
+            next_up: self.next_up.load(Ordering::Relaxed) as isize,
+            next_down: self.next_down.load(Ordering::Relaxed) as isize,
+            next_left: self.next_left.load(Ordering::Relaxed) as isize,
+            next_right: self.next_right.load(Ordering::Relaxed) as isize,
+            profiles_in_this_area: self.profiles_in_this_area.load(Ordering::Relaxed),
+        }
     }
 }
