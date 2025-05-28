@@ -34,16 +34,53 @@ use super::area::LocationIndexArea;
 // good enough value as the iterator does not go all squares one by one.
 const INDEX_ITERATOR_COUNT_LIMIT: u32 = 350_000;
 
+/// Max width or height for index is 0x8000, which makes possible
+/// to use u15 values for indexing the matrix.
+/// The u15 values are stored in [CellData].
+pub struct IndexSize {
+    value: NonZeroU16,
+}
+
+impl IndexSize {
+    const MAX_SIZE: u16 = 0x8000;
+
+    /// Panics if value is larger than 0x8000.
+    pub fn new(value: NonZeroU16) -> Self {
+        if value.get() > Self::MAX_SIZE {
+            panic!("Max index width or height is {}", Self::MAX_SIZE);
+        }
+        Self {
+            value,
+        }
+    }
+
+    fn get(&self) -> u16 {
+        self.value.get()
+    }
+}
+
+impl TryFrom<u16> for IndexSize {
+    type Error = String;
+    fn try_from(value: u16) -> Result<Self, Self::Error> {
+        let non_zero = TryInto::<NonZeroU16>::try_into(value).map_err(|e| e.to_string())?;
+        if value > Self::MAX_SIZE {
+            Err(format!("Max index width or height is {}", Self::MAX_SIZE))
+        } else {
+            Ok(Self::new(non_zero))
+        }
+    }
+}
+
 /// Origin (0,0) = (y, x) is at top left corner.
 pub struct LocationIndex {
     data: DMatrix<CellData>,
 }
 
 impl LocationIndex {
-    pub fn new(width: NonZeroU16, height: NonZeroU16) -> Self {
+    pub fn new(width: IndexSize, height: IndexSize) -> Self {
         let size = (width.get() as usize) * (height.get() as usize);
         let mut data = Vec::with_capacity(size);
-        data.resize_with(size, || CellData::new(width.get(), height.get()));
+        data.resize_with(size, || CellData::new(width.value, height.value));
         let storage = VecStorage::new(Dyn(height.get() as usize), Dyn(width.get() as usize), data);
         Self {
             data: DMatrix::from_data(storage),

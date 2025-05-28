@@ -8,7 +8,7 @@ use std::{
 use area::{IndexArea, LocationIndexArea};
 use config::{file::LocationConfig, Config};
 use error_stack::ResultExt;
-use location::ReadIndex;
+use location::{IndexSize, ReadIndex};
 use model::{AccountId, UnixTime};
 use model_server_data::{
     CellData, Location, LocationIndexKey, LocationIndexProfileData, LocationInternal, MaxDistanceKm, MinDistanceKm, ProfileLink, ProfileQueryMakerDetails
@@ -120,7 +120,7 @@ impl LocationIndexManager {
             coordinates.height().try_into().unwrap(),
         );
 
-        let index = LocationIndex::new(width, height).into();
+        let index = LocationIndex::new(IndexSize::new(width), IndexSize::new(height)).into();
 
         info!(
             "{}",

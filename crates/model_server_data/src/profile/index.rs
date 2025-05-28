@@ -1,4 +1,4 @@
-use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU16, Ordering};
+use std::{num::NonZeroU16, sync::atomic::{AtomicI64, AtomicU64, Ordering}};
 
 use model::{AccountId, InitialSetupCompletedTime, ProfileAge, ProfileContentVersion};
 use nalgebra::DMatrix;
@@ -272,15 +272,6 @@ impl LocationIndexKey {
     }
 }
 
-#[derive(Debug)]
-pub struct CellData {
-    pub next_up: AtomicU16,
-    pub next_down: AtomicU16,
-    pub next_left: AtomicU16,
-    pub next_right: AtomicU16,
-    pub profiles_in_this_area: AtomicBool,
-}
-
 impl std::ops::Index<LocationIndexKey> for DMatrix<CellData> {
     type Output = <Self as std::ops::Index<(usize, usize)>>::Output;
 
@@ -289,35 +280,114 @@ impl std::ops::Index<LocationIndexKey> for DMatrix<CellData> {
     }
 }
 
+struct BitFieldInfo {
+    mask: u64,
+    shift: u64,
+}
+
+#[derive(Debug)]
+pub struct CellData {
+    /// Contains these values starting from least significant bit:
+    ///
+    /// - next_up (u15)
+    /// - profiles_in_this_area (bit flag)
+    /// - next_down (u15)
+    /// - empty (bit flag)
+    /// - next_left (u15)
+    /// - empty (bit flag)
+    /// - next_right (u15)
+    /// - empty (bit flag)
+    pub state: AtomicU64,
+}
+
 impl CellData {
-    pub fn new(width: u16, height: u16) -> Self {
+    const NEXT_UP: BitFieldInfo = BitFieldInfo {
+        mask: 0x7FFF,
+        shift: 0,
+    };
+    const NEXT_DOWN: BitFieldInfo = BitFieldInfo {
+        mask: 0x7FFF_0000,
+        shift: 16,
+    };
+    const NEXT_LEFT: BitFieldInfo = BitFieldInfo {
+        mask: 0x7FFF_0000_0000,
+        shift: 32,
+    };
+    const NEXT_RIGHT: BitFieldInfo = BitFieldInfo {
+        mask: 0x7FFF_0000_0000_0000,
+        shift: 48,
+    };
+
+    const PROFILES_IN_THIS_AREA_MASK: u64 = 0x8000;
+
+    pub fn new(width: NonZeroU16, height: NonZeroU16) -> Self {
+        let mut state: u64 = 0;
+        state |= ((height.get() - 1) as u64) << Self::NEXT_DOWN.shift;
+        state |= ((width.get() - 1) as u64) << Self::NEXT_RIGHT.shift;
         Self {
-            next_down: AtomicU16::new(height.checked_sub(1).unwrap()),
-            next_up: AtomicU16::new(0),
-            next_left: AtomicU16::new(0),
-            next_right: AtomicU16::new(width.checked_sub(1).unwrap()),
-            profiles_in_this_area: AtomicBool::new(false),
+            state: AtomicU64::new(state),
         }
     }
 
-    pub fn set_next_down(&self, i: usize) {
-        self.next_down.store(i as u16, Ordering::Relaxed)
+    fn state(&self) -> u64 {
+        self.state.load(Ordering::Relaxed)
+    }
+
+    fn update_bit_field(&self, i: usize, info: BitFieldInfo) {
+        let mut state = self.state() & !info.mask;
+        state |= ((i as u64) & 0x7FFF) << info.shift;
+        self.state.store(state, Ordering::Relaxed)
     }
 
     pub fn set_next_up(&self, i: usize) {
-        self.next_up.store(i as u16, Ordering::Relaxed)
+        self.update_bit_field(i, Self::NEXT_UP);
+    }
+
+    pub fn set_next_down(&self, i: usize) {
+        self.update_bit_field(i, Self::NEXT_DOWN);
     }
 
     pub fn set_next_left(&self, i: usize) {
-        self.next_left.store(i as u16, Ordering::Relaxed)
+        self.update_bit_field(i, Self::NEXT_LEFT);
     }
 
     pub fn set_next_right(&self, i: usize) {
-        self.next_right.store(i as u16, Ordering::Relaxed)
+        self.update_bit_field(i, Self::NEXT_RIGHT);
     }
 
     pub fn set_profiles(&self, value: bool) {
-        self.profiles_in_this_area.store(value, Ordering::Relaxed)
+        if value {
+            self.state.fetch_or(Self::PROFILES_IN_THIS_AREA_MASK, Ordering::Relaxed);
+        } else {
+            self.state.fetch_and(!Self::PROFILES_IN_THIS_AREA_MASK, Ordering::Relaxed);
+        }
+    }
+
+    fn parser(&self) -> CellDataParser {
+        CellDataParser(self.state())
+    }
+}
+
+pub struct CellDataParser(u64);
+
+impl CellDataParser {
+    fn read_bit_field(&self, field: BitFieldInfo) -> u64 {
+        (self.0 & field.mask) >> field.shift
+    }
+    fn next_up(&self) -> u64 {
+        self.read_bit_field(CellData::NEXT_UP)
+    }
+    fn next_down(&self) -> u64 {
+        self.read_bit_field(CellData::NEXT_DOWN)
+    }
+    fn next_left(&self) -> u64 {
+        self.read_bit_field(CellData::NEXT_LEFT)
+    }
+    fn next_right(&self) -> u64 {
+        self.read_bit_field(CellData::NEXT_RIGHT)
+    }
+    fn profiles(&self) -> bool {
+        (self.0 & CellData::PROFILES_IN_THIS_AREA_MASK) != 0
     }
 }
 
@@ -330,8 +400,8 @@ pub struct CellState {
 }
 
 pub trait CellDataProvider {
-    fn next_down(&self) -> usize;
     fn next_up(&self) -> usize;
+    fn next_down(&self) -> usize;
     fn next_left(&self) -> usize;
     fn next_right(&self) -> usize;
     fn profiles(&self) -> bool;
@@ -339,33 +409,34 @@ pub trait CellDataProvider {
 }
 
 impl CellDataProvider for CellData {
-    fn next_down(&self) -> usize {
-        self.next_down.load(Ordering::Relaxed) as usize
+    fn next_up(&self) -> usize {
+        self.parser().next_up() as usize
     }
 
-    fn next_up(&self) -> usize {
-        self.next_up.load(Ordering::Relaxed) as usize
+    fn next_down(&self) -> usize {
+        self.parser().next_down() as usize
     }
 
     fn next_left(&self) -> usize {
-        self.next_left.load(Ordering::Relaxed) as usize
+        self.parser().next_left() as usize
     }
 
     fn next_right(&self) -> usize {
-        self.next_right.load(Ordering::Relaxed) as usize
+        self.parser().next_right() as usize
     }
 
     fn profiles(&self) -> bool {
-        self.profiles_in_this_area.load(Ordering::Relaxed)
+        self.parser().profiles()
     }
 
     fn state(&self) -> CellState {
+        let parser = self.parser();
         CellState {
-            next_up: self.next_up.load(Ordering::Relaxed) as isize,
-            next_down: self.next_down.load(Ordering::Relaxed) as isize,
-            next_left: self.next_left.load(Ordering::Relaxed) as isize,
-            next_right: self.next_right.load(Ordering::Relaxed) as isize,
-            profiles_in_this_area: self.profiles_in_this_area.load(Ordering::Relaxed),
+            next_up: parser.next_up() as isize,
+            next_down: parser.next_down() as isize,
+            next_left: parser.next_left() as isize,
+            next_right: parser.next_right() as isize,
+            profiles_in_this_area: parser.profiles(),
         }
     }
 }
