@@ -8,7 +8,7 @@ use std::{
 use area::{IndexArea, LocationIndexArea};
 use config::{file::LocationConfig, Config};
 use error_stack::ResultExt;
-use location::{IndexSize, ReadIndex};
+use location::IndexSize;
 use model::{AccountId, UnixTime};
 use model_server_data::{
     CellData, Location, LocationIndexKey, LocationIndexProfileData, LocationInternal, MaxDistanceKm, MinDistanceKm, ProfileLink, ProfileQueryMakerDetails
@@ -260,12 +260,8 @@ impl<'a> LocationIndexIteratorHandle<'a> {
         LocationIndexIteratorState::new(area, random, &self.index)
     }
 
-    pub fn index_width(&self) -> u16 {
-        self.index.width() as u16
-    }
-
-    pub fn index_height(&self) -> u16 {
-        self.index.height() as u16
+    pub fn index(&self) -> &LocationIndex {
+        self.index
     }
 }
 
@@ -292,7 +288,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
         max_distance: Option<MaxDistanceKm>,
     ) -> LocationIndexArea {
         self.coordinates
-            .to_index_area(location.into(), min_distance, max_distance)
+            .to_index_area(location.into(), min_distance, max_distance, self.index)
     }
 
     /// Move LocationIndexProfileData to another index location
@@ -563,6 +559,7 @@ impl CoordinateManager {
         location: LocationInternal,
         min_distance: Option<MinDistanceKm>,
         max_distance: Option<MaxDistanceKm>,
+        index: &LocationIndex,
     ) -> LocationIndexArea {
         let profile_location = self.location_to_index_key(location);
 
@@ -576,11 +573,12 @@ impl CoordinateManager {
             IndexArea::max_area(self.width(), self.height())
         };
 
-        LocationIndexArea {
+        LocationIndexArea::new(
             area_inner,
             area_outer,
             profile_location,
-        }
+            index,
+        )
     }
 
     pub fn location_to_index_key(&self, location: LocationInternal) -> LocationIndexKey {

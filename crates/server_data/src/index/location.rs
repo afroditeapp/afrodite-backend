@@ -37,15 +37,20 @@ const INDEX_ITERATOR_COUNT_LIMIT: u32 = 350_000;
 /// Max width or height for index is 0x8000, which makes possible
 /// to use u15 values for indexing the matrix.
 /// The u15 values are stored in [CellData].
+/// Min value is 3 as index border is reserved to be empty.
 pub struct IndexSize {
     value: NonZeroU16,
 }
 
 impl IndexSize {
+    const MIN_SIZE: u16 = 3;
     const MAX_SIZE: u16 = 0x8000;
 
-    /// Panics if value is larger than 0x8000.
+    /// Panics if value is less than 3 and larger than 0x8000.
     pub fn new(value: NonZeroU16) -> Self {
+        if value.get() < Self::MIN_SIZE {
+            panic!("Min index width or height is {}", Self::MIN_SIZE);
+        }
         if value.get() > Self::MAX_SIZE {
             panic!("Max index width or height is {}", Self::MAX_SIZE);
         }
@@ -63,7 +68,9 @@ impl TryFrom<u16> for IndexSize {
     type Error = String;
     fn try_from(value: u16) -> Result<Self, Self::Error> {
         let non_zero = TryInto::<NonZeroU16>::try_into(value).map_err(|e| e.to_string())?;
-        if value > Self::MAX_SIZE {
+        if value < Self::MIN_SIZE {
+            Err(format!("Min index width or height is {}", Self::MIN_SIZE))
+        } else if value > Self::MAX_SIZE {
             Err(format!("Max index width or height is {}", Self::MAX_SIZE))
         } else {
             Ok(Self::new(non_zero))
@@ -109,10 +116,12 @@ pub trait ReadIndex {
     /// Index height. Greater than zero.
     fn height(&self) -> usize;
 
+    /// Last y-axis index.
     fn last_row_index(&self) -> usize {
         self.height() - 1
     }
 
+    /// Last x-axis index.
     fn last_column_index(&self) -> usize {
         self.width() - 1
     }
@@ -147,20 +156,6 @@ enum Direction {
     Down,
     Left,
     Right,
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Default)]
-struct VisitedMaxCorners {
-    pub top_left: bool,
-    pub top_right: bool,
-    pub bottom_left: bool,
-    pub bottom_right: bool,
-}
-
-impl VisitedMaxCorners {
-    fn all_visited(&self) -> bool {
-        self.bottom_left && self.bottom_right && self.top_left && self.top_right
-    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -209,10 +204,8 @@ struct IndexLimitOuter(pub IndexLimit);
 
 impl IndexLimitOuter {
     fn is_outside(&self, x: isize, y: isize) -> bool {
-        x < self.0.top_left.x  ||
-        x > self.0.bottom_right.x ||
-        y < self.0.top_left.y ||
-        y > self.0.bottom_right.y
+        (x < self.0.top_left.x || x > self.0.bottom_right.x) &&
+        (y < self.0.top_left.y || y > self.0.bottom_right.y)
     }
 }
 
@@ -229,52 +222,165 @@ struct CurrentMaxIndexes {
     right: isize,
 }
 
-/// Iterator for location index
-///
-/// Start from one cell and enlarge area clockwise.
-/// Each iteration starts from one cell down of top right corner.
-/// Iteration ends to top right corner.
+/// State which does not change after iterator is created.
 #[derive(Debug, Clone)]
-pub struct LocationIndexIteratorState {
-    init_position_y: isize,
-    init_position_x: isize,
-    x: isize,
+struct InitialState {
     y: isize,
-    /// How many rounds cursor has moved. Checking initial position counts one.
-    iteration_count: isize,
-    iter_init_position_x: isize,
-    iter_init_position_y: isize,
-    /// Move direction for cursor
-    direction: Direction,
-    /// No more new cells available.
-    completed: bool,
-    visited_max_corners: VisitedMaxCorners,
+    x: isize,
     limit_inner: Option<IndexLimitInner>,
     limit_outer: IndexLimitOuter,
-    current_max_indexes: CurrentMaxIndexes,
+}
+
+enum CreateRoundStateResult {
+    Continue(RoundState),
+    AllIterated,
+}
+
+enum MoveForwardResult {
+    /// Nothing happened. Move to next round.
+    Completed,
+    CheckProfilesAndMoveForward,
+}
+
+/// Cursor round specific state.
+#[derive(Debug, Clone)]
+struct RoundState {
+    x: isize,
+    y: isize,
+    /// Move direction for cursor
+    direction: Direction,
+    max_indexes: CurrentMaxIndexes,
+}
+
+impl RoundState {
+    /// Round number must be 0 or greater.
+    ///
+    /// When round number is 0 the [Self::move_forward] returns directly
+    /// [RoundResult::Completed].
+    fn create(
+        initial: &InitialState,
+        round: isize,
+        index: &impl ReadIndex,
+    ) -> CreateRoundStateResult {
+        let top = initial.y - round;
+        let bottom = initial.y + round;
+        let left = initial.x - round;
+        let right = initial.x + round;
+
+        if initial.limit_outer.is_outside(left, top) &&
+            initial.limit_outer.is_outside(right, bottom) {
+            return CreateRoundStateResult::AllIterated;
+        }
+
+        let max_indexes = CurrentMaxIndexes {
+            top: top.max(0),
+            bottom: bottom.min(index.last_row_index() as isize),
+            left: left.max(0),
+            right: right.min(index.last_column_index() as isize),
+        };
+
+        let state = Self {
+            x: max_indexes.right,
+            y: if round == 0 {
+                max_indexes.top
+            } else {
+                max_indexes.top + 1
+            },
+            max_indexes,
+            direction: Direction::Down,
+        };
+
+        CreateRoundStateResult::Continue(state)
+    }
+
+    fn current_position(&self) -> LocationIndexKey {
+        LocationIndexKey { y: self.y as u16, x: self.x as u16 }
+    }
+
+    fn is_round_complete(&self) -> bool {
+        self.max_indexes.right == self.x
+            && self.max_indexes.top == self.y
+            && self.direction == Direction::Down
+    }
+
+    /// Move position according to cell next index information.
+    ///
+    /// Returns error if there is no next new position.
+    fn move_forward(&mut self, state: CellState) -> MoveForwardResult {
+        if self.is_round_complete() {
+            return MoveForwardResult::Completed;
+        }
+
+        match self.direction {
+            Direction::Up => {
+                self.y = state.next_up().max(self.max_indexes.top);
+                if self.y == self.max_indexes.top {
+                    self.direction = Direction::Right;
+                }
+            }
+            Direction::Down => {
+                self.y = state.next_down().min(self.max_indexes.bottom);
+                if self.y == self.max_indexes.bottom {
+                    self.direction = Direction::Left;
+                }
+            }
+            Direction::Left => {
+                self.x = state.next_left().max(self.max_indexes.left);
+                if self.x == self.max_indexes.left {
+                    self.direction = Direction::Up;
+                }
+            }
+            Direction::Right => {
+                self.x = state.next_right().min(self.max_indexes.right);
+                if self.x == self.max_indexes.right {
+                    self.direction = Direction::Down;
+                }
+            }
+        }
+
+        MoveForwardResult::CheckProfilesAndMoveForward
+    }
+}
+
+/// Iterator for location index
+///
+/// Start moving cursor from one cell and enlarge area clockwise.
+/// Each cursor round starts from one cell down of top right corner of the specific
+/// cursor round. The rounds ends to the top right corner of the round.
+///
+/// Border area of the index must be empty from profiles as cursor
+/// can be on that area multiple times.
+#[derive(Debug, Clone)]
+pub struct LocationIndexIteratorState {
+    initial_state: InitialState,
+    round: RoundState,
+    /// How many rounds cursor has moved. Checking initial position counts one.
+    current_round: isize,
+    completed: bool,
 }
 
 impl LocationIndexIteratorState {
     pub fn completed() -> Self {
         Self {
-            y: 0,
-            x: 0,
-            init_position_y: 0,
-            init_position_x: 0,
-            iteration_count: 0,
-            iter_init_position_x: 0,
-            iter_init_position_y: 0,
-            direction: Direction::Down,
-            completed: true,
-            visited_max_corners: VisitedMaxCorners::default(),
-            limit_inner: None,
-            limit_outer: IndexLimitOuter::default(),
-            current_max_indexes: CurrentMaxIndexes {
-                top: 0,
-                bottom: 0,
-                left: 0,
-                right: 0,
+            initial_state: InitialState {
+                x: 0,
+                y: 0,
+                limit_inner: None,
+                limit_outer: IndexLimitOuter::default(),
             },
+            round: RoundState {
+                x: 0,
+                y: 0,
+                direction: Direction::Down,
+                max_indexes: CurrentMaxIndexes {
+                    top: 0,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                }
+            },
+            current_round: 0,
+            completed: true,
         }
     }
 
@@ -284,43 +390,34 @@ impl LocationIndexIteratorState {
         index: &impl ReadIndex,
     ) -> Self {
         let start_position = area.index_iterator_start_location(random_start_position);
-        let x = (start_position.x as isize).min(index.width() as isize - 1);
-        let y = (start_position.y as isize).min(index.height() as isize - 1);
-
-        Self {
+        let x = start_position.x as isize;
+        let y = start_position.y as isize;
+        let initial_state = InitialState {
             x,
             y,
-            init_position_x: x,
-            init_position_y: y,
-            iter_init_position_x: x,
-            iter_init_position_y: y,
-            iteration_count: 0,
-            direction: Direction::Down,
-            completed: false,
-            visited_max_corners: VisitedMaxCorners::default(),
-            limit_inner: area.area_inner.as_ref().map(|a| IndexLimitInner(IndexLimit {
+            limit_inner: area.area_inner().as_ref().map(|a| IndexLimitInner(IndexLimit {
                 top_left: a.top_left.into(),
                 bottom_right: a.bottom_right.into(),
             })),
             limit_outer: IndexLimitOuter(IndexLimit {
-                top_left: area.area_outer.top_left.into(),
-                bottom_right: area.area_outer.bottom_right.into(),
+                top_left: area.area_outer().top_left.into(),
+                bottom_right: area.area_outer().bottom_right.into(),
             }),
-            current_max_indexes: CurrentMaxIndexes {
-                top: y,
-                bottom: y,
-                left: x,
-                right: x,
-            },
+        };
+        match RoundState::create(&initial_state, 0, index) {
+            CreateRoundStateResult::AllIterated => Self::completed(),
+            CreateRoundStateResult::Continue(round) =>
+                Self {
+                    round,
+                    initial_state,
+                    current_round: 0,
+                    completed: false,
+                }
         }
     }
 
     pub fn into_iterator<T: ReadIndex>(self, reader: T) -> LocationIndexIterator<T> {
         LocationIndexIterator::new(self, reader)
-    }
-
-    pub fn current_position(&self) -> LocationIndexKey {
-        LocationIndexKey { y: self.y as u16, x: self.x as u16 }
     }
 
     pub fn get_current_position_if_contains_profiles(&self, state: &CellState) -> Option<LocationIndexKey> {
@@ -329,18 +426,18 @@ impl LocationIndexIteratorState {
         }
 
         // Make area inside inner limit appear empty
-        if let Some(limit) = &self.limit_inner {
-            if limit.is_inside(self.x, self.y) {
+        if let Some(limit) = &self.initial_state.limit_inner {
+            if limit.is_inside(self.round.x, self.round.y) {
                 return None;
             }
         }
 
         // Make area outside outer limit appear empty
-        if self.limit_outer.is_outside(self.x, self.y) {
+        if self.initial_state.limit_outer.is_outside(self.round.x, self.round.y) {
             return None;
         }
 
-        Some(self.current_position())
+        Some(self.round.current_position())
     }
 
     /// Get next cell where are profiles.
@@ -353,14 +450,27 @@ impl LocationIndexIteratorState {
 
         loop {
             let state = self.current_cell_state(index);
-            let data_position =
-                self.get_current_position_if_contains_profiles(&state);
+            let Some(state) = state else {
+                // This should not happen as all coordinates should point to
+                // a valid location.
+                error!("Out of bounds location index access detected");
+                self.completed = true;
+                return None;
+            };
+            let data_position = self.get_current_position_if_contains_profiles(&state);
 
-            match self.move_next_position(index, state) {
-                Ok(()) => (),
-                Err(()) => {
-                    self.completed = true;
-                    return data_position;
+            match self.round.move_forward(state) {
+                MoveForwardResult::CheckProfilesAndMoveForward => (),
+                MoveForwardResult::Completed => {
+                    self.current_round += 1;
+                     match RoundState::create(&self.initial_state, self.current_round, index) {
+                        CreateRoundStateResult::AllIterated => {
+                            self.completed = true;
+                            return data_position;
+                        }
+                        CreateRoundStateResult::Continue(round) =>
+                            self.round = round,
+                    }
                 }
             }
 
@@ -381,150 +491,15 @@ impl LocationIndexIteratorState {
         }
     }
 
-    fn current_cell_state(&self, index: &impl ReadIndex) -> CellState {
+    fn current_cell_state(&self, index: &impl ReadIndex) -> Option<CellState> {
         self.current_cell(index)
             .map(|cell| cell.state())
-            .unwrap_or(CellState::new(
-                index.last_row_index() as u64,
-                index.last_column_index() as u64,
-            ))
     }
 
     fn current_cell<'a, A: ReadIndex>(&self, index: &'a A) -> Option<&'a A::C> {
-        let x = self.x.try_into().ok()?;
-        let y = self.y.try_into().ok()?;
+        let x = self.round.x.try_into().ok()?;
+        let y = self.round.y.try_into().ok()?;
         index.get_cell_data(x, y)
-    }
-
-    /// Move position according to cell next index information.
-    ///
-    /// Returns error if there is no next new position.
-    fn move_next_position(&mut self, index: &impl ReadIndex, state: CellState) -> Result<(), ()> {
-        if self.visited_max_corners.all_visited() && self.current_round_complete() {
-            return Err(());
-        }
-
-        if self.current_round_complete() {
-            self.move_to_next_round_init_pos();
-            self.update_visited_max_corners();
-            return Ok(());
-        }
-
-        // Make move
-        match self.direction {
-            Direction::Up => {
-                if self.y >= index.height() as isize {
-                    // Bottom: outside matrix
-                    self.y = index.last_row_index() as isize;
-                } else if self.y <= 0 {
-                    // Top: top line or outside matrix
-                    self.y = self.current_max_indexes.top;
-                } else {
-                    // Normal: inside matrix area and not the first row.
-                    self.y = state.next_up().max(self.current_max_indexes.top);
-                }
-            }
-            Direction::Down => {
-                if self.y >= index.last_row_index() as isize {
-                    // Bottom: outside matrix or bottom row
-                    self.y = self.current_max_indexes.bottom;
-                } else if self.y < 0 {
-                    // Top: top line or outside matrix
-                    self.y = 0;
-                } else {
-                    // Normal: inside matrix area and not the last row.
-                    self.y = state.next_down().min(self.current_max_indexes.bottom)
-                }
-            }
-            Direction::Left => {
-                if self.x > index.last_column_index() as isize {
-                    // Right: outside matrix
-                    self.x = index.last_column_index() as isize;
-                } else if self.x <= 0 {
-                    // Left: left column or outside matrix
-                    self.x = self.current_max_indexes.left;
-                } else {
-                    // Normal: inside matrix area and not the left column.
-                    self.x = state.next_left().max(self.current_max_indexes.left)
-                }
-            }
-            Direction::Right => {
-                if self.x >= index.last_column_index() as isize {
-                    // Right: outside matrix or last column
-                    self.x = self.current_max_indexes.right;
-                } else if self.x < 0 {
-                    // Left: outside matrix
-                    self.x = 0;
-                } else {
-                    // Normal: inside matrix area and not the right column.
-                    self.x = state.next_right().min(self.current_max_indexes.right)
-                }
-            }
-        }
-
-        // Change direction if needed
-        if self.x == self.current_max_indexes.right && self.y == self.current_max_indexes.top {
-            self.direction = Direction::Down;
-        } else if self.x == self.current_max_indexes.right
-            && self.y == self.current_max_indexes.bottom
-        {
-            self.direction = Direction::Left;
-        } else if self.x == self.current_max_indexes.left
-            && self.y == self.current_max_indexes.bottom
-        {
-            self.direction = Direction::Up;
-        } else if self.x == self.current_max_indexes.left && self.y == self.current_max_indexes.top
-        {
-            self.direction = Direction::Right;
-        }
-
-        self.update_visited_max_corners();
-
-        Ok(())
-    }
-
-    fn current_round_complete(&self) -> bool {
-        self.iter_init_position_x == self.x
-            && self.iter_init_position_y == self.y
-            && self.direction == Direction::Down
-    }
-
-    /// Top right corner starts the round
-    fn move_to_next_round_init_pos(&mut self) {
-        self.iteration_count += 1;
-
-        self.current_max_indexes = CurrentMaxIndexes {
-            top: self.init_position_y - self.iteration_count,
-            bottom: self.init_position_y + self.iteration_count,
-            left: self.init_position_x - self.iteration_count,
-            right: self.init_position_x + self.iteration_count,
-        };
-
-        self.direction = Direction::Down;
-        self.visited_max_corners = VisitedMaxCorners::default();
-        self.x = self.current_max_indexes.right;
-        self.y = self.current_max_indexes.top;
-        self.iter_init_position_x = self.x;
-        self.iter_init_position_y = self.y;
-
-        // Move to next than the iter init position
-        self.y += 1;
-    }
-
-    fn update_visited_max_corners(&mut self) {
-        let outer = &self.limit_outer.0;
-        if self.y <= outer.top_left.y && self.x <= outer.top_left.x {
-            self.visited_max_corners.top_left = true;
-        }
-        if self.y <= outer.top_left.y && self.x >= outer.bottom_right.x {
-            self.visited_max_corners.top_right = true;
-        }
-        if self.y >= outer.bottom_right.y && self.x <= outer.top_left.x {
-            self.visited_max_corners.bottom_left = true;
-        }
-        if self.y >= outer.bottom_right.y && self.x >= outer.bottom_right.x {
-            self.visited_max_corners.bottom_right = true;
-        }
     }
 }
 
@@ -551,9 +526,9 @@ impl <T: ReadIndex> LocationIndexIterator<T> {
     }
 
     #[cfg(test)]
-    /// Return next index key as (y, x) tuple.
+    /// Return next index key as (x, y) tuple.
     pub fn next_raw(&mut self) -> Option<(u16, u16)> {
-        self.state.next(&self.area).map(|v| (v.y, v.x))
+        self.state.next(&self.area).map(|v| (v.x, v.y))
     }
 }
 
@@ -584,6 +559,14 @@ impl IndexUpdater {
         if self.index.data[key].profiles() {
             return;
         }
+
+        if key.x == 0 || key.x == self.index.last_column_index() as u16 ||
+            key.y == 0 || key.y == self.index.last_row_index() as u16 {
+                // This should not happen as profile location coordinates
+                // are clamped to correct area.
+                error!("Marking location index border area cell to have profile is not allowed");
+                return;
+            }
 
         self.index.data[key].set_profiles(true);
 
@@ -707,202 +690,175 @@ impl IndexUpdater {
 mod tests {
     use super::*;
 
-    fn index() -> LocationIndex {
-        let index = LocationIndex::new(5.try_into().unwrap(), 10.try_into().unwrap());
-        index.data[(0, 0)].set_profiles(true);
-        index.data[(0, 4)].set_profiles(true);
-        index.data[(9, 0)].set_profiles(true);
-        index.data[(9, 4)].set_profiles(true);
-        index
+    trait IndexUtils: Sized {
+        fn add_profile(self, x: u16, y: u16) -> Self;
+        fn get(&self, x: u16, y: u16) -> CellState;
     }
 
-    fn mirror_index() -> LocationIndex {
-        let index = LocationIndex::new(10.try_into().unwrap(), 5.try_into().unwrap());
-        index.data[(0, 0)].set_profiles(true);
-        index.data[(0, 9)].set_profiles(true);
-        index.data[(4, 0)].set_profiles(true);
-        index.data[(4, 9)].set_profiles(true);
-        index
+    impl IndexUtils for Arc<LocationIndex> {
+        fn add_profile(self, x: u16, y: u16) -> Self {
+            let mut updater = IndexUpdater::new(self.clone());
+            updater.flag_cell_to_have_profiles(LocationIndexKey { x, y });
+            self
+        }
+        fn get(&self, x: u16, y: u16) -> CellState {
+            self.data[(y as usize, x as usize)].state()
+        }
+    }
+
+    fn index() -> Arc<LocationIndex> {
+        Arc::new(LocationIndex::new(6.try_into().unwrap(), 11.try_into().unwrap()))
+            .add_profile(1, 1)
+            .add_profile(4, 1)
+            .add_profile(1, 9)
+            .add_profile(4, 9)
+    }
+
+    fn mirror_index() -> Arc<LocationIndex> {
+        Arc::new(LocationIndex::new(11.try_into().unwrap(), 6.try_into().unwrap()))
+            .add_profile(1, 1)
+            .add_profile(9, 1)
+            .add_profile(1, 4)
+            .add_profile(9, 4)
     }
 
     fn max_area(x: u16, y: u16, index: &LocationIndex) -> LocationIndexArea {
         LocationIndexArea::max_area(
             LocationIndexKey { y, x },
-            index.width() as u16,
-            index.height() as u16
+            index,
         )
     }
 
-    fn init_with_index(x: u16, y: u16) -> LocationIndexIterator<LocationIndex> {
+    fn init_with_index(x: u16, y: u16) -> LocationIndexIterator<Arc<LocationIndex>> {
         let index = index();
         let area = max_area(x, y, &index);
-        LocationIndexIterator::new(LocationIndexIteratorState::new(&area, false, &index), index)
+        LocationIndexIterator::new(LocationIndexIteratorState::new(&area, false, &index), index.clone())
     }
 
-    fn init_with_mirror_index(x: u16, y: u16) -> LocationIndexIterator<LocationIndex> {
+    fn init_with_mirror_index(x: u16, y: u16) -> LocationIndexIterator<Arc<LocationIndex>> {
         let index = mirror_index();
         let area = max_area(x, y, &index);
         LocationIndexIterator::new(LocationIndexIteratorState::new(&area, false, &index), index)
     }
 
     #[test]
-    fn top_left_initial_values() {
-        assert!(index().data()[(0, 0)].next_up() == 0);
-        assert!(index().data()[(0, 0)].next_down() == 9);
-        assert!(index().data()[(0, 0)].next_left() == 0);
-        assert!(index().data()[(0, 0)].next_right() == 4);
+    fn top_left_profile() {
+        let c = index().get(1, 1);
+        assert!(c.next_up() == 0);
+        assert!(c.next_down() == 9);
+        assert!(c.next_left() == 0);
+        assert!(c.next_right() == 4);
+        assert!(c.profiles());
     }
 
     #[test]
-    fn top_right_initial_values() {
-        assert!(index().data()[(0, 4)].next_up() == 0);
-        assert!(index().data()[(0, 4)].next_down() == 9);
-        assert!(index().data()[(0, 4)].next_left() == 0);
-        assert!(index().data()[(0, 4)].next_right() == 4);
+    fn top_right_profile() {
+        let c = index().get(4, 1);
+        assert!(c.next_up() == 0);
+        assert!(c.next_down() == 9);
+        assert!(c.next_left() == 1);
+        assert!(c.next_right() == 5);
+        assert!(c.profiles());
     }
 
     #[test]
-    fn bottom_left_initial_values() {
-        assert!(index().data()[(9, 0)].next_up() == 0);
-        assert!(index().data()[(9, 0)].next_down() == 9);
-        assert!(index().data()[(9, 0)].next_left() == 0);
-        assert!(index().data()[(9, 0)].next_right() == 4);
+    fn bottom_left_profile() {
+        let c = index().get(1, 9);
+        assert!(c.next_up() == 1);
+        assert!(c.next_down() == 10);
+        assert!(c.next_left() == 0);
+        assert!(c.next_right() == 4);
+        assert!(c.profiles());
     }
 
     #[test]
-    fn bottom_right_initial_values() {
-        assert!(index().data()[(9, 4)].next_up() == 0);
-        assert!(index().data()[(9, 4)].next_down() == 9);
-        assert!(index().data()[(9, 4)].next_left() == 0);
-        assert!(index().data()[(9, 4)].next_right() == 4);
+    fn bottom_right_profile() {
+        let c = index().get(4, 9);
+        assert!(c.next_up() == 1);
+        assert!(c.next_down() == 10);
+        assert!(c.next_left() == 1);
+        assert!(c.next_right() == 5);
+        assert!(c.profiles());
     }
 
     #[test]
-    fn iterator_top_left_works() {
-        let mut iter = init_with_index(0, 0);
-
-        let n = iter.next_raw();
-        assert!(n == Some((0, 0)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((0, 4)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((9, 4)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((9, 0)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n.is_none(), "was: {n:?}");
+    fn iterator_from_top_left_profile() {
+        let mut iter = init_with_index(1, 1);
+        assert_eq!(iter.next_raw(), Some((1, 1)));
+        assert_eq!(iter.next_raw(), Some((4, 1)));
+        assert_eq!(iter.next_raw(), Some((4, 9)));
+        assert_eq!(iter.next_raw(), Some((1, 9)));
+        assert_eq!(iter.next_raw(), None);
     }
 
     #[test]
-    fn iterator_top_right_works() {
-        let mut iter = init_with_index(4, 0);
-
-        let n = iter.next_raw();
-        assert!(n == Some((0, 4)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((0, 0)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((9, 4)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((9, 0)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n.is_none(), "was: {n:?}");
+    fn iterator_from_top_right_profile() {
+        let mut iter = init_with_index(4, 1);
+        assert_eq!(iter.next_raw(), Some((4, 1)));
+        assert_eq!(iter.next_raw(), Some((1, 1)));
+        assert_eq!(iter.next_raw(), Some((4, 9)));
+        assert_eq!(iter.next_raw(), Some((1, 9)));
+        assert_eq!(iter.next_raw(), None);
     }
 
     #[test]
-    fn iterator_bottom_right_works() {
+    fn iterator_from_bottom_right_profile() {
         let mut iter = init_with_index(4, 9);
-
-        let n = iter.next_raw();
-        assert!(n == Some((9, 4)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((9, 0)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((0, 0)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((0, 4)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n.is_none(), "was: {n:?}");
+        assert_eq!(iter.next_raw(), Some((4, 9)));
+        assert_eq!(iter.next_raw(), Some((1, 9)));
+        assert_eq!(iter.next_raw(), Some((1, 1)));
+        assert_eq!(iter.next_raw(), Some((4, 1)));
+        assert_eq!(iter.next_raw(), None);
     }
 
     #[test]
-    fn iterator_bottom_left_works() {
-        let mut iter = init_with_index(0, 9);
-
-        let n = iter.next_raw();
-        assert!(n == Some((9, 0)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((9, 4)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((0, 0)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((0, 4)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n.is_none(), "was: {n:?}");
+    fn iterator_from_bottom_left_profile() {
+        let mut iter = init_with_index(1, 9);
+        assert_eq!(iter.next_raw(), Some((1, 9)));
+        assert_eq!(iter.next_raw(), Some((4, 9)));
+        assert_eq!(iter.next_raw(), Some((1, 1)));
+        assert_eq!(iter.next_raw(), Some((4, 1)));
+        assert_eq!(iter.next_raw(), None);
     }
 
     #[test]
-    fn mirror_iterator_top_left_works() {
-        let mut iter = init_with_mirror_index(0, 0);
-
-        let n = iter.next_raw();
-        assert!(n == Some((0, 0)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((4, 0)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((0, 9)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((4, 9)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n.is_none(), "was: {n:?}");
+    fn mirror_index_iterator_from_top_left_profile() {
+        let mut iter = init_with_mirror_index(1, 1);
+        assert_eq!(iter.next_raw(), Some((1, 1)));
+        assert_eq!(iter.next_raw(), Some((1, 4)));
+        assert_eq!(iter.next_raw(), Some((9, 1)));
+        assert_eq!(iter.next_raw(), Some((9, 4)));
+        assert_eq!(iter.next_raw(), None);
     }
 
     #[test]
-    fn mirror_iterator_top_right_works() {
-        let mut iter = init_with_mirror_index(9, 0);
-
-        let n = iter.next_raw();
-        assert!(n == Some((0, 9)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((4, 9)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((4, 0)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((0, 0)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n.is_none(), "was: {n:?}");
+    fn mirror_index_iterator_from_top_right_profile() {
+        let mut iter = init_with_mirror_index(9, 1);
+        assert_eq!(iter.next_raw(), Some((9, 1)));
+        assert_eq!(iter.next_raw(), Some((9, 4)));
+        assert_eq!(iter.next_raw(), Some((1, 4)));
+        assert_eq!(iter.next_raw(), Some((1, 1)));
+        assert_eq!(iter.next_raw(), None);
     }
 
     #[test]
-    fn mirror_iterator_bottom_right_works() {
+    fn mirror_index_iterator_from_bottom_right_profile() {
         let mut iter = init_with_mirror_index(9, 4);
-
-        let n = iter.next_raw();
-        assert!(n == Some((4, 9)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((0, 9)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((4, 0)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((0, 0)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n.is_none(), "was: {n:?}");
+        assert_eq!(iter.next_raw(), Some((9, 4)));
+        assert_eq!(iter.next_raw(), Some((9, 1)));
+        assert_eq!(iter.next_raw(), Some((1, 4)));
+        assert_eq!(iter.next_raw(), Some((1, 1)));
+        assert_eq!(iter.next_raw(), None);
     }
 
     #[test]
-    fn mirror_iterator_bottom_left_works() {
-        let mut iter = init_with_mirror_index(0, 4);
-
-        let n = iter.next_raw();
-        assert!(n == Some((4, 0)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((0, 0)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((0, 9)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n == Some((4, 9)), "was: {n:?}");
-        let n = iter.next_raw();
-        assert!(n.is_none(), "was: {n:?}");
+    fn mirror_index_iterator_from_bottom_left_profile() {
+        let mut iter = init_with_mirror_index(1, 4);
+        assert_eq!(iter.next_raw(), Some((1, 4)));
+        assert_eq!(iter.next_raw(), Some((1, 1)));
+        assert_eq!(iter.next_raw(), Some((9, 1)));
+        assert_eq!(iter.next_raw(), Some((9, 4)));
+        assert_eq!(iter.next_raw(), None);
     }
 
     // IndexUpdater

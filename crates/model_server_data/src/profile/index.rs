@@ -400,9 +400,6 @@ impl CellState {
     pub fn profiles(&self) -> bool {
         (self.0 & CellData::PROFILES_IN_THIS_AREA_MASK) != 0
     }
-    pub fn disable_profiles_flag(&mut self) {
-        self.0 &= !CellData::PROFILES_IN_THIS_AREA_MASK;
-    }
 }
 
 pub trait CellDataProvider {

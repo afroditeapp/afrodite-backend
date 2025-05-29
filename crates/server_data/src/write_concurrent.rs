@@ -495,8 +495,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
                     &p.location.current_position
                 } else {
                     &p.location.current_position.with_max_area(
-                        self.location.index_width(),
-                        self.location.index_height(),
+                        self.location.index(),
                     )
                 };
                 let next_state = self

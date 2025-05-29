@@ -1,7 +1,7 @@
 use model_server_data::{LocationIndexKey, LocationInternal};
 use rand::Rng;
 
-use super::CoordinateManager;
+use super::{location::ReadIndex, CoordinateManager};
 
 #[derive(Debug, Clone, Default)]
 pub struct IndexArea {
@@ -35,53 +35,81 @@ impl IndexArea {
 
 #[derive(Debug, Clone, Default)]
 pub struct LocationIndexArea {
-    pub area_inner: Option<IndexArea>,
-    pub area_outer: IndexArea,
-    pub profile_location: LocationIndexKey,
+    area_inner: Option<IndexArea>,
+    area_outer: IndexArea,
+    /// This is not on the empty border area of the location index.
+    profile_location: LocationIndexKey,
 }
 
 impl LocationIndexArea {
-    pub fn max_area(
-        profile_location: LocationIndexKey,
-        width: u16,
-        height: u16,
+    pub fn new(
+        area_inner: Option<IndexArea>,
+        area_outer: IndexArea,
+        mut profile_location: LocationIndexKey,
+        index: &impl ReadIndex,
     ) -> Self {
+        profile_location = LocationIndexKey {
+            x: profile_location.x.clamp(1, (index.width() - 2) as u16),
+            y: profile_location.y.clamp(1, (index.height() - 2) as u16),
+        };
         Self {
-            area_inner: None,
-            area_outer: IndexArea {
-                top_left: LocationIndexKey { y: 0, x: 0 },
-                bottom_right: LocationIndexKey { y: height - 1, x: width - 1 },
-            },
+            area_inner,
+            area_outer,
             profile_location,
         }
     }
 
+    pub fn max_area(
+        profile_location: LocationIndexKey,
+        index: &impl ReadIndex,
+    ) -> Self {
+        Self::new(
+            None,
+            IndexArea {
+                top_left: LocationIndexKey { x: 0, y: 0 },
+                bottom_right: LocationIndexKey {
+                    x: (index.width() - 1) as u16,
+                    y: (index.height() - 1) as u16,
+                },
+            },
+            profile_location,
+            index,
+        )
+    }
+
     pub fn index_iterator_start_location(&self, random: bool) -> LocationIndexKey {
         if random {
-            let y = rand::thread_rng().gen_range(self.area_outer.top_left.y..=self.area_outer.bottom_right.y);
             let x = rand::thread_rng().gen_range(self.area_outer.top_left.x..=self.area_outer.bottom_right.x);
+            let y = rand::thread_rng().gen_range(self.area_outer.top_left.y..=self.area_outer.bottom_right.y);
             LocationIndexKey {
-                y,
                 x,
+                y,
             }
         } else {
             self.profile_location
         }
     }
 
-    pub fn profile_location(&self) -> LocationIndexKey {
-        self.profile_location
-    }
-
     pub fn with_max_area(
         &self,
-        width: u16,
-        height: u16,
+        index: &impl ReadIndex,
     ) -> Self {
         Self::max_area(
             self.profile_location,
-            width,
-            height,
+            index,
         )
+    }
+
+    pub fn area_inner(&self) -> Option<&IndexArea> {
+        self.area_inner.as_ref()
+    }
+
+    pub fn area_outer(&self) -> &IndexArea {
+        &self.area_outer
+    }
+
+    /// This is not on the empty border area of the location index.
+    pub fn profile_location(&self) -> LocationIndexKey {
+        self.profile_location
     }
 }
