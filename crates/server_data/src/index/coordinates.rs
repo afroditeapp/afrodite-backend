@@ -124,11 +124,11 @@ impl CoordinateManager {
         let profile_location = self.location_to_index_key(location);
 
         let area_inner = min_distance.map(
-            |min_distance| self.create_index_area(location, min_distance.value)
+            |min_distance| self.create_index_area(location, min_distance.value, index)
         );
 
         let area_outer = if let Some(max_distance) = max_distance {
-            self.create_index_area(location, max_distance.value)
+            self.create_index_area(location, max_distance.value, index)
         } else {
             IndexArea::max_area(index)
         };
@@ -141,12 +141,11 @@ impl CoordinateManager {
         )
     }
 
-    fn create_index_area(&self, location: LocationInternal, distance: i64) -> IndexArea {
+    fn create_index_area(&self, location: LocationInternal, distance: i64, index: &LocationIndex) -> IndexArea {
         let distance = distance as f64;
-        IndexArea {
-            top_left: self.location_to_index_key(location.move_kilometers(distance, -distance)),
-            bottom_right: self.location_to_index_key(location.move_kilometers(-distance, distance)),
-        }
+        let top_left = self.location_to_index_key(location.move_kilometers(distance, -distance));
+        let bottom_right = self.location_to_index_key(location.move_kilometers(-distance, distance));
+        IndexArea::new(top_left, bottom_right, index)
     }
 
     fn location_to_index_key(&self, location: LocationInternal) -> LocationIndexKey {
@@ -195,6 +194,7 @@ impl CoordinateManager {
     }
 }
 
+/// The area is not located on the index border.
 #[derive(Debug, Clone, Default)]
 pub struct IndexArea {
     top_left: LocationIndexKey,
@@ -202,10 +202,33 @@ pub struct IndexArea {
 }
 
 impl IndexArea {
-    fn max_area(index: &LocationIndex) -> Self {
+    fn new(
+        top_left: LocationIndexKey,
+        bottom_right: LocationIndexKey,
+        index: &impl ReadIndex,
+    ) -> Self {
         Self {
-            top_left: LocationIndexKey { x: 0, y: 0, },
-            bottom_right: LocationIndexKey { x: index.last_x_index() as u16, y: index.last_y_index() as u16 },
+            top_left: LocationIndexKey {
+                x: top_left.x.clamp(1, index.last_profile_area_x_index()),
+                y: top_left.y.clamp(1, index.last_profile_area_y_index()),
+            },
+            bottom_right: LocationIndexKey {
+                x: bottom_right.x.clamp(1, index.last_profile_area_x_index()),
+                y: bottom_right.y.clamp(1, index.last_profile_area_y_index()),
+            },
+        }
+    }
+
+    fn max_area(index: &impl ReadIndex) -> Self {
+        Self {
+            top_left: LocationIndexKey {
+                x: 1,
+                y: 1,
+            },
+            bottom_right: LocationIndexKey {
+                x: index.last_profile_area_x_index(),
+                y: index.last_profile_area_y_index(),
+            },
         }
     }
 
@@ -220,7 +243,9 @@ impl IndexArea {
 
 #[derive(Debug, Clone, Default)]
 pub struct LocationIndexArea {
+    /// Index border is excluded.
     area_inner: Option<IndexArea>,
+    /// Index border is excluded.
     area_outer: IndexArea,
     /// This is not on the empty border area of the location index.
     profile_location: LocationIndexKey,
@@ -234,8 +259,8 @@ impl LocationIndexArea {
         index: &impl ReadIndex,
     ) -> Self {
         profile_location = LocationIndexKey {
-            x: profile_location.x.clamp(1, (index.width() - 2) as u16),
-            y: profile_location.y.clamp(1, (index.height() - 2) as u16),
+            x: profile_location.x.clamp(1, index.last_profile_area_x_index()),
+            y: profile_location.y.clamp(1, index.last_profile_area_y_index()),
         };
         Self {
             area_inner,
@@ -250,13 +275,7 @@ impl LocationIndexArea {
     ) -> Self {
         Self::new(
             None,
-            IndexArea {
-                top_left: LocationIndexKey { x: 0, y: 0 },
-                bottom_right: LocationIndexKey {
-                    x: index.last_x_index() as u16,
-                    y: index.last_y_index() as u16,
-                },
-            },
+            IndexArea::max_area(index),
             profile_location,
             index,
         )

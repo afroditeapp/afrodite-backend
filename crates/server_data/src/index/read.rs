@@ -54,15 +54,15 @@ enum Direction {
 
 #[derive(Debug, Clone, Default)]
 struct IndexLimitCoordinates {
-    x: isize,
-    y: isize,
+    x: u16,
+    y: u16,
 }
 
 impl IndexLimitCoordinates {
     fn new(key: LocationIndexKey) -> Self {
         Self {
-            x: key.x as isize,
-            y: key.y as isize,
+            x: key.x,
+            y: key.y,
         }
     }
 }
@@ -83,7 +83,7 @@ struct IndexLimit {
 struct IndexLimitInner(pub IndexLimit);
 
 impl IndexLimitInner {
-    fn is_inside(&self, x: isize, y: isize) -> bool {
+    fn is_inside(&self, x: u16, y: u16) -> bool {
         // Use > and < operators to make index cells at the limit border
         // accessible when min and max distance limits have the same value.
         x > self.0.top_left.x  &&
@@ -97,7 +97,7 @@ impl IndexLimitInner {
 struct IndexLimitOuter(pub IndexLimit);
 
 impl IndexLimitOuter {
-    fn is_outside(&self, x: isize, y: isize) -> bool {
+    fn is_outside(&self, x: u16, y: u16) -> bool {
         (x < self.0.top_left.x || x > self.0.bottom_right.x) &&
         (y < self.0.top_left.y || y > self.0.bottom_right.y)
     }
@@ -107,20 +107,20 @@ impl IndexLimitOuter {
 #[derive(Debug, Clone)]
 struct CurrentMaxIndexes {
     /// Top side max area index.
-    top: isize,
+    top: u16,
     /// Bottom side max area index.
-    bottom: isize,
+    bottom: u16,
     /// Left side max area index.
-    left: isize,
+    left: u16,
     /// Right side max area index.
-    right: isize,
+    right: u16,
 }
 
 /// State which does not change after iterator is created.
 #[derive(Debug, Clone)]
 struct InitialState {
-    y: isize,
-    x: isize,
+    y: u16,
+    x: u16,
     limit_inner: Option<IndexLimitInner>,
     limit_outer: IndexLimitOuter,
 }
@@ -139,8 +139,8 @@ enum MoveForwardResult {
 /// Cursor round specific state.
 #[derive(Debug, Clone)]
 struct RoundState {
-    x: isize,
-    y: isize,
+    x: u16,
+    y: u16,
     /// Move direction for cursor
     direction: Direction,
     max_indexes: CurrentMaxIndexes,
@@ -153,13 +153,13 @@ impl RoundState {
     /// [RoundResult::Completed].
     fn create(
         initial: &InitialState,
-        round: isize,
+        round: u16,
         index: &impl ReadIndex,
     ) -> CreateRoundStateResult {
-        let top = initial.y - round;
-        let bottom = initial.y + round;
-        let left = initial.x - round;
-        let right = initial.x + round;
+        let top = initial.y.saturating_sub(round);
+        let bottom = initial.y.saturating_add(round);
+        let left = initial.x.saturating_sub(round);
+        let right = initial.x.saturating_add(round);
 
         if initial.limit_outer.is_outside(left, top) &&
             initial.limit_outer.is_outside(right, bottom) {
@@ -167,10 +167,10 @@ impl RoundState {
         }
 
         let max_indexes = CurrentMaxIndexes {
-            top: top.max(0),
-            bottom: bottom.min(index.last_y_index() as isize),
-            left: left.max(0),
-            right: right.min(index.last_x_index() as isize),
+            top,
+            bottom: bottom.min(index.last_y_index()),
+            left,
+            right: right.min(index.last_x_index()),
         };
 
         let state = Self {
@@ -188,7 +188,7 @@ impl RoundState {
     }
 
     fn current_position(&self) -> LocationIndexKey {
-        LocationIndexKey { y: self.y as u16, x: self.x as u16 }
+        LocationIndexKey { x: self.x, y: self.y }
     }
 
     fn is_round_complete(&self) -> bool {
@@ -249,7 +249,7 @@ pub struct LocationIndexIteratorState {
     initial_state: InitialState,
     round: RoundState,
     /// How many rounds cursor has moved. Checking initial position counts one.
-    current_round: isize,
+    current_round: u16,
     completed: bool,
 }
 
@@ -284,8 +284,8 @@ impl LocationIndexIteratorState {
         index: &impl ReadIndex,
     ) -> Self {
         let start_position = area.index_iterator_start_location(random_start_position);
-        let x = start_position.x as isize;
-        let y = start_position.y as isize;
+        let x = start_position.x;
+        let y = start_position.y;
         let initial_state = InitialState {
             x,
             y,
@@ -356,8 +356,15 @@ impl LocationIndexIteratorState {
             match self.round.move_forward(state) {
                 MoveForwardResult::CheckProfilesAndMoveForward => (),
                 MoveForwardResult::Completed => {
-                    self.current_round += 1;
-                     match RoundState::create(&self.initial_state, self.current_round, index) {
+                    self.current_round = match self.current_round.checked_add(1) {
+                        Some(v) => v,
+                        None => {
+                            error!("Max iterator rounds reached");
+                            self.completed = true;
+                            return data_position;
+                        }
+                    };
+                    match RoundState::create(&self.initial_state, self.current_round, index) {
                         CreateRoundStateResult::AllIterated => {
                             self.completed = true;
                             return data_position;
@@ -386,14 +393,8 @@ impl LocationIndexIteratorState {
     }
 
     fn current_cell_state(&self, index: &impl ReadIndex) -> Option<CellState> {
-        self.current_cell(index)
+        index.get_cell_data(self.round.x, self.round.y)
             .map(|cell| cell.state())
-    }
-
-    fn current_cell<'a, A: ReadIndex>(&self, index: &'a A) -> Option<&'a A::C> {
-        let x = self.round.x.try_into().ok()?;
-        let y = self.round.y.try_into().ok()?;
-        index.get_cell_data(x, y)
     }
 }
 

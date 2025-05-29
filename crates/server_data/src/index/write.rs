@@ -24,8 +24,8 @@ impl IndexUpdater {
             return;
         }
 
-        if key.x == 0 || key.x == self.index.last_x_index() as u16 ||
-            key.y == 0 || key.y == self.index.last_y_index() as u16 {
+        if key.x == 0 || key.x == self.index.last_x_index() ||
+            key.y == 0 || key.y == self.index.last_y_index() {
                 // This should not happen as profile location coordinates
                 // are clamped to correct area.
                 error!("Marking location index border area cell to have profile is not allowed");

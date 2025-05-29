@@ -51,6 +51,7 @@ impl TryFrom<u16> for IndexSize {
 /// Origin (0,0) = (y, x) is at top left corner.
 pub struct LocationIndex {
     data: DMatrix<CellData>,
+    indexes: IndexNumbers,
 }
 
 impl LocationIndex {
@@ -61,11 +62,22 @@ impl LocationIndex {
         let storage = VecStorage::new(Dyn(height.get() as usize), Dyn(width.get() as usize), data);
         Self {
             data: DMatrix::from_data(storage),
+            indexes: IndexNumbers::new(width, height),
         }
     }
 
     pub fn data(&self) -> &DMatrix<CellData> {
         &self.data
+    }
+
+    /// Index width. Greater than zero.
+    pub fn width(&self) -> usize {
+        self.data.ncols()
+    }
+
+    /// Index height. Greater than zero.
+    pub fn height(&self) -> usize {
+        self.data.nrows()
     }
 }
 
@@ -77,43 +89,57 @@ impl Debug for LocationIndex {
 
 pub trait ReadIndex {
     type C: CellDataProvider;
-
-    fn get_cell_data(&self, x: usize, y: usize) -> Option<&Self::C>;
-
-    /// Index width. Greater than zero.
-    fn width(&self) -> usize;
-
-    /// Index height. Greater than zero.
-    fn height(&self) -> usize;
-
-    fn last_y_index(&self) -> usize {
-        self.height() - 1
-    }
-
-    fn last_x_index(&self) -> usize {
-        self.width() - 1
-    }
+    fn get_cell_data(&self, x: u16, y: u16) -> Option<&Self::C>;
+    fn last_x_index(&self) -> u16;
+    fn last_y_index(&self) -> u16;
+    fn last_profile_area_x_index(&self) -> u16;
+    fn last_profile_area_y_index(&self) -> u16;
 }
 
 impl <T: AsRef<LocationIndex>> ReadIndex for T {
     type C = CellData;
-    fn get_cell_data(&self, x: usize, y: usize) -> Option<&Self::C> {
-        self.as_ref().data().get((y, x))
+
+    fn get_cell_data(&self, x: u16, y: u16) -> Option<&Self::C> {
+        self.as_ref().data().get((y.into(), x.into()))
     }
 
-    /// Index width. Greater than zero.
-    fn width(&self) -> usize {
-        self.as_ref().data().ncols()
+    fn last_x_index(&self) -> u16 {
+        self.as_ref().indexes.last_x_index
     }
 
-    /// Index height. Greater than zero.
-    fn height(&self) -> usize {
-        self.as_ref().data().nrows()
+    fn last_y_index(&self) -> u16 {
+        self.as_ref().indexes.last_y_index
+    }
+
+    fn last_profile_area_x_index(&self) -> u16 {
+        self.as_ref().indexes.last_profile_area_x_index
+    }
+
+    fn last_profile_area_y_index(&self) -> u16 {
+        self.as_ref().indexes.last_profile_area_y_index
     }
 }
 
 impl AsRef<LocationIndex> for LocationIndex {
     fn as_ref(&self) -> &LocationIndex {
         self
+    }
+}
+
+struct IndexNumbers {
+    last_x_index: u16,
+    last_y_index: u16,
+    last_profile_area_x_index: u16,
+    last_profile_area_y_index: u16,
+}
+
+impl IndexNumbers {
+    fn new(width: IndexSize, height: IndexSize) -> Self {
+        Self {
+            last_x_index: width.get() - 1,
+            last_y_index: height.get() - 1,
+            last_profile_area_x_index: width.get() - 2,
+            last_profile_area_y_index: height.get() - 2,
+        }
     }
 }

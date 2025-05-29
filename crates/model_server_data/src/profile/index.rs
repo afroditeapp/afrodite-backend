@@ -382,19 +382,19 @@ impl CellState {
         Self(state)
     }
 
-    fn read_bit_field(&self, field: BitFieldInfo) -> isize {
-        ((self.0 & field.mask) >> field.shift) as isize
+    fn read_bit_field(&self, field: BitFieldInfo) -> u16 {
+        ((self.0 & field.mask) >> field.shift) as u16
     }
-    pub fn next_up(&self) -> isize {
+    pub fn next_up(&self) -> u16 {
         self.read_bit_field(CellData::NEXT_UP)
     }
-    pub fn next_down(&self) -> isize {
+    pub fn next_down(&self) -> u16 {
         self.read_bit_field(CellData::NEXT_DOWN)
     }
-    pub fn next_left(&self) -> isize {
+    pub fn next_left(&self) -> u16 {
         self.read_bit_field(CellData::NEXT_LEFT)
     }
-    pub fn next_right(&self) -> isize {
+    pub fn next_right(&self) -> u16 {
         self.read_bit_field(CellData::NEXT_RIGHT)
     }
     pub fn profiles(&self) -> bool {
