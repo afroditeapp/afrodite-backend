@@ -6,10 +6,6 @@ use tracing::error;
 
 use super::{coordinates::LocationIndexArea, data::ReadIndex};
 
-// Finland's area is 338 462 square kilometer, so this is most likely
-// good enough value as the iterator does not go all squares one by one.
-const INDEX_ITERATOR_COUNT_LIMIT: u32 = 350_000;
-
 pub struct LocationIndexIterator<T: ReadIndex> {
     state: LocationIndexIteratorState,
     area: T,
@@ -340,7 +336,7 @@ impl LocationIndexIteratorState {
             return None;
         }
 
-        let mut count_iterations = 0;
+        let mut count_iterations: u32 = 0;
 
         loop {
             let state = self.current_cell_state(index);
@@ -375,19 +371,17 @@ impl LocationIndexIteratorState {
                 }
             }
 
+            count_iterations = match count_iterations.checked_add(1) {
+                Some(v) => v,
+                None => {
+                    error!("Location index iterator endless loop detected");
+                    self.completed = true;
+                    return None;
+                }
+            };
+
             if data_position.is_some() {
                 return data_position;
-            }
-
-            if count_iterations >= INDEX_ITERATOR_COUNT_LIMIT {
-                error!(
-                    "Location index iterator max count {} reached. This is a bug.",
-                    count_iterations,
-                );
-                self.completed = true;
-                return None;
-            } else {
-                count_iterations += 1;
             }
         }
     }
