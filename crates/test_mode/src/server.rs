@@ -12,7 +12,7 @@ use config::{
 };
 use nix::{sys::signal::Signal, unistd::Pid};
 use reqwest::Url;
-use server_data::index::LocationIndexInfoCreator;
+use server_data::index::info::LocationIndexInfoCreator;
 use simple_backend_config::file::{
     DataConfig, GeneralConfig, IpInfoConfig, SimpleBackendConfigFile, SocketConfig, VideoCallingConfig
 };

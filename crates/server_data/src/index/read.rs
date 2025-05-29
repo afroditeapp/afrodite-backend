@@ -1,152 +1,46 @@
-//! Index for profiles
-//!
-//! LocationIndex
-//!
-//! Idea is to make matrix which has up-down lookup with atomic u16 values.
-//! Those atomic values represents matrix indexes.
-//!
-//! Perhaps left-right lookup could be implemented as well??
-//! Yes, it should be possible. Then there will be for atomic values in one cell.
-//! Figure out first the up-down lookup.
-//!
-//! Best to use u16 for atomic numbers, so algorithm will be easier.
-//! Matrix index numbers will fit to u16.
-//!
-//! Matrix cell should contain boolean which represents is there some profile in it.
-//!
-//! Initialization should happen so that border values of matrix should be used.
-//!
-//! Only one writer allowed at one time.
-//!
-//! No locks needed.
-//!
-//! Matrix indexes are used like a key for HashMap<(u16,u16), Vec<AccountId>>
 
-use std::{fmt::Debug, num::NonZeroU16, sync::Arc};
+use std::fmt::Debug;
 
-use model_server_data::{CellData, CellDataProvider, CellState, LocationIndexKey};
-use nalgebra::{DMatrix, Dyn, VecStorage};
+use model_server_data::{CellDataProvider, CellState, LocationIndexKey};
 use tracing::error;
 
-use super::area::LocationIndexArea;
+use super::{area::LocationIndexArea, data::ReadIndex};
 
 // Finland's area is 338 462 square kilometer, so this is most likely
 // good enough value as the iterator does not go all squares one by one.
 const INDEX_ITERATOR_COUNT_LIMIT: u32 = 350_000;
 
-/// Max width or height for index is 0x8000, which makes possible
-/// to use u15 values for indexing the matrix.
-/// The u15 values are stored in [CellData].
-/// Min value is 3 as index border is reserved to be empty.
-pub struct IndexSize {
-    value: NonZeroU16,
+pub struct LocationIndexIterator<T: ReadIndex> {
+    state: LocationIndexIteratorState,
+    area: T,
 }
 
-impl IndexSize {
-    const MIN_SIZE: u16 = 3;
-    const MAX_SIZE: u16 = 0x8000;
-
-    /// Panics if value is less than 3 and larger than 0x8000.
-    pub fn new(value: NonZeroU16) -> Self {
-        if value.get() < Self::MIN_SIZE {
-            panic!("Min index width or height is {}", Self::MIN_SIZE);
-        }
-        if value.get() > Self::MAX_SIZE {
-            panic!("Max index width or height is {}", Self::MAX_SIZE);
-        }
+impl <T: ReadIndex> LocationIndexIterator<T> {
+    fn new(
+        state: LocationIndexIteratorState,
+        area: T,
+    ) -> Self {
         Self {
-            value,
+            state,
+            area,
         }
     }
 
-    fn get(&self) -> u16 {
-        self.value.get()
+    #[cfg(test)]
+    /// Return next index key as (x, y) tuple.
+    pub fn next_raw(&mut self) -> Option<(u16, u16)> {
+        self.state.next(&self.area).map(|v| (v.x, v.y))
     }
 }
 
-impl TryFrom<u16> for IndexSize {
-    type Error = String;
-    fn try_from(value: u16) -> Result<Self, Self::Error> {
-        let non_zero = TryInto::<NonZeroU16>::try_into(value).map_err(|e| e.to_string())?;
-        if value < Self::MIN_SIZE {
-            Err(format!("Min index width or height is {}", Self::MIN_SIZE))
-        } else if value > Self::MAX_SIZE {
-            Err(format!("Max index width or height is {}", Self::MAX_SIZE))
-        } else {
-            Ok(Self::new(non_zero))
-        }
-    }
-}
+impl <T: ReadIndex> Iterator for LocationIndexIterator<T> {
+    type Item = LocationIndexKey;
 
-/// Origin (0,0) = (y, x) is at top left corner.
-pub struct LocationIndex {
-    data: DMatrix<CellData>,
-}
-
-impl LocationIndex {
-    pub fn new(width: IndexSize, height: IndexSize) -> Self {
-        let size = (width.get() as usize) * (height.get() as usize);
-        let mut data = Vec::with_capacity(size);
-        data.resize_with(size, || CellData::new(width.value, height.value));
-        let storage = VecStorage::new(Dyn(height.get() as usize), Dyn(width.get() as usize), data);
-        Self {
-            data: DMatrix::from_data(storage),
-        }
-    }
-
-    pub fn data(&self) -> &DMatrix<CellData> {
-        &self.data
-    }
-}
-
-impl Debug for LocationIndex {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("LocationIndex")
-    }
-}
-
-pub trait ReadIndex {
-    type C: CellDataProvider;
-
-    fn get_cell_data(&self, x: usize, y: usize) -> Option<&Self::C>;
-
-    /// Index width. Greater than zero.
-    fn width(&self) -> usize;
-
-    /// Index height. Greater than zero.
-    fn height(&self) -> usize;
-
-    /// Last y-axis index.
-    fn last_row_index(&self) -> usize {
-        self.height() - 1
-    }
-
-    /// Last x-axis index.
-    fn last_column_index(&self) -> usize {
-        self.width() - 1
-    }
-}
-
-impl <T: AsRef<LocationIndex>> ReadIndex for T {
-    type C = CellData;
-    fn get_cell_data(&self, x: usize, y: usize) -> Option<&Self::C> {
-        self.as_ref().data().get((y, x))
-    }
-
-    /// Index width. Greater than zero.
-    fn width(&self) -> usize {
-        self.as_ref().data().ncols()
-    }
-
-    /// Index height. Greater than zero.
-    fn height(&self) -> usize {
-        self.as_ref().data().nrows()
-    }
-}
-
-impl AsRef<LocationIndex> for LocationIndex {
-    fn as_ref(&self) -> &LocationIndex {
-        self
+    /// Get next cell where are profiles.
+    ///
+    /// If None then there is not any more cells with profiles.
+    fn next(&mut self) -> Option<LocationIndexKey> {
+        self.state.next(&self.area)
     }
 }
 
@@ -509,185 +403,12 @@ impl <T: ReadIndex> From<LocationIndexIterator<T>> for LocationIndexIteratorStat
     }
 }
 
-pub struct LocationIndexIterator<T: ReadIndex> {
-    state: LocationIndexIteratorState,
-    area: T,
-}
-
-impl <T: ReadIndex> LocationIndexIterator<T> {
-    fn new(
-        state: LocationIndexIteratorState,
-        area: T,
-    ) -> Self {
-        Self {
-            state,
-            area,
-        }
-    }
-
-    #[cfg(test)]
-    /// Return next index key as (x, y) tuple.
-    pub fn next_raw(&mut self) -> Option<(u16, u16)> {
-        self.state.next(&self.area).map(|v| (v.x, v.y))
-    }
-}
-
-impl <T: ReadIndex> Iterator for LocationIndexIterator<T> {
-    type Item = LocationIndexKey;
-
-    /// Get next cell where are profiles.
-    ///
-    /// If None then there is not any more cells with profiles.
-    fn next(&mut self) -> Option<LocationIndexKey> {
-        self.state.next(&self.area)
-    }
-}
-
-/// Update index.
-///
-/// Create only one IndexUpdater as it modifies the LocationIndex.
-pub struct IndexUpdater {
-    index: Arc<LocationIndex>,
-}
-
-impl IndexUpdater {
-    pub fn new(index: Arc<LocationIndex>) -> Self {
-        Self { index }
-    }
-
-    pub fn flag_cell_to_have_profiles(&mut self, key: LocationIndexKey) {
-        if self.index.data[key].profiles() {
-            return;
-        }
-
-        if key.x == 0 || key.x == self.index.last_column_index() as u16 ||
-            key.y == 0 || key.y == self.index.last_row_index() as u16 {
-                // This should not happen as profile location coordinates
-                // are clamped to correct area.
-                error!("Marking location index border area cell to have profile is not allowed");
-                return;
-            }
-
-        self.index.data[key].set_profiles(true);
-
-        // Update right side of row
-        for c in self.index.data.row(key.y()).iter().skip(key.x() + 1) {
-            c.set_next_left(key.x());
-
-            if c.profiles() {
-                break;
-            }
-        }
-
-        // Update left side of row
-        for c in self
-            .index
-            .data
-            .row(key.y())
-            .iter()
-            .rev()
-            .skip(self.index.width() - key.x())
-        {
-            c.set_next_right(key.x());
-
-            if c.profiles() {
-                break;
-            }
-        }
-
-        // Update bottom side of column
-        for c in self.index.data.column(key.x()).iter().skip(key.y() + 1) {
-            c.set_next_up(key.y());
-
-            if c.profiles() {
-                break;
-            }
-        }
-
-        // Update top side of column
-        for c in self
-            .index
-            .data
-            .column(key.x())
-            .iter()
-            .rev()
-            .skip(self.index.height() - key.y())
-        {
-            c.set_next_down(key.y());
-
-            if c.profiles() {
-                break;
-            }
-        }
-    }
-
-    pub fn remove_profile_flag_from_cell(&mut self, key: LocationIndexKey) {
-        if !self.index.data[key].profiles() {
-            return;
-        }
-
-        let cell = &self.index.data[key];
-        cell.set_profiles(false);
-
-        let next_right = cell.next_right();
-        let next_left = cell.next_left();
-        let next_up = cell.next_up();
-        let next_down = cell.next_down();
-
-        // Update right side of row
-        for c in self.index.data.row(key.y()).iter().skip(key.x() + 1) {
-            c.set_next_left(next_left);
-
-            if c.profiles() {
-                break;
-            }
-        }
-
-        // Update left side of row
-        for c in self
-            .index
-            .data
-            .row(key.y())
-            .iter()
-            .rev()
-            .skip(self.index.width() - key.x())
-        {
-            c.set_next_right(next_right);
-
-            if c.profiles() {
-                break;
-            }
-        }
-
-        // Update bottom side of column
-        for c in self.index.data.column(key.x()).iter().skip(key.y() + 1) {
-            c.set_next_up(next_up);
-
-            if c.profiles() {
-                break;
-            }
-        }
-
-        // Update top side of column
-        for c in self
-            .index
-            .data
-            .column(key.x())
-            .iter()
-            .rev()
-            .skip(self.index.height() - key.y())
-        {
-            c.set_next_down(next_down);
-
-            if c.profiles() {
-                break;
-            }
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
+    use crate::index::{data::LocationIndex, write::IndexUpdater};
+
     use super::*;
 
     trait IndexUtils: Sized {
@@ -702,7 +423,7 @@ mod tests {
             self
         }
         fn get(&self, x: u16, y: u16) -> CellState {
-            self.data[(y as usize, x as usize)].state()
+            self.data()[(y as usize, x as usize)].state()
         }
     }
 
@@ -859,60 +580,5 @@ mod tests {
         assert_eq!(iter.next_raw(), Some((9, 1)));
         assert_eq!(iter.next_raw(), Some((9, 4)));
         assert_eq!(iter.next_raw(), None);
-    }
-
-    // IndexUpdater
-
-    fn index_for_updater() -> LocationIndex {
-        LocationIndex::new(3.try_into().unwrap(), 3.try_into().unwrap())
-    }
-
-    #[test]
-    fn simple_index_update() {
-        let index: Arc<_> = index_for_updater().into();
-        let mut updater = IndexUpdater::new(index.clone());
-        updater.flag_cell_to_have_profiles(LocationIndexKey { x: 1, y: 1 });
-
-        let test_cell = |key: (usize, usize), up: usize, down: usize, left: usize, right: usize| {
-            assert!(index.data[key].next_up() == up);
-            assert!(index.data[key].next_down() == down);
-            assert!(index.data[key].next_left() == left);
-            assert!(index.data[key].next_right() == right);
-        };
-
-        // Check middle column
-        test_cell((0, 1), 0, 1, 0, 2);
-        test_cell((1, 1), 0, 2, 0, 2);
-        test_cell((2, 1), 1, 2, 0, 2);
-
-        // Check middle row
-        test_cell((1, 0), 0, 2, 0, 1);
-        test_cell((1, 1), 0, 2, 0, 2);
-        test_cell((1, 2), 0, 2, 1, 2);
-    }
-
-    #[test]
-    fn simple_index_remove_test() {
-        let index: Arc<_> = index_for_updater().into();
-        let mut updater = IndexUpdater::new(index.clone());
-        updater.flag_cell_to_have_profiles(LocationIndexKey { x: 1, y: 1 });
-        updater.remove_profile_flag_from_cell(LocationIndexKey { x: 1, y: 1 });
-
-        let test_cell = |key: (usize, usize), up: usize, down: usize, left: usize, right: usize| {
-            assert!(index.data[key].next_up() == up);
-            assert!(index.data[key].next_down() == down);
-            assert!(index.data[key].next_left() == left);
-            assert!(index.data[key].next_right() == right);
-        };
-
-        // Check middle column
-        test_cell((0, 1), 0, 2, 0, 2);
-        test_cell((1, 1), 0, 2, 0, 2);
-        test_cell((2, 1), 0, 2, 0, 2);
-
-        // Check middle row
-        test_cell((1, 0), 0, 2, 0, 2);
-        test_cell((1, 1), 0, 2, 0, 2);
-        test_cell((1, 2), 0, 2, 0, 2);
     }
 }

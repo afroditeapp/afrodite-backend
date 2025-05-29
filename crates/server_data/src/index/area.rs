@@ -1,7 +1,7 @@
 use model_server_data::{LocationIndexKey, LocationInternal};
 use rand::Rng;
 
-use super::{location::ReadIndex, CoordinateManager};
+use super::{data::ReadIndex, CoordinateManager};
 
 #[derive(Debug, Clone, Default)]
 pub struct IndexArea {

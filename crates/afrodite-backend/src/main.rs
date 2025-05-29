@@ -14,7 +14,7 @@ use std::process::ExitCode;
 use build_info::{BUILD_INFO_CARGO_PKG_NAME, BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE};
 use config::{args::AppMode, get_config};
 use server::{api_doc::ApiDoc, DatingAppServer};
-use server_data::index::LocationIndexInfoCreator;
+use server_data::index::info::LocationIndexInfoCreator;
 use simple_backend_config::{args::ImageProcessModeArgs, file::ImageProcessingConfig};
 use test_mode::TestRunner;
 use manager_config::args::ManagerApiClientMode;
