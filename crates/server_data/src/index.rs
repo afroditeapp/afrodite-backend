@@ -1,3 +1,17 @@
+//! Profile index
+//!
+//! Allow iterating profiles from nearest to farthest starting from
+//! some location.
+//!
+//! The first part of the index is a matrix [LocationIndexManager::index]
+//! where each cell has jump info to next profile for each direction.
+//! The cell also contains info is profile available at this location.
+//!
+//! After finding a cell with profiles, the cell coordinate info is
+//! used to check available profiles from [LocationIndexManager::profiles].
+//!
+//! The profile index supports multiple readers and one writer.
+
 use std::{
     collections::HashMap,
     sync::Arc,

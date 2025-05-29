@@ -1,26 +1,3 @@
-//! Index for profiles
-//!
-//! LocationIndex
-//!
-//! Idea is to make matrix which has up-down lookup with atomic u16 values.
-//! Those atomic values represents matrix indexes.
-//!
-//! Perhaps left-right lookup could be implemented as well??
-//! Yes, it should be possible. Then there will be for atomic values in one cell.
-//! Figure out first the up-down lookup.
-//!
-//! Best to use u16 for atomic numbers, so algorithm will be easier.
-//! Matrix index numbers will fit to u16.
-//!
-//! Matrix cell should contain boolean which represents is there some profile in it.
-//!
-//! Initialization should happen so that border values of matrix should be used.
-//!
-//! Only one writer allowed at one time.
-//!
-//! No locks needed.
-//!
-//! Matrix indexes are used like a key for HashMap<(u16,u16), Vec<AccountId>>
 
 use std::{fmt::Debug, num::NonZeroU16};
 
