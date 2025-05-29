@@ -100,4 +100,16 @@ impl SearchGroupFlagsFilter {
     pub(crate) fn is_match(&self, flags: SearchGroupFlags) -> bool {
         self.filter.intersects(flags)
     }
+
+    pub fn is_searching_men(&self) -> bool {
+        self.filter.is_man()
+    }
+
+    pub fn is_searching_women(&self) -> bool {
+        self.filter.is_woman()
+    }
+
+    pub fn is_searching_non_binaries(&self) -> bool {
+        self.filter.is_non_binary()
+    }
 }

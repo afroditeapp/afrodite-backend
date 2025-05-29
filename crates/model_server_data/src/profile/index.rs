@@ -143,6 +143,14 @@ impl LocationIndexProfileData {
         }
     }
 
+    pub fn is_man(&self) -> bool {
+        self.search_groups.is_man()
+    }
+
+    pub fn is_woman(&self) -> bool {
+        self.search_groups.is_woman()
+    }
+
     pub fn to_profile_link_value(&self) -> ProfileLink {
         let mut profile_link = self.profile_link;
         let last_seen_value = self.last_seen_time.load(Ordering::Relaxed);
