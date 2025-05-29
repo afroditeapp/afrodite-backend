@@ -4,7 +4,7 @@ use std::fmt::Debug;
 use model_server_data::{CellDataProvider, CellState, LocationIndexKey};
 use tracing::error;
 
-use super::{area::LocationIndexArea, data::ReadIndex};
+use super::{coordinates::LocationIndexArea, data::ReadIndex};
 
 // Finland's area is 338 462 square kilometer, so this is most likely
 // good enough value as the iterator does not go all squares one by one.
@@ -290,12 +290,12 @@ impl LocationIndexIteratorState {
             x,
             y,
             limit_inner: area.area_inner().as_ref().map(|a| IndexLimitInner(IndexLimit {
-                top_left: a.top_left.into(),
-                bottom_right: a.bottom_right.into(),
+                top_left: a.top_left().into(),
+                bottom_right: a.bottom_right().into(),
             })),
             limit_outer: IndexLimitOuter(IndexLimit {
-                top_left: area.area_outer().top_left.into(),
-                bottom_right: area.area_outer().bottom_right.into(),
+                top_left: area.area_outer().top_left().into(),
+                bottom_right: area.area_outer().bottom_right().into(),
             }),
         };
         match RoundState::create(&initial_state, 0, index) {

@@ -7,7 +7,7 @@ use server_common::data::{cache::CacheError, DataError};
 
 use crate::{
     cache::CacheEntryCommon, db_manager::InternalWriting,
-    index::{area::LocationIndexArea, read::LocationIndexIteratorState},
+    index::{coordinates::LocationIndexArea, read::LocationIndexIteratorState},
 };
 
 #[derive(Debug)]

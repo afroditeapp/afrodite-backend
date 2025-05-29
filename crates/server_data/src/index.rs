@@ -17,7 +17,7 @@ use std::{
     sync::Arc,
 };
 
-use area::LocationIndexArea;
+use coordinates::LocationIndexArea;
 use config::Config;
 use coordinates::CoordinateManager;
 use error_stack::ResultExt;
@@ -37,7 +37,6 @@ use self::data::LocationIndex;
 use crate::{cache::LastSeenTimeUpdated, db_manager::InternalWriting};
 
 pub mod data;
-pub mod area;
 pub mod read;
 pub mod write;
 pub mod coordinates;

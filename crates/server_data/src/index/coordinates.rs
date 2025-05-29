@@ -2,17 +2,14 @@ use std::num::NonZeroU8;
 
 use config::file::LocationConfig;
 use model_server_data::{LocationIndexKey, LocationInternal, MaxDistanceKm, MinDistanceKm};
+use rand::Rng;
 
-use super::{area::{IndexArea, LocationIndexArea}, data::LocationIndex};
+use super::data::{LocationIndex, ReadIndex};
 
-// https://stackoverflow.com/questions/1253499/simple-calculations-for-working-with-lat-lon-and-km-distance
-pub const LATITUDE_ONE_KM_IN_DEGREES: f64 = 1.0 / 110.574;
-
-// Lets just use middle point of Finland to approximate longitude.
-// That probably makes the index squares practically larger in north and
-// smaller in south. Or other way around.
-
-pub fn calculate_longitude_one_km_in_degrees() -> f64 {
+/// Use middle point of Finland to approximate longitude.
+/// That probably makes the index squares practically larger in north and
+/// smaller in south. Or other way around.
+fn calculate_longitude_one_km_in_degrees() -> f64 {
     1.0 / (111.320 * f64::cos(LATITUDE_FOR_LONGITUDE_CORRECTION.to_radians()).to_degrees())
 }
 
@@ -127,13 +124,13 @@ impl CoordinateManager {
         let profile_location = self.location_to_index_key(location);
 
         let area_inner = min_distance.map(
-            |min_distance| IndexArea::new(self, location, min_distance.value)
+            |min_distance| self.create_index_area(location, min_distance.value)
         );
 
         let area_outer = if let Some(max_distance) = max_distance {
-            IndexArea::new(self, location, max_distance.value)
+            self.create_index_area(location, max_distance.value)
         } else {
-            IndexArea::max_area(self.width(), self.height())
+            IndexArea::max_area(index)
         };
 
         LocationIndexArea::new(
@@ -144,7 +141,15 @@ impl CoordinateManager {
         )
     }
 
-    pub fn location_to_index_key(&self, location: LocationInternal) -> LocationIndexKey {
+    fn create_index_area(&self, location: LocationInternal, distance: i64) -> IndexArea {
+        let distance = distance as f64;
+        IndexArea {
+            top_left: self.location_to_index_key(location.move_kilometers(distance, -distance)),
+            bottom_right: self.location_to_index_key(location.move_kilometers(-distance, distance)),
+        }
+    }
+
+    fn location_to_index_key(&self, location: LocationInternal) -> LocationIndexKey {
         LocationIndexKey {
             y: self.calculate_index_y_key(location.latitude()),
             x: self.calculate_index_x_key(location.longitude()),
@@ -187,6 +192,110 @@ impl CoordinateManager {
 
     fn latitude_max(&self) -> f64 {
         self.config.latitude_top_left
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct IndexArea {
+    top_left: LocationIndexKey,
+    bottom_right: LocationIndexKey
+}
+
+impl IndexArea {
+    fn max_area(index: &LocationIndex) -> Self {
+        Self {
+            top_left: LocationIndexKey { x: 0, y: 0, },
+            bottom_right: LocationIndexKey { x: index.last_x_index() as u16, y: index.last_y_index() as u16 },
+        }
+    }
+
+    pub fn top_left(&self) -> LocationIndexKey {
+        self.top_left
+    }
+
+    pub fn bottom_right(&self) -> LocationIndexKey {
+        self.bottom_right
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct LocationIndexArea {
+    area_inner: Option<IndexArea>,
+    area_outer: IndexArea,
+    /// This is not on the empty border area of the location index.
+    profile_location: LocationIndexKey,
+}
+
+impl LocationIndexArea {
+    fn new(
+        area_inner: Option<IndexArea>,
+        area_outer: IndexArea,
+        mut profile_location: LocationIndexKey,
+        index: &impl ReadIndex,
+    ) -> Self {
+        profile_location = LocationIndexKey {
+            x: profile_location.x.clamp(1, (index.width() - 2) as u16),
+            y: profile_location.y.clamp(1, (index.height() - 2) as u16),
+        };
+        Self {
+            area_inner,
+            area_outer,
+            profile_location,
+        }
+    }
+
+    pub fn max_area(
+        profile_location: LocationIndexKey,
+        index: &impl ReadIndex,
+    ) -> Self {
+        Self::new(
+            None,
+            IndexArea {
+                top_left: LocationIndexKey { x: 0, y: 0 },
+                bottom_right: LocationIndexKey {
+                    x: index.last_x_index() as u16,
+                    y: index.last_y_index() as u16,
+                },
+            },
+            profile_location,
+            index,
+        )
+    }
+
+    pub fn index_iterator_start_location(&self, random: bool) -> LocationIndexKey {
+        if random {
+            let x = rand::thread_rng().gen_range(self.area_outer.top_left.x..=self.area_outer.bottom_right.x);
+            let y = rand::thread_rng().gen_range(self.area_outer.top_left.y..=self.area_outer.bottom_right.y);
+            LocationIndexKey {
+                x,
+                y,
+            }
+        } else {
+            self.profile_location
+        }
+    }
+
+    pub fn with_max_area(
+        &self,
+        index: &impl ReadIndex,
+    ) -> Self {
+        Self::max_area(
+            self.profile_location,
+            index,
+        )
+    }
+
+    pub fn area_inner(&self) -> Option<&IndexArea> {
+        self.area_inner.as_ref()
+    }
+
+    pub fn area_outer(&self) -> &IndexArea {
+        &self.area_outer
+    }
+
+    /// This is not on the empty border area of the location index.
+    pub fn profile_location(&self) -> LocationIndexKey {
+        self.profile_location
     }
 }
 
