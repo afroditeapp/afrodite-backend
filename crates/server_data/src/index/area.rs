@@ -68,8 +68,8 @@ impl LocationIndexArea {
             IndexArea {
                 top_left: LocationIndexKey { x: 0, y: 0 },
                 bottom_right: LocationIndexKey {
-                    x: (index.width() - 1) as u16,
-                    y: (index.height() - 1) as u16,
+                    x: index.last_x_index() as u16,
+                    y: index.last_y_index() as u16,
                 },
             },
             profile_location,

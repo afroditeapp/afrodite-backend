@@ -168,9 +168,9 @@ impl RoundState {
 
         let max_indexes = CurrentMaxIndexes {
             top: top.max(0),
-            bottom: bottom.min(index.last_row_index() as isize),
+            bottom: bottom.min(index.last_y_index() as isize),
             left: left.max(0),
-            right: right.min(index.last_column_index() as isize),
+            right: right.min(index.last_x_index() as isize),
         };
 
         let state = Self {

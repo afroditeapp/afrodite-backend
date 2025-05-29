@@ -86,13 +86,11 @@ pub trait ReadIndex {
     /// Index height. Greater than zero.
     fn height(&self) -> usize;
 
-    /// Last y-axis index.
-    fn last_row_index(&self) -> usize {
+    fn last_y_index(&self) -> usize {
         self.height() - 1
     }
 
-    /// Last x-axis index.
-    fn last_column_index(&self) -> usize {
+    fn last_x_index(&self) -> usize {
         self.width() - 1
     }
 }
