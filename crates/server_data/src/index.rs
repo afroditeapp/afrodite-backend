@@ -27,6 +27,7 @@ use model::{AccountId, UnixTime};
 use model_server_data::{
     Location, LocationIndexKey, LocationIndexProfileData, MaxDistanceKm, MinDistanceKm, ProfileLink, ProfileQueryMakerDetails
 };
+use profiles::ProfilesAtLocation;
 use read::LocationIndexIteratorState;
 use server_common::data::index::IndexError;
 use tokio::sync::RwLock;
@@ -41,6 +42,7 @@ pub mod read;
 pub mod write;
 pub mod coordinates;
 pub mod info;
+pub mod profiles;
 
 pub trait LocationWrite {
     fn location(&self) -> crate::index::LocationIndexWriteHandle<'_>;
@@ -168,18 +170,11 @@ impl<'a> LocationIndexIteratorHandle<'a> {
                 // sent to client, which might cause issues if everyone will
                 // set profile to same location.
                 Some(profiles) => {
-                    let matches: Vec<ProfileLink> = profiles
-                        .profiles
-                        .values()
-                        .filter(|p| {
-                            p.is_match(
-                                query_maker_details,
-                                self.config.profile_attributes(),
-                                current_time,
-                            )
-                        })
-                        .map(|p| p.to_profile_link_value())
-                        .collect();
+                    let matches: Vec<ProfileLink> = profiles.find_profiles(
+                        query_maker_details,
+                        self.config.profile_attributes(),
+                        current_time
+                    );
                     if matches.is_empty() {
                         IteratorResultInternal::TryAgain
                     } else {
@@ -246,8 +241,8 @@ impl<'a> LocationIndexWriteHandle<'a> {
         let mut profiles = self.profiles.write().await;
         let data = match profiles.get_mut(&previous_key) {
             Some(p) => {
-                let current_profile = p.profiles.remove(&account_id);
-                Some((current_profile, p.profiles.len()))
+                let current_profile = p.remove(&account_id);
+                Some((current_profile, p.len()))
             }
             None => None,
         };
@@ -258,9 +253,8 @@ impl<'a> LocationIndexWriteHandle<'a> {
             if let Some(profile) = current_profile {
                 match profiles.get_mut(&new_key) {
                     Some(some_other_profiles_also) => {
-                        let update_index = some_other_profiles_also.profiles.is_empty();
+                        let update_index = some_other_profiles_also.is_empty();
                         some_other_profiles_also
-                            .profiles
                             .insert(account_id, profile);
                         if update_index {
                             drop(profiles);
@@ -307,7 +301,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
         let profiles = self.profiles.read().await;
         profiles
             .get(&info.current_position)
-            .and_then(|v| v.profiles.get(&account_id))
+            .and_then(|v| v.get(&account_id))
             .inspect(|data| data.update_last_seen_value(info.last_seen_time));
     }
 
@@ -321,9 +315,8 @@ impl<'a> LocationIndexWriteHandle<'a> {
         let mut profiles = self.profiles.write().await;
         match profiles.get_mut(&key) {
             Some(some_other_profiles_also) => {
-                let update_index = some_other_profiles_also.profiles.is_empty();
+                let update_index = some_other_profiles_also.is_empty();
                 some_other_profiles_also
-                    .profiles
                     .insert(account_id, profile_data);
                 if update_index {
                     drop(profiles);
@@ -353,9 +346,9 @@ impl<'a> LocationIndexWriteHandle<'a> {
     ) -> error_stack::Result<(), IndexError> {
         let mut profiles = self.profiles.write().await;
         if let Some(some_other_profiles_also) = profiles.get_mut(&key) {
-            let removed = some_other_profiles_also.profiles.remove(&account_id);
+            let removed = some_other_profiles_also.remove(&account_id);
 
-            if removed.is_some() && some_other_profiles_also.profiles.is_empty() {
+            if removed.is_some() && some_other_profiles_also.is_empty() {
                 profiles.remove(&key);
                 drop(profiles);
                 let mut updater = IndexUpdater::new(self.index.clone());
@@ -365,18 +358,5 @@ impl<'a> LocationIndexWriteHandle<'a> {
             }
         }
         Ok(())
-    }
-}
-
-#[derive(Debug)]
-pub struct ProfilesAtLocation {
-    profiles: HashMap<AccountId, LocationIndexProfileData>,
-}
-
-impl ProfilesAtLocation {
-    pub fn new(account_id: AccountId, profile: LocationIndexProfileData) -> Self {
-        let mut profiles = HashMap::new();
-        profiles.insert(account_id, profile);
-        Self { profiles }
     }
 }
