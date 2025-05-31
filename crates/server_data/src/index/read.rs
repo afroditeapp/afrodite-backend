@@ -294,13 +294,23 @@ impl LocationIndexIteratorState {
                 bottom_right: area.area_outer().bottom_right().into(),
             }),
         };
-        match RoundState::create(&initial_state, 0, index) {
+        let current_round = if random_start_position {
+            // Start position is most likely not at the centre of
+            // inner limit.
+            0
+        } else if let Some(a) = area.area_inner() {
+            let size = a.bottom_right().x.abs_diff(a.top_left().x);
+            size / 2
+        } else {
+            0
+        };
+        match RoundState::create(&initial_state, current_round, index) {
             CreateRoundStateResult::AllIterated => Self::completed(),
             CreateRoundStateResult::Continue(round) =>
                 Self {
                     round,
                     initial_state,
-                    current_round: 0,
+                    current_round,
                     completed: false,
                 }
         }
