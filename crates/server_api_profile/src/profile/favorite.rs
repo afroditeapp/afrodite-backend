@@ -12,6 +12,9 @@ use crate::{
 const PATH_GET_FAVORITE_PROFILES: &str = "/profile_api/favorite_profiles";
 
 /// Get list of all favorite profiles.
+///
+/// First item is the oldest favorite
+/// (ordered using UnixTime and account ID).
 #[utoipa::path(
     get,
     path = PATH_GET_FAVORITE_PROFILES,
