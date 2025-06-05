@@ -7,6 +7,8 @@ use url::Url;
 
 use crate::{args::TestMode, file::ConfigFileError};
 
+pub use simple_backend_config::file::NsfwDetectionThresholds;
+
 #[derive(Debug, Default, Deserialize)]
 pub struct BotConfigFile {
     #[serde(default)]
@@ -384,15 +386,6 @@ pub struct NsfwDetectionConfig {
     pub move_to_human: Option<NsfwDetectionThresholds>,
     /// Thresholds for accepting the image.
     pub accept: Option<NsfwDetectionThresholds>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct NsfwDetectionThresholds {
-    pub drawings: Option<f32>,
-    pub hentai: Option<f32>,
-    pub neutral: Option<f32>,
-    pub porn: Option<f32>,
-    pub sexy: Option<f32>,
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]

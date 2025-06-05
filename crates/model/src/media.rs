@@ -182,6 +182,8 @@ pub enum ContentProcessingStateType {
     Completed = 3,
     /// Content processing failed.
     Failed = 4,
+    /// NSFW detected.
+    NsfwDetected = 5,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -233,6 +235,13 @@ impl ContentProcessingState {
 
     pub fn change_to_failed(&mut self) {
         self.state = ContentProcessingStateType::Failed;
+        self.wait_queue_position = None;
+        self.cid = None;
+        self.fd = None;
+    }
+
+    pub fn change_to_nsfw_detected(&mut self) {
+        self.state = ContentProcessingStateType::NsfwDetected;
         self.wait_queue_position = None;
         self.cid = None;
         self.fd = None;

@@ -12,6 +12,8 @@ rustface = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 
+nsfw = { workspace = true }
+
 thiserror = { workspace = true }
 error-stack = { workspace = true }
 

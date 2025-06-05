@@ -102,13 +102,18 @@ impl ContentProcessingManager {
         let mut write = self.state.content_processing().data().write().await;
         if let Some(state) = write.processing_states_mut().get_mut(&content.to_key()) {
             let result = self
-                .if_successful_save_to_database(self.state.config(), result, state)
+                .if_successful_and_no_nsfw_then_save_to_database(self.state.config(), result, state)
                 .await;
             match result {
-                Ok(ImgInfo { face_detected, content_id }) => {
+                Ok(ImgInfo::ProcessedSuccessfully { face_detected, content_id }) => {
                     state
                         .processing_state
                         .change_to_completed(content_id, face_detected);
+                }
+                Ok(ImgInfo::NsfwDetected) => {
+                    state
+                        .processing_state
+                        .change_to_nsfw_detected();
                 }
                 Err(e) => {
                     state.processing_state.change_to_failed();
@@ -132,13 +137,16 @@ impl ContentProcessingManager {
         }
     }
 
-    async fn if_successful_save_to_database(
+    async fn if_successful_and_no_nsfw_then_save_to_database(
         &self,
         config: &Config,
         result: Result<ImageProcessingInfo, ContentProcessingError>,
         state: &mut ProcessingState,
     ) -> Result<ImgInfo, ContentProcessingError> {
         let info = result?;
+        if info.nsfw_detected {
+            return Ok(ImgInfo::NsfwDetected);
+        }
         let face_detected =
             if let Some(face_detected) = config.simple_backend().debug_face_detection_result() {
                 face_detected
@@ -161,14 +169,17 @@ impl ContentProcessingManager {
         .await
         .change_context(ContentProcessingError::DatabaseError)?;
 
-        Ok(ImgInfo {
+        Ok(ImgInfo::ProcessedSuccessfully {
             face_detected,
             content_id,
         })
     }
 }
 
-struct ImgInfo {
-    face_detected: bool,
-    content_id: ContentId,
+enum ImgInfo {
+    ProcessedSuccessfully {
+        face_detected: bool,
+        content_id: ContentId,
+    },
+    NsfwDetected,
 }

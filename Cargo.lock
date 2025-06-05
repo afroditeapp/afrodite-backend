@@ -4914,6 +4914,7 @@ dependencies = [
  "error-stack",
  "image",
  "mozjpeg",
+ "nsfw",
  "rustface",
  "serde",
  "serde_json",

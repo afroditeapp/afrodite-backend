@@ -2,11 +2,14 @@ use std::io::Write;
 
 use error_stack::{report, Result, ResultExt};
 use image::{DynamicImage, EncodableLayout, GrayImage, ImageDecoder, ImageReader};
+use nsfw_detection::handle_nsfw_detection;
 use serde::{Deserialize, Serialize};
 use simple_backend_config::{
     args::{ImageProcessModeArgs, InputFileType},
     file::ImageProcessingConfig,
 };
+
+mod nsfw_detection;
 
 const SOURCE_IMG_MIN_WIDTH_AND_HEIGHT: u32 = 512;
 
@@ -41,12 +44,16 @@ pub enum ImageProcessError {
 
     #[error("Stdout error")]
     Stdout,
+
+    #[error("NSFW detection error")]
+    NsfwDetectionError,
 }
 
 /// Image process returns this info as JSON to standard output.
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct ImageProcessingInfo {
     pub face_detected: bool,
+    pub nsfw_detected: bool,
 }
 
 pub fn handle_image(
@@ -79,8 +86,6 @@ pub fn handle_image(
     img.apply_orientation(orientation);
     let width = img.width();
     let height = img.height();
-    let data_face_detection = img.to_luma8();
-    let data = img.into_rgb8();
 
     let result = std::panic::catch_unwind(|| -> Result<Vec<u8>, ImageProcessError> {
         let mut compress = mozjpeg::Compress::new(mozjpeg::ColorSpace::JCS_RGB);
@@ -99,7 +104,7 @@ pub fn handle_image(
             .change_context(ImageProcessError::EncodingError)?;
 
         compress
-            .write_scanlines(data.as_bytes())
+            .write_scanlines(img.to_rgb8().as_bytes())
             .change_context(ImageProcessError::EncodingError)?;
 
         let data = compress
@@ -122,13 +127,20 @@ pub fn handle_image(
 
     std::fs::write(&args.output, data).change_context(ImageProcessError::FileWriting)?;
 
-    let info = match detect_face(config, data_face_detection) {
-        Ok(info) => info,
+    let face_detected = match detect_face(&config, img.to_luma8()) {
+        Ok(v) => v,
         Err(e) => {
             // Ignore
             eprintln!("{:?}", e);
-            ImageProcessingInfo::default()
+            false
         }
+    };
+
+    let nsfw_detected = handle_nsfw_detection(&config, img.into_rgba8())?;
+
+    let info = ImageProcessingInfo {
+        face_detected,
+        nsfw_detected,
     };
 
     let mut stdout = std::io::stdout();
@@ -158,13 +170,11 @@ fn resize_image_if_needed(img: DynamicImage) -> DynamicImage {
 }
 
 fn detect_face(
-    config: ImageProcessingConfig,
+    config: &ImageProcessingConfig,
     data: GrayImage,
-) -> Result<ImageProcessingInfo, ImageProcessError> {
-    let Some(config) = config.seetaface else {
-        return Ok(ImageProcessingInfo {
-            face_detected: true,
-        });
+) -> Result<bool, ImageProcessError> {
+    let Some(config) = &config.seetaface else {
+        return Ok(false);
     };
 
     let data = rustface::ImageData::new(&data, data.width(), data.height());
@@ -194,7 +204,5 @@ fn detect_face(
     }
     .change_context(ImageProcessError::FaceDetection)?;
 
-    Ok(ImageProcessingInfo {
-        face_detected: !data.is_empty(),
-    })
+    Ok(!data.is_empty())
 }

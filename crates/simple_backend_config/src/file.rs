@@ -98,6 +98,13 @@ local_bot_api_port = 3002
 # detection_threshold = 2.8
 # pyramid_scale_factor = 0.5
 
+# [image_processing.nsfw_detection]
+# model_file = "model.onnx"
+
+# [image_processing.nsfw_detection.reject]
+# hentai = 0.9
+# porn = 0.9
+
 # [[ip_info.list]]
 # name = "test"
 # file = "ip-list.txt"
@@ -501,6 +508,7 @@ pub struct ImageProcessingConfig {
     #[serde(default = "default_jpeg_quality")]
     jpeg_quality: u8,
     pub seetaface: Option<SeetaFaceConfig>,
+    pub nsfw_detection: Option<NsfwDetectionConfig>,
 }
 
 fn default_jpeg_quality() -> u8 {
@@ -512,6 +520,7 @@ impl Default for ImageProcessingConfig {
         Self {
             jpeg_quality: default_jpeg_quality(),
             seetaface: None,
+            nsfw_detection: None,
         }
     }
 }
@@ -527,6 +536,22 @@ pub struct SeetaFaceConfig {
     pub model_file: String,
     pub detection_threshold: f64,
     pub pyramid_scale_factor: f32,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct NsfwDetectionConfig {
+    pub model_file: PathBuf,
+    /// Thresholds for image rejection.
+    pub reject: Option<NsfwDetectionThresholds>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct NsfwDetectionThresholds {
+    pub drawings: Option<f32>,
+    pub hentai: Option<f32>,
+    pub neutral: Option<f32>,
+    pub porn: Option<f32>,
+    pub sexy: Option<f32>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
