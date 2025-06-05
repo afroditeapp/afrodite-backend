@@ -241,7 +241,7 @@ pub struct BaseBotConfig {
     /// Longitude
     pub lon: Option<f64>,
     /// All bots will try to send like to this account ID
-    pub send_like_to_account_id: Option<simple_backend_utils::UuidBase64Url>,
+    pub send_like_to_account_id: Option<simple_backend_utils::UuidBase64UrlToml>,
     change_visibility: Option<bool>,
     change_location: Option<bool>,
     change_profile_text_time: Option<UtcTimeValue>,

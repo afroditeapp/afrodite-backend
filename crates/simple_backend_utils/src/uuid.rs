@@ -93,6 +93,12 @@ pub struct UuidBase64UrlToml(
     UuidBase64Url,
 );
 
+impl std::fmt::Display for UuidBase64UrlToml {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 fn uuid_as_string_base_64_url_toml<S: Serializer>(
     value: &UuidBase64Url,
     s: S,
