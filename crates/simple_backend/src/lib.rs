@@ -34,6 +34,7 @@ use axum::Router;
 use futures::future::poll_fn;
 use hyper::body::Incoming;
 use hyper_util::rt::{TokioExecutor, TokioIo};
+use image::ImageProcess;
 use manager_client::{ManagerApiClient, ManagerConnectionManager, ManagerEventHandler};
 use maxmind_db::{MaxMindDbManager, MaxMindDbManagerData};
 use perf::AllCounters;
@@ -369,6 +370,8 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         maxmind_db_quit_handle.wait_quit().await;
         perf_manager_quit_handle.wait_quit().await;
         self.logic.on_after_server_quit().await;
+
+        ImageProcess::close().await;
 
         info!("Server quit done");
     }

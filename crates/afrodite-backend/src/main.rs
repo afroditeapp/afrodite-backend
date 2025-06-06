@@ -15,7 +15,7 @@ use build_info::{BUILD_INFO_CARGO_PKG_NAME, BUILD_INFO_CARGO_PKG_VERSION, BUILD_
 use config::{args::AppMode, get_config};
 use server::{api_doc::ApiDoc, DatingAppServer};
 use server_data::index::info::LocationIndexInfoCreator;
-use simple_backend_config::{args::ImageProcessModeArgs, file::ImageProcessingConfig};
+use simple_backend_config::file::ImageProcessingConfig;
 use test_mode::TestRunner;
 use manager_config::args::ManagerApiClientMode;
 
@@ -42,7 +42,7 @@ fn main() -> ExitCode {
         return ExitCode::SUCCESS;
     }
 
-    if let Some(AppMode::ImageProcess(settings)) = args.mode {
+    if let Some(AppMode::ImageProcess) = args.mode {
         let config = simple_backend_config::get_config(
             args.server,
             BUILD_INFO_GIT_DESCRIBE.to_string(),
@@ -50,7 +50,7 @@ fn main() -> ExitCode {
             true,
         )
         .unwrap();
-        return handle_image_process_mode(settings, config.image_processing());
+        return handle_image_process_mode(config.image_processing());
     }
 
     if let Some(AppMode::OpenApi) = args.mode {
@@ -89,7 +89,7 @@ fn main() -> ExitCode {
         Some(config::args::AppMode::Config { .. }) |
         Some(config::args::AppMode::Manager) |
         Some(config::args::AppMode::ManagerApi(_)) |
-        Some(config::args::AppMode::ImageProcess(_)) |
+        Some(config::args::AppMode::ImageProcess) |
         Some(config::args::AppMode::OpenApi) => {
             unreachable!()
         }
@@ -123,10 +123,9 @@ fn handle_manager_api_client_mode(
 }
 
 fn handle_image_process_mode(
-    args: ImageProcessModeArgs,
     config: ImageProcessingConfig,
 ) -> ExitCode {
-    match simple_backend_image_process::handle_image(args, config) {
+    match simple_backend_image_process::run_image_processing_loop(config) {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
             eprintln!("{:?}", e);

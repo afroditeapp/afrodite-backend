@@ -6,7 +6,7 @@ use clap::{arg, command, Args, Parser, ValueEnum};
 use error_stack::ResultExt;
 use manager_config::args::ManagerApiClientMode;
 use reqwest::Url;
-use simple_backend_config::args::{ImageProcessModeArgs, ServerModeArgs};
+use simple_backend_config::args::ServerModeArgs;
 use simple_backend_utils::ContextExt;
 
 use crate::{bot_config_file::BotConfigFile, file::ConfigFileError};
@@ -47,7 +47,7 @@ pub enum AppMode {
     /// Run test, benchmark or bot mode
     Test(TestMode),
     /// Process received image
-    ImageProcess(ImageProcessModeArgs),
+    ImageProcess,
     /// Print API documentation JSON to stdout
     OpenApi,
     /// Manager mode

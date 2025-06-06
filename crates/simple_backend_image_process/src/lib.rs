@@ -1,12 +1,11 @@
-use std::io::Write;
+use std::{io, path::PathBuf};
 
 use error_stack::{report, Result, ResultExt};
-use face_detection::detect_face;
+use face_detection::FaceDetector;
 use image::{DynamicImage, EncodableLayout, ImageDecoder, ImageReader};
-use nsfw_detection::handle_nsfw_detection;
+use nsfw_detection::NsfwDetector;
 use serde::{Deserialize, Serialize};
 use simple_backend_config::{
-    args::{ImageProcessModeArgs, InputFileType},
     file::ImageProcessingConfig,
 };
 
@@ -44,11 +43,37 @@ pub enum ImageProcessError {
     #[error("Face detection panic detect")]
     FaceDetectionPanic,
 
-    #[error("Stdout error")]
-    Stdout,
+    #[error("Command reading failed")]
+    ReadCommand,
+
+    #[error("Info writing failed")]
+    WriteInfo,
 
     #[error("NSFW detection error")]
     NsfwDetectionError,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub enum InputFileType {
+    JpegImage,
+}
+
+/// Image process reads this info as JSON from standard input.
+///
+/// The standard input receives JSON strings with this format
+///
+/// * String length (u32, little-endian)
+/// * String bytes
+///
+/// The image process processs the JSON and responds with
+/// writing [ImageProcessingInfo] to standard output.
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ImageProcessingCommand {
+    /// Input image file.
+    pub input: PathBuf,
+    pub input_file_type: InputFileType,
+    /// Output jpeg image file. Will be overwritten if exists.
+    pub output: PathBuf,
 }
 
 /// Image process returns this info as JSON to standard output.
@@ -58,16 +83,60 @@ pub struct ImageProcessingInfo {
     pub nsfw_detected: bool,
 }
 
-pub fn handle_image(
-    args: ImageProcessModeArgs,
+pub fn read_command(read: &mut impl io::Read) -> Result<ImageProcessingCommand, ImageProcessError> {
+    let mut length = [0; 4];
+    read.read_exact(&mut length)
+        .change_context(ImageProcessError::ReadCommand)?;
+    let length = u32::from_le_bytes(length);
+    let mut bytes: Vec<u8> = vec![0; length as usize];
+    read.read_exact(&mut bytes)
+        .change_context(ImageProcessError::ReadCommand)?;
+    serde_json::from_reader(bytes.as_slice())
+        .change_context(ImageProcessError::ReadCommand)
+}
+
+pub fn write_info(write: &mut impl io::Write, info: ImageProcessingInfo) -> Result<(), ImageProcessError> {
+    let string = serde_json::to_string(&info)
+        .change_context(ImageProcessError::WriteInfo)?;
+    let len = TryInto::<u32>::try_into(string.len())
+        .change_context(ImageProcessError::WriteInfo)?;
+    write.write_all(&len.to_le_bytes())
+        .change_context(ImageProcessError::WriteInfo)?;
+    write.write_all(string.as_bytes())
+        .change_context(ImageProcessError::WriteInfo)?;
+    write.flush()
+        .change_context(ImageProcessError::WriteInfo)?;
+    Ok(())
+}
+
+pub fn run_image_processing_loop(
     config: ImageProcessingConfig,
 ) -> Result<(), ImageProcessError> {
-    let format = match args.input_file_type {
+    let face_detector = FaceDetector::new(&config)?;
+    let nsfw_detector = NsfwDetector::new(&config)?;
+
+    let mut stdout = std::io::stdout();
+    let mut stdin = std::io::stdin();
+
+    loop {
+        let command = read_command(&mut stdin)?;
+        let info = handle_image(&config, &face_detector, &nsfw_detector, command)?;
+        write_info(&mut stdout, info)?;
+    }
+}
+
+fn handle_image(
+    config: &ImageProcessingConfig,
+    face_detector: &FaceDetector,
+    nsfw_detector: &NsfwDetector,
+    command: ImageProcessingCommand,
+) -> Result<ImageProcessingInfo, ImageProcessError> {
+    let format = match command.input_file_type {
         InputFileType::JpegImage => image::ImageFormat::Jpeg,
     };
 
     let mut img_reader =
-        ImageReader::open(&args.input).change_context(ImageProcessError::InputReadingFailed)?;
+        ImageReader::open(&command.input).change_context(ImageProcessError::InputReadingFailed)?;
     img_reader.set_format(format);
     let mut img_decoder = img_reader
         .into_decoder()
@@ -127,9 +196,9 @@ pub fn handle_image(
     }
     .change_context(ImageProcessError::EncodingError)?;
 
-    std::fs::write(&args.output, data).change_context(ImageProcessError::FileWriting)?;
+    std::fs::write(&command.output, data).change_context(ImageProcessError::FileWriting)?;
 
-    let face_detected = match detect_face(&config, img.to_luma8()) {
+    let face_detected = match face_detector.detect_face(img.to_luma8()) {
         Ok(v) => v,
         Err(e) => {
             // Ignore
@@ -138,18 +207,14 @@ pub fn handle_image(
         }
     };
 
-    let nsfw_detected = handle_nsfw_detection(&config, img.into_rgba8())?;
+    let nsfw_detected = nsfw_detector.detect_nsfw(img.into_rgba8())?;
 
     let info = ImageProcessingInfo {
         face_detected,
         nsfw_detected,
     };
 
-    let mut stdout = std::io::stdout();
-    serde_json::to_writer(&stdout, &info).change_context(ImageProcessError::Stdout)?;
-    stdout.flush().change_context(ImageProcessError::Stdout)?;
-
-    Ok(())
+    Ok(info)
 }
 
 fn resize_image_if_needed(img: DynamicImage) -> DynamicImage {

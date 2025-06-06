@@ -13,8 +13,7 @@ use server_data::{
 use server_data_media::write::GetWriteCommandsMedia;
 use server_state::S;
 use simple_backend::{image::ImageProcess, ServerQuitWatcher};
-use simple_backend_config::args::InputFileType;
-use simple_backend_image_process::ImageProcessingInfo;
+use simple_backend_image_process::{ImageProcessingInfo, InputFileType};
 use tokio::task::JoinHandle;
 use tracing::{error, warn};
 

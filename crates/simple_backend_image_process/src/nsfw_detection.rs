@@ -1,47 +1,75 @@
 use error_stack::{report, Result, ResultExt};
 use image::RgbaImage;
-use nsfw::model::Metric;
-use simple_backend_config::file::{ImageProcessingConfig, NsfwDetectionThresholds};
+use nsfw::{model::Metric, Model};
+use simple_backend_config::file::{ImageProcessingConfig, NsfwDetectionConfig, NsfwDetectionThresholds};
 
 use crate::ImageProcessError;
 
-pub fn handle_nsfw_detection(
-    config: &ImageProcessingConfig,
-    img: RgbaImage,
-) -> Result<bool, ImageProcessError> {
-    let Some(config) = &config.nsfw_detection else {
-        return Ok(false);
-    };
+struct State {
+    model: Model,
+    config: NsfwDetectionConfig,
+}
 
-    let file = std::fs::File::open(&config.model_file)
-        .change_context(ImageProcessError::NsfwDetectionError)?;
-    let model = nsfw::create_model(file)
-        .map_err(|e| report!(ImageProcessError::NsfwDetectionError)
-            .attach_printable(e.to_string())
-        )?;
+pub struct NsfwDetector {
+    state: Option<State>,
+}
 
-    let results = nsfw::examine(&model, &img)
-        .map_err(|e| report!(ImageProcessError::NsfwDetectionError).attach_printable(e.to_string()))?;
+impl NsfwDetector {
+    pub fn new(
+        config: &ImageProcessingConfig,
+    ) -> Result<Self, ImageProcessError> {
+        let Some(config) = config.nsfw_detection.clone() else {
+            return Ok(Self {
+                state: None,
+            });
+        };
 
-    fn threshold(m: &Metric, thresholds: &NsfwDetectionThresholds) -> Option<f32> {
-        match m {
-            Metric::Drawings => thresholds.drawings,
-            Metric::Hentai => thresholds.hentai,
-            Metric::Neutral => thresholds.neutral,
-            Metric::Porn => thresholds.porn,
-            Metric::Sexy => thresholds.sexy,
-        }
+        let file = std::fs::File::open(&config.model_file)
+            .change_context(ImageProcessError::NsfwDetectionError)?;
+        let model = nsfw::create_model(file)
+            .map_err(|e| report!(ImageProcessError::NsfwDetectionError)
+                .attach_printable(e.to_string())
+            )?;
+
+        Ok(Self {
+            state: Some(State {
+                model,
+                config,
+            }),
+        })
     }
 
-    if let Some(thresholds) = &config.reject {
-        for c in &results {
-            if let Some(threshold) = threshold(&c.metric, thresholds) {
-                if c.score >= threshold {
-                    return Ok(true);
+    pub fn detect_nsfw(
+        &self,
+        img: RgbaImage,
+    ) -> Result<bool, ImageProcessError> {
+        let Some(state) = &self.state else {
+            return Ok(false);
+        };
+
+        let results = nsfw::examine(&state.model, &img)
+            .map_err(|e| report!(ImageProcessError::NsfwDetectionError).attach_printable(e.to_string()))?;
+
+        fn threshold(m: &Metric, thresholds: &NsfwDetectionThresholds) -> Option<f32> {
+            match m {
+                Metric::Drawings => thresholds.drawings,
+                Metric::Hentai => thresholds.hentai,
+                Metric::Neutral => thresholds.neutral,
+                Metric::Porn => thresholds.porn,
+                Metric::Sexy => thresholds.sexy,
+            }
+        }
+
+        if let Some(thresholds) = &state.config.reject {
+            for c in &results {
+                if let Some(threshold) = threshold(&c.metric, thresholds) {
+                    if c.score >= threshold {
+                        return Ok(true);
+                    }
                 }
             }
         }
-    }
 
-    Ok(false)
+        Ok(false)
+    }
 }
