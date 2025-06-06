@@ -9,7 +9,7 @@ use std::{
 use error_stack::{Report, Result, ResultExt};
 use manager_model::ManagerInstanceName;
 use serde::{Deserialize, Serialize};
-use simple_backend_utils::time::{DurationValue, TimeValue, UtcTimeValue};
+use simple_backend_utils::{time::{DurationValue, TimeValue, UtcTimeValue}, ContextExt};
 use url::Url;
 
 pub const CONFIG_FILE_NAME: &str = "simple_backend_config.toml";
@@ -101,7 +101,7 @@ local_bot_api_port = 3002
 # [image_processing.nsfw_detection]
 # model_file = "model.onnx"
 
-# [image_processing.nsfw_detection.reject]
+# [image_processing.nsfw_detection.thresholds]
 # hentai = 0.9
 # porn = 0.9
 
@@ -136,6 +136,8 @@ pub enum ConfigFileError {
     NotDirectory,
     #[error("Load config file")]
     LoadConfig,
+    #[error("Invalid config")]
+    InvalidConfig,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -211,7 +213,17 @@ impl SimpleBackendConfigFile {
     ) -> Result<SimpleBackendConfigFile, ConfigFileError> {
         let config_string =
             ConfigFileUtils::load_string(dir, CONFIG_FILE_NAME, DEFAULT_CONFIG_FILE_TEXT, save_default_if_not_found)?;
-        toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)
+        let config: SimpleBackendConfigFile = toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)?;
+
+        if let Some(nsfw_detection) = config.image_processing.as_ref().and_then(|v| v.nsfw_detection.as_ref()) {
+            if nsfw_detection.thresholds == NsfwDetectionThresholds::default() {
+                return Err(ConfigFileError::InvalidConfig
+                    .report()
+                    .attach_printable("Config image_processing.nsfw_detection.thresholds is empty"));
+            }
+        }
+
+        Ok(config)
     }
 }
 
@@ -541,11 +553,14 @@ pub struct SeetaFaceConfig {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct NsfwDetectionConfig {
     pub model_file: PathBuf,
-    /// Thresholds for image rejection.
-    pub reject: Option<NsfwDetectionThresholds>,
+    /// Thresholds when an image is classified as NSFW.
+    ///
+    /// If a probability value is equal or greater than the related
+    /// threshold then the image is classified as NSFW.
+    pub thresholds: NsfwDetectionThresholds,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize)]
 pub struct NsfwDetectionThresholds {
     pub drawings: Option<f32>,
     pub hentai: Option<f32>,

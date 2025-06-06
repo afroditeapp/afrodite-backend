@@ -60,12 +60,10 @@ impl NsfwDetector {
             }
         }
 
-        if let Some(thresholds) = &state.config.reject {
-            for c in &results {
-                if let Some(threshold) = threshold(&c.metric, thresholds) {
-                    if c.score >= threshold {
-                        return Ok(true);
-                    }
+        for c in &results {
+            if let Some(threshold) = threshold(&c.metric, &state.config.thresholds) {
+                if c.score >= threshold {
+                    return Ok(true);
                 }
             }
         }
