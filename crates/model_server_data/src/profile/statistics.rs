@@ -76,6 +76,7 @@ pub struct ProfileStatisticsInternal {
     pub generation_time: UnixTime,
     pub age_counts: ProfileAgeCounts,
     pub account_count: i64,
+    pub account_count_bots_excluded: i64,
     pub public_profile_counts: PublicProfileCounts,
 }
 
@@ -84,12 +85,14 @@ impl ProfileStatisticsInternal {
         generation_time: UnixTime,
         age_counts: ProfileAgeCounts,
         account_count: i64,
+        account_count_bots_excluded: i64,
         public_profile_counts: PublicProfileCounts,
     ) -> Self {
         Self {
             generation_time,
             age_counts,
             account_count,
+            account_count_bots_excluded,
             public_profile_counts,
         }
     }
@@ -98,16 +101,19 @@ impl ProfileStatisticsInternal {
 #[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct GetProfileStatisticsResult {
     pub generation_time: UnixTime,
+    pub account_count_bots_excluded: i64,
     pub age_counts: ProfileAgeCounts,
 }
 
 impl GetProfileStatisticsResult {
-    pub fn new(
+    fn new(
         generation_time: UnixTime,
+        account_count_bots_excluded: i64,
         age_counts: ProfileAgeCounts,
     ) -> Self {
         Self {
             generation_time,
+            account_count_bots_excluded,
             age_counts,
         }
     }
@@ -115,6 +121,10 @@ impl GetProfileStatisticsResult {
 
 impl From<ProfileStatisticsInternal> for GetProfileStatisticsResult {
     fn from(value: ProfileStatisticsInternal) -> Self {
-        Self::new(value.generation_time, value.age_counts)
+        Self::new(
+            value.generation_time,
+            value.account_count_bots_excluded,
+            value.age_counts
+        )
     }
 }

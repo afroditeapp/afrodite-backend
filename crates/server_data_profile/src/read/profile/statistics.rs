@@ -14,12 +14,17 @@ impl ReadCommandsProfileStatistics<'_> {
     ) -> Result<ProfileStatisticsInternal, DataError> {
         let generation_time = UnixTime::current_time();
         let mut account_count = 0;
+        let mut account_count_bots_excluded = 0;
         let mut public_profile_counts = PublicProfileCounts::default();
 
         let mut age_counts = ProfileAgeCounts::empty();
 
         self.read_cache_profile_and_common_for_all_accounts(|p, e| {
             account_count += 1;
+
+            if !e.other_shared_state.is_bot_account {
+                account_count_bots_excluded += 1;
+            }
 
             let visibility = e.account_state_related_shared_state.profile_visibility();
 
@@ -62,6 +67,7 @@ impl ReadCommandsProfileStatistics<'_> {
             generation_time,
             age_counts,
             account_count,
+            account_count_bots_excluded,
             public_profile_counts,
         ))
     }
