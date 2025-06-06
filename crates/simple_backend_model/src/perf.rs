@@ -57,22 +57,33 @@ pub struct MetricKey {
 
 impl MetricKey {
     const SYSTEM_CATEGORY: &str = "system";
-    const SERVER_CATEGORY: &str = "server";
+    const WEBSOCKET_CATEGORY: &str = "websocket";
 
-    pub const SYSTEM_CPU_USAGE: Self = Self {
-        category: Self::SYSTEM_CATEGORY,
-        name: "cpu_usage",
-    };
+    pub const SYSTEM_CPU_USAGE: Self = Self::system("cpu_usage");
+    pub const SYSTEM_RAM_USAGE_MIB: Self = Self::system("ram_usage_mib");
 
-    pub const SYSTEM_RAM_USAGE_MIB: Self = Self {
-        category: Self::SYSTEM_CATEGORY,
-        name: "ram_usage_mib",
-    };
+    pub const CONNECTIONS: Self = Self::websocket("connections");
+    pub const CONNECTIONS_MEN: Self = Self::websocket("connections_men");
+    pub const CONNECTIONS_WOMEN: Self = Self::websocket("connections_women");
+    pub const CONNECTIONS_NONBINARIES: Self = Self::websocket("connections_nonbinaries");
 
-    pub const SERVER_WEBSOCKET_CONNECTIONS: Self = Self {
-        category: Self::SERVER_CATEGORY,
-        name: "websocket_connections",
-    };
+    pub const BOT_CONNECTIONS: Self = Self::websocket("bot_connections");
+    pub const BOT_CONNECTIONS_MEN: Self = Self::websocket("bot_connections_men");
+    pub const BOT_CONNECTIONS_WOMEN: Self = Self::websocket("bot_connections_women");
+    pub const BOT_CONNECTIONS_NONBINARIES: Self = Self::websocket("bot_connections_nonbinaries");
+
+    const fn system(name: &'static str) -> Self {
+        Self {
+            category: Self::SYSTEM_CATEGORY,
+            name,
+        }
+    }
+    const fn websocket(name: &'static str) -> Self {
+        Self {
+            category: Self::WEBSOCKET_CATEGORY,
+            name,
+        }
+    }
 
     pub fn new(category: &'static str, name: &'static str) -> MetricKey {
         Self {

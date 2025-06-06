@@ -17,7 +17,6 @@ use simple_backend_model::{
 use sysinfo::MemoryRefreshKind;
 use tokio::{sync::RwLock, task::JoinHandle};
 use tracing::{error, warn};
-use websocket::WebSocketConnectionTracker;
 
 use crate::ServerQuitWatcher;
 
@@ -206,8 +205,37 @@ impl PerformanceMetricsHistory {
         }
 
         first_item.insert(
-            MetricKey::SERVER_WEBSOCKET_CONNECTIONS,
-            WebSocketConnectionTracker::connection_count(),
+            MetricKey::CONNECTIONS,
+            websocket::Connections::connection_count(),
+        );
+        first_item.insert(
+            MetricKey::CONNECTIONS_MEN,
+            websocket::ConnectionsMen::connection_count(),
+        );
+        first_item.insert(
+            MetricKey::CONNECTIONS_WOMEN,
+            websocket::ConnectionsWomen::connection_count(),
+        );
+        first_item.insert(
+            MetricKey::CONNECTIONS_NONBINARIES,
+            websocket::ConnectionsNonbinaries::connection_count(),
+        );
+
+        first_item.insert(
+            MetricKey::BOT_CONNECTIONS,
+            websocket::BotConnections::connection_count(),
+        );
+        first_item.insert(
+            MetricKey::BOT_CONNECTIONS_MEN,
+            websocket::BotConnectionsMen::connection_count(),
+        );
+        first_item.insert(
+            MetricKey::BOT_CONNECTIONS_WOMEN,
+            websocket::BotConnectionsWomen::connection_count(),
+        );
+        first_item.insert(
+            MetricKey::BOT_CONNECTIONS_NONBINARIES,
+            websocket::BotConnectionsNonbinaries::connection_count(),
         );
 
         self.data.push_front(first_item);

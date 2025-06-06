@@ -28,7 +28,7 @@ use server_state::{
     app::{ApiUsageTrackerProvider, ClientVersionTrackerProvider, GetAccessTokens, IpAddressUsageTrackerProvider},
     state_impl::{ReadData, WriteData},
 };
-use simple_backend::{app::FilePackageProvider, create_counters, perf::websocket::WebSocketConnectionTracker, web_socket::WebSocketManager};
+use simple_backend::{app::FilePackageProvider, create_counters, perf::websocket::{self, ConnectionTracker}, web_socket::WebSocketManager};
 use simple_backend_utils::IntoReportFromString;
 use tokio::time::Instant;
 use tracing::{error, info};
@@ -448,7 +448,7 @@ async fn handle_socket_result(
     // TODO(prod): Remove extra logging from this file.
 
     COMMON.websocket_connected.incr();
-    let connection_tracker = WebSocketConnectionTracker::create();
+    let connection_trackers = WebSocketConnectionTrackers::new(state, id).await?;
 
     let mut timeout_timer = ConnectionPingTracker::new();
 
@@ -513,8 +513,9 @@ async fn handle_socket_result(
         }
     }
 
-    // Make sure that the tracker is not dropped right after it is created
-    drop(connection_tracker);
+    // Make sure that connection trackers are not dropped right
+    // after those are created.
+    drop(connection_trackers);
 
     Ok(())
 }
@@ -542,6 +543,56 @@ impl ConnectionPingTracker {
 
     pub async fn reset(&mut self) {
         self.timer.reset();
+    }
+}
+
+struct WebSocketConnectionTrackers {
+    _all: ConnectionTracker,
+    _gender_specific: Option<ConnectionTracker>,
+}
+
+impl WebSocketConnectionTrackers {
+    async fn new(
+        state: &S,
+        id: AccountIdInternal,
+    ) -> crate::result::Result<Self, WebSocketError> {
+        let info = state
+            .read()
+            .common()
+            .bot_and_gender_info(id)
+            .await
+            .change_context(WebSocketError::DatabaseBotAndGenderInfoQuery)?;
+
+        let all = if info.is_bot {
+            websocket::BotConnections::create().into()
+        } else {
+            websocket::Connections::create().into()
+        };
+
+        let gender_specific = if info.is_bot {
+            if info.gender.is_man() {
+                Some(websocket::BotConnectionsMen::create().into())
+            } else if info.gender.is_woman() {
+                Some(websocket::BotConnectionsWomen::create().into())
+            } else if info.gender.is_non_binary() {
+                Some(websocket::BotConnectionsNonbinaries::create().into())
+            } else {
+                None
+            }
+        } else if info.gender.is_man() {
+            Some(websocket::ConnectionsMen::create().into())
+        } else if info.gender.is_woman() {
+            Some(websocket::ConnectionsWomen::create().into())
+        } else if info.gender.is_non_binary() {
+            Some(websocket::ConnectionsNonbinaries::create().into())
+        } else {
+            None
+        };
+
+        Ok(Self {
+            _all: all,
+            _gender_specific: gender_specific,
+        })
     }
 }
 

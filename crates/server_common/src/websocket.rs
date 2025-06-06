@@ -44,6 +44,8 @@ pub enum WebSocketError {
     DatabaseMediaContentModerationCompletedNotificationQuery,
     #[error("Database: Pending notification reset failed")]
     DatabasePendingNotificationReset,
+    #[error("Database: Bot and gender info query failed")]
+    DatabaseBotAndGenderInfoQuery,
 
     // Event errors
     #[error("Event channel creation failed")]
