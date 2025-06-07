@@ -44,11 +44,6 @@ impl MetricValues {
             }
         }
 
-        if let Some(info) = system.get_system_info().await {
-            self.metrics.insert(MetricKey::SYSTEM_CPU_USAGE, info.cpu_usage());
-            self.metrics.insert(MetricKey::SYSTEM_RAM_USAGE_MIB, info.ram_usage_mib());
-        }
-
         self.metrics.insert(
             MetricKey::CONNECTIONS,
             websocket::Connections::connection_count(),
@@ -82,6 +77,12 @@ impl MetricValues {
             MetricKey::BOT_CONNECTIONS_NONBINARIES,
             websocket::BotConnectionsNonbinaries::connection_count(),
         );
+
+        // Do this last to keep previous metrics accurate as
+        // running get_system_info will take some time.
+        let info = system.get_system_info().await;
+        self.metrics.insert(MetricKey::SYSTEM_CPU_USAGE, info.cpu_usage());
+        self.metrics.insert(MetricKey::SYSTEM_RAM_USAGE_MIB, info.ram_usage_mib());
     }
 }
 
