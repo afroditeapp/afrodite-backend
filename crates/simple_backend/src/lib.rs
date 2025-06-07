@@ -37,7 +37,7 @@ use hyper_util::rt::{TokioExecutor, TokioIo};
 use image::ImageProcess;
 use manager_client::{ManagerApiClient, ManagerConnectionManager, ManagerEventHandler};
 use maxmind_db::{MaxMindDbManager, MaxMindDbManagerData};
-use perf::AllCounters;
+use perf::counters::AllCounters;
 use tls::{LetsEncryptAcmeSocketUtils, SimpleBackendTlsConfig, TlsManager};
 use tokio_rustls_acme::AcmeAcceptor;
 use simple_backend_config::SimpleBackendConfig;

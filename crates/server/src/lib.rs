@@ -47,7 +47,7 @@ use shutdown_tasks::ShutdownTasks;
 use simple_backend::{
     app::SimpleBackendAppState,
     email::{EmailManager, EmailManagerQuitHandle},
-    perf::AllCounters,
+    perf::counters::AllCounters,
     web_socket::WebSocketManager,
     BusinessLogic, ServerQuitWatcher,
 };
