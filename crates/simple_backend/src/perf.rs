@@ -211,6 +211,7 @@ impl PerfMetricsManager {
 
     pub async fn run(self, mut quit_notification: ServerQuitWatcher) {
         let mut timer = tokio::time::interval(Duration::from_secs(60));
+        timer.tick().await; // Prevent saving metrics when backend starts
 
         loop {
             tokio::select! {
