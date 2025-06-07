@@ -113,7 +113,7 @@ pub struct AttributeValueReader;
 
 impl AttributeValueReader {
     /// The filter_data must not be empty
-    pub fn is_match(
+    pub fn wanted_is_match(
         mode: AttributeMode,
         filter_data: &[u32],
         attribute_data: &[u32],
@@ -130,14 +130,14 @@ impl AttributeValueReader {
                 }
             }
             AttributeMode::OneLevel =>
-                Self::is_number_lists_match(
+                Self::wanted_is_number_lists_match(
                     filter_data,
                     attribute_data,
                     logical_and,
                     NumberExistence::one_level_attribute_find_from_sorted,
                 ),
             AttributeMode::TwoLevel =>
-                Self::is_number_lists_match(
+                Self::wanted_is_number_lists_match(
                     filter_data,
                     attribute_data,
                     logical_and,
@@ -147,7 +147,7 @@ impl AttributeValueReader {
     }
 
     /// The filter_data must not be empty
-    fn is_number_lists_match<'a, F: Fn(u32, &mut std::iter::Copied<std::slice::Iter<'a, u32>>) -> NumberExistence>(
+    fn wanted_is_number_lists_match<'a, F: Fn(u32, &mut std::iter::Copied<std::slice::Iter<'a, u32>>) -> NumberExistence>(
         filter_data: &[u32],
         attribute_data: &'a [u32],
         logical_and: bool,
@@ -175,7 +175,7 @@ impl AttributeValueReader {
     }
 
     /// The filter_data must not be empty
-    pub fn is_match_nonselected(
+    pub fn unwanted_is_match(
         mode: AttributeMode,
         filter_data: &[u32],
         attribute_data: &[u32],
@@ -187,13 +187,13 @@ impl AttributeValueReader {
                 filter & attribute == filter
             }
             AttributeMode::OneLevel =>
-                Self::is_number_lists_match_nonselected(
+                Self::unwanted_is_number_lists_match(
                     filter_data,
                     attribute_data,
                     NumberExistence::one_level_attribute_find_from_sorted,
                 ),
             AttributeMode::TwoLevel =>
-                Self::is_number_lists_match_nonselected(
+                Self::unwanted_is_number_lists_match(
                     filter_data,
                     attribute_data,
                     NumberExistence::two_level_attribute_find_from_sorted,
@@ -202,7 +202,7 @@ impl AttributeValueReader {
     }
 
     /// The filter_data must not be empty
-    fn is_number_lists_match_nonselected<'a, F: Fn(u32, &mut std::iter::Copied<std::slice::Iter<'a, u32>>) -> NumberExistence>(
+    fn unwanted_is_number_lists_match<'a, F: Fn(u32, &mut std::iter::Copied<std::slice::Iter<'a, u32>>) -> NumberExistence>(
         filter_data: &[u32],
         attribute_data: &'a [u32],
         existence_check: F,

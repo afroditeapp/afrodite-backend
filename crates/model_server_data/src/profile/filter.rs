@@ -8,6 +8,8 @@ use super::{Attribute, AttributeValueReader, ProfileAttributeValue};
 pub struct ProfileAttributeFilterValue {
     /// Attribute ID
     id: AttributeId,
+    /// Wanted attribute values.
+    ///
     /// For bitflag filters the list only has one u16 value.
     ///
     /// For one level attributes the values are u16 attribute value
@@ -18,11 +20,11 @@ pub struct ProfileAttributeFilterValue {
     /// least significant u16 containing group value ID.
     ///
     /// The values are stored in ascending order.
-    filter_values: Vec<u32>,
-    /// Same as [Self::filter_values] but for nonselected values.
+    wanted: Vec<u32>,
+    /// Same as [Self::wanted] but for unwanted values.
     ///
-    /// The nonselected values are checked always with AND operator.
-    filter_values_nonselected: Vec<u32>,
+    /// The unwanted values are checked always with AND operator.
+    unwanted: Vec<u32>,
     accept_missing_attribute: bool,
     use_logical_operator_and: bool,
 }
@@ -30,17 +32,17 @@ pub struct ProfileAttributeFilterValue {
 impl ProfileAttributeFilterValue {
     pub fn new(
         id: AttributeId,
-        mut filter_values: Vec<u32>,
-        mut filter_values_nonselected: Vec<u32>,
+        mut wanted: Vec<u32>,
+        mut unwanted: Vec<u32>,
         accept_missing_attribute: bool,
         use_logical_operator_and: bool,
     ) -> Self {
-        filter_values.sort();
-        filter_values_nonselected.sort();
+        wanted.sort();
+        unwanted.sort();
         Self {
             id,
-            filter_values,
-            filter_values_nonselected,
+            wanted,
+            unwanted,
             accept_missing_attribute,
             use_logical_operator_and,
         }
@@ -60,27 +62,27 @@ impl ProfileAttributeFilterValue {
         value: &ProfileAttributeValue,
         attribute_info: &Attribute,
     ) -> bool {
-        let values_match = if self.filter_values.is_empty() {
+        let wanted_match = if self.wanted.is_empty() {
             true
         } else {
-            AttributeValueReader::is_match(
+            AttributeValueReader::wanted_is_match(
                 attribute_info.mode,
-                &self.filter_values,
+                &self.wanted,
                 value.raw_values(),
                 self.use_logical_operator_and,
             )
         };
 
-        let values_nonselected_match = if self.filter_values_nonselected.is_empty() {
+        let unwanted_match = if self.unwanted.is_empty() {
             true
         } else {
-            AttributeValueReader::is_match_nonselected(
+            AttributeValueReader::unwanted_is_match(
                 attribute_info.mode,
-                &self.filter_values,
+                &self.wanted,
                 value.raw_values(),
             )
         };
 
-        values_match && values_nonselected_match
+        wanted_match && unwanted_match
     }
 }

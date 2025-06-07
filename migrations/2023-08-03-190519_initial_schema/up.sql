@@ -524,7 +524,7 @@ CREATE TABLE IF NOT EXISTS profile_attributes_value_list(
             ON UPDATE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS profile_attributes_filter_list(
+CREATE TABLE IF NOT EXISTS profile_attributes_filter_list_wanted(
     account_id      INTEGER             NOT NULL,
     attribute_id    INTEGER             NOT NULL,
     filter_value    INTEGER             NOT NULL,
@@ -535,7 +535,7 @@ CREATE TABLE IF NOT EXISTS profile_attributes_filter_list(
             ON UPDATE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS profile_attributes_filter_list_nonselected(
+CREATE TABLE IF NOT EXISTS profile_attributes_filter_list_unwanted(
     account_id      INTEGER             NOT NULL,
     attribute_id    INTEGER             NOT NULL,
     filter_value    INTEGER             NOT NULL,

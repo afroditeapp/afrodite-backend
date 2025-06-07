@@ -58,8 +58,8 @@ impl ProfileFilteringSettingsUpdate {
                             Ok(())
                         };
 
-                        check(&a.filter_values)?;
-                        check(&a.filter_values_nonselected)?;
+                        check(&a.wanted)?;
+                        check(&a.unwanted)?;
                     }
                 }
             } else {
@@ -135,6 +135,8 @@ pub struct ProfileAttributeFilterValueUpdate {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub enabled: bool,
+    /// Wanted attribute values.
+    ///
     /// For bitflag filters the list only has one u16 value.
     ///
     /// For one level attributes the values are u16 attribute value
@@ -145,13 +147,13 @@ pub struct ProfileAttributeFilterValueUpdate {
     /// least significant u16 containing group value ID.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     #[schema(default = json!([]))]
-    pub filter_values: Vec<u32>,
-    /// Same as [Self::filter_values] but for nonselected values.
+    pub wanted: Vec<u32>,
+    /// Same as [Self::wanted] but for unwanted values.
     ///
-    /// The nonselected values are checked always with AND operator.
+    /// The unwanted values are checked always with AND operator.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     #[schema(default = json!([]))]
-    pub filter_values_nonselected: Vec<u32>,
+    pub unwanted: Vec<u32>,
     /// Defines should missing attribute be accepted.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]

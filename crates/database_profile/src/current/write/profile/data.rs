@@ -298,9 +298,9 @@ impl CurrentWriteProfileData<'_> {
             }
 
             {
-                use model::schema::profile_attributes_filter_list::dsl::*;
+                use model::schema::profile_attributes_filter_list_wanted::dsl::*;
 
-                delete(profile_attributes_filter_list)
+                delete(profile_attributes_filter_list_wanted)
                     .filter(account_id.eq(id.as_db_id()))
                     .filter(attribute_id.eq(a.id))
                     .execute(self.conn())
@@ -308,9 +308,9 @@ impl CurrentWriteProfileData<'_> {
             }
 
             {
-                use model::schema::profile_attributes_filter_list_nonselected::dsl::*;
+                use model::schema::profile_attributes_filter_list_unwanted::dsl::*;
 
-                delete(profile_attributes_filter_list_nonselected)
+                delete(profile_attributes_filter_list_unwanted)
                     .filter(account_id.eq(id.as_db_id()))
                     .filter(attribute_id.eq(a.id))
                     .execute(self.conn())
@@ -336,10 +336,10 @@ impl CurrentWriteProfileData<'_> {
             }
 
             {
-                use model::schema::profile_attributes_filter_list::dsl::*;
+                use model::schema::profile_attributes_filter_list_wanted::dsl::*;
 
                 let values: Vec<_> = a
-                    .filter_values
+                    .wanted
                     .into_iter()
                     .map(|value| {
                         (
@@ -350,17 +350,17 @@ impl CurrentWriteProfileData<'_> {
                     })
                     .collect();
 
-                insert_into(profile_attributes_filter_list)
+                insert_into(profile_attributes_filter_list_wanted)
                     .values(values)
                     .execute(self.conn())
                     .into_db_error(())?;
             }
 
             {
-                use model::schema::profile_attributes_filter_list_nonselected::dsl::*;
+                use model::schema::profile_attributes_filter_list_unwanted::dsl::*;
 
                 let values: Vec<_> = a
-                    .filter_values_nonselected
+                    .unwanted
                     .into_iter()
                     .map(|value| {
                         (
@@ -371,7 +371,7 @@ impl CurrentWriteProfileData<'_> {
                     })
                     .collect();
 
-                insert_into(profile_attributes_filter_list_nonselected)
+                insert_into(profile_attributes_filter_list_unwanted)
                     .values(values)
                     .execute(self.conn())
                     .into_db_error(())?;

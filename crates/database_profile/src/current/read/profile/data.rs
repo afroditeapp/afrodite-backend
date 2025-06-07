@@ -174,39 +174,39 @@ impl CurrentReadProfileData<'_> {
 
         #[derive(Default)]
         struct FilterValues {
-            selected: Vec<u32>,
-            nonselected: Vec<u32>,
+            wanted: Vec<u32>,
+            unwanted: Vec<u32>,
         }
 
         let mut all_values = HashMap::<AttributeId, FilterValues>::new();
 
         {
-            use crate::schema::profile_attributes_filter_list::dsl::*;
+            use crate::schema::profile_attributes_filter_list_wanted::dsl::*;
 
-            let attribute_filters_data: Vec<(AttributeId, i64)> = profile_attributes_filter_list
+            let attribute_filters_data_wanted: Vec<(AttributeId, i64)> = profile_attributes_filter_list_wanted
                 .filter(account_id.eq(id.as_db_id()))
                 .select((attribute_id, filter_value))
                 .load(self.conn())
                 .change_context(DieselDatabaseError::Execute)?;
 
-            for (id, value) in attribute_filters_data {
+            for (id, value) in attribute_filters_data_wanted {
                 let values = all_values.entry(id).or_default();
-                values.selected.push(value as u32);
+                values.wanted.push(value as u32);
             }
         }
 
         {
-            use crate::schema::profile_attributes_filter_list_nonselected::dsl::*;
+            use crate::schema::profile_attributes_filter_list_unwanted::dsl::*;
 
-            let attribute_filters_data_nonselected: Vec<(AttributeId, i64)> = profile_attributes_filter_list_nonselected
+            let attribute_filters_data_unwanted: Vec<(AttributeId, i64)> = profile_attributes_filter_list_unwanted
                 .filter(account_id.eq(id.as_db_id()))
                 .select((attribute_id, filter_value))
                 .load(self.conn())
                 .change_context(DieselDatabaseError::Execute)?;
 
-                for (id, value) in attribute_filters_data_nonselected {
+                for (id, value) in attribute_filters_data_unwanted {
                     let values = all_values.entry(id).or_default();
-                    values.nonselected.push(value as u32);
+                    values.unwanted.push(value as u32);
                 }
         };
 
@@ -216,8 +216,8 @@ impl CurrentReadProfileData<'_> {
                 let values = all_values.remove(&id).unwrap_or_default();
                 ProfileAttributeFilterValue::new(
                     id,
-                    values.selected,
-                    values.nonselected,
+                    values.wanted,
+                    values.unwanted,
                     accept_missing_attribute,
                     use_logical_operator_and,
                 )
