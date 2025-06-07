@@ -22,10 +22,73 @@ pub mod websocket;
 pub mod counters;
 pub mod system;
 
+pub struct MetricValues {
+    metrics: HashMap<MetricKey, u32>,
+}
+
+impl MetricValues {
+    fn new() -> Self {
+        Self {
+            metrics: HashMap::new(),
+        }
+    }
+
+    async fn save_metrics(&mut self, counters: AllCounters, system: &mut SystemInfoManager) {
+         for category in counters {
+            for counter in category.counter_list() {
+                let key = MetricKey::new(
+                    category.name(),
+                    counter.name(),
+                );
+                self.metrics.insert(key, counter.load_and_reset());
+            }
+        }
+
+        if let Some(info) = system.get_system_info().await {
+            self.metrics.insert(MetricKey::SYSTEM_CPU_USAGE, info.cpu_usage());
+            self.metrics.insert(MetricKey::SYSTEM_RAM_USAGE_MIB, info.ram_usage_mib());
+        }
+
+        self.metrics.insert(
+            MetricKey::CONNECTIONS,
+            websocket::Connections::connection_count(),
+        );
+        self.metrics.insert(
+            MetricKey::CONNECTIONS_MEN,
+            websocket::ConnectionsMen::connection_count(),
+        );
+        self.metrics.insert(
+            MetricKey::CONNECTIONS_WOMEN,
+            websocket::ConnectionsWomen::connection_count(),
+        );
+        self.metrics.insert(
+            MetricKey::CONNECTIONS_NONBINARIES,
+            websocket::ConnectionsNonbinaries::connection_count(),
+        );
+
+        self.metrics.insert(
+            MetricKey::BOT_CONNECTIONS,
+            websocket::BotConnections::connection_count(),
+        );
+        self.metrics.insert(
+            MetricKey::BOT_CONNECTIONS_MEN,
+            websocket::BotConnectionsMen::connection_count(),
+        );
+        self.metrics.insert(
+            MetricKey::BOT_CONNECTIONS_WOMEN,
+            websocket::BotConnectionsWomen::connection_count(),
+        );
+        self.metrics.insert(
+            MetricKey::BOT_CONNECTIONS_NONBINARIES,
+            websocket::BotConnectionsNonbinaries::connection_count(),
+        );
+    }
+}
+
 /// History has performance metric values every minute 24 hours
 pub struct PerformanceMetricsHistory {
-    first_item_time: Option<UnixTime>,
-    data: VecDeque<HashMap<MetricKey, u32>>,
+    latest_metrics_save_time: Option<UnixTime>,
+    data: VecDeque<MetricValues>,
     counters: AllCounters,
     system: SystemInfoManager,
 }
@@ -36,108 +99,51 @@ impl PerformanceMetricsHistory {
     fn new(counters: AllCounters) -> Self {
         let mut data = VecDeque::new();
         for _ in 0..Self::MINUTES_PER_DAY {
-            data.push_front(HashMap::new());
+            data.push_front(MetricValues::new());
         }
 
         Self {
             data,
-            first_item_time: None,
+            latest_metrics_save_time: None,
             counters,
             system: SystemInfoManager::new(),
         }
     }
 
-    async fn append_and_reset_counters(&mut self) {
-        self.first_item_time = Some(UnixTime::current_time());
-        let mut first_item = self.data.pop_back().expect("Buffer is empty");
-
-        for category in self.counters {
-            for counter in category.counter_list() {
-                let key = MetricKey::new(
-                    category.name(),
-                    counter.name(),
-                );
-                first_item.insert(key, counter.load_and_reset());
-            }
-        }
-
-        if let Some(info) = self.system.get_system_info().await {
-            first_item.insert(MetricKey::SYSTEM_CPU_USAGE, info.cpu_usage());
-            first_item.insert(MetricKey::SYSTEM_RAM_USAGE_MIB, info.ram_usage_mib());
-        }
-
-        first_item.insert(
-            MetricKey::CONNECTIONS,
-            websocket::Connections::connection_count(),
-        );
-        first_item.insert(
-            MetricKey::CONNECTIONS_MEN,
-            websocket::ConnectionsMen::connection_count(),
-        );
-        first_item.insert(
-            MetricKey::CONNECTIONS_WOMEN,
-            websocket::ConnectionsWomen::connection_count(),
-        );
-        first_item.insert(
-            MetricKey::CONNECTIONS_NONBINARIES,
-            websocket::ConnectionsNonbinaries::connection_count(),
-        );
-
-        first_item.insert(
-            MetricKey::BOT_CONNECTIONS,
-            websocket::BotConnections::connection_count(),
-        );
-        first_item.insert(
-            MetricKey::BOT_CONNECTIONS_MEN,
-            websocket::BotConnectionsMen::connection_count(),
-        );
-        first_item.insert(
-            MetricKey::BOT_CONNECTIONS_WOMEN,
-            websocket::BotConnectionsWomen::connection_count(),
-        );
-        first_item.insert(
-            MetricKey::BOT_CONNECTIONS_NONBINARIES,
-            websocket::BotConnectionsNonbinaries::connection_count(),
-        );
-
-        self.data.push_front(first_item);
+    async fn save_and_reset_counters(&mut self) {
+        self.latest_metrics_save_time = Some(UnixTime::current_time());
+        let mut last_item = self.data.pop_back().expect("Buffer is empty");
+        last_item.save_metrics(self.counters, &mut self.system).await;
+        self.data.push_front(last_item);
     }
 
     fn get_history(&self, only_latest_hour: bool) -> HashMap<MetricKey, PerfMetricValueArea> {
         let mut counter_data = HashMap::new();
 
-        self.copy_current_data_to(&mut counter_data, only_latest_hour);
-
-        counter_data
-    }
-
-    fn copy_current_data_to(
-        &self,
-        counter_data: &mut HashMap<MetricKey, PerfMetricValueArea>,
-        only_latest_hour: bool,
-    ) {
-        let Some(first_time_value) = self.first_item_time else {
-            return;
+        let Some(latest_metrics_save_time) = self.latest_metrics_save_time else {
+            return counter_data;
         };
+
         let max_count = if only_latest_hour {
             60
         } else {
             Self::MINUTES_PER_DAY
         };
+
         for counter_values in self.data.iter().take(max_count) {
-            for (k, &v) in counter_values.iter() {
-                if let Some(area) = counter_data.get_mut(k) {
-                    area.values.push(v);
-                } else {
-                    let area = PerfMetricValueArea {
-                        first_time_value,
+            for (k, &v) in counter_values.metrics.iter() {
+                let area = counter_data
+                    .entry(*k)
+                    .or_insert_with(|| PerfMetricValueArea {
+                        first_time_value: latest_metrics_save_time,
                         time_granularity: TimeGranularity::Minutes,
-                        values: vec![v],
-                    };
-                    counter_data.insert(*k, area);
-                }
+                        values: vec![],
+                    });
+                area.values.push(v);
             }
         }
+
+        counter_data
     }
 }
 
@@ -213,7 +219,7 @@ impl PerfMetricsManager {
                 // as wrong information in data and original tick timing will recover
                 // eventually.
                 _ = timer.tick() => {
-                    self.data.history.write().await.append_and_reset_counters().await;
+                    self.data.history.write().await.save_and_reset_counters().await;
                 }
                 _ = quit_notification.recv() => {
                     return;
