@@ -1,8 +1,11 @@
+use std::sync::Arc;
+
 use model_profile::ProfileStatisticsInternal;
 use server_data::{
     db_manager::RouterDatabaseReadHandle, result::Result, statistics::ProfileStatisticsCache,
     DataError,
 };
+use simple_backend::perf::PerfMetricsManagerData;
 
 use crate::read::GetReadProfileCommands;
 
@@ -10,10 +13,12 @@ pub trait ProfileStatisticsCacheUtils {
     async fn get_or_update_statistics(
         &self,
         handle: &RouterDatabaseReadHandle,
+        perf_data: Arc<PerfMetricsManagerData>,
     ) -> Result<ProfileStatisticsInternal, DataError>;
     async fn update_statistics(
         &self,
         handle: &RouterDatabaseReadHandle,
+        perf_data: Arc<PerfMetricsManagerData>,
     ) -> Result<ProfileStatisticsInternal, DataError>;
 }
 
@@ -21,6 +26,7 @@ impl ProfileStatisticsCacheUtils for ProfileStatisticsCache {
     async fn get_or_update_statistics(
         &self,
         handle: &RouterDatabaseReadHandle,
+        perf_data: Arc<PerfMetricsManagerData>,
     ) -> Result<ProfileStatisticsInternal, DataError> {
         let mut data = self.data.lock().await;
         let r = match data.as_mut() {
@@ -29,7 +35,7 @@ impl ProfileStatisticsCacheUtils for ProfileStatisticsCache {
                 let r = handle
                     .profile()
                     .statistics()
-                    .profile_statistics(Self::VISIBILITY)
+                    .profile_statistics(Self::VISIBILITY, perf_data)
                     .await?;
                 *data = Some(r.clone());
                 r
@@ -41,12 +47,13 @@ impl ProfileStatisticsCacheUtils for ProfileStatisticsCache {
     async fn update_statistics(
         &self,
         handle: &RouterDatabaseReadHandle,
+        perf_data: Arc<PerfMetricsManagerData>,
     ) -> Result<ProfileStatisticsInternal, DataError> {
         let mut data = self.data.lock().await;
         let r = handle
             .profile()
             .statistics()
-            .profile_statistics(Self::VISIBILITY)
+            .profile_statistics(Self::VISIBILITY, perf_data)
             .await?;
         *data = Some(r.clone());
         Ok(r)

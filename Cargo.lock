@@ -4646,6 +4646,8 @@ dependencies = [
  "model_profile",
  "server_common",
  "server_data",
+ "simple_backend",
+ "simple_backend_model",
  "tracing",
 ]
 

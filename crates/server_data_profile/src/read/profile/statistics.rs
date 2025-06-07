@@ -1,7 +1,11 @@
+use std::{collections::HashMap, sync::Arc};
+
 use model_profile::{
-    ProfileAgeCounts, ProfileStatisticsInternal, PublicProfileCounts, StatisticsGender, StatisticsProfileVisibility, UnixTime
+    ConnectionStatistics, ProfileAgeCounts, ProfileStatisticsInternal, PublicProfileCounts, StatisticsGender, StatisticsProfileVisibility, UnixTime
 };
 use server_data::{define_cmd_wrapper_read, result::Result, DataError};
+use simple_backend::perf::PerfMetricsManagerData;
+use simple_backend_model::{MetricKey, PerfMetricQueryResult, PerfMetricValueArea, TimeGranularity};
 
 use crate::cache::CacheReadProfile;
 
@@ -11,6 +15,7 @@ impl ReadCommandsProfileStatistics<'_> {
     pub async fn profile_statistics(
         &self,
         profile_visibility: StatisticsProfileVisibility,
+        perf_data: Arc<PerfMetricsManagerData>,
     ) -> Result<ProfileStatisticsInternal, DataError> {
         let generation_time = UnixTime::current_time();
         let mut account_count = 0;
@@ -63,12 +68,75 @@ impl ReadCommandsProfileStatistics<'_> {
         })
         .await?;
 
+        let history = perf_data.get_history(false).await;
+
         Ok(ProfileStatisticsInternal::new(
             generation_time,
             age_counts,
             account_count,
             account_count_bots_excluded,
             public_profile_counts,
+            convert_history_to_connection_statistics(history),
         ))
     }
+}
+
+fn convert_history_to_connection_statistics(data: PerfMetricQueryResult) -> ConnectionStatistics {
+    let get_areas = |key: MetricKey| -> &[PerfMetricValueArea] {
+        data.metrics
+            .iter()
+            .find(|v| v.name == key.to_name())
+            .map(|v| v.values.as_slice())
+            .unwrap_or_default()
+    };
+
+    let min_time = UnixTime::current_time().ut - 60 * 60 * 24;
+
+    ConnectionStatistics {
+        all: areas_to_average_values(get_areas(MetricKey::CONNECTIONS), min_time),
+        men: areas_to_average_values(get_areas(MetricKey::CONNECTIONS_MEN), min_time),
+        women: areas_to_average_values(get_areas(MetricKey::CONNECTIONS_WOMEN), min_time),
+        nonbinaries: areas_to_average_values(get_areas(MetricKey::CONNECTIONS_NONBINARIES), min_time),
+    }
+}
+
+fn areas_to_average_values(data: &[PerfMetricValueArea], min_time: i64) -> Vec<u32> {
+    let mut hour_and_values = HashMap::<u32, Vec<u32>>::new();
+
+    for h in 0..=23 {
+        hour_and_values.insert(h, vec![]);
+    }
+
+    for a in data {
+        if a.time_granularity != TimeGranularity::Minutes {
+            continue;
+        }
+
+        for (i, v) in a.values.iter().enumerate() {
+            let time = a.first_time_value.ut + (i * 60) as i64;
+            if time <= min_time {
+                continue;
+            }
+
+            let Some(hour) = UnixTime::new(time).hour() else {
+                continue;
+            };
+
+            if let Some(values)  = hour_and_values.get_mut(&hour) {
+                values.push(*v);
+            }
+        }
+    }
+
+    let mut vec: Vec<(u32, u32)> = hour_and_values.into_iter().map(|(k, v)| (k, average(v))).collect();
+    vec.sort_by_key(|(k, _)| *k);
+    vec.into_iter().map(|(_, v)| v).collect()
+}
+
+fn average(values: Vec<u32>) -> u32 {
+    if values.is_empty() {
+        return 0;
+    }
+    let sum: u64 = values.iter().map(|v| *v as u64).sum();
+    (sum / values.len() as u64) as u32
 }

@@ -78,6 +78,7 @@ pub struct ProfileStatisticsInternal {
     pub account_count: i64,
     pub account_count_bots_excluded: i64,
     pub public_profile_counts: PublicProfileCounts,
+    pub connection_statistics: ConnectionStatistics,
 }
 
 impl ProfileStatisticsInternal {
@@ -87,6 +88,7 @@ impl ProfileStatisticsInternal {
         account_count: i64,
         account_count_bots_excluded: i64,
         public_profile_counts: PublicProfileCounts,
+        connection_statistics: ConnectionStatistics,
     ) -> Self {
         Self {
             generation_time,
@@ -94,6 +96,7 @@ impl ProfileStatisticsInternal {
             account_count,
             account_count_bots_excluded,
             public_profile_counts,
+            connection_statistics,
         }
     }
 }
@@ -103,6 +106,7 @@ pub struct GetProfileStatisticsResult {
     pub generation_time: UnixTime,
     pub account_count_bots_excluded: i64,
     pub age_counts: ProfileAgeCounts,
+    pub connection_statistics: ConnectionStatistics,
 }
 
 impl GetProfileStatisticsResult {
@@ -110,11 +114,13 @@ impl GetProfileStatisticsResult {
         generation_time: UnixTime,
         account_count_bots_excluded: i64,
         age_counts: ProfileAgeCounts,
+        connection_statistics: ConnectionStatistics,
     ) -> Self {
         Self {
             generation_time,
             account_count_bots_excluded,
             age_counts,
+            connection_statistics,
         }
     }
 }
@@ -124,7 +130,23 @@ impl From<ProfileStatisticsInternal> for GetProfileStatisticsResult {
         Self::new(
             value.generation_time,
             value.account_count_bots_excluded,
-            value.age_counts
+            value.age_counts,
+            value.connection_statistics,
         )
     }
+}
+
+/// WebSocket connection statistics for 24 hours.
+///
+/// All lists contain 24 values starting from UTC time 00:00.
+///
+/// The data points are averages from available measurements.
+///
+/// Bots are not included in this data.
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, ToSchema)]
+pub struct ConnectionStatistics {
+    pub all: Vec<u32>,
+    pub men: Vec<u32>,
+    pub women: Vec<u32>,
+    pub nonbinaries: Vec<u32>,
 }

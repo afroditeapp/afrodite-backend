@@ -16,3 +16,6 @@ server_data = { path = "../server_data" }
 
 database = { path = "../database" }
 database_profile = { path = "../database_profile" }
+
+simple_backend = { path = "../simple_backend" }
+simple_backend_model = { path = "../simple_backend_model" }

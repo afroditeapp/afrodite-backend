@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::{net::SocketAddr, sync::Arc};
 
 use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
 use error_stack::ResultExt;
@@ -268,6 +268,10 @@ impl GetTileMap for S {
 impl PerfCounterDataProvider for S {
     fn perf_counter_data(&self) -> &PerfMetricsManagerData {
         &self.state.simple_backend_state.perf_data
+    }
+
+    fn perf_counter_data_arc(&self) -> Arc<PerfMetricsManagerData> {
+        self.state.simple_backend_state.perf_data.clone()
     }
 }
 

@@ -1,4 +1,4 @@
-use chrono::Datelike;
+use chrono::{Datelike, Timelike};
 use diesel::{sql_types::BigInt, AsExpression, FromSqlRow};
 use serde::{Deserialize, Serialize};
 use simple_backend_utils::current_unix_time;
@@ -42,6 +42,10 @@ impl UnixTime {
 
     pub fn year(&self) -> Option<i32> {
         chrono::DateTime::from_timestamp(self.ut, 0).map(|v| v.year())
+    }
+
+    pub fn hour(&self) -> Option<u32> {
+        chrono::DateTime::from_timestamp(self.ut, 0).map(|v| v.hour())
     }
 
     /// Return decremented time value (self.ut - 1). Implemented using

@@ -19,6 +19,7 @@ use server_data_profile::{
     write::GetWriteCommandsProfile,
 };
 use server_state::S;
+use simple_backend::app::PerfCounterDataProvider;
 use simple_backend::ServerQuitWatcher;
 use simple_backend_config::file::ScheduledTasksConfig;
 use simple_backend_utils::{IntoReportFromString, time::sleep_until_current_time_is_at};
@@ -141,7 +142,7 @@ impl ScheduledTaskManager {
         let statistics = self
             .state
             .profile_statistics_cache()
-            .update_statistics(self.state.read())
+            .update_statistics(self.state.read(), self.state.perf_counter_data_arc())
             .await
             .change_context(ScheduledTaskError::ProfileStatisticsError)?;
 

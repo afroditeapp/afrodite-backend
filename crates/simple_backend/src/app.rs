@@ -80,6 +80,7 @@ pub trait GetTileMap {
 
 pub trait PerfCounterDataProvider {
     fn perf_counter_data(&self) -> &PerfMetricsManagerData;
+    fn perf_counter_data_arc(&self) -> Arc<PerfMetricsManagerData>;
 }
 
 pub trait FilePackageProvider {
