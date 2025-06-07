@@ -130,12 +130,21 @@ impl PerformanceMetricsHistory {
             Self::MINUTES_PER_DAY
         };
 
+        let mut measurements = 0;
         for counter_values in self.data.iter().take(max_count) {
+            if counter_values.metrics.contains_key(&MetricKey::CONNECTIONS) {
+                measurements += 1;
+            }
+        }
+
+        let first_time_value = UnixTime::new(latest_metrics_save_time.ut - (measurements * 60));
+
+        for counter_values in self.data.iter().take(max_count).rev() {
             for (k, &v) in counter_values.metrics.iter() {
                 let area = counter_data
                     .entry(*k)
                     .or_insert_with(|| PerfMetricValueArea {
-                        first_time_value: latest_metrics_save_time,
+                        first_time_value,
                         time_granularity: TimeGranularity::Minutes,
                         values: vec![],
                     });
