@@ -12,40 +12,22 @@ use counters::AllCounters;
 use simple_backend_model::{
     MetricKey, PerfMetricQueryResult, PerfMetricValueArea, PerfMetricValues, TimeGranularity, UnixTime
 };
-use sysinfo::MemoryRefreshKind;
+use system::SystemInfoManager;
 use tokio::{sync::RwLock, task::JoinHandle};
-use tracing::{error, warn};
+use tracing::warn;
 
 use crate::ServerQuitWatcher;
 
 pub mod websocket;
 pub mod counters;
-
-struct SystemInfo {
-    cpu_usage: u32,
-    ram_usage_mib: u32,
-}
-
-impl SystemInfo {
-    fn new(mut system: Box<sysinfo::System>) -> (Box<sysinfo::System>, SystemInfo) {
-        system.refresh_cpu_usage();
-        std::thread::sleep(sysinfo::MINIMUM_CPU_UPDATE_INTERVAL);
-        system.refresh_cpu_usage();
-        system.refresh_memory_specifics(MemoryRefreshKind::nothing().with_ram());
-        let info = SystemInfo {
-            cpu_usage: system.global_cpu_usage() as u32,
-            ram_usage_mib: (system.used_memory() / 1024 / 1024) as u32,
-        };
-        (system, info)
-    }
-}
+pub mod system;
 
 /// History has performance metric values every minute 24 hours
 pub struct PerformanceMetricsHistory {
     first_item_time: Option<UnixTime>,
     data: VecDeque<HashMap<MetricKey, u32>>,
     counters: AllCounters,
-    system: Option<Box<sysinfo::System>>,
+    system: SystemInfoManager,
 }
 
 impl PerformanceMetricsHistory {
@@ -61,7 +43,7 @@ impl PerformanceMetricsHistory {
             data,
             first_item_time: None,
             counters,
-            system: Some(Box::new(sysinfo::System::new())),
+            system: SystemInfoManager::new(),
         }
     }
 
@@ -79,19 +61,9 @@ impl PerformanceMetricsHistory {
             }
         }
 
-        let system = self.system.take();
-        let result = tokio::task::spawn_blocking(|| {
-            SystemInfo::new(system.unwrap())
-        }).await;
-        match result {
-            Ok((system, info)) => {
-                self.system = Some(system);
-                first_item.insert(MetricKey::SYSTEM_CPU_USAGE, info.cpu_usage);
-                first_item.insert(MetricKey::SYSTEM_RAM_USAGE_MIB, info.ram_usage_mib);
-            }
-            Err(e) => {
-                error!("Getting system info failed: {e}");
-            }
+        if let Some(info) = self.system.get_system_info().await {
+            first_item.insert(MetricKey::SYSTEM_CPU_USAGE, info.cpu_usage());
+            first_item.insert(MetricKey::SYSTEM_RAM_USAGE_MIB, info.ram_usage_mib());
         }
 
         first_item.insert(
