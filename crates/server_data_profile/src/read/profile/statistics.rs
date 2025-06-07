@@ -5,7 +5,7 @@ use model_profile::{
 };
 use server_data::{define_cmd_wrapper_read, result::Result, DataError};
 use simple_backend::perf::PerfMetricsManagerData;
-use simple_backend_model::{MetricKey, PerfMetricQueryResult, PerfMetricValueArea, TimeGranularity};
+use simple_backend_model::{MetricKey, PerfMetricValueArea, TimeGranularity};
 
 use crate::cache::CacheReadProfile;
 
@@ -68,7 +68,7 @@ impl ReadCommandsProfileStatistics<'_> {
         })
         .await?;
 
-        let history = perf_data.get_history(false).await;
+        let history = perf_data.get_history_raw(false).await;
 
         Ok(ProfileStatisticsInternal::new(
             generation_time,
@@ -81,33 +81,25 @@ impl ReadCommandsProfileStatistics<'_> {
     }
 }
 
-fn convert_history_to_connection_statistics(data: PerfMetricQueryResult) -> ConnectionStatistics {
-    let get_areas = |key: MetricKey| -> &[PerfMetricValueArea] {
-        data.metrics
-            .iter()
-            .find(|v| v.name == key.to_name())
-            .map(|v| v.values.as_slice())
-            .unwrap_or_default()
-    };
-
+fn convert_history_to_connection_statistics(data: HashMap<MetricKey, PerfMetricValueArea>) -> ConnectionStatistics {
     let min_time = UnixTime::current_time().ut - 60 * 60 * 24;
 
     ConnectionStatistics {
-        all: areas_to_average_values(get_areas(MetricKey::CONNECTIONS), min_time),
-        men: areas_to_average_values(get_areas(MetricKey::CONNECTIONS_MEN), min_time),
-        women: areas_to_average_values(get_areas(MetricKey::CONNECTIONS_WOMEN), min_time),
-        nonbinaries: areas_to_average_values(get_areas(MetricKey::CONNECTIONS_NONBINARIES), min_time),
+        all: areas_to_average_values(data.get(&MetricKey::CONNECTIONS), min_time),
+        men: areas_to_average_values(data.get(&MetricKey::CONNECTIONS_MEN), min_time),
+        women: areas_to_average_values(data.get(&MetricKey::CONNECTIONS_WOMEN), min_time),
+        nonbinaries: areas_to_average_values(data.get(&MetricKey::CONNECTIONS_NONBINARIES), min_time),
     }
 }
 
-fn areas_to_average_values(data: &[PerfMetricValueArea], min_time: i64) -> Vec<u32> {
+fn areas_to_average_values(data: Option<&PerfMetricValueArea>, min_time: i64) -> Vec<u32> {
     let mut hour_and_values = HashMap::<u32, Vec<u32>>::new();
 
     for h in 0..=23 {
         hour_and_values.insert(h, vec![]);
     }
 
-    for a in data {
+    for a in data.into_iter() {
         if a.time_granularity != TimeGranularity::Minutes {
             continue;
         }
