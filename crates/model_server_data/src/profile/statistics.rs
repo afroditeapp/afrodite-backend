@@ -140,7 +140,7 @@ impl From<ProfileStatisticsInternal> for GetProfileStatisticsResult {
 ///
 /// All lists contain 24 values starting from UTC time 00:00.
 ///
-/// The data points are averages from available measurements.
+/// The data points are max values from available measurements.
 ///
 /// Bots are not included in this data.
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, ToSchema)]

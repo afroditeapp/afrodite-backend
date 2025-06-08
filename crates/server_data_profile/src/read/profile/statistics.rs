@@ -85,14 +85,14 @@ fn convert_history_to_connection_statistics(data: HashMap<MetricKey, PerfMetricV
     let min_time = UnixTime::current_time().ut - 60 * 60 * 24;
 
     ConnectionStatistics {
-        all: areas_to_average_values(data.get(&MetricKey::CONNECTIONS), min_time),
-        men: areas_to_average_values(data.get(&MetricKey::CONNECTIONS_MEN), min_time),
-        women: areas_to_average_values(data.get(&MetricKey::CONNECTIONS_WOMEN), min_time),
-        nonbinaries: areas_to_average_values(data.get(&MetricKey::CONNECTIONS_NONBINARIES), min_time),
+        all: areas_to_max_values(data.get(&MetricKey::CONNECTIONS), min_time),
+        men: areas_to_max_values(data.get(&MetricKey::CONNECTIONS_MEN), min_time),
+        women: areas_to_max_values(data.get(&MetricKey::CONNECTIONS_WOMEN), min_time),
+        nonbinaries: areas_to_max_values(data.get(&MetricKey::CONNECTIONS_NONBINARIES), min_time),
     }
 }
 
-fn areas_to_average_values(data: Option<&PerfMetricValueArea>, min_time: i64) -> Vec<u32> {
+fn areas_to_max_values(data: Option<&PerfMetricValueArea>, min_time: i64) -> Vec<u32> {
     let mut hour_and_values = HashMap::<u32, Vec<u32>>::new();
 
     for h in 0..=23 {
@@ -120,15 +120,10 @@ fn areas_to_average_values(data: Option<&PerfMetricValueArea>, min_time: i64) ->
         }
     }
 
-    let mut vec: Vec<(u32, u32)> = hour_and_values.into_iter().map(|(k, v)| (k, average(v))).collect();
+    let mut vec: Vec<(u32, u32)> = hour_and_values
+        .into_iter()
+        .map(|(k, v)| (k, v.into_iter().max().unwrap_or_default()))
+        .collect();
     vec.sort_by_key(|(k, _)| *k);
     vec.into_iter().map(|(_, v)| v).collect()
-}
-
-fn average(values: Vec<u32>) -> u32 {
-    if values.is_empty() {
-        return 0;
-    }
-    let sum: u64 = values.iter().map(|v| *v as u64).sum();
-    (sum / values.len() as u64) as u32
 }
