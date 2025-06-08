@@ -360,14 +360,14 @@ pub struct ChatGlobalState {
 /// Similar as [model_server_data::ProfileLink] but for chat component.
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct ChatProfileLink {
-    id: AccountId,
+    a: AccountId,
     /// This is optional because profile component owns it.
-    version: Option<ProfileVersion>,
+    p: Option<ProfileVersion>,
     /// This is optional because media component owns it.
-    content_version: Option<ProfileContentVersion>,
+    c: Option<ProfileContentVersion>,
     /// If the last seen time is not None, then it is Unix timestamp or -1 if
     /// the profile is currently online.
-    last_seen_time: Option<LastSeenTime>,
+    l: Option<LastSeenTime>,
 }
 
 impl ChatProfileLink {
@@ -378,10 +378,10 @@ impl ChatProfileLink {
         last_seen_time: Option<LastSeenTime>,
     ) -> Self {
         Self {
-            id,
-            version,
-            content_version,
-            last_seen_time,
+            a: id,
+            p: version,
+            c: content_version,
+            l: last_seen_time,
         }
     }
 }

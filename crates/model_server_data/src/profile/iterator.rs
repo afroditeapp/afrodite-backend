@@ -38,13 +38,13 @@ impl From<ProfileIteratorSessionIdInternal> for ProfileIteratorSessionId {
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct ProfileLink {
-    id: AccountId,
-    version: ProfileVersion,
+    a: AccountId,
+    p: ProfileVersion,
     /// This is optional because media component owns it.
-    content_version: Option<ProfileContentVersion>,
+    c: Option<ProfileContentVersion>,
     /// If the last seen time is not None, then it is Unix timestamp or -1 if
     /// the profile is currently online.
-    last_seen_time: Option<LastSeenTime>,
+    l: Option<LastSeenTime>,
 }
 
 impl ProfileLink {
@@ -55,19 +55,19 @@ impl ProfileLink {
         last_seen_time: Option<LastSeenTime>,
     ) -> Self {
         Self {
-            id,
-            version,
-            content_version,
-            last_seen_time,
+            a: id,
+            p: version,
+            c: content_version,
+            l: last_seen_time,
         }
     }
 
     pub fn last_seen_time(&self) -> Option<LastSeenTime> {
-        self.last_seen_time
+        self.l
     }
 
     pub fn set_last_seen_time(&mut self, value: LastSeenTime) {
-        self.last_seen_time = Some(value);
+        self.l = Some(value);
     }
 }
 
