@@ -4,6 +4,8 @@ use utoipa::ToSchema;
 
 use crate::{AccountId, MatchesSyncVersion};
 
+use super::ChatProfileLink;
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct AllMatchesPage {
     /// This version can be sent to the server when WebSocket protocol
@@ -19,7 +21,7 @@ pub struct ResetMatchesIteratorResult {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct MatchesPage {
-    pub p: Vec<AccountId>,
+    pub p: Vec<ChatProfileLink>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub error_invalid_iterator_session_id: bool,

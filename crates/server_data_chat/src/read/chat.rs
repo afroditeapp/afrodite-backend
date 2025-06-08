@@ -1,16 +1,12 @@
 use database_chat::current::read::GetDbReadCommandsChat;
 use model_chat::{
-    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, AllMatchesPage, ChatStateRaw, GetSentMessage, MatchId, MessageNumber, PageItemCountForNewLikes, ReceivedBlocksPage, ReceivedLikeId, SentBlocksPage, SentLikesPage, SentMessageId
+    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, AllMatchesPage, ChatProfileLink, ChatStateRaw, GetSentMessage, MatchId, MessageNumber, PageItemCountForNewLikes, ReceivedBlocksPage, ReceivedLikeId, SentBlocksPage, SentLikesPage, SentMessageId
 };
 use server_data::{
     cache::{
         db_iterator::{new_count::DbIteratorStateNewCount, DbIteratorState},
         CacheReadCommon,
-    },
-    define_cmd_wrapper_read,
-    read::DbRead,
-    result::Result,
-    DataError, IntoDataError,
+    }, db_manager::InternalReading, define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError
 };
 
 mod public_key;
@@ -52,8 +48,8 @@ impl ReadCommandsChat<'_> {
         &self,
         id: AccountIdInternal,
         state: DbIteratorStateNewCount<ReceivedLikeId>,
-    ) -> Result<(Vec<AccountId>, PageItemCountForNewLikes), DataError> {
-        self.db_read(move |mut cmds| {
+    ) -> Result<(Vec<ChatProfileLink>, PageItemCountForNewLikes), DataError> {
+        let (accounts, item_count) = self.db_read(move |mut cmds| {
             let value = cmds
                 .chat()
                 .interaction()
@@ -65,16 +61,20 @@ impl ReadCommandsChat<'_> {
                 )?;
             Ok(value)
         })
-        .await
-        .into_error()
+        .await?;
+
+        Ok((
+            self.to_chat_profile_links(accounts).await?,
+            item_count,
+        ))
     }
 
     pub async fn matches_page(
         &self,
         id: AccountIdInternal,
         state: DbIteratorState<MatchId>,
-    ) -> Result<Vec<AccountId>, DataError> {
-        self.db_read(move |mut cmds| {
+    ) -> Result<Vec<ChatProfileLink>, DataError> {
+        let accounts = self.db_read(move |mut cmds| {
             let value = cmds.chat().interaction().paged_matches(
                 id,
                 state.id_at_reset(),
@@ -82,8 +82,31 @@ impl ReadCommandsChat<'_> {
             )?;
             Ok(value)
         })
-        .await
-        .into_error()
+        .await?;
+
+        self.to_chat_profile_links(accounts).await
+    }
+
+    async fn to_chat_profile_links(
+        &self,
+        accounts: Vec<AccountId>,
+    ) -> Result<Vec<ChatProfileLink>, DataError> {
+        let mut links = vec![];
+        for id in accounts {
+            let x = self.cache().read_cache(id, |e| {
+                let version = e.profile.as_ref().map(|v| v.profile_internal().version_uuid);
+                let content_version = e.media.as_ref().map(|v| v.profile_content_version);
+                let last_seen_time = e.profile.as_ref().and_then(|v| v.last_seen_time(&e.common));
+                Ok(ChatProfileLink::new(
+                    id,
+                    version,
+                    content_version,
+                    last_seen_time,
+                ))
+            }).await?;
+            links.push(x);
+        }
+        Ok(links)
     }
 
     pub async fn all_sent_blocks(

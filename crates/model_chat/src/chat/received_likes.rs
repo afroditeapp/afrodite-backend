@@ -3,7 +3,9 @@ use model_server_data::ReceivedLikesIteratorSessionId;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::{AccountId, ReceivedLikesSyncVersion};
+use crate::ReceivedLikesSyncVersion;
+
+use super::ChatProfileLink;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ResetReceivedLikesIteratorResult {
@@ -15,7 +17,7 @@ pub struct ResetReceivedLikesIteratorResult {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct ReceivedLikesPage {
     pub n: PageItemCountForNewLikes,
-    pub p: Vec<AccountId>,
+    pub p: Vec<ChatProfileLink>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub error_invalid_iterator_session_id: bool,

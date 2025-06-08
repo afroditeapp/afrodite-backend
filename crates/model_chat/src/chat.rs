@@ -1,9 +1,9 @@
 use base64::Engine;
 use diesel::prelude::*;
 use model::{
-    MatchId, MatchesSyncVersion, MessageNumber, NewReceivedLikesCount, PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikeId, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion
+    MatchId, MatchesSyncVersion, MessageNumber, NewReceivedLikesCount, ProfileContentVersion, PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikeId, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion
 };
-use model_server_data::LimitedActionStatus;
+use model_server_data::{LastSeenTime, LimitedActionStatus, ProfileVersion};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use utoipa::{IntoParams, ToSchema};
 
@@ -355,4 +355,33 @@ pub const CHAT_GLOBAL_STATE_ROW_TYPE: i64 = 0;
 #[diesel(check_for_backend(crate::Db))]
 pub struct ChatGlobalState {
     pub next_match_id: MatchId,
+}
+
+/// Similar as [model_server_data::ProfileLink] but for chat component.
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct ChatProfileLink {
+    id: AccountId,
+    /// This is optional because profile component owns it.
+    version: Option<ProfileVersion>,
+    /// This is optional because media component owns it.
+    content_version: Option<ProfileContentVersion>,
+    /// If the last seen time is not None, then it is Unix timestamp or -1 if
+    /// the profile is currently online.
+    last_seen_time: Option<LastSeenTime>,
+}
+
+impl ChatProfileLink {
+    pub fn new(
+        id: AccountId,
+        version: Option<ProfileVersion>,
+        content_version: Option<ProfileContentVersion>,
+        last_seen_time: Option<LastSeenTime>,
+    ) -> Self {
+        Self {
+            id,
+            version,
+            content_version,
+            last_seen_time,
+        }
+    }
 }
