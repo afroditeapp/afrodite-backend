@@ -77,62 +77,29 @@ pub struct ProfileStatisticsInternal {
     pub age_counts: ProfileAgeCounts,
     pub account_count: i64,
     pub account_count_bots_excluded: i64,
+    pub online_account_count_bots_excluded: i64,
     pub public_profile_counts: PublicProfileCounts,
     pub connection_statistics: ConnectionStatistics,
-}
-
-impl ProfileStatisticsInternal {
-    pub fn new(
-        generation_time: UnixTime,
-        age_counts: ProfileAgeCounts,
-        account_count: i64,
-        account_count_bots_excluded: i64,
-        public_profile_counts: PublicProfileCounts,
-        connection_statistics: ConnectionStatistics,
-    ) -> Self {
-        Self {
-            generation_time,
-            age_counts,
-            account_count,
-            account_count_bots_excluded,
-            public_profile_counts,
-            connection_statistics,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct GetProfileStatisticsResult {
     pub generation_time: UnixTime,
     pub account_count_bots_excluded: i64,
+    pub online_account_count_bots_excluded: i64,
     pub age_counts: ProfileAgeCounts,
     pub connection_statistics: ConnectionStatistics,
 }
 
-impl GetProfileStatisticsResult {
-    fn new(
-        generation_time: UnixTime,
-        account_count_bots_excluded: i64,
-        age_counts: ProfileAgeCounts,
-        connection_statistics: ConnectionStatistics,
-    ) -> Self {
-        Self {
-            generation_time,
-            account_count_bots_excluded,
-            age_counts,
-            connection_statistics,
-        }
-    }
-}
-
 impl From<ProfileStatisticsInternal> for GetProfileStatisticsResult {
     fn from(value: ProfileStatisticsInternal) -> Self {
-        Self::new(
-            value.generation_time,
-            value.account_count_bots_excluded,
-            value.age_counts,
-            value.connection_statistics,
-        )
+        Self {
+            generation_time: value.generation_time,
+            account_count_bots_excluded: value.account_count_bots_excluded,
+            online_account_count_bots_excluded: value.online_account_count_bots_excluded,
+            age_counts: value.age_counts,
+            connection_statistics: value.connection_statistics,
+        }
     }
 }
 

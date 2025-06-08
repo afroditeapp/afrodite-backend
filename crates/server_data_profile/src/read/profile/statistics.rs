@@ -4,7 +4,7 @@ use model_profile::{
     ConnectionStatistics, ProfileAgeCounts, ProfileStatisticsInternal, PublicProfileCounts, StatisticsGender, StatisticsProfileVisibility, UnixTime
 };
 use server_data::{define_cmd_wrapper_read, result::Result, DataError};
-use simple_backend::perf::PerfMetricsManagerData;
+use simple_backend::perf::{websocket, PerfMetricsManagerData};
 use simple_backend_model::{MetricKey, PerfMetricValueArea, TimeGranularity};
 
 use crate::cache::CacheReadProfile;
@@ -70,14 +70,15 @@ impl ReadCommandsProfileStatistics<'_> {
 
         let history = perf_data.get_history_raw(false).await;
 
-        Ok(ProfileStatisticsInternal::new(
+        Ok(ProfileStatisticsInternal {
             generation_time,
             age_counts,
             account_count,
             account_count_bots_excluded,
+            online_account_count_bots_excluded: websocket::Connections::connection_count().into(),
             public_profile_counts,
-            convert_history_to_connection_statistics(history),
-        ))
+            connection_statistics: convert_history_to_connection_statistics(history),
+        })
     }
 }
 
