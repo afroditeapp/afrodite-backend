@@ -11,8 +11,9 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
+/// ChatProfileLink : Similar as [model_server_data::ProfileLink] but for chat component.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct ProfileLink {
+pub struct ChatProfileLink {
     #[serde(rename = "a")]
     pub a: Box<models::AccountId>,
     /// This is optional because media component owns it.
@@ -21,17 +22,19 @@ pub struct ProfileLink {
     /// Account's most recent disconnect time.  If the last seen time is not None, then it is Unix timestamp or -1 if the profile is currently online.
     #[serde(rename = "l", skip_serializing_if = "Option::is_none")]
     pub l: Option<i64>,
-    #[serde(rename = "p")]
-    pub p: Box<models::ProfileVersion>,
+    /// This is optional because profile component owns it.
+    #[serde(rename = "p", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub p: Option<Option<Box<models::ProfileVersion>>>,
 }
 
-impl ProfileLink {
-    pub fn new(a: models::AccountId, p: models::ProfileVersion) -> ProfileLink {
-        ProfileLink {
+impl ChatProfileLink {
+    /// Similar as [model_server_data::ProfileLink] but for chat component.
+    pub fn new(a: models::AccountId) -> ChatProfileLink {
+        ChatProfileLink {
             a: Box::new(a),
             c: None,
             l: None,
-            p: Box::new(p),
+            p: None,
         }
     }
 }

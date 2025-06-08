@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 pub struct GroupValues {
     #[serde(rename = "key")]
     pub key: String,
-    /// Values for this group.  Values are sorted by AttributeValue ID related to this group and ID can be used to index this list.
+    /// Values for this group.  Values are sorted by AttributeValue ID related to this group. Indexing with the ID is not possible as ID values start from 1.
     #[serde(rename = "values")]
     pub values: Vec<models::AttributeValue>,
 }

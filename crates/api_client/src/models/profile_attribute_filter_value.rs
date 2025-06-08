@@ -15,26 +15,26 @@ use serde::{Deserialize, Serialize};
 pub struct ProfileAttributeFilterValue {
     #[serde(rename = "accept_missing_attribute")]
     pub accept_missing_attribute: bool,
-    /// For bitflag filters the list only has one u16 value.  For one level attributes the values are u16 attribute value IDs.  For two level attributes the values are u32 values with most significant u16 containing attribute value ID and least significant u16 containing group value ID.  The values are stored in ascending order.
-    #[serde(rename = "filter_values")]
-    pub filter_values: Vec<i32>,
-    /// Same as [Self::filter_values] but for nonselected values.  The nonselected values are checked always with AND operator.
-    #[serde(rename = "filter_values_nonselected")]
-    pub filter_values_nonselected: Vec<i32>,
     #[serde(rename = "id")]
     pub id: i32,
+    /// Same as [Self::wanted] but for unwanted values.  The unwanted values are checked always with AND operator.
+    #[serde(rename = "unwanted")]
+    pub unwanted: Vec<i32>,
     #[serde(rename = "use_logical_operator_and")]
     pub use_logical_operator_and: bool,
+    /// Wanted attribute values.  For bitflag filters the list only has one u16 value.  For one level attributes the values are u16 attribute value IDs.  For two level attributes the values are u32 values with most significant u16 containing attribute value ID and least significant u16 containing group value ID.  The values are stored in ascending order.
+    #[serde(rename = "wanted")]
+    pub wanted: Vec<i32>,
 }
 
 impl ProfileAttributeFilterValue {
-    pub fn new(accept_missing_attribute: bool, filter_values: Vec<i32>, filter_values_nonselected: Vec<i32>, id: i32, use_logical_operator_and: bool) -> ProfileAttributeFilterValue {
+    pub fn new(accept_missing_attribute: bool, id: i32, unwanted: Vec<i32>, use_logical_operator_and: bool, wanted: Vec<i32>) -> ProfileAttributeFilterValue {
         ProfileAttributeFilterValue {
             accept_missing_attribute,
-            filter_values,
-            filter_values_nonselected,
             id,
+            unwanted,
             use_logical_operator_and,
+            wanted,
         }
     }
 }

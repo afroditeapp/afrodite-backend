@@ -24,6 +24,8 @@ pub enum ContentProcessingStateType {
     Completed,
     #[serde(rename = "Failed")]
     Failed,
+    #[serde(rename = "NsfwDetected")]
+    NsfwDetected,
 
 }
 
@@ -35,6 +37,7 @@ impl std::fmt::Display for ContentProcessingStateType {
             Self::Processing => write!(f, "Processing"),
             Self::Completed => write!(f, "Completed"),
             Self::Failed => write!(f, "Failed"),
+            Self::NsfwDetected => write!(f, "NsfwDetected"),
         }
     }
 }

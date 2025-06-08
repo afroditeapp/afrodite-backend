@@ -412,12 +412,12 @@ impl BotAction for AcceptReceivedLikesAndSendMessage {
             }
 
             for like in received_likes.p {
-                post_send_like(state.api.chat(), like.clone())
+                post_send_like(state.api.chat(), like.a.as_ref().clone())
                     .await
                     .change_context(TestError::ApiRequest)?;
 
                 let new_msg = "Hello!".to_string();
-                send_message(state, like, new_msg).await?;
+                send_message(state, *like.a, new_msg).await?;
             }
         }
 

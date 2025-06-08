@@ -268,7 +268,7 @@ impl BotAction for GetProfileList {
                 .await
                 .change_context(TestError::ApiRequest)?;
         let value =
-            HashSet::<String>::from_iter(data.profiles.into_iter().map(|l| l.id.to_string()));
+            HashSet::<String>::from_iter(data.profiles.into_iter().map(|l| l.a.to_string()));
         state.previous_value = PreviousValue::Profiles(value);
         Ok(())
     }

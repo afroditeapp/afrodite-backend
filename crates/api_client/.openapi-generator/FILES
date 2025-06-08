@@ -50,6 +50,7 @@ src/models/boolean_setting.rs
 src/models/bot_config.rs
 src/models/chat_app_notification_settings.rs
 src/models/chat_message_report.rs
+src/models/chat_profile_link.rs
 src/models/client_config.rs
 src/models/client_config_sync_version.rs
 src/models/client_features_config.rs
@@ -62,6 +63,7 @@ src/models/client_version.rs
 src/models/client_version_count.rs
 src/models/client_version_statistics.rs
 src/models/command_output.rs
+src/models/connection_statistics.rs
 src/models/content_id.rs
 src/models/content_info.rs
 src/models/content_info_detailed.rs
@@ -153,6 +155,7 @@ src/models/media_content_moderation_completed_notification_viewed.rs
 src/models/media_content_sync_version.rs
 src/models/media_content_type.rs
 src/models/message_number.rs
+src/models/min_distance_km.rs
 src/models/mod.rs
 src/models/moderation_queue_type.rs
 src/models/my_profile_content.rs

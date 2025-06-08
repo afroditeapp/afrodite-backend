@@ -331,6 +331,7 @@ pub async fn delete_favorite_profile(configuration: &configuration::Configuratio
     }
 }
 
+/// First item is the oldest favorite (ordered using UnixTime and account ID).
 pub async fn get_favorite_profiles(configuration: &configuration::Configuration, ) -> Result<models::FavoriteProfilesPage, Error<GetFavoriteProfilesError>> {
     let local_var_configuration = configuration;
 

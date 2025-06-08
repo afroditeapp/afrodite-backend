@@ -19,6 +19,8 @@ pub struct ProfileFilteringSettingsUpdate {
     pub last_seen_time_filter: Option<Option<Box<models::LastSeenTimeFilter>>>,
     #[serde(rename = "max_distance_km_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub max_distance_km_filter: Option<Option<Box<models::MaxDistanceKm>>>,
+    #[serde(rename = "min_distance_km_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub min_distance_km_filter: Option<Option<Box<models::MinDistanceKm>>>,
     #[serde(rename = "profile_created_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub profile_created_filter: Option<Option<Box<models::ProfileCreatedTimeFilter>>>,
     #[serde(rename = "profile_edited_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -39,6 +41,7 @@ impl ProfileFilteringSettingsUpdate {
             filters,
             last_seen_time_filter: None,
             max_distance_km_filter: None,
+            min_distance_km_filter: None,
             profile_created_filter: None,
             profile_edited_filter: None,
             profile_text_max_characters_filter: None,

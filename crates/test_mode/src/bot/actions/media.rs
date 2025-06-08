@@ -103,7 +103,9 @@ impl SendImageToSlot {
                     .change_context(TestError::ApiRequest)?;
 
                 match slot_state.state {
-                    ContentProcessingStateType::Empty | ContentProcessingStateType::Failed => {
+                    ContentProcessingStateType::Empty |
+                    ContentProcessingStateType::Failed |
+                    ContentProcessingStateType::NsfwDetected => {
                         return Err(TestError::ApiRequest.report())
                     }
                     ContentProcessingStateType::Processing

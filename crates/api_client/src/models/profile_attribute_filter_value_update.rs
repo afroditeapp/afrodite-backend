@@ -19,17 +19,17 @@ pub struct ProfileAttributeFilterValueUpdate {
     /// Value `false` ignores the settings in this object and removes current filter settings for this attribute.
     #[serde(rename = "enabled", skip_serializing_if = "Option::is_none")]
     pub enabled: Option<bool>,
-    /// For bitflag filters the list only has one u16 value.  For one level attributes the values are u16 attribute value IDs.  For two level attributes the values are u32 values with most significant u16 containing attribute value ID and least significant u16 containing group value ID.
-    #[serde(rename = "filter_values", skip_serializing_if = "Option::is_none")]
-    pub filter_values: Option<Vec<i32>>,
-    /// Same as [Self::filter_values] but for nonselected values.  The nonselected values are checked always with AND operator.
-    #[serde(rename = "filter_values_nonselected", skip_serializing_if = "Option::is_none")]
-    pub filter_values_nonselected: Option<Vec<i32>>,
     #[serde(rename = "id")]
     pub id: i32,
+    /// Same as [Self::wanted] but for unwanted values.  The unwanted values are checked always with AND operator.
+    #[serde(rename = "unwanted", skip_serializing_if = "Option::is_none")]
+    pub unwanted: Option<Vec<i32>>,
     /// Defines should attribute values be checked with logical operator AND.
     #[serde(rename = "use_logical_operator_and", skip_serializing_if = "Option::is_none")]
     pub use_logical_operator_and: Option<bool>,
+    /// Wanted attribute values.  For bitflag filters the list only has one u16 value.  For one level attributes the values are u16 attribute value IDs.  For two level attributes the values are u32 values with most significant u16 containing attribute value ID and least significant u16 containing group value ID.
+    #[serde(rename = "wanted", skip_serializing_if = "Option::is_none")]
+    pub wanted: Option<Vec<i32>>,
 }
 
 impl ProfileAttributeFilterValueUpdate {
@@ -37,10 +37,10 @@ impl ProfileAttributeFilterValueUpdate {
         ProfileAttributeFilterValueUpdate {
             accept_missing_attribute: None,
             enabled: None,
-            filter_values: None,
-            filter_values_nonselected: None,
             id,
+            unwanted: None,
             use_logical_operator_and: None,
+            wanted: None,
         }
     }
 }
