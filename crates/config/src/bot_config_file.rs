@@ -345,6 +345,8 @@ pub struct LlmModerationConfig {
     pub move_rejected_to_human_moderation: bool,
     #[serde(default)]
     pub debug_show_llm_output_when_rejected: bool,
+    #[serde(default)]
+    pub debug_log_results: bool,
     #[serde(default = "max_tokens_default_value")]
     pub max_tokens: u32,
 }
@@ -386,6 +388,8 @@ pub struct NsfwDetectionConfig {
     pub move_to_human: Option<NsfwDetectionThresholds>,
     /// Thresholds for accepting the image.
     pub accept: Option<NsfwDetectionThresholds>,
+    #[serde(default)]
+    pub debug_log_results: bool,
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]

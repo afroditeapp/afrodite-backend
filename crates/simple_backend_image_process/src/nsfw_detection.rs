@@ -50,6 +50,10 @@ impl NsfwDetector {
         let results = nsfw::examine(&state.model, &img)
             .map_err(|e| report!(ImageProcessError::NsfwDetectionError).attach_printable(e.to_string()))?;
 
+        if state.config.debug_log_results() {
+            eprintln!("NSFW detection results: {:?}", results);
+        }
+
         fn threshold(m: &Metric, thresholds: &NsfwDetectionThresholds) -> Option<f32> {
             match m {
                 Metric::Drawings => thresholds.drawings,

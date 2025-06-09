@@ -9,7 +9,7 @@ use nsfw::model::Metric;
 use super::{BotAction, BotState, EmptyPage, ModerationResult};
 use crate::client::{ApiClient, TestError};
 
-use tracing::error;
+use tracing::{error, info};
 
 #[derive(Debug, Default)]
 pub struct ContentModerationState {
@@ -237,6 +237,10 @@ impl AdminBotContentModerationLogic {
         let img = img.into_rgba8();
         let results = nsfw::examine(model, &img)
             .map_err(|e| TestError::ContentModerationFailed.report().attach_printable(e.to_string()))?;
+
+        if nsfw_config.debug_log_results {
+            info!("NSFW detection results: {:?}", &results);
+        }
 
         fn threshold(m: &Metric, thresholds: &NsfwDetectionThresholds) -> Option<f32> {
             match m {

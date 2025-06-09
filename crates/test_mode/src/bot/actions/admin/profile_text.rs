@@ -9,7 +9,7 @@ use async_openai::{
 use async_trait::async_trait;
 use config::bot_config_file::{LlmModerationConfig, ModerationAction, ProfileTextModerationConfig};
 use error_stack::{Result, ResultExt};
-use tracing::error;
+use tracing::{error, info};
 use unicode_segmentation::UnicodeSegmentation;
 
 use super::{BotAction, BotState, EmptyPage, ModerationResult};
@@ -162,6 +162,9 @@ impl AdminBotProfileTextModerationLogic {
         let response_first_line = response_lowercase.lines().next().unwrap_or_default();
         let accepted = response_lowercase.starts_with(&expected_response_lowercase)
             || response_first_line.contains(&expected_response_lowercase);
+        if config.debug_log_results {
+            info!("LLM text moderation result: '{}'", response);
+        }
         let rejected_details = if !accepted && config.debug_show_llm_output_when_rejected {
             Some(response)
         } else {

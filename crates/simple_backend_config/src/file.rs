@@ -548,6 +548,13 @@ pub struct SeetaFaceConfig {
     pub model_file: String,
     pub detection_threshold: f64,
     pub pyramid_scale_factor: f32,
+    debug_log_results: Option<bool>,
+}
+
+impl SeetaFaceConfig {
+    pub fn debug_log_results(&self) -> bool {
+        self.debug_log_results.unwrap_or_default()
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -558,6 +565,13 @@ pub struct NsfwDetectionConfig {
     /// If a probability value is equal or greater than the related
     /// threshold then the image is classified as NSFW.
     pub thresholds: NsfwDetectionThresholds,
+    debug_log_results: Option<bool>,
+}
+
+impl NsfwDetectionConfig {
+    pub fn debug_log_results(&self) -> bool {
+        self.debug_log_results.unwrap_or_default()
+    }
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize)]
