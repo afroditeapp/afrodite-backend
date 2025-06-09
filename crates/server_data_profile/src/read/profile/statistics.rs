@@ -69,6 +69,7 @@ impl ReadCommandsProfileStatistics<'_> {
         .await?;
 
         let history = perf_data.get_history_raw(false).await;
+        let statistics_creator = ConnectionStatisticsCreator::new(history);
 
         Ok(ProfileStatisticsInternal {
             generation_time,
@@ -77,23 +78,73 @@ impl ReadCommandsProfileStatistics<'_> {
             account_count_bots_excluded,
             online_account_count_bots_excluded: websocket::Connections::connection_count().into(),
             public_profile_counts,
-            connection_statistics: convert_history_to_connection_statistics(history),
+            connections_min: statistics_creator.to_connection_statistics(|v| v.min),
+            connections_max: statistics_creator.to_connection_statistics(|v| v.max),
+            connections_average: statistics_creator.to_connection_statistics(|v| v.average),
         })
     }
 }
 
-fn convert_history_to_connection_statistics(data: HashMap<MetricKey, PerfMetricValueArea>) -> ConnectionStatistics {
-    let min_time = UnixTime::current_time().ut - 60 * 60 * 24;
+struct ConnectionStatisticsCreator {
+    all: Vec<Values>,
+    men: Vec<Values>,
+    women: Vec<Values>,
+    nonbinaries: Vec<Values>,
+}
 
-    ConnectionStatistics {
-        all: areas_to_max_values(data.get(&MetricKey::CONNECTIONS), min_time),
-        men: areas_to_max_values(data.get(&MetricKey::CONNECTIONS_MEN), min_time),
-        women: areas_to_max_values(data.get(&MetricKey::CONNECTIONS_WOMEN), min_time),
-        nonbinaries: areas_to_max_values(data.get(&MetricKey::CONNECTIONS_NONBINARIES), min_time),
+impl ConnectionStatisticsCreator {
+    fn new(data: HashMap<MetricKey, PerfMetricValueArea>) -> Self {
+        let min_time = UnixTime::current_time().ut - 60 * 60 * 24;
+        Self {
+            all: areas_to_values(data.get(&MetricKey::CONNECTIONS), min_time),
+            men: areas_to_values(data.get(&MetricKey::CONNECTIONS_MEN), min_time),
+            women: areas_to_values(data.get(&MetricKey::CONNECTIONS_WOMEN), min_time),
+            nonbinaries: areas_to_values(data.get(&MetricKey::CONNECTIONS_NONBINARIES), min_time),
+        }
+    }
+
+    fn to_connection_statistics(&self, getter: impl Fn(&Values) -> u32) -> ConnectionStatistics {
+        ConnectionStatistics {
+            all: self.all.iter().map(&getter).collect(),
+            men: self.men.iter().map(&getter).collect(),
+            women: self.women.iter().map(&getter).collect(),
+            nonbinaries: self.nonbinaries.iter().map(&getter).collect(),
+        }
     }
 }
 
-fn areas_to_max_values(data: Option<&PerfMetricValueArea>, min_time: i64) -> Vec<u32> {
+#[derive(Default)]
+struct Values {
+    min: u32,
+    max: u32,
+    average: u32,
+}
+
+impl Values {
+    fn new(values: Vec<u32>) -> Self {
+        if values.is_empty() {
+            return Self::default()
+        }
+
+        let mut min = u32::MAX;
+        let mut max = 0;
+        let mut sum: u64 = 0;
+
+        for &v in &values {
+            min = min.min(v);
+            max = max.max(v);
+            sum += Into::<u64>::into(v);
+        }
+
+        Self {
+            min,
+            max,
+            average: (sum / values.len() as u64) as u32,
+        }
+    }
+}
+
+fn areas_to_values(data: Option<&PerfMetricValueArea>, min_time: i64) -> Vec<Values> {
     let mut hour_and_values = HashMap::<u32, Vec<u32>>::new();
 
     for h in 0..=23 {
@@ -121,9 +172,9 @@ fn areas_to_max_values(data: Option<&PerfMetricValueArea>, min_time: i64) -> Vec
         }
     }
 
-    let mut vec: Vec<(u32, u32)> = hour_and_values
+    let mut vec: Vec<(u32, Values)> = hour_and_values
         .into_iter()
-        .map(|(k, v)| (k, v.into_iter().max().unwrap_or_default()))
+        .map(|(k, v)| (k, Values::new(v)))
         .collect();
     vec.sort_by_key(|(k, _)| *k);
     vec.into_iter().map(|(_, v)| v).collect()

@@ -79,7 +79,9 @@ pub struct ProfileStatisticsInternal {
     pub account_count_bots_excluded: i64,
     pub online_account_count_bots_excluded: i64,
     pub public_profile_counts: PublicProfileCounts,
-    pub connection_statistics: ConnectionStatistics,
+    pub connections_min: ConnectionStatistics,
+    pub connections_max: ConnectionStatistics,
+    pub connections_average: ConnectionStatistics,
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
@@ -88,7 +90,12 @@ pub struct GetProfileStatisticsResult {
     pub account_count_bots_excluded: i64,
     pub online_account_count_bots_excluded: i64,
     pub age_counts: ProfileAgeCounts,
-    pub connection_statistics: ConnectionStatistics,
+    /// Min WebSocket connections per hour
+    pub connections_min: ConnectionStatistics,
+    /// Max WebSocket connections per hour
+    pub connections_max: ConnectionStatistics,
+    /// Average WebSocket connections per hour
+    pub connections_average: ConnectionStatistics,
 }
 
 impl From<ProfileStatisticsInternal> for GetProfileStatisticsResult {
@@ -98,7 +105,9 @@ impl From<ProfileStatisticsInternal> for GetProfileStatisticsResult {
             account_count_bots_excluded: value.account_count_bots_excluded,
             online_account_count_bots_excluded: value.online_account_count_bots_excluded,
             age_counts: value.age_counts,
-            connection_statistics: value.connection_statistics,
+            connections_min: value.connections_min,
+            connections_max: value.connections_max,
+            connections_average: value.connections_average,
         }
     }
 }
@@ -106,8 +115,6 @@ impl From<ProfileStatisticsInternal> for GetProfileStatisticsResult {
 /// WebSocket connection statistics for 24 hours.
 ///
 /// All lists contain 24 values starting from UTC time 00:00.
-///
-/// The data points are max values from available measurements.
 ///
 /// Bots are not included in this data.
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, ToSchema)]
