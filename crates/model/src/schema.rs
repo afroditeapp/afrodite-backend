@@ -398,7 +398,7 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    history_profile_statistics_age_changes_men (time_id, age) {
+    history_profile_statistics_age_changes_man (time_id, age) {
         time_id -> Integer,
         age -> Integer,
         count -> Integer,
@@ -861,7 +861,7 @@ diesel::joinable!(history_client_version_statistics -> history_client_version_st
 diesel::joinable!(history_performance_statistics_metric_value -> history_performance_statistics_metric_name (metric_id));
 diesel::joinable!(history_performance_statistics_metric_value -> history_performance_statistics_save_time (time_id));
 diesel::joinable!(history_profile_statistics_age_changes_all_genders -> history_profile_statistics_save_time (time_id));
-diesel::joinable!(history_profile_statistics_age_changes_men -> history_profile_statistics_save_time (time_id));
+diesel::joinable!(history_profile_statistics_age_changes_man -> history_profile_statistics_save_time (time_id));
 diesel::joinable!(history_profile_statistics_age_changes_non_binary -> history_profile_statistics_save_time (time_id));
 diesel::joinable!(history_profile_statistics_age_changes_woman -> history_profile_statistics_save_time (time_id));
 diesel::joinable!(history_profile_statistics_count_changes_account -> history_profile_statistics_save_time (time_id));
@@ -928,7 +928,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     history_performance_statistics_metric_value,
     history_performance_statistics_save_time,
     history_profile_statistics_age_changes_all_genders,
-    history_profile_statistics_age_changes_men,
+    history_profile_statistics_age_changes_man,
     history_profile_statistics_age_changes_non_binary,
     history_profile_statistics_age_changes_woman,
     history_profile_statistics_count_changes_account,

@@ -31,18 +31,18 @@ impl Default for StatisticsProfileVisibility {
 
 #[derive(Debug, Clone, Default)]
 pub struct PublicProfileCounts {
-    pub man: i64,
-    pub woman: i64,
-    pub non_binary: i64,
+    pub men: i64,
+    pub women: i64,
+    pub nonbinaries: i64,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
 pub struct ProfileAgeCounts {
     /// Age for first count
     pub start_age: i64,
-    pub man: Vec<i64>,
-    pub woman: Vec<i64>,
-    pub non_binary: Vec<i64>,
+    pub men: Vec<i64>,
+    pub women: Vec<i64>,
+    pub nonbinaries: Vec<i64>,
 }
 
 impl ProfileAgeCounts {
@@ -52,18 +52,18 @@ impl ProfileAgeCounts {
         let empty = vec![0; Self::AVAILABLE_AGE_VALUE_COUNT.into()];
         Self {
             start_age: ProfileAge::MIN_AGE.into(),
-            man: empty.clone(),
-            woman: empty.clone(),
-            non_binary: empty,
+            men: empty.clone(),
+            women: empty.clone(),
+            nonbinaries: empty,
         }
     }
 
     pub fn increment_age(&mut self, gender: StatisticsGender, age: u8) {
         let i = age - ProfileAge::MIN_AGE;
         let v = match gender {
-            StatisticsGender::Man => &mut self.man,
-            StatisticsGender::Woman => &mut self.woman,
-            StatisticsGender::NonBinary => &mut self.non_binary,
+            StatisticsGender::Man => &mut self.men,
+            StatisticsGender::Woman => &mut self.women,
+            StatisticsGender::NonBinary => &mut self.nonbinaries,
         };
         if let Some(c) = v.get_mut::<usize>(i.into()) {
             *c += 1;

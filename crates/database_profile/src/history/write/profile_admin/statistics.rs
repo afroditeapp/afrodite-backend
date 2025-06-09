@@ -12,14 +12,14 @@ impl<'a> HistoryWriteProfileAdminStatistics<'a> {
     ) -> Result<(), DieselDatabaseError> {
         let time_id = self.save_time(r.generation_time)?;
         self.save_count_if_needed_account(time_id, r.account_count)?;
-        self.save_count_if_needed_man(time_id, r.public_profile_counts.man)?;
-        self.save_count_if_needed_woman(time_id, r.public_profile_counts.woman)?;
-        self.save_count_if_needed_non_binary(time_id, r.public_profile_counts.non_binary)?;
+        self.save_count_if_needed_man(time_id, r.public_profile_counts.men)?;
+        self.save_count_if_needed_woman(time_id, r.public_profile_counts.women)?;
+        self.save_count_if_needed_non_binary(time_id, r.public_profile_counts.nonbinaries)?;
         self.save_count_if_needed_all_genders(
             time_id,
-            r.public_profile_counts.man
-                + r.public_profile_counts.woman
-                + r.public_profile_counts.non_binary,
+            r.public_profile_counts.men
+                + r.public_profile_counts.women
+                + r.public_profile_counts.nonbinaries,
         )?;
 
         type SaveMethod<'b> = fn(
@@ -36,19 +36,19 @@ impl<'a> HistoryWriteProfileAdminStatistics<'a> {
             Ok::<(), error_stack::Report<DieselDatabaseError>>(())
         };
 
-        handle_ages(&r.age_counts.man, Self::save_age_count_if_needed_man)?;
-        handle_ages(&r.age_counts.woman, Self::save_age_count_if_needed_woman)?;
+        handle_ages(&r.age_counts.men, Self::save_age_count_if_needed_man)?;
+        handle_ages(&r.age_counts.women, Self::save_age_count_if_needed_woman)?;
         handle_ages(
-            &r.age_counts.non_binary,
+            &r.age_counts.nonbinaries,
             Self::save_age_count_if_needed_non_binary,
         )?;
 
         let ages_all_genders = r
             .age_counts
-            .man
+            .men
             .iter()
-            .zip(r.age_counts.woman.iter())
-            .zip(r.age_counts.non_binary.iter());
+            .zip(r.age_counts.women.iter())
+            .zip(r.age_counts.nonbinaries.iter());
 
         for (i, ((c1, c2), c3)) in ages_all_genders.enumerate() {
             let age = r.age_counts.start_age + i as i64;
@@ -180,7 +180,7 @@ macro_rules! define_age_change_method {
 
 define_age_change_method!(
     fn save_age_count_if_needed_man,
-    history_profile_statistics_age_changes_men,
+    history_profile_statistics_age_changes_man,
 );
 
 define_age_change_method!(

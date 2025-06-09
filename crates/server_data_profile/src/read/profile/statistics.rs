@@ -36,11 +36,11 @@ impl ReadCommandsProfileStatistics<'_> {
             let groups = p.state.search_group_flags;
             if visibility.is_currently_public() {
                 if groups.is_man() {
-                    public_profile_counts.man += 1;
+                    public_profile_counts.men += 1;
                 } else if groups.is_woman() {
-                    public_profile_counts.woman += 1;
+                    public_profile_counts.women += 1;
                 } else if groups.is_non_binary() {
-                    public_profile_counts.non_binary += 1;
+                    public_profile_counts.nonbinaries += 1;
                 }
             }
 

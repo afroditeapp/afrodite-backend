@@ -122,7 +122,7 @@ macro_rules! define_read_age_change_methods {
 
 define_read_age_change_methods!(
     fn age_changes_man,
-    history_profile_statistics_age_changes_men,
+    history_profile_statistics_age_changes_man,
 );
 
 define_read_age_change_methods!(

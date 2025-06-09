@@ -1039,7 +1039,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_save_time(
     unix_time  INTEGER                           NOT NULL UNIQUE
 );
 
-CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_men(
+CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_man(
     time_id INTEGER NOT NULL,
     age     INTEGER NOT NULL,
     count   INTEGER NOT NULL,
