@@ -376,6 +376,9 @@ pub struct ContentModerationConfig {
     /// Neural network based detection.
     /// Actions: reject, move_to_human and accept
     pub nsfw_detection: Option<NsfwDetectionConfig>,
+    /// Large language model based moderation.
+    /// Actions: reject (or move_to_human) and accept (or move_to_human)
+    pub llm: Option<LlmContentModerationConfig>,
     pub default_action: ModerationAction,
 }
 
@@ -390,6 +393,26 @@ pub struct NsfwDetectionConfig {
     pub accept: Option<NsfwDetectionThresholds>,
     #[serde(default)]
     pub debug_log_results: bool,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct LlmContentModerationConfig {
+    /// For example "http://localhost:11434/v1"
+    pub openai_api_url: Url,
+    pub model: String,
+    pub system_text: String,
+    /// If LLM response starts with this text or the first
+    /// line of the response contains this text, the content
+    /// is moderated as accepted. The comparisons are case insensitive.
+    pub expected_response: String,
+    pub move_accepted_to_human_moderation: bool,
+    pub move_rejected_to_human_moderation: bool,
+    #[serde(default)]
+    pub debug_show_llm_output_when_rejected: bool,
+    #[serde(default)]
+    pub debug_log_results: bool,
+    #[serde(default = "max_tokens_default_value")]
+    pub max_tokens: u32,
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]

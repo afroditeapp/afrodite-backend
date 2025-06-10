@@ -13,7 +13,7 @@ use tracing::{error, info};
 use unicode_segmentation::UnicodeSegmentation;
 
 use super::{BotAction, BotState, EmptyPage, ModerationResult};
-use crate::client::{ApiClient, TestError};
+use crate::{bot::actions::admin::LlmModerationResult, client::{ApiClient, TestError}};
 
 #[derive(Debug)]
 pub struct ProfileTextModerationState {
@@ -67,8 +67,8 @@ impl AdminBotProfileTextModerationLogic {
                 ).await?;
 
                 match r {
-                    ProfileTextModerationResult::StopModerationSesssion => return Ok(Some(EmptyPage)),
-                    ProfileTextModerationResult::Decision(r) => r,
+                    LlmModerationResult::StopModerationSesssion => return Ok(Some(EmptyPage)),
+                    LlmModerationResult::Decision(r) => r,
                 }
             } else {
                 match config.default_action {
@@ -105,7 +105,7 @@ impl AdminBotProfileTextModerationLogic {
         profile_text: &str,
         config: &LlmModerationConfig,
         state: &mut ProfileTextModerationState,
-    ) -> Result<ProfileTextModerationResult, TestError> {
+    ) -> Result<LlmModerationResult, TestError> {
         let client = state.client.get_or_insert_with(||
             Client::with_config(
                 OpenAIConfig::new()
@@ -145,16 +145,16 @@ impl AdminBotProfileTextModerationLogic {
                 Some(response) => response,
                 None => {
                     error!("Profile text moderation error: no response content from LLM");
-                    return Ok(ProfileTextModerationResult::StopModerationSesssion);
+                    return Ok(LlmModerationResult::StopModerationSesssion);
                 }
             },
             Ok(None) => {
                 error!("Profile text moderation error: no response from LLM");
-                return Ok(ProfileTextModerationResult::StopModerationSesssion);
+                return Ok(LlmModerationResult::StopModerationSesssion);
             }
             Err(e) => {
                 error!("Profile text moderation error: {}", e);
-                return Ok(ProfileTextModerationResult::StopModerationSesssion);
+                return Ok(LlmModerationResult::StopModerationSesssion);
             }
         };
 
@@ -173,7 +173,7 @@ impl AdminBotProfileTextModerationLogic {
 
         let move_to_human = !accepted && config.move_rejected_to_human_moderation;
 
-        Ok(ProfileTextModerationResult::Decision(ModerationResult {
+        Ok(LlmModerationResult::Decision(ModerationResult {
             accept: accepted,
             rejected_details,
             move_to_human,
@@ -230,9 +230,4 @@ impl BotAction for AdminBotProfileTextModerationLogic {
 
         Ok(())
     }
-}
-
-enum ProfileTextModerationResult {
-    StopModerationSesssion,
-    Decision(ModerationResult),
 }

@@ -52,4 +52,17 @@ impl ModerationResult {
             rejected_details: None,
         }
     }
+
+    pub fn is_rejected(&self) -> bool {
+        !self.accept && !self.move_to_human
+    }
+
+    pub fn is_move_to_human(&self) -> bool {
+        self.move_to_human
+    }
+}
+
+enum LlmModerationResult {
+    StopModerationSesssion,
+    Decision(ModerationResult),
 }

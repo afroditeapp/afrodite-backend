@@ -1,13 +1,15 @@
 use std::{fmt::Debug, sync::Arc, time::Instant};
 
-use api_client::{apis::media_admin_api, models::{AccountId, ContentId, MediaContentType, ModerationQueueType, ProfileContentModerationRejectedReasonDetails}};
+use api_client::{apis::media_admin_api, models::{MediaContentType, ModerationQueueType, ProfileContentModerationRejectedReasonDetails}};
+use async_openai::{config::OpenAIConfig, types::{ChatCompletionRequestMessage, ChatCompletionRequestMessageContentPartImage, ChatCompletionRequestUserMessage, ChatCompletionRequestUserMessageContent, CreateChatCompletionRequest, ImageUrl}, Client};
 use async_trait::async_trait;
-use config::bot_config_file::{ContentModerationConfig, ModerationAction, NsfwDetectionConfig, NsfwDetectionThresholds};
+use base64::display::Base64Display;
+use config::bot_config_file::{ContentModerationConfig, LlmContentModerationConfig, ModerationAction, NsfwDetectionConfig, NsfwDetectionThresholds};
 use error_stack::{Result, ResultExt};
 use image::DynamicImage;
 use nsfw::model::Metric;
 use super::{BotAction, BotState, EmptyPage, ModerationResult};
-use crate::client::{ApiClient, TestError};
+use crate::{bot::actions::admin::LlmModerationResult, client::{ApiClient, TestError}};
 
 use tracing::{error, info};
 
@@ -15,6 +17,7 @@ use tracing::{error, info};
 pub struct ContentModerationState {
     content_moderation_started: Option<Instant>,
     model: Option<Arc<nsfw::Model>>,
+    client: Option<Client<OpenAIConfig>>,
 }
 
 impl ContentModerationState {
@@ -36,6 +39,7 @@ impl ContentModerationState {
             Ok(Self {
                 content_moderation_started: None,
                 model: Some(Arc::new(model)),
+                client: None,
             })
         } else {
             Ok(Self::default())
@@ -126,7 +130,7 @@ impl AdminBotContentModerationLogic {
         api: &ApiClient,
         queue: ModerationQueueType,
         config: &ContentModerationConfig,
-        moderation_state: &ContentModerationState,
+        moderation_state: &mut ContentModerationState,
     ) -> Result<Option<EmptyPage>, TestError> {
         let list = media_admin_api::get_profile_content_pending_moderation_list(api.media(), MediaContentType::JpegImage, queue, true)
             .await
@@ -137,7 +141,7 @@ impl AdminBotContentModerationLogic {
         }
 
         for request in list.values {
-            let data = api_client::manual_additions::get_content_fixed(
+            let image_data = api_client::manual_additions::get_content_fixed(
                 api.media(),
                 &request.account_id.aid,
                 &request.content_id.cid,
@@ -146,14 +150,27 @@ impl AdminBotContentModerationLogic {
             .await
             .change_context(TestError::ApiRequest)?;
 
-            let result = Self::moderate_image(
-                data,
+            let r = Self::handle_image(
+                image_data,
                 config.nsfw_detection.clone(),
                 moderation_state.model.clone(),
+                config.llm.as_ref(),
                 config.default_action,
-                &request.account_id,
-                &request.content_id,
+                moderation_state,
             ).await;
+
+            let result = match r {
+                Ok(None) => return Ok(Some(EmptyPage)),
+                Ok(Some(r)) => r,
+                Err(e) => {
+                    error!(
+                        "Content moderation failed: {e:?}, Account ID: {}, Content ID: {}",
+                        request.account_id,
+                        request.content_id,
+                    );
+                    ModerationResult::error()
+                }
+            };
 
             media_admin_api::post_moderate_profile_content(
                 api.media(),
@@ -173,50 +190,48 @@ impl AdminBotContentModerationLogic {
         Ok(None)
     }
 
-    async fn moderate_image(
+    async fn handle_image(
         data: Vec<u8>,
         nsfw_config: Option<NsfwDetectionConfig>,
         nsfw_model: Option<Arc<nsfw::Model>>,
+        llm_config: Option<&LlmContentModerationConfig>,
         default_action: ModerationAction,
-        account: &AccountId,
-        content: &ContentId,
-    ) -> ModerationResult {
-        let r = tokio::task::spawn_blocking(move || {
-            Self::handle_image_sync(data, nsfw_config, nsfw_model, default_action)
-        })
-            .await;
+        state: &mut ContentModerationState,
+    ) -> Result<Option<ModerationResult>, TestError> {
+        let nsfw_result = if let (Some(c), Some(m)) = (nsfw_config, nsfw_model) {
+            let img = image::load_from_memory(&data)
+                .change_context(TestError::ContentModerationFailed)?;
 
-        let log_error = |e: &dyn std::fmt::Debug| error!(
-            "Content moderation failed: {e:?}, Account ID: {}, Content ID: {}",
-            account.aid,
-            content.cid,
-        );
+            tokio::task::spawn_blocking(move || {
+                Self::handle_nsfw_detection_sync(img, c, &m)
+            })
+                .await
+                .change_context(TestError::ContentModerationFailed)??
+        } else {
+            None
+        };
 
-        match r {
-            Ok(Ok(r)) => r,
-            Err(e) => {
-                log_error(&e);
-                ModerationResult::error()
-            }
-            Ok(Err(e)) => {
-                log_error(&e);
-                ModerationResult::error()
+        if let Some(nsfw) = &nsfw_result {
+            if nsfw.is_rejected() {
+                return Ok(nsfw_result);
             }
         }
-    }
 
-    fn handle_image_sync(
-        data: Vec<u8>,
-        nsfw_config: Option<NsfwDetectionConfig>,
-        nsfw_model: Option<Arc<nsfw::Model>>,
-        default_action: ModerationAction,
-    ) -> Result<ModerationResult, TestError> {
-        let img = image::load_from_memory(&data)
-            .change_context(TestError::ContentModerationFailed)?;
+        let llm_result = if let Some(c) = llm_config {
+            match Self::llm_profile_image_moderation(data, c, state).await? {
+                LlmModerationResult::StopModerationSesssion => return Ok(None),
+                LlmModerationResult::Decision(r) => Some(r),
+            }
+        } else {
+            None
+        };
 
-        if let (Some(c), Some(m)) = (nsfw_config, nsfw_model) {
-            if let Some(result) = Self::handle_nsfw_detection(img, c, &m)? {
-                return Ok(result);
+        if let Some(llm) = &llm_result {
+            if llm.is_rejected() {
+                return Ok(llm_result);
+            }
+            if llm.is_move_to_human() {
+                return Ok(llm_result);
             }
         }
 
@@ -226,10 +241,10 @@ impl AdminBotContentModerationLogic {
             ModerationAction::MoveToHuman => ModerationResult::move_to_human(),
         };
 
-        Ok(action)
+        Ok(nsfw_result.or(llm_result).or(Some(action)))
     }
 
-    fn handle_nsfw_detection(
+    fn handle_nsfw_detection_sync(
         img: DynamicImage,
         nsfw_config: NsfwDetectionConfig,
         model: &nsfw::Model,
@@ -285,6 +300,95 @@ impl AdminBotContentModerationLogic {
         }
 
         Ok(None)
+    }
+
+    async fn llm_profile_image_moderation(
+        image_data: Vec<u8>,
+        config: &LlmContentModerationConfig,
+        state: &mut ContentModerationState,
+    ) -> Result<LlmModerationResult, TestError> {
+        let client = state.client.get_or_insert_with(||
+            Client::with_config(
+                OpenAIConfig::new()
+                    .with_api_base(config.openai_api_url.to_string())
+                    .with_api_key(""),
+            )
+        );
+
+        let expected_response_lowercase = config.expected_response.to_lowercase();
+
+        let image = ChatCompletionRequestMessageContentPartImage {
+            image_url: ImageUrl {
+                url: format!(
+                    "data:image/jpeg;base64,{}",
+                    Base64Display::new(&image_data, &base64::engine::general_purpose::STANDARD),
+                ),
+                detail: None,
+            }
+        };
+
+        let message = ChatCompletionRequestUserMessage {
+            content: ChatCompletionRequestUserMessageContent::Array(vec![image.into()]),
+            name: None,
+        };
+
+        // Hide warning about max_tokens as Ollama does not yet
+        // support max_completion_tokens.
+        #[allow(deprecated)]
+        let r = client
+            .chat()
+            .create(CreateChatCompletionRequest {
+                messages: vec![
+                    ChatCompletionRequestMessage::System(config.system_text.clone().into()),
+                    ChatCompletionRequestMessage::User(message),
+                ],
+                model: config.model.clone(),
+                temperature: Some(0.0),
+                seed: Some(0),
+                max_completion_tokens: Some(config.max_tokens),
+                max_tokens: Some(config.max_tokens),
+                ..Default::default()
+            })
+            .await;
+        let response = match r.map(|r| r.choices.into_iter().next()) {
+            Ok(Some(r)) => match r.message.content {
+                Some(response) => response,
+                None => {
+                    error!("Content moderation error: no response content from LLM");
+                    return Ok(LlmModerationResult::StopModerationSesssion);
+                }
+            },
+            Ok(None) => {
+                error!("Content moderation error: no response from LLM");
+                return Ok(LlmModerationResult::StopModerationSesssion);
+            }
+            Err(e) => {
+                error!("Content moderation error: {}", e);
+                return Ok(LlmModerationResult::StopModerationSesssion);
+            }
+        };
+
+        let response_lowercase = response.trim().to_lowercase();
+        let response_first_line = response_lowercase.lines().next().unwrap_or_default();
+        let accepted = response_lowercase.starts_with(&expected_response_lowercase)
+            || response_first_line.contains(&expected_response_lowercase);
+        if config.debug_log_results {
+            info!("LLM content moderation result: '{}'", response);
+        }
+        let rejected_details = if !accepted && config.debug_show_llm_output_when_rejected {
+            Some(response)
+        } else {
+            None
+        };
+
+        let move_to_human = (accepted && config.move_accepted_to_human_moderation)
+            || (!accepted && config.move_rejected_to_human_moderation);
+
+        Ok(LlmModerationResult::Decision(ModerationResult {
+            accept: accepted,
+            rejected_details,
+            move_to_human,
+        }))
     }
 }
 
