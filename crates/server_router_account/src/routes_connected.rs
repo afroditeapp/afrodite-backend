@@ -24,6 +24,7 @@ impl ConnectedApp {
             .merge(api::common_admin::router_config(self.state.clone()))
             .merge(api::common_admin::router_statistics(self.state.clone()))
             .merge(api::common_admin::router_report(self.state.clone()))
+            .merge(api::common_admin::router_notification(self.state.clone()))
             .route_layer({
                 middleware::from_fn_with_state(
                     self.state.s.clone(),

@@ -205,6 +205,7 @@ define_permissions!(
     admin_news_create,
     admin_news_edit_all,
     admin_profile_statistics,
+    admin_subscribe_admin_notifications,
 );
 
 impl Permissions {

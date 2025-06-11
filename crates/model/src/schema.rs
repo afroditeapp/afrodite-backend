@@ -129,6 +129,7 @@ diesel::table! {
         admin_news_create -> Bool,
         admin_news_edit_all -> Bool,
         admin_profile_statistics -> Bool,
+        admin_subscribe_admin_notifications -> Bool,
     }
 }
 
@@ -159,6 +160,21 @@ diesel::table! {
         publication_id_at_news_iterator_reset -> Nullable<Integer>,
         publication_id_at_unread_news_count_incrementing -> Nullable<Integer>,
         account_created_unix_time -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    admin_notification_subscriptions (account_id) {
+        account_id -> Integer,
+        moderate_media_content_bot -> Bool,
+        moderate_media_content_human -> Bool,
+        moderate_profile_texts_bot -> Bool,
+        moderate_profile_texts_human -> Bool,
+        moderate_profile_names_bot -> Bool,
+        moderate_profile_names_human -> Bool,
+        process_reports -> Bool,
     }
 }
 
@@ -848,6 +864,7 @@ diesel::joinable!(account_email_sending_state -> account_id (account_id));
 diesel::joinable!(account_interaction_index -> account_interaction (interaction_id));
 diesel::joinable!(account_permissions -> account_id (account_id));
 diesel::joinable!(account_setup -> account_id (account_id));
+diesel::joinable!(admin_notification_subscriptions -> account_id (account_id));
 diesel::joinable!(api_usage_statistics_metric_value -> account_id (account_id));
 diesel::joinable!(api_usage_statistics_metric_value -> api_usage_statistics_metric_name (metric_id));
 diesel::joinable!(api_usage_statistics_metric_value -> api_usage_statistics_save_time (time_id));
@@ -907,6 +924,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     account_permissions,
     account_setup,
     account_state,
+    admin_notification_subscriptions,
     api_usage_statistics_metric_name,
     api_usage_statistics_metric_value,
     api_usage_statistics_save_time,

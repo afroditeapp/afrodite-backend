@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+mod notification;
+pub use notification::*;
+
 mod report;
 pub use report::*;
 

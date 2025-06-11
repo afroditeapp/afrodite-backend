@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_news_create                            BOOLEAN NOT NULL DEFAULT 0,
     admin_news_edit_all                          BOOLEAN NOT NULL DEFAULT 0,
     admin_profile_statistics                     BOOLEAN NOT NULL DEFAULT 0,
+    admin_subscribe_admin_notifications          BOOLEAN NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -231,6 +232,21 @@ CREATE TABLE IF NOT EXISTS ip_address_usage_statistics(
     first_usage_unix_time  INTEGER                 NOT NULL,
     latest_usage_unix_time INTEGER                 NOT NULL,
     PRIMARY KEY (account_id, ip_address),
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS admin_notification_subscriptions(
+    account_id INTEGER PRIMARY KEY NOT NULL,
+    moderate_media_content_bot                   BOOLEAN NOT NULL DEFAULT 0,
+    moderate_media_content_human                 BOOLEAN NOT NULL DEFAULT 0,
+    moderate_profile_texts_bot                   BOOLEAN NOT NULL DEFAULT 0,
+    moderate_profile_texts_human                 BOOLEAN NOT NULL DEFAULT 0,
+    moderate_profile_names_bot                   BOOLEAN NOT NULL DEFAULT 0,
+    moderate_profile_names_human                 BOOLEAN NOT NULL DEFAULT 0,
+    process_reports                              BOOLEAN NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
