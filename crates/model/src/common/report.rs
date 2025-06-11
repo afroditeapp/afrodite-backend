@@ -209,7 +209,7 @@ pub struct ReportQueryParams {
     pub target: AccountId,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize, ToSchema)]
 pub struct UpdateReportResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -239,5 +239,9 @@ impl UpdateReportResult {
             error_outdated_report_content: false,
             error_too_many_reports: true,
         }
+    }
+
+    pub fn is_success(&self) -> bool {
+        *self == Self::success()
     }
 }

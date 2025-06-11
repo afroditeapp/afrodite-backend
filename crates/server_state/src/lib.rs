@@ -26,7 +26,7 @@ use server_data::{
 use simple_backend::app::SimpleBackendAppState;
 
 use self::internal_api::InternalApiClient;
-use crate::demo::DemoModeManager;
+use crate::{admin_notifications::AdminNotificationManagerData, demo::DemoModeManager};
 
 pub mod api_usage;
 pub mod app;
@@ -36,6 +36,7 @@ pub mod internal_api;
 pub mod ip_address;
 pub mod state_impl;
 pub mod data_signer;
+pub mod admin_notifications;
 pub mod utils;
 
 pub use server_common::{data::DataError, result};
@@ -55,6 +56,7 @@ struct AppStateInternal {
     internal_api: Arc<InternalApiClient>,
     config: Arc<Config>,
     content_processing: Arc<ContentProcessingManagerData>,
+    admin_notification: Arc<AdminNotificationManagerData>,
     demo_mode: DemoModeManager,
     push_notification_sender: PushNotificationSender,
     simple_backend_state: SimpleBackendAppState,
@@ -73,6 +75,7 @@ impl AppState {
         write_queue: WriteCommandRunnerHandle,
         config: Arc<Config>,
         content_processing: Arc<ContentProcessingManagerData>,
+        admin_notification: Arc<AdminNotificationManagerData>,
         demo_mode: DemoModeManager,
         push_notification_sender: PushNotificationSender,
         simple_backend_state: SimpleBackendAppState,
@@ -85,6 +88,7 @@ impl AppState {
             write_queue: Arc::new(write_queue),
             internal_api: InternalApiClient::new(config.external_service_urls().clone()).into(),
             content_processing,
+            admin_notification,
             demo_mode,
             push_notification_sender,
             simple_backend_state,

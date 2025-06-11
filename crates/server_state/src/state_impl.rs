@@ -239,6 +239,12 @@ impl DataSignerProvider for S {
     }
 }
 
+impl AdminNotificationProvider for S {
+    fn admin_notification(&self) -> &crate::admin_notifications::AdminNotificationManagerData {
+        &self.state.admin_notification
+    }
+}
+
 // Simple backend
 
 impl SignInWith for S {

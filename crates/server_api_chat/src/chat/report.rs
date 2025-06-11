@@ -1,8 +1,8 @@
 use axum::{extract::State, Extension};
 use base64::Engine;
-use model::UpdateReportResult;
+use model::{AdminNotificationTypes, UpdateReportResult};
 use model_chat::{AccountIdInternal, NewChatMessageReportInternal, SignedMessageData, UpdateChatMessageReport};
-use server_api::{app::DataSignerProvider, create_open_api_router, db_write_multiple, S};
+use server_api::{app::{AdminNotificationProvider, DataSignerProvider}, create_open_api_router, db_write_multiple, S};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 use utils::encrypt::{decrypt_binary_message, verify_signed_binary_message};
@@ -79,6 +79,11 @@ pub async fn post_chat_message_report(
         .report()
         .report_chat_message(account_id, target, report)
         .await)?;
+
+    state
+        .admin_notification()
+        .send_notification_if_needed(AdminNotificationTypes::ProcessReports)
+        .await;
 
     Ok(result.into())
 }

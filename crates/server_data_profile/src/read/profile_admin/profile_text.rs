@@ -9,7 +9,7 @@ use server_data::{
 define_cmd_wrapper_read!(ReadCommandsProfileText);
 
 impl ReadCommandsProfileText<'_> {
-    pub async fn profile_text_pending_moderation_list(
+    pub async fn profile_text_pending_moderation_list_using_moderator_id(
         &self,
         moderator_id: AccountIdInternal,
         params: GetProfileTextPendingModerationParams,
@@ -17,7 +17,21 @@ impl ReadCommandsProfileText<'_> {
         self.db_read(move |mut cmds| {
             cmds.profile_admin()
                 .profile_text()
-                .profile_text_pending_moderation_list(moderator_id, params)
+                .profile_text_pending_moderation_list_using_moderator_id(moderator_id, params)
+        })
+        .await
+        .into_error()
+    }
+
+    pub async fn profile_text_pending_moderation_list(
+        &self,
+        is_bot: bool,
+        params: GetProfileTextPendingModerationParams,
+    ) -> Result<GetProfileTextPendingModerationList, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.profile_admin()
+                .profile_text()
+                .profile_text_pending_moderation_list(is_bot, params)
         })
         .await
         .into_error()

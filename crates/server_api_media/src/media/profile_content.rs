@@ -2,13 +2,13 @@ use axum::{
     extract::{Path, Query, State},
     Extension,
 };
-use model::EventToClientInternal;
+use model::{AdminNotificationTypes, EventToClientInternal};
 use model_media::{
     AccountId, AccountIdInternal, AccountState,
     GetProfileContentQueryParams, GetProfileContentResult,
     Permissions, ProfileContent, SetProfileContent,
 };
-use server_api::{app::{ApiUsageTrackerProvider, GetConfig}, create_open_api_router, db_write_multiple, S};
+use server_api::{app::{AdminNotificationProvider, ApiUsageTrackerProvider, GetConfig}, create_open_api_router, db_write_multiple, S};
 use server_data::read::GetReadCommandsCommon;
 use server_data_media::{read::GetReadMediaCommands, write::{media::InitialContentModerationResult, GetWriteCommandsMedia}};
 use simple_backend::create_counters;
@@ -168,6 +168,11 @@ pub async fn put_profile_content(
 
         Ok(())
     })?;
+
+    state
+        .admin_notification()
+        .send_notification_if_needed(AdminNotificationTypes::ModerateMediaContentBot)
+        .await;
 
     // TODO(microservice): Add profile visibility change notification
     // to account internal API.

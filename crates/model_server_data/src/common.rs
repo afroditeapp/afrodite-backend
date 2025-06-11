@@ -94,6 +94,7 @@ impl AppNotificationSettingsInternal {
             NotificationEvent::MediaContentModerationCompleted => self.media.media_content_moderation,
             NotificationEvent::ProfileTextModerationCompleted => self.profile.profile_text_moderation,
             NotificationEvent::AutomaticProfileSearchCompleted => self.profile.automatic_profile_search,
+            NotificationEvent::AdminNotification => true,
         }
     }
 }

@@ -2,12 +2,12 @@ use axum::{
     extract::{Path, State},
     Extension,
 };
-use model::{AccountId, EventToClientInternal};
+use model::{AccountId, AdminNotificationTypes, EventToClientInternal};
 use model_profile::{
     GetProfileAgeAndName, Permissions, ProfileUpdate, SetProfileName
 };
 use server_api::{
-    app::{GetAccounts, GetConfig}, create_open_api_router, db_write_multiple, DataError, S
+    app::{AdminNotificationProvider, GetAccounts, GetConfig}, create_open_api_router, db_write_multiple, DataError, S
 };
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -137,6 +137,11 @@ pub async fn post_set_profile_name(
 
         Ok(())
     })?;
+
+    state
+        .admin_notification()
+        .send_notification_if_needed(AdminNotificationTypes::ModerateProfileNamesBot)
+        .await;
 
     Ok(())
 }

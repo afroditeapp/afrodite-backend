@@ -1,7 +1,7 @@
 use axum::{extract::State, Extension};
-use model::{AccountIdInternal, CustomReportsFileHash, UpdateReportResult};
+use model::{AccountIdInternal, AdminNotificationTypes, CustomReportsFileHash, UpdateReportResult};
 use model_account::{GetCustomReportsConfigResult, UpdateCustomReportBoolean};
-use server_api::{app::GetConfig, create_open_api_router, db_write_multiple, S};
+use server_api::{app::{AdminNotificationProvider, GetConfig}, create_open_api_router, db_write_multiple, S};
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
 
@@ -38,6 +38,11 @@ pub async fn post_custom_report_boolean(
         .report()
         .report_custom_report_boolean(account_id, target, update.custom_report_id, update.value)
         .await)?;
+
+    state
+        .admin_notification()
+        .send_notification_if_needed(AdminNotificationTypes::ProcessReports)
+        .await;
 
     Ok(r.into())
 }

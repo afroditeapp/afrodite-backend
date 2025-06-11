@@ -7,7 +7,7 @@ use server_data::{
     write_commands::WriteCommandRunnerHandle,
 };
 use server_data_all::app::DataAllUtilsImpl;
-use server_state::{demo::DemoModeManager, StateForRouterCreation, S};
+use server_state::{admin_notifications::AdminNotificationManagerData, demo::DemoModeManager, StateForRouterCreation, S};
 use simple_backend::{
     app::SimpleBackendAppState, manager_client::ManagerApiClient, maxmind_db::MaxMindDbManagerData, perf::PerfMetricsManagerData
 };
@@ -228,7 +228,7 @@ impl ApiDoc {
             WriteCommandRunnerHandle::new(router_database_write_handle.into(), &config).await;
 
         let (content_processing, _) = ContentProcessingManagerData::new();
-        let content_processing = Arc::new(content_processing);
+        let (admin_notification, _) = AdminNotificationManagerData::new();
 
         let demo_mode =
             DemoModeManager::new(config.demo_mode_config().cloned().unwrap_or_default())
@@ -238,7 +238,8 @@ impl ApiDoc {
             router_database_handle,
             write_cmd_runner_handle,
             config.clone(),
-            content_processing.clone(),
+            content_processing.into(),
+            admin_notification.into(),
             demo_mode,
             push_notification_sender,
             simple_state,

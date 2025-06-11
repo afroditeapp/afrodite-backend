@@ -1,7 +1,7 @@
 use axum::{extract::State, Extension};
-use model::UpdateReportResult;
+use model::{AdminNotificationTypes, UpdateReportResult};
 use model_media::{AccountIdInternal, UpdateProfileContentReport};
-use server_api::{create_open_api_router, db_write_multiple, S};
+use server_api::{app::AdminNotificationProvider, create_open_api_router, db_write_multiple, S};
 use server_data_media::write::GetWriteCommandsMedia;
 use simple_backend::create_counters;
 
@@ -42,6 +42,11 @@ pub async fn post_profile_content_report(
         .report()
         .update_report(account_id, target, update.content)
         .await)?;
+
+    state
+        .admin_notification()
+        .send_notification_if_needed(AdminNotificationTypes::ProcessReports)
+        .await;
 
     Ok(result.into())
 }

@@ -1,7 +1,7 @@
 use axum::{extract::State, Extension};
-use model::{AccountIdInternal, AdminNotificationSubscriptions, Permissions};
-use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
-use server_state::db_write_multiple;
+use model::{AccountIdInternal, AdminNotificationSubscriptions, PendingNotificationFlags, Permissions};
+use server_data::{app::EventManagerProvider, read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
+use server_state::{app::AdminNotificationProvider, db_write_multiple};
 use simple_backend::create_counters;
 
 use crate::{
@@ -87,7 +87,54 @@ pub async fn post_admin_notification_subscriptions(
     }
 }
 
-create_open_api_router!(fn router_notification, get_admin_notification_subscriptions, post_admin_notification_subscriptions,);
+const PATH_POST_GET_ADMIN_NOTIFICATION: &str = "/common_api/admin_notification";
+
+/// Get admin notification data.
+///
+/// Getting notification data is required when notification event is received
+/// from WebSocket. This prevents resending the notification as push
+/// notification when WebSocket connection closes.
+///
+/// # Access
+/// Requires [Permissions::admin_subscribe_admin_notifications].
+#[utoipa::path(
+    post,
+    path = PATH_POST_GET_ADMIN_NOTIFICATION,
+    responses(
+        (status = 200, description = "Successfull.", body = AdminNotificationSubscriptions),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_get_admin_notification(
+    State(state): State<S>,
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    Extension(api_caller_permissions): Extension<Permissions>,
+) -> Result<Json<AdminNotificationSubscriptions>, StatusCode> {
+    COMMON_ADMIN.post_get_admin_notification.incr();
+
+    if api_caller_permissions.admin_subscribe_admin_notifications {
+        state
+            .event_manager()
+            .remove_specific_pending_notification_flags_from_cache(
+                api_caller_account_id,
+                PendingNotificationFlags::ADMIN_NOTIFICATION,
+            )
+            .await;
+
+        let data = state.admin_notification()
+            .get_notification_state(api_caller_account_id)
+            .await
+            .unwrap_or_default();
+
+        Ok(data.into())
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
+}
+
+create_open_api_router!(fn router_notification, get_admin_notification_subscriptions, post_admin_notification_subscriptions, post_get_admin_notification,);
 
 create_counters!(
     CommonAdminCounters,
@@ -95,4 +142,5 @@ create_counters!(
     COMMON_ADMIN_NOTIFICATION_COUNTERS_LIST,
     get_admin_notification_subscriptions,
     post_admin_notification_subscriptions,
+    post_get_admin_notification,
 );

@@ -1,7 +1,8 @@
 use axum::{extract::State, Extension};
 use model::{
-    AccountIdInternal, FcmDeviceToken, PendingNotificationToken, PendingNotificationWithData,
+    AccountIdInternal, FcmDeviceToken, PendingNotificationFlags, PendingNotificationToken, PendingNotificationWithData
 };
+use server_state::app::AdminNotificationProvider;
 use crate::{create_open_api_router, db_write_multiple, S};
 use simple_backend::create_counters;
 use server_data::write::GetWriteCommandsCommon;
@@ -77,11 +78,21 @@ pub async fn post_get_pending_notification(
         Err(_) => return PendingNotificationWithData::default().into(),
     };
 
-    state
+    let mut data = state
         .data_all_access()
         .get_push_notification_data(id, notification_value)
-        .await
-        .into()
+        .await;
+
+    let flags = PendingNotificationFlags::from(notification_value);
+    data.admin_notification = if flags.contains(PendingNotificationFlags::ADMIN_NOTIFICATION) {
+        state.admin_notification()
+            .get_notification_state(id)
+            .await
+    } else {
+        None
+    };
+
+    data.into()
 }
 
 create_open_api_router!(fn router_push_notification_private, post_set_device_token,);

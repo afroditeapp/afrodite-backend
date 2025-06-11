@@ -89,5 +89,7 @@ pub async fn get_push_notification_data(
         news_changed: unread_news_count,
         profile_text_moderation_completed,
         automatic_profile_search_completed,
+        // State for this is added in API route handler
+        admin_notification: None,
     }
 }

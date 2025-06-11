@@ -18,6 +18,7 @@ pub mod shutdown_tasks;
 pub mod startup_tasks;
 pub mod task_utils;
 pub mod utils;
+pub mod admin_notifications;
 
 use std::sync::Arc;
 
@@ -42,7 +43,7 @@ use server_data::{
     write_commands::{WriteCmdWatcher, WriteCommandRunnerHandle},
 };
 use server_data_all::{app::DataAllUtilsImpl, load::DbDataToCacheLoader};
-use server_state::{demo::DemoModeManager, AppState, StateForRouterCreation};
+use server_state::{admin_notifications::AdminNotificationManagerData, demo::DemoModeManager, AppState, StateForRouterCreation};
 use shutdown_tasks::ShutdownTasks;
 use simple_backend::{
     app::SimpleBackendAppState,
@@ -55,7 +56,7 @@ use startup_tasks::StartupTasks;
 use tracing::{error, warn};
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::bot::BotClient;
+use crate::{admin_notifications::{AdminNotificationManager, AdminNotificationManagerQuitHandle}, bot::BotClient};
 
 pub struct DatingAppServer {
     config: Arc<Config>,
@@ -75,6 +76,7 @@ impl DatingAppServer {
             write_cmd_waiter: None,
             database_manager: None,
             content_processing_quit_handle: None,
+            admin_notification_quit_handle: None,
             push_notifications_quit_handle: None,
             email_manager_quit_handle: None,
             shutdown_tasks: None,
@@ -93,6 +95,7 @@ pub struct DatingAppBusinessLogic {
     write_cmd_waiter: Option<WriteCmdWatcher>,
     database_manager: Option<DatabaseManager>,
     content_processing_quit_handle: Option<ContentProcessingManagerQuitHandle>,
+    admin_notification_quit_handle: Option<AdminNotificationManagerQuitHandle>,
     push_notifications_quit_handle: Option<PushNotificationManagerQuitHandle>,
     email_manager_quit_handle: Option<EmailManagerQuitHandle>,
     shutdown_tasks: Option<ShutdownTasks>,
@@ -265,6 +268,9 @@ impl BusinessLogic for DatingAppBusinessLogic {
         let (content_processing, content_processing_receiver) = ContentProcessingManagerData::new();
         let content_processing = Arc::new(content_processing);
 
+        let (admin_notification, admin_notification_receiver) = AdminNotificationManagerData::new();
+        let admin_notification = Arc::new(admin_notification);
+
         let demo_mode =
             DemoModeManager::new(self.config.demo_mode_config().cloned().unwrap_or_default())
                 .expect("Demo mode manager init failed");
@@ -274,6 +280,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
             write_cmd_runner_handle,
             self.config.clone(),
             content_processing.clone(),
+            admin_notification.clone(),
             demo_mode,
             push_notification_sender,
             simple_state,
@@ -287,6 +294,12 @@ impl BusinessLogic for DatingAppBusinessLogic {
 
         let content_processing_quit_handle = ContentProcessingManager::new_manager(
             content_processing_receiver,
+            app_state.clone(),
+            server_quit_watcher.resubscribe(),
+        );
+
+        let admin_notification_quit_handle = AdminNotificationManager::new_manager(
+            admin_notification_receiver,
             app_state.clone(),
             server_quit_watcher.resubscribe(),
         );
@@ -322,6 +335,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
         self.database_manager = Some(database_manager);
         self.write_cmd_waiter = Some(write_cmd_waiter);
         self.content_processing_quit_handle = Some(content_processing_quit_handle);
+        self.admin_notification_quit_handle = Some(admin_notification_quit_handle);
         self.push_notifications_quit_handle = Some(push_notifications_quit_handle);
         self.email_manager_quit_handle = Some(email_manager_quit_handle);
         self.shutdown_tasks = Some(ShutdownTasks::new(app_state.clone()));

@@ -21,4 +21,17 @@ impl ReadCommandsCommonAdminNotification<'_> {
         .await
         .into_error()
     }
+
+    pub async fn get_accounts_with_some_wanted_subscriptions(
+        &self,
+        wanted: AdminNotificationSubscriptions,
+    ) -> Result<Vec<(AccountIdInternal, AdminNotificationSubscriptions)>, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.common_admin()
+                .notification()
+                .get_accounts_with_some_wanted_subscriptions(wanted)
+        })
+        .await
+        .into_error()
+    }
 }

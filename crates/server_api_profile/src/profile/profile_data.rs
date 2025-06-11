@@ -2,13 +2,14 @@ use axum::{
     extract::{Path, Query, State},
     Extension,
 };
+use model::AdminNotificationTypes;
 use model_profile::{
     AccountId, AccountIdInternal, AccountState, GetInitialProfileAgeInfoResult, GetMyProfileResult,
     GetProfileQueryParam, GetProfileResult, Permissions, ProfileSearchAgeRange,
     ProfileSearchAgeRangeValidated, ProfileUpdate, SearchGroups,
     ValidatedSearchGroups,
 };
-use server_api::{app::{ApiUsageTrackerProvider, GetConfig}, create_open_api_router, db_write_multiple, result::WrappedContextExt, S};
+use server_api::{app::{AdminNotificationProvider, ApiUsageTrackerProvider, GetConfig}, create_open_api_router, db_write_multiple, result::WrappedContextExt, S};
 use server_data::read::GetReadCommandsCommon;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -204,6 +205,15 @@ pub async fn post_profile(
 
         Ok(())
     })?;
+
+    state
+        .admin_notification()
+        .send_notification_if_needed(AdminNotificationTypes::ModerateProfileNamesBot)
+        .await;
+    state
+        .admin_notification()
+        .send_notification_if_needed(AdminNotificationTypes::ModerateProfileTextsBot)
+        .await;
 
     Ok(())
 }

@@ -2,11 +2,11 @@ use axum::{
     extract::{Query, State},
     Extension,
 };
-use model::NotificationEvent;
+use model::{AdminNotificationTypes, NotificationEvent};
 use model_media::{
     AccountIdInternal, EventToClientInternal, GetProfileContentPendingModerationList, GetProfileContentPendingModerationParams, Permissions, PostModerateProfileContent
 };
-use server_api::{app::{GetAccounts, GetConfig}, create_open_api_router, S};
+use server_api::{app::{AdminNotificationProvider, GetAccounts, GetConfig}, create_open_api_router, S};
 use server_data_media::{read::GetReadMediaCommands, write::{media::InitialContentModerationResult, media_admin::content::ContentModerationMode, GetWriteCommandsMedia}};
 use simple_backend::create_counters;
 use server_api::app::ReadData;
@@ -53,7 +53,7 @@ pub async fn get_profile_content_pending_moderation_list(
     let r = state
         .read()
         .media_admin()
-        .profile_content_pending_moderation_list(moderator_id, params)
+        .profile_content_pending_moderation_list_using_moderator_id(moderator_id, params)
         .await?;
 
     Ok(r.into())
@@ -174,6 +174,13 @@ pub async fn post_moderate_profile_content(
 
         Ok(())
     })?;
+
+    if data.move_to_human.unwrap_or_default() {
+        state
+            .admin_notification()
+            .send_notification_if_needed(AdminNotificationTypes::ModerateMediaContentHuman)
+            .await;
+    }
 
     // TODO(microservice): Add profile visibility change notification
     // to account internal API.

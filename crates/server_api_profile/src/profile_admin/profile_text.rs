@@ -2,12 +2,12 @@ use axum::{
     extract::{Path, Query, State},
     Extension,
 };
-use model::{AccountId, NotificationEvent};
+use model::{AccountId, AdminNotificationTypes, NotificationEvent};
 use model_profile::{
     AccountIdInternal, EventToClientInternal, GetProfileTextPendingModerationList, GetProfileTextPendingModerationParams, GetProfileTextState, Permissions, PostModerateProfileText
 };
 use server_api::{
-    app::{GetAccounts, WriteData},
+    app::{AdminNotificationProvider, GetAccounts, WriteData},
     create_open_api_router, db_write_multiple, S,
 };
 use server_data_profile::{read::GetReadProfileCommands, write::{profile_admin::profile_text::ModerateProfileTextMode, GetWriteCommandsProfile}};
@@ -52,7 +52,7 @@ pub async fn get_profile_text_pending_moderation_list(
         .read()
         .profile_admin()
         .profile_text()
-        .profile_text_pending_moderation_list(moderator_id, params)
+        .profile_text_pending_moderation_list_using_moderator_id(moderator_id, params)
         .await?;
 
     Ok(r.into())
@@ -150,6 +150,13 @@ pub async fn post_moderate_profile_text(
 
         Ok(())
     })?;
+
+    if data.move_to_human.unwrap_or_default() {
+        state
+            .admin_notification()
+            .send_notification_if_needed(AdminNotificationTypes::ModerateProfileTextsHuman)
+            .await;
+    }
 
     Ok(())
 }

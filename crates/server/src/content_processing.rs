@@ -1,5 +1,5 @@
 use config::Config;
-use model::ContentId;
+use model::{AdminNotificationTypes, ContentId};
 use model_media::MediaContentType;
 use server_api::{
     app::{ContentProcessingProvider, EventManagerProvider, WriteData},
@@ -11,6 +11,7 @@ use server_data::{
     content_processing::{notify_client, ContentProcessingReceiver, ProcessingState},
 };
 use server_data_media::write::GetWriteCommandsMedia;
+use server_state::app::AdminNotificationProvider;
 use server_state::S;
 use simple_backend::{image::ImageProcess, ServerQuitWatcher};
 use simple_backend_image_process::{ImageProcessingInfo, InputFileType};
@@ -167,6 +168,11 @@ impl ContentProcessingManager {
         })
         .await
         .change_context(ContentProcessingError::DatabaseError)?;
+
+        self.state
+            .admin_notification()
+            .send_notification_if_needed(AdminNotificationTypes::ModerateMediaContentBot)
+            .await;
 
         Ok(ImgInfo::ProcessedSuccessfully {
             face_detected,
