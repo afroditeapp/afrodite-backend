@@ -240,6 +240,8 @@ CREATE TABLE IF NOT EXISTS ip_address_usage_statistics(
 
 CREATE TABLE IF NOT EXISTS admin_notification_subscriptions(
     account_id INTEGER PRIMARY KEY NOT NULL,
+    moderate_initial_media_content_bot           BOOLEAN NOT NULL DEFAULT 0,
+    moderate_initial_media_content_human         BOOLEAN NOT NULL DEFAULT 0,
     moderate_media_content_bot                   BOOLEAN NOT NULL DEFAULT 0,
     moderate_media_content_human                 BOOLEAN NOT NULL DEFAULT 0,
     moderate_profile_texts_bot                   BOOLEAN NOT NULL DEFAULT 0,

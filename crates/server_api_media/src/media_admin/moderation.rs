@@ -178,6 +178,10 @@ pub async fn post_moderate_profile_content(
     if data.move_to_human.unwrap_or_default() {
         state
             .admin_notification()
+            .send_notification_if_needed(AdminNotificationTypes::ModerateInitialMediaContentHuman)
+            .await;
+        state
+            .admin_notification()
             .send_notification_if_needed(AdminNotificationTypes::ModerateMediaContentHuman)
             .await;
     }

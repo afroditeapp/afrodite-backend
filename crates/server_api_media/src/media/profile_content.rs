@@ -171,6 +171,10 @@ pub async fn put_profile_content(
 
     state
         .admin_notification()
+        .send_notification_if_needed(AdminNotificationTypes::ModerateInitialMediaContentBot)
+        .await;
+    state
+        .admin_notification()
         .send_notification_if_needed(AdminNotificationTypes::ModerateMediaContentBot)
         .await;
 

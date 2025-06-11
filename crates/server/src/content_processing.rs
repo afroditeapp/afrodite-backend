@@ -171,6 +171,10 @@ impl ContentProcessingManager {
 
         self.state
             .admin_notification()
+            .send_notification_if_needed(AdminNotificationTypes::ModerateInitialMediaContentBot)
+            .await;
+        self.state
+            .admin_notification()
             .send_notification_if_needed(AdminNotificationTypes::ModerateMediaContentBot)
             .await;
 

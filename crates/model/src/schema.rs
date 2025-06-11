@@ -168,6 +168,8 @@ diesel::table! {
 
     admin_notification_subscriptions (account_id) {
         account_id -> Integer,
+        moderate_initial_media_content_bot -> Bool,
+        moderate_initial_media_content_human -> Bool,
         moderate_media_content_bot -> Bool,
         moderate_media_content_human -> Bool,
         moderate_profile_texts_bot -> Bool,

@@ -9,6 +9,12 @@ use utoipa::ToSchema;
 pub struct AdminNotification {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
+    pub moderate_initial_media_content_bot: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub moderate_initial_media_content_human: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
     pub moderate_media_content_bot: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -33,6 +39,10 @@ pub struct AdminNotification {
 impl AdminNotification {
     pub fn enable(&mut self, event: AdminNotificationTypes) {
         match event {
+            AdminNotificationTypes::ModerateInitialMediaContentBot =>
+                self.moderate_initial_media_content_bot = true,
+            AdminNotificationTypes::ModerateInitialMediaContentHuman =>
+                self.moderate_initial_media_content_human = true,
             AdminNotificationTypes::ModerateMediaContentBot =>
                 self.moderate_media_content_bot = true,
             AdminNotificationTypes::ModerateMediaContentHuman =>
@@ -52,6 +62,8 @@ impl AdminNotification {
 }
 
 pub enum AdminNotificationTypes {
+    ModerateInitialMediaContentBot,
+    ModerateInitialMediaContentHuman,
     ModerateMediaContentBot,
     ModerateMediaContentHuman,
     ModerateProfileTextsBot,

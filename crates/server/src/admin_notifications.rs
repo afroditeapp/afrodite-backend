@@ -93,15 +93,23 @@ impl AdminNotificationManager {
     }
 
     async fn handle_pending_events(&mut self) -> Result<(), AdminNotificationError> {
+        if self.pending_notifications.moderate_initial_media_content_bot {
+            self.pending_notifications.moderate_initial_media_content_bot =
+                self.initial_content_moderation_is_needed(true).await?;
+        }
+
+        if self.pending_notifications.moderate_initial_media_content_human {
+            self.pending_notifications.moderate_initial_media_content_human =
+                self.initial_content_moderation_is_needed(false).await?;
+        }
+
         if self.pending_notifications.moderate_media_content_bot {
             self.pending_notifications.moderate_media_content_bot =
-                self.initial_content_moderation_is_needed(true).await? ||
                 self.content_moderation_is_needed(true).await?;
         }
 
         if self.pending_notifications.moderate_media_content_human {
             self.pending_notifications.moderate_media_content_human =
-                self.initial_content_moderation_is_needed(false).await? ||
                 self.content_moderation_is_needed(false).await?;
         }
 
