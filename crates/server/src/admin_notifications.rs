@@ -95,47 +95,47 @@ impl AdminNotificationManager {
     async fn handle_pending_events(&mut self) -> Result<(), AdminNotificationError> {
         if self.pending_notifications.moderate_initial_media_content_bot {
             self.pending_notifications.moderate_initial_media_content_bot =
-                self.initial_content_moderation_is_needed(true).await?;
+                self.is_initial_content_moderation_needed(true).await?;
         }
 
         if self.pending_notifications.moderate_initial_media_content_human {
             self.pending_notifications.moderate_initial_media_content_human =
-                self.initial_content_moderation_is_needed(false).await?;
+                self.is_initial_content_moderation_needed(false).await?;
         }
 
         if self.pending_notifications.moderate_media_content_bot {
             self.pending_notifications.moderate_media_content_bot =
-                self.content_moderation_is_needed(true).await?;
+                self.is_content_moderation_needed(true).await?;
         }
 
         if self.pending_notifications.moderate_media_content_human {
             self.pending_notifications.moderate_media_content_human =
-                self.content_moderation_is_needed(false).await?;
+                self.is_content_moderation_needed(false).await?;
         }
 
         if self.pending_notifications.moderate_profile_texts_bot {
             self.pending_notifications.moderate_profile_texts_bot =
-                self.profile_text_moderation_is_needed(true).await?
+                self.is_profile_text_moderation_needed(true).await?
         }
 
         if self.pending_notifications.moderate_profile_texts_human {
             self.pending_notifications.moderate_profile_texts_human =
-                self.profile_text_moderation_is_needed(false).await?
+                self.is_profile_text_moderation_needed(false).await?
         }
 
         if self.pending_notifications.moderate_profile_names_bot {
             self.pending_notifications.moderate_profile_names_bot =
-                self.profile_name_moderation_is_needed().await?
+                self.is_profile_name_moderation_needed().await?
         }
 
         if self.pending_notifications.moderate_profile_names_human {
             self.pending_notifications.moderate_profile_names_human =
-                self.profile_name_moderation_is_needed().await?
+                self.is_profile_name_moderation_needed().await?
         }
 
         if self.pending_notifications.process_reports {
             self.pending_notifications.process_reports =
-                self.report_processing_is_needed().await?
+                self.is_report_processing_needed().await?
         }
 
         let accounts = self.state
@@ -162,7 +162,7 @@ impl AdminNotificationManager {
         Ok(())
     }
 
-    async fn initial_content_moderation_is_needed(&self, is_bot: bool) -> Result<bool, AdminNotificationError> {
+    async fn is_initial_content_moderation_needed(&self, is_bot: bool) -> Result<bool, AdminNotificationError> {
         let values = self.state
             .read()
             .media_admin()
@@ -180,7 +180,7 @@ impl AdminNotificationManager {
         Ok(!values.is_empty())
     }
 
-    async fn content_moderation_is_needed(&self, is_bot: bool) -> Result<bool, AdminNotificationError> {
+    async fn is_content_moderation_needed(&self, is_bot: bool) -> Result<bool, AdminNotificationError> {
         let values = self.state
             .read()
             .media_admin()
@@ -198,7 +198,7 @@ impl AdminNotificationManager {
         Ok(!values.is_empty())
     }
 
-    async fn profile_text_moderation_is_needed(&self, is_bot: bool) -> Result<bool, AdminNotificationError> {
+    async fn is_profile_text_moderation_needed(&self, is_bot: bool) -> Result<bool, AdminNotificationError> {
         let values = self.state
             .read()
             .profile_admin()
@@ -216,7 +216,7 @@ impl AdminNotificationManager {
     }
 
     // TODO(prod): Add is_bot parameter
-    async fn profile_name_moderation_is_needed(&self) -> Result<bool, AdminNotificationError> {
+    async fn is_profile_name_moderation_needed(&self) -> Result<bool, AdminNotificationError> {
         let values = self.state
             .read()
             .profile_admin()
@@ -228,7 +228,7 @@ impl AdminNotificationManager {
         Ok(!values.is_empty())
     }
 
-    async fn report_processing_is_needed(&self) -> Result<bool, AdminNotificationError> {
+    async fn is_report_processing_needed(&self) -> Result<bool, AdminNotificationError> {
         let values = self.state
             .read()
             .common_admin()
