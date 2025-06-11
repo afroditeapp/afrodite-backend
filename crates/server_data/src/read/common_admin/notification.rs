@@ -1,6 +1,6 @@
 
 use database::current::read::GetDbReadCommandsCommon;
-use model::{AccountIdInternal, AdminNotificationSubscriptions};
+use model::{AccountIdInternal, AdminNotification};
 
 use crate::{
     define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError
@@ -12,7 +12,7 @@ impl ReadCommandsCommonAdminNotification<'_> {
     pub async fn admin_notification_subscriptions(
         &self,
         id: AccountIdInternal,
-    ) -> Result<AdminNotificationSubscriptions, DataError> {
+    ) -> Result<AdminNotification, DataError> {
         self.db_read(move |mut cmds| {
             cmds.common_admin()
                 .notification()
@@ -24,8 +24,8 @@ impl ReadCommandsCommonAdminNotification<'_> {
 
     pub async fn get_accounts_with_some_wanted_subscriptions(
         &self,
-        wanted: AdminNotificationSubscriptions,
-    ) -> Result<Vec<(AccountIdInternal, AdminNotificationSubscriptions)>, DataError> {
+        wanted: AdminNotification,
+    ) -> Result<Vec<(AccountIdInternal, AdminNotification)>, DataError> {
         self.db_read(move |mut cmds| {
             cmds.common_admin()
                 .notification()

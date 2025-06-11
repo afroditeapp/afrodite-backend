@@ -1,7 +1,7 @@
 
 use diesel::{insert_into, prelude::*};
 
-use model::{AccountIdInternal, AdminNotificationSubscriptions};
+use model::{AccountIdInternal, AdminNotification};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use error_stack::Result;
 
@@ -13,7 +13,7 @@ impl CurrentWriteCommonAdminNotification<'_> {
     pub fn set_admin_notification_subscriptions(
         &mut self,
         id: AccountIdInternal,
-        subscriptions: AdminNotificationSubscriptions,
+        subscriptions: AdminNotification,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::admin_notification_subscriptions::dsl::*;
 

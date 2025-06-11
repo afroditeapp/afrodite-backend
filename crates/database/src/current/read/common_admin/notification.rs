@@ -1,7 +1,7 @@
 
 use diesel::{prelude::*, sql_types::Bool};
 
-use model::{AccountIdInternal, AdminNotificationSubscriptions};
+use model::{AccountIdInternal, AdminNotification};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use error_stack::{Result, ResultExt};
 
@@ -13,12 +13,12 @@ impl CurrentReadAccountAdminNotification<'_> {
     pub fn admin_notification_subscriptions(
         &mut self,
         id: AccountIdInternal,
-    ) -> Result<AdminNotificationSubscriptions, DieselDatabaseError> {
+    ) -> Result<AdminNotification, DieselDatabaseError> {
         use crate::schema::admin_notification_subscriptions::dsl::*;
 
         admin_notification_subscriptions
             .filter(account_id.eq(id.as_db_id()))
-            .select(AdminNotificationSubscriptions::as_select())
+            .select(AdminNotification::as_select())
             .first(self.conn())
             .optional()
             .map(|v| v.unwrap_or_default())
@@ -27,8 +27,8 @@ impl CurrentReadAccountAdminNotification<'_> {
 
     pub fn get_accounts_with_some_wanted_subscriptions(
         &mut self,
-        wanted: AdminNotificationSubscriptions,
-    ) -> Result<Vec<(AccountIdInternal, AdminNotificationSubscriptions)>, DieselDatabaseError> {
+        wanted: AdminNotification,
+    ) -> Result<Vec<(AccountIdInternal, AdminNotification)>, DieselDatabaseError> {
         use crate::schema::account_id;
         use crate::schema::admin_notification_subscriptions::dsl::*;
 
@@ -57,7 +57,7 @@ impl CurrentReadAccountAdminNotification<'_> {
             )
             .select((
                 AccountIdInternal::as_select(),
-                AdminNotificationSubscriptions::as_select(),
+                AdminNotification::as_select(),
             ))
             .load(self.conn())
             .into_db_error(())

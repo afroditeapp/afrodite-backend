@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension};
-use model::{AccountIdInternal, AdminNotificationSubscriptions, PendingNotificationFlags, Permissions};
+use model::{AccountIdInternal, AdminNotification, PendingNotificationFlags, Permissions};
 use server_data::{app::EventManagerProvider, read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use server_state::{app::AdminNotificationProvider, db_write_multiple};
 use simple_backend::create_counters;
@@ -21,7 +21,7 @@ const PATH_GET_ADMIN_NOTIFICATION_SUBSCRIPTIONS: &str = "/common_api/admin_notif
     get,
     path = PATH_GET_ADMIN_NOTIFICATION_SUBSCRIPTIONS,
     responses(
-        (status = 200, description = "Successful.", body = AdminNotificationSubscriptions),
+        (status = 200, description = "Successful.", body = AdminNotification),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -31,7 +31,7 @@ pub async fn get_admin_notification_subscriptions(
     State(state): State<S>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     Extension(api_caller_permissions): Extension<Permissions>,
-) -> Result<Json<AdminNotificationSubscriptions>, StatusCode> {
+) -> Result<Json<AdminNotification>, StatusCode> {
     COMMON_ADMIN.get_admin_notification_subscriptions.incr();
 
     if api_caller_permissions.admin_server_maintenance_view_backend_config {
@@ -56,7 +56,7 @@ const PATH_POST_ADMIN_NOTIFICATION_SUBSCRIPTIONS: &str = "/common_api/admin_noti
 #[utoipa::path(
     post,
     path = PATH_POST_ADMIN_NOTIFICATION_SUBSCRIPTIONS,
-    request_body = AdminNotificationSubscriptions,
+    request_body = AdminNotification,
     responses(
         (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
@@ -68,7 +68,7 @@ pub async fn post_admin_notification_subscriptions(
     State(state): State<S>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     Extension(api_caller_permissions): Extension<Permissions>,
-    Json(subscriptions): Json<AdminNotificationSubscriptions>,
+    Json(subscriptions): Json<AdminNotification>,
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_admin_notification_subscriptions.incr();
 
@@ -101,7 +101,7 @@ const PATH_POST_GET_ADMIN_NOTIFICATION: &str = "/common_api/admin_notification";
     post,
     path = PATH_POST_GET_ADMIN_NOTIFICATION,
     responses(
-        (status = 200, description = "Successfull.", body = AdminNotificationSubscriptions),
+        (status = 200, description = "Successfull.", body = AdminNotification),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -111,7 +111,7 @@ pub async fn post_get_admin_notification(
     State(state): State<S>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     Extension(api_caller_permissions): Extension<Permissions>,
-) -> Result<Json<AdminNotificationSubscriptions>, StatusCode> {
+) -> Result<Json<AdminNotification>, StatusCode> {
     COMMON_ADMIN.post_get_admin_notification.incr();
 
     if api_caller_permissions.admin_subscribe_admin_notifications {

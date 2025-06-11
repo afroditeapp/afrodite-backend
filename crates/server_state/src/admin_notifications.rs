@@ -1,7 +1,7 @@
 
 use std::collections::HashMap;
 
-use model::{AccountIdDb, AccountIdInternal, AdminNotificationSubscriptions, AdminNotificationTypes};
+use model::{AccountIdDb, AccountIdInternal, AdminNotification, AdminNotificationTypes};
 use tokio::sync::{mpsc::{self, Receiver, Sender}, RwLock};
 
 use tracing::error;
@@ -15,7 +15,7 @@ pub struct AdminNotificationEventReceiver(pub Receiver<AdminNotificationEvent>);
 
 #[derive(Default)]
 struct State {
-    sent_status: HashMap<AccountIdDb, AdminNotificationSubscriptions>,
+    sent_status: HashMap<AccountIdDb, AdminNotification>,
 }
 
 pub struct AdminNotificationManagerData {
@@ -46,7 +46,7 @@ impl AdminNotificationManagerData {
         }
     }
 
-    pub async fn get_notification_state(&self, id: AccountIdInternal) -> Option<AdminNotificationSubscriptions> {
+    pub async fn get_notification_state(&self, id: AccountIdInternal) -> Option<AdminNotification> {
         self.state.read().await.sent_status.get(id.as_db_id()).cloned()
     }
 
@@ -54,7 +54,7 @@ impl AdminNotificationManagerData {
         self.state.write().await.sent_status.remove(id.as_db_id());
     }
 
-    pub async fn set_notification_state(&self, id: AccountIdInternal, state: AdminNotificationSubscriptions) {
+    pub async fn set_notification_state(&self, id: AccountIdInternal, state: AdminNotification) {
         self.state.write().await.sent_status.insert(id.into_db_id(), state);
     }
 }

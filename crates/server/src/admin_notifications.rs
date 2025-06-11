@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use model::{AdminNotificationSubscriptions, NotificationEvent};
+use model::{AdminNotification, NotificationEvent};
 use model_media::{GetProfileContentPendingModerationParams, MediaContentType, ModerationQueueType};
 use model_profile::GetProfileTextPendingModerationParams;
 use server_api::app::EventManagerProvider;
@@ -37,7 +37,7 @@ impl AdminNotificationManagerQuitHandle {
 
 pub struct AdminNotificationManager {
     state: S,
-    pending_notifications: AdminNotificationSubscriptions,
+    pending_notifications: AdminNotification,
 }
 
 impl AdminNotificationManager {
@@ -48,7 +48,7 @@ impl AdminNotificationManager {
     ) -> AdminNotificationManagerQuitHandle {
         let manager = Self {
             state,
-            pending_notifications: AdminNotificationSubscriptions::default(),
+            pending_notifications: AdminNotification::default(),
         };
 
         let task = tokio::spawn(manager.run(receiver, quit_notification));
@@ -149,7 +149,7 @@ impl AdminNotificationManager {
             }
         }
 
-        self.pending_notifications = AdminNotificationSubscriptions::default();
+        self.pending_notifications = AdminNotification::default();
 
         Ok(())
     }
