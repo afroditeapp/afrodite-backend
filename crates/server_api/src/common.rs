@@ -15,17 +15,15 @@ use axum_extra::TypedHeader;
 use headers::ContentType;
 use http::HeaderMap;
 use model::{
-    AccessToken, AccountIdInternal, BackendVersion, EventToClient, PendingNotificationFlags, RefreshToken, SyncDataVersionFromClient, WebSocketClientTypeNumber
+    AccessToken, AccountIdInternal, BackendVersion, EventToClient, EventToClientInternal, PendingNotificationFlags, RefreshToken, SyncDataVersionFromClient, WebSocketClientTypeNumber
 };
 use model_server_data::AuthPair;
 use server_common::websocket::WebSocketError;
 use server_data::{
-    app::{BackendVersionProvider, EventManagerProvider, GetConfig},
-    read::GetReadCommandsCommon,
-    write::GetWriteCommandsCommon,
+    app::{BackendVersionProvider, EventManagerProvider, GetConfig}, read::GetReadCommandsCommon, write::GetWriteCommandsCommon
 };
 use server_state::{
-    app::{ApiUsageTrackerProvider, ClientVersionTrackerProvider, GetAccessTokens, IpAddressUsageTrackerProvider},
+    app::{AdminNotificationProvider, ApiUsageTrackerProvider, ClientVersionTrackerProvider, GetAccessTokens, IpAddressUsageTrackerProvider},
     state_impl::{ReadData, WriteData},
 };
 use simple_backend::{app::FilePackageProvider, create_counters, perf::websocket::{self, ConnectionTracker}, web_socket::WebSocketManager};
@@ -445,6 +443,10 @@ async fn handle_socket_result(
         .handle_new_websocket_connection(&mut socket, id, data_sync_versions)
         .await?;
 
+    if state.admin_notification().get_notification_state(id).await.is_some() {
+        send_event(&mut socket, EventToClientInternal::AdminNotification).await?;
+    }
+
     // TODO(prod): Remove extra logging from this file.
 
     COMMON.websocket_connected.incr();
@@ -594,6 +596,20 @@ impl WebSocketConnectionTrackers {
             _gender_specific: gender_specific,
         })
     }
+}
+
+async fn send_event(
+    socket: &mut WebSocket,
+    event: impl Into<EventToClient>,
+) -> crate::result::Result<(), WebSocketError> {
+    let event: EventToClient = event.into();
+    let event = serde_json::to_string(&event).change_context(WebSocketError::Serialize)?;
+    socket
+        .send(Message::Text(event.into()))
+        .await
+        .change_context(WebSocketError::Send)?;
+
+    Ok(())
 }
 
 create_counters!(
