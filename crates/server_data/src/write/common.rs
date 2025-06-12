@@ -123,6 +123,12 @@ impl WriteCommandsCommon<'_> {
         id: AccountIdInternal,
         value: bool,
     ) -> Result<(), DataError> {
+        self.write_cache_common(id, |cache| {
+            cache.other_shared_state.is_bot_account = value;
+            Ok(())
+        })
+        .await?;
+
         db_transaction!(self, move |mut cmds| {
             cmds.common().state().set_is_bot_account(id, value)
         })
