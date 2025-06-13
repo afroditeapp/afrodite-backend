@@ -271,6 +271,6 @@ impl ReadCommandsChat<'_> {
             })
             .await?;
 
-        Ok(unlimited_likes_a0 == unlimited_likes_a1)
+        Ok(unlimited_likes_a0 && unlimited_likes_a1)
     }
 }
