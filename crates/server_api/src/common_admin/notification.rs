@@ -128,6 +128,10 @@ pub async fn post_get_admin_notification(
             .await
             .unwrap_or_default();
 
+        state.admin_notification()
+            .reset_notification_state(api_caller_account_id)
+            .await;
+
         Ok(data.into())
     } else {
         Err(StatusCode::UNAUTHORIZED)
