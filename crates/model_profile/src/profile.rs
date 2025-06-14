@@ -87,6 +87,10 @@ impl Profile {
     pub fn name_accepted(&self) -> bool {
         self.name_accepted
     }
+
+    pub fn unlimited_likes(&self) -> bool {
+        self.unlimited_likes
+    }
 }
 
 pub struct ProfileAndProfileVersion {

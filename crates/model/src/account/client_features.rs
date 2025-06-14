@@ -153,6 +153,8 @@ impl From<LimitsConfigInternal> for LimitsConfig {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
 pub struct LikeLimitsConfig {
+    /// UTC time with "hh:mm" format.
+    pub unlimited_likes_disabling_time: Option<UtcTimeValue>,
     pub like_sending: Option<LikeSendingLimitConfig>,
 }
 
