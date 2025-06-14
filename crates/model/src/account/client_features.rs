@@ -1,5 +1,6 @@
 
 use serde::{Deserialize, Serialize};
+use simple_backend_utils::time::UtcTimeValue;
 use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -23,12 +24,15 @@ pub struct ClientFeaturesConfigInternal {
     pub features: FeaturesConfig,
     #[serde(default)]
     pub map: MapConfigInternal,
+    #[serde(default)]
+    pub limits: LimitsConfigInternal,
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct ClientFeaturesConfig {
     pub features: FeaturesConfig,
     pub map: MapConfig,
+    pub limits: LimitsConfig,
 }
 
 impl From<ClientFeaturesConfigInternal> for ClientFeaturesConfig {
@@ -36,6 +40,7 @@ impl From<ClientFeaturesConfigInternal> for ClientFeaturesConfig {
         Self {
             features: value.features,
             map: value.map.into(),
+            limits: value.limits.into(),
         }
     }
 }
@@ -125,4 +130,35 @@ impl Default for MapZoom {
             location_selected: 0,
         }
     }
+}
+
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct LimitsConfigInternal {
+    #[serde(default)]
+    pub likes: LikeLimitsConfig,
+}
+
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct LimitsConfig {
+    pub likes: LikeLimitsConfig,
+}
+
+impl From<LimitsConfigInternal> for LimitsConfig {
+    fn from(value: LimitsConfigInternal) -> Self {
+        Self {
+            likes: value.likes,
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
+pub struct LikeLimitsConfig {
+    pub like_sending: Option<LikeSendingLimitConfig>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct LikeSendingLimitConfig {
+    pub daily_limit: u8,
+    /// UTC time with "hh:mm" format.
+    pub reset_time: UtcTimeValue,
 }

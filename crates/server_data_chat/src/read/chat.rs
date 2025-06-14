@@ -4,8 +4,7 @@ use model_chat::{
 };
 use server_data::{
     cache::{
-        db_iterator::{new_count::DbIteratorStateNewCount, DbIteratorState},
-        CacheReadCommon,
+        db_iterator::{new_count::DbIteratorStateNewCount, DbIteratorState}, CacheReadCommon
     }, db_manager::InternalReading, define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError
 };
 
@@ -254,23 +253,15 @@ impl ReadCommandsChat<'_> {
         Ok(interaction)
     }
 
-    pub async fn unlimited_likes_are_enabled_for_both(
+    pub async fn is_unlimited_likes_enabled(
         &self,
-        account0: AccountIdInternal,
-        account1: AccountIdInternal,
+        account: AccountIdInternal,
     ) -> Result<bool, DataError> {
-        let unlimited_likes_a0 = self
-            .read_cache_common(account0, |entry| {
+        let unlimited_likes = self
+            .read_cache_common(account, |entry| {
                 Ok(entry.other_shared_state.unlimited_likes)
             })
             .await?;
-
-        let unlimited_likes_a1 = self
-            .read_cache_common(account1, |entry| {
-                Ok(entry.other_shared_state.unlimited_likes)
-            })
-            .await?;
-
-        Ok(unlimited_likes_a0 && unlimited_likes_a1)
+        Ok(unlimited_likes)
     }
 }

@@ -319,13 +319,16 @@ impl DeleteLikeResult {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct SendLikeResult {
     pub status: Option<LimitedActionStatus>,
+    /// None if the limit is disabled.
+    pub daily_likes_left: Option<u8>,
     pub error_account_interaction_state_mismatch: Option<CurrentAccountInteractionState>,
 }
 
 impl SendLikeResult {
-    pub fn successful(status: LimitedActionStatus) -> Self {
+    pub fn successful(status: LimitedActionStatus, daily_likes_left: Option<u8>) -> Self {
         Self {
             status: Some(status),
+            daily_likes_left,
             error_account_interaction_state_mismatch: None,
         }
     }
@@ -333,6 +336,7 @@ impl SendLikeResult {
     pub fn error_account_interaction_state_mismatch(state: CurrentAccountInteractionState) -> Self {
         Self {
             status: None,
+            daily_likes_left: None,
             error_account_interaction_state_mismatch: Some(state),
         }
     }

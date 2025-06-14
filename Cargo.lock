@@ -786,7 +786,6 @@ dependencies = [
 name = "config"
 version = "0.0.0"
 dependencies = [
- "chrono",
  "clap",
  "csv",
  "error-stack",

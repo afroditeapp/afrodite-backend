@@ -15,8 +15,6 @@ toml = { workspace = true }
 toml_edit = { workspace = true }
 csv = { workspace = true }
 
-chrono = { workspace = true }
-
 reqwest = { workspace = true }
 url = { workspace = true }
 

@@ -1,14 +1,11 @@
-use chrono::Datelike;
 use config::Config;
-use error_stack::Result;
+use model::UnixTime;
 use model_server_data::LimitedActionStatus;
-use server_common::data::cache::CacheError;
-
-const MAX_VALUE_1: u8 = 1;
+use simple_backend_utils::time::next_possible_utc_date_time_value;
 
 #[derive(Debug, Default)]
 pub struct ChatLimits {
-    pub like_limit: AutoResetLimit<DailyLimit, MAX_VALUE_1>,
+    pub like_limit: AutoResetLimit<DailyLimit>,
 }
 
 pub enum LimitStatus {
@@ -31,59 +28,88 @@ impl LimitStatus {
 }
 
 #[derive(Debug, Default)]
-pub struct AutoResetLimit<R: ResetLogic, const MAX_VALUE: u8> {
+pub struct AutoResetLimit<R: ResetLogic> {
     value: u8,
     reset_provider: R,
 }
 
-impl<R: ResetLogic, const MAX_VALUE: u8> AutoResetLimit<R, MAX_VALUE> {
-    pub fn is_limit_not_reached(&mut self, config: &Config) -> Result<bool, CacheError> {
-        if self.reset_provider.reset_can_be_done(config)? {
-            self.value = 0;
+impl<R: ResetLogic> AutoResetLimit<R> {
+    pub fn is_limit_not_reached(&mut self, config: &Config) -> bool {
+        if let Some(count_left) = self.count_left(config) {
+            count_left > 0
+        } else {
+            true
         }
-
-        Ok(self.value < MAX_VALUE)
     }
 
-    pub fn increment_if_possible(&mut self, config: &Config) -> Result<LimitStatus, CacheError> {
-        if self.reset_provider.reset_can_be_done(config)? {
+    pub fn increment_if_possible(&mut self, config: &Config) -> LimitStatus {
+        let Some(max_value) = self.reset_provider.max_value(config) else {
+            return LimitStatus::Ok;
+        };
+
+        if self.reset_provider.reset_can_be_done(config) {
             self.value = 0;
         }
 
-        if self.value >= MAX_VALUE {
-            Ok(LimitStatus::IncrementingFailed)
+        if self.value >= max_value {
+            LimitStatus::IncrementingFailed
         } else {
             self.value += 1;
-            if self.value >= MAX_VALUE {
-                Ok(LimitStatus::LimitReached)
+            if self.value >= max_value {
+                LimitStatus::LimitReached
             } else {
-                Ok(LimitStatus::Ok)
+                LimitStatus::Ok
             }
         }
+    }
+
+    /// Returns None if limit is disabled.
+    pub fn count_left(&mut self, config: &Config) -> Option<u8> {
+        let max_value = self.reset_provider.max_value(config)?;
+
+        if self.reset_provider.reset_can_be_done(config) {
+            self.value = 0;
+        }
+
+        Some(max_value.saturating_sub(self.value))
     }
 }
 
 pub trait ResetLogic: Default {
-    fn reset_can_be_done(&mut self, config: &Config) -> Result<bool, CacheError>;
+    fn reset_can_be_done(&mut self, config: &Config) -> bool;
+    /// If None the limit is not enabled.
+    fn max_value(&self, config: &Config) -> Option<u8>;
 }
 
 #[derive(Debug, Default)]
 pub struct DailyLimit {
-    previous_reset_day: Option<u8>,
+    next_reset: Option<UnixTime>,
 }
 
 impl ResetLogic for DailyLimit {
-    fn reset_can_be_done(&mut self, config: &Config) -> Result<bool, CacheError> {
-        let time = chrono::Utc::now().with_timezone(&config.reset_likes_utc_offset());
-        let current_day = time.day() as u8;
-        let reset_can_be_done = if let Some(previous_reset_day) = self.previous_reset_day {
-            previous_reset_day != current_day
-        } else {
-            true
+    fn reset_can_be_done(&mut self, config: &Config) -> bool {
+        let Some(reset_time) = config.client_features().and_then(|v| v.limits.likes.like_sending.as_ref()).map(|v| v.reset_time) else {
+            return false;
         };
-        if reset_can_be_done {
-            self.previous_reset_day = Some(current_day);
+
+        let current_time = chrono::Utc::now();
+
+        if let Some(next_reset) = self.next_reset {
+            if Into::<UnixTime>::into(current_time).ut < next_reset.ut {
+                return false;
+            }
         }
-        Ok(reset_can_be_done)
+
+        let Ok(next_reset) = next_possible_utc_date_time_value(current_time, reset_time) else {
+            return false;
+        };
+
+        self.next_reset = Some(next_reset.into());
+
+        true
+    }
+
+    fn max_value(&self, config: &Config) -> Option<u8> {
+        config.client_features().and_then(|v| v.limits.likes.like_sending.as_ref()).map(|v| v.daily_limit)
     }
 }

@@ -3,6 +3,7 @@ use std::time::Duration;
 use chrono::{NaiveTime, Utc};
 use serde::{Deserialize, Serialize};
 use tokio::time::sleep;
+use utoipa::ToSchema;
 
 #[derive(thiserror::Error, Debug)]
 pub enum SleepUntilClockIsAtError {
@@ -35,7 +36,7 @@ pub fn next_possible_utc_date_time_value_using_current_time(
     next_possible_utc_date_time_value(Utc::now(), wanted_time)
 }
 
-fn next_possible_utc_date_time_value(
+pub fn next_possible_utc_date_time_value(
     current_time: chrono::DateTime<Utc>,
     wanted_time: UtcTimeValue,
 ) -> Result<chrono::DateTime<Utc>, SleepUntilClockIsAtError> {
@@ -67,7 +68,8 @@ fn seconds_until_current_time_is_at_internal(
 }
 
 /// UTC time value
-#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema)]
+#[schema(value_type = String)]
 pub struct UtcTimeValue(pub TimeValue);
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize)]

@@ -17,7 +17,6 @@ pub mod csv;
 use std::{path::Path, sync::Arc};
 
 use args::{AppMode, ArgsConfig};
-use chrono::FixedOffset;
 use error_stack::{Result, ResultExt};
 use file::{AccountLimitsConfig, AutomaticProfileSearchConfig, ChatLimitsConfig, CommonLimitsConfig, DemoModeConfig, GrantAdminAccessConfig, MediaLimitsConfig, MinClientVersion, RemoteBotConfig};
 use file_dynamic::ConfigFileDynamic;
@@ -95,7 +94,6 @@ pub struct Config {
     client_features_sha256: Option<String>,
     email_content: Option<EmailContentFile>,
 
-    reset_likes_utc_offset: FixedOffset,
     profile_name_allowlist: ProfileNameAllowlistData,
 
     // Used only for config utils
@@ -122,7 +120,6 @@ impl Config {
             client_features: None,
             client_features_sha256: None,
             email_content: None,
-            reset_likes_utc_offset: FixedOffset::east_opt(0).unwrap(),
             profile_name_allowlist: ProfileNameAllowlistData::default(),
             bot_config: None,
             profile_attributes_file: None,
@@ -236,10 +233,6 @@ impl Config {
 
     pub fn simple_backend_arc(&self) -> Arc<SimpleBackendConfig> {
         self.simple_backend_config.clone()
-    }
-
-    pub fn reset_likes_utc_offset(&self) -> FixedOffset {
-        self.reset_likes_utc_offset
     }
 
     pub fn profile_name_allowlist(&self) -> &ProfileNameAllowlistData {
@@ -380,13 +373,6 @@ pub fn get_config(
         );
     }
 
-    let limits = file_config.limits.as_ref().and_then(|v| v.chat.clone()).unwrap_or_default();
-    let offset_hours = 60 * 60 * Into::<i32>::into(limits.like_limit_reset_time_utc_offset_hours);
-    let Some(reset_likes_utc_offset) = FixedOffset::east_opt(offset_hours) else {
-        return Err(GetConfigError::InvalidConfiguration)
-            .attach_printable("like_limit_reset_time_utc_offset_hours is not valid");
-    };
-
     let mut allowlist_builder = ProfileNameAllowlistBuilder::default();
     let csv_configs = file_config
         .profile_name_allowlist
@@ -424,7 +410,6 @@ pub fn get_config(
         client_features,
         client_features_sha256,
         email_content,
-        reset_likes_utc_offset,
         profile_name_allowlist,
         bot_config,
         profile_attributes_file,

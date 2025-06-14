@@ -66,20 +66,20 @@ pub async fn post_send_like(
             }
         }
 
-        let unlimited_likes_enabled_for_both = cmds
+        let unlimited_likes = cmds
             .read()
             .chat()
-            .unlimited_likes_are_enabled_for_both(id, requested_profile)
+            .is_unlimited_likes_enabled(requested_profile)
             .await?;
 
-        let allow_action = if unlimited_likes_enabled_for_both {
+        let allow_action = if unlimited_likes {
             true
         } else {
             cmds.chat()
                 .modify_chat_limits(id, |limits| {
                     limits.like_limit.is_limit_not_reached(cmds.config())
                 })
-                .await??
+                .await?
         };
 
         if allow_action {
@@ -95,17 +95,28 @@ pub async fn post_send_like(
                 .await?;
         }
 
-        let status = if unlimited_likes_enabled_for_both {
-            LimitedActionStatus::Success
+        let (status, daily_likes_left) = if unlimited_likes {
+            cmds
+                .chat()
+                .modify_chat_limits(id, |limits| {
+                    (
+                        LimitedActionStatus::Success,
+                        limits.like_limit.count_left(cmds.config()),
+                    )
+                })
+                .await?
         } else {
             cmds.chat()
                 .modify_chat_limits(id, |limits| {
-                    limits.like_limit.increment_if_possible(cmds.config())
+                    (
+                        limits.like_limit.increment_if_possible(cmds.config()).to_action_status(),
+                        limits.like_limit.count_left(cmds.config()),
+                    )
                 })
-                .await??
-                .to_action_status()
+                .await?
         };
-        Ok(SendLikeResult::successful(status))
+
+        Ok(SendLikeResult::successful(status, daily_likes_left))
     })?;
 
     Ok(r.into())
