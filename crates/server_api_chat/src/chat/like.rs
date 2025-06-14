@@ -1,9 +1,6 @@
 use axum::{extract::State, Extension};
 use model_chat::{
-    AccountId, AccountIdInternal, AccountInteractionState, CurrentAccountInteractionState,
-    DeleteLikeResult, LimitedActionStatus, NewReceivedLikesCount, NewReceivedLikesCountResult,
-    PageItemCountForNewLikes, PendingNotificationFlags, ReceivedLikesIteratorSessionId,
-    ReceivedLikesPage, ResetReceivedLikesIteratorResult, SendLikeResult, SentLikesPage,
+    AccountId, AccountIdInternal, AccountInteractionState, CurrentAccountInteractionState, DailyLikesLeft, DeleteLikeResult, LimitedActionStatus, NewReceivedLikesCount, NewReceivedLikesCountResult, PageItemCountForNewLikes, PendingNotificationFlags, ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult, SendLikeResult, SentLikesPage
 };
 use server_api::{app::{ApiUsageTrackerProvider, EventManagerProvider, GetConfig}, create_open_api_router, S};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
@@ -101,7 +98,7 @@ pub async fn post_send_like(
                 .modify_chat_limits(id, |limits| {
                     (
                         LimitedActionStatus::Success,
-                        limits.like_limit.count_left(cmds.config()),
+                        limits.like_limit.count_left_mut(cmds.config()),
                     )
                 })
                 .await?
@@ -110,7 +107,7 @@ pub async fn post_send_like(
                 .modify_chat_limits(id, |limits| {
                     (
                         limits.like_limit.increment_if_possible(cmds.config()).to_action_status(),
-                        limits.like_limit.count_left(cmds.config()),
+                        limits.like_limit.count_left_mut(cmds.config()),
                     )
                 })
                 .await?
@@ -365,6 +362,29 @@ pub async fn delete_like(
     Ok(r.into())
 }
 
+const PATH_GET_DAILY_LIKES_LEFT: &str = "/chat_api/daily_likes_left";
+
+/// Get daily likes left value.
+#[utoipa::path(
+    get,
+    path = PATH_GET_DAILY_LIKES_LEFT,
+    responses(
+        (status = 200, description = "Success.", body = DailyLikesLeft),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_daily_likes_left(
+    State(state): State<S>,
+    Extension(id): Extension<AccountIdInternal>,
+) -> Result<Json<DailyLikesLeft>, StatusCode> {
+    CHAT.get_daily_likes_left.incr();
+
+    let likes = state.read().chat().daily_likes_left(id).await?;
+    Ok(likes.into())
+}
+
 create_open_api_router!(
         fn router_like,
         post_send_like,
@@ -373,6 +393,7 @@ create_open_api_router!(
         post_reset_received_likes_paging,
         post_get_next_received_likes_page,
         delete_like,
+        get_daily_likes_left,
 );
 
 create_counters!(
@@ -385,4 +406,5 @@ create_counters!(
     post_reset_received_likes_paging,
     post_get_next_received_likes_page,
     delete_like,
+    get_daily_likes_left,
 );

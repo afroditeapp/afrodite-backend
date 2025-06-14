@@ -389,3 +389,9 @@ impl ChatProfileLink {
         }
     }
 }
+
+#[derive(Serialize, ToSchema)]
+pub struct DailyLikesLeft {
+    /// If None the daily like sending limit is disabled.
+    pub likes: Option<u8>,
+}
