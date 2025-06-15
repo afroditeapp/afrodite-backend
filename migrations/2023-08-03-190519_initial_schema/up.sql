@@ -841,6 +841,17 @@ CREATE TABLE IF NOT EXISTS chat_state(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS daily_likes_left(
+    account_id            INTEGER PRIMARY KEY NOT NULL,
+    sync_version          INTEGER             NOT NULL DEFAULT 0,
+    likes_left            INTEGER             NOT NULL DEFAULT 0,
+    latest_limit_reset_unix_time INTEGER,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS public_key(
     account_id            INTEGER NOT NULL,
     key_id                INTEGER NOT NULL,

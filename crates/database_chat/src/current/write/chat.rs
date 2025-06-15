@@ -15,6 +15,7 @@ mod interaction;
 mod message;
 mod report;
 mod notification;
+mod limits;
 
 define_current_write_commands!(CurrentWriteChat);
 
@@ -33,6 +34,10 @@ impl<'a> CurrentWriteChat<'a> {
 
     pub fn notification(self) -> notification::CurrentWriteChatNotification<'a> {
         notification::CurrentWriteChatNotification::new(self.cmds)
+    }
+
+    pub fn limits(self) -> limits::CurrentWriteChatLimits<'a> {
+        limits::CurrentWriteChatLimits::new(self.cmds)
     }
 }
 

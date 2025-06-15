@@ -16,6 +16,9 @@ const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
 
 /// Send a like to some account. If both will like each other, then
 /// the accounts will be a match.
+///
+/// This route might update [model_chat::DailyLikesLeft] and WebSocket event
+/// about the update is not sent because this route returns the new value.
 #[utoipa::path(
     post,
     path = PATH_POST_SEND_LIKE,
@@ -69,14 +72,23 @@ pub async fn post_send_like(
             .is_unlimited_likes_enabled(requested_profile)
             .await?;
 
-        let allow_action = if unlimited_likes {
+        let like_sending_limit_enabled = cmds
+            .config()
+            .client_features()
+            .and_then(|v| v.limits.likes.like_sending.as_ref())
+            .is_some();
+
+        let no_like_limit = !like_sending_limit_enabled || unlimited_likes;
+
+        let allow_action = if no_like_limit {
             true
         } else {
-            cmds.chat()
-                .modify_chat_limits(id, |limits| {
-                    limits.like_limit.is_limit_not_reached(cmds.config())
-                })
+            cmds.read()
+                .chat()
+                .limits()
+                .daily_likes_left_internal(id)
                 .await?
+                .likes_left > 0
         };
 
         if allow_action {
@@ -92,28 +104,27 @@ pub async fn post_send_like(
                 .await?;
         }
 
-        let (status, daily_likes_left) = if unlimited_likes {
-            cmds
-                .chat()
-                .modify_chat_limits(id, |limits| {
-                    (
-                        LimitedActionStatus::Success,
-                        limits.like_limit.count_left_mut(cmds.config()),
-                    )
-                })
-                .await?
+        if !no_like_limit && allow_action {
+            cmds.chat().limits().decrement_daily_likes_left(id).await?;
+        }
+
+        let daily_likes = cmds.read()
+            .chat()
+            .limits()
+            .daily_likes_left_internal(id)
+            .await?;
+
+        let status = if no_like_limit {
+            LimitedActionStatus::Success
+        } else if !allow_action {
+            LimitedActionStatus::FailureLimitAlreadyReached
+        } else if daily_likes.likes_left == 0 {
+            LimitedActionStatus::SuccessAndLimitReached
         } else {
-            cmds.chat()
-                .modify_chat_limits(id, |limits| {
-                    (
-                        limits.like_limit.increment_if_possible(cmds.config()).to_action_status(),
-                        limits.like_limit.count_left_mut(cmds.config()),
-                    )
-                })
-                .await?
+            LimitedActionStatus::Success
         };
 
-        Ok(SendLikeResult::successful(status, daily_likes_left))
+        Ok(SendLikeResult::successful(status, daily_likes.into()))
     })?;
 
     Ok(r.into())
@@ -381,7 +392,8 @@ pub async fn get_daily_likes_left(
 ) -> Result<Json<DailyLikesLeft>, StatusCode> {
     CHAT.get_daily_likes_left.incr();
 
-    let likes = state.read().chat().daily_likes_left(id).await?;
+    let likes = state.read().chat().limits().daily_likes_left_internal(id).await?;
+    let likes: DailyLikesLeft = likes.into();
     Ok(likes.into())
 }
 

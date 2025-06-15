@@ -34,6 +34,8 @@ pub enum WebSocketError {
     DatabaseNewsCountQuery,
     #[error("Database: Media content sync version query failed")]
     DatabaseMediaContentSyncVersionQuery,
+    #[error("Database: Daily likes left sync version query failed")]
+    DatabaseDailyLikesLeftSyncVersionQuery,
     #[error("Database: Pending messages query failed")]
     DatabasePendingMessagesQuery,
     #[error("Database: Profile text moderation completed notification query failed")]
@@ -64,4 +66,6 @@ pub enum WebSocketError {
     NewsCountSyncVersionResetFailed,
     #[error("Media content sync version number reset failed")]
     MediaContentSyncVersionResetFailed,
+    #[error("Daily likes left sync version number reset failed")]
+    DailyLikesLeftSyncVersionResetFailed,
 }

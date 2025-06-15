@@ -35,6 +35,12 @@ pub struct ClientFeaturesConfig {
     pub limits: LimitsConfig,
 }
 
+impl ClientFeaturesConfig {
+    pub fn daily_likes(&self) -> Option<i64> {
+        self.limits.likes.like_sending.as_ref().map(|v| v.daily_limit.into())
+    }
+}
+
 impl From<ClientFeaturesConfigInternal> for ClientFeaturesConfig {
     fn from(value: ClientFeaturesConfigInternal) -> Self {
         Self {

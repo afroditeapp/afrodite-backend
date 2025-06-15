@@ -251,6 +251,18 @@ pub async fn sync_data_with_client_if_needed(
                     .await?;
                 }
             }
+            SyncCheckDataType::DailyLikesLeft => {
+                if config.components().chat {
+                    handle_daily_likes_left_sync_version_check(
+                        read_handle,
+                        write_handle,
+                        socket,
+                        id,
+                        version.version,
+                    )
+                    .await?;
+                }
+            }
             SyncCheckDataType::ServerMaintenanceIsScheduled => {
                 handle_maintenance_info_removing_if_needed(
                     manager_api_client,
@@ -451,6 +463,39 @@ async fn handle_media_content_sync_version_check(
     };
 
     send_event(socket, EventToClientInternal::MediaContentChanged).await?;
+
+    Ok(())
+}
+
+async fn handle_daily_likes_left_sync_version_check(
+    read_handle: &RouterDatabaseReadHandle,
+    write_handle: &WriteCommandRunnerHandle,
+    socket: &mut WebSocket,
+    id: AccountIdInternal,
+    sync_version: SyncVersionFromClient,
+) -> Result<(), WebSocketError> {
+    let current = read_handle
+        .chat()
+        .limits()
+        .daily_likes_left_internal(id)
+        .await
+        .change_context(WebSocketError::DatabaseDailyLikesLeftSyncVersionQuery)?
+        .sync_version;
+    match current.check_is_sync_required(sync_version) {
+        SyncCheckResult::DoNothing => return Ok(()),
+        SyncCheckResult::ResetVersionAndSync => write_handle
+            .write(move |cmds| async move {
+                cmds.chat()
+                    .limits()
+                    .reset_daily_likes_left_sync_version(id)
+                    .await
+            })
+            .await
+            .change_context(WebSocketError::DailyLikesLeftSyncVersionResetFailed)?,
+        SyncCheckResult::Sync => (),
+    };
+
+    send_event(socket, EventToClientInternal::DailyLikesLeftChanged).await?;
 
     Ok(())
 }

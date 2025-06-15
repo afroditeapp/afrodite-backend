@@ -41,11 +41,11 @@ impl UnixTime {
     }
 
     pub fn year(&self) -> Option<i32> {
-        chrono::DateTime::from_timestamp(self.ut, 0).map(|v| v.year())
+        self.to_chrono_time().map(|v| v.year())
     }
 
     pub fn hour(&self) -> Option<u32> {
-        chrono::DateTime::from_timestamp(self.ut, 0).map(|v| v.hour())
+        self.to_chrono_time().map(|v| v.hour())
     }
 
     /// Return decremented time value (self.ut - 1). Implemented using
@@ -61,6 +61,10 @@ impl UnixTime {
         Self {
             ut: self.ut + seconds,
         }
+    }
+
+    pub fn to_chrono_time(&self) -> Option<chrono::DateTime<chrono::Utc>> {
+        chrono::DateTime::from_timestamp(self.ut, 0)
     }
 }
 

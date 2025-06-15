@@ -54,6 +54,7 @@ sync_version_wrappers!(
     SentBlocksSyncVersion,
     SentLikesSyncVersion,
     MatchesSyncVersion,
+    DailyLikesLeftSyncVersion,
 );
 
 #[derive(

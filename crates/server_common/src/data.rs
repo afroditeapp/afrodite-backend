@@ -58,6 +58,9 @@ pub enum DataError {
 
     #[error("Event mode access failed")]
     EventModeAccessFailed,
+
+    #[error("Time error")]
+    Time,
 }
 
 /// Attach more info to current error

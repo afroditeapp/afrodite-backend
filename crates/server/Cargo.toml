@@ -35,6 +35,7 @@ server_data_all = { path = "../server_data_all" }
 server_data_account = { path = "../server_data_account" }
 server_data_profile = { path = "../server_data_profile" }
 server_data_media = { path = "../server_data_media" }
+server_data_chat = { path = "../server_data_chat" }
 
 server_api = { path = "../server_api" }
 server_api_account = { path = "../server_api_account" }

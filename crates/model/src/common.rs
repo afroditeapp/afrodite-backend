@@ -63,6 +63,7 @@ pub enum EventType {
     NewsCountChanged,
     MediaContentModerationCompleted,
     MediaContentChanged,
+    DailyLikesLeftChanged,
     ScheduledMaintenanceStatus,
     ProfileTextModerationCompleted,
     AutomaticProfileSearchCompleted,
@@ -125,6 +126,7 @@ pub enum EventToClientInternal {
     NewsChanged,
     MediaContentModerationCompleted,
     MediaContentChanged,
+    DailyLikesLeftChanged,
     ScheduledMaintenanceStatus(ScheduledMaintenanceStatus),
     ProfileTextModerationCompleted,
     AutomaticProfileSearchCompleted,
@@ -149,6 +151,7 @@ impl From<&EventToClientInternal> for EventType {
             NewsChanged => Self::NewsCountChanged,
             MediaContentModerationCompleted => Self::MediaContentModerationCompleted,
             MediaContentChanged => Self::MediaContentChanged,
+            DailyLikesLeftChanged => Self::DailyLikesLeftChanged,
             ScheduledMaintenanceStatus(_) => Self::ScheduledMaintenanceStatus,
             ProfileTextModerationCompleted => Self::ProfileTextModerationCompleted,
             AutomaticProfileSearchCompleted => Self::AutomaticProfileSearchCompleted,
@@ -184,6 +187,7 @@ impl From<EventToClientInternal> for EventToClient {
             | NewsChanged
             | MediaContentModerationCompleted
             | MediaContentChanged
+            | DailyLikesLeftChanged
             | ProfileTextModerationCompleted
             | AutomaticProfileSearchCompleted
             | AdminNotification => (),

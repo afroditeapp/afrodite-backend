@@ -6,6 +6,7 @@ use server_api::{
 use server_common::{data::DataError, result::Result};
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
+use server_data_chat::write::GetWriteCommandsChat;
 use server_data_profile::write::GetWriteCommandsProfile;
 use server_state::S;
 
@@ -104,6 +105,8 @@ impl StartupTasks {
 
                 // Remove tmp files
                 cmds.common().remove_tmp_files(id).await?;
+
+                cmds.chat().limits().reset_daily_likes_left_if_needed(id).await?;
 
                 Ok(())
             })

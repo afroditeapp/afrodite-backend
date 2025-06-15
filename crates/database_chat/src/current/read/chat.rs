@@ -12,6 +12,7 @@ mod interaction;
 mod message;
 mod public_key;
 mod notification;
+mod limits;
 
 define_current_read_commands!(CurrentReadChat);
 
@@ -30,6 +31,10 @@ impl<'a> CurrentReadChat<'a> {
 
     pub fn notification(self) -> notification::CurrentReadChatNotification<'a> {
         notification::CurrentReadChatNotification::new(self.cmds)
+    }
+
+    pub fn limits(self) -> limits::CurrentReadChatLimits<'a> {
+        limits::CurrentReadChatLimits::new(self.cmds)
     }
 }
 

@@ -1,5 +1,6 @@
 mod report;
 mod notification;
+mod limits;
 
 use std::sync::Arc;
 
@@ -15,7 +16,7 @@ use model_chat::{
     AccountIdInternal, AddPublicKeyResult, ChatStateRaw, ClientId, ClientLocalId, MatchesIteratorSessionIdInternal, MessageNumber, NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId, ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion, SendMessageResult, SentMessageId, SyncVersionUtils
 };
 use server_data::{
-    app::EventManagerProvider, cache::chat::limit::ChatLimits, define_cmd_wrapper_write,
+    app::EventManagerProvider, define_cmd_wrapper_write,
     id::ToAccountIdInternal, read::DbRead, result::Result, write::DbTransaction, DataError,
     DieselDatabaseError, IntoDataError,
 };
@@ -33,21 +34,12 @@ impl<'a> WriteCommandsChat<'a> {
     pub fn notification(self) -> notification::WriteCommandsChatNotification<'a> {
         notification::WriteCommandsChatNotification::new(self.0)
     }
+    pub fn limits(self) -> limits::WriteCommandsChatLimits<'a> {
+        limits::WriteCommandsChatLimits::new(self.0)
+    }
 }
 
 impl WriteCommandsChat<'_> {
-    pub async fn modify_chat_limits<T>(
-        &self,
-        id: AccountIdInternal,
-        mut action: impl FnMut(&mut ChatLimits) -> T,
-    ) -> Result<T, DataError> {
-        let value = self
-            .write_cache_chat(id, move |entry| Ok(action(&mut entry.limits)))
-            .await?;
-
-        Ok(value)
-    }
-
     pub async fn modify_chat_state(
         &self,
         id: AccountIdInternal,

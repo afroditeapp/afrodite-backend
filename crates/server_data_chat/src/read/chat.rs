@@ -1,6 +1,6 @@
 use database_chat::current::read::GetDbReadCommandsChat;
 use model_chat::{
-    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, AllMatchesPage, ChatProfileLink, ChatStateRaw, DailyLikesLeft, GetSentMessage, MatchId, MessageNumber, PageItemCountForNewLikes, ReceivedBlocksPage, ReceivedLikeId, SentBlocksPage, SentLikesPage, SentMessageId
+    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, AllMatchesPage, ChatProfileLink, ChatStateRaw, GetSentMessage, MatchId, MessageNumber, PageItemCountForNewLikes, ReceivedBlocksPage, ReceivedLikeId, SentBlocksPage, SentLikesPage, SentMessageId
 };
 use server_data::{
     cache::{
@@ -10,6 +10,7 @@ use server_data::{
 
 mod public_key;
 mod notification;
+mod limits;
 
 define_cmd_wrapper_read!(ReadCommandsChat);
 
@@ -19,6 +20,9 @@ impl<'a> ReadCommandsChat<'a> {
     }
     pub fn notification(self) -> notification::ReadCommandsChatNotification<'a> {
         notification::ReadCommandsChatNotification::new(self.0)
+    }
+    pub fn limits(self) -> limits::ReadCommandsChatLimits<'a> {
+        limits::ReadCommandsChatLimits::new(self.0)
     }
 }
 
@@ -263,20 +267,5 @@ impl ReadCommandsChat<'_> {
             })
             .await?;
         Ok(unlimited_likes)
-    }
-
-    pub async fn daily_likes_left(
-        &self,
-        account: AccountIdInternal,
-    ) -> Result<DailyLikesLeft, DataError> {
-        let likes = self
-            .cache()
-            .read_cache(account, |entry| {
-                Ok(entry.chat_data()?.limits.like_limit.count_left(self.config()))
-            })
-            .await?;
-        Ok(DailyLikesLeft {
-            likes,
-        })
     }
 }

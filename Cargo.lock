@@ -4390,6 +4390,7 @@ dependencies = [
  "server_data",
  "server_data_account",
  "server_data_all",
+ "server_data_chat",
  "server_data_media",
  "server_data_profile",
  "server_router_account",

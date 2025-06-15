@@ -113,6 +113,10 @@ impl RegisterAccount<'_> {
 
         if config.components().chat {
             current.chat().insert_chat_state(id)?;
+            current.chat().limits().insert_daily_likes_left(id)?;
+            if let Some(daily_likes) = config.client_features().and_then(|v| v.daily_likes()) {
+                current.chat().limits().reset_daily_likes_left(id, daily_likes)?;
+            }
         }
 
         Ok(id)

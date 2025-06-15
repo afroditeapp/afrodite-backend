@@ -1,7 +1,7 @@
 use base64::Engine;
 use diesel::prelude::*;
 use model::{
-    MatchId, MatchesSyncVersion, MessageNumber, NewReceivedLikesCount, ProfileContentVersion, PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikeId, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion
+    DailyLikesLeftSyncVersion, MatchId, MatchesSyncVersion, MessageNumber, NewReceivedLikesCount, ProfileContentVersion, PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikeId, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion, UnixTime
 };
 use model_server_data::{LastSeenTime, LimitedActionStatus, ProfileVersion};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -316,19 +316,18 @@ impl DeleteLikeResult {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[derive(Serialize, ToSchema)]
 pub struct SendLikeResult {
     pub status: Option<LimitedActionStatus>,
-    /// None if the limit is disabled.
-    pub daily_likes_left: Option<u8>,
+    pub daily_likes_left: Option<DailyLikesLeft>,
     pub error_account_interaction_state_mismatch: Option<CurrentAccountInteractionState>,
 }
 
 impl SendLikeResult {
-    pub fn successful(status: LimitedActionStatus, daily_likes_left: Option<u8>) -> Self {
+    pub fn successful(status: LimitedActionStatus, daily_likes_left: DailyLikesLeft) -> Self {
         Self {
             status: Some(status),
-            daily_likes_left,
+            daily_likes_left: Some(daily_likes_left),
             error_account_interaction_state_mismatch: None,
         }
     }
@@ -390,8 +389,27 @@ impl ChatProfileLink {
     }
 }
 
+#[derive(Debug, Default, Clone, PartialEq, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::daily_likes_left)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct DailyLikesLeftInternal {
+    pub sync_version: DailyLikesLeftSyncVersion,
+    pub likes_left: i64,
+    pub latest_limit_reset_unix_time: Option<UnixTime>,
+}
+
 #[derive(Serialize, ToSchema)]
 pub struct DailyLikesLeft {
-    /// If None the daily like sending limit is disabled.
-    pub likes: Option<u8>,
+    /// This value can be ignored when like sending limit is not enabled.
+    pub likes: i64,
+    pub version: DailyLikesLeftSyncVersion,
+}
+
+impl From<DailyLikesLeftInternal> for DailyLikesLeft {
+    fn from(value: DailyLikesLeftInternal) -> Self {
+        Self {
+            likes: value.likes_left,
+            version: value.sync_version,
+        }
+    }
 }

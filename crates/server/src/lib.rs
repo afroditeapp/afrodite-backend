@@ -20,6 +20,7 @@ pub mod task_utils;
 pub mod utils;
 pub mod admin_notifications;
 pub mod unlimited_likes;
+pub mod daily_likes;
 
 use std::sync::Arc;
 
@@ -57,7 +58,7 @@ use startup_tasks::StartupTasks;
 use tracing::{error, warn};
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::{admin_notifications::{AdminNotificationManager, AdminNotificationManagerQuitHandle}, bot::BotClient, unlimited_likes::{UnlimitedLikesManager, UnlimitedLikesManagerQuitHandle}};
+use crate::{admin_notifications::{AdminNotificationManager, AdminNotificationManagerQuitHandle}, bot::BotClient, daily_likes::{DailyLikesManager, DailyLikesManagerQuitHandle}, unlimited_likes::{UnlimitedLikesManager, UnlimitedLikesManagerQuitHandle}};
 
 pub struct DatingAppServer {
     config: Arc<Config>,
@@ -85,6 +86,7 @@ impl DatingAppServer {
             hourly_tasks: None,
             profile_search: None,
             unlimited_likes: None,
+            daily_likes: None,
         };
         let server = simple_backend::SimpleBackend::new(logic, self.config.simple_backend_arc());
         server.run().await;
@@ -105,6 +107,7 @@ pub struct DatingAppBusinessLogic {
     hourly_tasks: Option<HourlyTaskManagerQuitHandle>,
     profile_search: Option<ProfileSearchManagerQuitHandle>,
     unlimited_likes: Option<UnlimitedLikesManagerQuitHandle>,
+    daily_likes: Option<DailyLikesManagerQuitHandle>,
 }
 
 impl BusinessLogic for DatingAppBusinessLogic {
@@ -336,6 +339,8 @@ impl BusinessLogic for DatingAppBusinessLogic {
             ProfileSearchManager::new_manager(app_state.clone(), server_quit_watcher.resubscribe());
         let unlimited_likes =
             UnlimitedLikesManager::new_manager(app_state.clone(), server_quit_watcher.resubscribe());
+        let daily_likes =
+            DailyLikesManager::new_manager(app_state.clone(), server_quit_watcher.resubscribe());
 
         self.database_manager = Some(database_manager);
         self.write_cmd_waiter = Some(write_cmd_waiter);
@@ -348,6 +353,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
         self.hourly_tasks = Some(hourly_tasks);
         self.profile_search = Some(profile_search);
         self.unlimited_likes = Some(unlimited_likes);
+        self.daily_likes = Some(daily_likes);
         app_state
     }
 
@@ -395,6 +401,10 @@ impl BusinessLogic for DatingAppBusinessLogic {
             .await;
 
         // Avoid running tasks simultaneously with shutdown tasks.
+        self.daily_likes
+            .expect("Not initialized")
+            .wait_quit()
+            .await;
         self.unlimited_likes
             .expect("Not initialized")
             .wait_quit()
