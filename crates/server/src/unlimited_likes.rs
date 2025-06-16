@@ -1,9 +1,8 @@
 use std::time::Duration;
 
+use model::EventToClientInternal;
 use model_profile::AccountIdInternal;
-use server_api::{
-    app::{GetConfig, ReadData},
-};
+use server_api::app::{EventManagerProvider, GetConfig, ReadData};
 use server_common::result::{Result, WrappedResultExt};
 use server_data::read::GetReadCommandsCommon;
 use server_data_profile::read::GetReadProfileCommands;
@@ -23,6 +22,9 @@ enum UnlimitedLikesError {
 
     #[error("Internal API error")]
     InternalApi,
+
+    #[error("Event sending error")]
+    EventSending,
 }
 
 #[derive(Debug)]
@@ -151,6 +153,15 @@ impl UnlimitedLikesManager {
         server_api_chat::internal_api::common::sync_unlimited_likes(&self.state, account)
             .await
             .change_context(UnlimitedLikesError::InternalApi)?;
+
+        self.state
+            .event_manager()
+            .send_connected_event(
+                account,
+                EventToClientInternal::ProfileChanged,
+            )
+            .await
+            .change_context(UnlimitedLikesError::EventSending)?;
 
         Ok(())
     }
