@@ -34,7 +34,7 @@ impl AdminNotificationManagerData {
         (data, receiver)
     }
 
-    pub async fn reset_state(&self, id: AccountIdInternal) {
+    pub async fn reset_notification_state(&self, id: AccountIdInternal) {
         if self.sender.send(AdminNotificationEvent::ResetState(id)).await.is_err() {
             error!("Reset state event sending failed");
         }
@@ -50,6 +50,19 @@ impl AdminNotificationManagerData {
         self.state.read().await.sent_status.get(id.as_db_id()).cloned()
     }
 
+    /// Access this only from [AdminNotificationManager].
+    pub fn write(&self) -> AdminNotificationStateWriteAccess {
+        AdminNotificationStateWriteAccess {
+            state: &self.state,
+        }
+    }
+}
+
+pub struct AdminNotificationStateWriteAccess<'a> {
+    state: &'a RwLock<State>,
+}
+
+impl AdminNotificationStateWriteAccess<'_> {
     pub async fn reset_notification_state(&self, id: AccountIdInternal) {
         self.state.write().await.sent_status.remove(id.as_db_id());
     }

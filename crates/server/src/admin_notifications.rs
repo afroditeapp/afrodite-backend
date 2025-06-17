@@ -73,7 +73,7 @@ impl AdminNotificationManager {
                 item = receiver.0.recv() => {
                     match item {
                         Some(AdminNotificationEvent::ResetState(id)) => {
-                            self.state.admin_notification().reset_notification_state(id).await;
+                            self.state.admin_notification().write().reset_notification_state(id).await;
                         }
                         Some(AdminNotificationEvent::SendNotificationIfNeeded(notification)) => {
                             self.pending_notifications.enable(notification);
@@ -148,7 +148,7 @@ impl AdminNotificationManager {
 
         for (a, _) in accounts {
             if self.state.admin_notification().get_notification_state(a).await != Some(self.pending_notifications.clone()) {
-                self.state.admin_notification().set_notification_state(a, self.pending_notifications.clone()).await;
+                self.state.admin_notification().write().set_notification_state(a, self.pending_notifications.clone()).await;
                 let r = self.state.event_manager().send_notification(a, NotificationEvent::AdminNotification)
                     .await;
                 if let Err(e) = r {
