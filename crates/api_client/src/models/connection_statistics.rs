@@ -11,7 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// ConnectionStatistics : WebSocket connection statistics for 24 hours.  All lists contain 24 values starting from UTC time 00:00.  The data points are averages from available measurements.  Bots are not included in this data.
+/// ConnectionStatistics : WebSocket connection statistics for 24 hours.  All lists contain 24 values starting from UTC time 00:00.  Bots are not included in this data.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ConnectionStatistics {
     #[serde(rename = "all")]
@@ -25,7 +25,7 @@ pub struct ConnectionStatistics {
 }
 
 impl ConnectionStatistics {
-    /// WebSocket connection statistics for 24 hours.  All lists contain 24 values starting from UTC time 00:00.  The data points are averages from available measurements.  Bots are not included in this data.
+    /// WebSocket connection statistics for 24 hours.  All lists contain 24 values starting from UTC time 00:00.  Bots are not included in this data.
     pub fn new(all: Vec<i32>, men: Vec<i32>, nonbinaries: Vec<i32>, women: Vec<i32>) -> ConnectionStatistics {
         ConnectionStatistics {
             all,

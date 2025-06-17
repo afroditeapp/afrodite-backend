@@ -17,19 +17,31 @@ pub struct GetProfileStatisticsResult {
     pub account_count_bots_excluded: i64,
     #[serde(rename = "age_counts")]
     pub age_counts: Box<models::ProfileAgeCounts>,
-    #[serde(rename = "connection_statistics")]
-    pub connection_statistics: Box<models::ConnectionStatistics>,
+    /// Average WebSocket connections per hour
+    #[serde(rename = "connections_average")]
+    pub connections_average: Box<models::ConnectionStatistics>,
+    /// Max WebSocket connections per hour
+    #[serde(rename = "connections_max")]
+    pub connections_max: Box<models::ConnectionStatistics>,
+    /// Min WebSocket connections per hour
+    #[serde(rename = "connections_min")]
+    pub connections_min: Box<models::ConnectionStatistics>,
     #[serde(rename = "generation_time")]
     pub generation_time: Box<models::UnixTime>,
+    #[serde(rename = "online_account_count_bots_excluded")]
+    pub online_account_count_bots_excluded: i64,
 }
 
 impl GetProfileStatisticsResult {
-    pub fn new(account_count_bots_excluded: i64, age_counts: models::ProfileAgeCounts, connection_statistics: models::ConnectionStatistics, generation_time: models::UnixTime) -> GetProfileStatisticsResult {
+    pub fn new(account_count_bots_excluded: i64, age_counts: models::ProfileAgeCounts, connections_average: models::ConnectionStatistics, connections_max: models::ConnectionStatistics, connections_min: models::ConnectionStatistics, generation_time: models::UnixTime, online_account_count_bots_excluded: i64) -> GetProfileStatisticsResult {
         GetProfileStatisticsResult {
             account_count_bots_excluded,
             age_counts: Box::new(age_counts),
-            connection_statistics: Box::new(connection_statistics),
+            connections_average: Box::new(connections_average),
+            connections_max: Box::new(connections_max),
+            connections_min: Box::new(connections_min),
             generation_time: Box::new(generation_time),
+            online_account_count_bots_excluded,
         }
     }
 }

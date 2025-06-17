@@ -15,14 +15,17 @@ use serde::{Deserialize, Serialize};
 pub struct ClientFeaturesConfig {
     #[serde(rename = "features")]
     pub features: Box<models::FeaturesConfig>,
+    #[serde(rename = "limits")]
+    pub limits: Box<models::LimitsConfig>,
     #[serde(rename = "map")]
     pub map: Box<models::MapConfig>,
 }
 
 impl ClientFeaturesConfig {
-    pub fn new(features: models::FeaturesConfig, map: models::MapConfig) -> ClientFeaturesConfig {
+    pub fn new(features: models::FeaturesConfig, limits: models::LimitsConfig, map: models::MapConfig) -> ClientFeaturesConfig {
         ClientFeaturesConfig {
             features: Box::new(features),
+            limits: Box::new(limits),
             map: Box::new(map),
         }
     }

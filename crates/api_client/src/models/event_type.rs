@@ -43,12 +43,16 @@ pub enum EventType {
     MediaContentModerationCompleted,
     #[serde(rename = "MediaContentChanged")]
     MediaContentChanged,
+    #[serde(rename = "DailyLikesLeftChanged")]
+    DailyLikesLeftChanged,
     #[serde(rename = "ScheduledMaintenanceStatus")]
     ScheduledMaintenanceStatus,
     #[serde(rename = "ProfileTextModerationCompleted")]
     ProfileTextModerationCompleted,
     #[serde(rename = "AutomaticProfileSearchCompleted")]
     AutomaticProfileSearchCompleted,
+    #[serde(rename = "AdminNotification")]
+    AdminNotification,
 
 }
 
@@ -69,9 +73,11 @@ impl std::fmt::Display for EventType {
             Self::NewsCountChanged => write!(f, "NewsCountChanged"),
             Self::MediaContentModerationCompleted => write!(f, "MediaContentModerationCompleted"),
             Self::MediaContentChanged => write!(f, "MediaContentChanged"),
+            Self::DailyLikesLeftChanged => write!(f, "DailyLikesLeftChanged"),
             Self::ScheduledMaintenanceStatus => write!(f, "ScheduledMaintenanceStatus"),
             Self::ProfileTextModerationCompleted => write!(f, "ProfileTextModerationCompleted"),
             Self::AutomaticProfileSearchCompleted => write!(f, "AutomaticProfileSearchCompleted"),
+            Self::AdminNotification => write!(f, "AdminNotification"),
         }
     }
 }

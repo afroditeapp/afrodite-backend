@@ -31,6 +31,7 @@ src/models/account_state_container.rs
 src/models/account_sync_version.rs
 src/models/add_public_key_result.rs
 src/models/admin_info.rs
+src/models/admin_notification.rs
 src/models/all_matches_page.rs
 src/models/api_usage_count.rs
 src/models/api_usage_statistics.rs
@@ -83,6 +84,8 @@ src/models/custom_report_type.rs
 src/models/custom_reports_config.rs
 src/models/custom_reports_file_hash.rs
 src/models/custom_reports_order_mode.rs
+src/models/daily_likes_left.rs
+src/models/daily_likes_left_sync_version.rs
 src/models/delete_like_result.rs
 src/models/demo_mode_confirm_login.rs
 src/models/demo_mode_confirm_login_result.rs
@@ -136,7 +139,10 @@ src/models/language.rs
 src/models/last_seen_time_filter.rs
 src/models/latest_birthdate.rs
 src/models/latest_viewed_message_changed.rs
+src/models/like_limits_config.rs
+src/models/like_sending_limit_config.rs
 src/models/limited_action_status.rs
+src/models/limits_config.rs
 src/models/location.rs
 src/models/login_result.rs
 src/models/maintenance_task.rs

@@ -74,6 +74,7 @@ Class | Method | HTTP request | Description
 *AccountBotApi* | [**post_remote_bot_login**](docs/AccountBotApi.md#post_remote_bot_login) | **POST** /account_api/remote_bot_login | Login for remote bots which are listed in server config file.
 *ChatApi* | [**delete_like**](docs/ChatApi.md#delete_like) | **DELETE** /chat_api/delete_like | Delete sent like.
 *ChatApi* | [**get_chat_app_notification_settings**](docs/ChatApi.md#get_chat_app_notification_settings) | **GET** /chat_api/get_chat_app_notification_settings | 
+*ChatApi* | [**get_daily_likes_left**](docs/ChatApi.md#get_daily_likes_left) | **GET** /chat_api/daily_likes_left | Get daily likes left value.
 *ChatApi* | [**get_latest_public_key_id**](docs/ChatApi.md#get_latest_public_key_id) | **GET** /chat_api/latest_public_key_id/{aid} | Get latest public key ID for some account
 *ChatApi* | [**get_matches**](docs/ChatApi.md#get_matches) | **GET** /chat_api/matches | Get matches
 *ChatApi* | [**get_message_number_of_latest_viewed_message**](docs/ChatApi.md#get_message_number_of_latest_viewed_message) | **GET** /chat_api/message_number_of_latest_viewed_message | Get message number of the most recent message that the recipient has viewed.
@@ -107,6 +108,7 @@ Class | Method | HTTP request | Description
 *CommonApi* | [**get_version**](docs/CommonApi.md#get_version) | **GET** /common_api/version | Get backend version.
 *CommonApi* | [**post_get_pending_notification**](docs/CommonApi.md#post_get_pending_notification) | **POST** /common_api/get_pending_notification | Get pending notification and reset pending notification.
 *CommonApi* | [**post_set_device_token**](docs/CommonApi.md#post_set_device_token) | **POST** /common_api/set_device_token | 
+*CommonAdminApi* | [**get_admin_notification_subscriptions**](docs/CommonAdminApi.md#get_admin_notification_subscriptions) | **GET** /common_api/admin_notification_subscriptions | Get admin notification subscriptions.
 *CommonAdminApi* | [**get_backend_config**](docs/CommonAdminApi.md#get_backend_config) | **GET** /common_api/backend_config | Get dynamic backend config.
 *CommonAdminApi* | [**get_latest_report_iterator_start_position**](docs/CommonAdminApi.md#get_latest_report_iterator_start_position) | **GET** /common_api/admin/latest_report_iterator_start_position | 
 *CommonAdminApi* | [**get_maintenance_notification**](docs/CommonAdminApi.md#get_maintenance_notification) | **GET** /common_api/maintenance_notification | Get maintenance notification.
@@ -115,8 +117,10 @@ Class | Method | HTTP request | Description
 *CommonAdminApi* | [**get_software_update_status**](docs/CommonAdminApi.md#get_software_update_status) | **GET** /common_api/software_info | Get software version information from manager instance.
 *CommonAdminApi* | [**get_system_info**](docs/CommonAdminApi.md#get_system_info) | **GET** /common_api/system_info | Get system information from manager instance.
 *CommonAdminApi* | [**get_waiting_report_page**](docs/CommonAdminApi.md#get_waiting_report_page) | **GET** /common_api/admin/waiting_report_page | 
+*CommonAdminApi* | [**post_admin_notification_subscriptions**](docs/CommonAdminApi.md#post_admin_notification_subscriptions) | **POST** /common_api/admin_notification_subscriptions | Save admin notification subscriptions.
 *CommonAdminApi* | [**post_backend_config**](docs/CommonAdminApi.md#post_backend_config) | **POST** /common_api/backend_config | Save dynamic backend config.
 *CommonAdminApi* | [**post_edit_maintenance_notification**](docs/CommonAdminApi.md#post_edit_maintenance_notification) | **POST** /common_api/edit_maintenance_notification | Edit maintenance notification
+*CommonAdminApi* | [**post_get_admin_notification**](docs/CommonAdminApi.md#post_get_admin_notification) | **POST** /common_api/admin_notification | Get admin notification data.
 *CommonAdminApi* | [**post_get_api_usage_data**](docs/CommonAdminApi.md#post_get_api_usage_data) | **POST** /common_api/api_usage_data | Get API usage data for account
 *CommonAdminApi* | [**post_get_chat_message_reports**](docs/CommonAdminApi.md#post_get_chat_message_reports) | **POST** /chat_api/get_chat_message_reports | Get all chat message reports. The reports are ordered by message sending order from oldest to latest.
 *CommonAdminApi* | [**post_get_ip_address_usage_data**](docs/CommonAdminApi.md#post_get_ip_address_usage_data) | **POST** /common_api/ip_address_usage_data | Get IP address usage data for account
@@ -211,6 +215,7 @@ Class | Method | HTTP request | Description
  - [AccountSyncVersion](docs/AccountSyncVersion.md)
  - [AddPublicKeyResult](docs/AddPublicKeyResult.md)
  - [AdminInfo](docs/AdminInfo.md)
+ - [AdminNotification](docs/AdminNotification.md)
  - [AllMatchesPage](docs/AllMatchesPage.md)
  - [ApiUsageCount](docs/ApiUsageCount.md)
  - [ApiUsageStatistics](docs/ApiUsageStatistics.md)
@@ -263,6 +268,8 @@ Class | Method | HTTP request | Description
  - [CustomReportsConfig](docs/CustomReportsConfig.md)
  - [CustomReportsFileHash](docs/CustomReportsFileHash.md)
  - [CustomReportsOrderMode](docs/CustomReportsOrderMode.md)
+ - [DailyLikesLeft](docs/DailyLikesLeft.md)
+ - [DailyLikesLeftSyncVersion](docs/DailyLikesLeftSyncVersion.md)
  - [DeleteLikeResult](docs/DeleteLikeResult.md)
  - [DemoModeConfirmLogin](docs/DemoModeConfirmLogin.md)
  - [DemoModeConfirmLoginResult](docs/DemoModeConfirmLoginResult.md)
@@ -316,7 +323,10 @@ Class | Method | HTTP request | Description
  - [LastSeenTimeFilter](docs/LastSeenTimeFilter.md)
  - [LatestBirthdate](docs/LatestBirthdate.md)
  - [LatestViewedMessageChanged](docs/LatestViewedMessageChanged.md)
+ - [LikeLimitsConfig](docs/LikeLimitsConfig.md)
+ - [LikeSendingLimitConfig](docs/LikeSendingLimitConfig.md)
  - [LimitedActionStatus](docs/LimitedActionStatus.md)
+ - [LimitsConfig](docs/LimitsConfig.md)
  - [Location](docs/Location.md)
  - [LoginResult](docs/LoginResult.md)
  - [MaintenanceTask](docs/MaintenanceTask.md)

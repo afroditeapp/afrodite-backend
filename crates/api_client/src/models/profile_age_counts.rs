@@ -13,24 +13,24 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProfileAgeCounts {
-    #[serde(rename = "man")]
-    pub man: Vec<i64>,
-    #[serde(rename = "non_binary")]
-    pub non_binary: Vec<i64>,
+    #[serde(rename = "men")]
+    pub men: Vec<i64>,
+    #[serde(rename = "nonbinaries")]
+    pub nonbinaries: Vec<i64>,
     /// Age for first count
     #[serde(rename = "start_age")]
     pub start_age: i64,
-    #[serde(rename = "woman")]
-    pub woman: Vec<i64>,
+    #[serde(rename = "women")]
+    pub women: Vec<i64>,
 }
 
 impl ProfileAgeCounts {
-    pub fn new(man: Vec<i64>, non_binary: Vec<i64>, start_age: i64, woman: Vec<i64>) -> ProfileAgeCounts {
+    pub fn new(men: Vec<i64>, nonbinaries: Vec<i64>, start_age: i64, women: Vec<i64>) -> ProfileAgeCounts {
         ProfileAgeCounts {
-            man,
-            non_binary,
+            men,
+            nonbinaries,
             start_age,
-            woman,
+            women,
         }
     }
 }

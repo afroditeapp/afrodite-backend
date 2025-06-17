@@ -60,6 +60,8 @@ pub struct Permissions {
     /// View server infrastructure related info like logs and software versions.
     #[serde(rename = "admin_server_maintenance_view_info", skip_serializing_if = "Option::is_none")]
     pub admin_server_maintenance_view_info: Option<bool>,
+    #[serde(rename = "admin_subscribe_admin_notifications", skip_serializing_if = "Option::is_none")]
+    pub admin_subscribe_admin_notifications: Option<bool>,
     /// View public and private profiles.
     #[serde(rename = "admin_view_all_profiles", skip_serializing_if = "Option::is_none")]
     pub admin_view_all_profiles: Option<bool>,
@@ -97,6 +99,7 @@ impl Permissions {
             admin_server_maintenance_update_software: None,
             admin_server_maintenance_view_backend_config: None,
             admin_server_maintenance_view_info: None,
+            admin_subscribe_admin_notifications: None,
             admin_view_all_profiles: None,
             admin_view_permissions: None,
             admin_view_private_info: None,

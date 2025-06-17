@@ -14,6 +14,9 @@ use serde::{Deserialize, Serialize};
 /// PendingNotificationWithData : Pending notification with notification data.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PendingNotificationWithData {
+    /// Data for ADMIN_NOTIFICATION notification.
+    #[serde(rename = "admin_notification", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub admin_notification: Option<Option<Box<models::AdminNotification>>>,
     /// Data for AUTOMATIC_PROFILE_SEARCH_COMPLETED notification.
     #[serde(rename = "automatic_profile_search_completed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub automatic_profile_search_completed: Option<Option<Box<models::AutomaticProfileSearchCompletedNotification>>>,
@@ -32,7 +35,7 @@ pub struct PendingNotificationWithData {
     /// Data for RECEIVED_LIKES_CHANGED notification.
     #[serde(rename = "received_likes_changed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub received_likes_changed: Option<Option<Box<models::NewReceivedLikesCountResult>>>,
-    /// Pending notification (or multiple notifications which each have different type) not yet received notifications which push notification requests client to download.  The integer is a bitflag.  - const NEW_MESSAGE = 0x1; - const RECEIVED_LIKES_CHANGED = 0x2; - const MEDIA_CONTENT_MODERATION_COMPLETED = 0x4; - const NEWS_CHANGED = 0x8; - const PROFILE_TEXT_MODERATION_COMPLETED = 0x10; - const AUTOMATIC_PROFILE_SEARCH_COMPLETED = 0x20; 
+    /// Pending notification (or multiple notifications which each have different type) not yet received notifications which push notification requests client to download.  The integer is a bitflag.  - const NEW_MESSAGE = 0x1; - const RECEIVED_LIKES_CHANGED = 0x2; - const MEDIA_CONTENT_MODERATION_COMPLETED = 0x4; - const NEWS_CHANGED = 0x8; - const PROFILE_TEXT_MODERATION_COMPLETED = 0x10; - const AUTOMATIC_PROFILE_SEARCH_COMPLETED = 0x20; - const ADMIN_NOTIFICATION = 0x40; 
     #[serde(rename = "value")]
     pub value: i64,
 }
@@ -41,6 +44,7 @@ impl PendingNotificationWithData {
     /// Pending notification with notification data.
     pub fn new(value: i64) -> PendingNotificationWithData {
         PendingNotificationWithData {
+            admin_notification: None,
             automatic_profile_search_completed: None,
             media_content_moderation_completed: None,
             new_message_received_from: None,
