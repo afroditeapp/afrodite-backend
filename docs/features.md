@@ -18,6 +18,7 @@
   * Profile text moderation completed
   * Automatic profile search results available
   * News
+  * Admin notification (moderator work available)
 * WebSocket
   * Used for event sending instead of push notifications if connected
 
@@ -29,6 +30,7 @@
 * Images (max 6 images and the first must be a face image)
 * First image crop info (for displaying thumbnail image for the profile)
 * Unlimited chat requests enabled boolean
+  * Automatic daily disabling (server config)
 * Last seen time
 * Location (exact coordinates are not public)
 * Gender (indirectly public)
@@ -58,8 +60,11 @@ settings.
 
 Also optional filters can be set.
 
-* Max distance
+* Min and max distance
+* Min and max profile text length
 * Profile attributes
+  * Wanted values (logical OR or logical AND)
+  * Unwanted values (logical AND)
 * Last seen time
 * Profile created time
 * Profile edited time
@@ -102,8 +107,9 @@ the search with these options:
 ## User interaction
 
 * Chat requests (likes)
-  * One chat request per day
-  * Unlimited chat requests per day
+  * Optional daily limit for chat requests
+    * When sending a chat request to someone who has unlimited chat requests
+      enabled, the available chat requests does not decrease.
   * Undo once per user
 
 ### User interaction security
@@ -117,6 +123,17 @@ the search with these options:
 Simple content management system which for example can be used for informing
 users about app version changelogs and terms of service updates.
 
+## Statistics
+
+* [Profile statistics](#profile-statistics)
+* WebSocket connection statistics
+  * Hourly data for previous 24 hours
+  * Min, max and average connection counts
+  * All connections and profile gender specific connections
+  * Bots are excluded
+* Account count (bots excluded)
+* Online accounts count (bots excluded)
+
 ## Images
 
 * Server image storage size restrictions (max 20 images by default)
@@ -127,6 +144,7 @@ users about app version changelogs and terms of service updates.
 * Face detection for images ([rustface library](https://github.com/atomashpolskiy/rustface))
 * Face image for moderators (security selfie)
 * Image removal wait time (90 days by default)
+* NSFW detection ([nsfw library](https://github.com/Fyko/nsfw))
 
 ## Security
 
@@ -202,7 +220,9 @@ moderation.
 ### Admin bots
 
 * Neural network based image moderation ([nsfw library](https://github.com/Fyko/nsfw))
-* Large language model (LLM) based text moderation (OpenAI API compatible)
+* Large language model (LLM) based moderation (OpenAI API compatible)
+  * Profile texts
+  * Profile images
 
 ## Analytics
 
