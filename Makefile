@@ -61,6 +61,8 @@ run-release:
 
 fmt:
 	cargo +nightly fmt $(CARGO_CRATE_ARGS)
+check-fmt:
+	cargo +nightly fmt --quiet --check $(CARGO_CRATE_ARGS)
 fix:
 	cargo fix ${CARGO_CRATE_ARGS}
 test:
