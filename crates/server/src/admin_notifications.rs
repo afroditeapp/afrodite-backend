@@ -161,17 +161,21 @@ impl AdminNotificationManager {
             .change_context(AdminNotificationError::DatabaseError)?;
 
         for (a, _) in accounts {
-            if self
+            let current_notification_state = self
                 .state
                 .admin_notification()
                 .get_notification_state(a)
                 .await
-                != Some(self.pending_notifications.clone())
-            {
+                .unwrap_or_default();
+
+            let new_notification_state =
+                current_notification_state.merge(&self.pending_notifications);
+
+            if current_notification_state != new_notification_state {
                 self.state
                     .admin_notification()
                     .write()
-                    .set_notification_state(a, self.pending_notifications.clone())
+                    .set_notification_state(a, new_notification_state)
                     .await;
                 let r = self
                     .state
