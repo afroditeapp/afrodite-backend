@@ -3,8 +3,8 @@ use profile_text::ProfileTextModerationState;
 
 use super::{BotAction, BotState};
 
-pub mod profile_text;
 pub mod content;
+pub mod profile_text;
 
 struct EmptyPage;
 
@@ -25,7 +25,10 @@ impl ModerationResult {
         Self {
             accept: false,
             move_to_human: false,
-            rejected_details: Some("Error occurred. Try again and if this continues, please contact customer support.".to_string()),
+            rejected_details: Some(
+                "Error occurred. Try again and if this continues, please contact customer support."
+                    .to_string(),
+            ),
         }
     }
 

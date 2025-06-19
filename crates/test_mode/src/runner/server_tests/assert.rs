@@ -1,6 +1,6 @@
 use core::fmt;
 
-use crate::{client::TestError, ServerTestError, TestResult};
+use crate::{ServerTestError, TestResult, client::TestError};
 
 /// Assert that value is true
 #[track_caller]

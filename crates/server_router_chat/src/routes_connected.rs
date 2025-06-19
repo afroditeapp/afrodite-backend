@@ -1,4 +1,4 @@
-use axum::{middleware, Router};
+use axum::{Router, middleware};
 use server_state::StateForRouterCreation;
 
 use crate::api;
@@ -10,11 +10,8 @@ pub struct ConnectedApp {
 
 impl ConnectedApp {
     pub fn new(state: StateForRouterCreation) -> Self {
-        Self {
-            state,
-        }
+        Self { state }
     }
-
 
     pub fn private_chat_server_router(&self) -> Router {
         Router::new()
@@ -24,19 +21,13 @@ impl ConnectedApp {
             .merge(api::chat::match_routes::router_match(self.state.clone()))
             .merge(api::chat::message::router_message(self.state.clone()))
             .merge(api::chat::public_key::router_public_key(self.state.clone()))
-            .merge(
-                api::chat::report::router_chat_report(self.state.clone()),
-            )
-            .merge(
-                api::chat::notification::router_notification(self.state.clone()),
-            )
-            .merge(
-                api::chat::video_call::router_video_call(self.state.clone()),
-            )
+            .merge(api::chat::report::router_chat_report(self.state.clone()))
+            .merge(api::chat::notification::router_notification(
+                self.state.clone(),
+            ))
+            .merge(api::chat::video_call::router_video_call(self.state.clone()))
             // Chat admin
-            .merge(
-                api::chat_admin::router_admin_public_key(self.state.clone()),
-            )
+            .merge(api::chat_admin::router_admin_public_key(self.state.clone()))
             .route_layer({
                 middleware::from_fn_with_state(
                     self.state.s.clone(),

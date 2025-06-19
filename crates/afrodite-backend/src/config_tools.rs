@@ -1,21 +1,19 @@
-
 use std::{env, path::PathBuf};
 
-use config::{args::{ArgsConfig, ConfigMode}, get_config, GetConfigError};
+use config::{
+    GetConfigError,
+    args::{ArgsConfig, ConfigMode},
+    get_config,
+};
 
-pub fn handle_config_tools(
-    mode: ConfigMode,
-) -> Result<(), GetConfigError> {
+pub fn handle_config_tools(mode: ConfigMode) -> Result<(), GetConfigError> {
     match mode {
         ConfigMode::Check { dir } => handle_check_and_view(dir, false),
         ConfigMode::View { dir } => handle_check_and_view(dir, true),
     }
 }
 
-fn handle_check_and_view(
-    dir: Option<PathBuf>,
-    print: bool,
-) -> Result<(), GetConfigError> {
+fn handle_check_and_view(dir: Option<PathBuf>, print: bool) -> Result<(), GetConfigError> {
     if let Some(dir) = dir {
         env::set_current_dir(dir).unwrap();
     }
@@ -24,12 +22,7 @@ fn handle_check_and_view(
     let mut config_file_found = false;
 
     if dir.join(config::file::CONFIG_FILE_NAME).exists() {
-        let c = get_config(
-            ArgsConfig::default(),
-            String::new(),
-            String::new(),
-            false,
-        ).unwrap();
+        let c = get_config(ArgsConfig::default(), String::new(), String::new(), false).unwrap();
 
         if print {
             println!("{:#?}", c.parsed_files())
@@ -41,11 +34,7 @@ fn handle_check_and_view(
     }
 
     if dir.join(manager_config::file::CONFIG_FILE_NAME).exists() {
-        let c = manager_config::get_config(
-            String::new(),
-            String::new(),
-            String::new(),
-        ).unwrap();
+        let c = manager_config::get_config(String::new(), String::new(), String::new()).unwrap();
 
         if print {
             println!("{:#?}", c.parsed_file())

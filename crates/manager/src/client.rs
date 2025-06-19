@@ -2,10 +2,9 @@
 //!
 
 use error_stack::{Result, ResultExt};
-use manager_model::{ManagerInstanceName, SoftwareInfo, SoftwareUpdateTaskType};
-
-use manager_config::args::{ApiCommand, ManagerApiClientMode};
 use manager_api::{ClientConfig, ClientError, ManagerClient, protocol::RequestSenderCmds};
+use manager_config::args::{ApiCommand, ManagerApiClientMode};
+use manager_model::{ManagerInstanceName, SoftwareInfo, SoftwareUpdateTaskType};
 
 pub async fn handle_api_client_mode(args: ManagerApiClientMode) -> Result<(), ClientError> {
     let api_key = args
@@ -34,7 +33,8 @@ pub async fn handle_api_client_mode(args: ManagerApiClientMode) -> Result<(), Cl
 
     match args.api_command {
         ApiCommand::AvailableInstances => {
-            let list = client.get_available_instances()
+            let list = client
+                .get_available_instances()
                 .await
                 .change_context(ClientError::RemoteApiRequest)?;
             println!("{:#?}", list);
@@ -43,9 +43,10 @@ pub async fn handle_api_client_mode(args: ManagerApiClientMode) -> Result<(), Cl
             encryption_key_name,
             save_to,
         } => {
-            let key = client.get_secure_storage_encryption_key(
-                ManagerInstanceName::new(encryption_key_name.clone()),
-            )
+            let key = client
+                .get_secure_storage_encryption_key(ManagerInstanceName::new(
+                    encryption_key_name.clone(),
+                ))
                 .await
                 .change_context(ClientError::RemoteApiRequest)?;
             if let Some(path) = save_to {
@@ -59,27 +60,30 @@ pub async fn handle_api_client_mode(args: ManagerApiClientMode) -> Result<(), Cl
             }
         }
         ApiCommand::SystemInfo => {
-            let info = client.get_system_info()
+            let info = client
+                .get_system_info()
                 .await
                 .change_context(ClientError::RemoteApiRequest)?;
             println!("{:#?}", info);
         }
         ApiCommand::SoftwareStatus => {
-            let info = client.get_software_update_status()
+            let info = client
+                .get_software_update_status()
                 .await
                 .change_context(ClientError::RemoteApiRequest)?;
             println!("{:#?}", info);
         }
-        ApiCommand::SoftwareDownload => {
-            client.trigger_software_update_task(SoftwareUpdateTaskType::Download)
-                .await
-                .change_context(ClientError::RemoteApiRequest)?
-        }
-        ApiCommand::SoftwareInstall { name, sha256 } => {
-            client.trigger_software_update_task(SoftwareUpdateTaskType::Install(SoftwareInfo { name, sha256 }))
-                .await
-                .change_context(ClientError::RemoteApiRequest)?
-        }
+        ApiCommand::SoftwareDownload => client
+            .trigger_software_update_task(SoftwareUpdateTaskType::Download)
+            .await
+            .change_context(ClientError::RemoteApiRequest)?,
+        ApiCommand::SoftwareInstall { name, sha256 } => client
+            .trigger_software_update_task(SoftwareUpdateTaskType::Install(SoftwareInfo {
+                name,
+                sha256,
+            }))
+            .await
+            .change_context(ClientError::RemoteApiRequest)?,
     }
 
     Ok(())

@@ -1,10 +1,13 @@
 use std::collections::HashMap;
 
-use database::{define_history_read_commands, DieselDatabaseError};
+use database::{DieselDatabaseError, define_history_read_commands};
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model::{ClientVersion, UnixTime};
-use model_account::{ClientVersionCount, ClientVersionStatistics, GetClientVersionStatisticsResult, GetClientVersionStatisticsSettings};
+use model_account::{
+    ClientVersionCount, ClientVersionStatistics, GetClientVersionStatisticsResult,
+    GetClientVersionStatisticsSettings,
+};
 
 define_history_read_commands!(HistoryReadAccountClientVersion);
 
@@ -14,8 +17,7 @@ impl HistoryReadAccountClientVersion<'_> {
         settings: GetClientVersionStatisticsSettings,
     ) -> Result<GetClientVersionStatisticsResult, DieselDatabaseError> {
         use crate::schema::{
-            history_client_version_statistics::dsl::*,
-            history_client_version_statistics_save_time,
+            history_client_version_statistics::dsl::*, history_client_version_statistics_save_time,
             history_client_version_statistics_version_number,
         };
 
@@ -23,8 +25,14 @@ impl HistoryReadAccountClientVersion<'_> {
         let min_time = settings.min_time.unwrap_or(UnixTime::new(0));
 
         let values: Vec<(UnixTime, i64, i64, i64, i64)> = history_client_version_statistics
-            .inner_join(history_client_version_statistics_save_time::table.on(time_id.eq(history_client_version_statistics_save_time::id)))
-            .inner_join(history_client_version_statistics_version_number::table.on(version_id.eq(history_client_version_statistics_version_number::id)))
+            .inner_join(
+                history_client_version_statistics_save_time::table
+                    .on(time_id.eq(history_client_version_statistics_save_time::id)),
+            )
+            .inner_join(
+                history_client_version_statistics_version_number::table
+                    .on(version_id.eq(history_client_version_statistics_version_number::id)),
+            )
             .filter(history_client_version_statistics_save_time::unix_time.le(max_time))
             .filter(history_client_version_statistics_save_time::unix_time.ge(min_time))
             .select((
@@ -52,10 +60,18 @@ impl HistoryReadAccountClientVersion<'_> {
             if let Some(statistics) = version_data.get_mut(&version) {
                 statistics.values.push(v);
             } else {
-                version_data.insert(version, ClientVersionStatistics { version, values: vec![v] });
+                version_data.insert(
+                    version,
+                    ClientVersionStatistics {
+                        version,
+                        values: vec![v],
+                    },
+                );
             }
         }
 
-        Ok(GetClientVersionStatisticsResult { values: version_data.into_values().collect::<Vec<_>>() })
+        Ok(GetClientVersionStatisticsResult {
+            values: version_data.into_values().collect::<Vec<_>>(),
+        })
     }
 }

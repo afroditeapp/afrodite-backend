@@ -1,9 +1,6 @@
 //! Handle automatic reboots
 
-use std::{
-    process::ExitStatus,
-    sync::Arc,
-};
+use std::{process::ExitStatus, sync::Arc};
 
 use error_stack::{Result, ResultExt};
 use manager_model::ManualTaskType;
@@ -11,9 +8,13 @@ use tokio::{process::Command, sync::mpsc, task::JoinHandle};
 use tracing::{info, warn};
 
 use super::{
-    app::S, client::ApiManager, state::MountStateStorage, update::backend::reset_backend_data, ServerQuitWatcher
+    ServerQuitWatcher, app::S, client::ApiManager, state::MountStateStorage,
+    update::backend::reset_backend_data,
 };
-use crate::{api::{GetBackendManager, GetConfig}, server::mount::MountMode};
+use crate::{
+    api::{GetBackendManager, GetConfig},
+    server::mount::MountMode,
+};
 
 #[derive(thiserror::Error, Debug)]
 pub enum TaskError {
@@ -102,10 +103,7 @@ impl TaskManager {
         let handle = TaskManagerHandle {
             sender: sender.clone(),
         };
-        let state = TaskManagerInternalState {
-            sender,
-            receiver,
-        };
+        let state = TaskManagerInternalState { sender, receiver };
         (handle, state)
     }
 
@@ -153,12 +151,13 @@ impl TaskManager {
 
     pub async fn handle_message(&self, message: ManualTaskType) {
         let result = match message {
-            ManualTaskType::SystemReboot =>
-                self.run_reboot().await,
-            ManualTaskType::BackendRestart =>
-                self.backend_restart_and_optional_data_reset(false).await,
-            ManualTaskType::BackendDataReset =>
-                self.backend_restart_and_optional_data_reset(true).await,
+            ManualTaskType::SystemReboot => self.run_reboot().await,
+            ManualTaskType::BackendRestart => {
+                self.backend_restart_and_optional_data_reset(false).await
+            }
+            ManualTaskType::BackendDataReset => {
+                self.backend_restart_and_optional_data_reset(true).await
+            }
         };
 
         match result {
@@ -174,7 +173,9 @@ impl TaskManager {
     pub async fn run_reboot(&self) -> Result<(), TaskError> {
         match self.mount_state.get(|s| s.mount_state.mode()).await {
             MountMode::MountedWithRemoteKey => {
-                info!("Remote encryption key detected. Checking encryption key availability before rebooting");
+                info!(
+                    "Remote encryption key detected. Checking encryption key availability before rebooting"
+                );
                 self.api_manager()
                     .get_encryption_key()
                     .await
@@ -215,7 +216,12 @@ impl TaskManager {
             .change_context(TaskError::StopBackendFailed)?;
 
         if data_reset {
-            if let Some(config) = self.state.config().manual_tasks_config().allow_backend_data_reset {
+            if let Some(config) = self
+                .state
+                .config()
+                .manual_tasks_config()
+                .allow_backend_data_reset
+            {
                 reset_backend_data(&config.backend_data_dir)
                     .await
                     .change_context(TaskError::BackendUtils)?

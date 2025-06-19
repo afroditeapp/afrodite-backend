@@ -1,18 +1,17 @@
 use database_profile::current::read::GetDbReadCommandsProfile;
 use model_profile::{
-    AcceptedProfileAges, AccountIdInternal, GetMyProfileResult, Location, Profile,
-    ProfileAndProfileVersion, GetProfileFilteringSettings, ProfileInternal, ProfileStateInternal,
-    UnixTime,
+    AcceptedProfileAges, AccountIdInternal, GetMyProfileResult, GetProfileFilteringSettings,
+    Location, Profile, ProfileAndProfileVersion, ProfileInternal, ProfileStateInternal, UnixTime,
 };
 use server_data::{
-    define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError,
+    DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead, result::Result,
 };
 
 use crate::cache::CacheReadProfile;
 
-mod statistics;
 mod notification;
 mod search;
+mod statistics;
 
 define_cmd_wrapper_read!(ReadCommandsProfile);
 

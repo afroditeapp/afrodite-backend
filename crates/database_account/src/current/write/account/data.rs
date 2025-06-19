@@ -1,5 +1,5 @@
 use database::{
-    current::write::GetDbWriteCommandsCommon, define_current_write_commands, DieselDatabaseError,
+    DieselDatabaseError, current::write::GetDbWriteCommandsCommon, define_current_write_commands,
 };
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
@@ -154,17 +154,13 @@ impl CurrentWriteAccountData<'_> {
         Ok(current)
     }
 
-    pub fn new_unique_account_id(
-        &mut self,
-    ) -> Result<AccountId, DieselDatabaseError> {
+    pub fn new_unique_account_id(&mut self) -> Result<AccountId, DieselDatabaseError> {
         use model::schema::used_account_ids::dsl::*;
 
         let random_aid = AccountId::new_random();
 
         insert_into(used_account_ids)
-            .values((
-                uuid.eq(random_aid),
-            ))
+            .values((uuid.eq(random_aid),))
             .execute(self.conn())
             .into_db_error(random_aid)?;
 

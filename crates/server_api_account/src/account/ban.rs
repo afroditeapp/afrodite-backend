@@ -1,7 +1,14 @@
-use axum::{extract::{Path, State}, Extension};
+use axum::{
+    Extension,
+    extract::{Path, State},
+};
 use model::{AccountId, AccountIdInternal, Permissions};
 use model_account::GetAccountBanTimeResult;
-use server_api::{app::{ReadData, GetAccounts}, create_open_api_router, S};
+use server_api::{
+    S,
+    app::{GetAccounts, ReadData},
+    create_open_api_router,
+};
 use server_data_account::read::GetReadCommandsAccount;
 use simple_backend::create_counters;
 

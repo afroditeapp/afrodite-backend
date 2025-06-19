@@ -20,22 +20,22 @@ use tokio::time::sleep;
 use tracing::log::info;
 
 use super::{
+    BotState, BotStruct, TaskState,
     actions::{
+        BotAction, RepeatUntilFn, RunActions, TO_NORMAL_STATE,
         account::{Login, Register, SetProfileVisibility},
         profile::{
             ChangeProfileText, GetProfileList, ProfileText, ResetProfileIterator,
             UpdateLocationRandomOrConfigured,
         },
-        BotAction, RepeatUntilFn, RunActions, TO_NORMAL_STATE,
     },
     utils::{Counters, Timer},
-    BotState, BotStruct, TaskState,
 };
 use crate::{
     action_array,
     bot::actions::{
-        admin::content::ModerateContentModerationRequest, ActionArray, RepeatUntilFnSimple, RunFn,
-        SleepMillis, TO_ADMIN_NORMAL_STATE,
+        ActionArray, RepeatUntilFnSimple, RunFn, SleepMillis, TO_ADMIN_NORMAL_STATE,
+        admin::content::ModerateContentModerationRequest,
     },
     client::TestError,
     server::DEFAULT_LOCATION_CONFIG_BENCHMARK,
@@ -159,7 +159,9 @@ impl Benchmark {
     pub fn benchmark_get_profile_list_bot(state: BotState) -> Self {
         const ACTIONS: ActionArray = action_array![
             RunActions(TO_NORMAL_STATE),
-            UpdateLocationRandomOrConfigured::new_deterministic(Some(DEFAULT_LOCATION_CONFIG_BENCHMARK)),
+            UpdateLocationRandomOrConfigured::new_deterministic(Some(
+                DEFAULT_LOCATION_CONFIG_BENCHMARK
+            )),
             SetProfileVisibility(true),
         ];
         let iter = ACTIONS.iter().copied();

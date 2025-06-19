@@ -2,13 +2,15 @@ use chrono::NaiveDate;
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    Account, AccountIdInternal, AccountStateContainer, AccountStateRelatedSharedState, AccountSyncVersion, InitialSetupCompletedTime, Permissions, ProfileVisibility, SharedStateRaw, SyncVersionUtils
+    Account, AccountIdInternal, AccountStateContainer, AccountStateRelatedSharedState,
+    AccountSyncVersion, InitialSetupCompletedTime, Permissions, ProfileVisibility, SharedStateRaw,
+    SyncVersionUtils,
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
 
 use crate::{
-    current::read::GetDbReadCommandsCommon, define_current_write_commands, IntoDatabaseError,
+    IntoDatabaseError, current::read::GetDbReadCommandsCommon, define_current_write_commands,
 };
 
 define_current_write_commands!(CurrentWriteCommonState);
@@ -127,12 +129,12 @@ impl CurrentWriteCommonState<'_> {
         id: AccountIdInternal,
         account: Account,
         modify_action: impl FnOnce(
-                &mut AccountStateContainer,
-                &mut Permissions,
-                &mut ProfileVisibility,
-            ) -> error_stack::Result<(), DieselDatabaseError>
-            + Send
-            + 'static,
+            &mut AccountStateContainer,
+            &mut Permissions,
+            &mut ProfileVisibility,
+        ) -> error_stack::Result<(), DieselDatabaseError>
+        + Send
+        + 'static,
     ) -> Result<Account, DieselDatabaseError> {
         let mut state = account.state_container();
         let mut permissions = account.permissions();

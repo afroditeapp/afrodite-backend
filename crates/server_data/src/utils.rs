@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 
 use model::{AccessToken, AccountId, AccountIdInternal, AccountState, Permissions};
 
-use super::{cache::DatabaseCache, DataError, IntoDataError};
+use super::{DataError, IntoDataError, cache::DatabaseCache};
 use crate::result::Result;
 
 pub struct AccessTokenManager<'a> {

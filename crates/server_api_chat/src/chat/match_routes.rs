@@ -1,11 +1,11 @@
 //! Match related routes
 
-use axum::{extract::State, Extension};
+use axum::{Extension, extract::State};
 use model_chat::{
     AccountIdInternal, AllMatchesPage, MatchesIteratorSessionId, MatchesPage,
     ResetMatchesIteratorResult,
 };
-use server_api::{app::WriteData, create_open_api_router, db_write_multiple, S};
+use server_api::{S, app::WriteData, create_open_api_router, db_write_multiple};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 

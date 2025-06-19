@@ -1,4 +1,4 @@
-use database::{define_history_read_commands, DieselDatabaseError};
+use database::{DieselDatabaseError, define_history_read_commands};
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model_profile::{

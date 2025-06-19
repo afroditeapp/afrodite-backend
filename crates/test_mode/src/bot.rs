@@ -6,8 +6,8 @@ pub mod utils;
 use std::{
     fmt::Debug,
     sync::{
-        atomic::{AtomicBool, Ordering},
         Arc,
+        atomic::{AtomicBool, Ordering},
     },
     vec,
 };
@@ -16,9 +16,9 @@ use actions::{admin::AdminBotState, chat::ChatState, profile::ProfileState};
 use api_client::models::{AccountId, EventToClient};
 use async_trait::async_trait;
 use config::{
+    Config,
     args::{PublicApiUrls, SelectedBenchmark, TestMode, TestModeSubMode},
     bot_config_file::{BaseBotConfig, BotConfigFile},
-    Config,
 };
 use error_stack::{Result, ResultExt};
 use rand::SeedableRng;
@@ -32,10 +32,8 @@ use tokio::{
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 use tracing::{error, info};
 
-use crate::state::BotEncryptionKeys;
-
 use self::{
-    actions::{media::MediaState, BotAction, DoNothing, PreviousValue},
+    actions::{BotAction, DoNothing, PreviousValue, media::MediaState},
     benchmark::{Benchmark, BenchmarkState},
     client_bot::ClientBot,
 };
@@ -43,6 +41,7 @@ use super::{
     client::{ApiClient, TestError},
     state::{BotPersistentState, StateData},
 };
+use crate::state::BotEncryptionKeys;
 
 #[derive(Debug, Default)]
 pub struct TaskState;
@@ -250,9 +249,7 @@ impl BotState {
             action_history: vec![],
             media: MediaState::new(),
             profile: ProfileState::new(),
-            chat: ChatState {
-                keys,
-            },
+            chat: ChatState { keys },
             admin: AdminBotState::default(),
             connections: BotConnections::default(),
             refresh_token: None,
@@ -338,7 +335,10 @@ impl BotState {
     pub fn remote_bot_password(&self) -> Option<String> {
         if self.config.bot_mode().is_some() {
             if self.is_bot_mode_admin_bot() {
-                self.bot_config_file.admin_bot_config.remote_bot_login_password.clone()
+                self.bot_config_file
+                    .admin_bot_config
+                    .remote_bot_login_password
+                    .clone()
             } else {
                 self.bot_config_file
                     .find_bot_config(self.bot_id)
@@ -450,12 +450,14 @@ impl BotManager {
             } else {
                 None
             };
-            let account_id = account_id.or_else(
-                || old_state.as_ref()
+            let account_id = account_id.or_else(|| {
+                old_state
+                    .as_ref()
                     .and_then(|v| v.find_matching(task_id, bot_i))
                     .map(|v| v.account_id.clone())
-            );
-            let keys = old_state.as_ref()
+            });
+            let keys = old_state
+                .as_ref()
                 .and_then(|v| v.find_matching(task_id, bot_i))
                 .and_then(|v| v.keys.clone());
             let state = BotState::new(
@@ -544,7 +546,7 @@ impl BotManager {
             .chain(
                 self.removed_bots
                     .iter()
-                    .filter_map(|bot| bot.state().persistent_state())
+                    .filter_map(|bot| bot.state().persistent_state()),
             )
             .collect()
     }

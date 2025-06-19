@@ -7,8 +7,7 @@ use server_api::{
 use server_common::result::{Result, WrappedResultExt};
 use server_data::write::GetWriteCommandsCommon;
 use server_state::S;
-use simple_backend::{app::PerfCounterDataProvider, ServerQuitWatcher};
-
+use simple_backend::{ServerQuitWatcher, app::PerfCounterDataProvider};
 use tokio::{task::JoinHandle, time::Instant};
 use tracing::{error, warn};
 
@@ -58,10 +57,7 @@ impl HourlyTaskManager {
     pub async fn run(self, mut quit_notification: ServerQuitWatcher) {
         const HOUR_IN_SECONDS: u64 = 60 * 60;
         let first_tick = Instant::now() + Duration::from_secs(HOUR_IN_SECONDS);
-        let mut timer = tokio::time::interval_at(
-            first_tick,
-            Duration::from_secs(HOUR_IN_SECONDS),
-        );
+        let mut timer = tokio::time::interval_at(first_tick, Duration::from_secs(HOUR_IN_SECONDS));
 
         loop {
             tokio::select! {
@@ -84,9 +80,7 @@ impl HourlyTaskManager {
         }
     }
 
-    pub async fn run_tasks_and_return_result(
-        &self,
-    ) -> Result<(), HourlyTaskError> {
+    pub async fn run_tasks_and_return_result(&self) -> Result<(), HourlyTaskError> {
         self.save_performance_statistics().await?;
         if self.state.config().components().account {
             TaskUtils::save_client_version_statistics(&self.state)
@@ -103,16 +97,10 @@ impl HourlyTaskManager {
     }
 
     pub async fn save_performance_statistics(&self) -> Result<(), HourlyTaskError> {
-        let statistics = self
-            .state
-            .perf_counter_data()
-            .get_history_raw(true)
-            .await;
+        let statistics = self.state.perf_counter_data().get_history_raw(true).await;
 
         db_write_raw!(self.state, move |cmds| {
-            cmds.common_history()
-                .write_perf_data(statistics)
-                .await
+            cmds.common_history().write_perf_data(statistics).await
         })
         .await
         .change_context(HourlyTaskError::DatabaseError)?;

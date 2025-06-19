@@ -1,18 +1,25 @@
-
 use std::time::Duration;
 
 use error_stack::{FutureExt, Result, ResultExt};
-use manager_api::{protocol::{ClientConnectionReadSend, ClientConnectionWriteSend, ConnectionUtilsRead, ConnectionUtilsWrite}, ClientConfig, ManagerClient};
+use manager_api::{
+    ClientConfig, ManagerClient,
+    protocol::{
+        ClientConnectionReadSend, ClientConnectionWriteSend, ConnectionUtilsRead,
+        ConnectionUtilsWrite,
+    },
+};
 use manager_config::file::JsonRpcLinkConfigClient;
-use manager_model::{JsonRpcLinkHeader, JsonRpcLinkMessage, JsonRpcLinkMessageType, JsonRpcRequest};
+use manager_model::{
+    JsonRpcLinkHeader, JsonRpcLinkMessage, JsonRpcLinkMessageType, JsonRpcRequest,
+};
 use simple_backend_utils::ContextExt;
 use tokio::{sync::mpsc, task::JoinHandle};
 use tracing::{error, info, warn};
 
-use crate::{api::server::json_rpc::handle_rpc_request, server::{app::S, ServerQuitWatcher}};
-
-use crate::api::GetConfig;
-
+use crate::{
+    api::{GetConfig, server::json_rpc::handle_rpc_request},
+    server::{ServerQuitWatcher, app::S},
+};
 
 #[derive(thiserror::Error, Debug)]
 enum JsonRcpLinkClientError {
@@ -66,9 +73,7 @@ impl JsonRcpLinkManagerClient {
 
         let task = tokio::spawn(manager.run(quit_notification.resubscribe()));
 
-        JsonRcpLinkManagerClientQuitHandle {
-            task,
-        }
+        JsonRcpLinkManagerClientQuitHandle { task }
     }
 
     async fn run(self, mut quit_notification: ServerQuitWatcher) {
@@ -82,19 +87,22 @@ impl JsonRcpLinkManagerClient {
         }
     }
 
-    async fn create_connection_loop(
-        mut self,
-        config: JsonRpcLinkConfigClient,
-    ) {
+    async fn create_connection_loop(mut self, config: JsonRpcLinkConfigClient) {
         let mut retry_wait_seconds = 2;
         loop {
             match self.create_connection(&config).await {
                 Ok(()) => {
-                    info!("JSON RPC link disconnected, retrying connection in {} seconds", retry_wait_seconds);
+                    info!(
+                        "JSON RPC link disconnected, retrying connection in {} seconds",
+                        retry_wait_seconds
+                    );
                 }
                 Err(e) => {
                     error!("JSON RPC link client error: {:?}", e);
-                    info!("Retrying JSON RPC link connection in {} seconds", retry_wait_seconds);
+                    info!(
+                        "Retrying JSON RPC link connection in {} seconds",
+                        retry_wait_seconds
+                    );
                 }
             }
             tokio::time::sleep(Duration::from_secs(retry_wait_seconds)).await;
@@ -106,14 +114,13 @@ impl JsonRcpLinkManagerClient {
         &mut self,
         config: &JsonRpcLinkConfigClient,
     ) -> Result<(), JsonRcpLinkClientError> {
-        let client = ManagerClient::connect(
-            ClientConfig {
-                url: config.url.clone(),
-                tls_config: self.state.config().client_tls_config(),
-                api_key: self.state.config().api_key().to_string(),
-            }
-        )   .await
-            .change_context(JsonRcpLinkClientError::Client)?;
+        let client = ManagerClient::connect(ClientConfig {
+            url: config.url.clone(),
+            tls_config: self.state.config().client_tls_config(),
+            api_key: self.state.config().api_key().to_string(),
+        })
+        .await
+        .change_context(JsonRcpLinkClientError::Client)?;
 
         let (reader, writer) = client
             .json_rpc_link(self.state.config().manager_name(), config.password.clone())
@@ -137,7 +144,8 @@ impl JsonRcpLinkManagerClient {
     ) -> Result<(), JsonRcpLinkClientError> {
         loop {
             tokio::time::sleep(Duration::from_secs(60 * 60)).await;
-            sender.send(JsonRpcLinkMessage::empty())
+            sender
+                .send(JsonRpcLinkMessage::empty())
                 .await
                 .change_context(JsonRcpLinkClientError::BrokenMessageChannel)?;
         }
@@ -149,21 +157,29 @@ impl JsonRcpLinkManagerClient {
         sender: mpsc::Sender<JsonRpcLinkMessage>,
     ) -> Result<(), JsonRcpLinkClientError> {
         loop {
-            let Some(m) = reader.receive_json_rpc_link_message()
+            let Some(m) = reader
+                .receive_json_rpc_link_message()
                 .await
-                .change_context(JsonRcpLinkClientError::Read)? else {
-                    return Ok(());
-                };
+                .change_context(JsonRcpLinkClientError::Read)?
+            else {
+                return Ok(());
+            };
 
             match m.header.message_type {
                 JsonRpcLinkMessageType::Empty => (),
-                JsonRpcLinkMessageType::ServerResponse =>
-                    warn!("Ignoring ServerResponse message. Client should send ServerRequest messages"),
+                JsonRpcLinkMessageType::ServerResponse => warn!(
+                    "Ignoring ServerResponse message. Client should send ServerRequest messages"
+                ),
                 JsonRpcLinkMessageType::ServerRequest => {
                     let request: JsonRpcRequest = serde_json::from_str(&m.data)
                         .change_context(JsonRcpLinkClientError::Deserialize)?;
 
-                    let r = handle_rpc_request(request, Some("JSON RPC link server".to_string()), &self.state).await;
+                    let r = handle_rpc_request(
+                        request,
+                        Some("JSON RPC link server".to_string()),
+                        &self.state,
+                    )
+                    .await;
                     let r = match r {
                         Ok(r) => r,
                         Err(e) => {
@@ -173,13 +189,14 @@ impl JsonRcpLinkManagerClient {
                     };
                     let data = serde_json::to_string(&r)
                         .change_context(JsonRcpLinkClientError::Serialize)?;
-                    sender.send(JsonRpcLinkMessage {
-                        header: JsonRpcLinkHeader {
-                            message_type: JsonRpcLinkMessageType::ServerResponse,
-                            sequence_number: m.header.sequence_number,
-                        },
-                        data,
-                    })
+                    sender
+                        .send(JsonRpcLinkMessage {
+                            header: JsonRpcLinkHeader {
+                                message_type: JsonRpcLinkMessageType::ServerResponse,
+                                sequence_number: m.header.sequence_number,
+                            },
+                            data,
+                        })
                         .await
                         .change_context(JsonRcpLinkClientError::BrokenMessageChannel)?;
                 }
@@ -197,7 +214,8 @@ impl JsonRcpLinkManagerClient {
                 Some(m) => m,
                 None => return Err(JsonRcpLinkClientError::BrokenMessageChannel.report()),
             };
-            writer.send_json_rpc_link_message(message)
+            writer
+                .send_json_rpc_link_message(message)
                 .await
                 .change_context(JsonRcpLinkClientError::Write)?;
         }

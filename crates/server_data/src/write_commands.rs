@@ -8,13 +8,17 @@ use std::{
 
 use config::Config;
 use model::AccountId;
-use tokio::sync::{mpsc, Mutex, OwnedMutexGuard};
+use tokio::sync::{Mutex, OwnedMutexGuard, mpsc};
 
 use super::write_concurrent::{
     ConcurrentWriteAction, ConcurrentWriteCommandHandle, ConcurrentWriteSelectorHandle,
 };
 use crate::{
-    db_manager::{ReadAdapter, RouterDatabaseWriteHandle}, event::EventManagerWithCacheReference, result::{WrappedContextExt, WrappedResultExt}, write_concurrent::ConcurrentWriteProfileHandleBlocking, DataError
+    DataError,
+    db_manager::{ReadAdapter, RouterDatabaseWriteHandle},
+    event::EventManagerWithCacheReference,
+    result::{WrappedContextExt, WrappedResultExt},
+    write_concurrent::ConcurrentWriteProfileHandleBlocking,
 };
 
 pub type WriteCmds = Cmds;

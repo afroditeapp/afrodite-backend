@@ -1,6 +1,8 @@
 use model::AccountIdInternal;
 use model_chat::ChatAppNotificationSettings;
-use server_data::{cache::CacheReadCommon, define_cmd_wrapper_read, result::Result, DataError, IntoDataError};
+use server_data::{
+    DataError, IntoDataError, cache::CacheReadCommon, define_cmd_wrapper_read, result::Result,
+};
 
 define_cmd_wrapper_read!(ReadCommandsChatNotification);
 

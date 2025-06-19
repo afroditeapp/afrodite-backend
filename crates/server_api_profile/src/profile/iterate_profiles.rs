@@ -1,6 +1,9 @@
-use axum::{extract::State, Extension};
-use model_profile::{AccountIdInternal, AutomaticProfileSearchIteratorSessionId, ProfileIteratorSessionId, ProfilePage};
-use server_api::{app::ApiUsageTrackerProvider, create_open_api_router, S};
+use axum::{Extension, extract::State};
+use model_profile::{
+    AccountIdInternal, AutomaticProfileSearchIteratorSessionId, ProfileIteratorSessionId,
+    ProfilePage,
+};
+use server_api::{S, app::ApiUsageTrackerProvider, create_open_api_router};
 use server_data_profile::read::GetReadProfileCommands;
 use simple_backend::create_counters;
 
@@ -29,7 +32,10 @@ pub async fn post_get_next_profile_page(
     Json(iterator_session_id): Json<ProfileIteratorSessionId>,
 ) -> Result<Json<ProfilePage>, StatusCode> {
     PROFILE.post_get_next_profile_page.incr();
-    state.api_usage_tracker().incr(account_id, |u| &u.post_get_next_profile_page).await;
+    state
+        .api_usage_tracker()
+        .incr(account_id, |u| &u.post_get_next_profile_page)
+        .await;
 
     let data = state
         .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {
@@ -74,7 +80,10 @@ pub async fn post_reset_profile_paging(
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ProfileIteratorSessionId>, StatusCode> {
     PROFILE.post_reset_profile_paging.incr();
-    state.api_usage_tracker().incr(account_id, |u| &u.post_reset_profile_paging).await;
+    state
+        .api_usage_tracker()
+        .incr(account_id, |u| &u.post_reset_profile_paging)
+        .await;
 
     let iterator_session_id: ProfileIteratorSessionId = state
         .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {
@@ -86,7 +95,8 @@ pub async fn post_reset_profile_paging(
     Ok(iterator_session_id.into())
 }
 
-const PATH_POST_AUTOMATIC_PROFILE_SEARCH_GET_NEXT_PROFILE_PAGE: &str = "/profile_api/automatic_profile_search/next";
+const PATH_POST_AUTOMATIC_PROFILE_SEARCH_GET_NEXT_PROFILE_PAGE: &str =
+    "/profile_api/automatic_profile_search/next";
 
 /// Post (updates iterator) to get next page of automatic profile search profile list.
 #[utoipa::path(
@@ -105,10 +115,23 @@ pub async fn post_automatic_profile_search_get_next_profile_page(
     Extension(account_id): Extension<AccountIdInternal>,
     Json(iterator_session_id): Json<AutomaticProfileSearchIteratorSessionId>,
 ) -> Result<Json<ProfilePage>, StatusCode> {
-    PROFILE.post_automatic_profile_search_get_next_profile_page.incr();
-    state.api_usage_tracker().incr(account_id, |u| &u.post_automatic_profile_search_get_next_profile_page).await;
+    PROFILE
+        .post_automatic_profile_search_get_next_profile_page
+        .incr();
+    state
+        .api_usage_tracker()
+        .incr(account_id, |u| {
+            &u.post_automatic_profile_search_get_next_profile_page
+        })
+        .await;
 
-    if !state.read().profile().search().automatic_profile_search_happened_at_least_once(account_id).await? {
+    if !state
+        .read()
+        .profile()
+        .search()
+        .automatic_profile_search_happened_at_least_once(account_id)
+        .await?
+    {
         // Automatic search not done yet
         return Ok(ProfilePage {
             profiles: vec![],
@@ -139,7 +162,8 @@ pub async fn post_automatic_profile_search_get_next_profile_page(
     }
 }
 
-const PATH_POST_AUTOMATIC_PROFILE_SEARCH_RESET_PROFILE_PAGING: &str = "/profile_api/automatic_profile_search/reset";
+const PATH_POST_AUTOMATIC_PROFILE_SEARCH_RESET_PROFILE_PAGING: &str =
+    "/profile_api/automatic_profile_search/reset";
 
 /// Reset automatic profile search profile paging.
 ///
@@ -159,8 +183,15 @@ pub async fn post_automatic_profile_search_reset_profile_paging(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<AutomaticProfileSearchIteratorSessionId>, StatusCode> {
-    PROFILE.post_automatic_profile_search_reset_profile_paging.incr();
-    state.api_usage_tracker().incr(account_id, |u| &u.post_automatic_profile_search_reset_profile_paging).await;
+    PROFILE
+        .post_automatic_profile_search_reset_profile_paging
+        .incr();
+    state
+        .api_usage_tracker()
+        .incr(account_id, |u| {
+            &u.post_automatic_profile_search_reset_profile_paging
+        })
+        .await;
 
     let iterator_session_id: AutomaticProfileSearchIteratorSessionId = state
         .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {

@@ -1,12 +1,12 @@
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{AccountIdInternal, ProfileEditedTime, ProfileVersion};
 use server_data::{
+    DataError, IntoDataError,
     cache::profile::UpdateLocationCacheState,
     define_cmd_wrapper_write,
     read::DbRead,
     result::{Result, WrappedContextExt},
     write::DbTransaction,
-    DataError, IntoDataError,
 };
 
 use crate::cache::CacheWriteProfile;
@@ -41,9 +41,11 @@ impl WriteCommandsProfileAdminProfileNameAllowlist<'_> {
         let new_profile_version = ProfileVersion::new_random();
         let edit_time = ProfileEditedTime::current_time();
         let new_state = db_transaction!(self, move |mut cmds| {
-            cmds.profile()
-                .data()
-                .required_changes_for_profile_update(name_owner_id, new_profile_version, edit_time)?;
+            cmds.profile().data().required_changes_for_profile_update(
+                name_owner_id,
+                new_profile_version,
+                edit_time,
+            )?;
             let new_state = cmds
                 .profile_admin()
                 .profile_name_allowlist()

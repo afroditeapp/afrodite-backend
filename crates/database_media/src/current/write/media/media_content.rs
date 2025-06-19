@@ -1,15 +1,21 @@
-use database::{current::read::GetDbReadCommandsCommon, define_current_write_commands, DieselDatabaseError};
+use database::{
+    DieselDatabaseError, current::read::GetDbReadCommandsCommon, define_current_write_commands,
+};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::{ContentIdInternal, SyncVersion, UnixTime};
 use model_media::{
-    AccountIdInternal, ContentId, ContentIdDb, ContentModerationState, ContentSlot, MediaContentRaw, MediaContentType, NewContentParams, ProfileContentEditedTime, ProfileContentVersion, SetProfileContent
+    AccountIdInternal, ContentId, ContentIdDb, ContentModerationState, ContentSlot,
+    MediaContentRaw, MediaContentType, NewContentParams, ProfileContentEditedTime,
+    ProfileContentVersion, SetProfileContent,
 };
 use simple_backend_utils::ContextExt;
 
-use crate::{current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia}, IntoDatabaseError};
-
 use super::DeletedSomething;
+use crate::{
+    IntoDatabaseError,
+    current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia},
+};
 
 define_current_write_commands!(CurrentWriteMediaContent);
 
@@ -86,14 +92,10 @@ impl CurrentWriteMediaContent<'_> {
             .media_content()
             .get_account_media_content(id)?;
         let convert_first = |content_id: Option<&ContentId>| {
-            Self::check_content_id(content_id.copied(), &all_content, |c| {
-                c.face_detected
-            })
+            Self::check_content_id(content_id.copied(), &all_content, |c| c.face_detected)
         };
         let convert = |content_id: Option<&ContentId>| {
-            Self::check_content_id(content_id.copied(), &all_content, |_| {
-                true
-            })
+            Self::check_content_id(content_id.copied(), &all_content, |_| true)
         };
 
         let c = &new.c;
@@ -129,11 +131,13 @@ impl CurrentWriteMediaContent<'_> {
                 .media_content()
                 .get_media_content_raw(content_id)?;
             if state.state().is_in_slot() {
-                self
-                    .write()
+                self.write()
                     .media_admin()
                     .media_content()
-                    .update_content_moderation_state(content_id, ContentModerationState::WaitingBotOrHumanModeration)?;
+                    .update_content_moderation_state(
+                        content_id,
+                        ContentModerationState::WaitingBotOrHumanModeration,
+                    )?;
             }
         }
 
@@ -161,9 +165,9 @@ impl CurrentWriteMediaContent<'_> {
             .media_content()
             .get_media_content_raw(content_id)?;
 
-        let accepted = state.content_type() == MediaContentType::JpegImage &&
-            state.secure_capture &&
-            state.face_detected;
+        let accepted = state.content_type() == MediaContentType::JpegImage
+            && state.secure_capture
+            && state.face_detected;
         if !accepted {
             return Err(DieselDatabaseError::NotAllowed.report());
         }
@@ -174,11 +178,13 @@ impl CurrentWriteMediaContent<'_> {
             .into_db_error((content_id.content_owner(), content_id))?;
 
         if state.state().is_in_slot() {
-            self
-                .write()
+            self.write()
                 .media_admin()
                 .media_content()
-                .update_content_moderation_state(content_id, ContentModerationState::WaitingBotOrHumanModeration)?;
+                .update_content_moderation_state(
+                    content_id,
+                    ContentModerationState::WaitingBotOrHumanModeration,
+                )?;
         }
 
         Ok(())
@@ -215,7 +221,10 @@ impl CurrentWriteMediaContent<'_> {
         let (slot_number_value, state_value) = if let Some(slot) = slot {
             (slot, ContentModerationState::InSlot)
         } else {
-            (ContentSlot::Content0, ContentModerationState::WaitingBotOrHumanModeration)
+            (
+                ContentSlot::Content0,
+                ContentModerationState::WaitingBotOrHumanModeration,
+            )
         };
 
         insert_into(media_content)
@@ -285,7 +294,7 @@ impl CurrentWriteMediaContent<'_> {
             use crate::schema::current_account_media::dsl::*;
 
             update(current_account_media.find(id.as_db_id()))
-                .set(profile_content_version_uuid.eq(data),)
+                .set(profile_content_version_uuid.eq(data))
                 .execute(self.conn())
                 .change_context(DieselDatabaseError::Execute)?;
         }

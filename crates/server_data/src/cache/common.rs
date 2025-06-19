@@ -1,9 +1,10 @@
-use model::{AccountStateRelatedSharedState, OtherSharedState, PendingNotificationFlags, Permissions};
+use model::{
+    AccountStateRelatedSharedState, OtherSharedState, PendingNotificationFlags, Permissions,
+};
 use model_server_data::AppNotificationSettingsInternal;
 
-use crate::event::EventSender;
-
 use super::ConnectionInfo;
+use crate::event::EventSender;
 
 #[derive(Debug)]
 pub struct CacheEntryCommon {

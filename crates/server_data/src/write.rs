@@ -36,9 +36,7 @@ pub struct AccountWriteLock;
 /// }
 /// ```
 macro_rules! db_transaction {
-    ($state:expr, move |mut $cmds:ident| $commands:expr) => {{
-        $crate::IntoDataError::into_error($state.db_transaction(move |mut $cmds| ($commands)).await)
-    }};
+    ($state:expr, move |mut $cmds:ident| $commands:expr) => {{ $crate::IntoDataError::into_error($state.db_transaction(move |mut $cmds| ($commands)).await) }};
     ($state:expr, move |$cmds:ident| $commands:expr) => {{
         $crate::data::IntoDataError::into_error(
             $state.db_transaction_common(move |$cmds| ($commands)).await,

@@ -8,6 +8,7 @@ use simple_backend_utils::time::DurationValue;
 
 use super::{DbTransaction, GetWriteCommandsCommon};
 use crate::{
+    DataError, IntoDataError,
     cache::{CacheWriteCommon, LastSeenTimeUpdated, TopLevelCacheOperations},
     db_manager::InternalWriting,
     define_cmd_wrapper_write,
@@ -15,7 +16,6 @@ use crate::{
     file::FileWrite,
     result::Result,
     write::db_transaction,
-    DataError, IntoDataError,
 };
 
 mod push_notification;
@@ -169,7 +169,9 @@ impl WriteCommandsCommon<'_> {
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
         let time = db_transaction!(self, move |mut cmds| {
-            cmds.common().state().update_initial_setup_completed_unix_time(id)
+            cmds.common()
+                .state()
+                .update_initial_setup_completed_unix_time(id)
         })?;
 
         self.write_cache_common(id, |e| {
@@ -186,11 +188,13 @@ impl WriteCommandsCommon<'_> {
         report_type: ReportTypeNumberInternal,
         deletion_wait_time: DurationValue,
     ) -> Result<(), DataError> {
-        let automatic_deletion_allowed = UnixTime::current_time()
-            .add_seconds(deletion_wait_time.seconds);
+        let automatic_deletion_allowed =
+            UnixTime::current_time().add_seconds(deletion_wait_time.seconds);
 
         db_transaction!(self, move |mut cmds| {
-            cmds.common().report().delete_old_reports(report_type, automatic_deletion_allowed)?;
+            cmds.common()
+                .report()
+                .delete_old_reports(report_type, automatic_deletion_allowed)?;
             Ok(())
         })?;
 

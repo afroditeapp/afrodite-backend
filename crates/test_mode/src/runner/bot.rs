@@ -6,7 +6,7 @@ use std::{
     sync::Arc,
 };
 
-use config::{args::TestMode, bot_config_file::BotConfigFile, Config};
+use config::{Config, args::TestMode, bot_config_file::BotConfigFile};
 use tokio::{
     io::AsyncWriteExt,
     select, signal,
@@ -249,8 +249,7 @@ impl BotTestRunner {
 
     fn state_data_file(&self) -> PathBuf {
         let data_file = format!("test_{}_state_data.json", self.test_config.test_name());
-        DataDirUtils::create_data_dir_if_needed(&self.test_config)
-            .join(data_file)
+        DataDirUtils::create_data_dir_if_needed(&self.test_config).join(data_file)
     }
 }
 

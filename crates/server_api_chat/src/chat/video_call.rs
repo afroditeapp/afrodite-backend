@@ -1,16 +1,19 @@
 use axum::{
-    extract::{Query, State}, Extension
+    Extension,
+    extract::{Query, State},
 };
 use model::AccountId;
-use model_chat::{
-    AccountIdInternal, GetVideoCallUrlsResult, JitsiMeetUrls
-};
+use model_chat::{AccountIdInternal, GetVideoCallUrlsResult, JitsiMeetUrls};
 use server_api::{
-    app::{ApiUsageTrackerProvider, GetAccounts, ReadData}, create_open_api_router, S
+    S,
+    app::{ApiUsageTrackerProvider, GetAccounts, ReadData},
+    create_open_api_router,
 };
-use server_data_chat::read::GetReadChatCommands;
-use simple_backend::{app::JitsiMeetUrlCreatorProvider, create_counters, jitsi_meet::VideoCallUserInfo};
 use server_data::read::GetReadCommandsCommon;
+use server_data_chat::read::GetReadChatCommands;
+use simple_backend::{
+    app::JitsiMeetUrlCreatorProvider, create_counters, jitsi_meet::VideoCallUserInfo,
+};
 
 use super::super::utils::{Json, StatusCode};
 
@@ -38,7 +41,10 @@ async fn get_video_call_urls(
     Query(other_user): Query<AccountId>,
 ) -> Result<Json<GetVideoCallUrlsResult>, StatusCode> {
     CHAT.get_video_call_urls.incr();
-    state.api_usage_tracker().incr(id, |u| &u.get_video_call_urls).await;
+    state
+        .api_usage_tracker()
+        .incr(id, |u| &u.get_video_call_urls)
+        .await;
 
     let other_user = state.get_internal_id(other_user).await?;
 
@@ -68,7 +74,6 @@ async fn get_video_call_urls(
         .await?
         .map(|v| v.name);
 
-
     let urls = state.jitsi_meet_url_creator().create_url(
         VideoCallUserInfo {
             id: id.as_id().to_string(),
@@ -84,7 +89,7 @@ async fn get_video_call_urls(
         .map(|urls| GetVideoCallUrlsResult {
             jitsi_meet: Some(JitsiMeetUrls {
                 url: urls.url,
-                custom_url: urls.custom_url
+                custom_url: urls.custom_url,
             }),
         })
         .unwrap_or_default();

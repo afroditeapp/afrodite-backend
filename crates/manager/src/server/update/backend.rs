@@ -1,11 +1,9 @@
-
 use std::{path::Path, process::ExitStatus};
 
 use error_stack::{Result, ResultExt};
 use manager_config::file::SoftwareUpdateConfig;
 use simple_backend_utils::ContextExt;
 use tokio::process::Command;
-
 use tracing::info;
 
 #[derive(thiserror::Error, Debug)]
@@ -30,7 +28,6 @@ pub enum BackendUtilsError {
 
     #[error("Reset data directory missing file name")]
     ResetDataDirectoryNoFileName,
-
 }
 
 pub struct BackendUtils<'a> {
@@ -38,10 +35,7 @@ pub struct BackendUtils<'a> {
 }
 
 impl BackendUtils<'_> {
-    pub async fn replace_backend_binary(
-        &self,
-        new_binary: &Path,
-    ) -> Result<(), BackendUtilsError> {
+    pub async fn replace_backend_binary(&self, new_binary: &Path) -> Result<(), BackendUtilsError> {
         let target = self.config.backend_install_location.clone();
 
         if target.exists() {

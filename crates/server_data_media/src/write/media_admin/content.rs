@@ -1,11 +1,16 @@
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
-use model::{ContentIdInternal, AccountIdInternal, ProfileContentVersion};
-use model_media::{ProfileContentEditedTime, ProfileContentModerationRejectedReasonCategory, ProfileContentModerationRejectedReasonDetails};
-use server_data::{define_cmd_wrapper_write, read::DbRead, result::WrappedContextExt, write::DbTransaction, DataError};
-
+use model::{AccountIdInternal, ContentIdInternal, ProfileContentVersion};
+use model_media::{
+    ProfileContentEditedTime, ProfileContentModerationRejectedReasonCategory,
+    ProfileContentModerationRejectedReasonDetails,
+};
 use server_common::result::Result;
+use server_data::{
+    DataError, define_cmd_wrapper_write, read::DbRead, result::WrappedContextExt,
+    write::DbTransaction,
+};
 
-use crate::write::{media::InitialContentModerationResult, GetWriteCommandsMedia};
+use crate::write::{GetWriteCommandsMedia, media::InitialContentModerationResult};
 
 pub struct ModerationResult {
     pub moderation_result: InitialContentModerationResult,
@@ -20,12 +25,13 @@ impl WriteCommandsProfileAdminContent<'_> {
         content_id: ContentIdInternal,
     ) -> Result<ModerationResult, DataError> {
         let current_content = self
-            .db_read(move |mut cmds| cmds.media().media_content().get_media_content_raw(content_id))
+            .db_read(move |mut cmds| {
+                cmds.media()
+                    .media_content()
+                    .get_media_content_raw(content_id)
+            })
             .await?;
-        if current_content
-            .state()
-            .is_in_slot()
-        {
+        if current_content.state().is_in_slot() {
             return Err(DataError::NotAllowed.report());
         }
 
@@ -46,18 +52,27 @@ impl WriteCommandsProfileAdminContent<'_> {
                     rejected_category,
                     rejected_details,
                 } => {
-                    cmds.media_admin().media_content().moderate_profile_content(
-                        moderator_id,
-                        content_id,
-                        accept,
-                        rejected_category,
-                        rejected_details,
-                    )?;
+                    cmds.media_admin()
+                        .media_content()
+                        .moderate_profile_content(
+                            moderator_id,
+                            content_id,
+                            accept,
+                            rejected_category,
+                            rejected_details,
+                        )?;
                 }
             };
 
-            let current_account_media = cmds.read().media().media_content().current_account_media(content_id.content_owner())?;
-            if current_account_media.iter_current_profile_content().any(|v| v.content_id() == content_id.content_id()) {
+            let current_account_media = cmds
+                .read()
+                .media()
+                .media_content()
+                .current_account_media(content_id.content_owner())?;
+            if current_account_media
+                .iter_current_profile_content()
+                .any(|v| v.content_id() == content_id.content_id())
+            {
                 // Public profile content accepted value might have
                 // changed, so update public profile content version
                 // and edit time.
@@ -65,7 +80,11 @@ impl WriteCommandsProfileAdminContent<'_> {
                 let edit_time = ProfileContentEditedTime::current_time();
                 cmds.media()
                     .media_content()
-                    .required_changes_for_public_profile_content_update(content_id.content_owner(), version, edit_time)?;
+                    .required_changes_for_public_profile_content_update(
+                        content_id.content_owner(),
+                        version,
+                        edit_time,
+                    )?;
                 Ok(Some((version, edit_time)))
             } else {
                 Ok(None)
@@ -73,10 +92,17 @@ impl WriteCommandsProfileAdminContent<'_> {
         })?;
 
         if let Some(update) = cache_update {
-            self.handle().media().public_profile_content_cache_update(content_id.content_owner(), update).await?;
+            self.handle()
+                .media()
+                .public_profile_content_cache_update(content_id.content_owner(), update)
+                .await?;
         }
 
-        let visibility_change = self.handle().media().remove_pending_state_from_profile_visibility_if_needed(content_id.content_owner()).await?;
+        let visibility_change = self
+            .handle()
+            .media()
+            .remove_pending_state_from_profile_visibility_if_needed(content_id.content_owner())
+            .await?;
 
         Ok(ModerationResult {
             moderation_result: visibility_change,
@@ -89,7 +115,11 @@ impl WriteCommandsProfileAdminContent<'_> {
         value: bool,
     ) -> Result<(), DataError> {
         let current_content = self
-            .db_read(move |mut cmds| cmds.media().media_content().get_media_content_raw(content_id))
+            .db_read(move |mut cmds| {
+                cmds.media()
+                    .media_content()
+                    .get_media_content_raw(content_id)
+            })
             .await?;
         if current_content.face_detected == value {
             // Already done
@@ -101,13 +131,19 @@ impl WriteCommandsProfileAdminContent<'_> {
                 .media_content()
                 .increment_media_content_sync_version(content_id.content_owner())?;
 
-            cmds.media_admin().media_content().change_face_detected_value(
-                content_id,
-                value,
-            )?;
+            cmds.media_admin()
+                .media_content()
+                .change_face_detected_value(content_id, value)?;
 
-            let current_account_media = cmds.read().media().media_content().current_account_media(content_id.content_owner())?;
-            if current_account_media.iter_current_profile_content().any(|v| v.content_id() == content_id.content_id()) {
+            let current_account_media = cmds
+                .read()
+                .media()
+                .media_content()
+                .current_account_media(content_id.content_owner())?;
+            if current_account_media
+                .iter_current_profile_content()
+                .any(|v| v.content_id() == content_id.content_id())
+            {
                 // Public profile content [model_media::ContentInfo::p] value might have
                 // changed, so update public profile content version
                 // and edit time.
@@ -115,7 +151,11 @@ impl WriteCommandsProfileAdminContent<'_> {
                 let edit_time = ProfileContentEditedTime::current_time();
                 cmds.media()
                     .media_content()
-                    .required_changes_for_public_profile_content_update(content_id.content_owner(), version, edit_time)?;
+                    .required_changes_for_public_profile_content_update(
+                        content_id.content_owner(),
+                        version,
+                        edit_time,
+                    )?;
                 Ok(Some((version, edit_time)))
             } else {
                 Ok(None)
@@ -123,7 +163,10 @@ impl WriteCommandsProfileAdminContent<'_> {
         })?;
 
         if let Some(update) = cache_update {
-            self.handle().media().public_profile_content_cache_update(content_id.content_owner(), update).await?;
+            self.handle()
+                .media()
+                .public_profile_content_cache_update(content_id.content_owner(), update)
+                .await?;
         }
 
         Ok(())
@@ -137,5 +180,5 @@ pub enum ContentModerationMode {
         accept: bool,
         rejected_category: Option<ProfileContentModerationRejectedReasonCategory>,
         rejected_details: Option<ProfileContentModerationRejectedReasonDetails>,
-    }
+    },
 }

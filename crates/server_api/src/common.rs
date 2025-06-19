@@ -6,8 +6,8 @@ use std::{net::SocketAddr, time::Duration};
 use axum::{
     body::Bytes,
     extract::{
-        ws::{Message, WebSocket},
         ConnectInfo, Path, State, WebSocketUpgrade,
+        ws::{Message, WebSocket},
     },
     response::IntoResponse,
 };
@@ -15,27 +15,38 @@ use axum_extra::TypedHeader;
 use headers::ContentType;
 use http::HeaderMap;
 use model::{
-    AccessToken, AccountIdInternal, BackendVersion, EventToClient, EventToClientInternal, PendingNotificationFlags, RefreshToken, SyncDataVersionFromClient, WebSocketClientTypeNumber
+    AccessToken, AccountIdInternal, BackendVersion, EventToClient, EventToClientInternal,
+    PendingNotificationFlags, RefreshToken, SyncDataVersionFromClient, WebSocketClientTypeNumber,
 };
 use model_server_data::AuthPair;
 use server_common::websocket::WebSocketError;
 use server_data::{
-    app::{BackendVersionProvider, EventManagerProvider, GetConfig}, read::GetReadCommandsCommon, write::GetWriteCommandsCommon
+    app::{BackendVersionProvider, EventManagerProvider, GetConfig},
+    read::GetReadCommandsCommon,
+    write::GetWriteCommandsCommon,
 };
 use server_state::{
-    app::{AdminNotificationProvider, ApiUsageTrackerProvider, ClientVersionTrackerProvider, GetAccessTokens, IpAddressUsageTrackerProvider},
+    app::{
+        AdminNotificationProvider, ApiUsageTrackerProvider, ClientVersionTrackerProvider,
+        GetAccessTokens, IpAddressUsageTrackerProvider,
+    },
     state_impl::{ReadData, WriteData},
 };
-use simple_backend::{app::FilePackageProvider, create_counters, perf::websocket::{self, ConnectionTracker}, web_socket::WebSocketManager};
+use simple_backend::{
+    app::FilePackageProvider,
+    create_counters,
+    perf::websocket::{self, ConnectionTracker},
+    web_socket::WebSocketManager,
+};
 use simple_backend_utils::IntoReportFromString;
 use tokio::time::Instant;
 use tracing::{error, info};
 
 use super::utils::StatusCode;
 use crate::{
+    S,
     result::{WrappedContextExt, WrappedResultExt},
     utils::Json,
-    S,
 };
 
 mod client_config;
@@ -96,8 +107,7 @@ pub async fn get_file_package_access_root(
 
 fn check_ip_allowlist(state: &S, address: SocketAddr) -> Result<(), StatusCode> {
     if let Some(config) = state.config().simple_backend().file_package() {
-        if config.disable_ip_allowlist ||
-            config.ip_allowlist.iter().any(|v| *v == address.ip()) {
+        if config.disable_ip_allowlist || config.ip_allowlist.iter().any(|v| *v == address.ip()) {
             Ok(())
         } else {
             Err(StatusCode::NOT_FOUND)
@@ -202,8 +212,14 @@ pub async fn get_connect_websocket(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     };
 
-    state.api_usage_tracker().incr(id, |u| &u.get_connect_websocket).await;
-    state.ip_address_usage_tracker().mark_ip_used(id, addr.ip()).await;
+    state
+        .api_usage_tracker()
+        .incr(id, |u| &u.get_connect_websocket)
+        .await;
+    state
+        .ip_address_usage_tracker()
+        .mark_ip_used(id, addr.ip())
+        .await;
 
     info!("get_connect_websocket for '{}'", id.id.as_i64());
 
@@ -313,34 +329,35 @@ async fn handle_socket_result(
         .ok_or(WebSocketError::Receive.report())?
         .change_context(WebSocketError::Receive)?
     {
-        Message::Binary(version) => {
-            match version.to_vec().as_slice() {
-                [0, info_bytes @ ..] => {
-                    let info = model::WebSocketClientInfo::parse(info_bytes)
-                        .into_error_string(WebSocketError::ProtocolError)?;
+        Message::Binary(version) => match version.to_vec().as_slice() {
+            [0, info_bytes @ ..] => {
+                let info = model::WebSocketClientInfo::parse(info_bytes)
+                    .into_error_string(WebSocketError::ProtocolError)?;
 
-                    match info.client_type {
-                        WebSocketClientTypeNumber::Android =>
-                            COMMON.websocket_client_type_android.incr(),
-                        WebSocketClientTypeNumber::Ios =>
-                            COMMON.websocket_client_type_ios.incr(),
-                        WebSocketClientTypeNumber::Web =>
-                            COMMON.websocket_client_type_web.incr(),
-                        WebSocketClientTypeNumber::TestModeBot =>
-                            COMMON.websocket_client_type_test_mode_bot.incr(),
+                match info.client_type {
+                    WebSocketClientTypeNumber::Android => {
+                        COMMON.websocket_client_type_android.incr()
                     }
-
-                    state.client_version_tracker().track_version(info.client_version).await;
-
-                    if let Some(min_version) = state.config().min_client_version() {
-                        min_version.received_version_is_accepted(info.client_version)
-                    } else {
-                        true
+                    WebSocketClientTypeNumber::Ios => COMMON.websocket_client_type_ios.incr(),
+                    WebSocketClientTypeNumber::Web => COMMON.websocket_client_type_web.incr(),
+                    WebSocketClientTypeNumber::TestModeBot => {
+                        COMMON.websocket_client_type_test_mode_bot.incr()
                     }
                 }
-                _ => return Err(WebSocketError::ProtocolError.report()),
+
+                state
+                    .client_version_tracker()
+                    .track_version(info.client_version)
+                    .await;
+
+                if let Some(min_version) = state.config().min_client_version() {
+                    min_version.received_version_is_accepted(info.client_version)
+                } else {
+                    true
+                }
             }
-        }
+            _ => return Err(WebSocketError::ProtocolError.report()),
+        },
         _ => return Err(WebSocketError::ProtocolError.report()),
     };
 
@@ -443,7 +460,12 @@ async fn handle_socket_result(
         .handle_new_websocket_connection(&mut socket, id, data_sync_versions)
         .await?;
 
-    if state.admin_notification().get_notification_state(id).await.is_some() {
+    if state
+        .admin_notification()
+        .get_notification_state(id)
+        .await
+        .is_some()
+    {
         send_event(&mut socket, EventToClientInternal::AdminNotification).await?;
     }
 
@@ -554,10 +576,7 @@ struct WebSocketConnectionTrackers {
 }
 
 impl WebSocketConnectionTrackers {
-    async fn new(
-        state: &S,
-        id: AccountIdInternal,
-    ) -> crate::result::Result<Self, WebSocketError> {
+    async fn new(state: &S, id: AccountIdInternal) -> crate::result::Result<Self, WebSocketError> {
         let info = state
             .read()
             .common()

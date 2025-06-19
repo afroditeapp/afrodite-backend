@@ -1,24 +1,22 @@
 //! Handle automatic reboots
 
-use std::{
-    process::ExitStatus,
-    sync::Arc, time::Duration,
-};
+use std::{process::ExitStatus, sync::Arc, time::Duration};
 
 use error_stack::{Result, ResultExt};
 use futures::lock::Mutex;
 use manager_config::file::ScheduledTasksConfig;
-use manager_model::{MaintenanceTask, MaintenanceTime, ManualTaskType, ScheduledTaskStatus, ScheduledTaskType};
+use manager_model::{
+    MaintenanceTask, MaintenanceTime, ManualTaskType, ScheduledTaskStatus, ScheduledTaskType,
+};
 use simple_backend_model::UnixTime;
-use simple_backend_utils::time::{next_possible_utc_date_time_value_using_current_time, sleep_until_current_time_is_at};
+use simple_backend_utils::time::{
+    next_possible_utc_date_time_value_using_current_time, sleep_until_current_time_is_at,
+};
 use tokio::{sync::mpsc, task::JoinHandle, time::sleep};
 use tracing::{info, warn};
 
-use super::{
-    app::S, ServerQuitWatcher
-};
+use super::{ServerQuitWatcher, app::S};
 use crate::api::{GetConfig, GetTaskManager};
-
 
 #[derive(thiserror::Error, Debug)]
 pub enum ScheduledTaskError {
@@ -83,7 +81,10 @@ pub struct ScheduledTaskManagerHandle {
 }
 
 impl ScheduledTaskManagerHandle {
-    pub async fn send_message(&self, message: ScheduledTaskManagerMessage) -> Result<(), ScheduledTaskError> {
+    pub async fn send_message(
+        &self,
+        message: ScheduledTaskManagerMessage,
+    ) -> Result<(), ScheduledTaskError> {
         self.sender
             .send(message)
             .await
@@ -126,12 +127,15 @@ pub struct ScheduledTaskManager {
 }
 
 impl ScheduledTaskManager {
-    pub fn new_channel() -> (ScheduledTaskManagerHandle, ScheduledTaskManagerInternalState) {
+    pub fn new_channel() -> (
+        ScheduledTaskManagerHandle,
+        ScheduledTaskManagerInternalState,
+    ) {
         let (sender, receiver) = mpsc::channel(1);
         let state = Arc::new(Mutex::new(ScheduledTaskStatus::default()));
         let handle = ScheduledTaskManagerHandle {
             sender: sender.clone(),
-            state: state.clone()
+            state: state.clone(),
         };
         let state = ScheduledTaskManagerInternalState {
             sender,
@@ -237,7 +241,9 @@ impl ScheduledTaskManager {
         }
     }
 
-    async fn sleep_until_run_scheduled_tasks_check(config: &ScheduledTasksConfig) -> Result<(), ScheduledTaskError> {
+    async fn sleep_until_run_scheduled_tasks_check(
+        config: &ScheduledTasksConfig,
+    ) -> Result<(), ScheduledTaskError> {
         sleep_until_current_time_is_at(config.daily_start_time)
             .await
             .change_context(ScheduledTaskError::TimeError)
@@ -280,20 +286,21 @@ impl ScheduledTaksManagerInternal {
 
     async fn handle_message(&self, message: ScheduledTaskManagerMessage) {
         let result = match message {
-            ScheduledTaskManagerMessage::Schedule { task, notify_backend } =>
-                match task {
-                    ScheduledTaskType::BackendRestart =>
-                        self.schedule_backend_restart(notify_backend).await,
-                    ScheduledTaskType::SystemReboot =>
-                        self.schedule_system_reboot(notify_backend).await,
+            ScheduledTaskManagerMessage::Schedule {
+                task,
+                notify_backend,
+            } => match task {
+                ScheduledTaskType::BackendRestart => {
+                    self.schedule_backend_restart(notify_backend).await
                 }
-            ScheduledTaskManagerMessage::Unschedule { task } =>
-                match task {
-                    ScheduledTaskType::BackendRestart =>
-                        self.unschedule_backend_restart().await,
-                    ScheduledTaskType::SystemReboot =>
-                        self.unschedule_system_reboot().await,
+                ScheduledTaskType::SystemReboot => {
+                    self.schedule_system_reboot(notify_backend).await
                 }
+            },
+            ScheduledTaskManagerMessage::Unschedule { task } => match task {
+                ScheduledTaskType::BackendRestart => self.unschedule_backend_restart().await,
+                ScheduledTaskType::SystemReboot => self.unschedule_system_reboot().await,
+            },
         };
 
         self.state.refresh_state_to_backend().await;
@@ -308,7 +315,10 @@ impl ScheduledTaksManagerInternal {
         }
     }
 
-    async fn schedule_backend_restart(&self, notify_backend: bool) -> Result<(), ScheduledTaskError> {
+    async fn schedule_backend_restart(
+        &self,
+        notify_backend: bool,
+    ) -> Result<(), ScheduledTaskError> {
         if !self.config.allow_backend_restart {
             return Ok(());
         }
@@ -338,7 +348,10 @@ impl ScheduledTaksManagerInternal {
         Ok(())
     }
 
-    fn new_maintenance_task(&self, notify_backend: bool) -> Result<MaintenanceTask, ScheduledTaskError> {
+    fn new_maintenance_task(
+        &self,
+        notify_backend: bool,
+    ) -> Result<MaintenanceTask, ScheduledTaskError> {
         Ok(MaintenanceTask {
             time: self.task_start_time()?,
             notify_backend,
@@ -346,11 +359,10 @@ impl ScheduledTaksManagerInternal {
     }
 
     fn task_start_time(&self) -> Result<UnixTime, ScheduledTaskError> {
-        let time = next_possible_utc_date_time_value_using_current_time(
-            self.config.daily_start_time
-        )
-            .change_context(ScheduledTaskError::TimeError)?
-            .into();
+        let time =
+            next_possible_utc_date_time_value_using_current_time(self.config.daily_start_time)
+                .change_context(ScheduledTaskError::TimeError)?
+                .into();
         Ok(time)
     }
 }

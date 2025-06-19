@@ -1,11 +1,11 @@
 use std::num::Wrapping;
 
-use database::{define_current_write_commands, DieselDatabaseError};
-use diesel::{insert_into, prelude::*, ExpressionMethods};
+use database::{DieselDatabaseError, define_current_write_commands};
+use diesel::{ExpressionMethods, insert_into, prelude::*};
 use error_stack::Result;
 use model::AccountIdInternal;
 
-use crate::{current::read::GetDbReadCommandsMedia, IntoDatabaseError};
+use crate::{IntoDatabaseError, current::read::GetDbReadCommandsMedia};
 
 define_current_write_commands!(CurrentWriteMediaAdminNotification);
 
@@ -16,7 +16,11 @@ impl CurrentWriteMediaAdminNotification<'_> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::media_app_notification_state::dsl::*;
 
-        let current = self.read().media().notification().media_content_moderation_completed(id)?;
+        let current = self
+            .read()
+            .media()
+            .notification()
+            .media_content_moderation_completed(id)?;
 
         let new_value = Wrapping(current.accepted) + Wrapping(1);
         let new_value: i64 = new_value.0.into();
@@ -41,7 +45,11 @@ impl CurrentWriteMediaAdminNotification<'_> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::media_app_notification_state::dsl::*;
 
-        let current = self.read().media().notification().media_content_moderation_completed(id)?;
+        let current = self
+            .read()
+            .media()
+            .notification()
+            .media_content_moderation_completed(id)?;
 
         let new_value = Wrapping(current.rejected) + Wrapping(1);
         let new_value: i64 = new_value.0.into();

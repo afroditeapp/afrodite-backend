@@ -1,10 +1,7 @@
-
 use database::current::read::GetDbReadCommandsCommon;
 use model::{AccountIdInternal, AdminNotification};
 
-use crate::{
-    define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError
-};
+use crate::{DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead, result::Result};
 
 define_cmd_wrapper_read!(ReadCommandsCommonAdminNotification);
 

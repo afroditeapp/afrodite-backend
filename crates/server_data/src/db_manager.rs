@@ -2,10 +2,10 @@ use std::{fmt::Debug, fs, path::Path, sync::Arc};
 
 use config::Config;
 use database::{
-    current::write::TransactionConnection, CurrentReadHandle, CurrentWriteHandle,
-    DatabaseHandleCreator, DbReadCloseHandle, DbReaderHistoryRaw, DbReaderRaw, DbWriteCloseHandle,
-    DbWriter, DbWriterHistory, DbWriterWithHistory, DieselDatabaseError, HistoryReadHandle,
-    HistoryWriteHandle, TransactionError,
+    CurrentReadHandle, CurrentWriteHandle, DatabaseHandleCreator, DbReadCloseHandle,
+    DbReaderHistoryRaw, DbReaderRaw, DbWriteCloseHandle, DbWriter, DbWriterHistory,
+    DbWriterWithHistory, DieselDatabaseError, HistoryReadHandle, HistoryWriteHandle,
+    TransactionError, current::write::TransactionConnection,
 };
 use server_common::{
     app::EmailSenderImpl, push_notifications::PushNotificationSender, result::Result,
@@ -17,7 +17,13 @@ pub use server_common::{
 use tracing::info;
 
 use crate::{
-    cache::DatabaseCache, event::EventManagerWithCacheReference, file::utils::FileDir, index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle}, utils::{AccessTokenManager, AccountIdManager}, write_commands::Cmds, write_concurrent::WriteCommandsConcurrent
+    cache::DatabaseCache,
+    event::EventManagerWithCacheReference,
+    file::utils::FileDir,
+    index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
+    utils::{AccessTokenManager, AccountIdManager},
+    write_commands::Cmds,
+    write_concurrent::WriteCommandsConcurrent,
 };
 
 pub const DB_FILE_DIR_NAME: &str = "files";

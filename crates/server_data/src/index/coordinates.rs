@@ -123,9 +123,8 @@ impl CoordinateManager {
     ) -> LocationIndexArea {
         let profile_location = self.location_to_index_key(location);
 
-        let area_inner = min_distance.map(
-            |min_distance| self.create_index_area(location, min_distance.value, index)
-        );
+        let area_inner = min_distance
+            .map(|min_distance| self.create_index_area(location, min_distance.value, index));
 
         let area_outer = if let Some(max_distance) = max_distance {
             self.create_index_area(location, max_distance.value, index)
@@ -133,18 +132,19 @@ impl CoordinateManager {
             IndexArea::max_area(index)
         };
 
-        LocationIndexArea::new(
-            area_inner,
-            area_outer,
-            profile_location,
-            index,
-        )
+        LocationIndexArea::new(area_inner, area_outer, profile_location, index)
     }
 
-    fn create_index_area(&self, location: LocationInternal, distance: i64, index: &LocationIndex) -> IndexArea {
+    fn create_index_area(
+        &self,
+        location: LocationInternal,
+        distance: i64,
+        index: &LocationIndex,
+    ) -> IndexArea {
         let distance = distance as f64;
         let top_left = self.location_to_index_key(location.move_kilometers(distance, -distance));
-        let bottom_right = self.location_to_index_key(location.move_kilometers(-distance, distance));
+        let bottom_right =
+            self.location_to_index_key(location.move_kilometers(-distance, distance));
         IndexArea::new(top_left, bottom_right, index)
     }
 
@@ -198,7 +198,7 @@ impl CoordinateManager {
 #[derive(Debug, Clone, Default)]
 pub struct IndexArea {
     top_left: LocationIndexKey,
-    bottom_right: LocationIndexKey
+    bottom_right: LocationIndexKey,
 }
 
 impl IndexArea {
@@ -221,10 +221,7 @@ impl IndexArea {
 
     fn max_area(index: &impl ReadIndex) -> Self {
         Self {
-            top_left: LocationIndexKey {
-                x: 1,
-                y: 1,
-            },
+            top_left: LocationIndexKey { x: 1, y: 1 },
             bottom_right: LocationIndexKey {
                 x: index.last_profile_area_x_index(),
                 y: index.last_profile_area_y_index(),
@@ -259,8 +256,12 @@ impl LocationIndexArea {
         index: &impl ReadIndex,
     ) -> Self {
         profile_location = LocationIndexKey {
-            x: profile_location.x.clamp(1, index.last_profile_area_x_index()),
-            y: profile_location.y.clamp(1, index.last_profile_area_y_index()),
+            x: profile_location
+                .x
+                .clamp(1, index.last_profile_area_x_index()),
+            y: profile_location
+                .y
+                .clamp(1, index.last_profile_area_y_index()),
         };
         Self {
             area_inner,
@@ -269,39 +270,24 @@ impl LocationIndexArea {
         }
     }
 
-    pub fn max_area(
-        profile_location: LocationIndexKey,
-        index: &impl ReadIndex,
-    ) -> Self {
-        Self::new(
-            None,
-            IndexArea::max_area(index),
-            profile_location,
-            index,
-        )
+    pub fn max_area(profile_location: LocationIndexKey, index: &impl ReadIndex) -> Self {
+        Self::new(None, IndexArea::max_area(index), profile_location, index)
     }
 
     pub fn index_iterator_start_location(&self, random: bool) -> LocationIndexKey {
         if random {
-            let x = rand::thread_rng().gen_range(self.area_outer.top_left.x..=self.area_outer.bottom_right.x);
-            let y = rand::thread_rng().gen_range(self.area_outer.top_left.y..=self.area_outer.bottom_right.y);
-            LocationIndexKey {
-                x,
-                y,
-            }
+            let x = rand::thread_rng()
+                .gen_range(self.area_outer.top_left.x..=self.area_outer.bottom_right.x);
+            let y = rand::thread_rng()
+                .gen_range(self.area_outer.top_left.y..=self.area_outer.bottom_right.y);
+            LocationIndexKey { x, y }
         } else {
             self.profile_location
         }
     }
 
-    pub fn with_max_area(
-        &self,
-        index: &impl ReadIndex,
-    ) -> Self {
-        Self::max_area(
-            self.profile_location,
-            index,
-        )
+    pub fn with_max_area(&self, index: &impl ReadIndex) -> Self {
+        Self::max_area(self.profile_location, index)
     }
 
     pub fn area_inner(&self) -> Option<&IndexArea> {

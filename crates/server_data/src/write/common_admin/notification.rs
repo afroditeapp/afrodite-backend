@@ -2,10 +2,10 @@ use database::current::write::GetDbWriteCommandsCommon;
 use model::{AccountIdInternal, AdminNotification};
 
 use crate::{
-    define_cmd_wrapper_write, result::Result, write::db_transaction, DataError
+    DataError, define_cmd_wrapper_write,
+    result::Result,
+    write::{DbTransaction, db_transaction},
 };
-
-use crate::write::DbTransaction;
 
 define_cmd_wrapper_write!(WriteCommandsCommonAdminNotification);
 
@@ -16,7 +16,9 @@ impl WriteCommandsCommonAdminNotification<'_> {
         subscriptions: AdminNotification,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.common_admin().notification().set_admin_notification_subscriptions(id, subscriptions)
+            cmds.common_admin()
+                .notification()
+                .set_admin_notification_subscriptions(id, subscriptions)
         })
     }
 }

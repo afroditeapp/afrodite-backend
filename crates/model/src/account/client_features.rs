@@ -1,4 +1,3 @@
-
 use serde::{Deserialize, Serialize};
 use simple_backend_utils::time::UtcTimeValue;
 use utoipa::ToSchema;
@@ -37,7 +36,11 @@ pub struct ClientFeaturesConfig {
 
 impl ClientFeaturesConfig {
     pub fn daily_likes(&self) -> Option<i64> {
-        self.limits.likes.like_sending.as_ref().map(|v| v.daily_limit.into())
+        self.limits
+            .likes
+            .like_sending
+            .as_ref()
+            .map(|v| v.daily_limit.into())
     }
 }
 
@@ -151,9 +154,7 @@ pub struct LimitsConfig {
 
 impl From<LimitsConfigInternal> for LimitsConfig {
     fn from(value: LimitsConfigInternal) -> Self {
-        Self {
-            likes: value.likes,
-        }
+        Self { likes: value.likes }
     }
 }
 

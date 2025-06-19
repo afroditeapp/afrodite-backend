@@ -3,10 +3,9 @@
 use std::process::ExitStatus;
 
 use error_stack::{Result, ResultExt};
+use manager_config::Config;
 use manager_model::{CommandOutput, SystemInfo};
 use tokio::process::Command;
-
-use manager_config::Config;
 
 #[derive(thiserror::Error, Debug)]
 pub enum SystemInfoError {
@@ -62,9 +61,7 @@ impl SystemInfoGetter {
             }
         }
 
-        Ok(SystemInfo {
-            info: commands,
-        })
+        Ok(SystemInfo { info: commands })
     }
 
     async fn run_df() -> Result<CommandOutput, SystemInfoError> {
@@ -102,7 +99,7 @@ impl SystemInfoGetter {
             return Ok(CommandOutput {
                 name: "Print logs script".to_string(),
                 output: "The script does not exists".to_string(),
-            })
+            });
         }
         let script_str = script.to_str().ok_or(SystemInfoError::InvalidInput)?;
         Self::run_cmd_with_args("sudo", &[script_str]).await
@@ -120,7 +117,7 @@ impl SystemInfoGetter {
             return Ok(CommandOutput {
                 name: cmd_and_args_string,
                 output: "Command does not exists".to_string(),
-            })
+            });
         }
 
         let output = Command::new(cmd)

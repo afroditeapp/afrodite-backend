@@ -1,10 +1,10 @@
-use database::{define_current_write_commands, DieselDatabaseError};
+use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{insert_into, prelude::*};
 use error_stack::Result;
 use model::AccountIdInternal;
 use model_account::AccountEmailSendingStateRaw;
 
-use crate::{current::read::GetDbReadCommandsAccount, IntoDatabaseError};
+use crate::{IntoDatabaseError, current::read::GetDbReadCommandsAccount};
 
 define_current_write_commands!(CurrentWriteAccountEmail);
 

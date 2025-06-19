@@ -1,11 +1,14 @@
-
 use std::collections::HashMap;
-use diesel::{insert_into, query_dsl::methods::{FindDsl, SelectDsl}, ExpressionMethods, OptionalExtension, RunQueryDsl};
+
+use diesel::{
+    ExpressionMethods, OptionalExtension, RunQueryDsl, insert_into,
+    query_dsl::methods::{FindDsl, SelectDsl},
+};
+use error_stack::Result;
 use model::{AccountIdDb, ApiUsage, IpAddressStorage, UnixTime};
 use simple_backend_database::diesel_db::DieselDatabaseError;
-use error_stack::Result;
 
-use crate::{define_current_write_commands, IntoDatabaseError};
+use crate::{IntoDatabaseError, define_current_write_commands};
 
 define_current_write_commands!(CurrentWriteCommonStatistics);
 
@@ -41,14 +44,12 @@ impl CurrentWriteCommonStatistics<'_> {
                     continue;
                 }
 
-                let time_id_value = if let Some(time_id_value) = time_id_value{
+                let time_id_value = if let Some(time_id_value) = time_id_value {
                     time_id_value
                 } else {
                     use model::schema::api_usage_statistics_save_time::dsl::*;
                     let value: i64 = insert_into(api_usage_statistics_save_time)
-                        .values((
-                            unix_time.eq(current_time),
-                        ))
+                        .values((unix_time.eq(current_time),))
                         .on_conflict(unix_time)
                         .do_update()
                         .set(unix_time.eq(unix_time))
@@ -63,9 +64,7 @@ impl CurrentWriteCommonStatistics<'_> {
                 let metric_name_id: i64 = {
                     use model::schema::api_usage_statistics_metric_name::dsl::*;
                     insert_into(api_usage_statistics_metric_name)
-                        .values((
-                            metric_name.eq(&name),
-                        ))
+                        .values((metric_name.eq(&name),))
                         .on_conflict(metric_name)
                         .do_update()
                         .set(metric_name.eq(metric_name))

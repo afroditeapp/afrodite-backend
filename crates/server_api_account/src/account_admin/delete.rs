@@ -1,6 +1,13 @@
-use axum::{extract::{Path, State}, Extension};
+use axum::{
+    Extension,
+    extract::{Path, State},
+};
 use model::{AccountId, Permissions};
-use server_api::{app::{GetAccounts, WriteData}, create_open_api_router, db_write_multiple, S};
+use server_api::{
+    S,
+    app::{GetAccounts, WriteData},
+    create_open_api_router, db_write_multiple,
+};
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
 

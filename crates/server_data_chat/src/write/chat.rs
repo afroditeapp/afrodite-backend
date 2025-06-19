@@ -1,24 +1,28 @@
-mod report;
-mod notification;
 mod limits;
+mod notification;
+mod report;
 
 use std::sync::Arc;
 
 use database_chat::current::{
     read::GetDbReadCommandsChat,
     write::{
-        chat::{ChatStateChanges, ReceiverBlockedSender},
         GetDbWriteCommandsChat,
+        chat::{ChatStateChanges, ReceiverBlockedSender},
     },
 };
 use error_stack::ResultExt;
 use model_chat::{
-    AccountIdInternal, AddPublicKeyResult, ChatStateRaw, ClientId, ClientLocalId, MatchesIteratorSessionIdInternal, MessageNumber, NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId, ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion, SendMessageResult, SentMessageId, SyncVersionUtils
+    AccountIdInternal, AddPublicKeyResult, ChatStateRaw, ClientId, ClientLocalId,
+    MatchesIteratorSessionIdInternal, MessageNumber, NewReceivedLikesCount, PendingMessageId,
+    PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId,
+    ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion, SendMessageResult,
+    SentMessageId, SyncVersionUtils,
 };
 use server_data::{
-    app::EventManagerProvider, define_cmd_wrapper_write,
-    id::ToAccountIdInternal, read::DbRead, result::Result, write::DbTransaction, DataError,
-    DieselDatabaseError, IntoDataError,
+    DataError, DieselDatabaseError, IntoDataError, app::EventManagerProvider,
+    define_cmd_wrapper_write, id::ToAccountIdInternal, read::DbRead, result::Result,
+    write::DbTransaction,
 };
 use simple_backend_utils::ContextExt;
 use utils::encrypt::ParsedKeys;
@@ -340,8 +344,7 @@ impl WriteCommandsChat<'_> {
 
             // Who is sender and receiver in the interaction data depends
             // on who did the first like
-            if interaction.account_id_sender == Some(id_my_account.into_db_id())
-            {
+            if interaction.account_id_sender == Some(id_my_account.into_db_id()) {
                 interaction.sender_latest_viewed_message = new_message_number;
             } else {
                 interaction.receiver_latest_viewed_message = new_message_number;
@@ -442,7 +445,7 @@ impl WriteCommandsChat<'_> {
                     return Ok((
                         SendMessageResult::receiver_blocked_sender_or_receiver_not_found(),
                         None,
-                    ))
+                    ));
                 }
             };
 
@@ -464,13 +467,19 @@ impl WriteCommandsChat<'_> {
         id: AccountIdInternal,
         new_key: Vec<u8>,
     ) -> Result<AddPublicKeyResult, DataError> {
-        let info = self.handle().read().chat().public_key().get_private_public_key_info(id).await?;
+        let info = self
+            .handle()
+            .read()
+            .chat()
+            .public_key()
+            .get_private_public_key_info(id)
+            .await?;
 
         let key_count = if let Some(id) = info.latest_public_key_id {
             if *id.as_i64() >= 0 && *id.as_i64() < i64::MAX {
                 *id.as_i64() + 1
             } else {
-                return Err(DataError::NotAllowed.report().into())
+                return Err(DataError::NotAllowed.report().into());
             }
         } else {
             0

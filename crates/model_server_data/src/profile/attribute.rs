@@ -41,9 +41,7 @@ pub struct ProfileAttributeValue {
 impl ProfileAttributeValue {
     /// None is returned if [ProfileAttributeValueUpdate] disables
     /// the attribute.
-    pub fn from_update(
-        mut value: ProfileAttributeValueUpdate,
-    ) -> Option<Self> {
+    pub fn from_update(mut value: ProfileAttributeValueUpdate) -> Option<Self> {
         value.v.sort();
         match value.v.first() {
             Some(_) => Some(Self {
@@ -84,9 +82,7 @@ pub struct SortedProfileAttributes {
 }
 
 impl SortedProfileAttributes {
-    pub fn new(
-        attributes: Vec<ProfileAttributeValue>,
-    ) -> Self {
+    pub fn new(attributes: Vec<ProfileAttributeValue>) -> Self {
         let mut attributes = attributes;
         attributes.sort_by(|a, b| a.id.cmp(&b.id));
         Self { attributes }
@@ -129,25 +125,26 @@ impl AttributeValueReader {
                     filter & attribute != 0
                 }
             }
-            AttributeMode::OneLevel =>
-                Self::wanted_is_number_lists_match(
-                    filter_data,
-                    attribute_data,
-                    logical_and,
-                    NumberExistence::one_level_attribute_find_from_sorted,
-                ),
-            AttributeMode::TwoLevel =>
-                Self::wanted_is_number_lists_match(
-                    filter_data,
-                    attribute_data,
-                    logical_and,
-                    NumberExistence::two_level_attribute_find_from_sorted,
-                ),
+            AttributeMode::OneLevel => Self::wanted_is_number_lists_match(
+                filter_data,
+                attribute_data,
+                logical_and,
+                NumberExistence::one_level_attribute_find_from_sorted,
+            ),
+            AttributeMode::TwoLevel => Self::wanted_is_number_lists_match(
+                filter_data,
+                attribute_data,
+                logical_and,
+                NumberExistence::two_level_attribute_find_from_sorted,
+            ),
         }
     }
 
     /// The filter_data must not be empty
-    fn wanted_is_number_lists_match<'a, F: Fn(u32, &mut std::iter::Copied<std::slice::Iter<'a, u32>>) -> NumberExistence>(
+    fn wanted_is_number_lists_match<
+        'a,
+        F: Fn(u32, &mut std::iter::Copied<std::slice::Iter<'a, u32>>) -> NumberExistence,
+    >(
         filter_data: &[u32],
         attribute_data: &'a [u32],
         logical_and: bool,
@@ -186,23 +183,24 @@ impl AttributeValueReader {
                 let attribute = !(attribute_data.first().copied().unwrap_or_default() as u16);
                 filter & attribute == filter
             }
-            AttributeMode::OneLevel =>
-                Self::unwanted_is_number_lists_match(
-                    filter_data,
-                    attribute_data,
-                    NumberExistence::one_level_attribute_find_from_sorted,
-                ),
-            AttributeMode::TwoLevel =>
-                Self::unwanted_is_number_lists_match(
-                    filter_data,
-                    attribute_data,
-                    NumberExistence::two_level_attribute_find_from_sorted,
-                ),
+            AttributeMode::OneLevel => Self::unwanted_is_number_lists_match(
+                filter_data,
+                attribute_data,
+                NumberExistence::one_level_attribute_find_from_sorted,
+            ),
+            AttributeMode::TwoLevel => Self::unwanted_is_number_lists_match(
+                filter_data,
+                attribute_data,
+                NumberExistence::two_level_attribute_find_from_sorted,
+            ),
         }
     }
 
     /// The filter_data must not be empty
-    fn unwanted_is_number_lists_match<'a, F: Fn(u32, &mut std::iter::Copied<std::slice::Iter<'a, u32>>) -> NumberExistence>(
+    fn unwanted_is_number_lists_match<
+        'a,
+        F: Fn(u32, &mut std::iter::Copied<std::slice::Iter<'a, u32>>) -> NumberExistence,
+    >(
         filter_data: &[u32],
         attribute_data: &'a [u32],
         existence_check: F,
@@ -225,7 +223,10 @@ enum NumberExistence {
 }
 
 impl NumberExistence {
-    fn one_level_attribute_find_from_sorted<T: Iterator<Item=u32>>(filter_number: u32, value_iter: &mut T) -> Self {
+    fn one_level_attribute_find_from_sorted<T: Iterator<Item = u32>>(
+        filter_number: u32,
+        value_iter: &mut T,
+    ) -> Self {
         for value_number in value_iter {
             if value_number < filter_number {
                 // Can be found still
@@ -241,12 +242,18 @@ impl NumberExistence {
         NumberExistence::NotFound
     }
 
-    fn two_level_attribute_find_from_sorted<T: Iterator<Item=u32>>(filter_number: u32, value_iter: &mut T) -> Self {
+    fn two_level_attribute_find_from_sorted<T: Iterator<Item = u32>>(
+        filter_number: u32,
+        value_iter: &mut T,
+    ) -> Self {
         let filter_group_value = (filter_number & 0xFFFF) as u16;
         if filter_group_value == 0 {
             // Compare only with attribute value
             let filter_number = filter_number & 0xFFFF0000;
-            Self::one_level_attribute_find_from_sorted(filter_number, &mut value_iter.by_ref().map(|v| v & 0xFFFF0000))
+            Self::one_level_attribute_find_from_sorted(
+                filter_number,
+                &mut value_iter.by_ref().map(|v| v & 0xFFFF0000),
+            )
         } else {
             Self::one_level_attribute_find_from_sorted(filter_number, value_iter)
         }

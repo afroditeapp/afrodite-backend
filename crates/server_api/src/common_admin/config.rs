@@ -1,13 +1,13 @@
-use axum::{extract::State, Extension};
+use axum::{Extension, extract::State};
 use model::{AccountIdInternal, BackendConfig, Permissions};
 use simple_backend::create_counters;
 use tracing::info;
 
 use crate::{
+    S,
     app::{ReadDynamicConfig, WriteDynamicConfig},
     create_open_api_router,
     utils::{Json, StatusCode},
-    S,
 };
 
 const PATH_GET_BACKEND_CONFIG: &str = "/common_api/backend_config";

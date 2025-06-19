@@ -1,12 +1,16 @@
-use axum::{extract::{Path, State}, Extension};
+use axum::{
+    Extension,
+    extract::{Path, State},
+};
 use model_profile::{
-    AccountIdInternal, EventToClientInternal, GetProfileNamePendingModerationList, GetProfileNameState, Permissions, PostModerateProfileName
+    AccountId, AccountIdInternal, EventToClientInternal, GetProfileNamePendingModerationList,
+    GetProfileNameState, Permissions, PostModerateProfileName,
 };
 use server_api::{
+    S,
     app::{GetAccounts, WriteData},
-    create_open_api_router, db_write_multiple, S,
+    create_open_api_router, db_write_multiple,
 };
-use model_profile::AccountId;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 
@@ -138,7 +142,6 @@ pub async fn get_profile_name_state(
 
     Ok(r.into())
 }
-
 
 create_open_api_router!(
         fn router_admin_profile_name_allowlist,

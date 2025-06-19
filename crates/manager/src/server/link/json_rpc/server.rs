@@ -1,11 +1,15 @@
-
 use std::{collections::HashMap, num::Wrapping, time::Duration};
 
-use error_stack::{ResultExt, Result};
-use manager_model::{JsonRpcLinkHeader, JsonRpcLinkMessage, JsonRpcLinkMessageType, JsonRpcRequest, JsonRpcResponse};
+use error_stack::{Result, ResultExt};
+use manager_model::{
+    JsonRpcLinkHeader, JsonRpcLinkMessage, JsonRpcLinkMessageType, JsonRpcRequest, JsonRpcResponse,
+};
 use simple_backend_utils::ContextExt;
-use tokio::{sync::{mpsc, oneshot}, task::JoinHandle};
-use tracing::{warn, error};
+use tokio::{
+    sync::{mpsc, oneshot},
+    task::JoinHandle,
+};
+use tracing::{error, warn};
 
 use crate::server::ServerQuitWatcher;
 
@@ -76,7 +80,9 @@ pub struct JsonRcpLinkManagerHandleServer {
 }
 
 impl JsonRcpLinkManagerHandleServer {
-    pub async fn replace_connection(&self) -> Result<JsonRpcLinkConnectionReceiver, JsonRcpLinkError> {
+    pub async fn replace_connection(
+        &self,
+    ) -> Result<JsonRpcLinkConnectionReceiver, JsonRcpLinkError> {
         let (handle_sender, handle_receiver) = oneshot::channel();
         self.sender
             .send(JsonRcpLinkManagerMessage::ReplaceConnection { handle_sender })
@@ -94,7 +100,10 @@ impl JsonRcpLinkManagerHandleServer {
             .change_context(JsonRcpLinkError::BrokenChannel)
     }
 
-    pub async fn receive_message(&self, message: JsonRpcLinkMessage) -> Result<(), JsonRcpLinkError> {
+    pub async fn receive_message(
+        &self,
+        message: JsonRpcLinkMessage,
+    ) -> Result<(), JsonRcpLinkError> {
         self.sender
             .send(JsonRcpLinkManagerMessage::ReceiveMessage { message })
             .await
@@ -102,9 +111,12 @@ impl JsonRcpLinkManagerHandleServer {
     }
 
     /// Timeouts in 10 seconds
-    pub async fn do_request(&self, message: JsonRpcRequest) -> Result<JsonRpcResponse, JsonRcpLinkError> {
-        let message = serde_json::to_string(&message)
-            .change_context(JsonRcpLinkError::Serialize)?;
+    pub async fn do_request(
+        &self,
+        message: JsonRpcRequest,
+    ) -> Result<JsonRpcResponse, JsonRcpLinkError> {
+        let message =
+            serde_json::to_string(&message).change_context(JsonRcpLinkError::Serialize)?;
 
         let (sender, receiver) = oneshot::channel();
         self.sender
@@ -121,8 +133,7 @@ impl JsonRcpLinkManagerHandleServer {
 
         let response = r?;
 
-        serde_json::from_str(&response)
-            .change_context(JsonRcpLinkError::Deserialize)
+        serde_json::from_str(&response).change_context(JsonRcpLinkError::Deserialize)
     }
 }
 
@@ -139,15 +150,15 @@ pub struct JsonRcpLinkManagerServer {
 }
 
 impl JsonRcpLinkManagerServer {
-    pub fn new_channel() -> (JsonRcpLinkManagerHandleServer, JsonRcpLinkManagerInternalState) {
+    pub fn new_channel() -> (
+        JsonRcpLinkManagerHandleServer,
+        JsonRcpLinkManagerInternalState,
+    ) {
         let (sender, receiver) = mpsc::channel(10);
         let handle = JsonRcpLinkManagerHandleServer {
             sender: sender.clone(),
         };
-        let state = JsonRcpLinkManagerInternalState {
-            sender,
-            receiver,
-        };
+        let state = JsonRcpLinkManagerInternalState { sender, receiver };
         (handle, state)
     }
 
@@ -178,9 +189,7 @@ impl JsonRcpLinkManagerServer {
         }
     }
 
-    async fn handle_messages(
-        mut self,
-    ) {
+    async fn handle_messages(mut self) {
         loop {
             let message = self.receiver.recv().await;
             match message {
@@ -195,19 +204,14 @@ impl JsonRcpLinkManagerServer {
         }
     }
 
-    async fn handle_message(
-        &mut self,
-        message: JsonRcpLinkManagerMessage,
-    ) {
+    async fn handle_message(&mut self, message: JsonRcpLinkManagerMessage) {
         match message {
             JsonRcpLinkManagerMessage::ReplaceConnection { handle_sender } => {
                 let (sender, receiver) = mpsc::channel(10);
                 self.connection = Some(JsonRcpLinkConnectionSender { sender });
-                let _ = handle_sender.send(JsonRpcLinkConnectionReceiver {
-                    receiver,
-                });
+                let _ = handle_sender.send(JsonRpcLinkConnectionReceiver { receiver });
                 self.waiting_response.clear();
-            },
+            }
             JsonRcpLinkManagerMessage::CleanConnection => {
                 if let Some(connection) = &self.connection {
                     if connection.sender.is_closed() {
@@ -219,26 +223,29 @@ impl JsonRcpLinkManagerServer {
             JsonRcpLinkManagerMessage::ReceiveMessage { message } => {
                 match message.header.message_type {
                     JsonRpcLinkMessageType::Empty => (),
-                    JsonRpcLinkMessageType::ServerRequest =>
-                        warn!("Ignoring ServerRequest message. Client should send ServerResponse messages."),
+                    JsonRpcLinkMessageType::ServerRequest => warn!(
+                        "Ignoring ServerRequest message. Client should send ServerResponse messages."
+                    ),
                     JsonRpcLinkMessageType::ServerResponse => {
                         let sequence_number = message.header.sequence_number.0;
                         if let Some(handle) = self.waiting_response.remove(&sequence_number) {
                             match handle.send(message.data) {
                                 Ok(()) => (),
-                                Err(_) =>
-                                    warn!("Sending message to response wait handle failed, message sequence number {}", sequence_number)
+                                Err(_) => warn!(
+                                    "Sending message to response wait handle failed, message sequence number {}",
+                                    sequence_number
+                                ),
                             }
                         } else {
-                            warn!("Missing response wait handle, message sequence number {}", sequence_number);
+                            warn!(
+                                "Missing response wait handle, message sequence number {}",
+                                sequence_number
+                            );
                         }
                     }
                 }
-            },
-            JsonRcpLinkManagerMessage::DoRequest {
-                message,
-                sender
-            } => {
+            }
+            JsonRcpLinkManagerMessage::DoRequest { message, sender } => {
                 let Some(connection) = &self.connection else {
                     return;
                 };
@@ -253,7 +260,7 @@ impl JsonRcpLinkManagerServer {
                 };
 
                 if connection.sender.send(message).await.is_err() {
-                    return
+                    return;
                 }
 
                 self.garbage_collect_waiting_responses();
@@ -261,7 +268,7 @@ impl JsonRcpLinkManagerServer {
                 self.waiting_response.insert(sequence_number.0, sender);
 
                 self.next_sequence_number += 1;
-            },
+            }
         }
     }
 

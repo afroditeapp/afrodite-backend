@@ -1,2 +1,2 @@
-pub mod json_rpc;
 pub mod backup;
+pub mod json_rpc;

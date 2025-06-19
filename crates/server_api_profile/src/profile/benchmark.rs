@@ -1,19 +1,17 @@
 use axum::{
-    extract::{Path, State},
     Extension,
+    extract::{Path, State},
 };
-use model_profile::{
-    AccountId, AccountIdInternal, AccountState, Profile, ProfileUpdate,
-};
-use server_api::{create_open_api_router, db_write_multiple, S};
+use model_profile::{AccountId, AccountIdInternal, AccountState, Profile, ProfileUpdate};
+use server_api::{S, create_open_api_router, db_write_multiple};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
 
 use crate::{
+    DataError,
     app::{GetAccounts, GetConfig, ReadData, WriteData},
     utils::{Json, StatusCode},
-    DataError,
 };
 
 // ------------------- Benchmark routes ----------------------------

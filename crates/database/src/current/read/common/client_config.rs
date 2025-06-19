@@ -2,7 +2,7 @@ use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, ClientConfigSyncVersion};
 
-use crate::{define_current_read_commands, DieselDatabaseError};
+use crate::{DieselDatabaseError, define_current_read_commands};
 
 define_current_read_commands!(CurrentReadCommonClientConfig);
 

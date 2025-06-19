@@ -1,9 +1,11 @@
+use std::{
+    collections::HashMap,
+    net::{IpAddr, Ipv4Addr, Ipv6Addr},
+};
 
-use std::{collections::HashMap, net::{IpAddr, Ipv4Addr, Ipv6Addr}};
-
-use diesel::{prelude::Queryable, sql_types::Binary, Selectable};
+use diesel::{Selectable, prelude::Queryable, sql_types::Binary};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_bytes_try_from, UnixTime};
+use simple_backend_model::{UnixTime, diesel_bytes_try_from};
 use utoipa::ToSchema;
 
 use crate::AccountId;
@@ -115,9 +117,7 @@ impl IpAddressStorage {
     pub fn new(ip: IpAddressInternal) -> Self {
         let mut map = HashMap::new();
         map.insert(ip, IpInfo::new());
-        Self {
-            ips: map,
-        }
+        Self { ips: map }
     }
 }
 

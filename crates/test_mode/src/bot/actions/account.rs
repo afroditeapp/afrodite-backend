@@ -6,7 +6,8 @@ use api_client::{
         account_bot_api::{post_bot_login, post_bot_register, post_remote_bot_login},
     },
     models::{
-        auth_pair, Account, AccountData, AccountStateContainer, BooleanSetting, EventToClient, ProfileVisibility, RemoteBotLogin
+        Account, AccountData, AccountStateContainer, BooleanSetting, EventToClient,
+        ProfileVisibility, RemoteBotLogin, auth_pair,
     },
 };
 use async_trait::async_trait;
@@ -16,15 +17,15 @@ use error_stack::{Result, ResultExt};
 use futures::SinkExt;
 use headers::HeaderValue;
 use tokio_stream::StreamExt;
-use tokio_tungstenite::tungstenite::{client::IntoClientRequest, Message};
+use tokio_tungstenite::tungstenite::{Message, client::IntoClientRequest};
 use url::Url;
 use utils::api::PATH_CONNECT;
 
 use super::{super::super::client::TestError, BotAction, BotState, PreviousValue};
 use crate::{
     bot::{
-        create_event_channel, utils::assert::bot_assert_eq, AccountConnections, EventSender,
-        EventSenderAndQuitWatcher, WsConnection, WsStream,
+        AccountConnections, EventSender, EventSenderAndQuitWatcher, WsConnection, WsStream,
+        create_event_channel, utils::assert::bot_assert_eq,
     },
     server::TEST_ADMIN_ACCESS_EMAIL,
 };
@@ -61,13 +62,10 @@ impl BotAction for Login {
         let login_result = if let Some(password) = state.remote_bot_password() {
             post_remote_bot_login(
                 state.api.account(),
-                RemoteBotLogin::new(
-                    state.account_id()?,
-                    password,
-                ),
+                RemoteBotLogin::new(state.account_id()?, password),
             )
-                .await
-                .change_context(TestError::ApiRequest)?
+            .await
+            .change_context(TestError::ApiRequest)?
         } else {
             post_bot_login(state.api.account(), state.account_id()?)
                 .await
@@ -166,11 +164,14 @@ async fn connect_websocket(
 
     let web_socket_protocol_version: u8 = 0;
     let client_type_number = u8::MAX; // Test mode bot client type
-    let version = state.server_config.min_client_version().unwrap_or(MinClientVersion {
-        major: 0,
-        minor: 0,
-        patch: 0,
-    });
+    let version = state
+        .server_config
+        .min_client_version()
+        .unwrap_or(MinClientVersion {
+            major: 0,
+            minor: 0,
+            patch: 0,
+        });
     let mut version_bytes: Vec<u8> = vec![web_socket_protocol_version, client_type_number];
     version_bytes.extend_from_slice(&version.major.to_le_bytes());
     version_bytes.extend_from_slice(&version.minor.to_le_bytes());
@@ -297,7 +298,7 @@ impl AccountState {
                 initial_setup_completed: None,
                 banned: None,
                 pending_deletion: Some(true),
-            }
+            },
         }
     }
 }
@@ -374,9 +375,7 @@ impl SetAccountSetup {
     }
 
     pub const fn admin() -> Self {
-        Self {
-            admin: true,
-        }
+        Self { admin: true }
     }
 }
 

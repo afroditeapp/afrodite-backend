@@ -1,8 +1,8 @@
 use database::define_current_write_commands;
 
+mod notification;
 mod profile_name_allowlist;
 mod profile_text;
-mod notification;
 mod search;
 
 define_current_write_commands!(CurrentWriteProfileAdmin);

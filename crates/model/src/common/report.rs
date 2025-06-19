@@ -1,17 +1,13 @@
-
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_struct_try_from, diesel_i64_try_from, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{schema_sqlite_types::Integer, CustomReportId};
-
 use super::AccountId;
+use crate::{CustomReportId, schema_sqlite_types::Integer};
 
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, FromSqlRow, AsExpression
-)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromSqlRow, AsExpression)]
 #[diesel(sql_type = BigInt)]
 pub struct ReportIdDb(pub i64);
 
@@ -34,17 +30,13 @@ pub struct ReportId {
 
 impl ReportId {
     pub fn new(id: i64) -> Self {
-        Self {
-            id,
-        }
+        Self { id }
     }
 }
 
 impl From<ReportIdDb> for ReportId {
     fn from(value: ReportIdDb) -> Self {
-        Self {
-            id: value.0,
-        }
+        Self { id: value.0 }
     }
 }
 
@@ -53,20 +45,21 @@ impl From<ReportIdDb> for ReportId {
 pub struct CustomReportTypeNumberValue(i8);
 
 impl CustomReportTypeNumberValue {
-    pub fn new(value: u8) -> Result<Self, String>{
+    pub fn new(value: u8) -> Result<Self, String> {
         let min = ReportTypeNumber::FIRST_CUSTOM_REPORT_TYPE_NUMBER as u8;
         let max = ReportTypeNumber::LAST_CUSTOM_REPORT_TYPE_NUMBER as u8;
         if value < min || value > max {
-            Err(format!("Invalid custom report type number value {}, min: {}, max: {}", value, min, max))
+            Err(format!(
+                "Invalid custom report type number value {}, min: {}, max: {}",
+                value, min, max
+            ))
         } else {
             Ok(Self(value as i8))
         }
     }
 
     pub fn to_report_type_number(&self) -> ReportTypeNumber {
-        ReportTypeNumber {
-            n: self.0,
-        }
+        ReportTypeNumber { n: self.0 }
     }
 
     pub fn to_report_type_number_internal(&self) -> ReportTypeNumberInternal {
@@ -86,7 +79,7 @@ pub enum ReportTypeNumberInternal {
     ProfileContent,
     ChatMessage,
     /// Values from 64 to 127
-    CustomReport(CustomReportTypeNumberValue)
+    CustomReport(CustomReportTypeNumberValue),
 }
 
 impl ReportTypeNumberInternal {
@@ -103,7 +96,6 @@ impl ReportTypeNumberInternal {
             Self::CustomReport(value) => value.0,
         }
     }
-
 }
 
 diesel_i64_struct_try_from!(ReportTypeNumberInternal);
@@ -111,8 +103,7 @@ diesel_i64_struct_try_from!(ReportTypeNumberInternal);
 impl TryFrom<i64> for ReportTypeNumberInternal {
     type Error = String;
     fn try_from(value: i64) -> Result<Self, Self::Error> {
-        let value = TryInto::<i8>::try_into(value)
-            .map_err(|e| e.to_string())?;
+        let value = TryInto::<i8>::try_into(value).map_err(|e| e.to_string())?;
         let v = match value {
             0 => Self::ProfileName,
             1 => Self::ProfileText,
@@ -133,9 +124,7 @@ impl From<ReportTypeNumberInternal> for i64 {
 
 impl From<ReportTypeNumberInternal> for ReportTypeNumber {
     fn from(value: ReportTypeNumberInternal) -> Self {
-        Self {
-            n: value.to_i8(),
-        }
+        Self { n: value.to_i8() }
     }
 }
 
@@ -153,14 +142,7 @@ impl TryFrom<ReportTypeNumber> for ReportTypeNumberInternal {
 /// * ProfileContent = 2
 /// * ChatMessage = 3
 /// * CustomReport = values from 64 to 127
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    Deserialize,
-    Serialize,
-    ToSchema,
-)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema)]
 pub struct ReportTypeNumber {
     /// This is i8 so that max value is 127. That makes SQLite to
     /// store the value using single byte.

@@ -1,6 +1,6 @@
-use axum::{extract::State, Extension};
+use axum::{Extension, extract::State};
 use model::AccountIdInternal;
-use server_api::{create_open_api_router, db_write_multiple, S};
+use server_api::{S, create_open_api_router, db_write_multiple};
 use server_data::write::GetWriteCommandsCommon;
 use simple_backend::create_counters;
 

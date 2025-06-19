@@ -1,7 +1,7 @@
 use std::{future::Future, sync::Arc};
 
 use axum::extract::ws::WebSocket;
-use config::{file::EmailAddress, Config};
+use config::{Config, file::EmailAddress};
 use futures::future::BoxFuture;
 use model::{
     Account, AccountId, AccountIdInternal, PendingNotification, PendingNotificationWithData,
@@ -13,6 +13,7 @@ use server_common::websocket::WebSocketError;
 use simple_backend::manager_client::ManagerApiClient;
 
 use crate::{
+    DataError,
     db_manager::{InternalWriting, RouterDatabaseReadHandle},
     event::EventManagerWithCacheReference,
     statistics::ProfileStatisticsCache,
@@ -20,7 +21,6 @@ use crate::{
     write_concurrent::{
         ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle,
     },
-    DataError,
 };
 
 pub trait WriteData {

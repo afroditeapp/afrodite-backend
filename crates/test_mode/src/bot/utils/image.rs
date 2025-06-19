@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use image::{codecs::jpeg::JpegEncoder, ImageBuffer, Rgb};
+use image::{ImageBuffer, Rgb, codecs::jpeg::JpegEncoder};
 use rand::seq::SliceRandom;
 
 const GENERATED_IMG_WIDTH: u32 = 512;

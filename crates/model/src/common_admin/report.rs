@@ -2,7 +2,10 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::UnixTime;
 use utoipa::ToSchema;
 
-use crate::{AccountId, AccountIdDb, AccountIdInternal, ChatMessageReport, ContentId, ProfileAge, ReportId, ReportIdDb, ReportProcessingState, ReportTypeNumber, ReportTypeNumberInternal};
+use crate::{
+    AccountId, AccountIdDb, AccountIdInternal, ChatMessageReport, ContentId, ProfileAge, ReportId,
+    ReportIdDb, ReportProcessingState, ReportTypeNumber, ReportTypeNumberInternal,
+};
 
 pub struct ReportInternal {
     pub info: ReportDetailedInfoInternal,
@@ -91,7 +94,7 @@ pub struct ReportDetailed {
     pub target_info: Option<ReportAccountInfo>,
     /// Only available when chat component is enabled and account interaction
     /// exists.
-    pub chat_info: Option<ReportChatInfo>
+    pub chat_info: Option<ReportChatInfo>,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize, ToSchema)]

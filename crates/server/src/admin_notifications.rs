@@ -1,14 +1,20 @@
 use std::time::Duration;
 
 use model::{AdminNotification, NotificationEvent};
-use model_media::{GetProfileContentPendingModerationParams, MediaContentType, ModerationQueueType};
+use model_media::{
+    GetProfileContentPendingModerationParams, MediaContentType, ModerationQueueType,
+};
 use model_profile::GetProfileTextPendingModerationParams;
 use server_api::app::EventManagerProvider;
 use server_common::result::{Result, WrappedResultExt};
 use server_data::{app::ReadData, read::GetReadCommandsCommon};
 use server_data_media::read::GetReadMediaCommands;
 use server_data_profile::read::GetReadProfileCommands;
-use server_state::{admin_notifications::{AdminNotificationEvent, AdminNotificationEventReceiver}, S, app::AdminNotificationProvider};
+use server_state::{
+    S,
+    admin_notifications::{AdminNotificationEvent, AdminNotificationEventReceiver},
+    app::AdminNotificationProvider,
+};
 use simple_backend::ServerQuitWatcher;
 use tokio::task::JoinHandle;
 use tracing::{error, warn};
@@ -93,13 +99,21 @@ impl AdminNotificationManager {
     }
 
     async fn handle_pending_events(&mut self) -> Result<(), AdminNotificationError> {
-        if self.pending_notifications.moderate_initial_media_content_bot {
-            self.pending_notifications.moderate_initial_media_content_bot =
+        if self
+            .pending_notifications
+            .moderate_initial_media_content_bot
+        {
+            self.pending_notifications
+                .moderate_initial_media_content_bot =
                 self.is_initial_content_moderation_needed(true).await?;
         }
 
-        if self.pending_notifications.moderate_initial_media_content_human {
-            self.pending_notifications.moderate_initial_media_content_human =
+        if self
+            .pending_notifications
+            .moderate_initial_media_content_human
+        {
+            self.pending_notifications
+                .moderate_initial_media_content_human =
                 self.is_initial_content_moderation_needed(false).await?;
         }
 
@@ -134,11 +148,11 @@ impl AdminNotificationManager {
         }
 
         if self.pending_notifications.process_reports {
-            self.pending_notifications.process_reports =
-                self.is_report_processing_needed().await?
+            self.pending_notifications.process_reports = self.is_report_processing_needed().await?
         }
 
-        let accounts = self.state
+        let accounts = self
+            .state
             .read()
             .common_admin()
             .notification()
@@ -147,9 +161,22 @@ impl AdminNotificationManager {
             .change_context(AdminNotificationError::DatabaseError)?;
 
         for (a, _) in accounts {
-            if self.state.admin_notification().get_notification_state(a).await != Some(self.pending_notifications.clone()) {
-                self.state.admin_notification().write().set_notification_state(a, self.pending_notifications.clone()).await;
-                let r = self.state.event_manager().send_notification(a, NotificationEvent::AdminNotification)
+            if self
+                .state
+                .admin_notification()
+                .get_notification_state(a)
+                .await
+                != Some(self.pending_notifications.clone())
+            {
+                self.state
+                    .admin_notification()
+                    .write()
+                    .set_notification_state(a, self.pending_notifications.clone())
+                    .await;
+                let r = self
+                    .state
+                    .event_manager()
+                    .send_notification(a, NotificationEvent::AdminNotification)
                     .await;
                 if let Err(e) = r {
                     error!("Event sending failed: {:?}", e);
@@ -162,8 +189,12 @@ impl AdminNotificationManager {
         Ok(())
     }
 
-    async fn is_initial_content_moderation_needed(&self, is_bot: bool) -> Result<bool, AdminNotificationError> {
-        let values = self.state
+    async fn is_initial_content_moderation_needed(
+        &self,
+        is_bot: bool,
+    ) -> Result<bool, AdminNotificationError> {
+        let values = self
+            .state
             .read()
             .media_admin()
             .profile_content_pending_moderation_list(
@@ -172,7 +203,7 @@ impl AdminNotificationManager {
                     content_type: MediaContentType::JpegImage,
                     queue: ModerationQueueType::InitialMediaModeration,
                     show_content_which_bots_can_moderate: is_bot,
-                }
+                },
             )
             .await
             .change_context(AdminNotificationError::DatabaseError)?
@@ -180,8 +211,12 @@ impl AdminNotificationManager {
         Ok(!values.is_empty())
     }
 
-    async fn is_content_moderation_needed(&self, is_bot: bool) -> Result<bool, AdminNotificationError> {
-        let values = self.state
+    async fn is_content_moderation_needed(
+        &self,
+        is_bot: bool,
+    ) -> Result<bool, AdminNotificationError> {
+        let values = self
+            .state
             .read()
             .media_admin()
             .profile_content_pending_moderation_list(
@@ -190,7 +225,7 @@ impl AdminNotificationManager {
                     content_type: MediaContentType::JpegImage,
                     queue: ModerationQueueType::MediaModeration,
                     show_content_which_bots_can_moderate: is_bot,
-                }
+                },
             )
             .await
             .change_context(AdminNotificationError::DatabaseError)?
@@ -198,8 +233,12 @@ impl AdminNotificationManager {
         Ok(!values.is_empty())
     }
 
-    async fn is_profile_text_moderation_needed(&self, is_bot: bool) -> Result<bool, AdminNotificationError> {
-        let values = self.state
+    async fn is_profile_text_moderation_needed(
+        &self,
+        is_bot: bool,
+    ) -> Result<bool, AdminNotificationError> {
+        let values = self
+            .state
             .read()
             .profile_admin()
             .profile_text()
@@ -207,7 +246,7 @@ impl AdminNotificationManager {
                 is_bot,
                 GetProfileTextPendingModerationParams {
                     show_texts_which_bots_can_moderate: is_bot,
-                }
+                },
             )
             .await
             .change_context(AdminNotificationError::DatabaseError)?
@@ -217,7 +256,8 @@ impl AdminNotificationManager {
 
     // TODO(prod): Add is_bot parameter
     async fn is_profile_name_moderation_needed(&self) -> Result<bool, AdminNotificationError> {
-        let values = self.state
+        let values = self
+            .state
             .read()
             .profile_admin()
             .profile_name_allowlist()
@@ -229,7 +269,8 @@ impl AdminNotificationManager {
     }
 
     async fn is_report_processing_needed(&self) -> Result<bool, AdminNotificationError> {
-        let values = self.state
+        let values = self
+            .state
             .read()
             .common_admin()
             .report()
@@ -247,15 +288,14 @@ struct WaitSendTimer {
 
 impl WaitSendTimer {
     fn new() -> Self {
-        Self {
-            timer: None,
-        }
+        Self { timer: None }
     }
 
     fn start_if_not_running(&mut self) {
         if self.timer.is_none() {
             const WAIT_TIME: Duration = Duration::from_secs(60);
-            let timer = tokio::time::interval_at(tokio::time::Instant::now() + WAIT_TIME, WAIT_TIME);
+            let timer =
+                tokio::time::interval_at(tokio::time::Instant::now() + WAIT_TIME, WAIT_TIME);
             self.timer = Some(timer);
         }
     }
@@ -269,5 +309,4 @@ impl WaitSendTimer {
             std::future::pending().await
         }
     }
-
 }

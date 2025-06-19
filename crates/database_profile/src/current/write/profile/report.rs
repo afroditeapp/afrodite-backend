@@ -1,5 +1,7 @@
-use database::{current::write::GetDbWriteCommandsCommon, define_current_write_commands, DieselDatabaseError};
-use diesel::{insert_into, prelude::*, ExpressionMethods};
+use database::{
+    DieselDatabaseError, current::write::GetDbWriteCommandsCommon, define_current_write_commands,
+};
+use diesel::{ExpressionMethods, insert_into, prelude::*};
 use error_stack::Result;
 use model::{AccountIdInternal, ReportProcessingState, ReportTypeNumberInternal};
 
@@ -18,17 +20,14 @@ impl CurrentWriteProfileReport<'_> {
             creator,
             target,
             ReportTypeNumberInternal::ProfileName,
-            ReportProcessingState::Waiting
+            ReportProcessingState::Waiting,
         )?;
 
         {
             use model::schema::profile_report_profile_name::dsl::*;
 
             insert_into(profile_report_profile_name)
-                .values((
-                    report_id.eq(id),
-                    profile_name.eq(&name),
-                ))
+                .values((report_id.eq(id), profile_name.eq(&name)))
                 .execute(self.conn())
                 .into_db_error((creator, target))?;
         }
@@ -46,17 +45,14 @@ impl CurrentWriteProfileReport<'_> {
             creator,
             target,
             ReportTypeNumberInternal::ProfileText,
-            ReportProcessingState::Waiting
+            ReportProcessingState::Waiting,
         )?;
 
         {
             use model::schema::profile_report_profile_text::dsl::*;
 
             insert_into(profile_report_profile_text)
-                .values((
-                    report_id.eq(id),
-                    profile_text.eq(&text),
-                ))
+                .values((report_id.eq(id), profile_text.eq(&text)))
                 .execute(self.conn())
                 .into_db_error((creator, target))?;
         }

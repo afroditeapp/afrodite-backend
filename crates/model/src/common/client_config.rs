@@ -1,9 +1,8 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::{ClientFeaturesFileHash, CustomReportsFileHash, ProfileAttributeInfo};
-
 use super::ClientConfigSyncVersion;
+use crate::{ClientFeaturesFileHash, CustomReportsFileHash, ProfileAttributeInfo};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ClientConfig {

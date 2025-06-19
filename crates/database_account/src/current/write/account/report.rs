@@ -1,7 +1,11 @@
-use database::{current::write::GetDbWriteCommandsCommon, define_current_write_commands, DieselDatabaseError};
-use diesel::{insert_into, prelude::*, ExpressionMethods};
+use database::{
+    DieselDatabaseError, current::write::GetDbWriteCommandsCommon, define_current_write_commands,
+};
+use diesel::{ExpressionMethods, insert_into, prelude::*};
 use error_stack::Result;
-use model::{AccountIdInternal, CustomReportTypeNumberValue, ReportProcessingState, ReportTypeNumberInternal};
+use model::{
+    AccountIdInternal, CustomReportTypeNumberValue, ReportProcessingState, ReportTypeNumberInternal,
+};
 
 use crate::IntoDatabaseError;
 
@@ -19,17 +23,14 @@ impl CurrentWriteAccountReport<'_> {
             creator,
             target,
             ReportTypeNumberInternal::CustomReport(custom_report_type_number),
-            ReportProcessingState::Waiting
+            ReportProcessingState::Waiting,
         )?;
 
         {
             use model::schema::account_custom_report::dsl::*;
 
             insert_into(account_custom_report)
-                .values((
-                    report_id.eq(id),
-                    boolean_value.eq(value),
-                ))
+                .values((report_id.eq(id), boolean_value.eq(value)))
                 .execute(self.conn())
                 .into_db_error((creator, target))?;
         }
@@ -44,7 +45,10 @@ impl CurrentWriteAccountReport<'_> {
         use model::schema::custom_reports_file_hash::dsl::*;
 
         insert_into(custom_reports_file_hash)
-            .values((row_type.eq(0), sha256_hash.eq(sha256_custom_reports_file_hash)))
+            .values((
+                row_type.eq(0),
+                sha256_hash.eq(sha256_custom_reports_file_hash),
+            ))
             .on_conflict(row_type)
             .do_update()
             .set(sha256_hash.eq(sha256_custom_reports_file_hash))

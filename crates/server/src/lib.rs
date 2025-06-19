@@ -4,23 +4,23 @@
 #![warn(unused_crate_dependencies)]
 #![allow(clippy::while_let_loop)]
 
+pub mod admin_notifications;
 pub mod api;
 pub mod api_doc;
-pub mod profile_search;
 pub mod bot;
 pub mod content_processing;
+pub mod daily_likes;
 pub mod email;
-pub mod perf;
-pub mod push_notifications;
 pub mod hourly_tasks;
+pub mod perf;
+pub mod profile_search;
+pub mod push_notifications;
 pub mod scheduled_tasks;
 pub mod shutdown_tasks;
 pub mod startup_tasks;
 pub mod task_utils;
-pub mod utils;
-pub mod admin_notifications;
 pub mod unlimited_likes;
-pub mod daily_likes;
+pub mod utils;
 
 use std::sync::Arc;
 
@@ -45,20 +45,28 @@ use server_data::{
     write_commands::{WriteCmdWatcher, WriteCommandRunnerHandle},
 };
 use server_data_all::{app::DataAllUtilsImpl, load::DbDataToCacheLoader};
-use server_state::{admin_notifications::AdminNotificationManagerData, demo::DemoModeManager, AppState, StateForRouterCreation};
+use server_state::{
+    AppState, StateForRouterCreation, admin_notifications::AdminNotificationManagerData,
+    demo::DemoModeManager,
+};
 use shutdown_tasks::ShutdownTasks;
 use simple_backend::{
+    BusinessLogic, ServerQuitWatcher,
     app::SimpleBackendAppState,
     email::{EmailManager, EmailManagerQuitHandle},
     perf::counters::AllCounters,
     web_socket::WebSocketManager,
-    BusinessLogic, ServerQuitWatcher,
 };
 use startup_tasks::StartupTasks;
 use tracing::{error, warn};
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::{admin_notifications::{AdminNotificationManager, AdminNotificationManagerQuitHandle}, bot::BotClient, daily_likes::{DailyLikesManager, DailyLikesManagerQuitHandle}, unlimited_likes::{UnlimitedLikesManager, UnlimitedLikesManagerQuitHandle}};
+use crate::{
+    admin_notifications::{AdminNotificationManager, AdminNotificationManagerQuitHandle},
+    bot::BotClient,
+    daily_likes::{DailyLikesManager, DailyLikesManagerQuitHandle},
+    unlimited_likes::{UnlimitedLikesManager, UnlimitedLikesManagerQuitHandle},
+};
 
 pub struct DatingAppServer {
     config: Arc<Config>,
@@ -181,9 +189,9 @@ impl BusinessLogic for DatingAppBusinessLogic {
         let mut router = Router::new();
 
         if self.config.components().account {
-            router = router.merge(
-                server_router_account::BotApp::create_account_server_router(state.clone()),
-            )
+            router = router.merge(server_router_account::BotApp::create_account_server_router(
+                state.clone(),
+            ))
         }
 
         router = router.merge(self.public_api_router(web_socket_manager, state, true));
@@ -191,10 +199,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
         router
     }
 
-    fn internal_api_router(
-        &self,
-        state: &Self::AppState,
-    ) -> Router {
+    fn internal_api_router(&self, state: &Self::AppState) -> Router {
         let mut router = Router::new();
 
         if self.config.components().account {
@@ -218,26 +223,23 @@ impl BusinessLogic for DatingAppBusinessLogic {
             s: state.clone(),
             disable_api_obfuscation: false,
         };
-        let mut swagger = SwaggerUi::new("/swagger-ui")
-            .url(API_DOC_URL, ApiDoc::all(router_state.clone()));
+        let mut swagger =
+            SwaggerUi::new("/swagger-ui").url(API_DOC_URL, ApiDoc::all(router_state.clone()));
 
         let swagger_config = if state.config().api_obfuscation_salt().is_some() {
             let router_state = StateForRouterCreation {
                 s: state.clone(),
                 disable_api_obfuscation: true,
             };
-            swagger = swagger.url(API_DOC_URL_OBFUSCATION_DISABLED, ApiDoc::all(router_state.clone()));
+            swagger = swagger.url(
+                API_DOC_URL_OBFUSCATION_DISABLED,
+                ApiDoc::all(router_state.clone()),
+            );
             utoipa_swagger_ui::Config::new([API_DOC_URL, API_DOC_URL_OBFUSCATION_DISABLED])
         } else {
             utoipa_swagger_ui::Config::new([API_DOC_URL])
         };
-        Some(
-            swagger
-                .config(
-                    swagger_config
-                        .display_operation_id(true),
-                ),
-        )
+        Some(swagger.config(swagger_config.display_operation_id(true)))
     }
 
     async fn on_before_server_start(
@@ -294,7 +296,9 @@ impl BusinessLogic for DatingAppBusinessLogic {
         )
         .await;
 
-        app_state.data_signer().load_or_generate_keys(self.config.simple_backend())
+        app_state
+            .data_signer()
+            .load_or_generate_keys(self.config.simple_backend())
             .await
             .expect("Data signer init failed");
 
@@ -337,8 +341,10 @@ impl BusinessLogic for DatingAppBusinessLogic {
             HourlyTaskManager::new_manager(app_state.clone(), server_quit_watcher.resubscribe());
         let profile_search =
             ProfileSearchManager::new_manager(app_state.clone(), server_quit_watcher.resubscribe());
-        let unlimited_likes =
-            UnlimitedLikesManager::new_manager(app_state.clone(), server_quit_watcher.resubscribe());
+        let unlimited_likes = UnlimitedLikesManager::new_manager(
+            app_state.clone(),
+            server_quit_watcher.resubscribe(),
+        );
         let daily_likes =
             DailyLikesManager::new_manager(app_state.clone(), server_quit_watcher.resubscribe());
 
@@ -401,10 +407,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
             .await;
 
         // Avoid running tasks simultaneously with shutdown tasks.
-        self.daily_likes
-            .expect("Not initialized")
-            .wait_quit()
-            .await;
+        self.daily_likes.expect("Not initialized").wait_quit().await;
         self.unlimited_likes
             .expect("Not initialized")
             .wait_quit()

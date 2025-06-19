@@ -1,10 +1,10 @@
-use database::{define_current_write_commands, DieselDatabaseError};
+use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{delete, insert_into, prelude::*, update, upsert::excluded};
 use error_stack::Result;
 use model::{AccountIdInternal, SyncVersion, UnixTime};
 use model_account::{AccountGlobalState, NewsId, NewsLocale, PublicationId, UpdateNewsTranslation};
 
-use crate::{current::read::GetDbReadCommandsAccount, IntoDatabaseError};
+use crate::{IntoDatabaseError, current::read::GetDbReadCommandsAccount};
 
 define_current_write_commands!(CurrentWriteAccountNewsAdmin);
 

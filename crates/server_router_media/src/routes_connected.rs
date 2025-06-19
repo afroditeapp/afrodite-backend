@@ -1,4 +1,4 @@
-use axum::{middleware, Router};
+use axum::{Router, middleware};
 use server_state::StateForRouterCreation;
 
 use crate::api;
@@ -10,9 +10,7 @@ pub struct ConnectedApp {
 
 impl ConnectedApp {
     pub fn new(state: StateForRouterCreation) -> Self {
-        Self {
-            state,
-        }
+        Self { state }
     }
 
     pub fn private_media_server_router(&self) -> Router {
@@ -26,9 +24,7 @@ impl ConnectedApp {
             .merge(api::media::router_media_report(self.state.clone()))
             .merge(api::media::router_notification(self.state.clone()))
             // Media admin
-            .merge(api::media_admin::router_admin_content(
-                self.state.clone(),
-            ))
+            .merge(api::media_admin::router_admin_content(self.state.clone()))
             .merge(api::media_admin::router_admin_moderation(
                 self.state.clone(),
             ))

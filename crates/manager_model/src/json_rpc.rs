@@ -2,7 +2,10 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::UnixTime;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{ManualTaskType, NotifyBackend, ScheduledTaskStatus, ScheduledTaskType, SecureStorageEncryptionKey, SoftwareUpdateStatus, SoftwareUpdateTaskType, SystemInfo};
+use crate::{
+    ManualTaskType, NotifyBackend, ScheduledTaskStatus, ScheduledTaskType,
+    SecureStorageEncryptionKey, SoftwareUpdateStatus, SoftwareUpdateTaskType, SystemInfo,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, num_enum::TryFromPrimitive)]
 #[repr(u8)]
@@ -29,10 +32,7 @@ pub struct JsonRpcRequest {
 
 impl JsonRpcRequest {
     pub fn new(receiver: ManagerInstanceName, request: JsonRpcRequestType) -> Self {
-        Self {
-            receiver,
-            request,
-        }
+        Self { receiver, request }
     }
 }
 
@@ -76,49 +76,33 @@ impl JsonRpcResponse {
         }
     }
 
-    pub fn secure_storage_encryption_key(
-        key: SecureStorageEncryptionKey,
-    ) -> Self {
+    pub fn secure_storage_encryption_key(key: SecureStorageEncryptionKey) -> Self {
         Self {
             response: JsonRpcResponseType::SecureStorageEncryptionKey(key),
         }
     }
 
-    pub fn manager_instance_names(
-        names: Vec<ManagerInstanceName>,
-    ) -> Self {
+    pub fn manager_instance_names(names: Vec<ManagerInstanceName>) -> Self {
         Self {
-            response: JsonRpcResponseType::ManagerInstanceNames(
-                ManagerInstanceNameList { names }
-            ),
+            response: JsonRpcResponseType::ManagerInstanceNames(ManagerInstanceNameList { names }),
         }
     }
 
-    pub fn system_info(
-        info: SystemInfo,
-    ) -> Self {
+    pub fn system_info(info: SystemInfo) -> Self {
         Self {
-            response: JsonRpcResponseType::SystemInfo(info)
+            response: JsonRpcResponseType::SystemInfo(info),
         }
     }
 
-    pub fn software_update_status(
-        status: SoftwareUpdateStatus,
-    ) -> Self {
+    pub fn software_update_status(status: SoftwareUpdateStatus) -> Self {
         Self {
-            response: JsonRpcResponseType::SoftwareUpdateStatus(
-                status
-            ),
+            response: JsonRpcResponseType::SoftwareUpdateStatus(status),
         }
     }
 
-    pub fn scheduled_tasks_status(
-        status: ScheduledTaskStatus,
-    ) -> Self {
+    pub fn scheduled_tasks_status(status: ScheduledTaskStatus) -> Self {
         Self {
-            response: JsonRpcResponseType::ScheduledTasksStatus(
-                status
-            ),
+            response: JsonRpcResponseType::ScheduledTasksStatus(status),
         }
     }
 

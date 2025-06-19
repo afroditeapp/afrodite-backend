@@ -1,12 +1,20 @@
 use error_stack::{Result, ResultExt};
-use model::{AccountId, AccountIdInternal, AutomaticProfileSearchCompletedNotification, NextNumberStorage, UnixTime};
-use model_server_data::{
-    AutomaticProfileSearchIteratorSessionIdInternal, LastSeenTime, ProfileAppNotificationSettings, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileCreatedTimeFilter, ProfileEditedTimeFilter, ProfileInternal, ProfileIteratorSessionIdInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileTextCharacterCount, ProfileVersion, SortedProfileAttributes
+use model::{
+    AccountId, AccountIdInternal, AutomaticProfileSearchCompletedNotification, NextNumberStorage,
+    UnixTime,
 };
-use server_common::data::{cache::CacheError, DataError};
+use model_server_data::{
+    AutomaticProfileSearchIteratorSessionIdInternal, LastSeenTime, ProfileAppNotificationSettings,
+    ProfileAttributeFilterValue, ProfileAttributeValue, ProfileCreatedTimeFilter,
+    ProfileEditedTimeFilter, ProfileInternal, ProfileIteratorSessionIdInternal,
+    ProfileQueryMakerDetails, ProfileStateCached, ProfileTextCharacterCount, ProfileVersion,
+    SortedProfileAttributes,
+};
+use server_common::data::{DataError, cache::CacheError};
 
 use crate::{
-    cache::CacheEntryCommon, db_manager::InternalWriting,
+    cache::CacheEntryCommon,
+    db_manager::InternalWriting,
     index::{coordinates::LocationIndexArea, read::LocationIndexIteratorState},
 };
 
@@ -176,7 +184,9 @@ impl AutomaticProifleSearch {
         self.last_seen_unix_time.map(|v| {
             let current_time = UnixTime::current_time();
             let seconds_since_last_seen = *current_time.as_i64() - *v.as_i64();
-            ProfileEditedTimeFilter { value: seconds_since_last_seen }
+            ProfileEditedTimeFilter {
+                value: seconds_since_last_seen,
+            }
         })
     }
 
@@ -184,7 +194,9 @@ impl AutomaticProifleSearch {
         self.last_seen_unix_time.map(|v| {
             let current_time = UnixTime::current_time();
             let seconds_since_last_seen = *current_time.as_i64() - *v.as_i64();
-            ProfileCreatedTimeFilter { value: seconds_since_last_seen }
+            ProfileCreatedTimeFilter {
+                value: seconds_since_last_seen,
+            }
         })
     }
 }

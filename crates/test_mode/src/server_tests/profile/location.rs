@@ -2,9 +2,9 @@ use api_client::{apis::profile_api::get_location, models::Location};
 use test_mode_macro::server_test;
 
 use crate::{
+    TestContext, TestResult,
     bot::actions::profile::UpdateLocation,
     runner::server_tests::assert::{assert_eq, assert_ne},
-    TestContext, TestResult,
 };
 
 const LOCATION_LAT_LON_10: Location = Location {

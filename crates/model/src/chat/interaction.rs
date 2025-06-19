@@ -76,7 +76,17 @@ impl std::error::Error for AccountInteractionStateError {}
 /// Possible state transitions:
 /// - Empty -> Like -> Match
 /// - Like -> Empty
-#[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize, ToSchema, diesel::FromSqlRow, diesel::AsExpression)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+)]
 #[diesel(sql_type = BigInt)]
 pub enum AccountInteractionState {
     Empty = 0,
@@ -98,8 +108,6 @@ impl TryFrom<i64> for AccountInteractionState {
 }
 
 diesel_i64_try_from!(AccountInteractionState);
-
-
 
 #[derive(
     Debug, Clone, Copy, Default, Deserialize, Serialize, PartialEq, FromSqlRow, AsExpression,
@@ -385,10 +393,10 @@ impl AccountInteractionInternal {
     ) -> bool {
         if self.is_match() {
             true
-        } else  {
+        } else {
             self.is_like()
-            && self.account_id_sender == Some(id_like_sender.into())
-            && self.account_id_receiver == Some(id_like_receiver.into())
+                && self.account_id_sender == Some(id_like_sender.into())
+                && self.account_id_receiver == Some(id_like_receiver.into())
         }
     }
 
@@ -413,7 +421,8 @@ impl AccountInteractionInternal {
     /// Total sent messages for [Self::message_counter_sender] and
     /// [Self::message_counter_receiver].
     pub fn message_counter(&self) -> i64 {
-        self.message_counter_receiver.saturating_add(self.message_counter_sender)
+        self.message_counter_receiver
+            .saturating_add(self.message_counter_sender)
     }
 
     /// Skip message number 0, so that latest viewed message number

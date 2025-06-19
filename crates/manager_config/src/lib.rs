@@ -11,13 +11,19 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
-use file::{AutomaticSystemRebootConfig, BackupLinkConfig, JsonRpcLinkConfig, ControlBackendConfig, ManagerInstance, ScheduledTasksConfig};
+use file::{
+    AutomaticSystemRebootConfig, BackupLinkConfig, ControlBackendConfig, JsonRpcLinkConfig,
+    ManagerInstance, ScheduledTasksConfig,
+};
+use manager_api::{RootCertStore, TlsConfig};
 use manager_model::ManagerInstanceName;
 use rustls_pemfile::certs;
-use tokio_rustls::rustls::{pki_types::{pem::PemObject, CertificateDer}, server::WebPkiClientVerifier, ServerConfig};
+use tokio_rustls::rustls::{
+    ServerConfig,
+    pki_types::{CertificateDer, pem::PemObject},
+    server::WebPkiClientVerifier,
+};
 use tracing::{info, warn};
-
-use manager_api::{RootCertStore, TlsConfig};
 
 use self::file::{
     ConfigFile, ManualTasksConfig, SecureStorageConfig, ServerEncryptionKey, SocketConfig,
@@ -91,9 +97,7 @@ impl Config {
     }
 
     pub fn encryption_keys(&self) -> &[ServerEncryptionKey] {
-        self.file
-            .server_encryption_key
-            .as_slice()
+        self.file.server_encryption_key.as_slice()
     }
 
     pub fn secure_storage_config(&self) -> Option<&SecureStorageConfig> {
@@ -182,7 +186,11 @@ impl Config {
     }
 
     pub fn update_manager_user_agent(&self) -> String {
-        format!("{}/{}", self.backend_pkg_name(), self.backend_semver_version())
+        format!(
+            "{}/{}",
+            self.backend_pkg_name(),
+            self.backend_semver_version()
+        )
     }
 
     pub fn parsed_file(&self) -> &ConfigFile {
@@ -215,9 +223,9 @@ pub fn get_config(
                 tls_config.public_api_cert,
                 tls_config.public_api_key,
             )
-                .change_context(GetConfigError::ReadCertificateError)?;
+            .change_context(GetConfigError::ReadCertificateError)?;
             Some(config)
-        },
+        }
         None => None,
     };
 
@@ -226,10 +234,8 @@ pub fn get_config(
             .attach_printable("TLS must be configured when debug mode is false");
     }
 
-    let script_locations = check_script_locations(
-        &file_config.dir.scripts,
-        file_config.general.debug(),
-    )?;
+    let script_locations =
+        check_script_locations(&file_config.dir.scripts, file_config.general.debug())?;
 
     Ok(Config {
         backend_code_version,
@@ -286,7 +292,8 @@ fn generate_server_config(
     let client_auth_root_certificate = CertificateDer::from_pem_file(root_cert_path)
         .change_context(GetConfigError::CreateTlsConfig)?;
     let mut client_auth_root_store = RootCertStore::empty();
-    client_auth_root_store.add( client_auth_root_certificate)
+    client_auth_root_store
+        .add(client_auth_root_certificate)
         .change_context(GetConfigError::CreateTlsConfig)?;
     let client_verifier = WebPkiClientVerifier::builder(client_auth_root_store.into())
         .build()

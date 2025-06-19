@@ -1,7 +1,7 @@
 use error_stack::Result;
 use model::AccountId;
 use server_data::{
-    cache::{chat::CachedChatComponentData, CacheError},
+    cache::{CacheError, chat::CachedChatComponentData},
     db_manager::InternalWriting,
 };
 

@@ -10,7 +10,8 @@ use std::{
 
 use counters::AllCounters;
 use simple_backend_model::{
-    MetricKey, PerfMetricQueryResult, PerfMetricValueArea, PerfMetricValues, TimeGranularity, UnixTime
+    MetricKey, PerfMetricQueryResult, PerfMetricValueArea, PerfMetricValues, TimeGranularity,
+    UnixTime,
 };
 use system::SystemInfoManager;
 use tokio::{sync::RwLock, task::JoinHandle};
@@ -18,9 +19,9 @@ use tracing::warn;
 
 use crate::ServerQuitWatcher;
 
-pub mod websocket;
 pub mod counters;
 pub mod system;
+pub mod websocket;
 
 pub struct MetricValues {
     metrics: HashMap<MetricKey, u32>,
@@ -34,12 +35,9 @@ impl MetricValues {
     }
 
     async fn save_metrics(&mut self, counters: AllCounters, system: &mut SystemInfoManager) {
-         for category in counters {
+        for category in counters {
             for counter in category.counter_list() {
-                let key = MetricKey::new(
-                    category.name(),
-                    counter.name(),
-                );
+                let key = MetricKey::new(category.name(), counter.name());
                 self.metrics.insert(key, counter.load_and_reset());
             }
         }
@@ -81,8 +79,10 @@ impl MetricValues {
         // Do this last to keep previous metrics accurate as
         // running get_system_info will take some time.
         let info = system.get_system_info().await;
-        self.metrics.insert(MetricKey::SYSTEM_CPU_USAGE, info.cpu_usage());
-        self.metrics.insert(MetricKey::SYSTEM_RAM_USAGE_MIB, info.ram_usage_mib());
+        self.metrics
+            .insert(MetricKey::SYSTEM_CPU_USAGE, info.cpu_usage());
+        self.metrics
+            .insert(MetricKey::SYSTEM_RAM_USAGE_MIB, info.ram_usage_mib());
     }
 }
 
@@ -114,7 +114,9 @@ impl PerformanceMetricsHistory {
     async fn save_and_reset_counters(&mut self) {
         self.latest_metrics_save_time = Some(UnixTime::current_time());
         let mut last_item = self.data.pop_back().expect("Buffer is empty");
-        last_item.save_metrics(self.counters, &mut self.system).await;
+        last_item
+            .save_metrics(self.counters, &mut self.system)
+            .await;
         self.data.push_front(last_item);
     }
 
@@ -198,7 +200,10 @@ impl PerfMetricsManagerData {
         PerfMetricQueryResult { metrics: counters }
     }
 
-    pub async fn get_history_raw(&self, only_latest_hour: bool) -> HashMap<MetricKey, PerfMetricValueArea> {
+    pub async fn get_history_raw(
+        &self,
+        only_latest_hour: bool,
+    ) -> HashMap<MetricKey, PerfMetricValueArea> {
         self.history.read().await.get_history(only_latest_hour)
     }
 }

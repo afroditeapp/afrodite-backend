@@ -7,7 +7,11 @@ use std::{
 use error_stack::{Report, Result, ResultExt};
 use manager_model::{ManagerInstanceName, SecureStorageEncryptionKey};
 use serde::{Deserialize, Serialize};
-use simple_backend_utils::{file::FileSizeValue, time::{DurationValue, UtcTimeValue}, ContextExt};
+use simple_backend_utils::{
+    ContextExt,
+    file::FileSizeValue,
+    time::{DurationValue, UtcTimeValue},
+};
 use url::Url;
 
 use super::GetConfigError;
@@ -176,15 +180,18 @@ impl ConfigFile {
 
         let config_string =
             std::fs::read_to_string(file_path).change_context(ConfigFileError::LoadConfig)?;
-        let file: ConfigFile = toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)?;
+        let file: ConfigFile =
+            toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)?;
 
-        let system_reboot_scheduled_tasks_enabled = file.scheduled_tasks
+        let system_reboot_scheduled_tasks_enabled = file
+            .scheduled_tasks
             .as_ref()
             .map(|v| v.allow_system_reboot)
             .unwrap_or_default();
         if file.automatic_system_reboot.is_some() && !system_reboot_scheduled_tasks_enabled {
-            return Err(ConfigFileError::InvalidConfig.report())
-                .attach_printable("Automatic system reboot requires enabling scheduled tasks with system reboot")
+            return Err(ConfigFileError::InvalidConfig.report()).attach_printable(
+                "Automatic system reboot requires enabling scheduled tasks with system reboot",
+            );
         }
 
         Ok(file)
@@ -423,7 +430,10 @@ impl BackupLinkConfig {
     }
 
     pub fn file_backup_retention_time(&self) -> DurationValue {
-        self.target.as_ref().and_then(|v| v.file_backup_retention_time).unwrap_or(DurationValue::from_days(30))
+        self.target
+            .as_ref()
+            .and_then(|v| v.file_backup_retention_time)
+            .unwrap_or(DurationValue::from_days(30))
     }
 }
 

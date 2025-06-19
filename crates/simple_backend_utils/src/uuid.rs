@@ -1,4 +1,4 @@
-use base64::{display::Base64Display, Engine};
+use base64::{Engine, display::Base64Display};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -106,7 +106,9 @@ fn uuid_as_string_base_64_url_toml<S: Serializer>(
     uuid_as_string_base_64_url(&value.0, s)
 }
 
-fn uuid_from_string_base_64_url_toml<'de, D: Deserializer<'de>>(d: D) -> Result<UuidBase64Url, D::Error> {
+fn uuid_from_string_base_64_url_toml<'de, D: Deserializer<'de>>(
+    d: D,
+) -> Result<UuidBase64Url, D::Error> {
     let text = String::deserialize(d)?;
     let mut data_slice = [0u8; 16];
     let _ = base64::engine::general_purpose::URL_SAFE_NO_PAD

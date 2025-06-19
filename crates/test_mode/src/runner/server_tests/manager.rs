@@ -1,14 +1,14 @@
-use std::sync::{atomic::AtomicBool, Arc};
+use std::sync::{Arc, atomic::AtomicBool};
 
-use config::{args::TestMode, Config};
+use config::{Config, args::TestMode};
 use tokio::{
-    sync::{self, mpsc, OwnedSemaphorePermit},
+    sync::{self, OwnedSemaphorePermit, mpsc},
     task::JoinHandle,
 };
 
 use crate::{
-    server::{AdditionalSettings, ServerManager},
     ServerTestError, TestContext, TestFunction, TestResult,
+    server::{AdditionalSettings, ServerManager},
 };
 
 static TEST_FAILURE: AtomicBool = AtomicBool::new(false);

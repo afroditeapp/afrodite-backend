@@ -1,11 +1,6 @@
-use axum::{
-    extract::State,
-    Extension,
-};
-use model_media::{
-    EventToClientInternal, Permissions, PostMediaContentFaceDetectedValue
-};
-use server_api::{app::GetAccounts, create_open_api_router, S};
+use axum::{Extension, extract::State};
+use model_media::{EventToClientInternal, Permissions, PostMediaContentFaceDetectedValue};
+use server_api::{S, app::GetAccounts, create_open_api_router};
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
 
@@ -17,7 +12,8 @@ use crate::{
 
 // TODO(prod): Remove /admin/ from all paths for consistensy
 
-const PATH_POST_MEDIA_CONTENT_FACE_DETECTED_VALUE: &str = "/media_api/media_content_face_detected_value";
+const PATH_POST_MEDIA_CONTENT_FACE_DETECTED_VALUE: &str =
+    "/media_api/media_content_face_detected_value";
 
 /// Change media content face detected value
 ///
@@ -54,13 +50,11 @@ pub async fn post_media_content_face_detected_value(
         let content_id = cmds
             .read()
             .media()
-            .content_id_internal(content_owner, data.content_id).await?;
+            .content_id_internal(content_owner, data.content_id)
+            .await?;
         cmds.media_admin()
             .content()
-            .change_face_detected_value(
-                content_id,
-                data.value,
-            )
+            .change_face_detected_value(content_id, data.value)
             .await?;
 
         cmds.events()

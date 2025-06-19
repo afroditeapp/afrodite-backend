@@ -4,25 +4,24 @@ use delete::WriteCommandsAccountDelete;
 use email::WriteCommandsAccountEmail;
 use model::AccountStateContainer;
 use model_account::{
-    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, ClientId,
-    Permissions, ProfileVisibility, SetAccountSetup,
+    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, ClientId, Permissions,
+    ProfileVisibility, SetAccountSetup,
 };
 use model_server_state::DemoModeId;
 use news::WriteCommandsAccountNews;
 use server_data::{
-    define_cmd_wrapper_write,
+    DataError, DieselDatabaseError, define_cmd_wrapper_write,
     read::DbRead,
     result::Result,
     write::{DbTransaction, GetWriteCommandsCommon},
-    DataError, DieselDatabaseError,
 };
 
+pub mod client_features;
 pub mod delete;
 pub mod email;
 pub mod news;
-pub mod report;
-pub mod client_features;
 pub mod notification;
+pub mod report;
 
 #[derive(Debug, Clone, Copy)]
 pub struct IncrementAdminAccessGrantedCount;
@@ -66,12 +65,12 @@ impl WriteCommandsAccount<'_> {
         id: AccountIdInternal,
         increment_admin_access_granted: Option<IncrementAdminAccessGrantedCount>,
         modify_action: impl FnOnce(
-                &mut AccountStateContainer,
-                &mut Permissions,
-                &mut ProfileVisibility,
-            ) -> error_stack::Result<(), DieselDatabaseError>
-            + Send
-            + 'static,
+            &mut AccountStateContainer,
+            &mut Permissions,
+            &mut ProfileVisibility,
+        ) -> error_stack::Result<(), DieselDatabaseError>
+        + Send
+        + 'static,
     ) -> Result<Account, DataError> {
         let current_account = self
             .db_read(move |mut cmds| cmds.common().account(id))

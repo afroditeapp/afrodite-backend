@@ -1,18 +1,27 @@
-
 use std::{num::Wrapping, sync::Arc, time::Duration};
 
 use backup::{DeleteOldFileBackups, SaveContentBackup, SaveFileBackup};
 use error_stack::{FutureExt, Result, ResultExt};
-use manager_api::{protocol::{ClientConnectionReadSend, ClientConnectionWriteSend, ConnectionUtilsRead, ConnectionUtilsWrite}, ClientConfig, ManagerClient};
-use manager_config::{file::BackupLinkConfigTarget, Config};
-use manager_model::{AccountAndContent, BackupMessage, BackupMessageType, Sha256Bytes, SourceToTargetMessage, TargetToSourceMessage};
+use manager_api::{
+    ClientConfig, ManagerClient,
+    protocol::{
+        ClientConnectionReadSend, ClientConnectionWriteSend, ConnectionUtilsRead,
+        ConnectionUtilsWrite,
+    },
+};
+use manager_config::{Config, file::BackupLinkConfigTarget};
+use manager_model::{
+    AccountAndContent, BackupMessage, BackupMessageType, Sha256Bytes, SourceToTargetMessage,
+    TargetToSourceMessage,
+};
 use simple_backend_utils::{ContextExt, IntoReportFromString};
 use tokio::{sync::mpsc, task::JoinHandle};
 use tracing::{error, info, warn};
 
-use crate::server::{app::S, ServerQuitWatcher};
-
-use crate::api::GetConfig;
+use crate::{
+    api::GetConfig,
+    server::{ServerQuitWatcher, app::S},
+};
 
 mod backup;
 
@@ -107,9 +116,7 @@ impl BackupLinkManagerTarget {
 
         let task = tokio::spawn(manager.run(quit_notification.resubscribe()));
 
-        BackupLinkManagerTargetQuitHandle {
-            task,
-        }
+        BackupLinkManagerTargetQuitHandle { task }
     }
 
     async fn run(self, mut quit_notification: ServerQuitWatcher) {
@@ -123,19 +130,22 @@ impl BackupLinkManagerTarget {
         }
     }
 
-    async fn create_connection_loop(
-        mut self,
-        config: BackupLinkConfigTarget,
-    ) {
+    async fn create_connection_loop(mut self, config: BackupLinkConfigTarget) {
         let mut retry_wait_seconds = 2;
         loop {
             match self.create_connection(&config).await {
                 Ok(()) => {
-                    info!("Backup target link disconnected, retrying connection in {} seconds", retry_wait_seconds);
+                    info!(
+                        "Backup target link disconnected, retrying connection in {} seconds",
+                        retry_wait_seconds
+                    );
                 }
                 Err(e) => {
                     error!("Backup target link error: {:?}", e);
-                    info!("Retrying backup target link connection in {} seconds", retry_wait_seconds);
+                    info!(
+                        "Retrying backup target link connection in {} seconds",
+                        retry_wait_seconds
+                    );
                 }
             }
             tokio::time::sleep(Duration::from_secs(retry_wait_seconds)).await;
@@ -147,14 +157,13 @@ impl BackupLinkManagerTarget {
         &mut self,
         config: &BackupLinkConfigTarget,
     ) -> Result<(), BackupTargetError> {
-        let client = ManagerClient::connect(
-            ClientConfig {
-                url: config.url.clone(),
-                tls_config: self.state.config().client_tls_config(),
-                api_key: self.state.config().api_key().to_string(),
-            }
-        )   .await
-            .change_context(BackupTargetError::Client)?;
+        let client = ManagerClient::connect(ClientConfig {
+            url: config.url.clone(),
+            tls_config: self.state.config().client_tls_config(),
+            api_key: self.state.config().api_key().to_string(),
+        })
+        .await
+        .change_context(BackupTargetError::Client)?;
 
         let (reader, writer) = client
             .backup_link(config.password.clone())
@@ -178,7 +187,8 @@ impl BackupLinkManagerTarget {
     ) -> Result<(), BackupTargetError> {
         loop {
             tokio::time::sleep(Duration::from_secs(60 * 60)).await;
-            sender.send(BackupMessage::empty())
+            sender
+                .send(BackupMessage::empty())
                 .await
                 .change_context(BackupTargetError::BrokenMessageChannel)?;
         }
@@ -192,16 +202,18 @@ impl BackupLinkManagerTarget {
         let mut target_state: Option<BackupTargetState> = None;
 
         loop {
-            let Some(m) = reader.receive_backup_link_message()
+            let Some(m) = reader
+                .receive_backup_link_message()
                 .await
-                .change_context(BackupTargetError::Read)? else {
-                    return Ok(());
-                };
+                .change_context(BackupTargetError::Read)?
+            else {
+                return Ok(());
+            };
 
             match m.header.message_type {
                 BackupMessageType::Empty => {
                     continue;
-                },
+                }
                 BackupMessageType::StartBackupSession => {
                     let state = BackupTargetState::new(
                         self.state.config_arc().clone(),
@@ -215,12 +227,18 @@ impl BackupLinkManagerTarget {
             }
 
             let Some(target_state) = &mut target_state else {
-                warn!("Ignoring {:?} message. Backup session not started", m.header.message_type);
+                warn!(
+                    "Ignoring {:?} message. Backup session not started",
+                    m.header.message_type
+                );
                 continue;
             };
 
             if m.header.backup_session.0 != target_state.current_backup_session {
-                warn!("Ignoring {:?} message. Backup session mismatch", m.header.message_type);
+                warn!(
+                    "Ignoring {:?} message. Backup session mismatch",
+                    m.header.message_type
+                );
                 return Ok(());
             }
 
@@ -238,7 +256,8 @@ impl BackupLinkManagerTarget {
                 Some(m) => m,
                 None => return Err(BackupTargetError::BrokenMessageChannel.report()),
             };
-            writer.send_backup_link_message(message)
+            writer
+                .send_backup_link_message(message)
                 .await
                 .change_context(BackupTargetError::Write)?;
         }
@@ -258,7 +277,9 @@ impl BackupTargetState {
     ) -> Self {
         let (source_sender, source_receiver) = mpsc::channel(10);
         tokio::task::spawn(async move {
-            BackupSessionTaskTarget::new(config, sender, source_receiver, current_backup_session).run().await;
+            BackupSessionTaskTarget::new(config, sender, source_receiver, current_backup_session)
+                .run()
+                .await;
         });
         Self {
             sender: source_sender,
@@ -270,9 +291,11 @@ impl BackupTargetState {
         &mut self,
         m: BackupMessage,
     ) -> Result<(), BackupTargetError> {
-        let m = m.try_into()
+        let m = m
+            .try_into()
             .into_error_string(BackupTargetError::Deserialize)?;
-        self.sender.send(m)
+        self.sender
+            .send(m)
             .await
             .change_context(BackupTargetError::Deserialize)?;
 
@@ -310,9 +333,7 @@ impl BackupSessionTaskTarget {
         }
     }
 
-    pub async fn run(
-        mut self,
-    ) {
+    pub async fn run(mut self) {
         info!("Backup session started");
         match self.run_and_result().await {
             Ok(()) => (),
@@ -320,18 +341,12 @@ impl BackupSessionTaskTarget {
         }
         info!(
             "Backup session completed, accounts: {}, content: {}, files: {}, deleted files: {}",
-            self.synced_accounts,
-            self.synced_content,
-            self.received_files,
-            self.deleted_files,
+            self.synced_accounts, self.synced_content, self.received_files, self.deleted_files,
         );
     }
 
-    pub async fn run_and_result(
-        &mut self,
-    ) -> Result<(), BackupTargetError> {
-        let mut backup = SaveContentBackup::new(self.config.clone())
-            .await?;
+    pub async fn run_and_result(&mut self) -> Result<(), BackupTargetError> {
+        let mut backup = SaveContentBackup::new(self.config.clone()).await?;
 
         loop {
             let m = self.receive_content_list().await?;
@@ -342,12 +357,11 @@ impl BackupSessionTaskTarget {
                     if content_state.exists(c) {
                         content_state.mark_as_still_existing(c);
                     } else {
-                        self.send_message(
-                            TargetToSourceMessage::ContentQuery {
-                                account_id: a.account_id,
-                                content_id: c
-                            }
-                        ).await?;
+                        self.send_message(TargetToSourceMessage::ContentQuery {
+                            account_id: a.account_id,
+                            content_id: c,
+                        })
+                        .await?;
                         let (sha256, data) = self.receive_content().await?;
                         content_state.new_content(c, sha256, data).await?;
                     }
@@ -362,9 +376,8 @@ impl BackupSessionTaskTarget {
                 break;
             }
 
-            self.send_message(
-                TargetToSourceMessage::ContentListSyncDone
-            ).await?;
+            self.send_message(TargetToSourceMessage::ContentListSyncDone)
+                .await?;
         }
 
         backup.finalize().await?;
@@ -387,13 +400,14 @@ impl BackupSessionTaskTarget {
             }
         }
 
-        self.deleted_files = DeleteOldFileBackups::run(self.config.clone())
-            .await?;
+        self.deleted_files = DeleteOldFileBackups::run(self.config.clone()).await?;
 
         Ok(())
     }
 
-    pub async fn receive_content_list(&mut self) -> Result<Vec<AccountAndContent>, BackupTargetError> {
+    pub async fn receive_content_list(
+        &mut self,
+    ) -> Result<Vec<AccountAndContent>, BackupTargetError> {
         let Some(m) = self.receiver.recv().await else {
             return Err(BackupTargetError::BrokenMessageChannel.report());
         };
@@ -413,7 +427,9 @@ impl BackupSessionTaskTarget {
         }
     }
 
-    pub async fn receive_start_file_backup(&mut self) -> Result<(Sha256Bytes, String), BackupTargetError> {
+    pub async fn receive_start_file_backup(
+        &mut self,
+    ) -> Result<(Sha256Bytes, String), BackupTargetError> {
         let Some(m) = self.receiver.recv().await else {
             return Err(BackupTargetError::BrokenMessageChannel.report());
         };
@@ -423,12 +439,17 @@ impl BackupSessionTaskTarget {
         }
     }
 
-    pub async fn receive_file_backup_data(&mut self) -> Result<(Wrapping<u32>, Vec<u8>), BackupTargetError> {
+    pub async fn receive_file_backup_data(
+        &mut self,
+    ) -> Result<(Wrapping<u32>, Vec<u8>), BackupTargetError> {
         let Some(m) = self.receiver.recv().await else {
             return Err(BackupTargetError::BrokenMessageChannel.report());
         };
         match m {
-            SourceToTargetMessage::FileBackupData { package_number, data } => Ok((package_number, data)),
+            SourceToTargetMessage::FileBackupData {
+                package_number,
+                data,
+            } => Ok((package_number, data)),
             _ => Err(BackupTargetError::Protocol.report()),
         }
     }
@@ -437,7 +458,8 @@ impl BackupSessionTaskTarget {
         &mut self,
         message: TargetToSourceMessage,
     ) -> Result<(), BackupTargetError> {
-        self.sender.send(message.into_message(self.current_backup_session))
+        self.sender
+            .send(message.into_message(self.current_backup_session))
             .await
             .change_context(BackupTargetError::BrokenMessageChannel)
     }

@@ -3,13 +3,12 @@
 use std::{collections::HashSet, sync::LazyLock};
 
 use axum::extract::State;
-use model_account::{AccountId, RemoteBotLogin, LoginResult, SignInWithInfo};
-use server_api::{app::GetConfig, db_write_multiple, S};
+use model_account::{AccountId, LoginResult, RemoteBotLogin, SignInWithInfo};
+use server_api::{S, app::GetConfig, db_write_multiple};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::read::GetReadCommandsAccount;
 use simple_backend::create_counters;
 use tokio::sync::Mutex;
-
 use tracing::info;
 
 use super::account::login_impl;
@@ -84,11 +83,12 @@ pub struct RemoteBotLoginState {
     blocked: HashSet<AccountId>,
 }
 
-static REMOTE_BOT_LOGIN_STATE: LazyLock<Mutex<RemoteBotLoginState>> = std::sync::LazyLock::new(
-    || Mutex::new(
-        RemoteBotLoginState { blocked: HashSet::new() }
-    )
-);
+static REMOTE_BOT_LOGIN_STATE: LazyLock<Mutex<RemoteBotLoginState>> =
+    std::sync::LazyLock::new(|| {
+        Mutex::new(RemoteBotLoginState {
+            blocked: HashSet::new(),
+        })
+    });
 
 pub const PATH_REMOTE_BOT_LOGIN: &str = "/account_api/remote_bot_login";
 
@@ -134,7 +134,10 @@ pub async fn post_remote_bot_login(
     };
 
     if configured_bot.password() != info.password {
-        info!("Remote bot login failed. Wrong password for account {}", info.aid);
+        info!(
+            "Remote bot login failed. Wrong password for account {}",
+            info.aid
+        );
         bot_login_state.blocked.insert(info.aid);
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }

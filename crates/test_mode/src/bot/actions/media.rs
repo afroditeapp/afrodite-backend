@@ -1,14 +1,9 @@
 use std::{fmt::Debug, path::PathBuf};
 
 use api_client::{
-    apis::media_api::{
-        get_content_slot_state, put_profile_content, put_security_content_info
-    },
+    apis::media_api::{get_content_slot_state, put_profile_content, put_security_content_info},
     manual_additions::put_content_to_content_slot_fixed,
-    models::{
-        ContentId, ContentProcessingStateType, MediaContentType,
-        SetProfileContent,
-    },
+    models::{ContentId, ContentProcessingStateType, MediaContentType, SetProfileContent},
 };
 use async_trait::async_trait;
 use config::bot_config_file::{BaseBotConfig, BotConfigFile, Gender};
@@ -103,17 +98,17 @@ impl SendImageToSlot {
                     .change_context(TestError::ApiRequest)?;
 
                 match slot_state.state {
-                    ContentProcessingStateType::Empty |
-                    ContentProcessingStateType::Failed |
-                    ContentProcessingStateType::NsfwDetected => {
-                        return Err(TestError::ApiRequest.report())
+                    ContentProcessingStateType::Empty
+                    | ContentProcessingStateType::Failed
+                    | ContentProcessingStateType::NsfwDetected => {
+                        return Err(TestError::ApiRequest.report());
                     }
                     ContentProcessingStateType::Processing
                     | ContentProcessingStateType::InQueue => {
                         tokio::time::sleep(std::time::Duration::from_millis(200)).await
                     }
                     ContentProcessingStateType::Completed => {
-                        return Ok(*slot_state.cid.flatten().expect("Content ID is missing"))
+                        return Ok(*slot_state.cid.flatten().expect("Content ID is missing"));
                     }
                 }
             }

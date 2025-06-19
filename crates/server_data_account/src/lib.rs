@@ -20,12 +20,16 @@ macro_rules! db_transaction {
 macro_rules! db_transaction_history {
     ($state:expr, move |mut $cmds:ident| $commands:expr) => {{
         server_common::data::IntoDataError::into_error(
-            $state.db_transaction_history(move |mut $cmds| ($commands)).await,
+            $state
+                .db_transaction_history(move |mut $cmds| ($commands))
+                .await,
         )
     }};
     ($state:expr, move |$cmds:ident| $commands:expr) => {{
         $crate::data::IntoDataError::into_error(
-            $state.db_transaction_history(move |$cmds| ($commands)).await,
+            $state
+                .db_transaction_history(move |$cmds| ($commands))
+                .await,
         )
     }};
 }

@@ -1,6 +1,6 @@
 use diesel::{
-    sql_types::{BigInt, Text},
     AsExpression, FromSqlRow,
+    sql_types::{BigInt, Text},
 };
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, diesel_string_wrapper};

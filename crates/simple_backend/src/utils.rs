@@ -39,7 +39,7 @@ impl AppendErr for ErrorContainer<SimpleDatabaseError> {
 pub trait AppendErrorTo<Err>: Sized {
     fn append_to_and_ignore(self, container: &mut ErrorContainer<Err>);
     fn append_to_and_return_container(self, container: &mut ErrorContainer<Err>)
-        -> Result<(), Err>;
+    -> Result<(), Err>;
 }
 
 impl<Ok, Err: Context> AppendErrorTo<Err> for Result<Ok, Err>

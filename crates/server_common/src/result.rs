@@ -6,7 +6,7 @@ use model::markers::IsLoggingAllowed;
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use crate::{
-    data::{cache::CacheError, file::FileError, index::IndexError, DataError},
+    data::{DataError, cache::CacheError, file::FileError, index::IndexError},
     internal_api::InternalApiError,
 };
 

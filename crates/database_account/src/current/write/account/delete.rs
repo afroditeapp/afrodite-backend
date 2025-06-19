@@ -1,4 +1,4 @@
-use database::{define_current_write_commands, DieselDatabaseError};
+use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{delete, prelude::*, update};
 use error_stack::Result;
 use model::{AccountIdInternal, UnixTime};

@@ -2,7 +2,7 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_try_from;
 
-use crate::{schema_sqlite_types::Integer, EmailMessages, EnumParsingError};
+use crate::{EmailMessages, EnumParsingError, schema_sqlite_types::Integer};
 
 #[derive(
     Debug,

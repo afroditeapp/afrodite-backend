@@ -1,8 +1,11 @@
 use diesel::{prelude::*, update};
 use error_stack::Result;
-use model::{AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken, PushNotificationStateInfo};
+use model::{
+    AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken,
+    PushNotificationStateInfo,
+};
 
-use crate::{define_current_read_commands, DieselDatabaseError, IntoDatabaseError};
+use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
 
 define_current_read_commands!(CurrentWriteCommonPushNotification);
 

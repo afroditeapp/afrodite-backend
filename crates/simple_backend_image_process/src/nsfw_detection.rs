@@ -1,7 +1,9 @@
-use error_stack::{report, Result, ResultExt};
+use error_stack::{Result, ResultExt, report};
 use image::RgbaImage;
-use nsfw::{model::Metric, Model};
-use simple_backend_config::file::{ImageProcessingConfig, NsfwDetectionConfig, NsfwDetectionThresholds};
+use nsfw::{Model, model::Metric};
+use simple_backend_config::file::{
+    ImageProcessingConfig, NsfwDetectionConfig, NsfwDetectionThresholds,
+};
 
 use crate::ImageProcessError;
 
@@ -15,40 +17,30 @@ pub struct NsfwDetector {
 }
 
 impl NsfwDetector {
-    pub fn new(
-        config: &ImageProcessingConfig,
-    ) -> Result<Self, ImageProcessError> {
+    pub fn new(config: &ImageProcessingConfig) -> Result<Self, ImageProcessError> {
         let Some(config) = config.nsfw_detection.clone() else {
-            return Ok(Self {
-                state: None,
-            });
+            return Ok(Self { state: None });
         };
 
         let file = std::fs::File::open(&config.model_file)
             .change_context(ImageProcessError::NsfwDetectionError)?;
-        let model = nsfw::create_model(file)
-            .map_err(|e| report!(ImageProcessError::NsfwDetectionError)
-                .attach_printable(e.to_string())
-            )?;
+        let model = nsfw::create_model(file).map_err(|e| {
+            report!(ImageProcessError::NsfwDetectionError).attach_printable(e.to_string())
+        })?;
 
         Ok(Self {
-            state: Some(State {
-                model,
-                config,
-            }),
+            state: Some(State { model, config }),
         })
     }
 
-    pub fn detect_nsfw(
-        &self,
-        img: RgbaImage,
-    ) -> Result<bool, ImageProcessError> {
+    pub fn detect_nsfw(&self, img: RgbaImage) -> Result<bool, ImageProcessError> {
         let Some(state) = &self.state else {
             return Ok(false);
         };
 
-        let results = nsfw::examine(&state.model, &img)
-            .map_err(|e| report!(ImageProcessError::NsfwDetectionError).attach_printable(e.to_string()))?;
+        let results = nsfw::examine(&state.model, &img).map_err(|e| {
+            report!(ImageProcessError::NsfwDetectionError).attach_printable(e.to_string())
+        })?;
 
         if state.config.debug_log_results() {
             eprintln!("NSFW detection results: {:?}", results);

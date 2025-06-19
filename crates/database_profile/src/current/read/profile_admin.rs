@@ -1,8 +1,8 @@
 use database::define_current_read_commands;
 
+mod iterator;
 mod profile_name_allowlist;
 mod profile_text;
-mod iterator;
 mod search;
 
 define_current_read_commands!(CurrentReadProfileAdmin);

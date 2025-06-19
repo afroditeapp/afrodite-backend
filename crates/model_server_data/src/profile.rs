@@ -1,4 +1,4 @@
-use diesel::{prelude::Queryable, sql_types::Binary, Selectable};
+use diesel::{Selectable, prelude::Queryable, sql_types::Binary};
 use model::{AccountIdDb, ProfileAge};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_uuid_wrapper;

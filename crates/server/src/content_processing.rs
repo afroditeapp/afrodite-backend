@@ -8,12 +8,11 @@ use server_api::{
 use server_common::result::{Result, WrappedResultExt};
 use server_data::{
     app::GetConfig,
-    content_processing::{notify_client, ContentProcessingReceiver, ProcessingState},
+    content_processing::{ContentProcessingReceiver, ProcessingState, notify_client},
 };
 use server_data_media::write::GetWriteCommandsMedia;
-use server_state::app::AdminNotificationProvider;
-use server_state::S;
-use simple_backend::{image::ImageProcess, ServerQuitWatcher};
+use server_state::{S, app::AdminNotificationProvider};
+use simple_backend::{ServerQuitWatcher, image::ImageProcess};
 use simple_backend_image_process::{ImageProcessingInfo, InputFileType};
 use tokio::task::JoinHandle;
 use tracing::{error, warn};
@@ -105,15 +104,16 @@ impl ContentProcessingManager {
                 .if_successful_and_no_nsfw_then_save_to_database(self.state.config(), result, state)
                 .await;
             match result {
-                Ok(ImgInfo::ProcessedSuccessfully { face_detected, content_id }) => {
+                Ok(ImgInfo::ProcessedSuccessfully {
+                    face_detected,
+                    content_id,
+                }) => {
                     state
                         .processing_state
                         .change_to_completed(content_id, face_detected);
                 }
                 Ok(ImgInfo::NsfwDetected) => {
-                    state
-                        .processing_state
-                        .change_to_nsfw_detected();
+                    state.processing_state.change_to_nsfw_detected();
                 }
                 Err(e) => {
                     state.processing_state.change_to_failed();

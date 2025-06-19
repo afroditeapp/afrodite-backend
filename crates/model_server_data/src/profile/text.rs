@@ -5,9 +5,8 @@ use simple_backend_model::{diesel_i64_struct_try_from, diesel_i64_try_from};
 use unicode_segmentation::UnicodeSegmentation;
 use utoipa::ToSchema;
 
-use crate::schema_sqlite_types::Integer;
-
 use super::ProfileInternal;
+use crate::schema_sqlite_types::Integer;
 
 #[derive(
     Debug,
@@ -107,7 +106,7 @@ impl TryFrom<i64> for ProfileTextMinCharactersFilter {
 
     fn try_from(value: i64) -> Result<Self, Self::Error> {
         Ok(Self {
-            value: value.clamp(0, u16::MAX.into()) as u16
+            value: value.clamp(0, u16::MAX.into()) as u16,
         })
     }
 }
@@ -150,7 +149,7 @@ impl TryFrom<i64> for ProfileTextMaxCharactersFilter {
 
     fn try_from(value: i64) -> Result<Self, Self::Error> {
         Ok(Self {
-            value: value.clamp(0, u16::MAX.into()) as u16
+            value: value.clamp(0, u16::MAX.into()) as u16,
         })
     }
 }

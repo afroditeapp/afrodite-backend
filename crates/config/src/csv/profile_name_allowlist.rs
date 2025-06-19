@@ -1,9 +1,8 @@
 use error_stack::{Result, ResultExt};
 use simple_backend_utils::ContextExt;
 
-use crate::file::ProfiletNameAllowlistConfig;
-
 use super::CsvFileError;
+use crate::file::ProfiletNameAllowlistConfig;
 
 #[derive(Debug, Default)]
 pub struct ProfileNameAllowlistBuilder {

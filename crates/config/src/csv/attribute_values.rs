@@ -1,8 +1,10 @@
 use std::collections::HashSet;
 
 use error_stack::{Result, ResultExt};
-use model_server_data::{AttributeInternal, AttributesFileInternal, GroupValuesInternal, Language, Translation};
-use sha2::{digest::Update, Sha256};
+use model_server_data::{
+    AttributeInternal, AttributesFileInternal, GroupValuesInternal, Language, Translation,
+};
+use sha2::{Sha256, digest::Update};
 use simple_backend_utils::ContextExt;
 
 use super::CsvFileError;
@@ -11,7 +13,10 @@ use super::CsvFileError;
 pub struct AttributeValuesCsvLoader;
 
 impl AttributeValuesCsvLoader {
-    pub fn load_if_needed(file: &mut AttributesFileInternal, attributes_file_sha256: &mut Sha256) -> Result<(), CsvFileError> {
+    pub fn load_if_needed(
+        file: &mut AttributesFileInternal,
+        attributes_file_sha256: &mut Sha256,
+    ) -> Result<(), CsvFileError> {
         for a in &mut file.attribute {
             Self::handle_attribute(a, attributes_file_sha256)?;
         }
@@ -19,26 +24,35 @@ impl AttributeValuesCsvLoader {
         Ok(())
     }
 
-    fn handle_attribute(a: &mut AttributeInternal, attributes_file_sha256: &mut Sha256) -> Result<(), CsvFileError> {
+    fn handle_attribute(
+        a: &mut AttributeInternal,
+        attributes_file_sha256: &mut Sha256,
+    ) -> Result<(), CsvFileError> {
         let Some(config) = &a.group_values_csv else {
-            return Ok(())
+            return Ok(());
         };
 
-        let csv_string = std::fs::read_to_string(&config.csv_file)
-            .change_context(CsvFileError::Load)?;
+        let csv_string =
+            std::fs::read_to_string(&config.csv_file).change_context(CsvFileError::Load)?;
         attributes_file_sha256.update(csv_string.as_bytes());
 
         if !a.values.is_empty() {
-            return Err(CsvFileError::InvalidConfig.report())
-                .attach_printable(format!("Attribute ID {} values must be empty when group_values_csv is defined", a.id.to_usize()));
+            return Err(CsvFileError::InvalidConfig.report()).attach_printable(format!(
+                "Attribute ID {} values must be empty when group_values_csv is defined",
+                a.id.to_usize()
+            ));
         }
         if !a.group_values.is_empty() {
-            return Err(CsvFileError::InvalidConfig.report())
-                .attach_printable(format!("Attribute ID {} group_values must be empty when group_values_csv is defined", a.id.to_usize()));
+            return Err(CsvFileError::InvalidConfig.report()).attach_printable(format!(
+                "Attribute ID {} group_values must be empty when group_values_csv is defined",
+                a.id.to_usize()
+            ));
         }
         if !a.translations.is_empty() {
-            return Err(CsvFileError::InvalidConfig.report())
-                .attach_printable(format!("Attribute ID {} translations must be empty when group_values_csv is defined", a.id.to_usize()));
+            return Err(CsvFileError::InvalidConfig.report()).attach_printable(format!(
+                "Attribute ID {} translations must be empty when group_values_csv is defined",
+                a.id.to_usize()
+            ));
         }
 
         let delimiter: u8 = TryInto::<u8>::try_into(config.delimiter)
@@ -90,7 +104,9 @@ impl AttributeValuesCsvLoader {
 
             let key = AttributeInternal::english_text_to_attribute_key(&value);
             if let Some(group_values) = group_values.iter_mut().find(|v| v.key == key) {
-                group_values.values.push(toml::Value::String(group_value.to_string()));
+                group_values
+                    .values
+                    .push(toml::Value::String(group_value.to_string()));
             } else {
                 group_values.push(GroupValuesInternal {
                     key: key.clone(),
@@ -159,5 +175,4 @@ impl AttributeValuesCsvLoader {
 
         Ok(())
     }
-
 }

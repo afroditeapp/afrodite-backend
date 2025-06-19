@@ -1,4 +1,4 @@
-use database::{define_current_read_commands, DieselDatabaseError};
+use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::{alias, prelude::*};
 use error_stack::Result;
 use model::{AccountId, AccountIdInternal, NewsSyncVersion, UnreadNewsCount};

@@ -1,27 +1,26 @@
-
-
-use error_stack::ResultExt;
-use manager_model::JsonRpcResponse;
-use manager_model::ManagerInstanceName;
-use crate::api::GetConfig;
-use crate::server::info::SystemInfoGetter;
-
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
+use manager_model::{JsonRpcResponse, ManagerInstanceName};
 
 use super::JsonRpcError;
+use crate::{api::GetConfig, server::info::SystemInfoGetter};
 
 pub trait RpcSystemInfo: GetConfig {
     async fn rpc_get_manager_instance_names(&self) -> Result<JsonRpcResponse, JsonRpcError> {
-        let mut accessible_instances = vec![ManagerInstanceName::new(self.config().manager_name().to_string())];
+        let mut accessible_instances = vec![ManagerInstanceName::new(
+            self.config().manager_name().to_string(),
+        )];
 
-        let remote_managers = self.config()
+        let remote_managers = self
+            .config()
             .remote_managers()
             .iter()
             .map(|v| v.name.clone());
 
         accessible_instances.extend(remote_managers);
 
-        Ok(JsonRpcResponse::manager_instance_names(accessible_instances))
+        Ok(JsonRpcResponse::manager_instance_names(
+            accessible_instances,
+        ))
     }
 
     async fn rpc_get_system_info(&self) -> Result<JsonRpcResponse, JsonRpcError> {
@@ -32,4 +31,4 @@ pub trait RpcSystemInfo: GetConfig {
     }
 }
 
-impl <T: GetConfig> RpcSystemInfo for T {}
+impl<T: GetConfig> RpcSystemInfo for T {}

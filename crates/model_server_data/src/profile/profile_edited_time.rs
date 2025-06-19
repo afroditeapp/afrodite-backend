@@ -3,18 +3,11 @@ use model::UnixTime;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_wrapper;
 use utoipa::{IntoParams, ToSchema};
+
 use crate::ProfileContentEditedTime;
 
 #[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Serialize,
-    Deserialize,
-    ToSchema,
-    FromSqlRow,
-    AsExpression,
+    Debug, Clone, Copy, PartialEq, Serialize, Deserialize, ToSchema, FromSqlRow, AsExpression,
 )]
 #[diesel(sql_type = BigInt)]
 pub struct ProfileEditedTime(UnixTime);
@@ -34,7 +27,6 @@ impl ProfileEditedTime {
 }
 
 diesel_i64_wrapper!(ProfileEditedTime);
-
 
 /// Filter value for profile edited time. The value is max seconds since
 /// profile edited time.
@@ -66,9 +58,16 @@ impl ProfileEditedTimeFilter {
         &self.value
     }
 
-    pub fn is_match(&self, profile_edited_time: ProfileEditedTime, content_edited_time: Option<ProfileContentEditedTime>, current_time: &UnixTime) -> bool {
+    pub fn is_match(
+        &self,
+        profile_edited_time: ProfileEditedTime,
+        content_edited_time: Option<ProfileContentEditedTime>,
+        current_time: &UnixTime,
+    ) -> bool {
         let latest_edit_time = if let Some(content_edited_time) = content_edited_time {
-            *profile_edited_time.as_i64().max(content_edited_time.as_i64())
+            *profile_edited_time
+                .as_i64()
+                .max(content_edited_time.as_i64())
         } else {
             *profile_edited_time.as_i64()
         };

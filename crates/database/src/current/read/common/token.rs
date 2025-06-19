@@ -2,7 +2,7 @@ use diesel::prelude::*;
 use error_stack::Result;
 use model::{AccessToken, AccessTokenRaw, AccountIdInternal, RefreshToken, RefreshTokenRaw};
 
-use crate::{define_current_read_commands, DieselDatabaseError, IntoDatabaseError};
+use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
 
 define_current_read_commands!(CurrentReadAccountToken);
 

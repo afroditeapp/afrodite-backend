@@ -12,17 +12,36 @@ pub enum CustomReportsOrderMode {
     OrderNumber,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq, PartialOrd, Ord, Hash, FromSqlRow, AsExpression)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    FromSqlRow,
+    AsExpression,
+)]
 #[diesel(sql_type = BigInt)]
 pub struct CustomReportId(u8);
 
 impl CustomReportId {
     /// 63
-    const MAX_VALUE: u8 = (ReportTypeNumber::LAST_CUSTOM_REPORT_TYPE_NUMBER - ReportTypeNumber::FIRST_CUSTOM_REPORT_TYPE_NUMBER) as u8;
+    const MAX_VALUE: u8 = (ReportTypeNumber::LAST_CUSTOM_REPORT_TYPE_NUMBER
+        - ReportTypeNumber::FIRST_CUSTOM_REPORT_TYPE_NUMBER) as u8;
 
     pub fn new(value: u8) -> Result<Self, String> {
         if value > Self::MAX_VALUE {
-            return Err(format!("Custom report ID value {} is too large, max value: {}", value, Self::MAX_VALUE));
+            return Err(format!(
+                "Custom report ID value {} is too large, max value: {}",
+                value,
+                Self::MAX_VALUE
+            ));
         }
         Ok(Self(value))
     }
@@ -32,16 +51,24 @@ impl CustomReportId {
     }
 
     pub fn to_report_type_number_value(&self) -> Result<CustomReportTypeNumberValue, String> {
-        CustomReportTypeNumberValue::new(self.0 + ReportTypeNumber::FIRST_CUSTOM_REPORT_TYPE_NUMBER as u8)
+        CustomReportTypeNumberValue::new(
+            self.0 + ReportTypeNumber::FIRST_CUSTOM_REPORT_TYPE_NUMBER as u8,
+        )
     }
 }
 
 impl TryFrom<i64> for CustomReportId {
     type Error = String;
     fn try_from(value: i64) -> Result<Self, Self::Error> {
-        let value: u8 = value.try_into().map_err(|e: std::num::TryFromIntError| e.to_string())?;
+        let value: u8 = value
+            .try_into()
+            .map_err(|e: std::num::TryFromIntError| e.to_string())?;
         if value > Self::MAX_VALUE {
-            return Err(format!("Custom report ID value {} is too large, max value: {}", value, Self::MAX_VALUE));
+            return Err(format!(
+                "Custom report ID value {} is too large, max value: {}",
+                value,
+                Self::MAX_VALUE
+            ));
         }
         Ok(Self(value))
     }
@@ -82,9 +109,7 @@ pub struct CustomReportsConfig {
 }
 
 impl CustomReportsConfig {
-    pub fn validate_and_sort_by_id(
-        &mut self,
-    ) -> Result<(), String> {
+    pub fn validate_and_sort_by_id(&mut self) -> Result<(), String> {
         let mut keys = HashSet::new();
         let mut ids = HashSet::new();
         let mut order_numbers = HashSet::new();
@@ -108,7 +133,9 @@ impl CustomReportsConfig {
 
         // Check that correct IDs are used.
         for i in 0..self.report.len() {
-            let i: u8 = i.try_into().map_err(|e: std::num::TryFromIntError| e.to_string())?;
+            let i: u8 = i
+                .try_into()
+                .map_err(|e: std::num::TryFromIntError| e.to_string())?;
             let id = CustomReportId::new(i)?;
             if !ids.contains(&id) {
                 return Err(format!(

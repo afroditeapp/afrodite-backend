@@ -1,12 +1,12 @@
 use axum::{
-    extract::{Query, State},
     Extension,
+    extract::{Query, State},
 };
 use model_profile::{
     GetProfileStatisticsHistoryParams, GetProfileStatisticsHistoryResult, Permissions,
     ProfileStatisticsHistoryValueTypeInternal,
 };
-use server_api::{create_open_api_router, S};
+use server_api::{S, create_open_api_router};
 use server_data_profile::read::GetReadProfileCommands;
 use simple_backend::create_counters;
 

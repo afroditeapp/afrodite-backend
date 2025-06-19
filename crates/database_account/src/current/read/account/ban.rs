@@ -1,4 +1,4 @@
-use database::{define_current_read_commands, DieselDatabaseError};
+use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
 use model::AccountIdInternal;
@@ -24,6 +24,12 @@ impl CurrentReadAccountBan<'_> {
             ))
             .first(self.conn())
             .into_db_error(id)
-            .map(|(banned_until, reason_category, reason_details)| GetAccountBanTimeResult { banned_until, reason_category, reason_details })
+            .map(
+                |(banned_until, reason_category, reason_details)| GetAccountBanTimeResult {
+                    banned_until,
+                    reason_category,
+                    reason_details,
+                },
+            )
     }
 }

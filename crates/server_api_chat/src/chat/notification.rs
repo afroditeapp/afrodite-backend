@@ -1,19 +1,14 @@
-use axum::{
-    extract::State, Extension
-};
-use model_chat::{
-    AccountIdInternal, ChatAppNotificationSettings
-};
-use server_api::{
-    app::WriteData, create_open_api_router, db_write_multiple, S
-};
+use axum::{Extension, extract::State};
+use model_chat::{AccountIdInternal, ChatAppNotificationSettings};
+use server_api::{S, app::WriteData, create_open_api_router, db_write_multiple};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 
 use super::super::utils::{Json, StatusCode};
 use crate::app::ReadData;
 
-const PATH_GET_CHAT_APP_NOTIFICATION_SETTINGS: &str = "/chat_api/get_chat_app_notification_settings";
+const PATH_GET_CHAT_APP_NOTIFICATION_SETTINGS: &str =
+    "/chat_api/get_chat_app_notification_settings";
 
 #[utoipa::path(
     get,
@@ -41,7 +36,8 @@ async fn get_chat_app_notification_settings(
     Ok(settings.into())
 }
 
-const PATH_POST_CHAT_APP_NOTIFICATION_SETTINGS: &str = "/chat_api/post_chat_app_notification_settings";
+const PATH_POST_CHAT_APP_NOTIFICATION_SETTINGS: &str =
+    "/chat_api/post_chat_app_notification_settings";
 
 #[utoipa::path(
     post,
@@ -61,7 +57,10 @@ async fn post_chat_app_notification_settings(
 ) -> Result<(), StatusCode> {
     CHAT.post_chat_app_notification_settings.incr();
     db_write_multiple!(state, move |cmds| {
-        cmds.chat().notification().upsert_app_notification_settings(id, settings).await
+        cmds.chat()
+            .notification()
+            .upsert_app_notification_settings(id, settings)
+            .await
     })?;
     Ok(())
 }

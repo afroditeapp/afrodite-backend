@@ -1,12 +1,12 @@
-
 use std::collections::HashMap;
-use diesel::{insert_into, ExpressionMethods, RunQueryDsl};
+
+use diesel::{ExpressionMethods, RunQueryDsl, insert_into};
+use error_stack::Result;
 use model::UnixTime;
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_model::{MetricKey, PerfMetricValueArea};
-use error_stack::Result;
 
-use crate::{define_history_write_commands, IntoDatabaseError};
+use crate::{IntoDatabaseError, define_history_write_commands};
 
 define_history_write_commands!(HistoryWriteCommon);
 
@@ -20,9 +20,7 @@ impl HistoryWriteCommon<'_> {
         let time_id_value: i64 = {
             use model::schema::history_performance_statistics_save_time::dsl::*;
             insert_into(history_performance_statistics_save_time)
-                .values((
-                    unix_time.eq(current_time),
-                ))
+                .values((unix_time.eq(current_time),))
                 .on_conflict(unix_time)
                 .do_update()
                 .set(unix_time.eq(unix_time))
@@ -41,9 +39,7 @@ impl HistoryWriteCommon<'_> {
             let metric_name_id: i64 = {
                 use model::schema::history_performance_statistics_metric_name::dsl::*;
                 insert_into(history_performance_statistics_metric_name)
-                    .values((
-                        metric_name.eq(&name),
-                    ))
+                    .values((metric_name.eq(&name),))
                     .on_conflict(metric_name)
                     .do_update()
                     .set(metric_name.eq(metric_name))

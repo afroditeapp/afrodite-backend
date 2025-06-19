@@ -1,15 +1,15 @@
 //! Common routes related to admin features
 
 pub mod config;
-pub mod manager;
-pub mod statistics;
-pub mod report;
 pub mod maintenance;
+pub mod manager;
 pub mod notification;
+pub mod report;
+pub mod statistics;
 
-pub use manager::*;
-pub use statistics::*;
 pub use config::*;
-pub use report::*;
 pub use maintenance::*;
+pub use manager::*;
 pub use notification::*;
+pub use report::*;
+pub use statistics::*;

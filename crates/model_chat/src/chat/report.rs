@@ -31,7 +31,8 @@ impl NewChatMessageReportInternal {
             receiver: self.message_receiver_account_id_uuid,
             message_time: self.message_unix_time,
             message_number: self.message_number,
-            message_base64: base64::engine::general_purpose::STANDARD.encode(&self.client_message_bytes),
+            message_base64: base64::engine::general_purpose::STANDARD
+                .encode(&self.client_message_bytes),
         }
     }
 }

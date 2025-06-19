@@ -4,8 +4,22 @@ use manager_config::Config;
 use manager_model::{ServerEvent, ServerEventType};
 use tokio::sync::watch;
 
-use super::{backend_events::BackendEventsHandle, backend_manager::BackendManagerHandle, client::ApiManager, link::{backup::server::BackupLinkManagerHandleServer, json_rpc::server::JsonRcpLinkManagerHandleServer}, scheduled_task::ScheduledTaskManagerHandle, task::TaskManagerHandle, update::UpdateManagerHandle};
-use crate::api::{GetApiManager, GetBackendManager, GetBackupLinkManager, GetConfig, GetJsonRcpLinkManager, GetScheduledTaskManager, GetTaskManager, GetUpdateManager};
+use super::{
+    backend_events::BackendEventsHandle,
+    backend_manager::BackendManagerHandle,
+    client::ApiManager,
+    link::{
+        backup::server::BackupLinkManagerHandleServer,
+        json_rpc::server::JsonRcpLinkManagerHandleServer,
+    },
+    scheduled_task::ScheduledTaskManagerHandle,
+    task::TaskManagerHandle,
+    update::UpdateManagerHandle,
+};
+use crate::api::{
+    GetApiManager, GetBackendManager, GetBackupLinkManager, GetConfig, GetJsonRcpLinkManager,
+    GetScheduledTaskManager, GetTaskManager, GetUpdateManager,
+};
 
 pub type S = AppState;
 
@@ -25,14 +39,17 @@ impl AppState {
     async fn current_state_as_server_events(&self) -> Vec<ServerEvent> {
         let event = ServerEvent {
             event: ServerEventType::MaintenanceSchedulingStatus(
-                self.scheduled_task_manager.maintenance_time_for_backend_event().await
+                self.scheduled_task_manager
+                    .maintenance_time_for_backend_event()
+                    .await,
             ),
         };
         vec![event]
     }
 
     pub async fn refresh_state_to_backend(&self) {
-        self.backend_events.send(self.current_state_as_server_events().await);
+        self.backend_events
+            .send(self.current_state_as_server_events().await);
     }
 
     pub fn backend_events_receiver(&self) -> watch::Receiver<Vec<ServerEvent>> {
@@ -75,7 +92,9 @@ impl GetApiManager for AppState {
 }
 
 impl GetJsonRcpLinkManager for AppState {
-    fn json_rpc_link_server(&self) -> &super::link::json_rpc::server::JsonRcpLinkManagerHandleServer {
+    fn json_rpc_link_server(
+        &self,
+    ) -> &super::link::json_rpc::server::JsonRcpLinkManagerHandleServer {
         &self.json_rpc_link_handle_server
     }
 }

@@ -1,8 +1,11 @@
-use database::{current::read::GetDbReadCommandsCommon, define_current_read_commands, DieselDatabaseError};
+use database::{
+    DieselDatabaseError, current::read::GetDbReadCommandsCommon, define_current_read_commands,
+};
 use diesel::prelude::*;
 use error_stack::Result;
 use model_media::{
-    AccountIdInternal, ContentModerationState, GetProfileContentPendingModerationList, GetProfileContentPendingModerationParams, ModerationQueueType, ProfileContentPendingModeration
+    AccountIdInternal, ContentModerationState, GetProfileContentPendingModerationList,
+    GetProfileContentPendingModerationParams, ModerationQueueType, ProfileContentPendingModeration,
 };
 
 use crate::IntoDatabaseError;

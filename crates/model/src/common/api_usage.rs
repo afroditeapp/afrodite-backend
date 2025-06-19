@@ -1,5 +1,4 @@
-use std::sync::atomic::AtomicU32;
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicU32, Ordering};
 
 pub struct ApiUsage {
     // Common
@@ -56,7 +55,7 @@ macro_rules! to_api_usage_values {
 }
 
 impl ApiUsage {
-    pub fn values(&self) -> impl Iterator<Item=ApiUsageValue> {
+    pub fn values(&self) -> impl Iterator<Item = ApiUsageValue> {
         let array = to_api_usage_values!(
             self,
             get_connect_websocket,

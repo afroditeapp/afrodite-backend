@@ -1,11 +1,6 @@
-use axum::{
-    extract::State,
-    Extension,
-};
-use model_media::{
-    AccountIdInternal, GetMediaContentResult, MyProfileContent,
-};
-use server_api::{create_open_api_router, S};
+use axum::{Extension, extract::State};
+use model_media::{AccountIdInternal, GetMediaContentResult, MyProfileContent};
+use server_api::{S, create_open_api_router};
 use server_data_media::read::GetReadMediaCommands;
 use simple_backend::create_counters;
 
@@ -40,7 +35,10 @@ pub async fn get_media_content_info(
         .await?;
 
     let profile_content_version = internal.profile_content_version_uuid;
-    let security_content = internal.security_content_id.as_ref().map(|v| v.clone().into());
+    let security_content = internal
+        .security_content_id
+        .as_ref()
+        .map(|v| v.clone().into());
     let info: MyProfileContent = internal.into();
 
     let sync_version = state

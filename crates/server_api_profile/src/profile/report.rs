@@ -1,7 +1,7 @@
-use axum::{extract::State, Extension};
+use axum::{Extension, extract::State};
 use model::{AdminNotificationTypes, UpdateReportResult};
 use model_profile::{AccountIdInternal, UpdateProfileNameReport, UpdateProfileTextReport};
-use server_api::{app::AdminNotificationProvider, create_open_api_router, db_write_multiple, S};
+use server_api::{S, app::AdminNotificationProvider, create_open_api_router, db_write_multiple};
 use server_data_profile::write::GetWriteCommandsProfile;
 use simple_backend::create_counters;
 
@@ -39,7 +39,8 @@ pub async fn post_report_profile_name(
     let result = db_write_multiple!(state, move |cmds| cmds
         .profile()
         .report()
-        .report_profile_name(account_id, target, update.profile_name).await)?;
+        .report_profile_name(account_id, target, update.profile_name)
+        .await)?;
 
     state
         .admin_notification()
@@ -79,7 +80,8 @@ pub async fn post_report_profile_text(
     let result = db_write_multiple!(state, move |cmds| cmds
         .profile()
         .report()
-        .report_profile_text(account_id, target, update.profile_text).await)?;
+        .report_profile_text(account_id, target, update.profile_text)
+        .await)?;
 
     state
         .admin_notification()

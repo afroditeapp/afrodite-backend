@@ -1,10 +1,11 @@
 use std::{collections::HashMap, sync::Arc};
 
 use model_profile::{
-    ConnectionStatistics, ProfileAgeCounts, ProfileStatisticsInternal, PublicProfileCounts, StatisticsGender, StatisticsProfileVisibility, UnixTime
+    ConnectionStatistics, ProfileAgeCounts, ProfileStatisticsInternal, PublicProfileCounts,
+    StatisticsGender, StatisticsProfileVisibility, UnixTime,
 };
-use server_data::{define_cmd_wrapper_read, result::Result, DataError};
-use simple_backend::perf::{websocket, PerfMetricsManagerData};
+use server_data::{DataError, define_cmd_wrapper_read, result::Result};
+use simple_backend::perf::{PerfMetricsManagerData, websocket};
 use simple_backend_model::{MetricKey, PerfMetricValueArea, TimeGranularity};
 
 use crate::cache::CacheReadProfile;
@@ -63,7 +64,10 @@ impl ReadCommandsProfileStatistics<'_> {
             } else if groups.is_woman() {
                 age_counts.increment_age(StatisticsGender::Woman, p.profile_internal().age.value());
             } else if groups.is_non_binary() {
-                age_counts.increment_age(StatisticsGender::NonBinary, p.profile_internal().age.value());
+                age_counts.increment_age(
+                    StatisticsGender::NonBinary,
+                    p.profile_internal().age.value(),
+                );
             }
         })
         .await?;
@@ -123,7 +127,7 @@ struct Values {
 impl Values {
     fn new(values: Vec<u32>) -> Self {
         if values.is_empty() {
-            return Self::default()
+            return Self::default();
         }
 
         let mut min = u32::MAX;
@@ -166,7 +170,7 @@ fn areas_to_values(data: Option<&PerfMetricValueArea>, min_time: i64) -> Vec<Val
                 continue;
             };
 
-            if let Some(values)  = hour_and_values.get_mut(&hour) {
+            if let Some(values) = hour_and_values.get_mut(&hour) {
                 values.push(*v);
             }
         }

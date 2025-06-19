@@ -2,7 +2,7 @@ use diesel::{insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::{AccessToken, AccountIdInternal, RefreshToken};
 
-use crate::{define_current_write_commands, DieselDatabaseError, IntoDatabaseError};
+use crate::{DieselDatabaseError, IntoDatabaseError, define_current_write_commands};
 
 define_current_write_commands!(CurrentWriteAccountToken);
 

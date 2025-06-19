@@ -1,7 +1,11 @@
 use database_profile::current::write::GetDbWriteCommandsProfile;
-use model_profile::{AccountIdInternal, AutomaticProfileSearchCompletedNotificationViewed, ProfileAppNotificationSettings, ProfileTextModerationCompletedNotificationViewed};
+use model_profile::{
+    AccountIdInternal, AutomaticProfileSearchCompletedNotificationViewed,
+    ProfileAppNotificationSettings, ProfileTextModerationCompletedNotificationViewed,
+};
 use server_data::{
-    cache::CacheWriteCommon, define_cmd_wrapper_write, result::Result, write::DbTransaction, DataError, IntoDataError
+    DataError, IntoDataError, cache::CacheWriteCommon, define_cmd_wrapper_write, result::Result,
+    write::DbTransaction,
 };
 
 use crate::cache::CacheWriteProfile;
@@ -15,15 +19,17 @@ impl WriteCommandsProfileNotification<'_> {
         value: ProfileAppNotificationSettings,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.profile().notification().upsert_app_notification_settings(id, value)
+            cmds.profile()
+                .notification()
+                .upsert_app_notification_settings(id, value)
         })?;
 
         self.write_cache_common(id, |entry| {
             entry.app_notification_settings.profile = value;
             Ok(())
         })
-            .await
-            .into_error()
+        .await
+        .into_error()
     }
 
     pub async fn update_notification_viewed_values(
@@ -47,10 +53,12 @@ impl WriteCommandsProfileNotification<'_> {
         values: AutomaticProfileSearchCompletedNotificationViewed,
     ) -> Result<(), DataError> {
         self.write_cache_profile(id, |p| {
-            p.automatic_profile_search.notification.profiles_found_viewed = values.profiles_found;
+            p.automatic_profile_search
+                .notification
+                .profiles_found_viewed = values.profiles_found;
             Ok(())
         })
-            .await
-            .into_error()
+        .await
+        .into_error()
     }
 }

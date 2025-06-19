@@ -1,15 +1,20 @@
 use std::collections::HashMap;
 
-use axum::{extract::State, response::Redirect, Form};
+use axum::{Form, extract::State, response::Redirect};
 use base64::Engine;
 use model::AccountIdInternal;
 use model_account::{
-    AccessToken, AccountId, AppleAccountId, AuthPair, EmailAddress, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo, SignInWithLoginInfo
+    AccessToken, AccountId, AppleAccountId, AuthPair, EmailAddress, GoogleAccountId, LoginResult,
+    RefreshToken, SignInWithInfo, SignInWithLoginInfo,
 };
-use server_api::{app::GetConfig, db_write_multiple, S};
+use server_api::{S, app::GetConfig, db_write_multiple};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
-use simple_backend::{app::SignInWith, create_counters, sign_in_with::{apple::AppleAccountInfo, google::GoogleAccountInfo}};
+use simple_backend::{
+    app::SignInWith,
+    create_counters,
+    sign_in_with::{apple::AppleAccountInfo, google::GoogleAccountInfo},
+};
 
 use crate::{
     app::{GetAccounts, ReadData, WriteData},
@@ -55,7 +60,10 @@ pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
 trait SignInWithInfoTrait {
     fn email(&self) -> String;
     fn sign_in_with_info(&self) -> SignInWithInfo;
-    async fn already_existing_account(&self, state: &S) -> Result<Option<AccountIdInternal>, StatusCode>;
+    async fn already_existing_account(
+        &self,
+        state: &S,
+    ) -> Result<Option<AccountIdInternal>, StatusCode>;
 }
 
 impl SignInWithInfoTrait for GoogleAccountInfo {
@@ -70,7 +78,10 @@ impl SignInWithInfoTrait for GoogleAccountInfo {
         }
     }
 
-    async fn already_existing_account(&self, state: &S) -> Result<Option<AccountIdInternal>, StatusCode> {
+    async fn already_existing_account(
+        &self,
+        state: &S,
+    ) -> Result<Option<AccountIdInternal>, StatusCode> {
         let already_existing_account = state
             .read()
             .account()
@@ -93,7 +104,10 @@ impl SignInWithInfoTrait for AppleAccountInfo {
         }
     }
 
-    async fn already_existing_account(&self, state: &S) -> Result<Option<AccountIdInternal>, StatusCode> {
+    async fn already_existing_account(
+        &self,
+        state: &S,
+    ) -> Result<Option<AccountIdInternal>, StatusCode> {
         let already_existing_account = state
             .read()
             .account()
@@ -129,7 +143,8 @@ pub async fn post_sign_in_with_login(
     }
 
     if let Some(apple) = tokens.apple {
-        let nonce_bytes = base64::engine::general_purpose::URL_SAFE.decode(apple.nonce)
+        let nonce_bytes = base64::engine::general_purpose::URL_SAFE
+            .decode(apple.nonce)
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
         let info = state
             .sign_in_with_manager()
@@ -156,14 +171,14 @@ async fn handle_sign_in_with_info(
         .try_into()
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let already_existing_account = info.already_existing_account(&state)
-        .await?;
+    let already_existing_account = info.already_existing_account(&state).await?;
 
     if let Some(already_existing_account) = already_existing_account {
         db_write_multiple!(state, move |cmds| cmds
             .account()
             .email()
-            .account_email(already_existing_account, email).await)?;
+            .account_email(already_existing_account, email)
+            .await)?;
 
         login_impl(already_existing_account.as_id(), state)
             .await
@@ -171,16 +186,14 @@ async fn handle_sign_in_with_info(
     } else {
         let id = state
             .data_all_access()
-            .register_impl(
-                info.sign_in_with_info(),
-                Some(email),
-            )
+            .register_impl(info.sign_in_with_info(), Some(email))
             .await?;
         login_impl(id.as_id(), state).await.map(|d| d.into())
     }
 }
 
-pub const PATH_SIGN_IN_WITH_APPLE_REDIRECT_TO_APP: &str = "/account_api/sign_in_with_apple_redirect_to_app";
+pub const PATH_SIGN_IN_WITH_APPLE_REDIRECT_TO_APP: &str =
+    "/account_api/sign_in_with_apple_redirect_to_app";
 
 /// Sign in with Apple related redirect back to Android app.
 ///
@@ -198,13 +211,12 @@ pub async fn post_sign_in_with_apple_redirect_to_app(
         .map(|v| &v.android_package_id)
         .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let query_params: String = serde_urlencoded::to_string(form)
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let query_params: String =
+        serde_urlencoded::to_string(form).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     let redirect = format!(
         "intent://callback?{}#Intent;package={};scheme=signinwithapple;end",
-        query_params,
-        package_id,
+        query_params, package_id,
     );
 
     // Temporary redirect reuses current HTTP method POST which

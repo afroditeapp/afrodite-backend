@@ -8,7 +8,6 @@ use async_trait::async_trait;
 use chrono::{DateTime, NaiveTime, Utc};
 use config::file::LocationConfig;
 use error_stack::{Result, ResultExt};
-
 use tracing::error;
 
 use super::{super::super::client::TestError, BotAction, BotState, PreviousValue};
@@ -90,7 +89,8 @@ impl BotAction for ChangeProfileTextDaily {
             return Ok(());
         };
 
-        let Some(time) = NaiveTime::from_hms_opt(config.0.hours.into(), config.0.minutes.into(), 0) else {
+        let Some(time) = NaiveTime::from_hms_opt(config.0.hours.into(), config.0.minutes.into(), 0)
+        else {
             error!("NaiveTime creation failed");
             return Ok(());
         };
@@ -118,7 +118,9 @@ impl BotAction for ChangeProfileTextDaily {
             };
             ChangeProfileText {
                 mode: ProfileText::String(new_text),
-            }.excecute_impl(state).await?;
+            }
+            .excecute_impl(state)
+            .await?;
         }
 
         Ok(())

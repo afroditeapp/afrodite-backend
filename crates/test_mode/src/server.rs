@@ -1,20 +1,21 @@
 use std::{
-    env, num::NonZeroU8, os::unix::process::CommandExt, path::PathBuf,
-    process::Stdio, sync::Arc,
+    env, num::NonZeroU8, os::unix::process::CommandExt, path::PathBuf, process::Stdio, sync::Arc,
 };
 
 use config::{
+    Config,
     args::{SelectedBenchmark, TestMode},
     file::{
-        ApiConfig, AutomaticProfileSearchConfig, Components, ConfigFile, ConfigFileConfig, EmailAddress, ExternalServices, GrantAdminAccessConfig, LocationConfig, CONFIG_FILE_NAME
+        ApiConfig, AutomaticProfileSearchConfig, CONFIG_FILE_NAME, Components, ConfigFile,
+        ConfigFileConfig, EmailAddress, ExternalServices, GrantAdminAccessConfig, LocationConfig,
     },
-    Config,
 };
 use nix::{sys::signal::Signal, unistd::Pid};
 use reqwest::Url;
 use server_data::index::info::LocationIndexInfoCreator;
 use simple_backend_config::file::{
-    DataConfig, GeneralConfig, IpInfoConfig, SimpleBackendConfigFile, SocketConfig, VideoCallingConfig
+    DataConfig, GeneralConfig, IpInfoConfig, SimpleBackendConfigFile, SocketConfig,
+    VideoCallingConfig,
 };
 use tokio::{
     io::{AsyncBufReadExt, AsyncRead},
@@ -81,15 +82,8 @@ impl ServerManager {
 
         let bot_api_port = settings
             .account_server_api_port
-            .unwrap_or(
-                config.api_urls.url_account.port().unwrap()
-            );
-        let account_config = new_config(
-            &config,
-            bot_api_port,
-            Components::all_enabled(),
-            None,
-        );
+            .unwrap_or(config.api_urls.url_account.port().unwrap());
+        let account_config = new_config(&config, bot_api_port, Components::all_enabled(), None);
         let servers = vec![
             ServerInstance::new(
                 dir.clone(),
@@ -101,9 +95,10 @@ impl ServerManager {
             .await,
         ];
 
-        if config.server.microservice_profile ||
-            config.server.microservice_media ||
-            config.server.microservice_chat {
+        if config.server.microservice_profile
+            || config.server.microservice_media
+            || config.server.microservice_chat
+        {
             warn!("Starting server in microservice mode is unsupported");
         }
 

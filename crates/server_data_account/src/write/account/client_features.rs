@@ -1,8 +1,6 @@
 use database::current::write::GetDbWriteCommandsCommon;
 use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
-use server_data::{
-    define_cmd_wrapper_write, result::Result, write::DbTransaction, DataError
-};
+use server_data::{DataError, define_cmd_wrapper_write, result::Result, write::DbTransaction};
 use tracing::info;
 
 define_cmd_wrapper_write!(WriteCommandsAccountClientFeatures);
@@ -15,7 +13,11 @@ impl WriteCommandsAccountClientFeatures<'_> {
         sha256: String,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            let current_hash = cmds.read().account().client_features().client_features_hash()?;
+            let current_hash = cmds
+                .read()
+                .account()
+                .client_features()
+                .client_features_hash()?;
 
             if current_hash.as_deref() != Some(&sha256) {
                 info!(

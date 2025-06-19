@@ -1,9 +1,4 @@
-
-use std::{
-    sync::{
-        atomic::{AtomicU32, Ordering},
-    },
-};
+use std::sync::atomic::{AtomicU32, Ordering};
 
 pub struct PerfCounter {
     name: &'static str,
@@ -117,7 +112,7 @@ impl CounterCategory {
         self.name
     }
 
-    pub fn counter_list(&self) ->  &[&PerfCounter] {
+    pub fn counter_list(&self) -> &[&PerfCounter] {
         self.counter_list
     }
 }

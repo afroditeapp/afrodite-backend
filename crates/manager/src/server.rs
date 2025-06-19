@@ -8,41 +8,45 @@ use std::{
 use app::S;
 use backend_manager::BackendManager;
 use futures::future::poll_fn;
-use link::{backup::{server::BackupLinkManagerServer, target::BackupLinkManagerTarget}, json_rpc::{client::JsonRcpLinkManagerClient, server::JsonRcpLinkManagerServer}};
+use link::{
+    backup::{server::BackupLinkManagerServer, target::BackupLinkManagerTarget},
+    json_rpc::{client::JsonRcpLinkManagerClient, server::JsonRcpLinkManagerServer},
+};
 use manager_config::Config;
 use scheduled_task::ScheduledTaskManager;
 use task::TaskManager;
 use tokio::{
-    io::AsyncWriteExt, net::TcpListener, signal::{
+    io::AsyncWriteExt,
+    net::TcpListener,
+    signal::{
         self,
         unix::{Signal, SignalKind},
-    }, sync::{broadcast, mpsc}, task::JoinHandle
+    },
+    sync::{broadcast, mpsc},
+    task::JoinHandle,
 };
-use tokio_rustls::{rustls::ServerConfig, TlsAcceptor};
+use tokio_rustls::{TlsAcceptor, rustls::ServerConfig};
 use tracing::{error, info, warn};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
+use tracing_subscriber::{EnvFilter, Layer, layer::SubscriberExt, util::SubscriberInitExt};
 use update::UpdateManager;
 
 use crate::{
-    api::{server::handle_connection_to_server, GetBackendManager},
-    server::{
-        app::App,
-        mount::MountManager, state::MountStateStorage,
-    },
+    api::{GetBackendManager, server::handle_connection_to_server},
+    server::{app::App, mount::MountManager, state::MountStateStorage},
 };
 
 pub mod app;
-pub mod backend_manager;
 pub mod backend_events;
+pub mod backend_manager;
 pub mod client;
 pub mod info;
-pub mod mount;
-pub mod task;
-pub mod scheduled_task;
-pub mod reboot;
-pub mod state;
-pub mod update;
 pub mod link;
+pub mod mount;
+pub mod reboot;
+pub mod scheduled_task;
+pub mod state;
+pub mod task;
+pub mod update;
 
 /// Drop this when quit starts
 pub type ServerQuitHandle = broadcast::Sender<()>;
@@ -71,7 +75,11 @@ impl AppServer {
         let log_without_timestamp_layer = if self.config.log_timestamp() {
             None
         } else {
-            Some(tracing_subscriber::fmt::layer().without_time().with_filter(EnvFilter::from_default_env()))
+            Some(
+                tracing_subscriber::fmt::layer()
+                    .without_time()
+                    .with_filter(EnvFilter::from_default_env()),
+            )
         };
 
         tracing_subscriber::registry()
@@ -96,12 +104,10 @@ impl AppServer {
         let mut terminate_signal = signal::unix::signal(SignalKind::terminate()).unwrap();
 
         let state: Arc<MountStateStorage> = MountStateStorage::new().into();
-        let (task_manager_handle, task_manager_internal_state) =
-            TaskManager::new_channel();
+        let (task_manager_handle, task_manager_internal_state) = TaskManager::new_channel();
         let (scheduled_task_manager_handle, scheduled_task_manager_internal_state) =
             ScheduledTaskManager::new_channel();
-        let (update_manager_handle, update_manager_internal_state) =
-            UpdateManager::new_channel();
+        let (update_manager_handle, update_manager_internal_state) = UpdateManager::new_channel();
         let (json_rpc_link_manager_server_handle, json_rpc_link_manager_server_internal_state) =
             JsonRcpLinkManagerServer::new_channel();
         let (backup_link_manager_server_handle, backup_link_manager_server_internal_state) =
@@ -137,10 +143,8 @@ impl AppServer {
             services_quit_watcher.resubscribe(),
         );
 
-        let reboot_manager_quit_handle = reboot::RebootManager::new_manager(
-            app.state(),
-            services_quit_watcher.resubscribe(),
-        );
+        let reboot_manager_quit_handle =
+            reboot::RebootManager::new_manager(app.state(), services_quit_watcher.resubscribe());
 
         // Start update manager
 
@@ -159,10 +163,8 @@ impl AppServer {
 
         // Start JSON RPC link manager client logic
 
-        let json_rpc_link_manager_client_quit_handle = JsonRcpLinkManagerClient::new_manager(
-            app.state(),
-            services_quit_watcher.resubscribe(),
-        );
+        let json_rpc_link_manager_client_quit_handle =
+            JsonRcpLinkManagerClient::new_manager(app.state(), services_quit_watcher.resubscribe());
 
         // Start backup link manager server logic
 
@@ -173,10 +175,8 @@ impl AppServer {
 
         // Start backup target client logic
 
-        let backup_target_quit_handle = BackupLinkManagerTarget::new_manager(
-            app.state(),
-            services_quit_watcher.resubscribe(),
-        );
+        let backup_target_quit_handle =
+            BackupLinkManagerTarget::new_manager(app.state(), services_quit_watcher.resubscribe());
 
         // Start backend manager
 
@@ -335,13 +335,17 @@ impl AppServer {
             None
         };
 
-
         let second_join_handle =
             if let Some(port) = self.config.socket().second_public_api_localhost_only_port {
                 let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), port);
                 info!("Public API is available also on {}", addr);
                 let handle = self
-                    .create_server_task_no_tls(app.state(), addr, "Second public API", quit_notification)
+                    .create_server_task_no_tls(
+                        app.state(),
+                        addr,
+                        "Second public API",
+                        quit_notification,
+                    )
                     .await;
                 Some(handle)
             } else {

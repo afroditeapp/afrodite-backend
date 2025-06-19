@@ -1,12 +1,14 @@
-use axum::{extract::State, Extension};
+use axum::{Extension, extract::State};
 use model::Permissions;
-use model_account::{GetClientVersionStatisticsSettings, GetClientVersionStatisticsResult};
-use server_api::{create_open_api_router, S};
+use model_account::{GetClientVersionStatisticsResult, GetClientVersionStatisticsSettings};
+use server_api::{S, create_open_api_router};
 use server_data_account::read::GetReadCommandsAccount;
 use simple_backend::create_counters;
 
-use crate::utils::{Json, StatusCode};
-use crate::app::ReadData;
+use crate::{
+    app::ReadData,
+    utils::{Json, StatusCode},
+};
 
 const PATH_POST_GET_CLIENT_VERSION_STATISTICS: &str = "/account_api/client_version_statistics";
 
@@ -34,7 +36,11 @@ pub async fn post_get_client_version_statistics(
 ) -> Result<Json<GetClientVersionStatisticsResult>, StatusCode> {
     ACCOUNT_ADMIN.post_get_client_version_statistics.incr();
     if api_caller_permissions.admin_server_maintenance_view_info {
-        let data = state.read().account_admin_history().get_client_version_statistics(settings).await?;
+        let data = state
+            .read()
+            .account_admin_history()
+            .get_client_version_statistics(settings)
+            .await?;
         Ok(data.into())
     } else {
         Err(StatusCode::UNAUTHORIZED)

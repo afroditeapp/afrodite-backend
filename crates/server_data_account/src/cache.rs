@@ -1,7 +1,7 @@
 use error_stack::Result;
 use model::AccountId;
 use server_data::{
-    cache::{account::CachedAccountComponentData, CacheError},
+    cache::{CacheError, account::CachedAccountComponentData},
     db_manager::InternalReading,
 };
 

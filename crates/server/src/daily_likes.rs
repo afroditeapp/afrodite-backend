@@ -3,14 +3,15 @@ use std::time::Duration;
 use model::{EventToClientInternal, LikeSendingLimitConfig};
 use model_profile::AccountIdInternal;
 use server_api::{
-    app::{EventManagerProvider, GetConfig, ReadData, WriteData}, db_write_raw,
+    app::{EventManagerProvider, GetConfig, ReadData, WriteData},
+    db_write_raw,
 };
 use server_common::result::{Result, WrappedResultExt};
 use server_data::read::GetReadCommandsCommon;
 use server_data_chat::write::GetWriteCommandsChat;
 use server_state::S;
 use simple_backend::ServerQuitWatcher;
-use simple_backend_utils::time::{sleep_until_current_time_is_at};
+use simple_backend_utils::time::sleep_until_current_time_is_at;
 use tokio::{task::JoinHandle, time::sleep};
 use tracing::{error, warn};
 
@@ -60,7 +61,12 @@ impl DailyLikesManager {
 
     async fn run(self, mut quit_notification: ServerQuitWatcher) {
         let mut check_cooldown = false;
-        let Some(like_sending_limits) = self.state.config().client_features().and_then(|v| v.limits.likes.like_sending.as_ref()) else {
+        let Some(like_sending_limits) = self
+            .state
+            .config()
+            .client_features()
+            .and_then(|v| v.limits.likes.like_sending.as_ref())
+        else {
             return;
         };
 
@@ -142,11 +148,12 @@ impl DailyLikesManager {
                 .limits()
                 .reset_daily_likes_left(account, limit)
                 .await
-            })
+        })
         .await
         .change_context(DailyLikesError::Database)?;
 
-        self.state.event_manager()
+        self.state
+            .event_manager()
             .send_connected_event(account, EventToClientInternal::DailyLikesLeftChanged)
             .await
             .change_context(DailyLikesError::EventSending)?;

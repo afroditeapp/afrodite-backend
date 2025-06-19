@@ -1,12 +1,9 @@
-
-
+use error_stack::{Result, ResultExt};
 use manager_model::{JsonRpcResponse, ManualTaskType};
 use tracing::warn;
-use crate::api::{GetConfig, GetTaskManager};
-
-use error_stack::{Result, ResultExt};
 
 use super::JsonRpcError;
+use crate::api::{GetConfig, GetTaskManager};
 
 pub trait RpcTask: GetConfig + GetTaskManager {
     async fn rpc_trigger_manual_task(
@@ -15,21 +12,30 @@ pub trait RpcTask: GetConfig + GetTaskManager {
     ) -> Result<JsonRpcResponse, JsonRpcError> {
         match task {
             ManualTaskType::BackendDataReset => {
-                if self.config().manual_tasks_config().allow_backend_data_reset.is_none() {
-                    warn!("Skipping backend data reset request because it is disabled from config file");
-                    return Ok(JsonRpcResponse::successful())
+                if self
+                    .config()
+                    .manual_tasks_config()
+                    .allow_backend_data_reset
+                    .is_none()
+                {
+                    warn!(
+                        "Skipping backend data reset request because it is disabled from config file"
+                    );
+                    return Ok(JsonRpcResponse::successful());
                 }
             }
             ManualTaskType::BackendRestart => {
                 if !self.config().manual_tasks_config().allow_backend_restart {
-                    warn!("Skipping backend restart request because it is disabled from config file");
-                    return Ok(JsonRpcResponse::successful())
+                    warn!(
+                        "Skipping backend restart request because it is disabled from config file"
+                    );
+                    return Ok(JsonRpcResponse::successful());
                 }
             }
             ManualTaskType::SystemReboot => {
                 if !self.config().manual_tasks_config().allow_system_reboot {
                     warn!("Skipping system reboot request because it is disabled from config file");
-                    return Ok(JsonRpcResponse::successful())
+                    return Ok(JsonRpcResponse::successful());
                 }
             }
         }
@@ -42,4 +48,4 @@ pub trait RpcTask: GetConfig + GetTaskManager {
     }
 }
 
-impl <T: GetConfig + GetTaskManager> RpcTask for T {}
+impl<T: GetConfig + GetTaskManager> RpcTask for T {}

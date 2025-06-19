@@ -1,5 +1,5 @@
 use model_profile::AccountIdInternal;
-use server_data::{define_cmd_wrapper_read, result::Result, DataError, IntoDataError};
+use server_data::{DataError, IntoDataError, define_cmd_wrapper_read, result::Result};
 
 use crate::cache::CacheReadProfile;
 
@@ -13,7 +13,7 @@ impl ReadCommandsProfileSearch<'_> {
         self.read_cache_profile_and_common(account_id, |p, _| {
             Ok(p.automatic_profile_search.last_seen_unix_time.is_some())
         })
-            .await
-            .into_error()
+        .await
+        .into_error()
     }
 }

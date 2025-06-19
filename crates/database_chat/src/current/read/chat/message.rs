@@ -1,8 +1,8 @@
-use database::{define_current_read_commands, DieselDatabaseError};
+use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
 use model_chat::{
-    AccountId, AccountIdInternal, GetSentMessage, PendingMessageInternal, SentMessageId
+    AccountId, AccountIdInternal, GetSentMessage, PendingMessageInternal, SentMessageId,
 };
 
 use crate::IntoDatabaseError;

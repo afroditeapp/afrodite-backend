@@ -1,5 +1,7 @@
-use database::{current::write::GetDbWriteCommandsCommon, define_current_write_commands, DieselDatabaseError};
-use diesel::{insert_into, prelude::*, ExpressionMethods};
+use database::{
+    DieselDatabaseError, current::write::GetDbWriteCommandsCommon, define_current_write_commands,
+};
+use diesel::{ExpressionMethods, insert_into, prelude::*};
 use error_stack::Result;
 use model::{AccountIdInternal, ContentId, ReportProcessingState, ReportTypeNumberInternal};
 
@@ -25,10 +27,7 @@ impl CurrentWriteMediaReport<'_> {
             use model::schema::media_report_profile_content::dsl::*;
 
             insert_into(media_report_profile_content)
-                .values((
-                    report_id.eq(id),
-                    profile_content_uuid.eq(&content),
-                ))
+                .values((report_id.eq(id), profile_content_uuid.eq(&content)))
                 .execute(self.conn())
                 .into_db_error((creator, target))?;
         }

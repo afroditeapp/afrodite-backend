@@ -1,7 +1,9 @@
 use chrono::NaiveDate;
-use diesel::{prelude::*, Associations};
+use diesel::{Associations, prelude::*};
 use model::{ClientVersion, UnixTime};
-use model_server_data::{AppleAccountId, AuthPair, EmailAddress, GoogleAccountId, PublicationId, SignInWithInfo};
+use model_server_data::{
+    AppleAccountId, AuthPair, EmailAddress, GoogleAccountId, PublicationId, SignInWithInfo,
+};
 use model_server_state::DemoModeToken;
 use serde::{Deserialize, Serialize};
 use utils::time::age_in_years_from_birthdate;

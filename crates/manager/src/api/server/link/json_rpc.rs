@@ -1,35 +1,31 @@
 use std::net::SocketAddr;
-use manager_api::protocol::ClientConnectionRead;
-use manager_api::protocol::ClientConnectionWrite;
-
-use manager_model::ManagerInstanceName;
-use tracing::info;
-use crate::api::utils::validate_json_rpc_link_login;
-use crate::api::GetJsonRcpLinkManager;
-
-use manager_api::protocol::{ConnectionUtilsRead, ConnectionUtilsWrite};
-
-use crate::server::link::json_rpc::server::JsonRpcLinkConnectionReceiver;
-
-use crate::server::app::S;
 
 use error_stack::{Result, ResultExt};
-use super::super::ClientConnectionReadWrite;
-use super::super::ServerError;
+use manager_api::protocol::{
+    ClientConnectionRead, ClientConnectionWrite, ConnectionUtilsRead, ConnectionUtilsWrite,
+};
+use manager_model::ManagerInstanceName;
+use tracing::info;
 
-pub async fn handle_json_rpc_link<
-    C: ClientConnectionReadWrite,
->(
+use super::super::{ClientConnectionReadWrite, ServerError};
+use crate::{
+    api::{GetJsonRcpLinkManager, utils::validate_json_rpc_link_login},
+    server::{app::S, link::json_rpc::server::JsonRpcLinkConnectionReceiver},
+};
+
+pub async fn handle_json_rpc_link<C: ClientConnectionReadWrite>(
     mut c: C,
     address: SocketAddr,
     state: S,
 ) -> Result<(), ServerError> {
-    let name = c.receive_string_with_u32_len()
+    let name = c
+        .receive_string_with_u32_len()
         .await
         .change_context(ServerError::Read)?;
     let name = ManagerInstanceName(name);
 
-    let password = c.receive_string_with_u32_len()
+    let password = c
+        .receive_string_with_u32_len()
         .await
         .change_context(ServerError::Read)?;
 
@@ -43,19 +39,22 @@ pub async fn handle_json_rpc_link<
     handle_server_messages(c, address, state, name).await
 }
 
-async fn handle_server_messages<
-    C: ClientConnectionReadWrite,
->(
+async fn handle_server_messages<C: ClientConnectionReadWrite>(
     c: C,
     address: SocketAddr,
     state: S,
     name: ManagerInstanceName,
 ) -> Result<(), ServerError> {
-    info!("Remote manager {} from {} started JSON RPC link connection", name, address);
+    info!(
+        "Remote manager {} from {} started JSON RPC link connection",
+        name, address
+    );
 
     let (reader, writer) = tokio::io::split(c);
 
-    let mut receiver = state.json_rpc_link_server().replace_connection()
+    let mut receiver = state
+        .json_rpc_link_server()
+        .replace_connection()
         .await
         .change_context(ServerError::JsonRpcLink)?;
 
@@ -69,49 +68,50 @@ async fn handle_server_messages<
     };
 
     drop(receiver);
-    state.json_rpc_link_server().clean_connection()
+    state
+        .json_rpc_link_server()
+        .clean_connection()
         .await
         .change_context(ServerError::JsonRpcLink)?;
 
-    info!("Remote manager {} from {} disconnected JSON RPC link connection", name, address);
+    info!(
+        "Remote manager {} from {} disconnected JSON RPC link connection",
+        name, address
+    );
 
     r
 }
 
-async fn handle_read<
-    C: ClientConnectionRead,
->(
-    mut c: C,
-    state: S,
-) -> Result<(), ServerError> {
+async fn handle_read<C: ClientConnectionRead>(mut c: C, state: S) -> Result<(), ServerError> {
     loop {
-        let Some(connection) = handle_read_one_message(
-            c,
-            &state,
-        ).await? else {
+        let Some(connection) = handle_read_one_message(c, &state).await? else {
             return Ok(());
         };
         c = connection;
     }
 }
 
-async fn handle_read_one_message<
-    C: ClientConnectionRead,
->(
+async fn handle_read_one_message<C: ClientConnectionRead>(
     mut c: C,
     state: &S,
 ) -> Result<Option<C>, ServerError> {
-    let Some(message) = c.receive_json_rpc_link_message().await.change_context(ServerError::Read)? else {
+    let Some(message) = c
+        .receive_json_rpc_link_message()
+        .await
+        .change_context(ServerError::Read)?
+    else {
         // Client disconnected
         return Ok(None);
     };
-    state.json_rpc_link_server().receive_message(message).await.change_context(ServerError::BrokenChannel)?;
+    state
+        .json_rpc_link_server()
+        .receive_message(message)
+        .await
+        .change_context(ServerError::BrokenChannel)?;
     Ok(Some(c))
 }
 
-async fn handle_write<
-    C: ClientConnectionWrite,
->(
+async fn handle_write<C: ClientConnectionWrite>(
     mut c: C,
     receiver: &mut JsonRpcLinkConnectionReceiver,
 ) -> Result<(), ServerError> {
@@ -122,18 +122,17 @@ async fn handle_write<
     }
 }
 
-async fn handle_write_single<
-    C: ClientConnectionWrite,
->(
+async fn handle_write_single<C: ClientConnectionWrite>(
     c: &mut C,
     receiver: &mut JsonRpcLinkConnectionReceiver,
 ) -> Result<Option<Quit>, ServerError> {
-    let Some(message) = receiver.receiver.recv()
-        .await else {
-            return Ok(Some(Quit));
-        };
+    let Some(message) = receiver.receiver.recv().await else {
+        return Ok(Some(Quit));
+    };
 
-    c.send_json_rpc_link_message(message).await.change_context(ServerError::Write)?;
+    c.send_json_rpc_link_message(message)
+        .await
+        .change_context(ServerError::Write)?;
 
     Ok(None)
 }

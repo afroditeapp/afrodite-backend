@@ -1,15 +1,14 @@
-
-
-use std::num::Wrapping;
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::{
+    num::Wrapping,
+    sync::atomic::{AtomicU32, Ordering},
+};
 
 use manager_api::backup::BackupSourceClient;
 use manager_model::{AccountAndContent, Sha256Bytes, SourceToTargetMessage, TargetToSourceMessage};
 use model::{AccountId, ContentId};
-use server_api::app::GetConfig;
-use server_api::DataError;
 use server_api::{
-    app::ReadData,
+    DataError,
+    app::{GetConfig, ReadData},
     result::WrappedContextExt,
 };
 use server_common::result::{Result, WrappedResultExt};
@@ -17,12 +16,10 @@ use server_data::read::GetReadCommandsCommon;
 use server_data_media::read::GetReadMediaCommands;
 use server_state::S;
 use sha2::{Digest, Sha256};
-use simple_backend::ServerQuitWatcher;
-use simple_backend::app::GetManagerApi;
+use simple_backend::{ServerQuitWatcher, app::GetManagerApi};
 use simple_backend_config::SqliteDatabase;
 use simple_backend_utils::file::overwrite_and_remove_if_exists;
-use tokio::io::AsyncReadExt;
-use tokio::sync::broadcast::error::TryRecvError;
+use tokio::{io::AsyncReadExt, sync::broadcast::error::TryRecvError};
 
 use super::ScheduledTaskError;
 
@@ -38,12 +35,14 @@ pub async fn backup_data(
         .manager_api_client()
         .new_backup_connection(BACKUP_SESSION.fetch_add(1, Ordering::Relaxed))
         .await
-        .change_context(ScheduledTaskError::Backup)? else {
-            // Backup link password is not configured
-            return Ok(());
-        };
+        .change_context(ScheduledTaskError::Backup)?
+    else {
+        // Backup link password is not configured
+        return Ok(());
+    };
 
-    backup_client.send_message(SourceToTargetMessage::StartBackupSession)
+    backup_client
+        .send_message(SourceToTargetMessage::StartBackupSession)
         .await
         .change_context(ScheduledTaskError::Backup)?;
 
@@ -77,18 +76,23 @@ pub async fn backup_data(
             });
         }
 
-        backup_client.send_message(SourceToTargetMessage::ContentList { data })
+        backup_client
+            .send_message(SourceToTargetMessage::ContentList { data })
             .await
             .change_context(ScheduledTaskError::Backup)?;
 
         loop {
-            let m = backup_client.receive_message()
+            let m = backup_client
+                .receive_message()
                 .await
                 .change_context(ScheduledTaskError::Backup)?;
 
             match m {
                 TargetToSourceMessage::ContentListSyncDone => break,
-                TargetToSourceMessage::ContentQuery { account_id, content_id } => {
+                TargetToSourceMessage::ContentQuery {
+                    account_id,
+                    content_id,
+                } => {
                     let content_data = state
                         .read()
                         .media()
@@ -102,7 +106,11 @@ pub async fn backup_data(
                     let mut hasher = Sha256::new();
                     hasher.update(&data);
                     let result = hasher.finalize();
-                    backup_client.send_message(SourceToTargetMessage::ContentQueryAnswer { sha256: Sha256Bytes(result.into()), data })
+                    backup_client
+                        .send_message(SourceToTargetMessage::ContentQueryAnswer {
+                            sha256: Sha256Bytes(result.into()),
+                            data,
+                        })
                         .await
                         .change_context(ScheduledTaskError::Backup)?;
                 }
@@ -111,7 +119,8 @@ pub async fn backup_data(
     }
 
     // Empty file name ends content backup waiting
-    backup_client.send_message(SourceToTargetMessage::ContentList { data: vec![] })
+    backup_client
+        .send_message(SourceToTargetMessage::ContentList { data: vec![] })
         .await
         .change_context(ScheduledTaskError::Backup)?;
 
@@ -127,7 +136,8 @@ pub async fn backup_data(
             .read()
             .common()
             .backup_current_database(tmp_db.clone()),
-    ).await?;
+    )
+    .await?;
     handle_db(
         &mut backup_client,
         &tmp_db,
@@ -136,10 +146,15 @@ pub async fn backup_data(
             .read()
             .common_history()
             .backup_history_database(tmp_db.clone()),
-    ).await?;
+    )
+    .await?;
 
     // Empty file name ends file backup waiting
-    backup_client.send_message(SourceToTargetMessage::StartFileBackup { sha256: Sha256Bytes([0; 32]), file_name: String::new() })
+    backup_client
+        .send_message(SourceToTargetMessage::StartFileBackup {
+            sha256: Sha256Bytes([0; 32]),
+            file_name: String::new(),
+        })
         .await
         .change_context(ScheduledTaskError::Backup)?;
 
@@ -150,7 +165,7 @@ async fn handle_db(
     backup_client: &mut BackupSourceClient,
     tmp_db: &str,
     db_name: &SqliteDatabase,
-    create_backup_file: impl Future<Output=Result<(), DataError>>,
+    create_backup_file: impl Future<Output = Result<(), DataError>>,
 ) -> Result<(), ScheduledTaskError> {
     overwrite_and_remove_if_exists(tmp_db)
         .await
@@ -175,7 +190,11 @@ async fn send_backup_db(
     backup_client: &mut BackupSourceClient,
 ) -> Result<(), ScheduledTaskError> {
     let sha256 = calculate_hash(tmp_db_path).await?;
-    backup_client.send_message(SourceToTargetMessage::StartFileBackup { sha256, file_name: info.name.to_string() })
+    backup_client
+        .send_message(SourceToTargetMessage::StartFileBackup {
+            sha256,
+            file_name: info.name.to_string(),
+        })
         .await
         .change_context(ScheduledTaskError::Backup)?;
 
@@ -188,12 +207,17 @@ async fn send_backup_db(
     let mut next_packet_number: Wrapping<u32> = Wrapping(0);
 
     loop {
-        let size = file.read(&mut read_buffer)
+        let size = file
+            .read(&mut read_buffer)
             .await
             .change_context(ScheduledTaskError::Backup)?;
         let data = read_buffer[..size].to_vec();
 
-        backup_client.send_message(SourceToTargetMessage::FileBackupData { package_number: next_packet_number, data })
+        backup_client
+            .send_message(SourceToTargetMessage::FileBackupData {
+                package_number: next_packet_number,
+                data,
+            })
             .await
             .change_context(ScheduledTaskError::Backup)?;
 
@@ -207,9 +231,7 @@ async fn send_backup_db(
     Ok(())
 }
 
-async fn calculate_hash(
-    tmp_db_path: &str,
-) -> Result<Sha256Bytes, ScheduledTaskError> {
+async fn calculate_hash(tmp_db_path: &str) -> Result<Sha256Bytes, ScheduledTaskError> {
     let mut hasher = Sha256::new();
 
     let mut file = tokio::fs::File::open(tmp_db_path)
@@ -220,7 +242,8 @@ async fn calculate_hash(
     let mut read_buffer: Vec<u8> = vec![0; buffer_size];
 
     loop {
-        let size = file.read(&mut read_buffer)
+        let size = file
+            .read(&mut read_buffer)
             .await
             .change_context(ScheduledTaskError::Backup)?;
         let data = &read_buffer[..size];

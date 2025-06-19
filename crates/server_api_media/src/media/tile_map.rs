@@ -5,7 +5,7 @@ use axum::{
 use axum_extra::TypedHeader;
 use headers::{ContentLength, ContentType};
 use model_media::{MapTileX, MapTileY, MapTileZ};
-use server_api::{create_open_api_router, S};
+use server_api::{S, create_open_api_router};
 use simple_backend::{app::GetTileMap, create_counters};
 use tracing::error;
 

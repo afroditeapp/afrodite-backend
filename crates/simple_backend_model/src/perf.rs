@@ -2,7 +2,7 @@ use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::Text}
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::{diesel_string_wrapper, UnixTime};
+use crate::{UnixTime, diesel_string_wrapper};
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, ToSchema)]
 pub enum TimeGranularity {
@@ -86,10 +86,7 @@ impl MetricKey {
     }
 
     pub fn new(category: &'static str, name: &'static str) -> MetricKey {
-        Self {
-            category,
-            name,
-        }
+        Self { category, name }
     }
 
     pub fn to_name(&self) -> MetricName {
@@ -98,7 +95,9 @@ impl MetricKey {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, Hash, Eq, PartialEq, ToSchema, FromSqlRow, AsExpression)]
+#[derive(
+    Debug, Clone, Deserialize, Serialize, Hash, Eq, PartialEq, ToSchema, FromSqlRow, AsExpression,
+)]
 #[diesel(sql_type = Text)]
 pub struct MetricName(String);
 

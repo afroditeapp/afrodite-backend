@@ -3,12 +3,12 @@ use config::file::ConfigFileError;
 use manager_api::ClientError;
 use server_common::{data::cache::CacheError, internal_api::InternalApiError};
 use server_data::{content_processing::ContentProcessingError, event::EventError};
-use simple_backend::sign_in_with::{apple::SignInWithAppleError, google::SignInWithGoogleError};
-use simple_backend::jitsi_meet::JitsiMeetUrlCreatorError;
+use simple_backend::{
+    jitsi_meet::JitsiMeetUrlCreatorError,
+    sign_in_with::{apple::SignInWithAppleError, google::SignInWithGoogleError},
+};
 
-use crate::DataError;
-
-use crate::data_signer::DataSignerError;
+use crate::{DataError, data_signer::DataSignerError};
 
 #[allow(non_camel_case_types)]
 pub enum StatusCode {
@@ -80,7 +80,7 @@ enum RequestError {
 pub trait ConvertDataErrorToStatusCode<Ok>: Sized {
     #[track_caller]
     fn convert_data_error_to_status_code(self)
-        -> std::result::Result<Ok, crate::utils::StatusCode>;
+    -> std::result::Result<Ok, crate::utils::StatusCode>;
 
     #[track_caller]
     fn ignore_and_log_error(self) {
@@ -137,4 +137,7 @@ impl_error_to_status_code!(ConfigFileError, RequestError::ConfigFileError);
 impl_error_to_status_code!(EventError, RequestError::EventError);
 impl_error_to_status_code!(ContentProcessingError, RequestError::ContentProcessingError);
 impl_error_to_status_code!(DataSignerError, RequestError::DataSignerError);
-impl_error_to_status_code!(JitsiMeetUrlCreatorError, RequestError::JitsiMeetUrlCreatorError);
+impl_error_to_status_code!(
+    JitsiMeetUrlCreatorError,
+    RequestError::JitsiMeetUrlCreatorError
+);

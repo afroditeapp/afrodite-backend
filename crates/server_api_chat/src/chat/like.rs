@@ -1,8 +1,16 @@
-use axum::{extract::State, Extension};
+use axum::{Extension, extract::State};
 use model_chat::{
-    AccountId, AccountIdInternal, AccountInteractionState, CurrentAccountInteractionState, DailyLikesLeft, DeleteLikeResult, LimitedActionStatus, NewReceivedLikesCount, NewReceivedLikesCountResult, PageItemCountForNewLikes, PendingNotificationFlags, ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult, SendLikeResult, SentLikesPage
+    AccountId, AccountIdInternal, AccountInteractionState, CurrentAccountInteractionState,
+    DailyLikesLeft, DeleteLikeResult, LimitedActionStatus, NewReceivedLikesCount,
+    NewReceivedLikesCountResult, PageItemCountForNewLikes, PendingNotificationFlags,
+    ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult,
+    SendLikeResult, SentLikesPage,
 };
-use server_api::{app::{ApiUsageTrackerProvider, EventManagerProvider, GetConfig}, create_open_api_router, S};
+use server_api::{
+    S,
+    app::{ApiUsageTrackerProvider, EventManagerProvider, GetConfig},
+    create_open_api_router,
+};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 
@@ -36,7 +44,10 @@ pub async fn post_send_like(
     Json(requested_profile): Json<AccountId>,
 ) -> Result<Json<SendLikeResult>, StatusCode> {
     CHAT.post_send_like.incr();
-    state.api_usage_tracker().incr(id, |u| &u.post_send_like).await;
+    state
+        .api_usage_tracker()
+        .incr(id, |u| &u.post_send_like)
+        .await;
 
     // TODO(prod): Check is profile public and is age ok.
 
@@ -54,7 +65,7 @@ pub async fn post_send_like(
                 AccountInteractionState::Match => {
                     return Ok(SendLikeResult::error_account_interaction_state_mismatch(
                         CurrentAccountInteractionState::Match,
-                    ))
+                    ));
                 }
                 AccountInteractionState::Like => {
                     if current_interaction.account_id_sender == Some(id.into_db_id()) {
@@ -88,7 +99,8 @@ pub async fn post_send_like(
                 .limits()
                 .daily_likes_left_internal(id)
                 .await?
-                .likes_left > 0
+                .likes_left
+                > 0
         };
 
         if allow_action {
@@ -108,7 +120,8 @@ pub async fn post_send_like(
             cmds.chat().limits().decrement_daily_likes_left(id).await?;
         }
 
-        let daily_likes = cmds.read()
+        let daily_likes = cmds
+            .read()
             .chat()
             .limits()
             .daily_likes_left_internal(id)
@@ -233,7 +246,9 @@ pub async fn post_reset_received_likes_paging(
 ) -> Result<Json<ResetReceivedLikesIteratorResult>, StatusCode> {
     CHAT.post_reset_received_likes_paging.incr();
     let (iterator_session_id, new_version) = db_write_multiple!(state, move |cmds| {
-        cmds.chat().handle_reset_received_likes_iterator(account_id).await
+        cmds.chat()
+            .handle_reset_received_likes_iterator(account_id)
+            .await
     })?;
     let r = ResetReceivedLikesIteratorResult {
         v: new_version,
@@ -336,12 +351,12 @@ pub async fn delete_like(
                 AccountInteractionState::Empty => {
                     return Ok(DeleteLikeResult::error_account_interaction_state_mismatch(
                         CurrentAccountInteractionState::Empty,
-                    ))
+                    ));
                 }
                 AccountInteractionState::Match => {
                     return Ok(DeleteLikeResult::error_account_interaction_state_mismatch(
                         CurrentAccountInteractionState::Match,
-                    ))
+                    ));
                 }
                 AccountInteractionState::Like => (),
             }
@@ -392,7 +407,12 @@ pub async fn get_daily_likes_left(
 ) -> Result<Json<DailyLikesLeft>, StatusCode> {
     CHAT.get_daily_likes_left.incr();
 
-    let likes = state.read().chat().limits().daily_likes_left_internal(id).await?;
+    let likes = state
+        .read()
+        .chat()
+        .limits()
+        .daily_likes_left_internal(id)
+        .await?;
     let likes: DailyLikesLeft = likes.into();
     Ok(likes.into())
 }

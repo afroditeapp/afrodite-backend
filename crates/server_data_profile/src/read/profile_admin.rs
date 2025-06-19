@@ -1,8 +1,8 @@
 use server_data::define_cmd_wrapper_read;
 
+mod iterator;
 mod profile_name_allowlist;
 mod profile_text;
-mod iterator;
 
 define_cmd_wrapper_read!(ReadCommandsProfileAdmin);
 

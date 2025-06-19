@@ -12,20 +12,17 @@
 //!
 //! The profile index supports multiple readers and one writer.
 
-use std::{
-    collections::HashMap,
-    sync::Arc,
-};
+use std::{collections::HashMap, sync::Arc};
 
-use coordinates::LocationIndexArea;
 use config::Config;
-use coordinates::CoordinateManager;
+use coordinates::{CoordinateManager, LocationIndexArea};
+use data::IndexSize;
 use error_stack::ResultExt;
 use info::LocationIndexInfoCreator;
-use data::IndexSize;
 use model::{AccountId, UnixTime};
 use model_server_data::{
-    Location, LocationIndexKey, LocationIndexProfileData, MaxDistanceKm, MinDistanceKm, ProfileLink, ProfileQueryMakerDetails
+    Location, LocationIndexKey, LocationIndexProfileData, MaxDistanceKm, MinDistanceKm,
+    ProfileLink, ProfileQueryMakerDetails,
 };
 use profiles::ProfilesAtLocation;
 use read::LocationIndexIteratorState;
@@ -37,12 +34,12 @@ use write::IndexUpdater;
 use self::data::LocationIndex;
 use crate::{cache::LastSeenTimeUpdated, db_manager::InternalWriting};
 
-pub mod data;
-pub mod read;
-pub mod write;
 pub mod coordinates;
+pub mod data;
 pub mod info;
 pub mod profiles;
+pub mod read;
+pub mod write;
 
 pub trait LocationWrite {
     fn location(&self) -> crate::index::LocationIndexWriteHandle<'_>;
@@ -173,7 +170,7 @@ impl<'a> LocationIndexIteratorHandle<'a> {
                     let matches: Vec<ProfileLink> = profiles.find_profiles(
                         query_maker_details,
                         self.config.profile_attributes(),
-                        current_time
+                        current_time,
                     );
                     if matches.is_empty() {
                         IteratorResultInternal::TryAgain
@@ -254,8 +251,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
                 match profiles.get_mut(&new_key) {
                     Some(some_other_profiles_also) => {
                         let update_index = some_other_profiles_also.is_empty();
-                        some_other_profiles_also
-                            .insert(account_id, profile);
+                        some_other_profiles_also.insert(account_id, profile);
                         if update_index {
                             drop(profiles);
                             tokio::task::spawn_blocking(move || {
@@ -316,8 +312,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
         match profiles.get_mut(&key) {
             Some(some_other_profiles_also) => {
                 let update_index = some_other_profiles_also.is_empty();
-                some_other_profiles_also
-                    .insert(account_id, profile_data);
+                some_other_profiles_also.insert(account_id, profile_data);
                 if update_index {
                     drop(profiles);
                     let mut updater = IndexUpdater::new(self.index.clone());

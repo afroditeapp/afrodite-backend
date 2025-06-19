@@ -3,8 +3,8 @@ use std::{sync::Arc, time::Instant};
 use error_stack::{Result, ResultExt};
 use headers::{CacheControl, HeaderMapExt};
 use jsonwebtoken::{
-    jwk::{Jwk, JwkSet},
     DecodingKey, TokenData, Validation,
+    jwk::{Jwk, JwkSet},
 };
 use serde::Deserialize;
 use simple_backend_config::SimpleBackendConfig;
@@ -84,10 +84,7 @@ pub struct SignInWithGoogleManager {
 }
 
 impl SignInWithGoogleManager {
-    pub fn new(
-        config: Arc<SimpleBackendConfig>,
-        client: reqwest::Client,
-    ) -> Self {
+    pub fn new(config: Arc<SimpleBackendConfig>, client: reqwest::Client) -> Self {
         Self {
             config: config.clone(),
             key_state: GooglePublicKeysState::new(config, client),
@@ -151,7 +148,6 @@ impl SignInWithGoogleManager {
             email: data.claims.email,
         })
     }
-
 }
 
 struct GooglePublicKeys {
@@ -166,10 +162,7 @@ struct GooglePublicKeysState {
 }
 
 impl GooglePublicKeysState {
-    fn new(
-        config: Arc<SimpleBackendConfig>,
-        client: reqwest::Client,
-    ) -> Self {
+    fn new(config: Arc<SimpleBackendConfig>, client: reqwest::Client) -> Self {
         Self {
             client,
             config,

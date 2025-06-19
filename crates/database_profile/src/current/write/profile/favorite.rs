@@ -1,5 +1,5 @@
-use database::{define_current_write_commands, DieselDatabaseError};
-use diesel::{delete, insert_into, prelude::*, ExpressionMethods};
+use database::{DieselDatabaseError, define_current_write_commands};
+use diesel::{ExpressionMethods, delete, insert_into, prelude::*};
 use error_stack::Result;
 use model::AccountIdInternal;
 use simple_backend_utils::current_unix_time;

@@ -11,13 +11,12 @@ use server_api::{
 };
 use server_common::result::{Result, WrappedResultExt};
 use server_data::read::GetReadCommandsCommon;
-use server_data_profile::{
-    read::GetReadProfileCommands,
-    write::GetWriteCommandsProfile,
-};
+use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use server_state::S;
 use simple_backend::ServerQuitWatcher;
-use simple_backend_utils::time::{seconds_until_current_time_is_at, sleep_until_current_time_is_at};
+use simple_backend_utils::time::{
+    seconds_until_current_time_is_at, sleep_until_current_time_is_at,
+};
 use tokio::{task::JoinHandle, time::sleep};
 use tracing::{error, warn};
 
@@ -128,7 +127,8 @@ impl ProfileSearchManager {
         config: &AutomaticProfileSearchConfig,
     ) -> Result<(), ProfileSearchError> {
         let milliseconds = seconds_until_current_time_is_at(config.daily_end_time)
-            .change_context(ProfileSearchError::TimeError)? * 1000;
+            .change_context(ProfileSearchError::TimeError)?
+            * 1000;
 
         let accounts = self
             .state
@@ -150,10 +150,7 @@ impl ProfileSearchManager {
         Ok(())
     }
 
-    async fn handle_account(
-        &self,
-        account: AccountIdInternal,
-    ) -> Result<(), ProfileSearchError> {
+    async fn handle_account(&self, account: AccountIdInternal) -> Result<(), ProfileSearchError> {
         let settings = self
             .state
             .read()
@@ -185,29 +182,33 @@ impl ProfileSearchManager {
             .await
             .change_context(ProfileSearchError::DatabaseError)?
             .last_seen_time
-            .and_then(|v| v.last_seen_unix_time()) else {
-                return Ok(());
-            };
+            .and_then(|v| v.last_seen_unix_time())
+        else {
+            return Ok(());
+        };
 
         db_write_raw!(self.state, move |cmds| {
             cmds.profile()
                 .set_automatic_profile_search_last_seen_time(account, last_seen_time)
                 .await
         })
-            .await
-            .change_context(ProfileSearchError::DatabaseError)?;
+        .await
+        .change_context(ProfileSearchError::DatabaseError)?;
 
         let Some(data) = self
             .state
             .concurrent_write_profile_blocking(account.as_id(), move |cmds| {
-                let iterator_session_id: AutomaticProfileSearchIteratorSessionId = cmds.automatic_profile_search_reset_profile_iterator(account)?.into();
+                let iterator_session_id: AutomaticProfileSearchIteratorSessionId = cmds
+                    .automatic_profile_search_reset_profile_iterator(account)?
+                    .into();
                 cmds.automatic_profile_search_next_profiles(account, iterator_session_id)
             })
             .await
             .change_context(ProfileSearchError::ConcurrentWriteCommand)?
-            .change_context(ProfileSearchError::ConcurrentWriteCommand)? else {
-                return Ok(());
-            };
+            .change_context(ProfileSearchError::ConcurrentWriteCommand)?
+        else {
+            return Ok(());
+        };
 
         if data.is_empty() {
             return Ok(());
@@ -219,11 +220,10 @@ impl ProfileSearchManager {
                 .show_automatic_profile_search_notification(account)
                 .await
         })
-            .await
-            .change_context(ProfileSearchError::DatabaseError)?;
+        .await
+        .change_context(ProfileSearchError::DatabaseError)?;
 
-        self
-            .state
+        self.state
             .event_manager()
             .send_notification(account, NotificationEvent::AutomaticProfileSearchCompleted)
             .await

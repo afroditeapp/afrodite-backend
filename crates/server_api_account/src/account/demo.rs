@@ -1,13 +1,17 @@
 use std::time::Duration;
 
 use axum::extract::State;
-use model_account::{AccessibleAccount, AccountId, DemoModeLoginToAccount, LoginResult, SignInWithInfo};
+use model_account::{
+    AccessibleAccount, AccountId, DemoModeLoginToAccount, LoginResult, SignInWithInfo,
+};
 use model_server_state::{
-    DemoModeConfirmLogin, DemoModeConfirmLoginResult, DemoModeLoginResult,
-    DemoModePassword, DemoModeToken,
+    DemoModeConfirmLogin, DemoModeConfirmLoginResult, DemoModeLoginResult, DemoModePassword,
+    DemoModeToken,
 };
 use server_api::{
-    app::{GetConfig, ReadData}, create_open_api_router, db_write_multiple, S
+    S,
+    app::{GetConfig, ReadData},
+    create_open_api_router, db_write_multiple,
 };
 use server_data_account::{
     demo::{AccessibleAccountsInfoUtils, DemoModeUtils},

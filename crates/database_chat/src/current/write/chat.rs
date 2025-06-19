@@ -1,21 +1,21 @@
-use database::{define_current_write_commands, DieselDatabaseError};
+use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::UnixTime;
 use model_chat::{
-    AccountIdInternal, ChatStateRaw, MatchId, MatchesSyncVersion, NewReceivedLikesCount,
-    PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikesSyncVersion, SentBlocksSyncVersion,
-    SentLikesSyncVersion, SyncVersionUtils, CHAT_GLOBAL_STATE_ROW_TYPE,
+    AccountIdInternal, CHAT_GLOBAL_STATE_ROW_TYPE, ChatStateRaw, MatchId, MatchesSyncVersion,
+    NewReceivedLikesCount, PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikesSyncVersion,
+    SentBlocksSyncVersion, SentLikesSyncVersion, SyncVersionUtils,
 };
 use simple_backend_utils::ContextExt;
 
-use crate::{current::read::GetDbReadCommandsChat, IntoDatabaseError};
+use crate::{IntoDatabaseError, current::read::GetDbReadCommandsChat};
 
 mod interaction;
-mod message;
-mod report;
-mod notification;
 mod limits;
+mod message;
+mod notification;
+mod report;
 
 define_current_write_commands!(CurrentWriteChat);
 
@@ -110,9 +110,7 @@ impl CurrentWriteChat<'_> {
             if current.id == i64::MAX {
                 return Err(DieselDatabaseError::NoAvailableIds.report());
             } else {
-                PublicKeyId {
-                    id: current.id + 1,
-                }
+                PublicKeyId { id: current.id + 1 }
             }
         } else {
             PublicKeyId { id: 0 }

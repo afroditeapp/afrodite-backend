@@ -34,8 +34,13 @@ impl ProfileCreatedTimeFilter {
         &self.value
     }
 
-    pub fn is_match(&self, profile_created_time: InitialSetupCompletedTime, current_time: &UnixTime) -> bool {
-        let seconds_since_account_creation = *current_time.as_i64() - *profile_created_time.as_i64();
+    pub fn is_match(
+        &self,
+        profile_created_time: InitialSetupCompletedTime,
+        current_time: &UnixTime,
+    ) -> bool {
+        let seconds_since_account_creation =
+            *current_time.as_i64() - *profile_created_time.as_i64();
         seconds_since_account_creation <= self.value
     }
 }

@@ -1,11 +1,9 @@
-
 use diesel::{prelude::*, sql_types::Bool};
-
+use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, AdminNotification};
 use simple_backend_database::diesel_db::DieselDatabaseError;
-use error_stack::{Result, ResultExt};
 
-use crate::{define_current_read_commands, IntoDatabaseError};
+use crate::{IntoDatabaseError, define_current_read_commands};
 
 define_current_read_commands!(CurrentReadAccountAdminNotification);
 
@@ -29,31 +27,32 @@ impl CurrentReadAccountAdminNotification<'_> {
         &mut self,
         wanted: AdminNotification,
     ) -> Result<Vec<(AccountIdInternal, AdminNotification)>, DieselDatabaseError> {
-        use crate::schema::account_id;
-        use crate::schema::admin_notification_subscriptions::dsl::*;
+        use crate::schema::{account_id, admin_notification_subscriptions::dsl::*};
 
         admin_notification_subscriptions
             .inner_join(account_id::table)
             .filter(
-                (moderate_media_content_bot.eq(true).and(wanted.moderate_media_content_bot.into_sql::<Bool>()))
-                    .or(
-                        moderate_media_content_human.eq(true).and(wanted.moderate_media_content_human.into_sql::<Bool>())
-                    )
-                    .or(
-                        moderate_profile_texts_bot.eq(true).and(wanted.moderate_profile_texts_bot.into_sql::<Bool>())
-                    )
-                    .or(
-                        moderate_profile_texts_human.eq(true).and(wanted.moderate_profile_texts_human.into_sql::<Bool>())
-                    )
-                    .or(
-                        moderate_profile_names_bot.eq(true).and(wanted.moderate_profile_names_bot.into_sql::<Bool>())
-                    )
-                    .or(
-                        moderate_profile_names_human.eq(true).and(wanted.moderate_profile_names_human.into_sql::<Bool>())
-                    )
-                    .or(
-                        process_reports.eq(true).and(wanted.process_reports.into_sql::<Bool>())
-                    )
+                (moderate_media_content_bot
+                    .eq(true)
+                    .and(wanted.moderate_media_content_bot.into_sql::<Bool>()))
+                .or(moderate_media_content_human
+                    .eq(true)
+                    .and(wanted.moderate_media_content_human.into_sql::<Bool>()))
+                .or(moderate_profile_texts_bot
+                    .eq(true)
+                    .and(wanted.moderate_profile_texts_bot.into_sql::<Bool>()))
+                .or(moderate_profile_texts_human
+                    .eq(true)
+                    .and(wanted.moderate_profile_texts_human.into_sql::<Bool>()))
+                .or(moderate_profile_names_bot
+                    .eq(true)
+                    .and(wanted.moderate_profile_names_bot.into_sql::<Bool>()))
+                .or(moderate_profile_names_human
+                    .eq(true)
+                    .and(wanted.moderate_profile_names_human.into_sql::<Bool>()))
+                .or(process_reports
+                    .eq(true)
+                    .and(wanted.process_reports.into_sql::<Bool>())),
             )
             .select((
                 AccountIdInternal::as_select(),

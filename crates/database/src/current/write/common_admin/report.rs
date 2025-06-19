@@ -1,10 +1,8 @@
-use crate::{
-    define_current_write_commands, DieselDatabaseError, IntoDatabaseError,
-};
-use diesel::{prelude::*, update, ExpressionMethods};
+use diesel::{ExpressionMethods, prelude::*, update};
 use error_stack::Result;
-use model::{ReportIdDb, ReportProcessingState, UnixTime};
-use model::AccountIdInternal;
+use model::{AccountIdInternal, ReportIdDb, ReportProcessingState, UnixTime};
+
+use crate::{DieselDatabaseError, IntoDatabaseError, define_current_write_commands};
 
 define_current_write_commands!(CurrentWriteCommonAdminReport);
 

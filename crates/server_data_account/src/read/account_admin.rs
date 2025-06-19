@@ -1,8 +1,8 @@
 use server_data::define_cmd_wrapper_read;
 
 pub mod news;
-pub mod search;
 pub mod permissions;
+pub mod search;
 
 define_cmd_wrapper_read!(ReadCommandsAccountAdmin);
 

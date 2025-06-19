@@ -7,9 +7,13 @@ use server_data::{
     write_commands::WriteCommandRunnerHandle,
 };
 use server_data_all::app::DataAllUtilsImpl;
-use server_state::{admin_notifications::AdminNotificationManagerData, demo::DemoModeManager, StateForRouterCreation, S};
+use server_state::{
+    S, StateForRouterCreation, admin_notifications::AdminNotificationManagerData,
+    demo::DemoModeManager,
+};
 use simple_backend::{
-    app::SimpleBackendAppState, manager_client::ManagerApiClient, maxmind_db::MaxMindDbManagerData, perf::PerfMetricsManagerData
+    app::SimpleBackendAppState, manager_client::ManagerApiClient, maxmind_db::MaxMindDbManagerData,
+    perf::PerfMetricsManagerData,
 };
 use simple_backend_config::SimpleBackendConfig;
 use utoipa::OpenApi;
@@ -31,12 +35,10 @@ impl ApiDoc {
         let common = ApiDoc::openapi()
             .merge_from(server_api::common::router_client_config(state.clone()).into_openapi())
             .merge_from(
-                server_api::common::router_push_notification_private(state.clone())
-                    .into_openapi(),
+                server_api::common::router_push_notification_private(state.clone()).into_openapi(),
             )
             .merge_from(
-                server_api::common::router_push_notification_public(state.clone())
-                    .into_openapi(),
+                server_api::common::router_push_notification_public(state.clone()).into_openapi(),
             )
             .tag_routes("common");
         doc.merge(common);
@@ -60,9 +62,15 @@ impl ApiDoc {
             .merge_from(server_api_account::account::router_register(state.clone()).into_openapi())
             .merge_from(server_api_account::account::router_settings(state.clone()).into_openapi())
             .merge_from(server_api_account::account::router_state(state.clone()).into_openapi())
-            .merge_from(server_api_account::account::router_account_report(state.clone()).into_openapi())
-            .merge_from(server_api_account::account::router_client_features(state.clone()).into_openapi())
-            .merge_from(server_api_account::account::router_notification(state.clone()).into_openapi())
+            .merge_from(
+                server_api_account::account::router_account_report(state.clone()).into_openapi(),
+            )
+            .merge_from(
+                server_api_account::account::router_client_features(state.clone()).into_openapi(),
+            )
+            .merge_from(
+                server_api_account::account::router_notification(state.clone()).into_openapi(),
+            )
             .tag_routes("account");
         doc.merge(account);
         let account_admin = ApiDoc::openapi()
@@ -70,22 +78,26 @@ impl ApiDoc {
                 server_api_account::account_admin::router_admin_ban(state.clone()).into_openapi(),
             )
             .merge_from(
-                server_api_account::account_admin::router_admin_delete(state.clone()).into_openapi(),
+                server_api_account::account_admin::router_admin_delete(state.clone())
+                    .into_openapi(),
             )
             .merge_from(
                 server_api_account::account_admin::router_admin_news(state.clone()).into_openapi(),
             )
             .merge_from(
-                server_api_account::account_admin::router_admin_search(state.clone()).into_openapi(),
+                server_api_account::account_admin::router_admin_search(state.clone())
+                    .into_openapi(),
             )
             .merge_from(
-                server_api_account::account_admin::router_admin_permissions(state.clone()).into_openapi(),
+                server_api_account::account_admin::router_admin_permissions(state.clone())
+                    .into_openapi(),
             )
             .merge_from(
                 server_api_account::account_admin::router_admin_state(state.clone()).into_openapi(),
             )
             .merge_from(
-                server_api_account::account_admin::router_admin_client_version(state.clone()).into_openapi(),
+                server_api_account::account_admin::router_admin_client_version(state.clone())
+                    .into_openapi(),
             )
             .tag_routes("account_admin");
         doc.merge(account_admin);
@@ -93,9 +105,7 @@ impl ApiDoc {
         doc.merge(server_api_media::ApiDocMedia::openapi());
         let media = ApiDoc::openapi()
             .merge_from(server_api_media::media::router_content(state.clone()).into_openapi())
-            .merge_from(
-                server_api_media::media::router_media_content(state.clone()).into_openapi(),
-            )
+            .merge_from(server_api_media::media::router_media_content(state.clone()).into_openapi())
             .merge_from(
                 server_api_media::media::router_profile_content(state.clone()).into_openapi(),
             )
@@ -109,8 +119,7 @@ impl ApiDoc {
         doc.merge(media);
         let media_admin = ApiDoc::openapi()
             .merge_from(
-                server_api_media::media_admin::router_admin_content(state.clone())
-                    .into_openapi(),
+                server_api_media::media_admin::router_admin_content(state.clone()).into_openapi(),
             )
             .merge_from(
                 server_api_media::media_admin::router_admin_moderation(state.clone())
@@ -121,9 +130,7 @@ impl ApiDoc {
         // Profile
         doc.merge(server_api_profile::ApiDocProfile::openapi());
         let profile = ApiDoc::openapi()
-            .merge_from(
-                server_api_profile::profile::router_filters(state.clone()).into_openapi(),
-            )
+            .merge_from(server_api_profile::profile::router_filters(state.clone()).into_openapi())
             .merge_from(server_api_profile::profile::router_benchmark(state.clone()).into_openapi())
             .merge_from(server_api_profile::profile::router_favorite(state.clone()).into_openapi())
             .merge_from(
@@ -177,24 +184,14 @@ impl ApiDoc {
             .merge_from(server_api_chat::chat::router_match(state.clone()).into_openapi())
             .merge_from(server_api_chat::chat::router_message(state.clone()).into_openapi())
             .merge_from(server_api_chat::chat::router_public_key(state.clone()).into_openapi())
-            .merge_from(
-                server_api_chat::chat::router_chat_report(state.clone())
-                    .into_openapi(),
-            )
-            .merge_from(
-                server_api_chat::chat::router_notification(state.clone())
-                    .into_openapi(),
-            )
-            .merge_from(
-                server_api_chat::chat::router_video_call(state.clone())
-                    .into_openapi(),
-            )
+            .merge_from(server_api_chat::chat::router_chat_report(state.clone()).into_openapi())
+            .merge_from(server_api_chat::chat::router_notification(state.clone()).into_openapi())
+            .merge_from(server_api_chat::chat::router_video_call(state.clone()).into_openapi())
             .tag_routes("chat");
         doc.merge(chat);
         let chat_admin = ApiDoc::openapi()
             .merge_from(
-                server_api_chat::chat_admin::router_admin_public_key(state.clone())
-                .into_openapi(),
+                server_api_chat::chat_admin::router_admin_public_key(state.clone()).into_openapi(),
             )
             .tag_routes("chat_admin");
         doc.merge(chat_admin);
@@ -206,9 +203,10 @@ impl ApiDoc {
         let perf_data = PerfMetricsManagerData::new(&[]).into();
         let maxmind_data = MaxMindDbManagerData::new().into();
         let manager = ManagerApiClient::empty();
-        let simple_state = SimpleBackendAppState::new(config.clone(), perf_data, manager.into(), maxmind_data)
-            .await
-            .unwrap();
+        let simple_state =
+            SimpleBackendAppState::new(config.clone(), perf_data, manager.into(), maxmind_data)
+                .await
+                .unwrap();
 
         let config = Arc::new(Config::minimal_config_for_api_doc_json(config.clone()));
 

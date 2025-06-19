@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use model_profile::ProfileStatisticsInternal;
 use server_data::{
-    db_manager::RouterDatabaseReadHandle, result::Result, statistics::ProfileStatisticsCache,
-    DataError,
+    DataError, db_manager::RouterDatabaseReadHandle, result::Result,
+    statistics::ProfileStatisticsCache,
 };
 use simple_backend::perf::PerfMetricsManagerData;
 

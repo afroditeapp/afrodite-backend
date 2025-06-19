@@ -1,12 +1,13 @@
-use axum::{
-    extract::State, Extension
+use axum::{Extension, extract::State};
+use model::{
+    MediaContentModerationCompletedNotification, MediaContentModerationCompletedNotificationViewed,
+    PendingNotificationFlags,
 };
-use model::{MediaContentModerationCompletedNotification, MediaContentModerationCompletedNotificationViewed, PendingNotificationFlags};
-use model_media::{
-    AccountIdInternal, MediaAppNotificationSettings
-};
+use model_media::{AccountIdInternal, MediaAppNotificationSettings};
 use server_api::{
-    app::{EventManagerProvider, WriteData}, create_open_api_router, db_write_multiple, S
+    S,
+    app::{EventManagerProvider, WriteData},
+    create_open_api_router, db_write_multiple,
 };
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
@@ -14,7 +15,8 @@ use simple_backend::create_counters;
 use super::super::utils::{Json, StatusCode};
 use crate::app::ReadData;
 
-const PATH_GET_MEDIA_APP_NOTIFICATION_SETTINGS: &str = "/media_api/get_media_app_notification_settings";
+const PATH_GET_MEDIA_APP_NOTIFICATION_SETTINGS: &str =
+    "/media_api/get_media_app_notification_settings";
 
 #[utoipa::path(
     get,
@@ -42,7 +44,8 @@ async fn get_media_app_notification_settings(
     Ok(settings.into())
 }
 
-const PATH_POST_MEDIA_APP_NOTIFICATION_SETTINGS: &str = "/media_api/post_media_app_notification_settings";
+const PATH_POST_MEDIA_APP_NOTIFICATION_SETTINGS: &str =
+    "/media_api/post_media_app_notification_settings";
 
 #[utoipa::path(
     post,
@@ -62,12 +65,16 @@ async fn post_media_app_notification_settings(
 ) -> Result<(), StatusCode> {
     MEDIA.post_media_app_notification_settings.incr();
     db_write_multiple!(state, move |cmds| {
-        cmds.media().notification().upsert_app_notification_settings(id, settings).await
+        cmds.media()
+            .notification()
+            .upsert_app_notification_settings(id, settings)
+            .await
     })?;
     Ok(())
 }
 
-const PATH_POST_GET_MEDIA_CONTENT_MODERATION_COMPLETED_NOTIFICATION: &str = "/media_api/media_content_moderation_completed_notification";
+const PATH_POST_GET_MEDIA_CONTENT_MODERATION_COMPLETED_NOTIFICATION: &str =
+    "/media_api/media_content_moderation_completed_notification";
 
 /// Get media content moderation completed notification.
 ///
@@ -85,9 +92,16 @@ pub async fn post_get_media_content_moderation_completed_notification(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<MediaContentModerationCompletedNotification>, StatusCode> {
-    MEDIA.post_get_media_content_moderation_completed_notification.incr();
+    MEDIA
+        .post_get_media_content_moderation_completed_notification
+        .incr();
 
-    let info = state.read().media().notification().media_content_moderation_completed(account_id).await?;
+    let info = state
+        .read()
+        .media()
+        .notification()
+        .media_content_moderation_completed(account_id)
+        .await?;
 
     state
         .event_manager()
@@ -100,7 +114,8 @@ pub async fn post_get_media_content_moderation_completed_notification(
     Ok(info.into())
 }
 
-const PATH_POST_MARK_MEDIA_CONTENT_MODERATION_COMPLETED_NOTIFICATION_VIEWED: &str = "/media_api/mark_media_content_moderation_completed_notification_viewed";
+const PATH_POST_MARK_MEDIA_CONTENT_MODERATION_COMPLETED_NOTIFICATION_VIEWED: &str =
+    "/media_api/mark_media_content_moderation_completed_notification_viewed";
 
 /// The viewed values must be updated to prevent WebSocket code from sending
 /// unnecessary event about new notification.
@@ -120,10 +135,15 @@ pub async fn post_mark_media_content_moderation_completed_notification_viewed(
     Extension(account_id): Extension<AccountIdInternal>,
     Json(viewed): Json<MediaContentModerationCompletedNotificationViewed>,
 ) -> Result<(), StatusCode> {
-    MEDIA.post_mark_media_content_moderation_completed_notification_viewed.incr();
+    MEDIA
+        .post_mark_media_content_moderation_completed_notification_viewed
+        .incr();
 
     db_write_multiple!(state, move |cmds| {
-        cmds.media().notification().update_notification_viewed_values(account_id, viewed).await
+        cmds.media()
+            .notification()
+            .update_notification_viewed_values(account_id, viewed)
+            .await
     })?;
 
     Ok(())

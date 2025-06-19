@@ -4,7 +4,7 @@ use api_client::{
 };
 use test_mode_macro::server_test;
 
-use crate::{client::TestError, runner::server_tests::assert::assert_eq, TestContext, TestResult};
+use crate::{TestContext, TestResult, client::TestError, runner::server_tests::assert::assert_eq};
 
 #[server_test]
 async fn updating_profile_works(mut context: TestContext) -> TestResult {

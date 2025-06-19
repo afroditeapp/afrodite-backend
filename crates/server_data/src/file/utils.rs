@@ -3,9 +3,9 @@ use std::path::{Path, PathBuf};
 use axum::body::BodyDataStream;
 use error_stack::{Result, ResultExt};
 use model::{AccountId, ContentId, ContentProcessingId};
-use simple_backend_utils::{file::overwrite_and_remove_if_exists, ContextExt};
+use simple_backend_utils::{ContextExt, file::overwrite_and_remove_if_exists};
 use tokio::io::AsyncWriteExt;
-use tokio_stream::{wrappers::ReadDirStream, StreamExt};
+use tokio_stream::{StreamExt, wrappers::ReadDirStream};
 use tokio_util::io::ReaderStream;
 
 use super::super::FileError;
@@ -30,11 +30,21 @@ impl FileDir {
     }
 
     /// Unprocessed content upload.
-    pub fn raw_content_upload(&self, id: AccountId, content_id: ContentProcessingId) -> TmpContentFile {
-        self.account_dir(id).tmp_dir().raw_content_upload(content_id)
+    pub fn raw_content_upload(
+        &self,
+        id: AccountId,
+        content_id: ContentProcessingId,
+    ) -> TmpContentFile {
+        self.account_dir(id)
+            .tmp_dir()
+            .raw_content_upload(content_id)
     }
 
-    pub fn processed_content_upload(&self, id: AccountId, content_id: ContentProcessingId) -> TmpContentFile {
+    pub fn processed_content_upload(
+        &self,
+        id: AccountId,
+        content_id: ContentProcessingId,
+    ) -> TmpContentFile {
         self.account_dir(id)
             .tmp_dir()
             .processed_content_upload(content_id)
@@ -123,9 +133,7 @@ impl TmpDir {
             let mut s = ReadDirStream::new(iter);
             while let Some(entry) = s.next().await {
                 let entry = entry.change_context(FileError::IoDirIter)?;
-                let path = PathToFile {
-                    path: entry.path(),
-                };
+                let path = PathToFile { path: entry.path() };
                 path.overwrite_and_remove_if_exists().await?;
             }
             Ok(())

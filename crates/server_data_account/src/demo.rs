@@ -2,8 +2,8 @@ use config::Config;
 use model::{AccessibleAccount, AccountId};
 use model_server_state::AccessibleAccountsInfo;
 use server_data::{
-    db_manager::RouterDatabaseReadHandle, read::GetReadCommandsCommon, result::WrappedContextExt,
-    DataError,
+    DataError, db_manager::RouterDatabaseReadHandle, read::GetReadCommandsCommon,
+    result::WrappedContextExt,
 };
 
 use crate::read::GetReadCommandsAccount;

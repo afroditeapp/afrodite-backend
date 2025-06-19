@@ -1,7 +1,11 @@
-use axum::{extract::State, Extension};
+use axum::{Extension, extract::State};
 use model::{AccountIdInternal, EventToClientInternal, Permissions};
 use model_account::SetAccountBanState;
-use server_api::{app::{GetAccounts, WriteData}, create_open_api_router, db_write_multiple, S};
+use server_api::{
+    S,
+    app::{GetAccounts, WriteData},
+    create_open_api_router, db_write_multiple,
+};
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
 
@@ -40,20 +44,21 @@ pub async fn post_set_ban_state(
     let internal_id = state.get_internal_id(ban_info.account).await?;
 
     db_write_multiple!(state, move |cmds| {
-        let new_account = cmds.account_admin().ban().set_account_ban_state(
-            internal_id,
-            Some(api_caller_id),
-            ban_info.ban_until,
-            ban_info.reason_category,
-            ban_info.reason_details
-        ).await?;
+        let new_account = cmds
+            .account_admin()
+            .ban()
+            .set_account_ban_state(
+                internal_id,
+                Some(api_caller_id),
+                ban_info.ban_until,
+                ban_info.reason_category,
+                ban_info.reason_details,
+            )
+            .await?;
 
         if new_account.is_some() {
             cmds.events()
-                .send_connected_event(
-                    internal_id.uuid,
-                    EventToClientInternal::AccountStateChanged,
-                )
+                .send_connected_event(internal_id.uuid, EventToClientInternal::AccountStateChanged)
                 .await?;
         }
 

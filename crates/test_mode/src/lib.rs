@@ -17,9 +17,9 @@ use std::{future::Future, sync::Arc};
 
 use client::TestError;
 use config::{
+    Config,
     args::{TestMode, TestModeSubMode},
     bot_config_file::BotConfigFile,
-    Config,
 };
 use runner::{bot::BotTestRunner, server_tests::QaTestRunner};
 

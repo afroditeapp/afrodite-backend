@@ -1,14 +1,13 @@
-
 use std::collections::HashMap;
 
 use database::current::write::GetDbWriteCommandsCommon;
 use model::{AccountIdDb, ApiUsage, IpAddressStorage};
 
 use crate::{
-    define_cmd_wrapper_write, result::Result, write::db_transaction, DataError
+    DataError, define_cmd_wrapper_write,
+    result::Result,
+    write::{DbTransaction, db_transaction},
 };
-
-use crate::write::DbTransaction;
 
 define_cmd_wrapper_write!(WriteCommandsCommonAdminStatistics);
 

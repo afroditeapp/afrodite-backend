@@ -1,8 +1,8 @@
 use server_data::define_cmd_wrapper_write;
 
+pub mod notification;
 pub mod profile_name_allowlist;
 pub mod profile_text;
-pub mod notification;
 
 define_cmd_wrapper_write!(WriteCommandsProfileAdmin);
 

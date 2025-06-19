@@ -2,7 +2,8 @@ use std::collections::HashSet;
 
 use model::AttributeId;
 use model_server_data::{
-    MaxDistanceKm, MinDistanceKm, ProfileAttributeFilterValue, ProfileCreatedTimeFilter, ProfileEditedTimeFilter, ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter
+    MaxDistanceKm, MinDistanceKm, ProfileAttributeFilterValue, ProfileCreatedTimeFilter,
+    ProfileEditedTimeFilter, ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -42,12 +43,15 @@ impl ProfileFilteringSettingsUpdate {
                     None => return Err("Unknown attribute ID".to_string()),
                     Some(info) => {
                         let check = |values: &[u32]| {
-                            let error = || Err(format!(
-                                "Attribute supports max {} filter values",
-                                info.max_filters,
-                            ));
+                            let error = || {
+                                Err(format!(
+                                    "Attribute supports max {} filter values",
+                                    info.max_filters,
+                                ))
+                            };
                             if info.mode.is_bitflag() {
-                                let selected = values.first().copied().unwrap_or_default().count_ones();
+                                let selected =
+                                    values.first().copied().unwrap_or_default().count_ones();
                                 if selected > info.max_filters.into() {
                                     return error();
                                 }

@@ -1,5 +1,5 @@
-use database::{define_current_write_commands, DieselDatabaseError};
-use diesel::{insert_into, prelude::*, ExpressionMethods};
+use database::{DieselDatabaseError, define_current_write_commands};
+use diesel::{ExpressionMethods, insert_into, prelude::*};
 use error_stack::Result;
 use model::AccountIdInternal;
 use model_chat::ChatAppNotificationSettings;
@@ -17,10 +17,7 @@ impl CurrentWriteChatNotification<'_> {
         use model::schema::chat_app_notification_settings::dsl::*;
 
         insert_into(chat_app_notification_settings)
-            .values((
-                account_id.eq(id.as_db_id()),
-                settings,
-            ))
+            .values((account_id.eq(id.as_db_id()), settings))
             .on_conflict(account_id)
             .do_update()
             .set(settings)

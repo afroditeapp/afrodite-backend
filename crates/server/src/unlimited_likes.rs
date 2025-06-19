@@ -8,7 +8,7 @@ use server_data::read::GetReadCommandsCommon;
 use server_data_profile::read::GetReadProfileCommands;
 use server_state::S;
 use simple_backend::ServerQuitWatcher;
-use simple_backend_utils::time::{sleep_until_current_time_is_at, UtcTimeValue};
+use simple_backend_utils::time::{UtcTimeValue, sleep_until_current_time_is_at};
 use tokio::{task::JoinHandle, time::sleep};
 use tracing::{error, warn};
 
@@ -61,7 +61,12 @@ impl UnlimitedLikesManager {
 
     async fn run(self, mut quit_notification: ServerQuitWatcher) {
         let mut check_cooldown = false;
-        let Some(unlimited_likes_disabling_time) = self.state.config().client_features().and_then(|v| v.limits.likes.unlimited_likes_disabling_time) else {
+        let Some(unlimited_likes_disabling_time) = self
+            .state
+            .config()
+            .client_features()
+            .and_then(|v| v.limits.likes.unlimited_likes_disabling_time)
+        else {
             return;
         };
 
@@ -95,10 +100,7 @@ impl UnlimitedLikesManager {
         Ok(())
     }
 
-    async fn run_tasks(
-        &self,
-        quit_notification: &mut ServerQuitWatcher,
-    ) {
+    async fn run_tasks(&self, quit_notification: &mut ServerQuitWatcher) {
         tokio::select! {
             r = self.run_tasks_and_return_result() => {
                 match r {
@@ -112,9 +114,7 @@ impl UnlimitedLikesManager {
         }
     }
 
-    async fn run_tasks_and_return_result(
-        &self,
-    ) -> Result<(), UnlimitedLikesError> {
+    async fn run_tasks_and_return_result(&self) -> Result<(), UnlimitedLikesError> {
         let accounts = self
             .state
             .read()
@@ -130,11 +130,9 @@ impl UnlimitedLikesManager {
         Ok(())
     }
 
-    async fn handle_account(
-        &self,
-        account: AccountIdInternal,
-    ) -> Result<(), UnlimitedLikesError> {
-        let profile = self.state
+    async fn handle_account(&self, account: AccountIdInternal) -> Result<(), UnlimitedLikesError> {
+        let profile = self
+            .state
             .read()
             .profile()
             .profile(account)
@@ -156,10 +154,7 @@ impl UnlimitedLikesManager {
 
         self.state
             .event_manager()
-            .send_connected_event(
-                account,
-                EventToClientInternal::ProfileChanged,
-            )
+            .send_connected_event(account, EventToClientInternal::ProfileChanged)
             .await
             .change_context(UnlimitedLikesError::EventSending)?;
 

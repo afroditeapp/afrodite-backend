@@ -9,9 +9,7 @@ pub struct BackendEventsHandle {
 impl BackendEventsHandle {
     pub fn new(initial: Vec<ServerEvent>) -> Self {
         let (sender, _) = watch::channel(initial);
-        Self {
-            sender,
-        }
+        Self { sender }
     }
 
     pub fn send(&self, events: Vec<ServerEvent>) {

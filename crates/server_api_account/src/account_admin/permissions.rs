@@ -1,7 +1,14 @@
-use axum::{extract::{Path, State}, Extension};
+use axum::{
+    Extension,
+    extract::{Path, State},
+};
 use model::{AccountId, EventToClientInternal, Permissions};
 use model_account::GetAllAdminsResult;
-use server_api::{app::{GetAccounts, WriteData, ReadData}, create_open_api_router, db_write_multiple, S};
+use server_api::{
+    S,
+    app::{GetAccounts, ReadData, WriteData},
+    create_open_api_router, db_write_multiple,
+};
 use server_data::read::GetReadCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
@@ -71,7 +78,12 @@ pub async fn get_all_admins(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let admins = state.read().account_admin().permissions().all_admins().await?;
+    let admins = state
+        .read()
+        .account_admin()
+        .permissions()
+        .all_admins()
+        .await?;
 
     Ok(admins.into())
 }
@@ -110,16 +122,13 @@ pub async fn post_set_permissions(
     let internal_id = state.get_internal_id(account).await?;
 
     db_write_multiple!(state, move |cmds| {
-        cmds.account_admin().permissions().set_permissions(
-            internal_id,
-            new_permissions,
-        ).await?;
+        cmds.account_admin()
+            .permissions()
+            .set_permissions(internal_id, new_permissions)
+            .await?;
 
         cmds.events()
-            .send_connected_event(
-                internal_id.uuid,
-                EventToClientInternal::AccountStateChanged,
-            )
+            .send_connected_event(internal_id.uuid, EventToClientInternal::AccountStateChanged)
             .await?;
 
         Ok(())

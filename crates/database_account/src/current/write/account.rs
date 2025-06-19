@@ -1,14 +1,14 @@
 use database::define_current_write_commands;
 
+mod client_features;
 mod data;
 mod delete;
 mod demo;
 mod email;
 mod news;
-mod sign_in_with;
-mod report;
-mod client_features;
 mod notification;
+mod report;
+mod sign_in_with;
 
 define_current_write_commands!(CurrentWriteAccount);
 

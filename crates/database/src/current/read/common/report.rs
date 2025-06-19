@@ -2,9 +2,15 @@ use base64::Engine;
 use config::file::Components;
 use diesel::{alias, prelude::*};
 use error_stack::Result;
-use model::{AccountId, AccountIdDb, AccountIdInternal, AccountInteractionInternal, ChatMessageReport, ContentId, CustomReportContent, MessageNumber, ReportAccountInfo, ReportChatInfo, ReportChatInfoInteractionState, ReportContent, ReportDetailed, ReportDetailedInfo, ReportDetailedInfoInternal, ReportDetailedWithId, ReportIdDb, ReportInternal, ReportProcessingState, ReportTypeNumberInternal, UnixTime};
+use model::{
+    AccountId, AccountIdDb, AccountIdInternal, AccountInteractionInternal, ChatMessageReport,
+    ContentId, CustomReportContent, MessageNumber, ReportAccountInfo, ReportChatInfo,
+    ReportChatInfoInteractionState, ReportContent, ReportDetailed, ReportDetailedInfo,
+    ReportDetailedInfoInternal, ReportDetailedWithId, ReportIdDb, ReportInternal,
+    ReportProcessingState, ReportTypeNumberInternal, UnixTime,
+};
 
-use crate::{define_current_read_commands, DieselDatabaseError, IntoDatabaseError};
+use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
 
 define_current_read_commands!(CurrentReadCommonReport);
 
@@ -17,10 +23,16 @@ impl CurrentReadCommonReport<'_> {
     ) -> Result<Vec<ReportInternal>, DieselDatabaseError> {
         use crate::schema::{account_id, common_report::dsl::*};
 
-        let (creator_aid, target_aid) =
-            alias!(account_id as creator_aid, account_id as target_aid);
+        let (creator_aid, target_aid) = alias!(account_id as creator_aid, account_id as target_aid);
 
-        let values: Vec<(AccountId, AccountIdDb, AccountId, AccountIdDb, ReportIdDb, ReportProcessingState)> = common_report
+        let values: Vec<(
+            AccountId,
+            AccountIdDb,
+            AccountId,
+            AccountIdDb,
+            ReportIdDb,
+            ReportProcessingState,
+        )> = common_report
             .inner_join(creator_aid.on(creator_account_id.eq(creator_aid.field(account_id::id))))
             .inner_join(target_aid.on(target_account_id.eq(target_aid.field(account_id::id))))
             .filter(creator_account_id.eq(creator.as_db_id()))
@@ -37,19 +49,22 @@ impl CurrentReadCommonReport<'_> {
             .load(self.conn())
             .into_db_error(())?;
 
-        let values = values.into_iter().map(|(creator, creator_db_id, target, target_db_id, report_id, state)| {
-            ReportInternal {
-                info: ReportDetailedInfoInternal {
-                    creator,
-                    target,
-                    processing_state: state,
-                    report_type,
+        let values = values
+            .into_iter()
+            .map(
+                |(creator, creator_db_id, target, target_db_id, report_id, state)| ReportInternal {
+                    info: ReportDetailedInfoInternal {
+                        creator,
+                        target,
+                        processing_state: state,
+                        report_type,
+                    },
+                    id: report_id,
+                    creator_db_id,
+                    target_db_id,
                 },
-                id: report_id,
-                creator_db_id,
-                target_db_id,
-            }
-        }).collect();
+            )
+            .collect();
 
         Ok(values)
     }
@@ -65,10 +80,7 @@ impl CurrentReadCommonReport<'_> {
 
         let mut reports = vec![];
         for r in internal {
-            let detailed = self.convert_to_detailed_report(
-                r,
-                components,
-            )?;
+            let detailed = self.convert_to_detailed_report(r, components)?;
             reports.push(detailed);
         }
 
@@ -87,11 +99,21 @@ impl CurrentReadCommonReport<'_> {
         let mut custom_report = None;
 
         match report.info.report_type {
-            ReportTypeNumberInternal::ProfileName => profile_name = self.profile_name_report(report.id)?,
-            ReportTypeNumberInternal::ProfileText => profile_text = self.profile_text_report(report.id)?,
-            ReportTypeNumberInternal::ProfileContent => profile_content = self.profile_content_report(report.id)?,
-            ReportTypeNumberInternal::ChatMessage => chat_message = self.chat_message_report(report.id)?,
-            ReportTypeNumberInternal::CustomReport(_) => custom_report = self.custom_report(report.id)?,
+            ReportTypeNumberInternal::ProfileName => {
+                profile_name = self.profile_name_report(report.id)?
+            }
+            ReportTypeNumberInternal::ProfileText => {
+                profile_text = self.profile_text_report(report.id)?
+            }
+            ReportTypeNumberInternal::ProfileContent => {
+                profile_content = self.profile_content_report(report.id)?
+            }
+            ReportTypeNumberInternal::ChatMessage => {
+                chat_message = self.chat_message_report(report.id)?
+            }
+            ReportTypeNumberInternal::CustomReport(_) => {
+                custom_report = self.custom_report(report.id)?
+            }
         }
 
         let detailed = ReportDetailed {
@@ -123,7 +145,7 @@ impl CurrentReadCommonReport<'_> {
                 self.get_report_chat_info(report.creator_db_id, report.target_db_id)?
             } else {
                 None
-            }
+            },
         };
 
         let detailed = ReportDetailedWithId {
@@ -136,11 +158,12 @@ impl CurrentReadCommonReport<'_> {
 
     fn profile_name_report(
         &mut self,
-        id: ReportIdDb
+        id: ReportIdDb,
     ) -> Result<Option<String>, DieselDatabaseError> {
         use crate::schema::profile_report_profile_name::dsl::*;
 
-        profile_report_profile_name.find(id)
+        profile_report_profile_name
+            .find(id)
             .select(profile_name)
             .first(self.conn())
             .optional()
@@ -150,11 +173,12 @@ impl CurrentReadCommonReport<'_> {
 
     fn profile_text_report(
         &mut self,
-        id: ReportIdDb
+        id: ReportIdDb,
     ) -> Result<Option<String>, DieselDatabaseError> {
         use crate::schema::profile_report_profile_text::dsl::*;
 
-        profile_report_profile_text.find(id)
+        profile_report_profile_text
+            .find(id)
             .select(profile_text)
             .first(self.conn())
             .optional()
@@ -164,11 +188,12 @@ impl CurrentReadCommonReport<'_> {
 
     fn profile_content_report(
         &mut self,
-        id: ReportIdDb
+        id: ReportIdDb,
     ) -> Result<Option<ContentId>, DieselDatabaseError> {
         use crate::schema::media_report_profile_content::dsl::*;
 
-        media_report_profile_content.find(id)
+        media_report_profile_content
+            .find(id)
             .select(profile_content_uuid)
             .first(self.conn())
             .optional()
@@ -182,17 +207,19 @@ impl CurrentReadCommonReport<'_> {
     ) -> Result<Option<ChatMessageReport>, DieselDatabaseError> {
         use crate::schema::chat_report_chat_message::dsl::*;
 
-        let value: Option<(AccountId, AccountId, UnixTime, MessageNumber, Vec<u8>)> = chat_report_chat_message.find(id)
-            .select((
-                message_sender_account_id_uuid,
-                message_receiver_account_id_uuid,
-                message_unix_time,
-                message_number,
-                client_message_bytes,
-            ))
-            .first(self.conn())
-            .optional()
-            .into_db_error(())?;
+        let value: Option<(AccountId, AccountId, UnixTime, MessageNumber, Vec<u8>)> =
+            chat_report_chat_message
+                .find(id)
+                .select((
+                    message_sender_account_id_uuid,
+                    message_receiver_account_id_uuid,
+                    message_unix_time,
+                    message_number,
+                    client_message_bytes,
+                ))
+                .first(self.conn())
+                .optional()
+                .into_db_error(())?;
 
         if let Some((sender, receiver, message_time, mn, data)) = value {
             Ok(Some(ChatMessageReport {
@@ -209,11 +236,12 @@ impl CurrentReadCommonReport<'_> {
 
     fn custom_report(
         &mut self,
-        id: ReportIdDb
+        id: ReportIdDb,
     ) -> Result<Option<CustomReportContent>, DieselDatabaseError> {
         use crate::schema::account_custom_report::dsl::*;
 
-        let value: Option<Option<bool>> = account_custom_report.find(id)
+        let value: Option<Option<bool>> = account_custom_report
+            .find(id)
             .select(boolean_value)
             .first(self.conn())
             .optional()
@@ -224,19 +252,21 @@ impl CurrentReadCommonReport<'_> {
 
     pub fn get_report_account_info(
         &mut self,
-        id: AccountIdDb
+        id: AccountIdDb,
     ) -> Result<Option<ReportAccountInfo>, DieselDatabaseError> {
         use crate::schema::profile::dsl::*;
 
-        let value = profile.find(id)
+        let value = profile
+            .find(id)
             .select((age, name))
             .first(self.conn())
             .optional()
             .into_db_error(())?;
 
-        let info = value.map(|(age_value, name_value)|
-            ReportAccountInfo { age: age_value, name: name_value }
-        );
+        let info = value.map(|(age_value, name_value)| ReportAccountInfo {
+            age: age_value,
+            name: name_value,
+        });
 
         Ok(info)
     }
@@ -249,7 +279,8 @@ impl CurrentReadCommonReport<'_> {
         let interaction_id = {
             use crate::schema::account_interaction_index::dsl::*;
 
-            account_interaction_index.find((creator, target))
+            account_interaction_index
+                .find((creator, target))
                 .select(interaction_id)
                 .first(self.conn())
                 .optional()
@@ -263,13 +294,15 @@ impl CurrentReadCommonReport<'_> {
 
         use crate::schema::account_interaction::dsl::*;
 
-        let Some(interaction): Option<AccountInteractionInternal> = account_interaction.find(interaction_id)
+        let Some(interaction): Option<AccountInteractionInternal> = account_interaction
+            .find(interaction_id)
             .select(AccountInteractionInternal::as_select())
             .first(self.conn())
             .optional()
-            .into_db_error(())? else {
-                return Ok(Some(ReportChatInfo::default()))
-            };
+            .into_db_error(())?
+        else {
+            return Ok(Some(ReportChatInfo::default()));
+        };
 
         Ok(Some(ReportChatInfo {
             state: if interaction.is_match() {

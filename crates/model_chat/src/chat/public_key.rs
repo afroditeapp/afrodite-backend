@@ -19,7 +19,7 @@ impl AddPublicKeyResult {
     pub fn error_too_many_keys() -> Self {
         Self {
             key_id: None,
-            error_too_many_public_keys: true
+            error_too_many_public_keys: true,
         }
     }
 }

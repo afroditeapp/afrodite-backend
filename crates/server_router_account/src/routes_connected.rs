@@ -1,4 +1,4 @@
-use axum::{middleware, Router};
+use axum::{Router, middleware};
 use server_state::StateForRouterCreation;
 
 use crate::api;
@@ -10,15 +10,15 @@ pub struct ConnectedApp {
 
 impl ConnectedApp {
     pub fn new(state: StateForRouterCreation) -> Self {
-        Self {
-            state,
-        }
+        Self { state }
     }
 
     pub fn private_common_router(&self) -> Router {
         Router::new()
             .merge(api::common::router_client_config(self.state.clone()))
-            .merge(api::common::router_push_notification_private(self.state.clone()))
+            .merge(api::common::router_push_notification_private(
+                self.state.clone(),
+            ))
             .merge(api::common_admin::router_maintenance(self.state.clone()))
             .merge(api::common_admin::router_manager(self.state.clone()))
             .merge(api::common_admin::router_config(self.state.clone()))
@@ -49,9 +49,13 @@ impl ConnectedApp {
             .merge(api::account_admin::router_admin_delete(self.state.clone()))
             .merge(api::account_admin::router_admin_news(self.state.clone()))
             .merge(api::account_admin::router_admin_search(self.state.clone()))
-            .merge(api::account_admin::router_admin_permissions(self.state.clone()))
+            .merge(api::account_admin::router_admin_permissions(
+                self.state.clone(),
+            ))
             .merge(api::account_admin::router_admin_state(self.state.clone()))
-            .merge(api::account_admin::router_admin_client_version(self.state.clone()));
+            .merge(api::account_admin::router_admin_client_version(
+                self.state.clone(),
+            ));
 
         private.route_layer({
             middleware::from_fn_with_state(

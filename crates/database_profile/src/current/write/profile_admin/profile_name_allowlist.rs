@@ -1,7 +1,7 @@
 use database::{
-    current::read::GetDbReadCommandsCommon, define_current_write_commands, DieselDatabaseError,
+    DieselDatabaseError, current::read::GetDbReadCommandsCommon, define_current_write_commands,
 };
-use diesel::{insert_into, prelude::*, update, ExpressionMethods};
+use diesel::{ExpressionMethods, insert_into, prelude::*, update};
 use error_stack::Result;
 use model_profile::{AccountIdInternal, ProfileNameModerationState};
 

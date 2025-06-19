@@ -1,11 +1,18 @@
 //! Image process
 
-use std::{env, os::unix::process::CommandExt, path::Path, process::Stdio, sync::OnceLock, time::Duration};
+use std::{
+    env, os::unix::process::CommandExt, path::Path, process::Stdio, sync::OnceLock, time::Duration,
+};
 
 use error_stack::{Result, ResultExt};
 use simple_backend_image_process::{ImageProcessingCommand, ImageProcessingInfo, InputFileType};
 use simple_backend_utils::ContextExt;
-use tokio::{io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader}, process::{Child, ChildStdin, ChildStdout}, sync::Mutex, task::JoinHandle};
+use tokio::{
+    io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
+    process::{Child, ChildStdin, ChildStdout},
+    sync::Mutex,
+    task::JoinHandle,
+};
 use tracing::{error, warn};
 
 #[derive(thiserror::Error, Debug)]
@@ -105,18 +112,24 @@ impl ImageProcessHandle {
         })
     }
 
-    async fn write_command(write: &mut ChildStdin, command: ImageProcessingCommand) -> Result<(), ImageProcessError> {
-        let string = serde_json::to_string(&command)
-            .change_context(ImageProcessError::WriteCommand)?;
+    async fn write_command(
+        write: &mut ChildStdin,
+        command: ImageProcessingCommand,
+    ) -> Result<(), ImageProcessError> {
+        let string =
+            serde_json::to_string(&command).change_context(ImageProcessError::WriteCommand)?;
         let len = TryInto::<u32>::try_into(string.len())
             .change_context(ImageProcessError::WriteCommand)?;
-        write.write_all(&len.to_le_bytes())
+        write
+            .write_all(&len.to_le_bytes())
             .await
             .change_context(ImageProcessError::WriteCommand)?;
-        write.write_all(string.as_bytes())
+        write
+            .write_all(string.as_bytes())
             .await
             .change_context(ImageProcessError::WriteCommand)?;
-        write.flush()
+        write
+            .flush()
             .await
             .change_context(ImageProcessError::WriteCommand)?;
         Ok(())
@@ -132,11 +145,13 @@ impl ImageProcessHandle {
         read.read_exact(&mut bytes)
             .await
             .change_context(ImageProcessError::ReadInfo)?;
-        serde_json::from_reader(bytes.as_slice())
-            .change_context(ImageProcessError::ReadInfo)
+        serde_json::from_reader(bytes.as_slice()).change_context(ImageProcessError::ReadInfo)
     }
 
-    async fn run_command(mut self, command: ImageProcessingCommand) -> Result<(Self, ImageProcessingInfo), ImageProcessError> {
+    async fn run_command(
+        mut self,
+        command: ImageProcessingCommand,
+    ) -> Result<(Self, ImageProcessingInfo), ImageProcessError> {
         let r = Self::write_command(&mut self.stdin, command).await;
         if let Err(e) = r {
             self.close().await;
@@ -186,10 +201,11 @@ impl ImageProcess {
         input_file_type: InputFileType,
         output: &Path,
     ) -> Result<ImageProcessingInfo, ImageProcessError> {
-        let input =
-            std::fs::canonicalize(input).change_context(ImageProcessError::ImageProcessingCommandCreationFailed)?;
+        let input = std::fs::canonicalize(input)
+            .change_context(ImageProcessError::ImageProcessingCommandCreationFailed)?;
         let output = if output.exists() {
-            std::fs::canonicalize(output).change_context(ImageProcessError::ImageProcessingCommandCreationFailed)?
+            std::fs::canonicalize(output)
+                .change_context(ImageProcessError::ImageProcessingCommandCreationFailed)?
         } else {
             let output_file_name = output
                 .file_name()

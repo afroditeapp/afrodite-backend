@@ -1,11 +1,10 @@
 use std::{fmt::Debug, sync::Arc};
 
+use error_stack::{Result, ResultExt};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_utils::ContextExt;
 use tokio::sync::Mutex;
 use utils::encrypt::{GeneratedKeys, ParsedKeys};
-
-use error_stack::{Result, ResultExt};
 
 const PRIVATE_KEY_FILE_NAME: &str = "backend_private_key.asc";
 const PUBLIC_KEY_FILE_NAME: &str = "backend_public_key.asc";
@@ -56,13 +55,14 @@ impl Clone for DataSigner {
 impl DataSigner {
     pub(crate) fn new() -> Self {
         Self {
-            state: Arc::new(Mutex::new(State {
-                keys: None,
-            }))
+            state: Arc::new(Mutex::new(State { keys: None })),
         }
     }
 
-    pub async fn load_or_generate_keys(&self, config: &SimpleBackendConfig) -> Result<(), DataSignerError> {
+    pub async fn load_or_generate_keys(
+        &self,
+        config: &SimpleBackendConfig,
+    ) -> Result<(), DataSignerError> {
         let mut lock = self.state.lock().await;
 
         let private_key_path = config.data_dir().join(PRIVATE_KEY_FILE_NAME);
@@ -75,14 +75,11 @@ impl DataSigner {
                 .await
                 .change_context(DataSignerError::Read)?;
 
-            GeneratedKeys {
-                private,
-                public,
-            }
+            GeneratedKeys { private, public }
         } else if private_key_path.exists() {
-            return Err(DataSignerError::OnlyPrivateKeyExists.report())
+            return Err(DataSignerError::OnlyPrivateKeyExists.report());
         } else if public_key_path.exists() {
-            return Err(DataSignerError::OnlyPublicKeyExists.report())
+            return Err(DataSignerError::OnlyPublicKeyExists.report());
         } else {
             let keys = utils::encrypt::generate_keys("Backend".to_string())
                 .change_context(DataSignerError::MessageEncryptionError)?;
@@ -98,7 +95,8 @@ impl DataSigner {
             keys
         };
 
-        let keys = keys.to_parsed_keys()
+        let keys = keys
+            .to_parsed_keys()
             .change_context(DataSignerError::MessageEncryptionError)?;
 
         lock.keys = Some(keys.into());
@@ -114,12 +112,16 @@ impl DataSigner {
         Ok(keys.clone())
     }
 
-    pub async fn verify_and_extract_backend_signed_data(&self, data: &[u8]) -> Result<Vec<u8>, DataSignerError> {
+    pub async fn verify_and_extract_backend_signed_data(
+        &self,
+        data: &[u8],
+    ) -> Result<Vec<u8>, DataSignerError> {
         let lock = self.state.lock().await;
         let Some(keys) = &lock.keys else {
             return Err(DataSignerError::KeysNotLoaded.report());
         };
-        let data = keys.verify_signed_message_and_extract_data(data)
+        let data = keys
+            .verify_signed_message_and_extract_data(data)
             .change_context(DataSignerError::MessageEncryptionError)?;
         Ok(data)
     }

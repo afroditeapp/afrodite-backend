@@ -9,26 +9,32 @@ use tls_client as _;
 
 pub mod args;
 pub mod bot_config_file;
+pub mod csv;
 pub mod file;
 pub mod file_dynamic;
 pub mod file_email_content;
-pub mod csv;
 
 use std::{path::Path, sync::Arc};
 
 use args::{AppMode, ArgsConfig};
+use bot_config_file::BotConfigFile;
+use csv::{
+    attribute_values::AttributeValuesCsvLoader,
+    profile_name_allowlist::{ProfileNameAllowlistBuilder, ProfileNameAllowlistData},
+};
 use error_stack::{Result, ResultExt};
-use file::{AccountLimitsConfig, AutomaticProfileSearchConfig, ChatLimitsConfig, CommonLimitsConfig, DemoModeConfig, GrantAdminAccessConfig, MediaLimitsConfig, MinClientVersion, RemoteBotConfig};
+use file::{
+    AccountLimitsConfig, AutomaticProfileSearchConfig, ChatLimitsConfig, CommonLimitsConfig,
+    DemoModeConfig, GrantAdminAccessConfig, MediaLimitsConfig, MinClientVersion, RemoteBotConfig,
+};
 use file_dynamic::ConfigFileDynamic;
 use file_email_content::EmailContentFile;
 use model::{BotConfig, CustomReportsConfig};
 use model_server_data::{AttributesFileInternal, ProfileAttributesInternal};
-use csv::{attribute_values::AttributeValuesCsvLoader, profile_name_allowlist::{ProfileNameAllowlistBuilder, ProfileNameAllowlistData}};
 use reqwest::Url;
 use sha2::{Digest, Sha256};
-use simple_backend_config::{file::SimpleBackendConfigFile, SimpleBackendConfig};
+use simple_backend_config::{SimpleBackendConfig, file::SimpleBackendConfigFile};
 use simple_backend_utils::{ContextExt, IntoReportFromString};
-use bot_config_file::BotConfigFile;
 
 use self::file::{Components, ConfigFile, ExternalServices, LocationConfig};
 
@@ -172,7 +178,10 @@ impl Config {
     }
 
     pub fn remote_bot_login_allowed(&self) -> bool {
-        self.file_dynamic.backend_config.remote_bot_login.unwrap_or_default()
+        self.file_dynamic
+            .backend_config
+            .remote_bot_login
+            .unwrap_or_default()
     }
 
     pub fn bot_config_file(&self) -> Option<&Path> {
@@ -180,19 +189,35 @@ impl Config {
     }
 
     pub fn limits_common(&self) -> CommonLimitsConfig {
-        self.file.limits.as_ref().and_then(|v| v.common.as_ref().cloned()).unwrap_or_default()
+        self.file
+            .limits
+            .as_ref()
+            .and_then(|v| v.common.as_ref().cloned())
+            .unwrap_or_default()
     }
 
     pub fn limits_account(&self) -> AccountLimitsConfig {
-        self.file.limits.as_ref().and_then(|v| v.account.as_ref().cloned()).unwrap_or_default()
+        self.file
+            .limits
+            .as_ref()
+            .and_then(|v| v.account.as_ref().cloned())
+            .unwrap_or_default()
     }
 
     pub fn limits_chat(&self) -> ChatLimitsConfig {
-        self.file.limits.as_ref().and_then(|v| v.chat.as_ref().cloned()).unwrap_or_default()
+        self.file
+            .limits
+            .as_ref()
+            .and_then(|v| v.chat.as_ref().cloned())
+            .unwrap_or_default()
     }
 
     pub fn limits_media(&self) -> MediaLimitsConfig {
-        self.file.limits.as_ref().and_then(|v| v.media.as_ref().cloned()).unwrap_or_default()
+        self.file
+            .limits
+            .as_ref()
+            .and_then(|v| v.media.as_ref().cloned())
+            .unwrap_or_default()
     }
 
     pub fn profile_attributes(&self) -> Option<&ProfileAttributesInternal> {
@@ -284,21 +309,16 @@ pub fn get_config(
     .change_context(GetConfigError::SimpleBackendError)?;
 
     let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
-    let file_config =
-        file::ConfigFile::load(&current_dir, save_default_config_if_not_found)
-            .change_context(GetConfigError::LoadFileError)?;
+    let file_config = file::ConfigFile::load(&current_dir, save_default_config_if_not_found)
+        .change_context(GetConfigError::LoadFileError)?;
 
-    let external_services = file_config
-        .external_services
-        .clone()
-        .unwrap_or_default();
+    let external_services = file_config.external_services.clone().unwrap_or_default();
 
     let components = file_config.components.unwrap_or(Components::all_enabled());
 
     if components != Components::all_enabled() && !simple_backend_config.debug_mode() {
-        return Err(GetConfigError::InvalidConfiguration).attach_printable(
-            "Disabling some server component is possible only in debug mode",
-        );
+        return Err(GetConfigError::InvalidConfiguration)
+            .attach_printable("Disabling some server component is possible only in debug mode");
     }
 
     let client_api_urls = create_client_api_urls(&components, &external_services)?;
@@ -306,9 +326,8 @@ pub fn get_config(
     // TODO(prod): Consider adding file path for ConfigFileDynamic
     //             to server config.
 
-    let file_dynamic =
-        ConfigFileDynamic::load(current_dir, save_default_config_if_not_found)
-            .change_context(GetConfigError::LoadFileError)?;
+    let file_dynamic = ConfigFileDynamic::load(current_dir, save_default_config_if_not_found)
+        .change_context(GetConfigError::LoadFileError)?;
 
     let (profile_attributes, profile_attributes_sha256, profile_attributes_file) =
         if let Some(path) = &file_config.config_files.profile_attributes {
@@ -318,14 +337,21 @@ pub fn get_config(
             profile_attributes_sha256.update(attributes.as_bytes());
             let mut attributes_file: AttributesFileInternal =
                 toml::from_str(&attributes).change_context(GetConfigError::InvalidConfiguration)?;
-            AttributeValuesCsvLoader::load_if_needed(&mut attributes_file, &mut profile_attributes_sha256)
-                .change_context(GetConfigError::LoadFileError)?;
+            AttributeValuesCsvLoader::load_if_needed(
+                &mut attributes_file,
+                &mut profile_attributes_sha256,
+            )
+            .change_context(GetConfigError::LoadFileError)?;
             let profile_attributes_sha256 = format!("{:x}", profile_attributes_sha256.finalize());
             let attributes = attributes_file
                 .clone()
                 .validate()
                 .into_error_string(GetConfigError::InvalidConfiguration)?;
-            (Some(attributes), Some(profile_attributes_sha256), Some(attributes_file))
+            (
+                Some(attributes),
+                Some(profile_attributes_sha256),
+                Some(attributes_file),
+            )
         } else {
             (None, None, None)
         };
@@ -335,8 +361,8 @@ pub fn get_config(
             let custom_reports =
                 std::fs::read_to_string(path).change_context(GetConfigError::LoadFileError)?;
             let custom_reports_sha256 = format!("{:x}", Sha256::digest(custom_reports.as_bytes()));
-            let mut custom_reports: CustomReportsConfig =
-                toml::from_str(&custom_reports).change_context(GetConfigError::InvalidConfiguration)?;
+            let mut custom_reports: CustomReportsConfig = toml::from_str(&custom_reports)
+                .change_context(GetConfigError::InvalidConfiguration)?;
             custom_reports
                 .validate_and_sort_by_id()
                 .into_error_string(GetConfigError::InvalidConfiguration)?;
@@ -347,10 +373,9 @@ pub fn get_config(
 
     let (client_features, client_features_sha256) =
         if let Some(path) = &file_config.config_files.client_features {
-            let features =
-                std::fs::read_to_string(path)
-                    .change_context(GetConfigError::LoadFileError)
-                    .attach_printable_lazy(|| path.to_string_lossy().to_string())?;
+            let features = std::fs::read_to_string(path)
+                .change_context(GetConfigError::LoadFileError)
+                .attach_printable_lazy(|| path.to_string_lossy().to_string())?;
             let sha256 = format!("{:x}", Sha256::digest(features.as_bytes()));
             let features: ClientFeaturesConfigInternal =
                 toml::from_str(&features).change_context(GetConfigError::InvalidConfiguration)?;
@@ -388,8 +413,8 @@ pub fn get_config(
 
     let bot_config = if let Some(bot_config_file) = &file_config.config_files.bot {
         // Check that bot config file loads correctly
-        let bot_config = BotConfigFile::load(bot_config_file)
-            .change_context(GetConfigError::LoadFileError)?;
+        let bot_config =
+            BotConfigFile::load(bot_config_file).change_context(GetConfigError::LoadFileError)?;
         Some(bot_config)
     } else {
         None

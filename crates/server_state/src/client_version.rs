@@ -26,7 +26,7 @@ impl ClientVersionTracker {
         Self {
             state: Arc::new(Mutex::new(State {
                 versions: HashMap::new(),
-            }))
+            })),
         }
     }
 

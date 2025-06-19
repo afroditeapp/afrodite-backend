@@ -2,20 +2,53 @@
 //!
 //!
 
-use server_api::{common::{COMMON_CLIENT_CONFIG_COUNTERS_LIST, COMMON_PUSH_NOTIFICATION_COUNTERS_LIST}, common_admin::{COMMON_ADMIN_MAINTENANCE_COUNTERS_LIST, COMMON_ADMIN_NOTIFICATION_COUNTERS_LIST, COMMON_ADMIN_REPORT_COUNTERS_LIST}, utils::API_COUNTERS_LIST};
-use server_api_account::{
-    account::{ACCOUNT_BAN_COUNTERS_LIST, ACCOUNT_CLIENT_FEATURES_COUNTERS_LIST, ACCOUNT_LOGOUT_COUNTERS_LIST, ACCOUNT_NEWS_COUNTERS_LIST, ACCOUNT_NOTIFICATION_COUNTERS_LIST, ACCOUNT_REPORT_COUNTERS_LIST},
-    account_admin::{ACCOUNT_ADMIN_BAN_COUNTERS_LIST, ACCOUNT_ADMIN_CLIENT_VERSION_PERF_COUNTERS_LIST, ACCOUNT_ADMIN_DELETE_COUNTERS_LIST, ACCOUNT_ADMIN_NEWS_COUNTERS_LIST, ACCOUNT_ADMIN_PERMISSIONS_COUNTERS_LIST, ACCOUNT_ADMIN_SEARCH_COUNTERS_LIST, ACCOUNT_ADMIN_STATE_COUNTERS_LIST},
+use server_api::{
+    common::{COMMON_CLIENT_CONFIG_COUNTERS_LIST, COMMON_PUSH_NOTIFICATION_COUNTERS_LIST},
+    common_admin::{
+        COMMON_ADMIN_MAINTENANCE_COUNTERS_LIST, COMMON_ADMIN_NOTIFICATION_COUNTERS_LIST,
+        COMMON_ADMIN_REPORT_COUNTERS_LIST,
+    },
+    utils::API_COUNTERS_LIST,
 };
-use server_api_chat::{chat::{CHAT_NOTIFICATION_COUNTERS_LIST, CHAT_PUBLIC_KEY_COUNTERS_LIST, CHAT_REPORT_COUNTERS_LIST, CHAT_VIDEO_CALL_COUNTERS_LIST}, chat_admin::CHAT_ADMIN_PUBLIC_KEY_COUNTERS_LIST};
-use server_api_media::{media::{MEDIA_MEDIA_CONTENT_COUNTERS_LIST, MEDIA_NOTIFICATION_COUNTERS_LIST, MEDIA_REPORT_COUNTERS_LIST}, media_admin::MEDIA_ADMIN_CONTENT_COUNTERS_LIST};
-use server_api_profile::{
-    profile::{PROFILE_NOTIFICATION_COUNTERS_LIST, PROFILE_REPORT_COUNTERS_LIST, PROFILE_STATISTICS_COUNTERS_LIST},
-    profile_admin::{
-        PROFILE_ADMIN_ITERATE_PROFILES_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_DATA_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_NAME_ALLOWLIST_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_TEXT_COUNTERS_LIST, PROFILE_ADMIN_STATISTICS_COUNTERS_LIST
+use server_api_account::{
+    account::{
+        ACCOUNT_BAN_COUNTERS_LIST, ACCOUNT_CLIENT_FEATURES_COUNTERS_LIST,
+        ACCOUNT_LOGOUT_COUNTERS_LIST, ACCOUNT_NEWS_COUNTERS_LIST,
+        ACCOUNT_NOTIFICATION_COUNTERS_LIST, ACCOUNT_REPORT_COUNTERS_LIST,
+    },
+    account_admin::{
+        ACCOUNT_ADMIN_BAN_COUNTERS_LIST, ACCOUNT_ADMIN_CLIENT_VERSION_PERF_COUNTERS_LIST,
+        ACCOUNT_ADMIN_DELETE_COUNTERS_LIST, ACCOUNT_ADMIN_NEWS_COUNTERS_LIST,
+        ACCOUNT_ADMIN_PERMISSIONS_COUNTERS_LIST, ACCOUNT_ADMIN_SEARCH_COUNTERS_LIST,
+        ACCOUNT_ADMIN_STATE_COUNTERS_LIST,
     },
 };
-use simple_backend::{perf::counters::CounterCategory, SIMPLE_CONNECTION_COUNTERS_LIST};
+use server_api_chat::{
+    chat::{
+        CHAT_NOTIFICATION_COUNTERS_LIST, CHAT_PUBLIC_KEY_COUNTERS_LIST, CHAT_REPORT_COUNTERS_LIST,
+        CHAT_VIDEO_CALL_COUNTERS_LIST,
+    },
+    chat_admin::CHAT_ADMIN_PUBLIC_KEY_COUNTERS_LIST,
+};
+use server_api_media::{
+    media::{
+        MEDIA_MEDIA_CONTENT_COUNTERS_LIST, MEDIA_NOTIFICATION_COUNTERS_LIST,
+        MEDIA_REPORT_COUNTERS_LIST,
+    },
+    media_admin::MEDIA_ADMIN_CONTENT_COUNTERS_LIST,
+};
+use server_api_profile::{
+    profile::{
+        PROFILE_NOTIFICATION_COUNTERS_LIST, PROFILE_REPORT_COUNTERS_LIST,
+        PROFILE_STATISTICS_COUNTERS_LIST,
+    },
+    profile_admin::{
+        PROFILE_ADMIN_ITERATE_PROFILES_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_DATA_COUNTERS_LIST,
+        PROFILE_ADMIN_PROFILE_NAME_ALLOWLIST_COUNTERS_LIST,
+        PROFILE_ADMIN_PROFILE_TEXT_COUNTERS_LIST, PROFILE_ADMIN_STATISTICS_COUNTERS_LIST,
+    },
+};
+use simple_backend::{SIMPLE_CONNECTION_COUNTERS_LIST, perf::counters::CounterCategory};
 
 use crate::api::{
     account::{
@@ -34,14 +67,13 @@ use crate::api::{
         COMMON_ADMIN_STATISTICS_COUNTERS_LIST,
     },
     media::{
-        MEDIA_CONTENT_COUNTERS_LIST,
-        MEDIA_PROFILE_CONTENT_COUNTERS_LIST, MEDIA_SECURITY_CONTENT_COUNTERS_LIST,
-        MEDIA_TILE_MAP_COUNTERS_LIST,
+        MEDIA_CONTENT_COUNTERS_LIST, MEDIA_PROFILE_CONTENT_COUNTERS_LIST,
+        MEDIA_SECURITY_CONTENT_COUNTERS_LIST, MEDIA_TILE_MAP_COUNTERS_LIST,
     },
     media_admin::MEDIA_ADMIN_MODERATION_COUNTERS_LIST,
     profile::{
-        PROFILE_FILTERS_COUNTERS_LIST, PROFILE_BENCHMARK_COUNTERS_LIST,
-        PROFILE_DATA_COUNTERS_LIST, PROFILE_FAVORITE_COUNTERS_LIST,
+        PROFILE_BENCHMARK_COUNTERS_LIST, PROFILE_DATA_COUNTERS_LIST,
+        PROFILE_FAVORITE_COUNTERS_LIST, PROFILE_FILTERS_COUNTERS_LIST,
         PROFILE_ITERATE_PROFILES_COUNTERS_LIST, PROFILE_LOCATION_COUNTERS_LIST,
     },
     profile_internal::PROFILE_INTERNAL_COUNTERS_LIST,
@@ -57,12 +89,21 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
         COMMON_PUSH_NOTIFICATION_COUNTERS_LIST,
     ),
     // Common admin
-    &CounterCategory::new("common_admin_maintenance", COMMON_ADMIN_MAINTENANCE_COUNTERS_LIST),
+    &CounterCategory::new(
+        "common_admin_maintenance",
+        COMMON_ADMIN_MAINTENANCE_COUNTERS_LIST,
+    ),
     &CounterCategory::new("common_admin_manager", COMMON_ADMIN_MANAGER_COUNTERS_LIST),
     &CounterCategory::new("common_admin_config", COMMON_ADMIN_CONFIG_COUNTERS_LIST),
-    &CounterCategory::new("common_admin_statistics", COMMON_ADMIN_STATISTICS_COUNTERS_LIST),
+    &CounterCategory::new(
+        "common_admin_statistics",
+        COMMON_ADMIN_STATISTICS_COUNTERS_LIST,
+    ),
     &CounterCategory::new("common_admin_report", COMMON_ADMIN_REPORT_COUNTERS_LIST),
-    &CounterCategory::new("common_admin_notification", COMMON_ADMIN_NOTIFICATION_COUNTERS_LIST),
+    &CounterCategory::new(
+        "common_admin_notification",
+        COMMON_ADMIN_NOTIFICATION_COUNTERS_LIST,
+    ),
     // Account
     &CounterCategory::new("account_register", ACCOUNT_REGISTER_COUNTERS_LIST),
     &CounterCategory::new("account_login", ACCOUNT_LOGIN_COUNTERS_LIST),
@@ -74,16 +115,25 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("account_demo_mode", ACCOUNT_DEMO_MODE_COUNTERS_LIST),
     &CounterCategory::new("account_news", ACCOUNT_NEWS_COUNTERS_LIST),
     &CounterCategory::new("account_report", ACCOUNT_REPORT_COUNTERS_LIST),
-    &CounterCategory::new("account_client_features", ACCOUNT_CLIENT_FEATURES_COUNTERS_LIST),
+    &CounterCategory::new(
+        "account_client_features",
+        ACCOUNT_CLIENT_FEATURES_COUNTERS_LIST,
+    ),
     &CounterCategory::new("account_notification", ACCOUNT_NOTIFICATION_COUNTERS_LIST),
     // Account admin
     &CounterCategory::new("account_admin_ban", ACCOUNT_ADMIN_BAN_COUNTERS_LIST),
     &CounterCategory::new("account_admin_delete", ACCOUNT_ADMIN_DELETE_COUNTERS_LIST),
     &CounterCategory::new("account_admin_news", ACCOUNT_ADMIN_NEWS_COUNTERS_LIST),
     &CounterCategory::new("account_admin_search", ACCOUNT_ADMIN_SEARCH_COUNTERS_LIST),
-    &CounterCategory::new("account_admin_permissions", ACCOUNT_ADMIN_PERMISSIONS_COUNTERS_LIST),
+    &CounterCategory::new(
+        "account_admin_permissions",
+        ACCOUNT_ADMIN_PERMISSIONS_COUNTERS_LIST,
+    ),
     &CounterCategory::new("account_admin_state", ACCOUNT_ADMIN_STATE_COUNTERS_LIST),
-    &CounterCategory::new("account_admin_client_version", ACCOUNT_ADMIN_CLIENT_VERSION_PERF_COUNTERS_LIST),
+    &CounterCategory::new(
+        "account_admin_client_version",
+        ACCOUNT_ADMIN_CLIENT_VERSION_PERF_COUNTERS_LIST,
+    ),
     // Account internal
     &CounterCategory::new("account_internal", ACCOUNT_BOT_COUNTERS_LIST),
     // Media
@@ -98,10 +148,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("media_report", MEDIA_REPORT_COUNTERS_LIST),
     &CounterCategory::new("media_notification", MEDIA_NOTIFICATION_COUNTERS_LIST),
     // Media admin
-    &CounterCategory::new(
-        "media_admin_content",
-        MEDIA_ADMIN_CONTENT_COUNTERS_LIST,
-    ),
+    &CounterCategory::new("media_admin_content", MEDIA_ADMIN_CONTENT_COUNTERS_LIST),
     &CounterCategory::new(
         "media_admin_moderation",
         MEDIA_ADMIN_MODERATION_COUNTERS_LIST,
@@ -145,23 +192,11 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("chat_match", CHAT_MATCH_COUNTERS_LIST),
     &CounterCategory::new("chat_message", CHAT_MESSAGE_COUNTERS_LIST),
     &CounterCategory::new("chat_public_key", CHAT_PUBLIC_KEY_COUNTERS_LIST),
-    &CounterCategory::new(
-        "chat_report",
-        CHAT_REPORT_COUNTERS_LIST,
-    ),
-    &CounterCategory::new(
-        "chat_notification",
-        CHAT_NOTIFICATION_COUNTERS_LIST,
-    ),
-    &CounterCategory::new(
-        "chat_video_call",
-        CHAT_VIDEO_CALL_COUNTERS_LIST,
-    ),
+    &CounterCategory::new("chat_report", CHAT_REPORT_COUNTERS_LIST),
+    &CounterCategory::new("chat_notification", CHAT_NOTIFICATION_COUNTERS_LIST),
+    &CounterCategory::new("chat_video_call", CHAT_VIDEO_CALL_COUNTERS_LIST),
     // Chat admin
-    &CounterCategory::new(
-        "chat_admin_public_key",
-        CHAT_ADMIN_PUBLIC_KEY_COUNTERS_LIST,
-    ),
+    &CounterCategory::new("chat_admin_public_key", CHAT_ADMIN_PUBLIC_KEY_COUNTERS_LIST),
     // Server info
     &CounterCategory::new("server_info_connection", SIMPLE_CONNECTION_COUNTERS_LIST),
 ];

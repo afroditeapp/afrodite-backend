@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use error_stack::{Context, Report, Result, ResultExt};
-use tokio::sync::{oneshot, Mutex, OwnedMutexGuard};
+use tokio::sync::{Mutex, OwnedMutexGuard, oneshot};
 
 // TODO(refactor): Remove duplicate code
 
@@ -59,7 +59,7 @@ pub trait AppendErr: Sized {
 pub trait AppendErrorTo<Err>: Sized {
     fn append_to_and_ignore(self, container: &mut ErrorContainer<Err>);
     fn append_to_and_return_container(self, container: &mut ErrorContainer<Err>)
-        -> Result<(), Err>;
+    -> Result<(), Err>;
 }
 
 impl<Ok, Err: Context> AppendErrorTo<Err> for Result<Ok, Err>

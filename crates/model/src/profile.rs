@@ -92,8 +92,7 @@ pub struct ProfileTextModerationCompletedNotification {
 
 impl ProfileTextModerationCompletedNotification {
     pub fn notifications_viewed(&self) -> bool {
-        self.accepted == self.accepted_viewed &&
-            self.rejected == self.rejected_viewed
+        self.accepted == self.accepted_viewed && self.rejected == self.rejected_viewed
     }
 }
 

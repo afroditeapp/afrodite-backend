@@ -1,4 +1,11 @@
-use std::{collections::HashMap, fmt::Debug, sync::{atomic::{AtomicU32, Ordering}, Arc}};
+use std::{
+    collections::HashMap,
+    fmt::Debug,
+    sync::{
+        Arc,
+        atomic::{AtomicU32, Ordering},
+    },
+};
 
 use model::{AccountIdDb, ApiUsage};
 use tokio::sync::RwLock;
@@ -30,7 +37,7 @@ impl ApiUsageTracker {
         Self {
             state: Arc::new(RwLock::new(State {
                 api_usage: HashMap::new(),
-            }))
+            })),
         }
     }
 

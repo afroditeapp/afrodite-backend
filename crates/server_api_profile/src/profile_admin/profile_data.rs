@@ -1,13 +1,13 @@
 use axum::{
-    extract::{Path, State},
     Extension,
+    extract::{Path, State},
 };
 use model::{AccountId, AdminNotificationTypes, EventToClientInternal};
-use model_profile::{
-    GetProfileAgeAndName, Permissions, ProfileUpdate, SetProfileName
-};
+use model_profile::{GetProfileAgeAndName, Permissions, ProfileUpdate, SetProfileName};
 use server_api::{
-    app::{AdminNotificationProvider, GetAccounts, GetConfig}, create_open_api_router, db_write_multiple, DataError, S
+    DataError, S,
+    app::{AdminNotificationProvider, GetAccounts, GetConfig},
+    create_open_api_router, db_write_multiple,
 };
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -50,13 +50,12 @@ pub async fn get_profile_age_and_name(
 ) -> Result<Json<GetProfileAgeAndName>, StatusCode> {
     PROFILE.get_profile_age_and_name.incr();
 
-    let access_allowed =
-        permissions.admin_edit_profile_name ||
-        permissions.admin_find_account_by_email ||
-        permissions.admin_view_permissions ||
-        permissions.admin_moderate_media_content ||
-        permissions.admin_moderate_profile_names ||
-        permissions.admin_moderate_profile_texts;
+    let access_allowed = permissions.admin_edit_profile_name
+        || permissions.admin_find_account_by_email
+        || permissions.admin_view_permissions
+        || permissions.admin_moderate_media_content
+        || permissions.admin_moderate_profile_names
+        || permissions.admin_moderate_profile_texts;
 
     if !access_allowed {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -103,8 +102,7 @@ pub async fn post_set_profile_name(
 ) -> Result<(), StatusCode> {
     PROFILE.post_set_profile_name.incr();
 
-    let access_allowed =
-        permissions.admin_edit_profile_name;
+    let access_allowed = permissions.admin_edit_profile_name;
 
     if !access_allowed {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -113,7 +111,12 @@ pub async fn post_set_profile_name(
     let profile_owner_id = state.get_internal_id(info.account).await?;
 
     db_write_multiple!(state, move |cmds| {
-        let profile = cmds.read().profile().profile(profile_owner_id).await?.profile;
+        let profile = cmds
+            .read()
+            .profile()
+            .profile(profile_owner_id)
+            .await?
+            .profile;
 
         let profile_update = ProfileUpdate {
             ptext: profile.ptext.clone(),
@@ -129,7 +132,9 @@ pub async fn post_set_profile_name(
         let profile_update = profile_update
             .validate(cmds.config().profile_attributes(), &profile, None)
             .into_error_string(DataError::NotAllowed)?;
-        cmds.profile().profile(profile_owner_id, profile_update).await?;
+        cmds.profile()
+            .profile(profile_owner_id, profile_update)
+            .await?;
 
         cmds.events()
             .send_connected_event(profile_owner_id, EventToClientInternal::ProfileChanged)

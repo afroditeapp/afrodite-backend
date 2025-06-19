@@ -1,6 +1,6 @@
-use axum::{middleware, Router};
+use axum::{Router, middleware};
 use server_api::app::GetConfig;
-use server_state::{StateForRouterCreation, S};
+use server_state::{S, StateForRouterCreation};
 
 use crate::api;
 
@@ -11,9 +11,7 @@ pub struct ConnectedApp {
 
 impl ConnectedApp {
     pub fn new(state: StateForRouterCreation) -> Self {
-        Self {
-            state,
-        }
+        Self { state }
     }
 
     pub fn state(&self) -> S {

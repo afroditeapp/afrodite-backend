@@ -1,18 +1,18 @@
-use diesel::{prelude::*, sql_query, sql_types::Text, SelectableHelper};
+use diesel::{SelectableHelper, prelude::*, sql_query, sql_types::Text};
 use error_stack::Result;
 use model::{Account, AccountId, AccountIdDb, AccountIdInternal, Permissions};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use crate::{
-    current::read::GetDbReadCommandsCommon, define_current_read_commands, IntoDatabaseError,
+    IntoDatabaseError, current::read::GetDbReadCommandsCommon, define_current_read_commands,
 };
 
-mod queue_number;
-mod state;
-mod token;
-mod report;
 mod client_config;
 mod push_notification;
+mod queue_number;
+mod report;
+mod state;
+mod token;
 
 define_current_read_commands!(CurrentReadCommon);
 
@@ -78,7 +78,10 @@ impl CurrentReadCommon<'_> {
         account_id.select(uuid).load(self.conn()).into_db_error(())
     }
 
-    pub fn db_id_to_internal_id(&mut self, db_id: AccountIdDb) -> Result<AccountIdInternal, DieselDatabaseError> {
+    pub fn db_id_to_internal_id(
+        &mut self,
+        db_id: AccountIdDb,
+    ) -> Result<AccountIdInternal, DieselDatabaseError> {
         use crate::schema::account_id::dsl::*;
 
         let uuid_value = account_id
@@ -90,7 +93,10 @@ impl CurrentReadCommon<'_> {
         Ok(AccountIdInternal::new(db_id, uuid_value))
     }
 
-    pub fn backup_current_database(&mut self, file_name: String) -> Result<(), DieselDatabaseError> {
+    pub fn backup_current_database(
+        &mut self,
+        file_name: String,
+    ) -> Result<(), DieselDatabaseError> {
         sql_query("VACUUM INTO ?")
             .bind::<Text, _>(file_name)
             .execute(self.conn())

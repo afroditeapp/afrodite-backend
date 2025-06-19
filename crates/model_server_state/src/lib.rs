@@ -6,7 +6,7 @@
 
 //! Data types for API and database.
 
-pub use model::{schema, schema_sqlite_types, Db};
+pub use model::{Db, schema, schema_sqlite_types};
 
 mod account;
 pub use account::*;

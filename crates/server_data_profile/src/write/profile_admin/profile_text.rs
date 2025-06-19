@@ -1,14 +1,15 @@
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
-    AccountIdInternal, ProfileEditedTime, ProfileTextModerationRejectedReasonCategory, ProfileTextModerationRejectedReasonDetails, ProfileVersion
+    AccountIdInternal, ProfileEditedTime, ProfileTextModerationRejectedReasonCategory,
+    ProfileTextModerationRejectedReasonDetails, ProfileVersion,
 };
 use server_data::{
+    DataError, IntoDataError,
     cache::profile::UpdateLocationCacheState,
     define_cmd_wrapper_write,
     read::DbRead,
     result::{Result, WrappedContextExt},
     write::DbTransaction,
-    DataError, IntoDataError,
 };
 
 use crate::cache::CacheWriteProfile;
@@ -43,19 +44,21 @@ impl WriteCommandsProfileAdminProfileText<'_> {
         let new_profile_version = ProfileVersion::new_random();
         let edit_time = ProfileEditedTime::current_time();
         let new_state = db_transaction!(self, move |mut cmds| {
-            cmds.profile()
-                .data()
-                .required_changes_for_profile_update(data_owner_id, new_profile_version, edit_time)?;
+            cmds.profile().data().required_changes_for_profile_update(
+                data_owner_id,
+                new_profile_version,
+                edit_time,
+            )?;
             let new_state = match mode {
-                ModerateProfileTextMode::MoveToHumanModeration =>
-                    cmds.profile_admin()
-                        .profile_text()
-                        .move_to_human_moderation(data_owner_id)?,
+                ModerateProfileTextMode::MoveToHumanModeration => cmds
+                    .profile_admin()
+                    .profile_text()
+                    .move_to_human_moderation(data_owner_id)?,
                 ModerateProfileTextMode::Moderate {
                     moderator_id,
                     accept,
                     rejected_category,
-                    rejected_details
+                    rejected_details,
                 } => cmds.profile_admin().profile_text().moderate_profile_text(
                     moderator_id,
                     data_owner_id,
@@ -89,5 +92,5 @@ pub enum ModerateProfileTextMode {
         accept: bool,
         rejected_category: Option<ProfileTextModerationRejectedReasonCategory>,
         rejected_details: Option<ProfileTextModerationRejectedReasonDetails>,
-    }
+    },
 }

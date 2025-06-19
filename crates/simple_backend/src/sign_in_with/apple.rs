@@ -1,9 +1,15 @@
-use std::{sync::Arc, time::{Duration, Instant}};
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use base64::Engine;
 use error_stack::{Result, ResultExt};
 use futures::lock::Mutex;
-use jsonwebtoken::{jwk::{Jwk, JwkSet}, DecodingKey, Validation};
+use jsonwebtoken::{
+    DecodingKey, Validation,
+    jwk::{Jwk, JwkSet},
+};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use simple_backend_config::SimpleBackendConfig;
@@ -54,8 +60,7 @@ struct AppleTokenClaims {
 
 impl AppleTokenClaims {
     fn email_verified(&self) -> bool {
-        self.email_verified.as_bool() == Some(true) ||
-            self.email_verified.as_str() == Some("true")
+        self.email_verified.as_bool() == Some(true) || self.email_verified.as_str() == Some("true")
     }
 }
 
@@ -121,7 +126,7 @@ enum KeyStatus<'a> {
     Found(Jwk),
     KeyRefreshNeeded,
     UnknownKeyRefreshNeeded {
-        current_state: &'a mut ApplePublicKeys
+        current_state: &'a mut ApplePublicKeys,
     },
 }
 
@@ -155,10 +160,7 @@ struct ApplePublicKeysState {
 }
 
 impl ApplePublicKeysState {
-    fn new(
-        config: Arc<SimpleBackendConfig>,
-        client: reqwest::Client,
-    ) -> Self {
+    fn new(config: Arc<SimpleBackendConfig>, client: reqwest::Client) -> Self {
         Self {
             client,
             config,
@@ -173,12 +175,14 @@ impl ApplePublicKeysState {
             .await?
         {
             KeyStatus::Found(key) => Ok(key),
-            KeyStatus::KeyRefreshNeeded =>
+            KeyStatus::KeyRefreshNeeded => {
                 self.download_public_keys_and_get_key(&mut state, wanted_kid)
-                    .await,
-            KeyStatus::UnknownKeyRefreshNeeded { current_state } =>
+                    .await
+            }
+            KeyStatus::UnknownKeyRefreshNeeded { current_state } => {
                 self.handle_unknown_key_refresh(current_state, wanted_kid)
-                    .await,
+                    .await
+            }
         }
     }
 
@@ -197,7 +201,9 @@ impl ApplePublicKeysState {
                 } else if keys.unknown_key_refresh_done {
                     Err(SignInWithAppleError::JwkNotFound.report())
                 } else {
-                    Ok(KeyStatus::UnknownKeyRefreshNeeded { current_state: keys })
+                    Ok(KeyStatus::UnknownKeyRefreshNeeded {
+                        current_state: keys,
+                    })
                 }
             }
         }
@@ -232,9 +238,7 @@ impl ApplePublicKeysState {
         }
     }
 
-    async fn download_public_key(
-        &self,
-    ) -> Result<JwkSet, SignInWithAppleError> {
+    async fn download_public_key(&self) -> Result<JwkSet, SignInWithAppleError> {
         let download_request = reqwest::Request::new(
             reqwest::Method::GET,
             self.config.sign_in_with_urls().apple_public_keys.clone(),

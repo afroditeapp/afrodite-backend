@@ -3,7 +3,7 @@ use error_stack::Result;
 use model::{AccountIdInternal, AccountStateRelatedSharedState, OtherSharedState, Permissions};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
-use crate::{define_current_read_commands, IntoDatabaseError};
+use crate::{IntoDatabaseError, define_current_read_commands};
 
 define_current_read_commands!(CurrentReadCommonState);
 

@@ -11,24 +11,22 @@ use std::{
     fs,
     io::BufReader,
     path::{Path, PathBuf},
-    sync::{atomic::AtomicBool, Arc},
+    sync::{Arc, atomic::AtomicBool},
     vec,
 };
 
 use args::ServerModeArgs;
 use error_stack::{Result, ResultExt};
 use file::{
-    FirebaseCloudMessagingConfig, ImageProcessingConfig, MaxMindDbConfig, ScheduledTasksConfig, SignInWithAppleConfig, TileMapConfig, VideoCallingConfig
+    FirebaseCloudMessagingConfig, ImageProcessingConfig, MaxMindDbConfig, ScheduledTasksConfig,
+    SignInWithAppleConfig, TileMapConfig, VideoCallingConfig,
 };
 use ip::IpList;
 use reqwest::Url;
 use rustls_pemfile::certs;
 use tokio_rustls::rustls::ServerConfig;
 
-use self::file::{
-    ManagerConfig, SignInWithGoogleConfig,
-    SimpleBackendConfigFile, SocketConfig,
-};
+use self::file::{ManagerConfig, SignInWithGoogleConfig, SimpleBackendConfigFile, SocketConfig};
 
 /// Config file debug mode status.
 ///
@@ -236,8 +234,9 @@ pub fn get_config(
     save_default_config_if_not_found: bool,
 ) -> Result<SimpleBackendConfig, GetConfigError> {
     let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
-    let file_config = file::SimpleBackendConfigFile::load(current_dir, save_default_config_if_not_found)
-        .change_context(GetConfigError::LoadFileError)?;
+    let file_config =
+        file::SimpleBackendConfigFile::load(current_dir, save_default_config_if_not_found)
+            .change_context(GetConfigError::LoadFileError)?;
 
     let data_dir = if let Some(dir) = args_config.data_dir {
         dir
@@ -245,7 +244,9 @@ pub fn get_config(
         file_config.data.dir.clone()
     };
 
-    if file_config.socket.experimental_internal_api.is_some() && !file_config.general.debug.unwrap_or(false) {
+    if file_config.socket.experimental_internal_api.is_some()
+        && !file_config.general.debug.unwrap_or(false)
+    {
         return Err(GetConfigError::InvalidConfiguration)
             .attach_printable("Internal API can be enabled only when debug mode is enabled");
     }
@@ -291,9 +292,7 @@ pub fn get_config(
     }
 
     let internal_api_root_certificate = match file_config.tls.clone().and_then(|v| v.internal_api) {
-        Some(tls_config) => Some(load_root_certificate(
-            &tls_config.root_cert,
-        )?),
+        Some(tls_config) => Some(load_root_certificate(&tls_config.root_cert)?),
         None => None,
     };
 
@@ -346,7 +345,12 @@ pub fn get_config(
         ip_lists.push(IpList::new(l)?);
     }
 
-    if let Some(template) = file_config.video_calling.jitsi_meet.as_ref().and_then(|v| v.custom_url.as_ref()) {
+    if let Some(template) = file_config
+        .video_calling
+        .jitsi_meet
+        .as_ref()
+        .and_then(|v| v.custom_url.as_ref())
+    {
         if !template.contains("{room}") {
             return Err(GetConfigError::InvalidConfiguration)
                 .attach_printable("{room} is missing from Jitsi Meet custom URL config");
@@ -470,7 +474,7 @@ fn load_root_certificate(cert_path: &Path) -> Result<reqwest::Certificate, GetCo
     let mut cert_reader = BufReader::new(
         std::fs::File::open(cert_path)
             .change_context(GetConfigError::CreateTlsConfig)
-            .attach_printable_lazy(|| cert_path.to_string_lossy().to_string())?
+            .attach_printable_lazy(|| cert_path.to_string_lossy().to_string())?,
     );
     let all_certs: Vec<_> = certs(&mut cert_reader).collect();
     let mut cert_iter = all_certs.into_iter();

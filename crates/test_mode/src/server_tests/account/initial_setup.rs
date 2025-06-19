@@ -2,13 +2,12 @@ use api_client::apis::account_api::{get_account_state, post_complete_setup};
 use test_mode_macro::server_test;
 
 use crate::{
-    action_array,
+    TestContext, TestResult, action_array,
     bot::actions::{
         account::{AccountState, SetAccountSetup},
         media::{SendImageToSlot, SetContent},
     },
     runner::server_tests::assert::{assert_eq, assert_failure},
-    TestContext, TestResult,
 };
 
 #[server_test]

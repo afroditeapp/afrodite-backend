@@ -11,13 +11,15 @@ pub mod config_tools;
 
 use std::process::ExitCode;
 
-use build_info::{BUILD_INFO_CARGO_PKG_NAME, BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE};
+use build_info::{
+    BUILD_INFO_CARGO_PKG_NAME, BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE,
+};
 use config::{args::AppMode, get_config};
-use server::{api_doc::ApiDoc, DatingAppServer};
+use manager_config::args::ManagerApiClientMode;
+use server::{DatingAppServer, api_doc::ApiDoc};
 use server_data::index::info::LocationIndexInfoCreator;
 use simple_backend_config::file::ImageProcessingConfig;
 use test_mode::TestRunner;
-use manager_config::args::ManagerApiClientMode;
 
 fn main() -> ExitCode {
     tokio_rustls::rustls::crypto::ring::default_provider();
@@ -36,7 +38,8 @@ fn main() -> ExitCode {
             BUILD_INFO_GIT_DESCRIBE.to_string(),
             BUILD_INFO_CARGO_PKG_VERSION.to_string(),
             BUILD_INFO_CARGO_PKG_NAME.to_string(),
-        ).unwrap();
+        )
+        .unwrap();
         let runtime = tokio::runtime::Runtime::new().unwrap();
         runtime.block_on(async { manager::server::AppServer::new(config).run().await });
         return ExitCode::SUCCESS;
@@ -86,11 +89,11 @@ fn main() -> ExitCode {
     let runtime = tokio::runtime::Runtime::new().unwrap();
 
     match config.current_mode() {
-        Some(config::args::AppMode::Config { .. }) |
-        Some(config::args::AppMode::Manager) |
-        Some(config::args::AppMode::ManagerApi(_)) |
-        Some(config::args::AppMode::ImageProcess) |
-        Some(config::args::AppMode::OpenApi) => {
+        Some(config::args::AppMode::Config { .. })
+        | Some(config::args::AppMode::Manager)
+        | Some(config::args::AppMode::ManagerApi(_))
+        | Some(config::args::AppMode::ImageProcess)
+        | Some(config::args::AppMode::OpenApi) => {
             unreachable!()
         }
         Some(config::args::AppMode::RemoteBot(test_mode_config)) => {
@@ -106,9 +109,7 @@ fn main() -> ExitCode {
     ExitCode::SUCCESS
 }
 
-fn handle_manager_api_client_mode(
-    args: ManagerApiClientMode,
-) -> ExitCode {
+fn handle_manager_api_client_mode(args: ManagerApiClientMode) -> ExitCode {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
         let result = manager::client::handle_api_client_mode(args).await;
@@ -122,9 +123,7 @@ fn handle_manager_api_client_mode(
     })
 }
 
-fn handle_image_process_mode(
-    config: ImageProcessingConfig,
-) -> ExitCode {
+fn handle_image_process_mode(config: ImageProcessingConfig) -> ExitCode {
     match simple_backend_image_process::run_image_processing_loop(config) {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {

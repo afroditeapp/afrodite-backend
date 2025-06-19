@@ -1,12 +1,10 @@
 use axum::{
-    extract::{Path, State},
     Extension,
+    extract::{Path, State},
 };
 use model::Permissions;
-use model_media::{
-    AccountId, AccountIdInternal, ContentId, SecurityContent,
-};
-use server_api::{create_open_api_router, db_write_multiple, S};
+use model_media::{AccountId, AccountIdInternal, ContentId, SecurityContent};
+use server_api::{S, create_open_api_router, db_write_multiple};
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
 
@@ -44,8 +42,8 @@ pub async fn get_security_content_info(
 
     let internal_id = state.get_internal_id(requested_account_id).await?;
 
-    let access_allowed = internal_id == api_caller_account_id ||
-        permissions.admin_moderate_media_content;
+    let access_allowed =
+        internal_id == api_caller_account_id || permissions.admin_moderate_media_content;
 
     if !access_allowed {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -97,9 +95,7 @@ pub async fn put_security_content_info(
             .media()
             .content_id_internal(api_caller_account_id, content_id)
             .await?;
-        cmds
-            .media()
-            .update_security_content(content_id).await
+        cmds.media().update_security_content(content_id).await
     })
 }
 

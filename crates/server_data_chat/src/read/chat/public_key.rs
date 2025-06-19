@@ -1,7 +1,10 @@
 use database_chat::current::read::GetDbReadCommandsChat;
 use model::{AccountIdInternal, PublicKeyId};
 use model_chat::{GetLatestPublicKeyId, GetPrivatePublicKeyInfo};
-use server_data::{db_manager::InternalReading, define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError};
+use server_data::{
+    DataError, IntoDataError, db_manager::InternalReading, define_cmd_wrapper_read, read::DbRead,
+    result::Result,
+};
 
 define_cmd_wrapper_read!(ReadCommandsChatPublicKey);
 
@@ -21,9 +24,7 @@ impl ReadCommandsChatPublicKey<'_> {
         id: AccountIdInternal,
     ) -> Result<GetLatestPublicKeyId, DataError> {
         let latest_public_key_id = self
-            .db_read(move |mut cmds| {
-                cmds.chat().public_key().latest_public_key_id(id)
-        })
+            .db_read(move |mut cmds| cmds.chat().public_key().latest_public_key_id(id))
             .await?;
 
         Ok(GetLatestPublicKeyId {
@@ -38,9 +39,12 @@ impl ReadCommandsChatPublicKey<'_> {
         let (latest_public_key_id, account_specific_value) = self
             .db_read(move |mut cmds| {
                 let latest_public_key_id = cmds.chat().public_key().latest_public_key_id(id)?;
-                let limit = cmds.chat().public_key().max_public_key_count_account_config(id)?;
+                let limit = cmds
+                    .chat()
+                    .public_key()
+                    .max_public_key_count_account_config(id)?;
                 Ok((latest_public_key_id, limit))
-        })
+            })
             .await?;
 
         let config_value = self.config().limits_chat().max_public_key_count;

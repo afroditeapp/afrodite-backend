@@ -2,10 +2,10 @@ use database::define_current_write_commands;
 
 mod data;
 mod favorite;
+mod notification;
 mod profile_name_allowlist;
 mod profile_text;
 mod report;
-mod notification;
 
 define_current_write_commands!(CurrentWriteProfile);
 

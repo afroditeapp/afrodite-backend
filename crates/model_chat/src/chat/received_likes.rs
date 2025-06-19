@@ -3,9 +3,8 @@ use model_server_data::ReceivedLikesIteratorSessionId;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::ReceivedLikesSyncVersion;
-
 use super::ChatProfileLink;
+use crate::ReceivedLikesSyncVersion;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ResetReceivedLikesIteratorResult {

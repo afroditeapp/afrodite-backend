@@ -4,7 +4,7 @@ use model::{AccountIdInternal, NextQueueNumberType, QueueNumber};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use crate::{
-    current::read::GetDbReadCommandsCommon, define_current_write_commands, IntoDatabaseError,
+    IntoDatabaseError, current::read::GetDbReadCommandsCommon, define_current_write_commands,
 };
 
 define_current_write_commands!(CurrentWriteCommonQueueNumber);

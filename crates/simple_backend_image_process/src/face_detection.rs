@@ -1,5 +1,4 @@
-
-use error_stack::{report, Result, ResultExt};
+use error_stack::{Result, ResultExt, report};
 use image::GrayImage;
 use rustface::Model;
 use simple_backend_config::file::{ImageProcessingConfig, SeetaFaceConfig};
@@ -16,30 +15,20 @@ pub struct FaceDetector {
 }
 
 impl FaceDetector {
-    pub fn new(
-        config: &ImageProcessingConfig,
-    ) -> Result<Self, ImageProcessError> {
+    pub fn new(config: &ImageProcessingConfig) -> Result<Self, ImageProcessError> {
         let Some(config) = config.seetaface.clone() else {
-            return Ok(Self {
-                state: None,
-            });
+            return Ok(Self { state: None });
         };
 
         let model = rustface::load_model(&config.model_file)
             .change_context(ImageProcessError::FaceDetection)?;
 
         Ok(Self {
-            state: Some(State {
-                model,
-                config,
-            }),
+            state: Some(State { model, config }),
         })
     }
 
-    pub fn detect_face(
-        &self,
-        data: GrayImage,
-    ) -> Result<bool, ImageProcessError> {
+    pub fn detect_face(&self, data: GrayImage) -> Result<bool, ImageProcessError> {
         let Some(state) = &self.state else {
             return Ok(false);
         };

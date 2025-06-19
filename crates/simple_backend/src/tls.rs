@@ -1,16 +1,14 @@
 use std::sync::Arc;
 
-
+use futures::StreamExt;
+use rustls_platform_verifier::ConfigVerifierExt;
 use simple_backend_config::SimpleBackendConfig;
 use tokio::{net::TcpListener, task::JoinHandle};
 use tokio_rustls::rustls::{ClientConfig, ServerConfig};
-use tokio_rustls_acme::{caches::DirCache, AcmeAcceptor, AcmeConfig};
-use rustls_platform_verifier::ConfigVerifierExt;
-
-use crate::{ServerQuitWatcher, HTTPS_DEFAULT_PORT};
-use futures::StreamExt;
-
+use tokio_rustls_acme::{AcmeAcceptor, AcmeConfig, caches::DirCache};
 use tracing::{error, info, warn};
+
+use crate::{HTTPS_DEFAULT_PORT, ServerQuitWatcher};
 
 pub struct TlsManagerQuitHandle {
     handle: Option<JoinHandle<()>>,
@@ -40,11 +38,11 @@ impl TlsManager {
     ) -> (Self, TlsManagerQuitHandle) {
         if let Some(tls_config) = config.public_api_tls_config() {
             let manager = Self {
-                config: Some(SimpleBackendTlsConfig::ManualSertificates { tls_config: tls_config.clone() } ),
+                config: Some(SimpleBackendTlsConfig::ManualSertificates {
+                    tls_config: tls_config.clone(),
+                }),
             };
-            let quit_handle = TlsManagerQuitHandle {
-                handle: None,
-            };
+            let quit_handle = TlsManagerQuitHandle { handle: None };
             (manager, quit_handle)
         } else if let Some(lets_encrypt) = config.lets_encrypt_config() {
             let mut state = AcmeConfig::new(lets_encrypt.domains.clone())
@@ -97,17 +95,10 @@ impl TlsManager {
                 },
                 TlsManagerQuitHandle {
                     handle: Some(handle),
-                }
+                },
             )
         } else {
-            (
-                Self {
-                    config: None,
-                },
-                TlsManagerQuitHandle {
-                    handle: None,
-                }
-            )
+            (Self { config: None }, TlsManagerQuitHandle { handle: None })
         }
     }
 
@@ -118,7 +109,7 @@ impl TlsManager {
 
 pub enum SimpleBackendTlsConfig {
     ManualSertificates {
-        tls_config: Arc<ServerConfig>
+        tls_config: Arc<ServerConfig>,
     },
     LetsEncrypt {
         tls_config: Arc<ServerConfig>,
@@ -138,8 +129,9 @@ impl SimpleBackendTlsConfig {
 
     pub fn tls_config(&self) -> Arc<ServerConfig> {
         match self {
-            Self::ManualSertificates { tls_config } |
-            Self::LetsEncrypt { tls_config, .. } => tls_config.clone(),
+            Self::ManualSertificates { tls_config } | Self::LetsEncrypt { tls_config, .. } => {
+                tls_config.clone()
+            }
         }
     }
 }

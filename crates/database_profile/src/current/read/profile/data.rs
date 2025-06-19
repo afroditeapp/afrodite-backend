@@ -1,12 +1,14 @@
 use std::collections::HashMap;
 
 use database::{
-    current::read::GetDbReadCommandsCommon, define_current_read_commands, DieselDatabaseError,
+    DieselDatabaseError, current::read::GetDbReadCommandsCommon, define_current_read_commands,
 };
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model_profile::{
-    AcceptedProfileAges, AccountIdInternal, AttributeId, GetMyProfileResult, LastSeenTime, Location, Profile, ProfileAge, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileStateInternal, UnixTime
+    AcceptedProfileAges, AccountIdInternal, AttributeId, GetMyProfileResult, LastSeenTime,
+    Location, Profile, ProfileAge, ProfileAttributeFilterValue, ProfileAttributeValue,
+    ProfileInternal, ProfileStateInternal, UnixTime,
 };
 
 define_current_read_commands!(CurrentReadProfileData);
@@ -140,12 +142,7 @@ impl CurrentReadProfileData<'_> {
 
         let mut data: Vec<ProfileAttributeValue> = attributes
             .into_iter()
-            .map(|(id, data)| {
-                ProfileAttributeValue::new(
-                    id,
-                    data,
-                )
-            })
+            .map(|(id, data)| ProfileAttributeValue::new(id, data))
             .collect();
 
         data.sort_by_key(|v| v.id());
@@ -183,11 +180,12 @@ impl CurrentReadProfileData<'_> {
         {
             use crate::schema::profile_attributes_filter_list_wanted::dsl::*;
 
-            let attribute_filters_data_wanted: Vec<(AttributeId, i64)> = profile_attributes_filter_list_wanted
-                .filter(account_id.eq(id.as_db_id()))
-                .select((attribute_id, filter_value))
-                .load(self.conn())
-                .change_context(DieselDatabaseError::Execute)?;
+            let attribute_filters_data_wanted: Vec<(AttributeId, i64)> =
+                profile_attributes_filter_list_wanted
+                    .filter(account_id.eq(id.as_db_id()))
+                    .select((attribute_id, filter_value))
+                    .load(self.conn())
+                    .change_context(DieselDatabaseError::Execute)?;
 
             for (id, value) in attribute_filters_data_wanted {
                 let values = all_values.entry(id).or_default();
@@ -198,16 +196,17 @@ impl CurrentReadProfileData<'_> {
         {
             use crate::schema::profile_attributes_filter_list_unwanted::dsl::*;
 
-            let attribute_filters_data_unwanted: Vec<(AttributeId, i64)> = profile_attributes_filter_list_unwanted
-                .filter(account_id.eq(id.as_db_id()))
-                .select((attribute_id, filter_value))
-                .load(self.conn())
-                .change_context(DieselDatabaseError::Execute)?;
+            let attribute_filters_data_unwanted: Vec<(AttributeId, i64)> =
+                profile_attributes_filter_list_unwanted
+                    .filter(account_id.eq(id.as_db_id()))
+                    .select((attribute_id, filter_value))
+                    .load(self.conn())
+                    .change_context(DieselDatabaseError::Execute)?;
 
-                for (id, value) in attribute_filters_data_unwanted {
-                    let values = all_values.entry(id).or_default();
-                    values.unwanted.push(value as u32);
-                }
+            for (id, value) in attribute_filters_data_unwanted {
+                let values = all_values.entry(id).or_default();
+                values.unwanted.push(value as u32);
+            }
         };
 
         let mut data: Vec<ProfileAttributeFilterValue> = data

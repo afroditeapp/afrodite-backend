@@ -1,4 +1,3 @@
-
 use std::{fmt::Debug, num::NonZeroU16};
 
 use model_server_data::{CellData, CellDataProvider};
@@ -24,9 +23,7 @@ impl IndexSize {
         if value.get() > Self::MAX_SIZE {
             panic!("Max index width or height is {}", Self::MAX_SIZE);
         }
-        Self {
-            value,
-        }
+        Self { value }
     }
 
     fn get(&self) -> u16 {
@@ -96,7 +93,7 @@ pub trait ReadIndex {
     fn last_profile_area_y_index(&self) -> u16;
 }
 
-impl <T: AsRef<LocationIndex>> ReadIndex for T {
+impl<T: AsRef<LocationIndex>> ReadIndex for T {
     type C = CellData;
 
     fn get_cell_data(&self, x: u16, y: u16) -> Option<&Self::C> {

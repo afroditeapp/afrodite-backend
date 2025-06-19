@@ -31,39 +31,15 @@ macro_rules! create_connection_tracker {
     };
 }
 
-create_connection_tracker!(
-    CONNECTIONS,
-    Connections,
-);
-create_connection_tracker!(
-    CONNECTIONS_MEN,
-    ConnectionsMen,
-);
-create_connection_tracker!(
-    CONNECTIONS_WOMEN,
-    ConnectionsWomen,
-);
-create_connection_tracker!(
-    CONNECTIONS_NONBINARIES,
-    ConnectionsNonbinaries,
-);
+create_connection_tracker!(CONNECTIONS, Connections,);
+create_connection_tracker!(CONNECTIONS_MEN, ConnectionsMen,);
+create_connection_tracker!(CONNECTIONS_WOMEN, ConnectionsWomen,);
+create_connection_tracker!(CONNECTIONS_NONBINARIES, ConnectionsNonbinaries,);
 
-create_connection_tracker!(
-    BOT_CONNECTIONS,
-    BotConnections,
-);
-create_connection_tracker!(
-    BOT_CONNECTIONS_MEN,
-    BotConnectionsMen,
-);
-create_connection_tracker!(
-    BOT_CONNECTIONS_WOMEN,
-    BotConnectionsWomen,
-);
-create_connection_tracker!(
-    BOT_CONNECTIONS_NONBINARIES,
-    BotConnectionsNonbinaries,
-);
+create_connection_tracker!(BOT_CONNECTIONS, BotConnections,);
+create_connection_tracker!(BOT_CONNECTIONS_MEN, BotConnectionsMen,);
+create_connection_tracker!(BOT_CONNECTIONS_WOMEN, BotConnectionsWomen,);
+create_connection_tracker!(BOT_CONNECTIONS_NONBINARIES, BotConnectionsNonbinaries,);
 
 pub enum ConnectionTracker {
     Connections(Connections),

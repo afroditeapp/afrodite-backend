@@ -1,4 +1,4 @@
-use database::{define_history_write_commands, DieselDatabaseError, IntoDatabaseError};
+use database::{DieselDatabaseError, IntoDatabaseError, define_history_write_commands};
 use diesel::{insert_into, prelude::*};
 use error_stack::Result;
 use model_profile::{ProfileStatisticsInternal, SaveTimeId, UnixTime};

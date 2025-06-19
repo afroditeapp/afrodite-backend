@@ -1,8 +1,8 @@
 use crate::define_current_write_commands;
 
 mod notification;
-mod statistics;
 mod report;
+mod statistics;
 
 define_current_write_commands!(CurrentWriteCommonAdmin);
 

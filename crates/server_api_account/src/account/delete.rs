@@ -1,13 +1,21 @@
-use axum::{extract::{Path, State}, Extension};
+use axum::{
+    Extension,
+    extract::{Path, State},
+};
 use model::{AccountId, AccountIdInternal, Permissions};
 use model_account::{BooleanSetting, GetAccountDeletionRequestResult};
-use server_api::{app::{GetAccounts, WriteData, ReadData}, create_open_api_router, db_write_multiple, S};
+use server_api::{
+    S,
+    app::{GetAccounts, ReadData, WriteData},
+    create_open_api_router, db_write_multiple,
+};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 
 use crate::utils::{Json, StatusCode};
 
-const PATH_POST_SET_ACCOUNT_DELETION_REQUEST_STATE: &str = "/account_api/set_account_deletion_request_state/{aid}";
+const PATH_POST_SET_ACCOUNT_DELETION_REQUEST_STATE: &str =
+    "/account_api/set_account_deletion_request_state/{aid}";
 
 /// Request account deletion or cancel the deletion
 ///
@@ -42,13 +50,17 @@ pub async fn post_set_account_deletion_request_state(
     let internal_id = state.get_internal_id(account).await?;
 
     db_write_multiple!(state, move |cmds| {
-        cmds.account().delete().set_account_deletion_request_state(internal_id, value.value).await
+        cmds.account()
+            .delete()
+            .set_account_deletion_request_state(internal_id, value.value)
+            .await
     })?;
 
     Ok(())
 }
 
-const PATH_GET_ACCOUNT_DELETION_REQUEST_STATE: &str = "/account_api/get_account_deletion_request_state/{aid}";
+const PATH_GET_ACCOUNT_DELETION_REQUEST_STATE: &str =
+    "/account_api/get_account_deletion_request_state/{aid}";
 
 /// Get account deletion request state
 ///
@@ -80,7 +92,12 @@ pub async fn get_account_deletion_request_state(
 
     let internal_id = state.get_internal_id(account).await?;
 
-    let result = state.read().account().delete().account_deleteion_state(internal_id).await?;
+    let result = state
+        .read()
+        .account()
+        .delete()
+        .account_deleteion_state(internal_id)
+        .await?;
 
     Ok(result.into())
 }

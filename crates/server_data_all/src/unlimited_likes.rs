@@ -3,8 +3,8 @@ use database_profile::current::write::GetDbWriteCommandsProfile;
 use model_chat::ProfileEditedTime;
 use model_profile::{AccountIdInternal, ProfileVersion};
 use server_data::{
-    app::GetConfig, cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write,
-    result::Result, write::DbTransaction, DataError, IntoDataError,
+    DataError, IntoDataError, app::GetConfig, cache::profile::UpdateLocationCacheState,
+    define_cmd_wrapper_write, result::Result, write::DbTransaction,
 };
 use server_data_profile::cache::CacheWriteProfile;
 
@@ -26,7 +26,11 @@ impl UnlimitedLikesUpdate<'_> {
         let is_profile_component_enabled = self.config().components().profile;
         db_transaction!(self, move |mut cmds| {
             if is_profile_component_enabled {
-                cmds.profile().data().required_changes_for_profile_update(id, new_profile_version, edited_time)?;
+                cmds.profile().data().required_changes_for_profile_update(
+                    id,
+                    new_profile_version,
+                    edited_time,
+                )?;
             }
             cmds.common()
                 .state()

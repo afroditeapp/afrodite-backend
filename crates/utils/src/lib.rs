@@ -4,6 +4,6 @@
 #![warn(unused_crate_dependencies)]
 
 pub mod api;
+pub mod encrypt;
 pub mod random_bytes;
 pub mod time;
-pub mod encrypt;

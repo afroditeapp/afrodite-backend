@@ -1,9 +1,10 @@
-
 use std::collections::HashMap;
 
 use model::{AccountIdDb, AccountIdInternal, AdminNotification, AdminNotificationTypes};
-use tokio::sync::{mpsc::{self, Receiver, Sender}, RwLock};
-
+use tokio::sync::{
+    RwLock,
+    mpsc::{self, Receiver, Sender},
+};
 use tracing::error;
 
 pub enum AdminNotificationEvent {
@@ -35,26 +36,41 @@ impl AdminNotificationManagerData {
     }
 
     pub async fn reset_notification_state(&self, id: AccountIdInternal) {
-        if self.sender.send(AdminNotificationEvent::ResetState(id)).await.is_err() {
+        if self
+            .sender
+            .send(AdminNotificationEvent::ResetState(id))
+            .await
+            .is_err()
+        {
             error!("Reset state event sending failed");
         }
     }
 
     pub async fn send_notification_if_needed(&self, notification: AdminNotificationTypes) {
-        if self.sender.send(AdminNotificationEvent::SendNotificationIfNeeded(notification)).await.is_err() {
+        if self
+            .sender
+            .send(AdminNotificationEvent::SendNotificationIfNeeded(
+                notification,
+            ))
+            .await
+            .is_err()
+        {
             error!("Send notification if needed event sending failed");
         }
     }
 
     pub async fn get_notification_state(&self, id: AccountIdInternal) -> Option<AdminNotification> {
-        self.state.read().await.sent_status.get(id.as_db_id()).cloned()
+        self.state
+            .read()
+            .await
+            .sent_status
+            .get(id.as_db_id())
+            .cloned()
     }
 
     /// Access this only from [AdminNotificationManager].
     pub fn write(&self) -> AdminNotificationStateWriteAccess {
-        AdminNotificationStateWriteAccess {
-            state: &self.state,
-        }
+        AdminNotificationStateWriteAccess { state: &self.state }
     }
 }
 
@@ -68,6 +84,10 @@ impl AdminNotificationStateWriteAccess<'_> {
     }
 
     pub async fn set_notification_state(&self, id: AccountIdInternal, state: AdminNotification) {
-        self.state.write().await.sent_status.insert(id.into_db_id(), state);
+        self.state
+            .write()
+            .await
+            .sent_status
+            .insert(id.into_db_id(), state);
     }
 }

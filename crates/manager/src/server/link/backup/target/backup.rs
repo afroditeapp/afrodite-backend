@@ -1,17 +1,24 @@
-use std::{collections::HashSet, num::Wrapping, path::{Path, PathBuf}, sync::Arc, time::SystemTime};
+use std::{
+    collections::HashSet,
+    num::Wrapping,
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::SystemTime,
+};
 
 use chrono::Utc;
+use error_stack::{Result, ResultExt};
 use manager_config::Config;
 use manager_model::Sha256Bytes;
 use sha2::{Digest, Sha256};
 use simple_backend_model::UnixTime;
-use simple_backend_utils::{file::overwrite_and_remove_if_exists, ContextExt, IntoReportFromString, UuidBase64Url};
+use simple_backend_utils::{
+    ContextExt, IntoReportFromString, UuidBase64Url, file::overwrite_and_remove_if_exists,
+};
 use tokio::io::AsyncWriteExt;
 use tracing::warn;
 
 use super::BackupTargetError;
-
-use error_stack::{Result, ResultExt};
 
 const BACKUP_DIR_NAME: &str = "backup";
 const CONTENT_DIR_NAME: &str = "content";
@@ -25,9 +32,7 @@ struct BackupDirUtils<'a> {
 
 impl<'a> BackupDirUtils<'a> {
     fn new(config: &'a Config) -> Self {
-        Self {
-            config,
-        }
+        Self { config }
     }
 
     fn create_dir_if_needed(&self, existing_dir: &Path, dir_name: &str) -> PathBuf {
@@ -62,11 +67,17 @@ impl<'a> BackupDirUtils<'a> {
     }
 
     fn content_file_path(&self, account: UuidBase64Url, content: UuidBase64Url) -> PathBuf {
-        self.create_account_content_dir_if_needed(account).join(content.to_string())
+        self.create_account_content_dir_if_needed(account)
+            .join(content.to_string())
     }
 
-    fn content_file_checksum_path(&self, account: UuidBase64Url, content: UuidBase64Url) -> PathBuf {
-        self.create_account_content_dir_if_needed(account).join(format!("{}.sha256", content))
+    fn content_file_checksum_path(
+        &self,
+        account: UuidBase64Url,
+        content: UuidBase64Url,
+    ) -> PathBuf {
+        self.create_account_content_dir_if_needed(account)
+            .join(format!("{}.sha256", content))
     }
 
     fn create_files_dir_if_needed(&self) -> PathBuf {
@@ -88,16 +99,13 @@ impl<'a> BackupDirUtils<'a> {
     }
 }
 
-
 pub struct SaveContentBackup {
     config: Arc<Config>,
     initial_accounts: HashSet<UuidBase64Url>,
 }
 
 impl SaveContentBackup {
-    pub async fn new(
-        config: Arc<Config>,
-    ) -> Result<Self, BackupTargetError> {
+    pub async fn new(config: Arc<Config>) -> Result<Self, BackupTargetError> {
         let dir = BackupDirUtils::new(&config).create_content_dir_if_needed();
 
         let mut initial_accounts = HashSet::new();
@@ -106,7 +114,11 @@ impl SaveContentBackup {
             .await
             .change_context(BackupTargetError::Read)?;
 
-        while let Some(e) = iterator.next_entry().await.change_context(BackupTargetError::Read)? {
+        while let Some(e) = iterator
+            .next_entry()
+            .await
+            .change_context(BackupTargetError::Read)?
+        {
             if !e.path().is_dir() {
                 continue;
             }
@@ -128,7 +140,10 @@ impl SaveContentBackup {
         })
     }
 
-    pub async fn update_account_content_backup(&self, account: UuidBase64Url) -> Result<UpdateAccountContent, BackupTargetError> {
+    pub async fn update_account_content_backup(
+        &self,
+        account: UuidBase64Url,
+    ) -> Result<UpdateAccountContent, BackupTargetError> {
         let dir = BackupDirUtils::new(&self.config).create_account_content_dir_if_needed(account);
 
         let mut initial_content = HashSet::new();
@@ -137,7 +152,11 @@ impl SaveContentBackup {
             .await
             .change_context(BackupTargetError::Read)?;
 
-        while let Some(e) = iterator.next_entry().await.change_context(BackupTargetError::Read)? {
+        while let Some(e) = iterator
+            .next_entry()
+            .await
+            .change_context(BackupTargetError::Read)?
+        {
             if !e.path().is_file() {
                 continue;
             }
@@ -180,13 +199,11 @@ impl SaveContentBackup {
     }
 }
 
-
 pub struct UpdateAccountContent {
     config: Arc<Config>,
     account: UuidBase64Url,
     initial_content: HashSet<UuidBase64Url>,
 }
-
 
 impl UpdateAccountContent {
     pub fn exists(&self, content: UuidBase64Url) -> bool {
@@ -199,35 +216,39 @@ impl UpdateAccountContent {
         self.initial_content.remove(&content);
     }
 
-    pub async fn new_content(&self, content: UuidBase64Url, sha256: Sha256Bytes, data: Vec<u8>) -> Result<(), BackupTargetError> {
+    pub async fn new_content(
+        &self,
+        content: UuidBase64Url,
+        sha256: Sha256Bytes,
+        data: Vec<u8>,
+    ) -> Result<(), BackupTargetError> {
         let mut hasher = Sha256::new();
         hasher.update(&data);
         let result = hasher.finalize();
         if result.as_slice() != sha256.0 {
-            return Err(BackupTargetError::ContentDataCorruptionDetected.report())
+            return Err(BackupTargetError::ContentDataCorruptionDetected.report());
         }
 
-        let f = BackupDirUtils::new(&self.config)
-            .content_file_checksum_path(self.account, content);
-        tokio::fs::write(f, sha256.to_shasum_tool_compatible_checksum(&content.to_string()))
-            .await
-            .change_context( BackupTargetError::Write)?;
-        let f = BackupDirUtils::new(&self.config)
-            .content_file_path(self.account, content);
+        let f = BackupDirUtils::new(&self.config).content_file_checksum_path(self.account, content);
+        tokio::fs::write(
+            f,
+            sha256.to_shasum_tool_compatible_checksum(&content.to_string()),
+        )
+        .await
+        .change_context(BackupTargetError::Write)?;
+        let f = BackupDirUtils::new(&self.config).content_file_path(self.account, content);
         tokio::fs::write(f, data)
             .await
-            .change_context( BackupTargetError::Write)
+            .change_context(BackupTargetError::Write)
     }
 
     pub async fn finalize(self) -> Result<(), BackupTargetError> {
         for c in self.initial_content {
-            let f = BackupDirUtils::new(&self.config)
-                .content_file_checksum_path(self.account, c);
+            let f = BackupDirUtils::new(&self.config).content_file_checksum_path(self.account, c);
             overwrite_and_remove_if_exists(f)
                 .await
                 .change_context(BackupTargetError::FileOverwritingAndRemovingFailed)?;
-            let f = BackupDirUtils::new(&self.config)
-                .content_file_path(self.account, c);
+            let f = BackupDirUtils::new(&self.config).content_file_path(self.account, c);
             overwrite_and_remove_if_exists(f)
                 .await
                 .change_context(BackupTargetError::FileOverwritingAndRemovingFailed)?;
@@ -263,18 +284,16 @@ impl SaveFileBackup {
 
         let time = Utc::now().format("%Y-%m-%d_%H-%M-%S");
         let name = format!("backup_{}_{}", backup_name, time);
-        let target_path = BackupDirUtils::new(&config)
-            .file_path(&name);
+        let target_path = BackupDirUtils::new(&config).file_path(&name);
 
         if target_path.exists() {
-            return Err(BackupTargetError::FileBackupAlreadyExists.report())
-                .attach_printable(name);
+            return Err(BackupTargetError::FileBackupAlreadyExists.report()).attach_printable(name);
         }
 
         let checksum_file_name = format!("{}.sha256", name);
-        let target_checksum_path = BackupDirUtils::new(&config)
-            .file_path(&checksum_file_name);
-        let target_checksum_file_content = expected_sha256.to_shasum_tool_compatible_checksum(&name);
+        let target_checksum_path = BackupDirUtils::new(&config).file_path(&checksum_file_name);
+        let target_checksum_file_content =
+            expected_sha256.to_shasum_tool_compatible_checksum(&name);
 
         Ok(Self {
             expected_packet_number: Wrapping(0),
@@ -295,10 +314,14 @@ impl SaveFileBackup {
     ) -> Result<(), BackupTargetError> {
         if self.expected_packet_number != packet_number {
             return Err(BackupTargetError::FileBackupPacketNumberMismatch.report())
-                .attach_printable(format!("expected: {}, actual: {}", self.expected_packet_number, packet_number))
+                .attach_printable(format!(
+                    "expected: {}, actual: {}",
+                    self.expected_packet_number, packet_number
+                ));
         }
 
-        self.tmp_file.write_all(&data)
+        self.tmp_file
+            .write_all(&data)
             .await
             .change_context(BackupTargetError::Write)?;
 
@@ -309,18 +332,18 @@ impl SaveFileBackup {
         Ok(())
     }
 
-    pub async fn finalize(
-        mut self,
-        packet_number: Wrapping<u32>,
-    ) -> Result<(), BackupTargetError> {
+    pub async fn finalize(mut self, packet_number: Wrapping<u32>) -> Result<(), BackupTargetError> {
         if self.expected_packet_number != packet_number {
             return Err(BackupTargetError::FileBackupPacketNumberMismatch.report())
-                .attach_printable(format!("expected: {}, actual: {}", self.expected_packet_number, packet_number))
+                .attach_printable(format!(
+                    "expected: {}, actual: {}",
+                    self.expected_packet_number, packet_number
+                ));
         }
 
         let received_file_hash = self.sha256_state.finalize();
         if received_file_hash.as_slice() != self.expected_sha256.0 {
-            return Err(BackupTargetError::FileBackupDataCorruptionDetected.report())
+            return Err(BackupTargetError::FileBackupDataCorruptionDetected.report());
         }
 
         tokio::fs::write(self.target_checksum_path, self.target_checksum_file_content)
@@ -363,7 +386,11 @@ impl DeleteOldFileBackups {
 
         let mut deleted_count = 0;
 
-        while let Some(e) = iterator.next_entry().await.change_context(BackupTargetError::Read)? {
+        while let Some(e) = iterator
+            .next_entry()
+            .await
+            .change_context(BackupTargetError::Read)?
+        {
             if !e.path().is_file() {
                 continue;
             }
@@ -377,7 +404,8 @@ impl DeleteOldFileBackups {
                 continue;
             }
 
-            let unix_time_seconds = e.metadata()
+            let unix_time_seconds = e
+                .metadata()
                 .await
                 .change_context(BackupTargetError::Read)?
                 .created()
@@ -386,7 +414,8 @@ impl DeleteOldFileBackups {
                 .change_context(BackupTargetError::Read)?
                 .as_secs();
 
-            let deletion_allowed_seconds = unix_time_seconds + Into::<u64>::into(config.backup_link().file_backup_retention_time().seconds);
+            let deletion_allowed_seconds = unix_time_seconds
+                + Into::<u64>::into(config.backup_link().file_backup_retention_time().seconds);
 
             if current_time >= deletion_allowed_seconds {
                 overwrite_and_remove_if_exists(&e.path())

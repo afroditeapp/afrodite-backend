@@ -1,19 +1,28 @@
-
 use database::current::write::GetDbWriteCommandsCommon;
-use model::{AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken, PushNotificationStateInfo};
-
-use crate::{
-    cache::CacheReadCommon, define_cmd_wrapper_write, result::Result, write::db_transaction, DataError
+use model::{
+    AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken,
+    PushNotificationStateInfo,
 };
 
-use crate::write::DbTransaction;
+use crate::{
+    DataError,
+    cache::CacheReadCommon,
+    define_cmd_wrapper_write,
+    result::Result,
+    write::{DbTransaction, db_transaction},
+};
 
 define_cmd_wrapper_write!(WriteCommandsCommonPushNotification);
 
 impl WriteCommandsCommonPushNotification<'_> {
-    pub async fn remove_fcm_device_token_and_pending_notification_token(&self, id: AccountIdInternal) -> Result<(), DataError> {
+    pub async fn remove_fcm_device_token_and_pending_notification_token(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.common().push_notification().remove_fcm_device_token_and_pending_notification_token(id)
+            cmds.common()
+                .push_notification()
+                .remove_fcm_device_token_and_pending_notification_token(id)
         })?;
 
         Ok(())
@@ -21,7 +30,9 @@ impl WriteCommandsCommonPushNotification<'_> {
 
     pub async fn remove_fcm_device_token(&self, id: AccountIdInternal) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.common().push_notification().remove_fcm_device_token(id)
+            cmds.common()
+                .push_notification()
+                .remove_fcm_device_token(id)
         })?;
 
         Ok(())

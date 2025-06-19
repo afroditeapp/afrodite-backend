@@ -1,10 +1,13 @@
-use std::{fmt::Debug, net::{IpAddr, Ipv4Addr}};
+use std::{
+    fmt::Debug,
+    net::{IpAddr, Ipv4Addr},
+};
 
 use error_stack::{Result, ResultExt};
 use ipnet::{IpAddrRange, IpNet, Ipv4AddrRange};
 use simple_backend_utils::ContextExt;
 
-use crate::{file::IpListConfig, GetConfigError};
+use crate::{GetConfigError, file::IpListConfig};
 
 #[derive(Clone)]
 pub struct IpList {
@@ -21,8 +24,8 @@ impl Debug for IpList {
 
 impl IpList {
     pub(crate) fn new(config: &IpListConfig) -> Result<Self, GetConfigError> {
-        let file = std::fs::read_to_string(&config.file)
-            .change_context(GetConfigError::LoadConfig)?;
+        let file =
+            std::fs::read_to_string(&config.file).change_context(GetConfigError::LoadConfig)?;
 
         let mut networks = vec![];
         let mut ranges = vec![];
@@ -49,12 +52,19 @@ impl IpList {
                     .ok_or(GetConfigError::LoadFileError.report())
                     .attach_printable_lazy(|| format!("Invalid IP range: {}", l))?;
                 let range: IpAddrRange = Ipv4AddrRange::new(
-                    first.parse::<Ipv4Addr>().change_context(GetConfigError::LoadFileError)?,
-                    second.parse::<Ipv4Addr>().change_context(GetConfigError::LoadFileError)?,
-                ).into();
+                    first
+                        .parse::<Ipv4Addr>()
+                        .change_context(GetConfigError::LoadFileError)?,
+                    second
+                        .parse::<Ipv4Addr>()
+                        .change_context(GetConfigError::LoadFileError)?,
+                )
+                .into();
                 ranges.push(range);
             } else {
-                let address = l.parse::<IpAddr>().change_context(GetConfigError::LoadFileError)?;
+                let address = l
+                    .parse::<IpAddr>()
+                    .change_context(GetConfigError::LoadFileError)?;
                 networks.push(address.into());
             }
         }

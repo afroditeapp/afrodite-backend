@@ -1,10 +1,23 @@
-
-use diesel::{prelude::{AsChangeset, Insertable, Queryable}, Selectable};
+use diesel::{
+    Selectable,
+    prelude::{AsChangeset, Insertable, Queryable},
+};
 use model::{NotificationEvent, SelectedWeekdays};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-#[derive(Debug, Clone, Copy, Queryable, Selectable, AsChangeset, Insertable, Deserialize, Serialize, ToSchema)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Queryable,
+    Selectable,
+    AsChangeset,
+    Insertable,
+    Deserialize,
+    Serialize,
+    ToSchema,
+)]
 #[diesel(table_name = crate::schema::account_app_notification_settings)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountAppNotificationSettings {
@@ -13,13 +26,22 @@ pub struct AccountAppNotificationSettings {
 
 impl Default for AccountAppNotificationSettings {
     fn default() -> Self {
-        Self {
-            news: true,
-        }
+        Self { news: true }
     }
 }
 
-#[derive(Debug, Clone, Copy, Queryable, Selectable, AsChangeset, Insertable, Deserialize, Serialize, ToSchema)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Queryable,
+    Selectable,
+    AsChangeset,
+    Insertable,
+    Deserialize,
+    Serialize,
+    ToSchema,
+)]
 #[diesel(table_name = crate::schema::profile_app_notification_settings)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct ProfileAppNotificationSettings {
@@ -29,7 +51,6 @@ pub struct ProfileAppNotificationSettings {
     pub automatic_profile_search_filters: bool,
     pub automatic_profile_search_distance: bool,
     pub automatic_profile_search_weekdays: SelectedWeekdays,
-
 }
 
 impl Default for ProfileAppNotificationSettings {
@@ -45,7 +66,18 @@ impl Default for ProfileAppNotificationSettings {
     }
 }
 
-#[derive(Debug, Clone, Copy, Queryable, Selectable, AsChangeset, Insertable, Deserialize, Serialize, ToSchema)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Queryable,
+    Selectable,
+    AsChangeset,
+    Insertable,
+    Deserialize,
+    Serialize,
+    ToSchema,
+)]
 #[diesel(table_name = crate::schema::media_app_notification_settings)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct MediaAppNotificationSettings {
@@ -60,7 +92,18 @@ impl Default for MediaAppNotificationSettings {
     }
 }
 
-#[derive(Debug, Clone, Copy, Queryable, Selectable, AsChangeset, Insertable, Deserialize, Serialize, ToSchema)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Queryable,
+    Selectable,
+    AsChangeset,
+    Insertable,
+    Deserialize,
+    Serialize,
+    ToSchema,
+)]
 #[diesel(table_name = crate::schema::chat_app_notification_settings)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct ChatAppNotificationSettings {
@@ -91,9 +134,15 @@ impl AppNotificationSettingsInternal {
             NotificationEvent::NewsChanged => self.account.news,
             NotificationEvent::ReceivedLikesChanged => self.chat.likes,
             NotificationEvent::NewMessageReceived => self.chat.messages,
-            NotificationEvent::MediaContentModerationCompleted => self.media.media_content_moderation,
-            NotificationEvent::ProfileTextModerationCompleted => self.profile.profile_text_moderation,
-            NotificationEvent::AutomaticProfileSearchCompleted => self.profile.automatic_profile_search,
+            NotificationEvent::MediaContentModerationCompleted => {
+                self.media.media_content_moderation
+            }
+            NotificationEvent::ProfileTextModerationCompleted => {
+                self.profile.profile_text_moderation
+            }
+            NotificationEvent::AutomaticProfileSearchCompleted => {
+                self.profile.automatic_profile_search
+            }
             NotificationEvent::AdminNotification => true,
         }
     }

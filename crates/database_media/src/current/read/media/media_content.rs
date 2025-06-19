@@ -1,9 +1,10 @@
-use database::{define_current_read_commands, DieselDatabaseError};
+use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
 use model::ContentIdInternal;
 use model_media::{
-    AccountIdInternal, ContentId, ContentIdDb, ContentModerationState, ContentSlot, CurrentAccountMediaInternal, CurrentAccountMediaRaw, MediaContentRaw
+    AccountIdInternal, ContentId, ContentIdDb, ContentModerationState, ContentSlot,
+    CurrentAccountMediaInternal, CurrentAccountMediaRaw, MediaContentRaw,
 };
 
 use crate::IntoDatabaseError;
@@ -92,7 +93,11 @@ impl CurrentReadMediaMediaContent<'_> {
             .select(id)
             .first(self.conn())
             .into_db_error((account_id_value, content_id_value))?;
-        Ok(ContentIdInternal::new(account_id_value, content_id_value, id_value))
+        Ok(ContentIdInternal::new(
+            account_id_value,
+            content_id_value,
+            id_value,
+        ))
     }
 
     pub fn get_media_content_raw(

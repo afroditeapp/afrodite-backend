@@ -2,13 +2,16 @@ use axum::extract::ws::{Message, WebSocket};
 use config::Config;
 use model::ScheduledMaintenanceStatus;
 use model_chat::{
-    AccountIdInternal, ChatStateRaw, EventToClient, EventToClientInternal,
-    SyncCheckDataType, SyncCheckResult, SyncDataVersionFromClient, SyncVersionFromClient,
-    SyncVersionUtils,
+    AccountIdInternal, ChatStateRaw, EventToClient, EventToClientInternal, SyncCheckDataType,
+    SyncCheckResult, SyncDataVersionFromClient, SyncVersionFromClient, SyncVersionUtils,
 };
 use server_common::websocket::WebSocketError;
 use server_data::{
-    db_manager::RouterDatabaseReadHandle, read::GetReadCommandsCommon, result::{Result, WrappedResultExt}, write::GetWriteCommandsCommon, write_commands::WriteCommandRunnerHandle
+    db_manager::RouterDatabaseReadHandle,
+    read::GetReadCommandsCommon,
+    result::{Result, WrappedResultExt},
+    write::GetWriteCommandsCommon,
+    write_commands::WriteCommandRunnerHandle,
 };
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
@@ -49,10 +52,16 @@ pub async fn send_events_if_needed(
             .notification()
             .profile_text_moderation_completed(id)
             .await
-            .change_context(WebSocketError::DatabaseProfileTextModerationCompletedNotificationQuery)?;
+            .change_context(
+                WebSocketError::DatabaseProfileTextModerationCompletedNotificationQuery,
+            )?;
 
         if !notification.notifications_viewed() {
-            send_event(socket, EventToClientInternal::ProfileTextModerationCompleted).await?;
+            send_event(
+                socket,
+                EventToClientInternal::ProfileTextModerationCompleted,
+            )
+            .await?;
         }
 
         let notification = read_handle
@@ -60,10 +69,16 @@ pub async fn send_events_if_needed(
             .notification()
             .automatic_profile_search_completed(id)
             .await
-            .change_context(WebSocketError::DatabaseAutomaticProfileSearchCompletedNotificationQuery)?;
+            .change_context(
+                WebSocketError::DatabaseAutomaticProfileSearchCompletedNotificationQuery,
+            )?;
 
         if !notification.notifications_viewed() {
-            send_event(socket, EventToClientInternal::AutomaticProfileSearchCompleted).await?;
+            send_event(
+                socket,
+                EventToClientInternal::AutomaticProfileSearchCompleted,
+            )
+            .await?;
         }
     }
 
@@ -73,10 +88,16 @@ pub async fn send_events_if_needed(
             .notification()
             .media_content_moderation_completed(id)
             .await
-            .change_context(WebSocketError::DatabaseMediaContentModerationCompletedNotificationQuery)?;
+            .change_context(
+                WebSocketError::DatabaseMediaContentModerationCompletedNotificationQuery,
+            )?;
 
         if !notification.notifications_viewed() {
-            send_event(socket, EventToClientInternal::MediaContentModerationCompleted).await?;
+            send_event(
+                socket,
+                EventToClientInternal::MediaContentModerationCompleted,
+            )
+            .await?;
         }
     }
 
@@ -95,12 +116,11 @@ pub async fn send_events_if_needed(
     if let Some(time) = manager_api_client.latest_scheduled_reboot() {
         send_event(
             socket,
-            EventToClientInternal::ScheduledMaintenanceStatus(
-                ScheduledMaintenanceStatus {
-                    scheduled_maintenance: Some(time),
-                }
-            ),
-        ).await?;
+            EventToClientInternal::ScheduledMaintenanceStatus(ScheduledMaintenanceStatus {
+                scheduled_maintenance: Some(time),
+            }),
+        )
+        .await?;
     }
 
     Ok(())
@@ -264,11 +284,7 @@ pub async fn sync_data_with_client_if_needed(
                 }
             }
             SyncCheckDataType::ServerMaintenanceIsScheduled => {
-                handle_maintenance_info_removing_if_needed(
-                    manager_api_client,
-                    socket,
-                )
-                .await?;
+                handle_maintenance_info_removing_if_needed(manager_api_client, socket).await?;
             }
         }
     }
@@ -302,11 +318,7 @@ async fn handle_account_data_sync(
         SyncCheckResult::Sync => (),
     };
 
-    send_event(
-        socket,
-        EventToClientInternal::AccountStateChanged,
-    )
-    .await?;
+    send_event(socket, EventToClientInternal::AccountStateChanged).await?;
 
     Ok(())
 }
@@ -357,21 +369,15 @@ async fn handle_client_config_sync_version_check(
     match current.check_is_sync_required(sync_version) {
         SyncCheckResult::DoNothing => return Ok(()),
         SyncCheckResult::ResetVersionAndSync => write_handle
-            .write(move |cmds| async move {
-                cmds.common()
-                    .reset_client_config_sync_version(id)
-                    .await
-            })
+            .write(
+                move |cmds| async move { cmds.common().reset_client_config_sync_version(id).await },
+            )
             .await
             .change_context(WebSocketError::ProfileAttributesSyncVersionResetFailed)?,
         SyncCheckResult::Sync => (),
     };
 
-    send_event(
-        socket,
-        EventToClientInternal::ClientConfigChanged,
-    )
-    .await?;
+    send_event(socket, EventToClientInternal::ClientConfigChanged).await?;
 
     Ok(())
 }
@@ -436,7 +442,6 @@ async fn handle_news_count_sync_version_check(
     Ok(())
 }
 
-
 async fn handle_media_content_sync_version_check(
     read_handle: &RouterDatabaseReadHandle,
     write_handle: &WriteCommandRunnerHandle,
@@ -452,11 +457,9 @@ async fn handle_media_content_sync_version_check(
     match current.check_is_sync_required(sync_version) {
         SyncCheckResult::DoNothing => return Ok(()),
         SyncCheckResult::ResetVersionAndSync => write_handle
-            .write(move |cmds| async move {
-                cmds.media()
-                    .reset_media_content_sync_version(id)
-                    .await
-            })
+            .write(
+                move |cmds| async move { cmds.media().reset_media_content_sync_version(id).await },
+            )
             .await
             .change_context(WebSocketError::MediaContentSyncVersionResetFailed)?,
         SyncCheckResult::Sync => (),

@@ -3,8 +3,8 @@
 use std::sync::Arc;
 
 use config::{
-    args::{QaTestConfig, TestMode},
     Config,
+    args::{QaTestConfig, TestMode},
 };
 use manager::{ManagerEvent, ManagerEventReceiver, TestManager};
 use tokio::{select, signal};

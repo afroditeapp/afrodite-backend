@@ -12,11 +12,7 @@ use crate::server::app::S;
 static API_SECURITY_LOCK: AtomicBool = AtomicBool::new(false);
 
 #[allow(clippy::result_unit_err)]
-pub fn validate_api_key(
-    state: &S,
-    address: SocketAddr,
-    api_key: &str,
-) -> Result<(), ()> {
+pub fn validate_api_key(state: &S, address: SocketAddr, api_key: &str) -> Result<(), ()> {
     if API_SECURITY_LOCK.load(Ordering::Relaxed) {
         Err(())
     } else if state.config().api_key() != api_key {

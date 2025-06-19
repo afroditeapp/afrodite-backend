@@ -1,6 +1,6 @@
-use axum::{extract::State, Extension};
+use axum::{Extension, extract::State};
 use model_account::{AccountIdInternal, AccountSetup, AccountState, SetAccountSetup};
-use server_api::{create_open_api_router, S};
+use server_api::{S, create_open_api_router};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 

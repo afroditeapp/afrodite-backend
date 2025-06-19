@@ -1,21 +1,19 @@
 //! Handle automatic reboots
 
-use std::{
-    path::Path,
-    time::Duration,
-};
+use std::{path::Path, time::Duration};
 
 use error_stack::{Result, ResultExt};
 use manager_config::Config;
 use manager_model::ScheduledTaskType;
 use simple_backend_utils::time::sleep_until_current_time_is_at;
 use tokio::{task::JoinHandle, time::sleep};
-use tracing::{info, warn, error};
+use tracing::{error, info, warn};
 
-use super::{
-    app::S, ServerQuitWatcher
+use super::{ServerQuitWatcher, app::S};
+use crate::{
+    api::{GetConfig, GetScheduledTaskManager},
+    server::scheduled_task::ScheduledTaskManagerMessage,
 };
-use crate::{api::{GetConfig, GetScheduledTaskManager}, server::scheduled_task::ScheduledTaskManagerMessage};
 
 /// If this file exists reboot system at some point. Works at least on Ubuntu.
 const REBOOT_REQUIRED_PATH: &str = "/var/run/reboot-required";
@@ -53,19 +51,12 @@ pub struct RebootManager {
 }
 
 impl RebootManager {
-    pub fn new_manager(
-        state: S,
-        quit_notification: ServerQuitWatcher,
-    ) -> RebootManagerQuitHandle {
-        let manager = Self {
-            state,
-        };
+    pub fn new_manager(state: S, quit_notification: ServerQuitWatcher) -> RebootManagerQuitHandle {
+        let manager = Self { state };
 
         let task = tokio::spawn(manager.run(quit_notification));
 
-        RebootManagerQuitHandle {
-            task,
-        }
+        RebootManagerQuitHandle { task }
     }
 
     async fn run(self, mut quit_notification: ServerQuitWatcher) {
@@ -102,13 +93,19 @@ impl RebootManager {
     async fn schedule_reboot_if_needed(&self) {
         if Path::new(REBOOT_REQUIRED_PATH).exists() {
             info!("Reboot required file exists. Scheduling system reboot.");
-            let notify_backend = self.state.config()
+            let notify_backend = self
+                .state
+                .config()
                 .automatic_system_reboot()
                 .map(|v| v.notify_backend)
                 .unwrap_or_default();
-            let result = self.state
+            let result = self
+                .state
                 .scheduled_task_manager()
-                .send_message(ScheduledTaskManagerMessage::Schedule { task: ScheduledTaskType::SystemReboot, notify_backend })
+                .send_message(ScheduledTaskManagerMessage::Schedule {
+                    task: ScheduledTaskType::SystemReboot,
+                    notify_backend,
+                })
                 .await
                 .change_context(RebootError::ScheduledTask);
 

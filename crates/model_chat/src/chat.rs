@@ -1,7 +1,9 @@
 use base64::Engine;
 use diesel::prelude::*;
 use model::{
-    DailyLikesLeftSyncVersion, MatchId, MatchesSyncVersion, MessageNumber, NewReceivedLikesCount, ProfileContentVersion, PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikeId, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion, UnixTime
+    DailyLikesLeftSyncVersion, MatchId, MatchesSyncVersion, MessageNumber, NewReceivedLikesCount,
+    ProfileContentVersion, PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikeId,
+    ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion, UnixTime,
 };
 use model_server_data::{LastSeenTime, LimitedActionStatus, ProfileVersion};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -277,7 +279,7 @@ pub struct GetSentMessage {
 impl GetSentMessage {
     pub fn new(data: Vec<u8>) -> Self {
         Self {
-            data: base64::engine::general_purpose::STANDARD.encode(data)
+            data: base64::engine::general_purpose::STANDARD.encode(data),
         }
     }
 }

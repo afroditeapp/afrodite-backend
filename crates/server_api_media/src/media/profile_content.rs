@@ -1,16 +1,22 @@
 use axum::{
-    extract::{Path, Query, State},
     Extension,
+    extract::{Path, Query, State},
 };
 use model::{AdminNotificationTypes, EventToClientInternal};
 use model_media::{
-    AccountId, AccountIdInternal, AccountState,
-    GetProfileContentQueryParams, GetProfileContentResult,
-    Permissions, ProfileContent, SetProfileContent,
+    AccountId, AccountIdInternal, AccountState, GetProfileContentQueryParams,
+    GetProfileContentResult, Permissions, ProfileContent, SetProfileContent,
 };
-use server_api::{app::{AdminNotificationProvider, ApiUsageTrackerProvider, GetConfig}, create_open_api_router, db_write_multiple, S};
+use server_api::{
+    S,
+    app::{AdminNotificationProvider, ApiUsageTrackerProvider, GetConfig},
+    create_open_api_router, db_write_multiple,
+};
 use server_data::read::GetReadCommandsCommon;
-use server_data_media::{read::GetReadMediaCommands, write::{media::InitialContentModerationResult, GetWriteCommandsMedia}};
+use server_data_media::{
+    read::GetReadMediaCommands,
+    write::{GetWriteCommandsMedia, media::InitialContentModerationResult},
+};
 use simple_backend::create_counters;
 
 use crate::{
@@ -56,7 +62,10 @@ pub async fn get_profile_content_info(
     Query(params): Query<GetProfileContentQueryParams>,
 ) -> Result<Json<GetProfileContentResult>, StatusCode> {
     MEDIA.get_profile_content_info.incr();
-    state.api_usage_tracker().incr(account_id, |u| &u.get_profile_content_info).await;
+    state
+        .api_usage_tracker()
+        .incr(account_id, |u| &u.get_profile_content_info)
+        .await;
 
     let requested_profile = state.get_internal_id(requested_profile).await?;
 
@@ -149,7 +158,8 @@ pub async fn put_profile_content(
     db_write_multiple!(state, move |cmds| {
         let info = cmds
             .media()
-            .update_profile_content(api_caller_account_id, new).await?;
+            .update_profile_content(api_caller_account_id, new)
+            .await?;
 
         match info {
             InitialContentModerationResult::AllAccepted { .. } => {
@@ -162,8 +172,8 @@ pub async fn put_profile_content(
                         .await?;
                 }
             }
-            InitialContentModerationResult::AllModeratedAndNotAccepted |
-            InitialContentModerationResult::NoChange => (),
+            InitialContentModerationResult::AllModeratedAndNotAccepted
+            | InitialContentModerationResult::NoChange => (),
         }
 
         Ok(())
@@ -183,7 +193,6 @@ pub async fn put_profile_content(
 
     Ok(())
 }
-
 
 create_open_api_router!(
         fn router_profile_content,

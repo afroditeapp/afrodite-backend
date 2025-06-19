@@ -1,14 +1,16 @@
 use chrono::NaiveDate;
 use database::current::read::GetDbReadCommandsCommon;
 use model::{
-    AccessToken, Account, AccountId, AccountIdInternal, ClientConfigSyncVersion, PendingNotificationFlags, RefreshToken, ReportAccountInfo
+    AccessToken, Account, AccountId, AccountIdInternal, ClientConfigSyncVersion,
+    PendingNotificationFlags, RefreshToken, ReportAccountInfo,
 };
 use model_server_data::SearchGroupFlags;
 use server_common::data::IntoDataError;
 
 use super::{super::DataError, DbRead};
 use crate::{
-    cache::CacheReadCommon, db_manager::InternalReading, define_cmd_wrapper_read, id::ToAccountIdInternal, result::Result
+    cache::CacheReadCommon, db_manager::InternalReading, define_cmd_wrapper_read,
+    id::ToAccountIdInternal, result::Result,
 };
 
 define_cmd_wrapper_read!(ReadCommandsCommon);
@@ -93,44 +95,54 @@ impl ReadCommandsCommon<'_> {
     }
 
     pub async fn backup_current_database(&self, file_name: String) -> Result<(), DataError> {
-        self.db_read_raw_no_transaction(move |mut cmds| cmds.common().backup_current_database(file_name))
-            .await
-            .into_error()
+        self.db_read_raw_no_transaction(move |mut cmds| {
+            cmds.common().backup_current_database(file_name)
+        })
+        .await
+        .into_error()
     }
 
     pub async fn push_notification_already_sent(
         &self,
         id: AccountIdInternal,
     ) -> Result<bool, DataError> {
-        self
-            .db_read(move |mut cmds| cmds.common().push_notification().push_notification_already_sent(id))
-            .await
-            .into_error()
+        self.db_read(move |mut cmds| {
+            cmds.common()
+                .push_notification()
+                .push_notification_already_sent(id)
+        })
+        .await
+        .into_error()
     }
 
     pub async fn get_profile_age_and_name_if_profile_component_is_enabled(
         &self,
         id: AccountIdInternal,
     ) -> Result<Option<ReportAccountInfo>, DataError> {
-        self
-            .db_read(move |mut cmds| cmds.common().report().get_report_account_info(*id.as_db_id()))
-            .await
-            .into_error()
+        self.db_read(move |mut cmds| {
+            cmds.common()
+                .report()
+                .get_report_account_info(*id.as_db_id())
+        })
+        .await
+        .into_error()
     }
 
     pub async fn bot_and_gender_info(
         &self,
         id: AccountIdInternal,
     ) -> Result<BotAndGenderInfo, DataError> {
-        self.cache().read_cache(id, |e| {
-            Ok(BotAndGenderInfo {
-                is_bot: e.common.other_shared_state.is_bot_account,
-                gender: e.profile
-                    .as_ref()
-                    .map(|p| p.state.search_group_flags)
-                    .unwrap_or(SearchGroupFlags::empty())
+        self.cache()
+            .read_cache(id, |e| {
+                Ok(BotAndGenderInfo {
+                    is_bot: e.common.other_shared_state.is_bot_account,
+                    gender: e
+                        .profile
+                        .as_ref()
+                        .map(|p| p.state.search_group_flags)
+                        .unwrap_or(SearchGroupFlags::empty()),
+                })
             })
-        })
             .await
             .into_error()
     }

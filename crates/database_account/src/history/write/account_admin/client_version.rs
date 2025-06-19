@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
-use database::{define_history_write_commands, DieselDatabaseError};
+use database::{DieselDatabaseError, define_history_write_commands};
 use diesel::{insert_into, prelude::*};
 use error_stack::Result;
 use model::{ClientVersion, UnixTime};
+
 use crate::IntoDatabaseError;
 
 define_history_write_commands!(HistoryWriteAccountClientVersion);
@@ -13,7 +14,6 @@ impl HistoryWriteAccountClientVersion<'_> {
         &mut self,
         statistics: HashMap<ClientVersion, i64>,
     ) -> Result<(), DieselDatabaseError> {
-
         let time_id_value: i64 = {
             use crate::schema::history_client_version_statistics_save_time::dsl::*;
 

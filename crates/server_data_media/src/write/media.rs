@@ -5,16 +5,25 @@ use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCom
 use error_stack::ResultExt;
 use model::{Account, AccountState, ContentIdInternal, ProfileVisibility};
 use model_media::{
-    AccountIdInternal, ContentId, ContentIdDb, ContentSlot, CurrentAccountMediaInternal, NewContentParams, ProfileContent, ProfileContentEditedTime, ProfileContentVersion, SetProfileContent
+    AccountIdInternal, ContentId, ContentIdDb, ContentSlot, CurrentAccountMediaInternal,
+    NewContentParams, ProfileContent, ProfileContentEditedTime, ProfileContentVersion,
+    SetProfileContent,
 };
 use server_data::{
-    app::GetConfig, cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, file::{utils::TmpContentFile, FileWrite}, read::DbRead, result::{Result, WrappedContextExt}, write::{DbTransaction, GetWriteCommandsCommon}, DataError, DieselDatabaseError
+    DataError, DieselDatabaseError,
+    app::GetConfig,
+    cache::profile::UpdateLocationCacheState,
+    define_cmd_wrapper_write,
+    file::{FileWrite, utils::TmpContentFile},
+    read::DbRead,
+    result::{Result, WrappedContextExt},
+    write::{DbTransaction, GetWriteCommandsCommon},
 };
 
 use crate::cache::CacheWriteMedia;
 
-mod report;
 mod notification;
+mod report;
 
 pub enum InitialContentModerationResult {
     /// Profile visibility changed from pending to normal.
@@ -52,7 +61,9 @@ impl WriteCommandsMedia<'_> {
         new_content_params: NewContentParams,
         face_detected: bool,
     ) -> Result<ContentId, DataError> {
-        let account = self.db_read(move |mut cmds| cmds.common().account(id)).await?;
+        let account = self
+            .db_read(move |mut cmds| cmds.common().account(id))
+            .await?;
         let slot = if account.state() == AccountState::InitialSetup {
             Some(slot)
         } else {
@@ -85,16 +96,14 @@ impl WriteCommandsMedia<'_> {
         }
 
         let files = self.files().clone();
-        let content_id = self.db_transaction(move |mut cmds| {
-            let content_id = cmds.media()
-                .get_next_unique_content_id(id)?;
+        let content_id = self
+            .db_transaction(move |mut cmds| {
+                let content_id = cmds.media().get_next_unique_content_id(id)?;
 
-            // Paths related to moving content from tmp dir to content dir
-            let processed_content_path = files.media_content(id.as_id(), content_id);
+                // Paths related to moving content from tmp dir to content dir
+                let processed_content_path = files.media_content(id.as_id(), content_id);
 
-            cmds.media()
-                .media_content()
-                .insert_content_id(
+                cmds.media().media_content().insert_content_id(
                     id,
                     content_id,
                     slot,
@@ -102,15 +111,15 @@ impl WriteCommandsMedia<'_> {
                     face_detected,
                 )?;
 
-            // Move content from tmp dir to content dir
-            tmp_img
-                .move_to_blocking(&processed_content_path)
-                .map_err(|e| e.change_context(DieselDatabaseError::File))?;
-            // If moving fails, diesel rollbacks the transaction.
+                // Move content from tmp dir to content dir
+                tmp_img
+                    .move_to_blocking(&processed_content_path)
+                    .map_err(|e| e.change_context(DieselDatabaseError::File))?;
+                // If moving fails, diesel rollbacks the transaction.
 
-            Ok(content_id)
-        })
-        .await?;
+                Ok(content_id)
+            })
+            .await?;
 
         Ok(content_id)
     }
@@ -120,46 +129,58 @@ impl WriteCommandsMedia<'_> {
         id: AccountIdInternal,
         new: SetProfileContent,
     ) -> Result<InitialContentModerationResult, DataError> {
-        let content_before_update = self.db_read(move |mut cmds| cmds.media().media_content().current_account_media(id)).await?;
+        let content_before_update = self
+            .db_read(move |mut cmds| cmds.media().media_content().current_account_media(id))
+            .await?;
 
         let version = ProfileContentVersion::new_random();
         let edit_time = ProfileContentEditedTime::current_time();
 
         db_transaction!(self, move |mut cmds| {
-            cmds.media().media_content().required_changes_for_public_profile_content_update(
-                id,
-                version,
-                edit_time,
-            )?;
-            cmds.media().media_content().update_profile_content(
-                id,
-                new,
-            )?;
-            cmds.media().media_content().increment_media_content_sync_version(id)
+            cmds.media()
+                .media_content()
+                .required_changes_for_public_profile_content_update(id, version, edit_time)?;
+            cmds.media()
+                .media_content()
+                .update_profile_content(id, new)?;
+            cmds.media()
+                .media_content()
+                .increment_media_content_sync_version(id)
         })?;
 
-        self.public_profile_content_cache_update(id, (version, edit_time)).await?;
+        self.public_profile_content_cache_update(id, (version, edit_time))
+            .await?;
 
         self.update_content_usage(id, content_before_update).await?;
 
-        self.remove_pending_state_from_profile_visibility_if_needed(id).await
+        self.remove_pending_state_from_profile_visibility_if_needed(id)
+            .await
     }
 
     pub async fn update_security_content(
         &self,
         content_id: ContentIdInternal,
     ) -> Result<(), DataError> {
-        let content_before_update = self.db_read(move |mut cmds| cmds.media().media_content().current_account_media(content_id.content_owner())).await?;
+        let content_before_update = self
+            .db_read(move |mut cmds| {
+                cmds.media()
+                    .media_content()
+                    .current_account_media(content_id.content_owner())
+            })
+            .await?;
 
         db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .media_content()
                 .update_security_content(content_id)?;
 
-            cmds.media().media_content().increment_media_content_sync_version(content_id.content_owner())
+            cmds.media()
+                .media_content()
+                .increment_media_content_sync_version(content_id.content_owner())
         })?;
 
-        self.update_content_usage(content_id.content_owner(), content_before_update).await
+        self.update_content_usage(content_id.content_owner(), content_before_update)
+            .await
     }
 
     pub async fn delete_content(
@@ -167,15 +188,23 @@ impl WriteCommandsMedia<'_> {
         content_id: ContentIdInternal,
     ) -> Result<DeleteContentResult, DataError> {
         let (r, cache_update) = db_transaction!(self, move |mut cmds| {
-            let media_content = cmds.read().media().media_content().current_account_media(content_id.content_owner())?;
-            cmds.media()
+            let media_content = cmds
+                .read()
+                .media()
                 .media_content()
-                .delete_content(content_id)?;
-            let media_content_new = cmds.read().media().media_content().current_account_media(content_id.content_owner())?;
+                .current_account_media(content_id.content_owner())?;
+            cmds.media().media_content().delete_content(content_id)?;
+            let media_content_new = cmds
+                .read()
+                .media()
+                .media_content()
+                .current_account_media(content_id.content_owner())?;
             let current_media_changed = media_content != media_content_new;
             let cache_update = if current_media_changed {
                 // Admin removed in use image, so current media content changed
-                cmds.media().media_content().increment_media_content_sync_version(content_id.content_owner())?;
+                cmds.media()
+                    .media_content()
+                    .increment_media_content_sync_version(content_id.content_owner())?;
 
                 let public_content: ProfileContent = media_content.into();
                 let public_content_new: ProfileContent = media_content_new.into();
@@ -185,7 +214,11 @@ impl WriteCommandsMedia<'_> {
                     let edit_time = ProfileContentEditedTime::current_time();
                     cmds.media()
                         .media_content()
-                        .required_changes_for_public_profile_content_update(content_id.content_owner(), version, edit_time)?;
+                        .required_changes_for_public_profile_content_update(
+                            content_id.content_owner(),
+                            version,
+                            edit_time,
+                        )?;
                     Some((version, edit_time))
                 } else {
                     None
@@ -200,10 +233,14 @@ impl WriteCommandsMedia<'_> {
         })?;
 
         if let Some(update) = cache_update {
-            self.public_profile_content_cache_update(content_id.content_owner(), update).await?;
+            self.public_profile_content_cache_update(content_id.content_owner(), update)
+                .await?;
         }
 
-        self.files().media_content(content_id.content_owner().into(), content_id.content_id()).overwrite_and_remove_if_exists().await?;
+        self.files()
+            .media_content(content_id.content_owner().into(), content_id.content_id())
+            .overwrite_and_remove_if_exists()
+            .await?;
 
         Ok(r)
     }
@@ -236,12 +273,14 @@ impl WriteCommandsMedia<'_> {
             return Err(DataError::FeatureDisabled.report());
         }
 
-        let current_account = self.db_read(move |mut cmds| cmds.common().account(content_owner)).await?;
+        let current_account = self
+            .db_read(move |mut cmds| cmds.common().account(content_owner))
+            .await?;
         let profile_visibility = current_account.profile_visibility();
 
         let info = db_transaction!(self, move |mut cmds| {
             if !profile_visibility.is_pending() {
-                return Ok(InitialContentModerationResult::NoChange)
+                return Ok(InitialContentModerationResult::NoChange);
             }
 
             let current_media = cmds
@@ -279,7 +318,9 @@ impl WriteCommandsMedia<'_> {
                     },
                 )?;
 
-                Ok(InitialContentModerationResult::AllAccepted { account_after_visibility_change: new_account})
+                Ok(InitialContentModerationResult::AllAccepted {
+                    account_after_visibility_change: new_account,
+                })
             } else if all_moderated {
                 Ok(InitialContentModerationResult::AllModeratedAndNotAccepted)
             } else {
@@ -287,7 +328,10 @@ impl WriteCommandsMedia<'_> {
             }
         })?;
 
-        if let InitialContentModerationResult::AllAccepted { account_after_visibility_change } = &info {
+        if let InitialContentModerationResult::AllAccepted {
+            account_after_visibility_change,
+        } = &info
+        {
             self.handle()
                 .common()
                 .internal_handle_new_account_data_after_db_modification(
@@ -306,18 +350,27 @@ impl WriteCommandsMedia<'_> {
         content_owner: AccountIdInternal,
         previous: CurrentAccountMediaInternal,
     ) -> Result<(), DataError> {
-
         db_transaction!(self, move |mut cmds| {
-            let current = cmds.read().media().media_content().current_account_media(content_owner)?;
-            let current = HashSet::<ContentIdDb>::from_iter(current.iter_all_content().map(|v| v.id));
-            let previous = HashSet::<ContentIdDb>::from_iter(previous.iter_all_content().map(|v| v.id));
+            let current = cmds
+                .read()
+                .media()
+                .media_content()
+                .current_account_media(content_owner)?;
+            let current =
+                HashSet::<ContentIdDb>::from_iter(current.iter_all_content().map(|v| v.id));
+            let previous =
+                HashSet::<ContentIdDb>::from_iter(previous.iter_all_content().map(|v| v.id));
 
             for removed in previous.difference(&current) {
-                cmds.media().media_content().change_usage_to_ended(*removed)?;
+                cmds.media()
+                    .media_content()
+                    .change_usage_to_ended(*removed)?;
             }
 
             for added in current.difference(&previous) {
-                cmds.media().media_content().change_usage_to_started(*added)?;
+                cmds.media()
+                    .media_content()
+                    .change_usage_to_started(*added)?;
             }
 
             Ok(())

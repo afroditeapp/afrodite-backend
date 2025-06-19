@@ -1,19 +1,17 @@
 use std::sync::Arc;
 
 use config::Config;
-use database::{
-    current::write::GetDbWriteCommandsCommon, DbWriteMode, DieselDatabaseError
-};
+use database::{DbWriteMode, DieselDatabaseError, current::write::GetDbWriteCommandsCommon};
 use database_account::current::write::GetDbWriteCommandsAccount;
 use database_chat::current::write::GetDbWriteCommandsChat;
 use database_media::current::write::GetDbWriteCommandsMedia;
 use database_profile::current::write::GetDbWriteCommandsProfile;
 use model_account::{
-    AccountId, AccountIdInternal, AccountInternal, EmailAddress, SharedStateRaw,
-    SignInWithInfo,
+    AccountId, AccountIdInternal, AccountInternal, EmailAddress, SharedStateRaw, SignInWithInfo,
 };
 use server_data::{
-    db_manager::InternalWriting, define_cmd_wrapper_write, index::LocationIndexIteratorHandle, result::Result, write::DbTransaction, DataError, IntoDataError
+    DataError, IntoDataError, db_manager::InternalWriting, define_cmd_wrapper_write,
+    index::LocationIndexIteratorHandle, result::Result, write::DbTransaction,
 };
 
 use crate::load::DbDataToCacheLoader;
@@ -30,13 +28,7 @@ impl RegisterAccount<'_> {
         let config = self.config_arc().clone();
         let id: AccountIdInternal = self
             .db_transaction(move |current| {
-                Self::register_db_action(
-                    config,
-                    account_id,
-                    sign_in_with_info,
-                    email,
-                    current,
-                )
+                Self::register_db_action(config, account_id, sign_in_with_info, email, current)
             })
             .await?;
 
@@ -73,9 +65,7 @@ impl RegisterAccount<'_> {
             .common()
             .state()
             .insert_shared_state(id, SharedStateRaw::default())?;
-        current
-            .common()
-            .insert_common_state(id)?;
+        current.common().insert_common_state(id)?;
 
         if config.components().account {
             current
@@ -115,7 +105,10 @@ impl RegisterAccount<'_> {
             current.chat().insert_chat_state(id)?;
             current.chat().limits().insert_daily_likes_left(id)?;
             if let Some(daily_likes) = config.client_features().and_then(|v| v.daily_likes()) {
-                current.chat().limits().reset_daily_likes_left(id, daily_likes)?;
+                current
+                    .chat()
+                    .limits()
+                    .reset_daily_likes_left(id, daily_likes)?;
             }
         }
 

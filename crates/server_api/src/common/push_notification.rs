@@ -1,14 +1,14 @@
-use axum::{extract::State, Extension};
+use axum::{Extension, extract::State};
 use model::{
-    AccountIdInternal, FcmDeviceToken, PendingNotificationFlags, PendingNotificationToken, PendingNotificationWithData
+    AccountIdInternal, FcmDeviceToken, PendingNotificationFlags, PendingNotificationToken,
+    PendingNotificationWithData,
 };
-use server_state::app::AdminNotificationProvider;
-use crate::{create_open_api_router, db_write_multiple, S};
-use simple_backend::create_counters;
 use server_data::write::GetWriteCommandsCommon;
+use server_state::app::AdminNotificationProvider;
+use simple_backend::create_counters;
 
 use super::super::utils::{Json, StatusCode};
-use crate::app::WriteData;
+use crate::{S, app::WriteData, create_open_api_router, db_write_multiple};
 
 // TODO(prod): Logout route should remove the device and pending notification
 // tokens.
@@ -85,9 +85,7 @@ pub async fn post_get_pending_notification(
 
     let flags = PendingNotificationFlags::from(notification_value);
     data.admin_notification = if flags.contains(PendingNotificationFlags::ADMIN_NOTIFICATION) {
-        state.admin_notification()
-            .get_notification_state(id)
-            .await
+        state.admin_notification().get_notification_state(id).await
     } else {
         None
     };

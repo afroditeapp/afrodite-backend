@@ -31,7 +31,21 @@ impl ProfileAttributeHash {
     }
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq, PartialOrd, Ord, Hash, FromSqlRow, AsExpression)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    FromSqlRow,
+    AsExpression,
+)]
 #[diesel(sql_type = BigInt)]
 pub struct AttributeId(u16);
 
@@ -48,7 +62,9 @@ impl AttributeId {
 impl TryFrom<i64> for AttributeId {
     type Error = String;
     fn try_from(value: i64) -> Result<Self, Self::Error> {
-        let value: u16 = value.try_into().map_err(|e: std::num::TryFromIntError| e.to_string())?;
+        let value: u16 = value
+            .try_into()
+            .map_err(|e: std::num::TryFromIntError| e.to_string())?;
         Ok(Self(value))
     }
 }

@@ -2,9 +2,9 @@ use database::define_current_read_commands;
 
 mod data;
 mod favorite;
+mod notification;
 mod profile_name_allowlist;
 mod report;
-mod notification;
 
 define_current_read_commands!(CurrentReadProfile);
 

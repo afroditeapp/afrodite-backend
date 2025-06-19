@@ -1,8 +1,8 @@
-use axum::{extract::State, Extension};
+use axum::{Extension, extract::State};
 use model_account::{
     AccountData, AccountIdInternal, BooleanSetting, EventToClientInternal, ProfileVisibility,
 };
-use server_api::{create_open_api_router, db_write_multiple, S};
+use server_api::{S, create_open_api_router, db_write_multiple};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 
@@ -114,10 +114,7 @@ pub async fn put_setting_profile_visiblity(
             })
             .await?;
         cmds.events()
-            .send_connected_event(
-                id.uuid,
-                EventToClientInternal::AccountStateChanged,
-            )
+            .send_connected_event(id.uuid, EventToClientInternal::AccountStateChanged)
             .await?;
         Ok(new_account)
     })?;

@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
 use model::{AccountId, UnixTime};
-use model_server_data::{LocationIndexProfileData, ProfileAttributesInternal, ProfileLink, ProfileQueryMakerDetails};
+use model_server_data::{
+    LocationIndexProfileData, ProfileAttributesInternal, ProfileLink, ProfileQueryMakerDetails,
+};
 
 #[derive(Debug)]
 pub struct ProfilesAtLocation {
@@ -33,27 +35,28 @@ impl ProfilesAtLocation {
     }
 
     pub fn remove(&mut self, account_id: &AccountId) -> Option<LocationIndexProfileData> {
-        self.men.remove(account_id)
+        self.men
+            .remove(account_id)
             .or_else(|| self.women.remove(account_id))
             .or_else(|| self.non_binaries.remove(account_id))
     }
 
     pub fn get(&self, account_id: &AccountId) -> Option<&LocationIndexProfileData> {
-        self.men.get(account_id)
+        self.men
+            .get(account_id)
             .or_else(|| self.women.get(account_id))
             .or_else(|| self.non_binaries.get(account_id))
     }
 
     pub fn len(&self) -> usize {
-        self.men.len()
+        self.men
+            .len()
             .saturating_add(self.women.len())
             .saturating_add(self.non_binaries.len())
     }
 
     pub fn is_empty(&self) -> bool {
-        self.men.is_empty() &&
-        self.women.is_empty() &&
-        self.non_binaries.is_empty()
+        self.men.is_empty() && self.women.is_empty() && self.non_binaries.is_empty()
     }
 
     pub fn find_profiles(
@@ -67,27 +70,28 @@ impl ProfilesAtLocation {
         } else {
             None
         };
-        let women = if query_maker_details.search_groups_filter.is_searching_women() {
+        let women = if query_maker_details
+            .search_groups_filter
+            .is_searching_women()
+        {
             Some(self.women.values())
         } else {
             None
         };
-        let non_binaries = if query_maker_details.search_groups_filter.is_searching_non_binaries() {
+        let non_binaries = if query_maker_details
+            .search_groups_filter
+            .is_searching_non_binaries()
+        {
             Some(self.non_binaries.values())
         } else {
             None
         };
 
-        men.into_iter().flatten()
+        men.into_iter()
+            .flatten()
             .chain(women.into_iter().flatten())
             .chain(non_binaries.into_iter().flatten())
-            .filter(|p| {
-                p.is_match(
-                    query_maker_details,
-                    attributes,
-                    current_time,
-                )
-            })
+            .filter(|p| p.is_match(query_maker_details, attributes, current_time))
             .map(|p| p.to_profile_link_value())
             .collect()
     }

@@ -10,7 +10,9 @@ use tokio::sync::mpsc::{self, error::TrySendError};
 use tracing::error;
 
 use crate::{
-    cache::DatabaseCache, result::{Result, WrappedResultExt}, DataError
+    DataError,
+    cache::DatabaseCache,
+    result::{Result, WrappedResultExt},
 };
 
 // TODO(prod): Automatic logout if no activity for some months
@@ -142,8 +144,11 @@ impl<'a> EventManagerWithCacheReference<'a> {
         account: AccountIdInternal,
         event: NotificationEvent,
     ) -> Result<(), DataError> {
-        let push_notification_sending_allowed = self.cache
-            .read_cache_common(account, |entry| Ok(entry.app_notification_settings.get_setting(event)))
+        let push_notification_sending_allowed = self
+            .cache
+            .read_cache_common(account, |entry| {
+                Ok(entry.app_notification_settings.get_setting(event))
+            })
             .await
             .into_data_error(account)?;
 
@@ -187,7 +192,8 @@ impl<'a> EventManagerWithCacheReference<'a> {
     ) {
         self.cache
             .write_cache_common_for_logged_in_clients(|account_id, entry| {
-                let push_notification_sending_allowed = entry.app_notification_settings.get_setting(event);
+                let push_notification_sending_allowed =
+                    entry.app_notification_settings.get_setting(event);
 
                 if push_notification_sending_allowed {
                     entry.pending_notification_flags |= event.into();
@@ -251,7 +257,10 @@ impl<'a> EventManagerWithCacheReference<'a> {
         }
     }
 
-    pub async fn handle_chat_state_changes(&'a self, c: &ChatStateChanges) -> Result<(), DataError> {
+    pub async fn handle_chat_state_changes(
+        &'a self,
+        c: &ChatStateChanges,
+    ) -> Result<(), DataError> {
         if c.received_blocks_sync_version.is_some() {
             self.send_connected_event(c.id, EventToClientInternal::ReceivedBlocksChanged)
                 .await?;

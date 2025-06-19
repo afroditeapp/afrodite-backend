@@ -1,5 +1,5 @@
-use database::{define_current_write_commands, DieselDatabaseError};
-use diesel::{prelude::*, update, ExpressionMethods};
+use database::{DieselDatabaseError, define_current_write_commands};
+use diesel::{ExpressionMethods, prelude::*, update};
 use error_stack::Result;
 use model_profile::{AccountIdDb, AccountIdInternal, ProfileTextModerationState, UnixTime};
 

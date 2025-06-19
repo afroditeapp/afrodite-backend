@@ -14,17 +14,23 @@ pub mod email;
 pub mod event;
 pub mod file_package;
 pub mod image;
+pub mod jitsi_meet;
 pub mod manager_client;
 pub mod map;
+pub mod maxmind_db;
 pub mod perf;
 pub mod sign_in_with;
+pub mod tls;
 pub mod utils;
 pub mod web_socket;
-pub mod tls;
-pub mod maxmind_db;
-pub mod jitsi_meet;
 
-use std::{convert::Infallible, future::IntoFuture, net::{IpAddr, Ipv4Addr, SocketAddr}, pin::Pin, sync::Arc};
+use std::{
+    convert::Infallible,
+    future::IntoFuture,
+    net::{IpAddr, Ipv4Addr, SocketAddr},
+    pin::Pin,
+    sync::Arc,
+};
 
 use app::{
     GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith,
@@ -38,9 +44,8 @@ use image::ImageProcess;
 use manager_client::{ManagerApiClient, ManagerConnectionManager, ManagerEventHandler};
 use maxmind_db::{MaxMindDbManager, MaxMindDbManagerData};
 use perf::counters::AllCounters;
-use tls::{LetsEncryptAcmeSocketUtils, SimpleBackendTlsConfig, TlsManager};
-use tokio_rustls_acme::AcmeAcceptor;
 use simple_backend_config::SimpleBackendConfig;
+use tls::{LetsEncryptAcmeSocketUtils, SimpleBackendTlsConfig, TlsManager};
 use tokio::{
     net::TcpListener,
     signal::{
@@ -51,13 +56,14 @@ use tokio::{
     task::JoinHandle,
 };
 use tokio_rustls::{
-    rustls::{server::Acceptor, ServerConfig},
     LazyConfigAcceptor,
+    rustls::{ServerConfig, server::Acceptor},
 };
+use tokio_rustls_acme::AcmeAcceptor;
 use tower::Service;
 use tower_http::trace::TraceLayer;
 use tracing::{debug, error, info, warn};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
+use tracing_subscriber::{EnvFilter, Layer, layer::SubscriberExt, util::SubscriberInitExt};
 use utoipa_swagger_ui::SwaggerUi;
 
 use self::web_socket::WebSocketManager;
@@ -115,10 +121,7 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
         Router::new()
     }
     /// Create router for internal API
-    fn internal_api_router(
-        &self,
-        _state: &Self::AppState,
-    ) -> Router {
+    fn internal_api_router(&self, _state: &Self::AppState) -> Router {
         Router::new()
     }
 
@@ -223,85 +226,95 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         // only this client.
         let client = Arc::new(reqwest::Client::new());
         let maxmind_db_data = Arc::new(MaxMindDbManagerData::new());
-        let maxmind_db_quit_handle =
-            MaxMindDbManager::new_manager(maxmind_db_data.clone(), server_quit_watcher.resubscribe(), self.config.clone(), client);
+        let maxmind_db_quit_handle = MaxMindDbManager::new_manager(
+            maxmind_db_data.clone(),
+            server_quit_watcher.resubscribe(),
+            self.config.clone(),
+            client,
+        );
 
         let manager: Arc<ManagerApiClient> = ManagerApiClient::new(&self.config)
             .await
             .expect("Creating manager API client failed")
             .into();
 
-        let simple_state = SimpleBackendAppState::new(self.config.clone(), perf_data, manager.clone(), maxmind_db_data)
-            .await
-            .expect("State builder init failed");
+        let simple_state = SimpleBackendAppState::new(
+            self.config.clone(),
+            perf_data,
+            manager.clone(),
+            maxmind_db_data,
+        )
+        .await
+        .expect("State builder init failed");
 
         let state = self
             .logic
-            .on_before_server_start(
-                simple_state,
-                server_quit_watcher.resubscribe(),
-            )
+            .on_before_server_start(simple_state, server_quit_watcher.resubscribe())
             .await;
 
-        let manager_quit_handle = ManagerConnectionManager::new_manager(manager, state.clone(), server_quit_watcher.resubscribe())
-            .await
-            .expect("Manager connection manager init failed");
+        let manager_quit_handle = ManagerConnectionManager::new_manager(
+            manager,
+            state.clone(),
+            server_quit_watcher.resubscribe(),
+        )
+        .await
+        .expect("Manager connection manager init failed");
 
         let (ws_manager, mut ws_watcher) =
             WebSocketManager::new(server_quit_watcher.resubscribe()).await;
 
-        let (mut tls_manager, tls_manager_quit_handle) = TlsManager::new(&self.config, server_quit_watcher.resubscribe()).await;
+        let (mut tls_manager, tls_manager_quit_handle) =
+            TlsManager::new(&self.config, server_quit_watcher.resubscribe()).await;
 
-        let public_api_server_task =
-            if let Some(addr) = self.config.socket().public_api {
-                Some(
-                    self.create_api_server_task(
-                        server_quit_watcher.resubscribe(),
-                        &mut tls_manager,
-                        addr,
-                        self.logic.public_api_router(ws_manager.clone(), &state, false),
-                        "Public API",
-                    )
-                    .await
+        let public_api_server_task = if let Some(addr) = self.config.socket().public_api {
+            Some(
+                self.create_api_server_task(
+                    server_quit_watcher.resubscribe(),
+                    &mut tls_manager,
+                    addr,
+                    self.logic
+                        .public_api_router(ws_manager.clone(), &state, false),
+                    "Public API",
                 )
-            } else {
-                None
-            };
-        let public_bot_api_server_task =
-            if let Some(addr) = self.config.socket().public_bot_api {
-                Some(
-                    self.create_api_server_task(
-                        server_quit_watcher.resubscribe(),
-                        &mut tls_manager,
-                        addr,
-                        self.logic.public_bot_api_router(ws_manager.clone(), &state),
-                        "Public bot API",
-                    )
-                    .await,
+                .await,
+            )
+        } else {
+            None
+        };
+        let public_bot_api_server_task = if let Some(addr) = self.config.socket().public_bot_api {
+            Some(
+                self.create_api_server_task(
+                    server_quit_watcher.resubscribe(),
+                    &mut tls_manager,
+                    addr,
+                    self.logic.public_bot_api_router(ws_manager.clone(), &state),
+                    "Public bot API",
                 )
-            } else {
-                None
-            };
-        let local_bot_api_server_task =
-            if let Some(port) = self.config.socket().local_bot_api_port {
-                let ip = self
-                    .config
-                    .socket()
-                    .debug_local_bot_api_ip
-                    .unwrap_or(IpAddr::V4(Ipv4Addr::LOCALHOST));
-                Some(
-                    self.create_local_bot_api_server_task(
-                        server_quit_watcher.resubscribe(),
-                        ws_manager.clone(),
-                        &state,
-                        ip,
-                        port,
-                    )
-                    .await,
+                .await,
+            )
+        } else {
+            None
+        };
+        let local_bot_api_server_task = if let Some(port) = self.config.socket().local_bot_api_port
+        {
+            let ip = self
+                .config
+                .socket()
+                .debug_local_bot_api_ip
+                .unwrap_or(IpAddr::V4(Ipv4Addr::LOCALHOST));
+            Some(
+                self.create_local_bot_api_server_task(
+                    server_quit_watcher.resubscribe(),
+                    ws_manager.clone(),
+                    &state,
+                    ip,
+                    port,
                 )
-            } else {
-                None
-            };
+                .await,
+            )
+        } else {
+            None
+        };
         let internal_api_server_task =
             if let Some(internal_api_addr) = self.config.socket().experimental_internal_api {
                 Some(
@@ -314,17 +327,17 @@ impl<T: BusinessLogic> SimpleBackend<T> {
                     )
                     .await,
                 )
-
             } else {
                 None
             };
 
-        if public_api_server_task.is_none() &&
-            public_bot_api_server_task.is_none() &&
-            local_bot_api_server_task.is_none() &&
-            internal_api_server_task.is_none() {
-                warn!("No enabled APIs in config file");
-            }
+        if public_api_server_task.is_none()
+            && public_bot_api_server_task.is_none()
+            && local_bot_api_server_task.is_none()
+            && internal_api_server_task.is_none()
+        {
+            warn!("No enabled APIs in config file");
+        }
 
         self.logic.on_after_server_start().await;
         // Use println to make sure that this message is visible in logs.
@@ -342,24 +355,18 @@ impl<T: BusinessLogic> SimpleBackend<T> {
 
         // Wait until all tasks quit
         if let Some(task) = internal_api_server_task {
-            task
-                .await
-                .expect("Internal API server task panic detected");
+            task.await.expect("Internal API server task panic detected");
         }
         if let Some(task) = local_bot_api_server_task {
-            task
-                .await
+            task.await
                 .expect("Local bot API server task panic detected");
         }
         if let Some(task) = public_bot_api_server_task {
-            task
-                .await
+            task.await
                 .expect("Public bot API server task panic detected");
         }
         if let Some(task) = public_api_server_task {
-            task
-                .await
-                .expect("Public API server task panic detected");
+            task.await.expect("Public API server task panic detected");
         }
 
         tls_manager_quit_handle.wait_quit().await;
@@ -458,7 +465,10 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         let (listener_for_router, acme_only_listener) =
             if let Some(utils) = tls_config.take_acme_utils() {
                 if addr.port() == HTTPS_DEFAULT_PORT {
-                    (ListenerAndConfig::with_acme_acceptor(utils, tls_config), None)
+                    (
+                        ListenerAndConfig::with_acme_acceptor(utils, tls_config),
+                        None,
+                    )
                 } else {
                     let listener = TcpListener::bind(addr)
                         .await
@@ -472,10 +482,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
                 let listener = TcpListener::bind(addr)
                     .await
                     .expect("Address not available");
-                (
-                    ListenerAndConfig::new(listener, tls_config),
-                    None,
-                )
+                (ListenerAndConfig::new(listener, tls_config), None)
             };
 
         let (drop_after_connection, mut wait_all_connections) = mpsc::channel::<()>(1);
@@ -645,9 +652,7 @@ async fn handle_tls_related_tcp_stream(
             Err(e) => {
                 // Use debug log level as this happens quite often on internet
                 debug!("TLS ACME acceptor error: {}", e);
-                SIMPLE_CONNECTION
-                    .tls_acme_acceptor_error
-                    .incr();
+                SIMPLE_CONNECTION.tls_acme_acceptor_error.incr();
                 return;
             }
         }
@@ -658,9 +663,7 @@ async fn handle_tls_related_tcp_stream(
             Err(e) => {
                 // Use debug log level as this happens quite often on internet
                 debug!("TLS acceptor error: {}", e);
-                SIMPLE_CONNECTION
-                    .tls_acceptor_error
-                    .incr();
+                SIMPLE_CONNECTION.tls_acceptor_error.incr();
                 return;
             }
         }
@@ -672,9 +675,7 @@ async fn handle_tls_related_tcp_stream(
             Err(e) => {
                 // Use debug log level as this happens quite often on internet
                 debug!("Into TlsStream failed: {}", e);
-                SIMPLE_CONNECTION
-                    .tls_into_stream_error
-                    .incr();
+                SIMPLE_CONNECTION.tls_into_stream_error.incr();
             }
         }
     }
@@ -705,9 +706,7 @@ async fn handle_ready_tls_connection<
         Err(e) => {
             // Use debug log level as this happens quite often on internet
             debug!("Ready TLS connection serving error: {}", e);
-            SIMPLE_CONNECTION
-                .tls_connection_serving_error
-                .incr();
+            SIMPLE_CONNECTION.tls_connection_serving_error.incr();
         }
     }
 }
@@ -737,10 +736,7 @@ impl ListenerAndConfig {
         }
     }
 
-    fn new(
-        listener: TcpListener,
-        config: &SimpleBackendTlsConfig
-    ) -> Self {
+    fn new(listener: TcpListener, config: &SimpleBackendTlsConfig) -> Self {
         Self {
             listener,
             tls_config: config.tls_config(),

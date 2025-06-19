@@ -1,15 +1,25 @@
 use axum::{
-    extract::{Query, State},
     Extension,
+    extract::{Query, State},
 };
 use model::{AdminNotificationTypes, NotificationEvent};
 use model_media::{
-    AccountIdInternal, EventToClientInternal, GetProfileContentPendingModerationList, GetProfileContentPendingModerationParams, Permissions, PostModerateProfileContent
+    AccountIdInternal, EventToClientInternal, GetProfileContentPendingModerationList,
+    GetProfileContentPendingModerationParams, Permissions, PostModerateProfileContent,
 };
-use server_api::{app::{AdminNotificationProvider, GetAccounts, GetConfig}, create_open_api_router, S};
-use server_data_media::{read::GetReadMediaCommands, write::{media::InitialContentModerationResult, media_admin::content::ContentModerationMode, GetWriteCommandsMedia}};
+use server_api::{
+    S,
+    app::{AdminNotificationProvider, GetAccounts, GetConfig, ReadData},
+    create_open_api_router,
+};
+use server_data_media::{
+    read::GetReadMediaCommands,
+    write::{
+        GetWriteCommandsMedia, media::InitialContentModerationResult,
+        media_admin::content::ContentModerationMode,
+    },
+};
 use simple_backend::create_counters;
-use server_api::app::ReadData;
 
 use crate::{
     app::WriteData,
@@ -44,7 +54,9 @@ pub async fn get_profile_content_pending_moderation_list(
     Extension(permissions): Extension<Permissions>,
     Query(params): Query<GetProfileContentPendingModerationParams>,
 ) -> Result<Json<GetProfileContentPendingModerationList>, StatusCode> {
-    MEDIA_ADMIN.get_profile_content_pending_moderation_list.incr();
+    MEDIA_ADMIN
+        .get_profile_content_pending_moderation_list
+        .incr();
 
     if !permissions.admin_moderate_media_content {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -114,13 +126,12 @@ pub async fn post_moderate_profile_content(
         let content_id = cmds
             .read()
             .media()
-            .content_id_internal(content_owner, data.content_id).await?;
-        let info = cmds.media_admin()
+            .content_id_internal(content_owner, data.content_id)
+            .await?;
+        let info = cmds
+            .media_admin()
             .content()
-            .moderate_profile_content(
-                mode,
-                content_id,
-            )
+            .moderate_profile_content(mode, content_id)
             .await?;
 
         match info.moderation_result {
@@ -134,8 +145,8 @@ pub async fn post_moderate_profile_content(
                         .await?;
                 }
             }
-            InitialContentModerationResult::AllModeratedAndNotAccepted |
-            InitialContentModerationResult::NoChange => (),
+            InitialContentModerationResult::AllModeratedAndNotAccepted
+            | InitialContentModerationResult::NoChange => (),
         }
 
         cmds.events()
@@ -151,16 +162,12 @@ pub async fn post_moderate_profile_content(
             if data.accept {
                 cmds.media_admin()
                     .notification()
-                    .show_media_content_accepted_notification(
-                        content_id.content_owner(),
-                    )
+                    .show_media_content_accepted_notification(content_id.content_owner())
                     .await?;
             } else {
                 cmds.media_admin()
                     .notification()
-                    .show_media_content_rejected_notification(
-                        content_id.content_owner(),
-                    )
+                    .show_media_content_rejected_notification(content_id.content_owner())
                     .await?;
             }
 

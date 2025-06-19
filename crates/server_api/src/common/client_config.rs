@@ -1,13 +1,13 @@
-use axum::{extract::State, Extension};
+use axum::{Extension, extract::State};
 use model::{AccountIdInternal, ClientConfig, ClientFeaturesFileHash, CustomReportsFileHash};
 use server_data::{app::GetConfig, read::GetReadCommandsCommon};
 use simple_backend::create_counters;
 
 use crate::{
+    S,
     app::ReadData,
     create_open_api_router,
     utils::{Json, StatusCode},
-    S,
 };
 
 const PATH_GET_CLIENT_CONFIG: &str = "/common_api/client_config";
@@ -27,11 +27,25 @@ pub async fn get_client_config(
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ClientConfig>, StatusCode> {
     COMMON.get_client_config.incr();
-    let sync_version = state.read().common().client_config_sync_version(account_id).await?;
+    let sync_version = state
+        .read()
+        .common()
+        .client_config_sync_version(account_id)
+        .await?;
     let info = ClientConfig {
-        client_features: state.config().client_features_sha256().map(|v| ClientFeaturesFileHash::new(v.to_string())),
-        custom_reports: state.config().custom_reports_sha256().map(|v| CustomReportsFileHash::new(v.to_string())),
-        profile_attributes: state.config().profile_attributes().map(|a| a.info_for_client()).cloned(),
+        client_features: state
+            .config()
+            .client_features_sha256()
+            .map(|v| ClientFeaturesFileHash::new(v.to_string())),
+        custom_reports: state
+            .config()
+            .custom_reports_sha256()
+            .map(|v| CustomReportsFileHash::new(v.to_string())),
+        profile_attributes: state
+            .config()
+            .profile_attributes()
+            .map(|a| a.info_for_client())
+            .cloned(),
         sync_version,
     };
     Ok(info.into())

@@ -1,7 +1,7 @@
 use axum::{
+    Extension,
     body::Body,
     extract::{Path, Query, State},
-    Extension,
 };
 use axum_extra::TypedHeader;
 use headers::{ContentLength, ContentType};
@@ -11,11 +11,16 @@ use model_media::{
     ContentProcessingState, ContentSlot, GetContentQueryParams, NewContentParams, Permissions,
     SlotId,
 };
-use server_api::{app::{ApiUsageTrackerProvider, GetConfig}, create_open_api_router, db_write_multiple, result::WrappedResultExt, S};
+use server_api::{
+    S,
+    app::{ApiUsageTrackerProvider, GetConfig},
+    create_open_api_router, db_write_multiple,
+    result::WrappedResultExt,
+};
 use server_data::{
+    DataError,
     read::GetReadCommandsCommon,
     write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle},
-    DataError,
 };
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
@@ -66,7 +71,10 @@ pub async fn get_content(
     Query(params): Query<GetContentQueryParams>,
 ) -> Result<(TypedHeader<ContentType>, TypedHeader<ContentLength>, Body), StatusCode> {
     MEDIA.get_content.incr();
-    state.api_usage_tracker().incr(account_id, |u| &u.get_content).await;
+    state
+        .api_usage_tracker()
+        .incr(account_id, |u| &u.get_content)
+        .await;
 
     let send_content = || async {
         let data = state
@@ -160,8 +168,8 @@ pub async fn get_all_account_media_content(
 
     let internal_id = state.get_internal_id(account_id).await?;
 
-    let access_allowed = api_caller_account_id == internal_id ||
-        api_caller_permissions.admin_moderate_media_content;
+    let access_allowed =
+        api_caller_account_id == internal_id || api_caller_permissions.admin_moderate_media_content;
     if !access_allowed {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
@@ -180,8 +188,13 @@ pub async fn get_all_account_media_content(
     Ok(AccountContent {
         data,
         max_content_count: state.config().limits_media().max_content_count,
-        unused_content_wait_seconds: state.config().limits_media().unused_content_wait_duration.seconds,
-    }.into())
+        unused_content_wait_seconds: state
+            .config()
+            .limits_media()
+            .unused_content_wait_duration
+            .seconds,
+    }
+    .into())
 }
 
 const PATH_PUT_CONTENT_TO_CONTENT_SLOT: &str = "/media_api/content_slot/{slot_id}";
@@ -232,7 +245,11 @@ pub async fn put_content_to_content_slot(
     let slot = TryInto::<ContentSlot>::try_into(slot_number.slot_id as i64)
         .map_err(|_| StatusCode::NOT_ACCEPTABLE)?;
 
-    let count = state.read().media().all_account_media_content_count(account_id).await?;
+    let count = state
+        .read()
+        .media()
+        .all_account_media_content_count(account_id)
+        .await?;
     if count > state.config().limits_media().max_content_count.into() {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
@@ -326,7 +343,11 @@ pub async fn delete_content(
     MEDIA.delete_content.incr();
 
     let content_owner_account_id = state.get_internal_id(content_owner_account_id).await?;
-    let content_id = state.read().media().content_id_internal(content_owner_account_id, content_id).await?;
+    let content_id = state
+        .read()
+        .media()
+        .content_id_internal(content_owner_account_id, content_id)
+        .await?;
     let content = state.read().media().content_state(content_id).await?;
 
     if *content_owner_account_id.as_db_id() != content.account_id {
@@ -341,15 +362,21 @@ pub async fn delete_content(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    if owner_deleting_content && !admin_access && !content.removable_by_user(state.config().limits_media().unused_content_wait_duration.seconds) {
+    if owner_deleting_content
+        && !admin_access
+        && !content.removable_by_user(
+            state
+                .config()
+                .limits_media()
+                .unused_content_wait_duration
+                .seconds,
+        )
+    {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
     db_write_multiple!(state, move |cmds| {
-        let r = cmds
-            .media()
-            .delete_content(content_id)
-            .await?;
+        let r = cmds.media().delete_content(content_id).await?;
 
         if r.current_media_content_refresh_needed {
             cmds.events()

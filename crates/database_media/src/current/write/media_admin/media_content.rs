@@ -1,8 +1,13 @@
-use database::{current::read::GetDbReadCommandsCommon, define_current_write_commands, DieselDatabaseError};
+use database::{
+    DieselDatabaseError, current::read::GetDbReadCommandsCommon, define_current_write_commands,
+};
 use diesel::{prelude::*, update};
 use error_stack::Result;
-use model::{ContentIdInternal, AccountIdInternal};
-use model_media::{ContentModerationState, ProfileContentModerationRejectedReasonCategory, ProfileContentModerationRejectedReasonDetails};
+use model::{AccountIdInternal, ContentIdInternal};
+use model_media::{
+    ContentModerationState, ProfileContentModerationRejectedReasonCategory,
+    ProfileContentModerationRejectedReasonDetails,
+};
 
 use crate::IntoDatabaseError;
 
@@ -58,11 +63,9 @@ impl CurrentWriteMediaAdminMediaContent<'_> {
             .filter(media_content::id.eq(content_id.as_db_id()))
             .set((
                 media_content::moderation_state.eq(next_state),
-                media_content::moderation_rejected_reason_category
-                    .eq(rejected_category),
+                media_content::moderation_rejected_reason_category.eq(rejected_category),
                 media_content::moderation_rejected_reason_details.eq(rejected_details),
-                media_content::moderation_moderator_account_id
-                    .eq(moderator_id.as_db_id()),
+                media_content::moderation_moderator_account_id.eq(moderator_id.as_db_id()),
             ))
             .execute(self.conn())
             .into_db_error(())?;
@@ -96,9 +99,7 @@ impl CurrentWriteMediaAdminMediaContent<'_> {
 
         update(media_content::table)
             .filter(media_content::id.eq(content_id.as_db_id()))
-            .set((
-                media_content::face_detected.eq(value),
-            ))
+            .set((media_content::face_detected.eq(value),))
             .execute(self.conn())
             .into_db_error(())?;
 

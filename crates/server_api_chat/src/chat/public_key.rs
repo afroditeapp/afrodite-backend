@@ -1,15 +1,20 @@
 //! Public key management related routes
 
 use axum::{
-    body::{to_bytes, Body}, extract::{Path, Query, State}, Extension
+    Extension,
+    body::{Body, to_bytes},
+    extract::{Path, Query, State},
 };
 use model::Permissions;
 use model_chat::{
-    AccountId, AccountIdInternal, AddPublicKeyResult, GetLatestPublicKeyId, GetPrivatePublicKeyInfo, PublicKeyId
+    AccountId, AccountIdInternal, AddPublicKeyResult, GetLatestPublicKeyId,
+    GetPrivatePublicKeyInfo, PublicKeyId,
 };
 use pgp::{Deserializable, SignedPublicKey};
 use server_api::{
-    app::{GetAccounts, WriteData}, create_open_api_router, db_write_multiple, S
+    S,
+    app::{GetAccounts, WriteData},
+    create_open_api_router, db_write_multiple,
 };
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
@@ -125,9 +130,8 @@ async fn post_add_public_key(
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .to_vec();
 
-    let public_key =
-        SignedPublicKey::from_bytes(key_data.as_slice())
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let public_key = SignedPublicKey::from_bytes(key_data.as_slice())
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     let account_id_string = id.as_id().to_string();
     match public_key.details.users.as_slice() {
         [v] if v.id.id() == account_id_string.as_bytes() => (),
@@ -167,9 +171,8 @@ async fn get_private_public_key_info(
 ) -> Result<Json<GetPrivatePublicKeyInfo>, StatusCode> {
     CHAT.get_private_public_key_info.incr();
 
-    let access_allowed =
-        api_caller.as_id() == requested_id ||
-        api_caller_permissions.admin_edit_max_public_key_count;
+    let access_allowed = api_caller.as_id() == requested_id
+        || api_caller_permissions.admin_edit_max_public_key_count;
 
     if !access_allowed {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);

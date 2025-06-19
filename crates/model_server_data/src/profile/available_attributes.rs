@@ -1,9 +1,11 @@
 use std::{collections::HashSet, num::NonZeroU8, path::PathBuf, str::FromStr};
 
 use base64::Engine;
-use model::{AttributeId, AttributeIdAndHash, AttributeOrderMode, ProfileAttributeHash, ProfileAttributeInfo};
+use model::{
+    AttributeId, AttributeIdAndHash, AttributeOrderMode, ProfileAttributeHash, ProfileAttributeInfo,
+};
 use serde::{Deserialize, Serialize};
-use sha2::{Sha256, Digest};
+use sha2::{Digest, Sha256};
 use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,7 +41,9 @@ impl AttributesFileInternal {
 
         // Check that correct IDs are used.
         for i in 1..=self.attribute.len() {
-            let i: u16 = i.try_into().map_err(|e: std::num::TryFromIntError| e.to_string())?;
+            let i: u16 = i
+                .try_into()
+                .map_err(|e: std::num::TryFromIntError| e.to_string())?;
             let id = AttributeId::new(i);
             if !ids.contains(&id) {
                 return Err(format!(
@@ -64,9 +68,15 @@ pub struct AttributeInternal {
     pub key: String,
     pub name: String,
     pub mode: AttributeMode,
-    #[serde(default = "value_non_zero_u8_one", skip_serializing_if = "value_non_zero_u8_is_one")]
+    #[serde(
+        default = "value_non_zero_u8_one",
+        skip_serializing_if = "value_non_zero_u8_is_one"
+    )]
     pub max_selected: NonZeroU8,
-    #[serde(default = "value_non_zero_u8_one", skip_serializing_if = "value_non_zero_u8_is_one")]
+    #[serde(
+        default = "value_non_zero_u8_one",
+        skip_serializing_if = "value_non_zero_u8_is_one"
+    )]
     pub max_filters: NonZeroU8,
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
     pub editable: bool,
@@ -127,7 +137,6 @@ fn value_u8_one() -> u8 {
 fn value_u8_is_one(v: &u8) -> bool {
     *v == 1
 }
-
 
 /// Load atribute values from CSV file
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -191,7 +200,11 @@ impl ModeAndIdSequenceNumber {
 
     fn validate_integer_id(id: u16) -> Result<(), String> {
         if id < Self::FIRST_INTEGER_ID {
-            return Err(format!("Invalid ID {}, id < {}", id, Self::FIRST_INTEGER_ID));
+            return Err(format!(
+                "Invalid ID {}, id < {}",
+                id,
+                Self::FIRST_INTEGER_ID
+            ));
         }
 
         Ok(())
@@ -649,7 +662,10 @@ impl ProfileAttributesInternal {
         self.get_attribute_and_hash(id).map(|v| &v.0)
     }
 
-    fn get_attribute_and_hash(&self, id: AttributeId) -> Option<&(Attribute, ProfileAttributeHash)> {
+    fn get_attribute_and_hash(
+        &self,
+        id: AttributeId,
+    ) -> Option<&(Attribute, ProfileAttributeHash)> {
         self.attributes.get(id.to_usize().saturating_sub(1))
     }
 
@@ -698,15 +714,11 @@ impl ProfileAttributesInternal {
     }
 
     pub fn query_attributes(&self, ids: Vec<AttributeId>) -> Vec<ProfileAttributeQueryItem> {
-        ids
-            .into_iter()
+        ids.into_iter()
             .filter_map(|id| {
                 self.get_attribute_and_hash(id)
                     .cloned()
-                    .map(|(a, h)| ProfileAttributeQueryItem {
-                        a,
-                        h,
-                    })
+                    .map(|(a, h)| ProfileAttributeQueryItem { a, h })
             })
             .collect()
     }
@@ -767,15 +779,13 @@ pub struct Attribute {
 
 impl Attribute {
     pub fn hash(&self) -> Result<ProfileAttributeHash, String> {
-        let attribute_json = serde_json::to_string(self)
-            .map_err(|e| e.to_string())?;
+        let attribute_json = serde_json::to_string(self).map_err(|e| e.to_string())?;
 
         let mut hasher = Sha256::new();
         hasher.update(attribute_json);
         let result = hasher.finalize();
 
-        let h = base64::engine::general_purpose::URL_SAFE_NO_PAD
-            .encode(result);
+        let h = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(result);
 
         Ok(ProfileAttributeHash::new(h))
     }

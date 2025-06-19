@@ -1,7 +1,7 @@
 use axum::extract::State;
 use model::ClientFeaturesFileHash;
 use model_account::GetClientFeaturesConfigResult;
-use server_api::{app::GetConfig, create_open_api_router, S};
+use server_api::{S, app::GetConfig, create_open_api_router};
 use simple_backend::create_counters;
 
 use crate::utils::{Json, StatusCode};
@@ -30,9 +30,7 @@ pub async fn post_get_client_features_config(
             config: state.config().client_features().cloned(),
         }
     } else {
-        GetClientFeaturesConfigResult {
-            config: None,
-        }
+        GetClientFeaturesConfigResult { config: None }
     };
 
     Ok(r.into())

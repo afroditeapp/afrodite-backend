@@ -1,24 +1,21 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
-    AccountIdInternal, Location, ProfileEditedTime, ProfileFilteringSettingsUpdateValidated, ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateValidated, ProfileVersion, UnixTime, ValidatedSearchGroups
+    AccountIdInternal, Location, ProfileEditedTime, ProfileFilteringSettingsUpdateValidated,
+    ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateValidated, ProfileVersion,
+    UnixTime, ValidatedSearchGroups,
 };
 use server_data::{
-    app::GetConfig,
-    cache::profile::UpdateLocationCacheState,
-    define_cmd_wrapper_write,
-    index::LocationWrite,
-    read::DbRead,
-    result::Result,
+    DataError, IntoDataError, app::GetConfig, cache::profile::UpdateLocationCacheState,
+    define_cmd_wrapper_write, index::LocationWrite, read::DbRead, result::Result,
     write::DbTransaction,
-    DataError, IntoDataError,
 };
 use tracing::info;
 
 use crate::cache::{CacheReadProfile, CacheWriteProfile};
 
-pub mod report;
 mod notification;
+pub mod report;
 
 define_cmd_wrapper_write!(WriteCommandsProfile);
 
@@ -38,12 +35,14 @@ impl WriteCommandsProfile<'_> {
         coordinates: Location,
     ) -> Result<(), DataError> {
         let (location, min_distance, max_distance, random_profile_order) = self
-            .read_cache_profile_and_common(id.as_id(), |p, _| Ok((
-                p.location.clone(),
-                p.state.min_distance_km_filter,
-                p.state.max_distance_km_filter,
-                p.state.random_profile_order
-            )))
+            .read_cache_profile_and_common(id.as_id(), |p, _| {
+                Ok((
+                    p.location.clone(),
+                    p.state.min_distance_km_filter,
+                    p.state.max_distance_km_filter,
+                    p.state.random_profile_order,
+                ))
+            })
             .await
             .into_data_error(id)?;
 
@@ -51,17 +50,20 @@ impl WriteCommandsProfile<'_> {
             cmds.profile().data().profile_location(id, coordinates)
         })?;
 
-        let new_location_area = self.location().coordinates_to_area(coordinates, min_distance, max_distance);
+        let new_location_area =
+            self.location()
+                .coordinates_to_area(coordinates, min_distance, max_distance);
         self.location()
-            .update_profile_location(id.as_id(), location.current_position.profile_location(), new_location_area.profile_location())
+            .update_profile_location(
+                id.as_id(),
+                location.current_position.profile_location(),
+                new_location_area.profile_location(),
+            )
             .await?;
 
         let new_iterator_state = self
             .location_iterator()
-            .new_iterator_state(
-                &new_location_area,
-                random_profile_order,
-            );
+            .new_iterator_state(&new_location_area, random_profile_order);
         self.write_cache_profile(id, |p| {
             p.location.current_position = new_location_area;
             p.location.current_iterator = new_iterator_state;
@@ -102,11 +104,14 @@ impl WriteCommandsProfile<'_> {
                 )
             };
             cmds.profile().data().profile(id, &profile_data)?;
-            cmds.profile().data().upsert_profile_attributes(
+            cmds.profile()
+                .data()
+                .upsert_profile_attributes(id, profile_data.attributes)?;
+            cmds.profile().data().required_changes_for_profile_update(
                 id,
-                profile_data.attributes,
+                profile_version,
+                edit_time,
             )?;
-            cmds.profile().data().required_changes_for_profile_update(id, profile_version, edit_time)?;
             if name_update_detected {
                 cmds.profile()
                     .profile_name_allowlist()
@@ -120,10 +125,7 @@ impl WriteCommandsProfile<'_> {
                 Some(
                     cmds.profile()
                         .profile_text()
-                        .reset_profile_text_moderation_state(
-                            id,
-                            profile_data.ptext.is_empty(),
-                        )?,
+                        .reset_profile_text_moderation_state(id, profile_data.ptext.is_empty())?,
                 )
             } else {
                 None
@@ -132,7 +134,7 @@ impl WriteCommandsProfile<'_> {
         })?;
 
         self.write_cache_profile(id.as_id(), |p| {
-            p.update_profile_internal(|p|data.update_to_profile(p));
+            p.update_profile_internal(|p| data.update_to_profile(p));
             data.update_to_attributes(&mut p.attributes);
             p.update_profile_version_uuid(profile_version);
             p.state.profile_edited_time = edit_time;
@@ -183,10 +185,9 @@ impl WriteCommandsProfile<'_> {
     ) -> Result<(), DataError> {
         let filters_clone = filters.clone();
         let (new_filters, location) = db_transaction!(self, move |mut cmds| {
-            cmds.profile().data().update_profile_filtering_settings(
-                id,
-                filters_clone,
-            )?;
+            cmds.profile()
+                .data()
+                .update_profile_filtering_settings(id, filters_clone)?;
             let attribute_filters = cmds.read().profile().data().profile_attribute_filters(id)?;
             let location = cmds.read().profile().data().profile_location(id)?;
             Ok((attribute_filters, location))
@@ -356,7 +357,9 @@ impl WriteCommandsProfile<'_> {
         time: UnixTime,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.profile_admin().search().upsert_automatic_profile_search_last_seen_time(id, time)
+            cmds.profile_admin()
+                .search()
+                .upsert_automatic_profile_search_last_seen_time(id, time)
         })?;
 
         self.write_cache_profile(id.as_id(), |p| {

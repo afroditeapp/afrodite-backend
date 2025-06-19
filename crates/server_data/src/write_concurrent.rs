@@ -1,29 +1,40 @@
 //! Write commands that can be run concurrently also with synchronous
 //! write commands.
 
-use std::{collections::HashMap, fmt::{self, Debug}, sync::{atomic::{AtomicI64, Ordering}, Arc}};
+use std::{
+    collections::HashMap,
+    fmt::{self, Debug},
+    sync::{
+        Arc,
+        atomic::{AtomicI64, Ordering},
+    },
+};
 
 use axum::body::BodyDataStream;
 use config::Config;
 use futures::Future;
-use model::{AccountId, AccountIdInternal, ContentProcessingId, ContentSlot, MatchId, ReceivedLikeId};
+use model::{
+    AccountId, AccountIdInternal, ContentProcessingId, ContentSlot, MatchId, ReceivedLikeId,
+};
 use model_server_data::{
-    AutomaticProfileSearchIteratorSessionId, AutomaticProfileSearchIteratorSessionIdInternal, MatchesIteratorSessionId, NewsIteratorSessionId, ProfileIteratorSessionId, ProfileIteratorSessionIdInternal, ProfileLink, PublicationId, ReceivedLikesIteratorSessionId
+    AutomaticProfileSearchIteratorSessionId, AutomaticProfileSearchIteratorSessionIdInternal,
+    MatchesIteratorSessionId, NewsIteratorSessionId, ProfileIteratorSessionId,
+    ProfileIteratorSessionIdInternal, ProfileLink, PublicationId, ReceivedLikesIteratorSessionId,
 };
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{
+    IntoDataError,
     cache::{CacheError, DatabaseCache},
     file::utils::FileDir,
-    IntoDataError,
 };
 use crate::{
-    cache::db_iterator::{new_count::DbIteratorStateNewCount, DbIteratorState},
+    DataError,
+    cache::db_iterator::{DbIteratorState, new_count::DbIteratorStateNewCount},
     content_processing::NewContentInfo,
     db_manager::RouterDatabaseWriteHandle,
     index::LocationIndexIteratorHandle,
     result::Result,
-    DataError,
 };
 
 const PROFILE_ITERATOR_PAGE_SIZE: usize = 25;
@@ -82,8 +93,10 @@ impl ConcurrentWriteCommandHandle {
     pub fn new(write: Arc<RouterDatabaseWriteHandle>, config: &Config) -> Self {
         Self {
             write,
-            content_upload_queue: tokio::sync::Semaphore::new(config.limits_media().concurrent_content_uploads)
-                .into(),
+            content_upload_queue: tokio::sync::Semaphore::new(
+                config.limits_media().concurrent_content_uploads,
+            )
+            .into(),
             profile_index_queue: tokio::sync::Semaphore::new(num_cpus::get()).into(),
             account_write_locks: AccountWriteLockManager::default(),
         }
@@ -317,9 +330,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .overwrite_and_remove_contents_if_exists()
             .await?;
 
-        let tmp_raw_img = self
-            .file_dir
-            .raw_content_upload(id.as_id(), processing_id);
+        let tmp_raw_img = self.file_dir.raw_content_upload(id.as_id(), processing_id);
         tmp_raw_img.save_stream(stream).await?;
 
         let tmp_img = self
@@ -407,10 +418,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
                 );
                 let next_state = self
                     .location
-                    .new_iterator_state(
-                        &p.location.current_position,
-                        p.state.random_profile_order
-                    );
+                    .new_iterator_state(&p.location.current_position, p.state.random_profile_order);
                 p.location.current_iterator = next_state;
                 p.profile_iterator_session_id = Some(new_id);
                 Ok(new_id)
@@ -486,7 +494,11 @@ impl<'a> WriteCommandsConcurrent<'a> {
     ) -> Result<AutomaticProfileSearchIteratorSessionIdInternal, DataError> {
         self.cache
             .write_cache_blocking(id.as_id(), |e| {
-                let distance_filter_enabled = e.common.app_notification_settings.profile.automatic_profile_search_distance;
+                let distance_filter_enabled = e
+                    .common
+                    .app_notification_settings
+                    .profile
+                    .automatic_profile_search_distance;
                 let p = e.profile_data_mut()?;
                 let new_id = AutomaticProfileSearchIteratorSessionIdInternal::create(
                     &mut p.automatic_profile_search.iterator_session_id_storage,
@@ -494,16 +506,11 @@ impl<'a> WriteCommandsConcurrent<'a> {
                 let area = if distance_filter_enabled {
                     &p.location.current_position
                 } else {
-                    &p.location.current_position.with_max_area(
-                        self.location.index(),
-                    )
+                    &p.location
+                        .current_position
+                        .with_max_area(self.location.index())
                 };
-                let next_state = self
-                    .location
-                    .new_iterator_state(
-                        area,
-                        false,
-                    );
+                let next_state = self.location.new_iterator_state(area, false);
                 p.automatic_profile_search.current_iterator = next_state;
                 p.automatic_profile_search.iterator_session_id = Some(new_id);
                 Ok(new_id)

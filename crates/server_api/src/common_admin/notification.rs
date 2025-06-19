@@ -1,17 +1,20 @@
-use axum::{extract::State, Extension};
+use axum::{Extension, extract::State};
 use model::{AccountIdInternal, AdminNotification, PendingNotificationFlags, Permissions};
-use server_data::{app::EventManagerProvider, read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
+use server_data::{
+    app::EventManagerProvider, read::GetReadCommandsCommon, write::GetWriteCommandsCommon,
+};
 use server_state::{app::AdminNotificationProvider, db_write_multiple};
 use simple_backend::create_counters;
 
 use crate::{
+    S,
     app::{ReadData, WriteData},
     create_open_api_router,
     utils::{Json, StatusCode},
-    S,
 };
 
-const PATH_GET_ADMIN_NOTIFICATION_SUBSCRIPTIONS: &str = "/common_api/admin_notification_subscriptions";
+const PATH_GET_ADMIN_NOTIFICATION_SUBSCRIPTIONS: &str =
+    "/common_api/admin_notification_subscriptions";
 
 /// Get admin notification subscriptions.
 ///
@@ -47,7 +50,8 @@ pub async fn get_admin_notification_subscriptions(
     }
 }
 
-const PATH_POST_ADMIN_NOTIFICATION_SUBSCRIPTIONS: &str = "/common_api/admin_notification_subscriptions";
+const PATH_POST_ADMIN_NOTIFICATION_SUBSCRIPTIONS: &str =
+    "/common_api/admin_notification_subscriptions";
 
 /// Save admin notification subscriptions.
 ///
@@ -123,12 +127,14 @@ pub async fn post_get_admin_notification(
             )
             .await;
 
-        let data = state.admin_notification()
+        let data = state
+            .admin_notification()
             .get_notification_state(api_caller_account_id)
             .await
             .unwrap_or_default();
 
-        state.admin_notification()
+        state
+            .admin_notification()
             .reset_notification_state(api_caller_account_id)
             .await;
 

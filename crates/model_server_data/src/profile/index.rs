@@ -1,11 +1,18 @@
-use std::{num::NonZeroU16, sync::atomic::{AtomicI64, AtomicU64, Ordering}};
+use std::{
+    num::NonZeroU16,
+    sync::atomic::{AtomicI64, AtomicU64, Ordering},
+};
 
 use model::{AccountId, InitialSetupCompletedTime, ProfileAge, ProfileContentVersion};
 use nalgebra::DMatrix;
 use simple_backend_model::UnixTime;
 
 use super::{
-    LastSeenTimeFilter, ProfileAttributeFilterValue, ProfileAttributesInternal, ProfileCreatedTimeFilter, ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal, ProfileSearchAgeRangeValidated, ProfileStateCached, ProfileTextCharacterCount, ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter, SearchGroupFlags, SearchGroupFlagsFilter, SortedProfileAttributes
+    LastSeenTimeFilter, ProfileAttributeFilterValue, ProfileAttributesInternal,
+    ProfileCreatedTimeFilter, ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal,
+    ProfileSearchAgeRangeValidated, ProfileStateCached, ProfileTextCharacterCount,
+    ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter, SearchGroupFlags,
+    SearchGroupFlagsFilter, SortedProfileAttributes,
 };
 use crate::{LastSeenTime, ProfileAppNotificationSettings, ProfileContentEditedTime, ProfileLink};
 
@@ -189,14 +196,22 @@ impl LocationIndexProfileData {
         }
 
         if is_match {
-            if let Some(profile_created_time_filter) = query_maker_details.profile_created_time_filter {
-                is_match &= profile_created_time_filter.is_match(self.profile_created_time, current_time);
+            if let Some(profile_created_time_filter) =
+                query_maker_details.profile_created_time_filter
+            {
+                is_match &=
+                    profile_created_time_filter.is_match(self.profile_created_time, current_time);
             }
         }
 
         if is_match {
-            if let Some(profile_edited_time_filter) = query_maker_details.profile_edited_time_filter {
-                is_match &= profile_edited_time_filter.is_match(self.profile_edited_time, self.profile_content_edited_time, current_time);
+            if let Some(profile_edited_time_filter) = query_maker_details.profile_edited_time_filter
+            {
+                is_match &= profile_edited_time_filter.is_match(
+                    self.profile_edited_time,
+                    self.profile_content_edited_time,
+                    current_time,
+                );
             }
         }
 
@@ -242,12 +257,11 @@ impl LocationIndexProfileData {
         attribute_info: &ProfileAttributesInternal,
     ) -> bool {
         for filter in &query_maker_details.attribute_filters {
-            let attribute_info =
-                if let Some(info) = attribute_info.get_attribute(filter.id()) {
-                    info
-                } else {
-                    return false;
-                };
+            let attribute_info = if let Some(info) = attribute_info.get_attribute(filter.id()) {
+                info
+            } else {
+                return false;
+            };
 
             if let Some(value) = self.attributes.find_id(filter.id()) {
                 if !filter.is_match_with_attribute_value(value, attribute_info) {
@@ -329,10 +343,7 @@ impl CellData {
     const PROFILES_IN_THIS_AREA_MASK: u64 = 0x8000;
 
     pub fn new(width: NonZeroU16, height: NonZeroU16) -> Self {
-        let state = CellState::new(
-            (height.get() - 1) as u64,
-            (width.get() - 1) as u64,
-        );
+        let state = CellState::new((height.get() - 1) as u64, (width.get() - 1) as u64);
         Self {
             state: AtomicU64::new(state.0),
         }
@@ -366,9 +377,11 @@ impl CellData {
 
     pub fn set_profiles(&self, value: bool) {
         if value {
-            self.state.fetch_or(Self::PROFILES_IN_THIS_AREA_MASK, Ordering::Relaxed);
+            self.state
+                .fetch_or(Self::PROFILES_IN_THIS_AREA_MASK, Ordering::Relaxed);
         } else {
-            self.state.fetch_and(!Self::PROFILES_IN_THIS_AREA_MASK, Ordering::Relaxed);
+            self.state
+                .fetch_and(!Self::PROFILES_IN_THIS_AREA_MASK, Ordering::Relaxed);
         }
     }
 
@@ -380,10 +393,7 @@ impl CellData {
 pub struct CellState(u64);
 
 impl CellState {
-    pub fn new(
-        next_down: u64,
-        next_right: u64,
-    ) -> Self {
+    pub fn new(next_down: u64, next_right: u64) -> Self {
         let mut state: u64 = 0;
         state |= next_down << CellData::NEXT_DOWN.shift;
         state |= next_right << CellData::NEXT_RIGHT.shift;

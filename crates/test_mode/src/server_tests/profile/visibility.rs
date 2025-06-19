@@ -8,9 +8,9 @@ use api_client::{
 use test_mode_macro::server_test;
 
 use crate::{
-    bot::actions::{account::SetProfileVisibility, AssertFailure},
-    runner::server_tests::assert::assert_eq,
     TestContext, TestResult,
+    bot::actions::{AssertFailure, account::SetProfileVisibility},
+    runner::server_tests::assert::assert_eq,
 };
 
 #[server_test]

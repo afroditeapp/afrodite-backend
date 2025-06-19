@@ -1,15 +1,19 @@
 use std::collections::{HashMap, HashSet};
 
-use diesel::{prelude::*, sql_types::BigInt, AsExpression, FromSqlRow};
+use diesel::{AsExpression, FromSqlRow, prelude::*, sql_types::BigInt};
 use model::{AttributeId, ProfileAge};
 use model_server_data::{
-    LastSeenTime, LastSeenTimeFilter, MaxDistanceKm, MinDistanceKm, ProfileAttributeValue, ProfileAttributeValueUpdate, ProfileAttributesInternal, ProfileCreatedTimeFilter, ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal, ProfileNameModerationState, ProfileStateCached, ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter, ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes
+    LastSeenTime, LastSeenTimeFilter, MaxDistanceKm, MinDistanceKm, ProfileAttributeValue,
+    ProfileAttributeValueUpdate, ProfileAttributesInternal, ProfileCreatedTimeFilter,
+    ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal, ProfileNameModerationState,
+    ProfileStateCached, ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter,
+    ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes,
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_wrapper, UnixTime};
+use simple_backend_model::{UnixTime, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{sync_version_wrappers, AccountId, AccountIdDb};
+use crate::{AccountId, AccountIdDb, sync_version_wrappers};
 
 mod age;
 pub use age::*;
@@ -181,10 +185,12 @@ impl ProfileUpdate {
                 match attribute_info {
                     None => return Err("Unknown attribute ID".to_string()),
                     Some(info) => {
-                        let error = || Err(format!(
-                            "Attribute supports max {} selected values",
-                            info.max_selected,
-                        ));
+                        let error = || {
+                            Err(format!(
+                                "Attribute supports max {} selected values",
+                                info.max_selected,
+                            ))
+                        };
                         if info.mode.is_bitflag() {
                             let selected = a.v.first().copied().unwrap_or_default().count_ones();
                             if selected > info.max_selected.into() {

@@ -1,11 +1,14 @@
 use std::path::Path;
 
-use error_stack::{report, Result, ResultExt};
+use error_stack::{Result, ResultExt, report};
+use futures::StreamExt;
 use manager_config::file::SoftwareUpdateConfig;
-use reqwest::{header::{ACCEPT, USER_AGENT}, Client, StatusCode};
+use reqwest::{
+    Client, StatusCode,
+    header::{ACCEPT, USER_AGENT},
+};
 use serde_json::Value;
 use tokio::io::AsyncWriteExt;
-use futures::StreamExt;
 
 use super::UpdateError;
 
@@ -26,9 +29,14 @@ impl GitHubApi<'_> {
     pub async fn get_latest_release_asset(&self) -> Result<Option<ReleaseAsset>, UpdateError> {
         let config = self.updater_config;
 
-        let url = format!("https://api.github.com/repos/{}/{}/releases/latest", config.github.owner, config.github.repository);
+        let url = format!(
+            "https://api.github.com/repos/{}/{}/releases/latest",
+            config.github.owner, config.github.repository
+        );
 
-        let request = self.client.get(url)
+        let request = self
+            .client
+            .get(url)
             .header(ACCEPT, "application/vnd.github+json")
             .header(USER_AGENT, self.user_agent)
             .header("X-GitHub-Api-Version", GITHUB_API_VERSION);
@@ -39,27 +47,28 @@ impl GitHubApi<'_> {
             request
         };
 
-        let request = request.build()
-            .change_context(UpdateError::GitHubApi)?;
+        let request = request.build().change_context(UpdateError::GitHubApi)?;
 
-        let response = self.client.execute(request)
+        let response = self
+            .client
+            .execute(request)
             .await
             .change_context(UpdateError::GitHubApi)?;
 
         let status = response.status();
         if status != StatusCode::OK {
-            let text = response.text()
+            let text = response
+                .text()
                 .await
                 .change_context(UpdateError::GitHubApi)?;
 
-            return Err(
-                report!(UpdateError::GitHubApi)
-                    .attach_printable(status)
-                    .attach_printable(text)
-            );
+            return Err(report!(UpdateError::GitHubApi)
+                .attach_printable(status)
+                .attach_printable(text));
         }
 
-        let json: Value = response.json()
+        let json: Value = response
+            .json()
             .await
             .change_context(UpdateError::GitHubApi)?;
 
@@ -71,37 +80,44 @@ impl GitHubApi<'_> {
 
         let mut selected_asset: Option<ReleaseAsset> = None;
         for a in assets {
-            let Some(name) = a.as_object()
+            let Some(name) = a
+                .as_object()
                 .and_then(|v| v.get("name"))
-                .and_then(|v| v.as_str()) else {
-                    return Err(report!(UpdateError::GitHubApi));
-                };
-            let Some(id) = a.as_object()
+                .and_then(|v| v.as_str())
+            else {
+                return Err(report!(UpdateError::GitHubApi));
+            };
+            let Some(id) = a
+                .as_object()
                 .and_then(|v| v.get("id"))
-                .and_then(|v| v.as_i64()) else {
-                    return Err(report!(UpdateError::GitHubApi));
-                };
-            let Some(uploader) = a.as_object()
+                .and_then(|v| v.as_i64())
+            else {
+                return Err(report!(UpdateError::GitHubApi));
+            };
+            let Some(uploader) = a
+                .as_object()
                 .and_then(|v| v.get("uploader"))
                 .and_then(|v| v.get("login"))
-                .and_then(|v| v.as_str()) else {
-                    return Err(report!(UpdateError::GitHubApi));
-                };
+                .and_then(|v| v.as_str())
+            else {
+                return Err(report!(UpdateError::GitHubApi));
+            };
 
             if name.ends_with(&config.github.file_name_ending) {
                 if let Some(selected) = selected_asset {
-                    return Err(
-                        report!(UpdateError::SotwareDownloadFailedAmbiguousFileName)
-                            .attach_printable(selected.name.to_string())
-                            .attach_printable(name.to_string())
-                    );
+                    return Err(report!(UpdateError::SotwareDownloadFailedAmbiguousFileName)
+                        .attach_printable(selected.name.to_string())
+                        .attach_printable(name.to_string()));
                 } else {
                     if let Some(required_uploader) = &config.github.uploader {
                         if uploader != required_uploader {
-                            return Err(
-                                report!(UpdateError::SotwareDownloadFailedUnknownFileUploader)
-                                    .attach_printable(format!("uploader: {}, expected: {}", uploader, required_uploader))
-                            );
+                            return Err(report!(
+                                UpdateError::SotwareDownloadFailedUnknownFileUploader
+                            )
+                            .attach_printable(format!(
+                                "uploader: {}, expected: {}",
+                                uploader, required_uploader
+                            )));
                         }
                     }
                     selected_asset = Some(ReleaseAsset {
@@ -124,12 +140,12 @@ impl GitHubApi<'_> {
 
         let url = format!(
             "https://api.github.com/repos/{}/{}/releases/assets/{}",
-            config.github.owner,
-            config.github.repository,
-            asset.id,
+            config.github.owner, config.github.repository, asset.id,
         );
 
-        let request = self.client.get(url)
+        let request = self
+            .client
+            .get(url)
             .header(ACCEPT, "application/octet-stream")
             .header(USER_AGENT, self.user_agent)
             .header("X-GitHub-Api-Version", GITHUB_API_VERSION);
@@ -140,19 +156,17 @@ impl GitHubApi<'_> {
             request
         };
 
-        let request = request.build()
-            .change_context(UpdateError::GitHubApi)?;
+        let request = request.build().change_context(UpdateError::GitHubApi)?;
 
-        let response = self.client.execute(request)
+        let response = self
+            .client
+            .execute(request)
             .await
             .change_context(UpdateError::GitHubApi)?;
 
         let status = response.status();
         if status != StatusCode::OK {
-            return Err(
-                report!(UpdateError::GitHubApi)
-                    .attach_printable(status)
-            );
+            return Err(report!(UpdateError::GitHubApi).attach_printable(status));
         }
 
         let mut file = tokio::fs::File::create(download_location)

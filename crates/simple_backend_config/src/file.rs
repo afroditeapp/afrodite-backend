@@ -9,7 +9,10 @@ use std::{
 use error_stack::{Report, Result, ResultExt};
 use manager_model::ManagerInstanceName;
 use serde::{Deserialize, Serialize};
-use simple_backend_utils::{time::{DurationValue, TimeValue, UtcTimeValue}, ContextExt};
+use simple_backend_utils::{
+    ContextExt,
+    time::{DurationValue, TimeValue, UtcTimeValue},
+};
 use url::Url;
 
 pub const CONFIG_FILE_NAME: &str = "simple_backend_config.toml";
@@ -211,15 +214,24 @@ impl SimpleBackendConfigFile {
         dir: impl AsRef<Path>,
         save_default_if_not_found: bool,
     ) -> Result<SimpleBackendConfigFile, ConfigFileError> {
-        let config_string =
-            ConfigFileUtils::load_string(dir, CONFIG_FILE_NAME, DEFAULT_CONFIG_FILE_TEXT, save_default_if_not_found)?;
-        let config: SimpleBackendConfigFile = toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)?;
+        let config_string = ConfigFileUtils::load_string(
+            dir,
+            CONFIG_FILE_NAME,
+            DEFAULT_CONFIG_FILE_TEXT,
+            save_default_if_not_found,
+        )?;
+        let config: SimpleBackendConfigFile =
+            toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)?;
 
-        if let Some(nsfw_detection) = config.image_processing.as_ref().and_then(|v| v.nsfw_detection.as_ref()) {
+        if let Some(nsfw_detection) = config
+            .image_processing
+            .as_ref()
+            .and_then(|v| v.nsfw_detection.as_ref())
+        {
             if nsfw_detection.thresholds == NsfwDetectionThresholds::default() {
-                return Err(ConfigFileError::InvalidConfig
-                    .report()
-                    .attach_printable("Config image_processing.nsfw_detection.thresholds is empty"));
+                return Err(ConfigFileError::InvalidConfig.report().attach_printable(
+                    "Config image_processing.nsfw_detection.thresholds is empty",
+                ));
             }
         }
 
@@ -283,7 +295,7 @@ pub struct DataConfig {
 impl Default for DataConfig {
     fn default() -> Self {
         Self {
-            dir: "data".to_string().into()
+            dir: "data".to_string().into(),
         }
     }
 }
@@ -307,9 +319,9 @@ pub struct SocketConfig {
 
 impl SocketConfig {
     pub fn public_api_enabled(&self) -> bool {
-        self.public_api.is_some() ||
-        self.public_bot_api.is_some() ||
-        self.experimental_internal_api.is_some()
+        self.public_api.is_some()
+            || self.public_bot_api.is_some()
+            || self.experimental_internal_api.is_some()
     }
 }
 

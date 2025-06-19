@@ -1,14 +1,20 @@
-use axum::{extract::State, Extension};
+use axum::{Extension, extract::State};
 use base64::Engine;
 use model::{AdminNotificationTypes, UpdateReportResult};
-use model_chat::{AccountIdInternal, NewChatMessageReportInternal, SignedMessageData, UpdateChatMessageReport};
-use server_api::{app::{AdminNotificationProvider, DataSignerProvider}, create_open_api_router, db_write_multiple, S};
+use model_chat::{
+    AccountIdInternal, NewChatMessageReportInternal, SignedMessageData, UpdateChatMessageReport,
+};
+use server_api::{
+    S,
+    app::{AdminNotificationProvider, DataSignerProvider},
+    create_open_api_router, db_write_multiple,
+};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 use utils::encrypt::{decrypt_binary_message, verify_signed_binary_message};
 
 use crate::{
-    app::{GetAccounts, WriteData, ReadData},
+    app::{GetAccounts, ReadData, WriteData},
     utils::{Json, StatusCode},
 };
 
@@ -35,15 +41,19 @@ pub async fn post_chat_message_report(
 ) -> Result<Json<UpdateReportResult>, StatusCode> {
     CHAT.post_chat_message_report.incr();
 
-    let signed_message = base64::engine::general_purpose::STANDARD.decode(update.backend_signed_message_base64)
+    let signed_message = base64::engine::general_purpose::STANDARD
+        .decode(update.backend_signed_message_base64)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let decryption_key = base64::engine::general_purpose::STANDARD.decode(update.decryption_key_base64)
+    let decryption_key = base64::engine::general_purpose::STANDARD
+        .decode(update.decryption_key_base64)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let data = state.data_signer().verify_and_extract_backend_signed_data(&signed_message).await?;
-    let data = SignedMessageData::parse(&data)
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let data = state
+        .data_signer()
+        .verify_and_extract_backend_signed_data(&signed_message)
+        .await?;
+    let data = SignedMessageData::parse(&data).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     if data.receiver != update.target && data.sender != update.target {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -54,14 +64,16 @@ pub async fn post_chat_message_report(
         .read()
         .chat()
         .public_key()
-        .get_public_key_data(sender_account_id_internal, data.sender_public_key_id).await?
+        .get_public_key_data(sender_account_id_internal, data.sender_public_key_id)
+        .await?
         .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
 
     let signed_pgp_message = decrypt_binary_message(&data.message, &decryption_key)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let client_message_bytes = verify_signed_binary_message(&signed_pgp_message, &sender_public_key)
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let client_message_bytes =
+        verify_signed_binary_message(&signed_pgp_message, &sender_public_key)
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     let target = state.get_internal_id(update.target).await?;
     let report = NewChatMessageReportInternal {

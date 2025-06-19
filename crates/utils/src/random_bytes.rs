@@ -1,4 +1,4 @@
-use rand::{rngs::OsRng, RngCore};
+use rand::{RngCore, rngs::OsRng};
 
 pub fn random_128_bits() -> [u8; 16] {
     let mut data = [0u8; 16];

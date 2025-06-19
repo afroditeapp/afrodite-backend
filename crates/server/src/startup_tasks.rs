@@ -106,7 +106,10 @@ impl StartupTasks {
                 // Remove tmp files
                 cmds.common().remove_tmp_files(id).await?;
 
-                cmds.chat().limits().reset_daily_likes_left_if_needed(id).await?;
+                cmds.chat()
+                    .limits()
+                    .reset_daily_likes_left_if_needed(id)
+                    .await?;
 
                 Ok(())
             })

@@ -1,12 +1,11 @@
 use std::time::Duration;
 
-use error_stack::{report, Result, ResultExt};
+use error_stack::{Result, ResultExt, report};
 use manager_api::protocol::RequestSenderCmds;
 use manager_model::SecureStorageEncryptionKey;
 
-use crate::api::{client::LocalOrRemoteApiClient, GetConfig};
-
 use super::app::S;
+use crate::api::{GetConfig, client::LocalOrRemoteApiClient};
 
 #[derive(thiserror::Error, Debug)]
 pub enum ApiError {
@@ -53,11 +52,10 @@ impl<'a> ApiManager<'a> {
             .config()
             .secure_storage_config()
             .ok_or(ApiError::MissingConfiguration)?;
-        let client = LocalOrRemoteApiClient::new(
-            provider.key_storage_manager_name.clone(),
-            self.state,
-        );
-        let request = client.get_secure_storage_encryption_key(self.state.config().manager_name().clone());
+        let client =
+            LocalOrRemoteApiClient::new(provider.key_storage_manager_name.clone(), self.state);
+        let request =
+            client.get_secure_storage_encryption_key(self.state.config().manager_name().clone());
         if let Some(timeout) = provider.key_download_timeout_seconds {
             tokio::select! {
                 _ = tokio::time::sleep(Duration::from_secs(timeout.into())) => {
@@ -68,9 +66,7 @@ impl<'a> ApiManager<'a> {
                 },
             }
         } else {
-            request
-                .await
-                .change_context(ApiError::ApiRequest)
+            request.await.change_context(ApiError::ApiRequest)
         }
     }
 }

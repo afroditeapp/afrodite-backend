@@ -1,10 +1,11 @@
-use database::{define_current_write_commands, DieselDatabaseError};
-use diesel::{
-    delete, insert_into, prelude::*, update, ExpressionMethods, QueryDsl,
-};
+use database::{DieselDatabaseError, define_current_write_commands};
+use diesel::{ExpressionMethods, QueryDsl, delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model_profile::{
-    AccountIdInternal, Location, ProfileAge, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileEditedTime, ProfileFilteringSettingsUpdateValidated, ProfileInternal, ProfileStateInternal, ProfileUpdateValidated, ProfileVersion, SyncVersion, UnixTime
+    AccountIdInternal, Location, ProfileAge, ProfileAttributeFilterValueUpdate,
+    ProfileAttributeValueUpdate, ProfileEditedTime, ProfileFilteringSettingsUpdateValidated,
+    ProfileInternal, ProfileStateInternal, ProfileUpdateValidated, ProfileVersion, SyncVersion,
+    UnixTime,
 };
 
 use crate::IntoDatabaseError;
@@ -168,7 +169,6 @@ impl CurrentWriteProfileData<'_> {
         data: ProfileVersion,
         time: ProfileEditedTime,
     ) -> Result<(), DieselDatabaseError> {
-
         // Update profile version
         {
             use crate::schema::profile::dsl::*;
@@ -287,7 +287,7 @@ impl CurrentWriteProfileData<'_> {
         data: Vec<ProfileAttributeFilterValueUpdate>,
     ) -> Result<(), DieselDatabaseError> {
         for a in data {
-             {
+            {
                 use model::schema::profile_attributes_filter_settings::dsl::*;
 
                 delete(profile_attributes_filter_settings)

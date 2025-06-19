@@ -1,14 +1,14 @@
-use diesel::{prelude::*, sql_types::BigInt, AsExpression, FromSqlRow};
-use model::{sync_version_wrappers, ContentId, ContentIdDb, ContentSlot, ProfileContentVersion, UnixTime};
+use diesel::{AsExpression, FromSqlRow, prelude::*, sql_types::BigInt};
+use model::{
+    ContentId, ContentIdDb, ContentSlot, ProfileContentVersion, UnixTime, sync_version_wrappers,
+};
 use model_server_data::{MediaContentType, ProfileContentEditedTime};
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{
-    schema_sqlite_types::Integer, AccountIdDb
-};
+use crate::{AccountIdDb, schema_sqlite_types::Integer};
 
 mod map;
 pub use map::*;
@@ -31,7 +31,10 @@ pub struct ContentInfo {
     /// "oneOf" property and Dart code generator does not support it.
     ///
     /// Default value is [MediaContentType::JpegImage].
-    #[serde(default = "value_jpeg_image", skip_serializing_if = "value_is_jpeg_image")]
+    #[serde(
+        default = "value_jpeg_image",
+        skip_serializing_if = "value_is_jpeg_image"
+    )]
     #[schema(value_type = Option<MediaContentType>)]
     pub ctype: MediaContentType,
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
@@ -198,7 +201,6 @@ impl Default for ContentModerationState {
 
 diesel_i64_try_from!(ContentModerationState);
 
-
 #[derive(Debug, Clone, PartialEq, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::media_content)]
 #[diesel(check_for_backend(crate::Db))]
@@ -349,23 +351,28 @@ impl CurrentAccountMediaInternal {
     }
 
     pub fn iter_current_profile_content_info(&self) -> impl Iterator<Item = ContentInfo> + '_ {
-        self.iter_current_profile_content().enumerate().map(|(i, v)| ContentInfo {
-            cid: v.content_id(),
-            ctype: v.content_type(),
-            a: v.state().is_accepted(),
-            p: (i == 0 && v.face_detected),
-        })
+        self.iter_current_profile_content()
+            .enumerate()
+            .map(|(i, v)| ContentInfo {
+                cid: v.content_id(),
+                ctype: v.content_type(),
+                a: v.state().is_accepted(),
+                p: (i == 0 && v.face_detected),
+            })
     }
 
-    pub fn iter_current_profile_content_info_fd(&self) -> impl Iterator<Item = ContentInfoWithFd> + '_ {
-        self.iter_current_profile_content().map(|v| ContentInfoWithFd {
-            cid: v.content_id(),
-            ctype: v.content_type(),
-            fd: v.face_detected,
-            state: v.state(),
-            rejected_reason_category: v.moderation_rejected_reason_category,
-            rejected_reason_details: v.moderation_rejected_reason_details.clone(),
-        })
+    pub fn iter_current_profile_content_info_fd(
+        &self,
+    ) -> impl Iterator<Item = ContentInfoWithFd> + '_ {
+        self.iter_current_profile_content()
+            .map(|v| ContentInfoWithFd {
+                cid: v.content_id(),
+                ctype: v.content_type(),
+                fd: v.face_detected,
+                state: v.state(),
+                rejected_reason_category: v.moderation_rejected_reason_category,
+                rejected_reason_details: v.moderation_rejected_reason_details.clone(),
+            })
     }
 }
 
@@ -385,9 +392,7 @@ pub struct SetProfileContent {
 
 impl SetProfileContent {
     pub fn iter(&self) -> impl Iterator<Item = ContentId> + '_ {
-        self.c
-            .iter()
-            .copied()
+        self.c.iter().copied()
     }
 }
 

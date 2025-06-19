@@ -1,8 +1,8 @@
 use crate::define_current_read_commands;
 
 mod notification;
-mod statistics;
 mod report;
+mod statistics;
 
 define_current_read_commands!(CurrentReadCommonAdmin);
 

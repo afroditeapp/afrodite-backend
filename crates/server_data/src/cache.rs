@@ -5,9 +5,7 @@ use chat::CachedChatComponentData;
 use common::CacheEntryCommon;
 use error_stack::Result;
 use media::CachedMedia;
-use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, Permissions
-};
+use model::{AccessToken, AccountId, AccountIdInternal, AccountState, Permissions};
 use model_server_data::{LastSeenTime, LocationIndexKey, LocationIndexProfileData};
 use profile::CachedProfile;
 pub use server_common::data::cache::CacheError;
@@ -16,15 +14,15 @@ use tokio::sync::RwLock;
 
 use crate::{
     db_manager::{InternalReading, InternalWriting},
-    event::{event_channel, EventReceiver, EventSender},
+    event::{EventReceiver, EventSender, event_channel},
 };
 
 pub mod account;
 pub mod chat;
+pub mod common;
 pub mod db_iterator;
 pub mod media;
 pub mod profile;
-pub mod common;
 
 /// If this exists update last seen time atomic variable in location
 /// index.
@@ -609,7 +607,9 @@ impl CacheEntry {
             self.media.as_ref().map(|m| m.profile_content_version),
             self.common.other_shared_state.unlimited_likes,
             profile.last_seen_time(&self.common),
-            self.common.other_shared_state.initial_setup_completed_unix_time,
+            self.common
+                .other_shared_state
+                .initial_setup_completed_unix_time,
             self.media.as_ref().map(|m| m.profile_content_edited_time),
             profile.profile_text_character_count(),
         ))

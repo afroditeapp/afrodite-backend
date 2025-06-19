@@ -1,6 +1,10 @@
-use std::{fs::File, io::BufReader, path::{Path, PathBuf}};
+use std::{
+    fs::File,
+    io::BufReader,
+    path::{Path, PathBuf},
+};
 
-use error_stack::{report, Result, ResultExt};
+use error_stack::{Result, ResultExt, report};
 use flate2::bufread::GzDecoder;
 use manager_config::file::SimplePatternPath;
 use tar::Archive;
@@ -14,15 +18,8 @@ pub async fn extract_backend_binary(
     target: PathBuf,
 ) -> Result<(), UpdateError> {
     tokio::task::spawn_blocking(move || {
-        let path = find_backend_binary_from_archive_sync(
-            &archive,
-            archive_file_path
-        )?;
-        extract_backend_binary_sync(
-            &archive,
-            path,
-            target,
-        )
+        let path = find_backend_binary_from_archive_sync(&archive, archive_file_path)?;
+        extract_backend_binary_sync(&archive, path, target)
     })
     .await
     .change_context(UpdateError::Archive)?
@@ -32,13 +29,10 @@ fn find_backend_binary_from_archive_sync(
     archive: &Path,
     archive_file_path: SimplePatternPath,
 ) -> Result<PathBuf, UpdateError> {
-    let file = File::open(archive)
-        .change_context(UpdateError::Archive)?;
+    let file = File::open(archive).change_context(UpdateError::Archive)?;
     let decoder = GzDecoder::new(BufReader::new(file));
     let mut archive = Archive::new(decoder);
-    let entries = archive
-        .entries()
-        .change_context(UpdateError::Archive)?;
+    let entries = archive.entries().change_context(UpdateError::Archive)?;
 
     let mut found_files = vec![];
     let mut matching_file: Option<(_, String)> = None;
@@ -81,13 +75,10 @@ fn extract_backend_binary_sync(
     archive_file_path: PathBuf,
     target: PathBuf,
 ) -> Result<(), UpdateError> {
-    let file = File::open(archive)
-        .change_context(UpdateError::Archive)?;
+    let file = File::open(archive).change_context(UpdateError::Archive)?;
     let decoder = GzDecoder::new(BufReader::new(file));
     let mut archive = Archive::new(decoder);
-    let entries = archive
-        .entries()
-        .change_context(UpdateError::Archive)?;
+    let entries = archive.entries().change_context(UpdateError::Archive)?;
 
     for e in entries {
         let mut e = e.change_context(UpdateError::Archive)?;
@@ -102,10 +93,8 @@ fn extract_backend_binary_sync(
 
         info!("Extracting file {}", path.to_string_lossy());
 
-        let mut target_file = File::create(target)
-            .change_context(UpdateError::Archive)?;
-        std::io::copy(&mut e, &mut target_file)
-            .change_context(UpdateError::Archive)?;
+        let mut target_file = File::create(target).change_context(UpdateError::Archive)?;
+        std::io::copy(&mut e, &mut target_file).change_context(UpdateError::Archive)?;
 
         return Ok(());
     }

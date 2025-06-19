@@ -19,8 +19,10 @@ use model_chat::SignInWithInfo;
 use model_server_data::EmailAddress;
 use server_common::{push_notifications::PushNotificationSender, websocket::WebSocketError};
 use server_data::{
-    app::{DataAllUtils, GetConfig}, content_processing::ContentProcessingManagerData,
-    db_manager::RouterDatabaseReadHandle, statistics::ProfileStatisticsCache,
+    app::{DataAllUtils, GetConfig},
+    content_processing::ContentProcessingManagerData,
+    db_manager::RouterDatabaseReadHandle,
+    statistics::ProfileStatisticsCache,
     write_commands::WriteCommandRunnerHandle,
 };
 use simple_backend::app::SimpleBackendAppState;
@@ -28,15 +30,15 @@ use simple_backend::app::SimpleBackendAppState;
 use self::internal_api::InternalApiClient;
 use crate::{admin_notifications::AdminNotificationManagerData, demo::DemoModeManager};
 
+pub mod admin_notifications;
 pub mod api_usage;
 pub mod app;
-pub mod demo;
 pub mod client_version;
+pub mod data_signer;
+pub mod demo;
 pub mod internal_api;
 pub mod ip_address;
 pub mod state_impl;
-pub mod data_signer;
-pub mod admin_notifications;
 pub mod utils;
 
 pub use server_common::{data::DataError, result};
@@ -47,7 +49,7 @@ pub type S = AppState;
 
 #[derive(Clone)]
 pub struct AppState {
-    state: Arc<AppStateInternal>
+    state: Arc<AppStateInternal>,
 }
 
 struct AppStateInternal {
@@ -239,9 +241,8 @@ impl DataAllAccess<'_> {
 macro_rules! db_write {
     ($state:expr, move |$cmds:ident| $commands:expr) => {{
         let r = async {
-            let r: $crate::result::Result<_, server_data::DataError> = $state
-                .write(move |$cmds| async move { ($commands) })
-                .await;
+            let r: $crate::result::Result<_, server_data::DataError> =
+                $state.write(move |$cmds| async move { ($commands) }).await;
             r
         }
         .await;
@@ -327,10 +328,7 @@ macro_rules! __route {
     }
 }
 
-pub fn obfuscate_api_path(
-    state: &StateForRouterCreation,
-    path: String,
-) -> String {
+pub fn obfuscate_api_path(state: &StateForRouterCreation, path: String) -> String {
     if state.disable_api_obfuscation {
         return path;
     }
@@ -354,8 +352,8 @@ fn obfuscate_path(path: &str, salt: &str) -> String {
 }
 
 fn obfuscate(text: &str, salt: &str) -> String {
-    use sha1::Digest;
     use base64::Engine;
+    use sha1::Digest;
 
     let mut hasher = sha1::Sha1::new();
     hasher.update(text.as_bytes());

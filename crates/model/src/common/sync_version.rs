@@ -1,8 +1,8 @@
-use diesel::{sql_types::BigInt, AsExpression, FromSqlRow};
+use diesel::{AsExpression, FromSqlRow, sql_types::BigInt};
+use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_wrapper;
 use utoipa::ToSchema;
-use num_enum::TryFromPrimitive;
 
 #[derive(Debug)]
 pub struct SyncDataVersionFromClient {

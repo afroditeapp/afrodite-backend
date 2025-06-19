@@ -1,6 +1,6 @@
 use database::{
-    current::read::GetDbReadCommandsCommon, define_current_read_commands, DieselDatabaseError,
-    IntoDatabaseError,
+    DieselDatabaseError, IntoDatabaseError, current::read::GetDbReadCommandsCommon,
+    define_current_read_commands,
 };
 use diesel::prelude::*;
 use error_stack::Result;

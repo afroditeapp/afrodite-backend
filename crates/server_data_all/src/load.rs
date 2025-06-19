@@ -2,7 +2,7 @@ use std::collections::hash_map::Entry;
 
 use config::Config;
 use database::{
-    current::read::GetDbReadCommandsCommon, CurrentReadHandle, DbReaderRaw, DieselDatabaseError,
+    CurrentReadHandle, DbReaderRaw, DieselDatabaseError, current::read::GetDbReadCommandsCommon,
 };
 use database_account::current::read::GetDbReadCommandsAccount;
 use database_chat::current::read::GetDbReadCommandsChat;
@@ -10,12 +10,12 @@ use database_media::current::read::GetDbReadCommandsMedia;
 use database_profile::current::read::GetDbReadCommandsProfile;
 use error_stack::{Result, ResultExt};
 use model::AccountIdInternal;
-pub use server_common::data::cache::CacheError;
 use server_common::data::WithInfo;
+pub use server_common::data::cache::CacheError;
 use server_data::{
     cache::{
-        account::CachedAccountComponentData, chat::CachedChatComponentData, media::CachedMedia,
-        profile::CachedProfile, DatabaseCache,
+        DatabaseCache, account::CachedAccountComponentData, chat::CachedChatComponentData,
+        media::CachedMedia, profile::CachedProfile,
     },
     index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
 };
@@ -109,29 +109,50 @@ impl DbDataToCacheLoader {
         entry.common.other_shared_state = other_state;
 
         let push_notification_state = db
-            .db_read(move |mut cmds| cmds.common().push_notification().push_notification_db_state(account_id))
+            .db_read(move |mut cmds| {
+                cmds.common()
+                    .push_notification()
+                    .push_notification_db_state(account_id)
+            })
             .await?;
         // Try retry sending of not already sent notifications
         if !push_notification_state.fcm_notification_sent {
-            entry.common.pending_notification_flags = push_notification_state.pending_notification.into();
+            entry.common.pending_notification_flags =
+                push_notification_state.pending_notification.into();
         }
 
         // App notification settings
         {
             let account = db
-                .db_read(move |mut cmds| cmds.account().notification().app_notification_settings(account_id))
+                .db_read(move |mut cmds| {
+                    cmds.account()
+                        .notification()
+                        .app_notification_settings(account_id)
+                })
                 .await?;
             entry.common.app_notification_settings.account = account;
             let profile = db
-                .db_read(move |mut cmds| cmds.profile().notification().app_notification_settings(account_id))
+                .db_read(move |mut cmds| {
+                    cmds.profile()
+                        .notification()
+                        .app_notification_settings(account_id)
+                })
                 .await?;
             entry.common.app_notification_settings.profile = profile;
             let media = db
-                .db_read(move |mut cmds| cmds.media().notification().app_notification_settings(account_id))
+                .db_read(move |mut cmds| {
+                    cmds.media()
+                        .notification()
+                        .app_notification_settings(account_id)
+                })
                 .await?;
             entry.common.app_notification_settings.media = media;
             let chat = db
-                .db_read(move |mut cmds| cmds.chat().notification().app_notification_settings(account_id))
+                .db_read(move |mut cmds| {
+                    cmds.chat()
+                        .notification()
+                        .app_notification_settings(account_id)
+                })
                 .await?;
             entry.common.app_notification_settings.chat = chat;
         }
@@ -152,13 +173,13 @@ impl DbDataToCacheLoader {
                 })
                 .await?;
             let media_state = db
-                .db_read(move |mut cmds| {
-                    cmds.media()
-                        .get_media_state(account_id)
-                })
+                .db_read(move |mut cmds| cmds.media().get_media_state(account_id))
                 .await?;
-            let media_data =
-                CachedMedia::new(account_id.uuid, media_content.profile_content_version_uuid, media_state.profile_content_edited_unix_time);
+            let media_data = CachedMedia::new(
+                account_id.uuid,
+                media_content.profile_content_version_uuid,
+                media_state.profile_content_edited_unix_time,
+            );
             entry.media = Some(Box::new(media_data));
         }
 
@@ -184,7 +205,11 @@ impl DbDataToCacheLoader {
                 .db_read(move |mut cmds| cmds.profile().data().profile_last_seen_time(account_id))
                 .await?;
             let automatic_profile_search_last_seen_time = db
-                .db_read(move |mut cmds| cmds.profile_admin().search().automatic_profile_search_last_seen_time(account_id))
+                .db_read(move |mut cmds| {
+                    cmds.profile_admin()
+                        .search()
+                        .automatic_profile_search_last_seen_time(account_id)
+                })
                 .await?;
 
             let mut profile_data = CachedProfile::new(
@@ -202,12 +227,10 @@ impl DbDataToCacheLoader {
                 profile_data.state.max_distance_km_filter,
             );
             profile_data.location.current_position = location_area.clone();
-            profile_data.location.current_iterator =
-                index_iterator.new_iterator_state(
-                    &location_area,
-                    profile_data.state.random_profile_order
-                );
-            profile_data.automatic_profile_search.last_seen_unix_time = automatic_profile_search_last_seen_time;
+            profile_data.location.current_iterator = index_iterator
+                .new_iterator_state(&location_area, profile_data.state.random_profile_order);
+            profile_data.automatic_profile_search.last_seen_unix_time =
+                automatic_profile_search_last_seen_time;
 
             entry.profile = Some(Box::new(profile_data));
 

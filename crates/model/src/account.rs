@@ -4,8 +4,8 @@ use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    schema_sqlite_types::Integer, AccountId, AccountStateRelatedSharedState, AccountSyncVersion,
-    ProfileAge,
+    AccountId, AccountStateRelatedSharedState, AccountSyncVersion, ProfileAge,
+    schema_sqlite_types::Integer,
 };
 
 mod news;
@@ -92,17 +92,7 @@ pub enum AccountState {
     PendingDeletion,
 }
 
-#[derive(
-    Debug,
-    Default,
-    Clone,
-    Copy,
-    Deserialize,
-    Serialize,
-    ToSchema,
-    PartialEq,
-    Eq,
-)]
+#[derive(Debug, Default, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct AccountStateContainer {
     #[serde(default, skip_serializing_if = "value_is_true")]
     #[schema(default = true)]
@@ -258,10 +248,8 @@ impl ProfileVisibility {
 
     pub fn change_to_private_or_pending_private(&mut self) {
         match *self {
-            Self::Public |
-            Self::Private => *self = Self::Private,
-            Self::PendingPublic |
-            Self::PendingPrivate => *self = Self::PendingPrivate,
+            Self::Public | Self::Private => *self = Self::Private,
+            Self::PendingPublic | Self::PendingPrivate => *self = Self::PendingPrivate,
         };
     }
 }

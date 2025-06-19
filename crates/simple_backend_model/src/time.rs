@@ -1,5 +1,5 @@
 use chrono::{Datelike, Timelike};
-use diesel::{sql_types::BigInt, AsExpression, FromSqlRow};
+use diesel::{AsExpression, FromSqlRow, sql_types::BigInt};
 use serde::{Deserialize, Serialize};
 use simple_backend_utils::current_unix_time;
 use utoipa::{IntoParams, ToSchema};
@@ -73,7 +73,7 @@ diesel_i64_wrapper!(UnixTime);
 impl From<chrono::DateTime<chrono::Utc>> for UnixTime {
     fn from(value: chrono::DateTime<chrono::Utc>) -> Self {
         Self {
-            ut: value.timestamp()
+            ut: value.timestamp(),
         }
     }
 }

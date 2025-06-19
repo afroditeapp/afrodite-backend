@@ -7,26 +7,26 @@ use api_client::{
         profile_api::{post_profile, post_search_age_range, post_search_groups},
     },
     models::{
-        AccountId, EventToClient, MediaContentType, ModerationQueueType, ProfileSearchAgeRange, ProfileUpdate, SearchGroups
+        AccountId, EventToClient, MediaContentType, ModerationQueueType, ProfileSearchAgeRange,
+        ProfileUpdate, SearchGroups,
     },
 };
-use config::{args::TestMode, bot_config_file::BotConfigFile, Config};
+use config::{Config, args::TestMode, bot_config_file::BotConfigFile};
 use error_stack::{Result, ResultExt};
 use tokio::sync::Mutex;
 
 use crate::{
-    action_array,
+    TestError, action_array,
     bot::{
+        AccountConnections, BotState,
         actions::{
+            BotAction,
             account::{CompleteAccountSetup, Login, Register, SetAccountSetup},
             admin::content::ModerateContentModerationRequest,
             media::{SendImageToSlot, SetContent},
-            BotAction,
         },
-        AccountConnections, BotState,
     },
     client::ApiClient,
-    TestError,
 };
 
 #[derive(Debug)]
@@ -198,7 +198,9 @@ impl TestContext {
     /// Admin account with Normal state.
     pub async fn new_admin_and_moderate_initial_content(&mut self) -> Result<Admin, TestError> {
         let mut admin = self.new_admin().await?;
-        admin.accept_pending_content_moderations_for_initial_images().await?;
+        admin
+            .accept_pending_content_moderations_for_initial_images()
+            .await?;
         Ok(admin)
     }
 
@@ -213,14 +215,15 @@ pub struct Account {
 }
 
 impl Account {
-    pub async fn register_and_login(test_context: &mut TestContext, admin: bool) -> Result<Self, TestError> {
+    pub async fn register_and_login(
+        test_context: &mut TestContext,
+        admin: bool,
+    ) -> Result<Self, TestError> {
         let urls = test_context
             .test_config
             .api_urls
             .clone()
-            .change_ports(
-                test_context.account_server_api_port,
-            )
+            .change_ports(test_context.account_server_api_port)
             .map_err(|_| TestError::ApiUrlPortConfigFailed.report())?;
 
         let bot_id = if admin && !test_context.admin_access_granted {
@@ -319,7 +322,9 @@ impl Admin {
         &mut self.account
     }
 
-    pub async fn accept_pending_content_moderations_for_initial_images(&mut self) -> Result<(), TestError> {
+    pub async fn accept_pending_content_moderations_for_initial_images(
+        &mut self,
+    ) -> Result<(), TestError> {
         self.accept_pending_content_moderations(ModerationQueueType::InitialMediaModeration)
             .await
     }
@@ -333,15 +338,14 @@ impl Admin {
                 .run(ModerateContentModerationRequest::from_queue(queue))
                 .await?;
 
-            let list =
-                media_admin_api::get_profile_content_pending_moderation_list(
-                    self.account.media_api(),
-                    MediaContentType::JpegImage,
-                    queue,
-                    true
-                )
-                    .await
-                    .change_context(TestError::ApiRequest)?;
+            let list = media_admin_api::get_profile_content_pending_moderation_list(
+                self.account.media_api(),
+                MediaContentType::JpegImage,
+                queue,
+                true,
+            )
+            .await
+            .change_context(TestError::ApiRequest)?;
 
             if list.values.is_empty() {
                 break;

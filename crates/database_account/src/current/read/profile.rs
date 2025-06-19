@@ -1,7 +1,7 @@
-use database::{define_current_read_commands, DieselDatabaseError, IntoDatabaseError};
+use database::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
 use diesel::{
-    query_dsl::methods::{FilterDsl, SelectDsl},
     ExpressionMethods, RunQueryDsl,
+    query_dsl::methods::{FilterDsl, SelectDsl},
 };
 use error_stack::Result;
 use model::AccountIdInternal;

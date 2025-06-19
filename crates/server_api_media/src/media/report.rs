@@ -1,7 +1,7 @@
-use axum::{extract::State, Extension};
+use axum::{Extension, extract::State};
 use model::{AdminNotificationTypes, UpdateReportResult};
 use model_media::{AccountIdInternal, UpdateProfileContentReport};
-use server_api::{app::AdminNotificationProvider, create_open_api_router, db_write_multiple, S};
+use server_api::{S, app::AdminNotificationProvider, create_open_api_router, db_write_multiple};
 use server_data_media::write::GetWriteCommandsMedia;
 use simple_backend::create_counters;
 

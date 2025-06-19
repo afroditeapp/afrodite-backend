@@ -3,7 +3,8 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    AccountId, ProfileTextModerationInfo, ProfileTextModerationRejectedReasonCategory, ProfileTextModerationRejectedReasonDetails
+    AccountId, ProfileTextModerationInfo, ProfileTextModerationRejectedReasonCategory,
+    ProfileTextModerationRejectedReasonDetails,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

@@ -1,13 +1,13 @@
 use axum::{
-    extract::{Path, Query, State},
     Extension,
+    extract::{Path, Query, State},
 };
 use model_account::{
     AccountIdInternal, GetNewsItemResult, NewsId, NewsIteratorSessionId, NewsLocale, NewsPage,
     PageItemCountForNewPublicNews, PendingNotificationFlags, Permissions, RequireNewsLocale,
     ResetNewsIteratorResult, UnreadNewsCountResult,
 };
-use server_api::{app::EventManagerProvider, create_open_api_router, db_write_multiple, S};
+use server_api::{S, app::EventManagerProvider, create_open_api_router, db_write_multiple};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 
@@ -64,7 +64,10 @@ pub async fn post_reset_news_paging(
 ) -> Result<Json<ResetNewsIteratorResult>, StatusCode> {
     ACCOUNT.post_reset_news_paging.incr();
     let r = db_write_multiple!(state, move |cmds| {
-        cmds.account().news().handle_reset_news_iterator(account_id).await
+        cmds.account()
+            .news()
+            .handle_reset_news_iterator(account_id)
+            .await
     })?;
 
     Ok(r.into())

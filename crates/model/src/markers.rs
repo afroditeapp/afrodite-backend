@@ -120,11 +120,11 @@ where
 }
 
 impl<
-        T1: IsLoggingAllowed + Debug,
-        T2: IsLoggingAllowed + Debug,
-        T3: IsLoggingAllowed + Debug,
-        T4: IsLoggingAllowed + Debug,
-    > IsLoggingAllowed for (T1, T2, T3, T4)
+    T1: IsLoggingAllowed + Debug,
+    T2: IsLoggingAllowed + Debug,
+    T3: IsLoggingAllowed + Debug,
+    T4: IsLoggingAllowed + Debug,
+> IsLoggingAllowed for (T1, T2, T3, T4)
 where
     Self: Debug,
 {

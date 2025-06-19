@@ -1,8 +1,10 @@
-
-use error_stack::{ResultExt, Result};
+use error_stack::{Result, ResultExt};
 use manager_model::BackupMessage;
-use tokio::{sync::{mpsc, oneshot}, task::JoinHandle};
-use tracing::{warn, error};
+use tokio::{
+    sync::{mpsc, oneshot},
+    task::JoinHandle,
+};
+use tracing::{error, warn};
 
 use crate::{api::utils::BackupLinkClient, server::ServerQuitWatcher};
 
@@ -75,7 +77,9 @@ pub struct BackupLinkManagerHandleServer {
 }
 
 impl BackupLinkManagerHandleServer {
-    pub async fn replace_target_connection(&self) -> Result<BackupLinkConnectionReceiver, BackupLinkError> {
+    pub async fn replace_target_connection(
+        &self,
+    ) -> Result<BackupLinkConnectionReceiver, BackupLinkError> {
         let (handle_sender, handle_receiver) = oneshot::channel();
         self.sender
             .send(BackupLinkManagerMessage::ReplaceTargetConnection { handle_sender })
@@ -87,7 +91,9 @@ impl BackupLinkManagerHandleServer {
     }
 
     /// None is returned when target client is not connected.
-    pub async fn replace_source_connection(&self) -> Result<Option<BackupLinkConnectionReceiver>, BackupLinkError> {
+    pub async fn replace_source_connection(
+        &self,
+    ) -> Result<Option<BackupLinkConnectionReceiver>, BackupLinkError> {
         let (handle_sender, handle_receiver) = oneshot::channel();
         self.sender
             .send(BackupLinkManagerMessage::ReplaceSourceConnection { handle_sender })
@@ -98,16 +104,26 @@ impl BackupLinkManagerHandleServer {
             .change_context(BackupLinkError::BrokenChannel)
     }
 
-    pub async fn clean_connection(&self, client_type: BackupLinkClient) -> Result<(), BackupLinkError> {
+    pub async fn clean_connection(
+        &self,
+        client_type: BackupLinkClient,
+    ) -> Result<(), BackupLinkError> {
         self.sender
             .send(BackupLinkManagerMessage::CleanConnection { client_type })
             .await
             .change_context(BackupLinkError::BrokenChannel)
     }
 
-    pub async fn receive_message(&self, client_type: BackupLinkClient, message: BackupMessage) -> Result<(), BackupLinkError> {
+    pub async fn receive_message(
+        &self,
+        client_type: BackupLinkClient,
+        message: BackupMessage,
+    ) -> Result<(), BackupLinkError> {
         self.sender
-            .send(BackupLinkManagerMessage::ReceiveMessage { client_type, message })
+            .send(BackupLinkManagerMessage::ReceiveMessage {
+                client_type,
+                message,
+            })
             .await
             .change_context(BackupLinkError::BrokenChannel)
     }
@@ -125,15 +141,15 @@ pub struct BackupLinkManagerServer {
 }
 
 impl BackupLinkManagerServer {
-    pub fn new_channel() -> (BackupLinkManagerHandleServer, BackupLinkManagerInternalState) {
+    pub fn new_channel() -> (
+        BackupLinkManagerHandleServer,
+        BackupLinkManagerInternalState,
+    ) {
         let (sender, receiver) = mpsc::channel(10);
         let handle = BackupLinkManagerHandleServer {
             sender: sender.clone(),
         };
-        let state = BackupLinkManagerInternalState {
-            sender,
-            receiver,
-        };
+        let state = BackupLinkManagerInternalState { sender, receiver };
         (handle, state)
     }
 
@@ -163,9 +179,7 @@ impl BackupLinkManagerServer {
         }
     }
 
-    async fn handle_messages(
-        mut self,
-    ) {
+    async fn handle_messages(mut self) {
         loop {
             let message = self.receiver.recv().await;
             match message {
@@ -180,30 +194,23 @@ impl BackupLinkManagerServer {
         }
     }
 
-    async fn handle_message(
-        &mut self,
-        message: BackupLinkManagerMessage,
-    ) {
+    async fn handle_message(&mut self, message: BackupLinkManagerMessage) {
         match message {
             BackupLinkManagerMessage::ReplaceSourceConnection { handle_sender } => {
                 if self.connection_target.is_some() {
                     let (sender, receiver) = mpsc::channel(10);
                     self.connection_source = Some(BackupLinkConnectionSender { sender });
-                    let _ = handle_sender.send(Some(BackupLinkConnectionReceiver {
-                        receiver,
-                    }));
+                    let _ = handle_sender.send(Some(BackupLinkConnectionReceiver { receiver }));
                 } else {
                     let _ = handle_sender.send(None);
                 }
-            },
+            }
             BackupLinkManagerMessage::ReplaceTargetConnection { handle_sender } => {
                 let (sender, receiver) = mpsc::channel(10);
                 self.connection_target = Some(BackupLinkConnectionSender { sender });
                 self.connection_source = None;
-                let _ = handle_sender.send(BackupLinkConnectionReceiver {
-                    receiver,
-                });
-            },
+                let _ = handle_sender.send(BackupLinkConnectionReceiver { receiver });
+            }
             BackupLinkManagerMessage::CleanConnection { client_type } => {
                 if let Some(connection) = &self.connection(client_type) {
                     if connection.sender.is_closed() {
@@ -211,7 +218,10 @@ impl BackupLinkManagerServer {
                     }
                 }
             }
-            BackupLinkManagerMessage::ReceiveMessage { client_type, message } => {
+            BackupLinkManagerMessage::ReceiveMessage {
+                client_type,
+                message,
+            } => {
                 let next_location = match client_type {
                     BackupLinkClient::Source => &mut self.connection_target,
                     BackupLinkClient::Target => &mut self.connection_source,
@@ -223,11 +233,14 @@ impl BackupLinkManagerServer {
                         Err(_) => (),
                     }
                 }
-            },
+            }
         }
     }
 
-    pub fn connection(&mut self, client_type: BackupLinkClient) -> &mut Option<BackupLinkConnectionSender> {
+    pub fn connection(
+        &mut self,
+        client_type: BackupLinkClient,
+    ) -> &mut Option<BackupLinkConnectionSender> {
         match client_type {
             BackupLinkClient::Source => &mut self.connection_source,
             BackupLinkClient::Target => &mut self.connection_target,

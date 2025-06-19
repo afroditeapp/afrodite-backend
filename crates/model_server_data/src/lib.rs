@@ -5,12 +5,12 @@
 #![allow(
     clippy::collapsible_else_if,
     clippy::manual_range_contains,
-    clippy::comparison_chain,
+    clippy::comparison_chain
 )]
 
 //! Data types for API and database.
 
-pub use model::{schema, schema_sqlite_types, Db};
+pub use model::{Db, schema, schema_sqlite_types};
 
 mod common;
 pub use common::*;

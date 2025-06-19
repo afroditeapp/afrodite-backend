@@ -1,6 +1,6 @@
-use axum::{extract::State, Extension};
+use axum::{Extension, extract::State};
 use model_profile::{AccountId, AccountIdInternal, FavoriteProfilesPage};
-use server_api::{create_open_api_router, db_write_multiple, S};
+use server_api::{S, create_open_api_router, db_write_multiple};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 

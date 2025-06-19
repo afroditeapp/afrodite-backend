@@ -2,15 +2,15 @@ use model::{AccountId, UnixTime};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-mod news;
-mod search;
-mod permissions;
 mod client_version;
+mod news;
+mod permissions;
+mod search;
 
-pub use news::*;
-pub use search::*;
-pub use permissions::*;
 pub use client_version::*;
+pub use news::*;
+pub use permissions::*;
+pub use search::*;
 
 use crate::{AccountBanReasonCategory, AccountBanReasonDetails};
 

@@ -1,9 +1,9 @@
-use database::{define_current_write_commands, DieselDatabaseError};
+use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model_chat::{AccountIdInternal, AccountInteractionInternal};
 
-use crate::{current::read::GetDbReadCommandsChat, IntoDatabaseError};
+use crate::{IntoDatabaseError, current::read::GetDbReadCommandsChat};
 
 define_current_write_commands!(CurrentWriteChatInteraction);
 

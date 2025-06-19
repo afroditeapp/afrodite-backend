@@ -1,16 +1,17 @@
 use std::sync::Arc;
 
-use database::{define_current_write_commands, DieselDatabaseError};
+use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::PublicKeyId;
 use model_chat::{
-    AccountIdInternal, AccountInteractionState, ClientId, ClientLocalId, PendingMessageIdInternal, SentMessageId, SignedMessageData, UnixTime
+    AccountIdInternal, AccountInteractionState, ClientId, ClientLocalId, PendingMessageIdInternal,
+    SentMessageId, SignedMessageData, UnixTime,
 };
 use utils::encrypt::ParsedKeys;
 
 use super::ReceiverBlockedSender;
-use crate::{current::write::GetDbWriteCommandsChat, IntoDatabaseError};
+use crate::{IntoDatabaseError, current::write::GetDbWriteCommandsChat};
 
 define_current_write_commands!(CurrentWriteChatMessage);
 
@@ -86,10 +87,7 @@ impl CurrentWriteChatMessage<'_> {
         client_id_value: ClientId,
         client_local_id_value: ClientLocalId,
         keys: Arc<ParsedKeys>,
-    ) -> Result<
-        std::result::Result<Vec<u8>, ReceiverBlockedSender>,
-        DieselDatabaseError,
-    > {
+    ) -> Result<std::result::Result<Vec<u8>, ReceiverBlockedSender>, DieselDatabaseError> {
         use model::schema::{account_interaction, pending_messages::dsl::*};
         let time = UnixTime::current_time();
         let interaction = self
@@ -112,12 +110,18 @@ impl CurrentWriteChatMessage<'_> {
 
         if interaction.account_id_sender == Some(*sender.as_db_id()) {
             update(account_interaction::table.find(interaction.id))
-                .set(account_interaction::message_counter_sender.eq(account_interaction::message_counter_sender + 1))
+                .set(
+                    account_interaction::message_counter_sender
+                        .eq(account_interaction::message_counter_sender + 1),
+                )
                 .execute(self.conn())
                 .into_db_error((sender, receiver, new_message_number))?;
         } else {
             update(account_interaction::table.find(interaction.id))
-                .set(account_interaction::message_counter_receiver.eq(account_interaction::message_counter_receiver + 1))
+                .set(
+                    account_interaction::message_counter_receiver
+                        .eq(account_interaction::message_counter_receiver + 1),
+                )
                 .execute(self.conn())
                 .into_db_error((sender, receiver, new_message_number))?;
         }
@@ -132,7 +136,8 @@ impl CurrentWriteChatMessage<'_> {
             message,
         };
 
-        let signed = keys.sign(&data_for_signing.to_bytes())
+        let signed = keys
+            .sign(&data_for_signing.to_bytes())
             .change_context(DieselDatabaseError::MessageEncryptionError)?;
 
         insert_into(pending_messages)

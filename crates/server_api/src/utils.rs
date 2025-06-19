@@ -2,22 +2,22 @@ use std::net::SocketAddr;
 
 use axum::{
     body::Body,
-    extract::{rejection::JsonRejection, ConnectInfo, FromRequest, State},
+    extract::{ConnectInfo, FromRequest, State, rejection::JsonRejection},
     middleware::Next,
     response::{IntoResponse, Response},
 };
 use headers::{Header, HeaderValue};
-use hyper::{header, Request};
+use hyper::{Request, header};
 use model::AccessToken;
 use serde::Serialize;
 pub use server_state::utils::StatusCode;
-use server_state::{app::GetAccessTokens, S};
+use server_state::{S, app::GetAccessTokens};
 use simple_backend::create_counters;
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;
 pub use utils::api::ACCESS_TOKEN_HEADER_STR;
 use utoipa::{
-    openapi::security::{ApiKeyValue, SecurityScheme},
     Modify,
+    openapi::security::{ApiKeyValue, SecurityScheme},
 };
 
 pub static ACCESS_TOKEN_HEADER: header::HeaderName =

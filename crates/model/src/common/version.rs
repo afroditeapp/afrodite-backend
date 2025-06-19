@@ -48,7 +48,7 @@ impl WebSocketClientInfo {
                         major,
                         minor,
                         patch,
-                    }
+                    },
                 })
             }
             _ => Err(format!("Invalid input byte count {}", bytes.len())),

@@ -1,7 +1,7 @@
 use database_profile::current::write::GetDbWriteCommandsProfile;
 use model_profile::AccountIdInternal;
 use server_data::{
-    define_cmd_wrapper_write, result::Result, write::DbTransaction, DataError, IntoDataError
+    DataError, IntoDataError, define_cmd_wrapper_write, result::Result, write::DbTransaction,
 };
 
 use crate::cache::CacheWriteProfile;
@@ -42,11 +42,14 @@ impl WriteCommandsProfileAdminNotification<'_> {
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
         self.write_cache_profile(id, |p| {
-            p.automatic_profile_search.notification.profiles_found =
-                p.automatic_profile_search.notification.profiles_found.wrapping_add(1);
+            p.automatic_profile_search.notification.profiles_found = p
+                .automatic_profile_search
+                .notification
+                .profiles_found
+                .wrapping_add(1);
             Ok(())
         })
-            .await
-            .into_error()
+        .await
+        .into_error()
     }
 }

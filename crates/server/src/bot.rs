@@ -1,6 +1,11 @@
 //! Bot client
 
-use std::{env, net::{Ipv4Addr, SocketAddr}, os::unix::process::CommandExt, process::Stdio};
+use std::{
+    env,
+    net::{Ipv4Addr, SocketAddr},
+    os::unix::process::CommandExt,
+    process::Stdio,
+};
 
 use config::Config;
 use error_stack::{Result, ResultExt};
@@ -68,13 +73,12 @@ impl BotClient {
             ));
         }
 
-        let bot_api_socket =
-            if let Some(port) = config.simple_backend().socket().local_bot_api_port {
-                SocketAddr::new(Ipv4Addr::LOCALHOST.into(), port)
-            } else {
-                return Err(BotClientError::LaunchCommand)
-                    .attach_printable("Bot API must be enabled");
-            };
+        let bot_api_socket = if let Some(port) = config.simple_backend().socket().local_bot_api_port
+        {
+            SocketAddr::new(Ipv4Addr::LOCALHOST.into(), port)
+        } else {
+            return Err(BotClientError::LaunchCommand).attach_printable("Bot API must be enabled");
+        };
 
         let bot_data_dir = config.simple_backend().data_dir().join(BOT_DATA_DIR_NAME);
 
@@ -203,10 +207,6 @@ impl BotClient {
     }
 
     fn bot_api_url(api_socket: SocketAddr) -> String {
-        format!(
-            "http://{}:{}",
-            LOCALHOST_HOSTNAME,
-            api_socket.port()
-        )
+        format!("http://{}:{}", LOCALHOST_HOSTNAME, api_socket.port())
     }
 }

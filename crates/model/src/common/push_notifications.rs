@@ -1,12 +1,15 @@
 use base64::Engine;
-use diesel::{deserialize::Queryable, Selectable};
+use diesel::{Selectable, deserialize::Queryable};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, diesel_string_wrapper};
 use utils::random_bytes::random_128_bits;
 use utoipa::ToSchema;
 
 use crate::{
-    schema_sqlite_types::{Integer, Text}, AccountId, AdminNotification, AutomaticProfileSearchCompletedNotification, MediaContentModerationCompletedNotification, NewReceivedLikesCountResult, NotificationEvent, ProfileTextModerationCompletedNotification, UnreadNewsCountResult
+    AccountId, AdminNotification, AutomaticProfileSearchCompletedNotification,
+    MediaContentModerationCompletedNotification, NewReceivedLikesCountResult, NotificationEvent,
+    ProfileTextModerationCompletedNotification, UnreadNewsCountResult,
+    schema_sqlite_types::{Integer, Text},
 };
 
 /// Pending notification (or multiple notifications which each have
@@ -78,11 +81,16 @@ impl From<NotificationEvent> for PendingNotificationFlags {
         match value {
             NotificationEvent::NewMessageReceived => Self::NEW_MESSAGE,
             NotificationEvent::ReceivedLikesChanged => Self::RECEIVED_LIKES_CHANGED,
-            NotificationEvent::MediaContentModerationCompleted =>
-                Self::MEDIA_CONTENT_MODERATION_COMPLETED,
+            NotificationEvent::MediaContentModerationCompleted => {
+                Self::MEDIA_CONTENT_MODERATION_COMPLETED
+            }
             NotificationEvent::NewsChanged => Self::NEWS_CHANGED,
-            NotificationEvent::ProfileTextModerationCompleted => Self::PROFILE_TEXT_MODERATION_COMPLETED,
-            NotificationEvent::AutomaticProfileSearchCompleted => Self::AUTOMATIC_PROFILE_SEARCH_COMPLETED,
+            NotificationEvent::ProfileTextModerationCompleted => {
+                Self::PROFILE_TEXT_MODERATION_COMPLETED
+            }
+            NotificationEvent::AutomaticProfileSearchCompleted => {
+                Self::AUTOMATIC_PROFILE_SEARCH_COMPLETED
+            }
             NotificationEvent::AdminNotification => Self::ADMIN_NOTIFICATION,
         }
     }

@@ -16,7 +16,7 @@ use self::{
     media::{SendImageToSlot, SetContent},
 };
 use super::{
-    super::client::TestError, client_bot::ChangeBotAgeAndOtherSettings, BotState, TaskState,
+    super::client::TestError, BotState, TaskState, client_bot::ChangeBotAgeAndOtherSettings,
 };
 
 #[macro_export]

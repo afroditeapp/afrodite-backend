@@ -1,11 +1,9 @@
-
 use std::sync::Arc;
 
 use model_server_data::{CellDataProvider, LocationIndexKey};
 use tracing::error;
 
 use super::data::{LocationIndex, ReadIndex};
-
 
 /// Update index.
 ///
@@ -24,13 +22,16 @@ impl IndexUpdater {
             return;
         }
 
-        if key.x == 0 || key.x == self.index.last_x_index() ||
-            key.y == 0 || key.y == self.index.last_y_index() {
-                // This should not happen as profile location coordinates
-                // are clamped to correct area.
-                error!("Marking location index border area cell to have profile is not allowed");
-                return;
-            }
+        if key.x == 0
+            || key.x == self.index.last_x_index()
+            || key.y == 0
+            || key.y == self.index.last_y_index()
+        {
+            // This should not happen as profile location coordinates
+            // are clamped to correct area.
+            error!("Marking location index border area cell to have profile is not allowed");
+            return;
+        }
 
         self.index.data()[key].set_profiles(true);
 

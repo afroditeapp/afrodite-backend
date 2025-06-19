@@ -1,7 +1,11 @@
-use axum::{extract::State, Extension};
+use axum::{Extension, extract::State};
 use model::{AccountIdInternal, AdminNotificationTypes, CustomReportsFileHash, UpdateReportResult};
 use model_account::{GetCustomReportsConfigResult, UpdateCustomReportBoolean};
-use server_api::{app::{AdminNotificationProvider, GetConfig}, create_open_api_router, db_write_multiple, S};
+use server_api::{
+    S,
+    app::{AdminNotificationProvider, GetConfig},
+    create_open_api_router, db_write_multiple,
+};
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
 
@@ -71,9 +75,7 @@ pub async fn post_get_custom_reports_config(
             config: state.config().custom_reports().cloned(),
         }
     } else {
-        GetCustomReportsConfigResult {
-            config: None,
-        }
+        GetCustomReportsConfigResult { config: None }
     };
 
     Ok(r.into())

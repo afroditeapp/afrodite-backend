@@ -1,4 +1,4 @@
-use database::{define_current_write_commands, DieselDatabaseError};
+use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{insert_into, prelude::*};
 use error_stack::Result;
 use model::AccountIdInternal;
@@ -17,10 +17,7 @@ impl CurrentWriteAccountSignInWith<'_> {
         use model::schema::sign_in_with_info::dsl::*;
 
         insert_into(sign_in_with_info)
-            .values((
-                account_id.eq(id.as_db_id()),
-                data,
-            ))
+            .values((account_id.eq(id.as_db_id()), data))
             .execute(self.conn())
             .into_db_error(id)?;
 

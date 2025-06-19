@@ -1,6 +1,6 @@
 use std::sync::OnceLock;
 
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::{Mutex, mpsc};
 
 use crate::ServerQuitWatcher;
 

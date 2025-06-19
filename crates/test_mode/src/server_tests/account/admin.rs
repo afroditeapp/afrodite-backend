@@ -2,8 +2,8 @@ use api_client::apis::account_api::get_account_state;
 use test_mode_macro::server_test;
 
 use crate::{
-    runner::server_tests::assert::{assert, assert_eq},
     TestContext, TestResult,
+    runner::server_tests::assert::{assert, assert_eq},
 };
 
 #[server_test]

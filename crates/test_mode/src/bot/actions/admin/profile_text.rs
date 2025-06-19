@@ -2,9 +2,9 @@ use std::{fmt::Debug, time::Instant};
 
 use api_client::{apis::profile_admin_api, models::ProfileTextModerationRejectedReasonDetails};
 use async_openai::{
+    Client,
     config::OpenAIConfig,
     types::{ChatCompletionRequestMessage, CreateChatCompletionRequest},
-    Client,
 };
 use async_trait::async_trait;
 use config::bot_config_file::{LlmModerationConfig, ModerationAction, ProfileTextModerationConfig};
@@ -13,7 +13,10 @@ use tracing::{error, info};
 use unicode_segmentation::UnicodeSegmentation;
 
 use super::{BotAction, BotState, EmptyPage, ModerationResult};
-use crate::{bot::actions::admin::LlmModerationResult, client::{ApiClient, TestError}};
+use crate::{
+    bot::actions::admin::LlmModerationResult,
+    client::{ApiClient, TestError},
+};
 
 #[derive(Debug)]
 pub struct ProfileTextModerationState {
@@ -60,11 +63,7 @@ impl AdminBotProfileTextModerationLogic {
             }
 
             let r = if let Some(llm_config) = &config.llm {
-                let r = Self::llm_profile_text_moderation(
-                    &request.text,
-                    llm_config,
-                    state,
-                ).await?;
+                let r = Self::llm_profile_text_moderation(&request.text, llm_config, state).await?;
 
                 match r {
                     LlmModerationResult::StopModerationSesssion => return Ok(Some(EmptyPage)),
@@ -87,7 +86,9 @@ impl AdminBotProfileTextModerationLogic {
                     text: request.text.clone(),
                     accept: r.accept,
                     rejected_category: None,
-                    rejected_details: r.rejected_details.map(|v| Some(Box::new(ProfileTextModerationRejectedReasonDetails::new(v)))),
+                    rejected_details: r.rejected_details.map(|v| {
+                        Some(Box::new(ProfileTextModerationRejectedReasonDetails::new(v)))
+                    }),
                     move_to_human: if r.move_to_human {
                         Some(Some(true))
                     } else {
@@ -106,13 +107,13 @@ impl AdminBotProfileTextModerationLogic {
         config: &LlmModerationConfig,
         state: &mut ProfileTextModerationState,
     ) -> Result<LlmModerationResult, TestError> {
-        let client = state.client.get_or_insert_with(||
+        let client = state.client.get_or_insert_with(|| {
             Client::with_config(
                 OpenAIConfig::new()
                     .with_api_base(config.openai_api_url.to_string())
                     .with_api_key(""),
             )
-        );
+        });
 
         let expected_response_lowercase = config.expected_response.to_lowercase();
         let profile_text_paragraph = profile_text.lines().collect::<Vec<&str>>().join(" ");
@@ -210,12 +211,8 @@ impl BotAction for AdminBotProfileTextModerationLogic {
         moderation_state.moderation_started = Some(start_time);
 
         loop {
-            if let Some(EmptyPage) = Self::moderate_one_page(
-                &state.api,
-                config,
-                moderation_state,
-            )
-            .await?
+            if let Some(EmptyPage) =
+                Self::moderate_one_page(&state.api, config, moderation_state).await?
             {
                 break;
             }

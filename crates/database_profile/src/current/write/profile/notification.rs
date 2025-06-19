@@ -1,5 +1,5 @@
-use database::{define_current_write_commands, DieselDatabaseError};
-use diesel::{insert_into, prelude::*, ExpressionMethods};
+use database::{DieselDatabaseError, define_current_write_commands};
+use diesel::{ExpressionMethods, insert_into, prelude::*};
 use error_stack::Result;
 use model::{AccountIdInternal, ProfileTextModerationCompletedNotificationViewed};
 use model_profile::ProfileAppNotificationSettings;
@@ -17,10 +17,7 @@ impl CurrentWriteProfileNotification<'_> {
         use model::schema::profile_app_notification_settings::dsl::*;
 
         insert_into(profile_app_notification_settings)
-            .values((
-                account_id.eq(id.as_db_id()),
-                settings,
-            ))
+            .values((account_id.eq(id.as_db_id()), settings))
             .on_conflict(account_id)
             .do_update()
             .set(settings)
@@ -38,9 +35,7 @@ impl CurrentWriteProfileNotification<'_> {
         use model::schema::profile_app_notification_state::dsl::*;
 
         insert_into(profile_app_notification_state)
-            .values((
-                account_id.eq(id.as_db_id()),
-            ))
+            .values((account_id.eq(id.as_db_id()),))
             .on_conflict(account_id)
             .do_update()
             .set((

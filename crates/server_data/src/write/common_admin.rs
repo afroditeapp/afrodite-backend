@@ -1,8 +1,8 @@
 use crate::define_cmd_wrapper_write;
 
 mod notification;
-mod statistics;
 mod report;
+mod statistics;
 
 define_cmd_wrapper_write!(WriteCommandsCommonAdmin);
 

@@ -2,16 +2,16 @@ use std::{future::Future, time::Duration};
 
 use error_stack::{Result, ResultExt};
 use fcm::{
+    FcmClient,
     message::{Message, Target},
     response::{RecomendedAction, RecomendedWaitTime},
-    FcmClient,
 };
 use model::{AccountIdInternal, PendingNotificationFlags, PushNotificationStateInfoWithFlags};
 use serde_json::json;
 use simple_backend::ServerQuitWatcher;
 use simple_backend_config::SimpleBackendConfig;
 use tokio::{
-    sync::mpsc::{error::TrySendError, Receiver, Sender},
+    sync::mpsc::{Receiver, Sender, error::TrySendError},
     task::JoinHandle,
     time::MissedTickBehavior,
 };
@@ -86,10 +86,14 @@ impl PushNotificationSender {
         match self.sender_low_priority.try_send(notification) {
             Ok(()) => (),
             Err(TrySendError::Closed(_)) => {
-                error!("Sending low priority push notification to internal channel failed: channel is broken");
+                error!(
+                    "Sending low priority push notification to internal channel failed: channel is broken"
+                );
             }
             Err(TrySendError::Full(_)) => {
-                error!("Sending low priority push notification to internal channel failed: channel is full");
+                error!(
+                    "Sending low priority push notification to internal channel failed: channel is full"
+                );
             }
         }
     }

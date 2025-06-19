@@ -1,8 +1,6 @@
 use model::Permissions;
 use model_account::AccountIdInternal;
-use server_data::{
-    define_cmd_wrapper_write, result::Result, DataError
-};
+use server_data::{DataError, define_cmd_wrapper_write, result::Result};
 
 use crate::write::GetWriteCommandsAccount;
 
@@ -16,14 +14,10 @@ impl WriteCommandsAccountPermissionsAdmin<'_> {
     ) -> Result<(), DataError> {
         self.handle()
             .account()
-            .update_syncable_account_data(
-                id,
-                None,
-                |_, account_permissions, _| {
-                    *account_permissions = permissions;
-                    Ok(())
-                },
-            )
+            .update_syncable_account_data(id, None, |_, account_permissions, _| {
+                *account_permissions = permissions;
+                Ok(())
+            })
             .await?;
 
         Ok(())

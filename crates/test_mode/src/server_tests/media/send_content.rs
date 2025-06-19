@@ -1,9 +1,8 @@
 use test_mode_macro::server_test;
 
 use crate::{
-    action_array,
-    bot::actions::{media::SendImageToSlot, AssertFailure},
-    TestContext, TestResult,
+    TestContext, TestResult, action_array,
+    bot::actions::{AssertFailure, media::SendImageToSlot},
 };
 
 #[server_test]

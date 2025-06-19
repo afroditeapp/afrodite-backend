@@ -1,9 +1,24 @@
-use diesel::{prelude::{AsChangeset, Insertable, Queryable}, Selectable};
+use diesel::{
+    Selectable,
+    prelude::{AsChangeset, Insertable, Queryable},
+};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 /// Admin notification values or subscription info
-#[derive(Debug, Clone, Default, PartialEq, Deserialize, Serialize, Queryable, Selectable, AsChangeset, Insertable, ToSchema)]
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    PartialEq,
+    Deserialize,
+    Serialize,
+    Queryable,
+    Selectable,
+    AsChangeset,
+    Insertable,
+    ToSchema,
+)]
 #[diesel(table_name = crate::schema::admin_notification_subscriptions)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct AdminNotification {
@@ -39,24 +54,31 @@ pub struct AdminNotification {
 impl AdminNotification {
     pub fn enable(&mut self, event: AdminNotificationTypes) {
         match event {
-            AdminNotificationTypes::ModerateInitialMediaContentBot =>
-                self.moderate_initial_media_content_bot = true,
-            AdminNotificationTypes::ModerateInitialMediaContentHuman =>
-                self.moderate_initial_media_content_human = true,
-            AdminNotificationTypes::ModerateMediaContentBot =>
-                self.moderate_media_content_bot = true,
-            AdminNotificationTypes::ModerateMediaContentHuman =>
-                self.moderate_media_content_human = true,
-            AdminNotificationTypes::ModerateProfileTextsBot =>
-                self.moderate_profile_texts_bot = true,
-            AdminNotificationTypes::ModerateProfileTextsHuman =>
-                self.moderate_profile_texts_human = true,
-            AdminNotificationTypes::ModerateProfileNamesBot =>
-                self.moderate_profile_names_bot = true,
-            AdminNotificationTypes::ModerateProfileNamesHuman =>
-                self.moderate_profile_names_human = true,
-            AdminNotificationTypes::ProcessReports =>
-                self.process_reports = true,
+            AdminNotificationTypes::ModerateInitialMediaContentBot => {
+                self.moderate_initial_media_content_bot = true
+            }
+            AdminNotificationTypes::ModerateInitialMediaContentHuman => {
+                self.moderate_initial_media_content_human = true
+            }
+            AdminNotificationTypes::ModerateMediaContentBot => {
+                self.moderate_media_content_bot = true
+            }
+            AdminNotificationTypes::ModerateMediaContentHuman => {
+                self.moderate_media_content_human = true
+            }
+            AdminNotificationTypes::ModerateProfileTextsBot => {
+                self.moderate_profile_texts_bot = true
+            }
+            AdminNotificationTypes::ModerateProfileTextsHuman => {
+                self.moderate_profile_texts_human = true
+            }
+            AdminNotificationTypes::ModerateProfileNamesBot => {
+                self.moderate_profile_names_bot = true
+            }
+            AdminNotificationTypes::ModerateProfileNamesHuman => {
+                self.moderate_profile_names_human = true
+            }
+            AdminNotificationTypes::ProcessReports => self.process_reports = true,
         }
     }
 }

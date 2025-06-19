@@ -1,21 +1,19 @@
-use axum::{extract::State, Extension};
+use axum::{Extension, extract::State};
 use model::{
-    AccountIdInternal, GetChatMessageReports, GetChatMessageReportsInternal, GetReportList, Permissions, ProcessReport, ReportIteratorQuery, ReportIteratorQueryInternal, UnixTime
+    AccountIdInternal, GetChatMessageReports, GetChatMessageReportsInternal, GetReportList,
+    Permissions, ProcessReport, ReportIteratorQuery, ReportIteratorQueryInternal, UnixTime,
 };
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
-use crate::{
-    app::{GetAccounts, WriteData},
-    create_open_api_router, db_write_multiple, S,
-};
 use simple_backend::create_counters;
 
 use crate::{
-    app::ReadData,
+    S,
+    app::{GetAccounts, ReadData, WriteData},
+    create_open_api_router, db_write_multiple,
     utils::{Json, StatusCode},
 };
 
-const PATH_GET_WAITING_REPORT_PAGE: &str =
-    "/common_api/admin/waiting_report_page";
+const PATH_GET_WAITING_REPORT_PAGE: &str = "/common_api/admin/waiting_report_page";
 
 #[utoipa::path(
     get,
@@ -84,7 +82,13 @@ pub async fn post_process_report(
     db_write_multiple!(state, move |cmds| {
         cmds.common_admin()
             .report()
-            .process_report(moderator_id, creator, target, data.report_type, data.content)
+            .process_report(
+                moderator_id,
+                creator,
+                target,
+                data.report_type,
+                data.content,
+            )
             .await?;
         Ok(())
     })?;
@@ -122,8 +126,7 @@ pub async fn get_latest_report_iterator_start_position(
     Ok(previous_time.into())
 }
 
-const PATH_POST_GET_REPORT_ITERATOR_PAGE: &str =
-    "/common_api/admin/report_iterator_page";
+const PATH_POST_GET_REPORT_ITERATOR_PAGE: &str = "/common_api/admin/report_iterator_page";
 
 /// Get report iterator page.
 ///

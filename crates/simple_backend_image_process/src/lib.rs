@@ -1,16 +1,14 @@
 use std::{io, path::PathBuf};
 
-use error_stack::{report, Result, ResultExt};
+use error_stack::{Result, ResultExt, report};
 use face_detection::FaceDetector;
 use image::{DynamicImage, EncodableLayout, ImageDecoder, ImageReader};
 use nsfw_detection::NsfwDetector;
 use serde::{Deserialize, Serialize};
-use simple_backend_config::{
-    file::ImageProcessingConfig,
-};
+use simple_backend_config::file::ImageProcessingConfig;
 
-mod nsfw_detection;
 mod face_detection;
+mod nsfw_detection;
 
 const SOURCE_IMG_MIN_WIDTH_AND_HEIGHT: u32 = 512;
 
@@ -91,27 +89,27 @@ pub fn read_command(read: &mut impl io::Read) -> Result<ImageProcessingCommand, 
     let mut bytes: Vec<u8> = vec![0; length as usize];
     read.read_exact(&mut bytes)
         .change_context(ImageProcessError::ReadCommand)?;
-    serde_json::from_reader(bytes.as_slice())
-        .change_context(ImageProcessError::ReadCommand)
+    serde_json::from_reader(bytes.as_slice()).change_context(ImageProcessError::ReadCommand)
 }
 
-pub fn write_info(write: &mut impl io::Write, info: ImageProcessingInfo) -> Result<(), ImageProcessError> {
-    let string = serde_json::to_string(&info)
+pub fn write_info(
+    write: &mut impl io::Write,
+    info: ImageProcessingInfo,
+) -> Result<(), ImageProcessError> {
+    let string = serde_json::to_string(&info).change_context(ImageProcessError::WriteInfo)?;
+    let len =
+        TryInto::<u32>::try_into(string.len()).change_context(ImageProcessError::WriteInfo)?;
+    write
+        .write_all(&len.to_le_bytes())
         .change_context(ImageProcessError::WriteInfo)?;
-    let len = TryInto::<u32>::try_into(string.len())
+    write
+        .write_all(string.as_bytes())
         .change_context(ImageProcessError::WriteInfo)?;
-    write.write_all(&len.to_le_bytes())
-        .change_context(ImageProcessError::WriteInfo)?;
-    write.write_all(string.as_bytes())
-        .change_context(ImageProcessError::WriteInfo)?;
-    write.flush()
-        .change_context(ImageProcessError::WriteInfo)?;
+    write.flush().change_context(ImageProcessError::WriteInfo)?;
     Ok(())
 }
 
-pub fn run_image_processing_loop(
-    config: ImageProcessingConfig,
-) -> Result<(), ImageProcessError> {
+pub fn run_image_processing_loop(config: ImageProcessingConfig) -> Result<(), ImageProcessError> {
     let face_detector = FaceDetector::new(&config)?;
     let nsfw_detector = NsfwDetector::new(&config)?;
 

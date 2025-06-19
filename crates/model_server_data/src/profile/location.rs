@@ -83,7 +83,8 @@ impl LocationInternal {
         use std::f64::consts::PI;
         const R_EARTH: f64 = 6378.0;
         let new_latitude = self.latitude + (dy / R_EARTH) * (180.0 / PI);
-        let new_longitude = self.longitude + (dx / R_EARTH) * (180.0 / PI) / (self.latitude * (PI / 180.0));
+        let new_longitude =
+            self.longitude + (dx / R_EARTH) * (180.0 / PI) / (self.latitude * (PI / 180.0));
         let new_latitude = new_latitude.clamp(-90.0, 90.0);
         let new_longitude = new_longitude.clamp(-180.0, 180.0);
         Self {

@@ -7,7 +7,9 @@ use simple_backend_config::SimpleBackendConfig;
 
 use super::manager_client::ManagerApiClient;
 use crate::{
-    file_package::FilePackageManager, jitsi_meet::JitsiMeetUrlCreator, map::TileMapManager, maxmind_db::MaxMindDbManagerData, perf::PerfMetricsManagerData, sign_in_with::SignInWithManager
+    file_package::FilePackageManager, jitsi_meet::JitsiMeetUrlCreator, map::TileMapManager,
+    maxmind_db::MaxMindDbManagerData, perf::PerfMetricsManagerData,
+    sign_in_with::SignInWithManager,
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -57,7 +59,7 @@ pub trait GetManagerApi {
     fn manager_api_client(&self) -> &ManagerApiClient;
 
     async fn manager_request(
-        &self
+        &self,
     ) -> error_stack::Result<ManagerClientWithRequestReceiver, ClientError> {
         self.manager_api_client().new_request().await
     }
@@ -66,7 +68,9 @@ pub trait GetManagerApi {
         &self,
         name: ManagerInstanceNameValue,
     ) -> error_stack::Result<ManagerClientWithRequestReceiver, ClientError> {
-        self.manager_api_client().new_request_to_instance(name.manager_name).await
+        self.manager_api_client()
+            .new_request_to_instance(name.manager_name)
+            .await
     }
 }
 

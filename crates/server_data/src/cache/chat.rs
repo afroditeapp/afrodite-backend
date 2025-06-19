@@ -1,10 +1,7 @@
 use model::{MatchId, ReceivedLikeId};
-use model_server_data::{
-    MatchesIteratorSessionIdInternal,
-    ReceivedLikesIteratorSessionIdInternal,
-};
+use model_server_data::{MatchesIteratorSessionIdInternal, ReceivedLikesIteratorSessionIdInternal};
 
-use super::db_iterator::{new_count::DbIteratorNewCount, DbIterator};
+use super::db_iterator::{DbIterator, new_count::DbIteratorNewCount};
 
 #[derive(Debug, Default)]
 pub struct CachedChatComponentData {

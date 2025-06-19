@@ -1,13 +1,16 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::{DieselDatabaseError, IntoDatabaseError};
 use config::Config;
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, ApiUsageCount, ApiUsageStatistics, GetApiUsageStatisticsResult, GetApiUsageStatisticsSettings, GetIpAddressStatisticsResult, IpAddressInfo, IpAddressInfoInternal, UnixTime};
+use model::{
+    AccountIdInternal, ApiUsageCount, ApiUsageStatistics, GetApiUsageStatisticsResult,
+    GetApiUsageStatisticsSettings, GetIpAddressStatisticsResult, IpAddressInfo,
+    IpAddressInfoInternal, UnixTime,
+};
 use simple_backend::maxmind_db::IpDb;
 
-use crate::define_current_read_commands;
+use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
 
 define_current_read_commands!(CurrentReadAccountAdminStatistics);
 
@@ -22,12 +25,14 @@ impl CurrentReadAccountAdminStatistics<'_> {
 
         let values: Vec<(UnixTime, i64, i64)> = {
             use crate::schema::{
-                api_usage_statistics_metric_value::dsl::*,
-                api_usage_statistics_save_time,
+                api_usage_statistics_metric_value::dsl::*, api_usage_statistics_save_time,
             };
 
             api_usage_statistics_metric_value
-                .inner_join(api_usage_statistics_save_time::table.on(time_id.eq(api_usage_statistics_save_time::id)))
+                .inner_join(
+                    api_usage_statistics_save_time::table
+                        .on(time_id.eq(api_usage_statistics_save_time::id)),
+                )
                 .filter(api_usage_statistics_save_time::unix_time.le(max_time))
                 .filter(api_usage_statistics_save_time::unix_time.ge(min_time))
                 .filter(account_id.eq(account.as_db_id()))
@@ -36,7 +41,10 @@ impl CurrentReadAccountAdminStatistics<'_> {
                     metric_id,
                     metric_value,
                 ))
-                .order((metric_id.asc(), api_usage_statistics_save_time::unix_time.desc()))
+                .order((
+                    metric_id.asc(),
+                    api_usage_statistics_save_time::unix_time.desc(),
+                ))
                 .load(self.conn())
                 .change_context(DieselDatabaseError::Execute)?
         };
@@ -56,11 +64,19 @@ impl CurrentReadAccountAdminStatistics<'_> {
                     .select(metric_name)
                     .first(self.conn())
                     .into_db_error(())?;
-                data.insert(m_id, ApiUsageStatistics { name, values: vec![v] });
+                data.insert(
+                    m_id,
+                    ApiUsageStatistics {
+                        name,
+                        values: vec![v],
+                    },
+                );
             }
         }
 
-        Ok(GetApiUsageStatisticsResult { values: data.into_values().collect::<Vec<_>>() })
+        Ok(GetApiUsageStatisticsResult {
+            values: data.into_values().collect::<Vec<_>>(),
+        })
     }
 
     pub fn ip_address_statistics(
@@ -104,7 +120,7 @@ impl CurrentReadAccountAdminStatistics<'_> {
                         },
                     }
                 })
-                .collect::<Vec<_>>()
+                .collect::<Vec<_>>(),
         })
     }
 }

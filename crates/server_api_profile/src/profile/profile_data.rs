@@ -1,24 +1,28 @@
 use axum::{
-    extract::{Path, Query, State},
     Extension,
+    extract::{Path, Query, State},
 };
 use model::AdminNotificationTypes;
 use model_profile::{
     AccountId, AccountIdInternal, AccountState, GetInitialProfileAgeInfoResult, GetMyProfileResult,
     GetProfileQueryParam, GetProfileResult, Permissions, ProfileSearchAgeRange,
-    ProfileSearchAgeRangeValidated, ProfileUpdate, SearchGroups,
-    ValidatedSearchGroups,
+    ProfileSearchAgeRangeValidated, ProfileUpdate, SearchGroups, ValidatedSearchGroups,
 };
-use server_api::{app::{AdminNotificationProvider, ApiUsageTrackerProvider, GetConfig}, create_open_api_router, db_write_multiple, result::WrappedContextExt, S};
+use server_api::{
+    S,
+    app::{AdminNotificationProvider, ApiUsageTrackerProvider, GetConfig},
+    create_open_api_router, db_write_multiple,
+    result::WrappedContextExt,
+};
 use server_data::read::GetReadCommandsCommon;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
 
 use crate::{
+    DataError,
     app::{GetAccounts, ReadData, WriteData},
     utils::{Json, StatusCode},
-    DataError,
 };
 
 // TODO: Add timeout for database commands
@@ -70,7 +74,10 @@ pub async fn get_profile(
     Query(params): Query<GetProfileQueryParam>,
 ) -> Result<Json<GetProfileResult>, StatusCode> {
     PROFILE.get_profile.incr();
-    state.api_usage_tracker().incr(account_id, |u| &u.get_profile).await;
+    state
+        .api_usage_tracker()
+        .incr(account_id, |u| &u.get_profile)
+        .await;
 
     let requested_profile = state.get_internal_id(requested_profile).await?;
 
@@ -269,7 +276,8 @@ pub async fn post_search_groups(
 
     db_write_multiple!(state, move |cmds| cmds
         .profile()
-        .update_search_groups(account_id, validated).await)
+        .update_search_groups(account_id, validated)
+        .await)
 }
 
 const PATH_GET_SEARCH_AGE_RANGE: &str = "/profile_api/search_age_range";
@@ -321,7 +329,8 @@ pub async fn post_search_age_range(
 
     db_write_multiple!(state, move |cmds| cmds
         .profile()
-        .update_search_age_range(account_id, validated).await)
+        .update_search_age_range(account_id, validated)
+        .await)
 }
 
 const PATH_GET_MY_PROFILE: &str = "/profile_api/my_profile";

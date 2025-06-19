@@ -3,14 +3,16 @@
 use std::process::ExitStatus;
 
 use error_stack::{Result, ResultExt};
-use tokio::{process::Command, sync::{mpsc, oneshot}, task::JoinHandle};
+use manager_config::file::ControlBackendConfig;
+use tokio::{
+    process::Command,
+    sync::{mpsc, oneshot},
+    task::JoinHandle,
+};
 use tracing::{error, info, warn};
 
-use manager_config::file::ControlBackendConfig;
-
+use super::{ServerQuitWatcher, app::S};
 use crate::api::GetConfig;
-
-use super::{app::S, ServerQuitWatcher};
 
 #[derive(thiserror::Error, Debug)]
 pub enum BackendManagerError {
@@ -32,12 +34,8 @@ pub enum BackendManagerError {
 
 #[derive(Debug)]
 pub enum BackendManagerMessage {
-    StartBackend {
-        wait_start: oneshot::Sender<()>,
-    },
-    StopBackend {
-        wait_stop: oneshot::Sender<()>,
-    },
+    StartBackend { wait_start: oneshot::Sender<()> },
+    StopBackend { wait_stop: oneshot::Sender<()> },
 }
 
 impl BackendManagerMessage {
@@ -123,10 +121,7 @@ impl BackendManager {
         let handle = BackendManagerHandle {
             sender: sender.clone(),
         };
-        let state = BackendManagerInternalState {
-            sender,
-            receiver,
-        };
+        let state = BackendManagerInternalState { sender, receiver };
         (handle, state)
     }
 
@@ -165,9 +160,7 @@ impl BackendManager {
         }
     }
 
-    async fn handle_messages(
-        &mut self,
-    ) {
+    async fn handle_messages(&mut self) {
         loop {
             let message = self.receiver.recv().await;
             match message {
@@ -178,7 +171,9 @@ impl BackendManager {
                             Err(e) => error!("Backend manager error: {:?}", e),
                         }
                     } else {
-                        warn!("Ignoring backend manager message. Backend controlling is not configured.");
+                        warn!(
+                            "Ignoring backend manager message. Backend controlling is not configured."
+                        );
                         let _ = message.message_handled_info_sender().send(());
                     }
                 }
@@ -202,7 +197,7 @@ impl BackendManager {
                     self.backend_running = true;
                 }
                 let _ = wait_start.send(());
-            },
+            }
             BackendManagerMessage::StopBackend { wait_stop } => {
                 if self.backend_running {
                     self.stop_backend(config).await?;
@@ -244,10 +239,7 @@ impl BackendManager {
         Ok(())
     }
 
-    async fn stop_backend(
-        &self,
-        config: &ControlBackendConfig,
-    ) -> Result<(), BackendManagerError> {
+    async fn stop_backend(&self, config: &ControlBackendConfig) -> Result<(), BackendManagerError> {
         let script = self.state.config().script_locations().systemctl_access();
 
         if !script.exists() {

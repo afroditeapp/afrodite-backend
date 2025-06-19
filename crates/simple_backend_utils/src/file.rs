@@ -24,8 +24,9 @@ pub enum OverwriteFileError {
     FileOverwritingFailed,
 }
 
-
-pub async fn overwrite_and_remove_if_exists(path: impl AsRef<Path>) -> Result<(), OverwriteFileError> {
+pub async fn overwrite_and_remove_if_exists(
+    path: impl AsRef<Path>,
+) -> Result<(), OverwriteFileError> {
     let path = path.as_ref();
     if !path.exists() {
         return Ok(());
@@ -44,11 +45,14 @@ pub async fn overwrite_and_remove_if_exists(path: impl AsRef<Path>) -> Result<()
 /// https://manpages.ubuntu.com/manpages/focal/man1/shred.1.html
 /// https://www.kernel.org/doc/Documentation/filesystems/ext4.txt
 async fn overwrite_file(path: &Path) -> Result<(), OverwriteFileError> {
-    let mut file = tokio::fs::File::options().write(true).open(&path)
+    let mut file = tokio::fs::File::options()
+        .write(true)
+        .open(&path)
         .await
         .change_context(OverwriteFileError::IoFileOpen)?;
 
-    let data = file.metadata()
+    let data = file
+        .metadata()
         .await
         .change_context(OverwriteFileError::IoFileMetadata)?;
     let file_len: usize = TryInto::<usize>::try_into(data.len())
@@ -60,13 +64,11 @@ async fn overwrite_file(path: &Path) -> Result<(), OverwriteFileError> {
             .change_context(OverwriteFileError::IoFileWrite)?;
     }
 
-    file
-        .flush()
+    file.flush()
         .await
         .change_context(OverwriteFileError::IoFileFlush)?;
 
-    file
-        .sync_all()
+    file.sync_all()
         .await
         .change_context(OverwriteFileError::IoFileSync)?;
 
@@ -75,16 +77,13 @@ async fn overwrite_file(path: &Path) -> Result<(), OverwriteFileError> {
 
 const ZERO_ITER_CHUNK_SIZE: usize = 4096;
 
-fn buffered_zero_iter(
-    bytes: usize,
-) -> impl Iterator<Item=&'static [u8]> {
+fn buffered_zero_iter(bytes: usize) -> impl Iterator<Item = &'static [u8]> {
     const ZERO_BUFFER: [u8; ZERO_ITER_CHUNK_SIZE] = [0; ZERO_ITER_CHUNK_SIZE];
-    let iter = std::iter::repeat(ZERO_BUFFER.as_slice())
-        .take(bytes/ZERO_ITER_CHUNK_SIZE);
-    let remaining_bytes =
-        [&ZERO_BUFFER[..(bytes % ZERO_ITER_CHUNK_SIZE)]].into_iter().take_while(|v| !v.is_empty());
-    iter
-        .chain(remaining_bytes)
+    let iter = std::iter::repeat(ZERO_BUFFER.as_slice()).take(bytes / ZERO_ITER_CHUNK_SIZE);
+    let remaining_bytes = [&ZERO_BUFFER[..(bytes % ZERO_ITER_CHUNK_SIZE)]]
+        .into_iter()
+        .take_while(|v| !v.is_empty());
+    iter.chain(remaining_bytes)
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize)]
@@ -117,12 +116,22 @@ impl TryFrom<String> for FileSizeValue {
             let number: i64 = number
                 .parse()
                 .map_err(|e: std::num::ParseIntError| e.to_string())?;
-            let overflow_error = || format!("File size too large, current value: {}, max value: i64::MAX bytes", input);
+            let overflow_error = || {
+                format!(
+                    "File size too large, current value: {}, max value: i64::MAX bytes",
+                    input
+                )
+            };
             match unit {
                 "K" => number,
                 "M" => number.checked_mul(1024).ok_or_else(overflow_error)?,
                 "G" => number.checked_mul(1024 * 1024).ok_or_else(overflow_error)?,
-                unit => return Err(format!("Unknown size unit: {}, supported units: K, M, G", unit)),
+                unit => {
+                    return Err(format!(
+                        "Unknown size unit: {}, supported units: K, M, G",
+                        unit
+                    ));
+                }
             }
         } else {
             input
@@ -138,14 +147,13 @@ impl TryFrom<String> for FileSizeValue {
     }
 }
 
-
 #[cfg(test)]
 mod test {
-    use super::{buffered_zero_iter, ZERO_ITER_CHUNK_SIZE};
+    use super::{ZERO_ITER_CHUNK_SIZE, buffered_zero_iter};
 
     fn assert_eq_iter(
-        mut value: impl Iterator<Item=&'static [u8]>,
-        expected: impl IntoIterator<Item=&'static [u8]>,
+        mut value: impl Iterator<Item = &'static [u8]>,
+        expected: impl IntoIterator<Item = &'static [u8]>,
     ) {
         let mut expected = expected.into_iter();
         loop {
@@ -160,28 +168,19 @@ mod test {
     #[test]
     fn zero_iter_empty() {
         const SIZE: usize = 0;
-        assert_eq_iter(
-            buffered_zero_iter(SIZE),
-            [],
-        )
+        assert_eq_iter(buffered_zero_iter(SIZE), [])
     }
 
     #[test]
     fn zero_iter_less_than_buffer_size() {
         const SIZE: usize = ZERO_ITER_CHUNK_SIZE - 1;
-        assert_eq_iter(
-            buffered_zero_iter(SIZE),
-            [[0u8; SIZE].as_slice()],
-        )
+        assert_eq_iter(buffered_zero_iter(SIZE), [[0u8; SIZE].as_slice()])
     }
 
     #[test]
     fn zero_iter_equal_size_as_buffer_size() {
         const SIZE: usize = ZERO_ITER_CHUNK_SIZE;
-        assert_eq_iter(
-            buffered_zero_iter(SIZE),
-            [[0u8; SIZE].as_slice()],
-        );
+        assert_eq_iter(buffered_zero_iter(SIZE), [[0u8; SIZE].as_slice()]);
     }
 
     #[test]

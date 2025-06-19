@@ -1,4 +1,4 @@
-use database::{define_current_write_commands, DieselDatabaseError, IntoDatabaseError};
+use database::{DieselDatabaseError, IntoDatabaseError, define_current_write_commands};
 use diesel::{prelude::*, update};
 use error_stack::Result;
 use model::AccountIdInternal;
@@ -14,9 +14,7 @@ impl CurrentWriteChatAdminPublicKey<'_> {
         use model::schema::chat_state::dsl::*;
 
         update(chat_state.find(id.as_db_id()))
-            .set((
-                max_public_key_count.eq(count),
-            ))
+            .set((max_public_key_count.eq(count),))
             .execute(self.conn())
             .into_db_error(id)?;
 

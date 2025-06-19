@@ -2,25 +2,29 @@
 #![deny(unused_must_use)]
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
-
-#![allow(
-    async_fn_in_trait,
-)]
+#![allow(async_fn_in_trait)]
 
 use std::{future::Future, path::Path, sync::Arc};
 
-use error_stack::{report, ResultExt};
+use error_stack::{Result, ResultExt, report};
 use futures::FutureExt;
-use manager_model::{JsonRpcRequest, JsonRpcResponse, ManagerInstanceName, ManagerProtocolMode, ManagerProtocolVersion, ServerEvent};
-use protocol::{ClientConnectionReadSend, ClientConnectionReadWriteSend, ClientConnectionWriteSend, ConnectionUtilsRead, ConnectionUtilsWrite};
+use manager_model::{
+    JsonRpcRequest, JsonRpcResponse, ManagerInstanceName, ManagerProtocolMode,
+    ManagerProtocolVersion, ServerEvent,
+};
+use protocol::{
+    ClientConnectionReadSend, ClientConnectionReadWriteSend, ClientConnectionWriteSend,
+    ConnectionUtilsRead, ConnectionUtilsWrite,
+};
 use tokio::net::TcpStream;
-use tokio_rustls::{rustls::pki_types::{pem::PemObject, CertificateDer, PrivateKeyDer, ServerName}, TlsConnector};
+use tokio_rustls::{
+    TlsConnector,
+    rustls::pki_types::{CertificateDer, PrivateKeyDer, ServerName, pem::PemObject},
+};
 use url::Url;
 
-use error_stack::Result;
-
-pub mod protocol;
 pub mod backup;
+pub mod protocol;
 
 pub use protocol::{ManagerClientWithRequestReceiver, RequestSenderCmds};
 pub use tokio_rustls::rustls::RootCertStore;
@@ -97,7 +101,8 @@ impl TlsConfig {
             .change_context(ClientError::RootCertificateLoadingError)?;
 
         let mut root_store = RootCertStore::empty();
-        root_store.add( certificate)
+        root_store
+            .add(certificate)
             .change_context(ClientError::RootCertificateLoadingError)?;
 
         let certificate_iter = CertificateDer::pem_file_iter(server_certificate)
@@ -117,9 +122,7 @@ impl TlsConfig {
             .change_context(ClientError::ClientAuthenticationCertificatePrivateKey)?
             .into();
 
-        Ok(Self {
-            tls_config,
-        })
+        Ok(Self { tls_config })
     }
 }
 
@@ -138,20 +141,28 @@ pub struct ManagerClient {
 
 impl ManagerClient {
     pub async fn connect(config: ClientConfig) -> Result<Self, ClientError> {
-        let host = config.url.host_str()
+        let host = config
+            .url
+            .host_str()
             .map(|v| v.to_string())
             .ok_or_else(|| report!(ClientError::UrlHostMissing))?;
-        let port = config.url.port()
+        let port = config
+            .url
+            .port()
             .ok_or_else(|| report!(ClientError::UrlPortMissing))?;
         match config.url.scheme() {
             "tcp" => Self::connect_tcp(config, (host, port)).await,
             "tls" => Self::connect_tls(config, (host, port)).await,
-            other => Err(report!(ClientError::UnsupportedScheme))
-                .attach_printable(other.to_string()),
+            other => {
+                Err(report!(ClientError::UnsupportedScheme)).attach_printable(other.to_string())
+            }
         }
     }
 
-    async fn connect_tcp(config: ClientConfig, host_and_port: (String, u16)) -> Result<Self, ClientError> {
+    async fn connect_tcp(
+        config: ClientConfig,
+        host_and_port: (String, u16),
+    ) -> Result<Self, ClientError> {
         let stream = TcpStream::connect(host_and_port)
             .await
             .change_context(ClientError::Connect)?;
@@ -159,7 +170,10 @@ impl ManagerClient {
         Self::init_connection(config, Box::new(stream)).await
     }
 
-    async fn connect_tls(config: ClientConfig, host_and_port: (String, u16)) -> Result<Self, ClientError> {
+    async fn connect_tls(
+        config: ClientConfig,
+        host_and_port: (String, u16),
+    ) -> Result<Self, ClientError> {
         let domain = ServerName::try_from(host_and_port.0.clone())
             .change_context(ClientError::UrlHostInvalid)?;
 
@@ -171,7 +185,8 @@ impl ManagerClient {
             .await
             .change_context(ClientError::Connect)?;
         let connector = TlsConnector::from(tls_config.tls_config.clone());
-        let stream = connector.connect(domain, stream)
+        let stream = connector
+            .connect(domain, stream)
             .await
             .change_context(ClientError::Connect)?;
 
@@ -180,15 +195,18 @@ impl ManagerClient {
 
     async fn init_connection(
         config: ClientConfig,
-        mut stream: Box<dyn ClientConnectionReadWriteSend>
+        mut stream: Box<dyn ClientConnectionReadWriteSend>,
     ) -> Result<Self, ClientError> {
-        stream.send_u8(ManagerProtocolVersion::V1 as u8)
+        stream
+            .send_u8(ManagerProtocolVersion::V1 as u8)
             .await
             .change_context(ClientError::Write)?;
-        stream.send_string_with_u32_len(config.api_key)
+        stream
+            .send_string_with_u32_len(config.api_key)
             .await
             .change_context(ClientError::Write)?;
-        let result = stream.receive_u8()
+        let result = stream
+            .receive_u8()
             .await
             .change_context(ClientError::Read)?;
         if result != 1 {
@@ -205,38 +223,42 @@ impl ManagerClient {
 
     pub async fn send_request(
         mut self,
-        request: JsonRpcRequest
+        request: JsonRpcRequest,
     ) -> Result<JsonRpcResponse, ClientError> {
         self.send_request_internal(request).await
     }
 
     async fn send_request_internal(
         &mut self,
-        request: JsonRpcRequest
+        request: JsonRpcRequest,
     ) -> Result<JsonRpcResponse, ClientError> {
-        self.writer.send_u8(ManagerProtocolMode::JsonRpc as u8)
+        self.writer
+            .send_u8(ManagerProtocolMode::JsonRpc as u8)
             .await
             .change_context(ClientError::Write)?;
-        self.writer.send_json_rpc_request(request)
+        self.writer
+            .send_json_rpc_request(request)
             .await
             .change_context(ClientError::Write)?;
-        self.reader.receive_json_rpc_response()
+        self.reader
+            .receive_json_rpc_response()
             .await
             .change_context(ClientError::Write)
     }
 
-    pub async fn listen_events(
-        mut self,
-    ) -> Result<ServerEventListerner, ClientError> {
-        self.writer.send_u8(ManagerProtocolMode::ListenServerEvents as u8)
+    pub async fn listen_events(mut self) -> Result<ServerEventListerner, ClientError> {
+        self.writer
+            .send_u8(ManagerProtocolMode::ListenServerEvents as u8)
             .await
             .change_context(ClientError::Write)?;
-        Ok(ServerEventListerner { reader: self.reader })
+        Ok(ServerEventListerner {
+            reader: self.reader,
+        })
     }
 
     pub fn request_to(
         self,
-        request_receiver: ManagerInstanceName
+        request_receiver: ManagerInstanceName,
     ) -> ManagerClientWithRequestReceiver {
         ManagerClientWithRequestReceiver {
             client: self,
@@ -248,17 +270,28 @@ impl ManagerClient {
         mut self,
         name: ManagerInstanceName,
         password: String,
-    ) -> Result<(Box<dyn ClientConnectionReadSend>, Box<dyn ClientConnectionWriteSend>), ClientError> {
-        self.writer.send_u8(ManagerProtocolMode::JsonRpcLink as u8)
+    ) -> Result<
+        (
+            Box<dyn ClientConnectionReadSend>,
+            Box<dyn ClientConnectionWriteSend>,
+        ),
+        ClientError,
+    > {
+        self.writer
+            .send_u8(ManagerProtocolMode::JsonRpcLink as u8)
             .await
             .change_context(ClientError::Write)?;
-        self.writer.send_string_with_u32_len(name.0)
+        self.writer
+            .send_string_with_u32_len(name.0)
             .await
             .change_context(ClientError::Write)?;
-        self.writer.send_string_with_u32_len(password)
+        self.writer
+            .send_string_with_u32_len(password)
             .await
             .change_context(ClientError::Write)?;
-        let result = self.reader.receive_u8()
+        let result = self
+            .reader
+            .receive_u8()
             .await
             .change_context(ClientError::Read)?;
         if result != 1 {
@@ -271,14 +304,24 @@ impl ManagerClient {
     pub async fn backup_link(
         mut self,
         password: String,
-    ) -> Result<(Box<dyn ClientConnectionReadSend>, Box<dyn ClientConnectionWriteSend>), ClientError> {
-        self.writer.send_u8(ManagerProtocolMode::BackupLink as u8)
+    ) -> Result<
+        (
+            Box<dyn ClientConnectionReadSend>,
+            Box<dyn ClientConnectionWriteSend>,
+        ),
+        ClientError,
+    > {
+        self.writer
+            .send_u8(ManagerProtocolMode::BackupLink as u8)
             .await
             .change_context(ClientError::Write)?;
-        self.writer.send_string_with_u32_len(password)
+        self.writer
+            .send_string_with_u32_len(password)
             .await
             .change_context(ClientError::Write)?;
-        let result = self.reader.receive_u8()
+        let result = self
+            .reader
+            .receive_u8()
             .await
             .change_context(ClientError::Read)?;
         if result != 1 {
@@ -295,7 +338,8 @@ pub struct ServerEventListerner {
 
 impl ServerEventListerner {
     pub async fn next_event(&mut self) -> Result<ServerEvent, ClientError> {
-        self.reader.receive_server_event()
+        self.reader
+            .receive_server_event()
             .await
             .change_context(ClientError::Read)
     }

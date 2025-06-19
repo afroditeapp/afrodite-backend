@@ -8,14 +8,14 @@ use std::{
 use data::EmailLimitStateStorage;
 use error_stack::{Result, ResultExt};
 use lettre::{
-    message::Mailbox,
-    transport::smtp::{authentication::Credentials, PoolConfig},
     Address, AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
+    message::Mailbox,
+    transport::smtp::{PoolConfig, authentication::Credentials},
 };
-use simple_backend_config::{file::EmailSendingConfig, SimpleBackendConfig};
+use simple_backend_config::{SimpleBackendConfig, file::EmailSendingConfig};
 use simple_backend_utils::ContextExt;
 use tokio::{
-    sync::mpsc::{error::TrySendError, Receiver, Sender},
+    sync::mpsc::{Receiver, Sender, error::TrySendError},
     task::JoinHandle,
 };
 use tracing::{error, warn};
@@ -139,10 +139,10 @@ pub struct EmailManager<T, R, M> {
 }
 
 impl<
-        T: EmailDataProvider<R, M> + Send + Sync + 'static,
-        R: Clone + Send + 'static,
-        M: Clone + Send + 'static,
-    > EmailManager<T, R, M>
+    T: EmailDataProvider<R, M> + Send + Sync + 'static,
+    R: Clone + Send + 'static,
+    M: Clone + Send + 'static,
+> EmailManager<T, R, M>
 {
     pub async fn new_manager(
         simple_backend_config: &SimpleBackendConfig,

@@ -6,10 +6,10 @@ use model_profile::{
     AccountIdInternal, AccountState, EventToClientInternal, ProfileAge, ProfileUpdate,
 };
 use server_api::{
+    DataError,
     app::{GetConfig, ProfileStatisticsCacheProvider, ReadData, WriteData},
     db_write_raw,
     result::WrappedContextExt,
-    DataError,
 };
 use server_common::result::{Result, WrappedResultExt};
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
@@ -19,8 +19,7 @@ use server_data_profile::{
     write::GetWriteCommandsProfile,
 };
 use server_state::S;
-use simple_backend::app::PerfCounterDataProvider;
-use simple_backend::ServerQuitWatcher;
+use simple_backend::{ServerQuitWatcher, app::PerfCounterDataProvider};
 use simple_backend_config::file::ScheduledTasksConfig;
 use simple_backend_utils::{IntoReportFromString, time::sleep_until_current_time_is_at};
 use tokio::{sync::broadcast::error::TryRecvError, task::JoinHandle, time::sleep};
@@ -157,23 +156,35 @@ impl ScheduledTaskManager {
         Ok(())
     }
 
-    pub async fn delete_processed_reports_which_have_user_data(&self) -> Result<(), ScheduledTaskError> {
-        let run_delete = |report_type, deletion_wait_time| {
-            async move {
-                db_write_raw!(self.state, move |cmds| {
-                    cmds.common()
-                        .delete_processed_reports_if_needed(report_type, deletion_wait_time)
-                        .await
-                })
-                .await
-                .change_context(ScheduledTaskError::DatabaseError)?;
-                Result::Ok(())
-            }
+    pub async fn delete_processed_reports_which_have_user_data(
+        &self,
+    ) -> Result<(), ScheduledTaskError> {
+        let run_delete = |report_type, deletion_wait_time| async move {
+            db_write_raw!(self.state, move |cmds| {
+                cmds.common()
+                    .delete_processed_reports_if_needed(report_type, deletion_wait_time)
+                    .await
+            })
+            .await
+            .change_context(ScheduledTaskError::DatabaseError)?;
+            Result::Ok(())
         };
 
-        let durations = self.state.config().limits_common().processed_report_deletion_wait_duration;
-        run_delete(ReportTypeNumberInternal::ProfileName, durations.profile_name).await?;
-        run_delete(ReportTypeNumberInternal::ProfileText, durations.profile_text).await?;
+        let durations = self
+            .state
+            .config()
+            .limits_common()
+            .processed_report_deletion_wait_duration;
+        run_delete(
+            ReportTypeNumberInternal::ProfileName,
+            durations.profile_name,
+        )
+        .await?;
+        run_delete(
+            ReportTypeNumberInternal::ProfileText,
+            durations.profile_text,
+        )
+        .await?;
         Ok(())
     }
 
@@ -212,8 +223,7 @@ impl ScheduledTaskManager {
             }
 
             if account_state != AccountState::PendingDeletion {
-                self.init_deletion_for_unused_account(id)
-                    .await?;
+                self.init_deletion_for_unused_account(id).await?;
             }
 
             if account_state == AccountState::PendingDeletion {
@@ -321,7 +331,11 @@ impl ScheduledTaskManager {
 
         if let Some(last_seen_time) = last_seen_time.and_then(|v| v.last_seen_unix_time()) {
             let inactive_account = last_seen_time.add_seconds(
-                self.state.config().limits_account().init_deletion_for_inactive_accounts_wait_duration.seconds
+                self.state
+                    .config()
+                    .limits_account()
+                    .init_deletion_for_inactive_accounts_wait_duration
+                    .seconds,
             );
             if UnixTime::current_time().ut >= inactive_account.ut {
                 db_write_raw!(self.state, move |cmds| {
@@ -329,7 +343,7 @@ impl ScheduledTaskManager {
                         .delete()
                         .set_account_deletion_request_state(id, true)
                         .await
-                    })
+                })
                 .await
                 .change_context(ScheduledTaskError::DatabaseError)?;
             }
@@ -355,11 +369,8 @@ impl ScheduledTaskManager {
             let current_time = UnixTime::current_time();
             if current_time.ut >= deletion_allowed_time.ut {
                 db_write_raw!(self.state, move |cmds| {
-                    cmds.account()
-                        .delete()
-                        .delete_account(id)
-                        .await
-                    })
+                    cmds.account().delete().delete_account(id).await
+                })
                 .await
                 .change_context(ScheduledTaskError::DatabaseError)?;
             }
@@ -388,7 +399,7 @@ impl ScheduledTaskManager {
                         .ban()
                         .set_account_ban_state(id, None, None, None, None)
                         .await
-                    })
+                })
                 .await
                 .change_context(ScheduledTaskError::DatabaseError)?;
             }
@@ -424,16 +435,16 @@ impl ScheduledTaskManager {
 
             if let Some(last_seen_time) = last_seen_time.and_then(|v| v.last_seen_unix_time()) {
                 let inactive_account = last_seen_time.add_seconds(
-                    self.state.config().limits_account().inactivity_logout_wait_duration.seconds
+                    self.state
+                        .config()
+                        .limits_account()
+                        .inactivity_logout_wait_duration
+                        .seconds,
                 );
                 if UnixTime::current_time().ut >= inactive_account.ut {
-                    db_write_raw!(self.state, move |cmds| {
-                        cmds.common()
-                            .logout(id)
-                            .await
-                        })
-                    .await
-                    .change_context(ScheduledTaskError::DatabaseError)?;
+                    db_write_raw!(self.state, move |cmds| { cmds.common().logout(id).await })
+                        .await
+                        .change_context(ScheduledTaskError::DatabaseError)?;
                 }
             }
         }

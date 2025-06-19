@@ -4,10 +4,20 @@ use std::sync::Arc;
 
 use manager_config::Config;
 
-use crate::server::{backend_manager::BackendManagerHandle, client::ApiManager, link::{backup::server::BackupLinkManagerHandleServer, json_rpc::server::JsonRcpLinkManagerHandleServer}, scheduled_task::ScheduledTaskManagerHandle, task::TaskManagerHandle, update::UpdateManagerHandle};
+use crate::server::{
+    backend_manager::BackendManagerHandle,
+    client::ApiManager,
+    link::{
+        backup::server::BackupLinkManagerHandleServer,
+        json_rpc::server::JsonRcpLinkManagerHandleServer,
+    },
+    scheduled_task::ScheduledTaskManagerHandle,
+    task::TaskManagerHandle,
+    update::UpdateManagerHandle,
+};
 
-pub mod server;
 pub mod client;
+pub mod server;
 pub mod utils;
 
 // App state getters

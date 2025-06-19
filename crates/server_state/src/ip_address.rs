@@ -30,7 +30,7 @@ impl IpAddressUsageTracker {
         Self {
             state: Arc::new(Mutex::new(State {
                 accounts: HashMap::new(),
-            }))
+            })),
         }
     }
 
@@ -39,11 +39,7 @@ impl IpAddressUsageTracker {
         std::mem::take(&mut lock.accounts)
     }
 
-    pub async fn mark_ip_used(
-        &self,
-        account: impl Into<AccountIdDb>,
-        ip: IpAddr,
-    ) {
+    pub async fn mark_ip_used(&self, account: impl Into<AccountIdDb>, ip: IpAddr) {
         let account = account.into();
         let ip = ip.into();
         let mut lock = self.state.lock().await;

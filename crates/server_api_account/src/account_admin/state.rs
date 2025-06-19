@@ -1,6 +1,13 @@
-use axum::{extract::{Path, State}, Extension};
+use axum::{
+    Extension,
+    extract::{Path, State},
+};
 use model::{Account, AccountId, Permissions};
-use server_api::{app::{GetAccounts, ReadData}, create_open_api_router, S};
+use server_api::{
+    S,
+    app::{GetAccounts, ReadData},
+    create_open_api_router,
+};
 use server_data::read::GetReadCommandsCommon;
 use simple_backend::create_counters;
 

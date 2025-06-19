@@ -1,4 +1,3 @@
-
 use std::fmt::Debug;
 
 use model_server_data::{CellDataProvider, CellState, LocationIndexKey};
@@ -11,15 +10,9 @@ pub struct LocationIndexIterator<T: ReadIndex> {
     area: T,
 }
 
-impl <T: ReadIndex> LocationIndexIterator<T> {
-    fn new(
-        state: LocationIndexIteratorState,
-        area: T,
-    ) -> Self {
-        Self {
-            state,
-            area,
-        }
+impl<T: ReadIndex> LocationIndexIterator<T> {
+    fn new(state: LocationIndexIteratorState, area: T) -> Self {
+        Self { state, area }
     }
 
     #[cfg(test)]
@@ -29,7 +22,7 @@ impl <T: ReadIndex> LocationIndexIterator<T> {
     }
 }
 
-impl <T: ReadIndex> Iterator for LocationIndexIterator<T> {
+impl<T: ReadIndex> Iterator for LocationIndexIterator<T> {
     type Item = LocationIndexKey;
 
     /// Get next cell where are profiles.
@@ -56,10 +49,7 @@ struct IndexLimitCoordinates {
 
 impl IndexLimitCoordinates {
     fn new(key: LocationIndexKey) -> Self {
-        Self {
-            x: key.x,
-            y: key.y,
-        }
+        Self { x: key.x, y: key.y }
     }
 }
 
@@ -82,10 +72,10 @@ impl IndexLimitInner {
     fn is_inside(&self, x: u16, y: u16) -> bool {
         // Use > and < operators to make index cells at the limit border
         // accessible when min and max distance limits have the same value.
-        x > self.0.top_left.x  &&
-        x < self.0.bottom_right.x &&
-        y > self.0.top_left.y &&
-        y < self.0.bottom_right.y
+        x > self.0.top_left.x
+            && x < self.0.bottom_right.x
+            && y > self.0.top_left.y
+            && y < self.0.bottom_right.y
     }
 }
 
@@ -94,8 +84,8 @@ struct IndexLimitOuter(pub IndexLimit);
 
 impl IndexLimitOuter {
     fn is_outside(&self, x: u16, y: u16) -> bool {
-        (x < self.0.top_left.x || x > self.0.bottom_right.x) &&
-        (y < self.0.top_left.y || y > self.0.bottom_right.y)
+        (x < self.0.top_left.x || x > self.0.bottom_right.x)
+            && (y < self.0.top_left.y || y > self.0.bottom_right.y)
     }
 }
 
@@ -157,8 +147,9 @@ impl RoundState {
         let left = initial.x.saturating_sub(round);
         let right = initial.x.saturating_add(round);
 
-        if initial.limit_outer.is_outside(left, top) &&
-            initial.limit_outer.is_outside(right, bottom) {
+        if initial.limit_outer.is_outside(left, top)
+            && initial.limit_outer.is_outside(right, bottom)
+        {
             return CreateRoundStateResult::AllIterated;
         }
 
@@ -184,7 +175,10 @@ impl RoundState {
     }
 
     fn current_position(&self) -> LocationIndexKey {
-        LocationIndexKey { x: self.x, y: self.y }
+        LocationIndexKey {
+            x: self.x,
+            y: self.y,
+        }
     }
 
     fn is_round_complete(&self) -> bool {
@@ -267,7 +261,7 @@ impl LocationIndexIteratorState {
                     bottom: 0,
                     left: 0,
                     right: 0,
-                }
+                },
             },
             current_round: 0,
             completed: true,
@@ -285,10 +279,12 @@ impl LocationIndexIteratorState {
         let initial_state = InitialState {
             x,
             y,
-            limit_inner: area.area_inner().as_ref().map(|a| IndexLimitInner(IndexLimit {
-                top_left: a.top_left().into(),
-                bottom_right: a.bottom_right().into(),
-            })),
+            limit_inner: area.area_inner().as_ref().map(|a| {
+                IndexLimitInner(IndexLimit {
+                    top_left: a.top_left().into(),
+                    bottom_right: a.bottom_right().into(),
+                })
+            }),
             limit_outer: IndexLimitOuter(IndexLimit {
                 top_left: area.area_outer().top_left().into(),
                 bottom_right: area.area_outer().bottom_right().into(),
@@ -306,13 +302,12 @@ impl LocationIndexIteratorState {
         };
         match RoundState::create(&initial_state, current_round, index) {
             CreateRoundStateResult::AllIterated => Self::completed(),
-            CreateRoundStateResult::Continue(round) =>
-                Self {
-                    round,
-                    initial_state,
-                    current_round,
-                    completed: false,
-                }
+            CreateRoundStateResult::Continue(round) => Self {
+                round,
+                initial_state,
+                current_round,
+                completed: false,
+            },
         }
     }
 
@@ -320,7 +315,10 @@ impl LocationIndexIteratorState {
         LocationIndexIterator::new(self, reader)
     }
 
-    pub fn get_current_position_if_contains_profiles(&self, state: &CellState) -> Option<LocationIndexKey> {
+    pub fn get_current_position_if_contains_profiles(
+        &self,
+        state: &CellState,
+    ) -> Option<LocationIndexKey> {
         if !state.profiles() {
             return None;
         }
@@ -333,7 +331,11 @@ impl LocationIndexIteratorState {
         }
 
         // Make area outside outer limit appear empty
-        if self.initial_state.limit_outer.is_outside(self.round.x, self.round.y) {
+        if self
+            .initial_state
+            .limit_outer
+            .is_outside(self.round.x, self.round.y)
+        {
             return None;
         }
 
@@ -375,8 +377,7 @@ impl LocationIndexIteratorState {
                             self.completed = true;
                             return data_position;
                         }
-                        CreateRoundStateResult::Continue(round) =>
-                            self.round = round,
+                        CreateRoundStateResult::Continue(round) => self.round = round,
                     }
                 }
             }
@@ -397,12 +398,13 @@ impl LocationIndexIteratorState {
     }
 
     fn current_cell_state(&self, index: &impl ReadIndex) -> Option<CellState> {
-        index.get_cell_data(self.round.x, self.round.y)
+        index
+            .get_cell_data(self.round.x, self.round.y)
             .map(|cell| cell.state())
     }
 }
 
-impl <T: ReadIndex> From<LocationIndexIterator<T>> for LocationIndexIteratorState {
+impl<T: ReadIndex> From<LocationIndexIterator<T>> for LocationIndexIteratorState {
     fn from(value: LocationIndexIterator<T>) -> Self {
         value.state
     }
@@ -412,9 +414,8 @@ impl <T: ReadIndex> From<LocationIndexIterator<T>> for LocationIndexIteratorStat
 mod tests {
     use std::sync::Arc;
 
-    use crate::index::{data::LocationIndex, write::IndexUpdater};
-
     use super::*;
+    use crate::index::{data::LocationIndex, write::IndexUpdater};
 
     trait IndexUtils: Sized {
         fn add_profile(self, x: u16, y: u16) -> Self;
@@ -433,32 +434,38 @@ mod tests {
     }
 
     fn index() -> Arc<LocationIndex> {
-        Arc::new(LocationIndex::new(6.try_into().unwrap(), 11.try_into().unwrap()))
-            .add_profile(1, 1)
-            .add_profile(4, 1)
-            .add_profile(1, 9)
-            .add_profile(4, 9)
+        Arc::new(LocationIndex::new(
+            6.try_into().unwrap(),
+            11.try_into().unwrap(),
+        ))
+        .add_profile(1, 1)
+        .add_profile(4, 1)
+        .add_profile(1, 9)
+        .add_profile(4, 9)
     }
 
     fn mirror_index() -> Arc<LocationIndex> {
-        Arc::new(LocationIndex::new(11.try_into().unwrap(), 6.try_into().unwrap()))
-            .add_profile(1, 1)
-            .add_profile(9, 1)
-            .add_profile(1, 4)
-            .add_profile(9, 4)
+        Arc::new(LocationIndex::new(
+            11.try_into().unwrap(),
+            6.try_into().unwrap(),
+        ))
+        .add_profile(1, 1)
+        .add_profile(9, 1)
+        .add_profile(1, 4)
+        .add_profile(9, 4)
     }
 
     fn max_area(x: u16, y: u16, index: &LocationIndex) -> LocationIndexArea {
-        LocationIndexArea::max_area(
-            LocationIndexKey { y, x },
-            index,
-        )
+        LocationIndexArea::max_area(LocationIndexKey { y, x }, index)
     }
 
     fn init_with_index(x: u16, y: u16) -> LocationIndexIterator<Arc<LocationIndex>> {
         let index = index();
         let area = max_area(x, y, &index);
-        LocationIndexIterator::new(LocationIndexIteratorState::new(&area, false, &index), index.clone())
+        LocationIndexIterator::new(
+            LocationIndexIteratorState::new(&area, false, &index),
+            index.clone(),
+        )
     }
 
     fn init_with_mirror_index(x: u16, y: u16) -> LocationIndexIterator<Arc<LocationIndex>> {

@@ -1,16 +1,22 @@
 use axum::{
-    extract::{Path, Query, State},
     Extension,
+    extract::{Path, Query, State},
 };
 use model::{AccountId, AdminNotificationTypes, NotificationEvent};
 use model_profile::{
-    AccountIdInternal, EventToClientInternal, GetProfileTextPendingModerationList, GetProfileTextPendingModerationParams, GetProfileTextState, Permissions, PostModerateProfileText
+    AccountIdInternal, EventToClientInternal, GetProfileTextPendingModerationList,
+    GetProfileTextPendingModerationParams, GetProfileTextState, Permissions,
+    PostModerateProfileText,
 };
 use server_api::{
+    S,
     app::{AdminNotificationProvider, GetAccounts, WriteData},
-    create_open_api_router, db_write_multiple, S,
+    create_open_api_router, db_write_multiple,
 };
-use server_data_profile::{read::GetReadProfileCommands, write::{profile_admin::profile_text::ModerateProfileTextMode, GetWriteCommandsProfile}};
+use server_data_profile::{
+    read::GetReadProfileCommands,
+    write::{GetWriteCommandsProfile, profile_admin::profile_text::ModerateProfileTextMode},
+};
 use simple_backend::create_counters;
 
 use crate::{
@@ -110,11 +116,7 @@ pub async fn post_moderate_profile_text(
     db_write_multiple!(state, move |cmds| {
         cmds.profile_admin()
             .profile_text()
-            .moderate_profile_text(
-                mode,
-                text_owner_id,
-                data.text,
-            )
+            .moderate_profile_text(mode, text_owner_id, data.text)
             .await?;
 
         cmds.events()
@@ -127,16 +129,12 @@ pub async fn post_moderate_profile_text(
             if data.accept {
                 cmds.profile_admin()
                     .notification()
-                    .show_profile_text_accepted_notification(
-                        text_owner_id,
-                    )
+                    .show_profile_text_accepted_notification(text_owner_id)
                     .await?;
             } else {
                 cmds.profile_admin()
                     .notification()
-                    .show_profile_text_rejected_notification(
-                        text_owner_id,
-                    )
+                    .show_profile_text_rejected_notification(text_owner_id)
                     .await?;
             }
 

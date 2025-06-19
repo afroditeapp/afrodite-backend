@@ -2,14 +2,14 @@
 
 use std::path::PathBuf;
 
-use clap::{arg, command, Args, Parser};
+use clap::{Args, Parser, arg, command};
 use error_stack::{Result, ResultExt};
 use manager_api::TlsConfig;
 use manager_model::ManagerInstanceName;
 use simple_backend_utils::ContextExt;
 use url::Url;
 
-use super::{file::ConfigFile, GetConfigError};
+use super::{GetConfigError, file::ConfigFile};
 
 #[derive(Args, Debug, Clone)]
 pub struct ManagerApiClientMode {
@@ -84,10 +84,14 @@ impl ManagerApiClientMode {
     }
 
     pub fn tls_config(&self) -> Result<Option<TlsConfig>, GetConfigError> {
-        let tls_arg_config = (self.tls_root_cert.clone(), self.tls_client_auth_cert.clone(), self.tls_client_auth_cert_private_key.clone());
+        let tls_arg_config = (
+            self.tls_root_cert.clone(),
+            self.tls_client_auth_cert.clone(),
+            self.tls_client_auth_cert_private_key.clone(),
+        );
         if let (Some(root), Some(client_auth), Some(client_auth_private_key)) = tls_arg_config {
             let config = TlsConfig::new(root, client_auth, client_auth_private_key)
-                    .change_context(GetConfigError::ReadCertificateError)?;
+                .change_context(GetConfigError::ReadCertificateError)?;
             return Ok(Some(config));
         }
 
@@ -103,10 +107,14 @@ impl ManagerApiClientMode {
             if let Some(tls) = file_config.tls {
                 let config = TlsConfig::new(
                     self.tls_root_cert.clone().unwrap_or(tls.root_cert),
-                    self.tls_client_auth_cert.clone().unwrap_or(tls.public_api_cert),
-                    self.tls_client_auth_cert_private_key.clone().unwrap_or(tls.public_api_key),
+                    self.tls_client_auth_cert
+                        .clone()
+                        .unwrap_or(tls.public_api_cert),
+                    self.tls_client_auth_cert_private_key
+                        .clone()
+                        .unwrap_or(tls.public_api_key),
                 )
-                    .change_context(GetConfigError::ReadCertificateError)?;
+                .change_context(GetConfigError::ReadCertificateError)?;
                 Ok(Some(config))
             } else {
                 Ok(None)

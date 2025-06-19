@@ -1,9 +1,9 @@
 use base64::Engine;
+use error_stack::{Result, ResultExt};
 use jsonwebtoken::{EncodingKey, Header};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use simple_backend_config::SimpleBackendConfig;
-use error_stack::{Result, ResultExt};
 use simple_backend_model::UnixTime;
 
 pub struct VideoCallUserInfo {
@@ -40,9 +40,7 @@ pub struct JitsiMeetUrlCreator<'a> {
 
 impl<'a> JitsiMeetUrlCreator<'a> {
     pub fn new(config: &'a SimpleBackendConfig) -> Self {
-        Self {
-            config,
-        }
+        Self { config }
     }
 
     /// None is returned when video calls are not configured
@@ -71,7 +69,7 @@ impl<'a> JitsiMeetUrlCreator<'a> {
             context: Context {
                 user: url_requester.into(),
                 callee: callee.into(),
-            }
+            },
         };
 
         let jwt = jsonwebtoken::encode(
@@ -79,7 +77,7 @@ impl<'a> JitsiMeetUrlCreator<'a> {
             &claims,
             &EncodingKey::from_secret(config.jwt_secret.as_bytes()),
         )
-            .change_context(JitsiMeetUrlCreatorError::TokenEncoding)?;
+        .change_context(JitsiMeetUrlCreatorError::TokenEncoding)?;
 
         let mut url = config.url.clone();
         url.set_path(&room);
@@ -90,11 +88,7 @@ impl<'a> JitsiMeetUrlCreator<'a> {
             custom_url: config
                 .custom_url
                 .as_ref()
-                .map(|v|
-                    v
-                        .replace("{room}", &room)
-                        .replace("{jwt}", &jwt)
-                ),
+                .map(|v| v.replace("{room}", &room).replace("{jwt}", &jwt)),
         }))
     }
 }
@@ -106,9 +100,7 @@ struct Name {
 
 impl From<VideoCallUserInfo> for Name {
     fn from(value: VideoCallUserInfo) -> Self {
-        Self {
-            name: value.name,
-        }
+        Self { name: value.name }
     }
 }
 

@@ -4,23 +4,26 @@
 #![warn(unused_crate_dependencies)]
 
 use axum::{
-    routing::{get, post},
     Router,
+    routing::{get, post},
 };
 use routes_connected::ConnectedApp;
 use server_api::app::GetConfig;
 use server_state::StateForRouterCreation;
 
 mod api;
-mod routes_connected;
 mod routes_bot;
+mod routes_connected;
 mod routes_internal;
 
-pub use routes_bot::{PublicBotApp, BotApp};
+pub use routes_bot::{BotApp, PublicBotApp};
 pub use routes_internal::InternalApp;
 use simple_backend::web_socket::WebSocketManager;
 
-pub fn create_common_server_router(state: StateForRouterCreation, ws_manager: WebSocketManager) -> Router {
+pub fn create_common_server_router(
+    state: StateForRouterCreation,
+    ws_manager: WebSocketManager,
+) -> Router {
     let public = Router::new()
         .route(
             api::common::PATH_GET_VERSION, // TODO(prod): Make private?

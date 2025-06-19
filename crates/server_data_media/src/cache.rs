@@ -1,7 +1,7 @@
 use error_stack::Result;
 use model::AccountId;
 use server_data::{
-    cache::{media::CachedMedia, CacheError},
+    cache::{CacheError, media::CachedMedia},
     db_manager::InternalWriting,
 };
 

@@ -2,12 +2,11 @@ use std::path::{Path, PathBuf};
 
 use error_stack::{Result, ResultExt};
 use serde::{Deserialize, Deserializer};
+pub use simple_backend_config::file::NsfwDetectionThresholds;
 use simple_backend_utils::time::UtcTimeValue;
 use url::Url;
 
 use crate::{args::TestMode, file::ConfigFileError};
-
-pub use simple_backend_config::file::NsfwDetectionThresholds;
 
 #[derive(Debug, Default, Deserialize)]
 pub struct BotConfigFile {
@@ -41,9 +40,7 @@ impl BotConfigFile {
         Self::load(file)
     }
 
-    pub(crate) fn load(
-        file: impl AsRef<Path>,
-    ) -> Result<BotConfigFile, ConfigFileError> {
+    pub(crate) fn load(file: impl AsRef<Path>) -> Result<BotConfigFile, ConfigFileError> {
         let config_content =
             std::fs::read_to_string(file).change_context(ConfigFileError::LoadConfig)?;
         let mut config: BotConfigFile =
@@ -113,7 +110,11 @@ impl BotConfigFile {
             check_imgs_exist(&config, img_dir, Gender::Woman)?
         }
 
-        if let Some(config) = config.profile_text_moderation.as_ref().and_then(|v| v.llm.as_ref()) {
+        if let Some(config) = config
+            .profile_text_moderation
+            .as_ref()
+            .and_then(|v| v.llm.as_ref())
+        {
             let count = config
                 .user_text_template
                 .split(ProfileTextModerationConfig::TEMPLATE_FORMAT_ARGUMENT)
@@ -132,8 +133,10 @@ impl BotConfigFile {
         if let Some(config) = &config.content_moderation {
             if let Some(config) = &config.nsfw_detection {
                 if !config.model_file.exists() {
-                    return Err(ConfigFileError::InvalidConfig)
-                        .attach_printable(format!("NSFW model file {} does not exists", config.model_file.display()));
+                    return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
+                        "NSFW model file {} does not exists",
+                        config.model_file.display()
+                    ));
                 }
             }
         }
@@ -175,15 +178,15 @@ impl BotConfigFile {
                 send_like_to_account_id: c.send_like_to_account_id.or(base.send_like_to_account_id),
                 change_visibility: c.change_visibility.or(base.random_color_image),
                 change_location: c.change_location.or(base.change_location),
-                change_profile_text_time: c.change_profile_text_time.or(base.change_profile_text_time),
+                change_profile_text_time: c
+                    .change_profile_text_time
+                    .or(base.change_profile_text_time),
             };
         }
     }
 
     pub fn find_bot_config(&self, bot_id: u32) -> Option<&BotInstanceConfig> {
-        self.bot
-            .iter()
-            .find(|v| Into::<u32>::into(v.id) == bot_id)
+        self.bot.iter().find(|v| Into::<u32>::into(v.id) == bot_id)
     }
 }
 

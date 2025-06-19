@@ -1,18 +1,25 @@
 use axum::{
+    Extension,
     body::Body,
     extract::{Query, State},
-    Extension,
 };
 use axum_extra::TypedHeader;
 use headers::ContentType;
 use model::NotificationEvent;
 use model_chat::{
-    add_minimal_i64, AccountId, AccountIdInternal, EventToClientInternal, GetSentMessage, LatestViewedMessageChanged, MessageNumber, PendingMessageAcknowledgementList, SendMessageResult, SendMessageToAccountParams, SentMessageId, SentMessageIdList, UpdateMessageViewStatus
+    AccountId, AccountIdInternal, EventToClientInternal, GetSentMessage,
+    LatestViewedMessageChanged, MessageNumber, PendingMessageAcknowledgementList,
+    SendMessageResult, SendMessageToAccountParams, SentMessageId, SentMessageIdList,
+    UpdateMessageViewStatus, add_minimal_i64,
 };
-use server_api::{app::{ApiUsageTrackerProvider, DataSignerProvider}, create_open_api_router, S};
+use server_api::{
+    S,
+    app::{ApiUsageTrackerProvider, DataSignerProvider},
+    create_open_api_router,
+};
 use server_data_chat::{
     read::GetReadChatCommands,
-    write::{chat::PushNotificationAllowed, GetWriteCommandsChat},
+    write::{GetWriteCommandsChat, chat::PushNotificationAllowed},
 };
 use simple_backend::create_counters;
 use tracing::error;
@@ -111,7 +118,8 @@ pub async fn post_add_receiver_acknowledgement(
 
     db_write_multiple!(state, move |cmds| {
         cmds.chat()
-            .add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(id, list.ids).await
+            .add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(id, list.ids)
+            .await
     })?;
     Ok(())
 }
@@ -223,7 +231,10 @@ pub async fn post_send_message(
     message_bytes: Body,
 ) -> Result<Json<SendMessageResult>, StatusCode> {
     CHAT.post_send_message.incr();
-    state.api_usage_tracker().incr(id, |u| &u.post_send_message).await;
+    state
+        .api_usage_tracker()
+        .incr(id, |u| &u.post_send_message)
+        .await;
 
     let bytes = axum::body::to_bytes(message_bytes, u16::MAX.into())
         .await
@@ -252,10 +263,7 @@ pub async fn post_send_message(
             match push_notification_allowed {
                 Some(PushNotificationAllowed) => cmds
                     .events()
-                    .send_notification(
-                        message_reciever,
-                        NotificationEvent::NewMessageReceived,
-                    )
+                    .send_notification(message_reciever, NotificationEvent::NewMessageReceived)
                     .await
                     .ignore_and_log_error(),
                 None => cmds

@@ -10,18 +10,18 @@ pub mod history;
 use std::{fmt::Debug, marker::PhantomData};
 
 use current::write::TransactionConnection;
-use diesel_migrations::{embed_migrations, EmbeddedMigrations};
+use diesel_migrations::{EmbeddedMigrations, embed_migrations};
 use error_stack::{Context, Result, ResultExt};
 use model::markers::IsLoggingAllowed;
 pub use model::schema;
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;
-use simple_backend_database::{diesel_db::ObjectExtensions, DbReadHandle, DbWriteHandle};
+use simple_backend_database::{DbReadHandle, DbWriteHandle, diesel_db::ObjectExtensions};
 
 pub const DIESEL_MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 
 pub use simple_backend_database::{
-    diesel_db::{ConnectionProvider, DieselConnection, DieselDatabaseError},
     DatabaseHandleCreator, DbReadCloseHandle, DbWriteCloseHandle, PoolObject,
+    diesel_db::{ConnectionProvider, DieselConnection, DieselDatabaseError},
 };
 
 /// Write handle for current database.
@@ -285,10 +285,7 @@ impl<'a> DbReaderRaw<'a> {
             .await
             .change_context(DieselDatabaseError::GetConnection)?;
 
-        conn.interact(move |conn| {
-            cmd(DbReadMode(conn))
-        })
-        .await?
+        conn.interact(move |conn| cmd(DbReadMode(conn))).await?
     }
 }
 
@@ -355,10 +352,8 @@ impl<'a> DbReaderHistoryRaw<'a> {
             .await
             .change_context(DieselDatabaseError::GetConnection)?;
 
-        conn.interact(move |conn| {
-            cmd(DbReadModeHistory(conn))
-        })
-        .await?
+        conn.interact(move |conn| cmd(DbReadModeHistory(conn)))
+            .await?
     }
 }
 

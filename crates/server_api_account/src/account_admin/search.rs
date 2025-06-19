@@ -1,7 +1,10 @@
-use axum::{extract::{Path, State}, Extension};
+use axum::{
+    Extension,
+    extract::{Path, State},
+};
 use model::Permissions;
 use model_account::{GetAccountIdFromEmailParams, GetAccountIdFromEmailResult};
-use server_api::{app::ReadData, create_open_api_router, S};
+use server_api::{S, app::ReadData, create_open_api_router};
 use server_data_account::read::GetReadCommandsAccount;
 use simple_backend::create_counters;
 
@@ -36,7 +39,12 @@ pub async fn get_account_id_from_email(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let r = state.read().account_admin().search().account_id_from_email(email.email).await?;
+    let r = state
+        .read()
+        .account_admin()
+        .search()
+        .account_id_from_email(email.email)
+        .await?;
     Ok(r.into())
 }
 

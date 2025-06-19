@@ -1,15 +1,15 @@
 use axum::extract::ws::WebSocket;
 use config::Config;
-use futures::{future::BoxFuture, FutureExt};
+use futures::{FutureExt, future::BoxFuture};
 use model::{
-    Account, AccountIdInternal, EmailMessages, PendingNotification,
-    PendingNotificationWithData, SyncDataVersionFromClient,
+    Account, AccountIdInternal, EmailMessages, PendingNotification, PendingNotificationWithData,
+    SyncDataVersionFromClient,
 };
 use model_account::{EmailAddress, SignInWithInfo};
 use server_common::websocket::WebSocketError;
 use server_data::{
-    app::DataAllUtils, db_manager::RouterDatabaseReadHandle,
-    write_commands::WriteCommandRunnerHandle, DataError,
+    DataError, app::DataAllUtils, db_manager::RouterDatabaseReadHandle,
+    write_commands::WriteCommandRunnerHandle,
 };
 use server_data_account::write::GetWriteCommandsAccount;
 use server_data_chat::read::GetReadChatCommands;
@@ -93,13 +93,7 @@ impl DataAllUtils for DataAllUtilsImpl {
                 sync_versions,
             )
             .await?;
-            crate::websocket::send_events_if_needed(
-                config,
-                read_handle,
-                manager_api,
-                socket,
-                id
-            )
+            crate::websocket::send_events_if_needed(config, read_handle, manager_api, socket, id)
                 .await?;
             Ok(())
         }

@@ -1,4 +1,4 @@
-use database::{define_current_write_commands, DieselDatabaseError};
+use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::ContentId;
@@ -7,8 +7,8 @@ use model_media::{AccountIdInternal, MediaStateRaw, ProfileContentEditedTime};
 use crate::IntoDatabaseError;
 
 mod media_content;
-mod report;
 mod notification;
+mod report;
 
 define_current_write_commands!(CurrentWriteMedia);
 
@@ -82,10 +82,7 @@ impl CurrentWriteMedia<'_> {
         let random_cid = ContentId::new_random();
 
         insert_into(used_content_ids)
-            .values((
-                account_id.eq(id.as_db_id()),
-                uuid.eq(random_cid),
-            ))
+            .values((account_id.eq(id.as_db_id()), uuid.eq(random_cid)))
             .execute(self.conn())
             .into_db_error(id)?;
 

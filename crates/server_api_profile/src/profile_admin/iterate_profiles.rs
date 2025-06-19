@@ -1,13 +1,9 @@
 use axum::{
-    extract::{Query, State},
     Extension,
+    extract::{Query, State},
 };
-use model_profile::{
-    AccountIdDbValue, Permissions, ProfileIteratorPage, ProfileIteratorSettings
-};
-use server_api::{
-    create_open_api_router, S,
-};
+use model_profile::{AccountIdDbValue, Permissions, ProfileIteratorPage, ProfileIteratorSettings};
+use server_api::{S, create_open_api_router};
 use server_data_profile::read::GetReadProfileCommands;
 use simple_backend::create_counters;
 
@@ -45,7 +41,12 @@ pub async fn get_latest_created_account_id_db(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let r = state.read().profile_admin().iterator().get_latest_created_account_id_db().await?;
+    let r = state
+        .read()
+        .profile_admin()
+        .iterator()
+        .get_latest_created_account_id_db()
+        .await?;
 
     Ok(r.into())
 }
@@ -81,7 +82,12 @@ pub async fn get_admin_profile_iterator_page(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let r = state.read().profile_admin().iterator().get_profile_page(settings).await?;
+    let r = state
+        .read()
+        .profile_admin()
+        .iterator()
+        .get_profile_page(settings)
+        .await?;
 
     Ok(r.into())
 }

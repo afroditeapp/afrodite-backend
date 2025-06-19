@@ -1,21 +1,20 @@
-use database::{define_current_read_commands, DieselDatabaseError};
+use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model::{AccountIdDb, AccountIdInternal};
-use model_profile::{AccountIdDbValue, ProfileInternal, ProfileIteratorPage, ProfileIteratorPageValue, ProfileIteratorSettings};
+use model_profile::{
+    AccountIdDbValue, ProfileInternal, ProfileIteratorPage, ProfileIteratorPageValue,
+    ProfileIteratorSettings,
+};
 
 define_current_read_commands!(CurrentReadProfileIterator);
 
 impl CurrentReadProfileIterator<'_> {
-    pub fn get_latest_account_id_db(
-        &mut self,
-    ) -> Result<AccountIdDbValue, DieselDatabaseError> {
+    pub fn get_latest_account_id_db(&mut self) -> Result<AccountIdDbValue, DieselDatabaseError> {
         use crate::schema::account_id;
 
         let account_db_id: AccountIdDb = account_id::table
-            .order((
-                account_id::id.desc(),
-            ))
+            .order((account_id::id.desc(),))
             .select(account_id::id)
             .first(self.conn())
             .change_context(DieselDatabaseError::Execute)?;
@@ -34,19 +33,15 @@ impl CurrentReadProfileIterator<'_> {
         let data: Vec<(AccountIdInternal, ProfileInternal)> = account_id::table
             .inner_join(profile::table)
             .filter(account_id::id.le(settings.start_position))
-            .order((
-                account_id::id.desc(),
-            ))
-            .select((
-                AccountIdInternal::as_select(),
-                ProfileInternal::as_select(),
-            ))
+            .order((account_id::id.desc(),))
+            .select((AccountIdInternal::as_select(), ProfileInternal::as_select()))
             .limit(PAGE_SIZE)
             .offset(PAGE_SIZE.saturating_mul(settings.page))
             .load(self.conn())
             .change_context(DieselDatabaseError::Execute)?;
 
-        let values = data.into_iter()
+        let values = data
+            .into_iter()
             .map(|(id, profile)| ProfileIteratorPageValue {
                 account_id: id.uuid,
                 age: profile.age,

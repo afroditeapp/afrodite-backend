@@ -253,9 +253,7 @@ impl DieselReadCloseHandle {
     }
 }
 
-pub fn sqlite_setup_connection(
-    conn: &mut SqliteConnection,
-) -> Result<(), DieselDatabaseError> {
+pub fn sqlite_setup_connection(conn: &mut SqliteConnection) -> Result<(), DieselDatabaseError> {
     let pragmas = &[
         "PRAGMA journal_mode=WAL;",
         "PRAGMA synchronous=NORMAL;",

@@ -2,18 +2,21 @@
 //!
 
 use std::{
-    net::IpAddr, path::{Path, PathBuf}, sync::Arc, time::{Duration, SystemTime}
+    net::IpAddr,
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::{Duration, SystemTime},
 };
 
+use error_stack::{Result, ResultExt};
 use futures::StreamExt;
 use hyper::StatusCode;
-use simple_backend_config::{file::MaxMindDbConfig, SimpleBackendConfig};
+use simple_backend_config::{SimpleBackendConfig, file::MaxMindDbConfig};
 use simple_backend_database::data::create_dirs_and_get_simple_backend_dir_path;
 use simple_backend_model::UnixTime;
-use simple_backend_utils::{file::overwrite_and_remove_if_exists, ContextExt};
+use simple_backend_utils::{ContextExt, file::overwrite_and_remove_if_exists};
 use tokio::{io::AsyncWriteExt, sync::RwLock, task::JoinHandle};
-use tracing::{warn, error};
-use error_stack::{Result, ResultExt};
+use tracing::{error, warn};
 
 use crate::ServerQuitWatcher;
 
@@ -119,7 +122,11 @@ impl MaxMindDbManager {
         config: Arc<SimpleBackendConfig>,
         client: Arc<reqwest::Client>,
     ) -> MaxMindDbManagerQuitHandle {
-        let manager = Self { data, config, client };
+        let manager = Self {
+            data,
+            config,
+            client,
+        };
 
         let task = tokio::spawn(manager.run(quit_notification));
 
@@ -147,7 +154,7 @@ impl MaxMindDbManager {
         }
     }
 
-    async fn refresh_db_handle_result(&self)  {
+    async fn refresh_db_handle_result(&self) {
         match self.refresh_db().await {
             Ok(()) => (),
             Err(e) => error!("MaxMind DB error: {:?}", e),
@@ -201,7 +208,8 @@ impl MaxMindDbManager {
         let metadata = file
             .metadata()
             .change_context(MaxMindDbError::FileMetadata)?;
-        let file_created_unix_time = metadata.created()
+        let file_created_unix_time = metadata
+            .created()
             .change_context(MaxMindDbError::FileMetadata)?
             .duration_since(SystemTime::UNIX_EPOCH)
             .change_context(MaxMindDbError::FileMetadata)?
@@ -211,16 +219,16 @@ impl MaxMindDbManager {
         Ok(file_created_unix_time <= current_time && difference >= Self::SECONDS_IN_WEEK)
     }
 
-    async fn download_db_file(
-        &self,
-        config: &MaxMindDbConfig,
-    ) -> Result<(), MaxMindDbError> {
-        let request = self.client
+    async fn download_db_file(&self, config: &MaxMindDbConfig) -> Result<(), MaxMindDbError> {
+        let request = self
+            .client
             .get(config.download_url.clone())
             .build()
             .change_context(MaxMindDbError::Download)?;
 
-        let response = self.client.execute(request)
+        let response = self
+            .client
+            .execute(request)
             .await
             .change_context(MaxMindDbError::Download)?;
 
@@ -255,16 +263,13 @@ impl MaxMindDbManager {
         Ok(())
     }
 
-    async fn load_db_file_to_ram(
-        &self,
-    ) -> Result<(), MaxMindDbError> {
+    async fn load_db_file_to_ram(&self) -> Result<(), MaxMindDbError> {
         let db = self.db_file()?;
         let db = tokio::task::spawn_blocking(|| {
-            maxminddb::Reader::open_readfile(db)
-                .change_context(MaxMindDbError::Read)
+            maxminddb::Reader::open_readfile(db).change_context(MaxMindDbError::Read)
         })
-            .await
-            .change_context(MaxMindDbError::Read)??;
+        .await
+        .change_context(MaxMindDbError::Read)??;
 
         self.data.replace_db(db).await;
 

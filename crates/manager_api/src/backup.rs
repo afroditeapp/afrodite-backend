@@ -1,12 +1,16 @@
-
 use std::time::Duration;
 
-use error_stack::ResultExt;
+use error_stack::{Result, ResultExt};
 use manager_model::{BackupMessageType, SourceToTargetMessage, TargetToSourceMessage};
 use simple_backend_utils::{ContextExt, IntoReportFromString};
-use crate::{protocol::{ClientConnectionReadSend, ClientConnectionWriteSend, ConnectionUtilsRead, ConnectionUtilsWrite}, ClientError};
 
-use error_stack::Result;
+use crate::{
+    ClientError,
+    protocol::{
+        ClientConnectionReadSend, ClientConnectionWriteSend, ConnectionUtilsRead,
+        ConnectionUtilsWrite,
+    },
+};
 
 pub struct BackupSourceClient {
     reader: Box<dyn ClientConnectionReadSend>,
@@ -31,17 +35,17 @@ impl BackupSourceClient {
         &mut self,
         message: SourceToTargetMessage,
     ) -> Result<(), ClientError> {
-        let m = message.into_message(self.backup_session)
+        let m = message
+            .into_message(self.backup_session)
             .into_error_string(ClientError::Parse)?;
-        self.writer.send_backup_link_message(m)
+        self.writer
+            .send_backup_link_message(m)
             .await
             .change_context(ClientError::Write)
     }
 
     /// 30 second timeout
-    pub async fn receive_message(
-        &mut self,
-    ) -> Result<TargetToSourceMessage, ClientError> {
+    pub async fn receive_message(&mut self) -> Result<TargetToSourceMessage, ClientError> {
         tokio::select! {
             _ = tokio::time::sleep(Duration::from_secs(30)) =>
                 Err(ClientError::Timeout.report()),
@@ -49,15 +53,16 @@ impl BackupSourceClient {
         }
     }
 
-    async fn receive_message_no_timeout(
-        &mut self,
-    ) -> Result<TargetToSourceMessage, ClientError> {
+    async fn receive_message_no_timeout(&mut self) -> Result<TargetToSourceMessage, ClientError> {
         loop {
-            let Some(m) = self.reader.receive_backup_link_message()
+            let Some(m) = self
+                .reader
+                .receive_backup_link_message()
                 .await
-                .change_context(ClientError::Read)? else {
-                    return Err(ClientError::Read.report());
-                };
+                .change_context(ClientError::Read)?
+            else {
+                return Err(ClientError::Read.report());
+            };
 
             if m.header.message_type == BackupMessageType::Empty {
                 continue;
@@ -67,8 +72,7 @@ impl BackupSourceClient {
                 continue;
             }
 
-            let m = m.try_into()
-                .into_error_string(ClientError::Parse)?;
+            let m = m.try_into().into_error_string(ClientError::Parse)?;
 
             return Ok(m);
         }

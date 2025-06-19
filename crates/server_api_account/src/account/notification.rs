@@ -1,19 +1,14 @@
-use axum::{
-    extract::State, Extension
-};
-use model_account::{
-    AccountIdInternal, AccountAppNotificationSettings
-};
-use server_api::{
-    app::WriteData, create_open_api_router, db_write_multiple, S
-};
+use axum::{Extension, extract::State};
+use model_account::{AccountAppNotificationSettings, AccountIdInternal};
+use server_api::{S, app::WriteData, create_open_api_router, db_write_multiple};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 
 use super::super::utils::{Json, StatusCode};
 use crate::app::ReadData;
 
-const PATH_GET_ACCOUNT_APP_NOTIFICATION_SETTINGS: &str = "/account_api/get_account_app_notification_settings";
+const PATH_GET_ACCOUNT_APP_NOTIFICATION_SETTINGS: &str =
+    "/account_api/get_account_app_notification_settings";
 
 #[utoipa::path(
     get,
@@ -41,7 +36,8 @@ async fn get_account_app_notification_settings(
     Ok(settings.into())
 }
 
-const PATH_POST_ACCOUNT_APP_NOTIFICATION_SETTINGS: &str = "/account_api/post_account_app_notification_settings";
+const PATH_POST_ACCOUNT_APP_NOTIFICATION_SETTINGS: &str =
+    "/account_api/post_account_app_notification_settings";
 
 #[utoipa::path(
     post,
@@ -61,7 +57,10 @@ async fn post_account_app_notification_settings(
 ) -> Result<(), StatusCode> {
     ACCOUNT.post_account_app_notification_settings.incr();
     db_write_multiple!(state, move |cmds| {
-        cmds.account().notification().upsert_app_notification_settings(id, settings).await
+        cmds.account()
+            .notification()
+            .upsert_app_notification_settings(id, settings)
+            .await
     })?;
     Ok(())
 }

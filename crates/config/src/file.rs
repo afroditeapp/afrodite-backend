@@ -1,5 +1,7 @@
 use std::{
-    collections::HashSet, num::NonZeroU8, path::{Path, PathBuf}
+    collections::HashSet,
+    num::NonZeroU8,
+    path::{Path, PathBuf},
 };
 
 use error_stack::{Result, ResultExt};
@@ -9,7 +11,10 @@ pub use model_server_data::EmailAddress;
 use model_server_state::DemoModeId;
 use serde::{Deserialize, Serialize};
 use simple_backend_config::file::ConfigFileUtils;
-use simple_backend_utils::{time::{DurationValue, TimeValue, UtcTimeValue}, ContextExt};
+use simple_backend_utils::{
+    ContextExt,
+    time::{DurationValue, TimeValue, UtcTimeValue},
+};
 use url::Url;
 
 // Kilpisjärvi ja Nuorgam
@@ -132,10 +137,15 @@ impl ConfigFile {
         dir: impl AsRef<Path>,
         save_default_if_not_found: bool,
     ) -> Result<ConfigFile, ConfigFileError> {
-        let config_string =
-            ConfigFileUtils::load_string(dir, CONFIG_FILE_NAME, DEFAULT_CONFIG_FILE_TEXT, save_default_if_not_found)
-                .change_context(ConfigFileError::SimpleBackendError)?;
-        let file: ConfigFile = toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)?;
+        let config_string = ConfigFileUtils::load_string(
+            dir,
+            CONFIG_FILE_NAME,
+            DEFAULT_CONFIG_FILE_TEXT,
+            save_default_if_not_found,
+        )
+        .change_context(ConfigFileError::SimpleBackendError)?;
+        let file: ConfigFile =
+            toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)?;
 
         if let Some(remote_bots) = &file.remote_bot {
             let mut set = HashSet::<AccountId>::new();
@@ -143,8 +153,10 @@ impl ConfigFile {
             for b in remote_bots {
                 let aid = b.account_id();
                 if set.contains(&aid) {
-                    return Err(ConfigFileError::InvalidConfig.report())
-                        .attach_printable(format!("Duplicate remote bot config for account {}", aid))
+                    return Err(ConfigFileError::InvalidConfig.report()).attach_printable(format!(
+                        "Duplicate remote bot config for account {}",
+                        aid
+                    ));
                 }
                 set.insert(aid);
             }
@@ -286,8 +298,7 @@ impl Default for AccountLimitsConfig {
         Self {
             inactivity_logout_wait_duration: DurationValue::from_days(365),
             account_deletion_wait_duration: DurationValue::from_days(90),
-            init_deletion_for_inactive_accounts_wait_duration:
-                DurationValue::from_days(365 * 10), // About 10 years
+            init_deletion_for_inactive_accounts_wait_duration: DurationValue::from_days(365 * 10), // About 10 years
         }
     }
 }
@@ -371,7 +382,7 @@ pub struct MinClientVersion {
 
 impl MinClientVersion {
     pub fn received_version_is_accepted(&self, received: ClientVersion) -> bool {
-        if received.major > self.major  {
+        if received.major > self.major {
             true
         } else if received.major < self.major {
             false

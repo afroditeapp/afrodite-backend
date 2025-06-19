@@ -4,15 +4,27 @@ use std::{fmt::Debug, iter::Peekable, time::Instant};
 
 use api_client::{
     apis::{
-        account_api::get_account_state, chat_api::{
-            get_latest_public_key_id, post_add_receiver_acknowledgement, post_add_sender_acknowledgement, post_get_next_received_likes_page, post_reset_received_likes_paging, post_send_like
-        }, common_api::get_client_config, profile_api::{
-            post_get_query_available_profile_attributes, post_profile, post_search_age_range, post_search_groups
-        }
+        account_api::get_account_state,
+        chat_api::{
+            get_latest_public_key_id, post_add_receiver_acknowledgement,
+            post_add_sender_acknowledgement, post_get_next_received_likes_page,
+            post_reset_received_likes_paging, post_send_like,
+        },
+        common_api::get_client_config,
+        profile_api::{
+            post_get_query_available_profile_attributes, post_profile, post_search_age_range,
+            post_search_groups,
+        },
     },
-    manual_additions::{get_pending_messages_fixed, get_public_key_fixed, post_add_public_key_fixed, post_send_message_fixed},
+    manual_additions::{
+        get_pending_messages_fixed, get_public_key_fixed, post_add_public_key_fixed,
+        post_send_message_fixed,
+    },
     models::{
-        AccountId, AttributeMode, ClientId, ClientLocalId, MessageNumber, PendingMessageAcknowledgementList, PendingMessageId, ProfileAttributeQuery, ProfileAttributeValueUpdate, ProfileSearchAgeRange, ProfileUpdate, SearchGroups, SentMessageId, SentMessageIdList
+        AccountId, AttributeMode, ClientId, ClientLocalId, MessageNumber,
+        PendingMessageAcknowledgementList, PendingMessageId, ProfileAttributeQuery,
+        ProfileAttributeValueUpdate, ProfileSearchAgeRange, ProfileUpdate, SearchGroups,
+        SentMessageId, SentMessageIdList,
     },
 };
 use async_trait::async_trait;
@@ -20,25 +32,34 @@ use config::bot_config_file::Gender;
 use error_stack::{Result, ResultExt};
 use simple_backend_utils::UuidBase64Url;
 use tracing::warn;
+use utils::encrypt::{encrypt_data, generate_keys, unwrap_signed_binary_message};
 
 use super::{
+    BotState, BotStruct, TaskState,
     actions::{
+        BotAction, RunActions, RunActionsIf,
         account::{
-            AccountState, AssertAccountState, Login, Register, SetAccountSetup, SetProfileVisibility, DEFAULT_AGE
+            AccountState, AssertAccountState, DEFAULT_AGE, Login, Register, SetAccountSetup,
+            SetProfileVisibility,
         },
         media::SendImageToSlot,
         profile::{ChangeProfileText, GetProfile, ProfileText, UpdateLocationRandomOrConfigured},
-        BotAction, RunActions, RunActionsIf,
     },
-    BotState, BotStruct, TaskState,
 };
-use utils::encrypt::{encrypt_data, generate_keys, unwrap_signed_binary_message};
 use crate::{
     action_array,
     bot::actions::{
-        account::CompleteAccountSetup, admin::{content::AdminBotContentModerationLogic, profile_text::AdminBotProfileTextModerationLogic}, media::SetContent, profile::ChangeProfileTextDaily, ActionArray
+        ActionArray,
+        account::CompleteAccountSetup,
+        admin::{
+            content::AdminBotContentModerationLogic,
+            profile_text::AdminBotProfileTextModerationLogic,
+        },
+        media::SetContent,
+        profile::ChangeProfileTextDaily,
     },
-    client::TestError, state::BotEncryptionKeys,
+    client::TestError,
+    state::BotEncryptionKeys,
 };
 
 pub struct ClientBot {
@@ -85,9 +106,10 @@ impl ClientBot {
             const ACTION_LOOP: ActionArray = action_array![
                 ActionsBeforeIteration,
                 GetProfile,
-                RunActionsIf(action_array!(UpdateLocationRandomOrConfigured::new(None)), |s| {
-                    s.get_bot_config().change_location() && rand::random::<f32>() < 0.2
-                }),
+                RunActionsIf(
+                    action_array!(UpdateLocationRandomOrConfigured::new(None)),
+                    |s| { s.get_bot_config().change_location() && rand::random::<f32>() < 0.2 }
+                ),
                 // TODO: Toggle the profile visiblity in the future?
                 RunActionsIf(action_array!(SetProfileVisibility(true)), |s| {
                     s.get_bot_config().change_visibility() && rand::random::<f32>() < 0.5
@@ -190,12 +212,11 @@ impl BotAction for DoInitialSetupIfNeeded {
 pub struct SetBotPublicKey;
 
 impl SetBotPublicKey {
-    async fn setup_bot_keys_if_needed(state: &mut BotState) -> Result<BotEncryptionKeys, TestError> {
+    async fn setup_bot_keys_if_needed(
+        state: &mut BotState,
+    ) -> Result<BotEncryptionKeys, TestError> {
         let account_id_string = state.account_id_string()?;
-        let latest_public_key_id = get_latest_public_key_id(
-            state.api.chat(),
-            &account_id_string,
-        )
+        let latest_public_key_id = get_latest_public_key_id(state.api.chat(), &account_id_string)
             .await
             .change_context(TestError::ApiRequest)?
             .id
@@ -208,26 +229,22 @@ impl SetBotPublicKey {
             }
         }
 
-        let keys = generate_keys(account_id_string)
-            .change_context( TestError::MessageEncryptionError)?;
-        let public_key_bytes = keys.public_key_bytes()
-            .change_context( TestError::MessageEncryptionError)?;
+        let keys =
+            generate_keys(account_id_string).change_context(TestError::MessageEncryptionError)?;
+        let public_key_bytes = keys
+            .public_key_bytes()
+            .change_context(TestError::MessageEncryptionError)?;
 
-        let r = post_add_public_key_fixed(
-            state.api.chat(),
-            public_key_bytes,
-        )
-        .await
-        .change_context(TestError::ApiRequest)?;
+        let r = post_add_public_key_fixed(state.api.chat(), public_key_bytes)
+            .await
+            .change_context(TestError::ApiRequest)?;
 
         if r.error_too_many_public_keys {
-            return Err(TestError::ApiRequest.report())
-                .attach_printable("Too many public keys");
+            return Err(TestError::ApiRequest.report()).attach_printable("Too many public keys");
         }
 
         let Some(public_key_id) = r.key_id.flatten().map(|v| v.id) else {
-            return Err(TestError::ApiRequest.report())
-                .attach_printable("Public key ID not found");
+            return Err(TestError::ApiRequest.report()).attach_printable("Public key ID not found");
         };
 
         let keys = BotEncryptionKeys {
@@ -326,17 +343,15 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
                 values: available_attributes.iter().map(|v| v.id).collect(),
             },
         )
-            .await
-            .change_context(TestError::ApiRequest)?
-            .values
-            .into_iter()
-            .map(|v| v.a);
+        .await
+        .change_context(TestError::ApiRequest)?
+        .values
+        .into_iter()
+        .map(|v| v.a);
 
         let mut attributes: Vec<ProfileAttributeValueUpdate> = vec![];
         for attribute in available_attributes {
-            if attribute.required.unwrap_or_default()
-                && attribute.mode == AttributeMode::Bitflag
-            {
+            if attribute.required.unwrap_or_default() && attribute.mode == AttributeMode::Bitflag {
                 let mut select_all = 0;
                 for value in attribute.values {
                     select_all |= value.id;
@@ -365,11 +380,7 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             name,
             age: age.into(),
             attributes,
-            ptext: state
-                .get_bot_config()
-                .text
-                .clone()
-                .unwrap_or_default(),
+            ptext: state.get_bot_config().text.clone().unwrap_or_default(),
         };
 
         post_profile(state.api.profile(), update)
@@ -439,19 +450,14 @@ impl BotAction for AnswerReceivedMessages {
             return Ok(());
         }
 
-        fn parse_minimal_i64(d: &mut impl Iterator<Item=u8>) -> Option<i64> {
+        fn parse_minimal_i64(d: &mut impl Iterator<Item = u8>) -> Option<i64> {
             let count = d.next()?;
             let number: i64 = if count == 1 {
                 i8::from_le_bytes([d.next()?]).into()
             } else if count == 2 {
                 i16::from_le_bytes([d.next()?, d.next()?]).into()
             } else if count == 4 {
-                i32::from_le_bytes([
-                    d.next()?,
-                    d.next()?,
-                    d.next()?,
-                    d.next()?,
-                ]).into()
+                i32::from_le_bytes([d.next()?, d.next()?, d.next()?, d.next()?]).into()
             } else if count == 8 {
                 i64::from_le_bytes([
                     d.next()?,
@@ -470,10 +476,9 @@ impl BotAction for AnswerReceivedMessages {
             Some(number)
         }
 
-        fn parse_account_id(d: &mut impl Iterator<Item=u8>) -> Option<AccountId> {
+        fn parse_account_id(d: &mut impl Iterator<Item = u8>) -> Option<AccountId> {
             let id = d.by_ref().take(16).collect::<Vec<u8>>();
-            let id = TryInto::<[u8; 16]>::try_into(id)
-                .ok()?;
+            let id = TryInto::<[u8; 16]>::try_into(id).ok()?;
             let id = UuidBase64Url::from_bytes(id);
             let id = AccountId::new(id.to_string());
             Some(id)
@@ -502,12 +507,8 @@ impl BotAction for AnswerReceivedMessages {
                     Ok(len) => len,
                     Err(_) => break,
                 };
-                let data = list_iterator
-                    .by_ref()
-                    .take(data_len)
-                    .collect::<Vec<u8>>();
-                let data = unwrap_signed_binary_message(&data)
-                    .ok()?;
+                let data = list_iterator.by_ref().take(data_len).collect::<Vec<u8>>();
+                let data = unwrap_signed_binary_message(&data).ok()?;
                 pending_messages.push(parse_signed_message_data(data)?);
             }
 
@@ -516,7 +517,9 @@ impl BotAction for AnswerReceivedMessages {
 
         let pending_messages = parse_messages(&messages).ok_or(TestError::MissingValue)?;
 
-        let delete_list = PendingMessageAcknowledgementList { ids: pending_messages.clone() };
+        let delete_list = PendingMessageAcknowledgementList {
+            ids: pending_messages.clone(),
+        };
 
         post_add_receiver_acknowledgement(state.api.chat(), delete_list)
             .await
@@ -548,9 +551,10 @@ async fn send_message(
         }
     };
 
-    let public_key = get_public_key_fixed(state.api.chat(), &receiver.aid.to_string(), latest_key_id)
-        .await
-        .change_context(TestError::ApiRequest)?;
+    let public_key =
+        get_public_key_fixed(state.api.chat(), &receiver.aid.to_string(), latest_key_id)
+            .await
+            .change_context(TestError::ApiRequest)?;
 
     let keys = SetBotPublicKey::setup_bot_keys_if_needed(state).await?;
 
@@ -558,12 +562,8 @@ async fn send_message(
     let len_u16 = msg.len() as u16;
     message_bytes.extend_from_slice(&len_u16.to_le_bytes());
     message_bytes.extend_from_slice(msg.as_bytes());
-    let encrypted_bytes = encrypt_data(
-        &keys.private,
-        public_key,
-        &message_bytes,
-    )
-        .change_context( TestError::MessageEncryptionError)?;
+    let encrypted_bytes = encrypt_data(&keys.private, public_key, &message_bytes)
+        .change_context(TestError::MessageEncryptionError)?;
 
     post_send_message_fixed(
         state.api.chat(),

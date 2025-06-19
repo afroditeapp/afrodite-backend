@@ -1,8 +1,9 @@
-use axum::{extract::State, Extension};
+use axum::{Extension, extract::State};
 use model_profile::{
-    AccountIdInternal, GetProfileFilteringSettings, ProfileAttributeQuery, ProfileAttributeQueryResult, ProfileFilteringSettingsUpdate
+    AccountIdInternal, GetProfileFilteringSettings, ProfileAttributeQuery,
+    ProfileAttributeQueryResult, ProfileFilteringSettingsUpdate,
 };
-use server_api::{create_open_api_router, db_write_multiple, S};
+use server_api::{S, create_open_api_router, db_write_multiple};
 use server_data::DataError;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -13,7 +14,8 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-const PATH_POST_GET_QUERY_AVAILABLE_PROFILE_ATTRIBUTES: &str = "/profile_api/query_available_profile_attributes";
+const PATH_POST_GET_QUERY_AVAILABLE_PROFILE_ATTRIBUTES: &str =
+    "/profile_api/query_available_profile_attributes";
 
 /// Query profile attributes using attribute ID list.
 ///
@@ -35,7 +37,11 @@ pub async fn post_get_query_available_profile_attributes(
 ) -> Result<Json<ProfileAttributeQueryResult>, StatusCode> {
     PROFILE.post_get_query_available_profile_attributes.incr();
     let info = ProfileAttributeQueryResult {
-        values: state.config().profile_attributes().map(|a| a.query_attributes(query.values)).unwrap_or_default(),
+        values: state
+            .config()
+            .profile_attributes()
+            .map(|a| a.query_attributes(query.values))
+            .unwrap_or_default(),
     };
     Ok(info.into())
 }

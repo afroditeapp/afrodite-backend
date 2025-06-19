@@ -1,6 +1,6 @@
 use diesel::{
-    sql_types::{BigInt, Text},
     AsExpression, FromSqlRow,
+    sql_types::{BigInt, Text},
 };
 use model_server_data::ProfileTextModerationState;
 use serde::{Deserialize, Serialize};

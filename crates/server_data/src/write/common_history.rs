@@ -1,14 +1,12 @@
-
 use std::collections::HashMap;
 
 use database::history::write::GetDbHistoryWriteCommandsCommon;
 use simple_backend_model::{MetricKey, PerfMetricValueArea};
 
 use crate::{
-    define_cmd_wrapper_write,
+    DataError, define_cmd_wrapper_write,
     result::Result,
-    write::{db_transaction_history, DbTransactionHistory},
-    DataError,
+    write::{DbTransactionHistory, db_transaction_history},
 };
 
 define_cmd_wrapper_write!(WriteCommandsCommonHistory);

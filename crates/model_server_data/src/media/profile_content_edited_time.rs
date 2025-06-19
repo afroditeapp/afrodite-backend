@@ -1,6 +1,6 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_wrapper, UnixTime};
+use simple_backend_model::{UnixTime, diesel_i64_wrapper};
 use utoipa::ToSchema;
 
 #[derive(

@@ -20,7 +20,9 @@ pub struct AutomaticProfileSearchIteratorSessionId {
     id: i64,
 }
 
-impl From<AutomaticProfileSearchIteratorSessionIdInternal> for AutomaticProfileSearchIteratorSessionId {
+impl From<AutomaticProfileSearchIteratorSessionIdInternal>
+    for AutomaticProfileSearchIteratorSessionId
+{
     fn from(value: AutomaticProfileSearchIteratorSessionIdInternal) -> Self {
         Self { id: value.id }
     }

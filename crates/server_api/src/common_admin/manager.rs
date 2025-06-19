@@ -1,18 +1,19 @@
 use axum::{
-    extract::{Query, State},
     Extension,
+    extract::{Query, State},
 };
+use manager_api::RequestSenderCmds;
 use manager_model::{
-    ManagerInstanceNameValue, ManagerInstanceNameList, ManualTaskType, NotifyBackend, ScheduledTaskStatus, ScheduledTaskTypeValue, SoftwareInfo, SoftwareUpdateStatus, SoftwareUpdateTaskType, SystemInfo
+    ManagerInstanceNameList, ManagerInstanceNameValue, ManualTaskType, NotifyBackend,
+    ScheduledTaskStatus, ScheduledTaskTypeValue, SoftwareInfo, SoftwareUpdateStatus,
+    SoftwareUpdateTaskType, SystemInfo,
 };
 use model::Permissions;
 use simple_backend::{app::GetManagerApi, create_counters};
-use manager_api::RequestSenderCmds;
 
 use crate::{
-    create_open_api_router,
+    S, create_open_api_router,
     utils::{Json, StatusCode},
-    S,
 };
 
 // TODO(prod): Rename admin_server_maintenance_reset_data to admin_server_maintenance_data_reset?
@@ -44,12 +45,16 @@ pub async fn get_manager_instance_names(
 ) -> Result<Json<ManagerInstanceNameList>, StatusCode> {
     COMMON_ADMIN.get_manager_instance_names.incr();
 
-    if api_caller_permissions.admin_server_maintenance_view_info ||
-        api_caller_permissions.admin_server_maintenance_update_software ||
-        api_caller_permissions.admin_server_maintenance_reset_data ||
-        api_caller_permissions.admin_server_maintenance_reboot_backend
+    if api_caller_permissions.admin_server_maintenance_view_info
+        || api_caller_permissions.admin_server_maintenance_update_software
+        || api_caller_permissions.admin_server_maintenance_reset_data
+        || api_caller_permissions.admin_server_maintenance_reboot_backend
     {
-        let info = state.manager_request().await?.get_available_instances().await?;
+        let info = state
+            .manager_request()
+            .await?
+            .get_available_instances()
+            .await?;
         Ok(info.into())
     } else {
         Err(StatusCode::UNAUTHORIZED)
@@ -81,7 +86,11 @@ pub async fn get_system_info(
     COMMON_ADMIN.get_system_info.incr();
 
     if api_caller_permissions.admin_server_maintenance_view_info {
-        let info = state.manager_request_to(manager).await?.get_system_info().await?;
+        let info = state
+            .manager_request_to(manager)
+            .await?
+            .get_system_info()
+            .await?;
         Ok(info.into())
     } else {
         Err(StatusCode::UNAUTHORIZED)
@@ -113,14 +122,19 @@ pub async fn get_software_update_status(
     COMMON_ADMIN.get_software_update_status.incr();
 
     if api_caller_permissions.admin_server_maintenance_view_info {
-        let info = state.manager_request_to(manager).await?.get_software_update_status().await?;
+        let info = state
+            .manager_request_to(manager)
+            .await?
+            .get_software_update_status()
+            .await?;
         Ok(info.into())
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }
 }
 
-const PATH_POST_TRIGGER_SOFTWARE_UPDATE_DOWNLOAD: &str = "/common_api/trigger_software_update_download";
+const PATH_POST_TRIGGER_SOFTWARE_UPDATE_DOWNLOAD: &str =
+    "/common_api/trigger_software_update_download";
 
 /// Trigger software update download.
 ///
@@ -145,7 +159,8 @@ pub async fn post_trigger_software_update_download(
     COMMON_ADMIN.post_trigger_software_update_download.incr();
 
     if api_caller_permissions.admin_server_maintenance_update_software {
-        state.manager_request_to(manager)
+        state
+            .manager_request_to(manager)
             .await?
             .trigger_software_update_task(SoftwareUpdateTaskType::Download)
             .await?;
@@ -155,7 +170,8 @@ pub async fn post_trigger_software_update_download(
     }
 }
 
-const PATH_POST_TRIGGER_SOFTWARE_UPDATE_INSTALL: &str = "/common_api/trigger_software_update_install";
+const PATH_POST_TRIGGER_SOFTWARE_UPDATE_INSTALL: &str =
+    "/common_api/trigger_software_update_install";
 
 /// Trigger software update install.
 ///
@@ -181,7 +197,8 @@ pub async fn post_trigger_software_update_install(
     COMMON_ADMIN.post_trigger_software_update_install.incr();
 
     if api_caller_permissions.admin_server_maintenance_update_software {
-        state.manager_request_to(manager)
+        state
+            .manager_request_to(manager)
             .await?
             .trigger_software_update_task(SoftwareUpdateTaskType::Install(info))
             .await?;
@@ -216,7 +233,8 @@ pub async fn post_trigger_backend_data_reset(
     COMMON_ADMIN.post_trigger_backend_data_reset.incr();
 
     if api_caller_permissions.admin_server_maintenance_reset_data {
-        state.manager_request_to(manager)
+        state
+            .manager_request_to(manager)
             .await?
             .trigger_manual_task(ManualTaskType::BackendDataReset)
             .await?;
@@ -251,7 +269,8 @@ pub async fn post_trigger_backend_restart(
     COMMON_ADMIN.post_trigger_backend_restart.incr();
 
     if api_caller_permissions.admin_server_maintenance_reboot_backend {
-        state.manager_request_to(manager)
+        state
+            .manager_request_to(manager)
             .await?
             .trigger_manual_task(ManualTaskType::BackendRestart)
             .await?;
@@ -286,7 +305,8 @@ pub async fn post_trigger_system_reboot(
     COMMON_ADMIN.post_trigger_system_reboot.incr();
 
     if api_caller_permissions.admin_server_maintenance_reboot_backend {
-        state.manager_request_to(manager)
+        state
+            .manager_request_to(manager)
             .await?
             .trigger_manual_task(ManualTaskType::SystemReboot)
             .await?;
@@ -321,7 +341,11 @@ pub async fn get_scheduled_tasks_status(
     COMMON_ADMIN.get_software_update_status.incr();
 
     if api_caller_permissions.admin_server_maintenance_reboot_backend {
-        let info = state.manager_request_to(manager).await?.get_scheduled_tasks_status().await?;
+        let info = state
+            .manager_request_to(manager)
+            .await?
+            .get_scheduled_tasks_status()
+            .await?;
         Ok(info.into())
     } else {
         Err(StatusCode::UNAUTHORIZED)
@@ -355,7 +379,8 @@ pub async fn post_schedule_task(
     COMMON_ADMIN.post_schedule_task.incr();
 
     if api_caller_permissions.admin_server_maintenance_reboot_backend {
-        state.manager_request_to(manager)
+        state
+            .manager_request_to(manager)
             .await?
             .schedule_task(task.scheduled_task_type, notify_backend)
             .await?;
@@ -391,7 +416,8 @@ pub async fn post_unschedule_task(
     COMMON_ADMIN.post_unschedule_task.incr();
 
     if api_caller_permissions.admin_server_maintenance_reboot_backend {
-        state.manager_request_to(manager)
+        state
+            .manager_request_to(manager)
             .await?
             .unschedule_task(task.scheduled_task_type)
             .await?;

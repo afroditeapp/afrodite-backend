@@ -1,14 +1,11 @@
-use axum::{extract::State, Extension};
+use axum::{Extension, extract::State};
 use model::{EventToClientInternal, Permissions, ScheduledMaintenanceStatus};
 use server_data::app::EventManagerProvider;
-use simple_backend::create_counters;
-
-use simple_backend::app::GetManagerApi;
+use simple_backend::{app::GetManagerApi, create_counters};
 
 use crate::{
-    create_open_api_router,
+    S, create_open_api_router,
     utils::{Json, StatusCode},
-    S,
 };
 
 const PATH_GET_MAINTENANCE_NOTIFICATION: &str = "/common_api/maintenance_notification";
@@ -68,10 +65,15 @@ pub async fn post_edit_maintenance_notification(
     COMMON_ADMIN.post_edit_maintenance_notification.incr();
 
     if api_caller_permissions.admin_server_maintenance_edit_notification {
-        state.manager_api_client().set_latest_scheduled_reboot(status.scheduled_maintenance);
-        state.event_manager().send_connected_event_to_logged_in_clients(
-            EventToClientInternal::ScheduledMaintenanceStatus(status),
-        ).await;
+        state
+            .manager_api_client()
+            .set_latest_scheduled_reboot(status.scheduled_maintenance);
+        state
+            .event_manager()
+            .send_connected_event_to_logged_in_clients(
+                EventToClientInternal::ScheduledMaintenanceStatus(status),
+            )
+            .await;
         Ok(())
     } else {
         Err(StatusCode::UNAUTHORIZED)

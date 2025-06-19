@@ -1,11 +1,11 @@
 use axum::{
-    extract::{Query, State},
     Extension,
+    extract::{Query, State},
 };
 use model_profile::{GetProfileStatisticsParams, GetProfileStatisticsResult, Permissions};
-use server_api::{app::ProfileStatisticsCacheProvider, create_open_api_router, S};
+use server_api::{S, app::ProfileStatisticsCacheProvider, create_open_api_router};
 use server_data_profile::{read::GetReadProfileCommands, statistics::ProfileStatisticsCacheUtils};
-use simple_backend::{create_counters, app::PerfCounterDataProvider};
+use simple_backend::{app::PerfCounterDataProvider, create_counters};
 
 use crate::{
     app::ReadData,
@@ -46,7 +46,10 @@ pub async fn get_profile_statistics(
             .read()
             .profile()
             .statistics()
-            .profile_statistics(params.profile_visibility.unwrap_or_default(), state.perf_counter_data_arc())
+            .profile_statistics(
+                params.profile_visibility.unwrap_or_default(),
+                state.perf_counter_data_arc(),
+            )
             .await?
             .into()
     } else {

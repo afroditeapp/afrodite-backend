@@ -1,10 +1,15 @@
 use std::sync::Arc;
 
 use database::current::read::GetDbReadCommandsCommon;
-use model::{AccountIdInternal, GetApiUsageStatisticsResult, GetApiUsageStatisticsSettings, GetIpAddressStatisticsResult};
+use model::{
+    AccountIdInternal, GetApiUsageStatisticsResult, GetApiUsageStatisticsSettings,
+    GetIpAddressStatisticsResult,
+};
 use simple_backend::maxmind_db::IpDb;
+
 use crate::{
-    db_manager::InternalReading, define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError
+    DataError, IntoDataError, db_manager::InternalReading, define_cmd_wrapper_read, read::DbRead,
+    result::Result,
 };
 
 define_cmd_wrapper_read!(ReadCommandsCommonAdminStatistics);
@@ -15,9 +20,13 @@ impl ReadCommandsCommonAdminStatistics<'_> {
         account: AccountIdInternal,
         settings: GetApiUsageStatisticsSettings,
     ) -> Result<GetApiUsageStatisticsResult, DataError> {
-        self.db_read(move |mut cmds| cmds.common_admin().statistics().api_usage_statistics(account, settings))
-            .await
-            .into_error()
+        self.db_read(move |mut cmds| {
+            cmds.common_admin()
+                .statistics()
+                .api_usage_statistics(account, settings)
+        })
+        .await
+        .into_error()
     }
 
     pub async fn get_ip_address_statistics(
@@ -26,8 +35,12 @@ impl ReadCommandsCommonAdminStatistics<'_> {
         ip_db: Option<Arc<IpDb>>,
     ) -> Result<GetIpAddressStatisticsResult, DataError> {
         let config = self.config_arc();
-        self.db_read(move |mut cmds| cmds.common_admin().statistics().ip_address_statistics(account, config, ip_db))
-            .await
-            .into_error()
+        self.db_read(move |mut cmds| {
+            cmds.common_admin()
+                .statistics()
+                .ip_address_statistics(account, config, ip_db)
+        })
+        .await
+        .into_error()
     }
 }

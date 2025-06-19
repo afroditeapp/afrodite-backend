@@ -1,16 +1,16 @@
-use diesel::{insert_into, ExpressionMethods, RunQueryDsl};
+use diesel::{ExpressionMethods, RunQueryDsl, insert_into};
 use error_stack::Result;
 use model::{AccountId, AccountIdDb, AccountIdInternal};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
-use crate::{define_current_write_commands, IntoDatabaseError};
+use crate::{IntoDatabaseError, define_current_write_commands};
 
-mod queue_number;
-mod state;
-mod token;
-mod report;
 mod client_config;
 mod push_notification;
+mod queue_number;
+mod report;
+mod state;
+mod token;
 
 define_current_write_commands!(CurrentWriteCommon);
 
@@ -66,9 +66,7 @@ impl CurrentWriteCommon<'_> {
         use model::schema::common_state::dsl::*;
 
         insert_into(common_state)
-            .values((
-                account_id.eq(id.as_db_id()),
-            ))
+            .values((account_id.eq(id.as_db_id()),))
             .execute(self.conn())
             .into_db_error(id)?;
 

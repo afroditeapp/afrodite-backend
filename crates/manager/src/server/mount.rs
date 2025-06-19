@@ -7,16 +7,13 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
+use manager_config::{Config, file::SecureStorageConfig};
 use manager_model::SecureStorageEncryptionKey;
 use tokio::{io::AsyncWriteExt, process::Command};
 use tracing::{error, info, warn};
 
 use super::{app::S, state::MountStateStorage};
-use crate::{
-    api::GetApiManager, utils::ContextExt
-};
-
-use manager_config::{file::SecureStorageConfig, Config};
+use crate::{api::GetApiManager, utils::ContextExt};
 
 #[derive(thiserror::Error, Debug)]
 pub enum MountError {
@@ -98,7 +95,9 @@ impl MountManager {
             return Ok(());
         }
 
-        let key = self.state.api_manager()
+        let key = self
+            .state
+            .api_manager()
             .get_encryption_key()
             .await
             .change_context(MountError::GetKeyFailed);
@@ -125,7 +124,8 @@ impl MountManager {
             Some(key) => {
                 if self.is_default_password(storage_config).await? {
                     info!("Default password is used. Password will be changed.");
-                    self.change_default_password(storage_config, key.clone()).await?;
+                    self.change_default_password(storage_config, key.clone())
+                        .await?;
                 }
                 self.mount_secure_storage(storage_config, key).await?;
             }
@@ -136,7 +136,7 @@ impl MountManager {
                         storage_config,
                         SecureStorageEncryptionKey {
                             key: "password\n".to_string(),
-                        }
+                        },
                     )
                     .await?;
                     mode = MountMode::MountedWithDefaultKey;
@@ -146,7 +146,9 @@ impl MountManager {
             }
         };
 
-        self.mount_state.modify(|s| s.mount_state.set_mode(mode)).await;
+        self.mount_state
+            .modify(|s| s.mount_state.set_mode(mode))
+            .await;
 
         Ok(())
     }
@@ -167,7 +169,13 @@ impl MountManager {
             .arg(script)
             .arg("extend-size-and-open")
             .arg(&storage_config.dir)
-            .arg(storage_config.extend_size_to.map(|v| v.bytes).unwrap_or_default().to_string())
+            .arg(
+                storage_config
+                    .extend_size_to
+                    .map(|v| v.bytes)
+                    .unwrap_or_default()
+                    .to_string(),
+            )
             .stdin(Stdio::piped())
             .spawn()
             .change_context(MountError::ProcessStartFailed)?;
@@ -237,9 +245,7 @@ impl MountManager {
         &self,
         storage_config: &SecureStorageConfig,
     ) -> Result<bool, MountError> {
-        let script = self.config
-            .script_locations()
-            .secure_storage();
+        let script = self.config.script_locations().secure_storage();
 
         if !script.exists() {
             warn!("Script for checking secure storage password does not exist");

@@ -1,5 +1,5 @@
-use database::{define_current_write_commands, DieselDatabaseError};
-use diesel::{insert_into, prelude::*, update, ExpressionMethods};
+use database::{DieselDatabaseError, define_current_write_commands};
+use diesel::{ExpressionMethods, insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{AccountIdInternal, SyncVersion, UnixTime};
 
@@ -15,9 +15,7 @@ impl CurrentWriteChatLimits<'_> {
         use model::schema::daily_likes_left::dsl::*;
 
         insert_into(daily_likes_left)
-            .values((
-                account_id.eq(id.as_db_id()),
-            ))
+            .values((account_id.eq(id.as_db_id()),))
             .execute(self.conn())
             .into_db_error(id)?;
 
@@ -35,7 +33,7 @@ impl CurrentWriteChatLimits<'_> {
             .filter(account_id.eq(id.as_db_id()))
             .set((
                 likes_left.eq(likes_left_value),
-                latest_limit_reset_unix_time.eq(UnixTime::current_time())
+                latest_limit_reset_unix_time.eq(UnixTime::current_time()),
             ))
             .execute(self.conn())
             .into_db_error(id)?;

@@ -1,7 +1,7 @@
 use database_account::current::write::GetDbWriteCommandsAccount;
 use model_account::{AccountIdInternal, EmailAddress, EmailMessages, EmailSendingState};
 use server_data::{
-    app::GetEmailSender, define_cmd_wrapper_write, result::Result, write::DbTransaction, DataError,
+    DataError, app::GetEmailSender, define_cmd_wrapper_write, result::Result, write::DbTransaction,
 };
 
 define_cmd_wrapper_write!(WriteCommandsAccountEmail);

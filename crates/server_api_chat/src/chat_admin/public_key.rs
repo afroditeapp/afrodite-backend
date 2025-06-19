@@ -1,13 +1,12 @@
 //! Public key management related routes
 
-use axum::{
-    extract::State,
-    Extension,
-};
+use axum::{Extension, extract::State};
 use model::Permissions;
 use model_chat::SetMaxPublicKeyCount;
 use server_api::{
-    app::{GetAccounts, WriteData}, create_open_api_router, db_write_multiple, S
+    S,
+    app::{GetAccounts, WriteData},
+    create_open_api_router, db_write_multiple,
 };
 use server_data_chat::write::GetWriteCommandsChat;
 use simple_backend::create_counters;
@@ -45,7 +44,10 @@ async fn post_set_max_public_key_count(
     let id = state.get_internal_id(info.account).await?;
 
     db_write_multiple!(state, move |cmds| {
-        cmds.chat_admin().public_key().set_max_public_key_count(id, info.count).await
+        cmds.chat_admin()
+            .public_key()
+            .set_max_public_key_count(id, info.count)
+            .await
     })?;
 
     Ok(())

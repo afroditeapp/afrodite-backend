@@ -17,7 +17,10 @@ pub async fn sleep_until_current_time_is_at(
     wanted_time: UtcTimeValue,
 ) -> Result<(), SleepUntilClockIsAtError> {
     let current_time = Utc::now();
-    let duration_seconds = Duration::from_secs(seconds_until_current_time_is_at_internal(current_time, wanted_time)?);
+    let duration_seconds = Duration::from_secs(seconds_until_current_time_is_at_internal(
+        current_time,
+        wanted_time,
+    )?);
     sleep(duration_seconds).await;
     Ok(())
 }
@@ -45,7 +48,8 @@ pub fn next_possible_utc_date_time_value(
             .ok_or(SleepUntilClockIsAtError::TargetTimeValueInvalid)?;
 
     let today_date = Utc::now().date_naive();
-    let tomorrow_date = today_date.succ_opt()
+    let tomorrow_date = today_date
+        .succ_opt()
         .ok_or(SleepUntilClockIsAtError::DateCreationForTomorrowFailed)?;
 
     let today = today_date.and_time(target_time).and_utc();
@@ -144,7 +148,9 @@ pub struct DurationValue {
 
 impl DurationValue {
     pub const fn from_days(days: u32) -> Self {
-        Self { seconds: days * 60 * 60 * 24 }
+        Self {
+            seconds: days * 60 * 60 * 24,
+        }
     }
 }
 
@@ -172,7 +178,12 @@ impl TryFrom<String> for DurationValue {
             "m" => number * 60,
             "h" => number * 60 * 60,
             "d" => number * 60 * 60 * 24,
-            time_unit => return Err(format!("Unknown time unit: {}, supported units: s, m, h, d", time_unit)),
+            time_unit => {
+                return Err(format!(
+                    "Unknown time unit: {}, supported units: s, m, h, d",
+                    time_unit
+                ));
+            }
         };
 
         Ok(DurationValue { seconds })

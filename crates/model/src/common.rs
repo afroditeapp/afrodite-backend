@@ -1,17 +1,20 @@
 use base64::Engine;
 use chrono::NaiveDate;
 use diesel::{
+    AsExpression, FromSqlRow,
     prelude::*,
     sql_types::{BigInt, Binary},
-    AsExpression, FromSqlRow,
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_wrapper, UnixTime};
+use simple_backend_model::{
+    UnixTime, diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_wrapper,
+};
 use utils::random_bytes::random_128_bits;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    schema_sqlite_types::Integer, Account, AccountStateContainer, ContentProcessingId, ContentProcessingState, InitialSetupCompletedTime, MessageNumber, ProfileVisibility
+    Account, AccountStateContainer, ContentProcessingId, ContentProcessingState,
+    InitialSetupCompletedTime, MessageNumber, ProfileVisibility, schema_sqlite_types::Integer,
 };
 
 pub mod api_usage;
@@ -213,11 +216,16 @@ impl From<NotificationEvent> for EventToClientInternal {
         match event {
             NotificationEvent::NewMessageReceived => EventToClientInternal::NewMessageReceived,
             NotificationEvent::ReceivedLikesChanged => EventToClientInternal::ReceivedLikesChanged,
-            NotificationEvent::MediaContentModerationCompleted =>
-                EventToClientInternal::MediaContentModerationCompleted,
+            NotificationEvent::MediaContentModerationCompleted => {
+                EventToClientInternal::MediaContentModerationCompleted
+            }
             NotificationEvent::NewsChanged => EventToClientInternal::NewsChanged,
-            NotificationEvent::ProfileTextModerationCompleted => EventToClientInternal::ProfileTextModerationCompleted,
-            NotificationEvent::AutomaticProfileSearchCompleted => EventToClientInternal::AutomaticProfileSearchCompleted,
+            NotificationEvent::ProfileTextModerationCompleted => {
+                EventToClientInternal::ProfileTextModerationCompleted
+            }
+            NotificationEvent::AutomaticProfileSearchCompleted => {
+                EventToClientInternal::AutomaticProfileSearchCompleted
+            }
             NotificationEvent::AdminNotification => EventToClientInternal::AdminNotification,
         }
     }
@@ -450,7 +458,17 @@ impl RefreshToken {
 }
 
 #[derive(
-    Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, FromSqlRow, AsExpression, ToSchema
+    Debug,
+    Serialize,
+    Deserialize,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    FromSqlRow,
+    AsExpression,
+    ToSchema,
 )]
 #[diesel(sql_type = BigInt)]
 #[serde(transparent)]
@@ -522,7 +540,9 @@ impl From<Account> for AccountStateRelatedSharedState {
     fn from(account: Account) -> Self {
         Self {
             profile_visibility_state_number: account.profile_visibility(),
-            account_state_initial_setup_completed: account.state_container().initial_setup_completed,
+            account_state_initial_setup_completed: account
+                .state_container()
+                .initial_setup_completed,
             account_state_banned: account.state_container().banned,
             account_state_pending_deletion: account.state_container().pending_deletion,
             sync_version: account.sync_version(),

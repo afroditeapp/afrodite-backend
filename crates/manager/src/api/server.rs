@@ -1,4 +1,3 @@
-
 //! Manager protocol server code
 //!
 //! # Manager protocol
@@ -81,22 +80,19 @@
 //! - Data bytes
 
 use std::net::SocketAddr;
-use json_rpc::handle_json_rpc;
-use link::json_rpc::handle_json_rpc_link;
-use link::backup::handle_backup_link;
-use manager_api::protocol::{ClientConnectionReadWrite, ClientConnectionWrite};
-use manager_model::{ManagerProtocolMode, ServerEvent};
 
-use manager_api::protocol::{ConnectionUtilsRead, ConnectionUtilsWrite};
+use error_stack::{Result, ResultExt};
+use json_rpc::handle_json_rpc;
+use link::{backup::handle_backup_link, json_rpc::handle_json_rpc_link};
+use manager_api::protocol::{
+    ClientConnectionReadWrite, ClientConnectionWrite, ConnectionUtilsRead, ConnectionUtilsWrite,
+};
+use manager_model::{ManagerProtocolMode, ManagerProtocolVersion, ServerEvent};
 use tokio::io::AsyncReadExt;
 use tracing::info;
 
-use crate::{server::app::S, utils::ContextExt};
-
-use error_stack::{Result, ResultExt};
-use manager_model::ManagerProtocolVersion;
-
 use super::utils::validate_api_key;
+use crate::{server::app::S, utils::ContextExt};
 
 pub mod json_rpc;
 pub mod link;
@@ -141,18 +137,12 @@ pub enum ServerError {
     BackupLink,
 }
 
-pub async fn handle_connection_to_server<
-    T: ClientConnectionReadWrite,
->(
+pub async fn handle_connection_to_server<T: ClientConnectionReadWrite>(
     connection: T,
     address: SocketAddr,
     state: S,
 ) {
-    match handle_connection_to_server_with_error(
-        connection,
-        address,
-        state,
-    ).await {
+    match handle_connection_to_server_with_error(connection, address, state).await {
         Ok(()) => (),
         Err(e) => {
             let e = e.attach_printable(address);
@@ -161,14 +151,13 @@ pub async fn handle_connection_to_server<
     }
 }
 
-async fn handle_connection_to_server_with_error<
-    T: ClientConnectionReadWrite,
->(
+async fn handle_connection_to_server_with_error<T: ClientConnectionReadWrite>(
     mut c: T,
     address: SocketAddr,
     state: S,
 ) -> Result<(), ServerError> {
-    let version = c.receive_protocol_version()
+    let version = c
+        .receive_protocol_version()
         .await
         .change_context(ServerError::UnsupportedProtocolVersion)?;
 
@@ -176,18 +165,24 @@ async fn handle_connection_to_server_with_error<
         ManagerProtocolVersion::V1 => (),
     }
 
-    let api_key = c.receive_string_with_u32_len()
+    let api_key = c
+        .receive_string_with_u32_len()
         .await
         .change_context(ServerError::ApiKey)?;
 
     if validate_api_key(&state, address, &api_key).is_err() {
-        c.send_u8(0).await.change_context(ServerError::ApiKeyResponse)?;
+        c.send_u8(0)
+            .await
+            .change_context(ServerError::ApiKeyResponse)?;
         return Ok(());
     }
 
-    c.send_u8(1).await.change_context(ServerError::ApiKeyResponse)?;
+    c.send_u8(1)
+        .await
+        .change_context(ServerError::ApiKeyResponse)?;
 
-    let mode = c.receive_protocol_mode()
+    let mode = c
+        .receive_protocol_mode()
         .await
         .change_context(ServerError::UnsupportedProtocolMode)?;
 
@@ -199,9 +194,7 @@ async fn handle_connection_to_server_with_error<
     }
 }
 
-async fn handle_server_events<
-    C: ClientConnectionReadWrite,
->(
+async fn handle_server_events<C: ClientConnectionReadWrite>(
     c: C,
     address: SocketAddr,
     state: S,
@@ -225,9 +218,7 @@ async fn handle_server_events<
     r
 }
 
-async fn send_server_events<
-    C: ClientConnectionWrite,
->(
+async fn send_server_events<C: ClientConnectionWrite>(
     mut c: C,
     state: S,
 ) -> Result<(), ServerError> {

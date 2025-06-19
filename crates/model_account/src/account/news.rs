@@ -2,7 +2,7 @@ use diesel::{deserialize::FromSqlRow, expression::AsExpression, prelude::*, sql_
 use model::{NewsSyncVersion, UnreadNewsCount};
 use model_server_data::{NewsIteratorSessionId, PublicationId};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_wrapper, UnixTime};
+use simple_backend_model::{UnixTime, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{AccountId, AccountIdDb};

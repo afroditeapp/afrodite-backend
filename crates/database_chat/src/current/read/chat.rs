@@ -1,18 +1,15 @@
-use database::{define_current_read_commands, DieselDatabaseError};
-use diesel::{prelude::*, SelectableHelper};
+use database::{DieselDatabaseError, define_current_read_commands};
+use diesel::{SelectableHelper, prelude::*};
 use error_stack::Result;
-use model_chat::{
-    AccountIdInternal, ChatGlobalState, ChatStateRaw,
-    CHAT_GLOBAL_STATE_ROW_TYPE,
-};
+use model_chat::{AccountIdInternal, CHAT_GLOBAL_STATE_ROW_TYPE, ChatGlobalState, ChatStateRaw};
 
 use crate::IntoDatabaseError;
 
 mod interaction;
-mod message;
-mod public_key;
-mod notification;
 mod limits;
+mod message;
+mod notification;
+mod public_key;
 
 define_current_read_commands!(CurrentReadChat);
 
