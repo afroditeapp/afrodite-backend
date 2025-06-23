@@ -9,5 +9,4 @@ edition = "2024"
 chrono = { workspace = true }
 rand = { workspace = true }
 pgp = { workspace = true }
-bstr = { workspace = true }
 smallvec = { workspace = true }

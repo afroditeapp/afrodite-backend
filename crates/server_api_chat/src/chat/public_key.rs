@@ -10,7 +10,7 @@ use model_chat::{
     AccountId, AccountIdInternal, AddPublicKeyResult, GetLatestPublicKeyId,
     GetPrivatePublicKeyInfo, PublicKeyId,
 };
-use pgp::{Deserializable, SignedPublicKey};
+use pgp::composed::{Deserializable, SignedPublicKey};
 use server_api::{
     S,
     app::{GetAccounts, WriteData},

@@ -45,8 +45,10 @@ impl TlsManager {
             let quit_handle = TlsManagerQuitHandle { handle: None };
             (manager, quit_handle)
         } else if let Some(lets_encrypt) = config.lets_encrypt_config() {
+            let client_tls_config = ClientConfig::with_platform_verifier()
+                .expect("Getting platform TLS key verifier failed");
             let mut state = AcmeConfig::new(lets_encrypt.domains.clone())
-                .client_tls_config(ClientConfig::with_platform_verifier().into())
+                .client_tls_config(client_tls_config.into())
                 .contact([format!("mailto:{}", lets_encrypt.email)])
                 .cache(DirCache::new(lets_encrypt.cache_dir.clone()))
                 .directory_lets_encrypt(lets_encrypt.production_servers)

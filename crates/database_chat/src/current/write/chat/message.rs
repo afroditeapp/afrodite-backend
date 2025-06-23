@@ -137,7 +137,7 @@ impl CurrentWriteChatMessage<'_> {
         };
 
         let signed = keys
-            .sign(&data_for_signing.to_bytes())
+            .sign(data_for_signing.to_bytes())
             .change_context(DieselDatabaseError::MessageEncryptionError)?;
 
         insert_into(pending_messages)

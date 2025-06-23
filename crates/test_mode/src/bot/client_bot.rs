@@ -562,7 +562,7 @@ async fn send_message(
     let len_u16 = msg.len() as u16;
     message_bytes.extend_from_slice(&len_u16.to_le_bytes());
     message_bytes.extend_from_slice(msg.as_bytes());
-    let encrypted_bytes = encrypt_data(&keys.private, public_key, &message_bytes)
+    let encrypted_bytes = encrypt_data(&keys.private, public_key, message_bytes)
         .change_context(TestError::MessageEncryptionError)?;
 
     post_send_message_fixed(

@@ -1,14 +1,20 @@
 //! Message encrypting code from client
 
-use std::{error::Error, fmt::Display};
+use std::{error::Error, fmt::Display, io::Read};
 
-use bstr::BStr;
 use pgp::{
-    ArmorOptions, Deserializable, KeyType, Message, PlainSessionKey, SecretKeyParamsBuilder,
-    SignedPublicKey, SignedSecretKey, SubkeyParamsBuilder,
-    crypto::{aead::AeadAlgorithm, hash::HashAlgorithm, sym::SymmetricKeyAlgorithm},
+    bytes::Bytes,
+    composed::{
+        ArmorOptions, Deserializable, KeyType, Message, MessageBuilder, PlainSessionKey,
+        SecretKeyParamsBuilder, SignedPublicKey, SignedSecretKey, SubkeyParamsBuilder,
+    },
+    crypto::{
+        aead::{AeadAlgorithm, ChunkSize},
+        hash::HashAlgorithm,
+        sym::SymmetricKeyAlgorithm,
+    },
     ser::Serialize,
-    types::SecretKeyTrait,
+    types::Password,
 };
 use rand::rngs::OsRng;
 use smallvec::smallvec;
@@ -21,18 +27,17 @@ pub enum MessageEncryptionError {
     GenerateKeysPrivateKeySign = 3,
     GenerateKeysPrivateKeyArmor = 4,
     GenerateKeysPrivateKeyNullDetected = 5,
-    GenerateKeysPublicKeySign = 6,
-    GenerateKeysPublicKeyArmor = 7,
-    GenerateKeysPublicKeyNullDetected = 8,
-    GenerateKeysPrivateKeySubKeyParams = 9,
+    GenerateKeysPublicKeyArmor = 6,
+    GenerateKeysPublicKeyNullDetected = 7,
+    GenerateKeysPrivateKeySubKeyParams = 8,
     EncryptDataPrivateKeyParse = 10,
     EncryptDataPublicKeyParse = 11,
     EncryptDataEncrypt = 12,
-    EncryptDataSign = 13,
-    EncryptDataToBytes = 14,
-    EncryptDataPublicSubkeyMissing = 15,
-    EncryptDataEncryptedMessageLenTooLarge = 16,
-    EncryptDataEncryptedMessageCapacityTooLarge = 17,
+    EncryptDataToWriter = 13,
+    EncryptDataPublicSubkeyMissing = 14,
+    EncryptDataEncryptedMessageLenTooLarge = 15,
+    EncryptDataEncryptedMessageCapacityTooLarge = 16,
+    EncryptDataLiteralDataParsing = 17,
     DecryptDataPrivateKeyParse = 20,
     DecryptDataPublicKeyParse = 21,
     DecryptDataMessageParse = 22,
@@ -45,19 +50,17 @@ pub enum MessageEncryptionError {
     PublicKeyToBytes = 31,
     PrivateKeyReadFromString = 40,
     SignData = 50,
-    SignDataToBytes = 51,
+    SignDataToWriter = 51,
     UnwrapSignedMessageFromBytes = 60,
-    UnwrapSignedMessageGetContent = 61,
-    UnwrapSignedMessageNoContent = 62,
+    UnwrapSignedMessageAsDataVec = 61,
     VerifySignedMessageFromBytes = 70,
     VerifySignedMessageVerify = 71,
-    VerifySignedMessageGetContent = 72,
-    VerifySignedMessageNoContent = 73,
-    VerifySignedMessageParsePublicKey = 74,
+    VerifySignedMessageAsDataVec = 72,
+    VerifySignedMessageParsePublicKey = 73,
     DecryptWithKeyFromBytes = 80,
     DecryptWithKeyDecrypt = 81,
     DecryptWithKeyNotEncrypted = 82,
-    DecryptWithKeyToBytes = 83,
+    DecryptWithKeyReadToEnd = 83,
 }
 
 impl Display for MessageEncryptionError {
@@ -71,41 +74,46 @@ pub fn encrypt_data(
     // The sender private key can be used for signing the message
     data_sender_armored_private_key: &str,
     data_receive_public_key: Vec<u8>,
-    data: &[u8],
+    data: impl Into<pgp::bytes::Bytes>,
 ) -> Result<Vec<u8>, MessageEncryptionError> {
     let (my_private_key, _) = SignedSecretKey::from_string(data_sender_armored_private_key)
         .map_err(|_| MessageEncryptionError::EncryptDataPrivateKeyParse)?;
     let other_person_public_key = SignedPublicKey::from_bytes(data_receive_public_key.as_slice())
         .map_err(|_| MessageEncryptionError::EncryptDataPublicKeyParse)?;
 
-    let empty_file_name: &BStr = b"".into();
-
     let encryption_public_subkey = other_person_public_key
         .public_subkeys
         .first()
         .ok_or(MessageEncryptionError::EncryptDataPublicSubkeyMissing)?;
 
-    let armored_message = Message::new_literal_bytes(empty_file_name, data)
-        // Compression is not done for now as this library does not
-        // have possibility to limit decompressed data size.
-        // If the data would be compressed, then denial of service attacks
-        // would be possible.
-        .sign(OsRng, &my_private_key, String::new, HashAlgorithm::SHA2_256)
-        .map_err(|_| MessageEncryptionError::EncryptDataSign)?
-        .encrypt_to_keys_seipdv2(
-            OsRng,
-            SymmetricKeyAlgorithm::AES128,
-            AeadAlgorithm::Gcm,
-            // Use max chunk size as message size is small
-            // and streaming decryption is not needed.
-            16,
-            &[encryption_public_subkey],
-        )
-        .map_err(|_| MessageEncryptionError::EncryptDataEncrypt)?
-        .to_bytes()
-        .map_err(|_| MessageEncryptionError::EncryptDataToBytes)?;
+    let mut output = vec![];
 
-    Ok(armored_message)
+    let mut builder = MessageBuilder::from_bytes("", Into::<Bytes>::into(data));
+    // Compression is not done for now as this library does not
+    // have possibility to limit decompressed data size.
+    // If the data would be compressed, then denial of service attacks
+    // would be possible.
+    builder.sign(
+        &my_private_key.primary_key,
+        Password::empty(),
+        HashAlgorithm::Sha256,
+    );
+    let mut builder = builder.seipd_v2(
+        OsRng,
+        SymmetricKeyAlgorithm::AES128,
+        AeadAlgorithm::Gcm,
+        // Use max chunk size as message size is small
+        // and streaming decryption is not needed.
+        ChunkSize::C4MiB,
+    );
+    builder
+        .encrypt_to_key(OsRng, encryption_public_subkey)
+        .map_err(|_| MessageEncryptionError::EncryptDataEncrypt)?;
+    builder
+        .to_writer(OsRng, &mut output)
+        .map_err(|_| MessageEncryptionError::EncryptDataToWriter)?;
+
+    Ok(output)
 }
 
 pub fn generate_keys(primary_user_id: String) -> Result<GeneratedKeys, MessageEncryptionError> {
@@ -116,13 +124,12 @@ pub fn generate_keys(primary_user_id: String) -> Result<GeneratedKeys, MessageEn
         .can_sign(true)
         .primary_user_id(primary_user_id)
         .preferred_symmetric_algorithms(smallvec![SymmetricKeyAlgorithm::AES128,])
-        .preferred_hash_algorithms(smallvec![HashAlgorithm::SHA2_256,])
+        .preferred_hash_algorithms(smallvec![HashAlgorithm::Sha256])
         .preferred_compression_algorithms(smallvec![])
         .subkey(
             SubkeyParamsBuilder::default()
                 .key_type(KeyType::X25519)
                 .can_authenticate(false)
-                .can_certify(false)
                 .can_encrypt(true)
                 .can_sign(false)
                 .build()
@@ -134,16 +141,13 @@ pub fn generate_keys(primary_user_id: String) -> Result<GeneratedKeys, MessageEn
         .generate(OsRng)
         .map_err(|_| MessageEncryptionError::GenerateKeysPrivateKeyGenerate)?;
     let signed_private_key = private_key
-        .sign(OsRng, String::new)
+        .sign(OsRng, &Password::empty())
         .map_err(|_| MessageEncryptionError::GenerateKeysPrivateKeySign)?;
     let private = signed_private_key
         .to_armored_string(ArmorOptions::default())
         .map_err(|_| MessageEncryptionError::GenerateKeysPrivateKeyArmor)?;
 
-    let signed_public_key = signed_private_key
-        .public_key()
-        .sign(OsRng, &signed_private_key, String::new)
-        .map_err(|_| MessageEncryptionError::GenerateKeysPublicKeySign)?;
+    let signed_public_key = signed_private_key.signed_public_key();
     let public = signed_public_key
         .to_armored_string(ArmorOptions::default())
         .map_err(|_| MessageEncryptionError::GenerateKeysPublicKeyArmor)?;
@@ -183,44 +187,50 @@ pub struct ParsedKeys {
 }
 
 impl ParsedKeys {
-    pub fn sign(&self, data: &[u8]) -> Result<Vec<u8>, MessageEncryptionError> {
-        let empty_file_name: &BStr = b"".into();
-        let message = pgp::message::Message::new_literal_bytes(empty_file_name, data)
-            .sign(OsRng, &self.private, String::new, HashAlgorithm::SHA2_256)
-            .map_err(|_| MessageEncryptionError::SignData)?;
+    pub fn sign(
+        &self,
+        data: impl Into<pgp::bytes::Bytes>,
+    ) -> Result<Vec<u8>, MessageEncryptionError> {
+        let mut output = vec![];
 
-        message
-            .to_bytes()
-            .map_err(|_| MessageEncryptionError::SignDataToBytes)
+        let mut builder = MessageBuilder::from_bytes("", data);
+        builder.sign(
+            &self.private.primary_key,
+            Password::empty(),
+            HashAlgorithm::Sha256,
+        );
+
+        builder
+            .to_writer(OsRng, &mut output)
+            .map_err(|_| MessageEncryptionError::SignDataToWriter)?;
+
+        Ok(output)
     }
 
     pub fn verify_signed_message_and_extract_data(
         &self,
         data: &[u8],
     ) -> Result<Vec<u8>, MessageEncryptionError> {
-        let message = pgp::message::Message::from_bytes(data)
+        let mut message = Message::from_bytes(data)
             .map_err(|_| MessageEncryptionError::VerifySignedMessageFromBytes)?;
 
+        let output = message
+            .as_data_vec()
+            .map_err(|_| MessageEncryptionError::VerifySignedMessageAsDataVec)?;
+
         message
-            .verify(&self.public)
+            .verify_read(&self.public)
             .map_err(|_| MessageEncryptionError::VerifySignedMessageVerify)?;
 
-        let data = message
-            .get_content()
-            .map_err(|_| MessageEncryptionError::VerifySignedMessageGetContent)?
-            .ok_or(MessageEncryptionError::VerifySignedMessageNoContent)?;
-
-        Ok(data)
+        Ok(output)
     }
 }
 
 pub fn unwrap_signed_binary_message(data: &[u8]) -> Result<Vec<u8>, MessageEncryptionError> {
-    let message = pgp::message::Message::from_bytes(data)
-        .map_err(|_| MessageEncryptionError::UnwrapSignedMessageFromBytes)?;
-    message
-        .get_content()
-        .map_err(|_| MessageEncryptionError::UnwrapSignedMessageGetContent)?
-        .ok_or(MessageEncryptionError::UnwrapSignedMessageNoContent)
+    Message::from_bytes(data)
+        .map_err(|_| MessageEncryptionError::UnwrapSignedMessageFromBytes)?
+        .as_data_vec()
+        .map_err(|_| MessageEncryptionError::UnwrapSignedMessageAsDataVec)
 }
 
 pub fn verify_signed_binary_message(
@@ -229,33 +239,35 @@ pub fn verify_signed_binary_message(
 ) -> Result<Vec<u8>, MessageEncryptionError> {
     let public_key = SignedPublicKey::from_bytes(pgp_public_key)
         .map_err(|_| MessageEncryptionError::VerifySignedMessageParsePublicKey)?;
-    let message = pgp::message::Message::from_bytes(data)
+    let mut message = Message::from_bytes(data)
         .map_err(|_| MessageEncryptionError::VerifySignedMessageFromBytes)?;
 
+    let output = message
+        .as_data_vec()
+        .map_err(|_| MessageEncryptionError::VerifySignedMessageAsDataVec)?;
+
     message
-        .verify(&public_key)
+        .verify_read(&public_key)
         .map_err(|_| MessageEncryptionError::VerifySignedMessageVerify)?;
 
-    let data = message
-        .get_content()
-        .map_err(|_| MessageEncryptionError::VerifySignedMessageGetContent)?
-        .ok_or(MessageEncryptionError::VerifySignedMessageNoContent)?;
-
-    Ok(data)
+    Ok(output)
 }
 
 pub fn decrypt_binary_message(data: &[u8], key: &[u8]) -> Result<Vec<u8>, MessageEncryptionError> {
-    let message = pgp::message::Message::from_bytes(data)
-        .map_err(|_| MessageEncryptionError::DecryptWithKeyFromBytes)?;
+    let mut message =
+        Message::from_bytes(data).map_err(|_| MessageEncryptionError::DecryptWithKeyFromBytes)?;
 
     let key = PlainSessionKey::V6 { key: key.to_vec() };
 
-    if let Message::Encrypted { edata, .. } = message {
+    if let Message::Encrypted { edata, .. } = &mut message {
         edata
-            .decrypt(key)
-            .map_err(|_| MessageEncryptionError::DecryptWithKeyDecrypt)?
-            .to_bytes()
-            .map_err(|_| MessageEncryptionError::DecryptWithKeyToBytes)
+            .decrypt(&key)
+            .map_err(|_| MessageEncryptionError::DecryptWithKeyDecrypt)?;
+        let mut output = vec![];
+        edata
+            .read_to_end(&mut output)
+            .map_err(|_| MessageEncryptionError::DecryptWithKeyReadToEnd)?;
+        Ok(output)
     } else {
         Err(MessageEncryptionError::DecryptWithKeyNotEncrypted)
     }
