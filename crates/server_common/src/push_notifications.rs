@@ -3,7 +3,7 @@ use std::{future::Future, time::Duration};
 use error_stack::{Result, ResultExt};
 use fcm::{
     FcmClient,
-    message::{Message, Target},
+    message::{AndroidConfig, AndroidMessagePriority, Message, Target},
     response::{RecomendedAction, RecomendedWaitTime},
 };
 use model::{AccountIdInternal, PendingNotificationFlags, PushNotificationStateInfoWithFlags};
@@ -323,7 +323,10 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
                 "n": "",
             })),
             target: Target::Token(token.into_string()),
-            android: None,
+            android: Some(AndroidConfig {
+                priority: Some(AndroidMessagePriority::High),
+                ..Default::default()
+            }),
             apns: None,
             webpush: None,
             fcm_options: None,
