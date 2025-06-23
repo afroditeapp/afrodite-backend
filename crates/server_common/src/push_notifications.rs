@@ -317,8 +317,10 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
         };
 
         let message = Message {
+            // Use minimal notification data as this only triggers client
+            // to download the notification.
             data: Some(json!({
-                "check_notifications": "",
+                "n": "",
             })),
             target: Target::Token(token.into_string()),
             android: None,
