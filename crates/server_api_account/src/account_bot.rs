@@ -45,7 +45,7 @@ pub async fn post_bot_login(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    login_impl(id, state).await.map(|d| d.into())
+    login_impl(id, &state).await.map(|d| d.into())
 }
 
 pub const PATH_BOT_REGISTER: &str = "/account_api/bot_register";
@@ -142,7 +142,7 @@ pub async fn post_remote_bot_login(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    login_impl(info.aid, state).await.map(|d| d.into())
+    login_impl(info.aid, &state).await.map(|d| d.into())
 }
 
 create_counters!(

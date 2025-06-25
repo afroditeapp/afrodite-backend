@@ -1,8 +1,13 @@
+use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
+use simple_backend_model::diesel_i64_try_from;
 use utoipa::ToSchema;
 
 use super::ClientConfigSyncVersion;
-use crate::{ClientFeaturesFileHash, CustomReportsFileHash, ProfileAttributeInfo};
+use crate::{
+    ClientFeaturesFileHash, CustomReportsFileHash, ProfileAttributeInfo,
+    schema_sqlite_types::Integer,
+};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ClientConfig {
@@ -17,3 +22,25 @@ pub struct ClientConfig {
     pub profile_attributes: Option<ProfileAttributeInfo>,
     pub sync_version: ClientConfigSyncVersion,
 }
+
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    PartialEq,
+    ToSchema,
+    TryFromPrimitive,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+)]
+#[diesel(sql_type = Integer)]
+#[repr(i64)]
+pub enum ClientType {
+    Android = 0,
+    Ios = 1,
+    Web = 2,
+}
+
+diesel_i64_try_from!(ClientType);

@@ -1,6 +1,6 @@
 use diesel::{prelude::*, update};
 use error_stack::Result;
-use model::{AccountIdInternal, SyncVersion};
+use model::{AccountIdInternal, ClientType, SyncVersion};
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
 
@@ -30,6 +30,22 @@ impl CurrentWriteCommonClientConfig<'_> {
         update(common_state)
             .filter(account_id.eq(id.as_db_id()))
             .set(client_config_sync_version.eq(0))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn update_client_login_session_platform(
+        &mut self,
+        id: AccountIdInternal,
+        value: ClientType,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::common_state::dsl::*;
+
+        update(common_state)
+            .filter(account_id.eq(id.as_db_id()))
+            .set(client_login_session_platform.eq(value))
             .execute(self.conn())
             .into_db_error(())?;
 

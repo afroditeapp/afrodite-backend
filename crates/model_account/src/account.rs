@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use diesel::{Associations, prelude::*};
-use model::{ClientVersion, UnixTime};
+use model::{ClientType, ClientVersion, UnixTime};
 use model_server_data::{
     AppleAccountId, AuthPair, EmailAddress, GoogleAccountId, PublicationId, SignInWithInfo,
 };
@@ -64,13 +64,6 @@ impl LoginResult {
             error_unsupported_client: true,
         }
     }
-}
-
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, ToSchema)]
-pub enum ClientType {
-    Android,
-    Ios,
-    Web,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, ToSchema)]

@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use database::current::read::GetDbReadCommandsCommon;
 use model::{
-    AccessToken, Account, AccountId, AccountIdInternal, ClientConfigSyncVersion,
+    AccessToken, Account, AccountId, AccountIdInternal, ClientConfigSyncVersion, ClientType,
     PendingNotificationFlags, RefreshToken, ReportAccountInfo,
 };
 use model_server_data::SearchGroupFlags;
@@ -145,6 +145,19 @@ impl ReadCommandsCommon<'_> {
             })
             .await
             .into_error()
+    }
+
+    pub async fn client_login_session_platform(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Option<ClientType>, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.common()
+                .client_config()
+                .client_login_session_platform(id)
+        })
+        .await
+        .into_error()
     }
 }
 

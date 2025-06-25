@@ -10,9 +10,10 @@ use model_server_state::{
 };
 use server_api::{
     S,
-    app::{GetConfig, ReadData},
+    app::{GetAccounts, GetConfig, ReadData},
     create_open_api_router, db_write_multiple,
 };
+use server_data::write::GetWriteCommandsCommon;
 use server_data_account::{
     demo::{AccessibleAccountsInfoUtils, DemoModeUtils},
     write::GetWriteCommandsAccount,
@@ -176,9 +177,19 @@ pub async fn post_demo_mode_login_to_account(
         .await?;
     accessible_accounts.contains(info.aid, state.read()).await?;
 
-    let result = login_impl(info.aid, state).await?;
+    let r = login_impl(info.aid, &state).await?;
 
-    Ok(result.into())
+    if let Some(aid) = r.aid {
+        // Login successful
+        let id = state.get_internal_id(aid).await?;
+        db_write_multiple!(state, move |cmds| {
+            cmds.common()
+                .client_login_session_platform(id, info.client_info.client_type)
+                .await
+        })?;
+    }
+
+    Ok(r.into())
 }
 
 const PATH_POST_DEMO_MODE_LOGOUT: &str = "/account_api/demo_mode_logout";

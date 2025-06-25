@@ -1,7 +1,9 @@
 use std::net::SocketAddr;
 
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
-use model::{Account, AccountId, AccountIdInternal, ReportTypeNumberInternal, UnixTime};
+use model::{
+    Account, AccountId, AccountIdInternal, ClientType, ReportTypeNumberInternal, UnixTime,
+};
 use model_server_data::AuthPair;
 use server_common::data::cache::CacheError;
 use simple_backend_utils::time::DurationValue;
@@ -210,6 +212,18 @@ impl WriteCommandsCommon<'_> {
             cmds.common()
                 .client_config()
                 .reset_client_config_sync_version(id)
+        })
+    }
+
+    pub async fn client_login_session_platform(
+        &self,
+        id: AccountIdInternal,
+        value: ClientType,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.common()
+                .client_config()
+                .update_client_login_session_platform(id, value)
         })
     }
 }

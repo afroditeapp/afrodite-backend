@@ -21,7 +21,7 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-pub async fn login_impl(id: AccountId, state: S) -> Result<LoginResult, StatusCode> {
+pub async fn login_impl(id: AccountId, state: &S) -> Result<LoginResult, StatusCode> {
     let id = state.get_internal_id(id).await?;
     let email = state.read().account().account_data(id).await?;
 
@@ -142,7 +142,7 @@ pub async fn post_sign_in_with_login(
         }
     }
 
-    if let Some(apple) = tokens.apple {
+    let r = if let Some(apple) = tokens.apple {
         let nonce_bytes = base64::engine::general_purpose::URL_SAFE
             .decode(apple.nonce)
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -150,28 +150,40 @@ pub async fn post_sign_in_with_login(
             .sign_in_with_manager()
             .validate_apple_token(apple.token, nonce_bytes)
             .await?;
-        handle_sign_in_with_info(state, info).await
+        handle_sign_in_with_info(&state, info).await
     } else if let Some(google) = tokens.google_token {
         let info = state
             .sign_in_with_manager()
             .validate_google_token(google)
             .await?;
-        handle_sign_in_with_info(state, info).await
+        handle_sign_in_with_info(&state, info).await
     } else {
         Err(StatusCode::INTERNAL_SERVER_ERROR)
+    }?;
+
+    if let Some(aid) = r.aid {
+        // Login successful
+        let id = state.get_internal_id(aid).await?;
+        db_write_multiple!(state, move |cmds| {
+            cmds.common()
+                .client_login_session_platform(id, tokens.client_info.client_type)
+                .await
+        })?;
     }
+
+    Ok(r.into())
 }
 
 async fn handle_sign_in_with_info(
-    state: S,
+    state: &S,
     info: impl SignInWithInfoTrait,
-) -> Result<Json<LoginResult>, StatusCode> {
+) -> Result<LoginResult, StatusCode> {
     let email: EmailAddress = info
         .email()
         .try_into()
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let already_existing_account = info.already_existing_account(&state).await?;
+    let already_existing_account = info.already_existing_account(state).await?;
 
     if let Some(already_existing_account) = already_existing_account {
         db_write_multiple!(state, move |cmds| cmds
@@ -180,15 +192,13 @@ async fn handle_sign_in_with_info(
             .account_email(already_existing_account, email)
             .await)?;
 
-        login_impl(already_existing_account.as_id(), state)
-            .await
-            .map(|d| d.into())
+        login_impl(already_existing_account.as_id(), state).await
     } else {
         let id = state
             .data_all_access()
             .register_impl(info.sign_in_with_info(), Some(email))
             .await?;
-        login_impl(id.as_id(), state).await.map(|d| d.into())
+        login_impl(id.as_id(), state).await
     }
 }
 

@@ -1,5 +1,7 @@
 use error_stack::ResultExt;
-use model::{AccountIdInternal, PendingNotificationFlags, PushNotificationStateInfoWithFlags};
+use model::{
+    AccountIdInternal, ClientType, PendingNotificationFlags, PushNotificationStateInfoWithFlags,
+};
 use server_api::{
     app::{ReadData, WriteData},
     db_write_raw,
@@ -126,5 +128,18 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
         }
 
         Ok(())
+    }
+
+    async fn client_login_session_platform(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> error_stack::Result<Option<ClientType>, PushNotificationError> {
+        self.state
+            .read()
+            .common()
+            .client_login_session_platform(account_id)
+            .await
+            .map_err(|e| e.into_report())
+            .change_context(PushNotificationError::ReadingClientTypeFailed)
     }
 }

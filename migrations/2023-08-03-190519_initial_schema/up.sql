@@ -188,6 +188,10 @@ CREATE TABLE IF NOT EXISTS common_state(
     pending_notification_token   TEXT           UNIQUE,
     fcm_notification_sent        BOOLEAN        NOT NULL DEFAULT 0,
     fcm_device_token             TEXT           UNIQUE,
+    -- 0 = Android
+    -- 1 = iOS
+    -- 2 = Web
+    client_login_session_platform       INTEGER,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

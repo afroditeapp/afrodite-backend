@@ -3,10 +3,12 @@ use std::{future::Future, time::Duration};
 use error_stack::{Result, ResultExt};
 use fcm::{
     FcmClient,
-    message::{AndroidConfig, AndroidMessagePriority, Message, Target},
+    message::{AndroidConfig, AndroidMessagePriority, Message, Notification, Target},
     response::{RecomendedAction, RecomendedWaitTime},
 };
-use model::{AccountIdInternal, PendingNotificationFlags, PushNotificationStateInfoWithFlags};
+use model::{
+    AccountIdInternal, ClientType, PendingNotificationFlags, PushNotificationStateInfoWithFlags,
+};
 use serde_json::json;
 use simple_backend::ServerQuitWatcher;
 use simple_backend_config::SimpleBackendConfig;
@@ -33,6 +35,8 @@ pub enum PushNotificationError {
     RemoveSpecificNotificationFlagsFromCacheFailed,
     #[error("Reading notification flags from cache failed")]
     ReadingNotificationFlagsFromCacheFailed,
+    #[error("Reading client type failed")]
+    ReadingClientTypeFailed,
     #[error("Saving pending notifications to database failed")]
     SaveToDatabaseFailed,
 }
@@ -125,6 +129,11 @@ pub trait PushNotificationStateProvider {
     fn save_current_non_empty_notification_flags_from_cache_to_database(
         &self,
     ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
+
+    fn client_login_session_platform(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> impl Future<Output = Result<Option<ClientType>, PushNotificationError>> + Send;
 }
 
 pub fn channel() -> (PushNotificationSender, PushNotificationReceiver) {
@@ -316,21 +325,48 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
             }
         };
 
-        let message = Message {
-            // Use minimal notification data as this only triggers client
-            // to download the notification.
-            data: Some(json!({
-                "n": "",
-            })),
-            target: Target::Token(token.into_string()),
-            android: Some(AndroidConfig {
-                priority: Some(AndroidMessagePriority::High),
-                ..Default::default()
-            }),
-            apns: None,
-            webpush: None,
-            fcm_options: None,
-            notification: None,
+        let platform = self
+            .state
+            .client_login_session_platform(send_push_notification.account_id)
+            .await?;
+
+        let message = if let Some(ClientType::Ios) = platform {
+            // On iOS, data notifications don't work when app is closed
+            // from task switcher.
+            Message {
+                // Use minimal notification as this only triggers client
+                // to download the notification.
+                notification: Some(Notification {
+                    title: Some("n".to_string()),
+                    ..Default::default()
+                }),
+                target: Target::Token(token.into_string()),
+                android: Some(AndroidConfig {
+                    priority: Some(AndroidMessagePriority::High),
+                    ..Default::default()
+                }),
+                apns: None,
+                webpush: None,
+                fcm_options: None,
+                data: None,
+            }
+        } else {
+            Message {
+                // Use minimal notification data as this only triggers client
+                // to download the notification.
+                data: Some(json!({
+                    "n": "",
+                })),
+                target: Target::Token(token.into_string()),
+                android: Some(AndroidConfig {
+                    priority: Some(AndroidMessagePriority::High),
+                    ..Default::default()
+                }),
+                apns: None,
+                webpush: None,
+                fcm_options: None,
+                notification: None,
+            }
         };
 
         match sending_logic.send_push_notification(message, fcm).await {
