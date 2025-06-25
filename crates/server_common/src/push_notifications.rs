@@ -471,7 +471,13 @@ impl FcmSendingLogic {
                         RecomendedAction::CheckIosAndWebCredentials
                         | RecomendedAction::CheckSenderIdEquality
                         | RecomendedAction::FixMessageContent,
-                    ) => NextAction::UnusualAction(UnusualAction::DisablePushNotificationSupport),
+                    ) => {
+                        error!(
+                            "Disabling FCM support because of recomended action: {:?}",
+                            action
+                        );
+                        NextAction::UnusualAction(UnusualAction::DisablePushNotificationSupport)
+                    }
                     Some(RecomendedAction::RemoveFcmAppToken) => {
                         NextAction::UnusualAction(UnusualAction::RemoveDeviceToken)
                     }
@@ -485,7 +491,9 @@ impl FcmSendingLogic {
                         NextAction::Retry
                     }
                     Some(RecomendedAction::HandleUnknownError) => {
+                        error!("FCM unknown error");
                         // Just set forced wait time and hope for the best...
+                        warn!("Waiting 60 seconds before retrying message sending");
                         self.forced_wait_time = Some(Duration::from_secs(60));
                         NextAction::Retry
                     }
@@ -494,9 +502,11 @@ impl FcmSendingLogic {
             Err(e) => {
                 error!("FCM send failed: {:?}", e);
                 if e.is_access_token_missing_even_if_server_requests_completed() {
+                    error!("Disabling FCM support because service account key might be invalid");
                     NextAction::UnusualAction(UnusualAction::DisablePushNotificationSupport)
                 } else {
                     // Just set forced wait time and hope for the best...
+                    warn!("Waiting 60 seconds before retrying message sending");
                     self.forced_wait_time = Some(Duration::from_secs(60));
                     NextAction::Retry
                 }
