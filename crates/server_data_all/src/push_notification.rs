@@ -14,10 +14,10 @@ pub async fn get_push_notification_data(
     notification_value: PendingNotification,
 ) -> PendingNotificationWithData {
     let flags = PendingNotificationFlags::from(notification_value);
-    let sender_info = if flags.contains(PendingNotificationFlags::NEW_MESSAGE) {
+    let new_message = if flags.contains(PendingNotificationFlags::NEW_MESSAGE) {
         read_handle
             .chat()
-            .all_pending_message_sender_account_ids(id)
+            .new_message_notification_list(id)
             .await
             .ok()
     } else {
@@ -87,7 +87,7 @@ pub async fn get_push_notification_data(
 
     PendingNotificationWithData {
         value: notification_value,
-        new_message_received_from: sender_info,
+        new_message,
         received_likes_changed: received_likes_info,
         media_content_moderation_completed,
         news_changed: unread_news_count,

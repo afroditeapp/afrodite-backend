@@ -185,6 +185,54 @@ impl From<ReceivedLikeId> for i64 {
     }
 }
 
+/// Account specific conversation ID
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    Deserialize,
+    Serialize,
+    PartialEq,
+    FromSqlRow,
+    AsExpression,
+    ToSchema,
+)]
+#[diesel(sql_type = BigInt)]
+pub struct ConversationId {
+    pub id: i64,
+}
+
+impl ConversationId {
+    pub fn new(id: i64) -> Self {
+        Self { id }
+    }
+
+    pub fn as_i64(&self) -> &i64 {
+        &self.id
+    }
+
+    /// Return new incremented value using `saturated_add`.
+    pub fn increment(&self) -> Self {
+        Self {
+            id: self.id.saturating_add(1),
+        }
+    }
+
+    /// This returns -1 if ID is not incremented.
+    pub fn next_id_to_latest_used_id(&self) -> Self {
+        Self { id: self.id - 1 }
+    }
+}
+
+diesel_i64_wrapper!(ConversationId);
+
+impl From<ConversationId> for i64 {
+    fn from(value: ConversationId) -> Self {
+        value.id
+    }
+}
+
 #[derive(Debug, Clone, Queryable, Selectable, AsChangeset)]
 #[diesel(table_name = crate::schema::account_interaction)]
 #[diesel(check_for_backend(crate::Db))]
@@ -212,6 +260,8 @@ pub struct AccountInteractionInternal {
     pub match_id: Option<MatchId>,
     account_id_previous_like_deleter_slot_0: Option<AccountIdDb>,
     account_id_previous_like_deleter_slot_1: Option<AccountIdDb>,
+    conversation_id_sender: Option<ConversationId>,
+    conversation_id_receiver: Option<ConversationId>,
 }
 
 impl AccountInteractionInternal {
@@ -239,17 +289,32 @@ impl AccountInteractionInternal {
         }
     }
 
-    pub fn try_into_match(self, match_id: MatchId) -> Result<Self, AccountInteractionStateError> {
+    pub fn try_into_match(
+        self,
+        match_id: MatchId,
+        (account, conversation_id1): (AccountIdInternal, ConversationId),
+        conversation_id2: ConversationId,
+    ) -> Result<Self, AccountInteractionStateError> {
         let target = AccountInteractionState::Match;
         let state = self.state_number;
         match state {
-            AccountInteractionState::Like => Ok(Self {
-                state_number: target,
-                included_in_received_new_likes_count: false,
-                received_like_id: None,
-                match_id: Some(match_id),
-                ..self
-            }),
+            AccountInteractionState::Like => {
+                let (sender, receiver) = if self.account_id_sender == Some(account.into_db_id()) {
+                    (conversation_id1, conversation_id2)
+                } else {
+                    (conversation_id2, conversation_id1)
+                };
+
+                Ok(Self {
+                    state_number: target,
+                    included_in_received_new_likes_count: false,
+                    received_like_id: None,
+                    match_id: Some(match_id),
+                    conversation_id_sender: Some(sender),
+                    conversation_id_receiver: Some(receiver),
+                    ..self
+                })
+            }
             AccountInteractionState::Match => Ok(self),
             AccountInteractionState::Empty => {
                 Err(AccountInteractionStateError::transition(state, target))
@@ -441,4 +506,23 @@ impl AccountInteractionInternal {
             0
         }
     }
+
+    pub fn conversation_id_for_account(
+        &self,
+        account: impl Into<AccountIdDb>,
+    ) -> Option<ConversationId> {
+        let account = account.into();
+        if self.account_id_sender == Some(account) {
+            self.conversation_id_sender
+        } else if self.account_id_receiver == Some(account) {
+            self.conversation_id_receiver
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Default, Serialize, ToSchema)]
+pub struct GetConversationId {
+    pub value: Option<ConversationId>,
 }

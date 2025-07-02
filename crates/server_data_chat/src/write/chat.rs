@@ -78,13 +78,21 @@ impl WriteCommandsChat<'_> {
                 && interaction.account_id_sender == Some(id_like_receiver.into_db_id())
                 && interaction.account_id_receiver == Some(id_like_sender.into_db_id())
             {
-                let next_id = cmds.read().chat().global_state()?.next_match_id;
-                let updated_interaction = interaction
+                let next_id = cmds.chat().upsert_next_match_id()?;
+                let account_and_conversation_id = (
+                    id_like_sender,
+                    cmds.chat().upsert_next_conversation_id(id_like_sender)?,
+                );
+                let another_conversation_id =
+                    cmds.chat().upsert_next_conversation_id(id_like_receiver)?;
+                interaction
                     .clone()
-                    .try_into_match(next_id)
-                    .change_context(DieselDatabaseError::NotAllowed)?;
-                cmds.chat().upsert_next_match_id()?;
-                updated_interaction
+                    .try_into_match(
+                        next_id,
+                        account_and_conversation_id,
+                        another_conversation_id,
+                    )
+                    .change_context(DieselDatabaseError::NotAllowed)?
             } else if interaction.is_match() {
                 return Err(DieselDatabaseError::AlreadyDone.report());
             } else {
@@ -285,10 +293,10 @@ impl WriteCommandsChat<'_> {
             cmds.read()
                 .chat()
                 .message()
-                .all_pending_message_sender_account_ids(message_receiver)
+                .new_message_notification_list(message_receiver)
         })?;
 
-        if pending_messages.is_empty() {
+        if pending_messages.v.is_empty() {
             self.event_manager()
                 .remove_specific_pending_notification_flags_from_cache(
                     message_receiver,

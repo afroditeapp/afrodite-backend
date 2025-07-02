@@ -1,6 +1,9 @@
+use std::collections::HashMap;
+
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
+use model::{AccountIdDb, ConversationId, NewMessageNotification, NewMessageNotificationList};
 use model_chat::{
     AccountId, AccountIdInternal, GetSentMessage, PendingMessageInternal, SentMessageId,
 };
@@ -29,26 +32,49 @@ impl CurrentReadChatMessage<'_> {
         Ok(value)
     }
 
-    pub fn all_pending_message_sender_account_ids(
+    pub fn new_message_notification_list(
         &mut self,
         id_message_receiver: AccountIdInternal,
-    ) -> Result<Vec<AccountId>, DieselDatabaseError> {
-        use crate::schema::{account_id, pending_messages::dsl::*};
+    ) -> Result<NewMessageNotificationList, DieselDatabaseError> {
+        use crate::schema::{account_id, account_interaction, pending_messages::dsl::*};
 
-        let mut account_id_vec: Vec<AccountId> = pending_messages
+        let data: Vec<(AccountId, AccountIdDb, ConversationId, ConversationId)> = pending_messages
             .inner_join(
                 account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)),
             )
+            .inner_join(account_interaction::table)
             .filter(account_id_receiver.eq(id_message_receiver.as_db_id()))
             .filter(receiver_acknowledgement.eq(false))
-            .select(account_id::uuid)
+            .filter(account_interaction::account_id_sender.is_not_null())
+            .filter(account_interaction::conversation_id_sender.is_not_null())
+            .filter(account_interaction::conversation_id_receiver.is_not_null())
+            .select((
+                account_id::uuid,
+                account_interaction::account_id_sender.assume_not_null(),
+                account_interaction::conversation_id_sender.assume_not_null(),
+                account_interaction::conversation_id_receiver.assume_not_null(),
+            ))
             .order_by(account_id::id)
             .load(self.conn())
             .into_db_error(())?;
 
-        account_id_vec.dedup();
+        let mut notifications = HashMap::<AccountId, NewMessageNotification>::new();
 
-        Ok(account_id_vec)
+        for (a, like_sender, conversation_id_sender, conversation_id_receiver) in data {
+            // Select message receiver specific conversation ID
+            let c = if like_sender == id_message_receiver.into_db_id() {
+                conversation_id_sender
+            } else {
+                conversation_id_receiver
+            };
+            notifications
+                .entry(a)
+                .insert_entry(NewMessageNotification { a, c });
+        }
+
+        Ok(NewMessageNotificationList {
+            v: notifications.into_values().collect(),
+        })
     }
 
     pub fn all_sent_messages(

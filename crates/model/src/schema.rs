@@ -84,6 +84,8 @@ diesel::table! {
         match_id -> Nullable<Integer>,
         account_id_previous_like_deleter_slot_0 -> Nullable<Integer>,
         account_id_previous_like_deleter_slot_1 -> Nullable<Integer>,
+        conversation_id_sender -> Nullable<Integer>,
+        conversation_id_receiver -> Nullable<Integer>,
     }
 }
 
@@ -257,6 +259,7 @@ diesel::table! {
         next_received_like_id -> Integer,
         received_like_id_at_received_likes_iterator_reset -> Nullable<Integer>,
         max_public_key_count -> Integer,
+        next_conversation_id -> Integer,
     }
 }
 
@@ -626,6 +629,7 @@ diesel::table! {
 
     pending_messages (id) {
         id -> Integer,
+        account_interaction -> Integer,
         account_id_sender -> Integer,
         account_id_receiver -> Integer,
         sender_acknowledgement -> Bool,
@@ -909,6 +913,7 @@ diesel::joinable!(media_report_profile_content -> common_report (report_id));
 diesel::joinable!(media_state -> account_id (account_id));
 diesel::joinable!(news -> account_id (account_id_creator));
 diesel::joinable!(news_translations -> news (news_id));
+diesel::joinable!(pending_messages -> account_interaction (account_interaction));
 diesel::joinable!(profile -> account_id (account_id));
 diesel::joinable!(profile_app_notification_settings -> account_id (account_id));
 diesel::joinable!(profile_app_notification_state -> account_id (account_id));

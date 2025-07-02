@@ -41,9 +41,14 @@ impl PublicKeyId {
 diesel_i64_wrapper!(PublicKeyId);
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct NewReceivedLikesCountResult {
-    pub v: ReceivedLikesSyncVersion,
-    pub c: NewReceivedLikesCount,
+pub struct NewMessageNotificationList {
+    pub v: Vec<NewMessageNotification>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct NewMessageNotification {
+    pub a: AccountId,
+    pub c: ConversationId,
 }
 
 sync_version_wrappers!(
@@ -120,4 +125,10 @@ pub struct GetChatMessageReportsInternal {
     pub creator: AccountIdInternal,
     pub target: AccountIdInternal,
     pub only_not_processed: bool,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct NewReceivedLikesCountResult {
+    pub v: ReceivedLikesSyncVersion,
+    pub c: NewReceivedLikesCount,
 }

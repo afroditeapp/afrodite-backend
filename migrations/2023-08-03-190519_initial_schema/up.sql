@@ -839,6 +839,7 @@ CREATE TABLE IF NOT EXISTS chat_state(
     next_received_like_id        INTEGER        NOT NULL DEFAULT 0,
     received_like_id_at_received_likes_iterator_reset           INTEGER,
     max_public_key_count         INTEGER        NOT NULL DEFAULT 0,
+    next_conversation_id         INTEGER        NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -929,6 +930,10 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     match_id                        INTEGER,
     account_id_previous_like_deleter_slot_0 INTEGER,
     account_id_previous_like_deleter_slot_1 INTEGER,
+    -- Account specific conversation ID for new message notifications.
+    -- Available when accounts are a match.
+    conversation_id_sender                  INTEGER,
+    conversation_id_receiver                INTEGER,
     FOREIGN KEY (account_id_sender)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -951,6 +956,7 @@ CREATE TABLE IF NOT EXISTS account_interaction(
 -- sender and receiver.
 CREATE TABLE IF NOT EXISTS pending_messages(
     id                  INTEGER PRIMARY KEY NOT NULL,
+    account_interaction             INTEGER NOT NULL,
     -- The account which sent the message.
     account_id_sender               INTEGER NOT NULL,
     -- The account which will receive the message.
@@ -967,6 +973,10 @@ CREATE TABLE IF NOT EXISTS pending_messages(
     sender_client_local_id                 INTEGER NOT NULL,
     -- Message bytes.
     message_bytes                   BLOB    NOT NULL,
+    FOREIGN KEY (account_interaction)
+        REFERENCES account_interaction (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
     FOREIGN KEY (account_id_sender)
         REFERENCES account_id (id)
             ON DELETE CASCADE

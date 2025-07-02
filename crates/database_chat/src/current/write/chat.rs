@@ -1,7 +1,7 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
-use model::UnixTime;
+use model::{ConversationId, UnixTime};
 use model_chat::{
     AccountIdInternal, CHAT_GLOBAL_STATE_ROW_TYPE, ChatStateRaw, MatchId, MatchesSyncVersion,
     NewReceivedLikesCount, PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikesSyncVersion,
@@ -144,6 +144,25 @@ impl CurrentWriteChat<'_> {
             .on_conflict(row_type)
             .do_update()
             .set(next_match_id.eq(next))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(current)
+    }
+
+    /// Return unused ConversationId
+    pub fn upsert_next_conversation_id(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<ConversationId, DieselDatabaseError> {
+        use model::schema::chat_state::dsl::*;
+
+        let current = self.read().chat().chat_state(id)?.next_conversation_id;
+        let next = current.increment();
+
+        update(chat_state)
+            .filter(account_id.eq(id.as_db_id()))
+            .set(next_conversation_id.eq(next))
             .execute(self.conn())
             .into_db_error(())?;
 

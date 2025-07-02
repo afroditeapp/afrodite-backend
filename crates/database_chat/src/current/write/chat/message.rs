@@ -142,6 +142,7 @@ impl CurrentWriteChatMessage<'_> {
 
         insert_into(pending_messages)
             .values((
+                account_interaction.eq(interaction.id),
                 account_id_sender.eq(sender.as_db_id()),
                 account_id_receiver.eq(receiver.as_db_id()),
                 message_number.eq(new_message_number),

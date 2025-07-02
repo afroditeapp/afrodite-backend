@@ -6,9 +6,10 @@ use utils::random_bytes::random_128_bits;
 use utoipa::ToSchema;
 
 use crate::{
-    AccountId, AdminNotification, AutomaticProfileSearchCompletedNotification,
-    MediaContentModerationCompletedNotification, NewReceivedLikesCountResult, NotificationEvent,
-    ProfileTextModerationCompletedNotification, UnreadNewsCountResult,
+    AdminNotification, AutomaticProfileSearchCompletedNotification,
+    MediaContentModerationCompletedNotification, NewMessageNotificationList,
+    NewReceivedLikesCountResult, NotificationEvent, ProfileTextModerationCompletedNotification,
+    UnreadNewsCountResult,
     schema_sqlite_types::{Integer, Text},
 };
 
@@ -210,9 +211,7 @@ diesel_string_wrapper!(PendingNotificationToken);
 pub struct PendingNotificationWithData {
     pub value: PendingNotification,
     /// Data for NEW_MESSAGE notification.
-    ///
-    /// List of account IDs which have sent a new message.
-    pub new_message_received_from: Option<Vec<AccountId>>,
+    pub new_message: Option<NewMessageNotificationList>,
     /// Data for RECEIVED_LIKES_CHANGED notification.
     pub received_likes_changed: Option<NewReceivedLikesCountResult>,
     /// Data for MEDIA_CONTENT_MODERATION_COMPLETED notification.

@@ -1,11 +1,11 @@
 use axum::{
     Extension,
     body::Body,
-    extract::{Query, State},
+    extract::{Path, Query, State},
 };
 use axum_extra::TypedHeader;
 use headers::ContentType;
-use model::NotificationEvent;
+use model::{GetConversationId, NotificationEvent};
 use model_chat::{
     AccountId, AccountIdInternal, EventToClientInternal, GetSentMessage,
     LatestViewedMessageChanged, MessageNumber, PendingMessageAcknowledgementList,
@@ -362,6 +362,47 @@ pub async fn post_add_sender_acknowledgement(
     Ok(())
 }
 
+const PATH_GET_CONVERSATION_ID: &str = "/chat_api/conversation_id/{aid}";
+
+/// Get account specific conversation ID which can be used to display
+/// new message received notifications.
+///
+/// The ID is available only for accounts which are a match.
+#[utoipa::path(
+    get,
+    path = PATH_GET_CONVERSATION_ID,
+    params(AccountId),
+    responses(
+        (status = 200, description = "Success.", body = GetConversationId),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_conversation_id(
+    State(state): State<S>,
+    Extension(id): Extension<AccountIdInternal>,
+    Path(requested): Path<AccountId>,
+) -> Result<Json<GetConversationId>, StatusCode> {
+    CHAT.get_conversation_id.incr();
+
+    let requested = state.get_internal_id(requested).await?;
+    let Some(interaction) = state
+        .read()
+        .chat()
+        .account_interaction(id, requested)
+        .await?
+    else {
+        return Ok(GetConversationId::default().into());
+    };
+
+    let value = GetConversationId {
+        value: interaction.conversation_id_for_account(requested),
+    };
+
+    Ok(value.into())
+}
+
 create_open_api_router!(
         fn router_message,
         get_pending_messages,
@@ -372,6 +413,7 @@ create_open_api_router!(
         post_get_sent_message,
         get_sent_message_ids,
         post_add_sender_acknowledgement,
+        get_conversation_id,
 );
 
 create_counters!(
@@ -386,4 +428,5 @@ create_counters!(
     post_get_sent_message,
     get_sent_message_ids,
     post_add_sender_acknowledgement,
+    get_conversation_id,
 );
