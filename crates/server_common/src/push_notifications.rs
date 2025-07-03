@@ -9,7 +9,7 @@ use fcm::{
 use model::{
     AccountIdInternal, ClientType, PendingNotificationFlags, PushNotificationStateInfoWithFlags,
 };
-use serde_json::json;
+use serde_json::{Value, json};
 use simple_backend::ServerQuitWatcher;
 use simple_backend_config::SimpleBackendConfig;
 use tokio::{
@@ -469,14 +469,44 @@ impl FcmSendingLogic {
                     }
                     Some(
                         RecomendedAction::CheckIosAndWebCredentials
-                        | RecomendedAction::CheckSenderIdEquality
-                        | RecomendedAction::FixMessageContent,
+                        | RecomendedAction::CheckSenderIdEquality,
                     ) => {
                         error!(
                             "Disabling FCM support because of recomended action: {:?}",
                             action
                         );
                         NextAction::UnusualAction(UnusualAction::DisablePushNotificationSupport)
+                    }
+                    Some(RecomendedAction::FixMessageContent) => {
+                        // Handle iOS only APNs BadDeviceToken error.
+                        // After the error next FCM message sending will
+                        // fail with FcmResponseError::Unregistered.
+                        let bad_device_token_error = response
+                            .json()
+                            .get("error")
+                            .and_then(|v| v.as_object())
+                            .and_then(|v| v.get("details"))
+                            .and_then(|v| v.as_array())
+                            .and_then(|v| {
+                                v.iter().filter_map(|v| v.as_object()).find(|v| {
+                                    v.get("reason")
+                                        == Some(&Value::String("BadDeviceToken".to_string()))
+                                })
+                            });
+                        if bad_device_token_error.is_some() {
+                            error!("APNs BadDeviceToken error");
+                            // Use the current Firebase device token for the
+                            // next message because it is not documented that
+                            // next FCM message sending will return
+                            // FcmResponseError::Unregistered error.
+                            NextAction::NextMessage
+                        } else {
+                            error!(
+                                "Disabling FCM support because of recomended action: {:?}",
+                                action
+                            );
+                            NextAction::UnusualAction(UnusualAction::DisablePushNotificationSupport)
+                        }
                     }
                     Some(RecomendedAction::RemoveFcmAppToken) => {
                         NextAction::UnusualAction(UnusualAction::RemoveDeviceToken)
