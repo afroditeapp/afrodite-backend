@@ -113,7 +113,7 @@ impl DemoModeManager {
 
         let check_password = |all_passwords: &mut HashSet<String>, password: &str| {
             if all_passwords.contains(password) {
-                return Err(format!("Duplicate demo mode password: {}", password))
+                return Err(format!("Duplicate demo mode password: {password}"))
                     .into_error_string(DataError::NotAllowed);
             }
             all_passwords.insert(password.to_string());

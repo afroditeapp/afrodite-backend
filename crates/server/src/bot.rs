@@ -68,8 +68,7 @@ impl BotClient {
 
         if !start_cmd.is_file() {
             return Err(BotClientError::LaunchCommand).attach_printable(format!(
-                "First argument does not point to a file {:?}",
-                start_cmd
+                "First argument does not point to a file {start_cmd:?}"
             ));
         }
 
@@ -144,7 +143,7 @@ impl BotClient {
                 loop {
                     match line_stream.next_line().await {
                         Ok(Some(line)) => {
-                            println!("bot: {}", line);
+                            println!("bot: {line}");
                         }
                         Ok(None) => {
                             info!("Bot client {stream_name} closed");

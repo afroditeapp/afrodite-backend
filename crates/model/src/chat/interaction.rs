@@ -57,14 +57,10 @@ impl std::fmt::Display for AccountInteractionStateError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             AccountInteractionStateError::WrongStateNumber(number) => {
-                write!(f, "Wrong state number: {}", number)
+                write!(f, "Wrong state number: {number}")
             }
             AccountInteractionStateError::Transition { from, to } => {
-                write!(
-                    f,
-                    "State transition from {:?} to {:?} is not allowed",
-                    from, to
-                )
+                write!(f, "State transition from {from:?} to {to:?} is not allowed")
             }
         }
     }

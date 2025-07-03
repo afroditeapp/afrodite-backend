@@ -72,7 +72,7 @@ impl ServerManager {
         let check_host = |url: &Url, name| {
             let host = url.host_str().unwrap();
             if !(host == "127.0.0.1" || host == "localhost") {
-                panic!("{} address was not 127.0.0.1. value: {}", name, host);
+                panic!("{name} address was not 127.0.0.1. value: {host}");
             }
         };
         check_host(&config.api_urls.url_account, "account server");
@@ -116,7 +116,7 @@ impl ServerManager {
     pub async fn logs(&self) -> Vec<String> {
         let mut logs = Vec::new();
         for (i, s) in self.servers.iter().enumerate() {
-            logs.push(format!("Server {} logs:\n", i));
+            logs.push(format!("Server {i} logs:\n"));
             logs.extend(s.logs().await);
         }
         logs
@@ -342,7 +342,7 @@ impl ServerInstance {
             if dir.starts_with(SERVER_INSTANCE_DIR_START) {
                 std::fs::remove_dir_all(self.dir).unwrap();
             } else {
-                panic!("Not database instance dir {}", dir);
+                panic!("Not database instance dir {dir}");
             }
         }
 

@@ -79,7 +79,7 @@ const ZERO_ITER_CHUNK_SIZE: usize = 4096;
 
 fn buffered_zero_iter(bytes: usize) -> impl Iterator<Item = &'static [u8]> {
     const ZERO_BUFFER: [u8; ZERO_ITER_CHUNK_SIZE] = [0; ZERO_ITER_CHUNK_SIZE];
-    let iter = std::iter::repeat(ZERO_BUFFER.as_slice()).take(bytes / ZERO_ITER_CHUNK_SIZE);
+    let iter = std::iter::repeat_n(ZERO_BUFFER.as_slice(), bytes / ZERO_ITER_CHUNK_SIZE);
     let remaining_bytes = [&ZERO_BUFFER[..(bytes % ZERO_ITER_CHUNK_SIZE)]]
         .into_iter()
         .take_while(|v| !v.is_empty());
@@ -109,18 +109,14 @@ impl TryFrom<String> for FileSizeValue {
         let bytes: i64 = if unit_found {
             let Some((number, unit)) = input.split_at_checked(input.len() - 1) else {
                 return Err(format!(
-                    "Parsing file size failed, current value: {}, example value: 1G",
-                    input
+                    "Parsing file size failed, current value: {input}, example value: 1G"
                 ));
             };
             let number: i64 = number
                 .parse()
                 .map_err(|e: std::num::ParseIntError| e.to_string())?;
             let overflow_error = || {
-                format!(
-                    "File size too large, current value: {}, max value: i64::MAX bytes",
-                    input
-                )
+                format!("File size too large, current value: {input}, max value: i64::MAX bytes")
             };
             match unit {
                 "K" => number,
@@ -128,8 +124,7 @@ impl TryFrom<String> for FileSizeValue {
                 "G" => number.checked_mul(1024 * 1024).ok_or_else(overflow_error)?,
                 unit => {
                     return Err(format!(
-                        "Unknown size unit: {}, supported units: K, M, G",
-                        unit
+                        "Unknown size unit: {unit}, supported units: K, M, G",
                     ));
                 }
             }
@@ -140,7 +135,7 @@ impl TryFrom<String> for FileSizeValue {
         };
 
         if bytes < 0 {
-            return Err(format!("File size is negative. current value: {}", input));
+            return Err(format!("File size is negative. current value: {input}"));
         }
 
         Ok(FileSizeValue { bytes })

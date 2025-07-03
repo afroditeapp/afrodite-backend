@@ -212,7 +212,7 @@ impl ModeAndIdSequenceNumber {
 
     fn validate_bitflag_id(id: u16) -> Result<(), String> {
         if id.count_ones() != 1 {
-            return Err(format!("Invalid ID {}, id.count_ones() != 1", id));
+            return Err(format!("Invalid ID {id}, id.count_ones() != 1"));
         }
 
         if id < Self::FIRST_BITFLAG_ID {
@@ -278,14 +278,14 @@ impl AttributeInternal {
                 toml::Value::Table(t) => {
                     let value: AttributeValueInternal = t
                         .try_into()
-                        .map_err(|e| format!("Attribute value error: {}", e))?;
+                        .map_err(|e| format!("Attribute value error: {e}"))?;
 
                     let id = match value.id {
                         Some(id) => id_state.set_value(id)?,
                         None => id_state.increment_value()?,
                     };
                     if all_ids.contains(&id) {
-                        return Err(format!("Duplicate id {}", id));
+                        return Err(format!("Duplicate id {id}"));
                     }
                     all_ids.insert(id);
 
@@ -294,7 +294,7 @@ impl AttributeInternal {
                         None => AttributeInternal::english_text_to_attribute_key(&value.value),
                     };
                     if all_keys.contains(&key) {
-                        return Err(format!("Duplicate key {}", key));
+                        return Err(format!("Duplicate key {key}"));
                     }
                     all_keys.insert(key.clone());
 
@@ -303,7 +303,7 @@ impl AttributeInternal {
                         None => order_number_state.increment_value()?,
                     };
                     if all_order_numbers.contains(&order_number) {
-                        return Err(format!("Duplicate order number {}", order_number));
+                        return Err(format!("Duplicate order number {order_number}"));
                     }
                     all_order_numbers.insert(order_number);
 
@@ -348,7 +348,7 @@ impl AttributeInternal {
 
                     Ok(value)
                 }
-                _ => Err(format!("Invalid value type: {:?}", v)),
+                _ => Err(format!("Invalid value type: {v:?}")),
             }
         }
 
@@ -612,7 +612,7 @@ impl FromStr for IconLocation {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "material" => Ok(IconLocation::Material),
-            _ => Err(format!("Unknown icon location {}", s)),
+            _ => Err(format!("Unknown icon location {s}")),
         }
     }
 }
@@ -631,7 +631,7 @@ impl TryFrom<String> for IconResource {
     fn try_from(value: String) -> Result<Self, Self::Error> {
         let (location, identifier) = value
             .split_once(':')
-            .ok_or(format!("Missing delimiter in {}", value))?;
+            .ok_or(format!("Missing delimiter in {value}"))?;
         let location = location.parse()?;
         Ok(Self {
             location,

@@ -43,7 +43,7 @@ impl NsfwDetector {
         })?;
 
         if state.config.debug_log_results() {
-            eprintln!("NSFW detection results: {:?}", results);
+            eprintln!("NSFW detection results: {results:?}");
         }
 
         fn threshold(m: &Metric, thresholds: &NsfwDetectionThresholds) -> Option<f32> {

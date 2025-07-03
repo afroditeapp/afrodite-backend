@@ -226,8 +226,7 @@ pub async fn post_sign_in_with_apple_redirect_to_app(
         serde_urlencoded::to_string(form).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     let redirect = format!(
-        "intent://callback?{}#Intent;package={};scheme=signinwithapple;end",
-        query_params, package_id,
+        "intent://callback?{query_params}#Intent;package={package_id};scheme=signinwithapple;end",
     );
 
     // Temporary redirect reuses current HTTP method POST which

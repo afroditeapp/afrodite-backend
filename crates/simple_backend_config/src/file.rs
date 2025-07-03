@@ -486,8 +486,7 @@ const PATH_CHARACTERS_WHITELIST: &str =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_./";
 
 fn whitelist_chars(input: &str, whitelist: &str) -> String {
-    let invalid_chars = input.chars().filter(|&c| !whitelist.contains(c)).collect();
-    invalid_chars
+    input.chars().filter(|&c| !whitelist.contains(c)).collect()
 }
 
 fn validate_path(input: &Path) -> std::result::Result<(), String> {

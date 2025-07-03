@@ -24,7 +24,7 @@ impl SignedMessageData {
 
         let version = d.next()?;
         if version != 1 {
-            return Some(Err(format!("Data version {}, expected: 1", version)));
+            return Some(Err(format!("Data version {version}, expected: 1")));
         }
         let sender = parse_account_id(&mut d)?;
         let receiver = parse_account_id(&mut d)?;

@@ -200,7 +200,7 @@ fn handle_image(
         Ok(v) => v,
         Err(e) => {
             // Ignore
-            eprintln!("{:?}", e);
+            eprintln!("{e:?}");
             false
         }
     };

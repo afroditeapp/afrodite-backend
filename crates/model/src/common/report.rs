@@ -50,8 +50,7 @@ impl CustomReportTypeNumberValue {
         let max = ReportTypeNumber::LAST_CUSTOM_REPORT_TYPE_NUMBER as u8;
         if value < min || value > max {
             Err(format!(
-                "Invalid custom report type number value {}, min: {}, max: {}",
-                value, min, max
+                "Invalid custom report type number value {value}, min: {min}, max: {max}"
             ))
         } else {
             Ok(Self(value as i8))
@@ -110,7 +109,7 @@ impl TryFrom<i64> for ReportTypeNumberInternal {
             2 => Self::ProfileContent,
             3 => Self::ChatMessage,
             64..=127 => Self::CustomReport(CustomReportTypeNumberValue(value)),
-            v => return Err(format!("Unknown report type number value {}", v)),
+            v => return Err(format!("Unknown report type number value {v}")),
         };
         Ok(v)
     }

@@ -74,7 +74,7 @@ impl<T, Ok> ErrorContext<T, Ok> {
 
 impl<T: IsLoggingAllowed + std::fmt::Debug, Ok> ErrorContext<T, Ok> {
     pub fn printable(&self) -> String {
-        format!("{:#?}", self)
+        format!("{self:#?}")
     }
 }
 
@@ -120,7 +120,7 @@ pub trait IntoDatabaseError<Err: Context>: ResultExt + Sized {
             .attach_printable_lazy(move || {
                 let context = ErrorContext::<T, Self::Ok>::new(request_context);
 
-                format!("{:#?}", context)
+                format!("{context:#?}")
             })
     }
 }
@@ -134,7 +134,7 @@ pub trait IntoDatabaseErrorExt<Err: Context>: ResultExt + Sized {
         self.attach_printable_lazy(move || {
             let context = ErrorContext::<T, Self::Ok>::new(request_context);
 
-            format!("{:#?}", context)
+            format!("{context:#?}")
         })
     }
 }

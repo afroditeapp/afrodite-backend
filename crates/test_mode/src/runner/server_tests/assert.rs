@@ -8,7 +8,7 @@ pub fn assert(value: bool) -> TestResult {
     if value {
         Ok(())
     } else {
-        let error = TestError::AssertError(format!("{}", value));
+        let error = TestError::AssertError(value.to_string());
         Err(ServerTestError::new(error.report()))
     }
 }
@@ -19,7 +19,7 @@ pub fn assert_eq<T: PartialEq + fmt::Debug>(expect: T, value: T) -> TestResult {
     if expect == value {
         Ok(())
     } else {
-        let error = TestError::AssertError(format!("expected: {:?}, actual: {:?}", expect, value));
+        let error = TestError::AssertError(format!("expected: {expect:?}, actual: {value:?}"));
         Err(ServerTestError::new(error.report()))
     }
 }
@@ -30,7 +30,7 @@ pub fn assert_ne<T: PartialEq + fmt::Debug>(expect: T, value: T) -> TestResult {
     if expect != value {
         Ok(())
     } else {
-        let error = TestError::AssertError(format!("expected: {:?}, actual: {:?}", expect, value));
+        let error = TestError::AssertError(format!("expected: {expect:?}, actual: {value:?}"));
         Err(ServerTestError::new(error.report()))
     }
 }

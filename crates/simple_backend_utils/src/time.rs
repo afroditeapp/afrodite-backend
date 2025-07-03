@@ -129,7 +129,7 @@ impl TryFrom<String> for TimeValue {
                 }
                 Ok(TimeValue { hours, minutes })
             }
-            _ => Err(format!("Unknown values: {:?}", values)),
+            _ => Err(format!("Unknown values: {values:?}")),
         }
     }
 }
@@ -160,14 +160,12 @@ impl TryFrom<String> for DurationValue {
         let input = value.trim();
         if input.len() < 2 {
             return Err(format!(
-                "Parsing duration failed, current value: {}, example value: 1s",
-                input
+                "Parsing duration failed, current value: {input}, example value: 1s"
             ));
         }
         let Some((number, time_unit)) = input.split_at_checked(input.len() - 1) else {
             return Err(format!(
-                "Parsing duration failed, current value: {}, example value: 1s",
-                input
+                "Parsing duration failed, current value: {input}, example value: 1s"
             ));
         };
         let number: u32 = number
@@ -180,8 +178,7 @@ impl TryFrom<String> for DurationValue {
             "d" => number * 60 * 60 * 24,
             time_unit => {
                 return Err(format!(
-                    "Unknown time unit: {}, supported units: s, m, h, d",
-                    time_unit
+                    "Unknown time unit: {time_unit}, supported units: s, m, h, d"
                 ));
             }
         };

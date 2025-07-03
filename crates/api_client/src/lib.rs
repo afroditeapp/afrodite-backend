@@ -3,6 +3,7 @@
     clippy::empty_docs,
     clippy::to_string_trait_impl,
     clippy::too_many_arguments,
+    clippy::uninlined_format_args,
     unused_imports,
 )]
 

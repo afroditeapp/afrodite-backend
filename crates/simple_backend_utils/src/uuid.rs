@@ -60,7 +60,7 @@ impl std::fmt::Display for UuidBase64Url {
             self.0.as_bytes(),
             &base64::engine::general_purpose::URL_SAFE_NO_PAD,
         );
-        write!(f, "{}", displayer)
+        write!(f, "{displayer}")
     }
 }
 

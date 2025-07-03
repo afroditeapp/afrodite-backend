@@ -52,7 +52,7 @@ impl TestRunner {
                     ) {
                         Ok(bot_config_file) => bot_config_file,
                         Err(e) => {
-                            eprintln!("Failed to load bot config file: {:?}", e);
+                            eprintln!("Failed to load bot config file: {e:?}");
                             return;
                         }
                     }

@@ -37,7 +37,7 @@ impl TileMapManager {
             .as_ref()
             .ok_or(TileMapError::MissingTileMapConfig)?;
 
-        let path = config.tile_dir.join(format!("{}/{}/{}.png", z, x, y));
+        let path = config.tile_dir.join(format!("{z}/{x}/{y}.png"));
 
         if !path.exists() {
             return Ok(None);

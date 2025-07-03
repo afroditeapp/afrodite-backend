@@ -116,7 +116,7 @@ fn handle_manager_api_client_mode(args: ManagerApiClientMode) -> ExitCode {
         match result {
             Ok(_) => ExitCode::SUCCESS,
             Err(e) => {
-                eprintln!("{:?}", e);
+                eprintln!("{e:?}");
                 ExitCode::FAILURE
             }
         }
@@ -127,7 +127,7 @@ fn handle_image_process_mode(config: ImageProcessingConfig) -> ExitCode {
     match simple_backend_image_process::run_image_processing_loop(config) {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
-            eprintln!("{:?}", e);
+            eprintln!("{e:?}");
             ExitCode::FAILURE
         }
     }

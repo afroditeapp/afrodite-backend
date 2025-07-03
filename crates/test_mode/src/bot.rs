@@ -367,7 +367,7 @@ pub trait BotStruct: Debug + Send + 'static {
         if self.state().config.qa_mode().is_some() {
             result = result.attach_printable_lazy(|| format!("{:?}", self.state().action_history))
         }
-        result.attach_printable_lazy(|| format!("{:?}", self))
+        result.attach_printable_lazy(|| format!("{__self:?}"))
     }
 
     async fn run_action_impl(
@@ -508,7 +508,7 @@ impl BotManager {
                     )),
                 },
                 (_, Some(_)) => bots.push(Box::new(ClientBot::new(state))),
-                test_config => panic!("Invalid test config {:?}", test_config),
+                test_config => panic!("Invalid test config {test_config:?}"),
             };
         }
 

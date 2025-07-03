@@ -66,7 +66,7 @@ fn find_backend_binary_from_archive_sync(
         Ok(path)
     } else {
         Err(report!(UpdateError::ArchiveBackendNotFound))
-            .attach_printable(format!("Available files: {:#?}", found_files))
+            .attach_printable(format!("Available files: {found_files:#?}"))
     }
 }
 

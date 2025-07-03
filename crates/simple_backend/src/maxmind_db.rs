@@ -235,7 +235,7 @@ impl MaxMindDbManager {
         let status = response.status();
         if status != StatusCode::OK {
             return Err(MaxMindDbError::Download.report())
-                .attach_printable(format!("HTTP response status: {}", status));
+                .attach_printable(format!("HTTP response status: {status}"));
         }
 
         let tmp = self.tmp_file()?;

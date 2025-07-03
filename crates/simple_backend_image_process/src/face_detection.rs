@@ -59,7 +59,7 @@ impl FaceDetector {
         .change_context(ImageProcessError::FaceDetection)?;
 
         if state.config.debug_log_results() {
-            eprintln!("Face detection results: {:?}", data);
+            eprintln!("Face detection results: {data:?}");
         }
 
         Ok(!data.is_empty())

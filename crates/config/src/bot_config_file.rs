@@ -48,13 +48,12 @@ impl BotConfigFile {
 
         let validate_common_config = |bot: &BaseBotConfig, id: Option<u16>| {
             let error_location = id
-                .map(|v| format!("Bot ID {} config error.", v))
+                .map(|v| format!("Bot ID {v} config error."))
                 .unwrap_or("Bot config error.".to_string());
             if let Some(age) = bot.age {
                 if age < 18 || age > 99 {
                     return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
-                        "{} Age must be between 18 and 99",
-                        error_location
+                        "{error_location} Age must be between 18 and 99"
                     ));
                 }
             }
@@ -64,21 +63,20 @@ impl BotConfigFile {
                     Gender::Man => {
                         if config.image_dir.man.is_none() {
                             return Err(ConfigFileError::InvalidConfig)
-                                .attach_printable(format!("{} Image file name configured but man image directory is not configured", error_location));
+                                .attach_printable(format!("{error_location} Image file name configured but man image directory is not configured"));
                         }
                     }
                     Gender::Woman => {
                         if config.image_dir.woman.is_none() {
                             return Err(ConfigFileError::InvalidConfig)
-                                .attach_printable(format!("{} Image file name configured but woman image directory is not configured", error_location));
+                                .attach_printable(format!("{error_location} Image file name configured but woman image directory is not configured"));
                         }
                     }
                 }
 
                 if bot.random_color_image.is_some() {
                     return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
-                        "{} Image and random color image can't be both set",
-                        error_location
+                        "{error_location} Image and random color image can't be both set"
                     ));
                 }
             }
@@ -208,7 +206,7 @@ fn check_imgs_exist(
             let img_path = img_dir.join(img);
             if !img_path.is_file() {
                 return Err(ConfigFileError::InvalidConfig)
-                    .attach_printable(format!("Image file {:?} does not exist", img_path));
+                    .attach_printable(format!("Image file {img_path:?} does not exist"));
             }
         }
     }

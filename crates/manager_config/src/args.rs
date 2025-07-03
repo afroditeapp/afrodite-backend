@@ -67,7 +67,7 @@ impl ManagerApiClientMode {
             .change_context(GetConfigError::LoadFileError)?;
 
         let url = if let Some(port) = file_config.socket.second_public_api_localhost_only_port {
-            format!("tcp://localhost:{}", port)
+            format!("tcp://localhost:{port}")
         } else if let Some(addr) = file_config.socket.public_api {
             let scheme = if file_config.tls.is_some() {
                 "tls"

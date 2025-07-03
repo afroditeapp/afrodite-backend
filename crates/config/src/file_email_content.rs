@@ -39,8 +39,7 @@ impl EmailContentFile {
 
         if !missing_messages.is_empty() {
             return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
-                "Message content not defined for {:?}",
-                missing_messages
+                "Message content not defined for {missing_messages:?}"
             ));
         }
 

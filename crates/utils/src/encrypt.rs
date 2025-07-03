@@ -51,7 +51,7 @@ pub enum MessageEncryptionError {
 
 impl Display for MessageEncryptionError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 impl Error for MessageEncryptionError {}

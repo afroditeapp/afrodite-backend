@@ -79,7 +79,7 @@ fn get_test_functions(test_config: &QaTestConfig) -> Result<Vec<&'static TestFun
             .filter(|t| t.name().contains(continue_from))
             .collect();
         if matching_tests.is_empty() {
-            println!("No tests found containing string: {}", continue_from);
+            println!("No tests found containing string: {continue_from}");
             Err(())
         } else if matching_tests.len() > 1 {
             println!("Unambiguous test selection is required. Found tests:\n");
@@ -168,8 +168,7 @@ impl RunnerUi {
 
         if failed {
             println!(
-                "\nTo continue from the failed test, run command\nmake test CONTINUE_FROM={}",
-                current_test
+                "\nTo continue from the failed test, run command\nmake test CONTINUE_FROM={current_test}"
             );
         }
     }

@@ -21,7 +21,7 @@ impl TryFrom<u8> for WebSocketClientTypeNumber {
             1 => Ok(Self::Ios),
             2 => Ok(Self::Web),
             255 => Ok(Self::TestModeBot),
-            _ => Err(format!("Unknown client type number {}", value)),
+            _ => Err(format!("Unknown client type number {value}")),
         }
     }
 }

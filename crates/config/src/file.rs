@@ -154,8 +154,7 @@ impl ConfigFile {
                 let aid = b.account_id();
                 if set.contains(&aid) {
                     return Err(ConfigFileError::InvalidConfig.report()).attach_printable(format!(
-                        "Duplicate remote bot config for account {}",
-                        aid
+                        "Duplicate remote bot config for account {aid}"
                     ));
                 }
                 set.insert(aid);
@@ -405,7 +404,7 @@ impl TryFrom<String> for MinClientVersion {
     type Error = String;
     fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
         let mut numbers = value.split('.');
-        let error = || format!("Version {} is not formatted like 1.0.0", value);
+        let error = || format!("Version {value} is not formatted like 1.0.0");
         let major_str = numbers.next().ok_or_else(error)?;
         let minor_str = numbers.next().ok_or_else(error)?;
         let patch_str = numbers.next().ok_or_else(error)?;

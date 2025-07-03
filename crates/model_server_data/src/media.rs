@@ -40,7 +40,7 @@ impl TryFrom<i64> for MediaContentType {
     fn try_from(value: i64) -> Result<Self, Self::Error> {
         let value = match value {
             0 => Self::JpegImage,
-            _ => return Err(format!("Unknown media content type {}", value)),
+            _ => return Err(format!("Unknown media content type {value}")),
         };
 
         Ok(value)

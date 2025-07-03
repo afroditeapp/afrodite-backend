@@ -112,7 +112,7 @@ impl BotAction for ChangeProfileTextDaily {
             let config = state.get_bot_config();
             let time_text = current_time.to_rfc2822();
             let new_text = if let Some(text) = &config.text {
-                format!("{}\n{}", text, time_text)
+                format!("{text}\n{time_text}")
             } else {
                 time_text
             };

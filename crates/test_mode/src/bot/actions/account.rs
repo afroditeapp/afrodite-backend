@@ -232,7 +232,7 @@ async fn connect_websocket(
                         .send(Message::Ping(vec![].into()))
                         .await {
                             Ok(_) => (),
-                            Err(e) => panic!("Sending ping message to websocket failed, error: {}", e),
+                            Err(e) => panic!("Sending ping message to websocket failed, error: {e}"),
                         }
                 }
             }

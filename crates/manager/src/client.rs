@@ -37,7 +37,7 @@ pub async fn handle_api_client_mode(args: ManagerApiClientMode) -> Result<(), Cl
                 .get_available_instances()
                 .await
                 .change_context(ClientError::RemoteApiRequest)?;
-            println!("{:#?}", list);
+            println!("{list:#?}");
         }
         ApiCommand::EncryptionKey {
             encryption_key_name,
@@ -54,7 +54,7 @@ pub async fn handle_api_client_mode(args: ManagerApiClientMode) -> Result<(), Cl
                     .await
                     .change_context(ClientError::Write)?;
             } else {
-                println!("Name: {}", encryption_key_name);
+                println!("Name: {encryption_key_name}");
                 println!("Key: {}", key.key);
                 println!("Key bytes: {}", key.key.len());
             }
@@ -64,14 +64,14 @@ pub async fn handle_api_client_mode(args: ManagerApiClientMode) -> Result<(), Cl
                 .get_system_info()
                 .await
                 .change_context(ClientError::RemoteApiRequest)?;
-            println!("{:#?}", info);
+            println!("{info:#?}");
         }
         ApiCommand::SoftwareStatus => {
             let info = client
                 .get_software_update_status()
                 .await
                 .change_context(ClientError::RemoteApiRequest)?;
-            println!("{:#?}", info);
+            println!("{info:#?}");
         }
         ApiCommand::SoftwareDownload => client
             .trigger_software_update_task(SoftwareUpdateTaskType::Download)

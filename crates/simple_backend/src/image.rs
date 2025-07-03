@@ -62,8 +62,7 @@ impl ImageProcessHandle {
 
         if !start_cmd.is_file() {
             return Err(ImageProcessError::LaunchCommand).attach_printable(format!(
-                "First argument does not point to a file {:?}",
-                start_cmd
+                "First argument does not point to a file {start_cmd:?}"
             ));
         }
 
@@ -216,7 +215,7 @@ impl ImageProcess {
                 path.join(output_file_name)
             } else {
                 return Err(ImageProcessError::ImageProcessingCommandCreationFailed.report())
-                    .attach_printable(format!("Output path {:?} has no parent", output));
+                    .attach_printable(format!("Output path {output:?} has no parent"));
             }
         };
 

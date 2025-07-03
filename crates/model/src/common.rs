@@ -288,7 +288,7 @@ impl From<AccountIdInternal> for AccountId {
 
 impl std::fmt::Display for AccountIdInternal {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 
@@ -573,7 +573,7 @@ impl TryFrom<i64> for NextQueueNumberType {
         let number_type = match value {
             0 => Self::MediaModeration,
             1 => Self::InitialMediaModeration,
-            value => return Err(format!("Unknown NextQueueNumberType value {}", value)),
+            value => return Err(format!("Unknown NextQueueNumberType value {value}")),
         };
 
         Ok(number_type)

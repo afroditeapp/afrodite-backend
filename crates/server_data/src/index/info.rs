@@ -32,7 +32,7 @@ impl LocationIndexInfoCreator {
             coordinates.height().try_into().unwrap(),
         );
         let byte_count = width.get() as usize * height.get() as usize * size_of::<CellData>();
-        let size = format!("Location index size: {}x{}, ", width, height);
+        let size = format!("Location index size: {width}x{height}, ");
         let bytes = format!("bytes: {}, ", format_size_in_bytes(byte_count));
         let zoom = format!("zoom: {}, ", coordinates.zoom_level());
         let len = format!(
@@ -40,9 +40,9 @@ impl LocationIndexInfoCreator {
             coordinates.tile_side_length_km()
         );
         if whitespace_padding {
-            format!("{:<35}{:<20}{:<10}{}", size, bytes, zoom, len,)
+            format!("{size:<35}{bytes:<20}{zoom:<10}{len}",)
         } else {
-            format!("{}{}{}{}", size, bytes, zoom, len,)
+            format!("{size}{bytes}{zoom}{len}",)
         }
     }
 
@@ -82,5 +82,5 @@ fn format_size_in_bytes(size: usize) -> String {
         3 => "GiB",
         _ => "error",
     };
-    format!("{:.2} {}", size, unit)
+    format!("{size:.2} {unit}")
 }

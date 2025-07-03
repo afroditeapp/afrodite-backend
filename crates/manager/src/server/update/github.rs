@@ -115,8 +115,7 @@ impl GitHubApi<'_> {
                                 UpdateError::SotwareDownloadFailedUnknownFileUploader
                             )
                             .attach_printable(format!(
-                                "uploader: {}, expected: {}",
-                                uploader, required_uploader
+                                "uploader: {uploader}, expected: {required_uploader}"
                             )));
                         }
                     }

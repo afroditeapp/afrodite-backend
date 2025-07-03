@@ -59,7 +59,7 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
             .iter()
             .find(|e| e.message_type == message)
             .ok_or(EmailError::GettingEmailDataFailed)
-            .attach_printable(format!("Email content for {:?} is not configured", message))?;
+            .attach_printable(format!("Email content for {message:?} is not configured"))?;
 
         let email_data = EmailData {
             email_address: email,

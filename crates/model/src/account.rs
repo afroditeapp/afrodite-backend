@@ -263,7 +263,7 @@ impl TryFrom<i64> for ProfileVisibility {
             1 => Ok(Self::PendingPublic),
             2 => Ok(Self::Private),
             3 => Ok(Self::Public),
-            _ => Err(format!("Unknown visibility number: {}", value)),
+            _ => Err(format!("Unknown visibility number: {value}")),
         }
     }
 }

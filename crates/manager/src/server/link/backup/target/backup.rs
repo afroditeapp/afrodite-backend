@@ -77,7 +77,7 @@ impl<'a> BackupDirUtils<'a> {
         content: UuidBase64Url,
     ) -> PathBuf {
         self.create_account_content_dir_if_needed(account)
-            .join(format!("{}.sha256", content))
+            .join(format!("{content}.sha256"))
     }
 
     fn create_files_dir_if_needed(&self) -> PathBuf {
@@ -283,14 +283,14 @@ impl SaveFileBackup {
             .change_context(BackupTargetError::Write)?;
 
         let time = Utc::now().format("%Y-%m-%d_%H-%M-%S");
-        let name = format!("backup_{}_{}", backup_name, time);
+        let name = format!("backup_{backup_name}_{time}");
         let target_path = BackupDirUtils::new(&config).file_path(&name);
 
         if target_path.exists() {
             return Err(BackupTargetError::FileBackupAlreadyExists.report()).attach_printable(name);
         }
 
-        let checksum_file_name = format!("{}.sha256", name);
+        let checksum_file_name = format!("{name}.sha256");
         let target_checksum_path = BackupDirUtils::new(&config).file_path(&checksum_file_name);
         let target_checksum_file_content =
             expected_sha256.to_shasum_tool_compatible_checksum(&name);
