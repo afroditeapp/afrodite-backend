@@ -363,15 +363,19 @@ async fn handle_client_config_sync_version_check(
 ) -> Result<(), WebSocketError> {
     let current = read_handle
         .common()
+        .client_config()
         .client_config_sync_version(id)
         .await
         .change_context(WebSocketError::DatabaseProfileStateQuery)?;
     match current.check_is_sync_required(sync_version) {
         SyncCheckResult::DoNothing => return Ok(()),
         SyncCheckResult::ResetVersionAndSync => write_handle
-            .write(
-                move |cmds| async move { cmds.common().reset_client_config_sync_version(id).await },
-            )
+            .write(move |cmds| async move {
+                cmds.common()
+                    .client_config()
+                    .reset_client_config_sync_version(id)
+                    .await
+            })
             .await
             .change_context(WebSocketError::ProfileAttributesSyncVersionResetFailed)?,
         SyncCheckResult::Sync => (),

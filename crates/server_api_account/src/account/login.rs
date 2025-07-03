@@ -166,6 +166,7 @@ pub async fn post_sign_in_with_login(
         let id = state.get_internal_id(aid).await?;
         db_write_multiple!(state, move |cmds| {
             cmds.common()
+                .client_config()
                 .client_login_session_platform(id, tokens.client_info.client_type)
                 .await
         })?;

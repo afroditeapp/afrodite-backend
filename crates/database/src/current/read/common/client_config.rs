@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, ClientConfigSyncVersion, ClientType};
+use model::{AccountIdInternal, ClientConfigSyncVersion, ClientLanguage, ClientType};
 
 use crate::{DieselDatabaseError, define_current_read_commands};
 
@@ -33,5 +33,20 @@ impl CurrentReadCommonClientConfig<'_> {
             .optional()
             .change_context(DieselDatabaseError::Execute)
             .map(|v| v.flatten())
+    }
+
+    pub fn client_language(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<ClientLanguage, DieselDatabaseError> {
+        use crate::schema::common_state::dsl::*;
+
+        common_state
+            .filter(account_id.eq(id.as_db_id()))
+            .select(client_language)
+            .first(self.conn())
+            .optional()
+            .change_context(DieselDatabaseError::Execute)
+            .map(|v| v.unwrap_or_default())
     }
 }

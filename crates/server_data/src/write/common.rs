@@ -1,9 +1,7 @@
 use std::net::SocketAddr;
 
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
-use model::{
-    Account, AccountId, AccountIdInternal, ClientType, ReportTypeNumberInternal, UnixTime,
-};
+use model::{Account, AccountId, AccountIdInternal, ReportTypeNumberInternal, UnixTime};
 use model_server_data::AuthPair;
 use server_common::data::cache::CacheError;
 use simple_backend_utils::time::DurationValue;
@@ -20,6 +18,7 @@ use crate::{
     write::db_transaction,
 };
 
+mod client_config;
 mod push_notification;
 
 define_cmd_wrapper_write!(WriteCommandsCommon);
@@ -27,6 +26,10 @@ define_cmd_wrapper_write!(WriteCommandsCommon);
 impl WriteCommandsCommon<'_> {
     pub fn push_notification(&mut self) -> push_notification::WriteCommandsCommonPushNotification {
         push_notification::WriteCommandsCommonPushNotification::new(self.handle())
+    }
+
+    pub fn client_config(&mut self) -> client_config::WriteCommandsCommonClientConfig {
+        client_config::WriteCommandsCommonClientConfig::new(self.handle())
     }
 }
 
@@ -201,30 +204,6 @@ impl WriteCommandsCommon<'_> {
         })?;
 
         Ok(())
-    }
-
-    /// Only server WebSocket code should call this method.
-    pub async fn reset_client_config_sync_version(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.common()
-                .client_config()
-                .reset_client_config_sync_version(id)
-        })
-    }
-
-    pub async fn client_login_session_platform(
-        &self,
-        id: AccountIdInternal,
-        value: ClientType,
-    ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.common()
-                .client_config()
-                .update_client_login_session_platform(id, value)
-        })
     }
 }
 

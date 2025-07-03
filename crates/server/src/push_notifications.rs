@@ -137,6 +137,7 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
         self.state
             .read()
             .common()
+            .client_config()
             .client_login_session_platform(account_id)
             .await
             .map_err(|e| e.into_report())

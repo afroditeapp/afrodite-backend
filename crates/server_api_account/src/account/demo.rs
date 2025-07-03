@@ -184,6 +184,7 @@ pub async fn post_demo_mode_login_to_account(
         let id = state.get_internal_id(aid).await?;
         db_write_multiple!(state, move |cmds| {
             cmds.common()
+                .client_config()
                 .client_login_session_platform(id, info.client_info.client_type)
                 .await
         })?;

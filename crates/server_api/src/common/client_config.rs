@@ -1,11 +1,14 @@
 use axum::{Extension, extract::State};
-use model::{AccountIdInternal, ClientConfig, ClientFeaturesFileHash, CustomReportsFileHash};
-use server_data::{app::GetConfig, read::GetReadCommandsCommon};
+use model::{
+    AccountIdInternal, ClientConfig, ClientFeaturesFileHash, ClientLanguage, CustomReportsFileHash,
+};
+use server_data::{app::GetConfig, read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
+use server_state::db_write_multiple;
 use simple_backend::create_counters;
 
 use crate::{
     S,
-    app::ReadData,
+    app::{ReadData, WriteData},
     create_open_api_router,
     utils::{Json, StatusCode},
 };
@@ -30,6 +33,7 @@ pub async fn get_client_config(
     let sync_version = state
         .read()
         .common()
+        .client_config()
         .client_config_sync_version(account_id)
         .await?;
     let info = ClientConfig {
@@ -51,11 +55,67 @@ pub async fn get_client_config(
     Ok(info.into())
 }
 
-create_open_api_router!(fn router_client_config, get_client_config,);
+const PATH_GET_CLIENT_LANGUAGE: &str = "/common_api/client_language";
+
+#[utoipa::path(
+    get,
+    path = PATH_GET_CLIENT_LANGUAGE,
+    responses(
+        (status = 200, description = "Successfull.", body = ClientLanguage),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_client_language(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+) -> Result<Json<ClientLanguage>, StatusCode> {
+    COMMON.get_client_language.incr();
+    let value = state
+        .read()
+        .common()
+        .client_config()
+        .client_language(account_id)
+        .await?;
+    Ok(value.into())
+}
+
+const PATH_POST_CLIENT_LANGUAGE: &str = "/common_api/client_language";
+
+#[utoipa::path(
+    post,
+    path = PATH_POST_CLIENT_LANGUAGE,
+    request_body = ClientLanguage,
+    responses(
+        (status = 200, description = "Successfull."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_client_language(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+    Json(value): Json<ClientLanguage>,
+) -> Result<(), StatusCode> {
+    COMMON.post_client_language.incr();
+    db_write_multiple!(state, move |cmds| {
+        cmds.common()
+            .client_config()
+            .client_language(account_id, value)
+            .await
+    })?;
+    Ok(())
+}
+
+create_open_api_router!(fn router_client_config, get_client_config, get_client_language, post_client_language,);
 
 create_counters!(
     CommonCounters,
     COMMON,
     COMMON_CLIENT_CONFIG_COUNTERS_LIST,
     get_client_config,
+    get_client_language,
+    post_client_language,
 );

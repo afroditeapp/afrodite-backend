@@ -192,6 +192,7 @@ CREATE TABLE IF NOT EXISTS common_state(
     -- 1 = iOS
     -- 2 = Web
     client_login_session_platform       INTEGER,
+    client_language                     TEXT    NOT NULL DEFAULT '',
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

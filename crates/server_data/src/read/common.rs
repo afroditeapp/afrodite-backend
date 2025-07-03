@@ -1,8 +1,8 @@
 use chrono::NaiveDate;
 use database::current::read::GetDbReadCommandsCommon;
 use model::{
-    AccessToken, Account, AccountId, AccountIdInternal, ClientConfigSyncVersion, ClientType,
-    PendingNotificationFlags, RefreshToken, ReportAccountInfo,
+    AccessToken, Account, AccountId, AccountIdInternal, PendingNotificationFlags, RefreshToken,
+    ReportAccountInfo,
 };
 use model_server_data::SearchGroupFlags;
 use server_common::data::IntoDataError;
@@ -13,7 +13,15 @@ use crate::{
     id::ToAccountIdInternal, result::Result,
 };
 
+mod client_config;
+
 define_cmd_wrapper_read!(ReadCommandsCommon);
+
+impl<'a> ReadCommandsCommon<'a> {
+    pub fn client_config(self) -> client_config::ReadCommandsCommonClientConfig<'a> {
+        client_config::ReadCommandsCommonClientConfig::new(self.0)
+    }
+}
 
 impl ReadCommandsCommon<'_> {
     pub async fn account_access_token(
@@ -85,15 +93,6 @@ impl ReadCommandsCommon<'_> {
         self.cache().logged_in_clients().await
     }
 
-    pub async fn client_config_sync_version(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<ClientConfigSyncVersion, DataError> {
-        self.db_read(move |mut cmds| cmds.common().client_config().client_config_sync_version(id))
-            .await
-            .into_error()
-    }
-
     pub async fn backup_current_database(&self, file_name: String) -> Result<(), DataError> {
         self.db_read_raw_no_transaction(move |mut cmds| {
             cmds.common().backup_current_database(file_name)
@@ -145,19 +144,6 @@ impl ReadCommandsCommon<'_> {
             })
             .await
             .into_error()
-    }
-
-    pub async fn client_login_session_platform(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<Option<ClientType>, DataError> {
-        self.db_read(move |mut cmds| {
-            cmds.common()
-                .client_config()
-                .client_login_session_platform(id)
-        })
-        .await
-        .into_error()
     }
 }
 
