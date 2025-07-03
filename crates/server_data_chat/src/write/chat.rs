@@ -457,7 +457,9 @@ impl WriteCommandsChat<'_> {
                 }
             };
 
-            let push_notification_allowd = if receiver_acknowledgements_missing == 0 {
+            let push_notification_allowd = if receiver_acknowledgements_missing <= 1 {
+                // Update new message notification twice so that notification
+                // displays singular or plural text correctly.
                 Some(PushNotificationAllowed)
             } else {
                 None

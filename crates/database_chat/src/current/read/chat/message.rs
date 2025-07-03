@@ -67,9 +67,11 @@ impl CurrentReadChatMessage<'_> {
             } else {
                 conversation_id_receiver
             };
-            notifications
-                .entry(a)
-                .insert_entry(NewMessageNotification { a, c });
+            let mut entry =
+                notifications
+                    .entry(a)
+                    .insert_entry(NewMessageNotification { a, c, m: 0 });
+            entry.get_mut().m += 1;
         }
 
         Ok(NewMessageNotificationList {

@@ -49,6 +49,8 @@ pub struct NewMessageNotificationList {
 pub struct NewMessageNotification {
     pub a: AccountId,
     pub c: ConversationId,
+    /// Message count
+    pub m: i64,
 }
 
 sync_version_wrappers!(
