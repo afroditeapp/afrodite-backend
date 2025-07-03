@@ -5,8 +5,8 @@ use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::PublicKeyId;
 use model_chat::{
-    AccountIdInternal, AccountInteractionState, ClientId, ClientLocalId, PendingMessageIdInternal,
-    SentMessageId, SignedMessageData, UnixTime,
+    AccountIdInternal, AccountInteractionState, ClientId, ClientLocalId, PendingMessageDbId,
+    PendingMessageIdInternal, SentMessageId, SignedMessageData, UnixTime,
 };
 use utils::encrypt::ParsedKeys;
 
@@ -16,6 +16,21 @@ use crate::{IntoDatabaseError, current::write::GetDbWriteCommandsChat};
 define_current_write_commands!(CurrentWriteChatMessage);
 
 impl CurrentWriteChatMessage<'_> {
+    pub fn mark_receiver_push_notification_sent(
+        &mut self,
+        messages: Vec<PendingMessageDbId>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::pending_messages::dsl::*;
+
+        update(pending_messages)
+            .filter(id.eq_any(messages))
+            .set(receiver_push_notification_sent.eq(true))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
     pub fn add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
         &mut self,
         message_receiver: AccountIdInternal,

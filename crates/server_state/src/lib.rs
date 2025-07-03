@@ -12,7 +12,7 @@ use config::Config;
 use data_signer::DataSigner;
 use ip_address::IpAddressUsageTracker;
 use model::{
-    Account, AccountIdInternal, PendingNotification, PendingNotificationWithData,
+    Account, AccountIdInternal, PendingNotificationToken, PendingNotificationWithData,
     SyncDataVersionFromClient,
 };
 use model_chat::SignInWithInfo;
@@ -179,12 +179,11 @@ impl DataAllAccess<'_> {
 
     pub async fn get_push_notification_data(
         &self,
-        id: AccountIdInternal,
-        notification_value: PendingNotification,
-    ) -> PendingNotificationWithData {
+        token: PendingNotificationToken,
+    ) -> (Option<AccountIdInternal>, PendingNotificationWithData) {
         let cmd = self
             .utils()
-            .get_push_notification_data(self.read(), id, notification_value);
+            .get_push_notification_data(self.read(), self.write(), token);
         cmd.await
     }
 

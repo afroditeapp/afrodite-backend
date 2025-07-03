@@ -635,6 +635,7 @@ diesel::table! {
         account_id_receiver -> Integer,
         sender_acknowledgement -> Bool,
         receiver_acknowledgement -> Bool,
+        receiver_push_notification_sent -> Bool,
         message_number -> Integer,
         sender_client_id -> Integer,
         sender_client_local_id -> Integer,

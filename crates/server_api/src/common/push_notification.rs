@@ -49,6 +49,9 @@ const PATH_POST_GET_PENDING_NOTIFICATION: &str = "/common_api/get_pending_notifi
 
 /// Get pending notification and reset pending notification.
 ///
+/// When client receives a FCM data notification use this API route
+/// to download the notification.
+///
 /// Requesting this route is always valid to avoid figuring out device
 /// token values more easily.
 #[utoipa::path(
@@ -66,29 +69,19 @@ pub async fn post_get_pending_notification(
 ) -> Json<PendingNotificationWithData> {
     COMMON.post_get_pending_notification.incr();
 
-    let result = db_write_multiple!(state, move |cmds| {
-        cmds.common()
-            .push_notification()
-            .get_and_reset_pending_notification_with_notification_token(token)
-            .await
-    });
-
-    let (id, notification_value) = match result {
-        Ok((id, notification_value)) => (id, notification_value),
-        Err(_) => return PendingNotificationWithData::default().into(),
-    };
-
-    let mut data = state
+    let (id, mut data) = state
         .data_all_access()
-        .get_push_notification_data(id, notification_value)
+        .get_push_notification_data(token)
         .await;
 
-    let flags = PendingNotificationFlags::from(notification_value);
-    data.admin_notification = if flags.contains(PendingNotificationFlags::ADMIN_NOTIFICATION) {
-        state.admin_notification().get_notification_state(id).await
-    } else {
-        None
-    };
+    if let Some(id) = id {
+        let flags = PendingNotificationFlags::from(data.value);
+        data.admin_notification = if flags.contains(PendingNotificationFlags::ADMIN_NOTIFICATION) {
+            state.admin_notification().get_notification_state(id).await
+        } else {
+            None
+        };
+    }
 
     data.into()
 }

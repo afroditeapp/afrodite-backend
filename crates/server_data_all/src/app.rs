@@ -2,8 +2,8 @@ use axum::extract::ws::WebSocket;
 use config::Config;
 use futures::{FutureExt, future::BoxFuture};
 use model::{
-    Account, AccountIdInternal, EmailMessages, PendingNotification, PendingNotificationWithData,
-    SyncDataVersionFromClient,
+    Account, AccountIdInternal, EmailMessages, PendingNotificationToken,
+    PendingNotificationWithData, SyncDataVersionFromClient,
 };
 use model_account::{EmailAddress, SignInWithInfo};
 use server_common::websocket::WebSocketError;
@@ -103,16 +103,12 @@ impl DataAllUtils for DataAllUtilsImpl {
     fn get_push_notification_data<'a>(
         &self,
         read_handle: &'a RouterDatabaseReadHandle,
-        id: AccountIdInternal,
-        notification_value: PendingNotification,
-    ) -> BoxFuture<'a, PendingNotificationWithData> {
+        write_handle: &'a WriteCommandRunnerHandle,
+        token: PendingNotificationToken,
+    ) -> BoxFuture<'a, (Option<AccountIdInternal>, PendingNotificationWithData)> {
         async move {
-            crate::push_notification::get_push_notification_data(
-                read_handle,
-                id,
-                notification_value,
-            )
-            .await
+            crate::push_notification::get_push_notification_data(read_handle, write_handle, token)
+                .await
         }
         .boxed()
     }

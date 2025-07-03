@@ -3,8 +3,8 @@ use model::NewMessageNotificationList;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState,
     AllMatchesPage, ChatProfileLink, ChatStateRaw, GetSentMessage, MatchId, MessageNumber,
-    PageItemCountForNewLikes, ReceivedBlocksPage, ReceivedLikeId, SentBlocksPage, SentLikesPage,
-    SentMessageId,
+    PageItemCountForNewLikes, PendingMessageDbId, PendingMessageIdInternal, ReceivedBlocksPage,
+    ReceivedLikeId, SentBlocksPage, SentLikesPage, SentMessageId,
 };
 use server_data::{
     DataError, IntoDataError,
@@ -203,7 +203,7 @@ impl ReadCommandsChat<'_> {
     pub async fn new_message_notification_list(
         &self,
         id: AccountIdInternal,
-    ) -> Result<NewMessageNotificationList, DataError> {
+    ) -> Result<(NewMessageNotificationList, Vec<PendingMessageDbId>), DataError> {
         self.db_read(move |mut cmds| cmds.chat().message().new_message_notification_list(id))
             .await
             .into_error()

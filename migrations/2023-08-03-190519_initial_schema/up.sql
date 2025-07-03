@@ -965,6 +965,9 @@ CREATE TABLE IF NOT EXISTS pending_messages(
     -- Acknowledgement from sender and receiver
     sender_acknowledgement          BOOLEAN NOT NULL DEFAULT 0,
     receiver_acknowledgement        BOOLEAN NOT NULL DEFAULT 0,
+    -- Track push notification sending for the message to
+    -- avoid sending the same data again.
+    receiver_push_notification_sent BOOLEAN NOT NULL DEFAULT 0,
     -- Order number for the message in the conversation.
     message_number                  INTEGER NOT NULL,
     -- Client ID and client local ID together makes

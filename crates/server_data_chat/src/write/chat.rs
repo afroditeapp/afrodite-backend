@@ -14,8 +14,8 @@ use database_chat::current::{
 use error_stack::ResultExt;
 use model_chat::{
     AccountIdInternal, AddPublicKeyResult, ChatStateRaw, ClientId, ClientLocalId,
-    MatchesIteratorSessionIdInternal, MessageNumber, NewReceivedLikesCount, PendingMessageId,
-    PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId,
+    MatchesIteratorSessionIdInternal, MessageNumber, NewReceivedLikesCount, PendingMessageDbId,
+    PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId,
     ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion, SendMessageResult,
     SentMessageId, SyncVersionUtils,
 };
@@ -271,6 +271,17 @@ impl WriteCommandsChat<'_> {
 
     // TODO(prod): Change SQLite settings that delete is overwriting.
 
+    pub async fn mark_receiver_push_notification_sent(
+        &self,
+        messages: Vec<PendingMessageDbId>,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.chat()
+                .message()
+                .mark_receiver_push_notification_sent(messages)
+        })
+    }
+
     pub async fn add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
         &self,
         message_receiver: AccountIdInternal,
@@ -282,7 +293,7 @@ impl WriteCommandsChat<'_> {
             converted.push(PendingMessageIdInternal { sender, mn: m.mn });
         }
 
-        let pending_messages = db_transaction!(self, move |mut cmds| {
+        let pending_messages_exists = db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .message()
                 .add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
@@ -293,10 +304,10 @@ impl WriteCommandsChat<'_> {
             cmds.read()
                 .chat()
                 .message()
-                .new_message_notification_list(message_receiver)
+                .pending_messages_exists(message_receiver)
         })?;
 
-        if pending_messages.v.is_empty() {
+        if !pending_messages_exists {
             self.event_manager()
                 .remove_specific_pending_notification_flags_from_cache(
                     message_receiver,
