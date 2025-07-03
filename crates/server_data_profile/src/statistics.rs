@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use model_profile::ProfileStatisticsInternal;
+use model_profile::{ProfileStatisticsInternal, UnixTime};
 use server_data::{
     DataError, db_manager::RouterDatabaseReadHandle, result::Result,
     statistics::ProfileStatisticsCache,
@@ -29,18 +29,19 @@ impl ProfileStatisticsCacheUtils for ProfileStatisticsCache {
         perf_data: Arc<PerfMetricsManagerData>,
     ) -> Result<ProfileStatisticsInternal, DataError> {
         let mut data = self.data.lock().await;
-        let r = match data.as_mut() {
-            Some(data) => data.clone(),
-            None => {
-                let r = handle
-                    .profile()
-                    .statistics()
-                    .profile_statistics(Self::VISIBILITY, perf_data)
-                    .await?;
-                *data = Some(r.clone());
-                r
-            }
-        };
+
+        if let Some(data) = data.as_ref()
+            && UnixTime::current_time() < data.generation_time.add_seconds(60 * 15)
+        {
+            return Ok(data.clone());
+        }
+
+        let r = handle
+            .profile()
+            .statistics()
+            .profile_statistics(Self::VISIBILITY, perf_data)
+            .await?;
+        *data = Some(r.clone());
         Ok(r)
     }
 

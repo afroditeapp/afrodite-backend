@@ -16,6 +16,8 @@ use crate::macros::diesel_i64_wrapper;
     IntoParams,
     PartialEq,
     Eq,
+    PartialOrd,
+    Ord,
     Default,
     FromSqlRow,
     AsExpression,
