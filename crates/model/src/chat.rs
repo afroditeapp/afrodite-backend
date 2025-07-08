@@ -4,7 +4,7 @@ use simple_backend_model::{UnixTime, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 use super::sync_version_wrappers;
-use crate::{AccountId, AccountIdInternal};
+use crate::{AccountId, AccountIdDb, AccountIdInternal};
 
 mod interaction;
 pub use interaction::*;
@@ -133,4 +133,13 @@ pub struct GetChatMessageReportsInternal {
 pub struct NewReceivedLikesCountResult {
     pub v: ReceivedLikesSyncVersion,
     pub c: NewReceivedLikesCount,
+}
+
+#[derive(Debug, Clone)]
+pub struct PendingMessageIdInternal {
+    /// Sender of the message.
+    pub sender: AccountIdInternal,
+    /// Receiver of the message.
+    pub receiver: AccountIdDb,
+    pub mn: MessageNumber,
 }

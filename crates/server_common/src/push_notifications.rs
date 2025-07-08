@@ -3,13 +3,14 @@ use std::{future::Future, time::Duration};
 use error_stack::{Result, ResultExt};
 use fcm::{
     FcmClient,
-    message::{AndroidConfig, AndroidMessagePriority, Message, Notification, Target},
+    message::Message,
     response::{RecomendedAction, RecomendedWaitTime},
 };
 use model::{
-    AccountIdInternal, ClientType, PendingNotificationFlags, PushNotificationStateInfoWithFlags,
+    AccountIdInternal, FcmDeviceToken, PendingMessageIdInternal, PendingNotificationFlags,
+    PushNotificationStateInfoWithFlags,
 };
-use serde_json::{Value, json};
+use serde_json::Value;
 use simple_backend::ServerQuitWatcher;
 use simple_backend_config::SimpleBackendConfig;
 use tokio::{
@@ -35,10 +36,12 @@ pub enum PushNotificationError {
     RemoveSpecificNotificationFlagsFromCacheFailed,
     #[error("Reading notification flags from cache failed")]
     ReadingNotificationFlagsFromCacheFailed,
-    #[error("Reading client type failed")]
-    ReadingClientTypeFailed,
+    #[error("Creating push notifications failed")]
+    CreatingPushNotificationsFailed,
     #[error("Saving pending notifications to database failed")]
     SaveToDatabaseFailed,
+    #[error("Handling successful message sending action failed")]
+    HandlingSuccessfulMessageSendingActionFailed,
 }
 
 pub struct PushNotificationManagerQuitHandle {
@@ -103,6 +106,18 @@ impl PushNotificationSender {
     }
 }
 
+pub enum SuccessfulSendingAction {
+    MarkMessageNotificationSent { message: PendingMessageIdInternal },
+}
+
+pub struct PushNotification {
+    /// FCM message which will be sent
+    pub message: Option<Message>,
+    /// Remove these flags from cache if Message is sent successfully
+    pub flags: PendingNotificationFlags,
+    pub successful_sending_action: Option<SuccessfulSendingAction>,
+}
+
 pub trait PushNotificationStateProvider {
     fn get_push_notification_state_info_and_add_notification_value(
         &self,
@@ -130,10 +145,17 @@ pub trait PushNotificationStateProvider {
         &self,
     ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
 
-    fn client_login_session_platform(
+    fn convert_to_push_notifications(
         &self,
         account_id: AccountIdInternal,
-    ) -> impl Future<Output = Result<Option<ClientType>, PushNotificationError>> + Send;
+        token: FcmDeviceToken,
+        flags: PendingNotificationFlags,
+    ) -> impl Future<Output = Result<Vec<PushNotification>, PushNotificationError>> + Send;
+
+    fn handle_successful_message_sending_action(
+        &self,
+        action: SuccessfulSendingAction,
+    ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
 }
 
 pub fn channel() -> (PushNotificationSender, PushNotificationReceiver) {
@@ -325,79 +347,55 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
             }
         };
 
-        let platform = self
+        let messages = self
             .state
-            .client_login_session_platform(send_push_notification.account_id)
-            .await?;
+            .convert_to_push_notifications(send_push_notification.account_id, token, flags)
+            .await
+            .change_context(PushNotificationError::CreatingPushNotificationsFailed)?;
 
-        let message = if let Some(ClientType::Ios) = platform {
-            // On iOS, data notifications don't work when app is closed
-            // from task switcher.
-            Message {
-                // Use minimal notification as this only triggers client
-                // to download the notification.
-                notification: Some(Notification {
-                    title: Some("n".to_string()),
-                    ..Default::default()
-                }),
-                target: Target::Token(token.into_string()),
-                android: Some(AndroidConfig {
-                    priority: Some(AndroidMessagePriority::High),
-                    ..Default::default()
-                }),
-                apns: None,
-                webpush: None,
-                fcm_options: None,
-                data: None,
-            }
-        } else {
-            Message {
-                // Use minimal notification data as this only triggers client
-                // to download the notification.
-                data: Some(json!({
-                    "n": "",
-                })),
-                target: Target::Token(token.into_string()),
-                android: Some(AndroidConfig {
-                    priority: Some(AndroidMessagePriority::High),
-                    ..Default::default()
-                }),
-                apns: None,
-                webpush: None,
-                fcm_options: None,
-                notification: None,
-            }
-        };
-
-        match sending_logic.send_push_notification(message, fcm).await {
-            Ok(()) => {
-                self.state
-                    .enable_push_notification_sent_flag(send_push_notification.account_id)
-                    .await
-                    .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)?;
-                self.state
-                    .remove_specific_notification_flags_from_cache(
-                        send_push_notification.account_id,
-                        flags,
-                    )
-                    .await
-                    .change_context(
-                        PushNotificationError::RemoveSpecificNotificationFlagsFromCacheFailed,
-                    )?;
-                Ok(())
-            }
-            Err(action) => match action {
-                UnusualAction::DisablePushNotificationSupport => {
-                    self.fcm = None;
-                    Ok(())
+        for m in messages {
+            if let Some(m) = m.message {
+                match sending_logic.send_push_notification(m, fcm).await {
+                    Ok(()) => (),
+                    Err(action) => match action {
+                        UnusualAction::DisablePushNotificationSupport => {
+                            self.fcm = None;
+                            return Ok(());
+                        }
+                        UnusualAction::RemoveDeviceToken => {
+                            return self
+                                .state
+                                .remove_device_token(send_push_notification.account_id)
+                                .await
+                                .change_context(PushNotificationError::RemoveDeviceTokenFailed);
+                        }
+                    },
                 }
-                UnusualAction::RemoveDeviceToken => self
-                    .state
-                    .remove_device_token(send_push_notification.account_id)
-                    .await
-                    .change_context(PushNotificationError::RemoveDeviceTokenFailed),
-            },
+            }
+
+            self.state
+                .remove_specific_notification_flags_from_cache(
+                    send_push_notification.account_id,
+                    m.flags,
+                )
+                .await
+                .change_context(
+                    PushNotificationError::RemoveSpecificNotificationFlagsFromCacheFailed,
+                )?;
+
+            if let Some(action) = m.successful_sending_action {
+                self.state
+                    .handle_successful_message_sending_action(action)
+                    .await?;
+            }
         }
+
+        self.state
+            .enable_push_notification_sent_flag(send_push_notification.account_id)
+            .await
+            .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)?;
+
+        Ok(())
     }
 }
 

@@ -4,11 +4,10 @@ use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
-    AccountId, AccountIdDb, ConversationId, NewMessageNotification, NewMessageNotificationList,
+    AccountId, AccountIdDb, ConversationId, MessageNumber, NewMessageNotification,
+    NewMessageNotificationList, PendingMessageIdInternal,
 };
-use model_chat::{
-    AccountIdInternal, GetSentMessage, PendingMessageDbId, PendingMessageInternal, SentMessageId,
-};
+use model_chat::{AccountIdInternal, GetSentMessage, PendingMessageInternal, SentMessageId};
 
 use crate::IntoDatabaseError;
 
@@ -51,20 +50,20 @@ impl CurrentReadChatMessage<'_> {
     pub fn new_message_notification_list(
         &mut self,
         id_message_receiver: AccountIdInternal,
-    ) -> Result<(NewMessageNotificationList, Vec<PendingMessageDbId>), DieselDatabaseError> {
+    ) -> Result<(NewMessageNotificationList, Vec<PendingMessageIdInternal>), DieselDatabaseError>
+    {
         use crate::schema::{account_id, account_interaction, pending_messages::dsl::*};
 
         let data: Vec<(
-            PendingMessageDbId,
+            AccountIdDb,
             AccountId,
             AccountIdDb,
             ConversationId,
             ConversationId,
             bool,
+            MessageNumber,
         )> = pending_messages
-            .inner_join(
-                account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)),
-            )
+            .inner_join(account_id::table.on(account_id_sender.eq(account_id::id)))
             .inner_join(account_interaction::table)
             .filter(account_id_receiver.eq(id_message_receiver.as_db_id()))
             .filter(receiver_acknowledgement.eq(false))
@@ -72,44 +71,53 @@ impl CurrentReadChatMessage<'_> {
             .filter(account_interaction::conversation_id_sender.is_not_null())
             .filter(account_interaction::conversation_id_receiver.is_not_null())
             .select((
-                id,
+                account_id::id,
                 account_id::uuid,
                 account_interaction::account_id_sender.assume_not_null(),
                 account_interaction::conversation_id_sender.assume_not_null(),
                 account_interaction::conversation_id_receiver.assume_not_null(),
                 receiver_push_notification_sent,
+                message_number,
             ))
-            .order_by(account_id::id)
+            .order_by(account_id_sender)
             .load(self.conn())
             .into_db_error(())?;
 
-        let mut notifications = HashMap::<AccountId, (NewMessageNotification, bool)>::new();
+        let mut notifications = HashMap::<AccountIdDb, (NewMessageNotification, bool)>::new();
         let mut messages_pending_push_notification = vec![];
 
         for (
-            pending_message_id,
-            a,
-            like_sender,
+            sender_db_id,
+            sender,
+            like_sender_db_id,
             conversation_id_sender,
             conversation_id_receiver,
             push_notification_sent,
+            message_number_value,
         ) in data
         {
             // Select message receiver specific conversation ID
-            let c = if like_sender == id_message_receiver.into_db_id() {
+            let c = if like_sender_db_id == id_message_receiver.into_db_id() {
                 conversation_id_sender
             } else {
                 conversation_id_receiver
             };
             let mut entry = notifications
-                .entry(a)
-                .insert_entry((NewMessageNotification { a, c, m: 0 }, true));
+                .entry(sender_db_id)
+                .insert_entry((NewMessageNotification { a: sender, c, m: 0 }, true));
             entry.get_mut().0.m += 1;
 
             if !push_notification_sent {
                 // Message notification needs an update
                 entry.get_mut().1 = false;
-                messages_pending_push_notification.push(pending_message_id);
+                messages_pending_push_notification.push(PendingMessageIdInternal {
+                    sender: AccountIdInternal {
+                        id: sender_db_id,
+                        uuid: sender,
+                    },
+                    receiver: id_message_receiver.into_db_id(),
+                    mn: message_number_value,
+                });
             }
         }
 

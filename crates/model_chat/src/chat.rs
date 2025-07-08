@@ -1,5 +1,5 @@
 use base64::Engine;
-use diesel::{prelude::*, sql_types::BigInt};
+use diesel::prelude::*;
 use model::{
     ConversationId, DailyLikesLeftSyncVersion, MatchId, MatchesSyncVersion, MessageNumber,
     NewReceivedLikesCount, ProfileContentVersion, PublicKeyId, ReceivedBlocksSyncVersion,
@@ -8,10 +8,9 @@ use model::{
 };
 use model_server_data::{LastSeenTime, LimitedActionStatus, ProfileVersion};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use simple_backend_model::diesel_i64_wrapper;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{AccountId, AccountIdDb, AccountIdInternal, ClientId, ClientLocalId};
+use crate::{AccountId, AccountIdDb, ClientId, ClientLocalId};
 
 mod public_key;
 pub use public_key::*;
@@ -84,35 +83,10 @@ pub struct ReceivedBlocksPage {
     pub profiles: Vec<AccountId>,
 }
 
-#[derive(Debug, Clone, Eq, Hash, PartialEq, Copy, diesel::FromSqlRow, diesel::AsExpression)]
-#[diesel(sql_type = BigInt)]
-pub struct PendingMessageDbId {
-    pub id: i64,
-}
-
-impl PendingMessageDbId {
-    pub fn new(id: i64) -> Self {
-        Self { id }
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.id
-    }
-}
-
-diesel_i64_wrapper!(PendingMessageDbId);
-
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct PendingMessageId {
     /// Sender of the message.
     pub sender: AccountId,
-    pub mn: MessageNumber,
-}
-
-#[derive(Debug, Clone)]
-pub struct PendingMessageIdInternal {
-    /// Sender of the message.
-    pub sender: AccountIdInternal,
     pub mn: MessageNumber,
 }
 

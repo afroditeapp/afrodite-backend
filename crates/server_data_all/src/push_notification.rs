@@ -11,6 +11,9 @@ use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use server_data_media::read::GetReadMediaCommands;
 use server_data_profile::read::GetReadProfileCommands;
 
+/// Android push notification related code.
+/// iOS push notification related code is at
+/// [server::push_notifications::ios::ios_notifications].
 pub async fn get_push_notification_data(
     read_handle: &RouterDatabaseReadHandle,
     write_handle: &WriteCommandRunnerHandle,

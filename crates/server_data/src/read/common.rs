@@ -116,15 +116,20 @@ impl ReadCommandsCommon<'_> {
 
     pub async fn get_profile_age_and_name_if_profile_component_is_enabled(
         &self,
-        id: AccountIdInternal,
+        id: impl Into<AccountId>,
     ) -> Result<Option<ReportAccountInfo>, DataError> {
-        self.db_read(move |mut cmds| {
-            cmds.common()
-                .report()
-                .get_report_account_info(*id.as_db_id())
-        })
-        .await
-        .into_error()
+        // TODO(prod): Check usage of this method and create another for
+        //             user visible profile name usage as that might not be
+        //             yet accepted.
+        self.cache()
+            .read_cache(id, |e| {
+                Ok(e.profile.as_ref().map(|p| ReportAccountInfo {
+                    age: p.profile_internal().age,
+                    name: p.profile_internal().name.clone(),
+                }))
+            })
+            .await
+            .into_error()
     }
 
     pub async fn bot_and_gender_info(

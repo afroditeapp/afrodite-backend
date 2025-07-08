@@ -14,8 +14,8 @@ use database_chat::current::{
 use error_stack::ResultExt;
 use model_chat::{
     AccountIdInternal, AddPublicKeyResult, ChatStateRaw, ClientId, ClientLocalId,
-    MatchesIteratorSessionIdInternal, MessageNumber, NewReceivedLikesCount, PendingMessageDbId,
-    PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId,
+    MatchesIteratorSessionIdInternal, MessageNumber, NewReceivedLikesCount, PendingMessageId,
+    PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId,
     ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion, SendMessageResult,
     SentMessageId, SyncVersionUtils,
 };
@@ -273,7 +273,7 @@ impl WriteCommandsChat<'_> {
 
     pub async fn mark_receiver_push_notification_sent(
         &self,
-        messages: Vec<PendingMessageDbId>,
+        messages: Vec<PendingMessageIdInternal>,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
@@ -290,7 +290,11 @@ impl WriteCommandsChat<'_> {
         let mut converted = vec![];
         for m in messages {
             let sender = self.to_account_id_internal(m.sender).await?;
-            converted.push(PendingMessageIdInternal { sender, mn: m.mn });
+            converted.push(PendingMessageIdInternal {
+                sender,
+                receiver: message_receiver.into_db_id(),
+                mn: m.mn,
+            });
         }
 
         let pending_messages_exists = db_transaction!(self, move |mut cmds| {

@@ -1,14 +1,22 @@
 use error_stack::ResultExt;
+use fcm::message::{AndroidConfig, AndroidMessagePriority, Message, Target};
 use model::{
-    AccountIdInternal, ClientType, PendingNotificationFlags, PushNotificationStateInfoWithFlags,
+    AccountIdInternal, ClientType, FcmDeviceToken, PendingNotificationFlags,
+    PushNotificationStateInfoWithFlags,
 };
+use serde_json::json;
 use server_api::{
     app::{ReadData, WriteData},
     db_write_raw,
 };
-use server_common::push_notifications::{PushNotificationError, PushNotificationStateProvider};
+use server_common::push_notifications::{
+    PushNotification, PushNotificationError, PushNotificationStateProvider, SuccessfulSendingAction,
+};
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
+use server_data_chat::write::GetWriteCommandsChat;
 use server_state::S;
+
+mod ios;
 
 pub struct ServerPushNotificationStateProvider {
     state: S,
@@ -130,17 +138,74 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
         Ok(())
     }
 
-    async fn client_login_session_platform(
+    async fn convert_to_push_notifications(
         &self,
         account_id: AccountIdInternal,
-    ) -> error_stack::Result<Option<ClientType>, PushNotificationError> {
-        self.state
+        token: FcmDeviceToken,
+        flags: PendingNotificationFlags,
+    ) -> error_stack::Result<Vec<PushNotification>, PushNotificationError> {
+        let platform = self
+            .state
             .read()
             .common()
             .client_config()
             .client_login_session_platform(account_id)
             .await
             .map_err(|e| e.into_report())
-            .change_context(PushNotificationError::ReadingClientTypeFailed)
+            .change_context(PushNotificationError::CreatingPushNotificationsFailed)?;
+
+        if let Some(ClientType::Ios) = platform {
+            // On iOS, data notifications don't work when app is closed
+            // from task switcher and are not reliable, so send visible
+            // notifications.
+            ios::ios_notifications(&self.state, account_id, token, flags)
+                .await
+                .change_context(PushNotificationError::CreatingPushNotificationsFailed)
+        } else {
+            let message = Message {
+                // Use minimal notification data as this only triggers client
+                // to download the notification.
+                data: Some(json!({
+                    "n": "",
+                })),
+                target: Target::Token(token.into_string()),
+                android: Some(AndroidConfig {
+                    priority: Some(AndroidMessagePriority::High),
+                    ..Default::default()
+                }),
+                apns: None,
+                webpush: None,
+                fcm_options: None,
+                notification: None,
+            };
+
+            Ok(vec![PushNotification {
+                message: Some(message),
+                flags,
+                successful_sending_action: None,
+            }])
+        }
+    }
+
+    async fn handle_successful_message_sending_action(
+        &self,
+        action: SuccessfulSendingAction,
+    ) -> error_stack::Result<(), PushNotificationError> {
+        match action {
+            SuccessfulSendingAction::MarkMessageNotificationSent { message } => {
+                db_write_raw!(self.state, move |cmds| {
+                    cmds.chat()
+                        .mark_receiver_push_notification_sent(vec![message])
+                        .await
+                })
+                .await
+                .map_err(|e| e.into_report())
+                .change_context(
+                    PushNotificationError::HandlingSuccessfulMessageSendingActionFailed,
+                )?;
+            }
+        }
+
+        Ok(())
     }
 }
