@@ -4705,7 +4705,6 @@ dependencies = [
  "model",
  "serde_json",
  "simple_backend",
- "simple_backend_config",
  "simple_backend_database",
  "simple_backend_utils",
  "thiserror 2.0.12",
