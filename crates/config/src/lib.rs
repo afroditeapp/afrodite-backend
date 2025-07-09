@@ -13,6 +13,7 @@ pub mod csv;
 pub mod file;
 pub mod file_dynamic;
 pub mod file_email_content;
+pub mod file_notification_content;
 
 use std::{path::Path, sync::Arc};
 
@@ -37,6 +38,7 @@ use simple_backend_config::{SimpleBackendConfig, file::SimpleBackendConfigFile};
 use simple_backend_utils::{ContextExt, IntoReportFromString};
 
 use self::file::{Components, ConfigFile, ExternalServices, LocationConfig};
+use crate::file_notification_content::NotificationContentFile;
 
 // TODO(prod): Remove
 pub const DATABASE_MESSAGE_CHANNEL_BUFFER: usize = 32;
@@ -76,6 +78,7 @@ pub struct ParsedFiles<'a> {
     pub custom_reports: Option<&'a CustomReportsConfig>,
     pub client_features: Option<&'a ClientFeaturesConfig>,
     pub email_content: Option<&'a EmailContentFile>,
+    pub notification_content: &'a NotificationContentFile,
     pub bot: Option<&'a BotConfigFile>,
 }
 
@@ -99,6 +102,7 @@ pub struct Config {
     client_features: Option<ClientFeaturesConfig>,
     client_features_sha256: Option<String>,
     email_content: Option<EmailContentFile>,
+    notification_content: NotificationContentFile,
 
     profile_name_allowlist: ProfileNameAllowlistData,
 
@@ -126,6 +130,7 @@ impl Config {
             client_features: None,
             client_features_sha256: None,
             email_content: None,
+            notification_content: NotificationContentFile::default(),
             profile_name_allowlist: ProfileNameAllowlistData::default(),
             bot_config: None,
             profile_attributes_file: None,
@@ -248,6 +253,10 @@ impl Config {
         self.email_content.as_ref()
     }
 
+    pub fn notification_content(&self) -> &NotificationContentFile {
+        &self.notification_content
+    }
+
     pub fn demo_mode_config(&self) -> Option<&Vec<DemoModeConfig>> {
         self.file.demo_mode.as_ref()
     }
@@ -289,6 +298,7 @@ impl Config {
             custom_reports: self.custom_reports(),
             client_features: self.client_features(),
             email_content: self.email_content(),
+            notification_content: self.notification_content(),
             bot: self.bot_config.as_ref(),
         }
     }
@@ -398,6 +408,12 @@ pub fn get_config(
         );
     }
 
+    let notification_content = if let Some(path) = &file_config.config_files.notification_content {
+        NotificationContentFile::load(path).change_context(GetConfigError::LoadFileError)?
+    } else {
+        NotificationContentFile::default()
+    };
+
     let mut allowlist_builder = ProfileNameAllowlistBuilder::default();
     let csv_configs = file_config
         .profile_name_allowlist
@@ -435,6 +451,7 @@ pub fn get_config(
         client_features,
         client_features_sha256,
         email_content,
+        notification_content,
         profile_name_allowlist,
         bot_config,
         profile_attributes_file,

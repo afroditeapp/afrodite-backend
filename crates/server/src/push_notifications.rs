@@ -1,7 +1,7 @@
 use error_stack::ResultExt;
 use model::{
-    AccountIdInternal, PendingNotificationFlags, PushNotificationStateInfoWithFlags,
-    PushNotificationType,
+    AccountIdInternal, ClientLanguage, PendingNotificationFlags,
+    PushNotificationStateInfoWithFlags, PushNotificationType,
 };
 use server_api::{
     app::{ReadData, WriteData},
@@ -125,5 +125,21 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
         visibility::is_notification_visible(&self.state, account_id, flags)
             .await
             .change_context(PushNotificationError::NotificationVisiblityCheckFailed)
+    }
+
+    async fn client_language(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> error_stack::Result<ClientLanguage, PushNotificationError> {
+        let client_language = self
+            .state
+            .read()
+            .common()
+            .client_config()
+            .client_language(account_id)
+            .await
+            .map_err(|e| e.into_report())
+            .change_context(PushNotificationError::GetClientLanguageFailed)?;
+        Ok(client_language)
     }
 }

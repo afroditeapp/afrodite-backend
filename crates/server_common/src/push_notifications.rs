@@ -5,18 +5,18 @@ use std::{
     time::{Duration, Instant},
 };
 
+use config::{Config, file_notification_content::NotificationStringResource};
 use error_stack::{Result, ResultExt};
 use fcm::{
     FcmClient,
     message::{AndroidConfig, AndroidMessagePriority, ApnsConfig, Message, Notification, Target},
 };
 use model::{
-    AccountIdInternal, PendingNotificationFlags, PushNotificationStateInfoWithFlags,
-    PushNotificationType,
+    AccountIdInternal, ClientLanguage, PendingNotificationFlags,
+    PushNotificationStateInfoWithFlags, PushNotificationType,
 };
 use serde_json::json;
 use simple_backend::ServerQuitWatcher;
-use simple_backend_config::SimpleBackendConfig;
 use tokio::{
     sync::{
         Mutex,
@@ -51,6 +51,8 @@ pub enum PushNotificationError {
     SaveToDatabaseFailed,
     #[error("Handling successful message sending action failed")]
     HandlingSuccessfulMessageSendingActionFailed,
+    #[error("Get client language failed")]
+    GetClientLanguageFailed,
 }
 
 pub struct PushNotificationManagerQuitHandle {
@@ -177,6 +179,11 @@ pub trait PushNotificationStateProvider {
         account_id: AccountIdInternal,
         flags: PendingNotificationFlags,
     ) -> impl Future<Output = Result<bool, PushNotificationError>> + Send;
+
+    fn client_language(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> impl Future<Output = Result<ClientLanguage, PushNotificationError>> + Send;
 }
 
 pub fn channel() -> (PushNotificationSender, PushNotificationReceiver) {
@@ -207,6 +214,7 @@ pub struct PushNotificationReceiver {
 }
 
 pub struct PushNotificationManager<T> {
+    config: Arc<Config>,
     started_with_fcm_enabled: bool,
     fcm: Option<FcmClient>,
     receiver: PushNotificationReceiver,
@@ -215,12 +223,12 @@ pub struct PushNotificationManager<T> {
 
 impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<T> {
     pub async fn new_manager(
-        config: &SimpleBackendConfig,
+        config: Arc<Config>,
         quit_notification: ServerQuitWatcher,
         state: T,
         receiver: PushNotificationReceiver,
     ) -> PushNotificationManagerQuitHandle {
-        let fcm = if let Some(config) = config.firebase_cloud_messaging_config() {
+        let fcm = if let Some(config) = config.simple_backend().firebase_cloud_messaging_config() {
             let fcm_result = FcmClient::builder()
                 .service_account_key_json_path(&config.service_account_key_path)
                 .token_cache_json_path(&config.token_cache_path)
@@ -239,6 +247,7 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
         };
 
         let manager = PushNotificationManager {
+            config,
             started_with_fcm_enabled: fcm.is_some(),
             fcm,
             receiver,
@@ -494,12 +503,20 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
             return Ok(());
         }
 
+        let language = self
+            .state
+            .client_language(send_push_notification.account_id)
+            .await
+            .change_context(PushNotificationError::GetClientLanguageFailed)?;
+
         let m = Message {
             // Use minimal notification data as this only triggers client
             // to download the notification.
             notification: Some(Notification {
-                // TODO(prod): Get translation
-                title: Some("New notification available".to_string()),
+                title: Some(self.config.notification_content().get_value(
+                    NotificationStringResource::NewNotificationAvailableTitle,
+                    language.as_str(),
+                )),
                 ..Default::default()
             }),
             target: Target::Token(token.into_string()),

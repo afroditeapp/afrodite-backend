@@ -36,6 +36,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # [config_files]
 # bot = "server_config_bots.toml"
 # email_content = "server_config_email_content.toml"
+# notification_content = "server_config_notification_content.toml"
 # profile_attributes = "server_config_profile_attributes.toml"
 # custom_reports = "server_config_custom_reports.toml"
 # client_features = "server_config_client_features.toml"
@@ -175,6 +176,7 @@ pub struct ApiConfig {
 pub struct ConfigFileConfig {
     pub bot: Option<PathBuf>,
     pub email_content: Option<PathBuf>,
+    pub notification_content: Option<PathBuf>,
     pub profile_attributes: Option<PathBuf>,
     pub custom_reports: Option<PathBuf>,
     pub client_features: Option<PathBuf>,

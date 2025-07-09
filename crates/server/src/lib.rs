@@ -315,7 +315,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
         );
 
         let push_notifications_quit_handle = PushNotificationManager::new_manager(
-            self.config.simple_backend(),
+            self.config.clone(),
             server_quit_watcher.resubscribe(),
             ServerPushNotificationStateProvider::new(app_state.clone()),
             push_notification_receiver,
