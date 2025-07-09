@@ -1,6 +1,7 @@
+use model::{AccountIdInternal, PushNotificationStateInfoWithFlags};
 use model_account::{EmailMessages, EmailSendingState};
 use server_api::{
-    app::{EmailSenderImpl, GetConfig, ReadData, WriteData},
+    app::{EmailSenderImpl, EventManagerProvider, GetConfig, ReadData, WriteData},
     db_write_raw,
 };
 use server_common::{data::DataError, result::Result};
@@ -95,14 +96,10 @@ impl StartupTasks {
                 EmailMessages::AccountRegistered,
             );
 
-            db_write_raw!(state, move |cmds| {
-                // FCM
-                // The pending notification flags are already loaded from
-                // database to cache.
-                cmds.events()
-                    .trigger_push_notification_sending_check_if_needed(id)
-                    .await;
+            // FCM
+            Self::send_push_notification_if_needed(state, id).await?;
 
+            db_write_raw!(state, move |cmds| {
                 // Remove tmp files
                 cmds.common().remove_tmp_files(id).await?;
 
@@ -114,6 +111,31 @@ impl StartupTasks {
                 Ok(())
             })
             .await?;
+        }
+
+        Ok(())
+    }
+
+    async fn send_push_notification_if_needed(
+        state: &S,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        let push_notification_state = state
+            .read()
+            .common()
+            .push_notification()
+            .push_notification_state(id)
+            .await?;
+
+        match push_notification_state {
+            PushNotificationStateInfoWithFlags::EmptyFlags => (),
+            PushNotificationStateInfoWithFlags::WithFlags { info, .. } => {
+                if info.fcm_device_token.is_some()
+                    && !(info.fcm_data_notification_sent && info.fcm_visible_notification_sent)
+                {
+                    state.event_manager().trigger_push_notification_sending(id)
+                }
+            }
         }
 
         Ok(())

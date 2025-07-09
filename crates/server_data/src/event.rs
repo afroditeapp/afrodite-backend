@@ -237,6 +237,10 @@ impl<'a> EventManagerWithCacheReference<'a> {
         }
     }
 
+    pub fn trigger_push_notification_sending(&'a self, account: AccountIdInternal) {
+        self.push_notification_sender.send(account);
+    }
+
     pub async fn remove_specific_pending_notification_flags_from_cache(
         &'a self,
         account: AccountIdInternal,
