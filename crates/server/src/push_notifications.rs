@@ -32,6 +32,7 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
             .state
             .read()
             .common()
+            .push_notification()
             .cached_pending_notification_flags(account_id)
             .await
             .map_err(|e| e.into_report())

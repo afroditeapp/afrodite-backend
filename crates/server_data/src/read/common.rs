@@ -1,9 +1,6 @@
 use chrono::NaiveDate;
 use database::current::read::GetDbReadCommandsCommon;
-use model::{
-    AccessToken, Account, AccountId, AccountIdInternal, PendingNotificationFlags, RefreshToken,
-    ReportAccountInfo,
-};
+use model::{AccessToken, Account, AccountId, AccountIdInternal, RefreshToken, ReportAccountInfo};
 use model_server_data::SearchGroupFlags;
 use server_common::data::IntoDataError;
 
@@ -14,12 +11,17 @@ use crate::{
 };
 
 mod client_config;
+mod push_notification;
 
 define_cmd_wrapper_read!(ReadCommandsCommon);
 
 impl<'a> ReadCommandsCommon<'a> {
     pub fn client_config(self) -> client_config::ReadCommandsCommonClientConfig<'a> {
         client_config::ReadCommandsCommonClientConfig::new(self.0)
+    }
+
+    pub fn push_notification(self) -> push_notification::ReadCommandsCommonPushNotification<'a> {
+        push_notification::ReadCommandsCommonPushNotification::new(self.0)
     }
 }
 
@@ -55,16 +57,6 @@ impl ReadCommandsCommon<'_> {
             })
             .await?;
         Ok(account)
-    }
-
-    pub async fn cached_pending_notification_flags(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<PendingNotificationFlags, DataError> {
-        let flags = self
-            .read_cache_common(id, |cache| Ok(cache.pending_notification_flags))
-            .await?;
-        Ok(flags)
     }
 
     pub async fn latest_birthdate(
