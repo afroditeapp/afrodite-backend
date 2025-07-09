@@ -1,7 +1,7 @@
 use database::current::write::GetDbWriteCommandsCommon;
 use model::{
     AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken,
-    PushNotificationStateInfo,
+    PushNotificationStateInfo, PushNotificationType,
 };
 
 use crate::{
@@ -75,11 +75,12 @@ impl WriteCommandsCommonPushNotification<'_> {
     pub async fn enable_push_notification_sent_flag(
         &self,
         id: AccountIdInternal,
+        notification: PushNotificationType,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.common()
                 .push_notification()
-                .enable_push_notification_sent_flag(id)
+                .enable_push_notification_sent_flag(id, notification)
         })
     }
 

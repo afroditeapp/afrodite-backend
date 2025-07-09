@@ -1,24 +1,35 @@
-use std::{future::Future, time::Duration};
+use std::{
+    collections::HashMap,
+    future::Future,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use error_stack::{Result, ResultExt};
 use fcm::{
     FcmClient,
-    message::Message,
-    response::{RecomendedAction, RecomendedWaitTime},
+    message::{AndroidConfig, AndroidMessagePriority, ApnsConfig, Message, Notification, Target},
 };
 use model::{
-    AccountIdInternal, FcmDeviceToken, PendingMessageIdInternal, PendingNotificationFlags,
-    PushNotificationStateInfoWithFlags,
+    AccountIdInternal, PendingNotificationFlags, PushNotificationStateInfoWithFlags,
+    PushNotificationType,
 };
-use serde_json::Value;
+use serde_json::json;
 use simple_backend::ServerQuitWatcher;
 use simple_backend_config::SimpleBackendConfig;
 use tokio::{
-    sync::mpsc::{Receiver, Sender, error::TrySendError},
+    sync::{
+        Mutex,
+        mpsc::{Receiver, Sender, error::TrySendError},
+    },
     task::JoinHandle,
     time::MissedTickBehavior,
 };
-use tracing::{error, info, warn};
+use tracing::{error, warn};
+
+use crate::push_notifications::logic::{FcmSendingLogic, UnusualAction};
+
+mod logic;
 
 const PUSH_NOTIFICATION_CHANNEL_BUFFER_SIZE: usize = 1024 * 1024;
 
@@ -32,12 +43,10 @@ pub enum PushNotificationError {
     RemoveDeviceTokenFailed,
     #[error("Setting push notification sent flag failed")]
     SettingPushNotificationSentFlagFailed,
-    #[error("Removing specific notification flags from cache failed")]
-    RemoveSpecificNotificationFlagsFromCacheFailed,
     #[error("Reading notification flags from cache failed")]
     ReadingNotificationFlagsFromCacheFailed,
-    #[error("Creating push notifications failed")]
-    CreatingPushNotificationsFailed,
+    #[error("Notification visiblity check failed")]
+    NotificationVisiblityCheckFailed,
     #[error("Saving pending notifications to database failed")]
     SaveToDatabaseFailed,
     #[error("Handling successful message sending action failed")]
@@ -62,21 +71,35 @@ impl PushNotificationManagerQuitHandle {
     }
 }
 
+#[derive(Debug, Default)]
+struct FallbackLogicState {
+    waiting_data_notification_receiving: HashMap<AccountIdInternal, Instant>,
+}
+
 /// New [PendingNotificationFlags] available in the cache.
 #[derive(Debug, Clone, Copy)]
 pub struct SendPushNotification {
     pub account_id: AccountIdInternal,
+    /// Send visible FCM notification which
+    /// notifies that new notification is available.
+    /// Notification data is not sent to FCM as that is
+    /// personal data.
+    pub fallback_notification: bool,
 }
 
 #[derive(Debug, Clone)]
 pub struct PushNotificationSender {
     sender: Sender<SendPushNotification>,
     sender_low_priority: Sender<SendPushNotification>,
+    data: Arc<Mutex<FallbackLogicState>>,
 }
 
 impl PushNotificationSender {
     pub fn send(&self, account_id: AccountIdInternal) {
-        let notification = SendPushNotification { account_id };
+        let notification = SendPushNotification {
+            account_id,
+            fallback_notification: false,
+        };
         match self.sender.try_send(notification) {
             Ok(()) => (),
             Err(TrySendError::Closed(_)) => {
@@ -89,7 +112,10 @@ impl PushNotificationSender {
     }
 
     pub fn send_low_priority(&self, account_id: AccountIdInternal) {
-        let notification = SendPushNotification { account_id };
+        let notification = SendPushNotification {
+            account_id,
+            fallback_notification: false,
+        };
         match self.sender_low_priority.try_send(notification) {
             Ok(()) => (),
             Err(TrySendError::Closed(_)) => {
@@ -104,18 +130,25 @@ impl PushNotificationSender {
             }
         }
     }
-}
 
-pub enum SuccessfulSendingAction {
-    MarkMessageNotificationSent { message: PendingMessageIdInternal },
-}
+    fn send_fallback_notification(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> std::result::Result<(), TrySendError<SendPushNotification>> {
+        let notification = SendPushNotification {
+            account_id,
+            fallback_notification: true,
+        };
+        self.sender.try_send(notification)
+    }
 
-pub struct PushNotification {
-    /// FCM message which will be sent
-    pub message: Option<Message>,
-    /// Remove these flags from cache if Message is sent successfully
-    pub flags: PendingNotificationFlags,
-    pub successful_sending_action: Option<SuccessfulSendingAction>,
+    async fn add_to_pending_fallback_notification_hash_map(&self, account_id: AccountIdInternal) {
+        self.data
+            .lock()
+            .await
+            .waiting_data_notification_receiving
+            .insert(account_id, Instant::now());
+    }
 }
 
 pub trait PushNotificationStateProvider {
@@ -127,6 +160,7 @@ pub trait PushNotificationStateProvider {
     fn enable_push_notification_sent_flag(
         &self,
         account_id: AccountIdInternal,
+        notification: PushNotificationType,
     ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
 
     fn remove_device_token(
@@ -134,41 +168,32 @@ pub trait PushNotificationStateProvider {
         account_id: AccountIdInternal,
     ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
 
-    /// Avoid saving the cached notification to DB when server closes.
-    fn remove_specific_notification_flags_from_cache(
-        &self,
-        account_id: AccountIdInternal,
-        flags: PendingNotificationFlags,
-    ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
-
     fn save_current_non_empty_notification_flags_from_cache_to_database(
         &self,
     ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
 
-    fn convert_to_push_notifications(
+    fn is_pending_notification_visible_notification(
         &self,
         account_id: AccountIdInternal,
-        token: FcmDeviceToken,
         flags: PendingNotificationFlags,
-    ) -> impl Future<Output = Result<Vec<PushNotification>, PushNotificationError>> + Send;
-
-    fn handle_successful_message_sending_action(
-        &self,
-        action: SuccessfulSendingAction,
-    ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
+    ) -> impl Future<Output = Result<bool, PushNotificationError>> + Send;
 }
 
 pub fn channel() -> (PushNotificationSender, PushNotificationReceiver) {
     let (sender, receiver) = tokio::sync::mpsc::channel(PUSH_NOTIFICATION_CHANNEL_BUFFER_SIZE);
     let (sender_low_priority, receiver_low_priority) =
         tokio::sync::mpsc::channel(PUSH_NOTIFICATION_CHANNEL_BUFFER_SIZE);
+    let data = Arc::new(Mutex::new(FallbackLogicState::default()));
     let sender = PushNotificationSender {
         sender,
         sender_low_priority,
+        data: data.clone(),
     };
     let receiver = PushNotificationReceiver {
         receiver,
         receiver_low_priority,
+        data,
+        sender: sender.clone(),
     };
     (sender, receiver)
 }
@@ -177,6 +202,8 @@ pub fn channel() -> (PushNotificationSender, PushNotificationReceiver) {
 pub struct PushNotificationReceiver {
     receiver: Receiver<SendPushNotification>,
     receiver_low_priority: Receiver<SendPushNotification>,
+    data: Arc<Mutex<FallbackLogicState>>,
+    sender: PushNotificationSender,
 }
 
 pub struct PushNotificationManager<T> {
@@ -224,9 +251,12 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
     }
 
     pub async fn run(mut self, mut quit_notification: ServerQuitWatcher) {
+        let sender = self.receiver.sender.clone();
+        let fallback_state = self.receiver.data.clone();
         tokio::select! {
             _ = quit_notification.recv() => (),
             _ = self.logic() => (),
+            _ = Self::fallback_logic(sender, fallback_state) => (),
         }
 
         // Make sure that quit started (closed channel also
@@ -258,9 +288,13 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
 
             match notification {
                 Some(notification) => {
-                    let result = self
-                        .send_push_notification(notification, &mut sending_logic)
-                        .await;
+                    let result = if notification.fallback_notification {
+                        self.send_fallback_push_notification(notification, &mut sending_logic)
+                            .await
+                    } else {
+                        self.send_push_notification(notification, &mut sending_logic)
+                            .await
+                    };
                     match result {
                         Ok(()) => (),
                         Err(e) => {
@@ -272,6 +306,29 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
                     warn!("Push notification channel is broken");
                     break;
                 }
+            }
+        }
+    }
+
+    async fn fallback_logic(
+        sender: PushNotificationSender,
+        fallback_state: Arc<Mutex<FallbackLogicState>>,
+    ) {
+        const MINUTE: Duration = Duration::from_secs(60);
+        loop {
+            tokio::time::sleep(MINUTE).await;
+            let mut data = fallback_state.lock().await;
+            let mut should_be_removed = vec![];
+            for (a, t) in &data.waiting_data_notification_receiving {
+                if t.elapsed() >= MINUTE {
+                    match sender.send_fallback_notification(*a) {
+                        Ok(()) | Err(TrySendError::Closed(_)) => should_be_removed.push(*a),
+                        Err(TrySendError::Full(_)) => break,
+                    }
+                }
+            }
+            for a in should_be_removed {
+                data.waiting_data_notification_receiving.remove(&a);
             }
         }
     }
@@ -318,260 +375,173 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
             PushNotificationStateInfoWithFlags::WithFlags { info, flags } => (info, flags),
         };
 
-        if info.fcm_notification_sent {
-            self.state
-                .remove_specific_notification_flags_from_cache(
-                    send_push_notification.account_id,
-                    flags,
-                )
-                .await
-                .change_context(
-                    PushNotificationError::RemoveSpecificNotificationFlagsFromCacheFailed,
-                )?;
+        if info.fcm_data_notification_sent && !info.fcm_visible_notification_sent {
+            self.receiver
+                .sender
+                .add_to_pending_fallback_notification_hash_map(send_push_notification.account_id)
+                .await;
             return Ok(());
         }
 
-        let token = match info.fcm_device_token {
-            Some(token) => token,
-            None => {
-                self.state
-                    .remove_specific_notification_flags_from_cache(
-                        send_push_notification.account_id,
-                        flags,
-                    )
-                    .await
-                    .change_context(
-                        PushNotificationError::RemoveSpecificNotificationFlagsFromCacheFailed,
-                    )?;
-                return Ok(());
-            }
+        let Some(token) = info.fcm_device_token else {
+            return Ok(());
         };
 
-        let messages = self
+        let is_visible = self
             .state
-            .convert_to_push_notifications(send_push_notification.account_id, token, flags)
+            .is_pending_notification_visible_notification(send_push_notification.account_id, flags)
             .await
-            .change_context(PushNotificationError::CreatingPushNotificationsFailed)?;
+            .change_context(PushNotificationError::NotificationVisiblityCheckFailed)?;
 
-        for m in messages {
-            if let Some(m) = m.message {
-                match sending_logic.send_push_notification(m, fcm).await {
-                    Ok(()) => (),
-                    Err(action) => match action {
-                        UnusualAction::DisablePushNotificationSupport => {
-                            self.fcm = None;
-                            return Ok(());
-                        }
-                        UnusualAction::RemoveDeviceToken => {
-                            return self
-                                .state
-                                .remove_device_token(send_push_notification.account_id)
-                                .await
-                                .change_context(PushNotificationError::RemoveDeviceTokenFailed);
-                        }
-                    },
-                }
-            }
+        let m = Message {
+            // Use minimal notification data as this only triggers client
+            // to download the notification.
+            data: Some(json!({
+                "n": "",
+            })),
+            target: Target::Token(token.into_string()),
+            android: Some(AndroidConfig {
+                priority: Some(if is_visible {
+                    AndroidMessagePriority::High
+                } else {
+                    AndroidMessagePriority::Normal
+                }),
+                collapse_key: Some("0".to_string()),
+                ..Default::default()
+            }),
+            apns: Some(ApnsConfig {
+                headers: Some(json!({
+                    // 5 is max priority for data notifications
+                    "apns-priority": "5",
+                    "apns-collapse-id": "0",
+                })),
+                ..Default::default()
+            }),
+            webpush: None,
+            fcm_options: None,
+            notification: None,
+        };
 
-            self.state
-                .remove_specific_notification_flags_from_cache(
-                    send_push_notification.account_id,
-                    m.flags,
-                )
-                .await
-                .change_context(
-                    PushNotificationError::RemoveSpecificNotificationFlagsFromCacheFailed,
-                )?;
-
-            if let Some(action) = m.successful_sending_action {
+        match sending_logic.send_push_notification(m, fcm).await {
+            Ok(()) => {
+                self.receiver
+                    .sender
+                    .add_to_pending_fallback_notification_hash_map(
+                        send_push_notification.account_id,
+                    )
+                    .await;
                 self.state
-                    .handle_successful_message_sending_action(action)
-                    .await?;
+                    .enable_push_notification_sent_flag(
+                        send_push_notification.account_id,
+                        PushNotificationType::Data,
+                    )
+                    .await
+                    .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)
             }
+            Err(action) => match action {
+                UnusualAction::DisablePushNotificationSupport => {
+                    self.fcm = None;
+                    Ok(())
+                }
+                UnusualAction::RemoveDeviceToken => self
+                    .state
+                    .remove_device_token(send_push_notification.account_id)
+                    .await
+                    .change_context(PushNotificationError::RemoveDeviceTokenFailed),
+            },
         }
+    }
 
-        self.state
-            .enable_push_notification_sent_flag(send_push_notification.account_id)
+    pub async fn send_fallback_push_notification(
+        &mut self,
+        send_push_notification: SendPushNotification,
+        sending_logic: &mut FcmSendingLogic,
+    ) -> Result<(), PushNotificationError> {
+        let fcm = if let Some(fcm) = &self.fcm {
+            fcm
+        } else {
+            return Ok(());
+        };
+
+        let info = self
+            .state
+            .get_push_notification_state_info_and_add_notification_value(
+                send_push_notification.account_id,
+            )
             .await
             .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)?;
 
-        Ok(())
-    }
-}
+        let (info, flags) = match info {
+            PushNotificationStateInfoWithFlags::EmptyFlags => return Ok(()),
+            PushNotificationStateInfoWithFlags::WithFlags { info, flags } => (info, flags),
+        };
 
-pub struct FcmSendingLogic {
-    initial_send_rate_limit_millis: u64,
-    exponential_backoff: Option<Duration>,
-    forced_wait_time: Option<Duration>,
-}
-
-impl FcmSendingLogic {
-    pub fn new() -> Self {
-        Self {
-            initial_send_rate_limit_millis: 1,
-            exponential_backoff: None,
-            forced_wait_time: None,
-        }
-    }
-
-    pub async fn send_push_notification(
-        &mut self,
-        message: Message,
-        fcm: &FcmClient,
-    ) -> std::result::Result<(), UnusualAction> {
-        self.exponential_backoff = None;
-        self.forced_wait_time = None;
-
-        loop {
-            match self.retry_sending(&message, fcm).await {
-                NextAction::NextMessage => return Ok(()),
-                NextAction::UnusualAction(action) => return Err(action),
-                NextAction::Retry => (),
-            }
-        }
-    }
-
-    async fn retry_sending(&mut self, message: &Message, fcm: &FcmClient) -> NextAction {
-        match (self.forced_wait_time.take(), self.exponential_backoff) {
-            (None, None) =>
-            // First time trying to send this message.
-            // Basic rate limiting might be good, so wait some time.
-            {
-                tokio::time::sleep(Duration::from_millis(self.initial_send_rate_limit_millis)).await
-            }
-            (Some(forced_wait_time), _) => tokio::time::sleep(forced_wait_time).await,
-            (_, Some(exponential_backoff)) => {
-                // TODO: Add some jitter time?
-                let next_exponential_backoff =
-                    exponential_backoff.as_millis() * exponential_backoff.as_millis();
-                tokio::time::sleep(exponential_backoff).await;
-                self.exponential_backoff =
-                    Some(Duration::from_millis(next_exponential_backoff as u64));
-            }
+        if info.fcm_visible_notification_sent {
+            return Ok(());
         }
 
-        match fcm.send(message).await {
-            Ok(response) => {
-                let action = response.recommended_error_handling_action();
-                if let Some(action) = &action {
-                    error!(
-                        "FCM error detected, response: {:#?}, action: {:#?}",
-                        response, action
-                    );
+        let Some(token) = info.fcm_device_token else {
+            return Ok(());
+        };
+
+        let is_visible = self
+            .state
+            .is_pending_notification_visible_notification(send_push_notification.account_id, flags)
+            .await
+            .change_context(PushNotificationError::NotificationVisiblityCheckFailed)?;
+
+        if !is_visible {
+            return Ok(());
+        }
+
+        let m = Message {
+            // Use minimal notification data as this only triggers client
+            // to download the notification.
+            notification: Some(Notification {
+                // TODO(prod): Get translation
+                title: Some("New notification available".to_string()),
+                ..Default::default()
+            }),
+            target: Target::Token(token.into_string()),
+            android: Some(AndroidConfig {
+                priority: Some(AndroidMessagePriority::High),
+                collapse_key: Some("1".to_string()),
+                ..Default::default()
+            }),
+            apns: Some(ApnsConfig {
+                headers: Some(json!({
+                    "apns-priority": "10",
+                    "apns-collapse-id": "1",
+                })),
+                ..Default::default()
+            }),
+            webpush: None,
+            fcm_options: None,
+            data: None,
+        };
+
+        match sending_logic.send_push_notification(m, fcm).await {
+            Ok(()) => self
+                .state
+                .enable_push_notification_sent_flag(
+                    send_push_notification.account_id,
+                    PushNotificationType::Visible,
+                )
+                .await
+                .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed),
+            Err(action) => match action {
+                UnusualAction::DisablePushNotificationSupport => {
+                    self.fcm = None;
+                    Ok(())
                 }
-                match action {
-                    None => {
-                        // TODO(prod): Remove logging
-                        info!("FCM send successful");
-                        NextAction::NextMessage // No errors
-                    }
-                    Some(
-                        RecomendedAction::CheckIosAndWebCredentials
-                        | RecomendedAction::CheckSenderIdEquality,
-                    ) => {
-                        error!(
-                            "Disabling FCM support because of recomended action: {:?}",
-                            action
-                        );
-                        NextAction::UnusualAction(UnusualAction::DisablePushNotificationSupport)
-                    }
-                    Some(RecomendedAction::FixMessageContent) => {
-                        // Handle iOS only APNs BadDeviceToken error.
-                        // After the error next FCM message sending will
-                        // fail with FcmResponseError::Unregistered.
-                        let bad_device_token_error = response
-                            .json()
-                            .get("error")
-                            .and_then(|v| v.as_object())
-                            .and_then(|v| v.get("details"))
-                            .and_then(|v| v.as_array())
-                            .and_then(|v| {
-                                v.iter().filter_map(|v| v.as_object()).find(|v| {
-                                    v.get("reason")
-                                        == Some(&Value::String("BadDeviceToken".to_string()))
-                                })
-                            });
-                        if bad_device_token_error.is_some() {
-                            error!("APNs BadDeviceToken error");
-                            // Use the current Firebase device token for the
-                            // next message because it is not documented that
-                            // next FCM message sending will return
-                            // FcmResponseError::Unregistered error.
-                            NextAction::NextMessage
-                        } else {
-                            error!(
-                                "Disabling FCM support because of recomended action: {:?}",
-                                action
-                            );
-                            NextAction::UnusualAction(UnusualAction::DisablePushNotificationSupport)
-                        }
-                    }
-                    Some(RecomendedAction::RemoveFcmAppToken) => {
-                        NextAction::UnusualAction(UnusualAction::RemoveDeviceToken)
-                    }
-                    Some(RecomendedAction::ReduceMessageRateAndRetry(wait_time)) => {
-                        self.initial_send_rate_limit_millis *= 2;
-                        self.handle_recommended_wait_time(wait_time);
-                        NextAction::Retry
-                    }
-                    Some(RecomendedAction::Retry(wait_time)) => {
-                        self.handle_recommended_wait_time(wait_time);
-                        NextAction::Retry
-                    }
-                    Some(RecomendedAction::HandleUnknownError) => {
-                        error!("FCM unknown error");
-                        // Just set forced wait time and hope for the best...
-                        warn!("Waiting 60 seconds before retrying message sending");
-                        self.forced_wait_time = Some(Duration::from_secs(60));
-                        NextAction::Retry
-                    }
-                }
-            }
-            Err(e) => {
-                error!("FCM send failed: {:?}", e);
-                if e.is_access_token_missing_even_if_server_requests_completed() {
-                    error!("Disabling FCM support because service account key might be invalid");
-                    NextAction::UnusualAction(UnusualAction::DisablePushNotificationSupport)
-                } else {
-                    // Just set forced wait time and hope for the best...
-                    warn!("Waiting 60 seconds before retrying message sending");
-                    self.forced_wait_time = Some(Duration::from_secs(60));
-                    NextAction::Retry
-                }
-            }
+                UnusualAction::RemoveDeviceToken => self
+                    .state
+                    .remove_device_token(send_push_notification.account_id)
+                    .await
+                    .change_context(PushNotificationError::RemoveDeviceTokenFailed),
+            },
         }
     }
-
-    fn handle_recommended_wait_time(&mut self, recommendation: RecomendedWaitTime) {
-        match recommendation {
-            RecomendedWaitTime::InitialWaitTime(wait_time) => {
-                if self.exponential_backoff.is_none() {
-                    // Set initial time for exponential back-off
-                    self.exponential_backoff = Some(wait_time);
-                }
-            }
-            RecomendedWaitTime::SpecificWaitTime(retry_after) => {
-                self.forced_wait_time = Some(retry_after.wait_time())
-            }
-        }
-    }
-}
-
-impl Default for FcmSendingLogic {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-enum NextAction {
-    UnusualAction(UnusualAction),
-    NextMessage,
-    Retry,
-}
-
-pub enum UnusualAction {
-    DisablePushNotificationSupport,
-    RemoveDeviceToken,
 }
 
 // TODO(prod): Limit push notification sending rate.

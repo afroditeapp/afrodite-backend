@@ -232,6 +232,12 @@ pub struct PendingNotificationWithData {
 #[diesel(treat_none_as_null = true)]
 pub struct PushNotificationDbState {
     pub pending_notification: PendingNotification,
-    pub fcm_notification_sent: bool,
+    pub fcm_data_notification_sent: bool,
+    pub fcm_visible_notification_sent: bool,
     pub fcm_device_token: Option<FcmDeviceToken>,
+}
+
+pub enum PushNotificationType {
+    Data,
+    Visible,
 }

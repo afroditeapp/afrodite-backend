@@ -2,7 +2,7 @@ use diesel::{prelude::*, update};
 use error_stack::Result;
 use model::{
     AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken,
-    PushNotificationStateInfo,
+    PushNotificationStateInfo, PushNotificationType,
 };
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
@@ -19,7 +19,8 @@ impl CurrentWriteCommonPushNotification<'_> {
         update(common_state.find(id.as_db_id()))
             .set((
                 fcm_device_token.eq(None::<FcmDeviceToken>),
-                fcm_notification_sent.eq(false),
+                fcm_data_notification_sent.eq(false),
+                fcm_visible_notification_sent.eq(false),
                 pending_notification_token.eq(None::<PendingNotificationToken>),
             ))
             .execute(self.conn())
@@ -37,7 +38,8 @@ impl CurrentWriteCommonPushNotification<'_> {
         update(common_state.find(id.as_db_id()))
             .set((
                 fcm_device_token.eq(None::<FcmDeviceToken>),
-                fcm_notification_sent.eq(false),
+                fcm_data_notification_sent.eq(false),
+                fcm_visible_notification_sent.eq(false),
             ))
             .execute(self.conn())
             .into_db_error(id)?;
@@ -64,28 +66,14 @@ impl CurrentWriteCommonPushNotification<'_> {
         update(common_state.find(id.as_db_id()))
             .set((
                 fcm_device_token.eq(token),
-                fcm_notification_sent.eq(false),
+                fcm_data_notification_sent.eq(false),
+                fcm_visible_notification_sent.eq(false),
                 pending_notification_token.eq(notification_token.clone()),
             ))
             .execute(self.conn())
             .into_db_error(id)?;
 
         Ok(notification_token)
-    }
-
-    pub fn update_fcm_notification_sent_value(
-        &mut self,
-        id: AccountIdInternal,
-        fcm_notification_sent_value: bool,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::common_state::dsl::*;
-
-        update(common_state.find(id.as_db_id()))
-            .set(fcm_notification_sent.eq(fcm_notification_sent_value))
-            .execute(self.conn())
-            .into_db_error(id)?;
-
-        Ok(())
     }
 
     pub fn reset_pending_notification(
@@ -95,7 +83,11 @@ impl CurrentWriteCommonPushNotification<'_> {
         use model::schema::common_state::dsl::*;
 
         update(common_state.find(id.as_db_id()))
-            .set((pending_notification.eq(0), fcm_notification_sent.eq(false)))
+            .set((
+                pending_notification.eq(0),
+                fcm_data_notification_sent.eq(false),
+                fcm_visible_notification_sent.eq(false),
+            ))
             .execute(self.conn())
             .into_db_error(())?;
 
@@ -122,7 +114,8 @@ impl CurrentWriteCommonPushNotification<'_> {
         update(common_state::table.filter(common_state::pending_notification_token.eq(token)))
             .set((
                 common_state::pending_notification.eq(0),
-                common_state::fcm_notification_sent.eq(false),
+                common_state::fcm_data_notification_sent.eq(false),
+                common_state::fcm_visible_notification_sent.eq(false),
             ))
             .execute(self.conn())
             .into_db_error(())?;
@@ -133,13 +126,24 @@ impl CurrentWriteCommonPushNotification<'_> {
     pub fn enable_push_notification_sent_flag(
         &mut self,
         id: AccountIdInternal,
+        notification: PushNotificationType,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::common_state::dsl::*;
 
-        update(common_state.find(id.as_db_id()))
-            .set((fcm_notification_sent.eq(true),))
-            .execute(self.conn())
-            .into_db_error(())?;
+        match notification {
+            PushNotificationType::Data => {
+                update(common_state.find(id.as_db_id()))
+                    .set(fcm_data_notification_sent.eq(true))
+                    .execute(self.conn())
+                    .into_db_error(())?;
+            }
+            PushNotificationType::Visible => {
+                update(common_state.find(id.as_db_id()))
+                    .set(fcm_visible_notification_sent.eq(true))
+                    .execute(self.conn())
+                    .into_db_error(())?;
+            }
+        }
 
         Ok(())
     }
@@ -159,15 +163,21 @@ impl CurrentWriteCommonPushNotification<'_> {
 
         let new_notification_value = notification | *notification_to_be_added.as_i64();
 
-        let (token, notification_sent) = update(common_state.find(id.as_db_id()))
-            .set((pending_notification.eq(new_notification_value),))
-            .returning((fcm_device_token, fcm_notification_sent))
-            .get_result(self.conn())
-            .into_db_error(())?;
+        let (token, data_notification_sent, visible_notification_sent) =
+            update(common_state.find(id.as_db_id()))
+                .set((pending_notification.eq(new_notification_value),))
+                .returning((
+                    fcm_device_token,
+                    fcm_data_notification_sent,
+                    fcm_visible_notification_sent,
+                ))
+                .get_result(self.conn())
+                .into_db_error(())?;
 
         Ok(PushNotificationStateInfo {
             fcm_device_token: token,
-            fcm_notification_sent: notification_sent,
+            fcm_data_notification_sent: data_notification_sent,
+            fcm_visible_notification_sent: visible_notification_sent,
         })
     }
 }
