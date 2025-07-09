@@ -186,7 +186,8 @@ CREATE TABLE IF NOT EXISTS common_state(
     pending_notification         INTEGER        NOT NULL DEFAULT 0,
     -- Access token for getting pending notifications from server.
     pending_notification_token   TEXT           UNIQUE,
-    fcm_notification_sent        BOOLEAN        NOT NULL DEFAULT 0,
+    fcm_data_notification_sent          BOOLEAN            NOT NULL DEFAULT 0,
+    fcm_visible_notification_sent       BOOLEAN            NOT NULL DEFAULT 0,
     fcm_device_token             TEXT           UNIQUE,
     -- 0 = Android
     -- 1 = iOS

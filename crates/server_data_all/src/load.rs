@@ -115,11 +115,8 @@ impl DbDataToCacheLoader {
                     .push_notification_db_state(account_id)
             })
             .await?;
-        // Try retry sending of not already sent notifications
-        if !push_notification_state.fcm_notification_sent {
-            entry.common.pending_notification_flags =
-                push_notification_state.pending_notification.into();
-        }
+        entry.common.pending_notification_flags =
+            push_notification_state.pending_notification.into();
 
         // App notification settings
         {

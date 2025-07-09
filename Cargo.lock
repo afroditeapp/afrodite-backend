@@ -4549,7 +4549,6 @@ dependencies = [
  "chrono",
  "config",
  "error-stack",
- "fcm",
  "manager_api",
  "manager_model",
  "model",

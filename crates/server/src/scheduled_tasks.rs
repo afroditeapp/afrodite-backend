@@ -25,6 +25,9 @@ use simple_backend_utils::{IntoReportFromString, time::sleep_until_current_time_
 use tokio::{sync::broadcast::error::TryRecvError, task::JoinHandle, time::sleep};
 use tracing::{error, info, warn};
 
+// TODO(prod): Add logic for clearing pending notification flags and sending
+//             email notifications if needed.
+
 mod backup;
 
 #[derive(thiserror::Error, Debug)]
