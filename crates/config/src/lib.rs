@@ -31,6 +31,7 @@ use file::{
 use file_dynamic::ConfigFileDynamic;
 use file_email_content::EmailContentFile;
 use model::{BotConfig, CustomReportsConfig};
+pub use model::{ClientFeaturesConfig, ClientFeaturesConfigInternal};
 use model_server_data::{AttributesFileInternal, ProfileAttributesInternal};
 use reqwest::Url;
 use sha2::{Digest, Sha256};
@@ -39,11 +40,6 @@ use simple_backend_utils::{ContextExt, IntoReportFromString};
 
 use self::file::{Components, ConfigFile, ExternalServices, LocationConfig};
 use crate::file_notification_content::NotificationContentFile;
-
-// TODO(prod): Remove
-pub const DATABASE_MESSAGE_CHANNEL_BUFFER: usize = 32;
-
-pub use model::{ClientFeaturesConfig, ClientFeaturesConfigInternal};
 
 #[derive(thiserror::Error, Debug)]
 pub enum GetConfigError {
