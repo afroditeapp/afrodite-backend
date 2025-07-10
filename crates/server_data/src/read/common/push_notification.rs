@@ -22,6 +22,17 @@ impl ReadCommandsCommonPushNotification<'_> {
         Ok(flags)
     }
 
+    pub async fn fcm_token_exists(&self, id: AccountIdInternal) -> Result<bool, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.common()
+                .push_notification()
+                .push_notification_db_state(id)
+        })
+        .await
+        .into_error()
+        .map(|v| v.fcm_device_token.is_some())
+    }
+
     pub async fn push_notification_state(
         &self,
         id: AccountIdInternal,

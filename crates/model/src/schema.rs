@@ -42,6 +42,7 @@ diesel::table! {
     account_email_sending_state (account_id) {
         account_id -> Integer,
         account_registered_state_number -> Integer,
+        new_message_state_number -> Integer,
     }
 }
 
@@ -637,6 +638,8 @@ diesel::table! {
         sender_acknowledgement -> Bool,
         receiver_acknowledgement -> Bool,
         receiver_push_notification_sent -> Bool,
+        receiver_email_notification_sent -> Bool,
+        message_unix_time -> Integer,
         message_number -> Integer,
         sender_client_id -> Integer,
         sender_client_local_id -> Integer,

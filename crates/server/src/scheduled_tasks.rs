@@ -29,6 +29,7 @@ use tracing::{error, info, warn};
 //             email notifications if needed.
 
 mod backup;
+mod email;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ScheduledTaskError {
@@ -234,6 +235,10 @@ impl ScheduledTaskManager {
             } else if account_state == AccountState::Banned {
                 self.unban_account_if_needed(id).await?;
             }
+
+            email::handle_email_notifications(&self.state, id)
+                .await
+                .change_context(ScheduledTaskError::DatabaseError)?;
         }
 
         if age_updated != 0 {

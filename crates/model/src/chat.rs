@@ -143,3 +143,8 @@ pub struct PendingMessageIdInternal {
     pub receiver: AccountIdDb,
     pub mn: MessageNumber,
 }
+
+pub struct PendingMessageIdInternalAndMessageTime {
+    pub id: PendingMessageIdInternal,
+    pub time: UnixTime,
+}

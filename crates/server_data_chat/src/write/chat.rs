@@ -271,17 +271,6 @@ impl WriteCommandsChat<'_> {
 
     // TODO(prod): Change SQLite settings that delete is overwriting.
 
-    pub async fn mark_receiver_push_notification_sent(
-        &self,
-        messages: Vec<PendingMessageIdInternal>,
-    ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.chat()
-                .message()
-                .mark_receiver_push_notification_sent(messages)
-        })
-    }
-
     pub async fn add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
         &self,
         message_receiver: AccountIdInternal,

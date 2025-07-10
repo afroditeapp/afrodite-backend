@@ -53,12 +53,14 @@ impl Default for EmailSendingState {
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountEmailSendingStateRaw {
     pub account_registered_state_number: EmailSendingState,
+    pub new_message_state_number: EmailSendingState,
 }
 
 impl AccountEmailSendingStateRaw {
     pub fn get_ref_mut_to(&mut self, message: EmailMessages) -> &mut EmailSendingState {
         match message {
             EmailMessages::AccountRegistered => &mut self.account_registered_state_number,
+            EmailMessages::NewMessage => &mut self.new_message_state_number,
         }
     }
 }
