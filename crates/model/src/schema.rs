@@ -299,6 +299,7 @@ diesel::table! {
         fcm_data_notification_sent -> Bool,
         fcm_visible_notification_sent -> Bool,
         fcm_device_token -> Nullable<Text>,
+        fcm_device_token_unix_time -> Nullable<Integer>,
         client_login_session_platform -> Nullable<Integer>,
         client_language -> Text,
     }

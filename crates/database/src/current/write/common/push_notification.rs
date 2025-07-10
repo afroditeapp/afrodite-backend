@@ -2,7 +2,7 @@ use diesel::{prelude::*, update};
 use error_stack::Result;
 use model::{
     AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken,
-    PushNotificationStateInfo, PushNotificationType,
+    PushNotificationStateInfo, PushNotificationType, UnixTime,
 };
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
@@ -19,6 +19,7 @@ impl CurrentWriteCommonPushNotification<'_> {
         update(common_state.find(id.as_db_id()))
             .set((
                 fcm_device_token.eq(None::<FcmDeviceToken>),
+                fcm_device_token_unix_time.eq(None::<UnixTime>),
                 fcm_data_notification_sent.eq(false),
                 fcm_visible_notification_sent.eq(false),
                 pending_notification_token.eq(None::<PendingNotificationToken>),
@@ -38,6 +39,7 @@ impl CurrentWriteCommonPushNotification<'_> {
         update(common_state.find(id.as_db_id()))
             .set((
                 fcm_device_token.eq(None::<FcmDeviceToken>),
+                fcm_device_token_unix_time.eq(None::<UnixTime>),
                 fcm_data_notification_sent.eq(false),
                 fcm_visible_notification_sent.eq(false),
             ))
@@ -57,7 +59,10 @@ impl CurrentWriteCommonPushNotification<'_> {
         // Remove the token from other accounts. It is possible that
         // same device is used for multiple accounts.
         update(common_state.filter(fcm_device_token.eq(token.clone())))
-            .set(fcm_device_token.eq(None::<FcmDeviceToken>))
+            .set((
+                fcm_device_token.eq(None::<FcmDeviceToken>),
+                fcm_device_token_unix_time.eq(None::<UnixTime>),
+            ))
             .execute(self.conn())
             .into_db_error(())?;
 
@@ -66,6 +71,7 @@ impl CurrentWriteCommonPushNotification<'_> {
         update(common_state.find(id.as_db_id()))
             .set((
                 fcm_device_token.eq(token),
+                fcm_device_token_unix_time.eq(UnixTime::current_time()),
                 fcm_data_notification_sent.eq(false),
                 fcm_visible_notification_sent.eq(false),
                 pending_notification_token.eq(notification_token.clone()),
