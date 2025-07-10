@@ -189,6 +189,9 @@ CREATE TABLE IF NOT EXISTS common_state(
     fcm_data_notification_sent          BOOLEAN            NOT NULL DEFAULT 0,
     fcm_visible_notification_sent       BOOLEAN            NOT NULL DEFAULT 0,
     fcm_device_token             TEXT           UNIQUE,
+    -- Time when a token is saved. Not currently used for anything.
+    -- Firebase docs recommend storing a timestamp with a token.
+    fcm_device_token_unix_time   INTEGER,
     -- 0 = Android
     -- 1 = iOS
     -- 2 = Web
