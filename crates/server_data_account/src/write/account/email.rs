@@ -22,13 +22,32 @@ impl WriteCommandsAccountEmail<'_> {
         id: AccountIdInternal,
         email: EmailMessages,
     ) -> Result<(), DataError> {
+        self.send_email_internal(id, email, false).await
+    }
+
+    pub async fn send_email_if_sending_is_not_in_progress(
+        &self,
+        id: AccountIdInternal,
+        email: EmailMessages,
+    ) -> Result<(), DataError> {
+        self.send_email_internal(id, email, true).await
+    }
+
+    async fn send_email_internal(
+        &self,
+        id: AccountIdInternal,
+        email: EmailMessages,
+        send_again: bool,
+    ) -> Result<(), DataError> {
         let send_needed = db_transaction!(self, move |mut cmds| {
             let mut send_needed = false;
             cmds.account()
                 .email()
                 .modify_email_sending_states(id, |state| {
                     let correct_field = state.get_ref_mut_to(email);
-                    if *correct_field == EmailSendingState::NotSent {
+                    if *correct_field == EmailSendingState::NotSent
+                        || (send_again && *correct_field == EmailSendingState::SentSuccessfully)
+                    {
                         *correct_field = EmailSendingState::SendRequested;
                         send_needed = true;
                     }

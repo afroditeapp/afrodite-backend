@@ -35,6 +35,25 @@ impl CurrentWriteChatMessage<'_> {
         Ok(())
     }
 
+    pub fn mark_message_email_notification_sent(
+        &mut self,
+        messages: Vec<PendingMessageIdInternal>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::pending_messages::dsl::*;
+
+        for m in messages {
+            update(pending_messages)
+                .filter(account_id_sender.eq(m.sender.as_db_id()))
+                .filter(account_id_receiver.eq(m.receiver))
+                .filter(message_number.eq(m.mn))
+                .set(receiver_email_notification_sent.eq(true))
+                .execute(self.conn())
+                .into_db_error(())?;
+        }
+
+        Ok(())
+    }
+
     pub fn add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
         &mut self,
         message_receiver: AccountIdInternal,
@@ -164,6 +183,7 @@ impl CurrentWriteChatMessage<'_> {
                 account_interaction.eq(interaction.id),
                 account_id_sender.eq(sender.as_db_id()),
                 account_id_receiver.eq(receiver.as_db_id()),
+                message_unix_time.eq(time),
                 message_number.eq(new_message_number),
                 message_bytes.eq(&signed),
                 sender_client_id.eq(client_id_value),

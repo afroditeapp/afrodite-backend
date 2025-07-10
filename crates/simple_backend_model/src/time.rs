@@ -1,7 +1,7 @@
 use chrono::{Datelike, Timelike};
 use diesel::{AsExpression, FromSqlRow, sql_types::BigInt};
 use serde::{Deserialize, Serialize};
-use simple_backend_utils::current_unix_time;
+use simple_backend_utils::{current_unix_time, time::DurationValue};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::macros::diesel_i64_wrapper;
@@ -67,6 +67,10 @@ impl UnixTime {
 
     pub fn to_chrono_time(&self) -> Option<chrono::DateTime<chrono::Utc>> {
         chrono::DateTime::from_timestamp(self.ut, 0)
+    }
+
+    pub fn duration_value_elapsed(&self, wait: DurationValue) -> bool {
+        self.ut + wait.seconds as i64 >= Self::current_time().ut
     }
 }
 

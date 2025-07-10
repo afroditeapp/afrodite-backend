@@ -1,10 +1,9 @@
 use database_chat::current::read::GetDbReadCommandsChat;
-use model::NewMessageNotificationList;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState,
     AllMatchesPage, ChatProfileLink, ChatStateRaw, GetSentMessage, MatchId, MessageNumber,
-    PageItemCountForNewLikes, PendingMessageIdInternal, ReceivedBlocksPage, ReceivedLikeId,
-    SentBlocksPage, SentLikesPage, SentMessageId,
+    PageItemCountForNewLikes, ReceivedBlocksPage, ReceivedLikeId, SentBlocksPage, SentLikesPage,
+    SentMessageId,
 };
 use server_data::{
     DataError, IntoDataError,
@@ -196,15 +195,6 @@ impl ReadCommandsChat<'_> {
         id: AccountIdInternal,
     ) -> Result<Vec<Vec<u8>>, DataError> {
         self.db_read(move |mut cmds| cmds.chat().message().all_pending_messages(id))
-            .await
-            .into_error()
-    }
-
-    pub async fn new_message_notification_list(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<(NewMessageNotificationList, Vec<PendingMessageIdInternal>), DataError> {
-        self.db_read(move |mut cmds| cmds.chat().message().new_message_notification_list(id))
             .await
             .into_error()
     }

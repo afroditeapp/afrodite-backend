@@ -308,12 +308,16 @@ impl Default for AccountLimitsConfig {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ChatLimitsConfig {
     pub max_public_key_count: u16,
+    pub new_message_email_with_fcm_token: DurationValue,
+    pub new_message_email_without_fcm_token: DurationValue,
 }
 
 impl Default for ChatLimitsConfig {
     fn default() -> Self {
         Self {
             max_public_key_count: 100,
+            new_message_email_with_fcm_token: DurationValue::from_days(7),
+            new_message_email_without_fcm_token: DurationValue::from_days(1),
         }
     }
 }

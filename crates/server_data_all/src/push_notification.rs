@@ -29,10 +29,15 @@ pub async fn get_push_notification_data(
 
             let flags = PendingNotificationFlags::from(notification_value);
             let new_message = if flags.contains(PendingNotificationFlags::NEW_MESSAGE) {
-                let (notifications, messages_pending_push_notification) =
-                    cmds.read().chat().new_message_notification_list(id).await?;
+                let (notifications, messages_pending_push_notification) = cmds
+                    .read()
+                    .chat()
+                    .notification()
+                    .new_message_notification_list(id)
+                    .await?;
 
                 cmds.chat()
+                    .notification()
                     .mark_receiver_push_notification_sent(messages_pending_push_notification)
                     .await?;
 

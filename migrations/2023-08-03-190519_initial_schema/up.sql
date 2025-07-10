@@ -306,6 +306,7 @@ CREATE TABLE IF NOT EXISTS account_setup(
 CREATE TABLE IF NOT EXISTS account_email_sending_state(
     account_id                      INTEGER PRIMARY KEY NOT NULL,
     account_registered_state_number INTEGER             NOT NULL DEFAULT 0,
+    new_message_state_number        INTEGER             NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -969,6 +970,9 @@ CREATE TABLE IF NOT EXISTS pending_messages(
     -- Track push notification sending for the message to
     -- avoid sending the same data again.
     receiver_push_notification_sent BOOLEAN NOT NULL DEFAULT 0,
+    -- Email notification for the message.
+    receiver_email_notification_sent BOOLEAN NOT NULL DEFAULT 0,
+    message_unix_time               INTEGER NOT NULL,
     -- Order number for the message in the conversation.
     message_number                  INTEGER NOT NULL,
     -- Client ID and client local ID together makes

@@ -1,5 +1,5 @@
 use database_chat::current::write::GetDbWriteCommandsChat;
-use model::AccountIdInternal;
+use model::{AccountIdInternal, PendingMessageIdInternal};
 use model_chat::ChatAppNotificationSettings;
 use server_data::{
     DataError, IntoDataError, cache::CacheWriteCommon, define_cmd_wrapper_write, result::Result,
@@ -26,5 +26,27 @@ impl WriteCommandsChatNotification<'_> {
         })
         .await
         .into_error()
+    }
+
+    pub async fn mark_receiver_push_notification_sent(
+        &self,
+        messages: Vec<PendingMessageIdInternal>,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.chat()
+                .message()
+                .mark_receiver_push_notification_sent(messages)
+        })
+    }
+
+    pub async fn mark_message_email_notification_sent(
+        &self,
+        messages: Vec<PendingMessageIdInternal>,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.chat()
+                .message()
+                .mark_message_email_notification_sent(messages)
+        })
     }
 }

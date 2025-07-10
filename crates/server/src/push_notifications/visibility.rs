@@ -21,6 +21,7 @@ pub async fn is_notification_visible(
             let (notifications, _) = state
                 .read()
                 .chat()
+                .notification()
                 .new_message_notification_list(id)
                 .await
                 .ok()?;

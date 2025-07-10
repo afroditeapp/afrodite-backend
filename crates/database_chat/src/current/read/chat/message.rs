@@ -5,7 +5,8 @@ use diesel::prelude::*;
 use error_stack::Result;
 use model::{
     AccountId, AccountIdDb, ConversationId, MessageNumber, NewMessageNotification,
-    NewMessageNotificationList, PendingMessageIdInternal,
+    NewMessageNotificationList, PendingMessageIdInternal, PendingMessageIdInternalAndMessageTime,
+    UnixTime,
 };
 use model_chat::{AccountIdInternal, GetSentMessage, PendingMessageInternal, SentMessageId};
 
@@ -130,6 +131,49 @@ impl CurrentReadChatMessage<'_> {
             NewMessageNotificationList { v },
             messages_pending_push_notification,
         ))
+    }
+
+    pub fn messages_without_sent_email_notification(
+        &mut self,
+        id_message_receiver: AccountIdInternal,
+    ) -> Result<Vec<PendingMessageIdInternalAndMessageTime>, DieselDatabaseError> {
+        use crate::schema::{account_id, pending_messages::dsl::*};
+
+        let data: Vec<(AccountIdDb, AccountId, AccountIdDb, UnixTime, MessageNumber)> =
+            pending_messages
+                .inner_join(account_id::table.on(account_id_sender.eq(account_id::id)))
+                .filter(account_id_receiver.eq(id_message_receiver.as_db_id()))
+                .filter(receiver_acknowledgement.eq(false))
+                .filter(receiver_email_notification_sent.eq(false))
+                .select((
+                    account_id::id,
+                    account_id::uuid,
+                    account_id_receiver,
+                    message_unix_time,
+                    message_number,
+                ))
+                .order_by(account_id_sender)
+                .load(self.conn())
+                .into_db_error(())?;
+
+        let v = data
+            .into_iter()
+            .map(|(sender_db_id, sender_id, receiver_db_id, time, mn)| {
+                PendingMessageIdInternalAndMessageTime {
+                    id: PendingMessageIdInternal {
+                        sender: AccountIdInternal {
+                            id: sender_db_id,
+                            uuid: sender_id,
+                        },
+                        receiver: receiver_db_id,
+                        mn,
+                    },
+                    time,
+                }
+            })
+            .collect();
+
+        Ok(v)
     }
 
     pub fn all_sent_messages(
