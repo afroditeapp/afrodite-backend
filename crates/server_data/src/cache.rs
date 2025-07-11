@@ -517,6 +517,9 @@ pub struct ConnectionInfo {
     pub event_sender: EventSender,
 }
 
+// TODO(refactor): Rename CachedAccountComponentData to CacheAccount
+// and also others similarly.
+
 #[derive(Debug)]
 pub struct CacheEntry {
     pub account: Option<Box<CachedAccountComponentData>>,

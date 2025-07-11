@@ -244,7 +244,6 @@ impl Default for LocationConfig {
     fn default() -> Self {
         Self {
             // Just use Finland as default as that is tested to work.
-            // TODO: Add validation to the values? And more location unit tests?
             latitude_top_left: 70.1,
             longitude_top_left: 19.5,
             latitude_bottom_right: 59.8,

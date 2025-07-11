@@ -329,9 +329,6 @@ pub fn get_config(
 
     let client_api_urls = create_client_api_urls(&components, &external_services)?;
 
-    // TODO(prod): Consider adding file path for ConfigFileDynamic
-    //             to server config.
-
     let file_dynamic = ConfigFileDynamic::load(current_dir, save_default_config_if_not_found)
         .change_context(GetConfigError::LoadFileError)?;
 

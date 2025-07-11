@@ -253,8 +253,8 @@ async fn handle_socket(
     tokio::select! {
         _ = ws_manager.server_quit_detected() => {
             info!("Server quit detected, closing WebSocket connection for '{}', address: {}", id.id.as_i64(), address);
-            // TODO: Probably sessions should be ended when server quits?
-            //       Test does this code path work with client.
+            // It seems that this does not run when server closes.
+            // handle_socket_result will return Ok(()) when that happens.
             let result = state.write(move |cmds| async move {
                 cmds.common()
                     .end_connection_session(id, address)
@@ -496,8 +496,7 @@ async fn handle_socket_result(
                                 timeout_timer.reset().await;
                             },
                             Message::Pong(_) => (),
-                            // TODO(prod): Consider flagging the account for
-                            // suspicious activity.
+                            // TODO(prod): Remove data and address?
                             Message::Binary(data) => {
                                 error!("Client sent unexpected binary message: {:?}, address: {}", data, address);
                             }
