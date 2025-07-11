@@ -14,8 +14,8 @@ use server_common::data::WithInfo;
 pub use server_common::data::cache::CacheError;
 use server_data::{
     cache::{
-        DatabaseCache, account::CachedAccountComponentData, chat::CachedChatComponentData,
-        media::CachedMedia, profile::CachedProfile,
+        DatabaseCache, account::CacheAccount, chat::CacheChat, media::CacheMedia,
+        profile::CacheProfile,
     },
     index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
 };
@@ -155,7 +155,7 @@ impl DbDataToCacheLoader {
         }
 
         if config.components().account {
-            let account_data = CachedAccountComponentData::default();
+            let account_data = CacheAccount::default();
             entry.account = Some(Box::new(account_data));
         }
 
@@ -172,7 +172,7 @@ impl DbDataToCacheLoader {
             let media_state = db
                 .db_read(move |mut cmds| cmds.media().get_media_state(account_id))
                 .await?;
-            let media_data = CachedMedia::new(
+            let media_data = CacheMedia::new(
                 account_id.uuid,
                 media_content.profile_content_version_uuid,
                 media_state.profile_content_edited_unix_time,
@@ -209,7 +209,7 @@ impl DbDataToCacheLoader {
                 })
                 .await?;
 
-            let mut profile_data = CachedProfile::new(
+            let mut profile_data = CacheProfile::new(
                 account_id.uuid,
                 profile,
                 state.into(),
@@ -247,7 +247,7 @@ impl DbDataToCacheLoader {
         }
 
         if config.components().chat {
-            entry.chat = Some(CachedChatComponentData::default().into());
+            entry.chat = Some(CacheChat::default().into());
         }
 
         Ok(())

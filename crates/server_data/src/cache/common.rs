@@ -7,7 +7,7 @@ use super::ConnectionInfo;
 use crate::event::EventSender;
 
 #[derive(Debug)]
-pub struct CacheEntryCommon {
+pub struct CacheCommon {
     pub permissions: Permissions,
     pub account_state_related_shared_state: AccountStateRelatedSharedState,
     pub other_shared_state: OtherSharedState,
@@ -19,7 +19,7 @@ pub struct CacheEntryCommon {
     pub app_notification_settings: AppNotificationSettingsInternal,
 }
 
-impl CacheEntryCommon {
+impl CacheCommon {
     pub fn connection_event_sender(&self) -> Option<&EventSender> {
         self.current_connection
             .as_ref()
@@ -27,9 +27,9 @@ impl CacheEntryCommon {
     }
 }
 
-impl Default for CacheEntryCommon {
+impl Default for CacheCommon {
     fn default() -> Self {
-        CacheEntryCommon {
+        CacheCommon {
             permissions: Permissions::default(),
             account_state_related_shared_state: AccountStateRelatedSharedState::default(),
             other_shared_state: OtherSharedState::default(),

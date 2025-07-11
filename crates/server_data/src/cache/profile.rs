@@ -13,13 +13,13 @@ use model_server_data::{
 use server_common::data::{DataError, cache::CacheError};
 
 use crate::{
-    cache::CacheEntryCommon,
+    cache::CacheCommon,
     db_manager::InternalWriting,
     index::{coordinates::LocationIndexArea, read::LocationIndexIteratorState},
 };
 
 #[derive(Debug)]
-pub struct CachedProfile {
+pub struct CacheProfile {
     pub account_id: AccountId,
     data: ProfileInternal,
     pub state: ProfileStateCached,
@@ -33,7 +33,7 @@ pub struct CachedProfile {
     profile_text_character_count: ProfileTextCharacterCount,
 }
 
-impl CachedProfile {
+impl CacheProfile {
     pub fn new(
         account_id: AccountId,
         data: ProfileInternal,
@@ -100,7 +100,7 @@ impl CachedProfile {
         self.last_seen_time
     }
 
-    pub fn last_seen_time(&self, common: &CacheEntryCommon) -> Option<LastSeenTime> {
+    pub fn last_seen_time(&self, common: &CacheCommon) -> Option<LastSeenTime> {
         if common.current_connection.is_some() {
             Some(LastSeenTime::ONLINE)
         } else {

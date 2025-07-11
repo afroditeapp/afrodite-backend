@@ -1,13 +1,13 @@
 use std::{collections::HashMap, fmt::Debug, net::SocketAddr, sync::Arc};
 
-use account::CachedAccountComponentData;
-use chat::CachedChatComponentData;
-use common::CacheEntryCommon;
+use account::CacheAccount;
+use chat::CacheChat;
+use common::CacheCommon;
 use error_stack::Result;
-use media::CachedMedia;
+use media::CacheMedia;
 use model::{AccessToken, AccountId, AccountIdInternal, AccountState, Permissions};
 use model_server_data::{LastSeenTime, LocationIndexKey, LocationIndexProfileData};
-use profile::CachedProfile;
+use profile::CacheProfile;
 pub use server_common::data::cache::CacheError;
 use simple_backend_model::UnixTime;
 use tokio::sync::RwLock;
@@ -369,14 +369,14 @@ impl DatabaseCache {
     pub async fn read_cache_common<T, Id: Into<AccountId>>(
         &self,
         id: Id,
-        cache_operation: impl FnOnce(&CacheEntryCommon) -> Result<T, CacheError>,
+        cache_operation: impl FnOnce(&CacheCommon) -> Result<T, CacheError>,
     ) -> Result<T, CacheError> {
         self.read_cache(id, |e| cache_operation(&e.common)).await
     }
 
     pub async fn read_cache_common_for_logged_in_clients(
         &self,
-        cache_operation: impl Fn(&CacheEntryCommon),
+        cache_operation: impl Fn(&CacheCommon),
     ) {
         self.read_cache_for_logged_in_clients(|e| cache_operation(&e.common))
             .await
@@ -385,7 +385,7 @@ impl DatabaseCache {
     pub async fn write_cache_common<T, Id: Into<AccountId>>(
         &self,
         id: Id,
-        cache_operation: impl FnOnce(&mut CacheEntryCommon) -> Result<T, CacheError>,
+        cache_operation: impl FnOnce(&mut CacheCommon) -> Result<T, CacheError>,
     ) -> Result<T, CacheError> {
         self.write_cache(id, |e| cache_operation(&mut e.common))
             .await
@@ -393,7 +393,7 @@ impl DatabaseCache {
 
     pub async fn write_cache_common_for_logged_in_clients(
         &self,
-        cache_operation: impl Fn(AccountIdInternal, &mut CacheEntryCommon),
+        cache_operation: impl Fn(AccountIdInternal, &mut CacheCommon),
     ) {
         self.write_cache_for_logged_in_clients(|id, e| cache_operation(id, &mut e.common))
             .await
@@ -449,27 +449,24 @@ pub trait CacheReadCommon {
     async fn read_cache_common<T, Id: Into<AccountId>>(
         &self,
         id: Id,
-        cache_operation: impl FnOnce(&CacheEntryCommon) -> Result<T, CacheError>,
+        cache_operation: impl FnOnce(&CacheCommon) -> Result<T, CacheError>,
     ) -> Result<T, CacheError>;
 
-    async fn read_cache_common_for_logged_in_clients(
-        &self,
-        cache_operation: impl Fn(&CacheEntryCommon),
-    );
+    async fn read_cache_common_for_logged_in_clients(&self, cache_operation: impl Fn(&CacheCommon));
 }
 
 impl<R: InternalReading> CacheReadCommon for R {
     async fn read_cache_common<T, Id: Into<AccountId>>(
         &self,
         id: Id,
-        cache_operation: impl FnOnce(&CacheEntryCommon) -> Result<T, CacheError>,
+        cache_operation: impl FnOnce(&CacheCommon) -> Result<T, CacheError>,
     ) -> Result<T, CacheError> {
         self.cache().read_cache_common(id, cache_operation).await
     }
 
     async fn read_cache_common_for_logged_in_clients(
         &self,
-        cache_operation: impl Fn(&CacheEntryCommon),
+        cache_operation: impl Fn(&CacheCommon),
     ) {
         self.cache()
             .read_cache_common_for_logged_in_clients(cache_operation)
@@ -481,12 +478,12 @@ pub trait CacheWriteCommon {
     async fn write_cache_common<T, Id: Into<AccountId>>(
         &self,
         id: Id,
-        cache_operation: impl FnOnce(&mut CacheEntryCommon) -> Result<T, CacheError>,
+        cache_operation: impl FnOnce(&mut CacheCommon) -> Result<T, CacheError>,
     ) -> Result<T, CacheError>;
 
     async fn write_cache_for_logged_in_clients(
         &self,
-        cache_operation: impl Fn(AccountIdInternal, &mut CacheEntryCommon),
+        cache_operation: impl Fn(AccountIdInternal, &mut CacheCommon),
     );
 }
 
@@ -494,7 +491,7 @@ impl<I: InternalWriting> CacheWriteCommon for I {
     async fn write_cache_common<T, Id: Into<AccountId>>(
         &self,
         id: Id,
-        cache_operation: impl FnOnce(&mut CacheEntryCommon) -> Result<T, CacheError>,
+        cache_operation: impl FnOnce(&mut CacheCommon) -> Result<T, CacheError>,
     ) -> Result<T, CacheError> {
         self.cache()
             .write_cache_common(id, |e| cache_operation(e))
@@ -503,7 +500,7 @@ impl<I: InternalWriting> CacheWriteCommon for I {
 
     async fn write_cache_for_logged_in_clients(
         &self,
-        cache_operation: impl Fn(AccountIdInternal, &mut CacheEntryCommon),
+        cache_operation: impl Fn(AccountIdInternal, &mut CacheCommon),
     ) {
         self.cache()
             .write_cache_for_logged_in_clients(|id, e| cache_operation(id, &mut e.common))
@@ -517,16 +514,13 @@ pub struct ConnectionInfo {
     pub event_sender: EventSender,
 }
 
-// TODO(refactor): Rename CachedAccountComponentData to CacheAccount
-// and also others similarly.
-
 #[derive(Debug)]
 pub struct CacheEntry {
-    pub account: Option<Box<CachedAccountComponentData>>,
-    pub profile: Option<Box<CachedProfile>>,
-    pub media: Option<Box<CachedMedia>>,
-    pub chat: Option<Box<CachedChatComponentData>>,
-    pub common: CacheEntryCommon,
+    pub account: Option<Box<CacheAccount>>,
+    pub profile: Option<Box<CacheProfile>>,
+    pub media: Option<Box<CacheMedia>>,
+    pub chat: Option<Box<CacheChat>>,
+    pub common: CacheCommon,
 }
 
 impl CacheEntry {
@@ -536,63 +530,63 @@ impl CacheEntry {
             profile: None,
             media: None,
             chat: None,
-            common: CacheEntryCommon::default(),
+            common: CacheCommon::default(),
         }
     }
     // TODO(refactor): Add helper functions to get data related do features
     // that can be disabled. Those should return Result<Data, CacheError>.
     // Also read_cache action closure might need or should to return Result.
 
-    pub fn account_data(&self) -> Result<&CachedAccountComponentData, CacheError> {
+    pub fn account_data(&self) -> Result<&CacheAccount, CacheError> {
         self.account
             .as_ref()
             .map(|v| v.as_ref())
             .ok_or(CacheError::FeatureNotEnabled.report())
     }
 
-    pub fn account_data_mut(&mut self) -> Result<&mut CachedAccountComponentData, CacheError> {
+    pub fn account_data_mut(&mut self) -> Result<&mut CacheAccount, CacheError> {
         self.account
             .as_mut()
             .map(|v| v.as_mut())
             .ok_or(CacheError::FeatureNotEnabled.report())
     }
 
-    pub fn chat_data(&self) -> Result<&CachedChatComponentData, CacheError> {
+    pub fn chat_data(&self) -> Result<&CacheChat, CacheError> {
         self.chat
             .as_ref()
             .map(|v| v.as_ref())
             .ok_or(CacheError::FeatureNotEnabled.report())
     }
 
-    pub fn chat_data_mut(&mut self) -> Result<&mut CachedChatComponentData, CacheError> {
+    pub fn chat_data_mut(&mut self) -> Result<&mut CacheChat, CacheError> {
         self.chat
             .as_mut()
             .map(|v| v.as_mut())
             .ok_or(CacheError::FeatureNotEnabled.report())
     }
 
-    pub fn profile_data(&self) -> Result<&CachedProfile, CacheError> {
+    pub fn profile_data(&self) -> Result<&CacheProfile, CacheError> {
         self.profile
             .as_ref()
             .map(|v| v.as_ref())
             .ok_or(CacheError::FeatureNotEnabled.report())
     }
 
-    pub fn profile_data_mut(&mut self) -> Result<&mut CachedProfile, CacheError> {
+    pub fn profile_data_mut(&mut self) -> Result<&mut CacheProfile, CacheError> {
         self.profile
             .as_mut()
             .map(|v| v.as_mut())
             .ok_or(CacheError::FeatureNotEnabled.report())
     }
 
-    pub fn media_data(&self) -> Result<&CachedMedia, CacheError> {
+    pub fn media_data(&self) -> Result<&CacheMedia, CacheError> {
         self.media
             .as_ref()
             .map(|v| v.as_ref())
             .ok_or(CacheError::FeatureNotEnabled.report())
     }
 
-    pub fn media_data_mut(&mut self) -> Result<&mut CachedMedia, CacheError> {
+    pub fn media_data_mut(&mut self) -> Result<&mut CacheMedia, CacheError> {
         self.media
             .as_mut()
             .map(|v| v.as_mut())
