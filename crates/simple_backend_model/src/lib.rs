@@ -11,8 +11,6 @@ pub use perf::*;
 pub mod time;
 pub use time::*;
 
-mod markers;
-
 mod macros;
 
 #[cfg(test)]
