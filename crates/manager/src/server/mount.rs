@@ -9,11 +9,12 @@ use std::{
 use error_stack::{Result, ResultExt};
 use manager_config::{Config, file::SecureStorageConfig};
 use manager_model::SecureStorageEncryptionKey;
+use simple_backend_utils::ContextExt;
 use tokio::{io::AsyncWriteExt, process::Command};
 use tracing::{error, info, warn};
 
 use super::{app::S, state::MountStateStorage};
-use crate::{api::GetApiManager, utils::ContextExt};
+use crate::api::GetApiManager;
 
 #[derive(thiserror::Error, Debug)]
 pub enum MountError {

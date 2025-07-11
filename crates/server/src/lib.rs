@@ -20,7 +20,6 @@ pub mod shutdown_tasks;
 pub mod startup_tasks;
 pub mod task_utils;
 pub mod unlimited_likes;
-pub mod utils;
 
 use std::sync::Arc;
 
