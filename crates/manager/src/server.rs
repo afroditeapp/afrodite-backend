@@ -383,8 +383,6 @@ impl AppServer {
                                 stream_and_addr
                             }
                             Err(e) => {
-                                // TODO: Can this happen if there is no more
-                                //       file descriptors available?
                                 error!("TLS task address stream error {e}");
                                 return;
                             }
@@ -460,8 +458,6 @@ impl AppServer {
                                 stream_and_addr
                             }
                             Err(e) => {
-                                // TODO: Can this happen if there is no more
-                                //       file descriptors available?
                                 error!("{name_for_log_message}, address stream error {e}");
                                 return;
                             }

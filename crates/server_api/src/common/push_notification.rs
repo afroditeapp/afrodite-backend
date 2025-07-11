@@ -10,8 +10,8 @@ use simple_backend::create_counters;
 use super::super::utils::{Json, StatusCode};
 use crate::{S, app::WriteData, create_open_api_router, db_write_multiple};
 
-// TODO(prod): Logout route should remove the device and pending notification
-// tokens.
+// TODO(prod): Make sure that cache is updated when pending notification flags
+//             are updated.
 // TOOD(microservice): Most likely public ID will not be sent from account
 // to other servers.
 

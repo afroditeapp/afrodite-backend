@@ -81,7 +81,7 @@ impl BotConfigFile {
                 }
             }
 
-            // TODO: Validate all fields?
+            // TODO(future): Validate all fields?
 
             Ok(())
         };
