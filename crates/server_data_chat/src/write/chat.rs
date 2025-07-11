@@ -20,7 +20,7 @@ use model_chat::{
     SentMessageId, SyncVersionUtils,
 };
 use server_data::{
-    DataError, DieselDatabaseError, IntoDataError, app::EventManagerProvider,
+    DataError, DieselDatabaseError, IntoDataError, app::EventManagerProvider, db_transaction,
     define_cmd_wrapper_write, id::ToAccountIdInternal, read::DbRead, result::Result,
     write::DbTransaction,
 };

@@ -4792,7 +4792,6 @@ dependencies = [
  "error-stack",
  "model",
  "model_chat",
- "server_common",
  "server_data",
  "simple_backend_utils",
  "utils",

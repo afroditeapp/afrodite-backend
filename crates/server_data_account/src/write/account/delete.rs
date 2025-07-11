@@ -5,7 +5,7 @@ use model_account::AccountIdInternal;
 use server_data::{
     DataError,
     db_manager::InternalWriting,
-    define_cmd_wrapper_write,
+    db_transaction, define_cmd_wrapper_write,
     file::FileWrite,
     read::DbRead,
     result::Result,

@@ -13,7 +13,7 @@ use server_data::{
     DataError, DieselDatabaseError,
     app::GetConfig,
     cache::profile::UpdateLocationCacheState,
-    define_cmd_wrapper_write,
+    db_transaction, define_cmd_wrapper_write,
     file::{FileWrite, utils::TmpContentFile},
     read::DbRead,
     result::{Result, WrappedContextExt},

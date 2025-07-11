@@ -4,7 +4,7 @@ use model_chat::ProfileEditedTime;
 use model_profile::{AccountIdInternal, ProfileVersion};
 use server_data::{
     DataError, IntoDataError, app::GetConfig, cache::profile::UpdateLocationCacheState,
-    define_cmd_wrapper_write, result::Result, write::DbTransaction,
+    db_transaction, define_cmd_wrapper_write, result::Result, write::DbTransaction,
 };
 use server_data_profile::cache::CacheWriteProfile;
 

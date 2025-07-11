@@ -5,11 +5,8 @@ use model::{
 };
 
 use crate::{
-    DataError,
-    cache::CacheReadCommon,
-    define_cmd_wrapper_write,
-    result::Result,
-    write::{DbTransaction, db_transaction},
+    DataError, cache::CacheReadCommon, db_transaction, define_cmd_wrapper_write, result::Result,
+    write::DbTransaction,
 };
 
 define_cmd_wrapper_write!(WriteCommandsCommonPushNotification);

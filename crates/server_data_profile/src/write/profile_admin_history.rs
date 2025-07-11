@@ -1,7 +1,8 @@
 use database_profile::history::write::GetDbHistoryWriteCommandsProfile;
 use model_profile::ProfileStatisticsInternal;
 use server_data::{
-    DataError, define_cmd_wrapper_write, result::Result, write::DbTransactionHistory,
+    DataError, db_transaction_history, define_cmd_wrapper_write, result::Result,
+    write::DbTransactionHistory,
 };
 
 define_cmd_wrapper_write!(WriteCommandsProfileAdminHistory);

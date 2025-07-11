@@ -3,7 +3,8 @@ use std::collections::HashMap;
 use database_account::history::write::GetDbHistoryWriteCommandsAccount;
 use model::ClientVersion;
 use server_data::{
-    DataError, define_cmd_wrapper_write, result::Result, write::DbTransactionHistory,
+    DataError, db_transaction_history, define_cmd_wrapper_write, result::Result,
+    write::DbTransactionHistory,
 };
 
 define_cmd_wrapper_write!(WriteCommandsAccountAdminHistory);
