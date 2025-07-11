@@ -151,10 +151,13 @@ pub async fn post_sign_in_with_login(
             .validate_apple_token(apple.token, nonce_bytes)
             .await?;
         handle_sign_in_with_info(&state, info).await
-    } else if let Some(google) = tokens.google_token {
+    } else if let Some(google) = tokens.google {
+        let nonce_bytes = base64::engine::general_purpose::URL_SAFE
+            .decode(google.nonce)
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
         let info = state
             .sign_in_with_manager()
-            .validate_google_token(google)
+            .validate_google_token(google.token, nonce_bytes)
             .await?;
         handle_sign_in_with_info(&state, info).await
     } else {

@@ -1,5 +1,6 @@
 use std::{sync::Arc, time::Instant};
 
+use base64::Engine;
 use error_stack::{Result, ResultExt};
 use headers::{CacheControl, HeaderMapExt};
 use jsonwebtoken::{
@@ -7,6 +8,7 @@ use jsonwebtoken::{
     jwk::{Jwk, JwkSet},
 };
 use serde::Deserialize;
+use sha2::{Digest, Sha256};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_utils::ContextExt;
 use tokio::sync::Mutex;
@@ -66,6 +68,9 @@ struct GoogleTokenClaims {
     email: String,
     /// Email verification status.
     email_verified: bool,
+    /// Base64 URL (with possible padding) encoded SHA-256 of client generated
+    /// nonce.
+    nonce: String,
 }
 
 pub struct GoogleAccountInfo {
@@ -94,6 +99,7 @@ impl SignInWithGoogleManager {
     pub async fn validate_google_token(
         &self,
         token: String,
+        nonce: Vec<u8>,
     ) -> Result<GoogleAccountInfo, SignInWithGoogleError> {
         let google_config = self
             .config
@@ -140,6 +146,11 @@ impl SignInWithGoogleManager {
         };
 
         if !azp_valid || !data.claims.email_verified {
+            return Err(SignInWithGoogleError::InvalidToken.report());
+        }
+
+        let token_nonce = base64::engine::general_purpose::URL_SAFE.encode(Sha256::digest(nonce));
+        if data.claims.nonce != token_nonce {
             return Err(SignInWithGoogleError::InvalidToken.report());
         }
 
