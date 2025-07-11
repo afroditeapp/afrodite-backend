@@ -4,9 +4,8 @@ use database::history::write::GetDbHistoryWriteCommandsCommon;
 use simple_backend_model::{MetricKey, PerfMetricValueArea};
 
 use crate::{
-    DataError, define_cmd_wrapper_write,
-    result::Result,
-    write::{DbTransactionHistory, db_transaction_history},
+    DataError, db_transaction_history, define_cmd_wrapper_write, result::Result,
+    write::DbTransactionHistory,
 };
 
 define_cmd_wrapper_write!(WriteCommandsCommonHistory);

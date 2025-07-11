@@ -3,7 +3,7 @@ use model_profile::{AccountIdInternal, ProfileEditedTime, ProfileVersion};
 use server_data::{
     DataError, IntoDataError,
     cache::profile::UpdateLocationCacheState,
-    define_cmd_wrapper_write,
+    db_transaction, define_cmd_wrapper_write,
     read::DbRead,
     result::{Result, WrappedContextExt},
     write::DbTransaction,

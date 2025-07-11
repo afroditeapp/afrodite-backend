@@ -5,10 +5,10 @@ use simple_backend_utils::IntoReportFromString;
 use crate::{
     DataError,
     app::GetConfig,
-    define_cmd_wrapper_write,
+    db_transaction, define_cmd_wrapper_write,
     read::DbRead,
     result::{Result, WrappedContextExt},
-    write::{DbTransaction, db_transaction},
+    write::DbTransaction,
 };
 
 define_cmd_wrapper_write!(WriteCommandsCommonAdminReport);

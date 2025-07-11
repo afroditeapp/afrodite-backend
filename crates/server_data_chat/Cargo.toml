@@ -10,7 +10,6 @@ error-stack = { workspace = true }
 
 model = { path = "../model" }
 model_chat = { path = "../model_chat" }
-server_common = { path = "../server_common" }
 server_data = { path = "../server_data" }
 
 database = { path = "../database" }

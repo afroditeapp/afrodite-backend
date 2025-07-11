@@ -109,3 +109,51 @@ macro_rules! define_cmd_wrapper_write {
         }
     };
 }
+
+/// Macro for writing to current database with transaction.
+/// Calls await automatically.
+///
+/// ```ignore
+/// use server::DataError;
+/// use server::data::write::{define_write_commands, db_transaction};
+///
+/// define_write_commands!(WriteCommandsTest);
+///
+/// impl WriteCommandsTest<'_> {
+///     pub async fn test(
+///         &self,
+///     ) -> server::result::Result<(), DataError> {
+///         db_transaction!(self, move |mut cmds| {
+///             Ok(())
+///         })?;
+///         Ok(())
+///     }
+/// }
+/// ```
+#[macro_export]
+macro_rules! db_transaction {
+    ($state:expr, move |mut $cmds:ident| $commands:expr) => {{ $crate::IntoDataError::into_error($state.db_transaction(move |mut $cmds| ($commands)).await) }};
+    ($state:expr, move |$cmds:ident| $commands:expr) => {{
+        $crate::IntoDataError::into_error(
+            $state.db_transaction_common(move |$cmds| ($commands)).await,
+        )
+    }};
+}
+
+#[macro_export]
+macro_rules! db_transaction_history {
+    ($state:expr, move |mut $cmds:ident| $commands:expr) => {{
+        $crate::IntoDataError::into_error(
+            $state
+                .db_transaction_history(move |mut $cmds| ($commands))
+                .await,
+        )
+    }};
+    ($state:expr, move |$cmds:ident| $commands:expr) => {{
+        $crate::IntoDataError::into_error(
+            $state
+                .db_transaction_history(move |$cmds| ($commands))
+                .await,
+        )
+    }};
+}

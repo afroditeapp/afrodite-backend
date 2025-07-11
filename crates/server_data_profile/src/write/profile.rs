@@ -7,7 +7,7 @@ use model_profile::{
 };
 use server_data::{
     DataError, IntoDataError, app::GetConfig, cache::profile::UpdateLocationCacheState,
-    define_cmd_wrapper_write, index::LocationWrite, read::DbRead, result::Result,
+    db_transaction, define_cmd_wrapper_write, index::LocationWrite, read::DbRead, result::Result,
     write::DbTransaction,
 };
 use tracing::info;
