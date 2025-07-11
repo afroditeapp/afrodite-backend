@@ -28,7 +28,4 @@ pub mod write;
 pub mod write_commands;
 pub mod write_concurrent;
 
-// TODO: Remove?
-pub type DatabeseEntryId = String;
-
 pub use database::{DieselConnection, DieselDatabaseError};

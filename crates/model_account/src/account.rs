@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use diesel::{Associations, prelude::*};
+use diesel::prelude::*;
 use model::{ClientType, ClientVersion, UnixTime};
 use model_server_data::{
     AppleAccountId, AuthPair, EmailAddress, GoogleAccountId, PublicationId, SignInWithInfo,
@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use utils::time::age_in_years_from_birthdate;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{AccountId, AccountIdDb, AccountIdInternal};
+use crate::{AccountId, AccountIdDb};
 
 mod email;
 pub use email::*;
@@ -185,10 +185,7 @@ pub struct SignInWithAppleInfo {
     pub nonce: String,
 }
 
-// TODO(prod): Remove unused belongs_to?
-
-#[derive(Debug, Clone, PartialEq, Queryable, Selectable, Associations)]
-#[diesel(belongs_to(AccountIdInternal, foreign_key = account_id))]
+#[derive(Debug, Clone, PartialEq, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::sign_in_with_info)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct SignInWithInfoRaw {
