@@ -1,7 +1,7 @@
 use error_stack::Result;
 use model_profile::AccountId;
 use server_data::{
-    cache::{CacheError, common::CacheEntryCommon, profile::CachedProfile},
+    cache::{CacheError, common::CacheCommon, profile::CacheProfile},
     db_manager::{InternalReading, InternalWriting},
 };
 
@@ -9,12 +9,12 @@ pub trait CacheReadProfile {
     async fn read_cache_profile_and_common<T, Id: Into<AccountId>>(
         &self,
         id: Id,
-        cache_operation: impl FnOnce(&CachedProfile, &CacheEntryCommon) -> Result<T, CacheError>,
+        cache_operation: impl FnOnce(&CacheProfile, &CacheCommon) -> Result<T, CacheError>,
     ) -> Result<T, CacheError>;
 
     async fn read_cache_profile_and_common_for_all_accounts(
         &self,
-        cache_operation: impl FnMut(&CachedProfile, &CacheEntryCommon),
+        cache_operation: impl FnMut(&CacheProfile, &CacheCommon),
     ) -> Result<(), CacheError>;
 }
 
@@ -22,7 +22,7 @@ impl<R: InternalReading> CacheReadProfile for R {
     async fn read_cache_profile_and_common<T, Id: Into<AccountId>>(
         &self,
         id: Id,
-        cache_operation: impl FnOnce(&CachedProfile, &CacheEntryCommon) -> Result<T, CacheError>,
+        cache_operation: impl FnOnce(&CacheProfile, &CacheCommon) -> Result<T, CacheError>,
     ) -> Result<T, CacheError> {
         self.cache()
             .read_cache(id, |e| {
@@ -37,7 +37,7 @@ impl<R: InternalReading> CacheReadProfile for R {
 
     async fn read_cache_profile_and_common_for_all_accounts(
         &self,
-        mut cache_operation: impl FnMut(&CachedProfile, &CacheEntryCommon),
+        mut cache_operation: impl FnMut(&CacheProfile, &CacheCommon),
     ) -> Result<(), CacheError> {
         self.cache()
             .read_cache_for_all_accounts(|_, e| {
@@ -56,13 +56,13 @@ pub trait CacheWriteProfile {
     async fn write_cache_profile<T, Id: Into<AccountId>>(
         &self,
         id: Id,
-        cache_operation: impl FnOnce(&mut CachedProfile) -> Result<T, CacheError>,
+        cache_operation: impl FnOnce(&mut CacheProfile) -> Result<T, CacheError>,
     ) -> Result<T, CacheError>;
 
     async fn write_cache_profile_and_common<T, Id: Into<AccountId>>(
         &self,
         id: Id,
-        cache_operation: impl FnOnce(&mut CachedProfile, &mut CacheEntryCommon) -> Result<T, CacheError>,
+        cache_operation: impl FnOnce(&mut CacheProfile, &mut CacheCommon) -> Result<T, CacheError>,
     ) -> Result<T, CacheError>;
 }
 
@@ -70,7 +70,7 @@ impl<I: InternalWriting> CacheWriteProfile for I {
     async fn write_cache_profile<T, Id: Into<AccountId>>(
         &self,
         id: Id,
-        cache_operation: impl FnOnce(&mut CachedProfile) -> Result<T, CacheError>,
+        cache_operation: impl FnOnce(&mut CacheProfile) -> Result<T, CacheError>,
     ) -> Result<T, CacheError> {
         self.cache()
             .write_cache(id, |e| {
@@ -83,7 +83,7 @@ impl<I: InternalWriting> CacheWriteProfile for I {
     async fn write_cache_profile_and_common<T, Id: Into<AccountId>>(
         &self,
         id: Id,
-        cache_operation: impl FnOnce(&mut CachedProfile, &mut CacheEntryCommon) -> Result<T, CacheError>,
+        cache_operation: impl FnOnce(&mut CacheProfile, &mut CacheCommon) -> Result<T, CacheError>,
     ) -> Result<T, CacheError> {
         self.cache()
             .write_cache(id, |e| {
