@@ -29,8 +29,9 @@ impl SignInWithManager {
     pub async fn validate_google_token(
         &self,
         token: String,
+        nonce: Vec<u8>,
     ) -> Result<GoogleAccountInfo, SignInWithGoogleError> {
-        self.google.validate_google_token(token).await
+        self.google.validate_google_token(token, nonce).await
     }
 
     pub async fn validate_apple_token(
