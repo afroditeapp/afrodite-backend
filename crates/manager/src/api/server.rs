@@ -88,11 +88,12 @@ use manager_api::protocol::{
     ClientConnectionReadWrite, ClientConnectionWrite, ConnectionUtilsRead, ConnectionUtilsWrite,
 };
 use manager_model::{ManagerProtocolMode, ManagerProtocolVersion, ServerEvent};
+use simple_backend_utils::ContextExt;
 use tokio::io::AsyncReadExt;
 use tracing::info;
 
 use super::utils::validate_api_key;
-use crate::{server::app::S, utils::ContextExt};
+use crate::server::app::S;
 
 pub mod json_rpc;
 pub mod link;
