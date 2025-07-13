@@ -111,7 +111,7 @@ pub struct ChatMessageReport {
     pub sender: AccountId,
     pub receiver: AccountId,
     pub message_time: UnixTime,
-    pub message_number: MessageNumber,
+    pub message_id: MessageId,
     /// Message without encryption and signing
     pub message_base64: String,
 }
@@ -141,7 +141,7 @@ pub struct PendingMessageIdInternal {
     pub sender: AccountIdInternal,
     /// Receiver of the message.
     pub receiver: AccountIdDb,
-    pub mn: MessageNumber,
+    pub m: MessageId,
 }
 
 pub struct PendingMessageIdInternalAndMessageTime {

@@ -14,7 +14,7 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::{
     Account, AccountStateContainer, ContentProcessingId, ContentProcessingState,
-    InitialSetupCompletedTime, MessageNumber, ProfileVisibility, schema_sqlite_types::Integer,
+    InitialSetupCompletedTime, MessageId, ProfileVisibility, schema_sqlite_types::Integer,
 };
 
 pub mod api_usage;
@@ -56,7 +56,7 @@ pub enum EventType {
     SentLikesChanged,
     SentBlocksChanged,
     MatchesChanged,
-    /// New latest viewed message number changed
+    /// New latest viewed message ID changed
     /// Data: latest_viewed_message_changed
     LatestViewedMessageChanged,
     /// Data: content_processing_state_changed
@@ -78,7 +78,7 @@ pub struct LatestViewedMessageChanged {
     /// Account id of message viewer
     pub viewer: AccountId,
     /// New value for latest vieqed message
-    pub new_latest_viewed_message: MessageNumber,
+    pub new_latest_viewed_message: MessageId,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]

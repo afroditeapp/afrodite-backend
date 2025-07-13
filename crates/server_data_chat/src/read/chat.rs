@@ -1,7 +1,7 @@
 use database_chat::current::read::GetDbReadCommandsChat;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState,
-    AllMatchesPage, ChatProfileLink, ChatStateRaw, GetSentMessage, MatchId, MessageNumber,
+    AllMatchesPage, ChatProfileLink, ChatStateRaw, GetSentMessage, MatchId, MessageId,
     PageItemCountForNewLikes, ReceivedBlocksPage, ReceivedLikeId, SentBlocksPage, SentLikesPage,
     SentMessageId,
 };
@@ -218,12 +218,12 @@ impl ReadCommandsChat<'_> {
             .into_error()
     }
 
-    /// Get message number of message that receiver has viewed the latest
-    pub async fn message_number_of_latest_viewed_message(
+    /// Get message ID of message that receiver has viewed the latest
+    pub async fn message_id_of_latest_viewed_message(
         &self,
         id_message_sender: AccountIdInternal,
         id_message_receiver: AccountIdInternal,
-    ) -> Result<MessageNumber, DataError> {
+    ) -> Result<MessageId, DataError> {
         let number = self
             .db_read(move |mut cmds| {
                 cmds.chat()

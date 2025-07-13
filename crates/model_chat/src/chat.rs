@@ -1,7 +1,7 @@
 use base64::Engine;
 use diesel::prelude::*;
 use model::{
-    ConversationId, DailyLikesLeftSyncVersion, MatchId, MatchesSyncVersion, MessageNumber,
+    ConversationId, DailyLikesLeftSyncVersion, MatchId, MatchesSyncVersion, MessageId,
     NewReceivedLikesCount, ProfileContentVersion, PublicKeyId, ReceivedBlocksSyncVersion,
     ReceivedLikeId, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion,
     UnixTime,
@@ -53,7 +53,7 @@ pub struct PendingMessageInternal {
     pub id: i64,
     pub account_id_sender: AccountIdDb,
     pub account_id_receiver: AccountIdDb,
-    pub message_number: MessageNumber,
+    pub message_id: MessageId,
     pub message_bytes: Vec<u8>,
     pub sender_client_id: ClientId,
     pub sender_client_local_id: ClientLocalId,
@@ -87,7 +87,7 @@ pub struct ReceivedBlocksPage {
 pub struct PendingMessageId {
     /// Sender of the message.
     pub sender: AccountId,
-    pub mn: MessageNumber,
+    pub m: MessageId,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
@@ -110,8 +110,8 @@ pub struct SentMessageIdList {
 pub struct UpdateMessageViewStatus {
     /// Sender of the messages.
     pub sender: AccountId,
-    /// New message number for message view status.
-    pub mn: MessageNumber,
+    /// New message ID for message view status.
+    pub m: MessageId,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, IntoParams)]

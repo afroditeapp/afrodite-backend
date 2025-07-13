@@ -921,8 +921,8 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     -- Incrementing counters for tracking sent message count for both accounts.
     message_counter_sender          INTEGER NOT NULL DEFAULT 0,
     message_counter_receiver        INTEGER NOT NULL DEFAULT 0,
-    -- Latest viewed message number for sender and receiver.
-    -- Message numbers start from 1 to avoid having the first message
+    -- Latest viewed message ID for sender and receiver.
+    -- Message IDs start from 1 to avoid having the first message
     -- to appear already viewed.
     sender_latest_viewed_message    INTEGER NOT NULL DEFAULT 0,
     receiver_latest_viewed_message  INTEGER NOT NULL DEFAULT 0,
@@ -976,8 +976,8 @@ CREATE TABLE IF NOT EXISTS pending_messages(
     -- Email notification for the message.
     receiver_email_notification_sent BOOLEAN NOT NULL DEFAULT 0,
     message_unix_time               INTEGER NOT NULL,
-    -- Order number for the message in the conversation.
-    message_number                  INTEGER NOT NULL,
+    -- Conversation specific ID for the message.
+    message_id                      INTEGER NOT NULL,
     -- Client ID and client local ID together makes
     -- an practically unique ID which client can use
     -- detecting was message sent correctly.
@@ -1004,7 +1004,7 @@ CREATE TABLE IF NOT EXISTS chat_report_chat_message(
     message_sender_account_id_uuid     BLOB                NOT NULL,
     message_receiver_account_id_uuid   BLOB                NOT NULL,
     message_unix_time                  INTEGER             NOT NULL,
-    message_number                     INTEGER             NOT NULL,
+    message_id                         INTEGER             NOT NULL,
     message_symmetric_key              BLOB                NOT NULL,
     client_message_bytes               BLOB                NOT NULL,
     backend_signed_message_bytes       BLOB                NOT NULL,

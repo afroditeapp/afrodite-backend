@@ -5,9 +5,9 @@ use utoipa::ToSchema;
 
 use crate::{AccountIdDb, AccountIdInternal};
 
-// TODO(prod): Rename MessageNumber to MessageId?
-
-/// Message order number in a conversation.
+/// Message ID for identifying a message in a conversation.
+///
+/// The ID is conversation specific and it increments.
 #[derive(
     Debug,
     Clone,
@@ -21,21 +21,21 @@ use crate::{AccountIdDb, AccountIdInternal};
     AsExpression,
 )]
 #[diesel(sql_type = BigInt)]
-pub struct MessageNumber {
-    pub mn: i64,
+pub struct MessageId {
+    pub id: i64,
 }
 
-impl MessageNumber {
+impl MessageId {
     pub fn new(id: i64) -> Self {
-        Self { mn: id }
+        Self { id }
     }
 
     pub fn as_i64(&self) -> &i64 {
-        &self.mn
+        &self.id
     }
 }
 
-diesel_i64_wrapper!(MessageNumber);
+diesel_i64_wrapper!(MessageId);
 
 #[derive(Debug, Clone, Copy)]
 pub enum AccountInteractionStateError {
@@ -249,8 +249,8 @@ pub struct AccountInteractionInternal {
     /// message. The counter does not reset. Zero means that no messages are
     /// sent.
     pub message_counter_receiver: i64,
-    pub sender_latest_viewed_message: MessageNumber,
-    pub receiver_latest_viewed_message: MessageNumber,
+    pub sender_latest_viewed_message: MessageId,
+    pub receiver_latest_viewed_message: MessageId,
     pub included_in_received_new_likes_count: bool,
     pub received_like_id: Option<ReceivedLikeId>,
     pub match_id: Option<MatchId>,
@@ -486,10 +486,10 @@ impl AccountInteractionInternal {
             .saturating_add(self.message_counter_sender)
     }
 
-    /// Skip message number 0, so that latest viewed message number
+    /// Skip message ID 0, so that latest viewed message
     /// does not have that message already viewed.
-    pub fn next_message_number(&self) -> MessageNumber {
-        MessageNumber::new(self.message_counter().saturating_add(1))
+    pub fn next_message_id(&self) -> MessageId {
+        MessageId::new(self.message_counter().saturating_add(1))
     }
 
     pub fn message_count_for_account(&self, account: impl Into<AccountIdDb>) -> i64 {
