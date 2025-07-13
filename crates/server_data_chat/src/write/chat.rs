@@ -14,7 +14,7 @@ use database_chat::current::{
 use error_stack::ResultExt;
 use model_chat::{
     AccountIdInternal, AddPublicKeyResult, ChatStateRaw, ClientId, ClientLocalId,
-    MatchesIteratorSessionIdInternal, MessageId, NewReceivedLikesCount, PendingMessageId,
+    MatchesIteratorSessionIdInternal, NewReceivedLikesCount, PendingMessageId,
     PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId,
     ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion, SendMessageResult,
     SentMessageId, SyncVersionUtils,
@@ -327,47 +327,6 @@ impl WriteCommandsChat<'_> {
         })?;
 
         Ok(())
-    }
-
-    /// Update message ID which my account has viewed from the sender
-    pub async fn update_message_id_of_latest_viewed_message(
-        &self,
-        id_my_account: AccountIdInternal,
-        id_message_sender: AccountIdInternal,
-        new_message_id: MessageId,
-    ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            let mut interaction = cmds
-                .read()
-                .chat()
-                .interaction()
-                .account_interaction(id_my_account, id_message_sender)?
-                .ok_or(DieselDatabaseError::NotFound.report())?;
-
-            // Prevent marking future messages as viewed
-            if new_message_id.id > interaction.message_counter() {
-                return Err(DieselDatabaseError::NotAllowed.report());
-            }
-
-            // Prevent changing the values when accounts are not a match.
-            if !interaction.is_match() {
-                return Err(DieselDatabaseError::NotAllowed.report());
-            }
-
-            // Who is sender and receiver in the interaction data depends
-            // on who did the first like
-            if interaction.account_id_sender == Some(id_my_account.into_db_id()) {
-                interaction.sender_latest_viewed_message = new_message_id;
-            } else {
-                interaction.receiver_latest_viewed_message = new_message_id;
-            }
-
-            cmds.chat()
-                .interaction()
-                .update_account_interaction(interaction)?;
-
-            Ok(())
-        })
     }
 
     /// Insert a new pending message if sender and receiver are a match and

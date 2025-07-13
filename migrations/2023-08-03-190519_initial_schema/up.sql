@@ -921,11 +921,6 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     -- Incrementing counters for tracking sent message count for both accounts.
     message_counter_sender          INTEGER NOT NULL DEFAULT 0,
     message_counter_receiver        INTEGER NOT NULL DEFAULT 0,
-    -- Latest viewed message ID for sender and receiver.
-    -- Message IDs start from 1 to avoid having the first message
-    -- to appear already viewed.
-    sender_latest_viewed_message    INTEGER NOT NULL DEFAULT 0,
-    receiver_latest_viewed_message  INTEGER NOT NULL DEFAULT 0,
     -- Track is the received like included in the receiver's
     -- new_received_likes_count.
     included_in_received_new_likes_count  BOOLEAN NOT NULL DEFAULT 0,
