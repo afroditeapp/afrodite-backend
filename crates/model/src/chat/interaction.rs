@@ -249,8 +249,6 @@ pub struct AccountInteractionInternal {
     /// message. The counter does not reset. Zero means that no messages are
     /// sent.
     pub message_counter_receiver: i64,
-    pub sender_latest_viewed_message: MessageId,
-    pub receiver_latest_viewed_message: MessageId,
     pub included_in_received_new_likes_count: bool,
     pub received_like_id: Option<ReceivedLikeId>,
     pub match_id: Option<MatchId>,
@@ -486,8 +484,8 @@ impl AccountInteractionInternal {
             .saturating_add(self.message_counter_sender)
     }
 
-    /// Skip message ID 0, so that latest viewed message
-    /// does not have that message already viewed.
+    /// Skip message ID 0 to make possible to use that as initial value
+    /// for latest viewed message.
     pub fn next_message_id(&self) -> MessageId {
         MessageId::new(self.message_counter().saturating_add(1))
     }

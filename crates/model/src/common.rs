@@ -14,7 +14,7 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::{
     Account, AccountStateContainer, ContentProcessingId, ContentProcessingState,
-    InitialSetupCompletedTime, MessageId, ProfileVisibility, schema_sqlite_types::Integer,
+    InitialSetupCompletedTime, ProfileVisibility, schema_sqlite_types::Integer,
 };
 
 pub mod api_usage;
@@ -56,9 +56,6 @@ pub enum EventType {
     SentLikesChanged,
     SentBlocksChanged,
     MatchesChanged,
-    /// New latest viewed message ID changed
-    /// Data: latest_viewed_message_changed
-    LatestViewedMessageChanged,
     /// Data: content_processing_state_changed
     ContentProcessingStateChanged,
     ClientConfigChanged,
@@ -71,14 +68,6 @@ pub enum EventType {
     ProfileTextModerationCompleted,
     AutomaticProfileSearchCompleted,
     AdminNotification,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct LatestViewedMessageChanged {
-    /// Account id of message viewer
-    pub viewer: AccountId,
-    /// New value for latest vieqed message
-    pub new_latest_viewed_message: MessageId,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -99,8 +88,6 @@ pub struct ScheduledMaintenanceStatus {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct EventToClient {
     event: EventType,
-    /// Data for event LatestViewedMessageChanged
-    latest_viewed_message_changed: Option<LatestViewedMessageChanged>,
     /// Data for event ContentProcessingStateChanged
     content_processing_state_changed: Option<ContentProcessingStateChanged>,
     /// Data for event ScheduledMaintenanceStatus
@@ -116,7 +103,6 @@ pub struct EventToClient {
 pub enum EventToClientInternal {
     /// Account state, profile visibility or permissions changed.
     AccountStateChanged,
-    LatestViewedMessageChanged(LatestViewedMessageChanged),
     ContentProcessingStateChanged(ContentProcessingStateChanged),
     NewMessageReceived,
     ReceivedLikesChanged,
@@ -140,7 +126,6 @@ impl From<&EventToClientInternal> for EventType {
     fn from(value: &EventToClientInternal) -> Self {
         use EventToClientInternal::*;
         match value {
-            LatestViewedMessageChanged(_) => Self::LatestViewedMessageChanged,
             ContentProcessingStateChanged(_) => Self::ContentProcessingStateChanged,
             AccountStateChanged => Self::AccountStateChanged,
             NewMessageReceived => Self::NewMessageReceived,
@@ -167,7 +152,6 @@ impl From<EventToClientInternal> for EventToClient {
     fn from(internal: EventToClientInternal) -> Self {
         let mut value = Self {
             event: (&internal).into(),
-            latest_viewed_message_changed: None,
             content_processing_state_changed: None,
             scheduled_maintenance_status: None,
         };
@@ -175,7 +159,6 @@ impl From<EventToClientInternal> for EventToClient {
         use EventToClientInternal::*;
 
         match internal {
-            LatestViewedMessageChanged(v) => value.latest_viewed_message_changed = Some(v),
             ContentProcessingStateChanged(v) => value.content_processing_state_changed = Some(v),
             ScheduledMaintenanceStatus(v) => value.scheduled_maintenance_status = Some(v),
             AccountStateChanged

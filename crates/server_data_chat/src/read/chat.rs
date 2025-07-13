@@ -1,7 +1,7 @@
 use database_chat::current::read::GetDbReadCommandsChat;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState,
-    AllMatchesPage, ChatProfileLink, ChatStateRaw, GetSentMessage, MatchId, MessageId,
+    AllMatchesPage, ChatProfileLink, ChatStateRaw, GetSentMessage, MatchId,
     PageItemCountForNewLikes, ReceivedBlocksPage, ReceivedLikeId, SentBlocksPage, SentLikesPage,
     SentMessageId,
 };
@@ -216,32 +216,6 @@ impl ReadCommandsChat<'_> {
         self.db_read(move |mut cmds| cmds.chat().message().get_sent_message(id, message))
             .await
             .into_error()
-    }
-
-    /// Get message ID of message that receiver has viewed the latest
-    pub async fn message_id_of_latest_viewed_message(
-        &self,
-        id_message_sender: AccountIdInternal,
-        id_message_receiver: AccountIdInternal,
-    ) -> Result<MessageId, DataError> {
-        let number = self
-            .db_read(move |mut cmds| {
-                cmds.chat()
-                    .interaction()
-                    .account_interaction(id_message_sender, id_message_receiver)
-            })
-            .await?
-            .map(|interaction| {
-                // Who is sender and receiver in the interaction data depends
-                // on who did the first like
-                if interaction.account_id_sender == Some(id_message_sender.into_db_id()) {
-                    interaction.receiver_latest_viewed_message
-                } else {
-                    interaction.sender_latest_viewed_message
-                }
-            })
-            .unwrap_or_default();
-        Ok(number)
     }
 
     pub async fn account_interaction(
