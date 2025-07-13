@@ -55,11 +55,11 @@ macro_rules! define_read_count_change_methods {
                 &mut self,
             ) -> Result<Vec<ProfileStatisticsHistoryValue>, DieselDatabaseError> {
                 use crate::schema::{
-                    history_profile_statistics_save_time::dsl::*, $table_name::dsl::*,
+                    history_common_statistics_save_time::dsl::*, $table_name::dsl::*,
                 };
 
                 $table_name
-                    .inner_join(history_profile_statistics_save_time)
+                    .inner_join(history_common_statistics_save_time)
                     .select((unix_time, count))
                     .order((unix_time.desc(),))
                     .load(self.conn())
@@ -105,11 +105,11 @@ macro_rules! define_read_age_change_methods {
                 age_value: i64,
             ) -> Result<Vec<ProfileStatisticsHistoryValue>, DieselDatabaseError> {
                 use crate::schema::{
-                    history_profile_statistics_save_time::dsl::*, $table_name::dsl::*,
+                    history_common_statistics_save_time::dsl::*, $table_name::dsl::*,
                 };
 
                 $table_name
-                    .inner_join(history_profile_statistics_save_time)
+                    .inner_join(history_common_statistics_save_time)
                     .filter(age.eq(age_value))
                     .select((unix_time, count))
                     .order((unix_time.desc(),))

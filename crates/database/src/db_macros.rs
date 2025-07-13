@@ -83,6 +83,10 @@ macro_rules! define_history_write_commands {
                 Self { cmds }
             }
 
+            pub fn write(&mut self) -> $crate::DbWriteModeHistory<'_> {
+                $crate::DbWriteModeHistory(self.cmds)
+            }
+
             pub fn read(&mut self) -> $crate::DbReadModeHistory<'_> {
                 $crate::DbReadModeHistory(self.cmds)
             }
