@@ -32,13 +32,21 @@ impl HistoryWriteCommon<'_> {
     ) -> Result<(), DieselDatabaseError> {
         let current_time = UnixTime::current_time();
 
-        let time_id_value = self.get_or_create_save_time_id(current_time)?;
+        let mut time_id_value = None;
 
         for (k, v) in data.iter() {
             let value = v.average() as i64;
             if value == 0 {
                 continue;
             }
+
+            let time_id_value = if let Some(id) = time_id_value {
+                id
+            } else {
+                let id = self.get_or_create_save_time_id(current_time)?;
+                time_id_value = Some(id);
+                id
+            };
 
             let name = k.to_name();
             let metric_name_id: i64 = {
