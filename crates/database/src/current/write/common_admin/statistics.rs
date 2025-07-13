@@ -12,8 +12,6 @@ use crate::{IntoDatabaseError, define_current_write_commands};
 
 define_current_write_commands!(CurrentWriteCommonStatistics);
 
-// TODO(prod): Change other statistics to save time value lazily
-
 impl CurrentWriteCommonStatistics<'_> {
     pub fn save_api_usage_data(
         mut self,

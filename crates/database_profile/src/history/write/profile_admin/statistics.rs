@@ -4,7 +4,7 @@ use database::{
 };
 use diesel::{insert_into, prelude::*};
 use error_stack::Result;
-use model::StatisticsSaveTimeId;
+use model::{StatisticsSaveTimeId, UnixTime};
 use model_profile::ProfileStatisticsInternal;
 
 define_history_write_commands!(HistoryWriteProfileAdminStatistics);
@@ -14,16 +14,13 @@ impl<'a> HistoryWriteProfileAdminStatistics<'a> {
         &mut self,
         r: ProfileStatisticsInternal,
     ) -> Result<(), DieselDatabaseError> {
-        let time_id = self
-            .write()
-            .common_history()
-            .get_or_create_save_time_id(r.generation_time)?;
-        self.save_count_if_needed_account(time_id, r.account_count)?;
-        self.save_count_if_needed_man(time_id, r.public_profile_counts.men)?;
-        self.save_count_if_needed_woman(time_id, r.public_profile_counts.women)?;
-        self.save_count_if_needed_non_binary(time_id, r.public_profile_counts.nonbinaries)?;
+        let mut time_id = LazyTimeId::new(r.generation_time);
+        self.save_count_if_needed_account(&mut time_id, r.account_count)?;
+        self.save_count_if_needed_man(&mut time_id, r.public_profile_counts.men)?;
+        self.save_count_if_needed_woman(&mut time_id, r.public_profile_counts.women)?;
+        self.save_count_if_needed_non_binary(&mut time_id, r.public_profile_counts.nonbinaries)?;
         self.save_count_if_needed_all_genders(
-            time_id,
+            &mut time_id,
             r.public_profile_counts.men
                 + r.public_profile_counts.women
                 + r.public_profile_counts.nonbinaries,
@@ -31,14 +28,14 @@ impl<'a> HistoryWriteProfileAdminStatistics<'a> {
 
         type SaveMethod<'b> = fn(
             &mut HistoryWriteProfileAdminStatistics<'b>,
-            StatisticsSaveTimeId,
+            &mut LazyTimeId,
             i64,
             i64,
         ) -> Result<(), DieselDatabaseError>;
         let mut handle_ages = |v: &Vec<i64>, save_method: SaveMethod<'a>| {
             for (i, c) in v.iter().enumerate() {
                 let age = r.age_counts.start_age + i as i64;
-                save_method(self, time_id, age, *c)?
+                save_method(self, &mut time_id, age, *c)?
             }
             Ok::<(), error_stack::Report<DieselDatabaseError>>(())
         };
@@ -60,7 +57,7 @@ impl<'a> HistoryWriteProfileAdminStatistics<'a> {
         for (i, ((c1, c2), c3)) in ages_all_genders.enumerate() {
             let age = r.age_counts.start_age + i as i64;
             let c = *c1 + *c2 + *c3;
-            self.save_age_count_if_needed_all_genders(time_id, age, c)?
+            self.save_age_count_if_needed_all_genders(&mut time_id, age, c)?
         }
 
         Ok(())
@@ -75,7 +72,7 @@ macro_rules! define_integer_change_method {
         impl HistoryWriteProfileAdminStatistics<'_> {
             fn $method_name(
                 &mut self,
-                time_id_value: StatisticsSaveTimeId,
+                time_id_value: &mut LazyTimeId,
                 count_value: i64,
             ) -> Result<(), DieselDatabaseError> {
                 use crate::schema::$table_name::dsl::*;
@@ -92,6 +89,8 @@ macro_rules! define_integer_change_method {
                         return Ok(());
                     }
                 }
+
+                let time_id_value = time_id_value.time_id(self)?;
 
                 insert_into($table_name)
                     .values((time_id.eq(time_id_value), count.eq(count_value)))
@@ -137,7 +136,7 @@ macro_rules! define_age_change_method {
         impl HistoryWriteProfileAdminStatistics<'_> {
             fn $method_name(
                 &mut self,
-                time_id_value: StatisticsSaveTimeId,
+                time_id_value: &mut LazyTimeId,
                 age_value: i64,
                 count_value: i64,
             ) -> Result<(), DieselDatabaseError> {
@@ -156,6 +155,8 @@ macro_rules! define_age_change_method {
                         return Ok(());
                     }
                 }
+
+                let time_id_value = time_id_value.time_id(self)?;
 
                 insert_into($table_name)
                     .values((
@@ -191,3 +192,33 @@ define_age_change_method!(
     fn save_age_count_if_needed_all_genders,
     history_profile_statistics_age_changes_all_genders,
 );
+
+struct LazyTimeId {
+    current_time: UnixTime,
+    time_id: Option<StatisticsSaveTimeId>,
+}
+
+impl LazyTimeId {
+    fn new(current_time: UnixTime) -> Self {
+        Self {
+            current_time,
+            time_id: None,
+        }
+    }
+
+    fn time_id(
+        &mut self,
+        cmds: &mut HistoryWriteProfileAdminStatistics,
+    ) -> Result<StatisticsSaveTimeId, DieselDatabaseError> {
+        if let Some(id) = self.time_id {
+            Ok(id)
+        } else {
+            let id = cmds
+                .write()
+                .common_history()
+                .get_or_create_save_time_id(self.current_time)?;
+            self.time_id = Some(id);
+            Ok(id)
+        }
+    }
+}

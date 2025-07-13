@@ -18,15 +18,23 @@ impl HistoryWriteAccountClientVersion<'_> {
         statistics: HashMap<ClientVersion, i64>,
     ) -> Result<(), DieselDatabaseError> {
         let current_time = UnixTime::current_time();
-        let time_id_value = self
-            .write()
-            .common_history()
-            .get_or_create_save_time_id(current_time)?;
+        let mut time_id_value = None;
 
         for (k, v) in statistics {
             if v <= 0 {
                 continue;
             }
+
+            let time_id_value = if let Some(id) = time_id_value {
+                id
+            } else {
+                let id = self
+                    .write()
+                    .common_history()
+                    .get_or_create_save_time_id(current_time)?;
+                time_id_value = Some(id);
+                id
+            };
 
             let version_id_value: i64 = {
                 use crate::schema::history_client_version_statistics_version_number::dsl::*;
