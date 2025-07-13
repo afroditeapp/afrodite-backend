@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_try_from;
 use utoipa::{IntoParams, ToSchema};
 
-mod profile_content_edited_time;
-pub use profile_content_edited_time::*;
+mod profile_content;
+pub use profile_content::*;
 
 #[derive(
     Debug,

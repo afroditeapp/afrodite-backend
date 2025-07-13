@@ -6,8 +6,8 @@ use error_stack::{Result, ResultExt};
 use model::{ContentIdInternal, SyncVersion, UnixTime};
 use model_media::{
     AccountIdInternal, ContentId, ContentIdDb, ContentModerationState, ContentSlot,
-    MediaContentRaw, MediaContentType, NewContentParams, ProfileContentEditedTime,
-    ProfileContentVersion, SetProfileContent,
+    MediaContentRaw, MediaContentType, NewContentParams, ProfileContentModificationMetadata,
+    SetProfileContent,
 };
 use simple_backend_utils::ContextExt;
 
@@ -19,22 +19,18 @@ use crate::{
 
 define_current_write_commands!(CurrentWriteMediaContent);
 
-// TODO(refactor): New type for ProfileContentVersion::new_random() and
-//                 ProfileContentEditedTime::current_time().
-
 impl CurrentWriteMediaContent<'_> {
     pub fn insert_current_account_media(
         &mut self,
         id: AccountIdInternal,
+        modification: &ProfileContentModificationMetadata,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::current_account_media::dsl::*;
-
-        let version = ProfileContentVersion::new_random();
 
         insert_into(current_account_media)
             .values((
                 account_id.eq(id.as_db_id()),
-                profile_content_version_uuid.eq(version),
+                profile_content_version_uuid.eq(modification.version),
             ))
             .execute(self.conn())
             .into_db_error(id)?;
@@ -287,14 +283,13 @@ impl CurrentWriteMediaContent<'_> {
     pub fn required_changes_for_public_profile_content_update(
         &mut self,
         id: AccountIdInternal,
-        data: ProfileContentVersion,
-        edit_time: ProfileContentEditedTime,
+        modification: &ProfileContentModificationMetadata,
     ) -> Result<(), DieselDatabaseError> {
         {
             use crate::schema::current_account_media::dsl::*;
 
             update(current_account_media.find(id.as_db_id()))
-                .set(profile_content_version_uuid.eq(data))
+                .set(profile_content_version_uuid.eq(modification.version))
                 .execute(self.conn())
                 .change_context(DieselDatabaseError::Execute)?;
         }
@@ -303,7 +298,7 @@ impl CurrentWriteMediaContent<'_> {
             use crate::schema::media_state::dsl::*;
 
             update(media_state.find(id.as_db_id()))
-                .set(profile_content_edited_unix_time.eq(edit_time))
+                .set(profile_content_edited_unix_time.eq(modification.time))
                 .execute(self.conn())
                 .change_context(DieselDatabaseError::Execute)?;
         }

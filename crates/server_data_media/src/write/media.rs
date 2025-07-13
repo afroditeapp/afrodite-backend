@@ -6,8 +6,7 @@ use error_stack::ResultExt;
 use model::{Account, AccountState, ContentIdInternal, ProfileVisibility};
 use model_media::{
     AccountIdInternal, ContentId, ContentIdDb, ContentSlot, CurrentAccountMediaInternal,
-    NewContentParams, ProfileContent, ProfileContentEditedTime, ProfileContentVersion,
-    SetProfileContent,
+    NewContentParams, ProfileContent, ProfileContentModificationMetadata, SetProfileContent,
 };
 use server_data::{
     DataError, DieselDatabaseError,
@@ -133,13 +132,12 @@ impl WriteCommandsMedia<'_> {
             .db_read(move |mut cmds| cmds.media().media_content().current_account_media(id))
             .await?;
 
-        let version = ProfileContentVersion::new_random();
-        let edit_time = ProfileContentEditedTime::current_time();
+        let modification = ProfileContentModificationMetadata::generate();
 
         db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .media_content()
-                .required_changes_for_public_profile_content_update(id, version, edit_time)?;
+                .required_changes_for_public_profile_content_update(id, &modification)?;
             cmds.media()
                 .media_content()
                 .update_profile_content(id, new)?;
@@ -148,7 +146,7 @@ impl WriteCommandsMedia<'_> {
                 .increment_media_content_sync_version(id)
         })?;
 
-        self.public_profile_content_cache_update(id, (version, edit_time))
+        self.public_profile_content_cache_update(id, &modification)
             .await?;
 
         self.update_content_usage(id, content_before_update).await?;
@@ -210,16 +208,14 @@ impl WriteCommandsMedia<'_> {
                 let public_content_new: ProfileContent = media_content_new.into();
 
                 if public_content != public_content_new {
-                    let version = ProfileContentVersion::new_random();
-                    let edit_time = ProfileContentEditedTime::current_time();
+                    let modification = ProfileContentModificationMetadata::generate();
                     cmds.media()
                         .media_content()
                         .required_changes_for_public_profile_content_update(
                             content_id.content_owner(),
-                            version,
-                            edit_time,
+                            &modification,
                         )?;
-                    Some((version, edit_time))
+                    Some(modification)
                 } else {
                     None
                 }
@@ -232,8 +228,8 @@ impl WriteCommandsMedia<'_> {
             Ok((r, cache_update))
         })?;
 
-        if let Some(update) = cache_update {
-            self.public_profile_content_cache_update(content_id.content_owner(), update)
+        if let Some(modification) = cache_update {
+            self.public_profile_content_cache_update(content_id.content_owner(), &modification)
                 .await?;
         }
 
@@ -248,11 +244,11 @@ impl WriteCommandsMedia<'_> {
     pub async fn public_profile_content_cache_update(
         &self,
         id: AccountIdInternal,
-        (version, edit_time): (ProfileContentVersion, ProfileContentEditedTime),
+        modification: &ProfileContentModificationMetadata,
     ) -> Result<(), DataError> {
         self.write_cache_media(id, |e| {
-            e.profile_content_version = version;
-            e.profile_content_edited_time = edit_time;
+            e.profile_content_version = modification.version;
+            e.profile_content_edited_time = modification.time;
             Ok(())
         })
         .await?;
