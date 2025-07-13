@@ -1,5 +1,5 @@
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
-use model_profile::{AccountIdInternal, ProfileEditedTime, ProfileVersion};
+use model_profile::{AccountIdInternal, ProfileModificationMetadata};
 use server_data::{
     DataError, IntoDataError,
     cache::profile::UpdateLocationCacheState,
@@ -38,14 +38,11 @@ impl WriteCommandsProfileAdminProfileNameAllowlist<'_> {
         }
 
         // Profile name accepted value is part of Profile, so update it's version
-        let new_profile_version = ProfileVersion::new_random();
-        let edit_time = ProfileEditedTime::current_time();
+        let modification = ProfileModificationMetadata::generate();
         let new_state = db_transaction!(self, move |mut cmds| {
-            cmds.profile().data().required_changes_for_profile_update(
-                name_owner_id,
-                new_profile_version,
-                edit_time,
-            )?;
+            cmds.profile()
+                .data()
+                .required_changes_for_profile_update(name_owner_id, &modification)?;
             let new_state = cmds
                 .profile_admin()
                 .profile_name_allowlist()
@@ -55,8 +52,8 @@ impl WriteCommandsProfileAdminProfileNameAllowlist<'_> {
 
         self.write_cache_profile(name_owner_id.as_id(), |p| {
             p.state.profile_name_moderation_state = new_state;
-            p.update_profile_version_uuid(new_profile_version);
-            p.state.profile_edited_time = edit_time;
+            p.update_profile_version_uuid(modification.version);
+            p.state.profile_edited_time = modification.time;
             Ok(())
         })
         .await

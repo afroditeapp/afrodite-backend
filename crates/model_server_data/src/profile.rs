@@ -121,3 +121,18 @@ pub struct ProfileStateCached {
     pub profile_text_moderation_state: ProfileTextModerationState,
     pub profile_edited_time: ProfileEditedTime,
 }
+
+#[derive(Clone, Copy)]
+pub struct ProfileModificationMetadata {
+    pub version: ProfileVersion,
+    pub time: ProfileEditedTime,
+}
+
+impl ProfileModificationMetadata {
+    pub fn generate() -> Self {
+        Self {
+            version: ProfileVersion::new_random(),
+            time: ProfileEditedTime::current_time(),
+        }
+    }
+}

@@ -1,9 +1,9 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
-    AccountIdInternal, Location, ProfileEditedTime, ProfileFilteringSettingsUpdateValidated,
-    ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateValidated, ProfileVersion,
-    UnixTime, ValidatedSearchGroups,
+    AccountIdInternal, Location, ProfileFilteringSettingsUpdateValidated,
+    ProfileModificationMetadata, ProfileSearchAgeRangeValidated, ProfileStateInternal,
+    ProfileUpdateValidated, UnixTime, ValidatedSearchGroups,
 };
 use server_data::{
     DataError, IntoDataError, app::GetConfig, cache::profile::UpdateLocationCacheState,
@@ -74,9 +74,6 @@ impl WriteCommandsProfile<'_> {
         Ok(())
     }
 
-    // TODO(refactor): New type for ProfileVersion::new_random() and
-    //                 ProfileEditedTime::current_time().
-
     /// Updates [model::Profile].
     ///
     /// Updates also [model::ProfileSyncVersion].
@@ -93,8 +90,7 @@ impl WriteCommandsProfile<'_> {
     ) -> Result<(), DataError> {
         let profile_data = data.clone();
         let config = self.config_arc().clone();
-        let profile_version = ProfileVersion::new_random();
-        let edit_time = ProfileEditedTime::current_time();
+        let modification = ProfileModificationMetadata::generate();
         let profile_text_moderation_state_update = db_transaction!(self, move |mut cmds| {
             let (name_update_detected, text_update_detected) = {
                 let current_profile = cmds.read().profile().data().profile(id)?;
@@ -107,11 +103,9 @@ impl WriteCommandsProfile<'_> {
             cmds.profile()
                 .data()
                 .upsert_profile_attributes(id, profile_data.attributes)?;
-            cmds.profile().data().required_changes_for_profile_update(
-                id,
-                profile_version,
-                edit_time,
-            )?;
+            cmds.profile()
+                .data()
+                .required_changes_for_profile_update(id, &modification)?;
             if name_update_detected {
                 cmds.profile()
                     .profile_name_allowlist()
@@ -136,8 +130,8 @@ impl WriteCommandsProfile<'_> {
         self.write_cache_profile(id.as_id(), |p| {
             p.update_profile_internal(|p| data.update_to_profile(p));
             data.update_to_attributes(&mut p.attributes);
-            p.update_profile_version_uuid(profile_version);
-            p.state.profile_edited_time = edit_time;
+            p.update_profile_version_uuid(modification.version);
+            p.state.profile_edited_time = modification.time;
             if let Some(update) = profile_text_moderation_state_update {
                 p.state.profile_text_moderation_state = update;
             }
