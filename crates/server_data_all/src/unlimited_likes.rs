@@ -1,7 +1,7 @@
 use database::current::write::GetDbWriteCommandsCommon;
 use database_profile::current::write::GetDbWriteCommandsProfile;
-use model_chat::ProfileEditedTime;
-use model_profile::{AccountIdInternal, ProfileVersion};
+use model_chat::ProfileModificationMetadata;
+use model_profile::AccountIdInternal;
 use server_data::{
     DataError, IntoDataError, app::GetConfig, cache::profile::UpdateLocationCacheState,
     db_transaction, define_cmd_wrapper_write, result::Result, write::DbTransaction,
@@ -21,16 +21,13 @@ impl UnlimitedLikesUpdate<'_> {
     ) -> Result<(), DataError> {
         // Unlimited likes value is part of Profile, so update it's version
         // (if profile component is enabled).
-        let new_profile_version = ProfileVersion::new_random();
-        let edited_time = ProfileEditedTime::current_time();
+        let modification = ProfileModificationMetadata::generate();
         let is_profile_component_enabled = self.config().components().profile;
         db_transaction!(self, move |mut cmds| {
             if is_profile_component_enabled {
-                cmds.profile().data().required_changes_for_profile_update(
-                    id,
-                    new_profile_version,
-                    edited_time,
-                )?;
+                cmds.profile()
+                    .data()
+                    .required_changes_for_profile_update(id, &modification)?;
             }
             cmds.common()
                 .state()
@@ -39,8 +36,8 @@ impl UnlimitedLikesUpdate<'_> {
 
         self.write_cache_profile_and_common(id.as_id(), |p, e| {
             e.other_shared_state.unlimited_likes = unlimited_likes_value;
-            p.update_profile_version_uuid(new_profile_version);
-            p.state.profile_edited_time = edited_time;
+            p.update_profile_version_uuid(modification.version);
+            p.state.profile_edited_time = modification.time;
             Ok(())
         })
         .await

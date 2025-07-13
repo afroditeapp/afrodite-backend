@@ -1,7 +1,7 @@
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
-    AccountIdInternal, ProfileEditedTime, ProfileTextModerationRejectedReasonCategory,
-    ProfileTextModerationRejectedReasonDetails, ProfileVersion,
+    AccountIdInternal, ProfileModificationMetadata, ProfileTextModerationRejectedReasonCategory,
+    ProfileTextModerationRejectedReasonDetails,
 };
 use server_data::{
     DataError, IntoDataError,
@@ -41,14 +41,11 @@ impl WriteCommandsProfileAdminProfileText<'_> {
         }
 
         // Profile text accepted value is part of Profile, so update it's version
-        let new_profile_version = ProfileVersion::new_random();
-        let edit_time = ProfileEditedTime::current_time();
+        let modification = ProfileModificationMetadata::generate();
         let new_state = db_transaction!(self, move |mut cmds| {
-            cmds.profile().data().required_changes_for_profile_update(
-                data_owner_id,
-                new_profile_version,
-                edit_time,
-            )?;
+            cmds.profile()
+                .data()
+                .required_changes_for_profile_update(data_owner_id, &modification)?;
             let new_state = match mode {
                 ModerateProfileTextMode::MoveToHumanModeration => cmds
                     .profile_admin()
@@ -72,8 +69,8 @@ impl WriteCommandsProfileAdminProfileText<'_> {
 
         self.write_cache_profile(data_owner_id.as_id(), |p| {
             p.state.profile_text_moderation_state = new_state;
-            p.update_profile_version_uuid(new_profile_version);
-            p.state.profile_edited_time = edit_time;
+            p.update_profile_version_uuid(modification.version);
+            p.state.profile_edited_time = modification.time;
             Ok(())
         })
         .await

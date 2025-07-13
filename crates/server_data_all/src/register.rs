@@ -9,7 +9,7 @@ use database_profile::current::write::GetDbWriteCommandsProfile;
 use model_account::{
     AccountId, AccountIdInternal, AccountInternal, EmailAddress, SharedStateRaw, SignInWithInfo,
 };
-use model_chat::ProfileContentModificationMetadata;
+use model_chat::{ProfileContentModificationMetadata, ProfileModificationMetadata};
 use server_data::{
     DataError, IntoDataError, db_manager::InternalWriting, define_cmd_wrapper_write,
     index::LocationIndexIteratorHandle, result::Result, write::DbTransaction,
@@ -89,8 +89,12 @@ impl RegisterAccount<'_> {
         }
 
         if config.components().profile {
-            current.profile().data().insert_profile(id)?;
-            current.profile().data().insert_profile_state(id)?;
+            let modification = ProfileModificationMetadata::generate();
+            current.profile().data().insert_profile(id, &modification)?;
+            current
+                .profile()
+                .data()
+                .insert_profile_state(id, &modification)?;
         }
 
         if config.components().media {
