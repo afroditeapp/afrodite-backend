@@ -2,7 +2,7 @@ use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::ContentId;
-use model_media::{AccountIdInternal, MediaStateRaw, ProfileContentEditedTime};
+use model_media::{AccountIdInternal, MediaStateRaw, ProfileContentModificationMetadata};
 
 use crate::IntoDatabaseError;
 
@@ -27,16 +27,18 @@ impl<'a> CurrentWriteMedia<'a> {
 }
 
 impl CurrentWriteMedia<'_> {
-    pub fn insert_media_state(&mut self, id: AccountIdInternal) -> Result<(), DieselDatabaseError> {
+    pub fn insert_media_state(
+        &mut self,
+        id: AccountIdInternal,
+        modification: &ProfileContentModificationMetadata,
+    ) -> Result<(), DieselDatabaseError> {
         use model::schema::media_state::dsl::*;
-
-        let edit_time = ProfileContentEditedTime::current_time();
 
         insert_into(media_state)
             .values((
                 account_id.eq(id.as_db_id()),
                 initial_moderation_request_accepted.eq(false),
-                profile_content_edited_unix_time.eq(edit_time),
+                profile_content_edited_unix_time.eq(modification.time),
             ))
             .execute(self.conn())
             .into_db_error(id)?;

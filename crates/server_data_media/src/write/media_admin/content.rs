@@ -1,8 +1,8 @@
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
-use model::{AccountIdInternal, ContentIdInternal, ProfileContentVersion};
+use model::{AccountIdInternal, ContentIdInternal};
 use model_media::{
-    ProfileContentEditedTime, ProfileContentModerationRejectedReasonCategory,
-    ProfileContentModerationRejectedReasonDetails,
+    ProfileContentModerationRejectedReasonCategory, ProfileContentModerationRejectedReasonDetails,
+    ProfileContentModificationMetadata,
 };
 use server_common::result::Result;
 use server_data::{
@@ -76,25 +76,23 @@ impl WriteCommandsProfileAdminContent<'_> {
                 // Public profile content accepted value might have
                 // changed, so update public profile content version
                 // and edit time.
-                let version = ProfileContentVersion::new_random();
-                let edit_time = ProfileContentEditedTime::current_time();
+                let modification = ProfileContentModificationMetadata::generate();
                 cmds.media()
                     .media_content()
                     .required_changes_for_public_profile_content_update(
                         content_id.content_owner(),
-                        version,
-                        edit_time,
+                        &modification,
                     )?;
-                Ok(Some((version, edit_time)))
+                Ok(Some(modification))
             } else {
                 Ok(None)
             }
         })?;
 
-        if let Some(update) = cache_update {
+        if let Some(modification) = cache_update {
             self.handle()
                 .media()
-                .public_profile_content_cache_update(content_id.content_owner(), update)
+                .public_profile_content_cache_update(content_id.content_owner(), &modification)
                 .await?;
         }
 
@@ -147,25 +145,23 @@ impl WriteCommandsProfileAdminContent<'_> {
                 // Public profile content [model_media::ContentInfo::p] value might have
                 // changed, so update public profile content version
                 // and edit time.
-                let version = ProfileContentVersion::new_random();
-                let edit_time = ProfileContentEditedTime::current_time();
+                let modification = ProfileContentModificationMetadata::generate();
                 cmds.media()
                     .media_content()
                     .required_changes_for_public_profile_content_update(
                         content_id.content_owner(),
-                        version,
-                        edit_time,
+                        &modification,
                     )?;
-                Ok(Some((version, edit_time)))
+                Ok(Some(modification))
             } else {
                 Ok(None)
             }
         })?;
 
-        if let Some(update) = cache_update {
+        if let Some(modification) = cache_update {
             self.handle()
                 .media()
-                .public_profile_content_cache_update(content_id.content_owner(), update)
+                .public_profile_content_cache_update(content_id.content_owner(), &modification)
                 .await?;
         }
 
