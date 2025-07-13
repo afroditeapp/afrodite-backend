@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use diesel::{ExpressionMethods, RunQueryDsl, insert_into};
 use error_stack::Result;
-use model::UnixTime;
+use model::{StatisticsSaveTimeId, UnixTime};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_model::{MetricKey, PerfMetricValueArea};
 
@@ -11,23 +11,28 @@ use crate::{IntoDatabaseError, define_history_write_commands};
 define_history_write_commands!(HistoryWriteCommon);
 
 impl HistoryWriteCommon<'_> {
+    pub fn get_or_create_save_time_id(
+        &mut self,
+        time: UnixTime,
+    ) -> Result<StatisticsSaveTimeId, DieselDatabaseError> {
+        use model::schema::history_common_statistics_save_time::dsl::*;
+        insert_into(history_common_statistics_save_time)
+            .values(unix_time.eq(time))
+            .on_conflict(unix_time)
+            .do_update()
+            .set(unix_time.eq(unix_time))
+            .returning(id)
+            .get_result(self.conn())
+            .into_db_error(())
+    }
+
     pub fn write_perf_data(
         mut self,
         data: HashMap<MetricKey, PerfMetricValueArea>,
     ) -> Result<(), DieselDatabaseError> {
         let current_time = UnixTime::current_time();
 
-        let time_id_value: i64 = {
-            use model::schema::history_performance_statistics_save_time::dsl::*;
-            insert_into(history_performance_statistics_save_time)
-                .values((unix_time.eq(current_time),))
-                .on_conflict(unix_time)
-                .do_update()
-                .set(unix_time.eq(unix_time))
-                .returning(id)
-                .get_result(self.conn())
-                .into_db_error(())?
-        };
+        let time_id_value = self.get_or_create_save_time_id(current_time)?;
 
         for (k, v) in data.iter() {
             let value = v.average() as i64;

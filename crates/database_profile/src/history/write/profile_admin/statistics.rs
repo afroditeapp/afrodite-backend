@@ -1,7 +1,11 @@
-use database::{DieselDatabaseError, IntoDatabaseError, define_history_write_commands};
+use database::{
+    DieselDatabaseError, IntoDatabaseError, define_history_write_commands,
+    history::write::GetDbHistoryWriteCommandsCommon,
+};
 use diesel::{insert_into, prelude::*};
 use error_stack::Result;
-use model_profile::{ProfileStatisticsInternal, SaveTimeId, UnixTime};
+use model::StatisticsSaveTimeId;
+use model_profile::ProfileStatisticsInternal;
 
 define_history_write_commands!(HistoryWriteProfileAdminStatistics);
 
@@ -10,7 +14,10 @@ impl<'a> HistoryWriteProfileAdminStatistics<'a> {
         &mut self,
         r: ProfileStatisticsInternal,
     ) -> Result<(), DieselDatabaseError> {
-        let time_id = self.save_time(r.generation_time)?;
+        let time_id = self
+            .write()
+            .common_history()
+            .get_or_create_save_time_id(r.generation_time)?;
         self.save_count_if_needed_account(time_id, r.account_count)?;
         self.save_count_if_needed_man(time_id, r.public_profile_counts.men)?;
         self.save_count_if_needed_woman(time_id, r.public_profile_counts.women)?;
@@ -24,7 +31,7 @@ impl<'a> HistoryWriteProfileAdminStatistics<'a> {
 
         type SaveMethod<'b> = fn(
             &mut HistoryWriteProfileAdminStatistics<'b>,
-            SaveTimeId,
+            StatisticsSaveTimeId,
             i64,
             i64,
         ) -> Result<(), DieselDatabaseError>;
@@ -58,19 +65,6 @@ impl<'a> HistoryWriteProfileAdminStatistics<'a> {
 
         Ok(())
     }
-
-    fn save_time(&mut self, time: UnixTime) -> Result<SaveTimeId, DieselDatabaseError> {
-        use crate::schema::history_profile_statistics_save_time::dsl::*;
-
-        insert_into(history_profile_statistics_save_time)
-            .values(unix_time.eq(time))
-            .on_conflict(unix_time)
-            .do_update()
-            .set(unix_time.eq(unix_time))
-            .returning(id)
-            .get_result(self.conn())
-            .into_db_error(())
-    }
 }
 
 macro_rules! define_integer_change_method {
@@ -81,7 +75,7 @@ macro_rules! define_integer_change_method {
         impl HistoryWriteProfileAdminStatistics<'_> {
             fn $method_name(
                 &mut self,
-                time_id_value: SaveTimeId,
+                time_id_value: StatisticsSaveTimeId,
                 count_value: i64,
             ) -> Result<(), DieselDatabaseError> {
                 use crate::schema::$table_name::dsl::*;
@@ -143,7 +137,7 @@ macro_rules! define_age_change_method {
         impl HistoryWriteProfileAdminStatistics<'_> {
             fn $method_name(
                 &mut self,
-                time_id_value: SaveTimeId,
+                time_id_value: StatisticsSaveTimeId,
                 age_value: i64,
                 count_value: i64,
             ) -> Result<(), DieselDatabaseError> {

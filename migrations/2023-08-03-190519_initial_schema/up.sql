@@ -1032,7 +1032,7 @@ CREATE TABLE IF NOT EXISTS chat_global_state(
 
 ---------- History tables for server component common ----------
 
-CREATE TABLE IF NOT EXISTS history_performance_statistics_save_time(
+CREATE TABLE IF NOT EXISTS history_common_statistics_save_time(
     id           INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     unix_time    INTEGER                           NOT NULL UNIQUE
 );
@@ -1048,7 +1048,7 @@ CREATE TABLE IF NOT EXISTS history_performance_statistics_metric_value(
     metric_value INTEGER                           NOT NULL,
     PRIMARY KEY (time_id, metric_id),
     FOREIGN KEY (time_id)
-        REFERENCES history_performance_statistics_save_time (id)
+        REFERENCES history_common_statistics_save_time (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE,
     FOREIGN KEY (metric_id)
@@ -1058,11 +1058,6 @@ CREATE TABLE IF NOT EXISTS history_performance_statistics_metric_value(
 );
 
 ---------- History tables for server component account ----------
-
-CREATE TABLE IF NOT EXISTS history_client_version_statistics_save_time(
-    id         INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    unix_time  INTEGER                           NOT NULL UNIQUE
-);
 
 CREATE TABLE IF NOT EXISTS history_client_version_statistics_version_number(
     id            INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -1078,7 +1073,7 @@ CREATE TABLE IF NOT EXISTS history_client_version_statistics(
     count         INTEGER NOT NULL,
     PRIMARY KEY (time_id, version_id),
     FOREIGN KEY (time_id)
-        REFERENCES history_client_version_statistics_save_time (id)
+        REFERENCES history_common_statistics_save_time (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE,
     FOREIGN KEY (version_id)
@@ -1089,18 +1084,13 @@ CREATE TABLE IF NOT EXISTS history_client_version_statistics(
 
 ---------- History tables for server component profile ----------
 
-CREATE TABLE IF NOT EXISTS history_profile_statistics_save_time(
-    id         INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    unix_time  INTEGER                           NOT NULL UNIQUE
-);
-
 CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_man(
     time_id INTEGER NOT NULL,
     age     INTEGER NOT NULL,
     count   INTEGER NOT NULL,
     PRIMARY KEY (time_id, age),
     FOREIGN KEY (time_id)
-        REFERENCES history_profile_statistics_save_time (id)
+        REFERENCES history_common_statistics_save_time (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
@@ -1111,7 +1101,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_woman(
     count   INTEGER NOT NULL,
     PRIMARY KEY (time_id, age),
     FOREIGN KEY (time_id)
-        REFERENCES history_profile_statistics_save_time (id)
+        REFERENCES history_common_statistics_save_time (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
@@ -1122,7 +1112,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_non_binary(
     count   INTEGER NOT NULL,
     PRIMARY KEY (time_id, age),
     FOREIGN KEY (time_id)
-        REFERENCES history_profile_statistics_save_time (id)
+        REFERENCES history_common_statistics_save_time (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
@@ -1133,7 +1123,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_all_genders(
     count   INTEGER NOT NULL,
     PRIMARY KEY (time_id, age),
     FOREIGN KEY (time_id)
-        REFERENCES history_profile_statistics_save_time (id)
+        REFERENCES history_common_statistics_save_time (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
@@ -1142,7 +1132,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_account(
     time_id INTEGER PRIMARY KEY NOT NULL,
     count   INTEGER             NOT NULL,
     FOREIGN KEY (time_id)
-        REFERENCES history_profile_statistics_save_time (id)
+        REFERENCES history_common_statistics_save_time (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
@@ -1151,7 +1141,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_man(
     time_id INTEGER PRIMARY KEY NOT NULL,
     count   INTEGER             NOT NULL,
     FOREIGN KEY (time_id)
-        REFERENCES history_profile_statistics_save_time (id)
+        REFERENCES history_common_statistics_save_time (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
@@ -1160,7 +1150,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_woman(
     time_id INTEGER PRIMARY KEY NOT NULL,
     count   INTEGER             NOT NULL,
     FOREIGN KEY (time_id)
-        REFERENCES history_profile_statistics_save_time (id)
+        REFERENCES history_common_statistics_save_time (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
@@ -1169,7 +1159,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_non_binary(
     time_id INTEGER PRIMARY KEY NOT NULL,
     count   INTEGER             NOT NULL,
     FOREIGN KEY (time_id)
-        REFERENCES history_profile_statistics_save_time (id)
+        REFERENCES history_common_statistics_save_time (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
@@ -1178,7 +1168,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_all_genders(
     time_id INTEGER PRIMARY KEY NOT NULL,
     count   INTEGER             NOT NULL,
     FOREIGN KEY (time_id)
-        REFERENCES history_profile_statistics_save_time (id)
+        REFERENCES history_common_statistics_save_time (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );

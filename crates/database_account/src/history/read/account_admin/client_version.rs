@@ -17,8 +17,8 @@ impl HistoryReadAccountClientVersion<'_> {
         settings: GetClientVersionStatisticsSettings,
     ) -> Result<GetClientVersionStatisticsResult, DieselDatabaseError> {
         use crate::schema::{
-            history_client_version_statistics::dsl::*, history_client_version_statistics_save_time,
-            history_client_version_statistics_version_number,
+            history_client_version_statistics::dsl::*,
+            history_client_version_statistics_version_number, history_common_statistics_save_time,
         };
 
         let max_time = settings.max_time.unwrap_or(UnixTime::new(i64::MAX));
@@ -26,23 +26,23 @@ impl HistoryReadAccountClientVersion<'_> {
 
         let values: Vec<(UnixTime, i64, i64, i64, i64)> = history_client_version_statistics
             .inner_join(
-                history_client_version_statistics_save_time::table
-                    .on(time_id.eq(history_client_version_statistics_save_time::id)),
+                history_common_statistics_save_time::table
+                    .on(time_id.eq(history_common_statistics_save_time::id)),
             )
             .inner_join(
                 history_client_version_statistics_version_number::table
                     .on(version_id.eq(history_client_version_statistics_version_number::id)),
             )
-            .filter(history_client_version_statistics_save_time::unix_time.le(max_time))
-            .filter(history_client_version_statistics_save_time::unix_time.ge(min_time))
+            .filter(history_common_statistics_save_time::unix_time.le(max_time))
+            .filter(history_common_statistics_save_time::unix_time.ge(min_time))
             .select((
-                history_client_version_statistics_save_time::unix_time,
+                history_common_statistics_save_time::unix_time,
                 history_client_version_statistics_version_number::major,
                 history_client_version_statistics_version_number::minor,
                 history_client_version_statistics_version_number::patch,
                 count,
             ))
-            .order((history_client_version_statistics_save_time::unix_time.desc(),))
+            .order((history_common_statistics_save_time::unix_time.desc(),))
             .load(self.conn())
             .change_context(DieselDatabaseError::Execute)?;
 

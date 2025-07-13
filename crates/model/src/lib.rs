@@ -14,6 +14,9 @@ pub use common::*;
 pub mod common_admin;
 pub use common_admin::*;
 
+pub mod common_history;
+pub use common_history::*;
+
 pub mod account;
 pub use account::*;
 

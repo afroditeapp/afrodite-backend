@@ -1,32 +1,9 @@
-use diesel::{
-    deserialize::FromSqlRow, expression::AsExpression, prelude::Queryable, sql_types::BigInt,
-};
+use diesel::prelude::Queryable;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{UnixTime, diesel_i64_wrapper};
+use simple_backend_model::UnixTime;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::StatisticsGender;
-
-/// Profile statistics save time ID
-#[derive(
-    Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Default, FromSqlRow, AsExpression,
-)]
-#[diesel(sql_type = BigInt)]
-pub struct SaveTimeId {
-    pub id: i64,
-}
-
-impl SaveTimeId {
-    pub fn new(id: i64) -> Self {
-        Self { id }
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.id
-    }
-}
-
-diesel_i64_wrapper!(SaveTimeId);
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, IntoParams)]
 pub struct GetProfileStatisticsHistoryParams {
