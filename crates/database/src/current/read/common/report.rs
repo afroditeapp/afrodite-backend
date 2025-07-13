@@ -4,7 +4,7 @@ use diesel::{alias, prelude::*};
 use error_stack::Result;
 use model::{
     AccountId, AccountIdDb, AccountIdInternal, AccountInteractionInternal, ChatMessageReport,
-    ContentId, CustomReportContent, MessageNumber, ReportAccountInfo, ReportChatInfo,
+    ContentId, CustomReportContent, MessageId, ReportAccountInfo, ReportChatInfo,
     ReportChatInfoInteractionState, ReportContent, ReportDetailed, ReportDetailedInfo,
     ReportDetailedInfoInternal, ReportDetailedWithId, ReportIdDb, ReportInternal,
     ReportProcessingState, ReportTypeNumberInternal, UnixTime,
@@ -207,26 +207,26 @@ impl CurrentReadCommonReport<'_> {
     ) -> Result<Option<ChatMessageReport>, DieselDatabaseError> {
         use crate::schema::chat_report_chat_message::dsl::*;
 
-        let value: Option<(AccountId, AccountId, UnixTime, MessageNumber, Vec<u8>)> =
+        let value: Option<(AccountId, AccountId, UnixTime, MessageId, Vec<u8>)> =
             chat_report_chat_message
                 .find(id)
                 .select((
                     message_sender_account_id_uuid,
                     message_receiver_account_id_uuid,
                     message_unix_time,
-                    message_number,
+                    message_id,
                     client_message_bytes,
                 ))
                 .first(self.conn())
                 .optional()
                 .into_db_error(())?;
 
-        if let Some((sender, receiver, message_time, mn, data)) = value {
+        if let Some((sender, receiver, message_time, m, data)) = value {
             Ok(Some(ChatMessageReport {
                 sender,
                 receiver,
                 message_time,
-                message_number: mn,
+                message_id: m,
                 message_base64: base64::engine::general_purpose::STANDARD.encode(data),
             }))
         } else {

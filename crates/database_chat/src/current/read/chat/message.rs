@@ -4,7 +4,7 @@ use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
-    AccountId, AccountIdDb, ConversationId, MessageNumber, NewMessageNotification,
+    AccountId, AccountIdDb, ConversationId, MessageId, NewMessageNotification,
     NewMessageNotificationList, PendingMessageIdInternal, PendingMessageIdInternalAndMessageTime,
     UnixTime,
 };
@@ -62,7 +62,7 @@ impl CurrentReadChatMessage<'_> {
             ConversationId,
             ConversationId,
             bool,
-            MessageNumber,
+            MessageId,
         )> = pending_messages
             .inner_join(account_id::table.on(account_id_sender.eq(account_id::id)))
             .inner_join(account_interaction::table)
@@ -78,7 +78,7 @@ impl CurrentReadChatMessage<'_> {
                 account_interaction::conversation_id_sender.assume_not_null(),
                 account_interaction::conversation_id_receiver.assume_not_null(),
                 receiver_push_notification_sent,
-                message_number,
+                message_id,
             ))
             .order_by(account_id_sender)
             .load(self.conn())
@@ -94,7 +94,7 @@ impl CurrentReadChatMessage<'_> {
             conversation_id_sender,
             conversation_id_receiver,
             push_notification_sent,
-            message_number_value,
+            message_id_value,
         ) in data
         {
             // Select message receiver specific conversation ID
@@ -117,7 +117,7 @@ impl CurrentReadChatMessage<'_> {
                         uuid: sender,
                     },
                     receiver: id_message_receiver.into_db_id(),
-                    mn: message_number_value,
+                    m: message_id_value,
                 });
             }
         }
@@ -139,7 +139,7 @@ impl CurrentReadChatMessage<'_> {
     ) -> Result<Vec<PendingMessageIdInternalAndMessageTime>, DieselDatabaseError> {
         use crate::schema::{account_id, pending_messages::dsl::*};
 
-        let data: Vec<(AccountIdDb, AccountId, AccountIdDb, UnixTime, MessageNumber)> =
+        let data: Vec<(AccountIdDb, AccountId, AccountIdDb, UnixTime, MessageId)> =
             pending_messages
                 .inner_join(account_id::table.on(account_id_sender.eq(account_id::id)))
                 .filter(account_id_receiver.eq(id_message_receiver.as_db_id()))
@@ -150,7 +150,7 @@ impl CurrentReadChatMessage<'_> {
                     account_id::uuid,
                     account_id_receiver,
                     message_unix_time,
-                    message_number,
+                    message_id,
                 ))
                 .order_by(account_id_sender)
                 .load(self.conn())
@@ -158,7 +158,7 @@ impl CurrentReadChatMessage<'_> {
 
         let v = data
             .into_iter()
-            .map(|(sender_db_id, sender_id, receiver_db_id, time, mn)| {
+            .map(|(sender_db_id, sender_id, receiver_db_id, time, m)| {
                 PendingMessageIdInternalAndMessageTime {
                     id: PendingMessageIdInternal {
                         sender: AccountIdInternal {
@@ -166,7 +166,7 @@ impl CurrentReadChatMessage<'_> {
                             uuid: sender_id,
                         },
                         receiver: receiver_db_id,
-                        mn,
+                        m,
                     },
                     time,
                 }

@@ -26,7 +26,7 @@ impl CurrentWriteChatMessage<'_> {
             update(pending_messages)
                 .filter(account_id_sender.eq(m.sender.as_db_id()))
                 .filter(account_id_receiver.eq(m.receiver))
-                .filter(message_number.eq(m.mn))
+                .filter(message_id.eq(m.m))
                 .set(receiver_push_notification_sent.eq(true))
                 .execute(self.conn())
                 .into_db_error(())?;
@@ -45,7 +45,7 @@ impl CurrentWriteChatMessage<'_> {
             update(pending_messages)
                 .filter(account_id_sender.eq(m.sender.as_db_id()))
                 .filter(account_id_receiver.eq(m.receiver))
-                .filter(message_number.eq(m.mn))
+                .filter(message_id.eq(m.m))
                 .set(receiver_email_notification_sent.eq(true))
                 .execute(self.conn())
                 .into_db_error(())?;
@@ -63,7 +63,7 @@ impl CurrentWriteChatMessage<'_> {
 
         for message in messages {
             update(pending_messages)
-                .filter(message_number.eq(message.mn))
+                .filter(message_id.eq(message.m))
                 .filter(account_id_sender.eq(message.sender.as_db_id()))
                 .filter(account_id_receiver.eq(message_receiver.as_db_id()))
                 .set(receiver_acknowledgement.eq(true))
@@ -71,7 +71,7 @@ impl CurrentWriteChatMessage<'_> {
                 .into_db_error(message_receiver)?;
 
             delete(pending_messages)
-                .filter(message_number.eq(message.mn))
+                .filter(message_id.eq(message.m))
                 .filter(account_id_sender.eq(message.sender.as_db_id()))
                 .filter(account_id_receiver.eq(message_receiver.as_db_id()))
                 .filter(sender_acknowledgement.eq(true))
@@ -144,7 +144,7 @@ impl CurrentWriteChatMessage<'_> {
             return Err(DieselDatabaseError::NotAllowed.into());
         }
 
-        let new_message_number = interaction.next_message_number();
+        let new_message_id = interaction.next_message_id();
 
         if interaction.account_id_sender == Some(*sender.as_db_id()) {
             update(account_interaction::table.find(interaction.id))
@@ -153,7 +153,7 @@ impl CurrentWriteChatMessage<'_> {
                         .eq(account_interaction::message_counter_sender + 1),
                 )
                 .execute(self.conn())
-                .into_db_error((sender, receiver, new_message_number))?;
+                .into_db_error((sender, receiver, new_message_id))?;
         } else {
             update(account_interaction::table.find(interaction.id))
                 .set(
@@ -161,7 +161,7 @@ impl CurrentWriteChatMessage<'_> {
                         .eq(account_interaction::message_counter_receiver + 1),
                 )
                 .execute(self.conn())
-                .into_db_error((sender, receiver, new_message_number))?;
+                .into_db_error((sender, receiver, new_message_id))?;
         }
 
         let data_for_signing = SignedMessageData {
@@ -169,7 +169,7 @@ impl CurrentWriteChatMessage<'_> {
             receiver: receiver.as_id(),
             sender_public_key_id,
             receiver_public_key_id,
-            mn: new_message_number,
+            m: new_message_id,
             unix_time: time,
             message,
         };
@@ -184,13 +184,13 @@ impl CurrentWriteChatMessage<'_> {
                 account_id_sender.eq(sender.as_db_id()),
                 account_id_receiver.eq(receiver.as_db_id()),
                 message_unix_time.eq(time),
-                message_number.eq(new_message_number),
+                message_id.eq(new_message_id),
                 message_bytes.eq(&signed),
                 sender_client_id.eq(client_id_value),
                 sender_client_local_id.eq(client_local_id_value),
             ))
             .execute(self.conn())
-            .into_db_error((sender, receiver, new_message_number))?;
+            .into_db_error((sender, receiver, new_message_id))?;
 
         Ok(Ok(signed))
     }

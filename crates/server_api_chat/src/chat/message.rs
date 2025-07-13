@@ -8,9 +8,9 @@ use headers::ContentType;
 use model::{GetConversationId, NotificationEvent};
 use model_chat::{
     AccountId, AccountIdInternal, EventToClientInternal, GetSentMessage,
-    LatestViewedMessageChanged, MessageNumber, PendingMessageAcknowledgementList,
-    SendMessageResult, SendMessageToAccountParams, SentMessageId, SentMessageIdList,
-    UpdateMessageViewStatus, add_minimal_i64,
+    LatestViewedMessageChanged, MessageId, PendingMessageAcknowledgementList, SendMessageResult,
+    SendMessageToAccountParams, SentMessageId, SentMessageIdList, UpdateMessageViewStatus,
+    add_minimal_i64,
 };
 use server_api::{
     S,
@@ -60,7 +60,7 @@ const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
 /// - Receiver AccountId UUID big-endian bytes (16 bytes)
 /// - Sender public key ID (minimal i64)
 /// - Receiver public key ID (minimal i64)
-/// - Message number (minimal i64)
+/// - Message ID (minimal i64)
 /// - Unix time (minimal i64)
 /// - Message data
 #[utoipa::path(
@@ -124,44 +124,44 @@ pub async fn post_add_receiver_acknowledgement(
     Ok(())
 }
 
-const PATH_GET_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE: &str =
-    "/chat_api/message_number_of_latest_viewed_message";
+const PATH_GET_MESSAGE_ID_OF_LATEST_VIEWED_MESSAGE: &str =
+    "/chat_api/message_id_of_latest_viewed_message";
 
-/// Get message number of the most recent message that the recipient has viewed.
+/// Get message ID of the most recent message that the recipient has viewed.
 #[utoipa::path(
     get,
-    path = PATH_GET_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE,
+    path = PATH_GET_MESSAGE_ID_OF_LATEST_VIEWED_MESSAGE,
     request_body(content = AccountId),
     responses(
-        (status = 200, description = "Success.", body = MessageNumber),
+        (status = 200, description = "Success.", body = MessageId),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_message_number_of_latest_viewed_message(
+pub async fn get_message_id_of_latest_viewed_message(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
-) -> Result<Json<MessageNumber>, StatusCode> {
-    CHAT.get_message_number_of_latest_viewed_message.incr();
+) -> Result<Json<MessageId>, StatusCode> {
+    CHAT.get_message_id_of_latest_viewed_message.incr();
 
     let requested_profile = state.get_internal_id(requested_profile).await?;
     let number = state
         .read()
         .chat()
-        .message_number_of_latest_viewed_message(id, requested_profile)
+        .message_id_of_latest_viewed_message(id, requested_profile)
         .await?;
     Ok(number.into())
 }
 
-const PATH_POST_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE: &str =
-    "/chat_api/message_number_of_latest_viewed_message";
+const PATH_POST_MESSAGE_ID_OF_LATEST_VIEWED_MESSAGE: &str =
+    "/chat_api/message_id_of_latest_viewed_message";
 
-/// Update message number of the most recent message that the recipient has viewed.
+/// Update message ID of the most recent message that the recipient has viewed.
 #[utoipa::path(
     post,
-    path = PATH_POST_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE,
+    path = PATH_POST_MESSAGE_ID_OF_LATEST_VIEWED_MESSAGE,
     request_body(content = UpdateMessageViewStatus),
     responses(
         (status = 200, description = "Success."),
@@ -170,17 +170,17 @@ const PATH_POST_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_message_number_of_latest_viewed_message(
+pub async fn post_message_id_of_latest_viewed_message(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(update_info): Json<UpdateMessageViewStatus>,
 ) -> Result<(), StatusCode> {
-    CHAT.post_message_number_of_latest_viewed_message.incr();
+    CHAT.post_message_id_of_latest_viewed_message.incr();
 
     let message_sender = state.get_internal_id(update_info.sender).await?;
     db_write_multiple!(state, move |cmds| {
         cmds.chat()
-            .update_message_number_of_latest_viewed_message(id, message_sender, update_info.mn)
+            .update_message_id_of_latest_viewed_message(id, message_sender, update_info.m)
             .await?;
 
         cmds.events()
@@ -188,7 +188,7 @@ pub async fn post_message_number_of_latest_viewed_message(
                 message_sender,
                 EventToClientInternal::LatestViewedMessageChanged(LatestViewedMessageChanged {
                     viewer: id.into(),
-                    new_latest_viewed_message: update_info.mn,
+                    new_latest_viewed_message: update_info.m,
                 }),
             )
             .await?;
@@ -407,8 +407,8 @@ create_open_api_router!(
         fn router_message,
         get_pending_messages,
         post_add_receiver_acknowledgement,
-        get_message_number_of_latest_viewed_message,
-        post_message_number_of_latest_viewed_message,
+        get_message_id_of_latest_viewed_message,
+        post_message_id_of_latest_viewed_message,
         post_send_message,
         post_get_sent_message,
         get_sent_message_ids,
@@ -422,8 +422,8 @@ create_counters!(
     CHAT_MESSAGE_COUNTERS_LIST,
     get_pending_messages,
     delete_pending_messages,
-    get_message_number_of_latest_viewed_message,
-    post_message_number_of_latest_viewed_message,
+    get_message_id_of_latest_viewed_message,
+    post_message_id_of_latest_viewed_message,
     post_send_message,
     post_get_sent_message,
     get_sent_message_ids,

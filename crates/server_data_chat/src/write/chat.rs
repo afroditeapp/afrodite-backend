@@ -14,7 +14,7 @@ use database_chat::current::{
 use error_stack::ResultExt;
 use model_chat::{
     AccountIdInternal, AddPublicKeyResult, ChatStateRaw, ClientId, ClientLocalId,
-    MatchesIteratorSessionIdInternal, MessageNumber, NewReceivedLikesCount, PendingMessageId,
+    MatchesIteratorSessionIdInternal, MessageId, NewReceivedLikesCount, PendingMessageId,
     PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId,
     ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion, SendMessageResult,
     SentMessageId, SyncVersionUtils,
@@ -282,7 +282,7 @@ impl WriteCommandsChat<'_> {
             converted.push(PendingMessageIdInternal {
                 sender,
                 receiver: message_receiver.into_db_id(),
-                mn: m.mn,
+                m: m.m,
             });
         }
 
@@ -329,12 +329,12 @@ impl WriteCommandsChat<'_> {
         Ok(())
     }
 
-    /// Update message number which my account has viewed from the sender
-    pub async fn update_message_number_of_latest_viewed_message(
+    /// Update message ID which my account has viewed from the sender
+    pub async fn update_message_id_of_latest_viewed_message(
         &self,
         id_my_account: AccountIdInternal,
         id_message_sender: AccountIdInternal,
-        new_message_number: MessageNumber,
+        new_message_id: MessageId,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             let mut interaction = cmds
@@ -345,7 +345,7 @@ impl WriteCommandsChat<'_> {
                 .ok_or(DieselDatabaseError::NotFound.report())?;
 
             // Prevent marking future messages as viewed
-            if new_message_number.mn > interaction.message_counter() {
+            if new_message_id.id > interaction.message_counter() {
                 return Err(DieselDatabaseError::NotAllowed.report());
             }
 
@@ -357,9 +357,9 @@ impl WriteCommandsChat<'_> {
             // Who is sender and receiver in the interaction data depends
             // on who did the first like
             if interaction.account_id_sender == Some(id_my_account.into_db_id()) {
-                interaction.sender_latest_viewed_message = new_message_number;
+                interaction.sender_latest_viewed_message = new_message_id;
             } else {
-                interaction.receiver_latest_viewed_message = new_message_number;
+                interaction.receiver_latest_viewed_message = new_message_id;
             }
 
             cmds.chat()
