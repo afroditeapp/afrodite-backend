@@ -56,7 +56,6 @@ pub struct NewMessageNotification {
 sync_version_wrappers!(
     /// Sync version for new received likes count
     ReceivedLikesSyncVersion,
-    SentLikesSyncVersion,
     MatchesSyncVersion,
     DailyLikesLeftSyncVersion,
 );

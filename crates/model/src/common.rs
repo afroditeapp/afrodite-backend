@@ -50,7 +50,6 @@ pub enum EventType {
     AccountStateChanged,
     NewMessageReceived,
     ReceivedLikesChanged,
-    SentLikesChanged,
     MatchesChanged,
     /// Data: content_processing_state_changed
     ContentProcessingStateChanged,
@@ -102,7 +101,6 @@ pub enum EventToClientInternal {
     ContentProcessingStateChanged(ContentProcessingStateChanged),
     NewMessageReceived,
     ReceivedLikesChanged,
-    SentLikesChanged,
     MatchesChanged,
     ClientConfigChanged,
     ProfileChanged,
@@ -124,7 +122,6 @@ impl From<&EventToClientInternal> for EventType {
             AccountStateChanged => Self::AccountStateChanged,
             NewMessageReceived => Self::NewMessageReceived,
             ReceivedLikesChanged => Self::ReceivedLikesChanged,
-            SentLikesChanged => Self::SentLikesChanged,
             MatchesChanged => Self::MatchesChanged,
             ClientConfigChanged => Self::ClientConfigChanged,
             ProfileChanged => Self::ProfileChanged,
@@ -156,7 +153,6 @@ impl From<EventToClientInternal> for EventToClient {
             AccountStateChanged
             | NewMessageReceived
             | ReceivedLikesChanged
-            | SentLikesChanged
             | MatchesChanged
             | ClientConfigChanged
             | ProfileChanged
