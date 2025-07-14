@@ -2,9 +2,8 @@ use base64::Engine;
 use diesel::prelude::*;
 use model::{
     ConversationId, DailyLikesLeftSyncVersion, MatchId, MatchesSyncVersion, MessageId,
-    NewReceivedLikesCount, ProfileContentVersion, PublicKeyId, ReceivedBlocksSyncVersion,
-    ReceivedLikeId, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion,
-    UnixTime,
+    NewReceivedLikesCount, ProfileContentVersion, PublicKeyId, ReceivedLikeId,
+    ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion, UnixTime,
 };
 use model_server_data::{LastSeenTime, LimitedActionStatus, ProfileVersion};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -35,7 +34,6 @@ pub use video_call::*;
 #[diesel(check_for_backend(crate::Db))]
 #[diesel(treat_none_as_null = true)]
 pub struct ChatStateRaw {
-    pub received_blocks_sync_version: ReceivedBlocksSyncVersion,
     pub received_likes_sync_version: ReceivedLikesSyncVersion,
     pub sent_blocks_sync_version: SentBlocksSyncVersion,
     pub sent_likes_sync_version: SentLikesSyncVersion,
@@ -72,14 +70,6 @@ pub struct SentBlocksPage {
     /// This version can be sent to the server when WebSocket protocol
     /// data sync is happening.
     pub version: SentBlocksSyncVersion,
-    pub profiles: Vec<AccountId>,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
-pub struct ReceivedBlocksPage {
-    /// This version can be sent to the server when WebSocket protocol
-    /// data sync is happening.
-    pub version: ReceivedBlocksSyncVersion,
     pub profiles: Vec<AccountId>,
 }
 

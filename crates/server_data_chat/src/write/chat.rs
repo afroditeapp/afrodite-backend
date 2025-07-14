@@ -223,10 +223,7 @@ impl WriteCommandsChat<'_> {
                 s.sent_blocks_sync_version.increment_if_not_max_value_mut();
             })?;
 
-            let receiver = cmds.chat().modify_chat_state(id_block_receiver, |s| {
-                s.received_blocks_sync_version
-                    .increment_if_not_max_value_mut();
-            })?;
+            let receiver = cmds.chat().modify_chat_state(id_block_receiver, |_| ())?;
 
             Ok(SenderAndReceiverStateChanges { sender, receiver })
         })
@@ -260,10 +257,7 @@ impl WriteCommandsChat<'_> {
                 s.sent_blocks_sync_version.increment_if_not_max_value_mut();
             })?;
 
-            let receiver = cmds.chat().modify_chat_state(id_block_receiver, |s| {
-                s.received_blocks_sync_version
-                    .increment_if_not_max_value_mut();
-            })?;
+            let receiver = cmds.chat().modify_chat_state(id_block_receiver, |_| ())?;
 
             Ok(SenderAndReceiverStateChanges { sender, receiver })
         })

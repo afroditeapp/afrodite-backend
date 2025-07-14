@@ -1,5 +1,5 @@
 use axum::{Extension, extract::State};
-use model_chat::{AccountId, AccountIdInternal, ReceivedBlocksPage, SentBlocksPage};
+use model_chat::{AccountId, AccountIdInternal, SentBlocksPage};
 use server_api::{S, create_open_api_router};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
@@ -107,38 +107,11 @@ pub async fn get_sent_blocks(
     Ok(page.into())
 }
 
-// TODO: Add some block query info, so that server can send sync received blocks
-//       list command to client.
-
-const PATH_GET_RECEIVED_BLOCKS: &str = "/chat_api/received_blocks";
-
-/// Get list of received blocks
-#[utoipa::path(
-    get,
-    path = PATH_GET_RECEIVED_BLOCKS,
-    responses(
-        (status = 200, description = "Success.", body = ReceivedBlocksPage),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn get_received_blocks(
-    State(state): State<S>,
-    Extension(id): Extension<AccountIdInternal>,
-) -> Result<Json<ReceivedBlocksPage>, StatusCode> {
-    CHAT.get_received_blocks.incr();
-
-    let page = state.read().chat().all_received_blocks(id).await?;
-    Ok(page.into())
-}
-
 create_open_api_router!(
         fn router_block,
         post_block_profile,
         post_unblock_profile,
         get_sent_blocks,
-        get_received_blocks,
 );
 
 create_counters!(
@@ -148,5 +121,4 @@ create_counters!(
     post_block_profile,
     post_unblock_profile,
     get_sent_blocks,
-    get_received_blocks,
 );

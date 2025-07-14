@@ -50,7 +50,6 @@ pub enum EventType {
     AccountStateChanged,
     NewMessageReceived,
     ReceivedLikesChanged,
-    ReceivedBlocksChanged,
     SentLikesChanged,
     SentBlocksChanged,
     MatchesChanged,
@@ -104,7 +103,6 @@ pub enum EventToClientInternal {
     ContentProcessingStateChanged(ContentProcessingStateChanged),
     NewMessageReceived,
     ReceivedLikesChanged,
-    ReceivedBlocksChanged,
     SentLikesChanged,
     SentBlocksChanged,
     MatchesChanged,
@@ -128,7 +126,6 @@ impl From<&EventToClientInternal> for EventType {
             AccountStateChanged => Self::AccountStateChanged,
             NewMessageReceived => Self::NewMessageReceived,
             ReceivedLikesChanged => Self::ReceivedLikesChanged,
-            ReceivedBlocksChanged => Self::ReceivedBlocksChanged,
             SentLikesChanged => Self::SentLikesChanged,
             SentBlocksChanged => Self::SentBlocksChanged,
             MatchesChanged => Self::MatchesChanged,
@@ -162,7 +159,6 @@ impl From<EventToClientInternal> for EventToClient {
             AccountStateChanged
             | NewMessageReceived
             | ReceivedLikesChanged
-            | ReceivedBlocksChanged
             | SentLikesChanged
             | SentBlocksChanged
             | MatchesChanged

@@ -54,7 +54,6 @@ pub struct NewMessageNotification {
 }
 
 sync_version_wrappers!(
-    ReceivedBlocksSyncVersion,
     /// Sync version for new received likes count
     ReceivedLikesSyncVersion,
     SentBlocksSyncVersion,

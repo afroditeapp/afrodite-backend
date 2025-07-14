@@ -265,10 +265,6 @@ impl<'a> EventManagerWithCacheReference<'a> {
         &'a self,
         c: &ChatStateChanges,
     ) -> Result<(), DataError> {
-        if c.received_blocks_sync_version.is_some() {
-            self.send_connected_event(c.id, EventToClientInternal::ReceivedBlocksChanged)
-                .await?;
-        }
         if let Some(info) = &c.received_likes_change {
             if info.previous_count.c == 0 && info.current_count.c == 1 {
                 self.send_notification(c.id, NotificationEvent::ReceivedLikesChanged)

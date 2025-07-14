@@ -155,20 +155,6 @@ pub async fn sync_data_with_client_if_needed(
                     .await?;
                 }
             }
-            SyncCheckDataType::ReveivedBlocks => {
-                if config.components().chat {
-                    handle_chat_state_version_check(
-                        write_handle,
-                        socket,
-                        id,
-                        version.version,
-                        chat_state.clone(),
-                        |s| &mut s.received_blocks_sync_version,
-                        EventToClientInternal::ReceivedBlocksChanged,
-                    )
-                    .await?;
-                }
-            }
             SyncCheckDataType::ReveivedLikes => {
                 if config.components().chat {
                     handle_chat_state_version_check(
