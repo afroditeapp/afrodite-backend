@@ -2,8 +2,7 @@
 
 use axum::{Extension, extract::State};
 use model_chat::{
-    AccountIdInternal, AllMatchesPage, MatchesIteratorSessionId, MatchesPage,
-    ResetMatchesIteratorResult,
+    AccountIdInternal, MatchesIteratorSessionId, MatchesPage, ResetMatchesIteratorResult,
 };
 use server_api::{S, app::WriteData, create_open_api_router, db_write_multiple};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
@@ -11,29 +10,6 @@ use simple_backend::create_counters;
 
 use super::super::utils::{Json, StatusCode};
 use crate::app::ReadData;
-
-const PATH_GET_MATCHES: &str = "/chat_api/matches";
-
-/// Get matches
-#[utoipa::path(
-    get,
-    path = PATH_GET_MATCHES,
-    responses(
-        (status = 200, description = "Success.", body = AllMatchesPage),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn get_matches(
-    State(state): State<S>,
-    Extension(id): Extension<AccountIdInternal>,
-) -> Result<Json<AllMatchesPage>, StatusCode> {
-    CHAT.get_matches.incr();
-
-    let page = state.read().chat().all_matches(id).await?;
-    Ok(page.into())
-}
 
 const PATH_POST_RESET_MATCHES_PAGING: &str = "/chat_api/matches/reset";
 
@@ -110,7 +86,6 @@ pub async fn post_get_next_matches_page(
 
 create_open_api_router!(
         fn router_match,
-        get_matches,
         post_reset_matches_paging,
         post_get_next_matches_page,
 );
@@ -119,7 +94,6 @@ create_counters!(
     ChatCounters,
     CHAT,
     CHAT_MATCH_COUNTERS_LIST,
-    get_matches,
     post_reset_matches_paging,
     post_get_next_matches_page,
 );
