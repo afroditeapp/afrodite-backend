@@ -2,7 +2,7 @@ use database_chat::current::read::GetDbReadCommandsChat;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState,
     AllMatchesPage, ChatProfileLink, ChatStateRaw, GetSentMessage, MatchId,
-    PageItemCountForNewLikes, ReceivedLikeId, SentBlocksPage, SentLikesPage, SentMessageId,
+    PageItemCountForNewLikes, ReceivedLikeId, SentBlocksPage, SentMessageId,
 };
 use server_data::{
     DataError, IntoDataError,
@@ -39,19 +39,6 @@ impl ReadCommandsChat<'_> {
         self.db_read(move |mut cmds| cmds.chat().chat_state(id))
             .await
             .into_error()
-    }
-
-    pub async fn all_sent_likes(&self, id: AccountIdInternal) -> Result<SentLikesPage, DataError> {
-        self.db_read(move |mut cmds| {
-            let profiles = cmds.chat().interaction().all_sender_account_interactions(
-                id,
-                AccountInteractionState::Like,
-                true,
-            )?;
-            Ok(SentLikesPage { profiles })
-        })
-        .await
-        .into_error()
     }
 
     pub async fn received_likes_page(
