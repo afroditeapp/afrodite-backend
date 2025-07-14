@@ -4,7 +4,7 @@ use model_chat::{
     DailyLikesLeft, DeleteLikeResult, LimitedActionStatus, NewReceivedLikesCount,
     NewReceivedLikesCountResult, PageItemCountForNewLikes, PendingNotificationFlags,
     ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult,
-    SendLikeResult, SentLikesPage,
+    SendLikeResult,
 };
 use server_api::{
     S,
@@ -141,34 +141,6 @@ pub async fn post_send_like(
     })?;
 
     Ok(r.into())
-}
-
-const PATH_GET_SENT_LIKES: &str = "/chat_api/sent_likes";
-
-/// Get sent likes.
-///
-/// Profile will not be returned if:
-///
-/// - Profile is hidden (not public)
-/// - Profile is a match
-#[utoipa::path(
-    get,
-    path = PATH_GET_SENT_LIKES,
-    responses(
-        (status = 200, description = "Success.", body = SentLikesPage),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn get_sent_likes(
-    State(state): State<S>,
-    Extension(id): Extension<AccountIdInternal>,
-) -> Result<Json<SentLikesPage>, StatusCode> {
-    CHAT.get_sent_likes.incr();
-
-    let page = state.read().chat().all_sent_likes(id).await?;
-    Ok(page.into())
 }
 
 const PATH_POST_GET_NEW_RECEIVED_LIKES_COUNT: &str = "/chat_api/new_received_likes_count";
@@ -420,7 +392,6 @@ pub async fn get_daily_likes_left(
 create_open_api_router!(
         fn router_like,
         post_send_like,
-        get_sent_likes,
         post_get_new_received_likes_count,
         post_reset_received_likes_paging,
         post_get_next_received_likes_page,
@@ -433,7 +404,6 @@ create_counters!(
     CHAT,
     CHAT_LIKE_COUNTERS_LIST,
     post_send_like,
-    get_sent_likes,
     post_get_new_received_likes_count,
     post_reset_received_likes_paging,
     post_get_next_received_likes_page,

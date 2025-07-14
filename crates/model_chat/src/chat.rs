@@ -56,11 +56,6 @@ pub struct PendingMessageInternal {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
-pub struct SentLikesPage {
-    pub profiles: Vec<AccountId>,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct SentBlocksPage {
     pub profiles: Vec<AccountId>,
 }
