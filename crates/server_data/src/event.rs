@@ -274,10 +274,6 @@ impl<'a> EventManagerWithCacheReference<'a> {
                     .await?;
             }
         }
-        if c.sent_likes_sync_version.is_some() {
-            self.send_connected_event(c.id, EventToClientInternal::SentLikesChanged)
-                .await?;
-        }
         if c.matches_sync_version.is_some() {
             self.send_connected_event(c.id, EventToClientInternal::MatchesChanged)
                 .await?;

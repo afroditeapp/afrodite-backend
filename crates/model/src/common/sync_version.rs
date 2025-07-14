@@ -34,7 +34,6 @@ impl SyncDataVersionFromClient {
 pub enum SyncCheckDataType {
     Account = 0,
     ReveivedLikes = 1,
-    SentLikes = 3,
     Matches = 5,
     ClientConfig = 6,
     Profile = 7,

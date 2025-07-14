@@ -250,7 +250,6 @@ diesel::table! {
     chat_state (account_id) {
         account_id -> Integer,
         received_likes_sync_version -> Integer,
-        sent_likes_sync_version -> Integer,
         matches_sync_version -> Integer,
         new_received_likes_count -> Integer,
         next_received_like_id -> Integer,

@@ -48,8 +48,7 @@ impl ReadCommandsChat<'_> {
                 AccountInteractionState::Like,
                 true,
             )?;
-            let version = cmds.chat().chat_state(id)?.sent_likes_sync_version;
-            Ok(SentLikesPage { profiles, version })
+            Ok(SentLikesPage { profiles })
         })
         .await
         .into_error()

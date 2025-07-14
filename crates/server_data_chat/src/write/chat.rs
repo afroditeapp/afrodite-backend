@@ -115,9 +115,7 @@ impl WriteCommandsChat<'_> {
                 .update_account_interaction(updated.clone())?;
 
             let sender = cmds.chat().modify_chat_state(id_like_sender, |s| {
-                if interaction.is_empty() {
-                    s.sent_likes_sync_version.increment_if_not_max_value_mut();
-                } else if interaction.is_like() {
+                if interaction.is_like() {
                     s.matches_sync_version.increment_if_not_max_value_mut();
                 }
             })?;
@@ -177,9 +175,7 @@ impl WriteCommandsChat<'_> {
                 .interaction()
                 .update_account_interaction(updated)?;
 
-            let sender = cmds.chat().modify_chat_state(id_sender, |s| {
-                s.sent_likes_sync_version.increment_if_not_max_value_mut();
-            })?;
+            let sender = cmds.chat().modify_chat_state(id_sender, |_| ())?;
 
             let receiver = cmds.chat().modify_chat_state(id_receiver, |s| {
                 s.received_likes_sync_version
