@@ -116,36 +116,6 @@ CREATE TABLE IF NOT EXISTS shared_state(
             ON UPDATE CASCADE
 );
 
--- TODO(prod): Remove queue number tables?
-
--- All next new queue numbers are stored here.
-CREATE TABLE IF NOT EXISTS next_queue_number(
-    -- Queue type number: 0 = media moderation
-    -- Queue type number: 1 = initial media moderation
-    queue_type_number       INTEGER PRIMARY KEY     NOT NULL,
-    -- Next unused queue number
-    next_number             INTEGER                 NOT NULL DEFAULT 0
-);
-
--- Table for storing active queue entries.
--- Only active queue entries are stored here.
-CREATE TABLE IF NOT EXISTS queue_entry(
-    -- Queue number from next_queue_number table.
-    -- The number in that table is incremented when
-    -- new queue entry is created.
-    queue_number      INTEGER                        NOT NULL,
-    -- Queue entry type number. Check next_queue_number table for
-    -- available queue type numbers.
-    queue_type_number INTEGER                        NOT NULL,
-    -- Associate queue entry with account.
-    account_id        INTEGER                        NOT NULL,
-    PRIMARY KEY (queue_number, queue_type_number),
-    FOREIGN KEY (account_id)
-        REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
-);
-
 CREATE TABLE IF NOT EXISTS common_report(
     id                      INTEGER PRIMARY KEY NOT NULL,
     creator_account_id      INTEGER             NOT NULL,

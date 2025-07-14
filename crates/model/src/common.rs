@@ -6,15 +6,13 @@ use diesel::{
     sql_types::{BigInt, Binary},
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{
-    UnixTime, diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_wrapper,
-};
+use simple_backend_model::{UnixTime, diesel_i64_wrapper, diesel_uuid_wrapper};
 use utils::random_bytes::random_128_bits;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
     Account, AccountStateContainer, ContentProcessingId, ContentProcessingState,
-    InitialSetupCompletedTime, ProfileVisibility, schema_sqlite_types::Integer,
+    InitialSetupCompletedTime, ProfileVisibility,
 };
 
 pub mod api_usage;
@@ -532,66 +530,6 @@ impl From<Account> for AccountStateRelatedSharedState {
         }
     }
 }
-
-#[derive(Debug, Clone, Queryable, Selectable)]
-#[diesel(table_name = crate::schema::next_queue_number)]
-#[diesel(check_for_backend(crate::Db))]
-pub struct NextQueueNumbersRaw {
-    pub queue_type_number: NextQueueNumberType,
-    /// Next unused queue number
-    pub next_number: i64,
-}
-
-#[derive(Debug, Clone, Copy, diesel::FromSqlRow, diesel::AsExpression)]
-#[diesel(sql_type = Integer)]
-pub enum NextQueueNumberType {
-    MediaModeration = 0,
-    InitialMediaModeration = 1,
-}
-
-impl TryFrom<i64> for NextQueueNumberType {
-    type Error = String;
-
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
-        let number_type = match value {
-            0 => Self::MediaModeration,
-            1 => Self::InitialMediaModeration,
-            value => return Err(format!("Unknown NextQueueNumberType value {value}")),
-        };
-
-        Ok(number_type)
-    }
-}
-
-diesel_i64_try_from!(NextQueueNumberType);
-
-#[derive(Debug, Clone, Queryable, Selectable)]
-#[diesel(table_name = crate::schema::queue_entry)]
-#[diesel(check_for_backend(crate::Db))]
-pub struct QueueEntryRaw {
-    pub queue_number: QueueNumber,
-    pub queue_type_number: NextQueueNumberType,
-    pub account_id: AccountIdDb,
-}
-
-#[derive(
-    Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, FromSqlRow, AsExpression,
-)]
-#[diesel(sql_type = BigInt)]
-#[serde(transparent)]
-pub struct QueueNumber(pub i64);
-
-impl QueueNumber {
-    pub fn new(id: i64) -> Self {
-        Self(id)
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.0
-    }
-}
-
-diesel_i64_wrapper!(QueueNumber);
 
 #[cfg(test)]
 mod tests {

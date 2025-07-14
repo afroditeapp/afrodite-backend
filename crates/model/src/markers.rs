@@ -71,7 +71,6 @@ enable_logging!(
     ContentIdDb,
     Option<ContentId>,
     ContentIdInternal,
-    NextQueueNumberType,
     ContentSlot,
     // General
     &'static str,

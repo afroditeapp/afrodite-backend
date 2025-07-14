@@ -602,15 +602,6 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    next_queue_number (queue_type_number) {
-        queue_type_number -> Integer,
-        next_number -> Integer,
-    }
-}
-
-diesel::table! {
-    use crate::schema_sqlite_types::*;
-
     pending_messages (id) {
         id -> Integer,
         account_interaction -> Integer,
@@ -800,16 +791,6 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    queue_entry (queue_number, queue_type_number) {
-        queue_number -> Integer,
-        queue_type_number -> Integer,
-        account_id -> Integer,
-    }
-}
-
-diesel::table! {
-    use crate::schema_sqlite_types::*;
-
     refresh_token (account_id) {
         account_id -> Integer,
         token -> Nullable<Binary>,
@@ -912,7 +893,6 @@ diesel::joinable!(profile_automatic_profile_search_state -> account_id (account_
 diesel::joinable!(profile_report_profile_name -> common_report (report_id));
 diesel::joinable!(profile_report_profile_text -> common_report (report_id));
 diesel::joinable!(public_key -> account_id (account_id));
-diesel::joinable!(queue_entry -> account_id (account_id));
 diesel::joinable!(refresh_token -> account_id (account_id));
 diesel::joinable!(shared_state -> account_id (account_id));
 diesel::joinable!(sign_in_with_info -> account_id (account_id));
@@ -969,7 +949,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     media_state,
     news,
     news_translations,
-    next_queue_number,
     pending_messages,
     profile,
     profile_app_notification_settings,
@@ -985,7 +964,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     profile_report_profile_text,
     profile_state,
     public_key,
-    queue_entry,
     refresh_token,
     shared_state,
     sign_in_with_info,

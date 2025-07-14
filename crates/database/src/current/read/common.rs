@@ -9,7 +9,6 @@ use crate::{
 
 mod client_config;
 mod push_notification;
-mod queue_number;
 mod report;
 mod state;
 mod token;
@@ -19,10 +18,6 @@ define_current_read_commands!(CurrentReadCommon);
 impl<'a> CurrentReadCommon<'a> {
     pub fn state(self) -> state::CurrentReadCommonState<'a> {
         state::CurrentReadCommonState::new(self.cmds)
-    }
-
-    pub fn queue_number(self) -> queue_number::CurrentReadCommonQueueNumber<'a> {
-        queue_number::CurrentReadCommonQueueNumber::new(self.cmds)
     }
 
     pub fn token(self) -> token::CurrentReadAccountToken<'a> {
