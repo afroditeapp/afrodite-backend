@@ -3,7 +3,7 @@ use diesel::prelude::*;
 use model::{
     ConversationId, DailyLikesLeftSyncVersion, MatchId, MatchesSyncVersion, MessageId,
     NewReceivedLikesCount, ProfileContentVersion, PublicKeyId, ReceivedLikeId,
-    ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion, UnixTime,
+    ReceivedLikesSyncVersion, SentLikesSyncVersion, UnixTime,
 };
 use model_server_data::{LastSeenTime, LimitedActionStatus, ProfileVersion};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -35,7 +35,6 @@ pub use video_call::*;
 #[diesel(treat_none_as_null = true)]
 pub struct ChatStateRaw {
     pub received_likes_sync_version: ReceivedLikesSyncVersion,
-    pub sent_blocks_sync_version: SentBlocksSyncVersion,
     pub sent_likes_sync_version: SentLikesSyncVersion,
     pub matches_sync_version: MatchesSyncVersion,
     pub new_received_likes_count: NewReceivedLikesCount,
@@ -67,9 +66,6 @@ pub struct SentLikesPage {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct SentBlocksPage {
-    /// This version can be sent to the server when WebSocket protocol
-    /// data sync is happening.
-    pub version: SentBlocksSyncVersion,
     pub profiles: Vec<AccountId>,
 }
 

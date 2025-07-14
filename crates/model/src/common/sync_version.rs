@@ -35,7 +35,6 @@ pub enum SyncCheckDataType {
     Account = 0,
     ReveivedLikes = 1,
     SentLikes = 3,
-    SentBlocks = 4,
     Matches = 5,
     ClientConfig = 6,
     Profile = 7,

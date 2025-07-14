@@ -34,13 +34,7 @@ pub async fn post_block_profile(
     let requested_profile = state.get_internal_id(requested_profile).await?;
 
     db_write_multiple!(state, move |cmds| {
-        let changes = cmds.chat().block_profile(id, requested_profile).await?;
-        cmds.events()
-            .handle_chat_state_changes(&changes.sender)
-            .await?;
-        cmds.events()
-            .handle_chat_state_changes(&changes.receiver)
-            .await?;
+        cmds.chat().block_profile(id, requested_profile).await?;
         Ok(())
     })?;
 
@@ -71,13 +65,7 @@ pub async fn post_unblock_profile(
     let requested_profile = state.get_internal_id(requested_profile).await?;
 
     db_write_multiple!(state, move |cmds| {
-        let changes = cmds.chat().delete_block(id, requested_profile).await?;
-        cmds.events()
-            .handle_chat_state_changes(&changes.sender)
-            .await?;
-        cmds.events()
-            .handle_chat_state_changes(&changes.receiver)
-            .await?;
+        cmds.chat().delete_block(id, requested_profile).await?;
         Ok(())
     })?;
 

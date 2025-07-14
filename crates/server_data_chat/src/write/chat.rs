@@ -202,7 +202,7 @@ impl WriteCommandsChat<'_> {
         &self,
         id_block_sender: AccountIdInternal,
         id_block_receiver: AccountIdInternal,
-    ) -> Result<SenderAndReceiverStateChanges, DataError> {
+    ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             let interaction = cmds
                 .chat()
@@ -219,13 +219,7 @@ impl WriteCommandsChat<'_> {
                 .interaction()
                 .update_account_interaction(updated)?;
 
-            let sender = cmds.chat().modify_chat_state(id_block_sender, |s| {
-                s.sent_blocks_sync_version.increment_if_not_max_value_mut();
-            })?;
-
-            let receiver = cmds.chat().modify_chat_state(id_block_receiver, |_| ())?;
-
-            Ok(SenderAndReceiverStateChanges { sender, receiver })
+            Ok(())
         })
     }
 
@@ -236,7 +230,7 @@ impl WriteCommandsChat<'_> {
         &self,
         id_block_sender: AccountIdInternal,
         id_block_receiver: AccountIdInternal,
-    ) -> Result<SenderAndReceiverStateChanges, DataError> {
+    ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             let interaction = cmds
                 .chat()
@@ -253,13 +247,7 @@ impl WriteCommandsChat<'_> {
                 .interaction()
                 .update_account_interaction(updated)?;
 
-            let sender = cmds.chat().modify_chat_state(id_block_sender, |s| {
-                s.sent_blocks_sync_version.increment_if_not_max_value_mut();
-            })?;
-
-            let receiver = cmds.chat().modify_chat_state(id_block_receiver, |_| ())?;
-
-            Ok(SenderAndReceiverStateChanges { sender, receiver })
+            Ok(())
         })
     }
 

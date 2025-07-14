@@ -278,10 +278,6 @@ impl<'a> EventManagerWithCacheReference<'a> {
             self.send_connected_event(c.id, EventToClientInternal::SentLikesChanged)
                 .await?;
         }
-        if c.sent_blocks_sync_version.is_some() {
-            self.send_connected_event(c.id, EventToClientInternal::SentBlocksChanged)
-                .await?;
-        }
         if c.matches_sync_version.is_some() {
             self.send_connected_event(c.id, EventToClientInternal::MatchesChanged)
                 .await?;
