@@ -807,7 +807,6 @@ CREATE TABLE IF NOT EXISTS media_app_notification_state(
 CREATE TABLE IF NOT EXISTS chat_state(
     account_id              INTEGER PRIMARY KEY NOT NULL,
     received_likes_sync_version  INTEGER        NOT NULL DEFAULT 0,
-    matches_sync_version         INTEGER        NOT NULL DEFAULT 0,
     new_received_likes_count     INTEGER        NOT NULL DEFAULT 0,
     next_received_like_id        INTEGER        NOT NULL DEFAULT 0,
     received_like_id_at_received_likes_iterator_reset           INTEGER,

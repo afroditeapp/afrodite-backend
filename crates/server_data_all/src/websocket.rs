@@ -169,20 +169,6 @@ pub async fn sync_data_with_client_if_needed(
                     .await?;
                 }
             }
-            SyncCheckDataType::Matches => {
-                if config.components().chat {
-                    handle_chat_state_version_check(
-                        write_handle,
-                        socket,
-                        id,
-                        version.version,
-                        chat_state.clone(),
-                        |s| &mut s.matches_sync_version,
-                        EventToClientInternal::MatchesChanged,
-                    )
-                    .await?;
-                }
-            }
             SyncCheckDataType::ClientConfig => {
                 handle_client_config_sync_version_check(
                     read_handle,

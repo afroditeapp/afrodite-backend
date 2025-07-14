@@ -114,11 +114,7 @@ impl WriteCommandsChat<'_> {
                 .interaction()
                 .update_account_interaction(updated.clone())?;
 
-            let sender = cmds.chat().modify_chat_state(id_like_sender, |s| {
-                if interaction.is_like() {
-                    s.matches_sync_version.increment_if_not_max_value_mut();
-                }
-            })?;
+            let sender = cmds.chat().modify_chat_state(id_like_sender, |_| ())?;
 
             let receiver = cmds.chat().modify_chat_state(id_like_receiver, |s| {
                 if interaction.is_empty() {
@@ -127,14 +123,11 @@ impl WriteCommandsChat<'_> {
                         s.received_likes_sync_version
                             .increment_if_not_max_value_mut();
                     }
-                } else if interaction.is_like() {
-                    s.matches_sync_version.increment_if_not_max_value_mut();
-
-                    if interaction.included_in_received_new_likes_count {
-                        s.new_received_likes_count = s.new_received_likes_count.decrement();
-                        s.received_likes_sync_version
-                            .increment_if_not_max_value_mut();
-                    }
+                } else if interaction.is_like() && interaction.included_in_received_new_likes_count
+                {
+                    s.new_received_likes_count = s.new_received_likes_count.decrement();
+                    s.received_likes_sync_version
+                        .increment_if_not_max_value_mut();
                 }
             })?;
 

@@ -1,9 +1,8 @@
 use base64::Engine;
 use diesel::prelude::*;
 use model::{
-    ConversationId, DailyLikesLeftSyncVersion, MatchId, MatchesSyncVersion, MessageId,
-    NewReceivedLikesCount, ProfileContentVersion, PublicKeyId, ReceivedLikeId,
-    ReceivedLikesSyncVersion, UnixTime,
+    ConversationId, DailyLikesLeftSyncVersion, MatchId, MessageId, NewReceivedLikesCount,
+    ProfileContentVersion, PublicKeyId, ReceivedLikeId, ReceivedLikesSyncVersion, UnixTime,
 };
 use model_server_data::{LastSeenTime, LimitedActionStatus, ProfileVersion};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -35,7 +34,6 @@ pub use video_call::*;
 #[diesel(treat_none_as_null = true)]
 pub struct ChatStateRaw {
     pub received_likes_sync_version: ReceivedLikesSyncVersion,
-    pub matches_sync_version: MatchesSyncVersion,
     pub new_received_likes_count: NewReceivedLikesCount,
     pub next_received_like_id: ReceivedLikeId,
     pub received_like_id_at_received_likes_iterator_reset: Option<ReceivedLikeId>,

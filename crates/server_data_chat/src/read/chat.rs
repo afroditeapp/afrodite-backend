@@ -149,14 +149,7 @@ impl ReadCommandsChat<'_> {
 
         sent.append(&mut received);
 
-        let version = self
-            .db_read(move |mut cmds| Ok(cmds.chat().chat_state(id)?.matches_sync_version))
-            .await?;
-
-        Ok(AllMatchesPage {
-            profiles: sent,
-            version,
-        })
+        Ok(AllMatchesPage { profiles: sent })
     }
 
     pub async fn all_pending_messages(

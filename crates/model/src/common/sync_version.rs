@@ -27,14 +27,11 @@ impl SyncDataVersionFromClient {
     }
 }
 
-// TODO(prod): Remove unused [SyncCheckDataType] values
-
 #[derive(Debug, Clone, Copy, PartialEq, TryFromPrimitive)]
 #[repr(u8)]
 pub enum SyncCheckDataType {
     Account = 0,
     ReveivedLikes = 1,
-    Matches = 5,
     ClientConfig = 6,
     Profile = 7,
     News = 8,
