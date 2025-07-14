@@ -132,8 +132,7 @@ impl ReadCommandsChat<'_> {
     ) -> Result<SentBlocksPage, DataError> {
         self.db_read(move |mut cmds| {
             let profiles = cmds.chat().interaction().all_sent_blocks(id)?;
-            let version = cmds.chat().chat_state(id)?.sent_blocks_sync_version;
-            Ok(SentBlocksPage { profiles, version })
+            Ok(SentBlocksPage { profiles })
         })
         .await
         .into_error()

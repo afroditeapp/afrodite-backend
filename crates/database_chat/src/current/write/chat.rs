@@ -4,8 +4,8 @@ use error_stack::Result;
 use model::{ConversationId, UnixTime};
 use model_chat::{
     AccountIdInternal, CHAT_GLOBAL_STATE_ROW_TYPE, ChatStateRaw, MatchId, MatchesSyncVersion,
-    NewReceivedLikesCount, PublicKeyId, ReceivedLikesSyncVersion, SentBlocksSyncVersion,
-    SentLikesSyncVersion, SyncVersionUtils,
+    NewReceivedLikesCount, PublicKeyId, ReceivedLikesSyncVersion, SentLikesSyncVersion,
+    SyncVersionUtils,
 };
 use simple_backend_utils::ContextExt;
 
@@ -82,9 +82,6 @@ impl CurrentWriteChat<'_> {
             sent_likes_sync_version: current
                 .sent_likes_sync_version
                 .return_new_if_different(new.sent_likes_sync_version),
-            sent_blocks_sync_version: current
-                .sent_blocks_sync_version
-                .return_new_if_different(new.sent_blocks_sync_version),
             matches_sync_version: current
                 .matches_sync_version
                 .return_new_if_different(new.matches_sync_version),
@@ -171,7 +168,6 @@ pub struct ChatStateChanges {
     pub id: AccountIdInternal,
     pub received_likes_change: Option<ReceivedLikesChangeInfo>,
     pub sent_likes_sync_version: Option<SentLikesSyncVersion>,
-    pub sent_blocks_sync_version: Option<SentBlocksSyncVersion>,
     pub matches_sync_version: Option<MatchesSyncVersion>,
 }
 
