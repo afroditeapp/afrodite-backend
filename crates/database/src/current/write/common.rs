@@ -7,7 +7,6 @@ use crate::{IntoDatabaseError, define_current_write_commands};
 
 mod client_config;
 mod push_notification;
-mod queue_number;
 mod report;
 mod state;
 mod token;
@@ -15,10 +14,6 @@ mod token;
 define_current_write_commands!(CurrentWriteCommon);
 
 impl<'a> CurrentWriteCommon<'a> {
-    pub fn queue_number(self) -> queue_number::CurrentWriteCommonQueueNumber<'a> {
-        queue_number::CurrentWriteCommonQueueNumber::new(self.cmds)
-    }
-
     pub fn state(self) -> state::CurrentWriteCommonState<'a> {
         state::CurrentWriteCommonState::new(self.cmds)
     }
