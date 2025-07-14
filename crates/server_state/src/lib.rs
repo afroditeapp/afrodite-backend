@@ -207,8 +207,7 @@ impl DataAllAccess<'_> {
     }
 }
 
-// TODO(future): Change write method to have async closure parameter
-//               and remove db_write macros.
+// TODO(refactor): Remove unused db_write macro.
 
 /// Macro for writing data with different code style.
 /// Makes "async move" and "await" keywords unnecessary.

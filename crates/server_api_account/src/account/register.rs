@@ -10,8 +10,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-// TODO: Update register and login to support Apple and Google single sign on.
-
 const PATH_GET_ACCOUNT_SETUP: &str = "/account_api/account_setup";
 
 /// Get non-changeable user information to account.

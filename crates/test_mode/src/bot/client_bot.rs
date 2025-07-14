@@ -110,7 +110,6 @@ impl ClientBot {
                     action_array!(UpdateLocationRandomOrConfigured::new(None)),
                     |s| { s.get_bot_config().change_location() && rand::random::<f32>() < 0.2 }
                 ),
-                // TODO: Toggle the profile visiblity in the future?
                 RunActionsIf(action_array!(SetProfileVisibility(true)), |s| {
                     s.get_bot_config().change_visibility() && rand::random::<f32>() < 0.5
                 }),

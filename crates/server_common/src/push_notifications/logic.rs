@@ -50,7 +50,7 @@ impl FcmSendingLogic {
             }
             (Some(forced_wait_time), _) => tokio::time::sleep(forced_wait_time).await,
             (_, Some(exponential_backoff)) => {
-                // TODO: Add some jitter time?
+                // TODO(prod): Add some jitter time?
                 let next_exponential_backoff =
                     exponential_backoff.as_millis() * exponential_backoff.as_millis();
                 tokio::time::sleep(exponential_backoff).await;

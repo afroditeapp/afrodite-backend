@@ -122,7 +122,7 @@ impl BotAction for Login {
             None
         };
 
-        // TODO: Chat server
+        // TODO(microservice): Chat server connection
 
         state.connections.connections = Some(AccountConnections {
             account,

@@ -29,17 +29,6 @@ use crate::{
     db_write_multiple,
 };
 
-// TODO(prod): Chat improvements:
-// - sign then encrypt - allows storing only signed messages and public
-//   keys to message backup. The import tool will check the signatures
-//   and prevent importing modified messages. The public keys must be
-//   signed by server to make sure that those really are from the user.
-//   Also the sign then encrypt will make reliable message reporting
-//   possible as the messages are signed.
-// - Server should store all public keys and max uploads for public keys
-//   should be 1024.
-// - Update pgp to new version and change keys to use X25519 and Ed25519.
-
 const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
 
 /// Get list of pending messages.

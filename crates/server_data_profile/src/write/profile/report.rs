@@ -30,7 +30,7 @@ impl WriteCommandsProfileReport<'_> {
         }
 
         if target_data.name_moderation_state == ProfileNameModerationState::AcceptedByBot {
-            // TODO(future): Profile name bot moderation
+            // TODO(prod): Profile name bot moderation
             warn!("Profile name bot moderations are unsupported currently");
         }
 

@@ -289,8 +289,6 @@ impl DemoModeManager {
 
         if Some(token_i) != password_i {
             return if let Some(s) = w.states.get_mut(token_i) {
-                // TODO: Print some more info like IP address? Store info that the
-                // password needs to be changed.
                 error!(
                     "Stage 1 password was wrong, locking the related demo mode credentials for index {}",
                     token_i

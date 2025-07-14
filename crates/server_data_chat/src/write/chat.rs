@@ -240,8 +240,6 @@ impl WriteCommandsChat<'_> {
         })
     }
 
-    // TODO(prod): Change SQLite settings that delete is overwriting.
-
     pub async fn add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
         &self,
         message_receiver: AccountIdInternal,

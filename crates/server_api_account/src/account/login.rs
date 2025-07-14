@@ -55,7 +55,8 @@ pub async fn login_impl(id: AccountId, state: &S) -> Result<LoginResult, StatusC
 
 pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
 
-// TODO(prod): Add error for unverified email address
+// TODO(prod): Add error for unverified email address? Or add
+//             email verification to initial setup?
 
 trait SignInWithInfoTrait {
     fn email(&self) -> String;

@@ -8,8 +8,7 @@ use super::EmailError;
 
 const EMAIL_SENDER_STATE_FILE: &str = "email_sender_state.toml";
 
-// TODO(low-priority): Reset EmailLimitStateStorage counters if enough
-//                     time has passed.
+// TODO(prod): Save counter reset time to EmailLimitStateStorage.
 
 /// Save emal sender limit states before closing the server.
 ///

@@ -29,7 +29,6 @@ use crate::{
 // TODO(prod): Use one route for login and change wording to user ID and
 //             password? Also info about locked account only if password
 //             is correct?
-// TODO(prod): Add counter for password guessing.
 
 const PATH_POST_DEMO_MODE_LOGIN: &str = "/account_api/demo_mode_login";
 
@@ -82,7 +81,7 @@ pub async fn post_demo_mode_confirm_login(
 
 const PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS: &str = "/account_api/demo_mode_accessible_accounts";
 
-// TODO: Return Unauthorized instead of internal server error on routes which
+// TODO(prod): Return Unauthorized instead of internal server error on routes which
 // require DemoModeToken?
 
 /// Get demo account's available accounts.
