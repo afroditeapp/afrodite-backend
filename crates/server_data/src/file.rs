@@ -1,11 +1,8 @@
 //! Account file storage
 
-// TODO: Remove all git related code
+// TODO(refactor): Remove all git related code. (DataError)
 
 use tokio::sync::mpsc;
-
-// TODO: Set max limit for IP
-// address changes or something (limit IP address history size)?
 
 pub mod utils;
 

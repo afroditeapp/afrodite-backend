@@ -463,7 +463,7 @@ fn generate_server_config(
     }
 
     let config = ServerConfig::builder()
-        .with_no_client_auth() // TODO: configure at some point
+        .with_no_client_auth()
         .with_single_cert(vec![cert], key)
         .change_context(GetConfigError::CreateTlsConfig)?;
 

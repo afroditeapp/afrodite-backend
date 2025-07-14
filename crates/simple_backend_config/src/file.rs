@@ -125,10 +125,6 @@ local_bot_api_port = 3002
 
 "#;
 
-// TODO(prod): Consider changing manager config
-// remote_manager.manager_name to remote_manager.name and
-// simple backend config manager.manager_name to manager.name.
-
 #[derive(thiserror::Error, Debug)]
 pub enum ConfigFileError {
     #[error("Save config file failed")]
@@ -324,6 +320,8 @@ impl SocketConfig {
             || self.experimental_internal_api.is_some()
     }
 }
+
+// TODO(prod): Change manager.manager_name to manager.name.
 
 /// App manager config
 #[derive(Debug, Clone, Deserialize, Serialize)]

@@ -11,10 +11,7 @@ use crate::result::{Result, WrappedContextExt};
 
 pub mod common;
 
-// TODO: Use TLS for checking that all internal communication comes from trusted
-//       sources.
-
-// TOOD: What is PrintWarningsTriggersAtomics?
+// TODO(refactor): Remove PrintWarningsTriggersAtomics
 pub struct PrintWarningsTriggersAtomics {}
 
 pub struct InternalApiClient {

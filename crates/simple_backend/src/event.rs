@@ -1,3 +1,5 @@
+// TODO(prod): Remove this file
+
 // //! Send events to connected or not connected clients.
 
 // use std::sync::Arc;
@@ -80,8 +82,6 @@
 //     /// Send event to connected client or if not connected
 //     /// send using push notification.
 //     pub async fn send_notification(&self, account: impl Into<AccountId>, event: NotificationEvent) -> Result<(), EventError> {
-//         // TODO: Push notification support
-
 //         self.database.read().common().access_event_mode(
 //             account.into(),
 //             move |mode| {

@@ -26,7 +26,7 @@ pub fn create_common_server_router(
 ) -> Router {
     let public = Router::new()
         .route(
-            api::common::PATH_GET_VERSION, // TODO(prod): Make private?
+            api::common::PATH_GET_VERSION,
             get(server_api::common::get_version),
         )
         .route(

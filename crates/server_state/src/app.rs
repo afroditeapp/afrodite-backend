@@ -10,8 +10,6 @@ use crate::{
     ip_address::IpAddressUsageTracker,
 };
 
-// TODO(prod): Move push notifications to common
-
 pub trait GetInternalApi {
     fn internal_api_client(&self) -> &InternalApiClient;
 }

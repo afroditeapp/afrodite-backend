@@ -1,7 +1,6 @@
 -- Your SQL goes here
 
 -- TODO(prod): Add autoincrement where needed. News?
--- TODO(prod): Consider table constraint naming
 
 ---------- Tables for server component common ----------
 
@@ -479,8 +478,6 @@ CREATE TABLE IF NOT EXISTS profile_state(
             ON DELETE SET NULL
             ON UPDATE CASCADE
 );
-
--- TODO(prod): Change name and profile_text to be nullable
 
 -- Profile information which can be sent to clients if
 -- profile visibility is public.

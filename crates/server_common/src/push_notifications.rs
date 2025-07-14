@@ -561,11 +561,5 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
     }
 }
 
-// TODO(prod): Limit push notification sending rate.
-//             Only one push notification should be sent
-//             per conversation until user opens the app.
-//             Same for other types of notifications.
-//             At least likes.
-//             Or is limiting pending message count enough
-//             for message push notifications?
-// TODO(prod): Push notifications for likes and image moderation updates
+// TODO(prod): Are more push notification sending limits needed? New message
+//             notifications are already limited. Does likes need limits?

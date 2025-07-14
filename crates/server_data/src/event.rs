@@ -15,8 +15,6 @@ use crate::{
     result::{Result, WrappedResultExt},
 };
 
-// TODO(prod): Automatic logout if no activity for some months
-
 #[derive(thiserror::Error, Debug)]
 pub enum EventError {
     #[error("Event mode access failed")]

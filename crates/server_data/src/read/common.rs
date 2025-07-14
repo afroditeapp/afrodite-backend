@@ -97,9 +97,9 @@ impl ReadCommandsCommon<'_> {
         &self,
         id: impl Into<AccountId>,
     ) -> Result<Option<ReportAccountInfo>, DataError> {
-        // TODO(prod): Check usage of this method and create another for
-        //             user visible profile name usage as that might not be
-        //             yet accepted.
+        // TODO(prod): Change to user_visible_profile_name_if_data_available
+        //             and show only the first character of the name
+        //             if the name is not accepted.
         self.cache()
             .read_cache(id, |e| {
                 Ok(e.profile.as_ref().map(|p| ReportAccountInfo {

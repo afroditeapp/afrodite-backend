@@ -25,8 +25,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-// TODO: Add timeout for database commands
-
 const PATH_GET_PROFILE: &str = "/profile_api/profile/{aid}";
 
 /// Get account's current profile.
@@ -154,8 +152,6 @@ const PATH_POST_PROFILE: &str = "/profile_api/profile";
 ///      - Min value: initialAge + yearDifference - 1.
 ///      - Max value: initialAge + yearDifference + 1.
 ///
-/// TODO: string lenght validation, limit saving new profiles
-/// TODO: return the new proifle. Edit: is this really needed?
 #[utoipa::path(
     post,
     path = PATH_POST_PROFILE,

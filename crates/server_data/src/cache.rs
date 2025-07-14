@@ -335,6 +335,8 @@ impl DatabaseCache {
         }
     }
 
+    // TODO(refactor): Remove the following commented code
+
     // pub async fn account(&self, id: AccountId) -> Result<Account, CacheError> {
     //     let guard = self.accounts.read().await;
     //     let data = guard
@@ -533,9 +535,6 @@ impl CacheEntry {
             common: CacheCommon::default(),
         }
     }
-    // TODO(refactor): Add helper functions to get data related do features
-    // that can be disabled. Those should return Result<Data, CacheError>.
-    // Also read_cache action closure might need or should to return Result.
 
     pub fn account_data(&self) -> Result<&CacheAccount, CacheError> {
         self.account

@@ -448,5 +448,5 @@ impl BusinessLogic for DatingAppBusinessLogic {
     }
 }
 
-// TODO(prod): Add Cache-Control header for images as web client should
+// TODO(web): Add Cache-Control header for images as web client should
 // use browser cache.

@@ -258,7 +258,7 @@ impl AdminNotificationManager {
         Ok(!values.is_empty())
     }
 
-    // TODO(prod): Add is_bot parameter
+    // TODO(prod): Add bot moderation support to profile name?
     async fn is_profile_name_moderation_needed(&self) -> Result<bool, AdminNotificationError> {
         let values = self
             .state

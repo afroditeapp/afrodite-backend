@@ -147,7 +147,7 @@ async fn create_pool(
     connection_count: usize,
 ) -> Result<DieselPool, DieselDatabaseError> {
     let db_str = if config.sqlite_in_ram() {
-        // TODO: validate name?
+        // TODO(prod): Check that name only contains a-z, A-Z, and 0-9 characters.
         format!("file:{}?mode=memory&cache=shared", database_info.name)
     } else {
         db_path.to_string_lossy().to_string()

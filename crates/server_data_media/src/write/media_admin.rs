@@ -8,6 +8,8 @@ define_cmd_wrapper_write!(WriteCommandsMediaAdmin);
 // TODO(prod): Move event sending to WriteCommands or db_write_multiple instead
 // directly to route handlers to avoid disappearing events in case client
 // disconnects before event is sent.
+// Update: Change EventManagerProvider to only give access to functionality
+// which should not be moved to WriteCommands or db_write_multiple.
 
 impl<'a> WriteCommandsMediaAdmin<'a> {
     pub fn content(self) -> content::WriteCommandsProfileAdminContent<'a> {

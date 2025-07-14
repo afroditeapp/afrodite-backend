@@ -198,7 +198,8 @@ impl ProcessingKey {
     }
 }
 
-// TODO: add extension method to EventManager?
+// TODO(refactor): Move notify_client to EventManagerWithCacheReference.
+//                 Also rename it.
 
 pub async fn notify_client(
     event_manager: &EventManagerWithCacheReference<'_>,

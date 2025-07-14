@@ -178,28 +178,6 @@ pub async fn post_get_new_received_likes_count(
     Ok(r.into())
 }
 
-// TODO(prod): Add pagination to chat related lists. Pagination
-// iterator shows latest items first. Some ID key will be used as a
-// iterator starting point so that newer items do not make older items
-// to appear again in next pages. The sync version will be changed to
-// invalidate the pagination iterator.
-
-// TODO(prod): Remove received blocks from API and make liking and message
-// sending to seem like it succeeded even if the profile owner has blocked
-// you.
-
-// TODO(prod): Encryption public key management for chats.
-
-// TODO(prod): Add endless likes support. If user has enabled endless likes, it
-// will be possible to send likes without any limits to those users who also
-// have the same setting enabled. Profile needs info are endless likes enabled.
-
-// TODO(prod): Limit likes so that only one normal like can be sent per day.
-
-// TODO(prod): Add profile last seen time to profiles.
-
-// TODO(prod): Store date and time when account was created.
-
 const PATH_POST_RESET_RECEIVED_LIKES_PAGING: &str = "/chat_api/received_likes/reset";
 
 #[utoipa::path(

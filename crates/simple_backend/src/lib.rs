@@ -593,8 +593,6 @@ fn create_tls_listening_task(
                             stream_and_addr
                         }
                         Err(e) => {
-                            // TODO: Can this happen if there is no more
-                            //       file descriptors available?
                             error!("Address stream error {e}");
                             return;
                         }

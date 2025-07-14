@@ -71,7 +71,7 @@ pub async fn get_version(State(state): State<S>) -> Json<BackendVersion> {
     state.backend_version().into()
 }
 
-// TODO(prod): HTTP cache header support for file package access
+// TODO(web): HTTP cache header support for file package access
 
 pub const PATH_FILE_PACKAGE_ACCESS: &str = "/{*path}";
 
