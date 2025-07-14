@@ -3,13 +3,10 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::ChatProfileLink;
-use crate::{AccountId, MatchesSyncVersion};
+use crate::AccountId;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct AllMatchesPage {
-    /// This version can be sent to the server when WebSocket protocol
-    /// data sync is happening.
-    pub version: MatchesSyncVersion,
     pub profiles: Vec<AccountId>,
 }
 

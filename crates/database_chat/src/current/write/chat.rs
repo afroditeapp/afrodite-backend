@@ -3,8 +3,8 @@ use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{ConversationId, UnixTime};
 use model_chat::{
-    AccountIdInternal, CHAT_GLOBAL_STATE_ROW_TYPE, ChatStateRaw, MatchId, MatchesSyncVersion,
-    NewReceivedLikesCount, PublicKeyId, ReceivedLikesSyncVersion, SyncVersionUtils,
+    AccountIdInternal, CHAT_GLOBAL_STATE_ROW_TYPE, ChatStateRaw, MatchId, NewReceivedLikesCount,
+    PublicKeyId, ReceivedLikesSyncVersion, SyncVersionUtils,
 };
 use simple_backend_utils::ContextExt;
 
@@ -78,9 +78,6 @@ impl CurrentWriteChat<'_> {
                     current_count: new.new_received_likes_count,
                     previous_count: current.new_received_likes_count,
                 }),
-            matches_sync_version: current
-                .matches_sync_version
-                .return_new_if_different(new.matches_sync_version),
         };
 
         Ok(changes)
@@ -163,7 +160,6 @@ impl CurrentWriteChat<'_> {
 pub struct ChatStateChanges {
     pub id: AccountIdInternal,
     pub received_likes_change: Option<ReceivedLikesChangeInfo>,
-    pub matches_sync_version: Option<MatchesSyncVersion>,
 }
 
 pub struct ReceivedLikesChangeInfo {
