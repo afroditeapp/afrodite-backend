@@ -3,12 +3,6 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::ChatProfileLink;
-use crate::AccountId;
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
-pub struct AllMatchesPage {
-    pub profiles: Vec<AccountId>,
-}
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ResetMatchesIteratorResult {

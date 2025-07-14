@@ -1,8 +1,8 @@
 use database_chat::current::read::GetDbReadCommandsChat;
 use model_chat::{
-    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState,
-    AllMatchesPage, ChatProfileLink, ChatStateRaw, GetSentMessage, MatchId,
-    PageItemCountForNewLikes, ReceivedLikeId, SentBlocksPage, SentMessageId,
+    AccountId, AccountIdInternal, AccountInteractionInternal, ChatProfileLink, ChatStateRaw,
+    GetSentMessage, MatchId, PageItemCountForNewLikes, ReceivedLikeId, SentBlocksPage,
+    SentMessageId,
 };
 use server_data::{
     DataError, IntoDataError,
@@ -122,34 +122,6 @@ impl ReadCommandsChat<'_> {
         })
         .await
         .into_error()
-    }
-
-    pub async fn all_matches(&self, id: AccountIdInternal) -> Result<AllMatchesPage, DataError> {
-        // TODO: Is single SQL query possible? Update: yes, check iterator
-        //       implementation.
-        // TODO: Remove because match iterator code is enough?
-
-        let mut sent = self
-            .db_read(move |mut cmds| {
-                cmds.chat().interaction().all_sender_account_interactions(
-                    id,
-                    AccountInteractionState::Match,
-                    false,
-                )
-            })
-            .await?;
-
-        let mut received = self
-            .db_read(move |mut cmds| {
-                cmds.chat()
-                    .interaction()
-                    .all_receiver_account_interactions(id, AccountInteractionState::Match)
-            })
-            .await?;
-
-        sent.append(&mut received);
-
-        Ok(AllMatchesPage { profiles: sent })
     }
 
     pub async fn all_pending_messages(
