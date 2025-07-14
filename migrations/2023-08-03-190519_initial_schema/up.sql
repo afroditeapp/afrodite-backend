@@ -806,7 +806,6 @@ CREATE TABLE IF NOT EXISTS media_app_notification_state(
 -- State specific to chat component.
 CREATE TABLE IF NOT EXISTS chat_state(
     account_id              INTEGER PRIMARY KEY NOT NULL,
-    received_blocks_sync_version INTEGER        NOT NULL DEFAULT 0,
     received_likes_sync_version  INTEGER        NOT NULL DEFAULT 0,
     sent_blocks_sync_version     INTEGER        NOT NULL DEFAULT 0,
     sent_likes_sync_version      INTEGER        NOT NULL DEFAULT 0,
