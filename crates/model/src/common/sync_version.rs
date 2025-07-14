@@ -32,11 +32,11 @@ impl SyncDataVersionFromClient {
 pub enum SyncCheckDataType {
     Account = 0,
     ReveivedLikes = 1,
-    ClientConfig = 6,
-    Profile = 7,
-    News = 8,
-    MediaContent = 9,
-    DailyLikesLeft = 10,
+    ClientConfig = 2,
+    Profile = 3,
+    News = 4,
+    MediaContent = 5,
+    DailyLikesLeft = 6,
     /// Special value without valid [SyncVersionFromClient] informing
     /// the server that client has info that server maintenance is scheduled.
     ServerMaintenanceIsScheduled = 255,
