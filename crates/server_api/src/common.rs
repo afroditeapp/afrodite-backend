@@ -121,14 +121,12 @@ pub use utils::api::PATH_CONNECT;
 
 // ------------------------- WebSocket -------------------------
 
-// TODO(prod): Change WebSocket protocol version to 1?
-
 /// Connect to server using WebSocket after getting refresh and access tokens.
 /// Connection is required as API access is allowed for connected clients.
 ///
 /// Protocol:
 /// 1. Client sends version information as Binary message, where
-///    - u8: Client WebSocket protocol version (currently 0).
+///    - u8: Client WebSocket protocol version (currently 1).
 ///    - u8: Client type number. (0 = Android, 1 = iOS, 2 = Web, 255 = Test mode bot)
 ///    - u16: Client Major version.
 ///    - u16: Client Minor version.
@@ -330,7 +328,7 @@ async fn handle_socket_result(
         .change_context(WebSocketError::Receive)?
     {
         Message::Binary(version) => match version.to_vec().as_slice() {
-            [0, info_bytes @ ..] => {
+            [1, info_bytes @ ..] => {
                 let info = model::WebSocketClientInfo::parse(info_bytes)
                     .into_error_string(WebSocketError::ProtocolError)?;
 
