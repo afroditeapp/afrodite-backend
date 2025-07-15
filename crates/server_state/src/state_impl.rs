@@ -143,17 +143,6 @@ impl WriteData for S {
         self.state.write_queue.write(cmd).await
     }
 
-    // async fn write<
-    //     CmdResult: Send + 'static,
-    //     Cmd: Future<Output = server_common::result::Result<CmdResult, DataError>> + Send,
-    //     GetCmd,
-    // >(
-    //     &self,
-    //     write_cmd: GetCmd,
-    // ) -> server_common::result::Result<CmdResult, DataError> where GetCmd: FnOnce(SyncWriteHandleRef<'_>) -> Cmd + Send + 'static,  {
-    //     self.write_queue.write_with_ref_handle(write_cmd).await
-    // }
-
     async fn write_concurrent<
         CmdResult: Send + 'static,
         Cmd: Future<Output = ConcurrentWriteAction<CmdResult>> + Send + 'static,
