@@ -18,11 +18,10 @@ pub struct SignInWithManager {
 }
 
 impl SignInWithManager {
-    pub fn new(config: Arc<SimpleBackendConfig>) -> Self {
-        let client = reqwest::Client::new();
+    pub fn new(config: Arc<SimpleBackendConfig>, client: reqwest::Client) -> Self {
         Self {
             google: SignInWithGoogleManager::new(config.clone(), client.clone()),
-            apple: SignInWithAppleManager::new(config.clone(), client.clone()),
+            apple: SignInWithAppleManager::new(config.clone(), client),
         }
     }
 

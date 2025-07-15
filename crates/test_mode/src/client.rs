@@ -86,14 +86,12 @@ pub struct ApiClient {
 }
 
 impl ApiClient {
-    pub fn new(base_urls: PublicApiUrls) -> Self {
-        let client = reqwest::Client::new();
-
+    pub fn new(base_urls: PublicApiUrls, client: &reqwest::Client) -> Self {
         Self {
-            account: Self::create_configuration(&client, base_urls.url_account.as_str()),
-            profile: Self::create_configuration(&client, base_urls.url_profile.as_str()),
-            media: Self::create_configuration(&client, base_urls.url_media.as_str()),
-            chat: Self::create_configuration(&client, base_urls.url_chat.as_str()),
+            account: Self::create_configuration(client, base_urls.url_account.as_str()),
+            profile: Self::create_configuration(client, base_urls.url_profile.as_str()),
+            media: Self::create_configuration(client, base_urls.url_media.as_str()),
+            chat: Self::create_configuration(client, base_urls.url_chat.as_str()),
         }
     }
 

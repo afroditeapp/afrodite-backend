@@ -147,11 +147,12 @@ impl AppServer {
             reboot::RebootManager::new_manager(app.state(), services_quit_watcher.resubscribe());
 
         // Start update manager
-
+        let reqwest_client = reqwest::Client::new();
         let update_manager_quit_handle = update::UpdateManager::new_manager(
             update_manager_internal_state,
             app.state(),
             services_quit_watcher.resubscribe(),
+            reqwest_client,
         );
 
         // Start JSON RPC link manager server logic

@@ -197,13 +197,14 @@ impl UpdateManager {
         internal_state: UpdateManagerInternalState,
         state: S,
         quit_notification: ServerQuitWatcher,
+        client: reqwest::Client,
     ) -> UpdateManagerQuitHandle {
         let quit_handle_sender = internal_state.sender;
         let manager = Self {
             internal_state: internal_state.state,
             receiver: internal_state.receiver,
             state,
-            client: reqwest::Client::new(),
+            client,
         };
 
         let task = tokio::spawn(manager.run(quit_notification));

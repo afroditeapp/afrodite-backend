@@ -4556,6 +4556,7 @@ dependencies = [
  "model_media",
  "model_profile",
  "nix",
+ "reqwest",
  "serde_json",
  "server_api",
  "server_api_account",

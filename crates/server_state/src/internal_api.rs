@@ -17,9 +17,7 @@ pub struct InternalApiClient {
 }
 
 impl InternalApiClient {
-    pub fn new(base_urls: InternalApiUrls) -> Self {
-        let client = reqwest::Client::new();
-
+    pub fn new(base_urls: InternalApiUrls, client: reqwest::Client) -> Self {
         let account = base_urls.account_base_url.map(|url| {
             let url = url.as_str().trim_end_matches('/').to_string();
 

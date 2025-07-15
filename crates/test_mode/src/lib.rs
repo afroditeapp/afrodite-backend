@@ -39,8 +39,10 @@ impl TestRunner {
     pub async fn run(self) {
         tracing_subscriber::fmt::init();
 
+        let reqwest_client = reqwest::Client::new();
+
         if let TestModeSubMode::Qa(config) = self.test_config.mode.clone() {
-            QaTestRunner::new(self.config, self.test_config, config)
+            QaTestRunner::new(self.config, self.test_config, config, reqwest_client)
                 .run()
                 .await;
         } else {
@@ -60,9 +62,14 @@ impl TestRunner {
                     BotConfigFile::default()
                 };
 
-            BotTestRunner::new(self.config, bot_config_file.into(), self.test_config)
-                .run()
-                .await;
+            BotTestRunner::new(
+                self.config,
+                bot_config_file.into(),
+                self.test_config,
+                reqwest_client,
+            )
+            .run()
+            .await;
         }
     }
 }

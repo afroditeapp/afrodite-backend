@@ -221,15 +221,13 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         let perf_manager_quit_handle =
             PerfMetricsManager::new_manager(perf_data.clone(), server_quit_watcher.resubscribe());
 
-        // TODO(refactor): Add to SimpleBackendAppState and change code to use
-        // only this client.
-        let client = Arc::new(reqwest::Client::new());
+        let reqwest_client = reqwest::Client::new();
         let maxmind_db_data = Arc::new(MaxMindDbManagerData::new());
         let maxmind_db_quit_handle = MaxMindDbManager::new_manager(
             maxmind_db_data.clone(),
             server_quit_watcher.resubscribe(),
             self.config.clone(),
-            client,
+            reqwest_client.clone(),
         );
 
         let manager: Arc<ManagerApiClient> = ManagerApiClient::new(&self.config)
@@ -238,6 +236,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             .into();
 
         let simple_state = SimpleBackendAppState::new(
+            reqwest_client,
             self.config.clone(),
             perf_data,
             manager.clone(),

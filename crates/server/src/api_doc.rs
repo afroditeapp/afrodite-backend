@@ -203,10 +203,15 @@ impl ApiDoc {
         let perf_data = PerfMetricsManagerData::new(&[]).into();
         let maxmind_data = MaxMindDbManagerData::new().into();
         let manager = ManagerApiClient::empty();
-        let simple_state =
-            SimpleBackendAppState::new(config.clone(), perf_data, manager.into(), maxmind_data)
-                .await
-                .unwrap();
+        let simple_state = SimpleBackendAppState::new(
+            reqwest::Client::new(),
+            config.clone(),
+            perf_data,
+            manager.into(),
+            maxmind_data,
+        )
+        .await
+        .unwrap();
 
         let config = Arc::new(Config::minimal_config_for_api_doc_json(config.clone()));
 

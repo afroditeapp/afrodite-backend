@@ -20,14 +20,21 @@ pub struct QaTestRunner {
     config: Arc<Config>,
     test_config: Arc<TestMode>,
     qa_config: QaTestConfig,
+    reqwest_client: reqwest::Client,
 }
 
 impl QaTestRunner {
-    pub fn new(config: Arc<Config>, test_config: Arc<TestMode>, qa_config: QaTestConfig) -> Self {
+    pub fn new(
+        config: Arc<Config>,
+        test_config: Arc<TestMode>,
+        qa_config: QaTestConfig,
+        reqwest_client: reqwest::Client,
+    ) -> Self {
         Self {
             config,
             test_config,
             qa_config,
+            reqwest_client,
         }
     }
 
@@ -57,6 +64,7 @@ impl QaTestRunner {
             self.config.clone(),
             self.test_config.clone(),
             test_functions.clone(),
+            self.reqwest_client.clone(),
         );
 
         RunnerUi::new(test_functions, manager_event_receiver)

@@ -20,6 +20,7 @@ pub enum AppStateCreationError {
 
 #[derive(Clone)]
 pub struct SimpleBackendAppState {
+    pub reqwest_client: reqwest::Client,
     pub manager_api: Arc<ManagerApiClient>,
     pub config: Arc<SimpleBackendConfig>,
     pub sign_in_with: Arc<SignInWithManager>,
@@ -31,14 +32,16 @@ pub struct SimpleBackendAppState {
 
 impl SimpleBackendAppState {
     pub async fn new(
+        reqwest_client: reqwest::Client,
         config: Arc<SimpleBackendConfig>,
         perf_data: Arc<PerfMetricsManagerData>,
         manager_api: Arc<ManagerApiClient>,
         maxmind_db: Arc<MaxMindDbManagerData>,
     ) -> error_stack::Result<Self, AppStateCreationError> {
         Ok(SimpleBackendAppState {
+            reqwest_client: reqwest_client.clone(),
             tile_map: TileMapManager::new(&config).into(),
-            sign_in_with: SignInWithManager::new(config.clone()).into(),
+            sign_in_with: SignInWithManager::new(config.clone(), reqwest_client).into(),
             file_packages: FilePackageManager::new(&config)
                 .await
                 .change_context(AppStateCreationError::FilePackageManagerError)?

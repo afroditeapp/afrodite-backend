@@ -45,6 +45,8 @@ impl TlsManager {
             let quit_handle = TlsManagerQuitHandle { handle: None };
             (manager, quit_handle)
         } else if let Some(lets_encrypt) = config.lets_encrypt_config() {
+            // TODO(future): Make possible to use existing reqwest::Client with
+            //               tokio_rustls_acme.
             let client_tls_config = ClientConfig::with_platform_verifier()
                 .expect("Getting platform TLS key verifier failed");
             let mut state = AcmeConfig::new(lets_encrypt.domains.clone())

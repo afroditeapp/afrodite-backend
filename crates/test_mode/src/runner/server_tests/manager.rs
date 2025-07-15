@@ -49,6 +49,7 @@ pub struct TestManager {
     config: Arc<Config>,
     test_config: Arc<TestMode>,
     test_functions: Vec<&'static TestFunction>,
+    reqwest_client: reqwest::Client,
 }
 
 impl TestManager {
@@ -56,11 +57,13 @@ impl TestManager {
         config: Arc<Config>,
         test_config: Arc<TestMode>,
         test_functions: Vec<&'static TestFunction>,
+        reqwest_client: reqwest::Client,
     ) -> (ManagerEventReceiver, ManagerQuitHandle) {
         let manager = Self {
             config,
             test_config,
             test_functions,
+            reqwest_client,
         };
 
         let (sender, receiver) = mpsc::channel(10);
@@ -106,6 +109,7 @@ impl TestManager {
                 port_sender: port_number_sender.clone(),
                 test,
                 api_port,
+                reqwest_client: self.reqwest_client.clone(),
             };
             tokio::spawn(test_task.run());
         }
@@ -120,6 +124,7 @@ struct TestTask {
     port_sender: ServerPortNumberSender,
     test: &'static TestFunction,
     api_port: u16,
+    reqwest_client: reqwest::Client,
 }
 
 impl TestTask {
@@ -128,6 +133,7 @@ impl TestTask {
             self.config.clone(),
             self.test_config.clone(),
             Some(self.api_port),
+            self.reqwest_client,
         );
 
         let server_manager = ServerManager::new(

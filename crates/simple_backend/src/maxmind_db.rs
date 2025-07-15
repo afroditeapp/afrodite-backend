@@ -112,7 +112,7 @@ impl Default for MaxMindDbManagerData {
 pub struct MaxMindDbManager {
     data: Arc<MaxMindDbManagerData>,
     config: Arc<SimpleBackendConfig>,
-    client: Arc<reqwest::Client>,
+    client: reqwest::Client,
 }
 
 impl MaxMindDbManager {
@@ -120,7 +120,7 @@ impl MaxMindDbManager {
         data: Arc<MaxMindDbManagerData>,
         quit_notification: ServerQuitWatcher,
         config: Arc<SimpleBackendConfig>,
-        client: Arc<reqwest::Client>,
+        client: reqwest::Client,
     ) -> MaxMindDbManagerQuitHandle {
         let manager = Self {
             data,
