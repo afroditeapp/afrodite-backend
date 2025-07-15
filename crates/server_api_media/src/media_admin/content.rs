@@ -10,8 +10,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-// TODO(prod): Remove /admin/ from all paths for consistensy
-
 const PATH_POST_MEDIA_CONTENT_FACE_DETECTED_VALUE: &str =
     "/media_api/media_content_face_detected_value";
 

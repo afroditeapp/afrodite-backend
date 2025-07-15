@@ -31,7 +31,7 @@ use crate::{
 //             profile content to media content.
 
 const PATH_GET_PROFILE_CONTENT_PENDING_MODERATION_LIST: &str =
-    "/media_api/admin/profile_content_pending_moderation";
+    "/media_api/profile_content_pending_moderation";
 
 /// Get first page of pending profile content moderations. Oldest item is first and count 25.
 #[utoipa::path(
@@ -71,7 +71,7 @@ pub async fn get_profile_content_pending_moderation_list(
     Ok(r.into())
 }
 
-const PATH_POST_MODERATE_PROFILE_CONTENT: &str = "/media_api/admin/moderate_profile_content";
+const PATH_POST_MODERATE_PROFILE_CONTENT: &str = "/media_api/moderate_profile_content";
 
 /// Rejected category and details can be set only when the content is rejected.
 ///

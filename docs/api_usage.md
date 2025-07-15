@@ -253,24 +253,24 @@ this API for sending events to clients.
 
 If permission 'admin_moderate_images' can be found the client displays option to
 go image moderation mode. In that mode the app will fetch all images which need
-moderation using `/media_api/admin/moderation/page/next`.
+moderation using `/media_api/moderation/page/next`.
 That path will get next set of not handled image moderations.
 Images in that request
 will be downloaded using `/media_api/images/{account_id}/{image_id}`.
 It does not matter if image is
 accepted or not. Moderation requests have an unique id. That id can be accepted
-or not using `/media_admin/admin/moderation/handle_request/{request_id}`.
+or not using `/media_admin/moderation/handle_request/{request_id}`.
 
 #### Flagged profiles moderation
 
 Admin can get next page of flagged profiles with HTTP GET to
-`/profile_api/admin/moderation/page/next`. The profiles will be handled with
+`/profile_api/moderation/page/next`. The profiles will be handled with
 HTTP POST to
-`/profile_api/admin/moderfation/handle_flagged/{account_id}`.
+`/profile_api/moderfation/handle_flagged/{account_id}`.
 
 #### Flagged chat moderation
 
 Admin can get next page of flagged chats with HTTP GET to
-`/chat_api/admin/moderation/page/next`. The profiles will be handled with
+`/chat_api/moderation/page/next`. The profiles will be handled with
 HTTP POST to
-`/chat_api/admin/moderfation/handle_flagged/{chat_id}`.
+`/chat_api/moderfation/handle_flagged/{chat_id}`.

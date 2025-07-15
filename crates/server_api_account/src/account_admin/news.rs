@@ -13,7 +13,7 @@ use simple_backend::create_counters;
 use super::super::utils::{Json, StatusCode};
 use crate::app::{ReadData, WriteData};
 
-const PATH_POST_CREATE_NEWS_ITEM: &str = "/account_api/admin/create_news_item";
+const PATH_POST_CREATE_NEWS_ITEM: &str = "/account_api/create_news_item";
 
 #[utoipa::path(
     post,
@@ -44,7 +44,7 @@ pub async fn post_create_news_item(
     Ok(news_id.into())
 }
 
-const PATH_DELETE_NEWS_ITEM: &str = "/account_api/admin/delete_news/{nid}";
+const PATH_DELETE_NEWS_ITEM: &str = "/account_api/delete_news/{nid}";
 
 #[utoipa::path(
     delete,
@@ -90,7 +90,7 @@ pub async fn delete_news_item(
 }
 
 const PATH_POST_UPDATE_NEWS_TRANSLATION: &str =
-    "/account_api/admin/update_news_translation/{nid}/{locale}";
+    "/account_api/update_news_translation/{nid}/{locale}";
 
 #[utoipa::path(
     post,
@@ -150,8 +150,7 @@ pub async fn post_update_news_translation(
     Ok(result.into())
 }
 
-const PATH_DELETE_NEWS_TRANSLATION: &str =
-    "/account_api/admin/delete_news_translation/{nid}/{locale}";
+const PATH_DELETE_NEWS_TRANSLATION: &str = "/account_api/delete_news_translation/{nid}/{locale}";
 
 #[utoipa::path(
     delete,
@@ -197,7 +196,7 @@ pub async fn delete_news_translation(
     Ok(())
 }
 
-const PATH_POST_SET_NEWS_PUBLICITY: &str = "/account_api/admin/set_news_publicity/{nid}";
+const PATH_POST_SET_NEWS_PUBLICITY: &str = "/account_api/set_news_publicity/{nid}";
 
 #[utoipa::path(
     delete,
