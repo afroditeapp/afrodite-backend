@@ -5,9 +5,9 @@ use model_profile::{
     GetProfileNamePendingModerationList, ProfileNameModerationState, ProfileNamePendingModeration,
 };
 
-define_current_read_commands!(CurrentReadProfileNameAllowlist);
+define_current_read_commands!(CurrentReadProfileName);
 
-impl CurrentReadProfileNameAllowlist<'_> {
+impl CurrentReadProfileName<'_> {
     pub fn profile_name_pending_moderation_list(
         &mut self,
     ) -> Result<GetProfileNamePendingModerationList, DieselDatabaseError> {

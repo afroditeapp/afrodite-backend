@@ -1,17 +1,15 @@
 use database::define_current_read_commands;
 
 mod iterator;
-mod profile_name_allowlist;
+mod profile_name;
 mod profile_text;
 mod search;
 
 define_current_read_commands!(CurrentReadProfileAdmin);
 
 impl<'a> CurrentReadProfileAdmin<'a> {
-    pub fn profile_name_allowlist(
-        self,
-    ) -> profile_name_allowlist::CurrentReadProfileNameAllowlist<'a> {
-        profile_name_allowlist::CurrentReadProfileNameAllowlist::new(self.cmds)
+    pub fn profile_name(self) -> profile_name::CurrentReadProfileName<'a> {
+        profile_name::CurrentReadProfileName::new(self.cmds)
     }
 
     pub fn profile_text(self) -> profile_text::CurrentReadProfileText<'a> {
