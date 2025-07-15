@@ -2,16 +2,17 @@
 
 use database_chat::current::write::chat::ChatStateChanges;
 use model::{
-    AccountId, AccountIdInternal, EventToClient, EventToClientInternal, NotificationEvent,
-    PendingNotificationFlags,
+    AccountId, AccountIdInternal, ContentProcessingStateChanged, EventToClient,
+    EventToClientInternal, NotificationEvent, PendingNotificationFlags,
 };
 use server_common::{data::IntoDataError, push_notifications::PushNotificationSender};
 use tokio::sync::mpsc::{self, error::TrySendError};
-use tracing::error;
+use tracing::{error, warn};
 
 use crate::{
     DataError,
     cache::DatabaseCache,
+    content_processing::ProcessingState,
     result::{Result, WrappedResultExt},
 };
 
@@ -273,5 +274,22 @@ impl<'a> EventManagerWithCacheReference<'a> {
             }
         }
         Ok(())
+    }
+
+    pub async fn send_content_processing_state_change_to_client(&self, state: &ProcessingState) {
+        let state_change = ContentProcessingStateChanged {
+            id: state.processing_id,
+            new_state: state.processing_state.clone(),
+        };
+
+        if let Err(e) = self
+            .send_connected_event(
+                state.content_owner,
+                model::EventToClientInternal::ContentProcessingStateChanged(state_change),
+            )
+            .await
+        {
+            warn!("Event sending failed {}", e);
+        }
     }
 }

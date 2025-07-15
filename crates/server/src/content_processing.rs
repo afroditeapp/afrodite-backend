@@ -8,7 +8,7 @@ use server_api::{
 use server_common::result::{Result, WrappedResultExt};
 use server_data::{
     app::GetConfig,
-    content_processing::{ContentProcessingReceiver, ProcessingState, notify_client},
+    content_processing::{ContentProcessingReceiver, ProcessingState},
 };
 use server_data_media::write::GetWriteCommandsMedia;
 use server_state::{S, app::AdminNotificationProvider};
@@ -121,7 +121,10 @@ impl ContentProcessingManager {
                 }
             }
 
-            notify_client(&self.state.event_manager(), state).await;
+            self.state
+                .event_manager()
+                .send_content_processing_state_change_to_client(state)
+                .await;
         } else {
             warn!("Content processing state not found");
             match result {

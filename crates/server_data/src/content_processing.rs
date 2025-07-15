@@ -1,8 +1,7 @@
 use std::collections::{HashMap, VecDeque};
 
 use model::{
-    AccountIdDb, AccountIdInternal, ContentProcessingId, ContentProcessingState,
-    ContentProcessingStateChanged, ContentSlot,
+    AccountIdDb, AccountIdInternal, ContentProcessingId, ContentProcessingState, ContentSlot,
 };
 use model_server_data::NewContentParams;
 use server_common::result::WrappedResultExt;
@@ -10,7 +9,6 @@ use tokio::sync::{
     RwLock,
     mpsc::{self, UnboundedReceiver, UnboundedSender},
 };
-use tracing::warn;
 
 use crate::{event::EventManagerWithCacheReference, file::utils::TmpContentFile, result::Result};
 
@@ -106,7 +104,9 @@ impl ContentProcessingManagerData {
             if let Some(state) = processing_states.get_mut(processing_id_in_queue) {
                 if let Some(number) = state.processing_state.wait_queue_position.as_mut() {
                     *number = index as u64 + 1;
-                    notify_client(&events, state).await;
+                    events
+                        .send_content_processing_state_change_to_client(state)
+                        .await;
                 }
             }
         }
@@ -114,7 +114,9 @@ impl ContentProcessingManagerData {
         let state = processing_states.get_mut(&processing_id)?;
         state.processing_state.change_to_processing();
         state.in_event_queue = false;
-        notify_client(&events, state).await;
+        events
+            .send_content_processing_state_change_to_client(state)
+            .await;
 
         Some(state.clone())
     }
@@ -195,29 +197,6 @@ impl ProcessingKey {
             content_owner: account_id.id,
             slot,
         }
-    }
-}
-
-// TODO(refactor): Move notify_client to EventManagerWithCacheReference.
-//                 Also rename it.
-
-pub async fn notify_client(
-    event_manager: &EventManagerWithCacheReference<'_>,
-    state: &ProcessingState,
-) {
-    let state_change = ContentProcessingStateChanged {
-        id: state.processing_id,
-        new_state: state.processing_state.clone(),
-    };
-
-    if let Err(e) = event_manager
-        .send_connected_event(
-            state.content_owner,
-            model::EventToClientInternal::ContentProcessingStateChanged(state_change),
-        )
-        .await
-    {
-        warn!("Event sending failed {}", e);
     }
 }
 
