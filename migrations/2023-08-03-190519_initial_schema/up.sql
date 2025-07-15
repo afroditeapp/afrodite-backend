@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_server_maintenance_view_backend_config BOOLEAN NOT NULL DEFAULT 0,
     admin_server_maintenance_update_software     BOOLEAN NOT NULL DEFAULT 0,
     admin_server_maintenance_reset_data          BOOLEAN NOT NULL DEFAULT 0,
-    admin_server_maintenance_reboot_backend      BOOLEAN NOT NULL DEFAULT 0,
+    admin_server_maintenance_restart_backend     BOOLEAN NOT NULL DEFAULT 0,
     admin_server_maintenance_save_backend_config BOOLEAN NOT NULL DEFAULT 0,
     admin_server_maintenance_edit_notification   BOOLEAN NOT NULL DEFAULT 0,
     admin_news_create                            BOOLEAN NOT NULL DEFAULT 0,
