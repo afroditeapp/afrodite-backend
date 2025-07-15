@@ -132,7 +132,7 @@ impl<'a> EventManagerWithCacheReference<'a> {
             }
         })
         .await
-        .change_context(DataError::EventModeAccessFailed)
+        .change_context(DataError::EventSenderAccessFailed)
     }
 
     /// Send event to connected client or if not connected
@@ -175,7 +175,7 @@ impl<'a> EventManagerWithCacheReference<'a> {
                 }
             })
             .await
-            .change_context(DataError::EventModeAccessFailed)?;
+            .change_context(DataError::EventSenderAccessFailed)?;
 
         if !sent && push_notification_sending_allowed {
             self.push_notification_sender.send(account)

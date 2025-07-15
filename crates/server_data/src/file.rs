@@ -1,7 +1,5 @@
 //! Account file storage
 
-// TODO(refactor): Remove all git related code. (DataError)
-
 use tokio::sync::mpsc;
 
 pub mod utils;
