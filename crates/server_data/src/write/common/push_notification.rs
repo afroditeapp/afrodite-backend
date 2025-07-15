@@ -1,11 +1,15 @@
 use database::current::write::GetDbWriteCommandsCommon;
 use model::{
-    AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken,
-    PushNotificationStateInfo, PushNotificationType,
+    AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationFlags,
+    PendingNotificationToken, PushNotificationStateInfo, PushNotificationType,
 };
+use server_common::data::IntoDataError;
 
 use crate::{
-    DataError, cache::CacheReadCommon, db_transaction, define_cmd_wrapper_write, result::Result,
+    DataError,
+    cache::{CacheReadCommon, CacheWriteCommon},
+    db_transaction, define_cmd_wrapper_write,
+    result::Result,
     write::DbTransaction,
 };
 
@@ -55,18 +59,36 @@ impl WriteCommandsCommonPushNotification<'_> {
             cmds.common()
                 .push_notification()
                 .reset_pending_notification(id)
+        })?;
+
+        self.write_cache_common(id, |entry| {
+            entry.pending_notification_flags = PendingNotificationFlags::empty();
+            Ok(())
         })
+        .await
+        .into_error()?;
+
+        Ok(())
     }
 
     pub async fn get_and_reset_pending_notification_with_notification_token(
         &self,
         token: PendingNotificationToken,
     ) -> Result<(AccountIdInternal, PendingNotification), DataError> {
-        db_transaction!(self, move |mut cmds| {
+        let (id, flags) = db_transaction!(self, move |mut cmds| {
             cmds.common()
                 .push_notification()
                 .get_and_reset_pending_notification_with_notification_token(token)
+        })?;
+
+        self.write_cache_common(id, |entry| {
+            entry.pending_notification_flags = PendingNotificationFlags::empty();
+            Ok(())
         })
+        .await
+        .into_error()?;
+
+        Ok((id, flags))
     }
 
     pub async fn enable_push_notification_sent_flag(
