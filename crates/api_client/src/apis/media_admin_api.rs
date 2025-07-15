@@ -48,7 +48,7 @@ pub async fn get_profile_content_pending_moderation_list(configuration: &configu
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/admin/profile_content_pending_moderation", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/media_api/profile_content_pending_moderation", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     local_var_req_builder = local_var_req_builder.query(&[("content_type", &content_type.to_string())]);
@@ -124,7 +124,7 @@ pub async fn post_moderate_profile_content(configuration: &configuration::Config
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/admin/moderate_profile_content", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/media_api/moderate_profile_content", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {

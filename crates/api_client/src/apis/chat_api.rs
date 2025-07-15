@@ -33,6 +33,15 @@ pub enum GetChatAppNotificationSettingsError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_conversation_id`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetConversationIdError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_daily_likes_left`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -46,24 +55,6 @@ pub enum GetDailyLikesLeftError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetLatestPublicKeyIdError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`get_matches`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum GetMatchesError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`get_message_number_of_latest_viewed_message`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum GetMessageNumberOfLatestViewedMessageError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -96,28 +87,10 @@ pub enum GetPublicKeyError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_received_blocks`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum GetReceivedBlocksError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
 /// struct for typed errors of method [`get_sent_blocks`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetSentBlocksError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`get_sent_likes`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum GetSentLikesError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -226,15 +199,6 @@ pub enum PostGetNextReceivedLikesPageError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostGetSentMessageError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`post_message_number_of_latest_viewed_message`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum PostMessageNumberOfLatestViewedMessageError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -358,6 +322,42 @@ pub async fn get_chat_app_notification_settings(configuration: &configuration::C
     }
 }
 
+/// The ID is available only for accounts which are a match.
+pub async fn get_conversation_id(configuration: &configuration::Configuration, aid: &str) -> Result<models::GetConversationId, Error<GetConversationIdError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/chat_api/conversation_id/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<GetConversationIdError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
 pub async fn get_daily_likes_left(configuration: &configuration::Configuration, ) -> Result<models::DailyLikesLeft, Error<GetDailyLikesLeftError>> {
     let local_var_configuration = configuration;
 
@@ -428,78 +428,7 @@ pub async fn get_latest_public_key_id(configuration: &configuration::Configurati
     }
 }
 
-pub async fn get_matches(configuration: &configuration::Configuration, ) -> Result<models::AllMatchesPage, Error<GetMatchesError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/chat_api/matches", local_var_configuration.base_path);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
-    };
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
-    } else {
-        let local_var_entity: Option<GetMatchesError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
-pub async fn get_message_number_of_latest_viewed_message(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<models::MessageNumber, Error<GetMessageNumberOfLatestViewedMessageError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/chat_api/message_number_of_latest_viewed_message", local_var_configuration.base_path);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
-    };
-    local_var_req_builder = local_var_req_builder.json(&account_id);
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
-    } else {
-        let local_var_entity: Option<GetMessageNumberOfLatestViewedMessageError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
-/// The returned bytes is list of objects with following data: - Binary data length as minimal i64 - Binary data  Minimal i64 has this format: - i64 byte count (u8, values: 1, 2, 4, 8) - i64 bytes (little-endian)  Binary data is binary PGP message which contains backend signed binary data. The binary data contains: - Version (u8, values: 1) - Sender AccountId UUID big-endian bytes (16 bytes) - Receiver AccountId UUID big-endian bytes (16 bytes) - Sender public key ID (minimal i64) - Receiver public key ID (minimal i64) - Message number (minimal i64) - Unix time (minimal i64) - Message data
+/// The returned bytes is list of objects with following data: - Binary data length as minimal i64 - Binary data  Minimal i64 has this format: - i64 byte count (u8, values: 1, 2, 4, 8) - i64 bytes (little-endian)  Binary data is binary PGP message which contains backend signed binary data. The binary data contains: - Version (u8, values: 1) - Sender AccountId UUID big-endian bytes (16 bytes) - Receiver AccountId UUID big-endian bytes (16 bytes) - Sender public key ID (minimal i64) - Receiver public key ID (minimal i64) - Message ID (minimal i64) - Unix time (minimal i64) - Message data
 pub async fn get_pending_messages(configuration: &configuration::Configuration, ) -> Result<std::path::PathBuf, Error<GetPendingMessagesError>> {
     let local_var_configuration = configuration;
 
@@ -607,41 +536,6 @@ pub async fn get_public_key(configuration: &configuration::Configuration, aid: &
     }
 }
 
-pub async fn get_received_blocks(configuration: &configuration::Configuration, ) -> Result<models::ReceivedBlocksPage, Error<GetReceivedBlocksError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/chat_api/received_blocks", local_var_configuration.base_path);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
-    };
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
-    } else {
-        let local_var_entity: Option<GetReceivedBlocksError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
 pub async fn get_sent_blocks(configuration: &configuration::Configuration, ) -> Result<models::SentBlocksPage, Error<GetSentBlocksError>> {
     let local_var_configuration = configuration;
 
@@ -672,42 +566,6 @@ pub async fn get_sent_blocks(configuration: &configuration::Configuration, ) -> 
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
         let local_var_entity: Option<GetSentBlocksError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
-/// Profile will not be returned if:  - Profile is hidden (not public) - Profile is a match
-pub async fn get_sent_likes(configuration: &configuration::Configuration, ) -> Result<models::SentLikesPage, Error<GetSentLikesError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/chat_api/sent_likes", local_var_configuration.base_path);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
-    };
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
-    } else {
-        let local_var_entity: Option<GetSentLikesError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
@@ -1143,42 +1001,6 @@ pub async fn post_get_sent_message(configuration: &configuration::Configuration,
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
         let local_var_entity: Option<PostGetSentMessageError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
-pub async fn post_message_number_of_latest_viewed_message(configuration: &configuration::Configuration, update_message_view_status: models::UpdateMessageViewStatus) -> Result<(), Error<PostMessageNumberOfLatestViewedMessageError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/chat_api/message_number_of_latest_viewed_message", local_var_configuration.base_path);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
-    };
-    local_var_req_builder = local_var_req_builder.json(&update_message_view_status);
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        Ok(())
-    } else {
-        let local_var_entity: Option<PostMessageNumberOfLatestViewedMessageError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }

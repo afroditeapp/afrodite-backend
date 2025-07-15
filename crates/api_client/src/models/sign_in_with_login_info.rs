@@ -17,8 +17,8 @@ pub struct SignInWithLoginInfo {
     pub apple: Option<Option<Box<models::SignInWithAppleInfo>>>,
     #[serde(rename = "client_info")]
     pub client_info: Box<models::ClientInfo>,
-    #[serde(rename = "google_token", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub google_token: Option<Option<String>>,
+    #[serde(rename = "google", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub google: Option<Option<Box<models::SignInWithGoogleInfo>>>,
 }
 
 impl SignInWithLoginInfo {
@@ -26,7 +26,7 @@ impl SignInWithLoginInfo {
         SignInWithLoginInfo {
             apple: None,
             client_info: Box::new(client_info),
-            google_token: None,
+            google: None,
         }
     }
 }

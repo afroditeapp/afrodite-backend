@@ -12,15 +12,15 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct SentBlocksPage {
-    #[serde(rename = "profiles")]
-    pub profiles: Vec<models::AccountId>,
+pub struct ClientLanguage {
+    #[serde(rename = "l")]
+    pub l: String,
 }
 
-impl SentBlocksPage {
-    pub fn new(profiles: Vec<models::AccountId>) -> SentBlocksPage {
-        SentBlocksPage {
-            profiles,
+impl ClientLanguage {
+    pub fn new(l: String) -> ClientLanguage {
+        ClientLanguage {
+            l,
         }
     }
 }

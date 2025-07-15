@@ -23,9 +23,9 @@ pub struct PendingNotificationWithData {
     /// Data for MEDIA_CONTENT_MODERATION_COMPLETED notification.
     #[serde(rename = "media_content_moderation_completed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub media_content_moderation_completed: Option<Option<Box<models::MediaContentModerationCompletedNotification>>>,
-    /// Data for NEW_MESSAGE notification.  List of account IDs which have sent a new message.
-    #[serde(rename = "new_message_received_from", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub new_message_received_from: Option<Option<Vec<models::AccountId>>>,
+    /// Data for NEW_MESSAGE notification.
+    #[serde(rename = "new_message", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub new_message: Option<Option<Box<models::NewMessageNotificationList>>>,
     /// Data for NEWS_CHANGED notification.
     #[serde(rename = "news_changed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub news_changed: Option<Option<Box<models::UnreadNewsCountResult>>>,
@@ -47,7 +47,7 @@ impl PendingNotificationWithData {
             admin_notification: None,
             automatic_profile_search_completed: None,
             media_content_moderation_completed: None,
-            new_message_received_from: None,
+            new_message: None,
             news_changed: None,
             profile_text_moderation_completed: None,
             received_likes_changed: None,

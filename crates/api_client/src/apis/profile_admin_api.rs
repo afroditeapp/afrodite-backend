@@ -230,7 +230,7 @@ pub async fn get_profile_name_pending_moderation_list(configuration: &configurat
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/profile_api/admin/profile_name_pending_moderation", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/profile_name_pending_moderation", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -340,7 +340,7 @@ pub async fn get_profile_text_pending_moderation_list(configuration: &configurat
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/profile_api/admin/profile_text_pending_moderation", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/profile_text_pending_moderation", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     local_var_req_builder = local_var_req_builder.query(&[("show_texts_which_bots_can_moderate", &show_texts_which_bots_can_moderate.to_string())]);
@@ -412,7 +412,7 @@ pub async fn post_moderate_profile_name(configuration: &configuration::Configura
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/profile_api/admin/moderate_profile_name", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/moderate_profile_name", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -449,7 +449,7 @@ pub async fn post_moderate_profile_text(configuration: &configuration::Configura
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/profile_api/admin/moderate_profile_text", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/moderate_profile_text", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
