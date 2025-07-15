@@ -7,7 +7,7 @@ use model_chat::{
 use server_api::{
     S,
     app::{AdminNotificationProvider, DataSignerProvider},
-    create_open_api_router, db_write_multiple,
+    create_open_api_router, db_write,
 };
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
@@ -86,7 +86,7 @@ pub async fn post_chat_message_report(
         backend_signed_message_bytes: signed_message,
     };
 
-    let result = db_write_multiple!(state, move |cmds| cmds
+    let result = db_write!(state, move |cmds| cmds
         .chat()
         .report()
         .report_chat_message(account_id, target, report)

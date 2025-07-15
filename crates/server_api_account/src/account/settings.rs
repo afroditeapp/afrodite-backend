@@ -2,7 +2,7 @@ use axum::{Extension, extract::State};
 use model_account::{
     AccountData, AccountIdInternal, BooleanSetting, EventToClientInternal, ProfileVisibility,
 };
-use server_api::{S, create_open_api_router, db_write_multiple};
+use server_api::{S, create_open_api_router, db_write};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 
@@ -66,7 +66,7 @@ pub async fn post_account_data(
     // allow that only if account state is in initial setup and
     // sign in with login is not used.
 
-    db_write_multiple!(state, move |cmds| cmds
+    db_write!(state, move |cmds| cmds
         .account()
         .account_data(api_caller_account_id, data)
         .await)
@@ -95,7 +95,7 @@ pub async fn put_setting_profile_visiblity(
 ) -> Result<(), StatusCode> {
     ACCOUNT.put_setting_profile_visiblity.incr();
 
-    let new_account = db_write_multiple!(state, move |cmds| {
+    let new_account = db_write!(state, move |cmds| {
         let new_account = cmds
             .account()
             .update_syncable_account_data(id, None, move |_, _, visiblity| {

@@ -1,6 +1,6 @@
 use axum::{Extension, extract::State};
 use model_chat::{AccountIdInternal, ChatAppNotificationSettings};
-use server_api::{S, app::WriteData, create_open_api_router, db_write_multiple};
+use server_api::{S, app::WriteData, create_open_api_router, db_write};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 
@@ -56,7 +56,7 @@ async fn post_chat_app_notification_settings(
     Json(settings): Json<ChatAppNotificationSettings>,
 ) -> Result<(), StatusCode> {
     CHAT.post_chat_app_notification_settings.incr();
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         cmds.chat()
             .notification()
             .upsert_app_notification_settings(id, settings)

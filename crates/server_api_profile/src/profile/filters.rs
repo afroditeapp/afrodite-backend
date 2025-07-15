@@ -3,7 +3,7 @@ use model_profile::{
     AccountIdInternal, GetProfileFilteringSettings, ProfileAttributeQuery,
     ProfileAttributeQueryResult, ProfileFilteringSettingsUpdate,
 };
-use server_api::{S, create_open_api_router, db_write_multiple};
+use server_api::{S, create_open_api_router, db_write};
 use server_data::DataError;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -95,7 +95,7 @@ pub async fn post_profile_filtering_settings(
     let validated = data
         .validate(state.config().profile_attributes())
         .into_error_string(DataError::NotAllowed)?;
-    db_write_multiple!(state, move |cmds| cmds
+    db_write!(state, move |cmds| cmds
         .profile()
         .update_profile_filtering_settings(account_id, validated)
         .await)

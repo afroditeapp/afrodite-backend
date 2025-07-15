@@ -7,7 +7,7 @@ use model_account::{
     AccessToken, AccountId, AppleAccountId, AuthPair, EmailAddress, GoogleAccountId, LoginResult,
     RefreshToken, SignInWithInfo, SignInWithLoginInfo,
 };
-use server_api::{S, app::GetConfig, db_write_multiple};
+use server_api::{S, app::GetConfig, db_write};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::{
@@ -30,7 +30,7 @@ pub async fn login_impl(id: AccountId, state: &S) -> Result<LoginResult, StatusC
     let account = AuthPair { access, refresh };
     let account_clone = account.clone();
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         cmds.common()
             .push_notification()
             .remove_fcm_device_token_and_pending_notification_token(id)
@@ -168,7 +168,7 @@ pub async fn post_sign_in_with_login(
     if let Some(aid) = r.aid {
         // Login successful
         let id = state.get_internal_id(aid).await?;
-        db_write_multiple!(state, move |cmds| {
+        db_write!(state, move |cmds| {
             cmds.common()
                 .client_config()
                 .client_login_session_platform(id, tokens.client_info.client_type)
@@ -191,7 +191,7 @@ async fn handle_sign_in_with_info(
     let already_existing_account = info.already_existing_account(state).await?;
 
     if let Some(already_existing_account) = already_existing_account {
-        db_write_multiple!(state, move |cmds| cmds
+        db_write!(state, move |cmds| cmds
             .account()
             .email()
             .account_email(already_existing_account, email)

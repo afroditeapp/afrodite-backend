@@ -11,7 +11,7 @@ use model_profile::{
 use server_api::{
     S,
     app::{AdminNotificationProvider, GetAccounts, WriteData},
-    create_open_api_router, db_write_multiple,
+    create_open_api_router, db_write,
 };
 use server_data_profile::{
     read::GetReadProfileCommands,
@@ -113,7 +113,7 @@ pub async fn post_moderate_profile_text(
         }
     };
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         cmds.profile_admin()
             .profile_text()
             .moderate_profile_text(mode, text_owner_id, data.text)

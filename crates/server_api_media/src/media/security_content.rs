@@ -4,7 +4,7 @@ use axum::{
 };
 use model::Permissions;
 use model_media::{AccountId, AccountIdInternal, ContentId, SecurityContent};
-use server_api::{S, create_open_api_router, db_write_multiple};
+use server_api::{S, create_open_api_router, db_write};
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
 
@@ -89,7 +89,7 @@ pub async fn put_security_content_info(
 ) -> Result<(), StatusCode> {
     MEDIA.put_security_content_info.incr();
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         let content_id = cmds
             .read()
             .media()

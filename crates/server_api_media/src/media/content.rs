@@ -14,7 +14,7 @@ use model_media::{
 use server_api::{
     S,
     app::{ApiUsageTrackerProvider, GetConfig},
-    create_open_api_router, db_write_multiple,
+    create_open_api_router, db_write,
     result::WrappedResultExt,
 };
 use server_data::{
@@ -375,7 +375,7 @@ pub async fn delete_content(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         let r = cmds.media().delete_content(content_id).await?;
 
         if r.current_media_content_refresh_needed {

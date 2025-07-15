@@ -4,7 +4,7 @@ use axum::{Extension, extract::State};
 use model_chat::{
     AccountIdInternal, MatchesIteratorSessionId, MatchesPage, ResetMatchesIteratorResult,
 };
-use server_api::{S, app::WriteData, create_open_api_router, db_write_multiple};
+use server_api::{S, app::WriteData, create_open_api_router, db_write};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 
@@ -28,7 +28,7 @@ pub async fn post_reset_matches_paging(
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ResetMatchesIteratorResult>, StatusCode> {
     CHAT.post_reset_matches_paging.incr();
-    let iterator_session_id = db_write_multiple!(state, move |cmds| {
+    let iterator_session_id = db_write!(state, move |cmds| {
         cmds.chat().handle_reset_matches_iterator(account_id).await
     })?;
     let r = ResetMatchesIteratorResult {

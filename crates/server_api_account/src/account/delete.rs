@@ -7,7 +7,7 @@ use model_account::{BooleanSetting, GetAccountDeletionRequestResult};
 use server_api::{
     S,
     app::{GetAccounts, ReadData, WriteData},
-    create_open_api_router, db_write_multiple,
+    create_open_api_router, db_write,
 };
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
@@ -49,7 +49,7 @@ pub async fn post_set_account_deletion_request_state(
 
     let internal_id = state.get_internal_id(account).await?;
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         cmds.account()
             .delete()
             .set_account_deletion_request_state(internal_id, value.value)

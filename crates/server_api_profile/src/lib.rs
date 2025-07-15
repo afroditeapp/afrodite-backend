@@ -32,4 +32,4 @@ pub use server_common::{data::DataError, result};
 )]
 pub struct ApiDocProfile;
 
-pub use server_api::db_write_multiple;
+pub use server_api::db_write;

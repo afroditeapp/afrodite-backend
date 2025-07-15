@@ -14,7 +14,7 @@ use pgp::composed::{Deserializable, SignedPublicKey};
 use server_api::{
     S,
     app::{GetAccounts, WriteData},
-    create_open_api_router, db_write_multiple,
+    create_open_api_router, db_write,
 };
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
@@ -138,7 +138,7 @@ async fn post_add_public_key(
         _ => return Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
 
-    let new_key = db_write_multiple!(state, move |cmds| {
+    let new_key = db_write!(state, move |cmds| {
         cmds.chat().add_public_key(id, key_data).await
     })?;
 

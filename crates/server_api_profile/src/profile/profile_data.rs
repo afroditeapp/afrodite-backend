@@ -11,7 +11,7 @@ use model_profile::{
 use server_api::{
     S,
     app::{AdminNotificationProvider, ApiUsageTrackerProvider, GetConfig},
-    create_open_api_router, db_write_multiple,
+    create_open_api_router, db_write,
     result::WrappedContextExt,
 };
 use server_data::read::GetReadCommandsCommon;
@@ -173,7 +173,7 @@ pub async fn post_profile(
 ) -> Result<(), StatusCode> {
     PROFILE.post_profile.incr();
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         let account_state = cmds.read().common().account(account_id).await?.state();
         let old_profile = cmds.read().profile().profile(account_id).await?;
         let accepted_ages = if account_state != AccountState::InitialSetup {
@@ -270,7 +270,7 @@ pub async fn post_search_groups(
         .try_into()
         .into_error_string(DataError::NotAllowed)?;
 
-    db_write_multiple!(state, move |cmds| cmds
+    db_write!(state, move |cmds| cmds
         .profile()
         .update_search_groups(account_id, validated)
         .await)
@@ -323,7 +323,7 @@ pub async fn post_search_age_range(
         .try_into()
         .into_error_string(DataError::NotAllowed)?;
 
-    db_write_multiple!(state, move |cmds| cmds
+    db_write!(state, move |cmds| cmds
         .profile()
         .update_search_age_range(account_id, validated)
         .await)

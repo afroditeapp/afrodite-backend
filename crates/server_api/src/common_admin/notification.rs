@@ -3,7 +3,7 @@ use model::{AccountIdInternal, AdminNotification, PendingNotificationFlags, Perm
 use server_data::{
     app::EventManagerProvider, read::GetReadCommandsCommon, write::GetWriteCommandsCommon,
 };
-use server_state::{app::AdminNotificationProvider, db_write_multiple};
+use server_state::{app::AdminNotificationProvider, db_write};
 use simple_backend::create_counters;
 
 use crate::{
@@ -77,7 +77,7 @@ pub async fn post_admin_notification_subscriptions(
     COMMON_ADMIN.post_admin_notification_subscriptions.incr();
 
     if api_caller_permissions.admin_subscribe_admin_notifications {
-        db_write_multiple!(state, move |cmds| {
+        db_write!(state, move |cmds| {
             cmds.common_admin()
                 .notification()
                 .set_admin_notification_subscriptions(api_caller_account_id, subscriptions)

@@ -1,6 +1,6 @@
 use axum::{Extension, extract::State};
 use model::AccountIdInternal;
-use server_api::{S, create_open_api_router, db_write_multiple};
+use server_api::{S, create_open_api_router, db_write};
 use server_data::write::GetWriteCommandsCommon;
 use simple_backend::create_counters;
 
@@ -25,7 +25,7 @@ pub async fn post_logout(
 ) -> Result<(), StatusCode> {
     ACCOUNT.post_logout.incr();
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         cmds.common().logout(account_id).await
     })?;
 

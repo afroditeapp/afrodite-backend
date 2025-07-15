@@ -6,7 +6,7 @@ use simple_backend::create_counters;
 
 use crate::{
     app::WriteData,
-    db_write_multiple,
+    db_write,
     utils::{Json, StatusCode},
 };
 
@@ -46,7 +46,7 @@ pub async fn post_media_content_face_detected_value(
 
     let content_owner = state.get_internal_id(data.account_id).await?;
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         let content_id = cmds
             .read()
             .media()

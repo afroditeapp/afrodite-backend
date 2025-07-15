@@ -4,7 +4,7 @@ use model_account::SetAccountBanState;
 use server_api::{
     S,
     app::{GetAccounts, WriteData},
-    create_open_api_router, db_write_multiple,
+    create_open_api_router, db_write,
 };
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
@@ -43,7 +43,7 @@ pub async fn post_set_ban_state(
 
     let internal_id = state.get_internal_id(ban_info.account).await?;
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         let new_account = cmds
             .account_admin()
             .ban()

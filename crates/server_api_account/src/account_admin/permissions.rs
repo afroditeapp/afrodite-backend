@@ -7,7 +7,7 @@ use model_account::GetAllAdminsResult;
 use server_api::{
     S,
     app::{GetAccounts, ReadData, WriteData},
-    create_open_api_router, db_write_multiple,
+    create_open_api_router, db_write,
 };
 use server_data::read::GetReadCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
@@ -121,7 +121,7 @@ pub async fn post_set_permissions(
 
     let internal_id = state.get_internal_id(account).await?;
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         cmds.account_admin()
             .permissions()
             .set_permissions(internal_id, new_permissions)

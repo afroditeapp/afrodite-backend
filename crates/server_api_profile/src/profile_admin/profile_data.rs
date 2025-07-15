@@ -7,7 +7,7 @@ use model_profile::{GetProfileAgeAndName, Permissions, ProfileUpdate, SetProfile
 use server_api::{
     DataError, S,
     app::{AdminNotificationProvider, GetAccounts, GetConfig},
-    create_open_api_router, db_write_multiple,
+    create_open_api_router, db_write,
 };
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -110,7 +110,7 @@ pub async fn post_set_profile_name(
 
     let profile_owner_id = state.get_internal_id(info.account).await?;
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         let profile = cmds
             .read()
             .profile()

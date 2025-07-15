@@ -7,7 +7,7 @@ use model_account::{
     PageItemCountForNewPublicNews, PendingNotificationFlags, Permissions, RequireNewsLocale,
     ResetNewsIteratorResult, UnreadNewsCountResult,
 };
-use server_api::{S, app::EventManagerProvider, create_open_api_router, db_write_multiple};
+use server_api::{S, app::EventManagerProvider, create_open_api_router, db_write};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 
@@ -63,7 +63,7 @@ pub async fn post_reset_news_paging(
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ResetNewsIteratorResult>, StatusCode> {
     ACCOUNT.post_reset_news_paging.incr();
-    let r = db_write_multiple!(state, move |cmds| {
+    let r = db_write!(state, move |cmds| {
         cmds.account()
             .news()
             .handle_reset_news_iterator(account_id)
