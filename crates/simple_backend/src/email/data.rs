@@ -2,22 +2,24 @@ use error_stack::{Result, ResultExt};
 use serde::{Deserialize, Serialize};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_database::data::create_dirs_and_get_simple_backend_dir_path;
+use simple_backend_model::UnixTime;
 use tokio::io::AsyncWriteExt;
 
 use super::EmailError;
 
 const EMAIL_SENDER_STATE_FILE: &str = "email_sender_state.toml";
 
-// TODO(prod): Save counter reset time to EmailLimitStateStorage.
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
+pub struct Counter {
+    pub value: u32,
+    pub previous_reset: UnixTime,
+}
 
 /// Save emal sender limit states before closing the server.
-///
-/// It is assumed that server restarts quickly enough so time related
-/// limit invalidation is not implemented.
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct EmailLimitStateStorage {
-    pub emails_sent_per_minute: u32,
-    pub emails_sent_per_day: u32,
+    pub emails_sent_per_minute: Counter,
+    pub emails_sent_per_day: Counter,
 }
 
 impl EmailLimitStateStorage {
