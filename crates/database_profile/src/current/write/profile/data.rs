@@ -2,7 +2,7 @@ use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{ExpressionMethods, QueryDsl, delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model_profile::{
-    AccountIdInternal, Location, ProfileAge, ProfileAttributeFilterValueUpdate,
+    AccountIdInternal, LastSeenUnixTime, Location, ProfileAge, ProfileAttributeFilterValueUpdate,
     ProfileAttributeValueUpdate, ProfileFilteringSettingsUpdateValidated, ProfileInternal,
     ProfileModificationMetadata, ProfileStateInternal, ProfileUpdateValidated, SyncVersion,
     UnixTime,
@@ -24,6 +24,7 @@ impl CurrentWriteProfileData<'_> {
             .values((
                 account_id.eq(id.as_db_id()),
                 version_uuid.eq(modification.version),
+                last_seen_unix_time.eq(modification.time),
             ))
             .returning(ProfileInternal::as_returning())
             .get_result(self.conn())
@@ -70,7 +71,7 @@ impl CurrentWriteProfileData<'_> {
     pub fn profile_last_seen_time(
         &mut self,
         id: AccountIdInternal,
-        data: Option<UnixTime>,
+        data: LastSeenUnixTime,
     ) -> Result<(), DieselDatabaseError> {
         use crate::schema::profile::dsl::*;
 

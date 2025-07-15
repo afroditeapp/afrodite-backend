@@ -100,7 +100,7 @@ impl Profile {
 pub struct ProfileAndProfileVersion {
     pub profile: Profile,
     pub version: ProfileVersion,
-    pub last_seen_time: Option<LastSeenTime>,
+    pub last_seen_time: LastSeenTime,
 }
 
 /// Private profile related database data
@@ -318,7 +318,7 @@ impl GetProfileResult {
         Self {
             p: Some(info.profile),
             v: Some(info.version),
-            lst: info.last_seen_time,
+            lst: Some(info.last_seen_time),
         }
     }
 

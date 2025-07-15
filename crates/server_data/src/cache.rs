@@ -6,10 +6,11 @@ use common::CacheCommon;
 use error_stack::Result;
 use media::CacheMedia;
 use model::{AccessToken, AccountId, AccountIdInternal, AccountState, Permissions};
-use model_server_data::{LastSeenTime, LocationIndexKey, LocationIndexProfileData};
+use model_server_data::{
+    LastSeenTime, LastSeenUnixTime, LocationIndexKey, LocationIndexProfileData,
+};
 use profile::CacheProfile;
 pub use server_common::data::cache::CacheError;
-use simple_backend_model::UnixTime;
 use tokio::sync::RwLock;
 
 use crate::{
@@ -158,9 +159,9 @@ impl DatabaseCache {
                         == connection)
             {
                 cache_entry_write.common.current_connection = None;
-                let last_seen_time = UnixTime::current_time();
+                let last_seen_time = LastSeenUnixTime::current_time();
                 if let Some(profile_entry) = cache_entry_write.profile.as_mut() {
-                    profile_entry.last_seen_time = Some(last_seen_time);
+                    profile_entry.update_last_seen_time(last_seen_time);
                 }
                 last_seen_time_updated =
                     cache_entry_write

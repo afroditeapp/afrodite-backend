@@ -182,7 +182,7 @@ impl ProfileSearchManager {
             .await
             .change_context(ProfileSearchError::DatabaseError)?
             .last_seen_time
-            .and_then(|v| v.last_seen_unix_time())
+            .last_seen_unix_time()
         else {
             return Ok(());
         };

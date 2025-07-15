@@ -7,8 +7,8 @@ use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model_profile::{
     AcceptedProfileAges, AccountIdInternal, AttributeId, GetMyProfileResult, LastSeenTime,
-    Location, Profile, ProfileAge, ProfileAttributeFilterValue, ProfileAttributeValue,
-    ProfileInternal, ProfileStateInternal, UnixTime,
+    LastSeenUnixTime, Location, Profile, ProfileAge, ProfileAttributeFilterValue,
+    ProfileAttributeValue, ProfileInternal, ProfileStateInternal, UnixTime,
 };
 
 define_current_read_commands!(CurrentReadProfileData);
@@ -98,7 +98,7 @@ impl CurrentReadProfileData<'_> {
     pub fn profile_last_seen_time(
         &mut self,
         id: AccountIdInternal,
-    ) -> Result<Option<UnixTime>, DieselDatabaseError> {
+    ) -> Result<LastSeenUnixTime, DieselDatabaseError> {
         use crate::schema::profile::dsl::*;
 
         profile

@@ -11,7 +11,7 @@ impl ReadCommandsProfileSearch<'_> {
         account_id: AccountIdInternal,
     ) -> Result<bool, DataError> {
         self.read_cache_profile_and_common(account_id, |p, _| {
-            Ok(p.automatic_profile_search.last_seen_unix_time.is_some())
+            Ok(p.automatic_profile_search.last_seen_unix_time().is_some())
         })
         .await
         .into_error()

@@ -1,7 +1,8 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{AccountIdInternal, UnixTime};
+use model::AccountIdInternal;
+use model_profile::AutomaticProfileSearchLastSeenUnixTime;
 
 use crate::IntoDatabaseError;
 
@@ -11,7 +12,7 @@ impl CurrentReadProfileAdminSearch<'_> {
     pub fn automatic_profile_search_last_seen_time(
         &mut self,
         account_id_value: AccountIdInternal,
-    ) -> Result<Option<UnixTime>, DieselDatabaseError> {
+    ) -> Result<Option<AutomaticProfileSearchLastSeenUnixTime>, DieselDatabaseError> {
         use crate::schema::profile_automatic_profile_search_state::dsl::*;
 
         let query_result = profile_automatic_profile_search_state

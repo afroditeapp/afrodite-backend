@@ -1,7 +1,8 @@
 use database_profile::current::read::GetDbReadCommandsProfile;
 use model_profile::{
     AcceptedProfileAges, AccountIdInternal, GetMyProfileResult, GetProfileFilteringSettings,
-    Location, Profile, ProfileAndProfileVersion, ProfileInternal, ProfileStateInternal, UnixTime,
+    LastSeenUnixTime, Location, Profile, ProfileAndProfileVersion, ProfileInternal,
+    ProfileStateInternal,
 };
 use server_data::{
     DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead, result::Result,
@@ -65,7 +66,7 @@ impl ReadCommandsProfile<'_> {
             })
             .await?;
 
-        self.db_read(move |mut cmds| cmds.profile().data().my_profile(id, last_seen_time))
+        self.db_read(move |mut cmds| cmds.profile().data().my_profile(id, Some(last_seen_time)))
             .await
             .into_error()
     }
@@ -130,7 +131,7 @@ impl ReadCommandsProfile<'_> {
     pub async fn last_seen_unix_time_in_database(
         &self,
         id: AccountIdInternal,
-    ) -> Result<Option<UnixTime>, DataError> {
+    ) -> Result<LastSeenUnixTime, DataError> {
         self.db_read(move |mut cmds| cmds.profile().data().profile_last_seen_time(id))
             .await
             .into_error()

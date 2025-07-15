@@ -1,7 +1,8 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{ExpressionMethods, insert_into, prelude::*};
 use error_stack::Result;
-use model::{AccountIdInternal, UnixTime};
+use model::AccountIdInternal;
+use model_profile::AutomaticProfileSearchLastSeenUnixTime;
 
 use crate::IntoDatabaseError;
 
@@ -11,7 +12,7 @@ impl CurrentWriteProfileAdminSearch<'_> {
     pub fn upsert_automatic_profile_search_last_seen_time(
         &mut self,
         id: AccountIdInternal,
-        last_seen_time: UnixTime,
+        last_seen_time: AutomaticProfileSearchLastSeenUnixTime,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::profile_automatic_profile_search_state::dsl::*;
 
