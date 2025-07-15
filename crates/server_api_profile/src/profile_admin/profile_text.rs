@@ -25,7 +25,7 @@ use crate::{
 };
 
 const PATH_GET_PROFILE_TEXT_PENDING_MODERATION_LIST: &str =
-    "/profile_api/admin/profile_text_pending_moderation";
+    "/profile_api/profile_text_pending_moderation";
 
 /// Get first page of pending profile text moderations. Oldest item is first and count 25.
 #[utoipa::path(
@@ -64,7 +64,7 @@ pub async fn get_profile_text_pending_moderation_list(
     Ok(r.into())
 }
 
-const PATH_POST_MODERATE_PROFILE_TEXT: &str = "/profile_api/admin/moderate_profile_text";
+const PATH_POST_MODERATE_PROFILE_TEXT: &str = "/profile_api/moderate_profile_text";
 
 /// Rejected category and details can be set only when the text is rejected.
 ///

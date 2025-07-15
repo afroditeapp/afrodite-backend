@@ -20,7 +20,7 @@ use crate::{
 };
 
 const PATH_GET_PROFILE_NAME_PENDING_MODERATION_LIST: &str =
-    "/profile_api/admin/profile_name_pending_moderation";
+    "/profile_api/profile_name_pending_moderation";
 
 #[utoipa::path(
     get,
@@ -55,7 +55,7 @@ pub async fn get_profile_name_pending_moderation_list(
     Ok(r.into())
 }
 
-const PATH_POST_MODERATE_PROFILE_NAME: &str = "/profile_api/admin/moderate_profile_name";
+const PATH_POST_MODERATE_PROFILE_NAME: &str = "/profile_api/moderate_profile_name";
 
 #[utoipa::path(
     post,

@@ -13,7 +13,7 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-const PATH_GET_WAITING_REPORT_PAGE: &str = "/common_api/admin/waiting_report_page";
+const PATH_GET_WAITING_REPORT_PAGE: &str = "/common_api/waiting_report_page";
 
 #[utoipa::path(
     get,
@@ -48,7 +48,7 @@ pub async fn get_waiting_report_page(
     Ok(r.into())
 }
 
-const PATH_POST_PROCESS_REPORT: &str = "/common_api/admin/process_report";
+const PATH_POST_PROCESS_REPORT: &str = "/common_api/process_report";
 
 #[utoipa::path(
     post,
@@ -97,7 +97,7 @@ pub async fn post_process_report(
 }
 
 const PATH_GET_LATEST_REPORT_ITERATOR_START_POSITION: &str =
-    "/common_api/admin/latest_report_iterator_start_position";
+    "/common_api/latest_report_iterator_start_position";
 
 #[utoipa::path(
     get,
@@ -126,7 +126,7 @@ pub async fn get_latest_report_iterator_start_position(
     Ok(previous_time.into())
 }
 
-const PATH_POST_GET_REPORT_ITERATOR_PAGE: &str = "/common_api/admin/report_iterator_page";
+const PATH_POST_GET_REPORT_ITERATOR_PAGE: &str = "/common_api/report_iterator_page";
 
 /// Get report iterator page.
 ///
