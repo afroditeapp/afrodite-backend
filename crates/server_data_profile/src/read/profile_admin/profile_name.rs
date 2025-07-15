@@ -4,15 +4,15 @@ use server_data::{
     DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead, result::Result,
 };
 
-define_cmd_wrapper_read!(ReadCommandsProfileNameAllowlist);
+define_cmd_wrapper_read!(ReadCommandsProfileName);
 
-impl ReadCommandsProfileNameAllowlist<'_> {
+impl ReadCommandsProfileName<'_> {
     pub async fn profile_name_pending_moderation_list(
         &self,
     ) -> Result<GetProfileNamePendingModerationList, DataError> {
         self.db_read(|mut cmds| {
             cmds.profile_admin()
-                .profile_name_allowlist()
+                .profile_name()
                 .profile_name_pending_moderation_list()
         })
         .await
