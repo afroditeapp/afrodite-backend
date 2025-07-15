@@ -1,9 +1,4 @@
-use std::{
-    future::Future,
-    num::NonZeroU32,
-    str::FromStr,
-    time::{Duration, Instant},
-};
+use std::{future::Future, num::NonZeroU32, str::FromStr, time::Duration};
 
 use data::EmailLimitStateStorage;
 use error_stack::{Result, ResultExt};
@@ -13,6 +8,7 @@ use lettre::{
     transport::smtp::{PoolConfig, authentication::Credentials},
 };
 use simple_backend_config::{SimpleBackendConfig, file::EmailSendingConfig};
+use simple_backend_model::UnixTime;
 use simple_backend_utils::ContextExt;
 use tokio::{
     sync::mpsc::{Receiver, Sender, error::TrySendError},
@@ -20,7 +16,7 @@ use tokio::{
 };
 use tracing::{error, warn};
 
-use crate::ServerQuitWatcher;
+use crate::{ServerQuitWatcher, email::data::Counter};
 
 mod data;
 
@@ -205,9 +201,12 @@ impl<
     pub async fn run(mut self, mut quit_notification: ServerQuitWatcher) {
         let mut sending_logic = EmailSendingLogic::new();
         if let Some(sender_data) = &self.email_sender {
-            sending_logic.send_count_per_minute.count =
-                sender_data.previous_state.emails_sent_per_minute;
-            sending_logic.send_count_per_day.count = sender_data.previous_state.emails_sent_per_day;
+            sending_logic
+                .send_count_per_minute
+                .load(sender_data.previous_state.emails_sent_per_minute);
+            sending_logic
+                .send_count_per_day
+                .load(sender_data.previous_state.emails_sent_per_day);
         }
 
         tokio::select! {
@@ -224,8 +223,8 @@ impl<
 
     async fn before_quit(&self, sending_logic: &EmailSendingLogic) {
         let current_state = EmailLimitStateStorage {
-            emails_sent_per_minute: sending_logic.send_count_per_minute.count,
-            emails_sent_per_day: sending_logic.send_count_per_day.count,
+            emails_sent_per_minute: sending_logic.send_count_per_minute.to_count(),
+            emails_sent_per_day: sending_logic.send_count_per_day.to_count(),
         };
         if let Some(sender_data) = &self.email_sender {
             match current_state.save(&sender_data.simple_backend_config).await {
@@ -362,39 +361,54 @@ impl Default for EmailSendingLogic {
 }
 
 pub struct SendCounter {
-    count: u32,
-    last_reset: Instant,
+    value: u32,
+    previous_reset: UnixTime,
     counter_duration: Duration,
 }
 
 impl SendCounter {
     pub fn new(counter_duration: Duration) -> Self {
         Self {
-            count: 0,
-            last_reset: Instant::now(),
+            value: 0,
+            previous_reset: UnixTime::current_time(),
             counter_duration,
+        }
+    }
+
+    pub fn load(&mut self, counter: Counter) {
+        self.value = counter.value;
+        self.previous_reset = counter.previous_reset;
+    }
+
+    pub fn to_count(&self) -> Counter {
+        Counter {
+            value: self.value,
+            previous_reset: self.previous_reset,
         }
     }
 
     pub async fn wait_until_allowed(&mut self, limit: Option<NonZeroU32>) {
         if let Some(limit) = limit {
-            if self.count >= limit.get() {
+            if self.value >= limit.get() {
                 // Limit reached
                 self.wait_until_next_reset().await;
-                self.count = 0;
-                self.last_reset = Instant::now();
+                self.value = 0;
+                self.previous_reset = UnixTime::current_time();
             }
         }
     }
 
     pub fn increment(&mut self, limit: Option<NonZeroU32>) {
         if limit.is_some() {
-            self.count += 1;
+            self.value += 1;
         }
     }
 
     async fn wait_until_next_reset(&self) {
-        let time_since_reset = Instant::now().duration_since(self.last_reset);
+        let seconds_since_reset =
+            TryInto::<u64>::try_into(UnixTime::current_time().ut - self.previous_reset.ut)
+                .unwrap_or(0);
+        let time_since_reset = Duration::from_secs(seconds_since_reset);
         if let Some(remaining_time) = self.counter_duration.checked_sub(time_since_reset) {
             tokio::time::sleep(remaining_time).await
         }
