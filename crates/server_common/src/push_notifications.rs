@@ -229,6 +229,8 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
         receiver: PushNotificationReceiver,
     ) -> PushNotificationManagerQuitHandle {
         let fcm = if let Some(config) = config.simple_backend().firebase_cloud_messaging_config() {
+            // TODO(future): Make possible to use existing reqwest::Client
+            //               with FcmClient.
             let fcm_result = FcmClient::builder()
                 .service_account_key_json_path(&config.service_account_key_path)
                 .token_cache_json_path(&config.token_cache_path)

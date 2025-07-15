@@ -42,6 +42,7 @@ pub struct TestContext {
     account_server_api_port: Option<u16>,
     next_bot_id: u32,
     admin_access_granted: bool,
+    reqwest_client: reqwest::Client,
 }
 
 impl TestContext {
@@ -49,6 +50,7 @@ impl TestContext {
         config: Arc<Config>,
         test_config: Arc<TestMode>,
         account_server_api_port: Option<u16>,
+        reqwest_client: reqwest::Client,
     ) -> Self {
         Self {
             state: Arc::new(Mutex::new(State {
@@ -59,6 +61,7 @@ impl TestContext {
             account_server_api_port,
             next_bot_id: 1, // 0 is for admin bot
             admin_access_granted: false,
+            reqwest_client,
         }
     }
 
@@ -244,8 +247,9 @@ impl Account {
             Arc::new(BotConfigFile::default()),
             0,
             bot_id,
-            ApiClient::new(urls.clone()),
+            ApiClient::new(urls.clone(), &test_context.reqwest_client),
             urls,
+            test_context.reqwest_client.clone(),
         );
         state.enable_events();
 

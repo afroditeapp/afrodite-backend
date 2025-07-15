@@ -37,10 +37,14 @@ pub struct ContentModerationState {
     content_moderation_started: Option<Instant>,
     model: Option<Arc<nsfw::Model>>,
     client: Option<Client<OpenAIConfig>>,
+    reqwest_client: reqwest::Client,
 }
 
 impl ContentModerationState {
-    async fn new(config: &ContentModerationConfig) -> Result<Self, TestError> {
+    async fn new(
+        config: &ContentModerationConfig,
+        reqwest_client: reqwest::Client,
+    ) -> Result<Self, TestError> {
         let config = config.nsfw_detection.clone();
         if let Some(config) = config {
             let model = tokio::task::spawn_blocking(move || {
@@ -59,6 +63,7 @@ impl ContentModerationState {
                 content_moderation_started: None,
                 model: Some(Arc::new(model)),
                 client: None,
+                reqwest_client,
             })
         } else {
             Ok(Self::default())
@@ -346,6 +351,7 @@ impl AdminBotContentModerationLogic {
                     .with_api_base(config.openai_api_url.to_string())
                     .with_api_key(""),
             )
+            .with_http_client(state.reqwest_client.clone())
         });
 
         let expected_response_lowercase = config.expected_response.to_lowercase();
@@ -435,7 +441,8 @@ impl BotAction for AdminBotContentModerationLogic {
         let moderation_state = if let Some(state) = &mut state.admin.content {
             state
         } else {
-            let moderation_state = ContentModerationState::new(config).await?;
+            let moderation_state =
+                ContentModerationState::new(config, state.reqwest_client.clone()).await?;
             state.admin.content.get_or_insert(moderation_state)
         };
 

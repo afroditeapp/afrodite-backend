@@ -219,6 +219,7 @@ pub struct BotState {
     pub connections: BotConnections,
     pub refresh_token: Option<Vec<u8>>,
     pub deterministic_rng: Xoshiro256PlusPlus,
+    pub reqwest_client: reqwest::Client,
 }
 
 impl BotState {
@@ -233,8 +234,10 @@ impl BotState {
         bot_id: u32,
         api: ApiClient,
         api_urls: PublicApiUrls,
+        reqwest_client: reqwest::Client,
     ) -> Self {
         Self {
+            reqwest_client,
             id,
             server_config,
             config,
@@ -405,6 +408,7 @@ pub struct BotManager {
 }
 
 impl BotManager {
+    #[allow(clippy::too_many_arguments)]
     pub fn spawn(
         task_id: u32,
         server_config: Arc<Config>,
@@ -413,6 +417,7 @@ impl BotManager {
         old_state: Option<Arc<StateData>>,
         bot_quit_receiver: watch::Receiver<()>,
         bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
+        reqwest_client: &reqwest::Client,
     ) {
         let bot = match config.mode {
             TestModeSubMode::Benchmark(_) | TestModeSubMode::Bot(_) => Self::benchmark_or_bot(
@@ -422,6 +427,7 @@ impl BotManager {
                 bot_config_file,
                 config,
                 bot_running_handle,
+                reqwest_client,
             ),
             TestModeSubMode::Qa(_) => panic!("Server tests use different test runner"),
         };
@@ -436,6 +442,7 @@ impl BotManager {
         bot_config_file: Arc<BotConfigFile>,
         config: Arc<TestMode>,
         bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
+        reqwest_client: &reqwest::Client,
     ) -> Self {
         let mut bots = Vec::<Box<dyn BotStruct>>::new();
         for bot_i in 0..config.bots(task_id) {
@@ -468,8 +475,9 @@ impl BotManager {
                 bot_config_file.clone(),
                 task_id,
                 bot_i,
-                ApiClient::new(config.api_urls.clone()),
+                ApiClient::new(config.api_urls.clone(), reqwest_client),
                 config.api_urls.clone(),
+                reqwest_client.clone(),
             );
 
             match (config.selected_benchmark(), config.bot_mode()) {

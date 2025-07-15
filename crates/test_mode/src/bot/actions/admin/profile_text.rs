@@ -22,6 +22,7 @@ use crate::{
 pub struct ProfileTextModerationState {
     moderation_started: Option<Instant>,
     client: Option<Client<OpenAIConfig>>,
+    reqwest_client: reqwest::Client,
 }
 
 #[derive(Debug)]
@@ -113,6 +114,7 @@ impl AdminBotProfileTextModerationLogic {
                     .with_api_base(config.openai_api_url.to_string())
                     .with_api_key(""),
             )
+            .with_http_client(state.reqwest_client.clone())
         });
 
         let expected_response_lowercase = config.expected_response.to_lowercase();
@@ -196,6 +198,7 @@ impl BotAction for AdminBotProfileTextModerationLogic {
                 .get_or_insert_with(|| ProfileTextModerationState {
                     moderation_started: None,
                     client: None,
+                    reqwest_client: state.reqwest_client.clone(),
                 });
 
         let start_time = Instant::now();

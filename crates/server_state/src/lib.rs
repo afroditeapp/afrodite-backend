@@ -88,7 +88,11 @@ impl AppState {
             config: config.clone(),
             database: database.clone(),
             write_queue: Arc::new(write_queue),
-            internal_api: InternalApiClient::new(config.external_service_urls().clone()).into(),
+            internal_api: InternalApiClient::new(
+                config.external_service_urls().clone(),
+                simple_backend_state.reqwest_client.clone(),
+            )
+            .into(),
             content_processing,
             admin_notification,
             demo_mode,

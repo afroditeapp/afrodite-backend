@@ -25,6 +25,7 @@ pub struct BotTestRunner {
     config: Arc<Config>,
     bot_config_file: Arc<BotConfigFile>,
     test_config: Arc<TestMode>,
+    reqwest_client: reqwest::Client,
 }
 
 impl BotTestRunner {
@@ -32,11 +33,13 @@ impl BotTestRunner {
         config: Arc<Config>,
         bot_config_file: Arc<BotConfigFile>,
         test_config: Arc<TestMode>,
+        reqwest_client: reqwest::Client,
     ) -> Self {
         Self {
             config,
             bot_config_file,
             test_config,
+            reqwest_client,
         }
     }
 
@@ -53,7 +56,7 @@ impl BotTestRunner {
             None
         };
 
-        ApiClient::new(self.test_config.api_urls.clone()).print_to_log();
+        ApiClient::new(self.test_config.api_urls.clone(), &self.reqwest_client).print_to_log();
 
         let (quit_now, server) = if !self.test_config.no_servers {
             info!("Creating ServerManager...");
@@ -92,6 +95,7 @@ impl BotTestRunner {
                     old_state.clone(),
                     bot_quit_receiver.clone(),
                     bot_running_handle.clone(),
+                    &self.reqwest_client,
                 );
 
                 // Special case for profile iterator benchmark:
