@@ -335,39 +335,6 @@ impl DatabaseCache {
         }
     }
 
-    // TODO(refactor): Remove the following commented code
-
-    // pub async fn account(&self, id: AccountId) -> Result<Account, CacheError> {
-    //     let guard = self.accounts.read().await;
-    //     let data = guard
-    //         .get(&id)
-    //         .ok_or(CacheError::KeyNotExists)?
-    //         .cache
-    //         .read()
-    //         .await
-    //         .account
-    //         .as_ref()
-    //         .map(|data| data.as_ref().clone())
-    //         .ok_or(CacheError::NotInCache)?;
-
-    //     Ok(data)
-    // }
-
-    // pub async fn update_account(&self, id: AccountId, data: Account) -> Result<(), CacheError> {
-    //     let mut write_guard = self.accounts.write().await;
-    //     write_guard
-    //         .get_mut(&id)
-    //         .ok_or(CacheError::KeyNotExists)?
-    //         .cache
-    //         .write()
-    //         .await
-    //         .account
-    //         .as_mut()
-    //         .ok_or(CacheError::NotInCache)
-    //         .map(|current_data| *current_data.as_mut() = data)?;
-    //     Ok(())
-    // }
-
     pub async fn read_cache_common<T, Id: Into<AccountId>>(
         &self,
         id: Id,
