@@ -11,16 +11,18 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
+/// ConversationId : Account specific conversation ID
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct SentBlocksPage {
-    #[serde(rename = "profiles")]
-    pub profiles: Vec<models::AccountId>,
+pub struct ConversationId {
+    #[serde(rename = "id")]
+    pub id: i64,
 }
 
-impl SentBlocksPage {
-    pub fn new(profiles: Vec<models::AccountId>) -> SentBlocksPage {
-        SentBlocksPage {
-            profiles,
+impl ConversationId {
+    /// Account specific conversation ID
+    pub fn new(id: i64) -> ConversationId {
+        ConversationId {
+            id,
         }
     }
 }

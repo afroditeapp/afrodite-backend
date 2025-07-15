@@ -327,7 +327,7 @@ pub async fn get_latest_report_iterator_start_position(configuration: &configura
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/common_api/admin/latest_report_iterator_start_position", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/common_api/latest_report_iterator_start_position", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -393,7 +393,7 @@ pub async fn get_maintenance_notification(configuration: &configuration::Configu
     }
 }
 
-/// # Access * Permission [model::Permissions::admin_server_maintenance_view_info] * Permission [model::Permissions::admin_server_maintenance_update_software] * Permission [model::Permissions::admin_server_maintenance_reset_data] * Permission [model::Permissions::admin_server_maintenance_reboot_backend]
+/// # Access * Permission [model::Permissions::admin_server_maintenance_view_info] * Permission [model::Permissions::admin_server_maintenance_update_software] * Permission [model::Permissions::admin_server_maintenance_reset_data] * Permission [model::Permissions::admin_server_maintenance_restart_backend]
 pub async fn get_manager_instance_names(configuration: &configuration::Configuration, ) -> Result<models::ManagerInstanceNameList, Error<GetManagerInstanceNamesError>> {
     let local_var_configuration = configuration;
 
@@ -429,7 +429,7 @@ pub async fn get_manager_instance_names(configuration: &configuration::Configura
     }
 }
 
-/// # Access * Permission [model::Permissions::admin_server_maintenance_reboot_backend]
+/// # Access * Permission [model::Permissions::admin_server_maintenance_restart_backend]
 pub async fn get_scheduled_tasks_status(configuration: &configuration::Configuration, manager_name: &str) -> Result<models::ScheduledTaskStatus, Error<GetScheduledTasksStatusError>> {
     let local_var_configuration = configuration;
 
@@ -545,7 +545,7 @@ pub async fn get_waiting_report_page(configuration: &configuration::Configuratio
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/common_api/admin/waiting_report_page", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/common_api/waiting_report_page", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -875,7 +875,7 @@ pub async fn post_get_report_iterator_page(configuration: &configuration::Config
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/common_api/admin/report_iterator_page", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/common_api/report_iterator_page", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -911,7 +911,7 @@ pub async fn post_process_report(configuration: &configuration::Configuration, p
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/common_api/admin/process_report", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/common_api/process_report", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -942,7 +942,7 @@ pub async fn post_process_report(configuration: &configuration::Configuration, p
     }
 }
 
-/// # Access * Permission [model::Permissions::admin_server_maintenance_reboot_backend]
+/// # Access * Permission [model::Permissions::admin_server_maintenance_restart_backend]
 pub async fn post_schedule_task(configuration: &configuration::Configuration, manager_name: &str, scheduled_task_type: models::ScheduledTaskType, notify_backend: bool) -> Result<(), Error<PostScheduleTaskError>> {
     let local_var_configuration = configuration;
 
@@ -1018,7 +1018,7 @@ pub async fn post_trigger_backend_data_reset(configuration: &configuration::Conf
     }
 }
 
-/// # Access * Permission [model::Permissions::admin_server_maintenance_reboot_backend]
+/// # Access * Permission [model::Permissions::admin_server_maintenance_restart_backend]
 pub async fn post_trigger_backend_restart(configuration: &configuration::Configuration, manager_name: &str) -> Result<(), Error<PostTriggerBackendRestartError>> {
     let local_var_configuration = configuration;
 
@@ -1131,7 +1131,7 @@ pub async fn post_trigger_software_update_install(configuration: &configuration:
     }
 }
 
-/// # Access * Permission [model::Permissions::admin_server_maintenance_reboot_backend]
+/// # Access * Permission [model::Permissions::admin_server_maintenance_restart_backend]
 pub async fn post_trigger_system_reboot(configuration: &configuration::Configuration, manager_name: &str) -> Result<(), Error<PostTriggerSystemRebootError>> {
     let local_var_configuration = configuration;
 
@@ -1168,7 +1168,7 @@ pub async fn post_trigger_system_reboot(configuration: &configuration::Configura
     }
 }
 
-/// # Access * Permission [model::Permissions::admin_server_maintenance_reboot_backend]
+/// # Access * Permission [model::Permissions::admin_server_maintenance_restart_backend]
 pub async fn post_unschedule_task(configuration: &configuration::Configuration, manager_name: &str, scheduled_task_type: models::ScheduledTaskType) -> Result<(), Error<PostUnscheduleTaskError>> {
     let local_var_configuration = configuration;
 

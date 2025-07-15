@@ -16,8 +16,8 @@ pub struct ChatMessageReport {
     /// Message without encryption and signing
     #[serde(rename = "message_base64")]
     pub message_base64: String,
-    #[serde(rename = "message_number")]
-    pub message_number: Box<models::MessageNumber>,
+    #[serde(rename = "message_id")]
+    pub message_id: Box<models::MessageId>,
     #[serde(rename = "message_time")]
     pub message_time: Box<models::UnixTime>,
     #[serde(rename = "receiver")]
@@ -27,10 +27,10 @@ pub struct ChatMessageReport {
 }
 
 impl ChatMessageReport {
-    pub fn new(message_base64: String, message_number: models::MessageNumber, message_time: models::UnixTime, receiver: models::AccountId, sender: models::AccountId) -> ChatMessageReport {
+    pub fn new(message_base64: String, message_id: models::MessageId, message_time: models::UnixTime, receiver: models::AccountId, sender: models::AccountId) -> ChatMessageReport {
         ChatMessageReport {
             message_base64,
-            message_number: Box::new(message_number),
+            message_id: Box::new(message_id),
             message_time: Box::new(message_time),
             receiver: Box::new(receiver),
             sender: Box::new(sender),

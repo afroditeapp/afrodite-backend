@@ -32,7 +32,6 @@ src/models/account_sync_version.rs
 src/models/add_public_key_result.rs
 src/models/admin_info.rs
 src/models/admin_notification.rs
-src/models/all_matches_page.rs
 src/models/api_usage_count.rs
 src/models/api_usage_statistics.rs
 src/models/attribute.rs
@@ -58,6 +57,7 @@ src/models/client_features_config.rs
 src/models/client_features_file_hash.rs
 src/models/client_id.rs
 src/models/client_info.rs
+src/models/client_language.rs
 src/models/client_local_id.rs
 src/models/client_type.rs
 src/models/client_version.rs
@@ -75,6 +75,7 @@ src/models/content_processing_state.rs
 src/models/content_processing_state_changed.rs
 src/models/content_processing_state_type.rs
 src/models/content_slot.rs
+src/models/conversation_id.rs
 src/models/current_account_interaction_state.rs
 src/models/custom_report.rs
 src/models/custom_report_content.rs
@@ -109,6 +110,7 @@ src/models/get_chat_message_reports.rs
 src/models/get_client_features_config_result.rs
 src/models/get_client_version_statistics_result.rs
 src/models/get_client_version_statistics_settings.rs
+src/models/get_conversation_id.rs
 src/models/get_custom_reports_config_result.rs
 src/models/get_initial_profile_age_info_result.rs
 src/models/get_ip_address_statistics_result.rs
@@ -138,7 +140,6 @@ src/models/jitsi_meet_urls.rs
 src/models/language.rs
 src/models/last_seen_time_filter.rs
 src/models/latest_birthdate.rs
-src/models/latest_viewed_message_changed.rs
 src/models/like_limits_config.rs
 src/models/like_sending_limit_config.rs
 src/models/limited_action_status.rs
@@ -153,18 +154,19 @@ src/models/map_coordinate.rs
 src/models/map_zoom.rs
 src/models/matches_iterator_session_id.rs
 src/models/matches_page.rs
-src/models/matches_sync_version.rs
 src/models/max_distance_km.rs
 src/models/media_app_notification_settings.rs
 src/models/media_content_moderation_completed_notification.rs
 src/models/media_content_moderation_completed_notification_viewed.rs
 src/models/media_content_sync_version.rs
 src/models/media_content_type.rs
-src/models/message_number.rs
+src/models/message_id.rs
 src/models/min_distance_km.rs
 src/models/mod.rs
 src/models/moderation_queue_type.rs
 src/models/my_profile_content.rs
+src/models/new_message_notification.rs
+src/models/new_message_notification_list.rs
 src/models/new_received_likes_count.rs
 src/models/new_received_likes_count_result.rs
 src/models/news_id.rs
@@ -234,8 +236,6 @@ src/models/profile_update.rs
 src/models/profile_version.rs
 src/models/profile_visibility.rs
 src/models/public_key_id.rs
-src/models/received_blocks_page.rs
-src/models/received_blocks_sync_version.rs
 src/models/received_likes_iterator_session_id.rs
 src/models/received_likes_page.rs
 src/models/received_likes_sync_version.rs
@@ -264,9 +264,6 @@ src/models/security_content.rs
 src/models/send_like_result.rs
 src/models/send_message_result.rs
 src/models/sent_blocks_page.rs
-src/models/sent_blocks_sync_version.rs
-src/models/sent_likes_page.rs
-src/models/sent_likes_sync_version.rs
 src/models/sent_message_id.rs
 src/models/sent_message_id_list.rs
 src/models/set_account_ban_state.rs
@@ -275,6 +272,7 @@ src/models/set_max_public_key_count.rs
 src/models/set_profile_content.rs
 src/models/set_profile_name.rs
 src/models/sign_in_with_apple_info.rs
+src/models/sign_in_with_google_info.rs
 src/models/sign_in_with_login_info.rs
 src/models/software_info.rs
 src/models/software_update_state.rs
@@ -289,7 +287,6 @@ src/models/unread_news_count.rs
 src/models/unread_news_count_result.rs
 src/models/update_chat_message_report.rs
 src/models/update_custom_report_boolean.rs
-src/models/update_message_view_status.rs
 src/models/update_news_translation.rs
 src/models/update_news_translation_result.rs
 src/models/update_profile_content_report.rs

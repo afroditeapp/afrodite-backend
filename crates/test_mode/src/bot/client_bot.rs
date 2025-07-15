@@ -21,7 +21,7 @@ use api_client::{
         post_send_message_fixed,
     },
     models::{
-        AccountId, AttributeMode, ClientId, ClientLocalId, MessageNumber,
+        AccountId, AttributeMode, ClientId, ClientLocalId, MessageId,
         PendingMessageAcknowledgementList, PendingMessageId, ProfileAttributeQuery,
         ProfileAttributeValueUpdate, ProfileSearchAgeRange, ProfileUpdate, SearchGroups,
         SentMessageId, SentMessageIdList,
@@ -490,11 +490,11 @@ impl BotAction for AnswerReceivedMessages {
             let _ = parse_account_id(d)?;
             let _ = parse_minimal_i64(d)?;
             let _ = parse_minimal_i64(d)?;
-            let message_number = parse_minimal_i64(d)?;
+            let message_id = parse_minimal_i64(d)?;
 
             Some(PendingMessageId {
                 sender: sender.into(),
-                mn: MessageNumber::new(message_number).into(),
+                m: MessageId::new(message_id).into(),
             })
         }
 

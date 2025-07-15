@@ -21,16 +21,6 @@ pub enum EventType {
     NewMessageReceived,
     #[serde(rename = "ReceivedLikesChanged")]
     ReceivedLikesChanged,
-    #[serde(rename = "ReceivedBlocksChanged")]
-    ReceivedBlocksChanged,
-    #[serde(rename = "SentLikesChanged")]
-    SentLikesChanged,
-    #[serde(rename = "SentBlocksChanged")]
-    SentBlocksChanged,
-    #[serde(rename = "MatchesChanged")]
-    MatchesChanged,
-    #[serde(rename = "LatestViewedMessageChanged")]
-    LatestViewedMessageChanged,
     #[serde(rename = "ContentProcessingStateChanged")]
     ContentProcessingStateChanged,
     #[serde(rename = "ClientConfigChanged")]
@@ -62,11 +52,6 @@ impl std::fmt::Display for EventType {
             Self::AccountStateChanged => write!(f, "AccountStateChanged"),
             Self::NewMessageReceived => write!(f, "NewMessageReceived"),
             Self::ReceivedLikesChanged => write!(f, "ReceivedLikesChanged"),
-            Self::ReceivedBlocksChanged => write!(f, "ReceivedBlocksChanged"),
-            Self::SentLikesChanged => write!(f, "SentLikesChanged"),
-            Self::SentBlocksChanged => write!(f, "SentBlocksChanged"),
-            Self::MatchesChanged => write!(f, "MatchesChanged"),
-            Self::LatestViewedMessageChanged => write!(f, "LatestViewedMessageChanged"),
             Self::ContentProcessingStateChanged => write!(f, "ContentProcessingStateChanged"),
             Self::ClientConfigChanged => write!(f, "ClientConfigChanged"),
             Self::ProfileChanged => write!(f, "ProfileChanged"),

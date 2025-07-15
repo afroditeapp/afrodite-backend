@@ -138,7 +138,7 @@ pub async fn delete_news_item(configuration: &configuration::Configuration, nid:
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/admin/delete_news/{nid}", local_var_configuration.base_path, nid=nid);
+    let local_var_uri_str = format!("{}/account_api/delete_news/{nid}", local_var_configuration.base_path, nid=nid);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -173,7 +173,7 @@ pub async fn delete_news_translation(configuration: &configuration::Configuratio
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/admin/delete_news_translation/{nid}/{locale}", local_var_configuration.base_path, nid=nid, locale=crate::apis::urlencode(locale));
+    let local_var_uri_str = format!("{}/account_api/delete_news_translation/{nid}/{locale}", local_var_configuration.base_path, nid=nid, locale=crate::apis::urlencode(locale));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -352,7 +352,7 @@ pub async fn post_create_news_item(configuration: &configuration::Configuration,
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/admin/create_news_item", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/account_api/create_news_item", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -497,7 +497,7 @@ pub async fn post_set_news_publicity(configuration: &configuration::Configuratio
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/admin/set_news_publicity/{nid}", local_var_configuration.base_path, nid=nid);
+    let local_var_uri_str = format!("{}/account_api/set_news_publicity/{nid}", local_var_configuration.base_path, nid=nid);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -528,7 +528,7 @@ pub async fn post_set_news_publicity(configuration: &configuration::Configuratio
     }
 }
 
-/// # Access  Permission [model_account::Permissions::admin_modify_permissions] is required.
+/// # Access  Permission [model_account::Permissions::admin_edit_permissions] is required.
 pub async fn post_set_permissions(configuration: &configuration::Configuration, aid: &str, permissions: models::Permissions) -> Result<(), Error<PostSetPermissionsError>> {
     let local_var_configuration = configuration;
 
@@ -570,7 +570,7 @@ pub async fn post_update_news_translation(configuration: &configuration::Configu
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/admin/update_news_translation/{nid}/{locale}", local_var_configuration.base_path, nid=nid, locale=crate::apis::urlencode(locale));
+    let local_var_uri_str = format!("{}/account_api/update_news_translation/{nid}/{locale}", local_var_configuration.base_path, nid=nid, locale=crate::apis::urlencode(locale));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
