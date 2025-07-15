@@ -11,7 +11,6 @@
 
 pub mod app;
 pub mod email;
-pub mod event;
 pub mod file_package;
 pub mod image;
 pub mod jitsi_meet;

@@ -207,51 +207,26 @@ impl DataAllAccess<'_> {
     }
 }
 
-// TODO(refactor): Remove unused db_write macro.
-
-/// Macro for writing data with different code style.
-/// Makes "async move" and "await" keywords unnecessary.
-/// The macro "closure" should work like a real closure.
+/// Macro for writing data with simpler syntax.
 ///
 /// This macro will guarantee that contents of the closure will run
 /// completely even if HTTP connection fails when closure is running.
 ///
 /// Converts crate::data::DataError to crate::api::utils::StatusCode.
 ///
-/// Does not work in Rust 2024 edition because of drop order changes.
-///
 /// Example usage:
 ///
 /// ```
-/// use server_state::db_write;
+/// use server_state::db_write_multiple;
 /// use server_state::utils::StatusCode;
 /// use server_state::app::WriteData;
 /// use server_state::S;
 /// pub async fn axum_route_handler(
 ///     state: S,
 /// ) -> std::result::Result<(), StatusCode> {
-///     db_write!(state, move |cmds|
-///         async move { Ok(()) }
-///     )
+///     db_write_multiple!(state, move |cmds| Ok(()))
 /// }
 /// ```
-#[macro_export]
-macro_rules! db_write {
-    ($state:expr, move |$cmds:ident| $commands:expr) => {{
-        let r = async {
-            let r: $crate::result::Result<_, server_data::DataError> =
-                $state.write(move |$cmds| async move { ($commands) }).await;
-            r
-        }
-        .await;
-
-        use $crate::utils::ConvertDataErrorToStatusCode;
-        r.convert_data_error_to_status_code()
-    }};
-}
-
-/// Same as db_write! but allows multiple commands to be executed because the
-/// commands are not automatically awaited.
 #[macro_export]
 macro_rules! db_write_multiple {
     ($state:expr, move |$cmds:ident| $commands:expr) => {{

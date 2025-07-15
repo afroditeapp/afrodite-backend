@@ -11,9 +11,6 @@ use crate::result::{Result, WrappedContextExt};
 
 pub mod common;
 
-// TODO(refactor): Remove PrintWarningsTriggersAtomics
-pub struct PrintWarningsTriggersAtomics {}
-
 pub struct InternalApiClient {
     account: Option<Configuration>,
     media: Option<Configuration>,

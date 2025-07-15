@@ -34,4 +34,4 @@ pub use server_common::{data::DataError, result};
 )]
 pub struct ApiDocAccount;
 
-pub use server_api::{db_write, db_write_multiple};
+pub use server_api::db_write_multiple;
