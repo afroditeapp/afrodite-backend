@@ -10,7 +10,7 @@ use model_media::{
 use server_api::{
     S,
     app::{AdminNotificationProvider, ApiUsageTrackerProvider, GetConfig},
-    create_open_api_router, db_write_multiple,
+    create_open_api_router, db_write,
 };
 use server_data::read::GetReadCommandsCommon;
 use server_data_media::{
@@ -155,7 +155,7 @@ pub async fn put_profile_content(
 ) -> Result<(), StatusCode> {
     MEDIA.put_profile_content.incr();
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         let info = cmds
             .media()
             .update_profile_content(api_caller_account_id, new)

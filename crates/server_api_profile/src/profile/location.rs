@@ -1,6 +1,6 @@
 use axum::{Extension, extract::State};
 use model_profile::{AccountIdInternal, Location};
-use server_api::{S, create_open_api_router, db_write_multiple};
+use server_api::{S, create_open_api_router, db_write};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 
@@ -53,7 +53,7 @@ pub async fn put_location(
 ) -> Result<(), StatusCode> {
     PROFILE.put_location.incr();
 
-    db_write_multiple!(state, move |cmds| cmds
+    db_write!(state, move |cmds| cmds
         .profile()
         .profile_update_location(account_id, location)
         .await)

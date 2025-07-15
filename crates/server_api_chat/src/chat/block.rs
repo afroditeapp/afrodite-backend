@@ -7,7 +7,7 @@ use simple_backend::create_counters;
 use super::super::utils::{Json, StatusCode};
 use crate::{
     app::{GetAccounts, ReadData, WriteData},
-    db_write_multiple,
+    db_write,
 };
 
 const PATH_POST_BLOCK_PROFILE: &str = "/chat_api/block_profile";
@@ -33,7 +33,7 @@ pub async fn post_block_profile(
 
     let requested_profile = state.get_internal_id(requested_profile).await?;
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         cmds.chat().block_profile(id, requested_profile).await?;
         Ok(())
     })?;
@@ -64,7 +64,7 @@ pub async fn post_unblock_profile(
 
     let requested_profile = state.get_internal_id(requested_profile).await?;
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         cmds.chat().delete_block(id, requested_profile).await?;
         Ok(())
     })?;

@@ -8,7 +8,7 @@ use server_state::app::AdminNotificationProvider;
 use simple_backend::create_counters;
 
 use super::super::utils::{Json, StatusCode};
-use crate::{S, app::WriteData, create_open_api_router, db_write_multiple};
+use crate::{S, app::WriteData, create_open_api_router, db_write};
 
 // TODO(prod): Make sure that cache is updated when pending notification flags
 //             are updated.
@@ -35,7 +35,7 @@ pub async fn post_set_device_token(
 ) -> Result<Json<PendingNotificationToken>, StatusCode> {
     COMMON.post_set_device_token.incr();
 
-    let pending_notification_token = db_write_multiple!(state, move |cmds| {
+    let pending_notification_token = db_write!(state, move |cmds| {
         cmds.common()
             .push_notification()
             .set_device_token(id, device_token)

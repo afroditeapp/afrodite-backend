@@ -6,7 +6,7 @@ use model::{AccountId, Permissions};
 use server_api::{
     S,
     app::{GetAccounts, WriteData},
-    create_open_api_router, db_write_multiple,
+    create_open_api_router, db_write,
 };
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
@@ -44,7 +44,7 @@ pub async fn post_delete_account(
 
     let internal_id = state.get_internal_id(account).await?;
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         cmds.account().delete().delete_account(internal_id).await?;
         Ok(())
     })?;

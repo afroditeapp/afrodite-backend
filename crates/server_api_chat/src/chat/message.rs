@@ -26,7 +26,7 @@ use tracing::error;
 use super::super::utils::{Json, StatusCode};
 use crate::{
     app::{GetAccounts, ReadData, WriteData},
-    db_write_multiple,
+    db_write,
 };
 
 const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
@@ -104,7 +104,7 @@ pub async fn post_add_receiver_acknowledgement(
 ) -> Result<(), StatusCode> {
     CHAT.delete_pending_messages.incr();
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         cmds.chat()
             .add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(id, list.ids)
             .await
@@ -157,7 +157,7 @@ pub async fn post_send_message(
         return Ok(SendMessageResult::receiver_blocked_sender_or_receiver_not_found().into());
     };
     let keys = state.data_signer().keys().await?;
-    let result = db_write_multiple!(state, move |cmds| {
+    let result = db_write!(state, move |cmds| {
         let (result, push_notification_allowed) = cmds
             .chat()
             .insert_pending_message_if_match_and_not_blocked(
@@ -264,7 +264,7 @@ pub async fn post_add_sender_acknowledgement(
     Json(id_list): Json<SentMessageIdList>,
 ) -> Result<(), StatusCode> {
     CHAT.post_add_sender_acknowledgement.incr();
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         cmds.chat()
             .add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(
                 id,

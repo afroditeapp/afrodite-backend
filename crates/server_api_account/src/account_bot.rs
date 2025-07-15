@@ -4,7 +4,7 @@ use std::{collections::HashSet, sync::LazyLock};
 
 use axum::extract::State;
 use model_account::{AccountId, LoginResult, RemoteBotLogin, SignInWithInfo};
-use server_api::{S, app::GetConfig, db_write_multiple};
+use server_api::{S, app::GetConfig, db_write};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::read::GetReadCommandsAccount;
 use simple_backend::create_counters;
@@ -69,7 +69,7 @@ pub async fn post_bot_register(State(state): State<S>) -> Result<Json<AccountId>
         .register_impl(SignInWithInfo::default(), None)
         .await?;
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         cmds.common().set_is_bot_account(new_account_id, true).await
     })?;
 

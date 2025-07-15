@@ -217,18 +217,18 @@ impl DataAllAccess<'_> {
 /// Example usage:
 ///
 /// ```
-/// use server_state::db_write_multiple;
+/// use server_state::db_write;
 /// use server_state::utils::StatusCode;
 /// use server_state::app::WriteData;
 /// use server_state::S;
 /// pub async fn axum_route_handler(
 ///     state: S,
 /// ) -> std::result::Result<(), StatusCode> {
-///     db_write_multiple!(state, move |cmds| Ok(()))
+///     db_write!(state, move |cmds| Ok(()))
 /// }
 /// ```
 #[macro_export]
-macro_rules! db_write_multiple {
+macro_rules! db_write {
     ($state:expr, move |$cmds:ident| $commands:expr) => {{
         let r = async {
             let r: $crate::result::Result<_, $crate::DataError> =

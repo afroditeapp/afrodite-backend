@@ -17,7 +17,7 @@ use simple_backend::create_counters;
 use super::super::utils::{Json, StatusCode};
 use crate::{
     app::{GetAccounts, ReadData, WriteData},
-    db_write_multiple,
+    db_write,
 };
 
 const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
@@ -53,7 +53,7 @@ pub async fn post_send_like(
 
     let requested_profile = state.get_internal_id(requested_profile).await?;
 
-    let r = db_write_multiple!(state, move |cmds| {
+    let r = db_write!(state, move |cmds| {
         let current_interaction = cmds
             .read()
             .chat()
@@ -195,7 +195,7 @@ pub async fn post_reset_received_likes_paging(
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ResetReceivedLikesIteratorResult>, StatusCode> {
     CHAT.post_reset_received_likes_paging.incr();
-    let (iterator_session_id, new_version) = db_write_multiple!(state, move |cmds| {
+    let (iterator_session_id, new_version) = db_write!(state, move |cmds| {
         cmds.chat()
             .handle_reset_received_likes_iterator(account_id)
             .await
@@ -290,7 +290,7 @@ pub async fn delete_like(
 
     let requested_profile = state.get_internal_id(requested_profile).await?;
 
-    let r = db_write_multiple!(state, move |cmds| {
+    let r = db_write!(state, move |cmds| {
         let current_interaction = cmds
             .read()
             .chat()

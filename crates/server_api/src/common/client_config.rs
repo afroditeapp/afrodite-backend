@@ -3,7 +3,7 @@ use model::{
     AccountIdInternal, ClientConfig, ClientFeaturesFileHash, ClientLanguage, CustomReportsFileHash,
 };
 use server_data::{app::GetConfig, read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
-use server_state::db_write_multiple;
+use server_state::db_write;
 use simple_backend::create_counters;
 
 use crate::{
@@ -100,7 +100,7 @@ pub async fn post_client_language(
     Json(value): Json<ClientLanguage>,
 ) -> Result<(), StatusCode> {
     COMMON.post_client_language.incr();
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         cmds.common()
             .client_config()
             .client_language(account_id, value)

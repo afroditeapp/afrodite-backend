@@ -11,7 +11,7 @@ use model_server_state::{
 use server_api::{
     S,
     app::{GetAccounts, GetConfig, ReadData},
-    create_open_api_router, db_write_multiple,
+    create_open_api_router, db_write,
 };
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::{
@@ -138,7 +138,7 @@ pub async fn post_demo_mode_register_account(
         .register_impl(SignInWithInfo::default(), None)
         .await?;
 
-    db_write_multiple!(state, move |cmds| cmds
+    db_write!(state, move |cmds| cmds
         .account()
         .insert_demo_mode_related_account_ids(demo_mode_id, id.as_id())
         .await)?;
@@ -181,7 +181,7 @@ pub async fn post_demo_mode_login_to_account(
     if let Some(aid) = r.aid {
         // Login successful
         let id = state.get_internal_id(aid).await?;
-        db_write_multiple!(state, move |cmds| {
+        db_write!(state, move |cmds| {
             cmds.common()
                 .client_config()
                 .client_login_session_platform(id, info.client_info.client_type)

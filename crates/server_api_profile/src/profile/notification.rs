@@ -8,7 +8,7 @@ use model_profile::{AccountIdInternal, ProfileAppNotificationSettings};
 use server_api::{
     S,
     app::{EventManagerProvider, WriteData},
-    create_open_api_router, db_write_multiple,
+    create_open_api_router, db_write,
 };
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -65,7 +65,7 @@ async fn post_profile_app_notification_settings(
     Json(settings): Json<ProfileAppNotificationSettings>,
 ) -> Result<(), StatusCode> {
     PROFILE.post_profile_app_notification_settings.incr();
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         cmds.profile()
             .notification()
             .upsert_app_notification_settings(id, settings)
@@ -140,7 +140,7 @@ pub async fn post_mark_profile_text_moderation_completed_notification_viewed(
         .post_mark_profile_text_moderation_completed_notification_viewed
         .incr();
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         cmds.profile()
             .notification()
             .update_notification_viewed_values(account_id, viewed)
@@ -214,7 +214,7 @@ pub async fn post_mark_automatic_profile_search_completed_notification_viewed(
         .post_mark_automatic_profile_search_completed_notification_viewed
         .incr();
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         cmds.profile()
             .notification()
             .update_automatic_profile_search_notification_viewed_values(account_id, viewed)

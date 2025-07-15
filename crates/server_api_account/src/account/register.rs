@@ -6,7 +6,7 @@ use simple_backend::create_counters;
 
 use crate::{
     app::{ReadData, WriteData},
-    db_write_multiple, internal_api,
+    db_write, internal_api,
     utils::{Json, StatusCode},
 };
 
@@ -69,7 +69,7 @@ pub async fn post_account_setup(
         // TODO(microservice): Add mutex to avoid data races
         internal_api::common::sync_birthdate(&state, id).await?;
 
-        db_write_multiple!(state, move |cmds| {
+        db_write!(state, move |cmds| {
             cmds.account().account_setup(id, data).await
         })?;
 

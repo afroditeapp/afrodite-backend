@@ -1,6 +1,6 @@
 use axum::{Extension, extract::State};
 use model_account::{Account, AccountIdInternal, ClientId, LatestBirthdate};
-use server_api::{S, app::WriteData, create_open_api_router, db_write_multiple};
+use server_api::{S, app::WriteData, create_open_api_router, db_write};
 use server_data::read::GetReadCommandsCommon;
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
@@ -72,7 +72,7 @@ pub async fn post_get_next_client_id(
 ) -> Result<Json<ClientId>, StatusCode> {
     ACCOUNT.post_get_next_client_id.incr();
 
-    let client_id = db_write_multiple!(state, move |cmds| {
+    let client_id = db_write!(state, move |cmds| {
         cmds.account().get_next_client_id(id).await
     })?;
 

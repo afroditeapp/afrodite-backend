@@ -6,7 +6,7 @@ use model_chat::SetMaxPublicKeyCount;
 use server_api::{
     S,
     app::{GetAccounts, WriteData},
-    create_open_api_router, db_write_multiple,
+    create_open_api_router, db_write,
 };
 use server_data_chat::write::GetWriteCommandsChat;
 use simple_backend::create_counters;
@@ -43,7 +43,7 @@ async fn post_set_max_public_key_count(
 
     let id = state.get_internal_id(info.account).await?;
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         cmds.chat_admin()
             .public_key()
             .set_max_public_key_count(id, info.count)

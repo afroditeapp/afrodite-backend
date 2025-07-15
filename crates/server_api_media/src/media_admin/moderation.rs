@@ -23,7 +23,7 @@ use simple_backend::create_counters;
 
 use crate::{
     app::WriteData,
-    db_write_multiple,
+    db_write,
     utils::{Json, StatusCode},
 };
 
@@ -122,7 +122,7 @@ pub async fn post_moderate_profile_content(
         }
     };
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         let content_id = cmds
             .read()
             .media()

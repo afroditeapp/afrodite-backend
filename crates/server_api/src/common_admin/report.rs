@@ -9,7 +9,7 @@ use simple_backend::create_counters;
 use crate::{
     S,
     app::{GetAccounts, ReadData, WriteData},
-    create_open_api_router, db_write_multiple,
+    create_open_api_router, db_write,
     utils::{Json, StatusCode},
 };
 
@@ -79,7 +79,7 @@ pub async fn post_process_report(
     let creator = state.get_internal_id(data.creator).await?;
     let target = state.get_internal_id(data.target).await?;
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         cmds.common_admin()
             .report()
             .process_report(

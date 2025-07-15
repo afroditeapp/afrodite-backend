@@ -6,9 +6,7 @@ use model_account::{
     AccountIdInternal, BooleanSetting, NewsId, NewsLocale, NotificationEvent, Permissions,
     UpdateNewsTranslation, UpdateNewsTranslationResult,
 };
-use server_api::{
-    DataError, S, create_open_api_router, db_write_multiple, result::WrappedContextExt,
-};
+use server_api::{DataError, S, create_open_api_router, db_write, result::WrappedContextExt};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 
@@ -38,7 +36,7 @@ pub async fn post_create_news_item(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let news_id = db_write_multiple!(state, move |cmds| cmds
+    let news_id = db_write!(state, move |cmds| cmds
         .account_admin()
         .news()
         .create_news_item(account_id)
@@ -82,7 +80,7 @@ pub async fn delete_news_item(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    db_write_multiple!(state, move |cmds| cmds
+    db_write!(state, move |cmds| cmds
         .account_admin()
         .news()
         .delete_news_item(nid)
@@ -120,7 +118,7 @@ pub async fn post_update_news_translation(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let result = db_write_multiple!(state, move |cmds| {
+    let result = db_write!(state, move |cmds| {
         let item = cmds
             .read()
             .account_admin()
@@ -190,7 +188,7 @@ pub async fn delete_news_translation(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    db_write_multiple!(state, move |cmds| cmds
+    db_write!(state, move |cmds| cmds
         .account_admin()
         .news()
         .delete_news_translation(nid, locale)
@@ -226,7 +224,7 @@ pub async fn post_set_news_publicity(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         let item = cmds
             .read()
             .account_admin()

@@ -7,7 +7,7 @@ use model_media::{AccountIdInternal, MediaAppNotificationSettings};
 use server_api::{
     S,
     app::{EventManagerProvider, WriteData},
-    create_open_api_router, db_write_multiple,
+    create_open_api_router, db_write,
 };
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
@@ -64,7 +64,7 @@ async fn post_media_app_notification_settings(
     Json(settings): Json<MediaAppNotificationSettings>,
 ) -> Result<(), StatusCode> {
     MEDIA.post_media_app_notification_settings.incr();
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         cmds.media()
             .notification()
             .upsert_app_notification_settings(id, settings)
@@ -139,7 +139,7 @@ pub async fn post_mark_media_content_moderation_completed_notification_viewed(
         .post_mark_media_content_moderation_completed_notification_viewed
         .incr();
 
-    db_write_multiple!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         cmds.media()
             .notification()
             .update_notification_viewed_values(account_id, viewed)
