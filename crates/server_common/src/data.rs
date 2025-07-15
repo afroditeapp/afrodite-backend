@@ -12,8 +12,6 @@ pub mod index;
 
 #[derive(thiserror::Error, Debug)]
 pub enum DataError {
-    #[error("Git error")]
-    Git,
     #[error("SQLite error")]
     Sqlite,
     #[error("Cache error")]
@@ -24,43 +22,22 @@ pub enum DataError {
     Io,
     #[error("Profile index error")]
     ProfileIndex,
-    #[error("Image process error")]
-    ImageProcess,
-
     #[error("Diesel error")]
     Diesel,
-
-    #[error("Database command sending failed")]
-    CommandSendingFailed,
+    #[error("Event sender access failed")]
+    EventSenderAccessFailed,
+    #[error("Time error")]
+    Time,
     #[error("Database command result receiving failed")]
     CommandResultReceivingFailed,
-
-    // Other errors
-    #[error("Database initialization error")]
-    Init,
-    #[error("Database SQLite and Git integrity check")]
-    Integrity,
     #[error("Feature disabled from config file")]
     FeatureDisabled,
     #[error("Not found")]
     NotFound,
     #[error("Tried to do something that is not allowed")]
     NotAllowed,
-    #[error("Action is already done")]
-    AlreadyDone,
-    #[error("Missing value")]
-    MissingValue,
     #[error("Server closing in progress")]
     ServerClosingInProgress,
-
-    #[error("Command runner quit too early")]
-    CommandRunnerQuit,
-
-    #[error("Event mode access failed")]
-    EventModeAccessFailed,
-
-    #[error("Time error")]
-    Time,
 }
 
 /// Attach more info to current error
