@@ -94,7 +94,7 @@ const PATH_POST_SET_PERMISSIONS: &str = "/account_api/set_permissions/{aid}";
 ///
 /// # Access
 ///
-/// Permission [model_account::Permissions::admin_modify_permissions] is required.
+/// Permission [model_account::Permissions::admin_edit_permissions] is required.
 #[utoipa::path(
     post,
     path = PATH_POST_SET_PERMISSIONS,
@@ -115,7 +115,7 @@ pub async fn post_set_permissions(
 ) -> Result<(), StatusCode> {
     ACCOUNT_ADMIN.post_set_permissions.incr();
 
-    if !api_caller_permissions.admin_modify_permissions {
+    if !api_caller_permissions.admin_edit_permissions {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 

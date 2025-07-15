@@ -7,7 +7,7 @@ Account has several permissions for example granting admin related features.
 Admin can give some permissions or also user actions can grant some of those.
 
 Initial admin must be set from the server settings. This admin has
-'admin_modify_permissions' and 'admin_setup_possible' permissions.
+'admin_edit_permissions' and 'admin_setup_possible' permissions.
 
 Terms of Service updates are notified early using email, so no need to save
 accepted version to the server.
@@ -41,7 +41,7 @@ Possible state transfers:
 
 Admin:
 
-* 'admin_modify_permissions' - Add and remove permissions exept this one.
+* 'admin_edit_permissions' - Add and remove permissions exept this one.
 * 'admin_moderate_profiles' - View and moderate all user flagged profiles.
 * 'admin_moderate_images' - Account image moderation is now possible.
 * 'admin_view_private_info' - View private account info.

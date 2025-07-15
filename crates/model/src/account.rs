@@ -165,7 +165,7 @@ macro_rules! define_permissions {
 
 define_permissions!(
     struct Permissions,
-    admin_modify_permissions,
+    admin_edit_permissions,
     admin_edit_profile_name,
     admin_edit_max_public_key_count,
     admin_edit_media_content_face_detected_value,
