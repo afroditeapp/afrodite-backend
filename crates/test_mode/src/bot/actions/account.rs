@@ -162,7 +162,7 @@ async fn connect_websocket(
         .await
         .change_context(TestError::WebSocket)?;
 
-    let web_socket_protocol_version: u8 = 0;
+    let web_socket_protocol_version: u8 = 1;
     let client_type_number = u8::MAX; // Test mode bot client type
     let version = state
         .server_config
