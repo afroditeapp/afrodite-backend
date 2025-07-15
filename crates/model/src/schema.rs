@@ -124,7 +124,7 @@ diesel::table! {
         admin_server_maintenance_view_backend_config -> Bool,
         admin_server_maintenance_update_software -> Bool,
         admin_server_maintenance_reset_data -> Bool,
-        admin_server_maintenance_reboot_backend -> Bool,
+        admin_server_maintenance_restart_backend -> Bool,
         admin_server_maintenance_save_backend_config -> Bool,
         admin_server_maintenance_edit_notification -> Bool,
         admin_news_create -> Bool,
