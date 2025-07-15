@@ -105,7 +105,6 @@ pub struct LocationIndexProfileData {
     /// Possible values:
     /// - Unix timestamp
     /// - Value -1 is currently online
-    /// - i64::MIN is None
     last_seen_time: AtomicI64,
     profile_created_time: InitialSetupCompletedTime,
     profile_edited_time: ProfileEditedTime,
@@ -123,7 +122,7 @@ impl LocationIndexProfileData {
         attributes: SortedProfileAttributes,
         profile_content_version: Option<ProfileContentVersion>,
         unlimited_likes: bool,
-        last_seen_value: Option<LastSeenTime>,
+        last_seen_time: LastSeenTime,
         profile_created_time: InitialSetupCompletedTime,
         profile_content_edited_time: Option<ProfileContentEditedTime>,
         profile_text_character_count: ProfileTextCharacterCount,
@@ -138,11 +137,7 @@ impl LocationIndexProfileData {
             search_groups: state.search_group_flags,
             attributes,
             unlimited_likes,
-            last_seen_time: if let Some(last_seen_time) = last_seen_value {
-                AtomicI64::new(last_seen_time.raw())
-            } else {
-                AtomicI64::new(i64::MIN)
-            },
+            last_seen_time: AtomicI64::new(last_seen_time.raw()),
             profile_created_time,
             profile_edited_time: state.profile_edited_time,
             profile_content_edited_time,
@@ -161,9 +156,7 @@ impl LocationIndexProfileData {
     pub fn to_profile_link_value(&self) -> ProfileLink {
         let mut profile_link = self.profile_link;
         let last_seen_value = self.last_seen_time.load(Ordering::Relaxed);
-        if last_seen_value >= LastSeenTime::MIN_VALUE {
-            profile_link.set_last_seen_time(LastSeenTime::new(last_seen_value));
-        }
+        profile_link.set_last_seen_time(LastSeenTime::new(last_seen_value));
         profile_link
     }
 

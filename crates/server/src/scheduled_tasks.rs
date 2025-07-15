@@ -319,9 +319,6 @@ impl ScheduledTaskManager {
         &self,
         id: AccountIdInternal,
     ) -> Result<(), ScheduledTaskError> {
-        // TODO(prod): Avoid Option<LastSeenTime> as it complicates things.
-        //             Use account created time as the initial value and
-        //             remove Option?
         let last_seen_time = self
             .state
             .read()
@@ -334,8 +331,8 @@ impl ScheduledTaskManager {
         // TODO(prod): When subscription feature is added prevent requesting
         //             deletion when subscription is active.
 
-        if let Some(last_seen_time) = last_seen_time.and_then(|v| v.last_seen_unix_time()) {
-            let inactive_account = last_seen_time.add_seconds(
+        if let Some(last_seen_time) = last_seen_time.last_seen_unix_time() {
+            let inactive_account = last_seen_time.ut.add_seconds(
                 self.state
                     .config()
                     .limits_account()
@@ -438,8 +435,8 @@ impl ScheduledTaskManager {
                 .change_context(ScheduledTaskError::DatabaseError)?
                 .last_seen_time;
 
-            if let Some(last_seen_time) = last_seen_time.and_then(|v| v.last_seen_unix_time()) {
-                let inactive_account = last_seen_time.add_seconds(
+            if let Some(last_seen_time) = last_seen_time.last_seen_unix_time() {
+                let inactive_account = last_seen_time.ut.add_seconds(
                     self.state
                         .config()
                         .limits_account()

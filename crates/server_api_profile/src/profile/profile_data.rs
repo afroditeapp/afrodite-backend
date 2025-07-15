@@ -85,7 +85,7 @@ pub async fn get_profile(
             Some(param_version) if param_version == profile_info.version => {
                 Ok(GetProfileResult::current_version_latest_response(
                     profile_info.version,
-                    profile_info.last_seen_time,
+                    Some(profile_info.last_seen_time),
                 )
                 .into())
             }

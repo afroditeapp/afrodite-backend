@@ -1,9 +1,10 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
-    AccountIdInternal, Location, ProfileFilteringSettingsUpdateValidated,
-    ProfileModificationMetadata, ProfileSearchAgeRangeValidated, ProfileStateInternal,
-    ProfileUpdateValidated, UnixTime, ValidatedSearchGroups,
+    AccountIdInternal, AutomaticProfileSearchLastSeenUnixTime, LastSeenUnixTime, Location,
+    ProfileFilteringSettingsUpdateValidated, ProfileModificationMetadata,
+    ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateValidated,
+    ValidatedSearchGroups,
 };
 use server_data::{
     DataError, IntoDataError, app::GetConfig, cache::profile::UpdateLocationCacheState,
@@ -348,8 +349,9 @@ impl WriteCommandsProfile<'_> {
     pub async fn set_automatic_profile_search_last_seen_time(
         &self,
         id: AccountIdInternal,
-        time: UnixTime,
+        time: LastSeenUnixTime,
     ) -> Result<(), DataError> {
+        let time = AutomaticProfileSearchLastSeenUnixTime::new(time.ut.ut);
         db_transaction!(self, move |mut cmds| {
             cmds.profile_admin()
                 .search()
@@ -357,7 +359,7 @@ impl WriteCommandsProfile<'_> {
         })?;
 
         self.write_cache_profile(id.as_id(), |p| {
-            p.automatic_profile_search.last_seen_unix_time = Some(time);
+            p.automatic_profile_search.update_last_seen_unix_time(time);
             Ok(())
         })
         .await

@@ -216,6 +216,7 @@ impl DbDataToCacheLoader {
                 attributes,
                 filters,
                 last_seen_unix_time,
+                automatic_profile_search_last_seen_time,
             );
 
             let location_area = index_writer.coordinates_to_area(
@@ -226,8 +227,6 @@ impl DbDataToCacheLoader {
             profile_data.location.current_position = location_area.clone();
             profile_data.location.current_iterator = index_iterator
                 .new_iterator_state(&location_area, profile_data.state.random_profile_order);
-            profile_data.automatic_profile_search.last_seen_unix_time =
-                automatic_profile_search_last_seen_time;
 
             entry.profile = Some(Box::new(profile_data));
 

@@ -4,11 +4,11 @@ use model::{
     UnixTime,
 };
 use model_server_data::{
-    AutomaticProfileSearchIteratorSessionIdInternal, LastSeenTime, ProfileAppNotificationSettings,
-    ProfileAttributeFilterValue, ProfileAttributeValue, ProfileCreatedTimeFilter,
-    ProfileEditedTimeFilter, ProfileInternal, ProfileIteratorSessionIdInternal,
-    ProfileQueryMakerDetails, ProfileStateCached, ProfileTextCharacterCount, ProfileVersion,
-    SortedProfileAttributes,
+    AutomaticProfileSearchIteratorSessionIdInternal, AutomaticProfileSearchLastSeenUnixTime,
+    LastSeenTime, LastSeenUnixTime, ProfileAppNotificationSettings, ProfileAttributeFilterValue,
+    ProfileAttributeValue, ProfileCreatedTimeFilter, ProfileEditedTimeFilter, ProfileInternal,
+    ProfileIteratorSessionIdInternal, ProfileQueryMakerDetails, ProfileStateCached,
+    ProfileTextCharacterCount, ProfileVersion, SortedProfileAttributes,
 };
 use server_common::data::{DataError, cache::CacheError};
 
@@ -26,7 +26,7 @@ pub struct CacheProfile {
     pub location: LocationData,
     pub attributes: SortedProfileAttributes,
     pub filters: Vec<ProfileAttributeFilterValue>,
-    pub last_seen_time: Option<UnixTime>,
+    last_seen_time: LastSeenUnixTime,
     pub profile_iterator_session_id: Option<ProfileIteratorSessionIdInternal>,
     pub profile_iterator_session_id_storage: NextNumberStorage,
     pub automatic_profile_search: AutomaticProifleSearch,
@@ -40,7 +40,8 @@ impl CacheProfile {
         state: ProfileStateCached,
         attributes: Vec<ProfileAttributeValue>,
         filters: Vec<ProfileAttributeFilterValue>,
-        last_seen_time: Option<UnixTime>,
+        last_seen_time: LastSeenUnixTime,
+        automatic_profile_search_last_seen_time: Option<AutomaticProfileSearchLastSeenUnixTime>,
     ) -> Self {
         Self {
             account_id,
@@ -53,7 +54,9 @@ impl CacheProfile {
             last_seen_time,
             profile_iterator_session_id: None,
             profile_iterator_session_id_storage: NextNumberStorage::default(),
-            automatic_profile_search: AutomaticProifleSearch::default(),
+            automatic_profile_search: AutomaticProifleSearch::new(
+                automatic_profile_search_last_seen_time,
+            ),
         }
     }
 
@@ -96,16 +99,20 @@ impl CacheProfile {
         )
     }
 
-    pub fn last_seen_time_for_db(&self) -> Option<UnixTime> {
+    pub fn last_seen_time_for_db(&self) -> LastSeenUnixTime {
         self.last_seen_time
     }
 
-    pub fn last_seen_time(&self, common: &CacheCommon) -> Option<LastSeenTime> {
+    pub fn last_seen_time(&self, common: &CacheCommon) -> LastSeenTime {
         if common.current_connection.is_some() {
-            Some(LastSeenTime::ONLINE)
+            LastSeenTime::ONLINE
         } else {
-            self.last_seen_time.map(|v| v.into())
+            self.last_seen_time.into()
         }
+    }
+
+    pub fn update_last_seen_time(&mut self, time: LastSeenUnixTime) {
+        self.last_seen_time = time;
     }
 }
 
@@ -163,23 +170,21 @@ pub struct AutomaticProifleSearch {
     pub current_iterator: LocationIndexIteratorState,
     pub iterator_session_id: Option<AutomaticProfileSearchIteratorSessionIdInternal>,
     pub iterator_session_id_storage: NextNumberStorage,
-    pub last_seen_unix_time: Option<UnixTime>,
+    last_seen_unix_time: Option<AutomaticProfileSearchLastSeenUnixTime>,
     pub notification: AutomaticProfileSearchCompletedNotification,
 }
 
-impl Default for AutomaticProifleSearch {
-    fn default() -> Self {
+impl AutomaticProifleSearch {
+    fn new(last_seen_unix_time: Option<AutomaticProfileSearchLastSeenUnixTime>) -> Self {
         Self {
             current_iterator: LocationIndexIteratorState::completed(),
             iterator_session_id: None,
             iterator_session_id_storage: NextNumberStorage::default(),
-            last_seen_unix_time: None,
+            last_seen_unix_time,
             notification: AutomaticProfileSearchCompletedNotification::default(),
         }
     }
-}
 
-impl AutomaticProifleSearch {
     fn profile_edited_time_filter(&self) -> Option<ProfileEditedTimeFilter> {
         self.last_seen_unix_time.map(|v| {
             let current_time = UnixTime::current_time();
@@ -198,5 +203,13 @@ impl AutomaticProifleSearch {
                 value: seconds_since_last_seen,
             }
         })
+    }
+
+    pub fn last_seen_unix_time(&self) -> Option<AutomaticProfileSearchLastSeenUnixTime> {
+        self.last_seen_unix_time
+    }
+
+    pub fn update_last_seen_unix_time(&mut self, time: AutomaticProfileSearchLastSeenUnixTime) {
+        self.last_seen_unix_time = Some(time);
     }
 }
