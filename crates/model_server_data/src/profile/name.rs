@@ -21,6 +21,7 @@ use crate::schema_sqlite_types::Integer;
 #[diesel(sql_type = Integer)]
 #[repr(i64)]
 pub enum ProfileNameModerationState {
+    // Profile name is empty
     Empty = 0,
     WaitingBotOrHumanModeration = 1,
     WaitingHumanModeration = 2,
