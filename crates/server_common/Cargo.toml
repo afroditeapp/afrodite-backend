@@ -7,6 +7,7 @@ edition = "2024"
 
 [dependencies]
 serde_json = { workspace = true }
+rand = { workspace = true }
 
 tokio = { workspace = true }
 tracing = { workspace = true }
