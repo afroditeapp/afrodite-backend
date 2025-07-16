@@ -171,14 +171,13 @@ impl ReportTypeNumber {
 #[diesel(sql_type = Integer)]
 #[repr(i64)]
 pub enum ReportProcessingState {
-    Empty = 0,
-    Waiting = 1,
-    Done = 2,
+    Waiting = 0,
+    Done = 1,
 }
 
 impl Default for ReportProcessingState {
     fn default() -> Self {
-        Self::Empty
+        Self::Waiting
     }
 }
 

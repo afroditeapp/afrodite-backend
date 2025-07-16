@@ -125,9 +125,8 @@ CREATE TABLE IF NOT EXISTS common_report(
     report_type_number      INTEGER             NOT NULL,
     creation_unix_time      INTEGER             NOT NULL,
     moderator_account_id    INTEGER,
-    -- 0 = Empty // TODO(prod): Remove Empty?
-    -- 1 = Waiting
-    -- 2 = Done
+    -- 0 = Waiting
+    -- 1 = Done
     processing_state        INTEGER             NOT NULL    DEFAULT 0,
     processing_state_change_unix_time INTEGER   NOT NULL,
     FOREIGN KEY (creator_account_id)
