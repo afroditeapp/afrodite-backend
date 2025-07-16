@@ -1,5 +1,3 @@
-use std::collections::hash_map::Entry;
-
 use config::Config;
 use database::{
     CurrentReadHandle, DbReaderRaw, DieselDatabaseError, current::read::GetDbReadCommandsCommon,
@@ -69,25 +67,14 @@ impl DbDataToCacheLoader {
             .await
             .with_info(account_id)?;
 
-        let read_lock = cache.accounts().read().await;
-        let account_entry = read_lock
-            .get(&account_id.as_id())
-            .ok_or(CacheError::KeyNotExists.report())?;
-
         let db = DbReaderAll::new(DbReaderRaw::new(current_db));
         let access_token = db
             .db_read(move |mut cmds| cmds.common().token().access_token(account_id))
             .await?;
-        if let Some(key) = access_token {
-            let mut access_tokens = cache.access_tokens().write().await;
-            match access_tokens.entry(key) {
-                Entry::Vacant(e) => {
-                    e.insert(account_entry.clone());
-                }
-                Entry::Occupied(_) => return Err(CacheError::AlreadyExists.report()),
-            }
-        }
 
+        let account_entry = cache
+            .load_token_and_return_entry(account_id, access_token)
+            .await?;
         let mut entry = account_entry.cache.write().await;
 
         // Common

@@ -1,4 +1,9 @@
-use std::{collections::HashMap, fmt::Debug, net::SocketAddr, sync::Arc};
+use std::{
+    collections::{HashMap, hash_map::Entry},
+    fmt::Debug,
+    net::SocketAddr,
+    sync::Arc,
+};
 
 use account::CacheAccount;
 use chat::CacheChat;
@@ -52,12 +57,27 @@ impl DatabaseCache {
         Self::default()
     }
 
-    pub fn accounts(&self) -> &RwLock<HashMap<AccountId, Arc<AccountEntry>>> {
-        &self.accounts
-    }
+    pub async fn load_token_and_return_entry(
+        &self,
+        account_id: AccountIdInternal,
+        token: Option<AccessToken>,
+    ) -> Result<Arc<AccountEntry>, CacheError> {
+        let read_lock = self.accounts.read().await;
+        let account_entry = read_lock
+            .get(&account_id.as_id())
+            .ok_or(CacheError::KeyNotExists.report())?;
 
-    pub fn access_tokens(&self) -> &RwLock<HashMap<AccessToken, Arc<AccountEntry>>> {
-        &self.access_tokens
+        if let Some(token) = token {
+            let mut access_tokens = self.access_tokens.write().await;
+            match access_tokens.entry(token) {
+                Entry::Vacant(e) => {
+                    e.insert(account_entry.clone());
+                }
+                Entry::Occupied(_) => return Err(CacheError::AlreadyExists.report()),
+            }
+        }
+
+        Ok(account_entry.clone())
     }
 
     pub async fn insert_account_if_not_exists(
