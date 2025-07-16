@@ -24,7 +24,9 @@ CREATE TABLE IF NOT EXISTS used_account_ids(
 -- API access token for account
 CREATE TABLE IF NOT EXISTS access_token(
     account_id   INTEGER PRIMARY KEY NOT NULL,
-    token        TEXT                          UNIQUE,
+    -- Rust HashMap guarantees access token uniqueness, so
+    -- UNIQUE constrait is not needed here.
+    token        TEXT,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -34,7 +36,9 @@ CREATE TABLE IF NOT EXISTS access_token(
 -- API refresh token for account
 CREATE TABLE IF NOT EXISTS refresh_token(
     account_id    INTEGER PRIMARY KEY NOT NULL,
-    token         BLOB                          UNIQUE,
+    -- Using refresh token requires valid access token, so
+    -- UNIQUE constraint is not needed here.
+    token         BLOB,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

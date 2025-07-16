@@ -1,20 +1,12 @@
-use std::net::SocketAddr;
-
-use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
+use database::current::write::GetDbWriteCommandsCommon;
 use model::{Account, AccountIdInternal, ReportTypeNumberInternal, UnixTime};
-use model_server_data::AuthPair;
 use server_common::data::cache::CacheError;
 use simple_backend_utils::time::DurationValue;
 
 use super::{DbTransaction, GetWriteCommandsCommon};
 use crate::{
-    DataError, IntoDataError,
-    cache::{CacheWriteCommon, TopLevelCacheOperations},
-    db_manager::InternalWriting,
-    db_transaction, define_cmd_wrapper_write,
-    event::EventReceiver,
-    file::FileWrite,
-    result::Result,
+    DataError, IntoDataError, cache::CacheWriteCommon, db_manager::InternalWriting, db_transaction,
+    define_cmd_wrapper_write, file::FileWrite, result::Result,
 };
 
 mod client_config;
@@ -33,66 +25,35 @@ impl WriteCommandsCommon<'_> {
 }
 
 impl WriteCommandsCommon<'_> {
-    /// Creates new event channel if address is Some.
-    pub async fn set_new_auth_pair(
+    pub async fn save_authentication_tokens_from_cache_to_db_if_needed(
         &self,
         id: AccountIdInternal,
-        pair: AuthPair,
-        address: Option<SocketAddr>,
-    ) -> Result<Option<EventReceiver>, DataError> {
-        let access = pair.access.clone();
-        let current_access_token = db_transaction!(self, move |mut cmds| {
-            let current_access_token = cmds.read().common().token().access_token(id)?;
-            cmds.common().token().access_token(id, Some(access))?;
-            cmds.common()
-                .token()
-                .refresh_token(id, Some(pair.refresh))?;
-            Ok(current_access_token)
+    ) -> Result<(), DataError> {
+        let Some((access, refresh)) = self
+            .cache()
+            .write_cache_common(id, |e| Ok(e.get_tokens_if_save_needed()))
+            .await?
+        else {
+            return Ok(());
+        };
+
+        db_transaction!(self, move |mut cmds| {
+            cmds.common().token().access_token(id, access)?;
+            cmds.common().token().refresh_token(id, refresh)?;
+            Ok(())
         })?;
 
-        let event_receiver = self
-            .update_access_token_and_connection(
-                id.as_id(),
-                current_access_token,
-                pair.access,
-                address,
-            )
-            .await
-            .into_data_error(id)?;
-
-        Ok(event_receiver)
+        Ok(())
     }
 
     pub async fn logout(&self, id: AccountIdInternal) -> Result<(), DataError> {
-        let current_access_token = db_transaction!(self, move |mut cmds| {
-            let current_access_token = cmds.read().common().token().access_token(id);
-            cmds.common().token().access_token(id, None)?;
-            cmds.common().token().refresh_token(id, None)?;
-            current_access_token
-        })?;
-
-        self.delete_connection_and_specific_access_token(id.as_id(), None, current_access_token)
-            .await
-            .into_data_error(id)?;
+        self.cache().logout(id.into()).await.into_data_error(id)?;
 
         self.handle()
             .common()
             .push_notification()
             .remove_fcm_device_token_and_pending_notification_token(id)
             .await?;
-
-        Ok(())
-    }
-
-    /// Remove specific connection session.
-    pub async fn end_connection_session(
-        &self,
-        id: AccountIdInternal,
-        session_address: SocketAddr,
-    ) -> Result<(), DataError> {
-        self.delete_connection_and_specific_access_token(id.as_id(), Some(session_address), None)
-            .await
-            .into_data_error(id)?;
 
         Ok(())
     }
