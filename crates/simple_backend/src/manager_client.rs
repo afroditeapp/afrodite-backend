@@ -60,7 +60,7 @@ impl ManagerApiClient {
 
             Some((
                 config,
-                c.manager_name.clone(),
+                c.name.clone(),
                 c.backup_link_password.clone().map(BackupLinkPassword),
             ))
         } else {

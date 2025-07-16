@@ -321,12 +321,10 @@ impl SocketConfig {
     }
 }
 
-// TODO(prod): Change manager.manager_name to manager.name.
-
 /// App manager config
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ManagerConfig {
-    pub manager_name: ManagerInstanceName,
+    pub name: ManagerInstanceName,
     pub address: Url,
     pub api_key: String,
     pub tls: Option<ManagerTlsConfig>,
