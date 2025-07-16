@@ -5,6 +5,7 @@ use fcm::{
     message::Message,
     response::{RecomendedAction, RecomendedWaitTime},
 };
+use rand::{Rng, rngs::OsRng};
 use serde_json::Value;
 use tracing::{error, info, warn};
 
@@ -50,10 +51,10 @@ impl FcmSendingLogic {
             }
             (Some(forced_wait_time), _) => tokio::time::sleep(forced_wait_time).await,
             (_, Some(exponential_backoff)) => {
-                // TODO(prod): Add some jitter time?
                 let next_exponential_backoff =
                     exponential_backoff.as_millis() * exponential_backoff.as_millis();
-                tokio::time::sleep(exponential_backoff).await;
+                let jitter = Duration::from_millis(OsRng.gen_range(0..=1000));
+                tokio::time::sleep(exponential_backoff + jitter).await;
                 self.exponential_backoff =
                     Some(Duration::from_millis(next_exponential_backoff as u64));
             }
