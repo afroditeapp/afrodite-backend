@@ -52,7 +52,7 @@ impl ReadCommandsProfile<'_> {
                     c.other_shared_state.unlimited_likes,
                 ),
                 version: data.profile_internal().version_uuid,
-                last_seen_time: data.last_seen_time(c),
+                last_seen_time: data.last_seen_time().last_seen_time(),
             })
         })
         .await
@@ -60,9 +60,9 @@ impl ReadCommandsProfile<'_> {
     }
 
     pub async fn my_profile(&self, id: AccountIdInternal) -> Result<GetMyProfileResult, DataError> {
-        let last_seen_time =
-            self.read_cache_profile_and_common(id, move |cache, common| {
-                Ok(cache.last_seen_time(common))
+        let last_seen_time = self
+            .read_cache_profile_and_common(id, move |cache, _| {
+                Ok(cache.last_seen_time().last_seen_time())
             })
             .await?;
 

@@ -32,7 +32,7 @@ use tracing::info;
 use write::IndexUpdater;
 
 use self::data::LocationIndex;
-use crate::{cache::LastSeenTimeUpdated, db_manager::InternalWriting};
+use crate::db_manager::InternalWriting;
 
 pub mod coordinates;
 pub mod data;
@@ -288,17 +288,6 @@ impl<'a> LocationIndexWriteHandle<'a> {
         }
 
         Ok(())
-    }
-
-    pub async fn update_last_seen_time(&self, account_id: AccountId, info: LastSeenTimeUpdated) {
-        // TODO(perf): This is currently called also when profile does not exist
-        // in location index. Most likely profile visibility check can be done
-        // before creating LastSeenTimeUpdated.
-        let profiles = self.profiles.read().await;
-        profiles
-            .get(&info.current_position)
-            .and_then(|v| v.get(&account_id))
-            .inspect(|data| data.update_last_seen_value(info.last_seen_time));
     }
 
     /// Set LocationIndexProfileData to specific index location

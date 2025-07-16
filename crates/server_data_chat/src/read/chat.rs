@@ -97,7 +97,10 @@ impl ReadCommandsChat<'_> {
                         .as_ref()
                         .map(|v| v.profile_internal().version_uuid);
                     let content_version = e.media.as_ref().map(|v| v.profile_content_version);
-                    let last_seen_time = e.profile.as_ref().map(|v| v.last_seen_time(&e.common));
+                    let last_seen_time = e
+                        .profile
+                        .as_ref()
+                        .map(|v| v.last_seen_time().last_seen_time());
                     Ok(ChatProfileLink::new(
                         id,
                         version,

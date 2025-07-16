@@ -326,7 +326,7 @@ impl WriteCommandsProfile<'_> {
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
         let last_seen_time = self
-            .read_cache_profile_and_common(id, |p, _| Ok(p.last_seen_time_for_db()))
+            .read_cache_profile_and_common(id, |p, _| Ok(p.last_seen_time().last_seen_unix_time()))
             .await?;
 
         db_transaction!(self, move |mut cmds| {

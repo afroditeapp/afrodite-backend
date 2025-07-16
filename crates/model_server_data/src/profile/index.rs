@@ -1,6 +1,9 @@
 use std::{
     num::NonZeroU16,
-    sync::atomic::{AtomicI64, AtomicU64, Ordering},
+    sync::{
+        Arc,
+        atomic::{AtomicBool, AtomicI64, AtomicU64, Ordering},
+    },
 };
 
 use model::{AccountId, InitialSetupCompletedTime, ProfileAge, ProfileContentVersion};
@@ -14,7 +17,10 @@ use super::{
     ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter, SearchGroupFlags,
     SearchGroupFlagsFilter, SortedProfileAttributes,
 };
-use crate::{LastSeenTime, ProfileAppNotificationSettings, ProfileContentEditedTime, ProfileLink};
+use crate::{
+    LastSeenTime, LastSeenUnixTime, ProfileAppNotificationSettings, ProfileContentEditedTime,
+    ProfileLink,
+};
 
 #[derive(Debug)]
 pub struct ProfileQueryMakerDetails {
@@ -91,6 +97,43 @@ impl ProfileQueryMakerDetails {
     }
 }
 
+#[derive(Debug)]
+pub struct AtomicLastSeenTime {
+    last_seen_unix_time: AtomicI64,
+    is_online: AtomicBool,
+}
+
+impl AtomicLastSeenTime {
+    pub fn new(last_seen_time: LastSeenUnixTime) -> Self {
+        Self {
+            last_seen_unix_time: AtomicI64::new(*last_seen_time.as_i64()),
+            is_online: AtomicBool::new(false),
+        }
+    }
+
+    pub fn update_last_seen_time_to_offline_status(&self, time: LastSeenUnixTime) {
+        self.last_seen_unix_time
+            .store(*time.as_i64(), Ordering::Relaxed);
+        self.is_online.store(false, Ordering::Relaxed);
+    }
+
+    pub fn update_last_seen_time_to_online_status(&self) {
+        self.is_online.store(true, Ordering::Relaxed);
+    }
+
+    pub fn last_seen_time(&self) -> LastSeenTime {
+        if self.is_online.load(Ordering::Relaxed) {
+            LastSeenTime::ONLINE
+        } else {
+            LastSeenTime::new(self.last_seen_unix_time.load(Ordering::Relaxed))
+        }
+    }
+
+    pub fn last_seen_unix_time(&self) -> LastSeenUnixTime {
+        LastSeenUnixTime::new(self.last_seen_unix_time.load(Ordering::Relaxed))
+    }
+}
+
 /// All data which location index needs for returning filtered profiles when
 /// user queries new profiles.
 #[derive(Debug)]
@@ -102,10 +145,7 @@ pub struct LocationIndexProfileData {
     search_groups: SearchGroupFlags,
     attributes: SortedProfileAttributes,
     unlimited_likes: bool,
-    /// Possible values:
-    /// - Unix timestamp
-    /// - Value -1 is currently online
-    last_seen_time: AtomicI64,
+    last_seen_time: Arc<AtomicLastSeenTime>,
     profile_created_time: InitialSetupCompletedTime,
     profile_edited_time: ProfileEditedTime,
     /// Option because media component might not be enabled
@@ -122,7 +162,7 @@ impl LocationIndexProfileData {
         attributes: SortedProfileAttributes,
         profile_content_version: Option<ProfileContentVersion>,
         unlimited_likes: bool,
-        last_seen_time: LastSeenTime,
+        last_seen_time: Arc<AtomicLastSeenTime>,
         profile_created_time: InitialSetupCompletedTime,
         profile_content_edited_time: Option<ProfileContentEditedTime>,
         profile_text_character_count: ProfileTextCharacterCount,
@@ -137,7 +177,7 @@ impl LocationIndexProfileData {
             search_groups: state.search_group_flags,
             attributes,
             unlimited_likes,
-            last_seen_time: AtomicI64::new(last_seen_time.raw()),
+            last_seen_time,
             profile_created_time,
             profile_edited_time: state.profile_edited_time,
             profile_content_edited_time,
@@ -155,13 +195,8 @@ impl LocationIndexProfileData {
 
     pub fn to_profile_link_value(&self) -> ProfileLink {
         let mut profile_link = self.profile_link;
-        let last_seen_value = self.last_seen_time.load(Ordering::Relaxed);
-        profile_link.set_last_seen_time(LastSeenTime::new(last_seen_value));
+        profile_link.set_last_seen_time(self.last_seen_time.last_seen_time());
         profile_link
-    }
-
-    pub fn update_last_seen_value(&self, value: LastSeenTime) {
-        self.last_seen_time.store(value.raw(), Ordering::Relaxed);
     }
 
     pub fn is_match(
@@ -234,14 +269,7 @@ impl LocationIndexProfileData {
         last_seen_time_filter: LastSeenTimeFilter,
         current_time: &UnixTime,
     ) -> bool {
-        let current_last_seen_time = self.last_seen_time.load(Ordering::Relaxed);
-        let current_last_seen_time = if current_last_seen_time < -1 {
-            return false;
-        } else {
-            LastSeenTime::new(current_last_seen_time)
-        };
-
-        last_seen_time_filter.is_match(current_last_seen_time, current_time)
+        last_seen_time_filter.is_match(self.last_seen_time.last_seen_time(), current_time)
     }
 
     fn attribute_filters_match(

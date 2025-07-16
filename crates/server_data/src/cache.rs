@@ -11,9 +11,7 @@ use common::CacheCommon;
 use error_stack::Result;
 use media::CacheMedia;
 use model::{AccessToken, AccountId, AccountIdInternal, AccountState, Permissions};
-use model_server_data::{
-    LastSeenTime, LastSeenUnixTime, LocationIndexKey, LocationIndexProfileData,
-};
+use model_server_data::{LastSeenUnixTime, LocationIndexProfileData};
 use profile::CacheProfile;
 pub use server_common::data::cache::CacheError;
 use tokio::sync::RwLock;
@@ -29,14 +27,6 @@ pub mod common;
 pub mod db_iterator;
 pub mod media;
 pub mod profile;
-
-/// If this exists update last seen time atomic variable in location
-/// index.
-#[derive(Debug, Clone, Copy)]
-pub struct LastSeenTimeUpdated {
-    pub current_position: LocationIndexKey,
-    pub last_seen_time: LastSeenTime,
-}
 
 #[derive(Debug)]
 pub struct AccountEntry {
@@ -108,7 +98,7 @@ impl DatabaseCache {
         current_access_token: Option<AccessToken>,
         new_access_token: AccessToken,
         address: Option<SocketAddr>,
-    ) -> Result<Option<(EventReceiver, Option<LastSeenTimeUpdated>)>, CacheError> {
+    ) -> Result<Option<EventReceiver>, CacheError> {
         let cache_entry = self
             .accounts
             .read()
@@ -132,11 +122,10 @@ impl DatabaseCache {
                     connection: address,
                     event_sender: sender,
                 });
-                let last_seen_time_update = write.profile.as_ref().map(|v| LastSeenTimeUpdated {
-                    last_seen_time: LastSeenTime::ONLINE,
-                    current_position: v.location.current_position.profile_location(),
-                });
-                Ok(Some((receiver, last_seen_time_update)))
+                if let Some(p) = write.profile.as_ref() {
+                    p.last_seen_time().update_last_seen_time_to_online_status();
+                }
+                Ok(Some(receiver))
             } else {
                 Ok(None)
             };
@@ -156,7 +145,7 @@ impl DatabaseCache {
         id: AccountId,
         connection: Option<SocketAddr>,
         token: Option<AccessToken>,
-    ) -> Result<Option<LastSeenTimeUpdated>, CacheError> {
+    ) -> Result<(), CacheError> {
         let cache_entry = self
             .accounts
             .read()
@@ -164,8 +153,6 @@ impl DatabaseCache {
             .get(&id)
             .ok_or(CacheError::KeyNotExists)?
             .clone();
-
-        let mut last_seen_time_updated = None;
 
         {
             let mut cache_entry_write = cache_entry.cache.write().await;
@@ -181,25 +168,19 @@ impl DatabaseCache {
                 cache_entry_write.common.current_connection = None;
                 let last_seen_time = LastSeenUnixTime::current_time();
                 if let Some(profile_entry) = cache_entry_write.profile.as_mut() {
-                    profile_entry.update_last_seen_time(last_seen_time);
+                    profile_entry
+                        .last_seen_time()
+                        .update_last_seen_time_to_offline_status(last_seen_time);
                 }
-                last_seen_time_updated =
-                    cache_entry_write
-                        .profile
-                        .as_ref()
-                        .map(|v| LastSeenTimeUpdated {
-                            last_seen_time: last_seen_time.into(),
-                            current_position: v.location.current_position.profile_location(),
-                        });
             }
         }
 
         if let Some(token) = token {
             let mut tokens = self.access_tokens.write().await;
-            let _account = tokens.remove(&token).ok_or(CacheError::KeyNotExists)?;
+            tokens.remove(&token).ok_or(CacheError::KeyNotExists)?;
         }
 
-        Ok(last_seen_time_updated)
+        Ok(())
     }
 
     /// Account logout must be done before calling this.
@@ -398,7 +379,7 @@ pub trait TopLevelCacheOperations {
         current_access_token: Option<AccessToken>,
         new_access_token: AccessToken,
         address: Option<SocketAddr>,
-    ) -> Result<Option<(EventReceiver, Option<LastSeenTimeUpdated>)>, CacheError>;
+    ) -> Result<Option<EventReceiver>, CacheError>;
 
     /// Delete current connection or specific connection.
     /// Also delete access token if it is Some.
@@ -407,7 +388,7 @@ pub trait TopLevelCacheOperations {
         id: AccountId,
         connection: Option<SocketAddr>,
         token: Option<AccessToken>,
-    ) -> Result<Option<LastSeenTimeUpdated>, CacheError>;
+    ) -> Result<(), CacheError>;
 }
 
 impl<I: InternalWriting> TopLevelCacheOperations for I {
@@ -416,7 +397,7 @@ impl<I: InternalWriting> TopLevelCacheOperations for I {
         id: AccountId,
         connection: Option<SocketAddr>,
         token: Option<AccessToken>,
-    ) -> Result<Option<LastSeenTimeUpdated>, CacheError> {
+    ) -> Result<(), CacheError> {
         self.cache()
             .delete_connection_and_specific_access_token(id, connection, token)
             .await
@@ -428,7 +409,7 @@ impl<I: InternalWriting> TopLevelCacheOperations for I {
         current_access_token: Option<AccessToken>,
         new_access_token: AccessToken,
         address: Option<SocketAddr>,
-    ) -> Result<Option<(EventReceiver, Option<LastSeenTimeUpdated>)>, CacheError> {
+    ) -> Result<Option<EventReceiver>, CacheError> {
         self.cache()
             .update_access_token_and_connection(id, current_access_token, new_access_token, address)
             .await
@@ -590,7 +571,7 @@ impl CacheEntry {
             profile.attributes.clone(),
             self.media.as_ref().map(|m| m.profile_content_version),
             self.common.other_shared_state.unlimited_likes,
-            profile.last_seen_time(&self.common),
+            profile.last_seen_time().clone(),
             self.common
                 .other_shared_state
                 .initial_setup_completed_unix_time,
