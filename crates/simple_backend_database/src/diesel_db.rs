@@ -147,7 +147,12 @@ async fn create_pool(
     connection_count: usize,
 ) -> Result<DieselPool, DieselDatabaseError> {
     let db_str = if config.sqlite_in_ram() {
-        // TODO(prod): Check that name only contains a-z, A-Z, and 0-9 characters.
+        for c in database_info.name.chars() {
+            if !c.is_ascii_alphanumeric() {
+                return Err(DieselDatabaseError::Connect.report())
+                    .attach_printable("Database name is not ASCII alphanumeric");
+            }
+        }
         format!("file:{}?mode=memory&cache=shared", database_info.name)
     } else {
         db_path.to_string_lossy().to_string()
