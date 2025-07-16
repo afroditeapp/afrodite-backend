@@ -129,8 +129,6 @@ impl DatabaseManager {
         let history_read_handle = HistoryReadHandle(history_read);
         let history_write_handle = HistoryWriteHandle(history_write);
 
-        // let cache = DatabaseCache::new(&current_read_handle, &index,
-        // &config).await?;
         let cache = DatabaseCache::new();
 
         let router_write_handle = RouterDatabaseWriteHandle {
