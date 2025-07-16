@@ -10,8 +10,11 @@ use chat::CacheChat;
 use common::CacheCommon;
 use error_stack::Result;
 use media::CacheMedia;
-use model::{AccessToken, AccountId, AccountIdInternal, AccountState, Permissions};
-use model_server_data::{LastSeenUnixTime, LocationIndexProfileData};
+use model::{
+    AccessToken, AccountId, AccountIdInternal, AccountState, PendingNotificationFlags, Permissions,
+    RefreshToken,
+};
+use model_server_data::{AuthPair, LastSeenUnixTime, LocationIndexProfileData};
 use profile::CacheProfile;
 pub use server_common::data::cache::CacheError;
 use tokio::sync::RwLock;
@@ -47,17 +50,18 @@ impl DatabaseCache {
         Self::default()
     }
 
-    pub async fn load_token_and_return_entry(
+    pub async fn load_tokens_from_db_and_return_entry(
         &self,
         account_id: AccountIdInternal,
-        token: Option<AccessToken>,
+        access_token: Option<AccessToken>,
+        refresh_token: Option<RefreshToken>,
     ) -> Result<Arc<AccountEntry>, CacheError> {
         let read_lock = self.accounts.read().await;
         let account_entry = read_lock
             .get(&account_id.as_id())
             .ok_or(CacheError::KeyNotExists.report())?;
 
-        if let Some(token) = token {
+        if let Some(token) = access_token.clone() {
             let mut access_tokens = self.access_tokens.write().await;
             match access_tokens.entry(token) {
                 Entry::Vacant(e) => {
@@ -66,6 +70,9 @@ impl DatabaseCache {
                 Entry::Occupied(_) => return Err(CacheError::AlreadyExists.report()),
             }
         }
+
+        let mut write_lock = account_entry.cache.write().await;
+        write_lock.common.load_from_db(access_token, refresh_token);
 
         Ok(account_entry.clone())
     }
@@ -91,93 +98,22 @@ impl DatabaseCache {
         }
     }
 
-    /// Creates new event channel if address is Some.
-    pub async fn update_access_token_and_connection(
-        &self,
-        id: AccountId,
-        current_access_token: Option<AccessToken>,
-        new_access_token: AccessToken,
-        address: Option<SocketAddr>,
-    ) -> Result<Option<EventReceiver>, CacheError> {
-        let cache_entry = self
-            .accounts
-            .read()
-            .await
-            .get(&id)
-            .ok_or(CacheError::KeyNotExists)?
-            .clone();
-
-        let mut tokens = self.access_tokens.write().await;
-
-        if let Some(current) = current_access_token {
-            tokens.remove(&current);
-        }
-
-        // Avoid collisions.
-        if tokens.get(&new_access_token).is_none() {
-            let event_receiver = if let Some(address) = address {
-                let (sender, receiver) = event_channel();
-                let mut write = cache_entry.cache.write().await;
-                write.common.current_connection = Some(ConnectionInfo {
-                    connection: address,
-                    event_sender: sender,
-                });
-                if let Some(p) = write.profile.as_ref() {
-                    p.last_seen_time().update_last_seen_time_to_online_status();
-                }
-                Ok(Some(receiver))
-            } else {
-                Ok(None)
-            };
-
-            tokens.insert(new_access_token, cache_entry);
-
-            event_receiver
-        } else {
-            Err(CacheError::AlreadyExists.report())
-        }
+    pub fn websocket_cache_cmds(&self) -> WebSocketCacheCmds {
+        WebSocketCacheCmds { cache: self }
     }
 
-    /// Delete current connection or specific connection.
-    /// Also delete access token if it is Some.
-    pub async fn delete_connection_and_specific_access_token(
-        &self,
-        id: AccountId,
-        connection: Option<SocketAddr>,
-        token: Option<AccessToken>,
-    ) -> Result<(), CacheError> {
-        let cache_entry = self
-            .accounts
-            .read()
-            .await
-            .get(&id)
-            .ok_or(CacheError::KeyNotExists)?
-            .clone();
+    pub(crate) async fn logout(&self, id: AccountId) -> Result<(), CacheError> {
+        let access_token = self
+            .write_cache(id, |e| {
+                let access_token = e.common.access_token().cloned();
+                e.common.logout();
+                e.remove_connection();
+                Ok(access_token)
+            })
+            .await?;
 
-        {
-            let mut cache_entry_write = cache_entry.cache.write().await;
-            if connection.is_none()
-                || (connection.is_some()
-                    && cache_entry_write
-                        .common
-                        .current_connection
-                        .as_ref()
-                        .map(|info| info.connection)
-                        == connection)
-            {
-                cache_entry_write.common.current_connection = None;
-                let last_seen_time = LastSeenUnixTime::current_time();
-                if let Some(profile_entry) = cache_entry_write.profile.as_mut() {
-                    profile_entry
-                        .last_seen_time()
-                        .update_last_seen_time_to_offline_status(last_seen_time);
-                }
-            }
-        }
-
-        if let Some(token) = token {
-            let mut tokens = self.access_tokens.write().await;
-            tokens.remove(&token).ok_or(CacheError::KeyNotExists)?;
+        if let Some(access_token) = access_token {
+            self.access_tokens.write().await.remove(&access_token);
         }
 
         Ok(())
@@ -371,47 +307,85 @@ impl DatabaseCache {
     }
 }
 
-pub trait TopLevelCacheOperations {
-    /// Creates new event channel if address is Some.
-    async fn update_access_token_and_connection(
-        &self,
-        id: AccountId,
-        current_access_token: Option<AccessToken>,
-        new_access_token: AccessToken,
-        address: Option<SocketAddr>,
-    ) -> Result<Option<EventReceiver>, CacheError>;
-
-    /// Delete current connection or specific connection.
-    /// Also delete access token if it is Some.
-    async fn delete_connection_and_specific_access_token(
-        &self,
-        id: AccountId,
-        connection: Option<SocketAddr>,
-        token: Option<AccessToken>,
-    ) -> Result<(), CacheError>;
+pub struct WebSocketCacheCmds<'a> {
+    cache: &'a DatabaseCache,
 }
 
-impl<I: InternalWriting> TopLevelCacheOperations for I {
-    async fn delete_connection_and_specific_access_token(
+impl WebSocketCacheCmds<'_> {
+    /// Creates new event channel if address is Some.
+    ///
+    /// Removes current access token from HashMap containing valid
+    /// access tokens.
+    ///
+    /// This will reset cached pending notification.
+    pub async fn init_login_session(
         &self,
         id: AccountId,
-        connection: Option<SocketAddr>,
-        token: Option<AccessToken>,
-    ) -> Result<(), CacheError> {
-        self.cache()
-            .delete_connection_and_specific_access_token(id, connection, token)
-            .await
-    }
-
-    async fn update_access_token_and_connection(
-        &self,
-        id: AccountId,
-        current_access_token: Option<AccessToken>,
-        new_access_token: AccessToken,
+        new_tokens: AuthPair,
         address: Option<SocketAddr>,
     ) -> Result<Option<EventReceiver>, CacheError> {
-        self.cache()
-            .update_access_token_and_connection(id, current_access_token, new_access_token, address)
+        let cache_entry = self
+            .cache
+            .accounts
+            .read()
+            .await
+            .get(&id)
+            .ok_or(CacheError::KeyNotExists)?
+            .clone();
+
+        let mut tokens = self.cache.access_tokens.write().await;
+
+        if let Some(current) = cache_entry.cache.read().await.common.access_token() {
+            tokens.remove(current);
+        }
+
+        // Avoid collisions
+        if tokens.get(&new_tokens.access).is_none() {
+            let event_receiver = if let Some(address) = address {
+                let (sender, receiver) = event_channel();
+                let mut write = cache_entry.cache.write().await;
+                write.common.current_connection = Some(ConnectionInfo {
+                    connection: address,
+                    event_sender: sender,
+                });
+                if let Some(p) = write.profile.as_ref() {
+                    p.last_seen_time().update_last_seen_time_to_online_status();
+                }
+                Ok(Some(receiver))
+            } else {
+                Ok(None)
+            };
+
+            let new_access_token = new_tokens.access.clone();
+            let mut lock = cache_entry.cache.write().await;
+            lock.common.update_tokens(new_tokens);
+            lock.common.pending_notification_flags = PendingNotificationFlags::empty();
+            drop(lock);
+            tokens.insert(new_access_token, cache_entry);
+
+            event_receiver
+        } else {
+            Err(CacheError::AlreadyExists.report())
+        }
+    }
+
+    pub async fn delete_connection(
+        &self,
+        id: AccountId,
+        connection: SocketAddr,
+    ) -> Result<(), CacheError> {
+        self.cache
+            .write_cache(id, |e| {
+                if e.common
+                    .current_connection
+                    .as_ref()
+                    .map(|info| info.connection)
+                    == Some(connection)
+                {
+                    e.remove_connection();
+                }
+                Ok(())
+            })
             .await
     }
 }
@@ -578,6 +552,16 @@ impl CacheEntry {
             self.media.as_ref().map(|m| m.profile_content_edited_time),
             profile.profile_text_character_count(),
         ))
+    }
+
+    fn remove_connection(&mut self) {
+        self.common.current_connection = None;
+        let last_seen_time = LastSeenUnixTime::current_time();
+        if let Some(profile_entry) = self.profile.as_mut() {
+            profile_entry
+                .last_seen_time()
+                .update_last_seen_time_to_offline_status(last_seen_time);
+        }
     }
 }
 

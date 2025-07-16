@@ -71,9 +71,12 @@ impl DbDataToCacheLoader {
         let access_token = db
             .db_read(move |mut cmds| cmds.common().token().access_token(account_id))
             .await?;
+        let refresh_token = db
+            .db_read(move |mut cmds| cmds.common().token().refresh_token(account_id))
+            .await?;
 
         let account_entry = cache
-            .load_token_and_return_entry(account_id, access_token)
+            .load_tokens_from_db_and_return_entry(account_id, access_token, refresh_token)
             .await?;
         let mut entry = account_entry.cache.write().await;
 

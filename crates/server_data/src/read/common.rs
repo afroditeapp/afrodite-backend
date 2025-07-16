@@ -1,14 +1,13 @@
 use chrono::NaiveDate;
 use database::current::read::GetDbReadCommandsCommon;
-use model::{AccessToken, Account, AccountId, AccountIdInternal, RefreshToken};
+use model::{Account, AccountId, AccountIdInternal, RefreshToken};
 use model_server_data::SearchGroupFlags;
 use server_common::data::IntoDataError;
 use unicode_segmentation::UnicodeSegmentation;
 
 use super::{super::DataError, DbRead};
 use crate::{
-    cache::CacheReadCommon, db_manager::InternalReading, define_cmd_wrapper_read,
-    id::ToAccountIdInternal, result::Result,
+    cache::CacheReadCommon, db_manager::InternalReading, define_cmd_wrapper_read, result::Result,
 };
 
 mod client_config;
@@ -27,21 +26,11 @@ impl<'a> ReadCommandsCommon<'a> {
 }
 
 impl ReadCommandsCommon<'_> {
-    pub async fn account_access_token(
-        &self,
-        id: AccountId,
-    ) -> Result<Option<AccessToken>, DataError> {
-        let id = self.to_account_id_internal(id).await.into_data_error(id)?;
-        self.db_read(move |mut cmds| cmds.common().token().access_token(id))
-            .await
-            .into_error()
-    }
-
-    pub async fn account_refresh_token(
+    pub async fn account_refresh_token_from_cache(
         &self,
         id: AccountIdInternal,
     ) -> Result<Option<RefreshToken>, DataError> {
-        self.db_read(move |mut cmds| cmds.common().token().refresh_token(id))
+        self.read_cache_common(id, |e| Ok(e.refresh_token().cloned()))
             .await
             .into_error()
     }

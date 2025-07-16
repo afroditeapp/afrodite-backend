@@ -8,7 +8,7 @@ use model_account::{
     RefreshToken, SignInWithInfo, SignInWithLoginInfo,
 };
 use server_api::{S, app::GetConfig, db_write};
-use server_data::write::GetWriteCommandsCommon;
+use server_data::{IntoDataError, db_manager::InternalReading, write::GetWriteCommandsCommon};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::{
     app::SignInWith,
@@ -35,9 +35,12 @@ pub async fn login_impl(id: AccountId, state: &S) -> Result<LoginResult, StatusC
             .push_notification()
             .remove_fcm_device_token_and_pending_notification_token(id)
             .await?;
-        cmds.common()
-            .set_new_auth_pair(id, account_clone, None)
+        cmds.cache()
+            .websocket_cache_cmds()
+            .init_login_session(id.into(), account_clone, None)
             .await
+            .into_error()?;
+        Ok(())
     })?;
 
     // TODO(microservice): microservice support

@@ -16,7 +16,7 @@ use headers::ContentType;
 use http::HeaderMap;
 use model::{
     AccessToken, AccountIdInternal, BackendVersion, EventToClient, EventToClientInternal,
-    PendingNotificationFlags, RefreshToken, SyncDataVersionFromClient, WebSocketClientTypeNumber,
+    RefreshToken, SyncDataVersionFromClient, WebSocketClientTypeNumber,
 };
 use model_server_data::AuthPair;
 use server_common::websocket::WebSocketError;
@@ -253,11 +253,12 @@ async fn handle_socket(
             info!("Server quit detected, closing WebSocket connection for '{}', address: {}", id.id.as_i64(), address);
             // It seems that this does not run when server closes.
             // handle_socket_result will return Ok(()) when that happens.
-            let result = state.write(move |cmds| async move {
-                cmds.common()
-                    .end_connection_session(id, address)
-                    .await
-            }).await;
+            let result = state
+                .read()
+                .cache_read_write_access()
+                .websocket_cache_cmds()
+                .delete_connection(id.into(), address)
+                .await;
 
             if let Err(e) = result {
                 error!("server quit end_connection_session, {e:?}, for '{}', address: {}", id.id.as_i64(), address);
@@ -267,11 +268,12 @@ async fn handle_socket(
             match r {
                 Ok(()) => {
                     info!("handle_socket_result returned Ok for '{}', address: {}", id.id.as_i64(), address);
-                    let result = state.write(move |cmds| async move {
-                        cmds.common()
-                            .end_connection_session(id, address)
-                            .await
-                    }).await;
+                    let result = state
+                        .read()
+                        .cache_read_write_access()
+                        .websocket_cache_cmds()
+                        .delete_connection(id.into(), address)
+                        .await;
 
                     if let Err(e) = result {
                         error!("end_connection_session, {e:?}, for '{}', address: {}", id.id.as_i64(), address);
@@ -362,7 +364,7 @@ async fn handle_socket_result(
     let current_refresh_token = state
         .read()
         .common()
-        .account_refresh_token(id)
+        .account_refresh_token_from_cache(id)
         .await
         .change_context(WebSocketError::DatabaseNoRefreshToken)?
         .ok_or(WebSocketError::DatabaseNoRefreshToken.report())?
@@ -408,28 +410,17 @@ async fn handle_socket_result(
         .change_context(WebSocketError::Send)?;
 
     let mut event_receiver = state
-        .write(move |cmds| async move {
-            // Prevent sending push notification if this connection
-            // replaces the old connection.
-            cmds.events()
-                .remove_specific_pending_notification_flags_from_cache(
-                    id,
-                    PendingNotificationFlags::all(),
-                )
-                .await;
-            // Create new event channel, so old one will break.
-            // Also update tokens.
-            cmds.common()
-                .set_new_auth_pair(
-                    id,
-                    AuthPair {
-                        access: new_access_token,
-                        refresh: new_refresh_token,
-                    },
-                    Some(address),
-                )
-                .await
-        })
+        .read()
+        .cache_read_write_access()
+        .websocket_cache_cmds()
+        .init_login_session(
+            id.into(),
+            AuthPair {
+                access: new_access_token,
+                refresh: new_refresh_token,
+            },
+            Some(address),
+        )
         .await
         .change_context(WebSocketError::DatabaseSaveTokensOrOtherError)?
         .ok_or(WebSocketError::EventChannelCreationFailed.report())?;
