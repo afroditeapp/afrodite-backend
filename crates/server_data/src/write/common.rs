@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
-use model::{Account, AccountId, AccountIdInternal, ReportTypeNumberInternal, UnixTime};
+use model::{Account, AccountIdInternal, ReportTypeNumberInternal, UnixTime};
 use model_server_data::AuthPair;
 use server_common::data::cache::CacheError;
 use simple_backend_utils::time::DurationValue;
@@ -9,7 +9,7 @@ use simple_backend_utils::time::DurationValue;
 use super::{DbTransaction, GetWriteCommandsCommon};
 use crate::{
     DataError, IntoDataError,
-    cache::{CacheWriteCommon, LastSeenTimeUpdated, TopLevelCacheOperations},
+    cache::{CacheWriteCommon, TopLevelCacheOperations},
     db_manager::InternalWriting,
     db_transaction, define_cmd_wrapper_write,
     event::EventReceiver,
@@ -50,7 +50,7 @@ impl WriteCommandsCommon<'_> {
             Ok(current_access_token)
         })?;
 
-        let option = self
+        let event_receiver = self
             .update_access_token_and_connection(
                 id.as_id(),
                 current_access_token,
@@ -60,12 +60,7 @@ impl WriteCommandsCommon<'_> {
             .await
             .into_data_error(id)?;
 
-        if let Some(last_seen_time_update) = option.as_ref().and_then(|v| v.1) {
-            self.update_last_seen_time(id.uuid, last_seen_time_update)
-                .await;
-        }
-
-        Ok(option.map(|v| v.0))
+        Ok(event_receiver)
     }
 
     pub async fn logout(&self, id: AccountIdInternal) -> Result<(), DataError> {
@@ -76,15 +71,9 @@ impl WriteCommandsCommon<'_> {
             current_access_token
         })?;
 
-        let last_seen_time_update = self
-            .delete_connection_and_specific_access_token(id.as_id(), None, current_access_token)
+        self.delete_connection_and_specific_access_token(id.as_id(), None, current_access_token)
             .await
             .into_data_error(id)?;
-
-        if let Some(last_seen_time_update) = last_seen_time_update {
-            self.update_last_seen_time(id.uuid, last_seen_time_update)
-                .await;
-        }
 
         self.handle()
             .common()
@@ -101,15 +90,9 @@ impl WriteCommandsCommon<'_> {
         id: AccountIdInternal,
         session_address: SocketAddr,
     ) -> Result<(), DataError> {
-        let last_seen_time_update = self
-            .delete_connection_and_specific_access_token(id.as_id(), Some(session_address), None)
+        self.delete_connection_and_specific_access_token(id.as_id(), Some(session_address), None)
             .await
             .into_data_error(id)?;
-
-        if let Some(last_seen_time_update) = last_seen_time_update {
-            self.update_last_seen_time(id.uuid, last_seen_time_update)
-                .await;
-        }
 
         Ok(())
     }
@@ -212,8 +195,6 @@ pub trait UpdateLocationIndexVisibility {
         id: AccountIdInternal,
         visibility: bool,
     ) -> Result<(), DataError>;
-
-    async fn update_last_seen_time(&self, account_id: AccountId, info: LastSeenTimeUpdated);
 }
 
 impl<I: InternalWriting> UpdateLocationIndexVisibility for I {
@@ -253,11 +234,5 @@ impl<I: InternalWriting> UpdateLocationIndexVisibility for I {
         }
 
         Ok(())
-    }
-
-    async fn update_last_seen_time(&self, account_id: AccountId, info: LastSeenTimeUpdated) {
-        self.location_index_write_handle()
-            .update_last_seen_time(account_id, info)
-            .await
     }
 }

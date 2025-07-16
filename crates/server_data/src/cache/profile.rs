@@ -1,19 +1,21 @@
+use std::sync::Arc;
+
 use error_stack::{Result, ResultExt};
 use model::{
     AccountId, AccountIdInternal, AutomaticProfileSearchCompletedNotification, NextNumberStorage,
     UnixTime,
 };
 use model_server_data::{
-    AutomaticProfileSearchIteratorSessionIdInternal, AutomaticProfileSearchLastSeenUnixTime,
-    LastSeenTime, LastSeenUnixTime, ProfileAppNotificationSettings, ProfileAttributeFilterValue,
-    ProfileAttributeValue, ProfileCreatedTimeFilter, ProfileEditedTimeFilter, ProfileInternal,
-    ProfileIteratorSessionIdInternal, ProfileQueryMakerDetails, ProfileStateCached,
-    ProfileTextCharacterCount, ProfileVersion, SortedProfileAttributes,
+    AtomicLastSeenTime, AutomaticProfileSearchIteratorSessionIdInternal,
+    AutomaticProfileSearchLastSeenUnixTime, LastSeenUnixTime, ProfileAppNotificationSettings,
+    ProfileAttributeFilterValue, ProfileAttributeValue, ProfileCreatedTimeFilter,
+    ProfileEditedTimeFilter, ProfileInternal, ProfileIteratorSessionIdInternal,
+    ProfileQueryMakerDetails, ProfileStateCached, ProfileTextCharacterCount, ProfileVersion,
+    SortedProfileAttributes,
 };
 use server_common::data::{DataError, cache::CacheError};
 
 use crate::{
-    cache::CacheCommon,
     db_manager::InternalWriting,
     index::{coordinates::LocationIndexArea, read::LocationIndexIteratorState},
 };
@@ -26,7 +28,7 @@ pub struct CacheProfile {
     pub location: LocationData,
     pub attributes: SortedProfileAttributes,
     pub filters: Vec<ProfileAttributeFilterValue>,
-    last_seen_time: LastSeenUnixTime,
+    last_seen_time: Arc<AtomicLastSeenTime>,
     pub profile_iterator_session_id: Option<ProfileIteratorSessionIdInternal>,
     pub profile_iterator_session_id_storage: NextNumberStorage,
     pub automatic_profile_search: AutomaticProifleSearch,
@@ -51,7 +53,7 @@ impl CacheProfile {
             location: LocationData::default(),
             attributes: SortedProfileAttributes::new(attributes),
             filters,
-            last_seen_time,
+            last_seen_time: AtomicLastSeenTime::new(last_seen_time).into(),
             profile_iterator_session_id: None,
             profile_iterator_session_id_storage: NextNumberStorage::default(),
             automatic_profile_search: AutomaticProifleSearch::new(
@@ -99,20 +101,8 @@ impl CacheProfile {
         )
     }
 
-    pub fn last_seen_time_for_db(&self) -> LastSeenUnixTime {
-        self.last_seen_time
-    }
-
-    pub fn last_seen_time(&self, common: &CacheCommon) -> LastSeenTime {
-        if common.current_connection.is_some() {
-            LastSeenTime::ONLINE
-        } else {
-            self.last_seen_time.into()
-        }
-    }
-
-    pub fn update_last_seen_time(&mut self, time: LastSeenUnixTime) {
-        self.last_seen_time = time;
+    pub fn last_seen_time(&self) -> &Arc<AtomicLastSeenTime> {
+        &self.last_seen_time
     }
 }
 
