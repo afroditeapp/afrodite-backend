@@ -63,16 +63,14 @@ async fn get_video_call_urls(
     let name = state
         .read()
         .common()
-        .get_profile_age_and_name_if_profile_component_is_enabled(id)
-        .await?
-        .map(|v| v.name);
+        .user_visible_profile_name_if_data_available(id)
+        .await?;
 
     let other_user_name = state
         .read()
         .common()
-        .get_profile_age_and_name_if_profile_component_is_enabled(other_user)
-        .await?
-        .map(|v| v.name);
+        .user_visible_profile_name_if_data_available(other_user)
+        .await?;
 
     let urls = state.jitsi_meet_url_creator().create_url(
         VideoCallUserInfo {

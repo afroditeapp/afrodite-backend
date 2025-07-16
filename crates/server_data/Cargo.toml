@@ -18,6 +18,7 @@ error-stack = { workspace = true }
 
 chrono = { workspace = true }
 rand = { workspace = true }
+unicode-segmentation = { workspace = true }
 
 nalgebra = { workspace = true }
 

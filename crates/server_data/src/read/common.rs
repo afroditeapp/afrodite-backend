@@ -1,8 +1,9 @@
 use chrono::NaiveDate;
 use database::current::read::GetDbReadCommandsCommon;
-use model::{AccessToken, Account, AccountId, AccountIdInternal, RefreshToken, ReportAccountInfo};
+use model::{AccessToken, Account, AccountId, AccountIdInternal, RefreshToken};
 use model_server_data::SearchGroupFlags;
 use server_common::data::IntoDataError;
+use unicode_segmentation::UnicodeSegmentation;
 
 use super::{super::DataError, DbRead};
 use crate::{
@@ -93,22 +94,37 @@ impl ReadCommandsCommon<'_> {
         .into_error()
     }
 
-    pub async fn get_profile_age_and_name_if_profile_component_is_enabled(
+    /// Only the first letter is shown from the name if it is not accepted.
+    /// None is returned if name data is not available or the name is empty.
+    pub async fn user_visible_profile_name_if_data_available(
         &self,
         id: impl Into<AccountId>,
-    ) -> Result<Option<ReportAccountInfo>, DataError> {
-        // TODO(prod): Change to user_visible_profile_name_if_data_available
-        //             and show only the first character of the name
-        //             if the name is not accepted.
-        self.cache()
+    ) -> Result<Option<String>, DataError> {
+        let Some((name, accepted)) = self
+            .cache()
             .read_cache(id, |e| {
-                Ok(e.profile.as_ref().map(|p| ReportAccountInfo {
-                    age: p.profile_internal().age,
-                    name: p.profile_internal().name.clone(),
+                Ok(e.profile.as_ref().map(|p| {
+                    (
+                        p.profile_internal().name.clone(),
+                        p.state.profile_name_moderation_state.is_accepted(),
+                    )
                 }))
             })
             .await
-            .into_error()
+            .into_error()?
+        else {
+            return Ok(None);
+        };
+
+        if name.is_empty() {
+            Ok(None)
+        } else if accepted {
+            Ok(Some(name))
+        } else if let Some(letter) = name.graphemes(true).next() {
+            Ok(Some(format!("{letter}...")))
+        } else {
+            Ok(None)
+        }
     }
 
     pub async fn bot_and_gender_info(

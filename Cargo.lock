@@ -4739,6 +4739,7 @@ dependencies = [
  "tokio-stream",
  "tokio-util",
  "tracing",
+ "unicode-segmentation",
 ]
 
 [[package]]
