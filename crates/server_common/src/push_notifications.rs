@@ -562,6 +562,3 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
         }
     }
 }
-
-// TODO(prod): Are more push notification sending limits needed? New message
-//             notifications are already limited. Does likes need limits?
