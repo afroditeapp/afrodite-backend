@@ -181,36 +181,52 @@ async fn connect_websocket(
         .await
         .change_context(TestError::WebSocket)?;
 
-    let binary_token = base64::engine::general_purpose::STANDARD
-        .decode(auth.refresh.token)
-        .change_context(TestError::WebSocket)?;
-    stream
-        .send(Message::Binary(binary_token.into()))
-        .await
-        .change_context(TestError::WebSocket)?;
-
-    let refresh_token = stream
+    let response = stream
         .next()
         .await
         .ok_or(TestError::WebSocket.report())?
         .change_context(TestError::WebSocket)?;
-    match refresh_token {
-        Message::Binary(refresh_token) => state.refresh_token = Some(refresh_token.into()),
+    let update_tokens = match response {
+        Message::Binary(refresh_token) => match refresh_token.to_vec().as_slice() {
+            [0] => false,
+            [1] => true,
+            _ => return Err(TestError::WebSocketWrongValue.report()),
+        },
         _ => return Err(TestError::WebSocketWrongValue.report()),
-    }
+    };
 
-    let access_token = stream
-        .next()
-        .await
-        .ok_or(TestError::WebSocket.report())?
-        .change_context(TestError::WebSocket)?;
-    match access_token {
-        Message::Binary(access_token_bytes) => {
-            let access_token =
-                base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(access_token_bytes);
-            state.api.set_access_token(access_token)
+    if update_tokens {
+        let binary_token = base64::engine::general_purpose::STANDARD
+            .decode(auth.refresh.token)
+            .change_context(TestError::WebSocket)?;
+        stream
+            .send(Message::Binary(binary_token.into()))
+            .await
+            .change_context(TestError::WebSocket)?;
+
+        let refresh_token = stream
+            .next()
+            .await
+            .ok_or(TestError::WebSocket.report())?
+            .change_context(TestError::WebSocket)?;
+        match refresh_token {
+            Message::Binary(refresh_token) => state.refresh_token = Some(refresh_token.into()),
+            _ => return Err(TestError::WebSocketWrongValue.report()),
         }
-        _ => return Err(TestError::WebSocketWrongValue.report()),
+
+        let access_token = stream
+            .next()
+            .await
+            .ok_or(TestError::WebSocket.report())?
+            .change_context(TestError::WebSocket)?;
+        match access_token {
+            Message::Binary(access_token_bytes) => {
+                let access_token =
+                    base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(access_token_bytes);
+                state.api.set_access_token(access_token)
+            }
+            _ => return Err(TestError::WebSocketWrongValue.report()),
+        }
     }
 
     // Send empty sync data list
