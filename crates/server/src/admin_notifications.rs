@@ -1,9 +1,7 @@
 use std::time::Duration;
 
 use model::{AdminNotification, NotificationEvent};
-use model_media::{
-    GetProfileContentPendingModerationParams, MediaContentType, ModerationQueueType,
-};
+use model_media::{GetMediaContentPendingModerationParams, MediaContentType, ModerationQueueType};
 use model_profile::GetProfileTextPendingModerationParams;
 use server_api::app::EventManagerProvider;
 use server_common::result::{Result, WrappedResultExt};
@@ -203,7 +201,7 @@ impl AdminNotificationManager {
             .media_admin()
             .profile_content_pending_moderation_list(
                 is_bot,
-                GetProfileContentPendingModerationParams {
+                GetMediaContentPendingModerationParams {
                     content_type: MediaContentType::JpegImage,
                     queue: ModerationQueueType::InitialMediaModeration,
                     show_content_which_bots_can_moderate: is_bot,
@@ -225,7 +223,7 @@ impl AdminNotificationManager {
             .media_admin()
             .profile_content_pending_moderation_list(
                 is_bot,
-                GetProfileContentPendingModerationParams {
+                GetMediaContentPendingModerationParams {
                     content_type: MediaContentType::JpegImage,
                     queue: ModerationQueueType::MediaModeration,
                     show_content_which_bots_can_moderate: is_bot,

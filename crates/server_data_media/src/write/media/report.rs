@@ -36,7 +36,7 @@ impl WriteCommandsMediaReport<'_> {
                 self.handle()
                     .media_admin()
                     .content()
-                    .moderate_profile_content(
+                    .moderate_media_content(
                         ContentModerationMode::MoveToHumanModeration,
                         content_id_internal,
                     )

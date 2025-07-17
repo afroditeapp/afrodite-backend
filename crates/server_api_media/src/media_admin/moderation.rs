@@ -4,8 +4,8 @@ use axum::{
 };
 use model::{AdminNotificationTypes, NotificationEvent};
 use model_media::{
-    AccountIdInternal, EventToClientInternal, GetProfileContentPendingModerationList,
-    GetProfileContentPendingModerationParams, Permissions, PostModerateProfileContent,
+    AccountIdInternal, EventToClientInternal, GetMediaContentPendingModerationList,
+    GetMediaContentPendingModerationParams, Permissions, PostModerateMediaContent,
 };
 use server_api::{
     S,
@@ -27,19 +27,16 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-// TODO(prod): Change moderation related API naming from
-//             profile content to media content.
+const PATH_GET_MEDIA_CONTENT_PENDING_MODERATION_LIST: &str =
+    "/media_api/media_content_pending_moderation";
 
-const PATH_GET_PROFILE_CONTENT_PENDING_MODERATION_LIST: &str =
-    "/media_api/profile_content_pending_moderation";
-
-/// Get first page of pending profile content moderations. Oldest item is first and count 25.
+/// Get first page of pending media content moderations. Oldest item is first and count 25.
 #[utoipa::path(
     get,
-    path = PATH_GET_PROFILE_CONTENT_PENDING_MODERATION_LIST,
-    params(GetProfileContentPendingModerationParams),
+    path = PATH_GET_MEDIA_CONTENT_PENDING_MODERATION_LIST,
+    params(GetMediaContentPendingModerationParams),
     responses(
-        (status = 200, description = "Successful", body = GetProfileContentPendingModerationList),
+        (status = 200, description = "Successful", body = GetMediaContentPendingModerationList),
         (status = 401, description = "Unauthorized"),
         (
             status = 500,
@@ -48,15 +45,13 @@ const PATH_GET_PROFILE_CONTENT_PENDING_MODERATION_LIST: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_profile_content_pending_moderation_list(
+pub async fn get_media_content_pending_moderation_list(
     State(state): State<S>,
     Extension(moderator_id): Extension<AccountIdInternal>,
     Extension(permissions): Extension<Permissions>,
-    Query(params): Query<GetProfileContentPendingModerationParams>,
-) -> Result<Json<GetProfileContentPendingModerationList>, StatusCode> {
-    MEDIA_ADMIN
-        .get_profile_content_pending_moderation_list
-        .incr();
+    Query(params): Query<GetMediaContentPendingModerationParams>,
+) -> Result<Json<GetMediaContentPendingModerationList>, StatusCode> {
+    MEDIA_ADMIN.get_media_content_pending_moderation_list.incr();
 
     if !permissions.admin_moderate_media_content {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -65,13 +60,13 @@ pub async fn get_profile_content_pending_moderation_list(
     let r = state
         .read()
         .media_admin()
-        .profile_content_pending_moderation_list_using_moderator_id(moderator_id, params)
+        .media_content_pending_moderation_list_using_moderator_id(moderator_id, params)
         .await?;
 
     Ok(r.into())
 }
 
-const PATH_POST_MODERATE_PROFILE_CONTENT: &str = "/media_api/moderate_profile_content";
+const PATH_POST_MODERATE_MEDIA_CONTENT: &str = "/media_api/moderate_media_content";
 
 /// Rejected category and details can be set only when the content is rejected.
 ///
@@ -81,8 +76,8 @@ const PATH_POST_MODERATE_PROFILE_CONTENT: &str = "/media_api/moderate_profile_co
 /// all profile content is moderated as accepted.
 #[utoipa::path(
     post,
-    path = PATH_POST_MODERATE_PROFILE_CONTENT,
-    request_body = PostModerateProfileContent,
+    path = PATH_POST_MODERATE_MEDIA_CONTENT,
+    request_body = PostModerateMediaContent,
     responses(
         (status = 200, description = "Successful"),
         (status = 401, description = "Unauthorized"),
@@ -93,13 +88,13 @@ const PATH_POST_MODERATE_PROFILE_CONTENT: &str = "/media_api/moderate_profile_co
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_moderate_profile_content(
+pub async fn post_moderate_media_content(
     State(state): State<S>,
     Extension(permissions): Extension<Permissions>,
     Extension(moderator_id): Extension<AccountIdInternal>,
-    Json(data): Json<PostModerateProfileContent>,
+    Json(data): Json<PostModerateMediaContent>,
 ) -> Result<(), StatusCode> {
-    MEDIA_ADMIN.post_moderate_profile_content.incr();
+    MEDIA_ADMIN.post_moderate_media_content.incr();
 
     if !permissions.admin_moderate_media_content {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -131,7 +126,7 @@ pub async fn post_moderate_profile_content(
         let info = cmds
             .media_admin()
             .content()
-            .moderate_profile_content(mode, content_id)
+            .moderate_media_content(mode, content_id)
             .await?;
 
         match info.moderation_result {
@@ -201,14 +196,14 @@ pub async fn post_moderate_profile_content(
 
 create_open_api_router!(
         fn router_admin_moderation,
-        get_profile_content_pending_moderation_list,
-        post_moderate_profile_content,
+        get_media_content_pending_moderation_list,
+        post_moderate_media_content,
 );
 
 create_counters!(
     MediaAdminCounters,
     MEDIA_ADMIN,
     MEDIA_ADMIN_MODERATION_COUNTERS_LIST,
-    get_profile_content_pending_moderation_list,
-    post_moderate_profile_content,
+    get_media_content_pending_moderation_list,
+    post_moderate_media_content,
 );
