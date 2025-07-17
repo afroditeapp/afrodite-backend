@@ -11,8 +11,8 @@ use common::CacheCommon;
 use error_stack::Result;
 use media::CacheMedia;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, PendingNotificationFlags, Permissions,
-    RefreshToken,
+    AccessToken, AccessTokenUnixTime, AccountId, AccountIdInternal, AccountState,
+    PendingNotificationFlags, Permissions, RefreshToken,
 };
 use model_server_data::{AuthPair, LastSeenUnixTime, LocationIndexProfileData};
 use profile::CacheProfile;
@@ -54,6 +54,7 @@ impl DatabaseCache {
         &self,
         account_id: AccountIdInternal,
         access_token: Option<AccessToken>,
+        access_token_unix_time: Option<AccessTokenUnixTime>,
         refresh_token: Option<RefreshToken>,
     ) -> Result<Arc<AccountEntry>, CacheError> {
         let read_lock = self.accounts.read().await;
@@ -72,7 +73,9 @@ impl DatabaseCache {
         }
 
         let mut write_lock = account_entry.cache.write().await;
-        write_lock.common.load_from_db(access_token, refresh_token);
+        write_lock
+            .common
+            .load_from_db(access_token, access_token_unix_time, refresh_token);
 
         Ok(account_entry.clone())
     }
@@ -367,6 +370,34 @@ impl WebSocketCacheCmds<'_> {
         } else {
             Err(CacheError::AlreadyExists.report())
         }
+    }
+
+    /// This will reset cached pending notification.
+    pub async fn init_login_session_using_existing_tokens(
+        &self,
+        id: AccountId,
+        address: SocketAddr,
+    ) -> Result<EventReceiver, CacheError> {
+        let cache_entry = self
+            .cache
+            .accounts
+            .read()
+            .await
+            .get(&id)
+            .ok_or(CacheError::KeyNotExists)?
+            .clone();
+
+        let (sender, event_receiver) = event_channel();
+        let mut write = cache_entry.cache.write().await;
+        write.common.current_connection = Some(ConnectionInfo {
+            connection: address,
+            event_sender: sender,
+        });
+        write.common.pending_notification_flags = PendingNotificationFlags::empty();
+        if let Some(p) = write.profile.as_ref() {
+            p.last_seen_time().update_last_seen_time_to_online_status();
+        }
+        Ok(event_receiver)
     }
 
     pub async fn delete_connection(

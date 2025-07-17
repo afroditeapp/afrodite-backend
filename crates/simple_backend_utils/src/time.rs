@@ -152,6 +152,12 @@ impl DurationValue {
             seconds: days * 60 * 60 * 24,
         }
     }
+
+    pub const fn from_hours(hours: u32) -> Self {
+        Self {
+            seconds: hours * 60 * 60,
+        }
+    }
 }
 
 impl TryFrom<String> for DurationValue {
