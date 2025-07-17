@@ -1,6 +1,6 @@
 use diesel::{insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
-use model::{AccessToken, AccessTokenUnixTime, AccountIdInternal, RefreshToken};
+use model::{AccessToken, AccessTokenUnixTime, AccountIdInternal, IpAddressInternal, RefreshToken};
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_write_commands};
 
@@ -29,13 +29,18 @@ impl CurrentWriteAccountToken<'_> {
         id: AccountIdInternal,
         token_value: Option<AccessToken>,
         token_time: Option<AccessTokenUnixTime>,
+        token_ip: Option<IpAddressInternal>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::access_token::dsl::*;
 
         let token_value = token_value.as_ref().map(|k| k.as_str());
 
         update(access_token.find(id.as_db_id()))
-            .set((token.eq(token_value), token_unix_time.eq(token_time)))
+            .set((
+                token.eq(token_value),
+                token_unix_time.eq(token_time),
+                token_ip_address.eq(token_ip),
+            ))
             .execute(self.conn())
             .into_db_error(id)?;
 

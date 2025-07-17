@@ -68,7 +68,7 @@ impl DbDataToCacheLoader {
             .with_info(account_id)?;
 
         let db = DbReaderAll::new(DbReaderRaw::new(current_db));
-        let (access_token, access_token_unix_time) = db
+        let (access_token, access_token_unix_time, access_token_ip_address) = db
             .db_read(move |mut cmds| cmds.common().token().access_token(account_id))
             .await?;
         let refresh_token = db
@@ -80,6 +80,7 @@ impl DbDataToCacheLoader {
                 account_id,
                 access_token,
                 access_token_unix_time,
+                access_token_ip_address,
                 refresh_token,
             )
             .await?;

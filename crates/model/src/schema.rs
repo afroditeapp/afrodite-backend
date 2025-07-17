@@ -7,6 +7,7 @@ diesel::table! {
         account_id -> Integer,
         token -> Nullable<Text>,
         token_unix_time -> Nullable<Integer>,
+        token_ip_address -> Nullable<Binary>,
     }
 }
 

@@ -18,6 +18,8 @@ pub enum WebSocketError {
     // Database errors
     #[error("Database: Access token creation time")]
     DatabaseAccessTokenCreationTime,
+    #[error("Database: Access token IP address")]
+    DatabaseAccessTokenIpAddress,
     #[error("Database: No refresh token")]
     DatabaseNoRefreshToken,
     #[error("Invalid refresh token in database")]

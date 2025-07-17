@@ -1,6 +1,10 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, net::SocketAddr};
 
-use axum::{Form, extract::State, response::Redirect};
+use axum::{
+    Form,
+    extract::{ConnectInfo, State},
+    response::Redirect,
+};
 use base64::Engine;
 use model::AccountIdInternal;
 use model_account::{
@@ -21,7 +25,11 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-pub async fn login_impl(id: AccountId, state: &S) -> Result<LoginResult, StatusCode> {
+pub async fn login_impl(
+    id: AccountId,
+    address: SocketAddr,
+    state: &S,
+) -> Result<LoginResult, StatusCode> {
     let id = state.get_internal_id(id).await?;
     let email = state.read().account().account_data(id).await?;
 
@@ -37,7 +45,7 @@ pub async fn login_impl(id: AccountId, state: &S) -> Result<LoginResult, StatusC
             .await?;
         cmds.cache()
             .websocket_cache_cmds()
-            .init_login_session(id.into(), account_clone, None)
+            .init_login_session(id.into(), account_clone, address, false)
             .await
             .into_error()?;
         Ok(())
@@ -136,6 +144,7 @@ impl SignInWithInfoTrait for AppleAccountInfo {
 )]
 pub async fn post_sign_in_with_login(
     State(state): State<S>,
+    ConnectInfo(address): ConnectInfo<SocketAddr>,
     Json(tokens): Json<SignInWithLoginInfo>,
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT.post_sign_in_with_login.incr();
@@ -154,7 +163,7 @@ pub async fn post_sign_in_with_login(
             .sign_in_with_manager()
             .validate_apple_token(apple.token, nonce_bytes)
             .await?;
-        handle_sign_in_with_info(&state, info).await
+        handle_sign_in_with_info(&state, address, info).await
     } else if let Some(google) = tokens.google {
         let nonce_bytes = base64::engine::general_purpose::URL_SAFE
             .decode(google.nonce)
@@ -163,7 +172,7 @@ pub async fn post_sign_in_with_login(
             .sign_in_with_manager()
             .validate_google_token(google.token, nonce_bytes)
             .await?;
-        handle_sign_in_with_info(&state, info).await
+        handle_sign_in_with_info(&state, address, info).await
     } else {
         Err(StatusCode::INTERNAL_SERVER_ERROR)
     }?;
@@ -184,6 +193,7 @@ pub async fn post_sign_in_with_login(
 
 async fn handle_sign_in_with_info(
     state: &S,
+    address: SocketAddr,
     info: impl SignInWithInfoTrait,
 ) -> Result<LoginResult, StatusCode> {
     let email: EmailAddress = info
@@ -200,13 +210,13 @@ async fn handle_sign_in_with_info(
             .account_email(already_existing_account, email)
             .await)?;
 
-        login_impl(already_existing_account.as_id(), state).await
+        login_impl(already_existing_account.as_id(), address, state).await
     } else {
         let id = state
             .data_all_access()
             .register_impl(info.sign_in_with_info(), Some(email))
             .await?;
-        login_impl(id.as_id(), state).await
+        login_impl(id.as_id(), address, state).await
     }
 }
 

@@ -372,7 +372,7 @@ async fn handle_socket_result(
         return Err(WebSocketError::ClientVersionUnsupported.report());
     }
 
-    let access_token_refresh_needed = state
+    let access_token_too_old = state
         .read()
         .common()
         .account_access_token_creation_time_from_cache(id)
@@ -381,11 +381,20 @@ async fn handle_socket_result(
         .map(|created| {
             created
                 .ut
-                .duration_value_elapsed(DurationValue::from_hours(1))
+                .duration_value_elapsed(DurationValue::from_days(1))
         })
         .unwrap_or(true);
 
-    let mut event_receiver = if access_token_refresh_needed {
+    let access_token_ip_address_changed = state
+        .read()
+        .common()
+        .account_access_token_ip_address_from_cache(id)
+        .await
+        .change_context(WebSocketError::DatabaseAccessTokenIpAddress)?
+        .map(|token_ip_address| token_ip_address.to_ip_addr() != address.ip())
+        .unwrap_or(true);
+
+    let mut event_receiver = if access_token_too_old || access_token_ip_address_changed {
         socket
             .send(Message::Binary(Bytes::from_static(&[1])))
             .await
@@ -440,7 +449,8 @@ async fn handle_socket_result(
                     access: new_access_token,
                     refresh: new_refresh_token,
                 },
-                Some(address),
+                address,
+                true,
             )
             .await
             .change_context(WebSocketError::DatabaseSaveTokensOrOtherError)?

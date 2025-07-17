@@ -12,7 +12,7 @@ use error_stack::Result;
 use media::CacheMedia;
 use model::{
     AccessToken, AccessTokenUnixTime, AccountId, AccountIdInternal, AccountState,
-    PendingNotificationFlags, Permissions, RefreshToken,
+    IpAddressInternal, PendingNotificationFlags, Permissions, RefreshToken,
 };
 use model_server_data::{AuthPair, LastSeenUnixTime, LocationIndexProfileData};
 use profile::CacheProfile;
@@ -55,6 +55,7 @@ impl DatabaseCache {
         account_id: AccountIdInternal,
         access_token: Option<AccessToken>,
         access_token_unix_time: Option<AccessTokenUnixTime>,
+        access_token_ip_address: Option<IpAddressInternal>,
         refresh_token: Option<RefreshToken>,
     ) -> Result<Arc<AccountEntry>, CacheError> {
         let read_lock = self.accounts.read().await;
@@ -73,9 +74,12 @@ impl DatabaseCache {
         }
 
         let mut write_lock = account_entry.cache.write().await;
-        write_lock
-            .common
-            .load_from_db(access_token, access_token_unix_time, refresh_token);
+        write_lock.common.load_from_db(
+            access_token,
+            access_token_unix_time,
+            access_token_ip_address,
+            refresh_token,
+        );
 
         Ok(account_entry.clone())
     }
@@ -315,7 +319,7 @@ pub struct WebSocketCacheCmds<'a> {
 }
 
 impl WebSocketCacheCmds<'_> {
-    /// Creates new event channel if address is Some.
+    /// Creates new event channel if `new_event_channel` is true.
     ///
     /// Removes current access token from HashMap containing valid
     /// access tokens.
@@ -325,7 +329,8 @@ impl WebSocketCacheCmds<'_> {
         &self,
         id: AccountId,
         new_tokens: AuthPair,
-        address: Option<SocketAddr>,
+        address: SocketAddr,
+        new_event_channel: bool,
     ) -> Result<Option<EventReceiver>, CacheError> {
         let cache_entry = self
             .cache
@@ -344,7 +349,7 @@ impl WebSocketCacheCmds<'_> {
 
         // Avoid collisions
         if tokens.get(&new_tokens.access).is_none() {
-            let event_receiver = if let Some(address) = address {
+            let event_receiver = if new_event_channel {
                 let (sender, receiver) = event_channel();
                 let mut write = cache_entry.cache.write().await;
                 write.common.current_connection = Some(ConnectionInfo {
@@ -361,7 +366,7 @@ impl WebSocketCacheCmds<'_> {
 
             let new_access_token = new_tokens.access.clone();
             let mut lock = cache_entry.cache.write().await;
-            lock.common.update_tokens(new_tokens);
+            lock.common.update_tokens(new_tokens, address.ip().into());
             lock.common.pending_notification_flags = PendingNotificationFlags::empty();
             drop(lock);
             tokens.insert(new_access_token, cache_entry);
