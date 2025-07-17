@@ -6,6 +6,7 @@ diesel::table! {
     access_token (account_id) {
         account_id -> Integer,
         token -> Nullable<Text>,
+        token_unix_time -> Nullable<Integer>,
     }
 }
 

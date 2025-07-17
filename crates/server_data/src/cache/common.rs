@@ -1,6 +1,6 @@
 use model::{
-    AccessToken, AccountStateRelatedSharedState, OtherSharedState, PendingNotificationFlags,
-    Permissions, RefreshToken,
+    AccessToken, AccessTokenUnixTime, AccountStateRelatedSharedState, OtherSharedState,
+    PendingNotificationFlags, Permissions, RefreshToken,
 };
 use model_server_data::{AppNotificationSettingsInternal, AuthPair};
 
@@ -14,6 +14,7 @@ pub struct CacheCommon {
     pub other_shared_state: OtherSharedState,
     pub current_connection: Option<ConnectionInfo>,
     access_token: Option<AccessToken>,
+    access_token_unix_time: Option<AccessTokenUnixTime>,
     refresh_token: Option<RefreshToken>,
     tokens_changed: bool,
     /// The cached pending notification flags indicates not yet handled
@@ -27,36 +28,52 @@ impl CacheCommon {
     pub fn load_from_db(
         &mut self,
         access_token: Option<AccessToken>,
+        access_token_unix_time: Option<AccessTokenUnixTime>,
         refresh_token: Option<RefreshToken>,
     ) {
         self.access_token = access_token;
+        self.access_token_unix_time = access_token_unix_time;
         self.refresh_token = refresh_token;
     }
 
     pub fn update_tokens(&mut self, auth_pair: AuthPair) {
         self.access_token = Some(auth_pair.access);
+        self.access_token_unix_time = Some(AccessTokenUnixTime::current_time());
         self.refresh_token = Some(auth_pair.refresh);
         self.tokens_changed = true;
     }
 
     pub fn logout(&mut self) {
         self.access_token = None;
+        self.access_token_unix_time = None;
         self.refresh_token = None;
         self.tokens_changed = true;
     }
 
     pub fn get_tokens_if_save_needed(
         &mut self,
-    ) -> Option<(Option<AccessToken>, Option<RefreshToken>)> {
+    ) -> Option<(
+        Option<AccessToken>,
+        Option<AccessTokenUnixTime>,
+        Option<RefreshToken>,
+    )> {
         if self.tokens_changed {
             None
         } else {
-            Some((self.access_token.clone(), self.refresh_token.clone()))
+            Some((
+                self.access_token.clone(),
+                self.access_token_unix_time,
+                self.refresh_token.clone(),
+            ))
         }
     }
 
     pub fn access_token(&self) -> Option<&AccessToken> {
         self.access_token.as_ref()
+    }
+
+    pub fn access_token_unix_time(&self) -> Option<AccessTokenUnixTime> {
+        self.access_token_unix_time
     }
 
     pub fn refresh_token(&self) -> Option<&RefreshToken> {
@@ -78,6 +95,7 @@ impl Default for CacheCommon {
             other_shared_state: OtherSharedState::default(),
             current_connection: None,
             access_token: None,
+            access_token_unix_time: None,
             refresh_token: None,
             tokens_changed: false,
             pending_notification_flags: PendingNotificationFlags::empty(),

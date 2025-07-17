@@ -362,6 +362,32 @@ impl AccessToken {
     }
 }
 
+#[derive(Debug, Clone, Copy, Default, FromSqlRow, AsExpression)]
+#[diesel(sql_type = BigInt)]
+pub struct AccessTokenUnixTime {
+    pub ut: UnixTime,
+}
+
+impl AccessTokenUnixTime {
+    pub fn new(ut: i64) -> Self {
+        Self {
+            ut: UnixTime::new(ut),
+        }
+    }
+
+    pub fn as_i64(&self) -> &i64 {
+        self.ut.as_i64()
+    }
+
+    pub fn current_time() -> Self {
+        Self {
+            ut: UnixTime::current_time(),
+        }
+    }
+}
+
+diesel_i64_wrapper!(AccessTokenUnixTime);
+
 #[derive(Debug, Selectable, Queryable)]
 #[diesel(table_name = crate::schema::refresh_token)]
 #[diesel(check_for_backend(crate::Db))]

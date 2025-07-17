@@ -29,7 +29,7 @@ impl WriteCommandsCommon<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
-        let Some((access, refresh)) = self
+        let Some((access, access_token_time, refresh)) = self
             .cache()
             .write_cache_common(id, |e| Ok(e.get_tokens_if_save_needed()))
             .await?
@@ -38,7 +38,9 @@ impl WriteCommandsCommon<'_> {
         };
 
         db_transaction!(self, move |mut cmds| {
-            cmds.common().token().access_token(id, access)?;
+            cmds.common()
+                .token()
+                .access_token(id, access, access_token_time)?;
             cmds.common().token().refresh_token(id, refresh)?;
             Ok(())
         })?;

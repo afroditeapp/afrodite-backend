@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use database::current::read::GetDbReadCommandsCommon;
-use model::{Account, AccountId, AccountIdInternal, RefreshToken};
+use model::{AccessTokenUnixTime, Account, AccountId, AccountIdInternal, RefreshToken};
 use model_server_data::SearchGroupFlags;
 use server_common::data::IntoDataError;
 use unicode_segmentation::UnicodeSegmentation;
@@ -26,6 +26,15 @@ impl<'a> ReadCommandsCommon<'a> {
 }
 
 impl ReadCommandsCommon<'_> {
+    pub async fn account_access_token_creation_time_from_cache(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Option<AccessTokenUnixTime>, DataError> {
+        self.read_cache_common(id, |e| Ok(e.access_token_unix_time()))
+            .await
+            .into_error()
+    }
+
     pub async fn account_refresh_token_from_cache(
         &self,
         id: AccountIdInternal,

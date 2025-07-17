@@ -38,7 +38,7 @@ use simple_backend::{
     perf::websocket::{self, ConnectionTracker},
     web_socket::WebSocketManager,
 };
-use simple_backend_utils::IntoReportFromString;
+use simple_backend_utils::{IntoReportFromString, time::DurationValue};
 use tokio::time::Instant;
 use tracing::{error, info};
 
@@ -133,15 +133,17 @@ pub use utils::api::PATH_CONNECT;
 ///    - u16: Client Patch version.
 ///
 ///    The u16 values are in little endian byte order.
-/// 2. Client sends current refresh token as Binary message.
-/// 3. If server supports the client, the server sends next refresh token
-///    as Binary message.
-///    If server does not support the client, the server sends Text message
-///    and closes the connection without WebSocket Close message.
-/// 4. Server sends new access token as Binary message. The client must
+/// 2. Server sends one of these byte values as Binary messages:
+///    - 0, continue to data sync, move to step 6, at this point API can be used.
+///    - 1, access token and refresh token refresh is needed, move to step 3.
+///    - 2, unsupported client version, server closes the connection
+///      without sending WebSocket Close message.
+/// 3. Client sends current refresh token as Binary message.
+/// 4. Server sends new refresh token as Binary message.
+/// 5. Server sends new access token as Binary message. The client must
 ///    convert the token to base64url encoding without padding.
 ///    (At this point API can be used.)
-/// 5. Client sends list of current data sync versions as Binary message, where
+/// 6. Client sends list of current data sync versions as Binary message, where
 ///    items are [u8; 2] and the first u8 of an item is the data type number
 ///    and the second u8 of an item is the sync version number for that data.
 ///    If client does not have any version of the data, the client should
@@ -361,74 +363,111 @@ async fn handle_socket_result(
         _ => return Err(WebSocketError::ProtocolError.report()),
     };
 
-    let current_refresh_token = state
-        .read()
-        .common()
-        .account_refresh_token_from_cache(id)
-        .await
-        .change_context(WebSocketError::DatabaseNoRefreshToken)?
-        .ok_or(WebSocketError::DatabaseNoRefreshToken.report())?
-        .bytes()
-        .change_context(WebSocketError::InvalidRefreshTokenInDatabase)?;
-
-    // Refresh token check.
-    match socket
-        .recv()
-        .await
-        .ok_or(WebSocketError::Receive.report())?
-        .change_context(WebSocketError::Receive)?
-    {
-        Message::Binary(refresh_token) => {
-            if refresh_token != current_refresh_token {
-                COMMON.websocket_refresh_token_not_found.incr();
-                // Returning error does the logout, so it is not needed here.
-                // For this case the logout is needed to prevent refresh
-                // token quessing.
-                return Err(WebSocketError::ReceiveWrongRefreshToken.report());
-            }
-        }
-        _ => return Err(WebSocketError::ProtocolError.report()),
-    };
-
     if !client_is_supported {
         socket
-            .send(Message::Text(String::new().into()))
+            .send(Message::Binary(Bytes::from_static(&[2])))
             .await
             .change_context(WebSocketError::Send)?;
         drop(socket);
         return Err(WebSocketError::ClientVersionUnsupported.report());
     }
 
-    // Refresh check was successful, so the new refresh token can be sent.
-
-    let (new_refresh_token, new_refresh_token_bytes) = RefreshToken::generate_new_with_bytes();
-    let (new_access_token, new_access_token_bytes) = AccessToken::generate_new_with_bytes();
-
-    socket
-        .send(Message::Binary(new_refresh_token_bytes.into()))
-        .await
-        .change_context(WebSocketError::Send)?;
-
-    let mut event_receiver = state
+    let access_token_refresh_needed = state
         .read()
-        .cache_read_write_access()
-        .websocket_cache_cmds()
-        .init_login_session(
-            id.into(),
-            AuthPair {
-                access: new_access_token,
-                refresh: new_refresh_token,
-            },
-            Some(address),
-        )
+        .common()
+        .account_access_token_creation_time_from_cache(id)
         .await
-        .change_context(WebSocketError::DatabaseSaveTokensOrOtherError)?
-        .ok_or(WebSocketError::EventChannelCreationFailed.report())?;
+        .change_context(WebSocketError::DatabaseAccessTokenCreationTime)?
+        .map(|created| {
+            created
+                .ut
+                .duration_value_elapsed(DurationValue::from_hours(1))
+        })
+        .unwrap_or(true);
 
-    socket
-        .send(Message::Binary(new_access_token_bytes.into()))
-        .await
-        .change_context(WebSocketError::Send)?;
+    let mut event_receiver = if access_token_refresh_needed {
+        socket
+            .send(Message::Binary(Bytes::from_static(&[1])))
+            .await
+            .change_context(WebSocketError::Send)?;
+
+        let current_refresh_token = state
+            .read()
+            .common()
+            .account_refresh_token_from_cache(id)
+            .await
+            .change_context(WebSocketError::DatabaseNoRefreshToken)?
+            .ok_or(WebSocketError::DatabaseNoRefreshToken.report())?
+            .bytes()
+            .change_context(WebSocketError::InvalidRefreshTokenInDatabase)?;
+
+        // Refresh token check.
+        match socket
+            .recv()
+            .await
+            .ok_or(WebSocketError::Receive.report())?
+            .change_context(WebSocketError::Receive)?
+        {
+            Message::Binary(refresh_token) => {
+                if refresh_token != current_refresh_token {
+                    COMMON.websocket_refresh_token_not_found.incr();
+                    // Returning error does the logout, so it is not needed here.
+                    // For this case the logout is needed to prevent refresh
+                    // token quessing.
+                    return Err(WebSocketError::ReceiveWrongRefreshToken.report());
+                }
+            }
+            _ => return Err(WebSocketError::ProtocolError.report()),
+        };
+
+        // Refresh check was successful, so the new refresh token can be sent.
+
+        let (new_refresh_token, new_refresh_token_bytes) = RefreshToken::generate_new_with_bytes();
+        let (new_access_token, new_access_token_bytes) = AccessToken::generate_new_with_bytes();
+
+        socket
+            .send(Message::Binary(new_refresh_token_bytes.into()))
+            .await
+            .change_context(WebSocketError::Send)?;
+
+        let event_receiver = state
+            .read()
+            .cache_read_write_access()
+            .websocket_cache_cmds()
+            .init_login_session(
+                id.into(),
+                AuthPair {
+                    access: new_access_token,
+                    refresh: new_refresh_token,
+                },
+                Some(address),
+            )
+            .await
+            .change_context(WebSocketError::DatabaseSaveTokensOrOtherError)?
+            .ok_or(WebSocketError::EventChannelCreationFailed.report())?;
+
+        socket
+            .send(Message::Binary(new_access_token_bytes.into()))
+            .await
+            .change_context(WebSocketError::Send)?;
+
+        event_receiver
+    } else {
+        let event_receiver = state
+            .read()
+            .cache_read_write_access()
+            .websocket_cache_cmds()
+            .init_login_session_using_existing_tokens(id.into(), address)
+            .await
+            .change_context(WebSocketError::EventChannelCreationFailed)?;
+
+        socket
+            .send(Message::Binary(Bytes::from_static(&[0])))
+            .await
+            .change_context(WebSocketError::Send)?;
+
+        event_receiver
+    };
 
     // Receive sync data version list
     let data_sync_versions = match socket

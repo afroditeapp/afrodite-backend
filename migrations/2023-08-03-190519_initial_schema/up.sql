@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS access_token(
     -- Rust HashMap guarantees access token uniqueness, so
     -- UNIQUE constrait is not needed here.
     token        TEXT,
+    token_unix_time INTEGER,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

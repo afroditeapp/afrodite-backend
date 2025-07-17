@@ -16,6 +16,8 @@ pub enum WebSocketError {
     Serialize,
 
     // Database errors
+    #[error("Database: Access token creation time")]
+    DatabaseAccessTokenCreationTime,
     #[error("Database: No refresh token")]
     DatabaseNoRefreshToken,
     #[error("Invalid refresh token in database")]
