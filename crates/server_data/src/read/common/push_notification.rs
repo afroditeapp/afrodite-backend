@@ -33,6 +33,20 @@ impl ReadCommandsCommonPushNotification<'_> {
         .map(|v| v.fcm_device_token.is_some())
     }
 
+    pub async fn fcm_notification_sent_boolean_enabled(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<bool, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.common()
+                .push_notification()
+                .push_notification_db_state(id)
+        })
+        .await
+        .into_error()
+        .map(|v| v.fcm_data_notification_sent || v.fcm_visible_notification_sent)
+    }
+
     pub async fn push_notification_state(
         &self,
         id: AccountIdInternal,
