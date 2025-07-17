@@ -562,12 +562,9 @@ CREATE TABLE IF NOT EXISTS profile_name_allowlist(
             ON UPDATE CASCADE
 );
 
--- TODO(prod): Add NOT NULL to report related values
---             except account_custom_report?
-
 CREATE TABLE IF NOT EXISTS profile_report_profile_name(
     report_id               INTEGER PRIMARY KEY NOT NULL,
-    profile_name            TEXT,
+    profile_name            TEXT                NOT NULL,
     FOREIGN KEY (report_id)
         REFERENCES common_report (id)
             ON DELETE CASCADE
@@ -576,7 +573,7 @@ CREATE TABLE IF NOT EXISTS profile_report_profile_name(
 
 CREATE TABLE IF NOT EXISTS profile_report_profile_text(
     report_id               INTEGER PRIMARY KEY NOT NULL,
-    profile_text            TEXT,
+    profile_text            TEXT                NOT NULL,
     FOREIGN KEY (report_id)
         REFERENCES common_report (id)
             ON DELETE CASCADE
@@ -751,7 +748,7 @@ CREATE TABLE IF NOT EXISTS media_report_profile_content(
     report_id               INTEGER PRIMARY KEY NOT NULL,
     -- The image UUID is stored here to avoid
     -- image changes if database image ID is reused.
-    profile_content_uuid    BLOB,
+    profile_content_uuid    BLOB                NOT NULL,
     FOREIGN KEY (report_id)
         REFERENCES common_report (id)
             ON DELETE CASCADE
