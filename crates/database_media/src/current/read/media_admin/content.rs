@@ -4,8 +4,8 @@ use database::{
 use diesel::prelude::*;
 use error_stack::Result;
 use model_media::{
-    AccountIdInternal, ContentModerationState, GetProfileContentPendingModerationList,
-    GetProfileContentPendingModerationParams, ModerationQueueType, ProfileContentPendingModeration,
+    AccountIdInternal, ContentModerationState, GetMediaContentPendingModerationList,
+    GetMediaContentPendingModerationParams, MediaContentPendingModeration, ModerationQueueType,
 };
 
 use crate::IntoDatabaseError;
@@ -13,25 +13,25 @@ use crate::IntoDatabaseError;
 define_current_read_commands!(CurrentReadMediaAdminContent);
 
 impl CurrentReadMediaAdminContent<'_> {
-    pub fn profile_content_pending_moderation_list_using_moderator_id(
+    pub fn media_content_pending_moderation_list_using_moderator_id(
         &mut self,
         moderator_id: AccountIdInternal,
-        params: GetProfileContentPendingModerationParams,
-    ) -> Result<GetProfileContentPendingModerationList, DieselDatabaseError> {
+        params: GetMediaContentPendingModerationParams,
+    ) -> Result<GetMediaContentPendingModerationList, DieselDatabaseError> {
         let is_bot = self
             .read()
             .common()
             .state()
             .other_shared_state(moderator_id)?
             .is_bot_account;
-        self.profile_content_pending_moderation_list(is_bot, params)
+        self.media_content_pending_moderation_list(is_bot, params)
     }
 
-    pub fn profile_content_pending_moderation_list(
+    pub fn media_content_pending_moderation_list(
         &mut self,
         is_bot: bool,
-        params: GetProfileContentPendingModerationParams,
-    ) -> Result<GetProfileContentPendingModerationList, DieselDatabaseError> {
+        params: GetMediaContentPendingModerationParams,
+    ) -> Result<GetMediaContentPendingModerationList, DieselDatabaseError> {
         use crate::schema::{account_id, media_content};
 
         const LIMIT: i64 = 25;
@@ -71,9 +71,9 @@ impl CurrentReadMediaAdminContent<'_> {
                 account_id::id.asc(),
             ))
             .limit(LIMIT)
-            .load::<ProfileContentPendingModeration>(self.conn())
+            .load::<MediaContentPendingModeration>(self.conn())
             .into_db_error(())?;
 
-        Ok(GetProfileContentPendingModerationList { values })
+        Ok(GetMediaContentPendingModerationList { values })
     }
 }

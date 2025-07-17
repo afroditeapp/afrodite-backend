@@ -22,11 +22,11 @@ use utoipa::{IntoParams, ToSchema};
     AsExpression,
 )]
 #[diesel(sql_type = BigInt)]
-pub struct ProfileContentModerationRejectedReasonCategory {
+pub struct MediaContentModerationRejectedReasonCategory {
     pub value: i64,
 }
 
-impl ProfileContentModerationRejectedReasonCategory {
+impl MediaContentModerationRejectedReasonCategory {
     pub fn new(value: i64) -> Self {
         Self { value }
     }
@@ -36,7 +36,7 @@ impl ProfileContentModerationRejectedReasonCategory {
     }
 }
 
-diesel_i64_wrapper!(ProfileContentModerationRejectedReasonCategory);
+diesel_i64_wrapper!(MediaContentModerationRejectedReasonCategory);
 
 #[derive(
     Debug,
@@ -51,11 +51,11 @@ diesel_i64_wrapper!(ProfileContentModerationRejectedReasonCategory);
     diesel::AsExpression,
 )]
 #[diesel(sql_type = Text)]
-pub struct ProfileContentModerationRejectedReasonDetails {
+pub struct MediaContentModerationRejectedReasonDetails {
     value: String,
 }
 
-impl ProfileContentModerationRejectedReasonDetails {
+impl MediaContentModerationRejectedReasonDetails {
     pub fn new(value: String) -> Self {
         Self { value }
     }
@@ -69,4 +69,4 @@ impl ProfileContentModerationRejectedReasonDetails {
     }
 }
 
-diesel_string_wrapper!(ProfileContentModerationRejectedReasonDetails);
+diesel_string_wrapper!(MediaContentModerationRejectedReasonDetails);

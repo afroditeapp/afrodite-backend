@@ -1,7 +1,7 @@
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
 use model::{AccountIdInternal, ContentIdInternal};
 use model_media::{
-    ProfileContentModerationRejectedReasonCategory, ProfileContentModerationRejectedReasonDetails,
+    MediaContentModerationRejectedReasonCategory, MediaContentModerationRejectedReasonDetails,
     ProfileContentModificationMetadata,
 };
 use server_common::result::Result;
@@ -19,7 +19,7 @@ pub struct ModerationResult {
 define_cmd_wrapper_write!(WriteCommandsProfileAdminContent);
 
 impl WriteCommandsProfileAdminContent<'_> {
-    pub async fn moderate_profile_content(
+    pub async fn moderate_media_content(
         &self,
         mode: ContentModerationMode,
         content_id: ContentIdInternal,
@@ -52,15 +52,13 @@ impl WriteCommandsProfileAdminContent<'_> {
                     rejected_category,
                     rejected_details,
                 } => {
-                    cmds.media_admin()
-                        .media_content()
-                        .moderate_profile_content(
-                            moderator_id,
-                            content_id,
-                            accept,
-                            rejected_category,
-                            rejected_details,
-                        )?;
+                    cmds.media_admin().media_content().moderate_media_content(
+                        moderator_id,
+                        content_id,
+                        accept,
+                        rejected_category,
+                        rejected_details,
+                    )?;
                 }
             };
 
@@ -174,7 +172,7 @@ pub enum ContentModerationMode {
     Moderate {
         moderator_id: AccountIdInternal,
         accept: bool,
-        rejected_category: Option<ProfileContentModerationRejectedReasonCategory>,
-        rejected_details: Option<ProfileContentModerationRejectedReasonDetails>,
+        rejected_category: Option<MediaContentModerationRejectedReasonCategory>,
+        rejected_details: Option<MediaContentModerationRejectedReasonDetails>,
     },
 }

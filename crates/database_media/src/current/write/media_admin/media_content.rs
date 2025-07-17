@@ -5,8 +5,8 @@ use diesel::{prelude::*, update};
 use error_stack::Result;
 use model::{AccountIdInternal, ContentIdInternal};
 use model_media::{
-    ContentModerationState, ProfileContentModerationRejectedReasonCategory,
-    ProfileContentModerationRejectedReasonDetails,
+    ContentModerationState, MediaContentModerationRejectedReasonCategory,
+    MediaContentModerationRejectedReasonDetails,
 };
 
 use crate::IntoDatabaseError;
@@ -30,13 +30,13 @@ impl CurrentWriteMediaAdminMediaContent<'_> {
         Ok(())
     }
 
-    pub fn moderate_profile_content(
+    pub fn moderate_media_content(
         &mut self,
         moderator_id: AccountIdInternal,
         content_id: ContentIdInternal,
         accepted: bool,
-        rejected_category: Option<ProfileContentModerationRejectedReasonCategory>,
-        rejected_details: Option<ProfileContentModerationRejectedReasonDetails>,
+        rejected_category: Option<MediaContentModerationRejectedReasonCategory>,
+        rejected_details: Option<MediaContentModerationRejectedReasonDetails>,
     ) -> Result<ContentModerationState, DieselDatabaseError> {
         use model::schema::media_content;
 
