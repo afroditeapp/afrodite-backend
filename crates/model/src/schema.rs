@@ -546,7 +546,7 @@ diesel::table! {
 
     media_report_profile_content (report_id) {
         report_id -> Integer,
-        profile_content_uuid -> Nullable<Binary>,
+        profile_content_uuid -> Binary,
     }
 }
 
@@ -722,7 +722,7 @@ diesel::table! {
 
     profile_report_profile_name (report_id) {
         report_id -> Integer,
-        profile_name -> Nullable<Text>,
+        profile_name -> Text,
     }
 }
 
@@ -731,7 +731,7 @@ diesel::table! {
 
     profile_report_profile_text (report_id) {
         report_id -> Integer,
-        profile_text -> Nullable<Text>,
+        profile_text -> Text,
     }
 }
 

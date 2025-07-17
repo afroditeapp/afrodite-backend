@@ -169,7 +169,6 @@ impl CurrentReadCommonReport<'_> {
             .first(self.conn())
             .optional()
             .into_db_error(())
-            .map(|v| v.flatten())
     }
 
     fn profile_text_report(
@@ -184,7 +183,6 @@ impl CurrentReadCommonReport<'_> {
             .first(self.conn())
             .optional()
             .into_db_error(())
-            .map(|v| v.flatten())
     }
 
     fn profile_content_report(
@@ -199,7 +197,6 @@ impl CurrentReadCommonReport<'_> {
             .first(self.conn())
             .optional()
             .into_db_error(())
-            .map(|v| v.flatten())
     }
 
     fn chat_message_report(
