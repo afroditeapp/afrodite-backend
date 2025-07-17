@@ -1,6 +1,6 @@
 use model::{
-    AccessToken, AccessTokenUnixTime, AccountStateRelatedSharedState, OtherSharedState,
-    PendingNotificationFlags, Permissions, RefreshToken,
+    AccessToken, AccessTokenUnixTime, AccountStateRelatedSharedState, IpAddressInternal,
+    OtherSharedState, PendingNotificationFlags, Permissions, RefreshToken,
 };
 use model_server_data::{AppNotificationSettingsInternal, AuthPair};
 
@@ -15,6 +15,7 @@ pub struct CacheCommon {
     pub current_connection: Option<ConnectionInfo>,
     access_token: Option<AccessToken>,
     access_token_unix_time: Option<AccessTokenUnixTime>,
+    access_token_ip_address: Option<IpAddressInternal>,
     refresh_token: Option<RefreshToken>,
     tokens_changed: bool,
     /// The cached pending notification flags indicates not yet handled
@@ -29,16 +30,23 @@ impl CacheCommon {
         &mut self,
         access_token: Option<AccessToken>,
         access_token_unix_time: Option<AccessTokenUnixTime>,
+        access_token_ip_address: Option<IpAddressInternal>,
         refresh_token: Option<RefreshToken>,
     ) {
         self.access_token = access_token;
         self.access_token_unix_time = access_token_unix_time;
+        self.access_token_ip_address = access_token_ip_address;
         self.refresh_token = refresh_token;
     }
 
-    pub fn update_tokens(&mut self, auth_pair: AuthPair) {
+    pub fn update_tokens(
+        &mut self,
+        auth_pair: AuthPair,
+        access_token_ip_address: IpAddressInternal,
+    ) {
         self.access_token = Some(auth_pair.access);
         self.access_token_unix_time = Some(AccessTokenUnixTime::current_time());
+        self.access_token_ip_address = Some(access_token_ip_address);
         self.refresh_token = Some(auth_pair.refresh);
         self.tokens_changed = true;
     }
@@ -46,6 +54,7 @@ impl CacheCommon {
     pub fn logout(&mut self) {
         self.access_token = None;
         self.access_token_unix_time = None;
+        self.access_token_ip_address = None;
         self.refresh_token = None;
         self.tokens_changed = true;
     }
@@ -55,6 +64,7 @@ impl CacheCommon {
     ) -> Option<(
         Option<AccessToken>,
         Option<AccessTokenUnixTime>,
+        Option<IpAddressInternal>,
         Option<RefreshToken>,
     )> {
         if self.tokens_changed {
@@ -63,6 +73,7 @@ impl CacheCommon {
             Some((
                 self.access_token.clone(),
                 self.access_token_unix_time,
+                self.access_token_ip_address,
                 self.refresh_token.clone(),
             ))
         }
@@ -74,6 +85,10 @@ impl CacheCommon {
 
     pub fn access_token_unix_time(&self) -> Option<AccessTokenUnixTime> {
         self.access_token_unix_time
+    }
+
+    pub fn access_token_ip_address(&self) -> Option<IpAddressInternal> {
+        self.access_token_ip_address
     }
 
     pub fn refresh_token(&self) -> Option<&RefreshToken> {
@@ -96,6 +111,7 @@ impl Default for CacheCommon {
             current_connection: None,
             access_token: None,
             access_token_unix_time: None,
+            access_token_ip_address: None,
             refresh_token: None,
             tokens_changed: false,
             pending_notification_flags: PendingNotificationFlags::empty(),

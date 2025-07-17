@@ -1,8 +1,8 @@
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
-    AccessToken, AccessTokenRaw, AccessTokenUnixTime, AccountIdInternal, RefreshToken,
-    RefreshTokenRaw,
+    AccessToken, AccessTokenRaw, AccessTokenUnixTime, AccountIdInternal, IpAddressInternal,
+    RefreshToken, RefreshTokenRaw,
 };
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
@@ -32,19 +32,30 @@ impl CurrentReadAccountToken<'_> {
     pub fn access_token(
         &mut self,
         id: AccountIdInternal,
-    ) -> Result<(Option<AccessToken>, Option<AccessTokenUnixTime>), DieselDatabaseError> {
+    ) -> Result<
+        (
+            Option<AccessToken>,
+            Option<AccessTokenUnixTime>,
+            Option<IpAddressInternal>,
+        ),
+        DieselDatabaseError,
+    > {
         use crate::schema::access_token::dsl::*;
 
-        let (raw, time) = access_token
+        let (raw, time, ip_address) = access_token
             .filter(account_id.eq(id.as_db_id()))
-            .select((AccessTokenRaw::as_select(), token_unix_time))
+            .select((
+                AccessTokenRaw::as_select(),
+                token_unix_time,
+                token_ip_address,
+            ))
             .first(self.conn())
             .into_db_error(id)?;
 
         if let Some(data) = raw.token {
-            Ok((Some(AccessToken::new(data)), time))
+            Ok((Some(AccessToken::new(data)), time, ip_address))
         } else {
-            Ok((None, None))
+            Ok((None, None, None))
         }
     }
 }

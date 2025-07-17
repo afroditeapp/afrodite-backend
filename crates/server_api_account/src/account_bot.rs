@@ -1,8 +1,8 @@
 //! Account related internal API routes
 
-use std::{collections::HashSet, sync::LazyLock};
+use std::{collections::HashSet, net::SocketAddr, sync::LazyLock};
 
-use axum::extract::State;
+use axum::extract::{ConnectInfo, State};
 use model_account::{AccountId, LoginResult, RemoteBotLogin, SignInWithInfo};
 use server_api::{S, app::GetConfig, db_write};
 use server_data::write::GetWriteCommandsCommon;
@@ -35,6 +35,7 @@ pub const PATH_BOT_LOGIN: &str = "/account_api/bot_login";
 )]
 pub async fn post_bot_login(
     State(state): State<S>,
+    ConnectInfo(address): ConnectInfo<SocketAddr>,
     Json(id): Json<AccountId>,
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT_BOT.post_bot_login.incr();
@@ -45,7 +46,7 @@ pub async fn post_bot_login(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    login_impl(id, &state).await.map(|d| d.into())
+    login_impl(id, address, &state).await.map(|d| d.into())
 }
 
 pub const PATH_BOT_REGISTER: &str = "/account_api/bot_register";
@@ -107,6 +108,7 @@ pub const PATH_REMOTE_BOT_LOGIN: &str = "/account_api/remote_bot_login";
 )]
 pub async fn post_remote_bot_login(
     State(state): State<S>,
+    ConnectInfo(address): ConnectInfo<SocketAddr>,
     Json(info): Json<RemoteBotLogin>,
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT_BOT.post_remote_bot_login.incr();
@@ -142,7 +144,9 @@ pub async fn post_remote_bot_login(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    login_impl(info.aid, &state).await.map(|d| d.into())
+    login_impl(info.aid, address, &state)
+        .await
+        .map(|d| d.into())
 }
 
 create_counters!(

@@ -1,6 +1,6 @@
-use std::time::Duration;
+use std::{net::SocketAddr, time::Duration};
 
-use axum::extract::State;
+use axum::extract::{ConnectInfo, State};
 use model_account::{
     AccessibleAccount, AccountId, DemoModeLoginToAccount, LoginResult, SignInWithInfo,
 };
@@ -160,6 +160,7 @@ const PATH_POST_DEMO_MODE_LOGIN_TO_ACCOUNT: &str = "/account_api/demo_mode_login
 )]
 pub async fn post_demo_mode_login_to_account(
     State(state): State<S>,
+    ConnectInfo(address): ConnectInfo<SocketAddr>,
     Json(info): Json<DemoModeLoginToAccount>,
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT.post_demo_mode_login_to_account.incr();
@@ -176,7 +177,7 @@ pub async fn post_demo_mode_login_to_account(
         .await?;
     accessible_accounts.contains(info.aid, state.read()).await?;
 
-    let r = login_impl(info.aid, &state).await?;
+    let r = login_impl(info.aid, address, &state).await?;
 
     if let Some(aid) = r.aid {
         // Login successful
