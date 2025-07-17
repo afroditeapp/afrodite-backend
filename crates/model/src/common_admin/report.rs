@@ -107,9 +107,7 @@ pub struct ReportContent {
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize, ToSchema)]
-pub struct CustomReportContent {
-    pub boolean_value: Option<bool>,
-}
+pub struct CustomReportContent;
 
 #[derive(Serialize, ToSchema)]
 pub struct GetReportList {

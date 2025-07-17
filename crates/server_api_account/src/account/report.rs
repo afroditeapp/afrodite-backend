@@ -1,6 +1,6 @@
 use axum::{Extension, extract::State};
 use model::{AccountIdInternal, AdminNotificationTypes, CustomReportsFileHash, UpdateReportResult};
-use model_account::{GetCustomReportsConfigResult, UpdateCustomReportBoolean};
+use model_account::{GetCustomReportsConfigResult, UpdateCustomReportEmpty};
 use server_api::{
     S,
     app::{AdminNotificationProvider, GetConfig},
@@ -14,13 +14,13 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-const PATH_POST_CUSTOM_REPORT_BOOLEAN: &str = "/account_api/custom_report_boolean";
+const PATH_POST_CUSTOM_REPORT_EMPTY: &str = "/account_api/custom_report_empty";
 
-/// Send custom report
+/// Send custom report without any content
 #[utoipa::path(
     post,
-    path = PATH_POST_CUSTOM_REPORT_BOOLEAN,
-    request_body = UpdateCustomReportBoolean,
+    path = PATH_POST_CUSTOM_REPORT_EMPTY,
+    request_body = UpdateCustomReportEmpty,
     responses(
         (status = 200, description = "Successfull.", body = UpdateReportResult),
         (status = 401, description = "Unauthorized."),
@@ -28,19 +28,19 @@ const PATH_POST_CUSTOM_REPORT_BOOLEAN: &str = "/account_api/custom_report_boolea
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_custom_report_boolean(
+pub async fn post_custom_report_empty(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-    Json(update): Json<UpdateCustomReportBoolean>,
+    Json(update): Json<UpdateCustomReportEmpty>,
 ) -> Result<Json<UpdateReportResult>, StatusCode> {
-    ACCOUNT.post_custom_report_boolean.incr();
+    ACCOUNT.post_custom_report_empty.incr();
 
     let target = state.get_internal_id(update.target).await?;
 
     let r = db_write!(state, move |cmds| cmds
         .account()
         .report()
-        .report_custom_report_boolean(account_id, target, update.custom_report_id, update.value)
+        .report_custom_report_empty(account_id, target, update.custom_report_id)
         .await)?;
 
     state
@@ -83,7 +83,7 @@ pub async fn post_get_custom_reports_config(
 
 create_open_api_router!(
         fn router_account_report,
-        post_custom_report_boolean,
+        post_custom_report_empty,
         post_get_custom_reports_config,
 );
 
@@ -91,6 +91,6 @@ create_counters!(
     AccountCounters,
     ACCOUNT,
     ACCOUNT_REPORT_COUNTERS_LIST,
-    post_custom_report_boolean,
+    post_custom_report_empty,
     post_get_custom_reports_config,
 );

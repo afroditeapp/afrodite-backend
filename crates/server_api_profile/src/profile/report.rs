@@ -10,8 +10,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-// TODO(prod): Remove unused report APIs
-
 const PATH_POST_REPORT_PROFILE_NAME: &str = "/profile_api/report_profile_name";
 
 /// Report profile name
