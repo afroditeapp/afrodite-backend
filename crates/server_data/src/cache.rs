@@ -11,8 +11,8 @@ use common::CacheCommon;
 use error_stack::Result;
 use media::CacheMedia;
 use model::{
-    AccessToken, AccessTokenUnixTime, AccountId, AccountIdInternal, AccountState,
-    IpAddressInternal, PendingNotificationFlags, Permissions, RefreshToken,
+    AccessToken, AccountId, AccountIdInternal, AccountState, LoginSession,
+    PendingNotificationFlags, Permissions,
 };
 use model_server_data::{AuthPair, LastSeenUnixTime, LocationIndexProfileData};
 use profile::CacheProfile;
@@ -53,17 +53,14 @@ impl DatabaseCache {
     pub async fn load_tokens_from_db_and_return_entry(
         &self,
         account_id: AccountIdInternal,
-        access_token: Option<AccessToken>,
-        access_token_unix_time: Option<AccessTokenUnixTime>,
-        access_token_ip_address: Option<IpAddressInternal>,
-        refresh_token: Option<RefreshToken>,
+        login_session: Option<LoginSession>,
     ) -> Result<Arc<AccountEntry>, CacheError> {
         let read_lock = self.accounts.read().await;
         let account_entry = read_lock
             .get(&account_id.as_id())
             .ok_or(CacheError::KeyNotExists.report())?;
 
-        if let Some(token) = access_token.clone() {
+        if let Some(token) = login_session.as_ref().map(|v| v.access_token.clone()) {
             let mut access_tokens = self.access_tokens.write().await;
             match access_tokens.entry(token) {
                 Entry::Vacant(e) => {
@@ -74,12 +71,7 @@ impl DatabaseCache {
         }
 
         let mut write_lock = account_entry.cache.write().await;
-        write_lock.common.load_from_db(
-            access_token,
-            access_token_unix_time,
-            access_token_ip_address,
-            refresh_token,
-        );
+        write_lock.common.load_from_db(login_session);
 
         Ok(account_entry.clone())
     }

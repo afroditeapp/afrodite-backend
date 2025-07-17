@@ -56,8 +56,6 @@ impl RegisterAccount<'_> {
     ) -> error_stack::Result<AccountIdInternal, DieselDatabaseError> {
         // Common
         let id = current.common().insert_account_id(account_id)?;
-        current.common().token().insert_access_token(id, None)?;
-        current.common().token().insert_refresh_token(id, None)?;
         current
             .common()
             .state()

@@ -12,7 +12,7 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::{
     Account, AccountStateContainer, ContentProcessingId, ContentProcessingState,
-    InitialSetupCompletedTime, ProfileVisibility,
+    InitialSetupCompletedTime, IpAddressInternal, ProfileVisibility,
 };
 
 pub mod api_usage;
@@ -310,11 +310,12 @@ impl std::fmt::Display for AccountId {
     }
 }
 
-#[derive(Debug, Selectable, Queryable)]
-#[diesel(table_name = crate::schema::access_token)]
-#[diesel(check_for_backend(crate::Db))]
-pub struct AccessTokenRaw {
-    pub token: Option<String>,
+#[derive(Debug, Clone)]
+pub struct LoginSession {
+    pub access_token: AccessToken,
+    pub access_token_unix_time: AccessTokenUnixTime,
+    pub access_token_ip_address: IpAddressInternal,
+    pub refresh_token: RefreshToken,
 }
 
 /// AccessToken is used as a short lived token for API access.
@@ -387,13 +388,6 @@ impl AccessTokenUnixTime {
 }
 
 diesel_i64_wrapper!(AccessTokenUnixTime);
-
-#[derive(Debug, Selectable, Queryable)]
-#[diesel(table_name = crate::schema::refresh_token)]
-#[diesel(check_for_backend(crate::Db))]
-pub struct RefreshTokenRaw {
-    pub token: Option<Vec<u8>>,
-}
 
 /// Refresh token is long lived token used for getting new access tokens.
 ///

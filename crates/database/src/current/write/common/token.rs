@@ -1,96 +1,48 @@
-use diesel::{insert_into, prelude::*, update};
+use diesel::{delete, insert_into, prelude::*, upsert::excluded};
 use error_stack::{Result, ResultExt};
-use model::{AccessToken, AccessTokenUnixTime, AccountIdInternal, IpAddressInternal, RefreshToken};
+use model::{AccountIdInternal, LoginSession};
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_write_commands};
 
 define_current_write_commands!(CurrentWriteAccountToken);
 
 impl CurrentWriteAccountToken<'_> {
-    pub fn insert_access_token(
+    pub fn login_session(
         mut self,
         id: AccountIdInternal,
-        token_value: Option<AccessToken>,
+        data: Option<LoginSession>,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::access_token::dsl::*;
+        use model::schema::login_session::dsl::*;
 
-        let token_value = token_value.as_ref().map(|k| k.as_str());
-
-        insert_into(access_token)
-            .values((account_id.eq(id.as_db_id()), token.eq(token_value)))
-            .execute(self.conn())
-            .into_db_error(id)?;
-
-        Ok(())
-    }
-
-    pub fn access_token(
-        mut self,
-        id: AccountIdInternal,
-        token_value: Option<AccessToken>,
-        token_time: Option<AccessTokenUnixTime>,
-        token_ip: Option<IpAddressInternal>,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::access_token::dsl::*;
-
-        let token_value = token_value.as_ref().map(|k| k.as_str());
-
-        update(access_token.find(id.as_db_id()))
-            .set((
-                token.eq(token_value),
-                token_unix_time.eq(token_time),
-                token_ip_address.eq(token_ip),
-            ))
-            .execute(self.conn())
-            .into_db_error(id)?;
-
-        Ok(())
-    }
-
-    pub fn insert_refresh_token(
-        mut self,
-        id: AccountIdInternal,
-        token_value: Option<RefreshToken>,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::refresh_token::dsl::*;
-
-        let token_value = if let Some(t) = token_value {
-            Some(
-                t.bytes()
-                    .change_context(DieselDatabaseError::DataFormatConversion)?,
-            )
+        if let Some(data) = data {
+            let refresh_token_value = data
+                .refresh_token
+                .bytes()
+                .change_context(DieselDatabaseError::DataFormatConversion)?;
+            insert_into(login_session)
+                .values((
+                    account_id.eq(id.as_db_id()),
+                    access_token.eq(data.access_token.as_str()),
+                    access_token_unix_time.eq(data.access_token_unix_time),
+                    access_token_ip_address.eq(data.access_token_ip_address),
+                    refresh_token.eq(refresh_token_value),
+                ))
+                .on_conflict(account_id)
+                .do_update()
+                .set((
+                    access_token.eq(excluded(access_token)),
+                    access_token_unix_time.eq(excluded(access_token_unix_time)),
+                    access_token_ip_address.eq(excluded(access_token_ip_address)),
+                    refresh_token.eq(excluded(refresh_token)),
+                ))
+                .execute(self.conn())
+                .into_db_error(id)?;
         } else {
-            None
-        };
-
-        insert_into(refresh_token)
-            .values((account_id.eq(id.as_db_id()), token.eq(token_value)))
-            .execute(self.conn())
-            .into_db_error(id)?;
-
-        Ok(())
-    }
-
-    pub fn refresh_token(
-        &mut self,
-        id: AccountIdInternal,
-        token_value: Option<RefreshToken>,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::refresh_token::dsl::*;
-
-        let token_value = if let Some(t) = token_value {
-            Some(
-                t.bytes()
-                    .change_context(DieselDatabaseError::DataFormatConversion)?,
-            )
-        } else {
-            None
-        };
-
-        update(refresh_token.find(id.as_db_id()))
-            .set(token.eq(token_value))
-            .execute(self.conn())
-            .into_db_error(id)?;
+            delete(login_session)
+                .filter(account_id.eq(id.as_db_id()))
+                .execute(self.conn())
+                .into_db_error(id)?;
+        }
 
         Ok(())
     }
