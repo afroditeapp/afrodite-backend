@@ -1,6 +1,6 @@
 use model::{
     AccessToken, AccessTokenUnixTime, AccountStateRelatedSharedState, IpAddressInternal,
-    OtherSharedState, PendingNotificationFlags, Permissions, RefreshToken,
+    LoginSession, OtherSharedState, PendingNotificationFlags, Permissions, RefreshToken,
 };
 use model_server_data::{AppNotificationSettingsInternal, AuthPair};
 
@@ -13,11 +13,8 @@ pub struct CacheCommon {
     pub account_state_related_shared_state: AccountStateRelatedSharedState,
     pub other_shared_state: OtherSharedState,
     pub current_connection: Option<ConnectionInfo>,
-    access_token: Option<AccessToken>,
-    access_token_unix_time: Option<AccessTokenUnixTime>,
-    access_token_ip_address: Option<IpAddressInternal>,
-    refresh_token: Option<RefreshToken>,
-    tokens_changed: bool,
+    login_session: Option<LoginSession>,
+    login_session_changed: bool,
     /// The cached pending notification flags indicates not yet handled
     /// notification which PushNotificationManager will handle as soon as
     /// possible.
@@ -26,17 +23,8 @@ pub struct CacheCommon {
 }
 
 impl CacheCommon {
-    pub fn load_from_db(
-        &mut self,
-        access_token: Option<AccessToken>,
-        access_token_unix_time: Option<AccessTokenUnixTime>,
-        access_token_ip_address: Option<IpAddressInternal>,
-        refresh_token: Option<RefreshToken>,
-    ) {
-        self.access_token = access_token;
-        self.access_token_unix_time = access_token_unix_time;
-        self.access_token_ip_address = access_token_ip_address;
-        self.refresh_token = refresh_token;
+    pub fn load_from_db(&mut self, data: Option<LoginSession>) {
+        self.login_session = data;
     }
 
     pub fn update_tokens(
@@ -44,55 +32,46 @@ impl CacheCommon {
         auth_pair: AuthPair,
         access_token_ip_address: IpAddressInternal,
     ) {
-        self.access_token = Some(auth_pair.access);
-        self.access_token_unix_time = Some(AccessTokenUnixTime::current_time());
-        self.access_token_ip_address = Some(access_token_ip_address);
-        self.refresh_token = Some(auth_pair.refresh);
-        self.tokens_changed = true;
+        self.login_session = Some(LoginSession {
+            access_token: auth_pair.access,
+            access_token_unix_time: AccessTokenUnixTime::current_time(),
+            access_token_ip_address,
+            refresh_token: auth_pair.refresh,
+        });
+        self.login_session_changed = true;
     }
 
     pub fn logout(&mut self) {
-        self.access_token = None;
-        self.access_token_unix_time = None;
-        self.access_token_ip_address = None;
-        self.refresh_token = None;
-        self.tokens_changed = true;
+        self.login_session = None;
+        self.login_session_changed = true;
     }
 
-    pub fn get_tokens_if_save_needed(
-        &mut self,
-    ) -> Option<(
-        Option<AccessToken>,
-        Option<AccessTokenUnixTime>,
-        Option<IpAddressInternal>,
-        Option<RefreshToken>,
-    )> {
-        if self.tokens_changed {
+    pub fn get_tokens_if_save_needed(&mut self) -> Option<Option<LoginSession>> {
+        if self.login_session_changed {
             None
         } else {
-            Some((
-                self.access_token.clone(),
-                self.access_token_unix_time,
-                self.access_token_ip_address,
-                self.refresh_token.clone(),
-            ))
+            Some(self.login_session.clone())
         }
     }
 
     pub fn access_token(&self) -> Option<&AccessToken> {
-        self.access_token.as_ref()
+        self.login_session.as_ref().map(|v| &v.access_token)
     }
 
     pub fn access_token_unix_time(&self) -> Option<AccessTokenUnixTime> {
-        self.access_token_unix_time
+        self.login_session
+            .as_ref()
+            .map(|v| v.access_token_unix_time)
     }
 
     pub fn access_token_ip_address(&self) -> Option<IpAddressInternal> {
-        self.access_token_ip_address
+        self.login_session
+            .as_ref()
+            .map(|v| v.access_token_ip_address)
     }
 
     pub fn refresh_token(&self) -> Option<&RefreshToken> {
-        self.refresh_token.as_ref()
+        self.login_session.as_ref().map(|v| &v.refresh_token)
     }
 
     pub fn connection_event_sender(&self) -> Option<&EventSender> {
@@ -109,11 +88,8 @@ impl Default for CacheCommon {
             account_state_related_shared_state: AccountStateRelatedSharedState::default(),
             other_shared_state: OtherSharedState::default(),
             current_connection: None,
-            access_token: None,
-            access_token_unix_time: None,
-            access_token_ip_address: None,
-            refresh_token: None,
-            tokens_changed: false,
+            login_session: None,
+            login_session_changed: false,
             pending_notification_flags: PendingNotificationFlags::empty(),
             app_notification_settings: AppNotificationSettingsInternal::default(),
         }

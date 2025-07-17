@@ -21,31 +21,17 @@ CREATE TABLE IF NOT EXISTS used_account_ids(
     uuid       BLOB                              NOT NULL UNIQUE
 );
 
--- TODO(prod): Single table for access and refresh token data.
---             Also add NOT NULL to every column and
---             remove row if tokens do not exist.
-
--- API access token for account
-CREATE TABLE IF NOT EXISTS access_token(
-    account_id       INTEGER PRIMARY KEY NOT NULL,
+CREATE TABLE IF NOT EXISTS login_session(
+    account_id              INTEGER PRIMARY KEY NOT NULL,
     -- Rust HashMap guarantees access token uniqueness, so
     -- UNIQUE constrait is not needed here.
-    token            TEXT,
-    token_unix_time  INTEGER,
+    access_token            TEXT                NOT NULL,
+    access_token_unix_time  INTEGER             NOT NULL,
     -- 4 or 16 bytes
-    token_ip_address BLOB,
-    FOREIGN KEY (account_id)
-        REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
-);
-
--- API refresh token for account
-CREATE TABLE IF NOT EXISTS refresh_token(
-    account_id    INTEGER PRIMARY KEY NOT NULL,
+    access_token_ip_address BLOB                NOT NULL,
     -- Using refresh token requires valid access token, so
     -- UNIQUE constraint is not needed here.
-    token         BLOB,
+    refresh_token           BLOB                NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

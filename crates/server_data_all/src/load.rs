@@ -68,21 +68,12 @@ impl DbDataToCacheLoader {
             .with_info(account_id)?;
 
         let db = DbReaderAll::new(DbReaderRaw::new(current_db));
-        let (access_token, access_token_unix_time, access_token_ip_address) = db
-            .db_read(move |mut cmds| cmds.common().token().access_token(account_id))
-            .await?;
-        let refresh_token = db
-            .db_read(move |mut cmds| cmds.common().token().refresh_token(account_id))
+        let login_session = db
+            .db_read(move |mut cmds| cmds.common().token().login_session(account_id))
             .await?;
 
         let account_entry = cache
-            .load_tokens_from_db_and_return_entry(
-                account_id,
-                access_token,
-                access_token_unix_time,
-                access_token_ip_address,
-                refresh_token,
-            )
+            .load_tokens_from_db_and_return_entry(account_id, login_session)
             .await?;
         let mut entry = account_entry.cache.write().await;
 

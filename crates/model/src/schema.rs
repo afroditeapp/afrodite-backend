@@ -3,17 +3,6 @@
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    access_token (account_id) {
-        account_id -> Integer,
-        token -> Nullable<Text>,
-        token_unix_time -> Nullable<Integer>,
-        token_ip_address -> Nullable<Binary>,
-    }
-}
-
-diesel::table! {
-    use crate::schema_sqlite_types::*;
-
     account (account_id) {
         account_id -> Integer,
         email -> Nullable<Text>,
@@ -509,6 +498,18 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    login_session (account_id) {
+        account_id -> Integer,
+        access_token -> Text,
+        access_token_unix_time -> Integer,
+        access_token_ip_address -> Binary,
+        refresh_token -> Binary,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     media_app_notification_settings (account_id) {
         account_id -> Integer,
         media_content_moderation -> Bool,
@@ -789,15 +790,6 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    refresh_token (account_id) {
-        account_id -> Integer,
-        token -> Nullable<Binary>,
-    }
-}
-
-diesel::table! {
-    use crate::schema_sqlite_types::*;
-
     shared_state (account_id) {
         account_id -> Integer,
         account_state_initial_setup_completed -> Bool,
@@ -840,7 +832,6 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(access_token -> account_id (account_id));
 diesel::joinable!(account -> account_id (account_id));
 diesel::joinable!(account_app_notification_settings -> account_id (account_id));
 diesel::joinable!(account_custom_report -> common_report (report_id));
@@ -872,6 +863,7 @@ diesel::joinable!(history_profile_statistics_count_changes_man -> history_common
 diesel::joinable!(history_profile_statistics_count_changes_non_binary -> history_common_statistics_save_time (time_id));
 diesel::joinable!(history_profile_statistics_count_changes_woman -> history_common_statistics_save_time (time_id));
 diesel::joinable!(ip_address_usage_statistics -> account_id (account_id));
+diesel::joinable!(login_session -> account_id (account_id));
 diesel::joinable!(media_app_notification_settings -> account_id (account_id));
 diesel::joinable!(media_app_notification_state -> account_id (account_id));
 diesel::joinable!(media_content -> account_id (account_id));
@@ -891,13 +883,11 @@ diesel::joinable!(profile_automatic_profile_search_state -> account_id (account_
 diesel::joinable!(profile_report_profile_name -> common_report (report_id));
 diesel::joinable!(profile_report_profile_text -> common_report (report_id));
 diesel::joinable!(public_key -> account_id (account_id));
-diesel::joinable!(refresh_token -> account_id (account_id));
 diesel::joinable!(shared_state -> account_id (account_id));
 diesel::joinable!(sign_in_with_info -> account_id (account_id));
 diesel::joinable!(used_content_ids -> account_id (account_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
-    access_token,
     account,
     account_app_notification_settings,
     account_custom_report,
@@ -940,6 +930,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     history_profile_statistics_count_changes_non_binary,
     history_profile_statistics_count_changes_woman,
     ip_address_usage_statistics,
+    login_session,
     media_app_notification_settings,
     media_app_notification_state,
     media_content,
@@ -962,7 +953,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     profile_report_profile_text,
     profile_state,
     public_key,
-    refresh_token,
     shared_state,
     sign_in_with_info,
     used_account_ids,
