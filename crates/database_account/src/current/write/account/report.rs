@@ -12,28 +12,18 @@ use crate::IntoDatabaseError;
 define_current_write_commands!(CurrentWriteAccountReport);
 
 impl CurrentWriteAccountReport<'_> {
-    pub fn insert_custom_report_boolean(
+    pub fn insert_custom_report_empty(
         &mut self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
         custom_report_type_number: CustomReportTypeNumberValue,
-        value: bool,
     ) -> Result<(), DieselDatabaseError> {
-        let id = self.write().common().report().insert_report_content(
+        self.write().common().report().insert_report_content(
             creator,
             target,
             ReportTypeNumberInternal::CustomReport(custom_report_type_number),
             ReportProcessingState::Waiting,
         )?;
-
-        {
-            use model::schema::account_custom_report::dsl::*;
-
-            insert_into(account_custom_report)
-                .values((report_id.eq(id), boolean_value.eq(value)))
-                .execute(self.conn())
-                .into_db_error((creator, target))?;
-        }
 
         Ok(())
     }

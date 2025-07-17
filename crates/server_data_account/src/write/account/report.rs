@@ -17,14 +17,12 @@ use tracing::info;
 define_cmd_wrapper_write!(WriteCommandsAccountReport);
 
 impl WriteCommandsAccountReport<'_> {
-    /// Reports custom report with boolean value if not previously reported with
-    /// the same value.
-    pub async fn report_custom_report_boolean(
+    /// Reports custom report with empty content if not previously reported.
+    pub async fn report_custom_report_empty(
         &self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
         custom_report_id: CustomReportId,
-        value: bool,
     ) -> Result<UpdateReportResult, DataError> {
         let custom_report_type_number = custom_report_id
             .to_report_type_number_value()
@@ -35,7 +33,7 @@ impl WriteCommandsAccountReport<'_> {
             .custom_reports()
             .and_then(|v| v.index_with_id(custom_report_id))
             .map(|r| r.report_type);
-        if custom_report_type != Some(CustomReportType::Boolean) {
+        if custom_report_type != Some(CustomReportType::Empty) {
             return Err(DataError::NotAllowed.report());
         }
 
@@ -54,25 +52,16 @@ impl WriteCommandsAccountReport<'_> {
             return Ok(UpdateReportResult::too_many_reports());
         }
 
-        let report_with_same_value = reports.iter().find(|v| {
-            v.report
-                .content
-                .custom_report
-                .as_ref()
-                .and_then(|v| v.boolean_value)
-                == Some(value)
-        });
-        if report_with_same_value.is_some() {
+        if !reports.is_empty() {
             // Already reported
             return Ok(UpdateReportResult::success());
         }
 
         db_transaction!(self, move |mut cmds| {
-            cmds.account().report().insert_custom_report_boolean(
+            cmds.account().report().insert_custom_report_empty(
                 creator,
                 target,
                 custom_report_type_number,
-                value,
             )?;
             Ok(())
         })?;

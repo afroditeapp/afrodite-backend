@@ -112,7 +112,8 @@ impl CurrentReadCommonReport<'_> {
                 chat_message = self.chat_message_report(report.id)?
             }
             ReportTypeNumberInternal::CustomReport(_) => {
-                custom_report = self.custom_report(report.id)?
+                // Currently custom reports don't support any content
+                custom_report = Some(CustomReportContent);
             }
         }
 
@@ -232,22 +233,6 @@ impl CurrentReadCommonReport<'_> {
         } else {
             Ok(None)
         }
-    }
-
-    fn custom_report(
-        &mut self,
-        id: ReportIdDb,
-    ) -> Result<Option<CustomReportContent>, DieselDatabaseError> {
-        use crate::schema::account_custom_report::dsl::*;
-
-        let value: Option<Option<bool>> = account_custom_report
-            .find(id)
-            .select(boolean_value)
-            .first(self.conn())
-            .optional()
-            .into_db_error(())?;
-
-        Ok(value.map(|v| CustomReportContent { boolean_value: v }))
     }
 
     pub fn get_report_account_info(

@@ -314,19 +314,6 @@ CREATE TABLE IF NOT EXISTS account_app_notification_settings(
             ON UPDATE CASCADE
 );
 
--- TODO(prod): Add custom report type 'NoValue'
---             and remove the boolean value type as
---             false values are not used.
-
-CREATE TABLE IF NOT EXISTS account_custom_report(
-    report_id               INTEGER PRIMARY KEY NOT NULL,
-    boolean_value           BOOLEAN,
-    FOREIGN KEY (report_id)
-        REFERENCES common_report (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
-);
-
 -- Demo mode user created accounts
 CREATE TABLE IF NOT EXISTS demo_mode_account_ids(
     id               INTEGER PRIMARY KEY NOT NULL,

@@ -21,15 +21,6 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    account_custom_report (report_id) {
-        report_id -> Integer,
-        boolean_value -> Nullable<Bool>,
-    }
-}
-
-diesel::table! {
-    use crate::schema_sqlite_types::*;
-
     account_email_sending_state (account_id) {
         account_id -> Integer,
         account_registered_state_number -> Integer,
@@ -834,7 +825,6 @@ diesel::table! {
 
 diesel::joinable!(account -> account_id (account_id));
 diesel::joinable!(account_app_notification_settings -> account_id (account_id));
-diesel::joinable!(account_custom_report -> common_report (report_id));
 diesel::joinable!(account_email_sending_state -> account_id (account_id));
 diesel::joinable!(account_interaction_index -> account_interaction (interaction_id));
 diesel::joinable!(account_permissions -> account_id (account_id));
@@ -890,7 +880,6 @@ diesel::joinable!(used_content_ids -> account_id (account_id));
 diesel::allow_tables_to_appear_in_same_query!(
     account,
     account_app_notification_settings,
-    account_custom_report,
     account_email_sending_state,
     account_global_state,
     account_id,

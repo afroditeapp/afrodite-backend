@@ -99,7 +99,8 @@ impl CustomReportsFileHash {
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, ToSchema)]
 pub enum CustomReportType {
-    Boolean,
+    // Empty content
+    Empty,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
