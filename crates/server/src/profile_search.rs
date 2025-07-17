@@ -140,6 +140,10 @@ impl ProfileSearchManager {
         let account_count = TryInto::<u64>::try_into(accounts.len())
             .change_context(ProfileSearchError::AccountCount)?;
 
+        if account_count == 0 {
+            return Ok(());
+        }
+
         let time_for_each_account = milliseconds / account_count;
 
         for a in accounts {
