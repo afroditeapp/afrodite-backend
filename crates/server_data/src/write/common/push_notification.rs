@@ -54,19 +54,15 @@ impl WriteCommandsCommonPushNotification<'_> {
         Ok(token)
     }
 
-    pub async fn reset_pending_notification(&self, id: AccountIdInternal) -> Result<(), DataError> {
+    pub async fn reset_fcm_notification_sent_booleans(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.common()
                 .push_notification()
-                .reset_pending_notification(id)
+                .reset_fcm_notification_sent_booleans(id)
         })?;
-
-        self.write_cache_common(id, |entry| {
-            entry.pending_notification_flags = PendingNotificationFlags::empty();
-            Ok(())
-        })
-        .await
-        .into_error()?;
 
         Ok(())
     }

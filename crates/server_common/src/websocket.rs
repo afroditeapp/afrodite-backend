@@ -44,8 +44,8 @@ pub enum WebSocketError {
     DatabaseAutomaticProfileSearchCompletedNotificationQuery,
     #[error("Database: Media content moderation completed notification query failed")]
     DatabaseMediaContentModerationCompletedNotificationQuery,
-    #[error("Database: Pending notification reset failed")]
-    DatabasePendingNotificationReset,
+    #[error("Database: Reset FCM notification sent booleans failed")]
+    DatabaseResetFcmNotificationSentBooleans,
     #[error("Database: Bot and gender info query failed")]
     DatabaseBotAndGenderInfoQuery,
 

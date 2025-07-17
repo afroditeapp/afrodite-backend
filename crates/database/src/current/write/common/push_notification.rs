@@ -82,7 +82,7 @@ impl CurrentWriteCommonPushNotification<'_> {
         Ok(notification_token)
     }
 
-    pub fn reset_pending_notification(
+    pub fn reset_fcm_notification_sent_booleans(
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
@@ -90,7 +90,6 @@ impl CurrentWriteCommonPushNotification<'_> {
 
         update(common_state.find(id.as_db_id()))
             .set((
-                pending_notification.eq(0),
                 fcm_data_notification_sent.eq(false),
                 fcm_visible_notification_sent.eq(false),
             ))
