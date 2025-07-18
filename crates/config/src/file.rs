@@ -350,12 +350,10 @@ impl Default for MediaLimitsConfig {
 #[derive(Debug, Deserialize, Default, Serialize, Clone)]
 pub struct DemoModeConfig {
     pub database_id: DemoModeId,
-    /// First step password for getting demo mode access token.
-    pub password_stage0: String,
-    /// Second step password for getting demo mode access token.
+    pub username: String,
     /// If this is quessed wrong, these demo mode credentials will
-    /// be locked untill server restarts.
-    pub password_stage1: String,
+    /// be locked until server restarts.
+    pub password: String,
     /// If true then all accounts are accessible.
     /// Overrides `accessible_accounts`.
     #[serde(default)]

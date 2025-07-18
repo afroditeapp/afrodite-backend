@@ -1,5 +1,5 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression};
-use model::{AccountId, RefreshToken};
+use model::{AccessToken, AccountId};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_wrapper;
 use utoipa::{IntoParams, ToSchema};
@@ -7,7 +7,8 @@ use utoipa::{IntoParams, ToSchema};
 use crate::schema_sqlite_types::BigInt;
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
-pub struct DemoModePassword {
+pub struct DemoModeLoginCredentials {
+    pub username: String,
     pub password: String,
 }
 
@@ -15,39 +16,10 @@ pub struct DemoModePassword {
 pub struct DemoModeLoginResult {
     /// This password is locked.
     pub locked: bool,
-    pub token: Option<DemoModeLoginToken>,
-}
-
-impl DemoModeLoginResult {
-    pub fn locked() -> Self {
-        Self {
-            locked: true,
-            token: None,
-        }
-    }
-
-    pub fn token(token: DemoModeLoginToken) -> Self {
-        Self {
-            locked: false,
-            token: Some(token),
-        }
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
-pub struct DemoModeConfirmLogin {
-    pub password: DemoModePassword,
-    pub token: DemoModeLoginToken,
-}
-
-#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Default)]
-pub struct DemoModeConfirmLoginResult {
-    /// This password is locked.
-    pub locked: bool,
     pub token: Option<DemoModeToken>,
 }
 
-impl DemoModeConfirmLoginResult {
+impl DemoModeLoginResult {
     pub fn locked() -> Self {
         Self {
             locked: true,
@@ -64,19 +36,6 @@ impl DemoModeConfirmLoginResult {
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, PartialEq)]
-pub struct DemoModeLoginToken {
-    pub token: String,
-}
-
-impl DemoModeLoginToken {
-    pub fn generate_new() -> Self {
-        Self {
-            token: RefreshToken::generate_new().into_string(),
-        }
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, PartialEq)]
 pub struct DemoModeToken {
     pub token: String,
 }
@@ -84,7 +43,7 @@ pub struct DemoModeToken {
 impl DemoModeToken {
     pub fn generate_new() -> Self {
         Self {
-            token: RefreshToken::generate_new().into_string(),
+            token: AccessToken::generate_new().into_string(),
         }
     }
 }
