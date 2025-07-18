@@ -4,10 +4,7 @@ use axum::extract::{ConnectInfo, State};
 use model_account::{
     AccessibleAccount, AccountId, DemoModeLoginToAccount, LoginResult, SignInWithInfo,
 };
-use model_server_state::{
-    DemoModeConfirmLogin, DemoModeConfirmLoginResult, DemoModeLoginResult, DemoModePassword,
-    DemoModeToken,
-};
+use model_server_state::{DemoModeLoginCredentials, DemoModeLoginResult, DemoModeToken};
 use server_api::{
     S,
     app::{GetAccounts, GetConfig, ReadData},
@@ -26,10 +23,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-// TODO(prod): Use one route for login and change wording to user ID and
-//             password? Also info about locked account only if password
-//             is correct?
-
 const PATH_POST_DEMO_MODE_LOGIN: &str = "/account_api/demo_mode_login";
 
 /// Access demo mode, which allows accessing all or specific accounts
@@ -37,52 +30,24 @@ const PATH_POST_DEMO_MODE_LOGIN: &str = "/account_api/demo_mode_login";
 #[utoipa::path(
     post,
     path = PATH_POST_DEMO_MODE_LOGIN,
-    request_body = DemoModePassword,
+    request_body = DemoModeLoginCredentials,
     responses(
         (status = 200, description = "Successfull.", body = DemoModeLoginResult),
-        (status = 500, description = "Internal server error."),
     ),
     security(),
 )]
 pub async fn post_demo_mode_login(
     State(state): State<S>,
-    Json(password): Json<DemoModePassword>,
+    Json(credentials): Json<DemoModeLoginCredentials>,
 ) -> Result<Json<DemoModeLoginResult>, StatusCode> {
     ACCOUNT.post_demo_mode_login.incr();
     // TODO(prod): Increase to 5 seconds
     tokio::time::sleep(Duration::from_secs(1)).await;
-    let result = state.demo_mode().stage0_login(password).await?;
-    Ok(result.into())
-}
-
-const PATH_POST_DEMO_MODE_CONFIRM_LOGIN: &str = "/account_api/demo_mode_confirm_login";
-
-#[utoipa::path(
-    post,
-    path = PATH_POST_DEMO_MODE_CONFIRM_LOGIN,
-    request_body = DemoModeConfirmLogin,
-    responses(
-        (status = 200, description = "Successfull.", body = DemoModeConfirmLoginResult),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(),
-)]
-pub async fn post_demo_mode_confirm_login(
-    State(state): State<S>,
-    Json(info): Json<DemoModeConfirmLogin>,
-) -> Result<Json<DemoModeConfirmLoginResult>, StatusCode> {
-    ACCOUNT.post_demo_mode_confirm_login.incr();
-    let result = state
-        .demo_mode()
-        .stage1_login(info.password, info.token)
-        .await?;
+    let result = state.demo_mode().login(credentials).await;
     Ok(result.into())
 }
 
 const PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS: &str = "/account_api/demo_mode_accessible_accounts";
-
-// TODO(prod): Return Unauthorized instead of internal server error on routes which
-// require DemoModeToken?
 
 /// Get demo account's available accounts.
 ///
@@ -93,7 +58,8 @@ const PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS: &str = "/account_api/demo_mode_ac
     request_body = DemoModeToken,
     responses(
         (status = 200, description = "Successfull.", body = Vec<AccessibleAccount>),
-        (status = 500, description = "Unauthorized or internal server error."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
     ),
     security(),
 )]
@@ -103,10 +69,11 @@ pub async fn post_demo_mode_accessible_accounts(
 ) -> Result<Json<Vec<AccessibleAccount>>, StatusCode> {
     ACCOUNT.post_demo_mode_accessible_accounts.incr();
 
-    let info = state
-        .demo_mode()
-        .accessible_accounts_if_token_valid(&token)
-        .await?;
+    let Some(id) = state.demo_mode().valid_demo_mode_token_exists(&token).await else {
+        return Err(StatusCode::UNAUTHORIZED);
+    };
+
+    let info = state.demo_mode().accessible_accounts(id).await?;
     let accounts = info.into_accounts(state.read()).await?;
     let result = DemoModeUtils::with_extra_info(accounts, state.config(), state.read()).await?;
 
@@ -121,6 +88,7 @@ const PATH_POST_DEMO_MODE_REGISTER_ACCOUNT: &str = "/account_api/demo_mode_regis
     request_body = DemoModeToken,
     responses(
         (status = 200, description = "Successful.", body = AccountId),
+        (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
     security(),
@@ -131,7 +99,9 @@ pub async fn post_demo_mode_register_account(
 ) -> Result<Json<AccountId>, StatusCode> {
     ACCOUNT.post_demo_mode_register_account.incr();
 
-    let demo_mode_id = state.demo_mode().demo_mode_token_exists(&token).await?;
+    let Some(demo_mode_id) = state.demo_mode().valid_demo_mode_token_exists(&token).await else {
+        return Err(StatusCode::UNAUTHORIZED);
+    };
 
     let id = state
         .data_all_access()
@@ -154,6 +124,7 @@ const PATH_POST_DEMO_MODE_LOGIN_TO_ACCOUNT: &str = "/account_api/demo_mode_login
     request_body = DemoModeLoginToAccount,
     responses(
         (status = 200, description = "Successful.", body = LoginResult),
+        (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
     security(),
@@ -165,16 +136,21 @@ pub async fn post_demo_mode_login_to_account(
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT.post_demo_mode_login_to_account.incr();
 
+    let Some(id) = state
+        .demo_mode()
+        .valid_demo_mode_token_exists(&info.token)
+        .await
+    else {
+        return Err(StatusCode::UNAUTHORIZED);
+    };
+
     if let Some(min_version) = state.config().min_client_version() {
         if !min_version.received_version_is_accepted(info.client_info.client_version) {
             return Ok(LoginResult::error_unsupported_client().into());
         }
     }
 
-    let accessible_accounts = state
-        .demo_mode()
-        .accessible_accounts_if_token_valid(&info.token)
-        .await?;
+    let accessible_accounts = state.demo_mode().accessible_accounts(id).await?;
     accessible_accounts.contains(info.aid, state.read()).await?;
 
     let r = login_impl(info.aid, address, &state).await?;
@@ -201,7 +177,6 @@ const PATH_POST_DEMO_MODE_LOGOUT: &str = "/account_api/demo_mode_logout";
     request_body = DemoModeToken,
     responses(
         (status = 200, description = "Successfull."),
-        (status = 500, description = "Internal server error."),
     ),
     security(),
 )]
@@ -210,7 +185,7 @@ pub async fn post_demo_mode_logout(
     Json(token): Json<DemoModeToken>,
 ) -> Result<(), StatusCode> {
     ACCOUNT.post_demo_mode_logout.incr();
-    state.demo_mode().demo_mode_logout(&token).await?;
+    state.demo_mode().demo_mode_logout(&token).await;
     Ok(())
 }
 
@@ -218,7 +193,6 @@ create_open_api_router!(
         fn router_demo_mode,
         post_demo_mode_accessible_accounts,
         post_demo_mode_login,
-        post_demo_mode_confirm_login,
         post_demo_mode_register_account,
         post_demo_mode_login_to_account,
         post_demo_mode_logout,
@@ -230,7 +204,6 @@ create_counters!(
     ACCOUNT_DEMO_MODE_COUNTERS_LIST,
     post_demo_mode_accessible_accounts,
     post_demo_mode_login,
-    post_demo_mode_confirm_login,
     post_demo_mode_register_account,
     post_demo_mode_login_to_account,
     post_demo_mode_logout,
