@@ -1,4 +1,5 @@
 use axum::{Extension, extract::State};
+use model::AccountState;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionState, CurrentAccountInteractionState,
     DailyLikesLeft, DeleteLikeResult, LimitedActionStatus, NewReceivedLikesCount,
@@ -27,6 +28,13 @@ const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
 ///
 /// This route might update [model_chat::DailyLikesLeft] and WebSocket event
 /// about the update is not sent because this route returns the new value.
+///
+/// The like sending is allowed even if accounts aren't a match when
+/// considering age and gender preferences. This is because changing
+/// the preferences isn't limited.
+///
+/// # Access
+/// * [AccountState::Normal]
 #[utoipa::path(
     post,
     path = PATH_POST_SEND_LIKE,
@@ -41,7 +49,8 @@ const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
 pub async fn post_send_like(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    Json(requested_profile): Json<AccountId>,
+    Extension(account_state): Extension<AccountState>,
+    Json(requested_account): Json<AccountId>,
 ) -> Result<Json<SendLikeResult>, StatusCode> {
     CHAT.post_send_like.incr();
     state
@@ -49,15 +58,17 @@ pub async fn post_send_like(
         .incr(id, |u| &u.post_send_like)
         .await;
 
-    // TODO(prod): Check is profile public and is age ok.
+    if account_state != AccountState::Normal {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
 
-    let requested_profile = state.get_internal_id(requested_profile).await?;
+    let requested_account = state.get_internal_id(requested_account).await?;
 
     let r = db_write!(state, move |cmds| {
         let current_interaction = cmds
             .read()
             .chat()
-            .account_interaction(id, requested_profile)
+            .account_interaction(id, requested_account)
             .await?;
         if let Some(current_interaction) = current_interaction {
             match current_interaction.state_number {
@@ -80,7 +91,7 @@ pub async fn post_send_like(
         let unlimited_likes = cmds
             .read()
             .chat()
-            .is_unlimited_likes_enabled(requested_profile)
+            .is_unlimited_likes_enabled(requested_account)
             .await?;
 
         let like_sending_limit_enabled = cmds
@@ -106,7 +117,7 @@ pub async fn post_send_like(
         if allow_action {
             let changes = cmds
                 .chat()
-                .like_or_match_profile(id, requested_profile)
+                .like_or_match_profile(id, requested_account)
                 .await?;
             cmds.events()
                 .handle_chat_state_changes(&changes.sender)
