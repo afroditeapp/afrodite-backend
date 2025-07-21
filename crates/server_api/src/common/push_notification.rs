@@ -10,7 +10,7 @@ use simple_backend::create_counters;
 use super::super::utils::{Json, StatusCode};
 use crate::{S, app::WriteData, create_open_api_router, db_write};
 
-// TOOD(microservice): Most likely public ID will not be sent from account
+// TODO(microservice): Most likely public ID will not be sent from account
 // to other servers.
 
 const PATH_POST_SET_DEVICE_TOKEN: &str = "/common_api/set_device_token";
