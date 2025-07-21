@@ -27,6 +27,10 @@ const PATH_POST_DEMO_MODE_LOGIN: &str = "/account_api/demo_mode_login";
 
 /// Access demo mode, which allows accessing all or specific accounts
 /// depending on the server configuration.
+///
+/// This API route has 1 second wait time to make password guessing harder.
+/// Account will be locked if the password is guessed. Server process restart
+/// will reset the lock.
 #[utoipa::path(
     post,
     path = PATH_POST_DEMO_MODE_LOGIN,
@@ -41,7 +45,6 @@ pub async fn post_demo_mode_login(
     Json(credentials): Json<DemoModeLoginCredentials>,
 ) -> Result<Json<DemoModeLoginResult>, StatusCode> {
     ACCOUNT.post_demo_mode_login.incr();
-    // TODO(prod): Increase to 5 seconds
     tokio::time::sleep(Duration::from_secs(1)).await;
     let result = state.demo_mode().login(credentials).await;
     Ok(result.into())
