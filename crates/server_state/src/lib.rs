@@ -31,6 +31,7 @@ use self::internal_api::InternalApiClient;
 use crate::{admin_notifications::AdminNotificationManagerData, demo::DemoModeManager};
 
 pub mod admin_notifications;
+pub mod api_limits;
 pub mod api_usage;
 pub mod app;
 pub mod client_version;

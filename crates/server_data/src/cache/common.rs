@@ -5,7 +5,7 @@ use model::{
 use model_server_data::{AppNotificationSettingsInternal, AuthPair};
 
 use super::ConnectionInfo;
-use crate::event::EventSender;
+use crate::{cache::api_limits::AllApiLimits, event::EventSender};
 
 #[derive(Debug)]
 pub struct CacheCommon {
@@ -20,6 +20,7 @@ pub struct CacheCommon {
     /// possible.
     pub pending_notification_flags: PendingNotificationFlags,
     pub app_notification_settings: AppNotificationSettingsInternal,
+    api_limits: AllApiLimits,
 }
 
 impl CacheCommon {
@@ -79,6 +80,14 @@ impl CacheCommon {
             .as_ref()
             .map(|info| &info.event_sender)
     }
+
+    pub fn api_limits(&mut self) -> &mut AllApiLimits {
+        &mut self.api_limits
+    }
+
+    pub fn reset_api_limits(&mut self) {
+        self.api_limits = AllApiLimits::default();
+    }
 }
 
 impl Default for CacheCommon {
@@ -92,6 +101,7 @@ impl Default for CacheCommon {
             login_session_changed: false,
             pending_notification_flags: PendingNotificationFlags::empty(),
             app_notification_settings: AppNotificationSettingsInternal::default(),
+            api_limits: AllApiLimits::default(),
         }
     }
 }

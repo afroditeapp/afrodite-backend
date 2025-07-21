@@ -3,7 +3,11 @@ use model_profile::{
     AccountIdInternal, AutomaticProfileSearchIteratorSessionId, ProfileIteratorSessionId,
     ProfilePage,
 };
-use server_api::{S, app::ApiUsageTrackerProvider, create_open_api_router};
+use server_api::{
+    S,
+    app::{ApiLimitsProvider, ApiUsageTrackerProvider},
+    create_open_api_router,
+};
 use server_data_profile::read::GetReadProfileCommands;
 use simple_backend::create_counters;
 
@@ -36,6 +40,11 @@ pub async fn post_get_next_profile_page(
         .api_usage_tracker()
         .incr(account_id, |u| &u.post_get_next_profile_page)
         .await;
+    state
+        .api_limits(account_id)
+        .profile()
+        .post_get_next_profile_page()
+        .await?;
 
     let data = state
         .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {
@@ -84,6 +93,11 @@ pub async fn post_reset_profile_paging(
         .api_usage_tracker()
         .incr(account_id, |u| &u.post_reset_profile_paging)
         .await;
+    state
+        .api_limits(account_id)
+        .profile()
+        .post_reset_profile_paging()
+        .await?;
 
     let iterator_session_id: ProfileIteratorSessionId = state
         .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {

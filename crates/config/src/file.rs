@@ -262,6 +262,7 @@ pub struct LimitsConfig {
     pub account: Option<AccountLimitsConfig>,
     pub chat: Option<ChatLimitsConfig>,
     pub media: Option<MediaLimitsConfig>,
+    pub profile: Option<ProfileLimitsConfig>,
 }
 
 /// Common limits config for all server components
@@ -337,6 +338,22 @@ impl Default for MediaLimitsConfig {
             concurrent_content_uploads: 10,
             max_content_count: 20,
             unused_content_wait_duration: DurationValue::from_days(90),
+        }
+    }
+}
+
+/// Profile related limits config
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ProfileLimitsConfig {
+    pub profile_iterator_reset_daily_max_count: u16,
+    pub profile_iterator_next_page_daily_max_count: u16,
+}
+
+impl Default for ProfileLimitsConfig {
+    fn default() -> Self {
+        Self {
+            profile_iterator_reset_daily_max_count: 100,
+            profile_iterator_next_page_daily_max_count: 1000,
         }
     }
 }

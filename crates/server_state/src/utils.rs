@@ -8,7 +8,7 @@ use simple_backend::{
     sign_in_with::{apple::SignInWithAppleError, google::SignInWithGoogleError},
 };
 
-use crate::{DataError, data_signer::DataSignerError};
+use crate::{DataError, api_limits::ApiLimitError, data_signer::DataSignerError};
 
 #[allow(non_camel_case_types)]
 pub enum StatusCode {
@@ -22,6 +22,8 @@ pub enum StatusCode {
     NOT_ACCEPTABLE,
     /// 404
     NOT_FOUND,
+    /// 429
+    TOO_MANY_REQUESTS,
     /// 304
     NOT_MODIFIED,
 }
@@ -34,6 +36,7 @@ impl From<StatusCode> for hyper::StatusCode {
             StatusCode::INTERNAL_SERVER_ERROR => hyper::StatusCode::INTERNAL_SERVER_ERROR,
             StatusCode::NOT_ACCEPTABLE => hyper::StatusCode::NOT_ACCEPTABLE,
             StatusCode::NOT_FOUND => hyper::StatusCode::NOT_FOUND,
+            StatusCode::TOO_MANY_REQUESTS => hyper::StatusCode::TOO_MANY_REQUESTS,
             StatusCode::NOT_MODIFIED => hyper::StatusCode::NOT_MODIFIED,
         }
     }
@@ -141,3 +144,9 @@ impl_error_to_status_code!(
     JitsiMeetUrlCreatorError,
     RequestError::JitsiMeetUrlCreatorError
 );
+
+impl From<crate::result::WrappedReport<error_stack::Report<ApiLimitError>>> for StatusCode {
+    fn from(_: crate::result::WrappedReport<error_stack::Report<ApiLimitError>>) -> Self {
+        StatusCode::TOO_MANY_REQUESTS
+    }
+}

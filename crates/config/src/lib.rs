@@ -39,7 +39,7 @@ use simple_backend_config::{SimpleBackendConfig, file::SimpleBackendConfigFile};
 use simple_backend_utils::{ContextExt, IntoReportFromString};
 
 use self::file::{Components, ConfigFile, ExternalServices, LocationConfig};
-use crate::file_notification_content::NotificationContentFile;
+use crate::{file::ProfileLimitsConfig, file_notification_content::NotificationContentFile};
 
 #[derive(thiserror::Error, Debug)]
 pub enum GetConfigError {
@@ -218,6 +218,14 @@ impl Config {
             .limits
             .as_ref()
             .and_then(|v| v.media.as_ref().cloned())
+            .unwrap_or_default()
+    }
+
+    pub fn limits_profile(&self) -> ProfileLimitsConfig {
+        self.file
+            .limits
+            .as_ref()
+            .and_then(|v| v.profile.as_ref().cloned())
             .unwrap_or_default()
     }
 

@@ -35,7 +35,7 @@ use simple_backend_config::SimpleBackendConfig;
 use super::S;
 pub use crate::app::*;
 use crate::{
-    api_usage::ApiUsageTracker, client_version::ClientVersionTracker,
+    api_limits::ApiLimits, api_usage::ApiUsageTracker, client_version::ClientVersionTracker,
     internal_api::InternalApiClient,
 };
 
@@ -247,6 +247,16 @@ impl DataSignerProvider for S {
 impl AdminNotificationProvider for S {
     fn admin_notification(&self) -> &crate::admin_notifications::AdminNotificationManagerData {
         &self.state.admin_notification
+    }
+}
+
+impl ApiLimitsProvider for S {
+    fn api_limits(&self, account_id: AccountIdInternal) -> crate::api_limits::ApiLimits {
+        ApiLimits::new(
+            self.read().cache_read_write_access(),
+            self.config(),
+            account_id,
+        )
     }
 }
 

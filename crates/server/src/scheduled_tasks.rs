@@ -18,7 +18,7 @@ use server_data_profile::{
     read::GetReadProfileCommands, statistics::ProfileStatisticsCacheUtils,
     write::GetWriteCommandsProfile,
 };
-use server_state::S;
+use server_state::{S, app::ApiLimitsProvider};
 use simple_backend::{ServerQuitWatcher, app::PerfCounterDataProvider};
 use simple_backend_config::file::ScheduledTasksConfig;
 use simple_backend_utils::{IntoReportFromString, time::sleep_until_current_time_is_at};
@@ -236,6 +236,8 @@ impl ScheduledTaskManager {
             email::handle_email_notifications(&self.state, id)
                 .await
                 .change_context(ScheduledTaskError::DatabaseError)?;
+
+            self.reset_api_limits(id).await?;
         }
 
         if age_updated != 0 {
@@ -406,6 +408,16 @@ impl ScheduledTaskManager {
                 .change_context(ScheduledTaskError::DatabaseError)?;
             }
         }
+
+        Ok(())
+    }
+
+    pub async fn reset_api_limits(&self, id: AccountIdInternal) -> Result<(), ScheduledTaskError> {
+        self.state
+            .api_limits(id)
+            .reset_limits()
+            .await
+            .change_context(ScheduledTaskError::DatabaseError)?;
 
         Ok(())
     }

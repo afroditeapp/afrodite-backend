@@ -58,8 +58,6 @@ pub async fn post_account_data(
     Json(data): Json<AccountData>,
 ) -> Result<(), StatusCode> {
     ACCOUNT.post_account_data.incr();
-    // TODO(prod): API usage limits for some APIs
-
     // TODO(prod): Manual email setting should be removed probably and just
     // use the email from sign in with Google or Apple.
     // Update: Perhaps create specific route for setting email and
