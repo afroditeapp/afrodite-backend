@@ -198,7 +198,7 @@ pub async fn post_profile(
             return Err(DataError::NotAllowed.report());
         }
 
-        if profile.name.trim().is_empty() || profile.name != profile.name.trim() {
+        if profile.name.is_empty() {
             return Err(DataError::NotAllowed.report());
         }
 

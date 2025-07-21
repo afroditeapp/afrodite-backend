@@ -210,6 +210,10 @@ impl ProfileUpdate {
             return Err("Profile name is too long".to_string());
         }
 
+        if self.name != self.name.trim() {
+            return Err("Profile name is not trimmed".to_string());
+        }
+
         if let Some(c) = self.name.chars().next() {
             if !c.is_uppercase() {
                 return Err("Profile name does not start with uppercase letter".to_string());
