@@ -125,9 +125,6 @@ pub async fn get_profile(
 
 const PATH_POST_PROFILE: &str = "/profile_api/profile";
 
-// TODO(prod): Consider requiring that the first letter in profile name is
-//             a capital letter.
-
 /// Update profile information.
 ///
 /// Writes the profile to the database only if it is changed.
@@ -142,6 +139,7 @@ const PATH_POST_PROFILE: &str = "/profile_api/profile";
 /// - Profile name changes are only possible when initial setup is ongoing.
 /// - Profile name must be trimmed and not empty.
 /// - Profile name must be 100 bytes or less.
+/// - Profile name must start with uppercase letter.
 /// - Profile age must match with currently valid age range. The first min
 ///   value for the age range is the age at the initial setup. The second min
 ///   and max value is calculated using the following algorithm:

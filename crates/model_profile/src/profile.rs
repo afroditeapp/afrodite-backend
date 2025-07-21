@@ -210,6 +210,12 @@ impl ProfileUpdate {
             return Err("Profile name is too long".to_string());
         }
 
+        if let Some(c) = self.name.chars().next() {
+            if !c.is_uppercase() {
+                return Err("Profile name does not start with uppercase letter".to_string());
+            }
+        }
+
         if self.ptext.len() > 2000 {
             return Err("Profile text is too long".to_string());
         }
