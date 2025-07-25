@@ -136,7 +136,8 @@ const PATH_POST_PROFILE: &str = "/profile_api/profile";
 /// - Profile attributes must be valid.
 /// - Profile text must be 2000 bytes or less.
 /// - Profile text must be trimmed.
-/// - Profile name changes are only possible when initial setup is ongoing.
+/// - Profile name changes are only possible when initial setup is ongoing
+///   or current profile name is not accepted.
 /// - Profile name must be trimmed and not empty.
 /// - Profile name must be 100 bytes or less.
 /// - Profile name must start with uppercase letter.
@@ -194,7 +195,10 @@ pub async fn post_profile(
             return Ok(());
         }
 
-        if account_state != AccountState::InitialSetup && profile.name != old_profile.profile.name {
+        if account_state != AccountState::InitialSetup
+            && profile.name != old_profile.profile.name
+            && old_profile.profile.name_accepted()
+        {
             return Err(DataError::NotAllowed.report());
         }
 
