@@ -195,6 +195,20 @@ impl DbDataToCacheLoader {
                         .automatic_profile_search_last_seen_time(account_id)
                 })
                 .await?;
+            let profile_name_moderation_state = db
+                .db_read(move |mut cmds| {
+                    cmds.profile()
+                        .moderation()
+                        .profile_name_moderation_state(account_id)
+                })
+                .await?;
+            let profile_text_moderation_state = db
+                .db_read(move |mut cmds| {
+                    cmds.profile()
+                        .moderation()
+                        .profile_text_moderation_state(account_id)
+                })
+                .await?;
 
             let mut profile_data = CacheProfile::new(
                 account_id.uuid,
@@ -204,6 +218,8 @@ impl DbDataToCacheLoader {
                 filters,
                 last_seen_unix_time,
                 automatic_profile_search_last_seen_time,
+                profile_name_moderation_state,
+                profile_text_moderation_state,
             );
 
             let location_area = index_writer.coordinates_to_area(

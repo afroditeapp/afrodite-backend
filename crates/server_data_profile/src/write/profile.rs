@@ -92,49 +92,63 @@ impl WriteCommandsProfile<'_> {
         let profile_data = data.clone();
         let config = self.config_arc().clone();
         let modification = ProfileModificationMetadata::generate();
-        let profile_text_moderation_state_update = db_transaction!(self, move |mut cmds| {
-            let (name_update_detected, text_update_detected) = {
-                let current_profile = cmds.read().profile().data().profile(id)?;
-                (
-                    current_profile.name != profile_data.name,
-                    current_profile.ptext != profile_data.ptext,
-                )
-            };
-            cmds.profile().data().profile(id, &profile_data)?;
-            cmds.profile()
-                .data()
-                .upsert_profile_attributes(id, profile_data.attributes)?;
-            cmds.profile()
-                .data()
-                .required_changes_for_profile_update(id, &modification)?;
-            if name_update_detected {
+        let (profile_name_moderation_state_update, profile_text_moderation_state_update) =
+            db_transaction!(self, move |mut cmds| {
+                let (name_update_detected, text_update_detected) = {
+                    let current_profile = cmds.read().profile().data().profile(id)?;
+                    (
+                        current_profile.name != profile_data.name,
+                        current_profile.ptext != profile_data.ptext,
+                    )
+                };
+                cmds.profile().data().profile(id, &profile_data)?;
                 cmds.profile()
-                    .profile_name_allowlist()
-                    .reset_profile_name_moderation_state(
-                        id,
-                        &profile_data.name,
-                        config.profile_name_allowlist(),
-                    )?;
-            }
-            let profile_text_moderation_state_update = if text_update_detected {
-                Some(
-                    cmds.profile()
-                        .profile_text()
-                        .reset_profile_text_moderation_state(id, profile_data.ptext.is_empty())?,
-                )
-            } else {
-                None
-            };
-            Ok(profile_text_moderation_state_update)
-        })?;
+                    .data()
+                    .upsert_profile_attributes(id, profile_data.attributes)?;
+                cmds.profile()
+                    .data()
+                    .required_changes_for_profile_update(id, &modification)?;
+                let profile_name_moderation_state_update = if name_update_detected {
+                    Some(
+                        cmds.profile()
+                            .moderation()
+                            .reset_profile_name_moderation_state(
+                                id,
+                                &profile_data.name,
+                                config.profile_name_allowlist(),
+                            )?,
+                    )
+                } else {
+                    None
+                };
+                let profile_text_moderation_state_update = if text_update_detected {
+                    Some(
+                        cmds.profile()
+                            .moderation()
+                            .reset_profile_text_moderation_state(
+                                id,
+                                profile_data.ptext.is_empty(),
+                            )?,
+                    )
+                } else {
+                    None
+                };
+                Ok((
+                    profile_name_moderation_state_update,
+                    profile_text_moderation_state_update,
+                ))
+            })?;
 
         self.write_cache_profile(id.as_id(), |p| {
             p.update_profile_internal(|p| data.update_to_profile(p));
             data.update_to_attributes(&mut p.attributes);
             p.update_profile_version_uuid(modification.version);
             p.state.profile_edited_time = modification.time;
+            if let Some(update) = profile_name_moderation_state_update {
+                p.update_profile_name_moderation_state(Some(update));
+            }
             if let Some(update) = profile_text_moderation_state_update {
-                p.state.profile_text_moderation_state = update;
+                p.update_profile_text_moderation_state(update);
             }
             Ok(())
         })

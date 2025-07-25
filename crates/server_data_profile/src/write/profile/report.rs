@@ -1,16 +1,15 @@
 use database::current::read::GetDbReadCommandsCommon;
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
-    AccountIdInternal, EventToClientInternal, ProfileNameModerationState,
-    ProfileTextModerationState, ReportTypeNumber, ReportTypeNumberInternal, UpdateReportResult,
+    AccountIdInternal, EventToClientInternal, ProfileModerationContentType, ProfileModerationState,
+    ReportTypeNumber, ReportTypeNumberInternal, UpdateReportResult,
 };
 use server_data::{
     DataError, app::GetConfig, db_transaction, define_cmd_wrapper_write, read::DbRead,
     result::Result, write::DbTransaction,
 };
-use tracing::warn;
 
-use crate::write::{GetWriteCommandsProfile, profile_admin::profile_text::ModerateProfileTextMode};
+use crate::write::{GetWriteCommandsProfile, profile_admin::moderation::ModerateProfileValueMode};
 
 define_cmd_wrapper_write!(WriteCommandsProfileReport);
 
@@ -29,9 +28,24 @@ impl WriteCommandsProfileReport<'_> {
             return Ok(UpdateReportResult::outdated_report_content());
         }
 
-        if target_data.name_moderation_state == ProfileNameModerationState::AcceptedByBot {
-            // TODO(prod): Profile name bot moderation
-            warn!("Profile name bot moderations are unsupported currently");
+        if target_data.name_moderation_info.as_ref().map(|v| v.state)
+            == Some(ProfileModerationState::AcceptedByBot)
+        {
+            self.handle()
+                .profile_admin()
+                .moderation()
+                .moderate_profile_string(
+                    ProfileModerationContentType::ProfileName,
+                    ModerateProfileValueMode::MoveToHumanModeration,
+                    target,
+                    profile_name.to_string(),
+                )
+                .await?;
+
+            self.handle()
+                .events()
+                .send_connected_event(target, EventToClientInternal::ProfileChanged)
+                .await?;
         }
 
         let components = self.config().components();
@@ -81,12 +95,15 @@ impl WriteCommandsProfileReport<'_> {
             return Ok(UpdateReportResult::outdated_report_content());
         }
 
-        if target_data.text_moderation_info.state == ProfileTextModerationState::AcceptedByBot {
+        if target_data.text_moderation_info.as_ref().map(|v| v.state)
+            == Some(ProfileModerationState::AcceptedByBot)
+        {
             self.handle()
                 .profile_admin()
-                .profile_text()
-                .moderate_profile_text(
-                    ModerateProfileTextMode::MoveToHumanModeration,
+                .moderation()
+                .moderate_profile_string(
+                    ProfileModerationContentType::ProfileText,
+                    ModerateProfileValueMode::MoveToHumanModeration,
                     target,
                     profile_text.to_string(),
                 )

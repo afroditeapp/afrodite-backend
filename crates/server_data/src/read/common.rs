@@ -115,7 +115,10 @@ impl ReadCommandsCommon<'_> {
                 Ok(e.profile.as_ref().map(|p| {
                     (
                         p.profile_internal().name.clone(),
-                        p.state.profile_name_moderation_state.is_accepted(),
+                        p.profile_name_moderation_state()
+                            .as_ref()
+                            .map(|v| v.0.is_accepted())
+                            .unwrap_or_default(),
                     )
                 }))
             })

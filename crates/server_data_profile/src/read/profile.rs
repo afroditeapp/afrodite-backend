@@ -46,8 +46,8 @@ impl ReadCommandsProfile<'_> {
             Ok(ProfileAndProfileVersion {
                 profile: Profile::new(
                     data.profile_internal().clone(),
-                    data.state.profile_name_moderation_state,
-                    data.state.profile_text_moderation_state,
+                    data.profile_name_moderation_state(),
+                    data.profile_text_moderation_state(),
                     data.attributes.attributes().clone(),
                     c.other_shared_state.unlimited_likes,
                 ),

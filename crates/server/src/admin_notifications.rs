@@ -1,8 +1,11 @@
 use std::time::Duration;
 
 use model::{AdminNotification, NotificationEvent};
-use model_media::{GetMediaContentPendingModerationParams, MediaContentType, ModerationQueueType};
-use model_profile::GetProfileTextPendingModerationParams;
+use model_media::{
+    GetMediaContentPendingModerationParams, MediaContentType, ModerationQueueType,
+    ProfileModerationContentType,
+};
+use model_profile::GetProfileStringPendingModerationParams;
 use server_api::app::EventManagerProvider;
 use server_common::result::{Result, WrappedResultExt};
 use server_data::{app::ReadData, read::GetReadCommandsCommon};
@@ -126,23 +129,39 @@ impl AdminNotificationManager {
         }
 
         if self.pending_notifications.moderate_profile_texts_bot {
-            self.pending_notifications.moderate_profile_texts_bot =
-                self.is_profile_text_moderation_needed(true).await?
+            self.pending_notifications.moderate_profile_texts_bot = self
+                .is_profile_string_moderation_needed(
+                    ProfileModerationContentType::ProfileText,
+                    true,
+                )
+                .await?
         }
 
         if self.pending_notifications.moderate_profile_texts_human {
-            self.pending_notifications.moderate_profile_texts_human =
-                self.is_profile_text_moderation_needed(false).await?
+            self.pending_notifications.moderate_profile_texts_human = self
+                .is_profile_string_moderation_needed(
+                    ProfileModerationContentType::ProfileText,
+                    false,
+                )
+                .await?
         }
 
         if self.pending_notifications.moderate_profile_names_bot {
-            self.pending_notifications.moderate_profile_names_bot =
-                self.is_profile_name_moderation_needed().await?
+            self.pending_notifications.moderate_profile_names_bot = self
+                .is_profile_string_moderation_needed(
+                    ProfileModerationContentType::ProfileName,
+                    true,
+                )
+                .await?
         }
 
         if self.pending_notifications.moderate_profile_names_human {
-            self.pending_notifications.moderate_profile_names_human =
-                self.is_profile_name_moderation_needed().await?
+            self.pending_notifications.moderate_profile_names_human = self
+                .is_profile_string_moderation_needed(
+                    ProfileModerationContentType::ProfileName,
+                    false,
+                )
+                .await?
         }
 
         if self.pending_notifications.process_reports {
@@ -235,35 +254,23 @@ impl AdminNotificationManager {
         Ok(!values.is_empty())
     }
 
-    async fn is_profile_text_moderation_needed(
+    async fn is_profile_string_moderation_needed(
         &self,
+        content_type: ProfileModerationContentType,
         is_bot: bool,
     ) -> Result<bool, AdminNotificationError> {
         let values = self
             .state
             .read()
             .profile_admin()
-            .profile_text()
-            .profile_text_pending_moderation_list(
+            .moderation()
+            .profile_pending_moderation_list(
                 is_bot,
-                GetProfileTextPendingModerationParams {
-                    show_texts_which_bots_can_moderate: is_bot,
+                GetProfileStringPendingModerationParams {
+                    content_type,
+                    show_values_which_bots_can_moderate: is_bot,
                 },
             )
-            .await
-            .change_context(AdminNotificationError::DatabaseError)?
-            .values;
-        Ok(!values.is_empty())
-    }
-
-    // TODO(prod): Add bot moderation support to profile name?
-    async fn is_profile_name_moderation_needed(&self) -> Result<bool, AdminNotificationError> {
-        let values = self
-            .state
-            .read()
-            .profile_admin()
-            .profile_name_allowlist()
-            .profile_name_pending_moderation_list()
             .await
             .change_context(AdminNotificationError::DatabaseError)?
             .values;

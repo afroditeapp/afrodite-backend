@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::{UnixTime, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{AccountId, AccountIdDb, sync_version_wrappers};
+use crate::{AccountId, sync_version_wrappers};
 
 mod age;
 pub use age::*;
@@ -33,8 +33,8 @@ pub use search_group::*;
 mod statistics;
 pub use statistics::*;
 
-mod text;
-pub use text::*;
+mod moderation;
+pub use moderation::*;
 
 mod report;
 pub use report::*;
@@ -72,8 +72,8 @@ fn is_true(value: &bool) -> bool {
 impl Profile {
     pub fn new(
         value: ProfileInternal,
-        profile_name_moderation_state: ProfileNameModerationState,
-        profile_text_moderation_state: ProfileTextModerationState,
+        profile_name_moderation_state: Option<ProfileNameModerationState>,
+        profile_text_moderation_state: Option<ProfileTextModerationState>,
         attributes: Vec<ProfileAttributeValue>,
         unlimited_likes: bool,
     ) -> Self {
@@ -83,8 +83,12 @@ impl Profile {
             age: value.age,
             attributes,
             unlimited_likes,
-            name_accepted: profile_name_moderation_state.is_accepted(),
-            ptext_accepted: profile_text_moderation_state.is_accepted(),
+            name_accepted: profile_name_moderation_state
+                .map(|v| v.0.is_accepted())
+                .unwrap_or_default(),
+            ptext_accepted: profile_text_moderation_state
+                .map(|v| v.0.is_accepted())
+                .unwrap_or_default(),
         }
     }
 
@@ -123,13 +127,6 @@ pub struct ProfileStateInternal {
     pub profile_text_max_characters_filter: Option<ProfileTextMaxCharactersFilter>,
     pub random_profile_order: bool,
     pub profile_sync_version: ProfileSyncVersion,
-    pub profile_name_moderation_state: ProfileNameModerationState,
-    pub profile_text_moderation_state: ProfileTextModerationState,
-    pub profile_text_moderation_rejected_reason_category:
-        Option<ProfileTextModerationRejectedReasonCategory>,
-    pub profile_text_moderation_rejected_reason_details:
-        Option<ProfileTextModerationRejectedReasonDetails>,
-    pub profile_text_moderation_moderator_account_id: Option<AccountIdDb>,
     pub profile_edited_unix_time: ProfileEditedTime,
 }
 
@@ -148,8 +145,6 @@ impl From<ProfileStateInternal> for ProfileStateCached {
             profile_text_min_characters_filter: value.profile_text_min_characters_filter,
             profile_text_max_characters_filter: value.profile_text_max_characters_filter,
             random_profile_order: value.random_profile_order,
-            profile_name_moderation_state: value.profile_name_moderation_state,
-            profile_text_moderation_state: value.profile_text_moderation_state,
             profile_edited_time: value.profile_edited_unix_time,
         }
     }
@@ -358,8 +353,8 @@ pub struct GetMyProfileResult {
     pub v: ProfileVersion,
     pub sv: ProfileSyncVersion,
     pub lst: Option<LastSeenTime>,
-    pub name_moderation_state: ProfileNameModerationState,
-    pub text_moderation_info: ProfileTextModerationInfo,
+    pub name_moderation_info: Option<ProfileModerationInfo>,
+    pub text_moderation_info: Option<ProfileModerationInfo>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default)]

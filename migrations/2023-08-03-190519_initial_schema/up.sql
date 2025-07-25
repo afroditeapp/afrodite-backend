@@ -1,6 +1,8 @@
 -- Your SQL goes here
 
 -- TODO(prod): Add autoincrement where needed. News?
+-- TODO(prod): Add NOT NULL to nullable TEXT columns and
+--             use empty text as null value?
 
 ---------- Tables for server component common ----------
 
@@ -426,37 +428,12 @@ CREATE TABLE IF NOT EXISTS profile_state(
     -- Profile age when initial setup is completed
     profile_initial_age               INTEGER,
     profile_initial_age_set_unix_time INTEGER,
-    -- 0 = Empty
-    -- 1 = WaitingBotOrHumanModeration
-    -- 2 = WaitingHumanModeration
-    -- 3 = AcceptedByBot
-    -- 4 = AcceptedByHuman
-    -- 5 = AcceptedUsingAllowlist
-    -- 6 = RejectedByBot
-    -- 7 = RejectedByHuman
-    profile_name_moderation_state     INTEGER        NOT NULL    DEFAULT 0,
-    -- 0 = Empty
-    -- 1 = WaitingBotOrHumanModeration
-    -- 2 = WaitingHumanModeration
-    -- 3 = AcceptedByBot
-    -- 4 = AcceptedByHuman
-    -- 5 = RejectedByBot
-    -- 6 = RejectedByHuman
-    profile_text_moderation_state     INTEGER       NOT NULL    DEFAULT 0,
-    profile_text_moderation_rejected_reason_category INTEGER,
-    profile_text_moderation_rejected_reason_details  TEXT,
-    profile_text_moderation_moderator_account_id     INTEGER,
-    profile_text_edit_time_unix_time                 INTEGER,
     -- Edit time for public profile changes. This updates from both
     -- user and admin made changes.
     profile_edited_unix_time          INTEGER       NOT NULL    DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    FOREIGN KEY (profile_text_moderation_moderator_account_id)
-        REFERENCES account_id (id)
-            ON DELETE SET NULL
             ON UPDATE CASCADE
 );
 
@@ -612,6 +589,35 @@ CREATE TABLE IF NOT EXISTS profile_automatic_profile_search_state(
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS profile_moderation(
+    account_id              INTEGER             NOT NULL,
+    -- 0 = ProfileName
+    -- 1 = ProfileText
+    content_type            INTEGER             NOT NULL,
+    -- 0 = WaitingBotOrHumanModeration
+    -- 1 = WaitingHumanModeration
+    -- 2 = AcceptedByBot
+    -- 3 = AcceptedByHuman
+    -- 4 = AcceptedByAllowlist
+    -- 5 = RejectedByBot
+    -- 6 = RejectedByHuman
+    state_type               INTEGER            NOT NULL,
+    rejected_reason_category INTEGER,
+    rejected_reason_details  TEXT               NOT NULL DEFAULT '',
+    moderator_account_id     INTEGER,
+    -- Created or state reset time
+    created_unix_time        INTEGER            NOT NULL,
+    PRIMARY KEY (account_id, content_type),
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (moderator_account_id)
+        REFERENCES account_id (id)
+            ON DELETE SET NULL
             ON UPDATE CASCADE
 );
 

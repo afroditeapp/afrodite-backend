@@ -8,8 +8,11 @@ use error_stack::{Result, ResultExt};
 use model_profile::{
     AcceptedProfileAges, AccountIdInternal, AttributeId, GetMyProfileResult, LastSeenTime,
     LastSeenUnixTime, Location, Profile, ProfileAge, ProfileAttributeFilterValue,
-    ProfileAttributeValue, ProfileInternal, ProfileStateInternal, UnixTime,
+    ProfileAttributeValue, ProfileInternal, ProfileModerationContentType, ProfileStateInternal,
+    UnixTime,
 };
+
+use crate::current::read::GetDbReadCommandsProfile;
 
 define_current_read_commands!(CurrentReadProfileData);
 
@@ -29,13 +32,22 @@ impl CurrentReadProfileData<'_> {
 
     pub fn profile(&mut self, id: AccountIdInternal) -> Result<Profile, DieselDatabaseError> {
         let profile = self.profile_internal(id)?;
-        let profile_state = self.profile_state(id)?;
         let attributes = self.profile_attribute_values(id)?;
         let other_shared_state = self.read().common().state().other_shared_state(id)?;
+        let profile_name_moderation_state = self
+            .read()
+            .profile()
+            .moderation()
+            .profile_name_moderation_state(id)?;
+        let profile_text_moderation_state = self
+            .read()
+            .profile()
+            .moderation()
+            .profile_text_moderation_state(id)?;
         Ok(Profile::new(
             profile,
-            profile_state.profile_name_moderation_state,
-            profile_state.profile_text_moderation_state,
+            profile_name_moderation_state,
+            profile_text_moderation_state,
             attributes,
             other_shared_state.unlimited_likes,
         ))
@@ -51,10 +63,24 @@ impl CurrentReadProfileData<'_> {
         let profile_state = self.profile_state(id)?;
         let attributes = self.profile_attribute_values(id)?;
         let other_shared_state = self.read().common().state().other_shared_state(id)?;
+        let profile_name_moderation_state = self
+            .read()
+            .profile()
+            .moderation()
+            .profile_moderation_info(id, ProfileModerationContentType::ProfileName)?;
+        let profile_text_moderation_state = self
+            .read()
+            .profile()
+            .moderation()
+            .profile_moderation_info(id, ProfileModerationContentType::ProfileText)?;
         let p = Profile::new(
             profile,
-            profile_state.profile_name_moderation_state,
-            profile_state.profile_text_moderation_state,
+            profile_name_moderation_state
+                .as_ref()
+                .map(|v| v.state.into()),
+            profile_text_moderation_state
+                .as_ref()
+                .map(|v| v.state.into()),
             attributes,
             other_shared_state.unlimited_likes,
         );
@@ -63,8 +89,8 @@ impl CurrentReadProfileData<'_> {
             lst: last_seen_time,
             v: profile_version,
             sv: profile_state.profile_sync_version,
-            name_moderation_state: profile_state.profile_name_moderation_state,
-            text_moderation_info: profile_state.into(),
+            name_moderation_info: profile_name_moderation_state,
+            text_moderation_info: profile_text_moderation_state,
         };
         Ok(r)
     }

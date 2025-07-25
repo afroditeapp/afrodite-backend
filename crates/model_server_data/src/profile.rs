@@ -31,8 +31,8 @@ pub use iterator::*;
 mod search_groups;
 pub use search_groups::*;
 
-mod name;
-pub use name::*;
+mod moderation;
+pub use moderation::*;
 
 mod text;
 pub use text::*;
@@ -117,8 +117,6 @@ pub struct ProfileStateCached {
     pub min_distance_km_filter: Option<MinDistanceKm>,
     pub max_distance_km_filter: Option<MaxDistanceKm>,
     pub random_profile_order: bool,
-    pub profile_name_moderation_state: ProfileNameModerationState,
-    pub profile_text_moderation_state: ProfileTextModerationState,
     pub profile_edited_time: ProfileEditedTime,
 }
 

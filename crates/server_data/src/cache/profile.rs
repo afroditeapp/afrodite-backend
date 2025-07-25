@@ -10,8 +10,8 @@ use model_server_data::{
     AutomaticProfileSearchLastSeenUnixTime, LastSeenUnixTime, ProfileAppNotificationSettings,
     ProfileAttributeFilterValue, ProfileAttributeValue, ProfileCreatedTimeFilter,
     ProfileEditedTimeFilter, ProfileInternal, ProfileIteratorSessionIdInternal,
-    ProfileQueryMakerDetails, ProfileStateCached, ProfileTextCharacterCount, ProfileVersion,
-    SortedProfileAttributes,
+    ProfileNameModerationState, ProfileQueryMakerDetails, ProfileStateCached,
+    ProfileTextCharacterCount, ProfileTextModerationState, ProfileVersion, SortedProfileAttributes,
 };
 use server_common::data::{DataError, cache::CacheError};
 
@@ -32,10 +32,13 @@ pub struct CacheProfile {
     pub profile_iterator_session_id: Option<ProfileIteratorSessionIdInternal>,
     pub profile_iterator_session_id_storage: NextNumberStorage,
     pub automatic_profile_search: AutomaticProifleSearch,
+    profile_name_moderation_state: Option<ProfileNameModerationState>,
     profile_text_character_count: ProfileTextCharacterCount,
+    profile_text_moderation_state: Option<ProfileTextModerationState>,
 }
 
 impl CacheProfile {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         account_id: AccountId,
         data: ProfileInternal,
@@ -44,6 +47,8 @@ impl CacheProfile {
         filters: Vec<ProfileAttributeFilterValue>,
         last_seen_time: LastSeenUnixTime,
         automatic_profile_search_last_seen_time: Option<AutomaticProfileSearchLastSeenUnixTime>,
+        profile_name_moderation_state: Option<ProfileNameModerationState>,
+        profile_text_moderation_state: Option<ProfileTextModerationState>,
     ) -> Self {
         Self {
             account_id,
@@ -59,6 +64,8 @@ impl CacheProfile {
             automatic_profile_search: AutomaticProifleSearch::new(
                 automatic_profile_search_last_seen_time,
             ),
+            profile_name_moderation_state,
+            profile_text_moderation_state,
         }
     }
 
@@ -103,6 +110,28 @@ impl CacheProfile {
 
     pub fn last_seen_time(&self) -> &Arc<AtomicLastSeenTime> {
         &self.last_seen_time
+    }
+
+    pub fn profile_name_moderation_state(&self) -> Option<ProfileNameModerationState> {
+        self.profile_name_moderation_state
+    }
+
+    pub fn update_profile_name_moderation_state(
+        &mut self,
+        value: Option<ProfileNameModerationState>,
+    ) {
+        self.profile_name_moderation_state = value;
+    }
+
+    pub fn profile_text_moderation_state(&self) -> Option<ProfileTextModerationState> {
+        self.profile_text_moderation_state
+    }
+
+    pub fn update_profile_text_moderation_state(
+        &mut self,
+        value: Option<ProfileTextModerationState>,
+    ) {
+        self.profile_text_moderation_state = value;
     }
 }
 

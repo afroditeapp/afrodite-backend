@@ -710,6 +710,20 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    profile_moderation (account_id, content_type) {
+        account_id -> Integer,
+        content_type -> Integer,
+        state_type -> Integer,
+        rejected_reason_category -> Nullable<Integer>,
+        rejected_reason_details -> Text,
+        moderator_account_id -> Nullable<Integer>,
+        created_unix_time -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     profile_name_allowlist (profile_name) {
         profile_name -> Text,
         name_creator_account_id -> Integer,
@@ -757,12 +771,6 @@ diesel::table! {
         profile_sync_version -> Integer,
         profile_initial_age -> Nullable<Integer>,
         profile_initial_age_set_unix_time -> Nullable<Integer>,
-        profile_name_moderation_state -> Integer,
-        profile_text_moderation_state -> Integer,
-        profile_text_moderation_rejected_reason_category -> Nullable<Integer>,
-        profile_text_moderation_rejected_reason_details -> Nullable<Text>,
-        profile_text_moderation_moderator_account_id -> Nullable<Integer>,
-        profile_text_edit_time_unix_time -> Nullable<Integer>,
         profile_edited_unix_time -> Integer,
     }
 }
@@ -872,6 +880,7 @@ diesel::joinable!(profile_attributes_value_list -> account_id (account_id));
 diesel::joinable!(profile_automatic_profile_search_state -> account_id (account_id));
 diesel::joinable!(profile_report_profile_name -> common_report (report_id));
 diesel::joinable!(profile_report_profile_text -> common_report (report_id));
+diesel::joinable!(profile_state -> account_id (account_id));
 diesel::joinable!(public_key -> account_id (account_id));
 diesel::joinable!(shared_state -> account_id (account_id));
 diesel::joinable!(sign_in_with_info -> account_id (account_id));
@@ -937,6 +946,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     profile_attributes_filter_settings,
     profile_attributes_value_list,
     profile_automatic_profile_search_state,
+    profile_moderation,
     profile_name_allowlist,
     profile_report_profile_name,
     profile_report_profile_text,
