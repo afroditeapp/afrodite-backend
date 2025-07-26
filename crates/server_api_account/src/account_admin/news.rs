@@ -114,7 +114,7 @@ pub async fn post_update_news_translation(
 ) -> Result<Json<UpdateNewsTranslationResult>, StatusCode> {
     ACCOUNT.post_update_news_translation.incr();
 
-    if !permissions.some_admin_news_permissions_granted() || !locale.is_supported_locale() {
+    if !permissions.some_admin_news_permissions_granted() {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 

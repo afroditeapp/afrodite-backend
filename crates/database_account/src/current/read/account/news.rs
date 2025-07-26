@@ -73,7 +73,7 @@ impl CurrentReadAccountNews<'_> {
                             .and(
                                 default_translation
                                     .field(news_translations::locale)
-                                    .eq(NewsLocale::ENGLISH),
+                                    .eq(NewsLocale::DEFAULT),
                             )),
                     )
                     .filter(news::publication_id.is_null())
@@ -116,7 +116,7 @@ impl CurrentReadAccountNews<'_> {
                     .and(
                         default_translation
                             .field(news_translations::locale)
-                            .eq(NewsLocale::ENGLISH),
+                            .eq(NewsLocale::DEFAULT),
                     )),
             )
             .filter(news::publication_id.is_not_null())

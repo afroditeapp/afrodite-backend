@@ -166,6 +166,7 @@ pub struct NewsItemSimple {
     pub private: bool,
 }
 
+/// Value "default" or language code.
 #[derive(Debug, Clone, Deserialize, Serialize, IntoParams)]
 pub struct NewsLocale {
     pub locale: String,
@@ -179,18 +180,13 @@ pub struct RequireNewsLocale {
 }
 
 impl NewsLocale {
-    pub const ENGLISH: &'static str = "en";
-    pub const FINNISH: &'static str = "fi";
-
-    pub fn is_supported_locale(&self) -> bool {
-        self.locale == Self::ENGLISH || self.locale == Self::FINNISH
-    }
+    pub const DEFAULT: &'static str = "default";
 }
 
 impl Default for NewsLocale {
     fn default() -> Self {
         Self {
-            locale: Self::ENGLISH.to_string(),
+            locale: Self::DEFAULT.to_string(),
         }
     }
 }

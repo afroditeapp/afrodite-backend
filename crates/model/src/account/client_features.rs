@@ -21,6 +21,7 @@ impl ClientFeaturesFileHash {
 pub struct ClientFeaturesConfigInternal {
     #[serde(default)]
     pub features: FeaturesConfig,
+    pub news: Option<NewsConfig>,
     #[serde(default)]
     pub map: MapConfigInternal,
     #[serde(default)]
@@ -30,6 +31,8 @@ pub struct ClientFeaturesConfigInternal {
 #[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct ClientFeaturesConfig {
     pub features: FeaturesConfig,
+    /// Enable news UI
+    pub news: Option<NewsConfig>,
     pub map: MapConfig,
     pub limits: LimitsConfig,
 }
@@ -48,6 +51,7 @@ impl From<ClientFeaturesConfigInternal> for ClientFeaturesConfig {
     fn from(value: ClientFeaturesConfigInternal) -> Self {
         Self {
             features: value.features,
+            news: value.news,
             map: value.map.into(),
             limits: value.limits.into(),
         }
@@ -56,10 +60,16 @@ impl From<ClientFeaturesConfigInternal> for ClientFeaturesConfig {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
 pub struct FeaturesConfig {
-    /// Enable news UI
-    pub news: bool,
     /// Enable video calls
     pub video_calls: bool,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
+pub struct NewsConfig {
+    /// Make possible for admins to write translations for news.
+    /// If news translation is not available then server returns
+    /// news with locale "default".
+    pub locales: Vec<String>,
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
