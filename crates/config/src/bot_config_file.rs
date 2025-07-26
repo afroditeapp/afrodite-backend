@@ -385,6 +385,8 @@ pub struct ContentModerationConfig {
     /// action.
     pub llm_secondary: Option<LlmContentModerationConfig>,
     pub default_action: ModerationAction,
+    #[serde(default)]
+    pub debug_log_delete: bool,
 }
 
 #[derive(Debug, Clone, Deserialize)]

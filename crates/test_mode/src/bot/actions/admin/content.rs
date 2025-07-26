@@ -214,6 +214,10 @@ impl AdminBotContentModerationLogic {
                 )
                 .await
                 .change_context(TestError::ApiRequest)?;
+
+                if config.debug_log_delete {
+                    info!("Image deleted");
+                }
             } else {
                 media_admin_api::post_moderate_profile_content(
                     api.media(),
