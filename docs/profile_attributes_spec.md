@@ -93,7 +93,7 @@ values = [
 
 #### Required fields
 - `key` - unique identifier of the attribute
-- `name` - English name for the attribute
+- `name` - Default name for the attribute
 - `mode` - mode of the attribute. Possible values are
     - `Bitflag` - u16 bitflags.
         Only top level values are possible to set.
@@ -125,7 +125,7 @@ values = [
 - `values` - list of possible top level values for the attribute.
     Contains strings or objects with fields
     - `key` - unique identifier for the value
-    - `value` - English translation for the value
+    - `value` - Default name for the value
     - `id` - Unique ID number for the value for the value. Beharior is
         is different depending on the `type` attribute.
         - Behavior for bitflag attributes - Default value starts
@@ -177,7 +177,7 @@ possible to set:
     - `values` - list of possible sub level values for the top level value.
         Contains objects with fields
         - `key` - unique identifier for the value
-        - `value` - English translation for the value
+        - `value` - Default name for the value
         - `id` - Unique ID number for the value for the value.
             Default value starts from 1 and default value for
             next list item is the previous + 1.

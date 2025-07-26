@@ -261,7 +261,7 @@ struct AttributeInfoValidated {
 }
 
 impl AttributeInternal {
-    pub fn english_text_to_attribute_key(s: &str) -> String {
+    pub fn attribute_name_to_attribute_key(s: &str) -> String {
         s.to_lowercase().replace(' ', "_")
     }
 
@@ -291,7 +291,7 @@ impl AttributeInternal {
 
                     let key = match value.key {
                         Some(key) => key,
-                        None => AttributeInternal::english_text_to_attribute_key(&value.value),
+                        None => AttributeInternal::attribute_name_to_attribute_key(&value.value),
                     };
                     if all_keys.contains(&key) {
                         return Err(format!("Duplicate key {key}"));
@@ -321,7 +321,7 @@ impl AttributeInternal {
                 }
                 toml::Value::String(s) => {
                     let value = AttributeValue {
-                        key: AttributeInternal::english_text_to_attribute_key(&s),
+                        key: AttributeInternal::attribute_name_to_attribute_key(&s),
                         value: s,
                         id: id_state.increment_value()?,
                         order_number: order_number_state.increment_value()?,
@@ -527,7 +527,8 @@ pub struct AttributeValueInternal {
 pub struct AttributeValue {
     /// Unique string identifier for the attribute value.
     pub key: String,
-    /// English text for the attribute value.
+    /// Default name for the attribute value if translated value
+    /// is not available.
     pub value: String,
     /// Numeric unique identifier for the attribute value.
     /// Note that the value must only be unique within a group of values, so
@@ -734,7 +735,7 @@ pub struct ProfileAttributeQueryItem {
 pub struct Attribute {
     /// String unique identifier for the attribute.
     pub key: String,
-    /// English text for the attribute.
+    /// Default name for the attribute if translated value is not available.
     pub name: String,
     /// Mode of the attribute.
     pub mode: AttributeMode,

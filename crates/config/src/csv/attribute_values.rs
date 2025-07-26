@@ -102,7 +102,7 @@ impl AttributeValuesCsvLoader {
                 .trim()
                 .to_string();
 
-            let key = AttributeInternal::english_text_to_attribute_key(&value);
+            let key = AttributeInternal::attribute_name_to_attribute_key(&value);
             if let Some(group_values) = group_values.iter_mut().find(|v| v.key == key) {
                 group_values
                     .values
@@ -114,7 +114,7 @@ impl AttributeValuesCsvLoader {
                 });
             }
 
-            let group_value_key = AttributeInternal::english_text_to_attribute_key(&group_value);
+            let group_value_key = AttributeInternal::attribute_name_to_attribute_key(&group_value);
             for t in &config.translations {
                 let value_translation = r
                     .get(t.values_column_index)
