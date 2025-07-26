@@ -573,6 +573,10 @@ CREATE TABLE IF NOT EXISTS profile_app_notification_settings(
 
 CREATE TABLE IF NOT EXISTS profile_app_notification_state(
     account_id                         INTEGER PRIMARY KEY NOT NULL,
+    profile_name_accepted              INTEGER             NOT NULL DEFAULT 0,
+    profile_name_accepted_viewed       INTEGER             NOT NULL DEFAULT 0,
+    profile_name_rejected              INTEGER             NOT NULL DEFAULT 0,
+    profile_name_rejected_viewed       INTEGER             NOT NULL DEFAULT 0,
     profile_text_accepted              INTEGER             NOT NULL DEFAULT 0,
     profile_text_accepted_viewed       INTEGER             NOT NULL DEFAULT 0,
     profile_text_rejected              INTEGER             NOT NULL DEFAULT 0,

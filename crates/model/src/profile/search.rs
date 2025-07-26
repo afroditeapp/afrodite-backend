@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_wrapper;
 use utoipa::ToSchema;
 
-use crate::schema_sqlite_types::Integer;
+use crate::{NotificationIdViewed, NotificationStatus, schema_sqlite_types::Integer};
 
 /// Selected weekdays.
 ///
@@ -87,20 +87,16 @@ impl From<WeekdayFlags> for SelectedWeekdays {
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
 pub struct AutomaticProfileSearchCompletedNotification {
-    /// Wrapping notification ID
-    pub profiles_found: i8,
-    /// Wrapping notification ID
-    pub profiles_found_viewed: i8,
+    pub profiles_found: NotificationStatus,
 }
 
 impl AutomaticProfileSearchCompletedNotification {
     pub fn notifications_viewed(&self) -> bool {
-        self.profiles_found == self.profiles_found_viewed
+        self.profiles_found.notification_viewed()
     }
 }
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
 pub struct AutomaticProfileSearchCompletedNotificationViewed {
-    /// Wrapping notification ID
-    pub profiles_found: i8,
+    pub profiles_found: NotificationIdViewed,
 }

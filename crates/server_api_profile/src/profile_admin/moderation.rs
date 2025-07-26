@@ -153,32 +153,36 @@ pub async fn post_moderate_profile_string(
             .send_connected_event(string_owner_id, EventToClientInternal::ProfileChanged)
             .await?;
 
-        match data.content_type {
-            ProfileModerationContentType::ProfileName => (),
-            ProfileModerationContentType::ProfileText => {
-                if !data.move_to_human.unwrap_or_default() {
-                    // Accepted or rejected
+        if !data.move_to_human.unwrap_or_default() {
+            // Accepted or rejected
 
-                    if data.accept {
-                        cmds.profile_admin()
-                            .notification()
-                            .show_profile_text_accepted_notification(string_owner_id)
-                            .await?;
-                    } else {
-                        cmds.profile_admin()
-                            .notification()
-                            .show_profile_text_rejected_notification(string_owner_id)
-                            .await?;
-                    }
-
-                    cmds.events()
-                        .send_notification(
+            match data.content_type {
+                ProfileModerationContentType::ProfileName => {
+                    cmds.profile_admin()
+                        .notification()
+                        .show_profile_name_moderation_completed_notification(
                             string_owner_id,
-                            NotificationEvent::ProfileTextModerationCompleted,
+                            data.accept,
+                        )
+                        .await?;
+                }
+                ProfileModerationContentType::ProfileText => {
+                    cmds.profile_admin()
+                        .notification()
+                        .show_profile_text_moderation_completed_notification(
+                            string_owner_id,
+                            data.accept,
                         )
                         .await?;
                 }
             }
+
+            cmds.events()
+                .send_notification(
+                    string_owner_id,
+                    NotificationEvent::ProfileStringModerationCompleted,
+                )
+                .await?;
         }
 
         Ok(())

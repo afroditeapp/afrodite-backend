@@ -1,5 +1,3 @@
-use std::num::Wrapping;
-
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{ExpressionMethods, insert_into, prelude::*};
 use error_stack::Result;
@@ -22,8 +20,7 @@ impl CurrentWriteMediaAdminNotification<'_> {
             .notification()
             .media_content_moderation_completed(id)?;
 
-        let new_value = Wrapping(current.accepted) + Wrapping(1);
-        let new_value: i64 = new_value.0.into();
+        let new_value: i64 = current.accepted.id.wrapping_increment().id.into();
 
         insert_into(media_app_notification_state)
             .values((
@@ -51,8 +48,7 @@ impl CurrentWriteMediaAdminNotification<'_> {
             .notification()
             .media_content_moderation_completed(id)?;
 
-        let new_value = Wrapping(current.rejected) + Wrapping(1);
-        let new_value: i64 = new_value.0.into();
+        let new_value: i64 = current.rejected.id.wrapping_increment().id.into();
 
         insert_into(media_app_notification_state)
             .values((

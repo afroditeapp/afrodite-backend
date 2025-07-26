@@ -137,7 +137,7 @@ impl AppNotificationSettingsInternal {
             NotificationEvent::MediaContentModerationCompleted => {
                 self.media.media_content_moderation
             }
-            NotificationEvent::ProfileTextModerationCompleted => {
+            NotificationEvent::ProfileStringModerationCompleted => {
                 self.profile.profile_text_moderation
             }
             NotificationEvent::AutomaticProfileSearchCompleted => {

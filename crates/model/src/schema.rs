@@ -641,6 +641,10 @@ diesel::table! {
 
     profile_app_notification_state (account_id) {
         account_id -> Integer,
+        profile_name_accepted -> Integer,
+        profile_name_accepted_viewed -> Integer,
+        profile_name_rejected -> Integer,
+        profile_name_rejected_viewed -> Integer,
         profile_text_accepted -> Integer,
         profile_text_accepted_viewed -> Integer,
         profile_text_rejected -> Integer,

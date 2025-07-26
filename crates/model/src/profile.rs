@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_struct_try_from;
 use utoipa::ToSchema;
 
-use crate::schema_sqlite_types::Integer;
+use crate::{NotificationIdViewed, NotificationStatus, schema_sqlite_types::Integer};
 
 mod attribute;
 pub use attribute::*;
@@ -79,27 +79,26 @@ impl From<ProfileAge> for i64 {
 diesel_i64_struct_try_from!(ProfileAge);
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
-pub struct ProfileTextModerationCompletedNotification {
-    /// Wrapping notification ID
-    pub accepted: i8,
-    /// Wrapping notification ID
-    pub accepted_viewed: i8,
-    /// Wrapping notification ID
-    pub rejected: i8,
-    /// Wrapping notification ID
-    pub rejected_viewed: i8,
+pub struct ProfileStringModerationCompletedNotification {
+    pub name_accepted: NotificationStatus,
+    pub name_rejected: NotificationStatus,
+    pub text_accepted: NotificationStatus,
+    pub text_rejected: NotificationStatus,
 }
 
-impl ProfileTextModerationCompletedNotification {
+impl ProfileStringModerationCompletedNotification {
     pub fn notifications_viewed(&self) -> bool {
-        self.accepted == self.accepted_viewed && self.rejected == self.rejected_viewed
+        self.name_accepted.notification_viewed()
+            && self.name_rejected.notification_viewed()
+            && self.text_accepted.notification_viewed()
+            && self.text_rejected.notification_viewed()
     }
 }
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
-pub struct ProfileTextModerationCompletedNotificationViewed {
-    /// Wrapping notification ID
-    pub accepted: i8,
-    /// Wrapping notification ID
-    pub rejected: i8,
+pub struct ProfileStringModerationCompletedNotificationViewed {
+    pub name_accepted: NotificationIdViewed,
+    pub name_rejected: NotificationIdViewed,
+    pub text_accepted: NotificationIdViewed,
+    pub text_rejected: NotificationIdViewed,
 }

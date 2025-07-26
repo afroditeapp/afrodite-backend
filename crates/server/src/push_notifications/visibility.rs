@@ -64,7 +64,7 @@ pub async fn is_notification_visible(
                     .await
                     .ok()?;
 
-                Some(v.accepted != v.accepted_viewed || v.rejected != v.rejected_viewed)
+                Some(!v.accepted.notification_viewed() || !v.rejected.notification_viewed())
             },
         )
         .await;
@@ -85,17 +85,22 @@ pub async fn is_notification_visible(
     checker
         .check(
             flags,
-            PendingNotificationFlags::PROFILE_TEXT_MODERATION_COMPLETED,
+            PendingNotificationFlags::PROFILE_STRING_MODERATION_COMPLETED,
             async || {
                 let v = state
                     .read()
                     .profile()
                     .notification()
-                    .profile_text_moderation_completed(id)
+                    .profile_string_moderation_completed(id)
                     .await
                     .ok()?;
 
-                Some(v.accepted != v.accepted_viewed || v.rejected != v.rejected_viewed)
+                Some(
+                    !v.name_accepted.notification_viewed()
+                        || !v.name_rejected.notification_viewed()
+                        || !v.text_accepted.notification_viewed()
+                        || !v.text_rejected.notification_viewed(),
+                )
             },
         )
         .await;

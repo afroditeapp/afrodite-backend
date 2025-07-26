@@ -1,7 +1,10 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{AccountIdInternal, ProfileTextModerationCompletedNotification};
+use model::{
+    AccountIdInternal, NotificationId, NotificationIdViewed, NotificationStatus,
+    ProfileStringModerationCompletedNotification,
+};
 use model_profile::ProfileAppNotificationSettings;
 
 use crate::IntoDatabaseError;
@@ -25,28 +28,53 @@ impl CurrentReadProfileNotification<'_> {
         Ok(query_result.unwrap_or_default())
     }
 
-    pub fn profile_text_moderation_completed(
+    pub fn profile_string_moderation_completed(
         &mut self,
         account_id_value: AccountIdInternal,
-    ) -> Result<ProfileTextModerationCompletedNotification, DieselDatabaseError> {
+    ) -> Result<ProfileStringModerationCompletedNotification, DieselDatabaseError> {
         use crate::schema::profile_app_notification_state::dsl::*;
 
         let query_result = profile_app_notification_state
             .filter(account_id.eq(account_id_value.as_db_id()))
             .select((
+                profile_name_accepted,
+                profile_name_accepted_viewed,
+                profile_name_rejected,
+                profile_name_rejected_viewed,
                 profile_text_accepted,
                 profile_text_accepted_viewed,
                 profile_text_rejected,
                 profile_text_rejected_viewed,
             ))
-            .first::<(i64, i64, i64, i64)>(self.conn())
+            .first::<(
+                NotificationId,
+                NotificationIdViewed,
+                NotificationId,
+                NotificationIdViewed,
+                NotificationId,
+                NotificationIdViewed,
+                NotificationId,
+                NotificationIdViewed,
+            )>(self.conn())
             .optional()
             .into_db_error(())?
-            .map(|v| ProfileTextModerationCompletedNotification {
-                accepted: v.0 as i8,
-                accepted_viewed: v.1 as i8,
-                rejected: v.2 as i8,
-                rejected_viewed: v.3 as i8,
+            .map(|v| ProfileStringModerationCompletedNotification {
+                name_accepted: NotificationStatus {
+                    id: v.0,
+                    viewed: v.1,
+                },
+                name_rejected: NotificationStatus {
+                    id: v.2,
+                    viewed: v.3,
+                },
+                text_accepted: NotificationStatus {
+                    id: v.4,
+                    viewed: v.5,
+                },
+                text_rejected: NotificationStatus {
+                    id: v.6,
+                    viewed: v.7,
+                },
             });
 
         Ok(query_result.unwrap_or_default())

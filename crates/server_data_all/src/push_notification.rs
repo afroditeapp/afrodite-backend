@@ -93,11 +93,11 @@ pub async fn get_push_notification_data(
     };
 
     let profile_text_moderation_completed =
-        if flags.contains(PendingNotificationFlags::PROFILE_TEXT_MODERATION_COMPLETED) {
+        if flags.contains(PendingNotificationFlags::PROFILE_STRING_MODERATION_COMPLETED) {
             read_handle
                 .profile()
                 .notification()
-                .profile_text_moderation_completed(id)
+                .profile_string_moderation_completed(id)
                 .await
                 .ok()
         } else {

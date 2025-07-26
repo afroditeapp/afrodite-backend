@@ -10,28 +10,30 @@ use crate::cache::CacheWriteProfile;
 define_cmd_wrapper_write!(WriteCommandsProfileAdminNotification);
 
 impl WriteCommandsProfileAdminNotification<'_> {
-    pub async fn show_profile_text_accepted_notification(
+    pub async fn show_profile_name_moderation_completed_notification(
         &self,
         id: AccountIdInternal,
+        accepted: bool,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.profile_admin()
                 .notification()
-                .show_profile_text_accepted_notification(id)?;
+                .show_profile_name_moderation_completed_notification(id, accepted)?;
             Ok(())
         })?;
 
         Ok(())
     }
 
-    pub async fn show_profile_text_rejected_notification(
+    pub async fn show_profile_text_moderation_completed_notification(
         &self,
         id: AccountIdInternal,
+        accepted: bool,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.profile_admin()
                 .notification()
-                .show_profile_text_rejected_notification(id)?;
+                .show_profile_text_moderation_completed_notification(id, accepted)?;
             Ok(())
         })?;
 
@@ -43,11 +45,12 @@ impl WriteCommandsProfileAdminNotification<'_> {
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
         self.write_cache_profile(id, |p| {
-            p.automatic_profile_search.notification.profiles_found = p
+            p.automatic_profile_search.notification.profiles_found.id = p
                 .automatic_profile_search
                 .notification
                 .profiles_found
-                .wrapping_add(1);
+                .id
+                .wrapping_increment();
             Ok(())
         })
         .await

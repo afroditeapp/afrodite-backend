@@ -1,14 +1,19 @@
 use base64::Engine;
-use diesel::{Selectable, deserialize::Queryable};
+use diesel::{
+    Selectable,
+    deserialize::{FromSqlRow, Queryable},
+    expression::AsExpression,
+    sql_types::BigInt,
+};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_wrapper, diesel_string_wrapper};
+use simple_backend_model::{diesel_i64_struct_try_from, diesel_i64_wrapper, diesel_string_wrapper};
 use utils::random_bytes::random_128_bits;
 use utoipa::ToSchema;
 
 use crate::{
     AdminNotification, AutomaticProfileSearchCompletedNotification,
     MediaContentModerationCompletedNotification, NewMessageNotificationList,
-    NewReceivedLikesCountResult, NotificationEvent, ProfileTextModerationCompletedNotification,
+    NewReceivedLikesCountResult, NotificationEvent, ProfileStringModerationCompletedNotification,
     UnreadNewsCountResult,
     schema_sqlite_types::{Integer, Text},
 };
@@ -65,7 +70,7 @@ bitflags::bitflags! {
         const RECEIVED_LIKES_CHANGED = 0x2;
         const MEDIA_CONTENT_MODERATION_COMPLETED = 0x4;
         const NEWS_CHANGED = 0x8;
-        const PROFILE_TEXT_MODERATION_COMPLETED = 0x10;
+        const PROFILE_STRING_MODERATION_COMPLETED = 0x10;
         const AUTOMATIC_PROFILE_SEARCH_COMPLETED = 0x20;
         const ADMIN_NOTIFICATION = 0x40;
     }
@@ -86,8 +91,8 @@ impl From<NotificationEvent> for PendingNotificationFlags {
                 Self::MEDIA_CONTENT_MODERATION_COMPLETED
             }
             NotificationEvent::NewsChanged => Self::NEWS_CHANGED,
-            NotificationEvent::ProfileTextModerationCompleted => {
-                Self::PROFILE_TEXT_MODERATION_COMPLETED
+            NotificationEvent::ProfileStringModerationCompleted => {
+                Self::PROFILE_STRING_MODERATION_COMPLETED
             }
             NotificationEvent::AutomaticProfileSearchCompleted => {
                 Self::AUTOMATIC_PROFILE_SEARCH_COMPLETED
@@ -219,7 +224,7 @@ pub struct PendingNotificationWithData {
     /// Data for NEWS_CHANGED notification.
     pub news_changed: Option<UnreadNewsCountResult>,
     /// Data for PROFILE_TEXT_MODERATION_COMPLETED notification.
-    pub profile_text_moderation_completed: Option<ProfileTextModerationCompletedNotification>,
+    pub profile_text_moderation_completed: Option<ProfileStringModerationCompletedNotification>,
     /// Data for AUTOMATIC_PROFILE_SEARCH_COMPLETED notification.
     pub automatic_profile_search_completed: Option<AutomaticProfileSearchCompletedNotification>,
     /// Data for ADMIN_NOTIFICATION notification.
@@ -240,4 +245,95 @@ pub struct PushNotificationDbState {
 pub enum PushNotificationType {
     Data,
     Visible,
+}
+
+/// Notification ID for an event. Can be used to prevent showing
+/// the same notification again. The ID is i8 number which will wrap.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    Deserialize,
+    Serialize,
+    PartialEq,
+    FromSqlRow,
+    AsExpression,
+    ToSchema,
+)]
+#[diesel(sql_type = BigInt)]
+pub struct NotificationId {
+    pub id: i8,
+}
+
+impl NotificationId {
+    pub fn wrapping_increment(self) -> Self {
+        Self {
+            id: self.id.wrapping_add(1),
+        }
+    }
+}
+
+impl From<NotificationId> for i64 {
+    fn from(value: NotificationId) -> Self {
+        value.id.into()
+    }
+}
+
+impl TryFrom<i64> for NotificationId {
+    type Error = std::num::TryFromIntError;
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        Ok(Self {
+            id: TryInto::try_into(value)?,
+        })
+    }
+}
+
+diesel_i64_struct_try_from!(NotificationId);
+
+/// Notification ID which client has handled.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    Deserialize,
+    Serialize,
+    PartialEq,
+    FromSqlRow,
+    AsExpression,
+    ToSchema,
+)]
+#[diesel(sql_type = BigInt)]
+pub struct NotificationIdViewed {
+    pub id: i8,
+}
+
+impl From<NotificationIdViewed> for i64 {
+    fn from(value: NotificationIdViewed) -> Self {
+        value.id.into()
+    }
+}
+
+impl TryFrom<i64> for NotificationIdViewed {
+    type Error = std::num::TryFromIntError;
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        Ok(Self {
+            id: TryInto::try_into(value)?,
+        })
+    }
+}
+
+diesel_i64_struct_try_from!(NotificationIdViewed);
+
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
+pub struct NotificationStatus {
+    pub id: NotificationId,
+    pub viewed: NotificationIdViewed,
+}
+
+impl NotificationStatus {
+    pub fn notification_viewed(&self) -> bool {
+        self.id.id == self.viewed.id
+    }
 }

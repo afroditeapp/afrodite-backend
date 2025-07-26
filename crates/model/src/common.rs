@@ -59,7 +59,7 @@ pub enum EventType {
     MediaContentChanged,
     DailyLikesLeftChanged,
     ScheduledMaintenanceStatus,
-    ProfileTextModerationCompleted,
+    ProfileStringModerationCompleted,
     AutomaticProfileSearchCompleted,
     AdminNotification,
 }
@@ -107,7 +107,7 @@ pub enum EventToClientInternal {
     MediaContentChanged,
     DailyLikesLeftChanged,
     ScheduledMaintenanceStatus(ScheduledMaintenanceStatus),
-    ProfileTextModerationCompleted,
+    ProfileStringModerationCompleted,
     AutomaticProfileSearchCompleted,
     AdminNotification,
 }
@@ -127,7 +127,7 @@ impl From<&EventToClientInternal> for EventType {
             MediaContentChanged => Self::MediaContentChanged,
             DailyLikesLeftChanged => Self::DailyLikesLeftChanged,
             ScheduledMaintenanceStatus(_) => Self::ScheduledMaintenanceStatus,
-            ProfileTextModerationCompleted => Self::ProfileTextModerationCompleted,
+            ProfileStringModerationCompleted => Self::ProfileStringModerationCompleted,
             AutomaticProfileSearchCompleted => Self::AutomaticProfileSearchCompleted,
             AdminNotification => Self::AdminNotification,
         }
@@ -156,7 +156,7 @@ impl From<EventToClientInternal> for EventToClient {
             | MediaContentModerationCompleted
             | MediaContentChanged
             | DailyLikesLeftChanged
-            | ProfileTextModerationCompleted
+            | ProfileStringModerationCompleted
             | AutomaticProfileSearchCompleted
             | AdminNotification => (),
         }
@@ -171,7 +171,7 @@ pub enum NotificationEvent {
     ReceivedLikesChanged,
     MediaContentModerationCompleted,
     NewsChanged,
-    ProfileTextModerationCompleted,
+    ProfileStringModerationCompleted,
     AutomaticProfileSearchCompleted,
     AdminNotification,
 }
@@ -185,8 +185,8 @@ impl From<NotificationEvent> for EventToClientInternal {
                 EventToClientInternal::MediaContentModerationCompleted
             }
             NotificationEvent::NewsChanged => EventToClientInternal::NewsChanged,
-            NotificationEvent::ProfileTextModerationCompleted => {
-                EventToClientInternal::ProfileTextModerationCompleted
+            NotificationEvent::ProfileStringModerationCompleted => {
+                EventToClientInternal::ProfileStringModerationCompleted
             }
             NotificationEvent::AutomaticProfileSearchCompleted => {
                 EventToClientInternal::AutomaticProfileSearchCompleted

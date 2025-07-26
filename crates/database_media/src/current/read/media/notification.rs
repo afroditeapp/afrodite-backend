@@ -1,7 +1,10 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
-use model::MediaContentModerationCompletedNotification;
+use model::{
+    MediaContentModerationCompletedNotification, NotificationId, NotificationIdViewed,
+    NotificationStatus,
+};
 use model_media::{AccountIdInternal, MediaAppNotificationSettings};
 
 use crate::IntoDatabaseError;
@@ -39,14 +42,23 @@ impl CurrentReadMediaNotification<'_> {
                 media_content_rejected,
                 media_content_rejected_viewed,
             ))
-            .first::<(i64, i64, i64, i64)>(self.conn())
+            .first::<(
+                NotificationId,
+                NotificationIdViewed,
+                NotificationId,
+                NotificationIdViewed,
+            )>(self.conn())
             .optional()
             .into_db_error(())?
             .map(|v| MediaContentModerationCompletedNotification {
-                accepted: v.0 as i8,
-                accepted_viewed: v.1 as i8,
-                rejected: v.2 as i8,
-                rejected_viewed: v.3 as i8,
+                accepted: NotificationStatus {
+                    id: v.0,
+                    viewed: v.1,
+                },
+                rejected: NotificationStatus {
+                    id: v.2,
+                    viewed: v.3,
+                },
             });
 
         Ok(query_result.unwrap_or_default())

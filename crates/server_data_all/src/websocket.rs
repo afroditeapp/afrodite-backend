@@ -60,16 +60,16 @@ pub async fn send_events_if_needed(
         let notification = read_handle
             .profile()
             .notification()
-            .profile_text_moderation_completed(id)
+            .profile_string_moderation_completed(id)
             .await
             .change_context(
-                WebSocketError::DatabaseProfileTextModerationCompletedNotificationQuery,
+                WebSocketError::DatabaseProfileStringModerationCompletedNotificationQuery,
             )?;
 
         if !notification.notifications_viewed() {
             send_event(
                 socket,
-                EventToClientInternal::ProfileTextModerationCompleted,
+                EventToClientInternal::ProfileStringModerationCompleted,
             )
             .await?;
         }

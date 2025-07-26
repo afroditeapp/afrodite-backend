@@ -1,7 +1,7 @@
 use database_profile::current::write::GetDbWriteCommandsProfile;
 use model_profile::{
     AccountIdInternal, AutomaticProfileSearchCompletedNotificationViewed,
-    ProfileAppNotificationSettings, ProfileTextModerationCompletedNotificationViewed,
+    ProfileAppNotificationSettings, ProfileStringModerationCompletedNotificationViewed,
 };
 use server_data::{
     DataError, IntoDataError, cache::CacheWriteCommon, db_transaction, define_cmd_wrapper_write,
@@ -35,7 +35,7 @@ impl WriteCommandsProfileNotification<'_> {
     pub async fn update_notification_viewed_values(
         &self,
         id: AccountIdInternal,
-        values: ProfileTextModerationCompletedNotificationViewed,
+        values: ProfileStringModerationCompletedNotificationViewed,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.profile()
@@ -55,7 +55,8 @@ impl WriteCommandsProfileNotification<'_> {
         self.write_cache_profile(id, |p| {
             p.automatic_profile_search
                 .notification
-                .profiles_found_viewed = values.profiles_found;
+                .profiles_found
+                .viewed = values.profiles_found;
             Ok(())
         })
         .await

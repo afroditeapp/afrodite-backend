@@ -3,7 +3,10 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{AccountId, AccountIdInternal, schema_sqlite_types::Integer};
+use crate::{
+    AccountId, AccountIdInternal, NotificationIdViewed, NotificationStatus,
+    schema_sqlite_types::Integer,
+};
 
 /// media_content table primary key
 #[derive(
@@ -282,26 +285,18 @@ diesel_uuid_wrapper!(ProfileContentVersion);
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
 pub struct MediaContentModerationCompletedNotification {
-    /// Wrapping notification ID
-    pub accepted: i8,
-    /// Wrapping notification ID
-    pub accepted_viewed: i8,
-    /// Wrapping notification ID
-    pub rejected: i8,
-    /// Wrapping notification ID
-    pub rejected_viewed: i8,
+    pub accepted: NotificationStatus,
+    pub rejected: NotificationStatus,
 }
 
 impl MediaContentModerationCompletedNotification {
     pub fn notifications_viewed(&self) -> bool {
-        self.accepted == self.accepted_viewed && self.rejected == self.rejected_viewed
+        self.accepted.notification_viewed() && self.rejected.notification_viewed()
     }
 }
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
 pub struct MediaContentModerationCompletedNotificationViewed {
-    /// Wrapping notification ID
-    pub accepted: i8,
-    /// Wrapping notification ID
-    pub rejected: i8,
+    pub accepted: NotificationIdViewed,
+    pub rejected: NotificationIdViewed,
 }

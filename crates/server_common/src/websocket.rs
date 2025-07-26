@@ -42,8 +42,8 @@ pub enum WebSocketError {
     DatabaseDailyLikesLeftSyncVersionQuery,
     #[error("Database: Pending messages query failed")]
     DatabasePendingMessagesQuery,
-    #[error("Database: Profile text moderation completed notification query failed")]
-    DatabaseProfileTextModerationCompletedNotificationQuery,
+    #[error("Database: Profile string moderation completed notification query failed")]
+    DatabaseProfileStringModerationCompletedNotificationQuery,
     #[error("Database: Automatic profile search completed notification query failed")]
     DatabaseAutomaticProfileSearchCompletedNotificationQuery,
     #[error("Database: Media content moderation completed notification query failed")]
