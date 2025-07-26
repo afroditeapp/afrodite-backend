@@ -38,6 +38,7 @@ impl MediaContentModerationRejectedReasonCategory {
 
 diesel_i64_wrapper!(MediaContentModerationRejectedReasonCategory);
 
+/// This might be empty.
 #[derive(
     Debug,
     Deserialize,
@@ -66,6 +67,10 @@ impl MediaContentModerationRejectedReasonDetails {
 
     pub fn as_str(&self) -> &str {
         &self.value
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.value.is_empty()
     }
 }
 

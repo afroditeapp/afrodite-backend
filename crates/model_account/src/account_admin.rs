@@ -25,5 +25,5 @@ pub struct SetAccountBanState {
     /// `Some` value bans the account and `None` value unbans the account.
     pub ban_until: Option<UnixTime>,
     pub reason_category: Option<AccountBanReasonCategory>,
-    pub reason_details: Option<AccountBanReasonDetails>,
+    pub reason_details: AccountBanReasonDetails,
 }

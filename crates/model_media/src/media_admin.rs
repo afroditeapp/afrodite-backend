@@ -38,7 +38,7 @@ pub struct PostModerateMediaContent {
     pub content_id: ContentId,
     pub accept: bool,
     pub rejected_category: Option<MediaContentModerationRejectedReasonCategory>,
-    pub rejected_details: Option<MediaContentModerationRejectedReasonDetails>,
+    pub rejected_details: MediaContentModerationRejectedReasonDetails,
     /// If true, ignore accept, rejected_category, rejected_details and move
     /// the content to waiting for human moderation state.
     pub move_to_human: Option<bool>,

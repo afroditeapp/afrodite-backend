@@ -173,6 +173,6 @@ pub enum ContentModerationMode {
         moderator_id: AccountIdInternal,
         accept: bool,
         rejected_category: Option<MediaContentModerationRejectedReasonCategory>,
-        rejected_details: Option<MediaContentModerationRejectedReasonDetails>,
+        rejected_details: MediaContentModerationRejectedReasonDetails,
     },
 }

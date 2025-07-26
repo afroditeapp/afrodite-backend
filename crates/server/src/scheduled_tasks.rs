@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use backup::backup_data;
 use model::{ReportTypeNumberInternal, UnixTime};
+use model_account::AccountBanReasonDetails;
 use model_profile::{
     AccountIdInternal, AccountState, EventToClientInternal, ProfileAge, ProfileUpdate,
 };
@@ -401,7 +402,13 @@ impl ScheduledTaskManager {
                 db_write_raw!(self.state, move |cmds| {
                     cmds.account_admin()
                         .ban()
-                        .set_account_ban_state(id, None, None, None, None)
+                        .set_account_ban_state(
+                            id,
+                            None,
+                            None,
+                            None,
+                            AccountBanReasonDetails::default(),
+                        )
                         .await
                 })
                 .await

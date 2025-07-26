@@ -161,7 +161,7 @@ pub struct GetAccountBanTimeResult {
     /// If `None` the account is not banned.
     pub banned_until: Option<UnixTime>,
     pub reason_category: Option<AccountBanReasonCategory>,
-    pub reason_details: Option<AccountBanReasonDetails>,
+    pub reason_details: AccountBanReasonDetails,
 }
 
 #[derive(Deserialize, ToSchema)]

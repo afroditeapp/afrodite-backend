@@ -83,7 +83,7 @@ pub struct ContentInfoWithFd {
     pub fd: bool,
     pub state: ContentModerationState,
     pub rejected_reason_category: Option<MediaContentModerationRejectedReasonCategory>,
-    pub rejected_reason_details: Option<MediaContentModerationRejectedReasonDetails>,
+    pub rejected_reason_details: MediaContentModerationRejectedReasonDetails,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
@@ -98,7 +98,7 @@ pub struct ContentInfoDetailed {
     pub usage_start_time: Option<UnixTime>,
     pub usage_end_time: Option<UnixTime>,
     pub rejected_reason_category: Option<MediaContentModerationRejectedReasonCategory>,
-    pub rejected_reason_details: Option<MediaContentModerationRejectedReasonDetails>,
+    pub rejected_reason_details: MediaContentModerationRejectedReasonDetails,
 }
 
 /// Content moderation states
@@ -216,7 +216,7 @@ pub struct MediaContentRaw {
     pub initial_content: bool,
     pub moderation_state: ContentModerationState,
     pub moderation_rejected_reason_category: Option<MediaContentModerationRejectedReasonCategory>,
-    pub moderation_rejected_reason_details: Option<MediaContentModerationRejectedReasonDetails>,
+    pub moderation_rejected_reason_details: MediaContentModerationRejectedReasonDetails,
     pub moderation_moderator_account_id: Option<AccountIdDb>,
     pub usage_start_unix_time: Option<UnixTime>,
     pub usage_end_unix_time: Option<UnixTime>,

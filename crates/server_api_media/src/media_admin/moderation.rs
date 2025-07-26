@@ -100,7 +100,7 @@ pub async fn post_moderate_media_content(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    if data.accept && (data.rejected_category.is_some() || data.rejected_details.is_some()) {
+    if data.accept && (data.rejected_category.is_some() || !data.rejected_details.is_empty()) {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 

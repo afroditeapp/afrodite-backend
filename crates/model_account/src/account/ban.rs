@@ -38,8 +38,10 @@ impl AccountBanReasonCategory {
 
 diesel_i64_wrapper!(AccountBanReasonCategory);
 
+/// This might be empty.
 #[derive(
     Debug,
+    Default,
     Deserialize,
     Serialize,
     ToSchema,
