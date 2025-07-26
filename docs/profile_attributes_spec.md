@@ -33,7 +33,7 @@ value_order = "AlphabeticalValue"
 values = [
     {
         key = "helsinki",
-        value = "Helsinki",
+        name = "Helsinki",
         id = 1, # Optional
         editable = true, # Optional
         visible = true, # Optional
@@ -47,7 +47,7 @@ group_values = [ # Optional
     { key = "helsinki", values = [
         {
             key = "kallio",
-            value = "Kallio",
+            name = "Kallio",
             id = 1, # Optional
             editable = true, # Optional
             visible = true, # Optional
@@ -61,9 +61,9 @@ translations = [ # Optonal
     {
         lang = "se",
         values = [
-            { key = "city", value = "Stad" },
-            { key = "helsinki", value = "Helsingfors" },
-            { key = "kallio", value = "Berghäll" },
+            { key = "city", name = "Stad" },
+            { key = "helsinki", name = "Helsingfors" },
+            { key = "kallio", name = "Berghäll" },
         ]
     }
 ]
@@ -125,7 +125,7 @@ values = [
 - `values` - list of possible top level values for the attribute.
     Contains strings or objects with fields
     - `key` - unique identifier for the value
-    - `value` - Default name for the value
+    - `name` - Default name for the value
     - `id` - Unique ID number for the value for the value. Beharior is
         is different depending on the `type` attribute.
         - Behavior for bitflag attributes - Default value starts
@@ -166,7 +166,7 @@ values = [
     - `lang` - language code
     - `values` - list of translation objects with fields
         - `key` - key of the attribute or value
-        - `value` - translation for the key
+        - `name` - translation for the key
 
 If attirbute `type` is two level attribute the following fields is
 possible to set:
@@ -177,7 +177,7 @@ possible to set:
     - `values` - list of possible sub level values for the top level value.
         Contains objects with fields
         - `key` - unique identifier for the value
-        - `value` - Default name for the value
+        - `name` - Default name for the value
         - `id` - Unique ID number for the value for the value.
             Default value starts from 1 and default value for
             next list item is the previous + 1.

@@ -142,13 +142,13 @@ impl AttributeValuesCsvLoader {
                     if !lang.values.iter().any(|v| v.key == key) {
                         lang.values.push(Translation {
                             key: key.clone(),
-                            value: value_translation,
+                            name: value_translation,
                         });
                     }
                     if !lang.values.iter().any(|v| v.key == group_value_key) {
                         lang.values.push(Translation {
                             key: group_value_key.clone(),
-                            value: group_value_translation,
+                            name: group_value_translation,
                         });
                     }
                 } else {
@@ -157,11 +157,11 @@ impl AttributeValuesCsvLoader {
                         values: vec![
                             Translation {
                                 key: key.clone(),
-                                value: value_translation,
+                                name: value_translation,
                             },
                             Translation {
                                 key: group_value_key.clone(),
-                                value: group_value_translation,
+                                name: group_value_translation,
                             },
                         ],
                     });

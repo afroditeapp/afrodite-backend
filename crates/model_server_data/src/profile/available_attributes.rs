@@ -291,7 +291,7 @@ impl AttributeInternal {
 
                     let key = match value.key {
                         Some(key) => key,
-                        None => AttributeInternal::attribute_name_to_attribute_key(&value.value),
+                        None => AttributeInternal::attribute_name_to_attribute_key(&value.name),
                     };
                     if all_keys.contains(&key) {
                         return Err(format!("Duplicate key {key}"));
@@ -309,7 +309,7 @@ impl AttributeInternal {
 
                     let value = AttributeValue {
                         key,
-                        value: value.value,
+                        name: value.name,
                         id,
                         order_number,
                         editable: value.editable,
@@ -322,7 +322,7 @@ impl AttributeInternal {
                 toml::Value::String(s) => {
                     let value = AttributeValue {
                         key: AttributeInternal::attribute_name_to_attribute_key(&s),
-                        value: s,
+                        name: s,
                         id: id_state.increment_value()?,
                         order_number: order_number_state.increment_value()?,
                         editable: true,
@@ -513,7 +513,7 @@ pub struct GroupValues {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttributeValueInternal {
     pub key: Option<String>,
-    pub value: String,
+    pub name: String,
     pub id: Option<u16>,
     pub order_number: Option<u16>,
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
@@ -529,7 +529,7 @@ pub struct AttributeValue {
     pub key: String,
     /// Default name for the attribute value if translated value
     /// is not available.
-    pub value: String,
+    pub name: String,
     /// Numeric unique identifier for the attribute value.
     /// Note that the value must only be unique within a group of values, so
     /// value in top level group A, sub level group C and sub level group B
@@ -563,7 +563,7 @@ pub struct Translation {
     /// Attribute name or attribute value key.
     pub key: String,
     /// Translated text.
-    pub value: String,
+    pub name: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, ToSchema)]
