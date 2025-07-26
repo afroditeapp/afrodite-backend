@@ -299,7 +299,7 @@ impl Default for AccountLimitsConfig {
         Self {
             inactivity_logout_wait_duration: DurationValue::from_days(365),
             account_deletion_wait_duration: DurationValue::from_days(90),
-            init_deletion_for_inactive_accounts_wait_duration: DurationValue::from_days(365 * 10), // About 10 years
+            init_deletion_for_inactive_accounts_wait_duration: DurationValue::from_days(365 * 2), // About 2 years
         }
     }
 }
