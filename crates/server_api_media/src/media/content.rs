@@ -5,7 +5,7 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use headers::{ContentLength, ContentType};
-use model::EventToClientInternal;
+use model::{EventToClientInternal, NotificationEvent};
 use model_media::{
     AccountContent, AccountId, AccountIdInternal, AccountState, ContentId, ContentProcessingId,
     ContentProcessingState, ContentSlot, GetContentQueryParams, NewContentParams, Permissions,
@@ -389,6 +389,22 @@ pub async fn delete_content(
                 .send_connected_event(
                     api_caller_account_id,
                     EventToClientInternal::MediaContentChanged,
+                )
+                .await?;
+        }
+
+        if content.moderation_state.is_in_moderation() {
+            // Removed content was in moderation.
+
+            cmds.media_admin()
+                .notification()
+                .show_media_content_deleted_notification(content_id.content_owner())
+                .await?;
+
+            cmds.events()
+                .send_notification(
+                    content_id.content_owner(),
+                    NotificationEvent::MediaContentModerationCompleted,
                 )
                 .await?;
         }

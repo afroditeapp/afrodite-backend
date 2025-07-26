@@ -41,8 +41,12 @@ impl CurrentReadMediaNotification<'_> {
                 media_content_accepted_viewed,
                 media_content_rejected,
                 media_content_rejected_viewed,
+                media_content_deleted,
+                media_content_deleted_viewed,
             ))
             .first::<(
+                NotificationId,
+                NotificationIdViewed,
                 NotificationId,
                 NotificationIdViewed,
                 NotificationId,
@@ -58,6 +62,10 @@ impl CurrentReadMediaNotification<'_> {
                 rejected: NotificationStatus {
                     id: v.2,
                     viewed: v.3,
+                },
+                deleted: NotificationStatus {
+                    id: v.4,
+                    viewed: v.5,
                 },
             });
 

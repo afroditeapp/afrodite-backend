@@ -39,8 +39,9 @@ impl CurrentWriteMediaNotification<'_> {
             .on_conflict(account_id)
             .do_update()
             .set((
-                media_content_accepted_viewed.eq(Into::<i64>::into(values.accepted)),
-                media_content_rejected_viewed.eq(Into::<i64>::into(values.rejected)),
+                media_content_accepted_viewed.eq(values.accepted),
+                media_content_rejected_viewed.eq(values.rejected),
+                media_content_deleted_viewed.eq(values.deleted),
             ))
             .execute(self.conn())
             .into_db_error(())?;

@@ -516,6 +516,8 @@ diesel::table! {
         media_content_accepted_viewed -> Integer,
         media_content_rejected -> Integer,
         media_content_rejected_viewed -> Integer,
+        media_content_deleted -> Integer,
+        media_content_deleted_viewed -> Integer,
     }
 }
 

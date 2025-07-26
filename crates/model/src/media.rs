@@ -287,11 +287,14 @@ diesel_uuid_wrapper!(ProfileContentVersion);
 pub struct MediaContentModerationCompletedNotification {
     pub accepted: NotificationStatus,
     pub rejected: NotificationStatus,
+    pub deleted: NotificationStatus,
 }
 
 impl MediaContentModerationCompletedNotification {
     pub fn notifications_viewed(&self) -> bool {
-        self.accepted.notification_viewed() && self.rejected.notification_viewed()
+        self.accepted.notification_viewed()
+            && self.rejected.notification_viewed()
+            && self.deleted.notification_viewed()
     }
 }
 
@@ -299,4 +302,5 @@ impl MediaContentModerationCompletedNotification {
 pub struct MediaContentModerationCompletedNotificationViewed {
     pub accepted: NotificationIdViewed,
     pub rejected: NotificationIdViewed,
+    pub deleted: NotificationIdViewed,
 }

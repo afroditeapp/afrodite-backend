@@ -34,4 +34,18 @@ impl WriteCommandsMediaAdminNotification<'_> {
 
         Ok(())
     }
+
+    pub async fn show_media_content_deleted_notification(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.media_admin()
+                .notification()
+                .show_media_content_deleted_notification(id)?;
+            Ok(())
+        })?;
+
+        Ok(())
+    }
 }

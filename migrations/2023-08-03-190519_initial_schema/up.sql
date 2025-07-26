@@ -778,6 +778,8 @@ CREATE TABLE IF NOT EXISTS media_app_notification_state(
     media_content_accepted_viewed      INTEGER             NOT NULL DEFAULT 0,
     media_content_rejected             INTEGER             NOT NULL DEFAULT 0,
     media_content_rejected_viewed      INTEGER             NOT NULL DEFAULT 0,
+    media_content_deleted              INTEGER             NOT NULL DEFAULT 0,
+    media_content_deleted_viewed       INTEGER             NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
