@@ -71,12 +71,14 @@ impl AdminBotProfileTextModerationLogic {
                     LlmModerationResult::Decision(r) => r,
                 }
             } else {
-                match config.default_action {
-                    ModerationAction::Accept => ModerationResult::accept(),
-                    ModerationAction::Reject => ModerationResult::reject(None),
-                    ModerationAction::MoveToHuman => ModerationResult::move_to_human(),
-                }
+                None
             };
+
+            let r = r.unwrap_or_else(|| match config.default_action {
+                ModerationAction::Accept => ModerationResult::accept(),
+                ModerationAction::Reject => ModerationResult::reject(None),
+                ModerationAction::MoveToHuman => ModerationResult::move_to_human(),
+            });
 
             // Ignore errors as the user might have changed the text to
             // another one or it is already moderated.
@@ -176,11 +178,12 @@ impl AdminBotProfileTextModerationLogic {
 
         let move_to_human = !accepted && config.move_rejected_to_human_moderation;
 
-        Ok(LlmModerationResult::Decision(ModerationResult {
+        Ok(LlmModerationResult::Decision(Some(ModerationResult {
             accept: accepted,
             rejected_details,
             move_to_human,
-        }))
+            delete: false,
+        })))
     }
 }
 

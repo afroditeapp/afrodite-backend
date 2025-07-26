@@ -375,11 +375,15 @@ pub struct ContentModerationConfig {
     pub moderation_session_max_seconds: u32,
     pub moderation_session_min_seconds: u32,
     /// Neural network based detection.
-    /// Actions: reject, move_to_human and accept
+    /// Actions: reject, move_to_human, accept and delete.
     pub nsfw_detection: Option<NsfwDetectionConfig>,
     /// Large language model based moderation.
-    /// Actions: reject (or move_to_human) and accept (or move_to_human)
-    pub llm: Option<LlmContentModerationConfig>,
+    /// Actions: reject (can be replaced with move_to_human or ignore) and
+    ///          accept (can be replaced with move_to_human or delete).
+    pub llm_primary: Option<LlmContentModerationConfig>,
+    /// The secondary LLM moderation will run if primary results with ignore
+    /// action.
+    pub llm_secondary: Option<LlmContentModerationConfig>,
     pub default_action: ModerationAction,
 }
 
@@ -392,6 +396,8 @@ pub struct NsfwDetectionConfig {
     pub move_to_human: Option<NsfwDetectionThresholds>,
     /// Thresholds for accepting the image.
     pub accept: Option<NsfwDetectionThresholds>,
+    /// Thresholds for image deletion.
+    pub delete: Option<NsfwDetectionThresholds>,
     #[serde(default)]
     pub debug_log_results: bool,
 }
@@ -406,6 +412,10 @@ pub struct LlmContentModerationConfig {
     /// line of the response contains this text, the content
     /// is moderated as accepted. The comparisons are case insensitive.
     pub expected_response: String,
+    /// Overrides [Self::move_rejected_to_human_moderation]
+    pub ignore_rejected: bool,
+    /// Overrides [Self::move_accepted_to_human_moderation]
+    pub delete_accepted: bool,
     pub move_accepted_to_human_moderation: bool,
     pub move_rejected_to_human_moderation: bool,
     #[serde(default)]

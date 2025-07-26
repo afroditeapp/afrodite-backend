@@ -1,7 +1,7 @@
 use std::{fmt::Debug, sync::Arc, time::Instant};
 
 use api_client::{
-    apis::media_admin_api,
+    apis::{media_admin_api, media_api},
     models::{
         MediaContentType, ModerationQueueType, ProfileContentModerationRejectedReasonDetails,
     },
@@ -187,7 +187,8 @@ impl AdminBotContentModerationLogic {
                 image_data,
                 config.nsfw_detection.clone(),
                 moderation_state.model.clone(),
-                config.llm.as_ref(),
+                config.llm_primary.as_ref(),
+                config.llm_secondary.as_ref(),
                 config.default_action,
                 moderation_state,
             )
@@ -205,23 +206,33 @@ impl AdminBotContentModerationLogic {
                 }
             };
 
-            media_admin_api::post_moderate_profile_content(
-                api.media(),
-                api_client::models::PostModerateProfileContent {
-                    account_id: request.account_id,
-                    content_id: request.content_id,
-                    accept: result.accept,
-                    move_to_human: Some(Some(result.move_to_human)),
-                    rejected_category: None,
-                    rejected_details: result.rejected_details.map(|v| {
-                        Some(Box::new(
-                            ProfileContentModerationRejectedReasonDetails::new(v),
-                        ))
-                    }),
-                },
-            )
-            .await
-            .change_context(TestError::ApiRequest)?;
+            if result.delete {
+                media_api::delete_content(
+                    api.media(),
+                    &request.account_id.aid,
+                    &request.content_id.cid,
+                )
+                .await
+                .change_context(TestError::ApiRequest)?;
+            } else {
+                media_admin_api::post_moderate_profile_content(
+                    api.media(),
+                    api_client::models::PostModerateProfileContent {
+                        account_id: request.account_id,
+                        content_id: request.content_id,
+                        accept: result.accept,
+                        move_to_human: Some(Some(result.move_to_human)),
+                        rejected_category: None,
+                        rejected_details: result.rejected_details.map(|v| {
+                            Some(Box::new(
+                                ProfileContentModerationRejectedReasonDetails::new(v),
+                            ))
+                        }),
+                    },
+                )
+                .await
+                .change_context(TestError::ApiRequest)?;
+            }
         }
 
         Ok(None)
@@ -231,7 +242,8 @@ impl AdminBotContentModerationLogic {
         data: Vec<u8>,
         nsfw_config: Option<NsfwDetectionConfig>,
         nsfw_model: Option<Arc<nsfw::Model>>,
-        llm_config: Option<&LlmContentModerationConfig>,
+        llm_primary_config: Option<&LlmContentModerationConfig>,
+        llm_secondary_config: Option<&LlmContentModerationConfig>,
         default_action: ModerationAction,
         state: &mut ContentModerationState,
     ) -> Result<Option<ModerationResult>, TestError> {
@@ -247,22 +259,32 @@ impl AdminBotContentModerationLogic {
         };
 
         if let Some(nsfw) = &nsfw_result {
-            if nsfw.is_rejected() {
+            if nsfw.is_deleted_or_rejected() {
                 return Ok(nsfw_result);
             }
         }
 
-        let llm_result = if let Some(c) = llm_config {
-            match Self::llm_profile_image_moderation(data, c, state).await? {
+        let llm_result = if let Some(c) = llm_primary_config {
+            match Self::llm_profile_image_moderation(&data, c, state).await? {
                 LlmModerationResult::StopModerationSesssion => return Ok(None),
-                LlmModerationResult::Decision(r) => Some(r),
+                LlmModerationResult::Decision(None) => {
+                    if let Some(c) = llm_secondary_config {
+                        match Self::llm_profile_image_moderation(&data, c, state).await? {
+                            LlmModerationResult::StopModerationSesssion => return Ok(None),
+                            LlmModerationResult::Decision(r) => r,
+                        }
+                    } else {
+                        None
+                    }
+                }
+                LlmModerationResult::Decision(Some(r)) => Some(r),
             }
         } else {
             None
         };
 
         if let Some(llm) = &llm_result {
-            if llm.is_rejected() {
+            if llm.is_deleted_or_rejected() {
                 return Ok(llm_result);
             }
             if llm.is_move_to_human() {
@@ -270,13 +292,15 @@ impl AdminBotContentModerationLogic {
             }
         }
 
-        let action = match default_action {
-            ModerationAction::Accept => ModerationResult::accept(),
-            ModerationAction::Reject => ModerationResult::reject(None),
-            ModerationAction::MoveToHuman => ModerationResult::move_to_human(),
-        };
+        let r = nsfw_result
+            .or(llm_result)
+            .unwrap_or_else(|| match default_action {
+                ModerationAction::Accept => ModerationResult::accept(),
+                ModerationAction::Reject => ModerationResult::reject(None),
+                ModerationAction::MoveToHuman => ModerationResult::move_to_human(),
+            });
 
-        Ok(nsfw_result.or(llm_result).or(Some(action)))
+        Ok(Some(r))
     }
 
     fn handle_nsfw_detection_sync(
@@ -302,6 +326,16 @@ impl AdminBotContentModerationLogic {
                 Metric::Neutral => thresholds.neutral,
                 Metric::Porn => thresholds.porn,
                 Metric::Sexy => thresholds.sexy,
+            }
+        }
+
+        if let Some(thresholds) = &nsfw_config.delete {
+            for c in &results {
+                if let Some(threshold) = threshold(&c.metric, thresholds) {
+                    if c.score >= threshold {
+                        return Ok(Some(ModerationResult::delete()));
+                    }
+                }
             }
         }
 
@@ -341,7 +375,7 @@ impl AdminBotContentModerationLogic {
     }
 
     async fn llm_profile_image_moderation(
-        image_data: Vec<u8>,
+        image_data: &[u8],
         config: &LlmContentModerationConfig,
         state: &mut ContentModerationState,
     ) -> Result<LlmModerationResult, TestError> {
@@ -360,7 +394,7 @@ impl AdminBotContentModerationLogic {
             image_url: ImageUrl {
                 url: format!(
                     "data:image/jpeg;base64,{}",
-                    Base64Display::new(&image_data, &base64::engine::general_purpose::STANDARD),
+                    Base64Display::new(image_data, &base64::engine::general_purpose::STANDARD),
                 ),
                 detail: None,
             },
@@ -420,14 +454,25 @@ impl AdminBotContentModerationLogic {
             None
         };
 
+        if config.delete_accepted && accepted {
+            return Ok(LlmModerationResult::Decision(Some(
+                ModerationResult::delete(),
+            )));
+        }
+
+        if config.ignore_rejected && !accepted {
+            return Ok(LlmModerationResult::Decision(None));
+        }
+
         let move_to_human = (accepted && config.move_accepted_to_human_moderation)
             || (!accepted && config.move_rejected_to_human_moderation);
 
-        Ok(LlmModerationResult::Decision(ModerationResult {
+        Ok(LlmModerationResult::Decision(Some(ModerationResult {
             accept: accepted,
             rejected_details,
             move_to_human,
-        }))
+            delete: false,
+        })))
     }
 }
 

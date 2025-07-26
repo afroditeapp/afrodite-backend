@@ -14,49 +14,55 @@ pub struct AdminBotState {
     content: Option<ContentModerationState>,
 }
 
+/// Default state is reject.
+#[derive(Default)]
 pub struct ModerationResult {
     pub accept: bool,
     pub move_to_human: bool,
     pub rejected_details: Option<String>,
+    pub delete: bool,
 }
 
 impl ModerationResult {
     pub fn error() -> Self {
         Self {
-            accept: false,
-            move_to_human: false,
             rejected_details: Some(
                 "Error occurred. Try again and if this continues, please contact customer support."
                     .to_string(),
             ),
+            ..Default::default()
         }
     }
 
     pub fn reject(details: Option<&str>) -> Self {
         Self {
-            accept: false,
-            move_to_human: false,
             rejected_details: details.map(|text| text.to_string()),
+            ..Default::default()
         }
     }
 
     pub fn accept() -> Self {
         Self {
             accept: true,
-            move_to_human: false,
-            rejected_details: None,
+            ..Default::default()
         }
     }
 
     pub fn move_to_human() -> Self {
         Self {
-            accept: false,
             move_to_human: true,
-            rejected_details: None,
+            ..Default::default()
         }
     }
 
-    pub fn is_rejected(&self) -> bool {
+    pub fn delete() -> Self {
+        Self {
+            delete: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn is_deleted_or_rejected(&self) -> bool {
         !self.accept && !self.move_to_human
     }
 
@@ -67,5 +73,5 @@ impl ModerationResult {
 
 enum LlmModerationResult {
     StopModerationSesssion,
-    Decision(ModerationResult),
+    Decision(Option<ModerationResult>),
 }
