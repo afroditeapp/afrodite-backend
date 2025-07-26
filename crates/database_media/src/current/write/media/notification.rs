@@ -35,7 +35,12 @@ impl CurrentWriteMediaNotification<'_> {
         use model::schema::media_app_notification_state::dsl::*;
 
         insert_into(media_app_notification_state)
-            .values((account_id.eq(id.as_db_id()),))
+            .values((
+                account_id.eq(id.as_db_id()),
+                media_content_accepted_viewed.eq(values.accepted),
+                media_content_rejected_viewed.eq(values.rejected),
+                media_content_deleted_viewed.eq(values.deleted),
+            ))
             .on_conflict(account_id)
             .do_update()
             .set((

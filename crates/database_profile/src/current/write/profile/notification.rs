@@ -35,12 +35,16 @@ impl CurrentWriteProfileNotification<'_> {
         use model::schema::profile_app_notification_state::dsl::*;
 
         insert_into(profile_app_notification_state)
-            .values((account_id.eq(id.as_db_id()),))
+            .values((
+                account_id.eq(id.as_db_id()),
+                profile_text_accepted_viewed.eq(values.text_accepted),
+                profile_text_rejected_viewed.eq(values.text_rejected),
+            ))
             .on_conflict(account_id)
             .do_update()
             .set((
-                profile_text_accepted_viewed.eq(Into::<i64>::into(values.text_accepted)),
-                profile_text_rejected_viewed.eq(Into::<i64>::into(values.text_rejected)),
+                profile_text_accepted_viewed.eq(values.text_accepted),
+                profile_text_rejected_viewed.eq(values.text_rejected),
             ))
             .execute(self.conn())
             .into_db_error(())?;
