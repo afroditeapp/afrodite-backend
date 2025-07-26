@@ -375,6 +375,12 @@ pub async fn delete_content(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
+    if owner_deleting_content {
+        MEDIA.delete_content_for_content_owner.incr();
+    } else {
+        MEDIA.delete_content_for_admin.incr();
+    }
+
     db_write!(state, move |cmds| {
         let r = cmds.media().delete_content(content_id).await?;
 
@@ -409,4 +415,6 @@ create_counters!(
     get_content_slot_state,
     put_content_to_content_slot,
     delete_content,
+    delete_content_for_content_owner,
+    delete_content_for_admin,
 );
