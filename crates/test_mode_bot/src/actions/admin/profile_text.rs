@@ -2,7 +2,7 @@ use std::{fmt::Debug, time::Instant};
 
 use api_client::{
     apis::profile_admin_api,
-    models::{ProfileModerationRejectedReasonDetails, ProfileStringModerationContentType},
+    models::{ProfileStringModerationContentType, ProfileStringModerationRejectedReasonDetails},
 };
 use async_openai::{
     Client,
@@ -115,7 +115,7 @@ impl AdminBotProfileStringModerationLogic {
                     value: request.value.clone(),
                     accept: r.accept,
                     rejected_category: None,
-                    rejected_details: Box::new(ProfileModerationRejectedReasonDetails::new(
+                    rejected_details: Box::new(ProfileStringModerationRejectedReasonDetails::new(
                         r.rejected_details.unwrap_or_default(),
                     )),
                     move_to_human: if r.move_to_human {

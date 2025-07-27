@@ -12,7 +12,7 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct GetProfileStringModerationState {
+pub struct GetProfileStringState {
     #[serde(rename = "moderation_info", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub moderation_info: Option<Option<Box<models::ProfileStringModerationInfo>>>,
     /// If empty, the `moderation_info` is `None`.
@@ -20,9 +20,9 @@ pub struct GetProfileStringModerationState {
     pub value: String,
 }
 
-impl GetProfileStringModerationState {
-    pub fn new(value: String) -> GetProfileStringModerationState {
-        GetProfileStringModerationState {
+impl GetProfileStringState {
+    pub fn new(value: String) -> GetProfileStringState {
+        GetProfileStringState {
             moderation_info: None,
             value,
         }

@@ -23,15 +23,15 @@ pub struct PostModerateProfileString {
     #[serde(rename = "move_to_human", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub move_to_human: Option<Option<bool>>,
     #[serde(rename = "rejected_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_category: Option<Option<Box<models::ProfileModerationRejectedReasonCategory>>>,
+    pub rejected_category: Option<Option<Box<models::ProfileStringModerationRejectedReasonCategory>>>,
     #[serde(rename = "rejected_details")]
-    pub rejected_details: Box<models::ProfileModerationRejectedReasonDetails>,
+    pub rejected_details: Box<models::ProfileStringModerationRejectedReasonDetails>,
     #[serde(rename = "value")]
     pub value: String,
 }
 
 impl PostModerateProfileString {
-    pub fn new(accept: bool, content_type: models::ProfileStringModerationContentType, id: models::AccountId, rejected_details: models::ProfileModerationRejectedReasonDetails, value: String) -> PostModerateProfileString {
+    pub fn new(accept: bool, content_type: models::ProfileStringModerationContentType, id: models::AccountId, rejected_details: models::ProfileStringModerationRejectedReasonDetails, value: String) -> PostModerateProfileString {
         PostModerateProfileString {
             accept,
             content_type,

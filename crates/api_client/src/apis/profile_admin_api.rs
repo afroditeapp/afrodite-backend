@@ -275,8 +275,8 @@ pub async fn get_profile_string_pending_moderation_list(configuration: &configur
     }
 }
 
-/// # Access * [Permissions::admin_moderate_profile_names] or   [Permissions::admin_moderate_profile_texts] depending   on [GetProfileStringModerationStateParams::content_type].
-pub async fn get_profile_string_state(configuration: &configuration::Configuration, content_type: models::ProfileStringModerationContentType, aid: &str) -> Result<models::GetProfileStringModerationState, Error<GetProfileStringStateError>> {
+/// # Access * [Permissions::admin_moderate_profile_names] or   [Permissions::admin_moderate_profile_texts] depending   on [GetProfileStringStateParams::content_type].
+pub async fn get_profile_string_state(configuration: &configuration::Configuration, content_type: models::ProfileStringModerationContentType, aid: &str) -> Result<models::GetProfileStringState, Error<GetProfileStringStateError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;

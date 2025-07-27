@@ -17,13 +17,13 @@ pub struct GetMyProfileResult {
     #[serde(rename = "lst", skip_serializing_if = "Option::is_none")]
     pub lst: Option<i64>,
     #[serde(rename = "name_moderation_info", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub name_moderation_info: Option<Option<Box<models::ProfileModerationInfo>>>,
+    pub name_moderation_info: Option<Option<Box<models::ProfileStringModerationInfo>>>,
     #[serde(rename = "p")]
     pub p: Box<models::Profile>,
     #[serde(rename = "sv")]
     pub sv: Box<models::ProfileSyncVersion>,
     #[serde(rename = "text_moderation_info", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub text_moderation_info: Option<Option<Box<models::ProfileModerationInfo>>>,
+    pub text_moderation_info: Option<Option<Box<models::ProfileStringModerationInfo>>>,
     #[serde(rename = "v")]
     pub v: Box<models::ProfileVersion>,
 }

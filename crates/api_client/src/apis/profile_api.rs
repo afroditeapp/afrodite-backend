@@ -1198,7 +1198,7 @@ pub async fn post_profile_to_database_debug_mode_benchmark(configuration: &confi
     }
 }
 
-/// If profile name is reported and it is bot moderated, the name's moderation state changes to [model_profile::ProfileModerationState::WaitingHumanModeration].
+/// If profile name is reported and it is bot moderated, the name's moderation state changes to [model_profile::ProfileStringModerationState::WaitingHumanModeration].
 pub async fn post_report_profile_name(configuration: &configuration::Configuration, update_profile_name_report: models::UpdateProfileNameReport) -> Result<models::UpdateReportResult, Error<PostReportProfileNameError>> {
     let local_var_configuration = configuration;
 
@@ -1235,7 +1235,7 @@ pub async fn post_report_profile_name(configuration: &configuration::Configurati
     }
 }
 
-/// If profile text is reported and it is bot moderated, the text's moderation state changes to [model_profile::ProfileModerationState::WaitingHumanModeration].
+/// If profile text is reported and it is bot moderated, the text's moderation state changes to [model_profile::ProfileStringModerationState::WaitingHumanModeration].
 pub async fn post_report_profile_text(configuration: &configuration::Configuration, update_profile_text_report: models::UpdateProfileTextReport) -> Result<models::UpdateReportResult, Error<PostReportProfileTextError>> {
     let local_var_configuration = configuration;
 
