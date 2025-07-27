@@ -1,0 +1,37 @@
+[package]
+name = "test_mode_bot"
+version = "0.0.0"
+edition = "2024"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+error-stack = { workspace = true }
+
+tracing = { workspace = true }
+reqwest = { workspace = true }
+futures = { workspace = true }
+tokio = { workspace = true }
+tokio-stream = { workspace = true }
+tokio-tungstenite = { workspace = true }
+
+async-trait = { workspace = true }
+async-openai = { workspace = true }
+chrono = { workspace = true }
+rand = { workspace = true }
+rand_xoshiro = { workspace = true }
+image = { workspace = true }
+base64 = { workspace = true }
+url = { workspace = true }
+headers = { workspace = true }
+nsfw = { workspace = true }
+http = { workspace = true }
+serde_json = { workspace = true }
+unicode-segmentation = { workspace = true }
+
+simple_backend_utils = { path = "../simple_backend_utils" }
+api_client = { path = "../api_client" }
+utils = { path = "../utils" }
+config = { path = "../config" }
+
+test_mode_utils = { path = "../test_mode_utils" }

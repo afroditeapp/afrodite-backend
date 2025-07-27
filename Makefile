@@ -32,6 +32,12 @@ CARGO_CRATE_ARGS = 	-p api_internal \
 					-p server_data_media \
 					-p server_data_chat \
 					-p test_mode \
+					-p test_mode_bot \
+					-p test_mode_tests \
+					-p test_mode_tests_account \
+					-p test_mode_tests_profile \
+					-p test_mode_tests_media \
+					-p test_mode_utils \
 					-p test_mode_macro \
 					-p utils \
 					-p simple_backend \

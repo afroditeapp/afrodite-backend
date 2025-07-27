@@ -10,20 +10,7 @@ use syn::parse_macro_input;
 ///
 /// ```
 /// use std::future::Future;
-/// use test_mode_macro::server_test;
-///
-/// /// This must be defined in the root of the crate.
-/// pub type TestResult = Result<(), ()>;
-///
-/// /// This must be defined in the root of the crate.
-/// pub struct TestContext;
-///
-/// /// This must be defined in the root of the crate.
-/// pub struct TestFunction {
-///     pub name: &'static str,
-///     pub module_path: &'static str,
-///     pub function: fn(TestContext) -> Box<dyn Future<Output = TestResult> + Send>,
-/// }
+/// use test_mode_bot::server_test;
 ///
 /// inventory::collect!(TestFunction);
 ///
@@ -63,14 +50,14 @@ pub fn server_test(_attr: TokenStream, input: TokenStream) -> TokenStream {
 
         mod #hidden_mod_name {
             pub fn #hidden_fn_name(
-                test_context: crate::TestContext,
-            ) -> Box<dyn std::future::Future<Output = crate::TestResult> + Send> {
+                test_context: test_mode_tests::TestContext,
+            ) -> Box<dyn std::future::Future<Output = test_mode_tests::TestResult> + Send> {
                 Box::new(super::#test_fn_name(test_context))
             }
         }
 
         inventory::submit! {
-            crate::TestFunction {
+            test_mode_tests::TestFunction {
                 name: stringify!(#test_fn_name),
                 module_path: module_path!(),
                 function: #hidden_mod_name::#hidden_fn_name,

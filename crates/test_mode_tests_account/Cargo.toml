@@ -1,0 +1,13 @@
+[package]
+name = "test_mode_tests_account"
+version = "0.0.0"
+edition = "2024"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+inventory = { workspace = true }
+
+api_client = { path = "../api_client" }
+test_mode_bot = { path = "../test_mode_bot" }
+test_mode_tests = { path = "../test_mode_tests" }

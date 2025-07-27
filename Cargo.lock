@@ -5352,6 +5352,20 @@ dependencies = [
 name = "test_mode"
 version = "0.0.0"
 dependencies = [
+ "config",
+ "reqwest",
+ "test_mode_bot",
+ "test_mode_tests",
+ "test_mode_tests_account",
+ "test_mode_tests_media",
+ "test_mode_tests_profile",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "test_mode_bot"
+version = "0.0.0"
+dependencies = [
  "api_client",
  "async-openai",
  "async-trait",
@@ -5362,29 +5376,18 @@ dependencies = [
  "futures",
  "headers",
  "http",
- "hyper",
  "image",
- "inventory",
- "nix",
  "nsfw",
- "num_cpus",
  "rand 0.8.5",
  "rand_xoshiro",
  "reqwest",
- "serde",
  "serde_json",
- "server_data",
- "simple_backend",
- "simple_backend_config",
  "simple_backend_utils",
- "test_mode_macro",
- "thiserror 2.0.12",
+ "test_mode_utils",
  "tokio",
  "tokio-stream",
  "tokio-tungstenite",
- "toml",
  "tracing",
- "tracing-subscriber",
  "unicode-segmentation",
  "url",
  "utils",
@@ -5397,6 +5400,76 @@ dependencies = [
  "inventory",
  "quote",
  "syn 2.0.104",
+]
+
+[[package]]
+name = "test_mode_tests"
+version = "0.0.0"
+dependencies = [
+ "api_client",
+ "config",
+ "error-stack",
+ "futures",
+ "inventory",
+ "num_cpus",
+ "reqwest",
+ "test_mode_bot",
+ "test_mode_macro",
+ "test_mode_utils",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "test_mode_tests_account"
+version = "0.0.0"
+dependencies = [
+ "api_client",
+ "inventory",
+ "test_mode_bot",
+ "test_mode_tests",
+]
+
+[[package]]
+name = "test_mode_tests_media"
+version = "0.0.0"
+dependencies = [
+ "inventory",
+ "test_mode_bot",
+ "test_mode_tests",
+]
+
+[[package]]
+name = "test_mode_tests_profile"
+version = "0.0.0"
+dependencies = [
+ "api_client",
+ "inventory",
+ "test_mode_bot",
+ "test_mode_tests",
+ "test_mode_utils",
+]
+
+[[package]]
+name = "test_mode_utils"
+version = "0.0.0"
+dependencies = [
+ "api_client",
+ "chrono",
+ "config",
+ "error-stack",
+ "hyper",
+ "nix",
+ "reqwest",
+ "serde",
+ "server_data",
+ "simple_backend",
+ "simple_backend_config",
+ "simple_backend_utils",
+ "thiserror 2.0.12",
+ "tokio",
+ "toml",
+ "tracing",
 ]
 
 [[package]]

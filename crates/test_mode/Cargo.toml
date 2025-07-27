@@ -6,52 +6,13 @@ edition = "2024"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-
-tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 
-serde = { workspace = true }
-serde_json = { workspace = true }
-toml = { workspace = true }
-
-futures = { workspace = true }
-tokio = { workspace = true }
-tokio-stream = { workspace = true }
-hyper = { workspace = true }
-headers = { workspace = true }
 reqwest = { workspace = true }
-url = { workspace = true }
-http = { workspace = true }
 
-thiserror = { workspace = true }
-error-stack = { workspace = true }
-
-async-trait = { workspace = true }
-
-num_cpus = { workspace = true }
-
-chrono = { workspace = true }
-
-base64 = { workspace = true }
-
-rand = { workspace = true }
-rand_xoshiro = { workspace = true }
-nix = { workspace = true, default-features = false, features = ["signal"] }
-image = { workspace = true, default-features = false, features = ["jpeg"] }
-tokio-tungstenite = { workspace = true }
-inventory = { workspace = true }
-async-openai = { workspace = true }
-unicode-segmentation = { workspace = true }
-
-nsfw = { workspace = true }
-
-api_client = { path = "../api_client" }
-
-
-test_mode_macro = { path = "../test_mode_macro" }
-utils = { path = "../utils" }
 config = { path = "../config" }
-simple_backend = { path = "../simple_backend" }
-simple_backend_config = { path = "../simple_backend_config" }
-simple_backend_utils = { path = "../simple_backend_utils" }
-server_data = { path = "../server_data" }
+test_mode_bot = { path = "../test_mode_bot" }
+test_mode_tests = { path = "../test_mode_tests" }
+test_mode_tests_account = { path = "../test_mode_tests_account" }
+test_mode_tests_profile = { path = "../test_mode_tests_profile" }
+test_mode_tests_media = { path = "../test_mode_tests_media" }

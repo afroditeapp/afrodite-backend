@@ -6,22 +6,15 @@
 
 //! Run test suite and benchmarks
 
-pub mod bot;
-pub mod client;
-mod runner;
-mod server;
-mod server_tests;
-mod state;
+use std::sync::Arc;
 
-use std::{future::Future, sync::Arc};
-
-use client::TestError;
 use config::{
     Config,
     args::{TestMode, TestModeSubMode},
     bot_config_file::BotConfigFile,
 };
-use runner::{bot::BotTestRunner, server_tests::QaTestRunner};
+use test_mode_bot::runner::BotTestRunner;
+use test_mode_tests::runner::server_tests::QaTestRunner;
 
 pub struct TestRunner {
     config: Arc<Config>,
@@ -37,6 +30,10 @@ impl TestRunner {
     }
 
     pub async fn run(self) {
+        test_mode_tests_account::call_this_to_make_sure_that_crate_is_linked();
+        test_mode_tests_profile::call_this_to_make_sure_that_crate_is_linked();
+        test_mode_tests_media::call_this_to_make_sure_that_crate_is_linked();
+
         tracing_subscriber::fmt::init();
 
         let reqwest_client = reqwest::Client::new();
@@ -70,60 +67,6 @@ impl TestRunner {
             )
             .run()
             .await;
-        }
-    }
-}
-
-pub struct TestFunction {
-    pub name: &'static str,
-    pub module_path: &'static str,
-    pub function: fn(TestContext) -> Box<dyn Future<Output = TestResult> + Send>,
-}
-
-impl TestFunction {
-    pub fn name(&self) -> String {
-        let start = self
-            .module_path
-            .trim_start_matches("test_mode::server_tests::");
-        format!("{}::{}", start, self.name)
-    }
-}
-
-inventory::collect!(TestFunction);
-
-pub use crate::runner::server_tests::context::TestContext;
-
-pub type TestResult = Result<(), ServerTestError>;
-
-/// Workaround for api_client error type conversion to
-/// avoid change_context calls.
-pub struct ServerTestError {
-    pub error: error_stack::Report<TestError>,
-}
-
-impl ServerTestError {
-    pub fn new(error: error_stack::Report<crate::client::TestError>) -> Self {
-        Self { error }
-    }
-}
-
-impl From<error_stack::Report<crate::client::TestError>> for ServerTestError {
-    #[track_caller]
-    fn from(error: error_stack::Report<crate::client::TestError>) -> Self {
-        Self {
-            error: error.change_context(TestError::ServerTestFailed),
-        }
-    }
-}
-
-impl<T> From<api_client::apis::Error<T>> for ServerTestError
-where
-    api_client::apis::Error<T>: error_stack::Context,
-{
-    #[track_caller]
-    fn from(error: api_client::apis::Error<T>) -> Self {
-        Self {
-            error: error_stack::Report::from(error).change_context(TestError::ServerTestFailed),
         }
     }
 }
