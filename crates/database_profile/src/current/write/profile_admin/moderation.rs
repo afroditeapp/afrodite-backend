@@ -10,9 +10,9 @@ use model_profile::{
 
 use crate::IntoDatabaseError;
 
-define_current_write_commands!(CurrentWriteProfileAdminProfileText);
+define_current_write_commands!(CurrentWriteProfileAdminModeration);
 
-impl CurrentWriteProfileAdminProfileText<'_> {
+impl CurrentWriteProfileAdminModeration<'_> {
     pub fn add_to_profile_name_allowlist(
         &mut self,
         moderator_id: AccountIdInternal,

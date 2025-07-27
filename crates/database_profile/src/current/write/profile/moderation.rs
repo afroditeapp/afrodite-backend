@@ -9,9 +9,9 @@ use model_profile::{
 
 use crate::{IntoDatabaseError, current::read::GetDbReadCommandsProfile};
 
-define_current_write_commands!(CurrentWriteProfileText);
+define_current_write_commands!(CurrentWriteModeration);
 
-impl CurrentWriteProfileText<'_> {
+impl CurrentWriteModeration<'_> {
     pub fn reset_profile_name_moderation_state(
         &mut self,
         id: AccountIdInternal,

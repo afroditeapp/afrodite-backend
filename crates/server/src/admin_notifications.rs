@@ -264,7 +264,7 @@ impl AdminNotificationManager {
             .read()
             .profile_admin()
             .moderation()
-            .profile_pending_moderation_list(
+            .profile_string_pending_moderation_list(
                 is_bot,
                 GetProfileStringPendingModerationParams {
                     content_type,

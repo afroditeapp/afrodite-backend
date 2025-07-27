@@ -73,7 +73,7 @@ pub async fn get_profile_string_pending_moderation_list(
         .read()
         .profile_admin()
         .moderation()
-        .profile_pending_moderation_list_using_moderator_id(moderator_id, params)
+        .profile_string_pending_moderation_list_using_moderator_id(moderator_id, params)
         .await?;
 
     Ok(r.into())

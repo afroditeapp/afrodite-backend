@@ -17,8 +17,8 @@ impl<'a> CurrentWriteProfile<'a> {
         favorite::CurrentWriteProfileFavorite::new(self.cmds)
     }
 
-    pub fn moderation(self) -> moderation::CurrentWriteProfileText<'a> {
-        moderation::CurrentWriteProfileText::new(self.cmds)
+    pub fn moderation(self) -> moderation::CurrentWriteModeration<'a> {
+        moderation::CurrentWriteModeration::new(self.cmds)
     }
 
     pub fn report(self) -> report::CurrentWriteProfileReport<'a> {

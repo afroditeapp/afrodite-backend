@@ -28,7 +28,7 @@ use crate::{
 /// - const RECEIVED_LIKES_CHANGED = 0x2;
 /// - const MEDIA_CONTENT_MODERATION_COMPLETED = 0x4;
 /// - const NEWS_CHANGED = 0x8;
-/// - const PROFILE_TEXT_MODERATION_COMPLETED = 0x10;
+/// - const PROFILE_STRING_MODERATION_COMPLETED = 0x10;
 /// - const AUTOMATIC_PROFILE_SEARCH_COMPLETED = 0x20;
 /// - const ADMIN_NOTIFICATION = 0x40;
 ///
@@ -223,8 +223,8 @@ pub struct PendingNotificationWithData {
     pub media_content_moderation_completed: Option<MediaContentModerationCompletedNotification>,
     /// Data for NEWS_CHANGED notification.
     pub news_changed: Option<UnreadNewsCountResult>,
-    /// Data for PROFILE_TEXT_MODERATION_COMPLETED notification.
-    pub profile_text_moderation_completed: Option<ProfileStringModerationCompletedNotification>,
+    /// Data for PROFILE_STRING_MODERATION_COMPLETED notification.
+    pub profile_string_moderation_completed: Option<ProfileStringModerationCompletedNotification>,
     /// Data for AUTOMATIC_PROFILE_SEARCH_COMPLETED notification.
     pub automatic_profile_search_completed: Option<AutomaticProfileSearchCompletedNotification>,
     /// Data for ADMIN_NOTIFICATION notification.

@@ -92,7 +92,7 @@ pub async fn get_push_notification_data(
         None
     };
 
-    let profile_text_moderation_completed =
+    let profile_string_moderation_completed =
         if flags.contains(PendingNotificationFlags::PROFILE_STRING_MODERATION_COMPLETED) {
             read_handle
                 .profile()
@@ -122,7 +122,7 @@ pub async fn get_push_notification_data(
         received_likes_changed: received_likes_info,
         media_content_moderation_completed,
         news_changed: unread_news_count,
-        profile_text_moderation_completed,
+        profile_string_moderation_completed,
         automatic_profile_search_completed,
         // State for this is added in API route handler
         admin_notification: None,

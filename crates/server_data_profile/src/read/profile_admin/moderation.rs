@@ -10,7 +10,7 @@ use server_data::{
 define_cmd_wrapper_read!(ReadCommandsProfileModeration);
 
 impl ReadCommandsProfileModeration<'_> {
-    pub async fn profile_pending_moderation_list_using_moderator_id(
+    pub async fn profile_string_pending_moderation_list_using_moderator_id(
         &self,
         moderator_id: AccountIdInternal,
         params: GetProfileStringPendingModerationParams,
@@ -24,7 +24,7 @@ impl ReadCommandsProfileModeration<'_> {
         .into_error()
     }
 
-    pub async fn profile_pending_moderation_list(
+    pub async fn profile_string_pending_moderation_list(
         &self,
         is_bot: bool,
         params: GetProfileStringPendingModerationParams,
