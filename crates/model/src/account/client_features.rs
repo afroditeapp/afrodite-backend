@@ -72,8 +72,8 @@ impl ClientFeaturesConfig {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AttributionConfigInternal {
-    pub generic: Option<StringResource>,
-    pub ip_country: Option<StringResource>,
+    pub generic: Option<StringResourceInternal>,
+    pub ip_country: Option<StringResourceInternal>,
     #[serde(flatten)]
     pub other: toml::Table,
 }
@@ -90,18 +90,34 @@ pub struct AttributionConfig {
 impl From<AttributionConfigInternal> for AttributionConfig {
     fn from(value: AttributionConfigInternal) -> Self {
         Self {
-            generic: value.generic,
-            ip_country: value.ip_country,
+            generic: value.generic.map(Into::into),
+            ip_country: value.ip_country.map(Into::into),
         }
     }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct StringResourceInternal {
+    pub default: String,
+    /// Keys are country codes like "en".
+    #[serde(flatten)]
+    pub translations: HashMap<String, String>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
 pub struct StringResource {
     pub default: String,
     /// Keys are country codes like "en".
-    #[serde(flatten)]
     pub translations: HashMap<String, String>,
+}
+
+impl From<StringResourceInternal> for StringResource {
+    fn from(value: StringResourceInternal) -> Self {
+        Self {
+            default: value.default,
+            translations: value.translations,
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]

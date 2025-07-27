@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use error_stack::{Result, ResultExt};
-use model::StringResource;
+use model::StringResourceInternal;
 use serde::Deserialize;
 
 use crate::file::ConfigFileError;
@@ -12,8 +12,8 @@ pub enum NotificationStringResource {
 
 #[derive(Debug, Default, Deserialize)]
 pub struct NotificationContentFile {
-    pub new_notification_available_title: Option<StringResource>,
-    pub new_notification_available_body: Option<StringResource>,
+    pub new_notification_available_title: Option<StringResourceInternal>,
+    pub new_notification_available_body: Option<StringResourceInternal>,
     #[serde(flatten)]
     pub other: toml::Table,
 }
