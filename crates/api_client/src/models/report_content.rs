@@ -15,8 +15,6 @@ use serde::{Deserialize, Serialize};
 pub struct ReportContent {
     #[serde(rename = "chat_message", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub chat_message: Option<Option<Box<models::ChatMessageReport>>>,
-    #[serde(rename = "custom_report", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub custom_report: Option<Option<Box<models::CustomReportContent>>>,
     #[serde(rename = "profile_content", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub profile_content: Option<Option<Box<models::ContentId>>>,
     #[serde(rename = "profile_name", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -29,7 +27,6 @@ impl ReportContent {
     pub fn new() -> ReportContent {
         ReportContent {
             chat_message: None,
-            custom_report: None,
             profile_content: None,
             profile_name: None,
             profile_text: None,

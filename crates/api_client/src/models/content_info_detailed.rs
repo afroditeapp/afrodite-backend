@@ -21,9 +21,9 @@ pub struct ContentInfoDetailed {
     #[serde(rename = "fd")]
     pub fd: bool,
     #[serde(rename = "rejected_reason_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_reason_category: Option<Option<Box<models::ProfileContentModerationRejectedReasonCategory>>>,
-    #[serde(rename = "rejected_reason_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_reason_details: Option<Option<Box<models::ProfileContentModerationRejectedReasonDetails>>>,
+    pub rejected_reason_category: Option<Option<Box<models::MediaContentModerationRejectedReasonCategory>>>,
+    #[serde(rename = "rejected_reason_details")]
+    pub rejected_reason_details: Box<models::MediaContentModerationRejectedReasonDetails>,
     #[serde(rename = "secure_capture")]
     pub secure_capture: bool,
     #[serde(rename = "slot", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -37,13 +37,13 @@ pub struct ContentInfoDetailed {
 }
 
 impl ContentInfoDetailed {
-    pub fn new(cid: models::ContentId, ctype: models::MediaContentType, fd: bool, secure_capture: bool, state: models::ContentModerationState) -> ContentInfoDetailed {
+    pub fn new(cid: models::ContentId, ctype: models::MediaContentType, fd: bool, rejected_reason_details: models::MediaContentModerationRejectedReasonDetails, secure_capture: bool, state: models::ContentModerationState) -> ContentInfoDetailed {
         ContentInfoDetailed {
             cid: Box::new(cid),
             ctype,
             fd,
             rejected_reason_category: None,
-            rejected_reason_details: None,
+            rejected_reason_details: Box::new(rejected_reason_details),
             secure_capture,
             slot: None,
             state,

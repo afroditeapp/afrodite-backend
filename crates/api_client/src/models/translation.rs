@@ -17,15 +17,15 @@ pub struct Translation {
     #[serde(rename = "key")]
     pub key: String,
     /// Translated text.
-    #[serde(rename = "value")]
-    pub value: String,
+    #[serde(rename = "name")]
+    pub name: String,
 }
 
 impl Translation {
-    pub fn new(key: String, value: String) -> Translation {
+    pub fn new(key: String, name: String) -> Translation {
         Translation {
             key,
-            value,
+            name,
         }
     }
 }

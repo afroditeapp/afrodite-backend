@@ -15,10 +15,10 @@ use crate::{apis::ResponseContent, models};
 use super::{Error, configuration};
 
 
-/// struct for typed errors of method [`get_profile_content_pending_moderation_list`]
+/// struct for typed errors of method [`get_media_content_pending_moderation_list`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum GetProfileContentPendingModerationListError {
+pub enum GetMediaContentPendingModerationListError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -33,22 +33,22 @@ pub enum PostMediaContentFaceDetectedValueError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_moderate_profile_content`]
+/// struct for typed errors of method [`post_moderate_media_content`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostModerateProfileContentError {
+pub enum PostModerateMediaContentError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
 
 
-pub async fn get_profile_content_pending_moderation_list(configuration: &configuration::Configuration, content_type: models::MediaContentType, queue: models::ModerationQueueType, show_content_which_bots_can_moderate: bool) -> Result<models::GetProfileContentPendingModerationList, Error<GetProfileContentPendingModerationListError>> {
+pub async fn get_media_content_pending_moderation_list(configuration: &configuration::Configuration, content_type: models::MediaContentType, queue: models::ModerationQueueType, show_content_which_bots_can_moderate: bool) -> Result<models::GetMediaContentPendingModerationList, Error<GetMediaContentPendingModerationListError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/profile_content_pending_moderation", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/media_api/media_content_pending_moderation", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     local_var_req_builder = local_var_req_builder.query(&[("content_type", &content_type.to_string())]);
@@ -75,7 +75,7 @@ pub async fn get_profile_content_pending_moderation_list(configuration: &configu
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<GetProfileContentPendingModerationListError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<GetMediaContentPendingModerationListError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
@@ -119,12 +119,12 @@ pub async fn post_media_content_face_detected_value(configuration: &configuratio
 }
 
 /// This route will fail if the content is in slot.  Also profile visibility moves from pending to normal when all profile content is moderated as accepted.
-pub async fn post_moderate_profile_content(configuration: &configuration::Configuration, post_moderate_profile_content: models::PostModerateProfileContent) -> Result<(), Error<PostModerateProfileContentError>> {
+pub async fn post_moderate_media_content(configuration: &configuration::Configuration, post_moderate_media_content: models::PostModerateMediaContent) -> Result<(), Error<PostModerateMediaContentError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/moderate_profile_content", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/media_api/moderate_media_content", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -138,7 +138,7 @@ pub async fn post_moderate_profile_content(configuration: &configuration::Config
         };
         local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
-    local_var_req_builder = local_var_req_builder.json(&post_moderate_profile_content);
+    local_var_req_builder = local_var_req_builder.json(&post_moderate_media_content);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -149,7 +149,7 @@ pub async fn post_moderate_profile_content(configuration: &configuration::Config
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         Ok(())
     } else {
-        let local_var_entity: Option<PostModerateProfileContentError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<PostModerateMediaContentError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }

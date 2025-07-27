@@ -1,6 +1,9 @@
 use std::{fmt::Debug, time::Instant};
 
-use api_client::{apis::profile_admin_api, models::ProfileTextModerationRejectedReasonDetails};
+use api_client::{
+    apis::profile_admin_api,
+    models::{ProfileModerationContentType, ProfileModerationRejectedReasonDetails},
+};
 use async_openai::{
     Client,
     config::OpenAIConfig,
@@ -34,9 +37,13 @@ impl AdminBotProfileTextModerationLogic {
         config: &ProfileTextModerationConfig,
         state: &mut ProfileTextModerationState,
     ) -> Result<Option<EmptyPage>, TestError> {
-        let list = profile_admin_api::get_profile_text_pending_moderation_list(api.profile(), true)
-            .await
-            .change_context(TestError::ApiRequest)?;
+        let list = profile_admin_api::get_profile_string_pending_moderation_list(
+            api.profile(),
+            ProfileModerationContentType::ProfileText,
+            true,
+        )
+        .await
+        .change_context(TestError::ApiRequest)?;
 
         if list.values.is_empty() {
             return Ok(Some(EmptyPage));
@@ -44,17 +51,19 @@ impl AdminBotProfileTextModerationLogic {
 
         for request in list.values {
             // Allow texts with only single visible character
-            if config.accept_single_visible_character && request.text.graphemes(true).count() == 1 {
+            if config.accept_single_visible_character && request.value.graphemes(true).count() == 1
+            {
                 // Ignore errors as the user might have changed the text to
                 // another one or it is already moderated.
-                let _ = profile_admin_api::post_moderate_profile_text(
+                let _ = profile_admin_api::post_moderate_profile_string(
                     api.profile(),
-                    api_client::models::PostModerateProfileText {
+                    api_client::models::PostModerateProfileString {
+                        content_type: ProfileModerationContentType::ProfileText,
                         id: request.id.clone(),
-                        text: request.text.clone(),
+                        value: request.value.clone(),
                         accept: true,
                         rejected_category: None,
-                        rejected_details: None,
+                        rejected_details: Box::default(),
                         move_to_human: None,
                     },
                 )
@@ -64,7 +73,8 @@ impl AdminBotProfileTextModerationLogic {
             }
 
             let r = if let Some(llm_config) = &config.llm {
-                let r = Self::llm_profile_text_moderation(&request.text, llm_config, state).await?;
+                let r =
+                    Self::llm_profile_text_moderation(&request.value, llm_config, state).await?;
 
                 match r {
                     LlmModerationResult::StopModerationSesssion => return Ok(Some(EmptyPage)),
@@ -82,16 +92,17 @@ impl AdminBotProfileTextModerationLogic {
 
             // Ignore errors as the user might have changed the text to
             // another one or it is already moderated.
-            let _ = profile_admin_api::post_moderate_profile_text(
+            let _ = profile_admin_api::post_moderate_profile_string(
                 api.profile(),
-                api_client::models::PostModerateProfileText {
+                api_client::models::PostModerateProfileString {
+                    content_type: ProfileModerationContentType::ProfileText,
                     id: request.id.clone(),
-                    text: request.text.clone(),
+                    value: request.value.clone(),
                     accept: r.accept,
                     rejected_category: None,
-                    rejected_details: r.rejected_details.map(|v| {
-                        Some(Box::new(ProfileTextModerationRejectedReasonDetails::new(v)))
-                    }),
+                    rejected_details: Box::new(ProfileModerationRejectedReasonDetails::new(
+                        r.rejected_details.unwrap_or_default(),
+                    )),
                     move_to_human: if r.move_to_human {
                         Some(Some(true))
                     } else {

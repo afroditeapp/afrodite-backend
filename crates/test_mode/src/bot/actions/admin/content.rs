@@ -2,9 +2,7 @@ use std::{fmt::Debug, sync::Arc, time::Instant};
 
 use api_client::{
     apis::{media_admin_api, media_api},
-    models::{
-        MediaContentType, ModerationQueueType, ProfileContentModerationRejectedReasonDetails,
-    },
+    models::{MediaContentModerationRejectedReasonDetails, MediaContentType, ModerationQueueType},
 };
 use async_openai::{
     Client,
@@ -97,7 +95,7 @@ impl ModerateContentModerationRequest {
 impl BotAction for ModerateContentModerationRequest {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         loop {
-            let list = media_admin_api::get_profile_content_pending_moderation_list(
+            let list = media_admin_api::get_media_content_pending_moderation_list(
                 state.api.media(),
                 MediaContentType::JpegImage,
                 self.queue,
@@ -127,15 +125,15 @@ impl BotAction for ModerateContentModerationRequest {
                     )
                 })?;
 
-                media_admin_api::post_moderate_profile_content(
+                media_admin_api::post_moderate_media_content(
                     state.api.media(),
-                    api_client::models::PostModerateProfileContent {
+                    api_client::models::PostModerateMediaContent {
                         account_id: request.account_id,
                         content_id: request.content_id,
                         accept: true,
                         move_to_human: Some(Some(false)),
                         rejected_category: None,
-                        rejected_details: None,
+                        rejected_details: Box::default(),
                     },
                 )
                 .await
@@ -160,7 +158,7 @@ impl AdminBotContentModerationLogic {
         config: &ContentModerationConfig,
         moderation_state: &mut ContentModerationState,
     ) -> Result<Option<EmptyPage>, TestError> {
-        let list = media_admin_api::get_profile_content_pending_moderation_list(
+        let list = media_admin_api::get_media_content_pending_moderation_list(
             api.media(),
             MediaContentType::JpegImage,
             queue,
@@ -219,19 +217,19 @@ impl AdminBotContentModerationLogic {
                     info!("Image deleted");
                 }
             } else {
-                media_admin_api::post_moderate_profile_content(
+                media_admin_api::post_moderate_media_content(
                     api.media(),
-                    api_client::models::PostModerateProfileContent {
+                    api_client::models::PostModerateMediaContent {
                         account_id: request.account_id,
                         content_id: request.content_id,
                         accept: result.accept,
                         move_to_human: Some(Some(result.move_to_human)),
                         rejected_category: None,
-                        rejected_details: result.rejected_details.map(|v| {
-                            Some(Box::new(
-                                ProfileContentModerationRejectedReasonDetails::new(v),
-                            ))
-                        }),
+                        rejected_details: Box::new(
+                            MediaContentModerationRejectedReasonDetails::new(
+                                result.rejected_details.unwrap_or_default(),
+                            ),
+                        ),
                     },
                 )
                 .await

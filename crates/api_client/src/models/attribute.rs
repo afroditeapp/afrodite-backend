@@ -31,7 +31,7 @@ pub struct Attribute {
     /// Mode of the attribute.
     #[serde(rename = "mode")]
     pub mode: models::AttributeMode,
-    /// English text for the attribute.
+    /// Default name for the attribute if translated value is not available.
     #[serde(rename = "name")]
     pub name: String,
     /// Attribute order number.

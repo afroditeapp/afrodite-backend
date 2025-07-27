@@ -168,10 +168,10 @@ pub enum PostGetNextProfilePageError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_get_profile_text_moderation_completed_notification`]
+/// struct for typed errors of method [`post_get_profile_string_moderation_completed_notification`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostGetProfileTextModerationCompletedNotificationError {
+pub enum PostGetProfileStringModerationCompletedNotificationError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -195,10 +195,10 @@ pub enum PostMarkAutomaticProfileSearchCompletedNotificationViewedError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_mark_profile_text_moderation_completed_notification_viewed`]
+/// struct for typed errors of method [`post_mark_profile_string_moderation_completed_notification_viewed`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostMarkProfileTextModerationCompletedNotificationViewedError {
+pub enum PostMarkProfileStringModerationCompletedNotificationViewedError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -909,12 +909,12 @@ pub async fn post_get_next_profile_page(configuration: &configuration::Configura
     }
 }
 
-pub async fn post_get_profile_text_moderation_completed_notification(configuration: &configuration::Configuration, ) -> Result<models::ProfileTextModerationCompletedNotification, Error<PostGetProfileTextModerationCompletedNotificationError>> {
+pub async fn post_get_profile_string_moderation_completed_notification(configuration: &configuration::Configuration, ) -> Result<models::ProfileStringModerationCompletedNotification, Error<PostGetProfileStringModerationCompletedNotificationError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/profile_api/profile_text_moderation_completed_notification", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/profile_string_moderation_completed_notification", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -938,7 +938,7 @@ pub async fn post_get_profile_text_moderation_completed_notification(configurati
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<PostGetProfileTextModerationCompletedNotificationError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<PostGetProfileStringModerationCompletedNotificationError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
@@ -1017,12 +1017,12 @@ pub async fn post_mark_automatic_profile_search_completed_notification_viewed(co
     }
 }
 
-pub async fn post_mark_profile_text_moderation_completed_notification_viewed(configuration: &configuration::Configuration, profile_text_moderation_completed_notification_viewed: models::ProfileTextModerationCompletedNotificationViewed) -> Result<(), Error<PostMarkProfileTextModerationCompletedNotificationViewedError>> {
+pub async fn post_mark_profile_string_moderation_completed_notification_viewed(configuration: &configuration::Configuration, profile_string_moderation_completed_notification_viewed: models::ProfileStringModerationCompletedNotificationViewed) -> Result<(), Error<PostMarkProfileStringModerationCompletedNotificationViewedError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/profile_api/mark_profile_text_moderation_completed_notification_viewed", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/mark_profile_string_moderation_completed_notification_viewed", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -1036,7 +1036,7 @@ pub async fn post_mark_profile_text_moderation_completed_notification_viewed(con
         };
         local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
-    local_var_req_builder = local_var_req_builder.json(&profile_text_moderation_completed_notification_viewed);
+    local_var_req_builder = local_var_req_builder.json(&profile_string_moderation_completed_notification_viewed);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -1047,13 +1047,13 @@ pub async fn post_mark_profile_text_moderation_completed_notification_viewed(con
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         Ok(())
     } else {
-        let local_var_entity: Option<PostMarkProfileTextModerationCompletedNotificationViewedError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<PostMarkProfileStringModerationCompletedNotificationViewedError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
 }
 
-/// Writes the profile to the database only if it is changed.  WebSocket event about profile change will not be emitted. The event is emitted only from server side profile updates.  # Requirements - Profile attributes must be valid. - Profile text must be 2000 bytes or less. - Profile text must be trimmed. - Profile name changes are only possible when initial setup is ongoing. - Profile name must be trimmed and not empty. - Profile name must be 100 bytes or less. - Profile age must match with currently valid age range. The first min   value for the age range is the age at the initial setup. The second min   and max value is calculated using the following algorithm:  - The initial age (initialAge) is paired with the year of initial    setup completed (initialSetupYear).    - Year difference (yearDifference = currentYear - initialSetupYear) is      used for changing the range min and max.      - Min value: initialAge + yearDifference - 1.      - Max value: initialAge + yearDifference + 1.  
+/// Writes the profile to the database only if it is changed.  WebSocket event about profile change will not be emitted. The event is emitted only from server side profile updates.  # Requirements - Profile attributes must be valid. - Profile text must be 2000 bytes or less. - Profile text must be trimmed. - Profile name changes are only possible when initial setup is ongoing   or current profile name is not accepted. - Profile name must be trimmed and not empty. - Profile name must be 100 bytes or less. - Profile name must start with uppercase letter. - Profile age must match with currently valid age range. The first min   value for the age range is the age at the initial setup. The second min   and max value is calculated using the following algorithm:  - The initial age (initialAge) is paired with the year of initial    setup completed (initialSetupYear).    - Year difference (yearDifference = currentYear - initialSetupYear) is      used for changing the range min and max.      - Min value: initialAge + yearDifference - 1.      - Max value: initialAge + yearDifference + 1.  
 pub async fn post_profile(configuration: &configuration::Configuration, profile_update: models::ProfileUpdate) -> Result<(), Error<PostProfileError>> {
     let local_var_configuration = configuration;
 

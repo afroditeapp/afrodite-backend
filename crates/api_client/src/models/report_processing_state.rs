@@ -14,8 +14,6 @@ use serde::{Deserialize, Serialize};
 /// 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum ReportProcessingState {
-    #[serde(rename = "Empty")]
-    Empty,
     #[serde(rename = "Waiting")]
     Waiting,
     #[serde(rename = "Done")]
@@ -26,7 +24,6 @@ pub enum ReportProcessingState {
 impl std::fmt::Display for ReportProcessingState {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::Empty => write!(f, "Empty"),
             Self::Waiting => write!(f, "Waiting"),
             Self::Done => write!(f, "Done"),
         }
@@ -35,7 +32,7 @@ impl std::fmt::Display for ReportProcessingState {
 
 impl Default for ReportProcessingState {
     fn default() -> ReportProcessingState {
-        Self::Empty
+        Self::Waiting
     }
 }
 

@@ -342,7 +342,7 @@ impl Admin {
                 .run(ModerateContentModerationRequest::from_queue(queue))
                 .await?;
 
-            let list = media_admin_api::get_profile_content_pending_moderation_list(
+            let list = media_admin_api::get_media_content_pending_moderation_list(
                 self.account.media_api(),
                 MediaContentType::JpegImage,
                 queue,

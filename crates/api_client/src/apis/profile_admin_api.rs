@@ -42,24 +42,6 @@ pub enum GetProfileAgeAndNameError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_profile_name_pending_moderation_list`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum GetProfileNamePendingModerationListError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`get_profile_name_state`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum GetProfileNameStateError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
 /// struct for typed errors of method [`get_profile_statistics_history`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -69,37 +51,28 @@ pub enum GetProfileStatisticsHistoryError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_profile_text_pending_moderation_list`]
+/// struct for typed errors of method [`get_profile_string_pending_moderation_list`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum GetProfileTextPendingModerationListError {
+pub enum GetProfileStringPendingModerationListError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_profile_text_state`]
+/// struct for typed errors of method [`get_profile_string_state`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum GetProfileTextStateError {
+pub enum GetProfileStringStateError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_moderate_profile_name`]
+/// struct for typed errors of method [`post_moderate_profile_string`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostModerateProfileNameError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`post_moderate_profile_text`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum PostModerateProfileTextError {
+pub enum PostModerateProfileStringError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -225,77 +198,6 @@ pub async fn get_profile_age_and_name(configuration: &configuration::Configurati
     }
 }
 
-pub async fn get_profile_name_pending_moderation_list(configuration: &configuration::Configuration, ) -> Result<models::GetProfileNamePendingModerationList, Error<GetProfileNamePendingModerationListError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/profile_api/profile_name_pending_moderation", local_var_configuration.base_path);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
-    };
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
-    } else {
-        let local_var_entity: Option<GetProfileNamePendingModerationListError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
-/// # Access - Permission [model::Permissions::admin_moderate_profile_names]
-pub async fn get_profile_name_state(configuration: &configuration::Configuration, aid: &str) -> Result<models::GetProfileNameState, Error<GetProfileNameStateError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/profile_api/get_profile_name_state/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
-    };
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
-    } else {
-        let local_var_entity: Option<GetProfileNameStateError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
 pub async fn get_profile_statistics_history(configuration: &configuration::Configuration, value_type: models::ProfileStatisticsHistoryValueType, age: Option<i64>) -> Result<models::GetProfileStatisticsHistoryResult, Error<GetProfileStatisticsHistoryError>> {
     let local_var_configuration = configuration;
 
@@ -335,15 +237,17 @@ pub async fn get_profile_statistics_history(configuration: &configuration::Confi
     }
 }
 
-pub async fn get_profile_text_pending_moderation_list(configuration: &configuration::Configuration, show_texts_which_bots_can_moderate: bool) -> Result<models::GetProfileTextPendingModerationList, Error<GetProfileTextPendingModerationListError>> {
+/// # Access * [Permissions::admin_moderate_profile_names] or   [Permissions::admin_moderate_profile_texts] depending   on [GetProfilePendingModerationParams::content_type].
+pub async fn get_profile_string_pending_moderation_list(configuration: &configuration::Configuration, content_type: models::ProfileModerationContentType, show_values_which_bots_can_moderate: bool) -> Result<models::GetProfileStringPendingModerationList, Error<GetProfileStringPendingModerationListError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/profile_api/profile_text_pending_moderation", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/profile_string_pending_moderation", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
-    local_var_req_builder = local_var_req_builder.query(&[("show_texts_which_bots_can_moderate", &show_texts_which_bots_can_moderate.to_string())]);
+    local_var_req_builder = local_var_req_builder.query(&[("content_type", &content_type.to_string())]);
+    local_var_req_builder = local_var_req_builder.query(&[("show_values_which_bots_can_moderate", &show_values_which_bots_can_moderate.to_string())]);
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
@@ -365,21 +269,22 @@ pub async fn get_profile_text_pending_moderation_list(configuration: &configurat
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<GetProfileTextPendingModerationListError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<GetProfileStringPendingModerationListError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
 }
 
-/// # Access - Permission [model::Permissions::admin_moderate_profile_texts]
-pub async fn get_profile_text_state(configuration: &configuration::Configuration, aid: &str) -> Result<models::GetProfileTextState, Error<GetProfileTextStateError>> {
+/// # Access * [Permissions::admin_moderate_profile_names] or   [Permissions::admin_moderate_profile_texts] depending   on [GetProfileStringModerationStateParams::content_type].
+pub async fn get_profile_string_state(configuration: &configuration::Configuration, content_type: models::ProfileModerationContentType, aid: &str) -> Result<models::GetProfileStringModerationState, Error<GetProfileStringStateError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/profile_api/get_profile_text_state/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
+    let local_var_uri_str = format!("{}/profile_api/get_profile_string_state/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
+    local_var_req_builder = local_var_req_builder.query(&[("content_type", &content_type.to_string())]);
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
@@ -401,18 +306,19 @@ pub async fn get_profile_text_state(configuration: &configuration::Configuration
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<GetProfileTextStateError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<GetProfileStringStateError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
 }
 
-pub async fn post_moderate_profile_name(configuration: &configuration::Configuration, post_moderate_profile_name: models::PostModerateProfileName) -> Result<(), Error<PostModerateProfileNameError>> {
+/// This route will fail if the users's profile name/text is empty or it is not the same name/text that was moderated.  # Access * [Permissions::admin_moderate_profile_names] or   [Permissions::admin_moderate_profile_texts] depending   on [PostModerateProfileString::content_type].
+pub async fn post_moderate_profile_string(configuration: &configuration::Configuration, post_moderate_profile_string: models::PostModerateProfileString) -> Result<(), Error<PostModerateProfileStringError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/profile_api/moderate_profile_name", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/moderate_profile_string", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -426,7 +332,7 @@ pub async fn post_moderate_profile_name(configuration: &configuration::Configura
         };
         local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
-    local_var_req_builder = local_var_req_builder.json(&post_moderate_profile_name);
+    local_var_req_builder = local_var_req_builder.json(&post_moderate_profile_string);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -437,44 +343,7 @@ pub async fn post_moderate_profile_name(configuration: &configuration::Configura
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         Ok(())
     } else {
-        let local_var_entity: Option<PostModerateProfileNameError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
-/// This route will fail if the users's profile text is empty or it is not the same text that was moderated.
-pub async fn post_moderate_profile_text(configuration: &configuration::Configuration, post_moderate_profile_text: models::PostModerateProfileText) -> Result<(), Error<PostModerateProfileTextError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/profile_api/moderate_profile_text", local_var_configuration.base_path);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
-    };
-    local_var_req_builder = local_var_req_builder.json(&post_moderate_profile_text);
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        Ok(())
-    } else {
-        let local_var_entity: Option<PostModerateProfileTextError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<PostModerateProfileStringError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }

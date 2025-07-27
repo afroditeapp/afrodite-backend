@@ -13,19 +13,20 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MediaContentModerationCompletedNotificationViewed {
-    /// Wrapping notification ID
     #[serde(rename = "accepted")]
-    pub accepted: i32,
-    /// Wrapping notification ID
+    pub accepted: Box<models::NotificationIdViewed>,
+    #[serde(rename = "deleted")]
+    pub deleted: Box<models::NotificationIdViewed>,
     #[serde(rename = "rejected")]
-    pub rejected: i32,
+    pub rejected: Box<models::NotificationIdViewed>,
 }
 
 impl MediaContentModerationCompletedNotificationViewed {
-    pub fn new(accepted: i32, rejected: i32) -> MediaContentModerationCompletedNotificationViewed {
+    pub fn new(accepted: models::NotificationIdViewed, deleted: models::NotificationIdViewed, rejected: models::NotificationIdViewed) -> MediaContentModerationCompletedNotificationViewed {
         MediaContentModerationCompletedNotificationViewed {
-            accepted,
-            rejected,
+            accepted: Box::new(accepted),
+            deleted: Box::new(deleted),
+            rejected: Box::new(rejected),
         }
     }
 }

@@ -12,16 +12,15 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct FeaturesConfig {
-    /// Enable video calls
-    #[serde(rename = "video_calls")]
-    pub video_calls: bool,
+pub struct ProfileModerationRejectedReasonCategory {
+    #[serde(rename = "value")]
+    pub value: i64,
 }
 
-impl FeaturesConfig {
-    pub fn new(video_calls: bool) -> FeaturesConfig {
-        FeaturesConfig {
-            video_calls,
+impl ProfileModerationRejectedReasonCategory {
+    pub fn new(value: i64) -> ProfileModerationRejectedReasonCategory {
+        ProfileModerationRejectedReasonCategory {
+            value,
         }
     }
 }

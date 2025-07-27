@@ -13,19 +13,14 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AutomaticProfileSearchCompletedNotification {
-    /// Wrapping notification ID
     #[serde(rename = "profiles_found")]
-    pub profiles_found: i32,
-    /// Wrapping notification ID
-    #[serde(rename = "profiles_found_viewed")]
-    pub profiles_found_viewed: i32,
+    pub profiles_found: Box<models::NotificationStatus>,
 }
 
 impl AutomaticProfileSearchCompletedNotification {
-    pub fn new(profiles_found: i32, profiles_found_viewed: i32) -> AutomaticProfileSearchCompletedNotification {
+    pub fn new(profiles_found: models::NotificationStatus) -> AutomaticProfileSearchCompletedNotification {
         AutomaticProfileSearchCompletedNotification {
-            profiles_found,
-            profiles_found_viewed,
+            profiles_found: Box::new(profiles_found),
         }
     }
 }

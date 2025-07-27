@@ -17,15 +17,15 @@ pub struct CustomReportTranslation {
     #[serde(rename = "key")]
     pub key: String,
     /// Translated text.
-    #[serde(rename = "value")]
-    pub value: String,
+    #[serde(rename = "name")]
+    pub name: String,
 }
 
 impl CustomReportTranslation {
-    pub fn new(key: String, value: String) -> CustomReportTranslation {
+    pub fn new(key: String, name: String) -> CustomReportTranslation {
         CustomReportTranslation {
             key,
-            value,
+            name,
         }
     }
 }

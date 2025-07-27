@@ -11,17 +11,17 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// AccountBanReasonDetails : This might be empty.
+/// ProfileModerationRejectedReasonDetails : Text might be empty.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct AccountBanReasonDetails {
+pub struct ProfileModerationRejectedReasonDetails {
     #[serde(rename = "value")]
     pub value: String,
 }
 
-impl AccountBanReasonDetails {
-    /// This might be empty.
-    pub fn new(value: String) -> AccountBanReasonDetails {
-        AccountBanReasonDetails {
+impl ProfileModerationRejectedReasonDetails {
+    /// Text might be empty.
+    pub fn new(value: String) -> ProfileModerationRejectedReasonDetails {
+        ProfileModerationRejectedReasonDetails {
             value,
         }
     }

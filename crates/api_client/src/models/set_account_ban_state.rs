@@ -20,17 +20,17 @@ pub struct SetAccountBanState {
     pub ban_until: Option<Option<Box<models::UnixTime>>>,
     #[serde(rename = "reason_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub reason_category: Option<Option<Box<models::AccountBanReasonCategory>>>,
-    #[serde(rename = "reason_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub reason_details: Option<Option<Box<models::AccountBanReasonDetails>>>,
+    #[serde(rename = "reason_details")]
+    pub reason_details: Box<models::AccountBanReasonDetails>,
 }
 
 impl SetAccountBanState {
-    pub fn new(account: models::AccountId) -> SetAccountBanState {
+    pub fn new(account: models::AccountId, reason_details: models::AccountBanReasonDetails) -> SetAccountBanState {
         SetAccountBanState {
             account: Box::new(account),
             ban_until: None,
             reason_category: None,
-            reason_details: None,
+            reason_details: Box::new(reason_details),
         }
     }
 }

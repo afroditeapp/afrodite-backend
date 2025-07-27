@@ -1076,7 +1076,7 @@ pub async fn post_reset_received_likes_paging(configuration: &configuration::Con
     }
 }
 
-/// This route might update [model_chat::DailyLikesLeft] and WebSocket event about the update is not sent because this route returns the new value.
+/// This route might update [model_chat::DailyLikesLeft] and WebSocket event about the update is not sent because this route returns the new value.  The like sending is allowed even if accounts aren't a match when considering age and gender preferences. This is because changing the preferences isn't limited.  # Access * [AccountState::Normal]
 pub async fn post_send_like(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<models::SendLikeResult, Error<PostSendLikeError>> {
     let local_var_configuration = configuration;
 

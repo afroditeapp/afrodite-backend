@@ -13,20 +13,27 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ClientFeaturesConfig {
+    #[serde(rename = "attribution")]
+    pub attribution: Box<models::AttributionConfig>,
     #[serde(rename = "features")]
     pub features: Box<models::FeaturesConfig>,
     #[serde(rename = "limits")]
     pub limits: Box<models::LimitsConfig>,
     #[serde(rename = "map")]
     pub map: Box<models::MapConfig>,
+    /// Enable news UI
+    #[serde(rename = "news", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub news: Option<Option<Box<models::NewsConfig>>>,
 }
 
 impl ClientFeaturesConfig {
-    pub fn new(features: models::FeaturesConfig, limits: models::LimitsConfig, map: models::MapConfig) -> ClientFeaturesConfig {
+    pub fn new(attribution: models::AttributionConfig, features: models::FeaturesConfig, limits: models::LimitsConfig, map: models::MapConfig) -> ClientFeaturesConfig {
         ClientFeaturesConfig {
+            attribution: Box::new(attribution),
             features: Box::new(features),
             limits: Box::new(limits),
             map: Box::new(map),
+            news: None,
         }
     }
 }

@@ -125,10 +125,10 @@ pub enum PostCompleteSetupError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_custom_report_boolean`]
+/// struct for typed errors of method [`post_custom_report_empty`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostCustomReportBooleanError {
+pub enum PostCustomReportEmptyError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -138,14 +138,7 @@ pub enum PostCustomReportBooleanError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostDemoModeAccessibleAccountsError {
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`post_demo_mode_confirm_login`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum PostDemoModeConfirmLoginError {
+    Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -154,7 +147,6 @@ pub enum PostDemoModeConfirmLoginError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostDemoModeLoginError {
-    Status500(),
     UnknownValue(serde_json::Value),
 }
 
@@ -162,6 +154,7 @@ pub enum PostDemoModeLoginError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostDemoModeLoginToAccountError {
+    Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -170,7 +163,6 @@ pub enum PostDemoModeLoginToAccountError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostDemoModeLogoutError {
-    Status500(),
     UnknownValue(serde_json::Value),
 }
 
@@ -178,6 +170,7 @@ pub enum PostDemoModeLogoutError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostDemoModeRegisterAccountError {
+    Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -712,12 +705,12 @@ pub async fn post_complete_setup(configuration: &configuration::Configuration, )
     }
 }
 
-pub async fn post_custom_report_boolean(configuration: &configuration::Configuration, update_custom_report_boolean: models::UpdateCustomReportBoolean) -> Result<models::UpdateReportResult, Error<PostCustomReportBooleanError>> {
+pub async fn post_custom_report_empty(configuration: &configuration::Configuration, update_custom_report_empty: models::UpdateCustomReportEmpty) -> Result<models::UpdateReportResult, Error<PostCustomReportEmptyError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/custom_report_boolean", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/account_api/custom_report_empty", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -731,7 +724,7 @@ pub async fn post_custom_report_boolean(configuration: &configuration::Configura
         };
         local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
-    local_var_req_builder = local_var_req_builder.json(&update_custom_report_boolean);
+    local_var_req_builder = local_var_req_builder.json(&update_custom_report_empty);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -742,7 +735,7 @@ pub async fn post_custom_report_boolean(configuration: &configuration::Configura
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<PostCustomReportBooleanError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<PostCustomReportEmptyError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
@@ -777,35 +770,8 @@ pub async fn post_demo_mode_accessible_accounts(configuration: &configuration::C
     }
 }
 
-pub async fn post_demo_mode_confirm_login(configuration: &configuration::Configuration, demo_mode_confirm_login: models::DemoModeConfirmLogin) -> Result<models::DemoModeConfirmLoginResult, Error<PostDemoModeConfirmLoginError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/account_api/demo_mode_confirm_login", local_var_configuration.base_path);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    local_var_req_builder = local_var_req_builder.json(&demo_mode_confirm_login);
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
-    } else {
-        let local_var_entity: Option<PostDemoModeConfirmLoginError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
-pub async fn post_demo_mode_login(configuration: &configuration::Configuration, demo_mode_password: models::DemoModePassword) -> Result<models::DemoModeLoginResult, Error<PostDemoModeLoginError>> {
+/// This API route has 1 second wait time to make password guessing harder. Account will be locked if the password is guessed. Server process restart will reset the lock.
+pub async fn post_demo_mode_login(configuration: &configuration::Configuration, demo_mode_login_credentials: models::DemoModeLoginCredentials) -> Result<models::DemoModeLoginResult, Error<PostDemoModeLoginError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -816,7 +782,7 @@ pub async fn post_demo_mode_login(configuration: &configuration::Configuration, 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
-    local_var_req_builder = local_var_req_builder.json(&demo_mode_password);
+    local_var_req_builder = local_var_req_builder.json(&demo_mode_login_credentials);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;

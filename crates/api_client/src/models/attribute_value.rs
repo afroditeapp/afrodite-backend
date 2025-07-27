@@ -26,26 +26,26 @@ pub struct AttributeValue {
     /// Unique string identifier for the attribute value.
     #[serde(rename = "key")]
     pub key: String,
+    /// Default name for the attribute value if translated value is not available.
+    #[serde(rename = "name")]
+    pub name: String,
     /// Order number for client to determine in what order the values should be displayed.
     #[serde(rename = "order_number")]
     pub order_number: i32,
-    /// English text for the attribute value.
-    #[serde(rename = "value")]
-    pub value: String,
     #[serde(rename = "visible", skip_serializing_if = "Option::is_none")]
     pub visible: Option<bool>,
 }
 
 impl AttributeValue {
-    pub fn new(id: i32, key: String, order_number: i32, value: String) -> AttributeValue {
+    pub fn new(id: i32, key: String, name: String, order_number: i32) -> AttributeValue {
         AttributeValue {
             editable: None,
             group_values: None,
             icon: None,
             id,
             key,
+            name,
             order_number,
-            value,
             visible: None,
         }
     }

@@ -31,7 +31,7 @@ pub struct PendingNotificationWithData {
     pub news_changed: Option<Option<Box<models::UnreadNewsCountResult>>>,
     /// Data for PROFILE_TEXT_MODERATION_COMPLETED notification.
     #[serde(rename = "profile_text_moderation_completed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_text_moderation_completed: Option<Option<Box<models::ProfileTextModerationCompletedNotification>>>,
+    pub profile_text_moderation_completed: Option<Option<Box<models::ProfileStringModerationCompletedNotification>>>,
     /// Data for RECEIVED_LIKES_CHANGED notification.
     #[serde(rename = "received_likes_changed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub received_likes_changed: Option<Option<Box<models::NewReceivedLikesCountResult>>>,
