@@ -390,7 +390,10 @@ pub fn get_config(
             let sha256 = format!("{:x}", Sha256::digest(features.as_bytes()));
             let features: ClientFeaturesConfigInternal =
                 toml::from_str(&features).change_context(GetConfigError::InvalidConfiguration)?;
-            (Some(features.into()), Some(sha256))
+            let features = features
+                .to_client_features_config()
+                .into_error_string(GetConfigError::InvalidConfiguration)?;
+            (Some(features), Some(sha256))
         } else {
             (None, None)
         };

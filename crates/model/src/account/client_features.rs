@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 use simple_backend_utils::time::UtcTimeValue;
 use utoipa::ToSchema;
@@ -20,6 +22,8 @@ impl ClientFeaturesFileHash {
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct ClientFeaturesConfigInternal {
     #[serde(default)]
+    pub attribution: AttributionConfigInternal,
+    #[serde(default)]
     pub features: FeaturesConfig,
     pub news: Option<NewsConfig>,
     #[serde(default)]
@@ -28,8 +32,27 @@ pub struct ClientFeaturesConfigInternal {
     pub limits: LimitsConfigInternal,
 }
 
+impl ClientFeaturesConfigInternal {
+    pub fn to_client_features_config(self) -> Result<ClientFeaturesConfig, String> {
+        if let Some(key) = self.attribution.other.keys().next() {
+            return Err(format!(
+                "Client features config file error. Unknown attribution string resource '{key}'."
+            ));
+        }
+
+        Ok(ClientFeaturesConfig {
+            attribution: self.attribution.into(),
+            features: self.features,
+            news: self.news,
+            map: self.map.into(),
+            limits: self.limits.into(),
+        })
+    }
+}
+
 #[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct ClientFeaturesConfig {
+    pub attribution: AttributionConfig,
     pub features: FeaturesConfig,
     /// Enable news UI
     pub news: Option<NewsConfig>,
@@ -47,15 +70,38 @@ impl ClientFeaturesConfig {
     }
 }
 
-impl From<ClientFeaturesConfigInternal> for ClientFeaturesConfig {
-    fn from(value: ClientFeaturesConfigInternal) -> Self {
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct AttributionConfigInternal {
+    pub generic: Option<AttributionTranslations>,
+    pub ip_country: Option<AttributionTranslations>,
+    #[serde(flatten)]
+    pub other: toml::Table,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
+pub struct AttributionConfig {
+    /// Generic attribution info text displayed in about screen
+    /// of the app.
+    pub generic: Option<AttributionTranslations>,
+    /// Attribution info text displayed when IP country data is shown.
+    pub ip_country: Option<AttributionTranslations>,
+}
+
+impl From<AttributionConfigInternal> for AttributionConfig {
+    fn from(value: AttributionConfigInternal) -> Self {
         Self {
-            features: value.features,
-            news: value.news,
-            map: value.map.into(),
-            limits: value.limits.into(),
+            generic: value.generic,
+            ip_country: value.ip_country,
         }
     }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
+pub struct AttributionTranslations {
+    pub default: String,
+    /// Keys are country codes like "en".
+    #[serde(flatten)]
+    pub translations: HashMap<String, String>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
