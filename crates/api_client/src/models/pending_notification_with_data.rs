@@ -29,13 +29,13 @@ pub struct PendingNotificationWithData {
     /// Data for NEWS_CHANGED notification.
     #[serde(rename = "news_changed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub news_changed: Option<Option<Box<models::UnreadNewsCountResult>>>,
-    /// Data for PROFILE_TEXT_MODERATION_COMPLETED notification.
-    #[serde(rename = "profile_text_moderation_completed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_text_moderation_completed: Option<Option<Box<models::ProfileStringModerationCompletedNotification>>>,
+    /// Data for PROFILE_STRING_MODERATION_COMPLETED notification.
+    #[serde(rename = "profile_string_moderation_completed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub profile_string_moderation_completed: Option<Option<Box<models::ProfileStringModerationCompletedNotification>>>,
     /// Data for RECEIVED_LIKES_CHANGED notification.
     #[serde(rename = "received_likes_changed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub received_likes_changed: Option<Option<Box<models::NewReceivedLikesCountResult>>>,
-    /// Pending notification (or multiple notifications which each have different type) not yet received notifications which push notification requests client to download.  The integer is a bitflag.  - const NEW_MESSAGE = 0x1; - const RECEIVED_LIKES_CHANGED = 0x2; - const MEDIA_CONTENT_MODERATION_COMPLETED = 0x4; - const NEWS_CHANGED = 0x8; - const PROFILE_TEXT_MODERATION_COMPLETED = 0x10; - const AUTOMATIC_PROFILE_SEARCH_COMPLETED = 0x20; - const ADMIN_NOTIFICATION = 0x40; 
+    /// Pending notification (or multiple notifications which each have different type) not yet received notifications which push notification requests client to download.  The integer is a bitflag.  - const NEW_MESSAGE = 0x1; - const RECEIVED_LIKES_CHANGED = 0x2; - const MEDIA_CONTENT_MODERATION_COMPLETED = 0x4; - const NEWS_CHANGED = 0x8; - const PROFILE_STRING_MODERATION_COMPLETED = 0x10; - const AUTOMATIC_PROFILE_SEARCH_COMPLETED = 0x20; - const ADMIN_NOTIFICATION = 0x40; 
     #[serde(rename = "value")]
     pub value: i64,
 }
@@ -49,7 +49,7 @@ impl PendingNotificationWithData {
             media_content_moderation_completed: None,
             new_message: None,
             news_changed: None,
-            profile_text_moderation_completed: None,
+            profile_string_moderation_completed: None,
             received_likes_changed: None,
             value,
         }
