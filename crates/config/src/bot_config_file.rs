@@ -21,7 +21,8 @@ pub struct BotConfigFile {
     /// Override config for specific user bots.
     #[serde(default)]
     pub bot: Vec<BotInstanceConfig>,
-    pub profile_text_moderation: Option<ProfileTextModerationConfig>,
+    pub profile_name_moderation: Option<ProfileStringModerationConfig>,
+    pub profile_text_moderation: Option<ProfileStringModerationConfig>,
     pub content_moderation: Option<ContentModerationConfig>,
     /// Config required for starting backend in remote bot mode.
     /// Ignored when backend starts in test mode.
@@ -108,23 +109,32 @@ impl BotConfigFile {
             check_imgs_exist(&config, img_dir, Gender::Woman)?
         }
 
-        if let Some(config) = config
-            .profile_text_moderation
-            .as_ref()
-            .and_then(|v| v.llm.as_ref())
+        let profile_string_moderation_configs = [
+            config.profile_name_moderation.as_ref(),
+            config.profile_text_moderation.as_ref(),
+        ];
+
+        for config in profile_string_moderation_configs
+            .iter()
+            .flatten()
+            .flat_map(|v| v.llm.as_ref())
         {
             let count = config
                 .user_text_template
-                .split(ProfileTextModerationConfig::TEMPLATE_PLACEHOLDER_TEXT)
+                .split(ProfileStringModerationConfig::TEMPLATE_PLACEHOLDER_TEXT)
                 .count();
             #[allow(clippy::comparison_chain)]
             if count > 2 {
                 return Err(ConfigFileError::InvalidConfig)
-                    .attach_printable("Profile text LLM moderation user text template: only one '{text}' placeholder is allowed");
+                    .attach_printable(format!(
+                        "Profile text LLM moderation user text template: only one '{}' placeholder is allowed",
+                        ProfileStringModerationConfig::TEMPLATE_PLACEHOLDER_TEXT,
+                    ));
             } else if count < 2 {
-                return Err(ConfigFileError::InvalidConfig).attach_printable(
-                    "Profile text LLM moderation user text template: '{text}' placeholder is missing",
-                );
+                return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
+                    "Profile text LLM moderation user text template: '{}' placeholder is missing",
+                    ProfileStringModerationConfig::TEMPLATE_PLACEHOLDER_TEXT,
+                ));
             }
         }
 
@@ -320,19 +330,19 @@ impl<'de> Deserialize<'de> for Gender {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct ProfileTextModerationConfig {
+pub struct ProfileStringModerationConfig {
     /// Accept all texts which only have single visible character.
     pub accept_single_visible_character: bool,
     pub moderation_session_max_seconds: u32,
     pub moderation_session_min_seconds: u32,
     /// Large language model based moderation.
     /// Actions: reject (or move_to_human) and accept
-    pub llm: Option<LlmModerationConfig>,
+    pub llm: Option<LlmStringModerationConfig>,
     pub default_action: ModerationAction,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct LlmModerationConfig {
+pub struct LlmStringModerationConfig {
     /// For example "http://localhost:11434/v1"
     pub openai_api_url: Url,
     pub model: String,
@@ -357,7 +367,7 @@ fn max_tokens_default_value() -> u32 {
     10_000
 }
 
-impl ProfileTextModerationConfig {
+impl ProfileStringModerationConfig {
     pub const TEMPLATE_PLACEHOLDER_TEXT: &'static str = "{text}";
 }
 

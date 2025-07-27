@@ -53,7 +53,7 @@ use crate::{
         account::CompleteAccountSetup,
         admin::{
             content::AdminBotContentModerationLogic,
-            profile_text::AdminBotProfileTextModerationLogic,
+            profile_text::AdminBotProfileStringModerationLogic,
         },
         media::SetContent,
         profile::ChangeProfileTextDaily,
@@ -83,7 +83,8 @@ impl ClientBot {
             const ACTION_LOOP: ActionArray = action_array![
                 ActionsBeforeIteration,
                 AdminBotContentModerationLogic,
-                AdminBotProfileTextModerationLogic,
+                AdminBotProfileStringModerationLogic::profile_name(),
+                AdminBotProfileStringModerationLogic::profile_text(),
                 ActionsAfterIteration,
             ];
             let iter = SETUP

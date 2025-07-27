@@ -10,7 +10,9 @@ use async_openai::{
     types::{ChatCompletionRequestMessage, CreateChatCompletionRequest},
 };
 use async_trait::async_trait;
-use config::bot_config_file::{LlmModerationConfig, ModerationAction, ProfileTextModerationConfig};
+use config::bot_config_file::{
+    LlmStringModerationConfig, ModerationAction, ProfileStringModerationConfig,
+};
 use error_stack::{Result, ResultExt};
 use tracing::{error, info};
 use unicode_segmentation::UnicodeSegmentation;
@@ -29,17 +31,32 @@ pub struct ProfileTextModerationState {
 }
 
 #[derive(Debug)]
-pub struct AdminBotProfileTextModerationLogic;
+pub struct AdminBotProfileStringModerationLogic {
+    content_type: ProfileModerationContentType,
+}
 
-impl AdminBotProfileTextModerationLogic {
+impl AdminBotProfileStringModerationLogic {
+    pub const fn profile_name() -> Self {
+        Self {
+            content_type: ProfileModerationContentType::ProfileName,
+        }
+    }
+
+    pub const fn profile_text() -> Self {
+        Self {
+            content_type: ProfileModerationContentType::ProfileText,
+        }
+    }
+
     async fn moderate_one_page(
+        &self,
         api: &ApiClient,
-        config: &ProfileTextModerationConfig,
+        config: &ProfileStringModerationConfig,
         state: &mut ProfileTextModerationState,
     ) -> Result<Option<EmptyPage>, TestError> {
         let list = profile_admin_api::get_profile_string_pending_moderation_list(
             api.profile(),
-            ProfileModerationContentType::ProfileText,
+            self.content_type,
             true,
         )
         .await
@@ -58,7 +75,7 @@ impl AdminBotProfileTextModerationLogic {
                 let _ = profile_admin_api::post_moderate_profile_string(
                     api.profile(),
                     api_client::models::PostModerateProfileString {
-                        content_type: ProfileModerationContentType::ProfileText,
+                        content_type: self.content_type,
                         id: request.id.clone(),
                         value: request.value.clone(),
                         accept: true,
@@ -95,7 +112,7 @@ impl AdminBotProfileTextModerationLogic {
             let _ = profile_admin_api::post_moderate_profile_string(
                 api.profile(),
                 api_client::models::PostModerateProfileString {
-                    content_type: ProfileModerationContentType::ProfileText,
+                    content_type: self.content_type,
                     id: request.id.clone(),
                     value: request.value.clone(),
                     accept: r.accept,
@@ -118,7 +135,7 @@ impl AdminBotProfileTextModerationLogic {
 
     async fn llm_profile_text_moderation(
         profile_text: &str,
-        config: &LlmModerationConfig,
+        config: &LlmStringModerationConfig,
         state: &mut ProfileTextModerationState,
     ) -> Result<LlmModerationResult, TestError> {
         let client = state.client.get_or_insert_with(|| {
@@ -134,7 +151,7 @@ impl AdminBotProfileTextModerationLogic {
         let profile_text_paragraph = profile_text.lines().collect::<Vec<&str>>().join(" ");
 
         let user_text = config.user_text_template.replace(
-            ProfileTextModerationConfig::TEMPLATE_PLACEHOLDER_TEXT,
+            ProfileStringModerationConfig::TEMPLATE_PLACEHOLDER_TEXT,
             &profile_text_paragraph,
         );
 
@@ -199,9 +216,18 @@ impl AdminBotProfileTextModerationLogic {
 }
 
 #[async_trait]
-impl BotAction for AdminBotProfileTextModerationLogic {
+impl BotAction for AdminBotProfileStringModerationLogic {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let Some(config) = &state.bot_config_file.profile_text_moderation else {
+        let config = match self.content_type {
+            ProfileModerationContentType::ProfileName => {
+                &state.bot_config_file.profile_name_moderation
+            }
+            ProfileModerationContentType::ProfileText => {
+                &state.bot_config_file.profile_text_moderation
+            }
+        };
+
+        let Some(config) = config else {
             return Ok(());
         };
 
@@ -228,8 +254,9 @@ impl BotAction for AdminBotProfileTextModerationLogic {
         moderation_state.moderation_started = Some(start_time);
 
         loop {
-            if let Some(EmptyPage) =
-                Self::moderate_one_page(&state.api, config, moderation_state).await?
+            if let Some(EmptyPage) = self
+                .moderate_one_page(&state.api, config, moderation_state)
+                .await?
             {
                 break;
             }
