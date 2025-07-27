@@ -72,8 +72,8 @@ impl ClientFeaturesConfig {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AttributionConfigInternal {
-    pub generic: Option<AttributionTranslations>,
-    pub ip_country: Option<AttributionTranslations>,
+    pub generic: Option<StringResource>,
+    pub ip_country: Option<StringResource>,
     #[serde(flatten)]
     pub other: toml::Table,
 }
@@ -82,9 +82,9 @@ pub struct AttributionConfigInternal {
 pub struct AttributionConfig {
     /// Generic attribution info text displayed in about screen
     /// of the app.
-    pub generic: Option<AttributionTranslations>,
+    pub generic: Option<StringResource>,
     /// Attribution info text displayed when IP country data is shown.
-    pub ip_country: Option<AttributionTranslations>,
+    pub ip_country: Option<StringResource>,
 }
 
 impl From<AttributionConfigInternal> for AttributionConfig {
@@ -97,7 +97,7 @@ impl From<AttributionConfigInternal> for AttributionConfig {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
-pub struct AttributionTranslations {
+pub struct StringResource {
     pub default: String,
     /// Keys are country codes like "en".
     #[serde(flatten)]

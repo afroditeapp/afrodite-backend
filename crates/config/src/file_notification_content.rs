@@ -1,6 +1,7 @@
-use std::{collections::HashMap, path::Path};
+use std::path::Path;
 
 use error_stack::{Result, ResultExt};
+use model::StringResource;
 use serde::Deserialize;
 
 use crate::file::ConfigFileError;
@@ -11,10 +12,8 @@ pub enum NotificationStringResource {
 
 #[derive(Debug, Default, Deserialize)]
 pub struct NotificationContentFile {
-    #[serde(default)]
-    pub new_notification_available_title: Option<HashMap<String, String>>,
-    #[serde(default)]
-    pub new_notification_available_body: Option<HashMap<String, String>>,
+    pub new_notification_available_title: Option<StringResource>,
+    pub new_notification_available_body: Option<StringResource>,
     #[serde(flatten)]
     pub other: toml::Table,
 }
@@ -45,7 +44,7 @@ impl NotificationContentFile {
 
         translations
             .as_ref()
-            .and_then(|v| v.get(language).or(v.get("default")))
+            .map(|v| v.translations.get(language).unwrap_or(&v.default))
             .cloned()
             .unwrap_or(default.to_string())
     }
