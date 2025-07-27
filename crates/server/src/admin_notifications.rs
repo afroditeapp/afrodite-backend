@@ -3,7 +3,7 @@ use std::time::Duration;
 use model::{AdminNotification, NotificationEvent};
 use model_media::{
     GetMediaContentPendingModerationParams, MediaContentType, ModerationQueueType,
-    ProfileModerationContentType,
+    ProfileStringModerationContentType,
 };
 use model_profile::GetProfileStringPendingModerationParams;
 use server_api::app::EventManagerProvider;
@@ -131,7 +131,7 @@ impl AdminNotificationManager {
         if self.pending_notifications.moderate_profile_texts_bot {
             self.pending_notifications.moderate_profile_texts_bot = self
                 .is_profile_string_moderation_needed(
-                    ProfileModerationContentType::ProfileText,
+                    ProfileStringModerationContentType::ProfileText,
                     true,
                 )
                 .await?
@@ -140,7 +140,7 @@ impl AdminNotificationManager {
         if self.pending_notifications.moderate_profile_texts_human {
             self.pending_notifications.moderate_profile_texts_human = self
                 .is_profile_string_moderation_needed(
-                    ProfileModerationContentType::ProfileText,
+                    ProfileStringModerationContentType::ProfileText,
                     false,
                 )
                 .await?
@@ -149,7 +149,7 @@ impl AdminNotificationManager {
         if self.pending_notifications.moderate_profile_names_bot {
             self.pending_notifications.moderate_profile_names_bot = self
                 .is_profile_string_moderation_needed(
-                    ProfileModerationContentType::ProfileName,
+                    ProfileStringModerationContentType::ProfileName,
                     true,
                 )
                 .await?
@@ -158,7 +158,7 @@ impl AdminNotificationManager {
         if self.pending_notifications.moderate_profile_names_human {
             self.pending_notifications.moderate_profile_names_human = self
                 .is_profile_string_moderation_needed(
-                    ProfileModerationContentType::ProfileName,
+                    ProfileStringModerationContentType::ProfileName,
                     false,
                 )
                 .await?
@@ -256,7 +256,7 @@ impl AdminNotificationManager {
 
     async fn is_profile_string_moderation_needed(
         &self,
-        content_type: ProfileModerationContentType,
+        content_type: ProfileStringModerationContentType,
         is_bot: bool,
     ) -> Result<bool, AdminNotificationError> {
         let values = self

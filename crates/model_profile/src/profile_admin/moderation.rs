@@ -1,5 +1,5 @@
 use diesel::prelude::*;
-use model_server_data::ProfileModerationContentType;
+use model_server_data::ProfileStringModerationContentType;
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
@@ -15,7 +15,7 @@ pub struct GetProfileStringPendingModerationList {
 
 #[derive(Debug, Clone, Serialize, Deserialize, IntoParams)]
 pub struct GetProfileStringPendingModerationParams {
-    pub content_type: ProfileModerationContentType,
+    pub content_type: ProfileStringModerationContentType,
     pub show_values_which_bots_can_moderate: bool,
 }
 
@@ -29,7 +29,7 @@ pub struct ProfileStringPendingModeration {
 pub struct PostModerateProfileString {
     pub id: AccountId,
     pub value: String,
-    pub content_type: ProfileModerationContentType,
+    pub content_type: ProfileStringModerationContentType,
     pub accept: bool,
     pub rejected_category: Option<ProfileModerationRejectedReasonCategory>,
     pub rejected_details: ProfileModerationRejectedReasonDetails,
@@ -40,7 +40,7 @@ pub struct PostModerateProfileString {
 
 #[derive(Debug, Clone, Serialize, Deserialize, IntoParams)]
 pub struct GetProfileStringModerationStateParams {
-    pub content_type: ProfileModerationContentType,
+    pub content_type: ProfileStringModerationContentType,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

@@ -3,7 +3,7 @@ use diesel::{
     prelude::Queryable,
     sql_types::{BigInt, Text},
 };
-use model_server_data::ProfileModerationState;
+use model_server_data::ProfileStringModerationState;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, diesel_string_wrapper};
 use utoipa::{IntoParams, ToSchema};
@@ -83,7 +83,7 @@ diesel_string_wrapper!(ProfileModerationRejectedReasonDetails);
 #[diesel(check_for_backend(crate::Db))]
 pub struct ProfileModerationInfo {
     #[diesel(column_name = "state_type")]
-    pub state: ProfileModerationState,
+    pub state: ProfileStringModerationState,
     pub rejected_reason_category: Option<ProfileModerationRejectedReasonCategory>,
     pub rejected_reason_details: ProfileModerationRejectedReasonDetails,
 }

@@ -8,8 +8,8 @@ use error_stack::{Result, ResultExt};
 use model_profile::{
     AcceptedProfileAges, AccountIdInternal, AttributeId, GetMyProfileResult, LastSeenTime,
     LastSeenUnixTime, Location, Profile, ProfileAge, ProfileAttributeFilterValue,
-    ProfileAttributeValue, ProfileInternal, ProfileModerationContentType, ProfileStateInternal,
-    UnixTime,
+    ProfileAttributeValue, ProfileInternal, ProfileStateInternal,
+    ProfileStringModerationContentType, UnixTime,
 };
 
 use crate::current::read::GetDbReadCommandsProfile;
@@ -67,12 +67,12 @@ impl CurrentReadProfileData<'_> {
             .read()
             .profile()
             .moderation()
-            .profile_moderation_info(id, ProfileModerationContentType::ProfileName)?;
+            .profile_moderation_info(id, ProfileStringModerationContentType::ProfileName)?;
         let profile_text_moderation_state = self
             .read()
             .profile()
             .moderation()
-            .profile_moderation_info(id, ProfileModerationContentType::ProfileText)?;
+            .profile_moderation_info(id, ProfileStringModerationContentType::ProfileText)?;
         let p = Profile::new(
             profile,
             profile_name_moderation_state

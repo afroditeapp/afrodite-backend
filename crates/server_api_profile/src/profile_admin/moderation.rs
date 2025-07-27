@@ -7,7 +7,7 @@ use model_profile::{
     AccountIdInternal, EventToClientInternal, GetProfileStringModerationState,
     GetProfileStringModerationStateParams, GetProfileStringPendingModerationList,
     GetProfileStringPendingModerationParams, Permissions, PostModerateProfileString,
-    ProfileModerationContentType,
+    ProfileStringModerationContentType,
 };
 use server_api::{
     S,
@@ -57,12 +57,12 @@ pub async fn get_profile_string_pending_moderation_list(
     PROFILE.get_profile_string_pending_moderation_list.incr();
 
     match params.content_type {
-        ProfileModerationContentType::ProfileName => {
+        ProfileStringModerationContentType::ProfileName => {
             if !permissions.admin_moderate_profile_names {
                 return Err(StatusCode::INTERNAL_SERVER_ERROR);
             }
         }
-        ProfileModerationContentType::ProfileText => {
+        ProfileStringModerationContentType::ProfileText => {
             if !permissions.admin_moderate_profile_texts {
                 return Err(StatusCode::INTERNAL_SERVER_ERROR);
             }
@@ -114,12 +114,12 @@ pub async fn post_moderate_profile_string(
     PROFILE.post_moderate_profile_string.incr();
 
     match data.content_type {
-        ProfileModerationContentType::ProfileName => {
+        ProfileStringModerationContentType::ProfileName => {
             if !permissions.admin_moderate_profile_names {
                 return Err(StatusCode::INTERNAL_SERVER_ERROR);
             }
         }
-        ProfileModerationContentType::ProfileText => {
+        ProfileStringModerationContentType::ProfileText => {
             if !permissions.admin_moderate_profile_texts {
                 return Err(StatusCode::INTERNAL_SERVER_ERROR);
             }
@@ -157,7 +157,7 @@ pub async fn post_moderate_profile_string(
             // Accepted or rejected
 
             match data.content_type {
-                ProfileModerationContentType::ProfileName => {
+                ProfileStringModerationContentType::ProfileName => {
                     cmds.profile_admin()
                         .notification()
                         .show_profile_name_moderation_completed_notification(
@@ -166,7 +166,7 @@ pub async fn post_moderate_profile_string(
                         )
                         .await?;
                 }
-                ProfileModerationContentType::ProfileText => {
+                ProfileStringModerationContentType::ProfileText => {
                     cmds.profile_admin()
                         .notification()
                         .show_profile_text_moderation_completed_notification(
@@ -229,12 +229,12 @@ pub async fn get_profile_string_state(
     PROFILE.get_profile_string_state.incr();
 
     match params.content_type {
-        ProfileModerationContentType::ProfileName => {
+        ProfileStringModerationContentType::ProfileName => {
             if !permissions.admin_moderate_profile_names {
                 return Err(StatusCode::INTERNAL_SERVER_ERROR);
             }
         }
-        ProfileModerationContentType::ProfileText => {
+        ProfileStringModerationContentType::ProfileText => {
             if !permissions.admin_moderate_profile_texts {
                 return Err(StatusCode::INTERNAL_SERVER_ERROR);
             }

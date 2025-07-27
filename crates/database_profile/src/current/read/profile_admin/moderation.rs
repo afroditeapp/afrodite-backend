@@ -6,7 +6,7 @@ use diesel::prelude::*;
 use error_stack::Result;
 use model_profile::{
     AccountIdInternal, GetProfileStringPendingModerationList,
-    GetProfileStringPendingModerationParams, ProfileModerationState,
+    GetProfileStringPendingModerationParams, ProfileStringModerationState,
     ProfileStringPendingModeration,
 };
 
@@ -55,11 +55,11 @@ impl CurrentReadProfileModeration<'_> {
                 show_bot_moderations
                     .and(
                         profile_moderation::state_type
-                            .eq(ProfileModerationState::WaitingBotOrHumanModeration),
+                            .eq(ProfileStringModerationState::WaitingBotOrHumanModeration),
                     )
                     .or(is_not_bot.and(
                         profile_moderation::state_type
-                            .eq(ProfileModerationState::WaitingHumanModeration),
+                            .eq(ProfileStringModerationState::WaitingHumanModeration),
                     )),
             )
             .select((account_id::uuid, profile::profile_text))

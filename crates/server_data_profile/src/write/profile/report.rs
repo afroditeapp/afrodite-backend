@@ -1,8 +1,8 @@
 use database::current::read::GetDbReadCommandsCommon;
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
-    AccountIdInternal, EventToClientInternal, ProfileModerationContentType, ProfileModerationState,
-    ReportTypeNumber, ReportTypeNumberInternal, UpdateReportResult,
+    AccountIdInternal, EventToClientInternal, ProfileStringModerationContentType,
+    ProfileStringModerationState, ReportTypeNumber, ReportTypeNumberInternal, UpdateReportResult,
 };
 use server_data::{
     DataError, app::GetConfig, db_transaction, define_cmd_wrapper_write, read::DbRead,
@@ -29,13 +29,13 @@ impl WriteCommandsProfileReport<'_> {
         }
 
         if target_data.name_moderation_info.as_ref().map(|v| v.state)
-            == Some(ProfileModerationState::AcceptedByBot)
+            == Some(ProfileStringModerationState::AcceptedByBot)
         {
             self.handle()
                 .profile_admin()
                 .moderation()
                 .moderate_profile_string(
-                    ProfileModerationContentType::ProfileName,
+                    ProfileStringModerationContentType::ProfileName,
                     ModerateProfileValueMode::MoveToHumanModeration,
                     target,
                     profile_name.to_string(),
@@ -96,13 +96,13 @@ impl WriteCommandsProfileReport<'_> {
         }
 
         if target_data.text_moderation_info.as_ref().map(|v| v.state)
-            == Some(ProfileModerationState::AcceptedByBot)
+            == Some(ProfileStringModerationState::AcceptedByBot)
         {
             self.handle()
                 .profile_admin()
                 .moderation()
                 .moderate_profile_string(
-                    ProfileModerationContentType::ProfileText,
+                    ProfileStringModerationContentType::ProfileText,
                     ModerateProfileValueMode::MoveToHumanModeration,
                     target,
                     profile_text.to_string(),

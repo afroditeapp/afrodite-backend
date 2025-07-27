@@ -3,7 +3,7 @@ use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model::AccountIdInternal;
 use model_profile::{
-    ProfileModerationContentType, ProfileModerationInfo, ProfileNameModerationState,
+    ProfileModerationInfo, ProfileNameModerationState, ProfileStringModerationContentType,
     ProfileTextModerationState,
 };
 
@@ -18,7 +18,7 @@ impl CurrentReadProfileModeration<'_> {
 
         profile_moderation
             .filter(account_id.eq(id.as_db_id()))
-            .filter(content_type.eq(ProfileModerationContentType::ProfileName))
+            .filter(content_type.eq(ProfileStringModerationContentType::ProfileName))
             .select(state_type)
             .first(self.conn())
             .optional()
@@ -33,7 +33,7 @@ impl CurrentReadProfileModeration<'_> {
 
         profile_moderation
             .filter(account_id.eq(id.as_db_id()))
-            .filter(content_type.eq(ProfileModerationContentType::ProfileText))
+            .filter(content_type.eq(ProfileStringModerationContentType::ProfileText))
             .select(state_type)
             .first(self.conn())
             .optional()
@@ -43,7 +43,7 @@ impl CurrentReadProfileModeration<'_> {
     pub fn profile_moderation_info(
         &mut self,
         id: AccountIdInternal,
-        moderation_info: ProfileModerationContentType,
+        moderation_info: ProfileStringModerationContentType,
     ) -> Result<Option<ProfileModerationInfo>, DieselDatabaseError> {
         use crate::schema::profile_moderation::dsl::*;
 

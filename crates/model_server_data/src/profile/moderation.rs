@@ -20,12 +20,12 @@ use crate::schema_sqlite_types::Integer;
 )]
 #[diesel(sql_type = Integer)]
 #[repr(i64)]
-pub enum ProfileModerationContentType {
+pub enum ProfileStringModerationContentType {
     ProfileName = 0,
     ProfileText = 1,
 }
 
-diesel_i64_try_from!(ProfileModerationContentType);
+diesel_i64_try_from!(ProfileStringModerationContentType);
 
 #[derive(
     Debug,
@@ -42,7 +42,7 @@ diesel_i64_try_from!(ProfileModerationContentType);
 )]
 #[diesel(sql_type = Integer)]
 #[repr(i64)]
-pub enum ProfileModerationState {
+pub enum ProfileStringModerationState {
     WaitingBotOrHumanModeration = 0,
     WaitingHumanModeration = 1,
     AcceptedByBot = 2,
@@ -52,7 +52,7 @@ pub enum ProfileModerationState {
     RejectedByHuman = 6,
 }
 
-impl ProfileModerationState {
+impl ProfileStringModerationState {
     pub fn is_accepted(&self) -> bool {
         match self {
             Self::AcceptedByBot | Self::AcceptedByHuman | Self::AcceptedByAllowlist => true,
@@ -64,11 +64,11 @@ impl ProfileModerationState {
     }
 }
 
-diesel_i64_try_from!(ProfileModerationState);
+diesel_i64_try_from!(ProfileStringModerationState);
 
 #[derive(Debug, Clone, Copy, diesel::FromSqlRow, diesel::AsExpression)]
 #[diesel(sql_type = Integer)]
-pub struct ProfileNameModerationState(pub ProfileModerationState);
+pub struct ProfileNameModerationState(pub ProfileStringModerationState);
 
 impl From<ProfileNameModerationState> for i64 {
     fn from(value: ProfileNameModerationState) -> Self {
@@ -77,7 +77,7 @@ impl From<ProfileNameModerationState> for i64 {
 }
 
 impl TryFrom<i64> for ProfileNameModerationState {
-    type Error = <ProfileModerationState as TryFrom<i64>>::Error;
+    type Error = <ProfileStringModerationState as TryFrom<i64>>::Error;
     fn try_from(value: i64) -> Result<Self, Self::Error> {
         TryFrom::<i64>::try_from(value).map(Self)
     }
@@ -85,15 +85,15 @@ impl TryFrom<i64> for ProfileNameModerationState {
 
 diesel_i64_struct_try_from!(ProfileNameModerationState);
 
-impl From<ProfileModerationState> for ProfileNameModerationState {
-    fn from(value: ProfileModerationState) -> Self {
+impl From<ProfileStringModerationState> for ProfileNameModerationState {
+    fn from(value: ProfileStringModerationState) -> Self {
         Self(value)
     }
 }
 
 #[derive(Debug, Clone, Copy, diesel::FromSqlRow, diesel::AsExpression)]
 #[diesel(sql_type = Integer)]
-pub struct ProfileTextModerationState(pub ProfileModerationState);
+pub struct ProfileTextModerationState(pub ProfileStringModerationState);
 
 impl From<ProfileTextModerationState> for i64 {
     fn from(value: ProfileTextModerationState) -> Self {
@@ -102,7 +102,7 @@ impl From<ProfileTextModerationState> for i64 {
 }
 
 impl TryFrom<i64> for ProfileTextModerationState {
-    type Error = <ProfileModerationState as TryFrom<i64>>::Error;
+    type Error = <ProfileStringModerationState as TryFrom<i64>>::Error;
     fn try_from(value: i64) -> Result<Self, Self::Error> {
         TryFrom::<i64>::try_from(value).map(Self)
     }
@@ -110,8 +110,8 @@ impl TryFrom<i64> for ProfileTextModerationState {
 
 diesel_i64_struct_try_from!(ProfileTextModerationState);
 
-impl From<ProfileModerationState> for ProfileTextModerationState {
-    fn from(value: ProfileModerationState) -> Self {
+impl From<ProfileStringModerationState> for ProfileTextModerationState {
+    fn from(value: ProfileStringModerationState) -> Self {
         Self(value)
     }
 }

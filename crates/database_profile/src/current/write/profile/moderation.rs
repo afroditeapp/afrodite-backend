@@ -3,8 +3,8 @@ use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{ExpressionMethods, delete, insert_into, prelude::*, upsert::excluded};
 use error_stack::Result;
 use model_profile::{
-    AccountIdDb, AccountIdInternal, ProfileModerationContentType, ProfileModerationState,
-    ProfileNameModerationState, ProfileTextModerationState, UnixTime,
+    AccountIdDb, AccountIdInternal, ProfileNameModerationState, ProfileStringModerationContentType,
+    ProfileStringModerationState, ProfileTextModerationState, UnixTime,
 };
 
 use crate::{IntoDatabaseError, current::read::GetDbReadCommandsProfile};
@@ -29,15 +29,15 @@ impl CurrentWriteModeration<'_> {
                 .is_name_on_database_allowlist(&new_name)?;
 
         let new_state = if name_accepted {
-            ProfileModerationState::AcceptedByAllowlist
+            ProfileStringModerationState::AcceptedByAllowlist
         } else {
-            ProfileModerationState::WaitingBotOrHumanModeration
+            ProfileStringModerationState::WaitingBotOrHumanModeration
         };
 
         insert_into(profile_moderation)
             .values((
                 account_id.eq(id.as_db_id()),
-                content_type.eq(ProfileModerationContentType::ProfileName),
+                content_type.eq(ProfileStringModerationContentType::ProfileName),
                 state_type.eq(new_state),
                 created_unix_time.eq(UnixTime::current_time()),
             ))
@@ -66,17 +66,17 @@ impl CurrentWriteModeration<'_> {
         if text_empty {
             delete(profile_moderation)
                 .filter(account_id.eq(id.as_db_id()))
-                .filter(content_type.eq(ProfileModerationContentType::ProfileText))
+                .filter(content_type.eq(ProfileStringModerationContentType::ProfileText))
                 .execute(self.conn())
                 .into_db_error(id)?;
             Ok(None)
         } else {
-            let new_state = ProfileModerationState::WaitingBotOrHumanModeration;
+            let new_state = ProfileStringModerationState::WaitingBotOrHumanModeration;
 
             insert_into(profile_moderation)
                 .values((
                     account_id.eq(id.as_db_id()),
-                    content_type.eq(ProfileModerationContentType::ProfileText),
+                    content_type.eq(ProfileStringModerationContentType::ProfileText),
                     state_type.eq(new_state),
                     created_unix_time.eq(UnixTime::current_time()),
                 ))

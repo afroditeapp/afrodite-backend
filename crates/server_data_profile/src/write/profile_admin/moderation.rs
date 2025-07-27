@@ -1,7 +1,8 @@
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
-    AccountIdInternal, ProfileModerationContentType, ProfileModerationRejectedReasonCategory,
-    ProfileModerationRejectedReasonDetails, ProfileModerationState, ProfileModificationMetadata,
+    AccountIdInternal, ProfileModerationRejectedReasonCategory,
+    ProfileModerationRejectedReasonDetails, ProfileModificationMetadata,
+    ProfileStringModerationContentType, ProfileStringModerationState,
 };
 use server_data::{
     DataError, IntoDataError,
@@ -19,7 +20,7 @@ define_cmd_wrapper_write!(WriteCommandsProfileAdminModeration);
 impl WriteCommandsProfileAdminModeration<'_> {
     pub async fn moderate_profile_string(
         &self,
-        content_type: ProfileModerationContentType,
+        content_type: ProfileStringModerationContentType,
         mode: ModerateProfileValueMode,
         string_owner_id: AccountIdInternal,
         string_value: String,
@@ -28,8 +29,8 @@ impl WriteCommandsProfileAdminModeration<'_> {
             .db_read(move |mut cmds| cmds.profile().data().profile(string_owner_id))
             .await?;
         let current_value = match content_type {
-            ProfileModerationContentType::ProfileName => current_profile.name,
-            ProfileModerationContentType::ProfileText => current_profile.ptext,
+            ProfileStringModerationContentType::ProfileName => current_profile.name,
+            ProfileStringModerationContentType::ProfileText => current_profile.ptext,
         };
         if current_value != string_value {
             return Err(DataError::NotAllowed.report());
@@ -48,7 +49,7 @@ impl WriteCommandsProfileAdminModeration<'_> {
 
         // Profile name and text have accepted boolean in Profile, so update Profile metadata
         let modification = ProfileModificationMetadata::generate();
-        let new_state: ProfileModerationState = db_transaction!(self, move |mut cmds| {
+        let new_state: ProfileStringModerationState = db_transaction!(self, move |mut cmds| {
             cmds.profile()
                 .data()
                 .required_changes_for_profile_update(string_owner_id, &modification)?;
@@ -63,7 +64,7 @@ impl WriteCommandsProfileAdminModeration<'_> {
                     rejected_category,
                     rejected_details,
                 } => {
-                    if content_type == ProfileModerationContentType::ProfileName && accept {
+                    if content_type == ProfileStringModerationContentType::ProfileName && accept {
                         cmds.profile_admin()
                             .moderation()
                             .add_to_profile_name_allowlist(
@@ -87,10 +88,10 @@ impl WriteCommandsProfileAdminModeration<'_> {
 
         self.write_cache_profile(string_owner_id.as_id(), |p| {
             match content_type {
-                ProfileModerationContentType::ProfileName => {
+                ProfileStringModerationContentType::ProfileName => {
                     p.update_profile_name_moderation_state(Some(new_state.into()))
                 }
-                ProfileModerationContentType::ProfileText => {
+                ProfileStringModerationContentType::ProfileText => {
                     p.update_profile_text_moderation_state(Some(new_state.into()))
                 }
             };

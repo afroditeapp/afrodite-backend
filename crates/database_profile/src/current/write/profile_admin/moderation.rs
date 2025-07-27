@@ -4,8 +4,9 @@ use database::{
 use diesel::{ExpressionMethods, insert_into, prelude::*, update};
 use error_stack::Result;
 use model_profile::{
-    AccountIdInternal, ProfileModerationContentType, ProfileModerationRejectedReasonCategory,
-    ProfileModerationRejectedReasonDetails, ProfileModerationState,
+    AccountIdInternal, ProfileModerationRejectedReasonCategory,
+    ProfileModerationRejectedReasonDetails, ProfileStringModerationContentType,
+    ProfileStringModerationState,
 };
 
 use crate::IntoDatabaseError;
@@ -38,11 +39,11 @@ impl CurrentWriteProfileAdminModeration<'_> {
         &mut self,
         moderator_id: AccountIdInternal,
         string_owner_id: AccountIdInternal,
-        content_type_value: ProfileModerationContentType,
+        content_type_value: ProfileStringModerationContentType,
         accepted: bool,
         rejected_category: Option<ProfileModerationRejectedReasonCategory>,
         rejected_details: ProfileModerationRejectedReasonDetails,
-    ) -> Result<ProfileModerationState, DieselDatabaseError> {
+    ) -> Result<ProfileStringModerationState, DieselDatabaseError> {
         let moderator_is_bot = self
             .read()
             .common()
@@ -52,14 +53,14 @@ impl CurrentWriteProfileAdminModeration<'_> {
 
         let next_state = if accepted {
             if moderator_is_bot {
-                ProfileModerationState::AcceptedByBot
+                ProfileStringModerationState::AcceptedByBot
             } else {
-                ProfileModerationState::AcceptedByHuman
+                ProfileStringModerationState::AcceptedByHuman
             }
         } else if moderator_is_bot {
-            ProfileModerationState::RejectedByBot
+            ProfileStringModerationState::RejectedByBot
         } else {
-            ProfileModerationState::RejectedByHuman
+            ProfileStringModerationState::RejectedByHuman
         };
 
         {
@@ -83,11 +84,11 @@ impl CurrentWriteProfileAdminModeration<'_> {
     pub fn move_to_human_moderation(
         &mut self,
         id: AccountIdInternal,
-        content_type_value: ProfileModerationContentType,
-    ) -> Result<ProfileModerationState, DieselDatabaseError> {
+        content_type_value: ProfileStringModerationContentType,
+    ) -> Result<ProfileStringModerationState, DieselDatabaseError> {
         use model::schema::profile_moderation::dsl::*;
 
-        let next_state = ProfileModerationState::WaitingHumanModeration;
+        let next_state = ProfileStringModerationState::WaitingHumanModeration;
 
         update(profile_moderation)
             .filter(account_id.eq(id.as_db_id()))
