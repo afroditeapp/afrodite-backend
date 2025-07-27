@@ -219,5 +219,5 @@ pub struct CustomReportTranslation {
     /// Custom report name.
     pub key: String,
     /// Translated text.
-    pub value: String,
+    pub name: String,
 }
