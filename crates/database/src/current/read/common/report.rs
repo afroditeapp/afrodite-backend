@@ -4,10 +4,10 @@ use diesel::{alias, prelude::*};
 use error_stack::Result;
 use model::{
     AccountId, AccountIdDb, AccountIdInternal, AccountInteractionInternal, ChatMessageReport,
-    ContentId, CustomReportContent, MessageId, ReportAccountInfo, ReportChatInfo,
-    ReportChatInfoInteractionState, ReportContent, ReportDetailed, ReportDetailedInfo,
-    ReportDetailedInfoInternal, ReportDetailedWithId, ReportIdDb, ReportInternal,
-    ReportProcessingState, ReportTypeNumberInternal, UnixTime,
+    ContentId, MessageId, ReportAccountInfo, ReportChatInfo, ReportChatInfoInteractionState,
+    ReportContent, ReportDetailed, ReportDetailedInfo, ReportDetailedInfoInternal,
+    ReportDetailedWithId, ReportIdDb, ReportInternal, ReportProcessingState,
+    ReportTypeNumberInternal, UnixTime,
 };
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
@@ -96,7 +96,6 @@ impl CurrentReadCommonReport<'_> {
         let mut profile_text = None;
         let mut profile_content = None;
         let mut chat_message = None;
-        let mut custom_report = None;
 
         match report.info.report_type {
             ReportTypeNumberInternal::ProfileName => {
@@ -113,7 +112,6 @@ impl CurrentReadCommonReport<'_> {
             }
             ReportTypeNumberInternal::CustomReport(_) => {
                 // Currently custom reports don't support any content
-                custom_report = Some(CustomReportContent);
             }
         }
 
@@ -123,7 +121,6 @@ impl CurrentReadCommonReport<'_> {
                 profile_text,
                 profile_content,
                 chat_message,
-                custom_report,
             },
             info: ReportDetailedInfo {
                 id: report.id.into(),

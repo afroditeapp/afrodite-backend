@@ -103,11 +103,7 @@ pub struct ReportContent {
     pub profile_text: Option<String>,
     pub profile_content: Option<ContentId>,
     pub chat_message: Option<ChatMessageReport>,
-    pub custom_report: Option<CustomReportContent>,
 }
-
-#[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize, ToSchema)]
-pub struct CustomReportContent;
 
 #[derive(Serialize, ToSchema)]
 pub struct GetReportList {
