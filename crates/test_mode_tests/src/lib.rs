@@ -5,12 +5,13 @@
 
 use test_mode_utils::ServerTestError;
 
+mod assert;
+mod context;
 pub mod prelude;
-pub mod runner;
 
 pub use test_mode_macro::server_test;
 
-pub use crate::runner::server_tests::context::TestContext;
+pub use crate::context::TestContext;
 
 /// [server_test] requires this
 pub type TestResult = Result<(), ServerTestError>;

@@ -14,7 +14,7 @@ use config::{
     bot_config_file::BotConfigFile,
 };
 use test_mode_bot::runner::BotTestRunner;
-use test_mode_tests::runner::server_tests::QaTestRunner;
+use test_mode_tests_runner::QaTestRunner;
 
 pub struct TestRunner {
     config: Arc<Config>,

@@ -1,20 +1,19 @@
 [package]
-name = "test_mode_tests"
+name = "test_mode_tests_runner"
 version = "0.0.0"
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-error-stack = { workspace = true }
-
+tracing = { workspace = true }
+futures = { workspace = true }
 tokio = { workspace = true }
 reqwest = { workspace = true }
 
+num_cpus = { workspace = true }
 inventory = { workspace = true }
 
-api_client = { path = "../api_client" }
 config = { path = "../config" }
-test_mode_bot = { path = "../test_mode_bot" }
 test_mode_utils = { path = "../test_mode_utils" }
-test_mode_macro = { path = "../test_mode_macro" }
+test_mode_tests = { path = "../test_mode_tests" }

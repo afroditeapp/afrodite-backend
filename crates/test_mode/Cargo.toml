@@ -12,7 +12,7 @@ reqwest = { workspace = true }
 
 config = { path = "../config" }
 test_mode_bot = { path = "../test_mode_bot" }
-test_mode_tests = { path = "../test_mode_tests" }
 test_mode_tests_account = { path = "../test_mode_tests_account" }
 test_mode_tests_profile = { path = "../test_mode_tests_profile" }
 test_mode_tests_media = { path = "../test_mode_tests_media" }
+test_mode_tests_runner = { path = "../test_mode_tests_runner" }

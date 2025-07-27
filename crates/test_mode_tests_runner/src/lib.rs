@@ -1,4 +1,9 @@
-//! Runner for tests in `server_tests` module
+#![deny(unsafe_code)]
+#![deny(unused_must_use)]
+#![deny(unused_features)]
+#![warn(unused_crate_dependencies)]
+
+//! Runner for tests marked with [test_mode_tests::server_test] macro.
 
 use std::sync::Arc;
 
@@ -7,13 +12,11 @@ use config::{
     args::{QaTestConfig, TestMode},
 };
 use manager::{ManagerEvent, ManagerEventReceiver, TestManager};
+use test_mode_tests::TestFunction;
+use test_mode_utils::ServerTestError;
 use tokio::{select, signal};
 use tracing::{error, info};
 
-use crate::{ServerTestError, TestFunction};
-
-pub mod assert;
-pub mod context;
 mod manager;
 
 pub struct QaTestRunner {

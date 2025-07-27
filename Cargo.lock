@@ -5355,10 +5355,10 @@ dependencies = [
  "config",
  "reqwest",
  "test_mode_bot",
- "test_mode_tests",
  "test_mode_tests_account",
  "test_mode_tests_media",
  "test_mode_tests_profile",
+ "test_mode_tests_runner",
  "tracing-subscriber",
 ]
 
@@ -5409,15 +5409,12 @@ dependencies = [
  "api_client",
  "config",
  "error-stack",
- "futures",
  "inventory",
- "num_cpus",
  "reqwest",
  "test_mode_bot",
  "test_mode_macro",
  "test_mode_utils",
  "tokio",
- "tracing",
 ]
 
 [[package]]
@@ -5448,6 +5445,21 @@ dependencies = [
  "test_mode_bot",
  "test_mode_tests",
  "test_mode_utils",
+]
+
+[[package]]
+name = "test_mode_tests_runner"
+version = "0.0.0"
+dependencies = [
+ "config",
+ "futures",
+ "inventory",
+ "num_cpus",
+ "reqwest",
+ "test_mode_tests",
+ "test_mode_utils",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]

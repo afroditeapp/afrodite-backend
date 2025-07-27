@@ -21,6 +21,7 @@ members = [
     "crates/test_mode_tests_account",
     "crates/test_mode_tests_profile",
     "crates/test_mode_tests_media",
+    "crates/test_mode_tests_runner",
     "crates/test_mode_utils",
     "crates/test_mode_macro",
     "crates/database",
