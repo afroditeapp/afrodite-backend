@@ -16,7 +16,7 @@ pub struct PostModerateProfileString {
     #[serde(rename = "accept")]
     pub accept: bool,
     #[serde(rename = "content_type")]
-    pub content_type: models::ProfileModerationContentType,
+    pub content_type: models::ProfileStringModerationContentType,
     #[serde(rename = "id")]
     pub id: Box<models::AccountId>,
     /// If true, ignore accept, rejected_category, rejected_details and move the text to waiting for human moderation state.
@@ -31,7 +31,7 @@ pub struct PostModerateProfileString {
 }
 
 impl PostModerateProfileString {
-    pub fn new(accept: bool, content_type: models::ProfileModerationContentType, id: models::AccountId, rejected_details: models::ProfileModerationRejectedReasonDetails, value: String) -> PostModerateProfileString {
+    pub fn new(accept: bool, content_type: models::ProfileStringModerationContentType, id: models::AccountId, rejected_details: models::ProfileModerationRejectedReasonDetails, value: String) -> PostModerateProfileString {
         PostModerateProfileString {
             accept,
             content_type,

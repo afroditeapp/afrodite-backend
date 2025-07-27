@@ -18,11 +18,11 @@ pub struct ProfileModerationInfo {
     #[serde(rename = "rejected_reason_details")]
     pub rejected_reason_details: Box<models::ProfileModerationRejectedReasonDetails>,
     #[serde(rename = "state")]
-    pub state: models::ProfileModerationState,
+    pub state: models::ProfileStringModerationState,
 }
 
 impl ProfileModerationInfo {
-    pub fn new(rejected_reason_details: models::ProfileModerationRejectedReasonDetails, state: models::ProfileModerationState) -> ProfileModerationInfo {
+    pub fn new(rejected_reason_details: models::ProfileModerationRejectedReasonDetails, state: models::ProfileStringModerationState) -> ProfileModerationInfo {
         ProfileModerationInfo {
             rejected_reason_category: None,
             rejected_reason_details: Box::new(rejected_reason_details),

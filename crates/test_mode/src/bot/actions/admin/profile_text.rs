@@ -2,7 +2,7 @@ use std::{fmt::Debug, time::Instant};
 
 use api_client::{
     apis::profile_admin_api,
-    models::{ProfileModerationContentType, ProfileModerationRejectedReasonDetails},
+    models::{ProfileModerationRejectedReasonDetails, ProfileStringModerationContentType},
 };
 use async_openai::{
     Client,
@@ -32,19 +32,19 @@ pub struct ProfileTextModerationState {
 
 #[derive(Debug)]
 pub struct AdminBotProfileStringModerationLogic {
-    content_type: ProfileModerationContentType,
+    content_type: ProfileStringModerationContentType,
 }
 
 impl AdminBotProfileStringModerationLogic {
     pub const fn profile_name() -> Self {
         Self {
-            content_type: ProfileModerationContentType::ProfileName,
+            content_type: ProfileStringModerationContentType::ProfileName,
         }
     }
 
     pub const fn profile_text() -> Self {
         Self {
-            content_type: ProfileModerationContentType::ProfileText,
+            content_type: ProfileStringModerationContentType::ProfileText,
         }
     }
 
@@ -219,10 +219,10 @@ impl AdminBotProfileStringModerationLogic {
 impl BotAction for AdminBotProfileStringModerationLogic {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let config = match self.content_type {
-            ProfileModerationContentType::ProfileName => {
+            ProfileStringModerationContentType::ProfileName => {
                 &state.bot_config_file.profile_name_moderation
             }
-            ProfileModerationContentType::ProfileText => {
+            ProfileStringModerationContentType::ProfileText => {
                 &state.bot_config_file.profile_text_moderation
             }
         };
