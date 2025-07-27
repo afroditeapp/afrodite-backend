@@ -5354,7 +5354,7 @@ version = "0.0.0"
 dependencies = [
  "config",
  "reqwest",
- "test_mode_bot",
+ "test_mode_bot_runner",
  "test_mode_tests_account",
  "test_mode_tests_media",
  "test_mode_tests_profile",
@@ -5390,6 +5390,25 @@ dependencies = [
  "tracing",
  "unicode-segmentation",
  "url",
+ "utils",
+]
+
+[[package]]
+name = "test_mode_bot_runner"
+version = "0.0.0"
+dependencies = [
+ "api_client",
+ "async-trait",
+ "config",
+ "error-stack",
+ "rand 0.8.5",
+ "reqwest",
+ "serde_json",
+ "simple_backend_utils",
+ "test_mode_bot",
+ "test_mode_utils",
+ "tokio",
+ "tracing",
  "utils",
 ]
 

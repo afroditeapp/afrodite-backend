@@ -17,6 +17,7 @@ members = [
     "crates/utils",
     "crates/test_mode",
     "crates/test_mode_bot",
+    "crates/test_mode_bot_runner",
     "crates/test_mode_tests",
     "crates/test_mode_tests_account",
     "crates/test_mode_tests_profile",

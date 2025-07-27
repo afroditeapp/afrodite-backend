@@ -14,13 +14,14 @@ use api_client::{
 use config::{Config, args::TestMode, bot_config_file::BotConfigFile};
 use error_stack::{Result, ResultExt};
 use test_mode_bot::{
-    AccountConnections, BotState, action_array,
+    BotState, action_array,
     actions::{
         BotAction,
         account::{CompleteAccountSetup, Login, Register, SetAccountSetup},
         admin::content::ModerateContentModerationRequest,
         media::{SendImageToSlot, SetContent},
     },
+    connection::AccountConnections,
 };
 use test_mode_utils::client::{ApiClient, TestError};
 use tokio::sync::Mutex;

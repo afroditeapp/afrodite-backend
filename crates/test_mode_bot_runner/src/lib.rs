@@ -1,4 +1,14 @@
+#![deny(unsafe_code)]
+#![deny(unused_must_use)]
+#![deny(unused_features)]
+#![warn(unused_crate_dependencies)]
+
 //! Bot mode related test/bot runner.
+
+mod benchmark;
+mod client_bot;
+mod manager;
+mod utils;
 
 use std::{
     collections::{HashMap, HashSet},
@@ -20,7 +30,7 @@ use tokio::{
 };
 use tracing::{error, info};
 
-use crate::BotManager;
+use crate::manager::BotManager;
 
 pub struct BotTestRunner {
     config: Arc<Config>,

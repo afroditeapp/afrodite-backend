@@ -31,35 +31,28 @@ use async_trait::async_trait;
 use config::bot_config_file::Gender;
 use error_stack::{Result, ResultExt};
 use simple_backend_utils::UuidBase64Url;
-use test_mode_utils::{client::TestError, state::BotEncryptionKeys};
-use tracing::warn;
-use utils::encrypt::{encrypt_data, generate_keys, unwrap_signed_binary_message};
-
-use super::{
-    BotState, BotStruct, TaskState,
+use test_mode_bot::{
+    BotState, BotStruct, TaskState, action_array,
     actions::{
-        BotAction, RunActions, RunActionsIf,
+        ActionArray, BotAction, RunActions, RunActionsIf,
         account::{
-            AccountState, AssertAccountState, DEFAULT_AGE, Login, Register, SetAccountSetup,
-            SetProfileVisibility,
+            AccountState, AssertAccountState, CompleteAccountSetup, DEFAULT_AGE, Login, Register,
+            SetAccountSetup, SetProfileVisibility,
         },
-        media::SendImageToSlot,
-        profile::{ChangeProfileText, GetProfile, ProfileText, UpdateLocationRandomOrConfigured},
-    },
-};
-use crate::{
-    action_array,
-    actions::{
-        ActionArray,
-        account::CompleteAccountSetup,
         admin::{
             content::AdminBotContentModerationLogic,
             profile_text::AdminBotProfileStringModerationLogic,
         },
-        media::SetContent,
-        profile::ChangeProfileTextDaily,
+        media::{SendImageToSlot, SetContent},
+        profile::{
+            ChangeProfileText, ChangeProfileTextDaily, GetProfile, ProfileText,
+            UpdateLocationRandomOrConfigured,
+        },
     },
 };
+use test_mode_utils::{client::TestError, state::BotEncryptionKeys};
+use tracing::warn;
+use utils::encrypt::{encrypt_data, generate_keys, unwrap_signed_binary_message};
 
 pub struct ClientBot {
     state: BotState,

@@ -13,7 +13,7 @@ use config::{
     args::{TestMode, TestModeSubMode},
     bot_config_file::BotConfigFile,
 };
-use test_mode_bot::runner::BotTestRunner;
+use test_mode_bot_runner::BotTestRunner;
 use test_mode_tests_runner::QaTestRunner;
 
 pub struct TestRunner {

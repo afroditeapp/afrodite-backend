@@ -24,8 +24,11 @@ use utils::api::PATH_CONNECT;
 
 use super::{BotAction, BotState, PreviousValue};
 use crate::{
-    AccountConnections, EventSender, EventSenderAndQuitWatcher, WsConnection, WsStream,
-    create_event_channel, utils::assert::bot_assert_eq,
+    connection::{
+        AccountConnections, EventSender, EventSenderAndQuitWatcher, WsConnection, WsStream,
+        create_event_channel,
+    },
+    utils::assert::bot_assert_eq,
 };
 
 pub const DEFAULT_AGE: u8 = 30;
@@ -82,7 +85,7 @@ impl BotAction for Login {
 
         let (event_sender, event_receiver, quit_handle) =
             create_event_channel(state.connections.enable_event_sending.clone());
-        state.connections.events = Some(event_receiver);
+        state.connections.set_events(event_receiver);
 
         let url = state
             .api_urls
@@ -122,7 +125,7 @@ impl BotAction for Login {
 
         // TODO(microservice): Chat server connection
 
-        state.connections.connections = Some(AccountConnections {
+        state.connections.set_connections(AccountConnections {
             account,
             profile,
             media,
@@ -253,7 +256,7 @@ async fn connect_websocket(
         }
     });
 
-    Ok(WsConnection { task })
+    Ok(WsConnection::new(task))
 }
 
 async fn handle_connection(stream: &mut WsStream, sender: &EventSender) {

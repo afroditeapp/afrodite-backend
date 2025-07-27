@@ -16,7 +16,8 @@ use self::{
     account::{AssertAccountState, CompleteAccountSetup, Login, Register, SetAccountSetup},
     media::{SendImageToSlot, SetContent},
 };
-use super::{BotState, TaskState, client_bot::ChangeBotAgeAndOtherSettings};
+use super::{BotState, TaskState};
+use crate::actions::profile::ChangeBotAgeAndOtherSettings;
 
 #[macro_export]
 macro_rules! action_array {

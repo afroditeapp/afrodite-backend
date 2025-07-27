@@ -1,18 +1,27 @@
 use std::{collections::HashSet, fmt::Debug};
 
 use api_client::{
-    apis::profile_api::{self, get_location, get_profile, post_profile},
-    models::{Location, ProfileAttributeValueUpdate, ProfileIteratorSessionId, ProfileUpdate},
+    apis::{
+        common_api::get_client_config,
+        profile_api::{
+            self, get_location, get_profile, post_get_query_available_profile_attributes,
+            post_profile, post_search_age_range, post_search_groups,
+        },
+    },
+    models::{
+        AttributeMode, Location, ProfileAttributeQuery, ProfileAttributeValueUpdate,
+        ProfileIteratorSessionId, ProfileSearchAgeRange, ProfileUpdate, SearchGroups,
+    },
 };
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveTime, Utc};
-use config::file::LocationConfig;
+use config::{bot_config_file::Gender, file::LocationConfig};
 use error_stack::{Result, ResultExt};
 use test_mode_utils::client::TestError;
 use tracing::error;
 
 use super::{BotAction, BotState, PreviousValue};
-use crate::utils::location::LocationConfigUtils;
+use crate::{actions::account::DEFAULT_AGE, utils::location::LocationConfigUtils};
 
 #[derive(Debug, Default)]
 pub struct ProfileState {
@@ -278,5 +287,119 @@ impl BotAction for GetProfileList {
 
     fn previous_value_supported(&self) -> bool {
         true
+    }
+}
+
+#[derive(Debug)]
+pub struct ChangeBotAgeAndOtherSettings {
+    pub admin: bool,
+}
+
+#[async_trait]
+impl BotAction for ChangeBotAgeAndOtherSettings {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        let bot_config = state.get_bot_config();
+        let age = bot_config.age.unwrap_or(DEFAULT_AGE);
+
+        let groups = {
+            let man = SearchGroups {
+                man_for_man: Some(true),
+                man_for_woman: Some(true),
+                man_for_non_binary: Some(true),
+                ..Default::default()
+            };
+            let woman = SearchGroups {
+                woman_for_man: Some(true),
+                woman_for_woman: Some(true),
+                woman_for_non_binary: Some(true),
+                ..Default::default()
+            };
+            let non_binary = SearchGroups {
+                non_binary_for_man: Some(true),
+                non_binary_for_woman: Some(true),
+                non_binary_for_non_binary: Some(true),
+                ..Default::default()
+            };
+
+            match bot_config.gender {
+                Some(Gender::Man) => man,
+                Some(Gender::Woman) => woman,
+                None => match state.bot_id % 3 {
+                    0 => man,
+                    1 => woman,
+                    _ => non_binary,
+                },
+            }
+        };
+
+        let available_attributes = get_client_config(state.api.profile())
+            .await
+            .change_context(TestError::ApiRequest)?
+            .profile_attributes
+            .flatten()
+            .map(|v| v.attributes)
+            .unwrap_or_default();
+
+        let available_attributes = post_get_query_available_profile_attributes(
+            state.api.profile(),
+            ProfileAttributeQuery {
+                values: available_attributes.iter().map(|v| v.id).collect(),
+            },
+        )
+        .await
+        .change_context(TestError::ApiRequest)?
+        .values
+        .into_iter()
+        .map(|v| v.a);
+
+        let mut attributes: Vec<ProfileAttributeValueUpdate> = vec![];
+        for attribute in available_attributes {
+            if attribute.required.unwrap_or_default() && attribute.mode == AttributeMode::Bitflag {
+                let mut select_all = 0;
+                for value in attribute.values {
+                    select_all |= value.id;
+                }
+
+                let update = ProfileAttributeValueUpdate {
+                    id: attribute.id,
+                    v: vec![select_all],
+                };
+
+                attributes.push(update);
+            }
+        }
+
+        let name = if self.admin {
+            format!("Admin bot {}", state.bot_id + 1)
+        } else {
+            state
+                .get_bot_config()
+                .name
+                .clone()
+                .unwrap_or("B".to_string())
+        };
+
+        let update = ProfileUpdate {
+            name,
+            age: age.into(),
+            attributes,
+            ptext: state.get_bot_config().text.clone().unwrap_or_default(),
+        };
+
+        post_profile(state.api.profile(), update)
+            .await
+            .change_context(TestError::ApiRequest)?;
+
+        let age_range = ProfileSearchAgeRange { min: 18, max: 99 };
+
+        post_search_age_range(state.api.profile(), age_range)
+            .await
+            .change_context(TestError::ApiRequest)?;
+
+        post_search_groups(state.api.profile(), groups)
+            .await
+            .change_context(TestError::ApiRequest)?;
+
+        Ok(())
     }
 }
