@@ -1,8 +1,8 @@
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
-    AccountIdInternal, ProfileModerationRejectedReasonCategory,
-    ProfileModerationRejectedReasonDetails, ProfileModificationMetadata,
-    ProfileStringModerationContentType, ProfileStringModerationState,
+    AccountIdInternal, ProfileModificationMetadata, ProfileStringModerationContentType,
+    ProfileStringModerationRejectedReasonCategory, ProfileStringModerationRejectedReasonDetails,
+    ProfileStringModerationState,
 };
 use server_data::{
     DataError, IntoDataError,
@@ -113,7 +113,7 @@ pub enum ModerateProfileValueMode {
     Moderate {
         moderator_id: AccountIdInternal,
         accept: bool,
-        rejected_category: Option<ProfileModerationRejectedReasonCategory>,
-        rejected_details: ProfileModerationRejectedReasonDetails,
+        rejected_category: Option<ProfileStringModerationRejectedReasonCategory>,
+        rejected_details: ProfileStringModerationRejectedReasonDetails,
     },
 }

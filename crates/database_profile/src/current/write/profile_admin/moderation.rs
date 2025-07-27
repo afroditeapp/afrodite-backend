@@ -4,8 +4,8 @@ use database::{
 use diesel::{ExpressionMethods, insert_into, prelude::*, update};
 use error_stack::Result;
 use model_profile::{
-    AccountIdInternal, ProfileModerationRejectedReasonCategory,
-    ProfileModerationRejectedReasonDetails, ProfileStringModerationContentType,
+    AccountIdInternal, ProfileStringModerationContentType,
+    ProfileStringModerationRejectedReasonCategory, ProfileStringModerationRejectedReasonDetails,
     ProfileStringModerationState,
 };
 
@@ -41,8 +41,8 @@ impl CurrentWriteProfileAdminModeration<'_> {
         string_owner_id: AccountIdInternal,
         content_type_value: ProfileStringModerationContentType,
         accepted: bool,
-        rejected_category: Option<ProfileModerationRejectedReasonCategory>,
-        rejected_details: ProfileModerationRejectedReasonDetails,
+        rejected_category: Option<ProfileStringModerationRejectedReasonCategory>,
+        rejected_details: ProfileStringModerationRejectedReasonDetails,
     ) -> Result<ProfileStringModerationState, DieselDatabaseError> {
         let moderator_is_bot = self
             .read()

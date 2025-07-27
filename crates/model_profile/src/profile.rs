@@ -353,8 +353,8 @@ pub struct GetMyProfileResult {
     pub v: ProfileVersion,
     pub sv: ProfileSyncVersion,
     pub lst: Option<LastSeenTime>,
-    pub name_moderation_info: Option<ProfileModerationInfo>,
-    pub text_moderation_info: Option<ProfileModerationInfo>,
+    pub name_moderation_info: Option<ProfileStringModerationInfo>,
+    pub text_moderation_info: Option<ProfileStringModerationInfo>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default)]

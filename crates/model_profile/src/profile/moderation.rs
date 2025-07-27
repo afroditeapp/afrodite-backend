@@ -24,11 +24,11 @@ use utoipa::{IntoParams, ToSchema};
     AsExpression,
 )]
 #[diesel(sql_type = BigInt)]
-pub struct ProfileModerationRejectedReasonCategory {
+pub struct ProfileStringModerationRejectedReasonCategory {
     pub value: i64,
 }
 
-impl ProfileModerationRejectedReasonCategory {
+impl ProfileStringModerationRejectedReasonCategory {
     pub fn new(value: i64) -> Self {
         Self { value }
     }
@@ -38,7 +38,7 @@ impl ProfileModerationRejectedReasonCategory {
     }
 }
 
-diesel_i64_wrapper!(ProfileModerationRejectedReasonCategory);
+diesel_i64_wrapper!(ProfileStringModerationRejectedReasonCategory);
 
 /// Text might be empty.
 #[derive(
@@ -54,11 +54,11 @@ diesel_i64_wrapper!(ProfileModerationRejectedReasonCategory);
     diesel::AsExpression,
 )]
 #[diesel(sql_type = Text)]
-pub struct ProfileModerationRejectedReasonDetails {
+pub struct ProfileStringModerationRejectedReasonDetails {
     value: String,
 }
 
-impl ProfileModerationRejectedReasonDetails {
+impl ProfileStringModerationRejectedReasonDetails {
     pub fn new(value: String) -> Self {
         Self { value }
     }
@@ -76,14 +76,14 @@ impl ProfileModerationRejectedReasonDetails {
     }
 }
 
-diesel_string_wrapper!(ProfileModerationRejectedReasonDetails);
+diesel_string_wrapper!(ProfileStringModerationRejectedReasonDetails);
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema, Selectable, Queryable)]
 #[diesel(table_name = crate::schema::profile_moderation)]
 #[diesel(check_for_backend(crate::Db))]
-pub struct ProfileModerationInfo {
+pub struct ProfileStringModerationInfo {
     #[diesel(column_name = "state_type")]
     pub state: ProfileStringModerationState,
-    pub rejected_reason_category: Option<ProfileModerationRejectedReasonCategory>,
-    pub rejected_reason_details: ProfileModerationRejectedReasonDetails,
+    pub rejected_reason_category: Option<ProfileStringModerationRejectedReasonCategory>,
+    pub rejected_reason_details: ProfileStringModerationRejectedReasonDetails,
 }

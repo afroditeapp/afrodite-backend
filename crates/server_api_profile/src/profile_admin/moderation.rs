@@ -4,10 +4,9 @@ use axum::{
 };
 use model::{AccountId, AdminNotificationTypes, NotificationEvent};
 use model_profile::{
-    AccountIdInternal, EventToClientInternal, GetProfileStringModerationState,
-    GetProfileStringModerationStateParams, GetProfileStringPendingModerationList,
-    GetProfileStringPendingModerationParams, Permissions, PostModerateProfileString,
-    ProfileStringModerationContentType,
+    AccountIdInternal, EventToClientInternal, GetProfileStringPendingModerationList,
+    GetProfileStringPendingModerationParams, GetProfileStringState, GetProfileStringStateParams,
+    Permissions, PostModerateProfileString, ProfileStringModerationContentType,
 };
 use server_api::{
     S,
@@ -205,13 +204,13 @@ const PATH_GET_PROFILE_STRING_STATE: &str = "/profile_api/get_profile_string_sta
 /// # Access
 /// * [Permissions::admin_moderate_profile_names] or
 ///   [Permissions::admin_moderate_profile_texts] depending
-///   on [GetProfileStringModerationStateParams::content_type].
+///   on [GetProfileStringStateParams::content_type].
 #[utoipa::path(
     get,
     path = PATH_GET_PROFILE_STRING_STATE,
-    params(GetProfileStringModerationStateParams, AccountId),
+    params(GetProfileStringStateParams, AccountId),
     responses(
-        (status = 200, description = "Successful.", body = GetProfileStringModerationState),
+        (status = 200, description = "Successful.", body = GetProfileStringState),
         (status = 401, description = "Unauthorized."),
         (
             status = 500,
@@ -223,9 +222,9 @@ const PATH_GET_PROFILE_STRING_STATE: &str = "/profile_api/get_profile_string_sta
 pub async fn get_profile_string_state(
     State(state): State<S>,
     Extension(permissions): Extension<Permissions>,
-    Query(params): Query<GetProfileStringModerationStateParams>,
+    Query(params): Query<GetProfileStringStateParams>,
     Path(account_id): Path<AccountId>,
-) -> Result<Json<GetProfileStringModerationState>, StatusCode> {
+) -> Result<Json<GetProfileStringState>, StatusCode> {
     PROFILE.get_profile_string_state.incr();
 
     match params.content_type {
@@ -244,7 +243,7 @@ pub async fn get_profile_string_state(
     let string_owner_id = state.get_internal_id(account_id).await?;
 
     let r = state.read().profile().my_profile(string_owner_id).await?;
-    let r = GetProfileStringModerationState {
+    let r = GetProfileStringState {
         value: r.p.ptext,
         moderation_info: r.text_moderation_info,
     };

@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    AccountId, ProfileModerationInfo, ProfileModerationRejectedReasonCategory,
-    ProfileModerationRejectedReasonDetails,
+    AccountId, ProfileStringModerationInfo, ProfileStringModerationRejectedReasonCategory,
+    ProfileStringModerationRejectedReasonDetails,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -31,21 +31,21 @@ pub struct PostModerateProfileString {
     pub value: String,
     pub content_type: ProfileStringModerationContentType,
     pub accept: bool,
-    pub rejected_category: Option<ProfileModerationRejectedReasonCategory>,
-    pub rejected_details: ProfileModerationRejectedReasonDetails,
+    pub rejected_category: Option<ProfileStringModerationRejectedReasonCategory>,
+    pub rejected_details: ProfileStringModerationRejectedReasonDetails,
     /// If true, ignore accept, rejected_category, rejected_details and move
     /// the text to waiting for human moderation state.
     pub move_to_human: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, IntoParams)]
-pub struct GetProfileStringModerationStateParams {
+pub struct GetProfileStringStateParams {
     pub content_type: ProfileStringModerationContentType,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct GetProfileStringModerationState {
+pub struct GetProfileStringState {
     /// If empty, the `moderation_info` is `None`.
     pub value: String,
-    pub moderation_info: Option<ProfileModerationInfo>,
+    pub moderation_info: Option<ProfileStringModerationInfo>,
 }

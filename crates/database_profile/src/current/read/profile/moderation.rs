@@ -3,7 +3,7 @@ use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model::AccountIdInternal;
 use model_profile::{
-    ProfileModerationInfo, ProfileNameModerationState, ProfileStringModerationContentType,
+    ProfileNameModerationState, ProfileStringModerationContentType, ProfileStringModerationInfo,
     ProfileTextModerationState,
 };
 
@@ -44,13 +44,13 @@ impl CurrentReadProfileModeration<'_> {
         &mut self,
         id: AccountIdInternal,
         moderation_info: ProfileStringModerationContentType,
-    ) -> Result<Option<ProfileModerationInfo>, DieselDatabaseError> {
+    ) -> Result<Option<ProfileStringModerationInfo>, DieselDatabaseError> {
         use crate::schema::profile_moderation::dsl::*;
 
         profile_moderation
             .filter(account_id.eq(id.as_db_id()))
             .filter(content_type.eq(moderation_info))
-            .select(ProfileModerationInfo::as_select())
+            .select(ProfileStringModerationInfo::as_select())
             .first(self.conn())
             .optional()
             .change_context(DieselDatabaseError::Execute)
