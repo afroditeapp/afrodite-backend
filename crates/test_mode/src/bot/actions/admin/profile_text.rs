@@ -134,7 +134,7 @@ impl AdminBotProfileTextModerationLogic {
         let profile_text_paragraph = profile_text.lines().collect::<Vec<&str>>().join(" ");
 
         let user_text = config.user_text_template.replace(
-            ProfileTextModerationConfig::TEMPLATE_FORMAT_ARGUMENT,
+            ProfileTextModerationConfig::TEMPLATE_PLACEHOLDER_TEXT,
             &profile_text_paragraph,
         );
 

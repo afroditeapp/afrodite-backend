@@ -115,15 +115,15 @@ impl BotConfigFile {
         {
             let count = config
                 .user_text_template
-                .split(ProfileTextModerationConfig::TEMPLATE_FORMAT_ARGUMENT)
+                .split(ProfileTextModerationConfig::TEMPLATE_PLACEHOLDER_TEXT)
                 .count();
             #[allow(clippy::comparison_chain)]
             if count > 2 {
                 return Err(ConfigFileError::InvalidConfig)
-                    .attach_printable("Profile text LLM moderation user text template: only one '%s' format argument is allowed");
+                    .attach_printable("Profile text LLM moderation user text template: only one '{text}' placeholder is allowed");
             } else if count < 2 {
                 return Err(ConfigFileError::InvalidConfig).attach_printable(
-                    "Profile text LLM moderation user text template: '%s' format argument is missing",
+                    "Profile text LLM moderation user text template: '{text}' placeholder is missing",
                 );
             }
         }
@@ -337,7 +337,8 @@ pub struct LlmModerationConfig {
     pub openai_api_url: Url,
     pub model: String,
     pub system_text: String,
-    /// Format argument "%s" is replaced with profile text.
+    /// Placeholder "{text}" is replaced with text which will be
+    /// moderated.
     pub user_text_template: String,
     /// If LLM response starts with this text or the first
     /// line of the response contains this text, the profile text
@@ -357,7 +358,7 @@ fn max_tokens_default_value() -> u32 {
 }
 
 impl ProfileTextModerationConfig {
-    pub const TEMPLATE_FORMAT_ARGUMENT: &'static str = "%s";
+    pub const TEMPLATE_PLACEHOLDER_TEXT: &'static str = "{text}";
 }
 
 #[derive(Debug, Clone, Copy, Deserialize)]
