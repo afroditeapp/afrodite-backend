@@ -144,10 +144,10 @@ impl MaxMindDbManager {
         }
     }
 
-    const SECONDS_IN_WEEK: u64 = 60 * 60 * 24 * 7;
+    const SECONDS_IN_DAY: u64 = 60 * 60 * 24;
 
     async fn logic(&self) {
-        let mut timer = tokio::time::interval(Duration::from_secs(Self::SECONDS_IN_WEEK));
+        let mut timer = tokio::time::interval(Duration::from_secs(Self::SECONDS_IN_DAY));
         loop {
             timer.tick().await;
             self.refresh_db_handle_result().await;
@@ -173,7 +173,7 @@ impl MaxMindDbManager {
 
         let db = self.db_file()?;
         let reload_db = if db.exists() {
-            if self.file_one_week_old_or_older(&db)? {
+            if self.file_max_age_reached(config, &db)? {
                 self.download_db_file(config).await?;
                 true
             } else {
@@ -203,7 +203,17 @@ impl MaxMindDbManager {
             .map(|v| v.join("maxmind.db"))
     }
 
-    fn file_one_week_old_or_older(&self, file: &Path) -> Result<bool, MaxMindDbError> {
+    fn file_max_age_reached(
+        &self,
+        config: &MaxMindDbConfig,
+        file: &Path,
+    ) -> Result<bool, MaxMindDbError> {
+        let Some(days) = config.redownload_after_days else {
+            return Ok(false);
+        };
+
+        let max_age_seconds = 60 * 60 * 24 * Into::<u64>::into(days);
+
         // TODO(future): Avoid blocking I/O
         let metadata = file
             .metadata()
@@ -216,7 +226,7 @@ impl MaxMindDbManager {
             .as_secs();
         let current_time = *UnixTime::current_time().as_i64() as u64;
         let difference = file_created_unix_time.abs_diff(current_time);
-        Ok(file_created_unix_time <= current_time && difference >= Self::SECONDS_IN_WEEK)
+        Ok(file_created_unix_time <= current_time && difference >= max_age_seconds)
     }
 
     async fn download_db_file(&self, config: &MaxMindDbConfig) -> Result<(), MaxMindDbError> {

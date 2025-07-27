@@ -615,10 +615,11 @@ pub struct IpListConfig {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct MaxMindDbConfig {
-    /// Download URL for latest GeoLite2 database file with IP country info.
-    /// Note that the URL must point to the latest database and not to
-    /// some specific version so that the DB is updated weekly.
+    /// Template download URL for MMDB database file with IP country info.
+    /// Substrings matching "{.*}" regex are reserved for possible
+    /// future template placeholders.
     pub download_url: Url,
+    pub redownload_after_days: Option<u16>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
