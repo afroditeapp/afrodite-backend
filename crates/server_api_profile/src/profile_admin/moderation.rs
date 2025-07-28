@@ -243,9 +243,15 @@ pub async fn get_profile_string_state(
     let string_owner_id = state.get_internal_id(account_id).await?;
 
     let r = state.read().profile().my_profile(string_owner_id).await?;
-    let r = GetProfileStringState {
-        value: r.p.ptext,
-        moderation_info: r.text_moderation_info,
+    let r = match params.content_type {
+        ProfileStringModerationContentType::ProfileName => GetProfileStringState {
+            value: r.p.name,
+            moderation_info: r.name_moderation_info,
+        },
+        ProfileStringModerationContentType::ProfileText => GetProfileStringState {
+            value: r.p.ptext,
+            moderation_info: r.text_moderation_info,
+        },
     };
 
     Ok(r.into())
