@@ -1,7 +1,7 @@
 use database::{
     DieselDatabaseError, current::read::GetDbReadCommandsCommon, define_current_write_commands,
 };
-use diesel::{ExpressionMethods, insert_into, prelude::*, update};
+use diesel::{ExpressionMethods, delete, insert_into, prelude::*, update};
 use error_stack::Result;
 use model_profile::{
     AccountIdInternal, ProfileStringModerationContentType,
@@ -30,6 +30,19 @@ impl CurrentWriteProfileAdminModeration<'_> {
             ))
             .on_conflict(profile_name)
             .do_nothing()
+            .execute(self.conn())
+            .into_db_error(())?;
+        Ok(())
+    }
+
+    pub fn delete_from_profile_name_allowlist(
+        &mut self,
+        name: String,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::profile_name_allowlist::dsl::*;
+        let allowlist_name = name.trim().to_lowercase();
+        delete(profile_name_allowlist)
+            .filter(profile_name.eq(allowlist_name))
             .execute(self.conn())
             .into_db_error(())?;
         Ok(())

@@ -64,14 +64,20 @@ impl WriteCommandsProfileAdminModeration<'_> {
                     rejected_category,
                     rejected_details,
                 } => {
-                    if content_type == ProfileStringModerationContentType::ProfileName && accept {
-                        cmds.profile_admin()
-                            .moderation()
-                            .add_to_profile_name_allowlist(
-                                moderator_id,
-                                string_owner_id,
-                                string_value,
-                            )?;
+                    if content_type == ProfileStringModerationContentType::ProfileName {
+                        if accept {
+                            cmds.profile_admin()
+                                .moderation()
+                                .add_to_profile_name_allowlist(
+                                    moderator_id,
+                                    string_owner_id,
+                                    string_value,
+                                )?;
+                        } else {
+                            cmds.profile_admin()
+                                .moderation()
+                                .delete_from_profile_name_allowlist(string_value)?;
+                        }
                     }
                     cmds.profile_admin().moderation().moderate_profile_string(
                         moderator_id,
