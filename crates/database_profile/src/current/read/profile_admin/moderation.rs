@@ -6,8 +6,8 @@ use diesel::prelude::*;
 use error_stack::Result;
 use model_profile::{
     AccountIdInternal, GetProfileStringPendingModerationList,
-    GetProfileStringPendingModerationParams, ProfileStringModerationState,
-    ProfileStringPendingModeration,
+    GetProfileStringPendingModerationParams, ProfileStringModerationContentType,
+    ProfileStringModerationState, ProfileStringPendingModeration,
 };
 
 define_current_read_commands!(CurrentReadProfileModeration);
@@ -45,7 +45,7 @@ impl CurrentReadProfileModeration<'_> {
                 params.show_values_which_bots_can_moderate,
             );
 
-        let values = profile::table
+        let query = profile::table
             .inner_join(account_id::table)
             .inner_join(
                 profile_moderation::table.on(profile_moderation::account_id.eq(account_id::id)),
@@ -62,14 +62,21 @@ impl CurrentReadProfileModeration<'_> {
                             .eq(ProfileStringModerationState::WaitingHumanModeration),
                     )),
             )
-            .select((account_id::uuid, profile::profile_text))
             .order((
                 profile_moderation::created_unix_time.asc(),
                 account_id::id.asc(),
             ))
-            .limit(LIMIT)
-            .load::<ProfileStringPendingModeration>(self.conn())
-            .into_db_error(())?;
+            .limit(LIMIT);
+
+        let values = match params.content_type {
+            ProfileStringModerationContentType::ProfileName => query
+                .select((account_id::uuid, profile::name))
+                .load::<ProfileStringPendingModeration>(self.conn()),
+            ProfileStringModerationContentType::ProfileText => query
+                .select((account_id::uuid, profile::profile_text))
+                .load::<ProfileStringPendingModeration>(self.conn()),
+        }
+        .into_db_error(())?;
 
         Ok(GetProfileStringPendingModerationList { values })
     }
