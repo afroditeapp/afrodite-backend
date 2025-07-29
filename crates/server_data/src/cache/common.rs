@@ -49,9 +49,9 @@ impl CacheCommon {
 
     pub fn get_tokens_if_save_needed(&mut self) -> Option<Option<LoginSession>> {
         if self.login_session_changed {
-            None
-        } else {
             Some(self.login_session.clone())
+        } else {
+            None
         }
     }
 
