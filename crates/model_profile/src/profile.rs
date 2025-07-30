@@ -78,7 +78,7 @@ impl Profile {
         unlimited_likes: bool,
     ) -> Self {
         Self {
-            name: value.name,
+            name: value.profile_name,
             ptext: value.profile_text,
             age: value.age,
             attributes,
@@ -268,7 +268,7 @@ impl ProfileUpdateValidated {
     }
 
     pub fn update_to_profile(&self, target: &mut ProfileInternal) {
-        target.name.clone_from(&self.name);
+        target.profile_name.clone_from(&self.name);
         target.profile_text.clone_from(&self.ptext);
         target.age = self.age;
     }

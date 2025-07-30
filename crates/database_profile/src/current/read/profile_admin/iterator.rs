@@ -45,7 +45,7 @@ impl CurrentReadProfileIterator<'_> {
             .map(|(id, profile)| ProfileIteratorPageValue {
                 account_id: id.uuid,
                 age: profile.age,
-                name: profile.name,
+                name: profile.profile_name,
             })
             .collect();
 

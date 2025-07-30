@@ -18,7 +18,7 @@ impl CurrentReadProfileUtils<'_> {
 
         let (name_value, age_value) = profile
             .filter(account_id.eq(id.as_db_id()))
-            .select((name, age))
+            .select((profile_name, age))
             .first(self.conn())
             .into_db_error(())?;
 

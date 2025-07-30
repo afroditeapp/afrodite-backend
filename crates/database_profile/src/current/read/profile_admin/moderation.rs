@@ -70,7 +70,7 @@ impl CurrentReadProfileModeration<'_> {
 
         let values = match params.content_type {
             ProfileStringModerationContentType::ProfileName => query
-                .select((account_id::uuid, profile::name))
+                .select((account_id::uuid, profile::profile_name))
                 .load::<ProfileStringPendingModeration>(self.conn()),
             ProfileStringModerationContentType::ProfileText => query
                 .select((account_id::uuid, profile::profile_text))

@@ -82,7 +82,7 @@ impl CacheProfile {
     }
 
     pub fn update_profile_name(&mut self, v: String) {
-        self.data.name = v;
+        self.data.profile_name = v;
     }
 
     pub fn update_profile_internal(&mut self, action: impl FnOnce(&mut ProfileInternal)) {

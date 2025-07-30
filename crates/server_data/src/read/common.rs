@@ -114,7 +114,7 @@ impl ReadCommandsCommon<'_> {
             .read_cache(id, |e| {
                 Ok(e.profile.as_ref().map(|p| {
                     (
-                        p.profile_internal().name.clone(),
+                        p.profile_internal().profile_name.clone(),
                         p.profile_name_moderation_state()
                             .as_ref()
                             .map(|v| v.0.is_accepted())

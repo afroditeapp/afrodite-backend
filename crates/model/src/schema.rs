@@ -617,7 +617,7 @@ diesel::table! {
     profile (account_id) {
         account_id -> Integer,
         version_uuid -> Binary,
-        name -> Text,
+        profile_name -> Text,
         profile_text -> Text,
         age -> Integer,
         last_seen_unix_time -> Integer,

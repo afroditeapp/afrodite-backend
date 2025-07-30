@@ -237,7 +237,7 @@ impl CurrentReadCommonReport<'_> {
 
         let value = profile
             .find(id)
-            .select((age, name))
+            .select((age, profile_name))
             .first(self.conn())
             .optional()
             .into_db_error(())?;

@@ -440,7 +440,7 @@ CREATE TABLE IF NOT EXISTS profile_state(
 CREATE TABLE IF NOT EXISTS profile(
     account_id      INTEGER PRIMARY KEY NOT NULL,
     version_uuid    BLOB                NOT NULL,
-    name            TEXT                NOT NULL    DEFAULT '',
+    profile_name    TEXT                NOT NULL    DEFAULT '',
     profile_text    TEXT                NOT NULL    DEFAULT '',
     -- Age in years and inside inclusive range of [18,99].
     age             INTEGER             NOT NULL    DEFAULT 18,

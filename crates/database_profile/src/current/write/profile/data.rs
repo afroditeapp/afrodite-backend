@@ -58,7 +58,7 @@ impl CurrentWriteProfileData<'_> {
 
         update(profile.find(id.as_db_id()))
             .set((
-                name.eq(&data.name),
+                profile_name.eq(&data.name),
                 age.eq(&data.age),
                 profile_text.eq(&data.ptext),
             ))
@@ -91,7 +91,7 @@ impl CurrentWriteProfileData<'_> {
         use crate::schema::profile::dsl::*;
 
         update(profile.find(id.as_db_id()))
-            .set((name.eq(data),))
+            .set((profile_name.eq(data),))
             .execute(self.conn())
             .change_context(DieselDatabaseError::Execute)?;
 

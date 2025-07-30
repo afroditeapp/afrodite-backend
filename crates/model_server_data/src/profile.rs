@@ -56,7 +56,7 @@ pub use search::*;
 pub struct ProfileInternal {
     pub account_id: AccountIdDb,
     pub version_uuid: ProfileVersion,
-    pub name: String,
+    pub profile_name: String,
     pub profile_text: String,
     pub age: ProfileAge,
 }
