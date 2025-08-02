@@ -85,8 +85,8 @@ for all available config file options.
 ```toml
 [[demo_mode]]
 database_id = 0
-password_stage0 = "test"
-password_stage1 = "tThlYqVHIiY="
+username = "username"
+password = "password"
 access_all_accounts = true
 
 [grant_admin_access]
