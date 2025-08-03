@@ -3,7 +3,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, Eq, PartialEq, Hash, ToSchema)]
+#[derive(Copy, Clone, Serialize, Deserialize, Eq, PartialEq, Hash, ToSchema)]
 #[schema(value_type = String)]
 pub struct UuidBase64Url(
     #[serde(
@@ -54,6 +54,12 @@ impl From<uuid::Uuid> for UuidBase64Url {
     }
 }
 
+impl std::fmt::Debug for UuidBase64Url {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self}")
+    }
+}
+
 impl std::fmt::Display for UuidBase64Url {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let displayer = Base64Display::new(
@@ -84,7 +90,7 @@ pub fn uuid_from_string_base_64_url<'de, D: Deserializer<'de>>(d: D) -> Result<U
 
 /// Workaround the "expected a borrowed string" error
 /// when deserializing TOML.
-#[derive(Debug, Copy, Clone, Deserialize, Serialize)]
+#[derive(Copy, Clone, Deserialize, Serialize)]
 pub struct UuidBase64UrlToml(
     #[serde(
         serialize_with = "uuid_as_string_base_64_url_toml",
@@ -92,6 +98,12 @@ pub struct UuidBase64UrlToml(
     )]
     UuidBase64Url,
 );
+
+impl std::fmt::Debug for UuidBase64UrlToml {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self}")
+    }
+}
 
 impl std::fmt::Display for UuidBase64UrlToml {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
