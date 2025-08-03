@@ -310,7 +310,7 @@ pub async fn get_conversation_id(
     };
 
     let value = GetConversationId {
-        value: interaction.conversation_id_for_account(requested),
+        value: interaction.conversation_id_for_account(id),
     };
 
     Ok(value.into())
