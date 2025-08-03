@@ -7,7 +7,7 @@ use server_data::{
     db_manager::InternalWriting,
     db_transaction, define_cmd_wrapper_write,
     file::FileWrite,
-    read::DbRead,
+    read::{DbRead, GetReadCommandsCommon},
     result::Result,
     write::{DbTransaction, GetWriteCommandsCommon},
 };
@@ -98,6 +98,14 @@ impl WriteCommandsAccountDelete<'_> {
             .delete_if_exists()
             .await?;
 
+        Ok(())
+    }
+
+    pub async fn delete_all_accounts(&self) -> Result<(), DataError> {
+        let accounts = self.0.read().common().account_ids_internal_vec().await?;
+        for a in accounts {
+            self.delete_account(a).await?;
+        }
         Ok(())
     }
 }

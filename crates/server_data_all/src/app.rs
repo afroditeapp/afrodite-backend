@@ -8,7 +8,8 @@ use model::{
 use model_account::{EmailAddress, SignInWithInfo};
 use server_common::websocket::WebSocketError;
 use server_data::{
-    DataError, app::DataAllUtils, db_manager::RouterDatabaseReadHandle,
+    DataError, app::DataAllUtils, data_reset::BACKEND_DATA_RESET_STATE,
+    db_manager::RouterDatabaseReadHandle, result::WrappedContextExt,
     write_commands::WriteCommandRunnerHandle,
 };
 use server_data_account::write::GetWriteCommandsAccount;
@@ -47,6 +48,10 @@ impl DataAllUtils for DataAllUtilsImpl {
         async move {
             let id = write_command_runner
                 .write(move |cmds| async move {
+                    if BACKEND_DATA_RESET_STATE.is_ongoing() {
+                        return Err(DataError::NotAllowed.report());
+                    }
+
                     let id = cmds.account().get_next_unique_account_id().await?;
                     let id = RegisterAccount::new(cmds.write_handle())
                         .register(id, sign_in_with, email.clone())
@@ -146,6 +151,20 @@ impl DataAllUtils for DataAllUtilsImpl {
             } else {
                 Ok(false)
             }
+        }
+        .boxed()
+    }
+
+    fn delete_all_accounts<'a>(
+        &self,
+        write_command_runner: &'a WriteCommandRunnerHandle,
+    ) -> BoxFuture<'a, server_common::result::Result<(), DataError>> {
+        async move {
+            write_command_runner
+                .write(
+                    move |cmds| async move { cmds.account().delete().delete_all_accounts().await },
+                )
+                .await
         }
         .boxed()
     }

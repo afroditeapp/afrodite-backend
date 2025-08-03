@@ -39,7 +39,10 @@ use simple_backend_config::{SimpleBackendConfig, file::SimpleBackendConfigFile};
 use simple_backend_utils::{ContextExt, IntoReportFromString};
 
 use self::file::{Components, ConfigFile, ExternalServices, LocationConfig};
-use crate::{file::ProfileLimitsConfig, file_notification_content::NotificationContentFile};
+use crate::{
+    file::{GeneralConfig, ProfileLimitsConfig},
+    file_notification_content::NotificationContentFile,
+};
 
 #[derive(thiserror::Error, Debug)]
 pub enum GetConfigError {
@@ -291,6 +294,10 @@ impl Config {
 
     pub fn automatic_profile_search(&self) -> &AutomaticProfileSearchConfig {
         &self.file.automatic_profile_search
+    }
+
+    pub fn general(&self) -> &GeneralConfig {
+        &self.file.general
     }
 
     pub fn parsed_files(&self) -> ParsedFiles {

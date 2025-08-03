@@ -140,6 +140,7 @@ fn new_config(
             email: EmailAddress(TEST_ADMIN_ACCESS_EMAIL.to_string()),
         }
         .into(),
+        general: Default::default(),
         api: ApiConfig::default(),
         config_files: ConfigFileConfig::default(),
         automatic_profile_search: AutomaticProfileSearchConfig::default(),

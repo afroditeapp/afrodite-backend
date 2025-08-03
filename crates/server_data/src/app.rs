@@ -151,4 +151,9 @@ pub trait DataAllUtils: Send + Sync + 'static {
         account0: AccountIdInternal,
         account1: AccountIdInternal,
     ) -> BoxFuture<'a, server_common::result::Result<bool, DataError>>;
+
+    fn delete_all_accounts<'a>(
+        &self,
+        write_handle: &'a WriteCommandRunnerHandle,
+    ) -> BoxFuture<'a, server_common::result::Result<(), DataError>>;
 }

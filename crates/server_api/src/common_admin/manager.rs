@@ -9,6 +9,7 @@ use manager_model::{
     SoftwareUpdateTaskType, SystemInfo,
 };
 use model::Permissions;
+use server_data::{app::GetConfig, data_reset::BACKEND_DATA_RESET_STATE};
 use simple_backend::{app::GetManagerApi, create_counters};
 
 use crate::{
@@ -206,7 +207,19 @@ pub async fn post_trigger_software_update_install(
 
 const PATH_POST_TRIGGER_BACKEND_DATA_RESET: &str = "/common_api/trigger_backend_data_reset";
 
-/// Trigger backend data reset which also restarts the backend.
+/// Trigger backend data reset
+///
+/// This API route will fail if backend config file field
+/// debug_allow_backend_data_reset is not true.
+///
+/// Registering new accounts will be prevented and all accounts will be deleted.
+/// After that manager will stop the backend, delete backend's data directory
+/// and start the backend.
+///
+/// This can be requested only once per backend process.
+///
+/// Account registering prevention is process specific, so restarting
+/// backend will disable that.
 ///
 /// # Access
 /// * Permission [model::Permissions::admin_server_maintenance_reset_data]
@@ -228,16 +241,26 @@ pub async fn post_trigger_backend_data_reset(
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_trigger_backend_data_reset.incr();
 
-    if api_caller_permissions.admin_server_maintenance_reset_data {
-        state
-            .manager_request_to(manager)
-            .await?
-            .trigger_manual_task(ManualTaskType::BackendDataReset)
-            .await?;
-        Ok(())
-    } else {
-        Err(StatusCode::UNAUTHORIZED)
+    if !api_caller_permissions.admin_server_maintenance_reset_data {
+        return Err(StatusCode::UNAUTHORIZED);
     }
+
+    if !state.config().general().debug_allow_backend_data_reset {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    if BACKEND_DATA_RESET_STATE.current_value_and_set_ongoing() {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    state.data_all_access().delete_all_accounts().await?;
+
+    state
+        .manager_request_to(manager)
+        .await?
+        .trigger_manual_task(ManualTaskType::BackendDataReset)
+        .await?;
+    Ok(())
 }
 
 const PATH_POST_TRIGGER_BACKEND_RESTART: &str = "/common_api/trigger_backend_restart";

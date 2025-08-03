@@ -101,6 +101,8 @@ pub enum ConfigFileError {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ConfigFile {
     #[serde(default)]
+    pub general: GeneralConfig,
+    #[serde(default)]
     pub config_files: ConfigFileConfig,
     #[serde(default)]
     pub api: ApiConfig,
@@ -120,6 +122,7 @@ pub struct ConfigFile {
 impl ConfigFile {
     pub fn minimal_config_for_api_doc_json() -> Self {
         Self {
+            general: Default::default(),
             config_files: ConfigFileConfig::default(),
             api: ApiConfig::default(),
             automatic_profile_search: AutomaticProfileSearchConfig::default(),
@@ -164,6 +167,12 @@ impl ConfigFile {
 
         Ok(file)
     }
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct GeneralConfig {
+    /// Allow using backend data reset API.
+    pub debug_allow_backend_data_reset: bool,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]

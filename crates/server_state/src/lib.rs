@@ -210,6 +210,11 @@ impl DataAllAccess<'_> {
         let cmd = self.utils().is_match(self.read(), account0, account1);
         cmd.await
     }
+
+    pub async fn delete_all_accounts(&self) -> server_common::result::Result<(), DataError> {
+        let cmd = self.utils().delete_all_accounts(self.write());
+        cmd.await
+    }
 }
 
 /// Macro for writing data with simpler syntax.
