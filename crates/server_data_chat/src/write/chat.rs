@@ -79,19 +79,13 @@ impl WriteCommandsChat<'_> {
                 && interaction.account_id_receiver == Some(id_like_sender.into_db_id())
             {
                 let next_id = cmds.chat().upsert_next_match_id()?;
-                let account_and_conversation_id = (
-                    id_like_sender,
-                    cmds.chat().upsert_next_conversation_id(id_like_sender)?,
-                );
-                let another_conversation_id =
+                let conversation_id_sender =
                     cmds.chat().upsert_next_conversation_id(id_like_receiver)?;
+                let conversation_id_receiver =
+                    cmds.chat().upsert_next_conversation_id(id_like_sender)?;
                 interaction
                     .clone()
-                    .try_into_match(
-                        next_id,
-                        account_and_conversation_id,
-                        another_conversation_id,
-                    )
+                    .try_into_match(next_id, conversation_id_sender, conversation_id_receiver)
                     .change_context(DieselDatabaseError::NotAllowed)?
             } else if interaction.is_match() {
                 return Err(DieselDatabaseError::AlreadyDone.report());

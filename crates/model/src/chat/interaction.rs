@@ -286,29 +286,21 @@ impl AccountInteractionInternal {
     pub fn try_into_match(
         self,
         match_id: MatchId,
-        (account, conversation_id1): (AccountIdInternal, ConversationId),
-        conversation_id2: ConversationId,
+        conversation_id_sender: ConversationId,
+        conversation_id_receiver: ConversationId,
     ) -> Result<Self, AccountInteractionStateError> {
         let target = AccountInteractionState::Match;
         let state = self.state_number;
         match state {
-            AccountInteractionState::Like => {
-                let (sender, receiver) = if self.account_id_sender == Some(account.into_db_id()) {
-                    (conversation_id1, conversation_id2)
-                } else {
-                    (conversation_id2, conversation_id1)
-                };
-
-                Ok(Self {
-                    state_number: target,
-                    included_in_received_new_likes_count: false,
-                    received_like_id: None,
-                    match_id: Some(match_id),
-                    conversation_id_sender: Some(sender),
-                    conversation_id_receiver: Some(receiver),
-                    ..self
-                })
-            }
+            AccountInteractionState::Like => Ok(Self {
+                state_number: target,
+                included_in_received_new_likes_count: false,
+                received_like_id: None,
+                match_id: Some(match_id),
+                conversation_id_sender: Some(conversation_id_sender),
+                conversation_id_receiver: Some(conversation_id_receiver),
+                ..self
+            }),
             AccountInteractionState::Match => Ok(self),
             AccountInteractionState::Empty => {
                 Err(AccountInteractionStateError::transition(state, target))
