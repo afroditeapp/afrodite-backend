@@ -21,9 +21,11 @@ use server_data::{
 use simple_backend::{
     app::{
         FilePackageProvider, GetManagerApi, GetSimpleBackendConfig, GetTileMap,
-        JitsiMeetUrlCreatorProvider, MaxMindDbDataProvider, PerfCounterDataProvider, SignInWith,
+        IpCountryTrackerProvider, JitsiMeetUrlCreatorProvider, MaxMindDbDataProvider,
+        PerfCounterDataProvider, SignInWith,
     },
     file_package::FilePackageManager,
+    ip_country::IpCountryTracker,
     jitsi_meet::JitsiMeetUrlCreator,
     manager_client::{ManagerApiClient, ManagerEventHandler},
     map::TileMapManager,
@@ -328,5 +330,11 @@ impl ManagerEventHandler for S {
                     .await
             }
         }
+    }
+}
+
+impl IpCountryTrackerProvider for S {
+    fn ip_country_tracker(&self) -> &IpCountryTracker {
+        &self.state.simple_backend_state.ip_country
     }
 }

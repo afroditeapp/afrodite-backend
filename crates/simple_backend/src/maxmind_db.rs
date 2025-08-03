@@ -15,7 +15,11 @@ use simple_backend_config::{SimpleBackendConfig, file::MaxMindDbConfig};
 use simple_backend_database::data::create_dirs_and_get_simple_backend_dir_path;
 use simple_backend_model::UnixTime;
 use simple_backend_utils::{ContextExt, file::overwrite_and_remove_if_exists};
-use tokio::{io::AsyncWriteExt, sync::RwLock, task::JoinHandle};
+use tokio::{
+    io::AsyncWriteExt,
+    sync::{RwLock, RwLockReadGuard},
+    task::JoinHandle,
+};
 use tracing::{error, warn};
 
 use crate::ServerQuitWatcher;
@@ -63,11 +67,12 @@ pub struct IpDb {
 
 impl IpDb {
     pub fn get_country(&self, ip: IpAddr) -> Option<String> {
+        self.get_country_ref(ip).map(ToString::to_string)
+    }
+
+    pub fn get_country_ref(&self, ip: IpAddr) -> Option<&str> {
         match self.db.lookup::<maxminddb::geoip2::Country>(ip) {
-            Ok(v) => v
-                .and_then(|v| v.country)
-                .and_then(|v| v.iso_code)
-                .map(|v| v.to_string()),
+            Ok(v) => v.and_then(|v| v.country).and_then(|v| v.iso_code),
             Err(e) => {
                 error!("MaxMind DB error: {}", e);
                 None
@@ -90,6 +95,10 @@ impl MaxMindDbManagerData {
     pub async fn current_db(&self) -> Option<Arc<IpDb>> {
         let lock = self.db.read().await;
         lock.as_ref().cloned()
+    }
+
+    pub async fn current_db_ref(&self) -> RwLockReadGuard<Option<Arc<IpDb>>> {
+        self.db.read().await
     }
 
     async fn is_db_loaded(&self) -> bool {

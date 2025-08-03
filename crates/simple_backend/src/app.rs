@@ -7,9 +7,9 @@ use simple_backend_config::SimpleBackendConfig;
 
 use super::manager_client::ManagerApiClient;
 use crate::{
-    file_package::FilePackageManager, jitsi_meet::JitsiMeetUrlCreator, map::TileMapManager,
-    maxmind_db::MaxMindDbManagerData, perf::PerfMetricsManagerData,
-    sign_in_with::SignInWithManager,
+    file_package::FilePackageManager, ip_country::IpCountryTracker,
+    jitsi_meet::JitsiMeetUrlCreator, map::TileMapManager, maxmind_db::MaxMindDbManagerData,
+    perf::PerfMetricsManagerData, sign_in_with::SignInWithManager,
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -28,6 +28,7 @@ pub struct SimpleBackendAppState {
     pub perf_data: Arc<PerfMetricsManagerData>,
     pub file_packages: Arc<FilePackageManager>,
     pub maxmind_db: Arc<MaxMindDbManagerData>,
+    pub ip_country: IpCountryTracker,
 }
 
 impl SimpleBackendAppState {
@@ -49,6 +50,7 @@ impl SimpleBackendAppState {
             config,
             manager_api,
             perf_data,
+            ip_country: IpCountryTracker::new(maxmind_db.clone()),
             maxmind_db,
         })
     }
@@ -100,4 +102,8 @@ pub trait MaxMindDbDataProvider {
 
 pub trait JitsiMeetUrlCreatorProvider {
     fn jitsi_meet_url_creator(&self) -> JitsiMeetUrlCreator;
+}
+
+pub trait IpCountryTrackerProvider {
+    fn ip_country_tracker(&self) -> &IpCountryTracker;
 }

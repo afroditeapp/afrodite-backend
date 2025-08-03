@@ -13,6 +13,7 @@ pub mod app;
 pub mod email;
 pub mod file_package;
 pub mod image;
+pub mod ip_country;
 pub mod jitsi_meet;
 pub mod manager_client;
 pub mod map;
@@ -35,7 +36,14 @@ use app::{
     GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith,
     SimpleBackendAppState,
 };
-use axum::Router;
+use axum::{
+    Router,
+    body::Body,
+    extract::{ConnectInfo, Request, State},
+    middleware::{self, Next},
+    response::Response,
+    serve::{Listener, ListenerExt},
+};
 use futures::future::poll_fn;
 use hyper::body::Incoming;
 use hyper_util::rt::{TokioExecutor, TokioIo};
@@ -66,7 +74,10 @@ use tracing_subscriber::{EnvFilter, Layer, layer::SubscriberExt, util::Subscribe
 use utoipa_swagger_ui::SwaggerUi;
 
 use self::web_socket::WebSocketManager;
-use crate::perf::{PerfMetricsManager, PerfMetricsManagerData};
+use crate::{
+    ip_country::IpCountryTracker,
+    perf::{PerfMetricsManager, PerfMetricsManagerData},
+};
 
 pub const HTTPS_DEFAULT_PORT: u16 = 443;
 pub const SERVER_START_MESSAGE: &str = "Server start complete";
@@ -245,6 +256,8 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         .await
         .expect("State builder init failed");
 
+        let ip_country_tracker = simple_state.ip_country.clone();
+
         let state = self
             .logic
             .on_before_server_start(simple_state, server_quit_watcher.resubscribe())
@@ -273,6 +286,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
                     self.logic
                         .public_api_router(ws_manager.clone(), &state, false),
                     "Public API",
+                    ip_country_tracker.clone(),
                 )
                 .await,
             )
@@ -287,6 +301,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
                     addr,
                     self.logic.public_bot_api_router(ws_manager.clone(), &state),
                     "Public bot API",
+                    ip_country_tracker.clone(),
                 )
                 .await,
             )
@@ -307,6 +322,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
                     &state,
                     ip,
                     port,
+                    ip_country_tracker.clone(),
                 )
                 .await,
             )
@@ -322,6 +338,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
                         internal_api_addr,
                         self.logic.public_bot_api_router(ws_manager.clone(), &state),
                         "Internal API",
+                        ip_country_tracker,
                     )
                     .await,
                 )
@@ -398,15 +415,18 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         quit_notification: ServerQuitWatcher,
         tls_manager: &mut TlsManager,
         addr: SocketAddr,
-        api_router: Router,
+        router: Router,
         server_name: &'static str,
+        ip_country_tracker: IpCountryTracker,
     ) -> JoinHandle<()> {
-        let router = {
-            if self.config.debug_mode() {
-                api_router.route_layer(TraceLayer::new_for_http())
-            } else {
-                api_router
-            }
+        let router = router.layer(middleware::from_fn_with_state(
+            ip_country_tracker.clone(),
+            track_http_request_country,
+        ));
+        let router = if self.config.debug_mode() {
+            router.route_layer(TraceLayer::new_for_http())
+        } else {
+            router
         };
 
         info!("{} is available on {}", server_name, addr);
@@ -418,11 +438,18 @@ impl<T: BusinessLogic> SimpleBackend<T> {
                 tls_config,
                 server_name,
                 quit_notification,
+                ip_country_tracker,
             )
             .await
         } else {
-            self.create_server_task_no_tls(router, addr, server_name, quit_notification)
-                .await
+            self.create_server_task_no_tls(
+                router,
+                addr,
+                server_name,
+                quit_notification,
+                ip_country_tracker,
+            )
+            .await
         }
     }
 
@@ -434,8 +461,15 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         state: &T::AppState,
         ip: IpAddr,
         port: u16,
+        ip_country_tracker: IpCountryTracker,
     ) -> JoinHandle<()> {
-        let router = self.logic.local_bot_api_router(web_socket_manager, state);
+        let router = self
+            .logic
+            .local_bot_api_router(web_socket_manager, state)
+            .layer(middleware::from_fn_with_state(
+                ip_country_tracker.clone(),
+                track_http_request_country,
+            ));
         let router = if self.config.debug_mode() {
             if let Some(swagger) = self.logic.create_swagger_ui(state) {
                 router.merge(swagger)
@@ -448,8 +482,14 @@ impl<T: BusinessLogic> SimpleBackend<T> {
 
         let addr = SocketAddr::new(ip, port);
         info!("Bot API is available on {}", addr);
-        self.create_server_task_no_tls(router, addr, "Bot API", quit_notification)
-            .await
+        self.create_server_task_no_tls(
+            router,
+            addr,
+            "Bot API",
+            quit_notification,
+            ip_country_tracker,
+        )
+        .await
     }
 
     async fn create_server_task_with_tls(
@@ -459,6 +499,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         tls_config: &mut SimpleBackendTlsConfig,
         name_for_log_message: &'static str,
         mut quit_notification: ServerQuitWatcher,
+        ip_country_tracker: IpCountryTracker,
     ) -> JoinHandle<()> {
         let (listener_for_router, acme_only_listener) =
             if let Some(utils) = tls_config.take_acme_utils() {
@@ -490,6 +531,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             Some(router),
             drop_after_connection.clone(),
             quit_notification.resubscribe(),
+            ip_country_tracker.clone(),
         );
 
         let acme_only_task = acme_only_listener.map(|acme_only_listener| {
@@ -498,6 +540,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
                 None,
                 drop_after_connection.clone(),
                 quit_notification.resubscribe(),
+                ip_country_tracker,
             )
         });
 
@@ -535,13 +578,19 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         addr: SocketAddr,
         name_for_log_message: &'static str,
         mut quit_notification: ServerQuitWatcher,
+        ip_country_tracker: IpCountryTracker,
     ) -> JoinHandle<()> {
         let normal_api_server = {
             let listener = tokio::net::TcpListener::bind(addr)
                 .await
                 .expect("Address not available");
+
             axum::serve(
-                listener,
+                TcpListenerWithConnectionTracking {
+                    listener,
+                    ip_country_tracker,
+                }
+                .tap_io(|_| {}),
                 router.into_make_service_with_connect_info::<SocketAddr>(),
             )
         };
@@ -573,6 +622,7 @@ fn create_tls_listening_task(
     router: Option<Router>,
     drop_after_connection: mpsc::Sender<()>,
     mut quit_notification: ServerQuitWatcher,
+    ip_country_tracker: IpCountryTracker,
 ) -> JoinHandle<()> {
     let app_service = router.map(|v| v.into_make_service_with_connect_info::<SocketAddr>());
     let mut listener = config.listener;
@@ -597,6 +647,10 @@ fn create_tls_listening_task(
                     }
                 }
             };
+
+            ip_country_tracker
+                .increment_tcp_connections(addr.ip())
+                .await;
 
             let config_clone = config.tls_config.clone();
             let acme_acceptor_clone = config.acme_acceptor.clone();
@@ -739,6 +793,38 @@ impl ListenerAndConfig {
             acme_acceptor: None,
         }
     }
+}
+
+struct TcpListenerWithConnectionTracking {
+    listener: TcpListener,
+    ip_country_tracker: IpCountryTracker,
+}
+
+impl Listener for TcpListenerWithConnectionTracking {
+    type Io = <TcpListener as Listener>::Io;
+    type Addr = <TcpListener as Listener>::Addr;
+
+    async fn accept(&mut self) -> (Self::Io, Self::Addr) {
+        let value = <TcpListener as Listener>::accept(&mut self.listener).await;
+        self.ip_country_tracker
+            .increment_tcp_connections(value.1.ip())
+            .await;
+        value
+    }
+
+    fn local_addr(&self) -> tokio::io::Result<Self::Addr> {
+        <TcpListener as Listener>::local_addr(&self.listener)
+    }
+}
+
+pub async fn track_http_request_country(
+    State(state): State<IpCountryTracker>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    req: Request<Body>,
+    next: Next,
+) -> Response {
+    state.increment_http_requests(addr.ip()).await;
+    next.run(req).await
 }
 
 create_counters!(
