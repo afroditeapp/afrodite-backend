@@ -373,6 +373,35 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    history_ip_country_statistics_country_name (id) {
+        id -> Integer,
+        country_name -> Text,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    history_ip_country_statistics_new_http_requests (time_id, country_id) {
+        time_id -> Integer,
+        country_id -> Integer,
+        new_http_requests -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    history_ip_country_statistics_new_tcp_connections (time_id, country_id) {
+        time_id -> Integer,
+        country_id -> Integer,
+        new_tcp_connections -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     history_performance_statistics_metric_name (id) {
         id -> Integer,
         metric_name -> Text,
@@ -855,6 +884,10 @@ diesel::joinable!(current_account_media -> account_id (account_id));
 diesel::joinable!(daily_likes_left -> account_id (account_id));
 diesel::joinable!(history_client_version_statistics -> history_client_version_statistics_version_number (version_id));
 diesel::joinable!(history_client_version_statistics -> history_common_statistics_save_time (time_id));
+diesel::joinable!(history_ip_country_statistics_new_http_requests -> history_common_statistics_save_time (time_id));
+diesel::joinable!(history_ip_country_statistics_new_http_requests -> history_ip_country_statistics_country_name (country_id));
+diesel::joinable!(history_ip_country_statistics_new_tcp_connections -> history_common_statistics_save_time (time_id));
+diesel::joinable!(history_ip_country_statistics_new_tcp_connections -> history_ip_country_statistics_country_name (country_id));
 diesel::joinable!(history_performance_statistics_metric_value -> history_common_statistics_save_time (time_id));
 diesel::joinable!(history_performance_statistics_metric_value -> history_performance_statistics_metric_name (metric_id));
 diesel::joinable!(history_profile_statistics_age_changes_all_genders -> history_common_statistics_save_time (time_id));
@@ -922,6 +955,9 @@ diesel::allow_tables_to_appear_in_same_query!(
     history_client_version_statistics,
     history_client_version_statistics_version_number,
     history_common_statistics_save_time,
+    history_ip_country_statistics_country_name,
+    history_ip_country_statistics_new_http_requests,
+    history_ip_country_statistics_new_tcp_connections,
     history_performance_statistics_metric_name,
     history_performance_statistics_metric_value,
     history_profile_statistics_age_changes_all_genders,

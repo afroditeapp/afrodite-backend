@@ -1,53 +1,13 @@
-use std::{
-    borrow::Borrow,
-    collections::HashMap,
-    net::IpAddr,
-    sync::{
-        Arc,
-        atomic::{AtomicI64, Ordering},
-    },
-};
+use std::{collections::HashMap, net::IpAddr, sync::Arc};
 
+use simple_backend_model::{IpCountry, IpCountryCounters};
 use tokio::sync::RwLock;
 
 use crate::maxmind_db::MaxMindDbManagerData;
 
-#[derive(Debug, Hash, PartialEq, Eq)]
-pub struct IpCountry(pub String);
-
-impl Borrow<str> for IpCountry {
-    fn borrow(&self) -> &str {
-        self.0.as_ref()
-    }
-}
-
-#[derive(Default, Debug)]
-pub struct Counters {
-    tcp_connections: AtomicI64,
-    http_requests: AtomicI64,
-}
-
-impl Counters {
-    pub fn tcp_connections(&self) -> i64 {
-        self.tcp_connections.load(Ordering::Relaxed)
-    }
-
-    pub fn http_requests(&self) -> i64 {
-        self.http_requests.load(Ordering::Relaxed)
-    }
-
-    pub(crate) fn increment_tcp_connections(&self) {
-        self.tcp_connections.fetch_add(1, Ordering::Relaxed);
-    }
-
-    pub(crate) fn increment_http_requests(&self) {
-        self.http_requests.fetch_add(1, Ordering::Relaxed);
-    }
-}
-
 #[derive(Debug, Default)]
 struct State {
-    pub data: HashMap<IpCountry, Counters>,
+    pub data: HashMap<IpCountry, IpCountryCounters>,
 }
 
 pub struct IpCountryTracker {
@@ -72,7 +32,7 @@ impl IpCountryTracker {
         }
     }
 
-    pub async fn get_current_state_and_reset(&self) -> HashMap<IpCountry, Counters> {
+    pub async fn get_current_state_and_reset(&self) -> HashMap<IpCountry, IpCountryCounters> {
         let mut w = self.state.write().await;
         std::mem::take(&mut w.data)
     }
@@ -87,7 +47,7 @@ impl IpCountryTracker {
             .await
     }
 
-    async fn track_internal(&self, ip: IpAddr, action: impl FnOnce(&Counters)) {
+    async fn track_internal(&self, ip: IpAddr, action: impl FnOnce(&IpCountryCounters)) {
         let ip_db = self.ip_data.current_db_ref().await;
         let Some(db) = ip_db.as_ref() else {
             return;

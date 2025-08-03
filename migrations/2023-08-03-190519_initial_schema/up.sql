@@ -1003,6 +1003,42 @@ CREATE TABLE IF NOT EXISTS history_performance_statistics_metric_value(
             ON UPDATE CASCADE
 );
 
+-- Use own table for country names to keep ID value small as possible
+CREATE TABLE IF NOT EXISTS history_ip_country_statistics_country_name(
+    id           INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    country_name TEXT                              NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS history_ip_country_statistics_new_tcp_connections(
+    time_id             INTEGER                           NOT NULL,
+    country_id          INTEGER                           NOT NULL,
+    new_tcp_connections INTEGER                           NOT NULL,
+    PRIMARY KEY (time_id, country_id),
+    FOREIGN KEY (time_id)
+        REFERENCES history_common_statistics_save_time (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (country_id)
+        REFERENCES history_ip_country_statistics_country_name (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS history_ip_country_statistics_new_http_requests(
+    time_id           INTEGER                           NOT NULL,
+    country_id        INTEGER                           NOT NULL,
+    new_http_requests INTEGER                           NOT NULL,
+    PRIMARY KEY (time_id, country_id),
+    FOREIGN KEY (time_id)
+        REFERENCES history_common_statistics_save_time (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (country_id)
+        REFERENCES history_ip_country_statistics_country_name (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 ---------- History tables for server component account ----------
 
 CREATE TABLE IF NOT EXISTS history_client_version_statistics_version_number(

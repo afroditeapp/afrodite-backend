@@ -7,7 +7,10 @@ use server_api::{
 use server_common::result::{Result, WrappedResultExt};
 use server_data::write::GetWriteCommandsCommon;
 use server_state::S;
-use simple_backend::{ServerQuitWatcher, app::PerfCounterDataProvider};
+use simple_backend::{
+    ServerQuitWatcher,
+    app::{IpCountryTrackerProvider, PerfCounterDataProvider},
+};
 use tokio::{task::JoinHandle, time::Instant};
 use tracing::{error, warn};
 
@@ -101,6 +104,22 @@ impl HourlyTaskManager {
 
         db_write_raw!(self.state, move |cmds| {
             cmds.common_history().write_perf_data(statistics).await
+        })
+        .await
+        .change_context(HourlyTaskError::DatabaseError)?;
+
+        Ok(())
+    }
+
+    pub async fn save_ip_country_statistics(&self) -> Result<(), HourlyTaskError> {
+        let data = self
+            .state
+            .ip_country_tracker()
+            .get_current_state_and_reset()
+            .await;
+
+        db_write_raw!(self.state, move |cmds| {
+            cmds.common_history().write_ip_country_data(data).await
         })
         .await
         .change_context(HourlyTaskError::DatabaseError)?;

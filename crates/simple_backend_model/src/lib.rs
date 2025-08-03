@@ -11,6 +11,9 @@ pub use perf::*;
 pub mod time;
 pub use time::*;
 
+pub mod ip;
+pub use ip::*;
+
 mod macros;
 
 #[cfg(test)]
