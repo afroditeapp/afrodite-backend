@@ -148,3 +148,35 @@ pub struct IpAddressInfo {
     pub lists: Vec<String>,
     pub country: Option<String>,
 }
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub enum IpCountryStatisticsType {
+    NewTcpConnections,
+    NewHttpRequests,
+}
+
+/// Time range is inclusive. [Self::max_time] must be
+/// greater or equal to [Self::min_time].
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct GetIpCountryStatisticsSettings {
+    pub max_time: Option<UnixTime>,
+    pub min_time: Option<UnixTime>,
+    pub statistics_type: IpCountryStatisticsType,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct GetIpCountryStatisticsResult {
+    pub values: Vec<IpCountryStatistics>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct IpCountryStatistics {
+    pub country: String,
+    pub values: Vec<IpCountryStatisticsValue>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct IpCountryStatisticsValue {
+    pub t: UnixTime,
+    pub c: i64,
+}

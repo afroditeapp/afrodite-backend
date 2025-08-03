@@ -1,7 +1,8 @@
 use axum::{Extension, extract::State};
 use model::{
     GetApiUsageStatisticsResult, GetApiUsageStatisticsSettings, GetIpAddressStatisticsResult,
-    GetIpAddressStatisticsSettings, Permissions,
+    GetIpAddressStatisticsSettings, GetIpCountryStatisticsResult, GetIpCountryStatisticsSettings,
+    Permissions,
 };
 use server_common::app::GetAccounts;
 use server_data::{app::ReadData, read::GetReadCommandsCommon};
@@ -134,7 +135,44 @@ pub async fn post_get_ip_address_usage_data(
     Ok(data.into())
 }
 
-create_open_api_router!(fn router_statistics, post_get_perf_data, post_get_api_usage_data, post_get_ip_address_usage_data,);
+const PATH_POST_GET_IP_COUNTRY_STATISTICS: &str = "/common_api/ip_country_statistics";
+
+/// Get IP country statistics.
+///
+/// HTTP method is POST to allow JSON request body.
+///
+/// # Permissions
+/// Requires admin_server_maintenance_view_info.
+#[utoipa::path(
+    post,
+    path = PATH_POST_GET_IP_COUNTRY_STATISTICS,
+    request_body = GetIpCountryStatisticsSettings,
+    responses(
+        (status = 200, description = "Successfull.", body = GetIpCountryStatisticsResult),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_get_ip_country_statistics(
+    State(state): State<S>,
+    Extension(api_caller_permissions): Extension<Permissions>,
+    Json(settings): Json<GetIpCountryStatisticsSettings>,
+) -> Result<Json<GetIpCountryStatisticsResult>, StatusCode> {
+    COMMON_ADMIN.post_get_ip_country_statistics.incr();
+    if api_caller_permissions.admin_server_maintenance_view_info {
+        let data = state
+            .read()
+            .common_history()
+            .ip_country_statistics(settings)
+            .await?;
+        Ok(data.into())
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
+}
+
+create_open_api_router!(fn router_statistics, post_get_perf_data, post_get_api_usage_data, post_get_ip_address_usage_data, post_get_ip_country_statistics,);
 
 create_counters!(
     CommonAdminCounters,
@@ -143,4 +181,5 @@ create_counters!(
     post_get_perf_data,
     post_get_api_usage_data,
     post_get_ip_address_usage_data,
+    post_get_ip_country_statistics,
 );
