@@ -113,29 +113,18 @@ impl HistoryWriteCommon<'_> {
                     .into_db_error(())?
             };
 
-            if tcp_connections_value != 0 {
-                use model::schema::history_ip_country_statistics_new_tcp_connections::dsl::*;
-                insert_into(history_ip_country_statistics_new_tcp_connections)
+            {
+                use model::schema::history_ip_country_statistics::dsl::*;
+                insert_into(history_ip_country_statistics)
                     .values((
                         time_id.eq(time_id_value),
                         country_id.eq(country_name_id),
                         new_tcp_connections.eq(tcp_connections_value),
-                    ))
-                    .execute(self.conn())
-                    .into_db_error(())?;
-            };
-
-            if http_requests_value != 0 {
-                use model::schema::history_ip_country_statistics_new_http_requests::dsl::*;
-                insert_into(history_ip_country_statistics_new_http_requests)
-                    .values((
-                        time_id.eq(time_id_value),
-                        country_id.eq(country_name_id),
                         new_http_requests.eq(http_requests_value),
                     ))
                     .execute(self.conn())
                     .into_db_error(())?;
-            };
+            }
         }
 
         Ok(())

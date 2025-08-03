@@ -17,62 +17,44 @@ impl HistoryReadCommonStatistics<'_> {
         &mut self,
         settings: GetIpCountryStatisticsSettings,
     ) -> Result<GetIpCountryStatisticsResult, DieselDatabaseError> {
+        use crate::schema::{
+            history_common_statistics_save_time, history_ip_country_statistics::dsl::*,
+            history_ip_country_statistics_country_name,
+        };
+
         let max_time = settings.max_time.unwrap_or(UnixTime::new(i64::MAX));
         let min_time = settings.min_time.unwrap_or(UnixTime::new(0));
 
+        let query = history_ip_country_statistics
+            .inner_join(
+                history_common_statistics_save_time::table
+                    .on(time_id.eq(history_common_statistics_save_time::id)),
+            )
+            .inner_join(
+                history_ip_country_statistics_country_name::table
+                    .on(country_id.eq(history_ip_country_statistics_country_name::id)),
+            )
+            .filter(history_common_statistics_save_time::unix_time.le(max_time))
+            .filter(history_common_statistics_save_time::unix_time.ge(min_time))
+            .order(history_common_statistics_save_time::unix_time.desc());
+
         let values: Vec<(UnixTime, String, i64)> = match settings.statistics_type {
-            IpCountryStatisticsType::NewTcpConnections => {
-                use crate::schema::{
-                    history_common_statistics_save_time,
-                    history_ip_country_statistics_country_name,
-                    history_ip_country_statistics_new_tcp_connections::dsl::*,
-                };
-                history_ip_country_statistics_new_tcp_connections
-                    .inner_join(
-                        history_common_statistics_save_time::table
-                            .on(time_id.eq(history_common_statistics_save_time::id)),
-                    )
-                    .inner_join(
-                        history_ip_country_statistics_country_name::table
-                            .on(country_id.eq(history_ip_country_statistics_country_name::id)),
-                    )
-                    .filter(history_common_statistics_save_time::unix_time.le(max_time))
-                    .filter(history_common_statistics_save_time::unix_time.ge(min_time))
-                    .select((
-                        history_common_statistics_save_time::unix_time,
-                        history_ip_country_statistics_country_name::country_name,
-                        new_tcp_connections,
-                    ))
-                    .order((history_common_statistics_save_time::unix_time.desc(),))
-                    .load(self.conn())
-                    .change_context(DieselDatabaseError::Execute)?
-            }
-            IpCountryStatisticsType::NewHttpRequests => {
-                use crate::schema::{
-                    history_common_statistics_save_time,
-                    history_ip_country_statistics_country_name,
-                    history_ip_country_statistics_new_http_requests::dsl::*,
-                };
-                history_ip_country_statistics_new_http_requests
-                    .inner_join(
-                        history_common_statistics_save_time::table
-                            .on(time_id.eq(history_common_statistics_save_time::id)),
-                    )
-                    .inner_join(
-                        history_ip_country_statistics_country_name::table
-                            .on(country_id.eq(history_ip_country_statistics_country_name::id)),
-                    )
-                    .filter(history_common_statistics_save_time::unix_time.le(max_time))
-                    .filter(history_common_statistics_save_time::unix_time.ge(min_time))
-                    .select((
-                        history_common_statistics_save_time::unix_time,
-                        history_ip_country_statistics_country_name::country_name,
-                        new_http_requests,
-                    ))
-                    .order((history_common_statistics_save_time::unix_time.desc(),))
-                    .load(self.conn())
-                    .change_context(DieselDatabaseError::Execute)?
-            }
+            IpCountryStatisticsType::NewTcpConnections => query
+                .select((
+                    history_common_statistics_save_time::unix_time,
+                    history_ip_country_statistics_country_name::country_name,
+                    new_tcp_connections,
+                ))
+                .load(self.conn())
+                .change_context(DieselDatabaseError::Execute)?,
+            IpCountryStatisticsType::NewHttpRequests => query
+                .select((
+                    history_common_statistics_save_time::unix_time,
+                    history_ip_country_statistics_country_name::country_name,
+                    new_http_requests,
+                ))
+                .load(self.conn())
+                .change_context(DieselDatabaseError::Execute)?,
         };
 
         let mut data = HashMap::<String, IpCountryStatistics>::new();

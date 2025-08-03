@@ -1009,25 +1009,11 @@ CREATE TABLE IF NOT EXISTS history_ip_country_statistics_country_name(
     country_name TEXT                              NOT NULL UNIQUE
 );
 
-CREATE TABLE IF NOT EXISTS history_ip_country_statistics_new_tcp_connections(
+CREATE TABLE IF NOT EXISTS history_ip_country_statistics(
     time_id             INTEGER                           NOT NULL,
     country_id          INTEGER                           NOT NULL,
     new_tcp_connections INTEGER                           NOT NULL,
-    PRIMARY KEY (time_id, country_id),
-    FOREIGN KEY (time_id)
-        REFERENCES history_common_statistics_save_time (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    FOREIGN KEY (country_id)
-        REFERENCES history_ip_country_statistics_country_name (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS history_ip_country_statistics_new_http_requests(
-    time_id           INTEGER                           NOT NULL,
-    country_id        INTEGER                           NOT NULL,
-    new_http_requests INTEGER                           NOT NULL,
+    new_http_requests   INTEGER                           NOT NULL,
     PRIMARY KEY (time_id, country_id),
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)
