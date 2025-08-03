@@ -314,13 +314,12 @@ CREATE TABLE IF NOT EXISTS account_app_notification_settings(
             ON UPDATE CASCADE
 );
 
--- Demo mode user created accounts
-CREATE TABLE IF NOT EXISTS demo_mode_account_ids(
-    id               INTEGER PRIMARY KEY NOT NULL,
-    demo_mode_id     INTEGER             NOT NULL,
-    account_id_uuid  BLOB                NOT NULL,
-    FOREIGN KEY (account_id_uuid)
-        REFERENCES account_id (uuid)
+CREATE TABLE IF NOT EXISTS demo_account_owned_accounts(
+    demo_account_id INTEGER             NOT NULL,
+    account_id      INTEGER             NOT NULL,
+    PRIMARY KEY (demo_account_id, account_id),
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );

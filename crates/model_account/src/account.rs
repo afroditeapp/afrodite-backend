@@ -4,7 +4,7 @@ use model::{ClientType, ClientVersion, UnixTime};
 use model_server_data::{
     AppleAccountId, AuthPair, EmailAddress, GoogleAccountId, PublicationId, SignInWithInfo,
 };
-use model_server_state::DemoModeToken;
+use model_server_state::DemoAccountToken;
 use serde::{Deserialize, Serialize};
 use utils::time::age_in_years_from_birthdate;
 use utoipa::{IntoParams, ToSchema};
@@ -71,8 +71,8 @@ pub struct ClientInfo {
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
-pub struct DemoModeLoginToAccount {
-    pub token: DemoModeToken,
+pub struct DemoAccountLoginToAccount {
+    pub token: DemoAccountToken,
     pub aid: AccountId,
     pub client_info: ClientInfo,
 }

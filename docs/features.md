@@ -5,7 +5,7 @@
 
 * Sign in with Apple
 * Sign in with Google
-* Demo mode accounts for developers (access multiple normal accounts)
+* Demo accounts for developers (access multiple normal accounts)
 
 ## Notifications
 

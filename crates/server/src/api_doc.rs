@@ -9,7 +9,7 @@ use server_data::{
 use server_data_all::app::DataAllUtilsImpl;
 use server_state::{
     S, StateForRouterCreation, admin_notifications::AdminNotificationManagerData,
-    demo::DemoModeManager,
+    demo::DemoAccountManager,
 };
 use simple_backend::{
     app::SimpleBackendAppState, manager_client::ManagerApiClient, maxmind_db::MaxMindDbManagerData,
@@ -56,7 +56,7 @@ impl ApiDoc {
         let account = ApiDoc::openapi()
             .merge_from(server_api_account::account::router_ban(state.clone()).into_openapi())
             .merge_from(server_api_account::account::router_delete(state.clone()).into_openapi())
-            .merge_from(server_api_account::account::router_demo_mode(state.clone()).into_openapi())
+            .merge_from(server_api_account::account::router_demo(state.clone()).into_openapi())
             .merge_from(server_api_account::account::router_logout(state.clone()).into_openapi())
             .merge_from(server_api_account::account::router_news(state.clone()).into_openapi())
             .merge_from(server_api_account::account::router_register(state.clone()).into_openapi())
@@ -227,9 +227,9 @@ impl ApiDoc {
         let (content_processing, _) = ContentProcessingManagerData::new();
         let (admin_notification, _) = AdminNotificationManagerData::new();
 
-        let demo_mode =
-            DemoModeManager::new(config.demo_mode_config().cloned().unwrap_or_default())
-                .expect("Demo mode manager init failed");
+        let demo =
+            DemoAccountManager::new(config.demo_account_config().cloned().unwrap_or_default())
+                .expect("Demo account manager init failed");
 
         let app_state = S::create_app_state(
             router_database_handle,
@@ -237,7 +237,7 @@ impl ApiDoc {
             config.clone(),
             content_processing.into(),
             admin_notification.into(),
-            demo_mode,
+            demo,
             push_notification_sender,
             simple_state,
             &DataAllUtilsImpl,

@@ -63,8 +63,8 @@ pub fn create_account_server_router(state: StateForRouterCreation) -> Router {
         )
         .with_state(state.s.clone());
 
-    let public = if state.s.config().demo_mode_config().is_some() {
-        public.merge(api::account::router_demo_mode(state.clone()))
+    let public = if state.s.config().demo_account_config().is_some() {
+        public.merge(api::account::router_demo(state.clone()))
     } else {
         public
     };

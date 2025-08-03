@@ -26,7 +26,8 @@ use csv::{
 use error_stack::{Result, ResultExt};
 use file::{
     AccountLimitsConfig, AutomaticProfileSearchConfig, ChatLimitsConfig, CommonLimitsConfig,
-    DemoModeConfig, GrantAdminAccessConfig, MediaLimitsConfig, MinClientVersion, RemoteBotConfig,
+    DemoAccountConfig, GrantAdminAccessConfig, MediaLimitsConfig, MinClientVersion,
+    RemoteBotConfig,
 };
 use file_dynamic::ConfigFileDynamic;
 use file_email_content::EmailContentFile;
@@ -264,8 +265,8 @@ impl Config {
         &self.notification_content
     }
 
-    pub fn demo_mode_config(&self) -> Option<&Vec<DemoModeConfig>> {
-        self.file.demo_mode.as_ref()
+    pub fn demo_account_config(&self) -> Option<&Vec<DemoAccountConfig>> {
+        self.file.demo_account.as_ref()
     }
 
     pub fn simple_backend(&self) -> &SimpleBackendConfig {

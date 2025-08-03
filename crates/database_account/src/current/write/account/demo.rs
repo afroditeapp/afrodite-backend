@@ -1,28 +1,28 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{insert_into, prelude::*};
 use error_stack::Result;
-use model::AccountId;
-use model_server_state::DemoModeId;
+use model::AccountIdInternal;
+use model_server_state::DemoAccountId;
 
 use crate::IntoDatabaseError;
 
 define_current_write_commands!(CurrentWriteAccountDemo);
 
 impl CurrentWriteAccountDemo<'_> {
-    pub fn insert_related_account_id(
+    pub fn add_to_demo_account_owned_accounts(
         &mut self,
-        demo_mode_related_id: DemoModeId,
-        account_uuid: AccountId,
+        demo_account_id_value: DemoAccountId,
+        account: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::demo_mode_account_ids::dsl::*;
+        use model::schema::demo_account_owned_accounts::dsl::*;
 
-        insert_into(demo_mode_account_ids)
+        insert_into(demo_account_owned_accounts)
             .values((
-                demo_mode_id.eq(demo_mode_related_id),
-                account_id_uuid.eq(account_uuid),
+                demo_account_id.eq(demo_account_id_value),
+                account_id.eq(account.as_db_id()),
             ))
             .execute(self.conn())
-            .into_db_error(account_uuid)?;
+            .into_db_error(account)?;
 
         Ok(())
     }

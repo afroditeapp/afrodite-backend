@@ -4,7 +4,7 @@ use model_account::{
     AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountSetup, AppleAccountId,
     GoogleAccountId, SignInWithInfo,
 };
-use model_server_state::DemoModeId;
+use model_server_state::DemoAccountId;
 use server_data::{
     DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead, result::Result,
 };
@@ -103,11 +103,11 @@ impl ReadCommandsAccount<'_> {
         .into_error()
     }
 
-    pub async fn demo_mode_related_account_ids(
+    pub async fn demo_account_owned_account_ids(
         &self,
-        id: DemoModeId,
+        id: DemoAccountId,
     ) -> Result<Vec<AccountId>, DataError> {
-        self.db_read(move |mut cmds| cmds.account().demo_mode().related_account_ids(id))
+        self.db_read(move |mut cmds| cmds.account().demo().owned_account_ids(id))
             .await
             .into_error()
     }

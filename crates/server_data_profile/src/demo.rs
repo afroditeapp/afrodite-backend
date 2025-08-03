@@ -6,9 +6,9 @@ use server_data::{
 
 use crate::read::GetReadProfileCommands;
 
-pub struct DemoModeUtils;
+pub struct DemoAccountUtils;
 
-impl DemoModeUtils {
+impl DemoAccountUtils {
     pub async fn with_extra_info(
         accounts: Vec<AccountId>,
         config: &Config,

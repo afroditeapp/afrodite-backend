@@ -30,7 +30,7 @@ impl<'a> CurrentReadAccount<'a> {
         sign_in_with::CurrentReadAccountSignInWith::new(self.cmds)
     }
 
-    pub fn demo_mode(self) -> demo::CurrentReadAccountDemo<'a> {
+    pub fn demo(self) -> demo::CurrentReadAccountDemo<'a> {
         demo::CurrentReadAccountDemo::new(self.cmds)
     }
 

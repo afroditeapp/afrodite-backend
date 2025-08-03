@@ -46,7 +46,7 @@ use server_data::{
 use server_data_all::{app::DataAllUtilsImpl, load::DbDataToCacheLoader};
 use server_state::{
     AppState, StateForRouterCreation, admin_notifications::AdminNotificationManagerData,
-    demo::DemoModeManager,
+    demo::DemoAccountManager,
 };
 use shutdown_tasks::ShutdownTasks;
 use simple_backend::{
@@ -278,9 +278,13 @@ impl BusinessLogic for DatingAppBusinessLogic {
         let (admin_notification, admin_notification_receiver) = AdminNotificationManagerData::new();
         let admin_notification = Arc::new(admin_notification);
 
-        let demo_mode =
-            DemoModeManager::new(self.config.demo_mode_config().cloned().unwrap_or_default())
-                .expect("Demo mode manager init failed");
+        let demo = DemoAccountManager::new(
+            self.config
+                .demo_account_config()
+                .cloned()
+                .unwrap_or_default(),
+        )
+        .expect("Demo account manager init failed");
 
         let app_state = AppState::create_app_state(
             router_database_handle,
@@ -288,7 +292,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
             self.config.clone(),
             content_processing.clone(),
             admin_notification.clone(),
-            demo_mode,
+            demo,
             push_notification_sender,
             simple_state,
             &DataAllUtilsImpl,

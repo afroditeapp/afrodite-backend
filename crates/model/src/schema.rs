@@ -323,10 +323,9 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    demo_mode_account_ids (id) {
-        id -> Integer,
-        demo_mode_id -> Integer,
-        account_id_uuid -> Binary,
+    demo_account_owned_accounts (demo_account_id, account_id) {
+        demo_account_id -> Integer,
+        account_id -> Integer,
     }
 }
 
@@ -873,6 +872,7 @@ diesel::joinable!(chat_state -> account_id (account_id));
 diesel::joinable!(common_state -> account_id (account_id));
 diesel::joinable!(current_account_media -> account_id (account_id));
 diesel::joinable!(daily_likes_left -> account_id (account_id));
+diesel::joinable!(demo_account_owned_accounts -> account_id (account_id));
 diesel::joinable!(history_client_version_statistics -> history_client_version_statistics_version_number (version_id));
 diesel::joinable!(history_client_version_statistics -> history_common_statistics_save_time (time_id));
 diesel::joinable!(history_ip_country_statistics -> history_common_statistics_save_time (time_id));
@@ -939,7 +939,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     current_account_media,
     custom_reports_file_hash,
     daily_likes_left,
-    demo_mode_account_ids,
+    demo_account_owned_accounts,
     favorite_profile,
     history_client_version_statistics,
     history_client_version_statistics_version_number,

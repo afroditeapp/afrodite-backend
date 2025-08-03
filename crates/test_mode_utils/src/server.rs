@@ -161,7 +161,7 @@ fn new_config(
         }
         .into(),
         external_services,
-        demo_mode: None,
+        demo_account: None,
         limits: None,
         profile_name_allowlist: None,
         remote_bot: None,

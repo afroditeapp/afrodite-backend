@@ -7,19 +7,19 @@ use utoipa::{IntoParams, ToSchema};
 use crate::schema_sqlite_types::BigInt;
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
-pub struct DemoModeLoginCredentials {
+pub struct DemoAccountLoginCredentials {
     pub username: String,
     pub password: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Default)]
-pub struct DemoModeLoginResult {
+pub struct DemoAccountLoginResult {
     /// This password is locked.
     pub locked: bool,
-    pub token: Option<DemoModeToken>,
+    pub token: Option<DemoAccountToken>,
 }
 
-impl DemoModeLoginResult {
+impl DemoAccountLoginResult {
     pub fn locked() -> Self {
         Self {
             locked: true,
@@ -27,7 +27,7 @@ impl DemoModeLoginResult {
         }
     }
 
-    pub fn token(token: DemoModeToken) -> Self {
+    pub fn token(token: DemoAccountToken) -> Self {
         Self {
             locked: false,
             token: Some(token),
@@ -36,11 +36,11 @@ impl DemoModeLoginResult {
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, PartialEq)]
-pub struct DemoModeToken {
+pub struct DemoAccountToken {
     pub token: String,
 }
 
-impl DemoModeToken {
+impl DemoAccountToken {
     pub fn generate_new() -> Self {
         Self {
             token: AccessToken::generate_new().into_string(),
@@ -63,11 +63,11 @@ impl DemoModeToken {
 )]
 #[diesel(sql_type = BigInt)]
 #[serde(transparent)]
-pub struct DemoModeId {
+pub struct DemoAccountId {
     pub id: i64,
 }
 
-impl DemoModeId {
+impl DemoAccountId {
     pub fn new(id: i64) -> Self {
         Self { id }
     }
@@ -77,12 +77,12 @@ impl DemoModeId {
     }
 }
 
-diesel_i64_wrapper!(DemoModeId);
+diesel_i64_wrapper!(DemoAccountId);
 
 pub enum AccessibleAccountsInfo {
     All,
     Specific {
         config_file_accounts: Vec<AccountId>,
-        demo_mode_id: DemoModeId,
+        demo_account_id: DemoAccountId,
     },
 }

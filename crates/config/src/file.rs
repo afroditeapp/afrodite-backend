@@ -8,7 +8,7 @@ use error_stack::{Result, ResultExt};
 use model::{AccountId, ClientVersion};
 // Re-export for test-mode crate
 pub use model_server_data::EmailAddress;
-use model_server_state::DemoModeId;
+use model_server_state::DemoAccountId;
 use serde::{Deserialize, Serialize};
 use simple_backend_config::file::ConfigFileUtils;
 use simple_backend_utils::{
@@ -113,7 +113,7 @@ pub struct ConfigFile {
     pub grant_admin_access: Option<GrantAdminAccessConfig>,
     pub location: Option<LocationConfig>,
     pub external_services: Option<ExternalServices>,
-    pub demo_mode: Option<Vec<DemoModeConfig>>,
+    pub demo_account: Option<Vec<DemoAccountConfig>>,
     pub limits: Option<LimitsConfig>,
     pub profile_name_allowlist: Option<Vec<ProfiletNameAllowlistConfig>>,
     pub remote_bot: Option<Vec<RemoteBotConfig>>,
@@ -130,7 +130,7 @@ impl ConfigFile {
             grant_admin_access: None,
             location: None,
             external_services: None,
-            demo_mode: None,
+            demo_account: None,
             limits: None,
             profile_name_allowlist: None,
             remote_bot: None,
@@ -367,24 +367,24 @@ impl Default for ProfileLimitsConfig {
     }
 }
 
-/// Demo mode configuration.
+/// Demo account configuration.
 ///
-/// Adding one or more demo mode configurations
-/// will enable demo mode HTTP routes.
+/// Adding one or more demo account configurations
+/// will enable demo account HTTP routes.
 ///
-/// WARNING: This gives access to all/specific accounts.
+/// WARNING: Demo account gives access to all/specific accounts.
 #[derive(Debug, Deserialize, Default, Serialize, Clone)]
-pub struct DemoModeConfig {
-    pub database_id: DemoModeId,
+pub struct DemoAccountConfig {
+    pub database_id: DemoAccountId,
     pub username: String,
-    /// If this is quessed wrong, these demo mode credentials will
+    /// If this is quessed wrong, these demo account credentials will
     /// be locked until server restarts.
     pub password: String,
     /// If true then all accounts are accessible.
     /// Overrides `accessible_accounts`.
     #[serde(default)]
     pub access_all_accounts: bool,
-    /// AccountIds for accounts that are accessible in demo mode.
+    /// AccountIds for accounts that are accessible with demo account.
     #[serde(default)]
     pub accessible_accounts: Vec<simple_backend_utils::UuidBase64Url>,
 }

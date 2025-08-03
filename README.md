@@ -83,7 +83,7 @@ for all available config file options.
 `server_config.toml`
 
 ```toml
-[[demo_mode]]
+[[demo_account]]
 database_id = 0
 username = "username"
 password = "password"

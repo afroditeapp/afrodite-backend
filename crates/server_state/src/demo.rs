@@ -1,11 +1,11 @@
 use std::{collections::HashSet, hash::Hash, sync::Arc};
 
-use config::file::DemoModeConfig;
+use config::file::DemoAccountConfig;
 use error_stack::Result;
 use model::AccountId;
 use model_server_state::{
-    AccessibleAccountsInfo, DemoModeId, DemoModeLoginCredentials, DemoModeLoginResult,
-    DemoModeToken,
+    AccessibleAccountsInfo, DemoAccountId, DemoAccountLoginCredentials, DemoAccountLoginResult,
+    DemoAccountToken,
 };
 use server_common::data::DataError;
 use simple_backend_utils::{ContextExt, IntoReportFromString};
@@ -37,15 +37,15 @@ impl<T: PartialEq + Clone> TokenState<T> {
 }
 
 #[derive(Debug, Clone)]
-struct DemoModeAccountState {
-    pub info: DemoModeConfig,
+struct DemoAccountAccountState {
+    pub info: DemoAccountConfig,
     pub locked: bool,
-    pub access_granted_token: Option<TokenState<DemoModeToken>>,
+    pub access_granted_token: Option<TokenState<DemoAccountToken>>,
 }
 
-impl DemoModeAccountState {
+impl DemoAccountAccountState {
     /// Returns error if token is expired.
-    pub fn token_equals(&self, token: &DemoModeToken) -> Result<bool, DataError> {
+    pub fn token_equals(&self, token: &DemoAccountToken) -> Result<bool, DataError> {
         if let Some(t) = &self.access_granted_token {
             Ok(&t.get_checked()? == token)
         } else {
@@ -53,7 +53,7 @@ impl DemoModeAccountState {
         }
     }
 
-    pub fn token_equals_unchecked(&self, token: &DemoModeToken) -> bool {
+    pub fn token_equals_unchecked(&self, token: &DemoAccountToken) -> bool {
         if let Some(t) = &self.access_granted_token {
             &t.token == token
         } else {
@@ -64,15 +64,15 @@ impl DemoModeAccountState {
 
 #[derive(Debug)]
 struct State {
-    pub states: Vec<DemoModeAccountState>,
+    pub states: Vec<DemoAccountAccountState>,
 }
 
 #[derive(Debug)]
-pub struct DemoModeManager {
+pub struct DemoAccountManager {
     state: Arc<RwLock<State>>,
 }
 
-impl Clone for DemoModeManager {
+impl Clone for DemoAccountManager {
     fn clone(&self) -> Self {
         Self {
             state: self.state.clone(),
@@ -80,11 +80,11 @@ impl Clone for DemoModeManager {
     }
 }
 
-impl DemoModeManager {
-    pub fn new(info: Vec<DemoModeConfig>) -> Result<Self, DataError> {
-        let states: Vec<DemoModeAccountState> = info
+impl DemoAccountManager {
+    pub fn new(info: Vec<DemoAccountConfig>) -> Result<Self, DataError> {
+        let states: Vec<DemoAccountAccountState> = info
             .into_iter()
-            .map(|info| DemoModeAccountState {
+            .map(|info| DemoAccountAccountState {
                 info,
                 locked: false,
                 access_granted_token: None,
@@ -123,7 +123,7 @@ impl DemoModeManager {
         })
     }
 
-    pub async fn login(&self, credentials: DemoModeLoginCredentials) -> DemoModeLoginResult {
+    pub async fn login(&self, credentials: DemoAccountLoginCredentials) -> DemoAccountLoginResult {
         let mut w = self.state.write().await;
 
         let i = {
@@ -133,16 +133,16 @@ impl DemoModeManager {
                 .enumerate()
                 .find(|(_, v)| v.info.username == credentials.username)
             else {
-                return DemoModeLoginResult::default();
+                return DemoAccountLoginResult::default();
             };
 
             if account.info.password != credentials.password {
                 account.locked = true;
-                return DemoModeLoginResult::default();
+                return DemoAccountLoginResult::default();
             }
 
             if account.locked {
-                return DemoModeLoginResult::locked();
+                return DemoAccountLoginResult::locked();
             }
 
             i
@@ -150,7 +150,7 @@ impl DemoModeManager {
 
         // Make sure that token is unique.
         let token = loop {
-            let token = DemoModeToken::generate_new();
+            let token = DemoAccountToken::generate_new();
             if !w.states.iter().any(|s| s.token_equals_unchecked(&token)) {
                 break TokenState::new(token);
             }
@@ -159,12 +159,15 @@ impl DemoModeManager {
         let account = w
             .states
             .get_mut(i)
-            .expect("This should not happen. Index exists because Vec<DemoModeAccountState> is not modified.");
+            .expect("This should not happen. Index exists because Vec<DemoAccountAccountState> is not modified.");
         account.access_granted_token = Some(token.clone());
-        DemoModeLoginResult::token(token.token)
+        DemoAccountLoginResult::token(token.token)
     }
 
-    pub async fn valid_demo_mode_token_exists(&self, token: &DemoModeToken) -> Option<DemoModeId> {
+    pub async fn valid_demo_account_token_exists(
+        &self,
+        token: &DemoAccountToken,
+    ) -> Option<DemoAccountId> {
         let r = self.state.read().await;
         let account = r
             .states
@@ -173,7 +176,7 @@ impl DemoModeManager {
         account.map(|v| v.info.database_id)
     }
 
-    pub async fn demo_mode_logout(&self, token: &DemoModeToken) {
+    pub async fn demo_account_logout(&self, token: &DemoAccountToken) {
         let mut w = self.state.write().await;
 
         for a in &mut w.states {
@@ -186,7 +189,7 @@ impl DemoModeManager {
 
     pub async fn accessible_accounts(
         &self,
-        id: DemoModeId,
+        id: DemoAccountId,
     ) -> Result<AccessibleAccountsInfo, DataError> {
         let r = self.state.read().await;
         let state = r.states.iter().find(|state| state.info.database_id == id);
@@ -203,7 +206,7 @@ impl DemoModeManager {
                     .collect();
                 Ok(AccessibleAccountsInfo::Specific {
                     config_file_accounts: accounts,
-                    demo_mode_id: state.info.database_id,
+                    demo_account_id: state.info.database_id,
                 })
             }
         } else {

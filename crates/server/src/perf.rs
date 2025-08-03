@@ -51,7 +51,7 @@ use simple_backend::{SIMPLE_CONNECTION_COUNTERS_LIST, perf::counters::CounterCat
 
 use crate::api::{
     account::{
-        ACCOUNT_DELETE_COUNTERS_LIST, ACCOUNT_DEMO_MODE_COUNTERS_LIST, ACCOUNT_LOGIN_COUNTERS_LIST,
+        ACCOUNT_DELETE_COUNTERS_LIST, ACCOUNT_DEMO_COUNTERS_LIST, ACCOUNT_LOGIN_COUNTERS_LIST,
         ACCOUNT_REGISTER_COUNTERS_LIST, ACCOUNT_SETTINGS_COUNTERS_LIST,
         ACCOUNT_STATE_COUNTERS_LIST,
     },
@@ -111,7 +111,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("account_delete", ACCOUNT_DELETE_COUNTERS_LIST),
     &CounterCategory::new("account_settings", ACCOUNT_SETTINGS_COUNTERS_LIST),
     &CounterCategory::new("account_state", ACCOUNT_STATE_COUNTERS_LIST),
-    &CounterCategory::new("account_demo_mode", ACCOUNT_DEMO_MODE_COUNTERS_LIST),
+    &CounterCategory::new("account_demo", ACCOUNT_DEMO_COUNTERS_LIST),
     &CounterCategory::new("account_news", ACCOUNT_NEWS_COUNTERS_LIST),
     &CounterCategory::new("account_report", ACCOUNT_REPORT_COUNTERS_LIST),
     &CounterCategory::new(

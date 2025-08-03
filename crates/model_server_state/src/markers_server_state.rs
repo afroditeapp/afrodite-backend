@@ -4,7 +4,7 @@ use super::*;
 
 enable_logging!(
     // Account
-    DemoModeId,
+    DemoAccountId,
 );
 
 disable_logging!(

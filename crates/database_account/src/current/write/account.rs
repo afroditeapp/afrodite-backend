@@ -25,7 +25,7 @@ impl<'a> CurrentWriteAccount<'a> {
         sign_in_with::CurrentWriteAccountSignInWith::new(self.cmds)
     }
 
-    pub fn demo_mode(self) -> demo::CurrentWriteAccountDemo<'a> {
+    pub fn demo(self) -> demo::CurrentWriteAccountDemo<'a> {
         demo::CurrentWriteAccountDemo::new(self.cmds)
     }
 

@@ -2,9 +2,9 @@ use std::{net::SocketAddr, time::Duration};
 
 use axum::extract::{ConnectInfo, State};
 use model_account::{
-    AccessibleAccount, AccountId, DemoModeLoginToAccount, LoginResult, SignInWithInfo,
+    AccessibleAccount, AccountId, DemoAccountLoginToAccount, LoginResult, SignInWithInfo,
 };
-use model_server_state::{DemoModeLoginCredentials, DemoModeLoginResult, DemoModeToken};
+use model_server_state::{DemoAccountLoginCredentials, DemoAccountLoginResult, DemoAccountToken};
 use server_api::{
     S,
     app::{GetAccounts, GetConfig, ReadData},
@@ -12,7 +12,7 @@ use server_api::{
 };
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::{
-    demo::{AccessibleAccountsInfoUtils, DemoModeUtils},
+    demo::{AccessibleAccountsInfoUtils, DemoAccountUtils},
     write::GetWriteCommandsAccount,
 };
 use simple_backend::create_counters;
@@ -23,9 +23,9 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-const PATH_POST_DEMO_MODE_LOGIN: &str = "/account_api/demo_mode_login";
+const PATH_POST_DEMO_ACCOUNT_LOGIN: &str = "/account_api/demo_account_login";
 
-/// Access demo mode, which allows accessing all or specific accounts
+/// Access demo account, which allows accessing all or specific accounts
 /// depending on the server configuration.
 ///
 /// This API route has 1 second wait time to make password guessing harder.
@@ -33,32 +33,33 @@ const PATH_POST_DEMO_MODE_LOGIN: &str = "/account_api/demo_mode_login";
 /// will reset the lock.
 #[utoipa::path(
     post,
-    path = PATH_POST_DEMO_MODE_LOGIN,
-    request_body = DemoModeLoginCredentials,
+    path = PATH_POST_DEMO_ACCOUNT_LOGIN,
+    request_body = DemoAccountLoginCredentials,
     responses(
-        (status = 200, description = "Successfull.", body = DemoModeLoginResult),
+        (status = 200, description = "Successfull.", body = DemoAccountLoginResult),
     ),
     security(),
 )]
-pub async fn post_demo_mode_login(
+pub async fn post_demo_account_login(
     State(state): State<S>,
-    Json(credentials): Json<DemoModeLoginCredentials>,
-) -> Result<Json<DemoModeLoginResult>, StatusCode> {
-    ACCOUNT.post_demo_mode_login.incr();
+    Json(credentials): Json<DemoAccountLoginCredentials>,
+) -> Result<Json<DemoAccountLoginResult>, StatusCode> {
+    ACCOUNT.post_demo_account_login.incr();
     tokio::time::sleep(Duration::from_secs(1)).await;
-    let result = state.demo_mode().login(credentials).await;
+    let result = state.demo().login(credentials).await;
     Ok(result.into())
 }
 
-const PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS: &str = "/account_api/demo_mode_accessible_accounts";
+const PATH_POST_DEMO_ACCOUNT_ACCESSIBLE_ACCOUNTS: &str =
+    "/account_api/demo_account_accessible_accounts";
 
 /// Get demo account's available accounts.
 ///
 /// This path is using HTTP POST because there is JSON in the request body.
 #[utoipa::path(
     post,
-    path = PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS,
-    request_body = DemoModeToken,
+    path = PATH_POST_DEMO_ACCOUNT_ACCESSIBLE_ACCOUNTS,
+    request_body = DemoAccountToken,
     responses(
         (status = 200, description = "Successfull.", body = Vec<AccessibleAccount>),
         (status = 401, description = "Unauthorized."),
@@ -66,29 +67,29 @@ const PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS: &str = "/account_api/demo_mode_ac
     ),
     security(),
 )]
-pub async fn post_demo_mode_accessible_accounts(
+pub async fn post_demo_account_accessible_accounts(
     State(state): State<S>,
-    Json(token): Json<DemoModeToken>,
+    Json(token): Json<DemoAccountToken>,
 ) -> Result<Json<Vec<AccessibleAccount>>, StatusCode> {
-    ACCOUNT.post_demo_mode_accessible_accounts.incr();
+    ACCOUNT.post_demo_account_accessible_accounts.incr();
 
-    let Some(id) = state.demo_mode().valid_demo_mode_token_exists(&token).await else {
+    let Some(id) = state.demo().valid_demo_account_token_exists(&token).await else {
         return Err(StatusCode::UNAUTHORIZED);
     };
 
-    let info = state.demo_mode().accessible_accounts(id).await?;
+    let info = state.demo().accessible_accounts(id).await?;
     let accounts = info.into_accounts(state.read()).await?;
-    let result = DemoModeUtils::with_extra_info(accounts, state.config(), state.read()).await?;
+    let result = DemoAccountUtils::with_extra_info(accounts, state.config(), state.read()).await?;
 
     Ok(result.into())
 }
 
-const PATH_POST_DEMO_MODE_REGISTER_ACCOUNT: &str = "/account_api/demo_mode_register_account";
+const PATH_POST_DEMO_ACCOUNT_REGISTER_ACCOUNT: &str = "/account_api/demo_account_register_account";
 
 #[utoipa::path(
     post,
-    path = PATH_POST_DEMO_MODE_REGISTER_ACCOUNT,
-    request_body = DemoModeToken,
+    path = PATH_POST_DEMO_ACCOUNT_REGISTER_ACCOUNT,
+    request_body = DemoAccountToken,
     responses(
         (status = 200, description = "Successful.", body = AccountId),
         (status = 401, description = "Unauthorized."),
@@ -96,13 +97,13 @@ const PATH_POST_DEMO_MODE_REGISTER_ACCOUNT: &str = "/account_api/demo_mode_regis
     ),
     security(),
 )]
-pub async fn post_demo_mode_register_account(
+pub async fn post_demo_account_register_account(
     State(state): State<S>,
-    Json(token): Json<DemoModeToken>,
+    Json(token): Json<DemoAccountToken>,
 ) -> Result<Json<AccountId>, StatusCode> {
-    ACCOUNT.post_demo_mode_register_account.incr();
+    ACCOUNT.post_demo_account_register_account.incr();
 
-    let Some(demo_mode_id) = state.demo_mode().valid_demo_mode_token_exists(&token).await else {
+    let Some(demo_account_id) = state.demo().valid_demo_account_token_exists(&token).await else {
         return Err(StatusCode::UNAUTHORIZED);
     };
 
@@ -113,18 +114,18 @@ pub async fn post_demo_mode_register_account(
 
     db_write!(state, move |cmds| cmds
         .account()
-        .insert_demo_mode_related_account_ids(demo_mode_id, id.as_id())
+        .add_to_demo_account_owned_accounts(demo_account_id, id)
         .await)?;
 
     Ok(id.as_id().into())
 }
 
-const PATH_POST_DEMO_MODE_LOGIN_TO_ACCOUNT: &str = "/account_api/demo_mode_login_to_account";
+const PATH_POST_DEMO_ACCOUNT_LOGIN_TO_ACCOUNT: &str = "/account_api/demo_account_login_to_account";
 
 #[utoipa::path(
     post,
-    path = PATH_POST_DEMO_MODE_LOGIN_TO_ACCOUNT,
-    request_body = DemoModeLoginToAccount,
+    path = PATH_POST_DEMO_ACCOUNT_LOGIN_TO_ACCOUNT,
+    request_body = DemoAccountLoginToAccount,
     responses(
         (status = 200, description = "Successful.", body = LoginResult),
         (status = 401, description = "Unauthorized."),
@@ -132,16 +133,16 @@ const PATH_POST_DEMO_MODE_LOGIN_TO_ACCOUNT: &str = "/account_api/demo_mode_login
     ),
     security(),
 )]
-pub async fn post_demo_mode_login_to_account(
+pub async fn post_demo_account_login_to_account(
     State(state): State<S>,
     ConnectInfo(address): ConnectInfo<SocketAddr>,
-    Json(info): Json<DemoModeLoginToAccount>,
+    Json(info): Json<DemoAccountLoginToAccount>,
 ) -> Result<Json<LoginResult>, StatusCode> {
-    ACCOUNT.post_demo_mode_login_to_account.incr();
+    ACCOUNT.post_demo_account_login_to_account.incr();
 
     let Some(id) = state
-        .demo_mode()
-        .valid_demo_mode_token_exists(&info.token)
+        .demo()
+        .valid_demo_account_token_exists(&info.token)
         .await
     else {
         return Err(StatusCode::UNAUTHORIZED);
@@ -153,7 +154,7 @@ pub async fn post_demo_mode_login_to_account(
         }
     }
 
-    let accessible_accounts = state.demo_mode().accessible_accounts(id).await?;
+    let accessible_accounts = state.demo().accessible_accounts(id).await?;
     accessible_accounts.contains(info.aid, state.read()).await?;
 
     let r = login_impl(info.aid, address, &state).await?;
@@ -172,42 +173,42 @@ pub async fn post_demo_mode_login_to_account(
     Ok(r.into())
 }
 
-const PATH_POST_DEMO_MODE_LOGOUT: &str = "/account_api/demo_mode_logout";
+const PATH_POST_DEMO_ACCOUNT_LOGOUT: &str = "/account_api/demo_account_logout";
 
 #[utoipa::path(
     post,
-    path = PATH_POST_DEMO_MODE_LOGOUT,
-    request_body = DemoModeToken,
+    path = PATH_POST_DEMO_ACCOUNT_LOGOUT,
+    request_body = DemoAccountToken,
     responses(
         (status = 200, description = "Successfull."),
     ),
     security(),
 )]
-pub async fn post_demo_mode_logout(
+pub async fn post_demo_account_logout(
     State(state): State<S>,
-    Json(token): Json<DemoModeToken>,
+    Json(token): Json<DemoAccountToken>,
 ) -> Result<(), StatusCode> {
-    ACCOUNT.post_demo_mode_logout.incr();
-    state.demo_mode().demo_mode_logout(&token).await;
+    ACCOUNT.post_demo_account_logout.incr();
+    state.demo().demo_account_logout(&token).await;
     Ok(())
 }
 
 create_open_api_router!(
-        fn router_demo_mode,
-        post_demo_mode_accessible_accounts,
-        post_demo_mode_login,
-        post_demo_mode_register_account,
-        post_demo_mode_login_to_account,
-        post_demo_mode_logout,
+        fn router_demo,
+        post_demo_account_accessible_accounts,
+        post_demo_account_login,
+        post_demo_account_register_account,
+        post_demo_account_login_to_account,
+        post_demo_account_logout,
 );
 
 create_counters!(
     AccountCounters,
     ACCOUNT,
-    ACCOUNT_DEMO_MODE_COUNTERS_LIST,
-    post_demo_mode_accessible_accounts,
-    post_demo_mode_login,
-    post_demo_mode_register_account,
-    post_demo_mode_login_to_account,
-    post_demo_mode_logout,
+    ACCOUNT_DEMO_COUNTERS_LIST,
+    post_demo_account_accessible_accounts,
+    post_demo_account_login,
+    post_demo_account_register_account,
+    post_demo_account_login_to_account,
+    post_demo_account_logout,
 );

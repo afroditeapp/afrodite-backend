@@ -7,7 +7,7 @@ use model_account::{
     Account, AccountData, AccountId, AccountIdInternal, AccountInternal, ClientId, Permissions,
     ProfileVisibility, SetAccountSetup,
 };
-use model_server_state::DemoModeId;
+use model_server_state::DemoAccountId;
 use news::WriteCommandsAccountNews;
 use server_data::{
     DataError, DieselDatabaseError, db_transaction, define_cmd_wrapper_write,
@@ -137,15 +137,15 @@ impl WriteCommandsAccount<'_> {
         })
     }
 
-    pub async fn insert_demo_mode_related_account_ids(
+    pub async fn add_to_demo_account_owned_accounts(
         &self,
-        id: DemoModeId,
-        account_id: AccountId,
+        id: DemoAccountId,
+        account_id: AccountIdInternal,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.account()
-                .demo_mode()
-                .insert_related_account_id(id, account_id)
+                .demo()
+                .add_to_demo_account_owned_accounts(id, account_id)
         })
     }
 

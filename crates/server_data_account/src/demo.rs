@@ -26,25 +26,25 @@ impl AccessibleAccountsInfoUtils for AccessibleAccountsInfo {
         self,
         read: &RouterDatabaseReadHandle,
     ) -> server_common::result::Result<Vec<AccountId>, DataError> {
-        let (accounts, demo_mode_id) = match self {
+        let (accounts, demo_account_id) = match self {
             AccessibleAccountsInfo::All => {
                 let all_accounts = read.common().account_ids_vec().await?;
                 return Ok(all_accounts);
             }
             AccessibleAccountsInfo::Specific {
                 config_file_accounts,
-                demo_mode_id,
-            } => (config_file_accounts, demo_mode_id),
+                demo_account_id,
+            } => (config_file_accounts, demo_account_id),
         };
 
-        let related_accounts = read
+        let database_accounts = read
             .account()
-            .demo_mode_related_account_ids(demo_mode_id)
+            .demo_account_owned_account_ids(demo_account_id)
             .await?;
 
         Ok(accounts
             .into_iter()
-            .chain(related_accounts.into_iter())
+            .chain(database_accounts.into_iter())
             .collect())
     }
 
@@ -53,17 +53,17 @@ impl AccessibleAccountsInfoUtils for AccessibleAccountsInfo {
         account: AccountId,
         read: &RouterDatabaseReadHandle,
     ) -> server_common::result::Result<(), DataError> {
-        let (accounts, demo_mode_id) = match self {
+        let (accounts, demo_account_id) = match self {
             AccessibleAccountsInfo::All => return Ok(()),
             AccessibleAccountsInfo::Specific {
                 config_file_accounts,
-                demo_mode_id,
-            } => (config_file_accounts, demo_mode_id),
+                demo_account_id,
+            } => (config_file_accounts, demo_account_id),
         };
 
         let related_accounts = read
             .account()
-            .demo_mode_related_account_ids(*demo_mode_id)
+            .demo_account_owned_account_ids(*demo_account_id)
             .await?;
 
         accounts
@@ -76,9 +76,9 @@ impl AccessibleAccountsInfoUtils for AccessibleAccountsInfo {
     }
 }
 
-pub struct DemoModeUtils;
+pub struct DemoAccountUtils;
 
-impl DemoModeUtils {
+impl DemoAccountUtils {
     pub async fn with_extra_info(
         accounts: Vec<AccountId>,
         config: &Config,

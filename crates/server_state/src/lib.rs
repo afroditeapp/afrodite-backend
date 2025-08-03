@@ -28,7 +28,7 @@ use server_data::{
 use simple_backend::app::SimpleBackendAppState;
 
 use self::internal_api::InternalApiClient;
-use crate::{admin_notifications::AdminNotificationManagerData, demo::DemoModeManager};
+use crate::{admin_notifications::AdminNotificationManagerData, demo::DemoAccountManager};
 
 pub mod admin_notifications;
 pub mod api_limits;
@@ -60,7 +60,7 @@ struct AppStateInternal {
     config: Arc<Config>,
     content_processing: Arc<ContentProcessingManagerData>,
     admin_notification: Arc<AdminNotificationManagerData>,
-    demo_mode: DemoModeManager,
+    demo: DemoAccountManager,
     push_notification_sender: PushNotificationSender,
     simple_backend_state: SimpleBackendAppState,
     profile_statistics_cache: Arc<ProfileStatisticsCache>,
@@ -79,7 +79,7 @@ impl AppState {
         config: Arc<Config>,
         content_processing: Arc<ContentProcessingManagerData>,
         admin_notification: Arc<AdminNotificationManagerData>,
-        demo_mode: DemoModeManager,
+        demo: DemoAccountManager,
         push_notification_sender: PushNotificationSender,
         simple_backend_state: SimpleBackendAppState,
         data_all_utils: &'static dyn DataAllUtils,
@@ -96,7 +96,7 @@ impl AppState {
             .into(),
             content_processing,
             admin_notification,
-            demo_mode,
+            demo,
             push_notification_sender,
             simple_backend_state,
             profile_statistics_cache: ProfileStatisticsCache::default().into(),
@@ -112,8 +112,8 @@ impl AppState {
         }
     }
 
-    pub fn demo_mode(&self) -> &DemoModeManager {
-        &self.state.demo_mode
+    pub fn demo(&self) -> &DemoAccountManager {
+        &self.state.demo
     }
 
     pub fn data_all_access(&self) -> DataAllAccess {
