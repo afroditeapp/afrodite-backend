@@ -330,7 +330,7 @@ pub struct LoginSession {
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
 pub struct AccessToken {
     /// API token which server generates.
-    access_token: String,
+    token: String,
 }
 
 impl AccessToken {
@@ -341,7 +341,7 @@ impl AccessToken {
             token.extend(random_128_bits())
         }
         let access_token = Self {
-            access_token: base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(&token),
+            token: base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(&token),
         };
         (access_token, token)
     }
@@ -350,16 +350,16 @@ impl AccessToken {
         Self::generate_new_with_bytes().0
     }
 
-    pub fn new(access_token: String) -> Self {
-        Self { access_token }
+    pub fn new(token: String) -> Self {
+        Self { token }
     }
 
     pub fn into_string(self) -> String {
-        self.access_token
+        self.token
     }
 
     pub fn as_str(&self) -> &str {
-        &self.access_token
+        &self.token
     }
 }
 
@@ -556,14 +556,14 @@ mod tests {
             .encode(data_256_bit)
             .len();
         let token = AccessToken::generate_new();
-        assert_eq!(token.access_token.len(), wanted_len);
-        assert_eq!(token.access_token.len(), 43);
+        assert_eq!(token.token.len(), wanted_len);
+        assert_eq!(token.token.len(), 43);
     }
 
     #[test]
     fn access_token_contains_only_allowed_characters() {
         let token = AccessToken::generate_new();
-        for c in token.access_token.chars() {
+        for c in token.token.chars() {
             assert!(is_base64url_no_padding_character(c));
         }
     }
