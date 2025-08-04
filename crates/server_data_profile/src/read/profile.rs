@@ -1,6 +1,6 @@
 use database_profile::current::read::GetDbReadCommandsProfile;
 use model_profile::{
-    AcceptedProfileAges, AccountIdInternal, GetMyProfileResult, GetProfileFilteringSettings,
+    AcceptedProfileAges, AccountIdInternal, GetMyProfileResult, GetProfileFilters,
     LastSeenUnixTime, Location, Profile, ProfileAndProfileVersion, ProfileInternal,
     ProfileStateInternal,
 };
@@ -95,14 +95,14 @@ impl ReadCommandsProfile<'_> {
             .into_error()
     }
 
-    pub async fn profile_filtering_settings(
+    pub async fn profile_filters(
         &self,
         id: AccountIdInternal,
-    ) -> Result<GetProfileFilteringSettings, DataError> {
+    ) -> Result<GetProfileFilters, DataError> {
         self.db_read(move |mut cmds| {
             let filters = cmds.profile().data().profile_attribute_filters(id)?;
             let state = cmds.profile().data().profile_state(id)?;
-            Ok(GetProfileFilteringSettings {
+            Ok(GetProfileFilters {
                 filters,
                 last_seen_time_filter: state.last_seen_time_filter,
                 unlimited_likes_filter: state.unlimited_likes_filter,

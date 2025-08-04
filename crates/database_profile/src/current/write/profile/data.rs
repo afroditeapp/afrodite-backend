@@ -3,7 +3,7 @@ use diesel::{ExpressionMethods, QueryDsl, delete, insert_into, prelude::*, updat
 use error_stack::{Result, ResultExt};
 use model_profile::{
     AccountIdInternal, LastSeenUnixTime, Location, ProfileAge, ProfileAttributeFilterValueUpdate,
-    ProfileAttributeValueUpdate, ProfileFilteringSettingsUpdateValidated, ProfileInternal,
+    ProfileAttributeValueUpdate, ProfileFiltersUpdateValidated, ProfileInternal,
     ProfileModificationMetadata, ProfileStateInternal, ProfileUpdateValidated, SyncVersion,
     UnixTime,
 };
@@ -222,30 +222,30 @@ impl CurrentWriteProfileData<'_> {
         Ok(())
     }
 
-    pub fn update_profile_filtering_settings(
+    pub fn update_profile_filters(
         &mut self,
         id: AccountIdInternal,
-        settings: ProfileFilteringSettingsUpdateValidated,
+        filters: ProfileFiltersUpdateValidated,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::profile_state::dsl::*;
 
         update(profile_state)
             .filter(account_id.eq(id.as_db_id()))
             .set((
-                last_seen_time_filter.eq(settings.last_seen_time_filter),
-                unlimited_likes_filter.eq(settings.unlimited_likes_filter),
-                min_distance_km_filter.eq(settings.min_distance_km_filter),
-                max_distance_km_filter.eq(settings.max_distance_km_filter),
-                profile_created_time_filter.eq(settings.profile_created_filter),
-                profile_edited_time_filter.eq(settings.profile_edited_filter),
-                profile_text_min_characters_filter.eq(settings.profile_text_min_characters_filter),
-                profile_text_max_characters_filter.eq(settings.profile_text_max_characters_filter),
-                random_profile_order.eq(settings.random_profile_order),
+                last_seen_time_filter.eq(filters.last_seen_time_filter),
+                unlimited_likes_filter.eq(filters.unlimited_likes_filter),
+                min_distance_km_filter.eq(filters.min_distance_km_filter),
+                max_distance_km_filter.eq(filters.max_distance_km_filter),
+                profile_created_time_filter.eq(filters.profile_created_filter),
+                profile_edited_time_filter.eq(filters.profile_edited_filter),
+                profile_text_min_characters_filter.eq(filters.profile_text_min_characters_filter),
+                profile_text_max_characters_filter.eq(filters.profile_text_max_characters_filter),
+                random_profile_order.eq(filters.random_profile_order),
             ))
             .execute(self.conn())
             .into_db_error(())?;
 
-        self.upsert_profile_attribute_filters(id, settings.filters)?;
+        self.upsert_profile_attribute_filters(id, filters.filters)?;
 
         Ok(())
     }

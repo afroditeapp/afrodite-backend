@@ -11,7 +11,7 @@ use utoipa::ToSchema;
 use crate::{LastSeenTimeFilter, ProfileAttributesInternal};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
-pub struct ProfileFilteringSettingsUpdate {
+pub struct ProfileFiltersUpdate {
     filters: Vec<ProfileAttributeFilterValueUpdate>,
     last_seen_time_filter: Option<LastSeenTimeFilter>,
     unlimited_likes_filter: Option<bool>,
@@ -26,11 +26,11 @@ pub struct ProfileFilteringSettingsUpdate {
     random_profile_order: bool,
 }
 
-impl ProfileFilteringSettingsUpdate {
+impl ProfileFiltersUpdate {
     pub fn validate(
         self,
         attribute_info: Option<&ProfileAttributesInternal>,
-    ) -> Result<ProfileFilteringSettingsUpdateValidated, String> {
+    ) -> Result<ProfileFiltersUpdateValidated, String> {
         let mut hash_set = HashSet::new();
         for a in &self.filters {
             if !hash_set.insert(a.id) {
@@ -101,7 +101,7 @@ impl ProfileFilteringSettingsUpdate {
             }
         }
 
-        Ok(ProfileFilteringSettingsUpdateValidated {
+        Ok(ProfileFiltersUpdateValidated {
             filters: self.filters,
             last_seen_time_filter: self.last_seen_time_filter,
             unlimited_likes_filter: self.unlimited_likes_filter,
@@ -117,7 +117,7 @@ impl ProfileFilteringSettingsUpdate {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ProfileFilteringSettingsUpdateValidated {
+pub struct ProfileFiltersUpdateValidated {
     pub filters: Vec<ProfileAttributeFilterValueUpdate>,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
@@ -169,7 +169,7 @@ pub struct ProfileAttributeFilterValueUpdate {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
-pub struct GetProfileFilteringSettings {
+pub struct GetProfileFilters {
     pub filters: Vec<ProfileAttributeFilterValue>,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,

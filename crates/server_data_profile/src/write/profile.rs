@@ -2,9 +2,8 @@ use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommands
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
     AccountIdInternal, AutomaticProfileSearchLastSeenUnixTime, LastSeenUnixTime, Location,
-    ProfileFilteringSettingsUpdateValidated, ProfileModificationMetadata,
-    ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateValidated,
-    ValidatedSearchGroups,
+    ProfileFiltersUpdateValidated, ProfileModificationMetadata, ProfileSearchAgeRangeValidated,
+    ProfileStateInternal, ProfileUpdateValidated, ValidatedSearchGroups,
 };
 use server_data::{
     DataError, IntoDataError, app::GetConfig, cache::profile::UpdateLocationCacheState,
@@ -187,16 +186,16 @@ impl WriteCommandsProfile<'_> {
         Ok(())
     }
 
-    pub async fn update_profile_filtering_settings(
+    pub async fn update_profile_filters(
         &self,
         id: AccountIdInternal,
-        filters: ProfileFilteringSettingsUpdateValidated,
+        filters: ProfileFiltersUpdateValidated,
     ) -> Result<(), DataError> {
         let filters_clone = filters.clone();
         let (new_filters, location) = db_transaction!(self, move |mut cmds| {
             cmds.profile()
                 .data()
-                .update_profile_filtering_settings(id, filters_clone)?;
+                .update_profile_filters(id, filters_clone)?;
             let attribute_filters = cmds.read().profile().data().profile_attribute_filters(id)?;
             let location = cmds.read().profile().data().profile_location(id)?;
             Ok((attribute_filters, location))
