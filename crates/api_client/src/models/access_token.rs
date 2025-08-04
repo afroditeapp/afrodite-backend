@@ -15,15 +15,15 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AccessToken {
     /// API token which server generates.
-    #[serde(rename = "access_token")]
-    pub access_token: String,
+    #[serde(rename = "token")]
+    pub token: String,
 }
 
 impl AccessToken {
     /// AccessToken is used as a short lived token for API access.  The token is 256 bit random value which is base64url encoded without padding. The previous format is used because the token is transferred as HTTP header value. The token lenght in characters is 43.  OWASP recommends at least 128 bit session IDs. https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
-    pub fn new(access_token: String) -> AccessToken {
+    pub fn new(token: String) -> AccessToken {
         AccessToken {
-            access_token,
+            token,
         }
     }
 }

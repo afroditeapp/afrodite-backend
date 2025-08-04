@@ -12,18 +12,18 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct ProfileAttributeInfo {
+pub struct ProfileAttributesConfigQueryItem {
+    #[serde(rename = "a")]
+    pub a: Box<models::Attribute>,
     #[serde(rename = "h")]
     pub h: Box<models::AttributeHash>,
-    #[serde(rename = "id")]
-    pub id: i32,
 }
 
-impl ProfileAttributeInfo {
-    pub fn new(h: models::AttributeHash, id: i32) -> ProfileAttributeInfo {
-        ProfileAttributeInfo {
+impl ProfileAttributesConfigQueryItem {
+    pub fn new(a: models::Attribute, h: models::AttributeHash) -> ProfileAttributesConfigQueryItem {
+        ProfileAttributesConfigQueryItem {
+            a: Box::new(a),
             h: Box::new(h),
-            id,
         }
     }
 }

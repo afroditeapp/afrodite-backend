@@ -159,6 +159,15 @@ pub enum PostGetIpAddressUsageDataError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`post_get_ip_country_statistics`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostGetIpCountryStatisticsError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`post_get_perf_data`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -832,6 +841,43 @@ pub async fn post_get_ip_address_usage_data(configuration: &configuration::Confi
     }
 }
 
+/// HTTP method is POST to allow JSON request body.  # Permissions Requires admin_server_maintenance_view_info.
+pub async fn post_get_ip_country_statistics(configuration: &configuration::Configuration, get_ip_country_statistics_settings: models::GetIpCountryStatisticsSettings) -> Result<models::GetIpCountryStatisticsResult, Error<PostGetIpCountryStatisticsError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/common_api/ip_country_statistics", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+    local_var_req_builder = local_var_req_builder.json(&get_ip_country_statistics_settings);
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<PostGetIpCountryStatisticsError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
 /// HTTP method is POST because JSON request body requires it.  # Permissions Requires admin_server_maintenance_view_info.
 pub async fn post_get_perf_data(configuration: &configuration::Configuration, perf_metric_query: models::PerfMetricQuery) -> Result<models::PerfMetricQueryResult, Error<PostGetPerfDataError>> {
     let local_var_configuration = configuration;
@@ -981,7 +1027,7 @@ pub async fn post_schedule_task(configuration: &configuration::Configuration, ma
     }
 }
 
-/// # Access * Permission [model::Permissions::admin_server_maintenance_reset_data]
+/// This API route will fail if backend config file field debug_allow_backend_data_reset is not true.  Registering new accounts will be prevented and all accounts will be deleted. After that manager will stop the backend, delete backend's data directory and start the backend.  This can be requested only once per backend process.  Account registering prevention is process specific, so restarting backend will disable that.  # Access * Permission [model::Permissions::admin_server_maintenance_reset_data]
 pub async fn post_trigger_backend_data_reset(configuration: &configuration::Configuration, manager_name: &str) -> Result<(), Error<PostTriggerBackendDataResetError>> {
     let local_var_configuration = configuration;
 

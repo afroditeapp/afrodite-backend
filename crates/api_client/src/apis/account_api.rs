@@ -134,42 +134,42 @@ pub enum PostCustomReportEmptyError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_demo_mode_accessible_accounts`]
+/// struct for typed errors of method [`post_demo_account_accessible_accounts`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostDemoModeAccessibleAccountsError {
+pub enum PostDemoAccountAccessibleAccountsError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_demo_mode_login`]
+/// struct for typed errors of method [`post_demo_account_login`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostDemoModeLoginError {
+pub enum PostDemoAccountLoginError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_demo_mode_login_to_account`]
+/// struct for typed errors of method [`post_demo_account_login_to_account`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostDemoModeLoginToAccountError {
+pub enum PostDemoAccountLoginToAccountError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_demo_mode_logout`]
+/// struct for typed errors of method [`post_demo_account_logout`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostDemoModeLogoutError {
+pub enum PostDemoAccountLogoutError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_demo_mode_register_account`]
+/// struct for typed errors of method [`post_demo_account_register_account`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostDemoModeRegisterAccountError {
+pub enum PostDemoAccountRegisterAccountError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -742,18 +742,18 @@ pub async fn post_custom_report_empty(configuration: &configuration::Configurati
 }
 
 /// This path is using HTTP POST because there is JSON in the request body.
-pub async fn post_demo_mode_accessible_accounts(configuration: &configuration::Configuration, demo_mode_token: models::DemoModeToken) -> Result<Vec<models::AccessibleAccount>, Error<PostDemoModeAccessibleAccountsError>> {
+pub async fn post_demo_account_accessible_accounts(configuration: &configuration::Configuration, demo_account_token: models::DemoAccountToken) -> Result<Vec<models::AccessibleAccount>, Error<PostDemoAccountAccessibleAccountsError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/demo_mode_accessible_accounts", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/account_api/demo_account_accessible_accounts", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
-    local_var_req_builder = local_var_req_builder.json(&demo_mode_token);
+    local_var_req_builder = local_var_req_builder.json(&demo_account_token);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -764,25 +764,25 @@ pub async fn post_demo_mode_accessible_accounts(configuration: &configuration::C
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<PostDemoModeAccessibleAccountsError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<PostDemoAccountAccessibleAccountsError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
 }
 
 /// This API route has 1 second wait time to make password guessing harder. Account will be locked if the password is guessed. Server process restart will reset the lock.
-pub async fn post_demo_mode_login(configuration: &configuration::Configuration, demo_mode_login_credentials: models::DemoModeLoginCredentials) -> Result<models::DemoModeLoginResult, Error<PostDemoModeLoginError>> {
+pub async fn post_demo_account_login(configuration: &configuration::Configuration, demo_account_login_credentials: models::DemoAccountLoginCredentials) -> Result<models::DemoAccountLoginResult, Error<PostDemoAccountLoginError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/demo_mode_login", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/account_api/demo_account_login", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
-    local_var_req_builder = local_var_req_builder.json(&demo_mode_login_credentials);
+    local_var_req_builder = local_var_req_builder.json(&demo_account_login_credentials);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -793,24 +793,24 @@ pub async fn post_demo_mode_login(configuration: &configuration::Configuration, 
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<PostDemoModeLoginError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<PostDemoAccountLoginError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
 }
 
-pub async fn post_demo_mode_login_to_account(configuration: &configuration::Configuration, demo_mode_login_to_account: models::DemoModeLoginToAccount) -> Result<models::LoginResult, Error<PostDemoModeLoginToAccountError>> {
+pub async fn post_demo_account_login_to_account(configuration: &configuration::Configuration, demo_account_login_to_account: models::DemoAccountLoginToAccount) -> Result<models::LoginResult, Error<PostDemoAccountLoginToAccountError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/demo_mode_login_to_account", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/account_api/demo_account_login_to_account", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
-    local_var_req_builder = local_var_req_builder.json(&demo_mode_login_to_account);
+    local_var_req_builder = local_var_req_builder.json(&demo_account_login_to_account);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -821,24 +821,24 @@ pub async fn post_demo_mode_login_to_account(configuration: &configuration::Conf
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<PostDemoModeLoginToAccountError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<PostDemoAccountLoginToAccountError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
 }
 
-pub async fn post_demo_mode_logout(configuration: &configuration::Configuration, demo_mode_token: models::DemoModeToken) -> Result<(), Error<PostDemoModeLogoutError>> {
+pub async fn post_demo_account_logout(configuration: &configuration::Configuration, demo_account_token: models::DemoAccountToken) -> Result<(), Error<PostDemoAccountLogoutError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/demo_mode_logout", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/account_api/demo_account_logout", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
-    local_var_req_builder = local_var_req_builder.json(&demo_mode_token);
+    local_var_req_builder = local_var_req_builder.json(&demo_account_token);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -849,24 +849,24 @@ pub async fn post_demo_mode_logout(configuration: &configuration::Configuration,
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         Ok(())
     } else {
-        let local_var_entity: Option<PostDemoModeLogoutError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<PostDemoAccountLogoutError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
 }
 
-pub async fn post_demo_mode_register_account(configuration: &configuration::Configuration, demo_mode_token: models::DemoModeToken) -> Result<models::AccountId, Error<PostDemoModeRegisterAccountError>> {
+pub async fn post_demo_account_register_account(configuration: &configuration::Configuration, demo_account_token: models::DemoAccountToken) -> Result<models::AccountId, Error<PostDemoAccountRegisterAccountError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/demo_mode_register_account", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/account_api/demo_account_register_account", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
-    local_var_req_builder = local_var_req_builder.json(&demo_mode_token);
+    local_var_req_builder = local_var_req_builder.json(&demo_account_token);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -877,13 +877,13 @@ pub async fn post_demo_mode_register_account(configuration: &configuration::Conf
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<PostDemoModeRegisterAccountError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<PostDemoAccountRegisterAccountError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
 }
 
-pub async fn post_get_client_features_config(configuration: &configuration::Configuration, client_features_file_hash: models::ClientFeaturesFileHash) -> Result<models::GetClientFeaturesConfigResult, Error<PostGetClientFeaturesConfigError>> {
+pub async fn post_get_client_features_config(configuration: &configuration::Configuration, client_features_config_hash: models::ClientFeaturesConfigHash) -> Result<models::GetClientFeaturesConfigResult, Error<PostGetClientFeaturesConfigError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -902,7 +902,7 @@ pub async fn post_get_client_features_config(configuration: &configuration::Conf
         };
         local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
-    local_var_req_builder = local_var_req_builder.json(&client_features_file_hash);
+    local_var_req_builder = local_var_req_builder.json(&client_features_config_hash);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -919,7 +919,7 @@ pub async fn post_get_client_features_config(configuration: &configuration::Conf
     }
 }
 
-pub async fn post_get_custom_reports_config(configuration: &configuration::Configuration, custom_reports_file_hash: models::CustomReportsFileHash) -> Result<models::GetCustomReportsConfigResult, Error<PostGetCustomReportsConfigError>> {
+pub async fn post_get_custom_reports_config(configuration: &configuration::Configuration, custom_reports_config_hash: models::CustomReportsConfigHash) -> Result<models::GetCustomReportsConfigResult, Error<PostGetCustomReportsConfigError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -938,7 +938,7 @@ pub async fn post_get_custom_reports_config(configuration: &configuration::Confi
         };
         local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
-    local_var_req_builder = local_var_req_builder.json(&custom_reports_file_hash);
+    local_var_req_builder = local_var_req_builder.json(&custom_reports_config_hash);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;

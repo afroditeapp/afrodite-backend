@@ -79,9 +79,7 @@ impl BotAction for Login {
             return Err(TestError::ApiRequest.report());
         };
 
-        state
-            .api
-            .set_access_token(auth_pair.access.access_token.clone());
+        state.api.set_access_token(auth_pair.access.token.clone());
 
         let (event_sender, event_receiver, quit_handle) =
             create_event_channel(state.connections.enable_event_sending.clone());
@@ -154,7 +152,7 @@ async fn connect_websocket(
     let mut r = url
         .into_client_request()
         .change_context(TestError::WebSocket)?;
-    let protocol_header_value = format!("0,{}", auth.access.access_token);
+    let protocol_header_value = format!("0,{}", auth.access.token);
     r.headers_mut().insert(
         http::header::SEC_WEBSOCKET_PROTOCOL,
         HeaderValue::from_str(&protocol_header_value).change_context(TestError::WebSocket)?,

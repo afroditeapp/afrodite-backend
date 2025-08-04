@@ -12,18 +12,15 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct ProfileAttributeInfo {
+pub struct AttributeHash {
     #[serde(rename = "h")]
-    pub h: Box<models::AttributeHash>,
-    #[serde(rename = "id")]
-    pub id: i32,
+    pub h: String,
 }
 
-impl ProfileAttributeInfo {
-    pub fn new(h: models::AttributeHash, id: i32) -> ProfileAttributeInfo {
-        ProfileAttributeInfo {
-            h: Box::new(h),
-            id,
+impl AttributeHash {
+    pub fn new(h: String) -> AttributeHash {
+        AttributeHash {
+            h,
         }
     }
 }
