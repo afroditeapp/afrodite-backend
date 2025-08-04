@@ -74,7 +74,7 @@ impl ProfileQueryMakerDetails {
                 state.search_age_range_max,
             ),
             search_groups_filter: state.search_group_flags.to_filter(),
-            attribute_filters: if settings.automatic_profile_search_filters {
+            attribute_filters: if settings.automatic_profile_search_attribute_filters {
                 attribute_filters.to_vec()
             } else {
                 vec![]

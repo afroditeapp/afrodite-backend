@@ -48,8 +48,8 @@ pub struct ProfileAppNotificationSettings {
     pub profile_text_moderation: bool,
     pub automatic_profile_search: bool,
     pub automatic_profile_search_new_profiles: bool,
-    pub automatic_profile_search_filters: bool,
-    pub automatic_profile_search_distance: bool,
+    pub automatic_profile_search_attribute_filters: bool,
+    pub automatic_profile_search_distance_filters: bool,
     pub automatic_profile_search_weekdays: SelectedWeekdays,
 }
 
@@ -59,8 +59,8 @@ impl Default for ProfileAppNotificationSettings {
             profile_text_moderation: true,
             automatic_profile_search: true,
             automatic_profile_search_new_profiles: false,
-            automatic_profile_search_filters: false,
-            automatic_profile_search_distance: false,
+            automatic_profile_search_attribute_filters: false,
+            automatic_profile_search_distance_filters: false,
             automatic_profile_search_weekdays: SelectedWeekdays::all(),
         }
     }

@@ -494,16 +494,16 @@ impl<'a> WriteCommandsConcurrent<'a> {
     ) -> Result<AutomaticProfileSearchIteratorSessionIdInternal, DataError> {
         self.cache
             .write_cache_blocking(id.as_id(), |e| {
-                let distance_filter_enabled = e
+                let distance_filters_enabled = e
                     .common
                     .app_notification_settings
                     .profile
-                    .automatic_profile_search_distance;
+                    .automatic_profile_search_distance_filters;
                 let p = e.profile_data_mut()?;
                 let new_id = AutomaticProfileSearchIteratorSessionIdInternal::create(
                     &mut p.automatic_profile_search.iterator_session_id_storage,
                 );
-                let area = if distance_filter_enabled {
+                let area = if distance_filters_enabled {
                     &p.location.current_position
                 } else {
                     &p.location
