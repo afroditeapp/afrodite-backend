@@ -3,7 +3,7 @@ use std::{
     sync::atomic::{AtomicI64, Ordering},
 };
 
-#[derive(Debug, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct IpCountry(pub String);
 
 impl Borrow<str> for IpCountry {
@@ -33,5 +33,14 @@ impl IpCountryCounters {
 
     pub fn increment_http_requests(&self) {
         self.http_requests.fetch_add(1, Ordering::Relaxed);
+    }
+}
+
+impl Clone for IpCountryCounters {
+    fn clone(&self) -> Self {
+        Self {
+            tcp_connections: AtomicI64::new(self.tcp_connections()),
+            http_requests: AtomicI64::new(self.http_requests()),
+        }
     }
 }

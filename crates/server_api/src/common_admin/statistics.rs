@@ -7,7 +7,7 @@ use model::{
 use server_common::app::GetAccounts;
 use server_data::{app::ReadData, read::GetReadCommandsCommon};
 use simple_backend::{
-    app::{MaxMindDbDataProvider, PerfCounterDataProvider},
+    app::{IpCountryTrackerProvider, MaxMindDbDataProvider, PerfCounterDataProvider},
     create_counters,
 };
 use simple_backend_model::{PerfMetricQuery, PerfMetricQueryResult};
@@ -161,11 +161,17 @@ pub async fn post_get_ip_country_statistics(
 ) -> Result<Json<GetIpCountryStatisticsResult>, StatusCode> {
     COMMON_ADMIN.post_get_ip_country_statistics.incr();
     if api_caller_permissions.admin_server_maintenance_view_info {
-        let data = state
-            .read()
-            .common_history()
-            .ip_country_statistics(settings)
-            .await?;
+        let data = if settings.data_from_ram {
+            let data = state.ip_country_tracker().copy_current_state().await;
+
+            GetIpCountryStatisticsResult::new_from_ip_country_tracker_state(data, settings)
+        } else {
+            state
+                .read()
+                .common_history()
+                .ip_country_statistics(settings)
+                .await?
+        };
         Ok(data.into())
     } else {
         Err(StatusCode::UNAUTHORIZED)

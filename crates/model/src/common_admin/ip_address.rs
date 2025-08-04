@@ -5,7 +5,7 @@ use std::{
 
 use diesel::{Selectable, prelude::Queryable, sql_types::Binary};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{UnixTime, diesel_bytes_try_from};
+use simple_backend_model::{IpCountry, IpCountryCounters, UnixTime, diesel_bytes_try_from};
 use utoipa::ToSchema;
 
 use crate::AccountId;
@@ -162,11 +162,39 @@ pub struct GetIpCountryStatisticsSettings {
     pub max_time: Option<UnixTime>,
     pub min_time: Option<UnixTime>,
     pub statistics_type: IpCountryStatisticsType,
+    /// Get statistics from RAM instead of database.
+    pub data_from_ram: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct GetIpCountryStatisticsResult {
     pub values: Vec<IpCountryStatistics>,
+}
+
+impl GetIpCountryStatisticsResult {
+    pub fn new_from_ip_country_tracker_state(
+        data: HashMap<IpCountry, IpCountryCounters>,
+        settings: GetIpCountryStatisticsSettings,
+    ) -> Self {
+        let values = data
+            .into_iter()
+            .map(|(country, counters)| {
+                let c = match settings.statistics_type {
+                    IpCountryStatisticsType::NewTcpConnections => counters.tcp_connections(),
+                    IpCountryStatisticsType::NewHttpRequests => counters.http_requests(),
+                };
+
+                let value = IpCountryStatisticsValue { t: None, c };
+
+                IpCountryStatistics {
+                    country: country.0,
+                    values: vec![value],
+                }
+            })
+            .collect();
+
+        Self { values }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -177,6 +205,7 @@ pub struct IpCountryStatistics {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct IpCountryStatisticsValue {
-    pub t: UnixTime,
+    /// Value exists when [GetIpCountryStatisticsSettings::live_statistics] is false.
+    pub t: Option<UnixTime>,
     pub c: i64,
 }

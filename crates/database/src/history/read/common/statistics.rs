@@ -59,7 +59,10 @@ impl HistoryReadCommonStatistics<'_> {
 
         let mut data = HashMap::<String, IpCountryStatistics>::new();
         for (time, country, count) in values {
-            let v = IpCountryStatisticsValue { t: time, c: count };
+            let v = IpCountryStatisticsValue {
+                t: Some(time),
+                c: count,
+            };
             if let Some(statistics) = data.get_mut(&country) {
                 statistics.values.push(v);
             } else {

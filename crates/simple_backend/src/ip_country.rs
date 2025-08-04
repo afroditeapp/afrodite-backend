@@ -37,6 +37,11 @@ impl IpCountryTracker {
         std::mem::take(&mut w.data)
     }
 
+    pub async fn copy_current_state(&self) -> HashMap<IpCountry, IpCountryCounters> {
+        let r = self.state.read().await;
+        r.data.clone()
+    }
+
     pub async fn increment_tcp_connections(&self, ip: IpAddr) {
         self.track_internal(ip, |c| c.increment_tcp_connections())
             .await
