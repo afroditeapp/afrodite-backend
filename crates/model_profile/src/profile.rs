@@ -167,7 +167,7 @@ impl ProfileUpdate {
         mut self,
         attribute_info: Option<&ProfileAttributesInternal>,
         current_profile: &Profile,
-        accepted_profile_ages: Option<AcceptedProfileAges>,
+        initial_age: Option<InitialProfileAge>,
     ) -> Result<ProfileUpdateValidated, String> {
         let mut hash_set = HashSet::new();
         for a in &mut self.attributes {
@@ -224,7 +224,7 @@ impl ProfileUpdate {
         }
 
         if self.age != current_profile.age {
-            if let Some(age_range) = accepted_profile_ages {
+            if let Some(age_range) = initial_age {
                 if !age_range.is_age_valid(self.age) {
                     return Err(
                         "The new profile age is not in the current accepted profile age range"
@@ -358,25 +358,25 @@ pub struct GetMyProfileResult {
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default)]
-pub struct AcceptedProfileAges {
+pub struct InitialProfileAge {
     #[schema(value_type = i64)]
-    pub profile_initial_age: ProfileAge,
-    pub profile_initial_age_set_unix_time: UnixTime,
+    pub initial_profile_age: ProfileAge,
+    pub initial_profile_age_set_unix_time: UnixTime,
 }
 
-impl AcceptedProfileAges {
+impl InitialProfileAge {
     pub fn is_age_valid(&self, age: ProfileAge) -> bool {
-        if age.value() < self.profile_initial_age.value() {
+        if age.value() < self.initial_profile_age.value() {
             return false;
         }
 
         let current_time = UnixTime::current_time();
         match (
             current_time.year(),
-            self.profile_initial_age_set_unix_time.year(),
+            self.initial_profile_age_set_unix_time.year(),
         ) {
             (Some(current_year), Some(initial_year)) => {
-                let initial_age: i32 = self.profile_initial_age.value().into();
+                let initial_age: i32 = self.initial_profile_age.value().into();
                 let year_diff = current_year - initial_year;
                 let min = initial_age + year_diff - 1;
                 let max = initial_age + year_diff + 1;
@@ -389,6 +389,6 @@ impl AcceptedProfileAges {
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default)]
-pub struct GetInitialProfileAgeInfoResult {
-    pub info: Option<AcceptedProfileAges>,
+pub struct GetInitialProfileAgeResult {
+    pub value: Option<InitialProfileAge>,
 }

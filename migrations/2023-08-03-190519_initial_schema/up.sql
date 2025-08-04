@@ -423,8 +423,8 @@ CREATE TABLE IF NOT EXISTS profile_state(
     -- Sync version for profile data for this account.
     profile_sync_version              INTEGER       NOT NULL    DEFAULT 0,
     -- Profile age when initial setup is completed
-    profile_initial_age               INTEGER,
-    profile_initial_age_set_unix_time INTEGER,
+    initial_profile_age               INTEGER,
+    initial_profile_age_set_unix_time INTEGER,
     -- Edit time for public profile changes. This updates from both
     -- user and admin made changes.
     profile_edited_unix_time          INTEGER       NOT NULL    DEFAULT 0,

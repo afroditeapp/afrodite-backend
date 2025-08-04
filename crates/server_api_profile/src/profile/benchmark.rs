@@ -91,7 +91,7 @@ pub async fn post_profile_to_database_debug_mode_benchmark(
         state
             .read()
             .profile()
-            .accepted_profile_ages(account_id)
+            .initial_profile_age(account_id)
             .await?
     } else {
         None

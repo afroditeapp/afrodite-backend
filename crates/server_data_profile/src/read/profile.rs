@@ -1,6 +1,6 @@
 use database_profile::current::read::GetDbReadCommandsProfile;
 use model_profile::{
-    AcceptedProfileAges, AccountIdInternal, GetMyProfileResult, GetProfileFilters,
+    InitialProfileAge, AccountIdInternal, GetMyProfileResult, GetProfileFilters,
     LastSeenUnixTime, Location, Profile, ProfileAndProfileVersion, ProfileInternal,
     ProfileStateInternal,
 };
@@ -137,11 +137,11 @@ impl ReadCommandsProfile<'_> {
             .into_error()
     }
 
-    pub async fn accepted_profile_ages(
+    pub async fn initial_profile_age(
         &self,
         id: AccountIdInternal,
-    ) -> Result<Option<AcceptedProfileAges>, DataError> {
-        self.db_read(move |mut cmds| cmds.profile().data().accepted_profile_ages(id))
+    ) -> Result<Option<InitialProfileAge>, DataError> {
+        self.db_read(move |mut cmds| cmds.profile().data().initial_profile_age(id))
             .await
             .into_error()
     }

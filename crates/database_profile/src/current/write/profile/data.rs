@@ -124,8 +124,8 @@ impl CurrentWriteProfileData<'_> {
 
         update(profile_state.find(id.as_db_id()))
             .set((
-                profile_initial_age.eq(initial_age),
-                profile_initial_age_set_unix_time.eq(current_time),
+                initial_profile_age.eq(initial_age),
+                initial_profile_age_set_unix_time.eq(current_time),
             ))
             .execute(self.conn())
             .change_context(DieselDatabaseError::Execute)?;

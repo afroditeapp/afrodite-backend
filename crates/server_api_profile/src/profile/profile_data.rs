@@ -4,7 +4,7 @@ use axum::{
 };
 use model::AdminNotificationTypes;
 use model_profile::{
-    AccountId, AccountIdInternal, AccountState, GetInitialProfileAgeInfoResult, GetMyProfileResult,
+    AccountId, AccountIdInternal, AccountState, GetInitialProfileAgeResult, GetMyProfileResult,
     GetProfileQueryParam, GetProfileResult, Permissions, ProfileUpdate, SearchAgeRange,
     SearchAgeRangeValidated, SearchGroups, ValidatedSearchGroups,
 };
@@ -178,7 +178,7 @@ pub async fn post_profile(
         let accepted_ages = if account_state != AccountState::InitialSetup {
             cmds.read()
                 .profile()
-                .accepted_profile_ages(account_id)
+                .initial_profile_age(account_id)
                 .await?
         } else {
             None
@@ -358,15 +358,15 @@ pub async fn get_my_profile(
     Ok(r.into())
 }
 
-const PATH_GET_INITIAL_PROFILE_AGE_INFO: &str = "/profile_api/initial_profile_age_info";
+const PATH_GET_INITIAL_PROFILE_AGE: &str = "/profile_api/initial_profile_age";
 
-/// Get initial profile age information which can be used for calculating
+/// Get initial profile age which can be used for calculating
 /// current accepted profile ages.
 #[utoipa::path(
     get,
-    path = PATH_GET_INITIAL_PROFILE_AGE_INFO,
+    path = PATH_GET_INITIAL_PROFILE_AGE,
     responses(
-        (status = 200, description = "Success", body = GetInitialProfileAgeInfoResult),
+        (status = 200, description = "Success", body = GetInitialProfileAgeResult),
         (status = 401, description = "Unauthorized"),
         (
             status = 500,
@@ -375,19 +375,19 @@ const PATH_GET_INITIAL_PROFILE_AGE_INFO: &str = "/profile_api/initial_profile_ag
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_initial_profile_age_info(
+pub async fn get_initial_profile_age(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-) -> Result<Json<GetInitialProfileAgeInfoResult>, StatusCode> {
-    PROFILE.get_initial_profile_age_info.incr();
+) -> Result<Json<GetInitialProfileAgeResult>, StatusCode> {
+    PROFILE.get_initial_profile_age.incr();
 
-    let info = state
+    let value = state
         .read()
         .profile()
-        .accepted_profile_ages(account_id)
+        .initial_profile_age(account_id)
         .await?;
 
-    let r = GetInitialProfileAgeInfoResult { info };
+    let r = GetInitialProfileAgeResult { value };
 
     Ok(r.into())
 }
@@ -401,7 +401,7 @@ create_open_api_router!(
         post_search_groups,
         post_search_age_range,
         get_my_profile,
-        get_initial_profile_age_info,
+        get_initial_profile_age,
 );
 
 create_counters!(
@@ -415,5 +415,5 @@ create_counters!(
     post_search_groups,
     post_search_age_range,
     get_my_profile,
-    get_initial_profile_age_info,
+    get_initial_profile_age,
 );

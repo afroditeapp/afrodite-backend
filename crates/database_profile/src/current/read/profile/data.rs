@@ -6,7 +6,7 @@ use database::{
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model_profile::{
-    AcceptedProfileAges, AccountIdInternal, AttributeId, GetMyProfileResult, LastSeenTime,
+    InitialProfileAge, AccountIdInternal, AttributeId, GetMyProfileResult, LastSeenTime,
     LastSeenUnixTime, Location, Profile, ProfileAge, ProfileAttributeFilterValue,
     ProfileAttributeValue, ProfileInternal, ProfileStateInternal,
     ProfileStringModerationContentType, UnixTime,
@@ -256,22 +256,22 @@ impl CurrentReadProfileData<'_> {
 
     /// Returns Ok(None) if the initial profile age is not yet set.
     /// The age is set when complete initial setup command runs.
-    pub fn accepted_profile_ages(
+    pub fn initial_profile_age(
         &mut self,
         id: AccountIdInternal,
-    ) -> Result<Option<AcceptedProfileAges>, DieselDatabaseError> {
+    ) -> Result<Option<InitialProfileAge>, DieselDatabaseError> {
         use crate::schema::profile_state::dsl::*;
 
         let r: (Option<ProfileAge>, Option<UnixTime>) = profile_state
             .filter(account_id.eq(id.as_db_id()))
-            .select((profile_initial_age, profile_initial_age_set_unix_time))
+            .select((initial_profile_age, initial_profile_age_set_unix_time))
             .first(self.conn())
             .change_context(DieselDatabaseError::Execute)?;
 
         if let (Some(age), Some(time)) = r {
-            Ok(Some(AcceptedProfileAges {
-                profile_initial_age: age,
-                profile_initial_age_set_unix_time: time,
+            Ok(Some(InitialProfileAge {
+                initial_profile_age: age,
+                initial_profile_age_set_unix_time: time,
             }))
         } else {
             Ok(None)

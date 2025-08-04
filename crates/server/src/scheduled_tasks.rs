@@ -258,7 +258,7 @@ impl ScheduledTaskManager {
             .state
             .read()
             .profile()
-            .accepted_profile_ages(id)
+            .initial_profile_age(id)
             .await
             .change_context(ScheduledTaskError::DatabaseError)?;
 
