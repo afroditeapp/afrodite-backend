@@ -1,6 +1,7 @@
 use axum::{Extension, extract::State};
 use model::{
-    AccountIdInternal, ClientConfig, ClientFeaturesFileHash, ClientLanguage, CustomReportsFileHash,
+    AccountIdInternal, ClientConfig, ClientFeaturesConfigHash, ClientLanguage,
+    CustomReportsConfigHash,
 };
 use server_data::{app::GetConfig, read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use server_state::db_write;
@@ -40,15 +41,15 @@ pub async fn get_client_config(
         client_features: state
             .config()
             .client_features_sha256()
-            .map(|v| ClientFeaturesFileHash::new(v.to_string())),
+            .map(|v| ClientFeaturesConfigHash::new(v.to_string())),
         custom_reports: state
             .config()
             .custom_reports_sha256()
-            .map(|v| CustomReportsFileHash::new(v.to_string())),
+            .map(|v| CustomReportsConfigHash::new(v.to_string())),
         profile_attributes: state
             .config()
             .profile_attributes()
-            .map(|a| a.info_for_client())
+            .map(|a| a.config_for_client())
             .cloned(),
         sync_version,
     };

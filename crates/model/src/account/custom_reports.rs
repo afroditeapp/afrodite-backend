@@ -83,11 +83,11 @@ impl From<CustomReportId> for i64 {
 diesel_i64_struct_try_from!(CustomReportId);
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct CustomReportsFileHash {
+pub struct CustomReportsConfigHash {
     h: String,
 }
 
-impl CustomReportsFileHash {
+impl CustomReportsConfigHash {
     pub fn new(h: String) -> Self {
         Self { h }
     }

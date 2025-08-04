@@ -9,23 +9,23 @@ pub enum AttributeOrderMode {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct ProfileAttributeInfo {
+pub struct PartialProfileAttributesConfig {
     pub attribute_order: AttributeOrderMode,
-    pub attributes: Vec<AttributeIdAndHash>,
+    pub attributes: Vec<ProfileAttributeInfo>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct AttributeIdAndHash {
+pub struct ProfileAttributeInfo {
     pub id: AttributeId,
-    pub h: ProfileAttributeHash,
+    pub h: AttributeHash,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct ProfileAttributeHash {
+pub struct AttributeHash {
     h: String,
 }
 
-impl ProfileAttributeHash {
+impl AttributeHash {
     pub fn new(h: String) -> Self {
         Self { h }
     }

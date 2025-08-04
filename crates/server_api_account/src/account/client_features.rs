@@ -1,5 +1,5 @@
 use axum::extract::State;
-use model::ClientFeaturesFileHash;
+use model::ClientFeaturesConfigHash;
 use model_account::GetClientFeaturesConfigResult;
 use server_api::{S, app::GetConfig, create_open_api_router};
 use simple_backend::create_counters;
@@ -11,7 +11,7 @@ const PATH_POST_GET_CLIENT_FEATURES_CONFIG: &str = "/account_api/client_features
 #[utoipa::path(
     post,
     path = PATH_POST_GET_CLIENT_FEATURES_CONFIG,
-    request_body = ClientFeaturesFileHash,
+    request_body = ClientFeaturesConfigHash,
     responses(
         (status = 200, description = "Successfull.", body = GetClientFeaturesConfigResult),
         (status = 401, description = "Unauthorized."),
@@ -21,7 +21,7 @@ const PATH_POST_GET_CLIENT_FEATURES_CONFIG: &str = "/account_api/client_features
 )]
 pub async fn post_get_client_features_config(
     State(state): State<S>,
-    Json(requested_hash): Json<ClientFeaturesFileHash>,
+    Json(requested_hash): Json<ClientFeaturesConfigHash>,
 ) -> Result<Json<GetClientFeaturesConfigResult>, StatusCode> {
     ACCOUNT.post_get_client_features_config.incr();
 

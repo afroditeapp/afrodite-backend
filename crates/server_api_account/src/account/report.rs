@@ -1,5 +1,7 @@
 use axum::{Extension, extract::State};
-use model::{AccountIdInternal, AdminNotificationTypes, CustomReportsFileHash, UpdateReportResult};
+use model::{
+    AccountIdInternal, AdminNotificationTypes, CustomReportsConfigHash, UpdateReportResult,
+};
 use model_account::{GetCustomReportsConfigResult, UpdateCustomReportEmpty};
 use server_api::{
     S,
@@ -56,7 +58,7 @@ const PATH_POST_GET_CUSTOM_REPORTS_CONFIG: &str = "/account_api/custom_reports_c
 #[utoipa::path(
     post,
     path = PATH_POST_GET_CUSTOM_REPORTS_CONFIG,
-    request_body = CustomReportsFileHash,
+    request_body = CustomReportsConfigHash,
     responses(
         (status = 200, description = "Successfull.", body = GetCustomReportsConfigResult),
         (status = 401, description = "Unauthorized."),
@@ -66,7 +68,7 @@ const PATH_POST_GET_CUSTOM_REPORTS_CONFIG: &str = "/account_api/custom_reports_c
 )]
 pub async fn post_get_custom_reports_config(
     State(state): State<S>,
-    Json(requested_hash): Json<CustomReportsFileHash>,
+    Json(requested_hash): Json<CustomReportsConfigHash>,
 ) -> Result<Json<GetCustomReportsConfigResult>, StatusCode> {
     ACCOUNT.post_get_custom_reports_config.incr();
 

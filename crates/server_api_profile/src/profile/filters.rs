@@ -1,7 +1,7 @@
 use axum::{Extension, extract::State};
 use model_profile::{
-    AccountIdInternal, GetProfileFilters, ProfileAttributeQuery, ProfileAttributeQueryResult,
-    ProfileFiltersUpdate,
+    AccountIdInternal, GetProfileFilters, ProfileAttributesConfigQuery,
+    ProfileAttributesConfigQueryResult, ProfileFiltersUpdate,
 };
 use server_api::{S, create_open_api_router, db_write};
 use server_data::DataError;
@@ -14,29 +14,30 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-const PATH_POST_GET_QUERY_AVAILABLE_PROFILE_ATTRIBUTES: &str =
-    "/profile_api/query_available_profile_attributes";
+const PATH_POST_GET_QUERY_PROFILE_ATTRIBUTES_CONFIG: &str =
+    "/profile_api/query_profile_attributes_config";
 
-/// Query profile attributes using attribute ID list.
+/// Query profile attributes from profile attributes config
+/// using profile attribute ID list.
 ///
 /// The HTTP method is POST because HTTP GET does not allow request body.
 #[utoipa::path(
     post,
-    path = PATH_POST_GET_QUERY_AVAILABLE_PROFILE_ATTRIBUTES,
-    request_body = ProfileAttributeQuery,
+    path = PATH_POST_GET_QUERY_PROFILE_ATTRIBUTES_CONFIG,
+    request_body = ProfileAttributesConfigQuery,
     responses(
-        (status = 200, description = "Successfull.", body = ProfileAttributeQueryResult),
+        (status = 200, description = "Successfull.", body = ProfileAttributesConfigQueryResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_get_query_available_profile_attributes(
+pub async fn post_get_query_profile_attributes_config(
     State(state): State<S>,
-    Json(query): Json<ProfileAttributeQuery>,
-) -> Result<Json<ProfileAttributeQueryResult>, StatusCode> {
-    PROFILE.post_get_query_available_profile_attributes.incr();
-    let info = ProfileAttributeQueryResult {
+    Json(query): Json<ProfileAttributesConfigQuery>,
+) -> Result<Json<ProfileAttributesConfigQueryResult>, StatusCode> {
+    PROFILE.post_get_query_profile_attributes_config.incr();
+    let info = ProfileAttributesConfigQueryResult {
         values: state
             .config()
             .profile_attributes()
@@ -99,7 +100,7 @@ pub async fn post_profile_filters(
 
 create_open_api_router!(
         fn router_filters,
-        post_get_query_available_profile_attributes,
+        post_get_query_profile_attributes_config,
         get_profile_filters,
         post_profile_filters,
 );
@@ -108,7 +109,7 @@ create_counters!(
     ProfileCounters,
     PROFILE,
     PROFILE_FILTERS_COUNTERS_LIST,
-    post_get_query_available_profile_attributes,
+    post_get_query_profile_attributes_config,
     get_profile_filters,
     post_profile_filters,
 );

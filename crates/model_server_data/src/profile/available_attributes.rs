@@ -2,7 +2,8 @@ use std::{collections::HashSet, num::NonZeroU8, path::PathBuf, str::FromStr};
 
 use base64::Engine;
 use model::{
-    AttributeId, AttributeIdAndHash, AttributeOrderMode, ProfileAttributeHash, ProfileAttributeInfo,
+    AttributeHash, AttributeId, AttributeOrderMode, PartialProfileAttributesConfig,
+    ProfileAttributeInfo,
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -654,8 +655,8 @@ pub struct ProfileAttributesInternal {
     ///
     /// Attributes are sorted by Attribute ID.
     /// Indexing with the ID is not possible as ID values start from 1.
-    attributes: Vec<(Attribute, ProfileAttributeHash)>,
-    info: ProfileAttributeInfo,
+    attributes: Vec<(Attribute, AttributeHash)>,
+    config: PartialProfileAttributesConfig,
 }
 
 impl ProfileAttributesInternal {
@@ -663,10 +664,7 @@ impl ProfileAttributesInternal {
         self.get_attribute_and_hash(id).map(|v| &v.0)
     }
 
-    fn get_attribute_and_hash(
-        &self,
-        id: AttributeId,
-    ) -> Option<&(Attribute, ProfileAttributeHash)> {
+    fn get_attribute_and_hash(&self, id: AttributeId) -> Option<&(Attribute, AttributeHash)> {
         self.attributes.get(id.to_usize().saturating_sub(1))
     }
 
@@ -694,7 +692,7 @@ impl ProfileAttributesInternal {
                 translations: info.translations,
             };
             let hash = a.hash()?;
-            let id_and_hash = AttributeIdAndHash {
+            let id_and_hash = ProfileAttributeInfo {
                 id: a.id,
                 h: hash.clone(),
             };
@@ -703,32 +701,32 @@ impl ProfileAttributesInternal {
         }
         Ok(Self {
             attributes,
-            info: ProfileAttributeInfo {
+            config: PartialProfileAttributesConfig {
                 attribute_order,
                 attributes: attributes_for_info,
             },
         })
     }
 
-    pub fn info_for_client(&self) -> &ProfileAttributeInfo {
-        &self.info
+    pub fn config_for_client(&self) -> &PartialProfileAttributesConfig {
+        &self.config
     }
 
-    pub fn query_attributes(&self, ids: Vec<AttributeId>) -> Vec<ProfileAttributeQueryItem> {
+    pub fn query_attributes(&self, ids: Vec<AttributeId>) -> Vec<ProfileAttributesConfigQueryItem> {
         ids.into_iter()
             .filter_map(|id| {
                 self.get_attribute_and_hash(id)
                     .cloned()
-                    .map(|(a, h)| ProfileAttributeQueryItem { a, h })
+                    .map(|(a, h)| ProfileAttributesConfigQueryItem { a, h })
             })
             .collect()
     }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct ProfileAttributeQueryItem {
+pub struct ProfileAttributesConfigQueryItem {
     pub a: Attribute,
-    pub h: ProfileAttributeHash,
+    pub h: AttributeHash,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -779,7 +777,7 @@ pub struct Attribute {
 }
 
 impl Attribute {
-    pub fn hash(&self) -> Result<ProfileAttributeHash, String> {
+    pub fn hash(&self) -> Result<AttributeHash, String> {
         let attribute_json = serde_json::to_string(self).map_err(|e| e.to_string())?;
 
         let mut hasher = Sha256::new();
@@ -788,6 +786,6 @@ impl Attribute {
 
         let h = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(result);
 
-        Ok(ProfileAttributeHash::new(h))
+        Ok(AttributeHash::new(h))
     }
 }

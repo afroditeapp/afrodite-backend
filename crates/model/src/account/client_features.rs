@@ -5,11 +5,11 @@ use simple_backend_utils::time::UtcTimeValue;
 use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct ClientFeaturesFileHash {
+pub struct ClientFeaturesConfigHash {
     h: String,
 }
 
-impl ClientFeaturesFileHash {
+impl ClientFeaturesConfigHash {
     pub fn new(h: String) -> Self {
         Self { h }
     }
