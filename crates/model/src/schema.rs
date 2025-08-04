@@ -650,10 +650,6 @@ diesel::table! {
         account_id -> Integer,
         profile_string_moderation -> Bool,
         automatic_profile_search -> Bool,
-        automatic_profile_search_new_profiles -> Bool,
-        automatic_profile_search_attribute_filters -> Bool,
-        automatic_profile_search_distance_filters -> Bool,
-        automatic_profile_search_weekdays -> Integer,
     }
 }
 
@@ -720,6 +716,18 @@ diesel::table! {
         account_id -> Integer,
         attribute_id -> Integer,
         attribute_value -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    profile_automatic_profile_search_settings (account_id) {
+        account_id -> Integer,
+        new_profiles -> Bool,
+        attribute_filters -> Bool,
+        distance_filters -> Bool,
+        weekdays -> Integer,
     }
 }
 
@@ -905,6 +913,7 @@ diesel::joinable!(profile_attributes_filter_list_unwanted -> account_id (account
 diesel::joinable!(profile_attributes_filter_list_wanted -> account_id (account_id));
 diesel::joinable!(profile_attributes_filter_settings -> account_id (account_id));
 diesel::joinable!(profile_attributes_value_list -> account_id (account_id));
+diesel::joinable!(profile_automatic_profile_search_settings -> account_id (account_id));
 diesel::joinable!(profile_automatic_profile_search_state -> account_id (account_id));
 diesel::joinable!(profile_report_profile_name -> common_report (report_id));
 diesel::joinable!(profile_report_profile_text -> common_report (report_id));
@@ -975,6 +984,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     profile_attributes_filter_list_wanted,
     profile_attributes_filter_settings,
     profile_attributes_value_list,
+    profile_automatic_profile_search_settings,
     profile_automatic_profile_search_state,
     profile_moderation,
     profile_name_allowlist,

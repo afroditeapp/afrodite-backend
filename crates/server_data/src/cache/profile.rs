@@ -7,7 +7,7 @@ use model::{
 };
 use model_server_data::{
     AtomicLastSeenTime, AutomaticProfileSearchIteratorSessionIdInternal,
-    AutomaticProfileSearchLastSeenUnixTime, LastSeenUnixTime, ProfileAppNotificationSettings,
+    AutomaticProfileSearchLastSeenUnixTime, AutomaticProfileSearchSettings, LastSeenUnixTime,
     ProfileAttributeFilterValue, ProfileAttributeValue, ProfileCreatedTimeFilter,
     ProfileEditedTimeFilter, ProfileInternal, ProfileIteratorSessionIdInternal,
     ProfileNameModerationState, ProfileQueryMakerDetails, ProfileStateCached,
@@ -31,7 +31,7 @@ pub struct CacheProfile {
     last_seen_time: Arc<AtomicLastSeenTime>,
     pub profile_iterator_session_id: Option<ProfileIteratorSessionIdInternal>,
     pub profile_iterator_session_id_storage: NextNumberStorage,
-    pub automatic_profile_search: AutomaticProifleSearch,
+    pub automatic_profile_search: AutomaticProfileSearch,
     profile_name_moderation_state: Option<ProfileNameModerationState>,
     profile_text_character_count: ProfileTextCharacterCount,
     profile_text_moderation_state: Option<ProfileTextModerationState>,
@@ -47,6 +47,7 @@ impl CacheProfile {
         attribute_filters: Vec<ProfileAttributeFilterValue>,
         last_seen_time: LastSeenUnixTime,
         automatic_profile_search_last_seen_time: Option<AutomaticProfileSearchLastSeenUnixTime>,
+        automatic_profile_search_settings: AutomaticProfileSearchSettings,
         profile_name_moderation_state: Option<ProfileNameModerationState>,
         profile_text_moderation_state: Option<ProfileTextModerationState>,
     ) -> Self {
@@ -61,8 +62,9 @@ impl CacheProfile {
             last_seen_time: AtomicLastSeenTime::new(last_seen_time).into(),
             profile_iterator_session_id: None,
             profile_iterator_session_id_storage: NextNumberStorage::default(),
-            automatic_profile_search: AutomaticProifleSearch::new(
+            automatic_profile_search: AutomaticProfileSearch::new(
                 automatic_profile_search_last_seen_time,
+                automatic_profile_search_settings,
             ),
             profile_name_moderation_state,
             profile_text_moderation_state,
@@ -94,15 +96,12 @@ impl CacheProfile {
         ProfileQueryMakerDetails::new(&self.data, &self.state, self.attribute_filters.clone())
     }
 
-    pub fn automatic_profile_search_filters(
-        &self,
-        settings: &ProfileAppNotificationSettings,
-    ) -> ProfileQueryMakerDetails {
+    pub fn automatic_profile_search_filters(&self) -> ProfileQueryMakerDetails {
         ProfileQueryMakerDetails::new_for_automatic_profile_search(
             &self.data,
             &self.state,
             &self.attribute_filters,
-            settings,
+            self.automatic_profile_search.settings(),
             || self.automatic_profile_search.profile_created_time_filter(),
             || self.automatic_profile_search.profile_edited_time_filter(),
         )
@@ -185,22 +184,27 @@ impl<I: InternalWriting> UpdateLocationCacheState for I {
 }
 
 #[derive(Debug)]
-pub struct AutomaticProifleSearch {
+pub struct AutomaticProfileSearch {
     pub current_iterator: LocationIndexIteratorState,
     pub iterator_session_id: Option<AutomaticProfileSearchIteratorSessionIdInternal>,
     pub iterator_session_id_storage: NextNumberStorage,
     last_seen_unix_time: Option<AutomaticProfileSearchLastSeenUnixTime>,
     pub notification: AutomaticProfileSearchCompletedNotification,
+    settings: AutomaticProfileSearchSettings,
 }
 
-impl AutomaticProifleSearch {
-    fn new(last_seen_unix_time: Option<AutomaticProfileSearchLastSeenUnixTime>) -> Self {
+impl AutomaticProfileSearch {
+    fn new(
+        last_seen_unix_time: Option<AutomaticProfileSearchLastSeenUnixTime>,
+        settings: AutomaticProfileSearchSettings,
+    ) -> Self {
         Self {
             current_iterator: LocationIndexIteratorState::completed(),
             iterator_session_id: None,
             iterator_session_id_storage: NextNumberStorage::default(),
             last_seen_unix_time,
             notification: AutomaticProfileSearchCompletedNotification::default(),
+            settings,
         }
     }
 
@@ -230,5 +234,13 @@ impl AutomaticProifleSearch {
 
     pub fn update_last_seen_unix_time(&mut self, time: AutomaticProfileSearchLastSeenUnixTime) {
         self.last_seen_unix_time = Some(time);
+    }
+
+    pub fn settings(&self) -> &AutomaticProfileSearchSettings {
+        &self.settings
+    }
+
+    pub fn update_settings(&mut self, value: AutomaticProfileSearchSettings) {
+        self.settings = value;
     }
 }

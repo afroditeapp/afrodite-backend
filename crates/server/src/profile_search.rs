@@ -159,8 +159,8 @@ impl ProfileSearchManager {
             .state
             .read()
             .profile()
-            .notification()
-            .chat_app_notification_settings(account)
+            .search()
+            .automatic_profile_search_settings(account)
             .await
             .change_context(ProfileSearchError::DatabaseError)?;
 
@@ -173,7 +173,7 @@ impl ProfileSearchManager {
             Weekday::Sat => WeekdayFlags::SATURDAY,
             Weekday::Sun => WeekdayFlags::SUNDAY,
         };
-        let selected_weekdays: WeekdayFlags = settings.automatic_profile_search_weekdays.into();
+        let selected_weekdays: WeekdayFlags = settings.weekdays.into();
         if !selected_weekdays.contains(current_weekday) {
             return Ok(());
         }

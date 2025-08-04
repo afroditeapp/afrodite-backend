@@ -195,6 +195,13 @@ impl DbDataToCacheLoader {
                         .automatic_profile_search_last_seen_time(account_id)
                 })
                 .await?;
+            let automatic_profile_search_settings = db
+                .db_read(move |mut cmds| {
+                    cmds.profile_admin()
+                        .search()
+                        .automatic_profile_search_settings(account_id)
+                })
+                .await?;
             let profile_name_moderation_state = db
                 .db_read(move |mut cmds| {
                     cmds.profile()
@@ -218,6 +225,7 @@ impl DbDataToCacheLoader {
                 filters,
                 last_seen_unix_time,
                 automatic_profile_search_last_seen_time,
+                automatic_profile_search_settings,
                 profile_name_moderation_state,
                 profile_text_moderation_state,
             );

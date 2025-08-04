@@ -18,7 +18,7 @@ use super::{
     SearchGroupFlagsFilter, SortedProfileAttributes,
 };
 use crate::{
-    LastSeenTime, LastSeenUnixTime, ProfileAppNotificationSettings, ProfileContentEditedTime,
+    AutomaticProfileSearchSettings, LastSeenTime, LastSeenUnixTime, ProfileContentEditedTime,
     ProfileLink,
 };
 
@@ -63,7 +63,7 @@ impl ProfileQueryMakerDetails {
         profile: &ProfileInternal,
         state: &ProfileStateCached,
         attribute_filters: &[ProfileAttributeFilterValue],
-        settings: &ProfileAppNotificationSettings,
+        settings: &AutomaticProfileSearchSettings,
         profile_created_time_filter: impl FnOnce() -> Option<ProfileCreatedTimeFilter>,
         profile_edited_time_filter: impl FnOnce() -> Option<ProfileEditedTimeFilter>,
     ) -> Self {
@@ -74,19 +74,19 @@ impl ProfileQueryMakerDetails {
                 state.search_age_range_max,
             ),
             search_groups_filter: state.search_group_flags.to_filter(),
-            attribute_filters: if settings.automatic_profile_search_attribute_filters {
+            attribute_filters: if settings.attribute_filters {
                 attribute_filters.to_vec()
             } else {
                 vec![]
             },
             last_seen_time_filter: None,
             unlimited_likes_filter: None,
-            profile_created_time_filter: if settings.automatic_profile_search_new_profiles {
+            profile_created_time_filter: if settings.new_profiles {
                 profile_created_time_filter()
             } else {
                 None
             },
-            profile_edited_time_filter: if settings.automatic_profile_search_new_profiles {
+            profile_edited_time_filter: if settings.new_profiles {
                 None
             } else {
                 profile_edited_time_filter()

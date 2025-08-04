@@ -439,7 +439,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
                 let p = e.profile.as_ref().ok_or(CacheError::FeatureNotEnabled)?;
                 error_stack::Result::<_, CacheError>::Ok((
                     p.automatic_profile_search.current_iterator.clone(),
-                    p.automatic_profile_search_filters(&e.common.app_notification_settings.profile),
+                    p.automatic_profile_search_filters(),
                     p.automatic_profile_search.iterator_session_id,
                 ))
             })
@@ -494,12 +494,9 @@ impl<'a> WriteCommandsConcurrent<'a> {
     ) -> Result<AutomaticProfileSearchIteratorSessionIdInternal, DataError> {
         self.cache
             .write_cache_blocking(id.as_id(), |e| {
-                let distance_filters_enabled = e
-                    .common
-                    .app_notification_settings
-                    .profile
-                    .automatic_profile_search_distance_filters;
                 let p = e.profile_data_mut()?;
+                let distance_filters_enabled =
+                    p.automatic_profile_search.settings().distance_filters;
                 let new_id = AutomaticProfileSearchIteratorSessionIdInternal::create(
                     &mut p.automatic_profile_search.iterator_session_id_storage,
                 );

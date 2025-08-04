@@ -5,6 +5,7 @@ mod favorite;
 mod moderation;
 mod notification;
 mod report;
+mod search;
 
 define_current_write_commands!(CurrentWriteProfile);
 
@@ -27,5 +28,9 @@ impl<'a> CurrentWriteProfile<'a> {
 
     pub fn notification(self) -> notification::CurrentWriteProfileNotification<'a> {
         notification::CurrentWriteProfileNotification::new(self.cmds)
+    }
+
+    pub fn search(self) -> search::CurrentWriteProfileSearch<'a> {
+        search::CurrentWriteProfileSearch::new(self.cmds)
     }
 }

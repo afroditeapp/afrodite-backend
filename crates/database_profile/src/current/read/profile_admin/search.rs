@@ -2,7 +2,7 @@ use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
 use model::AccountIdInternal;
-use model_profile::AutomaticProfileSearchLastSeenUnixTime;
+use model_profile::{AutomaticProfileSearchLastSeenUnixTime, AutomaticProfileSearchSettings};
 
 use crate::IntoDatabaseError;
 
@@ -23,5 +23,21 @@ impl CurrentReadProfileAdminSearch<'_> {
             .into_db_error(())?;
 
         Ok(query_result)
+    }
+
+    pub fn automatic_profile_search_settings(
+        &mut self,
+        account_id_value: AccountIdInternal,
+    ) -> Result<AutomaticProfileSearchSettings, DieselDatabaseError> {
+        use crate::schema::profile_automatic_profile_search_settings::dsl::*;
+
+        let query_result = profile_automatic_profile_search_settings
+            .filter(account_id.eq(account_id_value.as_db_id()))
+            .select(AutomaticProfileSearchSettings::as_select())
+            .first(self.conn())
+            .optional()
+            .into_db_error(())?;
+
+        Ok(query_result.unwrap_or_default())
     }
 }
