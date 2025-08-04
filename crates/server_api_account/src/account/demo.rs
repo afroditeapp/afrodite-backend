@@ -1,4 +1,7 @@
-use std::{net::SocketAddr, time::Duration};
+use std::{
+    net::SocketAddr,
+    time::{Duration, Instant},
+};
 
 use axum::extract::{ConnectInfo, State};
 use model_account::{
@@ -45,8 +48,11 @@ pub async fn post_demo_account_login(
     Json(credentials): Json<DemoAccountLoginCredentials>,
 ) -> Result<Json<DemoAccountLoginResult>, StatusCode> {
     ACCOUNT.post_demo_account_login.incr();
-    tokio::time::sleep(Duration::from_secs(1)).await;
+
+    let wait_until = Instant::now() + Duration::from_secs(1);
     let result = state.demo().login(credentials).await;
+    tokio::time::sleep_until(wait_until.into()).await;
+
     Ok(result.into())
 }
 
