@@ -5,8 +5,8 @@ use axum::{
 use model::AdminNotificationTypes;
 use model_profile::{
     AccountId, AccountIdInternal, AccountState, GetInitialProfileAgeInfoResult, GetMyProfileResult,
-    GetProfileQueryParam, GetProfileResult, Permissions, ProfileSearchAgeRange,
-    ProfileSearchAgeRangeValidated, ProfileUpdate, SearchGroups, ValidatedSearchGroups,
+    GetProfileQueryParam, GetProfileResult, Permissions, ProfileUpdate, SearchAgeRange,
+    SearchAgeRangeValidated, SearchGroups, ValidatedSearchGroups,
 };
 use server_api::{
     S,
@@ -285,7 +285,7 @@ const PATH_GET_SEARCH_AGE_RANGE: &str = "/profile_api/search_age_range";
     get,
     path = PATH_GET_SEARCH_AGE_RANGE,
     responses(
-        (status = 200, description = "Successful.", body = ProfileSearchAgeRange),
+        (status = 200, description = "Successful.", body = SearchAgeRange),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -294,7 +294,7 @@ const PATH_GET_SEARCH_AGE_RANGE: &str = "/profile_api/search_age_range";
 pub async fn get_search_age_range(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-) -> Result<Json<ProfileSearchAgeRange>, StatusCode> {
+) -> Result<Json<SearchAgeRange>, StatusCode> {
     PROFILE.get_search_age_range.incr();
     let profile_state = state.read().profile().profile_state(account_id).await?;
     Ok(Json(profile_state.into()))
@@ -306,7 +306,7 @@ const PATH_POST_SEARCH_AGE_RANGE: &str = "/profile_api/search_age_range";
 #[utoipa::path(
     post,
     path = PATH_POST_SEARCH_AGE_RANGE,
-    request_body = ProfileSearchAgeRange,
+    request_body = SearchAgeRange,
     responses(
         (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
@@ -317,11 +317,11 @@ const PATH_POST_SEARCH_AGE_RANGE: &str = "/profile_api/search_age_range";
 pub async fn post_search_age_range(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-    Json(search_age_range): Json<ProfileSearchAgeRange>,
+    Json(search_age_range): Json<SearchAgeRange>,
 ) -> Result<(), StatusCode> {
     PROFILE.post_search_age_range.incr();
 
-    let validated: ProfileSearchAgeRangeValidated = search_age_range
+    let validated: SearchAgeRangeValidated = search_age_range
         .try_into()
         .into_error_string(DataError::NotAllowed)?;
 

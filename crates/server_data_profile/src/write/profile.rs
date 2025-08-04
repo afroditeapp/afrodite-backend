@@ -2,8 +2,8 @@ use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommands
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
     AccountIdInternal, AutomaticProfileSearchLastSeenUnixTime, LastSeenUnixTime, Location,
-    ProfileFiltersUpdateValidated, ProfileModificationMetadata, ProfileSearchAgeRangeValidated,
-    ProfileStateInternal, ProfileUpdateValidated, ValidatedSearchGroups,
+    ProfileFiltersUpdateValidated, ProfileModificationMetadata, ProfileStateInternal,
+    ProfileUpdateValidated, SearchAgeRangeValidated, ValidatedSearchGroups,
 };
 use server_data::{
     DataError, IntoDataError, app::GetConfig, cache::profile::UpdateLocationCacheState,
@@ -315,7 +315,7 @@ impl WriteCommandsProfile<'_> {
     pub async fn update_search_age_range(
         &self,
         id: AccountIdInternal,
-        range: ProfileSearchAgeRangeValidated,
+        range: SearchAgeRangeValidated,
     ) -> Result<(), DataError> {
         self.modify_profile_state(id, |s| {
             s.search_age_range_min = range.min();

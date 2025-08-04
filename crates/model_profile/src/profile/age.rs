@@ -1,18 +1,18 @@
-use model_server_data::ProfileSearchAgeRangeValidated;
+use model_server_data::SearchAgeRangeValidated;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::ProfileStateInternal;
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
-pub struct ProfileSearchAgeRange {
+pub struct SearchAgeRange {
     /// Min value for this field is 18.
     pub min: u8,
     /// Max value for this field is 99.
     pub max: u8,
 }
 
-impl From<ProfileStateInternal> for ProfileSearchAgeRange {
+impl From<ProfileStateInternal> for SearchAgeRange {
     fn from(value: ProfileStateInternal) -> Self {
         Self {
             min: value.search_age_range_min.value(),
@@ -21,10 +21,10 @@ impl From<ProfileStateInternal> for ProfileSearchAgeRange {
     }
 }
 
-impl TryFrom<ProfileSearchAgeRange> for ProfileSearchAgeRangeValidated {
+impl TryFrom<SearchAgeRange> for SearchAgeRangeValidated {
     type Error = String;
 
-    fn try_from(value: ProfileSearchAgeRange) -> Result<Self, Self::Error> {
+    fn try_from(value: SearchAgeRange) -> Result<Self, Self::Error> {
         if value.min > value.max {
             Err("Min value must be less than or equal to max value".to_string())
         } else {

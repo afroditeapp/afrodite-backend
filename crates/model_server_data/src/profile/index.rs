@@ -13,8 +13,8 @@ use simple_backend_model::UnixTime;
 use super::{
     LastSeenTimeFilter, ProfileAttributeFilterValue, ProfileAttributesInternal,
     ProfileCreatedTimeFilter, ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal,
-    ProfileSearchAgeRangeValidated, ProfileStateCached, ProfileTextCharacterCount,
-    ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter, SearchGroupFlags,
+    ProfileStateCached, ProfileTextCharacterCount, ProfileTextMaxCharactersFilter,
+    ProfileTextMinCharactersFilter, SearchAgeRangeValidated, SearchGroupFlags,
     SearchGroupFlagsFilter, SortedProfileAttributes,
 };
 use crate::{
@@ -25,7 +25,7 @@ use crate::{
 #[derive(Debug)]
 pub struct ProfileQueryMakerDetails {
     pub age: ProfileAge,
-    pub search_age_range: ProfileSearchAgeRangeValidated,
+    pub search_age_range: SearchAgeRangeValidated,
     pub search_groups_filter: SearchGroupFlagsFilter,
     pub attribute_filters: Vec<ProfileAttributeFilterValue>,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
@@ -44,7 +44,7 @@ impl ProfileQueryMakerDetails {
     ) -> Self {
         Self {
             age: profile.age,
-            search_age_range: ProfileSearchAgeRangeValidated::new(
+            search_age_range: SearchAgeRangeValidated::new(
                 state.search_age_range_min,
                 state.search_age_range_max,
             ),
@@ -69,7 +69,7 @@ impl ProfileQueryMakerDetails {
     ) -> Self {
         Self {
             age: profile.age,
-            search_age_range: ProfileSearchAgeRangeValidated::new(
+            search_age_range: SearchAgeRangeValidated::new(
                 state.search_age_range_min,
                 state.search_age_range_max,
             ),
@@ -141,7 +141,7 @@ pub struct LocationIndexProfileData {
     /// Simple profile information for client.
     profile_link: ProfileLink,
     age: ProfileAge,
-    search_age_range: ProfileSearchAgeRangeValidated,
+    search_age_range: SearchAgeRangeValidated,
     search_groups: SearchGroupFlags,
     attributes: SortedProfileAttributes,
     unlimited_likes: bool,
@@ -170,7 +170,7 @@ impl LocationIndexProfileData {
         Self {
             profile_link: ProfileLink::new(id, profile.version_uuid, profile_content_version, None),
             age: profile.age,
-            search_age_range: ProfileSearchAgeRangeValidated::new(
+            search_age_range: SearchAgeRangeValidated::new(
                 state.search_age_range_min,
                 state.search_age_range_max,
             ),

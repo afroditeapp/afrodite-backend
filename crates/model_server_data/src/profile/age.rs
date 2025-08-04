@@ -3,12 +3,12 @@ use model::ProfileAge;
 /// Profile search age range which min and max are in
 /// inclusive range of `[18, 99]`.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct ProfileSearchAgeRangeValidated {
+pub struct SearchAgeRangeValidated {
     min: ProfileAge,
     max: ProfileAge,
 }
 
-impl ProfileSearchAgeRangeValidated {
+impl SearchAgeRangeValidated {
     /// New range from two values. Automatically orders the values.
     pub fn new(value1: ProfileAge, value2: ProfileAge) -> Self {
         if value1.value() <= value2.value() {
