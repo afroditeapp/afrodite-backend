@@ -59,8 +59,7 @@ impl IpCountryTracker {
         };
         let country = db.get_country_ref(ip).unwrap_or("unknown");
 
-        let r = self.state.read().await;
-        if let Some(c) = r.data.get(country) {
+        if let Some(c) = self.state.read().await.data.get(country) {
             action(c);
             return;
         }
