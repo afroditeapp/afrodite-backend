@@ -12,7 +12,7 @@ use crate::{LastSeenTimeFilter, ProfileAttributesInternal};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileFiltersUpdate {
-    filters: Vec<ProfileAttributeFilterValueUpdate>,
+    attribute_filters: Vec<ProfileAttributeFilterValueUpdate>,
     last_seen_time_filter: Option<LastSeenTimeFilter>,
     unlimited_likes_filter: Option<bool>,
     min_distance_km_filter: Option<MinDistanceKm>,
@@ -32,7 +32,7 @@ impl ProfileFiltersUpdate {
         attribute_info: Option<&ProfileAttributesInternal>,
     ) -> Result<ProfileFiltersUpdateValidated, String> {
         let mut hash_set = HashSet::new();
-        for a in &self.filters {
+        for a in &self.attribute_filters {
             if !hash_set.insert(a.id) {
                 return Err("Duplicate attribute ID".to_string());
             }
@@ -102,7 +102,7 @@ impl ProfileFiltersUpdate {
         }
 
         Ok(ProfileFiltersUpdateValidated {
-            filters: self.filters,
+            attribute_filters: self.attribute_filters,
             last_seen_time_filter: self.last_seen_time_filter,
             unlimited_likes_filter: self.unlimited_likes_filter,
             min_distance_km_filter: self.min_distance_km_filter,
@@ -118,7 +118,7 @@ impl ProfileFiltersUpdate {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProfileFiltersUpdateValidated {
-    pub filters: Vec<ProfileAttributeFilterValueUpdate>,
+    pub attribute_filters: Vec<ProfileAttributeFilterValueUpdate>,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
     pub min_distance_km_filter: Option<MinDistanceKm>,
@@ -170,7 +170,7 @@ pub struct ProfileAttributeFilterValueUpdate {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct GetProfileFilters {
-    pub filters: Vec<ProfileAttributeFilterValue>,
+    pub attribute_filters: Vec<ProfileAttributeFilterValue>,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
     /// Show profiles starting this far from current location. The value

@@ -103,7 +103,7 @@ impl ReadCommandsProfile<'_> {
             let filters = cmds.profile().data().profile_attribute_filters(id)?;
             let state = cmds.profile().data().profile_state(id)?;
             Ok(GetProfileFilters {
-                filters,
+                attribute_filters: filters,
                 last_seen_time_filter: state.last_seen_time_filter,
                 unlimited_likes_filter: state.unlimited_likes_filter,
                 min_distance_km_filter: state.min_distance_km_filter,

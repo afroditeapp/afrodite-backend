@@ -245,7 +245,7 @@ impl CurrentWriteProfileData<'_> {
             .execute(self.conn())
             .into_db_error(())?;
 
-        self.upsert_profile_attribute_filters(id, filters.filters)?;
+        self.upsert_profile_attribute_filters(id, filters.attribute_filters)?;
 
         Ok(())
     }

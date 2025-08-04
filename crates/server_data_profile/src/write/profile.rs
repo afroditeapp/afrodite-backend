@@ -202,7 +202,7 @@ impl WriteCommandsProfile<'_> {
         })?;
 
         self.write_cache_profile(id.as_id(), |p| {
-            p.filters = new_filters;
+            p.attribute_filters = new_filters;
             p.state.last_seen_time_filter = filters.last_seen_time_filter;
             p.state.unlimited_likes_filter = filters.unlimited_likes_filter;
             p.state.min_distance_km_filter = filters.min_distance_km_filter;

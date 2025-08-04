@@ -27,7 +27,7 @@ pub struct CacheProfile {
     pub state: ProfileStateCached,
     pub location: LocationData,
     pub attributes: SortedProfileAttributes,
-    pub filters: Vec<ProfileAttributeFilterValue>,
+    pub attribute_filters: Vec<ProfileAttributeFilterValue>,
     last_seen_time: Arc<AtomicLastSeenTime>,
     pub profile_iterator_session_id: Option<ProfileIteratorSessionIdInternal>,
     pub profile_iterator_session_id_storage: NextNumberStorage,
@@ -44,7 +44,7 @@ impl CacheProfile {
         data: ProfileInternal,
         state: ProfileStateCached,
         attributes: Vec<ProfileAttributeValue>,
-        filters: Vec<ProfileAttributeFilterValue>,
+        attribute_filters: Vec<ProfileAttributeFilterValue>,
         last_seen_time: LastSeenUnixTime,
         automatic_profile_search_last_seen_time: Option<AutomaticProfileSearchLastSeenUnixTime>,
         profile_name_moderation_state: Option<ProfileNameModerationState>,
@@ -57,7 +57,7 @@ impl CacheProfile {
             state,
             location: LocationData::default(),
             attributes: SortedProfileAttributes::new(attributes),
-            filters,
+            attribute_filters,
             last_seen_time: AtomicLastSeenTime::new(last_seen_time).into(),
             profile_iterator_session_id: None,
             profile_iterator_session_id_storage: NextNumberStorage::default(),
@@ -91,7 +91,7 @@ impl CacheProfile {
     }
 
     pub fn filters(&self) -> ProfileQueryMakerDetails {
-        ProfileQueryMakerDetails::new(&self.data, &self.state, self.filters.clone())
+        ProfileQueryMakerDetails::new(&self.data, &self.state, self.attribute_filters.clone())
     }
 
     pub fn automatic_profile_search_filters(
@@ -101,7 +101,7 @@ impl CacheProfile {
         ProfileQueryMakerDetails::new_for_automatic_profile_search(
             &self.data,
             &self.state,
-            &self.filters,
+            &self.attribute_filters,
             settings,
             || self.automatic_profile_search.profile_created_time_filter(),
             || self.automatic_profile_search.profile_edited_time_filter(),
