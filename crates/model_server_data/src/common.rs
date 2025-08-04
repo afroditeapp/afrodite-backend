@@ -45,7 +45,7 @@ impl Default for AccountAppNotificationSettings {
 #[diesel(table_name = crate::schema::profile_app_notification_settings)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct ProfileAppNotificationSettings {
-    pub profile_text_moderation: bool,
+    pub profile_string_moderation: bool,
     pub automatic_profile_search: bool,
     pub automatic_profile_search_new_profiles: bool,
     pub automatic_profile_search_attribute_filters: bool,
@@ -56,7 +56,7 @@ pub struct ProfileAppNotificationSettings {
 impl Default for ProfileAppNotificationSettings {
     fn default() -> Self {
         Self {
-            profile_text_moderation: true,
+            profile_string_moderation: true,
             automatic_profile_search: true,
             automatic_profile_search_new_profiles: false,
             automatic_profile_search_attribute_filters: false,
@@ -138,7 +138,7 @@ impl AppNotificationSettingsInternal {
                 self.media.media_content_moderation
             }
             NotificationEvent::ProfileStringModerationCompleted => {
-                self.profile.profile_text_moderation
+                self.profile.profile_string_moderation
             }
             NotificationEvent::AutomaticProfileSearchCompleted => {
                 self.profile.automatic_profile_search

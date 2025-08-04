@@ -1,8 +1,7 @@
 use database_profile::current::read::GetDbReadCommandsProfile;
 use model_profile::{
-    InitialProfileAge, AccountIdInternal, GetMyProfileResult, GetProfileFilters,
-    LastSeenUnixTime, Location, Profile, ProfileAndProfileVersion, ProfileInternal,
-    ProfileStateInternal,
+    AccountIdInternal, GetMyProfileResult, GetProfileFilters, InitialProfileAge, LastSeenUnixTime,
+    Location, Profile, ProfileAndProfileVersion, ProfileInternal, ProfileStateInternal,
 };
 use server_data::{
     DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead, result::Result,

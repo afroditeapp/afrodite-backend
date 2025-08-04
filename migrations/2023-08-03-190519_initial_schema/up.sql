@@ -556,7 +556,7 @@ CREATE TABLE IF NOT EXISTS profile_report_profile_text(
 
 CREATE TABLE IF NOT EXISTS profile_app_notification_settings(
     account_id                                 INTEGER PRIMARY KEY NOT NULL,
-    profile_text_moderation                    BOOLEAN             NOT NULL,
+    profile_string_moderation                  BOOLEAN             NOT NULL,
     automatic_profile_search                   BOOLEAN             NOT NULL,
     automatic_profile_search_new_profiles      BOOLEAN             NOT NULL,
     automatic_profile_search_attribute_filters BOOLEAN             NOT NULL,

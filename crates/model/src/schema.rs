@@ -648,7 +648,7 @@ diesel::table! {
 
     profile_app_notification_settings (account_id) {
         account_id -> Integer,
-        profile_text_moderation -> Bool,
+        profile_string_moderation -> Bool,
         automatic_profile_search -> Bool,
         automatic_profile_search_new_profiles -> Bool,
         automatic_profile_search_attribute_filters -> Bool,

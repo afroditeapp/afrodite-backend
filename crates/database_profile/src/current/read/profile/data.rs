@@ -6,7 +6,7 @@ use database::{
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model_profile::{
-    InitialProfileAge, AccountIdInternal, AttributeId, GetMyProfileResult, LastSeenTime,
+    AccountIdInternal, AttributeId, GetMyProfileResult, InitialProfileAge, LastSeenTime,
     LastSeenUnixTime, Location, Profile, ProfileAge, ProfileAttributeFilterValue,
     ProfileAttributeValue, ProfileInternal, ProfileStateInternal,
     ProfileStringModerationContentType, UnixTime,
