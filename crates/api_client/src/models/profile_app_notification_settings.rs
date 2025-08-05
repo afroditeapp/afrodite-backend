@@ -15,28 +15,15 @@ use serde::{Deserialize, Serialize};
 pub struct ProfileAppNotificationSettings {
     #[serde(rename = "automatic_profile_search")]
     pub automatic_profile_search: bool,
-    #[serde(rename = "automatic_profile_search_attribute_filters")]
-    pub automatic_profile_search_attribute_filters: bool,
-    #[serde(rename = "automatic_profile_search_distance_filters")]
-    pub automatic_profile_search_distance_filters: bool,
-    #[serde(rename = "automatic_profile_search_new_profiles")]
-    pub automatic_profile_search_new_profiles: bool,
-    /// Selected weekdays.  The integer is a bitflag.  - const MONDAY = 0x1; - const TUESDAY = 0x2; - const WEDNESDAY = 0x4; - const THURSDAY = 0x8; - const FRIDAY = 0x10; - const SATURDAY = 0x20; - const SUNDAY = 0x40; 
-    #[serde(rename = "automatic_profile_search_weekdays")]
-    pub automatic_profile_search_weekdays: i64,
-    #[serde(rename = "profile_text_moderation")]
-    pub profile_text_moderation: bool,
+    #[serde(rename = "profile_string_moderation")]
+    pub profile_string_moderation: bool,
 }
 
 impl ProfileAppNotificationSettings {
-    pub fn new(automatic_profile_search: bool, automatic_profile_search_attribute_filters: bool, automatic_profile_search_distance_filters: bool, automatic_profile_search_new_profiles: bool, automatic_profile_search_weekdays: i64, profile_text_moderation: bool) -> ProfileAppNotificationSettings {
+    pub fn new(automatic_profile_search: bool, profile_string_moderation: bool) -> ProfileAppNotificationSettings {
         ProfileAppNotificationSettings {
             automatic_profile_search,
-            automatic_profile_search_attribute_filters,
-            automatic_profile_search_distance_filters,
-            automatic_profile_search_new_profiles,
-            automatic_profile_search_weekdays,
-            profile_text_moderation,
+            profile_string_moderation,
         }
     }
 }

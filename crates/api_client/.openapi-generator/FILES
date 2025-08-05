@@ -15,7 +15,6 @@ src/apis/media_api.rs
 src/apis/mod.rs
 src/apis/profile_admin_api.rs
 src/apis/profile_api.rs
-src/models/accepted_profile_ages.rs
 src/models/access_token.rs
 src/models/accessible_account.rs
 src/models/account.rs
@@ -32,6 +31,7 @@ src/models/account_sync_version.rs
 src/models/add_public_key_result.rs
 src/models/admin_info.rs
 src/models/admin_notification.rs
+src/models/admin_notification_settings.rs
 src/models/api_usage_count.rs
 src/models/api_usage_statistics.rs
 src/models/attribute.rs
@@ -45,6 +45,7 @@ src/models/auth_pair.rs
 src/models/automatic_profile_search_completed_notification.rs
 src/models/automatic_profile_search_completed_notification_viewed.rs
 src/models/automatic_profile_search_iterator_session_id.rs
+src/models/automatic_profile_search_settings.rs
 src/models/backend_config.rs
 src/models/backend_version.rs
 src/models/boolean_setting.rs
@@ -109,7 +110,7 @@ src/models/get_client_version_statistics_result.rs
 src/models/get_client_version_statistics_settings.rs
 src/models/get_conversation_id.rs
 src/models/get_custom_reports_config_result.rs
-src/models/get_initial_profile_age_info_result.rs
+src/models/get_initial_profile_age_result.rs
 src/models/get_ip_address_statistics_result.rs
 src/models/get_ip_address_statistics_settings.rs
 src/models/get_ip_country_statistics_result.rs
@@ -132,6 +133,7 @@ src/models/get_report_list.rs
 src/models/get_sent_message.rs
 src/models/get_video_call_urls_result.rs
 src/models/group_values.rs
+src/models/initial_profile_age.rs
 src/models/ip_address_info.rs
 src/models/ip_country_statistics.rs
 src/models/ip_country_statistics_type.rs
@@ -220,7 +222,6 @@ src/models/profile_iterator_page_value.rs
 src/models/profile_iterator_session_id.rs
 src/models/profile_link.rs
 src/models/profile_page.rs
-src/models/profile_search_age_range.rs
 src/models/profile_statistics_history_value.rs
 src/models/profile_statistics_history_value_type.rs
 src/models/profile_string_moderation_completed_notification.rs
@@ -261,6 +262,7 @@ src/models/scheduled_maintenance_status.rs
 src/models/scheduled_task_status.rs
 src/models/scheduled_task_type.rs
 src/models/scheduled_task_type_value.rs
+src/models/search_age_range.rs
 src/models/search_groups.rs
 src/models/security_content.rs
 src/models/send_like_result.rs

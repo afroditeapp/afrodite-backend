@@ -24,6 +24,15 @@ pub enum DeleteFavoriteProfileError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_automatic_profile_search_settings`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetAutomaticProfileSearchSettingsError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_favorite_profiles`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -33,10 +42,10 @@ pub enum GetFavoriteProfilesError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_initial_profile_age_info`]
+/// struct for typed errors of method [`get_initial_profile_age`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum GetInitialProfileAgeInfoError {
+pub enum GetInitialProfileAgeError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -136,6 +145,15 @@ pub enum PostAutomaticProfileSearchGetNextProfilePageError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostAutomaticProfileSearchResetProfilePagingError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_automatic_profile_search_settings`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostAutomaticProfileSearchSettingsError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -331,6 +349,41 @@ pub async fn delete_favorite_profile(configuration: &configuration::Configuratio
     }
 }
 
+pub async fn get_automatic_profile_search_settings(configuration: &configuration::Configuration, ) -> Result<models::AutomaticProfileSearchSettings, Error<GetAutomaticProfileSearchSettingsError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/profile_api/automatic_profile_search_settings", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<GetAutomaticProfileSearchSettingsError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
 /// First item is the oldest favorite (ordered using UnixTime and account ID).
 pub async fn get_favorite_profiles(configuration: &configuration::Configuration, ) -> Result<models::FavoriteProfilesPage, Error<GetFavoriteProfilesError>> {
     let local_var_configuration = configuration;
@@ -367,12 +420,12 @@ pub async fn get_favorite_profiles(configuration: &configuration::Configuration,
     }
 }
 
-pub async fn get_initial_profile_age_info(configuration: &configuration::Configuration, ) -> Result<models::GetInitialProfileAgeInfoResult, Error<GetInitialProfileAgeInfoError>> {
+pub async fn get_initial_profile_age(configuration: &configuration::Configuration, ) -> Result<models::GetInitialProfileAgeResult, Error<GetInitialProfileAgeError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/profile_api/initial_profile_age_info", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/profile_api/initial_profile_age", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -396,7 +449,7 @@ pub async fn get_initial_profile_age_info(configuration: &configuration::Configu
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<GetInitialProfileAgeInfoError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<GetInitialProfileAgeError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
@@ -660,7 +713,7 @@ pub async fn get_profile_statistics(configuration: &configuration::Configuration
     }
 }
 
-pub async fn get_search_age_range(configuration: &configuration::Configuration, ) -> Result<models::ProfileSearchAgeRange, Error<GetSearchAgeRangeError>> {
+pub async fn get_search_age_range(configuration: &configuration::Configuration, ) -> Result<models::SearchAgeRange, Error<GetSearchAgeRangeError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -797,6 +850,42 @@ pub async fn post_automatic_profile_search_reset_profile_paging(configuration: &
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
         let local_var_entity: Option<PostAutomaticProfileSearchResetProfilePagingError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+pub async fn post_automatic_profile_search_settings(configuration: &configuration::Configuration, automatic_profile_search_settings: models::AutomaticProfileSearchSettings) -> Result<(), Error<PostAutomaticProfileSearchSettingsError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/profile_api/automatic_profile_search_settings", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+    local_var_req_builder = local_var_req_builder.json(&automatic_profile_search_settings);
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        Ok(())
+    } else {
+        let local_var_entity: Option<PostAutomaticProfileSearchSettingsError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
@@ -1308,7 +1397,7 @@ pub async fn post_reset_profile_paging(configuration: &configuration::Configurat
     }
 }
 
-pub async fn post_search_age_range(configuration: &configuration::Configuration, profile_search_age_range: models::ProfileSearchAgeRange) -> Result<(), Error<PostSearchAgeRangeError>> {
+pub async fn post_search_age_range(configuration: &configuration::Configuration, search_age_range: models::SearchAgeRange) -> Result<(), Error<PostSearchAgeRangeError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -1327,7 +1416,7 @@ pub async fn post_search_age_range(configuration: &configuration::Configuration,
         };
         local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
-    local_var_req_builder = local_var_req_builder.json(&profile_search_age_range);
+    local_var_req_builder = local_var_req_builder.json(&search_age_range);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;

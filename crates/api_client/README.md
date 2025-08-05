@@ -105,6 +105,7 @@ Class | Method | HTTP request | Description
 *CommonApi* | [**post_client_language**](docs/CommonApi.md#post_client_language) | **POST** /common_api/client_language | 
 *CommonApi* | [**post_get_pending_notification**](docs/CommonApi.md#post_get_pending_notification) | **POST** /common_api/get_pending_notification | Get pending notification and reset pending notification.
 *CommonApi* | [**post_set_device_token**](docs/CommonApi.md#post_set_device_token) | **POST** /common_api/set_device_token | 
+*CommonAdminApi* | [**get_admin_notification_settings**](docs/CommonAdminApi.md#get_admin_notification_settings) | **GET** /common_api/admin_notification_settings | Get admin notification settings.
 *CommonAdminApi* | [**get_admin_notification_subscriptions**](docs/CommonAdminApi.md#get_admin_notification_subscriptions) | **GET** /common_api/admin_notification_subscriptions | Get admin notification subscriptions.
 *CommonAdminApi* | [**get_backend_config**](docs/CommonAdminApi.md#get_backend_config) | **GET** /common_api/backend_config | Get dynamic backend config.
 *CommonAdminApi* | [**get_latest_report_iterator_start_position**](docs/CommonAdminApi.md#get_latest_report_iterator_start_position) | **GET** /common_api/latest_report_iterator_start_position | 
@@ -114,6 +115,7 @@ Class | Method | HTTP request | Description
 *CommonAdminApi* | [**get_software_update_status**](docs/CommonAdminApi.md#get_software_update_status) | **GET** /common_api/software_info | Get software version information from manager instance.
 *CommonAdminApi* | [**get_system_info**](docs/CommonAdminApi.md#get_system_info) | **GET** /common_api/system_info | Get system information from manager instance.
 *CommonAdminApi* | [**get_waiting_report_page**](docs/CommonAdminApi.md#get_waiting_report_page) | **GET** /common_api/waiting_report_page | 
+*CommonAdminApi* | [**post_admin_notification_settings**](docs/CommonAdminApi.md#post_admin_notification_settings) | **POST** /common_api/admin_notification_settings | Save admin notification settings.
 *CommonAdminApi* | [**post_admin_notification_subscriptions**](docs/CommonAdminApi.md#post_admin_notification_subscriptions) | **POST** /common_api/admin_notification_subscriptions | Save admin notification subscriptions.
 *CommonAdminApi* | [**post_backend_config**](docs/CommonAdminApi.md#post_backend_config) | **POST** /common_api/backend_config | Save dynamic backend config.
 *CommonAdminApi* | [**post_edit_maintenance_notification**](docs/CommonAdminApi.md#post_edit_maintenance_notification) | **POST** /common_api/edit_maintenance_notification | Edit maintenance notification
@@ -152,8 +154,9 @@ Class | Method | HTTP request | Description
 *MediaAdminApi* | [**post_media_content_face_detected_value**](docs/MediaAdminApi.md#post_media_content_face_detected_value) | **POST** /media_api/media_content_face_detected_value | Change media content face detected value
 *MediaAdminApi* | [**post_moderate_media_content**](docs/MediaAdminApi.md#post_moderate_media_content) | **POST** /media_api/moderate_media_content | Rejected category and details can be set only when the content is rejected.
 *ProfileApi* | [**delete_favorite_profile**](docs/ProfileApi.md#delete_favorite_profile) | **DELETE** /profile_api/favorite_profile | Delete favorite profile
+*ProfileApi* | [**get_automatic_profile_search_settings**](docs/ProfileApi.md#get_automatic_profile_search_settings) | **GET** /profile_api/automatic_profile_search_settings | 
 *ProfileApi* | [**get_favorite_profiles**](docs/ProfileApi.md#get_favorite_profiles) | **GET** /profile_api/favorite_profiles | Get list of all favorite profiles.
-*ProfileApi* | [**get_initial_profile_age_info**](docs/ProfileApi.md#get_initial_profile_age_info) | **GET** /profile_api/initial_profile_age_info | Get initial profile age information which can be used for calculating current accepted profile ages.
+*ProfileApi* | [**get_initial_profile_age**](docs/ProfileApi.md#get_initial_profile_age) | **GET** /profile_api/initial_profile_age | Get initial profile age which can be used for calculating current accepted profile ages.
 *ProfileApi* | [**get_location**](docs/ProfileApi.md#get_location) | **GET** /profile_api/location | Get location for account which makes this request.
 *ProfileApi* | [**get_my_profile**](docs/ProfileApi.md#get_my_profile) | **GET** /profile_api/my_profile | Get my profile
 *ProfileApi* | [**get_profile**](docs/ProfileApi.md#get_profile) | **GET** /profile_api/profile/{aid} | Get account's current profile.
@@ -165,6 +168,7 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**get_search_groups**](docs/ProfileApi.md#get_search_groups) | **GET** /profile_api/search_groups | Get account's current search groups (gender and what gender user is looking for)
 *ProfileApi* | [**post_automatic_profile_search_get_next_profile_page**](docs/ProfileApi.md#post_automatic_profile_search_get_next_profile_page) | **POST** /profile_api/automatic_profile_search/next | Post (updates iterator) to get next page of automatic profile search profile list.
 *ProfileApi* | [**post_automatic_profile_search_reset_profile_paging**](docs/ProfileApi.md#post_automatic_profile_search_reset_profile_paging) | **POST** /profile_api/automatic_profile_search/reset | Reset automatic profile search profile paging.
+*ProfileApi* | [**post_automatic_profile_search_settings**](docs/ProfileApi.md#post_automatic_profile_search_settings) | **POST** /profile_api/automatic_profile_search_settings | 
 *ProfileApi* | [**post_favorite_profile**](docs/ProfileApi.md#post_favorite_profile) | **POST** /profile_api/favorite_profile | Add new favorite profile
 *ProfileApi* | [**post_get_automatic_profile_search_completed_notification**](docs/ProfileApi.md#post_get_automatic_profile_search_completed_notification) | **POST** /profile_api/automatic_profile_search_completed_notification | 
 *ProfileApi* | [**post_get_next_profile_page**](docs/ProfileApi.md#post_get_next_profile_page) | **POST** /profile_api/page/next | Post (updates iterator) to get next page of profile list.
@@ -194,7 +198,6 @@ Class | Method | HTTP request | Description
 
 ## Documentation For Models
 
- - [AcceptedProfileAges](docs/AcceptedProfileAges.md)
  - [AccessToken](docs/AccessToken.md)
  - [AccessibleAccount](docs/AccessibleAccount.md)
  - [Account](docs/Account.md)
@@ -211,6 +214,7 @@ Class | Method | HTTP request | Description
  - [AddPublicKeyResult](docs/AddPublicKeyResult.md)
  - [AdminInfo](docs/AdminInfo.md)
  - [AdminNotification](docs/AdminNotification.md)
+ - [AdminNotificationSettings](docs/AdminNotificationSettings.md)
  - [ApiUsageCount](docs/ApiUsageCount.md)
  - [ApiUsageStatistics](docs/ApiUsageStatistics.md)
  - [Attribute](docs/Attribute.md)
@@ -224,6 +228,7 @@ Class | Method | HTTP request | Description
  - [AutomaticProfileSearchCompletedNotification](docs/AutomaticProfileSearchCompletedNotification.md)
  - [AutomaticProfileSearchCompletedNotificationViewed](docs/AutomaticProfileSearchCompletedNotificationViewed.md)
  - [AutomaticProfileSearchIteratorSessionId](docs/AutomaticProfileSearchIteratorSessionId.md)
+ - [AutomaticProfileSearchSettings](docs/AutomaticProfileSearchSettings.md)
  - [BackendConfig](docs/BackendConfig.md)
  - [BackendVersion](docs/BackendVersion.md)
  - [BooleanSetting](docs/BooleanSetting.md)
@@ -288,7 +293,7 @@ Class | Method | HTTP request | Description
  - [GetClientVersionStatisticsSettings](docs/GetClientVersionStatisticsSettings.md)
  - [GetConversationId](docs/GetConversationId.md)
  - [GetCustomReportsConfigResult](docs/GetCustomReportsConfigResult.md)
- - [GetInitialProfileAgeInfoResult](docs/GetInitialProfileAgeInfoResult.md)
+ - [GetInitialProfileAgeResult](docs/GetInitialProfileAgeResult.md)
  - [GetIpAddressStatisticsResult](docs/GetIpAddressStatisticsResult.md)
  - [GetIpAddressStatisticsSettings](docs/GetIpAddressStatisticsSettings.md)
  - [GetIpCountryStatisticsResult](docs/GetIpCountryStatisticsResult.md)
@@ -311,6 +316,7 @@ Class | Method | HTTP request | Description
  - [GetSentMessage](docs/GetSentMessage.md)
  - [GetVideoCallUrlsResult](docs/GetVideoCallUrlsResult.md)
  - [GroupValues](docs/GroupValues.md)
+ - [InitialProfileAge](docs/InitialProfileAge.md)
  - [IpAddressInfo](docs/IpAddressInfo.md)
  - [IpCountryStatistics](docs/IpCountryStatistics.md)
  - [IpCountryStatisticsType](docs/IpCountryStatisticsType.md)
@@ -398,7 +404,6 @@ Class | Method | HTTP request | Description
  - [ProfileIteratorSessionId](docs/ProfileIteratorSessionId.md)
  - [ProfileLink](docs/ProfileLink.md)
  - [ProfilePage](docs/ProfilePage.md)
- - [ProfileSearchAgeRange](docs/ProfileSearchAgeRange.md)
  - [ProfileStatisticsHistoryValue](docs/ProfileStatisticsHistoryValue.md)
  - [ProfileStatisticsHistoryValueType](docs/ProfileStatisticsHistoryValueType.md)
  - [ProfileStringModerationCompletedNotification](docs/ProfileStringModerationCompletedNotification.md)
@@ -439,6 +444,7 @@ Class | Method | HTTP request | Description
  - [ScheduledTaskStatus](docs/ScheduledTaskStatus.md)
  - [ScheduledTaskType](docs/ScheduledTaskType.md)
  - [ScheduledTaskTypeValue](docs/ScheduledTaskTypeValue.md)
+ - [SearchAgeRange](docs/SearchAgeRange.md)
  - [SearchGroups](docs/SearchGroups.md)
  - [SecurityContent](docs/SecurityContent.md)
  - [SendLikeResult](docs/SendLikeResult.md)

@@ -7,8 +7,8 @@ use api_client::{
         profile_api::{post_profile, post_search_age_range, post_search_groups},
     },
     models::{
-        AccountId, EventToClient, MediaContentType, ModerationQueueType, ProfileSearchAgeRange,
-        ProfileUpdate, SearchGroups,
+        AccountId, EventToClient, MediaContentType, ModerationQueueType, ProfileUpdate,
+        SearchAgeRange, SearchGroups,
     },
 };
 use config::{Config, args::TestMode, bot_config_file::BotConfigFile};
@@ -121,7 +121,7 @@ impl TestContext {
     ) -> Result<Account, TestError> {
         let account = self.new_account_internal(age, name).await?;
 
-        let range = ProfileSearchAgeRange {
+        let range = SearchAgeRange {
             min: min_age,
             max: max_age,
         };

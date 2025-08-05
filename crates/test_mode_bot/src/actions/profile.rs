@@ -10,7 +10,7 @@ use api_client::{
     },
     models::{
         AttributeMode, Location, ProfileAttributeValueUpdate, ProfileAttributesConfigQuery,
-        ProfileIteratorSessionId, ProfileSearchAgeRange, ProfileUpdate, SearchGroups,
+        ProfileIteratorSessionId, ProfileUpdate, SearchAgeRange, SearchGroups,
     },
 };
 use async_trait::async_trait;
@@ -390,7 +390,7 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             .await
             .change_context(TestError::ApiRequest)?;
 
-        let age_range = ProfileSearchAgeRange { min: 18, max: 99 };
+        let age_range = SearchAgeRange { min: 18, max: 99 };
 
         post_search_age_range(state.api.profile(), age_range)
             .await
