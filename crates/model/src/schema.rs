@@ -149,6 +149,17 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    admin_notification_settings (account_id) {
+        account_id -> Integer,
+        weekdays -> Integer,
+        daily_enabled_time_start_seconds -> Integer,
+        daily_enabled_time_end_seconds -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     admin_notification_subscriptions (account_id) {
         account_id -> Integer,
         moderate_initial_media_content_bot -> Bool,
@@ -870,6 +881,7 @@ diesel::joinable!(account_email_sending_state -> account_id (account_id));
 diesel::joinable!(account_interaction_index -> account_interaction (interaction_id));
 diesel::joinable!(account_permissions -> account_id (account_id));
 diesel::joinable!(account_setup -> account_id (account_id));
+diesel::joinable!(admin_notification_settings -> account_id (account_id));
 diesel::joinable!(admin_notification_subscriptions -> account_id (account_id));
 diesel::joinable!(api_usage_statistics_metric_value -> account_id (account_id));
 diesel::joinable!(api_usage_statistics_metric_value -> api_usage_statistics_metric_name (metric_id));
@@ -934,6 +946,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     account_permissions,
     account_setup,
     account_state,
+    admin_notification_settings,
     admin_notification_subscriptions,
     api_usage_statistics_metric_name,
     api_usage_statistics_metric_value,

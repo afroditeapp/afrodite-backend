@@ -67,6 +67,21 @@ impl From<SelectedWeekdays> for WeekdayFlags {
     }
 }
 
+impl From<chrono::Weekday> for WeekdayFlags {
+    fn from(value: chrono::Weekday) -> Self {
+        use chrono::Weekday;
+        match value {
+            Weekday::Mon => WeekdayFlags::MONDAY,
+            Weekday::Tue => WeekdayFlags::TUESDAY,
+            Weekday::Wed => WeekdayFlags::WEDNESDAY,
+            Weekday::Thu => WeekdayFlags::THURSDAY,
+            Weekday::Fri => WeekdayFlags::FRIDAY,
+            Weekday::Sat => WeekdayFlags::SATURDAY,
+            Weekday::Sun => WeekdayFlags::SUNDAY,
+        }
+    }
+}
+
 impl From<i64> for WeekdayFlags {
     fn from(value: i64) -> Self {
         Self::from_bits_truncate(value as i8)

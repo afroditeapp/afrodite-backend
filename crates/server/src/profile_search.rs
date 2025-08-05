@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use chrono::{Datelike, Utc, Weekday};
+use chrono::{Datelike, Utc};
 use config::file::AutomaticProfileSearchConfig;
 use model::{NotificationEvent, WeekdayFlags};
 use model_media::AutomaticProfileSearchIteratorSessionId;
@@ -164,15 +164,7 @@ impl ProfileSearchManager {
             .await
             .change_context(ProfileSearchError::DatabaseError)?;
 
-        let current_weekday = match Utc::now().weekday() {
-            Weekday::Mon => WeekdayFlags::MONDAY,
-            Weekday::Tue => WeekdayFlags::TUESDAY,
-            Weekday::Wed => WeekdayFlags::WEDNESDAY,
-            Weekday::Thu => WeekdayFlags::THURSDAY,
-            Weekday::Fri => WeekdayFlags::FRIDAY,
-            Weekday::Sat => WeekdayFlags::SATURDAY,
-            Weekday::Sun => WeekdayFlags::SUNDAY,
-        };
+        let current_weekday: WeekdayFlags = Utc::now().weekday().into();
         let selected_weekdays: WeekdayFlags = settings.weekdays.into();
         if !selected_weekdays.contains(current_weekday) {
             return Ok(());

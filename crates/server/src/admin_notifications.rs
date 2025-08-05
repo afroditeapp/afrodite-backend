@@ -17,6 +17,7 @@ use server_state::{
     app::AdminNotificationProvider,
 };
 use simple_backend::ServerQuitWatcher;
+use simple_backend_utils::time::seconds_until_current_time_is_at;
 use tokio::task::JoinHandle;
 use tracing::{error, warn};
 
@@ -69,6 +70,8 @@ impl AdminNotificationManager {
         mut quit_notification: ServerQuitWatcher,
     ) {
         let mut timer = WaitSendTimer::new();
+        let mut waiter = StartTimeWaiter::new(self.state.clone());
+        waiter.refresh_state().await;
 
         loop {
             tokio::select! {
@@ -76,6 +79,10 @@ impl AdminNotificationManager {
                     if let Err(e) = self.handle_pending_events().await {
                         error!("Error: {:?}", e);
                     }
+                }
+                _ = waiter.wait_completion() => {
+                    waiter.refresh_state().await;
+                    timer.start_if_not_running();
                 }
                 item = receiver.0.recv() => {
                     match item {
@@ -85,6 +92,9 @@ impl AdminNotificationManager {
                         Some(AdminNotificationEvent::SendNotificationIfNeeded(notification)) => {
                             self.pending_notifications.enable(notification);
                             timer.start_if_not_running();
+                        },
+                        Some(AdminNotificationEvent::RefreshStartTimeWaiter) => {
+                            waiter.refresh_state().await;
                         },
                         None => {
                             error!("Admin notification manager event channel is broken");
@@ -173,7 +183,7 @@ impl AdminNotificationManager {
             .read()
             .common_admin()
             .notification()
-            .get_accounts_with_some_wanted_subscriptions(self.pending_notifications.clone())
+            .get_accounts_which_should_receive_notification(self.pending_notifications.clone())
             .await
             .change_context(AdminNotificationError::DatabaseError)?;
 
@@ -307,6 +317,58 @@ impl WaitSendTimer {
                 tokio::time::interval_at(tokio::time::Instant::now() + WAIT_TIME, WAIT_TIME);
             self.timer = Some(timer);
         }
+    }
+
+    /// Does not return if timer is not running
+    async fn wait_completion(&mut self) {
+        if let Some(timer) = &mut self.timer {
+            timer.tick().await;
+            self.timer = None;
+        } else {
+            std::future::pending().await
+        }
+    }
+}
+
+struct StartTimeWaiter {
+    timer: Option<tokio::time::Interval>,
+    state: S,
+}
+
+impl StartTimeWaiter {
+    fn new(state: S) -> Self {
+        Self { timer: None, state }
+    }
+
+    async fn refresh_state(&mut self) {
+        let start_time = match self
+            .state
+            .read()
+            .common_admin()
+            .notification()
+            .nearest_start_time()
+            .await
+        {
+            Ok(v) => v,
+            Err(e) => {
+                error!("Error: {:?}", e);
+                return;
+            }
+        };
+
+        let time_value = start_time.to_utc_time_value();
+
+        let wait_time = match seconds_until_current_time_is_at(time_value) {
+            Ok(v) => v,
+            Err(e) => {
+                error!("Error: {:?}", e);
+                return;
+            }
+        };
+
+        let wait_time = Duration::from_secs(wait_time.max(1));
+        let timer = tokio::time::interval_at(tokio::time::Instant::now() + wait_time, wait_time);
+        self.timer = Some(timer);
     }
 
     /// Does not return if timer is not running

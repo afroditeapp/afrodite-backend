@@ -10,6 +10,7 @@ use tracing::error;
 pub enum AdminNotificationEvent {
     ResetState(AccountIdInternal),
     SendNotificationIfNeeded(AdminNotificationTypes),
+    RefreshStartTimeWaiter,
 }
 
 pub struct AdminNotificationEventReceiver(pub Receiver<AdminNotificationEvent>);
@@ -56,6 +57,17 @@ impl AdminNotificationManagerData {
             .is_err()
         {
             error!("Send notification if needed event sending failed");
+        }
+    }
+
+    pub async fn refresh_start_time_waiter(&self) {
+        if self
+            .sender
+            .send(AdminNotificationEvent::RefreshStartTimeWaiter)
+            .await
+            .is_err()
+        {
+            error!("Refresh start time waiter event sending failed");
         }
     }
 

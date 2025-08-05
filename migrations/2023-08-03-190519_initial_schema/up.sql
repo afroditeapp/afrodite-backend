@@ -210,6 +210,17 @@ CREATE TABLE IF NOT EXISTS ip_address_usage_statistics(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS admin_notification_settings(
+    account_id                       INTEGER PRIMARY KEY NOT NULL,
+    weekdays                         INTEGER NOT NULL,
+    daily_enabled_time_start_seconds INTEGER NOT NULL,
+    daily_enabled_time_end_seconds   INTEGER NOT NULL,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS admin_notification_subscriptions(
     account_id INTEGER PRIMARY KEY NOT NULL,
     moderate_initial_media_content_bot           BOOLEAN NOT NULL DEFAULT 0,
