@@ -118,7 +118,7 @@ pub async fn get_admin_notification_subscriptions(
 ) -> Result<Json<AdminNotification>, StatusCode> {
     COMMON_ADMIN.get_admin_notification_subscriptions.incr();
 
-    if api_caller_permissions.admin_server_maintenance_view_backend_config {
+    if api_caller_permissions.admin_subscribe_admin_notifications {
         let subscriptions = state
             .read()
             .common_admin()
