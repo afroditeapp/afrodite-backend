@@ -361,7 +361,7 @@ pub struct ProfileLimitsConfig {
 impl Default for ProfileLimitsConfig {
     fn default() -> Self {
         Self {
-            profile_iterator_reset_daily_max_count: 100,
+            profile_iterator_reset_daily_max_count: 200,
             profile_iterator_next_page_daily_max_count: 1000,
         }
     }
