@@ -103,6 +103,7 @@ impl From<WeekdayFlags> for SelectedWeekdays {
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
 pub struct AutomaticProfileSearchCompletedNotification {
     pub profiles_found: NotificationStatus,
+    pub profile_count: i64,
 }
 
 impl AutomaticProfileSearchCompletedNotification {

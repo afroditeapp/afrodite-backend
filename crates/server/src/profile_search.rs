@@ -191,13 +191,23 @@ impl ProfileSearchManager {
         .await
         .change_context(ProfileSearchError::DatabaseError)?;
 
-        let Some(data) = self
+        let Some(count) = self
             .state
             .concurrent_write_profile_blocking(account.as_id(), move |cmds| {
                 let iterator_session_id: AutomaticProfileSearchIteratorSessionId = cmds
                     .automatic_profile_search_reset_profile_iterator(account)?
                     .into();
-                cmds.automatic_profile_search_next_profiles(account, iterator_session_id)
+                let mut count = 0;
+                loop {
+                    match cmds.automatic_profile_search_next_profiles(
+                        account,
+                        iterator_session_id.clone(),
+                    )? {
+                        Some(data) if data.is_empty() => return Result::Ok(Some(count)),
+                        Some(data) => count += data.len(),
+                        None => return Result::Ok(None),
+                    }
+                }
             })
             .await
             .change_context(ProfileSearchError::ConcurrentWriteCommand)?
@@ -206,14 +216,16 @@ impl ProfileSearchManager {
             return Ok(());
         };
 
-        if data.is_empty() {
+        if count == 0 {
             return Ok(());
         }
+
+        let count = TryInto::<i64>::try_into(count).unwrap_or(i64::MAX);
 
         db_write_raw!(self.state, move |cmds| {
             cmds.profile_admin()
                 .notification()
-                .show_automatic_profile_search_notification(account)
+                .show_automatic_profile_search_notification(account, count)
                 .await
         })
         .await

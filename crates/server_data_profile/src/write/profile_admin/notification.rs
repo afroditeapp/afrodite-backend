@@ -43,6 +43,7 @@ impl WriteCommandsProfileAdminNotification<'_> {
     pub async fn show_automatic_profile_search_notification(
         &self,
         id: AccountIdInternal,
+        profile_count: i64,
     ) -> Result<(), DataError> {
         self.write_cache_profile(id, |p| {
             p.automatic_profile_search.notification.profiles_found.id = p
@@ -51,6 +52,7 @@ impl WriteCommandsProfileAdminNotification<'_> {
                 .profiles_found
                 .id
                 .wrapping_increment();
+            p.automatic_profile_search.notification.profile_count = profile_count;
             Ok(())
         })
         .await
