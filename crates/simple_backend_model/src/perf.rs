@@ -41,6 +41,7 @@ impl PerfMetricValueArea {
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, ToSchema)]
 pub struct PerfMetricValues {
     pub name: MetricName,
+    pub group: Option<String>,
     pub values: Vec<PerfMetricValueArea>,
 }
 
@@ -53,14 +54,15 @@ pub struct PerfMetricQueryResult {
 pub struct MetricKey {
     category: &'static str,
     name: &'static str,
+    group: Option<&'static str>,
 }
 
 impl MetricKey {
     const SYSTEM_CATEGORY: &str = "system";
     const WEBSOCKET_CATEGORY: &str = "websocket";
 
-    pub const SYSTEM_CPU_USAGE: Self = Self::system("cpu_usage");
-    pub const SYSTEM_RAM_USAGE_MIB: Self = Self::system("ram_usage_mib");
+    pub const SYSTEM_CPU_USAGE: Self = Self::system("cpu_usage", "cpu");
+    pub const SYSTEM_RAM_USAGE_MIB: Self = Self::system("ram_usage_mib", "ram");
 
     pub const CONNECTIONS: Self = Self::websocket("connections");
     pub const CONNECTIONS_MEN: Self = Self::websocket("connections_men");
@@ -72,26 +74,36 @@ impl MetricKey {
     pub const BOT_CONNECTIONS_WOMEN: Self = Self::websocket("bot_connections_women");
     pub const BOT_CONNECTIONS_NONBINARIES: Self = Self::websocket("bot_connections_nonbinaries");
 
-    const fn system(name: &'static str) -> Self {
+    const fn system(name: &'static str, group: &'static str) -> Self {
         Self {
             category: Self::SYSTEM_CATEGORY,
             name,
+            group: Some(group),
         }
     }
     const fn websocket(name: &'static str) -> Self {
         Self {
             category: Self::WEBSOCKET_CATEGORY,
             name,
+            group: Some("websocket"),
         }
     }
 
     pub fn new(category: &'static str, name: &'static str) -> MetricKey {
-        Self { category, name }
+        Self {
+            category,
+            name,
+            group: None,
+        }
     }
 
     pub fn to_name(&self) -> MetricName {
         let name = format!("{}_{}", self.category, self.name);
         MetricName::new(name)
+    }
+
+    pub fn group(&self) -> Option<&'static str> {
+        self.group
     }
 }
 

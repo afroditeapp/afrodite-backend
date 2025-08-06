@@ -193,6 +193,7 @@ impl PerfMetricsManagerData {
             let value = PerfMetricValues {
                 name: counter_name.to_name(),
                 values: vec![values],
+                group: counter_name.group().map(ToString::to_string),
             };
             counters.push(value);
         }
