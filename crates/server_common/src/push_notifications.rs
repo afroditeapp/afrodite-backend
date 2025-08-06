@@ -278,7 +278,13 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
     }
 
     pub async fn logic(&mut self) {
-        let mut sending_logic = FcmSendingLogic::new();
+        let debug_logging = self
+            .config
+            .simple_backend()
+            .firebase_cloud_messaging_config()
+            .map(|v| v.debug_logging)
+            .unwrap_or_default();
+        let mut sending_logic = FcmSendingLogic::new(debug_logging);
         let mut low_priority_notification_allowed = false;
         let mut low_priority_notification_interval =
             tokio::time::interval(Duration::from_millis(500));

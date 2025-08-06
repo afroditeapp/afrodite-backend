@@ -373,6 +373,8 @@ pub struct FirebaseCloudMessagingConfig {
     pub service_account_key_path: PathBuf,
     /// Path where cache Firebase token cache JSON file will be created.
     pub token_cache_path: PathBuf,
+    #[serde(default)]
+    pub debug_logging: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

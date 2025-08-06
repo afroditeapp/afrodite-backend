@@ -13,14 +13,16 @@ pub struct FcmSendingLogic {
     initial_send_rate_limit_millis: u64,
     exponential_backoff: Option<Duration>,
     forced_wait_time: Option<Duration>,
+    debug_logging: bool,
 }
 
 impl FcmSendingLogic {
-    pub fn new() -> Self {
+    pub fn new(debug_logging: bool) -> Self {
         Self {
             initial_send_rate_limit_millis: 1,
             exponential_backoff: None,
             forced_wait_time: None,
+            debug_logging,
         }
     }
 
@@ -63,7 +65,9 @@ impl FcmSendingLogic {
         match fcm.send(message).await {
             Ok(response) => {
                 let action = response.recommended_error_handling_action();
-                if let Some(action) = &action {
+                if self.debug_logging
+                    && let Some(action) = &action
+                {
                     error!(
                         "FCM error detected, response: {:#?}, action: {:#?}",
                         response, action
@@ -71,8 +75,9 @@ impl FcmSendingLogic {
                 }
                 match action {
                     None => {
-                        // TODO(prod): Remove logging
-                        info!("FCM send successful");
+                        if self.debug_logging {
+                            info!("FCM send successful");
+                        }
                         NextAction::NextMessage // No errors
                     }
                     Some(
@@ -164,12 +169,6 @@ impl FcmSendingLogic {
                 self.forced_wait_time = Some(retry_after.wait_time())
             }
         }
-    }
-}
-
-impl Default for FcmSendingLogic {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
