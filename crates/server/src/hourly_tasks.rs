@@ -85,6 +85,7 @@ impl HourlyTaskManager {
 
     pub async fn run_tasks_and_return_result(&self) -> Result<(), HourlyTaskError> {
         self.save_performance_statistics().await?;
+        self.save_ip_country_statistics().await?;
         if self.state.config().components().account {
             TaskUtils::save_client_version_statistics(&self.state)
                 .await
