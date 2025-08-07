@@ -163,14 +163,11 @@ async fn connect_websocket(
 
     let web_socket_protocol_version: u8 = 1;
     let client_type_number = u8::MAX; // Test mode bot client type
-    let version = state
-        .server_config
-        .min_client_version()
-        .unwrap_or(MinClientVersion {
-            major: 0,
-            minor: 0,
-            patch: 0,
-        });
+    let version = MinClientVersion {
+        major: 0,
+        minor: 0,
+        patch: 0,
+    };
     let mut version_bytes: Vec<u8> = vec![web_socket_protocol_version, client_type_number];
     version_bytes.extend_from_slice(&version.major.to_le_bytes());
     version_bytes.extend_from_slice(&version.minor.to_le_bytes());

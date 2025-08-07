@@ -15,8 +15,8 @@ use axum_extra::TypedHeader;
 use headers::ContentType;
 use http::HeaderMap;
 use model::{
-    AccessToken, AccountIdInternal, BackendVersion, EventToClient, EventToClientInternal,
-    RefreshToken, SyncDataVersionFromClient, WebSocketClientTypeNumber,
+    AccessToken, AccountIdInternal, BackendVersion, ClientVersion, EventToClient,
+    EventToClientInternal, RefreshToken, SyncDataVersionFromClient, WebSocketClientTypeNumber,
 };
 use model_server_data::AuthPair;
 use server_common::websocket::WebSocketError;
@@ -352,7 +352,9 @@ async fn handle_socket_result(
                     .track_version(info.client_version)
                     .await;
 
-                if let Some(min_version) = state.config().min_client_version() {
+                if info.client_type == WebSocketClientTypeNumber::TestModeBot {
+                    info.client_version == ClientVersion::BOT_CLIENT_VERSION
+                } else if let Some(min_version) = state.config().min_client_version() {
                     min_version.received_version_is_accepted(info.client_version)
                 } else {
                     true

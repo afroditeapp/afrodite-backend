@@ -62,3 +62,11 @@ pub struct ClientVersion {
     pub minor: u16,
     pub patch: u16,
 }
+
+impl ClientVersion {
+    pub const BOT_CLIENT_VERSION: Self = Self {
+        major: 0,
+        minor: 0,
+        patch: 0,
+    };
+}
