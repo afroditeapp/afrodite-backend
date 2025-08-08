@@ -143,6 +143,8 @@ pub struct MapConfigInternal {
     pub zoom: MapZoom,
     #[serde(default)]
     pub initial_location: MapCoordinate,
+    #[serde(default)]
+    pub tile_data_version: u32,
 }
 
 #[derive(Debug, Default, Clone, Serialize, ToSchema)]
@@ -151,6 +153,9 @@ pub struct MapConfig {
     pub bounds: MapBounds,
     pub zoom: MapZoom,
     pub initial_location: MapCoordinate,
+    /// Increase this version number to make client to redownload cached
+    /// map tiles.
+    pub tile_data_version: u32,
 }
 
 impl From<MapConfigInternal> for MapConfig {
@@ -159,6 +164,7 @@ impl From<MapConfigInternal> for MapConfig {
             bounds: value.bounds,
             zoom: value.zoom,
             initial_location: value.initial_location,
+            tile_data_version: value.tile_data_version,
         }
     }
 }
