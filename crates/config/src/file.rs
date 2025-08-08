@@ -172,7 +172,10 @@ impl ConfigFile {
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct GeneralConfig {
     /// Allow using backend data reset API.
+    #[serde(default)]
     pub debug_allow_backend_data_reset: bool,
+    #[serde(default)]
+    pub debug_websocket_logging: bool,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]

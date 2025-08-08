@@ -221,8 +221,6 @@ pub async fn get_connect_websocket(
         .mark_ip_used(id, addr.ip())
         .await;
 
-    info!("get_connect_websocket for '{}'", id.id.as_i64());
-
     let response = websocket
         .protocols(["0"])
         .on_upgrade(move |socket| handle_socket(socket, addr, id, state, ws_manager));
@@ -236,13 +234,14 @@ async fn handle_socket(
     state: S,
     mut ws_manager: WebSocketManager,
 ) {
-    // TODO(prod): Remove account details printing before 1.0
+    if state.config().general().debug_websocket_logging {
+        info!(
+            "handle_socket for '{}', address: {}",
+            id.id.as_i64(),
+            address
+        );
+    }
 
-    info!(
-        "handle_socket for '{}', address: {}",
-        id.id.as_i64(),
-        address
-    );
     let quit_lock = if let Some(quit_lock) = ws_manager.get_ongoing_ws_connection_quit_lock().await
     {
         quit_lock
@@ -252,7 +251,6 @@ async fn handle_socket(
 
     tokio::select! {
         _ = ws_manager.server_quit_detected() => {
-            info!("Server quit detected, closing WebSocket connection for '{}', address: {}", id.id.as_i64(), address);
             // It seems that this does not run when server closes.
             // handle_socket_result will return Ok(()) when that happens.
             let result = state
@@ -263,13 +261,12 @@ async fn handle_socket(
                 .await;
 
             if let Err(e) = result {
-                error!("server quit end_connection_session, {e:?}, for '{}', address: {}", id.id.as_i64(), address);
+                error!("delete_connection failed, {e:?}");
             }
         },
         r = handle_socket_result(socket, address, id, &state) => {
             match r {
                 Ok(()) => {
-                    info!("handle_socket_result returned Ok for '{}', address: {}", id.id.as_i64(), address);
                     let result = state
                         .read()
                         .cache_read_write_access()
@@ -278,18 +275,20 @@ async fn handle_socket(
                         .await;
 
                     if let Err(e) = result {
-                        error!("end_connection_session, {e:?}, for '{}', address: {}", id.id.as_i64(), address);
+                        error!("delete_connection failed, {e:?}");
                     }
                 },
                 Err(e) => {
-                    error!("handle_socket_result returned Err {e:?} for '{}', address: {}", id.id.as_i64(), address);
+                    if state.config().general().debug_websocket_logging {
+                        error!("handle_socket_result returned error {e:?} for '{}', address: {}", id.id.as_i64(), address);
+                    }
 
                     let result = state.write(move |cmds| async move {
                         cmds.common().logout(id).await
                     }).await;
 
                     if let Err(e) = result {
-                        error!("logout, {e:?}, for '{}', address: {}", id.id.as_i64(), address);
+                        error!("logout failed, {e:?}");
                     }
                 }
             }
@@ -303,11 +302,13 @@ async fn handle_socket(
 
     drop(quit_lock);
 
-    info!(
-        "Connection for '{}' closed, address: {}",
-        id.id.as_i64(),
-        address
-    );
+    if state.config().general().debug_websocket_logging {
+        info!(
+            "Connection for '{}' closed, address: {}",
+            id.id.as_i64(),
+            address
+        );
+    }
 
     COMMON.websocket_disconnected.incr();
 }
@@ -318,12 +319,6 @@ async fn handle_socket_result(
     id: AccountIdInternal,
     state: &S,
 ) -> crate::result::Result<(), WebSocketError> {
-    info!(
-        "handle_socket_result for '{}', address: {}",
-        id.id.as_i64(),
-        address
-    );
-
     // Receive protocol version byte.
     let client_is_supported = match socket
         .recv()
@@ -509,8 +504,6 @@ async fn handle_socket_result(
         send_event(&mut socket, EventToClientInternal::AdminNotification).await?;
     }
 
-    // TODO(prod): Remove extra logging from this file.
-
     COMMON.websocket_connected.incr();
     let connection_trackers = WebSocketConnectionTrackers::new(state, id).await?;
 
@@ -535,14 +528,9 @@ async fn handle_socket_result(
                                 // disconnecting this connection.
                                 timeout_timer.reset().await;
                             },
-                            Message::Pong(_) => (),
-                            // TODO(prod): Remove data and address?
-                            Message::Binary(data) => {
-                                error!("Client sent unexpected binary message: {:?}, address: {}", data, address);
-                            }
-                            Message::Text(text) => {
-                                error!("Client sent unexpected text message: {:?}, address: {}", text, address);
-                            }
+                            Message::Pong(_) |
+                            Message::Binary(_) |
+                            Message::Text(_) => (),
                             Message::Close(_) => break,
                         }
                 }
@@ -562,15 +550,19 @@ async fn handle_socket_result(
                         // that client has received the event.
                     },
                     None => {
-                        error!("Event receiver channel broken: id: {}, address: {}", id.id.as_i64(), address);
                         // New connection created another event receiver.
+                        if state.config().general().debug_websocket_logging {
+                            error!("Event receiver channel broken: id: {}, address: {}", id.id.as_i64(), address);
+                        }
                         break;
                     },
                 }
             }
             _ = timeout_timer.wait_timeout() => {
                 // Connection timeout
-                info!("Connection timeout for '{}', address: {}", id.id.as_i64(), address);
+                if state.config().general().debug_websocket_logging {
+                    info!("Connection timeout for '{}', address: {}", id.id.as_i64(), address);
+                }
                 break;
             }
         }
