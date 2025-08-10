@@ -198,14 +198,6 @@ impl DieselWriteHandle {
             .await?
             .into_error_string(DieselDatabaseError::Migrate)?;
 
-        // let pool_clone = pool.clone();
-        // std::thread::spawn(move || {
-        //     loop {
-        //         std::thread::sleep(std::time::Duration::from_secs(5));
-        //         tracing::info!("write pool: {:?}", pool_clone.status());
-        //     }
-        // });
-
         let write_handle = DieselWriteHandle { pool: pool.clone() };
 
         let close_handle = DieselWriteCloseHandle {
@@ -294,14 +286,6 @@ impl DieselReadHandle {
     ) -> Result<(Self, DieselReadCloseHandle), DieselDatabaseError> {
         let connections = num_cpus::get();
         let pool = create_pool(config, database_info, db_path, connections).await?;
-
-        // let pool_clone = pool.clone();
-        // std::thread::spawn(move || {
-        //     loop {
-        //         std::thread::sleep(std::time::Duration::from_secs(5));
-        //         tracing::info!("read pool: {:?}", pool_clone.status());
-        //     }
-        // });
 
         let handle = DieselReadHandle { pool: pool.clone() };
 
