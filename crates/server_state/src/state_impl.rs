@@ -117,8 +117,9 @@ impl WriteDynamicConfig for S {
         tokio::task::spawn_blocking(move || {
             if BackendConfig::empty() != config {
                 ConfigFileDynamic::edit_config_from_current_dir(
-                    config.bots,
                     config.remote_bot_login,
+                    config.local_bots.clone().and_then(|v| v.admin),
+                    config.local_bots.and_then(|v| v.users),
                 )?
             }
 

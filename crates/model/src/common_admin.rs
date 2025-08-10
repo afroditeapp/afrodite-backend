@@ -15,8 +15,11 @@ pub use ip_address::*;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct BackendConfig {
-    pub bots: Option<BotConfig>,
+    /// Enable remote bot login API
+    ///
+    /// If None, editing the value is disabled.
     pub remote_bot_login: Option<bool>,
+    pub local_bots: Option<LocalBotsConfig>,
 }
 
 impl BackendConfig {
@@ -25,13 +28,14 @@ impl BackendConfig {
     }
 }
 
-/// Enable automatic bots when server starts.
-/// Editing of this field with edit module is only allowed when
-/// this exists in the config file.
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, ToSchema)]
-pub struct BotConfig {
-    /// User bot count
-    pub users: u32,
+pub struct LocalBotsConfig {
     /// Admin bot
-    pub admin: bool,
+    ///
+    /// If None, editing the value is disabled.
+    pub admin: Option<bool>,
+    /// User bot count
+    ///
+    /// If None, editing the value is disabled.
+    pub users: Option<u32>,
 }

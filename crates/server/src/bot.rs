@@ -9,7 +9,6 @@ use std::{
 
 use config::Config;
 use error_stack::{Result, ResultExt};
-use model::BotConfig;
 use nix::{sys::signal::Signal, unistd::Pid};
 use simple_backend_utils::ContextExt;
 use tokio::{
@@ -56,7 +55,8 @@ pub struct BotClient {
 impl BotClient {
     pub async fn start_bots(
         config: &Config,
-        bot_config: &BotConfig,
+        admin_bot: bool,
+        user_bots: u32,
     ) -> Result<Self, BotClientError> {
         let start_cmd = env::args()
             .next()
@@ -108,9 +108,9 @@ impl BotClient {
             .arg("bot")
             .arg("--save-state")
             .arg("--users")
-            .arg(bot_config.users.to_string());
+            .arg(user_bots.to_string());
 
-        if bot_config.admin {
+        if admin_bot {
             command.arg("--admin");
         }
 

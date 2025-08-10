@@ -31,7 +31,7 @@ use file::{
 };
 use file_dynamic::ConfigFileDynamic;
 use file_email_content::EmailContentFile;
-use model::{BotConfig, CustomReportsConfig};
+use model::CustomReportsConfig;
 pub use model::{ClientFeaturesConfig, ClientFeaturesConfigInternal};
 use model_server_data::{AttributesFileInternal, ProfileAttributesInternal};
 use reqwest::Url;
@@ -178,14 +178,28 @@ impl Config {
         self.file.grant_admin_access.as_ref()
     }
 
-    pub fn bot_config(&self) -> Option<&BotConfig> {
-        self.file_dynamic.backend_config.bots.as_ref()
-    }
-
     pub fn remote_bot_login_allowed(&self) -> bool {
         self.file_dynamic
             .backend_config
             .remote_bot_login
+            .unwrap_or_default()
+    }
+
+    pub fn local_admin_bot_enabled(&self) -> bool {
+        self.file_dynamic
+            .backend_config
+            .local_bots
+            .as_ref()
+            .and_then(|v| v.admin)
+            .unwrap_or_default()
+    }
+
+    pub fn local_user_bot_count(&self) -> u32 {
+        self.file_dynamic
+            .backend_config
+            .local_bots
+            .as_ref()
+            .and_then(|v| v.users)
             .unwrap_or_default()
     }
 
