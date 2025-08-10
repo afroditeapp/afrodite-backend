@@ -1,7 +1,6 @@
 use axum::{Extension, extract::State};
-use model::{AccountIdInternal, BackendConfig, Permissions};
+use model::{BackendConfig, Permissions};
 use simple_backend::create_counters;
-use tracing::info;
 
 use crate::{
     S,
@@ -61,20 +60,13 @@ const PATH_POST_BACKEND_CONFIG: &str = "/common_api/backend_config";
 )]
 pub async fn post_backend_config(
     State(state): State<S>,
-    Extension(api_caller_account_id): Extension<AccountIdInternal>,
     Extension(api_caller_permissions): Extension<Permissions>,
     Json(backend_config): Json<BackendConfig>,
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_backend_config.incr();
 
     if api_caller_permissions.admin_server_maintenance_save_backend_config {
-        info!(
-            "Saving dynamic backend config, account: {}, settings: {:#?}",
-            api_caller_account_id.as_id(),
-            backend_config
-        );
         state.write_config(backend_config).await?;
-
         Ok(())
     } else {
         Err(StatusCode::UNAUTHORIZED)
