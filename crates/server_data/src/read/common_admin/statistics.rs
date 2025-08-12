@@ -38,7 +38,7 @@ impl ReadCommandsCommonAdminStatistics<'_> {
         self.db_read(move |mut cmds| {
             cmds.common_admin()
                 .statistics()
-                .ip_address_statistics(account, config, ip_db)
+                .ip_address_statistics(account, Some(config), ip_db)
         })
         .await
         .into_error()

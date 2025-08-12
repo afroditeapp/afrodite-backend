@@ -2,7 +2,9 @@ use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
 use model::AccountIdInternal;
-use model_account::{AccountData, AccountGlobalState, AccountInternal, AccountSetup};
+use model_account::{
+    AccountData, AccountGlobalState, AccountInternal, AccountSetup, AccountStateTableRaw,
+};
 
 use crate::IntoDatabaseError;
 
@@ -37,6 +39,19 @@ impl CurrentReadAccountData<'_> {
         Ok(AccountData {
             email: account_internal.email,
         })
+    }
+
+    pub fn account_state_table_raw(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<AccountStateTableRaw, DieselDatabaseError> {
+        use model::schema::account_state::dsl::*;
+
+        account_state
+            .filter(account_id.eq(id.as_db_id()))
+            .select(AccountStateTableRaw::as_select())
+            .first(self.conn())
+            .into_db_error(id)
     }
 
     pub fn global_state(&mut self) -> Result<AccountGlobalState, DieselDatabaseError> {

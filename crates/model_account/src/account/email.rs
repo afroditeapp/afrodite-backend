@@ -48,7 +48,7 @@ impl Default for EmailSendingState {
     }
 }
 
-#[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset, Insertable)]
+#[derive(Debug, Clone, Default, Serialize, Queryable, Selectable, AsChangeset, Insertable)]
 #[diesel(table_name = crate::schema::account_email_sending_state)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountEmailSendingStateRaw {

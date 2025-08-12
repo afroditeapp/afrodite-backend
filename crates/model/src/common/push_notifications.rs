@@ -6,7 +6,9 @@ use diesel::{
     sql_types::BigInt,
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_struct_try_from, diesel_i64_wrapper, diesel_string_wrapper};
+use simple_backend_model::{
+    UnixTime, diesel_i64_struct_try_from, diesel_i64_wrapper, diesel_string_wrapper,
+};
 use utils::random_bytes::random_128_bits;
 use utoipa::ToSchema;
 
@@ -231,7 +233,7 @@ pub struct PendingNotificationWithData {
     pub admin_notification: Option<AdminNotification>,
 }
 
-#[derive(Debug, Clone, Default, Queryable, Selectable)]
+#[derive(Debug, Clone, Default, Serialize, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::common_state)]
 #[diesel(check_for_backend(crate::Db))]
 #[diesel(treat_none_as_null = true)]
@@ -240,6 +242,7 @@ pub struct PushNotificationDbState {
     pub fcm_data_notification_sent: bool,
     pub fcm_visible_notification_sent: bool,
     pub fcm_device_token: Option<FcmDeviceToken>,
+    pub fcm_device_token_unix_time: Option<UnixTime>,
 }
 
 pub enum PushNotificationType {

@@ -1,5 +1,6 @@
 use axum::{Extension, extract::State};
-use model_account::{Account, AccountIdInternal, ClientId, LatestBirthdate};
+use model::LatestBirthdate;
+use model_account::{Account, AccountIdInternal, ClientId};
 use server_api::{S, app::WriteData, create_open_api_router, db_write};
 use server_data::read::GetReadCommandsCommon;
 use server_data_account::write::GetWriteCommandsAccount;
@@ -50,7 +51,6 @@ pub async fn get_latest_birthdate(
 ) -> Result<Json<LatestBirthdate>, StatusCode> {
     ACCOUNT.get_latest_birthdate.incr();
     let birthdate = state.read().common().latest_birthdate(id).await?;
-    let birthdate = LatestBirthdate { birthdate };
     Ok(birthdate.into())
 }
 

@@ -4,7 +4,7 @@ use error_stack::Result;
 use model::{
     AccountId, AccountIdDb, GetChatMessageReportsInternal, GetReportList,
     ReportDetailedInfoInternal, ReportIdDb, ReportInternal, ReportIteratorMode,
-    ReportIteratorQueryInternal, ReportProcessingState, ReportTypeNumberInternal,
+    ReportIteratorQueryInternal, ReportProcessingState, ReportTypeNumberInternal, UnixTime,
 };
 
 use crate::{
@@ -51,6 +51,7 @@ impl CurrentReadCommonAdminReport<'_> {
             AccountIdDb,
             ReportIdDb,
             ReportTypeNumberInternal,
+            UnixTime,
         )> = common_report
             .inner_join(creator_aid.on(creator_account_id.eq(creator_aid.field(account_id::id))))
             .inner_join(target_aid.on(target_account_id.eq(target_aid.field(account_id::id))))
@@ -62,6 +63,7 @@ impl CurrentReadCommonAdminReport<'_> {
                 target_account_id,
                 id,
                 report_type_number,
+                creation_unix_time,
             ))
             .order((creation_unix_time.asc(), creator_account_id.asc()))
             .limit(PAGE_SIZE)
@@ -71,13 +73,22 @@ impl CurrentReadCommonAdminReport<'_> {
         let values = values
             .into_iter()
             .map(
-                |(creator, creator_db_id, target, target_db_id, report_id, report_type)| {
+                |(
+                    creator,
+                    creator_db_id,
+                    target,
+                    target_db_id,
+                    report_id,
+                    report_type,
+                    creation_time,
+                )| {
                     ReportInternal {
                         info: ReportDetailedInfoInternal {
                             creator,
                             target,
                             processing_state: ReportProcessingState::Waiting,
                             report_type,
+                            creation_time,
                         },
                         id: report_id,
                         creator_db_id,
@@ -113,7 +124,7 @@ impl CurrentReadCommonAdminReport<'_> {
         })
     }
 
-    fn get_report_iterator_page_internal(
+    pub fn get_report_iterator_page_internal(
         &mut self,
         query: ReportIteratorQueryInternal,
     ) -> Result<Vec<ReportInternal>, DieselDatabaseError> {
@@ -127,6 +138,7 @@ impl CurrentReadCommonAdminReport<'_> {
             .inner_join(creator_aid.on(creator_account_id.eq(creator_aid.field(account_id::id))))
             .inner_join(target_aid.on(target_account_id.eq(target_aid.field(account_id::id))));
 
+        #[allow(clippy::type_complexity)]
         let values: Vec<(
             AccountId,
             AccountIdDb,
@@ -135,6 +147,7 @@ impl CurrentReadCommonAdminReport<'_> {
             ReportIdDb,
             ReportProcessingState,
             ReportTypeNumberInternal,
+            UnixTime,
         )> = match query.mode {
             ReportIteratorMode::Received => db_query
                 .filter(target_account_id.eq(query.aid.as_db_id()))
@@ -147,6 +160,7 @@ impl CurrentReadCommonAdminReport<'_> {
                     id,
                     processing_state,
                     report_type_number,
+                    creation_unix_time,
                 ))
                 .order((creation_unix_time.desc(), creator_account_id.desc()))
                 .limit(PAGE_SIZE)
@@ -164,6 +178,7 @@ impl CurrentReadCommonAdminReport<'_> {
                     id,
                     processing_state,
                     report_type_number,
+                    creation_unix_time,
                 ))
                 .order((creation_unix_time.desc(), creator_account_id.desc()))
                 .limit(PAGE_SIZE)
@@ -183,6 +198,7 @@ impl CurrentReadCommonAdminReport<'_> {
                     report_id,
                     report_state,
                     report_type,
+                    creation_time,
                 )| {
                     ReportInternal {
                         info: ReportDetailedInfoInternal {
@@ -190,6 +206,7 @@ impl CurrentReadCommonAdminReport<'_> {
                             target,
                             processing_state: report_state,
                             report_type,
+                            creation_time,
                         },
                         id: report_id,
                         creator_db_id,
@@ -244,6 +261,7 @@ impl CurrentReadCommonAdminReport<'_> {
             .inner_join(creator_aid.on(creator_account_id.eq(creator_aid.field(account_id::id))))
             .inner_join(target_aid.on(target_account_id.eq(target_aid.field(account_id::id))));
 
+        #[allow(clippy::type_complexity)]
         let values: Vec<(
             AccountId,
             AccountIdDb,
@@ -252,6 +270,7 @@ impl CurrentReadCommonAdminReport<'_> {
             ReportIdDb,
             ReportProcessingState,
             ReportTypeNumberInternal,
+            UnixTime,
         )> = {
             db_query
                 .filter(creator_account_id.eq(query.creator.as_db_id()))
@@ -272,6 +291,7 @@ impl CurrentReadCommonAdminReport<'_> {
                     id,
                     processing_state,
                     report_type_number,
+                    creation_unix_time,
                 ))
                 .order((creation_unix_time.desc(), creator_account_id.desc()))
                 .load(self.conn())
@@ -289,6 +309,7 @@ impl CurrentReadCommonAdminReport<'_> {
                     report_id,
                     report_state,
                     report_type,
+                    creation_time,
                 )| {
                     ReportInternal {
                         info: ReportDetailedInfoInternal {
@@ -296,6 +317,7 @@ impl CurrentReadCommonAdminReport<'_> {
                             target,
                             processing_state: report_state,
                             report_type,
+                            creation_time,
                         },
                         id: report_id,
                         creator_db_id,

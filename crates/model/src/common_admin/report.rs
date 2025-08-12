@@ -26,6 +26,7 @@ pub struct ReportDetailedInfoInternal {
     pub target: AccountId,
     pub processing_state: ReportProcessingState,
     pub report_type: ReportTypeNumberInternal,
+    pub creation_time: UnixTime,
 }
 
 #[derive(Serialize, ToSchema)]

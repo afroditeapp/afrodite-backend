@@ -500,14 +500,28 @@ pub struct AccountStateRelatedSharedState {
     pub sync_version: AccountSyncVersion,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
+pub struct LatestBirthdate {
+    #[schema(value_type = Option<String>)]
+    pub birthdate: Option<NaiveDate>,
+}
+
 #[derive(Debug, Clone, Default, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::shared_state)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct OtherSharedState {
     pub unlimited_likes: bool,
-    pub birthdate: Option<NaiveDate>,
+    birthdate: Option<NaiveDate>,
     pub is_bot_account: bool,
     pub initial_setup_completed_unix_time: InitialSetupCompletedTime,
+}
+
+impl OtherSharedState {
+    pub fn latest_birthdate(&self) -> LatestBirthdate {
+        LatestBirthdate {
+            birthdate: self.birthdate,
+        }
+    }
 }
 
 impl AccountStateRelatedSharedState {

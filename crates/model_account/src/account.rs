@@ -140,12 +140,6 @@ impl AccountSetup {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
-pub struct LatestBirthdate {
-    #[schema(value_type = Option<String>)]
-    pub birthdate: Option<NaiveDate>,
-}
-
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, IntoParams)]
 pub struct BooleanSetting {
     pub value: bool,
@@ -207,6 +201,24 @@ impl From<SignInWithInfoRaw> for SignInWithInfo {
             apple_account_id: raw.apple_account_id,
         }
     }
+}
+
+/// Used only for user data export
+#[derive(Serialize, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::account_state)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct AccountStateTableRaw {
+    next_client_id: i64,
+    account_deletion_request_unix_time: Option<UnixTime>,
+    account_banned_reason_category: Option<i64>,
+    account_banned_reason_details: String,
+    account_banned_until_unix_time: Option<UnixTime>,
+    account_banned_state_change_unix_time: Option<UnixTime>,
+    news_sync_version: i64,
+    unread_news_count: i64,
+    publication_id_at_news_iterator_reset: Option<i64>,
+    publication_id_at_unread_news_count_incrementing: Option<i64>,
+    account_created_unix_time: UnixTime,
 }
 
 /// Global state for account component

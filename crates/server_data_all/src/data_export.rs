@@ -1,11 +1,13 @@
-use std::io::Write;
+use std::{io::Write, sync::Arc};
 
+use config::Config;
 use database::{DbReadMode, DieselDatabaseError};
 use error_stack::ResultExt;
 use model::{ContentId, DataExportType};
 use serde::Serialize;
 use server_data::{
     DataError,
+    app::GetConfig,
     data_export::DataExportCmd,
     file::{FileWrite, utils::FileDir},
     read::DbRead,
@@ -31,9 +33,10 @@ pub async fn data_export(
             let archive = cmds.files().tmp_dir(cmd.target().0.into()).data_export();
             archive.overwrite_and_remove_if_exists().await?;
 
+            let config = cmds.config_arc();
             let file_dir = cmds.files().clone();
             cmds.db_read(move |cmds| {
-                db_data_export(cmds, file_dir, zip_main_directory_name, cmd)?;
+                db_data_export(config, cmds, file_dir, zip_main_directory_name, cmd)?;
                 Ok(())
             })
             .await?;
@@ -45,6 +48,7 @@ pub async fn data_export(
 }
 
 fn db_data_export(
+    config: Arc<Config>,
     mut current: DbReadMode,
     file_dir: FileDir,
     zip_main_directory_name: String,
@@ -60,7 +64,7 @@ fn db_data_export(
     write_json_file(&data, "user", &zip_main_directory_name, &mut zip_writer)?;
 
     if cmd.data_export_type() == DataExportType::Admin {
-        let data = generate_admin_data_export_json(&mut current, cmd.source())?;
+        let data = generate_admin_data_export_json(&config, &mut current, cmd.source())?;
         write_json_file(&data, "admin", &zip_main_directory_name, &mut zip_writer)?;
     }
 

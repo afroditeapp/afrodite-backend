@@ -13,6 +13,16 @@ pub struct GetApiUsageStatisticsSettings {
     pub min_time: Option<UnixTime>,
 }
 
+impl GetApiUsageStatisticsSettings {
+    pub fn get_all_statistics(account: AccountId) -> Self {
+        Self {
+            account,
+            max_time: None,
+            min_time: None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct GetApiUsageStatisticsResult {
     pub values: Vec<ApiUsageStatistics>,

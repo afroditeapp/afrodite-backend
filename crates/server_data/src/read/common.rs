@@ -1,7 +1,7 @@
-use chrono::NaiveDate;
 use database::current::read::GetDbReadCommandsCommon;
 use model::{
-    AccessTokenUnixTime, Account, AccountId, AccountIdInternal, IpAddressInternal, RefreshToken,
+    AccessTokenUnixTime, Account, AccountId, AccountIdInternal, IpAddressInternal, LatestBirthdate,
+    RefreshToken,
 };
 use model_server_data::SearchGroupFlags;
 use server_common::data::IntoDataError;
@@ -77,11 +77,11 @@ impl ReadCommandsCommon<'_> {
     pub async fn latest_birthdate(
         &self,
         id: AccountIdInternal,
-    ) -> Result<Option<NaiveDate>, DataError> {
+    ) -> Result<LatestBirthdate, DataError> {
         self.db_read(move |mut cmds| cmds.common().state().other_shared_state(id))
             .await
             .into_error()
-            .map(|v| v.birthdate)
+            .map(|v| v.latest_birthdate())
     }
 
     pub async fn account_ids_vec(&self) -> Result<Vec<AccountId>, DataError> {

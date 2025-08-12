@@ -32,6 +32,7 @@ impl CurrentReadCommonReport<'_> {
             AccountIdDb,
             ReportIdDb,
             ReportProcessingState,
+            UnixTime,
         )> = common_report
             .inner_join(creator_aid.on(creator_account_id.eq(creator_aid.field(account_id::id))))
             .inner_join(target_aid.on(target_account_id.eq(target_aid.field(account_id::id))))
@@ -45,6 +46,7 @@ impl CurrentReadCommonReport<'_> {
                 target_account_id,
                 id,
                 processing_state,
+                creation_unix_time,
             ))
             .load(self.conn())
             .into_db_error(())?;
@@ -52,12 +54,21 @@ impl CurrentReadCommonReport<'_> {
         let values = values
             .into_iter()
             .map(
-                |(creator, creator_db_id, target, target_db_id, report_id, state)| ReportInternal {
+                |(
+                    creator,
+                    creator_db_id,
+                    target,
+                    target_db_id,
+                    report_id,
+                    state,
+                    creation_time,
+                )| ReportInternal {
                     info: ReportDetailedInfoInternal {
                         creator,
                         target,
                         processing_state: state,
                         report_type,
+                        creation_time,
                     },
                     id: report_id,
                     creator_db_id,

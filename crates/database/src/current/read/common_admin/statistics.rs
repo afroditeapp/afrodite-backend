@@ -82,7 +82,7 @@ impl CurrentReadAccountAdminStatistics<'_> {
     pub fn ip_address_statistics(
         &mut self,
         account: AccountIdInternal,
-        config: Arc<Config>,
+        config: Option<Arc<Config>>,
         ip_db: Option<Arc<IpDb>>,
     ) -> Result<GetIpAddressStatisticsResult, DieselDatabaseError> {
         let values: Vec<IpAddressInfoInternal> = {
@@ -102,7 +102,11 @@ impl CurrentReadAccountAdminStatistics<'_> {
                 .map(|v| {
                     let ip_address = v.ip_address.to_ip_addr();
                     let mut lists = vec![];
-                    for l in config.simple_backend().ip_lists() {
+                    for l in config
+                        .as_ref()
+                        .map(|v| v.simple_backend().ip_lists())
+                        .unwrap_or_default()
+                    {
                         if l.contains(ip_address) {
                             lists.push(l.name().to_string());
                         }

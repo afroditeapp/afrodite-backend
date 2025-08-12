@@ -4786,7 +4786,6 @@ name = "server_data"
 version = "0.0.0"
 dependencies = [
  "axum",
- "chrono",
  "config",
  "database",
  "database_chat",
