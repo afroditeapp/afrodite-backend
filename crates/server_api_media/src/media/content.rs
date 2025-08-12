@@ -40,15 +40,18 @@ const PATH_GET_CONTENT: &str = "/media_api/content/{aid}/{cid}";
 /// Unrestricted access.
 ///
 /// ## Public other content
-/// Normal account state required.
+/// Normal account state required. Only accepted content can be accessed.
 ///
 /// ## Private other content
 /// If owner of the requested content is a match and the requested content
 /// is in current profile content, then the requested content can be accessed
 /// if query parameter `is_match` is set to `true`.
 ///
-/// If the previous is not true, then permission `admin_view_all_profiles` or
-/// `admin_moderate_media_content` is required.
+/// Only accepted content can be accessed.
+///
+/// ## Admin access
+/// [Permissions::admin_view_all_profiles] and
+/// [Permissions::admin_moderate_media_content] allows access to all content.
 ///
 #[utoipa::path(
     get,
@@ -119,15 +122,18 @@ pub async fn get_content(
         .current_account_media(requested_profile_internal_id)
         .await?;
 
-    let requested_content_is_profile_content = internal
+    let content = internal
         .iter_current_profile_content()
-        .any(|c| c.content_id() == requested_content_id);
+        .find(|c| c.content_id() == requested_content_id);
+    let requested_content_is_profile_content = content.is_some();
+    let content_accepted = content.map(|v| v.state().is_accepted()).unwrap_or_default();
 
-    if (visibility && requested_content_is_profile_content)
+    if (visibility && requested_content_is_profile_content && content_accepted)
         || permissions.admin_view_all_profiles
         || permissions.admin_moderate_media_content
         || (params.is_match
             && requested_content_is_profile_content
+            && content_accepted
             && state
                 .data_all_access()
                 .is_match(account_id, requested_profile_internal_id)
