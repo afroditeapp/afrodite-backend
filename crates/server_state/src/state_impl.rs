@@ -179,11 +179,15 @@ impl ReadData for S {
     }
 }
 
-// Server data profile
-
 impl ProfileStatisticsCacheProvider for S {
     fn profile_statistics_cache(&self) -> &server_data::statistics::ProfileStatisticsCache {
         &self.state.profile_statistics_cache
+    }
+}
+
+impl DataExportManagerDataProvider for S {
+    fn data_export(&self) -> &server_data::data_export::DataExportManagerData {
+        &self.state.data_export
     }
 }
 

@@ -10,6 +10,7 @@ use crate::{
 };
 
 mod client_config;
+mod data_export;
 mod push_notification;
 
 define_cmd_wrapper_write!(WriteCommandsCommon);
@@ -21,6 +22,10 @@ impl WriteCommandsCommon<'_> {
 
     pub fn client_config(&mut self) -> client_config::WriteCommandsCommonClientConfig {
         client_config::WriteCommandsCommonClientConfig::new(self.handle())
+    }
+
+    pub fn data_export(&mut self) -> data_export::WriteCommandsCommonDataExport {
+        data_export::WriteCommandsCommonDataExport::new(self.handle())
     }
 }
 

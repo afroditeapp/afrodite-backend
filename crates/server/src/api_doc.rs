@@ -3,8 +3,8 @@ use std::sync::Arc;
 use config::Config;
 use model::{AccountIdInternal, EmailMessages};
 use server_data::{
-    content_processing::ContentProcessingManagerData, db_manager::DatabaseManager,
-    write_commands::WriteCommandRunnerHandle,
+    content_processing::ContentProcessingManagerData, data_export::DataExportManagerData,
+    db_manager::DatabaseManager, write_commands::WriteCommandRunnerHandle,
 };
 use server_data_all::app::DataAllUtilsImpl;
 use server_state::{
@@ -34,6 +34,7 @@ impl ApiDoc {
         // Common
         let common = ApiDoc::openapi()
             .merge_from(server_api::common::router_client_config(state.clone()).into_openapi())
+            .merge_from(server_api::common::router_data_export(state.clone()).into_openapi())
             .merge_from(
                 server_api::common::router_push_notification_private(state.clone()).into_openapi(),
             )
@@ -226,6 +227,7 @@ impl ApiDoc {
 
         let (content_processing, _) = ContentProcessingManagerData::new();
         let (admin_notification, _) = AdminNotificationManagerData::new();
+        let (data_export, _) = DataExportManagerData::new();
 
         let demo =
             DemoAccountManager::new(config.demo_account_config().cloned().unwrap_or_default())
@@ -239,6 +241,7 @@ impl ApiDoc {
             admin_notification.into(),
             demo,
             push_notification_sender,
+            data_export,
             simple_state,
             &DataAllUtilsImpl,
         )

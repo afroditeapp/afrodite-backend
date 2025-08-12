@@ -78,6 +78,9 @@ pub enum DieselDatabaseError {
     #[error("File operation failed")]
     File,
 
+    #[error("Zip file related error")]
+    Zip,
+
     #[error("Diesel error")]
     DieselError,
 

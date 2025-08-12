@@ -21,6 +21,7 @@ use server_common::{push_notifications::PushNotificationSender, websocket::WebSo
 use server_data::{
     app::{DataAllUtils, GetConfig},
     content_processing::ContentProcessingManagerData,
+    data_export::{DataExportManagerData, ExportCmd},
     db_manager::RouterDatabaseReadHandle,
     statistics::ProfileStatisticsCache,
     write_commands::WriteCommandRunnerHandle,
@@ -69,6 +70,7 @@ struct AppStateInternal {
     api_usage_tracker: ApiUsageTracker,
     ip_address_usage_tracker: IpAddressUsageTracker,
     data_signer: DataSigner,
+    data_export: DataExportManagerData,
 }
 
 impl AppState {
@@ -81,6 +83,7 @@ impl AppState {
         admin_notification: Arc<AdminNotificationManagerData>,
         demo: DemoAccountManager,
         push_notification_sender: PushNotificationSender,
+        data_export: DataExportManagerData,
         simple_backend_state: SimpleBackendAppState,
         data_all_utils: &'static dyn DataAllUtils,
     ) -> AppState {
@@ -105,6 +108,7 @@ impl AppState {
             api_usage_tracker: ApiUsageTracker::new(),
             ip_address_usage_tracker: IpAddressUsageTracker::new(),
             data_signer: DataSigner::new(),
+            data_export,
         };
 
         AppState {
@@ -213,6 +217,17 @@ impl DataAllAccess<'_> {
 
     pub async fn delete_all_accounts(&self) -> server_common::result::Result<(), DataError> {
         let cmd = self.utils().delete_all_accounts(self.write());
+        cmd.await
+    }
+
+    pub async fn data_export(
+        &self,
+        zip_main_directory_name: String,
+        cmd: ExportCmd,
+    ) -> server_common::result::Result<(), DataError> {
+        let cmd = self
+            .utils()
+            .data_export(self.write(), zip_main_directory_name, cmd);
         cmd.await
     }
 }

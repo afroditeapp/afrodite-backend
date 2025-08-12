@@ -10,6 +10,7 @@ pub mod api_doc;
 pub mod bot;
 pub mod content_processing;
 pub mod daily_likes;
+pub mod data_export;
 pub mod email;
 pub mod hourly_tasks;
 pub mod perf;
@@ -40,6 +41,7 @@ use server_common::push_notifications::{
 };
 use server_data::{
     content_processing::ContentProcessingManagerData,
+    data_export::DataExportManagerData,
     db_manager::DatabaseManager,
     write_commands::{WriteCmdWatcher, WriteCommandRunnerHandle},
 };
@@ -64,6 +66,7 @@ use crate::{
     admin_notifications::{AdminNotificationManager, AdminNotificationManagerQuitHandle},
     bot::BotClient,
     daily_likes::{DailyLikesManager, DailyLikesManagerQuitHandle},
+    data_export::{DataExportManager, DataExportManagerQuitHandle},
     unlimited_likes::{UnlimitedLikesManager, UnlimitedLikesManagerQuitHandle},
 };
 
@@ -86,6 +89,7 @@ impl DatingAppServer {
             database_manager: None,
             content_processing_quit_handle: None,
             admin_notification_quit_handle: None,
+            data_export_quit_handle: None,
             push_notifications_quit_handle: None,
             email_manager_quit_handle: None,
             shutdown_tasks: None,
@@ -107,6 +111,7 @@ pub struct DatingAppBusinessLogic {
     database_manager: Option<DatabaseManager>,
     content_processing_quit_handle: Option<ContentProcessingManagerQuitHandle>,
     admin_notification_quit_handle: Option<AdminNotificationManagerQuitHandle>,
+    data_export_quit_handle: Option<DataExportManagerQuitHandle>,
     push_notifications_quit_handle: Option<PushNotificationManagerQuitHandle>,
     email_manager_quit_handle: Option<EmailManagerQuitHandle>,
     shutdown_tasks: Option<ShutdownTasks>,
@@ -278,6 +283,8 @@ impl BusinessLogic for DatingAppBusinessLogic {
         let (admin_notification, admin_notification_receiver) = AdminNotificationManagerData::new();
         let admin_notification = Arc::new(admin_notification);
 
+        let (data_export, data_export_receiver) = DataExportManagerData::new();
+
         let demo = DemoAccountManager::new(
             self.config
                 .demo_account_config()
@@ -294,6 +301,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
             admin_notification.clone(),
             demo,
             push_notification_sender,
+            data_export,
             simple_state,
             &DataAllUtilsImpl,
         )
@@ -313,6 +321,12 @@ impl BusinessLogic for DatingAppBusinessLogic {
 
         let admin_notification_quit_handle = AdminNotificationManager::new_manager(
             admin_notification_receiver,
+            app_state.clone(),
+            server_quit_watcher.resubscribe(),
+        );
+
+        let data_export_quit_handle = DataExportManager::new_manager(
+            data_export_receiver,
             app_state.clone(),
             server_quit_watcher.resubscribe(),
         );
@@ -355,6 +369,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
         self.write_cmd_waiter = Some(write_cmd_waiter);
         self.content_processing_quit_handle = Some(content_processing_quit_handle);
         self.admin_notification_quit_handle = Some(admin_notification_quit_handle);
+        self.data_export_quit_handle = Some(data_export_quit_handle);
         self.push_notifications_quit_handle = Some(push_notifications_quit_handle);
         self.email_manager_quit_handle = Some(email_manager_quit_handle);
         self.shutdown_tasks = Some(ShutdownTasks::new(app_state.clone()));
@@ -419,6 +434,10 @@ impl BusinessLogic for DatingAppBusinessLogic {
             .wait_quit()
             .await;
         self.scheduled_tasks
+            .expect("Not initialized")
+            .wait_quit()
+            .await;
+        self.data_export_quit_handle
             .expect("Not initialized")
             .wait_quit()
             .await;

@@ -14,6 +14,7 @@ use simple_backend::manager_client::ManagerApiClient;
 
 use crate::{
     DataError,
+    data_export::{DataExportManagerData, ExportCmd},
     db_manager::{InternalWriting, RouterDatabaseReadHandle},
     event::EventManagerWithCacheReference,
     statistics::ProfileStatisticsCache,
@@ -156,4 +157,15 @@ pub trait DataAllUtils: Send + Sync + 'static {
         &self,
         write_handle: &'a WriteCommandRunnerHandle,
     ) -> BoxFuture<'a, server_common::result::Result<(), DataError>>;
+
+    fn data_export<'a>(
+        &self,
+        write_handle: &'a WriteCommandRunnerHandle,
+        zip_main_directory_name: String,
+        cmd: ExportCmd,
+    ) -> BoxFuture<'a, server_common::result::Result<(), DataError>>;
+}
+
+pub trait DataExportManagerDataProvider {
+    fn data_export(&self) -> &DataExportManagerData;
 }

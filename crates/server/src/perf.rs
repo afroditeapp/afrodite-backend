@@ -3,7 +3,10 @@
 //!
 
 use server_api::{
-    common::{COMMON_CLIENT_CONFIG_COUNTERS_LIST, COMMON_PUSH_NOTIFICATION_COUNTERS_LIST},
+    common::{
+        COMMON_CLIENT_CONFIG_COUNTERS_LIST, COMMON_DATA_EXPORT_COUNTERS_LIST,
+        COMMON_PUSH_NOTIFICATION_COUNTERS_LIST,
+    },
     common_admin::{
         COMMON_ADMIN_MAINTENANCE_COUNTERS_LIST, COMMON_ADMIN_NOTIFICATION_COUNTERS_LIST,
         COMMON_ADMIN_REPORT_COUNTERS_LIST,
@@ -83,6 +86,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("common", COMMON_COUNTERS_LIST),
     &CounterCategory::new("api", API_COUNTERS_LIST),
     &CounterCategory::new("common_client_config", COMMON_CLIENT_CONFIG_COUNTERS_LIST),
+    &CounterCategory::new("common_data_export", COMMON_DATA_EXPORT_COUNTERS_LIST),
     &CounterCategory::new(
         "common_push_notification",
         COMMON_PUSH_NOTIFICATION_COUNTERS_LIST,

@@ -52,6 +52,9 @@ use crate::{
 mod client_config;
 pub use client_config::*;
 
+mod data_export;
+pub use data_export::*;
+
 mod push_notification;
 pub use push_notification::*;
 

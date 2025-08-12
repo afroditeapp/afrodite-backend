@@ -8,7 +8,7 @@ use model::{
 use model_account::{EmailAddress, SignInWithInfo};
 use server_common::websocket::WebSocketError;
 use server_data::{
-    DataError, app::DataAllUtils, data_reset::BACKEND_DATA_RESET_STATE,
+    DataError, app::DataAllUtils, data_export::ExportCmd, data_reset::BACKEND_DATA_RESET_STATE,
     db_manager::RouterDatabaseReadHandle, result::WrappedContextExt,
     write_commands::WriteCommandRunnerHandle,
 };
@@ -164,6 +164,19 @@ impl DataAllUtils for DataAllUtilsImpl {
                 .write(
                     move |cmds| async move { cmds.account().delete().delete_all_accounts().await },
                 )
+                .await
+        }
+        .boxed()
+    }
+
+    fn data_export<'a>(
+        &self,
+        write_command_runner: &'a WriteCommandRunnerHandle,
+        zip_main_directory_name: String,
+        cmd: ExportCmd,
+    ) -> BoxFuture<'a, server_common::result::Result<(), DataError>> {
+        async move {
+            crate::data_export::data_export(write_command_runner, zip_main_directory_name, cmd)
                 .await
         }
         .boxed()

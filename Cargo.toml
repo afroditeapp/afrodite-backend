@@ -92,6 +92,7 @@ sha2 = "0.10.9"
 sysinfo = { version = "0.35.2", default-features = false, features = ["system"] }
 ipnet = "2.11.0"
 maxminddb = "0.26.0"
+zip = "4.3.0"
 
 clap = { version = "4.5.40", features = ["cargo", "derive"] }
 

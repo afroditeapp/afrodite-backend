@@ -13,6 +13,7 @@ use crate::{
 };
 
 mod client_config;
+mod data_export;
 mod push_notification;
 
 define_cmd_wrapper_read!(ReadCommandsCommon);
@@ -20,6 +21,10 @@ define_cmd_wrapper_read!(ReadCommandsCommon);
 impl<'a> ReadCommandsCommon<'a> {
     pub fn client_config(self) -> client_config::ReadCommandsCommonClientConfig<'a> {
         client_config::ReadCommandsCommonClientConfig::new(self.0)
+    }
+
+    pub fn data_export(self) -> data_export::ReadCommandsCommonDataExport<'a> {
+        data_export::ReadCommandsCommonDataExport::new(self.0)
     }
 
     pub fn push_notification(self) -> push_notification::ReadCommandsCommonPushNotification<'a> {

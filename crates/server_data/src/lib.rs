@@ -14,6 +14,7 @@ use self::file::{FileError, utils::FileDir};
 pub mod app;
 pub mod cache;
 pub mod content_processing;
+pub mod data_export;
 pub mod data_reset;
 pub mod db_manager;
 pub mod demo;

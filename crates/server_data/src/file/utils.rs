@@ -12,7 +12,6 @@ use super::super::FileError;
 
 pub const TMP_DIR_NAME: &str = "tmp";
 pub const CONTENT_DIR_NAME: &str = "content";
-pub const EXPORT_DIR_NAME: &str = "export";
 
 const MAX_TMP_FILE_SIZE: usize = 1024 * 1024 * 1024 * 10; // 10 MiB
 
@@ -78,12 +77,6 @@ impl AccountDir {
     fn tmp_dir(mut self) -> TmpDir {
         self.dir.push(TMP_DIR_NAME);
         TmpDir { dir: self.dir }
-    }
-
-    // TODO(prod): Remove if not used
-    fn _export_dir(mut self) -> ExportDir {
-        self.dir.push(EXPORT_DIR_NAME);
-        ExportDir { dir: self.dir }
     }
 
     fn content_dir(mut self) -> ContentDir {
@@ -155,6 +148,13 @@ impl TmpDir {
             path: PathToFile { path: self.dir },
         }
     }
+
+    pub fn data_export(mut self) -> TmpDataExport {
+        self.dir.push("data_export.zip");
+        TmpDataExport {
+            path: PathToFile { path: self.dir },
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -172,17 +172,6 @@ impl ContentDir {
         ContentFile {
             path: PathToFile { path: self.dir },
         }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct ExportDir {
-    dir: PathBuf,
-}
-
-impl ExportDir {
-    pub fn path(&self) -> &PathBuf {
-        &self.dir
     }
 }
 
@@ -209,6 +198,10 @@ impl ContentFile {
     pub async fn read_all(&self) -> Result<Vec<u8>, FileError> {
         self.path.read_all().await
     }
+
+    pub fn read_all_blocking(&self) -> Result<Vec<u8>, FileError> {
+        self.path.read_all_blocking()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -234,6 +227,27 @@ impl TmpContentFile {
     }
 
     pub fn as_path(&self) -> &Path {
+        self.path.as_path()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct TmpDataExport {
+    path: PathToFile,
+}
+
+impl TmpDataExport {
+    pub async fn overwrite_and_remove_if_exists(self) -> Result<(), FileError> {
+        self.path.overwrite_and_remove_if_exists().await
+    }
+
+    pub async fn byte_count_and_read_stream(
+        &self,
+    ) -> Result<(u64, ReaderStream<tokio::fs::File>), FileError> {
+        self.path.byte_count_and_read_stream().await
+    }
+
+    pub fn path(&self) -> &Path {
         self.path.as_path()
     }
 }
@@ -317,6 +331,10 @@ impl PathToFile {
         tokio::fs::read(&self.path)
             .await
             .change_context(FileError::IoFileOpen)
+    }
+
+    pub fn read_all_blocking(&self) -> Result<Vec<u8>, FileError> {
+        std::fs::read(&self.path).change_context(FileError::IoFileOpen)
     }
 
     pub async fn move_to(self, new_location: &Self) -> Result<(), FileError> {

@@ -169,6 +169,7 @@ define_permissions!(
     admin_edit_profile_name,
     admin_edit_max_public_key_count,
     admin_edit_media_content_face_detected_value,
+    admin_export_data,
     admin_moderate_media_content,
     admin_moderate_profile_names,
     admin_moderate_profile_texts,

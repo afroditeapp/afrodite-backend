@@ -2,7 +2,9 @@ use axum::response::{IntoResponse, Response};
 use config::file::ConfigFileError;
 use manager_api::ClientError;
 use server_common::{data::cache::CacheError, internal_api::InternalApiError};
-use server_data::{content_processing::ContentProcessingError, event::EventError};
+use server_data::{
+    content_processing::ContentProcessingError, data_export::DataExportError, event::EventError,
+};
 use simple_backend::{
     jitsi_meet::JitsiMeetUrlCreatorError,
     sign_in_with::{apple::SignInWithAppleError, google::SignInWithGoogleError},
@@ -69,6 +71,8 @@ enum RequestError {
     EventError,
     #[error("Content processing error")]
     ContentProcessingError,
+    #[error("Data export error")]
+    DataExportError,
     #[error("Data signer error")]
     DataSignerError,
     #[error("Jitsi Meet URL creator error")]
@@ -139,6 +143,7 @@ impl_error_to_status_code!(ClientError, RequestError::ManagerClientError);
 impl_error_to_status_code!(ConfigFileError, RequestError::ConfigFileError);
 impl_error_to_status_code!(EventError, RequestError::EventError);
 impl_error_to_status_code!(ContentProcessingError, RequestError::ContentProcessingError);
+impl_error_to_status_code!(DataExportError, RequestError::DataExportError);
 impl_error_to_status_code!(DataSignerError, RequestError::DataSignerError);
 impl_error_to_status_code!(
     JitsiMeetUrlCreatorError,

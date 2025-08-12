@@ -323,12 +323,11 @@ impl<'a> WriteCommandsConcurrent<'a> {
         let processing_id_i64 = NEXT_CONTENT_PROCESSING_ID.fetch_add(1, Ordering::Relaxed);
         let processing_id = ContentProcessingId::new(id.as_id(), slot, processing_id_i64);
 
-        // Clear tmp dir in case previous content writing failed and there is no
-        // content ID in the database about it.
-        self.file_dir
-            .tmp_dir(id.as_id())
-            .overwrite_and_remove_contents_if_exists()
-            .await?;
+        // There might be some content in the tmp dir which does not have
+        // content ID in the database if previous content writing failed.
+        // Because tmp dir is also used for data export saving it is not
+        // possible to clear tmp dir completely at this point.
+        // The dir is cleared completely when server starts.
 
         let tmp_raw_img = self.file_dir.raw_content_upload(id.as_id(), processing_id);
         tmp_raw_img.save_stream(stream).await?;

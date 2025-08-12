@@ -9,7 +9,9 @@ edition = "2024"
 futures = { workspace = true }
 tracing = { workspace = true }
 
+serde = { workspace = true }
 serde_json = { workspace = true }
+zip = { workspace = true }
 
 axum = { workspace = true }
 
@@ -19,6 +21,7 @@ config = { path = "../config" }
 model = { path = "../model" }
 model_account = { path = "../model_account" }
 model_profile = { path = "../model_profile" }
+model_media = { path = "../model_media" }
 model_chat = { path = "../model_chat" }
 server_common = { path = "../server_common" }
 

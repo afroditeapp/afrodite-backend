@@ -18,6 +18,9 @@ use crate::{
 pub mod api_usage;
 pub use api_usage::*;
 
+pub mod data_export;
+pub use data_export::*;
+
 pub mod sync_version;
 pub use sync_version::*;
 
