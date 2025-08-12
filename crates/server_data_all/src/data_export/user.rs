@@ -9,15 +9,15 @@ use server_data::data_export::SourceAccount;
 // TODO(prod): Add more data to data export JSON
 
 #[derive(Serialize)]
-pub struct DataExportJson {
+pub struct UserDataExportJson {
     my_profile: GetMyProfileResult,
     pub content: Vec<ContentInfoDetailed>,
 }
 
-pub fn generate_data_json(
+pub fn generate_user_data_export_json(
     current: &mut DbReadMode,
     id: SourceAccount,
-) -> error_stack::Result<DataExportJson, DieselDatabaseError> {
+) -> error_stack::Result<UserDataExportJson, DieselDatabaseError> {
     let id = id.0;
 
     let my_profile = current.profile().data().my_profile(id, None)?;
@@ -31,7 +31,7 @@ pub fn generate_data_json(
         .map(|m| m.into())
         .collect();
 
-    let data = DataExportJson {
+    let data = UserDataExportJson {
         my_profile,
         content,
     };

@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use model::{AccountIdInternal, DataExportState, DataExportStateType, UnixTime};
+use model::{AccountIdInternal, DataExportState, DataExportStateType, DataExportType, UnixTime};
 use server_common::result::{WrappedContextExt, WrappedResultExt};
 use simple_backend_utils::time::DurationValue;
 use tokio::sync::{
@@ -36,6 +36,7 @@ pub struct TargetAccount(pub AccountIdInternal);
 pub struct ExportCmd {
     source: SourceAccount,
     target: TargetAccount,
+    data_export_type: DataExportType,
 }
 
 impl ExportCmd {
@@ -45,6 +46,10 @@ impl ExportCmd {
 
     pub fn target(&self) -> TargetAccount {
         self.target
+    }
+
+    pub fn data_export_type(&self) -> DataExportType {
+        self.data_export_type
     }
 }
 
@@ -96,6 +101,7 @@ impl DataExportManagerData {
         &self,
         source: SourceAccount,
         target: TargetAccount,
+        data_export_type: DataExportType,
     ) -> Result<(), DataExportError> {
         let target_state = self.get_state(target.0).await;
         let mut target_state = target_state.state.lock().await;
@@ -103,7 +109,11 @@ impl DataExportManagerData {
             Err(DataExportError::ExportStateNotEmpty.report())
         } else {
             self.event_queue
-                .send(ExportCmd { source, target })
+                .send(ExportCmd {
+                    source,
+                    target,
+                    data_export_type,
+                })
                 .change_context(DataExportError::EventSendingFailed)?;
             target_state.public_state = DataExportState::in_progress();
             target_state.export_cmd_sent = UnixTime::current_time();

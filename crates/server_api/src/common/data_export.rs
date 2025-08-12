@@ -3,12 +3,13 @@ use std::str::FromStr;
 use axum::{
     Extension,
     body::Body,
-    extract::{Path, Query, State},
+    extract::{Query, State},
 };
 use axum_extra::TypedHeader;
 use headers::{ContentLength, ContentType};
 use model::{
-    AccountId, AccountIdInternal, DataExportName, DataExportState, DataExportStateType, Permissions,
+    AccountIdInternal, DataExportName, DataExportState, DataExportStateType, DataExportType,
+    Permissions, PostStartDataExport,
 };
 use server_data::{
     data_export::{SourceAccount, TargetAccount},
@@ -51,7 +52,7 @@ pub async fn get_data_export_state(
     Ok(value.into())
 }
 
-const PATH_POST_START_DATA_EXPORT: &str = "/common_api/start_data_export/{aid}";
+const PATH_POST_START_DATA_EXPORT: &str = "/common_api/start_data_export";
 
 /// Start data export
 ///
@@ -62,14 +63,15 @@ const PATH_POST_START_DATA_EXPORT: &str = "/common_api/start_data_export/{aid}";
 ///
 /// * Without admin permission, own account can exported once per 24 hours.
 ///   The export command sending time is stored only in RAM, so the limit
-///   resets when backend restarts.
+///   resets when backend restarts. Only allowed data export type is
+///   [DataExportType::User].
 /// * With [Permissions::admin_export_data] all accounts can be exported
 ///   without limits.
 ///
 #[utoipa::path(
     post,
     path = PATH_POST_START_DATA_EXPORT,
-    params(AccountId),
+    request_body = PostStartDataExport,
     responses(
         (status = 200, description = "Successfull."),
         (status = 401, description = "Unauthorized."),
@@ -82,21 +84,29 @@ pub async fn post_start_data_export(
     State(state): State<S>,
     Extension(api_caller_id): Extension<AccountIdInternal>,
     Extension(api_caller_permissions): Extension<Permissions>,
-    Path(account_for_exporting): Path<AccountId>,
+    Json(settings): Json<PostStartDataExport>,
 ) -> Result<(), StatusCode> {
     COMMON.post_start_data_export.incr();
 
     let export_state = state.data_export().get_state(api_caller_id).await;
 
-    let account_for_exporting = SourceAccount(state.get_internal_id(account_for_exporting).await?);
+    let account_for_exporting = SourceAccount(state.get_internal_id(settings.source).await?);
     let api_caller_id = TargetAccount(api_caller_id);
 
     if api_caller_permissions.admin_export_data {
         state
             .data_export()
-            .send_export_cmd_if_export_file_is_not_in_use(account_for_exporting, api_caller_id)
+            .send_export_cmd_if_export_file_is_not_in_use(
+                account_for_exporting,
+                api_caller_id,
+                settings.data_export_type,
+            )
             .await?;
         return Ok(());
+    }
+
+    if settings.data_export_type == DataExportType::Admin {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
     if !export_state
@@ -112,7 +122,11 @@ pub async fn post_start_data_export(
 
     state
         .data_export()
-        .send_export_cmd_if_export_file_is_not_in_use(account_for_exporting, api_caller_id)
+        .send_export_cmd_if_export_file_is_not_in_use(
+            account_for_exporting,
+            api_caller_id,
+            settings.data_export_type,
+        )
         .await?;
 
     Ok(())

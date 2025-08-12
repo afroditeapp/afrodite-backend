@@ -2,7 +2,8 @@ use std::io::Write;
 
 use database::{DbReadMode, DieselDatabaseError};
 use error_stack::ResultExt;
-use model::ContentId;
+use model::{ContentId, DataExportType};
+use serde::Serialize;
 use server_data::{
     DataError,
     data_export::ExportCmd,
@@ -13,9 +14,12 @@ use server_data::{
 };
 use zip::{ZipWriter, write::SimpleFileOptions};
 
-use crate::data_export::json::{DataExportJson, generate_data_json};
+use crate::data_export::{
+    admin::generate_admin_data_export_json, user::generate_user_data_export_json,
+};
 
-mod json;
+mod admin;
+mod user;
 
 pub async fn data_export(
     write_handle: &WriteCommandRunnerHandle,
@@ -52,8 +56,13 @@ fn db_data_export(
         std::fs::File::create_new(archive.path()).change_context(DieselDatabaseError::File)?;
     let mut zip_writer = zip::ZipWriter::new(file);
 
-    let data = generate_data_json(&mut current, cmd.source())?;
-    write_json_file(&data, &zip_main_directory_name, &mut zip_writer)?;
+    let data = generate_user_data_export_json(&mut current, cmd.source())?;
+    write_json_file(&data, "user", &zip_main_directory_name, &mut zip_writer)?;
+
+    if cmd.data_export_type() == DataExportType::Admin {
+        let data = generate_admin_data_export_json(&mut current, cmd.source())?;
+        write_json_file(&data, "admin", &zip_main_directory_name, &mut zip_writer)?;
+    }
 
     for c in data.content {
         let data = file_dir
@@ -71,14 +80,15 @@ fn db_data_export(
     Ok(())
 }
 
-fn write_json_file(
-    json: &DataExportJson,
+fn write_json_file<T: Serialize>(
+    json: &T,
+    json_name: &str,
     zip_main_directory_name: &str,
     zip_writer: &mut ZipWriter<std::fs::File>,
 ) -> error_stack::Result<(), DieselDatabaseError> {
     let json =
         serde_json::to_string_pretty(&json).change_context(DieselDatabaseError::SerdeSerialize)?;
-    let file_name = format!("{zip_main_directory_name}/data.json");
+    let file_name = format!("{zip_main_directory_name}/{json_name}.json");
     zip_writer
         .start_file(file_name, SimpleFileOptions::default())
         .change_context(DieselDatabaseError::Zip)?;

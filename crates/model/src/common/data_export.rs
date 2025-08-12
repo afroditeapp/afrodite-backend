@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
+use crate::AccountId;
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub enum DataExportStateType {
     Empty,
@@ -55,4 +57,21 @@ impl DataExportState {
             state: DataExportStateType::Error,
         }
     }
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, ToSchema, PartialEq)]
+pub enum DataExportType {
+    /// User initiated data export which
+    /// doesn't expose information on other users.
+    User,
+    /// Admin initiated data export which
+    /// does expose information on other users.
+    Admin,
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct PostStartDataExport {
+    /// Data reading source account.
+    pub source: AccountId,
+    pub data_export_type: DataExportType,
 }

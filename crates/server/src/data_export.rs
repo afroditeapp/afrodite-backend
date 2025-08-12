@@ -1,5 +1,5 @@
 use chrono::Utc;
-use model::{DataExportName, DataExportState};
+use model::{DataExportName, DataExportState, DataExportType};
 use server_api::app::DataExportManagerDataProvider;
 use server_data::{
     app::ReadData,
@@ -87,7 +87,11 @@ impl DataExportManager {
                         .collect::<String>();
                     let age = p.profile.age.value();
                     let time = Utc::now().format("%Y-%m-%d_%H-%M-%S");
-                    format!("data_export_{name}_{age}_{time}")
+                    let data_export_type = match cmd.data_export_type() {
+                        DataExportType::User => "user",
+                        DataExportType::Admin => "admin",
+                    };
+                    format!("data_export_{name}_{age}_{time}_{data_export_type}")
                 }
                 Err(e) => {
                     error!("Getting profile failed: {e:?}");
