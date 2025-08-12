@@ -6,7 +6,7 @@ use model::{ContentId, DataExportType};
 use serde::Serialize;
 use server_data::{
     DataError,
-    data_export::ExportCmd,
+    data_export::DataExportCmd,
     file::{FileWrite, utils::FileDir},
     read::DbRead,
     result::Result,
@@ -24,7 +24,7 @@ mod user;
 pub async fn data_export(
     write_handle: &WriteCommandRunnerHandle,
     zip_main_directory_name: String,
-    cmd: ExportCmd,
+    cmd: DataExportCmd,
 ) -> Result<(), DataError> {
     write_handle
         .write(move |cmds| async move {
@@ -48,7 +48,7 @@ fn db_data_export(
     mut current: DbReadMode,
     file_dir: FileDir,
     zip_main_directory_name: String,
-    cmd: ExportCmd,
+    cmd: DataExportCmd,
 ) -> error_stack::Result<(), DieselDatabaseError> {
     let archive = file_dir.tmp_dir(cmd.target().0.into()).data_export();
 

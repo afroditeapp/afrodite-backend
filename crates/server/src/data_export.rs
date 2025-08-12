@@ -3,7 +3,7 @@ use model::{DataExportName, DataExportState, DataExportType};
 use server_api::app::DataExportManagerDataProvider;
 use server_data::{
     app::ReadData,
-    data_export::{DataExportReceiver, ExportCmd},
+    data_export::{DataExportCmd, DataExportReceiver},
 };
 use server_data_profile::read::GetReadProfileCommands;
 use server_state::S;
@@ -69,7 +69,7 @@ impl DataExportManager {
         }
     }
 
-    pub async fn handle_cmd(&self, cmd: ExportCmd) {
+    pub async fn handle_cmd(&self, cmd: DataExportCmd) {
         let zip_main_directory_name =
             match self.state.read().profile().profile(cmd.source().0).await {
                 Ok(p) => {

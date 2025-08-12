@@ -33,13 +33,13 @@ pub struct SourceAccount(pub AccountIdInternal);
 pub struct TargetAccount(pub AccountIdInternal);
 
 #[derive(Debug, Clone, Copy)]
-pub struct ExportCmd {
+pub struct DataExportCmd {
     source: SourceAccount,
     target: TargetAccount,
     data_export_type: DataExportType,
 }
 
-impl ExportCmd {
+impl DataExportCmd {
     pub fn source(&self) -> SourceAccount {
         self.source
     }
@@ -54,7 +54,7 @@ impl ExportCmd {
 }
 
 #[derive(Debug)]
-pub struct DataExportReceiver(pub UnboundedReceiver<ExportCmd>);
+pub struct DataExportReceiver(pub UnboundedReceiver<DataExportCmd>);
 
 #[derive(Debug, Default, Clone)]
 pub struct State {
@@ -82,7 +82,7 @@ impl AccountSpecificData {
 }
 
 pub struct DataExportManagerData {
-    event_queue: UnboundedSender<ExportCmd>,
+    event_queue: UnboundedSender<DataExportCmd>,
     data: RwLock<HashMap<AccountIdInternal, AccountSpecificData>>,
 }
 
@@ -109,7 +109,7 @@ impl DataExportManagerData {
             Err(DataExportError::ExportStateNotEmpty.report())
         } else {
             self.event_queue
-                .send(ExportCmd {
+                .send(DataExportCmd {
                     source,
                     target,
                     data_export_type,

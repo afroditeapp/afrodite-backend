@@ -21,7 +21,7 @@ use server_common::{push_notifications::PushNotificationSender, websocket::WebSo
 use server_data::{
     app::{DataAllUtils, GetConfig},
     content_processing::ContentProcessingManagerData,
-    data_export::{DataExportManagerData, ExportCmd},
+    data_export::{DataExportCmd, DataExportManagerData},
     db_manager::RouterDatabaseReadHandle,
     statistics::ProfileStatisticsCache,
     write_commands::WriteCommandRunnerHandle,
@@ -223,7 +223,7 @@ impl DataAllAccess<'_> {
     pub async fn data_export(
         &self,
         zip_main_directory_name: String,
-        cmd: ExportCmd,
+        cmd: DataExportCmd,
     ) -> server_common::result::Result<(), DataError> {
         let cmd = self
             .utils()
