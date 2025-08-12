@@ -186,6 +186,7 @@ pub async fn post_profile(
         let profile = profile
             .validate(
                 cmds.config().profile_attributes(),
+                cmds.config().profile_name_regex(),
                 &old_profile.profile,
                 accepted_ages,
             )

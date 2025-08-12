@@ -130,7 +130,12 @@ pub async fn post_set_profile_name(
                 .collect(),
         };
         let profile_update = profile_update
-            .validate(cmds.config().profile_attributes(), &profile, None)
+            .validate(
+                cmds.config().profile_attributes(),
+                cmds.config().profile_name_regex(),
+                &profile,
+                None,
+            )
             .into_error_string(DataError::NotAllowed)?;
         cmds.profile()
             .profile(profile_owner_id, profile_update)

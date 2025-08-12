@@ -10,6 +10,7 @@ edition = "2024"
 serde = { workspace = true }
 utoipa = { workspace = true }
 diesel = { workspace = true }
+regex = { workspace = true }
 
 model = { path = "../model" }
 model_server_data = { path = "../model_server_data" }

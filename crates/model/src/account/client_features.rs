@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use simple_backend_utils::time::UtcTimeValue;
 use utoipa::ToSchema;
@@ -30,6 +31,8 @@ pub struct ClientFeaturesConfigInternal {
     pub map: MapConfigInternal,
     #[serde(default)]
     pub limits: LimitsConfigInternal,
+    #[serde(default)]
+    pub profile: ProfileConfig,
 }
 
 impl ClientFeaturesConfigInternal {
@@ -40,12 +43,23 @@ impl ClientFeaturesConfigInternal {
             ));
         }
 
+        if let Some(regex) = &self.profile.profile_name_regex {
+            if !regex.starts_with('^') {
+                return Err("Profile name regex does not start with '^'".to_string());
+            }
+            if !regex.ends_with('$') {
+                return Err("Profile name regex does not end with '$'".to_string());
+            }
+            Regex::new(regex).map_err(|v| v.to_string())?;
+        }
+
         Ok(ClientFeaturesConfig {
             attribution: self.attribution.into(),
             features: self.features,
             news: self.news,
             map: self.map.into(),
             limits: self.limits.into(),
+            profile: self.profile,
         })
     }
 }
@@ -58,6 +72,7 @@ pub struct ClientFeaturesConfig {
     pub news: Option<NewsConfig>,
     pub map: MapConfig,
     pub limits: LimitsConfig,
+    pub profile: ProfileConfig,
 }
 
 impl ClientFeaturesConfig {
@@ -248,4 +263,9 @@ pub struct LikeSendingLimitConfig {
     pub daily_limit: u8,
     /// UTC time with "hh:mm" format.
     pub reset_time: UtcTimeValue,
+}
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
+pub struct ProfileConfig {
+    pub profile_name_regex: Option<String>,
 }

@@ -4,6 +4,7 @@
 #![warn(unused_crate_dependencies)]
 #![allow(clippy::large_enum_variant, clippy::manual_range_contains)]
 
+use regex::Regex;
 // Ignore unused depenency warning
 use tls_client as _;
 
@@ -105,6 +106,7 @@ pub struct Config {
     notification_content: NotificationContentFile,
 
     profile_name_allowlist: ProfileNameAllowlistData,
+    profile_name_regex: Option<Regex>,
 
     // Used only for config utils
     bot_config: Option<BotConfigFile>,
@@ -132,6 +134,7 @@ impl Config {
             email_content: None,
             notification_content: NotificationContentFile::default(),
             profile_name_allowlist: ProfileNameAllowlistData::default(),
+            profile_name_regex: None,
             bot_config: None,
             profile_attributes_file: None,
         }
@@ -295,6 +298,10 @@ impl Config {
         &self.profile_name_allowlist
     }
 
+    pub fn profile_name_regex(&self) -> Option<&Regex> {
+        self.profile_name_regex.as_ref()
+    }
+
     pub fn api_obfuscation_salt(&self) -> Option<&str> {
         self.file.api.obfuscation_salt.as_deref()
     }
@@ -453,6 +460,16 @@ pub fn get_config(
     }
     let profile_name_allowlist = allowlist_builder.build();
 
+    let profile_name_regex = if let Some(regex) = client_features
+        .as_ref()
+        .and_then(|v| v.profile.profile_name_regex.as_ref())
+    {
+        let regex = Regex::new(regex).change_context(GetConfigError::LoadFileError)?;
+        Some(regex)
+    } else {
+        None
+    };
+
     let bot_config = if let Some(bot_config_file) = &file_config.config_files.bot {
         // Check that bot config file loads correctly
         let bot_config =
@@ -479,6 +496,7 @@ pub fn get_config(
         email_content,
         notification_content,
         profile_name_allowlist,
+        profile_name_regex,
         bot_config,
         profile_attributes_file,
     };

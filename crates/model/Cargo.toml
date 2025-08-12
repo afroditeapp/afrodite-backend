@@ -17,6 +17,7 @@ bitflags = { workspace = true }
 chrono = { workspace = true }
 num_enum = { workspace = true }
 toml = { workspace = true }
+regex = { workspace = true }
 
 thiserror = { workspace = true }
 

@@ -298,7 +298,12 @@ impl ScheduledTaskManager {
                     .collect(),
             };
             let profile_update = profile_update
-                .validate(cmds.config().profile_attributes(), &profile, None)
+                .validate(
+                    cmds.config().profile_attributes(),
+                    cmds.config().profile_name_regex(),
+                    &profile,
+                    None,
+                )
                 .into_error_string(DataError::NotAllowed)?;
             cmds.profile().profile(id, profile_update).await?;
 

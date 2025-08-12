@@ -99,6 +99,7 @@ pub async fn post_profile_to_database_debug_mode_benchmark(
     let profile = profile
         .validate(
             state.config().profile_attributes(),
+            state.config().profile_name_regex(),
             &old_profile.profile,
             accepted_ages,
         )

@@ -9,6 +9,7 @@ use model_server_data::{
     ProfileStateCached, ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter,
     ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes,
 };
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{UnixTime, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
@@ -166,6 +167,7 @@ impl ProfileUpdate {
     pub fn validate(
         mut self,
         attribute_info: Option<&ProfileAttributesInternal>,
+        profile_name_regex: Option<&Regex>,
         current_profile: &Profile,
         initial_age: Option<InitialProfileAge>,
     ) -> Result<ProfileUpdateValidated, String> {
@@ -212,6 +214,12 @@ impl ProfileUpdate {
         if let Some(c) = self.name.chars().next() {
             if !c.is_uppercase() {
                 return Err("Profile name does not start with uppercase letter".to_string());
+            }
+        }
+
+        if let Some(regex) = profile_name_regex {
+            if !regex.is_match(&self.name) {
+                return Err("Profile name does not match with profile name regex".to_string());
             }
         }
 
