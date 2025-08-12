@@ -437,6 +437,14 @@ impl BusinessLogic for DatingAppBusinessLogic {
             .expect("Not initialized")
             .wait_quit()
             .await;
+        self.content_processing_quit_handle
+            .expect("Not initialized")
+            .wait_quit()
+            .await;
+        self.admin_notification_quit_handle
+            .expect("Not initialized")
+            .wait_quit()
+            .await;
         self.data_export_quit_handle
             .expect("Not initialized")
             .wait_quit()
@@ -451,10 +459,6 @@ impl BusinessLogic for DatingAppBusinessLogic {
             error!("Running shutdown tasks failed: {:?}", e);
         }
 
-        self.content_processing_quit_handle
-            .expect("Not initialized")
-            .wait_quit()
-            .await;
         self.write_cmd_waiter
             .expect("Not initialized")
             .wait_untill_all_writing_ends()
