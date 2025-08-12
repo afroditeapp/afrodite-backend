@@ -26,6 +26,7 @@ const PATH_POST_GET_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
     responses(
         (status = 200, description = "Update successfull.", body = ProfilePage),
         (status = 401, description = "Unauthorized."),
+        (status = 429, description = "Too many requests."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
@@ -80,6 +81,7 @@ const PATH_POST_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
     responses(
         (status = 200, description = "Update successfull.", body = ProfileIteratorSessionId),
         (status = 401, description = "Unauthorized."),
+        (status = 429, description = "Too many requests."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
