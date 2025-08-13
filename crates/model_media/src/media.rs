@@ -525,7 +525,7 @@ pub struct AccountContent {
     pub unused_content_wait_seconds: u32,
 }
 
-#[derive(Debug, Clone, Default, Queryable, Selectable)]
+#[derive(Debug, Clone, Default, Serialize, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::media_state)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct MediaStateRaw {
