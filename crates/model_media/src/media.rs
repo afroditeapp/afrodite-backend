@@ -529,15 +529,8 @@ pub struct AccountContent {
 #[diesel(table_name = crate::schema::media_state)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct MediaStateRaw {
-    pub initial_moderation_request_accepted: bool,
     pub media_content_sync_version: MediaContentSyncVersion,
     pub profile_content_edited_unix_time: ProfileContentEditedTime,
-}
-
-impl MediaStateRaw {
-    pub fn current_moderation_request_is_initial(&self) -> bool {
-        !self.initial_moderation_request_accepted
-    }
 }
 
 sync_version_wrappers!(

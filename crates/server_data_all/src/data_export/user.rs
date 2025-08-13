@@ -5,9 +5,6 @@ pub mod profile;
 
 // TODO(prod): Add more data to data export JSON
 
-// TODO(prod): Add note that info about content moderation decicion makers
-//             is not included.
-
 // TODO(future): Moderator account IDs are not included in the
 //               data export. For example when source account is target account
 //               and the account is the same as in

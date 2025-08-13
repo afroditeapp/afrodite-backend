@@ -588,7 +588,6 @@ diesel::table! {
 
     media_state (account_id) {
         account_id -> Integer,
-        initial_moderation_request_accepted -> Bool,
         media_content_sync_version -> Integer,
         profile_content_edited_unix_time -> Integer,
     }

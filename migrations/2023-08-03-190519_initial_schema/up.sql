@@ -647,10 +647,6 @@ CREATE TABLE IF NOT EXISTS profile_moderation(
 -- State specific to media component.
 CREATE TABLE IF NOT EXISTS media_state(
     account_id                          INTEGER PRIMARY KEY NOT NULL,
-    -- Media component sends this to account component when
-    -- this turns to true. Account component then updates
-    -- the profile visibility for both profile and media.
-    initial_moderation_request_accepted BOOLEAN             NOT NULL DEFAULT 0,
     -- Sync version for profile and security content data for this account.
     media_content_sync_version          INTEGER             NOT NULL DEFAULT 0,
     -- Edit time for profile content changes. This updates from both
