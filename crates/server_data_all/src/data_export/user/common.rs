@@ -20,6 +20,7 @@ pub struct UserDataExportJsonCommon {
     ip_address_statistics: GetIpAddressStatisticsResult,
     admin_notification_settings: AdminNotificationSettings,
     admin_notification_subscriptions: AdminNotification,
+    note: &'static str,
 }
 
 impl UserDataExportJsonCommon {
@@ -52,8 +53,8 @@ impl UserDataExportJsonCommon {
                 .common_admin()
                 .notification()
                 .admin_notification_subscriptions(id)?,
+            note: "Account IDs of moderation decision makers are not included in this data export.",
         };
-
         Ok(data)
     }
 }
