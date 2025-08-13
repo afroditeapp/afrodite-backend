@@ -70,16 +70,25 @@ fn db_data_export(
         "common",
         &UserDataExportJsonCommon::query(&mut current, cmd.source())?,
     )?;
-    writer.write_user_json_file(
-        "profile",
-        &UserDataExportJsonProfile::query(&mut current, cmd.source())?,
-    )?;
-    writer.write_user_json_file(
-        "account",
-        &UserDataExportJsonAccount::query(&mut current, cmd.source())?,
-    )?;
-    let media = UserDataExportJsonMedia::query(&mut current, cmd.source())?;
-    writer.write_user_json_file("media", &media)?;
+    if config.components().profile {
+        writer.write_user_json_file(
+            "profile",
+            &UserDataExportJsonProfile::query(&mut current, cmd.source())?,
+        )?;
+    }
+    if config.components().account {
+        writer.write_user_json_file(
+            "account",
+            &UserDataExportJsonAccount::query(&mut current, cmd.source())?,
+        )?;
+    }
+    let media = if config.components().media {
+        let media = UserDataExportJsonMedia::query(&mut current, cmd.source())?;
+        writer.write_user_json_file("media", &media)?;
+        Some(media)
+    } else {
+        None
+    };
 
     if cmd.data_export_type() == DataExportType::Admin {
         writer.write_admin_json_file(
@@ -88,12 +97,14 @@ fn db_data_export(
         )?;
     }
 
-    for c in media.content {
-        let data = file_dir
-            .media_content(cmd.source().0.uuid, c.cid)
-            .read_all_blocking()
-            .change_context(DieselDatabaseError::File)?;
-        writer.write_media_content(c.cid, &data)?;
+    if let Some(media) = media {
+        for c in media.content {
+            let data = file_dir
+                .media_content(cmd.source().0.uuid, c.cid)
+                .read_all_blocking()
+                .change_context(DieselDatabaseError::File)?;
+            writer.write_media_content(c.cid, &data)?;
+        }
     }
 
     let mut file = writer
