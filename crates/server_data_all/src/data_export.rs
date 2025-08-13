@@ -68,7 +68,7 @@ fn db_data_export(
         write_json_file(&data, "admin", &zip_main_directory_name, &mut zip_writer)?;
     }
 
-    for c in data.content {
+    for c in data.media.content {
         let data = file_dir
             .media_content(cmd.source().0.uuid, c.cid)
             .read_all_blocking()
