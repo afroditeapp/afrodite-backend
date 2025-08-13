@@ -5,6 +5,9 @@ use model_chat::AccountAppNotificationSettings;
 use serde::Serialize;
 use server_data::data_export::SourceAccount;
 
+// TODO(future): Add news to data export. This is low priority task as
+//               only admins can create or edit news.
+
 #[derive(Serialize)]
 pub struct UserDataExportJsonAccount {
     account_data: AccountData,
@@ -12,6 +15,7 @@ pub struct UserDataExportJsonAccount {
     email_sending_states: AccountEmailSendingStateRaw,
     account_state_table: AccountStateTableRaw,
     account_notification_settings: AccountAppNotificationSettings,
+    note: &'static str,
 }
 
 impl UserDataExportJsonAccount {
@@ -29,6 +33,7 @@ impl UserDataExportJsonAccount {
                 .account()
                 .notification()
                 .app_notification_settings(id)?,
+            note: "If you created or edited news, that data is not currently included here.",
         };
         Ok(data)
     }

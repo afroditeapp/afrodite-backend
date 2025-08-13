@@ -17,7 +17,11 @@ use server_data::{
 use zip::{ZipWriter, write::SimpleFileOptions};
 
 use crate::data_export::{
-    admin::generate_admin_data_export_json, user::generate_user_data_export_json,
+    admin::common::AdminDataExportJsonCommon,
+    user::{
+        account::UserDataExportJsonAccount, common::UserDataExportJsonCommon,
+        media::UserDataExportJsonMedia, profile::UserDataExportJsonProfile,
+    },
 };
 
 mod admin;
@@ -55,28 +59,45 @@ fn db_data_export(
     cmd: DataExportCmd,
 ) -> error_stack::Result<(), DieselDatabaseError> {
     let archive = file_dir.tmp_dir(cmd.target().0.into()).data_export();
-
     let file =
         std::fs::File::create_new(archive.path()).change_context(DieselDatabaseError::File)?;
-    let mut zip_writer = zip::ZipWriter::new(file);
+    let mut writer = DataExportArchiveWriter {
+        zip_main_directory_name,
+        zip_writer: zip::ZipWriter::new(file),
+    };
 
-    let data = generate_user_data_export_json(&mut current, cmd.source())?;
-    write_json_file(&data, "user", &zip_main_directory_name, &mut zip_writer)?;
+    writer.write_user_json_file(
+        "common",
+        &UserDataExportJsonCommon::query(&mut current, cmd.source())?,
+    )?;
+    writer.write_user_json_file(
+        "profile",
+        &UserDataExportJsonProfile::query(&mut current, cmd.source())?,
+    )?;
+    writer.write_user_json_file(
+        "account",
+        &UserDataExportJsonAccount::query(&mut current, cmd.source())?,
+    )?;
+    let media = UserDataExportJsonMedia::query(&mut current, cmd.source())?;
+    writer.write_user_json_file("media", &media)?;
 
     if cmd.data_export_type() == DataExportType::Admin {
-        let data = generate_admin_data_export_json(&config, &mut current, cmd.source())?;
-        write_json_file(&data, "admin", &zip_main_directory_name, &mut zip_writer)?;
+        writer.write_admin_json_file(
+            "common",
+            &AdminDataExportJsonCommon::query(&config, &mut current, cmd.source())?,
+        )?;
     }
 
-    for c in data.media.content {
+    for c in media.content {
         let data = file_dir
             .media_content(cmd.source().0.uuid, c.cid)
             .read_all_blocking()
             .change_context(DieselDatabaseError::File)?;
-        write_media_content(c.cid, &data, &zip_main_directory_name, &mut zip_writer)?;
+        writer.write_media_content(c.cid, &data)?;
     }
 
-    let mut file = zip_writer
+    let mut file = writer
+        .zip_writer
         .finish()
         .change_context(DieselDatabaseError::Zip)?;
     file.flush().change_context(DieselDatabaseError::File)?;
@@ -84,37 +105,61 @@ fn db_data_export(
     Ok(())
 }
 
-fn write_json_file<T: Serialize>(
-    json: &T,
-    json_name: &str,
-    zip_main_directory_name: &str,
-    zip_writer: &mut ZipWriter<std::fs::File>,
-) -> error_stack::Result<(), DieselDatabaseError> {
-    let json =
-        serde_json::to_string_pretty(&json).change_context(DieselDatabaseError::SerdeSerialize)?;
-    let file_name = format!("{zip_main_directory_name}/{json_name}.json");
-    zip_writer
-        .start_file(file_name, SimpleFileOptions::default())
-        .change_context(DieselDatabaseError::Zip)?;
-    zip_writer
-        .write_all(json.as_bytes())
-        .change_context(DieselDatabaseError::Zip)?;
-    Ok(())
+struct DataExportArchiveWriter {
+    zip_main_directory_name: String,
+    zip_writer: ZipWriter<std::fs::File>,
 }
 
-fn write_media_content(
-    content_id: ContentId,
-    data: &[u8],
-    zip_main_directory_name: &str,
-    zip_writer: &mut ZipWriter<std::fs::File>,
-) -> error_stack::Result<(), DieselDatabaseError> {
-    let content_file_name = content_id.content_file_name();
-    let file_name = format!("{zip_main_directory_name}/media/{content_file_name}.jpg");
-    zip_writer
-        .start_file(file_name, SimpleFileOptions::default())
-        .change_context(DieselDatabaseError::Zip)?;
-    zip_writer
-        .write_all(data)
-        .change_context(DieselDatabaseError::Zip)?;
-    Ok(())
+impl DataExportArchiveWriter {
+    fn write_json_file_internal<T: Serialize>(
+        &mut self,
+        dir_name: &str,
+        json_name: &str,
+        json: &T,
+    ) -> error_stack::Result<(), DieselDatabaseError> {
+        let zip_main_directory_name = &self.zip_main_directory_name;
+        let file_name = format!("{zip_main_directory_name}/{dir_name}/{json_name}.json");
+        let json = serde_json::to_string_pretty(&json)
+            .change_context(DieselDatabaseError::SerdeSerialize)?;
+        self.zip_writer
+            .start_file(file_name, SimpleFileOptions::default())
+            .change_context(DieselDatabaseError::Zip)?;
+        self.zip_writer
+            .write_all(json.as_bytes())
+            .change_context(DieselDatabaseError::Zip)?;
+        Ok(())
+    }
+
+    fn write_user_json_file<T: Serialize>(
+        &mut self,
+        json_name: &str,
+        json: &T,
+    ) -> error_stack::Result<(), DieselDatabaseError> {
+        self.write_json_file_internal("user", json_name, json)
+    }
+
+    fn write_admin_json_file<T: Serialize>(
+        &mut self,
+        json_name: &str,
+        json: &T,
+    ) -> error_stack::Result<(), DieselDatabaseError> {
+        self.write_json_file_internal("admin", json_name, json)
+    }
+
+    fn write_media_content(
+        &mut self,
+        content_id: ContentId,
+        data: &[u8],
+    ) -> error_stack::Result<(), DieselDatabaseError> {
+        let zip_main_directory_name = &self.zip_main_directory_name;
+        let content_file_name = content_id.content_file_name();
+        let file_name = format!("{zip_main_directory_name}/media/{content_file_name}.jpg");
+        self.zip_writer
+            .start_file(file_name, SimpleFileOptions::default())
+            .change_context(DieselDatabaseError::Zip)?;
+        self.zip_writer
+            .write_all(data)
+            .change_context(DieselDatabaseError::Zip)?;
+        Ok(())
+    }
 }
