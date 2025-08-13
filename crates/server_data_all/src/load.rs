@@ -190,14 +190,14 @@ impl DbDataToCacheLoader {
                 .await?;
             let automatic_profile_search_last_seen_time = db
                 .db_read(move |mut cmds| {
-                    cmds.profile_admin()
+                    cmds.profile()
                         .search()
                         .automatic_profile_search_last_seen_time(account_id)
                 })
                 .await?;
             let automatic_profile_search_settings = db
                 .db_read(move |mut cmds| {
-                    cmds.profile_admin()
+                    cmds.profile()
                         .search()
                         .automatic_profile_search_settings(account_id)
                 })

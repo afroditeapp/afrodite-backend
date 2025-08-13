@@ -5,6 +5,7 @@ mod favorite;
 mod moderation;
 mod notification;
 mod report;
+mod search;
 
 define_current_read_commands!(CurrentReadProfile);
 
@@ -23,5 +24,8 @@ impl<'a> CurrentReadProfile<'a> {
     }
     pub fn moderation(self) -> moderation::CurrentReadProfileModeration<'a> {
         moderation::CurrentReadProfileModeration::new(self.cmds)
+    }
+    pub fn search(self) -> search::CurrentReadProfileAdminSearch<'a> {
+        search::CurrentReadProfileAdminSearch::new(self.cmds)
     }
 }

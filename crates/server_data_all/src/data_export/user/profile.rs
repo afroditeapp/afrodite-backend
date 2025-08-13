@@ -61,11 +61,11 @@ impl UserDataExportJsonProfile {
                 .notification()
                 .profile_string_moderation_completed(id)?,
             automatic_profile_search_settings: current
-                .profile_admin()
+                .profile()
                 .search()
                 .automatic_profile_search_settings(id)?,
             automatic_profile_search_last_seen_time: current
-                .profile_admin()
+                .profile()
                 .search()
                 .automatic_profile_search_last_seen_time(id)?,
             profile_string_moderation_created: current
