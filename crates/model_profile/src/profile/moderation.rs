@@ -3,6 +3,7 @@ use diesel::{
     prelude::Queryable,
     sql_types::{BigInt, Text},
 };
+use model::UnixTime;
 use model_server_data::ProfileStringModerationState;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, diesel_string_wrapper};
@@ -86,4 +87,11 @@ pub struct ProfileStringModerationInfo {
     pub state: ProfileStringModerationState,
     pub rejected_reason_category: Option<ProfileStringModerationRejectedReasonCategory>,
     pub rejected_reason_details: ProfileStringModerationRejectedReasonDetails,
+}
+
+/// Only data export uses this.
+#[derive(Serialize)]
+pub struct ProfileStringModerationCreated {
+    pub profile_name: Option<UnixTime>,
+    pub profile_text: Option<UnixTime>,
 }

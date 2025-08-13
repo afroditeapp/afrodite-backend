@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_wrapper;
 use utoipa::{IntoParams, ToSchema};
 
-#[derive(Debug, Clone, Copy, Default, FromSqlRow, AsExpression)]
+#[derive(Debug, Clone, Copy, Default, Serialize, FromSqlRow, AsExpression)]
 #[diesel(sql_type = BigInt)]
 pub struct LastSeenUnixTime {
     pub ut: UnixTime,
@@ -30,7 +30,7 @@ impl LastSeenUnixTime {
 
 diesel_i64_wrapper!(LastSeenUnixTime);
 
-#[derive(Debug, Clone, Copy, Default, FromSqlRow, AsExpression)]
+#[derive(Debug, Clone, Copy, Default, Serialize, FromSqlRow, AsExpression)]
 #[diesel(sql_type = BigInt)]
 pub struct AutomaticProfileSearchLastSeenUnixTime {
     pub ut: UnixTime,

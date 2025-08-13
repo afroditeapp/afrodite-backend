@@ -6,8 +6,8 @@ use database::{
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model_profile::{
-    AccountIdInternal, AttributeId, GetMyProfileResult, InitialProfileAge, LastSeenTime,
-    LastSeenUnixTime, Location, Profile, ProfileAge, ProfileAttributeFilterValue,
+    AccountIdInternal, AttributeId, GetMyProfileResult, GetProfileFilters, InitialProfileAge,
+    LastSeenTime, LastSeenUnixTime, Location, Profile, ProfileAge, ProfileAttributeFilterValue,
     ProfileAttributeValue, ProfileInternal, ProfileStateInternal,
     ProfileStringModerationContentType, UnixTime,
 };
@@ -119,6 +119,26 @@ impl CurrentReadProfileData<'_> {
             .select(ProfileStateInternal::as_select())
             .first(self.conn())
             .change_context(DieselDatabaseError::Execute)
+    }
+
+    pub fn profile_filters(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<GetProfileFilters, DieselDatabaseError> {
+        let attribute_filters = self.profile_attribute_filters(id)?;
+        let state = self.profile_state(id)?;
+        Ok(GetProfileFilters {
+            attribute_filters,
+            last_seen_time_filter: state.last_seen_time_filter,
+            unlimited_likes_filter: state.unlimited_likes_filter,
+            min_distance_km_filter: state.min_distance_km_filter,
+            max_distance_km_filter: state.max_distance_km_filter,
+            profile_created_filter: state.profile_created_time_filter,
+            profile_edited_filter: state.profile_edited_time_filter,
+            profile_text_min_characters_filter: state.profile_text_min_characters_filter,
+            profile_text_max_characters_filter: state.profile_text_max_characters_filter,
+            random_profile_order: state.random_profile_order,
+        })
     }
 
     pub fn profile_last_seen_time(

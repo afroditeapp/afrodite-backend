@@ -99,20 +99,8 @@ impl ReadCommandsProfile<'_> {
         id: AccountIdInternal,
     ) -> Result<GetProfileFilters, DataError> {
         self.db_read(move |mut cmds| {
-            let filters = cmds.profile().data().profile_attribute_filters(id)?;
-            let state = cmds.profile().data().profile_state(id)?;
-            Ok(GetProfileFilters {
-                attribute_filters: filters,
-                last_seen_time_filter: state.last_seen_time_filter,
-                unlimited_likes_filter: state.unlimited_likes_filter,
-                min_distance_km_filter: state.min_distance_km_filter,
-                max_distance_km_filter: state.max_distance_km_filter,
-                profile_created_filter: state.profile_created_time_filter,
-                profile_edited_filter: state.profile_edited_time_filter,
-                profile_text_min_characters_filter: state.profile_text_min_characters_filter,
-                profile_text_max_characters_filter: state.profile_text_max_characters_filter,
-                random_profile_order: state.random_profile_order,
-            })
+            let filters = cmds.profile().data().profile_filters(id)?;
+            Ok(filters)
         })
         .await
         .into_error()

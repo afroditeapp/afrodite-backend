@@ -3,8 +3,8 @@ use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model::AccountIdInternal;
 use model_profile::{
-    ProfileNameModerationState, ProfileStringModerationContentType, ProfileStringModerationInfo,
-    ProfileTextModerationState,
+    ProfileNameModerationState, ProfileStringModerationContentType, ProfileStringModerationCreated,
+    ProfileStringModerationInfo, ProfileTextModerationState,
 };
 
 define_current_read_commands!(CurrentReadProfileModeration);
@@ -56,6 +56,34 @@ impl CurrentReadProfileModeration<'_> {
             .change_context(DieselDatabaseError::Execute)
     }
 
+    pub fn profile_string_moderation_created(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<ProfileStringModerationCreated, DieselDatabaseError> {
+        use crate::schema::profile_moderation::dsl::*;
+
+        let profile_name = profile_moderation
+            .filter(account_id.eq(id.as_db_id()))
+            .filter(content_type.eq(ProfileStringModerationContentType::ProfileName))
+            .select(created_unix_time)
+            .first(self.conn())
+            .optional()
+            .change_context(DieselDatabaseError::Execute)?;
+
+        let profile_text = profile_moderation
+            .filter(account_id.eq(id.as_db_id()))
+            .filter(content_type.eq(ProfileStringModerationContentType::ProfileText))
+            .select(created_unix_time)
+            .first(self.conn())
+            .optional()
+            .change_context(DieselDatabaseError::Execute)?;
+
+        Ok(ProfileStringModerationCreated {
+            profile_name,
+            profile_text,
+        })
+    }
+
     pub fn is_name_on_database_allowlist(
         &mut self,
         name: &str,
@@ -70,5 +98,20 @@ impl CurrentReadProfileModeration<'_> {
             .change_context(DieselDatabaseError::Execute)?;
 
         Ok(exists.is_some())
+    }
+
+    pub fn my_data_on_database_profile_name_allowlist(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<Vec<String>, DieselDatabaseError> {
+        use crate::schema::profile_name_allowlist::dsl::*;
+
+        let names = profile_name_allowlist
+            .filter(name_creator_account_id.eq(id.as_db_id()))
+            .select(profile_name)
+            .load(self.conn())
+            .change_context(DieselDatabaseError::Execute)?;
+
+        Ok(names)
     }
 }
