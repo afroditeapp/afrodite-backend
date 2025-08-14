@@ -70,9 +70,12 @@ impl QaTestRunner {
             self.reqwest_client.clone(),
         );
 
-        RunnerUi::new(test_functions, manager_event_receiver)
+        let mut manager_event_receiver = RunnerUi::new(test_functions, manager_event_receiver)
             .run()
             .await;
+
+        // Wait that all test tasks complete
+        let _ = manager_event_receiver.receiver.recv().await;
 
         manager_quit_handle.wait_quit().await;
     }
@@ -129,7 +132,7 @@ impl RunnerUi {
         }
     }
 
-    pub async fn run(mut self) {
+    pub async fn run(mut self) -> ManagerEventReceiver {
         let mut failed = false;
         let mut passed_number = 0;
         let start_time = std::time::Instant::now();
@@ -182,6 +185,8 @@ impl RunnerUi {
                 "\nTo continue from the failed test, run command\nmake test CONTINUE_FROM={current_test}"
             );
         }
+
+        self.manager_event_receiver
     }
 }
 
