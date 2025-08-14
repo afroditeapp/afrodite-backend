@@ -1,4 +1,5 @@
-use model::PublicKeyId;
+use base64::{Engine, prelude::BASE64_STANDARD};
+use model::{PublicKeyId, UnixTime};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -40,5 +41,22 @@ impl GetPrivatePublicKeyInfo {
     pub fn public_key_count_limit(&self) -> i64 {
         self.max_public_key_count_from_backend_config
             .max(self.max_public_key_count_from_account_config)
+    }
+}
+
+#[derive(Serialize)]
+pub struct DataExportPublicKey {
+    public_key_id: PublicKeyId,
+    binary_pgp_public_key_base64: String,
+    key_added_time: UnixTime,
+}
+
+impl DataExportPublicKey {
+    pub fn new(public_key_id: PublicKeyId, key_data: Vec<u8>, key_added_time: UnixTime) -> Self {
+        Self {
+            public_key_id,
+            binary_pgp_public_key_base64: BASE64_STANDARD.encode(key_data),
+            key_added_time,
+        }
     }
 }

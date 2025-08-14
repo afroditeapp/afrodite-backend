@@ -1,8 +1,8 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
-use model::PublicKeyId;
-use model_chat::AccountIdInternal;
+use model::{PublicKeyId, UnixTime};
+use model_chat::{AccountIdInternal, DataExportPublicKey};
 
 use crate::IntoDatabaseError;
 
@@ -42,6 +42,26 @@ impl CurrentReadChatPublicKey<'_> {
             .into_db_error(())?;
 
         Ok(query_result)
+    }
+
+    pub fn all_public_keys(
+        &mut self,
+        account_id_value: AccountIdInternal,
+    ) -> Result<Vec<DataExportPublicKey>, DieselDatabaseError> {
+        use crate::schema::public_key::dsl::*;
+
+        let query_result: Vec<(PublicKeyId, Vec<u8>, UnixTime)> = public_key
+            .filter(account_id.eq(account_id_value.as_db_id()))
+            .select((key_id, key_data, key_added_unix_time))
+            .load(self.conn())
+            .into_db_error(())?;
+
+        let data = query_result
+            .into_iter()
+            .map(|(id, data, time)| DataExportPublicKey::new(id, data, time))
+            .collect();
+
+        Ok(data)
     }
 
     pub fn max_public_key_count_account_config(

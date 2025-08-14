@@ -40,6 +40,25 @@ impl CurrentReadChatInteraction<'_> {
         Ok(Some(value))
     }
 
+    pub fn all_related_account_interactions(
+        &mut self,
+        account: AccountIdInternal,
+    ) -> Result<Vec<AccountInteractionInternal>, DieselDatabaseError> {
+        use crate::schema::account_interaction::dsl::*;
+
+        let interactions = account_interaction
+            .filter(
+                account_id_sender
+                    .eq(account.as_db_id())
+                    .or(account_id_receiver.eq(account.as_db_id())),
+            )
+            .select(AccountInteractionInternal::as_select())
+            .load(self.conn())
+            .into_db_error(account)?;
+
+        Ok(interactions)
+    }
+
     pub fn all_sent_blocks(
         &mut self,
         id_sender: AccountIdInternal,

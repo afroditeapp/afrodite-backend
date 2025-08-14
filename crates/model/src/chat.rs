@@ -1,10 +1,14 @@
-use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
+use base64::{Engine, prelude::BASE64_STANDARD};
+use diesel::{
+    Selectable, deserialize::FromSqlRow, expression::AsExpression, prelude::Queryable,
+    sql_types::BigInt,
+};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{UnixTime, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 use super::sync_version_wrappers;
-use crate::{AccountId, AccountIdDb, AccountIdInternal};
+use crate::{AccountId, AccountIdDb, AccountIdInternal, ClientId, ClientLocalId};
 
 mod interaction;
 pub use interaction::*;
@@ -139,8 +143,60 @@ pub struct PendingMessageIdInternal {
     pub receiver: AccountIdDb,
     pub m: MessageId,
 }
-
 pub struct PendingMessageIdInternalAndMessageTime {
     pub id: PendingMessageIdInternal,
     pub time: UnixTime,
+}
+
+#[derive(Serialize, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::pending_messages)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct PendingMessageRaw {
+    pub id: i64,
+    pub account_id_sender: AccountIdDb,
+    pub account_id_receiver: AccountIdDb,
+    pub sender_acknowledgement: bool,
+    pub receiver_acknowledgement: bool,
+    pub receiver_push_notification_sent: bool,
+    pub receiver_email_notification_sent: bool,
+    pub message_unix_time: UnixTime,
+    pub message_id: MessageId,
+    pub sender_client_id: ClientId,
+    pub sender_client_local_id: ClientLocalId,
+}
+
+#[derive(Serialize)]
+pub struct DataExportPendingMessage {
+    message_unix_time: UnixTime,
+    message_id: MessageId,
+    sender_client_id: ClientId,
+    sender_client_local_id: ClientLocalId,
+    message_bytes_base64: String,
+}
+
+impl DataExportPendingMessage {
+    pub fn new(message: PendingMessageRaw, message_bytes: Vec<u8>) -> Self {
+        Self {
+            message_unix_time: message.message_unix_time,
+            message_id: message.message_id,
+            sender_client_id: message.sender_client_id,
+            sender_client_local_id: message.sender_client_local_id,
+            message_bytes_base64: BASE64_STANDARD.encode(message_bytes),
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct AdminDataExportPendingMessage {
+    pending_message: PendingMessageRaw,
+    message_bytes_base64: String,
+}
+
+impl AdminDataExportPendingMessage {
+    pub fn new(pending_message: PendingMessageRaw, message_bytes: Vec<u8>) -> Self {
+        Self {
+            pending_message,
+            message_bytes_base64: BASE64_STANDARD.encode(message_bytes),
+        }
+    }
 }

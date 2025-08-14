@@ -4,8 +4,6 @@ use model::{AccountIdInternal, ReportDetailed, ReportIteratorQueryInternal, Unix
 use serde::Serialize;
 use server_data::data_export::SourceAccount;
 
-// TODO(prod): Add more data to data export JSON
-
 #[derive(Serialize)]
 pub struct AdminDataExportJsonCommon {
     sent_reports: Vec<ReportDetailed>,

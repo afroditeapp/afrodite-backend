@@ -4,9 +4,9 @@ use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
-    AccountId, AccountIdDb, ConversationId, MessageId, NewMessageNotification,
-    NewMessageNotificationList, PendingMessageIdInternal, PendingMessageIdInternalAndMessageTime,
-    UnixTime,
+    AccountId, AccountIdDb, AdminDataExportPendingMessage, ConversationId,
+    DataExportPendingMessage, MessageId, NewMessageNotification, NewMessageNotificationList,
+    PendingMessageIdInternal, PendingMessageIdInternalAndMessageTime, PendingMessageRaw, UnixTime,
 };
 use model_chat::{AccountIdInternal, GetSentMessage, PendingMessageInternal, SentMessageId};
 
@@ -249,5 +249,44 @@ impl CurrentReadChatMessage<'_> {
             .count()
             .get_result(self.conn())
             .into_db_error(())
+    }
+
+    fn data_export_pending_messages_internal(
+        &mut self,
+        id_sender: AccountIdInternal,
+    ) -> Result<Vec<(PendingMessageRaw, Vec<u8>)>, DieselDatabaseError> {
+        use crate::schema::pending_messages::dsl::*;
+
+        pending_messages
+            .filter(account_id_sender.eq(id_sender.as_db_id()))
+            .select((PendingMessageRaw::as_select(), message_bytes))
+            .load(self.conn())
+            .into_db_error(())
+    }
+
+    pub fn data_export_pending_messages(
+        &mut self,
+        id_sender: AccountIdInternal,
+    ) -> Result<Vec<DataExportPendingMessage>, DieselDatabaseError> {
+        let data = self
+            .data_export_pending_messages_internal(id_sender)?
+            .into_iter()
+            .map(|(raw, message_data)| DataExportPendingMessage::new(raw, message_data))
+            .collect();
+
+        Ok(data)
+    }
+
+    pub fn admin_data_export_pending_messages(
+        &mut self,
+        id_sender: AccountIdInternal,
+    ) -> Result<Vec<AdminDataExportPendingMessage>, DieselDatabaseError> {
+        let data = self
+            .data_export_pending_messages_internal(id_sender)?
+            .into_iter()
+            .map(|(raw, message_data)| AdminDataExportPendingMessage::new(raw, message_data))
+            .collect();
+
+        Ok(data)
     }
 }

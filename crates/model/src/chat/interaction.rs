@@ -229,7 +229,7 @@ impl From<ConversationId> for i64 {
     }
 }
 
-#[derive(Debug, Clone, Queryable, Selectable, AsChangeset)]
+#[derive(Debug, Clone, Serialize, Queryable, Selectable, AsChangeset)]
 #[diesel(table_name = crate::schema::account_interaction)]
 #[diesel(check_for_backend(crate::Db))]
 #[diesel(treat_none_as_null = true)]

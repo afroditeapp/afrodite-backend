@@ -28,7 +28,7 @@ pub use message::*;
 mod video_call;
 pub use video_call::*;
 
-#[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
+#[derive(Debug, Clone, Default, Serialize, Queryable, Selectable, AsChangeset)]
 #[diesel(table_name = crate::schema::chat_state)]
 #[diesel(check_for_backend(crate::Db))]
 #[diesel(treat_none_as_null = true)]
@@ -361,7 +361,7 @@ impl ChatProfileLink {
     }
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Queryable, Selectable)]
+#[derive(Debug, Default, Clone, PartialEq, Serialize, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::daily_likes_left)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct DailyLikesLeftInternal {

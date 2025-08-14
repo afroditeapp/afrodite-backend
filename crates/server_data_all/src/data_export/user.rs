@@ -1,9 +1,8 @@
 pub mod account;
+pub mod chat;
 pub mod common;
 pub mod media;
 pub mod profile;
-
-// TODO(prod): Add more data to data export JSON
 
 // TODO(future): Moderator account IDs are not included in the
 //               data export. For example when source account is target account

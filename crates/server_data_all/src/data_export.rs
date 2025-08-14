@@ -17,10 +17,11 @@ use server_data::{
 use zip::{ZipWriter, write::SimpleFileOptions};
 
 use crate::data_export::{
-    admin::common::AdminDataExportJsonCommon,
+    admin::{chat::AdminDataExportJsonChat, common::AdminDataExportJsonCommon},
     user::{
-        account::UserDataExportJsonAccount, common::UserDataExportJsonCommon,
-        media::UserDataExportJsonMedia, profile::UserDataExportJsonProfile,
+        account::UserDataExportJsonAccount, chat::UserDataExportJsonChat,
+        common::UserDataExportJsonCommon, media::UserDataExportJsonMedia,
+        profile::UserDataExportJsonProfile,
     },
 };
 
@@ -70,16 +71,16 @@ fn db_data_export(
         "common",
         &UserDataExportJsonCommon::query(&mut current, cmd.source())?,
     )?;
-    if config.components().profile {
-        writer.write_user_json_file(
-            "profile",
-            &UserDataExportJsonProfile::query(&mut current, cmd.source())?,
-        )?;
-    }
     if config.components().account {
         writer.write_user_json_file(
             "account",
             &UserDataExportJsonAccount::query(&mut current, cmd.source())?,
+        )?;
+    }
+    if config.components().profile {
+        writer.write_user_json_file(
+            "profile",
+            &UserDataExportJsonProfile::query(&mut current, cmd.source())?,
         )?;
     }
     let media = if config.components().media {
@@ -89,12 +90,24 @@ fn db_data_export(
     } else {
         None
     };
+    if config.components().chat {
+        writer.write_user_json_file(
+            "chat",
+            &UserDataExportJsonChat::query(&mut current, cmd.source())?,
+        )?;
+    }
 
     if cmd.data_export_type() == DataExportType::Admin {
         writer.write_admin_json_file(
             "common",
             &AdminDataExportJsonCommon::query(&config, &mut current, cmd.source())?,
         )?;
+        if config.components().chat {
+            writer.write_admin_json_file(
+                "chat",
+                &AdminDataExportJsonChat::query(&mut current, cmd.source())?,
+            )?;
+        }
     }
 
     if let Some(media) = media {
