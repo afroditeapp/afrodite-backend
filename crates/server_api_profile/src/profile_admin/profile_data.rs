@@ -9,6 +9,7 @@ use server_api::{
     app::{AdminNotificationProvider, GetAccounts, GetConfig},
     create_open_api_router, db_write,
 };
+use server_data::read::GetReadCommandsCommon;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
@@ -135,6 +136,7 @@ pub async fn post_set_profile_name(
                 cmds.config().profile_name_regex(),
                 &profile,
                 None,
+                cmds.read().common().is_bot(profile_owner_id).await?,
             )
             .into_error_string(DataError::NotAllowed)?;
         cmds.profile()

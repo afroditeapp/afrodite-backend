@@ -141,6 +141,8 @@ const PATH_POST_PROFILE: &str = "/profile_api/profile";
 /// - Profile name must be trimmed and not empty.
 /// - Profile name must be 100 bytes or less.
 /// - Profile name must start with uppercase letter.
+/// - Profile name must match with profile name regex if it is enabled and
+///   related account is not a bot account.
 /// - Profile age must match with currently valid age range. The first min
 ///   value for the age range is the age at the initial setup. The second min
 ///   and max value is calculated using the following algorithm:
@@ -189,6 +191,7 @@ pub async fn post_profile(
                 cmds.config().profile_name_regex(),
                 &old_profile.profile,
                 accepted_ages,
+                cmds.read().common().is_bot(account_id).await?,
             )
             .into_error_string(DataError::NotAllowed)?;
 

@@ -170,6 +170,7 @@ impl ProfileUpdate {
         profile_name_regex: Option<&Regex>,
         current_profile: &Profile,
         initial_age: Option<InitialProfileAge>,
+        is_bot: bool,
     ) -> Result<ProfileUpdateValidated, String> {
         let mut hash_set = HashSet::new();
         for a in &mut self.attributes {
@@ -217,10 +218,11 @@ impl ProfileUpdate {
             }
         }
 
-        if let Some(regex) = profile_name_regex {
-            if !regex.is_match(&self.name) {
-                return Err("Profile name does not match with profile name regex".to_string());
-            }
+        if !is_bot
+            && let Some(regex) = profile_name_regex
+            && !regex.is_match(&self.name)
+        {
+            return Err("Profile name does not match with profile name regex".to_string());
         }
 
         if self.ptext.len() > 2000 {

@@ -162,6 +162,13 @@ impl ReadCommandsCommon<'_> {
             .await
             .into_error()
     }
+
+    pub async fn is_bot(&self, id: AccountIdInternal) -> Result<bool, DataError> {
+        self.cache()
+            .read_cache(id, |e| Ok(e.common.other_shared_state.is_bot_account))
+            .await
+            .into_error()
+    }
 }
 
 pub struct BotAndGenderInfo {

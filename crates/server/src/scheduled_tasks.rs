@@ -303,6 +303,7 @@ impl ScheduledTaskManager {
                     cmds.config().profile_name_regex(),
                     &profile,
                     None,
+                    cmds.read().common().is_bot(id).await?,
                 )
                 .into_error_string(DataError::NotAllowed)?;
             cmds.profile().profile(id, profile_update).await?;

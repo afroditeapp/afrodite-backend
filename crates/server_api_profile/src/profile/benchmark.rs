@@ -4,6 +4,7 @@ use axum::{
 };
 use model_profile::{AccountId, AccountIdInternal, AccountState, Profile, ProfileUpdate};
 use server_api::{S, create_open_api_router, db_write};
+use server_data::read::GetReadCommandsCommon;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
@@ -102,6 +103,7 @@ pub async fn post_profile_to_database_debug_mode_benchmark(
             state.config().profile_name_regex(),
             &old_profile.profile,
             accepted_ages,
+            state.read().common().is_bot(account_id).await?,
         )
         .into_error_string(DataError::NotAllowed)?;
 
