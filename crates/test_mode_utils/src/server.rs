@@ -109,7 +109,7 @@ impl ServerManager {
 
     pub async fn close(self) {
         for s in self.servers {
-            s.close_and_maeby_remove_data(!self.config.no_clean).await;
+            s.close_and_maybe_remove_data(!self.config.no_clean).await;
         }
     }
 
@@ -333,7 +333,7 @@ impl ServerInstance {
         }
     }
 
-    async fn close_and_maeby_remove_data(mut self, remove: bool) {
+    async fn close_and_maybe_remove_data(mut self, remove: bool) {
         let id = self.server.id().unwrap();
         nix::sys::signal::kill(Pid::from_raw(id.try_into().unwrap()), Signal::SIGINT).unwrap(); // CTRL-C
         self.server.wait().await.unwrap();
