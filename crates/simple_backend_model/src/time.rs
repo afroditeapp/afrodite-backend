@@ -70,7 +70,7 @@ impl UnixTime {
     }
 
     pub fn duration_value_elapsed(&self, wait: DurationValue) -> bool {
-        self.ut + wait.seconds as i64 >= Self::current_time().ut
+        Self::current_time().ut >= self.ut + wait.seconds as i64
     }
 }
 
