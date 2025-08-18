@@ -11,6 +11,7 @@
 
 * Email
   * Email notifying that account was created
+  * Messages (sent when daily tasks will run)
 * Push notifications (Firebase)
   * Messages
   * Likes
@@ -19,13 +20,20 @@
   * Automatic profile search results available
   * News
   * Admin notification (moderator work available)
+  * Fallback notification (sent if client doesn't download
+    other notifications from server)
 * WebSocket
   * Used for event sending instead of push notifications if connected
+
+Language for fallback notification is current client language.
 
 ## Profile
 
 * Age (18-99 and updates automatically without birthdate)
-* Name (max 100 bytes)
+* Name
+  * Max 100 bytes
+  * Starts with an uppercase letter
+  * Optional validation regex
 * Text (max 2000 bytes)
 * Images (max 6 images and the first must be a face image)
 * First image crop info (for displaying thumbnail image for the profile)
@@ -156,7 +164,7 @@ users about app version changelogs and terms of service updates.
 * Inactive account automatic logout (365 days by default)
 * Account specific API usage statistics
 * IP address history
-  * IP country info (MaxMind GeoLite2 database support)
+  * IP country info (MaxMind DB file format support)
   * Configure manual IP range and network lists and
     see is the IP on some of the lists
 * Reporting
@@ -174,13 +182,18 @@ users about app version changelogs and terms of service updates.
 ## Admin API
 
 * Image moderation
-* Profile name moderation (manual and allowlist)
+* Profile name moderation
+  * Optional server side allowlist is supported
 * Profile text moderation
-* Bot count configuration
+* Runtime editable config file
+  * Remote bot login
+  * Local admin bot
+  * Local user bot count
 * Server performance metrics
   * API usage
   * WebSocket connection count
   * CPU and RAM usage
+* IP country statistics
 * Profile statistics
   * Private
   * History
@@ -221,8 +234,11 @@ moderation.
 
 * Neural network based image moderation ([nsfw library](https://github.com/Fyko/nsfw))
 * Large language model (LLM) based moderation (OpenAI API compatible)
+  * Profile names
   * Profile texts
   * Profile images
+    * Image removing is also supported
+* One local and multiple remote admin bots are supported
 
 ## Analytics
 
@@ -231,6 +247,14 @@ moderation.
 ## Video calls
 
 * Jitsi Meet integration (JWT token and meeting room name generation)
+
+## Data export
+
+Account data can be exported to zip archive. Two different data
+export types are supported:
+
+* User
+* Admin (zip contains also info related to other accounts)
 
 ## Other
 
@@ -243,29 +267,21 @@ moderation.
 
 * Possibility to enable email and password login after account creation
   * Email login code sending and weekly sending limit
-* Profile age, name and picture verification using
-  EU digital wallet
+* Manual profile age, name and picture verification
 * Login method management
+* Association membership related features
 
 ## Email
 
 * Email address verification
 * Email address changing
-* Notification emails for chat requests and messages
-* Email language selection
-
-## Data export
-
-* Export account related data to ZIP archive
+* Notification emails for chat requests
+* HTML email
+* Email translations
 
 # Possible future backend features
 
 ## Account
 
-* EU digital wallet login method
-* Subscription management
-
-## Sweepstakes
-
-Admin can create automated and optional sweepstakes
-for users.
+* EU age verification solution support
+* EU digital wallet login method and profile verification
