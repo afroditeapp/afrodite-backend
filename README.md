@@ -1,6 +1,6 @@
 # Afrodite
 
-Afrodite is a dating app aiming to change dating app market to offer more
+Afrodite is an open source dating app aiming to change dating app market to offer more
 ethical, private and secure dating apps. Written using modern technologies,
 Flutter and Rust, the app offers ethical profile browsing centered UI together
 with private and secure end-to-end encrypted chat messaging. The app supports
