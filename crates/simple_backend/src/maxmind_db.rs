@@ -304,8 +304,12 @@ impl MaxMindDbManager {
                 let bytes = bytes.change_context(MaxMindDbError::Download)?;
                 file.write_all(&bytes)
                     .await
-                    .change_context(MaxMindDbError::Download)?;
+                    .change_context(MaxMindDbError::Write)?;
             }
+            file.flush().await.change_context(MaxMindDbError::Write)?;
+            file.sync_all()
+                .await
+                .change_context(MaxMindDbError::Write)?;
         }
 
         let db = self.db_file()?;
