@@ -6,6 +6,7 @@ use std::{
     str::FromStr,
 };
 
+use chrono::{Datelike, Utc};
 use error_stack::{Report, Result, ResultExt};
 use manager_model::ManagerInstanceName;
 use serde::{Deserialize, Serialize};
@@ -618,10 +619,61 @@ pub struct IpListConfig {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct MaxMindDbConfig {
     /// Template download URL for MMDB database file with IP country info.
-    /// Substrings matching "{.*}" regex are reserved for possible
-    /// future template placeholders.
-    pub download_url: Url,
+    ///
+    /// # Placeholder strings
+    /// - `{YYYY}` - year
+    /// - `{MM}` - month
+    download_url: MaxMindDbDownloadUrlTemplate,
     pub redownload_after_days: Option<u16>,
+}
+
+impl MaxMindDbConfig {
+    pub fn new_download_url(&self) -> Url {
+        self.download_url.url()
+    }
+}
+
+/// Valid template for creating MaxMind database download URL
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(try_from = "String")]
+#[serde(into = "String")]
+struct MaxMindDbDownloadUrlTemplate(String);
+
+impl MaxMindDbDownloadUrlTemplate {
+    fn url(&self) -> Url {
+        Self::create_download_url(&self.0).unwrap()
+    }
+
+    fn create_download_url(template: &str) -> std::result::Result<Url, String> {
+        let current_time = Utc::now();
+        let url = template
+            .replace("{YYYY}", &current_time.year().to_string())
+            .replace("{MM}", &format!("{:0>2}", current_time.month()));
+        let prevent_character = |c: char| {
+            if url.contains(c) {
+                Err(format!("Extra '{c}' character detected"))
+            } else {
+                Ok(())
+            }
+        };
+        prevent_character('{')?;
+        prevent_character('}')?;
+        Url::from_str(&url).map_err(|e| e.to_string())
+    }
+}
+
+impl TryFrom<String> for MaxMindDbDownloadUrlTemplate {
+    type Error = String;
+    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
+        Self::create_download_url(&value)?;
+        Ok(Self(value))
+    }
+}
+
+impl From<MaxMindDbDownloadUrlTemplate> for String {
+    fn from(value: MaxMindDbDownloadUrlTemplate) -> Self {
+        value.0
+    }
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]

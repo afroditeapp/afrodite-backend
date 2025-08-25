@@ -244,7 +244,7 @@ impl MaxMindDbManager {
     async fn download_db_file(&self, config: &MaxMindDbConfig) -> Result<(), MaxMindDbError> {
         let request = self
             .client
-            .get(config.download_url.clone())
+            .get(config.new_download_url())
             .build()
             .change_context(MaxMindDbError::Download)?;
 
