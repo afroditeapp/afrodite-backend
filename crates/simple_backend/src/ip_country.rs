@@ -57,7 +57,11 @@ impl IpCountryTracker {
         let Some(db) = ip_db.as_ref() else {
             return;
         };
-        let country = db.get_country_ref(ip).unwrap_or("unknown");
+        let country = if ip.is_loopback() {
+            "localhost"
+        } else {
+            db.get_country_ref(ip).unwrap_or("unknown")
+        };
 
         if let Some(c) = self.state.read().await.data.get(country) {
             action(c);
