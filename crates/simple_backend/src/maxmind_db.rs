@@ -2,6 +2,7 @@
 //!
 
 use std::{
+    io::Write,
     net::IpAddr,
     path::{Path, PathBuf},
     sync::Arc,
@@ -9,6 +10,7 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
+use flate2::read::GzDecoder;
 use futures::StreamExt;
 use hyper::StatusCode;
 use simple_backend_config::{SimpleBackendConfig, file::MaxMindDbConfig};
@@ -43,6 +45,12 @@ enum MaxMindDbError {
 
     #[error("Read error")]
     Read,
+
+    #[error("Write error")]
+    Write,
+
+    #[error("Pipe error")]
+    Pipe,
 }
 
 #[derive(Debug)]
@@ -261,16 +269,43 @@ impl MaxMindDbManager {
         }
 
         let tmp = self.tmp_file()?;
-        let mut file = tokio::fs::File::create(&tmp)
-            .await
-            .change_context(MaxMindDbError::Download)?;
 
         let mut stream = response.bytes_stream();
-        while let Some(bytes) = stream.next().await {
-            let bytes = bytes.change_context(MaxMindDbError::Download)?;
-            file.write_all(&bytes)
+        if config.is_download_gz_compressed() {
+            let (reader, mut writer) = std::io::pipe().change_context(MaxMindDbError::Pipe)?;
+
+            let tmp = tmp.clone();
+            let decompress_task_handle = tokio::task::spawn_blocking(move || {
+                let mut decoder = GzDecoder::new(reader);
+                let mut file = std::fs::File::create(tmp).change_context(MaxMindDbError::Write)?;
+                std::io::copy(&mut decoder, &mut file).change_context(MaxMindDbError::Write)?;
+                file.flush().change_context(MaxMindDbError::Write)?;
+                Result::Ok(())
+            });
+
+            while let Some(bytes) = stream.next().await {
+                let bytes = bytes.change_context(MaxMindDbError::Download)?;
+                tokio::task::block_in_place(|| writer.write_all(&bytes))
+                    .change_context(MaxMindDbError::Pipe)?;
+                tokio::task::block_in_place(|| writer.flush())
+                    .change_context(MaxMindDbError::Pipe)?;
+            }
+
+            drop(writer);
+
+            decompress_task_handle
+                .await
+                .change_context(MaxMindDbError::Write)??;
+        } else {
+            let mut file = tokio::fs::File::create(&tmp)
                 .await
                 .change_context(MaxMindDbError::Download)?;
+            while let Some(bytes) = stream.next().await {
+                let bytes = bytes.change_context(MaxMindDbError::Download)?;
+                file.write_all(&bytes)
+                    .await
+                    .change_context(MaxMindDbError::Download)?;
+            }
         }
 
         let db = self.db_file()?;

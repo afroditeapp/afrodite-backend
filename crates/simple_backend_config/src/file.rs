@@ -631,6 +631,10 @@ impl MaxMindDbConfig {
     pub fn new_download_url(&self) -> Url {
         self.download_url.url()
     }
+
+    pub fn is_download_gz_compressed(&self) -> bool {
+        self.download_url.0.ends_with(".gz")
+    }
 }
 
 /// Valid template for creating MaxMind database download URL
