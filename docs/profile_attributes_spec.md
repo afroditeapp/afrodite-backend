@@ -22,7 +22,7 @@ attribute_order = "OrderNumber"
 [[attribute]]
 key = "city"
 name = "City"
-mode = "SelectSingleFilterSingle"
+mode = "TwoLevel"
 editable = true # Optional
 visible = true # Optional
 required = false # Optional
@@ -32,7 +32,7 @@ order_number = 1
 value_order = "AlphabeticalValue"
 values = [
     {
-        key = "helsinki",
+        key = "helsinki", # Optional
         name = "Helsinki",
         id = 1, # Optional
         editable = true, # Optional
@@ -46,7 +46,7 @@ values = [
 group_values = [ # Optional
     { key = "helsinki", values = [
         {
-            key = "kallio",
+            key = "kallio", # Optional
             name = "Kallio",
             id = 1, # Optional
             editable = true, # Optional
@@ -71,7 +71,7 @@ translations = [ # Optonal
 [[attribute]]
 key = "favorite_color"
 name = "Favorite Color"
-mode = "SelectSingleFilterMultiple"
+mode = "Bitflag"
 icon = "material:color_lens"
 id = 2
 order_number = 2
