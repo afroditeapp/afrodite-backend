@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use database::history::write::GetDbHistoryWriteCommandsCommon;
-use simple_backend_model::{IpCountry, IpCountryCounters, MetricKey, PerfMetricValueArea};
+use simple_backend_model::{IpCountryCounters, IpCountryKey, MetricKey, PerfMetricValueArea};
 
 use crate::{
     DataError, db_transaction_history, define_cmd_wrapper_write, result::Result,
@@ -22,7 +22,7 @@ impl WriteCommandsCommonHistory<'_> {
 
     pub async fn write_ip_country_data(
         &self,
-        data: HashMap<IpCountry, IpCountryCounters>,
+        data: HashMap<IpCountryKey, IpCountryCounters>,
     ) -> Result<(), DataError> {
         db_transaction_history!(self, move |mut cmds| {
             cmds.common_history().write_ip_country_data(data)

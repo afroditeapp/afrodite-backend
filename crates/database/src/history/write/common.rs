@@ -4,7 +4,7 @@ use diesel::{ExpressionMethods, RunQueryDsl, insert_into};
 use error_stack::Result;
 use model::{StatisticsSaveTimeId, UnixTime};
 use simple_backend_database::diesel_db::DieselDatabaseError;
-use simple_backend_model::{IpCountry, IpCountryCounters, MetricKey, PerfMetricValueArea};
+use simple_backend_model::{IpCountryCounters, IpCountryKey, MetricKey, PerfMetricValueArea};
 
 use crate::{IntoDatabaseError, define_history_write_commands};
 
@@ -79,7 +79,7 @@ impl HistoryWriteCommon<'_> {
 
     pub fn write_ip_country_data(
         mut self,
-        data: HashMap<IpCountry, IpCountryCounters>,
+        data: HashMap<IpCountryKey, IpCountryCounters>,
     ) -> Result<(), DieselDatabaseError> {
         let current_time = UnixTime::current_time();
 
@@ -100,11 +100,11 @@ impl HistoryWriteCommon<'_> {
                 id
             };
 
-            let name = country.0.as_str();
+            let name = country.to_ip_country();
             let country_name_id: i64 = {
                 use model::schema::history_ip_country_statistics_country_name::dsl::*;
                 insert_into(history_ip_country_statistics_country_name)
-                    .values(country_name.eq(name))
+                    .values(country_name.eq(name.as_str()))
                     .on_conflict(country_name)
                     .do_update()
                     .set(country_name.eq(country_name))

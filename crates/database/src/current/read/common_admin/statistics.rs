@@ -118,7 +118,7 @@ impl CurrentReadAccountAdminStatistics<'_> {
                         l: v.latest_usage_unix_time,
                         lists,
                         country: if let Some(ip_db) = &ip_db {
-                            ip_db.get_country(ip_address)
+                            ip_db.get_country(ip_address).map(|v| v.into_string())
                         } else {
                             None
                         },

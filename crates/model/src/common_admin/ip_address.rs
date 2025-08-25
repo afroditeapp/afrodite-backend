@@ -5,7 +5,7 @@ use std::{
 
 use diesel::{Selectable, prelude::Queryable, sql_types::Binary};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{IpCountry, IpCountryCounters, UnixTime, diesel_bytes_try_from};
+use simple_backend_model::{IpCountryCounters, IpCountryKey, UnixTime, diesel_bytes_try_from};
 use utoipa::ToSchema;
 
 use crate::AccountId;
@@ -173,7 +173,7 @@ pub struct GetIpCountryStatisticsResult {
 
 impl GetIpCountryStatisticsResult {
     pub fn new_from_ip_country_tracker_state(
-        data: HashMap<IpCountry, IpCountryCounters>,
+        data: HashMap<IpCountryKey, IpCountryCounters>,
         settings: GetIpCountryStatisticsSettings,
     ) -> Self {
         let values = data
@@ -187,7 +187,7 @@ impl GetIpCountryStatisticsResult {
                 let value = IpCountryStatisticsValue { t: None, c };
 
                 IpCountryStatistics {
-                    country: country.0,
+                    country: country.to_ip_country().into_string(),
                     values: vec![value],
                 }
             })

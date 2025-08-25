@@ -13,7 +13,7 @@ use futures::StreamExt;
 use hyper::StatusCode;
 use simple_backend_config::{SimpleBackendConfig, file::MaxMindDbConfig};
 use simple_backend_database::data::create_dirs_and_get_simple_backend_dir_path;
-use simple_backend_model::UnixTime;
+use simple_backend_model::{IpCountry, IpCountryKeyRef, UnixTime};
 use simple_backend_utils::{ContextExt, file::overwrite_and_remove_if_exists};
 use tokio::{
     io::AsyncWriteExt,
@@ -66,13 +66,16 @@ pub struct IpDb {
 }
 
 impl IpDb {
-    pub fn get_country(&self, ip: IpAddr) -> Option<String> {
-        self.get_country_ref(ip).map(ToString::to_string)
+    pub fn get_country(&self, ip: IpAddr) -> Option<IpCountry> {
+        self.get_country_ref(ip).map(|v| v.to_ip_country())
     }
 
-    pub fn get_country_ref(&self, ip: IpAddr) -> Option<&str> {
+    pub fn get_country_ref(&self, ip: IpAddr) -> Option<IpCountryKeyRef> {
         match self.db.lookup::<maxminddb::geoip2::Country>(ip) {
-            Ok(v) => v.and_then(|v| v.country).and_then(|v| v.iso_code),
+            Ok(v) => v
+                .and_then(|v| v.country)
+                .and_then(|v| v.iso_code)
+                .map(IpCountryKeyRef::new),
             Err(e) => {
                 error!("MaxMind DB error: {}", e);
                 None

@@ -1,13 +1,13 @@
 use std::{collections::HashMap, net::IpAddr, sync::Arc};
 
-use simple_backend_model::{IpCountry, IpCountryCounters};
+use simple_backend_model::{IpCountryCounters, IpCountryKey, IpCountryKeyRef};
 use tokio::sync::RwLock;
 
 use crate::maxmind_db::MaxMindDbManagerData;
 
 #[derive(Debug, Default)]
 struct State {
-    pub data: HashMap<IpCountry, IpCountryCounters>,
+    pub data: HashMap<IpCountryKey, IpCountryCounters>,
 }
 
 pub struct IpCountryTracker {
@@ -32,12 +32,12 @@ impl IpCountryTracker {
         }
     }
 
-    pub async fn get_current_state_and_reset(&self) -> HashMap<IpCountry, IpCountryCounters> {
+    pub async fn get_current_state_and_reset(&self) -> HashMap<IpCountryKey, IpCountryCounters> {
         let mut w = self.state.write().await;
         std::mem::take(&mut w.data)
     }
 
-    pub async fn copy_current_state(&self) -> HashMap<IpCountry, IpCountryCounters> {
+    pub async fn copy_current_state(&self) -> HashMap<IpCountryKey, IpCountryCounters> {
         let r = self.state.read().await;
         r.data.clone()
     }
@@ -58,18 +58,18 @@ impl IpCountryTracker {
             return;
         };
         let country = if ip.is_loopback() {
-            "localhost"
+            IpCountryKeyRef::LOCALHOST
         } else {
-            db.get_country_ref(ip).unwrap_or("unknown")
+            db.get_country_ref(ip).unwrap_or(IpCountryKeyRef::UNKNOWN)
         };
 
-        if let Some(c) = self.state.read().await.data.get(country) {
+        if let Some(c) = self.state.read().await.data.get(country.as_str()) {
             action(c);
             return;
         }
 
         let mut w = self.state.write().await;
-        let counters = w.data.entry(IpCountry(country.to_string())).or_default();
+        let counters = w.data.entry(country.to_ip_country_key()).or_default();
         action(counters);
     }
 }
