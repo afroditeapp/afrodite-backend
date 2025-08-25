@@ -178,18 +178,22 @@ impl GetIpCountryStatisticsResult {
     ) -> Self {
         let values = data
             .into_iter()
-            .map(|(country, counters)| {
+            .filter_map(|(country, counters)| {
                 let c = match settings.statistics_type {
                     IpCountryStatisticsType::NewTcpConnections => counters.tcp_connections(),
                     IpCountryStatisticsType::NewHttpRequests => counters.http_requests(),
                 };
 
+                if c == 0 {
+                    return None;
+                }
+
                 let value = IpCountryStatisticsValue { t: None, c };
 
-                IpCountryStatistics {
+                Some(IpCountryStatistics {
                     country: country.to_ip_country().into_string(),
                     values: vec![value],
-                }
+                })
             })
             .collect();
 

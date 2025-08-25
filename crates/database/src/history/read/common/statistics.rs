@@ -40,6 +40,7 @@ impl HistoryReadCommonStatistics<'_> {
 
         let values: Vec<(UnixTime, String, i64)> = match settings.statistics_type {
             IpCountryStatisticsType::NewTcpConnections => query
+                .filter(new_tcp_connections.ne(0))
                 .select((
                     history_common_statistics_save_time::unix_time,
                     history_ip_country_statistics_country_name::country_name,
@@ -48,6 +49,7 @@ impl HistoryReadCommonStatistics<'_> {
                 .load(self.conn())
                 .change_context(DieselDatabaseError::Execute)?,
             IpCountryStatisticsType::NewHttpRequests => query
+                .filter(new_http_requests.ne(0))
                 .select((
                     history_common_statistics_save_time::unix_time,
                     history_ip_country_statistics_country_name::country_name,
