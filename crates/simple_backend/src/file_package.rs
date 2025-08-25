@@ -1,14 +1,8 @@
-use std::{
-    collections::HashMap,
-    fs::File,
-    io::{BufReader, Read},
-    path::Path,
-    str::FromStr,
-};
+use std::{collections::HashMap, fs::File, io::Read, path::Path, str::FromStr};
 
 use axum::body::Bytes;
 use error_stack::ResultExt;
-use flate2::bufread::GzDecoder;
+use flate2::read::GzDecoder;
 use headers::ContentType;
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_utils::ContextExt;
@@ -62,7 +56,7 @@ impl FilePackageManager {
                 let mut file_path_and_data = HashMap::new();
                 let file = File::open(package_path.package)
                     .change_context(FilePackageError::PackageLoading)?;
-                let decoder = GzDecoder::new(BufReader::new(file));
+                let decoder = GzDecoder::new(file);
                 let mut archive = Archive::new(decoder);
                 let entries = archive
                     .entries()

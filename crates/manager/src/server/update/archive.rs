@@ -1,11 +1,10 @@
 use std::{
     fs::File,
-    io::BufReader,
     path::{Path, PathBuf},
 };
 
 use error_stack::{Result, ResultExt, report};
-use flate2::bufread::GzDecoder;
+use flate2::read::GzDecoder;
 use manager_config::file::SimplePatternPath;
 use tar::Archive;
 use tracing::info;
@@ -30,7 +29,7 @@ fn find_backend_binary_from_archive_sync(
     archive_file_path: SimplePatternPath,
 ) -> Result<PathBuf, UpdateError> {
     let file = File::open(archive).change_context(UpdateError::Archive)?;
-    let decoder = GzDecoder::new(BufReader::new(file));
+    let decoder = GzDecoder::new(file);
     let mut archive = Archive::new(decoder);
     let entries = archive.entries().change_context(UpdateError::Archive)?;
 
@@ -76,7 +75,7 @@ fn extract_backend_binary_sync(
     target: PathBuf,
 ) -> Result<(), UpdateError> {
     let file = File::open(archive).change_context(UpdateError::Archive)?;
-    let decoder = GzDecoder::new(BufReader::new(file));
+    let decoder = GzDecoder::new(file);
     let mut archive = Archive::new(decoder);
     let entries = archive.entries().change_context(UpdateError::Archive)?;
 
