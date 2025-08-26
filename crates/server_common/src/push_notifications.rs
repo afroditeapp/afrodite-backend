@@ -432,6 +432,11 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
                     "apns-priority": "5",
                     "apns-collapse-id": "0",
                 })),
+                payload: Some(json!({
+                    "aps": {
+                        "content-available": 1
+                    }
+                })),
                 ..Default::default()
             }),
             webpush: None,
