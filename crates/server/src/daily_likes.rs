@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use model::{EventToClientInternal, LikeSendingLimitConfig};
+use model::{DailyLikesConfig, EventToClientInternal};
 use model_profile::AccountIdInternal;
 use server_api::{
     app::{EventManagerProvider, GetConfig, ReadData, WriteData},
@@ -65,7 +65,7 @@ impl DailyLikesManager {
             .state
             .config()
             .client_features()
-            .and_then(|v| v.limits.likes.like_sending.as_ref())
+            .and_then(|v| v.limits.likes.daily.as_ref())
         else {
             return;
         };
@@ -93,7 +93,7 @@ impl DailyLikesManager {
         }
     }
 
-    async fn sleep_until(config: &LikeSendingLimitConfig) -> Result<(), DailyLikesError> {
+    async fn sleep_until(config: &DailyLikesConfig) -> Result<(), DailyLikesError> {
         sleep_until_current_time_is_at(config.reset_time)
             .await
             .change_context(DailyLikesError::Time)?;
@@ -103,7 +103,7 @@ impl DailyLikesManager {
     async fn run_tasks(
         &self,
         quit_notification: &mut ServerQuitWatcher,
-        config: &LikeSendingLimitConfig,
+        config: &DailyLikesConfig,
     ) {
         tokio::select! {
             r = self.run_tasks_and_return_result(config) => {
@@ -120,7 +120,7 @@ impl DailyLikesManager {
 
     async fn run_tasks_and_return_result(
         &self,
-        config: &LikeSendingLimitConfig,
+        config: &DailyLikesConfig,
     ) -> Result<(), DailyLikesError> {
         let accounts = self
             .state
@@ -140,9 +140,9 @@ impl DailyLikesManager {
     async fn handle_account(
         &self,
         account: AccountIdInternal,
-        config: &LikeSendingLimitConfig,
+        config: &DailyLikesConfig,
     ) -> Result<(), DailyLikesError> {
-        let limit = config.daily_limit.into();
+        let limit = config.daily_likes.into();
         db_write_raw!(self.state, move |cmds| {
             cmds.chat()
                 .limits()

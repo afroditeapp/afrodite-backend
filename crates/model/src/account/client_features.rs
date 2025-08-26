@@ -79,9 +79,9 @@ impl ClientFeaturesConfig {
     pub fn daily_likes(&self) -> Option<i64> {
         self.limits
             .likes
-            .like_sending
+            .daily
             .as_ref()
-            .map(|v| v.daily_limit.into())
+            .map(|v| v.daily_likes.into())
     }
 }
 
@@ -255,12 +255,12 @@ impl From<LimitsConfigInternal> for LimitsConfig {
 pub struct LikeLimitsConfig {
     /// UTC time with "hh:mm" format.
     pub unlimited_likes_disabling_time: Option<UtcTimeValue>,
-    pub like_sending: Option<LikeSendingLimitConfig>,
+    pub daily: Option<DailyLikesConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct LikeSendingLimitConfig {
-    pub daily_limit: u8,
+pub struct DailyLikesConfig {
+    pub daily_likes: u8,
     /// UTC time with "hh:mm" format.
     pub reset_time: UtcTimeValue,
 }

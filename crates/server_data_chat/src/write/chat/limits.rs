@@ -20,7 +20,7 @@ impl WriteCommandsChatLimits<'_> {
         let Some(config) = self
             .config()
             .client_features()
-            .and_then(|v| v.limits.likes.like_sending.as_ref())
+            .and_then(|v| v.limits.likes.daily.as_ref())
         else {
             return Ok(());
         };
@@ -49,7 +49,7 @@ impl WriteCommandsChatLimits<'_> {
         };
 
         if reset {
-            let limit_value = config.daily_limit;
+            let limit_value = config.daily_likes;
             db_transaction!(self, move |mut cmds| {
                 cmds.chat()
                     .limits()
