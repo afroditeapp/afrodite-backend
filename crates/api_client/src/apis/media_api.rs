@@ -234,7 +234,7 @@ pub async fn get_all_account_media_content(configuration: &configuration::Config
     }
 }
 
-/// # Access  ## Own content Unrestricted access.  ## Public other content Normal account state required.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  If the previous is not true, then permission `admin_view_all_profiles` or `admin_moderate_media_content` is required.  
+/// # Access  ## Own content Unrestricted access.  ## Public other content Normal account state required. Only accepted content can be accessed.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  Only accepted content can be accessed.  ## Admin access [Permissions::admin_view_all_profiles] and [Permissions::admin_moderate_media_content] allows access to all content.  
 pub async fn get_content(configuration: &configuration::Configuration, aid: &str, cid: &str, is_match: Option<bool>) -> Result<std::path::PathBuf, Error<GetContentError>> {
     let local_var_configuration = configuration;
 

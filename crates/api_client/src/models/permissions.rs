@@ -27,6 +27,8 @@ pub struct Permissions {
     pub admin_edit_permissions: Option<bool>,
     #[serde(rename = "admin_edit_profile_name", skip_serializing_if = "Option::is_none")]
     pub admin_edit_profile_name: Option<bool>,
+    #[serde(rename = "admin_export_data", skip_serializing_if = "Option::is_none")]
+    pub admin_export_data: Option<bool>,
     #[serde(rename = "admin_find_account_by_email", skip_serializing_if = "Option::is_none")]
     pub admin_find_account_by_email: Option<bool>,
     #[serde(rename = "admin_moderate_media_content", skip_serializing_if = "Option::is_none")]
@@ -83,6 +85,7 @@ impl Permissions {
             admin_edit_media_content_face_detected_value: None,
             admin_edit_permissions: None,
             admin_edit_profile_name: None,
+            admin_export_data: None,
             admin_find_account_by_email: None,
             admin_moderate_media_content: None,
             admin_moderate_profile_names: None,

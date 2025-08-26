@@ -182,6 +182,7 @@ pub enum PostGetAutomaticProfileSearchCompletedNotificationError {
 #[serde(untagged)]
 pub enum PostGetNextProfilePageError {
     Status401(),
+    Status429(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -281,6 +282,7 @@ pub enum PostReportProfileTextError {
 #[serde(untagged)]
 pub enum PostResetProfilePagingError {
     Status401(),
+    Status429(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -1142,7 +1144,7 @@ pub async fn post_mark_profile_string_moderation_completed_notification_viewed(c
     }
 }
 
-/// Writes the profile to the database only if it is changed.  WebSocket event about profile change will not be emitted. The event is emitted only from server side profile updates.  # Requirements - Profile attributes must be valid. - Profile text must be 2000 bytes or less. - Profile text must be trimmed. - Profile name changes are only possible when initial setup is ongoing   or current profile name is not accepted. - Profile name must be trimmed and not empty. - Profile name must be 100 bytes or less. - Profile name must start with uppercase letter. - Profile age must match with currently valid age range. The first min   value for the age range is the age at the initial setup. The second min   and max value is calculated using the following algorithm:  - The initial age (initialAge) is paired with the year of initial    setup completed (initialSetupYear).    - Year difference (yearDifference = currentYear - initialSetupYear) is      used for changing the range min and max.      - Min value: initialAge + yearDifference - 1.      - Max value: initialAge + yearDifference + 1.  
+/// Writes the profile to the database only if it is changed.  WebSocket event about profile change will not be emitted. The event is emitted only from server side profile updates.  # Requirements - Profile attributes must be valid. - Profile text must be 2000 bytes or less. - Profile text must be trimmed. - Profile name changes are only possible when initial setup is ongoing   or current profile name is not accepted. - Profile name must be trimmed and not empty. - Profile name must be 100 bytes or less. - Profile name must start with uppercase letter. - Profile name must match with profile name regex if it is enabled and   related account is not a bot account. - Profile age must match with currently valid age range. The first min   value for the age range is the age at the initial setup. The second min   and max value is calculated using the following algorithm:  - The initial age (initialAge) is paired with the year of initial    setup completed (initialSetupYear).    - Year difference (yearDifference = currentYear - initialSetupYear) is      used for changing the range min and max.      - Min value: initialAge + yearDifference - 1.      - Max value: initialAge + yearDifference + 1.  
 pub async fn post_profile(configuration: &configuration::Configuration, profile_update: models::ProfileUpdate) -> Result<(), Error<PostProfileError>> {
     let local_var_configuration = configuration;
 

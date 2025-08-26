@@ -13,6 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PerfMetricValues {
+    #[serde(rename = "group", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub group: Option<Option<String>>,
     #[serde(rename = "name")]
     pub name: String,
     #[serde(rename = "values")]
@@ -22,6 +24,7 @@ pub struct PerfMetricValues {
 impl PerfMetricValues {
     pub fn new(name: String, values: Vec<models::PerfMetricValueArea>) -> PerfMetricValues {
         PerfMetricValues {
+            group: None,
             name,
             values,
         }

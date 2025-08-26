@@ -98,13 +98,17 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**post_send_message**](docs/ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match.
 *ChatApi* | [**post_unblock_profile**](docs/ChatApi.md#post_unblock_profile) | **POST** /chat_api/unblock_profile | Unblock profile
 *ChatAdminApi* | [**post_set_max_public_key_count**](docs/ChatAdminApi.md#post_set_max_public_key_count) | **POST** /chat_api/set_max_public_key_count | Set max public key count
+*CommonApi* | [**delete_data_export**](docs/CommonApi.md#delete_data_export) | **DELETE** /common_api/delete_data_export | Delete current data export
 *CommonApi* | [**get_client_config**](docs/CommonApi.md#get_client_config) | **GET** /common_api/client_config | 
 *CommonApi* | [**get_client_language**](docs/CommonApi.md#get_client_language) | **GET** /common_api/client_language | 
 *CommonApi* | [**get_connect_websocket**](docs/CommonApi.md#get_connect_websocket) | **GET** /common_api/connect | Connect to server using WebSocket after getting refresh and access tokens. Connection is required as API access is allowed for connected clients.
+*CommonApi* | [**get_data_export_archive**](docs/CommonApi.md#get_data_export_archive) | **GET** /common_api/data_export_archive | Download current data export archive
+*CommonApi* | [**get_data_export_state**](docs/CommonApi.md#get_data_export_state) | **GET** /common_api/data_export_state | 
 *CommonApi* | [**get_version**](docs/CommonApi.md#get_version) | **GET** /common_api/version | Get backend version.
 *CommonApi* | [**post_client_language**](docs/CommonApi.md#post_client_language) | **POST** /common_api/client_language | 
 *CommonApi* | [**post_get_pending_notification**](docs/CommonApi.md#post_get_pending_notification) | **POST** /common_api/get_pending_notification | Get pending notification and reset pending notification.
 *CommonApi* | [**post_set_device_token**](docs/CommonApi.md#post_set_device_token) | **POST** /common_api/set_device_token | 
+*CommonApi* | [**post_start_data_export**](docs/CommonApi.md#post_start_data_export) | **POST** /common_api/start_data_export | Start data export
 *CommonAdminApi* | [**get_admin_notification_settings**](docs/CommonAdminApi.md#get_admin_notification_settings) | **GET** /common_api/admin_notification_settings | Get admin notification settings.
 *CommonAdminApi* | [**get_admin_notification_subscriptions**](docs/CommonAdminApi.md#get_admin_notification_subscriptions) | **GET** /common_api/admin_notification_subscriptions | Get admin notification subscriptions.
 *CommonAdminApi* | [**get_backend_config**](docs/CommonAdminApi.md#get_backend_config) | **GET** /common_api/backend_config | Get dynamic backend config.
@@ -232,7 +236,6 @@ Class | Method | HTTP request | Description
  - [BackendConfig](docs/BackendConfig.md)
  - [BackendVersion](docs/BackendVersion.md)
  - [BooleanSetting](docs/BooleanSetting.md)
- - [BotConfig](docs/BotConfig.md)
  - [ChatAppNotificationSettings](docs/ChatAppNotificationSettings.md)
  - [ChatMessageReport](docs/ChatMessageReport.md)
  - [ChatProfileLink](docs/ChatProfileLink.md)
@@ -269,8 +272,13 @@ Class | Method | HTTP request | Description
  - [CustomReportsConfig](docs/CustomReportsConfig.md)
  - [CustomReportsConfigHash](docs/CustomReportsConfigHash.md)
  - [CustomReportsOrderMode](docs/CustomReportsOrderMode.md)
+ - [DailyLikesConfig](docs/DailyLikesConfig.md)
  - [DailyLikesLeft](docs/DailyLikesLeft.md)
  - [DailyLikesLeftSyncVersion](docs/DailyLikesLeftSyncVersion.md)
+ - [DataExportName](docs/DataExportName.md)
+ - [DataExportState](docs/DataExportState.md)
+ - [DataExportStateType](docs/DataExportStateType.md)
+ - [DataExportType](docs/DataExportType.md)
  - [DeleteLikeResult](docs/DeleteLikeResult.md)
  - [DemoAccountLoginCredentials](docs/DemoAccountLoginCredentials.md)
  - [DemoAccountLoginResult](docs/DemoAccountLoginResult.md)
@@ -326,9 +334,9 @@ Class | Method | HTTP request | Description
  - [LastSeenTimeFilter](docs/LastSeenTimeFilter.md)
  - [LatestBirthdate](docs/LatestBirthdate.md)
  - [LikeLimitsConfig](docs/LikeLimitsConfig.md)
- - [LikeSendingLimitConfig](docs/LikeSendingLimitConfig.md)
  - [LimitedActionStatus](docs/LimitedActionStatus.md)
  - [LimitsConfig](docs/LimitsConfig.md)
+ - [LocalBotsConfig](docs/LocalBotsConfig.md)
  - [Location](docs/Location.md)
  - [LoginResult](docs/LoginResult.md)
  - [MaintenanceTask](docs/MaintenanceTask.md)
@@ -382,6 +390,7 @@ Class | Method | HTTP request | Description
  - [PostMediaContentFaceDetectedValue](docs/PostMediaContentFaceDetectedValue.md)
  - [PostModerateMediaContent](docs/PostModerateMediaContent.md)
  - [PostModerateProfileString](docs/PostModerateProfileString.md)
+ - [PostStartDataExport](docs/PostStartDataExport.md)
  - [ProcessReport](docs/ProcessReport.md)
  - [Profile](docs/Profile.md)
  - [ProfileAgeCounts](docs/ProfileAgeCounts.md)
@@ -394,6 +403,7 @@ Class | Method | HTTP request | Description
  - [ProfileAttributesConfigQuery](docs/ProfileAttributesConfigQuery.md)
  - [ProfileAttributesConfigQueryItem](docs/ProfileAttributesConfigQueryItem.md)
  - [ProfileAttributesConfigQueryResult](docs/ProfileAttributesConfigQueryResult.md)
+ - [ProfileConfig](docs/ProfileConfig.md)
  - [ProfileContent](docs/ProfileContent.md)
  - [ProfileContentVersion](docs/ProfileContentVersion.md)
  - [ProfileCreatedTimeFilter](docs/ProfileCreatedTimeFilter.md)

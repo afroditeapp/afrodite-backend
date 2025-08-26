@@ -18,15 +18,19 @@ pub struct MapConfig {
     pub bounds: Box<models::MapBounds>,
     #[serde(rename = "initial_location")]
     pub initial_location: Box<models::MapCoordinate>,
+    /// Increase this version number to make client to redownload cached map tiles.
+    #[serde(rename = "tile_data_version")]
+    pub tile_data_version: i32,
     #[serde(rename = "zoom")]
     pub zoom: Box<models::MapZoom>,
 }
 
 impl MapConfig {
-    pub fn new(bounds: models::MapBounds, initial_location: models::MapCoordinate, zoom: models::MapZoom) -> MapConfig {
+    pub fn new(bounds: models::MapBounds, initial_location: models::MapCoordinate, tile_data_version: i32, zoom: models::MapZoom) -> MapConfig {
         MapConfig {
             bounds: Box::new(bounds),
             initial_location: Box::new(initial_location),
+            tile_data_version,
             zoom: Box::new(zoom),
         }
     }

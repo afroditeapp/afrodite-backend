@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct LikeLimitsConfig {
-    #[serde(rename = "like_sending", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub like_sending: Option<Option<Box<models::LikeSendingLimitConfig>>>,
+    #[serde(rename = "daily", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub daily: Option<Option<Box<models::DailyLikesConfig>>>,
     /// UTC time value
     #[serde(rename = "unlimited_likes_disabling_time", skip_serializing_if = "Option::is_none")]
     pub unlimited_likes_disabling_time: Option<String>,
@@ -23,7 +23,7 @@ pub struct LikeLimitsConfig {
 impl LikeLimitsConfig {
     pub fn new() -> LikeLimitsConfig {
         LikeLimitsConfig {
-            like_sending: None,
+            daily: None,
             unlimited_likes_disabling_time: None,
         }
     }

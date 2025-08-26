@@ -24,16 +24,19 @@ pub struct ClientFeaturesConfig {
     /// Enable news UI
     #[serde(rename = "news", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub news: Option<Option<Box<models::NewsConfig>>>,
+    #[serde(rename = "profile")]
+    pub profile: Box<models::ProfileConfig>,
 }
 
 impl ClientFeaturesConfig {
-    pub fn new(attribution: models::AttributionConfig, features: models::FeaturesConfig, limits: models::LimitsConfig, map: models::MapConfig) -> ClientFeaturesConfig {
+    pub fn new(attribution: models::AttributionConfig, features: models::FeaturesConfig, limits: models::LimitsConfig, map: models::MapConfig, profile: models::ProfileConfig) -> ClientFeaturesConfig {
         ClientFeaturesConfig {
             attribution: Box::new(attribution),
             features: Box::new(features),
             limits: Box::new(limits),
             map: Box::new(map),
             news: None,
+            profile: Box::new(profile),
         }
     }
 }
