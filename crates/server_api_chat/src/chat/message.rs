@@ -119,8 +119,6 @@ const PATH_POST_SEND_MESSAGE: &str = "/chat_api/send_message";
 /// Max pending message count is 50.
 /// Max message size is u16::MAX.
 ///
-/// The sender message ID must be value which server expects.
-///
 /// Sending will fail if one or two way block exists.
 ///
 /// Only the latest public key for sender and receiver can be used when
