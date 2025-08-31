@@ -1,4 +1,4 @@
-use model::{AccountIdInternal, PushNotificationStateInfoWithFlags};
+use model::{AccountIdInternal, PendingNotificationFlags, PushNotificationStateInfoWithFlags};
 use model_account::{EmailMessages, EmailSendingState};
 use server_api::{
     app::{EmailSenderImpl, EventManagerProvider, GetConfig, ReadData, WriteData},
@@ -96,9 +96,6 @@ impl StartupTasks {
                 EmailMessages::AccountRegistered,
             );
 
-            // FCM
-            Self::send_push_notification_if_needed(state, id).await?;
-
             db_write_raw!(state, move |cmds| {
                 // Remove tmp files
                 cmds.common().remove_tmp_files(id).await?;
@@ -108,15 +105,26 @@ impl StartupTasks {
                     .reset_daily_likes_left_if_needed(id)
                     .await?;
 
+                // Automatic profile search notification state is stored only
+                // in RAM, so it is not available anymore.
+                cmds.events()
+                    .remove_specific_pending_notification_flags_from_cache(
+                        id,
+                        PendingNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED,
+                    )
+                    .await;
+
                 Ok(())
             })
             .await?;
+
+            Self::fcm_send_push_notification_if_needed(state, id).await?;
         }
 
         Ok(())
     }
 
-    async fn send_push_notification_if_needed(
+    async fn fcm_send_push_notification_if_needed(
         state: &S,
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
