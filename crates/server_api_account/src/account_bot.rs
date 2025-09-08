@@ -118,7 +118,6 @@ pub async fn post_remote_bot_login(
     ACCOUNT_BOT.post_remote_bot_login.incr();
 
     if !state.is_remote_bot_login_enabled() {
-        info!("Remote bot login is disabled from dynamic config");
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
