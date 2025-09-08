@@ -52,6 +52,7 @@ impl TestRunner {
                 if let Some(bot_config_file_path) = &self.test_config.bot_config_file {
                     match BotConfigFile::load_if_bot_mode_or_default(
                         bot_config_file_path,
+                        self.test_config.bot_config_file.as_ref(),
                         &self.test_config,
                     ) {
                         Ok(bot_config_file) => bot_config_file,

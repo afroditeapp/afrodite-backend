@@ -351,9 +351,9 @@ pub fn get_config(
     )
     .change_context(GetConfigError::SimpleBackendError)?;
 
-    let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
-    let file_config = file::ConfigFile::load(&current_dir, save_default_config_if_not_found)
-        .change_context(GetConfigError::LoadFileError)?;
+    let file_config =
+        file::ConfigFile::load_from_default_location(save_default_config_if_not_found)
+            .change_context(GetConfigError::LoadFileError)?;
 
     let external_services = file_config.external_services.clone().unwrap_or_default();
 
@@ -366,6 +366,7 @@ pub fn get_config(
 
     let client_api_urls = create_client_api_urls(&components, &external_services)?;
 
+    let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
     let file_dynamic = ConfigFileDynamic::load(current_dir, save_default_config_if_not_found)
         .change_context(GetConfigError::LoadFileError)?;
 

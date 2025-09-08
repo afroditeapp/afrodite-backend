@@ -195,7 +195,8 @@ impl BotAction for GetLocation {
 /// location.
 ///
 /// If [Self::config] is None, then area for random location is
-/// one from bot config file or the default area.
+/// [config::bot_config_file::BotConfigFile::location] or
+/// default [LocationConfig].
 ///
 /// Updates PreviousValue to a new location.
 #[derive(Debug)]

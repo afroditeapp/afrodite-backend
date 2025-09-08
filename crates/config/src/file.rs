@@ -10,7 +10,6 @@ use model::{AccountId, ClientVersion};
 pub use model_server_data::EmailAddress;
 use model_server_state::DemoAccountId;
 use serde::{Deserialize, Serialize};
-use simple_backend_config::file::ConfigFileUtils;
 use simple_backend_utils::{
     ContextExt,
     time::{DurationValue, TimeValue, UtcTimeValue},
@@ -137,20 +136,25 @@ impl ConfigFile {
         }
     }
 
-    pub fn load(
-        dir: impl AsRef<Path>,
-        save_default_if_not_found: bool,
-    ) -> Result<ConfigFile, ConfigFileError> {
-        let config_string = ConfigFileUtils::load_string(
-            dir,
-            CONFIG_FILE_NAME,
-            DEFAULT_CONFIG_FILE_TEXT,
-            save_default_if_not_found,
-        )
-        .change_context(ConfigFileError::SimpleBackendError)?;
-        let file: ConfigFile =
-            toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)?;
+    pub fn default_file_path() -> Result<PathBuf, ConfigFileError> {
+        let current_dir = std::env::current_dir().change_context(ConfigFileError::LoadConfig)?;
+        Ok(current_dir.join(CONFIG_FILE_NAME))
+    }
 
+    pub fn load_from_default_location(save_if_needed: bool) -> Result<Self, ConfigFileError> {
+        let path = Self::default_file_path()?;
+        if !path.exists() && save_if_needed {
+            std::fs::write(&path, DEFAULT_CONFIG_FILE_TEXT)
+                .change_context(ConfigFileError::LoadConfig)?;
+        }
+        Self::load(path)
+    }
+
+    pub fn load(file: impl AsRef<Path>) -> Result<Self, ConfigFileError> {
+        let config_string =
+            std::fs::read_to_string(file).change_context(ConfigFileError::LoadConfig)?;
+        let file: Self =
+            toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)?;
         if let Some(remote_bots) = &file.remote_bot {
             let mut set = HashSet::<AccountId>::new();
 

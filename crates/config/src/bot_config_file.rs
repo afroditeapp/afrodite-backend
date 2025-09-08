@@ -8,7 +8,7 @@ use url::Url;
 
 use crate::{
     args::TestMode,
-    file::{ConfigFileError, LocationConfig},
+    file::{ConfigFile, ConfigFileError, LocationConfig},
 };
 
 #[derive(Debug, Default, Deserialize)]
@@ -30,19 +30,31 @@ pub struct BotConfigFile {
     /// Config required for starting backend in remote bot mode.
     /// Ignored when backend starts in test mode.
     pub remote_bot_mode: Option<RemoteBotModeConfig>,
+    /// If None, value from server config might be loaded here
+    /// if server config path command line argument is set.
     pub location: Option<LocationConfig>,
 }
 
 impl BotConfigFile {
     pub fn load_if_bot_mode_or_default(
         file: impl AsRef<Path>,
+        server_config_file: Option<impl AsRef<Path>>,
         test_mode: &TestMode,
     ) -> Result<BotConfigFile, ConfigFileError> {
         if test_mode.bot_mode().is_none() {
             return Ok(BotConfigFile::default());
         }
 
-        Self::load(file)
+        let mut config = Self::load(file)?;
+
+        if config.location.is_none()
+            && let Some(server_config_file) = server_config_file
+        {
+            let server_config = ConfigFile::load(server_config_file)?;
+            config.location = server_config.location;
+        }
+
+        Ok(config)
     }
 
     pub(crate) fn load(file: impl AsRef<Path>) -> Result<BotConfigFile, ConfigFileError> {

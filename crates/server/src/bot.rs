@@ -7,7 +7,7 @@ use std::{
     process::Stdio,
 };
 
-use config::Config;
+use config::{Config, file::ConfigFile};
 use error_stack::{Result, ResultExt};
 use nix::{sys::signal::Signal, unistd::Pid};
 use simple_backend_utils::ContextExt;
@@ -98,10 +98,16 @@ impl BotClient {
             .arg(Self::bot_api_url(bot_api_socket));
 
         if let Some(bot_config_file) = &config.bot_config_file() {
-            let dir = std::fs::canonicalize(bot_config_file)
+            let path = std::fs::canonicalize(bot_config_file)
                 .change_context(BotClientError::LaunchCommand)?;
-            command.arg("--bot-config-file").arg(dir);
+            command.arg("--bot-config-file").arg(path);
         }
+
+        let server_config_path =
+            ConfigFile::default_file_path().change_context(BotClientError::LaunchCommand)?;
+        let path = std::fs::canonicalize(server_config_path)
+            .change_context(BotClientError::LaunchCommand)?;
+        command.arg("--server-config-file").arg(path);
 
         // Bot mode config
         command
