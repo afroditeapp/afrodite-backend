@@ -14,11 +14,12 @@ use std::process::ExitCode;
 use build_info::{
     BUILD_INFO_CARGO_PKG_NAME, BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE,
 };
-use config::{args::AppMode, get_config};
-use manager_config::args::ManagerApiClientMode;
+use config::{
+    args::{AppMode, ArgsConfig},
+    get_config,
+};
 use server::{DatingAppServer, api_doc::ApiDoc};
 use server_data::index::info::LocationIndexInfoCreator;
-use simple_backend_config::file::ImageProcessingConfig;
 use test_mode::TestRunner;
 
 fn main() -> ExitCode {
@@ -29,57 +30,8 @@ fn main() -> ExitCode {
         Err(e) => return e,
     };
 
-    if let Some(AppMode::ManagerApi(api_client_mode)) = args.mode {
-        return handle_manager_api_client_mode(api_client_mode);
-    }
-
-    if let Some(AppMode::Manager) = args.mode {
-        let config = manager_config::get_config(
-            BUILD_INFO_GIT_DESCRIBE.to_string(),
-            BUILD_INFO_CARGO_PKG_VERSION.to_string(),
-            BUILD_INFO_CARGO_PKG_NAME.to_string(),
-        )
-        .unwrap();
-        let runtime = tokio::runtime::Runtime::new().unwrap();
-        runtime.block_on(async { manager::server::AppServer::new(config).run().await });
-        return ExitCode::SUCCESS;
-    }
-
-    if let Some(AppMode::ImageProcess) = args.mode {
-        let config = simple_backend_config::get_config(
-            args.server,
-            BUILD_INFO_GIT_DESCRIBE.to_string(),
-            BUILD_INFO_CARGO_PKG_VERSION.to_string(),
-            true,
-        )
-        .unwrap();
-        return handle_image_process_mode(config.image_processing());
-    }
-
-    if let Some(AppMode::OpenApi) = args.mode {
-        let runtime = tokio::runtime::Runtime::new().unwrap();
-        runtime.block_on(async {
-            println!("{}", ApiDoc::open_api_json_string().await.unwrap());
-        });
-        return ExitCode::SUCCESS;
-    }
-
-    if let Some(AppMode::Config { mode }) = args.mode {
-        config_tools::handle_config_tools(mode).unwrap();
-        return ExitCode::SUCCESS;
-    }
-
-    if let Some(AppMode::RemoteBot(remote_bot_mode_config)) = args.mode.clone() {
-        let test_mode_config = remote_bot_mode_config.to_test_mode().unwrap();
-        let runtime = tokio::runtime::Runtime::new().unwrap();
-        runtime.block_on(async { TestRunner::new(args, test_mode_config).run().await });
-        return ExitCode::SUCCESS;
-    }
-
-    if let Some(AppMode::Test(test_mode_config)) = args.mode.clone() {
-        let runtime = tokio::runtime::Runtime::new().unwrap();
-        runtime.block_on(async { TestRunner::new(args, test_mode_config).run().await });
-        return ExitCode::SUCCESS;
+    if let Some(mode) = args.mode.clone() {
+        return handle_app_mode(args, mode);
     }
 
     let index_info = args.index_info;
@@ -100,41 +52,75 @@ fn main() -> ExitCode {
     }
 
     let runtime = tokio::runtime::Runtime::new().unwrap();
-
-    match config.current_mode() {
-        Some(config::args::AppMode::Config { .. })
-        | Some(config::args::AppMode::Manager)
-        | Some(config::args::AppMode::ManagerApi(_))
-        | Some(config::args::AppMode::ImageProcess)
-        | Some(config::args::AppMode::OpenApi)
-        | Some(config::args::AppMode::RemoteBot(_))
-        | Some(config::args::AppMode::Test(_)) => unreachable!(),
-        None => runtime.block_on(async { DatingAppServer::new(config).run().await }),
-    }
+    runtime.block_on(async { DatingAppServer::new(config).run().await });
 
     ExitCode::SUCCESS
 }
 
-fn handle_manager_api_client_mode(args: ManagerApiClientMode) -> ExitCode {
-    let runtime = tokio::runtime::Runtime::new().unwrap();
-    runtime.block_on(async {
-        let result = manager::client::handle_api_client_mode(args).await;
-        match result {
-            Ok(_) => ExitCode::SUCCESS,
-            Err(e) => {
-                eprintln!("{e:?}");
-                ExitCode::FAILURE
+fn handle_app_mode(args: ArgsConfig, mode: AppMode) -> ExitCode {
+    match mode {
+        AppMode::ManagerApi(api_client_mode) => {
+            let runtime = tokio::runtime::Runtime::new().unwrap();
+            runtime.block_on(async {
+                let result = manager::client::handle_api_client_mode(api_client_mode).await;
+                match result {
+                    Ok(_) => ExitCode::SUCCESS,
+                    Err(e) => {
+                        eprintln!("{e:?}");
+                        ExitCode::FAILURE
+                    }
+                }
+            })
+        }
+        AppMode::Manager => {
+            let config = manager_config::get_config(
+                BUILD_INFO_GIT_DESCRIBE.to_string(),
+                BUILD_INFO_CARGO_PKG_VERSION.to_string(),
+                BUILD_INFO_CARGO_PKG_NAME.to_string(),
+            )
+            .unwrap();
+            let runtime = tokio::runtime::Runtime::new().unwrap();
+            runtime.block_on(async { manager::server::AppServer::new(config).run().await });
+            ExitCode::SUCCESS
+        }
+        AppMode::ImageProcess => {
+            let config = simple_backend_config::get_config(
+                args.server,
+                BUILD_INFO_GIT_DESCRIBE.to_string(),
+                BUILD_INFO_CARGO_PKG_VERSION.to_string(),
+                true,
+            )
+            .unwrap();
+            match simple_backend_image_process::run_image_processing_loop(config.image_processing())
+            {
+                Ok(()) => ExitCode::SUCCESS,
+                Err(e) => {
+                    eprintln!("{e:?}");
+                    ExitCode::FAILURE
+                }
             }
         }
-    })
-}
-
-fn handle_image_process_mode(config: ImageProcessingConfig) -> ExitCode {
-    match simple_backend_image_process::run_image_processing_loop(config) {
-        Ok(()) => ExitCode::SUCCESS,
-        Err(e) => {
-            eprintln!("{e:?}");
-            ExitCode::FAILURE
+        AppMode::OpenApi => {
+            let runtime = tokio::runtime::Runtime::new().unwrap();
+            runtime.block_on(async {
+                println!("{}", ApiDoc::open_api_json_string().await.unwrap());
+            });
+            ExitCode::SUCCESS
+        }
+        AppMode::Config { mode } => {
+            config_tools::handle_config_tools(mode).unwrap();
+            ExitCode::SUCCESS
+        }
+        AppMode::RemoteBot(remote_bot_mode_config) => {
+            let test_mode_config = remote_bot_mode_config.to_test_mode().unwrap();
+            let runtime = tokio::runtime::Runtime::new().unwrap();
+            runtime.block_on(async { TestRunner::new(args, test_mode_config).run().await });
+            ExitCode::SUCCESS
+        }
+        AppMode::Test(test_mode_config) => {
+            let runtime = tokio::runtime::Runtime::new().unwrap();
+            runtime.block_on(async { TestRunner::new(args, test_mode_config).run().await });
+            ExitCode::SUCCESS
         }
     }
 }
