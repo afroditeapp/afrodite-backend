@@ -1,6 +1,7 @@
 use config::Config;
 use model::{
-    Account, AccountIdInternal, AccountState, EmailMessages, EventToClientInternal, Permissions,
+    Account, AccountIdInternal, AccountState, ContentIdInternal, EmailMessages,
+    EventToClientInternal, Permissions,
 };
 use server_data::{
     DataError, cache::profile::UpdateLocationCacheState, db_manager::RouterDatabaseReadHandle,
@@ -11,6 +12,7 @@ use server_data_account::{
     read::GetReadCommandsAccount,
     write::{GetWriteCommandsAccount, account::IncrementAdminAccessGrantedCount},
 };
+use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use server_data_profile::write::GetWriteCommandsProfile;
 use tracing::warn;
 
@@ -125,6 +127,14 @@ pub async fn complete_initial_setup(
             cmds.events()
                 .send_connected_event(id.uuid, EventToClientInternal::AccountStateChanged)
                 .await?;
+
+            let current_content = cmds.read().media().all_account_media_content(id).await?;
+            for c in current_content {
+                if c.moderation_state.is_in_slot() {
+                    let content_id = ContentIdInternal::new(id, c.content_id(), c.content_row_id());
+                    cmds.media().delete_content(content_id).await?;
+                }
+            }
 
             Ok(new_account)
         })

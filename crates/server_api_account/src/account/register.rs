@@ -83,6 +83,8 @@ const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
 
 /// Complete initial setup.
 ///
+/// Media content with InSlot state will be removed.
+///
 /// Requirements:
 ///  - Account must be in `InitialSetup` state.
 ///  - Account must have a valid AccountSetup info set.
