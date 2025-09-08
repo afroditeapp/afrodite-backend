@@ -4,7 +4,11 @@ use std::{collections::HashSet, net::SocketAddr, sync::LazyLock};
 
 use axum::extract::{ConnectInfo, State};
 use model_account::{AccountId, LoginResult, RemoteBotLogin, SignInWithInfo};
-use server_api::{S, app::GetConfig, db_write};
+use server_api::{
+    S,
+    app::{GetConfig, ReadDynamicConfig},
+    db_write,
+};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::read::GetReadCommandsAccount;
 use simple_backend::create_counters;
@@ -113,7 +117,7 @@ pub async fn post_remote_bot_login(
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT_BOT.post_remote_bot_login.incr();
 
-    if !state.config().remote_bot_login_allowed() {
+    if !state.is_remote_bot_login_enabled() {
         info!("Remote bot login is disabled from dynamic config");
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }

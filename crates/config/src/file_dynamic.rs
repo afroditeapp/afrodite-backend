@@ -25,7 +25,7 @@ pub const DEFAULT_CONFIG_FILE_DYNAMIC_TEXT: &str = r#"
 
 "#;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct ConfigFileDynamic {
     #[serde(flatten)]
     pub backend_config: BackendConfig,
@@ -41,7 +41,7 @@ impl ConfigFileDynamic {
         }
     }
 
-    pub fn load(
+    fn load(
         dir: impl AsRef<Path>,
         save_default_if_not_found: bool,
     ) -> Result<ConfigFileDynamic, ConfigFileError> {

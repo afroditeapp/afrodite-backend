@@ -366,8 +366,7 @@ pub fn get_config(
 
     let client_api_urls = create_client_api_urls(&components, &external_services)?;
 
-    let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
-    let file_dynamic = ConfigFileDynamic::load(current_dir, save_default_config_if_not_found)
+    let file_dynamic = ConfigFileDynamic::load_from_current_dir(save_default_config_if_not_found)
         .change_context(GetConfigError::LoadFileError)?;
 
     let (profile_attributes, profile_attributes_sha256, profile_attributes_file) =

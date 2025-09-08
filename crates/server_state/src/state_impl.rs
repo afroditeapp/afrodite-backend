@@ -74,16 +74,6 @@ impl GetAccounts for S {
     }
 }
 
-impl ReadDynamicConfig for S {
-    async fn read_config(&self) -> error_stack::Result<BackendConfig, ConfigFileError> {
-        let config = tokio::task::spawn_blocking(|| ConfigFileDynamic::load_from_current_dir(true))
-            .await
-            .change_context(ConfigFileError::LoadConfig)??;
-
-        Ok(config.backend_config)
-    }
-}
-
 impl BackendVersionProvider for S {
     fn backend_version(&self) -> BackendVersion {
         BackendVersion {
@@ -109,6 +99,22 @@ impl GetConfig for S {
     }
 }
 
+impl ReadDynamicConfig for S {
+    async fn read_config(&self) -> error_stack::Result<BackendConfig, ConfigFileError> {
+        let config = tokio::task::spawn_blocking(|| ConfigFileDynamic::load_from_current_dir(true))
+            .await
+            .change_context(ConfigFileError::LoadConfig)??;
+
+        Ok(config.backend_config)
+    }
+
+    fn is_remote_bot_login_enabled(&self) -> bool {
+        self.state
+            .dynamic_config_manager
+            .is_remote_bot_login_enabled()
+    }
+}
+
 impl WriteDynamicConfig for S {
     async fn write_config(
         &self,
@@ -128,7 +134,19 @@ impl WriteDynamicConfig for S {
         .await
         .change_context(ConfigFileError::LoadConfig)??;
 
+        self.state.dynamic_config_manager.reload().await;
+
         Ok(())
+    }
+
+    fn set_remote_bot_login_enabled(&self, value: bool) {
+        self.state
+            .dynamic_config_manager
+            .set_remote_bot_login_enabled(value);
+    }
+
+    async fn reload_dynamic_config(&self) {
+        self.state.dynamic_config_manager.reload().await;
     }
 }
 

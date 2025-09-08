@@ -2,6 +2,7 @@
 #![deny(unused_must_use)]
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
+#![allow(async_fn_in_trait)]
 
 use std::sync::Arc;
 
@@ -29,7 +30,10 @@ use server_data::{
 use simple_backend::app::SimpleBackendAppState;
 
 use self::internal_api::InternalApiClient;
-use crate::{admin_notifications::AdminNotificationManagerData, demo::DemoAccountManager};
+use crate::{
+    admin_notifications::AdminNotificationManagerData, demo::DemoAccountManager,
+    dynamic_config::DynamicConfigManagerData,
+};
 
 pub mod admin_notifications;
 pub mod api_limits;
@@ -38,6 +42,7 @@ pub mod app;
 pub mod client_version;
 pub mod data_signer;
 pub mod demo;
+pub mod dynamic_config;
 pub mod internal_api;
 pub mod ip_address;
 pub mod state_impl;
@@ -71,6 +76,7 @@ struct AppStateInternal {
     ip_address_usage_tracker: IpAddressUsageTracker,
     data_signer: DataSigner,
     data_export: DataExportManagerData,
+    dynamic_config_manager: DynamicConfigManagerData,
 }
 
 impl AppState {
@@ -84,6 +90,7 @@ impl AppState {
         demo: DemoAccountManager,
         push_notification_sender: PushNotificationSender,
         data_export: DataExportManagerData,
+        dynamic_config_manager: DynamicConfigManagerData,
         simple_backend_state: SimpleBackendAppState,
         data_all_utils: &'static dyn DataAllUtils,
     ) -> AppState {
@@ -109,6 +116,7 @@ impl AppState {
             ip_address_usage_tracker: IpAddressUsageTracker::new(),
             data_signer: DataSigner::new(),
             data_export,
+            dynamic_config_manager,
         };
 
         AppState {

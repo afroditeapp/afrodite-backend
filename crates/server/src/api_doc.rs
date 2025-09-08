@@ -9,7 +9,7 @@ use server_data::{
 use server_data_all::app::DataAllUtilsImpl;
 use server_state::{
     S, StateForRouterCreation, admin_notifications::AdminNotificationManagerData,
-    demo::DemoAccountManager,
+    demo::DemoAccountManager, dynamic_config::DynamicConfigManagerData,
 };
 use simple_backend::{
     app::SimpleBackendAppState, manager_client::ManagerApiClient, maxmind_db::MaxMindDbManagerData,
@@ -228,6 +228,7 @@ impl ApiDoc {
         let (content_processing, _) = ContentProcessingManagerData::new();
         let (admin_notification, _) = AdminNotificationManagerData::new();
         let (data_export, _) = DataExportManagerData::new();
+        let (dynamic_config_manager, _) = DynamicConfigManagerData::new();
 
         let demo =
             DemoAccountManager::new(config.demo_account_config().cloned().unwrap_or_default())
@@ -242,6 +243,7 @@ impl ApiDoc {
             demo,
             push_notification_sender,
             data_export,
+            dynamic_config_manager,
             simple_state,
             &DataAllUtilsImpl,
         )

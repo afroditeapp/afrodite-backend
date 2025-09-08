@@ -7,10 +7,10 @@
 pub mod admin_notifications;
 pub mod api;
 pub mod api_doc;
-pub mod bot;
 pub mod content_processing;
 pub mod daily_likes;
 pub mod data_export;
+pub mod dynamic_config;
 pub mod email;
 pub mod hourly_tasks;
 pub mod perf;
@@ -35,7 +35,7 @@ use perf::ALL_COUNTERS;
 use profile_search::{ProfileSearchManager, ProfileSearchManagerQuitHandle};
 use push_notifications::ServerPushNotificationStateProvider;
 use scheduled_tasks::{ScheduledTaskManager, ScheduledTaskManagerQuitHandle};
-use server_api::app::{DataSignerProvider, GetConfig};
+use server_api::app::{DataSignerProvider, GetConfig, WriteDynamicConfig};
 use server_common::push_notifications::{
     PushNotificationManager, PushNotificationManagerQuitHandle,
 };
@@ -48,7 +48,7 @@ use server_data::{
 use server_data_all::{app::DataAllUtilsImpl, load::DbDataToCacheLoader};
 use server_state::{
     AppState, StateForRouterCreation, admin_notifications::AdminNotificationManagerData,
-    demo::DemoAccountManager,
+    demo::DemoAccountManager, dynamic_config::DynamicConfigManagerData,
 };
 use shutdown_tasks::ShutdownTasks;
 use simple_backend::{
@@ -64,9 +64,9 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
     admin_notifications::{AdminNotificationManager, AdminNotificationManagerQuitHandle},
-    bot::BotClient,
     daily_likes::{DailyLikesManager, DailyLikesManagerQuitHandle},
     data_export::{DataExportManager, DataExportManagerQuitHandle},
+    dynamic_config::{DynamicConfigManager, DynamicConfigManagerQuitHandle},
     unlimited_likes::{UnlimitedLikesManager, UnlimitedLikesManagerQuitHandle},
 };
 
@@ -84,7 +84,7 @@ impl DatingAppServer {
     pub async fn run(self) {
         let logic = DatingAppBusinessLogic {
             config: self.config.clone(),
-            bot_client: None,
+            dynamic_config_manager: None,
             write_cmd_waiter: None,
             database_manager: None,
             content_processing_quit_handle: None,
@@ -106,7 +106,7 @@ impl DatingAppServer {
 
 pub struct DatingAppBusinessLogic {
     config: Arc<Config>,
-    bot_client: Option<BotClient>,
+    dynamic_config_manager: Option<DynamicConfigManagerQuitHandle>,
     write_cmd_waiter: Option<WriteCmdWatcher>,
     database_manager: Option<DatabaseManager>,
     content_processing_quit_handle: Option<ContentProcessingManagerQuitHandle>,
@@ -285,6 +285,9 @@ impl BusinessLogic for DatingAppBusinessLogic {
 
         let (data_export, data_export_receiver) = DataExportManagerData::new();
 
+        let (dynamic_config_manager, dynamic_config_manager_receiver) =
+            DynamicConfigManagerData::new();
+
         let demo = DemoAccountManager::new(
             self.config
                 .demo_account_config()
@@ -302,6 +305,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
             demo,
             push_notification_sender,
             data_export,
+            dynamic_config_manager,
             simple_state,
             &DataAllUtilsImpl,
         )
@@ -312,6 +316,9 @@ impl BusinessLogic for DatingAppBusinessLogic {
             .load_or_generate_keys(self.config.simple_backend())
             .await
             .expect("Data signer init failed");
+
+        let dynamic_config_manager_quit_handle =
+            DynamicConfigManager::new_manager(dynamic_config_manager_receiver, app_state.clone());
 
         let content_processing_quit_handle = ContentProcessingManager::new_manager(
             content_processing_receiver,
@@ -378,33 +385,18 @@ impl BusinessLogic for DatingAppBusinessLogic {
         self.profile_search = Some(profile_search);
         self.unlimited_likes = Some(unlimited_likes);
         self.daily_likes = Some(daily_likes);
+
+        self.dynamic_config_manager = Some(dynamic_config_manager_quit_handle);
+
         app_state
     }
 
-    async fn on_after_server_start(&mut self) {
-        let admin_bot = self.config.local_admin_bot_enabled();
-        let user_bots = self.config.local_user_bot_count();
-
-        self.bot_client = if admin_bot || user_bots != 0 {
-            match BotClient::start_bots(&self.config, admin_bot, user_bots).await {
-                Ok(bot_manager) => Some(bot_manager),
-                Err(e) => {
-                    error!("Bot client start failed: {:?}", e);
-                    None
-                }
-            }
-        } else {
-            None
-        };
+    async fn on_after_server_start(&mut self, state: &Self::AppState) {
+        state.reload_dynamic_config().await;
     }
 
     async fn on_before_server_quit(&mut self) {
-        if let Some(bot_client) = self.bot_client.take() {
-            match bot_client.stop_bots().await {
-                Ok(()) => (),
-                Err(e) => error!("Bot client stop failed: {:?}", e),
-            }
-        }
+        self.dynamic_config_manager.take().unwrap().quit().await;
     }
 
     async fn on_after_server_quit(self) {

@@ -1,22 +1,8 @@
-use config::file::ConfigFileError;
 use error_stack::Result;
-use model::{AccountId, AccountIdInternal, BackendConfig, BackendVersion, EmailMessages};
+use model::{AccountId, AccountIdInternal, BackendVersion, EmailMessages};
 use simple_backend::email::EmailSender;
 
 use crate::data::DataError;
-
-pub trait WriteDynamicConfig {
-    fn write_config(
-        &self,
-        config: BackendConfig,
-    ) -> impl std::future::Future<Output = error_stack::Result<(), ConfigFileError>> + Send;
-}
-
-pub trait ReadDynamicConfig {
-    fn read_config(
-        &self,
-    ) -> impl std::future::Future<Output = error_stack::Result<BackendConfig, ConfigFileError>> + Send;
-}
 
 pub trait BackendVersionProvider {
     fn backend_version(&self) -> BackendVersion;

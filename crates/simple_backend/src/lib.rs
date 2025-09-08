@@ -151,7 +151,10 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
     ) -> impl std::future::Future<Output = Self::AppState> + Send;
 
     /// Callback for doing something after server has been started
-    fn on_after_server_start(&mut self) -> impl std::future::Future<Output = ()> + Send {
+    fn on_after_server_start(
+        &mut self,
+        _state: &Self::AppState,
+    ) -> impl std::future::Future<Output = ()> + Send {
         async {}
     }
 
@@ -354,7 +357,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             warn!("No enabled APIs in config file");
         }
 
-        self.logic.on_after_server_start().await;
+        self.logic.on_after_server_start(&state).await;
         // Use println to make sure that this message is visible in logs.
         // Test mode backend starting requires this.
         println!("{SERVER_START_MESSAGE}");

@@ -1,6 +1,7 @@
 use std::net::SocketAddr;
 
-use model::{AccessToken, AccountIdInternal, AccountState, Permissions};
+use config::file::ConfigFileError;
+use model::{AccessToken, AccountIdInternal, AccountState, BackendConfig, Permissions};
 pub use server_data::app::*;
 use server_data::{DataError, content_processing::ContentProcessingManagerData};
 
@@ -64,4 +65,19 @@ pub trait AdminNotificationProvider {
 
 pub trait ApiLimitsProvider {
     fn api_limits(&self, account_id: AccountIdInternal) -> ApiLimits;
+}
+
+pub trait ReadDynamicConfig {
+    async fn read_config(&self) -> error_stack::Result<BackendConfig, ConfigFileError>;
+
+    fn is_remote_bot_login_enabled(&self) -> bool;
+}
+
+pub trait WriteDynamicConfig {
+    async fn write_config(&self, config: BackendConfig)
+    -> error_stack::Result<(), ConfigFileError>;
+
+    fn set_remote_bot_login_enabled(&self, value: bool);
+
+    async fn reload_dynamic_config(&self);
 }
