@@ -7,20 +7,17 @@
 
 use std::sync::Arc;
 
-use config::{
-    Config,
-    args::{QaTestConfig, TestMode},
-};
+use config::args::{QaTestConfig, TestMode};
 use manager::{ManagerEvent, ManagerEventReceiver, TestManager};
 use test_mode_tests::TestFunction;
-use test_mode_utils::ServerTestError;
+use test_mode_utils::{ServerTestError, server::ServerInstanceConfig};
 use tokio::{select, signal};
 use tracing::{error, info};
 
 mod manager;
 
 pub struct QaTestRunner {
-    config: Arc<Config>,
+    server_instance_config: ServerInstanceConfig,
     test_config: Arc<TestMode>,
     qa_config: QaTestConfig,
     reqwest_client: reqwest::Client,
@@ -28,13 +25,13 @@ pub struct QaTestRunner {
 
 impl QaTestRunner {
     pub fn new(
-        config: Arc<Config>,
+        server_instance_config: ServerInstanceConfig,
         test_config: Arc<TestMode>,
         qa_config: QaTestConfig,
         reqwest_client: reqwest::Client,
     ) -> Self {
         Self {
-            config,
+            server_instance_config,
             test_config,
             qa_config,
             reqwest_client,
@@ -64,7 +61,7 @@ impl QaTestRunner {
         };
 
         let (manager_event_receiver, manager_quit_handle) = TestManager::new_manager(
-            self.config.clone(),
+            self.server_instance_config,
             self.test_config.clone(),
             test_functions.clone(),
             self.reqwest_client.clone(),

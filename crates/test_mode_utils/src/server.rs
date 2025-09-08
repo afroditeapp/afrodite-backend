@@ -3,8 +3,7 @@ use std::{
 };
 
 use config::{
-    Config,
-    args::{SelectedBenchmark, TestMode},
+    args::{ArgsConfig, SelectedBenchmark, TestMode},
     file::{
         ApiConfig, AutomaticProfileSearchConfig, CONFIG_FILE_NAME, Components, ConfigFile,
         ConfigFileConfig, EmailAddress, ExternalServices, GrantAdminAccessConfig, LocationConfig,
@@ -61,7 +60,7 @@ pub struct ServerManager {
 
 impl ServerManager {
     pub async fn new(
-        all_config: &Config,
+        server_instance_config: &ServerInstanceConfig,
         config: Arc<TestMode>,
         settings: Option<AdditionalSettings>,
     ) -> Self {
@@ -87,7 +86,7 @@ impl ServerManager {
         let servers = vec![
             ServerInstance::new(
                 dir.clone(),
-                all_config,
+                server_instance_config,
                 account_config,
                 &config,
                 settings.clone(),
@@ -200,6 +199,19 @@ fn new_config(
     (config, simple_backend_config)
 }
 
+#[derive(Default, Clone, Copy)]
+pub struct ServerInstanceConfig {
+    pub sqlite_in_ram: bool,
+}
+
+impl ServerInstanceConfig {
+    pub fn from_args(args_config: &ArgsConfig) -> Self {
+        Self {
+            sqlite_in_ram: args_config.server.sqlite_in_ram,
+        }
+    }
+}
+
 pub struct ServerInstance {
     server: Child,
     dir: PathBuf,
@@ -211,7 +223,7 @@ pub struct ServerInstance {
 impl ServerInstance {
     pub async fn new(
         dir: PathBuf,
-        all_config: &Config,
+        server_instance_config: &ServerInstanceConfig,
         (server_config, simple_backend_config): (ConfigFile, SimpleBackendConfigFile),
         args_config: &TestMode,
         settings: AdditionalSettings,
@@ -254,7 +266,7 @@ impl ServerInstance {
             .env("RUST_LOG", log_value)
             .process_group(0);
 
-        if all_config.simple_backend().sqlite_in_ram() {
+        if server_instance_config.sqlite_in_ram {
             command.arg("--sqlite-in-ram");
         }
 

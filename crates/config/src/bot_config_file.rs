@@ -6,7 +6,10 @@ pub use simple_backend_config::file::NsfwDetectionThresholds;
 use simple_backend_utils::time::UtcTimeValue;
 use url::Url;
 
-use crate::{args::TestMode, file::ConfigFileError};
+use crate::{
+    args::TestMode,
+    file::{ConfigFileError, LocationConfig},
+};
 
 #[derive(Debug, Default, Deserialize)]
 pub struct BotConfigFile {
@@ -27,6 +30,7 @@ pub struct BotConfigFile {
     /// Config required for starting backend in remote bot mode.
     /// Ignored when backend starts in test mode.
     pub remote_bot_mode: Option<RemoteBotModeConfig>,
+    pub location: Option<LocationConfig>,
 }
 
 impl BotConfigFile {

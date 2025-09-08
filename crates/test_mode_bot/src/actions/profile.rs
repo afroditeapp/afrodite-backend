@@ -193,8 +193,9 @@ impl BotAction for GetLocation {
 
 /// Updates location with random values if bot is not configured to specific
 /// location.
-/// If None is passed, then area for random location is
-/// from Config.
+///
+/// If [Self::config] is None, then area for random location is
+/// one from bot config file or the default area.
 ///
 /// Updates PreviousValue to a new location.
 #[derive(Debug)]
@@ -225,7 +226,7 @@ impl BotAction for UpdateLocationRandomOrConfigured {
         let config = self
             .config
             .clone()
-            .unwrap_or(state.server_config.location().clone());
+            .unwrap_or(state.bot_config_file.location.clone().unwrap_or_default());
         let mut location = config.generate_random_location(if self.deterministic {
             Some(&mut state.deterministic_rng)
         } else {

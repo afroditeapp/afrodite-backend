@@ -16,11 +16,11 @@ use std::{
     sync::Arc,
 };
 
-use config::{Config, args::TestMode, bot_config_file::BotConfigFile};
+use config::{args::TestMode, bot_config_file::BotConfigFile};
 use test_mode_utils::{
     client::ApiClient,
     dir::DataDirUtils,
-    server::ServerManager,
+    server::{ServerInstanceConfig, ServerManager},
     state::{BotPersistentState, StateData},
 };
 use tokio::{
@@ -33,7 +33,7 @@ use tracing::{error, info};
 use crate::manager::BotManager;
 
 pub struct BotTestRunner {
-    config: Arc<Config>,
+    server_instance_config: ServerInstanceConfig,
     bot_config_file: Arc<BotConfigFile>,
     test_config: Arc<TestMode>,
     reqwest_client: reqwest::Client,
@@ -41,13 +41,13 @@ pub struct BotTestRunner {
 
 impl BotTestRunner {
     pub fn new(
-        config: Arc<Config>,
+        server_instance_config: ServerInstanceConfig,
         bot_config_file: Arc<BotConfigFile>,
         test_config: Arc<TestMode>,
         reqwest_client: reqwest::Client,
     ) -> Self {
         Self {
-            config,
+            server_instance_config,
             bot_config_file,
             test_config,
             reqwest_client,
@@ -80,7 +80,7 @@ impl BotTestRunner {
                             (true, None)
                         }
                     },
-                server = ServerManager::new(&self.config, self.test_config.clone(), None) => {
+                server = ServerManager::new(&self.server_instance_config, self.test_config.clone(), None) => {
                     info!("...crated");
                     (false, Some(server))
                 }
@@ -100,7 +100,6 @@ impl BotTestRunner {
             while task_number > 0 {
                 BotManager::spawn(
                     task_number - 1,
-                    self.config.clone(),
                     self.test_config.clone(),
                     self.bot_config_file.clone(),
                     old_state.clone(),

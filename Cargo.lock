@@ -5401,6 +5401,7 @@ dependencies = [
  "test_mode_tests_media",
  "test_mode_tests_profile",
  "test_mode_tests_runner",
+ "test_mode_utils",
  "tracing-subscriber",
 ]
 

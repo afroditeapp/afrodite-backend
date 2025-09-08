@@ -1,10 +1,10 @@
 use std::sync::{Arc, atomic::AtomicBool};
 
-use config::{Config, args::TestMode};
+use config::args::TestMode;
 use test_mode_tests::{TestContext, TestFunction, TestResult};
 use test_mode_utils::{
     ServerTestError,
-    server::{AdditionalSettings, ServerManager},
+    server::{AdditionalSettings, ServerInstanceConfig, ServerManager},
 };
 use tokio::{
     sync::{self, OwnedSemaphorePermit, mpsc},
@@ -46,7 +46,7 @@ pub struct ManagerEventReceiver {
 }
 
 pub struct TestManager {
-    config: Arc<Config>,
+    server_instance_config: ServerInstanceConfig,
     test_config: Arc<TestMode>,
     test_functions: Vec<&'static TestFunction>,
     reqwest_client: reqwest::Client,
@@ -54,13 +54,13 @@ pub struct TestManager {
 
 impl TestManager {
     pub fn new_manager(
-        config: Arc<Config>,
+        server_instance_config: ServerInstanceConfig,
         test_config: Arc<TestMode>,
         test_functions: Vec<&'static TestFunction>,
         reqwest_client: reqwest::Client,
     ) -> (ManagerEventReceiver, ManagerQuitHandle) {
         let manager = Self {
-            config,
+            server_instance_config,
             test_config,
             test_functions,
             reqwest_client,
@@ -102,7 +102,7 @@ impl TestManager {
             let api_port = port_number_receiver.receive().await;
 
             let test_task = TestTask {
-                config: self.config.clone(),
+                server_instance_config: self.server_instance_config,
                 test_config: self.test_config.clone(),
                 permit,
                 sender: sender.clone(),
@@ -117,7 +117,7 @@ impl TestManager {
 }
 
 struct TestTask {
-    config: Arc<Config>,
+    server_instance_config: ServerInstanceConfig,
     test_config: Arc<TestMode>,
     permit: OwnedSemaphorePermit,
     sender: mpsc::Sender<ManagerEvent>,
@@ -130,14 +130,13 @@ struct TestTask {
 impl TestTask {
     pub async fn run(self) {
         let mut test_context = TestContext::new(
-            self.config.clone(),
             self.test_config.clone(),
             Some(self.api_port),
             self.reqwest_client,
         );
 
         let server_manager = ServerManager::new(
-            &self.config,
+            &self.server_instance_config,
             self.test_config.clone(),
             Some(AdditionalSettings {
                 log_to_memory: true,

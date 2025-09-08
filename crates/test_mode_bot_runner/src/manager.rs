@@ -2,7 +2,6 @@ use std::{sync::Arc, vec};
 
 use api_client::models::AccountId;
 use config::{
-    Config,
     args::{SelectedBenchmark, TestMode, TestModeSubMode},
     bot_config_file::BotConfigFile,
 };
@@ -31,7 +30,6 @@ impl BotManager {
     #[allow(clippy::too_many_arguments)]
     pub fn spawn(
         task_id: u32,
-        server_config: Arc<Config>,
         config: Arc<TestMode>,
         bot_config_file: Arc<BotConfigFile>,
         old_state: Option<Arc<StateData>>,
@@ -43,7 +41,6 @@ impl BotManager {
             TestModeSubMode::Benchmark(_) | TestModeSubMode::Bot(_) => Self::benchmark_or_bot(
                 task_id,
                 old_state,
-                server_config,
                 bot_config_file,
                 config,
                 bot_running_handle,
@@ -58,7 +55,6 @@ impl BotManager {
     pub fn benchmark_or_bot(
         task_id: u32,
         old_state: Option<Arc<StateData>>,
-        server_config: Arc<Config>,
         bot_config_file: Arc<BotConfigFile>,
         config: Arc<TestMode>,
         bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
@@ -90,7 +86,6 @@ impl BotManager {
             let state = BotState::new(
                 account_id.map(AccountId::new),
                 keys,
-                server_config.clone(),
                 config.clone(),
                 bot_config_file.clone(),
                 task_id,

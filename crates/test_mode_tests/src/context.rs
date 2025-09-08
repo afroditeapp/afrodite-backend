@@ -11,7 +11,7 @@ use api_client::{
         SearchAgeRange, SearchGroups,
     },
 };
-use config::{Config, args::TestMode, bot_config_file::BotConfigFile};
+use config::{args::TestMode, bot_config_file::BotConfigFile};
 use error_stack::{Result, ResultExt};
 use test_mode_bot::{
     BotState, action_array,
@@ -33,7 +33,6 @@ struct State {
 
 #[derive(Debug, Clone)]
 pub struct TestContext {
-    config: Arc<Config>,
     test_config: Arc<TestMode>,
     state: Arc<Mutex<State>>,
     account_server_api_port: Option<u16>,
@@ -44,7 +43,6 @@ pub struct TestContext {
 
 impl TestContext {
     pub fn new(
-        config: Arc<Config>,
         test_config: Arc<TestMode>,
         account_server_api_port: Option<u16>,
         reqwest_client: reqwest::Client,
@@ -53,7 +51,6 @@ impl TestContext {
             state: Arc::new(Mutex::new(State {
                 connections: vec![],
             })),
-            config,
             test_config,
             account_server_api_port,
             next_bot_id: 1, // 0 is for admin bot
@@ -239,7 +236,6 @@ impl Account {
         let mut state = BotState::new(
             None,
             None,
-            test_context.config.clone(),
             test_context.test_config.clone(),
             Arc::new(BotConfigFile::default()),
             0,

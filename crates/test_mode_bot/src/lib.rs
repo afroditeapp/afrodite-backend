@@ -18,7 +18,6 @@ use actions::{admin::AdminBotState, chat::ChatState, profile::ProfileState};
 use api_client::models::{AccountId, EventToClient};
 use async_trait::async_trait;
 use config::{
-    Config,
     args::{PublicApiUrls, TestMode},
     bot_config_file::{BaseBotConfig, BotConfigFile},
 };
@@ -39,7 +38,6 @@ pub struct TaskState;
 #[derive(Debug)]
 pub struct BotState {
     pub id: Option<AccountId>,
-    pub server_config: Arc<Config>,
     pub config: Arc<TestMode>,
     bot_config_file: Arc<BotConfigFile>,
     pub task_id: u32,
@@ -65,7 +63,6 @@ impl BotState {
     pub fn new(
         id: Option<AccountId>,
         keys: Option<BotEncryptionKeys>,
-        server_config: Arc<Config>,
         config: Arc<TestMode>,
         bot_config_file: Arc<BotConfigFile>,
         task_id: u32,
@@ -77,7 +74,6 @@ impl BotState {
         Self {
             reqwest_client,
             id,
-            server_config,
             config,
             bot_config_file,
             task_id,

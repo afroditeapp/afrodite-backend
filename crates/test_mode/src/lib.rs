@@ -9,22 +9,22 @@
 use std::sync::Arc;
 
 use config::{
-    Config,
-    args::{TestMode, TestModeSubMode},
+    args::{ArgsConfig, TestMode, TestModeSubMode},
     bot_config_file::BotConfigFile,
 };
 use test_mode_bot_runner::BotTestRunner;
 use test_mode_tests_runner::QaTestRunner;
+use test_mode_utils::server::ServerInstanceConfig;
 
 pub struct TestRunner {
-    config: Arc<Config>,
+    args_config: ArgsConfig,
     test_config: Arc<TestMode>,
 }
 
 impl TestRunner {
-    pub fn new(config: Config, test_config: TestMode) -> Self {
+    pub fn new(args_config: ArgsConfig, test_config: TestMode) -> Self {
         Self {
-            config: config.into(),
+            args_config,
             test_config: test_config.into(),
         }
     }
@@ -39,9 +39,14 @@ impl TestRunner {
         let reqwest_client = reqwest::Client::new();
 
         if let TestModeSubMode::Qa(config) = self.test_config.mode.clone() {
-            QaTestRunner::new(self.config, self.test_config, config, reqwest_client)
-                .run()
-                .await;
+            QaTestRunner::new(
+                ServerInstanceConfig::from_args(&self.args_config),
+                self.test_config,
+                config,
+                reqwest_client,
+            )
+            .run()
+            .await;
         } else {
             let bot_config_file =
                 if let Some(bot_config_file_path) = &self.test_config.bot_config_file {
@@ -60,7 +65,7 @@ impl TestRunner {
                 };
 
             BotTestRunner::new(
-                self.config,
+                ServerInstanceConfig::from_args(&self.args_config),
                 bot_config_file.into(),
                 self.test_config,
                 reqwest_client,

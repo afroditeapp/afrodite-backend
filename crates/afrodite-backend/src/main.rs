@@ -69,6 +69,19 @@ fn main() -> ExitCode {
         return ExitCode::SUCCESS;
     }
 
+    if let Some(AppMode::RemoteBot(remote_bot_mode_config)) = args.mode.clone() {
+        let test_mode_config = remote_bot_mode_config.to_test_mode().unwrap();
+        let runtime = tokio::runtime::Runtime::new().unwrap();
+        runtime.block_on(async { TestRunner::new(args, test_mode_config).run().await });
+        return ExitCode::SUCCESS;
+    }
+
+    if let Some(AppMode::Test(test_mode_config)) = args.mode.clone() {
+        let runtime = tokio::runtime::Runtime::new().unwrap();
+        runtime.block_on(async { TestRunner::new(args, test_mode_config).run().await });
+        return ExitCode::SUCCESS;
+    }
+
     let index_info = args.index_info;
     let config = get_config(
         args,
@@ -93,16 +106,9 @@ fn main() -> ExitCode {
         | Some(config::args::AppMode::Manager)
         | Some(config::args::AppMode::ManagerApi(_))
         | Some(config::args::AppMode::ImageProcess)
-        | Some(config::args::AppMode::OpenApi) => {
-            unreachable!()
-        }
-        Some(config::args::AppMode::RemoteBot(test_mode_config)) => {
-            let test_mode_config = test_mode_config.to_test_mode().unwrap();
-            runtime.block_on(async { TestRunner::new(config, test_mode_config).run().await })
-        }
-        Some(config::args::AppMode::Test(test_mode_config)) => {
-            runtime.block_on(async { TestRunner::new(config, test_mode_config).run().await })
-        }
+        | Some(config::args::AppMode::OpenApi)
+        | Some(config::args::AppMode::RemoteBot(_))
+        | Some(config::args::AppMode::Test(_)) => unreachable!(),
         None => runtime.block_on(async { DatingAppServer::new(config).run().await }),
     }
 
