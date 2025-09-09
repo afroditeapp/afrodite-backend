@@ -17,9 +17,6 @@ pub enum CacheError {
 
     #[error("Cache init error")]
     Init,
-
-    #[error("Cache operation failed because of server feature was not enabled")]
-    FeatureNotEnabled,
 }
 
 impl CacheError {

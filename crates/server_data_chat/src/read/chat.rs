@@ -92,20 +92,14 @@ impl ReadCommandsChat<'_> {
             let x = self
                 .cache()
                 .read_cache(id, |e| {
-                    let version = e
-                        .profile
-                        .as_ref()
-                        .map(|v| v.profile_internal().version_uuid);
-                    let content_version = e.media.as_ref().map(|v| v.profile_content_version);
-                    let last_seen_time = e
-                        .profile
-                        .as_ref()
-                        .map(|v| v.last_seen_time().last_seen_time());
+                    let version = e.profile.profile_internal().version_uuid;
+                    let content_version = e.media.profile_content_version;
+                    let last_seen_time = e.profile.last_seen_time().last_seen_time();
                     Ok(ChatProfileLink::new(
                         id,
-                        version,
-                        content_version,
-                        last_seen_time,
+                        Some(version),
+                        Some(content_version),
+                        Some(last_seen_time),
                     ))
                 })
                 .await?;

@@ -11,8 +11,8 @@ use server_common::data::WithInfo;
 pub use server_common::data::cache::CacheError;
 use server_data::{
     cache::{
-        DatabaseCache, account::CacheAccount, chat::CacheChat, media::CacheMedia,
-        profile::CacheProfile,
+        CacheEntry, DatabaseCache, account::CacheAccount, chat::CacheChat, common::CacheCommon,
+        media::CacheMedia, profile::CacheProfile,
     },
     index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
 };
@@ -58,26 +58,18 @@ impl DbDataToCacheLoader {
         index_iterator: LocationIndexIteratorHandle<'_>,
         index_writer: LocationIndexWriteHandle<'_>,
     ) -> Result<(), CacheError> {
-        cache
-            .insert_account_if_not_exists(account_id)
-            .await
-            .with_info(account_id)?;
-
         let db = DbReaderAll::new(DbReaderRaw::new(current_db));
         let login_session = db
             .db_read(move |mut cmds| cmds.common().token().login_session(account_id))
             .await?;
 
-        let account_entry = cache
-            .load_tokens_from_db_and_return_entry(account_id, login_session)
-            .await?;
-        let mut entry = account_entry.cache.write().await;
-
         // Common
+
+        let mut cache_common = CacheCommon::default();
         let permissions = db
             .db_read(move |mut cmds| cmds.common().state().account_permissions(account_id))
             .await?;
-        entry.common.permissions = permissions;
+        cache_common.permissions = permissions;
         let state = db
             .db_read(move |mut cmds| {
                 cmds.common()
@@ -85,11 +77,11 @@ impl DbDataToCacheLoader {
                     .account_state_related_shared_state(account_id)
             })
             .await?;
-        entry.common.account_state_related_shared_state = state;
+        cache_common.account_state_related_shared_state = state;
         let other_state = db
             .db_read(move |mut cmds| cmds.common().state().other_shared_state(account_id))
             .await?;
-        entry.common.other_shared_state = other_state;
+        cache_common.other_shared_state = other_state;
 
         let push_notification_state = db
             .db_read(move |mut cmds| {
@@ -98,7 +90,7 @@ impl DbDataToCacheLoader {
                     .push_notification_db_state(account_id)
             })
             .await?;
-        entry.common.pending_notification_flags =
+        cache_common.pending_notification_flags =
             push_notification_state.pending_notification.into();
 
         // App notification settings
@@ -110,7 +102,7 @@ impl DbDataToCacheLoader {
                         .app_notification_settings(account_id)
                 })
                 .await?;
-            entry.common.app_notification_settings.account = account;
+            cache_common.app_notification_settings.account = account;
             let profile = db
                 .db_read(move |mut cmds| {
                     cmds.profile()
@@ -118,7 +110,7 @@ impl DbDataToCacheLoader {
                         .app_notification_settings(account_id)
                 })
                 .await?;
-            entry.common.app_notification_settings.profile = profile;
+            cache_common.app_notification_settings.profile = profile;
             let media = db
                 .db_read(move |mut cmds| {
                     cmds.media()
@@ -126,7 +118,7 @@ impl DbDataToCacheLoader {
                         .app_notification_settings(account_id)
                 })
                 .await?;
-            entry.common.app_notification_settings.media = media;
+            cache_common.app_notification_settings.media = media;
             let chat = db
                 .db_read(move |mut cmds| {
                     cmds.chat()
@@ -134,13 +126,12 @@ impl DbDataToCacheLoader {
                         .app_notification_settings(account_id)
                 })
                 .await?;
-            entry.common.app_notification_settings.chat = chat;
+            cache_common.app_notification_settings.chat = chat;
         }
 
         // Account
 
-        let account_data = CacheAccount::default();
-        entry.account = Some(Box::new(account_data));
+        let cache_account = CacheAccount::default();
 
         // Media
 
@@ -156,12 +147,11 @@ impl DbDataToCacheLoader {
         let media_state = db
             .db_read(move |mut cmds| cmds.media().get_media_state(account_id))
             .await?;
-        let media_data = CacheMedia::new(
+        let cache_media = CacheMedia::new(
             account_id.uuid,
             media_content.profile_content_version_uuid,
             media_state.profile_content_edited_unix_time,
         );
-        entry.media = Some(Box::new(media_data));
 
         // Profile
 
@@ -212,7 +202,7 @@ impl DbDataToCacheLoader {
             })
             .await?;
 
-        let mut profile_data = CacheProfile::new(
+        let mut cache_profile = CacheProfile::new(
             account_id.uuid,
             profile,
             state.into(),
@@ -227,14 +217,35 @@ impl DbDataToCacheLoader {
 
         let location_area = index_writer.coordinates_to_area(
             profile_location,
-            profile_data.state.min_distance_km_filter,
-            profile_data.state.max_distance_km_filter,
+            cache_profile.state.min_distance_km_filter,
+            cache_profile.state.max_distance_km_filter,
         );
-        profile_data.location.current_position = location_area.clone();
-        profile_data.location.current_iterator = index_iterator
-            .new_iterator_state(&location_area, profile_data.state.random_profile_order);
+        cache_profile.location.current_position = location_area.clone();
+        cache_profile.location.current_iterator = index_iterator
+            .new_iterator_state(&location_area, cache_profile.state.random_profile_order);
 
-        entry.profile = Some(Box::new(profile_data));
+        // Chat
+
+        let cache_chat = CacheChat::default();
+
+        // Setup cache and profile index
+
+        let entry = CacheEntry::new(
+            cache_account,
+            cache_profile,
+            cache_media,
+            cache_chat,
+            cache_common,
+        );
+        let location_index_profile_data = entry.location_index_profile_data();
+        cache
+            .insert_account_if_not_exists(account_id, entry)
+            .await
+            .with_info(account_id)?;
+
+        cache
+            .load_tokens_from_db_and_return_entry(account_id, login_session)
+            .await?;
 
         let account = db
             .db_read(move |mut cmds| cmds.common().account(account_id))
@@ -243,16 +254,12 @@ impl DbDataToCacheLoader {
             index_writer
                 .update_profile_data(
                     account_id.uuid,
-                    entry.location_index_profile_data()?,
+                    location_index_profile_data,
                     location_area.profile_location(),
                 )
                 .await
                 .change_context(CacheError::Init)?;
         }
-
-        // Chat
-
-        entry.chat = Some(CacheChat::default().into());
 
         Ok(())
     }

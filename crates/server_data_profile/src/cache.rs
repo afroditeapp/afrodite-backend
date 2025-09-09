@@ -25,13 +25,7 @@ impl<R: InternalReading> CacheReadProfile for R {
         cache_operation: impl FnOnce(&CacheProfile, &CacheCommon) -> Result<T, CacheError>,
     ) -> Result<T, CacheError> {
         self.cache()
-            .read_cache(id, |e| {
-                let p = e
-                    .profile
-                    .as_deref()
-                    .ok_or(CacheError::FeatureNotEnabled.report())?;
-                cache_operation(p, &e.common)
-            })
+            .read_cache(id, |e| cache_operation(&e.profile, &e.common))
             .await
     }
 
@@ -41,11 +35,7 @@ impl<R: InternalReading> CacheReadProfile for R {
     ) -> Result<(), CacheError> {
         self.cache()
             .read_cache_for_all_accounts(|_, e| {
-                let p = e
-                    .profile
-                    .as_deref()
-                    .ok_or(CacheError::FeatureNotEnabled.report())?;
-                cache_operation(p, &e.common);
+                cache_operation(&e.profile, &e.common);
                 Ok(())
             })
             .await
@@ -73,10 +63,7 @@ impl<I: InternalWriting> CacheWriteProfile for I {
         cache_operation: impl FnOnce(&mut CacheProfile) -> Result<T, CacheError>,
     ) -> Result<T, CacheError> {
         self.cache()
-            .write_cache(id, |e| {
-                let p = e.profile_data_mut()?;
-                cache_operation(p)
-            })
+            .write_cache(id, |e| cache_operation(e.profile_data_mut()))
             .await
     }
 
@@ -86,13 +73,7 @@ impl<I: InternalWriting> CacheWriteProfile for I {
         cache_operation: impl FnOnce(&mut CacheProfile, &mut CacheCommon) -> Result<T, CacheError>,
     ) -> Result<T, CacheError> {
         self.cache()
-            .write_cache(id, |e| {
-                let p = e
-                    .profile
-                    .as_deref_mut()
-                    .ok_or(CacheError::FeatureNotEnabled.report())?;
-                cache_operation(p, &mut e.common)
-            })
+            .write_cache(id, |e| cache_operation(&mut e.profile, &mut e.common))
             .await
     }
 }

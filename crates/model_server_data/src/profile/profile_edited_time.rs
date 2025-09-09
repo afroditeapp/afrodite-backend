@@ -61,16 +61,12 @@ impl ProfileEditedTimeFilter {
     pub fn is_match(
         &self,
         profile_edited_time: ProfileEditedTime,
-        content_edited_time: Option<ProfileContentEditedTime>,
+        content_edited_time: ProfileContentEditedTime,
         current_time: &UnixTime,
     ) -> bool {
-        let latest_edit_time = if let Some(content_edited_time) = content_edited_time {
-            *profile_edited_time
-                .as_i64()
-                .max(content_edited_time.as_i64())
-        } else {
-            *profile_edited_time.as_i64()
-        };
+        let latest_edit_time = *profile_edited_time
+            .as_i64()
+            .max(content_edited_time.as_i64());
         let seconds_since_latest_edit_time = *current_time.as_i64() - latest_edit_time;
         seconds_since_latest_edit_time <= self.value
     }

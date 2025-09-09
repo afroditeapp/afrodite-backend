@@ -148,8 +148,7 @@ pub struct LocationIndexProfileData {
     last_seen_time: Arc<AtomicLastSeenTime>,
     profile_created_time: InitialSetupCompletedTime,
     profile_edited_time: ProfileEditedTime,
-    /// Option because media component might not be enabled
-    profile_content_edited_time: Option<ProfileContentEditedTime>,
+    profile_content_edited_time: ProfileContentEditedTime,
     profile_text_character_count: ProfileTextCharacterCount,
 }
 
@@ -160,15 +159,20 @@ impl LocationIndexProfileData {
         profile: &ProfileInternal,
         state: &ProfileStateCached,
         attributes: SortedProfileAttributes,
-        profile_content_version: Option<ProfileContentVersion>,
+        profile_content_version: ProfileContentVersion,
         unlimited_likes: bool,
         last_seen_time: Arc<AtomicLastSeenTime>,
         profile_created_time: InitialSetupCompletedTime,
-        profile_content_edited_time: Option<ProfileContentEditedTime>,
+        profile_content_edited_time: ProfileContentEditedTime,
         profile_text_character_count: ProfileTextCharacterCount,
     ) -> Self {
         Self {
-            profile_link: ProfileLink::new(id, profile.version_uuid, profile_content_version, None),
+            profile_link: ProfileLink::new(
+                id,
+                profile.version_uuid,
+                Some(profile_content_version),
+                None,
+            ),
             age: profile.age,
             search_age_range: SearchAgeRangeValidated::new(
                 state.search_age_range_min,

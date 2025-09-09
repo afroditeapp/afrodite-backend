@@ -20,10 +20,7 @@ impl<I: InternalReading> CacheWriteAccount for I {
         cache_operation: impl FnOnce(&mut CacheAccount) -> Result<T, CacheError>,
     ) -> Result<T, CacheError> {
         self.cache()
-            .write_cache(id, |e| {
-                let a = e.account_data_mut()?;
-                cache_operation(a)
-            })
+            .write_cache(id, |e| cache_operation(e.account_data_mut()))
             .await
     }
 }

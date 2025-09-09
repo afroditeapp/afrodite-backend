@@ -28,7 +28,7 @@ impl<I: InternalWriting> CacheWriteChat for I {
         cache_operation: impl FnOnce(&mut CacheChat) -> Result<T, CacheError>,
     ) -> Result<T, CacheError> {
         self.cache()
-            .write_cache(id, |e| cache_operation(e.chat_data_mut()?))
+            .write_cache(id, |e| cache_operation(e.chat_data_mut()))
             .await
     }
 }

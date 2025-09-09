@@ -13,7 +13,7 @@ use model_server_data::{
     ProfileNameModerationState, ProfileQueryMakerDetails, ProfileStateCached,
     ProfileTextCharacterCount, ProfileTextModerationState, ProfileVersion, SortedProfileAttributes,
 };
-use server_common::data::{DataError, cache::CacheError};
+use server_common::data::DataError;
 
 use crate::{
     db_manager::InternalWriting,
@@ -162,10 +162,10 @@ impl<I: InternalWriting> UpdateLocationCacheState for I {
                     .common
                     .account_state_related_shared_state
                     .profile_visibility();
-                let p = e.profile.as_deref().ok_or(CacheError::FeatureNotEnabled)?;
+                let p = &e.profile;
                 Ok((
                     p.location.current_position.profile_location(),
-                    e.location_index_profile_data()?,
+                    e.location_index_profile_data(),
                     profile_visibility,
                 ))
             })

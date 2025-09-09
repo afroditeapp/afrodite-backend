@@ -112,24 +112,20 @@ impl ReadCommandsCommon<'_> {
         &self,
         id: impl Into<AccountId>,
     ) -> Result<Option<String>, DataError> {
-        let Some((name, accepted)) = self
+        let (name, accepted) = self
             .cache()
             .read_cache(id, |e| {
-                Ok(e.profile.as_ref().map(|p| {
-                    (
-                        p.profile_internal().profile_name.clone(),
-                        p.profile_name_moderation_state()
-                            .as_ref()
-                            .map(|v| v.0.is_accepted())
-                            .unwrap_or_default(),
-                    )
-                }))
+                Ok((
+                    e.profile.profile_internal().profile_name.clone(),
+                    e.profile
+                        .profile_name_moderation_state()
+                        .as_ref()
+                        .map(|v| v.0.is_accepted())
+                        .unwrap_or_default(),
+                ))
             })
             .await
-            .into_error()?
-        else {
-            return Ok(None);
-        };
+            .into_error()?;
 
         if name.is_empty() {
             Ok(None)
@@ -150,11 +146,7 @@ impl ReadCommandsCommon<'_> {
             .read_cache(id, |e| {
                 Ok(BotAndGenderInfo {
                     is_bot: e.common.other_shared_state.is_bot_account,
-                    gender: e
-                        .profile
-                        .as_ref()
-                        .map(|p| p.state.search_group_flags)
-                        .unwrap_or(SearchGroupFlags::empty()),
+                    gender: e.profile.state.search_group_flags,
                 })
             })
             .await

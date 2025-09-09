@@ -28,10 +28,7 @@ impl<I: InternalWriting> CacheWriteMedia for I {
         cache_operation: impl FnOnce(&mut CacheMedia) -> Result<T, CacheError>,
     ) -> Result<T, CacheError> {
         self.cache()
-            .write_cache(id, |e| {
-                let m = e.media_data_mut()?;
-                cache_operation(m)
-            })
+            .write_cache(id, |e| cache_operation(e.media_data_mut()))
             .await
     }
 }

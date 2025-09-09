@@ -170,11 +170,8 @@ impl<I: InternalWriting> UpdateLocationIndexVisibility for I {
         let (location, profile_data) = self
             .cache()
             .read_cache(id.as_id(), |e| {
-                let index_data = e.location_index_profile_data()?;
-                let p = e
-                    .profile
-                    .as_ref()
-                    .ok_or(CacheError::FeatureNotEnabled.report())?;
+                let index_data = e.location_index_profile_data();
+                let p = &e.profile;
 
                 Ok::<
                     (

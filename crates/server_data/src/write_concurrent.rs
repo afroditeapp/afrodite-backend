@@ -353,7 +353,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
         let (location, query_maker_filters, iterator_id_current) = self
             .cache
             .read_cache_blocking(id.as_id(), |e| {
-                let p = e.profile.as_ref().ok_or(CacheError::FeatureNotEnabled)?;
+                let p = &e.profile;
                 error_stack::Result::<_, CacheError>::Ok((
                     p.location.clone(),
                     p.filters(),
@@ -395,9 +395,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
 
         self.cache
             .write_cache_blocking(id.as_id(), |e| {
-                if let Some(p) = e.profile.as_mut() {
-                    p.location.current_iterator = next_state;
-                }
+                e.profile.location.current_iterator = next_state;
                 Ok(())
             })
             .into_data_error(id)?;
@@ -411,7 +409,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
     ) -> Result<ProfileIteratorSessionIdInternal, DataError> {
         self.cache
             .write_cache_blocking(id.as_id(), |e| {
-                let p = e.profile_data_mut()?;
+                let p = &mut e.profile;
                 let new_id = ProfileIteratorSessionIdInternal::create(
                     &mut p.profile_iterator_session_id_storage,
                 );
@@ -435,7 +433,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
         let (iterator_state, query_maker_filters, iterator_id_current) = self
             .cache
             .read_cache_blocking(id.as_id(), |e| {
-                let p = e.profile.as_ref().ok_or(CacheError::FeatureNotEnabled)?;
+                let p = &e.profile;
                 error_stack::Result::<_, CacheError>::Ok((
                     p.automatic_profile_search.current_iterator.clone(),
                     p.automatic_profile_search_filters(),
@@ -477,9 +475,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
 
         self.cache
             .write_cache_blocking(id.as_id(), |e| {
-                if let Some(p) = e.profile.as_mut() {
-                    p.automatic_profile_search.current_iterator = next_state;
-                }
+                e.profile.automatic_profile_search.current_iterator = next_state;
                 Ok(())
             })
             .into_data_error(id)?;
@@ -493,7 +489,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
     ) -> Result<AutomaticProfileSearchIteratorSessionIdInternal, DataError> {
         self.cache
             .write_cache_blocking(id.as_id(), |e| {
-                let p = e.profile_data_mut()?;
+                let p = &mut e.profile;
                 let distance_filters_enabled =
                     p.automatic_profile_search.settings().distance_filters;
                 let new_id = AutomaticProfileSearchIteratorSessionIdInternal::create(
@@ -521,12 +517,9 @@ impl<'a> WriteCommandsConcurrent<'a> {
     ) -> Result<Option<DbIteratorStateNewCount<ReceivedLikeId>>, DataError> {
         self.cache
             .write_cache_blocking(id.as_id(), |e| {
-                if let Some(c) = e.chat.as_mut() {
-                    Ok(c.received_likes_iterator
-                        .get_and_increment(iterator_session_id))
-                } else {
-                    Err(CacheError::FeatureNotEnabled.report())
-                }
+                Ok(e.chat
+                    .received_likes_iterator
+                    .get_and_increment(iterator_session_id))
             })
             .into_data_error(id)
     }
@@ -538,11 +531,9 @@ impl<'a> WriteCommandsConcurrent<'a> {
     ) -> Result<Option<DbIteratorState<MatchId>>, DataError> {
         self.cache
             .write_cache_blocking(id.as_id(), |e| {
-                if let Some(c) = e.chat.as_mut() {
-                    Ok(c.matches_iterator.get_and_increment(iterator_session_id))
-                } else {
-                    Err(CacheError::FeatureNotEnabled.report())
-                }
+                Ok(e.chat
+                    .matches_iterator
+                    .get_and_increment(iterator_session_id))
             })
             .into_data_error(id)
     }
@@ -554,11 +545,9 @@ impl<'a> WriteCommandsConcurrent<'a> {
     ) -> Result<Option<DbIteratorStateNewCount<PublicationId>>, DataError> {
         self.cache
             .write_cache_blocking(id.as_id(), |e| {
-                if let Some(c) = e.account.as_mut() {
-                    Ok(c.news_iterator.get_and_increment(iterator_session_id))
-                } else {
-                    Err(CacheError::FeatureNotEnabled.report())
-                }
+                Ok(e.account
+                    .news_iterator
+                    .get_and_increment(iterator_session_id))
             })
             .into_data_error(id)
     }

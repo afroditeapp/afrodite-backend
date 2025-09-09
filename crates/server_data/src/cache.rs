@@ -80,10 +80,11 @@ impl DatabaseCache {
     pub async fn insert_account_if_not_exists(
         &self,
         id: AccountIdInternal,
+        entry: CacheEntry,
     ) -> Result<(), CacheError> {
         let mut data = self.accounts.write().await;
         if data.get(&id.as_id()).is_none() {
-            let value = RwLock::new(CacheEntry::default());
+            let value = RwLock::new(entry);
             data.insert(
                 id.as_id(),
                 AccountEntry {
@@ -349,9 +350,10 @@ impl WebSocketCacheCmds<'_> {
                     connection: address,
                     event_sender: sender,
                 });
-                if let Some(p) = write.profile.as_ref() {
-                    p.last_seen_time().update_last_seen_time_to_online_status();
-                }
+                write
+                    .profile
+                    .last_seen_time()
+                    .update_last_seen_time_to_online_status();
                 Ok(Some(receiver))
             } else {
                 Ok(None)
@@ -392,9 +394,10 @@ impl WebSocketCacheCmds<'_> {
             event_sender: sender,
         });
         write.common.pending_notification_flags = PendingNotificationFlags::empty();
-        if let Some(p) = write.profile.as_ref() {
-            p.last_seen_time().update_last_seen_time_to_online_status();
-        }
+        write
+            .profile
+            .last_seen_time()
+            .update_last_seen_time_to_online_status();
         Ok(event_receiver)
     }
 
@@ -490,112 +493,85 @@ pub struct ConnectionInfo {
 
 #[derive(Debug)]
 pub struct CacheEntry {
-    pub account: Option<Box<CacheAccount>>,
-    pub profile: Option<Box<CacheProfile>>,
-    pub media: Option<Box<CacheMedia>>,
-    pub chat: Option<Box<CacheChat>>,
+    pub account: CacheAccount,
+    pub profile: CacheProfile,
+    pub media: CacheMedia,
+    pub chat: CacheChat,
     pub common: CacheCommon,
 }
 
 impl CacheEntry {
-    pub fn new() -> Self {
+    pub fn new(
+        account: CacheAccount,
+        profile: CacheProfile,
+        media: CacheMedia,
+        chat: CacheChat,
+        common: CacheCommon,
+    ) -> Self {
         Self {
-            account: None,
-            profile: None,
-            media: None,
-            chat: None,
-            common: CacheCommon::default(),
+            account,
+            profile,
+            media,
+            chat,
+            common,
         }
     }
 
-    pub fn account_data(&self) -> Result<&CacheAccount, CacheError> {
-        self.account
-            .as_ref()
-            .map(|v| v.as_ref())
-            .ok_or(CacheError::FeatureNotEnabled.report())
+    pub fn account_data(&self) -> &CacheAccount {
+        &self.account
     }
 
-    pub fn account_data_mut(&mut self) -> Result<&mut CacheAccount, CacheError> {
-        self.account
-            .as_mut()
-            .map(|v| v.as_mut())
-            .ok_or(CacheError::FeatureNotEnabled.report())
+    pub fn account_data_mut(&mut self) -> &mut CacheAccount {
+        &mut self.account
     }
 
-    pub fn chat_data(&self) -> Result<&CacheChat, CacheError> {
-        self.chat
-            .as_ref()
-            .map(|v| v.as_ref())
-            .ok_or(CacheError::FeatureNotEnabled.report())
+    pub fn chat_data(&self) -> &CacheChat {
+        &self.chat
     }
 
-    pub fn chat_data_mut(&mut self) -> Result<&mut CacheChat, CacheError> {
-        self.chat
-            .as_mut()
-            .map(|v| v.as_mut())
-            .ok_or(CacheError::FeatureNotEnabled.report())
+    pub fn chat_data_mut(&mut self) -> &mut CacheChat {
+        &mut self.chat
     }
 
-    pub fn profile_data(&self) -> Result<&CacheProfile, CacheError> {
-        self.profile
-            .as_ref()
-            .map(|v| v.as_ref())
-            .ok_or(CacheError::FeatureNotEnabled.report())
+    pub fn profile_data(&self) -> &CacheProfile {
+        &self.profile
     }
 
-    pub fn profile_data_mut(&mut self) -> Result<&mut CacheProfile, CacheError> {
-        self.profile
-            .as_mut()
-            .map(|v| v.as_mut())
-            .ok_or(CacheError::FeatureNotEnabled.report())
+    pub fn profile_data_mut(&mut self) -> &mut CacheProfile {
+        &mut self.profile
     }
 
-    pub fn media_data(&self) -> Result<&CacheMedia, CacheError> {
-        self.media
-            .as_ref()
-            .map(|v| v.as_ref())
-            .ok_or(CacheError::FeatureNotEnabled.report())
+    pub fn media_data(&self) -> &CacheMedia {
+        &self.media
     }
 
-    pub fn media_data_mut(&mut self) -> Result<&mut CacheMedia, CacheError> {
-        self.media
-            .as_mut()
-            .map(|v| v.as_mut())
-            .ok_or(CacheError::FeatureNotEnabled.report())
+    pub fn media_data_mut(&mut self) -> &mut CacheMedia {
+        &mut self.media
     }
 
-    pub fn location_index_profile_data(&self) -> Result<LocationIndexProfileData, CacheError> {
-        let profile = self.profile.as_ref().ok_or(CacheError::FeatureNotEnabled)?;
-
-        Ok(LocationIndexProfileData::new(
+    pub fn location_index_profile_data(&self) -> LocationIndexProfileData {
+        let profile = &self.profile;
+        LocationIndexProfileData::new(
             profile.account_id,
             profile.profile_internal(),
             &profile.state,
             profile.attributes.clone(),
-            self.media.as_ref().map(|m| m.profile_content_version),
+            self.media.profile_content_version,
             self.common.other_shared_state.unlimited_likes,
             profile.last_seen_time().clone(),
             self.common
                 .other_shared_state
                 .initial_setup_completed_unix_time,
-            self.media.as_ref().map(|m| m.profile_content_edited_time),
+            self.media.profile_content_edited_time,
             profile.profile_text_character_count(),
-        ))
+        )
     }
 
     fn remove_connection(&mut self) {
         self.common.current_connection = None;
         let last_seen_time = LastSeenUnixTime::current_time();
-        if let Some(profile_entry) = self.profile.as_mut() {
-            profile_entry
-                .last_seen_time()
-                .update_last_seen_time_to_offline_status(last_seen_time);
-        }
-    }
-}
-
-impl Default for CacheEntry {
-    fn default() -> Self {
-        Self::new()
+        self.profile
+            .last_seen_time()
+            .update_last_seen_time_to_offline_status(last_seen_time);
     }
 }
