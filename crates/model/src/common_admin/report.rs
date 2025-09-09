@@ -89,10 +89,8 @@ pub struct ReportDetailedWithId {
 pub struct ReportDetailed {
     pub info: ReportDetailedInfo,
     pub content: ReportContent,
-    /// Only available when profile component is enabled.
-    pub creator_info: Option<ReportAccountInfo>,
-    /// Only available when profile component is enabled.
-    pub target_info: Option<ReportAccountInfo>,
+    pub creator_info: ReportAccountInfo,
+    pub target_info: ReportAccountInfo,
     /// Only available when account interaction exists.
     pub chat_info: Option<ReportChatInfo>,
 }

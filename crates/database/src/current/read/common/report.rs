@@ -228,20 +228,19 @@ impl CurrentReadCommonReport<'_> {
     pub fn get_report_account_info(
         &mut self,
         id: AccountIdDb,
-    ) -> Result<Option<ReportAccountInfo>, DieselDatabaseError> {
+    ) -> Result<ReportAccountInfo, DieselDatabaseError> {
         use crate::schema::profile::dsl::*;
 
-        let value = profile
+        let (age_value, name_value) = profile
             .find(id)
             .select((age, profile_name))
             .first(self.conn())
-            .optional()
             .into_db_error(())?;
 
-        let info = value.map(|(age_value, name_value)| ReportAccountInfo {
+        let info = ReportAccountInfo {
             age: age_value,
             name: name_value,
-        });
+        };
 
         Ok(info)
     }
