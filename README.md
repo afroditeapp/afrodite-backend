@@ -110,11 +110,11 @@ debug_face_detection_result = true
 
 [socket]
 public_api = "127.0.0.1:3000"
-local_bot_api_port = 3002
+local_bot_api_port = 3001
 ```
 
 With the above options Swagger UI will be available on
-<http://localhost:3002/swagger-ui>.
+<http://localhost:3001/swagger-ui>.
 
 ## Questions and answers
 

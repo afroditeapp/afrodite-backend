@@ -25,7 +25,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
 [socket]
 public_api = "127.0.0.1:3000"
-local_bot_api_port = 3002
+local_bot_api_port = 3001
 
 # [manager]
 # manager_name = "default"
