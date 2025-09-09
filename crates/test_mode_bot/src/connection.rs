@@ -94,25 +94,17 @@ impl WsConnection {
 }
 
 #[derive(Debug)]
-pub struct AccountConnections {
-    pub account: Option<WsConnection>,
-    pub profile: Option<WsConnection>,
-    pub media: Option<WsConnection>,
+pub struct ApiConnection {
+    pub connection: Option<WsConnection>,
     /// Drop this to close all WebSockets
     pub quit_handle: broadcast::Sender<()>,
 }
 
-impl AccountConnections {
+impl ApiConnection {
     pub async fn close(mut self) {
         drop(self.quit_handle);
-        if let Some(account) = self.account.take() {
+        if let Some(account) = self.connection.take() {
             let _ = account.close().await;
-        }
-        if let Some(profile) = self.profile.take() {
-            let _ = profile.close().await;
-        }
-        if let Some(media) = self.media.take() {
-            let _ = media.close().await;
         }
     }
 }
@@ -122,12 +114,12 @@ pub struct BotConnections {
     /// Setting this true will enable sending the connection
     /// events to event channel.
     pub enable_event_sending: Arc<AtomicBool>,
-    connections: Option<AccountConnections>,
+    connections: Option<ApiConnection>,
     events: Option<EventReceiver>,
 }
 
 impl BotConnections {
-    pub fn set_connections(&mut self, connections: AccountConnections) {
+    pub fn set_connections(&mut self, connections: ApiConnection) {
         self.connections = Some(connections);
     }
 
@@ -135,7 +127,7 @@ impl BotConnections {
         self.events = Some(events);
     }
 
-    pub fn unwrap_account_connections(&mut self) -> AccountConnections {
+    pub fn unwrap_account_connections(&mut self) -> ApiConnection {
         self.connections
             .take()
             .expect("Account connections are missing")

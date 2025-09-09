@@ -87,14 +87,7 @@ impl BotClient {
             .arg("--data-dir")
             .arg(bot_data_dir)
             .arg("--no-servers")
-            // Urls
-            .arg("--url-account")
-            .arg(Self::bot_api_url(bot_api_socket))
-            .arg("--url-profile")
-            .arg(Self::bot_api_url(bot_api_socket))
-            .arg("--url-media")
-            .arg(Self::bot_api_url(bot_api_socket))
-            .arg("--url-chat")
+            .arg("--api-url")
             .arg(Self::bot_api_url(bot_api_socket));
 
         if let Some(bot_config_file) = &config.bot_config_file() {

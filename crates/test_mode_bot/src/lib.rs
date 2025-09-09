@@ -15,10 +15,13 @@ use std::{
 };
 
 use actions::{admin::AdminBotState, chat::ChatState, profile::ProfileState};
-use api_client::models::{AccountId, EventToClient};
+use api_client::{
+    apis::configuration::Configuration,
+    models::{AccountId, EventToClient},
+};
 use async_trait::async_trait;
 use config::{
-    args::{PublicApiUrls, TestMode},
+    args::{PublicApiUrl, TestMode},
     bot_config_file::{BaseBotConfig, BotConfigFile},
 };
 use error_stack::{Result, ResultExt};
@@ -42,8 +45,8 @@ pub struct BotState {
     bot_config_file: Arc<BotConfigFile>,
     pub task_id: u32,
     pub bot_id: u32,
-    pub api: ApiClient,
-    pub api_urls: PublicApiUrls,
+    api: ApiClient,
+    pub api_urls: PublicApiUrl,
     pub previous_action: &'static dyn BotAction,
     pub previous_value: PreviousValue,
     pub action_history: Vec<&'static dyn BotAction>,
@@ -68,7 +71,7 @@ impl BotState {
         task_id: u32,
         bot_id: u32,
         api: ApiClient,
-        api_urls: PublicApiUrls,
+        api_urls: PublicApiUrl,
         reqwest_client: reqwest::Client,
     ) -> Self {
         Self {
@@ -97,6 +100,10 @@ impl BotState {
                 Xoshiro256PlusPlus::seed_from_u64(task_i_shifted + bot_i_u64)
             },
         }
+    }
+
+    pub fn api(&self) -> &Configuration {
+        self.api.api()
     }
 
     /// Wait event if event sending enabled or timeout after 5 seconds

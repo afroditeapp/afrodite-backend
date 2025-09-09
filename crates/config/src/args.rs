@@ -65,41 +65,23 @@ pub enum AppMode {
 }
 
 #[derive(Parser, Debug, Clone)]
-pub struct PublicApiUrls {
-    /// Base URL for account API
+pub struct PublicApiUrl {
+    /// Base URL for API
     #[arg(long, default_value = "http://127.0.0.1:3001", value_name = "URL")]
-    pub url_account: Url,
-
-    /// Base URL for profile API
-    #[arg(long, default_value = "http://127.0.0.1:3001", value_name = "URL")]
-    pub url_profile: Url,
-
-    /// Base URL for media API
-    #[arg(long, default_value = "http://127.0.0.1:3001", value_name = "URL")]
-    pub url_media: Url,
-
-    /// Base URL for chat API
-    #[arg(long, default_value = "http://127.0.0.1:3001", value_name = "URL")]
-    pub url_chat: Url,
+    pub api_url: Url,
 }
 
-impl PublicApiUrls {
+impl PublicApiUrl {
     pub fn new(url: Url) -> Self {
         Self {
-            url_account: url.clone(),
-            url_profile: url.clone(),
-            url_media: url.clone(),
-            url_chat: url.clone(),
+            api_url: url.clone(),
         }
     }
 
     #[allow(clippy::result_unit_err)]
     pub fn change_ports(mut self, port: Option<u16>) -> Result<Self, ()> {
         if let Some(port) = port {
-            self.url_account.set_port(Some(port))?;
-            self.url_profile.set_port(Some(port))?;
-            self.url_media.set_port(Some(port))?;
-            self.url_chat.set_port(Some(port))?;
+            self.api_url.set_port(Some(port))?;
         }
         Ok(self)
     }
@@ -148,7 +130,7 @@ impl RemoteBotMode {
 
         Ok(TestMode {
             server: ServerConfig::default(),
-            api_urls: PublicApiUrls::new(server_url),
+            api_urls: PublicApiUrl::new(server_url),
             bot_config_file: Some(self.bot_config_file.clone()),
             server_config_file: None,
             data_dir: None,
@@ -173,7 +155,7 @@ pub struct TestMode {
     pub server: ServerConfig,
 
     #[command(flatten)]
-    pub api_urls: PublicApiUrls,
+    pub api_urls: PublicApiUrl,
 
     #[arg(long, value_name = "FILE")]
     pub bot_config_file: Option<PathBuf>,
@@ -291,18 +273,6 @@ pub enum TestModeSubMode {
 
 #[derive(Parser, Debug, Clone, Default)]
 pub struct ServerConfig {
-    /// Start media API as microservice
-    #[arg(long)]
-    pub microservice_media: bool,
-
-    /// Start profile API as microservice
-    #[arg(long)]
-    pub microservice_profile: bool,
-
-    /// Start chat API as microservice
-    #[arg(long)]
-    pub microservice_chat: bool,
-
     /// Enable debug logging for server instances
     #[arg(long)]
     pub log_debug: bool,

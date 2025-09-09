@@ -51,7 +51,7 @@ pub struct ChangeProfileText {
 impl BotAction for ChangeProfileText {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let id = state.account_id_string()?;
-        let current_profile = get_profile(state.api.profile(), &id, None, None)
+        let current_profile = get_profile(state.api(), &id, None, None)
             .await
             .change_context(TestError::ApiRequest)?
             .p
@@ -82,7 +82,7 @@ impl BotAction for ChangeProfileText {
             name: current_profile.name,
             ptext: profile_text,
         };
-        post_profile(state.api.profile(), update)
+        post_profile(state.api(), update)
             .await
             .change_context(TestError::ApiRequest)?;
         Ok(())
@@ -143,7 +143,7 @@ pub struct GetProfile;
 #[async_trait]
 impl BotAction for GetProfile {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let profile = get_profile(state.api.profile(), &state.account_id_string()?, None, None)
+        let profile = get_profile(state.api(), &state.account_id_string()?, None, None)
             .await
             .change_context(TestError::ApiRequest)?
             .p
@@ -166,7 +166,7 @@ pub struct UpdateLocation(pub Location);
 #[async_trait]
 impl BotAction for UpdateLocation {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        profile_api::put_location(state.api.profile(), self.0)
+        profile_api::put_location(state.api(), self.0)
             .await
             .change_context(TestError::ApiRequest)?;
         Ok(())
@@ -179,7 +179,7 @@ pub struct GetLocation;
 #[async_trait]
 impl BotAction for GetLocation {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let location = get_location(state.api.profile())
+        let location = get_location(state.api())
             .await
             .change_context(TestError::ApiRequest)?;
         state.previous_value = PreviousValue::Location(location);
@@ -239,7 +239,7 @@ impl BotAction for UpdateLocationRandomOrConfigured {
         if let Some(lon) = state.get_bot_config().lon {
             location.longitude = lon;
         }
-        profile_api::put_location(state.api.profile(), location)
+        profile_api::put_location(state.api(), location)
             .await
             .change_context(TestError::ApiRequest)?;
         state.previous_value = PreviousValue::Location(location);
@@ -257,7 +257,7 @@ pub struct ResetProfileIterator;
 #[async_trait]
 impl BotAction for ResetProfileIterator {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let iterator_session_id = profile_api::post_reset_profile_paging(state.api.profile())
+        let iterator_session_id = profile_api::post_reset_profile_paging(state.api())
             .await
             .change_context(TestError::ApiRequest)?;
         state.profile.profile_iterator_session_id = Some(iterator_session_id);
@@ -277,10 +277,9 @@ impl BotAction for GetProfileList {
             .as_ref()
             .ok_or(TestError::MissingValue)?
             .clone();
-        let data =
-            profile_api::post_get_next_profile_page(state.api.profile(), iterator_session_id)
-                .await
-                .change_context(TestError::ApiRequest)?;
+        let data = profile_api::post_get_next_profile_page(state.api(), iterator_session_id)
+            .await
+            .change_context(TestError::ApiRequest)?;
         let value =
             HashSet::<String>::from_iter(data.profiles.into_iter().map(|l| l.a.to_string()));
         state.previous_value = PreviousValue::Profiles(value);
@@ -334,7 +333,7 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             }
         };
 
-        let available_attributes = get_client_config(state.api.profile())
+        let available_attributes = get_client_config(state.api())
             .await
             .change_context(TestError::ApiRequest)?
             .profile_attributes
@@ -343,7 +342,7 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             .unwrap_or_default();
 
         let available_attributes = post_get_query_profile_attributes_config(
-            state.api.profile(),
+            state.api(),
             ProfileAttributesConfigQuery {
                 values: available_attributes.iter().map(|v| v.id).collect(),
             },
@@ -388,17 +387,17 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             ptext: state.get_bot_config().text.clone().unwrap_or_default(),
         };
 
-        post_profile(state.api.profile(), update)
+        post_profile(state.api(), update)
             .await
             .change_context(TestError::ApiRequest)?;
 
         let age_range = SearchAgeRange { min: 18, max: 99 };
 
-        post_search_age_range(state.api.profile(), age_range)
+        post_search_age_range(state.api(), age_range)
             .await
             .change_context(TestError::ApiRequest)?;
 
-        post_search_groups(state.api.profile(), groups)
+        post_search_groups(state.api(), groups)
             .await
             .change_context(TestError::ApiRequest)?;
 

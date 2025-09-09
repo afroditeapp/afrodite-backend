@@ -64,7 +64,7 @@ impl SendImageToSlot {
         };
 
         let _ = put_content_to_content_slot_fixed(
-            state.api.media(),
+            state.api(),
             self.slot,
             self.slot == 0, // secure capture
             MediaContentType::JpegImage,
@@ -94,7 +94,7 @@ impl SendImageToSlot {
             }
 
             loop {
-                let slot_state = get_content_slot_state(state.api.media(), slot)
+                let slot_state = get_content_slot_state(state.api(), slot)
                     .await
                     .change_context(TestError::ApiRequest)?;
 
@@ -129,7 +129,7 @@ impl SendImageToSlot {
 
         if let Some(slot) = self.copy_to_slot {
             let _ = put_content_to_content_slot_fixed(
-                state.api.media(),
+                state.api(),
                 slot,
                 slot == 0, // slot 0 is for secure capture
                 MediaContentType::JpegImage,
@@ -191,7 +191,7 @@ impl BotAction for SetContent {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         if let Some(i) = self.security_content_slot_i {
             let content_id = state.media.slots[i].clone().unwrap();
-            put_security_content_info(state.api.media(), content_id)
+            put_security_content_info(state.api(), content_id)
                 .await
                 .change_context(TestError::ApiRequest)?;
         }
@@ -206,7 +206,7 @@ impl BotAction for SetContent {
                 grid_crop_x: bot_info.grid_crop_x.into(),
                 grid_crop_y: bot_info.grid_crop_y.into(),
             };
-            put_profile_content(state.api.media(), info)
+            put_profile_content(state.api(), info)
                 .await
                 .change_context(TestError::ApiRequest)?;
         }

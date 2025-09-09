@@ -156,7 +156,7 @@ impl BotAction for DoInitialSetupIfNeeded {
         state: &mut BotState,
         task_state: &mut TaskState,
     ) -> Result<(), TestError> {
-        let account_state = get_account_state(state.api.account())
+        let account_state = get_account_state(state.api())
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -208,7 +208,7 @@ impl SetBotPublicKey {
         state: &mut BotState,
     ) -> Result<BotEncryptionKeys, TestError> {
         let account_id_string = state.account_id_string()?;
-        let latest_public_key_id = get_latest_public_key_id(state.api.chat(), &account_id_string)
+        let latest_public_key_id = get_latest_public_key_id(state.api(), &account_id_string)
             .await
             .change_context(TestError::ApiRequest)?
             .id
@@ -227,7 +227,7 @@ impl SetBotPublicKey {
             .public_key_bytes()
             .change_context(TestError::MessageEncryptionError)?;
 
-        let r = post_add_public_key_fixed(state.api.chat(), public_key_bytes)
+        let r = post_add_public_key_fixed(state.api(), public_key_bytes)
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -321,7 +321,7 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             }
         };
 
-        let available_attributes = get_client_config(state.api.profile())
+        let available_attributes = get_client_config(state.api())
             .await
             .change_context(TestError::ApiRequest)?
             .profile_attributes
@@ -330,7 +330,7 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             .unwrap_or_default();
 
         let available_attributes = post_get_query_profile_attributes_config(
-            state.api.profile(),
+            state.api(),
             ProfileAttributesConfigQuery {
                 values: available_attributes.iter().map(|v| v.id).collect(),
             },
@@ -375,17 +375,17 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             ptext: state.get_bot_config().text.clone().unwrap_or_default(),
         };
 
-        post_profile(state.api.profile(), update)
+        post_profile(state.api(), update)
             .await
             .change_context(TestError::ApiRequest)?;
 
         let age_range = SearchAgeRange { min: 18, max: 99 };
 
-        post_search_age_range(state.api.profile(), age_range)
+        post_search_age_range(state.api(), age_range)
             .await
             .change_context(TestError::ApiRequest)?;
 
-        post_search_groups(state.api.profile(), groups)
+        post_search_groups(state.api(), groups)
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -399,23 +399,22 @@ pub struct AcceptReceivedLikesAndSendMessage;
 #[async_trait]
 impl BotAction for AcceptReceivedLikesAndSendMessage {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let r = post_reset_received_likes_paging(state.api.chat())
+        let r = post_reset_received_likes_paging(state.api())
             .await
             .change_context(TestError::ApiRequest)?;
         let session_id = *r.s;
 
         loop {
-            let received_likes =
-                post_get_next_received_likes_page(state.api.chat(), session_id.clone())
-                    .await
-                    .change_context(TestError::ApiRequest)?;
+            let received_likes = post_get_next_received_likes_page(state.api(), session_id.clone())
+                .await
+                .change_context(TestError::ApiRequest)?;
 
             if received_likes.p.is_empty() {
                 break;
             }
 
             for like in received_likes.p {
-                post_send_like(state.api.chat(), like.a.as_ref().clone())
+                post_send_like(state.api(), like.a.as_ref().clone())
                     .await
                     .change_context(TestError::ApiRequest)?;
 
@@ -434,7 +433,7 @@ pub struct AnswerReceivedMessages;
 #[async_trait]
 impl BotAction for AnswerReceivedMessages {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let messages = get_pending_messages_fixed(state.api.chat())
+        let messages = get_pending_messages_fixed(state.api())
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -513,7 +512,7 @@ impl BotAction for AnswerReceivedMessages {
             ids: pending_messages.clone(),
         };
 
-        post_add_receiver_acknowledgement(state.api.chat(), delete_list)
+        post_add_receiver_acknowledgement(state.api(), delete_list)
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -531,7 +530,7 @@ async fn send_message(
     receiver: AccountId,
     msg: String,
 ) -> Result<(), TestError> {
-    let latest_key_id = get_latest_public_key_id(state.api.chat(), &receiver.aid.to_string())
+    let latest_key_id = get_latest_public_key_id(state.api(), &receiver.aid.to_string())
         .await
         .change_context(TestError::ApiRequest)?;
 
@@ -543,10 +542,9 @@ async fn send_message(
         }
     };
 
-    let public_key =
-        get_public_key_fixed(state.api.chat(), &receiver.aid.to_string(), latest_key_id)
-            .await
-            .change_context(TestError::ApiRequest)?;
+    let public_key = get_public_key_fixed(state.api(), &receiver.aid.to_string(), latest_key_id)
+        .await
+        .change_context(TestError::ApiRequest)?;
 
     let keys = SetBotPublicKey::setup_bot_keys_if_needed(state).await?;
 
@@ -558,7 +556,7 @@ async fn send_message(
         .change_context(TestError::MessageEncryptionError)?;
 
     post_send_message_fixed(
-        state.api.chat(),
+        state.api(),
         keys.public_key_id,
         &receiver.aid.to_string(),
         latest_key_id,
@@ -570,7 +568,7 @@ async fn send_message(
     .change_context(TestError::ApiRequest)?;
 
     post_add_sender_acknowledgement(
-        state.api.chat(),
+        state.api(),
         SentMessageIdList {
             ids: vec![SentMessageId {
                 c: ClientId::new(0).into(),
@@ -614,7 +612,7 @@ impl BotAction for SendLikeIfNeeded {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         if let Some(account_id) = state.get_bot_config().send_like_to_account_id {
             let account_id = AccountId::new(account_id.to_string());
-            let r = post_send_like(state.api.chat(), account_id).await;
+            let r = post_send_like(state.api(), account_id).await;
             if r.is_err() {
                 warn!(
                     "Sending like failed. Task: {}, Bot: {}",

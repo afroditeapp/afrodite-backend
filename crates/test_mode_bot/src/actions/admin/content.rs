@@ -94,7 +94,7 @@ impl BotAction for ModerateContentModerationRequest {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         loop {
             let list = media_admin_api::get_media_content_pending_moderation_list(
-                state.api.media(),
+                state.api(),
                 MediaContentType::JpegImage,
                 self.queue,
                 true,
@@ -105,7 +105,7 @@ impl BotAction for ModerateContentModerationRequest {
             for request in list.values.clone() {
                 // Test that getting content data works
                 api_client::manual_additions::get_content_fixed(
-                    state.api.media(),
+                    state.api(),
                     &request.account_id.to_string(),
                     &request.content_id.to_string(),
                     false,
@@ -124,7 +124,7 @@ impl BotAction for ModerateContentModerationRequest {
                 })?;
 
                 media_admin_api::post_moderate_media_content(
-                    state.api.media(),
+                    state.api(),
                     api_client::models::PostModerateMediaContent {
                         account_id: request.account_id,
                         content_id: request.content_id,
@@ -157,7 +157,7 @@ impl AdminBotContentModerationLogic {
         moderation_state: &mut ContentModerationState,
     ) -> Result<Option<EmptyPage>, TestError> {
         let list = media_admin_api::get_media_content_pending_moderation_list(
-            api.media(),
+            api.api(),
             MediaContentType::JpegImage,
             queue,
             true,
@@ -171,7 +171,7 @@ impl AdminBotContentModerationLogic {
 
         for request in list.values {
             let image_data = api_client::manual_additions::get_content_fixed(
-                api.media(),
+                api.api(),
                 &request.account_id.aid,
                 &request.content_id.cid,
                 false,
@@ -204,7 +204,7 @@ impl AdminBotContentModerationLogic {
 
             if result.delete {
                 media_api::delete_content(
-                    api.media(),
+                    api.api(),
                     &request.account_id.aid,
                     &request.content_id.cid,
                 )
@@ -216,7 +216,7 @@ impl AdminBotContentModerationLogic {
                 }
             } else {
                 media_admin_api::post_moderate_media_content(
-                    api.media(),
+                    api.api(),
                     api_client::models::PostModerateMediaContent {
                         account_id: request.account_id,
                         content_id: request.content_id,

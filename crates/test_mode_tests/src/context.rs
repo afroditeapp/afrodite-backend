@@ -21,14 +21,14 @@ use test_mode_bot::{
         admin::content::ModerateContentModerationRequest,
         media::{SendImageToSlot, SetContent},
     },
-    connection::AccountConnections,
+    connection::ApiConnection,
 };
 use test_mode_utils::client::{ApiClient, TestError};
 use tokio::sync::Mutex;
 
 #[derive(Debug)]
 struct State {
-    pub connections: Vec<AccountConnections>,
+    pub connections: Vec<ApiConnection>,
 }
 
 #[derive(Debug, Clone)]
@@ -201,7 +201,7 @@ impl TestContext {
         Ok(admin)
     }
 
-    async fn add_account_connections(&mut self, connections: AccountConnections) {
+    async fn add_account_connections(&mut self, connections: ApiConnection) {
         let mut state = self.state.lock().await;
         state.connections.push(connections);
     }
@@ -256,19 +256,19 @@ impl Account {
     }
 
     pub fn account_api(&self) -> &Configuration {
-        self.bot_state.api.account()
+        self.bot_state.api()
     }
 
     pub fn profile_api(&self) -> &Configuration {
-        self.bot_state.api.profile()
+        self.bot_state.api()
     }
 
     pub fn media_api(&self) -> &Configuration {
-        self.bot_state.api.media()
+        self.bot_state.api()
     }
 
     pub fn chat_api(&self) -> &Configuration {
-        self.bot_state.api.chat()
+        self.bot_state.api()
     }
 
     pub fn account_id(&self) -> AccountId {

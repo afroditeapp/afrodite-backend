@@ -3,7 +3,7 @@
 use std::fmt::Debug;
 
 use api_client::apis::configuration::Configuration;
-use config::args::PublicApiUrls;
+use config::args::PublicApiUrl;
 use error_stack::Result;
 use hyper::StatusCode;
 use reqwest::{Client, Url};
@@ -79,19 +79,13 @@ impl TestError {
 
 #[derive(Debug, Clone)]
 pub struct ApiClient {
-    account: Configuration,
-    profile: Configuration,
-    media: Configuration,
-    chat: Configuration,
+    api: Configuration,
 }
 
 impl ApiClient {
-    pub fn new(base_urls: PublicApiUrls, client: &reqwest::Client) -> Self {
+    pub fn new(base_urls: PublicApiUrl, client: &reqwest::Client) -> Self {
         Self {
-            account: Self::create_configuration(client, base_urls.url_account.as_str()),
-            profile: Self::create_configuration(client, base_urls.url_profile.as_str()),
-            media: Self::create_configuration(client, base_urls.url_media.as_str()),
-            chat: Self::create_configuration(client, base_urls.url_chat.as_str()),
+            api: Self::create_configuration(client, base_urls.api_url.as_str()),
         }
     }
 
@@ -105,26 +99,11 @@ impl ApiClient {
     }
 
     pub fn print_to_log(&self) {
-        info!("Account API base url: {}", self.account.base_path);
-        info!("Profile API base url: {}", self.profile.base_path);
-        info!("Media API base url: {}", self.media.base_path);
-        info!("Chat API base url: {}", self.chat.base_path);
+        info!("API base url: {}", self.api.base_path);
     }
 
-    pub fn account(&self) -> &Configuration {
-        &self.account
-    }
-
-    pub fn profile(&self) -> &Configuration {
-        &self.profile
-    }
-
-    pub fn media(&self) -> &Configuration {
-        &self.media
-    }
-
-    pub fn chat(&self) -> &Configuration {
-        &self.chat
+    pub fn api(&self) -> &Configuration {
+        &self.api
     }
 
     pub fn set_access_token(&mut self, token: String) {
@@ -132,21 +111,15 @@ impl ApiClient {
             prefix: None,
             key: token,
         };
-        self.account.api_key = Some(token.clone());
-        self.profile.api_key = Some(token.clone());
-        self.media.api_key = Some(token.clone());
-        self.chat.api_key = Some(token.clone());
+        self.api.api_key = Some(token.clone());
     }
 
     pub fn is_access_token_available(&self) -> bool {
-        self.account.api_key.is_some()
-            && self.profile.api_key.is_some()
-            && self.media.api_key.is_some()
-            && self.chat.api_key.is_some()
+        self.api.api_key.is_some()
     }
 
     pub fn api_key(&self) -> Option<String> {
-        self.account.api_key.clone().map(|k| k.key)
+        self.api.api_key.clone().map(|k| k.key)
     }
 }
 

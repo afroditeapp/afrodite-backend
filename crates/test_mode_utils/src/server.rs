@@ -22,7 +22,7 @@ use tokio::{
     sync::Mutex,
     task::JoinHandle,
 };
-use tracing::{info, warn};
+use tracing::info;
 
 use crate::dir::DataDirUtils;
 
@@ -74,14 +74,11 @@ impl ServerManager {
                 panic!("{name} address was not 127.0.0.1. value: {host}");
             }
         };
-        check_host(&config.api_urls.url_account, "account server");
-        check_host(&config.api_urls.url_profile, "profile server");
-        check_host(&config.api_urls.url_media, "media server");
-        check_host(&config.api_urls.url_chat, "chat server");
+        check_host(&config.api_urls.api_url, "server");
 
         let bot_api_port = settings
             .account_server_api_port
-            .unwrap_or(config.api_urls.url_account.port().unwrap());
+            .unwrap_or(config.api_urls.api_url.port().unwrap());
         let account_config = new_config(&config, bot_api_port);
         let servers = vec![
             ServerInstance::new(
@@ -93,15 +90,6 @@ impl ServerManager {
             )
             .await,
         ];
-
-        if config.server.microservice_profile
-            || config.server.microservice_media
-            || config.server.microservice_chat
-        {
-            warn!("Starting server in microservice mode is unsupported");
-        }
-
-        // TODO(microservice): Start microservice server instances
 
         Self { servers, config }
     }

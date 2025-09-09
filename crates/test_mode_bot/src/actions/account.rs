@@ -25,7 +25,7 @@ use utils::api::PATH_CONNECT;
 use super::{BotAction, BotState, PreviousValue};
 use crate::{
     connection::{
-        AccountConnections, EventSender, EventSenderAndQuitWatcher, WsConnection, WsStream,
+        ApiConnection, EventSender, EventSenderAndQuitWatcher, WsConnection, WsStream,
         create_event_channel,
     },
     utils::assert::bot_assert_eq,
@@ -43,7 +43,7 @@ impl BotAction for Register {
             return Ok(());
         }
 
-        let id = post_bot_register(state.api.account())
+        let id = post_bot_register(state.api())
             .await
             .change_context(TestError::ApiRequest)?;
         state.id = Some(id);
@@ -62,13 +62,13 @@ impl BotAction for Login {
         }
         let login_result = if let Some(password) = state.remote_bot_password() {
             post_remote_bot_login(
-                state.api.account(),
+                state.api(),
                 RemoteBotLogin::new(state.account_id()?, password),
             )
             .await
             .change_context(TestError::ApiRequest)?
         } else {
-            post_bot_login(state.api.account(), state.account_id()?)
+            post_bot_login(state.api(), state.account_id()?)
                 .await
                 .change_context(TestError::ApiRequest)?
         };
@@ -87,46 +87,16 @@ impl BotAction for Login {
 
         let url = state
             .api_urls
-            .url_account
+            .api_url
             .join(PATH_CONNECT)
             .change_context(TestError::WebSocket)?;
-        let account: Option<WsConnection> =
+        let connection: Option<WsConnection> =
             connect_websocket(auth_pair, url, state, event_sender.clone())
                 .await?
                 .into();
 
-        let media = if let Some(media) = login_result.media.flatten() {
-            let url = state
-                .api_urls
-                .url_media
-                .join(PATH_CONNECT)
-                .change_context(TestError::WebSocket)?;
-            connect_websocket(*media, url, state, event_sender.clone())
-                .await?
-                .into()
-        } else {
-            None
-        };
-
-        let profile = if let Some(profile) = login_result.profile.flatten() {
-            let url = state
-                .api_urls
-                .url_profile
-                .join(PATH_CONNECT)
-                .change_context(TestError::WebSocket)?;
-            connect_websocket(*profile, url, state, event_sender.clone())
-                .await?
-                .into()
-        } else {
-            None
-        };
-
-        // TODO(microservice): Chat server connection
-
-        state.connections.set_connections(AccountConnections {
-            account,
-            profile,
-            media,
+        state.connections.set_connections(ApiConnection {
+            connection,
             quit_handle,
         });
 
@@ -364,7 +334,7 @@ impl AssertAccountState {
 #[async_trait]
 impl BotAction for AssertAccountState {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let state = get_account_state(state.api.account())
+        let state = get_account_state(state.api())
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -404,7 +374,7 @@ impl BotAction for SetAccountSetup {
             birthdate: None,
             is_adult: true,
         };
-        post_account_setup(state.api.account(), setup)
+        post_account_setup(state.api(), setup)
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -420,7 +390,7 @@ impl BotAction for SetAccountSetup {
 
         let account_data = AccountData { email: Some(email) };
 
-        account_api::post_account_data(state.api.account(), account_data)
+        account_api::post_account_data(state.api(), account_data)
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -434,7 +404,7 @@ pub struct CompleteAccountSetup;
 #[async_trait]
 impl BotAction for CompleteAccountSetup {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        post_complete_setup(state.api.account())
+        post_complete_setup(state.api())
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -448,12 +418,9 @@ pub struct SetProfileVisibility(pub bool);
 #[async_trait]
 impl BotAction for SetProfileVisibility {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        account_api::put_setting_profile_visiblity(
-            state.api.account(),
-            BooleanSetting::new(self.0),
-        )
-        .await
-        .change_context(TestError::ApiRequest)?;
+        account_api::put_setting_profile_visiblity(state.api(), BooleanSetting::new(self.0))
+            .await
+            .change_context(TestError::ApiRequest)?;
 
         Ok(())
     }
@@ -465,7 +432,7 @@ pub struct GetAccount;
 #[async_trait]
 impl BotAction for GetAccount {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let account = get_account_state(state.api.profile())
+        let account = get_account_state(state.api())
             .await
             .change_context(TestError::ApiRequest)?;
         state.previous_value = PreviousValue::Account(account);
