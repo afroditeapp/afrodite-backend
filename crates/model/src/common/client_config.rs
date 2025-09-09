@@ -12,14 +12,11 @@ use crate::{
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ClientConfig {
-    /// Account component specific config. It is also possible
-    /// that client features are not configured.
+    /// None, if client features are not configured.
     pub client_features: Option<ClientFeaturesConfigHash>,
-    /// Account component specific config. It is also possible
-    /// that custom reports are not configured.
+    /// None, if custom reports are not configured.
     pub custom_reports: Option<CustomReportsConfigHash>,
-    /// Profile component specific config. It is also possible
-    /// that attributes are not configured.
+    /// None, if attributes are not configured.
     pub profile_attributes: Option<PartialProfileAttributesConfig>,
     pub sync_version: ClientConfigSyncVersion,
 }

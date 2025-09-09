@@ -10,12 +10,11 @@ use model_media::{
 };
 use server_data::{
     DataError, DieselDatabaseError,
-    app::GetConfig,
     cache::profile::UpdateLocationCacheState,
     db_transaction, define_cmd_wrapper_write,
     file::{FileWrite, utils::TmpContentFile},
     read::DbRead,
-    result::{Result, WrappedContextExt},
+    result::Result,
     write::{DbTransaction, GetWriteCommandsCommon},
 };
 
@@ -262,12 +261,12 @@ impl WriteCommandsMedia<'_> {
         &self,
         content_owner: AccountIdInternal,
     ) -> Result<InitialContentModerationResult, DataError> {
-        if !self.config().components().account {
-            // TODO(microservice): The media server should request
-            // profile visibility change from account server if
-            // needed.
-            return Err(DataError::FeatureDisabled.report());
-        }
+        // if !self.config().components().account {
+        //     // TODO(microservice): The media server should request
+        //     // profile visibility change from account server if
+        //     // needed.
+        //     return Err(DataError::FeatureDisabled.report());
+        // }
 
         let current_account = self
             .db_read(move |mut cmds| cmds.common().account(content_owner))

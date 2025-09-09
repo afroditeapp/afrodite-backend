@@ -102,9 +102,8 @@ impl WriteCommandsCommon<'_> {
 
         // Other related state updating
 
-        if self.config().components().profile
-            && current_account.profile_visibility().is_currently_public()
-                != new_account.profile_visibility().is_currently_public()
+        if current_account.profile_visibility().is_currently_public()
+            != new_account.profile_visibility().is_currently_public()
         {
             self.profile_update_location_index_visibility(
                 id,

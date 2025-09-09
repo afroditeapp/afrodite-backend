@@ -175,7 +175,6 @@ impl DataAllAccess<'_> {
         sync_versions: Vec<SyncDataVersionFromClient>,
     ) -> server_common::result::Result<(), WebSocketError> {
         let cmd = self.utils().handle_new_websocket_connection(
-            self.config(),
             self.read(),
             self.write(),
             &self.state.simple_backend_state.manager_api,

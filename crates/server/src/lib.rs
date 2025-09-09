@@ -134,25 +134,17 @@ impl DatingAppBusinessLogic {
     ) -> Router {
         router = router.merge(CommonRoutes::routes_with_obfuscation_support(state.clone()));
 
-        if self.config.components().account {
-            router = router.merge(AccountRoutes::routes_with_obfuscation_support(
-                state.clone(),
-            ))
-        }
+        router = router.merge(AccountRoutes::routes_with_obfuscation_support(
+            state.clone(),
+        ));
 
-        if self.config.components().profile {
-            router = router.merge(ProfileRoutes::routes_with_obfuscation_support(
-                state.clone(),
-            ))
-        }
+        router = router.merge(ProfileRoutes::routes_with_obfuscation_support(
+            state.clone(),
+        ));
 
-        if self.config.components().media {
-            router = router.merge(MediaRoutes::routes_with_obfuscation_support(state.clone()))
-        }
+        router = router.merge(MediaRoutes::routes_with_obfuscation_support(state.clone()));
 
-        if self.config.components().chat {
-            router = router.merge(ChatRoutes::routes_with_obfuscation_support(state.clone()))
-        }
+        router = router.merge(ChatRoutes::routes_with_obfuscation_support(state.clone()));
 
         router
     }
@@ -180,32 +172,24 @@ impl BusinessLogic for DatingAppBusinessLogic {
         let mut router =
             CommonRoutes::routes_without_obfuscation_support(state.clone(), web_socket_manager);
 
-        if self.config.components().account {
-            if !state.s.config().remote_bots().is_empty() {
-                router = router.merge(RemoteBotApiRoutes::router(state.s.clone()))
-            }
-            router = router.merge(AccountRoutes::routes_without_obfuscation_support(
-                state.clone(),
-            ))
+        if !state.s.config().remote_bots().is_empty() {
+            router = router.merge(RemoteBotApiRoutes::router(state.s.clone()))
         }
+        router = router.merge(AccountRoutes::routes_without_obfuscation_support(
+            state.clone(),
+        ));
 
-        if self.config.components().profile {
-            router = router.merge(ProfileRoutes::routes_without_obfuscation_support(
-                state.clone(),
-            ))
-        }
+        router = router.merge(ProfileRoutes::routes_without_obfuscation_support(
+            state.clone(),
+        ));
 
-        if self.config.components().media {
-            router = router.merge(MediaRoutes::routes_without_obfuscation_support(
-                state.clone(),
-            ))
-        }
+        router = router.merge(MediaRoutes::routes_without_obfuscation_support(
+            state.clone(),
+        ));
 
-        if self.config.components().chat {
-            router = router.merge(ChatRoutes::routes_without_obfuscation_support(
-                state.clone(),
-            ))
-        }
+        router = router.merge(ChatRoutes::routes_without_obfuscation_support(
+            state.clone(),
+        ));
 
         router = self.add_obfuscation_supported_routes(router, state.clone());
 
@@ -234,9 +218,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
     ) -> Router {
         let mut router = Router::new();
 
-        if self.config.components().account {
-            router = router.merge(LocalBotApiRoutes::router(state.clone()))
-        }
+        router = router.merge(LocalBotApiRoutes::router(state.clone()));
 
         router = router.merge(self.public_api_router(web_socket_manager, state, true));
 
@@ -294,7 +276,6 @@ impl BusinessLogic for DatingAppBusinessLogic {
             router_database_handle.cache_read_write_access(),
             router_database_handle.read_handle_raw(),
             router_database_write_handle.location_raw(),
-            &self.config,
         )
         .await
         .expect("Loading data from database to cache failed");

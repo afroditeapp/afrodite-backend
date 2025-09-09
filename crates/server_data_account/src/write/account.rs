@@ -56,8 +56,8 @@ impl<'a> WriteCommandsAccount<'a> {
 
 impl WriteCommandsAccount<'_> {
     /// The only method which can modify AccountState, Permissions and
-    /// ProfileVisibility. This also updates profile index if profile component
-    /// is enabled and the visibility changed.
+    /// ProfileVisibility. Profile index will be updated if
+    /// the visibility changed.
     ///
     /// Returns the modified Account.
     pub async fn update_syncable_account_data(

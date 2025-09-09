@@ -1,4 +1,3 @@
-use config::Config;
 use database::{DbReadMode, DieselDatabaseError, current::read::GetDbReadCommandsCommon};
 use model::{AccountIdInternal, ReportDetailed, ReportIteratorQueryInternal, UnixTime};
 use serde::Serialize;
@@ -11,13 +10,12 @@ pub struct AdminDataExportJsonCommon {
 
 impl AdminDataExportJsonCommon {
     pub fn query(
-        config: &Config,
         current: &mut DbReadMode,
         id: SourceAccount,
     ) -> error_stack::Result<Self, DieselDatabaseError> {
         let id = id.0;
         let data = Self {
-            sent_reports: DataExportReport::query(config, current, id)?,
+            sent_reports: DataExportReport::query(current, id)?,
         };
         Ok(data)
     }
@@ -28,7 +26,6 @@ struct DataExportReport;
 
 impl DataExportReport {
     fn query(
-        config: &Config,
         current: &mut DbReadMode,
         id: AccountIdInternal,
     ) -> error_stack::Result<Vec<ReportDetailed>, DieselDatabaseError> {
@@ -43,7 +40,7 @@ impl DataExportReport {
             let reports = current
                 .common_admin()
                 .report()
-                .get_report_iterator_page(query.clone(), config.components())?;
+                .get_report_iterator_page(query.clone())?;
             if reports.values.is_empty() {
                 break;
             }

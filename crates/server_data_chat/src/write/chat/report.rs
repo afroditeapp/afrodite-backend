@@ -3,9 +3,7 @@ use database_chat::current::write::GetDbWriteCommandsChat;
 use model::{AccountIdInternal, ReportTypeNumber, ReportTypeNumberInternal, UpdateReportResult};
 use model_chat::NewChatMessageReportInternal;
 use server_data::{
-    DataError,
-    app::GetConfig,
-    db_transaction, define_cmd_wrapper_write,
+    DataError, db_transaction, define_cmd_wrapper_write,
     read::DbRead,
     result::{Result, WrappedContextExt},
     write::DbTransaction,
@@ -34,14 +32,12 @@ impl WriteCommandsChatReport<'_> {
             return Err(DataError::NotAllowed.report());
         }
 
-        let components = self.config().components();
         let reports = self
             .db_read(move |mut cmds| {
                 cmds.common().report().get_all_detailed_reports(
                     creator,
                     target,
                     ReportTypeNumberInternal::ChatMessage,
-                    components,
                 )
             })
             .await?;

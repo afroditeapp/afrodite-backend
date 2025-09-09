@@ -9,7 +9,7 @@ use model_media::{
 };
 use server_api::{
     S,
-    app::{AdminNotificationProvider, ApiUsageTrackerProvider, GetConfig},
+    app::{AdminNotificationProvider, ApiUsageTrackerProvider},
     create_open_api_router, db_write,
 };
 use server_data::read::GetReadCommandsCommon;
@@ -163,14 +163,12 @@ pub async fn put_profile_content(
 
         match info {
             InitialContentModerationResult::AllAccepted { .. } => {
-                if cmds.config().components().account {
-                    cmds.events()
-                        .send_connected_event(
-                            api_caller_account_id,
-                            EventToClientInternal::AccountStateChanged,
-                        )
-                        .await?;
-                }
+                cmds.events()
+                    .send_connected_event(
+                        api_caller_account_id,
+                        EventToClientInternal::AccountStateChanged,
+                    )
+                    .await?;
             }
             InitialContentModerationResult::AllModeratedAndNotAccepted
             | InitialContentModerationResult::NoChange => (),

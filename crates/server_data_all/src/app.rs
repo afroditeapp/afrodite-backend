@@ -75,7 +75,6 @@ impl DataAllUtils for DataAllUtilsImpl {
 
     fn handle_new_websocket_connection<'a>(
         &self,
-        config: &'a Config,
         read_handle: &'a RouterDatabaseReadHandle,
         write_handle: &'a WriteCommandRunnerHandle,
         manager_api: &'a ManagerApiClient,
@@ -85,14 +84,12 @@ impl DataAllUtils for DataAllUtilsImpl {
     ) -> BoxFuture<'a, server_common::result::Result<(), WebSocketError>> {
         async move {
             crate::websocket::reset_fcm_notification_sent_booleans_if_needed(
-                config,
                 read_handle,
                 write_handle,
                 id,
             )
             .await?;
             crate::websocket::sync_data_with_client_if_needed(
-                config,
                 read_handle,
                 write_handle,
                 manager_api,
@@ -101,8 +98,7 @@ impl DataAllUtils for DataAllUtilsImpl {
                 sync_versions,
             )
             .await?;
-            crate::websocket::send_events_if_needed(config, read_handle, manager_api, socket, id)
-                .await?;
+            crate::websocket::send_events_if_needed(read_handle, manager_api, socket, id).await?;
             Ok(())
         }
         .boxed()

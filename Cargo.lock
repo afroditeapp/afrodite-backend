@@ -4778,7 +4778,6 @@ dependencies = [
 name = "server_data_account"
 version = "0.0.0"
 dependencies = [
- "config",
  "database",
  "database_account",
  "error-stack",

@@ -1,5 +1,4 @@
 use base64::Engine;
-use config::file::Components;
 use diesel::{alias, prelude::*};
 use error_stack::Result;
 use model::{
@@ -85,13 +84,12 @@ impl CurrentReadCommonReport<'_> {
         creator: AccountIdInternal,
         target: AccountIdInternal,
         report_type: ReportTypeNumberInternal,
-        components: Components,
     ) -> Result<Vec<ReportDetailedWithId>, DieselDatabaseError> {
         let internal = self.get_all_internal_reports(creator, target, report_type)?;
 
         let mut reports = vec![];
         for r in internal {
-            let detailed = self.convert_to_detailed_report(r, components)?;
+            let detailed = self.convert_to_detailed_report(r)?;
             reports.push(detailed);
         }
 
@@ -101,7 +99,6 @@ impl CurrentReadCommonReport<'_> {
     pub fn convert_to_detailed_report(
         &mut self,
         report: ReportInternal,
-        components: Components,
     ) -> Result<ReportDetailedWithId, DieselDatabaseError> {
         let mut profile_name = None;
         let mut profile_text = None;
@@ -140,21 +137,9 @@ impl CurrentReadCommonReport<'_> {
                 processing_state: report.info.processing_state,
                 report_type: report.info.report_type.into(),
             },
-            creator_info: if components.profile {
-                self.get_report_account_info(report.creator_db_id)?
-            } else {
-                None
-            },
-            target_info: if components.profile {
-                self.get_report_account_info(report.target_db_id)?
-            } else {
-                None
-            },
-            chat_info: if components.chat {
-                self.get_report_chat_info(report.creator_db_id, report.target_db_id)?
-            } else {
-                None
-            },
+            creator_info: self.get_report_account_info(report.creator_db_id)?,
+            target_info: self.get_report_account_info(report.target_db_id)?,
+            chat_info: self.get_report_chat_info(report.creator_db_id, report.target_db_id)?,
         };
 
         let detailed = ReportDetailedWithId {

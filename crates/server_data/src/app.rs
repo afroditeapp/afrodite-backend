@@ -122,7 +122,6 @@ pub trait DataAllUtils: Send + Sync + 'static {
     #[allow(clippy::too_many_arguments)]
     fn handle_new_websocket_connection<'a>(
         &self,
-        config: &'a Config,
         read_handle: &'a RouterDatabaseReadHandle,
         write_handle: &'a WriteCommandRunnerHandle,
         manager_api_client: &'a ManagerApiClient,

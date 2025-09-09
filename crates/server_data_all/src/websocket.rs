@@ -1,5 +1,4 @@
 use axum::extract::ws::{Message, WebSocket};
-use config::Config;
 use model::ScheduledMaintenanceStatus;
 use model_chat::{
     AccountIdInternal, ChatStateRaw, EventToClient, EventToClientInternal, SyncCheckDataType,
@@ -20,108 +19,104 @@ use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsP
 use simple_backend::manager_client::ManagerApiClient;
 
 pub async fn reset_fcm_notification_sent_booleans_if_needed(
-    config: &Config,
     read_handle: &RouterDatabaseReadHandle,
     write_handle: &WriteCommandRunnerHandle,
     id: AccountIdInternal,
 ) -> Result<(), WebSocketError> {
-    if config.components().chat {
-        let reset_needed = read_handle
-            .common()
-            .push_notification()
-            .fcm_notification_sent_boolean_enabled(id)
+    // Chat
+
+    let reset_needed = read_handle
+        .common()
+        .push_notification()
+        .fcm_notification_sent_boolean_enabled(id)
+        .await
+        .change_context(WebSocketError::DatabaseResetFcmNotificationSentBooleans)?;
+
+    if reset_needed {
+        write_handle
+            .write(move |cmds| async move {
+                cmds.common()
+                    .push_notification()
+                    .reset_fcm_notification_sent_booleans(id)
+                    .await
+            })
             .await
             .change_context(WebSocketError::DatabaseResetFcmNotificationSentBooleans)?;
-
-        if reset_needed {
-            write_handle
-                .write(move |cmds| async move {
-                    cmds.common()
-                        .push_notification()
-                        .reset_fcm_notification_sent_booleans(id)
-                        .await
-                })
-                .await
-                .change_context(WebSocketError::DatabaseResetFcmNotificationSentBooleans)?;
-        }
     }
 
     Ok(())
 }
 
 pub async fn send_events_if_needed(
-    config: &Config,
     read_handle: &RouterDatabaseReadHandle,
     manager_api_client: &ManagerApiClient,
     socket: &mut WebSocket,
     id: AccountIdInternal,
 ) -> Result<(), WebSocketError> {
-    if config.components().profile {
-        let notification = read_handle
-            .profile()
-            .notification()
-            .profile_string_moderation_completed(id)
-            .await
-            .change_context(
-                WebSocketError::DatabaseProfileStringModerationCompletedNotificationQuery,
-            )?;
+    // Profile
 
-        if !notification.notifications_viewed() {
-            send_event(
-                socket,
-                EventToClientInternal::ProfileStringModerationCompleted,
-            )
-            .await?;
-        }
+    let notification = read_handle
+        .profile()
+        .notification()
+        .profile_string_moderation_completed(id)
+        .await
+        .change_context(
+            WebSocketError::DatabaseProfileStringModerationCompletedNotificationQuery,
+        )?;
 
-        let notification = read_handle
-            .profile()
-            .notification()
-            .automatic_profile_search_completed(id)
-            .await
-            .change_context(
-                WebSocketError::DatabaseAutomaticProfileSearchCompletedNotificationQuery,
-            )?;
-
-        if !notification.notifications_viewed() {
-            send_event(
-                socket,
-                EventToClientInternal::AutomaticProfileSearchCompleted,
-            )
-            .await?;
-        }
+    if !notification.notifications_viewed() {
+        send_event(
+            socket,
+            EventToClientInternal::ProfileStringModerationCompleted,
+        )
+        .await?;
     }
 
-    if config.components().media {
-        let notification = read_handle
-            .media()
-            .notification()
-            .media_content_moderation_completed(id)
-            .await
-            .change_context(
-                WebSocketError::DatabaseMediaContentModerationCompletedNotificationQuery,
-            )?;
+    let notification = read_handle
+        .profile()
+        .notification()
+        .automatic_profile_search_completed(id)
+        .await
+        .change_context(WebSocketError::DatabaseAutomaticProfileSearchCompletedNotificationQuery)?;
 
-        if !notification.notifications_viewed() {
-            send_event(
-                socket,
-                EventToClientInternal::MediaContentModerationCompleted,
-            )
-            .await?;
-        }
+    if !notification.notifications_viewed() {
+        send_event(
+            socket,
+            EventToClientInternal::AutomaticProfileSearchCompleted,
+        )
+        .await?;
     }
 
-    if config.components().chat {
-        let pending_messages = read_handle
-            .chat()
-            .all_pending_messages(id)
-            .await
-            .change_context(WebSocketError::DatabasePendingMessagesQuery)?;
+    // Media
 
-        if !pending_messages.is_empty() {
-            send_event(socket, EventToClientInternal::NewMessageReceived).await?;
-        }
+    let notification = read_handle
+        .media()
+        .notification()
+        .media_content_moderation_completed(id)
+        .await
+        .change_context(WebSocketError::DatabaseMediaContentModerationCompletedNotificationQuery)?;
+
+    if !notification.notifications_viewed() {
+        send_event(
+            socket,
+            EventToClientInternal::MediaContentModerationCompleted,
+        )
+        .await?;
     }
+
+    // Chat
+
+    let pending_messages = read_handle
+        .chat()
+        .all_pending_messages(id)
+        .await
+        .change_context(WebSocketError::DatabasePendingMessagesQuery)?;
+
+    if !pending_messages.is_empty() {
+        send_event(socket, EventToClientInternal::NewMessageReceived).await?;
+    }
+
+    // Common
 
     if let Some(time) = manager_api_client.latest_scheduled_reboot() {
         send_event(
@@ -137,7 +132,6 @@ pub async fn send_events_if_needed(
 }
 
 pub async fn sync_data_with_client_if_needed(
-    config: &Config,
     read_handle: &RouterDatabaseReadHandle,
     write_handle: &WriteCommandRunnerHandle,
     manager_api_client: &ManagerApiClient,
@@ -154,30 +148,20 @@ pub async fn sync_data_with_client_if_needed(
     for version in sync_versions {
         match version.data_type {
             SyncCheckDataType::Account => {
-                if config.components().account {
-                    handle_account_data_sync(
-                        read_handle,
-                        write_handle,
-                        socket,
-                        id,
-                        version.version,
-                    )
+                handle_account_data_sync(read_handle, write_handle, socket, id, version.version)
                     .await?;
-                }
             }
             SyncCheckDataType::ReveivedLikes => {
-                if config.components().chat {
-                    handle_chat_state_version_check(
-                        write_handle,
-                        socket,
-                        id,
-                        version.version,
-                        chat_state.clone(),
-                        |s| &mut s.received_likes_sync_version,
-                        EventToClientInternal::ReceivedLikesChanged,
-                    )
-                    .await?;
-                }
+                handle_chat_state_version_check(
+                    write_handle,
+                    socket,
+                    id,
+                    version.version,
+                    chat_state.clone(),
+                    |s| &mut s.received_likes_sync_version,
+                    EventToClientInternal::ReceivedLikesChanged,
+                )
+                .await?;
             }
             SyncCheckDataType::ClientConfig => {
                 handle_client_config_sync_version_check(
@@ -190,52 +174,44 @@ pub async fn sync_data_with_client_if_needed(
                 .await?;
             }
             SyncCheckDataType::Profile => {
-                if config.components().profile {
-                    handle_profile_sync_version_check(
-                        read_handle,
-                        write_handle,
-                        socket,
-                        id,
-                        version.version,
-                    )
-                    .await?;
-                }
+                handle_profile_sync_version_check(
+                    read_handle,
+                    write_handle,
+                    socket,
+                    id,
+                    version.version,
+                )
+                .await?;
             }
             SyncCheckDataType::News => {
-                if config.components().account {
-                    handle_news_count_sync_version_check(
-                        read_handle,
-                        write_handle,
-                        socket,
-                        id,
-                        version.version,
-                    )
-                    .await?;
-                }
+                handle_news_count_sync_version_check(
+                    read_handle,
+                    write_handle,
+                    socket,
+                    id,
+                    version.version,
+                )
+                .await?;
             }
             SyncCheckDataType::MediaContent => {
-                if config.components().account {
-                    handle_media_content_sync_version_check(
-                        read_handle,
-                        write_handle,
-                        socket,
-                        id,
-                        version.version,
-                    )
-                    .await?;
-                }
+                handle_media_content_sync_version_check(
+                    read_handle,
+                    write_handle,
+                    socket,
+                    id,
+                    version.version,
+                )
+                .await?;
             }
             SyncCheckDataType::DailyLikesLeft => {
-                if config.components().chat {
-                    handle_daily_likes_left_sync_version_check(
-                        read_handle,
-                        write_handle,
-                        socket,
-                        id,
-                        version.version,
-                    )
-                    .await?;
-                }
+                handle_daily_likes_left_sync_version_check(
+                    read_handle,
+                    write_handle,
+                    socket,
+                    id,
+                    version.version,
+                )
+                .await?;
             }
             SyncCheckDataType::ServerMaintenanceIsScheduled => {
                 handle_maintenance_info_removing_if_needed(manager_api_client, socket).await?;

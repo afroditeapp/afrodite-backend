@@ -3,9 +3,7 @@ use model::{AccountIdInternal, ReportContent, ReportTypeNumber, ReportTypeNumber
 use simple_backend_utils::IntoReportFromString;
 
 use crate::{
-    DataError,
-    app::GetConfig,
-    db_transaction, define_cmd_wrapper_write,
+    DataError, db_transaction, define_cmd_wrapper_write,
     read::DbRead,
     result::{Result, WrappedContextExt},
     write::DbTransaction,
@@ -25,15 +23,11 @@ impl WriteCommandsCommonAdminReport<'_> {
         let report_type = TryInto::<ReportTypeNumberInternal>::try_into(report_type)
             .into_error_string(DataError::NotAllowed)?;
 
-        let components = self.config().components();
         let current_reports = self
             .db_read(move |mut cmds| {
-                cmds.common().report().get_all_detailed_reports(
-                    creator,
-                    target,
-                    report_type,
-                    components,
-                )
+                cmds.common()
+                    .report()
+                    .get_all_detailed_reports(creator, target, report_type)
             })
             .await?;
 

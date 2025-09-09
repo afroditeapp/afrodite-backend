@@ -1,5 +1,5 @@
 use server_api::{
-    app::{GetConfig, ReadData, WriteData},
+    app::{ReadData, WriteData},
     db_write_raw,
 };
 use server_common::{data::DataError, result::Result};
@@ -23,9 +23,7 @@ impl ShutdownTasks {
     /// - [server_common::push_notifications::PushNotificationManager::quit_logic]
     pub async fn run_and_wait_completion(self) -> Result<(), DataError> {
         Self::handle_account_specific_tasks(&self.state).await?;
-        if self.state.config().components().account {
-            TaskUtils::save_client_version_statistics(&self.state).await?;
-        }
+        TaskUtils::save_client_version_statistics(&self.state).await?;
         TaskUtils::save_api_usage_statistics(&self.state).await?;
         TaskUtils::save_ip_address_statistics(&self.state).await
     }

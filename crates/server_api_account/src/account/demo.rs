@@ -85,7 +85,7 @@ pub async fn post_demo_account_accessible_accounts(
 
     let info = state.demo().accessible_accounts(id).await?;
     let accounts = info.into_accounts(state.read()).await?;
-    let result = DemoAccountUtils::with_extra_info(accounts, state.config(), state.read()).await?;
+    let result = DemoAccountUtils::with_extra_info(accounts, state.read()).await?;
 
     Ok(result.into())
 }

@@ -1,4 +1,3 @@
-use config::file::Components;
 use diesel::{alias, prelude::*, sql_types::Bool};
 use error_stack::Result;
 use model::{
@@ -15,10 +14,7 @@ use crate::{
 define_current_read_commands!(CurrentReadCommonAdminReport);
 
 impl CurrentReadCommonAdminReport<'_> {
-    pub fn get_reports_page(
-        &mut self,
-        components: Components,
-    ) -> Result<GetReportList, DieselDatabaseError> {
+    pub fn get_reports_page(&mut self) -> Result<GetReportList, DieselDatabaseError> {
         let reports = self.get_waiting_reports_page()?;
 
         let mut page = vec![];
@@ -28,7 +24,7 @@ impl CurrentReadCommonAdminReport<'_> {
                 .read()
                 .common()
                 .report()
-                .convert_to_detailed_report(r, components)?;
+                .convert_to_detailed_report(r)?;
             page.push(detailed);
         }
 
@@ -104,7 +100,6 @@ impl CurrentReadCommonAdminReport<'_> {
     pub fn get_report_iterator_page(
         &mut self,
         query: ReportIteratorQueryInternal,
-        components: Components,
     ) -> Result<GetReportList, DieselDatabaseError> {
         let reports = self.get_report_iterator_page_internal(query)?;
 
@@ -115,7 +110,7 @@ impl CurrentReadCommonAdminReport<'_> {
                 .read()
                 .common()
                 .report()
-                .convert_to_detailed_report(r, components)?;
+                .convert_to_detailed_report(r)?;
             page.push(detailed);
         }
 
@@ -222,7 +217,6 @@ impl CurrentReadCommonAdminReport<'_> {
     pub fn get_chat_message_reports(
         &mut self,
         query: GetChatMessageReportsInternal,
-        components: Components,
     ) -> Result<GetReportList, DieselDatabaseError> {
         let reports = self.get_chat_message_reports_internal(query)?;
 
@@ -233,7 +227,7 @@ impl CurrentReadCommonAdminReport<'_> {
                 .read()
                 .common()
                 .report()
-                .convert_to_detailed_report(r, components)?;
+                .convert_to_detailed_report(r)?;
             page.push(detailed);
         }
 

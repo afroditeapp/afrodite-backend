@@ -9,7 +9,7 @@ use model_media::{
 };
 use server_api::{
     S,
-    app::{AdminNotificationProvider, GetAccounts, GetConfig, ReadData},
+    app::{AdminNotificationProvider, GetAccounts, ReadData},
     create_open_api_router,
 };
 use server_data_media::{
@@ -131,14 +131,12 @@ pub async fn post_moderate_media_content(
 
         match info.moderation_result {
             InitialContentModerationResult::AllAccepted { .. } => {
-                if cmds.config().components().account {
-                    cmds.events()
-                        .send_connected_event(
-                            content_id.content_owner(),
-                            EventToClientInternal::AccountStateChanged,
-                        )
-                        .await?;
-                }
+                cmds.events()
+                    .send_connected_event(
+                        content_id.content_owner(),
+                        EventToClientInternal::AccountStateChanged,
+                    )
+                    .await?;
             }
             InitialContentModerationResult::AllModeratedAndNotAccepted
             | InitialContentModerationResult::NoChange => (),

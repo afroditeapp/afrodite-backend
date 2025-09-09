@@ -5,8 +5,8 @@ use model_profile::{
     ProfileStringModerationState, ReportTypeNumber, ReportTypeNumberInternal, UpdateReportResult,
 };
 use server_data::{
-    DataError, app::GetConfig, db_transaction, define_cmd_wrapper_write, read::DbRead,
-    result::Result, write::DbTransaction,
+    DataError, db_transaction, define_cmd_wrapper_write, read::DbRead, result::Result,
+    write::DbTransaction,
 };
 
 use crate::write::{GetWriteCommandsProfile, profile_admin::moderation::ModerateProfileValueMode};
@@ -48,14 +48,12 @@ impl WriteCommandsProfileReport<'_> {
                 .await?;
         }
 
-        let components = self.config().components();
         let reports = self
             .db_read(move |mut cmds| {
                 cmds.common().report().get_all_detailed_reports(
                     creator,
                     target,
                     ReportTypeNumberInternal::ProfileName,
-                    components,
                 )
             })
             .await?;
@@ -115,14 +113,12 @@ impl WriteCommandsProfileReport<'_> {
                 .await?;
         }
 
-        let components = self.config().components();
         let reports = self
             .db_read(move |mut cmds| {
                 cmds.common().report().get_all_detailed_reports(
                     creator,
                     target,
                     ReportTypeNumberInternal::ProfileText,
-                    components,
                 )
             })
             .await?;

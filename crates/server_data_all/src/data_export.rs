@@ -1,13 +1,11 @@
-use std::{io::Write, sync::Arc};
+use std::io::Write;
 
-use config::Config;
 use database::{DbReadMode, DieselDatabaseError};
 use error_stack::ResultExt;
 use model::{ContentId, DataExportType};
 use serde::Serialize;
 use server_data::{
     DataError,
-    app::GetConfig,
     data_export::DataExportCmd,
     file::{FileWrite, utils::FileDir},
     read::DbRead,
@@ -38,10 +36,9 @@ pub async fn data_export(
             let archive = cmds.files().tmp_dir(cmd.target().0.into()).data_export();
             archive.overwrite_and_remove_if_exists().await?;
 
-            let config = cmds.config_arc();
             let file_dir = cmds.files().clone();
             cmds.db_read(move |cmds| {
-                db_data_export(config, cmds, file_dir, zip_main_directory_name, cmd)?;
+                db_data_export(cmds, file_dir, zip_main_directory_name, cmd)?;
                 Ok(())
             })
             .await?;
@@ -53,7 +50,6 @@ pub async fn data_export(
 }
 
 fn db_data_export(
-    config: Arc<Config>,
     mut current: DbReadMode,
     file_dir: FileDir,
     zip_main_directory_name: String,
@@ -71,53 +67,40 @@ fn db_data_export(
         "common",
         &UserDataExportJsonCommon::query(&mut current, cmd.source())?,
     )?;
-    if config.components().account {
-        writer.write_user_json_file(
-            "account",
-            &UserDataExportJsonAccount::query(&mut current, cmd.source())?,
-        )?;
-    }
-    if config.components().profile {
-        writer.write_user_json_file(
-            "profile",
-            &UserDataExportJsonProfile::query(&mut current, cmd.source())?,
-        )?;
-    }
-    let media = if config.components().media {
-        let media = UserDataExportJsonMedia::query(&mut current, cmd.source())?;
-        writer.write_user_json_file("media", &media)?;
-        Some(media)
-    } else {
-        None
-    };
-    if config.components().chat {
-        writer.write_user_json_file(
-            "chat",
-            &UserDataExportJsonChat::query(&mut current, cmd.source())?,
-        )?;
-    }
+    writer.write_user_json_file(
+        "account",
+        &UserDataExportJsonAccount::query(&mut current, cmd.source())?,
+    )?;
+    writer.write_user_json_file(
+        "profile",
+        &UserDataExportJsonProfile::query(&mut current, cmd.source())?,
+    )?;
+
+    let media = UserDataExportJsonMedia::query(&mut current, cmd.source())?;
+    writer.write_user_json_file("media", &media)?;
+
+    writer.write_user_json_file(
+        "chat",
+        &UserDataExportJsonChat::query(&mut current, cmd.source())?,
+    )?;
 
     if cmd.data_export_type() == DataExportType::Admin {
         writer.write_admin_json_file(
             "common",
-            &AdminDataExportJsonCommon::query(&config, &mut current, cmd.source())?,
+            &AdminDataExportJsonCommon::query(&mut current, cmd.source())?,
         )?;
-        if config.components().chat {
-            writer.write_admin_json_file(
-                "chat",
-                &AdminDataExportJsonChat::query(&mut current, cmd.source())?,
-            )?;
-        }
+        writer.write_admin_json_file(
+            "chat",
+            &AdminDataExportJsonChat::query(&mut current, cmd.source())?,
+        )?;
     }
 
-    if let Some(media) = media {
-        for c in media.content {
-            let data = file_dir
-                .media_content(cmd.source().0.uuid, c.cid)
-                .read_all_blocking()
-                .change_context(DieselDatabaseError::File)?;
-            writer.write_media_content(c.cid, &data)?;
-        }
+    for c in media.content {
+        let data = file_dir
+            .media_content(cmd.source().0.uuid, c.cid)
+            .read_all_blocking()
+            .change_context(DieselDatabaseError::File)?;
+        writer.write_media_content(c.cid, &data)?;
     }
 
     let mut file = writer

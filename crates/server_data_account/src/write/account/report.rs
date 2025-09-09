@@ -37,14 +37,12 @@ impl WriteCommandsAccountReport<'_> {
             return Err(DataError::NotAllowed.report());
         }
 
-        let components = self.config().components();
         let reports = self
             .db_read(move |mut cmds| {
                 cmds.common().report().get_all_detailed_reports(
                     creator,
                     target,
                     ReportTypeNumberInternal::CustomReport(custom_report_type_number),
-                    components,
                 )
             })
             .await?;

@@ -107,7 +107,6 @@ pub struct ConfigFile {
     #[serde(default)]
     pub automatic_profile_search: AutomaticProfileSearchConfig,
 
-    pub components: Option<Components>,
     pub grant_admin_access: Option<GrantAdminAccessConfig>,
     pub location: Option<LocationConfig>,
     pub demo_account: Option<Vec<DemoAccountConfig>>,
@@ -123,7 +122,6 @@ impl ConfigFile {
             config_files: ConfigFileConfig::default(),
             api: ApiConfig::default(),
             automatic_profile_search: AutomaticProfileSearchConfig::default(),
-            components: Some(Components::default()),
             grant_admin_access: None,
             location: None,
             demo_account: None,
@@ -193,26 +191,6 @@ pub struct ConfigFileConfig {
     pub profile_attributes: Option<PathBuf>,
     pub custom_reports: Option<PathBuf>,
     pub client_features: Option<PathBuf>,
-}
-
-/// Enabled server components
-#[derive(Debug, Clone, Copy, Default, PartialEq, Deserialize, Serialize)]
-pub struct Components {
-    pub account: bool,
-    pub profile: bool,
-    pub media: bool,
-    pub chat: bool,
-}
-
-impl Components {
-    pub fn all_enabled() -> Self {
-        Self {
-            account: true,
-            profile: true,
-            media: true,
-            chat: true,
-        }
-    }
 }
 
 #[derive(Debug, Deserialize, Serialize)]

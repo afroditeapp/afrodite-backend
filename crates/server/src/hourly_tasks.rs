@@ -1,9 +1,6 @@
 use std::time::Duration;
 
-use server_api::{
-    app::{GetConfig, WriteData},
-    db_write_raw,
-};
+use server_api::{app::WriteData, db_write_raw};
 use server_common::result::{Result, WrappedResultExt};
 use server_data::write::GetWriteCommandsCommon;
 use server_state::S;
@@ -86,11 +83,9 @@ impl HourlyTaskManager {
     pub async fn run_tasks_and_return_result(&self) -> Result<(), HourlyTaskError> {
         self.save_performance_statistics().await?;
         self.save_ip_country_statistics().await?;
-        if self.state.config().components().account {
-            TaskUtils::save_client_version_statistics(&self.state)
-                .await
-                .change_context(HourlyTaskError::DatabaseError)?;
-        }
+        TaskUtils::save_client_version_statistics(&self.state)
+            .await
+            .change_context(HourlyTaskError::DatabaseError)?;
         TaskUtils::save_api_usage_statistics(&self.state)
             .await
             .change_context(HourlyTaskError::DatabaseError)?;

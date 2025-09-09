@@ -5,8 +5,8 @@ use std::{
 use config::{
     args::{ArgsConfig, SelectedBenchmark, TestMode},
     file::{
-        ApiConfig, AutomaticProfileSearchConfig, CONFIG_FILE_NAME, Components, ConfigFile,
-        ConfigFileConfig, EmailAddress, GrantAdminAccessConfig, LocationConfig,
+        ApiConfig, AutomaticProfileSearchConfig, CONFIG_FILE_NAME, ConfigFile, ConfigFileConfig,
+        EmailAddress, GrantAdminAccessConfig, LocationConfig,
     },
 };
 use nix::{sys::signal::Signal, unistd::Pid};
@@ -82,7 +82,7 @@ impl ServerManager {
         let bot_api_port = settings
             .account_server_api_port
             .unwrap_or(config.api_urls.url_account.port().unwrap());
-        let account_config = new_config(&config, bot_api_port, Components::all_enabled());
+        let account_config = new_config(&config, bot_api_port);
         let servers = vec![
             ServerInstance::new(
                 dir.clone(),
@@ -126,11 +126,7 @@ impl ServerManager {
     }
 }
 
-fn new_config(
-    config: &TestMode,
-    bot_api_port: u16,
-    components: Components,
-) -> (ConfigFile, SimpleBackendConfigFile) {
+fn new_config(config: &TestMode, bot_api_port: u16) -> (ConfigFile, SimpleBackendConfigFile) {
     let config = ConfigFile {
         grant_admin_access: GrantAdminAccessConfig {
             debug_for_every_matching_new_account: false,
@@ -142,7 +138,6 @@ fn new_config(
         api: ApiConfig::default(),
         config_files: ConfigFileConfig::default(),
         automatic_profile_search: AutomaticProfileSearchConfig::default(),
-        components: Some(components),
         location: if let Some(SelectedBenchmark::GetProfileList) = config.selected_benchmark() {
             let mut location = DEFAULT_LOCATION_CONFIG_BENCHMARK;
             if let Some(index_cell_size) = config.overridden_index_cell_size() {
