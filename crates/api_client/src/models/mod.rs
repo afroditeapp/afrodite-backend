@@ -70,8 +70,6 @@ pub mod chat_app_notification_settings;
 pub use self::chat_app_notification_settings::ChatAppNotificationSettings;
 pub mod chat_message_report;
 pub use self::chat_message_report::ChatMessageReport;
-pub mod chat_profile_link;
-pub use self::chat_profile_link::ChatProfileLink;
 pub mod client_config;
 pub use self::client_config::ClientConfig;
 pub mod client_config_sync_version;

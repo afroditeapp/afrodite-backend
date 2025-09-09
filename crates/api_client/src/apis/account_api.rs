@@ -669,7 +669,7 @@ pub async fn post_account_setup(configuration: &configuration::Configuration, se
     }
 }
 
-/// Requirements:  - Account must be in `InitialSetup` state.  - Account must have a valid AccountSetup info set.  
+/// Media content with InSlot state will be removed.  Requirements:  - Account must be in `InitialSetup` state.  - Account must have a valid AccountSetup info set.  
 pub async fn post_complete_setup(configuration: &configuration::Configuration, ) -> Result<(), Error<PostCompleteSetupError>> {
     let local_var_configuration = configuration;
 

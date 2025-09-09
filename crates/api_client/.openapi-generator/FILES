@@ -51,7 +51,6 @@ src/models/backend_version.rs
 src/models/boolean_setting.rs
 src/models/chat_app_notification_settings.rs
 src/models/chat_message_report.rs
-src/models/chat_profile_link.rs
 src/models/client_config.rs
 src/models/client_config_sync_version.rs
 src/models/client_features_config.rs

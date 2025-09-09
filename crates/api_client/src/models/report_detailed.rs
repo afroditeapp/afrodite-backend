@@ -13,29 +13,27 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ReportDetailed {
-    /// Only available when chat component is enabled and account interaction exists.
+    /// Only available when account interaction exists.
     #[serde(rename = "chat_info", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub chat_info: Option<Option<Box<models::ReportChatInfo>>>,
     #[serde(rename = "content")]
     pub content: Box<models::ReportContent>,
-    /// Only available when profile component is enabled.
-    #[serde(rename = "creator_info", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub creator_info: Option<Option<Box<models::ReportAccountInfo>>>,
+    #[serde(rename = "creator_info")]
+    pub creator_info: Box<models::ReportAccountInfo>,
     #[serde(rename = "info")]
     pub info: Box<models::ReportDetailedInfo>,
-    /// Only available when profile component is enabled.
-    #[serde(rename = "target_info", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub target_info: Option<Option<Box<models::ReportAccountInfo>>>,
+    #[serde(rename = "target_info")]
+    pub target_info: Box<models::ReportAccountInfo>,
 }
 
 impl ReportDetailed {
-    pub fn new(content: models::ReportContent, info: models::ReportDetailedInfo) -> ReportDetailed {
+    pub fn new(content: models::ReportContent, creator_info: models::ReportAccountInfo, info: models::ReportDetailedInfo, target_info: models::ReportAccountInfo) -> ReportDetailed {
         ReportDetailed {
             chat_info: None,
             content: Box::new(content),
-            creator_info: None,
+            creator_info: Box::new(creator_info),
             info: Box::new(info),
-            target_info: None,
+            target_info: Box::new(target_info),
         }
     }
 }

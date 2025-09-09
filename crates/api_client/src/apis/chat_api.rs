@@ -1113,7 +1113,7 @@ pub async fn post_send_like(configuration: &configuration::Configuration, accoun
     }
 }
 
-/// Max pending message count is 50. Max message size is u16::MAX.  The sender message ID must be value which server expects.  Sending will fail if one or two way block exists.  Only the latest public key for sender and receiver can be used when sending a message.
+/// Max pending message count is 50. Max message size is u16::MAX.  Sending will fail if one or two way block exists.  Only the latest public key for sender and receiver can be used when sending a message.
 pub async fn post_send_message(configuration: &configuration::Configuration, sender_public_key_id: i64, receiver: &str, receiver_public_key_id: i64, client_id: i64, client_local_id: i64, body: std::path::PathBuf) -> Result<models::SendMessageResult, Error<PostSendMessageError>> {
     let local_var_configuration = configuration;
 

@@ -73,7 +73,7 @@ impl BotAction for Login {
                 .change_context(TestError::ApiRequest)?
         };
 
-        let auth_pair = if let Some(Some(auth_pair)) = login_result.account {
+        let auth_pair = if let Some(Some(auth_pair)) = login_result.tokens {
             *auth_pair.clone()
         } else {
             return Err(TestError::ApiRequest.report());

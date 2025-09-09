@@ -13,13 +13,13 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ClientConfig {
-    /// Account component specific config. It is also possible that client features are not configured.
+    /// None, if client features are not configured.
     #[serde(rename = "client_features", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub client_features: Option<Option<Box<models::ClientFeaturesConfigHash>>>,
-    /// Account component specific config. It is also possible that custom reports are not configured.
+    /// None, if custom reports are not configured.
     #[serde(rename = "custom_reports", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub custom_reports: Option<Option<Box<models::CustomReportsConfigHash>>>,
-    /// Profile component specific config. It is also possible that attributes are not configured.
+    /// None, if attributes are not configured.
     #[serde(rename = "profile_attributes", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub profile_attributes: Option<Option<Box<models::PartialProfileAttributesConfig>>>,
     #[serde(rename = "sync_version")]

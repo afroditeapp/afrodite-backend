@@ -16,11 +16,11 @@ pub struct MatchesPage {
     #[serde(rename = "error_invalid_iterator_session_id", skip_serializing_if = "Option::is_none")]
     pub error_invalid_iterator_session_id: Option<bool>,
     #[serde(rename = "p")]
-    pub p: Vec<models::ChatProfileLink>,
+    pub p: Vec<models::ProfileLink>,
 }
 
 impl MatchesPage {
-    pub fn new(p: Vec<models::ChatProfileLink>) -> MatchesPage {
+    pub fn new(p: Vec<models::ProfileLink>) -> MatchesPage {
         MatchesPage {
             error_invalid_iterator_session_id: None,
             p,

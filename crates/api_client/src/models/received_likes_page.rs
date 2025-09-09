@@ -18,11 +18,11 @@ pub struct ReceivedLikesPage {
     #[serde(rename = "n")]
     pub n: Box<models::PageItemCountForNewLikes>,
     #[serde(rename = "p")]
-    pub p: Vec<models::ChatProfileLink>,
+    pub p: Vec<models::ProfileLink>,
 }
 
 impl ReceivedLikesPage {
-    pub fn new(n: models::PageItemCountForNewLikes, p: Vec<models::ChatProfileLink>) -> ReceivedLikesPage {
+    pub fn new(n: models::PageItemCountForNewLikes, p: Vec<models::ProfileLink>) -> ReceivedLikesPage {
         ReceivedLikesPage {
             error_invalid_iterator_session_id: None,
             n: Box::new(n),
