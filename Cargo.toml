@@ -5,7 +5,6 @@ members = [
     "crates/afrodite-backend",
     # Library crates
     "crates/api_client",
-    "crates/api_internal",
     "crates/model",
     "crates/model_server_data",
     "crates/model_server_state",

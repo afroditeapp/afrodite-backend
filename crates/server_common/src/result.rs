@@ -5,10 +5,7 @@ use error_stack::{Context, Report};
 use model::markers::IsLoggingAllowed;
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
-use crate::{
-    data::{DataError, cache::CacheError, file::FileError, index::IndexError},
-    internal_api::InternalApiError,
-};
+use crate::data::{DataError, cache::CacheError, file::FileError, index::IndexError};
 
 pub type Result<Ok, Err> = std::result::Result<Ok, WrappedReport<Report<Err>>>;
 
@@ -115,15 +112,6 @@ impl From<std::io::Error> for WrappedReport<Report<DataError>> {
     fn from(error: std::io::Error) -> Self {
         Self {
             report: Report::from(error).change_context(DataError::Io),
-        }
-    }
-}
-
-impl From<InternalApiError> for WrappedReport<Report<InternalApiError>> {
-    #[track_caller]
-    fn from(error: InternalApiError) -> Self {
-        Self {
-            report: Report::from(error),
         }
     }
 }

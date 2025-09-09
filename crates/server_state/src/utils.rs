@@ -1,7 +1,7 @@
 use axum::response::{IntoResponse, Response};
 use config::file::ConfigFileError;
 use manager_api::ClientError;
-use server_common::{data::cache::CacheError, internal_api::InternalApiError};
+use server_common::data::cache::CacheError;
 use server_data::{
     content_processing::ContentProcessingError, data_export::DataExportError, event::EventError,
 };
@@ -61,8 +61,6 @@ enum RequestError {
     SignInWithGoogle,
     #[error("Sign in with Apple error")]
     SignInWithApple,
-    #[error("Internal API error")]
-    InternalApiError,
     #[error("Manager client error")]
     ManagerClientError,
     #[error("Config file error")]
@@ -138,7 +136,6 @@ impl_error_to_status_code!(DataError, RequestError::Data);
 impl_error_to_status_code!(CacheError, RequestError::Cache);
 impl_error_to_status_code!(SignInWithGoogleError, RequestError::SignInWithGoogle);
 impl_error_to_status_code!(SignInWithAppleError, RequestError::SignInWithApple);
-impl_error_to_status_code!(InternalApiError, RequestError::InternalApiError);
 impl_error_to_status_code!(ClientError, RequestError::ManagerClientError);
 impl_error_to_status_code!(ConfigFileError, RequestError::ConfigFileError);
 impl_error_to_status_code!(EventError, RequestError::EventError);

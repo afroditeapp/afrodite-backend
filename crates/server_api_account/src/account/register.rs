@@ -6,7 +6,7 @@ use simple_backend::create_counters;
 
 use crate::{
     app::{ReadData, WriteData},
-    db_write, internal_api,
+    db_write,
     utils::{Json, StatusCode},
 };
 
@@ -66,8 +66,7 @@ pub async fn post_account_setup(
             return Err(StatusCode::NOT_ACCEPTABLE);
         }
 
-        // TODO(microservice): Add mutex to avoid data races
-        internal_api::common::sync_birthdate(&state, id).await?;
+        // TODO(microservice): Add mutex to avoid data races, sync birthdate
 
         db_write!(state, move |cmds| {
             cmds.account().account_setup(id, data).await
@@ -113,10 +112,9 @@ pub async fn post_complete_setup(
         return Err(StatusCode::NOT_ACCEPTABLE);
     }
 
-    let new_account = state.data_all_access().complete_initial_setup(id).await?;
+    state.data_all_access().complete_initial_setup(id).await?;
 
-    // TODO(microservice): initial setup completed time sync
-    internal_api::common::sync_account_state(&state, id, new_account).await?;
+    // TODO(microservice): initial setup completed time sync, account state sync
 
     Ok(())
 }

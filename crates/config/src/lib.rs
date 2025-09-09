@@ -35,12 +35,11 @@ use file_email_content::EmailContentFile;
 use model::CustomReportsConfig;
 pub use model::{ClientFeaturesConfig, ClientFeaturesConfigInternal};
 use model_server_data::{AttributesFileInternal, ProfileAttributesInternal};
-use reqwest::Url;
 use sha2::{Digest, Sha256};
 use simple_backend_config::{SimpleBackendConfig, file::SimpleBackendConfigFile};
-use simple_backend_utils::{ContextExt, IntoReportFromString};
+use simple_backend_utils::IntoReportFromString;
 
-use self::file::{Components, ConfigFile, ExternalServices, LocationConfig};
+use self::file::{Components, ConfigFile, LocationConfig};
 use crate::{
     file::{GeneralConfig, ProfileLimitsConfig},
     file_notification_content::NotificationContentFile,
@@ -57,14 +56,6 @@ pub enum GetConfigError {
     LoadFileError,
     #[error("Profile name allowlist error")]
     ProfileNameAllowlistError,
-
-    // External service configuration errors
-    #[error(
-        "External service 'account internal' is required because account component is disabled."
-    )]
-    ExternalServiceAccountInternalMissing,
-    #[error("External service 'media internal' is required because media component is disabled.")]
-    ExternalServiceMediaInternalMissing,
 
     #[error("Invalid configuration")]
     InvalidConfiguration,
@@ -90,8 +81,6 @@ pub struct Config {
     simple_backend_config: Arc<SimpleBackendConfig>,
 
     // Server related configs
-    external_services: ExternalServices,
-    client_api_urls: InternalApiUrls,
     components: Components,
 
     // Other configs
@@ -121,8 +110,6 @@ impl Config {
             file: ConfigFile::minimal_config_for_api_doc_json(),
             file_dynamic: ConfigFileDynamic::minimal_config_for_api_doc_json(),
             simple_backend_config,
-            external_services: ExternalServices::default(),
-            client_api_urls: InternalApiUrls::new(None, None),
             components: Components::default(),
             mode: None,
             profile_attributes: None,
@@ -160,14 +147,6 @@ impl Config {
     /// Check also [SimpleBackendConfig::debug_mode].
     pub fn debug_mode(&self) -> bool {
         self.simple_backend_config.debug_mode()
-    }
-
-    pub fn external_services(&self) -> &ExternalServices {
-        &self.external_services
-    }
-
-    pub fn external_service_urls(&self) -> &InternalApiUrls {
-        &self.client_api_urls
     }
 
     /// Server binary was launched in a special mode instead of the server mode.
@@ -355,16 +334,12 @@ pub fn get_config(
         file::ConfigFile::load_from_default_location(save_default_config_if_not_found)
             .change_context(GetConfigError::LoadFileError)?;
 
-    let external_services = file_config.external_services.clone().unwrap_or_default();
-
     let components = file_config.components.unwrap_or(Components::all_enabled());
 
     if components != Components::all_enabled() && !simple_backend_config.debug_mode() {
         return Err(GetConfigError::InvalidConfiguration)
             .attach_printable("Disabling some server component is possible only in debug mode");
     }
-
-    let client_api_urls = create_client_api_urls(&components, &external_services)?;
 
     let file_dynamic = ConfigFileDynamic::load_from_current_dir(save_default_config_if_not_found)
         .change_context(GetConfigError::LoadFileError)?;
@@ -483,8 +458,6 @@ pub fn get_config(
         simple_backend_config: simple_backend_config.into(),
         file: file_config,
         file_dynamic,
-        external_services,
-        client_api_urls,
         components,
         mode: args_config.mode.clone(),
         profile_attributes,
@@ -502,49 +475,4 @@ pub fn get_config(
     };
 
     Ok(config)
-}
-
-#[derive(Debug, Clone)]
-pub struct InternalApiUrls {
-    pub account_base_url: Option<Url>,
-    pub media_base_url: Option<Url>,
-}
-
-impl InternalApiUrls {
-    pub fn new(account_base_url: Option<Url>, media_base_url: Option<Url>) -> Self {
-        Self {
-            account_base_url,
-            media_base_url,
-        }
-    }
-}
-
-pub fn create_client_api_urls(
-    components: &Components,
-    external_services: &ExternalServices,
-) -> Result<InternalApiUrls, GetConfigError> {
-    let account_internal = if !components.account {
-        let url = external_services
-            .account_internal
-            .as_ref()
-            .ok_or(GetConfigError::ExternalServiceAccountInternalMissing.report())?;
-        Some(url.clone())
-    } else {
-        None
-    };
-
-    let media_internal = if !components.media && components.account {
-        let url = external_services
-            .media_internal
-            .as_ref()
-            .ok_or(GetConfigError::ExternalServiceMediaInternalMissing.report())?;
-        Some(url.clone())
-    } else {
-        None
-    };
-
-    Ok(InternalApiUrls {
-        account_base_url: account_internal,
-        media_base_url: media_internal,
-    })
 }

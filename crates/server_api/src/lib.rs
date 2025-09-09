@@ -17,7 +17,7 @@ pub mod common_internal;
 pub mod utils;
 
 pub use server_common::{data::DataError, result};
-pub use server_state::{S, create_open_api_router, db_write, db_write_raw, internal_api};
+pub use server_state::{S, create_open_api_router, db_write, db_write_raw};
 
 pub mod app {
     pub use server_state::app::*;

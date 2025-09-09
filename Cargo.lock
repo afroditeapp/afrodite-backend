@@ -205,13 +205,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "api_internal"
-version = "0.1.0"
-dependencies = [
- "api_client",
-]
-
-[[package]]
 name = "approx"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4915,7 +4908,6 @@ dependencies = [
 name = "server_state"
 version = "0.0.0"
 dependencies = [
- "api_internal",
  "axum",
  "base64",
  "config",
@@ -4928,7 +4920,6 @@ dependencies = [
  "model_chat",
  "model_server_data",
  "model_server_state",
- "reqwest",
  "server_common",
  "server_data",
  "sha1",

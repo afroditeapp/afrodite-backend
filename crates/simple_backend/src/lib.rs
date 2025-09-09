@@ -124,11 +124,6 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
         Router::new()
     }
 
-    /// Create router for internal API
-    fn internal_api_router(&self, _state: &Self::AppState) -> Router {
-        Router::new()
-    }
-
     /// Swagger UI which is added to local bot API router
     /// when debug mode is enabled.
     fn create_swagger_ui(&self, _state: &Self::AppState) -> Option<SwaggerUi> {
@@ -311,29 +306,8 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         } else {
             None
         };
-        let internal_api_server_task =
-            if let Some(internal_api_addr) = self.config.socket().experimental_internal_api {
-                Some(
-                    self.create_api_server_task(
-                        server_quit_watcher.resubscribe(),
-                        &mut tls_manager,
-                        internal_api_addr,
-                        // Add routes when internal API is required
-                        // for something.
-                        Router::new(),
-                        "Internal API",
-                        ip_country_tracker,
-                    )
-                    .await,
-                )
-            } else {
-                None
-            };
 
-        if public_api_server_task.is_none()
-            && local_bot_api_server_task.is_none()
-            && internal_api_server_task.is_none()
-        {
+        if public_api_server_task.is_none() && local_bot_api_server_task.is_none() {
             warn!("No enabled APIs in config file");
         }
 
@@ -352,9 +326,6 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         drop(server_quit_handle);
 
         // Wait until all tasks quit
-        if let Some(task) = internal_api_server_task {
-            task.await.expect("Internal API server task panic detected");
-        }
         if let Some(task) = local_bot_api_server_task {
             task.await
                 .expect("Local bot API server task panic detected");

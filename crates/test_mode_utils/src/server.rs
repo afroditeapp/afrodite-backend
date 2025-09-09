@@ -6,7 +6,7 @@ use config::{
     args::{ArgsConfig, SelectedBenchmark, TestMode},
     file::{
         ApiConfig, AutomaticProfileSearchConfig, CONFIG_FILE_NAME, Components, ConfigFile,
-        ConfigFileConfig, EmailAddress, ExternalServices, GrantAdminAccessConfig, LocationConfig,
+        ConfigFileConfig, EmailAddress, GrantAdminAccessConfig, LocationConfig,
     },
 };
 use nix::{sys::signal::Signal, unistd::Pid};
@@ -82,7 +82,7 @@ impl ServerManager {
         let bot_api_port = settings
             .account_server_api_port
             .unwrap_or(config.api_urls.url_account.port().unwrap());
-        let account_config = new_config(&config, bot_api_port, Components::all_enabled(), None);
+        let account_config = new_config(&config, bot_api_port, Components::all_enabled());
         let servers = vec![
             ServerInstance::new(
                 dir.clone(),
@@ -130,7 +130,6 @@ fn new_config(
     config: &TestMode,
     bot_api_port: u16,
     components: Components,
-    external_services: Option<ExternalServices>,
 ) -> (ConfigFile, SimpleBackendConfigFile) {
     let config = ConfigFile {
         grant_admin_access: GrantAdminAccessConfig {
@@ -159,7 +158,6 @@ fn new_config(
             DEFAULT_LOCATION_CONFIG
         }
         .into(),
-        external_services,
         demo_account: None,
         limits: None,
         profile_name_allowlist: None,
@@ -177,8 +175,6 @@ fn new_config(
             public_api: None,
             local_bot_api_port: Some(bot_api_port),
             debug_local_bot_api_ip: None,
-            // TODO(microservice): Configure internal API properly
-            experimental_internal_api: None,
         },
         sign_in_with_apple: None,
         sign_in_with_google: None,

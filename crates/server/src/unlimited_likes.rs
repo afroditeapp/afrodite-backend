@@ -20,9 +20,6 @@ enum UnlimitedLikesError {
     #[error("Database error")]
     Database,
 
-    #[error("Internal API error")]
-    InternalApi,
-
     #[error("Event sending error")]
     EventSending,
 }
@@ -148,9 +145,7 @@ impl UnlimitedLikesManager {
             .await
             .change_context(UnlimitedLikesError::Database)?;
 
-        server_api_chat::internal_api::common::sync_unlimited_likes(&self.state, account)
-            .await
-            .change_context(UnlimitedLikesError::InternalApi)?;
+        // TODO(microservice): sync unlimited likes
 
         self.state
             .event_manager()

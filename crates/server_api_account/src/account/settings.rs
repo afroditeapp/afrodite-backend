@@ -8,7 +8,6 @@ use simple_backend::create_counters;
 
 use crate::{
     app::{ReadData, WriteData},
-    internal_api,
     utils::{Json, StatusCode},
 };
 
@@ -93,7 +92,7 @@ pub async fn put_setting_profile_visiblity(
 ) -> Result<(), StatusCode> {
     ACCOUNT.put_setting_profile_visiblity.incr();
 
-    let new_account = db_write!(state, move |cmds| {
+    db_write!(state, move |cmds| {
         let new_account = cmds
             .account()
             .update_syncable_account_data(id, None, move |_, _, visiblity| {
@@ -117,7 +116,7 @@ pub async fn put_setting_profile_visiblity(
         Ok(new_account)
     })?;
 
-    internal_api::common::sync_account_state(&state, id, new_account.clone()).await?;
+    // TODO(microservice): sync account state
 
     Ok(())
 }
@@ -147,7 +146,7 @@ pub async fn put_setting_unlimited_likes(
         .update_unlimited_likes(id, new_value.value)
         .await?;
 
-    internal_api::common::sync_unlimited_likes(&state, id).await?;
+    // TODO(microservice): sync unlimited likes
 
     Ok(())
 }

@@ -8,12 +8,8 @@ use server_data::{DataError, content_processing::ContentProcessingManagerData};
 use crate::{
     admin_notifications::AdminNotificationManagerData, api_limits::ApiLimits,
     api_usage::ApiUsageTracker, client_version::ClientVersionTracker, data_signer::DataSigner,
-    internal_api::InternalApiClient, ip_address::IpAddressUsageTracker,
+    ip_address::IpAddressUsageTracker,
 };
-
-pub trait GetInternalApi {
-    fn internal_api_client(&self) -> &InternalApiClient;
-}
 
 pub trait GetAccessTokens {
     fn access_token_exists(

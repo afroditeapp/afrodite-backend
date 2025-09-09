@@ -38,7 +38,6 @@ use super::S;
 pub use crate::app::*;
 use crate::{
     api_limits::ApiLimits, api_usage::ApiUsageTracker, client_version::ClientVersionTracker,
-    internal_api::InternalApiClient,
 };
 
 // Server common
@@ -210,12 +209,6 @@ impl DataExportManagerDataProvider for S {
 }
 
 // Server API
-
-impl GetInternalApi for S {
-    fn internal_api_client(&self) -> &InternalApiClient {
-        &self.state.internal_api
-    }
-}
 
 impl GetAccessTokens for S {
     async fn access_token_exists(&self, token: &AccessToken) -> Option<AccountIdInternal> {

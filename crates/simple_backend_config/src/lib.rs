@@ -87,8 +87,6 @@ pub struct SimpleBackendConfig {
 
     // TLS
     public_api_tls_config: Option<Arc<ServerConfig>>,
-    internal_api_tls_config: Option<Arc<ServerConfig>>,
-    internal_api_root_certificate: Option<reqwest::Certificate>,
 
     // IP info
     ip_lists: Vec<IpList>,
@@ -132,7 +130,6 @@ impl SimpleBackendConfig {
     /// * Disabling HTTPS is possbile.
     /// * SQLite in RAM mode is allowed.
     /// * Atomic boolean `RUNNING_IN_DEBUG_MODE` is set to `true`.
-    /// * Experimental internal API can be enabled.
     pub fn debug_mode(&self) -> bool {
         self.file.general.debug.unwrap_or(false)
     }
@@ -161,16 +158,8 @@ impl SimpleBackendConfig {
         self.public_api_tls_config.as_ref()
     }
 
-    pub fn internal_api_tls_config(&self) -> Option<&Arc<ServerConfig>> {
-        self.internal_api_tls_config.as_ref()
-    }
-
     pub fn lets_encrypt_config(&self) -> Option<&file::LetsEncryptConfig> {
         self.file.lets_encrypt.as_ref()
-    }
-
-    pub fn internal_api_root_certificate(&self) -> Option<&reqwest::Certificate> {
-        self.internal_api_root_certificate.as_ref()
     }
 
     pub fn backend_code_version(&self) -> &str {
@@ -244,13 +233,6 @@ pub fn get_config(
         file_config.data.dir.clone()
     };
 
-    if file_config.socket.experimental_internal_api.is_some()
-        && !file_config.general.debug.unwrap_or(false)
-    {
-        return Err(GetConfigError::InvalidConfiguration)
-            .attach_printable("Internal API can be enabled only when debug mode is enabled");
-    }
-
     if let Some(config) = file_config.firebase_cloud_messaging.as_ref() {
         if !config.service_account_key_path.exists() {
             return Err(GetConfigError::InvalidConfiguration).attach_printable(
@@ -260,14 +242,6 @@ pub fn get_config(
     }
 
     let public_api_tls_config = match file_config.tls.clone().and_then(|v| v.public_api) {
-        Some(tls_config) => Some(Arc::new(generate_server_config(
-            tls_config.key.as_path(),
-            tls_config.cert.as_path(),
-        )?)),
-        None => None,
-    };
-
-    let internal_api_tls_config = match file_config.tls.clone().and_then(|v| v.internal_api) {
         Some(tls_config) => Some(Arc::new(generate_server_config(
             tls_config.key.as_path(),
             tls_config.cert.as_path(),
@@ -290,11 +264,6 @@ pub fn get_config(
             "TLS certificate or Let's Encrypt must be configured if some public API is enabled when debug mode is false",
         );
     }
-
-    let internal_api_root_certificate = match file_config.tls.clone().and_then(|v| v.internal_api) {
-        Some(tls_config) => Some(load_root_certificate(&tls_config.root_cert)?),
-        None => None,
-    };
 
     if let Some(lets_encrypt_config) = file_config.lets_encrypt.as_ref() {
         if !lets_encrypt_config.cache_dir.exists() {
@@ -367,8 +336,6 @@ pub fn get_config(
         sqlite_in_ram,
         sign_in_with_urls: SignInWithUrls::new()?,
         public_api_tls_config,
-        internal_api_tls_config,
-        internal_api_root_certificate,
         backend_code_version,
         backend_semver_version,
         ip_lists,
@@ -381,21 +348,6 @@ pub fn get_config(
     }
 
     Ok(config)
-}
-
-#[derive(Debug, Clone)]
-pub struct InternalApiUrls {
-    pub account_base_url: Option<Url>,
-    pub media_base_url: Option<Url>,
-}
-
-impl InternalApiUrls {
-    pub fn new(account_base_url: Option<Url>, media_base_url: Option<Url>) -> Self {
-        Self {
-            account_base_url,
-            media_base_url,
-        }
-    }
 }
 
 const APPLE_PUBLIC_KEY_URL: &str = "https://appleid.apple.com/auth/keys";
@@ -468,28 +420,6 @@ fn generate_server_config(
         .change_context(GetConfigError::CreateTlsConfig)?;
 
     Ok(config)
-}
-
-fn load_root_certificate(cert_path: &Path) -> Result<reqwest::Certificate, GetConfigError> {
-    let mut cert_reader = BufReader::new(
-        std::fs::File::open(cert_path)
-            .change_context(GetConfigError::CreateTlsConfig)
-            .attach_printable_lazy(|| cert_path.to_string_lossy().to_string())?,
-    );
-    let all_certs: Vec<_> = certs(&mut cert_reader).collect();
-    let mut cert_iter = all_certs.into_iter();
-    let cert = if let Some(cert) = cert_iter.next() {
-        let cert = cert.change_context(GetConfigError::CreateTlsConfig)?;
-        reqwest::Certificate::from_der(&cert).change_context(GetConfigError::CreateTlsConfig)?
-    } else {
-        return Err(GetConfigError::CreateTlsConfig).attach_printable("No cert found");
-    };
-
-    if cert_iter.next().is_some() {
-        return Err(GetConfigError::CreateTlsConfig).attach_printable("Only one cert supported");
-    }
-
-    Ok(cert)
 }
 
 const DATABASES: DatabaseInfo = DatabaseInfo {

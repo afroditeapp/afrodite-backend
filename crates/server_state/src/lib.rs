@@ -29,7 +29,6 @@ use server_data::{
 };
 use simple_backend::app::SimpleBackendAppState;
 
-use self::internal_api::InternalApiClient;
 use crate::{
     admin_notifications::AdminNotificationManagerData, demo::DemoAccountManager,
     dynamic_config::DynamicConfigManagerData,
@@ -43,7 +42,6 @@ pub mod client_version;
 pub mod data_signer;
 pub mod demo;
 pub mod dynamic_config;
-pub mod internal_api;
 pub mod ip_address;
 pub mod state_impl;
 pub mod utils;
@@ -62,7 +60,6 @@ pub struct AppState {
 struct AppStateInternal {
     database: Arc<RouterDatabaseReadHandle>,
     write_queue: Arc<WriteCommandRunnerHandle>,
-    internal_api: Arc<InternalApiClient>,
     config: Arc<Config>,
     content_processing: Arc<ContentProcessingManagerData>,
     admin_notification: Arc<AdminNotificationManagerData>,
@@ -99,11 +96,6 @@ impl AppState {
             config: config.clone(),
             database: database.clone(),
             write_queue: Arc::new(write_queue),
-            internal_api: InternalApiClient::new(
-                config.external_service_urls().clone(),
-                simple_backend_state.reqwest_client.clone(),
-            )
-            .into(),
             content_processing,
             admin_notification,
             demo,
@@ -204,6 +196,7 @@ impl DataAllAccess<'_> {
         cmd.await
     }
 
+    /// Returns new [Account]
     pub async fn complete_initial_setup(
         &self,
         id: AccountIdInternal,

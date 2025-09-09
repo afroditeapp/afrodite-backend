@@ -69,11 +69,6 @@ local_bot_api_port = 3001
 # cert = "server_config/public_api.crt"
 # key = "server_config/public_api.key"
 
-# [tls.internal_api]
-# cert = "server_config/internal_api.crt"
-# key = "server_config/internal_api.key"
-# root_cert = "server_config/root_cert.crt"
-
 # Configuring Let's Encrypt will create socket public_api:443 if public API
 # is not on port 443.
 #
@@ -187,7 +182,6 @@ impl SimpleBackendConfigFile {
                 public_api: None,
                 local_bot_api_port: None,
                 debug_local_bot_api_ip: None,
-                experimental_internal_api: None,
             },
             email_sending: None,
             tile_map: None,
@@ -307,15 +301,11 @@ pub struct SocketConfig {
     ///
     /// Overrides the default localhost IP address.
     pub debug_local_bot_api_ip: Option<IpAddr>,
-    /// Socket address for server to server API which is only used
-    /// when backend is running in microservice mode.
-    /// The microservice mode is not currently working properly.
-    pub experimental_internal_api: Option<SocketAddr>,
 }
 
 impl SocketConfig {
     pub fn public_api_enabled(&self) -> bool {
-        self.public_api.is_some() || self.experimental_internal_api.is_some()
+        self.public_api.is_some()
     }
 }
 
@@ -414,21 +404,12 @@ impl std::convert::TryFrom<String> for EmailFromHeader {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct TlsConfig {
     pub public_api: Option<PublicApiTlsConfig>,
-    pub internal_api: Option<InternalApiTlsConfig>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct PublicApiTlsConfig {
     pub cert: PathBuf,
     pub key: PathBuf,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct InternalApiTlsConfig {
-    pub cert: PathBuf,
-    pub key: PathBuf,
-    /// Root certificate for internal API client
-    pub root_cert: PathBuf,
 }
 
 /// Let's Encrypt configuration for public API. If public API is not on

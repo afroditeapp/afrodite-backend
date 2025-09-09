@@ -1,5 +1,3 @@
-//! Account related internal API routes
-
 use std::{collections::HashSet, net::SocketAddr, sync::LazyLock};
 
 use axum::extract::{ConnectInfo, State};

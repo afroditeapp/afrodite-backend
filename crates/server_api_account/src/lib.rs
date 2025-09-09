@@ -15,7 +15,7 @@ pub mod account_admin;
 pub mod account_bot;
 pub mod app;
 
-pub use server_api::{internal_api, utils};
+pub use server_api::utils;
 pub use server_common::{data::DataError, result};
 
 // API docs

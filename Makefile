@@ -1,6 +1,5 @@
 
-CARGO_CRATE_ARGS = 	-p api_internal \
-					-p config \
+CARGO_CRATE_ARGS = 	-p config \
 					-p database \
 					-p database_account \
 					-p database_profile \
@@ -122,7 +121,6 @@ profile-build:
 code-stats:
 	@/bin/echo -n "Lines:"
 	@find \
-	crates/api_internal \
 	crates/config \
 	crates/database \
 	crates/database_account \

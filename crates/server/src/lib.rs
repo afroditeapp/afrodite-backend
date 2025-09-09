@@ -243,23 +243,6 @@ impl BusinessLogic for DatingAppBusinessLogic {
         router
     }
 
-    fn internal_api_router(&self, state: &Self::AppState) -> Router {
-        let mut router = Router::new();
-
-        if self.config.components().account {
-            router = router.merge(
-                server_router_account::InternalApp::create_account_server_router(state.clone()),
-            )
-        }
-
-        if self.config.components().media {
-            router = router
-                .merge(server_router_media::InternalApp::create_media_server_router(state.clone()))
-        }
-
-        router
-    }
-
     fn create_swagger_ui(&self, state: &Self::AppState) -> Option<SwaggerUi> {
         const API_DOC_URL: &str = "/api-doc/app_api.json";
         const API_DOC_URL_OBFUSCATION_DISABLED: &str = "/api-doc/app_api_obfuscation_disabled.json";

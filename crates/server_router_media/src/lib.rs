@@ -9,9 +9,6 @@ use server_state::StateForRouterCreation;
 
 mod api;
 mod routes_connected;
-mod routes_internal;
-
-pub use routes_internal::InternalApp;
 
 pub fn create_media_server_router(state: StateForRouterCreation) -> Router {
     let public = Router::new();

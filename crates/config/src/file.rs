@@ -14,7 +14,6 @@ use simple_backend_utils::{
     ContextExt,
     time::{DurationValue, TimeValue, UtcTimeValue},
 };
-use url::Url;
 
 // Kilpisjärvi ja Nuorgam
 // latitude_top_left = 70.1
@@ -111,7 +110,6 @@ pub struct ConfigFile {
     pub components: Option<Components>,
     pub grant_admin_access: Option<GrantAdminAccessConfig>,
     pub location: Option<LocationConfig>,
-    pub external_services: Option<ExternalServices>,
     pub demo_account: Option<Vec<DemoAccountConfig>>,
     pub limits: Option<LimitsConfig>,
     pub profile_name_allowlist: Option<Vec<ProfiletNameAllowlistConfig>>,
@@ -128,7 +126,6 @@ impl ConfigFile {
             components: Some(Components::default()),
             grant_admin_access: None,
             location: None,
-            external_services: None,
             demo_account: None,
             limits: None,
             profile_name_allowlist: None,
@@ -229,14 +226,6 @@ pub struct GrantAdminAccessConfig {
     #[serde(default)]
     pub debug_match_only_email_domain: bool,
     pub email: EmailAddress,
-}
-
-/// Base URLs for defining server to server connections.
-/// Only used in microservice mode.
-#[derive(Debug, Deserialize, Default, Serialize, Clone)]
-pub struct ExternalServices {
-    pub account_internal: Option<Url>,
-    pub media_internal: Option<Url>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

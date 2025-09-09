@@ -4,7 +4,7 @@ use database::ErrorContext;
 use error_stack::Context;
 use model::markers::IsLoggingAllowed;
 
-use crate::{internal_api::InternalApiError, result::WrappedReport};
+use crate::result::WrappedReport;
 
 pub mod cache;
 pub mod file;
@@ -91,16 +91,6 @@ impl<Ok, Err: Context> WrappedWithInfo<Ok, Err>
         self,
     ) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>> {
         self
-    }
-}
-
-impl<Ok> WrappedWithInfo<Ok, InternalApiError> for std::result::Result<Ok, InternalApiError> {
-    #[track_caller]
-    fn into_error_without_context(
-        self,
-    ) -> std::result::Result<Ok, WrappedReport<error_stack::Report<InternalApiError>>> {
-        let value = self?;
-        Ok(value)
     }
 }
 
