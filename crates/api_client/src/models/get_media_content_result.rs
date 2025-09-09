@@ -19,13 +19,12 @@ pub struct GetMediaContentResult {
     pub profile_content_version: Box<models::ProfileContentVersion>,
     #[serde(rename = "security_content", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub security_content: Option<Option<Box<models::ContentInfoWithFd>>>,
-    /// Sync version for profile and security content
     #[serde(rename = "sync_version")]
-    pub sync_version: Box<models::SyncVersion>,
+    pub sync_version: Box<models::MediaContentSyncVersion>,
 }
 
 impl GetMediaContentResult {
-    pub fn new(profile_content: models::MyProfileContent, profile_content_version: models::ProfileContentVersion, sync_version: models::SyncVersion) -> GetMediaContentResult {
+    pub fn new(profile_content: models::MyProfileContent, profile_content_version: models::ProfileContentVersion, sync_version: models::MediaContentSyncVersion) -> GetMediaContentResult {
         GetMediaContentResult {
             profile_content: Box::new(profile_content),
             profile_content_version: Box::new(profile_content_version),

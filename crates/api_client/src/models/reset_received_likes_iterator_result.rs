@@ -17,13 +17,12 @@ pub struct ResetReceivedLikesIteratorResult {
     pub c: Box<models::NewReceivedLikesCount>,
     #[serde(rename = "s")]
     pub s: Box<models::ReceivedLikesIteratorSessionId>,
-    /// Sync version for new received likes count
     #[serde(rename = "v")]
-    pub v: Box<models::SyncVersion>,
+    pub v: Box<models::ReceivedLikesSyncVersion>,
 }
 
 impl ResetReceivedLikesIteratorResult {
-    pub fn new(c: models::NewReceivedLikesCount, s: models::ReceivedLikesIteratorSessionId, v: models::SyncVersion) -> ResetReceivedLikesIteratorResult {
+    pub fn new(c: models::NewReceivedLikesCount, s: models::ReceivedLikesIteratorSessionId, v: models::ReceivedLikesSyncVersion) -> ResetReceivedLikesIteratorResult {
         ResetReceivedLikesIteratorResult {
             c: Box::new(c),
             s: Box::new(s),

@@ -4,6 +4,7 @@
     clippy::to_string_trait_impl,
     clippy::too_many_arguments,
     clippy::uninlined_format_args,
+    clippy::needless_return,
     unused_imports,
 )]
 
