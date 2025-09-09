@@ -51,8 +51,6 @@ pub async fn login_impl(
         Ok(())
     })?;
 
-    // TODO(microservice): microservice support
-
     let result = LoginResult {
         account: Some(account),
         profile: None,

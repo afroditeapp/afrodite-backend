@@ -46,9 +46,6 @@ const PATH_GET_PROFILE: &str = "/profile_api/profile/{aid}";
 /// If the profile is not a match, then permission `admin_view_all_profiles`
 /// is required.
 ///
-/// # Microservice notes
-/// If account feature is set as external service then cached permission
-/// information from account service is used for access checks.
 #[utoipa::path(
     get,
     path = PATH_GET_PROFILE,

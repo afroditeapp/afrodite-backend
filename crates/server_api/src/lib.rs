@@ -12,7 +12,6 @@ use self::utils::SecurityApiAccessTokenDefault;
 // Routes
 pub mod common;
 pub mod common_admin;
-pub mod common_internal;
 
 pub mod utils;
 

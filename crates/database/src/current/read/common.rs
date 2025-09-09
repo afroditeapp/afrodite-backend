@@ -38,8 +38,6 @@ impl<'a> CurrentReadCommon<'a> {
 }
 
 impl CurrentReadCommon<'_> {
-    /// This data is available on all servers as if microservice mode is
-    /// enabled, the account server will update the data to other servers.
     pub fn account(&mut self, id: AccountIdInternal) -> Result<Account, DieselDatabaseError> {
         use crate::schema::account_permissions;
 

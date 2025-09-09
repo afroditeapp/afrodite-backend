@@ -116,8 +116,6 @@ pub async fn put_setting_profile_visiblity(
         Ok(new_account)
     })?;
 
-    // TODO(microservice): sync account state
-
     Ok(())
 }
 
@@ -145,8 +143,6 @@ pub async fn put_setting_unlimited_likes(
         .data_all_access()
         .update_unlimited_likes(id, new_value.value)
         .await?;
-
-    // TODO(microservice): sync unlimited likes
 
     Ok(())
 }

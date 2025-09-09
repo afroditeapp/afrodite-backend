@@ -73,7 +73,6 @@ pub async fn complete_initial_setup(
                 return Err(DataError::NotAllowed.report());
             }
 
-            // TODO(microservice): API for setting initial profile age
             cmds.profile()
                 .set_initial_profile_age_from_current_profile(id)
                 .await?;

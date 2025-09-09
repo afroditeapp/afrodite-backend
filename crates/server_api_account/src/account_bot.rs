@@ -76,9 +76,6 @@ pub async fn post_bot_register(State(state): State<S>) -> Result<Json<AccountId>
         cmds.common().set_is_bot_account(new_account_id, true).await
     })?;
 
-    // TODO(microservice): The is_bot_account is currently not synced
-    // to other servers.
-
     Ok(new_account_id.as_id().into())
 }
 

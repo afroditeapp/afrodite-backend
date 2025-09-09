@@ -60,8 +60,6 @@ impl ReadCommandsCommon<'_> {
             .into_error()
     }
 
-    /// Account is available on all servers as account server will sync it to
-    /// others if server is running in microservice mode.
     pub async fn account(&self, id: AccountIdInternal) -> Result<Account, DataError> {
         let account = self
             .read_cache_common(id, |cache| {

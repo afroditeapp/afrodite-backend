@@ -186,9 +186,6 @@ pub async fn post_moderate_media_content(
             .await;
     }
 
-    // TODO(microservice): Add profile visibility change notification
-    // to account internal API.
-
     Ok(())
 }
 

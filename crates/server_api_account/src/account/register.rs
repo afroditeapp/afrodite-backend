@@ -66,8 +66,6 @@ pub async fn post_account_setup(
             return Err(StatusCode::NOT_ACCEPTABLE);
         }
 
-        // TODO(microservice): Add mutex to avoid data races, sync birthdate
-
         db_write!(state, move |cmds| {
             cmds.account().account_setup(id, data).await
         })?;
@@ -113,8 +111,6 @@ pub async fn post_complete_setup(
     }
 
     state.data_all_access().complete_initial_setup(id).await?;
-
-    // TODO(microservice): initial setup completed time sync, account state sync
 
     Ok(())
 }

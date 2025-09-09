@@ -145,8 +145,6 @@ impl UnlimitedLikesManager {
             .await
             .change_context(UnlimitedLikesError::Database)?;
 
-        // TODO(microservice): sync unlimited likes
-
         self.state
             .event_manager()
             .send_connected_event(account, EventToClientInternal::ProfileChanged)

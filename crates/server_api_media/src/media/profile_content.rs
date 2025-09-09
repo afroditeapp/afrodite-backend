@@ -186,9 +186,6 @@ pub async fn put_profile_content(
         .send_notification_if_needed(AdminNotificationTypes::ModerateMediaContentBot)
         .await;
 
-    // TODO(microservice): Add profile visibility change notification
-    // to account internal API.
-
     Ok(())
 }
 

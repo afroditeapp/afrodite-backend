@@ -1,4 +1,4 @@
-//! Common routes to all microservices
+//! Common routes
 //!
 
 use std::{net::SocketAddr, time::Duration};
