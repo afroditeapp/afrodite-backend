@@ -16,58 +16,73 @@ mod routes_bot;
 mod routes_connected;
 mod routes_internal;
 
-pub use routes_bot::{BotApp, PublicBotApp};
+pub use routes_bot::{LocalBotApiRoutes, RemoteBotApiRoutes};
 pub use routes_internal::InternalApp;
 use simple_backend::web_socket::WebSocketManager;
 
-pub fn create_common_server_router(
-    state: StateForRouterCreation,
-    ws_manager: WebSocketManager,
-) -> Router {
-    let public = Router::new()
-        .route(
-            api::common::PATH_GET_VERSION,
-            get(server_api::common::get_version),
-        )
-        .route(
-            api::common::PATH_FILE_PACKAGE_ACCESS,
-            get(server_api::common::get_file_package_access),
-        )
-        .route(
-            api::common::PATH_FILE_PACKAGE_ACCESS_ROOT,
-            get(server_api::common::get_file_package_access_root),
-        )
-        .route(
-            api::common::PATH_CONNECT, // This route checks the access token by itself.
-            get({
-                move |state, param1, param2, param3| {
-                    api::common::get_connect_websocket(state, param1, param2, param3, ws_manager)
-                }
-            }),
-        )
-        .with_state(state.s.clone())
-        .merge(api::common::router_push_notification_public(state.clone()));
+pub struct CommonRoutes;
 
-    public.merge(ConnectedApp::new(state).private_common_router())
+impl CommonRoutes {
+    pub fn routes_without_obfuscation_support(
+        state: StateForRouterCreation,
+        ws_manager: WebSocketManager,
+    ) -> Router {
+        Router::new()
+            .route(
+                api::common::PATH_GET_VERSION,
+                get(server_api::common::get_version),
+            )
+            .route(
+                api::common::PATH_FILE_PACKAGE_ACCESS,
+                get(server_api::common::get_file_package_access),
+            )
+            .route(
+                api::common::PATH_FILE_PACKAGE_ACCESS_ROOT,
+                get(server_api::common::get_file_package_access_root),
+            )
+            .route(
+                api::common::PATH_CONNECT, // This route checks the access token by itself.
+                get({
+                    move |state, param1, param2, param3| {
+                        api::common::get_connect_websocket(
+                            state, param1, param2, param3, ws_manager,
+                        )
+                    }
+                }),
+            )
+            .with_state(state.s.clone())
+    }
+
+    pub fn routes_with_obfuscation_support(state: StateForRouterCreation) -> Router {
+        let public =
+            Router::new().merge(api::common::router_push_notification_public(state.clone()));
+        public.merge(ConnectedApp::new(state).private_common_router())
+    }
 }
 
-pub fn create_account_server_router(state: StateForRouterCreation) -> Router {
-    let public = Router::new()
-        .route(
-            api::account::PATH_SIGN_IN_WITH_LOGIN,
-            post(api::account::post_sign_in_with_login),
-        )
-        .route(
-            api::account::PATH_SIGN_IN_WITH_APPLE_REDIRECT_TO_APP,
-            post(api::account::post_sign_in_with_apple_redirect_to_app),
-        )
-        .with_state(state.s.clone());
+pub struct AccountRoutes;
 
-    let public = if state.s.config().demo_account_config().is_some() {
-        public.merge(api::account::router_demo(state.clone()))
-    } else {
-        public
-    };
+impl AccountRoutes {
+    pub fn routes_without_obfuscation_support(state: StateForRouterCreation) -> Router {
+        Router::new()
+            .route(
+                api::account::PATH_SIGN_IN_WITH_LOGIN,
+                post(api::account::post_sign_in_with_login),
+            )
+            .route(
+                api::account::PATH_SIGN_IN_WITH_APPLE_REDIRECT_TO_APP,
+                post(api::account::post_sign_in_with_apple_redirect_to_app),
+            )
+            .with_state(state.s.clone())
+    }
 
-    public.merge(ConnectedApp::new(state).private_account_server_router())
+    pub fn routes_with_obfuscation_support(state: StateForRouterCreation) -> Router {
+        let public = Router::new();
+        let public = if state.s.config().demo_account_config().is_some() {
+            public.merge(api::account::router_demo(state.clone()))
+        } else {
+            public
+        };
+        public.merge(ConnectedApp::new(state).private_account_server_router())
+    }
 }

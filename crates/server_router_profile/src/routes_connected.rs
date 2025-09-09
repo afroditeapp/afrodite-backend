@@ -1,6 +1,6 @@
 use axum::{Router, middleware};
 use server_api::app::GetConfig;
-use server_state::{S, StateForRouterCreation};
+use server_state::StateForRouterCreation;
 
 use crate::api;
 
@@ -12,10 +12,6 @@ pub struct ConnectedApp {
 impl ConnectedApp {
     pub fn new(state: StateForRouterCreation) -> Self {
         Self { state }
-    }
-
-    pub fn state(&self) -> S {
-        self.state.s.clone()
     }
 
     pub fn private_profile_server_router(&self) -> Router {
@@ -48,7 +44,10 @@ impl ConnectedApp {
         };
 
         private.route_layer({
-            middleware::from_fn_with_state(self.state(), api::utils::authenticate_with_access_token)
+            middleware::from_fn_with_state(
+                self.state.clone(),
+                api::utils::authenticate_with_access_token,
+            )
         })
     }
 }

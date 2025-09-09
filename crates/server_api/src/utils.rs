@@ -10,8 +10,9 @@ use headers::{Header, HeaderValue};
 use hyper::{Request, header};
 use model::AccessToken;
 use serde::Serialize;
+use server_data::app::GetConfig;
 pub use server_state::utils::StatusCode;
-use server_state::{S, app::GetAccessTokens};
+use server_state::{StateForRouterCreation, app::GetAccessTokens};
 use simple_backend::create_counters;
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;
 pub use utils::api::ACCESS_TOKEN_HEADER_STR;
@@ -37,7 +38,7 @@ pub static ACCESS_TOKEN_HEADER: header::HeaderName =
 /// "Extension(api_caller_account_state): Extension<AccountState>"
 /// to handlers is possible.
 pub async fn authenticate_with_access_token(
-    State(state): State<S>,
+    State(state): State<StateForRouterCreation>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     mut req: Request<Body>,
     next: Next,
@@ -50,8 +51,21 @@ pub async fn authenticate_with_access_token(
     let key = AccessToken::new(key_str.to_string());
 
     if let Some((id, permissions, account_state)) =
-        state.access_token_and_connection_exists(&key, addr).await
+        state.s.access_token_and_connection_exists(&key, addr).await
     {
+        if state.allow_only_remote_bots {
+            let is_remote_bot = state
+                .s
+                .config()
+                .remote_bots()
+                .iter()
+                .any(|b| b.account_id() == id.as_id());
+            if !is_remote_bot {
+                API.access_token_found_not_remote_bot.incr();
+                return Err(StatusCode::UNAUTHORIZED);
+            }
+        }
+
         API.access_token_found.incr();
         req.extensions_mut().insert(id);
         req.extensions_mut().insert(permissions);
@@ -68,6 +82,7 @@ create_counters!(
     API,
     API_COUNTERS_LIST,
     access_token_found,
+    access_token_found_not_remote_bot,
     access_token_not_found,
 );
 

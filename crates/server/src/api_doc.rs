@@ -252,6 +252,7 @@ impl ApiDoc {
         let state = StateForRouterCreation {
             s: app_state,
             disable_api_obfuscation: true,
+            allow_only_remote_bots: false,
         };
 
         Self::all(state).to_pretty_json()

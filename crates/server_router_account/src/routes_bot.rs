@@ -3,11 +3,10 @@ use server_state::S;
 
 use crate::api;
 
-/// Bot API route handlers
-pub struct PublicBotApp;
+pub struct RemoteBotApiRoutes;
 
-impl PublicBotApp {
-    pub fn create_account_server_router(state: S) -> Router {
+impl RemoteBotApiRoutes {
+    pub fn router(state: S) -> Router {
         Router::new()
             .route(
                 api::account_bot::PATH_REMOTE_BOT_LOGIN,
@@ -17,11 +16,10 @@ impl PublicBotApp {
     }
 }
 
-/// Bot API route handlers
-pub struct BotApp;
+pub struct LocalBotApiRoutes;
 
-impl BotApp {
-    pub fn create_account_server_router(state: S) -> Router {
+impl LocalBotApiRoutes {
+    pub fn router(state: S) -> Router {
         Router::new()
             .route(
                 api::account_bot::PATH_BOT_REGISTER,
@@ -30,10 +28,6 @@ impl BotApp {
             .route(
                 api::account_bot::PATH_BOT_LOGIN,
                 post(api::account_bot::post_bot_login),
-            )
-            .route(
-                api::account_bot::PATH_REMOTE_BOT_LOGIN,
-                post(api::account_bot::post_remote_bot_login),
             )
             .with_state(state)
     }

@@ -46,6 +46,10 @@ use server_data::{
     write_commands::{WriteCmdWatcher, WriteCommandRunnerHandle},
 };
 use server_data_all::{app::DataAllUtilsImpl, load::DbDataToCacheLoader};
+use server_router_account::{AccountRoutes, CommonRoutes, LocalBotApiRoutes, RemoteBotApiRoutes};
+use server_router_chat::ChatRoutes;
+use server_router_media::MediaRoutes;
+use server_router_profile::ProfileRoutes;
 use server_state::{
     AppState, StateForRouterCreation, admin_notifications::AdminNotificationManagerData,
     demo::DemoAccountManager, dynamic_config::DynamicConfigManagerData,
@@ -122,6 +126,38 @@ pub struct DatingAppBusinessLogic {
     daily_likes: Option<DailyLikesManagerQuitHandle>,
 }
 
+impl DatingAppBusinessLogic {
+    fn add_obfuscation_supported_routes(
+        &self,
+        mut router: Router,
+        state: StateForRouterCreation,
+    ) -> Router {
+        router = router.merge(CommonRoutes::routes_with_obfuscation_support(state.clone()));
+
+        if self.config.components().account {
+            router = router.merge(AccountRoutes::routes_with_obfuscation_support(
+                state.clone(),
+            ))
+        }
+
+        if self.config.components().profile {
+            router = router.merge(ProfileRoutes::routes_with_obfuscation_support(
+                state.clone(),
+            ))
+        }
+
+        if self.config.components().media {
+            router = router.merge(MediaRoutes::routes_with_obfuscation_support(state.clone()))
+        }
+
+        if self.config.components().chat {
+            router = router.merge(ChatRoutes::routes_with_obfuscation_support(state.clone()))
+        }
+
+        router
+    }
+}
+
 impl BusinessLogic for DatingAppBusinessLogic {
     type AppState = AppState;
 
@@ -138,49 +174,55 @@ impl BusinessLogic for DatingAppBusinessLogic {
         let state = StateForRouterCreation {
             s: state.clone(),
             disable_api_obfuscation,
+            allow_only_remote_bots: false,
         };
+
         let mut router =
-            server_router_account::create_common_server_router(state.clone(), web_socket_manager);
+            CommonRoutes::routes_without_obfuscation_support(state.clone(), web_socket_manager);
 
         if self.config.components().account {
-            router = router.merge(server_router_account::create_account_server_router(
+            if !state.s.config().remote_bots().is_empty() {
+                router = router.merge(RemoteBotApiRoutes::router(state.s.clone()))
+            }
+            router = router.merge(AccountRoutes::routes_without_obfuscation_support(
                 state.clone(),
             ))
         }
 
         if self.config.components().profile {
-            router = router.merge(server_router_profile::create_profile_server_router(
+            router = router.merge(ProfileRoutes::routes_without_obfuscation_support(
                 state.clone(),
             ))
         }
 
         if self.config.components().media {
-            router = router.merge(server_router_media::create_media_server_router(
+            router = router.merge(MediaRoutes::routes_without_obfuscation_support(
                 state.clone(),
             ))
         }
 
         if self.config.components().chat {
-            router = router.merge(server_router_chat::create_chat_server_router(state.clone()))
+            router = router.merge(ChatRoutes::routes_without_obfuscation_support(
+                state.clone(),
+            ))
         }
 
-        router
-    }
+        router = self.add_obfuscation_supported_routes(router, state.clone());
 
-    fn public_bot_api_router(
-        &self,
-        web_socket_manager: WebSocketManager,
-        state: &Self::AppState,
-    ) -> Router {
-        let mut router = Router::new();
+        // Add unobfuscated API for remote bots if needed
 
-        if self.config.components().account {
-            router = router.merge(
-                server_router_account::PublicBotApp::create_account_server_router(state.clone()),
-            )
+        let api_obfuscation_enabled =
+            state.s.config().api_obfuscation_salt().is_some() && !state.disable_api_obfuscation;
+        if api_obfuscation_enabled && !state.s.config().remote_bots().is_empty() {
+            router = self.add_obfuscation_supported_routes(
+                router,
+                StateForRouterCreation {
+                    s: state.s,
+                    disable_api_obfuscation: true,
+                    allow_only_remote_bots: true,
+                },
+            );
         }
-
-        router = router.merge(self.public_api_router(web_socket_manager, state, true));
 
         router
     }
@@ -193,9 +235,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
         let mut router = Router::new();
 
         if self.config.components().account {
-            router = router.merge(server_router_account::BotApp::create_account_server_router(
-                state.clone(),
-            ))
+            router = router.merge(LocalBotApiRoutes::router(state.clone()))
         }
 
         router = router.merge(self.public_api_router(web_socket_manager, state, true));
@@ -226,6 +266,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
         let router_state = StateForRouterCreation {
             s: state.clone(),
             disable_api_obfuscation: false,
+            allow_only_remote_bots: false,
         };
         let mut swagger =
             SwaggerUi::new("/swagger-ui").url(API_DOC_URL, ApiDoc::all(router_state.clone()));
@@ -234,6 +275,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
             let router_state = StateForRouterCreation {
                 s: state.clone(),
                 disable_api_obfuscation: true,
+                allow_only_remote_bots: false,
             };
             swagger = swagger.url(
                 API_DOC_URL_OBFUSCATION_DISABLED,

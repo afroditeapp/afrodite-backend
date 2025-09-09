@@ -175,7 +175,6 @@ fn new_config(
         data: DataConfig::default(),
         socket: SocketConfig {
             public_api: None,
-            public_bot_api: None,
             local_bot_api_port: Some(bot_api_port),
             debug_local_bot_api_ip: None,
             // TODO(microservice): Configure internal API properly

@@ -25,7 +25,6 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
 [socket]
 public_api = "127.0.0.1:3000"
-public_bot_api = "127.0.0.1:3001"
 local_bot_api_port = 3002
 
 # [manager]
@@ -186,7 +185,6 @@ impl SimpleBackendConfigFile {
             },
             socket: SocketConfig {
                 public_api: None,
-                public_bot_api: None,
                 local_bot_api_port: None,
                 debug_local_bot_api_ip: None,
                 experimental_internal_api: None,
@@ -299,9 +297,10 @@ impl Default for DataConfig {
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct SocketConfig {
+    /// If API obfuscation is enabled and remote bot login
+    /// is enabled, unobfuscated API access is added for
+    /// remote bot accounts.
     pub public_api: Option<SocketAddr>,
-    /// Bot remote login and unobfuscated API access.
-    pub public_bot_api: Option<SocketAddr>,
     /// Bot register, login, remote login and unobfuscated API access.
     pub local_bot_api_port: Option<u16>,
     /// Bot register, login, remote login and unobfuscated API access.
@@ -316,9 +315,7 @@ pub struct SocketConfig {
 
 impl SocketConfig {
     pub fn public_api_enabled(&self) -> bool {
-        self.public_api.is_some()
-            || self.public_bot_api.is_some()
-            || self.experimental_internal_api.is_some()
+        self.public_api.is_some() || self.experimental_internal_api.is_some()
     }
 }
 

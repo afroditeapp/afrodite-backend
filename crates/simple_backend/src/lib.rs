@@ -114,14 +114,7 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
     ) -> Router {
         Router::new()
     }
-    /// Create router for public bot API
-    fn public_bot_api_router(
-        &self,
-        _web_socket_manager: WebSocketManager,
-        _state: &Self::AppState,
-    ) -> Router {
-        Router::new()
-    }
+
     /// Create router for local bot API
     fn local_bot_api_router(
         &self,
@@ -130,6 +123,7 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
     ) -> Router {
         Router::new()
     }
+
     /// Create router for internal API
     fn internal_api_router(&self, _state: &Self::AppState) -> Router {
         Router::new()
@@ -296,21 +290,6 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         } else {
             None
         };
-        let public_bot_api_server_task = if let Some(addr) = self.config.socket().public_bot_api {
-            Some(
-                self.create_api_server_task(
-                    server_quit_watcher.resubscribe(),
-                    &mut tls_manager,
-                    addr,
-                    self.logic.public_bot_api_router(ws_manager.clone(), &state),
-                    "Public bot API",
-                    ip_country_tracker.clone(),
-                )
-                .await,
-            )
-        } else {
-            None
-        };
         let local_bot_api_server_task = if let Some(port) = self.config.socket().local_bot_api_port
         {
             let ip = self
@@ -339,7 +318,9 @@ impl<T: BusinessLogic> SimpleBackend<T> {
                         server_quit_watcher.resubscribe(),
                         &mut tls_manager,
                         internal_api_addr,
-                        self.logic.public_bot_api_router(ws_manager.clone(), &state),
+                        // Add routes when internal API is required
+                        // for something.
+                        Router::new(),
                         "Internal API",
                         ip_country_tracker,
                     )
@@ -350,7 +331,6 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             };
 
         if public_api_server_task.is_none()
-            && public_bot_api_server_task.is_none()
             && local_bot_api_server_task.is_none()
             && internal_api_server_task.is_none()
         {
@@ -378,10 +358,6 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         if let Some(task) = local_bot_api_server_task {
             task.await
                 .expect("Local bot API server task panic detected");
-        }
-        if let Some(task) = public_bot_api_server_task {
-            task.await
-                .expect("Public bot API server task panic detected");
         }
         if let Some(task) = public_api_server_task {
             task.await.expect("Public API server task panic detected");

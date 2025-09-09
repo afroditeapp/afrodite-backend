@@ -30,7 +30,7 @@ impl ConnectedApp {
             .merge(api::chat_admin::router_admin_public_key(self.state.clone()))
             .route_layer({
                 middleware::from_fn_with_state(
-                    self.state.s.clone(),
+                    self.state.clone(),
                     api::utils::authenticate_with_access_token,
                 )
             })

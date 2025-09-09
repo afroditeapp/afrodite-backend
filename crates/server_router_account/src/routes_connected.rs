@@ -28,7 +28,7 @@ impl ConnectedApp {
             .merge(api::common_admin::router_notification(self.state.clone()))
             .route_layer({
                 middleware::from_fn_with_state(
-                    self.state.s.clone(),
+                    self.state.clone(),
                     api::utils::authenticate_with_access_token,
                 )
             })
@@ -60,7 +60,7 @@ impl ConnectedApp {
 
         private.route_layer({
             middleware::from_fn_with_state(
-                self.state.s.clone(),
+                self.state.clone(),
                 api::utils::authenticate_with_access_token,
             )
         })
