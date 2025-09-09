@@ -29,15 +29,7 @@ pub use client_features::*;
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, PartialEq)]
 pub struct LoginResult {
     /// If `None`, the client is unsupported.
-    pub account: Option<AuthPair>,
-
-    /// If `None`, profile microservice is disabled or the version client is
-    /// unsupported.
-    pub profile: Option<AuthPair>,
-
-    /// If `None`, media microservice is disabled or the client version is
-    /// unsupported.
-    pub media: Option<AuthPair>,
+    pub tokens: Option<AuthPair>,
 
     /// Account ID of current account. If `None`, the client is unsupported.
     pub aid: Option<AccountId>,
@@ -54,9 +46,7 @@ pub struct LoginResult {
 impl LoginResult {
     pub fn error_unsupported_client() -> Self {
         Self {
-            account: None,
-            profile: None,
-            media: None,
+            tokens: None,
             aid: None,
             email: None,
             error_unsupported_client: true,

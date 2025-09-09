@@ -35,8 +35,8 @@ pub async fn login_impl(
 
     let access = AccessToken::generate_new();
     let refresh = RefreshToken::generate_new();
-    let account = AuthPair { access, refresh };
-    let account_clone = account.clone();
+    let tokens = AuthPair { access, refresh };
+    let tokens_clone = tokens.clone();
 
     db_write!(state, move |cmds| {
         cmds.common()
@@ -45,16 +45,14 @@ pub async fn login_impl(
             .await?;
         cmds.cache()
             .websocket_cache_cmds()
-            .init_login_session(id.into(), account_clone, address, false)
+            .init_login_session(id.into(), tokens_clone, address, false)
             .await
             .into_error()?;
         Ok(())
     })?;
 
     let result = LoginResult {
-        account: Some(account),
-        profile: None,
-        media: None,
+        tokens: Some(tokens),
         aid: Some(id.as_id()),
         email: email.email,
         error_unsupported_client: false,
