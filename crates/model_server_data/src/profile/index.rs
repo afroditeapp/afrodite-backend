@@ -19,7 +19,7 @@ use super::{
 };
 use crate::{
     AutomaticProfileSearchSettings, LastSeenTime, LastSeenUnixTime, ProfileContentEditedTime,
-    ProfileLink,
+    ProfileLink, ProfileVersion,
 };
 
 #[derive(Debug)]
@@ -138,8 +138,9 @@ impl AtomicLastSeenTime {
 /// user queries new profiles.
 #[derive(Debug)]
 pub struct LocationIndexProfileData {
-    /// Simple profile information for client.
-    profile_link: ProfileLink,
+    account_id: AccountId,
+    profile_version: ProfileVersion,
+    profile_content_version: ProfileContentVersion,
     age: ProfileAge,
     search_age_range: SearchAgeRangeValidated,
     search_groups: SearchGroupFlags,
@@ -167,12 +168,9 @@ impl LocationIndexProfileData {
         profile_text_character_count: ProfileTextCharacterCount,
     ) -> Self {
         Self {
-            profile_link: ProfileLink::new(
-                id,
-                profile.version_uuid,
-                Some(profile_content_version),
-                None,
-            ),
+            account_id: id,
+            profile_version: profile.version_uuid,
+            profile_content_version,
             age: profile.age,
             search_age_range: SearchAgeRangeValidated::new(
                 state.search_age_range_min,
@@ -198,9 +196,12 @@ impl LocationIndexProfileData {
     }
 
     pub fn to_profile_link_value(&self) -> ProfileLink {
-        let mut profile_link = self.profile_link;
-        profile_link.set_last_seen_time(self.last_seen_time.last_seen_time());
-        profile_link
+        ProfileLink::new(
+            self.account_id,
+            self.profile_version,
+            self.profile_content_version,
+            self.last_seen_time.last_seen_time(),
+        )
     }
 
     pub fn is_match(

@@ -1,8 +1,7 @@
 use database_chat::current::read::GetDbReadCommandsChat;
 use model_chat::{
-    AccountId, AccountIdInternal, AccountInteractionInternal, ChatProfileLink, ChatStateRaw,
-    GetSentMessage, MatchId, PageItemCountForNewLikes, ReceivedLikeId, SentBlocksPage,
-    SentMessageId,
+    AccountId, AccountIdInternal, AccountInteractionInternal, ChatStateRaw, GetSentMessage,
+    MatchId, PageItemCountForNewLikes, ProfileLink, ReceivedLikeId, SentBlocksPage, SentMessageId,
 };
 use server_data::{
     DataError, IntoDataError,
@@ -45,7 +44,7 @@ impl ReadCommandsChat<'_> {
         &self,
         id: AccountIdInternal,
         state: DbIteratorStateNewCount<ReceivedLikeId>,
-    ) -> Result<(Vec<ChatProfileLink>, PageItemCountForNewLikes), DataError> {
+    ) -> Result<(Vec<ProfileLink>, PageItemCountForNewLikes), DataError> {
         let (accounts, item_count) = self
             .db_read(move |mut cmds| {
                 let value = cmds
@@ -61,14 +60,14 @@ impl ReadCommandsChat<'_> {
             })
             .await?;
 
-        Ok((self.to_chat_profile_links(accounts).await?, item_count))
+        Ok((self.to_profile_links(accounts).await?, item_count))
     }
 
     pub async fn matches_page(
         &self,
         id: AccountIdInternal,
         state: DbIteratorState<MatchId>,
-    ) -> Result<Vec<ChatProfileLink>, DataError> {
+    ) -> Result<Vec<ProfileLink>, DataError> {
         let accounts = self
             .db_read(move |mut cmds| {
                 let value = cmds.chat().interaction().paged_matches(
@@ -80,26 +79,23 @@ impl ReadCommandsChat<'_> {
             })
             .await?;
 
-        self.to_chat_profile_links(accounts).await
+        self.to_profile_links(accounts).await
     }
 
-    async fn to_chat_profile_links(
+    async fn to_profile_links(
         &self,
         accounts: Vec<AccountId>,
-    ) -> Result<Vec<ChatProfileLink>, DataError> {
+    ) -> Result<Vec<ProfileLink>, DataError> {
         let mut links = vec![];
         for id in accounts {
             let x = self
                 .cache()
                 .read_cache(id, |e| {
-                    let version = e.profile.profile_internal().version_uuid;
-                    let content_version = e.media.profile_content_version;
-                    let last_seen_time = e.profile.last_seen_time().last_seen_time();
-                    Ok(ChatProfileLink::new(
+                    Ok(ProfileLink::new(
                         id,
-                        Some(version),
-                        Some(content_version),
-                        Some(last_seen_time),
+                        e.profile.profile_internal().version_uuid,
+                        e.media.profile_content_version,
+                        e.profile.last_seen_time().last_seen_time(),
                     ))
                 })
                 .await?;
