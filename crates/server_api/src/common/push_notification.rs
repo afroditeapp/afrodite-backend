@@ -72,7 +72,13 @@ pub async fn post_get_pending_notification(
     if let Some(id) = id {
         let flags = PendingNotificationFlags::from(data.value);
         data.admin_notification = if flags.contains(PendingNotificationFlags::ADMIN_NOTIFICATION) {
-            state.admin_notification().get_notification_state(id).await
+            Some(
+                state
+                    .admin_notification()
+                    .get_unreceived_notification(id)
+                    .await
+                    .unwrap_or_default(),
+            )
         } else {
             None
         };

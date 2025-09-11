@@ -210,13 +210,8 @@ pub async fn post_get_admin_notification(
 
         let data = state
             .admin_notification()
-            .get_notification_state(api_caller_account_id)
-            .await
-            .unwrap_or_default();
-
-        state
-            .admin_notification()
-            .reset_notification_state(api_caller_account_id)
+            .write()
+            .mark_notification_received_and_return_it(api_caller_account_id)
             .await;
 
         Ok(data.into())

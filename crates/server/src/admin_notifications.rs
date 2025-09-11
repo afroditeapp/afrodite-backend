@@ -82,9 +82,6 @@ impl AdminNotificationManager {
                 }
                 item = receiver.0.recv() => {
                     match item {
-                        Some(AdminNotificationEvent::ResetState(id)) => {
-                            self.state.admin_notification().write().reset_notification_state(id).await;
-                        }
                         Some(AdminNotificationEvent::SendNotificationIfNeeded(_)) => {
                             timer.start_if_not_running();
                         },
@@ -152,22 +149,13 @@ impl AdminNotificationManager {
             .change_context(AdminNotificationError::DatabaseError)?;
 
         for (a, settings) in accounts {
-            let current_notification_state = self
+            let send_event = self
                 .state
                 .admin_notification()
-                .get_notification_state(a)
-                .await
-                .unwrap_or_default();
-
-            let new_notification_state =
-                current_notification_state.merge(&settings.union(&notification));
-
-            if current_notification_state != new_notification_state {
-                self.state
-                    .admin_notification()
-                    .write()
-                    .set_notification_state(a, new_notification_state)
-                    .await;
+                .write()
+                .send_if_needed(a, settings.union(&notification))
+                .await;
+            if send_event {
                 let r = self
                     .state
                     .event_manager()

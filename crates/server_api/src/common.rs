@@ -524,7 +524,7 @@ async fn handle_socket_result(
 
     if state
         .admin_notification()
-        .get_notification_state(id)
+        .get_unreceived_notification(id)
         .await
         .is_some()
     {

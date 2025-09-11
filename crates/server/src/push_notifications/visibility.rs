@@ -129,7 +129,7 @@ pub async fn is_notification_visible(
             async || {
                 state
                     .admin_notification()
-                    .get_notification_state(id)
+                    .get_unreceived_notification(id)
                     .await
                     .map(|_| true)
             },

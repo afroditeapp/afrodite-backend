@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use model::{AccountIdDb, AccountIdInternal, AdminNotification, AdminNotificationTypes};
+use model::{AccountIdDb, AccountIdInternal, AdminNotification, AdminNotificationTypes, UnixTime};
+use simple_backend_utils::time::DurationValue;
 use tokio::sync::{
     RwLock,
     mpsc::{self, Receiver, Sender},
@@ -8,7 +9,6 @@ use tokio::sync::{
 use tracing::error;
 
 pub enum AdminNotificationEvent {
-    ResetState(AccountIdInternal),
     SendNotificationIfNeeded(AdminNotificationTypes),
     RefreshStartTimeWaiter,
 }
@@ -16,8 +16,15 @@ pub enum AdminNotificationEvent {
 pub struct AdminNotificationEventReceiver(pub Receiver<AdminNotificationEvent>);
 
 #[derive(Default)]
+pub struct AccountSpecificState {
+    notification: AdminNotification,
+    received: bool,
+    sending_time: UnixTime,
+}
+
+#[derive(Default)]
 struct State {
-    sent_status: HashMap<AccountIdDb, AdminNotification>,
+    state: HashMap<AccountIdDb, AccountSpecificState>,
 }
 
 pub struct AdminNotificationManagerData {
@@ -34,17 +41,6 @@ impl AdminNotificationManagerData {
             state: RwLock::default(),
         };
         (data, receiver)
-    }
-
-    pub async fn reset_notification_state(&self, id: AccountIdInternal) {
-        if self
-            .sender
-            .send(AdminNotificationEvent::ResetState(id))
-            .await
-            .is_err()
-        {
-            error!("Reset state event sending failed");
-        }
     }
 
     pub async fn send_notification_if_needed(&self, notification: AdminNotificationTypes) {
@@ -71,16 +67,25 @@ impl AdminNotificationManagerData {
         }
     }
 
-    pub async fn get_notification_state(&self, id: AccountIdInternal) -> Option<AdminNotification> {
+    pub async fn get_unreceived_notification(
+        &self,
+        id: AccountIdInternal,
+    ) -> Option<AdminNotification> {
         self.state
             .read()
             .await
-            .sent_status
+            .state
             .get(id.as_db_id())
+            .and_then(|v| {
+                if v.received {
+                    None
+                } else {
+                    Some(&v.notification)
+                }
+            })
             .cloned()
     }
 
-    /// Access this only from [AdminNotificationManager].
     pub fn write(&self) -> AdminNotificationStateWriteAccess {
         AdminNotificationStateWriteAccess { state: &self.state }
     }
@@ -91,15 +96,44 @@ pub struct AdminNotificationStateWriteAccess<'a> {
 }
 
 impl AdminNotificationStateWriteAccess<'_> {
-    pub async fn reset_notification_state(&self, id: AccountIdInternal) {
-        self.state.write().await.sent_status.remove(id.as_db_id());
+    pub async fn mark_notification_received_and_return_it(
+        &self,
+        id: AccountIdInternal,
+    ) -> AdminNotification {
+        if let Some(s) = self.state.write().await.state.get_mut(id.as_db_id()) {
+            s.received = true;
+            s.notification.clone()
+        } else {
+            AdminNotification::default()
+        }
     }
 
-    pub async fn set_notification_state(&self, id: AccountIdInternal, state: AdminNotification) {
-        self.state
-            .write()
-            .await
-            .sent_status
-            .insert(id.into_db_id(), state);
+    /// Returns true, if notification event should be sent to client
+    pub async fn send_if_needed(
+        &self,
+        id: AccountIdInternal,
+        notification: AdminNotification,
+    ) -> bool {
+        if notification == AdminNotification::default() {
+            return false;
+        }
+        let mut write = self.state.write().await;
+        let state = write
+            .state
+            .entry(id.into_db_id())
+            .or_insert(AccountSpecificState::default());
+        let new_notification = state.notification.merge(&notification);
+        if state.notification != new_notification
+            || state
+                .sending_time
+                .duration_value_elapsed(DurationValue::from_days(1))
+        {
+            state.notification = new_notification;
+            state.received = false;
+            state.sending_time = UnixTime::current_time();
+            true
+        } else {
+            false
+        }
     }
 }
