@@ -13,11 +13,11 @@ use std::{
 use axum::body::BodyDataStream;
 use config::Config;
 use futures::Future;
-use model::{AccountId, AccountIdInternal, ContentProcessingId, ContentSlot, ReceivedLikeId};
+use model::{AccountId, AccountIdInternal, ContentProcessingId, ContentSlot};
 use model_server_data::{
     AutomaticProfileSearchIteratorSessionId, AutomaticProfileSearchIteratorSessionIdInternal,
     NewsIteratorSessionId, ProfileIteratorSessionId, ProfileIteratorSessionIdInternal, ProfileLink,
-    PublicationId, ReceivedLikesIteratorSessionId,
+    PublicationId,
 };
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
@@ -251,16 +251,6 @@ impl ConcurrentWriteProfileHandleBlocking {
             .automatic_profile_search_reset_profile_iterator(id)
     }
 
-    pub fn next_received_likes_iterator_state(
-        &self,
-        id: AccountIdInternal,
-        iterator_id: ReceivedLikesIteratorSessionId,
-    ) -> Result<Option<DbIteratorStateNewCount<ReceivedLikeId>>, DataError> {
-        self.write
-            .user_write_commands_account()
-            .next_received_likes_iterator_state(id, iterator_id)
-    }
-
     pub fn into_lock(self) -> OwnedMutexGuard<AccountHandle> {
         self.account_write_lock
     }
@@ -491,20 +481,6 @@ impl<'a> WriteCommandsConcurrent<'a> {
                 p.automatic_profile_search.current_iterator = next_state;
                 p.automatic_profile_search.iterator_session_id = Some(new_id);
                 Ok(new_id)
-            })
-            .into_data_error(id)
-    }
-
-    pub fn next_received_likes_iterator_state(
-        &self,
-        id: AccountIdInternal,
-        iterator_session_id: ReceivedLikesIteratorSessionId,
-    ) -> Result<Option<DbIteratorStateNewCount<ReceivedLikeId>>, DataError> {
-        self.cache
-            .write_cache_blocking(id.as_id(), |e| {
-                Ok(e.chat
-                    .received_likes_iterator
-                    .get_and_increment(iterator_session_id))
             })
             .into_data_error(id)
     }

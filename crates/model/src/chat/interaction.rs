@@ -153,7 +153,16 @@ impl From<MatchId> for i64 {
 }
 
 #[derive(
-    Debug, Clone, Copy, Default, Deserialize, Serialize, PartialEq, FromSqlRow, AsExpression,
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    Deserialize,
+    Serialize,
+    PartialEq,
+    FromSqlRow,
+    AsExpression,
+    ToSchema,
 )]
 #[diesel(sql_type = BigInt)]
 pub struct ReceivedLikeId {

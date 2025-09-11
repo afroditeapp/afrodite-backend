@@ -3,9 +3,8 @@ use model::AccountState;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionState, CurrentAccountInteractionState,
     DailyLikesLeft, DeleteLikeResult, LimitedActionStatus, NewReceivedLikesCount,
-    NewReceivedLikesCountResult, PageItemCountForNewLikes, PendingNotificationFlags,
-    ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult,
-    SendLikeResult,
+    NewReceivedLikesCountResult, PendingNotificationFlags, ReceivedLikesIteratorState,
+    ReceivedLikesPage, ResetReceivedLikesIteratorResult, SendLikeResult,
 };
 use server_api::{
     S,
@@ -206,7 +205,7 @@ pub async fn post_reset_received_likes_paging(
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ResetReceivedLikesIteratorResult>, StatusCode> {
     CHAT.post_reset_received_likes_paging.incr();
-    let (iterator_session_id, new_version) = db_write!(state, move |cmds| {
+    let (iterator_state, new_version) = db_write!(state, move |cmds| {
         cmds.chat()
             .handle_reset_received_likes_iterator(account_id)
             .await
@@ -214,16 +213,14 @@ pub async fn post_reset_received_likes_paging(
     let r = ResetReceivedLikesIteratorResult {
         v: new_version,
         c: NewReceivedLikesCount::default(),
-        s: iterator_session_id.into(),
+        s: iterator_state,
     };
-
     Ok(r.into())
 }
 
-const PATH_POST_GET_NEXT_RECEIVED_LIKES_PAGE: &str = "/chat_api/received_likes";
+const PATH_POST_GET_RECEIVED_LIKES_PAGE: &str = "/chat_api/received_likes";
 
-/// Update received likes iterator and get next page
-/// of received likes. If the page is empty there is no more
+/// Get next page of received likes. If the page is empty there is no more
 /// received likes available.
 ///
 /// Profile will not be returned if:
@@ -231,8 +228,8 @@ const PATH_POST_GET_NEXT_RECEIVED_LIKES_PAGE: &str = "/chat_api/received_likes";
 /// - Profile is a match
 #[utoipa::path(
     post,
-    path = PATH_POST_GET_NEXT_RECEIVED_LIKES_PAGE,
-    request_body(content = ReceivedLikesIteratorSessionId),
+    path = PATH_POST_GET_RECEIVED_LIKES_PAGE,
+    request_body(content = ReceivedLikesIteratorState),
     responses(
         (status = 200, description = "Success.", body = ReceivedLikesPage),
         (status = 401, description = "Unauthorized."),
@@ -240,40 +237,22 @@ const PATH_POST_GET_NEXT_RECEIVED_LIKES_PAGE: &str = "/chat_api/received_likes";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_get_next_received_likes_page(
+pub async fn post_get_received_likes_page(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-    Json(iterator_session_id): Json<ReceivedLikesIteratorSessionId>,
+    Json(iterator_state): Json<ReceivedLikesIteratorState>,
 ) -> Result<Json<ReceivedLikesPage>, StatusCode> {
-    CHAT.post_get_next_received_likes_page.incr();
-
-    let data = state
-        .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {
-            cmds.next_received_likes_iterator_state(account_id, iterator_session_id)
-        })
-        .await??;
-
-    if let Some(data) = data {
-        // Received likes iterator session ID was valid
-        let (profiles, new_likes_count) = state
-            .read()
-            .chat()
-            .received_likes_page(account_id, data)
-            .await?;
-        Ok(ReceivedLikesPage {
-            n: new_likes_count,
-            p: profiles,
-            error_invalid_iterator_session_id: false,
-        }
-        .into())
-    } else {
-        Ok(ReceivedLikesPage {
-            n: PageItemCountForNewLikes::default(),
-            p: vec![],
-            error_invalid_iterator_session_id: true,
-        }
-        .into())
+    CHAT.post_get_received_likes_page.incr();
+    let (profiles, new_likes_count) = state
+        .read()
+        .chat()
+        .received_likes_page(account_id, iterator_state)
+        .await?;
+    Ok(ReceivedLikesPage {
+        n: new_likes_count,
+        p: profiles,
     }
+    .into())
 }
 
 const PATH_DELETE_LIKE: &str = "/chat_api/delete_like";
@@ -383,7 +362,7 @@ create_open_api_router!(
         post_send_like,
         post_get_new_received_likes_count,
         post_reset_received_likes_paging,
-        post_get_next_received_likes_page,
+        post_get_received_likes_page,
         delete_like,
         get_daily_likes_left,
 );
@@ -395,7 +374,7 @@ create_counters!(
     post_send_like,
     post_get_new_received_likes_count,
     post_reset_received_likes_paging,
-    post_get_next_received_likes_page,
+    post_get_received_likes_page,
     delete_like,
     get_daily_likes_left,
 );

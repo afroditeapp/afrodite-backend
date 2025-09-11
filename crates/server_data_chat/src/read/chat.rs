@@ -1,16 +1,12 @@
 use database_chat::current::read::GetDbReadCommandsChat;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, ChatStateRaw, GetSentMessage,
-    MatchesIteratorState, PageItemCountForNewLikes, ProfileLink, ReceivedLikeId, SentBlocksPage,
-    SentMessageId,
+    MatchesIteratorState, PageItemCountForNewLikes, ProfileLink, ReceivedLikesIteratorState,
+    SentBlocksPage, SentMessageId,
 };
 use server_data::{
-    DataError, IntoDataError,
-    cache::{CacheReadCommon, db_iterator::new_count::DbIteratorStateNewCount},
-    db_manager::InternalReading,
-    define_cmd_wrapper_read,
-    read::DbRead,
-    result::Result,
+    DataError, IntoDataError, cache::CacheReadCommon, db_manager::InternalReading,
+    define_cmd_wrapper_read, read::DbRead, result::Result,
 };
 
 mod limits;
@@ -41,7 +37,7 @@ impl ReadCommandsChat<'_> {
     pub async fn received_likes_page(
         &self,
         id: AccountIdInternal,
-        state: DbIteratorStateNewCount<ReceivedLikeId>,
+        state: ReceivedLikesIteratorState,
     ) -> Result<(Vec<ProfileLink>, PageItemCountForNewLikes), DataError> {
         let (accounts, item_count) = self
             .db_read(move |mut cmds| {
@@ -50,9 +46,9 @@ impl ReadCommandsChat<'_> {
                     .interaction()
                     .paged_received_likes_from_received_like_id(
                         id,
-                        state.id_at_reset(),
-                        state.page().try_into().unwrap_or(i64::MAX),
-                        state.previous_id_at_reset(),
+                        state.id_at_reset,
+                        state.page,
+                        state.previous_id_at_reset,
                     )?;
                 Ok(value)
             })

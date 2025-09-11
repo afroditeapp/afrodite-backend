@@ -15,17 +15,17 @@ use error_stack::ResultExt;
 use model_chat::{
     AccountIdInternal, AddPublicKeyResult, ChatStateRaw, ClientId, ClientLocalId,
     NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags,
-    PublicKeyId, ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion,
-    SendMessageResult, SentMessageId, SyncVersionUtils,
+    PublicKeyId, ReceivedLikesIteratorState, ReceivedLikesSyncVersion, SendMessageResult,
+    SentMessageId, SyncVersionUtils,
 };
 use server_data::{
-    DataError, DieselDatabaseError, IntoDataError, app::EventManagerProvider, db_transaction,
+    DataError, DieselDatabaseError, app::EventManagerProvider, db_transaction,
     define_cmd_wrapper_write, id::ToAccountIdInternal, result::Result, write::DbTransaction,
 };
 use simple_backend_utils::ContextExt;
 use utils::encrypt::ParsedKeys;
 
-use crate::{cache::CacheWriteChat, read::GetReadChatCommands};
+use crate::read::GetReadChatCommands;
 
 define_cmd_wrapper_write!(WriteCommandsChat);
 
@@ -435,13 +435,7 @@ impl WriteCommandsChat<'_> {
     pub async fn handle_reset_received_likes_iterator(
         &self,
         id: AccountIdInternal,
-    ) -> Result<
-        (
-            ReceivedLikesIteratorSessionIdInternal,
-            ReceivedLikesSyncVersion,
-        ),
-        DataError,
-    > {
+    ) -> Result<(ReceivedLikesIteratorState, ReceivedLikesSyncVersion), DataError> {
         let (new_version, received_like_id, received_like_id_previous) =
             db_transaction!(self, move |mut cmds| {
                 cmds.chat()
@@ -466,15 +460,13 @@ impl WriteCommandsChat<'_> {
                 ))
             })?;
 
-        let session_id = self
-            .write_cache_chat(id.as_id(), |e| {
-                Ok(e.received_likes_iterator
-                    .reset(received_like_id, received_like_id_previous))
-            })
-            .await
-            .into_data_error(id)?;
+        let iterator_state = ReceivedLikesIteratorState {
+            previous_id_at_reset: received_like_id_previous,
+            id_at_reset: received_like_id,
+            page: 0,
+        };
 
-        Ok((session_id, new_version))
+        Ok((iterator_state, new_version))
     }
 }
 

@@ -1,7 +1,5 @@
-use model::{NextNumberStorage, ReceivedLikeId};
-use model_server_data::{
-    NewsIteratorSessionIdInternal, PublicationId, ReceivedLikesIteratorSessionIdInternal,
-};
+use model::NextNumberStorage;
+use model_server_data::{NewsIteratorSessionIdInternal, PublicationId};
 
 pub mod new_count;
 
@@ -112,13 +110,3 @@ impl IteratorSessionIdTrait for NewsIteratorSessionIdInternal {
 }
 
 impl IteratorStartPoint for PublicationId {}
-
-// Chat
-
-impl IteratorSessionIdTrait for ReceivedLikesIteratorSessionIdInternal {
-    fn create(storage: &mut NextNumberStorage) -> Self {
-        ReceivedLikesIteratorSessionIdInternal::create(storage)
-    }
-}
-
-impl IteratorStartPoint for ReceivedLikeId {}
