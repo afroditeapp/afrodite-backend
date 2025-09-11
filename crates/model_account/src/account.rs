@@ -153,6 +153,9 @@ pub struct SignInWithLoginInfo {
     pub client_info: ClientInfo,
     pub apple: Option<SignInWithAppleInfo>,
     pub google: Option<SignInWithGoogleInfo>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub disable_registering: bool,
 }
 
 #[derive(Deserialize, ToSchema)]

@@ -126,8 +126,10 @@ impl SignInWithInfoTrait for AppleAccountInfo {
     }
 }
 
-/// Start new session with sign in with Apple or Google. Creates new account if
-/// it does not exists.
+/// Start new session with sign in with Apple or Google.
+///
+/// Registers new account if it does not exists. That can be disabled
+/// using [SignInWithLoginInfo::disable_registering].
 #[utoipa::path(
     post,
     path = PATH_SIGN_IN_WITH_LOGIN,
@@ -159,7 +161,7 @@ pub async fn post_sign_in_with_login(
             .sign_in_with_manager()
             .validate_apple_token(apple.token, nonce_bytes)
             .await?;
-        handle_sign_in_with_info(&state, address, info).await
+        handle_sign_in_with_info(&state, address, tokens.disable_registering, info).await
     } else if let Some(google) = tokens.google {
         let nonce_bytes = base64::engine::general_purpose::URL_SAFE
             .decode(google.nonce)
@@ -168,7 +170,7 @@ pub async fn post_sign_in_with_login(
             .sign_in_with_manager()
             .validate_google_token(google.token, nonce_bytes)
             .await?;
-        handle_sign_in_with_info(&state, address, info).await
+        handle_sign_in_with_info(&state, address, tokens.disable_registering, info).await
     } else {
         Err(StatusCode::INTERNAL_SERVER_ERROR)
     }?;
@@ -190,6 +192,7 @@ pub async fn post_sign_in_with_login(
 async fn handle_sign_in_with_info(
     state: &S,
     address: SocketAddr,
+    disable_registering: bool,
     info: impl SignInWithInfoTrait,
 ) -> Result<LoginResult, StatusCode> {
     let email: EmailAddress = info
@@ -207,6 +210,8 @@ async fn handle_sign_in_with_info(
             .await)?;
 
         login_impl(already_existing_account.as_id(), address, state).await
+    } else if disable_registering {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
     } else {
         let id = state
             .data_all_access()
