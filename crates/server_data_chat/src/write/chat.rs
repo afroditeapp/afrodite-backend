@@ -14,15 +14,13 @@ use database_chat::current::{
 use error_stack::ResultExt;
 use model_chat::{
     AccountIdInternal, AddPublicKeyResult, ChatStateRaw, ClientId, ClientLocalId,
-    MatchesIteratorSessionIdInternal, NewReceivedLikesCount, PendingMessageId,
-    PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId,
-    ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion, SendMessageResult,
-    SentMessageId, SyncVersionUtils,
+    NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags,
+    PublicKeyId, ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion,
+    SendMessageResult, SentMessageId, SyncVersionUtils,
 };
 use server_data::{
     DataError, DieselDatabaseError, IntoDataError, app::EventManagerProvider, db_transaction,
-    define_cmd_wrapper_write, id::ToAccountIdInternal, read::DbRead, result::Result,
-    write::DbTransaction,
+    define_cmd_wrapper_write, id::ToAccountIdInternal, result::Result, write::DbTransaction,
 };
 use simple_backend_utils::ContextExt;
 use utils::encrypt::ParsedKeys;
@@ -477,23 +475,6 @@ impl WriteCommandsChat<'_> {
             .into_data_error(id)?;
 
         Ok((session_id, new_version))
-    }
-
-    pub async fn handle_reset_matches_iterator(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<MatchesIteratorSessionIdInternal, DataError> {
-        let latest_used_id = self
-            .db_read(|mut cmds| cmds.chat().global_state())
-            .await?
-            .next_match_id
-            .next_id_to_latest_used_id();
-        let session_id = self
-            .write_cache_chat(id.as_id(), |e| Ok(e.matches_iterator.reset(latest_used_id)))
-            .await
-            .into_data_error(id)?;
-
-        Ok(session_id)
     }
 }
 

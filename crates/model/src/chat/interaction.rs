@@ -106,7 +106,16 @@ impl TryFrom<i64> for AccountInteractionState {
 diesel_i64_try_from!(AccountInteractionState);
 
 #[derive(
-    Debug, Clone, Copy, Default, Deserialize, Serialize, PartialEq, FromSqlRow, AsExpression,
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    Deserialize,
+    Serialize,
+    PartialEq,
+    FromSqlRow,
+    AsExpression,
+    ToSchema,
 )]
 #[diesel(sql_type = BigInt)]
 pub struct MatchId {

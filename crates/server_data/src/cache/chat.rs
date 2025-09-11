@@ -1,7 +1,7 @@
-use model::{MatchId, ReceivedLikeId};
-use model_server_data::{MatchesIteratorSessionIdInternal, ReceivedLikesIteratorSessionIdInternal};
+use model::ReceivedLikeId;
+use model_server_data::ReceivedLikesIteratorSessionIdInternal;
 
-use super::db_iterator::{DbIterator, new_count::DbIteratorNewCount};
+use super::db_iterator::new_count::DbIteratorNewCount;
 
 #[derive(Debug, Default)]
 pub struct CacheChat {
@@ -12,5 +12,4 @@ pub struct CacheChat {
     // pub fcm_device_token: Option<FcmDeviceToken>,
     pub received_likes_iterator:
         DbIteratorNewCount<ReceivedLikesIteratorSessionIdInternal, ReceivedLikeId>,
-    pub matches_iterator: DbIterator<MatchesIteratorSessionIdInternal, MatchId>,
 }

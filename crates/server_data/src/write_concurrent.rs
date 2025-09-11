@@ -13,13 +13,11 @@ use std::{
 use axum::body::BodyDataStream;
 use config::Config;
 use futures::Future;
-use model::{
-    AccountId, AccountIdInternal, ContentProcessingId, ContentSlot, MatchId, ReceivedLikeId,
-};
+use model::{AccountId, AccountIdInternal, ContentProcessingId, ContentSlot, ReceivedLikeId};
 use model_server_data::{
     AutomaticProfileSearchIteratorSessionId, AutomaticProfileSearchIteratorSessionIdInternal,
-    MatchesIteratorSessionId, NewsIteratorSessionId, ProfileIteratorSessionId,
-    ProfileIteratorSessionIdInternal, ProfileLink, PublicationId, ReceivedLikesIteratorSessionId,
+    NewsIteratorSessionId, ProfileIteratorSessionId, ProfileIteratorSessionIdInternal, ProfileLink,
+    PublicationId, ReceivedLikesIteratorSessionId,
 };
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
@@ -29,12 +27,9 @@ use super::{
     file::utils::FileDir,
 };
 use crate::{
-    DataError,
-    cache::db_iterator::{DbIteratorState, new_count::DbIteratorStateNewCount},
-    content_processing::NewContentInfo,
-    db_manager::RouterDatabaseWriteHandle,
-    index::LocationIndexIteratorHandle,
-    result::Result,
+    DataError, cache::db_iterator::new_count::DbIteratorStateNewCount,
+    content_processing::NewContentInfo, db_manager::RouterDatabaseWriteHandle,
+    index::LocationIndexIteratorHandle, result::Result,
 };
 
 const PROFILE_ITERATOR_PAGE_SIZE: usize = 25;
@@ -264,16 +259,6 @@ impl ConcurrentWriteProfileHandleBlocking {
         self.write
             .user_write_commands_account()
             .next_received_likes_iterator_state(id, iterator_id)
-    }
-
-    pub fn next_matches_iterator_state(
-        &self,
-        id: AccountIdInternal,
-        iterator_id: MatchesIteratorSessionId,
-    ) -> Result<Option<DbIteratorState<MatchId>>, DataError> {
-        self.write
-            .user_write_commands_account()
-            .next_matches_iterator_state(id, iterator_id)
     }
 
     pub fn into_lock(self) -> OwnedMutexGuard<AccountHandle> {
@@ -519,20 +504,6 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .write_cache_blocking(id.as_id(), |e| {
                 Ok(e.chat
                     .received_likes_iterator
-                    .get_and_increment(iterator_session_id))
-            })
-            .into_data_error(id)
-    }
-
-    pub fn next_matches_iterator_state(
-        &self,
-        id: AccountIdInternal,
-        iterator_session_id: MatchesIteratorSessionId,
-    ) -> Result<Option<DbIteratorState<MatchId>>, DataError> {
-        self.cache
-            .write_cache_blocking(id.as_id(), |e| {
-                Ok(e.chat
-                    .matches_iterator
                     .get_and_increment(iterator_session_id))
             })
             .into_data_error(id)

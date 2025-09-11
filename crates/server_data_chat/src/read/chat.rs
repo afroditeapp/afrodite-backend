@@ -1,14 +1,12 @@
 use database_chat::current::read::GetDbReadCommandsChat;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, ChatStateRaw, GetSentMessage,
-    MatchId, PageItemCountForNewLikes, ProfileLink, ReceivedLikeId, SentBlocksPage, SentMessageId,
+    MatchesIteratorState, PageItemCountForNewLikes, ProfileLink, ReceivedLikeId, SentBlocksPage,
+    SentMessageId,
 };
 use server_data::{
     DataError, IntoDataError,
-    cache::{
-        CacheReadCommon,
-        db_iterator::{DbIteratorState, new_count::DbIteratorStateNewCount},
-    },
+    cache::{CacheReadCommon, db_iterator::new_count::DbIteratorStateNewCount},
     db_manager::InternalReading,
     define_cmd_wrapper_read,
     read::DbRead,
@@ -66,15 +64,14 @@ impl ReadCommandsChat<'_> {
     pub async fn matches_page(
         &self,
         id: AccountIdInternal,
-        state: DbIteratorState<MatchId>,
+        state: MatchesIteratorState,
     ) -> Result<Vec<ProfileLink>, DataError> {
         let accounts = self
             .db_read(move |mut cmds| {
-                let value = cmds.chat().interaction().paged_matches(
-                    id,
-                    state.id_at_reset(),
-                    state.page().try_into().unwrap_or(i64::MAX),
-                )?;
+                let value =
+                    cmds.chat()
+                        .interaction()
+                        .paged_matches(id, state.id_at_reset, state.page)?;
                 Ok(value)
             })
             .await?;
@@ -169,5 +166,19 @@ impl ReadCommandsChat<'_> {
             })
             .await?;
         Ok(unlimited_likes)
+    }
+
+    pub async fn get_initial_matches_iterator_state(
+        &self,
+    ) -> Result<MatchesIteratorState, DataError> {
+        let latest_used_id = self
+            .db_read(|mut cmds| cmds.chat().global_state())
+            .await?
+            .next_match_id
+            .next_id_to_latest_used_id();
+        Ok(MatchesIteratorState {
+            id_at_reset: latest_used_id,
+            page: 0,
+        })
     }
 }
