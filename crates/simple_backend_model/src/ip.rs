@@ -51,7 +51,7 @@ pub enum IpCountryKey {
 impl IpCountryKey {
     pub fn to_ip_country(&self) -> IpCountry {
         match self {
-            Self::Country(c) => IpCountry(c.to_lowercase()),
+            Self::Country(c) => IpCountry(c.to_uppercase()),
             Self::Localhost => IpCountry(LOCALHOST.to_string()),
             Self::Unknown => IpCountry(UNKNOWN.to_string()),
         }
@@ -72,7 +72,7 @@ impl Borrow<str> for IpCountryKey {
 ///
 /// # Possible values
 ///
-/// - Two letter lowercase country code
+/// - Two letter uppercase country code
 /// - `localhost`
 /// - `unknown`
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
