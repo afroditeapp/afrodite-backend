@@ -9,7 +9,7 @@ use std::{
 use chrono::{Datelike, Utc};
 use error_stack::{Report, Result, ResultExt};
 use manager_model::ManagerInstanceName;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use simple_backend_utils::{
     ContextExt,
     time::{DurationValue, TimeValue, UtcTimeValue},
@@ -435,11 +435,33 @@ pub struct StaticFilePackageHostingConfig {
     pub package: PathBuf,
     /// Read files only from specific directory in the package.
     pub read_from_dir: Option<String>,
+    #[serde(flatten, default)]
+    pub acccess: IpAddressAccessConfig,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct IpAddressAccessConfig {
     #[serde(default)]
-    pub disable_ip_allowlist: bool,
-    /// Allow accessing files only from specific IP addresses.
+    pub allow_all_ip_addresses: bool,
+    /// Allow access from specific IP addresses.
     #[serde(default)]
     pub ip_allowlist: Vec<IpAddr>,
+    /// Allow access from specific IP countries.
+    ///
+    /// All strings are converted to uppercase as it is assumed that
+    /// MaxMind DB contains uppercase country codes.
+    #[serde(default, deserialize_with = "ip_country_allowlist_from_vec_string")]
+    pub ip_country_allowlist: Vec<String>,
+}
+
+pub fn ip_country_allowlist_from_vec_string<'de, D: Deserializer<'de>>(
+    d: D,
+) -> std::result::Result<Vec<String>, D::Error> {
+    Vec::<String>::deserialize(d).map(|v| {
+        v.iter()
+            .map(|v| v.to_ascii_uppercase())
+            .collect::<Vec<String>>()
+    })
 }
 
 /// Absolute path with no whitespace.

@@ -33,11 +33,12 @@ use server_state::{
     state_impl::{ReadData, WriteData},
 };
 use simple_backend::{
-    app::FilePackageProvider,
+    app::{FilePackageProvider, MaxMindDbDataProvider},
     create_counters,
     perf::websocket::{self, ConnectionTracker},
     web_socket::WebSocketManager,
 };
+use simple_backend_config::file::IpAddressAccessConfig;
 use simple_backend_utils::{IntoReportFromString, time::DurationValue};
 use tokio::time::Instant;
 use tracing::{error, info};
@@ -84,7 +85,7 @@ pub async fn get_file_package_access(
     ConnectInfo(address): ConnectInfo<SocketAddr>,
 ) -> Result<(TypedHeader<ContentType>, Bytes), StatusCode> {
     COMMON.get_file_package_access.incr();
-    check_ip_allowlist(&state, address)?;
+    check_ip_allowlist(&state, address).await?;
     let wanted_file = path_parts.join("/");
     let (content_type, data) = state
         .file_package()
@@ -100,7 +101,7 @@ pub async fn get_file_package_access_root(
     ConnectInfo(address): ConnectInfo<SocketAddr>,
 ) -> Result<(TypedHeader<ContentType>, Bytes), StatusCode> {
     COMMON.get_file_package_access_root.incr();
-    check_ip_allowlist(&state, address)?;
+    check_ip_allowlist(&state, address).await?;
     let (content_type, data) = state
         .file_package()
         .data("index.html")
@@ -108,16 +109,39 @@ pub async fn get_file_package_access_root(
     Ok((TypedHeader(content_type), data))
 }
 
-fn check_ip_allowlist(state: &S, address: SocketAddr) -> Result<(), StatusCode> {
+async fn check_ip_allowlist(state: &S, address: SocketAddr) -> Result<(), StatusCode> {
     if let Some(config) = state.config().simple_backend().file_package() {
-        if config.disable_ip_allowlist || config.ip_allowlist.iter().any(|v| *v == address.ip()) {
-            Ok(())
-        } else {
-            Err(StatusCode::NOT_FOUND)
-        }
+        is_ip_address_accepted(state, address, &config.acccess).await
     } else {
         Err(StatusCode::NOT_FOUND)
     }
+}
+
+pub async fn is_ip_address_accepted(
+    state: &S,
+    address: SocketAddr,
+    config: &IpAddressAccessConfig,
+) -> Result<(), StatusCode> {
+    if config.allow_all_ip_addresses || config.ip_allowlist.iter().any(|v| *v == address.ip()) {
+        return Ok(());
+    }
+
+    if !config.ip_country_allowlist.is_empty() {
+        let ip_db = state.maxmind_db().current_db_ref().await;
+        if let Some(ip_db) = ip_db.as_ref() {
+            if let Some(country) = ip_db.get_country_ref(address.ip()) {
+                if config
+                    .ip_country_allowlist
+                    .iter()
+                    .any(|v| v == country.as_str())
+                {
+                    return Ok(());
+                }
+            }
+        }
+    }
+
+    Err(StatusCode::NOT_FOUND)
 }
 
 pub use utils::api::PATH_CONNECT;
