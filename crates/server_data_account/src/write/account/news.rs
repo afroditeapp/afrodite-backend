@@ -1,11 +1,8 @@
 use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
-use model_account::{AccountIdInternal, ResetNewsIteratorResult};
+use model_account::{AccountIdInternal, NewsIteratorState, ResetNewsIteratorResult};
 use server_data::{
-    DataError, IntoDataError, db_transaction, define_cmd_wrapper_write, result::Result,
-    write::DbTransaction,
+    DataError, db_transaction, define_cmd_wrapper_write, result::Result, write::DbTransaction,
 };
-
-use crate::cache::CacheWriteAccount;
 
 define_cmd_wrapper_write!(WriteCommandsAccountNews);
 
@@ -35,15 +32,12 @@ impl WriteCommandsAccountNews<'_> {
             Ok((previous_id, new_id, v, c))
         })?;
 
-        let session_id = self
-            .write_cache_account(id.as_id(), |e| {
-                Ok(e.news_iterator.reset(new_id, previous_id))
-            })
-            .await
-            .into_data_error(id)?;
-
         Ok(ResetNewsIteratorResult {
-            s: session_id.into(),
+            s: NewsIteratorState {
+                previous_id_at_reset: previous_id,
+                id_at_reset: new_id,
+                page: 0,
+            },
             v,
             c: count,
         })

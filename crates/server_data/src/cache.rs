@@ -28,7 +28,6 @@ pub mod account;
 pub mod api_limits;
 pub mod chat;
 pub mod common;
-pub mod db_iterator;
 pub mod media;
 pub mod profile;
 

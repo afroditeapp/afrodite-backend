@@ -1,25 +1,7 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
-use model::NextNumberStorage;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_wrapper;
 use utoipa::{IntoParams, ToSchema};
-
-/// Session ID type for news iterator so that client can detect
-/// server restarts and ask user to refresh news.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct NewsIteratorSessionIdInternal {
-    pub id: i64,
-}
-
-impl NewsIteratorSessionIdInternal {
-    /// Current implementation uses i64. Only requirement for this
-    /// type is that next one should be different than the previous.
-    pub fn create(storage: &mut NextNumberStorage) -> Self {
-        Self {
-            id: storage.get_and_increment(),
-        }
-    }
-}
 
 /// Publication ID
 #[derive(
@@ -67,21 +49,9 @@ impl From<PublicationId> for i64 {
     }
 }
 
-/// Session ID type for news iterator so that client can detect
-/// server restarts and ask user to refresh news.
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
-pub struct NewsIteratorSessionId {
-    id: i64,
-}
-
-impl From<NewsIteratorSessionIdInternal> for NewsIteratorSessionId {
-    fn from(value: NewsIteratorSessionIdInternal) -> Self {
-        Self { id: value.id }
-    }
-}
-
-impl From<NewsIteratorSessionId> for NewsIteratorSessionIdInternal {
-    fn from(value: NewsIteratorSessionId) -> Self {
-        Self { id: value.id }
-    }
+pub struct NewsIteratorState {
+    pub previous_id_at_reset: Option<PublicationId>,
+    pub id_at_reset: PublicationId,
+    pub page: i64,
 }

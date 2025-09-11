@@ -3,9 +3,9 @@ use axum::{
     extract::{Path, Query, State},
 };
 use model_account::{
-    AccountIdInternal, GetNewsItemResult, NewsId, NewsIteratorSessionId, NewsLocale, NewsPage,
-    PageItemCountForNewPublicNews, PendingNotificationFlags, Permissions, RequireNewsLocale,
-    ResetNewsIteratorResult, UnreadNewsCountResult,
+    AccountIdInternal, GetNewsItemResult, NewsId, NewsIteratorState, NewsLocale, NewsPage,
+    PendingNotificationFlags, Permissions, RequireNewsLocale, ResetNewsIteratorResult,
+    UnreadNewsCountResult,
 };
 use server_api::{S, app::EventManagerProvider, create_open_api_router, db_write};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
@@ -75,13 +75,13 @@ pub async fn post_reset_news_paging(
 
 /// For admins the first items on the first page are all
 /// private news.
-const PATH_POST_GET_NEXT_NEWS_PAGE: &str = "/account_api/next_news_page";
+const PATH_POST_GET_NEWS_PAGE: &str = "/account_api/news_page";
 
 #[utoipa::path(
     post,
-    path = PATH_POST_GET_NEXT_NEWS_PAGE,
+    path = PATH_POST_GET_NEWS_PAGE,
     params(NewsLocale),
-    request_body(content = NewsIteratorSessionId),
+    request_body(content = NewsIteratorState),
     responses(
         (status = 200, description = "Success.", body = NewsPage),
         (status = 401, description = "Unauthorized."),
@@ -89,47 +89,24 @@ const PATH_POST_GET_NEXT_NEWS_PAGE: &str = "/account_api/next_news_page";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_get_next_news_page(
+pub async fn post_get_news_page(
     State(state): State<S>,
-    Extension(account_id): Extension<AccountIdInternal>,
     Extension(permissions): Extension<Permissions>,
     Query(locale): Query<NewsLocale>,
-    Json(iterator_session_id): Json<NewsIteratorSessionId>,
+    Json(iterator_state): Json<NewsIteratorState>,
 ) -> Result<Json<NewsPage>, StatusCode> {
-    ACCOUNT.post_get_next_news_page.incr();
-
-    let data = state
-        .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {
-            cmds.next_news_iterator_state(account_id, iterator_session_id)
-        })
-        .await??;
-
-    if let Some(data) = data {
-        // Session ID is valid
-        let (news, n) = state
-            .read()
-            .account()
-            .news()
-            .news_page(
-                data,
-                locale,
-                permissions.some_admin_news_permissions_granted(),
-            )
-            .await?;
-        Ok(NewsPage {
-            n,
-            news,
-            error_invalid_iterator_session_id: false,
-        }
-        .into())
-    } else {
-        Ok(NewsPage {
-            n: PageItemCountForNewPublicNews::default(),
-            news: vec![],
-            error_invalid_iterator_session_id: true,
-        }
-        .into())
-    }
+    ACCOUNT.post_get_news_page.incr();
+    let (news, n) = state
+        .read()
+        .account()
+        .news()
+        .news_page(
+            iterator_state,
+            locale,
+            permissions.some_admin_news_permissions_granted(),
+        )
+        .await?;
+    Ok(NewsPage { n, news }.into())
 }
 
 const PATH_GET_NEWS_ITEM: &str = "/account_api/news_item/{nid}";
@@ -184,7 +161,7 @@ create_open_api_router!(
         fn router_news,
         post_get_unread_news_count,
         post_reset_news_paging,
-        post_get_next_news_page,
+        post_get_news_page,
         get_news_item,
 );
 
@@ -194,6 +171,6 @@ create_counters!(
     ACCOUNT_NEWS_COUNTERS_LIST,
     get_unread_news_count,
     post_reset_news_paging,
-    post_get_next_news_page,
+    post_get_news_page,
     get_news_item,
 );

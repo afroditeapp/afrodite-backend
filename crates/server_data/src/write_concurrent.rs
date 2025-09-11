@@ -16,8 +16,7 @@ use futures::Future;
 use model::{AccountId, AccountIdInternal, ContentProcessingId, ContentSlot};
 use model_server_data::{
     AutomaticProfileSearchIteratorSessionId, AutomaticProfileSearchIteratorSessionIdInternal,
-    NewsIteratorSessionId, ProfileIteratorSessionId, ProfileIteratorSessionIdInternal, ProfileLink,
-    PublicationId,
+    ProfileIteratorSessionId, ProfileIteratorSessionIdInternal, ProfileLink,
 };
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
@@ -27,8 +26,7 @@ use super::{
     file::utils::FileDir,
 };
 use crate::{
-    DataError, cache::db_iterator::new_count::DbIteratorStateNewCount,
-    content_processing::NewContentInfo, db_manager::RouterDatabaseWriteHandle,
+    DataError, content_processing::NewContentInfo, db_manager::RouterDatabaseWriteHandle,
     index::LocationIndexIteratorHandle, result::Result,
 };
 
@@ -254,16 +252,6 @@ impl ConcurrentWriteProfileHandleBlocking {
     pub fn into_lock(self) -> OwnedMutexGuard<AccountHandle> {
         self.account_write_lock
     }
-
-    pub fn next_news_iterator_state(
-        &self,
-        id: AccountIdInternal,
-        iterator_id: NewsIteratorSessionId,
-    ) -> Result<Option<DbIteratorStateNewCount<PublicationId>>, DataError> {
-        self.write
-            .user_write_commands_account()
-            .next_news_iterator_state(id, iterator_id)
-    }
 }
 
 /// Commands that can run concurrently with other write commands, but which have
@@ -481,20 +469,6 @@ impl<'a> WriteCommandsConcurrent<'a> {
                 p.automatic_profile_search.current_iterator = next_state;
                 p.automatic_profile_search.iterator_session_id = Some(new_id);
                 Ok(new_id)
-            })
-            .into_data_error(id)
-    }
-
-    pub fn next_news_iterator_state(
-        &self,
-        id: AccountIdInternal,
-        iterator_session_id: NewsIteratorSessionId,
-    ) -> Result<Option<DbIteratorStateNewCount<PublicationId>>, DataError> {
-        self.cache
-            .write_cache_blocking(id.as_id(), |e| {
-                Ok(e.account
-                    .news_iterator
-                    .get_and_increment(iterator_session_id))
             })
             .into_data_error(id)
     }

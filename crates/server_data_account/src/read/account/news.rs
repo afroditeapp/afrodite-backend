@@ -1,11 +1,10 @@
 use database_account::current::read::GetDbReadCommandsAccount;
 use model_account::{
-    AccountIdInternal, NewsId, NewsItem, NewsItemSimple, NewsLocale, PageItemCountForNewPublicNews,
-    PublicationId, RequireNewsLocale, UnreadNewsCountResult,
+    AccountIdInternal, NewsId, NewsItem, NewsItemSimple, NewsIteratorState, NewsLocale,
+    PageItemCountForNewPublicNews, RequireNewsLocale, UnreadNewsCountResult,
 };
 use server_data::{
-    DataError, IntoDataError, cache::db_iterator::new_count::DbIteratorStateNewCount,
-    define_cmd_wrapper_read, read::DbRead, result::Result,
+    DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead, result::Result,
 };
 
 define_cmd_wrapper_read!(ReadCommandsAccountNews);
@@ -26,15 +25,15 @@ impl ReadCommandsAccountNews<'_> {
 
     pub async fn news_page(
         &self,
-        state: DbIteratorStateNewCount<PublicationId>,
+        state: NewsIteratorState,
         locale: NewsLocale,
         include_private_news: bool,
     ) -> Result<(Vec<NewsItemSimple>, PageItemCountForNewPublicNews), DataError> {
         self.db_read(move |mut cmds| {
             let value = cmds.account().news().paged_news(
-                state.id_at_reset(),
-                state.previous_id_at_reset(),
-                state.page().try_into().unwrap_or(i64::MAX),
+                state.id_at_reset,
+                state.previous_id_at_reset,
+                state.page,
                 locale,
                 include_private_news,
             )?;

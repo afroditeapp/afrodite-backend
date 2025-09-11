@@ -1,6 +1,6 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, prelude::*, sql_types::BigInt};
 use model::{NewsSyncVersion, UnreadNewsCount};
-use model_server_data::{NewsIteratorSessionId, PublicationId};
+use model_server_data::{NewsIteratorState, PublicationId};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{UnixTime, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
@@ -108,7 +108,7 @@ diesel_i64_wrapper!(NewsTranslationVersion);
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ResetNewsIteratorResult {
-    pub s: NewsIteratorSessionId,
+    pub s: NewsIteratorState,
     pub v: NewsSyncVersion,
     pub c: UnreadNewsCount,
 }
@@ -117,9 +117,6 @@ pub struct ResetNewsIteratorResult {
 pub struct NewsPage {
     pub n: PageItemCountForNewPublicNews,
     pub news: Vec<NewsItemSimple>,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub error_invalid_iterator_session_id: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
