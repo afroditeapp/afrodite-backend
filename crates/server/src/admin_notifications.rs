@@ -151,7 +151,7 @@ impl AdminNotificationManager {
             .await
             .change_context(AdminNotificationError::DatabaseError)?;
 
-        for (a, _) in accounts {
+        for (a, settings) in accounts {
             let current_notification_state = self
                 .state
                 .admin_notification()
@@ -159,7 +159,8 @@ impl AdminNotificationManager {
                 .await
                 .unwrap_or_default();
 
-            let new_notification_state = current_notification_state.merge(&notification);
+            let new_notification_state =
+                current_notification_state.merge(&settings.union(&notification));
 
             if current_notification_state != new_notification_state {
                 self.state

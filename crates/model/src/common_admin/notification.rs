@@ -221,6 +221,28 @@ impl AdminNotification {
             process_reports: self.process_reports || other.process_reports,
         }
     }
+
+    pub fn union(&self, other: &Self) -> Self {
+        Self {
+            moderate_initial_media_content_bot: self.moderate_initial_media_content_bot
+                && other.moderate_initial_media_content_bot,
+            moderate_initial_media_content_human: self.moderate_initial_media_content_human
+                && other.moderate_initial_media_content_human,
+            moderate_media_content_bot: self.moderate_media_content_bot
+                && other.moderate_media_content_bot,
+            moderate_media_content_human: self.moderate_media_content_human
+                && other.moderate_media_content_human,
+            moderate_profile_texts_bot: self.moderate_profile_texts_bot
+                && other.moderate_profile_texts_bot,
+            moderate_profile_texts_human: self.moderate_profile_texts_human
+                && other.moderate_profile_texts_human,
+            moderate_profile_names_bot: self.moderate_profile_names_bot
+                && other.moderate_profile_names_bot,
+            moderate_profile_names_human: self.moderate_profile_names_human
+                && other.moderate_profile_names_human,
+            process_reports: self.process_reports && other.process_reports,
+        }
+    }
 }
 
 pub enum AdminNotificationTypes {
