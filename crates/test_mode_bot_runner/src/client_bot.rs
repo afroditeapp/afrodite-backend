@@ -7,7 +7,7 @@ use api_client::{
         account_api::get_account_state,
         chat_api::{
             get_latest_public_key_id, post_add_receiver_acknowledgement,
-            post_add_sender_acknowledgement, post_get_next_received_likes_page,
+            post_add_sender_acknowledgement, post_get_received_likes_page,
             post_reset_received_likes_paging, post_send_like,
         },
         common_api::get_client_config,
@@ -402,12 +402,13 @@ impl BotAction for AcceptReceivedLikesAndSendMessage {
         let r = post_reset_received_likes_paging(state.api())
             .await
             .change_context(TestError::ApiRequest)?;
-        let session_id = *r.s;
+        let mut iterator_state = *r.s;
 
         loop {
-            let received_likes = post_get_next_received_likes_page(state.api(), session_id.clone())
+            let received_likes = post_get_received_likes_page(state.api(), iterator_state.clone())
                 .await
                 .change_context(TestError::ApiRequest)?;
+            iterator_state.page += 1;
 
             if received_likes.p.is_empty() {
                 break;

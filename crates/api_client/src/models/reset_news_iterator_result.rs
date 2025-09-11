@@ -16,13 +16,13 @@ pub struct ResetNewsIteratorResult {
     #[serde(rename = "c")]
     pub c: Box<models::UnreadNewsCount>,
     #[serde(rename = "s")]
-    pub s: Box<models::NewsIteratorSessionId>,
+    pub s: Box<models::NewsIteratorState>,
     #[serde(rename = "v")]
     pub v: Box<models::NewsSyncVersion>,
 }
 
 impl ResetNewsIteratorResult {
-    pub fn new(c: models::UnreadNewsCount, s: models::NewsIteratorSessionId, v: models::NewsSyncVersion) -> ResetNewsIteratorResult {
+    pub fn new(c: models::UnreadNewsCount, s: models::NewsIteratorState, v: models::NewsSyncVersion) -> ResetNewsIteratorResult {
         ResetNewsIteratorResult {
             c: Box::new(c),
             s: Box::new(s),

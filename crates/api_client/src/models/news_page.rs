@@ -13,8 +13,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct NewsPage {
-    #[serde(rename = "error_invalid_iterator_session_id", skip_serializing_if = "Option::is_none")]
-    pub error_invalid_iterator_session_id: Option<bool>,
     #[serde(rename = "n")]
     pub n: Box<models::PageItemCountForNewPublicNews>,
     #[serde(rename = "news")]
@@ -24,7 +22,6 @@ pub struct NewsPage {
 impl NewsPage {
     pub fn new(n: models::PageItemCountForNewPublicNews, news: Vec<models::NewsItemSimple>) -> NewsPage {
         NewsPage {
-            error_invalid_iterator_session_id: None,
             n: Box::new(n),
             news,
         }

@@ -193,19 +193,19 @@ pub enum PostGetCustomReportsConfigError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_get_next_client_id`]
+/// struct for typed errors of method [`post_get_news_page`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostGetNextClientIdError {
+pub enum PostGetNewsPageError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_get_next_news_page`]
+/// struct for typed errors of method [`post_get_next_client_id`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostGetNextNewsPageError {
+pub enum PostGetNextClientIdError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -1070,6 +1070,53 @@ pub async fn post_get_custom_reports_config(configuration: &configuration::Confi
     }
 }
 
+pub async fn post_get_news_page(configuration: &configuration::Configuration, locale: &str, news_iterator_state: models::NewsIteratorState) -> Result<models::NewsPage, Error<PostGetNewsPageError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_locale = locale;
+    let p_body_news_iterator_state = news_iterator_state;
+
+    let uri_str = format!("{}/account_api/news_page", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    req_builder = req_builder.query(&[("locale", &p_query_locale.to_string())]);
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-access-token", value);
+    };
+    req_builder = req_builder.json(&p_body_news_iterator_state);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::NewsPage`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::NewsPage`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostGetNewsPageError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 pub async fn post_get_next_client_id(configuration: &configuration::Configuration, ) -> Result<models::ClientId, Error<PostGetNextClientIdError>> {
 
     let uri_str = format!("{}/account_api/next_client_id", configuration.base_path);
@@ -1108,53 +1155,6 @@ pub async fn post_get_next_client_id(configuration: &configuration::Configuratio
     } else {
         let content = resp.text().await?;
         let entity: Option<PostGetNextClientIdError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
-pub async fn post_get_next_news_page(configuration: &configuration::Configuration, locale: &str, news_iterator_session_id: models::NewsIteratorSessionId) -> Result<models::NewsPage, Error<PostGetNextNewsPageError>> {
-    // add a prefix to parameters to efficiently prevent name collisions
-    let p_query_locale = locale;
-    let p_body_news_iterator_session_id = news_iterator_session_id;
-
-    let uri_str = format!("{}/account_api/next_news_page", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
-
-    req_builder = req_builder.query(&[("locale", &p_query_locale.to_string())]);
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("x-access-token", value);
-    };
-    req_builder = req_builder.json(&p_body_news_iterator_session_id);
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-    let content_type = resp
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream");
-    let content_type = super::ContentType::from(content_type);
-
-    if !status.is_client_error() && !status.is_server_error() {
-        let content = resp.text().await?;
-        match content_type {
-            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::NewsPage`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::NewsPage`")))),
-        }
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<PostGetNextNewsPageError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -1310,6 +1310,7 @@ pub async fn post_set_account_deletion_request_state(configuration: &configurati
     }
 }
 
+/// Registers new account if it does not exists. That can be disabled using [SignInWithLoginInfo::disable_registering].
 pub async fn post_sign_in_with_login(configuration: &configuration::Configuration, sign_in_with_login_info: models::SignInWithLoginInfo) -> Result<models::LoginResult, Error<PostSignInWithLoginError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_sign_in_with_login_info = sign_in_with_login_info;

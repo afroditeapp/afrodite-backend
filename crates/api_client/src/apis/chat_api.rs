@@ -53,6 +53,15 @@ pub enum GetDailyLikesLeftError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_initial_matches_iterator_state`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetInitialMatchesIteratorStateError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_latest_public_key_id`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -170,6 +179,15 @@ pub enum PostChatMessageReportError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`post_get_matches_iterator_page`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostGetMatchesIteratorPageError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`post_get_new_received_likes_count`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -179,19 +197,10 @@ pub enum PostGetNewReceivedLikesCountError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_get_next_matches_page`]
+/// struct for typed errors of method [`post_get_received_likes_page`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostGetNextMatchesPageError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`post_get_next_received_likes_page`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum PostGetNextReceivedLikesPageError {
+pub enum PostGetReceivedLikesPageError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -201,15 +210,6 @@ pub enum PostGetNextReceivedLikesPageError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostGetSentMessageError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`post_reset_matches_paging`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum PostResetMatchesPagingError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -423,6 +423,48 @@ pub async fn get_daily_likes_left(configuration: &configuration::Configuration, 
     } else {
         let content = resp.text().await?;
         let entity: Option<GetDailyLikesLeftError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn get_initial_matches_iterator_state(configuration: &configuration::Configuration, ) -> Result<models::MatchesIteratorState, Error<GetInitialMatchesIteratorStateError>> {
+
+    let uri_str = format!("{}/chat_api/matches/initial_state", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-access-token", value);
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::MatchesIteratorState`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::MatchesIteratorState`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetInitialMatchesIteratorStateError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -943,6 +985,51 @@ pub async fn post_chat_message_report(configuration: &configuration::Configurati
     }
 }
 
+pub async fn post_get_matches_iterator_page(configuration: &configuration::Configuration, matches_iterator_state: models::MatchesIteratorState) -> Result<models::MatchesPage, Error<PostGetMatchesIteratorPageError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_matches_iterator_state = matches_iterator_state;
+
+    let uri_str = format!("{}/chat_api/matches", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-access-token", value);
+    };
+    req_builder = req_builder.json(&p_body_matches_iterator_state);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::MatchesPage`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::MatchesPage`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostGetMatchesIteratorPageError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 pub async fn post_get_new_received_likes_count(configuration: &configuration::Configuration, ) -> Result<models::NewReceivedLikesCountResult, Error<PostGetNewReceivedLikesCountError>> {
 
     let uri_str = format!("{}/chat_api/new_received_likes_count", configuration.base_path);
@@ -985,55 +1072,10 @@ pub async fn post_get_new_received_likes_count(configuration: &configuration::Co
     }
 }
 
-pub async fn post_get_next_matches_page(configuration: &configuration::Configuration, matches_iterator_session_id: models::MatchesIteratorSessionId) -> Result<models::MatchesPage, Error<PostGetNextMatchesPageError>> {
-    // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_matches_iterator_session_id = matches_iterator_session_id;
-
-    let uri_str = format!("{}/chat_api/matches_page", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
-
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("x-access-token", value);
-    };
-    req_builder = req_builder.json(&p_body_matches_iterator_session_id);
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-    let content_type = resp
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream");
-    let content_type = super::ContentType::from(content_type);
-
-    if !status.is_client_error() && !status.is_server_error() {
-        let content = resp.text().await?;
-        match content_type {
-            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::MatchesPage`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::MatchesPage`")))),
-        }
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<PostGetNextMatchesPageError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
 /// Profile will not be returned if: - Profile is blocked - Profile is a match
-pub async fn post_get_next_received_likes_page(configuration: &configuration::Configuration, received_likes_iterator_session_id: models::ReceivedLikesIteratorSessionId) -> Result<models::ReceivedLikesPage, Error<PostGetNextReceivedLikesPageError>> {
+pub async fn post_get_received_likes_page(configuration: &configuration::Configuration, received_likes_iterator_state: models::ReceivedLikesIteratorState) -> Result<models::ReceivedLikesPage, Error<PostGetReceivedLikesPageError>> {
     // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_received_likes_iterator_session_id = received_likes_iterator_session_id;
+    let p_body_received_likes_iterator_state = received_likes_iterator_state;
 
     let uri_str = format!("{}/chat_api/received_likes", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
@@ -1049,7 +1091,7 @@ pub async fn post_get_next_received_likes_page(configuration: &configuration::Co
         };
         req_builder = req_builder.header("x-access-token", value);
     };
-    req_builder = req_builder.json(&p_body_received_likes_iterator_session_id);
+    req_builder = req_builder.json(&p_body_received_likes_iterator_state);
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -1071,7 +1113,7 @@ pub async fn post_get_next_received_likes_page(configuration: &configuration::Co
         }
     } else {
         let content = resp.text().await?;
-        let entity: Option<PostGetNextReceivedLikesPageError> = serde_json::from_str(&content).ok();
+        let entity: Option<PostGetReceivedLikesPageError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -1118,48 +1160,6 @@ pub async fn post_get_sent_message(configuration: &configuration::Configuration,
     } else {
         let content = resp.text().await?;
         let entity: Option<PostGetSentMessageError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
-pub async fn post_reset_matches_paging(configuration: &configuration::Configuration, ) -> Result<models::ResetMatchesIteratorResult, Error<PostResetMatchesPagingError>> {
-
-    let uri_str = format!("{}/chat_api/matches/reset", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
-
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("x-access-token", value);
-    };
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-    let content_type = resp
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream");
-    let content_type = super::ContentType::from(content_type);
-
-    if !status.is_client_error() && !status.is_server_error() {
-        let content = resp.text().await?;
-        match content_type {
-            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ResetMatchesIteratorResult`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ResetMatchesIteratorResult`")))),
-        }
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<PostResetMatchesPagingError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

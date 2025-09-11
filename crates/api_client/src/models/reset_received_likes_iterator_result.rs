@@ -16,13 +16,13 @@ pub struct ResetReceivedLikesIteratorResult {
     #[serde(rename = "c")]
     pub c: Box<models::NewReceivedLikesCount>,
     #[serde(rename = "s")]
-    pub s: Box<models::ReceivedLikesIteratorSessionId>,
+    pub s: Box<models::ReceivedLikesIteratorState>,
     #[serde(rename = "v")]
     pub v: Box<models::ReceivedLikesSyncVersion>,
 }
 
 impl ResetReceivedLikesIteratorResult {
-    pub fn new(c: models::NewReceivedLikesCount, s: models::ReceivedLikesIteratorSessionId, v: models::ReceivedLikesSyncVersion) -> ResetReceivedLikesIteratorResult {
+    pub fn new(c: models::NewReceivedLikesCount, s: models::ReceivedLikesIteratorState, v: models::ReceivedLikesSyncVersion) -> ResetReceivedLikesIteratorResult {
         ResetReceivedLikesIteratorResult {
             c: Box::new(c),
             s: Box::new(s),

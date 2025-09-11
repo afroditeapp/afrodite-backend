@@ -46,13 +46,13 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_demo_account_register_account**](docs/AccountApi.md#post_demo_account_register_account) | **POST** /account_api/demo_account_register_account | 
 *AccountApi* | [**post_get_client_features_config**](docs/AccountApi.md#post_get_client_features_config) | **POST** /account_api/client_features_config | 
 *AccountApi* | [**post_get_custom_reports_config**](docs/AccountApi.md#post_get_custom_reports_config) | **POST** /account_api/custom_reports_config | 
+*AccountApi* | [**post_get_news_page**](docs/AccountApi.md#post_get_news_page) | **POST** /account_api/news_page | 
 *AccountApi* | [**post_get_next_client_id**](docs/AccountApi.md#post_get_next_client_id) | **POST** /account_api/next_client_id | 
-*AccountApi* | [**post_get_next_news_page**](docs/AccountApi.md#post_get_next_news_page) | **POST** /account_api/next_news_page | 
 *AccountApi* | [**post_get_unread_news_count**](docs/AccountApi.md#post_get_unread_news_count) | **POST** /account_api/news_count | The unread news count for public news.
 *AccountApi* | [**post_logout**](docs/AccountApi.md#post_logout) | **POST** /account_api/logout | 
 *AccountApi* | [**post_reset_news_paging**](docs/AccountApi.md#post_reset_news_paging) | **POST** /account_api/reset_news_paging | 
 *AccountApi* | [**post_set_account_deletion_request_state**](docs/AccountApi.md#post_set_account_deletion_request_state) | **POST** /account_api/set_account_deletion_request_state/{aid} | Request account deletion or cancel the deletion
-*AccountApi* | [**post_sign_in_with_login**](docs/AccountApi.md#post_sign_in_with_login) | **POST** /account_api/sign_in_with_login | Start new session with sign in with Apple or Google. Creates new account if it does not exists.
+*AccountApi* | [**post_sign_in_with_login**](docs/AccountApi.md#post_sign_in_with_login) | **POST** /account_api/sign_in_with_login | Start new session with sign in with Apple or Google.
 *AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update current or pending profile visiblity value.
 *AccountApi* | [**put_setting_unlimited_likes**](docs/AccountApi.md#put_setting_unlimited_likes) | **PUT** /account_api/settings/unlimited_likes | 
 *AccountAdminApi* | [**delete_news_item**](docs/AccountAdminApi.md#delete_news_item) | **DELETE** /account_api/delete_news/{nid} | 
@@ -75,6 +75,7 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**get_chat_app_notification_settings**](docs/ChatApi.md#get_chat_app_notification_settings) | **GET** /chat_api/get_chat_app_notification_settings | 
 *ChatApi* | [**get_conversation_id**](docs/ChatApi.md#get_conversation_id) | **GET** /chat_api/conversation_id/{aid} | Get account specific conversation ID which can be used to display new message received notifications.
 *ChatApi* | [**get_daily_likes_left**](docs/ChatApi.md#get_daily_likes_left) | **GET** /chat_api/daily_likes_left | Get daily likes left value.
+*ChatApi* | [**get_initial_matches_iterator_state**](docs/ChatApi.md#get_initial_matches_iterator_state) | **GET** /chat_api/matches/initial_state | 
 *ChatApi* | [**get_latest_public_key_id**](docs/ChatApi.md#get_latest_public_key_id) | **GET** /chat_api/latest_public_key_id/{aid} | Get latest public key ID for some account
 *ChatApi* | [**get_pending_messages**](docs/ChatApi.md#get_pending_messages) | **GET** /chat_api/pending_messages | Get list of pending messages.
 *ChatApi* | [**get_private_public_key_info**](docs/ChatApi.md#get_private_public_key_info) | **GET** /chat_api/private_public_key_info/{aid} | Get private public key info
@@ -88,11 +89,10 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**post_block_profile**](docs/ChatApi.md#post_block_profile) | **POST** /chat_api/block_profile | Block profile
 *ChatApi* | [**post_chat_app_notification_settings**](docs/ChatApi.md#post_chat_app_notification_settings) | **POST** /chat_api/post_chat_app_notification_settings | 
 *ChatApi* | [**post_chat_message_report**](docs/ChatApi.md#post_chat_message_report) | **POST** /chat_api/chat_message_report | Report chat message.
+*ChatApi* | [**post_get_matches_iterator_page**](docs/ChatApi.md#post_get_matches_iterator_page) | **POST** /chat_api/matches | Get requested page of matches iterator page. If the page is empty there is no more matches available.
 *ChatApi* | [**post_get_new_received_likes_count**](docs/ChatApi.md#post_get_new_received_likes_count) | **POST** /chat_api/new_received_likes_count | 
-*ChatApi* | [**post_get_next_matches_page**](docs/ChatApi.md#post_get_next_matches_page) | **POST** /chat_api/matches_page | Update matches iterator and get next page of matches. If the page is empty there is no more matches available.
-*ChatApi* | [**post_get_next_received_likes_page**](docs/ChatApi.md#post_get_next_received_likes_page) | **POST** /chat_api/received_likes | Update received likes iterator and get next page of received likes. If the page is empty there is no more received likes available.
+*ChatApi* | [**post_get_received_likes_page**](docs/ChatApi.md#post_get_received_likes_page) | **POST** /chat_api/received_likes | Get next page of received likes. If the page is empty there is no more received likes available.
 *ChatApi* | [**post_get_sent_message**](docs/ChatApi.md#post_get_sent_message) | **POST** /chat_api/sent_message | Receive unreceived [model_chat::SignedMessageData] for sent message.
-*ChatApi* | [**post_reset_matches_paging**](docs/ChatApi.md#post_reset_matches_paging) | **POST** /chat_api/matches/reset | 
 *ChatApi* | [**post_reset_received_likes_paging**](docs/ChatApi.md#post_reset_received_likes_paging) | **POST** /chat_api/received_likes/reset | 
 *ChatApi* | [**post_send_like**](docs/ChatApi.md#post_send_like) | **POST** /chat_api/send_like | Send a like to some account. If both will like each other, then the accounts will be a match.
 *ChatApi* | [**post_send_message**](docs/ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match.
@@ -344,7 +344,8 @@ Class | Method | HTTP request | Description
  - [MapConfig](docs/MapConfig.md)
  - [MapCoordinate](docs/MapCoordinate.md)
  - [MapZoom](docs/MapZoom.md)
- - [MatchesIteratorSessionId](docs/MatchesIteratorSessionId.md)
+ - [MatchId](docs/MatchId.md)
+ - [MatchesIteratorState](docs/MatchesIteratorState.md)
  - [MatchesPage](docs/MatchesPage.md)
  - [MaxDistanceKm](docs/MaxDistanceKm.md)
  - [MediaAppNotificationSettings](docs/MediaAppNotificationSettings.md)
@@ -367,7 +368,7 @@ Class | Method | HTTP request | Description
  - [NewsId](docs/NewsId.md)
  - [NewsItem](docs/NewsItem.md)
  - [NewsItemSimple](docs/NewsItemSimple.md)
- - [NewsIteratorSessionId](docs/NewsIteratorSessionId.md)
+ - [NewsIteratorState](docs/NewsIteratorState.md)
  - [NewsPage](docs/NewsPage.md)
  - [NewsSyncVersion](docs/NewsSyncVersion.md)
  - [NewsTranslationVersion](docs/NewsTranslationVersion.md)
@@ -430,7 +431,9 @@ Class | Method | HTTP request | Description
  - [ProfileVersion](docs/ProfileVersion.md)
  - [ProfileVisibility](docs/ProfileVisibility.md)
  - [PublicKeyId](docs/PublicKeyId.md)
- - [ReceivedLikesIteratorSessionId](docs/ReceivedLikesIteratorSessionId.md)
+ - [PublicationId](docs/PublicationId.md)
+ - [ReceivedLikeId](docs/ReceivedLikeId.md)
+ - [ReceivedLikesIteratorState](docs/ReceivedLikesIteratorState.md)
  - [ReceivedLikesPage](docs/ReceivedLikesPage.md)
  - [ReceivedLikesSyncVersion](docs/ReceivedLikesSyncVersion.md)
  - [RefreshToken](docs/RefreshToken.md)
@@ -446,7 +449,6 @@ Class | Method | HTTP request | Description
  - [ReportIteratorQuery](docs/ReportIteratorQuery.md)
  - [ReportProcessingState](docs/ReportProcessingState.md)
  - [ReportTypeNumber](docs/ReportTypeNumber.md)
- - [ResetMatchesIteratorResult](docs/ResetMatchesIteratorResult.md)
  - [ResetNewsIteratorResult](docs/ResetNewsIteratorResult.md)
  - [ResetReceivedLikesIteratorResult](docs/ResetReceivedLikesIteratorResult.md)
  - [ScheduledMaintenanceStatus](docs/ScheduledMaintenanceStatus.md)

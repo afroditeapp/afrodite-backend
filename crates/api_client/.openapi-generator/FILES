@@ -158,7 +158,8 @@ src/models/map_bounds.rs
 src/models/map_config.rs
 src/models/map_coordinate.rs
 src/models/map_zoom.rs
-src/models/matches_iterator_session_id.rs
+src/models/match_id.rs
+src/models/matches_iterator_state.rs
 src/models/matches_page.rs
 src/models/max_distance_km.rs
 src/models/media_app_notification_settings.rs
@@ -182,7 +183,7 @@ src/models/news_config.rs
 src/models/news_id.rs
 src/models/news_item.rs
 src/models/news_item_simple.rs
-src/models/news_iterator_session_id.rs
+src/models/news_iterator_state.rs
 src/models/news_page.rs
 src/models/news_sync_version.rs
 src/models/news_translation_version.rs
@@ -245,7 +246,9 @@ src/models/profile_update.rs
 src/models/profile_version.rs
 src/models/profile_visibility.rs
 src/models/public_key_id.rs
-src/models/received_likes_iterator_session_id.rs
+src/models/publication_id.rs
+src/models/received_like_id.rs
+src/models/received_likes_iterator_state.rs
 src/models/received_likes_page.rs
 src/models/received_likes_sync_version.rs
 src/models/refresh_token.rs
@@ -261,7 +264,6 @@ src/models/report_iterator_mode.rs
 src/models/report_iterator_query.rs
 src/models/report_processing_state.rs
 src/models/report_type_number.rs
-src/models/reset_matches_iterator_result.rs
 src/models/reset_news_iterator_result.rs
 src/models/reset_received_likes_iterator_result.rs
 src/models/scheduled_maintenance_status.rs

@@ -12,15 +12,15 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct MatchesPage {
-    #[serde(rename = "p")]
-    pub p: Vec<models::ProfileLink>,
+pub struct ReceivedLikeId {
+    #[serde(rename = "id")]
+    pub id: i64,
 }
 
-impl MatchesPage {
-    pub fn new(p: Vec<models::ProfileLink>) -> MatchesPage {
-        MatchesPage {
-            p,
+impl ReceivedLikeId {
+    pub fn new(id: i64) -> ReceivedLikeId {
+        ReceivedLikeId {
+            id,
         }
     }
 }
