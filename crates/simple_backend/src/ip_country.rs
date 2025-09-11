@@ -58,9 +58,9 @@ impl IpCountryTracker {
             return;
         };
         let country = if ip.is_loopback() {
-            IpCountryKeyRef::LOCALHOST
+            IpCountryKeyRef::Localhost
         } else {
-            db.get_country_ref(ip).unwrap_or(IpCountryKeyRef::UNKNOWN)
+            db.get_country_ref(ip).unwrap_or(IpCountryKeyRef::Unknown)
         };
 
         if let Some(c) = self.state.read().await.data.get(country.as_str()) {
