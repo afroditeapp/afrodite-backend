@@ -45,7 +45,6 @@ impl AdminNotificationManagerQuitHandle {
 
 pub struct AdminNotificationManager {
     state: S,
-    pending_notifications: AdminNotification,
 }
 
 impl AdminNotificationManager {
@@ -54,10 +53,7 @@ impl AdminNotificationManager {
         state: S,
         quit_notification: ServerQuitWatcher,
     ) -> AdminNotificationManagerQuitHandle {
-        let manager = Self {
-            state,
-            pending_notifications: AdminNotification::default(),
-        };
+        let manager = Self { state };
 
         let task = tokio::spawn(manager.run(receiver, quit_notification));
 
@@ -89,8 +85,7 @@ impl AdminNotificationManager {
                         Some(AdminNotificationEvent::ResetState(id)) => {
                             self.state.admin_notification().write().reset_notification_state(id).await;
                         }
-                        Some(AdminNotificationEvent::SendNotificationIfNeeded(notification)) => {
-                            self.pending_notifications.enable(notification);
+                        Some(AdminNotificationEvent::SendNotificationIfNeeded(_)) => {
                             timer.start_if_not_running();
                         },
                         Some(AdminNotificationEvent::RefreshStartTimeWaiter) => {
@@ -110,80 +105,49 @@ impl AdminNotificationManager {
     }
 
     async fn handle_pending_events(&mut self) -> Result<(), AdminNotificationError> {
-        if self
-            .pending_notifications
-            .moderate_initial_media_content_bot
-        {
-            self.pending_notifications
-                .moderate_initial_media_content_bot =
-                self.is_initial_content_moderation_needed(true).await?;
-        }
-
-        if self
-            .pending_notifications
-            .moderate_initial_media_content_human
-        {
-            self.pending_notifications
-                .moderate_initial_media_content_human =
-                self.is_initial_content_moderation_needed(false).await?;
-        }
-
-        if self.pending_notifications.moderate_media_content_bot {
-            self.pending_notifications.moderate_media_content_bot =
-                self.is_content_moderation_needed(true).await?;
-        }
-
-        if self.pending_notifications.moderate_media_content_human {
-            self.pending_notifications.moderate_media_content_human =
-                self.is_content_moderation_needed(false).await?;
-        }
-
-        if self.pending_notifications.moderate_profile_texts_bot {
-            self.pending_notifications.moderate_profile_texts_bot = self
+        // Check all categories, so that every notification contains full info
+        let notification = AdminNotification {
+            moderate_initial_media_content_bot: self
+                .is_initial_content_moderation_needed(true)
+                .await?,
+            moderate_initial_media_content_human: self
+                .is_initial_content_moderation_needed(false)
+                .await?,
+            moderate_media_content_bot: self.is_content_moderation_needed(true).await?,
+            moderate_media_content_human: self.is_content_moderation_needed(false).await?,
+            moderate_profile_texts_bot: self
                 .is_profile_string_moderation_needed(
                     ProfileStringModerationContentType::ProfileText,
                     true,
                 )
-                .await?
-        }
-
-        if self.pending_notifications.moderate_profile_texts_human {
-            self.pending_notifications.moderate_profile_texts_human = self
+                .await?,
+            moderate_profile_texts_human: self
                 .is_profile_string_moderation_needed(
                     ProfileStringModerationContentType::ProfileText,
                     false,
                 )
-                .await?
-        }
-
-        if self.pending_notifications.moderate_profile_names_bot {
-            self.pending_notifications.moderate_profile_names_bot = self
+                .await?,
+            moderate_profile_names_bot: self
                 .is_profile_string_moderation_needed(
                     ProfileStringModerationContentType::ProfileName,
                     true,
                 )
-                .await?
-        }
-
-        if self.pending_notifications.moderate_profile_names_human {
-            self.pending_notifications.moderate_profile_names_human = self
+                .await?,
+            moderate_profile_names_human: self
                 .is_profile_string_moderation_needed(
                     ProfileStringModerationContentType::ProfileName,
                     false,
                 )
-                .await?
-        }
-
-        if self.pending_notifications.process_reports {
-            self.pending_notifications.process_reports = self.is_report_processing_needed().await?
-        }
+                .await?,
+            process_reports: self.is_report_processing_needed().await?,
+        };
 
         let accounts = self
             .state
             .read()
             .common_admin()
             .notification()
-            .get_accounts_which_should_receive_notification(self.pending_notifications.clone())
+            .get_accounts_which_should_receive_notification(notification.clone())
             .await
             .change_context(AdminNotificationError::DatabaseError)?;
 
@@ -195,8 +159,7 @@ impl AdminNotificationManager {
                 .await
                 .unwrap_or_default();
 
-            let new_notification_state =
-                current_notification_state.merge(&self.pending_notifications);
+            let new_notification_state = current_notification_state.merge(&notification);
 
             if current_notification_state != new_notification_state {
                 self.state
@@ -214,8 +177,6 @@ impl AdminNotificationManager {
                 }
             }
         }
-
-        self.pending_notifications = AdminNotification::default();
 
         Ok(())
     }
