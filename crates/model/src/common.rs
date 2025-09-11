@@ -6,7 +6,9 @@ use diesel::{
     sql_types::{BigInt, Binary},
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{UnixTime, diesel_i64_wrapper, diesel_uuid_wrapper};
+use simple_backend_model::{
+    ScheduledMaintenanceStatus, UnixTime, diesel_i64_wrapper, diesel_uuid_wrapper,
+};
 use utils::random_bytes::random_128_bits;
 use utoipa::{IntoParams, ToSchema};
 
@@ -71,11 +73,6 @@ pub enum EventType {
 pub struct ContentProcessingStateChanged {
     pub id: ContentProcessingId,
     pub new_state: ContentProcessingState,
-}
-
-#[derive(Debug, Default, Clone, Deserialize, Serialize, PartialEq, ToSchema)]
-pub struct ScheduledMaintenanceStatus {
-    pub scheduled_maintenance: Option<UnixTime>,
 }
 
 /// Event to client which is sent through websocket.

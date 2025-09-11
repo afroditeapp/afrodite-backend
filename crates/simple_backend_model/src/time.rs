@@ -83,3 +83,16 @@ impl From<chrono::DateTime<chrono::Utc>> for UnixTime {
         }
     }
 }
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, PartialEq, ToSchema)]
+pub struct ScheduledMaintenanceStatus {
+    /// If None, ignore [Self::end].
+    pub start: Option<UnixTime>,
+    pub end: Option<UnixTime>,
+}
+
+impl ScheduledMaintenanceStatus {
+    pub fn is_empty(&self) -> bool {
+        self.start.is_none()
+    }
+}

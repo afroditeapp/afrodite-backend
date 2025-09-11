@@ -4926,7 +4926,6 @@ dependencies = [
  "futures",
  "hyper",
  "manager_api",
- "manager_model",
  "model",
  "model_chat",
  "model_server_data",

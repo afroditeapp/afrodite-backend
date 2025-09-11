@@ -1,7 +1,4 @@
-use std::sync::{
-    Arc,
-    atomic::{AtomicI64, Ordering},
-};
+use std::sync::Arc;
 
 use error_stack::Result;
 use manager_api::{
@@ -10,9 +7,9 @@ use manager_api::{
 };
 use manager_model::{ManagerInstanceName, ServerEventType};
 use simple_backend_config::SimpleBackendConfig;
-use simple_backend_model::UnixTime;
+use simple_backend_model::ScheduledMaintenanceStatus;
 use simple_backend_utils::ContextExt;
-use tokio::task::JoinHandle;
+use tokio::{sync::RwLock, task::JoinHandle};
 use tracing::{error, info, warn};
 
 use crate::ServerQuitWatcher;
@@ -27,14 +24,14 @@ pub struct ManagerApiClient {
         ManagerInstanceName,
         Option<BackupLinkPassword>,
     )>,
-    latest_scheduled_reboot: AtomicI64,
+    maintenance_status: RwLock<ScheduledMaintenanceStatus>,
 }
 
 impl ManagerApiClient {
     pub fn empty() -> Self {
         Self {
             manager: None,
-            latest_scheduled_reboot: AtomicI64::new(0),
+            maintenance_status: RwLock::default(),
         }
     }
 
@@ -69,7 +66,7 @@ impl ManagerApiClient {
 
         Ok(Self {
             manager,
-            latest_scheduled_reboot: AtomicI64::new(0),
+            maintenance_status: RwLock::default(),
         })
     }
 
@@ -127,14 +124,12 @@ impl ManagerApiClient {
         }
     }
 
-    pub fn latest_scheduled_reboot(&self) -> Option<UnixTime> {
-        let v = self.latest_scheduled_reboot.load(Ordering::Relaxed);
-        if v == 0 { None } else { Some(UnixTime::new(v)) }
+    pub async fn maintenance_status(&self) -> ScheduledMaintenanceStatus {
+        self.maintenance_status.read().await.clone()
     }
 
-    pub fn set_latest_scheduled_reboot(&self, ut: Option<UnixTime>) {
-        let v = ut.map(|v| v.ut).unwrap_or_default();
-        self.latest_scheduled_reboot.store(v, Ordering::Relaxed);
+    pub async fn set_maintenance_status(&self, status: ScheduledMaintenanceStatus) {
+        *self.maintenance_status.write().await = status;
     }
 }
 
@@ -193,20 +188,21 @@ impl<T: ManagerEventHandler> ManagerConnectionManager<T> {
             let event = listener.next_event().await?;
             match event.event() {
                 ServerEventType::MaintenanceSchedulingStatus(time) => {
-                    let ut = if let Some(time) = time { time.0.ut } else { 0 };
-                    self.client
-                        .latest_scheduled_reboot
-                        .store(ut, Ordering::Relaxed);
+                    let status = ScheduledMaintenanceStatus {
+                        start: time.map(|v| v.0),
+                        end: time.map(|v| v.0.add_seconds(5 * 60)),
+                    };
+                    self.client.set_maintenance_status(status.clone()).await;
+                    self.event_handler.send_maintenance_status(status).await;
                 }
             }
-            self.event_handler.handle(event.event()).await;
         }
     }
 }
 
 pub trait ManagerEventHandler: Send + Sync + 'static {
-    fn handle(
+    fn send_maintenance_status(
         &self,
-        event: &ServerEventType,
+        status: ScheduledMaintenanceStatus,
     ) -> impl std::future::Future<Output = ()> + std::marker::Send;
 }

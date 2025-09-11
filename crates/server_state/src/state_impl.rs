@@ -3,7 +3,6 @@ use std::{net::SocketAddr, sync::Arc};
 use config::{Config, file::ConfigFileError, file_dynamic::ConfigFileDynamic};
 use error_stack::ResultExt;
 use futures::Future;
-use manager_model::ServerEventType;
 use model::{
     AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion,
     EventToClientInternal, Permissions, ScheduledMaintenanceStatus,
@@ -333,19 +332,12 @@ impl JitsiMeetUrlCreatorProvider for S {
 }
 
 impl ManagerEventHandler for S {
-    async fn handle(&self, event: &ServerEventType) {
-        match event {
-            ServerEventType::MaintenanceSchedulingStatus(status) => {
-                let status = ScheduledMaintenanceStatus {
-                    scheduled_maintenance: status.map(|v| v.0),
-                };
-                self.event_manager()
-                    .send_connected_event_to_logged_in_clients(
-                        EventToClientInternal::ScheduledMaintenanceStatus(status),
-                    )
-                    .await
-            }
-        }
+    async fn send_maintenance_status(&self, status: ScheduledMaintenanceStatus) {
+        self.event_manager()
+            .send_connected_event_to_logged_in_clients(
+                EventToClientInternal::ScheduledMaintenanceStatus(status),
+            )
+            .await
     }
 }
 

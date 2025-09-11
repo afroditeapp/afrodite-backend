@@ -31,10 +31,7 @@ pub async fn get_maintenance_notification(
     COMMON_ADMIN.get_maintenance_notification.incr();
 
     if api_caller_permissions.admin_server_maintenance_edit_notification {
-        let status = ScheduledMaintenanceStatus {
-            scheduled_maintenance: state.manager_api_client().latest_scheduled_reboot(),
-        };
-        Ok(status.into())
+        Ok(state.manager_api_client().maintenance_status().await.into())
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }
@@ -67,7 +64,8 @@ pub async fn post_edit_maintenance_notification(
     if api_caller_permissions.admin_server_maintenance_edit_notification {
         state
             .manager_api_client()
-            .set_latest_scheduled_reboot(status.scheduled_maintenance);
+            .set_maintenance_status(status.clone())
+            .await;
         state
             .event_manager()
             .send_connected_event_to_logged_in_clients(

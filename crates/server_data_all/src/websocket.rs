@@ -118,12 +118,11 @@ pub async fn send_events_if_needed(
 
     // Common
 
-    if let Some(time) = manager_api_client.latest_scheduled_reboot() {
+    let status = manager_api_client.maintenance_status().await;
+    if !status.is_empty() {
         send_event(
             socket,
-            EventToClientInternal::ScheduledMaintenanceStatus(ScheduledMaintenanceStatus {
-                scheduled_maintenance: Some(time),
-            }),
+            EventToClientInternal::ScheduledMaintenanceStatus(status),
         )
         .await?;
     }
@@ -441,7 +440,7 @@ async fn handle_maintenance_info_removing_if_needed(
     manager_api_client: &ManagerApiClient,
     socket: &mut WebSocket,
 ) -> Result<(), WebSocketError> {
-    if manager_api_client.latest_scheduled_reboot().is_none() {
+    if manager_api_client.maintenance_status().await.is_empty() {
         send_event(
             socket,
             EventToClientInternal::ScheduledMaintenanceStatus(
