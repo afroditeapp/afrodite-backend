@@ -278,8 +278,8 @@ impl Config {
         self.file.api.min_client_version
     }
 
-    pub fn remote_bots(&self) -> Vec<RemoteBotConfig> {
-        self.file.remote_bot.clone().unwrap_or_default()
+    pub fn remote_bots(&self) -> &[RemoteBotConfig] {
+        &self.file.remote_bots
     }
 
     pub fn automatic_profile_search(&self) -> &AutomaticProfileSearchConfig {

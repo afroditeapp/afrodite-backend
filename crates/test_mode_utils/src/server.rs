@@ -126,6 +126,7 @@ fn new_config(config: &TestMode, bot_api_port: u16) -> (ConfigFile, SimpleBacken
         api: ApiConfig::default(),
         config_files: ConfigFileConfig::default(),
         automatic_profile_search: AutomaticProfileSearchConfig::default(),
+        remote_bots: vec![],
         location: if let Some(SelectedBenchmark::GetProfileList) = config.selected_benchmark() {
             let mut location = DEFAULT_LOCATION_CONFIG_BENCHMARK;
             if let Some(index_cell_size) = config.overridden_index_cell_size() {
@@ -144,7 +145,6 @@ fn new_config(config: &TestMode, bot_api_port: u16) -> (ConfigFile, SimpleBacken
         demo_account: None,
         limits: None,
         profile_name_allowlist: None,
-        remote_bot: None,
     };
 
     let simple_backend_config = SimpleBackendConfigFile {

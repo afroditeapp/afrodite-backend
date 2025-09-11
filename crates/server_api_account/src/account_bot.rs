@@ -5,6 +5,7 @@ use model_account::{AccountId, LoginResult, RemoteBotLogin, SignInWithInfo};
 use server_api::{
     S,
     app::{GetConfig, ReadDynamicConfig},
+    common::is_ip_address_accepted,
     db_write,
 };
 use server_data::write::GetWriteCommandsCommon;
@@ -116,6 +117,13 @@ pub async fn post_remote_bot_login(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
+    let bots = state.config().remote_bots();
+    let Some(configured_bot) = bots.iter().find(|v| v.account_id() == info.aid) else {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    };
+
+    is_ip_address_accepted(&state, address, configured_bot.access()).await?;
+
     let internal_id = state.get_internal_id(info.aid).await?;
     let is_bot = state.read().account().is_bot_account(internal_id).await?;
     if !is_bot {
@@ -127,11 +135,6 @@ pub async fn post_remote_bot_login(
         info!("Remote bot login is blocked for account {}", info.aid);
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
-
-    let bots = state.config().remote_bots();
-    let Some(configured_bot) = bots.iter().find(|v| v.account_id() == info.aid) else {
-        return Err(StatusCode::INTERNAL_SERVER_ERROR);
-    };
 
     if configured_bot.password() != info.password {
         info!(
