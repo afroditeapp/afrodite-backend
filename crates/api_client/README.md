@@ -71,7 +71,6 @@ Class | Method | HTTP request | Description
 *AccountBotApi* | [**post_bot_login**](docs/AccountBotApi.md#post_bot_login) | **POST** /account_api/bot_login | Get new AccessToken for a bot account. If the account is not registered as a bot account, then the request will fail.
 *AccountBotApi* | [**post_bot_register**](docs/AccountBotApi.md#post_bot_register) | **POST** /account_api/bot_register | Register a new bot account. Returns new account ID which is UUID.
 *AccountBotApi* | [**post_remote_bot_login**](docs/AccountBotApi.md#post_remote_bot_login) | **POST** /account_api/remote_bot_login | Login for remote bots which are listed in server config file.
-*ChatApi* | [**delete_like**](docs/ChatApi.md#delete_like) | **DELETE** /chat_api/delete_like | Delete sent like.
 *ChatApi* | [**get_chat_app_notification_settings**](docs/ChatApi.md#get_chat_app_notification_settings) | **GET** /chat_api/get_chat_app_notification_settings | 
 *ChatApi* | [**get_conversation_id**](docs/ChatApi.md#get_conversation_id) | **GET** /chat_api/conversation_id/{aid} | Get account specific conversation ID which can be used to display new message received notifications.
 *ChatApi* | [**get_daily_likes_left**](docs/ChatApi.md#get_daily_likes_left) | **GET** /chat_api/daily_likes_left | Get daily likes left value.
@@ -93,6 +92,7 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**post_get_new_received_likes_count**](docs/ChatApi.md#post_get_new_received_likes_count) | **POST** /chat_api/new_received_likes_count | 
 *ChatApi* | [**post_get_received_likes_page**](docs/ChatApi.md#post_get_received_likes_page) | **POST** /chat_api/received_likes | Get next page of received likes. If the page is empty there is no more received likes available.
 *ChatApi* | [**post_get_sent_message**](docs/ChatApi.md#post_get_sent_message) | **POST** /chat_api/sent_message | Receive unreceived [model_chat::SignedMessageData] for sent message.
+*ChatApi* | [**post_reset_new_received_likes_count**](docs/ChatApi.md#post_reset_new_received_likes_count) | **POST** /chat_api/reset_new_received_likes_count | 
 *ChatApi* | [**post_reset_received_likes_paging**](docs/ChatApi.md#post_reset_received_likes_paging) | **POST** /chat_api/received_likes/reset | 
 *ChatApi* | [**post_send_like**](docs/ChatApi.md#post_send_like) | **POST** /chat_api/send_like | Send a like to some account. If both will like each other, then the accounts will be a match.
 *ChatApi* | [**post_send_message**](docs/ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match.
@@ -278,7 +278,6 @@ Class | Method | HTTP request | Description
  - [DataExportState](docs/DataExportState.md)
  - [DataExportStateType](docs/DataExportStateType.md)
  - [DataExportType](docs/DataExportType.md)
- - [DeleteLikeResult](docs/DeleteLikeResult.md)
  - [DemoAccountLoginCredentials](docs/DemoAccountLoginCredentials.md)
  - [DemoAccountLoginResult](docs/DemoAccountLoginResult.md)
  - [DemoAccountLoginToAccount](docs/DemoAccountLoginToAccount.md)

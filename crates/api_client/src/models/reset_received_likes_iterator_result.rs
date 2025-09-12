@@ -13,20 +13,14 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ResetReceivedLikesIteratorResult {
-    #[serde(rename = "c")]
-    pub c: Box<models::NewReceivedLikesCount>,
     #[serde(rename = "s")]
     pub s: Box<models::ReceivedLikesIteratorState>,
-    #[serde(rename = "v")]
-    pub v: Box<models::ReceivedLikesSyncVersion>,
 }
 
 impl ResetReceivedLikesIteratorResult {
-    pub fn new(c: models::NewReceivedLikesCount, s: models::ReceivedLikesIteratorState, v: models::ReceivedLikesSyncVersion) -> ResetReceivedLikesIteratorResult {
+    pub fn new(s: models::ReceivedLikesIteratorState) -> ResetReceivedLikesIteratorResult {
         ResetReceivedLikesIteratorResult {
-            c: Box::new(c),
             s: Box::new(s),
-            v: Box::new(v),
         }
     }
 }

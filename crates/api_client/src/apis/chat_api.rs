@@ -17,15 +17,6 @@ use tokio::fs::File as TokioFile;
 use tokio_util::codec::{BytesCodec, FramedRead};
 
 
-/// struct for typed errors of method [`delete_like`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum DeleteLikeError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
 /// struct for typed errors of method [`get_chat_app_notification_settings`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -215,6 +206,15 @@ pub enum PostGetSentMessageError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`post_reset_new_received_likes_count`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostResetNewReceivedLikesCountError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`post_reset_received_likes_paging`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -251,52 +251,6 @@ pub enum PostUnblockProfileError {
     UnknownValue(serde_json::Value),
 }
 
-
-/// Delete will not work if profile is a match.
-pub async fn delete_like(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<models::DeleteLikeResult, Error<DeleteLikeError>> {
-    // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_account_id = account_id;
-
-    let uri_str = format!("{}/chat_api/delete_like", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::DELETE, &uri_str);
-
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("x-access-token", value);
-    };
-    req_builder = req_builder.json(&p_body_account_id);
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-    let content_type = resp
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream");
-    let content_type = super::ContentType::from(content_type);
-
-    if !status.is_client_error() && !status.is_server_error() {
-        let content = resp.text().await?;
-        match content_type {
-            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::DeleteLikeResult`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::DeleteLikeResult`")))),
-        }
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<DeleteLikeError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
 
 pub async fn get_chat_app_notification_settings(configuration: &configuration::Configuration, ) -> Result<models::ChatAppNotificationSettings, Error<GetChatAppNotificationSettingsError>> {
 
@@ -1160,6 +1114,48 @@ pub async fn post_get_sent_message(configuration: &configuration::Configuration,
     } else {
         let content = resp.text().await?;
         let entity: Option<PostGetSentMessageError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn post_reset_new_received_likes_count(configuration: &configuration::Configuration, ) -> Result<models::NewReceivedLikesCountResult, Error<PostResetNewReceivedLikesCountError>> {
+
+    let uri_str = format!("{}/chat_api/reset_new_received_likes_count", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-access-token", value);
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::NewReceivedLikesCountResult`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::NewReceivedLikesCountResult`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostResetNewReceivedLikesCountError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

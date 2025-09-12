@@ -150,8 +150,6 @@ pub mod data_export_state_type;
 pub use self::data_export_state_type::DataExportStateType;
 pub mod data_export_type;
 pub use self::data_export_type::DataExportType;
-pub mod delete_like_result;
-pub use self::delete_like_result::DeleteLikeResult;
 pub mod demo_account_login_credentials;
 pub use self::demo_account_login_credentials::DemoAccountLoginCredentials;
 pub mod demo_account_login_result;
