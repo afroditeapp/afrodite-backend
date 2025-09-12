@@ -118,7 +118,6 @@ the search with these options:
   * Optional daily limit for chat requests
     * When sending a chat request to someone who has unlimited chat requests
       enabled, the available chat requests does not decrease.
-  * Undo once per user
 
 ### User interaction security
 

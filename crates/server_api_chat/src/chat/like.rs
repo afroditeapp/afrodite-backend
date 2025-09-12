@@ -2,9 +2,9 @@ use axum::{Extension, extract::State};
 use model::AccountState;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionState, CurrentAccountInteractionState,
-    DailyLikesLeft, DeleteLikeResult, LimitedActionStatus, NewReceivedLikesCountResult,
-    PendingNotificationFlags, ReceivedLikesIteratorState, ReceivedLikesPage,
-    ResetReceivedLikesIteratorResult, SendLikeResult,
+    DailyLikesLeft, LimitedActionStatus, NewReceivedLikesCountResult, PendingNotificationFlags,
+    ReceivedLikesIteratorState, ReceivedLikesPage, ResetReceivedLikesIteratorResult,
+    SendLikeResult,
 };
 use server_api::{
     S,
@@ -275,79 +275,6 @@ pub async fn post_get_received_likes_page(
     .into())
 }
 
-const PATH_DELETE_LIKE: &str = "/chat_api/delete_like";
-
-/// Delete sent like.
-///
-/// Delete will not work if profile is a match.
-#[utoipa::path(
-    delete,
-    path = PATH_DELETE_LIKE,
-    request_body(content = AccountId),
-    responses(
-        (status = 200, description = "Success.", body = DeleteLikeResult),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn delete_like(
-    State(state): State<S>,
-    Extension(id): Extension<AccountIdInternal>,
-    Json(requested_profile): Json<AccountId>,
-) -> Result<Json<DeleteLikeResult>, StatusCode> {
-    CHAT.delete_like.incr();
-
-    let requested_profile = state.get_internal_id(requested_profile).await?;
-
-    let r = db_write!(state, move |cmds| {
-        let current_interaction = cmds
-            .read()
-            .chat()
-            .account_interaction(id, requested_profile)
-            .await?;
-        if let Some(current_interaction) = current_interaction {
-            match current_interaction.state_number {
-                AccountInteractionState::Empty => {
-                    return Ok(DeleteLikeResult::error_account_interaction_state_mismatch(
-                        CurrentAccountInteractionState::Empty,
-                    ));
-                }
-                AccountInteractionState::Match => {
-                    return Ok(DeleteLikeResult::error_account_interaction_state_mismatch(
-                        CurrentAccountInteractionState::Match,
-                    ));
-                }
-                AccountInteractionState::Like => (),
-            }
-        }
-
-        let like_deleted_once_before = cmds
-            .read()
-            .chat()
-            .account_interaction(id, requested_profile)
-            .await?
-            .map(|v| v.account_already_deleted_like(id))
-            .unwrap_or_default();
-
-        if like_deleted_once_before {
-            return Ok(DeleteLikeResult::error_delete_already_done_once_before());
-        }
-
-        let changes = cmds.chat().delete_like(id, requested_profile).await?;
-        cmds.events()
-            .handle_chat_state_changes(&changes.sender)
-            .await?;
-        cmds.events()
-            .handle_chat_state_changes(&changes.receiver)
-            .await?;
-
-        Ok(DeleteLikeResult::success())
-    })?;
-
-    Ok(r.into())
-}
-
 const PATH_GET_DAILY_LIKES_LEFT: &str = "/chat_api/daily_likes_left";
 
 /// Get daily likes left value.
@@ -384,7 +311,6 @@ create_open_api_router!(
         post_reset_new_received_likes_count,
         post_reset_received_likes_paging,
         post_get_received_likes_page,
-        delete_like,
         get_daily_likes_left,
 );
 
@@ -397,6 +323,5 @@ create_counters!(
     post_reset_new_received_likes_count,
     post_reset_received_likes_paging,
     post_get_received_likes_page,
-    delete_like,
     get_daily_likes_left,
 );

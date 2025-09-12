@@ -871,12 +871,8 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     -- 2 = match
     state_number                    INTEGER NOT NULL DEFAULT 0,
     -- The account which sent a like.
-    -- This changes back to null when the like is removed.
-    -- This can't change to null once accounts are a match.
     account_id_sender               INTEGER,
     -- The account which received a like.
-    -- This changes back to null when the like is removed.
-    -- This can't change to null once accounts are a match.
     account_id_receiver             INTEGER,
     -- The account which started the block.
     account_id_block_sender         INTEGER,
@@ -887,16 +883,11 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     -- Incrementing counters for tracking sent message count for both accounts.
     message_counter_sender          INTEGER NOT NULL DEFAULT 0,
     message_counter_receiver        INTEGER NOT NULL DEFAULT 0,
-    -- Track is the received like included in the receiver's
-    -- new_received_likes_count.
-    included_in_received_new_likes_count  BOOLEAN NOT NULL DEFAULT 0,
     -- Received likes iterator uses received likes ID to return
     -- correct pages.
     received_like_id                INTEGER,
     -- Matches iterator uses match ID to return correct pages.
     match_id                        INTEGER,
-    account_id_previous_like_deleter_slot_0 INTEGER,
-    account_id_previous_like_deleter_slot_1 INTEGER,
     -- Account specific conversation ID for new message notifications.
     -- Available when accounts are a match.
     conversation_id_sender                  INTEGER,
@@ -906,14 +897,6 @@ CREATE TABLE IF NOT EXISTS account_interaction(
             ON DELETE CASCADE
             ON UPDATE CASCADE,
     FOREIGN KEY (account_id_receiver)
-        REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    FOREIGN KEY (account_id_previous_like_deleter_slot_0)
-        REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    FOREIGN KEY (account_id_previous_like_deleter_slot_1)
         REFERENCES account_id (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE

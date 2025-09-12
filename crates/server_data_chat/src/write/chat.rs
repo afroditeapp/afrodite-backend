@@ -111,63 +111,7 @@ impl WriteCommandsChat<'_> {
 
             let receiver = cmds.chat().modify_chat_state(id_like_receiver, |s| {
                 if interaction.is_empty() {
-                    if updated.included_in_received_new_likes_count {
-                        s.new_received_likes_count = s.new_received_likes_count.increment();
-                        s.received_likes_sync_version
-                            .increment_if_not_max_value_mut();
-                    }
-                } else if interaction.is_like() && interaction.included_in_received_new_likes_count
-                {
-                    s.new_received_likes_count = s.new_received_likes_count.decrement();
-                    s.received_likes_sync_version
-                        .increment_if_not_max_value_mut();
-                }
-            })?;
-
-            Ok(SenderAndReceiverStateChanges { sender, receiver })
-        })
-    }
-
-    /// Delete a like.
-    ///
-    /// Returns Ok only if the state change happened.
-    pub async fn delete_like(
-        &self,
-        id_sender: AccountIdInternal,
-        id_receiver: AccountIdInternal,
-    ) -> Result<SenderAndReceiverStateChanges, DataError> {
-        db_transaction!(self, move |mut cmds| {
-            let interaction = cmds
-                .chat()
-                .interaction()
-                .get_or_create_account_interaction(id_sender, id_receiver)?;
-
-            if interaction.is_empty() {
-                return Err(DieselDatabaseError::AlreadyDone.report());
-            }
-            if !interaction.is_like() {
-                return Err(DieselDatabaseError::NotAllowed.report());
-            }
-            if interaction.account_id_sender != Some(id_sender.into_db_id()) {
-                return Err(DieselDatabaseError::NotAllowed.report());
-            }
-            let mut updated = interaction
-                .clone()
-                .try_into_empty()
-                .change_context(DieselDatabaseError::NotAllowed)?;
-            updated.set_previous_like_deleter_if_slot_available(id_sender);
-
-            cmds.chat()
-                .interaction()
-                .update_account_interaction(updated)?;
-
-            let sender = cmds.chat().modify_chat_state(id_sender, |_| ())?;
-
-            let receiver = cmds.chat().modify_chat_state(id_receiver, |s| {
-                s.received_likes_sync_version
-                    .increment_if_not_max_value_mut();
-                if interaction.included_in_received_new_likes_count {
-                    s.new_received_likes_count = s.new_received_likes_count.decrement();
+                    s.new_received_likes_count = s.new_received_likes_count.increment();
                     s.received_likes_sync_version
                         .increment_if_not_max_value_mut();
                 }
@@ -437,9 +381,6 @@ impl WriteCommandsChat<'_> {
         id: AccountIdInternal,
     ) -> Result<NewReceivedLikesCountResult, DataError> {
         let new_version = db_transaction!(self, move |mut cmds| {
-            cmds.chat()
-                .interaction()
-                .reset_included_in_received_new_likes_count(id)?;
             cmds.chat().modify_chat_state(id, |s| {
                 if s.new_received_likes_count.c != 0 {
                     s.received_likes_sync_version

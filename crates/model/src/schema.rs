@@ -60,11 +60,8 @@ diesel::table! {
         two_way_block -> Bool,
         message_counter_sender -> Integer,
         message_counter_receiver -> Integer,
-        included_in_received_new_likes_count -> Bool,
         received_like_id -> Nullable<Integer>,
         match_id -> Nullable<Integer>,
-        account_id_previous_like_deleter_slot_0 -> Nullable<Integer>,
-        account_id_previous_like_deleter_slot_1 -> Nullable<Integer>,
         conversation_id_sender -> Nullable<Integer>,
         conversation_id_receiver -> Nullable<Integer>,
     }

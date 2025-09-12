@@ -254,40 +254,6 @@ impl GetSentMessage {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
-pub struct DeleteLikeResult {
-    /// The account tracking for delete like only tracks the latest deleter
-    /// account, so it is possible that this error resets if delete like
-    /// target account likes and removes the like.
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub error_delete_already_done_before: bool,
-    pub error_account_interaction_state_mismatch: Option<CurrentAccountInteractionState>,
-}
-
-impl DeleteLikeResult {
-    pub fn success() -> Self {
-        Self {
-            error_delete_already_done_before: false,
-            error_account_interaction_state_mismatch: None,
-        }
-    }
-
-    pub fn error_delete_already_done_once_before() -> Self {
-        Self {
-            error_delete_already_done_before: true,
-            error_account_interaction_state_mismatch: None,
-        }
-    }
-
-    pub fn error_account_interaction_state_mismatch(state: CurrentAccountInteractionState) -> Self {
-        Self {
-            error_delete_already_done_before: false,
-            error_account_interaction_state_mismatch: Some(state),
-        }
-    }
-}
-
 #[derive(Serialize, ToSchema)]
 pub struct SendLikeResult {
     pub status: Option<LimitedActionStatus>,
