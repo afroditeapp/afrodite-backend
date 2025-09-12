@@ -12,10 +12,11 @@ use database_chat::current::{
     },
 };
 use error_stack::ResultExt;
+use model::NewReceivedLikesCountResult;
 use model_chat::{
     AccountIdInternal, AddPublicKeyResult, ChatStateRaw, ClientId, ClientLocalId,
     NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags,
-    PublicKeyId, ReceivedLikesIteratorState, ReceivedLikesSyncVersion, SendMessageResult,
+    PublicKeyId, ReceivedLikesIteratorState, ResetReceivedLikesIteratorResult, SendMessageResult,
     SentMessageId, SyncVersionUtils,
 };
 use server_data::{
@@ -430,43 +431,55 @@ impl WriteCommandsChat<'_> {
         Ok(AddPublicKeyResult::success(key))
     }
 
-    /// Resets new received likes count if needed and updates received likes
-    /// iterator reset time.
+    /// Resets new received likes count if needed
+    pub async fn handle_reset_new_received_likes_count(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<NewReceivedLikesCountResult, DataError> {
+        let new_version = db_transaction!(self, move |mut cmds| {
+            cmds.chat()
+                .interaction()
+                .reset_included_in_received_new_likes_count(id)?;
+            cmds.chat().modify_chat_state(id, |s| {
+                if s.new_received_likes_count.c != 0 {
+                    s.received_likes_sync_version
+                        .increment_if_not_max_value_mut();
+                    s.new_received_likes_count = NewReceivedLikesCount::default();
+                }
+            })?;
+            let new_state = cmds.read().chat().chat_state(id)?;
+            Ok(new_state.received_likes_sync_version)
+        })?;
+
+        Ok(NewReceivedLikesCountResult {
+            c: NewReceivedLikesCount::default(),
+            v: new_version,
+        })
+    }
+
+    /// Updates received_like_id_at_received_likes_iterator_reset
     pub async fn handle_reset_received_likes_iterator(
         &self,
         id: AccountIdInternal,
-    ) -> Result<(ReceivedLikesIteratorState, ReceivedLikesSyncVersion), DataError> {
-        let (new_version, received_like_id, received_like_id_previous) =
+    ) -> Result<ResetReceivedLikesIteratorResult, DataError> {
+        let (received_like_id, received_like_id_previous) =
             db_transaction!(self, move |mut cmds| {
-                cmds.chat()
-                    .interaction()
-                    .reset_included_in_received_new_likes_count(id)?;
                 let state = cmds.read().chat().chat_state(id)?;
                 let latest_used_id = state.next_received_like_id.next_id_to_latest_used_id();
                 let id_at_previous_reset = state.received_like_id_at_received_likes_iterator_reset;
                 cmds.chat().modify_chat_state(id, |s| {
-                    if s.new_received_likes_count.c != 0 {
-                        s.received_likes_sync_version
-                            .increment_if_not_max_value_mut();
-                        s.new_received_likes_count = NewReceivedLikesCount::default();
-                    }
                     s.received_like_id_at_received_likes_iterator_reset = Some(latest_used_id);
                 })?;
-                let new_state = cmds.read().chat().chat_state(id)?;
-                Ok((
-                    new_state.received_likes_sync_version,
-                    latest_used_id,
-                    id_at_previous_reset,
-                ))
+                Ok((latest_used_id, id_at_previous_reset))
             })?;
 
-        let iterator_state = ReceivedLikesIteratorState {
-            previous_id_at_reset: received_like_id_previous,
-            id_at_reset: received_like_id,
-            page: 0,
-        };
-
-        Ok((iterator_state, new_version))
+        Ok(ResetReceivedLikesIteratorResult {
+            s: ReceivedLikesIteratorState {
+                previous_id_at_reset: received_like_id_previous,
+                id_at_reset: received_like_id,
+                page: 0,
+            },
+        })
     }
 }
 

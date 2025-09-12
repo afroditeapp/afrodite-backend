@@ -6,9 +6,13 @@ use utoipa::ToSchema;
 use crate::ReceivedLikesSyncVersion;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct ResetReceivedLikesIteratorResult {
+pub struct ResetNewReceivedLikesCountResult {
     pub v: ReceivedLikesSyncVersion,
     pub c: NewReceivedLikesCount,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct ResetReceivedLikesIteratorResult {
     pub s: ReceivedLikesIteratorState,
 }
 

@@ -2,9 +2,9 @@ use axum::{Extension, extract::State};
 use model::AccountState;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionState, CurrentAccountInteractionState,
-    DailyLikesLeft, DeleteLikeResult, LimitedActionStatus, NewReceivedLikesCount,
-    NewReceivedLikesCountResult, PendingNotificationFlags, ReceivedLikesIteratorState,
-    ReceivedLikesPage, ResetReceivedLikesIteratorResult, SendLikeResult,
+    DailyLikesLeft, DeleteLikeResult, LimitedActionStatus, NewReceivedLikesCountResult,
+    PendingNotificationFlags, ReceivedLikesIteratorState, ReceivedLikesPage,
+    ResetReceivedLikesIteratorResult, SendLikeResult,
 };
 use server_api::{
     S,
@@ -188,6 +188,31 @@ pub async fn post_get_new_received_likes_count(
     Ok(r.into())
 }
 
+const PATH_POST_RESET_NEW_RECEIVED_LIKES_COUNT: &str = "/chat_api/reset_new_received_likes_count";
+
+#[utoipa::path(
+    post,
+    path = PATH_POST_RESET_NEW_RECEIVED_LIKES_COUNT,
+    responses(
+        (status = 200, description = "Successfull.", body = NewReceivedLikesCountResult),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_reset_new_received_likes_count(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+) -> Result<Json<NewReceivedLikesCountResult>, StatusCode> {
+    CHAT.post_reset_new_received_likes_count.incr();
+    let r = db_write!(state, move |cmds| {
+        cmds.chat()
+            .handle_reset_new_received_likes_count(account_id)
+            .await
+    })?;
+    Ok(r.into())
+}
+
 const PATH_POST_RESET_RECEIVED_LIKES_PAGING: &str = "/chat_api/received_likes/reset";
 
 #[utoipa::path(
@@ -205,16 +230,11 @@ pub async fn post_reset_received_likes_paging(
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ResetReceivedLikesIteratorResult>, StatusCode> {
     CHAT.post_reset_received_likes_paging.incr();
-    let (iterator_state, new_version) = db_write!(state, move |cmds| {
+    let r = db_write!(state, move |cmds| {
         cmds.chat()
             .handle_reset_received_likes_iterator(account_id)
             .await
     })?;
-    let r = ResetReceivedLikesIteratorResult {
-        v: new_version,
-        c: NewReceivedLikesCount::default(),
-        s: iterator_state,
-    };
     Ok(r.into())
 }
 
@@ -361,6 +381,7 @@ create_open_api_router!(
         fn router_like,
         post_send_like,
         post_get_new_received_likes_count,
+        post_reset_new_received_likes_count,
         post_reset_received_likes_paging,
         post_get_received_likes_page,
         delete_like,
@@ -373,6 +394,7 @@ create_counters!(
     CHAT_LIKE_COUNTERS_LIST,
     post_send_like,
     post_get_new_received_likes_count,
+    post_reset_new_received_likes_count,
     post_reset_received_likes_paging,
     post_get_received_likes_page,
     delete_like,
