@@ -88,8 +88,13 @@ impl AdminBotProfileStringModerationLogic {
             }
 
             let r = if let Some(llm_config) = &config.llm {
-                let r =
-                    Self::llm_profile_text_moderation(&request.value, llm_config, state).await?;
+                let r = Self::llm_profile_text_moderation(
+                    &request.value,
+                    llm_config,
+                    state,
+                    self.content_type,
+                )
+                .await?;
 
                 match r {
                     LlmModerationResult::StopModerationSesssion => return Ok(Some(EmptyPage)),
@@ -135,6 +140,7 @@ impl AdminBotProfileStringModerationLogic {
         profile_text: &str,
         config: &LlmStringModerationConfig,
         state: &mut ProfileTextModerationState,
+        content_type: ProfileStringModerationContentType,
     ) -> Result<LlmModerationResult, TestError> {
         let client = state.client.get_or_insert_with(|| {
             Client::with_config(
@@ -175,16 +181,16 @@ impl AdminBotProfileStringModerationLogic {
             Ok(Some(r)) => match r.message.content {
                 Some(response) => response,
                 None => {
-                    error!("Profile text moderation error: no response content from LLM");
+                    error!("LLM {content_type} moderation error: no response content");
                     return Ok(LlmModerationResult::StopModerationSesssion);
                 }
             },
             Ok(None) => {
-                error!("Profile text moderation error: no response from LLM");
+                error!("LLM {content_type} moderation error: no response");
                 return Ok(LlmModerationResult::StopModerationSesssion);
             }
             Err(e) => {
-                error!("Profile text moderation error: {}", e);
+                error!("LLM {content_type} moderation failed: {}", e);
                 return Ok(LlmModerationResult::StopModerationSesssion);
             }
         };
@@ -194,7 +200,7 @@ impl AdminBotProfileStringModerationLogic {
         let accepted = response_lowercase.starts_with(&expected_response_lowercase)
             || response_first_line.contains(&expected_response_lowercase);
         if config.debug_log_results {
-            info!("LLM text moderation result: '{}'", response);
+            info!("LLM {content_type} moderation result: '{}'", response);
         }
         let rejected_details = if !accepted && config.debug_show_llm_output_when_rejected {
             Some(response)

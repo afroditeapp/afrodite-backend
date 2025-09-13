@@ -427,16 +427,16 @@ impl AdminBotContentModerationLogic {
             Ok(Some(r)) => match r.message.content {
                 Some(response) => response,
                 None => {
-                    error!("Content moderation error: no response content from LLM");
+                    error!("LLM content moderation error: no response content");
                     return Ok(LlmModerationResult::StopModerationSesssion);
                 }
             },
             Ok(None) => {
-                error!("Content moderation error: no response from LLM");
+                error!("LLM content moderation error: no response");
                 return Ok(LlmModerationResult::StopModerationSesssion);
             }
             Err(e) => {
-                error!("Content moderation error: {}", e);
+                error!("LLM content moderation failed: {}", e);
                 return Ok(LlmModerationResult::StopModerationSesssion);
             }
         };
