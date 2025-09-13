@@ -1,6 +1,6 @@
 use model::{
-    AccountIdInternal, NewReceivedLikesCountResult, PendingNotificationFlags,
-    PendingNotificationToken, PendingNotificationWithData,
+    AccountIdInternal, PendingNotificationFlags, PendingNotificationToken,
+    PendingNotificationWithData,
 };
 use server_data::{
     db_manager::RouterDatabaseReadHandle, write::GetWriteCommandsCommon,
@@ -61,10 +61,7 @@ pub async fn get_push_notification_data(
             .chat_state(id)
             .await
             .ok()
-            .map(|chat_state| NewReceivedLikesCountResult {
-                v: chat_state.received_likes_sync_version,
-                c: chat_state.new_received_likes_count,
-            })
+            .map(|chat_state| chat_state.new_received_likes_info())
     } else {
         None
     };

@@ -380,7 +380,7 @@ impl WriteCommandsChat<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<NewReceivedLikesCountResult, DataError> {
-        let new_version = db_transaction!(self, move |mut cmds| {
+        db_transaction!(self, move |mut cmds| {
             cmds.chat().modify_chat_state(id, |s| {
                 if s.new_received_likes_count.c != 0 {
                     s.received_likes_sync_version
@@ -389,12 +389,7 @@ impl WriteCommandsChat<'_> {
                 }
             })?;
             let new_state = cmds.read().chat().chat_state(id)?;
-            Ok(new_state.received_likes_sync_version)
-        })?;
-
-        Ok(NewReceivedLikesCountResult {
-            c: NewReceivedLikesCount::default(),
-            v: new_version,
+            Ok(new_state.new_received_likes_info())
         })
     }
 

@@ -126,6 +126,9 @@ pub struct GetChatMessageReportsInternal {
 pub struct NewReceivedLikesCountResult {
     pub v: ReceivedLikesSyncVersion,
     pub c: NewReceivedLikesCount,
+    /// Latest received like in use. Client can use this
+    /// to check should received likes be refreshed.
+    pub l: ReceivedLikeId,
 }
 
 #[derive(Debug, Clone)]

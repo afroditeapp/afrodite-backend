@@ -1,4 +1,4 @@
-use model::{AccountIdInternal, NewReceivedLikesCountResult, PendingNotificationFlags};
+use model::{AccountIdInternal, PendingNotificationFlags};
 use server_api::{
     DataError,
     app::{AdminNotificationProvider, ReadData},
@@ -41,10 +41,7 @@ pub async fn is_notification_visible(
                     .chat_state(id)
                     .await
                     .ok()
-                    .map(|chat_state| NewReceivedLikesCountResult {
-                        v: chat_state.received_likes_sync_version,
-                        c: chat_state.new_received_likes_count,
-                    })?;
+                    .map(|chat_state| chat_state.new_received_likes_info())?;
 
                 Some(v.c.c > 0)
             },

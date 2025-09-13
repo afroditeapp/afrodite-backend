@@ -172,10 +172,6 @@ pub async fn post_get_new_received_likes_count(
     CHAT.post_get_new_received_likes_count.incr();
 
     let chat_state = state.read().chat().chat_state(id).await?;
-    let r = NewReceivedLikesCountResult {
-        v: chat_state.received_likes_sync_version,
-        c: chat_state.new_received_likes_count,
-    };
 
     state
         .event_manager()
@@ -185,7 +181,7 @@ pub async fn post_get_new_received_likes_count(
         )
         .await;
 
-    Ok(r.into())
+    Ok(chat_state.new_received_likes_info().into())
 }
 
 const PATH_POST_RESET_NEW_RECEIVED_LIKES_COUNT: &str = "/chat_api/reset_new_received_likes_count";

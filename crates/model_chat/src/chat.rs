@@ -2,7 +2,7 @@ use base64::Engine;
 use diesel::prelude::*;
 use model::{
     ConversationId, DailyLikesLeftSyncVersion, MatchId, MessageId, NewReceivedLikesCount,
-    PublicKeyId, ReceivedLikeId, ReceivedLikesSyncVersion, UnixTime,
+    NewReceivedLikesCountResult, PublicKeyId, ReceivedLikeId, ReceivedLikesSyncVersion, UnixTime,
 };
 use model_server_data::LimitedActionStatus;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -38,6 +38,16 @@ pub struct ChatStateRaw {
     pub next_received_like_id: ReceivedLikeId,
     pub received_like_id_at_received_likes_iterator_reset: Option<ReceivedLikeId>,
     pub next_conversation_id: ConversationId,
+}
+
+impl ChatStateRaw {
+    pub fn new_received_likes_info(&self) -> NewReceivedLikesCountResult {
+        NewReceivedLikesCountResult {
+            v: self.received_likes_sync_version,
+            c: self.new_received_likes_count,
+            l: self.next_received_like_id.next_id_to_latest_used_id(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Queryable, Selectable)]
