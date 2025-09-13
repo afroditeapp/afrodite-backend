@@ -22,7 +22,7 @@ use super::{BotAction, BotState, EmptyPage, ModerationResult};
 use crate::actions::admin::LlmModerationResult;
 
 #[derive(Debug)]
-pub struct ProfileTextModerationState {
+pub struct ProfileStringModerationState {
     moderation_started: Option<Instant>,
     client: Option<Client<OpenAIConfig>>,
     reqwest_client: reqwest::Client,
@@ -50,7 +50,7 @@ impl AdminBotProfileStringModerationLogic {
         &self,
         api: &ApiClient,
         config: &ProfileStringModerationConfig,
-        state: &mut ProfileTextModerationState,
+        state: &mut ProfileStringModerationState,
     ) -> Result<Option<EmptyPage>, TestError> {
         let list = profile_admin_api::get_profile_string_pending_moderation_list(
             api.api(),
@@ -88,7 +88,7 @@ impl AdminBotProfileStringModerationLogic {
             }
 
             let r = if let Some(llm_config) = &config.llm {
-                let r = Self::llm_profile_text_moderation(
+                let r = Self::llm_profile_string_moderation(
                     &request.value,
                     llm_config,
                     state,
@@ -136,10 +136,10 @@ impl AdminBotProfileStringModerationLogic {
         Ok(None)
     }
 
-    async fn llm_profile_text_moderation(
-        profile_text: &str,
+    async fn llm_profile_string_moderation(
+        profile_string: &str,
         config: &LlmStringModerationConfig,
-        state: &mut ProfileTextModerationState,
+        state: &mut ProfileStringModerationState,
         content_type: ProfileStringModerationContentType,
     ) -> Result<LlmModerationResult, TestError> {
         let client = state.client.get_or_insert_with(|| {
@@ -152,7 +152,7 @@ impl AdminBotProfileStringModerationLogic {
         });
 
         let expected_response_lowercase = config.expected_response.to_lowercase();
-        let profile_text_paragraph = profile_text.lines().collect::<Vec<&str>>().join(" ");
+        let profile_text_paragraph = profile_string.lines().collect::<Vec<&str>>().join(" ");
 
         let user_text = config.user_text_template.replace(
             ProfileStringModerationConfig::TEMPLATE_PLACEHOLDER_TEXT,
@@ -238,8 +238,8 @@ impl BotAction for AdminBotProfileStringModerationLogic {
         let moderation_state =
             state
                 .admin
-                .profile_text
-                .get_or_insert_with(|| ProfileTextModerationState {
+                .profile_string
+                .get_or_insert_with(|| ProfileStringModerationState {
                     moderation_started: None,
                     client: None,
                     reqwest_client: state.reqwest_client.clone(),

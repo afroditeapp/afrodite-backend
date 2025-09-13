@@ -1,5 +1,5 @@
 use content::ContentModerationState;
-use profile_text::ProfileTextModerationState;
+use profile_text::ProfileStringModerationState;
 
 use super::{BotAction, BotState};
 
@@ -10,7 +10,7 @@ struct EmptyPage;
 
 #[derive(Debug, Default)]
 pub struct AdminBotState {
-    profile_text: Option<ProfileTextModerationState>,
+    profile_string: Option<ProfileStringModerationState>,
     content: Option<ContentModerationState>,
 }
 
