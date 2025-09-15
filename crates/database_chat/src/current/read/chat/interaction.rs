@@ -3,7 +3,7 @@ use diesel::prelude::*;
 use error_stack::Result;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, MatchId,
-    PageItemCountForNewLikes, ReceivedLikeId,
+    ReceivedLikeId,
 };
 
 use crate::IntoDatabaseError;
@@ -100,48 +100,30 @@ impl CurrentReadChatInteraction<'_> {
         id_receiver: AccountIdInternal,
         received_like_id_value: ReceivedLikeId,
         page: i64,
-        received_like_id_previous_value: Option<ReceivedLikeId>,
-    ) -> Result<(Vec<AccountId>, PageItemCountForNewLikes), DieselDatabaseError> {
+    ) -> Result<Vec<(AccountId, ReceivedLikeId, bool)>, DieselDatabaseError> {
         use crate::schema::{account_id, account_interaction::dsl::*};
 
         const PAGE_SIZE: i64 = 25;
 
-        let account_ids_and_received_like_ids: Vec<(AccountId, ReceivedLikeId)> =
-            account_interaction
-                .inner_join(
-                    account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)),
-                )
-                .filter(account_id_sender.is_not_null())
-                .filter(account_id_receiver.eq(id_receiver.as_db_id()))
-                .filter(state_number.eq(AccountInteractionState::Like))
-                .filter(received_like_id.is_not_null())
-                .filter(received_like_id.le(received_like_id_value))
-                .select((account_id::uuid, received_like_id.assume_not_null()))
-                .order((received_like_id.desc(),))
-                .limit(PAGE_SIZE)
-                .offset(PAGE_SIZE.saturating_mul(page))
-                .load(self.conn())
-                .into_db_error(())?;
-
-        let mut count = 0;
-        let account_ids: Vec<AccountId> = if let Some(previous) = received_like_id_previous_value {
-            account_ids_and_received_like_ids
-                .into_iter()
-                .map(|(aid, like_id)| {
-                    if like_id.id > previous.id {
-                        count += 1;
-                    }
-                    aid
-                })
-                .collect()
-        } else {
-            account_ids_and_received_like_ids
-                .into_iter()
-                .map(|(aid, _)| aid)
-                .collect()
-        };
-
-        Ok((account_ids, PageItemCountForNewLikes { c: count }))
+        account_interaction
+            .inner_join(
+                account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)),
+            )
+            .filter(account_id_sender.is_not_null())
+            .filter(account_id_receiver.eq(id_receiver.as_db_id()))
+            .filter(state_number.eq(AccountInteractionState::Like))
+            .filter(received_like_id.is_not_null())
+            .filter(received_like_id.le(received_like_id_value))
+            .select((
+                account_id::uuid,
+                received_like_id.assume_not_null(),
+                received_like_viewed,
+            ))
+            .order(received_like_id.desc())
+            .limit(PAGE_SIZE)
+            .offset(PAGE_SIZE.saturating_mul(page))
+            .load(self.conn())
+            .into_db_error(())
     }
 
     /// Interaction ordering goes from recent to older starting

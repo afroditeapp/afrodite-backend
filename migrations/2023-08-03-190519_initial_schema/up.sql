@@ -809,7 +809,6 @@ CREATE TABLE IF NOT EXISTS chat_state(
     received_likes_sync_version  INTEGER        NOT NULL DEFAULT 0,
     new_received_likes_count     INTEGER        NOT NULL DEFAULT 0,
     next_received_like_id        INTEGER        NOT NULL DEFAULT 0,
-    received_like_id_at_received_likes_iterator_reset           INTEGER,
     max_public_key_count         INTEGER        NOT NULL DEFAULT 0,
     next_conversation_id         INTEGER        NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
@@ -886,6 +885,7 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     -- Received likes iterator uses received likes ID to return
     -- correct pages.
     received_like_id                INTEGER,
+    received_like_viewed            BOOLEAN NOT NULL DEFAULT 0,
     -- Matches iterator uses match ID to return correct pages.
     match_id                        INTEGER,
     -- Account specific conversation ID for new message notifications.

@@ -1,6 +1,7 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
+use model::ReceivedLikeId;
 use model_chat::{AccountIdInternal, AccountInteractionInternal};
 
 use crate::{IntoDatabaseError, current::read::GetDbReadCommandsChat};
@@ -75,5 +76,24 @@ impl CurrentWriteChatInteraction<'_> {
             Some(interaction) => Ok(interaction),
             None => self.insert_account_interaction(account1, account2),
         }
+    }
+
+    pub fn mark_received_likes_viewed(
+        &mut self,
+        like_receiver: AccountIdInternal,
+        likes: Vec<ReceivedLikeId>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account_interaction::dsl::*;
+
+        update(
+            account_interaction
+                .filter(account_id_receiver.eq(like_receiver.as_db_id()))
+                .filter(received_like_id.eq_any(likes)),
+        )
+        .set(received_like_viewed.eq(true))
+        .execute(self.conn())
+        .into_db_error(())?;
+
+        Ok(())
     }
 }

@@ -2,9 +2,9 @@ use axum::{Extension, extract::State};
 use model::AccountState;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionState, CurrentAccountInteractionState,
-    DailyLikesLeft, LimitedActionStatus, NewReceivedLikesCountResult, PendingNotificationFlags,
-    ReceivedLikesIteratorState, ReceivedLikesPage, ResetReceivedLikesIteratorResult,
-    SendLikeResult,
+    DailyLikesLeft, LimitedActionStatus, MarkReceivedLikesViewed, NewReceivedLikesCountResult,
+    PendingNotificationFlags, ReceivedLikesIteratorState, ReceivedLikesPage,
+    ResetReceivedLikesIteratorResult, SendLikeResult,
 };
 use server_api::{
     S,
@@ -259,16 +259,39 @@ pub async fn post_get_received_likes_page(
     Json(iterator_state): Json<ReceivedLikesIteratorState>,
 ) -> Result<Json<ReceivedLikesPage>, StatusCode> {
     CHAT.post_get_received_likes_page.incr();
-    let (profiles, new_likes_count) = state
+    let v = state
         .read()
         .chat()
         .received_likes_page(account_id, iterator_state)
         .await?;
-    Ok(ReceivedLikesPage {
-        n: new_likes_count,
-        p: profiles,
-    }
-    .into())
+    Ok(v.into())
+}
+
+const PATH_POST_MARK_RECEIVED_LIKES_VIEWED: &str = "/chat_api/mark_received_likes_viewed";
+
+#[utoipa::path(
+    post,
+    path = PATH_POST_MARK_RECEIVED_LIKES_VIEWED,
+    request_body(content = MarkReceivedLikesViewed),
+    responses(
+        (status = 200, description = "Successfull."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_mark_received_likes_viewed(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+    Json(likes): Json<MarkReceivedLikesViewed>,
+) -> Result<(), StatusCode> {
+    CHAT.post_mark_received_likes_viewed.incr();
+    db_write!(state, move |cmds| {
+        cmds.chat()
+            .mark_received_likes_viewed(account_id, likes.v)
+            .await
+    })?;
+    Ok(())
 }
 
 const PATH_GET_DAILY_LIKES_LEFT: &str = "/chat_api/daily_likes_left";
@@ -307,6 +330,7 @@ create_open_api_router!(
         post_reset_new_received_likes_count,
         post_reset_received_likes_paging,
         post_get_received_likes_page,
+        post_mark_received_likes_viewed,
         get_daily_likes_left,
 );
 
@@ -319,5 +343,6 @@ create_counters!(
     post_reset_new_received_likes_count,
     post_reset_received_likes_paging,
     post_get_received_likes_page,
+    post_mark_received_likes_viewed,
     get_daily_likes_left,
 );

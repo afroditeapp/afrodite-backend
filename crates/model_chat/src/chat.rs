@@ -36,7 +36,6 @@ pub struct ChatStateRaw {
     pub received_likes_sync_version: ReceivedLikesSyncVersion,
     pub new_received_likes_count: NewReceivedLikesCount,
     pub next_received_like_id: ReceivedLikeId,
-    pub received_like_id_at_received_likes_iterator_reset: Option<ReceivedLikeId>,
     pub next_conversation_id: ConversationId,
 }
 

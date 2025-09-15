@@ -61,6 +61,7 @@ diesel::table! {
         message_counter_sender -> Integer,
         message_counter_receiver -> Integer,
         received_like_id -> Nullable<Integer>,
+        received_like_viewed -> Bool,
         match_id -> Nullable<Integer>,
         conversation_id_sender -> Nullable<Integer>,
         conversation_id_receiver -> Nullable<Integer>,
@@ -243,7 +244,6 @@ diesel::table! {
         received_likes_sync_version -> Integer,
         new_received_likes_count -> Integer,
         next_received_like_id -> Integer,
-        received_like_id_at_received_likes_iterator_reset -> Nullable<Integer>,
         max_public_key_count -> Integer,
         next_conversation_id -> Integer,
     }

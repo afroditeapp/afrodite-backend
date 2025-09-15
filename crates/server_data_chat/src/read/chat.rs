@@ -1,8 +1,8 @@
 use database_chat::current::read::GetDbReadCommandsChat;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, ChatStateRaw, GetSentMessage,
-    MatchesIteratorState, PageItemCountForNewLikes, ProfileLink, ReceivedLikesIteratorState,
-    SentBlocksPage, SentMessageId,
+    MatchesIteratorState, ProfileLink, ReceivedLikesIteratorState, ReceivedLikesPage,
+    ReceivedLikesPageItem, SentBlocksPage, SentMessageId,
 };
 use server_data::{
     DataError, IntoDataError, cache::CacheReadCommon, db_manager::InternalReading,
@@ -38,8 +38,8 @@ impl ReadCommandsChat<'_> {
         &self,
         id: AccountIdInternal,
         state: ReceivedLikesIteratorState,
-    ) -> Result<(Vec<ProfileLink>, PageItemCountForNewLikes), DataError> {
-        let (accounts, item_count) = self
+    ) -> Result<ReceivedLikesPage, DataError> {
+        let received_likes = self
             .db_read(move |mut cmds| {
                 let value = cmds
                     .chat()
@@ -48,13 +48,19 @@ impl ReadCommandsChat<'_> {
                         id,
                         state.id_at_reset,
                         state.page,
-                        state.previous_id_at_reset,
                     )?;
                 Ok(value)
             })
             .await?;
 
-        Ok((self.to_profile_links(accounts).await?, item_count))
+        let mut likes = vec![];
+        for (account, like_id, viewed) in received_likes {
+            likes.push(ReceivedLikesPageItem {
+                p: self.to_profile_link(account).await?,
+                not_viewed: if !viewed { Some(like_id) } else { None },
+            });
+        }
+        Ok(ReceivedLikesPage { l: likes })
     }
 
     pub async fn matches_page(
@@ -72,29 +78,32 @@ impl ReadCommandsChat<'_> {
             })
             .await?;
 
-        self.to_profile_links(accounts).await
+        self.to_profile_link_list(accounts).await
     }
 
-    async fn to_profile_links(
+    async fn to_profile_link_list(
         &self,
         accounts: Vec<AccountId>,
     ) -> Result<Vec<ProfileLink>, DataError> {
         let mut links = vec![];
         for id in accounts {
-            let x = self
-                .cache()
-                .read_cache(id, |e| {
-                    Ok(ProfileLink::new(
-                        id,
-                        e.profile.profile_internal().version_uuid,
-                        e.media.profile_content_version,
-                        e.profile.last_seen_time().last_seen_time(),
-                    ))
-                })
-                .await?;
-            links.push(x);
+            links.push(self.to_profile_link(id).await?);
         }
         Ok(links)
+    }
+
+    async fn to_profile_link(&self, id: AccountId) -> Result<ProfileLink, DataError> {
+        self.cache()
+            .read_cache(id, |e| {
+                Ok(ProfileLink::new(
+                    id,
+                    e.profile.profile_internal().version_uuid,
+                    e.media.profile_content_version,
+                    e.profile.last_seen_time().last_seen_time(),
+                ))
+            })
+            .await
+            .into_error()
     }
 
     pub async fn all_sent_blocks(

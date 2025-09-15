@@ -1,3 +1,4 @@
+use model::ReceivedLikeId;
 use model_server_data::{ProfileLink, ReceivedLikesIteratorState};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -7,16 +8,19 @@ pub struct ResetReceivedLikesIteratorResult {
     pub s: ReceivedLikesIteratorState,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
+#[derive(Serialize, ToSchema)]
 pub struct ReceivedLikesPage {
-    pub n: PageItemCountForNewLikes,
-    pub p: Vec<ProfileLink>,
+    pub l: Vec<ReceivedLikesPageItem>,
 }
 
-/// Define how many returned profiles counted from the first page item are
-/// new likes (interaction state changed to like after previous received likes
-/// iterator reset).
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema, PartialEq)]
-pub struct PageItemCountForNewLikes {
-    pub c: i64,
+#[derive(Serialize, ToSchema)]
+pub struct ReceivedLikesPageItem {
+    pub p: ProfileLink,
+    /// If Some, the like is not viewed yet
+    pub not_viewed: Option<ReceivedLikeId>,
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct MarkReceivedLikesViewed {
+    pub v: Vec<ReceivedLikeId>,
 }
