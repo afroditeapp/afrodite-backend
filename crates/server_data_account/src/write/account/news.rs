@@ -11,12 +11,7 @@ impl WriteCommandsAccountNews<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<ResetNewsIteratorResult, DataError> {
-        let (previous_id, new_id, v, count) = db_transaction!(self, move |mut cmds| {
-            let previous_id = cmds
-                .read()
-                .account()
-                .news()
-                .publication_id_at_news_iterator_reset(id)?;
+        let (new_id, v, count) = db_transaction!(self, move |mut cmds| {
             let new_id = cmds
                 .read()
                 .account()
@@ -29,12 +24,11 @@ impl WriteCommandsAccountNews<'_> {
                 .news()
                 .increment_news_sync_version_for_specific_account(id)?;
             let c = cmds.account().news().reset_news_unread_count(id)?;
-            Ok((previous_id, new_id, v, c))
+            Ok((new_id, v, c))
         })?;
 
         Ok(ResetNewsIteratorResult {
             s: NewsIteratorState {
-                previous_id_at_reset: previous_id,
                 id_at_reset: new_id,
                 page: 0,
             },

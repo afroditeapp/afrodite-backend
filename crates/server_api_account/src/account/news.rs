@@ -96,7 +96,7 @@ pub async fn post_get_news_page(
     Json(iterator_state): Json<NewsIteratorState>,
 ) -> Result<Json<NewsPage>, StatusCode> {
     ACCOUNT.post_get_news_page.incr();
-    let (news, n) = state
+    let news = state
         .read()
         .account()
         .news()
@@ -106,7 +106,7 @@ pub async fn post_get_news_page(
             permissions.some_admin_news_permissions_granted(),
         )
         .await?;
-    Ok(NewsPage { n, news }.into())
+    Ok(NewsPage { news }.into())
 }
 
 const PATH_GET_NEWS_ITEM: &str = "/account_api/news_item/{nid}";

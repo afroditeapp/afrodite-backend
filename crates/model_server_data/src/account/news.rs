@@ -51,7 +51,6 @@ impl From<PublicationId> for i64 {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct NewsIteratorState {
-    pub previous_id_at_reset: Option<PublicationId>,
     pub id_at_reset: PublicationId,
     pub page: i64,
 }

@@ -139,7 +139,6 @@ diesel::table! {
         account_banned_state_change_unix_time -> Nullable<Integer>,
         news_sync_version -> Integer,
         unread_news_count -> Integer,
-        publication_id_at_news_iterator_reset -> Nullable<Integer>,
         publication_id_at_unread_news_count_incrementing -> Nullable<Integer>,
         account_created_unix_time -> Integer,
     }

@@ -1,7 +1,7 @@
 use database_account::current::read::GetDbReadCommandsAccount;
 use model_account::{
     AccountIdInternal, NewsId, NewsItem, NewsItemSimple, NewsIteratorState, NewsLocale,
-    PageItemCountForNewPublicNews, RequireNewsLocale, UnreadNewsCountResult,
+    RequireNewsLocale, UnreadNewsCountResult,
 };
 use server_data::{
     DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead, result::Result,
@@ -28,11 +28,10 @@ impl ReadCommandsAccountNews<'_> {
         state: NewsIteratorState,
         locale: NewsLocale,
         include_private_news: bool,
-    ) -> Result<(Vec<NewsItemSimple>, PageItemCountForNewPublicNews), DataError> {
+    ) -> Result<Vec<NewsItemSimple>, DataError> {
         self.db_read(move |mut cmds| {
             let value = cmds.account().news().paged_news(
                 state.id_at_reset,
-                state.previous_id_at_reset,
                 state.page,
                 locale,
                 include_private_news,

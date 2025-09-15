@@ -4,7 +4,7 @@ use error_stack::Result;
 use model::{AccountId, AccountIdInternal, NewsSyncVersion, UnreadNewsCount};
 use model_account::{
     NewsId, NewsItem, NewsItemInternal, NewsItemSimple, NewsLocale, NewsTranslationInternal,
-    PageItemCountForNewPublicNews, PublicationId, RequireNewsLocale,
+    PublicationId, RequireNewsLocale,
 };
 
 use crate::IntoDatabaseError;
@@ -43,11 +43,10 @@ impl CurrentReadAccountNews<'_> {
     pub fn paged_news(
         &mut self,
         id_value: PublicationId,
-        previous_id_value: Option<PublicationId>,
         page: i64,
         locale_value: NewsLocale,
         include_private_news: bool,
-    ) -> Result<(Vec<NewsItemSimple>, PageItemCountForNewPublicNews), DieselDatabaseError> {
+    ) -> Result<Vec<NewsItemSimple>, DieselDatabaseError> {
         use crate::schema::{news, news_translations};
 
         let (requested_translation, default_translation) = alias!(
@@ -137,8 +136,6 @@ impl CurrentReadAccountNews<'_> {
             .load(self.conn())
             .into_db_error(())?;
 
-        let mut new_items_count = 0;
-
         let items = private_rows
             .into_iter()
             .map(|r| NewsItemSimple {
@@ -147,22 +144,15 @@ impl CurrentReadAccountNews<'_> {
                 time: r.0.latest_publication_unix_time,
                 private: r.0.publication_id.is_none(),
             })
-            .chain(public_rows.into_iter().map(|r| {
-                if let Some(previous_id_value) = previous_id_value {
-                    if r.1.id > previous_id_value.id {
-                        new_items_count += 1;
-                    }
-                }
-                NewsItemSimple {
-                    id: r.0.id,
-                    title: r.2.or(r.3),
-                    time: r.0.latest_publication_unix_time,
-                    private: r.0.publication_id.is_none(),
-                }
+            .chain(public_rows.into_iter().map(|r| NewsItemSimple {
+                id: r.0.id,
+                title: r.2.or(r.3),
+                time: r.0.latest_publication_unix_time,
+                private: r.0.publication_id.is_none(),
             }))
             .collect();
 
-        Ok((items, PageItemCountForNewPublicNews { c: new_items_count }))
+        Ok(items)
     }
 
     pub fn news_item(
@@ -253,18 +243,5 @@ impl CurrentReadAccountNews<'_> {
             .into_db_error(())?;
 
         Ok(value.publication_id.is_some())
-    }
-
-    pub fn publication_id_at_news_iterator_reset(
-        &mut self,
-        id_value: AccountIdInternal,
-    ) -> Result<Option<PublicationId>, DieselDatabaseError> {
-        use model::schema::account_state::dsl::*;
-
-        account_state
-            .filter(account_id.eq(id_value.as_db_id()))
-            .select(publication_id_at_news_iterator_reset)
-            .first(self.conn())
-            .into_db_error(())
     }
 }

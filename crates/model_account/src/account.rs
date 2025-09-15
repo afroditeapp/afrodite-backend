@@ -209,7 +209,6 @@ pub struct AccountStateTableRaw {
     account_banned_state_change_unix_time: Option<UnixTime>,
     news_sync_version: i64,
     unread_news_count: i64,
-    publication_id_at_news_iterator_reset: Option<i64>,
     publication_id_at_unread_news_count_incrementing: Option<i64>,
     account_created_unix_time: UnixTime,
 }

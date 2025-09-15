@@ -115,7 +115,6 @@ pub struct ResetNewsIteratorResult {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct NewsPage {
-    pub n: PageItemCountForNewPublicNews,
     pub news: Vec<NewsItemSimple>,
 }
 
@@ -186,12 +185,4 @@ impl Default for NewsLocale {
             locale: Self::DEFAULT.to_string(),
         }
     }
-}
-
-/// Define how many returned news items counted from the first public
-/// news item are new news (news publicity changed to public after
-/// previous news iterator reset).
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema, PartialEq)]
-pub struct PageItemCountForNewPublicNews {
-    pub c: i64,
 }
