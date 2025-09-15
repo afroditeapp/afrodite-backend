@@ -239,14 +239,17 @@ pub async fn post_set_news_publicity(
             return Ok(());
         }
 
-        cmds.account_admin()
+        let send_notification = cmds
+            .account_admin()
             .news()
             .set_news_publicity(nid, publicity.value)
             .await?;
 
-        cmds.events()
-            .send_low_priority_notification_to_logged_in_clients(NotificationEvent::NewsChanged)
-            .await;
+        if send_notification {
+            cmds.events()
+                .send_low_priority_notification_to_logged_in_clients(NotificationEvent::NewsChanged)
+                .await;
+        }
 
         Ok(())
     })?;

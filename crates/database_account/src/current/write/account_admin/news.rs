@@ -86,11 +86,12 @@ impl CurrentWriteAccountNewsAdmin<'_> {
         Ok(())
     }
 
+    /// Returns Ok(true) if news notification should be sent to clients.
     pub fn set_news_publicity(
         &mut self,
         id_value: NewsId,
         is_public: bool,
-    ) -> Result<(), DieselDatabaseError> {
+    ) -> Result<bool, DieselDatabaseError> {
         use model::schema::news::dsl::*;
 
         let current_value = self
@@ -104,11 +105,11 @@ impl CurrentWriteAccountNewsAdmin<'_> {
         } else {
             current_value.first_publication_time
         };
-        let (publication_id_value, latest_publication) = if is_public {
+        let (publication_id_value, latest_publication, send_notification) = if is_public {
             let new_publication_id = self.get_next_news_publication_id_and_increment_it()?;
             self.increment_news_unread_count_for_every_account()?;
             self.increment_news_sync_version_for_every_account()?;
-            (Some(new_publication_id), Some(current_time))
+            (Some(new_publication_id), Some(current_time), true)
         } else {
             let publication_id_value: PublicationId = news
                 .filter(id.eq(id_value))
@@ -128,11 +129,18 @@ impl CurrentWriteAccountNewsAdmin<'_> {
             // - View news        - unread news 0
             // - Publish news B   - unread news 1
             // - Unpublish news A - unread news 0
-            if publication_id_value == latest_used_publication_id {
+            let send_notification = if publication_id_value == latest_used_publication_id {
                 self.decrement_news_unread_count_for_every_account()?;
                 self.increment_news_sync_version_for_every_account()?;
-            }
-            (None, current_value.latest_publication_time)
+                true
+            } else {
+                false
+            };
+            (
+                None,
+                current_value.latest_publication_time,
+                send_notification,
+            )
         };
 
         update(news)
@@ -145,7 +153,7 @@ impl CurrentWriteAccountNewsAdmin<'_> {
             .execute(self.conn())
             .into_db_error(())?;
 
-        Ok(())
+        Ok(send_notification)
     }
 
     fn increment_news_sync_version_for_every_account(&mut self) -> Result<(), DieselDatabaseError> {

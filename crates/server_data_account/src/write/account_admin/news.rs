@@ -45,7 +45,12 @@ impl WriteCommandsAccountNewsAdmin<'_> {
         })
     }
 
-    pub async fn set_news_publicity(&self, nid: NewsId, is_public: bool) -> Result<(), DataError> {
+    /// Returns Ok(true) if news notification should be sent to clients.
+    pub async fn set_news_publicity(
+        &self,
+        nid: NewsId,
+        is_public: bool,
+    ) -> Result<bool, DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.account_admin()
                 .news()
