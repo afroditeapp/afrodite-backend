@@ -10,8 +10,8 @@ macro_rules! define_cmd_wrapper_read {
         }
 
         impl $crate::db_manager::InternalReading for &$struct_name<'_> {
-            fn root(&self) -> &$crate::db_manager::DatabaseRoot {
-                self.0.root()
+            fn file_dir(&self) -> &$crate::file::utils::FileDir {
+                self.0.file_dir()
             }
 
             fn current_read_handle(&self) -> &$crate::db_manager::handle_types::CurrentReadHandle {
@@ -61,8 +61,8 @@ macro_rules! define_cmd_wrapper_write {
                 $crate::db_manager::InternalWriting::config_arc(self.0)
             }
 
-            fn root(&self) -> &$crate::db_manager::DatabaseRoot {
-                $crate::db_manager::InternalWriting::root(self.0)
+            fn file_dir(&self) -> &$crate::file::utils::FileDir {
+                $crate::db_manager::InternalWriting::file_dir(self.0)
             }
 
             fn current_write_handle(

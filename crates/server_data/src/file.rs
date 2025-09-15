@@ -28,7 +28,7 @@ pub trait FileRead {
 
 impl<I: InternalReading> FileRead for I {
     fn files(&self) -> &crate::FileDir {
-        self.root().file_dir()
+        self.file_dir()
     }
 }
 
@@ -38,6 +38,6 @@ pub trait FileWrite {
 
 impl<I: InternalWriting> FileWrite for I {
     fn files(&self) -> &crate::FileDir {
-        self.root().file_dir()
+        self.file_dir()
     }
 }

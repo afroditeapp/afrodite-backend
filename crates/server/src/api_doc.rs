@@ -214,7 +214,6 @@ impl ApiDoc {
         let (email_sender, _) =
             simple_backend::email::channel::<AccountIdInternal, EmailMessages>();
         let (_, router_database_handle, router_database_write_handle) = DatabaseManager::new(
-            config.simple_backend().data_dir().to_path_buf(),
             config.clone(),
             push_notification_sender.clone(),
             email_sender.clone(),

@@ -39,30 +39,16 @@ pub mod handle_types {
     pub type WriteHandleType = super::RouterDatabaseWriteHandle;
 }
 
-/// Absolsute path to database root directory.
 #[derive(Clone, Debug)]
-pub struct DatabaseRoot {
-    file_dir: FileDir,
-}
+pub struct FileDirUtils {}
 
-impl DatabaseRoot {
-    pub fn new<T: AsRef<Path>>(path: T) -> Result<Self, DataError> {
-        let root = path.as_ref().to_path_buf();
-        if !root.exists() {
-            fs::create_dir(&root)?;
-        }
-
-        let file_dir = root.join(DB_FILE_DIR_NAME);
+impl FileDirUtils {
+    pub fn create<T: AsRef<Path>>(data_dir_path: T) -> Result<FileDir, DataError> {
+        let file_dir = data_dir_path.as_ref().join(DB_FILE_DIR_NAME);
         if !file_dir.exists() {
             fs::create_dir(&file_dir)?;
         }
-        let file_dir = FileDir::new(file_dir);
-
-        Ok(Self { file_dir })
-    }
-
-    pub fn file_dir(&self) -> &FileDir {
-        &self.file_dir
+        Ok(FileDir::new(file_dir))
     }
 }
 
@@ -76,15 +62,13 @@ pub struct DatabaseManager {
 
 impl DatabaseManager {
     /// Runs also some blocking file system code.
-    pub async fn new<T: AsRef<Path>>(
-        database_dir: T,
+    pub async fn new(
         config: Arc<Config>,
         push_notification_sender: PushNotificationSender,
         email_sender: EmailSenderImpl,
     ) -> Result<(Self, RouterDatabaseReadHandle, RouterDatabaseWriteHandle), DataError> {
         info!("Creating DatabaseManager");
 
-        let root = DatabaseRoot::new(database_dir)?;
         let databases = config.simple_backend().databases();
         // Write handles
 
@@ -135,7 +119,7 @@ impl DatabaseManager {
             read: RouterDatabaseReadHandle {
                 current_read_handle: current_write_handle.to_read_handle(),
                 history_read_handle: history_write_handle.to_read_handle(),
-                root: root.into(),
+                file_dir: FileDirUtils::create(config.simple_backend().data_dir())?.into(),
                 cache: cache.into(),
                 config: config.clone(),
             },
@@ -147,13 +131,11 @@ impl DatabaseManager {
             email_sender,
         };
 
-        let root = router_write_handle.read.root.clone();
-        let cache = router_write_handle.read.cache.clone();
         let router_read_handle = RouterDatabaseReadHandle {
             current_read_handle: current_read_handle.clone(),
             history_read_handle: history_read_handle.clone(),
-            root,
-            cache,
+            file_dir: router_write_handle.read.file_dir.clone(),
+            cache: router_write_handle.read.cache.clone(),
             config,
         };
 
@@ -193,7 +175,7 @@ impl RouterDatabaseWriteHandle {
     pub fn user_write_commands_account(&self) -> WriteCommandsConcurrent {
         WriteCommandsConcurrent::new(
             &self.read.cache,
-            &self.read.root.file_dir,
+            &self.read.file_dir,
             LocationIndexIteratorHandle::new(&self.location),
         )
     }
@@ -218,7 +200,7 @@ impl RouterDatabaseWriteHandle {
 pub trait InternalWriting {
     fn config(&self) -> &Config;
     fn config_arc(&self) -> Arc<Config>;
-    fn root(&self) -> &DatabaseRoot;
+    fn file_dir(&self) -> &FileDir;
     fn current_write_handle(&self) -> &CurrentWriteHandle;
     fn history_write_handle(&self) -> &HistoryWriteHandle;
     fn current_read_handle(&self) -> &CurrentReadHandle;
@@ -302,8 +284,8 @@ impl InternalWriting for RouterDatabaseWriteHandle {
         self.config.clone()
     }
 
-    fn root(&self) -> &DatabaseRoot {
-        &self.read.root
+    fn file_dir(&self) -> &FileDir {
+        &self.read.file_dir
     }
 
     fn current_write_handle(&self) -> &CurrentWriteHandle {
@@ -352,8 +334,8 @@ impl InternalWriting for Cmds {
         InternalWriting::config_arc(self.write_handle())
     }
 
-    fn root(&self) -> &DatabaseRoot {
-        InternalWriting::root(self.write_handle())
+    fn file_dir(&self) -> &FileDir {
+        InternalWriting::file_dir(self.write_handle())
     }
 
     fn current_write_handle(&self) -> &CurrentWriteHandle {
@@ -411,7 +393,7 @@ impl WriteAccessProvider for Cmds {
 /// read and write access to cache.
 #[derive(Debug)]
 pub struct RouterDatabaseReadHandle {
-    root: Arc<DatabaseRoot>,
+    file_dir: Arc<FileDir>,
     current_read_handle: CurrentReadHandle,
     history_read_handle: HistoryReadHandle,
     cache: Arc<DatabaseCache>,
@@ -461,7 +443,7 @@ impl<'a> ReadAccessProvider<'a> for ReadAdapter<'a> {
 }
 
 pub trait InternalReading {
-    fn root(&self) -> &DatabaseRoot;
+    fn file_dir(&self) -> &FileDir;
     fn current_read_handle(&self) -> &CurrentReadHandle;
     fn history_read_handle(&self) -> &HistoryReadHandle;
     fn cache(&self) -> &DatabaseCache;
@@ -528,8 +510,8 @@ pub trait InternalReading {
 }
 
 impl InternalReading for &RouterDatabaseReadHandle {
-    fn root(&self) -> &DatabaseRoot {
-        &self.root
+    fn file_dir(&self) -> &FileDir {
+        &self.file_dir
     }
 
     fn current_read_handle(&self) -> &CurrentReadHandle {
@@ -554,8 +536,8 @@ impl InternalReading for &RouterDatabaseReadHandle {
 }
 
 impl<I: InternalWriting> InternalReading for I {
-    fn root(&self) -> &DatabaseRoot {
-        self.root()
+    fn file_dir(&self) -> &FileDir {
+        self.file_dir()
     }
 
     fn current_read_handle(&self) -> &CurrentReadHandle {
@@ -580,8 +562,8 @@ impl<I: InternalWriting> InternalReading for I {
 }
 
 impl InternalReading for ReadAdapter<'_> {
-    fn root(&self) -> &DatabaseRoot {
-        &self.cmds.read.root
+    fn file_dir(&self) -> &FileDir {
+        &self.cmds.read.file_dir
     }
 
     fn current_read_handle(&self) -> &CurrentReadHandle {

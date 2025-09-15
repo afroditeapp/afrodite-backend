@@ -264,7 +264,6 @@ impl BusinessLogic for DatingAppBusinessLogic {
             simple_backend::email::channel::<AccountIdInternal, EmailMessages>();
         let (database_manager, router_database_handle, router_database_write_handle) =
             DatabaseManager::new(
-                self.config.simple_backend().data_dir().to_path_buf(),
                 self.config.clone(),
                 push_notification_sender.clone(),
                 email_sender.clone(),
