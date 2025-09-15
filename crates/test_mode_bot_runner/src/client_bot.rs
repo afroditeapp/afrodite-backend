@@ -410,17 +410,17 @@ impl BotAction for AcceptReceivedLikesAndSendMessage {
                 .change_context(TestError::ApiRequest)?;
             iterator_state.page += 1;
 
-            if received_likes.p.is_empty() {
+            if received_likes.l.is_empty() {
                 break;
             }
 
-            for like in received_likes.p {
-                post_send_like(state.api(), like.a.as_ref().clone())
+            for like in received_likes.l {
+                post_send_like(state.api(), like.p.a.as_ref().clone())
                     .await
                     .change_context(TestError::ApiRequest)?;
 
                 let new_msg = "Hello!".to_string();
-                send_message(state, *like.a, new_msg).await?;
+                send_message(state, *like.p.a, new_msg).await?;
             }
         }
 

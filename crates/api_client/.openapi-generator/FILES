@@ -157,6 +157,7 @@ src/models/map_bounds.rs
 src/models/map_config.rs
 src/models/map_coordinate.rs
 src/models/map_zoom.rs
+src/models/mark_received_likes_viewed.rs
 src/models/match_id.rs
 src/models/matches_iterator_state.rs
 src/models/matches_page.rs
@@ -189,7 +190,6 @@ src/models/news_translation_version.rs
 src/models/notification_id.rs
 src/models/notification_id_viewed.rs
 src/models/notification_status.rs
-src/models/page_item_count_for_new_likes.rs
 src/models/page_item_count_for_new_public_news.rs
 src/models/partial_profile_attributes_config.rs
 src/models/pending_message_acknowledgement_list.rs
@@ -249,6 +249,7 @@ src/models/publication_id.rs
 src/models/received_like_id.rs
 src/models/received_likes_iterator_state.rs
 src/models/received_likes_page.rs
+src/models/received_likes_page_item.rs
 src/models/received_likes_sync_version.rs
 src/models/refresh_token.rs
 src/models/remote_bot_login.rs
