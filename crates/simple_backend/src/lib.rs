@@ -216,6 +216,10 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             }
         }
 
+        if !self.config.data_dir().exists() {
+            std::fs::create_dir(self.config.data_dir()).expect("Data directory creation failed");
+        }
+
         let mut terminate_signal = signal::unix::signal(SignalKind::terminate()).unwrap();
 
         let (server_quit_handle, server_quit_watcher) = broadcast::channel(1);
