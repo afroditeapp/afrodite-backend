@@ -304,7 +304,6 @@ CREATE TABLE IF NOT EXISTS account_state(
     -- Sync version for news.
     news_sync_version                  INTEGER             NOT NULL DEFAULT 0,
     unread_news_count                  INTEGER             NOT NULL DEFAULT 0,
-    publication_id_at_unread_news_count_incrementing INTEGER,
     account_created_unix_time          INTEGER             NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)

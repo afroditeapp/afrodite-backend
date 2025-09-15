@@ -106,7 +106,8 @@ impl CurrentWriteAccountNewsAdmin<'_> {
         };
         let (publication_id_value, latest_publication) = if is_public {
             let new_publication_id = self.get_next_news_publication_id_and_increment_it()?;
-            self.increment_news_unread_count_for_every_account(new_publication_id)?;
+            self.increment_news_unread_count_for_every_account()?;
+            self.increment_news_sync_version_for_every_account()?;
             (Some(new_publication_id), Some(current_time))
         } else {
             let publication_id_value: PublicationId = news
@@ -115,11 +116,24 @@ impl CurrentWriteAccountNewsAdmin<'_> {
                 .select(publication_id.assume_not_null())
                 .first(self.conn())
                 .into_db_error(())?;
-            self.decrement_news_unread_count_for_every_account(publication_id_value)?;
+            let latest_used_publication_id = self
+                .read()
+                .account_admin()
+                .news()
+                .get_next_news_publication_id()?
+                .to_latest_used_id();
+            // Limit decrementing to only latest publication ID to
+            // prevent the following case:
+            // - Publish news A   - unread news 1
+            // - View news        - unread news 0
+            // - Publish news B   - unread news 1
+            // - Unpublish news A - unread news 0
+            if publication_id_value == latest_used_publication_id {
+                self.decrement_news_unread_count_for_every_account()?;
+                self.increment_news_sync_version_for_every_account()?;
+            }
             (None, current_value.latest_publication_time)
         };
-
-        self.increment_news_sync_version_for_every_account()?;
 
         update(news)
             .filter(id.eq(id_value))
@@ -146,32 +160,22 @@ impl CurrentWriteAccountNewsAdmin<'_> {
         Ok(())
     }
 
-    fn increment_news_unread_count_for_every_account(
-        &mut self,
-        publication_id: PublicationId,
-    ) -> Result<(), DieselDatabaseError> {
+    fn increment_news_unread_count_for_every_account(&mut self) -> Result<(), DieselDatabaseError> {
         use model::schema::account_state::dsl::*;
 
         update(account_state)
-            .set((
-                unread_news_count.eq(unread_news_count + 1),
-                publication_id_at_unread_news_count_incrementing.eq(publication_id),
-            ))
+            .set(unread_news_count.eq(unread_news_count + 1))
             .execute(self.conn())
             .into_db_error(())?;
 
         Ok(())
     }
 
-    fn decrement_news_unread_count_for_every_account(
-        &mut self,
-        id: PublicationId,
-    ) -> Result<(), DieselDatabaseError> {
+    fn decrement_news_unread_count_for_every_account(&mut self) -> Result<(), DieselDatabaseError> {
         use model::schema::account_state::dsl::*;
 
         update(account_state)
             .filter(unread_news_count.gt(0))
-            .filter(publication_id_at_unread_news_count_incrementing.ge(id))
             .set(unread_news_count.eq(unread_news_count - 1))
             .execute(self.conn())
             .into_db_error(())?;

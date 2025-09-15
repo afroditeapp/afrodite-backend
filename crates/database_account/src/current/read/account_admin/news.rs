@@ -3,7 +3,7 @@ use diesel::{alias, prelude::*};
 use error_stack::Result;
 use model::AccountId;
 use model_account::{
-    NewsId, NewsItem, NewsItemInternal, NewsTranslationInternal, NewsTranslations,
+    NewsId, NewsItem, NewsItemInternal, NewsTranslationInternal, NewsTranslations, PublicationId,
 };
 
 use crate::IntoDatabaseError;
@@ -84,5 +84,15 @@ impl CurrentReadAccountNewsAdmin<'_> {
             latest_publication_time: news_item.latest_publication_unix_time,
             translations,
         })
+    }
+
+    pub fn get_next_news_publication_id(&mut self) -> Result<PublicationId, DieselDatabaseError> {
+        use crate::schema::account_global_state::dsl::*;
+
+        account_global_state
+            .filter(row_type.eq(0))
+            .select(next_news_publication_id)
+            .first(self.conn())
+            .into_db_error(())
     }
 }
