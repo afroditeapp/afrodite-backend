@@ -267,6 +267,7 @@ pub struct AccountInteractionInternal {
     /// sent.
     pub message_counter_receiver: i64,
     pub received_like_id: Option<ReceivedLikeId>,
+    received_like_viewed: bool,
     pub match_id: Option<MatchId>,
     conversation_id_sender: Option<ConversationId>,
     conversation_id_receiver: Option<ConversationId>,
