@@ -31,5 +31,6 @@ model_server_data = { path = "../model_server_data" }
 server_common = { path = "../server_common" }
 
 simple_backend = { path = "../simple_backend" }
+simple_backend_database = { path = "../simple_backend_database" }
 simple_backend_utils = { path = "../simple_backend_utils" }
 simple_backend_model = { path = "../simple_backend_model" }

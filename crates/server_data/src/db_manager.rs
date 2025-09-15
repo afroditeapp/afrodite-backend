@@ -1,4 +1,4 @@
-use std::{fmt::Debug, fs, path::Path, sync::Arc};
+use std::{fmt::Debug, sync::Arc};
 
 use config::Config;
 use database::{
@@ -26,8 +26,6 @@ use crate::{
     write_concurrent::WriteCommandsConcurrent,
 };
 
-pub const DB_FILE_DIR_NAME: &str = "files";
-
 pub mod handle_types {
     pub use config::Config;
     pub use database::{
@@ -37,19 +35,6 @@ pub mod handle_types {
 
     pub type ReadHandleType = super::RouterDatabaseReadHandle;
     pub type WriteHandleType = super::RouterDatabaseWriteHandle;
-}
-
-#[derive(Clone, Debug)]
-pub struct FileDirUtils {}
-
-impl FileDirUtils {
-    pub fn create<T: AsRef<Path>>(data_dir_path: T) -> Result<FileDir, DataError> {
-        let file_dir = data_dir_path.as_ref().join(DB_FILE_DIR_NAME);
-        if !file_dir.exists() {
-            fs::create_dir(&file_dir)?;
-        }
-        Ok(FileDir::new(file_dir))
-    }
 }
 
 /// Handle SQLite databases and write command runner.
@@ -119,7 +104,7 @@ impl DatabaseManager {
             read: RouterDatabaseReadHandle {
                 current_read_handle: current_write_handle.to_read_handle(),
                 history_read_handle: history_write_handle.to_read_handle(),
-                file_dir: FileDirUtils::create(config.simple_backend().data_dir())?.into(),
+                file_dir: FileDir::new(&config)?.into(),
                 cache: cache.into(),
                 config: config.clone(),
             },

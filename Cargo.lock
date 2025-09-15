@@ -4776,6 +4776,7 @@ dependencies = [
  "rand 0.8.5",
  "server_common",
  "simple_backend",
+ "simple_backend_database",
  "simple_backend_model",
  "simple_backend_utils",
  "thiserror 2.0.12",

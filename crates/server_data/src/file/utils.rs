@@ -1,8 +1,11 @@
 use std::path::{Path, PathBuf};
 
 use axum::body::BodyDataStream;
+use config::Config;
 use error_stack::{Result, ResultExt};
 use model::{AccountId, ContentId, ContentProcessingId};
+use server_common::data::DataError;
+use simple_backend_database::data::create_dirs_and_get_files_dir_path;
 use simple_backend_utils::{ContextExt, file::overwrite_and_remove_if_exists};
 use tokio::io::AsyncWriteExt;
 use tokio_stream::{StreamExt, wrappers::ReadDirStream};
@@ -22,10 +25,11 @@ pub struct FileDir {
 }
 
 impl FileDir {
-    pub fn new<T: AsRef<Path>>(file_dir: T) -> Self {
-        Self {
-            dir: file_dir.as_ref().to_path_buf(),
-        }
+    pub fn new(config: &Config) -> Result<FileDir, DataError> {
+        Ok(Self {
+            dir: create_dirs_and_get_files_dir_path(config.simple_backend())
+                .change_context(DataError::File)?,
+        })
     }
 
     /// Unprocessed content upload.
