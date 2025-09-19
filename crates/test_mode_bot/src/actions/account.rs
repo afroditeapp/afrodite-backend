@@ -122,15 +122,6 @@ async fn connect_websocket(
     let mut r = url
         .into_client_request()
         .change_context(TestError::WebSocket)?;
-    let protocol_header_value = format!("0,{}", auth.access.token);
-    r.headers_mut().insert(
-        http::header::SEC_WEBSOCKET_PROTOCOL,
-        HeaderValue::from_str(&protocol_header_value).change_context(TestError::WebSocket)?,
-    );
-    let (mut stream, _) = tokio_tungstenite::connect_async(r)
-        .await
-        .change_context(TestError::WebSocket)?;
-
     let web_socket_protocol_version: u8 = 1;
     let client_type_number = u8::MAX; // Test mode bot client type
     let version = MinClientVersion {
@@ -138,12 +129,20 @@ async fn connect_websocket(
         minor: 0,
         patch: 0,
     };
-    let mut version_bytes: Vec<u8> = vec![web_socket_protocol_version, client_type_number];
-    version_bytes.extend_from_slice(&version.major.to_le_bytes());
-    version_bytes.extend_from_slice(&version.minor.to_le_bytes());
-    version_bytes.extend_from_slice(&version.patch.to_le_bytes());
-    stream
-        .send(Message::Binary(version_bytes.into()))
+    let protocol_header_value = format!(
+        "v{},t{},c{}_{}_{}_{}",
+        web_socket_protocol_version,
+        auth.access.token,
+        client_type_number,
+        version.major,
+        version.minor,
+        version.patch,
+    );
+    r.headers_mut().insert(
+        http::header::SEC_WEBSOCKET_PROTOCOL,
+        HeaderValue::from_str(&protocol_header_value).change_context(TestError::WebSocket)?,
+    );
+    let (mut stream, _) = tokio_tungstenite::connect_async(r)
         .await
         .change_context(TestError::WebSocket)?;
 

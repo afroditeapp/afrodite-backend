@@ -4,8 +4,6 @@ pub enum WebSocketError {
     Receive,
     #[error("Client sent something unsupported")]
     ProtocolError,
-    #[error("Client version is unsupported")]
-    ClientVersionUnsupported,
     #[error("Received wrong refresh token")]
     ReceiveWrongRefreshToken,
     #[error("Websocket data sending error")]

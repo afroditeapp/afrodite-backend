@@ -16,7 +16,8 @@ use headers::ContentType;
 use http::HeaderMap;
 use model::{
     AccessToken, AccountIdInternal, BackendVersion, ClientVersion, EventToClient,
-    EventToClientInternal, RefreshToken, SyncDataVersionFromClient, WebSocketClientTypeNumber,
+    EventToClientInternal, RefreshToken, SyncDataVersionFromClient, WebSocketClientInfo,
+    WebSocketClientTypeNumber,
 };
 use model_server_data::AuthPair;
 use server_common::websocket::WebSocketError;
@@ -152,25 +153,19 @@ pub use utils::api::PATH_CONNECT;
 /// Connection is required as API access is allowed for connected clients.
 ///
 /// Protocol:
-/// 1. Client sends version information as Binary message, where
-///    - u8: Client WebSocket protocol version (currently 1).
-///    - u8: Client type number. (0 = Android, 1 = iOS, 2 = Web, 255 = Test mode bot)
-///    - u16: Client Major version.
-///    - u16: Client Minor version.
-///    - u16: Client Patch version.
-///
-///    The u16 values are in little endian byte order.
-/// 2. Server sends one of these byte values as Binary messages:
-///    - 0, continue to data sync, move to step 6, at this point API can be used.
-///    - 1, access token and refresh token refresh is needed, move to step 3.
+/// 1. Server sends one of these byte values as Binary message:
+///    - 0, continue to data sync, move to step 5, at this point API can be used.
+///    - 1, access token and refresh token refresh is needed, move to step 2.
 ///    - 2, unsupported client version, server closes the connection
 ///      without sending WebSocket Close message.
-/// 3. Client sends current refresh token as Binary message.
-/// 4. Server sends new refresh token as Binary message.
-/// 5. Server sends new access token as Binary message. The client must
+///    - 3, invalid access token, server closes the connection
+///      without sending WebSocket Close message.
+/// 2. Client sends current refresh token as Binary message.
+/// 3. Server sends new refresh token as Binary message.
+/// 4. Server sends new access token as Binary message. The client must
 ///    convert the token to base64url encoding without padding.
 ///    (At this point API can be used.)
-/// 6. Client sends list of current data sync versions as Binary message, where
+/// 5. Client sends list of current data sync versions as Binary message, where
 ///    items are [u8; 2] and the first u8 of an item is the data type number
 ///    and the second u8 of an item is the sync version number for that data.
 ///    If client does not have any version of the data, the client should
@@ -189,9 +184,15 @@ pub use utils::api::PATH_CONNECT;
 /// send a WebScoket ping message before 6 minutes elapses from connection
 /// establishment or previous ping message.
 ///
-/// `Sec-WebSocket-Protocol` header must have 2 protocols/values. The first
-/// is "0" and that protocol is accepted. The second is access token of
-/// currently logged in account. The token is base64url encoded without padding.
+/// `Sec-WebSocket-Protocol` header must have the following values:
+///   - Client WebSocket protocol version string (currently "v1").
+///   - Client access token string (prefix 't' and base64url encoded token
+///     without base64url padding).
+///   - Client info string (prefix 'c' and values separated with '_' character)
+///     - Client type number (0 = Android, 1 = iOS, 2 = Web, 255 = Test mode bot).
+///     - Client major version number.
+///     - Client minor version number.
+///     - Client patch version number.
 #[utoipa::path(
     get,
     path = PATH_CONNECT,
@@ -222,36 +223,124 @@ pub async fn get_connect_websocket(
         .split(',')
         .map(|v| v.trim());
 
-    if protocols_iterator.next() != Some("0") {
+    if protocols_iterator.next() != Some("v1") {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let id = if let Some(access_token) = protocols_iterator.next() {
-        let access_token = AccessToken::new(access_token.to_string());
+    let access_token = protocols_iterator
+        .next()
+        .and_then(|v| v.strip_prefix("t"))
+        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)
+        .map(|v| AccessToken::new(v.to_string()))?;
+
+    let info = protocols_iterator
+        .next()
+        .and_then(|v| v.strip_prefix("c"))
+        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)
+        .and_then(|v| {
+            let mut iterator = v.split('_');
+
+            let client_type = iterator
+                .next()
+                .ok_or(StatusCode::INTERNAL_SERVER_ERROR)
+                .and_then(|v| str::parse::<u8>(v).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR))
+                .and_then(|v| {
+                    TryInto::<WebSocketClientTypeNumber>::try_into(v)
+                        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+                })?;
+
+            let major = iterator
+                .next()
+                .ok_or(StatusCode::INTERNAL_SERVER_ERROR)
+                .and_then(|v| {
+                    str::parse::<u16>(v).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+                })?;
+
+            let minor = iterator
+                .next()
+                .ok_or(StatusCode::INTERNAL_SERVER_ERROR)
+                .and_then(|v| {
+                    str::parse::<u16>(v).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+                })?;
+
+            let patch = iterator
+                .next()
+                .ok_or(StatusCode::INTERNAL_SERVER_ERROR)
+                .and_then(|v| {
+                    str::parse::<u16>(v).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+                })?;
+
+            Ok(WebSocketClientInfo {
+                client_type,
+                client_version: ClientVersion {
+                    major,
+                    minor,
+                    patch,
+                },
+            })
+        })?;
+
+    let id = state.access_token_exists(&access_token).await;
+
+    if let Some(id) = &id {
         state
-            .access_token_exists(&access_token)
-            .await
-            .ok_or_else(|| {
-                COMMON.websocket_access_token_not_found.incr();
-                StatusCode::UNAUTHORIZED
-            })?
+            .api_usage_tracker()
+            .incr(id.id, |u| &u.get_connect_websocket)
+            .await;
+        state
+            .ip_address_usage_tracker()
+            .mark_ip_used(id.id, addr.ip())
+            .await;
     } else {
-        return Err(StatusCode::INTERNAL_SERVER_ERROR);
-    };
+        COMMON.websocket_access_token_not_found.incr();
+    }
 
-    state
-        .api_usage_tracker()
-        .incr(id, |u| &u.get_connect_websocket)
-        .await;
-    state
-        .ip_address_usage_tracker()
-        .mark_ip_used(id, addr.ip())
-        .await;
-
-    let response = websocket
-        .protocols(["0"])
-        .on_upgrade(move |socket| handle_socket(socket, addr, id, state, ws_manager));
+    let response = websocket.protocols(["v1"]).on_upgrade(move |socket| {
+        handle_socket_basic_errors(socket, addr, id, state, ws_manager, info)
+    });
     Ok(response)
+}
+
+async fn handle_socket_basic_errors(
+    mut socket: WebSocket,
+    address: SocketAddr,
+    id: Option<AccountIdInternal>,
+    state: S,
+    ws_manager: WebSocketManager,
+    info: WebSocketClientInfo,
+) {
+    if let Some(id) = id {
+        let is_supported_client = {
+            match info.client_type {
+                WebSocketClientTypeNumber::Android => COMMON.websocket_client_type_android.incr(),
+                WebSocketClientTypeNumber::Ios => COMMON.websocket_client_type_ios.incr(),
+                WebSocketClientTypeNumber::Web => COMMON.websocket_client_type_web.incr(),
+                WebSocketClientTypeNumber::TestModeBot => {
+                    COMMON.websocket_client_type_test_mode_bot.incr()
+                }
+            }
+
+            state
+                .client_version_tracker()
+                .track_version(info.client_version)
+                .await;
+
+            if info.client_type == WebSocketClientTypeNumber::TestModeBot {
+                info.client_version == ClientVersion::BOT_CLIENT_VERSION
+            } else if let Some(min_version) = state.config().min_client_version() {
+                min_version.received_version_is_accepted(info.client_version)
+            } else {
+                true
+            }
+        };
+        if is_supported_client {
+            handle_socket(socket, address, id, state, ws_manager).await
+        } else {
+            let _ = socket.send(Message::Binary(Bytes::from_static(&[2]))).await;
+        }
+    } else {
+        let _ = socket.send(Message::Binary(Bytes::from_static(&[3]))).await;
+    }
 }
 
 async fn handle_socket(
@@ -346,56 +435,6 @@ async fn handle_socket_result(
     id: AccountIdInternal,
     state: &S,
 ) -> crate::result::Result<(), WebSocketError> {
-    // Receive protocol version byte.
-    let client_is_supported = match socket
-        .recv()
-        .await
-        .ok_or(WebSocketError::Receive.report())?
-        .change_context(WebSocketError::Receive)?
-    {
-        Message::Binary(version) => match version.to_vec().as_slice() {
-            [1, info_bytes @ ..] => {
-                let info = model::WebSocketClientInfo::parse(info_bytes)
-                    .into_error_string(WebSocketError::ProtocolError)?;
-
-                match info.client_type {
-                    WebSocketClientTypeNumber::Android => {
-                        COMMON.websocket_client_type_android.incr()
-                    }
-                    WebSocketClientTypeNumber::Ios => COMMON.websocket_client_type_ios.incr(),
-                    WebSocketClientTypeNumber::Web => COMMON.websocket_client_type_web.incr(),
-                    WebSocketClientTypeNumber::TestModeBot => {
-                        COMMON.websocket_client_type_test_mode_bot.incr()
-                    }
-                }
-
-                state
-                    .client_version_tracker()
-                    .track_version(info.client_version)
-                    .await;
-
-                if info.client_type == WebSocketClientTypeNumber::TestModeBot {
-                    info.client_version == ClientVersion::BOT_CLIENT_VERSION
-                } else if let Some(min_version) = state.config().min_client_version() {
-                    min_version.received_version_is_accepted(info.client_version)
-                } else {
-                    true
-                }
-            }
-            _ => return Err(WebSocketError::ProtocolError.report()),
-        },
-        _ => return Err(WebSocketError::ProtocolError.report()),
-    };
-
-    if !client_is_supported {
-        socket
-            .send(Message::Binary(Bytes::from_static(&[2])))
-            .await
-            .change_context(WebSocketError::Send)?;
-        drop(socket);
-        return Err(WebSocketError::ClientVersionUnsupported.report());
-    }
-
     let access_token_too_old = state
         .read()
         .common()
