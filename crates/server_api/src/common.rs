@@ -88,11 +88,11 @@ pub async fn get_file_package_access(
     COMMON.get_file_package_access.incr();
     check_ip_allowlist(&state, address).await?;
     let wanted_file = path_parts.join("/");
-    let (content_type, data) = state
+    let file = state
         .file_package()
-        .data(&wanted_file)
+        .static_file(&wanted_file)
         .ok_or(StatusCode::NOT_FOUND)?;
-    Ok((TypedHeader(content_type), data))
+    Ok((TypedHeader(file.content_type), file.data))
 }
 
 pub const PATH_FILE_PACKAGE_ACCESS_ROOT: &str = "/";
@@ -103,11 +103,11 @@ pub async fn get_file_package_access_root(
 ) -> Result<(TypedHeader<ContentType>, Bytes), StatusCode> {
     COMMON.get_file_package_access_root.incr();
     check_ip_allowlist(&state, address).await?;
-    let (content_type, data) = state
+    let file = state
         .file_package()
-        .data("index.html")
+        .static_file("index.html")
         .ok_or(StatusCode::NOT_FOUND)?;
-    Ok((TypedHeader(content_type), data))
+    Ok((TypedHeader(file.content_type), file.data))
 }
 
 async fn check_ip_allowlist(state: &S, address: SocketAddr) -> Result<(), StatusCode> {

@@ -21,8 +21,23 @@ pub enum FilePackageError {
     InvalidMimeType,
 }
 
+#[derive(Clone)]
+pub struct StaticFile {
+    pub content_type: ContentType,
+    pub data: Bytes,
+}
+
+impl StaticFile {
+    pub fn new(content_type: ContentType, data: Vec<u8>) -> Self {
+        Self {
+            content_type,
+            data: data.into(),
+        }
+    }
+}
+
 pub struct FilePackageManager {
-    file_path_and_data: HashMap<String, (ContentType, Bytes)>,
+    file_path_and_data: HashMap<String, StaticFile>,
 }
 
 impl FilePackageManager {
@@ -63,40 +78,17 @@ impl FilePackageManager {
                     .change_context(FilePackageError::PackageLoading)?;
                 for e in entries {
                     let mut e = e.change_context(FilePackageError::PackageLoading)?;
-                    if e.header().entry_type() == EntryType::Directory {
+                    let Some(path_string) =
+                        Self::get_path_string(read_files_only_from_dir.as_deref(), &e)?
+                    else {
                         continue;
-                    }
-                    let path = e.path().change_context(FilePackageError::PackageLoading)?;
-                    // Skip hidden files
-                    if path
-                        .file_name()
-                        .and_then(|v| v.to_str())
-                        .map(|v| v.starts_with('.'))
-                        .unwrap_or_default()
-                    {
-                        continue;
-                    }
-                    let path_string = path
-                        .to_str()
-                        .ok_or(FilePackageError::InvalidUtf8)?
-                        .to_string();
-                    // Remove root directory from paths if needed
-                    let path_string = if let Some(files_from_dir) = &read_files_only_from_dir {
-                        if path_string.starts_with(files_from_dir) {
-                            path_string.trim_start_matches(files_from_dir).to_string()
-                        } else {
-                            continue;
-                        }
-                    } else {
-                        path_string
                     };
                     let mut data = vec![];
                     e.read_to_end(&mut data)
                         .change_context(FilePackageError::PackageLoading)?;
-                    let data_bytes: Bytes = data.into();
                     let content_type =
                         Self::path_string_to_content_type(&mime_types, &path_string)?;
-                    file_path_and_data.insert(path_string, (content_type, data_bytes));
+                    file_path_and_data.insert(path_string, StaticFile::new(content_type, data));
                 }
                 Ok(Self { file_path_and_data })
             })
@@ -104,6 +96,41 @@ impl FilePackageManager {
             .change_context(FilePackageError::PackageLoading)?;
 
         result
+    }
+
+    fn get_path_string(
+        read_files_only_from_dir: Option<&str>,
+        e: &tar::Entry<GzDecoder<File>>,
+    ) -> error_stack::Result<Option<String>, FilePackageError> {
+        if e.header().entry_type() == EntryType::Directory {
+            return Ok(None);
+        }
+        let path = e.path().change_context(FilePackageError::PackageLoading)?;
+        // Skip hidden files
+        if path
+            .file_name()
+            .and_then(|v| v.to_str())
+            .map(|v| v.starts_with('.'))
+            .unwrap_or_default()
+        {
+            return Ok(None);
+        }
+        let path_string = path
+            .to_str()
+            .ok_or(FilePackageError::InvalidUtf8)?
+            .to_string();
+        // Remove root directory from paths if needed
+        if let Some(files_from_dir) = read_files_only_from_dir {
+            if path_string.starts_with(files_from_dir) {
+                Ok(Some(
+                    path_string.trim_start_matches(files_from_dir).to_string(),
+                ))
+            } else {
+                Ok(None)
+            }
+        } else {
+            Ok(Some(path_string))
+        }
     }
 
     fn path_string_to_content_type(
@@ -141,7 +168,7 @@ impl FilePackageManager {
         Ok(content_type)
     }
 
-    pub fn data(&self, path: &str) -> Option<(ContentType, Bytes)> {
+    pub fn static_file(&self, path: &str) -> Option<StaticFile> {
         self.file_path_and_data.get(path).cloned()
     }
 }
