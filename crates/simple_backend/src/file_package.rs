@@ -1,12 +1,19 @@
-use std::{collections::HashMap, fs::File, io::Read, path::Path, str::FromStr};
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::{Read, Write},
+    path::Path,
+    str::FromStr,
+};
 
 use axum::body::Bytes;
 use error_stack::ResultExt;
-use flate2::read::GzDecoder;
-use headers::ContentType;
+use flate2::{Compression, read::GzDecoder, write::GzEncoder};
+use headers::{ContentEncoding, ContentType};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_utils::ContextExt;
 use tar::{Archive, EntryType};
+use tokio_util::bytes::{BufMut, BytesMut};
 use tracing::warn;
 
 #[derive(thiserror::Error, Debug)]
@@ -19,20 +26,42 @@ pub enum FilePackageError {
     PackageContainsUnknonwFileType,
     #[error("Invalid MIME type string in source code")]
     InvalidMimeType,
+    #[error("File compression error")]
+    FileComporession,
 }
 
 #[derive(Clone)]
 pub struct StaticFile {
     pub content_type: ContentType,
+    pub content_encoding: Option<ContentEncoding>,
     pub data: Bytes,
 }
 
 impl StaticFile {
-    pub fn new(content_type: ContentType, data: Vec<u8>) -> Self {
-        Self {
+    pub fn new(
+        content_type: ContentType,
+        data: Vec<u8>,
+        path_string: &str,
+    ) -> error_stack::Result<Self, FilePackageError> {
+        let (data, content_encoding) = if path_string.ends_with(".png") {
+            (data.into(), None)
+        } else {
+            let mut gzip = GzEncoder::new(BytesMut::new().writer(), Compression::best());
+            gzip.write_all(&data)
+                .change_context(FilePackageError::FileComporession)?;
+            let data = gzip
+                .finish()
+                .change_context(FilePackageError::FileComporession)?
+                .into_inner()
+                .freeze();
+            (data, Some(ContentEncoding::gzip()))
+        };
+
+        Ok(Self {
             content_type,
-            data: data.into(),
-        }
+            content_encoding,
+            data,
+        })
     }
 }
 
@@ -88,7 +117,8 @@ impl FilePackageManager {
                         .change_context(FilePackageError::PackageLoading)?;
                     let content_type =
                         Self::path_string_to_content_type(&mime_types, &path_string)?;
-                    file_path_and_data.insert(path_string, StaticFile::new(content_type, data));
+                    let static_file = StaticFile::new(content_type, data, &path_string)?;
+                    file_path_and_data.insert(path_string, static_file);
                 }
                 Ok(Self { file_path_and_data })
             })

@@ -12,7 +12,7 @@ use axum::{
     response::IntoResponse,
 };
 use axum_extra::TypedHeader;
-use headers::ContentType;
+use headers::{ContentEncoding, ContentType};
 use http::HeaderMap;
 use model::{
     AccessToken, AccountIdInternal, BackendVersion, ClientVersion, EventToClient,
@@ -84,7 +84,14 @@ pub async fn get_file_package_access(
     State(state): State<S>,
     Path(path_parts): Path<Vec<String>>,
     ConnectInfo(address): ConnectInfo<SocketAddr>,
-) -> Result<(TypedHeader<ContentType>, Bytes), StatusCode> {
+) -> Result<
+    (
+        TypedHeader<ContentType>,
+        Option<TypedHeader<ContentEncoding>>,
+        Bytes,
+    ),
+    StatusCode,
+> {
     COMMON.get_file_package_access.incr();
     check_ip_allowlist(&state, address).await?;
     let wanted_file = path_parts.join("/");
@@ -92,7 +99,11 @@ pub async fn get_file_package_access(
         .file_package()
         .static_file(&wanted_file)
         .ok_or(StatusCode::NOT_FOUND)?;
-    Ok((TypedHeader(file.content_type), file.data))
+    Ok((
+        TypedHeader(file.content_type),
+        file.content_encoding.map(TypedHeader),
+        file.data,
+    ))
 }
 
 pub const PATH_FILE_PACKAGE_ACCESS_ROOT: &str = "/";
@@ -100,14 +111,25 @@ pub const PATH_FILE_PACKAGE_ACCESS_ROOT: &str = "/";
 pub async fn get_file_package_access_root(
     State(state): State<S>,
     ConnectInfo(address): ConnectInfo<SocketAddr>,
-) -> Result<(TypedHeader<ContentType>, Bytes), StatusCode> {
+) -> Result<
+    (
+        TypedHeader<ContentType>,
+        Option<TypedHeader<ContentEncoding>>,
+        Bytes,
+    ),
+    StatusCode,
+> {
     COMMON.get_file_package_access_root.incr();
     check_ip_allowlist(&state, address).await?;
     let file = state
         .file_package()
         .static_file("index.html")
         .ok_or(StatusCode::NOT_FOUND)?;
-    Ok((TypedHeader(file.content_type), file.data))
+    Ok((
+        TypedHeader(file.content_type),
+        file.content_encoding.map(TypedHeader),
+        file.data,
+    ))
 }
 
 async fn check_ip_allowlist(state: &S, address: SocketAddr) -> Result<(), StatusCode> {
