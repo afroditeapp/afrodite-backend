@@ -20,3 +20,8 @@ pub struct MapTileX {
 pub struct MapTileZ {
     pub z: u32,
 }
+
+#[derive(Debug, Clone, Deserialize, Serialize, IntoParams)]
+pub struct MapTileVersion {
+    pub v: u32,
+}

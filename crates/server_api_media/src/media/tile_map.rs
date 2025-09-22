@@ -1,11 +1,11 @@
 use axum::{
     body::Body,
-    extract::{Path, State},
+    extract::{Path, Query, State},
 };
 use axum_extra::TypedHeader;
 use headers::{ContentLength, ContentType};
-use model_media::{MapTileX, MapTileY, MapTileZ};
-use server_api::{S, create_open_api_router};
+use model_media::{MapTileVersion, MapTileX, MapTileY, MapTileZ};
+use server_api::{S, app::GetConfig, create_open_api_router};
 use simple_backend::{app::GetTileMap, create_counters};
 use tracing::error;
 
@@ -19,10 +19,11 @@ const PATH_GET_MAP_TILE: &str = "/media_api/map_tile/{z}/{x}/{y}";
 #[utoipa::path(
     get,
     path = PATH_GET_MAP_TILE,
-    params(MapTileZ, MapTileX, MapTileY),
+    params(MapTileZ, MapTileX, MapTileY, MapTileVersion),
     responses(
         (status = 200, description = "Get map tile PNG file.", body = inline(model::BinaryData), content_type = "image/png"),
         (status = 401, description = "Unauthorized."),
+        (status = 404, description = "Not found."),
         (status = 500),
     ),
     security(("access_token" = [])),
@@ -32,8 +33,18 @@ pub async fn get_map_tile(
     Path(z): Path<MapTileZ>,
     Path(x): Path<MapTileX>,
     Path(y): Path<MapTileY>,
+    Query(v): Query<MapTileVersion>,
 ) -> Result<(TypedHeader<ContentType>, TypedHeader<ContentLength>, Body), StatusCode> {
     MEDIA.get_map_tile.incr();
+
+    let tile_data_version = state
+        .config()
+        .client_features()
+        .map(|v| v.map.tile_data_version)
+        .unwrap_or_default();
+    if v.v != tile_data_version {
+        return Err(StatusCode::NOT_FOUND);
+    }
 
     let y_string = y.y.trim_end_matches(".png");
     let y = y_string
