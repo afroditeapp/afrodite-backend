@@ -4,7 +4,7 @@ use axum::{
     extract::{Path, Query, State},
 };
 use axum_extra::TypedHeader;
-use headers::{ContentLength, ContentType};
+use headers::{CacheControl, ContentLength, ContentType};
 use model::{EventToClientInternal, NotificationEvent};
 use model_media::{
     AccountContent, AccountId, AccountIdInternal, AccountState, ContentId, ContentProcessingId,
@@ -16,6 +16,7 @@ use server_api::{
     app::{ApiUsageTrackerProvider, GetConfig},
     create_open_api_router, db_write,
     result::WrappedResultExt,
+    utils::cache_control_for_images,
 };
 use server_data::{
     DataError,
@@ -72,7 +73,15 @@ pub async fn get_content(
     Path(requested_profile): Path<AccountId>,
     Path(requested_content_id): Path<ContentId>,
     Query(params): Query<GetContentQueryParams>,
-) -> Result<(TypedHeader<ContentType>, TypedHeader<ContentLength>, Body), StatusCode> {
+) -> Result<
+    (
+        TypedHeader<CacheControl>,
+        TypedHeader<ContentType>,
+        TypedHeader<ContentLength>,
+        Body,
+    ),
+    StatusCode,
+> {
     MEDIA.get_content.incr();
     state
         .api_usage_tracker()
@@ -92,6 +101,7 @@ pub async fn get_content(
             .change_context(DataError::File)?;
 
         Ok((
+            TypedHeader(cache_control_for_images()),
             TypedHeader(ContentType::octet_stream()),
             TypedHeader(ContentLength(lenght)),
             Body::from_stream(stream),

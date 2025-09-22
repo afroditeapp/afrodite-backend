@@ -3,9 +3,9 @@ use axum::{
     extract::{Path, Query, State},
 };
 use axum_extra::TypedHeader;
-use headers::{ContentLength, ContentType};
+use headers::{CacheControl, ContentLength, ContentType};
 use model_media::{MapTileVersion, MapTileX, MapTileY, MapTileZ};
-use server_api::{S, app::GetConfig, create_open_api_router};
+use server_api::{S, app::GetConfig, create_open_api_router, utils::cache_control_for_images};
 use simple_backend::{app::GetTileMap, create_counters};
 use tracing::error;
 
@@ -34,7 +34,15 @@ pub async fn get_map_tile(
     Path(x): Path<MapTileX>,
     Path(y): Path<MapTileY>,
     Query(v): Query<MapTileVersion>,
-) -> Result<(TypedHeader<ContentType>, TypedHeader<ContentLength>, Body), StatusCode> {
+) -> Result<
+    (
+        TypedHeader<CacheControl>,
+        TypedHeader<ContentType>,
+        TypedHeader<ContentLength>,
+        Body,
+    ),
+    StatusCode,
+> {
     MEDIA.get_map_tile.incr();
 
     let tile_data_version = state
@@ -62,6 +70,7 @@ pub async fn get_map_tile(
 
     match byte_count_and_data_stream {
         Some((byte_count, data_stream)) => Ok((
+            TypedHeader(cache_control_for_images()),
             TypedHeader(ContentType::png()),
             TypedHeader(ContentLength(byte_count)),
             Body::from_stream(data_stream),

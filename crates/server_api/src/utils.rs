@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::{net::SocketAddr, time::Duration};
 
 use axum::{
     body::Body,
@@ -6,7 +6,7 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
-use headers::{Header, HeaderValue};
+use headers::{CacheControl, Header, HeaderValue};
 use hyper::{Request, header};
 use model::AccessToken;
 use serde::Serialize;
@@ -181,4 +181,13 @@ impl IntoResponse for ApiError {
 
         (self.status, axum::Json(json_error)).into_response()
     }
+}
+
+pub fn cache_control_for_images() -> CacheControl {
+    const MONTH_SECONDS: u64 = 60 * 60 * 24 * 30;
+    CacheControl::new()
+        .with_max_age(Duration::from_secs(MONTH_SECONDS * 3))
+        .with_must_revalidate()
+        .with_private()
+        .with_immutable()
 }
