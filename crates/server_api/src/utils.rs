@@ -6,7 +6,7 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
-use headers::{CacheControl, Header, HeaderValue};
+use headers::{CacheControl, ETag, Header, HeaderValue, IfNoneMatch};
 use hyper::{Request, header};
 use model::AccessToken;
 use serde::Serialize;
@@ -190,4 +190,14 @@ pub fn cache_control_for_images() -> CacheControl {
         .with_must_revalidate()
         .with_private()
         .with_immutable()
+}
+
+pub trait IfNoneMatchExtensions {
+    fn matches(&self, tag: &ETag) -> bool;
+}
+
+impl IfNoneMatchExtensions for IfNoneMatch {
+    fn matches(&self, tag: &ETag) -> bool {
+        !self.precondition_passes(tag)
+    }
 }

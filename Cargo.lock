@@ -4925,6 +4925,7 @@ dependencies = [
  "config",
  "error-stack",
  "futures",
+ "headers",
  "hyper",
  "manager_api",
  "model",

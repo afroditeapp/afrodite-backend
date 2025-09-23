@@ -11,10 +11,11 @@ use axum::extract::ws::WebSocket;
 use client_version::ClientVersionTracker;
 use config::Config;
 use data_signer::DataSigner;
+use headers::ETag;
 use ip_address::IpAddressUsageTracker;
 use model::{
     Account, AccountIdInternal, PendingNotificationToken, PendingNotificationWithData,
-    SyncDataVersionFromClient,
+    SyncDataVersionFromClient, UnixTime,
 };
 use model_chat::SignInWithInfo;
 use model_server_data::EmailAddress;
@@ -74,6 +75,7 @@ struct AppStateInternal {
     data_signer: DataSigner,
     data_export: DataExportManagerData,
     dynamic_config_manager: DynamicConfigManagerData,
+    server_start_time_etag: ETag,
 }
 
 impl AppState {
@@ -109,6 +111,9 @@ impl AppState {
             data_signer: DataSigner::new(),
             data_export,
             dynamic_config_manager,
+            server_start_time_etag: format!("\"{}\"", UnixTime::current_time().ut)
+                .parse()
+                .unwrap(),
         };
 
         AppState {
@@ -122,6 +127,10 @@ impl AppState {
 
     pub fn data_all_access(&self) -> DataAllAccess {
         DataAllAccess { state: &self.state }
+    }
+
+    pub fn server_start_time_etag(&self) -> &ETag {
+        &self.state.server_start_time_etag
     }
 }
 

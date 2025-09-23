@@ -14,6 +14,7 @@ tracing = { workspace = true }
 utoipa-axum = { workspace = true }
 
 hyper = { workspace = true }
+headers = { workspace = true }
 
 sha1 = { workspace = true }
 base64 = { workspace = true }

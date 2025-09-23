@@ -1,42 +1,30 @@
-use std::net::SocketAddr;
+use std::{net::SocketAddr, time::Duration};
 
 use axum::{
     body::Bytes,
     extract::{ConnectInfo, Path, State},
 };
 use axum_extra::TypedHeader;
-use headers::{ContentEncoding, ContentType};
+use headers::{CacheControl, ContentEncoding, ContentType, ETag, IfNoneMatch};
 use server_data::app::GetConfig;
 use simple_backend::{
     app::{FilePackageProvider, MaxMindDbDataProvider},
     create_counters,
-    file_package::StaticFile,
 };
 use simple_backend_config::file::IpAddressAccessConfig;
 
-use crate::{S, utils::StatusCode};
-
-// TODO(web): HTTP cache header support for file package access
+use crate::{
+    S,
+    utils::{IfNoneMatchExtensions, StatusCode},
+};
 
 type StaticFileResponse = (
+    Option<TypedHeader<ETag>>,
+    TypedHeader<CacheControl>,
     TypedHeader<ContentType>,
     Option<TypedHeader<ContentEncoding>>,
     Bytes,
 );
-
-pub trait StaticFileExtensions {
-    fn to_response(self) -> StaticFileResponse;
-}
-
-impl StaticFileExtensions for StaticFile {
-    fn to_response(self) -> StaticFileResponse {
-        (
-            TypedHeader(self.content_type),
-            self.content_encoding.map(TypedHeader),
-            self.data,
-        )
-    }
-}
 
 pub const PATH_FILE_PACKAGE_ACCESS: &str = "/app/{*path}";
 
@@ -46,13 +34,29 @@ pub async fn get_file_package_access(
     ConnectInfo(address): ConnectInfo<SocketAddr>,
 ) -> Result<StaticFileResponse, StatusCode> {
     COMMON.get_file_package_access.incr();
+
     check_ip_allowlist(&state, address).await?;
+
     let wanted_file = path_parts.join("/");
     let file = state
         .file_package()
         .static_file(&wanted_file)
         .ok_or(StatusCode::NOT_FOUND)?;
-    Ok(file.to_response())
+
+    const MONTH_SECONDS: u64 = 60 * 60 * 24 * 30;
+    let cache_control = CacheControl::new()
+        .with_max_age(Duration::from_secs(MONTH_SECONDS * 12))
+        .with_must_revalidate()
+        .with_public()
+        .with_immutable();
+
+    Ok((
+        None,
+        TypedHeader(cache_control),
+        TypedHeader(file.content_type),
+        file.content_encoding.map(TypedHeader),
+        file.data,
+    ))
 }
 
 pub const PATH_FILE_PACKAGE_ACCESS_ROOT: &str = "/";
@@ -60,9 +64,10 @@ pub const PATH_FILE_PACKAGE_ACCESS_ROOT: &str = "/";
 pub async fn get_file_package_access_root(
     State(state): State<S>,
     ConnectInfo(address): ConnectInfo<SocketAddr>,
+    browser_etag: Option<TypedHeader<IfNoneMatch>>,
 ) -> Result<StaticFileResponse, StatusCode> {
     COMMON.get_file_package_access_root.incr();
-    return_index_html(state, address).await
+    return_index_html(state, address, browser_etag).await
 }
 
 pub const PATH_FILE_PACKAGE_ACCESS_PWA_INDEX_HTML: &str = "/app/index.html";
@@ -70,21 +75,39 @@ pub const PATH_FILE_PACKAGE_ACCESS_PWA_INDEX_HTML: &str = "/app/index.html";
 pub async fn get_file_package_access_pwa_index_html(
     State(state): State<S>,
     ConnectInfo(address): ConnectInfo<SocketAddr>,
+    browser_etag: Option<TypedHeader<IfNoneMatch>>,
 ) -> Result<StaticFileResponse, StatusCode> {
     COMMON.get_file_package_access_pwa_index_html.incr();
-    return_index_html(state, address).await
+    return_index_html(state, address, browser_etag).await
 }
 
 async fn return_index_html(
     state: S,
     address: SocketAddr,
+    browser_etag: Option<TypedHeader<IfNoneMatch>>,
 ) -> Result<StaticFileResponse, StatusCode> {
     check_ip_allowlist(&state, address).await?;
+
+    if let Some(browser_etag) = browser_etag {
+        if browser_etag.matches(state.server_start_time_etag()) {
+            return Err(StatusCode::NOT_MODIFIED);
+        }
+    }
+
     let file = state
         .file_package()
         .index_html()
         .ok_or(StatusCode::NOT_FOUND)?;
-    Ok(file.to_response())
+
+    let cache_control = CacheControl::new().with_no_cache();
+
+    Ok((
+        Some(TypedHeader(state.server_start_time_etag().clone())),
+        TypedHeader(cache_control),
+        TypedHeader(file.content_type),
+        file.content_encoding.map(TypedHeader),
+        file.data,
+    ))
 }
 
 async fn check_ip_allowlist(state: &S, address: SocketAddr) -> Result<(), StatusCode> {
