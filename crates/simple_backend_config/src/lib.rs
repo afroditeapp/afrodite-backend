@@ -414,12 +414,19 @@ fn generate_server_config(
         return Err(GetConfigError::CreateTlsConfig).attach_printable("Only one cert supported");
     }
 
-    let config = ServerConfig::builder()
+    let mut config = ServerConfig::builder()
         .with_no_client_auth()
         .with_single_cert(vec![cert], key)
         .change_context(GetConfigError::CreateTlsConfig)?;
 
+    configure_apln_protocols(&mut config);
+
     Ok(config)
+}
+
+pub fn configure_apln_protocols(config: &mut ServerConfig) {
+    config.alpn_protocols.push(b"h2".to_vec());
+    config.alpn_protocols.push(b"http/1.1".to_vec());
 }
 
 const DATABASES: DatabaseInfo = DatabaseInfo {

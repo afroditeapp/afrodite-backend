@@ -549,6 +549,8 @@ impl<T: BusinessLogic> SimpleBackend<T> {
                 .await
                 .expect("Address not available");
 
+            // HTTP/2 is usually used with TLS, so HTTP/2 WebSocket
+            // support enabling is not needed here.
             axum::serve(
                 TcpListenerWithConnectionTracking {
                     listener,
@@ -712,6 +714,8 @@ async fn handle_ready_tls_connection<
 
     let connection_serving_result =
         hyper_util::server::conn::auto::Builder::new(TokioExecutor::new())
+            .http2()
+            .enable_connect_protocol()
             .serve_connection_with_upgrades(data_stream, hyper_service)
             .await;
 

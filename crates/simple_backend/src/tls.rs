@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use futures::StreamExt;
 use rustls_platform_verifier::ConfigVerifierExt;
-use simple_backend_config::SimpleBackendConfig;
+use simple_backend_config::{SimpleBackendConfig, configure_apln_protocols};
 use tokio::{net::TcpListener, task::JoinHandle};
 use tokio_rustls::rustls::{ClientConfig, ServerConfig};
 use tokio_rustls_acme::{AcmeAcceptor, AcmeConfig, caches::DirCache};
@@ -56,10 +56,11 @@ impl TlsManager {
                 .directory_lets_encrypt(lets_encrypt.production_servers)
                 .state();
             let acceptor = state.acceptor();
-            let tls_config = ServerConfig::builder()
+            let mut tls_config = ServerConfig::builder()
                 .with_no_client_auth()
-                .with_cert_resolver(state.resolver())
-                .into();
+                .with_cert_resolver(state.resolver());
+            configure_apln_protocols(&mut tls_config);
+            let tls_config = tls_config.into();
 
             let Some(mut https_addr) = config.socket().public_api else {
                 panic!("Public API must be enabled when using Let's Encrypt TLS");

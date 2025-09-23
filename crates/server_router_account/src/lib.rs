@@ -5,7 +5,7 @@
 
 use axum::{
     Router,
-    routing::{get, post},
+    routing::{any, get, post},
 };
 use routes_connected::ConnectedApp;
 use server_api::app::GetConfig;
@@ -44,7 +44,8 @@ impl CommonRoutes {
             )
             .route(
                 api::common::PATH_CONNECT, // This route checks the access token by itself.
-                get({
+                // Use any to allow both GET and CONNECT methods.
+                any({
                     move |state, param1, param2, param3| {
                         api::common::get_connect_websocket(
                             state, param1, param2, param3, ws_manager,

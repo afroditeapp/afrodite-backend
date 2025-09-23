@@ -124,7 +124,7 @@ pub use utils::api::PATH_CONNECT;
 ///     - Client minor version number.
 ///     - Client patch version number.
 #[utoipa::path(
-    get,
+    get, // or CONNECT method if using HTTP/2
     path = PATH_CONNECT,
     responses(
         (status = 101, description = "Switching protocols."),
