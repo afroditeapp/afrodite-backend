@@ -10,6 +10,7 @@ use server_data::app::GetConfig;
 use simple_backend::{
     app::{FilePackageProvider, MaxMindDbDataProvider},
     create_counters,
+    file_package::StaticFile,
 };
 use simple_backend_config::file::IpAddressAccessConfig;
 
@@ -17,20 +18,33 @@ use crate::{S, utils::StatusCode};
 
 // TODO(web): HTTP cache header support for file package access
 
+type StaticFileResponse = (
+    TypedHeader<ContentType>,
+    Option<TypedHeader<ContentEncoding>>,
+    Bytes,
+);
+
+pub trait StaticFileExtensions {
+    fn to_response(self) -> StaticFileResponse;
+}
+
+impl StaticFileExtensions for StaticFile {
+    fn to_response(self) -> StaticFileResponse {
+        (
+            TypedHeader(self.content_type),
+            self.content_encoding.map(TypedHeader),
+            self.data,
+        )
+    }
+}
+
 pub const PATH_FILE_PACKAGE_ACCESS: &str = "/app/{*path}";
 
 pub async fn get_file_package_access(
     State(state): State<S>,
     Path(path_parts): Path<Vec<String>>,
     ConnectInfo(address): ConnectInfo<SocketAddr>,
-) -> Result<
-    (
-        TypedHeader<ContentType>,
-        Option<TypedHeader<ContentEncoding>>,
-        Bytes,
-    ),
-    StatusCode,
-> {
+) -> Result<StaticFileResponse, StatusCode> {
     COMMON.get_file_package_access.incr();
     check_ip_allowlist(&state, address).await?;
     let wanted_file = path_parts.join("/");
@@ -38,11 +52,7 @@ pub async fn get_file_package_access(
         .file_package()
         .static_file(&wanted_file)
         .ok_or(StatusCode::NOT_FOUND)?;
-    Ok((
-        TypedHeader(file.content_type),
-        file.content_encoding.map(TypedHeader),
-        file.data,
-    ))
+    Ok(file.to_response())
 }
 
 pub const PATH_FILE_PACKAGE_ACCESS_ROOT: &str = "/";
@@ -50,25 +60,9 @@ pub const PATH_FILE_PACKAGE_ACCESS_ROOT: &str = "/";
 pub async fn get_file_package_access_root(
     State(state): State<S>,
     ConnectInfo(address): ConnectInfo<SocketAddr>,
-) -> Result<
-    (
-        TypedHeader<ContentType>,
-        Option<TypedHeader<ContentEncoding>>,
-        Bytes,
-    ),
-    StatusCode,
-> {
+) -> Result<StaticFileResponse, StatusCode> {
     COMMON.get_file_package_access_root.incr();
-    check_ip_allowlist(&state, address).await?;
-    let file = state
-        .file_package()
-        .index_html()
-        .ok_or(StatusCode::NOT_FOUND)?;
-    Ok((
-        TypedHeader(file.content_type),
-        file.content_encoding.map(TypedHeader),
-        file.data,
-    ))
+    return_index_html(state, address).await
 }
 
 pub const PATH_FILE_PACKAGE_ACCESS_PWA_INDEX_HTML: &str = "/app/index.html";
@@ -76,25 +70,21 @@ pub const PATH_FILE_PACKAGE_ACCESS_PWA_INDEX_HTML: &str = "/app/index.html";
 pub async fn get_file_package_access_pwa_index_html(
     State(state): State<S>,
     ConnectInfo(address): ConnectInfo<SocketAddr>,
-) -> Result<
-    (
-        TypedHeader<ContentType>,
-        Option<TypedHeader<ContentEncoding>>,
-        Bytes,
-    ),
-    StatusCode,
-> {
+) -> Result<StaticFileResponse, StatusCode> {
     COMMON.get_file_package_access_pwa_index_html.incr();
+    return_index_html(state, address).await
+}
+
+async fn return_index_html(
+    state: S,
+    address: SocketAddr,
+) -> Result<StaticFileResponse, StatusCode> {
     check_ip_allowlist(&state, address).await?;
     let file = state
         .file_package()
         .index_html()
         .ok_or(StatusCode::NOT_FOUND)?;
-    Ok((
-        TypedHeader(file.content_type),
-        file.content_encoding.map(TypedHeader),
-        file.data,
-    ))
+    Ok(file.to_response())
 }
 
 async fn check_ip_allowlist(state: &S, address: SocketAddr) -> Result<(), StatusCode> {
