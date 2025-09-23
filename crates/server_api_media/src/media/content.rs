@@ -4,7 +4,7 @@ use axum::{
     extract::{Path, Query, State},
 };
 use axum_extra::TypedHeader;
-use headers::{CacheControl, ContentLength, ContentType};
+use headers::{CacheControl, ContentLength, ContentType, ETag, IfNoneMatch};
 use model::{EventToClientInternal, NotificationEvent};
 use model_media::{
     AccountContent, AccountId, AccountIdInternal, AccountState, ContentId, ContentProcessingId,
@@ -16,7 +16,7 @@ use server_api::{
     app::{ApiUsageTrackerProvider, GetConfig},
     create_open_api_router, db_write,
     result::WrappedResultExt,
-    utils::cache_control_for_images,
+    utils::{IfNoneMatchExtensions, cache_control_for_images},
 };
 use server_data::{
     DataError,
@@ -65,6 +65,7 @@ const PATH_GET_CONTENT: &str = "/media_api/content/{aid}/{cid}";
     ),
     security(("access_token" = [])),
 )]
+#[allow(clippy::too_many_arguments)]
 pub async fn get_content(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
@@ -73,8 +74,10 @@ pub async fn get_content(
     Path(requested_profile): Path<AccountId>,
     Path(requested_content_id): Path<ContentId>,
     Query(params): Query<GetContentQueryParams>,
+    browser_etag: Option<TypedHeader<IfNoneMatch>>,
 ) -> Result<
     (
+        TypedHeader<ETag>,
         TypedHeader<CacheControl>,
         TypedHeader<ContentType>,
         TypedHeader<ContentLength>,
@@ -100,7 +103,12 @@ pub async fn get_content(
             .await
             .change_context(DataError::File)?;
 
+        if browser_etag.matches(state.etag_utils().immutable_content()) {
+            return Err(StatusCode::NOT_MODIFIED);
+        }
+
         Ok((
+            TypedHeader(state.etag_utils().immutable_content().clone()),
             TypedHeader(cache_control_for_images()),
             TypedHeader(ContentType::octet_stream()),
             TypedHeader(ContentLength(lenght)),

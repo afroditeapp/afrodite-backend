@@ -6,6 +6,7 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
+use axum_extra::TypedHeader;
 use headers::{CacheControl, ETag, Header, HeaderValue, IfNoneMatch};
 use hyper::{Request, header};
 use model::AccessToken;
@@ -199,5 +200,15 @@ pub trait IfNoneMatchExtensions {
 impl IfNoneMatchExtensions for IfNoneMatch {
     fn matches(&self, tag: &ETag) -> bool {
         !self.precondition_passes(tag)
+    }
+}
+
+impl IfNoneMatchExtensions for Option<TypedHeader<IfNoneMatch>> {
+    fn matches(&self, tag: &ETag) -> bool {
+        if let Some(browser_etag) = self {
+            browser_etag.matches(tag)
+        } else {
+            false
+        }
     }
 }

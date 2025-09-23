@@ -3,9 +3,14 @@ use axum::{
     extract::{Path, Query, State},
 };
 use axum_extra::TypedHeader;
-use headers::{CacheControl, ContentLength, ContentType};
+use headers::{CacheControl, ContentLength, ContentType, ETag, IfNoneMatch};
 use model_media::{MapTileVersion, MapTileX, MapTileY, MapTileZ};
-use server_api::{S, app::GetConfig, create_open_api_router, utils::cache_control_for_images};
+use server_api::{
+    S,
+    app::GetConfig,
+    create_open_api_router,
+    utils::{IfNoneMatchExtensions, cache_control_for_images},
+};
 use simple_backend::{app::GetTileMap, create_counters};
 use tracing::error;
 
@@ -34,8 +39,10 @@ pub async fn get_map_tile(
     Path(x): Path<MapTileX>,
     Path(y): Path<MapTileY>,
     Query(v): Query<MapTileVersion>,
+    browser_etag: Option<TypedHeader<IfNoneMatch>>,
 ) -> Result<
     (
+        TypedHeader<ETag>,
         TypedHeader<CacheControl>,
         TypedHeader<ContentType>,
         TypedHeader<ContentLength>,
@@ -69,12 +76,19 @@ pub async fn get_map_tile(
         })?;
 
     match byte_count_and_data_stream {
-        Some((byte_count, data_stream)) => Ok((
-            TypedHeader(cache_control_for_images()),
-            TypedHeader(ContentType::png()),
-            TypedHeader(ContentLength(byte_count)),
-            Body::from_stream(data_stream),
-        )),
+        Some((byte_count, data_stream)) => {
+            if browser_etag.matches(state.etag_utils().immutable_content()) {
+                Err(StatusCode::NOT_MODIFIED)
+            } else {
+                Ok((
+                    TypedHeader(state.etag_utils().immutable_content().clone()),
+                    TypedHeader(cache_control_for_images()),
+                    TypedHeader(ContentType::png()),
+                    TypedHeader(ContentLength(byte_count)),
+                    Body::from_stream(data_stream),
+                ))
+            }
+        }
         None => Err(StatusCode::NOT_FOUND),
     }
 }

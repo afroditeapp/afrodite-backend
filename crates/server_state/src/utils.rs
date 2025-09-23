@@ -1,6 +1,8 @@
 use axum::response::{IntoResponse, Response};
 use config::file::ConfigFileError;
+use headers::ETag;
 use manager_api::ClientError;
+use model::UnixTime;
 use server_common::data::cache::CacheError;
 use server_data::{
     content_processing::ContentProcessingError, data_export::DataExportError, event::EventError,
@@ -150,5 +152,29 @@ impl_error_to_status_code!(
 impl From<crate::result::WrappedReport<error_stack::Report<ApiLimitError>>> for StatusCode {
     fn from(_: crate::result::WrappedReport<error_stack::Report<ApiLimitError>>) -> Self {
         StatusCode::TOO_MANY_REQUESTS
+    }
+}
+
+pub struct ETagUtils {
+    immutable_content: ETag,
+    server_start_time: ETag,
+}
+
+impl ETagUtils {
+    pub(crate) fn new() -> Self {
+        Self {
+            immutable_content: "\"i\"".to_string().parse().unwrap(),
+            server_start_time: format!("\"{}\"", UnixTime::current_time().ut)
+                .parse()
+                .unwrap(),
+        }
+    }
+
+    pub fn immutable_content(&self) -> &ETag {
+        &self.immutable_content
+    }
+
+    pub fn server_start_time(&self) -> &ETag {
+        &self.server_start_time
     }
 }

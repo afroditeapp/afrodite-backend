@@ -11,11 +11,10 @@ use axum::extract::ws::WebSocket;
 use client_version::ClientVersionTracker;
 use config::Config;
 use data_signer::DataSigner;
-use headers::ETag;
 use ip_address::IpAddressUsageTracker;
 use model::{
     Account, AccountIdInternal, PendingNotificationToken, PendingNotificationWithData,
-    SyncDataVersionFromClient, UnixTime,
+    SyncDataVersionFromClient,
 };
 use model_chat::SignInWithInfo;
 use model_server_data::EmailAddress;
@@ -32,7 +31,7 @@ use simple_backend::app::SimpleBackendAppState;
 
 use crate::{
     admin_notifications::AdminNotificationManagerData, demo::DemoAccountManager,
-    dynamic_config::DynamicConfigManagerData,
+    dynamic_config::DynamicConfigManagerData, utils::ETagUtils,
 };
 
 pub mod admin_notifications;
@@ -75,7 +74,7 @@ struct AppStateInternal {
     data_signer: DataSigner,
     data_export: DataExportManagerData,
     dynamic_config_manager: DynamicConfigManagerData,
-    server_start_time_etag: ETag,
+    etag_utils: ETagUtils,
 }
 
 impl AppState {
@@ -111,9 +110,7 @@ impl AppState {
             data_signer: DataSigner::new(),
             data_export,
             dynamic_config_manager,
-            server_start_time_etag: format!("\"{}\"", UnixTime::current_time().ut)
-                .parse()
-                .unwrap(),
+            etag_utils: ETagUtils::new(),
         };
 
         AppState {
@@ -129,8 +126,8 @@ impl AppState {
         DataAllAccess { state: &self.state }
     }
 
-    pub fn server_start_time_etag(&self) -> &ETag {
-        &self.state.server_start_time_etag
+    pub fn etag_utils(&self) -> &ETagUtils {
+        &self.state.etag_utils
     }
 }
 

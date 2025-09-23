@@ -19,7 +19,7 @@ use crate::{
 };
 
 type StaticFileResponse = (
-    Option<TypedHeader<ETag>>,
+    TypedHeader<ETag>,
     TypedHeader<CacheControl>,
     TypedHeader<ContentType>,
     Option<TypedHeader<ContentEncoding>>,
@@ -32,6 +32,7 @@ pub async fn get_file_package_access(
     State(state): State<S>,
     Path(path_parts): Path<Vec<String>>,
     ConnectInfo(address): ConnectInfo<SocketAddr>,
+    browser_etag: Option<TypedHeader<IfNoneMatch>>,
 ) -> Result<StaticFileResponse, StatusCode> {
     COMMON.get_file_package_access.incr();
 
@@ -43,6 +44,10 @@ pub async fn get_file_package_access(
         .static_file(&wanted_file)
         .ok_or(StatusCode::NOT_FOUND)?;
 
+    if browser_etag.matches(state.etag_utils().immutable_content()) {
+        return Err(StatusCode::NOT_MODIFIED);
+    }
+
     const MONTH_SECONDS: u64 = 60 * 60 * 24 * 30;
     let cache_control = CacheControl::new()
         .with_max_age(Duration::from_secs(MONTH_SECONDS * 12))
@@ -51,7 +56,7 @@ pub async fn get_file_package_access(
         .with_immutable();
 
     Ok((
-        None,
+        TypedHeader(state.etag_utils().immutable_content().clone()),
         TypedHeader(cache_control),
         TypedHeader(file.content_type),
         file.content_encoding.map(TypedHeader),
@@ -88,10 +93,8 @@ async fn return_index_html(
 ) -> Result<StaticFileResponse, StatusCode> {
     check_ip_allowlist(&state, address).await?;
 
-    if let Some(browser_etag) = browser_etag {
-        if browser_etag.matches(state.server_start_time_etag()) {
-            return Err(StatusCode::NOT_MODIFIED);
-        }
+    if browser_etag.matches(state.etag_utils().server_start_time()) {
+        return Err(StatusCode::NOT_MODIFIED);
     }
 
     let file = state
@@ -102,7 +105,7 @@ async fn return_index_html(
     let cache_control = CacheControl::new().with_no_cache();
 
     Ok((
-        Some(TypedHeader(state.server_start_time_etag().clone())),
+        TypedHeader(state.etag_utils().server_start_time().clone()),
         TypedHeader(cache_control),
         TypedHeader(file.content_type),
         file.content_encoding.map(TypedHeader),
