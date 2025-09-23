@@ -45,7 +45,8 @@ use axum::{
     serve::{Listener, ListenerExt},
 };
 use futures::future::poll_fn;
-use hyper::body::Incoming;
+use headers::{CacheControl, HeaderMapExt};
+use hyper::{body::Incoming, header::CACHE_CONTROL};
 use hyper_util::rt::{TokioExecutor, TokioIo};
 use image::ImageProcess;
 use manager_client::{ManagerApiClient, ManagerConnectionManager, ManagerEventHandler};
@@ -67,7 +68,7 @@ use tokio_rustls::{
     rustls::{ServerConfig, server::Acceptor},
 };
 use tokio_rustls_acme::AcmeAcceptor;
-use tower::Service;
+use tower::{Service, ServiceBuilder};
 use tower_http::trace::TraceLayer;
 use tracing::{debug, error, info, warn};
 use tracing_subscriber::{EnvFilter, Layer, layer::SubscriberExt, util::SubscriberInitExt};
@@ -364,6 +365,23 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         }
     }
 
+    fn common_layers(router: Router, ip_country_tracker: IpCountryTracker) -> Router {
+        router.layer(
+            ServiceBuilder::new()
+                .layer(middleware::from_fn_with_state(
+                    ip_country_tracker.clone(),
+                    track_http_request_country,
+                ))
+                .map_response(|mut r: hyper::Response<Body>| {
+                    let headers = r.headers_mut();
+                    if !headers.contains_key(CACHE_CONTROL) {
+                        headers.typed_insert(CacheControl::new().with_no_store());
+                    }
+                    r
+                }),
+        )
+    }
+
     async fn create_api_server_task(
         &self,
         quit_notification: ServerQuitWatcher,
@@ -373,10 +391,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         server_name: &'static str,
         ip_country_tracker: IpCountryTracker,
     ) -> JoinHandle<()> {
-        let router = router.layer(middleware::from_fn_with_state(
-            ip_country_tracker.clone(),
-            track_http_request_country,
-        ));
+        let router = Self::common_layers(router, ip_country_tracker.clone());
         let router = if self.config.debug_mode() {
             router.route_layer(TraceLayer::new_for_http())
         } else {
@@ -417,13 +432,8 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         port: u16,
         ip_country_tracker: IpCountryTracker,
     ) -> JoinHandle<()> {
-        let router = self
-            .logic
-            .local_bot_api_router(web_socket_manager, state)
-            .layer(middleware::from_fn_with_state(
-                ip_country_tracker.clone(),
-                track_http_request_country,
-            ));
+        let router = self.logic.local_bot_api_router(web_socket_manager, state);
+        let router = Self::common_layers(router, ip_country_tracker.clone());
         let router = if self.config.debug_mode() {
             if let Some(swagger) = self.logic.create_swagger_ui(state) {
                 router.merge(swagger)
