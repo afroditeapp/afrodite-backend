@@ -7,8 +7,10 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum_extra::TypedHeader;
-use headers::{CacheControl, ETag, Header, HeaderValue, IfNoneMatch};
-use hyper::{Request, header};
+use headers::{
+    Authorization, CacheControl, ETag, HeaderMapExt, IfNoneMatch, authorization::Bearer,
+};
+use hyper::Request;
 use model::AccessToken;
 use serde::Serialize;
 use server_data::app::GetConfig;
@@ -16,14 +18,10 @@ pub use server_state::utils::StatusCode;
 use server_state::{StateForRouterCreation, app::GetAccessTokens};
 use simple_backend::create_counters;
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;
-pub use utils::api::ACCESS_TOKEN_HEADER_STR;
 use utoipa::{
     Modify,
-    openapi::security::{ApiKeyValue, SecurityScheme},
+    openapi::security::{Http, HttpAuthScheme, SecurityScheme},
 };
-
-pub static ACCESS_TOKEN_HEADER: header::HeaderName =
-    header::HeaderName::from_static(ACCESS_TOKEN_HEADER_STR);
 
 /// Middleware for authenticating requests with access tokens.
 ///
@@ -46,10 +44,9 @@ pub async fn authenticate_with_access_token(
 ) -> Result<Response, StatusCode> {
     let header = req
         .headers()
-        .get(ACCESS_TOKEN_HEADER_STR)
+        .typed_get::<Authorization<Bearer>>()
         .ok_or(StatusCode::BAD_REQUEST)?;
-    let key_str = header.to_str().map_err(|_| StatusCode::BAD_REQUEST)?;
-    let key = AccessToken::new(key_str.to_string());
+    let key = AccessToken::new(header.token().to_string());
 
     if let Some((id, permissions, account_state)) =
         state.s.access_token_and_connection_exists(&key, addr).await
@@ -87,35 +84,6 @@ create_counters!(
     access_token_not_found,
 );
 
-pub struct AccessTokenHeader(AccessToken);
-
-impl AccessTokenHeader {
-    pub fn key(&self) -> &AccessToken {
-        &self.0
-    }
-}
-
-impl Header for AccessTokenHeader {
-    fn name() -> &'static headers::HeaderName {
-        &ACCESS_TOKEN_HEADER
-    }
-
-    fn decode<'i, I>(values: &mut I) -> Result<Self, headers::Error>
-    where
-        Self: Sized,
-        I: Iterator<Item = &'i headers::HeaderValue>,
-    {
-        let value = values.next().ok_or_else(headers::Error::invalid)?;
-        let value = value.to_str().map_err(|_| headers::Error::invalid())?;
-        Ok(AccessTokenHeader(AccessToken::new(value.to_string())))
-    }
-
-    fn encode<E: Extend<headers::HeaderValue>>(&self, values: &mut E) {
-        let header = HeaderValue::from_str(self.0.as_str()).unwrap();
-        values.extend(std::iter::once(header))
-    }
-}
-
 /// Utoipa API doc security config
 pub struct SecurityApiAccessTokenDefault;
 
@@ -124,9 +92,7 @@ impl Modify for SecurityApiAccessTokenDefault {
         if let Some(components) = openapi.components.as_mut() {
             components.add_security_scheme(
                 "access_token",
-                SecurityScheme::ApiKey(utoipa::openapi::security::ApiKey::Header(
-                    ApiKeyValue::new(ACCESS_TOKEN_HEADER_STR),
-                )),
+                SecurityScheme::Http(Http::builder().scheme(HttpAuthScheme::Bearer).into()),
             )
         }
     }
