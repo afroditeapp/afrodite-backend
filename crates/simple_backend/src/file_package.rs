@@ -1,19 +1,12 @@
-use std::{
-    collections::HashMap,
-    fs::File,
-    io::{Read, Write},
-    path::Path,
-    str::FromStr,
-};
+use std::{collections::HashMap, fs::File, io::Read, path::Path, str::FromStr};
 
 use axum::body::Bytes;
 use error_stack::ResultExt;
-use flate2::{Compression, read::GzDecoder, write::GzEncoder};
+use flate2::read::GzDecoder;
 use headers::{ContentEncoding, ContentType};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_utils::ContextExt;
 use tar::{Archive, EntryType};
-use tokio_util::bytes::{BufMut, BytesMut};
 use tracing::warn;
 
 #[derive(thiserror::Error, Debug)]
@@ -26,8 +19,8 @@ pub enum FilePackageError {
     PackageContainsUnknonwFileType,
     #[error("Invalid MIME type string in source code")]
     InvalidMimeType,
-    #[error("File compression error")]
-    FileComporession,
+    #[error("Package contains multiple index.html files")]
+    MultipleIndexHtmlFiles,
 }
 
 #[derive(Clone)]
@@ -38,89 +31,71 @@ pub struct StaticFile {
 }
 
 impl StaticFile {
-    pub fn new(
-        content_type: ContentType,
+    fn new(
+        mime_types: &ExtraMimeTypes,
+        path_string: String,
         data: Vec<u8>,
-        path_string: &str,
-    ) -> error_stack::Result<Self, FilePackageError> {
-        let (data, content_encoding) = if path_string.ends_with(".png") {
-            (data.into(), None)
+    ) -> error_stack::Result<(String, Self), FilePackageError> {
+        if let Some(path_string) = path_string.strip_suffix(".gz").map(ToString::to_string) {
+            let static_file = Self {
+                content_type: FilePackageManager::path_string_to_content_type(
+                    mime_types,
+                    &path_string,
+                )?,
+                content_encoding: Some(ContentEncoding::gzip()),
+                data: data.into(),
+            };
+            Ok((path_string, static_file))
         } else {
-            let mut gzip = GzEncoder::new(BytesMut::new().writer(), Compression::best());
-            gzip.write_all(&data)
-                .change_context(FilePackageError::FileComporession)?;
-            let data = gzip
-                .finish()
-                .change_context(FilePackageError::FileComporession)?
-                .into_inner()
-                .freeze();
-            (data, Some(ContentEncoding::gzip()))
-        };
-
-        Ok(Self {
-            content_type,
-            content_encoding,
-            data,
-        })
+            let static_file = Self {
+                content_type: FilePackageManager::path_string_to_content_type(
+                    mime_types,
+                    &path_string,
+                )?,
+                content_encoding: None,
+                data: data.into(),
+            };
+            Ok((path_string, static_file))
+        }
     }
 }
 
 pub struct FilePackageManager {
+    index_html: Option<StaticFile>,
     file_path_and_data: HashMap<String, StaticFile>,
 }
 
 impl FilePackageManager {
+    fn new_empty() -> Self {
+        Self {
+            index_html: None,
+            file_path_and_data: HashMap::new(),
+        }
+    }
+
     pub async fn new(config: &SimpleBackendConfig) -> error_stack::Result<Self, FilePackageError> {
         let mime_types = ExtraMimeTypes::new().change_context(FilePackageError::InvalidMimeType)?;
         let package_path = if let Some(c) = config.file_package() {
             c.clone()
         } else {
-            return Ok(Self {
-                file_path_and_data: HashMap::new(),
-            });
+            return Ok(Self::new_empty());
         };
 
         let result: error_stack::Result<Self, FilePackageError> =
             tokio::task::spawn_blocking(move || {
-                let file_path = Path::new(&package_path.package);
-                if !file_path.exists() {
+                let mut manager = Self::new_empty();
+
+                if !package_path.package.exists() {
                     warn!(
                         "Static file hosting package does not exist at location {}",
                         package_path.package.display()
                     );
-                    return Ok(Self {
-                        file_path_and_data: HashMap::new(),
-                    });
-                }
-                let mut read_files_only_from_dir = package_path.read_from_dir.clone();
-                if let Some(d) = &mut read_files_only_from_dir {
-                    d.push('/');
+                    return Ok(manager);
                 }
 
-                let mut file_path_and_data = HashMap::new();
-                let file = File::open(package_path.package)
-                    .change_context(FilePackageError::PackageLoading)?;
-                let decoder = GzDecoder::new(file);
-                let mut archive = Archive::new(decoder);
-                let entries = archive
-                    .entries()
-                    .change_context(FilePackageError::PackageLoading)?;
-                for e in entries {
-                    let mut e = e.change_context(FilePackageError::PackageLoading)?;
-                    let Some(path_string) =
-                        Self::get_path_string(read_files_only_from_dir.as_deref(), &e)?
-                    else {
-                        continue;
-                    };
-                    let mut data = vec![];
-                    e.read_to_end(&mut data)
-                        .change_context(FilePackageError::PackageLoading)?;
-                    let content_type =
-                        Self::path_string_to_content_type(&mime_types, &path_string)?;
-                    let static_file = StaticFile::new(content_type, data, &path_string)?;
-                    file_path_and_data.insert(path_string, static_file);
-                }
-                Ok(Self { file_path_and_data })
+                manager.handle_package(&mime_types, &package_path.package, true)?;
+
+                Ok(manager)
             })
             .await
             .change_context(FilePackageError::PackageLoading)?;
@@ -128,8 +103,51 @@ impl FilePackageManager {
         result
     }
 
+    fn handle_package(
+        &mut self,
+        mime_types: &ExtraMimeTypes,
+        package_path: &Path,
+        find_index_html: bool,
+    ) -> error_stack::Result<(), FilePackageError> {
+        if !package_path.to_string_lossy().ends_with(".tar.gz") {
+            return Err(FilePackageError::PackageLoading.report())
+                .attach_printable("File name does not end with '.tar.gz'")
+                .attach_printable(package_path.display().to_string());
+        }
+        let file = File::open(package_path).change_context(FilePackageError::PackageLoading)?;
+        let decoder = GzDecoder::new(file);
+        let mut archive = Archive::new(decoder);
+        let entries = archive
+            .entries()
+            .change_context(FilePackageError::PackageLoading)?;
+        let mut index_html_detected = false;
+        for e in entries {
+            let mut e = e.change_context(FilePackageError::PackageLoading)?;
+            let Some(path_string) = Self::get_path_string(&e)? else {
+                continue;
+            };
+            let mut data = vec![];
+            e.read_to_end(&mut data)
+                .change_context(FilePackageError::PackageLoading)?;
+            let (path_string, static_file) = StaticFile::new(mime_types, path_string, data)?;
+            if path_string.ends_with("/index.html") {
+                if index_html_detected {
+                    return Err(FilePackageError::MultipleIndexHtmlFiles.report())
+                        .attach_printable(package_path.display().to_string());
+                } else {
+                    index_html_detected = true;
+                    if find_index_html {
+                        self.index_html = Some(static_file.clone());
+                    }
+                }
+            }
+            self.file_path_and_data.insert(path_string, static_file);
+        }
+
+        Ok(())
+    }
+
     fn get_path_string(
-        read_files_only_from_dir: Option<&str>,
         e: &tar::Entry<GzDecoder<File>>,
     ) -> error_stack::Result<Option<String>, FilePackageError> {
         if e.header().entry_type() == EntryType::Directory {
@@ -149,18 +167,7 @@ impl FilePackageManager {
             .to_str()
             .ok_or(FilePackageError::InvalidUtf8)?
             .to_string();
-        // Remove root directory from paths if needed
-        if let Some(files_from_dir) = read_files_only_from_dir {
-            if path_string.starts_with(files_from_dir) {
-                Ok(Some(
-                    path_string.trim_start_matches(files_from_dir).to_string(),
-                ))
-            } else {
-                Ok(None)
-            }
-        } else {
-            Ok(Some(path_string))
-        }
+        Ok(Some(path_string))
     }
 
     fn path_string_to_content_type(
@@ -200,6 +207,10 @@ impl FilePackageManager {
 
     pub fn static_file(&self, path: &str) -> Option<StaticFile> {
         self.file_path_and_data.get(path).cloned()
+    }
+
+    pub fn index_html(&self) -> Option<StaticFile> {
+        self.index_html.clone()
     }
 }
 

@@ -433,8 +433,6 @@ pub struct LetsEncryptConfig {
 pub struct StaticFilePackageHostingConfig {
     /// Path to tar.gz package.
     pub package: PathBuf,
-    /// Read files only from specific directory in the package.
-    pub read_from_dir: Option<String>,
     #[serde(flatten, default)]
     pub acccess: IpAddressAccessConfig,
 }

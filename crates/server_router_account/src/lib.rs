@@ -39,6 +39,10 @@ impl CommonRoutes {
                 get(server_api::common::get_file_package_access_root),
             )
             .route(
+                api::common::PATH_FILE_PACKAGE_ACCESS_PWA_INDEX_HTML,
+                get(server_api::common::get_file_package_access_pwa_index_html),
+            )
+            .route(
                 api::common::PATH_CONNECT, // This route checks the access token by itself.
                 get({
                     move |state, param1, param2, param3| {

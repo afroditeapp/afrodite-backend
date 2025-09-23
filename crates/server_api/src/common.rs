@@ -78,7 +78,7 @@ pub async fn get_version(State(state): State<S>) -> Json<BackendVersion> {
 
 // TODO(web): HTTP cache header support for file package access
 
-pub const PATH_FILE_PACKAGE_ACCESS: &str = "/{*path}";
+pub const PATH_FILE_PACKAGE_ACCESS: &str = "/app/{*path}";
 
 pub async fn get_file_package_access(
     State(state): State<S>,
@@ -123,7 +123,33 @@ pub async fn get_file_package_access_root(
     check_ip_allowlist(&state, address).await?;
     let file = state
         .file_package()
-        .static_file("index.html")
+        .index_html()
+        .ok_or(StatusCode::NOT_FOUND)?;
+    Ok((
+        TypedHeader(file.content_type),
+        file.content_encoding.map(TypedHeader),
+        file.data,
+    ))
+}
+
+pub const PATH_FILE_PACKAGE_ACCESS_PWA_INDEX_HTML: &str = "/app/index.html";
+
+pub async fn get_file_package_access_pwa_index_html(
+    State(state): State<S>,
+    ConnectInfo(address): ConnectInfo<SocketAddr>,
+) -> Result<
+    (
+        TypedHeader<ContentType>,
+        Option<TypedHeader<ContentEncoding>>,
+        Bytes,
+    ),
+    StatusCode,
+> {
+    COMMON.get_file_package_access_pwa_index_html.incr();
+    check_ip_allowlist(&state, address).await?;
+    let file = state
+        .file_package()
+        .index_html()
         .ok_or(StatusCode::NOT_FOUND)?;
     Ok((
         TypedHeader(file.content_type),
@@ -757,6 +783,7 @@ create_counters!(
     get_version,
     get_file_package_access,
     get_file_package_access_root,
+    get_file_package_access_pwa_index_html,
     get_connect_websocket,
     websocket_access_token_not_found,
     websocket_refresh_token_not_found,
