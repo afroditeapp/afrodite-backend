@@ -6,13 +6,11 @@ use std::{net::SocketAddr, time::Duration};
 use axum::{
     body::Bytes,
     extract::{
-        ConnectInfo, Path, State, WebSocketUpgrade,
+        ConnectInfo, State, WebSocketUpgrade,
         ws::{Message, WebSocket},
     },
     response::IntoResponse,
 };
-use axum_extra::TypedHeader;
-use headers::{ContentEncoding, ContentType};
 use http::HeaderMap;
 use model::{
     AccessToken, AccountIdInternal, BackendVersion, ClientVersion, EventToClient,
@@ -34,12 +32,10 @@ use server_state::{
     state_impl::{ReadData, WriteData},
 };
 use simple_backend::{
-    app::{FilePackageProvider, MaxMindDbDataProvider},
     create_counters,
     perf::websocket::{self, ConnectionTracker},
     web_socket::WebSocketManager,
 };
-use simple_backend_config::file::IpAddressAccessConfig;
 use simple_backend_utils::{IntoReportFromString, time::DurationValue};
 use tokio::time::Instant;
 use tracing::{error, info};
@@ -56,6 +52,9 @@ pub use client_config::*;
 
 mod data_export;
 pub use data_export::*;
+
+mod file_package;
+pub use file_package::*;
 
 mod push_notification;
 pub use push_notification::*;
@@ -74,123 +73,6 @@ pub const PATH_GET_VERSION: &str = "/common_api/version";
 pub async fn get_version(State(state): State<S>) -> Json<BackendVersion> {
     COMMON.get_version.incr();
     state.backend_version().into()
-}
-
-// TODO(web): HTTP cache header support for file package access
-
-pub const PATH_FILE_PACKAGE_ACCESS: &str = "/app/{*path}";
-
-pub async fn get_file_package_access(
-    State(state): State<S>,
-    Path(path_parts): Path<Vec<String>>,
-    ConnectInfo(address): ConnectInfo<SocketAddr>,
-) -> Result<
-    (
-        TypedHeader<ContentType>,
-        Option<TypedHeader<ContentEncoding>>,
-        Bytes,
-    ),
-    StatusCode,
-> {
-    COMMON.get_file_package_access.incr();
-    check_ip_allowlist(&state, address).await?;
-    let wanted_file = path_parts.join("/");
-    let file = state
-        .file_package()
-        .static_file(&wanted_file)
-        .ok_or(StatusCode::NOT_FOUND)?;
-    Ok((
-        TypedHeader(file.content_type),
-        file.content_encoding.map(TypedHeader),
-        file.data,
-    ))
-}
-
-pub const PATH_FILE_PACKAGE_ACCESS_ROOT: &str = "/";
-
-pub async fn get_file_package_access_root(
-    State(state): State<S>,
-    ConnectInfo(address): ConnectInfo<SocketAddr>,
-) -> Result<
-    (
-        TypedHeader<ContentType>,
-        Option<TypedHeader<ContentEncoding>>,
-        Bytes,
-    ),
-    StatusCode,
-> {
-    COMMON.get_file_package_access_root.incr();
-    check_ip_allowlist(&state, address).await?;
-    let file = state
-        .file_package()
-        .index_html()
-        .ok_or(StatusCode::NOT_FOUND)?;
-    Ok((
-        TypedHeader(file.content_type),
-        file.content_encoding.map(TypedHeader),
-        file.data,
-    ))
-}
-
-pub const PATH_FILE_PACKAGE_ACCESS_PWA_INDEX_HTML: &str = "/app/index.html";
-
-pub async fn get_file_package_access_pwa_index_html(
-    State(state): State<S>,
-    ConnectInfo(address): ConnectInfo<SocketAddr>,
-) -> Result<
-    (
-        TypedHeader<ContentType>,
-        Option<TypedHeader<ContentEncoding>>,
-        Bytes,
-    ),
-    StatusCode,
-> {
-    COMMON.get_file_package_access_pwa_index_html.incr();
-    check_ip_allowlist(&state, address).await?;
-    let file = state
-        .file_package()
-        .index_html()
-        .ok_or(StatusCode::NOT_FOUND)?;
-    Ok((
-        TypedHeader(file.content_type),
-        file.content_encoding.map(TypedHeader),
-        file.data,
-    ))
-}
-
-async fn check_ip_allowlist(state: &S, address: SocketAddr) -> Result<(), StatusCode> {
-    if let Some(config) = state.config().simple_backend().file_package() {
-        is_ip_address_accepted(state, address, &config.acccess).await
-    } else {
-        Err(StatusCode::NOT_FOUND)
-    }
-}
-
-pub async fn is_ip_address_accepted(
-    state: &S,
-    address: SocketAddr,
-    config: &IpAddressAccessConfig,
-) -> Result<(), StatusCode> {
-    if config.allow_all_ip_addresses || config.ip_allowlist.iter().any(|v| *v == address.ip()) {
-        return Ok(());
-    }
-
-    if !config.ip_country_allowlist.is_empty() {
-        let ip_db = state.maxmind_db().current_db_ref().await;
-        if let Some(ip_db) = ip_db.as_ref() {
-            if let Some(country) = ip_db.get_country_ref(address.ip()) {
-                if config
-                    .ip_country_allowlist
-                    .iter()
-                    .any(|v| v == country.as_str())
-                {
-                    return Ok(());
-                }
-            }
-        }
-    }
-
-    Err(StatusCode::NOT_FOUND)
 }
 
 pub use utils::api::PATH_CONNECT;
@@ -781,9 +663,6 @@ create_counters!(
     COMMON,
     COMMON_COUNTERS_LIST,
     get_version,
-    get_file_package_access,
-    get_file_package_access_root,
-    get_file_package_access_pwa_index_html,
     get_connect_websocket,
     websocket_access_token_not_found,
     websocket_refresh_token_not_found,
