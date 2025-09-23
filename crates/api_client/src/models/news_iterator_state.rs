@@ -17,8 +17,6 @@ pub struct NewsIteratorState {
     pub id_at_reset: Box<models::PublicationId>,
     #[serde(rename = "page")]
     pub page: i64,
-    #[serde(rename = "previous_id_at_reset", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub previous_id_at_reset: Option<Option<Box<models::PublicationId>>>,
 }
 
 impl NewsIteratorState {
@@ -26,7 +24,6 @@ impl NewsIteratorState {
         NewsIteratorState {
             id_at_reset: Box::new(id_at_reset),
             page,
-            previous_id_at_reset: None,
         }
     }
 }

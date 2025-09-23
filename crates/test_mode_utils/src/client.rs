@@ -107,19 +107,15 @@ impl ApiClient {
     }
 
     pub fn set_access_token(&mut self, token: String) {
-        let token = api_client::apis::configuration::ApiKey {
-            prefix: None,
-            key: token,
-        };
-        self.api.api_key = Some(token.clone());
+        self.api.bearer_access_token = Some(token);
     }
 
     pub fn is_access_token_available(&self) -> bool {
-        self.api.api_key.is_some()
+        self.api.bearer_access_token.is_some()
     }
 
     pub fn api_key(&self) -> Option<String> {
-        self.api.api_key.clone().map(|k| k.key)
+        self.api.bearer_access_token.clone()
     }
 }
 

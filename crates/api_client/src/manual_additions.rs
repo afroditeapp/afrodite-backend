@@ -42,13 +42,8 @@ pub async fn get_content_fixed(configuration: &configuration::Configuration, acc
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    if let Some(ref token) = configuration.bearer_access_token {
+        local_var_req_builder = local_var_req_builder.bearer_auth(token.to_owned());
     };
 
     let local_var_req = local_var_req_builder.build()?;
@@ -89,13 +84,8 @@ pub async fn put_content_to_content_slot_fixed(
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    if let Some(ref token) = configuration.bearer_access_token {
+        local_var_req_builder = local_var_req_builder.bearer_auth(token.to_owned());
     };
     local_var_req_builder = local_var_req_builder.body(body);
 
@@ -126,13 +116,8 @@ pub async fn post_add_public_key_fixed(configuration: &configuration::Configurat
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    if let Some(ref token) = configuration.bearer_access_token {
+        local_var_req_builder = local_var_req_builder.bearer_auth(token.to_owned());
     };
     local_var_req_builder = local_var_req_builder.body(body);
 
@@ -163,13 +148,8 @@ pub async fn get_public_key_fixed(configuration: &configuration::Configuration, 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    if let Some(ref token) = configuration.bearer_access_token {
+        local_var_req_builder = local_var_req_builder.bearer_auth(token.to_owned());
     };
 
     let local_var_req = local_var_req_builder.build()?;
@@ -207,13 +187,8 @@ pub async fn post_send_message_fixed(configuration: &configuration::Configuratio
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    if let Some(ref token) = configuration.bearer_access_token {
+        local_var_req_builder = local_var_req_builder.bearer_auth(token.to_owned());
     };
     local_var_req_builder = local_var_req_builder.body(body);
 
@@ -244,13 +219,8 @@ pub async fn get_pending_messages_fixed(configuration: &configuration::Configura
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    if let Some(ref token) = configuration.bearer_access_token {
+        local_var_req_builder = local_var_req_builder.bearer_auth(token.to_owned());
     };
 
     let local_var_req = local_var_req_builder.build()?;

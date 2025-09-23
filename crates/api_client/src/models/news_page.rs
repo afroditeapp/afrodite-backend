@@ -13,16 +13,13 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct NewsPage {
-    #[serde(rename = "n")]
-    pub n: Box<models::PageItemCountForNewPublicNews>,
     #[serde(rename = "news")]
     pub news: Vec<models::NewsItemSimple>,
 }
 
 impl NewsPage {
-    pub fn new(n: models::PageItemCountForNewPublicNews, news: Vec<models::NewsItemSimple>) -> NewsPage {
+    pub fn new(news: Vec<models::NewsItemSimple>) -> NewsPage {
         NewsPage {
-            n: Box::new(n),
             news,
         }
     }

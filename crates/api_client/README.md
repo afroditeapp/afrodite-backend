@@ -376,7 +376,6 @@ Class | Method | HTTP request | Description
  - [NotificationId](docs/NotificationId.md)
  - [NotificationIdViewed](docs/NotificationIdViewed.md)
  - [NotificationStatus](docs/NotificationStatus.md)
- - [PageItemCountForNewPublicNews](docs/PageItemCountForNewPublicNews.md)
  - [PartialProfileAttributesConfig](docs/PartialProfileAttributesConfig.md)
  - [PendingMessageAcknowledgementList](docs/PendingMessageAcknowledgementList.md)
  - [PendingMessageId](docs/PendingMessageId.md)

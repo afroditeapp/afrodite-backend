@@ -344,8 +344,6 @@ pub mod notification_id_viewed;
 pub use self::notification_id_viewed::NotificationIdViewed;
 pub mod notification_status;
 pub use self::notification_status::NotificationStatus;
-pub mod page_item_count_for_new_public_news;
-pub use self::page_item_count_for_new_public_news::PageItemCountForNewPublicNews;
 pub mod partial_profile_attributes_config;
 pub use self::partial_profile_attributes_config::PartialProfileAttributesConfig;
 pub mod pending_message_acknowledgement_list;

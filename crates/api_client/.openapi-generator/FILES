@@ -190,7 +190,6 @@ src/models/news_translation_version.rs
 src/models/notification_id.rs
 src/models/notification_id_viewed.rs
 src/models/notification_status.rs
-src/models/page_item_count_for_new_public_news.rs
 src/models/partial_profile_attributes_config.rs
 src/models/pending_message_acknowledgement_list.rs
 src/models/pending_message_id.rs
