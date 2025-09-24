@@ -1,11 +1,19 @@
-use std::{collections::HashMap, fs::File, io::Read, path::Path, str::FromStr};
+use std::{
+    collections::HashMap,
+    fs::{File, ReadDir},
+    io::Read,
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 
 use axum::body::Bytes;
 use error_stack::ResultExt;
 use flate2::read::GzDecoder;
 use headers::{ContentEncoding, ContentType};
+use regex::Regex;
 use simple_backend_config::SimpleBackendConfig;
-use simple_backend_utils::ContextExt;
+use simple_backend_model::VersionNumber;
+use simple_backend_utils::{ContextExt, IntoReportFromString};
 use tar::{Archive, EntryType};
 use tracing::warn;
 
@@ -75,7 +83,7 @@ impl FilePackageManager {
 
     pub async fn new(config: &SimpleBackendConfig) -> error_stack::Result<Self, FilePackageError> {
         let mime_types = ExtraMimeTypes::new().change_context(FilePackageError::InvalidMimeType)?;
-        let package_path = if let Some(c) = config.file_package() {
+        let package_config = if let Some(c) = config.file_package() {
             c.clone()
         } else {
             return Ok(Self::new_empty());
@@ -85,15 +93,11 @@ impl FilePackageManager {
             tokio::task::spawn_blocking(move || {
                 let mut manager = Self::new_empty();
 
-                if !package_path.package.exists() {
-                    warn!(
-                        "Static file hosting package does not exist at location {}",
-                        package_path.package.display()
-                    );
-                    return Ok(manager);
+                if let Some(single_package) = package_config.package {
+                    manager.handle_single_package_mode(&mime_types, &single_package)?
+                } else if let Some(dir) = package_config.package_dir {
+                    manager.handle_package_dir_mode(&mime_types, &dir)?
                 }
-
-                manager.handle_package(&mime_types, &package_path.package, true)?;
 
                 Ok(manager)
             })
@@ -101,6 +105,48 @@ impl FilePackageManager {
             .change_context(FilePackageError::PackageLoading)?;
 
         result
+    }
+
+    fn handle_single_package_mode(
+        &mut self,
+        mime_types: &ExtraMimeTypes,
+        package_path: &Path,
+    ) -> error_stack::Result<(), FilePackageError> {
+        if !package_path.exists() {
+            warn!(
+                "Static file hosting package does not exist at location {}",
+                package_path.display()
+            );
+            return Ok(());
+        }
+
+        self.handle_package(mime_types, package_path, true)
+    }
+
+    fn handle_package_dir_mode(
+        &mut self,
+        mime_types: &ExtraMimeTypes,
+        package_dir: &Path,
+    ) -> error_stack::Result<(), FilePackageError> {
+        if !package_dir.exists() {
+            warn!(
+                "Static file hosting package dir does not exist at location {}",
+                package_dir.display()
+            );
+            return Ok(());
+        }
+
+        let dir =
+            std::fs::read_dir(package_dir).change_context(FilePackageError::PackageLoading)?;
+        let manager = PackageDirManager::new(dir)?;
+
+        let mut latest_package = true;
+        for (_, package_path) in manager.sorted_packages() {
+            self.handle_package(mime_types, &package_path, latest_package)?;
+            latest_package = false;
+        }
+
+        Ok(())
     }
 
     fn handle_package(
@@ -225,5 +271,44 @@ impl ExtraMimeTypes {
             otf: ContentType::from_str("font/otf")?,
             wasm: ContentType::from_str("application/wasm")?,
         })
+    }
+}
+
+struct PackageDirManager {
+    packages: HashMap<VersionNumber, PathBuf>,
+}
+
+impl PackageDirManager {
+    fn new(dir: ReadDir) -> error_stack::Result<Self, FilePackageError> {
+        let regex = Regex::new(r"v\d+\.\d+\.\d+").unwrap();
+
+        let mut packages = HashMap::new();
+        for d in dir {
+            let d = d.change_context(FilePackageError::PackageLoading)?;
+            if !d.path().is_file() {
+                continue;
+            }
+            let name = d.file_name();
+            let name = name.to_string_lossy();
+            let Some(version) = regex
+                .find(&name)
+                .map(|m| m.as_str().trim_start_matches('v').to_string())
+            else {
+                warn!("{name} does not contain version number like v0.0.0");
+                continue;
+            };
+            let version = TryInto::<VersionNumber>::try_into(version)
+                .into_error_string(FilePackageError::PackageLoading)?;
+            packages.insert(version, d.path());
+        }
+
+        Ok(Self { packages })
+    }
+
+    /// The first package is the latest package
+    fn sorted_packages(self) -> Vec<(VersionNumber, PathBuf)> {
+        let mut packages = self.packages.into_iter().collect::<Vec<_>>();
+        packages.sort_by(|a, b| b.0.cmp(&a.0));
+        packages
     }
 }

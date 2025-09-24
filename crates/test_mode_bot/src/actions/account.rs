@@ -12,10 +12,10 @@ use api_client::{
 };
 use async_trait::async_trait;
 use base64::Engine;
-use config::file::MinClientVersion;
 use error_stack::{Result, ResultExt};
 use futures::SinkExt;
 use headers::HeaderValue;
+use simple_backend_model::VersionNumber;
 use test_mode_utils::{client::TestError, server::TEST_ADMIN_ACCESS_EMAIL};
 use tokio_stream::StreamExt;
 use tokio_tungstenite::tungstenite::{Message, client::IntoClientRequest};
@@ -124,7 +124,7 @@ async fn connect_websocket(
         .change_context(TestError::WebSocket)?;
     let web_socket_protocol_version: u8 = 1;
     let client_type_number = u8::MAX; // Test mode bot client type
-    let version = MinClientVersion {
+    let version = VersionNumber {
         major: 0,
         minor: 0,
         patch: 0,

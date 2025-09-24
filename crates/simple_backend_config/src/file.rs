@@ -224,6 +224,19 @@ impl SimpleBackendConfigFile {
             }
         }
 
+        if let Some(config) = &config.static_file_package_hosting {
+            if config.package.is_some() && config.package_dir.is_some() {
+                return Err(ConfigFileError::InvalidConfig.report().attach_printable(
+                    "static_file_package_hosting: both package and package_dir are configured",
+                ));
+            }
+            if config.package.is_none() && config.package_dir.is_none() {
+                return Err(ConfigFileError::InvalidConfig.report().attach_printable(
+                    "static_file_package_hosting: package or package_dir must be configured",
+                ));
+            }
+        }
+
         Ok(config)
     }
 }
@@ -432,7 +445,12 @@ pub struct LetsEncryptConfig {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct StaticFilePackageHostingConfig {
     /// Path to tar.gz package.
-    pub package: PathBuf,
+    pub package: Option<PathBuf>,
+    /// Path to tar.gz package directory which contains tar.gz files
+    /// which have version strings like `v0.0.0` in file names.
+    /// If directory contains multiple files the latest version
+    /// is selected as the primary version.
+    pub package_dir: Option<PathBuf>,
     #[serde(flatten, default)]
     pub acccess: IpAddressAccessConfig,
 }

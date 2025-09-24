@@ -26,6 +26,7 @@ model = { path = "../model" }
 model_server_data = { path = "../model_server_data" }
 model_server_state = { path = "../model_server_state" }
 
+simple_backend_model = { path = "../simple_backend_model" }
 simple_backend_config = { path = "../simple_backend_config" }
 simple_backend_utils = { path = "../simple_backend_utils" }
 

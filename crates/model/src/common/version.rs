@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use simple_backend_model::VersionNumber;
 use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -69,4 +70,14 @@ impl ClientVersion {
         minor: 0,
         patch: 0,
     };
+}
+
+impl From<ClientVersion> for VersionNumber {
+    fn from(value: ClientVersion) -> Self {
+        Self {
+            major: value.major,
+            minor: value.minor,
+            patch: value.patch,
+        }
+    }
 }

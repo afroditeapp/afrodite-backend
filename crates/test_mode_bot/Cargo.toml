@@ -29,6 +29,7 @@ http = { workspace = true }
 serde_json = { workspace = true }
 unicode-segmentation = { workspace = true }
 
+simple_backend_model = { path = "../simple_backend_model" }
 simple_backend_utils = { path = "../simple_backend_utils" }
 api_client = { path = "../api_client" }
 utils = { path = "../utils" }

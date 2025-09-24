@@ -14,6 +14,9 @@ pub use time::*;
 pub mod ip;
 pub use ip::*;
 
+pub mod version;
+pub use version::*;
+
 mod macros;
 
 #[cfg(test)]

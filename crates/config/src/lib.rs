@@ -27,8 +27,7 @@ use csv::{
 use error_stack::{Result, ResultExt};
 use file::{
     AccountLimitsConfig, AutomaticProfileSearchConfig, ChatLimitsConfig, CommonLimitsConfig,
-    DemoAccountConfig, GrantAdminAccessConfig, MediaLimitsConfig, MinClientVersion,
-    RemoteBotConfig,
+    DemoAccountConfig, GrantAdminAccessConfig, MediaLimitsConfig, RemoteBotConfig,
 };
 use file_dynamic::ConfigFileDynamic;
 use file_email_content::EmailContentFile;
@@ -41,7 +40,7 @@ use simple_backend_utils::IntoReportFromString;
 
 use self::file::{ConfigFile, LocationConfig};
 use crate::{
-    file::{GeneralConfig, ProfileLimitsConfig},
+    file::{GeneralConfig, MinClientVersion, ProfileLimitsConfig},
     file_notification_content::NotificationContentFile,
 };
 
