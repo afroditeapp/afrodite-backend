@@ -95,4 +95,12 @@ impl ScheduledMaintenanceStatus {
     pub fn is_empty(&self) -> bool {
         self.start.is_none()
     }
+
+    pub fn expired(&self) -> bool {
+        if let Some(end) = self.end {
+            UnixTime::current_time() >= end
+        } else {
+            false
+        }
+    }
 }

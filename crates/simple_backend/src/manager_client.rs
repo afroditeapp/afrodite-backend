@@ -125,7 +125,14 @@ impl ManagerApiClient {
     }
 
     pub async fn maintenance_status(&self) -> ScheduledMaintenanceStatus {
-        self.maintenance_status.read().await.clone()
+        let status = self.maintenance_status.read().await.clone();
+        if status.expired() {
+            let empty = ScheduledMaintenanceStatus::default();
+            self.set_maintenance_status(empty.clone()).await;
+            empty
+        } else {
+            status
+        }
     }
 
     pub async fn set_maintenance_status(&self, status: ScheduledMaintenanceStatus) {
