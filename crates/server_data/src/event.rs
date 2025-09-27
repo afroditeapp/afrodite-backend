@@ -232,7 +232,7 @@ impl<'a> EventManagerWithCacheReference<'a> {
                     self.push_notification_sender.send(account);
                 }
             }
-            Err(e) => error!("Failed to read pending notification flags: {:?}", e),
+            Err(e) => error!("Failed to read pending notification flags: {e:?}"),
         }
     }
 
@@ -256,7 +256,29 @@ impl<'a> EventManagerWithCacheReference<'a> {
 
         match edit_result {
             Ok(()) => (),
-            Err(e) => error!("Failed to edit pending notification flags: {:?}", e),
+            Err(e) => error!("Failed to edit pending notification flags: {e:?}"),
+        }
+    }
+
+    pub async fn remove_pending_notification_flags_from_cache(
+        &'a self,
+        account: AccountIdInternal,
+    ) -> PendingNotificationFlags {
+        let r = self
+            .cache
+            .write_cache_common(account, move |entry| {
+                let flags = entry.pending_notification_flags;
+                entry.pending_notification_flags = PendingNotificationFlags::empty();
+                Ok(flags)
+            })
+            .await
+            .into_data_error(account);
+        match r {
+            Ok(flags) => flags,
+            Err(e) => {
+                error!("Failed to remove pending notification flags: {e:?}");
+                PendingNotificationFlags::empty()
+            }
         }
     }
 
@@ -289,7 +311,7 @@ impl<'a> EventManagerWithCacheReference<'a> {
             )
             .await
         {
-            warn!("Event sending failed {}", e);
+            warn!("Event sending failed {e:?}");
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::{FcmDeviceToken, PendingNotificationFlags};
+use crate::{FcmDeviceToken, PendingNotificationFlags, PushNotificationDbState};
 
 #[derive(Debug)]
 pub struct PushNotificationStateInfo {
@@ -11,4 +11,9 @@ pub enum PushNotificationStateInfoWithFlags {
         info: PushNotificationStateInfo,
         flags: PendingNotificationFlags,
     },
+}
+
+pub struct PushNotificationSendingInfo {
+    pub db_state: PushNotificationDbState,
+    pub flags: PendingNotificationFlags,
 }

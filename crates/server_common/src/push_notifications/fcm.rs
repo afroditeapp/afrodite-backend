@@ -65,23 +65,15 @@ impl FcmManager {
         };
 
         let info = state
-            .get_push_notification_state_info(send_push_notification.account_id)
+            .get_and_reset_push_notifications(send_push_notification.account_id)
             .await
             .change_context(PushNotificationError::ReadingNotificationSentStatusFailed)?;
 
-        let (info, flags) = match info {
-            PushNotificationStateInfoWithFlags::EmptyFlags => return Ok(()),
-            PushNotificationStateInfoWithFlags::WithFlags { info, flags } => (info, flags),
-        };
-
-        let Some(token) = info.fcm_device_token else {
+        let Some(token) = info.db_state.fcm_device_token else {
             return Ok(());
         };
 
-        let is_visible = state
-            .is_pending_notification_visible_notification(send_push_notification.account_id, flags)
-            .await
-            .change_context(PushNotificationError::NotificationVisiblityCheckFailed)?;
+        let is_visible = true;
 
         let m = Message {
             // Use minimal notification data as this only triggers client

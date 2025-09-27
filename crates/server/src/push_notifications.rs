@@ -1,9 +1,7 @@
 use error_stack::ResultExt;
-use model::{
-    AccountIdInternal, ClientLanguage, PendingNotificationFlags, PushNotificationStateInfoWithFlags,
-};
+use model::{AccountIdInternal, PushNotificationSendingInfo};
 use server_api::{
-    app::{ReadData, WriteData},
+    app::{EventManagerProvider, ReadData, WriteData},
     db_write_raw,
 };
 use server_common::push_notifications::{PushNotificationError, PushNotificationStateProvider};
@@ -23,18 +21,27 @@ impl ServerPushNotificationStateProvider {
 }
 
 impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
-    async fn get_push_notification_state_info(
+    async fn get_and_reset_push_notifications(
         &self,
         account_id: AccountIdInternal,
-    ) -> error_stack::Result<PushNotificationStateInfoWithFlags, PushNotificationError> {
-        self.state
+    ) -> error_stack::Result<PushNotificationSendingInfo, PushNotificationError> {
+        let db_state = self
+            .state
             .read()
             .common()
             .push_notification()
-            .push_notification_state(account_id)
+            .push_notification_db_state(account_id)
             .await
             .map_err(|e| e.into_report())
-            .change_context(PushNotificationError::ReadingNotificationFlagsFromCacheFailed)
+            .change_context(PushNotificationError::GetAndResetPushNotificationsFailed)?;
+
+        let flags = self
+            .state
+            .event_manager()
+            .remove_pending_notification_flags_from_cache(account_id)
+            .await;
+
+        Ok(PushNotificationSendingInfo { db_state, flags })
     }
 
     async fn remove_device_token(
@@ -77,31 +84,5 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
         }
 
         Ok(())
-    }
-
-    async fn is_pending_notification_visible_notification(
-        &self,
-        account_id: AccountIdInternal,
-        flags: PendingNotificationFlags,
-    ) -> error_stack::Result<bool, PushNotificationError> {
-        visibility::is_notification_visible(&self.state, account_id, flags)
-            .await
-            .change_context(PushNotificationError::NotificationVisiblityCheckFailed)
-    }
-
-    async fn client_language(
-        &self,
-        account_id: AccountIdInternal,
-    ) -> error_stack::Result<ClientLanguage, PushNotificationError> {
-        let client_language = self
-            .state
-            .read()
-            .common()
-            .client_config()
-            .client_language(account_id)
-            .await
-            .map_err(|e| e.into_report())
-            .change_context(PushNotificationError::GetClientLanguageFailed)?;
-        Ok(client_language)
     }
 }

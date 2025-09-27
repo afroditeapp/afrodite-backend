@@ -2,9 +2,7 @@ use std::{future::Future, sync::Arc, time::Duration};
 
 use config::Config;
 use error_stack::Result;
-use model::{
-    AccountIdInternal, ClientLanguage, PendingNotificationFlags, PushNotificationStateInfoWithFlags,
-};
+use model::{AccountIdInternal, PushNotificationSendingInfo};
 use simple_backend::ServerQuitWatcher;
 use tokio::{
     sync::mpsc::{Receiver, Sender, error::TrySendError},
@@ -23,22 +21,14 @@ const PUSH_NOTIFICATION_CHANNEL_BUFFER_SIZE: usize = 1024 * 1024;
 pub enum PushNotificationError {
     #[error("Creating FCM client failed")]
     CreateFcmClient,
-    #[error("Reading or writing to database failed")]
-    ReadOrWriteError,
     #[error("Reading notification sent status failed")]
     ReadingNotificationSentStatusFailed,
     #[error("Removing device token failed")]
     RemoveDeviceTokenFailed,
-    #[error("Reading notification flags from cache failed")]
-    ReadingNotificationFlagsFromCacheFailed,
-    #[error("Notification visiblity check failed")]
-    NotificationVisiblityCheckFailed,
+    #[error("Get and reset push notifications failed")]
+    GetAndResetPushNotificationsFailed,
     #[error("Saving pending notifications to database failed")]
     SaveToDatabaseFailed,
-    #[error("Handling successful message sending action failed")]
-    HandlingSuccessfulMessageSendingActionFailed,
-    #[error("Get client language failed")]
-    GetClientLanguageFailed,
 }
 
 pub struct PushNotificationManagerQuitHandle {
@@ -101,10 +91,10 @@ impl PushNotificationSender {
 }
 
 pub trait PushNotificationStateProvider {
-    fn get_push_notification_state_info(
+    fn get_and_reset_push_notifications(
         &self,
         account_id: AccountIdInternal,
-    ) -> impl Future<Output = Result<PushNotificationStateInfoWithFlags, PushNotificationError>> + Send;
+    ) -> impl Future<Output = Result<PushNotificationSendingInfo, PushNotificationError>> + Send;
 
     fn remove_device_token(
         &self,
@@ -114,17 +104,6 @@ pub trait PushNotificationStateProvider {
     fn save_current_notification_flags_to_database_if_needed(
         &self,
     ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
-
-    fn is_pending_notification_visible_notification(
-        &self,
-        account_id: AccountIdInternal,
-        flags: PendingNotificationFlags,
-    ) -> impl Future<Output = Result<bool, PushNotificationError>> + Send;
-
-    fn client_language(
-        &self,
-        account_id: AccountIdInternal,
-    ) -> impl Future<Output = Result<ClientLanguage, PushNotificationError>> + Send;
 }
 
 pub fn channel() -> (PushNotificationSender, PushNotificationReceiver) {

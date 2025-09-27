@@ -1,7 +1,7 @@
 use database::current::read::GetDbReadCommandsCommon;
 use model::{
-    AccountIdInternal, PendingNotificationFlags, PushNotificationStateInfo,
-    PushNotificationStateInfoWithFlags,
+    AccountIdInternal, PendingNotificationFlags, PushNotificationDbState,
+    PushNotificationStateInfo, PushNotificationStateInfoWithFlags,
 };
 use server_common::data::IntoDataError;
 
@@ -23,6 +23,15 @@ impl ReadCommandsCommonPushNotification<'_> {
     }
 
     pub async fn fcm_token_exists(&self, id: AccountIdInternal) -> Result<bool, DataError> {
+        self.push_notification_db_state(id)
+            .await
+            .map(|v| v.fcm_device_token.is_some())
+    }
+
+    pub async fn push_notification_db_state(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<PushNotificationDbState, DataError> {
         self.db_read(move |mut cmds| {
             cmds.common()
                 .push_notification()
@@ -30,7 +39,6 @@ impl ReadCommandsCommonPushNotification<'_> {
         })
         .await
         .into_error()
-        .map(|v| v.fcm_device_token.is_some())
     }
 
     pub async fn push_notification_state(
