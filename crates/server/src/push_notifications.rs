@@ -23,38 +23,18 @@ impl ServerPushNotificationStateProvider {
 }
 
 impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
-    async fn get_push_notification_state_info_and_add_notification_value(
+    async fn get_push_notification_state_info(
         &self,
         account_id: AccountIdInternal,
     ) -> error_stack::Result<PushNotificationStateInfoWithFlags, PushNotificationError> {
-        let flags = self
-            .state
+        self.state
             .read()
             .common()
             .push_notification()
-            .cached_pending_notification_flags(account_id)
+            .push_notification_state(account_id)
             .await
             .map_err(|e| e.into_report())
-            .change_context(PushNotificationError::ReadingNotificationFlagsFromCacheFailed)?;
-
-        if flags.is_empty() {
-            return Ok(PushNotificationStateInfoWithFlags::EmptyFlags);
-        }
-
-        let info = db_write_raw!(self.state, move |cmds| {
-            cmds.common()
-                .push_notification()
-                .get_push_notification_state_info_and_add_notification_value(
-                    account_id,
-                    flags.into(),
-                )
-                .await
-        })
-        .await
-        .map_err(|e| e.into_report())
-        .change_context(PushNotificationError::ReadingNotificationSentStatusFailed)?;
-
-        Ok(PushNotificationStateInfoWithFlags::WithFlags { info, flags })
+            .change_context(PushNotificationError::ReadingNotificationFlagsFromCacheFailed)
     }
 
     async fn remove_device_token(
@@ -72,7 +52,7 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
         .change_context(PushNotificationError::RemoveDeviceTokenFailed)
     }
 
-    async fn save_current_non_empty_notification_flags_from_cache_to_database(
+    async fn save_current_notification_flags_to_database_if_needed(
         &self,
     ) -> error_stack::Result<(), PushNotificationError> {
         let account_ids = self
@@ -88,7 +68,7 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
             db_write_raw!(self.state, move |cmds| {
                 cmds.common()
                     .push_notification()
-                    .save_current_non_empty_notification_flags_from_cache_to_database(account_id)
+                    .save_current_notification_flags_to_database_if_needed(account_id)
                     .await
             })
             .await

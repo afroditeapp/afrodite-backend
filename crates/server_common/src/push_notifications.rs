@@ -109,7 +109,7 @@ impl PushNotificationSender {
 }
 
 pub trait PushNotificationStateProvider {
-    fn get_push_notification_state_info_and_add_notification_value(
+    fn get_push_notification_state_info(
         &self,
         account_id: AccountIdInternal,
     ) -> impl Future<Output = Result<PushNotificationStateInfoWithFlags, PushNotificationError>> + Send;
@@ -119,7 +119,7 @@ pub trait PushNotificationStateProvider {
         account_id: AccountIdInternal,
     ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
 
-    fn save_current_non_empty_notification_flags_from_cache_to_database(
+    fn save_current_notification_flags_to_database_if_needed(
         &self,
     ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
 
@@ -269,7 +269,7 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
             // from cache to database.
             match self
                 .state
-                .save_current_non_empty_notification_flags_from_cache_to_database()
+                .save_current_notification_flags_to_database_if_needed()
                 .await
             {
                 Ok(()) => (),
@@ -294,9 +294,7 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
 
         let info = self
             .state
-            .get_push_notification_state_info_and_add_notification_value(
-                send_push_notification.account_id,
-            )
+            .get_push_notification_state_info(send_push_notification.account_id)
             .await
             .change_context(PushNotificationError::ReadingNotificationSentStatusFailed)?;
 

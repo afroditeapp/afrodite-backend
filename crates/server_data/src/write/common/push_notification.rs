@@ -1,7 +1,7 @@
 use database::current::write::GetDbWriteCommandsCommon;
 use model::{
     AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationFlags,
-    PendingNotificationToken, PushNotificationStateInfo,
+    PendingNotificationToken,
 };
 use server_common::data::IntoDataError;
 
@@ -74,19 +74,7 @@ impl WriteCommandsCommonPushNotification<'_> {
         Ok((id, flags))
     }
 
-    pub async fn get_push_notification_state_info_and_add_notification_value(
-        &self,
-        id: AccountIdInternal,
-        notification: PendingNotification,
-    ) -> Result<PushNotificationStateInfo, DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.common()
-                .push_notification()
-                .get_push_notification_state_info_and_add_notification_value(id, notification)
-        })
-    }
-
-    pub async fn save_current_non_empty_notification_flags_from_cache_to_database(
+    pub async fn save_current_notification_flags_to_database_if_needed(
         &self,
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
@@ -94,14 +82,10 @@ impl WriteCommandsCommonPushNotification<'_> {
             .read_cache_common(id, move |entry| Ok(entry.pending_notification_flags))
             .await?;
 
-        if flags.is_empty() {
-            return Ok(());
-        }
-
         db_transaction!(self, move |mut cmds| {
             cmds.common()
                 .push_notification()
-                .get_push_notification_state_info_and_add_notification_value(id, flags.into())
+                .save_current_notification_flags_to_database_if_needed(id, flags.into())
         })
         .map(|_| ())
     }

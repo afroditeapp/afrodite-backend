@@ -1,8 +1,7 @@
 use diesel::{prelude::*, update};
 use error_stack::Result;
 use model::{
-    AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken,
-    PushNotificationStateInfo, UnixTime,
+    AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken, UnixTime,
 };
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
@@ -101,11 +100,11 @@ impl CurrentWriteCommonPushNotification<'_> {
         Ok((id, notification))
     }
 
-    pub fn get_push_notification_state_info_and_add_notification_value(
+    pub fn save_current_notification_flags_to_database_if_needed(
         &mut self,
         id: AccountIdInternal,
-        notification_to_be_added: PendingNotification,
-    ) -> Result<PushNotificationStateInfo, DieselDatabaseError> {
+        current_flags: PendingNotification,
+    ) -> Result<(), DieselDatabaseError> {
         use model::schema::common_state::dsl::*;
 
         let notification: i64 = common_state
@@ -114,16 +113,13 @@ impl CurrentWriteCommonPushNotification<'_> {
             .first(self.conn())
             .into_db_error(())?;
 
-        let new_notification_value = notification | *notification_to_be_added.as_i64();
+        if notification != *current_flags.as_i64() {
+            update(common_state.find(id.as_db_id()))
+                .set(pending_notification.eq(current_flags))
+                .execute(self.conn())
+                .into_db_error(())?;
+        }
 
-        let token = update(common_state.find(id.as_db_id()))
-            .set(pending_notification.eq(new_notification_value))
-            .returning(fcm_device_token)
-            .get_result(self.conn())
-            .into_db_error(())?;
-
-        Ok(PushNotificationStateInfo {
-            fcm_device_token: token,
-        })
+        Ok(())
     }
 }
