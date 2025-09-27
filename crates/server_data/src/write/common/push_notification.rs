@@ -1,7 +1,7 @@
 use database::current::write::GetDbWriteCommandsCommon;
 use model::{
     AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationFlags,
-    PendingNotificationToken, PushNotificationStateInfo, PushNotificationType,
+    PendingNotificationToken, PushNotificationStateInfo,
 };
 use server_common::data::IntoDataError;
 
@@ -54,14 +54,14 @@ impl WriteCommandsCommonPushNotification<'_> {
         Ok(token)
     }
 
-    pub async fn reset_fcm_notification_sent_booleans(
+    pub async fn reset_push_notification_sent_boolean(
         &self,
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.common()
                 .push_notification()
-                .reset_fcm_notification_sent_booleans(id)
+                .reset_push_notification_sent_boolean(id)
         })?;
 
         Ok(())
@@ -90,12 +90,11 @@ impl WriteCommandsCommonPushNotification<'_> {
     pub async fn enable_push_notification_sent_flag(
         &self,
         id: AccountIdInternal,
-        notification: PushNotificationType,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.common()
                 .push_notification()
-                .enable_push_notification_sent_flag(id, notification)
+                .enable_push_notification_sent_flag(id)
         })
     }
 

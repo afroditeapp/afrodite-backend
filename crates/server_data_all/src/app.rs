@@ -83,7 +83,7 @@ impl DataAllUtils for DataAllUtilsImpl {
         sync_versions: Vec<SyncDataVersionFromClient>,
     ) -> BoxFuture<'a, server_common::result::Result<(), WebSocketError>> {
         async move {
-            crate::websocket::reset_fcm_notification_sent_booleans_if_needed(
+            crate::websocket::reset_push_notification_sent_boolean_if_needed(
                 read_handle,
                 write_handle,
                 id,

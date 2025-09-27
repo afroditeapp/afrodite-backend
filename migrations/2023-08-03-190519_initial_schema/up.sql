@@ -143,24 +143,23 @@ CREATE TABLE IF NOT EXISTS common_report(
 
 -- State specific to all components.
 CREATE TABLE IF NOT EXISTS common_state(
-    account_id                         INTEGER PRIMARY KEY NOT NULL,
+    account_id                    INTEGER PRIMARY KEY NOT NULL,
     -- Sync version for client config.
-    client_config_sync_version         INTEGER             NOT NULL    DEFAULT 0,
+    client_config_sync_version    INTEGER             NOT NULL DEFAULT 0,
     -- Bitflag value for pending notification
-    pending_notification         INTEGER        NOT NULL DEFAULT 0,
+    pending_notification          INTEGER             NOT NULL DEFAULT 0,
     -- Access token for getting pending notifications from server.
-    pending_notification_token   TEXT           UNIQUE,
-    fcm_data_notification_sent          BOOLEAN            NOT NULL DEFAULT 0,
-    fcm_visible_notification_sent       BOOLEAN            NOT NULL DEFAULT 0,
-    fcm_device_token             TEXT           UNIQUE,
+    pending_notification_token    TEXT                         UNIQUE,
+    push_notification_sent        BOOLEAN             NOT NULL DEFAULT 0,
+    fcm_device_token              TEXT                         UNIQUE,
     -- Time when a token is saved. Not currently used for anything.
     -- Firebase docs recommend storing a timestamp with a token.
-    fcm_device_token_unix_time   INTEGER,
+    fcm_device_token_unix_time    INTEGER,
     -- 0 = Android
     -- 1 = iOS
     -- 2 = Web
-    client_login_session_platform       INTEGER,
-    client_language                     TEXT    NOT NULL DEFAULT '',
+    client_login_session_platform INTEGER,
+    client_language               TEXT                NOT NULL DEFAULT '',
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

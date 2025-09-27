@@ -138,9 +138,7 @@ impl StartupTasks {
         match push_notification_state {
             PushNotificationStateInfoWithFlags::EmptyFlags => (),
             PushNotificationStateInfoWithFlags::WithFlags { info, .. } => {
-                if info.fcm_device_token.is_some()
-                    && !(info.fcm_data_notification_sent && info.fcm_visible_notification_sent)
-                {
+                if info.fcm_device_token.is_some() && !info.push_notification_sent {
                     state.event_manager().trigger_push_notification_sending(id)
                 }
             }

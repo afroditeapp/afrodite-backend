@@ -18,7 +18,7 @@ use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::manager_client::ManagerApiClient;
 
-pub async fn reset_fcm_notification_sent_booleans_if_needed(
+pub async fn reset_push_notification_sent_boolean_if_needed(
     read_handle: &RouterDatabaseReadHandle,
     write_handle: &WriteCommandRunnerHandle,
     id: AccountIdInternal,
@@ -28,20 +28,20 @@ pub async fn reset_fcm_notification_sent_booleans_if_needed(
     let reset_needed = read_handle
         .common()
         .push_notification()
-        .fcm_notification_sent_boolean_enabled(id)
+        .push_notification_sent_boolean_enabled(id)
         .await
-        .change_context(WebSocketError::DatabaseResetFcmNotificationSentBooleans)?;
+        .change_context(WebSocketError::DatabaseResetPushNotificationSentBoolean)?;
 
     if reset_needed {
         write_handle
             .write(move |cmds| async move {
                 cmds.common()
                     .push_notification()
-                    .reset_fcm_notification_sent_booleans(id)
+                    .reset_push_notification_sent_boolean(id)
                     .await
             })
             .await
-            .change_context(WebSocketError::DatabaseResetFcmNotificationSentBooleans)?;
+            .change_context(WebSocketError::DatabaseResetPushNotificationSentBoolean)?;
     }
 
     Ok(())

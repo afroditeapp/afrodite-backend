@@ -1,7 +1,6 @@
 use error_stack::ResultExt;
 use model::{
-    AccountIdInternal, ClientLanguage, PendingNotificationFlags,
-    PushNotificationStateInfoWithFlags, PushNotificationType,
+    AccountIdInternal, ClientLanguage, PendingNotificationFlags, PushNotificationStateInfoWithFlags,
 };
 use server_api::{
     app::{ReadData, WriteData},
@@ -61,12 +60,11 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
     async fn enable_push_notification_sent_flag(
         &self,
         account_id: AccountIdInternal,
-        notification: PushNotificationType,
     ) -> error_stack::Result<(), PushNotificationError> {
         db_write_raw!(self.state, move |cmds| {
             cmds.common()
                 .push_notification()
-                .enable_push_notification_sent_flag(account_id, notification)
+                .enable_push_notification_sent_flag(account_id)
                 .await
         })
         .await
