@@ -13,9 +13,9 @@ use tokio::{
 };
 use tracing::{error, warn};
 
-use crate::push_notifications::logic::FcmManager;
+use crate::push_notifications::fcm::FcmManager;
 
-mod logic;
+mod fcm;
 
 const PUSH_NOTIFICATION_CHANNEL_BUFFER_SIZE: usize = 1024 * 1024;
 
