@@ -1,13 +1,137 @@
 use std::time::Duration;
 
+use config::Config;
+use error_stack::{Result, ResultExt};
 use fcm::{
     FcmClient,
-    message::Message,
+    message::{AndroidConfig, AndroidMessagePriority, ApnsConfig, Message, Target},
     response::{RecomendedAction, RecomendedWaitTime},
 };
+use model::PushNotificationStateInfoWithFlags;
 use rand::{Rng, rngs::OsRng};
-use serde_json::Value;
+use serde_json::{Value, json};
 use tracing::{error, info, warn};
+
+use crate::push_notifications::{
+    PushNotificationError, PushNotificationStateProvider, SendPushNotification,
+};
+
+pub struct FcmManager {
+    fcm: Option<FcmClient>,
+    sending_logic: FcmSendingLogic,
+}
+
+impl FcmManager {
+    pub async fn new(config: &Config) -> Self {
+        let fcm = if let Some(config) = config.simple_backend().firebase_cloud_messaging_config() {
+            // TODO(future): Make possible to use existing reqwest::Client
+            //               with FcmClient.
+            let fcm_result = FcmClient::builder()
+                .service_account_key_json_path(&config.service_account_key_path)
+                .token_cache_json_path(&config.token_cache_path)
+                .fcm_request_timeout(Duration::from_secs(20))
+                .build()
+                .await;
+            match fcm_result {
+                Ok(client) => Some(client),
+                Err(e) => {
+                    error!("Creating FCM client failed: {}", e);
+                    None
+                }
+            }
+        } else {
+            None
+        };
+
+        let debug_logging = config
+            .simple_backend()
+            .firebase_cloud_messaging_config()
+            .map(|v| v.debug_logging)
+            .unwrap_or_default();
+        let sending_logic = FcmSendingLogic::new(debug_logging);
+
+        Self { fcm, sending_logic }
+    }
+
+    pub async fn send_fcm_notification(
+        &mut self,
+        send_push_notification: SendPushNotification,
+        state: &impl PushNotificationStateProvider,
+    ) -> Result<(), PushNotificationError> {
+        let fcm = if let Some(fcm) = &self.fcm {
+            fcm
+        } else {
+            return Ok(());
+        };
+
+        let info = state
+            .get_push_notification_state_info(send_push_notification.account_id)
+            .await
+            .change_context(PushNotificationError::ReadingNotificationSentStatusFailed)?;
+
+        let (info, flags) = match info {
+            PushNotificationStateInfoWithFlags::EmptyFlags => return Ok(()),
+            PushNotificationStateInfoWithFlags::WithFlags { info, flags } => (info, flags),
+        };
+
+        let Some(token) = info.fcm_device_token else {
+            return Ok(());
+        };
+
+        let is_visible = state
+            .is_pending_notification_visible_notification(send_push_notification.account_id, flags)
+            .await
+            .change_context(PushNotificationError::NotificationVisiblityCheckFailed)?;
+
+        let m = Message {
+            // Use minimal notification data as this only triggers client
+            // to download the notification.
+            data: Some(json!({
+                "n": "",
+            })),
+            target: Target::Token(token.into_string()),
+            android: Some(AndroidConfig {
+                priority: Some(if is_visible {
+                    AndroidMessagePriority::High
+                } else {
+                    AndroidMessagePriority::Normal
+                }),
+                collapse_key: Some("0".to_string()),
+                ..Default::default()
+            }),
+            apns: Some(ApnsConfig {
+                headers: Some(json!({
+                    // 5 is max priority for data notifications
+                    "apns-priority": "5",
+                    "apns-collapse-id": "0",
+                })),
+                payload: Some(json!({
+                    "aps": {
+                        "content-available": 1
+                    }
+                })),
+                ..Default::default()
+            }),
+            webpush: None,
+            fcm_options: None,
+            notification: None,
+        };
+
+        match self.sending_logic.send_push_notification(m, fcm).await {
+            Ok(()) => Ok(()),
+            Err(action) => match action {
+                UnusualAction::DisablePushNotificationSupport => {
+                    self.fcm = None;
+                    Ok(())
+                }
+                UnusualAction::RemoveDeviceToken => state
+                    .remove_device_token(send_push_notification.account_id)
+                    .await
+                    .change_context(PushNotificationError::RemoveDeviceTokenFailed),
+            },
+        }
+    }
+}
 
 pub struct FcmSendingLogic {
     initial_send_rate_limit_millis: u64,
@@ -68,10 +192,7 @@ impl FcmSendingLogic {
                 if self.debug_logging
                     && let Some(action) = &action
                 {
-                    error!(
-                        "FCM error detected, response: {:#?}, action: {:#?}",
-                        response, action
-                    );
+                    error!("FCM error detected, response: {response:#?}, action: {action:#?}");
                 }
                 match action {
                     None => {
@@ -84,10 +205,7 @@ impl FcmSendingLogic {
                         RecomendedAction::CheckIosAndWebCredentials
                         | RecomendedAction::CheckSenderIdEquality,
                     ) => {
-                        error!(
-                            "Disabling FCM support because of recomended action: {:?}",
-                            action
-                        );
+                        error!("Disabling FCM support because of recomended action: {action:?}");
                         NextAction::UnusualAction(UnusualAction::DisablePushNotificationSupport)
                     }
                     Some(RecomendedAction::FixMessageContent) => {

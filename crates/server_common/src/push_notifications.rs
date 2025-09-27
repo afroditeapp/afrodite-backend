@@ -1,15 +1,10 @@
 use std::{future::Future, sync::Arc, time::Duration};
 
 use config::Config;
-use error_stack::{Result, ResultExt};
-use fcm::{
-    FcmClient,
-    message::{AndroidConfig, AndroidMessagePriority, ApnsConfig, Message, Target},
-};
+use error_stack::Result;
 use model::{
     AccountIdInternal, ClientLanguage, PendingNotificationFlags, PushNotificationStateInfoWithFlags,
 };
-use serde_json::json;
 use simple_backend::ServerQuitWatcher;
 use tokio::{
     sync::mpsc::{Receiver, Sender, error::TrySendError},
@@ -18,7 +13,7 @@ use tokio::{
 };
 use tracing::{error, warn};
 
-use crate::push_notifications::logic::{FcmSendingLogic, UnusualAction};
+use crate::push_notifications::logic::FcmManager;
 
 mod logic;
 
@@ -55,10 +50,7 @@ impl PushNotificationManagerQuitHandle {
         match self.task.await {
             Ok(()) => (),
             Err(e) => {
-                warn!(
-                    "PushNotificationManagerQuitHandle quit failed. Error: {:?}",
-                    e
-                );
+                warn!("PushNotificationManagerQuitHandle quit failed. Error: {e:?}");
             }
         }
     }
@@ -157,44 +149,20 @@ pub struct PushNotificationReceiver {
 }
 
 pub struct PushNotificationManager<T> {
-    config: Arc<Config>,
-    started_with_fcm_enabled: bool,
-    fcm: Option<FcmClient>,
+    fcm: FcmManager,
     receiver: PushNotificationReceiver,
     state: T,
 }
 
-impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<T> {
+impl<T: PushNotificationStateProvider + Send + Sync + 'static> PushNotificationManager<T> {
     pub async fn new_manager(
         config: Arc<Config>,
         quit_notification: ServerQuitWatcher,
         state: T,
         receiver: PushNotificationReceiver,
     ) -> PushNotificationManagerQuitHandle {
-        let fcm = if let Some(config) = config.simple_backend().firebase_cloud_messaging_config() {
-            // TODO(future): Make possible to use existing reqwest::Client
-            //               with FcmClient.
-            let fcm_result = FcmClient::builder()
-                .service_account_key_json_path(&config.service_account_key_path)
-                .token_cache_json_path(&config.token_cache_path)
-                .fcm_request_timeout(Duration::from_secs(20))
-                .build()
-                .await;
-            match fcm_result {
-                Ok(client) => Some(client),
-                Err(e) => {
-                    error!("Creating FCM client failed: {}", e);
-                    None
-                }
-            }
-        } else {
-            None
-        };
-
         let manager = PushNotificationManager {
-            config,
-            started_with_fcm_enabled: fcm.is_some(),
-            fcm,
+            fcm: FcmManager::new(&config).await,
             receiver,
             state,
         };
@@ -205,26 +173,14 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
     }
 
     pub async fn run(mut self, mut quit_notification: ServerQuitWatcher) {
-        tokio::select! {
-            _ = quit_notification.recv() => (),
-            _ = self.logic() => (),
-        }
-
+        self.logic(&mut quit_notification).await;
         // Make sure that quit started (closed channel also
         // breaks the logic loop, but that should not happen)
         let _ = quit_notification.recv().await;
-
         self.quit_logic().await;
     }
 
-    pub async fn logic(&mut self) {
-        let debug_logging = self
-            .config
-            .simple_backend()
-            .firebase_cloud_messaging_config()
-            .map(|v| v.debug_logging)
-            .unwrap_or_default();
-        let mut sending_logic = FcmSendingLogic::new(debug_logging);
+    pub async fn logic(&mut self, quit_notification: &mut ServerQuitWatcher) {
         let mut low_priority_notification_allowed = false;
         let mut low_priority_notification_interval =
             tokio::time::interval(Duration::from_millis(500));
@@ -241,125 +197,43 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
                     low_priority_notification_allowed = true;
                     continue;
                 }
+                _ = quit_notification.recv() => return,
             };
 
             match notification {
-                Some(notification) => {
-                    let result = self
-                        .send_push_notification(notification, &mut sending_logic)
-                        .await;
-                    match result {
-                        Ok(()) => (),
-                        Err(e) => {
-                            error!("Sending push notification failed: {:?}", e);
-                        }
+                Some(notification) => match self.handle_notification(notification).await {
+                    Ok(()) => (),
+                    Err(e) => {
+                        error!("Sending push notification failed: {e:?}");
                     }
-                }
+                },
                 None => {
                     warn!("Push notification channel is broken");
-                    break;
+                    return;
                 }
             }
         }
     }
 
     pub async fn quit_logic(&mut self) {
-        if self.started_with_fcm_enabled {
-            // There might be unhandled or failed notifications, so save those
-            // from cache to database.
-            match self
-                .state
-                .save_current_notification_flags_to_database_if_needed()
-                .await
-            {
-                Ok(()) => (),
-                Err(e) => error!(
-                    "Saving pending push notifications to database failed: {:?}",
-                    e
-                ),
-            }
+        // There might be unhandled or failed notifications, so save those
+        // from cache to database.
+        match self
+            .state
+            .save_current_notification_flags_to_database_if_needed()
+            .await
+        {
+            Ok(()) => (),
+            Err(e) => error!("Saving pending push notifications to database failed: {e:?}"),
         }
     }
 
-    pub async fn send_push_notification(
+    pub async fn handle_notification(
         &mut self,
         send_push_notification: SendPushNotification,
-        sending_logic: &mut FcmSendingLogic,
     ) -> Result<(), PushNotificationError> {
-        let fcm = if let Some(fcm) = &self.fcm {
-            fcm
-        } else {
-            return Ok(());
-        };
-
-        let info = self
-            .state
-            .get_push_notification_state_info(send_push_notification.account_id)
+        self.fcm
+            .send_fcm_notification(send_push_notification, &self.state)
             .await
-            .change_context(PushNotificationError::ReadingNotificationSentStatusFailed)?;
-
-        let (info, flags) = match info {
-            PushNotificationStateInfoWithFlags::EmptyFlags => return Ok(()),
-            PushNotificationStateInfoWithFlags::WithFlags { info, flags } => (info, flags),
-        };
-
-        let Some(token) = info.fcm_device_token else {
-            return Ok(());
-        };
-
-        let is_visible = self
-            .state
-            .is_pending_notification_visible_notification(send_push_notification.account_id, flags)
-            .await
-            .change_context(PushNotificationError::NotificationVisiblityCheckFailed)?;
-
-        let m = Message {
-            // Use minimal notification data as this only triggers client
-            // to download the notification.
-            data: Some(json!({
-                "n": "",
-            })),
-            target: Target::Token(token.into_string()),
-            android: Some(AndroidConfig {
-                priority: Some(if is_visible {
-                    AndroidMessagePriority::High
-                } else {
-                    AndroidMessagePriority::Normal
-                }),
-                collapse_key: Some("0".to_string()),
-                ..Default::default()
-            }),
-            apns: Some(ApnsConfig {
-                headers: Some(json!({
-                    // 5 is max priority for data notifications
-                    "apns-priority": "5",
-                    "apns-collapse-id": "0",
-                })),
-                payload: Some(json!({
-                    "aps": {
-                        "content-available": 1
-                    }
-                })),
-                ..Default::default()
-            }),
-            webpush: None,
-            fcm_options: None,
-            notification: None,
-        };
-
-        match sending_logic.send_push_notification(m, fcm).await {
-            Ok(()) => Ok(()),
-            Err(action) => match action {
-                UnusualAction::DisablePushNotificationSupport => {
-                    self.fcm = None;
-                    Ok(())
-                }
-                UnusualAction::RemoveDeviceToken => self
-                    .state
-                    .remove_device_token(send_push_notification.account_id)
-                    .await
-                    .change_context(PushNotificationError::RemoveDeviceTokenFailed),
-            },
-        }
     }
 }
