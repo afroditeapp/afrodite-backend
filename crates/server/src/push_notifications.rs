@@ -57,23 +57,6 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
         Ok(PushNotificationStateInfoWithFlags::WithFlags { info, flags })
     }
 
-    async fn enable_push_notification_sent_flag(
-        &self,
-        account_id: AccountIdInternal,
-    ) -> error_stack::Result<(), PushNotificationError> {
-        db_write_raw!(self.state, move |cmds| {
-            cmds.common()
-                .push_notification()
-                .enable_push_notification_sent_flag(account_id)
-                .await
-        })
-        .await
-        .map_err(|e| e.into_report())
-        .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)?;
-
-        Ok(())
-    }
-
     async fn remove_device_token(
         &self,
         account_id: AccountIdInternal,

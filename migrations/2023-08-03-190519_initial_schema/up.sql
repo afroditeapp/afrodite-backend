@@ -150,7 +150,6 @@ CREATE TABLE IF NOT EXISTS common_state(
     pending_notification          INTEGER             NOT NULL DEFAULT 0,
     -- Access token for getting pending notifications from server.
     pending_notification_token    TEXT                         UNIQUE,
-    push_notification_sent        BOOLEAN             NOT NULL DEFAULT 0,
     fcm_device_token              TEXT                         UNIQUE,
     -- Time when a token is saved. Not currently used for anything.
     -- Firebase docs recommend storing a timestamp with a token.

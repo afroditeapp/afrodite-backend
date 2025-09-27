@@ -18,35 +18,6 @@ use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::manager_client::ManagerApiClient;
 
-pub async fn reset_push_notification_sent_boolean_if_needed(
-    read_handle: &RouterDatabaseReadHandle,
-    write_handle: &WriteCommandRunnerHandle,
-    id: AccountIdInternal,
-) -> Result<(), WebSocketError> {
-    // Chat
-
-    let reset_needed = read_handle
-        .common()
-        .push_notification()
-        .push_notification_sent_boolean_enabled(id)
-        .await
-        .change_context(WebSocketError::DatabaseResetPushNotificationSentBoolean)?;
-
-    if reset_needed {
-        write_handle
-            .write(move |cmds| async move {
-                cmds.common()
-                    .push_notification()
-                    .reset_push_notification_sent_boolean(id)
-                    .await
-            })
-            .await
-            .change_context(WebSocketError::DatabaseResetPushNotificationSentBoolean)?;
-    }
-
-    Ok(())
-}
-
 pub async fn send_events_if_needed(
     read_handle: &RouterDatabaseReadHandle,
     manager_api_client: &ManagerApiClient,

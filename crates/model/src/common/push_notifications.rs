@@ -239,7 +239,6 @@ pub struct PendingNotificationWithData {
 #[diesel(treat_none_as_null = true)]
 pub struct PushNotificationDbState {
     pub pending_notification: PendingNotification,
-    pub push_notification_sent: bool,
     pub fcm_device_token: Option<FcmDeviceToken>,
     pub fcm_device_token_unix_time: Option<UnixTime>,
 }

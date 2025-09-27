@@ -279,7 +279,6 @@ diesel::table! {
         client_config_sync_version -> Integer,
         pending_notification -> Integer,
         pending_notification_token -> Nullable<Text>,
-        push_notification_sent -> Bool,
         fcm_device_token -> Nullable<Text>,
         fcm_device_token_unix_time -> Nullable<Integer>,
         client_login_session_platform -> Nullable<Integer>,

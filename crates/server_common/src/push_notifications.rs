@@ -28,12 +28,12 @@ const PUSH_NOTIFICATION_CHANNEL_BUFFER_SIZE: usize = 1024 * 1024;
 pub enum PushNotificationError {
     #[error("Creating FCM client failed")]
     CreateFcmClient,
+    #[error("Reading or writing to database failed")]
+    ReadOrWriteError,
     #[error("Reading notification sent status failed")]
     ReadingNotificationSentStatusFailed,
     #[error("Removing device token failed")]
     RemoveDeviceTokenFailed,
-    #[error("Setting push notification sent flag failed")]
-    SettingPushNotificationSentFlagFailed,
     #[error("Reading notification flags from cache failed")]
     ReadingNotificationFlagsFromCacheFailed,
     #[error("Notification visiblity check failed")]
@@ -113,11 +113,6 @@ pub trait PushNotificationStateProvider {
         &self,
         account_id: AccountIdInternal,
     ) -> impl Future<Output = Result<PushNotificationStateInfoWithFlags, PushNotificationError>> + Send;
-
-    fn enable_push_notification_sent_flag(
-        &self,
-        account_id: AccountIdInternal,
-    ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
 
     fn remove_device_token(
         &self,
@@ -303,7 +298,7 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
                 send_push_notification.account_id,
             )
             .await
-            .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)?;
+            .change_context(PushNotificationError::ReadingNotificationSentStatusFailed)?;
 
         let (info, flags) = match info {
             PushNotificationStateInfoWithFlags::EmptyFlags => return Ok(()),
@@ -355,11 +350,7 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
         };
 
         match sending_logic.send_push_notification(m, fcm).await {
-            Ok(()) => self
-                .state
-                .enable_push_notification_sent_flag(send_push_notification.account_id)
-                .await
-                .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed),
+            Ok(()) => Ok(()),
             Err(action) => match action {
                 UnusualAction::DisablePushNotificationSupport => {
                     self.fcm = None;

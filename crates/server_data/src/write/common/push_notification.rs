@@ -54,19 +54,6 @@ impl WriteCommandsCommonPushNotification<'_> {
         Ok(token)
     }
 
-    pub async fn reset_push_notification_sent_boolean(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.common()
-                .push_notification()
-                .reset_push_notification_sent_boolean(id)
-        })?;
-
-        Ok(())
-    }
-
     pub async fn get_and_reset_pending_notification_with_notification_token(
         &self,
         token: PendingNotificationToken,
@@ -85,17 +72,6 @@ impl WriteCommandsCommonPushNotification<'_> {
         .into_error()?;
 
         Ok((id, flags))
-    }
-
-    pub async fn enable_push_notification_sent_flag(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.common()
-                .push_notification()
-                .enable_push_notification_sent_flag(id)
-        })
     }
 
     pub async fn get_push_notification_state_info_and_add_notification_value(

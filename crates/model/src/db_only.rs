@@ -3,7 +3,6 @@ use crate::{FcmDeviceToken, PendingNotificationFlags};
 #[derive(Debug)]
 pub struct PushNotificationStateInfo {
     pub fcm_device_token: Option<FcmDeviceToken>,
-    pub push_notification_sent: bool,
 }
 
 pub enum PushNotificationStateInfoWithFlags {
