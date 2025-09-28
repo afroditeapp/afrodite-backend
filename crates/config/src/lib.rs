@@ -398,7 +398,8 @@ pub fn get_config(
     }
 
     let notification_content = if let Some(path) = &file_config.config_files.notification_content {
-        NotificationContentFile::load(path).change_context(GetConfigError::LoadFileError)?
+        NotificationContentFile::load(path, save_default_config_if_not_found)
+            .change_context(GetConfigError::LoadFileError)?
     } else {
         NotificationContentFile::default()
     };

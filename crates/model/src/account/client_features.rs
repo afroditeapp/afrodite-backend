@@ -119,6 +119,12 @@ pub struct StringResourceInternal {
     pub translations: HashMap<String, String>,
 }
 
+impl StringResourceInternal {
+    pub fn values(&self) -> impl Iterator<Item = &str> {
+        std::iter::once(self.default.as_str()).chain(self.translations.values().map(|v| v.as_str()))
+    }
+}
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
 pub struct StringResource {
     pub default: String,
