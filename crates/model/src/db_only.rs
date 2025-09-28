@@ -36,6 +36,8 @@ pub struct PushNotification {
     /// the [Self::payload] object.
     id: i64,
     payload: NotificationPayload,
+    /// Notification channel ID string for Android client.
+    channel: Option<&'static str>,
 }
 
 impl PushNotification {
@@ -53,6 +55,7 @@ impl PushNotification {
                 a: account.to_string(),
                 data,
             },
+            channel: notification.to_channel_id(),
         }
     }
 
@@ -69,6 +72,7 @@ impl PushNotification {
                 a: account.to_string(),
                 data,
             },
+            channel: notification.to_channel_id(),
         }
     }
 
@@ -86,6 +90,7 @@ impl PushNotification {
                 a: account.to_string(),
                 data,
             },
+            channel: Some("messages"),
         }
     }
 
@@ -98,8 +103,11 @@ impl PushNotification {
     }
 }
 
+/// Notification IDs from client
+#[derive(Clone, Copy)]
 pub enum PushNotificationId {
-    NotificationDecryptingFailed = 0,
+    // Backend does not use this
+    // NotificationDecryptingFailed = 0,
 
     // Common
     AdminNotification = 10,
@@ -121,8 +129,28 @@ pub enum PushNotificationId {
 
     // Chat
     LikeReceived = 50,
-    GenericMessageReceived = 51,
+    // Backend does not use this
+    // GenericMessageReceived = 51,
     FirstNewMessageNotificationId = 1000,
+}
+
+impl PushNotificationId {
+    /// Convert to Android notification channel ID
+    fn to_channel_id(self) -> Option<&'static str> {
+        match self {
+            Self::AdminNotification | Self::NewsItemAvailable => Some("news_item_available"),
+            Self::ProfileNameModerationAccepted
+            | Self::ProfileNameModerationRejected
+            | Self::ProfileTextModerationAccepted
+            | Self::ProfileTextModerationRejected => Some("profile_string_moderation_completed"),
+            Self::AutomaticProfileSearchCompleted => Some("automatic_profile_search"),
+            Self::MediaContentModerationAccepted
+            | Self::MediaContentModerationRejected
+            | Self::MediaContentModerationDeleted => Some("media_content_moderation_completed"),
+            Self::LikeReceived => Some("likes"),
+            Self::FirstNewMessageNotificationId => None,
+        }
+    }
 }
 
 #[derive(Serialize)]
