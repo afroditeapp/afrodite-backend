@@ -8,7 +8,7 @@ use server_common::push_notifications::{PushNotificationError, PushNotificationS
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use server_state::S;
 
-mod visibility;
+mod notifications;
 
 pub struct ServerPushNotificationStateProvider {
     state: S,
@@ -41,10 +41,11 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
             .remove_pending_notification_flags_from_cache(account_id)
             .await;
 
-        let notifications = visibility::notifications_for_sending(&self.state, account_id, flags)
-            .await
-            .map_err(|e| e.into_report())
-            .change_context(PushNotificationError::GetAndResetPushNotificationsFailed)?;
+        let notifications =
+            notifications::notifications_for_sending(&self.state, account_id, flags)
+                .await
+                .map_err(|e| e.into_report())
+                .change_context(PushNotificationError::GetAndResetPushNotificationsFailed)?;
 
         Ok(PushNotificationSendingInfo {
             db_state,
