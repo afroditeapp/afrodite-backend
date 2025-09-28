@@ -1,10 +1,8 @@
 use axum::{Extension, extract::State};
 use model::{
-    AccountIdInternal, FcmDeviceToken, PendingNotificationFlags, PendingNotificationToken,
-    PendingNotificationWithData,
+    AccountIdInternal, FcmDeviceToken, PendingNotificationToken, PendingNotificationWithData,
 };
 use server_data::write::GetWriteCommandsCommon;
-use server_state::app::AdminNotificationProvider;
 use simple_backend::create_counters;
 
 use super::super::utils::{Json, StatusCode};
@@ -59,32 +57,12 @@ const PATH_POST_GET_PENDING_NOTIFICATION: &str = "/common_api/get_pending_notifi
     security(), // This is public route handler
 )]
 pub async fn post_get_pending_notification(
-    State(state): State<S>,
-    Json(token): Json<PendingNotificationToken>,
+    State(_state): State<S>,
+    Json(_token): Json<PendingNotificationToken>,
 ) -> Json<PendingNotificationWithData> {
     COMMON.post_get_pending_notification.incr();
 
-    let (id, mut data) = state
-        .data_all_access()
-        .get_push_notification_data(token)
-        .await;
-
-    if let Some(id) = id {
-        let flags = PendingNotificationFlags::from(data.value);
-        data.admin_notification = if flags.contains(PendingNotificationFlags::ADMIN_NOTIFICATION) {
-            Some(
-                state
-                    .admin_notification()
-                    .get_unreceived_notification(id)
-                    .await
-                    .unwrap_or_default(),
-            )
-        } else {
-            None
-        };
-    }
-
-    data.into()
+    PendingNotificationWithData::default().into()
 }
 
 create_open_api_router!(fn router_push_notification_private, post_set_device_token,);

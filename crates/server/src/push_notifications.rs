@@ -41,7 +41,15 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
             .remove_pending_notification_flags_from_cache(account_id)
             .await;
 
-        Ok(PushNotificationSendingInfo { db_state, flags })
+        let notifications = visibility::notifications_for_sending(&self.state, account_id, flags)
+            .await
+            .map_err(|e| e.into_report())
+            .change_context(PushNotificationError::GetAndResetPushNotificationsFailed)?;
+
+        Ok(PushNotificationSendingInfo {
+            db_state,
+            notifications,
+        })
     }
 
     async fn remove_device_token(

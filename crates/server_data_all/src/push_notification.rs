@@ -11,6 +11,7 @@ use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use server_data_media::read::GetReadMediaCommands;
 use server_data_profile::read::GetReadProfileCommands;
 
+// TODO(future): Remove
 /// Android push notification related code.
 /// iOS push notification related code is at
 /// [server::push_notifications::ios::ios_notifications].
@@ -50,7 +51,7 @@ pub async fn get_push_notification_data(
         })
         .await;
 
-    let (id, notification_value, flags, new_message) = match result {
+    let (id, _notification_value, flags, new_message) = match result {
         Err(_) => return (None, PendingNotificationWithData::default()),
         Ok(v) => v,
     };
@@ -66,7 +67,7 @@ pub async fn get_push_notification_data(
         None
     };
 
-    let media_content_moderation_completed =
+    let _media_content_moderation_completed =
         if flags.contains(PendingNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED) {
             read_handle
                 .media()
@@ -89,7 +90,7 @@ pub async fn get_push_notification_data(
         None
     };
 
-    let profile_string_moderation_completed =
+    let _profile_string_moderation_completed =
         if flags.contains(PendingNotificationFlags::PROFILE_STRING_MODERATION_COMPLETED) {
             read_handle
                 .profile()
@@ -114,15 +115,13 @@ pub async fn get_push_notification_data(
         };
 
     let notification = PendingNotificationWithData {
-        value: notification_value,
         new_message,
         received_likes_changed: received_likes_info,
-        media_content_moderation_completed,
         news_changed: unread_news_count,
-        profile_string_moderation_completed,
         automatic_profile_search_completed,
         // State for this is added in API route handler
         admin_notification: None,
+        ..Default::default()
     };
 
     (Some(id), notification)

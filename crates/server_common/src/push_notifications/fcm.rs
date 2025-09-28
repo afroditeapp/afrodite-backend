@@ -4,12 +4,12 @@ use config::Config;
 use error_stack::{Result, ResultExt};
 use fcm::{
     FcmClient,
-    message::{AndroidConfig, AndroidMessagePriority, ApnsConfig, Message, Target},
+    message::{AndroidConfig, AndroidMessagePriority, Message, Target},
     response::{RecomendedAction, RecomendedWaitTime},
 };
-use model::PushNotificationStateInfoWithFlags;
+use model::{FcmDeviceToken, PushNotification};
 use rand::{Rng, rngs::OsRng};
-use serde_json::{Value, json};
+use serde_json::Value;
 use tracing::{error, info, warn};
 
 use crate::push_notifications::{
@@ -55,7 +55,7 @@ impl FcmManager {
 
     pub async fn send_fcm_notification(
         &mut self,
-        send_push_notification: SendPushNotification,
+        event: SendPushNotification,
         state: &impl PushNotificationStateProvider,
     ) -> Result<(), PushNotificationError> {
         let fcm = if let Some(fcm) = &self.fcm {
@@ -65,7 +65,7 @@ impl FcmManager {
         };
 
         let info = state
-            .get_and_reset_push_notifications(send_push_notification.account_id)
+            .get_and_reset_push_notifications(event.account_id)
             .await
             .change_context(PushNotificationError::ReadingNotificationSentStatusFailed)?;
 
@@ -73,55 +73,58 @@ impl FcmManager {
             return Ok(());
         };
 
-        let is_visible = true;
+        for n in info.notifications {
+            let message = self.create_message(&token, n)?;
 
+            match self
+                .sending_logic
+                .send_push_notification(message, fcm)
+                .await
+            {
+                Ok(()) => (),
+                Err(action) => match action {
+                    UnusualAction::DisablePushNotificationSupport => {
+                        self.fcm = None;
+                        return Ok(());
+                    }
+                    UnusualAction::RemoveDeviceToken => {
+                        return state
+                            .remove_device_token(event.account_id)
+                            .await
+                            .change_context(PushNotificationError::RemoveDeviceTokenFailed);
+                    }
+                },
+            }
+        }
+
+        Ok(())
+    }
+
+    fn create_message(
+        &self,
+        token: &FcmDeviceToken,
+        notification: PushNotification,
+    ) -> Result<Message, PushNotificationError> {
+        let json_object =
+            serde_json::to_value(&notification).change_context(PushNotificationError::Serialize)?;
         let m = Message {
-            // Use minimal notification data as this only triggers client
-            // to download the notification.
-            data: Some(json!({
-                "n": "",
-            })),
-            target: Target::Token(token.into_string()),
+            data: Some(json_object),
+            target: Target::Token(token.clone().into_string()),
             android: Some(AndroidConfig {
-                priority: Some(if is_visible {
+                priority: Some(if notification.is_visible() {
                     AndroidMessagePriority::High
                 } else {
                     AndroidMessagePriority::Normal
                 }),
-                collapse_key: Some("0".to_string()),
+                collapse_key: Some(notification.id().to_string()),
                 ..Default::default()
             }),
-            apns: Some(ApnsConfig {
-                headers: Some(json!({
-                    // 5 is max priority for data notifications
-                    "apns-priority": "5",
-                    "apns-collapse-id": "0",
-                })),
-                payload: Some(json!({
-                    "aps": {
-                        "content-available": 1
-                    }
-                })),
-                ..Default::default()
-            }),
+            apns: None,
             webpush: None,
             fcm_options: None,
             notification: None,
         };
-
-        match self.sending_logic.send_push_notification(m, fcm).await {
-            Ok(()) => Ok(()),
-            Err(action) => match action {
-                UnusualAction::DisablePushNotificationSupport => {
-                    self.fcm = None;
-                    Ok(())
-                }
-                UnusualAction::RemoveDeviceToken => state
-                    .remove_device_token(send_push_notification.account_id)
-                    .await
-                    .change_context(PushNotificationError::RemoveDeviceTokenFailed),
-            },
-        }
+        Ok(m)
     }
 }
 

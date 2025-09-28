@@ -13,10 +13,8 @@ use utils::random_bytes::random_128_bits;
 use utoipa::ToSchema;
 
 use crate::{
-    AdminNotification, AutomaticProfileSearchCompletedNotification,
-    MediaContentModerationCompletedNotification, NewMessageNotificationList,
-    NewReceivedLikesCountResult, NotificationEvent, ProfileStringModerationCompletedNotification,
-    UnreadNewsCountResult,
+    AdminNotification, AutomaticProfileSearchCompletedNotification, NewMessageNotificationList,
+    NewReceivedLikesCountResult, NotificationEvent, UnreadNewsCountResult,
     schema_sqlite_types::{Integer, Text},
 };
 
@@ -216,20 +214,17 @@ diesel_string_wrapper!(PendingNotificationToken);
 /// Pending notification with notification data.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
 pub struct PendingNotificationWithData {
-    pub value: PendingNotification,
-    /// Data for NEW_MESSAGE notification.
     pub new_message: Option<NewMessageNotificationList>,
-    /// Data for RECEIVED_LIKES_CHANGED notification.
     pub received_likes_changed: Option<NewReceivedLikesCountResult>,
-    /// Data for MEDIA_CONTENT_MODERATION_COMPLETED notification.
-    pub media_content_moderation_completed: Option<MediaContentModerationCompletedNotification>,
-    /// Data for NEWS_CHANGED notification.
+    pub media_content_accepted: Option<NotificationStatus>,
+    pub media_content_rejected: Option<NotificationStatus>,
+    pub media_content_deleted: Option<NotificationStatus>,
     pub news_changed: Option<UnreadNewsCountResult>,
-    /// Data for PROFILE_STRING_MODERATION_COMPLETED notification.
-    pub profile_string_moderation_completed: Option<ProfileStringModerationCompletedNotification>,
-    /// Data for AUTOMATIC_PROFILE_SEARCH_COMPLETED notification.
+    pub profile_name_accepted: Option<NotificationStatus>,
+    pub profile_name_rejected: Option<NotificationStatus>,
+    pub profile_text_accepted: Option<NotificationStatus>,
+    pub profile_text_rejected: Option<NotificationStatus>,
     pub automatic_profile_search_completed: Option<AutomaticProfileSearchCompletedNotification>,
-    /// Data for ADMIN_NOTIFICATION notification.
     pub admin_notification: Option<AdminNotification>,
 }
 

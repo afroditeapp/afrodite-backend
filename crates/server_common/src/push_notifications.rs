@@ -29,6 +29,8 @@ pub enum PushNotificationError {
     GetAndResetPushNotificationsFailed,
     #[error("Saving pending notifications to database failed")]
     SaveToDatabaseFailed,
+    #[error("Serializing error")]
+    Serialize,
 }
 
 pub struct PushNotificationManagerQuitHandle {
