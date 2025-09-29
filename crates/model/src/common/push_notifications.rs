@@ -214,17 +214,29 @@ diesel_string_wrapper!(PendingNotificationToken);
 /// Pending notification with notification data.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
 pub struct PendingNotificationWithData {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub new_message: Option<NewMessageNotificationList>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub received_likes_changed: Option<NewReceivedLikesCountResult>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub media_content_accepted: Option<NotificationStatus>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub media_content_rejected: Option<NotificationStatus>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub media_content_deleted: Option<NotificationStatus>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub news_changed: Option<UnreadNewsCountResult>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_name_accepted: Option<NotificationStatus>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_name_rejected: Option<NotificationStatus>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_text_accepted: Option<NotificationStatus>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_text_rejected: Option<NotificationStatus>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub automatic_profile_search_completed: Option<AutomaticProfileSearchCompletedNotification>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub admin_notification: Option<AdminNotification>,
 }
 
