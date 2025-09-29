@@ -116,7 +116,7 @@ impl FcmManager {
                 } else {
                     AndroidMessagePriority::Normal
                 }),
-                collapse_key: Some(notification.id().to_string()),
+                collapse_key: Some(notification.id()),
                 ..Default::default()
             }),
             apns: None,

@@ -2829,6 +2829,7 @@ dependencies = [
  "num_enum",
  "regex",
  "serde",
+ "serde_json",
  "simple_backend_model",
  "simple_backend_utils",
  "thiserror 2.0.12",

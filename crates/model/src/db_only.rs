@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Serialize, ser::Error};
 
 use crate::{
     AccountId, ConversationId, FcmDeviceToken, PendingNotificationFlags,
@@ -31,13 +31,22 @@ pub struct PushNotification {
     /// Notification ID number which client can
     /// use to hide the notification or run notification
     /// specific navigation action.
-    ///
-    /// Notification library in the client will add this to
-    /// the [Self::payload] object.
-    id: i64,
+    id: String,
+    #[serde(serialize_with = "serialize_payload_as_string")]
     payload: NotificationPayload,
     /// Notification channel ID string for Android client.
     channel: Option<&'static str>,
+}
+
+fn serialize_payload_as_string<S>(
+    payload: &NotificationPayload,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    let json_string = serde_json::to_string(payload).map_err(S::Error::custom)?;
+    serializer.serialize_str(&json_string)
 }
 
 impl PushNotification {
@@ -50,7 +59,7 @@ impl PushNotification {
         Self {
             title: Some(title),
             body: None,
-            id: notification as i64,
+            id: (notification as i64).to_string(),
             payload: NotificationPayload {
                 a: account.to_string(),
                 data,
@@ -67,7 +76,7 @@ impl PushNotification {
         Self {
             title: None,
             body: None,
-            id: notification as i64,
+            id: (notification as i64).to_string(),
             payload: NotificationPayload {
                 a: account.to_string(),
                 data,
@@ -85,7 +94,8 @@ impl PushNotification {
         Self {
             title: Some(title),
             body: None,
-            id: (PushNotificationId::FirstNewMessageNotificationId as i64) + conversation.id,
+            id: ((PushNotificationId::FirstNewMessageNotificationId as i64) + conversation.id)
+                .to_string(),
             payload: NotificationPayload {
                 a: account.to_string(),
                 data,
@@ -98,8 +108,8 @@ impl PushNotification {
         self.title.is_some()
     }
 
-    pub fn id(&self) -> i64 {
-        self.id
+    pub fn id(&self) -> String {
+        self.id.clone()
     }
 }
 
