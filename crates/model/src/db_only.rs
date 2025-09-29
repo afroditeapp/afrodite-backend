@@ -32,20 +32,27 @@ pub struct PushNotification {
     /// use to hide the notification or run notification
     /// specific navigation action.
     id: String,
-    #[serde(serialize_with = "serialize_payload_as_string")]
-    payload: NotificationPayload,
     /// Notification channel ID string for Android client.
     channel: Option<&'static str>,
+    /// Notification receiver AccountId for preventing
+    /// client to use this notification if client is signed in to
+    /// a different account.
+    a: String,
+    /// Notification related state which client should store
+    /// to prevent the same notification showing again
+    /// when WebSocket connects.
+    #[serde(serialize_with = "serialize_data_as_string")]
+    data: PendingNotificationWithData,
 }
 
-fn serialize_payload_as_string<S>(
-    payload: &NotificationPayload,
+fn serialize_data_as_string<S>(
+    data: &PendingNotificationWithData,
     serializer: S,
 ) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
 {
-    let json_string = serde_json::to_string(payload).map_err(S::Error::custom)?;
+    let json_string = serde_json::to_string(data).map_err(S::Error::custom)?;
     serializer.serialize_str(&json_string)
 }
 
@@ -60,11 +67,9 @@ impl PushNotification {
             title: Some(title),
             body: None,
             id: (notification as i64).to_string(),
-            payload: NotificationPayload {
-                a: account.to_string(),
-                data,
-            },
             channel: notification.to_channel_id(),
+            a: account.to_string(),
+            data,
         }
     }
 
@@ -77,11 +82,9 @@ impl PushNotification {
             title: None,
             body: None,
             id: (notification as i64).to_string(),
-            payload: NotificationPayload {
-                a: account.to_string(),
-                data,
-            },
             channel: notification.to_channel_id(),
+            a: account.to_string(),
+            data,
         }
     }
 
@@ -96,11 +99,9 @@ impl PushNotification {
             body: None,
             id: ((PushNotificationId::FirstNewMessageNotificationId as i64) + conversation.id)
                 .to_string(),
-            payload: NotificationPayload {
-                a: account.to_string(),
-                data,
-            },
             channel: Some("messages"),
+            a: account.to_string(),
+            data,
         }
     }
 
@@ -161,16 +162,4 @@ impl PushNotificationId {
             Self::FirstNewMessageNotificationId => None,
         }
     }
-}
-
-#[derive(Serialize)]
-pub struct NotificationPayload {
-    /// Notification receiver AccountId for preventing
-    /// client to use this payload if client is signed in to
-    /// a different account.
-    a: String,
-    /// Notification related state which client should store
-    /// to prevent the same notification showing again
-    /// when WebSocket connects.
-    data: PendingNotificationWithData,
 }
