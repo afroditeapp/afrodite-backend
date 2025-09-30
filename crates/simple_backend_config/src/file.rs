@@ -41,12 +41,12 @@ local_bot_api_port = 3001
 # [tile_map]
 # tile_dir = "/map_tiles"
 
-# [sign_in_with_apple]
+# [sign_in_with.apple]
 # ios_bundle_id = "id"
 # service_id = "id"
 # android_package_id = "id"
 
-# [sign_in_with_google]
+# [sign_in_with.google]
 # client_id_android = "id"
 # client_id_ios = "id"
 # client_id_web = "id"
@@ -150,11 +150,11 @@ pub struct SimpleBackendConfigFile {
     pub data: DataConfig,
     #[serde(default)]
     pub push_notifications: PushNotificationConfig,
+    #[serde(default)]
+    pub sign_in_with: SignInWithConfig,
 
     pub tile_map: Option<TileMapConfig>,
     pub manager: Option<ManagerConfig>,
-    pub sign_in_with_apple: Option<SignInWithAppleConfig>,
-    pub sign_in_with_google: Option<SignInWithGoogleConfig>,
     pub email_sending: Option<EmailSendingConfig>,
 
     /// Manual TLS certificates.
@@ -191,11 +191,10 @@ impl SimpleBackendConfigFile {
                 debug_local_bot_api_ip: None,
             },
             push_notifications: PushNotificationConfig::default(),
+            sign_in_with: SignInWithConfig::default(),
             email_sending: None,
             tile_map: None,
             manager: None,
-            sign_in_with_apple: None,
-            sign_in_with_google: None,
             tls: None,
             lets_encrypt: None,
             scheduled_tasks: None,
@@ -354,6 +353,12 @@ pub struct TileMapConfig {
     /// Directory for map tiles.
     /// Tiles must be stored in z/x/y.png format.
     pub tile_dir: PathBuf,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+pub struct SignInWithConfig {
+    pub apple: Option<SignInWithAppleConfig>,
+    pub google: Option<SignInWithGoogleConfig>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

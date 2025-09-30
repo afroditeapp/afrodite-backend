@@ -140,11 +140,11 @@ impl SimpleBackendConfig {
     }
 
     pub fn sign_in_with_apple_config(&self) -> Option<&SignInWithAppleConfig> {
-        self.file.sign_in_with_apple.as_ref()
+        self.file.sign_in_with.apple.as_ref()
     }
 
     pub fn sign_in_with_google_config(&self) -> Option<&SignInWithGoogleConfig> {
-        self.file.sign_in_with_google.as_ref()
+        self.file.sign_in_with.google.as_ref()
     }
 
     pub fn fcm_config(&self) -> Option<&FcmConfig> {
