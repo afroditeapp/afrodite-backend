@@ -1,5 +1,5 @@
 use error_stack::ResultExt;
-use model::{AccountIdInternal, PushNotificationSendingInfo};
+use model::{AccountIdInternal, ClientType, PushNotificationSendingInfo};
 use server_api::{
     app::{EventManagerProvider, ReadData, WriteData},
     db_write_raw,
@@ -93,5 +93,19 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
         }
 
         Ok(())
+    }
+
+    async fn client_type(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> error_stack::Result<Option<ClientType>, PushNotificationError> {
+        self.state
+            .read()
+            .common()
+            .client_config()
+            .client_login_session_platform(account_id)
+            .await
+            .map_err(|e| e.into_report())
+            .change_context(PushNotificationError::GetClientType)
     }
 }

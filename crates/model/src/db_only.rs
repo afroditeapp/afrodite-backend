@@ -112,6 +112,14 @@ impl PushNotification {
     pub fn id(&self) -> String {
         self.id.clone()
     }
+
+    pub fn title(&self) -> Option<&str> {
+        self.title.as_deref()
+    }
+
+    pub fn body(&self) -> Option<&str> {
+        self.body.as_deref()
+    }
 }
 
 /// Notification IDs from client

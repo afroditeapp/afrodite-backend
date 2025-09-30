@@ -27,6 +27,7 @@ use rustls_pemfile::certs;
 use tokio_rustls::rustls::ServerConfig;
 
 use self::file::{ManagerConfig, SignInWithGoogleConfig, SimpleBackendConfigFile, SocketConfig};
+use crate::file::ApnsConfig;
 
 /// Config file debug mode status.
 ///
@@ -150,6 +151,10 @@ impl SimpleBackendConfig {
         self.file.firebase_cloud_messaging.as_ref()
     }
 
+    pub fn apns_config(&self) -> Option<&ApnsConfig> {
+        self.file.apns.as_ref()
+    }
+
     pub fn manager_config(&self) -> Option<&ManagerConfig> {
         self.file.manager.as_ref()
     }
@@ -238,6 +243,13 @@ pub fn get_config(
             return Err(GetConfigError::InvalidConfiguration).attach_printable(
                 "Firebase Cloud Messaging service account key file does not exist",
             );
+        }
+    }
+
+    if let Some(config) = file_config.apns.as_ref() {
+        if !config.key_path.exists() {
+            return Err(GetConfigError::InvalidConfiguration)
+                .attach_printable("APNs key file does not exist");
         }
     }
 

@@ -166,6 +166,7 @@ fn new_config(config: &TestMode, bot_api_port: u16) -> (ConfigFile, SimpleBacken
         lets_encrypt: None,
         tile_map: None,
         firebase_cloud_messaging: None,
+        apns: None,
         email_sending: None,
         scheduled_tasks: None,
         static_file_package_hosting: None,

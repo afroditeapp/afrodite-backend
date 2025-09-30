@@ -2,8 +2,9 @@ use std::{future::Future, sync::Arc, time::Duration};
 
 use config::Config;
 use error_stack::Result;
-use model::{AccountIdInternal, PushNotificationSendingInfo};
+use model::{AccountIdInternal, ClientType, PushNotificationSendingInfo};
 use simple_backend::ServerQuitWatcher;
+use simple_backend_utils::ContextExt;
 use tokio::{
     sync::mpsc::{Receiver, Sender, error::TrySendError},
     task::JoinHandle,
@@ -11,8 +12,9 @@ use tokio::{
 };
 use tracing::{error, warn};
 
-use crate::push_notifications::fcm::FcmManager;
+use crate::push_notifications::{apns::ApnsManager, fcm::FcmManager};
 
+mod apns;
 mod fcm;
 
 const PUSH_NOTIFICATION_CHANNEL_BUFFER_SIZE: usize = 1024 * 1024;
@@ -21,16 +23,24 @@ const PUSH_NOTIFICATION_CHANNEL_BUFFER_SIZE: usize = 1024 * 1024;
 pub enum PushNotificationError {
     #[error("Creating FCM client failed")]
     CreateFcmClient,
+    #[error("Creating APNs client failed")]
+    CreateApnsClient,
     #[error("Reading notification sent status failed")]
     ReadingNotificationSentStatusFailed,
     #[error("Removing device token failed")]
     RemoveDeviceTokenFailed,
     #[error("Get and reset push notifications failed")]
     GetAndResetPushNotificationsFailed,
+    #[error("Getting client type failed")]
+    GetClientType,
+    #[error("Client type not found")]
+    ClientTypeNotFound,
     #[error("Saving pending notifications to database failed")]
     SaveToDatabaseFailed,
     #[error("Serializing error")]
     Serialize,
+    #[error("Notification building error")]
+    NotificationBuildingFailed,
 }
 
 pub struct PushNotificationManagerQuitHandle {
@@ -106,6 +116,11 @@ pub trait PushNotificationStateProvider {
     fn save_current_notification_flags_to_database_if_needed(
         &self,
     ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
+
+    fn client_type(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> impl Future<Output = Result<Option<ClientType>, PushNotificationError>> + Send;
 }
 
 pub fn channel() -> (PushNotificationSender, PushNotificationReceiver) {
@@ -131,6 +146,7 @@ pub struct PushNotificationReceiver {
 
 pub struct PushNotificationManager<T> {
     fcm: FcmManager,
+    apns: ApnsManager,
     receiver: PushNotificationReceiver,
     state: T,
 }
@@ -144,6 +160,7 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> PushNotificationM
     ) -> PushNotificationManagerQuitHandle {
         let manager = PushNotificationManager {
             fcm: FcmManager::new(&config).await,
+            apns: ApnsManager::new(&config).await,
             receiver,
             state,
         };
@@ -213,8 +230,25 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> PushNotificationM
         &mut self,
         send_push_notification: SendPushNotification,
     ) -> Result<(), PushNotificationError> {
-        self.fcm
-            .send_fcm_notification(send_push_notification, &self.state)
-            .await
+        let Some(client_type) = self
+            .state
+            .client_type(send_push_notification.account_id)
+            .await?
+        else {
+            return Err(PushNotificationError::ClientTypeNotFound.report());
+        };
+        match client_type {
+            ClientType::Android => {
+                self.fcm
+                    .send_fcm_notification(send_push_notification, &self.state)
+                    .await
+            }
+            ClientType::Ios => {
+                self.apns
+                    .send_apns_notification(send_push_notification, &self.state)
+                    .await
+            }
+            ClientType::Web => Ok(()),
+        }
     }
 }

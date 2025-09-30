@@ -15,13 +15,15 @@ tracing = { workspace = true }
 thiserror = { workspace = true }
 error-stack = { workspace = true }
 
-# Firebase cloud messaging
+# Push notifications
 fcm = { workspace = true }
+a2 = { workspace = true }
 
 config = { path = "../config" }
 database = { path = "../database" }
 model = { path = "../model" }
 
 simple_backend = { path = "../simple_backend" }
+simple_backend_config = { path = "../simple_backend_config" }
 simple_backend_utils = { path = "../simple_backend_utils" }
 simple_backend_database = { path = "../simple_backend_database" }

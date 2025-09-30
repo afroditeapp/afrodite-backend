@@ -56,6 +56,12 @@ local_bot_api_port = 3001
 # service_account_key_path = "server_config/service_account_key.json"
 # token_cache_path = "firebase_token_cache.json"
 
+# [apns]
+# key_path = "server_config/apns_key.p8"
+# key_id = "TODO"
+# team_id = "TODO"
+# production_servers = false
+
 # [email_sending]
 # smtp_server_address = "smtp.example.com"
 # use_starttls_instead_of_smtps = false # optional
@@ -148,6 +154,7 @@ pub struct SimpleBackendConfigFile {
     pub sign_in_with_apple: Option<SignInWithAppleConfig>,
     pub sign_in_with_google: Option<SignInWithGoogleConfig>,
     pub firebase_cloud_messaging: Option<FirebaseCloudMessagingConfig>,
+    pub apns: Option<ApnsConfig>,
     pub email_sending: Option<EmailSendingConfig>,
 
     /// Manual TLS certificates.
@@ -189,6 +196,7 @@ impl SimpleBackendConfigFile {
             sign_in_with_apple: None,
             sign_in_with_google: None,
             firebase_cloud_messaging: None,
+            apns: None,
             tls: None,
             lets_encrypt: None,
             scheduled_tasks: None,
@@ -374,6 +382,17 @@ pub struct FirebaseCloudMessagingConfig {
     pub service_account_key_path: PathBuf,
     /// Path where cache Firebase token cache JSON file will be created.
     pub token_cache_path: PathBuf,
+    #[serde(default)]
+    pub debug_logging: bool,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ApnsConfig {
+    /// Path to ".p8" file
+    pub key_path: PathBuf,
+    pub key_id: String,
+    pub team_id: String,
+    pub production_servers: bool,
     #[serde(default)]
     pub debug_logging: bool,
 }
