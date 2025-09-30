@@ -23,7 +23,7 @@ pub struct FcmManager {
 
 impl FcmManager {
     pub async fn new(config: &Config) -> Self {
-        let fcm = if let Some(config) = config.simple_backend().firebase_cloud_messaging_config() {
+        let fcm = if let Some(config) = config.simple_backend().fcm_config() {
             // TODO(future): Make possible to use existing reqwest::Client
             //               with FcmClient.
             let fcm_result = FcmClient::builder()
@@ -45,7 +45,7 @@ impl FcmManager {
 
         let debug_logging = config
             .simple_backend()
-            .firebase_cloud_messaging_config()
+            .fcm_config()
             .map(|v| v.debug_logging)
             .unwrap_or_default();
         let sending_logic = FcmSendingLogic::new(debug_logging);

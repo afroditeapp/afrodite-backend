@@ -52,11 +52,11 @@ local_bot_api_port = 3001
 # client_id_web = "id"
 # client_id_server = "id"
 
-# [firebase_cloud_messaging]
+# [push_notifications.fcm]
 # service_account_key_path = "server_config/service_account_key.json"
 # token_cache_path = "firebase_token_cache.json"
 
-# [apns]
+# [push_notifications.apns]
 # key_path = "server_config/apns_key.p8"
 # key_id = "TODO"
 # team_id = "TODO"
@@ -148,13 +148,13 @@ pub struct SimpleBackendConfigFile {
     pub socket: SocketConfig,
     #[serde(default)]
     pub data: DataConfig,
+    #[serde(default)]
+    pub push_notifications: PushNotificationConfig,
 
     pub tile_map: Option<TileMapConfig>,
     pub manager: Option<ManagerConfig>,
     pub sign_in_with_apple: Option<SignInWithAppleConfig>,
     pub sign_in_with_google: Option<SignInWithGoogleConfig>,
-    pub firebase_cloud_messaging: Option<FirebaseCloudMessagingConfig>,
-    pub apns: Option<ApnsConfig>,
     pub email_sending: Option<EmailSendingConfig>,
 
     /// Manual TLS certificates.
@@ -190,13 +190,12 @@ impl SimpleBackendConfigFile {
                 local_bot_api_port: None,
                 debug_local_bot_api_ip: None,
             },
+            push_notifications: PushNotificationConfig::default(),
             email_sending: None,
             tile_map: None,
             manager: None,
             sign_in_with_apple: None,
             sign_in_with_google: None,
-            firebase_cloud_messaging: None,
-            apns: None,
             tls: None,
             lets_encrypt: None,
             scheduled_tasks: None,
@@ -376,8 +375,9 @@ pub struct SignInWithGoogleConfig {
     pub client_id_server: String,
 }
 
+/// Firebase Cloud Messaging config
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct FirebaseCloudMessagingConfig {
+pub struct FcmConfig {
     /// Path to service account key JSON file.
     pub service_account_key_path: PathBuf,
     /// Path where cache Firebase token cache JSON file will be created.
@@ -386,6 +386,7 @@ pub struct FirebaseCloudMessagingConfig {
     pub debug_logging: bool,
 }
 
+/// Apple Push Notification service config
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ApnsConfig {
     /// Path to ".p8" file
@@ -395,6 +396,12 @@ pub struct ApnsConfig {
     pub production_servers: bool,
     #[serde(default)]
     pub debug_logging: bool,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+pub struct PushNotificationConfig {
+    pub fcm: Option<FcmConfig>,
+    pub apns: Option<ApnsConfig>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

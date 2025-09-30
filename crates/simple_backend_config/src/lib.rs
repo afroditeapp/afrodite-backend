@@ -18,8 +18,8 @@ use std::{
 use args::ServerModeArgs;
 use error_stack::{Result, ResultExt};
 use file::{
-    FirebaseCloudMessagingConfig, ImageProcessingConfig, MaxMindDbConfig, ScheduledTasksConfig,
-    SignInWithAppleConfig, TileMapConfig, VideoCallingConfig,
+    ImageProcessingConfig, MaxMindDbConfig, ScheduledTasksConfig, SignInWithAppleConfig,
+    TileMapConfig, VideoCallingConfig,
 };
 use ip::IpList;
 use reqwest::Url;
@@ -27,7 +27,7 @@ use rustls_pemfile::certs;
 use tokio_rustls::rustls::ServerConfig;
 
 use self::file::{ManagerConfig, SignInWithGoogleConfig, SimpleBackendConfigFile, SocketConfig};
-use crate::file::ApnsConfig;
+use crate::file::{ApnsConfig, FcmConfig};
 
 /// Config file debug mode status.
 ///
@@ -147,12 +147,12 @@ impl SimpleBackendConfig {
         self.file.sign_in_with_google.as_ref()
     }
 
-    pub fn firebase_cloud_messaging_config(&self) -> Option<&FirebaseCloudMessagingConfig> {
-        self.file.firebase_cloud_messaging.as_ref()
+    pub fn fcm_config(&self) -> Option<&FcmConfig> {
+        self.file.push_notifications.fcm.as_ref()
     }
 
     pub fn apns_config(&self) -> Option<&ApnsConfig> {
-        self.file.apns.as_ref()
+        self.file.push_notifications.apns.as_ref()
     }
 
     pub fn manager_config(&self) -> Option<&ManagerConfig> {
@@ -238,7 +238,7 @@ pub fn get_config(
         file_config.data.dir.clone()
     };
 
-    if let Some(config) = file_config.firebase_cloud_messaging.as_ref() {
+    if let Some(config) = file_config.push_notifications.fcm.as_ref() {
         if !config.service_account_key_path.exists() {
             return Err(GetConfigError::InvalidConfiguration).attach_printable(
                 "Firebase Cloud Messaging service account key file does not exist",
@@ -246,7 +246,7 @@ pub fn get_config(
         }
     }
 
-    if let Some(config) = file_config.apns.as_ref() {
+    if let Some(config) = file_config.push_notifications.apns.as_ref() {
         if !config.key_path.exists() {
             return Err(GetConfigError::InvalidConfiguration)
                 .attach_printable("APNs key file does not exist");
