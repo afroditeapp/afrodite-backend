@@ -1,6 +1,6 @@
 use a2::{
-    Client, ClientConfig, CollapseId, DefaultNotificationBuilder, Endpoint, NotificationBuilder,
-    NotificationOptions, request::payload::Payload,
+    Client, ClientConfig, CollapseId, DefaultNotificationBuilder, Endpoint, Error,
+    NotificationBuilder, NotificationOptions, request::payload::Payload,
 };
 use config::Config;
 use error_stack::{Result, ResultExt};
@@ -12,13 +12,18 @@ use crate::push_notifications::{
     PushNotificationError, PushNotificationStateProvider, SendPushNotification,
 };
 
+struct InternalState {
+    client: Client,
+    topic: String,
+}
+
 pub struct ApnsManager {
-    apns: Option<Client>,
+    state: Option<InternalState>,
     sending_logic: ApnsSendingLogic,
 }
 
 impl ApnsManager {
-    fn new_client(config: &ApnsConfig) -> Result<Client, PushNotificationError> {
+    fn new_internal_state(config: &ApnsConfig) -> Result<InternalState, PushNotificationError> {
         let file = std::fs::File::open(&config.key_path)
             .change_context(PushNotificationError::CreateApnsClient)?;
 
@@ -35,15 +40,19 @@ impl ApnsManager {
             ClientConfig::new(endpoint),
         )
         .change_context(PushNotificationError::CreateApnsClient)?;
-        Ok(client)
+
+        Ok(InternalState {
+            client,
+            topic: config.ios_bundle_id.clone(),
+        })
     }
 
     pub async fn new(config: &Config) -> Self {
         let apns = if let Some(config) = config.simple_backend().apns_config() {
-            match Self::new_client(config) {
-                Ok(c) => Some(c),
+            match Self::new_internal_state(config) {
+                Ok(v) => Some(v),
                 Err(e) => {
-                    error!("Client creation failed: {e:?}");
+                    error!("Internal state creation failed: {e:?}");
                     None
                 }
             }
@@ -59,7 +68,7 @@ impl ApnsManager {
         let sending_logic = ApnsSendingLogic::new(debug_logging);
 
         Self {
-            apns,
+            state: apns,
             sending_logic,
         }
     }
@@ -69,8 +78,8 @@ impl ApnsManager {
         event: SendPushNotification,
         state: &impl PushNotificationStateProvider,
     ) -> Result<(), PushNotificationError> {
-        let apns = if let Some(apns) = &self.apns {
-            apns
+        let internal_state = if let Some(internal_state) = &self.state {
+            internal_state
         } else {
             return Ok(());
         };
@@ -89,19 +98,19 @@ impl ApnsManager {
                 // Hiding notifications is not supported
                 continue;
             };
-            let notification_id_string = n.id();
+
             let notification =
-                self.create_notification(&token, &n, title, &notification_id_string)?;
+                self.create_notification(&token, &n, title, &internal_state.topic)?;
 
             match self
                 .sending_logic
-                .send_push_notification(apns, notification)
+                .send_push_notification(&internal_state.client, notification)
                 .await
             {
                 Ok(()) => (),
                 Err(action) => match action {
                     UnusualAction::DisablePushNotificationSupport => {
-                        self.apns = None;
+                        self.state = None;
                         return Ok(());
                     }
                     UnusualAction::RemoveDeviceToken => {
@@ -122,25 +131,34 @@ impl ApnsManager {
         token: &'a FcmDeviceToken,
         notification: &'a PushNotification,
         title: &'a str,
-        notification_id_string: &'a str,
+        apns_topic: &'a str,
     ) -> Result<Payload<'a>, PushNotificationError> {
-        let mut builder = DefaultNotificationBuilder::new().set_title(title);
+        let mut builder = DefaultNotificationBuilder::new()
+            .set_title(title)
+            .set_sound("default");
 
         if let Some(body) = notification.body() {
             builder = builder.set_body(body);
         }
 
-        let collapse_id = CollapseId::new(notification_id_string)
+        let collapse_id = CollapseId::new(notification.id())
             .change_context(PushNotificationError::NotificationBuildingFailed)?;
 
         let options = NotificationOptions {
             apns_collapse_id: Some(collapse_id),
+            apns_topic: Some(apns_topic),
             ..Default::default()
         };
 
         let mut payload = builder.build(token.as_str(), options);
         payload
-            .add_custom_data("data", &notification)
+            .add_custom_data("id", &notification.id())
+            .change_context(PushNotificationError::Serialize)?;
+        payload
+            .add_custom_data("a", &notification.a())
+            .change_context(PushNotificationError::Serialize)?;
+        payload
+            .add_custom_data("data", &notification.data())
             .change_context(PushNotificationError::Serialize)?;
         Ok(payload)
     }
@@ -161,20 +179,22 @@ impl ApnsSendingLogic {
         notification: Payload<'_>,
     ) -> std::result::Result<(), UnusualAction> {
         match apns.send(notification).await {
-            Ok(response) => {
-                if response.code != 200 {
-                    error!("APNs send failed: status: {}", response.code);
+            Ok(_) => {
+                if self.debug_logging {
+                    info!("APNs send successful");
                 }
-
+                Ok(())
+            }
+            Err(Error::ResponseError(response)) => {
                 match response.code {
-                    200 => {
-                        if self.debug_logging {
-                            info!("APNs send successful");
-                        }
-                        Ok(())
-                    }
                     410 => Err(UnusualAction::RemoveDeviceToken),
-                    400 | 403 | 405 | 413 => Err(UnusualAction::DisablePushNotificationSupport),
+                    400 | 403 | 405 | 413 => {
+                        error!(
+                            "APNs send failed: status: {}, disabling APNs notifications",
+                            response.code
+                        );
+                        Err(UnusualAction::DisablePushNotificationSupport)
+                    }
                     429 => {
                         // TODO(prod): Retry with delay
                         Ok(())
@@ -185,6 +205,7 @@ impl ApnsSendingLogic {
                     }
                     _ => {
                         // Unknown error
+                        error!("APNs send failed: status: {}", response.code);
                         Ok(())
                     }
                 }

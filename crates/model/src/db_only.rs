@@ -24,6 +24,22 @@ pub struct PushNotificationSendingInfo {
 }
 
 #[derive(Serialize)]
+pub struct PendingNotificationWithDataString(
+    #[serde(serialize_with = "serialize_data_as_string")] PendingNotificationWithData,
+);
+
+fn serialize_data_as_string<S>(
+    data: &PendingNotificationWithData,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    let json_string = serde_json::to_string(data).map_err(S::Error::custom)?;
+    serializer.serialize_str(&json_string)
+}
+
+#[derive(Serialize)]
 pub struct PushNotification {
     /// If None, notification should be hidden
     title: Option<String>,
@@ -41,19 +57,7 @@ pub struct PushNotification {
     /// Notification related state which client should store
     /// to prevent the same notification showing again
     /// when WebSocket connects.
-    #[serde(serialize_with = "serialize_data_as_string")]
-    data: PendingNotificationWithData,
-}
-
-fn serialize_data_as_string<S>(
-    data: &PendingNotificationWithData,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-{
-    let json_string = serde_json::to_string(data).map_err(S::Error::custom)?;
-    serializer.serialize_str(&json_string)
+    data: PendingNotificationWithDataString,
 }
 
 impl PushNotification {
@@ -69,7 +73,7 @@ impl PushNotification {
             id: (notification as i64).to_string(),
             channel: notification.to_channel_id(),
             a: account.to_string(),
-            data,
+            data: PendingNotificationWithDataString(data),
         }
     }
 
@@ -84,7 +88,7 @@ impl PushNotification {
             id: (notification as i64).to_string(),
             channel: notification.to_channel_id(),
             a: account.to_string(),
-            data,
+            data: PendingNotificationWithDataString(data),
         }
     }
 
@@ -101,7 +105,7 @@ impl PushNotification {
                 .to_string(),
             channel: Some("messages"),
             a: account.to_string(),
-            data,
+            data: PendingNotificationWithDataString(data),
         }
     }
 
@@ -109,8 +113,8 @@ impl PushNotification {
         self.title.is_some()
     }
 
-    pub fn id(&self) -> String {
-        self.id.clone()
+    pub fn id(&self) -> &str {
+        &self.id
     }
 
     pub fn title(&self) -> Option<&str> {
@@ -119,6 +123,15 @@ impl PushNotification {
 
     pub fn body(&self) -> Option<&str> {
         self.body.as_deref()
+    }
+
+    /// Account ID
+    pub fn a(&self) -> &str {
+        &self.a
+    }
+
+    pub fn data(&self) -> &PendingNotificationWithDataString {
+        &self.data
     }
 }
 

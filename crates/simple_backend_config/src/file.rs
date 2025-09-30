@@ -60,6 +60,7 @@ local_bot_api_port = 3001
 # key_path = "server_config/apns_key.p8"
 # key_id = "TODO"
 # team_id = "TODO"
+# ios_bundle_id = "TODO"
 # production_servers = false
 
 # [email_sending]
@@ -398,6 +399,8 @@ pub struct ApnsConfig {
     pub key_path: PathBuf,
     pub key_id: String,
     pub team_id: String,
+    /// Used as notification's topic
+    pub ios_bundle_id: String,
     pub production_servers: bool,
     #[serde(default)]
     pub debug_logging: bool,
