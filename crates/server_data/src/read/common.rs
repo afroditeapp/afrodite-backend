@@ -131,10 +131,13 @@ impl ReadCommandsCommon<'_> {
             Ok(None)
         } else if accepted {
             Ok(Some(name))
-        } else if let Some(letter) = name.graphemes(true).next() {
-            Ok(Some(format!("{letter}...")))
         } else {
-            Ok(None)
+            let mut letters = name.graphemes(true);
+            match (letters.next(), letters.next()) {
+                (Some(first), None) => Ok(Some(first.to_string())),
+                (Some(first), Some(_)) => Ok(Some(format!("{first}..."))),
+                _ => Ok(None),
+            }
         }
     }
 
