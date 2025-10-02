@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use a2::{
     Client, ClientConfig, CollapseId, DefaultNotificationBuilder, Endpoint, Error,
     NotificationBuilder, NotificationOptions, request::payload::Payload,
@@ -234,6 +236,33 @@ impl ApnsSendingLogic {
         apns: &Client,
         notification: Payload<'_>,
     ) -> std::result::Result<(), UnusualAction> {
+        let mut retry_once_done = false;
+        loop {
+            match self
+                .send_push_notification_internal(apns, notification.clone())
+                .await
+            {
+                Ok(()) => return Ok(()),
+                Err(Action::DisablePushNotificationSupport) => {
+                    return Err(UnusualAction::DisablePushNotificationSupport);
+                }
+                Err(Action::RemoveDeviceToken) => return Err(UnusualAction::RemoveDeviceToken),
+                Err(Action::Retry) => (),
+                Err(Action::RetryOnce) => {
+                    if retry_once_done {
+                        return Ok(());
+                    }
+                    retry_once_done = true;
+                }
+            }
+        }
+    }
+
+    async fn send_push_notification_internal(
+        &mut self,
+        apns: &Client,
+        notification: Payload<'_>,
+    ) -> std::result::Result<(), Action> {
         match apns.send(notification).await {
             Ok(_) => {
                 if self.debug_logging {
@@ -243,21 +272,32 @@ impl ApnsSendingLogic {
             }
             Err(Error::ResponseError(response)) => {
                 match response.code {
-                    410 => Err(UnusualAction::RemoveDeviceToken),
+                    410 => Err(Action::RemoveDeviceToken),
                     400 | 403 | 405 | 413 => {
                         error!(
                             "APNs send failed: status: {}, disabling APNs notifications",
                             response.code
                         );
-                        Err(UnusualAction::DisablePushNotificationSupport)
+                        Err(Action::DisablePushNotificationSupport)
                     }
                     429 => {
-                        // TODO(prod): Retry with delay
-                        Ok(())
+                        // Too many messages sent to a single device.
+                        warn!(
+                            "APNs send failed: status: {}, retrying sending",
+                            response.code
+                        );
+                        // APNs docs don't have specific wait time for this case.
+                        tokio::time::sleep(Duration::from_secs(1)).await;
+                        Err(Action::Retry)
                     }
                     500 | 503 => {
-                        // TODO(prod): Retry after 15 minutes
-                        Ok(())
+                        warn!(
+                            "APNs send failed: status: {}, retrying sending",
+                            response.code
+                        );
+                        // Wait time is from APNs docs
+                        tokio::time::sleep(Duration::from_secs(60 * 15)).await;
+                        Err(Action::Retry)
                     }
                     _ => {
                         // Unknown error
@@ -266,9 +306,16 @@ impl ApnsSendingLogic {
                     }
                 }
             }
+            Err(e @ Error::ClientError(_))
+            | Err(e @ Error::ConnectionError(_))
+            | Err(e @ Error::RequestTimeout(_)) => {
+                warn!("APNs send failed: {e}, retrying sending");
+                tokio::time::sleep(Duration::from_secs(1)).await;
+                Err(Action::RetryOnce)
+            }
             Err(e) => {
-                error!("APNs send failed: {e}");
-                Ok(())
+                error!("APNs send failed: {e}, disabling APNs notifications");
+                Err(Action::DisablePushNotificationSupport)
             }
         }
     }
@@ -277,4 +324,11 @@ impl ApnsSendingLogic {
 pub enum UnusualAction {
     DisablePushNotificationSupport,
     RemoveDeviceToken,
+}
+
+pub enum Action {
+    DisablePushNotificationSupport,
+    RemoveDeviceToken,
+    Retry,
+    RetryOnce,
 }
