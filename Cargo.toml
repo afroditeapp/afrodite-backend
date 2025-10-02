@@ -135,9 +135,6 @@ axum-extra = { version = "0.10.1", features = ["typed-header"] }
 tower = "0.5.2"
 tower-http = { version = "0.6.6", features = ["trace"] }
 
-# APNs support
-a2 = { version = "0.10.0", default-features = false, features = ["ring"] }
-
 # Email sending, tls_client_rustls and tls_client_rustls configures TLS
 lettre = { version = "0.11.17", default-features = false, features = ["smtp-transport", "pool", "hostname", "builder"] }
 
@@ -183,6 +180,14 @@ default-features = false
 git = "https://github.com/jutuon/rustface"
 rev = "271563b947d7906f2126e1dfaae292d900171bcb"
 default-features = false
+
+# APNs support, version 0.10.0 with dependencies
+# updated and webpki-roots replaced with rustls-platform-verifier.
+[workspace.dependencies.a2]
+git = "https://github.com/jutuon/a2"
+rev = "4408b2c090da04771551dd71fbb866411e344df8"
+default-features = false
+features = ["ring"]
 
 # Make image processing faster for debug builds
 [profile.dev.package.image]
