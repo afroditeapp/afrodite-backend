@@ -10,19 +10,43 @@ use fcm::{
 use model::{FcmDeviceToken, PushNotification};
 use rand::{Rng, rngs::OsRng};
 use serde_json::Value;
+use simple_backend::ServerQuitWatcher;
+use tokio::{sync::mpsc::Receiver, task::JoinHandle};
 use tracing::{error, info, warn};
 
 use crate::push_notifications::{
     PushNotificationError, PushNotificationStateProvider, SendPushNotification,
 };
 
-pub struct FcmManager {
+pub struct FcmManager<T> {
     fcm: Option<FcmClient>,
     sending_logic: FcmSendingLogic,
+    receiver: Receiver<SendPushNotification>,
+    state: T,
 }
 
-impl FcmManager {
-    pub async fn new(config: &Config) -> Self {
+pub struct FcmManagerQuitHandle {
+    task: JoinHandle<()>,
+}
+
+impl FcmManagerQuitHandle {
+    pub async fn wait_quit(self) {
+        match self.task.await {
+            Ok(()) => (),
+            Err(e) => {
+                warn!("FcmManagerQuitHandle quit failed. Error: {e:?}");
+            }
+        }
+    }
+}
+
+impl<T: PushNotificationStateProvider + Send + Sync + 'static> FcmManager<T> {
+    pub async fn new_manager(
+        config: &Config,
+        receiver: Receiver<SendPushNotification>,
+        state: T,
+        quit_notification: ServerQuitWatcher,
+    ) -> FcmManagerQuitHandle {
         let fcm = if let Some(config) = config.simple_backend().fcm_config() {
             // TODO(future): Make possible to use existing reqwest::Client
             //               with FcmClient.
@@ -50,13 +74,47 @@ impl FcmManager {
             .unwrap_or_default();
         let sending_logic = FcmSendingLogic::new(debug_logging);
 
-        Self { fcm, sending_logic }
+        let mut manager = Self {
+            fcm,
+            sending_logic,
+            receiver,
+            state,
+        };
+
+        let task = tokio::spawn(async move {
+            manager.run(quit_notification).await;
+        });
+
+        FcmManagerQuitHandle { task }
     }
 
-    pub async fn send_fcm_notification(
+    pub async fn run(&mut self, mut quit_notification: ServerQuitWatcher) {
+        loop {
+            tokio::select! {
+                notification = self.receiver.recv() => {
+                    match notification {
+                        Some(notification) => match self.handle_notification(notification).await {
+                            Ok(()) => (),
+                            Err(e) => {
+                                error!("FCM notification handling failed: {e:?}");
+                            }
+                        },
+                        None => {
+                            warn!("FCM notification channel is broken");
+                            return;
+                        }
+                    }
+                }
+                _ = quit_notification.recv() => {
+                    return;
+                }
+            }
+        }
+    }
+
+    pub async fn handle_notification(
         &mut self,
-        event: SendPushNotification,
-        state: &impl PushNotificationStateProvider,
+        send_push_notification: SendPushNotification,
     ) -> Result<(), PushNotificationError> {
         let fcm = if let Some(fcm) = &self.fcm {
             fcm
@@ -64,8 +122,9 @@ impl FcmManager {
             return Ok(());
         };
 
-        let info = state
-            .get_and_reset_push_notifications(event.account_id)
+        let info = self
+            .state
+            .get_and_reset_push_notifications(send_push_notification.account_id)
             .await
             .change_context(PushNotificationError::ReadingNotificationSentStatusFailed)?;
 
@@ -88,8 +147,9 @@ impl FcmManager {
                         return Ok(());
                     }
                     UnusualAction::RemoveDeviceToken => {
-                        return state
-                            .remove_device_token(event.account_id)
+                        return self
+                            .state
+                            .remove_device_token(send_push_notification.account_id)
                             .await
                             .change_context(PushNotificationError::RemoveDeviceTokenFailed);
                     }

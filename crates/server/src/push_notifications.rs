@@ -10,6 +10,7 @@ use server_state::S;
 
 mod notifications;
 
+#[derive(Clone)]
 pub struct ServerPushNotificationStateProvider {
     state: S,
 }

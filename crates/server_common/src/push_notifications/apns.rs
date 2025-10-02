@@ -5,25 +5,44 @@ use a2::{
 use config::Config;
 use error_stack::{Result, ResultExt};
 use model::{FcmDeviceToken, PushNotification};
+use simple_backend::ServerQuitWatcher;
 use simple_backend_config::file::ApnsConfig;
-use tracing::{error, info};
+use tokio::{sync::mpsc::Receiver, task::JoinHandle};
+use tracing::{error, info, warn};
 
 use crate::push_notifications::{
     PushNotificationError, PushNotificationStateProvider, SendPushNotification,
 };
 
-struct InternalState {
+struct ApnsClient {
     client: Client,
     topic: String,
 }
 
-pub struct ApnsManager {
-    state: Option<InternalState>,
+pub struct ApnsManager<T> {
+    apns: Option<ApnsClient>,
     sending_logic: ApnsSendingLogic,
+    receiver: Receiver<SendPushNotification>,
+    state: T,
 }
 
-impl ApnsManager {
-    fn new_internal_state(config: &ApnsConfig) -> Result<InternalState, PushNotificationError> {
+pub struct ApnsManagerQuitHandle {
+    task: JoinHandle<()>,
+}
+
+impl ApnsManagerQuitHandle {
+    pub async fn wait_quit(self) {
+        match self.task.await {
+            Ok(()) => (),
+            Err(e) => {
+                warn!("ApnsManager quit failed. Error: {e:?}");
+            }
+        }
+    }
+}
+
+impl<T: PushNotificationStateProvider + Send + Sync + 'static> ApnsManager<T> {
+    fn new_client(config: &ApnsConfig) -> Result<ApnsClient, PushNotificationError> {
         let file = std::fs::File::open(&config.key_path)
             .change_context(PushNotificationError::CreateApnsClient)?;
 
@@ -41,15 +60,20 @@ impl ApnsManager {
         )
         .change_context(PushNotificationError::CreateApnsClient)?;
 
-        Ok(InternalState {
+        Ok(ApnsClient {
             client,
             topic: config.ios_bundle_id.clone(),
         })
     }
 
-    pub async fn new(config: &Config) -> Self {
+    pub async fn new_manager(
+        config: &Config,
+        receiver: Receiver<SendPushNotification>,
+        state: T,
+        quit_notification: ServerQuitWatcher,
+    ) -> ApnsManagerQuitHandle {
         let apns = if let Some(config) = config.simple_backend().apns_config() {
-            match Self::new_internal_state(config) {
+            match Self::new_client(config) {
                 Ok(v) => Some(v),
                 Err(e) => {
                     error!("Internal state creation failed: {e:?}");
@@ -67,25 +91,57 @@ impl ApnsManager {
             .unwrap_or_default();
         let sending_logic = ApnsSendingLogic::new(debug_logging);
 
-        Self {
-            state: apns,
+        let mut manager = Self {
+            apns,
             sending_logic,
+            receiver,
+            state,
+        };
+
+        let task = tokio::spawn(async move {
+            manager.run(quit_notification).await;
+        });
+
+        ApnsManagerQuitHandle { task }
+    }
+
+    pub async fn run(&mut self, mut quit_notification: ServerQuitWatcher) {
+        loop {
+            tokio::select! {
+                notification = self.receiver.recv() => {
+                    match notification {
+                        Some(notification) => match self.handle_notification(notification).await {
+                            Ok(()) => (),
+                            Err(e) => {
+                                error!("APNs notification handling failed: {e:?}");
+                            }
+                        },
+                        None => {
+                            warn!("APNs notification channel is broken");
+                            return;
+                        }
+                    }
+                }
+                _ = quit_notification.recv() => {
+                    return;
+                }
+            }
         }
     }
 
-    pub async fn send_apns_notification(
+    pub async fn handle_notification(
         &mut self,
-        event: SendPushNotification,
-        state: &impl PushNotificationStateProvider,
+        send_push_notification: SendPushNotification,
     ) -> Result<(), PushNotificationError> {
-        let internal_state = if let Some(internal_state) = &self.state {
-            internal_state
+        let apns = if let Some(apns) = &self.apns {
+            apns
         } else {
             return Ok(());
         };
 
-        let info = state
-            .get_and_reset_push_notifications(event.account_id)
+        let info = self
+            .state
+            .get_and_reset_push_notifications(send_push_notification.account_id)
             .await
             .change_context(PushNotificationError::ReadingNotificationSentStatusFailed)?;
 
@@ -99,23 +155,23 @@ impl ApnsManager {
                 continue;
             };
 
-            let notification =
-                self.create_notification(&token, &n, title, &internal_state.topic)?;
+            let notification = self.create_notification(&token, &n, title, &apns.topic)?;
 
             match self
                 .sending_logic
-                .send_push_notification(&internal_state.client, notification)
+                .send_push_notification(&apns.client, notification)
                 .await
             {
                 Ok(()) => (),
                 Err(action) => match action {
                     UnusualAction::DisablePushNotificationSupport => {
-                        self.state = None;
+                        self.apns = None;
                         return Ok(());
                     }
                     UnusualAction::RemoveDeviceToken => {
-                        return state
-                            .remove_device_token(event.account_id)
+                        return self
+                            .state
+                            .remove_device_token(send_push_notification.account_id)
                             .await
                             .change_context(PushNotificationError::RemoveDeviceTokenFailed);
                     }

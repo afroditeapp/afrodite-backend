@@ -1,7 +1,7 @@
 use std::{future::Future, sync::Arc, time::Duration};
 
 use config::Config;
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, ClientType, PushNotificationSendingInfo};
 use simple_backend::ServerQuitWatcher;
 use simple_backend_utils::ContextExt;
@@ -12,12 +12,16 @@ use tokio::{
 };
 use tracing::{error, warn};
 
-use crate::push_notifications::{apns::ApnsManager, fcm::FcmManager};
+use crate::push_notifications::{
+    apns::{ApnsManager, ApnsManagerQuitHandle},
+    fcm::{FcmManager, FcmManagerQuitHandle},
+};
 
 mod apns;
 mod fcm;
 
-const PUSH_NOTIFICATION_CHANNEL_BUFFER_SIZE: usize = 1024 * 1024;
+const PRIMARY_BUFFER_SIZE: usize = 1024 * 1024;
+const SECONDARY_BUFFER_SIZE: usize = 1024 * 512;
 
 #[derive(thiserror::Error, Debug)]
 pub enum PushNotificationError {
@@ -41,6 +45,8 @@ pub enum PushNotificationError {
     Serialize,
     #[error("Notification building error")]
     NotificationBuildingFailed,
+    #[error("Notification routing failed")]
+    NotificationRoutingFailed,
 }
 
 pub struct PushNotificationManagerQuitHandle {
@@ -52,7 +58,7 @@ impl PushNotificationManagerQuitHandle {
         match self.task.await {
             Ok(()) => (),
             Err(e) => {
-                warn!("PushNotificationManagerQuitHandle quit failed. Error: {e:?}");
+                warn!("PushNotificationManager quit failed. Error: {e:?}");
             }
         }
     }
@@ -124,9 +130,9 @@ pub trait PushNotificationStateProvider {
 }
 
 pub fn channel() -> (PushNotificationSender, PushNotificationReceiver) {
-    let (sender, receiver) = tokio::sync::mpsc::channel(PUSH_NOTIFICATION_CHANNEL_BUFFER_SIZE);
+    let (sender, receiver) = tokio::sync::mpsc::channel(PRIMARY_BUFFER_SIZE);
     let (sender_low_priority, receiver_low_priority) =
-        tokio::sync::mpsc::channel(PUSH_NOTIFICATION_CHANNEL_BUFFER_SIZE);
+        tokio::sync::mpsc::channel(PRIMARY_BUFFER_SIZE);
     let sender = PushNotificationSender {
         sender,
         sender_low_priority,
@@ -145,22 +151,44 @@ pub struct PushNotificationReceiver {
 }
 
 pub struct PushNotificationManager<T> {
-    fcm: FcmManager,
-    apns: ApnsManager,
+    fcm_sender: Sender<SendPushNotification>,
+    apns_sender: Sender<SendPushNotification>,
+    fcm_quit_handle: FcmManagerQuitHandle,
+    apns_quit_handle: ApnsManagerQuitHandle,
     receiver: PushNotificationReceiver,
     state: T,
 }
 
-impl<T: PushNotificationStateProvider + Send + Sync + 'static> PushNotificationManager<T> {
+impl<T: PushNotificationStateProvider + Clone + Send + Sync + 'static> PushNotificationManager<T> {
     pub async fn new_manager(
         config: Arc<Config>,
         quit_notification: ServerQuitWatcher,
         state: T,
         receiver: PushNotificationReceiver,
     ) -> PushNotificationManagerQuitHandle {
+        let (fcm_sender, fcm_receiver) = tokio::sync::mpsc::channel(SECONDARY_BUFFER_SIZE);
+        let fcm_quit_handle = FcmManager::new_manager(
+            &config,
+            fcm_receiver,
+            state.clone(),
+            quit_notification.resubscribe(),
+        )
+        .await;
+
+        let (apns_sender, apns_receiver) = tokio::sync::mpsc::channel(SECONDARY_BUFFER_SIZE);
+        let apns_quit_handle = ApnsManager::new_manager(
+            &config,
+            apns_receiver,
+            state.clone(),
+            quit_notification.resubscribe(),
+        )
+        .await;
+
         let manager = PushNotificationManager {
-            fcm: FcmManager::new(&config).await,
-            apns: ApnsManager::new(&config).await,
+            fcm_sender,
+            apns_sender,
+            fcm_quit_handle,
+            apns_quit_handle,
             receiver,
             state,
         };
@@ -213,7 +241,10 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> PushNotificationM
         }
     }
 
-    pub async fn quit_logic(&mut self) {
+    pub async fn quit_logic(self) {
+        self.fcm_quit_handle.wait_quit().await;
+        self.apns_quit_handle.wait_quit().await;
+
         // There might be unhandled or failed notifications, so save those
         // from cache to database.
         match self
@@ -237,18 +268,22 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> PushNotificationM
         else {
             return Err(PushNotificationError::ClientTypeNotFound.report());
         };
+
         match client_type {
-            ClientType::Android => {
-                self.fcm
-                    .send_fcm_notification(send_push_notification, &self.state)
-                    .await
+            ClientType::Android => self
+                .fcm_sender
+                .send(send_push_notification)
+                .await
+                .change_context(PushNotificationError::NotificationRoutingFailed),
+            ClientType::Ios => self
+                .apns_sender
+                .send(send_push_notification)
+                .await
+                .change_context(PushNotificationError::NotificationRoutingFailed),
+            ClientType::Web => {
+                // TODO
+                Ok(())
             }
-            ClientType::Ios => {
-                self.apns
-                    .send_apns_notification(send_push_notification, &self.state)
-                    .await
-            }
-            ClientType::Web => Ok(()),
         }
     }
 }
