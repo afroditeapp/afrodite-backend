@@ -27,7 +27,7 @@ use rustls_pemfile::certs;
 use tokio_rustls::rustls::ServerConfig;
 
 use self::file::{ManagerConfig, SignInWithGoogleConfig, SimpleBackendConfigFile, SocketConfig};
-use crate::file::{ApnsConfig, FcmConfig};
+use crate::file::{ApnsConfig, FcmConfig, WebPushConfig};
 
 /// Config file debug mode status.
 ///
@@ -153,6 +153,10 @@ impl SimpleBackendConfig {
 
     pub fn apns_config(&self) -> Option<&ApnsConfig> {
         self.file.push_notifications.apns.as_ref()
+    }
+
+    pub fn web_push_config(&self) -> Option<&WebPushConfig> {
+        self.file.push_notifications.web.as_ref()
     }
 
     pub fn manager_config(&self) -> Option<&ManagerConfig> {

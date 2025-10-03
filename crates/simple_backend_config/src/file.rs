@@ -63,6 +63,9 @@ local_bot_api_port = 3001
 # ios_bundle_id = "TODO"
 # production_servers = false
 
+# [push_notifications.web]
+# vapid_private_key_path = "server_config/vapid_key.pem"
+
 # [email_sending]
 # smtp_server_address = "smtp.example.com"
 # use_starttls_instead_of_smtps = false # optional
@@ -406,10 +409,20 @@ pub struct ApnsConfig {
     pub debug_logging: bool,
 }
 
+/// Web push notification config
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct WebPushConfig {
+    /// Path to VAPID private key file (PEM format)
+    pub vapid_private_key_path: PathBuf,
+    #[serde(default)]
+    pub debug_logging: bool,
+}
+
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct PushNotificationConfig {
     pub fcm: Option<FcmConfig>,
     pub apns: Option<ApnsConfig>,
+    pub web: Option<WebPushConfig>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

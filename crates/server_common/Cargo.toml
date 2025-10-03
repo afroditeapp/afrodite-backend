@@ -18,6 +18,7 @@ error-stack = { workspace = true }
 # Push notifications
 fcm = { workspace = true }
 a2 = { workspace = true }
+web-push = { workspace = true }
 
 config = { path = "../config" }
 database = { path = "../database" }

@@ -15,10 +15,12 @@ use tracing::{error, warn};
 use crate::push_notifications::{
     apns::{ApnsManager, ApnsManagerQuitHandle},
     fcm::{FcmManager, FcmManagerQuitHandle},
+    web::{WebPushManager, WebPushManagerQuitHandle},
 };
 
 mod apns;
 mod fcm;
+mod web;
 
 const PRIMARY_BUFFER_SIZE: usize = 1024 * 1024;
 const SECONDARY_BUFFER_SIZE: usize = 1024 * 512;
@@ -29,6 +31,8 @@ pub enum PushNotificationError {
     CreateFcmClient,
     #[error("Creating APNs client failed")]
     CreateApnsClient,
+    #[error("Creating web push notification client failed")]
+    CreateWebPushClient,
     #[error("Reading notification sent status failed")]
     ReadingNotificationSentStatusFailed,
     #[error("Removing device token failed")]
@@ -153,8 +157,10 @@ pub struct PushNotificationReceiver {
 pub struct PushNotificationManager<T> {
     fcm_sender: Sender<SendPushNotification>,
     apns_sender: Sender<SendPushNotification>,
+    web_sender: Sender<SendPushNotification>,
     fcm_quit_handle: FcmManagerQuitHandle,
     apns_quit_handle: ApnsManagerQuitHandle,
+    web_quit_handle: WebPushManagerQuitHandle,
     receiver: PushNotificationReceiver,
     state: T,
 }
@@ -184,11 +190,22 @@ impl<T: PushNotificationStateProvider + Clone + Send + Sync + 'static> PushNotif
         )
         .await;
 
+        let (web_sender, web_receiver) = tokio::sync::mpsc::channel(SECONDARY_BUFFER_SIZE);
+        let web_quit_handle = WebPushManager::new_manager(
+            &config,
+            web_receiver,
+            state.clone(),
+            quit_notification.resubscribe(),
+        )
+        .await;
+
         let manager = PushNotificationManager {
             fcm_sender,
             apns_sender,
+            web_sender,
             fcm_quit_handle,
             apns_quit_handle,
+            web_quit_handle,
             receiver,
             state,
         };
@@ -244,6 +261,7 @@ impl<T: PushNotificationStateProvider + Clone + Send + Sync + 'static> PushNotif
     pub async fn quit_logic(self) {
         self.fcm_quit_handle.wait_quit().await;
         self.apns_quit_handle.wait_quit().await;
+        self.web_quit_handle.wait_quit().await;
 
         // There might be unhandled or failed notifications, so save those
         // from cache to database.
@@ -280,10 +298,11 @@ impl<T: PushNotificationStateProvider + Clone + Send + Sync + 'static> PushNotif
                 .send(send_push_notification)
                 .await
                 .change_context(PushNotificationError::NotificationRoutingFailed),
-            ClientType::Web => {
-                // TODO
-                Ok(())
-            }
+            ClientType::Web => self
+                .web_sender
+                .send(send_push_notification)
+                .await
+                .change_context(PushNotificationError::NotificationRoutingFailed),
         }
     }
 }

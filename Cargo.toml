@@ -189,6 +189,12 @@ rev = "4408b2c090da04771551dd71fbb866411e344df8"
 default-features = false
 features = ["ring"]
 
+[workspace.dependencies.web-push]
+git = "https://github.com/jutuon/rust-web-push"
+rev = "175a11cb311f077a155ec57f7f44962588b12f62"
+default-features = false
+features = ["hyper-rustls-client"]
+
 # Make image processing faster for debug builds
 [profile.dev.package.image]
 opt-level = 3
