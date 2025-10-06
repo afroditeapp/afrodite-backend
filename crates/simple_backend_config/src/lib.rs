@@ -8,6 +8,7 @@ pub mod file;
 pub mod ip;
 
 use std::{
+    fmt::Debug,
     fs,
     io::BufReader,
     path::{Path, PathBuf},
@@ -25,6 +26,7 @@ use ip::IpList;
 use reqwest::Url;
 use rustls_pemfile::certs;
 use tokio_rustls::rustls::ServerConfig;
+use web_push::{PartialVapidSignatureBuilder, VapidSignatureBuilder};
 
 use self::file::{ManagerConfig, SignInWithGoogleConfig, SimpleBackendConfigFile, SocketConfig};
 use crate::file::{ApnsConfig, FcmConfig, WebPushConfig};
@@ -72,6 +74,16 @@ pub enum GetConfigError {
     DirCreationError,
 }
 
+/// Adds Debug implementation for PartialVapidSignatureBuilder
+#[derive(Clone)]
+struct VapidWrapper(pub PartialVapidSignatureBuilder);
+
+impl Debug for VapidWrapper {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("VapidWrapper")
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct SimpleBackendConfig {
     file: SimpleBackendConfigFile,
@@ -91,6 +103,9 @@ pub struct SimpleBackendConfig {
 
     // IP info
     ip_lists: Vec<IpList>,
+
+    // Web push notifications related config
+    vapid_builder: Option<VapidWrapper>,
 }
 
 impl SimpleBackendConfig {
@@ -155,8 +170,12 @@ impl SimpleBackendConfig {
         self.file.push_notifications.apns.as_ref()
     }
 
-    pub fn web_push_config(&self) -> Option<&WebPushConfig> {
-        self.file.push_notifications.web.as_ref()
+    pub fn web_push_config(&self) -> Option<(&WebPushConfig, &PartialVapidSignatureBuilder)> {
+        self.file
+            .push_notifications
+            .web
+            .as_ref()
+            .zip(self.vapid_builder.as_ref().map(|v| &v.0))
     }
 
     pub fn manager_config(&self) -> Option<&ManagerConfig> {
@@ -346,6 +365,16 @@ pub fn get_config(
         }
     }
 
+    let vapid_builder = if let Some(config) = &file_config.push_notifications.web {
+        let vapid_private_key = std::fs::read(&config.vapid_private_key_path)
+            .change_context(GetConfigError::LoadFileError)?;
+        let builder = VapidSignatureBuilder::from_pem_no_sub(vapid_private_key.as_slice())
+            .change_context(GetConfigError::LoadFileError)?;
+        Some(VapidWrapper(builder))
+    } else {
+        None
+    };
+
     let config = SimpleBackendConfig {
         file: file_config,
         data_dir,
@@ -355,6 +384,7 @@ pub fn get_config(
         backend_code_version,
         backend_semver_version,
         ip_lists,
+        vapid_builder,
     };
 
     if config.debug_mode() {

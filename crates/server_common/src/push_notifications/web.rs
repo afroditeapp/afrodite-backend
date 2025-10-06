@@ -4,12 +4,11 @@ use config::Config;
 use error_stack::{Result, ResultExt};
 use model::{FcmDeviceToken, PushNotification};
 use simple_backend::ServerQuitWatcher;
-use simple_backend_config::file::WebPushConfig;
 use tokio::{sync::mpsc::Receiver, task::JoinHandle};
 use tracing::{error, info, warn};
 use web_push::{
     ContentEncoding, HyperWebPushClient, PartialVapidSignatureBuilder, SubscriptionInfo, Urgency,
-    VapidSignatureBuilder, WebPushClient, WebPushError, WebPushMessageBuilder,
+    WebPushClient, WebPushError, WebPushMessageBuilder,
 };
 
 use crate::push_notifications::{
@@ -44,33 +43,17 @@ impl WebPushManagerQuitHandle {
 }
 
 impl<T: PushNotificationStateProvider + Send + Sync + 'static> WebPushManager<T> {
-    fn new_client(config: &WebPushConfig) -> Result<WebPushClientState, PushNotificationError> {
-        let vapid_private_key = std::fs::read(&config.vapid_private_key_path)
-            .change_context(PushNotificationError::CreateWebPushClient)?;
-
-        let vapid_builder = VapidSignatureBuilder::from_pem_no_sub(vapid_private_key.as_slice())
-            .change_context(PushNotificationError::CreateWebPushClient)?;
-
-        Ok(WebPushClientState {
-            client: HyperWebPushClient::new(),
-            vapid_builder,
-        })
-    }
-
     pub async fn new_manager(
         config: &Config,
         receiver: Receiver<SendPushNotification>,
         state: T,
         quit_notification: ServerQuitWatcher,
     ) -> WebPushManagerQuitHandle {
-        let web = if let Some(config) = config.simple_backend().web_push_config() {
-            match Self::new_client(config) {
-                Ok(v) => Some(v),
-                Err(e) => {
-                    error!("Web push notification client creation failed: {e:?}");
-                    None
-                }
-            }
+        let web = if let Some((_, vapid_builder)) = config.simple_backend().web_push_config() {
+            Some(WebPushClientState {
+                client: HyperWebPushClient::new(),
+                vapid_builder: vapid_builder.clone(),
+            })
         } else {
             None
         };
@@ -78,7 +61,7 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> WebPushManager<T>
         let debug_logging = config
             .simple_backend()
             .web_push_config()
-            .map(|v| v.debug_logging)
+            .map(|v| v.0.debug_logging)
             .unwrap_or_default();
         let sending_logic = WebPushSendingLogic::new(debug_logging);
 
