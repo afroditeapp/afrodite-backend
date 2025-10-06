@@ -20,6 +20,8 @@ http = { workspace = true }
 utoipa = { workspace = true }
 utoipa-axum = { workspace = true }
 
+base64 = { workspace = true }
+
 manager_model = { path = "../manager_model" }
 
 utils = { path = "../utils" }

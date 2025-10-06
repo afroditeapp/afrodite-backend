@@ -4880,6 +4880,7 @@ version = "0.0.0"
 dependencies = [
  "axum",
  "axum-extra",
+ "base64 0.22.1",
  "headers",
  "http",
  "hyper",

@@ -1,8 +1,10 @@
 use axum::{Extension, extract::State};
+use base64::{Engine, prelude::BASE64_STANDARD};
 use model::{
-    AccountIdInternal, FcmDeviceToken, PendingNotificationToken, PendingNotificationWithData,
+    AccountIdInternal, FcmDeviceToken, GetVapidPublicKey, PendingNotificationToken,
+    PendingNotificationWithData,
 };
-use server_data::write::GetWriteCommandsCommon;
+use server_data::{app::GetConfig, write::GetWriteCommandsCommon};
 use simple_backend::create_counters;
 
 use super::super::utils::{Json, StatusCode};
@@ -38,6 +40,35 @@ pub async fn post_set_device_token(
     Ok(pending_notification_token.into())
 }
 
+const PATH_GET_VAPID_PUBLIC_KEY: &str = "/common_api/get_vapid_public_key";
+
+#[utoipa::path(
+    get,
+    path = PATH_GET_VAPID_PUBLIC_KEY,
+    responses(
+        (status = 200, description = "Success.", body = GetVapidPublicKey),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_vapid_public_key(
+    State(state): State<S>,
+) -> Result<Json<GetVapidPublicKey>, StatusCode> {
+    COMMON.get_vapid_public_key.incr();
+
+    let vapid_public_key =
+        if let Some((_, vapid_builder)) = state.config().simple_backend().web_push_config() {
+            Some(BASE64_STANDARD.encode(vapid_builder.get_public_key()))
+        } else {
+            None
+        };
+
+    let key = GetVapidPublicKey { vapid_public_key };
+
+    Ok(key.into())
+}
+
 const PATH_POST_GET_PENDING_NOTIFICATION: &str = "/common_api/get_pending_notification";
 
 /// Get pending notification and reset pending notification.
@@ -65,7 +96,7 @@ pub async fn post_get_pending_notification(
     PendingNotificationWithData::default().into()
 }
 
-create_open_api_router!(fn router_push_notification_private, post_set_device_token,);
+create_open_api_router!(fn router_push_notification_private, post_set_device_token, get_vapid_public_key,);
 
 create_open_api_router!(fn router_push_notification_public, post_get_pending_notification,);
 
@@ -74,5 +105,6 @@ create_counters!(
     COMMON,
     COMMON_PUSH_NOTIFICATION_COUNTERS_LIST,
     post_set_device_token,
+    get_vapid_public_key,
     post_get_pending_notification,
 );

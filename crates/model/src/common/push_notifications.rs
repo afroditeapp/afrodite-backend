@@ -340,3 +340,10 @@ impl NotificationStatus {
         self.id.id == self.viewed.id
     }
 }
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct GetVapidPublicKey {
+    /// Base64 encoded VAPID public key if web push notifications
+    /// are enabled.
+    pub vapid_public_key: Option<String>,
+}
