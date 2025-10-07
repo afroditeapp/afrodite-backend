@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use config::Config;
 use error_stack::{Result, ResultExt};
-use model::{FcmDeviceToken, PushNotification};
+use model::{PushNotification, PushNotificationDeviceToken};
 use simple_backend::ServerQuitWatcher;
 use tokio::{sync::mpsc::Receiver, task::JoinHandle};
 use tracing::{error, info, warn};
@@ -119,7 +119,7 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> WebPushManager<T>
             .await
             .change_context(PushNotificationError::ReadingNotificationSentStatusFailed)?;
 
-        let Some(token) = info.db_state.fcm_device_token else {
+        let Some(token) = info.db_state.push_notification_device_token else {
             return Ok(());
         };
 
@@ -191,7 +191,7 @@ impl WebPushSendingLogic {
         &mut self,
         client: &HyperWebPushClient,
         vapid_builder: &PartialVapidSignatureBuilder,
-        token: &FcmDeviceToken,
+        token: &PushNotificationDeviceToken,
         notification_data: &str,
         topic: &str,
     ) -> std::result::Result<(), UnusualAction> {
@@ -227,7 +227,7 @@ impl WebPushSendingLogic {
         &mut self,
         client: &HyperWebPushClient,
         vapid_builder: &PartialVapidSignatureBuilder,
-        token: &FcmDeviceToken,
+        token: &PushNotificationDeviceToken,
         notification_data: &str,
         topic: &str,
     ) -> std::result::Result<(), Action> {

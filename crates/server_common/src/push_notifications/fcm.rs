@@ -7,7 +7,7 @@ use fcm::{
     message::{AndroidConfig, AndroidMessagePriority, Message, Target},
     response::{RecomendedAction, RecomendedWaitTime},
 };
-use model::{FcmDeviceToken, PushNotification};
+use model::{PushNotification, PushNotificationDeviceToken};
 use rand::{Rng, rngs::OsRng};
 use serde_json::Value;
 use simple_backend::ServerQuitWatcher;
@@ -128,7 +128,7 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> FcmManager<T> {
             .await
             .change_context(PushNotificationError::ReadingNotificationSentStatusFailed)?;
 
-        let Some(token) = info.db_state.fcm_device_token else {
+        let Some(token) = info.db_state.push_notification_device_token else {
             return Ok(());
         };
 
@@ -162,7 +162,7 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> FcmManager<T> {
 
     fn create_message(
         &self,
-        token: &FcmDeviceToken,
+        token: &PushNotificationDeviceToken,
         notification: PushNotification,
     ) -> Result<Message, PushNotificationError> {
         let json_object =

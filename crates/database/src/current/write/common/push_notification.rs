@@ -1,8 +1,8 @@
 use diesel::{prelude::*, update};
 use error_stack::Result;
 use model::{
-    AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken, SyncVersion,
-    UnixTime,
+    AccountIdInternal, PendingNotification, PendingNotificationToken, PushNotificationDeviceToken,
+    SyncVersion, UnixTime,
 };
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
@@ -10,7 +10,7 @@ use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands
 define_current_read_commands!(CurrentWriteCommonPushNotification);
 
 impl CurrentWriteCommonPushNotification<'_> {
-    pub fn remove_fcm_device_token_and_pending_notification_token(
+    pub fn remove_push_notification_device_token_and_pending_notification_token(
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
@@ -18,8 +18,8 @@ impl CurrentWriteCommonPushNotification<'_> {
 
         update(common_state.find(id.as_db_id()))
             .set((
-                fcm_device_token.eq(None::<FcmDeviceToken>),
-                fcm_device_token_unix_time.eq(None::<UnixTime>),
+                push_notification_device_token.eq(None::<PushNotificationDeviceToken>),
+                push_notification_device_token_unix_time.eq(None::<UnixTime>),
                 pending_notification_token.eq(None::<PendingNotificationToken>),
             ))
             .execute(self.conn())
@@ -30,7 +30,7 @@ impl CurrentWriteCommonPushNotification<'_> {
         Ok(())
     }
 
-    pub fn remove_fcm_device_token(
+    pub fn remove_push_notification_device_token(
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
@@ -38,8 +38,8 @@ impl CurrentWriteCommonPushNotification<'_> {
 
         update(common_state.find(id.as_db_id()))
             .set((
-                fcm_device_token.eq(None::<FcmDeviceToken>),
-                fcm_device_token_unix_time.eq(None::<UnixTime>),
+                push_notification_device_token.eq(None::<PushNotificationDeviceToken>),
+                push_notification_device_token_unix_time.eq(None::<UnixTime>),
             ))
             .execute(self.conn())
             .into_db_error(id)?;
@@ -49,19 +49,19 @@ impl CurrentWriteCommonPushNotification<'_> {
         Ok(())
     }
 
-    pub fn update_fcm_device_token_and_generate_new_notification_token(
+    pub fn update_push_notification_device_token_and_generate_new_notification_token(
         &mut self,
         id: AccountIdInternal,
-        token: FcmDeviceToken,
+        token: PushNotificationDeviceToken,
     ) -> Result<PendingNotificationToken, DieselDatabaseError> {
         use model::schema::common_state::dsl::*;
 
         // Remove the token from other accounts. It is possible that
         // same device is used for multiple accounts.
-        update(common_state.filter(fcm_device_token.eq(token.clone())))
+        update(common_state.filter(push_notification_device_token.eq(token.clone())))
             .set((
-                fcm_device_token.eq(None::<FcmDeviceToken>),
-                fcm_device_token_unix_time.eq(None::<UnixTime>),
+                push_notification_device_token.eq(None::<PushNotificationDeviceToken>),
+                push_notification_device_token_unix_time.eq(None::<UnixTime>),
             ))
             .execute(self.conn())
             .into_db_error(())?;
@@ -70,8 +70,8 @@ impl CurrentWriteCommonPushNotification<'_> {
 
         update(common_state.find(id.as_db_id()))
             .set((
-                fcm_device_token.eq(token),
-                fcm_device_token_unix_time.eq(UnixTime::current_time()),
+                push_notification_device_token.eq(token),
+                push_notification_device_token_unix_time.eq(UnixTime::current_time()),
                 pending_notification_token.eq(notification_token.clone()),
             ))
             .execute(self.conn())

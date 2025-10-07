@@ -1,7 +1,7 @@
 use database::current::write::GetDbWriteCommandsCommon;
 use model::{
-    AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationFlags,
-    PendingNotificationToken,
+    AccountIdInternal, PendingNotification, PendingNotificationFlags, PendingNotificationToken,
+    PushNotificationDeviceToken,
 };
 use server_common::data::IntoDataError;
 
@@ -16,24 +16,27 @@ use crate::{
 define_cmd_wrapper_write!(WriteCommandsCommonPushNotification);
 
 impl WriteCommandsCommonPushNotification<'_> {
-    pub async fn remove_fcm_device_token_and_pending_notification_token(
+    pub async fn remove_push_notification_device_token_and_pending_notification_token(
         &self,
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.common()
                 .push_notification()
-                .remove_fcm_device_token_and_pending_notification_token(id)
+                .remove_push_notification_device_token_and_pending_notification_token(id)
         })?;
 
         Ok(())
     }
 
-    pub async fn remove_fcm_device_token(&self, id: AccountIdInternal) -> Result<(), DataError> {
+    pub async fn remove_push_notification_device_token(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.common()
                 .push_notification()
-                .remove_fcm_device_token(id)
+                .remove_push_notification_device_token(id)
         })?;
 
         Ok(())
@@ -42,13 +45,16 @@ impl WriteCommandsCommonPushNotification<'_> {
     pub async fn set_device_token(
         &self,
         id: AccountIdInternal,
-        token: FcmDeviceToken,
+        token: PushNotificationDeviceToken,
     ) -> Result<PendingNotificationToken, DataError> {
         let token_clone = token.clone();
         let token = db_transaction!(self, move |mut cmds| {
             cmds.common()
                 .push_notification()
-                .update_fcm_device_token_and_generate_new_notification_token(id, token_clone)
+                .update_push_notification_device_token_and_generate_new_notification_token(
+                    id,
+                    token_clone,
+                )
         })?;
 
         Ok(token)

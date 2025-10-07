@@ -6,7 +6,7 @@ use a2::{
 };
 use config::Config;
 use error_stack::{Result, ResultExt};
-use model::{FcmDeviceToken, PushNotification};
+use model::{PushNotification, PushNotificationDeviceToken};
 use simple_backend::ServerQuitWatcher;
 use simple_backend_config::file::ApnsConfig;
 use tokio::{sync::mpsc::Receiver, task::JoinHandle};
@@ -147,7 +147,7 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> ApnsManager<T> {
             .await
             .change_context(PushNotificationError::ReadingNotificationSentStatusFailed)?;
 
-        let Some(token) = info.db_state.fcm_device_token else {
+        let Some(token) = info.db_state.push_notification_device_token else {
             return Ok(());
         };
 
@@ -186,7 +186,7 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> ApnsManager<T> {
 
     fn create_notification<'a>(
         &self,
-        token: &'a FcmDeviceToken,
+        token: &'a PushNotificationDeviceToken,
         notification: &'a PushNotification,
         title: &'a str,
         apns_topic: &'a str,

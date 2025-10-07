@@ -61,7 +61,7 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
         db_write_raw!(self.state, move |cmds| {
             cmds.common()
                 .push_notification()
-                .remove_fcm_device_token(account_id)
+                .remove_push_notification_device_token(account_id)
                 .await
         })
         .await

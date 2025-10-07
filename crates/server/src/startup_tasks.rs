@@ -118,13 +118,13 @@ impl StartupTasks {
             })
             .await?;
 
-            Self::fcm_send_push_notification_if_needed(state, id).await?;
+            Self::send_push_notification_if_needed(state, id).await?;
         }
 
         Ok(())
     }
 
-    async fn fcm_send_push_notification_if_needed(
+    async fn send_push_notification_if_needed(
         state: &S,
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
@@ -138,7 +138,7 @@ impl StartupTasks {
         match push_notification_state {
             PushNotificationStateInfoWithFlags::EmptyFlags => (),
             PushNotificationStateInfoWithFlags::WithFlags { info, .. } => {
-                if info.fcm_device_token.is_some() {
+                if info.push_notification_device_token.is_some() {
                     state.event_manager().trigger_push_notification_sending(id)
                 }
             }

@@ -1,13 +1,13 @@
 use serde::{Serialize, ser::Error};
 
 use crate::{
-    AccountId, ConversationId, FcmDeviceToken, PendingNotificationFlags,
-    PendingNotificationWithData, PushNotificationDbState,
+    AccountId, ConversationId, PendingNotificationFlags, PendingNotificationWithData,
+    PushNotificationDbState, PushNotificationDeviceToken,
 };
 
 #[derive(Debug)]
 pub struct PushNotificationStateInfo {
-    pub fcm_device_token: Option<FcmDeviceToken>,
+    pub push_notification_device_token: Option<PushNotificationDeviceToken>,
 }
 
 pub enum PushNotificationStateInfoWithFlags {

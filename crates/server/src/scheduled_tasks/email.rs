@@ -11,22 +11,22 @@ use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use server_state::S;
 
 pub async fn handle_email_notifications(state: &S, id: AccountIdInternal) -> Result<(), DataError> {
-    let fcm_token_exists = state
+    let push_notification_device_token_exists = state
         .read()
         .common()
         .push_notification()
-        .fcm_token_exists(id)
+        .push_notification_device_token_exists(id)
         .await?;
-    let wait_time = if fcm_token_exists {
+    let wait_time = if push_notification_device_token_exists {
         state
             .config()
             .limits_chat()
-            .new_message_email_with_fcm_token
+            .new_message_email_with_push_notification_device_token
     } else {
         state
             .config()
             .limits_chat()
-            .new_message_email_without_fcm_token
+            .new_message_email_without_push_notification_device_token
     };
 
     let messages = state

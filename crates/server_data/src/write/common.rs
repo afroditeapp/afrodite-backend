@@ -56,7 +56,7 @@ impl WriteCommandsCommon<'_> {
         self.handle()
             .common()
             .push_notification()
-            .remove_fcm_device_token_and_pending_notification_token(id)
+            .remove_push_notification_device_token_and_pending_notification_token(id)
             .await?;
 
         Ok(())

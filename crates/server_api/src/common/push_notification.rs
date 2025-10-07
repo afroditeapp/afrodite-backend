@@ -1,8 +1,8 @@
 use axum::{Extension, extract::State};
 use base64::{Engine, prelude::BASE64_STANDARD};
 use model::{
-    AccountIdInternal, FcmDeviceToken, GetVapidPublicKey, PendingNotificationToken,
-    PendingNotificationWithData,
+    AccountIdInternal, GetVapidPublicKey, PendingNotificationToken, PendingNotificationWithData,
+    PushNotificationDeviceToken,
 };
 use server_data::{app::GetConfig, write::GetWriteCommandsCommon};
 use simple_backend::create_counters;
@@ -15,7 +15,7 @@ const PATH_POST_SET_DEVICE_TOKEN: &str = "/common_api/set_device_token";
 #[utoipa::path(
     post,
     path = PATH_POST_SET_DEVICE_TOKEN,
-    request_body(content = FcmDeviceToken),
+    request_body(content = PushNotificationDeviceToken),
     responses(
         (status = 200, description = "Success.", body = PendingNotificationToken),
         (status = 401, description = "Unauthorized."),
@@ -26,7 +26,7 @@ const PATH_POST_SET_DEVICE_TOKEN: &str = "/common_api/set_device_token";
 pub async fn post_set_device_token(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    Json(device_token): Json<FcmDeviceToken>,
+    Json(device_token): Json<PushNotificationDeviceToken>,
 ) -> Result<Json<PendingNotificationToken>, StatusCode> {
     COMMON.post_set_device_token.incr();
 

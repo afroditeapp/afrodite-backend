@@ -133,11 +133,11 @@ impl From<PendingNotificationFlags> for PendingNotification {
     diesel::AsExpression,
 )]
 #[diesel(sql_type = Text)]
-pub struct FcmDeviceToken {
+pub struct PushNotificationDeviceToken {
     token: String,
 }
 
-impl FcmDeviceToken {
+impl PushNotificationDeviceToken {
     pub fn into_string(self) -> String {
         self.token
     }
@@ -151,7 +151,7 @@ impl FcmDeviceToken {
     }
 }
 
-diesel_string_wrapper!(FcmDeviceToken);
+diesel_string_wrapper!(PushNotificationDeviceToken);
 
 #[derive(Debug, Selectable, Queryable)]
 #[diesel(table_name = crate::schema::common_state)]
@@ -247,8 +247,8 @@ pub struct PendingNotificationWithData {
 #[diesel(treat_none_as_null = true)]
 pub struct PushNotificationDbState {
     pub pending_notification: PendingNotification,
-    pub fcm_device_token: Option<FcmDeviceToken>,
-    pub fcm_device_token_unix_time: Option<UnixTime>,
+    pub push_notification_device_token: Option<PushNotificationDeviceToken>,
+    pub push_notification_device_token_unix_time: Option<UnixTime>,
 }
 
 /// Notification ID for an event. Can be used to prevent showing
