@@ -16,6 +16,7 @@ use crate::{
     AdminNotification, AutomaticProfileSearchCompletedNotification, NewMessageNotificationList,
     NewReceivedLikesCountResult, NotificationEvent, UnreadNewsCountResult,
     schema_sqlite_types::{Integer, Text},
+    sync_version_wrappers,
 };
 
 /// Pending notification (or multiple notifications which each have
@@ -347,3 +348,5 @@ pub struct GetVapidPublicKey {
     /// are enabled.
     pub vapid_public_key: Option<String>,
 }
+
+sync_version_wrappers!(PushNotificationInfoSyncVersion,);

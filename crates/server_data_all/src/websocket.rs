@@ -183,6 +183,16 @@ pub async fn sync_data_with_client_if_needed(
                 )
                 .await?;
             }
+            SyncCheckDataType::PushNotificationInfo => {
+                handle_push_notification_info_sync_version_check(
+                    read_handle,
+                    write_handle,
+                    socket,
+                    id,
+                    version.version,
+                )
+                .await?;
+            }
             SyncCheckDataType::ServerMaintenanceIsScheduled => {
                 handle_maintenance_info_removing_if_needed(manager_api_client, socket).await?;
             }
@@ -403,6 +413,38 @@ async fn handle_daily_likes_left_sync_version_check(
     };
 
     send_event(socket, EventToClientInternal::DailyLikesLeftChanged).await?;
+
+    Ok(())
+}
+
+async fn handle_push_notification_info_sync_version_check(
+    read_handle: &RouterDatabaseReadHandle,
+    write_handle: &WriteCommandRunnerHandle,
+    socket: &mut WebSocket,
+    id: AccountIdInternal,
+    sync_version: SyncVersionFromClient,
+) -> Result<(), WebSocketError> {
+    let current = read_handle
+        .common()
+        .push_notification()
+        .push_notification_info_sync_version(id)
+        .await
+        .change_context(WebSocketError::DatabasePushNotificationInfoSyncVersionQuery)?;
+    match current.check_is_sync_required(sync_version) {
+        SyncCheckResult::DoNothing => return Ok(()),
+        SyncCheckResult::ResetVersionAndSync => write_handle
+            .write(move |cmds| async move {
+                cmds.common()
+                    .push_notification()
+                    .reset_push_notification_info_sync_version(id)
+                    .await
+            })
+            .await
+            .change_context(WebSocketError::PushNotificationInfoSyncVersionResetFailed)?,
+        SyncCheckResult::Sync => (),
+    };
+
+    send_event(socket, EventToClientInternal::PushNotificationInfoChanged).await?;
 
     Ok(())
 }

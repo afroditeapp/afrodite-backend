@@ -67,6 +67,7 @@ pub enum EventType {
     ProfileStringModerationCompleted,
     AutomaticProfileSearchCompleted,
     AdminNotification,
+    PushNotificationInfoChanged,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -110,6 +111,7 @@ pub enum EventToClientInternal {
     ProfileStringModerationCompleted,
     AutomaticProfileSearchCompleted,
     AdminNotification,
+    PushNotificationInfoChanged,
 }
 
 impl From<&EventToClientInternal> for EventType {
@@ -130,6 +132,7 @@ impl From<&EventToClientInternal> for EventType {
             ProfileStringModerationCompleted => Self::ProfileStringModerationCompleted,
             AutomaticProfileSearchCompleted => Self::AutomaticProfileSearchCompleted,
             AdminNotification => Self::AdminNotification,
+            PushNotificationInfoChanged => Self::PushNotificationInfoChanged,
         }
     }
 }
@@ -158,7 +161,8 @@ impl From<EventToClientInternal> for EventToClient {
             | DailyLikesLeftChanged
             | ProfileStringModerationCompleted
             | AutomaticProfileSearchCompleted
-            | AdminNotification => (),
+            | AdminNotification
+            | PushNotificationInfoChanged => (),
         }
 
         value

@@ -1,7 +1,8 @@
 use diesel::{prelude::*, update};
 use error_stack::Result;
 use model::{
-    AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken, UnixTime,
+    AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken, SyncVersion,
+    UnixTime,
 };
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
@@ -24,6 +25,8 @@ impl CurrentWriteCommonPushNotification<'_> {
             .execute(self.conn())
             .into_db_error(id)?;
 
+        self.increment_push_notification_info_sync_version(id)?;
+
         Ok(())
     }
 
@@ -40,6 +43,8 @@ impl CurrentWriteCommonPushNotification<'_> {
             ))
             .execute(self.conn())
             .into_db_error(id)?;
+
+        self.increment_push_notification_info_sync_version(id)?;
 
         Ok(())
     }
@@ -71,6 +76,8 @@ impl CurrentWriteCommonPushNotification<'_> {
             ))
             .execute(self.conn())
             .into_db_error(id)?;
+
+        self.increment_push_notification_info_sync_version(id)?;
 
         Ok(notification_token)
     }
@@ -119,6 +126,37 @@ impl CurrentWriteCommonPushNotification<'_> {
                 .execute(self.conn())
                 .into_db_error(())?;
         }
+
+        Ok(())
+    }
+
+    pub fn reset_push_notification_info_sync_version(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::common_state::dsl::*;
+
+        update(common_state)
+            .filter(account_id.eq(id.as_db_id()))
+            .set(push_notification_info_sync_version.eq(0))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn increment_push_notification_info_sync_version(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::common_state::dsl::*;
+
+        update(common_state)
+            .filter(account_id.eq(id.as_db_id()))
+            .filter(push_notification_info_sync_version.lt(SyncVersion::MAX_VALUE))
+            .set(push_notification_info_sync_version.eq(push_notification_info_sync_version + 1))
+            .execute(self.conn())
+            .into_db_error(())?;
 
         Ok(())
     }

@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, PushNotificationDbState};
+use model::{AccountIdInternal, PushNotificationDbState, PushNotificationInfoSyncVersion};
 
 use crate::{DieselDatabaseError, define_current_read_commands};
 
@@ -16,6 +16,19 @@ impl CurrentReadCommonPushNotification<'_> {
         common_state
             .filter(account_id.eq(id.as_db_id()))
             .select(PushNotificationDbState::as_select())
+            .first(self.conn())
+            .change_context(DieselDatabaseError::Execute)
+    }
+
+    pub fn push_notification_info_sync_version(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<PushNotificationInfoSyncVersion, DieselDatabaseError> {
+        use crate::schema::common_state::dsl::*;
+
+        common_state
+            .filter(account_id.eq(id.as_db_id()))
+            .select(push_notification_info_sync_version)
             .first(self.conn())
             .change_context(DieselDatabaseError::Execute)
     }

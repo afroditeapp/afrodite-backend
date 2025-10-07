@@ -89,4 +89,17 @@ impl WriteCommandsCommonPushNotification<'_> {
         })
         .map(|_| ())
     }
+
+    pub async fn reset_push_notification_info_sync_version(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.common()
+                .push_notification()
+                .reset_push_notification_info_sync_version(id)
+        })?;
+
+        Ok(())
+    }
 }

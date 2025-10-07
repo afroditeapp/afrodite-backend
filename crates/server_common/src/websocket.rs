@@ -38,6 +38,8 @@ pub enum WebSocketError {
     DatabaseMediaContentSyncVersionQuery,
     #[error("Database: Daily likes left sync version query failed")]
     DatabaseDailyLikesLeftSyncVersionQuery,
+    #[error("Database: push notification info sync version query failed")]
+    DatabasePushNotificationInfoSyncVersionQuery,
     #[error("Database: Pending messages query failed")]
     DatabasePendingMessagesQuery,
     #[error("Database: Profile string moderation completed notification query failed")]
@@ -68,4 +70,6 @@ pub enum WebSocketError {
     MediaContentSyncVersionResetFailed,
     #[error("Daily likes left sync version number reset failed")]
     DailyLikesLeftSyncVersionResetFailed,
+    #[error("Push notification info sync version number reset failed")]
+    PushNotificationInfoSyncVersionResetFailed,
 }
