@@ -1,8 +1,7 @@
 use axum::{Extension, extract::State};
-use base64::{Engine, prelude::BASE64_STANDARD};
 use model::{
     AccountIdInternal, ClientType, GetPushNotificationInfo, PendingNotificationToken,
-    PendingNotificationWithData, PushNotificationDeviceToken,
+    PendingNotificationWithData, PushNotificationDeviceToken, VapidPublicKey,
 };
 use server_data::{
     app::{GetConfig, ReadData},
@@ -78,7 +77,7 @@ pub async fn get_push_notification_info(
     let vapid_public_key = if let Some(ClientType::Web) = client
         && let Some((_, vapid_builder)) = state.config().simple_backend().web_push_config()
     {
-        Some(BASE64_STANDARD.encode(vapid_builder.get_public_key()))
+        Some(VapidPublicKey::new(&vapid_builder.get_public_key()))
     } else {
         None
     };

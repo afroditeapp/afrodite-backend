@@ -1,4 +1,4 @@
-use base64::Engine;
+use base64::{Engine, prelude::BASE64_STANDARD};
 use diesel::{
     Selectable,
     deserialize::{FromSqlRow, Queryable},
@@ -342,12 +342,26 @@ impl NotificationStatus {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+/// Base64 encoded VAPID public key
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct VapidPublicKey {
+    key: String,
+}
+
+impl VapidPublicKey {
+    pub fn new(public_key: &[u8]) -> Self {
+        Self {
+            key: BASE64_STANDARD.encode(public_key),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct GetPushNotificationInfo {
     pub device_token: Option<PushNotificationDeviceToken>,
     /// Base64 encoded VAPID public key if web push notifications
     /// are enabled and current login session if from web client.
-    pub vapid_public_key: Option<String>,
+    pub vapid_public_key: Option<VapidPublicKey>,
     pub sync_version: PushNotificationInfoSyncVersion,
 }
 
