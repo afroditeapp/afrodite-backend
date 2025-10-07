@@ -343,10 +343,12 @@ impl NotificationStatus {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct GetVapidPublicKey {
+pub struct GetPushNotificationInfo {
+    pub device_token: Option<PushNotificationDeviceToken>,
     /// Base64 encoded VAPID public key if web push notifications
-    /// are enabled.
+    /// are enabled and current login session if from web client.
     pub vapid_public_key: Option<String>,
+    pub sync_version: PushNotificationInfoSyncVersion,
 }
 
 sync_version_wrappers!(PushNotificationInfoSyncVersion,);

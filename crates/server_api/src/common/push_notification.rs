@@ -1,10 +1,14 @@
 use axum::{Extension, extract::State};
 use base64::{Engine, prelude::BASE64_STANDARD};
 use model::{
-    AccountIdInternal, GetVapidPublicKey, PendingNotificationToken, PendingNotificationWithData,
-    PushNotificationDeviceToken,
+    AccountIdInternal, ClientType, GetPushNotificationInfo, PendingNotificationToken,
+    PendingNotificationWithData, PushNotificationDeviceToken,
 };
-use server_data::{app::GetConfig, write::GetWriteCommandsCommon};
+use server_data::{
+    app::{GetConfig, ReadData},
+    read::GetReadCommandsCommon,
+    write::GetWriteCommandsCommon,
+};
 use simple_backend::create_counters;
 
 use super::super::utils::{Json, StatusCode};
@@ -40,31 +44,57 @@ pub async fn post_set_device_token(
     Ok(pending_notification_token.into())
 }
 
-const PATH_GET_VAPID_PUBLIC_KEY: &str = "/common_api/get_vapid_public_key";
+const PATH_GET_PUSH_NOTIFICATION_INFO: &str = "/common_api/get_push_notification_info";
 
 #[utoipa::path(
     get,
-    path = PATH_GET_VAPID_PUBLIC_KEY,
+    path = PATH_GET_PUSH_NOTIFICATION_INFO,
     responses(
-        (status = 200, description = "Success.", body = GetVapidPublicKey),
+        (status = 200, description = "Success.", body = GetPushNotificationInfo),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_vapid_public_key(
+pub async fn get_push_notification_info(
     State(state): State<S>,
-) -> Result<Json<GetVapidPublicKey>, StatusCode> {
-    COMMON.get_vapid_public_key.incr();
+    Extension(id): Extension<AccountIdInternal>,
+) -> Result<Json<GetPushNotificationInfo>, StatusCode> {
+    COMMON.get_push_notification_info.incr();
 
-    let vapid_public_key =
-        if let Some((_, vapid_builder)) = state.config().simple_backend().web_push_config() {
-            Some(BASE64_STANDARD.encode(vapid_builder.get_public_key()))
-        } else {
-            None
-        };
+    let db_state = state
+        .read()
+        .common()
+        .push_notification()
+        .push_notification_db_state(id)
+        .await?;
 
-    let key = GetVapidPublicKey { vapid_public_key };
+    let client = state
+        .read()
+        .common()
+        .client_config()
+        .client_login_session_platform(id)
+        .await?;
+    let vapid_public_key = if let Some(ClientType::Web) = client
+        && let Some((_, vapid_builder)) = state.config().simple_backend().web_push_config()
+    {
+        Some(BASE64_STANDARD.encode(vapid_builder.get_public_key()))
+    } else {
+        None
+    };
+
+    let sync_version = state
+        .read()
+        .common()
+        .push_notification()
+        .push_notification_info_sync_version(id)
+        .await?;
+
+    let key = GetPushNotificationInfo {
+        device_token: db_state.push_notification_device_token,
+        vapid_public_key,
+        sync_version,
+    };
 
     Ok(key.into())
 }
@@ -96,7 +126,7 @@ pub async fn post_get_pending_notification(
     PendingNotificationWithData::default().into()
 }
 
-create_open_api_router!(fn router_push_notification_private, post_set_device_token, get_vapid_public_key,);
+create_open_api_router!(fn router_push_notification_private, post_set_device_token, get_push_notification_info,);
 
 create_open_api_router!(fn router_push_notification_public, post_get_pending_notification,);
 
@@ -105,6 +135,6 @@ create_counters!(
     COMMON,
     COMMON_PUSH_NOTIFICATION_COUNTERS_LIST,
     post_set_device_token,
-    get_vapid_public_key,
+    get_push_notification_info,
     post_get_pending_notification,
 );
