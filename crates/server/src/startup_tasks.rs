@@ -10,6 +10,7 @@ use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsA
 use server_data_chat::write::GetWriteCommandsChat;
 use server_data_profile::write::GetWriteCommandsProfile;
 use server_state::S;
+use sha2::{Digest, Sha256};
 
 pub struct StartupTasks {
     state: S,
@@ -27,6 +28,7 @@ impl StartupTasks {
         Self::handle_profile_attribute_file_changes(&self.state).await?;
         Self::handle_custom_report_file_changes(&self.state).await?;
         Self::handle_client_features_file_changes(&self.state).await?;
+        Self::handle_vapid_public_key_changes(&self.state).await?;
         Self::handle_account_specific_tasks(&self.state, email_sender).await
     }
 
@@ -72,6 +74,24 @@ impl StartupTasks {
             cmds.account()
                 .client_featues()
                 .update_client_features_sha256_and_sync_versions(hash)
+                .await
+        })
+        .await
+    }
+
+    async fn handle_vapid_public_key_changes(state: &S) -> Result<(), DataError> {
+        let hash = state
+            .config()
+            .simple_backend()
+            .web_push_config()
+            .map(|(_, key)| Sha256::digest(key.get_public_key()))
+            .map(|hash| format!("{hash:x}"))
+            .unwrap_or_default();
+
+        db_write_raw!(state, move |cmds| {
+            cmds.common()
+                .push_notification()
+                .update_vapid_public_key_sha256_and_sync_versions(hash)
                 .await
         })
         .await

@@ -869,6 +869,15 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    vapid_public_key_hash (row_type) {
+        row_type -> Integer,
+        sha256_hash -> Text,
+    }
+}
+
 diesel::joinable!(account -> account_id (account_id));
 diesel::joinable!(account_app_notification_settings -> account_id (account_id));
 diesel::joinable!(account_email_sending_state -> account_id (account_id));
@@ -1003,4 +1012,5 @@ diesel::allow_tables_to_appear_in_same_query!(
     sign_in_with_info,
     used_account_ids,
     used_content_ids,
+    vapid_public_key_hash,
 );

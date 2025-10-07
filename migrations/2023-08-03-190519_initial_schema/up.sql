@@ -238,6 +238,14 @@ CREATE TABLE IF NOT EXISTS admin_notification_subscriptions(
             ON UPDATE CASCADE
 );
 
+-- Store VAPID public key hash, so that changes to it can be detected
+-- when server starts.
+CREATE TABLE IF NOT EXISTS vapid_public_key_hash(
+    -- 0 = VAPID hash
+    row_type      INTEGER PRIMARY KEY NOT NULL,
+    sha256_hash   TEXT                NOT NULL
+);
+
 ---------- Tables for server component account ----------
 
 -- Sign in with related IDs for account

@@ -32,4 +32,15 @@ impl CurrentReadCommonPushNotification<'_> {
             .first(self.conn())
             .change_context(DieselDatabaseError::Execute)
     }
+
+    pub fn vapid_public_key_hash(&mut self) -> Result<Option<String>, DieselDatabaseError> {
+        use crate::schema::vapid_public_key_hash::dsl::*;
+
+        vapid_public_key_hash
+            .filter(row_type.eq(0))
+            .select(sha256_hash)
+            .first(self.conn())
+            .optional()
+            .change_context(DieselDatabaseError::Execute)
+    }
 }

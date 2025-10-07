@@ -1,4 +1,4 @@
-use diesel::{prelude::*, update};
+use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
     AccountIdInternal, PendingNotification, PendingNotificationToken, PushNotificationDeviceToken,
@@ -155,6 +155,37 @@ impl CurrentWriteCommonPushNotification<'_> {
             .filter(account_id.eq(id.as_db_id()))
             .filter(push_notification_info_sync_version.lt(SyncVersion::MAX_VALUE))
             .set(push_notification_info_sync_version.eq(push_notification_info_sync_version + 1))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn increment_push_notification_info_sync_version_for_every_account(
+        &mut self,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::common_state::dsl::*;
+
+        update(common_state)
+            .filter(push_notification_info_sync_version.lt(SyncVersion::MAX_VALUE))
+            .set(push_notification_info_sync_version.eq(push_notification_info_sync_version + 1))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn upsert_vapid_public_key_hash(
+        &mut self,
+        sha256_vapid_public_key_hash: &str,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::vapid_public_key_hash::dsl::*;
+
+        insert_into(vapid_public_key_hash)
+            .values((row_type.eq(0), sha256_hash.eq(sha256_vapid_public_key_hash)))
+            .on_conflict(row_type)
+            .do_update()
+            .set(sha256_hash.eq(sha256_vapid_public_key_hash))
             .execute(self.conn())
             .into_db_error(())?;
 

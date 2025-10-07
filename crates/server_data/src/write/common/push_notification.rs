@@ -1,9 +1,10 @@
-use database::current::write::GetDbWriteCommandsCommon;
+use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use model::{
     AccountIdInternal, PendingNotification, PendingNotificationFlags, PendingNotificationToken,
     PushNotificationDeviceToken,
 };
 use server_common::data::IntoDataError;
+use tracing::info;
 
 use crate::{
     DataError,
@@ -107,5 +108,38 @@ impl WriteCommandsCommonPushNotification<'_> {
         })?;
 
         Ok(())
+    }
+
+    /// Updates the VAPID public key sha256 and related
+    /// sync version for it for every account if needed.
+    pub async fn update_vapid_public_key_sha256_and_sync_versions(
+        &self,
+        sha256: String,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            let current_hash = cmds
+                .read()
+                .common()
+                .push_notification()
+                .vapid_public_key_hash()?;
+
+            if current_hash.as_deref() != Some(&sha256) {
+                info!(
+                    "VAPID public key hash changed from {:?} to {:?}",
+                    current_hash,
+                    Some(&sha256)
+                );
+
+                cmds.common()
+                    .push_notification()
+                    .upsert_vapid_public_key_hash(&sha256)?;
+
+                cmds.common()
+                    .push_notification()
+                    .increment_push_notification_info_sync_version_for_every_account()?;
+            }
+
+            Ok(())
+        })
     }
 }
