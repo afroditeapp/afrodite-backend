@@ -5,7 +5,9 @@ use axum::{
     extract::{ConnectInfo, Path, State},
 };
 use axum_extra::TypedHeader;
-use headers::{CacheControl, ContentEncoding, ContentType, ETag, IfNoneMatch};
+use headers::{
+    CacheControl, ContentEncoding, ContentType, ETag, Header, HeaderName, HeaderValue, IfNoneMatch,
+};
 use server_data::app::GetConfig;
 use simple_backend::{
     app::{FilePackageProvider, MaxMindDbDataProvider},
@@ -18,11 +20,40 @@ use crate::{
     utils::{IfNoneMatchExtensions, StatusCode},
 };
 
+#[derive(Debug, Clone)]
+pub struct ServiceWorkerAllowed(HeaderValue);
+
+impl Header for ServiceWorkerAllowed {
+    fn name() -> &'static HeaderName {
+        static NAME: HeaderName = HeaderName::from_static("service-worker-allowed");
+        &NAME
+    }
+
+    fn decode<'i, I>(_values: &mut I) -> Result<Self, headers::Error>
+    where
+        I: Iterator<Item = &'i HeaderValue>,
+    {
+        // Not needed for response-only header
+        Err(headers::Error::invalid())
+    }
+
+    fn encode<E: Extend<HeaderValue>>(&self, values: &mut E) {
+        values.extend(std::iter::once(self.0.clone()));
+    }
+}
+
+impl ServiceWorkerAllowed {
+    pub fn root_scope() -> Self {
+        Self(HeaderValue::from_static("/"))
+    }
+}
+
 type StaticFileResponse = (
     TypedHeader<ETag>,
     TypedHeader<CacheControl>,
     TypedHeader<ContentType>,
     Option<TypedHeader<ContentEncoding>>,
+    Option<TypedHeader<ServiceWorkerAllowed>>,
     Bytes,
 );
 
@@ -55,11 +86,18 @@ pub async fn get_file_package_access(
         .with_public()
         .with_immutable();
 
+    let service_worker_header = if wanted_file.ends_with("/sw.js") {
+        Some(TypedHeader(ServiceWorkerAllowed::root_scope()))
+    } else {
+        None
+    };
+
     Ok((
         TypedHeader(state.etag_utils().immutable_content().clone()),
         TypedHeader(cache_control),
         TypedHeader(file.content_type),
         file.content_encoding.map(TypedHeader),
+        service_worker_header,
         file.data,
     ))
 }
@@ -109,6 +147,7 @@ async fn return_index_html(
         TypedHeader(cache_control),
         TypedHeader(file.content_type),
         file.content_encoding.map(TypedHeader),
+        None,
         file.data,
     ))
 }
