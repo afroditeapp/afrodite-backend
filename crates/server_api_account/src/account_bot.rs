@@ -122,7 +122,9 @@ pub async fn post_remote_bot_login(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     };
 
-    is_ip_address_accepted(&state, address, configured_bot.access()).await?;
+    if !is_ip_address_accepted(&state, address, configured_bot.access()).await {
+        return Err(StatusCode::NOT_FOUND);
+    }
 
     let internal_id = state.get_internal_id(info.aid).await?;
     let is_bot = state.read().account().is_bot_account(internal_id).await?;
