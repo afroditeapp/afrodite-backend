@@ -271,11 +271,14 @@ impl<'a> NotificationChecker<'a> {
             .get_unreceived_notification(self.id)
             .await;
 
-        if let Some(_) = admin {
-            self.add_notification(
+        if let Some(admin) = admin {
+            let notification = PushNotification::new_with_body(
+                self.id.uuid,
                 PushNotificationId::AdminNotification,
                 "Admin notification".to_string(),
+                format!("{admin:?}"),
             );
+            self.notifications.push(notification);
         }
 
         Ok(())

@@ -51,6 +51,21 @@ impl PushNotification {
         }
     }
 
+    pub fn new_with_body(
+        account: AccountId,
+        notification: PushNotificationId,
+        title: String,
+        body: String,
+    ) -> Self {
+        Self {
+            title: Some(title),
+            body: Some(body),
+            id: (notification as i64).to_string(),
+            channel: notification.to_channel_id(),
+            a: account.to_string(),
+        }
+    }
+
     pub fn remove_notification(account: AccountId, notification: PushNotificationId) -> Self {
         Self {
             title: None,
