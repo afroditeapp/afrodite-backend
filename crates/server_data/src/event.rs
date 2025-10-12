@@ -16,6 +16,11 @@ use crate::{
     result::{Result, WrappedResultExt},
 };
 
+/// If [Self::hidden] is true, push notification was sent or sending was tried.
+pub struct NotificationVisibility {
+    pub hidden: bool,
+}
+
 #[derive(thiserror::Error, Debug)]
 pub enum EventError {
     #[error("Event mode access failed")]
@@ -155,6 +160,7 @@ impl<'a> EventManagerWithCacheReference<'a> {
             .write_cache_common(account, move |entry| {
                 if push_notification_sending_allowed {
                     entry.pending_notification_flags |= event.into();
+                    entry.pending_notification_sent_flags.remove(event.into());
                 }
                 Ok(())
             })
@@ -196,6 +202,7 @@ impl<'a> EventManagerWithCacheReference<'a> {
 
                 if push_notification_sending_allowed {
                     entry.pending_notification_flags |= event.into();
+                    entry.pending_notification_sent_flags.remove(event.into());
                 }
                 let sent = if let Some(sender) = entry.connection_event_sender() {
                     match sender
@@ -240,26 +247,35 @@ impl<'a> EventManagerWithCacheReference<'a> {
         self.push_notification_sender.send(account);
     }
 
+    /// Also remove the flags from sent flags
     pub async fn remove_specific_pending_notification_flags_from_cache(
         &'a self,
         account: AccountIdInternal,
         flags: PendingNotificationFlags,
-    ) {
+    ) -> NotificationVisibility {
         let edit_result = self
             .cache
             .write_cache_common(account, move |entry| {
                 entry.pending_notification_flags -= flags;
-                Ok(())
+                let visibility = NotificationVisibility {
+                    hidden: entry.pending_notification_sent_flags.contains(flags),
+                };
+                entry.pending_notification_sent_flags -= flags;
+                Ok(visibility)
             })
             .await
             .into_data_error(account);
 
         match edit_result {
-            Ok(()) => (),
-            Err(e) => error!("Failed to edit pending notification flags: {e:?}"),
+            Ok(v) => v,
+            Err(e) => {
+                error!("Failed to edit pending notification flags: {e:?}");
+                NotificationVisibility { hidden: false }
+            }
         }
     }
 
+    /// Also add the returned flags to sent flags
     pub async fn remove_pending_notification_flags_from_cache(
         &'a self,
         account: AccountIdInternal,
@@ -269,6 +285,7 @@ impl<'a> EventManagerWithCacheReference<'a> {
             .write_cache_common(account, move |entry| {
                 let flags = entry.pending_notification_flags;
                 entry.pending_notification_flags = PendingNotificationFlags::empty();
+                entry.pending_notification_sent_flags |= flags;
                 Ok(flags)
             })
             .await

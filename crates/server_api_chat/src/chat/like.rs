@@ -171,17 +171,23 @@ pub async fn post_get_new_received_likes_count(
 ) -> Result<Json<NewReceivedLikesCountResult>, StatusCode> {
     CHAT.post_get_new_received_likes_count.incr();
 
-    let chat_state = state.read().chat().chat_state(id).await?;
+    let mut info = state
+        .read()
+        .chat()
+        .chat_state(id)
+        .await?
+        .new_received_likes_info();
 
-    state
+    let visibility = state
         .event_manager()
         .remove_specific_pending_notification_flags_from_cache(
             id,
             PendingNotificationFlags::RECEIVED_LIKES_CHANGED,
         )
         .await;
+    info.h = visibility.hidden;
 
-    Ok(chat_state.new_received_likes_info().into())
+    Ok(info.into())
 }
 
 const PATH_POST_RESET_NEW_RECEIVED_LIKES_COUNT: &str = "/chat_api/reset_new_received_likes_count";

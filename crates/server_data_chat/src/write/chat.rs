@@ -15,13 +15,13 @@ use error_stack::ResultExt;
 use model::{NewReceivedLikesCountResult, ReceivedLikeId};
 use model_chat::{
     AccountIdInternal, AddPublicKeyResult, ChatStateRaw, ClientId, ClientLocalId,
-    NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags,
-    PublicKeyId, ReceivedLikesIteratorState, ResetReceivedLikesIteratorResult, SendMessageResult,
-    SentMessageId, SyncVersionUtils,
+    NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PublicKeyId,
+    ReceivedLikesIteratorState, ResetReceivedLikesIteratorResult, SendMessageResult, SentMessageId,
+    SyncVersionUtils,
 };
 use server_data::{
-    DataError, DieselDatabaseError, app::EventManagerProvider, db_transaction,
-    define_cmd_wrapper_write, id::ToAccountIdInternal, result::Result, write::DbTransaction,
+    DataError, DieselDatabaseError, db_transaction, define_cmd_wrapper_write,
+    id::ToAccountIdInternal, result::Result, write::DbTransaction,
 };
 use simple_backend_utils::ContextExt;
 use utils::encrypt::ParsedKeys;
@@ -192,28 +192,14 @@ impl WriteCommandsChat<'_> {
             });
         }
 
-        let pending_messages_exists = db_transaction!(self, move |mut cmds| {
+        db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .message()
                 .add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
                     message_receiver,
                     converted,
-                )?;
-
-            cmds.read()
-                .chat()
-                .message()
-                .pending_messages_exists(message_receiver)
-        })?;
-
-        if !pending_messages_exists {
-            self.event_manager()
-                .remove_specific_pending_notification_flags_from_cache(
-                    message_receiver,
-                    PendingNotificationFlags::NEW_MESSAGE,
                 )
-                .await;
-        }
+        })?;
 
         Ok(())
     }

@@ -75,6 +75,7 @@ impl CurrentReadProfileNotification<'_> {
                     id: v.6,
                     viewed: v.7,
                 },
+                hidden: false,
             });
 
         Ok(query_result.unwrap_or_default())

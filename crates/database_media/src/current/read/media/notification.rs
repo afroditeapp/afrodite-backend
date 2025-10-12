@@ -67,6 +67,7 @@ impl CurrentReadMediaNotification<'_> {
                     id: v.4,
                     viewed: v.5,
                 },
+                hidden: false,
             });
 
         Ok(query_result.unwrap_or_default())

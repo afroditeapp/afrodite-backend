@@ -148,6 +148,10 @@ CREATE TABLE IF NOT EXISTS common_state(
     client_config_sync_version    INTEGER             NOT NULL DEFAULT 0,
     -- Bitflag value for pending notification
     pending_notification          INTEGER             NOT NULL DEFAULT 0,
+    -- Bitflag value for sent notifications. Used
+    -- to prevent showing same notification again when WebSocket
+    -- connects.
+    pending_notification_sent     INTEGER             NOT NULL DEFAULT 0,
     -- Access token for getting pending notifications from server.
     pending_notification_token    TEXT                         UNIQUE,
     push_notification_device_token TEXT                        UNIQUE,

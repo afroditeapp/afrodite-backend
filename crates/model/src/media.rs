@@ -288,6 +288,10 @@ pub struct MediaContentModerationCompletedNotification {
     pub accepted: NotificationStatus,
     pub rejected: NotificationStatus,
     pub deleted: NotificationStatus,
+    /// If true, client should not show notifications
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub hidden: bool,
 }
 
 impl MediaContentModerationCompletedNotification {

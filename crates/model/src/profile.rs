@@ -84,6 +84,10 @@ pub struct ProfileStringModerationCompletedNotification {
     pub name_rejected: NotificationStatus,
     pub text_accepted: NotificationStatus,
     pub text_rejected: NotificationStatus,
+    /// If true, client should not show the notifications
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub hidden: bool,
 }
 
 impl ProfileStringModerationCompletedNotification {

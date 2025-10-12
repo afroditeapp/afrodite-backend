@@ -1,7 +1,7 @@
 use axum::{Extension, extract::State};
 use model::{
-    AccountIdInternal, AdminNotification, AdminNotificationSettings, PendingNotificationFlags,
-    Permissions,
+    AccountIdInternal, AdminNotification, AdminNotificationSettings, GetAdminNotification,
+    PendingNotificationFlags, Permissions,
 };
 use server_data::{
     app::EventManagerProvider, read::GetReadCommandsCommon, write::GetWriteCommandsCommon,
@@ -186,7 +186,7 @@ const PATH_POST_GET_ADMIN_NOTIFICATION: &str = "/common_api/admin_notification";
     post,
     path = PATH_POST_GET_ADMIN_NOTIFICATION,
     responses(
-        (status = 200, description = "Successfull.", body = AdminNotification),
+        (status = 200, description = "Successfull.", body = GetAdminNotification),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -196,11 +196,11 @@ pub async fn post_get_admin_notification(
     State(state): State<S>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     Extension(api_caller_permissions): Extension<Permissions>,
-) -> Result<Json<AdminNotification>, StatusCode> {
+) -> Result<Json<GetAdminNotification>, StatusCode> {
     COMMON_ADMIN.post_get_admin_notification.incr();
 
     if api_caller_permissions.admin_subscribe_admin_notifications {
-        state
+        let visibility = state
             .event_manager()
             .remove_specific_pending_notification_flags_from_cache(
                 api_caller_account_id,
@@ -213,6 +213,11 @@ pub async fn post_get_admin_notification(
             .write()
             .mark_notification_received_and_return_it(api_caller_account_id)
             .await;
+
+        let data = GetAdminNotification {
+            hidden: visibility.hidden,
+            state: data,
+        };
 
         Ok(data.into())
     } else {

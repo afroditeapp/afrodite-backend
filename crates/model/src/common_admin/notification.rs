@@ -256,3 +256,12 @@ pub enum AdminNotificationTypes {
     ModerateProfileNamesHuman,
     ProcessReports,
 }
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct GetAdminNotification {
+    /// If true, client should not show the notification
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub hidden: bool,
+    pub state: AdminNotification,
+}

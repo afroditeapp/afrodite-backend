@@ -33,15 +33,16 @@ pub async fn post_get_unread_news_count(
 ) -> Result<Json<UnreadNewsCountResult>, StatusCode> {
     ACCOUNT.get_unread_news_count.incr();
 
-    let r = state.read().account().news().unread_news_count(id).await?;
+    let mut r = state.read().account().news().unread_news_count(id).await?;
 
-    state
+    let visibility = state
         .event_manager()
         .remove_specific_pending_notification_flags_from_cache(
             id,
             PendingNotificationFlags::NEWS_CHANGED,
         )
         .await;
+    r.h = visibility.hidden;
 
     Ok(r.into())
 }

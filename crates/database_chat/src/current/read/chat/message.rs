@@ -31,23 +31,6 @@ impl CurrentReadChatMessage<'_> {
         Ok(value)
     }
 
-    pub fn pending_messages_exists(
-        &mut self,
-        id_message_receiver: AccountIdInternal,
-    ) -> Result<bool, DieselDatabaseError> {
-        use crate::schema::pending_messages::dsl::*;
-
-        let value: Option<i64> = pending_messages
-            .filter(account_id_receiver.eq(id_message_receiver.as_db_id()))
-            .filter(receiver_acknowledgement.eq(false))
-            .select(id)
-            .first(self.conn())
-            .optional()
-            .into_db_error(())?;
-
-        Ok(value.is_some())
-    }
-
     pub fn new_message_notification_list(
         &mut self,
         id_message_receiver: AccountIdInternal,

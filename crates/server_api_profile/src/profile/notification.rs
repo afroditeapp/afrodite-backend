@@ -97,20 +97,21 @@ pub async fn post_get_profile_string_moderation_completed_notification(
         .post_get_profile_string_moderation_completed_notification
         .incr();
 
-    let info = state
+    let mut info = state
         .read()
         .profile()
         .notification()
         .profile_string_moderation_completed(account_id)
         .await?;
 
-    state
+    let visibility = state
         .event_manager()
         .remove_specific_pending_notification_flags_from_cache(
             account_id,
             PendingNotificationFlags::PROFILE_STRING_MODERATION_COMPLETED,
         )
         .await;
+    info.hidden = visibility.hidden;
 
     Ok(info.into())
 }
@@ -171,20 +172,21 @@ pub async fn post_get_automatic_profile_search_completed_notification(
         .post_get_automatic_profile_search_completed_notification
         .incr();
 
-    let info = state
+    let mut info = state
         .read()
         .profile()
         .notification()
         .automatic_profile_search_completed(account_id)
         .await?;
 
-    state
+    let visiblity = state
         .event_manager()
         .remove_specific_pending_notification_flags_from_cache(
             account_id,
             PendingNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED,
         )
         .await;
+    info.hidden = visiblity.hidden;
 
     Ok(info.into())
 }

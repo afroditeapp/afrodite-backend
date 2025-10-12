@@ -104,6 +104,10 @@ impl From<WeekdayFlags> for SelectedWeekdays {
 pub struct AutomaticProfileSearchCompletedNotification {
     pub profiles_found: NotificationStatus,
     pub profile_count: i64,
+    /// If true, client should not show the notification
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub hidden: bool,
 }
 
 impl AutomaticProfileSearchCompletedNotification {

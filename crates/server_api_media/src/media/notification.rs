@@ -96,20 +96,21 @@ pub async fn post_get_media_content_moderation_completed_notification(
         .post_get_media_content_moderation_completed_notification
         .incr();
 
-    let info = state
+    let mut info = state
         .read()
         .media()
         .notification()
         .media_content_moderation_completed(account_id)
         .await?;
 
-    state
+    let visibility = state
         .event_manager()
         .remove_specific_pending_notification_flags_from_cache(
             account_id,
             PendingNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED,
         )
         .await;
+    info.hidden = visibility.hidden;
 
     Ok(info.into())
 }

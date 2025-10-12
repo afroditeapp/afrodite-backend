@@ -129,6 +129,10 @@ pub struct NewReceivedLikesCountResult {
     /// Latest received like in use. Client can use this
     /// to check should received likes be refreshed.
     pub l: ReceivedLikeId,
+    /// If true, client should not show the notification
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub h: bool,
 }
 
 #[derive(Debug, Clone)]
