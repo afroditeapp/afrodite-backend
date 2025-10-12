@@ -1,7 +1,9 @@
 use std::time::Duration;
 
+use aes_gcm::{AeadCore, Aes128Gcm, KeyInit, aead::Aead};
+use base64::Engine;
 use config::Config;
-use error_stack::{Result, ResultExt};
+use error_stack::{Report, Result, ResultExt};
 use fcm::{
     FcmClient,
     message::{AndroidConfig, AndroidMessagePriority, Message, Target},
@@ -132,8 +134,16 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> FcmManager<T> {
             return Ok(());
         };
 
+        let Some(encryption_key) = info.db_state.push_notification_encryption_key else {
+            return Ok(());
+        };
+
+        let encryption_key_bytes = base64::engine::general_purpose::STANDARD
+            .decode(encryption_key.as_str())
+            .change_context(PushNotificationError::EncryptionFailed)?;
+
         for n in info.notifications {
-            let message = self.create_message(&token, n)?;
+            let message = self.create_message(&token, &n, &encryption_key_bytes)?;
 
             match self
                 .sending_logic
@@ -163,12 +173,48 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> FcmManager<T> {
     fn create_message(
         &self,
         token: &PushNotificationDeviceToken,
-        notification: PushNotification,
+        notification: &PushNotification,
+        encryption_key_bytes: &[u8],
     ) -> Result<Message, PushNotificationError> {
-        let json_object =
-            serde_json::to_value(&notification).change_context(PushNotificationError::Serialize)?;
+        let notification_content = if let Some(body) = notification.body() {
+            serde_json::json!({
+                "title": notification.title(),
+                "body": body,
+            })
+        } else {
+            serde_json::json!({
+                "title": notification.title(),
+            })
+        };
+
+        let content_json = serde_json::to_string(&notification_content)
+            .change_context(PushNotificationError::Serialize)?;
+
+        let cipher = Aes128Gcm::new_from_slice(encryption_key_bytes)
+            .change_context(PushNotificationError::EncryptionFailed)?;
+
+        let nonce = Aes128Gcm::generate_nonce(OsRng);
+
+        let encrypted = cipher
+            .encrypt(&nonce, content_json.as_bytes())
+            .map_err(|_| {
+                Report::new(PushNotificationError::EncryptionFailed)
+                    .attach_printable("Failed to encrypt notification content")
+            })?;
+
+        let encrypted_base64 = base64::engine::general_purpose::STANDARD.encode(&encrypted);
+        let nonce_base64 = base64::engine::general_purpose::STANDARD.encode(nonce.as_slice());
+
+        let mut data = serde_json::Map::new();
+        data.insert("id".to_string(), serde_json::json!(notification.id()));
+        if let Some(channel) = notification.channel() {
+            data.insert("channel".to_string(), serde_json::json!(channel));
+        }
+        data.insert("encrypted".to_string(), serde_json::json!(encrypted_base64));
+        data.insert("nonce".to_string(), serde_json::json!(nonce_base64));
+
         let m = Message {
-            data: Some(json_object),
+            data: Some(serde_json::Value::Object(data)),
             target: Target::Token(token.clone().into_string()),
             android: Some(AndroidConfig {
                 priority: Some(if notification.is_visible() {

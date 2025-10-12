@@ -88,6 +88,10 @@ impl PushNotification {
     pub fn body(&self) -> Option<&str> {
         self.body.as_deref()
     }
+
+    pub fn channel(&self) -> Option<&str> {
+        self.channel
+    }
 }
 
 /// Notification IDs from client
