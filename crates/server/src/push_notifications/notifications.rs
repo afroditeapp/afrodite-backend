@@ -74,7 +74,7 @@ struct NotificationChecker<'a> {
 
 impl<'a> NotificationChecker<'a> {
     fn add_notification(&mut self, notification: PushNotificationId, title: String) {
-        let notification = PushNotification::new(self.id.uuid, notification, title);
+        let notification = PushNotification::new(notification, title);
         self.notifications.push(notification);
     }
 
@@ -96,7 +96,6 @@ impl<'a> NotificationChecker<'a> {
                 .await?
                 .unwrap_or_default();
             let notification = PushNotification::new_message(
-                self.id.uuid,
                 n.c,
                 if n.m == 1 {
                     self.notification_strings.message_received_single(&name)
@@ -182,10 +181,8 @@ impl<'a> NotificationChecker<'a> {
             .await?;
 
         if count.c.c == 0 {
-            let notification = PushNotification::remove_notification(
-                self.id.uuid,
-                PushNotificationId::NewsItemAvailable,
-            );
+            let notification =
+                PushNotification::remove_notification(PushNotificationId::NewsItemAvailable);
             self.notifications.push(notification);
         } else {
             self.add_notification(
@@ -273,7 +270,6 @@ impl<'a> NotificationChecker<'a> {
 
         if let Some(admin) = admin {
             let notification = PushNotification::new_with_body(
-                self.id.uuid,
                 PushNotificationId::AdminNotification,
                 "Admin notification".to_string(),
                 format!("{admin:?}"),

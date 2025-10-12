@@ -1,8 +1,7 @@
 use serde::Serialize;
 
 use crate::{
-    AccountId, ConversationId, PendingNotificationFlags, PushNotificationDbState,
-    PushNotificationDeviceToken,
+    ConversationId, PendingNotificationFlags, PushNotificationDbState, PushNotificationDeviceToken,
 };
 
 #[derive(Debug)]
@@ -34,56 +33,43 @@ pub struct PushNotification {
     id: String,
     /// Notification channel ID string for Android client.
     channel: Option<&'static str>,
-    /// Notification receiver AccountId for preventing
-    /// client to use this notification if client is signed in to
-    /// a different account.
-    a: String,
 }
 
 impl PushNotification {
-    pub fn new(account: AccountId, notification: PushNotificationId, title: String) -> Self {
+    pub fn new(notification: PushNotificationId, title: String) -> Self {
         Self {
             title: Some(title),
             body: None,
             id: (notification as i64).to_string(),
             channel: notification.to_channel_id(),
-            a: account.to_string(),
         }
     }
 
-    pub fn new_with_body(
-        account: AccountId,
-        notification: PushNotificationId,
-        title: String,
-        body: String,
-    ) -> Self {
+    pub fn new_with_body(notification: PushNotificationId, title: String, body: String) -> Self {
         Self {
             title: Some(title),
             body: Some(body),
             id: (notification as i64).to_string(),
             channel: notification.to_channel_id(),
-            a: account.to_string(),
         }
     }
 
-    pub fn remove_notification(account: AccountId, notification: PushNotificationId) -> Self {
+    pub fn remove_notification(notification: PushNotificationId) -> Self {
         Self {
             title: None,
             body: None,
             id: (notification as i64).to_string(),
             channel: notification.to_channel_id(),
-            a: account.to_string(),
         }
     }
 
-    pub fn new_message(account: AccountId, conversation: ConversationId, title: String) -> Self {
+    pub fn new_message(conversation: ConversationId, title: String) -> Self {
         Self {
             title: Some(title),
             body: None,
             id: ((PushNotificationId::FirstNewMessageNotificationId as i64) + conversation.id)
                 .to_string(),
             channel: Some("messages"),
-            a: account.to_string(),
         }
     }
 
@@ -101,11 +87,6 @@ impl PushNotification {
 
     pub fn body(&self) -> Option<&str> {
         self.body.as_deref()
-    }
-
-    /// Account ID
-    pub fn a(&self) -> &str {
-        &self.a
     }
 }
 
