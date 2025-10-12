@@ -1,7 +1,7 @@
 use axum::{Extension, extract::State};
 use model::{
     AccountIdInternal, ClientType, GetPushNotificationInfo, PendingNotificationToken,
-    PendingNotificationWithData, PushNotificationDeviceToken, VapidPublicKey,
+    PushNotificationDeviceToken, VapidPublicKey,
 };
 use server_data::{
     app::{GetConfig, ReadData},
@@ -98,36 +98,7 @@ pub async fn get_push_notification_info(
     Ok(key.into())
 }
 
-const PATH_POST_GET_PENDING_NOTIFICATION: &str = "/common_api/get_pending_notification";
-
-/// Get pending notification and reset pending notification.
-///
-/// When client receives a FCM data notification use this API route
-/// to download the notification.
-///
-/// Requesting this route is always valid to avoid figuring out device
-/// token values more easily.
-#[utoipa::path(
-    post,
-    path = PATH_POST_GET_PENDING_NOTIFICATION,
-    request_body(content = PendingNotificationToken),
-    responses(
-        (status = 200, description = "Success", body = PendingNotificationWithData),
-    ),
-    security(), // This is public route handler
-)]
-pub async fn post_get_pending_notification(
-    State(_state): State<S>,
-    Json(_token): Json<PendingNotificationToken>,
-) -> Json<PendingNotificationWithData> {
-    COMMON.post_get_pending_notification.incr();
-
-    PendingNotificationWithData::default().into()
-}
-
 create_open_api_router!(fn router_push_notification_private, post_set_device_token, get_push_notification_info,);
-
-create_open_api_router!(fn router_push_notification_public, post_get_pending_notification,);
 
 create_counters!(
     CommonCounters,
@@ -135,5 +106,4 @@ create_counters!(
     COMMON_PUSH_NOTIFICATION_COUNTERS_LIST,
     post_set_device_token,
     get_push_notification_info,
-    post_get_pending_notification,
 );

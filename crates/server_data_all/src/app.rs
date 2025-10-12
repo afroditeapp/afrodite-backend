@@ -1,10 +1,7 @@
 use axum::extract::ws::WebSocket;
 use config::Config;
 use futures::{FutureExt, future::BoxFuture};
-use model::{
-    Account, AccountIdInternal, EmailMessages, PendingNotificationToken,
-    PendingNotificationWithData, SyncDataVersionFromClient,
-};
+use model::{Account, AccountIdInternal, EmailMessages, SyncDataVersionFromClient};
 use model_account::{EmailAddress, SignInWithInfo};
 use server_common::websocket::WebSocketError;
 use server_data::{
@@ -94,19 +91,6 @@ impl DataAllUtils for DataAllUtilsImpl {
             .await?;
             crate::websocket::send_events_if_needed(read_handle, manager_api, socket, id).await?;
             Ok(())
-        }
-        .boxed()
-    }
-
-    fn get_push_notification_data<'a>(
-        &self,
-        read_handle: &'a RouterDatabaseReadHandle,
-        write_handle: &'a WriteCommandRunnerHandle,
-        token: PendingNotificationToken,
-    ) -> BoxFuture<'a, (Option<AccountIdInternal>, PendingNotificationWithData)> {
-        async move {
-            crate::push_notification::get_push_notification_data(read_handle, write_handle, token)
-                .await
         }
         .boxed()
     }

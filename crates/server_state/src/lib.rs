@@ -12,10 +12,7 @@ use client_version::ClientVersionTracker;
 use config::Config;
 use data_signer::DataSigner;
 use ip_address::IpAddressUsageTracker;
-use model::{
-    Account, AccountIdInternal, PendingNotificationToken, PendingNotificationWithData,
-    SyncDataVersionFromClient,
-};
+use model::{Account, AccountIdInternal, SyncDataVersionFromClient};
 use model_chat::SignInWithInfo;
 use model_server_data::EmailAddress;
 use server_common::{push_notifications::PushNotificationSender, websocket::WebSocketError};
@@ -188,16 +185,6 @@ impl DataAllAccess<'_> {
             id,
             sync_versions,
         );
-        cmd.await
-    }
-
-    pub async fn get_push_notification_data(
-        &self,
-        token: PendingNotificationToken,
-    ) -> (Option<AccountIdInternal>, PendingNotificationWithData) {
-        let cmd = self
-            .utils()
-            .get_push_notification_data(self.read(), self.write(), token);
         cmd.await
     }
 

@@ -57,8 +57,7 @@ impl CommonRoutes {
     }
 
     pub fn routes_with_obfuscation_support(state: StateForRouterCreation) -> Router {
-        let public =
-            Router::new().merge(api::common::router_push_notification_public(state.clone()));
+        let public = Router::new();
         public.merge(ConnectedApp::new(state).private_common_router())
     }
 }

@@ -1,8 +1,5 @@
 use config::file_notification_content::NotificationStringGetter;
-use model::{
-    AccountIdInternal, NewMessageNotificationList, PendingNotificationFlags,
-    PendingNotificationWithData, PushNotification, PushNotificationId,
-};
+use model::{AccountIdInternal, PendingNotificationFlags, PushNotification, PushNotificationId};
 use server_api::{
     DataError,
     app::{AdminNotificationProvider, GetConfig, ReadData, WriteData},
@@ -76,13 +73,8 @@ struct NotificationChecker<'a> {
 }
 
 impl<'a> NotificationChecker<'a> {
-    fn add_notification(
-        &mut self,
-        notification: PushNotificationId,
-        title: String,
-        data: PendingNotificationWithData,
-    ) {
-        let notification = PushNotification::new(self.id.uuid, notification, title, data);
+    fn add_notification(&mut self, notification: PushNotificationId, title: String) {
+        let notification = PushNotification::new(self.id.uuid, notification, title);
         self.notifications.push(notification);
     }
 
@@ -110,10 +102,6 @@ impl<'a> NotificationChecker<'a> {
                     self.notification_strings.message_received_single(&name)
                 } else {
                     self.notification_strings.message_received_multiple(&name)
-                },
-                PendingNotificationWithData {
-                    new_message: Some(NewMessageNotificationList { v: vec![n] }),
-                    ..Default::default()
                 },
             );
             self.notifications.push(notification);
@@ -146,10 +134,6 @@ impl<'a> NotificationChecker<'a> {
             } else {
                 self.notification_strings.like_received_multiple()
             },
-            PendingNotificationWithData {
-                received_likes_changed: Some(v),
-                ..Default::default()
-            },
         );
 
         Ok(())
@@ -168,10 +152,6 @@ impl<'a> NotificationChecker<'a> {
             self.add_notification(
                 PushNotificationId::MediaContentModerationAccepted,
                 self.notification_strings.media_content_accepted(),
-                PendingNotificationWithData {
-                    media_content_accepted: Some(v.accepted),
-                    ..Default::default()
-                },
             );
         }
 
@@ -179,10 +159,6 @@ impl<'a> NotificationChecker<'a> {
             self.add_notification(
                 PushNotificationId::MediaContentModerationRejected,
                 self.notification_strings.media_content_rejected(),
-                PendingNotificationWithData {
-                    media_content_rejected: Some(v.rejected),
-                    ..Default::default()
-                },
             );
         }
 
@@ -190,10 +166,6 @@ impl<'a> NotificationChecker<'a> {
             self.add_notification(
                 PushNotificationId::MediaContentModerationDeleted,
                 self.notification_strings.media_content_deleted(),
-                PendingNotificationWithData {
-                    media_content_deleted: Some(v.deleted),
-                    ..Default::default()
-                },
             );
         }
 
@@ -213,20 +185,12 @@ impl<'a> NotificationChecker<'a> {
             let notification = PushNotification::remove_notification(
                 self.id.uuid,
                 PushNotificationId::NewsItemAvailable,
-                PendingNotificationWithData {
-                    news_changed: Some(count),
-                    ..Default::default()
-                },
             );
             self.notifications.push(notification);
         } else {
             self.add_notification(
                 PushNotificationId::NewsItemAvailable,
                 self.notification_strings.news_item_available(),
-                PendingNotificationWithData {
-                    news_changed: Some(count),
-                    ..Default::default()
-                },
             );
         }
 
@@ -246,10 +210,6 @@ impl<'a> NotificationChecker<'a> {
             self.add_notification(
                 PushNotificationId::ProfileNameModerationAccepted,
                 self.notification_strings.profile_name_accepted(),
-                PendingNotificationWithData {
-                    profile_name_accepted: Some(v.name_accepted),
-                    ..Default::default()
-                },
             );
         }
 
@@ -257,10 +217,6 @@ impl<'a> NotificationChecker<'a> {
             self.add_notification(
                 PushNotificationId::ProfileNameModerationRejected,
                 self.notification_strings.profile_name_rejected(),
-                PendingNotificationWithData {
-                    profile_name_rejected: Some(v.name_rejected),
-                    ..Default::default()
-                },
             );
         }
 
@@ -268,10 +224,6 @@ impl<'a> NotificationChecker<'a> {
             self.add_notification(
                 PushNotificationId::ProfileTextModerationAccepted,
                 self.notification_strings.profile_text_accepted(),
-                PendingNotificationWithData {
-                    profile_text_accepted: Some(v.text_accepted),
-                    ..Default::default()
-                },
             );
         }
 
@@ -279,10 +231,6 @@ impl<'a> NotificationChecker<'a> {
             self.add_notification(
                 PushNotificationId::ProfileTextModerationRejected,
                 self.notification_strings.profile_text_rejected(),
-                PendingNotificationWithData {
-                    profile_text_rejected: Some(v.text_rejected),
-                    ..Default::default()
-                },
             );
         }
 
@@ -310,10 +258,6 @@ impl<'a> NotificationChecker<'a> {
                             &search.profile_count.to_string(),
                         )
                 },
-                PendingNotificationWithData {
-                    automatic_profile_search_completed: Some(search),
-                    ..Default::default()
-                },
             );
         }
 
@@ -327,14 +271,10 @@ impl<'a> NotificationChecker<'a> {
             .get_unreceived_notification(self.id)
             .await;
 
-        if let Some(admin) = admin {
+        if let Some(_) = admin {
             self.add_notification(
                 PushNotificationId::AdminNotification,
                 "Admin notification".to_string(),
-                PendingNotificationWithData {
-                    admin_notification: Some(admin),
-                    ..Default::default()
-                },
             );
         }
 

@@ -1,8 +1,8 @@
-use serde::{Serialize, ser::Error};
+use serde::Serialize;
 
 use crate::{
-    AccountId, ConversationId, PendingNotificationFlags, PendingNotificationWithData,
-    PushNotificationDbState, PushNotificationDeviceToken,
+    AccountId, ConversationId, PendingNotificationFlags, PushNotificationDbState,
+    PushNotificationDeviceToken,
 };
 
 #[derive(Debug)]
@@ -24,22 +24,6 @@ pub struct PushNotificationSendingInfo {
 }
 
 #[derive(Serialize)]
-pub struct PendingNotificationWithDataString(
-    #[serde(serialize_with = "serialize_data_as_string")] PendingNotificationWithData,
-);
-
-fn serialize_data_as_string<S>(
-    data: &PendingNotificationWithData,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-{
-    let json_string = serde_json::to_string(data).map_err(S::Error::custom)?;
-    serializer.serialize_str(&json_string)
-}
-
-#[derive(Serialize)]
 pub struct PushNotification {
     /// If None, notification should be hidden
     title: Option<String>,
@@ -54,50 +38,30 @@ pub struct PushNotification {
     /// client to use this notification if client is signed in to
     /// a different account.
     a: String,
-    /// Notification related state which client should store
-    /// to prevent the same notification showing again
-    /// when WebSocket connects.
-    data: PendingNotificationWithDataString,
 }
 
 impl PushNotification {
-    pub fn new(
-        account: AccountId,
-        notification: PushNotificationId,
-        title: String,
-        data: PendingNotificationWithData,
-    ) -> Self {
+    pub fn new(account: AccountId, notification: PushNotificationId, title: String) -> Self {
         Self {
             title: Some(title),
             body: None,
             id: (notification as i64).to_string(),
             channel: notification.to_channel_id(),
             a: account.to_string(),
-            data: PendingNotificationWithDataString(data),
         }
     }
 
-    pub fn remove_notification(
-        account: AccountId,
-        notification: PushNotificationId,
-        data: PendingNotificationWithData,
-    ) -> Self {
+    pub fn remove_notification(account: AccountId, notification: PushNotificationId) -> Self {
         Self {
             title: None,
             body: None,
             id: (notification as i64).to_string(),
             channel: notification.to_channel_id(),
             a: account.to_string(),
-            data: PendingNotificationWithDataString(data),
         }
     }
 
-    pub fn new_message(
-        account: AccountId,
-        conversation: ConversationId,
-        title: String,
-        data: PendingNotificationWithData,
-    ) -> Self {
+    pub fn new_message(account: AccountId, conversation: ConversationId, title: String) -> Self {
         Self {
             title: Some(title),
             body: None,
@@ -105,7 +69,6 @@ impl PushNotification {
                 .to_string(),
             channel: Some("messages"),
             a: account.to_string(),
-            data: PendingNotificationWithDataString(data),
         }
     }
 
@@ -128,10 +91,6 @@ impl PushNotification {
     /// Account ID
     pub fn a(&self) -> &str {
         &self.a
-    }
-
-    pub fn data(&self) -> &PendingNotificationWithDataString {
-        &self.data
     }
 }
 

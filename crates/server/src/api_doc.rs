@@ -38,9 +38,6 @@ impl ApiDoc {
             .merge_from(
                 server_api::common::router_push_notification_private(state.clone()).into_openapi(),
             )
-            .merge_from(
-                server_api::common::router_push_notification_public(state.clone()).into_openapi(),
-            )
             .tag_routes("common");
         doc.merge(common);
         let common_admin = ApiDoc::openapi()

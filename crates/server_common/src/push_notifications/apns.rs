@@ -215,9 +215,6 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> ApnsManager<T> {
         payload
             .add_custom_data("a", &notification.a())
             .change_context(PushNotificationError::Serialize)?;
-        payload
-            .add_custom_data("data", &notification.data())
-            .change_context(PushNotificationError::Serialize)?;
         Ok(payload)
     }
 }

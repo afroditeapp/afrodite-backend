@@ -3,10 +3,7 @@ use std::{future::Future, sync::Arc};
 use axum::extract::ws::WebSocket;
 use config::{Config, file::EmailAddress};
 use futures::future::BoxFuture;
-use model::{
-    Account, AccountId, AccountIdInternal, PendingNotificationToken, PendingNotificationWithData,
-    SyncDataVersionFromClient,
-};
+use model::{Account, AccountId, AccountIdInternal, SyncDataVersionFromClient};
 use model_server_data::SignInWithInfo;
 pub use server_common::app::*;
 use server_common::websocket::WebSocketError;
@@ -129,13 +126,6 @@ pub trait DataAllUtils: Send + Sync + 'static {
         id: AccountIdInternal,
         sync_versions: Vec<SyncDataVersionFromClient>,
     ) -> BoxFuture<'a, server_common::result::Result<(), WebSocketError>>;
-
-    fn get_push_notification_data<'a>(
-        &self,
-        read_handle: &'a RouterDatabaseReadHandle,
-        write_handle: &'a WriteCommandRunnerHandle,
-        token: PendingNotificationToken,
-    ) -> BoxFuture<'a, (Option<AccountIdInternal>, PendingNotificationWithData)>;
 
     fn complete_initial_setup<'a>(
         &self,

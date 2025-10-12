@@ -169,7 +169,6 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> WebPushManager<T>
         let notification_json = serde_json::json!({
             "id": notification.id(),
             "a": notification.a(),
-            "data": notification.data(),
             "title": notification.title(),
             "body": notification.body(),
         });

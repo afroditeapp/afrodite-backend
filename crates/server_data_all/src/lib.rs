@@ -7,7 +7,6 @@ pub mod app;
 pub mod data_export;
 pub mod initial_setup;
 pub mod load;
-pub mod push_notification;
 pub mod register;
 pub mod unlimited_likes;
 pub mod websocket;
