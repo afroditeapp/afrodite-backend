@@ -4,8 +4,13 @@ use a2::{
     Client, ClientConfig, CollapseId, DefaultNotificationBuilder, Endpoint, Error,
     NotificationBuilder, NotificationOptions, request::payload::Payload,
 };
+use aes_gcm::{
+    AeadCore, Aes128Gcm, KeyInit,
+    aead::{Aead, OsRng},
+};
+use base64::Engine;
 use config::Config;
-use error_stack::{Result, ResultExt};
+use error_stack::{Report, Result, ResultExt};
 use model::{PushNotification, PushNotificationDeviceToken};
 use simple_backend::ServerQuitWatcher;
 use simple_backend_config::file::ApnsConfig;
@@ -151,13 +156,22 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> ApnsManager<T> {
             return Ok(());
         };
 
+        let Some(encryption_key) = info.db_state.push_notification_encryption_key else {
+            return Ok(());
+        };
+
+        let encryption_key_bytes = base64::engine::general_purpose::STANDARD
+            .decode(encryption_key.as_str())
+            .change_context(PushNotificationError::EncryptionFailed)?;
+
         for n in info.notifications {
             let Some(title) = n.title() else {
                 // Hiding notifications is not supported
                 continue;
             };
 
-            let notification = self.create_notification(&token, &n, title, &apns.topic)?;
+            let notification =
+                self.create_notification(&token, &n, title, &apns.topic, &encryption_key_bytes)?;
 
             match self
                 .sending_logic
@@ -190,14 +204,41 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> ApnsManager<T> {
         notification: &'a PushNotification,
         title: &'a str,
         apns_topic: &'a str,
+        encryption_key_bytes: &[u8],
     ) -> Result<Payload<'a>, PushNotificationError> {
-        let mut builder = DefaultNotificationBuilder::new()
-            .set_title(title)
-            .set_sound("default");
+        let notification_content = if let Some(body) = notification.body() {
+            serde_json::json!({
+                "title": title,
+                "body": body,
+            })
+        } else {
+            serde_json::json!({
+                "title": title,
+            })
+        };
 
-        if let Some(body) = notification.body() {
-            builder = builder.set_body(body);
-        }
+        let content_json = serde_json::to_string(&notification_content)
+            .change_context(PushNotificationError::Serialize)?;
+
+        let cipher = Aes128Gcm::new_from_slice(encryption_key_bytes)
+            .change_context(PushNotificationError::EncryptionFailed)?;
+
+        let nonce = Aes128Gcm::generate_nonce(OsRng);
+
+        let encrypted = cipher
+            .encrypt(&nonce, content_json.as_bytes())
+            .map_err(|_| {
+                Report::new(PushNotificationError::EncryptionFailed)
+                    .attach_printable("Failed to encrypt notification content")
+            })?;
+
+        let encrypted_base64 = base64::engine::general_purpose::STANDARD.encode(&encrypted);
+        let nonce_base64 = base64::engine::general_purpose::STANDARD.encode(nonce.as_slice());
+
+        let builder = DefaultNotificationBuilder::new()
+            .set_title("Notification decrypting failed")
+            .set_sound("default")
+            .set_mutable_content();
 
         let collapse_id = CollapseId::new(notification.id())
             .change_context(PushNotificationError::NotificationBuildingFailed)?;
@@ -211,6 +252,12 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> ApnsManager<T> {
         let mut payload = builder.build(token.as_str(), options);
         payload
             .add_custom_data("id", &notification.id())
+            .change_context(PushNotificationError::Serialize)?;
+        payload
+            .add_custom_data("encrypted", &encrypted_base64)
+            .change_context(PushNotificationError::Serialize)?;
+        payload
+            .add_custom_data("nonce", &nonce_base64)
             .change_context(PushNotificationError::Serialize)?;
         Ok(payload)
     }

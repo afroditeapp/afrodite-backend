@@ -152,21 +152,7 @@ impl PushNotificationDeviceToken {
 
 diesel_string_wrapper!(PushNotificationDeviceToken);
 
-#[derive(Debug, Selectable, Queryable)]
-#[diesel(table_name = crate::schema::common_state)]
-#[diesel(check_for_backend(crate::Db))]
-pub struct PendingNotificationTokenRaw {
-    pub pending_notification_token: Option<PendingNotificationToken>,
-}
-
-/// PendingNotificationToken is used as a token for pending notification
-/// API access.
-///
-/// The token is 256 bit random value which is Base64 encoded.
-/// The token lenght in characters is 44.
-///
-/// OWASP recommends at least 128 bit session IDs.
-/// https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
+/// 128 bit random value which is Base64 encoded.
 #[derive(
     Debug,
     Deserialize,
@@ -180,36 +166,31 @@ pub struct PendingNotificationTokenRaw {
     diesel::AsExpression,
 )]
 #[diesel(sql_type = Text)]
-pub struct PendingNotificationToken {
-    token: String,
+pub struct PushNotificationEncryptionKey {
+    key: String,
 }
 
-impl PendingNotificationToken {
+impl PushNotificationEncryptionKey {
     pub fn generate_new() -> Self {
-        // Generate 256 bit token
-        let mut token = Vec::new();
-        for _ in 1..=2 {
-            token.extend(random_128_bits())
-        }
         Self {
-            token: base64::engine::general_purpose::STANDARD.encode(token),
+            key: base64::engine::general_purpose::STANDARD.encode(random_128_bits()),
         }
     }
 
-    pub fn new(token: String) -> Self {
-        Self { token }
+    pub fn new(key: String) -> Self {
+        Self { key }
     }
 
     pub fn into_string(self) -> String {
-        self.token
+        self.key
     }
 
     pub fn as_str(&self) -> &str {
-        &self.token
+        &self.key
     }
 }
 
-diesel_string_wrapper!(PendingNotificationToken);
+diesel_string_wrapper!(PushNotificationEncryptionKey);
 
 #[derive(Debug, Clone, Default, Serialize, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::common_state)]
@@ -218,6 +199,7 @@ diesel_string_wrapper!(PendingNotificationToken);
 pub struct PushNotificationDbState {
     pub pending_notification: PendingNotification,
     pub pending_notification_sent: PendingNotification,
+    pub push_notification_encryption_key: Option<PushNotificationEncryptionKey>,
     pub push_notification_device_token: Option<PushNotificationDeviceToken>,
     pub push_notification_device_token_unix_time: Option<UnixTime>,
 }

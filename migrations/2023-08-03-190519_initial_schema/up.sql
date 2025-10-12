@@ -152,8 +152,8 @@ CREATE TABLE IF NOT EXISTS common_state(
     -- to prevent showing same notification again when WebSocket
     -- connects.
     pending_notification_sent     INTEGER             NOT NULL DEFAULT 0,
-    -- Access token for getting pending notifications from server.
-    pending_notification_token    TEXT                         UNIQUE,
+    -- Push notification encryption key for APNs and FCM notifications
+    push_notification_encryption_key TEXT,
     push_notification_device_token TEXT                        UNIQUE,
     -- Time when a token is saved. Not currently used for anything.
     -- Firebase docs recommend storing a timestamp with a token.

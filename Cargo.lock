@@ -4986,6 +4986,8 @@ name = "server_common"
 version = "0.0.0"
 dependencies = [
  "a2",
+ "aes-gcm",
+ "base64 0.22.1",
  "config",
  "database",
  "error-stack",

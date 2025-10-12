@@ -1,8 +1,8 @@
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    AccountIdInternal, PendingNotification, PendingNotificationToken, PushNotificationDeviceToken,
-    SyncVersion, UnixTime,
+    AccountIdInternal, PendingNotification, PushNotificationDeviceToken,
+    PushNotificationEncryptionKey, SyncVersion, UnixTime,
 };
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
@@ -20,7 +20,7 @@ impl CurrentWriteCommonPushNotification<'_> {
             .set((
                 push_notification_device_token.eq(None::<PushNotificationDeviceToken>),
                 push_notification_device_token_unix_time.eq(None::<UnixTime>),
-                pending_notification_token.eq(None::<PendingNotificationToken>),
+                push_notification_encryption_key.eq(None::<PushNotificationEncryptionKey>),
             ))
             .execute(self.conn())
             .into_db_error(id)?;
@@ -53,7 +53,7 @@ impl CurrentWriteCommonPushNotification<'_> {
         &mut self,
         id: AccountIdInternal,
         token: PushNotificationDeviceToken,
-    ) -> Result<PendingNotificationToken, DieselDatabaseError> {
+    ) -> Result<PushNotificationEncryptionKey, DieselDatabaseError> {
         use model::schema::common_state::dsl::*;
 
         // Remove the token from other accounts. It is possible that
@@ -66,13 +66,13 @@ impl CurrentWriteCommonPushNotification<'_> {
             .execute(self.conn())
             .into_db_error(())?;
 
-        let notification_token = PendingNotificationToken::generate_new();
+        let notification_token = PushNotificationEncryptionKey::generate_new();
 
         update(common_state.find(id.as_db_id()))
             .set((
                 push_notification_device_token.eq(token),
                 push_notification_device_token_unix_time.eq(UnixTime::current_time()),
-                pending_notification_token.eq(notification_token.clone()),
+                push_notification_encryption_key.eq(notification_token.clone()),
             ))
             .execute(self.conn())
             .into_db_error(id)?;

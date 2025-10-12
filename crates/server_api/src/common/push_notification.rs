@@ -1,7 +1,7 @@
 use axum::{Extension, extract::State};
 use model::{
-    AccountIdInternal, ClientType, GetPushNotificationInfo, PendingNotificationToken,
-    PushNotificationDeviceToken, VapidPublicKey,
+    AccountIdInternal, ClientType, GetPushNotificationInfo, PushNotificationDeviceToken,
+    PushNotificationEncryptionKey, VapidPublicKey,
 };
 use server_data::{
     app::{GetConfig, ReadData},
@@ -20,7 +20,7 @@ const PATH_POST_SET_DEVICE_TOKEN: &str = "/common_api/set_device_token";
     path = PATH_POST_SET_DEVICE_TOKEN,
     request_body(content = PushNotificationDeviceToken),
     responses(
-        (status = 200, description = "Success.", body = PendingNotificationToken),
+        (status = 200, description = "Success.", body = PushNotificationEncryptionKey),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -30,7 +30,7 @@ pub async fn post_set_device_token(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(device_token): Json<PushNotificationDeviceToken>,
-) -> Result<Json<PendingNotificationToken>, StatusCode> {
+) -> Result<Json<PushNotificationEncryptionKey>, StatusCode> {
     COMMON.post_set_device_token.incr();
 
     let pending_notification_token = db_write!(state, move |cmds| {

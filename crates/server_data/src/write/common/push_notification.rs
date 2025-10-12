@@ -1,5 +1,5 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
-use model::{AccountIdInternal, PendingNotificationToken, PushNotificationDeviceToken};
+use model::{AccountIdInternal, PushNotificationDeviceToken, PushNotificationEncryptionKey};
 use tracing::info;
 
 use crate::{
@@ -40,7 +40,7 @@ impl WriteCommandsCommonPushNotification<'_> {
         &self,
         id: AccountIdInternal,
         token: PushNotificationDeviceToken,
-    ) -> Result<PendingNotificationToken, DataError> {
+    ) -> Result<PushNotificationEncryptionKey, DataError> {
         let token_clone = token.clone();
         let token = db_transaction!(self, move |mut cmds| {
             cmds.common()

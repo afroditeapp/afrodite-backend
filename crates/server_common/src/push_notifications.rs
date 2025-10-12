@@ -51,6 +51,8 @@ pub enum PushNotificationError {
     NotificationBuildingFailed,
     #[error("Notification routing failed")]
     NotificationRoutingFailed,
+    #[error("Notification encryption failed")]
+    EncryptionFailed,
 }
 
 pub struct PushNotificationManagerQuitHandle {
