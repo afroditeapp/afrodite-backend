@@ -82,31 +82,6 @@ impl CurrentWriteCommonPushNotification<'_> {
         Ok(notification_token)
     }
 
-    pub fn get_and_reset_pending_notification_with_notification_token(
-        &mut self,
-        token: PendingNotificationToken,
-    ) -> Result<(AccountIdInternal, PendingNotification), DieselDatabaseError> {
-        use model::schema::{account_id, common_state};
-
-        let token_clone = token.clone();
-        let (id, notification) = common_state::table
-            .inner_join(account_id::table)
-            .filter(common_state::pending_notification_token.eq(token_clone))
-            .select((
-                AccountIdInternal::as_select(),
-                common_state::pending_notification,
-            ))
-            .first(self.conn())
-            .into_db_error(())?;
-
-        update(common_state::table.filter(common_state::pending_notification_token.eq(token)))
-            .set((common_state::pending_notification.eq(0),))
-            .execute(self.conn())
-            .into_db_error(())?;
-
-        Ok((id, notification))
-    }
-
     pub fn save_current_notification_flags_to_database_if_needed(
         &mut self,
         id: AccountIdInternal,

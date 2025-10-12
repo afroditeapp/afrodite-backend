@@ -1,16 +1,9 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
-use model::{
-    AccountIdInternal, PendingNotification, PendingNotificationFlags, PendingNotificationToken,
-    PushNotificationDeviceToken,
-};
-use server_common::data::IntoDataError;
+use model::{AccountIdInternal, PendingNotificationToken, PushNotificationDeviceToken};
 use tracing::info;
 
 use crate::{
-    DataError,
-    cache::{CacheReadCommon, CacheWriteCommon},
-    db_transaction, define_cmd_wrapper_write,
-    result::Result,
+    DataError, cache::CacheReadCommon, db_transaction, define_cmd_wrapper_write, result::Result,
     write::DbTransaction,
 };
 
@@ -59,26 +52,6 @@ impl WriteCommandsCommonPushNotification<'_> {
         })?;
 
         Ok(token)
-    }
-
-    pub async fn get_and_reset_pending_notification_with_notification_token(
-        &self,
-        token: PendingNotificationToken,
-    ) -> Result<(AccountIdInternal, PendingNotification), DataError> {
-        let (id, flags) = db_transaction!(self, move |mut cmds| {
-            cmds.common()
-                .push_notification()
-                .get_and_reset_pending_notification_with_notification_token(token)
-        })?;
-
-        self.write_cache_common(id, |entry| {
-            entry.pending_notification_flags = PendingNotificationFlags::empty();
-            Ok(())
-        })
-        .await
-        .into_error()?;
-
-        Ok((id, flags))
     }
 
     pub async fn save_current_notification_flags_to_database_if_needed(
