@@ -503,6 +503,7 @@ pub struct AccountStateRelatedSharedState {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
 pub struct LatestBirthdate {
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<String>)]
     pub birthdate: Option<NaiveDate>,
 }

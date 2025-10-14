@@ -13,10 +13,13 @@ use crate::{
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ClientConfig {
     /// None, if client features are not configured.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub client_features: Option<ClientFeaturesConfigHash>,
     /// None, if custom reports are not configured.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_reports: Option<CustomReportsConfigHash>,
     /// None, if attributes are not configured.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_attributes: Option<PartialProfileAttributesConfig>,
     pub sync_version: ClientConfigSyncVersion,
 }

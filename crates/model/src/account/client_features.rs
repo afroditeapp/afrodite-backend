@@ -69,6 +69,7 @@ pub struct ClientFeaturesConfig {
     pub attribution: AttributionConfig,
     pub features: FeaturesConfig,
     /// Enable news UI
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub news: Option<NewsConfig>,
     pub map: MapConfig,
     pub limits: LimitsConfig,
@@ -97,8 +98,10 @@ pub struct AttributionConfigInternal {
 pub struct AttributionConfig {
     /// Generic attribution info text displayed in about screen
     /// of the app.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub generic: Option<StringResource>,
     /// Attribution info text displayed when IP country data is shown.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub ip_country: Option<StringResource>,
 }
 
@@ -260,7 +263,9 @@ impl From<LimitsConfigInternal> for LimitsConfig {
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
 pub struct LikeLimitsConfig {
     /// UTC time with "hh:mm" format.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub unlimited_likes_disabling_time: Option<UtcTimeValue>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub daily: Option<DailyLikesConfig>,
 }
 
@@ -273,5 +278,6 @@ pub struct DailyLikesConfig {
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ProfileConfig {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_name_regex: Option<String>,
 }

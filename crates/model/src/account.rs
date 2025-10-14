@@ -360,7 +360,9 @@ impl EmailMessages {
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
 pub struct AccessibleAccount {
     pub aid: AccountId,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<i64>)]
     pub age: Option<ProfileAge>,
 }

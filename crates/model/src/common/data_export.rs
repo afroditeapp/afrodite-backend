@@ -25,6 +25,7 @@ pub struct DataExportName {
 #[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
 pub struct DataExportState {
     /// Available when current state is [DataExportStateType::Done].
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<DataExportName>,
     pub state: DataExportStateType,
 }

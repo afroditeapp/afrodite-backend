@@ -186,10 +186,13 @@ pub struct ContentProcessingState {
     ///
     /// If ProcessingContentId is added to empty queue, then
     /// this will be 1.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub wait_queue_position: Option<u64>,
     /// Content ID of the processed content.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub cid: Option<ContentId>,
     /// Face detected info of the processed content.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub fd: Option<bool>,
 }
 

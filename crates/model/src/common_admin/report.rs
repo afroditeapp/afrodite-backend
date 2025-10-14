@@ -92,14 +92,19 @@ pub struct ReportDetailed {
     pub creator_info: ReportAccountInfo,
     pub target_info: ReportAccountInfo,
     /// Only available when account interaction exists.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub chat_info: Option<ReportChatInfo>,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize, ToSchema)]
 pub struct ReportContent {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_text: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_content: Option<ContentId>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub chat_message: Option<ChatMessageReport>,
 }
 

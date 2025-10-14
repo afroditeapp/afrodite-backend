@@ -308,9 +308,11 @@ impl VapidPublicKey {
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct GetPushNotificationInfo {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub device_token: Option<PushNotificationDeviceToken>,
     /// Base64 encoded VAPID public key if web push notifications
     /// are enabled and current login session if from web client.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub vapid_public_key: Option<VapidPublicKey>,
     pub sync_version: PushNotificationInfoSyncVersion,
 }
