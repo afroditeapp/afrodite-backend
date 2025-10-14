@@ -4,7 +4,9 @@ use utoipa::{IntoParams, ToSchema};
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, ToSchema)]
 pub struct SoftwareUpdateStatus {
     pub state: SoftwareUpdateState,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub downloaded: Option<SoftwareInfo>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub installed: Option<SoftwareInfo>,
 }
 

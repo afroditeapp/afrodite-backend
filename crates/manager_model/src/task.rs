@@ -4,7 +4,9 @@ use utoipa::{IntoParams, ToSchema};
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, PartialEq, ToSchema)]
 pub struct ScheduledTaskStatus {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub system_reboot: Option<MaintenanceTask>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub backend_restart: Option<MaintenanceTask>,
 }
 
