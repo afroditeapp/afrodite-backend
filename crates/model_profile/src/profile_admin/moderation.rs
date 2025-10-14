@@ -31,10 +31,12 @@ pub struct PostModerateProfileString {
     pub value: String,
     pub content_type: ProfileStringModerationContentType,
     pub accept: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub rejected_category: Option<ProfileStringModerationRejectedReasonCategory>,
     pub rejected_details: ProfileStringModerationRejectedReasonDetails,
     /// If true, ignore accept, rejected_category, rejected_details and move
     /// the text to waiting for human moderation state.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub move_to_human: Option<bool>,
 }
 
@@ -47,5 +49,6 @@ pub struct GetProfileStringStateParams {
 pub struct GetProfileStringState {
     /// If empty, the `moderation_info` is `None`.
     pub value: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub moderation_info: Option<ProfileStringModerationInfo>,
 }

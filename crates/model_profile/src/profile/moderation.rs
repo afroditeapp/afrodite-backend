@@ -85,6 +85,7 @@ diesel_string_wrapper!(ProfileStringModerationRejectedReasonDetails);
 pub struct ProfileStringModerationInfo {
     #[diesel(column_name = "state_type")]
     pub state: ProfileStringModerationState,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub rejected_reason_category: Option<ProfileStringModerationRejectedReasonCategory>,
     pub rejected_reason_details: ProfileStringModerationRejectedReasonDetails,
 }

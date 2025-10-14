@@ -171,21 +171,29 @@ pub struct ProfileAttributeFilterValueUpdate {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct GetProfileFilters {
     pub attribute_filters: Vec<ProfileAttributeFilterValue>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub unlimited_likes_filter: Option<bool>,
     /// Show profiles starting this far from current location. The value
     /// is in kilometers.
     ///
     /// The value must be `None`, 1 or greater number.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub min_distance_km_filter: Option<MinDistanceKm>,
     /// Show profiles until this far from current location. The value
     /// is in kilometers.
     ///
     /// The value must be `None`, 1 or greater number.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub max_distance_km_filter: Option<MaxDistanceKm>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_created_filter: Option<ProfileCreatedTimeFilter>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_edited_filter: Option<ProfileEditedTimeFilter>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_text_min_characters_filter: Option<ProfileTextMinCharactersFilter>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_text_max_characters_filter: Option<ProfileTextMaxCharactersFilter>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]

@@ -321,10 +321,13 @@ impl GetProfileQueryParam {
 #[derive(Debug, Clone, Serialize, ToSchema, IntoParams)]
 pub struct GetProfileResult {
     /// Profile data if it is newer than the version in the query.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub p: Option<Profile>,
     /// If empty then profile does not exist or current account does
     /// not have access to the profile.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub v: Option<ProfileVersion>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     lst: Option<LastSeenTime>,
 }
 
@@ -362,8 +365,11 @@ pub struct GetMyProfileResult {
     pub p: Profile,
     pub v: ProfileVersion,
     pub sv: ProfileSyncVersion,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub lst: Option<LastSeenTime>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub name_moderation_info: Option<ProfileStringModerationInfo>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub text_moderation_info: Option<ProfileStringModerationInfo>,
 }
 
@@ -400,5 +406,6 @@ impl InitialProfileAge {
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct GetInitialProfileAgeResult {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub value: Option<InitialProfileAge>,
 }

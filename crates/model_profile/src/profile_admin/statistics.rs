@@ -9,6 +9,7 @@ use crate::StatisticsGender;
 pub struct GetProfileStatisticsHistoryParams {
     pub value_type: ProfileStatisticsHistoryValueType,
     /// Required only for AgeChange history
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub age: Option<i64>,
 }
 
