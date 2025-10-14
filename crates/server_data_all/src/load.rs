@@ -90,10 +90,8 @@ impl DbDataToCacheLoader {
                     .push_notification_db_state(account_id)
             })
             .await?;
-        cache_common.pending_notification_flags =
-            push_notification_state.pending_notification.into();
-        cache_common.pending_notification_sent_flags =
-            push_notification_state.pending_notification_sent.into();
+        cache_common.pending_notification_flags = push_notification_state.pending_flags.into();
+        cache_common.pending_notification_sent_flags = push_notification_state.sent_flags.into();
 
         // App notification settings
         {

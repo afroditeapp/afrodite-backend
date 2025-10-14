@@ -11,9 +11,9 @@ impl CurrentReadCommonPushNotification<'_> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<PushNotificationDbState, DieselDatabaseError> {
-        use crate::schema::common_state::dsl::*;
+        use crate::schema::push_notification::dsl::*;
 
-        common_state
+        push_notification
             .filter(account_id.eq(id.as_db_id()))
             .select(PushNotificationDbState::as_select())
             .first(self.conn())
@@ -24,11 +24,11 @@ impl CurrentReadCommonPushNotification<'_> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<PushNotificationInfoSyncVersion, DieselDatabaseError> {
-        use crate::schema::common_state::dsl::*;
+        use crate::schema::push_notification::dsl::*;
 
-        common_state
+        push_notification
             .filter(account_id.eq(id.as_db_id()))
-            .select(push_notification_info_sync_version)
+            .select(sync_version)
             .first(self.conn())
             .change_context(DieselDatabaseError::Execute)
     }

@@ -277,12 +277,6 @@ diesel::table! {
     common_state (account_id) {
         account_id -> Integer,
         client_config_sync_version -> Integer,
-        pending_notification -> Integer,
-        pending_notification_sent -> Integer,
-        push_notification_encryption_key -> Nullable<Text>,
-        push_notification_device_token -> Nullable<Text>,
-        push_notification_device_token_unix_time -> Nullable<Integer>,
-        push_notification_info_sync_version -> Integer,
         client_login_session_platform -> Nullable<Integer>,
         client_language -> Text,
     }
@@ -828,6 +822,20 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    push_notification (account_id) {
+        account_id -> Integer,
+        pending_flags -> Integer,
+        sent_flags -> Integer,
+        encryption_key -> Nullable<Text>,
+        device_token -> Nullable<Text>,
+        device_token_unix_time -> Nullable<Integer>,
+        sync_version -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     shared_state (account_id) {
         account_id -> Integer,
         account_state_initial_setup_completed -> Bool,
@@ -935,6 +943,7 @@ diesel::joinable!(profile_report_profile_name -> common_report (report_id));
 diesel::joinable!(profile_report_profile_text -> common_report (report_id));
 diesel::joinable!(profile_state -> account_id (account_id));
 diesel::joinable!(public_key -> account_id (account_id));
+diesel::joinable!(push_notification -> account_id (account_id));
 diesel::joinable!(shared_state -> account_id (account_id));
 diesel::joinable!(sign_in_with_info -> account_id (account_id));
 diesel::joinable!(used_content_ids -> account_id (account_id));
@@ -1009,6 +1018,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     profile_report_profile_text,
     profile_state,
     public_key,
+    push_notification,
     shared_state,
     sign_in_with_info,
     used_account_ids,

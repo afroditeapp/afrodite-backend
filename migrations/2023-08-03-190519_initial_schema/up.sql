@@ -146,24 +146,32 @@ CREATE TABLE IF NOT EXISTS common_state(
     account_id                    INTEGER PRIMARY KEY NOT NULL,
     -- Sync version for client config.
     client_config_sync_version    INTEGER             NOT NULL DEFAULT 0,
-    -- Bitflag value for pending notification
-    pending_notification          INTEGER             NOT NULL DEFAULT 0,
-    -- Bitflag value for sent notifications. Used
-    -- to prevent showing same notification again when WebSocket
-    -- connects.
-    pending_notification_sent     INTEGER             NOT NULL DEFAULT 0,
-    -- Push notification encryption key for APNs and FCM notifications
-    push_notification_encryption_key TEXT,
-    push_notification_device_token TEXT                        UNIQUE,
-    -- Time when a token is saved. Not currently used for anything.
-    -- Firebase docs recommend storing a timestamp with a token.
-    push_notification_device_token_unix_time    INTEGER,
-    push_notification_info_sync_version INTEGER       NOT NULL DEFAULT 0,
     -- 0 = Android
     -- 1 = iOS
     -- 2 = Web
     client_login_session_platform INTEGER,
     client_language               TEXT                NOT NULL DEFAULT '',
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS push_notification(
+    account_id             INTEGER PRIMARY KEY NOT NULL,
+    -- Bitflag value for pending push notification
+    pending_flags          INTEGER             NOT NULL DEFAULT 0,
+    -- Bitflag value for sent push notifications. Used
+    -- to prevent showing same notification again when WebSocket
+    -- connects.
+    sent_flags             INTEGER             NOT NULL DEFAULT 0,
+    -- Push notification encryption key for APNs and FCM notifications
+    encryption_key         TEXT,
+    device_token           TEXT                         UNIQUE,
+    -- Time when a token is saved. Not currently used for anything.
+    -- Firebase docs recommend storing a timestamp with a token.
+    device_token_unix_time INTEGER,
+    sync_version           INTEGER             NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

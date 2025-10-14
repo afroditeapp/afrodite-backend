@@ -152,11 +152,11 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> ApnsManager<T> {
             .await
             .change_context(PushNotificationError::ReadingNotificationSentStatusFailed)?;
 
-        let Some(token) = info.db_state.push_notification_device_token else {
+        let Some(token) = info.db_state.device_token else {
             return Ok(());
         };
 
-        let Some(encryption_key) = info.db_state.push_notification_encryption_key else {
+        let Some(encryption_key) = info.db_state.encryption_key else {
             return Ok(());
         };
 

@@ -14,13 +14,13 @@ impl CurrentWriteCommonPushNotification<'_> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::common_state::dsl::*;
+        use model::schema::push_notification::dsl::*;
 
-        update(common_state.find(id.as_db_id()))
+        update(push_notification.find(id.as_db_id()))
             .set((
-                push_notification_device_token.eq(None::<PushNotificationDeviceToken>),
-                push_notification_device_token_unix_time.eq(None::<UnixTime>),
-                push_notification_encryption_key.eq(None::<PushNotificationEncryptionKey>),
+                device_token.eq(None::<PushNotificationDeviceToken>),
+                device_token_unix_time.eq(None::<UnixTime>),
+                encryption_key.eq(None::<PushNotificationEncryptionKey>),
             ))
             .execute(self.conn())
             .into_db_error(id)?;
@@ -34,12 +34,12 @@ impl CurrentWriteCommonPushNotification<'_> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::common_state::dsl::*;
+        use model::schema::push_notification::dsl::*;
 
-        update(common_state.find(id.as_db_id()))
+        update(push_notification.find(id.as_db_id()))
             .set((
-                push_notification_device_token.eq(None::<PushNotificationDeviceToken>),
-                push_notification_device_token_unix_time.eq(None::<UnixTime>),
+                device_token.eq(None::<PushNotificationDeviceToken>),
+                device_token_unix_time.eq(None::<UnixTime>),
             ))
             .execute(self.conn())
             .into_db_error(id)?;
@@ -54,25 +54,25 @@ impl CurrentWriteCommonPushNotification<'_> {
         id: AccountIdInternal,
         token: PushNotificationDeviceToken,
     ) -> Result<PushNotificationEncryptionKey, DieselDatabaseError> {
-        use model::schema::common_state::dsl::*;
+        use model::schema::push_notification::dsl::*;
 
         // Remove the token from other accounts. It is possible that
         // same device is used for multiple accounts.
-        update(common_state.filter(push_notification_device_token.eq(token.clone())))
+        update(push_notification.filter(device_token.eq(token.clone())))
             .set((
-                push_notification_device_token.eq(None::<PushNotificationDeviceToken>),
-                push_notification_device_token_unix_time.eq(None::<UnixTime>),
+                device_token.eq(None::<PushNotificationDeviceToken>),
+                device_token_unix_time.eq(None::<UnixTime>),
             ))
             .execute(self.conn())
             .into_db_error(())?;
 
         let notification_token = PushNotificationEncryptionKey::generate_new();
 
-        update(common_state.find(id.as_db_id()))
+        update(push_notification.find(id.as_db_id()))
             .set((
-                push_notification_device_token.eq(token),
-                push_notification_device_token_unix_time.eq(UnixTime::current_time()),
-                push_notification_encryption_key.eq(notification_token.clone()),
+                device_token.eq(token),
+                device_token_unix_time.eq(UnixTime::current_time()),
+                encryption_key.eq(notification_token.clone()),
             ))
             .execute(self.conn())
             .into_db_error(id)?;
@@ -88,24 +88,24 @@ impl CurrentWriteCommonPushNotification<'_> {
         current_flags: PendingNotification,
         current_sent_flags: PendingNotification,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::common_state::dsl::*;
+        use model::schema::push_notification::dsl::*;
 
-        let (flags, sent_flags): (i64, i64) = common_state
+        let (db_pending_flags, db_sent_flags): (i64, i64) = push_notification
             .filter(account_id.eq(id.as_db_id()))
-            .select((pending_notification, pending_notification_sent))
+            .select((pending_flags, sent_flags))
             .first(self.conn())
             .into_db_error(())?;
 
-        if flags != *current_flags.as_i64() {
-            update(common_state.find(id.as_db_id()))
-                .set(pending_notification.eq(current_flags))
+        if db_pending_flags != *current_flags.as_i64() {
+            update(push_notification.find(id.as_db_id()))
+                .set(pending_flags.eq(current_flags))
                 .execute(self.conn())
                 .into_db_error(())?;
         }
 
-        if sent_flags != *current_sent_flags.as_i64() {
-            update(common_state.find(id.as_db_id()))
-                .set(pending_notification_sent.eq(current_sent_flags))
+        if db_sent_flags != *current_sent_flags.as_i64() {
+            update(push_notification.find(id.as_db_id()))
+                .set(sent_flags.eq(current_sent_flags))
                 .execute(self.conn())
                 .into_db_error(())?;
         }
@@ -117,11 +117,11 @@ impl CurrentWriteCommonPushNotification<'_> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::common_state::dsl::*;
+        use model::schema::push_notification::dsl::*;
 
-        update(common_state)
+        update(push_notification)
             .filter(account_id.eq(id.as_db_id()))
-            .set(push_notification_info_sync_version.eq(0))
+            .set(sync_version.eq(0))
             .execute(self.conn())
             .into_db_error(())?;
 
@@ -132,12 +132,12 @@ impl CurrentWriteCommonPushNotification<'_> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::common_state::dsl::*;
+        use model::schema::push_notification::dsl::*;
 
-        update(common_state)
+        update(push_notification)
             .filter(account_id.eq(id.as_db_id()))
-            .filter(push_notification_info_sync_version.lt(SyncVersion::MAX_VALUE))
-            .set(push_notification_info_sync_version.eq(push_notification_info_sync_version + 1))
+            .filter(sync_version.lt(SyncVersion::MAX_VALUE))
+            .set(sync_version.eq(sync_version + 1))
             .execute(self.conn())
             .into_db_error(())?;
 
@@ -147,11 +147,11 @@ impl CurrentWriteCommonPushNotification<'_> {
     pub fn increment_push_notification_info_sync_version_for_every_account(
         &mut self,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::common_state::dsl::*;
+        use model::schema::push_notification::dsl::*;
 
-        update(common_state)
-            .filter(push_notification_info_sync_version.lt(SyncVersion::MAX_VALUE))
-            .set(push_notification_info_sync_version.eq(push_notification_info_sync_version + 1))
+        update(push_notification)
+            .filter(sync_version.lt(SyncVersion::MAX_VALUE))
+            .set(sync_version.eq(sync_version + 1))
             .execute(self.conn())
             .into_db_error(())?;
 

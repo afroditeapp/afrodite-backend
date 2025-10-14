@@ -28,7 +28,7 @@ impl ReadCommandsCommonPushNotification<'_> {
     ) -> Result<bool, DataError> {
         self.push_notification_db_state(id)
             .await
-            .map(|v| v.push_notification_device_token.is_some())
+            .map(|v| v.device_token.is_some())
     }
 
     pub async fn push_notification_info_sync_version(
@@ -78,7 +78,7 @@ impl ReadCommandsCommonPushNotification<'_> {
         } else {
             Ok(PushNotificationStateInfoWithFlags::WithFlags {
                 info: PushNotificationStateInfo {
-                    push_notification_device_token: db_state.push_notification_device_token,
+                    push_notification_device_token: db_state.device_token,
                 },
                 flags,
             })

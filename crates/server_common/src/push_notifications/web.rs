@@ -119,7 +119,7 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> WebPushManager<T>
             .await
             .change_context(PushNotificationError::ReadingNotificationSentStatusFailed)?;
 
-        let Some(token) = info.db_state.push_notification_device_token else {
+        let Some(token) = info.db_state.device_token else {
             return Ok(());
         };
 

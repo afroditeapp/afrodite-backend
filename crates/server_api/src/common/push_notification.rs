@@ -90,7 +90,7 @@ pub async fn get_push_notification_info(
         .await?;
 
     let key = GetPushNotificationInfo {
-        device_token: db_state.push_notification_device_token,
+        device_token: db_state.device_token,
         vapid_public_key,
         sync_version,
     };

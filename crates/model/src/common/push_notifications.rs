@@ -6,9 +6,7 @@ use diesel::{
     sql_types::BigInt,
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{
-    UnixTime, diesel_i64_struct_try_from, diesel_i64_wrapper, diesel_string_wrapper,
-};
+use simple_backend_model::{diesel_i64_struct_try_from, diesel_i64_wrapper, diesel_string_wrapper};
 use utils::random_bytes::random_128_bits;
 use utoipa::ToSchema;
 
@@ -193,15 +191,14 @@ impl PushNotificationEncryptionKey {
 diesel_string_wrapper!(PushNotificationEncryptionKey);
 
 #[derive(Debug, Clone, Default, Serialize, Queryable, Selectable)]
-#[diesel(table_name = crate::schema::common_state)]
+#[diesel(table_name = crate::schema::push_notification)]
 #[diesel(check_for_backend(crate::Db))]
 #[diesel(treat_none_as_null = true)]
 pub struct PushNotificationDbState {
-    pub pending_notification: PendingNotification,
-    pub pending_notification_sent: PendingNotification,
-    pub push_notification_encryption_key: Option<PushNotificationEncryptionKey>,
-    pub push_notification_device_token: Option<PushNotificationDeviceToken>,
-    pub push_notification_device_token_unix_time: Option<UnixTime>,
+    pub pending_flags: PendingNotification,
+    pub sent_flags: PendingNotification,
+    pub encryption_key: Option<PushNotificationEncryptionKey>,
+    pub device_token: Option<PushNotificationDeviceToken>,
 }
 
 /// Notification ID for an event. Can be used to prevent showing

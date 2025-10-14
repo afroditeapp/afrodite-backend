@@ -67,4 +67,18 @@ impl CurrentWriteCommon<'_> {
 
         Ok(())
     }
+
+    pub fn insert_push_notification(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::push_notification::dsl::*;
+
+        insert_into(push_notification)
+            .values((account_id.eq(id.as_db_id()),))
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
+    }
 }

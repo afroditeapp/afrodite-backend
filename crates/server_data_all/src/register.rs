@@ -64,6 +64,7 @@ impl RegisterAccount<'_> {
             .state()
             .insert_shared_state(id, SharedStateRaw::default())?;
         current.common().insert_common_state(id)?;
+        current.common().insert_push_notification(id)?;
 
         // Account
 
