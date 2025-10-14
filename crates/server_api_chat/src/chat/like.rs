@@ -3,7 +3,7 @@ use model::AccountState;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionState, CurrentAccountInteractionState,
     DailyLikesLeft, LimitedActionStatus, MarkReceivedLikesViewed, NewReceivedLikesCountResult,
-    PendingNotificationFlags, ReceivedLikesIteratorState, ReceivedLikesPage,
+    PushNotificationFlags, ReceivedLikesIteratorState, ReceivedLikesPage,
     ResetReceivedLikesIteratorResult, SendLikeResult,
 };
 use server_api::{
@@ -180,9 +180,9 @@ pub async fn post_get_new_received_likes_count(
 
     let visibility = state
         .event_manager()
-        .remove_specific_pending_notification_flags_from_cache(
+        .remove_pending_push_notification_flags_from_cache(
             id,
-            PendingNotificationFlags::RECEIVED_LIKES_CHANGED,
+            PushNotificationFlags::RECEIVED_LIKES_CHANGED,
         )
         .await;
     info.h = visibility.hidden;

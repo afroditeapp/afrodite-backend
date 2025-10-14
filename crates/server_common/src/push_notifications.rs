@@ -43,7 +43,7 @@ pub enum PushNotificationError {
     GetClientType,
     #[error("Client type not found")]
     ClientTypeNotFound,
-    #[error("Saving pending notifications to database failed")]
+    #[error("Saving notification flags to database failed")]
     SaveToDatabaseFailed,
     #[error("Serializing error")]
     Serialize,
@@ -70,7 +70,8 @@ impl PushNotificationManagerQuitHandle {
     }
 }
 
-/// New [PendingNotificationFlags] available in the cache.
+/// When handling this event, get current
+/// pending [PushNotificationFlags] from cache.
 #[derive(Debug, Clone, Copy)]
 pub struct SendPushNotification {
     pub account_id: AccountIdInternal,

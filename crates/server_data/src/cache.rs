@@ -11,8 +11,8 @@ use common::CacheCommon;
 use error_stack::Result;
 use media::CacheMedia;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, LoginSession,
-    PendingNotificationFlags, Permissions,
+    AccessToken, AccountId, AccountIdInternal, AccountState, LoginSession, Permissions,
+    PushNotificationFlags,
 };
 use model_server_data::{AuthPair, LastSeenUnixTime, LocationIndexProfileData};
 use profile::CacheProfile;
@@ -317,7 +317,7 @@ impl WebSocketCacheCmds<'_> {
     /// Removes current access token from HashMap containing valid
     /// access tokens.
     ///
-    /// This will reset cached pending notification.
+    /// This will reset cached pending push notification flags.
     pub async fn init_login_session(
         &self,
         id: AccountId,
@@ -361,7 +361,7 @@ impl WebSocketCacheCmds<'_> {
             let new_access_token = new_tokens.access.clone();
             let mut lock = cache_entry.cache.write().await;
             lock.common.update_tokens(new_tokens, address.ip().into());
-            lock.common.pending_notification_flags = PendingNotificationFlags::empty();
+            lock.common.pending_push_notification_flags = PushNotificationFlags::empty();
             drop(lock);
             tokens.insert(new_access_token, cache_entry);
 
@@ -371,7 +371,7 @@ impl WebSocketCacheCmds<'_> {
         }
     }
 
-    /// This will reset cached pending notification.
+    /// This will reset cached pending push notification flags.
     pub async fn init_login_session_using_existing_tokens(
         &self,
         id: AccountId,
@@ -392,7 +392,7 @@ impl WebSocketCacheCmds<'_> {
             connection: address,
             event_sender: sender,
         });
-        write.common.pending_notification_flags = PendingNotificationFlags::empty();
+        write.common.pending_push_notification_flags = PushNotificationFlags::empty();
         write
             .profile
             .last_seen_time()

@@ -1,7 +1,7 @@
 use axum::{Extension, extract::State};
 use model::{
     AccountIdInternal, AdminNotification, AdminNotificationSettings, GetAdminNotification,
-    PendingNotificationFlags, Permissions,
+    Permissions, PushNotificationFlags,
 };
 use server_data::{
     app::EventManagerProvider, read::GetReadCommandsCommon, write::GetWriteCommandsCommon,
@@ -202,9 +202,9 @@ pub async fn post_get_admin_notification(
     if api_caller_permissions.admin_subscribe_admin_notifications {
         let visibility = state
             .event_manager()
-            .remove_specific_pending_notification_flags_from_cache(
+            .remove_pending_push_notification_flags_from_cache(
                 api_caller_account_id,
-                PendingNotificationFlags::ADMIN_NOTIFICATION,
+                PushNotificationFlags::ADMIN_NOTIFICATION,
             )
             .await;
 

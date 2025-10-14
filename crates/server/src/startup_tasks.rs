@@ -1,4 +1,4 @@
-use model::{AccountIdInternal, PendingNotificationFlags, PushNotificationStateInfoWithFlags};
+use model::{AccountIdInternal, PushNotificationFlags, PushNotificationStateInfoWithFlags};
 use model_account::{EmailMessages, EmailSendingState};
 use server_api::{
     app::{EmailSenderImpl, EventManagerProvider, GetConfig, ReadData, WriteData},
@@ -128,9 +128,9 @@ impl StartupTasks {
                 // Automatic profile search notification state is stored only
                 // in RAM, so it is not available anymore.
                 cmds.events()
-                    .remove_specific_pending_notification_flags_from_cache(
+                    .remove_pending_push_notification_flags_from_cache(
                         id,
-                        PendingNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED,
+                        PushNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED,
                     )
                     .await;
 

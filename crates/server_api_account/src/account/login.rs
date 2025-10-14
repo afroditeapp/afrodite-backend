@@ -41,7 +41,7 @@ pub async fn login_impl(
     db_write!(state, move |cmds| {
         cmds.common()
             .push_notification()
-            .remove_push_notification_device_token_and_pending_notification_token(id)
+            .remove_push_notification_device_token_and_encryption_key(id)
             .await?;
         cmds.cache()
             .websocket_cache_cmds()

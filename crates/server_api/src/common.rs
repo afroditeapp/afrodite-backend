@@ -540,8 +540,8 @@ async fn handle_socket_result(
                         socket.send(Message::Text(event.into()))
                             .await
                             .change_context(WebSocketError::Send)?;
-                        // If event is pending notification related, the cached
-                        // pending notification flags are removed in the related
+                        // If event is pending push notification related, the cached
+                        // pending push notification flags are removed in the related
                         // HTTP route handlers using event manager assuming
                         // that client has received the event.
                     },

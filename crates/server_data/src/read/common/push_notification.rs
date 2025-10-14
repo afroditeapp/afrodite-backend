@@ -1,6 +1,6 @@
 use database::current::read::GetDbReadCommandsCommon;
 use model::{
-    AccountIdInternal, PendingNotificationFlags, PushNotificationDbState,
+    AccountIdInternal, PushNotificationDbState, PushNotificationFlags,
     PushNotificationInfoSyncVersion, PushNotificationStateInfo, PushNotificationStateInfoWithFlags,
 };
 use server_common::data::IntoDataError;
@@ -12,12 +12,12 @@ use crate::{
 define_cmd_wrapper_read!(ReadCommandsCommonPushNotification);
 
 impl ReadCommandsCommonPushNotification<'_> {
-    pub async fn cached_pending_notification_flags(
+    pub async fn cached_pending_push_notification_flags(
         &self,
         id: AccountIdInternal,
-    ) -> Result<PendingNotificationFlags, DataError> {
+    ) -> Result<PushNotificationFlags, DataError> {
         let flags = self
-            .read_cache_common(id, |cache| Ok(cache.pending_notification_flags))
+            .read_cache_common(id, |cache| Ok(cache.pending_push_notification_flags))
             .await?;
         Ok(flags)
     }
@@ -71,7 +71,7 @@ impl ReadCommandsCommonPushNotification<'_> {
             .into_error()?;
 
         // Cache contains the latest state
-        let flags = self.cached_pending_notification_flags(id).await?;
+        let flags = self.cached_pending_push_notification_flags(id).await?;
 
         if flags.is_empty() {
             Ok(PushNotificationStateInfoWithFlags::EmptyFlags)

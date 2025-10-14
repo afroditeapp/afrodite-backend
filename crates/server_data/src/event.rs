@@ -3,7 +3,7 @@
 use database_chat::current::write::chat::ChatStateChanges;
 use model::{
     AccountId, AccountIdInternal, ContentProcessingStateChanged, EventToClient,
-    EventToClientInternal, NotificationEvent, PendingNotificationFlags,
+    EventToClientInternal, NotificationEvent, PushNotificationFlags,
 };
 use server_common::{data::IntoDataError, push_notifications::PushNotificationSender};
 use tokio::sync::mpsc::{self, error::TrySendError};
@@ -159,8 +159,8 @@ impl<'a> EventManagerWithCacheReference<'a> {
         self.cache
             .write_cache_common(account, move |entry| {
                 if push_notification_sending_allowed {
-                    entry.pending_notification_flags |= event.into();
-                    entry.pending_notification_sent_flags.remove(event.into());
+                    entry.pending_push_notification_flags |= event.into();
+                    entry.sent_push_notification_flags.remove(event.into());
                 }
                 Ok(())
             })
@@ -201,8 +201,8 @@ impl<'a> EventManagerWithCacheReference<'a> {
                     entry.app_notification_settings.get_setting(event);
 
                 if push_notification_sending_allowed {
-                    entry.pending_notification_flags |= event.into();
-                    entry.pending_notification_sent_flags.remove(event.into());
+                    entry.pending_push_notification_flags |= event.into();
+                    entry.sent_push_notification_flags.remove(event.into());
                 }
                 let sent = if let Some(sender) = entry.connection_event_sender() {
                     match sender
@@ -229,7 +229,9 @@ impl<'a> EventManagerWithCacheReference<'a> {
     ) {
         let flags_result = self
             .cache
-            .read_cache_common(account, move |entry| Ok(entry.pending_notification_flags))
+            .read_cache_common(account, move |entry| {
+                Ok(entry.pending_push_notification_flags)
+            })
             .await
             .into_data_error(account);
 
@@ -239,7 +241,7 @@ impl<'a> EventManagerWithCacheReference<'a> {
                     self.push_notification_sender.send(account);
                 }
             }
-            Err(e) => error!("Failed to read pending notification flags: {e:?}"),
+            Err(e) => error!("Failed to read pending push notification flags: {e:?}"),
         }
     }
 
@@ -248,19 +250,19 @@ impl<'a> EventManagerWithCacheReference<'a> {
     }
 
     /// Also remove the flags from sent flags
-    pub async fn remove_specific_pending_notification_flags_from_cache(
+    pub async fn remove_pending_push_notification_flags_from_cache(
         &'a self,
         account: AccountIdInternal,
-        flags: PendingNotificationFlags,
+        flags: PushNotificationFlags,
     ) -> NotificationVisibility {
         let edit_result = self
             .cache
             .write_cache_common(account, move |entry| {
-                entry.pending_notification_flags -= flags;
+                entry.pending_push_notification_flags -= flags;
                 let visibility = NotificationVisibility {
-                    hidden: entry.pending_notification_sent_flags.contains(flags),
+                    hidden: entry.sent_push_notification_flags.contains(flags),
                 };
-                entry.pending_notification_sent_flags -= flags;
+                entry.sent_push_notification_flags -= flags;
                 Ok(visibility)
             })
             .await
@@ -269,23 +271,23 @@ impl<'a> EventManagerWithCacheReference<'a> {
         match edit_result {
             Ok(v) => v,
             Err(e) => {
-                error!("Failed to edit pending notification flags: {e:?}");
+                error!("Failed to edit pending push notification flags: {e:?}");
                 NotificationVisibility { hidden: false }
             }
         }
     }
 
     /// Also add the returned flags to sent flags
-    pub async fn remove_pending_notification_flags_from_cache(
+    pub async fn remove_all_pending_push_notification_flags_from_cache(
         &'a self,
         account: AccountIdInternal,
-    ) -> PendingNotificationFlags {
+    ) -> PushNotificationFlags {
         let r = self
             .cache
             .write_cache_common(account, move |entry| {
-                let flags = entry.pending_notification_flags;
-                entry.pending_notification_flags = PendingNotificationFlags::empty();
-                entry.pending_notification_sent_flags |= flags;
+                let flags = entry.pending_push_notification_flags;
+                entry.pending_push_notification_flags = PushNotificationFlags::empty();
+                entry.sent_push_notification_flags |= flags;
                 Ok(flags)
             })
             .await
@@ -293,8 +295,8 @@ impl<'a> EventManagerWithCacheReference<'a> {
         match r {
             Ok(flags) => flags,
             Err(e) => {
-                error!("Failed to remove pending notification flags: {e:?}");
-                PendingNotificationFlags::empty()
+                error!("Failed to remove pending push notification flags: {e:?}");
+                PushNotificationFlags::empty()
             }
         }
     }

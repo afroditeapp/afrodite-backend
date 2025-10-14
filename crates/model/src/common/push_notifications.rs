@@ -16,9 +16,9 @@ use crate::{
     sync_version_wrappers,
 };
 
-/// Pending notification (or multiple notifications which each have
-/// different type) not yet received notifications which push notification
-/// requests client to download.
+/// Push notification type. Backend uses this internally for
+/// tracking which notifications should be send and which notifications
+/// should be displayed when WebSocket connects.
 ///
 /// The integer is a bitflag.
 ///
@@ -44,9 +44,9 @@ use crate::{
     diesel::AsExpression,
 )]
 #[diesel(sql_type = Integer)]
-pub struct PendingNotification(i64);
+pub struct PushNotificationFlagsDb(i64);
 
-impl PendingNotification {
+impl PushNotificationFlagsDb {
     pub fn new(value: i64) -> Self {
         Self(value)
     }
@@ -56,14 +56,14 @@ impl PendingNotification {
     }
 }
 
-diesel_i64_wrapper!(PendingNotification);
+diesel_i64_wrapper!(PushNotificationFlagsDb);
 
 bitflags::bitflags! {
     /// If you add anything here, remember to remove the flag from the
     /// cache so that websocket code do not send push notification when it
     /// is not needed.
     #[derive(Clone, Copy, Debug, PartialEq)]
-    pub struct PendingNotificationFlags: i64 {
+    pub struct PushNotificationFlags: i64 {
         const NEW_MESSAGE = 0x1;
         const RECEIVED_LIKES_CHANGED = 0x2;
         const MEDIA_CONTENT_MODERATION_COMPLETED = 0x4;
@@ -74,13 +74,13 @@ bitflags::bitflags! {
     }
 }
 
-impl From<PendingNotification> for PendingNotificationFlags {
-    fn from(value: PendingNotification) -> Self {
+impl From<PushNotificationFlagsDb> for PushNotificationFlags {
+    fn from(value: PushNotificationFlagsDb) -> Self {
         value.0.into()
     }
 }
 
-impl From<NotificationEvent> for PendingNotificationFlags {
+impl From<NotificationEvent> for PushNotificationFlags {
     fn from(value: NotificationEvent) -> Self {
         match value {
             NotificationEvent::NewMessageReceived => Self::NEW_MESSAGE,
@@ -100,21 +100,21 @@ impl From<NotificationEvent> for PendingNotificationFlags {
     }
 }
 
-impl From<i64> for PendingNotificationFlags {
+impl From<i64> for PushNotificationFlags {
     fn from(value: i64) -> Self {
         Self::from_bits_truncate(value)
     }
 }
 
-impl From<PendingNotificationFlags> for i64 {
-    fn from(value: PendingNotificationFlags) -> Self {
+impl From<PushNotificationFlags> for i64 {
+    fn from(value: PushNotificationFlags) -> Self {
         value.bits()
     }
 }
 
-impl From<PendingNotificationFlags> for PendingNotification {
-    fn from(value: PendingNotificationFlags) -> Self {
-        PendingNotification(value.bits())
+impl From<PushNotificationFlags> for PushNotificationFlagsDb {
+    fn from(value: PushNotificationFlags) -> Self {
+        PushNotificationFlagsDb(value.bits())
     }
 }
 
@@ -195,8 +195,8 @@ diesel_string_wrapper!(PushNotificationEncryptionKey);
 #[diesel(check_for_backend(crate::Db))]
 #[diesel(treat_none_as_null = true)]
 pub struct PushNotificationDbState {
-    pub pending_flags: PendingNotification,
-    pub sent_flags: PendingNotification,
+    pub pending_flags: PushNotificationFlagsDb,
+    pub sent_flags: PushNotificationFlagsDb,
     pub encryption_key: Option<PushNotificationEncryptionKey>,
     pub device_token: Option<PushNotificationDeviceToken>,
 }
@@ -326,7 +326,7 @@ pub enum PushNotificationStateInfoWithFlags {
     EmptyFlags,
     WithFlags {
         info: PushNotificationStateInfo,
-        flags: PendingNotificationFlags,
+        flags: PushNotificationFlags,
     },
 }
 

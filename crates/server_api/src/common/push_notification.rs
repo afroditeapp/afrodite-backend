@@ -33,14 +33,14 @@ pub async fn post_set_device_token(
 ) -> Result<Json<PushNotificationEncryptionKey>, StatusCode> {
     COMMON.post_set_device_token.incr();
 
-    let pending_notification_token = db_write!(state, move |cmds| {
+    let encryption_key = db_write!(state, move |cmds| {
         cmds.common()
             .push_notification()
             .set_device_token(id, device_token)
             .await
     })?;
 
-    Ok(pending_notification_token.into())
+    Ok(encryption_key.into())
 }
 
 const PATH_GET_PUSH_NOTIFICATION_INFO: &str = "/common_api/get_push_notification_info";

@@ -4,7 +4,7 @@ use axum::{
 };
 use model_account::{
     AccountIdInternal, GetNewsItemResult, NewsId, NewsIteratorState, NewsLocale, NewsPage,
-    PendingNotificationFlags, Permissions, RequireNewsLocale, ResetNewsIteratorResult,
+    Permissions, PushNotificationFlags, RequireNewsLocale, ResetNewsIteratorResult,
     UnreadNewsCountResult,
 };
 use server_api::{S, app::EventManagerProvider, create_open_api_router, db_write};
@@ -37,10 +37,7 @@ pub async fn post_get_unread_news_count(
 
     let visibility = state
         .event_manager()
-        .remove_specific_pending_notification_flags_from_cache(
-            id,
-            PendingNotificationFlags::NEWS_CHANGED,
-        )
+        .remove_pending_push_notification_flags_from_cache(id, PushNotificationFlags::NEWS_CHANGED)
         .await;
     r.h = visibility.hidden;
 

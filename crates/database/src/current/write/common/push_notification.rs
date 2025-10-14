@@ -1,8 +1,8 @@
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    AccountIdInternal, PendingNotification, PushNotificationDeviceToken,
-    PushNotificationEncryptionKey, SyncVersion, UnixTime,
+    AccountIdInternal, PushNotificationDeviceToken, PushNotificationEncryptionKey,
+    PushNotificationFlagsDb, SyncVersion, UnixTime,
 };
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
@@ -10,7 +10,7 @@ use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands
 define_current_read_commands!(CurrentWriteCommonPushNotification);
 
 impl CurrentWriteCommonPushNotification<'_> {
-    pub fn remove_push_notification_device_token_and_pending_notification_token(
+    pub fn remove_push_notification_device_token_and_encryption_key(
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
@@ -85,8 +85,8 @@ impl CurrentWriteCommonPushNotification<'_> {
     pub fn save_current_notification_flags_to_database_if_needed(
         &mut self,
         id: AccountIdInternal,
-        current_flags: PendingNotification,
-        current_sent_flags: PendingNotification,
+        current_flags: PushNotificationFlagsDb,
+        current_sent_flags: PushNotificationFlagsDb,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::push_notification::dsl::*;
 

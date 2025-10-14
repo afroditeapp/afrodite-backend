@@ -5,7 +5,7 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use headers::ContentType;
-use model::{GetConversationId, NotificationEvent, PendingNotificationFlags};
+use model::{GetConversationId, NotificationEvent, PushNotificationFlags};
 use model_chat::{
     AccountId, AccountIdInternal, EventToClientInternal, GetSentMessage,
     PendingMessageAcknowledgementList, SendMessageResult, SendMessageToAccountParams,
@@ -74,10 +74,7 @@ pub async fn get_pending_messages(
 
     let visibility = state
         .event_manager()
-        .remove_specific_pending_notification_flags_from_cache(
-            id,
-            PendingNotificationFlags::NEW_MESSAGE,
-        )
+        .remove_pending_push_notification_flags_from_cache(id, PushNotificationFlags::NEW_MESSAGE)
         .await;
 
     let mut bytes: Vec<u8> = vec![if visibility.hidden { 1 } else { 0 }];

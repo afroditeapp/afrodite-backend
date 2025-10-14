@@ -1,7 +1,7 @@
 use axum::{Extension, extract::State};
 use model::{
     MediaContentModerationCompletedNotification, MediaContentModerationCompletedNotificationViewed,
-    PendingNotificationFlags,
+    PushNotificationFlags,
 };
 use model_media::{AccountIdInternal, MediaAppNotificationSettings};
 use server_api::{
@@ -105,9 +105,9 @@ pub async fn post_get_media_content_moderation_completed_notification(
 
     let visibility = state
         .event_manager()
-        .remove_specific_pending_notification_flags_from_cache(
+        .remove_pending_push_notification_flags_from_cache(
             account_id,
-            PendingNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED,
+            PushNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED,
         )
         .await;
     info.hidden = visibility.hidden;

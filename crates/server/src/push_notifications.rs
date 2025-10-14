@@ -39,7 +39,7 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
         let flags = self
             .state
             .event_manager()
-            .remove_pending_notification_flags_from_cache(account_id)
+            .remove_all_pending_push_notification_flags_from_cache(account_id)
             .await;
 
         let notifications =

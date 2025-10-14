@@ -10,14 +10,14 @@ use crate::{
 define_cmd_wrapper_write!(WriteCommandsCommonPushNotification);
 
 impl WriteCommandsCommonPushNotification<'_> {
-    pub async fn remove_push_notification_device_token_and_pending_notification_token(
+    pub async fn remove_push_notification_device_token_and_encryption_key(
         &self,
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.common()
                 .push_notification()
-                .remove_push_notification_device_token_and_pending_notification_token(id)
+                .remove_push_notification_device_token_and_encryption_key(id)
         })?;
 
         Ok(())
@@ -61,8 +61,8 @@ impl WriteCommandsCommonPushNotification<'_> {
         let (flags, sent_flags) = self
             .read_cache_common(id, move |entry| {
                 Ok((
-                    entry.pending_notification_flags,
-                    entry.pending_notification_sent_flags,
+                    entry.pending_push_notification_flags,
+                    entry.sent_push_notification_flags,
                 ))
             })
             .await?;

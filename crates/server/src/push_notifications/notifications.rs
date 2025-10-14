@@ -1,5 +1,5 @@
 use config::file_notification_content::NotificationStringGetter;
-use model::{AccountIdInternal, PendingNotificationFlags, PushNotification, PushNotificationId};
+use model::{AccountIdInternal, PushNotification, PushNotificationFlags, PushNotificationId};
 use server_api::{
     DataError,
     app::{AdminNotificationProvider, GetConfig, ReadData, WriteData},
@@ -15,7 +15,7 @@ use server_state::{S, result::Result};
 pub async fn notifications_for_sending(
     state: &S,
     id: AccountIdInternal,
-    flags: PendingNotificationFlags,
+    flags: PushNotificationFlags,
 ) -> Result<Vec<PushNotification>, DataError> {
     let client_language = state
         .read()
@@ -34,31 +34,31 @@ pub async fn notifications_for_sending(
         notifications: vec![],
     };
 
-    if flags.contains(PendingNotificationFlags::NEW_MESSAGE) {
+    if flags.contains(PushNotificationFlags::NEW_MESSAGE) {
         checker.handle_new_message().await?;
     }
 
-    if flags.contains(PendingNotificationFlags::RECEIVED_LIKES_CHANGED) {
+    if flags.contains(PushNotificationFlags::RECEIVED_LIKES_CHANGED) {
         checker.handle_received_likes().await?;
     }
 
-    if flags.contains(PendingNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED) {
+    if flags.contains(PushNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED) {
         checker.handle_media_content_moderation().await?;
     }
 
-    if flags.contains(PendingNotificationFlags::NEWS_CHANGED) {
+    if flags.contains(PushNotificationFlags::NEWS_CHANGED) {
         checker.handle_news().await?;
     }
 
-    if flags.contains(PendingNotificationFlags::PROFILE_STRING_MODERATION_COMPLETED) {
+    if flags.contains(PushNotificationFlags::PROFILE_STRING_MODERATION_COMPLETED) {
         checker.handle_profile_string_moderation().await?;
     }
 
-    if flags.contains(PendingNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED) {
+    if flags.contains(PushNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED) {
         checker.handle_automatic_profile_search_completed().await?;
     }
 
-    if flags.contains(PendingNotificationFlags::ADMIN_NOTIFICATION) {
+    if flags.contains(PushNotificationFlags::ADMIN_NOTIFICATION) {
         checker.handle_admin_notification().await?;
     }
 

@@ -1,8 +1,8 @@
 use axum::{Extension, extract::State};
 use model::{
     AutomaticProfileSearchCompletedNotification, AutomaticProfileSearchCompletedNotificationViewed,
-    PendingNotificationFlags, ProfileStringModerationCompletedNotification,
-    ProfileStringModerationCompletedNotificationViewed,
+    ProfileStringModerationCompletedNotification,
+    ProfileStringModerationCompletedNotificationViewed, PushNotificationFlags,
 };
 use model_profile::{AccountIdInternal, ProfileAppNotificationSettings};
 use server_api::{
@@ -106,9 +106,9 @@ pub async fn post_get_profile_string_moderation_completed_notification(
 
     let visibility = state
         .event_manager()
-        .remove_specific_pending_notification_flags_from_cache(
+        .remove_pending_push_notification_flags_from_cache(
             account_id,
-            PendingNotificationFlags::PROFILE_STRING_MODERATION_COMPLETED,
+            PushNotificationFlags::PROFILE_STRING_MODERATION_COMPLETED,
         )
         .await;
     info.hidden = visibility.hidden;
@@ -181,9 +181,9 @@ pub async fn post_get_automatic_profile_search_completed_notification(
 
     let visiblity = state
         .event_manager()
-        .remove_specific_pending_notification_flags_from_cache(
+        .remove_pending_push_notification_flags_from_cache(
             account_id,
-            PendingNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED,
+            PushNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED,
         )
         .await;
     info.hidden = visiblity.hidden;

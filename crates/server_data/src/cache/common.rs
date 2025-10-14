@@ -1,6 +1,6 @@
 use model::{
     AccessToken, AccessTokenUnixTime, AccountStateRelatedSharedState, IpAddressInternal,
-    LoginSession, OtherSharedState, PendingNotificationFlags, Permissions, RefreshToken,
+    LoginSession, OtherSharedState, Permissions, PushNotificationFlags, RefreshToken,
 };
 use model_server_data::{AppNotificationSettingsInternal, AuthPair};
 
@@ -15,11 +15,11 @@ pub struct CacheCommon {
     pub current_connection: Option<ConnectionInfo>,
     login_session: Option<LoginSession>,
     login_session_changed: bool,
-    /// The cached pending notification flags indicates not yet handled
+    /// The cached pending push notification flags indicates not yet handled
     /// notification which PushNotificationManager will handle as soon as
     /// possible.
-    pub pending_notification_flags: PendingNotificationFlags,
-    pub pending_notification_sent_flags: PendingNotificationFlags,
+    pub pending_push_notification_flags: PushNotificationFlags,
+    pub sent_push_notification_flags: PushNotificationFlags,
     pub app_notification_settings: AppNotificationSettingsInternal,
     api_limits: AllApiLimits,
 }
@@ -100,8 +100,8 @@ impl Default for CacheCommon {
             current_connection: None,
             login_session: None,
             login_session_changed: false,
-            pending_notification_flags: PendingNotificationFlags::empty(),
-            pending_notification_sent_flags: PendingNotificationFlags::empty(),
+            pending_push_notification_flags: PushNotificationFlags::empty(),
+            sent_push_notification_flags: PushNotificationFlags::empty(),
             app_notification_settings: AppNotificationSettingsInternal::default(),
             api_limits: AllApiLimits::default(),
         }
