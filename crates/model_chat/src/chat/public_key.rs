@@ -5,6 +5,7 @@ use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct AddPublicKeyResult {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub key_id: Option<PublicKeyId>,
     pub error_too_many_public_keys: bool,
 }
@@ -27,11 +28,13 @@ impl AddPublicKeyResult {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct GetLatestPublicKeyId {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<PublicKeyId>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct GetPrivatePublicKeyInfo {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub latest_public_key_id: Option<PublicKeyId>,
     pub max_public_key_count_from_backend_config: i64,
     pub max_public_key_count_from_account_config: i64,

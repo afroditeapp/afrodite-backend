@@ -266,8 +266,11 @@ impl GetSentMessage {
 
 #[derive(Serialize, ToSchema)]
 pub struct SendLikeResult {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<LimitedActionStatus>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub daily_likes_left: Option<DailyLikesLeft>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub error_account_interaction_state_mismatch: Option<CurrentAccountInteractionState>,
 }
 
@@ -314,6 +317,7 @@ pub struct ChatGlobalState {
 pub struct DailyLikesLeftInternal {
     pub sync_version: DailyLikesLeftSyncVersion,
     pub likes_left: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub latest_limit_reset_unix_time: Option<UnixTime>,
 }
 
