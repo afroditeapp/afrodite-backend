@@ -317,7 +317,7 @@ impl WebSocketCacheCmds<'_> {
     /// Removes current access token from HashMap containing valid
     /// access tokens.
     ///
-    /// This will reset cached pending push notification flags.
+    /// This will reset cached pending and sent push notification flags.
     pub async fn init_login_session(
         &self,
         id: AccountId,
@@ -362,6 +362,8 @@ impl WebSocketCacheCmds<'_> {
             let mut lock = cache_entry.cache.write().await;
             lock.common.update_tokens(new_tokens, address.ip().into());
             lock.common.pending_push_notification_flags = PushNotificationFlags::empty();
+            // Show notifications on login
+            lock.common.sent_push_notification_flags = PushNotificationFlags::empty();
             drop(lock);
             tokens.insert(new_access_token, cache_entry);
 
