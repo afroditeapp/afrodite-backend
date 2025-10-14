@@ -29,9 +29,6 @@ pub use media::*;
 pub mod profile;
 pub use profile::*;
 
-pub mod db_only;
-pub use db_only::*;
-
 pub mod markers;
 pub mod schema;
 pub mod schema_sqlite_types;
