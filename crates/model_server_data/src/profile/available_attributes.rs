@@ -545,9 +545,11 @@ pub struct AttributeValue {
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
     #[schema(default = true)]
     pub visible: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<String>)]
     pub icon: Option<IconResource>,
     /// Sub level values for this attribute value.
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(no_recursion)]
     pub group_values: Option<GroupValues>,
 }
@@ -756,6 +758,7 @@ pub struct Attribute {
     #[schema(default = false)]
     pub required: bool,
     /// Icon for the attribute.
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<String>)]
     pub icon: Option<IconResource>,
     /// Numeric unique identifier for the attribute.
