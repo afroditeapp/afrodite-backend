@@ -10,5 +10,6 @@ pub struct GetAccountIdFromEmailParams {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct GetAccountIdFromEmailResult {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub aid: Option<AccountId>,
 }

@@ -23,7 +23,9 @@ pub struct CurrentVersions {
 pub struct SetAccountBanState {
     pub account: AccountId,
     /// `Some` value bans the account and `None` value unbans the account.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub ban_until: Option<UnixTime>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub reason_category: Option<AccountBanReasonCategory>,
     pub reason_details: AccountBanReasonDetails,
 }

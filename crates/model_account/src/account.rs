@@ -29,13 +29,16 @@ pub use client_features::*;
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, PartialEq)]
 pub struct LoginResult {
     /// If `None`, the client is unsupported.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub tokens: Option<AuthPair>,
 
     /// Account ID of current account. If `None`, the client is unsupported.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub aid: Option<AccountId>,
 
     /// Current email of current account. If `None`, if email address is not
     /// set or the client version is unsupported.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub email: Option<EmailAddress>,
 
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
@@ -77,6 +80,7 @@ pub struct AccountInternal {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct AccountData {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub email: Option<EmailAddress>,
 }
 
@@ -85,6 +89,7 @@ pub struct SetAccountSetup {
     /// String date with "YYYY-MM-DD" format.
     ///
     /// This is not required at the moment to reduce sensitive user data.
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<String>)]
     pub birthdate: Option<NaiveDate>,
     pub is_adult: bool,
@@ -137,13 +142,16 @@ pub struct BooleanSetting {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct GetAccountDeletionRequestResult {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub automatic_deletion_allowed: Option<UnixTime>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct GetAccountBanTimeResult {
     /// If `None` the account is not banned.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub banned_until: Option<UnixTime>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub reason_category: Option<AccountBanReasonCategory>,
     pub reason_details: AccountBanReasonDetails,
 }
@@ -151,7 +159,9 @@ pub struct GetAccountBanTimeResult {
 #[derive(Deserialize, ToSchema)]
 pub struct SignInWithLoginInfo {
     pub client_info: ClientInfo,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub apple: Option<SignInWithAppleInfo>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub google: Option<SignInWithGoogleInfo>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]

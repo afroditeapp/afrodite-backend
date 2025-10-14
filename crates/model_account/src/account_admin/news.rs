@@ -8,8 +8,11 @@ use crate::{AccountId, NewsId, NewsItem, NewsTranslationVersion};
 pub struct NewsTranslations {
     pub id: NewsId,
     pub public: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub aid_creator: Option<AccountId>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub first_publication_time: Option<UnixTime>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub latest_publication_time: Option<UnixTime>,
     pub translations: Vec<NewsItem>,
 }

@@ -6,7 +6,9 @@ use utoipa::ToSchema;
 /// greater or equal to [Self::min_time].
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct GetClientVersionStatisticsSettings {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub max_time: Option<UnixTime>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub min_time: Option<UnixTime>,
 }
 

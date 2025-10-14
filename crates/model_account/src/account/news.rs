@@ -124,14 +124,19 @@ pub struct NewsItem {
     pub body: String,
     pub locale: String,
     /// Latest publication time
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub time: Option<UnixTime>,
     /// Option<i64> is a workaround for Dart OpenApi generator version 7.9.0
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub edit_unix_time: Option<i64>,
     /// Only visible for accounts which have some news permissions
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub aid_creator: Option<AccountId>,
     /// Only visible for accounts which have some news permissions
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub aid_editor: Option<AccountId>,
     /// Only visible for accounts which have some news permissions
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub version: Option<NewsTranslationVersion>,
 }
 
@@ -145,6 +150,7 @@ impl NewsItem {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct GetNewsItemResult {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub item: Option<NewsItem>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -154,8 +160,10 @@ pub struct GetNewsItemResult {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct NewsItemSimple {
     pub id: NewsId,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
     /// Latest publication time
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub time: Option<UnixTime>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
