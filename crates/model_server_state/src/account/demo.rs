@@ -16,6 +16,7 @@ pub struct DemoAccountLoginCredentials {
 pub struct DemoAccountLoginResult {
     /// This password is locked.
     pub locked: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub token: Option<DemoAccountToken>,
 }
 
