@@ -82,6 +82,7 @@ pub struct ContentInfoWithFd {
     /// Face detected
     pub fd: bool,
     pub state: ContentModerationState,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub rejected_reason_category: Option<MediaContentModerationRejectedReasonCategory>,
     pub rejected_reason_details: MediaContentModerationRejectedReasonDetails,
 }
@@ -91,12 +92,16 @@ pub struct ContentInfoDetailed {
     pub cid: ContentId,
     pub ctype: MediaContentType,
     pub state: ContentModerationState,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub slot: Option<ContentSlot>,
     pub secure_capture: bool,
     /// Face detected
     pub fd: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub usage_start_time: Option<UnixTime>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub usage_end_time: Option<UnixTime>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub rejected_reason_category: Option<MediaContentModerationRejectedReasonCategory>,
     pub rejected_reason_details: MediaContentModerationRejectedReasonDetails,
 }
@@ -385,8 +390,11 @@ pub struct SetProfileContent {
     ///
     /// Max item count is 6. Extra items are ignored.
     pub c: Vec<ContentId>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub grid_crop_size: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub grid_crop_x: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub grid_crop_y: Option<f64>,
 }
 
@@ -401,8 +409,11 @@ impl SetProfileContent {
 pub struct ProfileContent {
     /// Primary profile image which is shown in grid view.
     pub c: Vec<ContentInfo>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub grid_crop_size: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub grid_crop_x: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub grid_crop_y: Option<f64>,
 }
 
@@ -422,8 +433,11 @@ impl From<CurrentAccountMediaInternal> for ProfileContent {
 pub struct MyProfileContent {
     /// Primary profile image which is shown in grid view.
     pub c: Vec<ContentInfoWithFd>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub grid_crop_size: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub grid_crop_x: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub grid_crop_y: Option<f64>,
 }
 
@@ -440,6 +454,7 @@ impl From<CurrentAccountMediaInternal> for MyProfileContent {
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct SecurityContent {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub c: Option<ContentInfoWithFd>,
 }
 
@@ -480,7 +495,9 @@ impl GetProfileContentQueryParams {
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct GetProfileContentResult {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub c: Option<ProfileContent>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub v: Option<ProfileContentVersion>,
 }
 
@@ -508,6 +525,7 @@ impl GetProfileContentResult {
 pub struct GetMediaContentResult {
     pub profile_content: MyProfileContent,
     pub profile_content_version: ProfileContentVersion,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub security_content: Option<ContentInfoWithFd>,
     pub sync_version: MediaContentSyncVersion,
 }
