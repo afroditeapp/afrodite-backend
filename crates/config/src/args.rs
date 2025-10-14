@@ -101,7 +101,7 @@ impl RemoteBotMode {
                 .attach_printable("Remote bot mode config not found");
         };
 
-        for b in &config.bot {
+        for b in &config.bots {
             if b.account_id.is_none() {
                 return Err(ConfigFileError::InvalidConfig.report())
                     .attach_printable(format!("Account ID is missing from bot {}", b.id));
@@ -138,7 +138,7 @@ impl RemoteBotMode {
             no_servers: true,
             early_quit: false,
             mode: TestModeSubMode::Bot(BotModeConfig {
-                users: TryInto::<u32>::try_into(config.bot.len())
+                users: TryInto::<u32>::try_into(config.bots.len())
                     .change_context(ConfigFileError::InvalidConfig)?,
                 admin: admin_config.account_id.is_some()
                     && admin_config.remote_bot_login_password.is_some(),

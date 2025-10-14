@@ -55,7 +55,7 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
             .attach_printable("Email content not configured")?;
 
         let email_content = email_content
-            .email
+            .emails
             .iter()
             .find(|e| e.message_type == message)
             .ok_or(EmailError::GettingEmailDataFailed)

@@ -66,7 +66,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # max_content_count = 20
 # unused_content_wait_duration = "90d"
 
-# [[profile_name_allowlist]]
+# [[profile_name_allowlists]]
 # csv_file = "names.csv"
 # delimiter = ";"
 # column_index = 0
@@ -113,9 +113,9 @@ pub struct ConfigFile {
 
     pub grant_admin_access: Option<GrantAdminAccessConfig>,
     pub location: Option<LocationConfig>,
-    pub demo_account: Option<Vec<DemoAccountConfig>>,
+    pub demo_accounts: Option<Vec<DemoAccountConfig>>,
     pub limits: Option<LimitsConfig>,
-    pub profile_name_allowlist: Option<Vec<ProfiletNameAllowlistConfig>>,
+    pub profile_name_allowlists: Option<Vec<ProfiletNameAllowlistConfig>>,
 }
 
 impl ConfigFile {
@@ -128,9 +128,9 @@ impl ConfigFile {
             remote_bots: vec![],
             grant_admin_access: None,
             location: None,
-            demo_account: None,
+            demo_accounts: None,
             limits: None,
-            profile_name_allowlist: None,
+            profile_name_allowlists: None,
         }
     }
 

@@ -12,7 +12,7 @@ use utoipa::ToSchema;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttributesFileInternal {
     attribute_order: AttributeOrderMode,
-    pub attribute: Vec<AttributeInternal>,
+    pub attributes: Vec<AttributeInternal>,
 }
 
 impl AttributesFileInternal {
@@ -23,7 +23,7 @@ impl AttributesFileInternal {
         let mut ids = HashSet::new();
         let mut order_numbers = HashSet::new();
         // Validate uniquenes of keys, IDs and order numbers.
-        for attribute in &self.attribute {
+        for attribute in &self.attributes {
             if keys.contains(&attribute.key) {
                 return Err(format!("Duplicate key {}", attribute.key));
             }
@@ -41,7 +41,7 @@ impl AttributesFileInternal {
         }
 
         // Check that correct IDs are used.
-        for i in 1..=self.attribute.len() {
+        for i in 1..=self.attributes.len() {
             let i: u16 = i
                 .try_into()
                 .map_err(|e: std::num::TryFromIntError| e.to_string())?;
@@ -50,13 +50,13 @@ impl AttributesFileInternal {
                 return Err(format!(
                     "ID {} is missing from attribute ID values, all numbers between 1 and {} should be used",
                     i,
-                    self.attribute.len()
+                    self.attributes.len()
                 ));
             }
         }
-        self.attribute.sort_by_key(|a| a.id);
+        self.attributes.sort_by_key(|a| a.id);
 
-        Ok((self.attribute_order, self.attribute))
+        Ok((self.attribute_order, self.attributes))
     }
 
     pub fn validate(self) -> Result<ProfileAttributesInternal, String> {

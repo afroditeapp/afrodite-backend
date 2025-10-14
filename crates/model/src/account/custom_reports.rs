@@ -106,7 +106,7 @@ pub enum CustomReportType {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CustomReportsConfig {
     report_order: CustomReportsOrderMode,
-    report: Vec<CustomReport>,
+    reports: Vec<CustomReport>,
 }
 
 impl CustomReportsConfig {
@@ -115,7 +115,7 @@ impl CustomReportsConfig {
         let mut ids = HashSet::new();
         let mut order_numbers = HashSet::new();
         // Validate uniquenes of keys, IDs and order numbers.
-        for report in &self.report {
+        for report in &self.reports {
             if keys.contains(&report.key) {
                 return Err(format!("Duplicate key {}", report.key));
             }
@@ -133,7 +133,7 @@ impl CustomReportsConfig {
         }
 
         // Check that correct IDs are used.
-        for i in 0..self.report.len() {
+        for i in 0..self.reports.len() {
             let i: u8 = i
                 .try_into()
                 .map_err(|e: std::num::TryFromIntError| e.to_string())?;
@@ -142,22 +142,22 @@ impl CustomReportsConfig {
                 return Err(format!(
                     "ID {} is missing from custom report ID values, all numbers between 0 and {} should be used",
                     i,
-                    self.report.len() - 1
+                    self.reports.len() - 1
                 ));
             }
         }
 
-        for r in &self.report {
+        for r in &self.reports {
             r.validate()?;
         }
 
-        self.report.sort_by_key(|a| a.id);
+        self.reports.sort_by_key(|a| a.id);
 
         Ok(())
     }
 
     pub fn index_with_id(&self, value: CustomReportId) -> Option<&CustomReport> {
-        self.report.get(value.to_usize())
+        self.reports.get(value.to_usize())
     }
 }
 

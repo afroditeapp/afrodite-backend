@@ -70,7 +70,7 @@ public_api = "127.0.0.1:4000"
 # encryption_key_text = ""
 # extend_size_to = "1G"
 
-# [[server_encryption_key]]
+# [[server_encryption_keys]]
 # manager_name = "default"
 # key_path = "data-key.key"
 
@@ -139,7 +139,7 @@ pub struct ConfigFile {
     #[serde(default)]
     pub backup_link: BackupLinkConfig,
     #[serde(default)]
-    pub server_encryption_key: Vec<ServerEncryptionKey>,
+    pub server_encryption_keys: Vec<ServerEncryptionKey>,
     pub secure_storage: Option<SecureStorageConfig>,
     pub manual_tasks: Option<ManualTasksConfig>,
     pub scheduled_tasks: Option<ScheduledTasksConfig>,

@@ -9,7 +9,7 @@ use crate::file::ConfigFileError;
 #[derive(Debug, Default, Deserialize)]
 pub struct EmailContentFile {
     #[serde(default)]
-    pub email: Vec<EmailContent>,
+    pub emails: Vec<EmailContent>,
 }
 
 impl EmailContentFile {
@@ -20,7 +20,7 @@ impl EmailContentFile {
             toml::from_str(&config_content).change_context(ConfigFileError::LoadConfig)?;
 
         let mut messages = std::collections::HashSet::<EmailMessages>::new();
-        for content in &config.email {
+        for content in &config.emails {
             if messages.contains(&content.message_type) {
                 return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
                     "Message {:?} is defined more than once",

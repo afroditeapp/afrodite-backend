@@ -142,9 +142,9 @@ fn new_config(config: &TestMode, bot_api_port: u16) -> (ConfigFile, SimpleBacken
             DEFAULT_LOCATION_CONFIG
         }
         .into(),
-        demo_account: None,
+        demo_accounts: None,
         limits: None,
-        profile_name_allowlist: None,
+        profile_name_allowlists: None,
     };
 
     let simple_backend_config = SimpleBackendConfigFile {

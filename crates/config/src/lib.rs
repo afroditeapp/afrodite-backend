@@ -250,7 +250,7 @@ impl Config {
     }
 
     pub fn demo_account_config(&self) -> Option<&Vec<DemoAccountConfig>> {
-        self.file.demo_account.as_ref()
+        self.file.demo_accounts.as_ref()
     }
 
     pub fn simple_backend(&self) -> &SimpleBackendConfig {
@@ -406,7 +406,7 @@ pub fn get_config(
 
     let mut allowlist_builder = ProfileNameAllowlistBuilder::default();
     let csv_configs = file_config
-        .profile_name_allowlist
+        .profile_name_allowlists
         .as_ref()
         .map(|v| v.iter())
         .unwrap_or_default();

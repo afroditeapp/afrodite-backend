@@ -17,7 +17,7 @@ impl AttributeValuesCsvLoader {
         file: &mut AttributesFileInternal,
         attributes_file_sha256: &mut Sha256,
     ) -> Result<(), CsvFileError> {
-        for a in &mut file.attribute {
+        for a in &mut file.attributes {
             Self::handle_attribute(a, attributes_file_sha256)?;
         }
 

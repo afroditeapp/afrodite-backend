@@ -97,7 +97,7 @@ impl Config {
     }
 
     pub fn encryption_keys(&self) -> &[ServerEncryptionKey] {
-        self.file.server_encryption_key.as_slice()
+        self.file.server_encryption_keys.as_slice()
     }
 
     pub fn secure_storage_config(&self) -> Option<&SecureStorageConfig> {

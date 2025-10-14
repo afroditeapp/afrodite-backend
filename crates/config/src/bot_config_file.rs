@@ -23,7 +23,7 @@ pub struct BotConfigFile {
     pub bot_config: BaseBotConfig,
     /// Override config for specific user bots.
     #[serde(default)]
-    pub bot: Vec<BotInstanceConfig>,
+    pub bots: Vec<BotInstanceConfig>,
     pub profile_name_moderation: Option<ProfileStringModerationConfig>,
     pub profile_text_moderation: Option<ProfileStringModerationConfig>,
     pub content_moderation: Option<ContentModerationConfig>,
@@ -106,7 +106,7 @@ impl BotConfigFile {
         validate_common_config(&config.bot_config, None)?;
 
         let mut ids = std::collections::HashSet::<u16>::new();
-        for bot in &config.bot {
+        for bot in &config.bots {
             validate_common_config(&config.bot_config, Some(bot.id))?;
 
             if ids.contains(&bot.id) {
@@ -171,7 +171,7 @@ impl BotConfigFile {
     }
 
     fn merge_base_bot_config_with_specific_bot_configs(&mut self) {
-        for config in &mut self.bot {
+        for config in &mut self.bots {
             let base = self.bot_config.clone();
             let c = config.config.clone();
 
@@ -210,7 +210,7 @@ impl BotConfigFile {
     }
 
     pub fn find_bot_config(&self, bot_id: u32) -> Option<&BotInstanceConfig> {
-        self.bot.iter().find(|v| Into::<u32>::into(v.id) == bot_id)
+        self.bots.iter().find(|v| Into::<u32>::into(v.id) == bot_id)
     }
 }
 
@@ -221,7 +221,7 @@ fn check_imgs_exist(
 ) -> Result<(), ConfigFileError> {
     let configs = [&config.bot_config]
         .into_iter()
-        .chain(config.bot.iter().map(|v| &v.config));
+        .chain(config.bots.iter().map(|v| &v.config));
 
     for bot in configs {
         if bot.img_dir_gender() != gender {
