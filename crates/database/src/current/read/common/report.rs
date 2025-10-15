@@ -8,6 +8,7 @@ use model::{
     ReportDetailedWithId, ReportIdDb, ReportInternal, ReportProcessingState,
     ReportTypeNumberInternal, UnixTime,
 };
+use simple_backend_model::NonEmptyString;
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
 
@@ -153,7 +154,7 @@ impl CurrentReadCommonReport<'_> {
     fn profile_name_report(
         &mut self,
         id: ReportIdDb,
-    ) -> Result<Option<String>, DieselDatabaseError> {
+    ) -> Result<Option<NonEmptyString>, DieselDatabaseError> {
         use crate::schema::profile_report_profile_name::dsl::*;
 
         profile_report_profile_name

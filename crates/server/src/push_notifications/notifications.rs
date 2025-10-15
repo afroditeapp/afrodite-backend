@@ -94,6 +94,7 @@ impl<'a> NotificationChecker<'a> {
                 .common()
                 .user_visible_profile_name_if_data_available(n.a)
                 .await?
+                .map(|v| v.into_string())
                 .unwrap_or_default();
             let notification = PushNotification::new_message(
                 n.c,

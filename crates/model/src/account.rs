@@ -1,6 +1,6 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, prelude::*, sql_types::BigInt};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper};
+use simple_backend_model::{NonEmptyString, diesel_i64_try_from, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
@@ -361,7 +361,7 @@ impl EmailMessages {
 pub struct AccessibleAccount {
     pub aid: AccountId,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub name: Option<String>,
+    pub name: Option<NonEmptyString>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<i64>)]
     pub age: Option<ProfileAge>,

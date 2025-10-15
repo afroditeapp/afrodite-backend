@@ -91,7 +91,7 @@ impl DemoAccountUtils {
                 .await?;
             let info = AccessibleAccount {
                 aid: *id,
-                name: Some(profile.name),
+                name: profile.name,
                 age: Some(profile.age),
             };
             accessible_accounts.push(info);

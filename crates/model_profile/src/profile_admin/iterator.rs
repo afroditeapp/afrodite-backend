@@ -1,5 +1,6 @@
 use model::{AccountId, AccountIdDb, ProfileAge};
 use serde::{Deserialize, Serialize};
+use simple_backend_model::NonEmptyString;
 use utoipa::{IntoParams, ToSchema};
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -18,7 +19,8 @@ pub struct ProfileIteratorPageValue {
     pub account_id: AccountId,
     #[schema(value_type = i64)]
     pub age: ProfileAge,
-    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<NonEmptyString>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

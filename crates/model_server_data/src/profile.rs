@@ -1,7 +1,7 @@
 use diesel::{Selectable, prelude::Queryable, sql_types::Binary};
 use model::{AccountIdDb, ProfileAge};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::diesel_uuid_wrapper;
+use simple_backend_model::{NonEmptyString, diesel_uuid_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 mod attribute;
@@ -56,7 +56,7 @@ pub use search::*;
 pub struct ProfileInternal {
     pub account_id: AccountIdDb,
     pub version_uuid: ProfileVersion,
-    pub profile_name: String,
+    pub profile_name: Option<NonEmptyString>,
     pub profile_text: String,
     pub age: ProfileAge,
 }

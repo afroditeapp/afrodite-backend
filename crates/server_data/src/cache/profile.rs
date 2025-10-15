@@ -14,6 +14,7 @@ use model_server_data::{
     ProfileTextCharacterCount, ProfileTextModerationState, ProfileVersion, SortedProfileAttributes,
 };
 use server_common::data::DataError;
+use simple_backend_model::NonEmptyString;
 
 use crate::{
     db_manager::InternalWriting,
@@ -83,7 +84,7 @@ impl CacheProfile {
         self.data.version_uuid = v;
     }
 
-    pub fn update_profile_name(&mut self, v: String) {
+    pub fn update_profile_name(&mut self, v: Option<NonEmptyString>) {
         self.data.profile_name = v;
     }
 

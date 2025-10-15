@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use simple_backend_model::UnixTime;
+use simple_backend_model::{NonEmptyString, UnixTime};
 use utoipa::ToSchema;
 
 use crate::{
@@ -42,7 +42,8 @@ pub struct ReportDetailedInfo {
 pub struct ReportAccountInfo {
     #[schema(value_type = i64)]
     pub age: ProfileAge,
-    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<NonEmptyString>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -98,8 +99,9 @@ pub struct ReportDetailed {
 
 #[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize, ToSchema)]
 pub struct ReportContent {
+    /// Null or non-empty string
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub profile_name: Option<String>,
+    pub profile_name: Option<NonEmptyString>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_text: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]

@@ -4,6 +4,7 @@ use database::{
 use diesel::{ExpressionMethods, insert_into, prelude::*};
 use error_stack::Result;
 use model::{AccountIdInternal, ReportProcessingState, ReportTypeNumberInternal};
+use simple_backend_model::NonEmptyString;
 
 use crate::IntoDatabaseError;
 
@@ -14,7 +15,7 @@ impl CurrentWriteProfileReport<'_> {
         &mut self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
-        name: String,
+        name: NonEmptyString,
     ) -> Result<(), DieselDatabaseError> {
         let id = self.write().common().report().insert_report_content(
             creator,

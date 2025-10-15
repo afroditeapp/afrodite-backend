@@ -1203,6 +1203,7 @@ dependencies = [
  "error-stack",
  "model",
  "model_profile",
+ "simple_backend_model",
  "simple_backend_utils",
 ]
 

@@ -470,7 +470,8 @@ CREATE TABLE IF NOT EXISTS profile_state(
 CREATE TABLE IF NOT EXISTS profile(
     account_id      INTEGER PRIMARY KEY NOT NULL,
     version_uuid    BLOB                NOT NULL,
-    profile_name    TEXT                NOT NULL    DEFAULT '',
+    -- Null or non-empty string
+    profile_name    TEXT,
     profile_text    TEXT                NOT NULL    DEFAULT '',
     -- Age in years and inside inclusive range of [18,99].
     age             INTEGER             NOT NULL    DEFAULT 18,
@@ -569,6 +570,7 @@ CREATE TABLE IF NOT EXISTS profile_name_allowlist(
 
 CREATE TABLE IF NOT EXISTS profile_report_profile_name(
     report_id               INTEGER PRIMARY KEY NOT NULL,
+    -- Non-empty string
     profile_name            TEXT                NOT NULL,
     FOREIGN KEY (report_id)
         REFERENCES common_report (id)

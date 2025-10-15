@@ -48,6 +48,7 @@ pub struct GetProfileStringStateParams {
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct GetProfileStringState {
+    // TODO: Update once profile text type is NonEmptyString
     /// If empty, the `moderation_info` is `None`.
     pub value: String,
     #[serde(skip_serializing_if = "Option::is_none")]

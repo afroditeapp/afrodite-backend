@@ -16,7 +16,7 @@ impl DemoAccountUtils {
             let profile = read.profile().profile(internal_id).await?;
             let info = AccessibleAccount {
                 aid: *id,
-                name: Some(profile.profile.name),
+                name: profile.profile.name,
                 age: Some(profile.profile.age),
             };
             accessible_accounts.push(info);

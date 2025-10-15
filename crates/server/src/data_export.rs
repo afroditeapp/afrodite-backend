@@ -76,6 +76,8 @@ impl DataExportManager {
                     let name = p
                         .profile
                         .name
+                        .map(|v| v.into_string())
+                        .unwrap_or_default()
                         .chars()
                         .map(|v| {
                             if v.is_ascii_alphanumeric() {

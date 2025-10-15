@@ -4,11 +4,13 @@ use database::{
 };
 use diesel::prelude::*;
 use error_stack::Result;
+use model::AccountId;
 use model_profile::{
     AccountIdInternal, GetProfileStringPendingModerationList,
     GetProfileStringPendingModerationParams, ProfileStringModerationContentType,
     ProfileStringModerationState, ProfileStringPendingModeration,
 };
+use simple_backend_model::NonEmptyString;
 
 define_current_read_commands!(CurrentReadProfileModeration);
 
@@ -69,9 +71,18 @@ impl CurrentReadProfileModeration<'_> {
             .limit(LIMIT);
 
         let values = match params.content_type {
+            // TODO: Update once profile text type is NonEmptyString
             ProfileStringModerationContentType::ProfileName => query
                 .select((account_id::uuid, profile::profile_name))
-                .load::<ProfileStringPendingModeration>(self.conn()),
+                .load::<(AccountId, Option<NonEmptyString>)>(self.conn())
+                .map(|v| {
+                    v.into_iter()
+                        .map(|(id, name)| ProfileStringPendingModeration {
+                            id,
+                            value: name.map(|v| v.into_string()).unwrap_or_default(),
+                        })
+                        .collect::<Vec<_>>()
+                }),
             ProfileStringModerationContentType::ProfileText => query
                 .select((account_id::uuid, profile::profile_text))
                 .load::<ProfileStringPendingModeration>(self.conn()),

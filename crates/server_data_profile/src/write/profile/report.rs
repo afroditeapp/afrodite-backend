@@ -8,6 +8,7 @@ use server_data::{
     DataError, db_transaction, define_cmd_wrapper_write, read::DbRead, result::Result,
     write::DbTransaction,
 };
+use simple_backend_model::NonEmptyString;
 
 use crate::write::{GetWriteCommandsProfile, profile_admin::moderation::ModerateProfileValueMode};
 
@@ -18,13 +19,13 @@ impl WriteCommandsProfileReport<'_> {
         &self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
-        profile_name: String,
+        profile_name: NonEmptyString,
     ) -> Result<UpdateReportResult, DataError> {
         let target_data = self
             .db_read(move |mut cmds| cmds.profile().data().my_profile(target, None))
             .await?;
 
-        if profile_name != target_data.p.name {
+        if Some(&profile_name) != target_data.p.name.as_ref() {
             return Ok(UpdateReportResult::outdated_report_content());
         }
 
@@ -38,6 +39,7 @@ impl WriteCommandsProfileReport<'_> {
                     ProfileStringModerationContentType::ProfileName,
                     ModerateProfileValueMode::MoveToHumanModeration,
                     target,
+                    // TODO: Update once profile text type is NonEmptyString
                     profile_name.to_string(),
                 )
                 .await?;
@@ -63,7 +65,7 @@ impl WriteCommandsProfileReport<'_> {
 
         let current_report = reports
             .iter()
-            .find(|v| v.report.content.profile_name.as_deref() == Some(&profile_name));
+            .find(|v| v.report.content.profile_name.as_ref() == Some(&profile_name));
         if current_report.is_some() {
             // Already reported
             return Ok(UpdateReportResult::success());

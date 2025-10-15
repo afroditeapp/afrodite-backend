@@ -5,6 +5,7 @@ use model::{
 };
 use model_server_data::SearchGroupFlags;
 use server_common::data::IntoDataError;
+use simple_backend_model::NonEmptyString;
 use unicode_segmentation::UnicodeSegmentation;
 
 use super::{super::DataError, DbRead};
@@ -111,7 +112,7 @@ impl ReadCommandsCommon<'_> {
     pub async fn user_visible_profile_name_if_data_available(
         &self,
         id: impl Into<AccountId>,
-    ) -> Result<Option<String>, DataError> {
+    ) -> Result<Option<NonEmptyString>, DataError> {
         let (name, accepted) = self
             .cache()
             .read_cache(id, |e| {
@@ -127,16 +128,18 @@ impl ReadCommandsCommon<'_> {
             .await
             .into_error()?;
 
-        if name.is_empty() {
-            Ok(None)
-        } else if accepted {
-            Ok(Some(name))
-        } else {
-            let mut letters = name.graphemes(true);
-            match (letters.next(), letters.next()) {
-                (Some(first), None) => Ok(Some(first.to_string())),
-                (Some(first), Some(_)) => Ok(Some(format!("{first}..."))),
-                _ => Ok(None),
+        match name {
+            None => Ok(None),
+            Some(name) if accepted => Ok(Some(name)),
+            Some(name) => {
+                let mut letters = name.as_str().graphemes(true);
+                match (letters.next(), letters.next()) {
+                    (Some(first), None) => Ok(NonEmptyString::from_string(first.to_string())),
+                    (Some(first), Some(_)) => {
+                        Ok(NonEmptyString::from_string(format!("{first}...")))
+                    }
+                    _ => Ok(None),
+                }
             }
         }
     }

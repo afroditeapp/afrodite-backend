@@ -75,11 +75,15 @@ async fn get_video_call_urls(
     let urls = state.jitsi_meet_url_creator().create_url(
         VideoCallUserInfo {
             id: id.as_id().to_string(),
-            name: name.unwrap_or_else(|| "Caller".to_string()),
+            name: name
+                .map(|v| v.into_string())
+                .unwrap_or_else(|| "Caller".to_string()),
         },
         VideoCallUserInfo {
             id: other_user.as_id().to_string(),
-            name: other_user_name.unwrap_or_else(|| "Callee".to_string()),
+            name: other_user_name
+                .map(|v| v.into_string())
+                .unwrap_or_else(|| "Callee".to_string()),
         },
     )?;
 

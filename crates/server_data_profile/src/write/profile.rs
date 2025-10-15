@@ -117,7 +117,11 @@ impl WriteCommandsProfile<'_> {
                             .moderation()
                             .reset_profile_name_moderation_state(
                                 id,
-                                &profile_data.name,
+                                profile_data
+                                    .name
+                                    .as_ref()
+                                    .map(|v| v.as_str())
+                                    .unwrap_or_default(),
                                 config.profile_name_allowlist(),
                             )?,
                     )
@@ -223,22 +227,6 @@ impl WriteCommandsProfile<'_> {
                 filters.max_distance_km_filter,
             );
 
-            Ok(())
-        })
-        .await
-        .into_data_error(id)?;
-
-        Ok(())
-    }
-
-    pub async fn profile_name(&self, id: AccountIdInternal, data: String) -> Result<(), DataError> {
-        let profile_data = data.clone();
-        db_transaction!(self, move |mut cmds| {
-            cmds.profile().data().profile_name(id, profile_data)
-        })?;
-
-        self.write_cache_profile(id.as_id(), |p| {
-            p.update_profile_name(data);
             Ok(())
         })
         .await

@@ -203,7 +203,7 @@ pub async fn post_profile(
             return Err(DataError::NotAllowed.report());
         }
 
-        if profile.name.is_empty() {
+        if profile.name.is_none() {
             return Err(DataError::NotAllowed.report());
         }
 

@@ -11,7 +11,7 @@ use model_server_data::{
 };
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{UnixTime, diesel_i64_wrapper};
+use simple_backend_model::{NonEmptyString, UnixTime, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{AccountId, sync_version_wrappers};
@@ -43,7 +43,8 @@ pub use report::*;
 /// Public profile info
 #[derive(Debug, Clone, Serialize, ToSchema, PartialEq, Eq)]
 pub struct Profile {
-    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<NonEmptyString>,
     /// Profile text support is disabled for now.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     #[schema(default = "")]
@@ -156,7 +157,8 @@ sync_version_wrappers!(ProfileSyncVersion,);
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
 pub struct ProfileUpdate {
     pub ptext: String,
-    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<NonEmptyString>,
     #[schema(value_type = i64)]
     pub age: ProfileAge,
     pub attributes: Vec<ProfileAttributeValueUpdate>,
@@ -204,15 +206,17 @@ impl ProfileUpdate {
             }
         }
 
-        if self.name.len() > 100 {
+        let name = self.name.as_ref().map(|v| v.as_str()).unwrap_or_default();
+
+        if name.len() > 100 {
             return Err("Profile name is too long".to_string());
         }
 
-        if self.name != self.name.trim() {
+        if name != name.trim() {
             return Err("Profile name is not trimmed".to_string());
         }
 
-        if let Some(c) = self.name.chars().next() {
+        if let Some(c) = name.chars().next() {
             if !c.is_uppercase() {
                 return Err("Profile name does not start with uppercase letter".to_string());
             }
@@ -220,7 +224,7 @@ impl ProfileUpdate {
 
         if !is_bot
             && let Some(regex) = profile_name_regex
-            && !regex.is_match(&self.name)
+            && !regex.is_match(name)
         {
             return Err("Profile name does not match with profile name regex".to_string());
         }
@@ -257,7 +261,7 @@ impl ProfileUpdate {
 #[derive(Debug, Clone, Default)]
 pub struct ProfileUpdateValidated {
     pub ptext: String,
-    pub name: String,
+    pub name: Option<NonEmptyString>,
     pub age: ProfileAge,
     pub attributes: Vec<ProfileAttributeValueUpdate>,
 }

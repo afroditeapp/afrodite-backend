@@ -245,7 +245,8 @@ pub async fn get_profile_string_state(
     let r = state.read().profile().my_profile(string_owner_id).await?;
     let r = match params.content_type {
         ProfileStringModerationContentType::ProfileName => GetProfileStringState {
-            value: r.p.name,
+            // TODO: Update once profile text type is NonEmptyString
+            value: r.p.name.map(|v| v.into_string()).unwrap_or_default(),
             moderation_info: r.name_moderation_info,
         },
         ProfileStringModerationContentType::ProfileText => GetProfileStringState {

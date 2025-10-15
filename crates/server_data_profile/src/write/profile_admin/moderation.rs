@@ -29,7 +29,11 @@ impl WriteCommandsProfileAdminModeration<'_> {
             .db_read(move |mut cmds| cmds.profile().data().profile(string_owner_id))
             .await?;
         let current_value = match content_type {
-            ProfileStringModerationContentType::ProfileName => current_profile.name,
+            // TODO: Update once profile text type is NonEmptyString
+            ProfileStringModerationContentType::ProfileName => current_profile
+                .name
+                .map(|v| v.into_string())
+                .unwrap_or_default(),
             ProfileStringModerationContentType::ProfileText => current_profile.ptext,
         };
         if current_value != string_value {
