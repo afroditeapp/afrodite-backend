@@ -556,7 +556,7 @@ diesel::table! {
         initial_content -> Bool,
         moderation_state -> Integer,
         moderation_rejected_reason_category -> Nullable<Integer>,
-        moderation_rejected_reason_details -> Text,
+        moderation_rejected_reason_details -> Nullable<Text>,
         moderation_moderator_account_id -> Nullable<Integer>,
         usage_start_unix_time -> Nullable<Integer>,
         usage_end_unix_time -> Nullable<Integer>,
@@ -748,7 +748,7 @@ diesel::table! {
         content_type -> Integer,
         state_type -> Integer,
         rejected_reason_category -> Nullable<Integer>,
-        rejected_reason_details -> Text,
+        rejected_reason_details -> Nullable<Text>,
         moderator_account_id -> Nullable<Integer>,
         created_unix_time -> Integer,
     }

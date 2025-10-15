@@ -39,7 +39,8 @@ pub struct PostModerateMediaContent {
     pub accept: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rejected_category: Option<MediaContentModerationRejectedReasonCategory>,
-    pub rejected_details: MediaContentModerationRejectedReasonDetails,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rejected_details: Option<MediaContentModerationRejectedReasonDetails>,
     /// If true, ignore accept, rejected_category, rejected_details and move
     /// the content to waiting for human moderation state.
     #[serde(skip_serializing_if = "Option::is_none")]

@@ -120,6 +120,6 @@ pub enum ModerateProfileValueMode {
         moderator_id: AccountIdInternal,
         accept: bool,
         rejected_category: Option<ProfileStringModerationRejectedReasonCategory>,
-        rejected_details: ProfileStringModerationRejectedReasonDetails,
+        rejected_details: Option<ProfileStringModerationRejectedReasonDetails>,
     },
 }

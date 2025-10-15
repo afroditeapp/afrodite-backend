@@ -125,7 +125,7 @@ pub async fn post_moderate_profile_string(
         }
     }
 
-    if data.accept && (data.rejected_category.is_some() || !data.rejected_details.is_empty()) {
+    if data.accept && (data.rejected_category.is_some() || data.rejected_details.is_some()) {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 

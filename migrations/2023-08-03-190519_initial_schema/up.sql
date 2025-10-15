@@ -646,7 +646,8 @@ CREATE TABLE IF NOT EXISTS profile_moderation(
     -- 6 = RejectedByHuman
     state_type               INTEGER            NOT NULL,
     rejected_reason_category INTEGER,
-    rejected_reason_details  TEXT               NOT NULL DEFAULT '',
+    -- Null or non-empty string
+    rejected_reason_details  TEXT,
     moderator_account_id     INTEGER,
     -- Created or state reset time
     created_unix_time        INTEGER            NOT NULL,
@@ -766,7 +767,8 @@ CREATE TABLE IF NOT EXISTS media_content(
     -- 6 = RejectedByHuman (ModeratedAsRejected)
     moderation_state     INTEGER             NOT NULL    DEFAULT 0,
     moderation_rejected_reason_category INTEGER,
-    moderation_rejected_reason_details  TEXT NOT NULL    DEFAULT '',
+    -- Null or non-empty string
+    moderation_rejected_reason_details  TEXT,
     moderation_moderator_account_id     INTEGER,
     usage_start_unix_time  INTEGER,
     usage_end_unix_time    INTEGER,

@@ -36,7 +36,7 @@ impl CurrentWriteMediaAdminMediaContent<'_> {
         content_id: ContentIdInternal,
         accepted: bool,
         rejected_category: Option<MediaContentModerationRejectedReasonCategory>,
-        rejected_details: MediaContentModerationRejectedReasonDetails,
+        rejected_details: Option<MediaContentModerationRejectedReasonDetails>,
     ) -> Result<ContentModerationState, DieselDatabaseError> {
         use model::schema::media_content;
 

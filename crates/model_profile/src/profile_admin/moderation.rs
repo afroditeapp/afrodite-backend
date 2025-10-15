@@ -33,7 +33,8 @@ pub struct PostModerateProfileString {
     pub accept: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rejected_category: Option<ProfileStringModerationRejectedReasonCategory>,
-    pub rejected_details: ProfileStringModerationRejectedReasonDetails,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rejected_details: Option<ProfileStringModerationRejectedReasonDetails>,
     /// If true, ignore accept, rejected_category, rejected_details and move
     /// the text to waiting for human moderation state.
     #[serde(skip_serializing_if = "Option::is_none")]

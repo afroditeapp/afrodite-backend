@@ -46,7 +46,7 @@ impl CurrentWriteModeration<'_> {
             .set((
                 state_type.eq(excluded(state_type)),
                 rejected_reason_category.eq(None::<i64>),
-                rejected_reason_details.eq(String::new()),
+                rejected_reason_details.eq(None::<String>),
                 moderator_account_id.eq(None::<AccountIdDb>),
                 created_unix_time.eq(excluded(created_unix_time)),
             ))
@@ -85,7 +85,7 @@ impl CurrentWriteModeration<'_> {
                 .set((
                     state_type.eq(excluded(state_type)),
                     rejected_reason_category.eq(None::<i64>),
-                    rejected_reason_details.eq(String::new()),
+                    rejected_reason_details.eq(None::<String>),
                     moderator_account_id.eq(None::<AccountIdDb>),
                     created_unix_time.eq(excluded(created_unix_time)),
                 ))

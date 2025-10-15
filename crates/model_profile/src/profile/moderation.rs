@@ -6,7 +6,7 @@ use diesel::{
 use model::UnixTime;
 use model_server_data::ProfileStringModerationState;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_wrapper, diesel_string_wrapper};
+use simple_backend_model::{NonEmptyString, diesel_i64_wrapper, diesel_non_empty_string_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 #[derive(
@@ -41,13 +41,12 @@ impl ProfileStringModerationRejectedReasonCategory {
 
 diesel_i64_wrapper!(ProfileStringModerationRejectedReasonCategory);
 
-/// Text might be empty.
 #[derive(
     Debug,
+    Clone,
     Deserialize,
     Serialize,
     ToSchema,
-    Clone,
     Eq,
     Hash,
     PartialEq,
@@ -56,28 +55,21 @@ diesel_i64_wrapper!(ProfileStringModerationRejectedReasonCategory);
 )]
 #[diesel(sql_type = Text)]
 pub struct ProfileStringModerationRejectedReasonDetails {
-    value: String,
+    // Non-empty string
+    value: NonEmptyString,
 }
 
 impl ProfileStringModerationRejectedReasonDetails {
-    pub fn new(value: String) -> Self {
+    pub fn new(value: NonEmptyString) -> Self {
         Self { value }
     }
 
-    pub fn into_string(self) -> String {
-        self.value
-    }
-
     pub fn as_str(&self) -> &str {
-        &self.value
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.value.is_empty()
+        self.value.as_str()
     }
 }
 
-diesel_string_wrapper!(ProfileStringModerationRejectedReasonDetails);
+diesel_non_empty_string_wrapper!(ProfileStringModerationRejectedReasonDetails);
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema, Selectable, Queryable)]
 #[diesel(table_name = crate::schema::profile_moderation)]
@@ -87,7 +79,8 @@ pub struct ProfileStringModerationInfo {
     pub state: ProfileStringModerationState,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rejected_reason_category: Option<ProfileStringModerationRejectedReasonCategory>,
-    pub rejected_reason_details: ProfileStringModerationRejectedReasonDetails,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rejected_reason_details: Option<ProfileStringModerationRejectedReasonDetails>,
 }
 
 /// Only data export uses this.

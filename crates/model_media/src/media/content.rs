@@ -3,7 +3,7 @@ use diesel::{
     sql_types::{BigInt, Text},
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_wrapper, diesel_string_wrapper};
+use simple_backend_model::{NonEmptyString, diesel_i64_wrapper, diesel_non_empty_string_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 #[derive(
@@ -38,13 +38,12 @@ impl MediaContentModerationRejectedReasonCategory {
 
 diesel_i64_wrapper!(MediaContentModerationRejectedReasonCategory);
 
-/// This might be empty.
 #[derive(
     Debug,
+    Clone,
     Deserialize,
     Serialize,
     ToSchema,
-    Clone,
     Eq,
     Hash,
     PartialEq,
@@ -53,25 +52,18 @@ diesel_i64_wrapper!(MediaContentModerationRejectedReasonCategory);
 )]
 #[diesel(sql_type = Text)]
 pub struct MediaContentModerationRejectedReasonDetails {
-    value: String,
+    // Non-empty string
+    value: NonEmptyString,
 }
 
 impl MediaContentModerationRejectedReasonDetails {
-    pub fn new(value: String) -> Self {
+    pub fn new(value: NonEmptyString) -> Self {
         Self { value }
     }
 
-    pub fn into_string(self) -> String {
-        self.value
-    }
-
     pub fn as_str(&self) -> &str {
-        &self.value
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.value.is_empty()
+        self.value.as_str()
     }
 }
 
-diesel_string_wrapper!(MediaContentModerationRejectedReasonDetails);
+diesel_non_empty_string_wrapper!(MediaContentModerationRejectedReasonDetails);

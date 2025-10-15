@@ -55,7 +55,7 @@ impl CurrentWriteProfileAdminModeration<'_> {
         content_type_value: ProfileStringModerationContentType,
         accepted: bool,
         rejected_category: Option<ProfileStringModerationRejectedReasonCategory>,
-        rejected_details: ProfileStringModerationRejectedReasonDetails,
+        rejected_details: Option<ProfileStringModerationRejectedReasonDetails>,
     ) -> Result<ProfileStringModerationState, DieselDatabaseError> {
         let moderator_is_bot = self
             .read()
