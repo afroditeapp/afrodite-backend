@@ -18,7 +18,7 @@ impl WriteCommandsAccountBan<'_> {
         admin_id: Option<AccountIdInternal>,
         banned_until: Option<UnixTime>,
         reason_category: Option<AccountBanReasonCategory>,
-        reason_details: AccountBanReasonDetails,
+        reason_details: Option<AccountBanReasonDetails>,
     ) -> Result<Option<Account>, DataError> {
         let (ban_state, current_account) = self
             .db_read(move |mut cmds| {

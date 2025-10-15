@@ -15,7 +15,7 @@ impl CurrentWriteAccountBanAdmin<'_> {
         admin_id: Option<AccountIdInternal>,
         banned_until: Option<UnixTime>,
         reason_category: Option<AccountBanReasonCategory>,
-        reason_details: AccountBanReasonDetails,
+        reason_details: Option<AccountBanReasonDetails>,
     ) -> Result<(), DieselDatabaseError> {
         use crate::schema::account_state::dsl::*;
 

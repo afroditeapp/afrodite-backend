@@ -27,5 +27,6 @@ pub struct SetAccountBanState {
     pub ban_until: Option<UnixTime>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reason_category: Option<AccountBanReasonCategory>,
-    pub reason_details: AccountBanReasonDetails,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason_details: Option<AccountBanReasonDetails>,
 }

@@ -3,7 +3,7 @@ use diesel::{
     sql_types::{BigInt, Text},
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_wrapper, diesel_string_wrapper};
+use simple_backend_model::{NonEmptyString, diesel_i64_wrapper, diesel_non_empty_string_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 #[derive(
@@ -38,14 +38,12 @@ impl AccountBanReasonCategory {
 
 diesel_i64_wrapper!(AccountBanReasonCategory);
 
-/// This might be empty.
 #[derive(
     Debug,
-    Default,
+    Clone,
     Deserialize,
     Serialize,
     ToSchema,
-    Clone,
     Eq,
     Hash,
     PartialEq,
@@ -54,21 +52,18 @@ diesel_i64_wrapper!(AccountBanReasonCategory);
 )]
 #[diesel(sql_type = Text)]
 pub struct AccountBanReasonDetails {
-    value: String,
+    // Non-empty string
+    value: NonEmptyString,
 }
 
 impl AccountBanReasonDetails {
-    pub fn new(value: String) -> Self {
+    pub fn new(value: NonEmptyString) -> Self {
         Self { value }
     }
 
-    pub fn into_string(self) -> String {
-        self.value
-    }
-
     pub fn as_str(&self) -> &str {
-        &self.value
+        self.value.as_str()
     }
 }
 
-diesel_string_wrapper!(AccountBanReasonDetails);
+diesel_non_empty_string_wrapper!(AccountBanReasonDetails);

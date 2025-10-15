@@ -317,7 +317,8 @@ CREATE TABLE IF NOT EXISTS account_state(
     next_client_id                     INTEGER             NOT NULL DEFAULT 0,
     account_deletion_request_unix_time INTEGER,
     account_banned_reason_category     INTEGER,
-    account_banned_reason_details      TEXT                NOT NULL DEFAULT '',
+    -- Null or non-empty string
+    account_banned_reason_details      TEXT,
     account_banned_admin_account_id    INTEGER,
     account_banned_until_unix_time     INTEGER,
     account_banned_state_change_unix_time INTEGER,

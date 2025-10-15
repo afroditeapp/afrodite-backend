@@ -153,7 +153,8 @@ pub struct GetAccountBanTimeResult {
     pub banned_until: Option<UnixTime>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reason_category: Option<AccountBanReasonCategory>,
-    pub reason_details: AccountBanReasonDetails,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason_details: Option<AccountBanReasonDetails>,
 }
 
 #[derive(Deserialize, ToSchema)]
@@ -214,7 +215,7 @@ pub struct AccountStateTableRaw {
     next_client_id: i64,
     account_deletion_request_unix_time: Option<UnixTime>,
     account_banned_reason_category: Option<i64>,
-    account_banned_reason_details: String,
+    account_banned_reason_details: Option<AccountBanReasonDetails>,
     account_banned_until_unix_time: Option<UnixTime>,
     account_banned_state_change_unix_time: Option<UnixTime>,
     news_sync_version: i64,
