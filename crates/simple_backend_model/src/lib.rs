@@ -17,6 +17,9 @@ pub use ip::*;
 pub mod version;
 pub use version::*;
 
+pub mod string;
+pub use string::*;
+
 mod macros;
 
 #[cfg(test)]

@@ -126,6 +126,67 @@ macro_rules! diesel_string_wrapper {
     };
 }
 
+/// Type must have new() and as_str() methods.
+/// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
+///
+/// ```
+/// use diesel::sql_types::Text;
+/// use simple_backend_model::diesel_non_empty_string_wrapper;
+/// use simple_backend_model::NonEmptyString;
+///
+/// #[derive(
+///     Debug,
+///     diesel::FromSqlRow,
+///     diesel::AsExpression,
+/// )]
+/// #[diesel(sql_type = Text)]
+/// pub struct NonEmptyStringWrapper {
+///     value: NonEmptyString,
+/// }
+///
+/// impl NonEmptyStringWrapper {
+///     pub fn new(value: NonEmptyString) -> Self {
+///         Self { value }
+///     }
+///
+///     pub fn as_str(&self) -> &str {
+///        &self.text
+///     }
+/// }
+///
+/// diesel_non_empty_string_wrapper!(NonEmptyStringWrapper);
+/// ```
+#[macro_export]
+macro_rules! diesel_non_empty_string_wrapper {
+    ($name:ty) => {
+        impl<DB: diesel::backend::Backend> diesel::deserialize::FromSql<diesel::sql_types::Text, DB>
+            for $name
+        where
+            String: diesel::deserialize::FromSql<diesel::sql_types::Text, DB>,
+        {
+            fn from_sql(
+                value: <DB as diesel::backend::Backend>::RawValue<'_>,
+            ) -> diesel::deserialize::Result<Self> {
+                let value = NonEmptyString::from_sql(value)?;
+                Ok(<$name>::new(value))
+            }
+        }
+
+        impl<DB: diesel::backend::Backend> diesel::serialize::ToSql<diesel::sql_types::Text, DB>
+            for $name
+        where
+            str: diesel::serialize::ToSql<diesel::sql_types::Text, DB>,
+        {
+            fn to_sql<'b>(
+                &'b self,
+                out: &mut diesel::serialize::Output<'b, '_, DB>,
+            ) -> diesel::serialize::Result {
+                self.as_str().to_sql(out)
+            }
+        }
+    };
+}
+
 /// Type must have new() and as_i64() methods.
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
 ///

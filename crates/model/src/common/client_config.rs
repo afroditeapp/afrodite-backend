@@ -1,7 +1,7 @@
 use diesel::sql_types::Text;
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_try_from, diesel_string_wrapper};
+use simple_backend_model::{NonEmptyString, diesel_i64_try_from, diesel_non_empty_string_wrapper};
 use utoipa::ToSchema;
 
 use super::ClientConfigSyncVersion;
@@ -47,29 +47,28 @@ pub enum ClientType {
 diesel_i64_try_from!(ClientType);
 
 #[derive(
-    Debug,
-    Default,
-    Clone,
-    Deserialize,
-    Serialize,
-    ToSchema,
-    diesel::FromSqlRow,
-    diesel::AsExpression,
+    Debug, Clone, Deserialize, Serialize, ToSchema, diesel::FromSqlRow, diesel::AsExpression,
 )]
 #[diesel(sql_type = Text)]
 pub struct ClientLanguage {
-    // Language code like "en". Might be empty.
-    pub l: String,
+    // Language code like "en". Non-empty string.
+    pub l: NonEmptyString,
 }
 
 impl ClientLanguage {
-    pub fn new(l: String) -> Self {
+    pub fn new(l: NonEmptyString) -> Self {
         Self { l }
     }
 
     pub fn as_str(&self) -> &str {
-        &self.l
+        self.l.as_str()
     }
 }
 
-diesel_string_wrapper!(ClientLanguage);
+diesel_non_empty_string_wrapper!(ClientLanguage);
+
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct GetClientLanguage {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub l: Option<ClientLanguage>,
+}

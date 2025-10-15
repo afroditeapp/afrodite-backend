@@ -163,10 +163,10 @@ impl NotificationContentFile {
         Ok(config)
     }
 
-    pub fn get<'a>(&'a self, language: &'a str) -> NotificationStringGetter<'a> {
+    pub fn get<'a>(&'a self, language: Option<&'a str>) -> NotificationStringGetter<'a> {
         NotificationStringGetter {
             config: self,
-            language,
+            language: language.unwrap_or_default(),
         }
     }
 }

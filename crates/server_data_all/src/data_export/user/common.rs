@@ -123,7 +123,7 @@ struct DataExportCommonState {
     pub client_config_sync_version: ClientConfigSyncVersion,
     pub push_notifications: PushNotificationDbState,
     pub client_login_session_platform: Option<ClientType>,
-    pub client_language: ClientLanguage,
+    pub client_language: Option<ClientLanguage>,
 }
 
 impl DataExportCommonState {

@@ -38,15 +38,13 @@ impl CurrentReadCommonClientConfig<'_> {
     pub fn client_language(
         &mut self,
         id: AccountIdInternal,
-    ) -> Result<ClientLanguage, DieselDatabaseError> {
+    ) -> Result<Option<ClientLanguage>, DieselDatabaseError> {
         use crate::schema::common_state::dsl::*;
 
         common_state
             .filter(account_id.eq(id.as_db_id()))
             .select(client_language)
             .first(self.conn())
-            .optional()
             .change_context(DieselDatabaseError::Execute)
-            .map(|v| v.unwrap_or_default())
     }
 }

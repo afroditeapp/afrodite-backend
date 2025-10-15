@@ -1,7 +1,7 @@
 use axum::{Extension, extract::State};
 use model::{
     AccountIdInternal, ClientConfig, ClientFeaturesConfigHash, ClientLanguage,
-    CustomReportsConfigHash,
+    CustomReportsConfigHash, GetClientLanguage,
 };
 use server_data::{app::GetConfig, read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use server_state::db_write;
@@ -62,7 +62,7 @@ const PATH_GET_CLIENT_LANGUAGE: &str = "/common_api/client_language";
     get,
     path = PATH_GET_CLIENT_LANGUAGE,
     responses(
-        (status = 200, description = "Successfull.", body = ClientLanguage),
+        (status = 200, description = "Successfull.", body = GetClientLanguage),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -71,7 +71,7 @@ const PATH_GET_CLIENT_LANGUAGE: &str = "/common_api/client_language";
 pub async fn get_client_language(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-) -> Result<Json<ClientLanguage>, StatusCode> {
+) -> Result<Json<GetClientLanguage>, StatusCode> {
     COMMON.get_client_language.incr();
     let value = state
         .read()
@@ -79,6 +79,7 @@ pub async fn get_client_language(
         .client_config()
         .client_language(account_id)
         .await?;
+    let value = GetClientLanguage { l: value };
     Ok(value.into())
 }
 

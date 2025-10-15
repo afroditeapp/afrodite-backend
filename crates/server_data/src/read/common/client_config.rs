@@ -31,7 +31,7 @@ impl ReadCommandsCommonClientConfig<'_> {
     pub async fn client_language(
         &self,
         id: AccountIdInternal,
-    ) -> Result<ClientLanguage, DataError> {
+    ) -> Result<Option<ClientLanguage>, DataError> {
         self.db_read(move |mut cmds| cmds.common().client_config().client_language(id))
             .await
             .into_error()

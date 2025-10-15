@@ -278,7 +278,7 @@ diesel::table! {
         account_id -> Integer,
         client_config_sync_version -> Integer,
         client_login_session_platform -> Nullable<Integer>,
-        client_language -> Text,
+        client_language -> Nullable<Text>,
     }
 }
 
