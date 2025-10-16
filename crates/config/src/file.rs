@@ -56,14 +56,24 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # profile_text = "90d"
 
 # [limits.account]
+# inactivity_logout_wait_duration = "365d"
 # account_deletion_wait_duration = "90d"
+# init_deletion_for_inactive_accounts_wait_duration = "730d"
 
 # [limits.chat]
 # max_public_key_count = 100
+# new_message_email_with_push_notification_device_token = "7d"
+# new_message_email_without_push_notification_device_token = "1d"
 
 # [limits.media]
 # max_content_count = 20
 # unused_content_wait_duration = "90d"
+# get_profile_content_info_daily_max_count = 2000
+
+# [limits.profile]
+# profile_iterator_reset_daily_max_count = 200
+# profile_iterator_next_page_daily_max_count = 1000
+# get_profile_daily_max_count = 2000
 
 # [[profile_name_allowlists]]
 # csv_file = "names.csv"
