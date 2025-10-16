@@ -122,6 +122,7 @@ const PATH_POST_AUTOMATIC_PROFILE_SEARCH_GET_NEXT_PROFILE_PAGE: &str =
     responses(
         (status = 200, description = "Update successfull.", body = ProfilePage),
         (status = 401, description = "Unauthorized."),
+        (status = 429, description = "Too many requests."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
@@ -140,6 +141,11 @@ pub async fn post_automatic_profile_search_get_next_profile_page(
             &u.post_automatic_profile_search_get_next_profile_page
         })
         .await;
+    state
+        .api_limits(account_id)
+        .profile()
+        .post_get_next_profile_page()
+        .await?;
 
     if !state
         .read()
@@ -191,6 +197,7 @@ const PATH_POST_AUTOMATIC_PROFILE_SEARCH_RESET_PROFILE_PAGING: &str =
     responses(
         (status = 200, description = "Update successfull.", body = AutomaticProfileSearchIteratorSessionId),
         (status = 401, description = "Unauthorized."),
+        (status = 429, description = "Too many requests."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
@@ -208,6 +215,11 @@ pub async fn post_automatic_profile_search_reset_profile_paging(
             &u.post_automatic_profile_search_reset_profile_paging
         })
         .await;
+    state
+        .api_limits(account_id)
+        .profile()
+        .post_reset_profile_paging()
+        .await?;
 
     let iterator_session_id: AutomaticProfileSearchIteratorSessionId = state
         .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {

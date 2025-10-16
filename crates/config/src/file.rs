@@ -328,7 +328,9 @@ impl Default for MediaLimitsConfig {
 /// Profile related limits config
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ProfileLimitsConfig {
+    /// Used also for automatic profile search specific iterator
     pub profile_iterator_reset_daily_max_count: u16,
+    /// Used also for automatic profile search specific iterator
     pub profile_iterator_next_page_daily_max_count: u16,
 }
 
