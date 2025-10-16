@@ -440,6 +440,8 @@ pub struct EmailSendingConfig {
     pub email_from_header: EmailFromHeader,
     pub send_limit_per_minute: Option<NonZeroU32>,
     pub send_limit_per_day: Option<NonZeroU32>,
+    #[serde(default)]
+    pub debug_logging: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

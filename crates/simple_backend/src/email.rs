@@ -14,7 +14,7 @@ use tokio::{
     sync::mpsc::{Receiver, Sender, error::TrySendError},
     task::JoinHandle,
 };
-use tracing::{error, warn};
+use tracing::{debug, error, warn};
 
 use crate::{ServerQuitWatcher, email::data::Counter};
 
@@ -331,6 +331,10 @@ impl EmailSendingLogic {
             .increment(sender.config.send_limit_per_minute);
         self.send_count_per_day
             .increment(sender.config.send_limit_per_day);
+
+        if sender.config.debug_logging {
+            debug!("Sending email: {:?}", message);
+        }
 
         let response = sender
             .sender
