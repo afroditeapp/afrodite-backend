@@ -6,18 +6,19 @@ use model::AccountId;
 use model_chat::{AccountIdInternal, GetVideoCallUrlsResult, JitsiMeetUrls};
 use server_api::{
     S,
-    app::{ApiUsageTrackerProvider, GetAccounts, ReadData},
+    app::{ApiUsageTrackerProvider, GetAccounts, ReadData, WriteData},
     create_open_api_router,
 };
 use server_data::read::GetReadCommandsCommon;
-use server_data_chat::read::GetReadChatCommands;
+use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::{
     app::JitsiMeetUrlCreatorProvider, create_counters, jitsi_meet::VideoCallUserInfo,
 };
 
 use super::super::utils::{Json, StatusCode};
+use crate::db_write;
 
-const PATH_GET_VIDEO_CALL_URLS: &str = "/chat_api/get_video_call_urls";
+const PATH_POST_CREATE_VIDEO_CALL_URLS: &str = "/chat_api/post_create_video_call_urls";
 
 /// Create Jitsi Meet video call URLs to a meeting with an user.
 ///
@@ -25,8 +26,8 @@ const PATH_GET_VIDEO_CALL_URLS: &str = "/chat_api/get_video_call_urls";
 ///
 /// If result value is empty then video calling is disabled.
 #[utoipa::path(
-    get,
-    path = PATH_GET_VIDEO_CALL_URLS,
+    post,
+    path = PATH_POST_CREATE_VIDEO_CALL_URLS,
     params(AccountId),
     responses(
         (status = 200, description = "Success.", body = GetVideoCallUrlsResult),
@@ -35,15 +36,15 @@ const PATH_GET_VIDEO_CALL_URLS: &str = "/chat_api/get_video_call_urls";
     ),
     security(("access_token" = [])),
 )]
-async fn get_video_call_urls(
+async fn post_create_video_call_urls(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Query(other_user): Query<AccountId>,
 ) -> Result<Json<GetVideoCallUrlsResult>, StatusCode> {
-    CHAT.get_video_call_urls.incr();
+    CHAT.post_create_video_call_urls.incr();
     state
         .api_usage_tracker()
-        .incr(id, |u| &u.get_video_call_urls)
+        .incr(id, |u| &u.post_create_video_call_urls)
         .await;
 
     let other_user = state.get_internal_id(other_user).await?;
@@ -87,6 +88,22 @@ async fn get_video_call_urls(
         },
     )?;
 
+    if urls.is_some() {
+        let already_created = state
+            .read()
+            .chat()
+            .is_video_call_url_already_created(id, other_user)
+            .await?;
+
+        if !already_created {
+            db_write!(state, move |cmds| {
+                cmds.chat()
+                    .mark_video_call_url_created(id, other_user)
+                    .await
+            })?;
+        }
+    }
+
     let r = urls
         .map(|urls| GetVideoCallUrlsResult {
             jitsi_meet: Some(JitsiMeetUrls {
@@ -99,11 +116,11 @@ async fn get_video_call_urls(
     Ok(r.into())
 }
 
-create_open_api_router!(fn router_video_call, get_video_call_urls,);
+create_open_api_router!(fn router_video_call, post_create_video_call_urls,);
 
 create_counters!(
     ChatCounters,
     CHAT,
     CHAT_VIDEO_CALL_COUNTERS_LIST,
-    get_video_call_urls,
+    post_create_video_call_urls,
 );

@@ -60,6 +60,8 @@ diesel::table! {
         two_way_block -> Bool,
         message_counter_sender -> Integer,
         message_counter_receiver -> Integer,
+        video_call_url_created_sender -> Bool,
+        video_call_url_created_receiver -> Bool,
         received_like_id -> Nullable<Integer>,
         received_like_viewed -> Bool,
         match_id -> Nullable<Integer>,

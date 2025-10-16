@@ -907,6 +907,9 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     -- Incrementing counters for tracking sent message count for both accounts.
     message_counter_sender          INTEGER NOT NULL DEFAULT 0,
     message_counter_receiver        INTEGER NOT NULL DEFAULT 0,
+    -- Track if video call URL has been created for each side
+    video_call_url_created_sender   BOOLEAN NOT NULL DEFAULT 0,
+    video_call_url_created_receiver BOOLEAN NOT NULL DEFAULT 0,
     -- Received likes iterator uses received likes ID to return
     -- correct pages.
     received_like_id                INTEGER,

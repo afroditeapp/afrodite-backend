@@ -266,6 +266,10 @@ pub struct AccountInteractionInternal {
     /// message. The counter does not reset. Zero means that no messages are
     /// sent.
     pub message_counter_receiver: i64,
+    /// Video call URL created flag for [Self::account_id_sender]
+    pub video_call_url_created_sender: bool,
+    /// Video call URL created flag for [Self::account_id_receiver]
+    pub video_call_url_created_receiver: bool,
     pub received_like_id: Option<ReceivedLikeId>,
     received_like_viewed: bool,
     pub match_id: Option<MatchId>,

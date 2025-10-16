@@ -407,6 +407,38 @@ impl WriteCommandsChat<'_> {
             Ok(())
         })
     }
+
+    /// Mark video call URL as created for the caller account.
+    ///
+    /// This determines whether the caller is the sender or receiver in the
+    /// interaction and sets the appropriate flag.
+    pub async fn mark_video_call_url_created(
+        &self,
+        caller: AccountIdInternal,
+        other_user: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            let mut interaction = cmds
+                .read()
+                .chat()
+                .interaction()
+                .account_interaction(caller, other_user)?
+                .ok_or(DieselDatabaseError::NotAllowed)?;
+
+            // Determine if caller is like sender or receiver and set appropriate flag
+            if interaction.account_id_sender == Some(caller.into_db_id()) {
+                interaction.video_call_url_created_sender = true;
+            } else {
+                interaction.video_call_url_created_receiver = true;
+            }
+
+            cmds.chat()
+                .interaction()
+                .update_account_interaction(interaction)?;
+
+            Ok(())
+        })
+    }
 }
 
 pub struct SenderAndReceiverStateChanges {

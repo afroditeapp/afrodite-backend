@@ -161,6 +161,24 @@ impl ReadCommandsChat<'_> {
         Ok(interaction)
     }
 
+    pub async fn is_video_call_url_already_created(
+        &self,
+        caller: AccountIdInternal,
+        other_user: AccountIdInternal,
+    ) -> Result<bool, DataError> {
+        let interaction = self.account_interaction(caller, other_user).await?;
+        match interaction {
+            Some(interaction) => {
+                if interaction.account_id_sender == Some(caller.into_db_id()) {
+                    Ok(interaction.video_call_url_created_sender)
+                } else {
+                    Ok(interaction.video_call_url_created_receiver)
+                }
+            }
+            None => Ok(false),
+        }
+    }
+
     pub async fn is_unlimited_likes_enabled(
         &self,
         account: AccountIdInternal,
