@@ -19,7 +19,7 @@ order.
 
 attribute_order = "OrderNumber"
 
-[[attribute]]
+[[attributes]]
 key = "city"
 name = "City"
 mode = "TwoLevel"
@@ -68,7 +68,7 @@ translations = [ # Optonal
     }
 ]
 
-[[attribute]]
+[[attributes]]
 key = "favorite_color"
 name = "Favorite Color"
 mode = "Bitflag"
