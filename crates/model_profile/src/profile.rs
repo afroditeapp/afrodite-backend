@@ -152,18 +152,35 @@ impl From<ProfileStateInternal> for ProfileStateCached {
 
 sync_version_wrappers!(ProfileSyncVersion,);
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
+#[derive(Deserialize, ToSchema)]
 pub struct ProfileUpdate {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ptext: Option<NonEmptyString>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub name: Option<NonEmptyString>,
+    pub name: NonEmptyString,
     #[schema(value_type = i64)]
     pub age: ProfileAge,
     pub attributes: Vec<ProfileAttributeValueUpdate>,
 }
 
-impl ProfileUpdate {
+pub struct ProfileUpdateInternal {
+    pub ptext: Option<NonEmptyString>,
+    pub name: Option<NonEmptyString>,
+    pub age: ProfileAge,
+    pub attributes: Vec<ProfileAttributeValueUpdate>,
+}
+
+impl From<ProfileUpdate> for ProfileUpdateInternal {
+    fn from(value: ProfileUpdate) -> Self {
+        Self {
+            ptext: value.ptext,
+            name: Some(value.name),
+            age: value.age,
+            attributes: value.attributes,
+        }
+    }
+}
+
+impl ProfileUpdateInternal {
     /// `AcceptedProfileAges` is checked only if it is Some.
     pub fn validate(
         mut self,

@@ -2,7 +2,9 @@ use axum::{
     Extension,
     extract::{Path, State},
 };
-use model_profile::{AccountId, AccountIdInternal, AccountState, Profile, ProfileUpdate};
+use model_profile::{
+    AccountId, AccountIdInternal, AccountState, Profile, ProfileUpdate, ProfileUpdateInternal,
+};
 use server_api::{S, create_open_api_router, db_write};
 use server_data::read::GetReadCommandsCommon;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
@@ -97,7 +99,7 @@ pub async fn post_profile_to_database_debug_mode_benchmark(
     } else {
         None
     };
-    let profile = profile
+    let profile = Into::<ProfileUpdateInternal>::into(profile)
         .validate(
             state.config().profile_attributes(),
             state.config().profile_name_regex(),

@@ -5,8 +5,8 @@ use axum::{
 use model::AdminNotificationTypes;
 use model_profile::{
     AccountId, AccountIdInternal, AccountState, GetInitialProfileAgeResult, GetMyProfileResult,
-    GetProfileQueryParam, GetProfileResult, Permissions, ProfileUpdate, SearchAgeRange,
-    SearchAgeRangeValidated, SearchGroups, ValidatedSearchGroups,
+    GetProfileQueryParam, GetProfileResult, Permissions, ProfileUpdate, ProfileUpdateInternal,
+    SearchAgeRange, SearchAgeRangeValidated, SearchGroups, ValidatedSearchGroups,
 };
 use server_api::{
     S,
@@ -182,7 +182,7 @@ pub async fn post_profile(
         } else {
             None
         };
-        let profile = profile
+        let profile = Into::<ProfileUpdateInternal>::into(profile)
             .validate(
                 cmds.config().profile_attributes(),
                 cmds.config().profile_name_regex(),

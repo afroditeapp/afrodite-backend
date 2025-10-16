@@ -3,7 +3,7 @@ use std::time::Duration;
 use backup::backup_data;
 use model::{ReportTypeNumberInternal, UnixTime};
 use model_profile::{
-    AccountIdInternal, AccountState, EventToClientInternal, ProfileAge, ProfileUpdate,
+    AccountIdInternal, AccountState, EventToClientInternal, ProfileAge, ProfileUpdateInternal,
 };
 use server_api::{
     DataError,
@@ -285,7 +285,7 @@ impl ScheduledTaskManager {
             }
 
             // Save the new age to database
-            let profile_update = ProfileUpdate {
+            let profile_update = ProfileUpdateInternal {
                 ptext: profile.ptext.clone(),
                 name: profile.name.clone(),
                 age: age_plus_one,

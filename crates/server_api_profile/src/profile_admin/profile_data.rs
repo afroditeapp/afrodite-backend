@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, State},
 };
 use model::{AccountId, AdminNotificationTypes, EventToClientInternal};
-use model_profile::{GetProfileAgeAndName, Permissions, ProfileUpdate, SetProfileName};
+use model_profile::{GetProfileAgeAndName, Permissions, ProfileUpdateInternal, SetProfileName};
 use server_api::{
     DataError, S,
     app::{AdminNotificationProvider, GetAccounts, GetConfig},
@@ -119,7 +119,7 @@ pub async fn post_set_profile_name(
             .await?
             .profile;
 
-        let profile_update = ProfileUpdate {
+        let profile_update = ProfileUpdateInternal {
             ptext: profile.ptext.clone(),
             name: info.name,
             age: profile.age,
