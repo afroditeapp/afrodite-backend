@@ -6,7 +6,6 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
-use config::Config;
 use model::AccountId;
 use tokio::sync::{Mutex, OwnedMutexGuard, mpsc};
 
@@ -58,10 +57,7 @@ pub struct WriteCommandRunnerHandle {
 }
 
 impl WriteCommandRunnerHandle {
-    pub async fn new(
-        write: Arc<RouterDatabaseWriteHandle>,
-        config: &Config,
-    ) -> (Self, WriteCmdWatcher) {
+    pub async fn new(write: Arc<RouterDatabaseWriteHandle>) -> (Self, WriteCmdWatcher) {
         let (quit_lock, quit_handle) = mpsc::channel::<()>(1);
         *get_quit_lock().lock().await = Some(quit_lock);
 
@@ -69,7 +65,7 @@ impl WriteCommandRunnerHandle {
 
         let runner_handle = Self {
             sync_write_mutex: Mutex::new(write.clone()).into(),
-            concurrent_write: ConcurrentWriteCommandHandle::new(write, config),
+            concurrent_write: ConcurrentWriteCommandHandle::new(write),
         };
         (runner_handle, cmd_watcher)
     }

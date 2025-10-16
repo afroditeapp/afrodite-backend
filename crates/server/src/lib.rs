@@ -280,7 +280,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
         .expect("Loading data from database to cache failed");
 
         let (write_cmd_runner_handle, write_cmd_waiter) =
-            WriteCommandRunnerHandle::new(router_database_write_handle.into(), &self.config).await;
+            WriteCommandRunnerHandle::new(router_database_write_handle.into()).await;
 
         let (content_processing, content_processing_receiver) = ContentProcessingManagerData::new();
         let content_processing = Arc::new(content_processing);

@@ -11,7 +11,6 @@ use std::{
 };
 
 use axum::body::BodyDataStream;
-use config::Config;
 use futures::Future;
 use model::{AccountId, AccountIdInternal, ContentProcessingId, ContentSlot};
 use model_server_data::{
@@ -75,21 +74,15 @@ impl AccountWriteLockManager {
 #[derive(Debug)]
 pub struct ConcurrentWriteCommandHandle {
     write: Arc<RouterDatabaseWriteHandle>,
-    /// Content upload queue
-    content_upload_queue: Arc<tokio::sync::Semaphore>,
     /// Profile index write queue
     profile_index_queue: Arc<tokio::sync::Semaphore>,
     account_write_locks: AccountWriteLockManager,
 }
 
 impl ConcurrentWriteCommandHandle {
-    pub fn new(write: Arc<RouterDatabaseWriteHandle>, config: &Config) -> Self {
+    pub fn new(write: Arc<RouterDatabaseWriteHandle>) -> Self {
         Self {
             write,
-            content_upload_queue: tokio::sync::Semaphore::new(
-                config.limits_media().concurrent_content_uploads,
-            )
-            .into(),
             profile_index_queue: tokio::sync::Semaphore::new(num_cpus::get()).into(),
             account_write_locks: AccountWriteLockManager::default(),
         }
@@ -100,7 +93,6 @@ impl ConcurrentWriteCommandHandle {
 
         ConcurrentWriteSelectorHandle {
             write: self.write.clone(),
-            content_upload_queue: self.content_upload_queue.clone(),
             profile_index_queue: self.profile_index_queue.clone(),
             _account_write_lock: lock,
         }
@@ -109,7 +101,6 @@ impl ConcurrentWriteCommandHandle {
 
 pub struct ConcurrentWriteSelectorHandle {
     write: Arc<RouterDatabaseWriteHandle>,
-    content_upload_queue: Arc<tokio::sync::Semaphore>,
     profile_index_queue: Arc<tokio::sync::Semaphore>,
     _account_write_lock: OwnedMutexGuard<AccountHandle>,
 }
@@ -128,18 +119,8 @@ impl ConcurrentWriteSelectorHandle {
         self,
         action: A,
     ) -> ConcurrentWriteAction<R> {
-        let permit = self
-            .content_upload_queue
-            .clone()
-            .acquire_owned()
-            .await
-            // Code does not call close method of Semaphore, so this should not
-            // panic.
-            .expect("Semaphore was closed. This should not happen.");
-
         let handle = ConcurrentWriteContentHandle {
             write: self.write,
-            _permit: permit,
             _account_write_lock: self._account_write_lock,
         };
 
@@ -173,7 +154,6 @@ impl ConcurrentWriteSelectorHandle {
 
 pub struct ConcurrentWriteContentHandle {
     write: Arc<RouterDatabaseWriteHandle>,
-    _permit: tokio::sync::OwnedSemaphorePermit,
     _account_write_lock: OwnedMutexGuard<AccountHandle>,
 }
 

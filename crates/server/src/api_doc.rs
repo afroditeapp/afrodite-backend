@@ -219,7 +219,7 @@ impl ApiDoc {
         .expect("Database init failed");
 
         let (write_cmd_runner_handle, _) =
-            WriteCommandRunnerHandle::new(router_database_write_handle.into(), &config).await;
+            WriteCommandRunnerHandle::new(router_database_write_handle.into()).await;
 
         let (content_processing, _) = ContentProcessingManagerData::new();
         let (admin_notification, _) = AdminNotificationManagerData::new();

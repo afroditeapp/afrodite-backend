@@ -62,7 +62,6 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # max_public_key_count = 100
 
 # [limits.media]
-# concurrent_content_uploads = 10
 # max_content_count = 20
 # unused_content_wait_duration = "90d"
 
@@ -308,9 +307,6 @@ impl Default for ChatLimitsConfig {
 /// Media related limits config
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct MediaLimitsConfig {
-    /// Concurrent media content uploads. Processing of the media content
-    /// will be done sequentially.
-    pub concurrent_content_uploads: usize,
     pub max_content_count: u8,
     pub unused_content_wait_duration: DurationValue,
     pub get_profile_content_info_daily_max_count: u16,
@@ -319,7 +315,6 @@ pub struct MediaLimitsConfig {
 impl Default for MediaLimitsConfig {
     fn default() -> Self {
         Self {
-            concurrent_content_uploads: 10,
             max_content_count: 20,
             unused_content_wait_duration: DurationValue::from_days(90),
             get_profile_content_info_daily_max_count: 2000,
