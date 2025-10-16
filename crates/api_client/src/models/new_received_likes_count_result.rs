@@ -15,6 +15,9 @@ use serde::{Deserialize, Serialize};
 pub struct NewReceivedLikesCountResult {
     #[serde(rename = "c")]
     pub c: Box<models::NewReceivedLikesCount>,
+    /// If true, client should not show the notification
+    #[serde(rename = "h", skip_serializing_if = "Option::is_none")]
+    pub h: Option<bool>,
     /// Latest received like in use. Client can use this to check should received likes be refreshed.
     #[serde(rename = "l")]
     pub l: Box<models::ReceivedLikeId>,
@@ -26,6 +29,7 @@ impl NewReceivedLikesCountResult {
     pub fn new(c: models::NewReceivedLikesCount, l: models::ReceivedLikeId, v: models::ReceivedLikesSyncVersion) -> NewReceivedLikesCountResult {
         NewReceivedLikesCountResult {
             c: Box::new(c),
+            h: None,
             l: Box::new(l),
             v: Box::new(v),
         }

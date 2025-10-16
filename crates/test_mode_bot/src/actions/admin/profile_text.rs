@@ -78,7 +78,7 @@ impl AdminBotProfileStringModerationLogic {
                         value: request.value.clone(),
                         accept: true,
                         rejected_category: None,
-                        rejected_details: Box::default(),
+                        rejected_details: None,
                         move_to_human: None,
                     },
                 )
@@ -120,9 +120,15 @@ impl AdminBotProfileStringModerationLogic {
                     value: request.value.clone(),
                     accept: r.accept,
                     rejected_category: None,
-                    rejected_details: Box::new(ProfileStringModerationRejectedReasonDetails::new(
-                        r.rejected_details.unwrap_or_default(),
-                    )),
+                    rejected_details: Some(r.rejected_details.and_then(|v| {
+                        if v.is_empty() {
+                            None
+                        } else {
+                            Some(Box::new(ProfileStringModerationRejectedReasonDetails::new(
+                                v,
+                            )))
+                        }
+                    })),
                     move_to_human: if r.move_to_human {
                         Some(Some(true))
                     } else {

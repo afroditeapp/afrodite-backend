@@ -22,20 +22,20 @@ pub struct ContentInfoWithFd {
     pub fd: bool,
     #[serde(rename = "rejected_reason_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub rejected_reason_category: Option<Option<Box<models::MediaContentModerationRejectedReasonCategory>>>,
-    #[serde(rename = "rejected_reason_details")]
-    pub rejected_reason_details: Box<models::MediaContentModerationRejectedReasonDetails>,
+    #[serde(rename = "rejected_reason_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub rejected_reason_details: Option<Option<Box<models::MediaContentModerationRejectedReasonDetails>>>,
     #[serde(rename = "state")]
     pub state: models::ContentModerationState,
 }
 
 impl ContentInfoWithFd {
-    pub fn new(cid: models::ContentId, ctype: models::MediaContentType, fd: bool, rejected_reason_details: models::MediaContentModerationRejectedReasonDetails, state: models::ContentModerationState) -> ContentInfoWithFd {
+    pub fn new(cid: models::ContentId, ctype: models::MediaContentType, fd: bool, state: models::ContentModerationState) -> ContentInfoWithFd {
         ContentInfoWithFd {
             cid: Box::new(cid),
             ctype,
             fd,
             rejected_reason_category: None,
-            rejected_reason_details: Box::new(rejected_reason_details),
+            rejected_reason_details: None,
             state,
         }
     }

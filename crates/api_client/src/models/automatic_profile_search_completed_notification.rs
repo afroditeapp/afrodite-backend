@@ -13,6 +13,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AutomaticProfileSearchCompletedNotification {
+    /// If true, client should not show the notification
+    #[serde(rename = "hidden", skip_serializing_if = "Option::is_none")]
+    pub hidden: Option<bool>,
     #[serde(rename = "profile_count")]
     pub profile_count: i64,
     #[serde(rename = "profiles_found")]
@@ -22,6 +25,7 @@ pub struct AutomaticProfileSearchCompletedNotification {
 impl AutomaticProfileSearchCompletedNotification {
     pub fn new(profile_count: i64, profiles_found: models::NotificationStatus) -> AutomaticProfileSearchCompletedNotification {
         AutomaticProfileSearchCompletedNotification {
+            hidden: None,
             profile_count,
             profiles_found: Box::new(profiles_found),
         }

@@ -369,10 +369,10 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
         };
 
         let update = ProfileUpdate {
-            name,
+            name: Some(name),
             age: age.into(),
             attributes,
-            ptext: state.get_bot_config().text.clone().unwrap_or_default(),
+            ptext: state.get_bot_config().text.clone(),
         };
 
         post_profile(state.api(), update)

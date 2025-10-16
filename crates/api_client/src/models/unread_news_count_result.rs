@@ -15,6 +15,9 @@ use serde::{Deserialize, Serialize};
 pub struct UnreadNewsCountResult {
     #[serde(rename = "c")]
     pub c: Box<models::UnreadNewsCount>,
+    /// If true, client should not show the notification
+    #[serde(rename = "h", skip_serializing_if = "Option::is_none")]
+    pub h: Option<bool>,
     #[serde(rename = "v")]
     pub v: Box<models::NewsSyncVersion>,
 }
@@ -23,6 +26,7 @@ impl UnreadNewsCountResult {
     pub fn new(c: models::UnreadNewsCount, v: models::NewsSyncVersion) -> UnreadNewsCountResult {
         UnreadNewsCountResult {
             c: Box::new(c),
+            h: None,
             v: Box::new(v),
         }
     }

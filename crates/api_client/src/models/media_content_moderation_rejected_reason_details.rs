@@ -11,15 +11,14 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// MediaContentModerationRejectedReasonDetails : This might be empty.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MediaContentModerationRejectedReasonDetails {
+    /// A string wrapper that ensures the string is not empty. This type is used for TEXT columns that should not allow empty strings. In the database, these columns are NULL when there is no value, and this type represents non-NULL values that must be non-empty.
     #[serde(rename = "value")]
     pub value: String,
 }
 
 impl MediaContentModerationRejectedReasonDetails {
-    /// This might be empty.
     pub fn new(value: String) -> MediaContentModerationRejectedReasonDetails {
         MediaContentModerationRejectedReasonDetails {
             value,

@@ -15,15 +15,16 @@ use serde::{Deserialize, Serialize};
 pub struct SetProfileName {
     #[serde(rename = "account")]
     pub account: Box<models::AccountId>,
-    #[serde(rename = "name")]
-    pub name: String,
+    /// A string wrapper that ensures the string is not empty. This type is used for TEXT columns that should not allow empty strings. In the database, these columns are NULL when there is no value, and this type represents non-NULL values that must be non-empty.
+    #[serde(rename = "name", skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
 }
 
 impl SetProfileName {
-    pub fn new(account: models::AccountId, name: String) -> SetProfileName {
+    pub fn new(account: models::AccountId) -> SetProfileName {
         SetProfileName {
             account: Box::new(account),
-            name,
+            name: None,
         }
     }
 }

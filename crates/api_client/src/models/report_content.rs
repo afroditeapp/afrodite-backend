@@ -17,10 +17,12 @@ pub struct ReportContent {
     pub chat_message: Option<Option<Box<models::ChatMessageReport>>>,
     #[serde(rename = "profile_content", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub profile_content: Option<Option<Box<models::ContentId>>>,
-    #[serde(rename = "profile_name", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_name: Option<Option<String>>,
-    #[serde(rename = "profile_text", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_text: Option<Option<String>>,
+    /// A string wrapper that ensures the string is not empty. This type is used for TEXT columns that should not allow empty strings. In the database, these columns are NULL when there is no value, and this type represents non-NULL values that must be non-empty.
+    #[serde(rename = "profile_name", skip_serializing_if = "Option::is_none")]
+    pub profile_name: Option<String>,
+    /// A string wrapper that ensures the string is not empty. This type is used for TEXT columns that should not allow empty strings. In the database, these columns are NULL when there is no value, and this type represents non-NULL values that must be non-empty.
+    #[serde(rename = "profile_text", skip_serializing_if = "Option::is_none")]
+    pub profile_text: Option<String>,
 }
 
 impl ReportContent {

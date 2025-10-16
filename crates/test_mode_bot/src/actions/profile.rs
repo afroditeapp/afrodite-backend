@@ -80,7 +80,7 @@ impl BotAction for ChangeProfileText {
                 .collect(),
             age: current_profile.age,
             name: current_profile.name,
-            ptext: profile_text,
+            ptext: Some(profile_text),
         };
         post_profile(state.api(), update)
             .await
@@ -381,10 +381,10 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
         };
 
         let update = ProfileUpdate {
-            name,
+            name: Some(name),
             age: age.into(),
             attributes,
-            ptext: state.get_bot_config().text.clone().unwrap_or_default(),
+            ptext: state.get_bot_config().text.clone(),
         };
 
         post_profile(state.api(), update)

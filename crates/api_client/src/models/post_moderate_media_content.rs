@@ -24,19 +24,19 @@ pub struct PostModerateMediaContent {
     pub move_to_human: Option<Option<bool>>,
     #[serde(rename = "rejected_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub rejected_category: Option<Option<Box<models::MediaContentModerationRejectedReasonCategory>>>,
-    #[serde(rename = "rejected_details")]
-    pub rejected_details: Box<models::MediaContentModerationRejectedReasonDetails>,
+    #[serde(rename = "rejected_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub rejected_details: Option<Option<Box<models::MediaContentModerationRejectedReasonDetails>>>,
 }
 
 impl PostModerateMediaContent {
-    pub fn new(accept: bool, account_id: models::AccountId, content_id: models::ContentId, rejected_details: models::MediaContentModerationRejectedReasonDetails) -> PostModerateMediaContent {
+    pub fn new(accept: bool, account_id: models::AccountId, content_id: models::ContentId) -> PostModerateMediaContent {
         PostModerateMediaContent {
             accept,
             account_id: Box::new(account_id),
             content_id: Box::new(content_id),
             move_to_human: None,
             rejected_category: None,
-            rejected_details: Box::new(rejected_details),
+            rejected_details: None,
         }
     }
 }

@@ -13,6 +13,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProfileStringModerationCompletedNotification {
+    /// If true, client should not show the notifications
+    #[serde(rename = "hidden", skip_serializing_if = "Option::is_none")]
+    pub hidden: Option<bool>,
     #[serde(rename = "name_accepted")]
     pub name_accepted: Box<models::NotificationStatus>,
     #[serde(rename = "name_rejected")]
@@ -26,6 +29,7 @@ pub struct ProfileStringModerationCompletedNotification {
 impl ProfileStringModerationCompletedNotification {
     pub fn new(name_accepted: models::NotificationStatus, name_rejected: models::NotificationStatus, text_accepted: models::NotificationStatus, text_rejected: models::NotificationStatus) -> ProfileStringModerationCompletedNotification {
         ProfileStringModerationCompletedNotification {
+            hidden: None,
             name_accepted: Box::new(name_accepted),
             name_rejected: Box::new(name_rejected),
             text_accepted: Box::new(text_accepted),

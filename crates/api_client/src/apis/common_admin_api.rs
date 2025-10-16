@@ -785,7 +785,7 @@ pub async fn post_edit_maintenance_notification(configuration: &configuration::C
 }
 
 /// Getting notification data is required when notification event is received from WebSocket. This prevents resending the notification as push notification when WebSocket connection closes.  # Access Requires [Permissions::admin_subscribe_admin_notifications].
-pub async fn post_get_admin_notification(configuration: &configuration::Configuration, ) -> Result<models::AdminNotification, Error<PostGetAdminNotificationError>> {
+pub async fn post_get_admin_notification(configuration: &configuration::Configuration, ) -> Result<models::GetAdminNotification, Error<PostGetAdminNotificationError>> {
 
     let uri_str = format!("{}/common_api/admin_notification", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
@@ -812,8 +812,8 @@ pub async fn post_get_admin_notification(configuration: &configuration::Configur
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::AdminNotification`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::AdminNotification`")))),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::GetAdminNotification`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::GetAdminNotification`")))),
         }
     } else {
         let content = resp.text().await?;

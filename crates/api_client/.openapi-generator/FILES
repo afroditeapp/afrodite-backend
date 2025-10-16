@@ -99,16 +99,17 @@ src/models/demo_account_token.rs
 src/models/event_to_client.rs
 src/models/event_type.rs
 src/models/favorite_profiles_page.rs
-src/models/fcm_device_token.rs
 src/models/features_config.rs
 src/models/get_account_ban_time_result.rs
 src/models/get_account_deletion_request_result.rs
 src/models/get_account_id_from_email_result.rs
+src/models/get_admin_notification.rs
 src/models/get_all_admins_result.rs
 src/models/get_api_usage_statistics_result.rs
 src/models/get_api_usage_statistics_settings.rs
 src/models/get_chat_message_reports.rs
 src/models/get_client_features_config_result.rs
+src/models/get_client_language.rs
 src/models/get_client_version_statistics_result.rs
 src/models/get_client_version_statistics_settings.rs
 src/models/get_conversation_id.rs
@@ -132,6 +133,7 @@ src/models/get_profile_statistics_history_result.rs
 src/models/get_profile_statistics_result.rs
 src/models/get_profile_string_pending_moderation_list.rs
 src/models/get_profile_string_state.rs
+src/models/get_push_notification_info.rs
 src/models/get_report_list.rs
 src/models/get_sent_message.rs
 src/models/get_video_call_urls_result.rs
@@ -175,8 +177,6 @@ src/models/min_distance_km.rs
 src/models/mod.rs
 src/models/moderation_queue_type.rs
 src/models/my_profile_content.rs
-src/models/new_message_notification.rs
-src/models/new_message_notification_list.rs
 src/models/new_received_likes_count.rs
 src/models/new_received_likes_count_result.rs
 src/models/news_config.rs
@@ -193,8 +193,6 @@ src/models/notification_status.rs
 src/models/partial_profile_attributes_config.rs
 src/models/pending_message_acknowledgement_list.rs
 src/models/pending_message_id.rs
-src/models/pending_notification_token.rs
-src/models/pending_notification_with_data.rs
 src/models/perf_metric_query.rs
 src/models/perf_metric_query_result.rs
 src/models/perf_metric_value_area.rs
@@ -245,6 +243,9 @@ src/models/profile_version.rs
 src/models/profile_visibility.rs
 src/models/public_key_id.rs
 src/models/publication_id.rs
+src/models/push_notification_device_token.rs
+src/models/push_notification_encryption_key.rs
+src/models/push_notification_info_sync_version.rs
 src/models/received_like_id.rs
 src/models/received_likes_iterator_state.rs
 src/models/received_likes_page.rs
@@ -305,3 +306,4 @@ src/models/update_profile_content_report.rs
 src/models/update_profile_name_report.rs
 src/models/update_profile_text_report.rs
 src/models/update_report_result.rs
+src/models/vapid_public_key.rs

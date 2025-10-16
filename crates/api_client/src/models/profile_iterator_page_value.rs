@@ -17,16 +17,17 @@ pub struct ProfileIteratorPageValue {
     pub account_id: Box<models::AccountId>,
     #[serde(rename = "age")]
     pub age: i64,
-    #[serde(rename = "name")]
-    pub name: String,
+    /// A string wrapper that ensures the string is not empty. This type is used for TEXT columns that should not allow empty strings. In the database, these columns are NULL when there is no value, and this type represents non-NULL values that must be non-empty.
+    #[serde(rename = "name", skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
 }
 
 impl ProfileIteratorPageValue {
-    pub fn new(account_id: models::AccountId, age: i64, name: String) -> ProfileIteratorPageValue {
+    pub fn new(account_id: models::AccountId, age: i64) -> ProfileIteratorPageValue {
         ProfileIteratorPageValue {
             account_id: Box::new(account_id),
             age,
-            name,
+            name: None,
         }
     }
 }

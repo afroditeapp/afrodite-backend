@@ -15,17 +15,17 @@ use serde::{Deserialize, Serialize};
 pub struct ProfileStringModerationInfo {
     #[serde(rename = "rejected_reason_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub rejected_reason_category: Option<Option<Box<models::ProfileStringModerationRejectedReasonCategory>>>,
-    #[serde(rename = "rejected_reason_details")]
-    pub rejected_reason_details: Box<models::ProfileStringModerationRejectedReasonDetails>,
+    #[serde(rename = "rejected_reason_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub rejected_reason_details: Option<Option<Box<models::ProfileStringModerationRejectedReasonDetails>>>,
     #[serde(rename = "state")]
     pub state: models::ProfileStringModerationState,
 }
 
 impl ProfileStringModerationInfo {
-    pub fn new(rejected_reason_details: models::ProfileStringModerationRejectedReasonDetails, state: models::ProfileStringModerationState) -> ProfileStringModerationInfo {
+    pub fn new(state: models::ProfileStringModerationState) -> ProfileStringModerationInfo {
         ProfileStringModerationInfo {
             rejected_reason_category: None,
-            rejected_reason_details: Box::new(rejected_reason_details),
+            rejected_reason_details: None,
             state,
         }
     }

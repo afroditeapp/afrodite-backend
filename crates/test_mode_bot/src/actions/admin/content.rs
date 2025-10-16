@@ -131,7 +131,7 @@ impl BotAction for ModerateContentModerationRequest {
                         accept: true,
                         move_to_human: Some(Some(false)),
                         rejected_category: None,
-                        rejected_details: Box::default(),
+                        rejected_details: None,
                     },
                 )
                 .await
@@ -223,11 +223,15 @@ impl AdminBotContentModerationLogic {
                         accept: result.accept,
                         move_to_human: Some(Some(result.move_to_human)),
                         rejected_category: None,
-                        rejected_details: Box::new(
-                            MediaContentModerationRejectedReasonDetails::new(
-                                result.rejected_details.unwrap_or_default(),
-                            ),
-                        ),
+                        rejected_details: Some(result.rejected_details.and_then(|v| {
+                            if v.is_empty() {
+                                None
+                            } else {
+                                Some(Box::new(MediaContentModerationRejectedReasonDetails::new(
+                                    v,
+                                )))
+                            }
+                        })),
                     },
                 )
                 .await

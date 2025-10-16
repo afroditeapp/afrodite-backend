@@ -17,6 +17,9 @@ pub struct MediaContentModerationCompletedNotification {
     pub accepted: Box<models::NotificationStatus>,
     #[serde(rename = "deleted")]
     pub deleted: Box<models::NotificationStatus>,
+    /// If true, client should not show notifications
+    #[serde(rename = "hidden", skip_serializing_if = "Option::is_none")]
+    pub hidden: Option<bool>,
     #[serde(rename = "rejected")]
     pub rejected: Box<models::NotificationStatus>,
 }
@@ -26,6 +29,7 @@ impl MediaContentModerationCompletedNotification {
         MediaContentModerationCompletedNotification {
             accepted: Box::new(accepted),
             deleted: Box::new(deleted),
+            hidden: None,
             rejected: Box::new(rejected),
         }
     }

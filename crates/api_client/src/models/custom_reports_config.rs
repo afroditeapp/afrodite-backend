@@ -13,17 +13,17 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct CustomReportsConfig {
-    #[serde(rename = "report")]
-    pub report: Vec<models::CustomReport>,
     #[serde(rename = "report_order")]
     pub report_order: models::CustomReportsOrderMode,
+    #[serde(rename = "reports")]
+    pub reports: Vec<models::CustomReport>,
 }
 
 impl CustomReportsConfig {
-    pub fn new(report: Vec<models::CustomReport>, report_order: models::CustomReportsOrderMode) -> CustomReportsConfig {
+    pub fn new(report_order: models::CustomReportsOrderMode, reports: Vec<models::CustomReport>) -> CustomReportsConfig {
         CustomReportsConfig {
-            report,
             report_order,
+            reports,
         }
     }
 }

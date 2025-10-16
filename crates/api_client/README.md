@@ -105,9 +105,9 @@ Class | Method | HTTP request | Description
 *CommonApi* | [**get_connect_websocket**](docs/CommonApi.md#get_connect_websocket) | **GET** /common_api/connect | Connect to server using WebSocket after getting refresh and access tokens. Connection is required as API access is allowed for connected clients.
 *CommonApi* | [**get_data_export_archive**](docs/CommonApi.md#get_data_export_archive) | **GET** /common_api/data_export_archive | Download current data export archive
 *CommonApi* | [**get_data_export_state**](docs/CommonApi.md#get_data_export_state) | **GET** /common_api/data_export_state | 
+*CommonApi* | [**get_push_notification_info**](docs/CommonApi.md#get_push_notification_info) | **GET** /common_api/get_push_notification_info | 
 *CommonApi* | [**get_version**](docs/CommonApi.md#get_version) | **GET** /common_api/version | Get backend version.
 *CommonApi* | [**post_client_language**](docs/CommonApi.md#post_client_language) | **POST** /common_api/client_language | 
-*CommonApi* | [**post_get_pending_notification**](docs/CommonApi.md#post_get_pending_notification) | **POST** /common_api/get_pending_notification | Get pending notification and reset pending notification.
 *CommonApi* | [**post_set_device_token**](docs/CommonApi.md#post_set_device_token) | **POST** /common_api/set_device_token | 
 *CommonApi* | [**post_start_data_export**](docs/CommonApi.md#post_start_data_export) | **POST** /common_api/start_data_export | Start data export
 *CommonAdminApi* | [**get_admin_notification_settings**](docs/CommonAdminApi.md#get_admin_notification_settings) | **GET** /common_api/admin_notification_settings | Get admin notification settings.
@@ -286,16 +286,17 @@ Class | Method | HTTP request | Description
  - [EventToClient](docs/EventToClient.md)
  - [EventType](docs/EventType.md)
  - [FavoriteProfilesPage](docs/FavoriteProfilesPage.md)
- - [FcmDeviceToken](docs/FcmDeviceToken.md)
  - [FeaturesConfig](docs/FeaturesConfig.md)
  - [GetAccountBanTimeResult](docs/GetAccountBanTimeResult.md)
  - [GetAccountDeletionRequestResult](docs/GetAccountDeletionRequestResult.md)
  - [GetAccountIdFromEmailResult](docs/GetAccountIdFromEmailResult.md)
+ - [GetAdminNotification](docs/GetAdminNotification.md)
  - [GetAllAdminsResult](docs/GetAllAdminsResult.md)
  - [GetApiUsageStatisticsResult](docs/GetApiUsageStatisticsResult.md)
  - [GetApiUsageStatisticsSettings](docs/GetApiUsageStatisticsSettings.md)
  - [GetChatMessageReports](docs/GetChatMessageReports.md)
  - [GetClientFeaturesConfigResult](docs/GetClientFeaturesConfigResult.md)
+ - [GetClientLanguage](docs/GetClientLanguage.md)
  - [GetClientVersionStatisticsResult](docs/GetClientVersionStatisticsResult.md)
  - [GetClientVersionStatisticsSettings](docs/GetClientVersionStatisticsSettings.md)
  - [GetConversationId](docs/GetConversationId.md)
@@ -319,6 +320,7 @@ Class | Method | HTTP request | Description
  - [GetProfileStatisticsResult](docs/GetProfileStatisticsResult.md)
  - [GetProfileStringPendingModerationList](docs/GetProfileStringPendingModerationList.md)
  - [GetProfileStringState](docs/GetProfileStringState.md)
+ - [GetPushNotificationInfo](docs/GetPushNotificationInfo.md)
  - [GetReportList](docs/GetReportList.md)
  - [GetSentMessage](docs/GetSentMessage.md)
  - [GetVideoCallUrlsResult](docs/GetVideoCallUrlsResult.md)
@@ -361,8 +363,6 @@ Class | Method | HTTP request | Description
  - [MinDistanceKm](docs/MinDistanceKm.md)
  - [ModerationQueueType](docs/ModerationQueueType.md)
  - [MyProfileContent](docs/MyProfileContent.md)
- - [NewMessageNotification](docs/NewMessageNotification.md)
- - [NewMessageNotificationList](docs/NewMessageNotificationList.md)
  - [NewReceivedLikesCount](docs/NewReceivedLikesCount.md)
  - [NewReceivedLikesCountResult](docs/NewReceivedLikesCountResult.md)
  - [NewsConfig](docs/NewsConfig.md)
@@ -379,8 +379,6 @@ Class | Method | HTTP request | Description
  - [PartialProfileAttributesConfig](docs/PartialProfileAttributesConfig.md)
  - [PendingMessageAcknowledgementList](docs/PendingMessageAcknowledgementList.md)
  - [PendingMessageId](docs/PendingMessageId.md)
- - [PendingNotificationToken](docs/PendingNotificationToken.md)
- - [PendingNotificationWithData](docs/PendingNotificationWithData.md)
  - [PerfMetricQuery](docs/PerfMetricQuery.md)
  - [PerfMetricQueryResult](docs/PerfMetricQueryResult.md)
  - [PerfMetricValueArea](docs/PerfMetricValueArea.md)
@@ -431,6 +429,9 @@ Class | Method | HTTP request | Description
  - [ProfileVisibility](docs/ProfileVisibility.md)
  - [PublicKeyId](docs/PublicKeyId.md)
  - [PublicationId](docs/PublicationId.md)
+ - [PushNotificationDeviceToken](docs/PushNotificationDeviceToken.md)
+ - [PushNotificationEncryptionKey](docs/PushNotificationEncryptionKey.md)
+ - [PushNotificationInfoSyncVersion](docs/PushNotificationInfoSyncVersion.md)
  - [ReceivedLikeId](docs/ReceivedLikeId.md)
  - [ReceivedLikesIteratorState](docs/ReceivedLikesIteratorState.md)
  - [ReceivedLikesPage](docs/ReceivedLikesPage.md)
@@ -491,6 +492,7 @@ Class | Method | HTTP request | Description
  - [UpdateProfileNameReport](docs/UpdateProfileNameReport.md)
  - [UpdateProfileTextReport](docs/UpdateProfileTextReport.md)
  - [UpdateReportResult](docs/UpdateReportResult.md)
+ - [VapidPublicKey](docs/VapidPublicKey.md)
 
 
 To get access to the crate's generated documentation, use:

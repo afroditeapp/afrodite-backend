@@ -94,8 +94,8 @@ impl TestContext {
         let update = ProfileUpdate {
             attributes: vec![],
             age,
-            name: name.to_string(),
-            ptext: String::new(),
+            name: Some(name.to_string()),
+            ptext: None,
         };
         post_profile(account.profile_api(), update)
             .await

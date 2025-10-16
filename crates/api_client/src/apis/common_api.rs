@@ -69,6 +69,15 @@ pub enum GetDataExportStateError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_push_notification_info`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetPushNotificationInfoError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_version`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -82,13 +91,6 @@ pub enum GetVersionError {
 pub enum PostClientLanguageError {
     Status401(),
     Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`post_get_pending_notification`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum PostGetPendingNotificationError {
     UnknownValue(serde_json::Value),
 }
 
@@ -176,7 +178,7 @@ pub async fn get_client_config(configuration: &configuration::Configuration, ) -
     }
 }
 
-pub async fn get_client_language(configuration: &configuration::Configuration, ) -> Result<models::ClientLanguage, Error<GetClientLanguageError>> {
+pub async fn get_client_language(configuration: &configuration::Configuration, ) -> Result<models::GetClientLanguage, Error<GetClientLanguageError>> {
 
     let uri_str = format!("{}/common_api/client_language", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -203,8 +205,8 @@ pub async fn get_client_language(configuration: &configuration::Configuration, )
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ClientLanguage`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ClientLanguage`")))),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::GetClientLanguage`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::GetClientLanguage`")))),
         }
     } else {
         let content = resp.text().await?;
@@ -304,6 +306,43 @@ pub async fn get_data_export_state(configuration: &configuration::Configuration,
     }
 }
 
+pub async fn get_push_notification_info(configuration: &configuration::Configuration, ) -> Result<models::GetPushNotificationInfo, Error<GetPushNotificationInfoError>> {
+
+    let uri_str = format!("{}/common_api/get_push_notification_info", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::GetPushNotificationInfo`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::GetPushNotificationInfo`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetPushNotificationInfoError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 pub async fn get_version(configuration: &configuration::Configuration, ) -> Result<models::BackendVersion, Error<GetVersionError>> {
 
     let uri_str = format!("{}/common_api/version", configuration.base_path);
@@ -367,47 +406,9 @@ pub async fn post_client_language(configuration: &configuration::Configuration, 
     }
 }
 
-/// When client receives a FCM data notification use this API route to download the notification.  Requesting this route is always valid to avoid figuring out device token values more easily.
-pub async fn post_get_pending_notification(configuration: &configuration::Configuration, pending_notification_token: models::PendingNotificationToken) -> Result<models::PendingNotificationWithData, Error<PostGetPendingNotificationError>> {
+pub async fn post_set_device_token(configuration: &configuration::Configuration, push_notification_device_token: models::PushNotificationDeviceToken) -> Result<models::PushNotificationEncryptionKey, Error<PostSetDeviceTokenError>> {
     // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_pending_notification_token = pending_notification_token;
-
-    let uri_str = format!("{}/common_api/get_pending_notification", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
-
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    req_builder = req_builder.json(&p_body_pending_notification_token);
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-    let content_type = resp
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream");
-    let content_type = super::ContentType::from(content_type);
-
-    if !status.is_client_error() && !status.is_server_error() {
-        let content = resp.text().await?;
-        match content_type {
-            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::PendingNotificationWithData`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::PendingNotificationWithData`")))),
-        }
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<PostGetPendingNotificationError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
-pub async fn post_set_device_token(configuration: &configuration::Configuration, fcm_device_token: models::FcmDeviceToken) -> Result<models::PendingNotificationToken, Error<PostSetDeviceTokenError>> {
-    // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_fcm_device_token = fcm_device_token;
+    let p_body_push_notification_device_token = push_notification_device_token;
 
     let uri_str = format!("{}/common_api/set_device_token", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
@@ -418,7 +419,7 @@ pub async fn post_set_device_token(configuration: &configuration::Configuration,
     if let Some(ref token) = configuration.bearer_access_token {
         req_builder = req_builder.bearer_auth(token.to_owned());
     };
-    req_builder = req_builder.json(&p_body_fcm_device_token);
+    req_builder = req_builder.json(&p_body_push_notification_device_token);
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -435,8 +436,8 @@ pub async fn post_set_device_token(configuration: &configuration::Configuration,
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::PendingNotificationToken`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::PendingNotificationToken`")))),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::PushNotificationEncryptionKey`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::PushNotificationEncryptionKey`")))),
         }
     } else {
         let content = resp.text().await?;

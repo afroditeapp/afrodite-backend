@@ -43,6 +43,8 @@ pub enum EventType {
     AutomaticProfileSearchCompleted,
     #[serde(rename = "AdminNotification")]
     AdminNotification,
+    #[serde(rename = "PushNotificationInfoChanged")]
+    PushNotificationInfoChanged,
 
 }
 
@@ -63,6 +65,7 @@ impl std::fmt::Display for EventType {
             Self::ProfileStringModerationCompleted => write!(f, "ProfileStringModerationCompleted"),
             Self::AutomaticProfileSearchCompleted => write!(f, "AutomaticProfileSearchCompleted"),
             Self::AdminNotification => write!(f, "AdminNotification"),
+            Self::PushNotificationInfoChanged => write!(f, "PushNotificationInfoChanged"),
         }
     }
 }
