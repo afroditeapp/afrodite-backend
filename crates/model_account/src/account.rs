@@ -44,6 +44,10 @@ pub struct LoginResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub error_unsupported_client: bool,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub error_sign_in_with_email_unverified: bool,
 }
 
 impl LoginResult {
@@ -53,6 +57,17 @@ impl LoginResult {
             aid: None,
             email: None,
             error_unsupported_client: true,
+            error_sign_in_with_email_unverified: false,
+        }
+    }
+
+    pub fn error_sign_in_with_email_unverified() -> Self {
+        Self {
+            tokens: None,
+            aid: None,
+            email: None,
+            error_unsupported_client: false,
+            error_sign_in_with_email_unverified: true,
         }
     }
 }

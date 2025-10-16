@@ -67,6 +67,7 @@ impl AppleTokenClaims {
 pub struct AppleAccountInfo {
     pub id: String,
     pub email: String,
+    pub email_verified: bool,
 }
 
 pub struct SignInWithAppleManager {
@@ -111,8 +112,9 @@ impl SignInWithAppleManager {
 
         let token_nonce = base64::engine::general_purpose::URL_SAFE.encode(Sha256::digest(nonce));
 
-        if data.claims.email_verified() && data.claims.nonce == token_nonce {
+        if data.claims.nonce == token_nonce {
             Ok(AppleAccountInfo {
+                email_verified: data.claims.email_verified(),
                 id: data.claims.sub,
                 email: data.claims.email,
             })

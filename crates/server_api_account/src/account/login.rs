@@ -56,6 +56,7 @@ pub async fn login_impl(
         aid: Some(id.as_id()),
         email: email.email,
         error_unsupported_client: false,
+        error_sign_in_with_email_unverified: false,
     };
     Ok(result)
 }
@@ -67,6 +68,7 @@ pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
 
 trait SignInWithInfoTrait {
     fn email(&self) -> String;
+    fn email_verified(&self) -> bool;
     fn sign_in_with_info(&self) -> SignInWithInfo;
     async fn already_existing_account(
         &self,
@@ -77,6 +79,10 @@ trait SignInWithInfoTrait {
 impl SignInWithInfoTrait for GoogleAccountInfo {
     fn email(&self) -> String {
         self.email.clone()
+    }
+
+    fn email_verified(&self) -> bool {
+        self.email_verified
     }
 
     fn sign_in_with_info(&self) -> SignInWithInfo {
@@ -103,6 +109,10 @@ impl SignInWithInfoTrait for GoogleAccountInfo {
 impl SignInWithInfoTrait for AppleAccountInfo {
     fn email(&self) -> String {
         self.email.clone()
+    }
+
+    fn email_verified(&self) -> bool {
+        self.email_verified
     }
 
     fn sign_in_with_info(&self) -> SignInWithInfo {
@@ -195,6 +205,10 @@ async fn handle_sign_in_with_info(
     disable_registering: bool,
     info: impl SignInWithInfoTrait,
 ) -> Result<LoginResult, StatusCode> {
+    if !info.email_verified() {
+        return Ok(LoginResult::error_sign_in_with_email_unverified());
+    }
+
     let email: EmailAddress = info
         .email()
         .try_into()

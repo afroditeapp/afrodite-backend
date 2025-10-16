@@ -76,6 +76,7 @@ struct GoogleTokenClaims {
 pub struct GoogleAccountInfo {
     pub id: String,
     pub email: String,
+    pub email_verified: bool,
 }
 
 enum KeyStatus {
@@ -145,7 +146,7 @@ impl SignInWithGoogleManager {
             valid_client_ids.into_iter().any(|id| id == data.claims.azp)
         };
 
-        if !azp_valid || !data.claims.email_verified {
+        if !azp_valid {
             return Err(SignInWithGoogleError::InvalidToken.report());
         }
 
@@ -157,6 +158,7 @@ impl SignInWithGoogleManager {
         Ok(GoogleAccountInfo {
             id: data.claims.sub,
             email: data.claims.email,
+            email_verified: data.claims.email_verified,
         })
     }
 }
