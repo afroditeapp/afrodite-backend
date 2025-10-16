@@ -91,7 +91,7 @@ macro_rules! create_counters {
 ///     get_account_state,     // Struct field name
 ///     // ...
 /// );
-/// use simple_backend::perf::CounterCategory;
+/// use simple_backend::perf::counters::CounterCategory;
 /// static ALL_COUNTERS: &'static [&'static CounterCategory] = &[
 ///     &CounterCategory::new("account", ACCOUNT_COUNTERS_LIST),
 /// ];
