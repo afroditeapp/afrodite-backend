@@ -79,7 +79,7 @@ impl BotAction for ChangeProfileText {
                 })
                 .collect(),
             age: current_profile.age,
-            name: current_profile.name,
+            name: current_profile.name.unwrap_or_default(),
             ptext: Some(profile_text),
         };
         post_profile(state.api(), update)
@@ -377,11 +377,12 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
                 .get_bot_config()
                 .name
                 .clone()
+                .map(|v| v.into_string())
                 .unwrap_or("B".to_string())
         };
 
         let update = ProfileUpdate {
-            name: Some(name),
+            name,
             age: age.into(),
             attributes,
             ptext: state.get_bot_config().text.clone(),

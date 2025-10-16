@@ -365,11 +365,12 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
                 .get_bot_config()
                 .name
                 .clone()
+                .map(|v| v.into_string())
                 .unwrap_or("B".to_string())
         };
 
         let update = ProfileUpdate {
-            name: Some(name),
+            name,
             age: age.into(),
             attributes,
             ptext: state.get_bot_config().text.clone(),

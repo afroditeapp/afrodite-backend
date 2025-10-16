@@ -18,19 +18,19 @@ pub struct ProfileUpdate {
     #[serde(rename = "attributes")]
     pub attributes: Vec<models::ProfileAttributeValueUpdate>,
     /// A string wrapper that ensures the string is not empty. This type is used for TEXT columns that should not allow empty strings. In the database, these columns are NULL when there is no value, and this type represents non-NULL values that must be non-empty.
-    #[serde(rename = "name", skip_serializing_if = "Option::is_none")]
-    pub name: Option<String>,
+    #[serde(rename = "name")]
+    pub name: String,
     /// A string wrapper that ensures the string is not empty. This type is used for TEXT columns that should not allow empty strings. In the database, these columns are NULL when there is no value, and this type represents non-NULL values that must be non-empty.
     #[serde(rename = "ptext", skip_serializing_if = "Option::is_none")]
     pub ptext: Option<String>,
 }
 
 impl ProfileUpdate {
-    pub fn new(age: i64, attributes: Vec<models::ProfileAttributeValueUpdate>) -> ProfileUpdate {
+    pub fn new(age: i64, attributes: Vec<models::ProfileAttributeValueUpdate>, name: String) -> ProfileUpdate {
         ProfileUpdate {
             age,
             attributes,
-            name: None,
+            name,
             ptext: None,
         }
     }

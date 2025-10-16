@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use error_stack::{Result, ResultExt};
 use serde::{Deserialize, Deserializer};
 pub use simple_backend_config::file::NsfwDetectionThresholds;
+use simple_backend_model::NonEmptyString;
 use simple_backend_utils::time::UtcTimeValue;
 use url::Url;
 
@@ -250,7 +251,7 @@ pub struct ImageDirConfig {
 pub struct BaseBotConfig {
     pub age: Option<u8>,
     pub gender: Option<Gender>,
-    pub name: Option<String>,
+    pub name: Option<NonEmptyString>,
     pub text: Option<String>,
     /// Image file name.
     ///
