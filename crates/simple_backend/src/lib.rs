@@ -172,6 +172,9 @@ impl<T: BusinessLogic> SimpleBackend<T> {
     }
 
     pub async fn run(mut self) {
+        // Disable colors because tracing_subscriber escapes ANSI control characters
+        error_stack::Report::set_color_mode(error_stack::fmt::ColorMode::None);
+
         let log_with_timestamp_layer = if self.config.log_timestamp() {
             Some(tracing_subscriber::fmt::layer().with_filter(EnvFilter::from_default_env()))
         } else {

@@ -5675,6 +5675,7 @@ name = "test_mode"
 version = "0.0.0"
 dependencies = [
  "config",
+ "error-stack",
  "reqwest",
  "test_mode_bot_runner",
  "test_mode_tests_account",

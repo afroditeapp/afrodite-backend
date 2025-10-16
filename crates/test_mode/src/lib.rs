@@ -34,6 +34,9 @@ impl TestRunner {
         test_mode_tests_profile::call_this_to_make_sure_that_crate_is_linked();
         test_mode_tests_media::call_this_to_make_sure_that_crate_is_linked();
 
+        // Disable colors because tracing_subscriber escapes ANSI control characters
+        error_stack::Report::set_color_mode(error_stack::fmt::ColorMode::None);
+
         tracing_subscriber::fmt::init();
 
         let reqwest_client = reqwest::Client::new();

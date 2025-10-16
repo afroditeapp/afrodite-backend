@@ -8,6 +8,8 @@ edition = "2024"
 [dependencies]
 tracing-subscriber = { workspace = true }
 
+error-stack = { workspace = true }
+
 reqwest = { workspace = true }
 
 config = { path = "../config" }
