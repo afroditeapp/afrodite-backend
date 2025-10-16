@@ -9,7 +9,7 @@ use model_media::{
 };
 use server_api::{
     S,
-    app::{AdminNotificationProvider, ApiUsageTrackerProvider},
+    app::{AdminNotificationProvider, ApiLimitsProvider, ApiUsageTrackerProvider},
     create_open_api_router, db_write,
 };
 use server_data::read::GetReadCommandsCommon;
@@ -49,6 +49,7 @@ const PATH_GET_PROFILE_CONTENT_INFO: &str = "/media_api/profile_content_info/{ai
     responses(
         (status = 200, description = "Get profile content info.", body = GetProfileContentResult),
         (status = 401, description = "Unauthorized."),
+        (status = 429, description = "Too many requests."),
         (status = 500),
     ),
     security(("access_token" = [])),
@@ -66,6 +67,11 @@ pub async fn get_profile_content_info(
         .api_usage_tracker()
         .incr(account_id, |u| &u.get_profile_content_info)
         .await;
+    state
+        .api_limits(account_id)
+        .media()
+        .get_profile_content_info()
+        .await?;
 
     let requested_profile = state.get_internal_id(requested_profile).await?;
 

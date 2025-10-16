@@ -313,6 +313,7 @@ pub struct MediaLimitsConfig {
     pub concurrent_content_uploads: usize,
     pub max_content_count: u8,
     pub unused_content_wait_duration: DurationValue,
+    pub get_profile_content_info_daily_max_count: u16,
 }
 
 impl Default for MediaLimitsConfig {
@@ -321,6 +322,7 @@ impl Default for MediaLimitsConfig {
             concurrent_content_uploads: 10,
             max_content_count: 20,
             unused_content_wait_duration: DurationValue::from_days(90),
+            get_profile_content_info_daily_max_count: 2000,
         }
     }
 }

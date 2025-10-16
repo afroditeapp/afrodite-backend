@@ -28,4 +28,6 @@ pub struct AllApiLimits {
     pub post_reset_profile_paging: ApiLimitState,
     pub post_get_next_profile_page: ApiLimitState,
     pub get_profile: ApiLimitState,
+    // Media
+    pub get_profile_content_info: ApiLimitState,
 }
