@@ -27,4 +27,5 @@ pub struct AllApiLimits {
     // Profile
     pub post_reset_profile_paging: ApiLimitState,
     pub post_get_next_profile_page: ApiLimitState,
+    pub get_profile: ApiLimitState,
 }

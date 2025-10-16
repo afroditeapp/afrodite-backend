@@ -102,4 +102,13 @@ impl ProfileApiLimits<'_> {
         })
         .await
     }
+
+    pub async fn get_profile(&self) -> Result<(), ApiLimitError> {
+        self.check(|state, config| {
+            state.get_profile.increment_and_check_is_limit_reached(
+                config.limits_profile().get_profile_daily_max_count,
+            )
+        })
+        .await
+    }
 }

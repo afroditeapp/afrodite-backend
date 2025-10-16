@@ -332,6 +332,7 @@ pub struct ProfileLimitsConfig {
     pub profile_iterator_reset_daily_max_count: u16,
     /// Used also for automatic profile search specific iterator
     pub profile_iterator_next_page_daily_max_count: u16,
+    pub get_profile_daily_max_count: u16,
 }
 
 impl Default for ProfileLimitsConfig {
@@ -339,6 +340,7 @@ impl Default for ProfileLimitsConfig {
         Self {
             profile_iterator_reset_daily_max_count: 200,
             profile_iterator_next_page_daily_max_count: 1000,
+            get_profile_daily_max_count: 2000,
         }
     }
 }

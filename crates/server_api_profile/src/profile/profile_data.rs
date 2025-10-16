@@ -10,7 +10,7 @@ use model_profile::{
 };
 use server_api::{
     S,
-    app::{AdminNotificationProvider, ApiUsageTrackerProvider, GetConfig},
+    app::{AdminNotificationProvider, ApiLimitsProvider, ApiUsageTrackerProvider, GetConfig},
     create_open_api_router, db_write,
     result::WrappedContextExt,
 };
@@ -53,6 +53,7 @@ const PATH_GET_PROFILE: &str = "/profile_api/profile/{aid}";
     responses(
         (status = 200, description = "Get current profile", body = GetProfileResult),
         (status = 401, description = "Unauthorized"),
+        (status = 429, description = "Too many requests."),
         (
             status = 500,
             description = "Internal server error",
@@ -73,6 +74,7 @@ pub async fn get_profile(
         .api_usage_tracker()
         .incr(account_id, |u| &u.get_profile)
         .await;
+    state.api_limits(account_id).profile().get_profile().await?;
 
     let requested_profile = state.get_internal_id(requested_profile).await?;
 
