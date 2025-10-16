@@ -373,7 +373,7 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             name,
             age: age.into(),
             attributes,
-            ptext: state.get_bot_config().text.clone(),
+            ptext: state.get_bot_config().text.clone().map(|v| v.into_string()),
         };
 
         post_profile(state.api(), update)

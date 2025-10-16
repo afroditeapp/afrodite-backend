@@ -252,7 +252,7 @@ pub struct BaseBotConfig {
     pub age: Option<u8>,
     pub gender: Option<Gender>,
     pub name: Option<NonEmptyString>,
-    pub text: Option<String>,
+    pub text: Option<NonEmptyString>,
     /// Image file name.
     ///
     /// The image is loaded from directory which matches gender config.
