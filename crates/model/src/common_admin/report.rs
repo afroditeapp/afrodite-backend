@@ -102,8 +102,9 @@ pub struct ReportContent {
     /// Null or non-empty string
     #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_name: Option<NonEmptyString>,
+    /// Null or non-empty string
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub profile_text: Option<String>,
+    pub profile_text: Option<NonEmptyString>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_content: Option<ContentId>,
     #[serde(skip_serializing_if = "Option::is_none")]

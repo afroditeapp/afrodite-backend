@@ -12,6 +12,7 @@ use server_data::{
     result::{Result, WrappedContextExt},
     write::DbTransaction,
 };
+use simple_backend_model::NonEmptyString;
 
 use crate::cache::CacheWriteProfile;
 
@@ -23,20 +24,16 @@ impl WriteCommandsProfileAdminModeration<'_> {
         content_type: ProfileStringModerationContentType,
         mode: ModerateProfileValueMode,
         string_owner_id: AccountIdInternal,
-        string_value: String,
+        string_value: NonEmptyString,
     ) -> Result<(), DataError> {
         let current_profile = self
             .db_read(move |mut cmds| cmds.profile().data().profile(string_owner_id))
             .await?;
         let current_value = match content_type {
-            // TODO: Update once profile text type is NonEmptyString
-            ProfileStringModerationContentType::ProfileName => current_profile
-                .name
-                .map(|v| v.into_string())
-                .unwrap_or_default(),
+            ProfileStringModerationContentType::ProfileName => current_profile.name,
             ProfileStringModerationContentType::ProfileText => current_profile.ptext,
         };
-        if current_value != string_value {
+        if current_value.as_ref() != Some(&string_value) {
             return Err(DataError::NotAllowed.report());
         }
 

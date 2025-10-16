@@ -39,8 +39,7 @@ impl WriteCommandsProfileReport<'_> {
                     ProfileStringModerationContentType::ProfileName,
                     ModerateProfileValueMode::MoveToHumanModeration,
                     target,
-                    // TODO: Update once profile text type is NonEmptyString
-                    profile_name.to_string(),
+                    profile_name.clone(),
                 )
                 .await?;
 
@@ -85,13 +84,13 @@ impl WriteCommandsProfileReport<'_> {
         &self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
-        profile_text: String,
+        profile_text: NonEmptyString,
     ) -> Result<UpdateReportResult, DataError> {
         let target_data = self
             .db_read(move |mut cmds| cmds.profile().data().my_profile(target, None))
             .await?;
 
-        if profile_text != target_data.p.ptext {
+        if Some(&profile_text) != target_data.p.ptext.as_ref() {
             return Ok(UpdateReportResult::outdated_report_content());
         }
 
@@ -105,7 +104,7 @@ impl WriteCommandsProfileReport<'_> {
                     ProfileStringModerationContentType::ProfileText,
                     ModerateProfileValueMode::MoveToHumanModeration,
                     target,
-                    profile_text.to_string(),
+                    profile_text.clone(),
                 )
                 .await?;
 
@@ -130,7 +129,7 @@ impl WriteCommandsProfileReport<'_> {
 
         let current_report = reports
             .iter()
-            .find(|v| v.report.content.profile_text.as_deref() == Some(&profile_text));
+            .find(|v| v.report.content.profile_text.as_ref() == Some(&profile_text));
         if current_report.is_some() {
             // Already reported
             return Ok(UpdateReportResult::success());

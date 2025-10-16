@@ -57,7 +57,7 @@ pub struct ProfileInternal {
     pub account_id: AccountIdDb,
     pub version_uuid: ProfileVersion,
     pub profile_name: Option<NonEmptyString>,
-    pub profile_text: String,
+    pub profile_text: Option<NonEmptyString>,
     pub age: ProfileAge,
 }
 

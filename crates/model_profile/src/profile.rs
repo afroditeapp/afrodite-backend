@@ -45,10 +45,8 @@ pub use report::*;
 pub struct Profile {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<NonEmptyString>,
-    /// Profile text support is disabled for now.
-    #[serde(default, skip_serializing_if = "String::is_empty")]
-    #[schema(default = "")]
-    pub ptext: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ptext: Option<NonEmptyString>,
     #[schema(value_type = i64)]
     pub age: ProfileAge,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -156,7 +154,8 @@ sync_version_wrappers!(ProfileSyncVersion,);
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
 pub struct ProfileUpdate {
-    pub ptext: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ptext: Option<NonEmptyString>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<NonEmptyString>,
     #[schema(value_type = i64)]
@@ -229,12 +228,14 @@ impl ProfileUpdate {
             return Err("Profile name does not match with profile name regex".to_string());
         }
 
-        if self.ptext.len() > 2000 {
-            return Err("Profile text is too long".to_string());
-        }
+        if let Some(ptext) = &self.ptext {
+            if ptext.as_str().len() > 2000 {
+                return Err("Profile text is too long".to_string());
+            }
 
-        if self.ptext != self.ptext.trim() {
-            return Err("Profile text is not trimmed".to_string());
+            if ptext.as_str() != ptext.as_str().trim() {
+                return Err("Profile text is not trimmed".to_string());
+            }
         }
 
         if self.age != current_profile.age {
@@ -260,7 +261,7 @@ impl ProfileUpdate {
 /// Makes sure that the number list attributes are sorted.
 #[derive(Debug, Clone, Default)]
 pub struct ProfileUpdateValidated {
-    pub ptext: String,
+    pub ptext: Option<NonEmptyString>,
     pub name: Option<NonEmptyString>,
     pub age: ProfileAge,
     pub attributes: Vec<ProfileAttributeValueUpdate>,

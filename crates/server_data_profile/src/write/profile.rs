@@ -134,7 +134,7 @@ impl WriteCommandsProfile<'_> {
                             .moderation()
                             .reset_profile_text_moderation_state(
                                 id,
-                                profile_data.ptext.is_empty(),
+                                profile_data.ptext.is_none(),
                             )?,
                     )
                 } else {

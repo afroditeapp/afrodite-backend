@@ -637,7 +637,7 @@ diesel::table! {
         account_id -> Integer,
         version_uuid -> Binary,
         profile_name -> Nullable<Text>,
-        profile_text -> Text,
+        profile_text -> Nullable<Text>,
         age -> Integer,
         last_seen_unix_time -> Integer,
     }

@@ -40,7 +40,7 @@ impl CurrentWriteProfileReport<'_> {
         &mut self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
-        text: String,
+        text: NonEmptyString,
     ) -> Result<(), DieselDatabaseError> {
         let id = self.write().common().report().insert_report_content(
             creator,

@@ -168,7 +168,7 @@ impl CurrentReadCommonReport<'_> {
     fn profile_text_report(
         &mut self,
         id: ReportIdDb,
-    ) -> Result<Option<String>, DieselDatabaseError> {
+    ) -> Result<Option<NonEmptyString>, DieselDatabaseError> {
         use crate::schema::profile_report_profile_text::dsl::*;
 
         profile_report_profile_text

@@ -1,6 +1,7 @@
 use diesel::prelude::*;
 use model_server_data::ProfileStringModerationContentType;
 use serde::{Deserialize, Serialize};
+use simple_backend_model::NonEmptyString;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
@@ -22,13 +23,13 @@ pub struct GetProfileStringPendingModerationParams {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Queryable)]
 pub struct ProfileStringPendingModeration {
     pub id: AccountId,
-    pub value: String,
+    pub value: NonEmptyString,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Queryable)]
 pub struct PostModerateProfileString {
     pub id: AccountId,
-    pub value: String,
+    pub value: NonEmptyString,
     pub content_type: ProfileStringModerationContentType,
     pub accept: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -48,9 +49,8 @@ pub struct GetProfileStringStateParams {
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct GetProfileStringState {
-    // TODO: Update once profile text type is NonEmptyString
-    /// If empty, the `moderation_info` is `None`.
-    pub value: String,
+    /// If `None`, the `moderation_info` is `None`.
+    pub value: Option<NonEmptyString>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub moderation_info: Option<ProfileStringModerationInfo>,
 }

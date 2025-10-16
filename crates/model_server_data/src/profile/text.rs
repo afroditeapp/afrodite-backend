@@ -17,6 +17,9 @@ impl ProfileTextCharacterCount {
         Self {
             count: data
                 .profile_text
+                .as_ref()
+                .map(|t| t.as_str())
+                .unwrap_or_default()
                 .graphemes(true)
                 .count()
                 .try_into()

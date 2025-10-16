@@ -8,6 +8,7 @@ use model_profile::{
     ProfileStringModerationRejectedReasonCategory, ProfileStringModerationRejectedReasonDetails,
     ProfileStringModerationState,
 };
+use simple_backend_model::NonEmptyString;
 
 use crate::IntoDatabaseError;
 
@@ -18,10 +19,10 @@ impl CurrentWriteProfileAdminModeration<'_> {
         &mut self,
         moderator_id: AccountIdInternal,
         name_owner_id: AccountIdInternal,
-        name: String,
+        name: NonEmptyString,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::profile_name_allowlist::dsl::*;
-        let allowlist_name = name.trim().to_lowercase();
+        let allowlist_name = name.as_str().trim().to_lowercase();
         insert_into(profile_name_allowlist)
             .values((
                 profile_name.eq(allowlist_name),
@@ -37,10 +38,10 @@ impl CurrentWriteProfileAdminModeration<'_> {
 
     pub fn delete_from_profile_name_allowlist(
         &mut self,
-        name: String,
+        name: NonEmptyString,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::profile_name_allowlist::dsl::*;
-        let allowlist_name = name.trim().to_lowercase();
+        let allowlist_name = name.as_str().trim().to_lowercase();
         delete(profile_name_allowlist)
             .filter(profile_name.eq(allowlist_name))
             .execute(self.conn())

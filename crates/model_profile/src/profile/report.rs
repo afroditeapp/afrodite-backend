@@ -12,5 +12,5 @@ pub struct UpdateProfileNameReport {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateProfileTextReport {
     pub target: AccountId,
-    pub profile_text: String,
+    pub profile_text: NonEmptyString,
 }
