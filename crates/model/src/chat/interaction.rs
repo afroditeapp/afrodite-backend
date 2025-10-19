@@ -246,6 +246,7 @@ impl From<ConversationId> for i64 {
     }
 }
 
+/// Note that admin data export includes this
 #[derive(Debug, Clone, Serialize, Queryable, Selectable, AsChangeset)]
 #[diesel(table_name = crate::schema::account_interaction)]
 #[diesel(check_for_backend(crate::Db))]
@@ -272,6 +273,7 @@ pub struct AccountInteractionInternal {
     pub video_call_url_created_receiver: bool,
     pub received_like_id: Option<ReceivedLikeId>,
     received_like_viewed: bool,
+    received_like_email_notification_sent: bool,
     pub match_id: Option<MatchId>,
     conversation_id_sender: Option<ConversationId>,
     conversation_id_receiver: Option<ConversationId>,

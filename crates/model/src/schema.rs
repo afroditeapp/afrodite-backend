@@ -25,6 +25,7 @@ diesel::table! {
         account_id -> Integer,
         account_registered_state_number -> Integer,
         new_message_state_number -> Integer,
+        new_like_state_number -> Integer,
     }
 }
 
@@ -64,6 +65,7 @@ diesel::table! {
         video_call_url_created_receiver -> Bool,
         received_like_id -> Nullable<Integer>,
         received_like_viewed -> Bool,
+        received_like_email_notification_sent -> Bool,
         match_id -> Nullable<Integer>,
         conversation_id_sender -> Nullable<Integer>,
         conversation_id_receiver -> Nullable<Integer>,

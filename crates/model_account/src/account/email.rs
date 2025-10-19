@@ -54,6 +54,7 @@ impl Default for EmailSendingState {
 pub struct AccountEmailSendingStateRaw {
     pub account_registered_state_number: EmailSendingState,
     pub new_message_state_number: EmailSendingState,
+    pub new_like_state_number: EmailSendingState,
 }
 
 impl AccountEmailSendingStateRaw {
@@ -61,6 +62,7 @@ impl AccountEmailSendingStateRaw {
         match message {
             EmailMessages::AccountRegistered => &mut self.account_registered_state_number,
             EmailMessages::NewMessage => &mut self.new_message_state_number,
+            EmailMessages::NewLike => &mut self.new_like_state_number,
         }
     }
 }

@@ -22,6 +22,10 @@ pub async fn handle_email_notifications(state: &S, id: AccountIdInternal) -> Res
         handle_messages_email_notification(state, id).await?;
     }
 
+    if email_settings.likes {
+        handle_likes_email_notification(state, id).await?;
+    }
+
     Ok(())
 }
 
@@ -71,6 +75,35 @@ async fn handle_messages_email_notification(
             cmds.account()
                 .email()
                 .send_email_if_sending_is_not_in_progress(id, EmailMessages::NewMessage)
+                .await?;
+            Ok(())
+        })
+        .await?;
+    }
+
+    Ok(())
+}
+
+async fn handle_likes_email_notification(
+    state: &S,
+    id: AccountIdInternal,
+) -> Result<(), DataError> {
+    let likes = state
+        .read()
+        .chat()
+        .notification()
+        .unviewed_received_likes_without_sent_email_notification(id)
+        .await?;
+
+    if !likes.is_empty() {
+        db_write_raw!(state, move |cmds| {
+            cmds.chat()
+                .notification()
+                .mark_like_email_notification_sent(id, likes)
+                .await?;
+            cmds.account()
+                .email()
+                .send_email_if_sending_is_not_in_progress(id, EmailMessages::NewLike)
                 .await?;
             Ok(())
         })

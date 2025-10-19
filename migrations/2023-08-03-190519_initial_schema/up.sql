@@ -305,6 +305,7 @@ CREATE TABLE IF NOT EXISTS account_email_sending_state(
     account_id                      INTEGER PRIMARY KEY NOT NULL,
     account_registered_state_number INTEGER             NOT NULL DEFAULT 0,
     new_message_state_number        INTEGER             NOT NULL DEFAULT 0,
+    new_like_state_number           INTEGER             NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -914,6 +915,7 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     -- correct pages.
     received_like_id                INTEGER,
     received_like_viewed            BOOLEAN NOT NULL DEFAULT 0,
+    received_like_email_notification_sent BOOLEAN NOT NULL DEFAULT 0,
     -- Matches iterator uses match ID to return correct pages.
     match_id                        INTEGER,
     -- Account specific conversation ID for new message notifications.

@@ -351,10 +351,12 @@ diesel_i64_wrapper!(ClientLocalId);
 pub enum EmailMessages {
     AccountRegistered,
     NewMessage,
+    NewLike,
 }
 
 impl EmailMessages {
-    pub const VARIANTS: &'static [Self] = &[Self::AccountRegistered, Self::NewMessage];
+    pub const VARIANTS: &'static [Self] =
+        &[Self::AccountRegistered, Self::NewMessage, Self::NewLike];
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
