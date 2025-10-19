@@ -67,19 +67,17 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
 
         let getter = email_content.get(language.as_ref());
 
-        let (subject, body) = match message {
-            EmailMessages::AccountRegistered => (
-                getter.account_registered_subject(),
-                getter.account_registered_body(),
-            ),
-            EmailMessages::NewMessage => (getter.new_message_subject(), getter.new_message_body()),
-            EmailMessages::NewLike => (getter.new_like_subject(), getter.new_like_body()),
-        };
+        let content = match message {
+            EmailMessages::AccountRegistered => getter.account_registered(),
+            EmailMessages::NewMessage => getter.new_message(),
+            EmailMessages::NewLike => getter.new_like(),
+        }
+        .change_context(EmailError::GettingEmailDataFailed)?;
 
         let email_data = EmailData {
             email_address: email,
-            subject,
-            body,
+            subject: content.subject,
+            body: content.body,
         };
 
         Ok(Some(email_data))
