@@ -71,10 +71,10 @@ pub struct ReportChatInfo {
     pub target_blocked_creator: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    pub creator_created_video_call_urls: bool,
+    pub creator_created_video_call_url: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    pub target_created_video_call_urls: bool,
+    pub target_created_video_call_url: bool,
     #[serde(default, skip_serializing_if = "is_zero")]
     #[schema(default = 0)]
     pub creator_sent_messages_count: i64,

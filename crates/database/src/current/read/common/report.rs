@@ -291,9 +291,8 @@ impl CurrentReadCommonReport<'_> {
             },
             creator_blocked_target: interaction.is_direction_blocked(creator, target),
             target_blocked_creator: interaction.is_direction_blocked(target, creator),
-            creator_created_video_call_urls: interaction
-                .video_call_urls_created_for_account(creator),
-            target_created_video_call_urls: interaction.video_call_urls_created_for_account(target),
+            creator_created_video_call_url: interaction.video_call_url_created_for_account(creator),
+            target_created_video_call_url: interaction.video_call_url_created_for_account(target),
             creator_sent_messages_count: interaction.message_count_for_account(creator),
             target_sent_messages_count: interaction.message_count_for_account(target),
         }))

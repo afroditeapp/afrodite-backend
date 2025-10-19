@@ -487,7 +487,7 @@ impl AccountInteractionInternal {
         }
     }
 
-    pub fn video_call_urls_created_for_account(&self, account: impl Into<AccountIdDb>) -> bool {
+    pub fn video_call_url_created_for_account(&self, account: impl Into<AccountIdDb>) -> bool {
         let account = account.into();
         if self.account_id_sender == Some(account) {
             self.video_call_url_created_sender
