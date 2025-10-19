@@ -919,6 +919,7 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     received_like_unix_time         INTEGER,
     -- Matches iterator uses match ID to return correct pages.
     match_id                        INTEGER,
+    match_unix_time                 INTEGER,
     -- Account specific conversation ID for new message notifications.
     -- Available when accounts are a match.
     conversation_id_sender                  INTEGER,

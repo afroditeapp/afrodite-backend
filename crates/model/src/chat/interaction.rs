@@ -276,6 +276,7 @@ pub struct AccountInteractionInternal {
     received_like_email_notification_sent: bool,
     received_like_unix_time: Option<UnixTime>,
     pub match_id: Option<MatchId>,
+    match_unix_time: Option<UnixTime>,
     conversation_id_sender: Option<ConversationId>,
     conversation_id_receiver: Option<ConversationId>,
 }
@@ -320,6 +321,7 @@ impl AccountInteractionInternal {
                 match_id: Some(match_id),
                 conversation_id_sender: Some(conversation_id_sender),
                 conversation_id_receiver: Some(conversation_id_receiver),
+                match_unix_time: Some(UnixTime::current_time()),
                 ..self
             }),
             AccountInteractionState::Match => Ok(self),

@@ -68,6 +68,7 @@ diesel::table! {
         received_like_email_notification_sent -> Bool,
         received_like_unix_time -> Nullable<Integer>,
         match_id -> Nullable<Integer>,
+        match_unix_time -> Nullable<Integer>,
         conversation_id_sender -> Nullable<Integer>,
         conversation_id_receiver -> Nullable<Integer>,
     }
