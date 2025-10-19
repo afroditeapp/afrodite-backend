@@ -11,7 +11,7 @@ use crate::file::ConfigFileError;
 const DEFAULT_EMAIL_CONTENT: &str = r#"
 # Common template for all emails (non-translatable, required)
 # All custom keys plus "subject" and "body" are available in the template
-template = """
+email_body_template = """
 {{subject}}
 
 {{body}}
@@ -24,26 +24,26 @@ default = "Footer"
 
 # Account registered
 
-[account_registered_subject]
+[account_registered.subject]
 default = "New account created"
 
-[account_registered_body]
+[account_registered.body]
 default = "You created a new account"
 
 # New message
 
-[new_message_subject]
+[new_message.subject]
 default = "New message received"
 
-[new_message_body]
+[new_message.body]
 default = "You have received a new message"
 
 # New like
 
-[new_like_subject]
+[new_like.subject]
 default = "New chat request received"
 
-[new_like_body]
+[new_like.body]
 default = "You have received a new chat request"
 
 "#;
@@ -54,19 +54,22 @@ pub struct EmailContent {
     pub body: String,
 }
 
+#[derive(Debug, Default, Deserialize)]
+struct EmailContentStrings {
+    subject: StringResourceInternal,
+    body: StringResourceInternal,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct EmailContentFile {
-    pub template: String,
+    email_body_template: String,
     #[serde(default)]
-    pub custom_keys: HashMap<String, StringResourceInternal>,
-    pub account_registered_subject: Option<StringResourceInternal>,
-    pub account_registered_body: Option<StringResourceInternal>,
-    pub new_message_subject: Option<StringResourceInternal>,
-    pub new_message_body: Option<StringResourceInternal>,
-    pub new_like_subject: Option<StringResourceInternal>,
-    pub new_like_body: Option<StringResourceInternal>,
+    custom_keys: HashMap<String, StringResourceInternal>,
+    account_registered: Option<EmailContentStrings>,
+    new_message: Option<EmailContentStrings>,
+    new_like: Option<EmailContentStrings>,
     #[serde(flatten)]
-    pub other: toml::Table,
+    other: toml::Table,
 }
 
 impl EmailContentFile {
@@ -93,12 +96,9 @@ impl EmailContentFile {
             ));
         }
 
-        // Validate template references all custom keys
-        let handlebars = Handlebars::new();
-
         // Validate that template can be parsed
-        if let Err(e) = handlebars.render_template_with_context_to_write(
-            &config.template,
+        if let Err(e) = Handlebars::new().render_template_with_context_to_write(
+            &config.email_body_template,
             &handlebars::Context::null(),
             &mut std::io::sink(),
         ) {
@@ -108,7 +108,7 @@ impl EmailContentFile {
 
         // Find all variable references in the template
         let mut referenced_keys = std::collections::HashSet::new();
-        for line in config.template.lines() {
+        for line in config.email_body_template.lines() {
             for cap in line.match_indices("{{") {
                 if let Some(end_pos) = line[cap.0..].find("}}") {
                     let var_content = &line[cap.0 + 2..cap.0 + end_pos].trim();
@@ -148,15 +148,26 @@ pub struct EmailStringGetter<'a> {
 }
 
 impl<'a> EmailStringGetter<'a> {
-    fn get_string(&self, resource: &Option<StringResourceInternal>, default: &str) -> String {
-        resource
+    fn apply_template(
+        &self,
+        resource: &Option<EmailContentStrings>,
+        default_subject: &str,
+        default_body: &str,
+    ) -> Result<EmailContent, ConfigFileError> {
+        let subject = resource
             .as_ref()
+            .map(|v| &v.subject)
             .map(|v| v.translations.get(self.language).unwrap_or(&v.default))
             .cloned()
-            .unwrap_or_else(|| default.to_string())
-    }
+            .unwrap_or_else(|| default_subject.to_string());
 
-    fn apply_template(&self, subject: String, body: String) -> Result<EmailContent, ConfigFileError> {
+        let body = resource
+            .as_ref()
+            .map(|v| &v.body)
+            .map(|v| v.translations.get(self.language).unwrap_or(&v.default))
+            .cloned()
+            .unwrap_or_else(|| default_body.to_string());
+
         let mut data = json!({
             "subject": subject,
             "body": body,
@@ -171,9 +182,8 @@ impl<'a> EmailStringGetter<'a> {
             data[key] = json!(value);
         }
 
-        let handlebars = Handlebars::new();
-        let rendered = handlebars
-            .render_template(&self.config.template, &data)
+        let rendered = Handlebars::new()
+            .render_template(&self.config.email_body_template, &data)
             .change_context(ConfigFileError::InvalidConfig)
             .attach_printable_lazy(|| "Template rendering error".to_string())?;
 
@@ -184,32 +194,26 @@ impl<'a> EmailStringGetter<'a> {
     }
 
     pub fn account_registered(&self) -> Result<EmailContent, ConfigFileError> {
-        let subject = self.get_string(
-            &self.config.account_registered_subject,
+        self.apply_template(
+            &self.config.account_registered,
             "New account created",
-        );
-        let body = self.get_string(
-            &self.config.account_registered_body,
             "You created a new account",
-        );
-        self.apply_template(subject, body)
+        )
     }
 
     pub fn new_message(&self) -> Result<EmailContent, ConfigFileError> {
-        let subject = self.get_string(&self.config.new_message_subject, "New message received");
-        let body = self.get_string(
-            &self.config.new_message_body,
+        self.apply_template(
+            &self.config.new_message,
+            "New message received",
             "You have received a new message",
-        );
-        self.apply_template(subject, body)
+        )
     }
 
     pub fn new_like(&self) -> Result<EmailContent, ConfigFileError> {
-        let subject = self.get_string(&self.config.new_like_subject, "New chat request received");
-        let body = self.get_string(
-            &self.config.new_like_body,
+        self.apply_template(
+            &self.config.new_like,
+            "New chat request received",
             "You have received a new chat request",
-        );
-        self.apply_template(subject, body)
+        )
     }
 }
