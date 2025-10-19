@@ -30,7 +30,7 @@ pub async fn notifications_for_sending(
         notification_strings: state
             .config()
             .notification_content()
-            .get(client_language.as_ref().map(|s| s.as_str())),
+            .get(client_language.as_ref()),
         notifications: vec![],
     };
 
