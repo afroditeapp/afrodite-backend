@@ -1,4 +1,6 @@
-use config::file_notification_content::NotificationStringGetter;
+use config::file_notification_content::{
+    NotificationStringGetter, NotificationTitle, NotificationTitleAndBody,
+};
 use model::{AccountIdInternal, PushNotification, PushNotificationFlags, PushNotificationId};
 use server_api::{
     DataError,
@@ -73,8 +75,18 @@ struct NotificationChecker<'a> {
 }
 
 impl<'a> NotificationChecker<'a> {
-    fn add_notification(&mut self, notification: PushNotificationId, title: String) {
-        let notification = PushNotification::new(notification, title);
+    fn add_notification(&mut self, notification: PushNotificationId, title: NotificationTitle) {
+        let notification = PushNotification::new(notification, title.title);
+        self.notifications.push(notification);
+    }
+
+    fn add_notification_with_body(
+        &mut self,
+        notification: PushNotificationId,
+        content: NotificationTitleAndBody,
+    ) {
+        let notification =
+            PushNotification::new_with_body(notification, content.title, content.body);
         self.notifications.push(notification);
     }
 
@@ -96,14 +108,12 @@ impl<'a> NotificationChecker<'a> {
                 .await?
                 .map(|v| v.into_string())
                 .unwrap_or_default();
-            let notification = PushNotification::new_message(
-                n.c,
-                if n.m == 1 {
-                    self.notification_strings.message_received_single(&name)
-                } else {
-                    self.notification_strings.message_received_multiple(&name)
-                },
-            );
+            let title = if n.m == 1 {
+                self.notification_strings.message_received_single(&name)
+            } else {
+                self.notification_strings.message_received_multiple(&name)
+            };
+            let notification = PushNotification::new_message(n.c, title.title);
             self.notifications.push(notification);
         }
 
@@ -163,7 +173,7 @@ impl<'a> NotificationChecker<'a> {
         }
 
         if !v.deleted.notification_viewed() {
-            self.add_notification(
+            self.add_notification_with_body(
                 PushNotificationId::MediaContentModerationDeleted,
                 self.notification_strings.media_content_deleted(),
             );
