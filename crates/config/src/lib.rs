@@ -384,8 +384,8 @@ pub fn get_config(
         };
 
     let email_content = if let Some(path) = &file_config.config_files.email_content {
-        let email_content =
-            EmailContentFile::load(path).change_context(GetConfigError::LoadFileError)?;
+        let email_content = EmailContentFile::load(path, save_default_config_if_not_found)
+            .change_context(GetConfigError::LoadFileError)?;
         Some(email_content)
     } else {
         None

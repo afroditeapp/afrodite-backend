@@ -4,6 +4,7 @@ use server_api::{
     app::{GetConfig, ReadData, WriteData},
     db_write_raw,
 };
+use server_data::read::GetReadCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use server_state::S;
 use simple_backend::email::{EmailData, EmailDataProvider, EmailError};
@@ -54,17 +55,31 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
             .ok_or(EmailError::GettingEmailDataFailed)
             .attach_printable("Email content not configured")?;
 
-        let email_content = email_content
-            .emails
-            .iter()
-            .find(|e| e.message_type == message)
-            .ok_or(EmailError::GettingEmailDataFailed)
-            .attach_printable(format!("Email content for {message:?} is not configured"))?;
+        let language = self
+            .state
+            .read()
+            .common()
+            .client_config()
+            .client_language(receiver)
+            .await
+            .ok()
+            .flatten();
+
+        let getter = email_content.get(language.as_ref());
+
+        let (subject, body) = match message {
+            EmailMessages::AccountRegistered => (
+                getter.account_registered_subject(),
+                getter.account_registered_body(),
+            ),
+            EmailMessages::NewMessage => (getter.new_message_subject(), getter.new_message_body()),
+            EmailMessages::NewLike => (getter.new_like_subject(), getter.new_like_body()),
+        };
 
         let email_data = EmailData {
             email_address: email,
-            subject: email_content.subject.clone(),
-            body: email_content.body.clone(),
+            subject,
+            body,
         };
 
         Ok(Some(email_data))

@@ -67,6 +67,12 @@ impl ClientLanguage {
 
 diesel_non_empty_string_wrapper!(ClientLanguage);
 
+impl AsRef<str> for ClientLanguage {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
 #[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct GetClientLanguage {
     #[serde(skip_serializing_if = "Option::is_none")]
