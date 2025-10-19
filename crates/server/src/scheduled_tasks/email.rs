@@ -11,6 +11,24 @@ use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use server_state::S;
 
 pub async fn handle_email_notifications(state: &S, id: AccountIdInternal) -> Result<(), DataError> {
+    let email_settings = state
+        .read()
+        .chat()
+        .notification()
+        .chat_email_notification_settings(id)
+        .await?;
+
+    if email_settings.messages {
+        handle_messages_email_notification(state, id).await?;
+    }
+
+    Ok(())
+}
+
+async fn handle_messages_email_notification(
+    state: &S,
+    id: AccountIdInternal,
+) -> Result<(), DataError> {
     let push_notification_device_token_exists = state
         .read()
         .common()

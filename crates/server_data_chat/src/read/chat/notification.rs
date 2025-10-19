@@ -3,7 +3,7 @@ use model::{
     AccountIdInternal, NewMessageNotificationList, PendingMessageIdInternal,
     PendingMessageIdInternalAndMessageTime,
 };
-use model_chat::ChatAppNotificationSettings;
+use model_chat::{ChatAppNotificationSettings, ChatEmailNotificationSettings};
 use server_data::{
     DataError, IntoDataError, cache::CacheReadCommon, define_cmd_wrapper_read, read::DbRead,
     result::Result,
@@ -17,6 +17,15 @@ impl ReadCommandsChatNotification<'_> {
         id: AccountIdInternal,
     ) -> Result<ChatAppNotificationSettings, DataError> {
         self.read_cache_common(id, |entry| Ok(entry.app_notification_settings.chat))
+            .await
+            .into_error()
+    }
+
+    pub async fn chat_email_notification_settings(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<ChatEmailNotificationSettings, DataError> {
+        self.db_read(move |mut cmds| cmds.chat().notification().email_notification_settings(id))
             .await
             .into_error()
     }

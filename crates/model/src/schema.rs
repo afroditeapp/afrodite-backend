@@ -215,6 +215,16 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    chat_email_notification_settings (account_id) {
+        account_id -> Integer,
+        likes -> Bool,
+        messages -> Bool,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     chat_global_state (row_type) {
         row_type -> Integer,
         next_match_id -> Integer,
@@ -901,6 +911,7 @@ diesel::joinable!(api_usage_statistics_metric_value -> account_id (account_id));
 diesel::joinable!(api_usage_statistics_metric_value -> api_usage_statistics_metric_name (metric_id));
 diesel::joinable!(api_usage_statistics_metric_value -> api_usage_statistics_save_time (time_id));
 diesel::joinable!(chat_app_notification_settings -> account_id (account_id));
+diesel::joinable!(chat_email_notification_settings -> account_id (account_id));
 diesel::joinable!(chat_report_chat_message -> common_report (report_id));
 diesel::joinable!(chat_state -> account_id (account_id));
 diesel::joinable!(common_state -> account_id (account_id));
@@ -967,6 +978,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     api_usage_statistics_metric_value,
     api_usage_statistics_save_time,
     chat_app_notification_settings,
+    chat_email_notification_settings,
     chat_global_state,
     chat_report_chat_message,
     chat_state,

@@ -112,6 +112,34 @@ impl Default for ChatAppNotificationSettings {
     }
 }
 
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Queryable,
+    Selectable,
+    AsChangeset,
+    Insertable,
+    Deserialize,
+    Serialize,
+    ToSchema,
+)]
+#[diesel(table_name = crate::schema::chat_email_notification_settings)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct ChatEmailNotificationSettings {
+    pub likes: bool,
+    pub messages: bool,
+}
+
+impl Default for ChatEmailNotificationSettings {
+    fn default() -> Self {
+        Self {
+            likes: true,
+            messages: true,
+        }
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct AppNotificationSettingsInternal {
     pub account: AccountAppNotificationSettings,
