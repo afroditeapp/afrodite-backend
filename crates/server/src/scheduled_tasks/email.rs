@@ -88,18 +88,47 @@ async fn handle_likes_email_notification(
     state: &S,
     id: AccountIdInternal,
 ) -> Result<(), DataError> {
-    let likes = state
+    let push_notification_device_token_exists = state
+        .read()
+        .common()
+        .push_notification()
+        .push_notification_device_token_exists(id)
+        .await?;
+
+    let wait_time = if push_notification_device_token_exists {
+        state
+            .config()
+            .limits_chat()
+            .new_like_email_with_push_notification_device_token
+    } else {
+        state
+            .config()
+            .limits_chat()
+            .new_like_email_without_push_notification_device_token
+    };
+
+    let likes_with_time = state
         .read()
         .chat()
         .notification()
         .unviewed_received_likes_without_sent_email_notification(id)
         .await?;
 
-    if !likes.is_empty() {
+    let mut send_notification = false;
+    for (_, received_time) in &likes_with_time {
+        if received_time.duration_value_elapsed(wait_time) {
+            send_notification = true;
+        }
+    }
+
+    if send_notification {
         db_write_raw!(state, move |cmds| {
             cmds.chat()
                 .notification()
-                .mark_like_email_notification_sent(id, likes)
+                .mark_like_email_notification_sent(
+                    id,
+                    likes_with_time.into_iter().map(|v| v.0).collect(),
+                )
                 .await?;
             cmds.account()
                 .email()

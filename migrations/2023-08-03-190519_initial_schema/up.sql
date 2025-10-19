@@ -916,6 +916,7 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     received_like_id                INTEGER,
     received_like_viewed            BOOLEAN NOT NULL DEFAULT 0,
     received_like_email_notification_sent BOOLEAN NOT NULL DEFAULT 0,
+    received_like_unix_time         INTEGER,
     -- Matches iterator uses match ID to return correct pages.
     match_id                        INTEGER,
     -- Account specific conversation ID for new message notifications.

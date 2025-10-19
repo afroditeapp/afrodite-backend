@@ -64,6 +64,8 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # max_public_key_count = 100
 # new_message_email_with_push_notification_device_token = "7d"
 # new_message_email_without_push_notification_device_token = "1d"
+# new_like_email_with_push_notification_device_token = "7d"
+# new_like_email_without_push_notification_device_token = "1d"
 
 # [limits.media]
 # max_content_count = 20
@@ -302,6 +304,8 @@ pub struct ChatLimitsConfig {
     pub max_public_key_count: u16,
     pub new_message_email_with_push_notification_device_token: DurationValue,
     pub new_message_email_without_push_notification_device_token: DurationValue,
+    pub new_like_email_with_push_notification_device_token: DurationValue,
+    pub new_like_email_without_push_notification_device_token: DurationValue,
 }
 
 impl Default for ChatLimitsConfig {
@@ -310,6 +314,8 @@ impl Default for ChatLimitsConfig {
             max_public_key_count: 100,
             new_message_email_with_push_notification_device_token: DurationValue::from_days(7),
             new_message_email_without_push_notification_device_token: DurationValue::from_days(1),
+            new_like_email_with_push_notification_device_token: DurationValue::from_days(7),
+            new_like_email_without_push_notification_device_token: DurationValue::from_days(1),
         }
     }
 }

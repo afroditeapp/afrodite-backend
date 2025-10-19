@@ -1,6 +1,7 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
+use model::UnixTime;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, MatchId,
     ReceivedLikeId,
@@ -173,18 +174,22 @@ impl CurrentReadChatInteraction<'_> {
     pub fn unviewed_received_likes_without_sent_email_notification(
         &mut self,
         id_receiver: AccountIdInternal,
-    ) -> Result<Vec<ReceivedLikeId>, DieselDatabaseError> {
+    ) -> Result<Vec<(ReceivedLikeId, UnixTime)>, DieselDatabaseError> {
         use crate::schema::account_interaction::dsl::*;
 
-        let like_ids = account_interaction
+        let like_data = account_interaction
             .filter(account_id_receiver.eq(id_receiver.as_db_id()))
             .filter(received_like_viewed.eq(false))
             .filter(received_like_email_notification_sent.eq(false))
             .filter(received_like_id.is_not_null())
-            .select(received_like_id.assume_not_null())
+            .filter(received_like_unix_time.is_not_null())
+            .select((
+                received_like_id.assume_not_null(),
+                received_like_unix_time.assume_not_null(),
+            ))
             .load(self.conn())
             .into_db_error(id_receiver)?;
 
-        Ok(like_ids)
+        Ok(like_data)
     }
 }

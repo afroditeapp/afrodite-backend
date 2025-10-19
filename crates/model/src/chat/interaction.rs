@@ -1,6 +1,6 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, prelude::*, sql_types::BigInt};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper};
+use simple_backend_model::{UnixTime, diesel_i64_try_from, diesel_i64_wrapper};
 use utoipa::ToSchema;
 
 use crate::{AccountIdDb, AccountIdInternal};
@@ -274,6 +274,7 @@ pub struct AccountInteractionInternal {
     pub received_like_id: Option<ReceivedLikeId>,
     received_like_viewed: bool,
     received_like_email_notification_sent: bool,
+    received_like_unix_time: Option<UnixTime>,
     pub match_id: Option<MatchId>,
     conversation_id_sender: Option<ConversationId>,
     conversation_id_receiver: Option<ConversationId>,
@@ -294,6 +295,7 @@ impl AccountInteractionInternal {
                 account_id_sender: Some(id_like_sender.into_db_id()),
                 account_id_receiver: Some(id_like_receiver.into_db_id()),
                 received_like_id: Some(received_like_id),
+                received_like_unix_time: Some(UnixTime::current_time()),
                 ..self
             }),
             AccountInteractionState::Like => Ok(self),
