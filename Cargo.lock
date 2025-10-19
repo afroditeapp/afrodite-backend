@@ -5403,6 +5403,7 @@ dependencies = [
  "chrono",
  "diesel",
  "serde",
+ "serde_json",
  "simple_backend_utils",
  "utoipa",
  "uuid",

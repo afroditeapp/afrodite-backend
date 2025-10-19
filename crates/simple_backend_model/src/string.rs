@@ -1,5 +1,5 @@
 use diesel::sql_types::Text;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, de::Error};
 use utoipa::ToSchema;
 
 /// A string wrapper that ensures the string is not empty.
@@ -7,16 +7,7 @@ use utoipa::ToSchema;
 /// In the database, these columns are NULL when there is no value, and this
 /// type represents non-NULL values that must be non-empty.
 #[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    Eq,
-    Hash,
-    Serialize,
-    Deserialize,
-    ToSchema,
-    diesel::FromSqlRow,
-    diesel::AsExpression,
+    Debug, Clone, PartialEq, Eq, Hash, Serialize, ToSchema, diesel::FromSqlRow, diesel::AsExpression,
 )]
 #[diesel(sql_type = Text)]
 #[serde(transparent)]
@@ -83,8 +74,20 @@ where
     }
 }
 
+impl<'de> Deserialize<'de> for NonEmptyString {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Self::from_string(s).ok_or_else(|| Error::custom("NonEmptyString cannot be empty"))
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use serde_json;
+
     use super::*;
 
     #[test]
@@ -98,5 +101,19 @@ mod tests {
         let s = NonEmptyString::from_string("test".to_string()).unwrap();
         assert_eq!(s.as_str(), "test");
         assert_eq!(s.into_string(), "test");
+    }
+
+    #[test]
+    fn test_deserialize_success() {
+        let json = "\"test\"";
+        let result: NonEmptyString = serde_json::from_str(json).unwrap();
+        assert_eq!(result.as_str(), "test");
+    }
+
+    #[test]
+    fn test_deserialize_failure_empty() {
+        let json = "\"\"";
+        let result: Result<NonEmptyString, _> = serde_json::from_str(json);
+        assert!(result.is_err());
     }
 }
