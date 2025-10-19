@@ -78,7 +78,6 @@ use crate::api::{
         PROFILE_FAVORITE_COUNTERS_LIST, PROFILE_FILTERS_COUNTERS_LIST,
         PROFILE_ITERATE_PROFILES_COUNTERS_LIST, PROFILE_LOCATION_COUNTERS_LIST,
     },
-    profile_internal::PROFILE_INTERNAL_COUNTERS_LIST,
 };
 
 pub static ALL_COUNTERS: &[&CounterCategory] = &[
@@ -184,8 +183,6 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
         "profile_admin_moderation",
         PROFILE_ADMIN_MODERATION_COUNTERS_LIST,
     ),
-    // Profile internal
-    &CounterCategory::new("profile_internal", PROFILE_INTERNAL_COUNTERS_LIST),
     // Chat
     &CounterCategory::new("chat_like", CHAT_LIKE_COUNTERS_LIST),
     &CounterCategory::new("chat_block", CHAT_BLOCK_COUNTERS_LIST),

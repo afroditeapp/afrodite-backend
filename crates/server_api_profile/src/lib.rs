@@ -12,7 +12,6 @@ use self::utils::SecurityApiAccessTokenDefault;
 // Routes
 pub mod profile;
 pub mod profile_admin;
-pub mod profile_internal;
 
 pub use server_api::{app, utils};
 pub use server_common::{data::DataError, result};
