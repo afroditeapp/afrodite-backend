@@ -941,7 +941,6 @@ diesel::joinable!(ip_address_usage_statistics -> account_id (account_id));
 diesel::joinable!(login_session -> account_id (account_id));
 diesel::joinable!(media_app_notification_settings -> account_id (account_id));
 diesel::joinable!(media_app_notification_state -> account_id (account_id));
-diesel::joinable!(media_content -> account_id (account_id));
 diesel::joinable!(media_report_profile_content -> common_report (report_id));
 diesel::joinable!(media_state -> account_id (account_id));
 diesel::joinable!(news -> account_id (account_id_creator));

@@ -51,7 +51,7 @@ impl CurrentReadMediaAdminContent<'_> {
         };
 
         let values = media_content::table
-            .inner_join(account_id::table)
+            .inner_join(account_id::table.on(media_content::account_id.eq(account_id::id)))
             .filter(
                 show_bot_moderations
                     .and(

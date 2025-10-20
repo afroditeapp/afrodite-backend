@@ -347,6 +347,7 @@ CREATE TABLE IF NOT EXISTS account_app_notification_settings(
 );
 
 CREATE TABLE IF NOT EXISTS demo_account_owned_accounts(
+    -- These are defined in config file
     demo_account_id INTEGER             NOT NULL,
     account_id      INTEGER             NOT NULL,
     PRIMARY KEY (demo_account_id, account_id),
@@ -364,9 +365,9 @@ CREATE TABLE IF NOT EXISTS news(
     -- If publication ID exists the news are public.
     publication_id        INTEGER,
     FOREIGN KEY (account_id_creator)
-    REFERENCES account_id (id)
-        ON DELETE SET NULL
-        ON UPDATE CASCADE
+        REFERENCES account_id (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS news_translations(
@@ -780,6 +781,10 @@ CREATE TABLE IF NOT EXISTS media_content(
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (moderation_moderator_account_id)
+        REFERENCES account_id (id)
+            ON DELETE SET NULL
             ON UPDATE CASCADE
 );
 
@@ -931,6 +936,14 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     FOREIGN KEY (account_id_receiver)
         REFERENCES account_id (id)
             ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (account_id_block_sender)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (account_id_block_receiver)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
             ON UPDATE CASCADE
 );
 
@@ -988,6 +1001,8 @@ CREATE TABLE IF NOT EXISTS chat_report_chat_message(
         REFERENCES common_report (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
+    -- Reports have own deletion logic, so REFERENCES for account_id values
+    -- are not needed.
 );
 
 CREATE TABLE IF NOT EXISTS chat_app_notification_settings(
