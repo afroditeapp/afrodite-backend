@@ -4,7 +4,7 @@ use data::EmailLimitStateStorage;
 use error_stack::{Result, ResultExt};
 use lettre::{
     Address, AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
-    message::Mailbox,
+    message::{Mailbox, header::ContentType},
     transport::smtp::{PoolConfig, authentication::Credentials},
 };
 use simple_backend_config::{SimpleBackendConfig, file::EmailSendingConfig};
@@ -91,6 +91,7 @@ pub struct EmailData {
     pub email_address: String,
     pub subject: String,
     pub body: String,
+    pub body_is_html: bool,
 }
 
 pub trait EmailDataProvider<R, M> {
@@ -284,10 +285,17 @@ impl<
         let address = Address::from_str(&info.email_address)
             .change_context(EmailError::AccountEmailAddressParsingFailed)?;
 
+        let content_type = if info.body_is_html {
+            ContentType::TEXT_HTML
+        } else {
+            ContentType::TEXT_PLAIN
+        };
+
         let message = Message::builder()
             .from(email_sender.config.email_from_header.0.clone())
             .to(Mailbox::new(None, address))
             .subject(info.subject)
+            .header(content_type)
             .body(info.body)
             .change_context(EmailError::MessageBuildingFailed)?;
 

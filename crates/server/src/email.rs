@@ -78,6 +78,7 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
             email_address: email,
             subject: content.subject,
             body: content.body,
+            body_is_html: content.body_is_html,
         };
 
         Ok(Some(email_data))

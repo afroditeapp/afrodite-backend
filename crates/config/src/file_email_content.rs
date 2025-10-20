@@ -19,6 +19,8 @@ email_body_template = """
 {{footer}}
 """
 
+email_body_content_type_is_html = false
+
 [custom_keys.footer]
 default = "Footer"
 
@@ -52,6 +54,7 @@ default = "You have received a new chat request"
 pub struct EmailContent {
     pub subject: String,
     pub body: String,
+    pub body_is_html: bool,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -63,6 +66,7 @@ struct EmailContentStrings {
 #[derive(Debug, Deserialize)]
 pub struct EmailContentFile {
     email_body_template: String,
+    email_body_content_type_is_html: bool,
     #[serde(default)]
     custom_keys: HashMap<String, StringResourceInternal>,
     account_registered: Option<EmailContentStrings>,
@@ -190,6 +194,7 @@ impl<'a> EmailStringGetter<'a> {
         Ok(EmailContent {
             subject,
             body: rendered,
+            body_is_html: self.config.email_body_content_type_is_html,
         })
     }
 
