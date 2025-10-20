@@ -7,7 +7,7 @@ use database_chat::current::write::GetDbWriteCommandsChat;
 use database_media::current::write::GetDbWriteCommandsMedia;
 use database_profile::current::write::GetDbWriteCommandsProfile;
 use model_account::{
-    AccountId, AccountIdInternal, AccountInternal, EmailAddress, SharedStateRaw, SignInWithInfo,
+    AccountIdInternal, AccountInternal, EmailAddress, SharedStateRaw, SignInWithInfo,
 };
 use model_chat::{ProfileContentModificationMetadata, ProfileModificationMetadata};
 use server_data::{
@@ -22,39 +22,38 @@ define_cmd_wrapper_write!(RegisterAccount);
 impl RegisterAccount<'_> {
     pub async fn register(
         &self,
-        account_id: AccountId,
+        account_id: AccountIdInternal,
         sign_in_with_info: SignInWithInfo,
         email: Option<EmailAddress>,
-    ) -> Result<AccountIdInternal, DataError> {
+    ) -> Result<(), DataError> {
         let config = self.config_arc().clone();
-        let id: AccountIdInternal = self
-            .db_transaction(move |current| {
-                Self::register_db_action(config, account_id, sign_in_with_info, email, current)
-            })
-            .await?;
+        self.db_transaction(move |current| {
+            Self::register_db_action(config, account_id, sign_in_with_info, email, current)
+        })
+        .await?;
 
         DbDataToCacheLoader::load_account_from_db(
             self.cache(),
-            id,
+            account_id,
             self.current_read_handle(),
             LocationIndexIteratorHandle::new(self.location()),
             self.location_index_write_handle(),
         )
         .await
-        .into_data_error(id)?;
+        .into_data_error(account_id)?;
 
-        Ok(id)
+        Ok(())
     }
 
     pub fn register_db_action(
         config: Arc<Config>,
-        account_id: AccountId,
+        id: AccountIdInternal,
         sign_in_with_info: SignInWithInfo,
         email: Option<EmailAddress>,
         mut current: DbWriteMode,
     ) -> error_stack::Result<AccountIdInternal, DieselDatabaseError> {
         // Common
-        let id = current.common().insert_account_id(account_id)?;
+        current.common().insert_account_id(id)?;
         current
             .common()
             .state()

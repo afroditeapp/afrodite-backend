@@ -1,6 +1,6 @@
 use diesel::{ExpressionMethods, RunQueryDsl, insert_into};
 use error_stack::Result;
-use model::{AccountId, AccountIdDb, AccountIdInternal};
+use model::AccountIdInternal;
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use crate::{IntoDatabaseError, define_current_write_commands};
@@ -38,20 +38,19 @@ impl<'a> CurrentWriteCommon<'a> {
 impl CurrentWriteCommon<'_> {
     pub fn insert_account_id(
         mut self,
-        account_uuid: AccountId,
-    ) -> Result<AccountIdInternal, DieselDatabaseError> {
+        account_id_value: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
         use model::schema::account_id::dsl::*;
 
-        let db_id: AccountIdDb = insert_into(account_id)
-            .values(uuid.eq(account_uuid))
-            .returning(id)
-            .get_result(self.conn())
-            .into_db_error(account_uuid)?;
+        insert_into(account_id)
+            .values((
+                id.eq(account_id_value.as_db_id()),
+                uuid.eq(account_id_value.uuid),
+            ))
+            .execute(self.conn())
+            .into_db_error(account_id_value)?;
 
-        Ok(AccountIdInternal {
-            uuid: account_uuid,
-            id: db_id,
-        })
+        Ok(())
     }
 
     pub fn insert_common_state(

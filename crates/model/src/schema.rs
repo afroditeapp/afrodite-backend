@@ -906,6 +906,7 @@ diesel::table! {
 diesel::joinable!(account -> account_id (account_id));
 diesel::joinable!(account_app_notification_settings -> account_id (account_id));
 diesel::joinable!(account_email_sending_state -> account_id (account_id));
+diesel::joinable!(account_id -> used_account_ids (id));
 diesel::joinable!(account_interaction_index -> account_interaction (interaction_id));
 diesel::joinable!(account_permissions -> account_id (account_id));
 diesel::joinable!(account_setup -> account_id (account_id));

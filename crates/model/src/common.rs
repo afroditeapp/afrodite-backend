@@ -261,6 +261,7 @@ impl std::fmt::Display for AccountIdInternal {
     }
 }
 
+/// This is quaranteed to not be reused for another account
 #[derive(
     Debug,
     Serialize,
@@ -446,6 +447,7 @@ impl RefreshToken {
     }
 }
 
+/// This is quaranteed to not be reused for another account
 #[derive(
     Debug,
     Serialize,

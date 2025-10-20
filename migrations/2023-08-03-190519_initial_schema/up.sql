@@ -1,23 +1,25 @@
 -- Your SQL goes here
 
--- TODO(prod): Add autoincrement where needed. News?
-
 ---------- Tables for server component common ----------
 
--- UUID for account
+-- Account IDs for currently existing accounts
 CREATE TABLE IF NOT EXISTS account_id(
-    id    INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    id    INTEGER PRIMARY KEY               NOT NULL,
     -- Main UUID for account.
     -- This is used internally in the server, client and API level.
     -- Also this should be not used as somekind of secret as it
     -- can be seen from filesystem.
-    uuid  BLOB                              NOT NULL  UNIQUE
+    uuid  BLOB                              NOT NULL  UNIQUE,
+    FOREIGN KEY (id)
+        REFERENCES used_account_ids (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
 );
 
 -- All used account IDs. Account ID is not removed from here
 -- when account data is removed.
 CREATE TABLE IF NOT EXISTS used_account_ids(
-    id         INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    id         INTEGER PRIMARY KEY               NOT NULL,
     uuid       BLOB                              NOT NULL UNIQUE
 );
 
@@ -180,12 +182,12 @@ CREATE TABLE IF NOT EXISTS push_notification(
 );
 
 CREATE TABLE IF NOT EXISTS api_usage_statistics_save_time(
-    id           INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    id           INTEGER PRIMARY KEY               NOT NULL,
     unix_time    INTEGER                           NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS api_usage_statistics_metric_name(
-    id           INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    id           INTEGER PRIMARY KEY               NOT NULL,
     metric_name  TEXT                              NOT NULL UNIQUE
 );
 
@@ -1034,12 +1036,12 @@ CREATE TABLE IF NOT EXISTS chat_global_state(
 ---------- History tables for server component common ----------
 
 CREATE TABLE IF NOT EXISTS history_common_statistics_save_time(
-    id           INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    id           INTEGER PRIMARY KEY               NOT NULL,
     unix_time    INTEGER                           NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS history_performance_statistics_metric_name(
-    id           INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    id           INTEGER PRIMARY KEY               NOT NULL,
     metric_name  TEXT                              NOT NULL UNIQUE
 );
 
@@ -1060,7 +1062,7 @@ CREATE TABLE IF NOT EXISTS history_performance_statistics_metric_value(
 
 -- Use own table for country names to keep ID value small as possible
 CREATE TABLE IF NOT EXISTS history_ip_country_statistics_country_name(
-    id           INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    id           INTEGER PRIMARY KEY               NOT NULL,
     country_name TEXT                              NOT NULL UNIQUE
 );
 
@@ -1083,7 +1085,7 @@ CREATE TABLE IF NOT EXISTS history_ip_country_statistics(
 ---------- History tables for server component account ----------
 
 CREATE TABLE IF NOT EXISTS history_client_version_statistics_version_number(
-    id            INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    id            INTEGER PRIMARY KEY                     NOT NULL,
     major         INTEGER NOT NULL,
     minor         INTEGER NOT NULL,
     patch         INTEGER NOT NULL,

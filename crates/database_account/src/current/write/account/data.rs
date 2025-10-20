@@ -154,17 +154,21 @@ impl CurrentWriteAccountData<'_> {
         Ok(current)
     }
 
-    pub fn new_unique_account_id(&mut self) -> Result<AccountId, DieselDatabaseError> {
+    pub fn new_unique_account_id(&mut self) -> Result<AccountIdInternal, DieselDatabaseError> {
         use model::schema::used_account_ids::dsl::*;
 
         let random_aid = AccountId::new_random();
 
-        insert_into(used_account_ids)
-            .values((uuid.eq(random_aid),))
-            .execute(self.conn())
+        let db_id = insert_into(used_account_ids)
+            .values(uuid.eq(random_aid))
+            .returning(id)
+            .get_result(self.conn())
             .into_db_error(random_aid)?;
 
-        Ok(random_aid)
+        Ok(AccountIdInternal {
+            id: db_id,
+            uuid: random_aid,
+        })
     }
 
     pub fn update_account_created_unix_time(

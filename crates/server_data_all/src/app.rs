@@ -50,7 +50,7 @@ impl DataAllUtils for DataAllUtilsImpl {
                     }
 
                     let id = cmds.account().get_next_unique_account_id().await?;
-                    let id = RegisterAccount::new(cmds.write_handle())
+                    RegisterAccount::new(cmds.write_handle())
                         .register(id, sign_in_with, email.clone())
                         .await?;
 

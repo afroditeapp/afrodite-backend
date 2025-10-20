@@ -4,7 +4,7 @@ use delete::WriteCommandsAccountDelete;
 use email::WriteCommandsAccountEmail;
 use model::AccountStateContainer;
 use model_account::{
-    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, ClientId, Permissions,
+    Account, AccountData, AccountIdInternal, AccountInternal, ClientId, Permissions,
     ProfileVisibility, SetAccountSetup,
 };
 use model_server_state::DemoAccountId;
@@ -155,7 +155,7 @@ impl WriteCommandsAccount<'_> {
         })
     }
 
-    pub async fn get_next_unique_account_id(&self) -> Result<AccountId, DataError> {
+    pub async fn get_next_unique_account_id(&self) -> Result<AccountIdInternal, DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.account().data().new_unique_account_id()
         })
