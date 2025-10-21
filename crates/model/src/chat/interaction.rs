@@ -1,6 +1,6 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, prelude::*, sql_types::BigInt};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{UnixTime, diesel_i64_try_from, diesel_i64_wrapper};
+use simple_backend_model::{SimpleDieselEnum, UnixTime, diesel_i64_wrapper};
 use utoipa::ToSchema;
 
 use crate::{AccountIdDb, AccountIdInternal};
@@ -79,6 +79,7 @@ impl std::error::Error for AccountInteractionStateError {}
     Deserialize,
     Serialize,
     ToSchema,
+    SimpleDieselEnum,
     diesel::FromSqlRow,
     diesel::AsExpression,
 )]
@@ -101,8 +102,6 @@ impl TryFrom<i64> for AccountInteractionState {
         }
     }
 }
-
-diesel_i64_try_from!(AccountInteractionState);
 
 #[derive(
     Debug,

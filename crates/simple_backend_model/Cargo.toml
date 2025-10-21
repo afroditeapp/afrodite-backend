@@ -13,6 +13,7 @@ diesel = { workspace = true }
 chrono = { workspace = true }
 
 simple_backend_utils = { path = "../simple_backend_utils"}
+simple_diesel_enum_macro = { path = "../simple_diesel_enum_macro"}
 
 [dev-dependencies]
 uuid = { workspace = true }

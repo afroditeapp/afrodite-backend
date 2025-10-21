@@ -5438,6 +5438,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simple_backend_utils",
+ "simple_diesel_enum_macro",
  "utoipa",
  "uuid",
 ]

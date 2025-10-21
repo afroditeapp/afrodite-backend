@@ -1,6 +1,6 @@
 use diesel::{AsExpression, FromSqlRow, sql_types::Binary};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_wrapper};
+use simple_backend_model::{SimpleDieselEnum, diesel_i64_wrapper, diesel_uuid_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
@@ -121,6 +121,7 @@ impl ContentIdInternal {
     Serialize,
     Deserialize,
     ToSchema,
+    SimpleDieselEnum,
     diesel::FromSqlRow,
     diesel::AsExpression,
     num_enum::TryFromPrimitive,
@@ -136,8 +137,6 @@ pub enum ContentSlot {
     Content5 = 5,
     Content6 = 6,
 }
-
-diesel_i64_try_from!(ContentSlot);
 
 /// Content ID which is queued to be processed
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema)]

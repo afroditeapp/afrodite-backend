@@ -252,12 +252,12 @@ macro_rules! diesel_i64_wrapper {
 
 pub(crate) use diesel_i64_wrapper;
 
-/// Enum type must have TryFrom implementation.
+/// The struct needs to have `TryFrom<i64>` and `Into<i64>` implementations.
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
 ///
 /// ```
 /// use diesel::sql_types::Integer;
-/// use simple_backend_model::diesel_i64_try_from;
+/// use simple_backend_model::diesel_i64_struct_try_from;
 ///
 /// #[derive(
 ///     Debug,
@@ -267,63 +267,27 @@ pub(crate) use diesel_i64_wrapper;
 ///     diesel::AsExpression,
 /// )]
 /// #[diesel(sql_type = Integer)]
-/// pub enum NumberEnum {
-///     Value = 1,
+/// pub struct NumberStruct {
+///     value: i64,
 /// }
 ///
-/// impl TryFrom<i64> for NumberEnum {
+/// impl TryFrom<i64> for NumberStruct {
 ///     type Error = String;
 ///
 ///     fn try_from(value: i64) -> Result<Self, Self::Error> {
-///         let number_type = match value {
-///             1 => Self::Value,
-///             value => return Err(format!("Unknown value {}", value)),
-///         };
-///
-///         Ok(number_type)
+///         Ok(NumberStruct { value: value })
 ///     }
 /// }
 ///
-/// diesel_i64_try_from!(NumberEnum);
+/// impl From<NumberStruct> for i64 {
+///     fn from(value: NumberStruct) -> Self {
+///         value.value
+///     }
+/// }
+///
+/// diesel_i64_struct_try_from!(NumberStruct);
 ///
 /// ```
-#[macro_export]
-macro_rules! diesel_i64_try_from {
-    ($name:ty) => {
-        impl<DB: diesel::backend::Backend>
-            diesel::deserialize::FromSql<diesel::sql_types::BigInt, DB> for $name
-        where
-            i64: diesel::deserialize::FromSql<diesel::sql_types::BigInt, DB>,
-        {
-            fn from_sql(
-                value: <DB as diesel::backend::Backend>::RawValue<'_>,
-            ) -> diesel::deserialize::Result<Self> {
-                let value = i64::from_sql(value)?;
-                TryInto::<$name>::try_into(value).map_err(|e| e.into())
-            }
-        }
-
-        // TODO(future): Support other databases?
-        // https://docs.diesel.rs/2.0.x/diesel/serialize/trait.ToSql.html
-
-        impl diesel::serialize::ToSql<diesel::sql_types::BigInt, diesel::sqlite::Sqlite> for $name
-        where
-            i64: diesel::serialize::ToSql<diesel::sql_types::BigInt, diesel::sqlite::Sqlite>,
-        {
-            fn to_sql<'b>(
-                &'b self,
-                out: &mut diesel::serialize::Output<'b, '_, diesel::sqlite::Sqlite>,
-            ) -> diesel::serialize::Result {
-                let value = *self as i64;
-                out.set_value(value);
-                Ok(diesel::serialize::IsNull::No)
-            }
-        }
-    };
-}
-
-/// Same as diesel_i64_try_from! but for struct.
-/// The struct needs to have `Into<i64>` implementation.
 #[macro_export]
 macro_rules! diesel_i64_struct_try_from {
     ($name:ty) => {

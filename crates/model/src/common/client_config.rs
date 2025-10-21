@@ -1,7 +1,7 @@
 use diesel::sql_types::Text;
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{NonEmptyString, diesel_i64_try_from, diesel_non_empty_string_wrapper};
+use simple_backend_model::{NonEmptyString, SimpleDieselEnum, diesel_non_empty_string_wrapper};
 use utoipa::ToSchema;
 
 use super::ClientConfigSyncVersion;
@@ -33,6 +33,7 @@ pub struct ClientConfig {
     PartialEq,
     ToSchema,
     TryFromPrimitive,
+    SimpleDieselEnum,
     diesel::FromSqlRow,
     diesel::AsExpression,
 )]
@@ -43,8 +44,6 @@ pub enum ClientType {
     Ios = 1,
     Web = 2,
 }
-
-diesel_i64_try_from!(ClientType);
 
 #[derive(
     Debug, Clone, Deserialize, Serialize, ToSchema, diesel::FromSqlRow, diesel::AsExpression,

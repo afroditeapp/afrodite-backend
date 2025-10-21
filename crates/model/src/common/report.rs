@@ -1,7 +1,7 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_struct_try_from, diesel_i64_try_from, diesel_i64_wrapper};
+use simple_backend_model::{SimpleDieselEnum, diesel_i64_struct_try_from, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 use super::AccountId;
@@ -165,6 +165,7 @@ impl ReportTypeNumber {
     PartialEq,
     Eq,
     TryFromPrimitive,
+    SimpleDieselEnum,
     diesel::FromSqlRow,
     diesel::AsExpression,
 )]
@@ -180,8 +181,6 @@ impl Default for ReportProcessingState {
         Self::Waiting
     }
 }
-
-diesel_i64_try_from!(ReportProcessingState);
 
 #[derive(Debug, Clone, Deserialize, Serialize, IntoParams, PartialEq)]
 pub struct ReportQueryParams {

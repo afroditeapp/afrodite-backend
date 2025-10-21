@@ -5,6 +5,8 @@
 
 //! Data types for API and database.
 
+pub use simple_diesel_enum_macro::SimpleDieselEnum;
+
 pub mod perf;
 pub use perf::*;
 

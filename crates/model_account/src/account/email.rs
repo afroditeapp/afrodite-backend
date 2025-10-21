@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::diesel_i64_try_from;
+use simple_backend_model::SimpleDieselEnum;
 
 use crate::{EmailMessages, EnumParsingError, schema_sqlite_types::Integer};
 
@@ -12,6 +12,7 @@ use crate::{EmailMessages, EnumParsingError, schema_sqlite_types::Integer};
     Copy,
     PartialEq,
     Eq,
+    SimpleDieselEnum,
     diesel::FromSqlRow,
     diesel::AsExpression,
 )]
@@ -25,8 +26,6 @@ pub enum EmailSendingState {
     /// SMTP server returned a positive response.
     SentSuccessfully = 2,
 }
-
-diesel_i64_try_from!(EmailSendingState);
 
 impl TryFrom<i64> for EmailSendingState {
     type Error = EnumParsingError;

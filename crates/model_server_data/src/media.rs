@@ -1,6 +1,6 @@
 use model::schema_sqlite_types::Integer;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::diesel_i64_try_from;
+use simple_backend_model::SimpleDieselEnum;
 use utoipa::{IntoParams, ToSchema};
 
 mod profile_content;
@@ -15,6 +15,7 @@ pub use profile_content::*;
     PartialEq,
     Eq,
     Hash,
+    SimpleDieselEnum,
     diesel::FromSqlRow,
     diesel::AsExpression,
     ToSchema,
@@ -32,8 +33,6 @@ impl MediaContentType {
         }
     }
 }
-
-diesel_i64_try_from!(MediaContentType);
 
 impl TryFrom<i64> for MediaContentType {
     type Error = String;

@@ -1,6 +1,6 @@
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_struct_try_from, diesel_i64_try_from};
+use simple_backend_model::{SimpleDieselEnum, diesel_i64_struct_try_from};
 use utoipa::ToSchema;
 
 use crate::schema_sqlite_types::Integer;
@@ -15,6 +15,7 @@ use crate::schema_sqlite_types::Integer;
     PartialEq,
     Eq,
     TryFromPrimitive,
+    SimpleDieselEnum,
     diesel::FromSqlRow,
     diesel::AsExpression,
 )]
@@ -24,8 +25,6 @@ pub enum ProfileStringModerationContentType {
     ProfileName = 0,
     ProfileText = 1,
 }
-
-diesel_i64_try_from!(ProfileStringModerationContentType);
 
 #[derive(
     Debug,
@@ -37,6 +36,7 @@ diesel_i64_try_from!(ProfileStringModerationContentType);
     PartialEq,
     Eq,
     TryFromPrimitive,
+    SimpleDieselEnum,
     diesel::FromSqlRow,
     diesel::AsExpression,
 )]
@@ -63,8 +63,6 @@ impl ProfileStringModerationState {
         }
     }
 }
-
-diesel_i64_try_from!(ProfileStringModerationState);
 
 #[derive(Debug, Clone, Copy, diesel::FromSqlRow, diesel::AsExpression)]
 #[diesel(sql_type = Integer)]

@@ -5,7 +5,7 @@ use model::{
 use model_server_data::{MediaContentType, ProfileContentEditedTime};
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper};
+use simple_backend_model::{SimpleDieselEnum, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{AccountIdDb, schema_sqlite_types::Integer};
@@ -128,6 +128,7 @@ pub struct ContentInfoDetailed {
     PartialEq,
     Eq,
     TryFromPrimitive,
+    SimpleDieselEnum,
     diesel::FromSqlRow,
     diesel::AsExpression,
 )]
@@ -205,8 +206,6 @@ impl Default for ContentModerationState {
         Self::InSlot
     }
 }
-
-diesel_i64_try_from!(ContentModerationState);
 
 #[derive(Debug, Clone, PartialEq, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::media_content)]
