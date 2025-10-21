@@ -5,6 +5,7 @@
 file = "crates/model/src/schema.rs"
 custom_type_derives = ["diesel::query_builder::QueryId"]
 import_types = ["crate::schema_sqlite_types::*"]
+sqlite_integer_primary_key_is_bigint = true
 
 [migrations_directory]
 dir = "migrations"

@@ -4,7 +4,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     account (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         email -> Nullable<Text>,
     }
 }
@@ -13,7 +13,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     account_app_notification_settings (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         news -> Bool,
     }
 }
@@ -22,7 +22,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     account_email_sending_state (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         account_registered_state_number -> SmallInt,
         new_message_state_number -> SmallInt,
         new_like_state_number -> SmallInt,
@@ -33,7 +33,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     account_global_state (row_type) {
-        row_type -> Integer,
+        row_type -> BigInt,
         admin_access_granted_count -> Integer,
         next_news_publication_id -> Integer,
     }
@@ -43,7 +43,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     account_id (id) {
-        id -> Integer,
+        id -> BigInt,
         uuid -> Binary,
     }
 }
@@ -52,12 +52,12 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     account_interaction (id) {
-        id -> Integer,
+        id -> BigInt,
         state_number -> SmallInt,
-        account_id_sender -> Nullable<Integer>,
-        account_id_receiver -> Nullable<Integer>,
-        account_id_block_sender -> Nullable<Integer>,
-        account_id_block_receiver -> Nullable<Integer>,
+        account_id_sender -> Nullable<BigInt>,
+        account_id_receiver -> Nullable<BigInt>,
+        account_id_block_sender -> Nullable<BigInt>,
+        account_id_block_receiver -> Nullable<BigInt>,
         two_way_block -> Bool,
         message_counter_sender -> Integer,
         message_counter_receiver -> Integer,
@@ -78,9 +78,9 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     account_interaction_index (account_id_first, account_id_second) {
-        account_id_first -> Integer,
-        account_id_second -> Integer,
-        interaction_id -> Integer,
+        account_id_first -> BigInt,
+        account_id_second -> BigInt,
+        interaction_id -> BigInt,
     }
 }
 
@@ -88,7 +88,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     account_permissions (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         admin_edit_permissions -> Bool,
         admin_edit_profile_name -> Bool,
         admin_edit_max_public_key_count -> Bool,
@@ -125,7 +125,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     account_setup (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         birthdate -> Nullable<Date>,
         is_adult -> Nullable<Bool>,
     }
@@ -135,12 +135,12 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     account_state (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         next_client_id -> Integer,
         account_deletion_request_unix_time -> Nullable<BigInt>,
         account_banned_reason_category -> Nullable<Integer>,
         account_banned_reason_details -> Nullable<Text>,
-        account_banned_admin_account_id -> Nullable<Integer>,
+        account_banned_admin_account_id -> Nullable<BigInt>,
         account_banned_until_unix_time -> Nullable<BigInt>,
         account_banned_state_change_unix_time -> Nullable<BigInt>,
         news_sync_version -> SmallInt,
@@ -153,7 +153,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     admin_notification_settings (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         weekdays -> Integer,
         daily_enabled_time_start_seconds -> Integer,
         daily_enabled_time_end_seconds -> Integer,
@@ -164,7 +164,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     admin_notification_subscriptions (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         moderate_initial_media_content_bot -> Bool,
         moderate_initial_media_content_human -> Bool,
         moderate_media_content_bot -> Bool,
@@ -181,7 +181,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     api_usage_statistics_metric_name (id) {
-        id -> Integer,
+        id -> BigInt,
         metric_name -> Text,
     }
 }
@@ -190,9 +190,9 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     api_usage_statistics_metric_value (account_id, time_id, metric_id) {
-        account_id -> Integer,
-        time_id -> Integer,
-        metric_id -> Integer,
+        account_id -> BigInt,
+        time_id -> BigInt,
+        metric_id -> BigInt,
         metric_value -> Integer,
     }
 }
@@ -201,7 +201,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     api_usage_statistics_save_time (id) {
-        id -> Integer,
+        id -> BigInt,
         unix_time -> BigInt,
     }
 }
@@ -210,7 +210,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     chat_app_notification_settings (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         likes -> Bool,
         messages -> Bool,
     }
@@ -220,7 +220,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     chat_email_notification_settings (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         likes -> Bool,
         messages -> Bool,
     }
@@ -230,7 +230,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     chat_global_state (row_type) {
-        row_type -> Integer,
+        row_type -> BigInt,
         next_match_id -> Integer,
     }
 }
@@ -239,7 +239,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     chat_report_chat_message (report_id) {
-        report_id -> Integer,
+        report_id -> BigInt,
         message_sender_account_id_uuid -> Binary,
         message_receiver_account_id_uuid -> Binary,
         message_unix_time -> BigInt,
@@ -254,7 +254,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     chat_state (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         received_likes_sync_version -> SmallInt,
         new_received_likes_count -> Integer,
         next_received_like_id -> Integer,
@@ -267,7 +267,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     client_features_file_hash (row_type) {
-        row_type -> Integer,
+        row_type -> BigInt,
         sha256_hash -> Text,
     }
 }
@@ -276,12 +276,12 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     common_report (id) {
-        id -> Integer,
-        creator_account_id -> Integer,
-        target_account_id -> Integer,
+        id -> BigInt,
+        creator_account_id -> BigInt,
+        target_account_id -> BigInt,
         report_type_number -> SmallInt,
         creation_unix_time -> BigInt,
-        moderator_account_id -> Nullable<Integer>,
+        moderator_account_id -> Nullable<BigInt>,
         processing_state -> SmallInt,
         processing_state_change_unix_time -> BigInt,
     }
@@ -291,7 +291,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     common_state (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         client_config_sync_version -> SmallInt,
         client_login_session_platform -> Nullable<SmallInt>,
         client_language -> Nullable<Text>,
@@ -302,15 +302,15 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     current_account_media (account_id) {
-        account_id -> Integer,
-        security_content_id -> Nullable<Integer>,
+        account_id -> BigInt,
+        security_content_id -> Nullable<BigInt>,
         profile_content_version_uuid -> Binary,
-        profile_content_id_0 -> Nullable<Integer>,
-        profile_content_id_1 -> Nullable<Integer>,
-        profile_content_id_2 -> Nullable<Integer>,
-        profile_content_id_3 -> Nullable<Integer>,
-        profile_content_id_4 -> Nullable<Integer>,
-        profile_content_id_5 -> Nullable<Integer>,
+        profile_content_id_0 -> Nullable<BigInt>,
+        profile_content_id_1 -> Nullable<BigInt>,
+        profile_content_id_2 -> Nullable<BigInt>,
+        profile_content_id_3 -> Nullable<BigInt>,
+        profile_content_id_4 -> Nullable<BigInt>,
+        profile_content_id_5 -> Nullable<BigInt>,
         grid_crop_size -> Nullable<Double>,
         grid_crop_x -> Nullable<Double>,
         grid_crop_y -> Nullable<Double>,
@@ -321,7 +321,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     custom_reports_file_hash (row_type) {
-        row_type -> Integer,
+        row_type -> BigInt,
         sha256_hash -> Text,
     }
 }
@@ -330,7 +330,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     daily_likes_left (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         sync_version -> SmallInt,
         likes_left -> Integer,
         latest_limit_reset_unix_time -> Nullable<BigInt>,
@@ -342,7 +342,7 @@ diesel::table! {
 
     demo_account_owned_accounts (demo_account_id, account_id) {
         demo_account_id -> Integer,
-        account_id -> Integer,
+        account_id -> BigInt,
     }
 }
 
@@ -350,8 +350,8 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     favorite_profile (account_id, favorite_account_id) {
-        account_id -> Integer,
-        favorite_account_id -> Integer,
+        account_id -> BigInt,
+        favorite_account_id -> BigInt,
         unix_time -> BigInt,
     }
 }
@@ -360,8 +360,8 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     history_client_version_statistics (time_id, version_id) {
-        time_id -> Integer,
-        version_id -> Integer,
+        time_id -> BigInt,
+        version_id -> BigInt,
         count -> Integer,
     }
 }
@@ -370,7 +370,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     history_client_version_statistics_version_number (id) {
-        id -> Integer,
+        id -> BigInt,
         major -> Integer,
         minor -> Integer,
         patch -> Integer,
@@ -381,7 +381,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     history_common_statistics_save_time (id) {
-        id -> Integer,
+        id -> BigInt,
         unix_time -> BigInt,
     }
 }
@@ -390,8 +390,8 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     history_ip_country_statistics (time_id, country_id) {
-        time_id -> Integer,
-        country_id -> Integer,
+        time_id -> BigInt,
+        country_id -> BigInt,
         new_tcp_connections -> Integer,
         new_http_requests -> Integer,
     }
@@ -401,7 +401,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     history_ip_country_statistics_country_name (id) {
-        id -> Integer,
+        id -> BigInt,
         country_name -> Text,
     }
 }
@@ -410,7 +410,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     history_performance_statistics_metric_name (id) {
-        id -> Integer,
+        id -> BigInt,
         metric_name -> Text,
     }
 }
@@ -419,8 +419,8 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     history_performance_statistics_metric_value (time_id, metric_id) {
-        time_id -> Integer,
-        metric_id -> Integer,
+        time_id -> BigInt,
+        metric_id -> BigInt,
         metric_value -> Integer,
     }
 }
@@ -429,7 +429,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     history_profile_statistics_age_changes_all_genders (time_id, age) {
-        time_id -> Integer,
+        time_id -> BigInt,
         age -> Integer,
         count -> Integer,
     }
@@ -439,7 +439,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     history_profile_statistics_age_changes_man (time_id, age) {
-        time_id -> Integer,
+        time_id -> BigInt,
         age -> Integer,
         count -> Integer,
     }
@@ -449,7 +449,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     history_profile_statistics_age_changes_non_binary (time_id, age) {
-        time_id -> Integer,
+        time_id -> BigInt,
         age -> Integer,
         count -> Integer,
     }
@@ -459,7 +459,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     history_profile_statistics_age_changes_woman (time_id, age) {
-        time_id -> Integer,
+        time_id -> BigInt,
         age -> Integer,
         count -> Integer,
     }
@@ -469,7 +469,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     history_profile_statistics_count_changes_account (time_id) {
-        time_id -> Integer,
+        time_id -> BigInt,
         count -> Integer,
     }
 }
@@ -478,7 +478,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     history_profile_statistics_count_changes_all_genders (time_id) {
-        time_id -> Integer,
+        time_id -> BigInt,
         count -> Integer,
     }
 }
@@ -487,7 +487,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     history_profile_statistics_count_changes_man (time_id) {
-        time_id -> Integer,
+        time_id -> BigInt,
         count -> Integer,
     }
 }
@@ -496,7 +496,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     history_profile_statistics_count_changes_non_binary (time_id) {
-        time_id -> Integer,
+        time_id -> BigInt,
         count -> Integer,
     }
 }
@@ -505,7 +505,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     history_profile_statistics_count_changes_woman (time_id) {
-        time_id -> Integer,
+        time_id -> BigInt,
         count -> Integer,
     }
 }
@@ -514,7 +514,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     ip_address_usage_statistics (account_id, ip_address) {
-        account_id -> Integer,
+        account_id -> BigInt,
         ip_address -> Binary,
         usage_count -> Integer,
         first_usage_unix_time -> BigInt,
@@ -526,7 +526,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     login_session (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         access_token -> Binary,
         access_token_unix_time -> BigInt,
         access_token_ip_address -> Binary,
@@ -538,7 +538,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     media_app_notification_settings (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         media_content_moderation -> Bool,
     }
 }
@@ -547,7 +547,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     media_app_notification_state (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         media_content_accepted -> Integer,
         media_content_accepted_viewed -> Integer,
         media_content_rejected -> Integer,
@@ -561,9 +561,9 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     media_content (id) {
-        id -> Integer,
+        id -> BigInt,
         uuid -> Binary,
-        account_id -> Integer,
+        account_id -> BigInt,
         secure_capture -> Bool,
         face_detected -> Bool,
         content_type_number -> SmallInt,
@@ -573,7 +573,7 @@ diesel::table! {
         moderation_state -> SmallInt,
         moderation_rejected_reason_category -> Nullable<Integer>,
         moderation_rejected_reason_details -> Nullable<Text>,
-        moderation_moderator_account_id -> Nullable<Integer>,
+        moderation_moderator_account_id -> Nullable<BigInt>,
         usage_start_unix_time -> Nullable<BigInt>,
         usage_end_unix_time -> Nullable<BigInt>,
     }
@@ -583,7 +583,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     media_report_profile_content (report_id) {
-        report_id -> Integer,
+        report_id -> BigInt,
         profile_content_uuid -> Binary,
     }
 }
@@ -592,7 +592,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     media_state (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         media_content_sync_version -> SmallInt,
         profile_content_edited_unix_time -> BigInt,
     }
@@ -602,8 +602,8 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     news (id) {
-        id -> Integer,
-        account_id_creator -> Nullable<Integer>,
+        id -> BigInt,
+        account_id_creator -> Nullable<BigInt>,
         first_publication_unix_time -> Nullable<BigInt>,
         latest_publication_unix_time -> Nullable<BigInt>,
         publication_id -> Nullable<Integer>,
@@ -615,13 +615,13 @@ diesel::table! {
 
     news_translations (locale, news_id) {
         locale -> Text,
-        news_id -> Integer,
+        news_id -> BigInt,
         title -> Text,
         body -> Text,
         creation_unix_time -> BigInt,
         version_number -> Integer,
-        account_id_creator -> Nullable<Integer>,
-        account_id_editor -> Nullable<Integer>,
+        account_id_creator -> Nullable<BigInt>,
+        account_id_editor -> Nullable<BigInt>,
         edit_unix_time -> Nullable<BigInt>,
     }
 }
@@ -630,10 +630,10 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     pending_messages (id) {
-        id -> Integer,
-        account_interaction -> Integer,
-        account_id_sender -> Integer,
-        account_id_receiver -> Integer,
+        id -> BigInt,
+        account_interaction -> BigInt,
+        account_id_sender -> BigInt,
+        account_id_receiver -> BigInt,
         sender_acknowledgement -> Bool,
         receiver_acknowledgement -> Bool,
         receiver_push_notification_sent -> Bool,
@@ -650,7 +650,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     profile (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         version_uuid -> Binary,
         profile_name -> Nullable<Text>,
         profile_text -> Nullable<Text>,
@@ -663,7 +663,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     profile_app_notification_settings (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         profile_string_moderation -> Bool,
         automatic_profile_search -> Bool,
     }
@@ -673,7 +673,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     profile_app_notification_state (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         profile_name_accepted -> Integer,
         profile_name_accepted_viewed -> Integer,
         profile_name_rejected -> Integer,
@@ -689,7 +689,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     profile_attributes_file_hash (row_type) {
-        row_type -> Integer,
+        row_type -> BigInt,
         sha256_hash -> Text,
     }
 }
@@ -698,7 +698,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     profile_attributes_filter_list_unwanted (account_id, attribute_id, filter_value) {
-        account_id -> Integer,
+        account_id -> BigInt,
         attribute_id -> Integer,
         filter_value -> Integer,
     }
@@ -708,7 +708,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     profile_attributes_filter_list_wanted (account_id, attribute_id, filter_value) {
-        account_id -> Integer,
+        account_id -> BigInt,
         attribute_id -> Integer,
         filter_value -> Integer,
     }
@@ -718,7 +718,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     profile_attributes_filter_settings (account_id, attribute_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         attribute_id -> Integer,
         filter_accept_missing_attribute -> Bool,
         filter_use_logical_operator_and -> Bool,
@@ -729,7 +729,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     profile_attributes_value_list (account_id, attribute_id, attribute_value) {
-        account_id -> Integer,
+        account_id -> BigInt,
         attribute_id -> Integer,
         attribute_value -> Integer,
     }
@@ -739,7 +739,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     profile_automatic_profile_search_settings (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         new_profiles -> Bool,
         attribute_filters -> Bool,
         distance_filters -> Bool,
@@ -751,7 +751,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     profile_automatic_profile_search_state (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         last_seen_unix_time -> BigInt,
     }
 }
@@ -760,12 +760,12 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     profile_moderation (account_id, content_type) {
-        account_id -> Integer,
+        account_id -> BigInt,
         content_type -> SmallInt,
         state_type -> SmallInt,
         rejected_reason_category -> Nullable<Integer>,
         rejected_reason_details -> Nullable<Text>,
-        moderator_account_id -> Nullable<Integer>,
+        moderator_account_id -> Nullable<BigInt>,
         created_unix_time -> BigInt,
     }
 }
@@ -775,8 +775,8 @@ diesel::table! {
 
     profile_name_allowlist (profile_name) {
         profile_name -> Text,
-        name_creator_account_id -> Integer,
-        name_moderator_account_id -> Nullable<Integer>,
+        name_creator_account_id -> BigInt,
+        name_moderator_account_id -> Nullable<BigInt>,
     }
 }
 
@@ -784,7 +784,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     profile_report_profile_name (report_id) {
-        report_id -> Integer,
+        report_id -> BigInt,
         profile_name -> Text,
     }
 }
@@ -793,7 +793,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     profile_report_profile_text (report_id) {
-        report_id -> Integer,
+        report_id -> BigInt,
         profile_text -> Text,
     }
 }
@@ -802,7 +802,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     profile_state (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         search_age_range_min -> Integer,
         search_age_range_max -> Integer,
         search_group_flags -> Integer,
@@ -828,7 +828,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     public_key (account_id, key_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         key_id -> Integer,
         key_data -> Binary,
         key_added_unix_time -> BigInt,
@@ -839,7 +839,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     push_notification (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         pending_flags -> Integer,
         sent_flags -> Integer,
         encryption_key -> Nullable<Text>,
@@ -853,7 +853,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     shared_state (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         account_state_initial_setup_completed -> Bool,
         account_state_banned -> Bool,
         account_state_pending_deletion -> Bool,
@@ -870,7 +870,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     sign_in_with_info (account_id) {
-        account_id -> Integer,
+        account_id -> BigInt,
         apple_account_id -> Nullable<Text>,
         google_account_id -> Nullable<Text>,
     }
@@ -880,7 +880,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     used_account_ids (id) {
-        id -> Integer,
+        id -> BigInt,
         uuid -> Binary,
     }
 }
@@ -889,7 +889,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     used_content_ids (account_id, uuid) {
-        account_id -> Integer,
+        account_id -> BigInt,
         uuid -> Binary,
     }
 }
@@ -898,7 +898,7 @@ diesel::table! {
     use crate::schema_sqlite_types::*;
 
     vapid_public_key_hash (row_type) {
-        row_type -> Integer,
+        row_type -> BigInt,
         sha256_hash -> Text,
     }
 }
