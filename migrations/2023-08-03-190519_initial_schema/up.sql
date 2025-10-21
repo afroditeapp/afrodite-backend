@@ -45,35 +45,35 @@ CREATE TABLE IF NOT EXISTS login_session(
 -- server as it propagates the changes to other components.
 CREATE TABLE IF NOT EXISTS account_permissions(
     account_id    INTEGER PRIMARY KEY NOT NULL,
-    admin_edit_permissions                       BOOLEAN NOT NULL DEFAULT 0,
-    admin_edit_profile_name                      BOOLEAN NOT NULL DEFAULT 0,
-    admin_edit_max_public_key_count              BOOLEAN NOT NULL DEFAULT 0,
-    admin_edit_media_content_face_detected_value BOOLEAN NOT NULL DEFAULT 0,
-    admin_export_data                            BOOLEAN NOT NULL DEFAULT 0,
-    admin_moderate_media_content                 BOOLEAN NOT NULL DEFAULT 0,
-    admin_moderate_profile_names                 BOOLEAN NOT NULL DEFAULT 0,
-    admin_moderate_profile_texts                 BOOLEAN NOT NULL DEFAULT 0,
-    admin_process_reports                        BOOLEAN NOT NULL DEFAULT 0,
-    admin_delete_media_content                   BOOLEAN NOT NULL DEFAULT 0,
-    admin_delete_account                         BOOLEAN NOT NULL DEFAULT 0,
-    admin_ban_account                            BOOLEAN NOT NULL DEFAULT 0,
-    admin_request_account_deletion               BOOLEAN NOT NULL DEFAULT 0,
-    admin_view_all_profiles                      BOOLEAN NOT NULL DEFAULT 0,
-    admin_view_private_info                      BOOLEAN NOT NULL DEFAULT 0,
-    admin_view_profile_history                   BOOLEAN NOT NULL DEFAULT 0,
-    admin_view_permissions                       BOOLEAN NOT NULL DEFAULT 0,
-    admin_find_account_by_email                  BOOLEAN NOT NULL DEFAULT 0,
-    admin_server_maintenance_view_info           BOOLEAN NOT NULL DEFAULT 0,
-    admin_server_maintenance_view_backend_config BOOLEAN NOT NULL DEFAULT 0,
-    admin_server_maintenance_update_software     BOOLEAN NOT NULL DEFAULT 0,
-    admin_server_maintenance_reset_data          BOOLEAN NOT NULL DEFAULT 0,
-    admin_server_maintenance_restart_backend     BOOLEAN NOT NULL DEFAULT 0,
-    admin_server_maintenance_save_backend_config BOOLEAN NOT NULL DEFAULT 0,
-    admin_server_maintenance_edit_notification   BOOLEAN NOT NULL DEFAULT 0,
-    admin_news_create                            BOOLEAN NOT NULL DEFAULT 0,
-    admin_news_edit_all                          BOOLEAN NOT NULL DEFAULT 0,
-    admin_profile_statistics                     BOOLEAN NOT NULL DEFAULT 0,
-    admin_subscribe_admin_notifications          BOOLEAN NOT NULL DEFAULT 0,
+    admin_edit_permissions                       BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_edit_profile_name                      BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_edit_max_public_key_count              BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_edit_media_content_face_detected_value BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_export_data                            BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_moderate_media_content                 BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_moderate_profile_names                 BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_moderate_profile_texts                 BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_process_reports                        BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_delete_media_content                   BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_delete_account                         BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_ban_account                            BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_request_account_deletion               BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_view_all_profiles                      BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_view_private_info                      BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_view_profile_history                   BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_view_permissions                       BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_find_account_by_email                  BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_server_maintenance_view_info           BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_server_maintenance_view_backend_config BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_server_maintenance_update_software     BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_server_maintenance_reset_data          BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_server_maintenance_restart_backend     BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_server_maintenance_save_backend_config BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_server_maintenance_edit_notification   BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_news_create                            BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_news_edit_all                          BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_profile_statistics                     BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_subscribe_admin_notifications          BOOLEAN NOT NULL DEFAULT FALSE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -87,9 +87,9 @@ CREATE TABLE IF NOT EXISTS account_permissions(
 -- server as it propagates the changes to other components.
 CREATE TABLE IF NOT EXISTS shared_state(
     account_id                INTEGER PRIMARY KEY NOT NULL,
-    account_state_initial_setup_completed   BOOLEAN             NOT NULL DEFAULT 0,
-    account_state_banned                    BOOLEAN             NOT NULL DEFAULT 0,
-    account_state_pending_deletion          BOOLEAN             NOT NULL DEFAULT 0,
+    account_state_initial_setup_completed   BOOLEAN             NOT NULL DEFAULT FALSE,
+    account_state_banned                    BOOLEAN             NOT NULL DEFAULT FALSE,
+    account_state_pending_deletion          BOOLEAN             NOT NULL DEFAULT FALSE,
     -- pending private = 0
     -- pending public = 1
     -- private = 2
@@ -99,12 +99,12 @@ CREATE TABLE IF NOT EXISTS shared_state(
     -- Used in receiving end to avoid saving old state in case of
     -- concurrent updates.
     sync_version              INTEGER              NOT NULL DEFAULT 0,
-    unlimited_likes           BOOLEAN              NOT NULL DEFAULT 0,
+    unlimited_likes           BOOLEAN              NOT NULL DEFAULT FALSE,
     -- Birthdate has YYYY-MM-DD format. This is in shared state if
     -- birthdate validation using third party service is implemented
     -- someday.
     birthdate                 DATE,
-    is_bot_account            BOOLEAN              NOT NULL DEFAULT 0,
+    is_bot_account            BOOLEAN              NOT NULL DEFAULT FALSE,
     -- Profile component uses this info for profile filtering.
     initial_setup_completed_unix_time INTEGER      NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
@@ -238,15 +238,15 @@ CREATE TABLE IF NOT EXISTS admin_notification_settings(
 
 CREATE TABLE IF NOT EXISTS admin_notification_subscriptions(
     account_id INTEGER PRIMARY KEY NOT NULL,
-    moderate_initial_media_content_bot           BOOLEAN NOT NULL DEFAULT 0,
-    moderate_initial_media_content_human         BOOLEAN NOT NULL DEFAULT 0,
-    moderate_media_content_bot                   BOOLEAN NOT NULL DEFAULT 0,
-    moderate_media_content_human                 BOOLEAN NOT NULL DEFAULT 0,
-    moderate_profile_texts_bot                   BOOLEAN NOT NULL DEFAULT 0,
-    moderate_profile_texts_human                 BOOLEAN NOT NULL DEFAULT 0,
-    moderate_profile_names_bot                   BOOLEAN NOT NULL DEFAULT 0,
-    moderate_profile_names_human                 BOOLEAN NOT NULL DEFAULT 0,
-    process_reports                              BOOLEAN NOT NULL DEFAULT 0,
+    moderate_initial_media_content_bot           BOOLEAN NOT NULL DEFAULT FALSE,
+    moderate_initial_media_content_human         BOOLEAN NOT NULL DEFAULT FALSE,
+    moderate_media_content_bot                   BOOLEAN NOT NULL DEFAULT FALSE,
+    moderate_media_content_human                 BOOLEAN NOT NULL DEFAULT FALSE,
+    moderate_profile_texts_bot                   BOOLEAN NOT NULL DEFAULT FALSE,
+    moderate_profile_texts_human                 BOOLEAN NOT NULL DEFAULT FALSE,
+    moderate_profile_names_bot                   BOOLEAN NOT NULL DEFAULT FALSE,
+    moderate_profile_names_human                 BOOLEAN NOT NULL DEFAULT FALSE,
+    process_reports                              BOOLEAN NOT NULL DEFAULT FALSE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -452,7 +452,7 @@ CREATE TABLE IF NOT EXISTS profile_state(
     -- Filter setting for profile text max character count.
     profile_text_max_characters_filter INTEGER,
     -- Profile iterator setting for random profile order.
-    random_profile_order       BOOLEAN              NOT NULL    DEFAULT 0,
+    random_profile_order       BOOLEAN              NOT NULL    DEFAULT FALSE,
     latitude                   DOUBLE               NOT NULL    DEFAULT 0.0,
     longitude                  DOUBLE               NOT NULL    DEFAULT 0.0,
     -- Sync version for profile data for this account.
@@ -491,8 +491,8 @@ CREATE TABLE IF NOT EXISTS profile(
 CREATE TABLE IF NOT EXISTS profile_attributes_filter_settings(
     account_id      INTEGER             NOT NULL,
     attribute_id    INTEGER             NOT NULL,
-    filter_accept_missing_attribute BOOLEAN NOT NULL DEFAULT 0,
-    filter_use_logical_operator_and BOOLEAN NOT NULL DEFAULT 0,
+    filter_accept_missing_attribute BOOLEAN NOT NULL DEFAULT FALSE,
+    filter_use_logical_operator_and BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (account_id, attribute_id),
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
@@ -911,18 +911,18 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     -- The account which received the block.
     account_id_block_receiver       INTEGER,
     -- If this is true, then both sides have blocked each other.
-    two_way_block                   BOOLEAN NOT NULL DEFAULT 0,
+    two_way_block                   BOOLEAN NOT NULL DEFAULT FALSE,
     -- Incrementing counters for tracking sent message count for both accounts.
     message_counter_sender          INTEGER NOT NULL DEFAULT 0,
     message_counter_receiver        INTEGER NOT NULL DEFAULT 0,
     -- Track if video call URL has been created for each side
-    video_call_url_created_sender   BOOLEAN NOT NULL DEFAULT 0,
-    video_call_url_created_receiver BOOLEAN NOT NULL DEFAULT 0,
+    video_call_url_created_sender   BOOLEAN NOT NULL DEFAULT FALSE,
+    video_call_url_created_receiver BOOLEAN NOT NULL DEFAULT FALSE,
     -- Received likes iterator uses received likes ID to return
     -- correct pages.
     received_like_id                INTEGER,
-    received_like_viewed            BOOLEAN NOT NULL DEFAULT 0,
-    received_like_email_notification_sent BOOLEAN NOT NULL DEFAULT 0,
+    received_like_viewed            BOOLEAN NOT NULL DEFAULT FALSE,
+    received_like_email_notification_sent BOOLEAN NOT NULL DEFAULT FALSE,
     received_like_unix_time         INTEGER,
     -- Matches iterator uses match ID to return correct pages.
     match_id                        INTEGER,
@@ -959,13 +959,13 @@ CREATE TABLE IF NOT EXISTS pending_messages(
     -- The account which will receive the message.
     account_id_receiver             INTEGER NOT NULL,
     -- Acknowledgement from sender and receiver
-    sender_acknowledgement          BOOLEAN NOT NULL DEFAULT 0,
-    receiver_acknowledgement        BOOLEAN NOT NULL DEFAULT 0,
+    sender_acknowledgement          BOOLEAN NOT NULL DEFAULT FALSE,
+    receiver_acknowledgement        BOOLEAN NOT NULL DEFAULT FALSE,
     -- Track push notification sending for the message to
     -- avoid sending the same data again.
-    receiver_push_notification_sent BOOLEAN NOT NULL DEFAULT 0,
+    receiver_push_notification_sent BOOLEAN NOT NULL DEFAULT FALSE,
     -- Email notification for the message.
-    receiver_email_notification_sent BOOLEAN NOT NULL DEFAULT 0,
+    receiver_email_notification_sent BOOLEAN NOT NULL DEFAULT FALSE,
     message_unix_time               INTEGER NOT NULL,
     -- Conversation specific ID for the message.
     message_id                      INTEGER NOT NULL,
