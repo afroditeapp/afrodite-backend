@@ -377,20 +377,17 @@ macro_rules! diesel_bytes_try_from {
             }
         }
 
-        // TODO(future): Support other databases?
-        // https://docs.diesel.rs/2.0.x/diesel/serialize/trait.ToSql.html
-
-        impl diesel::serialize::ToSql<diesel::sql_types::Binary, diesel::sqlite::Sqlite> for $name
+        impl<DB: diesel::backend::Backend> diesel::serialize::ToSql<diesel::sql_types::Binary, DB>
+            for $name
         where
-            [u8]: diesel::serialize::ToSql<diesel::sql_types::Binary, diesel::sqlite::Sqlite>,
+            [u8]: diesel::serialize::ToSql<diesel::sql_types::Binary, DB>,
         {
             fn to_sql<'b>(
                 &'b self,
-                out: &mut diesel::serialize::Output<'b, '_, diesel::sqlite::Sqlite>,
+                out: &mut diesel::serialize::Output<'b, '_, DB>,
             ) -> diesel::serialize::Result {
                 let value = AsRef::<[u8]>::as_ref(self);
-                out.set_value(value);
-                Ok(diesel::serialize::IsNull::No)
+                value.to_sql(out)
             }
         }
     };
