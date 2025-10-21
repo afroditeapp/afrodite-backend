@@ -66,9 +66,9 @@ diesel::table! {
         received_like_id -> Nullable<Integer>,
         received_like_viewed -> Bool,
         received_like_email_notification_sent -> Bool,
-        received_like_unix_time -> Nullable<Integer>,
+        received_like_unix_time -> Nullable<BigInt>,
         match_id -> Nullable<Integer>,
-        match_unix_time -> Nullable<Integer>,
+        match_unix_time -> Nullable<BigInt>,
         conversation_id_sender -> Nullable<Integer>,
         conversation_id_receiver -> Nullable<Integer>,
     }
@@ -137,15 +137,15 @@ diesel::table! {
     account_state (account_id) {
         account_id -> Integer,
         next_client_id -> Integer,
-        account_deletion_request_unix_time -> Nullable<Integer>,
+        account_deletion_request_unix_time -> Nullable<BigInt>,
         account_banned_reason_category -> Nullable<Integer>,
         account_banned_reason_details -> Nullable<Text>,
         account_banned_admin_account_id -> Nullable<Integer>,
-        account_banned_until_unix_time -> Nullable<Integer>,
-        account_banned_state_change_unix_time -> Nullable<Integer>,
+        account_banned_until_unix_time -> Nullable<BigInt>,
+        account_banned_state_change_unix_time -> Nullable<BigInt>,
         news_sync_version -> SmallInt,
         unread_news_count -> Integer,
-        account_created_unix_time -> Integer,
+        account_created_unix_time -> BigInt,
     }
 }
 
@@ -202,7 +202,7 @@ diesel::table! {
 
     api_usage_statistics_save_time (id) {
         id -> Integer,
-        unix_time -> Integer,
+        unix_time -> BigInt,
     }
 }
 
@@ -242,7 +242,7 @@ diesel::table! {
         report_id -> Integer,
         message_sender_account_id_uuid -> Binary,
         message_receiver_account_id_uuid -> Binary,
-        message_unix_time -> Integer,
+        message_unix_time -> BigInt,
         message_id -> Integer,
         message_symmetric_key -> Binary,
         client_message_bytes -> Binary,
@@ -280,10 +280,10 @@ diesel::table! {
         creator_account_id -> Integer,
         target_account_id -> Integer,
         report_type_number -> SmallInt,
-        creation_unix_time -> Integer,
+        creation_unix_time -> BigInt,
         moderator_account_id -> Nullable<Integer>,
         processing_state -> SmallInt,
-        processing_state_change_unix_time -> Integer,
+        processing_state_change_unix_time -> BigInt,
     }
 }
 
@@ -333,7 +333,7 @@ diesel::table! {
         account_id -> Integer,
         sync_version -> SmallInt,
         likes_left -> Integer,
-        latest_limit_reset_unix_time -> Nullable<Integer>,
+        latest_limit_reset_unix_time -> Nullable<BigInt>,
     }
 }
 
@@ -352,7 +352,7 @@ diesel::table! {
     favorite_profile (account_id, favorite_account_id) {
         account_id -> Integer,
         favorite_account_id -> Integer,
-        unix_time -> Integer,
+        unix_time -> BigInt,
     }
 }
 
@@ -382,7 +382,7 @@ diesel::table! {
 
     history_common_statistics_save_time (id) {
         id -> Integer,
-        unix_time -> Integer,
+        unix_time -> BigInt,
     }
 }
 
@@ -517,8 +517,8 @@ diesel::table! {
         account_id -> Integer,
         ip_address -> Binary,
         usage_count -> Integer,
-        first_usage_unix_time -> Integer,
-        latest_usage_unix_time -> Integer,
+        first_usage_unix_time -> BigInt,
+        latest_usage_unix_time -> BigInt,
     }
 }
 
@@ -528,7 +528,7 @@ diesel::table! {
     login_session (account_id) {
         account_id -> Integer,
         access_token -> Text,
-        access_token_unix_time -> Integer,
+        access_token_unix_time -> BigInt,
         access_token_ip_address -> Binary,
         refresh_token -> Binary,
     }
@@ -568,14 +568,14 @@ diesel::table! {
         face_detected -> Bool,
         content_type_number -> SmallInt,
         slot_number -> SmallInt,
-        creation_unix_time -> Integer,
+        creation_unix_time -> BigInt,
         initial_content -> Bool,
         moderation_state -> SmallInt,
         moderation_rejected_reason_category -> Nullable<Integer>,
         moderation_rejected_reason_details -> Nullable<Text>,
         moderation_moderator_account_id -> Nullable<Integer>,
-        usage_start_unix_time -> Nullable<Integer>,
-        usage_end_unix_time -> Nullable<Integer>,
+        usage_start_unix_time -> Nullable<BigInt>,
+        usage_end_unix_time -> Nullable<BigInt>,
     }
 }
 
@@ -594,7 +594,7 @@ diesel::table! {
     media_state (account_id) {
         account_id -> Integer,
         media_content_sync_version -> SmallInt,
-        profile_content_edited_unix_time -> Integer,
+        profile_content_edited_unix_time -> BigInt,
     }
 }
 
@@ -604,8 +604,8 @@ diesel::table! {
     news (id) {
         id -> Integer,
         account_id_creator -> Nullable<Integer>,
-        first_publication_unix_time -> Nullable<Integer>,
-        latest_publication_unix_time -> Nullable<Integer>,
+        first_publication_unix_time -> Nullable<BigInt>,
+        latest_publication_unix_time -> Nullable<BigInt>,
         publication_id -> Nullable<Integer>,
     }
 }
@@ -618,11 +618,11 @@ diesel::table! {
         news_id -> Integer,
         title -> Text,
         body -> Text,
-        creation_unix_time -> Integer,
+        creation_unix_time -> BigInt,
         version_number -> Integer,
         account_id_creator -> Nullable<Integer>,
         account_id_editor -> Nullable<Integer>,
-        edit_unix_time -> Nullable<Integer>,
+        edit_unix_time -> Nullable<BigInt>,
     }
 }
 
@@ -638,7 +638,7 @@ diesel::table! {
         receiver_acknowledgement -> Bool,
         receiver_push_notification_sent -> Bool,
         receiver_email_notification_sent -> Bool,
-        message_unix_time -> Integer,
+        message_unix_time -> BigInt,
         message_id -> Integer,
         sender_client_id -> Integer,
         sender_client_local_id -> Integer,
@@ -655,7 +655,7 @@ diesel::table! {
         profile_name -> Nullable<Text>,
         profile_text -> Nullable<Text>,
         age -> Integer,
-        last_seen_unix_time -> Integer,
+        last_seen_unix_time -> BigInt,
     }
 }
 
@@ -752,7 +752,7 @@ diesel::table! {
 
     profile_automatic_profile_search_state (account_id) {
         account_id -> Integer,
-        last_seen_unix_time -> Integer,
+        last_seen_unix_time -> BigInt,
     }
 }
 
@@ -766,7 +766,7 @@ diesel::table! {
         rejected_reason_category -> Nullable<Integer>,
         rejected_reason_details -> Nullable<Text>,
         moderator_account_id -> Nullable<Integer>,
-        created_unix_time -> Integer,
+        created_unix_time -> BigInt,
     }
 }
 
@@ -819,8 +819,8 @@ diesel::table! {
         longitude -> Double,
         profile_sync_version -> SmallInt,
         initial_profile_age -> Nullable<Integer>,
-        initial_profile_age_set_unix_time -> Nullable<Integer>,
-        profile_edited_unix_time -> Integer,
+        initial_profile_age_set_unix_time -> Nullable<BigInt>,
+        profile_edited_unix_time -> BigInt,
     }
 }
 
@@ -831,7 +831,7 @@ diesel::table! {
         account_id -> Integer,
         key_id -> Integer,
         key_data -> Binary,
-        key_added_unix_time -> Integer,
+        key_added_unix_time -> BigInt,
     }
 }
 
@@ -844,7 +844,7 @@ diesel::table! {
         sent_flags -> Integer,
         encryption_key -> Nullable<Text>,
         device_token -> Nullable<Text>,
-        device_token_unix_time -> Nullable<Integer>,
+        device_token_unix_time -> Nullable<BigInt>,
         sync_version -> SmallInt,
     }
 }
@@ -862,7 +862,7 @@ diesel::table! {
         unlimited_likes -> Bool,
         birthdate -> Nullable<Date>,
         is_bot_account -> Bool,
-        initial_setup_completed_unix_time -> Integer,
+        initial_setup_completed_unix_time -> BigInt,
     }
 }
 

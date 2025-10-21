@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS login_session(
     -- Rust HashMap guarantees access token uniqueness, so
     -- UNIQUE constrait is not needed here.
     access_token            TEXT                NOT NULL,
-    access_token_unix_time  INTEGER             NOT NULL,
+    access_token_unix_time  BIGINT              NOT NULL,
     -- 4 or 16 bytes
     access_token_ip_address BLOB                NOT NULL,
     -- Using refresh token requires valid access token, so
@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS shared_state(
     birthdate                 DATE,
     is_bot_account            BOOLEAN              NOT NULL DEFAULT FALSE,
     -- Profile component uses this info for profile filtering.
-    initial_setup_completed_unix_time INTEGER      NOT NULL DEFAULT 0,
+    initial_setup_completed_unix_time BIGINT       NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -123,12 +123,12 @@ CREATE TABLE IF NOT EXISTS common_report(
     -- 3 = chat message
     -- Values from 64 to 127 are reserved for custom reports.
     report_type_number      SMALLINT            NOT NULL,
-    creation_unix_time      INTEGER             NOT NULL,
+    creation_unix_time      BIGINT              NOT NULL,
     moderator_account_id    INTEGER,
     -- 0 = Waiting
     -- 1 = Done
     processing_state        SMALLINT            NOT NULL    DEFAULT 0,
-    processing_state_change_unix_time INTEGER   NOT NULL,
+    processing_state_change_unix_time BIGINT    NOT NULL,
     FOREIGN KEY (creator_account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -173,7 +173,7 @@ CREATE TABLE IF NOT EXISTS push_notification(
     device_token           TEXT                         UNIQUE,
     -- Time when a token is saved. Not currently used for anything.
     -- Firebase docs recommend storing a timestamp with a token.
-    device_token_unix_time INTEGER,
+    device_token_unix_time BIGINT,
     sync_version           SMALLINT            NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
@@ -183,7 +183,7 @@ CREATE TABLE IF NOT EXISTS push_notification(
 
 CREATE TABLE IF NOT EXISTS api_usage_statistics_save_time(
     id           INTEGER PRIMARY KEY               NOT NULL,
-    unix_time    INTEGER                           NOT NULL UNIQUE
+    unix_time    BIGINT                            NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS api_usage_statistics_metric_name(
@@ -216,8 +216,8 @@ CREATE TABLE IF NOT EXISTS ip_address_usage_statistics(
     -- 4 or 16 bytes
     ip_address             BLOB                    NOT NULL,
     usage_count            INTEGER                 NOT NULL,
-    first_usage_unix_time  INTEGER                 NOT NULL,
-    latest_usage_unix_time INTEGER                 NOT NULL,
+    first_usage_unix_time  BIGINT                  NOT NULL,
+    latest_usage_unix_time BIGINT                  NOT NULL,
     PRIMARY KEY (account_id, ip_address),
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
@@ -318,17 +318,17 @@ CREATE TABLE IF NOT EXISTS account_email_sending_state(
 CREATE TABLE IF NOT EXISTS account_state(
     account_id                         INTEGER PRIMARY KEY NOT NULL,
     next_client_id                     INTEGER             NOT NULL DEFAULT 0,
-    account_deletion_request_unix_time INTEGER,
+    account_deletion_request_unix_time BIGINT,
     account_banned_reason_category     INTEGER,
     -- Null or non-empty string
     account_banned_reason_details      TEXT,
     account_banned_admin_account_id    INTEGER,
-    account_banned_until_unix_time     INTEGER,
-    account_banned_state_change_unix_time INTEGER,
+    account_banned_until_unix_time     BIGINT,
+    account_banned_state_change_unix_time BIGINT,
     -- Sync version for news.
     news_sync_version                  SMALLINT            NOT NULL DEFAULT 0,
     unread_news_count                  INTEGER             NOT NULL DEFAULT 0,
-    account_created_unix_time          INTEGER             NOT NULL DEFAULT 0,
+    account_created_unix_time          BIGINT              NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -362,8 +362,8 @@ CREATE TABLE IF NOT EXISTS demo_account_owned_accounts(
 CREATE TABLE IF NOT EXISTS news(
     id                    INTEGER PRIMARY KEY NOT NULL,
     account_id_creator    INTEGER,
-    first_publication_unix_time  INTEGER,
-    latest_publication_unix_time INTEGER,
+    first_publication_unix_time  BIGINT,
+    latest_publication_unix_time BIGINT,
     -- If publication ID exists the news are public.
     publication_id        INTEGER,
     FOREIGN KEY (account_id_creator)
@@ -377,11 +377,11 @@ CREATE TABLE IF NOT EXISTS news_translations(
     news_id               INTEGER             NOT NULL,
     title                 TEXT                NOT NULL,
     body                  TEXT                NOT NULL,
-    creation_unix_time    INTEGER             NOT NULL,
+    creation_unix_time    BIGINT              NOT NULL,
     version_number        INTEGER             NOT NULL DEFAULT 0,
     account_id_creator    INTEGER,
     account_id_editor     INTEGER,
-    edit_unix_time        INTEGER,
+    edit_unix_time        BIGINT,
     PRIMARY KEY (locale, news_id),
     FOREIGN KEY (news_id)
         REFERENCES news (id)
@@ -459,10 +459,10 @@ CREATE TABLE IF NOT EXISTS profile_state(
     profile_sync_version              SMALLINT      NOT NULL    DEFAULT 0,
     -- Profile age when initial setup is completed
     initial_profile_age               INTEGER,
-    initial_profile_age_set_unix_time INTEGER,
+    initial_profile_age_set_unix_time BIGINT,
     -- Edit time for public profile changes. This updates from both
     -- user and admin made changes.
-    profile_edited_unix_time          INTEGER       NOT NULL    DEFAULT 0,
+    profile_edited_unix_time          BIGINT        NOT NULL    DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -480,7 +480,7 @@ CREATE TABLE IF NOT EXISTS profile(
     profile_text    TEXT,
     -- Age in years and inside inclusive range of [18,99].
     age             INTEGER             NOT NULL    DEFAULT 18,
-    last_seen_unix_time  INTEGER        NOT NULL,
+    last_seen_unix_time  BIGINT         NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -547,7 +547,7 @@ CREATE TABLE IF NOT EXISTS favorite_profile(
     -- Account which profile is marked as a favorite.
     favorite_account_id INTEGER               NOT NULL,
     -- Unix timestamp when favorite was added.
-    unix_time           INTEGER               NOT NULL,
+    unix_time           BIGINT                NOT NULL,
     PRIMARY KEY (account_id, favorite_account_id),
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
@@ -633,7 +633,7 @@ CREATE TABLE IF NOT EXISTS profile_automatic_profile_search_settings(
 
 CREATE TABLE IF NOT EXISTS profile_automatic_profile_search_state(
     account_id                         INTEGER PRIMARY KEY NOT NULL,
-    last_seen_unix_time                INTEGER             NOT NULL,
+    last_seen_unix_time                BIGINT              NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -658,7 +658,7 @@ CREATE TABLE IF NOT EXISTS profile_moderation(
     rejected_reason_details  TEXT,
     moderator_account_id     INTEGER,
     -- Created or state reset time
-    created_unix_time        INTEGER            NOT NULL,
+    created_unix_time        BIGINT             NOT NULL,
     PRIMARY KEY (account_id, content_type),
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
@@ -679,7 +679,7 @@ CREATE TABLE IF NOT EXISTS media_state(
     media_content_sync_version          SMALLINT            NOT NULL DEFAULT 0,
     -- Edit time for profile content changes. This updates from both
     -- user and admin made changes.
-    profile_content_edited_unix_time    INTEGER             NOT NULL DEFAULT 0,
+    profile_content_edited_unix_time    BIGINT              NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -754,7 +754,7 @@ CREATE TABLE IF NOT EXISTS media_content(
     content_type_number SMALLINT            NOT NULL,
     -- Numbers from 0 to 6.
     slot_number         SMALLINT            NOT NULL,
-    creation_unix_time  INTEGER             NOT NULL,
+    creation_unix_time  BIGINT              NOT NULL,
     -- Content was uploaded when profile visibility is pending public or
     -- pending private.
     initial_content     BOOLEAN             NOT NULL,
@@ -778,8 +778,8 @@ CREATE TABLE IF NOT EXISTS media_content(
     -- Null or non-empty string
     moderation_rejected_reason_details  TEXT,
     moderation_moderator_account_id     INTEGER,
-    usage_start_unix_time  INTEGER,
-    usage_end_unix_time    INTEGER,
+    usage_start_unix_time  BIGINT,
+    usage_end_unix_time    BIGINT,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -854,7 +854,7 @@ CREATE TABLE IF NOT EXISTS daily_likes_left(
     account_id            INTEGER PRIMARY KEY NOT NULL,
     sync_version          SMALLINT            NOT NULL DEFAULT 0,
     likes_left            INTEGER             NOT NULL DEFAULT 0,
-    latest_limit_reset_unix_time INTEGER,
+    latest_limit_reset_unix_time BIGINT,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -865,7 +865,7 @@ CREATE TABLE IF NOT EXISTS public_key(
     account_id            INTEGER NOT NULL,
     key_id                INTEGER NOT NULL,
     key_data              BLOB    NOT NULL,
-    key_added_unix_time   INTEGER NOT NULL,
+    key_added_unix_time   BIGINT NOT NULL,
     PRIMARY KEY (account_id, key_id),
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
@@ -923,10 +923,10 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     received_like_id                INTEGER,
     received_like_viewed            BOOLEAN NOT NULL DEFAULT FALSE,
     received_like_email_notification_sent BOOLEAN NOT NULL DEFAULT FALSE,
-    received_like_unix_time         INTEGER,
+    received_like_unix_time         BIGINT,
     -- Matches iterator uses match ID to return correct pages.
     match_id                        INTEGER,
-    match_unix_time                 INTEGER,
+    match_unix_time                 BIGINT,
     -- Account specific conversation ID for new message notifications.
     -- Available when accounts are a match.
     conversation_id_sender                  INTEGER,
@@ -966,7 +966,7 @@ CREATE TABLE IF NOT EXISTS pending_messages(
     receiver_push_notification_sent BOOLEAN NOT NULL DEFAULT FALSE,
     -- Email notification for the message.
     receiver_email_notification_sent BOOLEAN NOT NULL DEFAULT FALSE,
-    message_unix_time               INTEGER NOT NULL,
+    message_unix_time               BIGINT NOT NULL,
     -- Conversation specific ID for the message.
     message_id                      INTEGER NOT NULL,
     -- Client ID and client local ID together makes
@@ -994,7 +994,7 @@ CREATE TABLE IF NOT EXISTS chat_report_chat_message(
     report_id                          INTEGER PRIMARY KEY NOT NULL,
     message_sender_account_id_uuid     BLOB                NOT NULL,
     message_receiver_account_id_uuid   BLOB                NOT NULL,
-    message_unix_time                  INTEGER             NOT NULL,
+    message_unix_time                  BIGINT              NOT NULL,
     message_id                         INTEGER             NOT NULL,
     message_symmetric_key              BLOB                NOT NULL,
     client_message_bytes               BLOB                NOT NULL,
@@ -1037,7 +1037,7 @@ CREATE TABLE IF NOT EXISTS chat_global_state(
 
 CREATE TABLE IF NOT EXISTS history_common_statistics_save_time(
     id           INTEGER PRIMARY KEY               NOT NULL,
-    unix_time    INTEGER                           NOT NULL UNIQUE
+    unix_time    BIGINT                            NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS history_performance_statistics_metric_name(
