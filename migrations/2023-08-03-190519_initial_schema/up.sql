@@ -453,8 +453,8 @@ CREATE TABLE IF NOT EXISTS profile_state(
     profile_text_max_characters_filter INTEGER,
     -- Profile iterator setting for random profile order.
     random_profile_order       BOOLEAN              NOT NULL    DEFAULT FALSE,
-    latitude                   DOUBLE               NOT NULL    DEFAULT 0.0,
-    longitude                  DOUBLE               NOT NULL    DEFAULT 0.0,
+    latitude                   DOUBLE PRECISION               NOT NULL    DEFAULT 0.0,
+    longitude                  DOUBLE PRECISION               NOT NULL    DEFAULT 0.0,
     -- Sync version for profile data for this account.
     profile_sync_version              INTEGER       NOT NULL    DEFAULT 0,
     -- Profile age when initial setup is completed
@@ -700,13 +700,13 @@ CREATE TABLE IF NOT EXISTS current_account_media(
     profile_content_id_5         INTEGER,
     -- Image's max square size multipler.
     -- Value 1.0 is the max size and the size of the original image.
-    grid_crop_size       DOUBLE,
+    grid_crop_size       DOUBLE PRECISION,
     -- X coordinate for square top left corner.
     -- Counted from top left corner of the original image.
-    grid_crop_x          DOUBLE,
+    grid_crop_x          DOUBLE PRECISION,
     -- Y coordinate for square top left corner.
     -- Counted from top left corner of the original image.
-    grid_crop_y          DOUBLE,
+    grid_crop_y          DOUBLE PRECISION,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
