@@ -1,7 +1,5 @@
-use diesel::{AsExpression, FromSqlRow, sql_types::BigInt};
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::diesel_i64_wrapper;
 use utoipa::ToSchema;
 
 #[derive(Debug)]
@@ -68,26 +66,26 @@ impl SyncVersionFromClient {
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, ToSchema)]
 /// Sync version stored on the server. The value has range of [0, 255].
 pub struct SyncVersion {
-    version: i64,
+    version: i16,
 }
 
 impl SyncVersion {
-    pub const MAX_VALUE: i64 = u8::MAX as i64;
+    pub const MAX_VALUE: i16 = u8::MAX as i16;
 
-    pub fn new(id: i64) -> Self {
+    pub fn new(id: i16) -> Self {
         Self {
             version: id.clamp(0, Self::MAX_VALUE),
         }
     }
 
-    pub fn as_i64(&self) -> &i64 {
+    pub fn as_i16(&self) -> &i16 {
         &self.version
     }
 
     fn check_is_sync_required(&self, client_value: SyncVersionFromClient) -> SyncCheckResult {
-        if client_value.0 as i64 >= Self::MAX_VALUE {
+        if client_value.0 as i16 >= Self::MAX_VALUE {
             SyncCheckResult::ResetVersionAndSync
-        } else if client_value.0 as i64 == self.version {
+        } else if client_value.0 as i16 == self.version {
             SyncCheckResult::DoNothing
         } else {
             SyncCheckResult::Sync
@@ -153,35 +151,35 @@ macro_rules! sync_version_wrappers {
             )*
             #[derive(
                 Debug,
-                Serialize,
-                Deserialize,
+                serde::Serialize,
+                serde::Deserialize,
                 Default,
                 Clone,
                 Copy,
                 PartialEq,
                 Eq,
                 Hash,
-                ToSchema,
-                FromSqlRow,
-                AsExpression,
+                utoipa::ToSchema,
+                diesel::FromSqlRow,
+                diesel::AsExpression,
             )]
-            #[diesel(sql_type = BigInt)]
+            #[diesel(sql_type = diesel::sql_types::SmallInt)]
             pub struct $name {
                 #[serde(flatten)]
                 version: $crate::SyncVersion
             }
 
             impl $name {
-                pub fn new(id: i64) -> Self {
+                pub fn new(id: i16) -> Self {
                     Self { version: $crate::SyncVersion::new(id) }
                 }
 
-                pub fn as_i64(&self) -> &i64 {
-                    self.version.as_i64()
+                pub fn as_i16(&self) -> &i16 {
+                    self.version.as_i16()
                 }
             }
 
-            diesel_i64_wrapper!($name);
+            simple_backend_model::diesel_i16_wrapper!($name);
 
             impl $crate::SyncVersionUtils for $name {
                 fn sync_version(&self) -> $crate::SyncVersion {

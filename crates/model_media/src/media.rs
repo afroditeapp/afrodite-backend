@@ -1,15 +1,11 @@
-use diesel::{
-    AsExpression, FromSqlRow,
-    prelude::*,
-    sql_types::{BigInt, SmallInt},
-};
+use diesel::{prelude::*, sql_types::SmallInt};
 use model::{
     ContentId, ContentIdDb, ContentSlot, ProfileContentVersion, UnixTime, sync_version_wrappers,
 };
 use model_server_data::{MediaContentType, ProfileContentEditedTime};
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{SimpleDieselEnum, diesel_i64_wrapper};
+use simple_backend_model::SimpleDieselEnum;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::AccountIdDb;

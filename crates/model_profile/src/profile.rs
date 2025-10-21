@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use diesel::{AsExpression, FromSqlRow, prelude::*, sql_types::BigInt};
+use diesel::prelude::*;
 use model::{AttributeId, ProfileAge};
 use model_server_data::{
     LastSeenTime, LastSeenTimeFilter, MaxDistanceKm, MinDistanceKm, ProfileAttributeValue,
@@ -11,7 +11,7 @@ use model_server_data::{
 };
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{NonEmptyString, UnixTime, diesel_i64_wrapper};
+use simple_backend_model::{NonEmptyString, UnixTime};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{AccountId, sync_version_wrappers};

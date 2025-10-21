@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS shared_state(
     -- Version number which only account server increments.
     -- Used in receiving end to avoid saving old state in case of
     -- concurrent updates.
-    sync_version              INTEGER              NOT NULL DEFAULT 0,
+    sync_version              SMALLINT             NOT NULL DEFAULT 0,
     unlimited_likes           BOOLEAN              NOT NULL DEFAULT FALSE,
     -- Birthdate has YYYY-MM-DD format. This is in shared state if
     -- birthdate validation using third party service is implemented
@@ -147,7 +147,7 @@ CREATE TABLE IF NOT EXISTS common_report(
 CREATE TABLE IF NOT EXISTS common_state(
     account_id                    INTEGER PRIMARY KEY NOT NULL,
     -- Sync version for client config.
-    client_config_sync_version    INTEGER             NOT NULL DEFAULT 0,
+    client_config_sync_version    SMALLINT            NOT NULL DEFAULT 0,
     -- 0 = Android
     -- 1 = iOS
     -- 2 = Web
@@ -174,7 +174,7 @@ CREATE TABLE IF NOT EXISTS push_notification(
     -- Time when a token is saved. Not currently used for anything.
     -- Firebase docs recommend storing a timestamp with a token.
     device_token_unix_time INTEGER,
-    sync_version           INTEGER             NOT NULL DEFAULT 0,
+    sync_version           SMALLINT            NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -326,7 +326,7 @@ CREATE TABLE IF NOT EXISTS account_state(
     account_banned_until_unix_time     INTEGER,
     account_banned_state_change_unix_time INTEGER,
     -- Sync version for news.
-    news_sync_version                  INTEGER             NOT NULL DEFAULT 0,
+    news_sync_version                  SMALLINT            NOT NULL DEFAULT 0,
     unread_news_count                  INTEGER             NOT NULL DEFAULT 0,
     account_created_unix_time          INTEGER             NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
@@ -456,7 +456,7 @@ CREATE TABLE IF NOT EXISTS profile_state(
     latitude                   DOUBLE PRECISION               NOT NULL    DEFAULT 0.0,
     longitude                  DOUBLE PRECISION               NOT NULL    DEFAULT 0.0,
     -- Sync version for profile data for this account.
-    profile_sync_version              INTEGER       NOT NULL    DEFAULT 0,
+    profile_sync_version              SMALLINT      NOT NULL    DEFAULT 0,
     -- Profile age when initial setup is completed
     initial_profile_age               INTEGER,
     initial_profile_age_set_unix_time INTEGER,
@@ -676,7 +676,7 @@ CREATE TABLE IF NOT EXISTS profile_moderation(
 CREATE TABLE IF NOT EXISTS media_state(
     account_id                          INTEGER PRIMARY KEY NOT NULL,
     -- Sync version for profile and security content data for this account.
-    media_content_sync_version          INTEGER             NOT NULL DEFAULT 0,
+    media_content_sync_version          SMALLINT            NOT NULL DEFAULT 0,
     -- Edit time for profile content changes. This updates from both
     -- user and admin made changes.
     profile_content_edited_unix_time    INTEGER             NOT NULL DEFAULT 0,
@@ -839,7 +839,7 @@ CREATE TABLE IF NOT EXISTS media_app_notification_state(
 -- State specific to chat component.
 CREATE TABLE IF NOT EXISTS chat_state(
     account_id              INTEGER PRIMARY KEY NOT NULL,
-    received_likes_sync_version  INTEGER        NOT NULL DEFAULT 0,
+    received_likes_sync_version  SMALLINT       NOT NULL DEFAULT 0,
     new_received_likes_count     INTEGER        NOT NULL DEFAULT 0,
     next_received_like_id        INTEGER        NOT NULL DEFAULT 0,
     max_public_key_count         INTEGER        NOT NULL DEFAULT 0,
@@ -852,7 +852,7 @@ CREATE TABLE IF NOT EXISTS chat_state(
 
 CREATE TABLE IF NOT EXISTS daily_likes_left(
     account_id            INTEGER PRIMARY KEY NOT NULL,
-    sync_version          INTEGER             NOT NULL DEFAULT 0,
+    sync_version          SMALLINT            NOT NULL DEFAULT 0,
     likes_left            INTEGER             NOT NULL DEFAULT 0,
     latest_limit_reset_unix_time INTEGER,
     FOREIGN KEY (account_id)

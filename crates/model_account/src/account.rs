@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use diesel::prelude::*;
-use model::{ClientType, ClientVersion, UnixTime};
+use model::{ClientType, ClientVersion, NewsSyncVersion, UnixTime};
 use model_server_data::{
     AppleAccountId, AuthPair, EmailAddress, GoogleAccountId, PublicationId, SignInWithInfo,
 };
@@ -233,7 +233,7 @@ pub struct AccountStateTableRaw {
     account_banned_reason_details: Option<AccountBanReasonDetails>,
     account_banned_until_unix_time: Option<UnixTime>,
     account_banned_state_change_unix_time: Option<UnixTime>,
-    news_sync_version: i64,
+    news_sync_version: NewsSyncVersion,
     unread_news_count: i64,
     account_created_unix_time: UnixTime,
 }

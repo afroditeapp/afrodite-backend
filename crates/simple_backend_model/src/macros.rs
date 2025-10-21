@@ -252,6 +252,69 @@ macro_rules! diesel_i64_wrapper {
 
 pub(crate) use diesel_i64_wrapper;
 
+/// Type must have new() and as_i16() methods.
+/// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
+///
+/// ```
+/// use diesel::sql_types::SmallInt;
+/// use simple_backend_model::diesel_i16_wrapper;
+///
+/// #[derive(
+///     Debug,
+///     Clone,
+///     Copy,
+///     diesel::FromSqlRow,
+///     diesel::AsExpression,
+/// )]
+/// #[diesel(sql_type = SmallInt)]
+/// pub struct SmallNumberWrapper {
+///     number: i16,
+/// }
+///
+/// impl SmallNumberWrapper {
+///     pub fn new(number: i16) -> Self {
+///         Self { number }
+///     }
+///
+///     pub fn as_i16(&self) -> &i16 {
+///        &self.number
+///     }
+/// }
+///
+/// diesel_i16_wrapper!(SmallNumberWrapper);
+///
+/// ```
+#[macro_export]
+macro_rules! diesel_i16_wrapper {
+    ($name:ty) => {
+        impl<DB: diesel::backend::Backend>
+            diesel::deserialize::FromSql<diesel::sql_types::SmallInt, DB> for $name
+        where
+            i16: diesel::deserialize::FromSql<diesel::sql_types::SmallInt, DB>,
+        {
+            fn from_sql(
+                value: <DB as diesel::backend::Backend>::RawValue<'_>,
+            ) -> diesel::deserialize::Result<Self> {
+                let value = i16::from_sql(value)?;
+                Ok(<$name>::new(value))
+            }
+        }
+
+        impl<DB: diesel::backend::Backend> diesel::serialize::ToSql<diesel::sql_types::SmallInt, DB>
+            for $name
+        where
+            i16: diesel::serialize::ToSql<diesel::sql_types::SmallInt, DB>,
+        {
+            fn to_sql<'b>(
+                &'b self,
+                out: &mut diesel::serialize::Output<'b, '_, DB>,
+            ) -> diesel::serialize::Result {
+                self.as_i16().to_sql(out)
+            }
+        }
+    };
+}
+
 /// The struct needs to have `TryFrom<i64>` and `Into<i64>` implementations.
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
 ///

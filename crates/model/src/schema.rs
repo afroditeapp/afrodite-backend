@@ -143,7 +143,7 @@ diesel::table! {
         account_banned_admin_account_id -> Nullable<Integer>,
         account_banned_until_unix_time -> Nullable<Integer>,
         account_banned_state_change_unix_time -> Nullable<Integer>,
-        news_sync_version -> Integer,
+        news_sync_version -> SmallInt,
         unread_news_count -> Integer,
         account_created_unix_time -> Integer,
     }
@@ -255,7 +255,7 @@ diesel::table! {
 
     chat_state (account_id) {
         account_id -> Integer,
-        received_likes_sync_version -> Integer,
+        received_likes_sync_version -> SmallInt,
         new_received_likes_count -> Integer,
         next_received_like_id -> Integer,
         max_public_key_count -> Integer,
@@ -292,7 +292,7 @@ diesel::table! {
 
     common_state (account_id) {
         account_id -> Integer,
-        client_config_sync_version -> Integer,
+        client_config_sync_version -> SmallInt,
         client_login_session_platform -> Nullable<SmallInt>,
         client_language -> Nullable<Text>,
     }
@@ -331,7 +331,7 @@ diesel::table! {
 
     daily_likes_left (account_id) {
         account_id -> Integer,
-        sync_version -> Integer,
+        sync_version -> SmallInt,
         likes_left -> Integer,
         latest_limit_reset_unix_time -> Nullable<Integer>,
     }
@@ -593,7 +593,7 @@ diesel::table! {
 
     media_state (account_id) {
         account_id -> Integer,
-        media_content_sync_version -> Integer,
+        media_content_sync_version -> SmallInt,
         profile_content_edited_unix_time -> Integer,
     }
 }
@@ -817,7 +817,7 @@ diesel::table! {
         random_profile_order -> Bool,
         latitude -> Double,
         longitude -> Double,
-        profile_sync_version -> Integer,
+        profile_sync_version -> SmallInt,
         initial_profile_age -> Nullable<Integer>,
         initial_profile_age_set_unix_time -> Nullable<Integer>,
         profile_edited_unix_time -> Integer,
@@ -845,7 +845,7 @@ diesel::table! {
         encryption_key -> Nullable<Text>,
         device_token -> Nullable<Text>,
         device_token_unix_time -> Nullable<Integer>,
-        sync_version -> Integer,
+        sync_version -> SmallInt,
     }
 }
 
@@ -858,7 +858,7 @@ diesel::table! {
         account_state_banned -> Bool,
         account_state_pending_deletion -> Bool,
         profile_visibility_state_number -> SmallInt,
-        sync_version -> Integer,
+        sync_version -> SmallInt,
         unlimited_likes -> Bool,
         birthdate -> Nullable<Date>,
         is_bot_account -> Bool,
