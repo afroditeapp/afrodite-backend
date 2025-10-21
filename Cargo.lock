@@ -5457,6 +5457,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "simple_diesel_enum_macro"
+version = "0.0.0"
+dependencies = [
+ "diesel",
+ "num_enum",
+ "quote",
+ "syn 2.0.106",
+]
+
+[[package]]
 name = "slab"
 version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"

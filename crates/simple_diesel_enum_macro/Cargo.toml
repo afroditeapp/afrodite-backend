@@ -1,0 +1,15 @@
+[package]
+name = "simple_diesel_enum_macro"
+version = "0.0.0"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { workspace = true }
+quote = { workspace = true }
+
+[dev-dependencies]
+diesel = { workspace = true }
+num_enum = { workspace = true }
