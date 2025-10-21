@@ -2,6 +2,13 @@
 
 ---------- Tables for server component common ----------
 
+-- All used account IDs. Account ID is not removed from here
+-- when account data is removed.
+CREATE TABLE IF NOT EXISTS used_account_ids(
+    id         INTEGER PRIMARY KEY               NOT NULL,
+    uuid       BLOB                              NOT NULL UNIQUE
+);
+
 -- Account IDs for currently existing accounts
 CREATE TABLE IF NOT EXISTS account_id(
     id    INTEGER PRIMARY KEY               NOT NULL,
@@ -14,13 +21,6 @@ CREATE TABLE IF NOT EXISTS account_id(
         REFERENCES used_account_ids (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
-);
-
--- All used account IDs. Account ID is not removed from here
--- when account data is removed.
-CREATE TABLE IF NOT EXISTS used_account_ids(
-    id         INTEGER PRIMARY KEY               NOT NULL,
-    uuid       BLOB                              NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS login_session(
