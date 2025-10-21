@@ -111,9 +111,11 @@ validate-openapi:
 migrations-run:
 	mkdir -p database/sqlite/current
 	DATABASE_URL="database/sqlite/current/current.db" diesel migration run
+	rustfmt +nightly crates/model/src/schema.rs
 reset-database:
 	mkdir -p database/sqlite/current
 	DATABASE_URL="database/sqlite/current/current.db" diesel database reset
+	rustfmt +nightly crates/model/src/schema.rs
 
 profile-build:
 	RUSTC_BOOTSTRAP=1 RUSTFLAGS=-Zself-profile=target/profile-build cargo build --bin afrodite-backend
