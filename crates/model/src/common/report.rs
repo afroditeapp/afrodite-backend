@@ -1,4 +1,8 @@
-use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
+use diesel::{
+    deserialize::FromSqlRow,
+    expression::AsExpression,
+    sql_types::{BigInt, SmallInt},
+};
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{SimpleDieselEnum, diesel_i64_struct_try_from, diesel_i64_wrapper};
@@ -169,8 +173,8 @@ impl ReportTypeNumber {
     diesel::FromSqlRow,
     diesel::AsExpression,
 )]
-#[diesel(sql_type = Integer)]
-#[repr(i64)]
+#[diesel(sql_type = SmallInt)]
+#[repr(i16)]
 pub enum ReportProcessingState {
     Waiting = 0,
     Done = 1,

@@ -1,4 +1,7 @@
-use diesel::{AsExpression, FromSqlRow, sql_types::Binary};
+use diesel::{
+    AsExpression, FromSqlRow,
+    sql_types::{Binary, SmallInt},
+};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{SimpleDieselEnum, diesel_i64_wrapper, diesel_uuid_wrapper};
 use utoipa::{IntoParams, ToSchema};
@@ -126,8 +129,8 @@ impl ContentIdInternal {
     diesel::AsExpression,
     num_enum::TryFromPrimitive,
 )]
-#[diesel(sql_type = Integer)]
-#[repr(i64)]
+#[diesel(sql_type = SmallInt)]
+#[repr(i16)]
 pub enum ContentSlot {
     Content0 = 0,
     Content1 = 1,

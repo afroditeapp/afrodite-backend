@@ -8,8 +8,8 @@ use error_stack::{Result, ResultExt};
 use model_profile::{
     AccountIdInternal, AttributeId, GetMyProfileResult, GetProfileFilters, InitialProfileAge,
     LastSeenTime, LastSeenUnixTime, Location, Profile, ProfileAge, ProfileAttributeFilterValue,
-    ProfileAttributeValue, ProfileInternal, ProfileStateInternal,
-    ProfileStringModerationContentType, UnixTime,
+    ProfileAttributeValue, ProfileInternal, ProfileNameModerationState, ProfileStateInternal,
+    ProfileStringModerationContentType, ProfileTextModerationState, UnixTime,
 };
 
 use crate::current::read::GetDbReadCommandsProfile;
@@ -77,10 +77,10 @@ impl CurrentReadProfileData<'_> {
             profile,
             profile_name_moderation_state
                 .as_ref()
-                .map(|v| v.state.into()),
+                .map(|v| ProfileNameModerationState(v.state)),
             profile_text_moderation_state
                 .as_ref()
-                .map(|v| v.state.into()),
+                .map(|v| ProfileTextModerationState(v.state)),
             attributes,
             other_shared_state.unlimited_likes,
         );

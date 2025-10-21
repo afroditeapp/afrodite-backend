@@ -1,4 +1,8 @@
-use diesel::{AsExpression, FromSqlRow, prelude::*, sql_types::BigInt};
+use diesel::{
+    AsExpression, FromSqlRow,
+    prelude::*,
+    sql_types::{BigInt, SmallInt},
+};
 use model::{
     ContentId, ContentIdDb, ContentSlot, ProfileContentVersion, UnixTime, sync_version_wrappers,
 };
@@ -8,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::{SimpleDieselEnum, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{AccountIdDb, schema_sqlite_types::Integer};
+use crate::AccountIdDb;
 
 mod map;
 pub use map::*;
@@ -132,8 +136,8 @@ pub struct ContentInfoDetailed {
     diesel::FromSqlRow,
     diesel::AsExpression,
 )]
-#[diesel(sql_type = Integer)]
-#[repr(i64)]
+#[diesel(sql_type = SmallInt)]
+#[repr(i16)]
 pub enum ContentModerationState {
     InSlot = 0,
     /// InModeration

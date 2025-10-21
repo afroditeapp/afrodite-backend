@@ -23,6 +23,7 @@ impl CurrentReadProfileModeration<'_> {
             .first(self.conn())
             .optional()
             .change_context(DieselDatabaseError::Execute)
+            .map(|v| v.map(ProfileNameModerationState))
     }
 
     pub fn profile_text_moderation_state(
@@ -38,6 +39,7 @@ impl CurrentReadProfileModeration<'_> {
             .first(self.conn())
             .optional()
             .change_context(DieselDatabaseError::Execute)
+            .map(|v| v.map(ProfileTextModerationState))
     }
 
     pub fn profile_moderation_info(

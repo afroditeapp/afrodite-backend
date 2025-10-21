@@ -1,4 +1,4 @@
-use model::schema_sqlite_types::Integer;
+use diesel::sql_types::SmallInt;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::SimpleDieselEnum;
 use utoipa::{IntoParams, ToSchema};
@@ -18,10 +18,11 @@ pub use profile_content::*;
     SimpleDieselEnum,
     diesel::FromSqlRow,
     diesel::AsExpression,
+    num_enum::TryFromPrimitive,
     ToSchema,
 )]
-#[diesel(sql_type = Integer)]
-#[repr(i64)]
+#[diesel(sql_type = SmallInt)]
+#[repr(i16)]
 pub enum MediaContentType {
     JpegImage = 0,
 }
@@ -31,18 +32,6 @@ impl MediaContentType {
         match self {
             Self::JpegImage => "jpg",
         }
-    }
-}
-
-impl TryFrom<i64> for MediaContentType {
-    type Error = String;
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
-        let value = match value {
-            0 => Self::JpegImage,
-            _ => return Err(format!("Unknown media content type {value}")),
-        };
-
-        Ok(value)
     }
 }
 

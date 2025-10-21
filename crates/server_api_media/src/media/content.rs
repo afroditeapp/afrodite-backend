@@ -266,7 +266,7 @@ pub async fn put_content_to_content_slot(
 ) -> Result<Json<ContentProcessingId>, StatusCode> {
     MEDIA.put_content_to_content_slot.incr();
 
-    let slot = TryInto::<ContentSlot>::try_into(slot_number.slot_id as i64)
+    let slot = TryInto::<ContentSlot>::try_into(slot_number.slot_id as i16)
         .map_err(|_| StatusCode::NOT_ACCEPTABLE)?;
 
     let count = state
@@ -324,7 +324,7 @@ pub async fn get_content_slot_state(
 ) -> Result<Json<ContentProcessingState>, StatusCode> {
     MEDIA.get_content_slot_state.incr();
 
-    let slot = TryInto::<ContentSlot>::try_into(slot_number.slot_id as i64)
+    let slot = TryInto::<ContentSlot>::try_into(slot_number.slot_id as i16)
         .map_err(|_| StatusCode::NOT_ACCEPTABLE)?;
 
     if let Some(state) = state.content_processing().get_state(account_id, slot).await {

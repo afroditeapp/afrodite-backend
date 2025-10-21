@@ -1,8 +1,8 @@
-use diesel::prelude::*;
+use diesel::{prelude::*, sql_types::SmallInt};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::SimpleDieselEnum;
 
-use crate::{EmailMessages, EnumParsingError, schema_sqlite_types::Integer};
+use crate::EmailMessages;
 
 #[derive(
     Debug,
@@ -15,9 +15,10 @@ use crate::{EmailMessages, EnumParsingError, schema_sqlite_types::Integer};
     SimpleDieselEnum,
     diesel::FromSqlRow,
     diesel::AsExpression,
+    num_enum::TryFromPrimitive,
 )]
-#[diesel(sql_type = Integer)]
-#[repr(i64)]
+#[diesel(sql_type = SmallInt)]
+#[repr(i16)]
 pub enum EmailSendingState {
     /// Backend has not yet tried to send the email.
     NotSent = 0,
@@ -25,20 +26,6 @@ pub enum EmailSendingState {
     SendRequested = 1,
     /// SMTP server returned a positive response.
     SentSuccessfully = 2,
-}
-
-impl TryFrom<i64> for EmailSendingState {
-    type Error = EnumParsingError;
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
-        let value = match value {
-            0 => Self::NotSent,
-            1 => Self::SendRequested,
-            2 => Self::SentSuccessfully,
-            _ => return Err(EnumParsingError::ParsingError(value)),
-        };
-
-        Ok(value)
-    }
 }
 
 impl Default for EmailSendingState {

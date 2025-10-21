@@ -35,12 +35,6 @@ pub mod schema_sqlite_types;
 
 pub type Db = diesel::sqlite::Sqlite;
 
-#[derive(thiserror::Error, Debug)]
-pub enum EnumParsingError {
-    #[error("ParsingFailed, value: {0}")]
-    ParsingError(i64),
-}
-
 #[derive(Debug, Clone, Copy, Default)]
 pub struct NextNumberStorage {
     next: i64,

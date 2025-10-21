@@ -12,6 +12,7 @@ utoipa = { workspace = true }
 diesel = { workspace = true }
 
 chrono = { workspace = true }
+num_enum = { workspace = true }
 
 utils = { path = "../utils" }
 model = { path = "../model" }

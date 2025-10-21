@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS shared_state(
     -- pending public = 1
     -- private = 2
     -- public = 3
-    profile_visibility_state_number INTEGER NOT NULL DEFAULT 0,
+    profile_visibility_state_number SMALLINT NOT NULL DEFAULT 0,
     -- Version number which only account server increments.
     -- Used in receiving end to avoid saving old state in case of
     -- concurrent updates.
@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS common_report(
     moderator_account_id    INTEGER,
     -- 0 = Waiting
     -- 1 = Done
-    processing_state        INTEGER             NOT NULL    DEFAULT 0,
+    processing_state        SMALLINT            NOT NULL    DEFAULT 0,
     processing_state_change_unix_time INTEGER   NOT NULL,
     FOREIGN KEY (creator_account_id)
         REFERENCES account_id (id)
@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS common_state(
     -- 0 = Android
     -- 1 = iOS
     -- 2 = Web
-    client_login_session_platform INTEGER,
+    client_login_session_platform SMALLINT,
     -- Null or non-empty string
     client_language               TEXT,
     FOREIGN KEY (account_id)
@@ -305,9 +305,9 @@ CREATE TABLE IF NOT EXISTS account_setup(
 -- 2 - Sent successfully
 CREATE TABLE IF NOT EXISTS account_email_sending_state(
     account_id                      INTEGER PRIMARY KEY NOT NULL,
-    account_registered_state_number INTEGER             NOT NULL DEFAULT 0,
-    new_message_state_number        INTEGER             NOT NULL DEFAULT 0,
-    new_like_state_number           INTEGER             NOT NULL DEFAULT 0,
+    account_registered_state_number SMALLINT            NOT NULL DEFAULT 0,
+    new_message_state_number        SMALLINT            NOT NULL DEFAULT 0,
+    new_like_state_number           SMALLINT            NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -644,7 +644,7 @@ CREATE TABLE IF NOT EXISTS profile_moderation(
     account_id              INTEGER             NOT NULL,
     -- 0 = ProfileName
     -- 1 = ProfileText
-    content_type            INTEGER             NOT NULL,
+    content_type            SMALLINT            NOT NULL,
     -- 0 = WaitingBotOrHumanModeration
     -- 1 = WaitingHumanModeration
     -- 2 = AcceptedByBot
@@ -652,7 +652,7 @@ CREATE TABLE IF NOT EXISTS profile_moderation(
     -- 4 = AcceptedByAllowlist
     -- 5 = RejectedByBot
     -- 6 = RejectedByHuman
-    state_type               INTEGER            NOT NULL,
+    state_type               SMALLINT           NOT NULL,
     rejected_reason_category INTEGER,
     -- Null or non-empty string
     rejected_reason_details  TEXT,
@@ -751,9 +751,9 @@ CREATE TABLE IF NOT EXISTS media_content(
     -- Face was detected from the content
     face_detected       BOOLEAN             NOT NULL,
     -- JpegImage = 0, Jpeg image
-    content_type_number INTEGER             NOT NULL,
+    content_type_number SMALLINT            NOT NULL,
     -- Numbers from 0 to 6.
-    slot_number         INTEGER             NOT NULL,
+    slot_number         SMALLINT            NOT NULL,
     creation_unix_time  INTEGER             NOT NULL,
     -- Content was uploaded when profile visibility is pending public or
     -- pending private.
@@ -773,7 +773,7 @@ CREATE TABLE IF NOT EXISTS media_content(
     -- 4 = AcceptedByHuman (ModeratedAsAccepted)
     -- 5 = RejectedByBot (ModeratedAsRejected)
     -- 6 = RejectedByHuman (ModeratedAsRejected)
-    moderation_state     INTEGER             NOT NULL    DEFAULT 0,
+    moderation_state     SMALLINT            NOT NULL    DEFAULT 0,
     moderation_rejected_reason_category INTEGER,
     -- Null or non-empty string
     moderation_rejected_reason_details  TEXT,
@@ -901,7 +901,7 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     -- 0 = no interaction
     -- 1 = like
     -- 2 = match
-    state_number                    INTEGER NOT NULL DEFAULT 0,
+    state_number                    SMALLINT NOT NULL DEFAULT 0,
     -- The account which sent a like.
     account_id_sender               INTEGER,
     -- The account which received a like.

@@ -1,12 +1,14 @@
-use diesel::{deserialize::FromSqlRow, expression::AsExpression, prelude::*, sql_types::BigInt};
+use diesel::{
+    deserialize::FromSqlRow,
+    expression::AsExpression,
+    prelude::*,
+    sql_types::{BigInt, SmallInt},
+};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{NonEmptyString, SimpleDieselEnum, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{
-    AccountId, AccountStateRelatedSharedState, AccountSyncVersion, ProfileAge,
-    schema_sqlite_types::Integer,
-};
+use crate::{AccountId, AccountStateRelatedSharedState, AccountSyncVersion, ProfileAge};
 
 mod news;
 pub use news::*;
@@ -217,8 +219,10 @@ impl Permissions {
     SimpleDieselEnum,
     diesel::FromSqlRow,
     diesel::AsExpression,
+    num_enum::TryFromPrimitive,
 )]
-#[diesel(sql_type = Integer)]
+#[diesel(sql_type = SmallInt)]
+#[repr(i16)]
 pub enum ProfileVisibility {
     /// Profile is currently private and its visibility is not
     /// changed when initial moderation request will be moderated as accepted.
@@ -253,20 +257,6 @@ impl ProfileVisibility {
             Self::Public | Self::Private => *self = Self::Private,
             Self::PendingPublic | Self::PendingPrivate => *self = Self::PendingPrivate,
         };
-    }
-}
-
-impl TryFrom<i64> for ProfileVisibility {
-    type Error = String;
-
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Self::PendingPrivate),
-            1 => Ok(Self::PendingPublic),
-            2 => Ok(Self::Private),
-            3 => Ok(Self::Public),
-            _ => Err(format!("Unknown visibility number: {value}")),
-        }
     }
 }
 

@@ -252,7 +252,7 @@ impl CurrentWriteMediaContent<'_> {
             media_content
                 .filter(account_id.eq(request_creator.as_db_id()))
                 .filter(moderation_state.eq(ContentModerationState::InSlot))
-                .filter(slot_number.eq(slot as i64)),
+                .filter(slot_number.eq(slot as i16)),
         )
         .execute(self.conn())
         .into_db_error((request_creator, slot))?;

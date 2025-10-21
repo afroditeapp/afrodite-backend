@@ -1,4 +1,9 @@
-use diesel::{deserialize::FromSqlRow, expression::AsExpression, prelude::*, sql_types::BigInt};
+use diesel::{
+    deserialize::FromSqlRow,
+    expression::AsExpression,
+    prelude::*,
+    sql_types::{BigInt, SmallInt},
+};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{SimpleDieselEnum, UnixTime, diesel_i64_wrapper};
 use utoipa::ToSchema;
@@ -39,16 +44,12 @@ diesel_i64_wrapper!(MessageId);
 
 #[derive(Debug, Clone, Copy)]
 pub enum AccountInteractionStateError {
-    WrongStateNumber(i64),
     Transition {
         from: AccountInteractionState,
         to: AccountInteractionState,
     },
 }
 impl AccountInteractionStateError {
-    pub fn wrong_state_number(number: i64) -> Self {
-        Self::WrongStateNumber(number)
-    }
     pub fn transition(from: AccountInteractionState, to: AccountInteractionState) -> Self {
         Self::Transition { from, to }
     }
@@ -56,9 +57,6 @@ impl AccountInteractionStateError {
 impl std::fmt::Display for AccountInteractionStateError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            AccountInteractionStateError::WrongStateNumber(number) => {
-                write!(f, "Wrong state number: {number}")
-            }
             AccountInteractionStateError::Transition { from, to } => {
                 write!(f, "State transition from {from:?} to {to:?} is not allowed")
             }
@@ -82,25 +80,14 @@ impl std::error::Error for AccountInteractionStateError {}
     SimpleDieselEnum,
     diesel::FromSqlRow,
     diesel::AsExpression,
+    num_enum::TryFromPrimitive,
 )]
-#[diesel(sql_type = BigInt)]
+#[diesel(sql_type = SmallInt)]
+#[repr(i16)]
 pub enum AccountInteractionState {
     Empty = 0,
     Like = 1,
     Match = 2,
-}
-
-impl TryFrom<i64> for AccountInteractionState {
-    type Error = AccountInteractionStateError;
-
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Self::Empty),
-            1 => Ok(Self::Like),
-            2 => Ok(Self::Match),
-            _ => Err(AccountInteractionStateError::WrongStateNumber(value)),
-        }
-    }
 }
 
 #[derive(

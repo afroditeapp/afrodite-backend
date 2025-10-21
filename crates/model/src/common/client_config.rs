@@ -1,14 +1,11 @@
-use diesel::sql_types::Text;
+use diesel::sql_types::{SmallInt, Text};
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{NonEmptyString, SimpleDieselEnum, diesel_non_empty_string_wrapper};
 use utoipa::ToSchema;
 
 use super::ClientConfigSyncVersion;
-use crate::{
-    ClientFeaturesConfigHash, CustomReportsConfigHash, PartialProfileAttributesConfig,
-    schema_sqlite_types::Integer,
-};
+use crate::{ClientFeaturesConfigHash, CustomReportsConfigHash, PartialProfileAttributesConfig};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ClientConfig {
@@ -37,8 +34,8 @@ pub struct ClientConfig {
     diesel::FromSqlRow,
     diesel::AsExpression,
 )]
-#[diesel(sql_type = Integer)]
-#[repr(i64)]
+#[diesel(sql_type = SmallInt)]
+#[repr(i16)]
 pub enum ClientType {
     Android = 0,
     Ios = 1,

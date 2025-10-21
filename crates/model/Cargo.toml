@@ -19,8 +19,6 @@ num_enum = { workspace = true }
 toml = { workspace = true }
 regex = { workspace = true }
 
-thiserror = { workspace = true }
-
 utils = { path = "../utils" }
 
 simple_backend_model = { path = "../simple_backend_model"}

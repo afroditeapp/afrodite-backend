@@ -23,9 +23,9 @@ diesel::table! {
 
     account_email_sending_state (account_id) {
         account_id -> Integer,
-        account_registered_state_number -> Integer,
-        new_message_state_number -> Integer,
-        new_like_state_number -> Integer,
+        account_registered_state_number -> SmallInt,
+        new_message_state_number -> SmallInt,
+        new_like_state_number -> SmallInt,
     }
 }
 
@@ -53,7 +53,7 @@ diesel::table! {
 
     account_interaction (id) {
         id -> Integer,
-        state_number -> Integer,
+        state_number -> SmallInt,
         account_id_sender -> Nullable<Integer>,
         account_id_receiver -> Nullable<Integer>,
         account_id_block_sender -> Nullable<Integer>,
@@ -282,7 +282,7 @@ diesel::table! {
         report_type_number -> Integer,
         creation_unix_time -> Integer,
         moderator_account_id -> Nullable<Integer>,
-        processing_state -> Integer,
+        processing_state -> SmallInt,
         processing_state_change_unix_time -> Integer,
     }
 }
@@ -293,7 +293,7 @@ diesel::table! {
     common_state (account_id) {
         account_id -> Integer,
         client_config_sync_version -> Integer,
-        client_login_session_platform -> Nullable<Integer>,
+        client_login_session_platform -> Nullable<SmallInt>,
         client_language -> Nullable<Text>,
     }
 }
@@ -566,11 +566,11 @@ diesel::table! {
         account_id -> Integer,
         secure_capture -> Bool,
         face_detected -> Bool,
-        content_type_number -> Integer,
-        slot_number -> Integer,
+        content_type_number -> SmallInt,
+        slot_number -> SmallInt,
         creation_unix_time -> Integer,
         initial_content -> Bool,
-        moderation_state -> Integer,
+        moderation_state -> SmallInt,
         moderation_rejected_reason_category -> Nullable<Integer>,
         moderation_rejected_reason_details -> Nullable<Text>,
         moderation_moderator_account_id -> Nullable<Integer>,
@@ -761,8 +761,8 @@ diesel::table! {
 
     profile_moderation (account_id, content_type) {
         account_id -> Integer,
-        content_type -> Integer,
-        state_type -> Integer,
+        content_type -> SmallInt,
+        state_type -> SmallInt,
         rejected_reason_category -> Nullable<Integer>,
         rejected_reason_details -> Nullable<Text>,
         moderator_account_id -> Nullable<Integer>,
@@ -857,7 +857,7 @@ diesel::table! {
         account_state_initial_setup_completed -> Bool,
         account_state_banned -> Bool,
         account_state_pending_deletion -> Bool,
-        profile_visibility_state_number -> Integer,
+        profile_visibility_state_number -> SmallInt,
         sync_version -> Integer,
         unlimited_likes -> Bool,
         birthdate -> Nullable<Date>,

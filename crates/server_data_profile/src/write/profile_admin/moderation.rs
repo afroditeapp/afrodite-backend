@@ -1,8 +1,9 @@
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
-    AccountIdInternal, ProfileModificationMetadata, ProfileStringModerationContentType,
-    ProfileStringModerationRejectedReasonCategory, ProfileStringModerationRejectedReasonDetails,
-    ProfileStringModerationState,
+    AccountIdInternal, ProfileModificationMetadata, ProfileNameModerationState,
+    ProfileStringModerationContentType, ProfileStringModerationRejectedReasonCategory,
+    ProfileStringModerationRejectedReasonDetails, ProfileStringModerationState,
+    ProfileTextModerationState,
 };
 use server_data::{
     DataError, IntoDataError,
@@ -95,12 +96,14 @@ impl WriteCommandsProfileAdminModeration<'_> {
 
         self.write_cache_profile(string_owner_id.as_id(), |p| {
             match content_type {
-                ProfileStringModerationContentType::ProfileName => {
-                    p.update_profile_name_moderation_state(Some(new_state.into()))
-                }
-                ProfileStringModerationContentType::ProfileText => {
-                    p.update_profile_text_moderation_state(Some(new_state.into()))
-                }
+                ProfileStringModerationContentType::ProfileName => p
+                    .update_profile_name_moderation_state(Some(ProfileNameModerationState(
+                        new_state,
+                    ))),
+                ProfileStringModerationContentType::ProfileText => p
+                    .update_profile_text_moderation_state(Some(ProfileTextModerationState(
+                        new_state,
+                    ))),
             };
             p.update_profile_version_uuid(modification.version);
             p.state.profile_edited_time = modification.time;

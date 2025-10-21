@@ -23,7 +23,7 @@ pub fn simple_diesel_enum_derive(input: TokenStream) -> TokenStream {
         let ident = &variant.ident;
         if let Some((_, expr)) = &variant.discriminant {
             if let Expr::Lit(ExprLit { lit: Lit::Int(lit_int), .. }) = expr {
-                let value: i64 = lit_int.base10_parse().expect("Discriminant must be a valid i64");
+                let value: i16 = lit_int.base10_parse().expect("Discriminant must be a valid i16");
                 to_sql_arms.push(quote! {
                     #name::#ident => #value.to_sql(out),
                 });
@@ -37,22 +37,22 @@ pub fn simple_diesel_enum_derive(input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         impl<DB: diesel::backend::Backend>
-            diesel::deserialize::FromSql<diesel::sql_types::BigInt, DB> for #name
+            diesel::deserialize::FromSql<diesel::sql_types::SmallInt, DB> for #name
         where
-            i64: diesel::deserialize::FromSql<diesel::sql_types::BigInt, DB>,
+            i16: diesel::deserialize::FromSql<diesel::sql_types::SmallInt, DB>,
         {
             fn from_sql(
                 value: <DB as diesel::backend::Backend>::RawValue<'_>,
             ) -> diesel::deserialize::Result<Self> {
-                let value = i64::from_sql(value)?;
+                let value = i16::from_sql(value)?;
                 TryInto::<#name>::try_into(value).map_err(|e| e.into())
             }
         }
 
-        impl<DB> diesel::serialize::ToSql<diesel::sql_types::BigInt, DB> for #name
+        impl<DB> diesel::serialize::ToSql<diesel::sql_types::SmallInt, DB> for #name
         where
             DB: diesel::backend::Backend,
-            i64: diesel::serialize::ToSql<diesel::sql_types::BigInt, DB>,
+            i16: diesel::serialize::ToSql<diesel::sql_types::SmallInt, DB>,
         {
             fn to_sql<'b>(&'b self, out: &mut diesel::serialize::Output<'b, '_, DB>) -> diesel::serialize::Result {
                 match *self {
