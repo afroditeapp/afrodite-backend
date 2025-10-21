@@ -20,8 +20,9 @@ impl WriteCommandsCommonAdminReport<'_> {
         report_type: ReportTypeNumber,
         content: ReportContent,
     ) -> Result<(), DataError> {
-        let report_type = TryInto::<ReportTypeNumberInternal>::try_into(report_type)
-            .into_error_string(DataError::NotAllowed)?;
+        let report_type =
+            TryInto::<ReportTypeNumberInternal>::try_into(Into::<i16>::into(report_type.n))
+                .into_error_string(DataError::NotAllowed)?;
 
         let current_reports = self
             .db_read(move |mut cmds| {

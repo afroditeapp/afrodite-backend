@@ -5,11 +5,11 @@ use diesel::{
 };
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{SimpleDieselEnum, diesel_i64_struct_try_from, diesel_i64_wrapper};
+use simple_backend_model::{SimpleDieselEnum, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 use super::AccountId;
-use crate::{CustomReportId, schema_sqlite_types::Integer};
+use crate::CustomReportId;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromSqlRow, AsExpression)]
 #[diesel(sql_type = BigInt)]
@@ -75,7 +75,7 @@ impl CustomReportTypeNumberValue {
 }
 
 #[derive(Debug, Clone, Copy, diesel::FromSqlRow, diesel::AsExpression)]
-#[diesel(sql_type = Integer)]
+#[diesel(sql_type = SmallInt)]
 pub enum ReportTypeNumberInternal {
     ProfileName,
     ProfileText,
@@ -86,7 +86,7 @@ pub enum ReportTypeNumberInternal {
 }
 
 impl ReportTypeNumberInternal {
-    pub fn db_value(&self) -> i64 {
+    pub fn db_value(&self) -> i16 {
         self.to_i8().into()
     }
 
@@ -101,11 +101,9 @@ impl ReportTypeNumberInternal {
     }
 }
 
-diesel_i64_struct_try_from!(ReportTypeNumberInternal);
-
-impl TryFrom<i64> for ReportTypeNumberInternal {
+impl TryFrom<i16> for ReportTypeNumberInternal {
     type Error = String;
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
+    fn try_from(value: i16) -> Result<Self, Self::Error> {
         let value = TryInto::<i8>::try_into(value).map_err(|e| e.to_string())?;
         let v = match value {
             0 => Self::ProfileName,
@@ -119,22 +117,22 @@ impl TryFrom<i64> for ReportTypeNumberInternal {
     }
 }
 
-impl From<ReportTypeNumberInternal> for i64 {
-    fn from(value: ReportTypeNumberInternal) -> Self {
-        value.db_value()
+impl<DB: diesel::backend::Backend> diesel::deserialize::FromSql<diesel::sql_types::SmallInt, DB>
+    for ReportTypeNumberInternal
+where
+    i16: diesel::deserialize::FromSql<diesel::sql_types::SmallInt, DB>,
+{
+    fn from_sql(
+        value: <DB as diesel::backend::Backend>::RawValue<'_>,
+    ) -> diesel::deserialize::Result<Self> {
+        let value = i16::from_sql(value)?;
+        TryInto::<Self>::try_into(value).map_err(|e| e.into())
     }
 }
 
 impl From<ReportTypeNumberInternal> for ReportTypeNumber {
     fn from(value: ReportTypeNumberInternal) -> Self {
         Self { n: value.to_i8() }
-    }
-}
-
-impl TryFrom<ReportTypeNumber> for ReportTypeNumberInternal {
-    type Error = String;
-    fn try_from(value: ReportTypeNumber) -> Result<Self, Self::Error> {
-        Into::<i64>::into(value.n).try_into()
     }
 }
 

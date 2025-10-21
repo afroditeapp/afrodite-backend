@@ -269,7 +269,7 @@ impl CurrentReadCommonAdminReport<'_> {
             db_query
                 .filter(creator_account_id.eq(query.creator.as_db_id()))
                 .filter(target_account_id.eq(query.target.as_db_id()))
-                .filter(report_type_number.eq(ReportTypeNumberInternal::ChatMessage))
+                .filter(report_type_number.eq(ReportTypeNumberInternal::ChatMessage.db_value()))
                 .filter(
                     (!query.only_not_processed)
                         .as_sql::<Bool>()

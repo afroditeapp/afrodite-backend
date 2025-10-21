@@ -122,7 +122,7 @@ CREATE TABLE IF NOT EXISTS common_report(
     -- 2 = profile content
     -- 3 = chat message
     -- Values from 64 to 127 are reserved for custom reports.
-    report_type_number      INTEGER             NOT NULL,
+    report_type_number      SMALLINT            NOT NULL,
     creation_unix_time      INTEGER             NOT NULL,
     moderator_account_id    INTEGER,
     -- 0 = Waiting

@@ -279,7 +279,7 @@ diesel::table! {
         id -> Integer,
         creator_account_id -> Integer,
         target_account_id -> Integer,
-        report_type_number -> Integer,
+        report_type_number -> SmallInt,
         creation_unix_time -> Integer,
         moderator_account_id -> Nullable<Integer>,
         processing_state -> SmallInt,

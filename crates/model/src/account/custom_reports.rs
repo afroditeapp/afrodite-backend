@@ -1,8 +1,6 @@
 use std::collections::HashSet;
 
-use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::diesel_i64_struct_try_from;
 use utoipa::ToSchema;
 
 use crate::{CustomReportTypeNumberValue, ReportTypeNumber};
@@ -13,21 +11,8 @@ pub enum CustomReportsOrderMode {
 }
 
 #[derive(
-    Debug,
-    Clone,
-    Copy,
-    Deserialize,
-    Serialize,
-    ToSchema,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Hash,
-    FromSqlRow,
-    AsExpression,
+    Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq, PartialOrd, Ord, Hash,
 )]
-#[diesel(sql_type = BigInt)]
 pub struct CustomReportId(u8);
 
 impl CustomReportId {
@@ -56,31 +41,6 @@ impl CustomReportId {
         )
     }
 }
-
-impl TryFrom<i64> for CustomReportId {
-    type Error = String;
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
-        let value: u8 = value
-            .try_into()
-            .map_err(|e: std::num::TryFromIntError| e.to_string())?;
-        if value > Self::MAX_VALUE {
-            return Err(format!(
-                "Custom report ID value {} is too large, max value: {}",
-                value,
-                Self::MAX_VALUE
-            ));
-        }
-        Ok(Self(value))
-    }
-}
-
-impl From<CustomReportId> for i64 {
-    fn from(value: CustomReportId) -> Self {
-        value.0.into()
-    }
-}
-
-diesel_i64_struct_try_from!(CustomReportId);
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CustomReportsConfigHash {
