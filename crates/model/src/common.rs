@@ -334,7 +334,7 @@ pub struct LoginSession {
 /// https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
 pub struct AccessToken {
-    /// API token which server generates.
+    /// Base64 URL safe without padding
     token: String,
 }
 
@@ -365,6 +365,16 @@ impl AccessToken {
 
     pub fn as_str(&self) -> &str {
         &self.token
+    }
+
+    pub fn from_bytes(data: &[u8]) -> Self {
+        Self {
+            token: base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(data),
+        }
+    }
+
+    pub fn bytes(&self) -> Result<Vec<u8>, base64::DecodeError> {
+        base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&self.token)
     }
 }
 

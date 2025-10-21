@@ -15,6 +15,10 @@ impl CurrentWriteAccountToken<'_> {
         use model::schema::login_session::dsl::*;
 
         if let Some(data) = data {
+            let access_token_value = data
+                .access_token
+                .bytes()
+                .change_context(DieselDatabaseError::DataFormatConversion)?;
             let refresh_token_value = data
                 .refresh_token
                 .bytes()
@@ -22,7 +26,7 @@ impl CurrentWriteAccountToken<'_> {
             insert_into(login_session)
                 .values((
                     account_id.eq(id.as_db_id()),
-                    access_token.eq(data.access_token.as_str()),
+                    access_token.eq(access_token_value),
                     access_token_unix_time.eq(data.access_token_unix_time),
                     access_token_ip_address.eq(data.access_token_ip_address),
                     refresh_token.eq(refresh_token_value),

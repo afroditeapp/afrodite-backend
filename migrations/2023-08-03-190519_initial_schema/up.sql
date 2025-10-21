@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS login_session(
     account_id              INTEGER PRIMARY KEY NOT NULL,
     -- Rust HashMap guarantees access token uniqueness, so
     -- UNIQUE constrait is not needed here.
-    access_token            TEXT                NOT NULL,
+    access_token            BLOB                NOT NULL,
     access_token_unix_time  BIGINT              NOT NULL,
     -- 4 or 16 bytes
     access_token_ip_address BLOB                NOT NULL,

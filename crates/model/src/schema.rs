@@ -527,7 +527,7 @@ diesel::table! {
 
     login_session (account_id) {
         account_id -> Integer,
-        access_token -> Text,
+        access_token -> Binary,
         access_token_unix_time -> BigInt,
         access_token_ip_address -> Binary,
         refresh_token -> Binary,
