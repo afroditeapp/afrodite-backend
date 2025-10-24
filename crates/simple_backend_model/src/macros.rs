@@ -315,6 +315,75 @@ macro_rules! diesel_i16_wrapper {
     };
 }
 
+/// The struct needs to have `Into<i16>` and `TryFrom<i16>` implementations.
+/// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
+///
+/// ```
+/// use diesel::sql_types::SmallInt;
+/// use simple_backend_model::diesel_db_i16_is_i8_struct;
+///
+/// #[derive(
+///     Debug,
+///     Clone,
+///     Copy,
+///     diesel::FromSqlRow,
+///     diesel::AsExpression,
+/// )]
+/// #[diesel(sql_type = SmallInt)]
+/// pub struct I8Struct {
+///     value: i8,
+/// }
+///
+/// impl From<I8Struct> for i16 {
+///     fn from(value: I8Struct) -> Self {
+///         value.value.into()
+///     }
+/// }
+///
+/// impl TryFrom<i16> for I8Struct {
+///     type Error = String;
+///
+///     fn try_from(value: i16) -> Result<Self, Self::Error> {
+///         let value = i8::try_from(value).map_err(|e| e.to_string())?;
+///         Ok(I8Struct { value })
+///     }
+/// }
+///
+/// diesel_db_i16_is_i8_struct!(I8Struct);
+///
+/// ```
+#[macro_export]
+macro_rules! diesel_db_i16_is_i8_struct {
+    ($name:ty) => {
+        impl<DB: diesel::backend::Backend>
+            diesel::deserialize::FromSql<diesel::sql_types::SmallInt, DB> for $name
+        where
+            i16: diesel::deserialize::FromSql<diesel::sql_types::SmallInt, DB>,
+        {
+            fn from_sql(
+                value: <DB as diesel::backend::Backend>::RawValue<'_>,
+            ) -> diesel::deserialize::Result<Self> {
+                let value = i16::from_sql(value)?;
+                TryInto::<$name>::try_into(value).map_err(|e| e.into())
+            }
+        }
+
+        impl diesel::serialize::ToSql<diesel::sql_types::SmallInt, diesel::sqlite::Sqlite> for $name
+        where
+            i16: diesel::serialize::ToSql<diesel::sql_types::SmallInt, diesel::sqlite::Sqlite>,
+        {
+            fn to_sql<'b>(
+                &'b self,
+                out: &mut diesel::serialize::Output<'b, '_, diesel::sqlite::Sqlite>,
+            ) -> diesel::serialize::Result {
+                let value: i32 = Into::<i16>::into(*self).into();
+                out.set_value(value);
+                Ok(diesel::serialize::IsNull::No)
+            }
+        }
+    };
+}
+
 /// The struct needs to have `TryFrom<i64>` and `Into<i64>` implementations.
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
 ///

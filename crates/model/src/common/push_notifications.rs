@@ -3,10 +3,10 @@ use diesel::{
     Selectable,
     deserialize::{FromSqlRow, Queryable},
     expression::AsExpression,
-    sql_types::BigInt,
+    sql_types::SmallInt,
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_struct_try_from, diesel_i64_wrapper, diesel_string_wrapper};
+use simple_backend_model::{diesel_db_i16_is_i8_struct, diesel_i64_wrapper, diesel_string_wrapper};
 use utils::random_bytes::random_128_bits;
 use utoipa::ToSchema;
 
@@ -215,7 +215,7 @@ pub struct PushNotificationDbState {
     AsExpression,
     ToSchema,
 )]
-#[diesel(sql_type = BigInt)]
+#[diesel(sql_type = SmallInt)]
 pub struct NotificationId {
     pub id: i8,
 }
@@ -228,22 +228,22 @@ impl NotificationId {
     }
 }
 
-impl From<NotificationId> for i64 {
+impl From<NotificationId> for i16 {
     fn from(value: NotificationId) -> Self {
         value.id.into()
     }
 }
 
-impl TryFrom<i64> for NotificationId {
+impl TryFrom<i16> for NotificationId {
     type Error = std::num::TryFromIntError;
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
+    fn try_from(value: i16) -> Result<Self, Self::Error> {
         Ok(Self {
             id: TryInto::try_into(value)?,
         })
     }
 }
 
-diesel_i64_struct_try_from!(NotificationId);
+diesel_db_i16_is_i8_struct!(NotificationId);
 
 /// Notification ID which client has handled.
 #[derive(
@@ -258,27 +258,27 @@ diesel_i64_struct_try_from!(NotificationId);
     AsExpression,
     ToSchema,
 )]
-#[diesel(sql_type = BigInt)]
+#[diesel(sql_type = SmallInt)]
 pub struct NotificationIdViewed {
     pub id: i8,
 }
 
-impl From<NotificationIdViewed> for i64 {
+impl From<NotificationIdViewed> for i16 {
     fn from(value: NotificationIdViewed) -> Self {
         value.id.into()
     }
 }
 
-impl TryFrom<i64> for NotificationIdViewed {
+impl TryFrom<i16> for NotificationIdViewed {
     type Error = std::num::TryFromIntError;
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
+    fn try_from(value: i16) -> Result<Self, Self::Error> {
         Ok(Self {
             id: TryInto::try_into(value)?,
         })
     }
 }
 
-diesel_i64_struct_try_from!(NotificationIdViewed);
+diesel_db_i16_is_i8_struct!(NotificationIdViewed);
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
 pub struct NotificationStatus {

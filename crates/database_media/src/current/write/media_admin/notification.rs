@@ -20,7 +20,7 @@ impl CurrentWriteMediaAdminNotification<'_> {
             .notification()
             .media_content_moderation_completed(id)?;
 
-        let new_value: i64 = current.accepted.id.wrapping_increment().id.into();
+        let new_value = current.accepted.id.wrapping_increment();
 
         insert_into(media_app_notification_state)
             .values((
@@ -48,7 +48,7 @@ impl CurrentWriteMediaAdminNotification<'_> {
             .notification()
             .media_content_moderation_completed(id)?;
 
-        let new_value: i64 = current.rejected.id.wrapping_increment().id.into();
+        let new_value = current.rejected.id.wrapping_increment();
 
         insert_into(media_app_notification_state)
             .values((
@@ -76,7 +76,7 @@ impl CurrentWriteMediaAdminNotification<'_> {
             .notification()
             .media_content_moderation_completed(id)?;
 
-        let new_value: i64 = current.deleted.id.wrapping_increment().id.into();
+        let new_value = current.deleted.id.wrapping_increment();
 
         insert_into(media_app_notification_state)
             .values((

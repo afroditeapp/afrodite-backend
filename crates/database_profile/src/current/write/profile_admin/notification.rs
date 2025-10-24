@@ -21,16 +21,16 @@ impl CurrentWriteProfileAdminNotification<'_> {
             .notification()
             .profile_string_moderation_completed(id)?;
 
-        let accepted_new_value: i64 = if accepted {
-            current.name_accepted.id.wrapping_increment().id.into()
+        let accepted_new_value = if accepted {
+            current.name_accepted.id.wrapping_increment()
         } else {
-            current.name_accepted.id.id.into()
+            current.name_accepted.id
         };
 
-        let rejected_new_value: i64 = if !accepted {
-            current.name_rejected.id.wrapping_increment().id.into()
+        let rejected_new_value = if !accepted {
+            current.name_rejected.id.wrapping_increment()
         } else {
-            current.name_rejected.id.id.into()
+            current.name_rejected.id
         };
 
         insert_into(profile_app_notification_state)
@@ -64,16 +64,16 @@ impl CurrentWriteProfileAdminNotification<'_> {
             .notification()
             .profile_string_moderation_completed(id)?;
 
-        let accepted_new_value: i64 = if accepted {
-            current.text_accepted.id.wrapping_increment().id.into()
+        let accepted_new_value = if accepted {
+            current.text_accepted.id.wrapping_increment()
         } else {
-            current.text_accepted.id.id.into()
+            current.text_accepted.id
         };
 
-        let rejected_new_value: i64 = if !accepted {
-            current.text_rejected.id.wrapping_increment().id.into()
+        let rejected_new_value = if !accepted {
+            current.text_rejected.id.wrapping_increment()
         } else {
-            current.text_rejected.id.id.into()
+            current.text_rejected.id
         };
 
         insert_into(profile_app_notification_state)

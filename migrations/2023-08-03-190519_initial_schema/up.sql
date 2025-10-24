@@ -605,14 +605,14 @@ CREATE TABLE IF NOT EXISTS profile_app_notification_settings(
 
 CREATE TABLE IF NOT EXISTS profile_app_notification_state(
     account_id                         INTEGER PRIMARY KEY NOT NULL,
-    profile_name_accepted              INTEGER             NOT NULL DEFAULT 0,
-    profile_name_accepted_viewed       INTEGER             NOT NULL DEFAULT 0,
-    profile_name_rejected              INTEGER             NOT NULL DEFAULT 0,
-    profile_name_rejected_viewed       INTEGER             NOT NULL DEFAULT 0,
-    profile_text_accepted              INTEGER             NOT NULL DEFAULT 0,
-    profile_text_accepted_viewed       INTEGER             NOT NULL DEFAULT 0,
-    profile_text_rejected              INTEGER             NOT NULL DEFAULT 0,
-    profile_text_rejected_viewed       INTEGER             NOT NULL DEFAULT 0,
+    profile_name_accepted              SMALLINT            NOT NULL DEFAULT 0,
+    profile_name_accepted_viewed       SMALLINT            NOT NULL DEFAULT 0,
+    profile_name_rejected              SMALLINT            NOT NULL DEFAULT 0,
+    profile_name_rejected_viewed       SMALLINT            NOT NULL DEFAULT 0,
+    profile_text_accepted              SMALLINT            NOT NULL DEFAULT 0,
+    profile_text_accepted_viewed       SMALLINT            NOT NULL DEFAULT 0,
+    profile_text_rejected              SMALLINT            NOT NULL DEFAULT 0,
+    profile_text_rejected_viewed       SMALLINT            NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -822,12 +822,12 @@ CREATE TABLE IF NOT EXISTS media_app_notification_settings(
 
 CREATE TABLE IF NOT EXISTS media_app_notification_state(
     account_id                         INTEGER PRIMARY KEY NOT NULL,
-    media_content_accepted             INTEGER             NOT NULL DEFAULT 0,
-    media_content_accepted_viewed      INTEGER             NOT NULL DEFAULT 0,
-    media_content_rejected             INTEGER             NOT NULL DEFAULT 0,
-    media_content_rejected_viewed      INTEGER             NOT NULL DEFAULT 0,
-    media_content_deleted              INTEGER             NOT NULL DEFAULT 0,
-    media_content_deleted_viewed       INTEGER             NOT NULL DEFAULT 0,
+    media_content_accepted             SMALLINT            NOT NULL DEFAULT 0,
+    media_content_accepted_viewed      SMALLINT            NOT NULL DEFAULT 0,
+    media_content_rejected             SMALLINT            NOT NULL DEFAULT 0,
+    media_content_rejected_viewed      SMALLINT            NOT NULL DEFAULT 0,
+    media_content_deleted              SMALLINT            NOT NULL DEFAULT 0,
+    media_content_deleted_viewed       SMALLINT            NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

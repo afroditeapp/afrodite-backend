@@ -548,12 +548,12 @@ diesel::table! {
 
     media_app_notification_state (account_id) {
         account_id -> BigInt,
-        media_content_accepted -> Integer,
-        media_content_accepted_viewed -> Integer,
-        media_content_rejected -> Integer,
-        media_content_rejected_viewed -> Integer,
-        media_content_deleted -> Integer,
-        media_content_deleted_viewed -> Integer,
+        media_content_accepted -> SmallInt,
+        media_content_accepted_viewed -> SmallInt,
+        media_content_rejected -> SmallInt,
+        media_content_rejected_viewed -> SmallInt,
+        media_content_deleted -> SmallInt,
+        media_content_deleted_viewed -> SmallInt,
     }
 }
 
@@ -674,14 +674,14 @@ diesel::table! {
 
     profile_app_notification_state (account_id) {
         account_id -> BigInt,
-        profile_name_accepted -> Integer,
-        profile_name_accepted_viewed -> Integer,
-        profile_name_rejected -> Integer,
-        profile_name_rejected_viewed -> Integer,
-        profile_text_accepted -> Integer,
-        profile_text_accepted_viewed -> Integer,
-        profile_text_rejected -> Integer,
-        profile_text_rejected_viewed -> Integer,
+        profile_name_accepted -> SmallInt,
+        profile_name_accepted_viewed -> SmallInt,
+        profile_name_rejected -> SmallInt,
+        profile_name_rejected_viewed -> SmallInt,
+        profile_text_accepted -> SmallInt,
+        profile_text_accepted_viewed -> SmallInt,
+        profile_text_rejected -> SmallInt,
+        profile_text_rejected_viewed -> SmallInt,
     }
 }
 
@@ -829,7 +829,7 @@ diesel::table! {
 
     public_key (account_id, key_id) {
         account_id -> BigInt,
-        key_id -> Integer,
+        key_id -> BigInt,
         key_data -> Binary,
         key_added_unix_time -> BigInt,
     }
