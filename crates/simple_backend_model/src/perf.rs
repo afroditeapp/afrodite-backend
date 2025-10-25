@@ -123,4 +123,18 @@ impl MetricName {
     }
 }
 
+impl TryFrom<String> for MetricName {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Ok(Self(value))
+    }
+}
+
+impl AsRef<str> for MetricName {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
 diesel_string_wrapper!(MetricName);

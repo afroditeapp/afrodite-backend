@@ -34,6 +34,20 @@ impl GoogleAccountId {
     }
 }
 
+impl TryFrom<String> for GoogleAccountId {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Ok(Self(value))
+    }
+}
+
+impl AsRef<str> for GoogleAccountId {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
 diesel_string_wrapper!(GoogleAccountId);
 
 #[derive(
@@ -49,6 +63,20 @@ impl AppleAccountId {
     }
 
     pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl TryFrom<String> for AppleAccountId {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Ok(Self(value))
+    }
+}
+
+impl AsRef<str> for AppleAccountId {
+    fn as_ref(&self) -> &str {
         &self.0
     }
 }

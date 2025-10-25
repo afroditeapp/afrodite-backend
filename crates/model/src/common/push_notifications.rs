@@ -144,6 +144,20 @@ impl PushNotificationDeviceToken {
     }
 }
 
+impl TryFrom<String> for PushNotificationDeviceToken {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Ok(Self { token: value })
+    }
+}
+
+impl AsRef<str> for PushNotificationDeviceToken {
+    fn as_ref(&self) -> &str {
+        &self.token
+    }
+}
+
 diesel_string_wrapper!(PushNotificationDeviceToken);
 
 /// 128 bit random value which is Base64 encoded.
@@ -180,6 +194,20 @@ impl PushNotificationEncryptionKey {
     }
 
     pub fn as_str(&self) -> &str {
+        &self.key
+    }
+}
+
+impl TryFrom<String> for PushNotificationEncryptionKey {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Ok(Self { key: value })
+    }
+}
+
+impl AsRef<str> for PushNotificationEncryptionKey {
+    fn as_ref(&self) -> &str {
         &self.key
     }
 }

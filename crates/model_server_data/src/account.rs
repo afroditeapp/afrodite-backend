@@ -64,3 +64,9 @@ impl TryFrom<String> for EmailAddress {
         }
     }
 }
+
+impl AsRef<str> for EmailAddress {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}

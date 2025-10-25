@@ -69,7 +69,7 @@ macro_rules! diesel_uuid_wrapper {
     };
 }
 
-/// Type must have new() and as_str() methods.
+/// The struct needs to have `TryFrom<String>` and `AsRef<str>` implementations.
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
 ///
 /// ```
@@ -86,13 +86,17 @@ macro_rules! diesel_uuid_wrapper {
 ///     text: String,
 /// }
 ///
-/// impl StringWrapper {
-///     pub fn new(text: String) -> Self {
-///         Self { text }
-///     }
+/// impl TryFrom<String> for StringWrapper {
+///     type Error = String;
 ///
-///     pub fn as_str(&self) -> &str {
-///        &self.text
+///     fn try_from(text: String) -> Result<Self, Self::Error> {
+///         Ok(Self { text })
+///     }
+/// }
+///
+/// impl AsRef<str> for StringWrapper {
+///     fn as_ref(&self) -> &str {
+///         &self.text
 ///     }
 /// }
 ///
@@ -111,7 +115,7 @@ macro_rules! diesel_string_wrapper {
                 value: <DB as diesel::backend::Backend>::RawValue<'_>,
             ) -> diesel::deserialize::Result<Self> {
                 let string = String::from_sql(value)?;
-                Ok(<$name>::new(string))
+                TryInto::<$name>::try_into(string).map_err(|e| e.into())
             }
         }
 
@@ -124,7 +128,7 @@ macro_rules! diesel_string_wrapper {
                 &'b self,
                 out: &mut diesel::serialize::Output<'b, '_, DB>,
             ) -> diesel::serialize::Result {
-                self.as_str().to_sql(out)
+                AsRef::<str>::as_ref(self).to_sql(out)
             }
         }
     };
