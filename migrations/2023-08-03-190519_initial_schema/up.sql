@@ -229,9 +229,8 @@ CREATE TABLE IF NOT EXISTS admin_notification_settings(
     account_id                       INTEGER PRIMARY KEY NOT NULL,
     -- TODO: Change to SMALLINT
     weekdays                         BIGINT NOT NULL,
-    -- TODO: Change to INTEGER
-    daily_enabled_time_start_seconds BIGINT  NOT NULL,
-    daily_enabled_time_end_seconds   BIGINT  NOT NULL,
+    daily_enabled_time_start_seconds INTEGER NOT NULL,
+    daily_enabled_time_end_seconds   INTEGER NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

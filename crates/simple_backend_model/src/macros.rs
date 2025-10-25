@@ -252,6 +252,74 @@ macro_rules! diesel_i64_wrapper {
 
 pub(crate) use diesel_i64_wrapper;
 
+/// The struct needs to have `TryFrom<i32>` and `AsRef<i32>` implementations.
+/// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
+///
+/// ```
+/// use diesel::sql_types::Integer;
+/// use simple_backend_model::diesel_i32_wrapper;
+///
+/// #[derive(
+///     Debug,
+///     Clone,
+///     Copy,
+///     diesel::FromSqlRow,
+///     diesel::AsExpression,
+/// )]
+/// #[diesel(sql_type = Integer)]
+/// pub struct NumberStruct {
+///     value: i32,
+/// }
+///
+/// impl TryFrom<i32> for NumberStruct {
+///     type Error = String;
+///
+///     fn try_from(value: i32) -> Result<Self, Self::Error> {
+///         Ok(NumberStruct { value })
+///     }
+/// }
+///
+/// impl AsRef<i32> for NumberStruct {
+///     fn as_ref(&self) -> &i32 {
+///         &self.value
+///     }
+/// }
+///
+/// diesel_i32_wrapper!(NumberStruct);
+///
+/// ```
+#[macro_export]
+macro_rules! diesel_i32_wrapper {
+    ($name:ty) => {
+        impl<DB: diesel::backend::Backend>
+            diesel::deserialize::FromSql<diesel::sql_types::Integer, DB> for $name
+        where
+            i32: diesel::deserialize::FromSql<diesel::sql_types::Integer, DB>,
+        {
+            fn from_sql(
+                value: <DB as diesel::backend::Backend>::RawValue<'_>,
+            ) -> diesel::deserialize::Result<Self> {
+                let value = i32::from_sql(value)?;
+                TryInto::<$name>::try_into(value).map_err(|e| e.into())
+            }
+        }
+
+        impl<DB: diesel::backend::Backend> diesel::serialize::ToSql<diesel::sql_types::Integer, DB>
+            for $name
+        where
+            i32: diesel::serialize::ToSql<diesel::sql_types::Integer, DB>,
+        {
+            fn to_sql<'b>(
+                &'b self,
+                out: &mut diesel::serialize::Output<'b, '_, DB>,
+            ) -> diesel::serialize::Result {
+                let value = AsRef::<i32>::as_ref(self);
+                value.to_sql(out)
+            }
+        }
+    };
+}
+
 /// Type must have new() and as_i16() methods.
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
 ///

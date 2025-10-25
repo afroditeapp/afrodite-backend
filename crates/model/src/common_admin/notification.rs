@@ -1,10 +1,10 @@
 use diesel::{
     Selectable,
     prelude::{AsChangeset, Insertable, Queryable},
-    sql_types::BigInt,
+    sql_types::Integer,
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::diesel_i64_struct_try_from;
+use simple_backend_model::diesel_i32_wrapper;
 use simple_backend_utils::time::{TimeValue, UtcTimeValue};
 use utoipa::ToSchema;
 
@@ -13,42 +13,42 @@ use crate::SelectedWeekdays;
 /// Timestamp value in seconds which is
 /// in inclusive range `[0, (SECONDS_IN_DAY - 1)]`.
 ///
-/// This serializes to i64, so this must not be added to API doc.
+/// This serializes to i32, so this must not be added to API doc without
+/// `#[schema(value_type = i32)]`.
 #[derive(
     Debug,
     Clone,
     Copy,
     Deserialize,
     Serialize,
-    ToSchema,
     PartialEq,
     Eq,
     diesel::FromSqlRow,
     diesel::AsExpression,
 )]
-#[diesel(sql_type = BigInt)]
-#[serde(try_from = "i64")]
-#[serde(into = "i64")]
+#[diesel(sql_type = Integer)]
+#[serde(try_from = "i32")]
+#[serde(into = "i32")]
 pub struct DayTimestamp {
-    value: u32,
+    value: i32,
 }
 
 impl DayTimestamp {
-    pub const MIN: u32 = 0;
-    pub const MAX: u32 = (24 * 60 * 60) - 1;
+    pub const MIN: i32 = 0;
+    pub const MAX: i32 = (24 * 60 * 60) - 1;
 
-    pub fn new_clamped(value: u32) -> Self {
+    pub fn new_clamped(value: i32) -> Self {
         Self {
             value: value.clamp(Self::MIN, Self::MAX),
         }
     }
 
-    pub fn value(&self) -> u32 {
+    pub fn value(&self) -> i32 {
         self.value
     }
 
-    pub fn from_hours(hours: u32) -> Self {
-        Self::new_clamped(hours * 60 * 60)
+    pub fn from_hours(hours: u8) -> Self {
+        Self::new_clamped(Into::<i32>::into(hours) * 60 * 60)
     }
 
     pub fn to_utc_time_value(&self) -> UtcTimeValue {
@@ -65,31 +65,35 @@ impl Default for DayTimestamp {
     }
 }
 
-impl TryFrom<i64> for DayTimestamp {
+impl TryFrom<i32> for DayTimestamp {
     type Error = String;
 
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
-        if value < Self::MIN as i64 || value > Self::MAX as i64 {
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        if value < Self::MIN || value > Self::MAX {
             Err(format!(
                 "DayTimestamp must be in range [{}, {}]",
                 Self::MIN,
                 Self::MAX
             ))
         } else {
-            Ok(Self {
-                value: value as u32,
-            })
+            Ok(Self { value })
         }
     }
 }
 
-impl From<DayTimestamp> for i64 {
+impl From<DayTimestamp> for i32 {
     fn from(value: DayTimestamp) -> Self {
-        value.value as i64
+        value.value
     }
 }
 
-diesel_i64_struct_try_from!(DayTimestamp);
+impl AsRef<i32> for DayTimestamp {
+    fn as_ref(&self) -> &i32 {
+        &self.value
+    }
+}
+
+diesel_i32_wrapper!(DayTimestamp);
 
 /// Timezone for timestamps is UTC+0.
 #[derive(
@@ -108,9 +112,9 @@ diesel_i64_struct_try_from!(DayTimestamp);
 #[diesel(check_for_backend(crate::Db))]
 pub struct AdminNotificationSettings {
     pub weekdays: SelectedWeekdays,
-    #[schema(value_type = i64)]
+    #[schema(value_type = i32)]
     pub daily_enabled_time_start_seconds: DayTimestamp,
-    #[schema(value_type = i64)]
+    #[schema(value_type = i32)]
     pub daily_enabled_time_end_seconds: DayTimestamp,
 }
 

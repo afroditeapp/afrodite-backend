@@ -133,8 +133,8 @@ diesel::table! {
     admin_notification_settings (account_id) {
         account_id -> BigInt,
         weekdays -> BigInt,
-        daily_enabled_time_start_seconds -> BigInt,
-        daily_enabled_time_end_seconds -> BigInt,
+        daily_enabled_time_start_seconds -> Integer,
+        daily_enabled_time_end_seconds -> Integer,
     }
 }
 

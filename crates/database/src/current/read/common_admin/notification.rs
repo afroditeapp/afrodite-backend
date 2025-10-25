@@ -1,7 +1,7 @@
 use chrono::{Datelike, Timelike, Utc};
 use diesel::{
     prelude::*,
-    sql_types::{BigInt, Bool},
+    sql_types::{Bool, Integer},
 };
 use error_stack::{Result, ResultExt};
 use model::{
@@ -34,7 +34,9 @@ impl CurrentReadAccountAdminNotification<'_> {
         use crate::schema::admin_notification_settings::dsl::*;
 
         let current_time = Utc::now();
-        let day_timestamp = DayTimestamp::from_hours(current_time.hour());
+        let current_hour = TryInto::<u8>::try_into(current_time.hour())
+            .change_context(DieselDatabaseError::DataFormatConversion)?;
+        let day_timestamp = DayTimestamp::from_hours(current_hour);
 
         let current_day = admin_notification_settings
             .filter(daily_enabled_time_start_seconds.gt(day_timestamp))
@@ -81,7 +83,9 @@ impl CurrentReadAccountAdminNotification<'_> {
 
         let current_time = Utc::now();
         let current_weekday: WeekdayFlags = current_time.weekday().into();
-        let day_timestamp = DayTimestamp::from_hours(current_time.hour());
+        let current_hour = TryInto::<u8>::try_into(current_time.hour())
+            .change_context(DieselDatabaseError::DataFormatConversion)?;
+        let day_timestamp = DayTimestamp::from_hours(current_hour);
 
         let data: Vec<(
             AccountIdInternal,
@@ -100,7 +104,7 @@ impl CurrentReadAccountAdminNotification<'_> {
             .filter(
                 admin_notification_settings::daily_enabled_time_start_seconds
                     .is_null()
-                    .or(day_timestamp.as_sql::<BigInt>().between(
+                    .or(day_timestamp.as_sql::<Integer>().between(
                         admin_notification_settings::daily_enabled_time_start_seconds,
                         admin_notification_settings::daily_enabled_time_end_seconds,
                     )),
