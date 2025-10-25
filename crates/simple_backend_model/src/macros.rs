@@ -134,7 +134,7 @@ macro_rules! diesel_string_wrapper {
     };
 }
 
-/// Type must have new() and as_str() methods.
+/// The struct needs to have `TryFrom<NonEmptyString>` and `AsRef<str>` implementations.
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
 ///
 /// ```
@@ -152,13 +152,17 @@ macro_rules! diesel_string_wrapper {
 ///     value: NonEmptyString,
 /// }
 ///
-/// impl NonEmptyStringWrapper {
-///     pub fn new(value: NonEmptyString) -> Self {
-///         Self { value }
-///     }
+/// impl TryFrom<NonEmptyString> for NonEmptyStringWrapper {
+///     type Error = String;
 ///
-///     pub fn as_str(&self) -> &str {
-///        &self.text
+///     fn try_from(value: NonEmptyString) -> Result<Self, Self::Error> {
+///         Ok(Self { value })
+///     }
+/// }
+///
+/// impl AsRef<str> for NonEmptyStringWrapper {
+///     fn as_ref(&self) -> &str {
+///         &self.value.as_str()
 ///     }
 /// }
 ///
@@ -176,7 +180,7 @@ macro_rules! diesel_non_empty_string_wrapper {
                 value: <DB as diesel::backend::Backend>::RawValue<'_>,
             ) -> diesel::deserialize::Result<Self> {
                 let value = NonEmptyString::from_sql(value)?;
-                Ok(<$name>::new(value))
+                TryInto::<$name>::try_into(value).map_err(|e| e.into())
             }
         }
 
@@ -189,7 +193,7 @@ macro_rules! diesel_non_empty_string_wrapper {
                 &'b self,
                 out: &mut diesel::serialize::Output<'b, '_, DB>,
             ) -> diesel::serialize::Result {
-                self.as_str().to_sql(out)
+                AsRef::<str>::as_ref(self).to_sql(out)
             }
         }
     };

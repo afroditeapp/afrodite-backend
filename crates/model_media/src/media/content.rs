@@ -66,4 +66,18 @@ impl MediaContentModerationRejectedReasonDetails {
     }
 }
 
+impl TryFrom<NonEmptyString> for MediaContentModerationRejectedReasonDetails {
+    type Error = String;
+
+    fn try_from(value: NonEmptyString) -> Result<Self, Self::Error> {
+        Ok(Self { value })
+    }
+}
+
+impl AsRef<str> for MediaContentModerationRejectedReasonDetails {
+    fn as_ref(&self) -> &str {
+        self.value.as_str()
+    }
+}
+
 diesel_non_empty_string_wrapper!(MediaContentModerationRejectedReasonDetails);

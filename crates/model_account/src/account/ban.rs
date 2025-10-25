@@ -66,4 +66,18 @@ impl AccountBanReasonDetails {
     }
 }
 
+impl TryFrom<NonEmptyString> for AccountBanReasonDetails {
+    type Error = String;
+
+    fn try_from(value: NonEmptyString) -> Result<Self, Self::Error> {
+        Ok(Self { value })
+    }
+}
+
+impl AsRef<str> for AccountBanReasonDetails {
+    fn as_ref(&self) -> &str {
+        self.value.as_str()
+    }
+}
+
 diesel_non_empty_string_wrapper!(AccountBanReasonDetails);

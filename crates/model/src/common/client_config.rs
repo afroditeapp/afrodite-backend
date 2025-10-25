@@ -61,6 +61,14 @@ impl ClientLanguage {
     }
 }
 
+impl TryFrom<NonEmptyString> for ClientLanguage {
+    type Error = String;
+
+    fn try_from(l: NonEmptyString) -> Result<Self, Self::Error> {
+        Ok(Self { l })
+    }
+}
+
 diesel_non_empty_string_wrapper!(ClientLanguage);
 
 impl AsRef<str> for ClientLanguage {
