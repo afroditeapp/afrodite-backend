@@ -1086,7 +1086,6 @@ CREATE TABLE IF NOT EXISTS history_ip_country_statistics(
 
 CREATE TABLE IF NOT EXISTS history_client_version_statistics_version_number(
     id            INTEGER PRIMARY KEY                     NOT NULL,
-    -- TODO: Change version number parsing to support u32 values
     major         BIGINT NOT NULL,
     minor         BIGINT NOT NULL,
     patch         BIGINT NOT NULL,

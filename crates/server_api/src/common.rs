@@ -183,21 +183,21 @@ pub async fn get_connect_websocket(
                 .next()
                 .ok_or(StatusCode::INTERNAL_SERVER_ERROR)
                 .and_then(|v| {
-                    str::parse::<u16>(v).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+                    str::parse::<u32>(v).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
                 })?;
 
             let minor = iterator
                 .next()
                 .ok_or(StatusCode::INTERNAL_SERVER_ERROR)
                 .and_then(|v| {
-                    str::parse::<u16>(v).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+                    str::parse::<u32>(v).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
                 })?;
 
             let patch = iterator
                 .next()
                 .ok_or(StatusCode::INTERNAL_SERVER_ERROR)
                 .and_then(|v| {
-                    str::parse::<u16>(v).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+                    str::parse::<u32>(v).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
                 })?;
 
             Ok(WebSocketClientInfo {

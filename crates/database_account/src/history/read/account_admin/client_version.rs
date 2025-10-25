@@ -49,9 +49,9 @@ impl HistoryReadAccountClientVersion<'_> {
         let mut version_data = HashMap::<ClientVersion, ClientVersionStatistics>::new();
         for (time, major, minor, patch, count_value) in values {
             let version = ClientVersion {
-                major: major as u16,
-                minor: minor as u16,
-                patch: patch as u16,
+                major: major as u32,
+                minor: minor as u32,
+                patch: patch as u32,
             };
             let v = ClientVersionCount {
                 t: time,

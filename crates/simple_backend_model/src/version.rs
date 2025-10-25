@@ -5,9 +5,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, Eq, Hash)]
 #[serde(try_from = "String")]
 pub struct VersionNumber {
-    pub major: u16,
-    pub minor: u16,
-    pub patch: u16,
+    pub major: u32,
+    pub minor: u32,
+    pub patch: u32,
 }
 
 impl PartialOrd for VersionNumber {
@@ -41,9 +41,9 @@ impl TryFrom<String> for VersionNumber {
         let minor_str = numbers.next().ok_or_else(error)?;
         let patch_str = numbers.next().ok_or_else(error)?;
 
-        let major = major_str.parse::<u16>().map_err(|e| e.to_string())?;
-        let minor = minor_str.parse::<u16>().map_err(|e| e.to_string())?;
-        let patch = patch_str.parse::<u16>().map_err(|e| e.to_string())?;
+        let major = major_str.parse::<u32>().map_err(|e| e.to_string())?;
+        let minor = minor_str.parse::<u32>().map_err(|e| e.to_string())?;
+        let patch = patch_str.parse::<u32>().map_err(|e| e.to_string())?;
 
         Ok(VersionNumber {
             major,
