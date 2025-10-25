@@ -336,7 +336,7 @@ macro_rules! diesel_i32_wrapper {
     };
 }
 
-/// Type must have new() and as_i16() methods.
+/// The struct needs to have `TryFrom<i16>` and `AsRef<i16>` implementations.
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
 ///
 /// ```
@@ -355,13 +355,17 @@ macro_rules! diesel_i32_wrapper {
 ///     number: i16,
 /// }
 ///
-/// impl SmallNumberWrapper {
-///     pub fn new(number: i16) -> Self {
-///         Self { number }
-///     }
+/// impl TryFrom<i16> for SmallNumberWrapper {
+///     type Error = String;
 ///
-///     pub fn as_i16(&self) -> &i16 {
-///        &self.number
+///     fn try_from(number: i16) -> Result<Self, Self::Error> {
+///         Ok(Self { number })
+///     }
+/// }
+///
+/// impl AsRef<i16> for SmallNumberWrapper {
+///     fn as_ref(&self) -> &i16 {
+///         &self.number
 ///     }
 /// }
 ///
@@ -380,7 +384,7 @@ macro_rules! diesel_i16_wrapper {
                 value: <DB as diesel::backend::Backend>::RawValue<'_>,
             ) -> diesel::deserialize::Result<Self> {
                 let value = i16::from_sql(value)?;
-                Ok(<$name>::new(value))
+                TryInto::<$name>::try_into(value).map_err(|e| e.into())
             }
         }
 
@@ -393,7 +397,7 @@ macro_rules! diesel_i16_wrapper {
                 &'b self,
                 out: &mut diesel::serialize::Output<'b, '_, DB>,
             ) -> diesel::serialize::Result {
-                self.as_i16().to_sql(out)
+                AsRef::<i16>::as_ref(self).to_sql(out)
             }
         }
     };

@@ -179,6 +179,20 @@ macro_rules! sync_version_wrappers {
                 }
             }
 
+            impl TryFrom<i16> for $name {
+                type Error = String;
+
+                fn try_from(value: i16) -> Result<Self, Self::Error> {
+                    Ok(Self { version: $crate::SyncVersion::new(value) })
+                }
+            }
+
+            impl AsRef<i16> for $name {
+                fn as_ref(&self) -> &i16 {
+                    self.version.as_i16()
+                }
+            }
+
             simple_backend_model::diesel_i16_wrapper!($name);
 
             impl $crate::SyncVersionUtils for $name {
