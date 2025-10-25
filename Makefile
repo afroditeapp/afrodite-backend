@@ -109,13 +109,13 @@ validate-openapi:
 	-i $(TMP_FILE)
 
 migrations-run:
-	mkdir -p database/sqlite/current
-	DATABASE_URL="database/sqlite/current/current.db" diesel migration run
+	DATABASE_URL="postgres://localhost/afrodite_dev" diesel migration run
 	rustfmt +nightly crates/model/src/schema.rs
+	sh tools/convert_migrations.sh
 reset-database:
-	mkdir -p database/sqlite/current
-	DATABASE_URL="database/sqlite/current/current.db" diesel database reset
+	DATABASE_URL="postgres://localhost/afrodite_dev" diesel database reset
 	rustfmt +nightly crates/model/src/schema.rs
+	sh tools/convert_migrations.sh
 
 profile-build:
 	RUSTC_BOOTSTRAP=1 RUSTFLAGS=-Zself-profile=target/profile-build cargo build --bin afrodite-backend

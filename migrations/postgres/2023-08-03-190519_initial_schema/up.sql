@@ -5,18 +5,18 @@
 -- All used account IDs. Account ID is not removed from here
 -- when account data is removed.
 CREATE TABLE IF NOT EXISTS used_account_ids(
-    id         INTEGER PRIMARY KEY               NOT NULL,
-    uuid       BLOB                              NOT NULL UNIQUE
+    id         BIGSERIAL PRIMARY KEY             NOT NULL,
+    uuid       BYTEA                             NOT NULL UNIQUE
 );
 
 -- Account IDs for currently existing accounts
 CREATE TABLE IF NOT EXISTS account_id(
-    id    INTEGER PRIMARY KEY               NOT NULL,
+    id    BIGINT PRIMARY KEY                NOT NULL,
     -- Main UUID for account.
     -- This is used internally in the server, client and API level.
     -- Also this should be not used as somekind of secret as it
     -- can be seen from filesystem.
-    uuid  BLOB                              NOT NULL  UNIQUE,
+    uuid  BYTEA                             NOT NULL  UNIQUE,
     FOREIGN KEY (id)
         REFERENCES used_account_ids (id)
             ON DELETE CASCADE
@@ -24,16 +24,16 @@ CREATE TABLE IF NOT EXISTS account_id(
 );
 
 CREATE TABLE IF NOT EXISTS login_session(
-    account_id              INTEGER PRIMARY KEY NOT NULL,
+    account_id              BIGINT PRIMARY KEY  NOT NULL,
     -- Rust HashMap guarantees access token uniqueness, so
     -- UNIQUE constrait is not needed here.
-    access_token            BLOB                NOT NULL,
+    access_token            BYTEA               NOT NULL,
     access_token_unix_time  BIGINT              NOT NULL,
     -- 4 or 16 bytes
-    access_token_ip_address BLOB                NOT NULL,
+    access_token_ip_address BYTEA               NOT NULL,
     -- Using refresh token requires valid access token, so
     -- UNIQUE constraint is not needed here.
-    refresh_token           BLOB                NOT NULL,
+    refresh_token           BYTEA               NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS login_session(
 -- If the data is located in this table it should be set through account
 -- server as it propagates the changes to other components.
 CREATE TABLE IF NOT EXISTS account_permissions(
-    account_id    INTEGER PRIMARY KEY NOT NULL,
+    account_id    BIGINT PRIMARY KEY NOT NULL,
     admin_edit_permissions                       BOOLEAN NOT NULL DEFAULT FALSE,
     admin_edit_profile_name                      BOOLEAN NOT NULL DEFAULT FALSE,
     admin_edit_max_public_key_count              BOOLEAN NOT NULL DEFAULT FALSE,
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
 -- If the data is located in this table it should be set through account
 -- server as it propagates the changes to other components.
 CREATE TABLE IF NOT EXISTS shared_state(
-    account_id                INTEGER PRIMARY KEY NOT NULL,
+    account_id                BIGINT PRIMARY KEY NOT NULL,
     account_state_initial_setup_completed   BOOLEAN             NOT NULL DEFAULT FALSE,
     account_state_banned                    BOOLEAN             NOT NULL DEFAULT FALSE,
     account_state_pending_deletion          BOOLEAN             NOT NULL DEFAULT FALSE,
@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS shared_state(
 );
 
 CREATE TABLE IF NOT EXISTS common_report(
-    id                      INTEGER PRIMARY KEY NOT NULL,
+    id                      BIGSERIAL PRIMARY KEY NOT NULL,
     creator_account_id      BIGINT              NOT NULL,
     target_account_id       BIGINT              NOT NULL,
     -- 0 = profile name
@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS common_report(
 
 -- State specific to all components.
 CREATE TABLE IF NOT EXISTS common_state(
-    account_id                    INTEGER PRIMARY KEY NOT NULL,
+    account_id                    BIGINT PRIMARY KEY  NOT NULL,
     -- Sync version for client config.
     client_config_sync_version    SMALLINT            NOT NULL DEFAULT 0,
     -- 0 = Android
@@ -161,7 +161,7 @@ CREATE TABLE IF NOT EXISTS common_state(
 );
 
 CREATE TABLE IF NOT EXISTS push_notification(
-    account_id             INTEGER PRIMARY KEY NOT NULL,
+    account_id             BIGINT PRIMARY KEY  NOT NULL,
     -- Bitflag value for pending push notification
     pending_flags          BIGINT              NOT NULL DEFAULT 0,
     -- Bitflag value for sent push notifications. Used
@@ -182,12 +182,12 @@ CREATE TABLE IF NOT EXISTS push_notification(
 );
 
 CREATE TABLE IF NOT EXISTS api_usage_statistics_save_time(
-    id           INTEGER PRIMARY KEY               NOT NULL,
+    id           BIGSERIAL PRIMARY KEY             NOT NULL,
     unix_time    BIGINT                            NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS api_usage_statistics_metric_name(
-    id           INTEGER PRIMARY KEY               NOT NULL,
+    id           BIGSERIAL PRIMARY KEY             NOT NULL,
     metric_name  TEXT                              NOT NULL UNIQUE
 );
 
@@ -212,9 +212,9 @@ CREATE TABLE IF NOT EXISTS api_usage_statistics_metric_value(
 );
 
 CREATE TABLE IF NOT EXISTS ip_address_usage_statistics(
-    account_id             INTEGER                 NOT NULL,
+    account_id             BIGINT                  NOT NULL,
     -- 4 or 16 bytes
-    ip_address             BLOB                    NOT NULL,
+    ip_address             BYTEA                   NOT NULL,
     usage_count            BIGINT                  NOT NULL,
     first_usage_unix_time  BIGINT                  NOT NULL,
     latest_usage_unix_time BIGINT                  NOT NULL,
@@ -226,7 +226,7 @@ CREATE TABLE IF NOT EXISTS ip_address_usage_statistics(
 );
 
 CREATE TABLE IF NOT EXISTS admin_notification_settings(
-    account_id                       INTEGER PRIMARY KEY NOT NULL,
+    account_id                       BIGINT PRIMARY KEY NOT NULL,
     weekdays                         SMALLINT NOT NULL,
     daily_enabled_time_start_seconds INTEGER NOT NULL,
     daily_enabled_time_end_seconds   INTEGER NOT NULL,
@@ -237,7 +237,7 @@ CREATE TABLE IF NOT EXISTS admin_notification_settings(
 );
 
 CREATE TABLE IF NOT EXISTS admin_notification_subscriptions(
-    account_id INTEGER PRIMARY KEY NOT NULL,
+    account_id BIGINT PRIMARY KEY NOT NULL,
     moderate_initial_media_content_bot           BOOLEAN NOT NULL DEFAULT FALSE,
     moderate_initial_media_content_human         BOOLEAN NOT NULL DEFAULT FALSE,
     moderate_media_content_bot                   BOOLEAN NOT NULL DEFAULT FALSE,
@@ -265,7 +265,7 @@ CREATE TABLE IF NOT EXISTS vapid_public_key_hash(
 
 -- Sign in with related IDs for account
 CREATE TABLE IF NOT EXISTS sign_in_with_info(
-    account_id         INTEGER PRIMARY KEY NOT NULL,
+    account_id         BIGINT PRIMARY KEY NOT NULL,
     apple_account_id   TEXT                          UNIQUE,
     google_account_id  TEXT                          UNIQUE,
     FOREIGN KEY (account_id)
@@ -276,7 +276,7 @@ CREATE TABLE IF NOT EXISTS sign_in_with_info(
 
 -- Account information which can change
 CREATE TABLE IF NOT EXISTS account(
-    account_id   INTEGER PRIMARY KEY NOT NULL,
+    account_id   BIGINT PRIMARY KEY NOT NULL,
     email        TEXT                                UNIQUE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
@@ -286,7 +286,7 @@ CREATE TABLE IF NOT EXISTS account(
 
 -- Information which can not change after account initial setup completes
 CREATE TABLE IF NOT EXISTS account_setup(
-    account_id  INTEGER PRIMARY KEY NOT NULL,
+    account_id  BIGINT PRIMARY KEY NOT NULL,
     -- Birthdate has YYYY-MM-DD format. This is the birthdate from user when
     -- account initial setup is done. The birthdate in shared_state can
     -- be modified later.
@@ -304,7 +304,7 @@ CREATE TABLE IF NOT EXISTS account_setup(
 -- 1 - Sending requested
 -- 2 - Sent successfully
 CREATE TABLE IF NOT EXISTS account_email_sending_state(
-    account_id                      INTEGER PRIMARY KEY NOT NULL,
+    account_id                      BIGINT PRIMARY KEY  NOT NULL,
     account_registered_state_number SMALLINT            NOT NULL DEFAULT 0,
     new_message_state_number        SMALLINT            NOT NULL DEFAULT 0,
     new_like_state_number           SMALLINT            NOT NULL DEFAULT 0,
@@ -316,7 +316,7 @@ CREATE TABLE IF NOT EXISTS account_email_sending_state(
 
 -- State specific to account component.
 CREATE TABLE IF NOT EXISTS account_state(
-    account_id                         INTEGER PRIMARY KEY NOT NULL,
+    account_id                         BIGINT PRIMARY KEY NOT NULL,
     next_client_id                     BIGINT             NOT NULL DEFAULT 0,
     account_deletion_request_unix_time BIGINT,
     account_banned_reason_category     SMALLINT,
@@ -340,7 +340,7 @@ CREATE TABLE IF NOT EXISTS account_state(
 );
 
 CREATE TABLE IF NOT EXISTS account_app_notification_settings(
-    account_id                         INTEGER PRIMARY KEY NOT NULL,
+    account_id                         BIGINT PRIMARY KEY NOT NULL,
     news                               BOOLEAN             NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
@@ -360,7 +360,7 @@ CREATE TABLE IF NOT EXISTS demo_account_owned_accounts(
 );
 
 CREATE TABLE IF NOT EXISTS news(
-    id                    INTEGER PRIMARY KEY NOT NULL,
+    id                    BIGSERIAL PRIMARY KEY NOT NULL,
     account_id_creator    BIGINT,
     first_publication_unix_time  BIGINT,
     latest_publication_unix_time BIGINT,
@@ -425,7 +425,7 @@ CREATE TABLE IF NOT EXISTS client_features_file_hash(
 
 -- Private profile related state for some account.
 CREATE TABLE IF NOT EXISTS profile_state(
-    account_id                 INTEGER PRIMARY KEY  NOT NULL,
+    account_id                 BIGINT PRIMARY KEY   NOT NULL,
     -- Min age in years and inside inclusive range of [18,99] for
     -- searching profiles.
     search_age_range_min       SMALLINT             NOT NULL    DEFAULT 18,
@@ -472,8 +472,8 @@ CREATE TABLE IF NOT EXISTS profile_state(
 -- Profile information which can be sent to clients if
 -- profile visibility is public.
 CREATE TABLE IF NOT EXISTS profile(
-    account_id      INTEGER PRIMARY KEY NOT NULL,
-    version_uuid    BLOB                NOT NULL,
+    account_id      BIGINT PRIMARY KEY  NOT NULL,
+    version_uuid    BYTEA               NOT NULL,
     -- Null or non-empty string
     profile_name    TEXT,
     -- Null or non-empty string
@@ -574,7 +574,7 @@ CREATE TABLE IF NOT EXISTS profile_name_allowlist(
 );
 
 CREATE TABLE IF NOT EXISTS profile_report_profile_name(
-    report_id               INTEGER PRIMARY KEY NOT NULL,
+    report_id               BIGINT PRIMARY KEY  NOT NULL,
     -- Non-empty string
     profile_name            TEXT                NOT NULL,
     FOREIGN KEY (report_id)
@@ -584,7 +584,7 @@ CREATE TABLE IF NOT EXISTS profile_report_profile_name(
 );
 
 CREATE TABLE IF NOT EXISTS profile_report_profile_text(
-    report_id               INTEGER PRIMARY KEY NOT NULL,
+    report_id               BIGINT PRIMARY KEY NOT NULL,
     -- Non-empty string
     profile_text            TEXT                NOT NULL,
     FOREIGN KEY (report_id)
@@ -594,7 +594,7 @@ CREATE TABLE IF NOT EXISTS profile_report_profile_text(
 );
 
 CREATE TABLE IF NOT EXISTS profile_app_notification_settings(
-    account_id                                 INTEGER PRIMARY KEY NOT NULL,
+    account_id                                 BIGINT PRIMARY KEY  NOT NULL,
     profile_string_moderation                  BOOLEAN             NOT NULL,
     automatic_profile_search                   BOOLEAN             NOT NULL,
     FOREIGN KEY (account_id)
@@ -604,7 +604,7 @@ CREATE TABLE IF NOT EXISTS profile_app_notification_settings(
 );
 
 CREATE TABLE IF NOT EXISTS profile_app_notification_state(
-    account_id                         INTEGER PRIMARY KEY NOT NULL,
+    account_id                         BIGINT PRIMARY KEY  NOT NULL,
     profile_name_accepted              SMALLINT            NOT NULL DEFAULT 0,
     profile_name_accepted_viewed       SMALLINT            NOT NULL DEFAULT 0,
     profile_name_rejected              SMALLINT            NOT NULL DEFAULT 0,
@@ -620,7 +620,7 @@ CREATE TABLE IF NOT EXISTS profile_app_notification_state(
 );
 
 CREATE TABLE IF NOT EXISTS profile_automatic_profile_search_settings(
-    account_id        INTEGER PRIMARY KEY NOT NULL,
+    account_id        BIGINT PRIMARY KEY  NOT NULL,
     new_profiles      BOOLEAN             NOT NULL,
     attribute_filters BOOLEAN             NOT NULL,
     distance_filters  BOOLEAN             NOT NULL,
@@ -632,7 +632,7 @@ CREATE TABLE IF NOT EXISTS profile_automatic_profile_search_settings(
 );
 
 CREATE TABLE IF NOT EXISTS profile_automatic_profile_search_state(
-    account_id                         INTEGER PRIMARY KEY NOT NULL,
+    account_id                         BIGINT PRIMARY KEY  NOT NULL,
     last_seen_unix_time                BIGINT              NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
@@ -641,7 +641,7 @@ CREATE TABLE IF NOT EXISTS profile_automatic_profile_search_state(
 );
 
 CREATE TABLE IF NOT EXISTS profile_moderation(
-    account_id              INTEGER             NOT NULL,
+    account_id              BIGINT              NOT NULL,
     -- 0 = ProfileName
     -- 1 = ProfileText
     content_type            SMALLINT            NOT NULL,
@@ -674,7 +674,7 @@ CREATE TABLE IF NOT EXISTS profile_moderation(
 
 -- State specific to media component.
 CREATE TABLE IF NOT EXISTS media_state(
-    account_id                          INTEGER PRIMARY KEY NOT NULL,
+    account_id                          BIGINT PRIMARY KEY  NOT NULL,
     -- Sync version for profile and security content data for this account.
     media_content_sync_version          SMALLINT            NOT NULL DEFAULT 0,
     -- Edit time for profile content changes. This updates from both
@@ -686,12 +686,61 @@ CREATE TABLE IF NOT EXISTS media_state(
             ON UPDATE CASCADE
 );
 
+-- Information about uploaded media content
+CREATE TABLE IF NOT EXISTS media_content(
+    id                  BIGSERIAL PRIMARY KEY NOT NULL,
+    uuid                BYTEA               NOT NULL,
+    account_id          BIGINT              NOT NULL,
+    -- Client captured this media
+    secure_capture      BOOLEAN             NOT NULL,
+    -- Face was detected from the content
+    face_detected       BOOLEAN             NOT NULL,
+    -- JpegImage = 0, Jpeg image
+    content_type_number SMALLINT            NOT NULL,
+    -- Numbers from 0 to 6.
+    slot_number         SMALLINT            NOT NULL,
+    creation_unix_time  BIGINT              NOT NULL,
+    -- Content was uploaded when profile visibility is pending public or
+    -- pending private.
+    initial_content     BOOLEAN             NOT NULL,
+    -- State groups:
+    -- InSlot, If user uploads new content to slot the current will be removed.
+    -- InModeration, Content is in moderation. User can not remove the content.
+    -- ModeratedAsAccepted, Content is moderated as accepted. User can not remove the content until
+    --                      specific time elapses.
+    -- ModeratedAsRejected, Content is moderated as rejected. Content deleting
+    --                      is possible.
+    -- State values:
+    -- 0 = Empty (InSlot),
+    -- 1 = WaitingBotOrHumanModeration (InModeration)
+    -- 2 = WaitingHumanModeration (InModeration)
+    -- 3 = AcceptedByBot (ModeratedAsAccepted)
+    -- 4 = AcceptedByHuman (ModeratedAsAccepted)
+    -- 5 = RejectedByBot (ModeratedAsRejected)
+    -- 6 = RejectedByHuman (ModeratedAsRejected)
+    moderation_state     SMALLINT            NOT NULL    DEFAULT 0,
+    moderation_rejected_reason_category SMALLINT,
+    -- Null or non-empty string
+    moderation_rejected_reason_details  TEXT,
+    moderation_moderator_account_id     BIGINT,
+    usage_start_unix_time  BIGINT,
+    usage_end_unix_time    BIGINT,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (moderation_moderator_account_id)
+        REFERENCES account_id (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE
+);
+
 -- Currently selected images for account.
 -- Contains profile editing related pending profile image info.
 CREATE TABLE IF NOT EXISTS current_account_media(
-    account_id                   INTEGER PRIMARY KEY NOT NULL,
+    account_id                   BIGINT PRIMARY KEY  NOT NULL,
     security_content_id          BIGINT,
-    profile_content_version_uuid BLOB                NOT NULL,
+    profile_content_version_uuid BYTEA               NOT NULL,
     profile_content_id_0         BIGINT,
     profile_content_id_1         BIGINT,
     profile_content_id_2         BIGINT,
@@ -741,58 +790,9 @@ CREATE TABLE IF NOT EXISTS current_account_media(
             ON UPDATE CASCADE
 );
 
--- Information about uploaded media content
-CREATE TABLE IF NOT EXISTS media_content(
-    id                  INTEGER PRIMARY KEY NOT NULL,
-    uuid                BLOB                NOT NULL,
-    account_id          BIGINT              NOT NULL,
-    -- Client captured this media
-    secure_capture      BOOLEAN             NOT NULL,
-    -- Face was detected from the content
-    face_detected       BOOLEAN             NOT NULL,
-    -- JpegImage = 0, Jpeg image
-    content_type_number SMALLINT            NOT NULL,
-    -- Numbers from 0 to 6.
-    slot_number         SMALLINT            NOT NULL,
-    creation_unix_time  BIGINT              NOT NULL,
-    -- Content was uploaded when profile visibility is pending public or
-    -- pending private.
-    initial_content     BOOLEAN             NOT NULL,
-    -- State groups:
-    -- InSlot, If user uploads new content to slot the current will be removed.
-    -- InModeration, Content is in moderation. User can not remove the content.
-    -- ModeratedAsAccepted, Content is moderated as accepted. User can not remove the content until
-    --                      specific time elapses.
-    -- ModeratedAsRejected, Content is moderated as rejected. Content deleting
-    --                      is possible.
-    -- State values:
-    -- 0 = Empty (InSlot),
-    -- 1 = WaitingBotOrHumanModeration (InModeration)
-    -- 2 = WaitingHumanModeration (InModeration)
-    -- 3 = AcceptedByBot (ModeratedAsAccepted)
-    -- 4 = AcceptedByHuman (ModeratedAsAccepted)
-    -- 5 = RejectedByBot (ModeratedAsRejected)
-    -- 6 = RejectedByHuman (ModeratedAsRejected)
-    moderation_state     SMALLINT            NOT NULL    DEFAULT 0,
-    moderation_rejected_reason_category SMALLINT,
-    -- Null or non-empty string
-    moderation_rejected_reason_details  TEXT,
-    moderation_moderator_account_id     BIGINT,
-    usage_start_unix_time  BIGINT,
-    usage_end_unix_time    BIGINT,
-    FOREIGN KEY (account_id)
-        REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    FOREIGN KEY (moderation_moderator_account_id)
-        REFERENCES account_id (id)
-            ON DELETE SET NULL
-            ON UPDATE CASCADE
-);
-
 CREATE TABLE IF NOT EXISTS used_content_ids(
     account_id            BIGINT                            NOT NULL,
-    uuid                  BLOB                              NOT NULL,
+    uuid                  BYTEA                             NOT NULL,
     PRIMARY KEY (account_id, uuid),
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
@@ -801,10 +801,10 @@ CREATE TABLE IF NOT EXISTS used_content_ids(
 );
 
 CREATE TABLE IF NOT EXISTS media_report_profile_content(
-    report_id               INTEGER PRIMARY KEY NOT NULL,
+    report_id               BIGINT PRIMARY KEY  NOT NULL,
     -- The image UUID is stored here to avoid
     -- image changes if database image ID is reused.
-    profile_content_uuid    BLOB                NOT NULL,
+    profile_content_uuid    BYTEA               NOT NULL,
     FOREIGN KEY (report_id)
         REFERENCES common_report (id)
             ON DELETE CASCADE
@@ -812,7 +812,7 @@ CREATE TABLE IF NOT EXISTS media_report_profile_content(
 );
 
 CREATE TABLE IF NOT EXISTS media_app_notification_settings(
-    account_id                         INTEGER PRIMARY KEY NOT NULL,
+    account_id                         BIGINT PRIMARY KEY  NOT NULL,
     media_content_moderation           BOOLEAN             NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
@@ -821,7 +821,7 @@ CREATE TABLE IF NOT EXISTS media_app_notification_settings(
 );
 
 CREATE TABLE IF NOT EXISTS media_app_notification_state(
-    account_id                         INTEGER PRIMARY KEY NOT NULL,
+    account_id                         BIGINT PRIMARY KEY  NOT NULL,
     media_content_accepted             SMALLINT            NOT NULL DEFAULT 0,
     media_content_accepted_viewed      SMALLINT            NOT NULL DEFAULT 0,
     media_content_rejected             SMALLINT            NOT NULL DEFAULT 0,
@@ -838,7 +838,7 @@ CREATE TABLE IF NOT EXISTS media_app_notification_state(
 
 -- State specific to chat component.
 CREATE TABLE IF NOT EXISTS chat_state(
-    account_id              INTEGER PRIMARY KEY NOT NULL,
+    account_id              BIGINT PRIMARY KEY  NOT NULL,
     received_likes_sync_version  SMALLINT       NOT NULL DEFAULT 0,
     new_received_likes_count     BIGINT        NOT NULL DEFAULT 0,
     next_received_like_id        BIGINT        NOT NULL DEFAULT 0,
@@ -851,7 +851,7 @@ CREATE TABLE IF NOT EXISTS chat_state(
 );
 
 CREATE TABLE IF NOT EXISTS daily_likes_left(
-    account_id            INTEGER PRIMARY KEY NOT NULL,
+    account_id            BIGINT PRIMARY KEY  NOT NULL,
     sync_version          SMALLINT            NOT NULL DEFAULT 0,
     likes_left            SMALLINT            NOT NULL DEFAULT 0,
     latest_limit_reset_unix_time BIGINT,
@@ -864,7 +864,7 @@ CREATE TABLE IF NOT EXISTS daily_likes_left(
 CREATE TABLE IF NOT EXISTS public_key(
     account_id            BIGINT  NOT NULL,
     key_id                BIGINT  NOT NULL,
-    key_data              BLOB    NOT NULL,
+    key_data              BYTEA   NOT NULL,
     key_added_unix_time   BIGINT  NOT NULL,
     PRIMARY KEY (account_id, key_id),
     FOREIGN KEY (account_id)
@@ -873,31 +873,9 @@ CREATE TABLE IF NOT EXISTS public_key(
             ON UPDATE CASCADE
 );
 
--- Lookup table for finding interaction ID for a pair of accounts.
--- One account pair has two rows in this table, so accessing
--- with (a1, a2) and (a2, a1) is possible.
-CREATE TABLE IF NOT EXISTS account_interaction_index(
-    account_id_first               BIGINT NOT NULL,
-    account_id_second              BIGINT NOT NULL,
-    interaction_id                 BIGINT NOT NULL,
-    PRIMARY KEY (account_id_first, account_id_second),
-    FOREIGN KEY (account_id_first)
-        REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    FOREIGN KEY (account_id_second)
-        REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    FOREIGN KEY (interaction_id)
-        REFERENCES account_interaction (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
-);
-
 -- Current relationship between accounts
 CREATE TABLE IF NOT EXISTS account_interaction(
-    id                  INTEGER PRIMARY KEY NOT NULL,
+    id                  BIGSERIAL PRIMARY KEY NOT NULL,
     -- 0 = no interaction
     -- 1 = like
     -- 2 = match
@@ -949,10 +927,32 @@ CREATE TABLE IF NOT EXISTS account_interaction(
             ON UPDATE CASCADE
 );
 
+-- Lookup table for finding interaction ID for a pair of accounts.
+-- One account pair has two rows in this table, so accessing
+-- with (a1, a2) and (a2, a1) is possible.
+CREATE TABLE IF NOT EXISTS account_interaction_index(
+    account_id_first               BIGINT NOT NULL,
+    account_id_second              BIGINT NOT NULL,
+    interaction_id                 BIGINT NOT NULL,
+    PRIMARY KEY (account_id_first, account_id_second),
+    FOREIGN KEY (account_id_first)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (account_id_second)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (interaction_id)
+        REFERENCES account_interaction (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 -- Messages received from clients which are pending for acknowledgements from
 -- sender and receiver.
 CREATE TABLE IF NOT EXISTS pending_messages(
-    id                  INTEGER PRIMARY KEY NOT NULL,
+    id                  BIGSERIAL PRIMARY KEY NOT NULL,
     account_interaction             BIGINT NOT NULL,
     -- The account which sent the message.
     account_id_sender               BIGINT NOT NULL,
@@ -975,7 +975,7 @@ CREATE TABLE IF NOT EXISTS pending_messages(
     sender_client_id                BIGINT NOT NULL,
     sender_client_local_id          BIGINT NOT NULL,
     -- Message bytes.
-    message_bytes                   BLOB   NOT NULL,
+    message_bytes                   BYTEA  NOT NULL,
     FOREIGN KEY (account_interaction)
         REFERENCES account_interaction (id)
             ON DELETE CASCADE
@@ -991,14 +991,14 @@ CREATE TABLE IF NOT EXISTS pending_messages(
 );
 
 CREATE TABLE IF NOT EXISTS chat_report_chat_message(
-    report_id                          INTEGER PRIMARY KEY NOT NULL,
-    message_sender_account_id_uuid     BLOB                NOT NULL,
-    message_receiver_account_id_uuid   BLOB                NOT NULL,
+    report_id                          BIGINT PRIMARY KEY  NOT NULL,
+    message_sender_account_id_uuid     BYTEA               NOT NULL,
+    message_receiver_account_id_uuid   BYTEA               NOT NULL,
     message_unix_time                  BIGINT              NOT NULL,
     message_id                         BIGINT              NOT NULL,
-    message_symmetric_key              BLOB                NOT NULL,
-    client_message_bytes               BLOB                NOT NULL,
-    backend_signed_message_bytes       BLOB                NOT NULL,
+    message_symmetric_key              BYTEA               NOT NULL,
+    client_message_bytes               BYTEA               NOT NULL,
+    backend_signed_message_bytes       BYTEA               NOT NULL,
     FOREIGN KEY (report_id)
         REFERENCES common_report (id)
             ON DELETE CASCADE
@@ -1008,7 +1008,7 @@ CREATE TABLE IF NOT EXISTS chat_report_chat_message(
 );
 
 CREATE TABLE IF NOT EXISTS chat_app_notification_settings(
-    account_id                         INTEGER PRIMARY KEY NOT NULL,
+    account_id                         BIGINT PRIMARY KEY  NOT NULL,
     likes                              BOOLEAN             NOT NULL,
     messages                           BOOLEAN             NOT NULL,
     FOREIGN KEY (account_id)
@@ -1018,7 +1018,7 @@ CREATE TABLE IF NOT EXISTS chat_app_notification_settings(
 );
 
 CREATE TABLE IF NOT EXISTS chat_email_notification_settings(
-    account_id                         INTEGER PRIMARY KEY NOT NULL,
+    account_id                         BIGINT PRIMARY KEY  NOT NULL,
     likes                              BOOLEAN             NOT NULL,
     messages                           BOOLEAN             NOT NULL,
     FOREIGN KEY (account_id)
@@ -1036,12 +1036,12 @@ CREATE TABLE IF NOT EXISTS chat_global_state(
 ---------- History tables for server component common ----------
 
 CREATE TABLE IF NOT EXISTS history_common_statistics_save_time(
-    id           INTEGER PRIMARY KEY               NOT NULL,
+    id           BIGSERIAL PRIMARY KEY             NOT NULL,
     unix_time    BIGINT                            NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS history_performance_statistics_metric_name(
-    id           INTEGER PRIMARY KEY               NOT NULL,
+    id           BIGSERIAL PRIMARY KEY             NOT NULL,
     metric_name  TEXT                              NOT NULL UNIQUE
 );
 
@@ -1062,7 +1062,7 @@ CREATE TABLE IF NOT EXISTS history_performance_statistics_metric_value(
 
 -- Use own table for country names to keep ID value small as possible
 CREATE TABLE IF NOT EXISTS history_ip_country_statistics_country_name(
-    id           INTEGER PRIMARY KEY               NOT NULL,
+    id           BIGSERIAL PRIMARY KEY             NOT NULL,
     country_name TEXT                              NOT NULL UNIQUE
 );
 
@@ -1085,7 +1085,7 @@ CREATE TABLE IF NOT EXISTS history_ip_country_statistics(
 ---------- History tables for server component account ----------
 
 CREATE TABLE IF NOT EXISTS history_client_version_statistics_version_number(
-    id            INTEGER PRIMARY KEY                     NOT NULL,
+    id            BIGSERIAL PRIMARY KEY                   NOT NULL,
     major         BIGINT NOT NULL,
     minor         BIGINT NOT NULL,
     patch         BIGINT NOT NULL,
@@ -1154,7 +1154,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_all_genders(
 );
 
 CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_account(
-    time_id INTEGER PRIMARY KEY NOT NULL,
+    time_id BIGINT PRIMARY KEY  NOT NULL,
     count   BIGINT              NOT NULL,
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)
@@ -1163,7 +1163,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_account(
 );
 
 CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_man(
-    time_id INTEGER PRIMARY KEY NOT NULL,
+    time_id BIGINT PRIMARY KEY  NOT NULL,
     count   BIGINT              NOT NULL,
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)
@@ -1172,7 +1172,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_man(
 );
 
 CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_woman(
-    time_id INTEGER PRIMARY KEY NOT NULL,
+    time_id BIGINT PRIMARY KEY  NOT NULL,
     count   BIGINT              NOT NULL,
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)
@@ -1181,7 +1181,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_woman(
 );
 
 CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_non_binary(
-    time_id INTEGER PRIMARY KEY NOT NULL,
+    time_id BIGINT PRIMARY KEY  NOT NULL,
     count   BIGINT              NOT NULL,
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)
@@ -1190,7 +1190,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_non_binary(
 );
 
 CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_all_genders(
-    time_id INTEGER PRIMARY KEY NOT NULL,
+    time_id BIGINT PRIMARY KEY  NOT NULL,
     count   BIGINT              NOT NULL,
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)

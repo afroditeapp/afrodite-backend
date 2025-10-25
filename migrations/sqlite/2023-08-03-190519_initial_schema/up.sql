@@ -5,7 +5,7 @@
 -- All used account IDs. Account ID is not removed from here
 -- when account data is removed.
 CREATE TABLE IF NOT EXISTS used_account_ids(
-    id         INTEGER PRIMARY KEY               NOT NULL,
+    id         INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     uuid       BLOB                              NOT NULL UNIQUE
 );
 
@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS shared_state(
 );
 
 CREATE TABLE IF NOT EXISTS common_report(
-    id                      INTEGER PRIMARY KEY NOT NULL,
+    id                      INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     creator_account_id      BIGINT              NOT NULL,
     target_account_id       BIGINT              NOT NULL,
     -- 0 = profile name
@@ -182,12 +182,12 @@ CREATE TABLE IF NOT EXISTS push_notification(
 );
 
 CREATE TABLE IF NOT EXISTS api_usage_statistics_save_time(
-    id           INTEGER PRIMARY KEY               NOT NULL,
+    id           INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     unix_time    BIGINT                            NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS api_usage_statistics_metric_name(
-    id           INTEGER PRIMARY KEY               NOT NULL,
+    id           INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     metric_name  TEXT                              NOT NULL UNIQUE
 );
 
@@ -212,7 +212,7 @@ CREATE TABLE IF NOT EXISTS api_usage_statistics_metric_value(
 );
 
 CREATE TABLE IF NOT EXISTS ip_address_usage_statistics(
-    account_id             INTEGER                 NOT NULL,
+    account_id             BIGINT                  NOT NULL,
     -- 4 or 16 bytes
     ip_address             BLOB                    NOT NULL,
     usage_count            BIGINT                  NOT NULL,
@@ -360,7 +360,7 @@ CREATE TABLE IF NOT EXISTS demo_account_owned_accounts(
 );
 
 CREATE TABLE IF NOT EXISTS news(
-    id                    INTEGER PRIMARY KEY NOT NULL,
+    id                    INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     account_id_creator    BIGINT,
     first_publication_unix_time  BIGINT,
     latest_publication_unix_time BIGINT,
@@ -641,7 +641,7 @@ CREATE TABLE IF NOT EXISTS profile_automatic_profile_search_state(
 );
 
 CREATE TABLE IF NOT EXISTS profile_moderation(
-    account_id              INTEGER             NOT NULL,
+    account_id              BIGINT              NOT NULL,
     -- 0 = ProfileName
     -- 1 = ProfileText
     content_type            SMALLINT            NOT NULL,
@@ -683,6 +683,55 @@ CREATE TABLE IF NOT EXISTS media_state(
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+-- Information about uploaded media content
+CREATE TABLE IF NOT EXISTS media_content(
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    uuid                BLOB                NOT NULL,
+    account_id          BIGINT              NOT NULL,
+    -- Client captured this media
+    secure_capture      BOOLEAN             NOT NULL,
+    -- Face was detected from the content
+    face_detected       BOOLEAN             NOT NULL,
+    -- JpegImage = 0, Jpeg image
+    content_type_number SMALLINT            NOT NULL,
+    -- Numbers from 0 to 6.
+    slot_number         SMALLINT            NOT NULL,
+    creation_unix_time  BIGINT              NOT NULL,
+    -- Content was uploaded when profile visibility is pending public or
+    -- pending private.
+    initial_content     BOOLEAN             NOT NULL,
+    -- State groups:
+    -- InSlot, If user uploads new content to slot the current will be removed.
+    -- InModeration, Content is in moderation. User can not remove the content.
+    -- ModeratedAsAccepted, Content is moderated as accepted. User can not remove the content until
+    --                      specific time elapses.
+    -- ModeratedAsRejected, Content is moderated as rejected. Content deleting
+    --                      is possible.
+    -- State values:
+    -- 0 = Empty (InSlot),
+    -- 1 = WaitingBotOrHumanModeration (InModeration)
+    -- 2 = WaitingHumanModeration (InModeration)
+    -- 3 = AcceptedByBot (ModeratedAsAccepted)
+    -- 4 = AcceptedByHuman (ModeratedAsAccepted)
+    -- 5 = RejectedByBot (ModeratedAsRejected)
+    -- 6 = RejectedByHuman (ModeratedAsRejected)
+    moderation_state     SMALLINT            NOT NULL    DEFAULT 0,
+    moderation_rejected_reason_category SMALLINT,
+    -- Null or non-empty string
+    moderation_rejected_reason_details  TEXT,
+    moderation_moderator_account_id     BIGINT,
+    usage_start_unix_time  BIGINT,
+    usage_end_unix_time    BIGINT,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (moderation_moderator_account_id)
+        REFERENCES account_id (id)
+            ON DELETE SET NULL
             ON UPDATE CASCADE
 );
 
@@ -737,55 +786,6 @@ CREATE TABLE IF NOT EXISTS current_account_media(
             ON UPDATE CASCADE,
     FOREIGN KEY (profile_content_id_5)
         REFERENCES media_content (id)
-            ON DELETE SET NULL
-            ON UPDATE CASCADE
-);
-
--- Information about uploaded media content
-CREATE TABLE IF NOT EXISTS media_content(
-    id                  INTEGER PRIMARY KEY NOT NULL,
-    uuid                BLOB                NOT NULL,
-    account_id          BIGINT              NOT NULL,
-    -- Client captured this media
-    secure_capture      BOOLEAN             NOT NULL,
-    -- Face was detected from the content
-    face_detected       BOOLEAN             NOT NULL,
-    -- JpegImage = 0, Jpeg image
-    content_type_number SMALLINT            NOT NULL,
-    -- Numbers from 0 to 6.
-    slot_number         SMALLINT            NOT NULL,
-    creation_unix_time  BIGINT              NOT NULL,
-    -- Content was uploaded when profile visibility is pending public or
-    -- pending private.
-    initial_content     BOOLEAN             NOT NULL,
-    -- State groups:
-    -- InSlot, If user uploads new content to slot the current will be removed.
-    -- InModeration, Content is in moderation. User can not remove the content.
-    -- ModeratedAsAccepted, Content is moderated as accepted. User can not remove the content until
-    --                      specific time elapses.
-    -- ModeratedAsRejected, Content is moderated as rejected. Content deleting
-    --                      is possible.
-    -- State values:
-    -- 0 = Empty (InSlot),
-    -- 1 = WaitingBotOrHumanModeration (InModeration)
-    -- 2 = WaitingHumanModeration (InModeration)
-    -- 3 = AcceptedByBot (ModeratedAsAccepted)
-    -- 4 = AcceptedByHuman (ModeratedAsAccepted)
-    -- 5 = RejectedByBot (ModeratedAsRejected)
-    -- 6 = RejectedByHuman (ModeratedAsRejected)
-    moderation_state     SMALLINT            NOT NULL    DEFAULT 0,
-    moderation_rejected_reason_category SMALLINT,
-    -- Null or non-empty string
-    moderation_rejected_reason_details  TEXT,
-    moderation_moderator_account_id     BIGINT,
-    usage_start_unix_time  BIGINT,
-    usage_end_unix_time    BIGINT,
-    FOREIGN KEY (account_id)
-        REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    FOREIGN KEY (moderation_moderator_account_id)
-        REFERENCES account_id (id)
             ON DELETE SET NULL
             ON UPDATE CASCADE
 );
@@ -873,31 +873,9 @@ CREATE TABLE IF NOT EXISTS public_key(
             ON UPDATE CASCADE
 );
 
--- Lookup table for finding interaction ID for a pair of accounts.
--- One account pair has two rows in this table, so accessing
--- with (a1, a2) and (a2, a1) is possible.
-CREATE TABLE IF NOT EXISTS account_interaction_index(
-    account_id_first               BIGINT NOT NULL,
-    account_id_second              BIGINT NOT NULL,
-    interaction_id                 BIGINT NOT NULL,
-    PRIMARY KEY (account_id_first, account_id_second),
-    FOREIGN KEY (account_id_first)
-        REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    FOREIGN KEY (account_id_second)
-        REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    FOREIGN KEY (interaction_id)
-        REFERENCES account_interaction (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
-);
-
 -- Current relationship between accounts
 CREATE TABLE IF NOT EXISTS account_interaction(
-    id                  INTEGER PRIMARY KEY NOT NULL,
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     -- 0 = no interaction
     -- 1 = like
     -- 2 = match
@@ -949,10 +927,32 @@ CREATE TABLE IF NOT EXISTS account_interaction(
             ON UPDATE CASCADE
 );
 
+-- Lookup table for finding interaction ID for a pair of accounts.
+-- One account pair has two rows in this table, so accessing
+-- with (a1, a2) and (a2, a1) is possible.
+CREATE TABLE IF NOT EXISTS account_interaction_index(
+    account_id_first               BIGINT NOT NULL,
+    account_id_second              BIGINT NOT NULL,
+    interaction_id                 BIGINT NOT NULL,
+    PRIMARY KEY (account_id_first, account_id_second),
+    FOREIGN KEY (account_id_first)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (account_id_second)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (interaction_id)
+        REFERENCES account_interaction (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 -- Messages received from clients which are pending for acknowledgements from
 -- sender and receiver.
 CREATE TABLE IF NOT EXISTS pending_messages(
-    id                  INTEGER PRIMARY KEY NOT NULL,
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     account_interaction             BIGINT NOT NULL,
     -- The account which sent the message.
     account_id_sender               BIGINT NOT NULL,
@@ -975,7 +975,7 @@ CREATE TABLE IF NOT EXISTS pending_messages(
     sender_client_id                BIGINT NOT NULL,
     sender_client_local_id          BIGINT NOT NULL,
     -- Message bytes.
-    message_bytes                   BLOB    NOT NULL,
+    message_bytes                   BLOB   NOT NULL,
     FOREIGN KEY (account_interaction)
         REFERENCES account_interaction (id)
             ON DELETE CASCADE
@@ -1036,12 +1036,12 @@ CREATE TABLE IF NOT EXISTS chat_global_state(
 ---------- History tables for server component common ----------
 
 CREATE TABLE IF NOT EXISTS history_common_statistics_save_time(
-    id           INTEGER PRIMARY KEY               NOT NULL,
+    id           INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     unix_time    BIGINT                            NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS history_performance_statistics_metric_name(
-    id           INTEGER PRIMARY KEY               NOT NULL,
+    id           INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     metric_name  TEXT                              NOT NULL UNIQUE
 );
 
@@ -1062,7 +1062,7 @@ CREATE TABLE IF NOT EXISTS history_performance_statistics_metric_value(
 
 -- Use own table for country names to keep ID value small as possible
 CREATE TABLE IF NOT EXISTS history_ip_country_statistics_country_name(
-    id           INTEGER PRIMARY KEY               NOT NULL,
+    id           INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     country_name TEXT                              NOT NULL UNIQUE
 );
 
@@ -1085,7 +1085,7 @@ CREATE TABLE IF NOT EXISTS history_ip_country_statistics(
 ---------- History tables for server component account ----------
 
 CREATE TABLE IF NOT EXISTS history_client_version_statistics_version_number(
-    id            INTEGER PRIMARY KEY                     NOT NULL,
+    id            INTEGER PRIMARY KEY AUTOINCREMENT       NOT NULL,
     major         BIGINT NOT NULL,
     minor         BIGINT NOT NULL,
     patch         BIGINT NOT NULL,

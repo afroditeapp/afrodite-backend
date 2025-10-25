@@ -17,7 +17,7 @@ pub use model::schema;
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;
 use simple_backend_database::{DbReadHandle, DbWriteHandle, diesel_db::ObjectExtensions};
 
-pub const DIESEL_MIGRATIONS: EmbeddedMigrations = embed_migrations!();
+pub const DIESEL_MIGRATIONS: EmbeddedMigrations = embed_migrations!("../../migrations/sqlite");
 
 pub use simple_backend_database::{
     DatabaseHandleCreator, DbReadCloseHandle, DbWriteCloseHandle, PoolObject,

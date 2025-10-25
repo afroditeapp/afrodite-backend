@@ -301,7 +301,7 @@ pub enum CurrentAccountInteractionState {
     BlockSent,
 }
 
-pub const CHAT_GLOBAL_STATE_ROW_TYPE: i64 = 0;
+pub const CHAT_GLOBAL_STATE_ROW_TYPE: i32 = 0;
 
 /// Global state for account component
 #[derive(Debug, Default, Clone, PartialEq, Queryable, Selectable)]

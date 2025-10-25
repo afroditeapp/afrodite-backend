@@ -249,7 +249,7 @@ pub struct AccountGlobalState {
 
 impl AccountGlobalState {
     /// Key for the only row in the table
-    pub const ACCOUNT_GLOBAL_STATE_ROW_TYPE: i64 = 0;
+    pub const ACCOUNT_GLOBAL_STATE_ROW_TYPE: i32 = 0;
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
