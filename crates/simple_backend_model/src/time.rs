@@ -74,6 +74,20 @@ impl UnixTime {
     }
 }
 
+impl TryFrom<i64> for UnixTime {
+    type Error = String;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        Ok(Self { ut: value })
+    }
+}
+
+impl AsRef<i64> for UnixTime {
+    fn as_ref(&self) -> &i64 {
+        &self.ut
+    }
+}
+
 diesel_i64_wrapper!(UnixTime);
 
 impl From<chrono::DateTime<chrono::Utc>> for UnixTime {

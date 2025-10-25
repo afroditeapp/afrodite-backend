@@ -19,16 +19,22 @@ use utoipa::ToSchema;
 pub struct AccountCreatedTime(UnixTime);
 
 impl AccountCreatedTime {
-    pub fn new(value: i64) -> Self {
-        Self(UnixTime::new(value))
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.0.ut
-    }
-
     pub fn current_time() -> Self {
         Self(UnixTime::current_time())
+    }
+}
+
+impl TryFrom<i64> for AccountCreatedTime {
+    type Error = String;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        Ok(Self(UnixTime::new(value)))
+    }
+}
+
+impl AsRef<i64> for AccountCreatedTime {
+    fn as_ref(&self) -> &i64 {
+        &self.0.ut
     }
 }
 
@@ -50,16 +56,22 @@ diesel_i64_wrapper!(AccountCreatedTime);
 pub struct InitialSetupCompletedTime(UnixTime);
 
 impl InitialSetupCompletedTime {
-    pub fn new(value: i64) -> Self {
-        Self(UnixTime::new(value))
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.0.ut
-    }
-
     pub fn current_time() -> Self {
         Self(UnixTime::current_time())
+    }
+}
+
+impl TryFrom<i64> for InitialSetupCompletedTime {
+    type Error = String;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        Ok(Self(UnixTime::new(value)))
+    }
+}
+
+impl AsRef<i64> for InitialSetupCompletedTime {
+    fn as_ref(&self) -> &i64 {
+        &self.0.ut
     }
 }
 

@@ -34,16 +34,22 @@ use crate::{NotificationIdViewed, NotificationStatus};
 pub struct SelectedWeekdays(i64);
 
 impl SelectedWeekdays {
-    pub fn new(value: i64) -> Self {
-        Self(value)
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.0
-    }
-
     pub fn all() -> Self {
         Self(WeekdayFlags::all().bits().into())
+    }
+}
+
+impl TryFrom<i64> for SelectedWeekdays {
+    type Error = String;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        Ok(Self(value))
+    }
+}
+
+impl AsRef<i64> for SelectedWeekdays {
+    fn as_ref(&self) -> &i64 {
+        &self.0
     }
 }
 

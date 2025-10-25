@@ -7,12 +7,16 @@ pub struct StatisticsSaveTimeId {
     pub id: i64,
 }
 
-impl StatisticsSaveTimeId {
-    pub fn new(id: i64) -> Self {
-        Self { id }
-    }
+impl TryFrom<i64> for StatisticsSaveTimeId {
+    type Error = String;
 
-    pub fn as_i64(&self) -> &i64 {
+    fn try_from(id: i64) -> Result<Self, Self::Error> {
+        Ok(Self { id })
+    }
+}
+
+impl AsRef<i64> for StatisticsSaveTimeId {
+    fn as_ref(&self) -> &i64 {
         &self.id
     }
 }

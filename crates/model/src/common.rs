@@ -391,20 +391,26 @@ pub struct AccessTokenUnixTime {
 }
 
 impl AccessTokenUnixTime {
-    pub fn new(ut: i64) -> Self {
-        Self {
-            ut: UnixTime::new(ut),
-        }
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        self.ut.as_i64()
-    }
-
     pub fn current_time() -> Self {
         Self {
             ut: UnixTime::current_time(),
         }
+    }
+}
+
+impl TryFrom<i64> for AccessTokenUnixTime {
+    type Error = String;
+
+    fn try_from(ut: i64) -> Result<Self, Self::Error> {
+        Ok(Self {
+            ut: UnixTime::new(ut),
+        })
+    }
+}
+
+impl AsRef<i64> for AccessTokenUnixTime {
+    fn as_ref(&self) -> &i64 {
+        self.ut.as_i64()
     }
 }
 
@@ -481,12 +487,16 @@ impl RefreshToken {
 #[serde(transparent)]
 pub struct AccountIdDb(pub i64);
 
-impl AccountIdDb {
-    pub fn new(id: i64) -> Self {
-        Self(id)
-    }
+impl TryFrom<i64> for AccountIdDb {
+    type Error = String;
 
-    pub fn as_i64(&self) -> &i64 {
+    fn try_from(id: i64) -> Result<Self, Self::Error> {
+        Ok(Self(id))
+    }
+}
+
+impl AsRef<i64> for AccountIdDb {
+    fn as_ref(&self) -> &i64 {
         &self.0
     }
 }

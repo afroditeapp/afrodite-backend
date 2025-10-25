@@ -13,16 +13,22 @@ use crate::ProfileContentEditedTime;
 pub struct ProfileEditedTime(UnixTime);
 
 impl ProfileEditedTime {
-    pub fn new(value: i64) -> Self {
-        Self(UnixTime::new(value))
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.0.ut
-    }
-
     pub fn current_time() -> Self {
         Self(UnixTime::current_time())
+    }
+}
+
+impl TryFrom<i64> for ProfileEditedTime {
+    type Error = String;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        Ok(Self(UnixTime::new(value)))
+    }
+}
+
+impl AsRef<i64> for ProfileEditedTime {
+    fn as_ref(&self) -> &i64 {
+        &self.0.ut
     }
 }
 
@@ -50,14 +56,6 @@ pub struct ProfileEditedTimeFilter {
 }
 
 impl ProfileEditedTimeFilter {
-    pub fn new(value: i64) -> Self {
-        Self { value }
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.value
-    }
-
     pub fn is_match(
         &self,
         profile_edited_time: ProfileEditedTime,
@@ -65,10 +63,24 @@ impl ProfileEditedTimeFilter {
         current_time: &UnixTime,
     ) -> bool {
         let latest_edit_time = *profile_edited_time
-            .as_i64()
-            .max(content_edited_time.as_i64());
-        let seconds_since_latest_edit_time = *current_time.as_i64() - latest_edit_time;
+            .as_ref()
+            .max(content_edited_time.as_ref());
+        let seconds_since_latest_edit_time = *current_time.as_ref() - latest_edit_time;
         seconds_since_latest_edit_time <= self.value
+    }
+}
+
+impl TryFrom<i64> for ProfileEditedTimeFilter {
+    type Error = String;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        Ok(Self { value })
+    }
+}
+
+impl AsRef<i64> for ProfileEditedTimeFilter {
+    fn as_ref(&self) -> &i64 {
+        &self.value
     }
 }
 

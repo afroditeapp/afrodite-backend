@@ -42,12 +42,16 @@ use crate::{ConversationId, NotificationEvent, sync_version_wrappers};
 #[diesel(sql_type = BigInt)]
 pub struct PushNotificationFlagsDb(i64);
 
-impl PushNotificationFlagsDb {
-    pub fn new(value: i64) -> Self {
-        Self(value)
-    }
+impl TryFrom<i64> for PushNotificationFlagsDb {
+    type Error = String;
 
-    pub fn as_i64(&self) -> &i64 {
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        Ok(Self(value))
+    }
+}
+
+impl AsRef<i64> for PushNotificationFlagsDb {
+    fn as_ref(&self) -> &i64 {
         &self.0
     }
 }

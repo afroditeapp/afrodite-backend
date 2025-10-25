@@ -341,8 +341,8 @@ impl WriteCommandsChat<'_> {
             .await?;
 
         let key_count = if let Some(id) = info.latest_public_key_id {
-            if *id.as_i64() >= 0 && *id.as_i64() < i64::MAX {
-                *id.as_i64() + 1
+            if *id.as_ref() >= 0 && *id.as_ref() < i64::MAX {
+                *id.as_ref() + 1
             } else {
                 return Err(DataError::NotAllowed.report().into());
             }

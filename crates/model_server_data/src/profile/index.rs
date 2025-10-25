@@ -106,14 +106,14 @@ pub struct AtomicLastSeenTime {
 impl AtomicLastSeenTime {
     pub fn new(last_seen_time: LastSeenUnixTime) -> Self {
         Self {
-            last_seen_unix_time: AtomicI64::new(*last_seen_time.as_i64()),
+            last_seen_unix_time: AtomicI64::new(*last_seen_time.as_ref()),
             is_online: AtomicBool::new(false),
         }
     }
 
     pub fn update_last_seen_time_to_offline_status(&self, time: LastSeenUnixTime) {
         self.last_seen_unix_time
-            .store(*time.as_i64(), Ordering::Relaxed);
+            .store(*time.as_ref(), Ordering::Relaxed);
         self.is_online.store(false, Ordering::Relaxed);
     }
 
@@ -130,7 +130,9 @@ impl AtomicLastSeenTime {
     }
 
     pub fn last_seen_unix_time(&self) -> LastSeenUnixTime {
-        LastSeenUnixTime::new(self.last_seen_unix_time.load(Ordering::Relaxed))
+        LastSeenUnixTime {
+            ut: UnixTime::new(self.last_seen_unix_time.load(Ordering::Relaxed)),
+        }
     }
 }
 

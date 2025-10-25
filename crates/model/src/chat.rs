@@ -32,12 +32,16 @@ pub struct PublicKeyId {
     pub id: i64,
 }
 
-impl PublicKeyId {
-    pub fn new(id: i64) -> Self {
-        Self { id }
-    }
+impl TryFrom<i64> for PublicKeyId {
+    type Error = String;
 
-    pub fn as_i64(&self) -> &i64 {
+    fn try_from(id: i64) -> Result<Self, Self::Error> {
+        Ok(Self { id })
+    }
+}
+
+impl AsRef<i64> for PublicKeyId {
+    fn as_ref(&self) -> &i64 {
         &self.id
     }
 }
@@ -81,19 +85,25 @@ pub struct NewReceivedLikesCount {
 }
 
 impl NewReceivedLikesCount {
-    pub fn new(count: i64) -> Self {
-        Self { c: count }
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.c
-    }
-
     /// Return new incremented value using `saturated_add`.
     pub fn increment(&self) -> Self {
         Self {
             c: self.c.saturating_add(1),
         }
+    }
+}
+
+impl TryFrom<i64> for NewReceivedLikesCount {
+    type Error = String;
+
+    fn try_from(count: i64) -> Result<Self, Self::Error> {
+        Ok(Self { c: count })
+    }
+}
+
+impl AsRef<i64> for NewReceivedLikesCount {
+    fn as_ref(&self) -> &i64 {
+        &self.c
     }
 }
 

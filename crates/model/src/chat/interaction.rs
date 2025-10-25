@@ -30,12 +30,16 @@ pub struct MessageId {
     pub id: i64,
 }
 
-impl MessageId {
-    pub fn new(id: i64) -> Self {
-        Self { id }
-    }
+impl TryFrom<i64> for MessageId {
+    type Error = String;
 
-    pub fn as_i64(&self) -> &i64 {
+    fn try_from(id: i64) -> Result<Self, Self::Error> {
+        Ok(Self { id })
+    }
+}
+
+impl AsRef<i64> for MessageId {
+    fn as_ref(&self) -> &i64 {
         &self.id
     }
 }
@@ -108,14 +112,6 @@ pub struct MatchId {
 }
 
 impl MatchId {
-    pub fn new(id: i64) -> Self {
-        Self { id }
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.id
-    }
-
     /// Return new incremented value using `saturated_add`.
     pub fn increment(&self) -> Self {
         Self {
@@ -126,6 +122,20 @@ impl MatchId {
     /// This returns -1 if ID is not incremented.
     pub fn next_id_to_latest_used_id(&self) -> Self {
         Self { id: self.id - 1 }
+    }
+}
+
+impl TryFrom<i64> for MatchId {
+    type Error = String;
+
+    fn try_from(id: i64) -> Result<Self, Self::Error> {
+        Ok(Self { id })
+    }
+}
+
+impl AsRef<i64> for MatchId {
+    fn as_ref(&self) -> &i64 {
+        &self.id
     }
 }
 
@@ -155,14 +165,6 @@ pub struct ReceivedLikeId {
 }
 
 impl ReceivedLikeId {
-    pub fn new(id: i64) -> Self {
-        Self { id }
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.id
-    }
-
     /// Return new incremented value using `saturated_add`.
     pub fn increment(&self) -> Self {
         Self {
@@ -173,6 +175,20 @@ impl ReceivedLikeId {
     /// This returns -1 if ID is not incremented.
     pub fn next_id_to_latest_used_id(&self) -> Self {
         Self { id: self.id - 1 }
+    }
+}
+
+impl TryFrom<i64> for ReceivedLikeId {
+    type Error = String;
+
+    fn try_from(id: i64) -> Result<Self, Self::Error> {
+        Ok(Self { id })
+    }
+}
+
+impl AsRef<i64> for ReceivedLikeId {
+    fn as_ref(&self) -> &i64 {
+        &self.id
     }
 }
 
@@ -203,14 +219,6 @@ pub struct ConversationId {
 }
 
 impl ConversationId {
-    pub fn new(id: i64) -> Self {
-        Self { id }
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.id
-    }
-
     /// Return new incremented value using `saturated_add`.
     pub fn increment(&self) -> Self {
         Self {
@@ -221,6 +229,20 @@ impl ConversationId {
     /// This returns -1 if ID is not incremented.
     pub fn next_id_to_latest_used_id(&self) -> Self {
         Self { id: self.id - 1 }
+    }
+}
+
+impl TryFrom<i64> for ConversationId {
+    type Error = String;
+
+    fn try_from(id: i64) -> Result<Self, Self::Error> {
+        Ok(Self { id })
+    }
+}
+
+impl AsRef<i64> for ConversationId {
+    fn as_ref(&self) -> &i64 {
+        &self.id
     }
 }
 
@@ -451,7 +473,9 @@ impl AccountInteractionInternal {
     /// Skip message ID 0 to make possible to use that as initial value
     /// for latest viewed message.
     pub fn next_message_id(&self) -> MessageId {
-        MessageId::new(self.message_counter().saturating_add(1))
+        MessageId {
+            id: self.message_counter().saturating_add(1),
+        }
     }
 
     pub fn message_count_for_account(&self, account: impl Into<AccountIdDb>) -> i64 {

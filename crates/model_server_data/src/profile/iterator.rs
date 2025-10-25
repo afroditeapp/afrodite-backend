@@ -81,12 +81,16 @@ pub struct MinDistanceKm {
     pub value: i64,
 }
 
-impl MinDistanceKm {
-    pub fn new(value: i64) -> Self {
-        Self { value }
-    }
+impl TryFrom<i64> for MinDistanceKm {
+    type Error = String;
 
-    pub fn as_i64(&self) -> &i64 {
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        Ok(Self { value })
+    }
+}
+
+impl AsRef<i64> for MinDistanceKm {
+    fn as_ref(&self) -> &i64 {
         &self.value
     }
 }
@@ -114,12 +118,16 @@ pub struct MaxDistanceKm {
     pub value: i64,
 }
 
-impl MaxDistanceKm {
-    pub fn new(value: i64) -> Self {
-        Self { value }
-    }
+impl TryFrom<i64> for MaxDistanceKm {
+    type Error = String;
 
-    pub fn as_i64(&self) -> &i64 {
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        Ok(Self { value })
+    }
+}
+
+impl AsRef<i64> for MaxDistanceKm {
+    fn as_ref(&self) -> &i64 {
         &self.value
     }
 }

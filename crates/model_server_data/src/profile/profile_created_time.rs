@@ -26,22 +26,28 @@ pub struct ProfileCreatedTimeFilter {
 }
 
 impl ProfileCreatedTimeFilter {
-    pub fn new(value: i64) -> Self {
-        Self { value }
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.value
-    }
-
     pub fn is_match(
         &self,
         profile_created_time: InitialSetupCompletedTime,
         current_time: &UnixTime,
     ) -> bool {
         let seconds_since_account_creation =
-            *current_time.as_i64() - *profile_created_time.as_i64();
+            *current_time.as_ref() - *profile_created_time.as_ref();
         seconds_since_account_creation <= self.value
+    }
+}
+
+impl TryFrom<i64> for ProfileCreatedTimeFilter {
+    type Error = String;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        Ok(Self { value })
+    }
+}
+
+impl AsRef<i64> for ProfileCreatedTimeFilter {
+    fn as_ref(&self) -> &i64 {
+        &self.value
     }
 }
 

@@ -35,16 +35,22 @@ impl ProfileContentModificationMetadata {
 pub struct ProfileContentEditedTime(UnixTime);
 
 impl ProfileContentEditedTime {
-    pub fn new(value: i64) -> Self {
-        Self(UnixTime::new(value))
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.0.ut
-    }
-
     pub fn current_time() -> Self {
         Self(UnixTime::current_time())
+    }
+}
+
+impl TryFrom<i64> for ProfileContentEditedTime {
+    type Error = String;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        Ok(Self(UnixTime::new(value)))
+    }
+}
+
+impl AsRef<i64> for ProfileContentEditedTime {
+    fn as_ref(&self) -> &i64 {
+        &self.0.ut
     }
 }
 

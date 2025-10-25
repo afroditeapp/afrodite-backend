@@ -24,12 +24,16 @@ pub struct UnreadNewsCount {
     pub c: i64,
 }
 
-impl UnreadNewsCount {
-    pub fn new(count: i64) -> Self {
-        Self { c: count }
-    }
+impl TryFrom<i64> for UnreadNewsCount {
+    type Error = String;
 
-    pub fn as_i64(&self) -> &i64 {
+    fn try_from(count: i64) -> Result<Self, Self::Error> {
+        Ok(Self { c: count })
+    }
+}
+
+impl AsRef<i64> for UnreadNewsCount {
+    fn as_ref(&self) -> &i64 {
         &self.c
     }
 }

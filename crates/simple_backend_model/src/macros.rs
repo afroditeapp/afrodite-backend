@@ -199,11 +199,11 @@ macro_rules! diesel_non_empty_string_wrapper {
     };
 }
 
-/// Type must have new() and as_i64() methods.
+/// The struct needs to have `TryFrom<i64>` and `AsRef<i64>` implementations.
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
 ///
 /// ```
-/// use diesel::sql_types::Integer;
+/// use diesel::sql_types::BigInt;
 /// use simple_backend_model::diesel_i64_wrapper;
 ///
 /// #[derive(
@@ -213,18 +213,22 @@ macro_rules! diesel_non_empty_string_wrapper {
 ///     diesel::FromSqlRow,
 ///     diesel::AsExpression,
 /// )]
-/// #[diesel(sql_type = Integer)]
+/// #[diesel(sql_type = BigInt)]
 /// pub struct NumberWrapper {
 ///     number: i64,
 /// }
 ///
-/// impl NumberWrapper {
-///     pub fn new(number: i64) -> Self {
-///         Self { number }
-///     }
+/// impl TryFrom<i64> for NumberWrapper {
+///     type Error = String;
 ///
-///     pub fn as_i64(&self) -> &i64 {
-///        &self.number
+///     fn try_from(number: i64) -> Result<Self, Self::Error> {
+///         Ok(Self { number })
+///     }
+/// }
+///
+/// impl AsRef<i64> for NumberWrapper {
+///     fn as_ref(&self) -> &i64 {
+///         &self.number
 ///     }
 /// }
 ///
@@ -243,7 +247,7 @@ macro_rules! diesel_i64_wrapper {
                 value: <DB as diesel::backend::Backend>::RawValue<'_>,
             ) -> diesel::deserialize::Result<Self> {
                 let value = i64::from_sql(value)?;
-                Ok(<$name>::new(value))
+                TryInto::<$name>::try_into(value).map_err(|e| e.into())
             }
         }
 
@@ -256,7 +260,7 @@ macro_rules! diesel_i64_wrapper {
                 &'b self,
                 out: &mut diesel::serialize::Output<'b, '_, DB>,
             ) -> diesel::serialize::Result {
-                self.as_i64().to_sql(out)
+                AsRef::<i64>::as_ref(self).to_sql(out)
             }
         }
     };

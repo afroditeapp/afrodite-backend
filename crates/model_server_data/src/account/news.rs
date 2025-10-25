@@ -27,17 +27,23 @@ impl PublicationId {
     /// returns if there is no items.
     pub const NO_PUBLICATION_ID: PublicationId = PublicationId { id: -1 };
 
-    pub fn new(id: i64) -> Self {
-        Self { id }
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.id
-    }
-
     /// Might return -1 if no IDs are used
     pub fn to_latest_used_id(&self) -> Self {
         Self { id: self.id - 1 }
+    }
+}
+
+impl TryFrom<i64> for PublicationId {
+    type Error = String;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        Ok(Self { id: value })
+    }
+}
+
+impl AsRef<i64> for PublicationId {
+    fn as_ref(&self) -> &i64 {
+        &self.id
     }
 }
 

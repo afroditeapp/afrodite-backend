@@ -283,7 +283,7 @@ async fn handle_socket(
     if state.config().general().debug_websocket_logging {
         info!(
             "handle_socket for '{}', address: {}",
-            id.id.as_i64(),
+            id.id.as_ref(),
             address
         );
     }
@@ -326,7 +326,7 @@ async fn handle_socket(
                 },
                 Err(e) => {
                     if state.config().general().debug_websocket_logging {
-                        error!("handle_socket_result returned error {e:?} for '{}', address: {}", id.id.as_i64(), address);
+                        error!("handle_socket_result returned error {e:?} for '{}', address: {}", id.id.as_ref(), address);
                     }
 
                     let result = state.write(move |cmds| async move {
@@ -351,7 +351,7 @@ async fn handle_socket(
     if state.config().general().debug_websocket_logging {
         info!(
             "Connection for '{}' closed, address: {}",
-            id.id.as_i64(),
+            id.id.as_ref(),
             address
         );
     }
@@ -548,7 +548,7 @@ async fn handle_socket_result(
                     None => {
                         // New connection created another event receiver.
                         if state.config().general().debug_websocket_logging {
-                            error!("Event receiver channel broken: id: {}, address: {}", id.id.as_i64(), address);
+                            error!("Event receiver channel broken: id: {}, address: {}", id.id.as_ref(), address);
                         }
                         break;
                     },
@@ -557,7 +557,7 @@ async fn handle_socket_result(
             _ = timeout_timer.wait_timeout() => {
                 // Connection timeout
                 if state.config().general().debug_websocket_logging {
-                    info!("Connection timeout for '{}', address: {}", id.id.as_i64(), address);
+                    info!("Connection timeout for '{}', address: {}", id.id.as_ref(), address);
                 }
                 break;
             }

@@ -11,20 +11,26 @@ pub struct LastSeenUnixTime {
 }
 
 impl LastSeenUnixTime {
-    pub fn new(ut: i64) -> Self {
-        Self {
-            ut: UnixTime::new(ut),
-        }
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        self.ut.as_i64()
-    }
-
     pub fn current_time() -> Self {
         Self {
             ut: UnixTime::current_time(),
         }
+    }
+}
+
+impl TryFrom<i64> for LastSeenUnixTime {
+    type Error = String;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        Ok(Self {
+            ut: UnixTime::new(value),
+        })
+    }
+}
+
+impl AsRef<i64> for LastSeenUnixTime {
+    fn as_ref(&self) -> &i64 {
+        self.ut.as_i64()
     }
 }
 
@@ -36,14 +42,18 @@ pub struct AutomaticProfileSearchLastSeenUnixTime {
     pub ut: UnixTime,
 }
 
-impl AutomaticProfileSearchLastSeenUnixTime {
-    pub fn new(ut: i64) -> Self {
-        Self {
-            ut: UnixTime::new(ut),
-        }
-    }
+impl TryFrom<i64> for AutomaticProfileSearchLastSeenUnixTime {
+    type Error = String;
 
-    pub fn as_i64(&self) -> &i64 {
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        Ok(Self {
+            ut: UnixTime::new(value),
+        })
+    }
+}
+
+impl AsRef<i64> for AutomaticProfileSearchLastSeenUnixTime {
+    fn as_ref(&self) -> &i64 {
         self.ut.as_i64()
     }
 }
@@ -71,7 +81,9 @@ impl LastSeenTime {
     /// Return None if account is currently online.
     pub fn last_seen_unix_time(&self) -> Option<LastSeenUnixTime> {
         if *self != Self::ONLINE {
-            Some(LastSeenUnixTime::new(self.raw()))
+            Some(LastSeenUnixTime {
+                ut: UnixTime::new(self.raw()),
+            })
         } else {
             None
         }
@@ -112,14 +124,6 @@ impl LastSeenTimeFilter {
     const ONLINE: Self = Self { value: -1 };
     pub const MIN_VALUE: i64 = -1;
 
-    pub fn new(value: i64) -> Self {
-        Self { value }
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.value
-    }
-
     pub fn is_match(&self, last_seen_time: LastSeenTime, current_time: &UnixTime) -> bool {
         if *self == Self::ONLINE {
             last_seen_time == LastSeenTime::ONLINE
@@ -130,6 +134,20 @@ impl LastSeenTimeFilter {
         } else {
             false
         }
+    }
+}
+
+impl TryFrom<i64> for LastSeenTimeFilter {
+    type Error = String;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        Ok(Self { value })
+    }
+}
+
+impl AsRef<i64> for LastSeenTimeFilter {
+    fn as_ref(&self) -> &i64 {
+        &self.value
     }
 }
 

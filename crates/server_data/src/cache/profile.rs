@@ -212,7 +212,7 @@ impl AutomaticProfileSearch {
     fn profile_edited_time_filter(&self) -> Option<ProfileEditedTimeFilter> {
         self.last_seen_unix_time.map(|v| {
             let current_time = UnixTime::current_time();
-            let seconds_since_last_seen = *current_time.as_i64() - *v.as_i64();
+            let seconds_since_last_seen = *current_time.as_ref() - *v.as_ref();
             ProfileEditedTimeFilter {
                 value: seconds_since_last_seen,
             }
@@ -222,7 +222,7 @@ impl AutomaticProfileSearch {
     fn profile_created_time_filter(&self) -> Option<ProfileCreatedTimeFilter> {
         self.last_seen_unix_time.map(|v| {
             let current_time = UnixTime::current_time();
-            let seconds_since_last_seen = *current_time.as_i64() - *v.as_i64();
+            let seconds_since_last_seen = *current_time.as_ref() - *v.as_ref();
             ProfileCreatedTimeFilter {
                 value: seconds_since_last_seen,
             }

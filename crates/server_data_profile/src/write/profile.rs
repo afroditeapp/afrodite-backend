@@ -356,7 +356,7 @@ impl WriteCommandsProfile<'_> {
         id: AccountIdInternal,
         time: LastSeenUnixTime,
     ) -> Result<(), DataError> {
-        let time = AutomaticProfileSearchLastSeenUnixTime::new(time.ut.ut);
+        let time = AutomaticProfileSearchLastSeenUnixTime::try_from(time.ut.ut).unwrap();
         db_transaction!(self, move |mut cmds| {
             cmds.profile_admin()
                 .search()

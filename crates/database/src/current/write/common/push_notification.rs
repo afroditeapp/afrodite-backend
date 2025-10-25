@@ -96,14 +96,14 @@ impl CurrentWriteCommonPushNotification<'_> {
             .first(self.conn())
             .into_db_error(())?;
 
-        if db_pending_flags != *current_flags.as_i64() {
+        if db_pending_flags != *current_flags.as_ref() {
             update(push_notification.find(id.as_db_id()))
                 .set(pending_flags.eq(current_flags))
                 .execute(self.conn())
                 .into_db_error(())?;
         }
 
-        if db_sent_flags != *current_sent_flags.as_i64() {
+        if db_sent_flags != *current_sent_flags.as_ref() {
             update(push_notification.find(id.as_db_id()))
                 .set(sent_flags.eq(current_sent_flags))
                 .execute(self.conn())

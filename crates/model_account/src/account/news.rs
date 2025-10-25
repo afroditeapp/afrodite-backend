@@ -66,6 +66,20 @@ impl NewsId {
     }
 }
 
+impl TryFrom<i64> for NewsId {
+    type Error = String;
+
+    fn try_from(id: i64) -> Result<Self, Self::Error> {
+        Ok(Self { nid: id })
+    }
+}
+
+impl AsRef<i64> for NewsId {
+    fn as_ref(&self) -> &i64 {
+        &self.nid
+    }
+}
+
 diesel_i64_wrapper!(NewsId);
 
 impl From<NewsId> for i64 {
@@ -100,6 +114,20 @@ impl NewsTranslationVersion {
     }
 
     pub fn as_i64(&self) -> &i64 {
+        &self.version
+    }
+}
+
+impl TryFrom<i64> for NewsTranslationVersion {
+    type Error = String;
+
+    fn try_from(version: i64) -> Result<Self, Self::Error> {
+        Ok(Self { version })
+    }
+}
+
+impl AsRef<i64> for NewsTranslationVersion {
+    fn as_ref(&self) -> &i64 {
         &self.version
     }
 }

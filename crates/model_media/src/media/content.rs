@@ -26,12 +26,16 @@ pub struct MediaContentModerationRejectedReasonCategory {
     pub value: i64,
 }
 
-impl MediaContentModerationRejectedReasonCategory {
-    pub fn new(value: i64) -> Self {
-        Self { value }
-    }
+impl TryFrom<i64> for MediaContentModerationRejectedReasonCategory {
+    type Error = String;
 
-    pub fn as_i64(&self) -> &i64 {
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        Ok(Self { value })
+    }
+}
+
+impl AsRef<i64> for MediaContentModerationRejectedReasonCategory {
+    fn as_ref(&self) -> &i64 {
         &self.value
     }
 }

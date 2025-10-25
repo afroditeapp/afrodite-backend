@@ -15,12 +15,16 @@ use crate::CustomReportId;
 #[diesel(sql_type = BigInt)]
 pub struct ReportIdDb(pub i64);
 
-impl ReportIdDb {
-    pub fn new(id: i64) -> Self {
-        Self(id)
-    }
+impl TryFrom<i64> for ReportIdDb {
+    type Error = String;
 
-    pub fn as_i64(&self) -> &i64 {
+    fn try_from(id: i64) -> Result<Self, Self::Error> {
+        Ok(Self(id))
+    }
+}
+
+impl AsRef<i64> for ReportIdDb {
+    fn as_ref(&self) -> &i64 {
         &self.0
     }
 }
