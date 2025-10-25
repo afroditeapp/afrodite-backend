@@ -42,9 +42,12 @@ impl AttributesFileInternal {
 
         // Check that correct IDs are used.
         for i in 1..=self.attributes.len() {
-            let i: u16 = i
+            let i: i16 = i
                 .try_into()
                 .map_err(|e: std::num::TryFromIntError| e.to_string())?;
+            if i < 0 {
+                return Err(format!("ID {i} is is negative"));
+            }
             let id = AttributeId::new(i);
             if !ids.contains(&id) {
                 return Err(format!(

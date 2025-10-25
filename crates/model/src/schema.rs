@@ -581,7 +581,7 @@ diesel::table! {
 diesel::table! {
     profile_attributes_filter_list_unwanted (account_id, attribute_id, filter_value) {
         account_id -> BigInt,
-        attribute_id -> BigInt,
+        attribute_id -> SmallInt,
         filter_value -> BigInt,
     }
 }
@@ -589,7 +589,7 @@ diesel::table! {
 diesel::table! {
     profile_attributes_filter_list_wanted (account_id, attribute_id, filter_value) {
         account_id -> BigInt,
-        attribute_id -> BigInt,
+        attribute_id -> SmallInt,
         filter_value -> BigInt,
     }
 }
@@ -597,7 +597,7 @@ diesel::table! {
 diesel::table! {
     profile_attributes_filter_settings (account_id, attribute_id) {
         account_id -> BigInt,
-        attribute_id -> BigInt,
+        attribute_id -> SmallInt,
         filter_accept_missing_attribute -> Bool,
         filter_use_logical_operator_and -> Bool,
     }
@@ -606,7 +606,7 @@ diesel::table! {
 diesel::table! {
     profile_attributes_value_list (account_id, attribute_id, attribute_value) {
         account_id -> BigInt,
-        attribute_id -> BigInt,
+        attribute_id -> SmallInt,
         attribute_value -> BigInt,
     }
 }

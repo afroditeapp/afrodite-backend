@@ -493,8 +493,7 @@ CREATE TABLE IF NOT EXISTS profile(
 -- Store profile attribute specific filter settings
 CREATE TABLE IF NOT EXISTS profile_attributes_filter_settings(
     account_id      BIGINT              NOT NULL,
-    -- TODO: Change ID to SMALLINT
-    attribute_id    BIGINT              NOT NULL,
+    attribute_id    SMALLINT            NOT NULL,
     filter_accept_missing_attribute BOOLEAN NOT NULL DEFAULT FALSE,
     filter_use_logical_operator_and BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (account_id, attribute_id),
@@ -506,8 +505,7 @@ CREATE TABLE IF NOT EXISTS profile_attributes_filter_settings(
 
 CREATE TABLE IF NOT EXISTS profile_attributes_value_list(
     account_id      BIGINT              NOT NULL,
-    -- TODO: Change ID to SMALLINT
-    attribute_id    BIGINT              NOT NULL,
+    attribute_id    SMALLINT            NOT NULL,
     attribute_value BIGINT              NOT NULL,
     PRIMARY KEY (account_id, attribute_id, attribute_value),
     FOREIGN KEY (account_id)
@@ -518,8 +516,7 @@ CREATE TABLE IF NOT EXISTS profile_attributes_value_list(
 
 CREATE TABLE IF NOT EXISTS profile_attributes_filter_list_wanted(
     account_id      BIGINT              NOT NULL,
-    -- TODO: Change ID to SMALLINT
-    attribute_id    BIGINT              NOT NULL,
+    attribute_id    SMALLINT            NOT NULL,
     filter_value    BIGINT              NOT NULL,
     PRIMARY KEY (account_id, attribute_id, filter_value),
     FOREIGN KEY (account_id)
@@ -530,8 +527,7 @@ CREATE TABLE IF NOT EXISTS profile_attributes_filter_list_wanted(
 
 CREATE TABLE IF NOT EXISTS profile_attributes_filter_list_unwanted(
     account_id      BIGINT              NOT NULL,
-    -- TODO: Change ID to SMALLINT
-    attribute_id    BIGINT              NOT NULL,
+    attribute_id    SMALLINT            NOT NULL,
     filter_value    BIGINT              NOT NULL,
     PRIMARY KEY (account_id, attribute_id, filter_value),
     FOREIGN KEY (account_id)

@@ -1,6 +1,6 @@
-use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
+use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::SmallInt};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::diesel_i64_struct_try_from;
+use simple_backend_model::diesel_i16_wrapper;
 use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
@@ -46,33 +46,44 @@ impl AttributeHash {
     FromSqlRow,
     AsExpression,
 )]
-#[diesel(sql_type = BigInt)]
-pub struct AttributeId(u16);
+#[diesel(sql_type = SmallInt)]
+pub struct AttributeId(#[serde(deserialize_with = "deserialize_non_negative_i16")] i16);
+
+fn deserialize_non_negative_i16<'de, D>(deserializer: D) -> Result<i16, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = i16::deserialize(deserializer)?;
+    if v < 0 {
+        Err(serde::de::Error::custom("negative value not allowed"))
+    } else {
+        Ok(v)
+    }
+}
 
 impl AttributeId {
-    pub fn new(id: u16) -> Self {
+    /// The `id` must be 0 or greater.
+    pub fn new(id: i16) -> Self {
+        assert!(id >= 0);
         Self(id)
     }
 
     pub fn to_usize(&self) -> usize {
-        self.0.into()
+        self.0 as usize
     }
 }
 
-impl TryFrom<i64> for AttributeId {
+impl TryFrom<i16> for AttributeId {
     type Error = String;
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
-        let value: u16 = value
-            .try_into()
-            .map_err(|e: std::num::TryFromIntError| e.to_string())?;
+    fn try_from(value: i16) -> Result<Self, Self::Error> {
         Ok(Self(value))
     }
 }
 
-impl From<AttributeId> for i64 {
-    fn from(value: AttributeId) -> Self {
-        value.0.into()
+impl AsRef<i16> for AttributeId {
+    fn as_ref(&self) -> &i16 {
+        &self.0
     }
 }
 
-diesel_i64_struct_try_from!(AttributeId);
+diesel_i16_wrapper!(AttributeId);
