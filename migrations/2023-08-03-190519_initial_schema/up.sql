@@ -163,11 +163,11 @@ CREATE TABLE IF NOT EXISTS common_state(
 CREATE TABLE IF NOT EXISTS push_notification(
     account_id             INTEGER PRIMARY KEY NOT NULL,
     -- Bitflag value for pending push notification
-    pending_flags          INTEGER             NOT NULL DEFAULT 0,
+    pending_flags          BIGINT              NOT NULL DEFAULT 0,
     -- Bitflag value for sent push notifications. Used
     -- to prevent showing same notification again when WebSocket
     -- connects.
-    sent_flags             INTEGER             NOT NULL DEFAULT 0,
+    sent_flags             BIGINT              NOT NULL DEFAULT 0,
     -- Push notification encryption key for APNs and FCM notifications
     encryption_key         TEXT,
     device_token           TEXT                         UNIQUE,
@@ -195,7 +195,7 @@ CREATE TABLE IF NOT EXISTS api_usage_statistics_metric_value(
     account_id   BIGINT                            NOT NULL,
     time_id      BIGINT                            NOT NULL,
     metric_id    BIGINT                            NOT NULL,
-    metric_value INTEGER                           NOT NULL,
+    metric_value BIGINT                            NOT NULL,
     PRIMARY KEY (account_id, time_id, metric_id),
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
@@ -215,7 +215,7 @@ CREATE TABLE IF NOT EXISTS ip_address_usage_statistics(
     account_id             INTEGER                 NOT NULL,
     -- 4 or 16 bytes
     ip_address             BLOB                    NOT NULL,
-    usage_count            INTEGER                 NOT NULL,
+    usage_count            BIGINT                  NOT NULL,
     first_usage_unix_time  BIGINT                  NOT NULL,
     latest_usage_unix_time BIGINT                  NOT NULL,
     PRIMARY KEY (account_id, ip_address),
@@ -227,9 +227,11 @@ CREATE TABLE IF NOT EXISTS ip_address_usage_statistics(
 
 CREATE TABLE IF NOT EXISTS admin_notification_settings(
     account_id                       INTEGER PRIMARY KEY NOT NULL,
-    weekdays                         INTEGER NOT NULL,
-    daily_enabled_time_start_seconds INTEGER NOT NULL,
-    daily_enabled_time_end_seconds   INTEGER NOT NULL,
+    -- TODO: Change to SMALLINT
+    weekdays                         BIGINT NOT NULL,
+    -- TODO: Change to INTEGER
+    daily_enabled_time_start_seconds BIGINT  NOT NULL,
+    daily_enabled_time_end_seconds   BIGINT  NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -317,9 +319,10 @@ CREATE TABLE IF NOT EXISTS account_email_sending_state(
 -- State specific to account component.
 CREATE TABLE IF NOT EXISTS account_state(
     account_id                         INTEGER PRIMARY KEY NOT NULL,
-    next_client_id                     INTEGER             NOT NULL DEFAULT 0,
+    next_client_id                     BIGINT             NOT NULL DEFAULT 0,
     account_deletion_request_unix_time BIGINT,
-    account_banned_reason_category     INTEGER,
+    -- TODO: Change to SMALLINT
+    account_banned_reason_category     BIGINT,
     -- Null or non-empty string
     account_banned_reason_details      TEXT,
     account_banned_admin_account_id    BIGINT,
@@ -327,7 +330,7 @@ CREATE TABLE IF NOT EXISTS account_state(
     account_banned_state_change_unix_time BIGINT,
     -- Sync version for news.
     news_sync_version                  SMALLINT            NOT NULL DEFAULT 0,
-    unread_news_count                  INTEGER             NOT NULL DEFAULT 0,
+    unread_news_count                  BIGINT              NOT NULL DEFAULT 0,
     account_created_unix_time          BIGINT              NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
@@ -350,7 +353,7 @@ CREATE TABLE IF NOT EXISTS account_app_notification_settings(
 
 CREATE TABLE IF NOT EXISTS demo_account_owned_accounts(
     -- These are defined in config file
-    demo_account_id INTEGER             NOT NULL,
+    demo_account_id BIGINT              NOT NULL,
     account_id      BIGINT              NOT NULL,
     PRIMARY KEY (demo_account_id, account_id),
     FOREIGN KEY (account_id)
@@ -365,7 +368,7 @@ CREATE TABLE IF NOT EXISTS news(
     first_publication_unix_time  BIGINT,
     latest_publication_unix_time BIGINT,
     -- If publication ID exists the news are public.
-    publication_id        INTEGER,
+    publication_id        BIGINT,
     FOREIGN KEY (account_id_creator)
         REFERENCES account_id (id)
             ON DELETE SET NULL
@@ -378,7 +381,7 @@ CREATE TABLE IF NOT EXISTS news_translations(
     title                 TEXT                NOT NULL,
     body                  TEXT                NOT NULL,
     creation_unix_time    BIGINT              NOT NULL,
-    version_number        INTEGER             NOT NULL DEFAULT 0,
+    version_number        BIGINT              NOT NULL DEFAULT 0,
     account_id_creator    BIGINT,
     account_id_editor     BIGINT,
     edit_unix_time        BIGINT,
@@ -400,9 +403,9 @@ CREATE TABLE IF NOT EXISTS news_translations(
 CREATE TABLE IF NOT EXISTS account_global_state(
     -- 0 = account component global state
     row_type                   INTEGER PRIMARY KEY NOT NULL,
-    admin_access_granted_count INTEGER             NOT NULL DEFAULT 0,
+    admin_access_granted_count BIGINT              NOT NULL DEFAULT 0,
     -- Publication ID for news which always increments.
-    next_news_publication_id   INTEGER             NOT NULL DEFAULT 0
+    next_news_publication_id   BIGINT              NOT NULL DEFAULT 0
 );
 
 -- Store custom reports file hash, so that changes to it can be detected
@@ -432,25 +435,28 @@ CREATE TABLE IF NOT EXISTS profile_state(
     -- Max age in years and inside inclusive range of [18,99] for
     -- searching profiles.
     search_age_range_max       SMALLINT             NOT NULL    DEFAULT 18,
+    -- TODO: Change to SMALLINT
     -- Bitflags value containing gender and genders that
     -- the profile owner searches for.
-    search_group_flags         INTEGER              NOT NULL    DEFAULT 0,
+    search_group_flags         BIGINT              NOT NULL    DEFAULT 0,
     -- Filter setting for last seen time.
-    last_seen_time_filter      INTEGER,
+    last_seen_time_filter      BIGINT,
     -- Filter setting for unlimited likes.
     unlimited_likes_filter     BOOLEAN,
+    -- TODO: Change to SMALLINT
     -- Filter setting for profile iterator min distance in kilometers.
-    min_distance_km_filter     INTEGER,
+    min_distance_km_filter     BIGINT,
     -- Filter setting for profile iterator max distance in kilometers.
-    max_distance_km_filter     INTEGER,
+    max_distance_km_filter     BIGINT,
     -- Filter setting for profile created time in seconds.
-    profile_created_time_filter INTEGER,
+    profile_created_time_filter BIGINT,
     -- Filter setting for profile edited time in seconds.
-    profile_edited_time_filter INTEGER,
+    profile_edited_time_filter BIGINT,
+    -- TODO: Change to SMALLINT
     -- Filter setting for profile text min character count.
-    profile_text_min_characters_filter INTEGER,
+    profile_text_min_characters_filter BIGINT,
     -- Filter setting for profile text max character count.
-    profile_text_max_characters_filter INTEGER,
+    profile_text_max_characters_filter BIGINT,
     -- Profile iterator setting for random profile order.
     random_profile_order       BOOLEAN              NOT NULL    DEFAULT FALSE,
     latitude                   DOUBLE PRECISION               NOT NULL    DEFAULT 0.0,
@@ -490,7 +496,8 @@ CREATE TABLE IF NOT EXISTS profile(
 -- Store profile attribute specific filter settings
 CREATE TABLE IF NOT EXISTS profile_attributes_filter_settings(
     account_id      BIGINT              NOT NULL,
-    attribute_id    INTEGER             NOT NULL,
+    -- TODO: Change ID to SMALLINT
+    attribute_id    BIGINT              NOT NULL,
     filter_accept_missing_attribute BOOLEAN NOT NULL DEFAULT FALSE,
     filter_use_logical_operator_and BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (account_id, attribute_id),
@@ -502,8 +509,9 @@ CREATE TABLE IF NOT EXISTS profile_attributes_filter_settings(
 
 CREATE TABLE IF NOT EXISTS profile_attributes_value_list(
     account_id      BIGINT              NOT NULL,
-    attribute_id    INTEGER             NOT NULL,
-    attribute_value INTEGER             NOT NULL,
+    -- TODO: Change ID to SMALLINT
+    attribute_id    BIGINT              NOT NULL,
+    attribute_value BIGINT              NOT NULL,
     PRIMARY KEY (account_id, attribute_id, attribute_value),
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
@@ -513,8 +521,9 @@ CREATE TABLE IF NOT EXISTS profile_attributes_value_list(
 
 CREATE TABLE IF NOT EXISTS profile_attributes_filter_list_wanted(
     account_id      BIGINT              NOT NULL,
-    attribute_id    INTEGER             NOT NULL,
-    filter_value    INTEGER             NOT NULL,
+    -- TODO: Change ID to SMALLINT
+    attribute_id    BIGINT              NOT NULL,
+    filter_value    BIGINT              NOT NULL,
     PRIMARY KEY (account_id, attribute_id, filter_value),
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
@@ -524,8 +533,9 @@ CREATE TABLE IF NOT EXISTS profile_attributes_filter_list_wanted(
 
 CREATE TABLE IF NOT EXISTS profile_attributes_filter_list_unwanted(
     account_id      BIGINT              NOT NULL,
-    attribute_id    INTEGER             NOT NULL,
-    filter_value    INTEGER             NOT NULL,
+    -- TODO: Change ID to SMALLINT
+    attribute_id    BIGINT              NOT NULL,
+    filter_value    BIGINT              NOT NULL,
     PRIMARY KEY (account_id, attribute_id, filter_value),
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
@@ -624,7 +634,8 @@ CREATE TABLE IF NOT EXISTS profile_automatic_profile_search_settings(
     new_profiles      BOOLEAN             NOT NULL,
     attribute_filters BOOLEAN             NOT NULL,
     distance_filters  BOOLEAN             NOT NULL,
-    weekdays          INTEGER             NOT NULL,
+    -- TODO: Change to SMALLINT
+    weekdays          BIGINT              NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -653,7 +664,8 @@ CREATE TABLE IF NOT EXISTS profile_moderation(
     -- 5 = RejectedByBot
     -- 6 = RejectedByHuman
     state_type               SMALLINT           NOT NULL,
-    rejected_reason_category INTEGER,
+    -- TODO: Change to SMALLINT
+    rejected_reason_category BIGINT,
     -- Null or non-empty string
     rejected_reason_details  TEXT,
     moderator_account_id     BIGINT,
@@ -774,7 +786,8 @@ CREATE TABLE IF NOT EXISTS media_content(
     -- 5 = RejectedByBot (ModeratedAsRejected)
     -- 6 = RejectedByHuman (ModeratedAsRejected)
     moderation_state     SMALLINT            NOT NULL    DEFAULT 0,
-    moderation_rejected_reason_category INTEGER,
+    -- TODO: Change to SMALLINT
+    moderation_rejected_reason_category BIGINT,
     -- Null or non-empty string
     moderation_rejected_reason_details  TEXT,
     moderation_moderator_account_id     BIGINT,
@@ -840,10 +853,10 @@ CREATE TABLE IF NOT EXISTS media_app_notification_state(
 CREATE TABLE IF NOT EXISTS chat_state(
     account_id              INTEGER PRIMARY KEY NOT NULL,
     received_likes_sync_version  SMALLINT       NOT NULL DEFAULT 0,
-    new_received_likes_count     INTEGER        NOT NULL DEFAULT 0,
-    next_received_like_id        INTEGER        NOT NULL DEFAULT 0,
-    max_public_key_count         INTEGER        NOT NULL DEFAULT 0,
-    next_conversation_id         INTEGER        NOT NULL DEFAULT 0,
+    new_received_likes_count     BIGINT        NOT NULL DEFAULT 0,
+    next_received_like_id        BIGINT        NOT NULL DEFAULT 0,
+    max_public_key_count         BIGINT        NOT NULL DEFAULT 0,
+    next_conversation_id         BIGINT        NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -853,7 +866,8 @@ CREATE TABLE IF NOT EXISTS chat_state(
 CREATE TABLE IF NOT EXISTS daily_likes_left(
     account_id            INTEGER PRIMARY KEY NOT NULL,
     sync_version          SMALLINT            NOT NULL DEFAULT 0,
-    likes_left            INTEGER             NOT NULL DEFAULT 0,
+    -- TODO: Change to SMALLINT
+    likes_left            BIGINT              NOT NULL DEFAULT 0,
     latest_limit_reset_unix_time BIGINT,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
@@ -913,24 +927,24 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     -- If this is true, then both sides have blocked each other.
     two_way_block                   BOOLEAN NOT NULL DEFAULT FALSE,
     -- Incrementing counters for tracking sent message count for both accounts.
-    message_counter_sender          INTEGER NOT NULL DEFAULT 0,
-    message_counter_receiver        INTEGER NOT NULL DEFAULT 0,
+    message_counter_sender          BIGINT  NOT NULL DEFAULT 0,
+    message_counter_receiver        BIGINT  NOT NULL DEFAULT 0,
     -- Track if video call URL has been created for each side
     video_call_url_created_sender   BOOLEAN NOT NULL DEFAULT FALSE,
     video_call_url_created_receiver BOOLEAN NOT NULL DEFAULT FALSE,
     -- Received likes iterator uses received likes ID to return
     -- correct pages.
-    received_like_id                INTEGER,
+    received_like_id                BIGINT,
     received_like_viewed            BOOLEAN NOT NULL DEFAULT FALSE,
     received_like_email_notification_sent BOOLEAN NOT NULL DEFAULT FALSE,
     received_like_unix_time         BIGINT,
     -- Matches iterator uses match ID to return correct pages.
-    match_id                        INTEGER,
+    match_id                        BIGINT,
     match_unix_time                 BIGINT,
     -- Account specific conversation ID for new message notifications.
     -- Available when accounts are a match.
-    conversation_id_sender                  INTEGER,
-    conversation_id_receiver                INTEGER,
+    conversation_id_sender                  BIGINT,
+    conversation_id_receiver                BIGINT,
     FOREIGN KEY (account_id_sender)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -968,12 +982,12 @@ CREATE TABLE IF NOT EXISTS pending_messages(
     receiver_email_notification_sent BOOLEAN NOT NULL DEFAULT FALSE,
     message_unix_time               BIGINT NOT NULL,
     -- Conversation specific ID for the message.
-    message_id                      INTEGER NOT NULL,
+    message_id                      BIGINT NOT NULL,
     -- Client ID and client local ID together makes
     -- an practically unique ID which client can use
     -- detecting was message sent correctly.
-    sender_client_id                       INTEGER NOT NULL,
-    sender_client_local_id                 INTEGER NOT NULL,
+    sender_client_id                BIGINT NOT NULL,
+    sender_client_local_id          BIGINT NOT NULL,
     -- Message bytes.
     message_bytes                   BLOB    NOT NULL,
     FOREIGN KEY (account_interaction)
@@ -995,7 +1009,7 @@ CREATE TABLE IF NOT EXISTS chat_report_chat_message(
     message_sender_account_id_uuid     BLOB                NOT NULL,
     message_receiver_account_id_uuid   BLOB                NOT NULL,
     message_unix_time                  BIGINT              NOT NULL,
-    message_id                         INTEGER             NOT NULL,
+    message_id                         BIGINT              NOT NULL,
     message_symmetric_key              BLOB                NOT NULL,
     client_message_bytes               BLOB                NOT NULL,
     backend_signed_message_bytes       BLOB                NOT NULL,
@@ -1030,7 +1044,7 @@ CREATE TABLE IF NOT EXISTS chat_email_notification_settings(
 CREATE TABLE IF NOT EXISTS chat_global_state(
     -- 0 = chat component global state
     row_type              INTEGER PRIMARY KEY NOT NULL,
-    next_match_id         INTEGER             NOT NULL DEFAULT 0
+    next_match_id         BIGINT              NOT NULL DEFAULT 0
 );
 
 ---------- History tables for server component common ----------
@@ -1048,7 +1062,7 @@ CREATE TABLE IF NOT EXISTS history_performance_statistics_metric_name(
 CREATE TABLE IF NOT EXISTS history_performance_statistics_metric_value(
     time_id      BIGINT                            NOT NULL,
     metric_id    BIGINT                            NOT NULL,
-    metric_value INTEGER                           NOT NULL,
+    metric_value BIGINT                            NOT NULL,
     PRIMARY KEY (time_id, metric_id),
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)
@@ -1069,8 +1083,8 @@ CREATE TABLE IF NOT EXISTS history_ip_country_statistics_country_name(
 CREATE TABLE IF NOT EXISTS history_ip_country_statistics(
     time_id             BIGINT                            NOT NULL,
     country_id          BIGINT                            NOT NULL,
-    new_tcp_connections INTEGER                           NOT NULL,
-    new_http_requests   INTEGER                           NOT NULL,
+    new_tcp_connections BIGINT                            NOT NULL,
+    new_http_requests   BIGINT                            NOT NULL,
     PRIMARY KEY (time_id, country_id),
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)
@@ -1086,16 +1100,17 @@ CREATE TABLE IF NOT EXISTS history_ip_country_statistics(
 
 CREATE TABLE IF NOT EXISTS history_client_version_statistics_version_number(
     id            INTEGER PRIMARY KEY                     NOT NULL,
-    major         INTEGER NOT NULL,
-    minor         INTEGER NOT NULL,
-    patch         INTEGER NOT NULL,
+    -- TODO: Change version number parsing to support u32 values
+    major         BIGINT NOT NULL,
+    minor         BIGINT NOT NULL,
+    patch         BIGINT NOT NULL,
     UNIQUE (major, minor, patch)
 );
 
 CREATE TABLE IF NOT EXISTS history_client_version_statistics(
     time_id       BIGINT  NOT NULL,
     version_id    BIGINT  NOT NULL,
-    count         INTEGER NOT NULL,
+    count         BIGINT  NOT NULL,
     PRIMARY KEY (time_id, version_id),
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)
@@ -1112,7 +1127,7 @@ CREATE TABLE IF NOT EXISTS history_client_version_statistics(
 CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_man(
     time_id BIGINT   NOT NULL,
     age     SMALLINT NOT NULL,
-    count   INTEGER  NOT NULL,
+    count   BIGINT   NOT NULL,
     PRIMARY KEY (time_id, age),
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)
@@ -1123,7 +1138,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_man(
 CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_woman(
     time_id BIGINT   NOT NULL,
     age     SMALLINT NOT NULL,
-    count   INTEGER  NOT NULL,
+    count   BIGINT   NOT NULL,
     PRIMARY KEY (time_id, age),
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)
@@ -1134,7 +1149,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_woman(
 CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_non_binary(
     time_id BIGINT   NOT NULL,
     age     SMALLINT NOT NULL,
-    count   INTEGER  NOT NULL,
+    count   BIGINT   NOT NULL,
     PRIMARY KEY (time_id, age),
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)
@@ -1145,7 +1160,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_non_binary(
 CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_all_genders(
     time_id BIGINT   NOT NULL,
     age     SMALLINT NOT NULL,
-    count   INTEGER  NOT NULL,
+    count   BIGINT   NOT NULL,
     PRIMARY KEY (time_id, age),
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)
@@ -1155,7 +1170,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_all_genders(
 
 CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_account(
     time_id INTEGER PRIMARY KEY NOT NULL,
-    count   INTEGER             NOT NULL,
+    count   BIGINT              NOT NULL,
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)
             ON DELETE CASCADE
@@ -1164,7 +1179,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_account(
 
 CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_man(
     time_id INTEGER PRIMARY KEY NOT NULL,
-    count   INTEGER             NOT NULL,
+    count   BIGINT              NOT NULL,
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)
             ON DELETE CASCADE
@@ -1173,7 +1188,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_man(
 
 CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_woman(
     time_id INTEGER PRIMARY KEY NOT NULL,
-    count   INTEGER             NOT NULL,
+    count   BIGINT              NOT NULL,
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)
             ON DELETE CASCADE
@@ -1182,7 +1197,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_woman(
 
 CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_non_binary(
     time_id INTEGER PRIMARY KEY NOT NULL,
-    count   INTEGER             NOT NULL,
+    count   BIGINT              NOT NULL,
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)
             ON DELETE CASCADE
@@ -1191,7 +1206,7 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_non_binary(
 
 CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_all_genders(
     time_id INTEGER PRIMARY KEY NOT NULL,
-    count   INTEGER             NOT NULL,
+    count   BIGINT              NOT NULL,
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)
             ON DELETE CASCADE

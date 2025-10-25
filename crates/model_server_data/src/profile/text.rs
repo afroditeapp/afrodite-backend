@@ -1,11 +1,10 @@
-use diesel::{deserialize::FromSqlRow, expression::AsExpression};
+use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_struct_try_from;
 use unicode_segmentation::UnicodeSegmentation;
 use utoipa::ToSchema;
 
 use super::ProfileInternal;
-use crate::schema_sqlite_types::Integer;
 
 #[derive(Debug, Clone, Copy)]
 pub struct ProfileTextCharacterCount {
@@ -42,7 +41,7 @@ impl ProfileTextCharacterCount {
     FromSqlRow,
     AsExpression,
 )]
-#[diesel(sql_type = Integer)]
+#[diesel(sql_type = BigInt)]
 pub struct ProfileTextMinCharactersFilter {
     pub value: u16,
 }
@@ -85,7 +84,7 @@ diesel_i64_struct_try_from!(ProfileTextMinCharactersFilter);
     FromSqlRow,
     AsExpression,
 )]
-#[diesel(sql_type = Integer)]
+#[diesel(sql_type = BigInt)]
 pub struct ProfileTextMaxCharactersFilter {
     pub value: u16,
 }

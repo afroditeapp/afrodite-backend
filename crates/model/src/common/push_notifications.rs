@@ -3,18 +3,14 @@ use diesel::{
     Selectable,
     deserialize::{FromSqlRow, Queryable},
     expression::AsExpression,
-    sql_types::SmallInt,
+    sql_types::{BigInt, SmallInt, Text},
 };
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_db_i16_is_i8_struct, diesel_i64_wrapper, diesel_string_wrapper};
 use utils::random_bytes::random_128_bits;
 use utoipa::ToSchema;
 
-use crate::{
-    ConversationId, NotificationEvent,
-    schema_sqlite_types::{Integer, Text},
-    sync_version_wrappers,
-};
+use crate::{ConversationId, NotificationEvent, sync_version_wrappers};
 
 /// Push notification type. Backend uses this internally for
 /// tracking which notifications should be send and which notifications
@@ -43,7 +39,7 @@ use crate::{
     diesel::FromSqlRow,
     diesel::AsExpression,
 )]
-#[diesel(sql_type = Integer)]
+#[diesel(sql_type = BigInt)]
 pub struct PushNotificationFlagsDb(i64);
 
 impl PushNotificationFlagsDb {

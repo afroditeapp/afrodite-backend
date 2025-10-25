@@ -1,13 +1,14 @@
 use diesel::{
     Selectable,
     prelude::{AsChangeset, Insertable, Queryable},
+    sql_types::BigInt,
 };
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_struct_try_from;
 use simple_backend_utils::time::{TimeValue, UtcTimeValue};
 use utoipa::ToSchema;
 
-use crate::{SelectedWeekdays, schema_sqlite_types::Integer};
+use crate::SelectedWeekdays;
 
 /// Timestamp value in seconds which is
 /// in inclusive range `[0, (SECONDS_IN_DAY - 1)]`.
@@ -25,7 +26,7 @@ use crate::{SelectedWeekdays, schema_sqlite_types::Integer};
     diesel::FromSqlRow,
     diesel::AsExpression,
 )]
-#[diesel(sql_type = Integer)]
+#[diesel(sql_type = BigInt)]
 #[serde(try_from = "i64")]
 #[serde(into = "i64")]
 pub struct DayTimestamp {

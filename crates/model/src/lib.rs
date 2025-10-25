@@ -31,7 +31,6 @@ pub use profile::*;
 
 pub mod markers;
 pub mod schema;
-pub mod schema_sqlite_types;
 
 pub type Db = diesel::sqlite::Sqlite;
 

@@ -1,21 +1,18 @@
 use diesel::{
     AsExpression, FromSqlRow,
-    sql_types::{Binary, SmallInt},
+    sql_types::{BigInt, Binary, SmallInt},
 };
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{SimpleDieselEnum, diesel_i64_wrapper, diesel_uuid_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{
-    AccountId, AccountIdInternal, NotificationIdViewed, NotificationStatus,
-    schema_sqlite_types::Integer,
-};
+use crate::{AccountId, AccountIdInternal, NotificationIdViewed, NotificationStatus};
 
 /// media_content table primary key
 #[derive(
     Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, FromSqlRow, AsExpression,
 )]
-#[diesel(sql_type = Integer)]
+#[diesel(sql_type = BigInt)]
 #[serde(transparent)]
 pub struct ContentIdDb(pub i64);
 

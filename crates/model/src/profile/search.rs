@@ -1,8 +1,9 @@
+use diesel::sql_types::BigInt;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_wrapper;
 use utoipa::ToSchema;
 
-use crate::{NotificationIdViewed, NotificationStatus, schema_sqlite_types::Integer};
+use crate::{NotificationIdViewed, NotificationStatus};
 
 /// Selected weekdays.
 ///
@@ -29,7 +30,7 @@ use crate::{NotificationIdViewed, NotificationStatus, schema_sqlite_types::Integ
     diesel::FromSqlRow,
     diesel::AsExpression,
 )]
-#[diesel(sql_type = Integer)]
+#[diesel(sql_type = BigInt)]
 pub struct SelectedWeekdays(i64);
 
 impl SelectedWeekdays {

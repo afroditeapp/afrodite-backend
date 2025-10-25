@@ -1,10 +1,8 @@
-use diesel::{deserialize::FromSqlRow, expression::AsExpression};
+use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
 use model::{AccessToken, AccountId};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_wrapper;
 use utoipa::{IntoParams, ToSchema};
-
-use crate::schema_sqlite_types::BigInt;
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
 pub struct DemoAccountLoginCredentials {
