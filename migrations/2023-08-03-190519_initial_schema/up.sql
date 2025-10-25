@@ -442,11 +442,10 @@ CREATE TABLE IF NOT EXISTS profile_state(
     last_seen_time_filter      BIGINT,
     -- Filter setting for unlimited likes.
     unlimited_likes_filter     BOOLEAN,
-    -- TODO: Change to SMALLINT
     -- Filter setting for profile iterator min distance in kilometers.
-    min_distance_km_filter     BIGINT,
+    min_distance_km_filter     SMALLINT,
     -- Filter setting for profile iterator max distance in kilometers.
-    max_distance_km_filter     BIGINT,
+    max_distance_km_filter     SMALLINT,
     -- Filter setting for profile created time in seconds.
     profile_created_time_filter BIGINT,
     -- Filter setting for profile edited time in seconds.

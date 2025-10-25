@@ -138,7 +138,7 @@ impl CoordinateManager {
     fn create_index_area(
         &self,
         location: LocationInternal,
-        distance: i64,
+        distance: i16,
         index: &LocationIndex,
     ) -> IndexArea {
         let distance = distance as f64;

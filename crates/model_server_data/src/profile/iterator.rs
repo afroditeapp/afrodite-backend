@@ -1,7 +1,7 @@
-use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
+use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::SmallInt};
 use model::{AccountId, NextNumberStorage, ProfileContentVersion};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::diesel_i64_wrapper;
+use simple_backend_model::diesel_i16_wrapper;
 use utoipa::{IntoParams, ToSchema};
 
 use super::{LastSeenTime, ProfileVersion};
@@ -76,26 +76,26 @@ impl ProfileLink {
     FromSqlRow,
     AsExpression,
 )]
-#[diesel(sql_type = BigInt)]
+#[diesel(sql_type = SmallInt)]
 pub struct MinDistanceKm {
-    pub value: i64,
+    pub value: i16,
 }
 
-impl TryFrom<i64> for MinDistanceKm {
+impl TryFrom<i16> for MinDistanceKm {
     type Error = String;
 
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
+    fn try_from(value: i16) -> Result<Self, Self::Error> {
         Ok(Self { value })
     }
 }
 
-impl AsRef<i64> for MinDistanceKm {
-    fn as_ref(&self) -> &i64 {
+impl AsRef<i16> for MinDistanceKm {
+    fn as_ref(&self) -> &i16 {
         &self.value
     }
 }
 
-diesel_i64_wrapper!(MinDistanceKm);
+diesel_i16_wrapper!(MinDistanceKm);
 
 /// Profile iterator max distance in kilometers.
 ///
@@ -113,23 +113,23 @@ diesel_i64_wrapper!(MinDistanceKm);
     FromSqlRow,
     AsExpression,
 )]
-#[diesel(sql_type = BigInt)]
+#[diesel(sql_type = SmallInt)]
 pub struct MaxDistanceKm {
-    pub value: i64,
+    pub value: i16,
 }
 
-impl TryFrom<i64> for MaxDistanceKm {
+impl TryFrom<i16> for MaxDistanceKm {
     type Error = String;
 
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
+    fn try_from(value: i16) -> Result<Self, Self::Error> {
         Ok(Self { value })
     }
 }
 
-impl AsRef<i64> for MaxDistanceKm {
-    fn as_ref(&self) -> &i64 {
+impl AsRef<i16> for MaxDistanceKm {
+    fn as_ref(&self) -> &i16 {
         &self.value
     }
 }
 
-diesel_i64_wrapper!(MaxDistanceKm);
+diesel_i16_wrapper!(MaxDistanceKm);
