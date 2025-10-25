@@ -428,10 +428,10 @@ CREATE TABLE IF NOT EXISTS profile_state(
     account_id                 INTEGER PRIMARY KEY  NOT NULL,
     -- Min age in years and inside inclusive range of [18,99] for
     -- searching profiles.
-    search_age_range_min       INTEGER              NOT NULL    DEFAULT 18,
+    search_age_range_min       SMALLINT             NOT NULL    DEFAULT 18,
     -- Max age in years and inside inclusive range of [18,99] for
     -- searching profiles.
-    search_age_range_max       INTEGER              NOT NULL    DEFAULT 18,
+    search_age_range_max       SMALLINT             NOT NULL    DEFAULT 18,
     -- Bitflags value containing gender and genders that
     -- the profile owner searches for.
     search_group_flags         INTEGER              NOT NULL    DEFAULT 0,
@@ -458,7 +458,7 @@ CREATE TABLE IF NOT EXISTS profile_state(
     -- Sync version for profile data for this account.
     profile_sync_version              SMALLINT      NOT NULL    DEFAULT 0,
     -- Profile age when initial setup is completed
-    initial_profile_age               INTEGER,
+    initial_profile_age               SMALLINT,
     initial_profile_age_set_unix_time BIGINT,
     -- Edit time for public profile changes. This updates from both
     -- user and admin made changes.
@@ -479,7 +479,7 @@ CREATE TABLE IF NOT EXISTS profile(
     -- Null or non-empty string
     profile_text    TEXT,
     -- Age in years and inside inclusive range of [18,99].
-    age             INTEGER             NOT NULL    DEFAULT 18,
+    age             SMALLINT            NOT NULL    DEFAULT 18,
     last_seen_unix_time  BIGINT         NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
@@ -1110,9 +1110,9 @@ CREATE TABLE IF NOT EXISTS history_client_version_statistics(
 ---------- History tables for server component profile ----------
 
 CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_man(
-    time_id BIGINT  NOT NULL,
-    age     INTEGER NOT NULL,
-    count   INTEGER NOT NULL,
+    time_id BIGINT   NOT NULL,
+    age     SMALLINT NOT NULL,
+    count   INTEGER  NOT NULL,
     PRIMARY KEY (time_id, age),
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)
@@ -1121,9 +1121,9 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_man(
 );
 
 CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_woman(
-    time_id BIGINT  NOT NULL,
-    age     INTEGER NOT NULL,
-    count   INTEGER NOT NULL,
+    time_id BIGINT   NOT NULL,
+    age     SMALLINT NOT NULL,
+    count   INTEGER  NOT NULL,
     PRIMARY KEY (time_id, age),
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)
@@ -1132,9 +1132,9 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_woman(
 );
 
 CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_non_binary(
-    time_id BIGINT  NOT NULL,
-    age     INTEGER NOT NULL,
-    count   INTEGER NOT NULL,
+    time_id BIGINT   NOT NULL,
+    age     SMALLINT NOT NULL,
+    count   INTEGER  NOT NULL,
     PRIMARY KEY (time_id, age),
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)
@@ -1143,9 +1143,9 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_non_binary(
 );
 
 CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_all_genders(
-    time_id BIGINT  NOT NULL,
-    age     INTEGER NOT NULL,
-    count   INTEGER NOT NULL,
+    time_id BIGINT   NOT NULL,
+    age     SMALLINT NOT NULL,
+    count   INTEGER  NOT NULL,
     PRIMARY KEY (time_id, age),
     FOREIGN KEY (time_id)
         REFERENCES history_common_statistics_save_time (id)

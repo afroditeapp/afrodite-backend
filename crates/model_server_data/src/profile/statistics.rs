@@ -39,7 +39,7 @@ pub struct PublicProfileCounts {
 #[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
 pub struct ProfileAgeCounts {
     /// Age for first count
-    pub start_age: i64,
+    pub start_age: i16,
     pub men: Vec<i64>,
     pub women: Vec<i64>,
     pub nonbinaries: Vec<i64>,

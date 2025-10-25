@@ -28,8 +28,8 @@ impl TryFrom<SearchAgeRange> for SearchAgeRangeValidated {
         if value.min > value.max {
             Err("Min value must be less than or equal to max value".to_string())
         } else {
-            let min = (value.min as i64).try_into()?;
-            let max = (value.max as i64).try_into()?;
+            let min = (value.min as i16).try_into()?;
+            let max = (value.max as i16).try_into()?;
             Ok(Self::new(min, max))
         }
     }

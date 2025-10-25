@@ -10,7 +10,7 @@ pub struct GetProfileStatisticsHistoryParams {
     pub value_type: ProfileStatisticsHistoryValueType,
     /// Required only for AgeChange history
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub age: Option<i64>,
+    pub age: Option<i16>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -45,7 +45,7 @@ pub enum ProfileStatisticsHistoryValueTypeInternal {
     },
     AgeChange {
         gender: Option<StatisticsGender>,
-        age: i64,
+        age: i16,
     },
 }
 

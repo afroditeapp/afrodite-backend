@@ -1,8 +1,9 @@
+use diesel::sql_types::SmallInt;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::diesel_i64_struct_try_from;
+use simple_backend_model::diesel_db_i16_is_u8_struct;
 use utoipa::ToSchema;
 
-use crate::{NotificationIdViewed, NotificationStatus, schema_sqlite_types::Integer};
+use crate::{NotificationIdViewed, NotificationStatus};
 
 mod attribute;
 pub use attribute::*;
@@ -25,9 +26,9 @@ pub use search::*;
     diesel::FromSqlRow,
     diesel::AsExpression,
 )]
-#[diesel(sql_type = Integer)]
-#[serde(try_from = "i64")]
-#[serde(into = "i64")]
+#[diesel(sql_type = SmallInt)]
+#[serde(try_from = "i16")]
+#[serde(into = "i16")]
 pub struct ProfileAge {
     value: u8,
 }
@@ -54,11 +55,11 @@ impl Default for ProfileAge {
     }
 }
 
-impl TryFrom<i64> for ProfileAge {
+impl TryFrom<i16> for ProfileAge {
     type Error = String;
 
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
-        if value < Self::MIN_AGE as i64 || value > Self::MAX_AGE as i64 {
+    fn try_from(value: i16) -> Result<Self, Self::Error> {
+        if value < Self::MIN_AGE as i16 || value > Self::MAX_AGE as i16 {
             Err(format!(
                 "Profile age must be in range [{}, {}]",
                 Self::MIN_AGE,
@@ -70,13 +71,13 @@ impl TryFrom<i64> for ProfileAge {
     }
 }
 
-impl From<ProfileAge> for i64 {
+impl From<ProfileAge> for i16 {
     fn from(value: ProfileAge) -> Self {
-        value.value as i64
+        value.value as i16
     }
 }
 
-diesel_i64_struct_try_from!(ProfileAge);
+diesel_db_i16_is_u8_struct!(ProfileAge);
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
 pub struct ProfileStringModerationCompletedNotification {

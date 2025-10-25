@@ -29,12 +29,12 @@ impl<'a> HistoryWriteProfileAdminStatistics<'a> {
         type SaveMethod<'b> = fn(
             &mut HistoryWriteProfileAdminStatistics<'b>,
             &mut LazyTimeId,
-            i64,
+            i16,
             i64,
         ) -> Result<(), DieselDatabaseError>;
         let mut handle_ages = |v: &Vec<i64>, save_method: SaveMethod<'a>| {
             for (i, c) in v.iter().enumerate() {
-                let age = r.age_counts.start_age + i as i64;
+                let age = r.age_counts.start_age + i as i16;
                 save_method(self, &mut time_id, age, *c)?
             }
             Ok::<(), error_stack::Report<DieselDatabaseError>>(())
@@ -55,7 +55,7 @@ impl<'a> HistoryWriteProfileAdminStatistics<'a> {
             .zip(r.age_counts.nonbinaries.iter());
 
         for (i, ((c1, c2), c3)) in ages_all_genders.enumerate() {
-            let age = r.age_counts.start_age + i as i64;
+            let age = r.age_counts.start_age + i as i16;
             let c = *c1 + *c2 + *c3;
             self.save_age_count_if_needed_all_genders(&mut time_id, age, c)?
         }
@@ -137,7 +137,7 @@ macro_rules! define_age_change_method {
             fn $method_name(
                 &mut self,
                 time_id_value: &mut LazyTimeId,
-                age_value: i64,
+                age_value: i16,
                 count_value: i64,
             ) -> Result<(), DieselDatabaseError> {
                 use crate::schema::$table_name::dsl::*;

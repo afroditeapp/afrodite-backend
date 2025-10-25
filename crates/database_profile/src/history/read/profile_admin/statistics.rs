@@ -102,7 +102,7 @@ macro_rules! define_read_age_change_methods {
         impl<'a> HistoryReadProfileAdminStatistics<'a> {
             fn $method_name(
                 &mut self,
-                age_value: i64,
+                age_value: i16,
             ) -> Result<Vec<ProfileStatisticsHistoryValue>, DieselDatabaseError> {
                 use crate::schema::{
                     history_common_statistics_save_time::dsl::*, $table_name::dsl::*,

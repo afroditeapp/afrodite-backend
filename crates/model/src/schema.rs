@@ -430,7 +430,7 @@ diesel::table! {
 
     history_profile_statistics_age_changes_all_genders (time_id, age) {
         time_id -> BigInt,
-        age -> Integer,
+        age -> SmallInt,
         count -> Integer,
     }
 }
@@ -440,7 +440,7 @@ diesel::table! {
 
     history_profile_statistics_age_changes_man (time_id, age) {
         time_id -> BigInt,
-        age -> Integer,
+        age -> SmallInt,
         count -> Integer,
     }
 }
@@ -450,7 +450,7 @@ diesel::table! {
 
     history_profile_statistics_age_changes_non_binary (time_id, age) {
         time_id -> BigInt,
-        age -> Integer,
+        age -> SmallInt,
         count -> Integer,
     }
 }
@@ -460,7 +460,7 @@ diesel::table! {
 
     history_profile_statistics_age_changes_woman (time_id, age) {
         time_id -> BigInt,
-        age -> Integer,
+        age -> SmallInt,
         count -> Integer,
     }
 }
@@ -654,7 +654,7 @@ diesel::table! {
         version_uuid -> Binary,
         profile_name -> Nullable<Text>,
         profile_text -> Nullable<Text>,
-        age -> Integer,
+        age -> SmallInt,
         last_seen_unix_time -> BigInt,
     }
 }
@@ -803,8 +803,8 @@ diesel::table! {
 
     profile_state (account_id) {
         account_id -> BigInt,
-        search_age_range_min -> Integer,
-        search_age_range_max -> Integer,
+        search_age_range_min -> SmallInt,
+        search_age_range_max -> SmallInt,
         search_group_flags -> Integer,
         last_seen_time_filter -> Nullable<Integer>,
         unlimited_likes_filter -> Nullable<Bool>,
@@ -818,7 +818,7 @@ diesel::table! {
         latitude -> Double,
         longitude -> Double,
         profile_sync_version -> SmallInt,
-        initial_profile_age -> Nullable<Integer>,
+        initial_profile_age -> Nullable<SmallInt>,
         initial_profile_age_set_unix_time -> Nullable<BigInt>,
         profile_edited_unix_time -> BigInt,
     }
