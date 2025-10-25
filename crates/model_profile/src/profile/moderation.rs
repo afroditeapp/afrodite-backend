@@ -1,12 +1,12 @@
 use diesel::{
     AsExpression, FromSqlRow, Selectable,
     prelude::Queryable,
-    sql_types::{BigInt, Text},
+    sql_types::{SmallInt, Text},
 };
 use model::UnixTime;
 use model_server_data::ProfileStringModerationState;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{NonEmptyString, diesel_i64_wrapper, diesel_non_empty_string_wrapper};
+use simple_backend_model::{NonEmptyString, diesel_i16_wrapper, diesel_non_empty_string_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 #[derive(
@@ -24,26 +24,26 @@ use utoipa::{IntoParams, ToSchema};
     FromSqlRow,
     AsExpression,
 )]
-#[diesel(sql_type = BigInt)]
+#[diesel(sql_type = SmallInt)]
 pub struct ProfileStringModerationRejectedReasonCategory {
-    pub value: i64,
+    pub value: i16,
 }
 
-impl TryFrom<i64> for ProfileStringModerationRejectedReasonCategory {
+impl TryFrom<i16> for ProfileStringModerationRejectedReasonCategory {
     type Error = String;
 
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
+    fn try_from(value: i16) -> Result<Self, Self::Error> {
         Ok(Self { value })
     }
 }
 
-impl AsRef<i64> for ProfileStringModerationRejectedReasonCategory {
-    fn as_ref(&self) -> &i64 {
+impl AsRef<i16> for ProfileStringModerationRejectedReasonCategory {
+    fn as_ref(&self) -> &i16 {
         &self.value
     }
 }
 
-diesel_i64_wrapper!(ProfileStringModerationRejectedReasonCategory);
+diesel_i16_wrapper!(ProfileStringModerationRejectedReasonCategory);
 
 #[derive(
     Debug,

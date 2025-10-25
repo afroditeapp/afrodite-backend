@@ -320,8 +320,7 @@ CREATE TABLE IF NOT EXISTS account_state(
     account_id                         INTEGER PRIMARY KEY NOT NULL,
     next_client_id                     BIGINT             NOT NULL DEFAULT 0,
     account_deletion_request_unix_time BIGINT,
-    -- TODO: Change to SMALLINT
-    account_banned_reason_category     BIGINT,
+    account_banned_reason_category     SMALLINT,
     -- Null or non-empty string
     account_banned_reason_details      TEXT,
     account_banned_admin_account_id    BIGINT,
@@ -657,8 +656,7 @@ CREATE TABLE IF NOT EXISTS profile_moderation(
     -- 5 = RejectedByBot
     -- 6 = RejectedByHuman
     state_type               SMALLINT           NOT NULL,
-    -- TODO: Change to SMALLINT
-    rejected_reason_category BIGINT,
+    rejected_reason_category SMALLINT,
     -- Null or non-empty string
     rejected_reason_details  TEXT,
     moderator_account_id     BIGINT,
@@ -779,8 +777,7 @@ CREATE TABLE IF NOT EXISTS media_content(
     -- 5 = RejectedByBot (ModeratedAsRejected)
     -- 6 = RejectedByHuman (ModeratedAsRejected)
     moderation_state     SMALLINT            NOT NULL    DEFAULT 0,
-    -- TODO: Change to SMALLINT
-    moderation_rejected_reason_category BIGINT,
+    moderation_rejected_reason_category SMALLINT,
     -- Null or non-empty string
     moderation_rejected_reason_details  TEXT,
     moderation_moderator_account_id     BIGINT,

@@ -1,9 +1,9 @@
 use diesel::{
     AsExpression, FromSqlRow,
-    sql_types::{BigInt, Text},
+    sql_types::{SmallInt, Text},
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{NonEmptyString, diesel_i64_wrapper, diesel_non_empty_string_wrapper};
+use simple_backend_model::{NonEmptyString, diesel_i16_wrapper, diesel_non_empty_string_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 #[derive(
@@ -21,26 +21,26 @@ use utoipa::{IntoParams, ToSchema};
     FromSqlRow,
     AsExpression,
 )]
-#[diesel(sql_type = BigInt)]
+#[diesel(sql_type = SmallInt)]
 pub struct AccountBanReasonCategory {
-    pub value: i64,
+    pub value: i16,
 }
 
-impl TryFrom<i64> for AccountBanReasonCategory {
+impl TryFrom<i16> for AccountBanReasonCategory {
     type Error = String;
 
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
+    fn try_from(value: i16) -> Result<Self, Self::Error> {
         Ok(Self { value })
     }
 }
 
-impl AsRef<i64> for AccountBanReasonCategory {
-    fn as_ref(&self) -> &i64 {
+impl AsRef<i16> for AccountBanReasonCategory {
+    fn as_ref(&self) -> &i16 {
         &self.value
     }
 }
 
-diesel_i64_wrapper!(AccountBanReasonCategory);
+diesel_i16_wrapper!(AccountBanReasonCategory);
 
 #[derive(
     Debug,

@@ -229,7 +229,7 @@ impl From<SignInWithInfoRaw> for SignInWithInfo {
 pub struct AccountStateTableRaw {
     next_client_id: i64,
     account_deletion_request_unix_time: Option<UnixTime>,
-    account_banned_reason_category: Option<i64>,
+    account_banned_reason_category: Option<i16>,
     account_banned_reason_details: Option<AccountBanReasonDetails>,
     account_banned_until_unix_time: Option<UnixTime>,
     account_banned_state_change_unix_time: Option<UnixTime>,
