@@ -132,7 +132,7 @@ diesel::table! {
 diesel::table! {
     admin_notification_settings (account_id) {
         account_id -> BigInt,
-        weekdays -> BigInt,
+        weekdays -> SmallInt,
         daily_enabled_time_start_seconds -> Integer,
         daily_enabled_time_end_seconds -> Integer,
     }
@@ -617,7 +617,7 @@ diesel::table! {
         new_profiles -> Bool,
         attribute_filters -> Bool,
         distance_filters -> Bool,
-        weekdays -> BigInt,
+        weekdays -> SmallInt,
     }
 }
 

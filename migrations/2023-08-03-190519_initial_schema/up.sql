@@ -227,8 +227,7 @@ CREATE TABLE IF NOT EXISTS ip_address_usage_statistics(
 
 CREATE TABLE IF NOT EXISTS admin_notification_settings(
     account_id                       INTEGER PRIMARY KEY NOT NULL,
-    -- TODO: Change to SMALLINT
-    weekdays                         BIGINT NOT NULL,
+    weekdays                         SMALLINT NOT NULL,
     daily_enabled_time_start_seconds INTEGER NOT NULL,
     daily_enabled_time_end_seconds   INTEGER NOT NULL,
     FOREIGN KEY (account_id)
@@ -626,8 +625,7 @@ CREATE TABLE IF NOT EXISTS profile_automatic_profile_search_settings(
     new_profiles      BOOLEAN             NOT NULL,
     attribute_filters BOOLEAN             NOT NULL,
     distance_filters  BOOLEAN             NOT NULL,
-    -- TODO: Change to SMALLINT
-    weekdays          BIGINT              NOT NULL,
+    weekdays          SMALLINT            NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

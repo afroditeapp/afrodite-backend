@@ -1,6 +1,6 @@
-use diesel::sql_types::BigInt;
+use diesel::sql_types::SmallInt;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::diesel_i64_wrapper;
+use simple_backend_model::diesel_i16_wrapper;
 use utoipa::ToSchema;
 
 use crate::{NotificationIdViewed, NotificationStatus};
@@ -30,34 +30,34 @@ use crate::{NotificationIdViewed, NotificationStatus};
     diesel::FromSqlRow,
     diesel::AsExpression,
 )]
-#[diesel(sql_type = BigInt)]
-pub struct SelectedWeekdays(i64);
+#[diesel(sql_type = SmallInt)]
+pub struct SelectedWeekdays(i16);
 
 impl SelectedWeekdays {
     pub fn all() -> Self {
-        Self(WeekdayFlags::all().bits().into())
+        Self(WeekdayFlags::all().bits())
     }
 }
 
-impl TryFrom<i64> for SelectedWeekdays {
+impl TryFrom<i16> for SelectedWeekdays {
     type Error = String;
 
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
+    fn try_from(value: i16) -> Result<Self, Self::Error> {
         Ok(Self(value))
     }
 }
 
-impl AsRef<i64> for SelectedWeekdays {
-    fn as_ref(&self) -> &i64 {
+impl AsRef<i16> for SelectedWeekdays {
+    fn as_ref(&self) -> &i16 {
         &self.0
     }
 }
 
-diesel_i64_wrapper!(SelectedWeekdays);
+diesel_i16_wrapper!(SelectedWeekdays);
 
 bitflags::bitflags! {
     #[derive(Clone, Copy, Debug, PartialEq)]
-    pub struct WeekdayFlags: i8 {
+    pub struct WeekdayFlags: i16 {
         const MONDAY = 0x1;
         const TUESDAY = 0x2;
         const WEDNESDAY = 0x4;
@@ -89,21 +89,21 @@ impl From<chrono::Weekday> for WeekdayFlags {
     }
 }
 
-impl From<i64> for WeekdayFlags {
-    fn from(value: i64) -> Self {
-        Self::from_bits_truncate(value as i8)
+impl From<i16> for WeekdayFlags {
+    fn from(value: i16) -> Self {
+        Self::from_bits_truncate(value)
     }
 }
 
-impl From<WeekdayFlags> for i64 {
+impl From<WeekdayFlags> for i16 {
     fn from(value: WeekdayFlags) -> Self {
-        value.bits().into()
+        value.bits()
     }
 }
 
 impl From<WeekdayFlags> for SelectedWeekdays {
     fn from(value: WeekdayFlags) -> Self {
-        SelectedWeekdays(value.bits().into())
+        SelectedWeekdays(value.bits())
     }
 }
 
