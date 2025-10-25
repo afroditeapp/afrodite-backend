@@ -1,7 +1,7 @@
 bitflags::bitflags! {
     /// Same as SearchGroups but as bitflags. The biflags are used in database.
     #[derive(Clone, Copy, Debug, PartialEq)]
-    pub struct SearchGroupFlags: u16 {
+    pub struct SearchGroupFlags: i16 {
         const MAN_FOR_WOMAN = 0x1;
         const MAN_FOR_MAN = 0x2;
         const MAN_FOR_NON_BINARY = 0x4;
@@ -38,18 +38,17 @@ impl SearchGroupFlags {
     }
 }
 
-impl TryFrom<i64> for SearchGroupFlags {
+impl TryFrom<i16> for SearchGroupFlags {
     type Error = String;
 
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
-        let value = TryInto::<u16>::try_into(value).map_err(|e| e.to_string())?;
+    fn try_from(value: i16) -> Result<Self, Self::Error> {
         Self::from_bits(value).ok_or_else(|| "Unknown bitflag".to_string())
     }
 }
 
-impl From<SearchGroupFlags> for i64 {
+impl From<SearchGroupFlags> for i16 {
     fn from(value: SearchGroupFlags) -> Self {
-        value.bits() as i64
+        value.bits()
     }
 }
 

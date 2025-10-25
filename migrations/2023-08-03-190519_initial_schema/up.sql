@@ -432,10 +432,9 @@ CREATE TABLE IF NOT EXISTS profile_state(
     -- Max age in years and inside inclusive range of [18,99] for
     -- searching profiles.
     search_age_range_max       SMALLINT             NOT NULL    DEFAULT 18,
-    -- TODO: Change to SMALLINT
     -- Bitflags value containing gender and genders that
     -- the profile owner searches for.
-    search_group_flags         BIGINT              NOT NULL    DEFAULT 0,
+    search_group_flags         SMALLINT              NOT NULL    DEFAULT 0,
     -- Filter setting for last seen time.
     last_seen_time_filter      BIGINT,
     -- Filter setting for unlimited likes.

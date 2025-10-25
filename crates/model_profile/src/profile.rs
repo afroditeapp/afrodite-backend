@@ -115,7 +115,7 @@ pub struct ProfileAndProfileVersion {
 pub struct ProfileStateInternal {
     pub search_age_range_min: ProfileAge,
     pub search_age_range_max: ProfileAge,
-    #[diesel(deserialize_as = i64, serialize_as = i64)]
+    #[diesel(deserialize_as = i16, serialize_as = i16)]
     pub search_group_flags: SearchGroupFlags,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,

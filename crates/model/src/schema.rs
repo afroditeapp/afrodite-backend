@@ -667,7 +667,7 @@ diesel::table! {
         account_id -> BigInt,
         search_age_range_min -> SmallInt,
         search_age_range_max -> SmallInt,
-        search_group_flags -> BigInt,
+        search_group_flags -> SmallInt,
         last_seen_time_filter -> Nullable<BigInt>,
         unlimited_likes_filter -> Nullable<Bool>,
         min_distance_km_filter -> Nullable<SmallInt>,
