@@ -1,5 +1,5 @@
-/// Type must have new() and to_uuid() methods. Also diesel::FromSqlRow and
-/// diesel::AsExpression derives are needed.
+/// The struct needs to have `TryFrom<UuidBase64Url>` and `AsRef<UuidBase64Url>` implementations.
+/// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
 ///
 /// ```
 /// use diesel::sql_types::Binary;
@@ -16,12 +16,16 @@
 ///     uuid: UuidBase64Url,
 /// }
 ///
-/// impl UuidWrapper {
-///     pub fn diesel_uuid_wrapper_new(uuid: UuidBase64Url) -> Self {
-///         Self { uuid }
-///     }
+/// impl TryFrom<UuidBase64Url> for UuidWrapper {
+///     type Error = String;
 ///
-///     pub fn diesel_uuid_wrapper_as_uuid(&self) -> &UuidBase64Url {
+///     fn try_from(uuid: UuidBase64Url) -> Result<Self, Self::Error> {
+///         Ok(Self { uuid })
+///     }
+/// }
+///
+/// impl AsRef<UuidBase64Url> for UuidWrapper {
+///     fn as_ref(&self) -> &UuidBase64Url {
 ///         &self.uuid
 ///     }
 /// }
@@ -44,7 +48,7 @@ macro_rules! diesel_uuid_wrapper {
                 let bytes = Vec::<u8>::from_sql(bytes)?;
                 let uuid = uuid::Uuid::from_slice(&bytes)?;
                 let uuid = simple_backend_utils::UuidBase64Url::new(uuid);
-                Ok(<$name>::diesel_uuid_wrapper_new(uuid))
+                TryInto::<$name>::try_into(uuid).map_err(|e| e.into())
             }
         }
 
@@ -57,7 +61,7 @@ macro_rules! diesel_uuid_wrapper {
                 &'b self,
                 out: &mut diesel::serialize::Output<'b, '_, DB>,
             ) -> diesel::serialize::Result {
-                let uuid = self.diesel_uuid_wrapper_as_uuid().as_uuid();
+                let uuid = AsRef::<simple_backend_utils::UuidBase64Url>::as_ref(self).as_uuid();
                 let bytes: &[u8] = uuid.as_bytes();
                 bytes.to_sql(out)
             }

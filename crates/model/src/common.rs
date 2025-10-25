@@ -288,14 +288,6 @@ impl AccountId {
         }
     }
 
-    fn diesel_uuid_wrapper_new(aid: simple_backend_utils::UuidBase64Url) -> Self {
-        Self { aid }
-    }
-
-    fn diesel_uuid_wrapper_as_uuid(&self) -> &simple_backend_utils::UuidBase64Url {
-        &self.aid
-    }
-
     pub fn new_base_64_url(account_id: simple_backend_utils::UuidBase64Url) -> Self {
         Self { aid: account_id }
     }
@@ -304,6 +296,20 @@ impl AccountId {
         Self {
             aid: simple_backend_utils::UuidBase64Url::for_debugging_only_zero(),
         }
+    }
+}
+
+impl TryFrom<simple_backend_utils::UuidBase64Url> for AccountId {
+    type Error = String;
+
+    fn try_from(aid: simple_backend_utils::UuidBase64Url) -> Result<Self, Self::Error> {
+        Ok(Self { aid })
+    }
+}
+
+impl AsRef<simple_backend_utils::UuidBase64Url> for AccountId {
+    fn as_ref(&self) -> &simple_backend_utils::UuidBase64Url {
+        &self.aid
     }
 }
 

@@ -85,17 +85,23 @@ impl ProfileVersion {
         Self { v: version }
     }
 
-    fn diesel_uuid_wrapper_new(v: simple_backend_utils::UuidBase64Url) -> Self {
-        Self { v }
-    }
-
     pub fn new_random() -> Self {
         Self {
             v: simple_backend_utils::UuidBase64Url::new_random_id(),
         }
     }
+}
 
-    fn diesel_uuid_wrapper_as_uuid(&self) -> &simple_backend_utils::UuidBase64Url {
+impl TryFrom<simple_backend_utils::UuidBase64Url> for ProfileVersion {
+    type Error = String;
+
+    fn try_from(v: simple_backend_utils::UuidBase64Url) -> Result<Self, Self::Error> {
+        Ok(Self { v })
+    }
+}
+
+impl AsRef<simple_backend_utils::UuidBase64Url> for ProfileVersion {
+    fn as_ref(&self) -> &simple_backend_utils::UuidBase64Url {
         &self.v
     }
 }
