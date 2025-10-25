@@ -25,7 +25,7 @@ impl CurrentWriteChatLimits<'_> {
     pub fn reset_daily_likes_left(
         &mut self,
         id: AccountIdInternal,
-        likes_left_value: i64,
+        likes_left_value: i16,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::daily_likes_left::dsl::*;
 

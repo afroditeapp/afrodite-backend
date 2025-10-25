@@ -316,7 +316,7 @@ pub struct ChatGlobalState {
 #[diesel(check_for_backend(crate::Db))]
 pub struct DailyLikesLeftInternal {
     pub sync_version: DailyLikesLeftSyncVersion,
-    pub likes_left: i64,
+    pub likes_left: i16,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub latest_limit_reset_unix_time: Option<UnixTime>,
 }
@@ -324,7 +324,7 @@ pub struct DailyLikesLeftInternal {
 #[derive(Serialize, ToSchema)]
 pub struct DailyLikesLeft {
     /// This value can be ignored when like sending limit is not enabled.
-    pub likes: i64,
+    pub likes: i16,
     pub version: DailyLikesLeftSyncVersion,
 }
 

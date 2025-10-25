@@ -280,7 +280,7 @@ diesel::table! {
     daily_likes_left (account_id) {
         account_id -> BigInt,
         sync_version -> SmallInt,
-        likes_left -> BigInt,
+        likes_left -> SmallInt,
         latest_limit_reset_unix_time -> Nullable<BigInt>,
     }
 }

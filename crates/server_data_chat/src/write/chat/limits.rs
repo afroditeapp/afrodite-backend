@@ -63,7 +63,7 @@ impl WriteCommandsChatLimits<'_> {
     pub async fn reset_daily_likes_left(
         &self,
         id: AccountIdInternal,
-        value: i64,
+        value: i16,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat().limits().reset_daily_likes_left(id, value)

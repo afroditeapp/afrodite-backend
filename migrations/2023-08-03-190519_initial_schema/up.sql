@@ -854,8 +854,7 @@ CREATE TABLE IF NOT EXISTS chat_state(
 CREATE TABLE IF NOT EXISTS daily_likes_left(
     account_id            INTEGER PRIMARY KEY NOT NULL,
     sync_version          SMALLINT            NOT NULL DEFAULT 0,
-    -- TODO: Change to SMALLINT
-    likes_left            BIGINT              NOT NULL DEFAULT 0,
+    likes_left            SMALLINT            NOT NULL DEFAULT 0,
     latest_limit_reset_unix_time BIGINT,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)

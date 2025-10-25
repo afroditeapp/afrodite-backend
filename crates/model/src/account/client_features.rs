@@ -77,7 +77,7 @@ pub struct ClientFeaturesConfig {
 }
 
 impl ClientFeaturesConfig {
-    pub fn daily_likes(&self) -> Option<i64> {
+    pub fn daily_likes(&self) -> Option<i16> {
         self.limits
             .likes
             .daily
