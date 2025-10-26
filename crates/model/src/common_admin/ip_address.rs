@@ -5,7 +5,7 @@ use std::{
 
 use diesel::{Selectable, prelude::Queryable, sql_types::Binary};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{IpCountryCounters, IpCountryKey, UnixTime, diesel_bytes_try_from};
+use simple_backend_model::{IpCountryCounters, IpCountryKey, UnixTime, diesel_bytes_wrapper};
 use utoipa::ToSchema;
 
 use crate::AccountId;
@@ -36,7 +36,7 @@ impl IpAddressInternal {
     }
 }
 
-diesel_bytes_try_from!(IpAddressInternal);
+diesel_bytes_wrapper!(IpAddressInternal);
 
 impl TryFrom<&[u8]> for IpAddressInternal {
     type Error = String;

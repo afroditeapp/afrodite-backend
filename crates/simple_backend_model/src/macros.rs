@@ -570,7 +570,7 @@ macro_rules! diesel_db_i16_is_u8_struct {
 /// The struct needs to have `TryFrom<i64>` and `AsRef<&[u8]>` implementations.
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
 #[macro_export]
-macro_rules! diesel_bytes_try_from {
+macro_rules! diesel_bytes_wrapper {
     ($name:ty) => {
         impl<DB: diesel::backend::Backend>
             diesel::deserialize::FromSql<diesel::sql_types::Binary, DB> for $name
