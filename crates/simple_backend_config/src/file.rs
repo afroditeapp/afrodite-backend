@@ -27,6 +27,13 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 public_api = "127.0.0.1:3000"
 local_bot_api_port = 3001
 
+[database]
+sqlite = true
+
+# [database.postgres]
+# current = "postgres://user:password@localhost/current_db"
+# history = "postgres://user:password@localhost/history_db"
+
 # [manager]
 # manager_name = "default"
 # address = "tls://localhost:4000"
@@ -157,6 +164,8 @@ pub struct SimpleBackendConfigFile {
     #[serde(default)]
     pub sign_in_with: SignInWithConfig,
 
+    pub database: DatabaseConfig,
+
     pub tile_map: Option<TileMapConfig>,
     pub manager: Option<ManagerConfig>,
     pub email_sending: Option<EmailSendingConfig>,
@@ -194,6 +203,7 @@ impl SimpleBackendConfigFile {
                 local_bot_api_port: None,
                 debug_local_bot_api_ip: None,
             },
+            database: DatabaseConfig::sqlite(),
             push_notifications: PushNotificationConfig::default(),
             sign_in_with: SignInWithConfig::default(),
             email_sending: None,
@@ -245,6 +255,12 @@ impl SimpleBackendConfigFile {
                     "static_file_package_hosting: package or package_dir must be configured",
                 ));
             }
+        }
+
+        if config.database.sqlite && config.database.postgres.is_some() {
+            return Err(ConfigFileError::InvalidConfig
+                .report()
+                .attach_printable("database: both sqlite and postgres cannot be enabled"));
         }
 
         Ok(config)
@@ -762,4 +778,25 @@ pub struct JitsiMeetConfig {
     /// Client opens this URL when configured and Jitsi Meet App
     /// is not installed.
     pub custom_url: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct DatabaseConfig {
+    pub sqlite: bool,
+    pub postgres: Option<PostgresConfig>,
+}
+
+impl DatabaseConfig {
+    pub fn sqlite() -> Self {
+        Self {
+            sqlite: true,
+            postgres: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct PostgresConfig {
+    pub current: Url,
+    pub history: Url,
 }
