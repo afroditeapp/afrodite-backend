@@ -30,6 +30,9 @@ local_bot_api_port = 3001
 [database]
 sqlite = true
 
+# TODO(future): Add connection error handling to Postgres support if needed.
+#               Postgres support should not be used in production
+#               before error handling is implemented.
 # [database.postgres]
 # current = "postgres://user:password@localhost/current_db"
 # history = "postgres://user:password@localhost/history_db"

@@ -17,7 +17,7 @@ use server_data_media::read::GetReadMediaCommands;
 use server_state::S;
 use sha2::{Digest, Sha256};
 use simple_backend::{ServerQuitWatcher, app::GetManagerApi};
-use simple_backend_config::SqliteDatabase;
+use simple_backend_config::Database;
 use simple_backend_utils::file::overwrite_and_remove_if_exists;
 use tokio::{io::AsyncReadExt, sync::broadcast::error::TryRecvError};
 
@@ -126,7 +126,7 @@ pub async fn backup_data(
 
     let tmp_db = tmp_db_path_string(state)?;
 
-    let databases = state.config().simple_backend().databases();
+    let databases = state.config().simple_backend().database_info();
 
     handle_db(
         &mut backup_client,
@@ -164,7 +164,7 @@ pub async fn backup_data(
 async fn handle_db(
     backup_client: &mut BackupSourceClient,
     tmp_db: &str,
-    db_name: &SqliteDatabase,
+    db_name: &Database,
     create_backup_file: impl Future<Output = Result<(), DataError>>,
 ) -> Result<(), ScheduledTaskError> {
     overwrite_and_remove_if_exists(tmp_db)
@@ -185,7 +185,7 @@ async fn handle_db(
 }
 
 async fn send_backup_db(
-    info: &SqliteDatabase,
+    info: &Database,
     tmp_db_path: &str,
     backup_client: &mut BackupSourceClient,
 ) -> Result<(), ScheduledTaskError> {
@@ -193,7 +193,7 @@ async fn send_backup_db(
     backup_client
         .send_message(SourceToTargetMessage::StartFileBackup {
             sha256,
-            file_name: info.name.to_string(),
+            file_name: info.sqlite_name().to_string(),
         })
         .await
         .change_context(ScheduledTaskError::Backup)?;

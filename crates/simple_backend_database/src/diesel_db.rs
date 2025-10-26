@@ -3,7 +3,7 @@ use std::{fmt, path::PathBuf};
 use diesel::{RunQueryDsl, SqliteConnection};
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness};
 use error_stack::{Result, ResultExt};
-use simple_backend_config::{SimpleBackendConfig, SqliteDatabase};
+use simple_backend_config::{Database, SimpleBackendConfig};
 use simple_backend_utils::{ContextExt, IntoReportFromString};
 use tracing::error;
 
@@ -69,7 +69,7 @@ impl ObjectExtensions<MyDbConnection> for PoolObject {
 
 async fn create_pool(
     config: &SimpleBackendConfig,
-    database_info: &SqliteDatabase,
+    database_info: &Database,
     db_path: PathBuf,
     connection_count: usize,
 ) -> Result<DieselPool, DieselDatabaseError> {
@@ -96,7 +96,7 @@ impl DieselWriteHandle {
     /// pub const DIESEL_MIGRATIONS: EmbeddedMigrations = embed_migrations!();
     pub async fn new(
         config: &SimpleBackendConfig,
-        database_info: &SqliteDatabase,
+        database_info: &Database,
         db_path: PathBuf,
         migrations: EmbeddedMigrations,
     ) -> Result<(Self, DieselWriteCloseHandle), DieselDatabaseError> {
@@ -188,7 +188,7 @@ impl fmt::Debug for DieselReadHandle {
 impl DieselReadHandle {
     pub async fn new(
         config: &SimpleBackendConfig,
-        database_info: &SqliteDatabase,
+        database_info: &Database,
         db_path: PathBuf,
     ) -> Result<(Self, DieselReadCloseHandle), DieselDatabaseError> {
         let connections = num_cpus::get();

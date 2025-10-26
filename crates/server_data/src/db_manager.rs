@@ -54,25 +54,35 @@ impl DatabaseManager {
     ) -> Result<(Self, RouterDatabaseReadHandle, RouterDatabaseWriteHandle), DataError> {
         info!("Creating DatabaseManager");
 
-        let databases = config.simple_backend().databases();
+        let databases = config.simple_backend().database_info();
+        let get_migrations = || {
+            if config.simple_backend().database_config().postgres.is_some() {
+                database::DIESEL_POSTGRES_MIGRATIONS
+            } else {
+                database::DIESEL_SQLITE_MIGRATIONS
+            }
+        };
+
         // Write handles
 
         let (current_write, current_write_close) =
             DatabaseHandleCreator::create_write_handle_from_config(
                 config.simple_backend(),
                 &databases.current,
-                database::DIESEL_MIGRATIONS,
+                get_migrations(),
             )
             .await?;
 
-        let diesel_sqlite = current_write.diesel().sqlite_version().await?;
-        info!("Diesel SQLite version: {}", diesel_sqlite);
+        if config.simple_backend().database_config().sqlite {
+            let diesel_sqlite = current_write.diesel().sqlite_version().await?;
+            info!("Diesel SQLite version: {}", diesel_sqlite);
+        }
 
         let (history_write, history_write_close) =
             DatabaseHandleCreator::create_write_handle_from_config(
                 config.simple_backend(),
                 &databases.history,
-                database::DIESEL_MIGRATIONS,
+                get_migrations(),
             )
             .await?;
 

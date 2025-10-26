@@ -1,7 +1,7 @@
 use std::{fs, path::PathBuf};
 
 use error_stack::{Result, ResultExt};
-use simple_backend_config::{SimpleBackendConfig, SqliteDatabase};
+use simple_backend_config::{Database, SimpleBackendConfig};
 
 use crate::SimpleDatabaseError;
 
@@ -11,19 +11,20 @@ pub const SIMPLE_BACKEND_DIR_NAME: &str = "simple_backend";
 
 pub fn create_dirs_and_get_sqlite_database_file_path(
     config: &SimpleBackendConfig,
-    database_info: &SqliteDatabase,
+    database_info: &Database,
 ) -> Result<PathBuf, SimpleDatabaseError> {
     let sqlite = config.data_dir().join(SQLITE_DIR_NAME);
     if !sqlite.exists() {
         fs::create_dir(&sqlite).change_context(SimpleDatabaseError::FilePathCreationFailed)?;
     }
 
-    let db_dir = sqlite.join(database_info.name);
+    let name = database_info.sqlite_name();
+    let db_dir = sqlite.join(name);
     if !db_dir.exists() {
         fs::create_dir(&db_dir).change_context(SimpleDatabaseError::FilePathCreationFailed)?;
     }
 
-    let db_file = db_dir.join(format!("{}.db", database_info.name));
+    let db_file = db_dir.join(format!("{name}.db"));
 
     Ok(db_file)
 }

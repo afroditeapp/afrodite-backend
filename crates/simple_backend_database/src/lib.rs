@@ -13,7 +13,7 @@ use diesel_db::{
 };
 use diesel_migrations::EmbeddedMigrations;
 use error_stack::{Result, ResultExt};
-use simple_backend_config::{SimpleBackendConfig, SqliteDatabase};
+use simple_backend_config::{Database, SimpleBackendConfig};
 
 pub type PoolObject = diesel_db::PoolObject;
 
@@ -83,7 +83,7 @@ impl DatabaseHandleCreator {
     /// Create the write handle first. Only that runs migrations.
     pub async fn create_read_handle_from_config(
         config: &SimpleBackendConfig,
-        name: &SqliteDatabase,
+        name: &Database,
     ) -> Result<(DbReadHandle, DbReadCloseHandle), SimpleDatabaseError> {
         let db_file_path = data::create_dirs_and_get_sqlite_database_file_path(config, name)?;
 
@@ -103,7 +103,7 @@ impl DatabaseHandleCreator {
     /// Runs migrations.
     pub async fn create_write_handle_from_config(
         config: &SimpleBackendConfig,
-        name: &SqliteDatabase,
+        name: &Database,
         migrations: EmbeddedMigrations,
     ) -> Result<(DbWriteHandle, DbWriteCloseHandle), SimpleDatabaseError> {
         let db_file_path = data::create_dirs_and_get_sqlite_database_file_path(config, name)?;

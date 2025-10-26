@@ -29,7 +29,7 @@ use tokio_rustls::rustls::ServerConfig;
 use web_push::{PartialVapidSignatureBuilder, VapidSignatureBuilder};
 
 use self::file::{ManagerConfig, SignInWithGoogleConfig, SimpleBackendConfigFile, SocketConfig};
-use crate::file::{ApnsConfig, FcmConfig, WebPushConfig};
+use crate::file::{ApnsConfig, DatabaseConfig, FcmConfig, WebPushConfig};
 
 /// Config file debug mode status.
 ///
@@ -127,8 +127,12 @@ impl SimpleBackendConfig {
         &self.data_dir
     }
 
-    pub fn databases(&self) -> &DatabaseInfo {
+    pub fn database_info(&self) -> &DatabaseInfo {
         &DATABASES
+    }
+
+    pub fn database_config(&self) -> &DatabaseConfig {
+        &self.file.database
     }
 
     pub fn socket(&self) -> &SocketConfig {
@@ -476,17 +480,27 @@ pub fn configure_apln_protocols(config: &mut ServerConfig) {
 }
 
 const DATABASES: DatabaseInfo = DatabaseInfo {
-    current: SqliteDatabase { name: "current" },
-    history: SqliteDatabase { name: "history" },
+    current: Database::Current,
+    history: Database::History,
 };
 
 #[derive(Debug, Clone, Copy)]
 pub struct DatabaseInfo {
-    pub current: SqliteDatabase,
-    pub history: SqliteDatabase,
+    pub current: Database,
+    pub history: Database,
 }
 
-#[derive(Debug, Default, Clone, Copy)]
-pub struct SqliteDatabase {
-    pub name: &'static str,
+#[derive(Debug, Clone, Copy)]
+pub enum Database {
+    Current,
+    History,
+}
+
+impl Database {
+    pub fn sqlite_name(&self) -> &'static str {
+        match self {
+            Database::Current => "current",
+            Database::History => "history",
+        }
+    }
 }
