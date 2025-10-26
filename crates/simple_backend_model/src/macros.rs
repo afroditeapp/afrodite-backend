@@ -541,79 +541,8 @@ macro_rules! diesel_db_i16_is_u8_struct {
     };
 }
 
-/// The struct needs to have `TryFrom<i64>` and `Into<i64>` implementations.
+/// The struct needs to have `TryFrom<i64>` and `AsRef<&[u8]>` implementations.
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
-///
-/// ```
-/// use diesel::sql_types::Integer;
-/// use simple_backend_model::diesel_i64_struct_try_from;
-///
-/// #[derive(
-///     Debug,
-///     Clone,
-///     Copy,
-///     diesel::FromSqlRow,
-///     diesel::AsExpression,
-/// )]
-/// #[diesel(sql_type = Integer)]
-/// pub struct NumberStruct {
-///     value: i64,
-/// }
-///
-/// impl TryFrom<i64> for NumberStruct {
-///     type Error = String;
-///
-///     fn try_from(value: i64) -> Result<Self, Self::Error> {
-///         Ok(NumberStruct { value: value })
-///     }
-/// }
-///
-/// impl From<NumberStruct> for i64 {
-///     fn from(value: NumberStruct) -> Self {
-///         value.value
-///     }
-/// }
-///
-/// diesel_i64_struct_try_from!(NumberStruct);
-///
-/// ```
-#[macro_export]
-macro_rules! diesel_i64_struct_try_from {
-    ($name:ty) => {
-        impl<DB: diesel::backend::Backend>
-            diesel::deserialize::FromSql<diesel::sql_types::BigInt, DB> for $name
-        where
-            i64: diesel::deserialize::FromSql<diesel::sql_types::BigInt, DB>,
-        {
-            fn from_sql(
-                value: <DB as diesel::backend::Backend>::RawValue<'_>,
-            ) -> diesel::deserialize::Result<Self> {
-                let value = i64::from_sql(value)?;
-                TryInto::<$name>::try_into(value).map_err(|e| e.into())
-            }
-        }
-
-        // TODO(future): Support other databases?
-        // https://docs.diesel.rs/2.0.x/diesel/serialize/trait.ToSql.html
-
-        impl diesel::serialize::ToSql<diesel::sql_types::BigInt, diesel::sqlite::Sqlite> for $name
-        where
-            i64: diesel::serialize::ToSql<diesel::sql_types::BigInt, diesel::sqlite::Sqlite>,
-        {
-            fn to_sql<'b>(
-                &'b self,
-                out: &mut diesel::serialize::Output<'b, '_, diesel::sqlite::Sqlite>,
-            ) -> diesel::serialize::Result {
-                let value = Into::<i64>::into(*self);
-                out.set_value(value);
-                Ok(diesel::serialize::IsNull::No)
-            }
-        }
-    };
-}
-
-/// Version of diesel_i64_struct_try_from! for bytes.
-/// The struct or enum needs to have `AsRef<&[u8]>` implementation.
 #[macro_export]
 macro_rules! diesel_bytes_try_from {
     ($name:ty) => {
