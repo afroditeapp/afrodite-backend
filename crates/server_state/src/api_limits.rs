@@ -74,7 +74,7 @@ impl ProfileApiLimits<'_> {
             .await
             .change_context(ApiLimitError::Cache)?;
 
-        if is_limit_reached {
+        if is_limit_reached && !self.limits.config.general().debug_disable_api_limits {
             Err(ApiLimitError::LimitReached.report())
         } else {
             Ok(())
@@ -135,7 +135,7 @@ impl MediaApiLimits<'_> {
             .await
             .change_context(ApiLimitError::Cache)?;
 
-        if is_limit_reached {
+        if is_limit_reached && !self.limits.config.general().debug_disable_api_limits {
             Err(ApiLimitError::LimitReached.report())
         } else {
             Ok(())

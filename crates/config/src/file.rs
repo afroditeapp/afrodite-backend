@@ -186,6 +186,8 @@ pub struct GeneralConfig {
     pub debug_allow_backend_data_reset: bool,
     #[serde(default)]
     pub debug_websocket_logging: bool,
+    #[serde(default)]
+    pub debug_disable_api_limits: bool,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
