@@ -456,6 +456,19 @@ macro_rules! diesel_db_i16_is_i8_struct {
             }
         }
 
+        impl diesel::serialize::ToSql<diesel::sql_types::SmallInt, diesel::pg::Pg> for $name
+        where
+            i16: diesel::serialize::ToSql<diesel::sql_types::SmallInt, diesel::pg::Pg>,
+        {
+            fn to_sql<'b>(
+                &'b self,
+                out: &mut diesel::serialize::Output<'b, '_, diesel::pg::Pg>,
+            ) -> diesel::serialize::Result {
+                let value: i16 = Into::<i16>::into(*self).into();
+                <i16 as diesel::serialize::ToSql<diesel::sql_types::SmallInt, diesel::pg::Pg>>::to_sql(&value, &mut out.reborrow())
+            }
+        }
+
         impl diesel::serialize::ToSql<diesel::sql_types::SmallInt, diesel::sqlite::Sqlite> for $name
         where
             i16: diesel::serialize::ToSql<diesel::sql_types::SmallInt, diesel::sqlite::Sqlite>,
@@ -522,6 +535,19 @@ macro_rules! diesel_db_i16_is_u8_struct {
             ) -> diesel::deserialize::Result<Self> {
                 let value = i16::from_sql(value)?;
                 TryInto::<$name>::try_into(value).map_err(|e| e.into())
+            }
+        }
+
+        impl diesel::serialize::ToSql<diesel::sql_types::SmallInt, diesel::pg::Pg> for $name
+        where
+            i16: diesel::serialize::ToSql<diesel::sql_types::SmallInt, diesel::pg::Pg>,
+        {
+            fn to_sql<'b>(
+                &'b self,
+                out: &mut diesel::serialize::Output<'b, '_, diesel::pg::Pg>,
+            ) -> diesel::serialize::Result {
+                let value: i16 = Into::<i16>::into(*self).into();
+                <i16 as diesel::serialize::ToSql<diesel::sql_types::SmallInt, diesel::pg::Pg>>::to_sql(&value, &mut out.reborrow())
             }
         }
 
