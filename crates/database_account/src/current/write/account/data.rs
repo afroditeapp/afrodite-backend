@@ -5,6 +5,7 @@ use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{AccountCreatedTime, AccountId, AccountIdInternal, ClientId};
 use model_account::{AccountGlobalState, AccountInternal, EmailAddress, SetAccountSetup};
+use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::IntoDatabaseError;
 
@@ -106,7 +107,7 @@ impl CurrentWriteAccountData<'_> {
             .on_conflict(row_type)
             .do_update()
             .set(admin_access_granted_count.eq(admin_access_granted_count + 1))
-            .execute(self.conn())
+            .execute_my_conn(self.conn())
             .into_db_error(())?;
 
         Ok(())
@@ -148,7 +149,7 @@ impl CurrentWriteAccountData<'_> {
             .on_conflict(account_id)
             .do_update()
             .set(next_client_id.eq(next))
-            .execute(self.conn())
+            .execute_my_conn(self.conn())
             .into_db_error(())?;
 
         Ok(current)

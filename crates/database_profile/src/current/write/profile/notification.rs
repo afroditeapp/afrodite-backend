@@ -1,8 +1,9 @@
 use database::{DieselDatabaseError, define_current_write_commands};
-use diesel::{ExpressionMethods, insert_into, prelude::*};
+use diesel::{insert_into, prelude::*};
 use error_stack::Result;
 use model::{AccountIdInternal, ProfileStringModerationCompletedNotificationViewed};
 use model_profile::ProfileAppNotificationSettings;
+use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::IntoDatabaseError;
 
@@ -21,7 +22,7 @@ impl CurrentWriteProfileNotification<'_> {
             .on_conflict(account_id)
             .do_update()
             .set(settings)
-            .execute(self.conn())
+            .execute_my_conn(self.conn())
             .into_db_error(())?;
 
         Ok(())
@@ -46,7 +47,7 @@ impl CurrentWriteProfileNotification<'_> {
                 profile_text_accepted_viewed.eq(values.text_accepted),
                 profile_text_rejected_viewed.eq(values.text_rejected),
             ))
-            .execute(self.conn())
+            .execute_my_conn(self.conn())
             .into_db_error(())?;
 
         Ok(())

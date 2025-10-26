@@ -1,11 +1,12 @@
 use database::{
     DieselDatabaseError, current::write::GetDbWriteCommandsCommon, define_current_write_commands,
 };
-use diesel::{ExpressionMethods, insert_into, prelude::*};
+use diesel::{insert_into, prelude::*};
 use error_stack::Result;
 use model::{
     AccountIdInternal, CustomReportTypeNumberValue, ReportProcessingState, ReportTypeNumberInternal,
 };
+use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::IntoDatabaseError;
 
@@ -42,7 +43,7 @@ impl CurrentWriteAccountReport<'_> {
             .on_conflict(row_type)
             .do_update()
             .set(sha256_hash.eq(sha256_custom_reports_file_hash))
-            .execute(self.conn())
+            .execute_my_conn(self.conn())
             .into_db_error(())?;
 
         Ok(())

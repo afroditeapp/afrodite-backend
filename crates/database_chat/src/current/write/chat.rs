@@ -6,7 +6,7 @@ use model_chat::{
     AccountIdInternal, CHAT_GLOBAL_STATE_ROW_TYPE, ChatStateRaw, MatchId, NewReceivedLikesCount,
     PublicKeyId, ReceivedLikesSyncVersion, SyncVersionUtils,
 };
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{ContextExt, db::MyRunQueryDsl};
 
 use crate::{IntoDatabaseError, current::read::GetDbReadCommandsChat};
 
@@ -131,7 +131,7 @@ impl CurrentWriteChat<'_> {
             .on_conflict(row_type)
             .do_update()
             .set(next_match_id.eq(next))
-            .execute(self.conn())
+            .execute_my_conn(self.conn())
             .into_db_error(())?;
 
         Ok(current)

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_utils::{current_unix_time, time::DurationValue};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::macros::diesel_i64_wrapper;
+use crate::diesel_i64_wrapper;
 
 #[derive(
     Debug,

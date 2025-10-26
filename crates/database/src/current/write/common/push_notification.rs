@@ -4,6 +4,7 @@ use model::{
     AccountIdInternal, PushNotificationDeviceToken, PushNotificationEncryptionKey,
     PushNotificationFlagsDb, SyncVersion, UnixTime,
 };
+use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
 
@@ -169,7 +170,7 @@ impl CurrentWriteCommonPushNotification<'_> {
             .on_conflict(row_type)
             .do_update()
             .set(sha256_hash.eq(sha256_vapid_public_key_hash))
-            .execute(self.conn())
+            .execute_my_conn(self.conn())
             .into_db_error(())?;
 
         Ok(())

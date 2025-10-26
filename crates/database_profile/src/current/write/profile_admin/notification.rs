@@ -1,7 +1,8 @@
 use database::{DieselDatabaseError, define_current_write_commands};
-use diesel::{ExpressionMethods, insert_into, prelude::*, upsert::excluded};
+use diesel::{insert_into, prelude::*, upsert::excluded};
 use error_stack::Result;
 use model::AccountIdInternal;
+use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::{IntoDatabaseError, current::read::GetDbReadCommandsProfile};
 
@@ -45,7 +46,7 @@ impl CurrentWriteProfileAdminNotification<'_> {
                 profile_name_accepted.eq(excluded(profile_name_accepted)),
                 profile_name_rejected.eq(excluded(profile_name_rejected)),
             ))
-            .execute(self.conn())
+            .execute_my_conn(self.conn())
             .into_db_error(())?;
 
         Ok(())
@@ -88,7 +89,7 @@ impl CurrentWriteProfileAdminNotification<'_> {
                 profile_text_accepted.eq(excluded(profile_text_accepted)),
                 profile_text_rejected.eq(excluded(profile_text_rejected)),
             ))
-            .execute(self.conn())
+            .execute_my_conn(self.conn())
             .into_db_error(())?;
 
         Ok(())

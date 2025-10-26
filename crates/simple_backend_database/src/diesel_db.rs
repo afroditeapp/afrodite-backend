@@ -1,95 +1,19 @@
 use std::{fmt, path::PathBuf};
 
-use diesel::{Connection, RunQueryDsl, SqliteConnection};
+use diesel::{RunQueryDsl, SqliteConnection};
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness};
 use error_stack::{Result, ResultExt};
 use simple_backend_config::{SimpleBackendConfig, SqliteDatabase};
-use simple_backend_utils::{ComponentError, ContextExt, IntoReportFromString};
+use simple_backend_utils::{ContextExt, IntoReportFromString};
 use tracing::error;
 
-pub type DieselConnection = diesel::SqliteConnection;
+mod connection;
+
+pub use simple_backend_utils::db::{DieselDatabaseError, MyDbConnection};
+
+pub type DieselConnection = MyDbConnection;
 pub type DieselPool = deadpool::unmanaged::Pool<DieselConnection>;
 pub type PoolObject = deadpool::unmanaged::Object<DieselConnection>;
-
-mod sqlite_version {
-    use diesel::define_sql_function;
-    define_sql_function! { fn sqlite_version() -> Text }
-}
-
-impl ComponentError for DieselDatabaseError {
-    const COMPONENT_NAME: &'static str = "Diesel";
-}
-
-#[derive(thiserror::Error, Debug)]
-pub enum DieselDatabaseError {
-    #[error("Connecting to SQLite database failed")]
-    Connect,
-    #[error("SQLite connection setup failed")]
-    Setup,
-    #[error("Executing SQL query failed")]
-    Execute,
-    #[error("Running diesel database migrations failed")]
-    Migrate,
-
-    #[error("Running an action failed")]
-    RunAction,
-    #[error("Add connection to pool failed")]
-    AddConnection,
-    #[error("Connection get failed from connection pool")]
-    GetConnection,
-    #[error("Interaction with database connection failed")]
-    InteractionError,
-
-    #[error("SQLite version query failed")]
-    SqliteVersionQuery,
-
-    #[error("Creating in RAM database failed")]
-    CreateInRam,
-
-    #[error("Deserializing failed")]
-    SerdeDeserialize,
-    #[error("Serializing failed")]
-    SerdeSerialize,
-
-    #[error("Content slot not empty")]
-    ContentSlotNotEmpty,
-    #[error("Content slot empty")]
-    ContentSlotEmpty,
-    #[error("Moderation request content invalid")]
-    ModerationRequestContentInvalid,
-    #[error("Moderation request is missing")]
-    MissingModerationRequest,
-
-    #[error("Not found")]
-    NotFound,
-    #[error("Operation is not allowed")]
-    NotAllowed,
-    #[error("Action is already done")]
-    AlreadyDone,
-    #[error("No available IDs")]
-    NoAvailableIds,
-
-    #[error("Data format conversion failed")]
-    DataFormatConversion,
-
-    #[error("Transaction failed")]
-    FromDieselErrorToTransactionError,
-
-    #[error("File operation failed")]
-    File,
-
-    #[error("Zip file related error")]
-    Zip,
-
-    #[error("Diesel error")]
-    DieselError,
-
-    #[error("Transaction error")]
-    FromStdErrorToTransactionError,
-
-    #[error("Message encryption error")]
-    MessageEncryptionError,
-}
 
 async fn close_connections(pool: &DieselPool, connections: usize) {
     for _ in 0..connections {
@@ -121,14 +45,14 @@ impl fmt::Debug for DieselWriteHandle {
 }
 
 pub trait ObjectExtensions<T>: Sized {
-    fn interact<F: FnOnce(&mut SqliteConnection) -> R + Send + 'static, R: Send + 'static>(
+    fn interact<F: FnOnce(&mut MyDbConnection) -> R + Send + 'static, R: Send + 'static>(
         self,
         action: F,
     ) -> impl std::future::Future<Output = Result<R, DieselDatabaseError>> + Send;
 }
 
-impl ObjectExtensions<SqliteConnection> for PoolObject {
-    async fn interact<F: FnOnce(&mut SqliteConnection) -> R + Send + 'static, R: Send + 'static>(
+impl ObjectExtensions<MyDbConnection> for PoolObject {
+    async fn interact<F: FnOnce(&mut MyDbConnection) -> R + Send + 'static, R: Send + 'static>(
         mut self,
         action: F,
     ) -> Result<R, DieselDatabaseError> {
@@ -149,23 +73,9 @@ async fn create_pool(
     db_path: PathBuf,
     connection_count: usize,
 ) -> Result<DieselPool, DieselDatabaseError> {
-    let db_str = if config.sqlite_in_ram() {
-        for c in database_info.name.chars() {
-            if !c.is_ascii_alphanumeric() {
-                return Err(DieselDatabaseError::Connect.report())
-                    .attach_printable("Database name is not ASCII alphanumeric");
-            }
-        }
-        format!("file:{}?mode=memory&cache=shared", database_info.name)
-    } else {
-        db_path.to_string_lossy().to_string()
-    };
-
     let pool = deadpool::unmanaged::Pool::new(connection_count);
     for _ in 0..connection_count {
-        let mut conn =
-            SqliteConnection::establish(&db_str).change_context(DieselDatabaseError::Connect)?;
-        sqlite_setup_connection(&mut conn)?;
+        let conn = connection::create_connection(config, database_info, db_path.clone()).await?;
         pool.add(conn)
             .await
             .map_err(|(_, e)| e)
@@ -222,15 +132,9 @@ impl DieselWriteHandle {
             .await
             .change_context(DieselDatabaseError::GetConnection)?;
 
-        let sqlite_version: Vec<String> = conn
-            .interact(move |conn| diesel::select(sqlite_version::sqlite_version()).load(conn))
+        conn.interact(|conn| conn.sqlite_version())
             .await?
-            .into_error_string(DieselDatabaseError::Execute)?;
-
-        sqlite_version
-            .first()
-            .ok_or(DieselDatabaseError::SqliteVersionQuery.report())
-            .cloned()
+            .and_then(|opt| opt.ok_or(DieselDatabaseError::SqliteVersionQuery.report()))
     }
 
     pub fn to_read_handle(&self) -> DieselReadHandle {

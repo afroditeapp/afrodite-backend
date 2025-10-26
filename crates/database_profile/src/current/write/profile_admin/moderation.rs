@@ -9,6 +9,7 @@ use model_profile::{
     ProfileStringModerationState,
 };
 use simple_backend_model::NonEmptyString;
+use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::IntoDatabaseError;
 
@@ -31,7 +32,7 @@ impl CurrentWriteProfileAdminModeration<'_> {
             ))
             .on_conflict(profile_name)
             .do_nothing()
-            .execute(self.conn())
+            .execute_my_conn(self.conn())
             .into_db_error(())?;
         Ok(())
     }

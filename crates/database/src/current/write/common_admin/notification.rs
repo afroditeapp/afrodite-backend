@@ -2,6 +2,7 @@ use diesel::{insert_into, prelude::*};
 use error_stack::Result;
 use model::{AccountIdInternal, AdminNotification, AdminNotificationSettings};
 use simple_backend_database::diesel_db::DieselDatabaseError;
+use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::{IntoDatabaseError, define_current_write_commands};
 
@@ -20,7 +21,7 @@ impl CurrentWriteCommonAdminNotification<'_> {
             .on_conflict(account_id)
             .do_update()
             .set(&settings)
-            .execute(self.conn())
+            .execute_my_conn(self.conn())
             .into_db_error(())?;
 
         Ok(())
@@ -38,7 +39,7 @@ impl CurrentWriteCommonAdminNotification<'_> {
             .on_conflict(account_id)
             .do_update()
             .set(&subscriptions)
-            .execute(self.conn())
+            .execute_my_conn(self.conn())
             .into_db_error(())?;
 
         Ok(())

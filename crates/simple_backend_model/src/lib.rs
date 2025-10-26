@@ -5,6 +5,11 @@
 
 //! Data types for API and database.
 
+pub use simple_backend_utils::{
+    diesel_bytes_wrapper, diesel_db_i16_is_i8_struct, diesel_db_i16_is_u8_struct,
+    diesel_i16_wrapper, diesel_i32_wrapper, diesel_i64_wrapper, diesel_non_empty_string_wrapper,
+    diesel_string_wrapper, diesel_uuid_wrapper, string::NonEmptyString,
+};
 pub use simple_diesel_enum_macro::SimpleDieselEnum;
 
 pub mod perf;
@@ -18,11 +23,6 @@ pub use ip::*;
 
 pub mod version;
 pub use version::*;
-
-pub mod string;
-pub use string::*;
-
-mod macros;
 
 #[cfg(test)]
 mod tests {

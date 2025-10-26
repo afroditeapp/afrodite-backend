@@ -3,7 +3,7 @@
 ///
 /// ```
 /// use diesel::sql_types::Binary;
-/// use simple_backend_model::diesel_uuid_wrapper;
+/// use simple_backend_utils::diesel_uuid_wrapper;
 /// use simple_backend_utils::UuidBase64Url;
 ///
 /// #[derive(
@@ -74,7 +74,7 @@ macro_rules! diesel_uuid_wrapper {
 ///
 /// ```
 /// use diesel::sql_types::Text;
-/// use simple_backend_model::diesel_string_wrapper;
+/// use simple_backend_utils::diesel_string_wrapper;
 ///
 /// #[derive(
 ///     Debug,
@@ -139,8 +139,8 @@ macro_rules! diesel_string_wrapper {
 ///
 /// ```
 /// use diesel::sql_types::Text;
-/// use simple_backend_model::diesel_non_empty_string_wrapper;
-/// use simple_backend_model::NonEmptyString;
+/// use simple_backend_utils::diesel_non_empty_string_wrapper;
+/// use simple_backend_utils::string::NonEmptyString;
 ///
 /// #[derive(
 ///     Debug,
@@ -204,7 +204,7 @@ macro_rules! diesel_non_empty_string_wrapper {
 ///
 /// ```
 /// use diesel::sql_types::BigInt;
-/// use simple_backend_model::diesel_i64_wrapper;
+/// use simple_backend_utils::diesel_i64_wrapper;
 ///
 /// #[derive(
 ///     Debug,
@@ -266,14 +266,12 @@ macro_rules! diesel_i64_wrapper {
     };
 }
 
-pub(crate) use diesel_i64_wrapper;
-
 /// The struct needs to have `TryFrom<i32>` and `AsRef<i32>` implementations.
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
 ///
 /// ```
 /// use diesel::sql_types::Integer;
-/// use simple_backend_model::diesel_i32_wrapper;
+/// use simple_backend_utils::diesel_i32_wrapper;
 ///
 /// #[derive(
 ///     Debug,
@@ -341,7 +339,7 @@ macro_rules! diesel_i32_wrapper {
 ///
 /// ```
 /// use diesel::sql_types::SmallInt;
-/// use simple_backend_model::diesel_i16_wrapper;
+/// use simple_backend_utils::diesel_i16_wrapper;
 ///
 /// #[derive(
 ///     Debug,
@@ -408,7 +406,7 @@ macro_rules! diesel_i16_wrapper {
 ///
 /// ```
 /// use diesel::sql_types::SmallInt;
-/// use simple_backend_model::diesel_db_i16_is_i8_struct;
+/// use simple_backend_utils::diesel_db_i16_is_i8_struct;
 ///
 /// #[derive(
 ///     Debug,
@@ -482,6 +480,19 @@ macro_rules! diesel_db_i16_is_i8_struct {
                 Ok(diesel::serialize::IsNull::No)
             }
         }
+
+        impl diesel::serialize::ToSql<diesel::sql_types::SmallInt, $crate::db::MultiBackend> for $name
+        where
+            i16: diesel::serialize::ToSql<diesel::sql_types::SmallInt, $crate::db::MultiBackend>,
+        {
+            fn to_sql<'b>(
+                &'b self,
+                out: &mut diesel::serialize::Output<'b, '_, $crate::db::MultiBackend>,
+            ) -> diesel::serialize::Result {
+                out.set_value((diesel::sql_types::SmallInt, self));
+                Ok(diesel::serialize::IsNull::No)
+            }
+        }
     };
 }
 
@@ -490,7 +501,7 @@ macro_rules! diesel_db_i16_is_i8_struct {
 ///
 /// ```
 /// use diesel::sql_types::SmallInt;
-/// use simple_backend_model::diesel_db_i16_is_u8_struct;
+/// use simple_backend_utils::diesel_db_i16_is_u8_struct;
 ///
 /// #[derive(
 ///     Debug,
@@ -561,6 +572,19 @@ macro_rules! diesel_db_i16_is_u8_struct {
             ) -> diesel::serialize::Result {
                 let value: i32 = Into::<i16>::into(*self).into();
                 out.set_value(value);
+                Ok(diesel::serialize::IsNull::No)
+            }
+        }
+
+        impl diesel::serialize::ToSql<diesel::sql_types::SmallInt, $crate::db::MultiBackend> for $name
+        where
+            i16: diesel::serialize::ToSql<diesel::sql_types::SmallInt, $crate::db::MultiBackend>,
+        {
+            fn to_sql<'b>(
+                &'b self,
+                out: &mut diesel::serialize::Output<'b, '_, $crate::db::MultiBackend>,
+            ) -> diesel::serialize::Result {
+                out.set_value((diesel::sql_types::SmallInt, self));
                 Ok(diesel::serialize::IsNull::No)
             }
         }

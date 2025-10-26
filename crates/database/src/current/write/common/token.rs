@@ -1,6 +1,7 @@
 use diesel::{delete, insert_into, prelude::*, upsert::excluded};
 use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, LoginSession};
+use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_write_commands};
 
@@ -39,7 +40,7 @@ impl CurrentWriteAccountToken<'_> {
                     access_token_ip_address.eq(excluded(access_token_ip_address)),
                     refresh_token.eq(excluded(refresh_token)),
                 ))
-                .execute(self.conn())
+                .execute_my_conn(self.conn())
                 .into_db_error(id)?;
         } else {
             delete(login_session)

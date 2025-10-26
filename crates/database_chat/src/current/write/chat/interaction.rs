@@ -3,6 +3,7 @@ use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::ReceivedLikeId;
 use model_chat::{AccountIdInternal, AccountInteractionInternal};
+use simple_backend_utils::db::MyDbConnection;
 
 use crate::{IntoDatabaseError, current::read::GetDbReadCommandsChat};
 
@@ -16,11 +17,16 @@ impl CurrentWriteChatInteraction<'_> {
     ) -> Result<AccountInteractionInternal, DieselDatabaseError> {
         use model::schema::{account_interaction::dsl::*, account_interaction_index::dsl::*};
 
-        let interaction_value = insert_into(account_interaction)
-            .default_values()
-            .returning(AccountInteractionInternal::as_returning())
-            .get_result::<AccountInteractionInternal>(self.conn())
-            .into_db_error((account1, account2))?;
+        let query = insert_into(account_interaction).default_values();
+        let interaction_value = match self.conn() {
+            MyDbConnection::Sqlite(conn) => query
+                .returning(AccountInteractionInternal::as_returning())
+                .get_result::<AccountInteractionInternal>(conn),
+            MyDbConnection::Pg(conn) => query
+                .returning(AccountInteractionInternal::as_returning())
+                .get_result::<AccountInteractionInternal>(conn),
+        }
+        .into_db_error((account1, account2))?;
 
         insert_into(account_interaction_index)
             .values((

@@ -3,6 +3,7 @@ use diesel::{delete, insert_into, prelude::*, update, upsert::excluded};
 use error_stack::Result;
 use model::{AccountIdInternal, SyncVersion, UnixTime};
 use model_account::{AccountGlobalState, NewsId, NewsLocale, PublicationId, UpdateNewsTranslation};
+use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::{IntoDatabaseError, current::read::GetDbReadCommandsAccount};
 
@@ -64,7 +65,7 @@ impl CurrentWriteAccountNewsAdmin<'_> {
                 edit_unix_time.eq(current_time),
                 account_id_editor.eq(id_value.as_db_id()),
             ))
-            .execute(self.conn())
+            .execute_my_conn(self.conn())
             .into_db_error(())?;
 
         Ok(())
@@ -211,7 +212,7 @@ impl CurrentWriteAccountNewsAdmin<'_> {
             .on_conflict(row_type)
             .do_update()
             .set(next_news_publication_id.eq(next_news_publication_id + 1))
-            .execute(self.conn())
+            .execute_my_conn(self.conn())
             .into_db_error(())?;
 
         Ok(id)

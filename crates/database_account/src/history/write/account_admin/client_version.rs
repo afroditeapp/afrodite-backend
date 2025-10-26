@@ -7,6 +7,7 @@ use database::{
 use diesel::{insert_into, prelude::*};
 use error_stack::Result;
 use model::{ClientVersion, UnixTime};
+use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::IntoDatabaseError;
 
@@ -49,7 +50,7 @@ impl HistoryWriteAccountClientVersion<'_> {
                     .do_update()
                     .set(major.eq(major))
                     .returning(id)
-                    .get_result(self.conn())
+                    .get_result_my_conn(self.conn())
                     .into_db_error(())?
             };
 

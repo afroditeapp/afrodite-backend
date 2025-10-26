@@ -3,10 +3,10 @@ use diesel::{ExpressionMethods, QueryDsl, delete, insert_into, prelude::*, updat
 use error_stack::{Result, ResultExt};
 use model_profile::{
     AccountIdInternal, LastSeenUnixTime, Location, ProfileAge, ProfileAttributeFilterValueUpdate,
-    ProfileAttributeValueUpdate, ProfileFiltersUpdateValidated, ProfileInternal,
-    ProfileModificationMetadata, ProfileStateInternal, ProfileUpdateValidated, SyncVersion,
-    UnixTime,
+    ProfileAttributeValueUpdate, ProfileFiltersUpdateValidated, ProfileModificationMetadata,
+    ProfileStateInternal, ProfileUpdateValidated, SyncVersion, UnixTime,
 };
+use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::IntoDatabaseError;
 
@@ -17,7 +17,7 @@ impl CurrentWriteProfileData<'_> {
         &mut self,
         id: AccountIdInternal,
         modification: &ProfileModificationMetadata,
-    ) -> Result<ProfileInternal, DieselDatabaseError> {
+    ) -> Result<(), DieselDatabaseError> {
         use model::schema::profile::dsl::*;
 
         insert_into(profile)
@@ -26,9 +26,10 @@ impl CurrentWriteProfileData<'_> {
                 version_uuid.eq(modification.version),
                 last_seen_unix_time.eq(modification.time),
             ))
-            .returning(ProfileInternal::as_returning())
-            .get_result(self.conn())
-            .into_db_error(id)
+            .execute_my_conn(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
     }
 
     pub fn insert_profile_state(
@@ -144,7 +145,7 @@ impl CurrentWriteProfileData<'_> {
             .on_conflict(row_type)
             .do_update()
             .set(sha256_hash.eq(sha256_attribute_file_hash))
-            .execute(self.conn())
+            .execute_my_conn(self.conn())
             .into_db_error(())?;
 
         Ok(())
@@ -262,7 +263,7 @@ impl CurrentWriteProfileData<'_> {
 
             insert_into(profile_attributes_value_list)
                 .values(values)
-                .execute(self.conn())
+                .execute_my_conn(self.conn())
                 .into_db_error(())?;
         }
 
@@ -340,7 +341,7 @@ impl CurrentWriteProfileData<'_> {
 
                 insert_into(profile_attributes_filter_list_wanted)
                     .values(values)
-                    .execute(self.conn())
+                    .execute_my_conn(self.conn())
                     .into_db_error(())?;
             }
 
@@ -361,7 +362,7 @@ impl CurrentWriteProfileData<'_> {
 
                 insert_into(profile_attributes_filter_list_unwanted)
                     .values(values)
-                    .execute(self.conn())
+                    .execute_my_conn(self.conn())
                     .into_db_error(())?;
             }
         }

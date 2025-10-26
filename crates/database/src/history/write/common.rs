@@ -1,10 +1,11 @@
 use std::collections::HashMap;
 
-use diesel::{ExpressionMethods, RunQueryDsl, insert_into};
+use diesel::{ExpressionMethods, insert_into};
 use error_stack::Result;
 use model::{StatisticsSaveTimeId, UnixTime};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_model::{IpCountryCounters, IpCountryKey, MetricKey, PerfMetricValueArea};
+use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::{IntoDatabaseError, define_history_write_commands};
 
@@ -22,7 +23,7 @@ impl HistoryWriteCommon<'_> {
             .do_update()
             .set(unix_time.eq(unix_time))
             .returning(id)
-            .get_result(self.conn())
+            .get_result_my_conn(self.conn())
             .into_db_error(())
     }
 
@@ -57,7 +58,7 @@ impl HistoryWriteCommon<'_> {
                     .do_update()
                     .set(metric_name.eq(metric_name))
                     .returning(id)
-                    .get_result(self.conn())
+                    .get_result_my_conn(self.conn())
                     .into_db_error(())?
             };
 
@@ -69,7 +70,7 @@ impl HistoryWriteCommon<'_> {
                         metric_id.eq(metric_name_id),
                         metric_value.eq(value),
                     ))
-                    .execute(self.conn())
+                    .execute_my_conn(self.conn())
                     .into_db_error(())?
             };
         }
@@ -109,7 +110,7 @@ impl HistoryWriteCommon<'_> {
                     .do_update()
                     .set(country_name.eq(country_name))
                     .returning(id)
-                    .get_result(self.conn())
+                    .get_result_my_conn(self.conn())
                     .into_db_error(())?
             };
 
@@ -122,7 +123,7 @@ impl HistoryWriteCommon<'_> {
                         new_tcp_connections.eq(tcp_connections_value),
                         new_http_requests.eq(http_requests_value),
                     ))
-                    .execute(self.conn())
+                    .execute_my_conn(self.conn())
                     .into_db_error(())?;
             }
         }

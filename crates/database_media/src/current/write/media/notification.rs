@@ -1,8 +1,9 @@
 use database::{DieselDatabaseError, define_current_write_commands};
-use diesel::{ExpressionMethods, insert_into, prelude::*};
+use diesel::{insert_into, prelude::*};
 use error_stack::Result;
 use model::{AccountIdInternal, MediaContentModerationCompletedNotificationViewed};
 use model_media::MediaAppNotificationSettings;
+use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::IntoDatabaseError;
 
@@ -21,7 +22,7 @@ impl CurrentWriteMediaNotification<'_> {
             .on_conflict(account_id)
             .do_update()
             .set(settings)
-            .execute(self.conn())
+            .execute_my_conn(self.conn())
             .into_db_error(())?;
 
         Ok(())
@@ -48,7 +49,7 @@ impl CurrentWriteMediaNotification<'_> {
                 media_content_rejected_viewed.eq(values.rejected),
                 media_content_deleted_viewed.eq(values.deleted),
             ))
-            .execute(self.conn())
+            .execute_my_conn(self.conn())
             .into_db_error(())?;
 
         Ok(())

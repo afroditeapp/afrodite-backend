@@ -1168,6 +1168,7 @@ dependencies = [
  "model",
  "model_account",
  "model_server_state",
+ "simple_backend_utils",
 ]
 
 [[package]]
@@ -5451,7 +5452,6 @@ dependencies = [
  "chrono",
  "diesel",
  "serde",
- "serde_json",
  "simple_backend_utils",
  "simple_diesel_enum_macro",
  "utoipa",
@@ -5464,8 +5464,10 @@ version = "0.0.0"
 dependencies = [
  "base64 0.22.1",
  "chrono",
+ "diesel",
  "error-stack",
  "serde",
+ "serde_json",
  "thiserror 2.0.17",
  "tokio",
  "utoipa",

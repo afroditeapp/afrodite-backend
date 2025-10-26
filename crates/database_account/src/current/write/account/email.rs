@@ -3,6 +3,7 @@ use diesel::{insert_into, prelude::*};
 use error_stack::Result;
 use model::AccountIdInternal;
 use model_account::AccountEmailSendingStateRaw;
+use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::{IntoDatabaseError, current::read::GetDbReadCommandsAccount};
 
@@ -25,7 +26,7 @@ impl CurrentWriteAccountEmail<'_> {
             .on_conflict(account_id)
             .do_update()
             .set(current_states)
-            .execute(self.conn())
+            .execute_my_conn(self.conn())
             .into_db_error(())?;
 
         Ok(())

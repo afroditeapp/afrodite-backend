@@ -7,6 +7,7 @@ use diesel::{
 use error_stack::Result;
 use model::{AccountIdDb, ApiUsage, IpAddressStorage, UnixTime};
 use simple_backend_database::diesel_db::DieselDatabaseError;
+use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::{IntoDatabaseError, define_current_write_commands};
 
@@ -52,7 +53,7 @@ impl CurrentWriteCommonStatistics<'_> {
                         .do_update()
                         .set(unix_time.eq(unix_time))
                         .returning(id)
-                        .get_result(self.conn())
+                        .get_result_my_conn(self.conn())
                         .into_db_error(())?;
                     time_id_value = Some(value);
                     value
@@ -67,7 +68,7 @@ impl CurrentWriteCommonStatistics<'_> {
                         .do_update()
                         .set(metric_name.eq(metric_name))
                         .returning(id)
-                        .get_result(self.conn())
+                        .get_result_my_conn(self.conn())
                         .into_db_error(())?
                 };
 
@@ -124,7 +125,7 @@ impl CurrentWriteCommonStatistics<'_> {
                         usage_count.eq(usage_count + info.usage_count()),
                         latest_usage_unix_time.eq(info.latest_usage()),
                     ))
-                    .execute(self.conn())
+                    .execute_my_conn(self.conn())
                     .into_db_error(())?;
             }
         }

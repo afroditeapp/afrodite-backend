@@ -6,6 +6,7 @@ use model_profile::{
     AccountIdDb, AccountIdInternal, ProfileNameModerationState, ProfileStringModerationContentType,
     ProfileStringModerationState, ProfileTextModerationState, UnixTime,
 };
+use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::{IntoDatabaseError, current::read::GetDbReadCommandsProfile};
 
@@ -50,7 +51,7 @@ impl CurrentWriteModeration<'_> {
                 moderator_account_id.eq(None::<AccountIdDb>),
                 created_unix_time.eq(excluded(created_unix_time)),
             ))
-            .execute(self.conn())
+            .execute_my_conn(self.conn())
             .into_db_error(id)?;
 
         Ok(ProfileNameModerationState(new_state))
@@ -89,7 +90,7 @@ impl CurrentWriteModeration<'_> {
                     moderator_account_id.eq(None::<AccountIdDb>),
                     created_unix_time.eq(excluded(created_unix_time)),
                 ))
-                .execute(self.conn())
+                .execute_my_conn(self.conn())
                 .into_db_error(id)?;
 
             Ok(Some(ProfileTextModerationState(new_state)))

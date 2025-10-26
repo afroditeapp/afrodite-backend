@@ -7,7 +7,10 @@ use std::fmt::Display;
 
 use error_stack::{Context, Report, Result, ResultExt};
 
+pub mod db;
 pub mod file;
+pub mod macros;
+pub mod string;
 pub mod time;
 mod uuid;
 
