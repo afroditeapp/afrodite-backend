@@ -1,7 +1,7 @@
 [package]
 name = "simple_diesel_enum_macro"
 version = "0.0.0"
-edition = "2021"
+edition = "2024"
 
 [lib]
 proc-macro = true
