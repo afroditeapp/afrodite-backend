@@ -1,7 +1,7 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
 use model::EventToClientInternal;
-use model_account::AccountIdInternal;
+use model_account::{AccountIdInternal, EmailSendingState};
 use server_data::{
     DataError,
     db_manager::InternalWriting,
@@ -50,6 +50,17 @@ impl WriteCommandsAccountDelete<'_> {
             cmds.account()
                 .delete()
                 .set_account_deletion_request_state(id, value)?;
+
+            cmds.account()
+                .email()
+                .modify_email_sending_states(id, |email_states| {
+                    email_states.account_deletion_remainder_first_state_number =
+                        EmailSendingState::NotSent;
+                    email_states.account_deletion_remainder_second_state_number =
+                        EmailSendingState::NotSent;
+                    email_states.account_deletion_remainder_third_state_number =
+                        EmailSendingState::NotSent;
+                })?;
 
             Ok(a)
         })?;

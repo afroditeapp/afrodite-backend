@@ -1,4 +1,4 @@
-use model::{AccountIdInternal, EmailMessages};
+use model::{AccountIdInternal, EmailMessages, UnixTime};
 use server_api::{
     DataError,
     app::{GetConfig, ReadData, WriteData},
@@ -6,7 +6,7 @@ use server_api::{
 };
 use server_common::result::Result;
 use server_data::read::GetReadCommandsCommon;
-use server_data_account::write::GetWriteCommandsAccount;
+use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use server_state::S;
 
@@ -25,6 +25,8 @@ pub async fn handle_email_notifications(state: &S, id: AccountIdInternal) -> Res
     if email_settings.likes {
         handle_likes_email_notification(state, id).await?;
     }
+
+    handle_account_deletion_email_notification(state, id).await?;
 
     Ok(())
 }
@@ -138,6 +140,60 @@ async fn handle_likes_email_notification(
         })
         .await?;
     }
+
+    Ok(())
+}
+
+async fn handle_account_deletion_email_notification(
+    state: &S,
+    id: AccountIdInternal,
+) -> Result<(), DataError> {
+    let deletion_state = state
+        .read()
+        .account()
+        .delete()
+        .account_deletion_state(id)
+        .await?;
+
+    let deletion_time = match deletion_state.automatic_deletion_allowed {
+        Some(deletion_time) => deletion_time,
+        None => return Ok(()),
+    };
+
+    let current_time = UnixTime::current_time();
+    if current_time >= deletion_time {
+        return Ok(());
+    }
+
+    let time_until_deletion = deletion_time.ut - current_time.ut;
+
+    const SECONDS_PER_DAY: i64 = 60 * 60 * 24;
+    const SECOND_EMAIL_DAYS_REMAINING: i64 = 30;
+    const THIRD_EMAIL_DAYS_REMAINING: i64 = 7;
+
+    let second_email_threshold = SECOND_EMAIL_DAYS_REMAINING * SECONDS_PER_DAY;
+    let third_email_threshold = THIRD_EMAIL_DAYS_REMAINING * SECONDS_PER_DAY;
+
+    // Determine which email to send based on time remaining
+    // We only send the most recent applicable email to avoid sending outdated ones
+    let email_to_send = if time_until_deletion <= third_email_threshold {
+        // 7 days or less remaining - send third email
+        EmailMessages::AccountDeletionRemainderThird
+    } else if time_until_deletion <= second_email_threshold {
+        // Between 7 and 30 days remaining - send second email
+        EmailMessages::AccountDeletionRemainderSecond
+    } else {
+        EmailMessages::AccountDeletionRemainderFirst
+    };
+
+    db_write_raw!(state, move |cmds| {
+        cmds.account()
+            .email()
+            .send_email_if_not_already_sent(id, email_to_send)
+            .await?;
+        Ok(())
+    })
+    .await?;
 
     Ok(())
 }

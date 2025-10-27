@@ -41,6 +41,9 @@ pub struct AccountEmailSendingStateRaw {
     pub account_registered_state_number: EmailSendingState,
     pub new_message_state_number: EmailSendingState,
     pub new_like_state_number: EmailSendingState,
+    pub account_deletion_remainder_first_state_number: EmailSendingState,
+    pub account_deletion_remainder_second_state_number: EmailSendingState,
+    pub account_deletion_remainder_third_state_number: EmailSendingState,
 }
 
 impl AccountEmailSendingStateRaw {
@@ -49,6 +52,15 @@ impl AccountEmailSendingStateRaw {
             EmailMessages::AccountRegistered => &mut self.account_registered_state_number,
             EmailMessages::NewMessage => &mut self.new_message_state_number,
             EmailMessages::NewLike => &mut self.new_like_state_number,
+            EmailMessages::AccountDeletionRemainderFirst => {
+                &mut self.account_deletion_remainder_first_state_number
+            }
+            EmailMessages::AccountDeletionRemainderSecond => {
+                &mut self.account_deletion_remainder_second_state_number
+            }
+            EmailMessages::AccountDeletionRemainderThird => {
+                &mut self.account_deletion_remainder_third_state_number
+            }
         }
     }
 }

@@ -48,6 +48,30 @@ default = "New chat request received"
 [new_like.body]
 default = "You have received a new chat request"
 
+# Account deletion remainder 1/3
+
+[account_deletion_remainder_first.subject]
+default = "Account deletion reminder 1/3"
+
+[account_deletion_remainder_first.body]
+default = "Your account will be deleted. This is the first reminder."
+
+# Account deletion remainder 2/3
+
+[account_deletion_remainder_second.subject]
+default = "Account deletion reminder 2/3"
+
+[account_deletion_remainder_second.body]
+default = "Your account will be deleted. This is the second reminder."
+
+# Account deletion remainder 3/3
+
+[account_deletion_remainder_third.subject]
+default = "Account deletion reminder 3/3"
+
+[account_deletion_remainder_third.body]
+default = "Your account will be deleted. This is the final reminder."
+
 "#;
 
 #[derive(Debug, Clone)]
@@ -72,6 +96,9 @@ pub struct EmailContentFile {
     account_registered: Option<EmailContentStrings>,
     new_message: Option<EmailContentStrings>,
     new_like: Option<EmailContentStrings>,
+    account_deletion_remainder_first: Option<EmailContentStrings>,
+    account_deletion_remainder_second: Option<EmailContentStrings>,
+    account_deletion_remainder_third: Option<EmailContentStrings>,
     #[serde(flatten)]
     other: toml::Table,
 }
@@ -219,6 +246,30 @@ impl<'a> EmailStringGetter<'a> {
             &self.config.new_like,
             "New chat request received",
             "You have received a new chat request",
+        )
+    }
+
+    pub fn account_deletion_remainder_first(&self) -> Result<EmailContent, ConfigFileError> {
+        self.apply_template(
+            &self.config.account_deletion_remainder_first,
+            "Account deletion reminder 1/3",
+            "Your account will be deleted. This is the first reminder.",
+        )
+    }
+
+    pub fn account_deletion_remainder_second(&self) -> Result<EmailContent, ConfigFileError> {
+        self.apply_template(
+            &self.config.account_deletion_remainder_second,
+            "Account deletion reminder 2/3",
+            "Your account will be deleted. This is the second reminder.",
+        )
+    }
+
+    pub fn account_deletion_remainder_third(&self) -> Result<EmailContent, ConfigFileError> {
+        self.apply_template(
+            &self.config.account_deletion_remainder_third,
+            "Account deletion reminder 3/3",
+            "Your account will be deleted. This is the final reminder.",
         )
     }
 }

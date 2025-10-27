@@ -71,6 +71,15 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
             EmailMessages::AccountRegistered => getter.account_registered(),
             EmailMessages::NewMessage => getter.new_message(),
             EmailMessages::NewLike => getter.new_like(),
+            EmailMessages::AccountDeletionRemainderFirst => {
+                getter.account_deletion_remainder_first()
+            }
+            EmailMessages::AccountDeletionRemainderSecond => {
+                getter.account_deletion_remainder_second()
+            }
+            EmailMessages::AccountDeletionRemainderThird => {
+                getter.account_deletion_remainder_third()
+            }
         }
         .change_context(EmailError::GettingEmailDataFailed)?;
 

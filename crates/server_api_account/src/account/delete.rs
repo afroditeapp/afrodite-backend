@@ -96,7 +96,7 @@ pub async fn get_account_deletion_request_state(
         .read()
         .account()
         .delete()
-        .account_deleteion_state(internal_id)
+        .account_deletion_state(internal_id)
         .await?;
 
     Ok(result.into())

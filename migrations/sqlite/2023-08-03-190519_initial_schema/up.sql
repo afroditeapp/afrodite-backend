@@ -308,6 +308,9 @@ CREATE TABLE IF NOT EXISTS account_email_sending_state(
     account_registered_state_number SMALLINT            NOT NULL DEFAULT 0,
     new_message_state_number        SMALLINT            NOT NULL DEFAULT 0,
     new_like_state_number           SMALLINT            NOT NULL DEFAULT 0,
+    account_deletion_remainder_first_state_number  SMALLINT NOT NULL DEFAULT 0,
+    account_deletion_remainder_second_state_number SMALLINT NOT NULL DEFAULT 0,
+    account_deletion_remainder_third_state_number  SMALLINT NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

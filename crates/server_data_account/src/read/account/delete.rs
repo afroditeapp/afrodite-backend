@@ -7,7 +7,7 @@ use server_data::{
 define_cmd_wrapper_read!(ReadCommandsAccountDelete);
 
 impl ReadCommandsAccountDelete<'_> {
-    pub async fn account_deleteion_state(
+    pub async fn account_deletion_state(
         &self,
         id: AccountIdInternal,
     ) -> Result<GetAccountDeletionRequestResult, DataError> {

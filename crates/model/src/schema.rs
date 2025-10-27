@@ -20,6 +20,9 @@ diesel::table! {
         account_registered_state_number -> Int2,
         new_message_state_number -> Int2,
         new_like_state_number -> Int2,
+        account_deletion_remainder_first_state_number -> Int2,
+        account_deletion_remainder_second_state_number -> Int2,
+        account_deletion_remainder_third_state_number -> Int2,
     }
 }
 

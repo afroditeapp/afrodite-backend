@@ -371,7 +371,7 @@ impl ScheduledTaskManager {
             .read()
             .account()
             .delete()
-            .account_deleteion_state(id)
+            .account_deletion_state(id)
             .await
             .change_context(ScheduledTaskError::DatabaseError)?;
 

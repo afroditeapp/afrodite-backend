@@ -351,11 +351,20 @@ pub enum EmailMessages {
     AccountRegistered,
     NewMessage,
     NewLike,
+    AccountDeletionRemainderFirst,
+    AccountDeletionRemainderSecond,
+    AccountDeletionRemainderThird,
 }
 
 impl EmailMessages {
-    pub const VARIANTS: &'static [Self] =
-        &[Self::AccountRegistered, Self::NewMessage, Self::NewLike];
+    pub const VARIANTS: &'static [Self] = &[
+        Self::AccountRegistered,
+        Self::NewMessage,
+        Self::NewLike,
+        Self::AccountDeletionRemainderFirst,
+        Self::AccountDeletionRemainderSecond,
+        Self::AccountDeletionRemainderThird,
+    ];
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
