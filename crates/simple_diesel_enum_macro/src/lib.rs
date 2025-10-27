@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, Data, DeriveInput, Expr, ExprLit, Fields, Lit};
+use syn::{Data, DeriveInput, Expr, ExprLit, Fields, Lit, parse_macro_input};
 
 #[proc_macro_derive(SimpleDieselEnum)]
 pub fn simple_diesel_enum_derive(input: TokenStream) -> TokenStream {
@@ -22,8 +22,14 @@ pub fn simple_diesel_enum_derive(input: TokenStream) -> TokenStream {
 
         let ident = &variant.ident;
         if let Some((_, expr)) = &variant.discriminant {
-            if let Expr::Lit(ExprLit { lit: Lit::Int(lit_int), .. }) = expr {
-                let value: i16 = lit_int.base10_parse().expect("Discriminant must be a valid i16");
+            if let Expr::Lit(ExprLit {
+                lit: Lit::Int(lit_int),
+                ..
+            }) = expr
+            {
+                let value: i16 = lit_int
+                    .base10_parse()
+                    .expect("Discriminant must be a valid i16");
                 to_sql_arms.push(quote! {
                     #name::#ident => #value.to_sql(out),
                 });

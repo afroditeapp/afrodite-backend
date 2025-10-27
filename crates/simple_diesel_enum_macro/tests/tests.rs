@@ -1,8 +1,5 @@
+use diesel::{prelude::*, sql_query, sql_types::SmallInt};
 use simple_diesel_enum_macro::SimpleDieselEnum;
-use diesel::sql_types::SmallInt;
-use diesel::sql_query;
-
-use diesel::prelude::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, SimpleDieselEnum, num_enum::TryFromPrimitive)]
 #[repr(i16)]
@@ -13,7 +10,6 @@ enum TestEnum {
 
 #[test]
 fn test_sqlite_insert_and_query_enum() {
-
     #[derive(diesel::QueryableByName, Debug, PartialEq)]
     struct Row {
         #[sql_type = "SmallInt"]
