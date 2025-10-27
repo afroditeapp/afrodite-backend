@@ -47,6 +47,7 @@ CARGO_CRATE_ARGS = 	-p config \
 					-p simple_backend_config \
 					-p simple_backend_database \
 					-p simple_backend_image_process \
+					-p simple_diesel_enum_macro \
 					-p manager \
 					-p manager_api \
 					-p manager_config \
@@ -162,6 +163,7 @@ code-stats:
 	crates/simple_backend_config \
 	crates/simple_backend_database \
 	crates/simple_backend_image_process \
+	crates/simple_diesel_enum_macro \
 	crates/manager \
 	crates/manager_api \
 	crates/manager_config \
