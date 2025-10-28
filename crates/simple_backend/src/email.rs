@@ -11,7 +11,10 @@ use simple_backend_config::{SimpleBackendConfig, file::EmailSendingConfig};
 use simple_backend_model::UnixTime;
 use simple_backend_utils::ContextExt;
 use tokio::{
-    sync::mpsc::{Receiver, Sender, error::TrySendError},
+    sync::{
+        mpsc::{Receiver, Sender, error::TrySendError},
+        oneshot,
+    },
     task::JoinHandle,
 };
 use tracing::{debug, error, warn};
@@ -21,6 +24,7 @@ use crate::{ServerQuitWatcher, email::data::Counter};
 mod data;
 
 const EMAIL_SENDING_CHANNEL_BUFFER_SIZE: usize = 1024 * 1024;
+const EMAIL_SENDING_HIGH_PRIORITY_CHANNEL_BUFFER_SIZE: usize = 1024;
 
 #[derive(thiserror::Error, Debug)]
 pub enum EmailError {
@@ -65,16 +69,22 @@ impl EmailManagerQuitHandle {
 pub struct SendEmail<R, M> {
     pub receiver: R,
     pub message: M,
+    pub result_sender: Option<oneshot::Sender<Result<(), EmailError>>>,
 }
 
 #[derive(Debug, Clone)]
 pub struct EmailSender<R, M> {
     sender: Sender<SendEmail<R, M>>,
+    high_priority_sender: Sender<SendEmail<R, M>>,
 }
 
 impl<R, M> EmailSender<R, M> {
     pub fn send(&self, receiver: R, message: M) {
-        let email_send_cmd = SendEmail { receiver, message };
+        let email_send_cmd = SendEmail {
+            receiver,
+            message,
+            result_sender: None,
+        };
         match self.sender.try_send(email_send_cmd) {
             Ok(()) => (),
             Err(TrySendError::Closed(_)) => {
@@ -83,6 +93,35 @@ impl<R, M> EmailSender<R, M> {
             Err(TrySendError::Full(_)) => {
                 error!("Sending email to internal channel failed: channel is full");
             }
+        }
+    }
+
+    pub async fn send_high_priority(&self, receiver: R, message: M) -> Result<(), EmailError> {
+        let (result_sender, result_receiver) = oneshot::channel();
+        let email_send_cmd = SendEmail {
+            receiver,
+            message,
+            result_sender: Some(result_sender),
+        };
+        match self.high_priority_sender.try_send(email_send_cmd) {
+            Ok(()) => (),
+            Err(TrySendError::Closed(_)) => {
+                return Err(EmailError::SendingFailed
+                    .report()
+                    .attach_printable("High priority email channel is broken"));
+            }
+            Err(TrySendError::Full(_)) => {
+                return Err(EmailError::SendingFailed
+                    .report()
+                    .attach_printable("High priority email channel is full"));
+            }
+        }
+
+        match result_receiver.await {
+            Ok(result) => result,
+            Err(_) => Err(EmailError::SendingFailed
+                .report()
+                .attach_printable("High priority email result channel closed")),
         }
     }
 }
@@ -112,14 +151,23 @@ pub trait EmailDataProvider<R, M> {
 
 pub fn channel<R, M>() -> (EmailSender<R, M>, EmailReceiver<R, M>) {
     let (sender, receiver) = tokio::sync::mpsc::channel(EMAIL_SENDING_CHANNEL_BUFFER_SIZE);
-    let sender = EmailSender { sender };
-    let receiver = EmailReceiver { receiver };
+    let (high_priority_sender, high_priority_receiver) =
+        tokio::sync::mpsc::channel(EMAIL_SENDING_HIGH_PRIORITY_CHANNEL_BUFFER_SIZE);
+    let sender = EmailSender {
+        sender,
+        high_priority_sender,
+    };
+    let receiver = EmailReceiver {
+        receiver,
+        high_priority_receiver,
+    };
     (sender, receiver)
 }
 
 #[derive(Debug)]
 pub struct EmailReceiver<R, M> {
     receiver: Receiver<SendEmail<R, M>>,
+    high_priority_receiver: Receiver<SendEmail<R, M>>,
 }
 
 struct EmailSenderData {
@@ -239,20 +287,50 @@ impl<
 
     pub async fn logic(&mut self, sending_logic: &mut EmailSendingLogic) {
         loop {
-            let send_cmd = self.receiver.receiver.recv().await;
-            match send_cmd {
-                Some(send_cmd) => {
-                    let result = self.send_email(send_cmd, sending_logic).await;
-                    match result {
-                        Ok(()) => (),
-                        Err(e) => {
-                            error!("Email sending failed: {:?}", e);
+            tokio::select! {
+                send_cmd = self.receiver.high_priority_receiver.recv() => {
+                    match send_cmd {
+                        Some(mut send_cmd) => {
+                            let result_sender = send_cmd.result_sender.take();
+                            let result = self.send_email(send_cmd, sending_logic).await;
+
+                            match &result {
+                                Ok(()) => (),
+                                Err(e) => {
+                                    error!("Email sending failed: {:?}", e);
+                                }
+                            }
+
+                            if let Some(result_sender) = result_sender {
+                                let send_result = match &result {
+                                    Ok(()) => Ok(()),
+                                    Err(_) => Err(EmailError::SendingFailed.report()),
+                                };
+                                let _ = result_sender.send(send_result);
+                            }
+                        }
+                        None => {
+                            warn!("High priority email channel is broken");
+                            break;
                         }
                     }
                 }
-                None => {
-                    warn!("Email channel is broken");
-                    break;
+                send_cmd = self.receiver.receiver.recv() => {
+                    match send_cmd {
+                        Some(send_cmd) => {
+                            let result = self.send_email(send_cmd, sending_logic).await;
+                            match result {
+                                Ok(()) => (),
+                                Err(e) => {
+                                    error!("Email sending failed: {:?}", e);
+                                }
+                            }
+                        }
+                        None => {
+                            warn!("Email channel is broken");
+                            break;
+                        }
+                    }
                 }
             }
         }

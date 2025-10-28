@@ -1,14 +1,29 @@
+use std::time::Duration;
+
 use axum::{
+    Extension,
     body::Bytes,
     extract::{Path, State},
     http::StatusCode,
 };
 use axum_extra::{TypedHeader, headers::ContentType};
-use model::AccessToken;
-use server_api::{S, app::WriteData, common::AcceptLanguage, db_write};
-use server_data::app::GetConfig;
-use server_data_account::write::{GetWriteCommandsAccount, account::email::TokenCheckResult};
+use model::{AccessToken, AccountIdInternal};
+use model_account::SendConfirmEmailMessageResult;
+use server_api::{
+    S,
+    app::{ReadData, WriteData},
+    common::AcceptLanguage,
+    create_open_api_router, db_write,
+    utils::Json,
+};
+use server_data::{app::GetConfig, read::GetReadCommandsCommon};
+use server_data_account::{
+    read::GetReadCommandsAccount,
+    write::{GetWriteCommandsAccount, account::email::TokenCheckResult},
+};
 use simple_backend::create_counters;
+use simple_backend_utils::time::DurationValue;
+use tokio::time::timeout;
 
 pub const PATH_GET_CONFIRM_EMAIL: &str = "/account_api/confirm_email/{token}";
 
@@ -115,9 +130,92 @@ fn create_invalid_token_response(
     }
 }
 
+pub const PATH_POST_SEND_CONFIRM_EMAIL_MESSAGE: &str = "/account_api/send_confirm_email_message";
+
+#[utoipa::path(
+    post,
+    path = PATH_POST_SEND_CONFIRM_EMAIL_MESSAGE,
+    responses(
+        (status = 200, description = "Successfull.", body = SendConfirmEmailMessageResult),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(),
+)]
+pub async fn post_send_confirm_email_message(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+) -> Result<Json<SendConfirmEmailMessageResult>, StatusCode> {
+    ACCOUNT.post_send_confirm_email_message.incr();
+
+    // Check if email is already verified
+    let account = state
+        .read()
+        .common()
+        .account(account_id)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    if account.email_verified() {
+        return Ok(SendConfirmEmailMessageResult::error_email_already_verified().into());
+    }
+
+    // Check email confirmation token age
+    let account_internal = state
+        .read()
+        .account()
+        .account_internal(account_id)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    if let Some(token_time) = account_internal.email_confirmation_token_unix_time {
+        const MIN_TOKEN_AGE_SECONDS: u32 = 15 * 60;
+        if !token_time.duration_value_elapsed(DurationValue::from_seconds(MIN_TOKEN_AGE_SECONDS)) {
+            return Ok(
+                SendConfirmEmailMessageResult::error_try_again_later_after_seconds(
+                    MIN_TOKEN_AGE_SECONDS,
+                )
+                .into(),
+            );
+        }
+    }
+
+    // Try to send email with 10 second timeout
+    let send_result = timeout(Duration::from_secs(10), async {
+        db_write!(state, move |cmds| {
+            cmds.account()
+                .email()
+                .send_email_confirmation_high_priority(account_id)
+                .await
+        })
+    })
+    .await;
+
+    match send_result {
+        Ok(Ok(())) => {
+            // Email sent successfully
+            Ok(SendConfirmEmailMessageResult::ok().into())
+        }
+        Ok(Err(_)) => {
+            // Email sending failed
+            Ok(SendConfirmEmailMessageResult::error_email_sending_failed().into())
+        }
+        Err(_) => {
+            // Timeout
+            Ok(SendConfirmEmailMessageResult::error_email_sending_timeout().into())
+        }
+    }
+}
+
+create_open_api_router!(
+    fn router_email_private,
+    post_send_confirm_email_message,
+);
+
 create_counters!(
     AccountCounters,
     ACCOUNT,
     ACCOUNT_EMAIL_COUNTERS_LIST,
     get_confirm_email,
+    post_send_confirm_email_message,
 );

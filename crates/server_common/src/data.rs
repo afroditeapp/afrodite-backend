@@ -38,6 +38,8 @@ pub enum DataError {
     NotAllowed,
     #[error("Server closing in progress")]
     ServerClosingInProgress,
+    #[error("Email sending failed")]
+    EmailSendingFailed,
 }
 
 /// Attach more info to current error

@@ -6,7 +6,7 @@ use server_data::{
     app::{EventManagerProvider, GetConfig, GetEmailSender},
     db_transaction, define_cmd_wrapper_write,
     read::DbRead,
-    result::Result,
+    result::{Result, WrappedContextExt},
     write::DbTransaction,
 };
 
@@ -152,6 +152,18 @@ impl WriteCommandsAccountEmail<'_> {
                     *correct_field = EmailSendingState::SentSuccessfully;
                 })
         })?;
+
+        Ok(())
+    }
+
+    pub async fn send_email_confirmation_high_priority(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        self.email_sender()
+            .send_high_priority(id, EmailMessages::EmailConfirmation)
+            .await
+            .map_err(|_| DataError::EmailSendingFailed.report())?;
 
         Ok(())
     }

@@ -69,6 +69,9 @@ impl ApiDoc {
             .merge_from(
                 server_api_account::account::router_notification(state.clone()).into_openapi(),
             )
+            .merge_from(
+                server_api_account::account::router_email_private(state.clone()).into_openapi(),
+            )
             .tag_routes("account");
         doc.merge(account);
         let account_admin = ApiDoc::openapi()
