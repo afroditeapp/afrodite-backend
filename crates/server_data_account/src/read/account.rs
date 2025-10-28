@@ -1,8 +1,8 @@
 use database::current::read::GetDbReadCommandsCommon;
 use database_account::current::read::GetDbReadCommandsAccount;
 use model_account::{
-    AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountSetup, AppleAccountId,
-    GoogleAccountId, SignInWithInfo,
+    AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountInternal, AccountSetup,
+    AppleAccountId, GoogleAccountId, SignInWithInfo,
 };
 use model_server_state::DemoAccountId;
 use server_data::{
@@ -67,6 +67,15 @@ impl ReadCommandsAccount<'_> {
 
     pub async fn account_data(&self, id: AccountIdInternal) -> Result<AccountData, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().account_data(id))
+            .await
+            .into_error()
+    }
+
+    pub async fn account_internal(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<AccountInternal, DataError> {
+        self.db_read(move |mut cmds| cmds.account().data().account_internal(id))
             .await
             .into_error()
     }

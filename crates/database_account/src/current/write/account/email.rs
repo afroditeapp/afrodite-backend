@@ -1,7 +1,7 @@
 use database::{DieselDatabaseError, define_current_write_commands};
-use diesel::{insert_into, prelude::*};
+use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
-use model::AccountIdInternal;
+use model::{AccountIdInternal, UnixTime};
 use model_account::AccountEmailSendingStateRaw;
 use simple_backend_utils::db::MyRunQueryDsl;
 
@@ -28,6 +28,42 @@ impl CurrentWriteAccountEmail<'_> {
             .set(current_states)
             .execute_my_conn(self.conn())
             .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn set_email_confirmation_token(
+        mut self,
+        id: AccountIdInternal,
+        token: Vec<u8>,
+        token_unix_time: UnixTime,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account::dsl::*;
+
+        update(account.find(id.as_db_id()))
+            .set((
+                email_confirmation_token.eq(Some(token)),
+                email_confirmation_token_unix_time.eq(Some(token_unix_time)),
+            ))
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
+    }
+
+    pub fn clear_email_confirmation_token(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account::dsl::*;
+
+        update(account.find(id.as_db_id()))
+            .set((
+                email_confirmation_token.eq(None::<Vec<u8>>),
+                email_confirmation_token_unix_time.eq(None::<UnixTime>),
+            ))
+            .execute(self.conn())
+            .into_db_error(id)?;
 
         Ok(())
     }

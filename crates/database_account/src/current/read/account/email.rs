@@ -1,7 +1,7 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
-use model::AccountIdInternal;
+use model::{AccountIdInternal, UnixTime};
 use model_account::AccountEmailSendingStateRaw;
 
 use crate::IntoDatabaseError;
@@ -22,5 +22,26 @@ impl CurrentReadAccountEmail<'_> {
             .optional()
             .into_db_error(id)
             .map(|data| data.unwrap_or_default())
+    }
+
+    pub fn find_account_by_email_confirmation_token(
+        &mut self,
+        token: Vec<u8>,
+    ) -> Result<Option<(AccountIdInternal, UnixTime)>, DieselDatabaseError> {
+        use model::schema::{account, account_id};
+
+        let account_data = account::table
+            .inner_join(account_id::table)
+            .filter(account::email_confirmation_token.eq(Some(token)))
+            .filter(account::email_confirmation_token_unix_time.is_not_null())
+            .select((
+                AccountIdInternal::as_select(),
+                account::email_confirmation_token_unix_time.assume_not_null(),
+            ))
+            .first(self.conn())
+            .optional()
+            .into_db_error(())?;
+
+        Ok(account_data)
     }
 }

@@ -41,6 +41,18 @@ impl CurrentReadAccountData<'_> {
         })
     }
 
+    pub fn account_internal(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<AccountInternal, DieselDatabaseError> {
+        use crate::schema::account::dsl::*;
+        account
+            .filter(account_id.eq(id.as_db_id()))
+            .select(AccountInternal::as_select())
+            .first(self.conn())
+            .into_db_error(id)
+    }
+
     pub fn account_state_table_raw(
         &mut self,
         id: AccountIdInternal,

@@ -338,7 +338,7 @@ pub struct LoginSession {
 ///
 /// OWASP recommends at least 128 bit session IDs.
 /// https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
-#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, ToSchema, IntoParams, Clone, Eq, Hash, PartialEq)]
 pub struct AccessToken {
     /// Base64 URL safe without padding
     token: String,
@@ -527,6 +527,7 @@ pub struct AccountStateRelatedSharedState {
     pub account_state_banned: bool,
     pub account_state_pending_deletion: bool,
     pub sync_version: AccountSyncVersion,
+    pub email_verified: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
@@ -578,6 +579,7 @@ impl From<Account> for AccountStateRelatedSharedState {
             account_state_banned: account.state_container().banned,
             account_state_pending_deletion: account.state_container().pending_deletion,
             sync_version: account.sync_version(),
+            email_verified: account.email_verified(),
         }
     }
 }

@@ -16,7 +16,7 @@ use server_api::{
 use server_api_account::{
     account::{
         ACCOUNT_BAN_COUNTERS_LIST, ACCOUNT_CLIENT_FEATURES_COUNTERS_LIST,
-        ACCOUNT_LOGOUT_COUNTERS_LIST, ACCOUNT_NEWS_COUNTERS_LIST,
+        ACCOUNT_EMAIL_COUNTERS_LIST, ACCOUNT_LOGOUT_COUNTERS_LIST, ACCOUNT_NEWS_COUNTERS_LIST,
         ACCOUNT_NOTIFICATION_COUNTERS_LIST, ACCOUNT_REPORT_COUNTERS_LIST,
     },
     account_admin::{
@@ -123,6 +123,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
         ACCOUNT_CLIENT_FEATURES_COUNTERS_LIST,
     ),
     &CounterCategory::new("account_notification", ACCOUNT_NOTIFICATION_COUNTERS_LIST),
+    &CounterCategory::new("account_email", ACCOUNT_EMAIL_COUNTERS_LIST),
     // Account admin
     &CounterCategory::new("account_admin_ban", ACCOUNT_ADMIN_BAN_COUNTERS_LIST),
     &CounterCategory::new("account_admin_delete", ACCOUNT_ADMIN_DELETE_COUNTERS_LIST),

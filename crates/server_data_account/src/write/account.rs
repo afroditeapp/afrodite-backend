@@ -1,5 +1,5 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
-use database_account::current::write::GetDbWriteCommandsAccount;
+use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
 use delete::WriteCommandsAccountDelete;
 use email::WriteCommandsAccountEmail;
 use model::AccountStateContainer;
@@ -55,9 +55,9 @@ impl<'a> WriteCommandsAccount<'a> {
 }
 
 impl WriteCommandsAccount<'_> {
-    /// The only method which can modify AccountState, Permissions and
-    /// ProfileVisibility. Profile index will be updated if
-    /// the visibility changed.
+    /// The only method which can modify AccountState, Permissions,
+    /// ProfileVisibility and email verification status.
+    /// Profile index will be updated if the visibility changed.
     ///
     /// Returns the modified Account.
     pub async fn update_syncable_account_data(
@@ -68,6 +68,7 @@ impl WriteCommandsAccount<'_> {
             &mut AccountStateContainer,
             &mut Permissions,
             &mut ProfileVisibility,
+            &mut bool, // Email verified
         ) -> error_stack::Result<(), DieselDatabaseError>
         + Send
         + 'static,
@@ -118,8 +119,13 @@ impl WriteCommandsAccount<'_> {
         id: AccountIdInternal,
         account_data: AccountData,
     ) -> Result<(), DataError> {
+        let current_data = self
+            .db_read(move |mut cmds| cmds.account().data().account_internal(id))
+            .await?;
         let internal = AccountInternal {
             email: account_data.email,
+            email_confirmation_token: current_data.email_confirmation_token,
+            email_confirmation_token_unix_time: current_data.email_confirmation_token_unix_time,
         };
 
         db_transaction!(self, move |mut cmds| {

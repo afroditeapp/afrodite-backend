@@ -38,7 +38,7 @@ impl Default for EmailSendingState {
 #[diesel(table_name = crate::schema::account_email_sending_state)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountEmailSendingStateRaw {
-    pub account_registered_state_number: EmailSendingState,
+    pub email_confirmation_state_number: EmailSendingState,
     pub new_message_state_number: EmailSendingState,
     pub new_like_state_number: EmailSendingState,
     pub account_deletion_remainder_first_state_number: EmailSendingState,
@@ -47,9 +47,26 @@ pub struct AccountEmailSendingStateRaw {
 }
 
 impl AccountEmailSendingStateRaw {
+    pub fn get_ref_to(&self, message: EmailMessages) -> &EmailSendingState {
+        match message {
+            EmailMessages::EmailConfirmation => &self.email_confirmation_state_number,
+            EmailMessages::NewMessage => &self.new_message_state_number,
+            EmailMessages::NewLike => &self.new_like_state_number,
+            EmailMessages::AccountDeletionRemainderFirst => {
+                &self.account_deletion_remainder_first_state_number
+            }
+            EmailMessages::AccountDeletionRemainderSecond => {
+                &self.account_deletion_remainder_second_state_number
+            }
+            EmailMessages::AccountDeletionRemainderThird => {
+                &self.account_deletion_remainder_third_state_number
+            }
+        }
+    }
+
     pub fn get_ref_mut_to(&mut self, message: EmailMessages) -> &mut EmailSendingState {
         match message {
-            EmailMessages::AccountRegistered => &mut self.account_registered_state_number,
+            EmailMessages::EmailConfirmation => &mut self.email_confirmation_state_number,
             EmailMessages::NewMessage => &mut self.new_message_state_number,
             EmailMessages::NewLike => &mut self.new_like_state_number,
             EmailMessages::AccountDeletionRemainderFirst => {

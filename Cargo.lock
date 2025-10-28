@@ -4957,6 +4957,7 @@ name = "server_api_account"
 version = "0.0.0"
 dependencies = [
  "axum",
+ "axum-extra",
  "base64 0.22.1",
  "model",
  "model_account",
@@ -5095,6 +5096,7 @@ dependencies = [
  "model_server_state",
  "server_common",
  "server_data",
+ "simple_backend_utils",
  "tracing",
 ]
 

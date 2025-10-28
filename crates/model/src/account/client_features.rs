@@ -126,6 +126,16 @@ impl StringResourceInternal {
     pub fn values(&self) -> impl Iterator<Item = &str> {
         std::iter::once(self.default.as_str()).chain(self.translations.values().map(|v| v.as_str()))
     }
+
+    pub fn all_strings_contain(&self, text: &str) -> bool {
+        for v in self.values() {
+            if !v.contains(text) {
+                return false;
+            }
+        }
+
+        true
+    }
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]

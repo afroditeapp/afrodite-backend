@@ -27,6 +27,9 @@ pub struct Account {
     state: AccountStateContainer,
     permissions: Permissions,
     visibility: ProfileVisibility,
+    #[serde(default, skip_serializing_if = "value_is_true")]
+    #[schema(default = true)]
+    email_verified: bool,
     sync_version: AccountSyncVersion,
 }
 
@@ -47,6 +50,7 @@ impl Account {
             },
             permissions,
             visibility: shared_state.profile_visibility(),
+            email_verified: shared_state.email_verified,
             sync_version: shared_state.sync_version,
         }
     }
@@ -55,12 +59,14 @@ impl Account {
         permissions: Permissions,
         state: AccountStateContainer,
         visibility: ProfileVisibility,
+        email_verified: bool,
         sync_version: AccountSyncVersion,
     ) -> Self {
         Self {
             permissions,
             state,
             visibility,
+            email_verified,
             sync_version,
         }
     }
@@ -83,6 +89,10 @@ impl Account {
 
     pub fn sync_version(&self) -> AccountSyncVersion {
         self.sync_version
+    }
+
+    pub fn email_verified(&self) -> bool {
+        self.email_verified
     }
 }
 
@@ -348,7 +358,7 @@ diesel_i64_wrapper!(ClientLocalId);
 
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, Deserialize)]
 pub enum EmailMessages {
-    AccountRegistered,
+    EmailConfirmation,
     NewMessage,
     NewLike,
     AccountDeletionRemainderFirst,
@@ -358,7 +368,7 @@ pub enum EmailMessages {
 
 impl EmailMessages {
     pub const VARIANTS: &'static [Self] = &[
-        Self::AccountRegistered,
+        Self::EmailConfirmation,
         Self::NewMessage,
         Self::NewLike,
         Self::AccountDeletionRemainderFirst,

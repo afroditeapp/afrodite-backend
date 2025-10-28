@@ -120,8 +120,9 @@ impl CurrentWriteCommonState<'_> {
         Ok(())
     }
 
-    /// The only method which can modify AccountStateContainer, Permissions and
-    /// ProfileVisibility. Updates automatically the AccountSyncVersion number.
+    /// The only method which can modify AccountStateContainer, Permissions,
+    /// ProfileVisibility and email verification status.
+    /// Updates automatically the AccountSyncVersion number.
     ///
     /// Returns the modified Account.
     pub fn update_syncable_account_data(
@@ -132,6 +133,7 @@ impl CurrentWriteCommonState<'_> {
             &mut AccountStateContainer,
             &mut Permissions,
             &mut ProfileVisibility,
+            &mut bool, // Email verified
         ) -> error_stack::Result<(), DieselDatabaseError>
         + Send
         + 'static,
@@ -139,10 +141,22 @@ impl CurrentWriteCommonState<'_> {
         let mut state = account.state_container();
         let mut permissions = account.permissions();
         let mut profile_visibility = account.profile_visibility();
-        modify_action(&mut state, &mut permissions, &mut profile_visibility)
-            .map_err(|_| DieselDatabaseError::NotAllowed.report())?;
+        let mut email_verified = account.email_verified();
+        modify_action(
+            &mut state,
+            &mut permissions,
+            &mut profile_visibility,
+            &mut email_verified,
+        )
+        .map_err(|_| DieselDatabaseError::NotAllowed.report())?;
         let new_version = account.sync_version().increment_if_not_max_value();
-        let new_account = Account::new_from(permissions, state, profile_visibility, new_version);
+        let new_account = Account::new_from(
+            permissions,
+            state,
+            profile_visibility,
+            email_verified,
+            new_version,
+        );
 
         self.account_permissions(id, new_account.permissions())?;
         self.update_account_related_shared_state(id, new_account.clone().into())?;

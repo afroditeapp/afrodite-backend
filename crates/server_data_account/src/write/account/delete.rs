@@ -38,7 +38,7 @@ impl WriteCommandsAccountDelete<'_> {
             let a = cmds.common().state().update_syncable_account_data(
                 id,
                 a,
-                move |state_container, _, visibility| {
+                move |state_container, _, visibility, _| {
                     state_container.set_pending_deletion(value);
                     if value {
                         visibility.change_to_private_or_pending_private();
@@ -90,7 +90,7 @@ impl WriteCommandsAccountDelete<'_> {
         // Delete account from location index
         self.handle()
             .account()
-            .update_syncable_account_data(id, None, |_, _, visibility| {
+            .update_syncable_account_data(id, None, |_, _, visibility, _| {
                 visibility.change_to_private_or_pending_private();
                 Ok(())
             })

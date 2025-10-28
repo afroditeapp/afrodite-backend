@@ -1,5 +1,6 @@
 use error_stack::ResultExt;
-use model::{AccountIdInternal, EmailMessages};
+use model::{AccessToken, AccountIdInternal, EmailMessages, EventToClientInternal, UnixTime};
+use model_account::AccountInternal;
 use server_api::{
     app::{GetConfig, ReadData, WriteData},
     db_write_raw,
@@ -8,6 +9,7 @@ use server_data::read::GetReadCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use server_state::S;
 use simple_backend::email::{EmailData, EmailDataProvider, EmailError};
+use simple_backend_utils::time::DurationValue;
 
 pub struct ServerEmailDataProvider {
     state: S,
@@ -39,7 +41,34 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
         }
 
         let email = if let Some(email) = data.email {
-            if email.0.ends_with("example.com") {
+            if email.0.ends_with("@example.com") {
+                if message == EmailMessages::EmailConfirmation {
+                    db_write_raw!(self.state, move |cmds| {
+                        cmds.account()
+                            .update_syncable_account_data(
+                                receiver,
+                                None,
+                                |_, _, _, email_verified| {
+                                    *email_verified = true;
+                                    Ok(())
+                                },
+                            )
+                            .await?;
+                        cmds.events()
+                            .send_connected_event(
+                                receiver,
+                                EventToClientInternal::AccountStateChanged,
+                            )
+                            .await?;
+                        Ok(())
+                    })
+                    .await
+                    .map_err(|e| e.into_report())
+                    .change_context(EmailError::GettingEmailDataFailed)?;
+                }
+
+                self.mark_as_sent(receiver, message).await?;
+
                 return Ok(None);
             }
 
@@ -68,7 +97,10 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
         let getter = email_content.get(language.as_ref());
 
         let content = match message {
-            EmailMessages::AccountRegistered => getter.account_registered(),
+            EmailMessages::EmailConfirmation => {
+                let token = self.generate_token_for_email_confirmation(receiver).await?;
+                getter.email_confirmation(&token)
+            }
             EmailMessages::NewMessage => getter.new_message(),
             EmailMessages::NewLike => getter.new_like(),
             EmailMessages::AccountDeletionRemainderFirst => {
@@ -107,5 +139,55 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
         .await
         .map_err(|e| e.into_report())
         .change_context(EmailError::MarkAsSentFailed)
+    }
+}
+
+impl ServerEmailDataProvider {
+    async fn generate_token_for_email_confirmation(
+        &self,
+        receiver: AccountIdInternal,
+    ) -> error_stack::Result<String, simple_backend::email::EmailError> {
+        let account_internal = self
+            .state
+            .read()
+            .account()
+            .account_internal(receiver)
+            .await
+            .map_err(|e| e.into_report())
+            .change_context(EmailError::GettingEmailDataFailed)?;
+
+        let current_time = UnixTime::current_time();
+
+        // Reuse existing valid token to avoid sending multiple emails
+        // with different links in a short time period.
+        let (token, token_bytes) = if let (Some(existing_token_bytes), Some(token_time)) = (
+            account_internal.email_confirmation_token,
+            account_internal.email_confirmation_token_unix_time,
+        ) {
+            if token_time.duration_value_elapsed(DurationValue::from_seconds(
+                AccountInternal::EMAIL_CONFIRMATION_TOKEN_VALIDITY_SECONDS,
+            )) {
+                AccessToken::generate_new_with_bytes()
+            } else {
+                (
+                    AccessToken::from_bytes(&existing_token_bytes),
+                    existing_token_bytes,
+                )
+            }
+        } else {
+            AccessToken::generate_new_with_bytes()
+        };
+
+        db_write_raw!(self.state, move |cmds| {
+            cmds.account()
+                .email()
+                .set_email_confirmation_token(receiver, token_bytes, current_time)
+                .await
+        })
+        .await
+        .map_err(|e| e.into_report())
+        .change_context(EmailError::GettingEmailDataFailed)?;
+
+        Ok(token.into_string())
     }
 }

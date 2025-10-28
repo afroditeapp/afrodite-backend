@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS shared_state(
     -- someday.
     birthdate                 DATE,
     is_bot_account            BOOLEAN              NOT NULL DEFAULT FALSE,
+    email_verified            BOOLEAN              NOT NULL DEFAULT FALSE,
     -- Profile component uses this info for profile filtering.
     initial_setup_completed_unix_time BIGINT       NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
@@ -278,6 +279,8 @@ CREATE TABLE IF NOT EXISTS sign_in_with_info(
 CREATE TABLE IF NOT EXISTS account(
     account_id   BIGINT PRIMARY KEY NOT NULL,
     email        TEXT                                UNIQUE,
+    email_confirmation_token           BYTEA         UNIQUE,
+    email_confirmation_token_unix_time BIGINT        UNIQUE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -305,7 +308,7 @@ CREATE TABLE IF NOT EXISTS account_setup(
 -- 2 - Sent successfully
 CREATE TABLE IF NOT EXISTS account_email_sending_state(
     account_id                      BIGINT PRIMARY KEY  NOT NULL,
-    account_registered_state_number SMALLINT            NOT NULL DEFAULT 0,
+    email_confirmation_state_number SMALLINT            NOT NULL DEFAULT 0,
     new_message_state_number        SMALLINT            NOT NULL DEFAULT 0,
     new_like_state_number           SMALLINT            NOT NULL DEFAULT 0,
     account_deletion_remainder_first_state_number  SMALLINT NOT NULL DEFAULT 0,

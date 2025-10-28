@@ -106,15 +106,11 @@ impl StartupTasks {
         for id in ids {
             // Email
             let email_state = state.read().account().email().email_state(id).await?;
-            let send_if_needed = |state: &EmailSendingState, message: EmailMessages| {
-                if *state == EmailSendingState::SendRequested {
-                    email_sender.send(id, message)
+            for m in EmailMessages::VARIANTS {
+                if *email_state.get_ref_to(*m) == EmailSendingState::SendRequested {
+                    email_sender.send(id, *m)
                 }
-            };
-            send_if_needed(
-                &email_state.account_registered_state_number,
-                EmailMessages::AccountRegistered,
-            );
+            }
 
             db_write_raw!(state, move |cmds| {
                 // Remove tmp files

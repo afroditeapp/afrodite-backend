@@ -24,13 +24,13 @@ email_body_content_type_is_html = false
 [custom_keys.footer]
 default = "Footer"
 
-# Account registered
+# Email confirmation
 
-[account_registered.subject]
-default = "New account created"
+[email_confirmation.subject]
+default = "Confirm your email address"
 
-[account_registered.body]
-default = "You created a new account"
+[email_confirmation.body]
+default = "Please confirm your email address by opening this link: https://example.com/account_api/confirm_email_address/{{token}}"
 
 # New message
 
@@ -93,7 +93,8 @@ pub struct EmailContentFile {
     email_body_content_type_is_html: bool,
     #[serde(default)]
     custom_keys: HashMap<String, StringResourceInternal>,
-    account_registered: Option<EmailContentStrings>,
+    /// "{{token}}" is replaced with email confirmation token
+    email_confirmation: Option<EmailContentStrings>,
     new_message: Option<EmailContentStrings>,
     new_like: Option<EmailContentStrings>,
     account_deletion_remainder_first: Option<EmailContentStrings>,
@@ -162,6 +163,14 @@ impl EmailContentFile {
             }
         }
 
+        if let Some(email_confirmation) = &config.email_confirmation {
+            if !email_confirmation.body.all_strings_contain("{{token}}") {
+                return Err(ConfigFileError::InvalidConfig).attach_printable(
+                    "'{{token}}' is missing from email_confirmation body text".to_string(),
+                );
+            }
+        }
+
         Ok(config)
     }
 
@@ -185,6 +194,16 @@ impl<'a> EmailStringGetter<'a> {
         default_subject: &str,
         default_body: &str,
     ) -> Result<EmailContent, ConfigFileError> {
+        self.render_body_and_apply_template(resource, default_subject, default_body, HashMap::new())
+    }
+
+    fn render_body_and_apply_template(
+        &self,
+        resource: &Option<EmailContentStrings>,
+        default_subject: &str,
+        default_body: &str,
+        body_data: HashMap<&str, &str>,
+    ) -> Result<EmailContent, ConfigFileError> {
         let subject = resource
             .as_ref()
             .map(|v| &v.subject)
@@ -199,9 +218,14 @@ impl<'a> EmailStringGetter<'a> {
             .cloned()
             .unwrap_or_else(|| default_body.to_string());
 
+        let rendered_body = Handlebars::new()
+            .render_template(&body, &body_data)
+            .change_context(ConfigFileError::InvalidConfig)
+            .attach_printable_lazy(|| "Template rendering error".to_string())?;
+
         let mut data = json!({
             "subject": subject,
-            "body": body,
+            "body": rendered_body,
         });
 
         // Add custom keys
@@ -225,11 +249,12 @@ impl<'a> EmailStringGetter<'a> {
         })
     }
 
-    pub fn account_registered(&self) -> Result<EmailContent, ConfigFileError> {
-        self.apply_template(
-            &self.config.account_registered,
-            "New account created",
-            "You created a new account",
+    pub fn email_confirmation(&self, token: &str) -> Result<EmailContent, ConfigFileError> {
+        self.render_body_and_apply_template(
+            &self.config.email_confirmation,
+            "Confirm your email address",
+            "Please confirm your email address by opening this link: https://example.com/account_api/confirm_email_address/{{token}}",
+            HashMap::from_iter([("token", token)]),
         )
     }
 

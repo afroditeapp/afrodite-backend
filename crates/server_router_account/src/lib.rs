@@ -75,6 +75,10 @@ impl AccountRoutes {
                 api::account::PATH_SIGN_IN_WITH_APPLE_REDIRECT_TO_APP,
                 post(api::account::post_sign_in_with_apple_redirect_to_app),
             )
+            .route(
+                api::account::PATH_GET_CONFIRM_EMAIL,
+                get(api::account::get_confirm_email),
+            )
             .with_state(state.s.clone())
     }
 

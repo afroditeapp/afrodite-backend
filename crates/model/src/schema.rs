@@ -4,6 +4,8 @@ diesel::table! {
     account (account_id) {
         account_id -> Int8,
         email -> Nullable<Text>,
+        email_confirmation_token -> Nullable<Bytea>,
+        email_confirmation_token_unix_time -> Nullable<Int8>,
     }
 }
 
@@ -17,7 +19,7 @@ diesel::table! {
 diesel::table! {
     account_email_sending_state (account_id) {
         account_id -> Int8,
-        account_registered_state_number -> Int2,
+        email_confirmation_state_number -> Int2,
         new_message_state_number -> Int2,
         new_like_state_number -> Int2,
         account_deletion_remainder_first_state_number -> Int2,
@@ -721,6 +723,7 @@ diesel::table! {
         unlimited_likes -> Bool,
         birthdate -> Nullable<Date>,
         is_bot_account -> Bool,
+        email_verified -> Bool,
         initial_setup_completed_unix_time -> Int8,
     }
 }

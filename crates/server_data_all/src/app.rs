@@ -57,7 +57,7 @@ impl DataAllUtils for DataAllUtilsImpl {
                     if email.is_some() {
                         cmds.account()
                             .email()
-                            .send_email_if_not_already_sent(id, EmailMessages::AccountRegistered)
+                            .send_email_if_not_already_sent(id, EmailMessages::EmailConfirmation)
                             .await?;
                     }
 

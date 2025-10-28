@@ -36,7 +36,7 @@ impl WriteCommandsAccountBan<'_> {
             let a = cmds.common().state().update_syncable_account_data(
                 id,
                 a,
-                move |state_container, _, visibility| {
+                move |state_container, _, visibility, _| {
                     state_container.set_banned(banned_until.is_some());
                     if banned_until.is_some() {
                         visibility.change_to_private_or_pending_private();

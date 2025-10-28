@@ -91,6 +91,13 @@ pub struct DemoAccountLoginToAccount {
 #[diesel(treat_none_as_null = true)]
 pub struct AccountInternal {
     pub email: Option<EmailAddress>,
+    pub email_confirmation_token: Option<Vec<u8>>,
+    pub email_confirmation_token_unix_time: Option<UnixTime>,
+}
+
+impl AccountInternal {
+    /// 24 hours
+    pub const EMAIL_CONFIRMATION_TOKEN_VALIDITY_SECONDS: u32 = 24 * 60 * 60;
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]

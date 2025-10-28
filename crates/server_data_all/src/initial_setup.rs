@@ -96,7 +96,7 @@ pub async fn complete_initial_setup(
                 .update_syncable_account_data(
                     id,
                     enable_all_permissions,
-                    move |state, permissions, _| {
+                    move |state, permissions, _, _| {
                         if state.account_state() == AccountState::InitialSetup {
                             state.complete_initial_setup();
                             if enable_all_permissions.is_some() {
@@ -115,11 +115,11 @@ pub async fn complete_initial_setup(
             (&cmds.profile()).update_location_cache_profile(id).await?;
 
             if !is_bot_account && !sign_in_with_info.some_sign_in_with_method_is_set() {
-                // Account registered email is not yet sent if email address
+                // Email confirmation email is not yet sent if email address
                 // was provided manually and not from some sign in with method.
                 cmds.account()
                     .email()
-                    .send_email_if_not_already_sent(id, EmailMessages::AccountRegistered)
+                    .send_email_if_not_already_sent(id, EmailMessages::EmailConfirmation)
                     .await?;
             }
 

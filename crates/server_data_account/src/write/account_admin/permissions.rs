@@ -14,7 +14,7 @@ impl WriteCommandsAccountPermissionsAdmin<'_> {
     ) -> Result<(), DataError> {
         self.handle()
             .account()
-            .update_syncable_account_data(id, None, |_, account_permissions, _| {
+            .update_syncable_account_data(id, None, |_, account_permissions, _, _| {
                 *account_permissions = permissions;
                 Ok(())
             })
