@@ -59,6 +59,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # inactivity_logout_wait_duration = "365d"
 # account_deletion_wait_duration = "90d"
 # init_deletion_for_inactive_accounts_wait_duration = "730d"
+# email_confirmation_token_validity_duration = "1d"
 
 # [limits.chat]
 # max_public_key_count = 100
@@ -288,6 +289,7 @@ pub struct AccountLimitsConfig {
     pub inactivity_logout_wait_duration: DurationValue,
     pub account_deletion_wait_duration: DurationValue,
     pub init_deletion_for_inactive_accounts_wait_duration: DurationValue,
+    pub email_confirmation_token_validity_duration: DurationValue,
 }
 
 impl Default for AccountLimitsConfig {
@@ -296,6 +298,7 @@ impl Default for AccountLimitsConfig {
             inactivity_logout_wait_duration: DurationValue::from_days(365),
             account_deletion_wait_duration: DurationValue::from_days(90),
             init_deletion_for_inactive_accounts_wait_duration: DurationValue::from_days(365 * 2), // About 2 years
+            email_confirmation_token_validity_duration: DurationValue::from_days(1),
         }
     }
 }

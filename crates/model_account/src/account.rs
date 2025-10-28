@@ -95,11 +95,6 @@ pub struct AccountInternal {
     pub email_confirmation_token_unix_time: Option<UnixTime>,
 }
 
-impl AccountInternal {
-    /// 24 hours
-    pub const EMAIL_CONFIRMATION_TOKEN_VALIDITY_SECONDS: u32 = 24 * 60 * 60;
-}
-
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct AccountData {
     #[serde(skip_serializing_if = "Option::is_none")]

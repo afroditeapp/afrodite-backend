@@ -1,6 +1,5 @@
 use error_stack::ResultExt;
 use model::{AccessToken, AccountIdInternal, EmailMessages, EventToClientInternal, UnixTime};
-use model_account::AccountInternal;
 use server_api::{
     app::{GetConfig, ReadData, WriteData},
     db_write_raw,
@@ -9,7 +8,6 @@ use server_data::read::GetReadCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use server_state::S;
 use simple_backend::email::{EmailData, EmailDataProvider, EmailError};
-use simple_backend_utils::time::DurationValue;
 
 pub struct ServerEmailDataProvider {
     state: S,
@@ -164,9 +162,12 @@ impl ServerEmailDataProvider {
             account_internal.email_confirmation_token,
             account_internal.email_confirmation_token_unix_time,
         ) {
-            if token_time.duration_value_elapsed(DurationValue::from_seconds(
-                AccountInternal::EMAIL_CONFIRMATION_TOKEN_VALIDITY_SECONDS,
-            )) {
+            if token_time.duration_value_elapsed(
+                self.state
+                    .config()
+                    .limits_account()
+                    .email_confirmation_token_validity_duration,
+            ) {
                 AccessToken::generate_new_with_bytes()
             } else {
                 (

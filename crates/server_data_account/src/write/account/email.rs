@@ -1,17 +1,14 @@
 use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
 use model::{EventToClientInternal, UnixTime};
-use model_account::{
-    AccountIdInternal, AccountInternal, EmailAddress, EmailMessages, EmailSendingState,
-};
+use model_account::{AccountIdInternal, EmailAddress, EmailMessages, EmailSendingState};
 use server_data::{
     DataError,
-    app::{EventManagerProvider, GetEmailSender},
+    app::{EventManagerProvider, GetConfig, GetEmailSender},
     db_transaction, define_cmd_wrapper_write,
     read::DbRead,
     result::Result,
     write::DbTransaction,
 };
-use simple_backend_utils::time::DurationValue;
 
 use crate::write::GetWriteCommandsAccount;
 
@@ -50,6 +47,11 @@ impl WriteCommandsAccountEmail<'_> {
         &self,
         token: Vec<u8>,
     ) -> Result<TokenCheckResult, DataError> {
+        let token_validity_duration = self
+            .config()
+            .limits_account()
+            .email_confirmation_token_validity_duration;
+
         let account_id = self
             .db_read(move |mut cmds| {
                 let account_data = cmds
@@ -61,9 +63,7 @@ impl WriteCommandsAccountEmail<'_> {
                     return Ok(None);
                 };
 
-                if token_unix_time.duration_value_elapsed(DurationValue::from_seconds(
-                    AccountInternal::EMAIL_CONFIRMATION_TOKEN_VALIDITY_SECONDS,
-                )) {
+                if token_unix_time.duration_value_elapsed(token_validity_duration) {
                     return Ok(None);
                 }
 
