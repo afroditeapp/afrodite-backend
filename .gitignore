@@ -13,6 +13,7 @@ server_config_client_features.toml
 server_config_profile_attributes.toml
 server_config_email_content.toml
 server_config_notification_content.toml
+server_config_web_content.toml
 simple_backend_config.toml
 manager_config.toml
 

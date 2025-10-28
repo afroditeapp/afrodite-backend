@@ -15,6 +15,7 @@ pub mod file;
 pub mod file_dynamic;
 pub mod file_email_content;
 pub mod file_notification_content;
+pub mod file_web_content;
 
 use std::{path::Path, sync::Arc};
 
@@ -31,6 +32,7 @@ use file::{
 };
 use file_dynamic::ConfigFileDynamic;
 use file_email_content::EmailContentFile;
+use file_web_content::WebContentFile;
 use model::CustomReportsConfig;
 pub use model::{ClientFeaturesConfig, ClientFeaturesConfigInternal};
 use model_server_data::{AttributesFileInternal, ProfileAttributesInternal};
@@ -70,6 +72,7 @@ pub struct ParsedFiles<'a> {
     pub client_features: Option<&'a ClientFeaturesConfig>,
     pub email_content: Option<&'a EmailContentFile>,
     pub notification_content: &'a NotificationContentFile,
+    pub web_content: Option<&'a WebContentFile>,
     pub bot: Option<&'a BotConfigFile>,
 }
 
@@ -89,6 +92,7 @@ pub struct Config {
     client_features_sha256: Option<String>,
     email_content: Option<EmailContentFile>,
     notification_content: NotificationContentFile,
+    web_content: Option<WebContentFile>,
 
     profile_name_allowlist: ProfileNameAllowlistData,
     profile_name_regex: Option<Regex>,
@@ -115,6 +119,7 @@ impl Config {
             client_features_sha256: None,
             email_content: None,
             notification_content: NotificationContentFile::default(),
+            web_content: None,
             profile_name_allowlist: ProfileNameAllowlistData::default(),
             profile_name_regex: None,
             bot_config: None,
@@ -249,6 +254,10 @@ impl Config {
         &self.notification_content
     }
 
+    pub fn web_content(&self) -> Option<&WebContentFile> {
+        self.web_content.as_ref()
+    }
+
     pub fn demo_account_config(&self) -> Option<&Vec<DemoAccountConfig>> {
         self.file.demo_accounts.as_ref()
     }
@@ -299,6 +308,7 @@ impl Config {
             client_features: self.client_features(),
             email_content: self.email_content(),
             notification_content: self.notification_content(),
+            web_content: self.web_content(),
             bot: self.bot_config.as_ref(),
         }
     }
@@ -404,6 +414,14 @@ pub fn get_config(
         NotificationContentFile::default()
     };
 
+    let web_content = if let Some(path) = &file_config.config_files.web_content {
+        let web_content = WebContentFile::load(path, save_default_config_if_not_found)
+            .change_context(GetConfigError::LoadFileError)?;
+        Some(web_content)
+    } else {
+        None
+    };
+
     let mut allowlist_builder = ProfileNameAllowlistBuilder::default();
     let csv_configs = file_config
         .profile_name_allowlists
@@ -449,6 +467,7 @@ pub fn get_config(
         client_features_sha256,
         email_content,
         notification_content,
+        web_content,
         profile_name_allowlist,
         profile_name_regex,
         bot_config,

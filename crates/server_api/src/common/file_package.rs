@@ -1,9 +1,8 @@
 use std::{net::SocketAddr, time::Duration};
 
 use axum::{
-    body::Bytes,
+    body::{Body, Bytes},
     extract::{ConnectInfo, Path, State},
-    response::Html,
 };
 use axum_extra::TypedHeader;
 use headers::{
@@ -18,6 +17,50 @@ use simple_backend::{
 use simple_backend_config::file::IpAddressAccessConfig;
 
 use crate::{S, utils::IfNoneMatchExtensions};
+
+#[derive(Debug, Clone)]
+pub struct AcceptLanguage(String);
+
+impl Header for AcceptLanguage {
+    fn name() -> &'static HeaderName {
+        static NAME: HeaderName = HeaderName::from_static("accept-language");
+        &NAME
+    }
+
+    fn decode<'i, I>(values: &mut I) -> Result<Self, headers::Error>
+    where
+        I: Iterator<Item = &'i HeaderValue>,
+    {
+        let value = values.next().ok_or_else(headers::Error::invalid)?;
+        let value_str = value.to_str().map_err(|_| headers::Error::invalid())?;
+
+        // Parse the first language from Accept-Language header
+        // Format: "en-US,en;q=0.9,fi;q=0.8" -> extract "en-US" or "en"
+        let first_lang = value_str
+            .split(',')
+            .next()
+            .and_then(|lang| lang.split(';').next())
+            .map(|lang| lang.trim())
+            .unwrap_or("");
+
+        // Extract just the language code (e.g., "en" from "en-US")
+        let lang_code = first_lang.split('-').next().unwrap_or(first_lang);
+
+        Ok(AcceptLanguage(lang_code.to_string()))
+    }
+
+    fn encode<E: Extend<HeaderValue>>(&self, values: &mut E) {
+        if let Ok(value) = HeaderValue::from_str(&self.0) {
+            values.extend(std::iter::once(value));
+        }
+    }
+}
+
+impl AcceptLanguage {
+    pub fn language(&self) -> &str {
+        &self.0
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct ServiceWorkerAllowed(HeaderValue);
@@ -62,20 +105,26 @@ pub async fn get_file_package_access(
     State(state): State<S>,
     Path(path_parts): Path<Vec<String>>,
     ConnectInfo(address): ConnectInfo<SocketAddr>,
+    accept_language: Option<TypedHeader<AcceptLanguage>>,
     browser_etag: Option<TypedHeader<IfNoneMatch>>,
-) -> Result<StaticFileResponse, (StatusCode, Html<String>)> {
+) -> Result<StaticFileResponse, (StatusCode, TypedHeader<ContentType>, Body)> {
     COMMON.get_file_package_access.incr();
 
-    check_ip_allowlist(&state, address).await?;
+    check_ip_allowlist(&state, address, accept_language).await?;
 
     let wanted_file = path_parts.join("/");
-    let file = state
-        .file_package()
-        .static_file(&wanted_file)
-        .ok_or((StatusCode::NOT_FOUND, empty_html()))?;
+    let file = state.file_package().static_file(&wanted_file).ok_or((
+        StatusCode::NOT_FOUND,
+        TypedHeader(ContentType::html()),
+        Body::empty(),
+    ))?;
 
     if browser_etag.matches(state.etag_utils().immutable_content()) {
-        return Err((StatusCode::NOT_MODIFIED, empty_html()));
+        return Err((
+            StatusCode::NOT_MODIFIED,
+            TypedHeader(ContentType::html()),
+            Body::empty(),
+        ));
     }
 
     const MONTH_SECONDS: u64 = 60 * 60 * 24 * 30;
@@ -106,10 +155,11 @@ pub const PATH_FILE_PACKAGE_ACCESS_ROOT: &str = "/";
 pub async fn get_file_package_access_root(
     State(state): State<S>,
     ConnectInfo(address): ConnectInfo<SocketAddr>,
+    accept_language: Option<TypedHeader<AcceptLanguage>>,
     browser_etag: Option<TypedHeader<IfNoneMatch>>,
-) -> Result<StaticFileResponse, (StatusCode, Html<String>)> {
+) -> Result<StaticFileResponse, (StatusCode, TypedHeader<ContentType>, Body)> {
     COMMON.get_file_package_access_root.incr();
-    return_index_html(state, address, browser_etag).await
+    return_index_html(state, address, accept_language, browser_etag).await
 }
 
 pub const PATH_FILE_PACKAGE_ACCESS_PWA_INDEX_HTML: &str = "/app/index.html";
@@ -117,27 +167,34 @@ pub const PATH_FILE_PACKAGE_ACCESS_PWA_INDEX_HTML: &str = "/app/index.html";
 pub async fn get_file_package_access_pwa_index_html(
     State(state): State<S>,
     ConnectInfo(address): ConnectInfo<SocketAddr>,
+    accept_language: Option<TypedHeader<AcceptLanguage>>,
     browser_etag: Option<TypedHeader<IfNoneMatch>>,
-) -> Result<StaticFileResponse, (StatusCode, Html<String>)> {
+) -> Result<StaticFileResponse, (StatusCode, TypedHeader<ContentType>, Body)> {
     COMMON.get_file_package_access_pwa_index_html.incr();
-    return_index_html(state, address, browser_etag).await
+    return_index_html(state, address, accept_language, browser_etag).await
 }
 
 async fn return_index_html(
     state: S,
     address: SocketAddr,
+    accept_language: Option<TypedHeader<AcceptLanguage>>,
     browser_etag: Option<TypedHeader<IfNoneMatch>>,
-) -> Result<StaticFileResponse, (StatusCode, Html<String>)> {
-    check_ip_allowlist(&state, address).await?;
+) -> Result<StaticFileResponse, (StatusCode, TypedHeader<ContentType>, Body)> {
+    check_ip_allowlist(&state, address, accept_language).await?;
 
     if browser_etag.matches(state.etag_utils().server_start_time()) {
-        return Err((StatusCode::NOT_MODIFIED, empty_html()));
+        return Err((
+            StatusCode::NOT_MODIFIED,
+            TypedHeader(ContentType::html()),
+            Body::empty(),
+        ));
     }
 
-    let file = state
-        .file_package()
-        .index_html()
-        .ok_or((StatusCode::NOT_FOUND, empty_html()))?;
+    let file = state.file_package().index_html().ok_or((
+        StatusCode::NOT_FOUND,
+        TypedHeader(ContentType::html()),
+        Body::empty(),
+    ))?;
 
     let cache_control = CacheControl::new().with_no_cache();
 
@@ -154,15 +211,24 @@ async fn return_index_html(
 async fn check_ip_allowlist(
     state: &S,
     address: SocketAddr,
-) -> Result<(), (StatusCode, Html<String>)> {
+    accept_language: Option<TypedHeader<AcceptLanguage>>,
+) -> Result<(), (StatusCode, TypedHeader<ContentType>, Body)> {
     if let Some(config) = state.config().simple_backend().file_package() {
         if is_ip_address_accepted(state, address, &config.acccess).await {
             Ok(())
         } else {
-            Err((StatusCode::FORBIDDEN, create_access_denied_html(address)))
+            Err(create_access_denied_response(
+                state,
+                address,
+                accept_language,
+            ))
         }
     } else {
-        Err((StatusCode::NOT_FOUND, empty_html()))
+        Err((
+            StatusCode::NOT_FOUND,
+            TypedHeader(ContentType::html()),
+            Body::empty(),
+        ))
     }
 }
 
@@ -193,81 +259,43 @@ pub async fn is_ip_address_accepted(
     false
 }
 
-fn empty_html() -> Html<String> {
-    Html(String::new())
-}
+fn create_access_denied_response(
+    state: &S,
+    ip_address: SocketAddr,
+    accept_language: Option<TypedHeader<AcceptLanguage>>,
+) -> (StatusCode, TypedHeader<ContentType>, Body) {
+    if let Some(web_config) = state.config().web_content() {
+        let language = accept_language.as_ref().map(|h| h.language());
+        let page = web_config
+            .get(language.as_ref())
+            .access_denied(&ip_address.ip().to_string());
 
-fn create_access_denied_html(ip_address: SocketAddr) -> Html<String> {
-    let html = format!(
-        r#"<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Access Denied</title>
-    <style>
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #333;
-        }}
-        .container {{
-            background: white;
-            padding: 3rem;
-            border-radius: 1rem;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 500px;
-            text-align: center;
-        }}
-        .icon {{
-            font-size: 4rem;
-            margin-bottom: 1rem;
-        }}
-        h1 {{
-            margin: 0 0 1rem 0;
-            font-size: 2rem;
-            color: #d32f2f;
-        }}
-        p {{
-            margin: 0.5rem 0;
-            color: #666;
-            line-height: 1.6;
-        }}
-        .ip-address {{
-            font-family: 'Courier New', monospace;
-            background: #f5f5f5;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            margin: 1.5rem 0;
-            font-weight: bold;
-            color: #333;
-        }}
-        .footer {{
-            margin-top: 2rem;
-            font-size: 0.875rem;
-            color: #999;
-        }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="icon">🚫</div>
-        <h1>Access Denied</h1>
-        <p>Sorry, access to this application is not allowed from your current IP address.</p>
-        <div class="ip-address">Your IP: {}</div>
-        <p>If you believe this is an error, please contact the system administrator.</p>
-        <div class="footer">Error Code: 403 Forbidden</div>
-    </div>
-</body>
-</html>"#,
-        ip_address.ip()
-    );
-    Html(html)
+        match page {
+            Ok(page) => {
+                let content_type = if page.is_html {
+                    ContentType::html()
+                } else {
+                    ContentType::text_utf8()
+                };
+                (
+                    StatusCode::FORBIDDEN,
+                    TypedHeader(content_type),
+                    Body::from(page.content),
+                )
+            }
+            Err(_) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                TypedHeader(ContentType::text_utf8()),
+                Body::from("Internal Server Error"),
+            ),
+        }
+    } else {
+        (
+            StatusCode::FORBIDDEN,
+            TypedHeader(ContentType::text_utf8()),
+            Body::from("Forbidden"),
+        )
+    }
 }
 
 create_counters!(
