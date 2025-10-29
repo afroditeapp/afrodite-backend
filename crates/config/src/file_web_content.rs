@@ -5,6 +5,7 @@ use handlebars::Handlebars;
 use model::StringResourceInternal;
 use serde::Deserialize;
 use serde_json::json;
+use toml::map::Map;
 
 use crate::file::ConfigFileError;
 
@@ -64,6 +65,25 @@ pub struct WebContentFile {
     email_confirmation_invalid: Option<WebContentStrings>,
     #[serde(flatten)]
     other: toml::Table,
+}
+
+const DEFAULT_TEMPLATE: &str = "
+{{title}}
+
+{{body}}
+";
+
+impl Default for WebContentFile {
+    fn default() -> Self {
+        Self {
+            web_page_template: DEFAULT_TEMPLATE.to_string(),
+            web_page_content_type_is_html: false,
+            access_denied: None,
+            email_confirmed: None,
+            email_confirmation_invalid: None,
+            other: Map::new(),
+        }
+    }
 }
 
 impl WebContentFile {

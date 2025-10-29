@@ -72,7 +72,8 @@ pub struct ParsedFiles<'a> {
     pub client_features: Option<&'a ClientFeaturesConfig>,
     pub email_content: Option<&'a EmailContentFile>,
     pub notification_content: &'a NotificationContentFile,
-    pub web_content: Option<&'a WebContentFile>,
+    /// Might be Default implementation
+    pub web_content: &'a WebContentFile,
     pub bot: Option<&'a BotConfigFile>,
 }
 
@@ -92,7 +93,7 @@ pub struct Config {
     client_features_sha256: Option<String>,
     email_content: Option<EmailContentFile>,
     notification_content: NotificationContentFile,
-    web_content: Option<WebContentFile>,
+    web_content: WebContentFile,
 
     profile_name_allowlist: ProfileNameAllowlistData,
     profile_name_regex: Option<Regex>,
@@ -119,7 +120,7 @@ impl Config {
             client_features_sha256: None,
             email_content: None,
             notification_content: NotificationContentFile::default(),
-            web_content: None,
+            web_content: WebContentFile::default(),
             profile_name_allowlist: ProfileNameAllowlistData::default(),
             profile_name_regex: None,
             bot_config: None,
@@ -254,8 +255,8 @@ impl Config {
         &self.notification_content
     }
 
-    pub fn web_content(&self) -> Option<&WebContentFile> {
-        self.web_content.as_ref()
+    pub fn web_content(&self) -> &WebContentFile {
+        &self.web_content
     }
 
     pub fn demo_account_config(&self) -> Option<&Vec<DemoAccountConfig>> {
@@ -415,11 +416,10 @@ pub fn get_config(
     };
 
     let web_content = if let Some(path) = &file_config.config_files.web_content {
-        let web_content = WebContentFile::load(path, save_default_config_if_not_found)
-            .change_context(GetConfigError::LoadFileError)?;
-        Some(web_content)
+        WebContentFile::load(path, save_default_config_if_not_found)
+            .change_context(GetConfigError::LoadFileError)?
     } else {
-        None
+        WebContentFile::default()
     };
 
     let mut allowlist_builder = ProfileNameAllowlistBuilder::default();

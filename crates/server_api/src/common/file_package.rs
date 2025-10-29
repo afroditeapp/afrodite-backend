@@ -264,37 +264,30 @@ fn create_access_denied_response(
     ip_address: SocketAddr,
     accept_language: Option<TypedHeader<AcceptLanguage>>,
 ) -> (StatusCode, TypedHeader<ContentType>, Body) {
-    if let Some(web_config) = state.config().web_content() {
-        let language = accept_language.as_ref().map(|h| h.language());
-        let page = web_config
-            .get(language.as_ref())
-            .access_denied(&ip_address.ip().to_string());
+    let web_config = state.config().web_content();
+    let language = accept_language.as_ref().map(|h| h.language());
+    let page = web_config
+        .get(language.as_ref())
+        .access_denied(&ip_address.ip().to_string());
 
-        match page {
-            Ok(page) => {
-                let content_type = if page.is_html {
-                    ContentType::html()
-                } else {
-                    ContentType::text_utf8()
-                };
-                (
-                    StatusCode::FORBIDDEN,
-                    TypedHeader(content_type),
-                    Body::from(page.content),
-                )
-            }
-            Err(_) => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                TypedHeader(ContentType::text_utf8()),
-                Body::from("Internal Server Error"),
-            ),
+    match page {
+        Ok(page) => {
+            let content_type = if page.is_html {
+                ContentType::html()
+            } else {
+                ContentType::text_utf8()
+            };
+            (
+                StatusCode::FORBIDDEN,
+                TypedHeader(content_type),
+                Body::from(page.content),
+            )
         }
-    } else {
-        (
-            StatusCode::FORBIDDEN,
+        Err(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
             TypedHeader(ContentType::text_utf8()),
-            Body::from("Forbidden"),
-        )
+            Body::from("Internal Server Error"),
+        ),
     }
 }
 

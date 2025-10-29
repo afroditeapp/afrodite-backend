@@ -39,7 +39,7 @@ pub async fn get_confirm_email(
     let token = match token.bytes() {
         Ok(bytes) => bytes,
         Err(_) => {
-            return Err(create_invalid_token_response(&state, accept_language));
+            return create_invalid_token_response(&state, accept_language);
         }
     };
 
@@ -48,9 +48,32 @@ pub async fn get_confirm_email(
     });
 
     match result {
-        Ok(TokenCheckResult::Valid) => Ok(create_success_response(&state, accept_language)),
-        Ok(TokenCheckResult::Invalid) => {
-            Err(create_invalid_token_response(&state, accept_language))
+        Ok(TokenCheckResult::Valid) => create_success_response(&state, accept_language),
+        Ok(TokenCheckResult::Invalid) => create_invalid_token_response(&state, accept_language),
+        Err(_) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            TypedHeader(ContentType::text_utf8()),
+            Bytes::from("Internal Server Error"),
+        )),
+    }
+}
+
+#[allow(clippy::result_large_err)]
+#[allow(clippy::type_complexity)]
+fn create_success_response(
+    state: &S,
+    accept_language: Option<TypedHeader<AcceptLanguage>>,
+) -> Result<(TypedHeader<ContentType>, Bytes), (StatusCode, TypedHeader<ContentType>, Bytes)> {
+    let web_config = state.config().web_content();
+    let language = accept_language.as_ref().map(|h| h.language());
+    match web_config.get(language.as_ref()).email_confirmed() {
+        Ok(page) => {
+            let content_type = if page.is_html {
+                ContentType::html()
+            } else {
+                ContentType::text_utf8()
+            };
+            Ok((TypedHeader(content_type), Bytes::from(page.content)))
         }
         Err(_) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -60,57 +83,36 @@ pub async fn get_confirm_email(
     }
 }
 
-fn create_success_response(
-    state: &S,
-    accept_language: Option<TypedHeader<AcceptLanguage>>,
-) -> (TypedHeader<ContentType>, Bytes) {
-    if let Some(web_config) = state.config().web_content() {
-        let language = accept_language.as_ref().map(|h| h.language());
-        if let Ok(web_content) = web_config.get(language.as_ref()).email_confirmed() {
-            let content_type = if web_content.is_html {
-                ContentType::html()
-            } else {
-                ContentType::text_utf8()
-            };
-            return (TypedHeader(content_type), Bytes::from(web_content.content));
-        }
-    }
-
-    (
-        TypedHeader(ContentType::text_utf8()),
-        "Email confirmed successfully!".into(),
-    )
-}
-
+#[allow(clippy::result_large_err)]
+#[allow(clippy::type_complexity)]
 fn create_invalid_token_response(
     state: &S,
     accept_language: Option<TypedHeader<AcceptLanguage>>,
-) -> (StatusCode, TypedHeader<ContentType>, Bytes) {
-    if let Some(web_config) = state.config().web_content() {
-        let language = accept_language.as_ref().map(|h| h.language());
-        let page = web_config
-            .get(language.as_ref())
-            .email_confirmation_invalid();
-
-        if let Ok(page) = page {
+) -> Result<(TypedHeader<ContentType>, Bytes), (StatusCode, TypedHeader<ContentType>, Bytes)> {
+    let web_config = state.config().web_content();
+    let language = accept_language.as_ref().map(|h| h.language());
+    match web_config
+        .get(language.as_ref())
+        .email_confirmation_invalid()
+    {
+        Ok(page) => {
             let content_type = if page.is_html {
                 ContentType::html()
             } else {
                 ContentType::text_utf8()
             };
-            return (
+            Err((
                 StatusCode::BAD_REQUEST,
                 TypedHeader(content_type),
                 Bytes::from(page.content),
-            );
+            ))
         }
+        Err(_) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            TypedHeader(ContentType::text_utf8()),
+            Bytes::from("Internal Server Error"),
+        )),
     }
-
-    (
-        StatusCode::BAD_REQUEST,
-        TypedHeader(ContentType::text_utf8()),
-        Bytes::new(),
-    )
 }
 
 create_counters!(
