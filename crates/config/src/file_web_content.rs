@@ -27,6 +27,20 @@ default = "Access Denied"
 [access_denied.body]
 default = "Sorry, access to this application is not allowed from your current IP address.\n\nYour IP: {{ip_address}}\n\nIf you believe this is an error, please contact the system administrator."
 
+# Email Confirmation Page
+
+[email_confirmed.title]
+default = "Email Confirmed"
+
+[email_confirmed.body]
+default = "Email confirmed successfully!"
+
+[email_confirmation_invalid.title]
+default = "Invalid Token"
+
+[email_confirmation_invalid.body]
+default = "Invalid or expired token"
+
 "#;
 
 #[derive(Debug, Clone)]
@@ -46,6 +60,8 @@ pub struct WebContentFile {
     web_page_template: String,
     web_page_content_type_is_html: bool,
     access_denied: Option<WebContentStrings>,
+    email_confirmed: Option<WebContentStrings>,
+    email_confirmation_invalid: Option<WebContentStrings>,
     #[serde(flatten)]
     other: toml::Table,
 }
@@ -101,6 +117,15 @@ pub struct WebStringGetter<'a> {
 }
 
 impl<'a> WebStringGetter<'a> {
+    fn render_web_page(
+        &self,
+        resource: &Option<WebContentStrings>,
+        default_title: &str,
+        default_body: &str,
+    ) -> Result<WebContent, ConfigFileError> {
+        self.render_body_and_web_page(resource, default_title, default_body, HashMap::new())
+    }
+
     fn render_body_and_web_page(
         &self,
         resource: &Option<WebContentStrings>,
@@ -149,6 +174,22 @@ impl<'a> WebStringGetter<'a> {
             "Access Denied",
             "Sorry, access to this application is not allowed from your current IP address.\n\nYour IP: {{ip_address}}\n\nIf you believe this is an error, please contact the system administrator.",
             HashMap::from_iter([("ip_address", ip_address)]),
+        )
+    }
+
+    pub fn email_confirmed(&self) -> Result<WebContent, ConfigFileError> {
+        self.render_web_page(
+            &self.config.email_confirmed,
+            "Email Confirmed",
+            "Email confirmed successfully!",
+        )
+    }
+
+    pub fn email_confirmation_invalid(&self) -> Result<WebContent, ConfigFileError> {
+        self.render_web_page(
+            &self.config.email_confirmation_invalid,
+            "Invalid Token",
+            "Invalid or expired token",
         )
     }
 }
