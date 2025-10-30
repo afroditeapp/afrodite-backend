@@ -22,7 +22,6 @@ use server_data_account::{
     write::{GetWriteCommandsAccount, account::email::TokenCheckResult},
 };
 use simple_backend::create_counters;
-use simple_backend_utils::time::DurationValue;
 use tokio::time::timeout;
 
 pub const PATH_GET_CONFIRM_EMAIL: &str = "/account_api/confirm_email/{token}";
@@ -169,11 +168,14 @@ pub async fn post_send_confirm_email_message(
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     if let Some(token_time) = account_internal.email_confirmation_token_unix_time {
-        const MIN_TOKEN_AGE_SECONDS: u32 = 15 * 60;
-        if !token_time.duration_value_elapsed(DurationValue::from_seconds(MIN_TOKEN_AGE_SECONDS)) {
+        let min_wait_duration = state
+            .config()
+            .limits_account()
+            .email_confirmation_resend_min_wait_duration;
+        if !token_time.duration_value_elapsed(min_wait_duration) {
             return Ok(
                 SendConfirmEmailMessageResult::error_try_again_later_after_seconds(
-                    MIN_TOKEN_AGE_SECONDS,
+                    min_wait_duration.seconds,
                 )
                 .into(),
             );

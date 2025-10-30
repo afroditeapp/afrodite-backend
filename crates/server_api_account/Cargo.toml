@@ -28,4 +28,3 @@ server_api = { path = "../server_api" }
 server_data_account = { path = "../server_data_account" }
 
 simple_backend = { path = "../simple_backend" }
-simple_backend_utils = { path = "../simple_backend_utils" }
