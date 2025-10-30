@@ -17,7 +17,7 @@ use tokio::{
     },
     task::JoinHandle,
 };
-use tracing::{debug, error, warn};
+use tracing::{error, info, warn};
 
 use crate::{ServerQuitWatcher, email::data::Counter};
 
@@ -419,7 +419,7 @@ impl EmailSendingLogic {
             .increment(sender.config.send_limit_per_day);
 
         if sender.config.debug_logging {
-            debug!("Sending email: {:?}", message);
+            info!("Sending email: {:?}", message);
         }
 
         let response = sender
