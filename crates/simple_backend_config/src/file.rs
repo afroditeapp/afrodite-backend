@@ -461,6 +461,8 @@ pub struct EmailSendingConfig {
     pub send_limit_per_day: Option<NonZeroU32>,
     #[serde(default)]
     pub debug_logging: bool,
+    #[serde(default)]
+    pub debug_example_com_is_normal_email: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
