@@ -47,7 +47,7 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
                 };
 
             if treat_example_com_as_test && email.0.ends_with("@example.com") {
-                if message == EmailMessages::EmailConfirmation {
+                if message == EmailMessages::EmailVerification {
                     db_write_raw!(self.state, move |cmds| {
                         cmds.account()
                             .update_syncable_account_data(
@@ -102,9 +102,9 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
         let getter = email_content.get(language.as_ref());
 
         let content = match message {
-            EmailMessages::EmailConfirmation => {
-                let token = self.generate_token_for_email_confirmation(receiver).await?;
-                getter.email_confirmation(&token)
+            EmailMessages::EmailVerification => {
+                let token = self.generate_token_for_email_verification(receiver).await?;
+                getter.email_verification(&token)
             }
             EmailMessages::NewMessage => getter.new_message(),
             EmailMessages::NewLike => getter.new_like(),
@@ -148,7 +148,7 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
 }
 
 impl ServerEmailDataProvider {
-    async fn generate_token_for_email_confirmation(
+    async fn generate_token_for_email_verification(
         &self,
         receiver: AccountIdInternal,
     ) -> error_stack::Result<String, simple_backend::email::EmailError> {
@@ -166,14 +166,14 @@ impl ServerEmailDataProvider {
         // Reuse existing valid token to avoid sending multiple emails
         // with different links in a short time period.
         let (token, token_bytes) = if let (Some(existing_token_bytes), Some(token_time)) = (
-            account_internal.email_confirmation_token,
-            account_internal.email_confirmation_token_unix_time,
+            account_internal.email_verification_token,
+            account_internal.email_verification_token_unix_time,
         ) {
             if token_time.duration_value_elapsed(
                 self.state
                     .config()
                     .limits_account()
-                    .email_confirmation_token_validity_duration,
+                    .email_verification_token_validity_duration,
             ) {
                 AccessToken::generate_new_with_bytes()
             } else {
@@ -189,7 +189,7 @@ impl ServerEmailDataProvider {
         db_write_raw!(self.state, move |cmds| {
             cmds.account()
                 .email()
-                .set_email_confirmation_token(receiver, token_bytes, current_time)
+                .set_email_verification_token(receiver, token_bytes, current_time)
                 .await
         })
         .await

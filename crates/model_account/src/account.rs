@@ -91,8 +91,8 @@ pub struct DemoAccountLoginToAccount {
 #[diesel(treat_none_as_null = true)]
 pub struct AccountInternal {
     pub email: Option<EmailAddress>,
-    pub email_confirmation_token: Option<Vec<u8>>,
-    pub email_confirmation_token_unix_time: Option<UnixTime>,
+    pub email_verification_token: Option<Vec<u8>>,
+    pub email_verification_token_unix_time: Option<UnixTime>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]

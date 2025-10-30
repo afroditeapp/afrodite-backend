@@ -115,11 +115,11 @@ pub async fn complete_initial_setup(
             (&cmds.profile()).update_location_cache_profile(id).await?;
 
             if !is_bot_account && !sign_in_with_info.some_sign_in_with_method_is_set() {
-                // Email confirmation email is not yet sent if email address
+                // Email verification email is not yet sent if email address
                 // was provided manually and not from some sign in with method.
                 cmds.account()
                     .email()
-                    .send_email_if_not_already_sent(id, EmailMessages::EmailConfirmation)
+                    .send_email_if_not_already_sent(id, EmailMessages::EmailVerification)
                     .await?;
             }
 

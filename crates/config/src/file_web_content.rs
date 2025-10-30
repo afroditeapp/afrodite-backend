@@ -28,18 +28,18 @@ default = "Access Denied"
 [access_denied.body]
 default = "Sorry, access to this application is not allowed from your current IP address.\n\nYour IP: {{ip_address}}\n\nIf you believe this is an error, please contact the system administrator."
 
-# Email Confirmation Page
+# Email Verification Page
 
-[email_confirmed.title]
-default = "Email Confirmed"
+[email_verified.title]
+default = "Email Verified"
 
-[email_confirmed.body]
-default = "Email confirmed successfully!"
+[email_verified.body]
+default = "Email verified successfully!"
 
-[email_confirmation_invalid.title]
+[email_verification_invalid.title]
 default = "Invalid Token"
 
-[email_confirmation_invalid.body]
+[email_verification_invalid.body]
 default = "Invalid or expired token"
 
 "#;
@@ -61,8 +61,8 @@ pub struct WebContentFile {
     web_page_template: String,
     web_page_content_type_is_html: bool,
     access_denied: Option<WebContentStrings>,
-    email_confirmed: Option<WebContentStrings>,
-    email_confirmation_invalid: Option<WebContentStrings>,
+    email_verified: Option<WebContentStrings>,
+    email_verification_invalid: Option<WebContentStrings>,
     #[serde(flatten)]
     other: toml::Table,
 }
@@ -79,8 +79,8 @@ impl Default for WebContentFile {
             web_page_template: DEFAULT_TEMPLATE.to_string(),
             web_page_content_type_is_html: false,
             access_denied: None,
-            email_confirmed: None,
-            email_confirmation_invalid: None,
+            email_verified: None,
+            email_verification_invalid: None,
             other: Map::new(),
         }
     }
@@ -197,17 +197,17 @@ impl<'a> WebStringGetter<'a> {
         )
     }
 
-    pub fn email_confirmed(&self) -> Result<WebContent, ConfigFileError> {
+    pub fn email_verified(&self) -> Result<WebContent, ConfigFileError> {
         self.render_web_page(
-            &self.config.email_confirmed,
-            "Email Confirmed",
-            "Email confirmed successfully!",
+            &self.config.email_verified,
+            "Email Verified",
+            "Email verified successfully!",
         )
     }
 
-    pub fn email_confirmation_invalid(&self) -> Result<WebContent, ConfigFileError> {
+    pub fn email_verification_invalid(&self) -> Result<WebContent, ConfigFileError> {
         self.render_web_page(
-            &self.config.email_confirmation_invalid,
+            &self.config.email_verification_invalid,
             "Invalid Token",
             "Invalid or expired token",
         )

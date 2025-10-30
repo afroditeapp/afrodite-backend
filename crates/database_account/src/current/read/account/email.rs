@@ -24,7 +24,7 @@ impl CurrentReadAccountEmail<'_> {
             .map(|data| data.unwrap_or_default())
     }
 
-    pub fn find_account_by_email_confirmation_token(
+    pub fn find_account_by_email_verification_token(
         &mut self,
         token: Vec<u8>,
     ) -> Result<Option<(AccountIdInternal, UnixTime)>, DieselDatabaseError> {
@@ -32,11 +32,11 @@ impl CurrentReadAccountEmail<'_> {
 
         let account_data = account::table
             .inner_join(account_id::table)
-            .filter(account::email_confirmation_token.eq(Some(token)))
-            .filter(account::email_confirmation_token_unix_time.is_not_null())
+            .filter(account::email_verification_token.eq(Some(token)))
+            .filter(account::email_verification_token_unix_time.is_not_null())
             .select((
                 AccountIdInternal::as_select(),
-                account::email_confirmation_token_unix_time.assume_not_null(),
+                account::email_verification_token_unix_time.assume_not_null(),
             ))
             .first(self.conn())
             .optional()

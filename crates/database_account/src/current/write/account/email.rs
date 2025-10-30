@@ -32,7 +32,7 @@ impl CurrentWriteAccountEmail<'_> {
         Ok(())
     }
 
-    pub fn set_email_confirmation_token(
+    pub fn set_email_verification_token(
         mut self,
         id: AccountIdInternal,
         token: Vec<u8>,
@@ -42,8 +42,8 @@ impl CurrentWriteAccountEmail<'_> {
 
         update(account.find(id.as_db_id()))
             .set((
-                email_confirmation_token.eq(Some(token)),
-                email_confirmation_token_unix_time.eq(Some(token_unix_time)),
+                email_verification_token.eq(Some(token)),
+                email_verification_token_unix_time.eq(Some(token_unix_time)),
             ))
             .execute(self.conn())
             .into_db_error(id)?;
@@ -51,7 +51,7 @@ impl CurrentWriteAccountEmail<'_> {
         Ok(())
     }
 
-    pub fn clear_email_confirmation_token(
+    pub fn clear_email_verification_token(
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
@@ -59,8 +59,8 @@ impl CurrentWriteAccountEmail<'_> {
 
         update(account.find(id.as_db_id()))
             .set((
-                email_confirmation_token.eq(None::<Vec<u8>>),
-                email_confirmation_token_unix_time.eq(None::<UnixTime>),
+                email_verification_token.eq(None::<Vec<u8>>),
+                email_verification_token_unix_time.eq(None::<UnixTime>),
             ))
             .execute(self.conn())
             .into_db_error(id)?;

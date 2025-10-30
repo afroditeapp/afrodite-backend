@@ -358,7 +358,7 @@ diesel_i64_wrapper!(ClientLocalId);
 
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, Deserialize)]
 pub enum EmailMessages {
-    EmailConfirmation,
+    EmailVerification,
     NewMessage,
     NewLike,
     AccountDeletionRemainderFirst,
@@ -368,7 +368,7 @@ pub enum EmailMessages {
 
 impl EmailMessages {
     pub const VARIANTS: &'static [Self] = &[
-        Self::EmailConfirmation,
+        Self::EmailVerification,
         Self::NewMessage,
         Self::NewLike,
         Self::AccountDeletionRemainderFirst,

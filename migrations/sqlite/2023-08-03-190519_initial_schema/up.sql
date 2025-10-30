@@ -279,8 +279,8 @@ CREATE TABLE IF NOT EXISTS sign_in_with_info(
 CREATE TABLE IF NOT EXISTS account(
     account_id   INTEGER PRIMARY KEY NOT NULL,
     email        TEXT                                UNIQUE,
-    email_confirmation_token           BLOB          UNIQUE,
-    email_confirmation_token_unix_time BIGINT        UNIQUE,
+    email_verification_token           BLOB          UNIQUE,
+    email_verification_token_unix_time BIGINT        UNIQUE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -308,7 +308,7 @@ CREATE TABLE IF NOT EXISTS account_setup(
 -- 2 - Sent successfully
 CREATE TABLE IF NOT EXISTS account_email_sending_state(
     account_id                      INTEGER PRIMARY KEY NOT NULL,
-    email_confirmation_state_number SMALLINT            NOT NULL DEFAULT 0,
+    email_verification_state_number SMALLINT            NOT NULL DEFAULT 0,
     new_message_state_number        SMALLINT            NOT NULL DEFAULT 0,
     new_like_state_number           SMALLINT            NOT NULL DEFAULT 0,
     account_deletion_remainder_first_state_number  SMALLINT NOT NULL DEFAULT 0,

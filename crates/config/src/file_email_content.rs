@@ -24,13 +24,13 @@ email_body_content_type_is_html = false
 [custom_keys.footer]
 default = "Footer"
 
-# Email confirmation
+# Email verification
 
-[email_confirmation.subject]
-default = "Confirm your email address"
+[email_verification.subject]
+default = "Verify your email address"
 
-[email_confirmation.body]
-default = "Please confirm your email address by opening this link: https://example.com/account_api/confirm_email_address/{{token}}"
+[email_verification.body]
+default = "Please verify your email address by opening this link: https://example.com/account_api/verify_email/{{token}}"
 
 # New message
 
@@ -93,8 +93,8 @@ pub struct EmailContentFile {
     email_body_content_type_is_html: bool,
     #[serde(default)]
     custom_keys: HashMap<String, StringResourceInternal>,
-    /// "{{token}}" is replaced with email confirmation token
-    email_confirmation: Option<EmailContentStrings>,
+    /// "{{token}}" is replaced with email verification token
+    email_verification: Option<EmailContentStrings>,
     new_message: Option<EmailContentStrings>,
     new_like: Option<EmailContentStrings>,
     account_deletion_remainder_first: Option<EmailContentStrings>,
@@ -163,10 +163,10 @@ impl EmailContentFile {
             }
         }
 
-        if let Some(email_confirmation) = &config.email_confirmation {
-            if !email_confirmation.body.all_strings_contain("{{token}}") {
+        if let Some(email_verification) = &config.email_verification {
+            if !email_verification.body.all_strings_contain("{{token}}") {
                 return Err(ConfigFileError::InvalidConfig).attach_printable(
-                    "'{{token}}' is missing from email_confirmation body text".to_string(),
+                    "'{{token}}' is missing from email_verification body text".to_string(),
                 );
             }
         }
@@ -249,11 +249,11 @@ impl<'a> EmailStringGetter<'a> {
         })
     }
 
-    pub fn email_confirmation(&self, token: &str) -> Result<EmailContent, ConfigFileError> {
+    pub fn email_verification(&self, token: &str) -> Result<EmailContent, ConfigFileError> {
         self.render_body_and_apply_template(
-            &self.config.email_confirmation,
-            "Confirm your email address",
-            "Please confirm your email address by opening this link: https://example.com/account_api/confirm_email_address/{{token}}",
+            &self.config.email_verification,
+            "Verify your email address",
+            "Please verify your email address by opening this link: https://example.com/account_api/verify_email/{{token}}",
             HashMap::from_iter([("token", token)]),
         )
     }

@@ -124,8 +124,8 @@ impl WriteCommandsAccount<'_> {
             .await?;
         let internal = AccountInternal {
             email: account_data.email,
-            email_confirmation_token: current_data.email_confirmation_token,
-            email_confirmation_token_unix_time: current_data.email_confirmation_token_unix_time,
+            email_verification_token: current_data.email_verification_token,
+            email_verification_token_unix_time: current_data.email_verification_token_unix_time,
         };
 
         db_transaction!(self, move |mut cmds| {
