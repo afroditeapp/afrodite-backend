@@ -1,4 +1,5 @@
 use diesel::{prelude::*, sql_types::SmallInt};
+use model_server_data::EmailAddress;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::SimpleDieselEnum;
 use utoipa::ToSchema;
@@ -45,6 +46,8 @@ pub struct AccountEmailSendingStateRaw {
     pub account_deletion_remainder_first_state_number: EmailSendingState,
     pub account_deletion_remainder_second_state_number: EmailSendingState,
     pub account_deletion_remainder_third_state_number: EmailSendingState,
+    pub email_change_verification_state_number: EmailSendingState,
+    pub email_change_cancellation_state_number: EmailSendingState,
 }
 
 impl AccountEmailSendingStateRaw {
@@ -62,6 +65,8 @@ impl AccountEmailSendingStateRaw {
             EmailMessages::AccountDeletionRemainderThird => {
                 &self.account_deletion_remainder_third_state_number
             }
+            EmailMessages::EmailChangeVerification => &self.email_change_verification_state_number,
+            EmailMessages::EmailChangeCancellation => &self.email_change_cancellation_state_number,
         }
     }
 
@@ -78,6 +83,12 @@ impl AccountEmailSendingStateRaw {
             }
             EmailMessages::AccountDeletionRemainderThird => {
                 &mut self.account_deletion_remainder_third_state_number
+            }
+            EmailMessages::EmailChangeVerification => {
+                &mut self.email_change_verification_state_number
+            }
+            EmailMessages::EmailChangeCancellation => {
+                &mut self.email_change_cancellation_state_number
             }
         }
     }
@@ -108,6 +119,52 @@ impl SendVerifyEmailMessageResult {
     pub fn error_email_already_verified() -> Self {
         Self {
             error_email_already_verified: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_email_sending_failed() -> Self {
+        Self {
+            error_email_sending_failed: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_email_sending_timeout() -> Self {
+        Self {
+            error_email_sending_timeout: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_try_again_later_after_seconds(seconds: u32) -> Self {
+        Self {
+            error_try_again_later_after_seconds: Some(seconds),
+            ..Default::default()
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct SetInitialEmail {
+    pub email: EmailAddress,
+}
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
+pub struct InitEmailChangeResult {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_email_sending_failed: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_email_sending_timeout: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    error_try_again_later_after_seconds: Option<u32>,
+}
+
+impl InitEmailChangeResult {
+    pub fn ok() -> Self {
+        Self {
             ..Default::default()
         }
     }

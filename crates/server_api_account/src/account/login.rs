@@ -13,7 +13,7 @@ use model_account::{
 };
 use server_api::{S, app::GetConfig, db_write};
 use server_data::{IntoDataError, db_manager::InternalReading, write::GetWriteCommandsCommon};
-use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
+use server_data_account::read::GetReadCommandsAccount;
 use simple_backend::{
     app::SignInWith,
     create_counters,
@@ -209,24 +209,18 @@ async fn handle_sign_in_with_info(
         return Ok(LoginResult::error_sign_in_with_email_unverified());
     }
 
-    let email: EmailAddress = info
-        .email()
-        .try_into()
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
     let already_existing_account = info.already_existing_account(state).await?;
 
     if let Some(already_existing_account) = already_existing_account {
-        db_write!(state, move |cmds| cmds
-            .account()
-            .email()
-            .account_email(already_existing_account, email)
-            .await)?;
-
         login_impl(already_existing_account.as_id(), address, state).await
     } else if disable_registering {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     } else {
+        let email: EmailAddress = info
+            .email()
+            .try_into()
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
         let id = state
             .data_all_access()
             .register_impl(info.sign_in_with_info(), Some(email))

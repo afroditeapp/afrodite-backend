@@ -358,12 +358,17 @@ diesel_i64_wrapper!(ClientLocalId);
 
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, Deserialize)]
 pub enum EmailMessages {
+    /// Email sending code must generate and save the verification token to DB
     EmailVerification,
     NewMessage,
     NewLike,
     AccountDeletionRemainderFirst,
     AccountDeletionRemainderSecond,
     AccountDeletionRemainderThird,
+    /// Email sending code must read the verification token from DB
+    EmailChangeVerification,
+    /// Email sending code must read the cancellation token from DB
+    EmailChangeCancellation,
 }
 
 impl EmailMessages {
@@ -374,6 +379,8 @@ impl EmailMessages {
         Self::AccountDeletionRemainderFirst,
         Self::AccountDeletionRemainderSecond,
         Self::AccountDeletionRemainderThird,
+        Self::EmailChangeVerification,
+        Self::EmailChangeCancellation,
     ];
 }
 

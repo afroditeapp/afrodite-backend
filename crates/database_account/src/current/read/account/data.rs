@@ -1,7 +1,7 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
-use model::AccountIdInternal;
+use model::{AccessToken, AccountIdInternal};
 use model_account::{
     AccountData, AccountGlobalState, AccountInternal, AccountSetup, AccountStateTableRaw,
 };
@@ -38,6 +38,12 @@ impl CurrentReadAccountData<'_> {
 
         Ok(AccountData {
             email: account_internal.email,
+            change_email: account_internal.change_email,
+            change_email_unix_time: account_internal.change_email_unix_time,
+            change_email_cancellation_token: account_internal
+                .change_email_cancellation_token
+                .map(|v| AccessToken::from_bytes(&v)),
+            change_email_verified: account_internal.change_email_verified,
         })
     }
 

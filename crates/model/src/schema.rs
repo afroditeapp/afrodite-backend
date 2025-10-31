@@ -6,6 +6,11 @@ diesel::table! {
         email -> Nullable<Text>,
         email_verification_token -> Nullable<Bytea>,
         email_verification_token_unix_time -> Nullable<Int8>,
+        change_email -> Nullable<Text>,
+        change_email_unix_time -> Nullable<Int8>,
+        change_email_cancellation_token -> Nullable<Bytea>,
+        change_email_verification_token -> Nullable<Bytea>,
+        change_email_verified -> Bool,
     }
 }
 
@@ -25,6 +30,8 @@ diesel::table! {
         account_deletion_remainder_first_state_number -> Int2,
         account_deletion_remainder_second_state_number -> Int2,
         account_deletion_remainder_third_state_number -> Int2,
+        email_change_verification_state_number -> Int2,
+        email_change_cancellation_state_number -> Int2,
     }
 }
 

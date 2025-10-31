@@ -36,11 +36,19 @@ default = "Email Verified"
 [email_verified.body]
 default = "Email verified successfully!"
 
-[email_verification_invalid.title]
+[invalid_link.title]
 default = "Invalid Token"
 
-[email_verification_invalid.body]
+[invalid_link.body]
 default = "Invalid or expired token"
+
+# Email Change Cancelled Page
+
+[email_change_cancelled.title]
+default = "Email Change Cancelled"
+
+[email_change_cancelled.body]
+default = "Email change has been successfully cancelled."
 
 "#;
 
@@ -62,7 +70,8 @@ pub struct WebContentFile {
     web_page_content_type_is_html: bool,
     access_denied: Option<WebContentStrings>,
     email_verified: Option<WebContentStrings>,
-    email_verification_invalid: Option<WebContentStrings>,
+    invalid_link: Option<WebContentStrings>,
+    email_change_cancelled: Option<WebContentStrings>,
     #[serde(flatten)]
     other: toml::Table,
 }
@@ -80,7 +89,8 @@ impl Default for WebContentFile {
             web_page_content_type_is_html: false,
             access_denied: None,
             email_verified: None,
-            email_verification_invalid: None,
+            invalid_link: None,
+            email_change_cancelled: None,
             other: Map::new(),
         }
     }
@@ -205,11 +215,19 @@ impl<'a> WebStringGetter<'a> {
         )
     }
 
-    pub fn email_verification_invalid(&self) -> Result<WebContent, ConfigFileError> {
+    pub fn invalid_link(&self) -> Result<WebContent, ConfigFileError> {
         self.render_web_page(
-            &self.config.email_verification_invalid,
+            &self.config.invalid_link,
             "Invalid Token",
             "Invalid or expired token",
+        )
+    }
+
+    pub fn email_change_cancelled(&self) -> Result<WebContent, ConfigFileError> {
+        self.render_web_page(
+            &self.config.email_change_cancelled,
+            "Email Change Cancelled",
+            "Email change has been successfully cancelled.",
         )
     }
 }

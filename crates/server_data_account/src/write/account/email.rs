@@ -20,11 +20,18 @@ pub enum TokenCheckResult {
 define_cmd_wrapper_write!(WriteCommandsAccountEmail);
 
 impl WriteCommandsAccountEmail<'_> {
-    pub async fn account_email(
+    pub async fn inital_setup_account_email_change(
         &self,
         id: AccountIdInternal,
         email: EmailAddress,
     ) -> Result<(), DataError> {
+        self.0
+            .account()
+            .update_syncable_account_data(id, None, |_, _, _, verified| {
+                *verified = false;
+                Ok(())
+            })
+            .await?;
         db_transaction!(self, move |mut cmds| {
             cmds.account().data().update_account_email(id, &email)
         })
@@ -54,12 +61,12 @@ impl WriteCommandsAccountEmail<'_> {
 
         let account_id = self
             .db_read(move |mut cmds| {
-                let account_data = cmds
+                let token_info = cmds
                     .account()
                     .email()
                     .find_account_by_email_verification_token(token)?;
 
-                let Some((account_id, token_unix_time)) = account_data else {
+                let Some((account_id, token_unix_time)) = token_info else {
                     return Ok(None);
                 };
 
@@ -164,6 +171,155 @@ impl WriteCommandsAccountEmail<'_> {
             .send_high_priority(id, EmailMessages::EmailVerification)
             .await
             .map_err(|_| DataError::EmailSendingFailed.report())?;
+
+        Ok(())
+    }
+
+    pub async fn init_email_change(
+        &self,
+        id: AccountIdInternal,
+        new_email: EmailAddress,
+    ) -> Result<(), DataError> {
+        let current_time = UnixTime::current_time();
+        let (_, verification_token_bytes) = model::AccessToken::generate_new_with_bytes();
+        let (_, cancellation_token_bytes) = model::AccessToken::generate_new_with_bytes();
+
+        db_transaction!(self, move |mut cmds| {
+            cmds.account().email().init_email_change(
+                id,
+                new_email.0.clone(),
+                current_time,
+                verification_token_bytes,
+                cancellation_token_bytes,
+            )
+        })
+    }
+
+    pub async fn email_change_try_to_verify_new_email(
+        &self,
+        token: Vec<u8>,
+    ) -> Result<TokenCheckResult, DataError> {
+        let token_validity_duration = self
+            .config()
+            .limits_account()
+            .email_change_min_wait_duration;
+
+        let account_id = self
+            .db_read(move |mut cmds| {
+                let token_info = cmds
+                    .account()
+                    .email()
+                    .find_account_by_change_email_verification_token(token)?;
+
+                let Some((account_id, token_unix_time)) = token_info else {
+                    return Ok(None);
+                };
+
+                if token_unix_time.duration_value_elapsed(token_validity_duration) {
+                    return Ok(None);
+                }
+
+                Ok(Some(account_id))
+            })
+            .await?;
+
+        if let Some(account_id) = account_id {
+            db_transaction!(self, move |mut cmds| {
+                cmds.account()
+                    .email()
+                    .verify_pending_email_address(account_id)
+            })?;
+            Ok(TokenCheckResult::Valid)
+        } else {
+            Ok(TokenCheckResult::Invalid)
+        }
+    }
+
+    pub async fn email_change_try_to_cancel_new_email(
+        &self,
+        token: Vec<u8>,
+    ) -> Result<TokenCheckResult, DataError> {
+        let token_validity_duration = self
+            .config()
+            .limits_account()
+            .email_change_min_wait_duration;
+
+        let account_id = self
+            .db_read(move |mut cmds| {
+                let token_info = cmds
+                    .account()
+                    .email()
+                    .find_account_by_change_email_cancellation_token(token)?;
+
+                let Some((account_id, token_unix_time)) = token_info else {
+                    return Ok(None);
+                };
+
+                if token_unix_time.duration_value_elapsed(token_validity_duration) {
+                    return Ok(None);
+                }
+
+                Ok(Some(account_id))
+            })
+            .await?;
+
+        if let Some(account_id) = account_id {
+            db_transaction!(self, move |mut cmds| {
+                cmds.account().email().clear_email_change_data(account_id)
+            })?;
+            Ok(TokenCheckResult::Valid)
+        } else {
+            Ok(TokenCheckResult::Invalid)
+        }
+    }
+
+    pub async fn send_email_change_verification_high_priority(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        self.email_sender()
+            .send_high_priority(id, EmailMessages::EmailChangeVerification)
+            .await
+            .map_err(|_| DataError::EmailSendingFailed.report())?;
+
+        Ok(())
+    }
+
+    pub async fn send_email_change_cancellation_high_priority(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        self.email_sender()
+            .send_high_priority(id, EmailMessages::EmailChangeCancellation)
+            .await
+            .map_err(|_| DataError::EmailSendingFailed.report())?;
+
+        Ok(())
+    }
+
+    /// The new_email must be verified email address.
+    pub async fn complete_email_change(
+        &self,
+        id: AccountIdInternal,
+        new_email: EmailAddress,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.account()
+                .email()
+                .complete_email_change(id, new_email.0)
+        })?;
+
+        self.0
+            .account()
+            .update_syncable_account_data(id, None, |_, _, _, email_verified| {
+                *email_verified = true;
+                Ok(())
+            })
+            .await?;
+
+        self.event_manager()
+            .send_connected_event(id, EventToClientInternal::AccountStateChanged)
+            .await?;
 
         Ok(())
     }

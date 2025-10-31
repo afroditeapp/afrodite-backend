@@ -1,11 +1,10 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
-use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
+use database_account::current::write::GetDbWriteCommandsAccount;
 use delete::WriteCommandsAccountDelete;
 use email::WriteCommandsAccountEmail;
 use model::AccountStateContainer;
 use model_account::{
-    Account, AccountData, AccountIdInternal, AccountInternal, ClientId, Permissions,
-    ProfileVisibility, SetAccountSetup,
+    Account, AccountIdInternal, ClientId, Permissions, ProfileVisibility, SetAccountSetup,
 };
 use model_server_state::DemoAccountId;
 use news::WriteCommandsAccountNews;
@@ -111,25 +110,6 @@ impl WriteCommandsAccount<'_> {
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.common().state().reset_account_data_version_number(id)
-        })
-    }
-
-    pub async fn account_data(
-        &self,
-        id: AccountIdInternal,
-        account_data: AccountData,
-    ) -> Result<(), DataError> {
-        let current_data = self
-            .db_read(move |mut cmds| cmds.account().data().account_internal(id))
-            .await?;
-        let internal = AccountInternal {
-            email: account_data.email,
-            email_verification_token: current_data.email_verification_token,
-            email_verification_token_unix_time: current_data.email_verification_token_unix_time,
-        };
-
-        db_transaction!(self, move |mut cmds| {
-            cmds.account().data().account(id, &internal)
         })
     }
 

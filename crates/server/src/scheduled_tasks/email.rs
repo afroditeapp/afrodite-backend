@@ -28,6 +28,8 @@ pub async fn handle_email_notifications(state: &S, id: AccountIdInternal) -> Res
 
     handle_account_deletion_email_notification(state, id).await?;
 
+    handle_email_change(state, id).await?;
+
     Ok(())
 }
 
@@ -190,6 +192,44 @@ async fn handle_account_deletion_email_notification(
         cmds.account()
             .email()
             .send_email_if_not_already_sent(id, email_to_send)
+            .await?;
+        Ok(())
+    })
+    .await?;
+
+    Ok(())
+}
+
+async fn handle_email_change(state: &S, id: AccountIdInternal) -> Result<(), DataError> {
+    let account_data = state.read().account().account_data(id).await?;
+
+    let change_time = match account_data.change_email_unix_time {
+        Some(time) => time,
+        None => return Ok(()),
+    };
+
+    let new_email = match account_data.change_email {
+        Some(email) => email,
+        None => return Ok(()),
+    };
+
+    if !account_data.change_email_verified {
+        return Ok(());
+    }
+
+    let min_wait_duration = state
+        .config()
+        .limits_account()
+        .email_change_min_wait_duration;
+
+    if !change_time.duration_value_elapsed(min_wait_duration) {
+        return Ok(());
+    }
+
+    db_write_raw!(state, move |cmds| {
+        cmds.account()
+            .email()
+            .complete_email_change(id, new_email)
             .await?;
         Ok(())
     })

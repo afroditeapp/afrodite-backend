@@ -37,38 +37,6 @@ pub async fn get_account_data(
     Ok(data.into())
 }
 
-const PATH_POST_ACCOUNT_DATA: &str = "/account_api/account_data";
-
-/// Set changeable user information to account.
-#[utoipa::path(
-    post,
-    path = PATH_POST_ACCOUNT_DATA,
-    request_body(content = AccountData),
-    responses(
-        (status = 200, description = "Request successfull."),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn post_account_data(
-    State(state): State<S>,
-    Extension(api_caller_account_id): Extension<AccountIdInternal>,
-    Json(data): Json<AccountData>,
-) -> Result<(), StatusCode> {
-    ACCOUNT.post_account_data.incr();
-    // TODO(prod): Manual email setting should be removed probably and just
-    // use the email from sign in with Google or Apple.
-    // Update: Perhaps create specific route for setting email and
-    // allow that only if account state is in initial setup and
-    // sign in with login is not used.
-
-    db_write!(state, move |cmds| cmds
-        .account()
-        .account_data(api_caller_account_id, data)
-        .await)
-}
-
 const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile_visibility";
 
 /// Update current or pending profile visiblity value.
@@ -150,7 +118,6 @@ pub async fn put_setting_unlimited_likes(
 create_open_api_router!(
         fn router_settings,
         get_account_data,
-        post_account_data,
         put_setting_profile_visiblity,
         put_setting_unlimited_likes,
 );
@@ -160,7 +127,6 @@ create_counters!(
     ACCOUNT,
     ACCOUNT_SETTINGS_COUNTERS_LIST,
     get_account_data,
-    post_account_data,
     put_setting_profile_visiblity,
     put_setting_unlimited_likes,
 );

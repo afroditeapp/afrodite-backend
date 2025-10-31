@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use diesel::prelude::*;
-use model::{ClientType, ClientVersion, NewsSyncVersion, UnixTime};
+use model::{AccessToken, ClientType, ClientVersion, NewsSyncVersion, UnixTime};
 use model_server_data::{
     AppleAccountId, AuthPair, EmailAddress, GoogleAccountId, PublicationId, SignInWithInfo,
 };
@@ -93,12 +93,31 @@ pub struct AccountInternal {
     pub email: Option<EmailAddress>,
     pub email_verification_token: Option<Vec<u8>>,
     pub email_verification_token_unix_time: Option<UnixTime>,
+    pub change_email: Option<EmailAddress>,
+    pub change_email_unix_time: Option<UnixTime>,
+    pub change_email_verification_token: Option<Vec<u8>>,
+    pub change_email_cancellation_token: Option<Vec<u8>>,
+    pub change_email_verified: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct AccountData {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub email: Option<EmailAddress>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub change_email: Option<EmailAddress>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub change_email_unix_time: Option<UnixTime>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub change_email_cancellation_token: Option<AccessToken>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub change_email_verified: bool,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct InitEmailChange {
+    pub new_email: EmailAddress,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]

@@ -67,4 +67,86 @@ impl CurrentWriteAccountEmail<'_> {
 
         Ok(())
     }
+
+    pub fn verify_pending_email_address(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account::dsl::*;
+
+        update(account.find(id.as_db_id()))
+            .set((
+                change_email_verified.eq(true),
+                change_email_verification_token.eq(None::<Vec<u8>>),
+            ))
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
+    }
+
+    pub fn clear_email_change_data(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account::dsl::*;
+
+        update(account.find(id.as_db_id()))
+            .set((
+                change_email.eq(None::<String>),
+                change_email_unix_time.eq(None::<UnixTime>),
+                change_email_verification_token.eq(None::<Vec<u8>>),
+                change_email_verified.eq(false),
+            ))
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
+    }
+
+    pub fn init_email_change(
+        &mut self,
+        id: AccountIdInternal,
+        new_email: String,
+        current_time: UnixTime,
+        verification_token: Vec<u8>,
+        cancellation_token: Vec<u8>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account::dsl::*;
+
+        update(account.find(id.as_db_id()))
+            .set((
+                change_email.eq(Some(new_email)),
+                change_email_unix_time.eq(Some(current_time)),
+                change_email_verification_token.eq(Some(verification_token)),
+                change_email_cancellation_token.eq(Some(cancellation_token)),
+                change_email_verified.eq(false),
+            ))
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
+    }
+
+    pub fn complete_email_change(
+        &mut self,
+        id: AccountIdInternal,
+        new_email: String,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account::dsl::*;
+
+        update(account.find(id.as_db_id()))
+            .set((
+                email.eq(Some(new_email)),
+                change_email.eq(None::<String>),
+                change_email_unix_time.eq(None::<UnixTime>),
+                change_email_verification_token.eq(None::<Vec<u8>>),
+                change_email_cancellation_token.eq(None::<Vec<u8>>),
+                change_email_verified.eq(false),
+            ))
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
+    }
 }

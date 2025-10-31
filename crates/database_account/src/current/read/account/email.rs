@@ -44,4 +44,46 @@ impl CurrentReadAccountEmail<'_> {
 
         Ok(account_data)
     }
+
+    pub fn find_account_by_change_email_verification_token(
+        &mut self,
+        token: Vec<u8>,
+    ) -> Result<Option<(AccountIdInternal, UnixTime)>, DieselDatabaseError> {
+        use model::schema::{account, account_id};
+
+        let account_data = account::table
+            .inner_join(account_id::table)
+            .filter(account::change_email_verification_token.eq(Some(token)))
+            .filter(account::change_email_unix_time.is_not_null())
+            .select((
+                AccountIdInternal::as_select(),
+                account::change_email_unix_time.assume_not_null(),
+            ))
+            .first(self.conn())
+            .optional()
+            .into_db_error(())?;
+
+        Ok(account_data)
+    }
+
+    pub fn find_account_by_change_email_cancellation_token(
+        &mut self,
+        token: Vec<u8>,
+    ) -> Result<Option<(AccountIdInternal, UnixTime)>, DieselDatabaseError> {
+        use model::schema::{account, account_id};
+
+        let account_data = account::table
+            .inner_join(account_id::table)
+            .filter(account::change_email_cancellation_token.eq(Some(token)))
+            .filter(account::change_email_unix_time.is_not_null())
+            .select((
+                AccountIdInternal::as_select(),
+                account::change_email_unix_time.assume_not_null(),
+            ))
+            .first(self.conn())
+            .optional()
+            .into_db_error(())?;
+
+        Ok(account_data)
+    }
 }

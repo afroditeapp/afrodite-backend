@@ -72,6 +72,22 @@ default = "Account deletion reminder 3/3"
 [account_deletion_remainder_third.body]
 default = "Your account will be deleted. This is the final reminder."
 
+# Email change verification
+
+[email_change_verification.subject]
+default = "Verify your new email address"
+
+[email_change_verification.body]
+default = "Please verify your new email address by opening this link: https://example.com/account_api/verify_new_email/{{token}}"
+
+# Email change cancellation
+
+[email_change_cancellation.subject]
+default = "Email change notification"
+
+[email_change_cancellation.body]
+default = "Your account's email address will be changed. If you did not request this change, please cancel it by opening this link: https://example.com/account_api/cancel_email_change/{{token}}"
+
 "#;
 
 #[derive(Debug, Clone)]
@@ -100,6 +116,10 @@ pub struct EmailContentFile {
     account_deletion_remainder_first: Option<EmailContentStrings>,
     account_deletion_remainder_second: Option<EmailContentStrings>,
     account_deletion_remainder_third: Option<EmailContentStrings>,
+    /// "{{token}}" is replaced with email change verification token
+    email_change_verification: Option<EmailContentStrings>,
+    /// "{{token}}" is replaced with email change cancellation token
+    email_change_cancellation: Option<EmailContentStrings>,
     #[serde(flatten)]
     other: toml::Table,
 }
@@ -295,6 +315,24 @@ impl<'a> EmailStringGetter<'a> {
             &self.config.account_deletion_remainder_third,
             "Account deletion reminder 3/3",
             "Your account will be deleted. This is the final reminder.",
+        )
+    }
+
+    pub fn email_change_verification(&self, token: &str) -> Result<EmailContent, ConfigFileError> {
+        self.render_body_and_apply_template(
+            &self.config.email_change_verification,
+            "Verify your new email address",
+            "Please verify your new email address by opening this link: https://example.com/account_api/verify_new_email/{{token}}",
+            HashMap::from_iter([("token", token)]),
+        )
+    }
+
+    pub fn email_change_cancellation(&self, token: &str) -> Result<EmailContent, ConfigFileError> {
+        self.render_body_and_apply_template(
+            &self.config.email_change_cancellation,
+            "Email change notification",
+            "Your account's email address will be changed. If you did not request this change, please cancel it by opening this link: https://example.com/account_api/cancel_email_change/{{token}}",
+            HashMap::from_iter([("token", token)]),
         )
     }
 }
