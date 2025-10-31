@@ -280,7 +280,7 @@ CREATE TABLE IF NOT EXISTS account(
     account_id   BIGINT PRIMARY KEY NOT NULL,
     email        TEXT                                UNIQUE,
     email_verification_token           BYTEA         UNIQUE,
-    email_verification_token_unix_time BIGINT        UNIQUE,
+    email_verification_token_unix_time BIGINT,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
