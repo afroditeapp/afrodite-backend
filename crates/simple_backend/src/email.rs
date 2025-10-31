@@ -369,6 +369,13 @@ impl<
             ContentType::TEXT_PLAIN
         };
 
+        if email_sender.config.debug_logging {
+            info!(
+                "Sending email:\nTo: {}\nSubject: {}\nBody: {}",
+                address, info.subject, info.body
+            );
+        }
+
         let message = Message::builder()
             .from(email_sender.config.email_from_header.0.clone())
             .to(Mailbox::new(None, address))
@@ -417,10 +424,6 @@ impl EmailSendingLogic {
             .increment(sender.config.send_limit_per_minute);
         self.send_count_per_day
             .increment(sender.config.send_limit_per_day);
-
-        if sender.config.debug_logging {
-            info!("Sending email: {:?}", message);
-        }
 
         let response = sender
             .sender
