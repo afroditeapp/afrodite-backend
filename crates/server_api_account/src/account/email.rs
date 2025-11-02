@@ -12,11 +12,7 @@ use model_account::{
     InitEmailChange, InitEmailChangeResult, SendVerifyEmailMessageResult, SetInitialEmail,
 };
 use server_api::{
-    S,
-    app::{ReadData, WriteData},
-    common::AcceptLanguage,
-    create_open_api_router, db_write,
-    utils::Json,
+    S, app::WriteData, common::AcceptLanguage, create_open_api_router, db_write, utils::Json,
 };
 use server_data::{app::GetConfig, read::GetReadCommandsCommon};
 use server_data_account::{
@@ -148,57 +144,42 @@ pub async fn post_send_verify_email_message(
 ) -> Result<Json<SendVerifyEmailMessageResult>, StatusCode> {
     ACCOUNT.post_send_verify_email_message.incr();
 
-    // Check if email is already verified
-    let account = state
-        .read()
-        .common()
-        .account(account_id)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    if account.email_verified() {
-        return Ok(SendVerifyEmailMessageResult::error_email_already_verified().into());
-    }
-
-    // Check email verification token age
-    let account_internal = state
-        .read()
-        .account()
-        .account_internal(account_id)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    if let Some(token_time) = account_internal.email_verification_token_unix_time {
-        let min_wait_duration = state
-            .config()
-            .limits_account()
-            .email_verification_resend_min_wait_duration;
-        if !token_time.duration_value_elapsed(min_wait_duration) {
-            return Ok(
-                SendVerifyEmailMessageResult::error_try_again_later_after_seconds(
-                    min_wait_duration.seconds,
-                )
-                .into(),
-            );
-        }
-    }
-
-    // Try to send email with 10 second timeout
     let send_result = timeout(Duration::from_secs(10), async {
         db_write!(state, move |cmds| {
+            let account = cmds.read().common().account(account_id).await?;
+
+            if account.email_verified() {
+                return Ok(SendVerifyEmailMessageResult::error_email_already_verified());
+            }
+
+            let account_internal = cmds.read().account().account_internal(account_id).await?;
+
+            if let Some(token_time) = account_internal.email_verification_token_unix_time {
+                let min_wait_duration = cmds
+                    .config()
+                    .limits_account()
+                    .email_verification_resend_min_wait_duration;
+                if !token_time.duration_value_elapsed(min_wait_duration) {
+                    return Ok(
+                        SendVerifyEmailMessageResult::error_try_again_later_after_seconds(
+                            min_wait_duration.seconds,
+                        ),
+                    );
+                }
+            }
+
             cmds.account()
                 .email()
                 .send_email_verification_message_high_priority(account_id)
-                .await
+                .await?;
+
+            Ok(SendVerifyEmailMessageResult::ok())
         })
     })
     .await;
 
     match send_result {
-        Ok(Ok(())) => {
-            // Email sent successfully
-            Ok(SendVerifyEmailMessageResult::ok().into())
-        }
+        Ok(Ok(r)) => Ok(r.into()),
         Ok(Err(_)) => {
             // Email sending failed
             Ok(SendVerifyEmailMessageResult::error_email_sending_failed().into())
@@ -299,7 +280,7 @@ pub const PATH_POST_INIT_EMAIL_CHANGE: &str = "/account_api/init_email_change";
 /// 3. Notification email sent to current address
 /// 4. After configured time elapses and new email is verified, email changes
 ///
-/// Request fails when
+/// Error is returned when
 ///  - account does not already have email address set,
 ///  - the new email is the current email or
 ///  - email address change is already in progress.
@@ -308,7 +289,7 @@ pub const PATH_POST_INIT_EMAIL_CHANGE: &str = "/account_api/init_email_change";
     path = PATH_POST_INIT_EMAIL_CHANGE,
     request_body = InitEmailChange,
     responses(
-        (status = 200, description = "Email change initiated successfully.", body = InitEmailChangeResult),
+        (status = 200, description = "Successfull.", body = InitEmailChangeResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -321,37 +302,35 @@ pub async fn post_init_email_change(
 ) -> Result<Json<InitEmailChangeResult>, StatusCode> {
     ACCOUNT.post_init_email_change.incr();
 
-    let account_data = state
-        .read()
-        .account()
-        .account_data(account_id)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    if account_data.email.is_none() {
-        return Err(StatusCode::INTERNAL_SERVER_ERROR);
-    }
-
-    if account_data.email.as_ref() == Some(&request.new_email) {
-        return Err(StatusCode::INTERNAL_SERVER_ERROR);
-    }
-
-    if let Some(change_time) = account_data.email_change_time {
-        let min_wait_duration = state
-            .config()
-            .limits_account()
-            .email_change_resend_min_wait_duration;
-        if !change_time.duration_value_elapsed(min_wait_duration) {
-            return Err(StatusCode::INTERNAL_SERVER_ERROR);
-        }
-    }
-
     let send_result = timeout(Duration::from_secs(10), async {
         db_write!(state, move |cmds| {
+            let account_data = cmds.read().account().account_data(account_id).await?;
+
+            if account_data.email.is_none() {
+                return Ok(InitEmailChangeResult::error_email_sending_failed());
+            }
+
+            if account_data.email.as_ref() == Some(&request.new_email) {
+                return Ok(InitEmailChangeResult::error_email_sending_failed());
+            }
+
+            if let Some(change_time) = account_data.email_change_time {
+                let min_wait_duration = cmds
+                    .config()
+                    .limits_account()
+                    .email_change_resend_min_wait_duration;
+                if !change_time.duration_value_elapsed(min_wait_duration) {
+                    return Ok(InitEmailChangeResult::error_try_again_later_after_seconds(
+                        min_wait_duration.seconds,
+                    ));
+                }
+            }
+
             cmds.account()
                 .email()
                 .init_email_change(account_id, request.new_email)
                 .await?;
+
             cmds.account()
                 .email()
                 .send_email_change_verification_high_priority(account_id)
@@ -359,13 +338,15 @@ pub async fn post_init_email_change(
             cmds.account()
                 .email()
                 .send_email_change_notification_high_priority(account_id)
-                .await
+                .await?;
+
+            Ok(InitEmailChangeResult::ok())
         })
     })
     .await;
 
     match send_result {
-        Ok(Ok(())) => Ok(InitEmailChangeResult::ok().into()),
+        Ok(Ok(r)) => Ok(r.into()),
         Ok(Err(_)) => Ok(InitEmailChangeResult::error_email_sending_failed().into()),
         Err(_) => Ok(InitEmailChangeResult::error_email_sending_timeout().into()),
     }
