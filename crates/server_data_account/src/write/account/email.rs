@@ -1,3 +1,4 @@
+use database::current::read::GetDbReadCommandsCommon;
 use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
 use model::{EventToClientInternal, UnixTime};
 use model_account::{AccountIdInternal, EmailAddress, EmailMessages, EmailSendingState};
@@ -79,22 +80,21 @@ impl WriteCommandsAccountEmail<'_> {
             .await?;
 
         if let Some(account_id) = account_id {
-            self.0
-                .account()
-                .update_syncable_account_data(account_id, None, |_, _, _, email_verified| {
-                    *email_verified = true;
-                    Ok(())
-                })
+            let account = self
+                .db_read(move |mut cmds| cmds.common().account(account_id))
                 .await?;
-            self.event_manager()
-                .send_connected_event(account_id, EventToClientInternal::AccountStateChanged)
-                .await?;
-            db_transaction!(self, move |mut cmds| {
-                cmds.account()
-                    .email()
-                    .clear_email_verification_token(account_id)?;
-                Ok(())
-            })?;
+            if !account.email_verified() {
+                self.0
+                    .account()
+                    .update_syncable_account_data(account_id, None, |_, _, _, email_verified| {
+                        *email_verified = true;
+                        Ok(())
+                    })
+                    .await?;
+                self.event_manager()
+                    .send_connected_event(account_id, EventToClientInternal::AccountStateChanged)
+                    .await?;
+            }
             Ok(TokenCheckResult::Valid)
         } else {
             Ok(TokenCheckResult::Invalid)
