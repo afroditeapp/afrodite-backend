@@ -282,17 +282,17 @@ CREATE TABLE IF NOT EXISTS account(
     email_verification_token           BYTEA         UNIQUE,
     email_verification_token_unix_time BIGINT,
     -- Pending new email address
-    change_email TEXT,
+    email_change TEXT,
     -- Time when pending new email address is set
-    change_email_unix_time BIGINT,
+    email_change_unix_time BIGINT,
     -- Verification token for pending new email address.
-    -- change_email_unix_time tracks token validity.
-    -- Verification request email is sent when change_email is set.
-    change_email_verification_token           BYTEA         UNIQUE,
-    -- Verification status of change_email.
+    -- email_change_unix_time tracks token validity.
+    -- Verification request email is sent when email_change is set.
+    email_change_verification_token           BYTEA         UNIQUE,
+    -- Verification status of email_change.
     -- This is required to be TRUE when backend logic changes the pending
     -- email to account's email address.
-    change_email_verified           BOOLEAN   NOT NULL DEFAULT FALSE,
+    email_change_verified           BOOLEAN   NOT NULL DEFAULT FALSE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

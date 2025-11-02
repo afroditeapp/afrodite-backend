@@ -6,10 +6,10 @@ diesel::table! {
         email -> Nullable<Text>,
         email_verification_token -> Nullable<Bytea>,
         email_verification_token_unix_time -> Nullable<Int8>,
-        change_email -> Nullable<Text>,
-        change_email_unix_time -> Nullable<Int8>,
-        change_email_verification_token -> Nullable<Bytea>,
-        change_email_verified -> Bool,
+        email_change -> Nullable<Text>,
+        email_change_unix_time -> Nullable<Int8>,
+        email_change_verification_token -> Nullable<Bytea>,
+        email_change_verified -> Bool,
     }
 }
 

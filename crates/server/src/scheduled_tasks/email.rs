@@ -203,17 +203,17 @@ async fn handle_account_deletion_email_notification(
 async fn handle_email_change(state: &S, id: AccountIdInternal) -> Result<(), DataError> {
     let account_data = state.read().account().account_data(id).await?;
 
-    let change_time = match account_data.change_email_unix_time {
+    let change_time = match account_data.email_change_time {
         Some(time) => time,
         None => return Ok(()),
     };
 
-    let new_email = match account_data.change_email {
+    let new_email = match account_data.email_change {
         Some(email) => email,
         None => return Ok(()),
     };
 
-    if !account_data.change_email_verified {
+    if !account_data.email_change_verified {
         return Ok(());
     }
 

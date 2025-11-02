@@ -207,7 +207,7 @@ impl WriteCommandsAccountEmail<'_> {
                 let token_info = cmds
                     .account()
                     .email()
-                    .find_account_by_change_email_verification_token(token)?;
+                    .find_account_by_email_change_verification_token(token)?;
 
                 let Some((account_id, token_unix_time)) = token_info else {
                     return Ok(None);

@@ -36,7 +36,7 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
 
         // For email change verification, use the new email address
         let email_to_use = if message == EmailMessages::EmailChangeVerification {
-            data.change_email.clone()
+            data.email_change.clone()
         } else {
             data.email.clone()
         };
@@ -222,7 +222,7 @@ impl ServerEmailDataProvider {
             .map_err(|e| e.into_report())
             .change_context(EmailError::GettingEmailDataFailed)?;
 
-        if let Some(token_bytes) = account_internal.change_email_verification_token {
+        if let Some(token_bytes) = account_internal.email_change_verification_token {
             let token = AccessToken::from_bytes(&token_bytes);
             Ok(token.into_string())
         } else {

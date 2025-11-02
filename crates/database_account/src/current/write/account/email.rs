@@ -75,8 +75,8 @@ impl CurrentWriteAccountEmail<'_> {
 
         update(account.find(id.as_db_id()))
             .set((
-                change_email_verified.eq(true),
-                change_email_verification_token.eq(None::<Vec<u8>>),
+                email_change_verified.eq(true),
+                email_change_verification_token.eq(None::<Vec<u8>>),
             ))
             .execute(self.conn())
             .into_db_error(id)?;
@@ -92,10 +92,10 @@ impl CurrentWriteAccountEmail<'_> {
 
         update(account.find(id.as_db_id()))
             .set((
-                change_email.eq(None::<String>),
-                change_email_unix_time.eq(None::<UnixTime>),
-                change_email_verification_token.eq(None::<Vec<u8>>),
-                change_email_verified.eq(false),
+                email_change.eq(None::<String>),
+                email_change_unix_time.eq(None::<UnixTime>),
+                email_change_verification_token.eq(None::<Vec<u8>>),
+                email_change_verified.eq(false),
             ))
             .execute(self.conn())
             .into_db_error(id)?;
@@ -114,10 +114,10 @@ impl CurrentWriteAccountEmail<'_> {
 
         update(account.find(id.as_db_id()))
             .set((
-                change_email.eq(Some(new_email)),
-                change_email_unix_time.eq(Some(current_time)),
-                change_email_verification_token.eq(Some(verification_token)),
-                change_email_verified.eq(false),
+                email_change.eq(Some(new_email)),
+                email_change_unix_time.eq(Some(current_time)),
+                email_change_verification_token.eq(Some(verification_token)),
+                email_change_verified.eq(false),
             ))
             .execute(self.conn())
             .into_db_error(id)?;
@@ -135,10 +135,10 @@ impl CurrentWriteAccountEmail<'_> {
         update(account.find(id.as_db_id()))
             .set((
                 email.eq(Some(new_email)),
-                change_email.eq(None::<String>),
-                change_email_unix_time.eq(None::<UnixTime>),
-                change_email_verification_token.eq(None::<Vec<u8>>),
-                change_email_verified.eq(false),
+                email_change.eq(None::<String>),
+                email_change_unix_time.eq(None::<UnixTime>),
+                email_change_verification_token.eq(None::<Vec<u8>>),
+                email_change_verified.eq(false),
             ))
             .execute(self.conn())
             .into_db_error(id)?;

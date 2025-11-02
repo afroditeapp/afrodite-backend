@@ -332,7 +332,7 @@ pub async fn post_init_email_change(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    if let Some(change_time) = account_data.change_email_unix_time {
+    if let Some(change_time) = account_data.email_change_time {
         let min_wait_duration = state
             .config()
             .limits_account()
