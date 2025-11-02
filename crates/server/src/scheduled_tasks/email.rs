@@ -32,6 +32,8 @@ pub async fn handle_email_notifications(state: &S, id: AccountIdInternal) -> Res
 
     remove_expired_email_verification_token(state, id).await?;
 
+    cancel_email_change_if_needed(state, id).await?;
+
     Ok(())
 }
 
@@ -258,6 +260,27 @@ async fn remove_expired_email_verification_token(
                     .email()
                     .clear_email_verification_token(id)
                     .await?;
+                Ok(())
+            })
+            .await?;
+        }
+    }
+
+    Ok(())
+}
+
+async fn cancel_email_change_if_needed(state: &S, id: AccountIdInternal) -> Result<(), DataError> {
+    let account_internal = state.read().account().account_internal(id).await?;
+
+    let email_change_token_validity = state
+        .config()
+        .limits_account()
+        .email_change_min_wait_duration;
+
+    if let Some(change_time) = account_internal.email_change_unix_time {
+        if change_time.duration_value_elapsed(email_change_token_validity) {
+            db_write_raw!(state, move |cmds| {
+                cmds.account().email().cancel_email_change(id).await?;
                 Ok(())
             })
             .await?;

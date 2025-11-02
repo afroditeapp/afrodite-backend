@@ -241,8 +241,7 @@ impl WriteCommandsAccountEmail<'_> {
     pub async fn cancel_email_change(&self, id: AccountIdInternal) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.account().email().clear_email_change_data(id)
-        })?;
-        Ok(())
+        })
     }
 
     pub async fn send_email_change_verification_high_priority(
