@@ -84,6 +84,8 @@ impl CurrentWriteAccountEmail<'_> {
         Ok(())
     }
 
+    /// Does not clear email_change_unix_time so that email
+    /// changing limit will work.
     pub fn clear_email_change_data(
         &mut self,
         id: AccountIdInternal,
@@ -93,7 +95,6 @@ impl CurrentWriteAccountEmail<'_> {
         update(account.find(id.as_db_id()))
             .set((
                 email_change.eq(None::<String>),
-                email_change_unix_time.eq(None::<UnixTime>),
                 email_change_verification_token.eq(None::<Vec<u8>>),
                 email_change_verified.eq(false),
             ))
@@ -125,6 +126,8 @@ impl CurrentWriteAccountEmail<'_> {
         Ok(())
     }
 
+    /// Does not clear email_change_unix_time so that email
+    /// changing limit will work.
     pub fn complete_email_change(
         &mut self,
         id: AccountIdInternal,
@@ -136,7 +139,6 @@ impl CurrentWriteAccountEmail<'_> {
             .set((
                 email.eq(Some(new_email)),
                 email_change.eq(None::<String>),
-                email_change_unix_time.eq(None::<UnixTime>),
                 email_change_verification_token.eq(None::<Vec<u8>>),
                 email_change_verified.eq(false),
             ))
