@@ -212,6 +212,8 @@ pub const PATH_GET_VERIFY_NEW_EMAIL: &str = "/account_api/verify_new_email/{toke
 
 /// Verify new email address using the token sent via email.
 /// This endpoint is meant to be accessed via a link in the verification email.
+/// To workaround email security scanning related link accessing, the link
+/// can be opened multiple times.
 ///
 /// This modifies server state even if the HTTP method is GET.
 ///

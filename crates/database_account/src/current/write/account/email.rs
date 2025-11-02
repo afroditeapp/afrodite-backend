@@ -67,6 +67,8 @@ impl CurrentWriteAccountEmail<'_> {
         Ok(())
     }
 
+    /// Does not modify email_change_verification_token, so that email link
+    /// will work multiple times.
     pub fn verify_pending_email_address(
         &mut self,
         id: AccountIdInternal,
@@ -74,10 +76,7 @@ impl CurrentWriteAccountEmail<'_> {
         use model::schema::account::dsl::*;
 
         update(account.find(id.as_db_id()))
-            .set((
-                email_change_verified.eq(true),
-                email_change_verification_token.eq(None::<Vec<u8>>),
-            ))
+            .set(email_change_verified.eq(true))
             .execute(self.conn())
             .into_db_error(id)?;
 
