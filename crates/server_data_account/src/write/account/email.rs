@@ -295,4 +295,13 @@ impl WriteCommandsAccountEmail<'_> {
 
         Ok(())
     }
+
+    pub async fn clear_email_verification_token(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.account().email().clear_email_verification_token(id)
+        })
+    }
 }
