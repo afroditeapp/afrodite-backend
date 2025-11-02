@@ -126,12 +126,7 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
                     .await?;
                 getter.email_change_verification(&token)
             }
-            EmailMessages::EmailChangeCancellation => {
-                let token = self
-                    .get_token_for_email_change_cancellation(receiver)
-                    .await?;
-                getter.email_change_cancellation(&token)
-            }
+            EmailMessages::EmailChangeNotification => getter.email_change_notification(),
         }
         .change_context(EmailError::GettingEmailDataFailed)?;
 
@@ -233,28 +228,6 @@ impl ServerEmailDataProvider {
         } else {
             Err(EmailError::GettingEmailDataFailed)
                 .attach_printable("No email change verification token found")
-        }
-    }
-
-    async fn get_token_for_email_change_cancellation(
-        &self,
-        receiver: AccountIdInternal,
-    ) -> error_stack::Result<String, simple_backend::email::EmailError> {
-        let account_internal = self
-            .state
-            .read()
-            .account()
-            .account_internal(receiver)
-            .await
-            .map_err(|e| e.into_report())
-            .change_context(EmailError::GettingEmailDataFailed)?;
-
-        if let Some(token_bytes) = account_internal.change_email_cancellation_token {
-            let token = AccessToken::from_bytes(&token_bytes);
-            Ok(token.into_string())
-        } else {
-            Err(EmailError::GettingEmailDataFailed)
-                .attach_printable("No email change cancellation token found")
         }
     }
 }

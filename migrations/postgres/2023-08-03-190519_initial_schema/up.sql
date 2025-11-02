@@ -285,10 +285,6 @@ CREATE TABLE IF NOT EXISTS account(
     change_email TEXT,
     -- Time when pending new email address is set
     change_email_unix_time BIGINT,
-    -- Cancellation token for pending new email address.
-    -- change_email_unix_time tracks token validity.
-    -- Cancellation possibility email is sent current email when change_email is set.
-    change_email_cancellation_token           BYTEA         UNIQUE,
     -- Verification token for pending new email address.
     -- change_email_unix_time tracks token validity.
     -- Verification request email is sent when change_email is set.
@@ -331,7 +327,7 @@ CREATE TABLE IF NOT EXISTS account_email_sending_state(
     account_deletion_remainder_second_state_number SMALLINT NOT NULL DEFAULT 0,
     account_deletion_remainder_third_state_number  SMALLINT NOT NULL DEFAULT 0,
     email_change_verification_state_number         SMALLINT NOT NULL DEFAULT 0,
-    email_change_cancellation_state_number         SMALLINT NOT NULL DEFAULT 0,
+    email_change_notification_state_number         SMALLINT NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

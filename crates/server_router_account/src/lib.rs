@@ -83,10 +83,6 @@ impl AccountRoutes {
                 api::account::PATH_GET_VERIFY_NEW_EMAIL,
                 get(api::account::get_verify_new_email),
             )
-            .route(
-                api::account::PATH_GET_CANCEL_EMAIL_CHANGE,
-                get(api::account::get_cancel_email_change),
-            )
             .with_state(state.s.clone())
     }
 

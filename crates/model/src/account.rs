@@ -367,8 +367,7 @@ pub enum EmailMessages {
     AccountDeletionRemainderThird,
     /// Email sending code must read the verification token from DB
     EmailChangeVerification,
-    /// Email sending code must read the cancellation token from DB
-    EmailChangeCancellation,
+    EmailChangeNotification,
 }
 
 impl EmailMessages {
@@ -380,7 +379,7 @@ impl EmailMessages {
         Self::AccountDeletionRemainderSecond,
         Self::AccountDeletionRemainderThird,
         Self::EmailChangeVerification,
-        Self::EmailChangeCancellation,
+        Self::EmailChangeNotification,
     ];
 }
 

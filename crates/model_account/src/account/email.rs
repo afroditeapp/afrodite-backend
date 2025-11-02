@@ -47,7 +47,7 @@ pub struct AccountEmailSendingStateRaw {
     pub account_deletion_remainder_second_state_number: EmailSendingState,
     pub account_deletion_remainder_third_state_number: EmailSendingState,
     pub email_change_verification_state_number: EmailSendingState,
-    pub email_change_cancellation_state_number: EmailSendingState,
+    pub email_change_notification_state_number: EmailSendingState,
 }
 
 impl AccountEmailSendingStateRaw {
@@ -66,7 +66,7 @@ impl AccountEmailSendingStateRaw {
                 &self.account_deletion_remainder_third_state_number
             }
             EmailMessages::EmailChangeVerification => &self.email_change_verification_state_number,
-            EmailMessages::EmailChangeCancellation => &self.email_change_cancellation_state_number,
+            EmailMessages::EmailChangeNotification => &self.email_change_notification_state_number,
         }
     }
 
@@ -87,8 +87,8 @@ impl AccountEmailSendingStateRaw {
             EmailMessages::EmailChangeVerification => {
                 &mut self.email_change_verification_state_number
             }
-            EmailMessages::EmailChangeCancellation => {
-                &mut self.email_change_cancellation_state_number
+            EmailMessages::EmailChangeNotification => {
+                &mut self.email_change_notification_state_number
             }
         }
     }

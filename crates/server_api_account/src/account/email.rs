@@ -128,31 +128,6 @@ fn create_invalid_token_response(
     }
 }
 
-#[allow(clippy::result_large_err)]
-#[allow(clippy::type_complexity)]
-fn create_cancellation_success_response(
-    state: &S,
-    accept_language: Option<TypedHeader<AcceptLanguage>>,
-) -> Result<(TypedHeader<ContentType>, Bytes), (StatusCode, TypedHeader<ContentType>, Bytes)> {
-    let web_config = state.config().web_content();
-    let language = accept_language.as_ref().map(|h| h.language());
-    match web_config.get(language.as_ref()).email_change_cancelled() {
-        Ok(page) => {
-            let content_type = if page.is_html {
-                ContentType::html()
-            } else {
-                ContentType::text_utf8()
-            };
-            Ok((TypedHeader(content_type), Bytes::from(page.content)))
-        }
-        Err(_) => Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            TypedHeader(ContentType::text_utf8()),
-            Bytes::from("Internal Server Error"),
-        )),
-    }
-}
-
 pub const PATH_POST_SEND_VERIFY_EMAIL_MESSAGE: &str = "/account_api/send_verify_email_message";
 
 #[utoipa::path(
@@ -284,57 +259,30 @@ pub async fn get_verify_new_email(
     }
 }
 
-pub const PATH_GET_CANCEL_EMAIL_CHANGE: &str = "/account_api/cancel_email_change/{token}";
+pub const PATH_POST_CANCEL_EMAIL_CHANGE: &str = "/account_api/cancel_email_change";
 
-/// Cancel email changing process using the token sent via email.
-/// This endpoint is meant to be accessed via a link in the cancellation email.
-///
-/// This modifies server state even if the HTTP method is GET.
-///
-/// Returns plain text response indicating success or failure.
+/// Cancel email changing process
 #[utoipa::path(
-    get,
-    path = PATH_GET_CANCEL_EMAIL_CHANGE,
-    params(AccessToken),
+    post,
+    path = PATH_POST_CANCEL_EMAIL_CHANGE,
     responses(
-        (status = 200, description = "Email change cancelled successfully.", content_type = "text/plain"),
-        (status = 400, description = "Invalid or expired token.", content_type = "text/plain"),
-        (status = 500, description = "Internal server error.", content_type = "text/plain"),
+        (status = 200, description = "Successful."),
+        (status = 400, description = "Invalid or expired token."),
+        (status = 500, description = "Internal server error."),
     ),
-    security(),
+    security(("access_token" = [])),
 )]
-pub async fn get_cancel_email_change(
+pub async fn post_cancel_email_change(
     State(state): State<S>,
-    Path(token): Path<AccessToken>,
-    accept_language: Option<TypedHeader<AcceptLanguage>>,
-) -> Result<(TypedHeader<ContentType>, Bytes), (StatusCode, TypedHeader<ContentType>, Bytes)> {
-    ACCOUNT.get_cancel_email_change.incr();
+    Extension(account_id): Extension<AccountIdInternal>,
+) -> Result<(), StatusCode> {
+    ACCOUNT.post_cancel_email_change.incr();
 
-    let token = match token.bytes() {
-        Ok(bytes) => bytes,
-        Err(_) => {
-            return create_invalid_token_response(&state, accept_language);
-        }
-    };
+    db_write!(state, move |cmds| {
+        cmds.account().email().cancel_email_change(account_id).await
+    })?;
 
-    let result = db_write!(state, move |cmds| {
-        cmds.account()
-            .email()
-            .email_change_try_to_cancel_new_email(token)
-            .await
-    });
-
-    match result {
-        Ok(TokenCheckResult::Valid) => {
-            create_cancellation_success_response(&state, accept_language)
-        }
-        Ok(TokenCheckResult::Invalid) => create_invalid_token_response(&state, accept_language),
-        Err(_) => Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            TypedHeader(ContentType::text_utf8()),
-            Bytes::from("Internal Server Error"),
-        )),
-    }
+    Ok(())
 }
 
 pub const PATH_POST_INIT_EMAIL_CHANGE: &str = "/account_api/init_email_change";
@@ -344,8 +292,8 @@ pub const PATH_POST_INIT_EMAIL_CHANGE: &str = "/account_api/init_email_change";
 /// The process:
 /// 1. User provides new email address
 /// 2. Verification email sent to new address
-/// 3. Warning email sent to current address with cancellation link
-/// 4. After configured time elapses, new email is verified and cancellation link not clicked, email changes
+/// 3. Notification email sent to current address
+/// 4. After configured time elapses and new email is verified, email changes
 ///
 /// Request fails when
 ///  - account does not already have email address set,
@@ -406,7 +354,7 @@ pub async fn post_init_email_change(
                 .await?;
             cmds.account()
                 .email()
-                .send_email_change_cancellation_high_priority(account_id)
+                .send_email_change_notification_high_priority(account_id)
                 .await
         })
     })
@@ -457,6 +405,7 @@ pub async fn post_initial_email(
 create_open_api_router!(
     fn router_email_private,
     post_send_verify_email_message,
+    post_cancel_email_change,
     post_init_email_change,
     post_initial_email,
 );
@@ -467,7 +416,7 @@ create_counters!(
     ACCOUNT_EMAIL_COUNTERS_LIST,
     get_verify_email,
     get_verify_new_email,
-    get_cancel_email_change,
+    post_cancel_email_change,
     post_send_verify_email_message,
     post_init_email_change,
     post_initial_email,

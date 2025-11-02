@@ -80,13 +80,13 @@ default = "Verify your new email address"
 [email_change_verification.body]
 default = "Please verify your new email address by opening this link: https://example.com/account_api/verify_new_email/{{token}}"
 
-# Email change cancellation
+# Email change notification
 
-[email_change_cancellation.subject]
+[email_change_notification.subject]
 default = "Email change notification"
 
-[email_change_cancellation.body]
-default = "Your account's email address will be changed. If you did not request this change, please cancel it by opening this link: https://example.com/account_api/cancel_email_change/{{token}}"
+[email_change_notification.body]
+default = "Your account's email address will be changed. If you did not request this change, your account might have been compromised."
 
 "#;
 
@@ -118,8 +118,7 @@ pub struct EmailContentFile {
     account_deletion_remainder_third: Option<EmailContentStrings>,
     /// "{{token}}" is replaced with email change verification token
     email_change_verification: Option<EmailContentStrings>,
-    /// "{{token}}" is replaced with email change cancellation token
-    email_change_cancellation: Option<EmailContentStrings>,
+    email_change_notification: Option<EmailContentStrings>,
     #[serde(flatten)]
     other: toml::Table,
 }
@@ -327,12 +326,11 @@ impl<'a> EmailStringGetter<'a> {
         )
     }
 
-    pub fn email_change_cancellation(&self, token: &str) -> Result<EmailContent, ConfigFileError> {
-        self.render_body_and_apply_template(
-            &self.config.email_change_cancellation,
+    pub fn email_change_notification(&self) -> Result<EmailContent, ConfigFileError> {
+        self.apply_template(
+            &self.config.email_change_notification,
             "Email change notification",
-            "Your account's email address will be changed. If you did not request this change, please cancel it by opening this link: https://example.com/account_api/cancel_email_change/{{token}}",
-            HashMap::from_iter([("token", token)]),
+            "Your account's email address will be changed. If you did not request this change, your account might have been compromised.",
         )
     }
 }

@@ -110,7 +110,6 @@ impl CurrentWriteAccountEmail<'_> {
         new_email: String,
         current_time: UnixTime,
         verification_token: Vec<u8>,
-        cancellation_token: Vec<u8>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account::dsl::*;
 
@@ -119,7 +118,6 @@ impl CurrentWriteAccountEmail<'_> {
                 change_email.eq(Some(new_email)),
                 change_email_unix_time.eq(Some(current_time)),
                 change_email_verification_token.eq(Some(verification_token)),
-                change_email_cancellation_token.eq(Some(cancellation_token)),
                 change_email_verified.eq(false),
             ))
             .execute(self.conn())
@@ -141,7 +139,6 @@ impl CurrentWriteAccountEmail<'_> {
                 change_email.eq(None::<String>),
                 change_email_unix_time.eq(None::<UnixTime>),
                 change_email_verification_token.eq(None::<Vec<u8>>),
-                change_email_cancellation_token.eq(None::<Vec<u8>>),
                 change_email_verified.eq(false),
             ))
             .execute(self.conn())
