@@ -3,7 +3,7 @@ use database::{
 };
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{AccountCreatedTime, AccountId, AccountIdInternal, ClientId, UnixTime};
+use model::{AccountCreatedTime, AccountId, AccountIdInternal, ClientId};
 use model_account::{AccountGlobalState, AccountInternal, EmailAddress, SetAccountSetup};
 use simple_backend_utils::db::MyRunQueryDsl;
 
@@ -101,6 +101,9 @@ impl CurrentWriteAccountData<'_> {
     /// Does not set email verification status to false as that
     /// needs sync version change. That should be done before calling
     /// this method.
+    ///
+    /// Does not clear email_verification_token_unix_time to limit
+    /// verification email sending.
     pub fn update_account_email(
         mut self,
         id: AccountIdInternal,
@@ -112,7 +115,6 @@ impl CurrentWriteAccountData<'_> {
             .set((
                 email.eq(email_address),
                 email_verification_token.eq(None::<Vec<u8>>),
-                email_verification_token_unix_time.eq(None::<UnixTime>),
             ))
             .execute(self.conn())
             .into_db_error(id)?;

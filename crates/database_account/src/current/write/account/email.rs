@@ -51,6 +51,8 @@ impl CurrentWriteAccountEmail<'_> {
         Ok(())
     }
 
+    /// Does not clear email_verification_token_unix_time to limit
+    /// verification email sending.
     pub fn clear_email_verification_token(
         &mut self,
         id: AccountIdInternal,
@@ -58,10 +60,7 @@ impl CurrentWriteAccountEmail<'_> {
         use model::schema::account::dsl::*;
 
         update(account.find(id.as_db_id()))
-            .set((
-                email_verification_token.eq(None::<Vec<u8>>),
-                email_verification_token_unix_time.eq(None::<UnixTime>),
-            ))
+            .set(email_verification_token.eq(None::<Vec<u8>>))
             .execute(self.conn())
             .into_db_error(id)?;
 
