@@ -39,7 +39,7 @@ pub struct EmailAddress(pub String);
 
 impl EmailAddress {
     pub fn new(id: String) -> Self {
-        Self(id)
+        Self(id.to_lowercase())
     }
 
     pub fn as_str(&self) -> &str {
@@ -58,7 +58,7 @@ impl TryFrom<String> for EmailAddress {
         }
 
         if value.contains('@') {
-            Ok(Self(value))
+            Ok(Self(value.to_lowercase()))
         } else {
             Err("Email address does not have '@' character".to_string())
         }
