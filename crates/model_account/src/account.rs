@@ -110,6 +110,9 @@ pub struct AccountData {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub email_change_verified: bool,
+    /// API route handler sets this value
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub email_change_completion_time: Option<UnixTime>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]

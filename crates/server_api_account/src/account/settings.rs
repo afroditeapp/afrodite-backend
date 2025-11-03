@@ -3,8 +3,10 @@ use model_account::{
     AccountData, AccountIdInternal, BooleanSetting, EventToClientInternal, ProfileVisibility,
 };
 use server_api::{S, create_open_api_router, db_write};
+use server_data::app::GetConfig;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
+use simple_backend_utils::time::seconds_until_current_time_is_at;
 
 use crate::{
     app::{ReadData, WriteData},
@@ -29,11 +31,33 @@ pub async fn get_account_data(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<AccountData>, StatusCode> {
     ACCOUNT.get_account_data.incr();
-    let data = state
+    let mut data = state
         .read()
         .account()
         .account_data(api_caller_account_id)
         .await?;
+
+    if let Some(init_time) = data.email_change_time {
+        let wait_duration_seconds = state
+            .config()
+            .limits_account()
+            .email_change_min_wait_duration
+            .seconds;
+
+        let scheduled_tasks_config = state.config().simple_backend().scheduled_tasks();
+        let next_scheduled_tasks_run =
+            seconds_until_current_time_is_at(scheduled_tasks_config.daily_start_time)
+                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        let next_scheduled_tasks_run = TryInto::<u32>::try_into(next_scheduled_tasks_run)
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        data.email_change_completion_time = Some(
+            init_time
+                .add_seconds(wait_duration_seconds)
+                .add_seconds(next_scheduled_tasks_run),
+        );
+    }
+
     Ok(data.into())
 }
 
