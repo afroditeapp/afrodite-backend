@@ -37,7 +37,13 @@ pub async fn get_account_data(
         .account_data(api_caller_account_id)
         .await?;
 
-    if let Some(init_time) = data.email_change_time {
+    let internal = state
+        .read()
+        .account()
+        .account_internal(api_caller_account_id)
+        .await?;
+
+    if let Some(init_time) = internal.email_change_unix_time {
         let wait_duration_seconds = state
             .config()
             .limits_account()

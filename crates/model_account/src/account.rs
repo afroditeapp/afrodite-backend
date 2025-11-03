@@ -105,8 +105,6 @@ pub struct AccountData {
     pub email: Option<EmailAddress>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub email_change: Option<EmailAddress>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub email_change_time: Option<UnixTime>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub email_change_verified: bool,

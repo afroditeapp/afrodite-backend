@@ -304,17 +304,17 @@ pub async fn post_init_email_change(
 
     let send_result = timeout(Duration::from_secs(10), async {
         db_write!(state, move |cmds| {
-            let account_data = cmds.read().account().account_data(account_id).await?;
+            let account_internal = cmds.read().account().account_internal(account_id).await?;
 
-            if account_data.email.is_none() {
+            if account_internal.email.is_none() {
                 return Ok(InitEmailChangeResult::error_email_sending_failed());
             }
 
-            if account_data.email.as_ref() == Some(&request.new_email) {
+            if account_internal.email.as_ref() == Some(&request.new_email) {
                 return Ok(InitEmailChangeResult::error_email_sending_failed());
             }
 
-            if let Some(change_time) = account_data.email_change_time {
+            if let Some(change_time) = account_internal.email_change_unix_time {
                 let min_wait_duration = cmds
                     .config()
                     .limits_account()

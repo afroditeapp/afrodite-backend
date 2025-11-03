@@ -39,7 +39,6 @@ impl CurrentReadAccountData<'_> {
         Ok(AccountData {
             email: account_internal.email,
             email_change: account_internal.email_change,
-            email_change_time: account_internal.email_change_unix_time,
             email_change_verified: account_internal.email_change_verified,
             email_change_completion_time: None,
         })
