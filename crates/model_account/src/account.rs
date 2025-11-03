@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use diesel::prelude::*;
-use model::{ClientType, ClientVersion, NewsSyncVersion, UnixTime};
+use model::{AccessToken, ClientType, ClientVersion, NewsSyncVersion, UnixTime};
 use model_server_data::{
     AppleAccountId, AuthPair, EmailAddress, GoogleAccountId, PublicationId, SignInWithInfo,
 };
@@ -85,6 +85,25 @@ pub struct DemoAccountLoginToAccount {
     pub client_info: ClientInfo,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct RequestEmailLoginToken {
+    pub email: EmailAddress,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct RequestEmailLoginTokenResult {
+    /// Token validity duration in seconds
+    pub token_validity_seconds: i64,
+    /// Minimum wait duration between token requests in seconds
+    pub resend_wait_seconds: i64,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct EmailLoginToken {
+    pub token: AccessToken,
+    pub client_info: ClientInfo,
+}
+
 #[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
 #[diesel(table_name = crate::schema::account)]
 #[diesel(check_for_backend(crate::Db))]
@@ -97,6 +116,8 @@ pub struct AccountInternal {
     pub email_change_unix_time: Option<UnixTime>,
     pub email_change_verification_token: Option<Vec<u8>>,
     pub email_change_verified: bool,
+    pub email_login_token: Option<Vec<u8>>,
+    pub email_login_token_unix_time: Option<UnixTime>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]

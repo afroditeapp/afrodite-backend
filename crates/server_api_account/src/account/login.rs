@@ -1,4 +1,4 @@
-use std::{collections::HashMap, net::SocketAddr};
+use std::{collections::HashMap, net::SocketAddr, time::Instant};
 
 use axum::{
     Form,
@@ -8,17 +8,19 @@ use axum::{
 use base64::Engine;
 use model::AccountIdInternal;
 use model_account::{
-    AccessToken, AccountId, AppleAccountId, AuthPair, EmailAddress, GoogleAccountId, LoginResult,
-    RefreshToken, SignInWithInfo, SignInWithLoginInfo,
+    AccessToken, AccountId, AppleAccountId, AuthPair, EmailAddress, EmailLoginToken,
+    GoogleAccountId, LoginResult, RefreshToken, RequestEmailLoginToken,
+    RequestEmailLoginTokenResult, SignInWithInfo, SignInWithLoginInfo,
 };
 use server_api::{S, app::GetConfig, db_write};
 use server_data::{IntoDataError, db_manager::InternalReading, write::GetWriteCommandsCommon};
-use server_data_account::read::GetReadCommandsAccount;
+use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::{
     app::SignInWith,
     create_counters,
     sign_in_with::{apple::AppleAccountInfo, google::GoogleAccountInfo},
 };
+use tokio::time::{Duration, timeout};
 
 use crate::{
     app::{GetAccounts, ReadData, WriteData},
@@ -260,10 +262,157 @@ pub async fn post_sign_in_with_apple_redirect_to_app(
     Ok(Redirect::temporary(&redirect))
 }
 
+pub const PATH_POST_REQUEST_EMAIL_LOGIN_TOKEN: &str = "/account_api/request_email_login_token";
+
+/// Request email login token to be sent via email.
+///
+/// The route always takes at least 5 seconds to complete to prevent timing attacks
+/// that could be used to enumerate existing email addresses.
+///
+/// No error is returned to prevent attackers from discovering which email
+/// addresses exist in the system.
+#[utoipa::path(
+    post,
+    path = PATH_POST_REQUEST_EMAIL_LOGIN_TOKEN,
+    request_body = RequestEmailLoginToken,
+    responses(
+        (status = 200, description = "Request processed.", body = RequestEmailLoginTokenResult),
+    ),
+    security(),
+)]
+pub async fn post_request_email_login_token(
+    State(state): State<S>,
+    Json(request): Json<RequestEmailLoginToken>,
+) -> Result<Json<RequestEmailLoginTokenResult>, StatusCode> {
+    ACCOUNT.post_request_email_login_token.incr();
+
+    let wait_until = Instant::now() + Duration::from_secs(5);
+
+    let _ = timeout(Duration::from_secs(10), async {
+        let account_id = state
+            .read()
+            .account()
+            .email()
+            .account_id_from_email(request.email.clone())
+            .await
+            .ok()??;
+
+        db_write!(state, move |cmds| {
+            let account_internal = cmds.read().account().account_internal(account_id).await?;
+
+            if let Some(token_time) = account_internal.email_login_token_unix_time {
+                let min_wait_duration = GetConfig::config(&cmds)
+                    .limits_account()
+                    .email_login_resend_min_wait_duration;
+                if !token_time.duration_value_elapsed(min_wait_duration) {
+                    // Too soon to send another token, but don't return error
+                    return Ok(());
+                }
+            }
+
+            cmds.account()
+                .email()
+                .set_email_login_token(account_id)
+                .await?;
+
+            cmds.account()
+                .email()
+                .send_email_login_token_high_priority(account_id)
+                .await?;
+
+            Ok(())
+        })
+        .ok()
+    })
+    .await;
+
+    // Wait until at least 5 seconds have elapsed
+    tokio::time::sleep_until(wait_until.into()).await;
+
+    // Always return success with config values to prevent email enumeration
+    Ok(Json(RequestEmailLoginTokenResult {
+        token_validity_seconds: state
+            .config()
+            .limits_account()
+            .email_login_token_validity_duration
+            .seconds as i64,
+        resend_wait_seconds: state
+            .config()
+            .limits_account()
+            .email_login_resend_min_wait_duration
+            .seconds as i64,
+    }))
+}
+
+pub const PATH_POST_EMAIL_LOGIN_WITH_TOKEN: &str = "/account_api/email_login_with_token";
+
+/// Login using email login token (single use, max 1 guess).
+#[utoipa::path(
+    post,
+    path = PATH_POST_EMAIL_LOGIN_WITH_TOKEN,
+    security(),
+    request_body = EmailLoginToken,
+    responses(
+        (status = 200, description = "Login successful.", body = LoginResult),
+        (status = 401, description = "Invalid token."),
+        (status = 500, description = "Internal server error."),
+    ),
+)]
+pub async fn post_email_login_with_token(
+    State(state): State<S>,
+    ConnectInfo(address): ConnectInfo<SocketAddr>,
+    Json(request): Json<EmailLoginToken>,
+) -> Result<Json<LoginResult>, StatusCode> {
+    ACCOUNT.post_email_login_with_token.incr();
+
+    if let Some(min_version) = state.config().min_client_version() {
+        if !min_version.received_version_is_accepted(request.client_info.client_version) {
+            return Ok(LoginResult::error_unsupported_client().into());
+        }
+    }
+
+    let token = request
+        .token
+        .bytes()
+        .map_err(|_| StatusCode::UNAUTHORIZED)?;
+
+    // Verify token and get account ID (single use, invalidates after check)
+    let account_id = db_write!(state, move |cmds| {
+        cmds.account()
+            .email()
+            .verify_email_login_token_and_invalidate(token)
+            .await
+    })
+    .map_err(|_| StatusCode::UNAUTHORIZED)?;
+
+    let account_id = match account_id {
+        Some(id) => id,
+        None => return Err(StatusCode::UNAUTHORIZED),
+    };
+
+    // Perform login
+    let r = login_impl(account_id.as_id(), address, &state).await?;
+
+    if let Some(aid) = r.aid {
+        // Login successful
+        let id = state.get_internal_id(aid).await?;
+        db_write!(state, move |cmds| {
+            cmds.common()
+                .client_config()
+                .client_login_session_platform(id, request.client_info.client_type)
+                .await
+        })?;
+    }
+
+    Ok(r.into())
+}
+
 create_counters!(
     AccountCounters,
     ACCOUNT,
     ACCOUNT_LOGIN_COUNTERS_LIST,
     post_sign_in_with_login,
     post_sign_in_with_apple_redirect_to_app,
+    post_request_email_login_token,
+    post_email_login_with_token,
 );

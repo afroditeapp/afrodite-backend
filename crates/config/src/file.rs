@@ -64,6 +64,8 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # email_verification_resend_min_wait_duration = "15m"
 # email_change_min_wait_duration = "3d"
 # email_change_resend_min_wait_duration = "15m"
+# email_login_token_validity_duration = "15m"
+# email_login_resend_min_wait_duration = "15m"
 
 # [limits.chat]
 # max_public_key_count = 100
@@ -301,6 +303,8 @@ pub struct AccountLimitsConfig {
     /// verification token is valid during this [DurationValue].
     pub email_change_min_wait_duration: DurationValue,
     pub email_change_resend_min_wait_duration: DurationValue,
+    pub email_login_token_validity_duration: DurationValue,
+    pub email_login_resend_min_wait_duration: DurationValue,
 }
 
 impl Default for AccountLimitsConfig {
@@ -313,6 +317,8 @@ impl Default for AccountLimitsConfig {
             email_verification_resend_min_wait_duration: DurationValue::from_seconds(15 * 60),
             email_change_min_wait_duration: DurationValue::from_days(3),
             email_change_resend_min_wait_duration: DurationValue::from_seconds(15 * 60),
+            email_login_token_validity_duration: DurationValue::from_seconds(15 * 60),
+            email_login_resend_min_wait_duration: DurationValue::from_seconds(15 * 60),
         }
     }
 }

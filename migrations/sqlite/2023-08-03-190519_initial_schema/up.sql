@@ -293,6 +293,8 @@ CREATE TABLE IF NOT EXISTS account(
     -- This is required to be TRUE when backend logic changes the pending
     -- email to account's email address.
     email_change_verified           BOOLEAN   NOT NULL DEFAULT FALSE,
+    email_login_token                         BLOB          UNIQUE,
+    email_login_token_unix_time               BIGINT,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -328,6 +330,7 @@ CREATE TABLE IF NOT EXISTS account_email_sending_state(
     account_deletion_remainder_third_state_number  SMALLINT NOT NULL DEFAULT 0,
     email_change_verification_state_number         SMALLINT NOT NULL DEFAULT 0,
     email_change_notification_state_number         SMALLINT NOT NULL DEFAULT 0,
+    email_login_state_number                       SMALLINT NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

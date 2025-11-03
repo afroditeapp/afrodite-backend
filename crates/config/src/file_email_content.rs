@@ -88,6 +88,14 @@ default = "Email change notification"
 [email_change_notification.body]
 default = "Your account's email address will be changed. If you did not request this change, your account might have been compromised."
 
+# Email login token
+
+[email_login.subject]
+default = "Your login code"
+
+[email_login.body]
+default = "Here is your login code: {{token}}"
+
 "#;
 
 #[derive(Debug, Clone)]
@@ -119,6 +127,8 @@ pub struct EmailContentFile {
     /// "{{token}}" is replaced with email change verification token
     email_change_verification: Option<EmailContentStrings>,
     email_change_notification: Option<EmailContentStrings>,
+    /// "{{token}}" is replaced with email login token
+    email_login: Option<EmailContentStrings>,
     #[serde(flatten)]
     other: toml::Table,
 }
@@ -331,6 +341,15 @@ impl<'a> EmailStringGetter<'a> {
             &self.config.email_change_notification,
             "Email change notification",
             "Your account's email address will be changed. If you did not request this change, your account might have been compromised.",
+        )
+    }
+
+    pub fn email_login(&self, token: &str) -> Result<EmailContent, ConfigFileError> {
+        self.render_body_and_apply_template(
+            &self.config.email_login,
+            "Your login code",
+            "Here is your login code: {{token}}",
+            HashMap::from_iter([("token", token)]),
         )
     }
 }

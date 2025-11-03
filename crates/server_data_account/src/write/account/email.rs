@@ -303,4 +303,71 @@ impl WriteCommandsAccountEmail<'_> {
             cmds.account().email().clear_email_verification_token(id)
         })
     }
+
+    pub async fn set_email_login_token(&self, id: AccountIdInternal) -> Result<(), DataError> {
+        let current_time = UnixTime::current_time();
+        let (_, token_bytes) = model::AccessToken::generate_new_with_bytes();
+
+        db_transaction!(self, move |mut cmds| {
+            cmds.account()
+                .email()
+                .set_email_login_token(id, token_bytes, current_time)
+        })
+    }
+
+    pub async fn send_email_login_token_high_priority(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        self.email_sender()
+            .send_high_priority(id, EmailMessages::EmailLoginToken)
+            .await
+            .map_err(|_| DataError::EmailSendingFailed.report())?;
+
+        Ok(())
+    }
+
+    pub async fn verify_email_login_token_and_invalidate(
+        &self,
+        token: Vec<u8>,
+    ) -> Result<Option<AccountIdInternal>, DataError> {
+        let token_validity_duration = self
+            .config()
+            .limits_account()
+            .email_login_token_validity_duration;
+
+        let account_id = self
+            .db_read(move |mut cmds| {
+                let token_info = cmds
+                    .account()
+                    .email()
+                    .find_account_by_email_login_token(token.clone())?;
+
+                let Some((account_id, token_unix_time)) = token_info else {
+                    return Ok(None);
+                };
+
+                if token_unix_time.duration_value_elapsed(token_validity_duration) {
+                    return Ok(None);
+                }
+
+                Ok(Some(account_id))
+            })
+            .await?;
+
+        if let Some(account_id) = account_id {
+            db_transaction!(self, move |mut cmds| {
+                cmds.account().email().clear_email_login_token(account_id)
+            })?;
+            Ok(Some(account_id))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn clear_email_login_token(&self, id: AccountIdInternal) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.account().email().clear_email_login_token(id)
+        })
+    }
 }

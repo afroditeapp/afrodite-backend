@@ -25,6 +25,8 @@ pub use server_common::{data::DataError, result};
     paths(
         // Account
         account::post_sign_in_with_login,
+        account::post_request_email_login_token,
+        account::post_email_login_with_token,
         account::get_verify_email,
         account::get_verify_new_email,
         // Account bot API

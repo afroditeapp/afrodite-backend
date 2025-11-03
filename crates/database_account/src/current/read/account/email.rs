@@ -2,7 +2,7 @@ use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{AccountIdInternal, UnixTime};
-use model_account::AccountEmailSendingStateRaw;
+use model_account::{AccountEmailSendingStateRaw, EmailAddress};
 
 use crate::IntoDatabaseError;
 
@@ -64,5 +64,43 @@ impl CurrentReadAccountEmail<'_> {
             .into_db_error(())?;
 
         Ok(account_data)
+    }
+
+    pub fn find_account_by_email_login_token(
+        &mut self,
+        token: Vec<u8>,
+    ) -> Result<Option<(AccountIdInternal, UnixTime)>, DieselDatabaseError> {
+        use model::schema::{account, account_id};
+
+        let account_data = account::table
+            .inner_join(account_id::table)
+            .filter(account::email_login_token.eq(Some(token)))
+            .filter(account::email_login_token_unix_time.is_not_null())
+            .select((
+                AccountIdInternal::as_select(),
+                account::email_login_token_unix_time.assume_not_null(),
+            ))
+            .first(self.conn())
+            .optional()
+            .into_db_error(())?;
+
+        Ok(account_data)
+    }
+
+    pub fn account_id_from_email(
+        &mut self,
+        email: EmailAddress,
+    ) -> Result<Option<AccountIdInternal>, DieselDatabaseError> {
+        use crate::schema::{account, account_id};
+
+        let found_account: Option<AccountIdInternal> = account::table
+            .inner_join(account_id::table)
+            .filter(account::email.eq(email))
+            .select(AccountIdInternal::as_select())
+            .first(self.conn())
+            .optional()
+            .into_db_error(())?;
+
+        Ok(found_account)
     }
 }

@@ -146,4 +146,39 @@ impl CurrentWriteAccountEmail<'_> {
 
         Ok(())
     }
+
+    pub fn set_email_login_token(
+        &mut self,
+        id: AccountIdInternal,
+        token: Vec<u8>,
+        token_unix_time: UnixTime,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account::dsl::*;
+
+        update(account.find(id.as_db_id()))
+            .set((
+                email_login_token.eq(Some(token)),
+                email_login_token_unix_time.eq(Some(token_unix_time)),
+            ))
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
+    }
+
+    /// Does not clear email_login_token_unix_time, so that email sending limit
+    /// will work.
+    pub fn clear_email_login_token(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account::dsl::*;
+
+        update(account.find(id.as_db_id()))
+            .set(email_login_token.eq(None::<Vec<u8>>))
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
+    }
 }

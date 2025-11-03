@@ -39,12 +39,17 @@ pub async fn get_account_id_from_email(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let r = state
+    let aid = state
         .read()
-        .account_admin()
-        .search()
+        .account()
+        .email()
         .account_id_from_email(email.email)
         .await?;
+
+    let r = GetAccountIdFromEmailResult {
+        aid: aid.map(|v| v.uuid),
+    };
+
     Ok(r.into())
 }
 

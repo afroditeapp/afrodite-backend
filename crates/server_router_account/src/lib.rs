@@ -76,6 +76,14 @@ impl AccountRoutes {
                 post(api::account::post_sign_in_with_apple_redirect_to_app),
             )
             .route(
+                api::account::PATH_POST_REQUEST_EMAIL_LOGIN_TOKEN,
+                post(api::account::post_request_email_login_token),
+            )
+            .route(
+                api::account::PATH_POST_EMAIL_LOGIN_WITH_TOKEN,
+                post(api::account::post_email_login_with_token),
+            )
+            .route(
                 api::account::PATH_GET_VERIFY_EMAIL,
                 get(api::account::get_verify_email),
             )
