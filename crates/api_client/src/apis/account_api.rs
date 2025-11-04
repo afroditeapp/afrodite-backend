@@ -87,19 +87,28 @@ pub enum GetNewsItemError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_account_app_notification_settings`]
+/// struct for typed errors of method [`get_verify_email`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostAccountAppNotificationSettingsError {
-    Status401(),
+pub enum GetVerifyEmailError {
+    Status400(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_account_data`]
+/// struct for typed errors of method [`get_verify_new_email`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostAccountDataError {
+pub enum GetVerifyNewEmailError {
+    Status400(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_account_app_notification_settings`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostAccountAppNotificationSettingsError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -111,6 +120,15 @@ pub enum PostAccountDataError {
 pub enum PostAccountSetupError {
     Status401(),
     Status406(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_cancel_email_change`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostCancelEmailChangeError {
+    Status400(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -175,6 +193,15 @@ pub enum PostDemoAccountRegisterAccountError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`post_email_login_with_token`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostEmailLoginWithTokenError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`post_get_client_features_config`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -220,6 +247,24 @@ pub enum PostGetUnreadNewsCountError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`post_init_email_change`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostInitEmailChangeError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_initial_email`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostInitialEmailError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`post_logout`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -229,10 +274,26 @@ pub enum PostLogoutError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`post_request_email_login_token`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostRequestEmailLoginTokenError {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`post_reset_news_paging`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostResetNewsPagingError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_send_verify_email_message`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostSendVerifyEmailMessageError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -585,6 +646,58 @@ pub async fn get_news_item(configuration: &configuration::Configuration, nid: i6
     }
 }
 
+/// This modifies server state even if the HTTP method is GET.  Returns plain text response indicating success or failure.
+pub async fn get_verify_email(configuration: &configuration::Configuration, token: &str) -> Result<(), Error<GetVerifyEmailError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_token = token;
+
+    let uri_str = format!("{}/account_api/verify_email/{token}", configuration.base_path, token=crate::apis::urlencode(p_path_token));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetVerifyEmailError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// This modifies server state even if the HTTP method is GET.  Returns plain text response indicating success or failure.
+pub async fn get_verify_new_email(configuration: &configuration::Configuration, token: &str) -> Result<(), Error<GetVerifyNewEmailError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_token = token;
+
+    let uri_str = format!("{}/account_api/verify_new_email/{token}", configuration.base_path, token=crate::apis::urlencode(p_path_token));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetVerifyNewEmailError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 pub async fn post_account_app_notification_settings(configuration: &configuration::Configuration, account_app_notification_settings: models::AccountAppNotificationSettings) -> Result<(), Error<PostAccountAppNotificationSettingsError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_account_app_notification_settings = account_app_notification_settings;
@@ -614,35 +727,6 @@ pub async fn post_account_app_notification_settings(configuration: &configuratio
     }
 }
 
-pub async fn post_account_data(configuration: &configuration::Configuration, account_data: models::AccountData) -> Result<(), Error<PostAccountDataError>> {
-    // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_account_data = account_data;
-
-    let uri_str = format!("{}/account_api/account_data", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
-
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref token) = configuration.bearer_access_token {
-        req_builder = req_builder.bearer_auth(token.to_owned());
-    };
-    req_builder = req_builder.json(&p_body_account_data);
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-
-    if !status.is_client_error() && !status.is_server_error() {
-        Ok(())
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<PostAccountDataError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
 pub async fn post_account_setup(configuration: &configuration::Configuration, set_account_setup: models::SetAccountSetup) -> Result<(), Error<PostAccountSetupError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_set_account_setup = set_account_setup;
@@ -668,6 +752,32 @@ pub async fn post_account_setup(configuration: &configuration::Configuration, se
     } else {
         let content = resp.text().await?;
         let entity: Option<PostAccountSetupError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn post_cancel_email_change(configuration: &configuration::Configuration, ) -> Result<(), Error<PostCancelEmailChangeError>> {
+
+    let uri_str = format!("{}/account_api/cancel_email_change", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostCancelEmailChangeError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -878,7 +988,7 @@ pub async fn post_demo_account_logout(configuration: &configuration::Configurati
     }
 }
 
-pub async fn post_demo_account_register_account(configuration: &configuration::Configuration, demo_account_token: models::DemoAccountToken) -> Result<models::AccountId, Error<PostDemoAccountRegisterAccountError>> {
+pub async fn post_demo_account_register_account(configuration: &configuration::Configuration, demo_account_token: models::DemoAccountToken) -> Result<models::DemoAccountRegisterAccountResult, Error<PostDemoAccountRegisterAccountError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_demo_account_token = demo_account_token;
 
@@ -905,12 +1015,49 @@ pub async fn post_demo_account_register_account(configuration: &configuration::C
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::AccountId`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::AccountId`")))),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::DemoAccountRegisterAccountResult`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::DemoAccountRegisterAccountResult`")))),
         }
     } else {
         let content = resp.text().await?;
         let entity: Option<PostDemoAccountRegisterAccountError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn post_email_login_with_token(configuration: &configuration::Configuration, email_login_token: models::EmailLoginToken) -> Result<models::LoginResult, Error<PostEmailLoginWithTokenError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_email_login_token = email_login_token;
+
+    let uri_str = format!("{}/account_api/email_login_with_token", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    req_builder = req_builder.json(&p_body_email_login_token);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::LoginResult`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::LoginResult`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostEmailLoginWithTokenError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -1111,6 +1258,76 @@ pub async fn post_get_unread_news_count(configuration: &configuration::Configura
     }
 }
 
+/// The process: 1. User provides new email address 2. Verification email sent to new address 3. Notification email sent to current address 4. After configured time elapses and new email is verified, email changes  Error is returned when  - account does not already have email address set,  - the new email is the current email or  - email address change is already in progress.
+pub async fn post_init_email_change(configuration: &configuration::Configuration, init_email_change: models::InitEmailChange) -> Result<models::InitEmailChangeResult, Error<PostInitEmailChangeError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_init_email_change = init_email_change;
+
+    let uri_str = format!("{}/account_api/init_email_change", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_init_email_change);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::InitEmailChangeResult`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::InitEmailChangeResult`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostInitEmailChangeError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn post_initial_email(configuration: &configuration::Configuration, set_initial_email: models::SetInitialEmail) -> Result<(), Error<PostInitialEmailError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_set_initial_email = set_initial_email;
+
+    let uri_str = format!("{}/account_api/initial_email", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_set_initial_email);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostInitialEmailError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 pub async fn post_logout(configuration: &configuration::Configuration, ) -> Result<(), Error<PostLogoutError>> {
 
     let uri_str = format!("{}/account_api/logout", configuration.base_path);
@@ -1133,6 +1350,44 @@ pub async fn post_logout(configuration: &configuration::Configuration, ) -> Resu
     } else {
         let content = resp.text().await?;
         let entity: Option<PostLogoutError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// The route always takes at least 5 seconds to complete to prevent timing attacks that could be used to enumerate existing email addresses.  No error is returned to prevent attackers from discovering which email addresses exist in the system.
+pub async fn post_request_email_login_token(configuration: &configuration::Configuration, request_email_login_token: models::RequestEmailLoginToken) -> Result<models::RequestEmailLoginTokenResult, Error<PostRequestEmailLoginTokenError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_request_email_login_token = request_email_login_token;
+
+    let uri_str = format!("{}/account_api/request_email_login_token", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    req_builder = req_builder.json(&p_body_request_email_login_token);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::RequestEmailLoginTokenResult`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::RequestEmailLoginTokenResult`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostRequestEmailLoginTokenError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -1170,6 +1425,43 @@ pub async fn post_reset_news_paging(configuration: &configuration::Configuration
     } else {
         let content = resp.text().await?;
         let entity: Option<PostResetNewsPagingError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn post_send_verify_email_message(configuration: &configuration::Configuration, ) -> Result<models::SendVerifyEmailMessageResult, Error<PostSendVerifyEmailMessageError>> {
+
+    let uri_str = format!("{}/account_api/send_verify_email_message", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::SendVerifyEmailMessageResult`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::SendVerifyEmailMessageResult`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostSendVerifyEmailMessageError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

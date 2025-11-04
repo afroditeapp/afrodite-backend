@@ -14,11 +14,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct DailyLikesLeftSyncVersion {
     #[serde(rename = "version")]
-    pub version: i64,
+    pub version: i32,
 }
 
 impl DailyLikesLeftSyncVersion {
-    pub fn new(version: i64) -> DailyLikesLeftSyncVersion {
+    pub fn new(version: i32) -> DailyLikesLeftSyncVersion {
         DailyLikesLeftSyncVersion {
             version,
         }

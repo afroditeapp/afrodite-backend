@@ -14,11 +14,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProfileStringModerationRejectedReasonCategory {
     #[serde(rename = "value")]
-    pub value: i64,
+    pub value: i32,
 }
 
 impl ProfileStringModerationRejectedReasonCategory {
-    pub fn new(value: i64) -> ProfileStringModerationRejectedReasonCategory {
+    pub fn new(value: i32) -> ProfileStringModerationRejectedReasonCategory {
         ProfileStringModerationRejectedReasonCategory {
             value,
         }

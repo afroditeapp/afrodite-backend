@@ -74,6 +74,7 @@ pub enum GetMyProfileError {
 #[serde(untagged)]
 pub enum GetProfileError {
     Status401(),
+    Status429(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -137,6 +138,7 @@ pub enum GetSearchGroupsError {
 #[serde(untagged)]
 pub enum PostAutomaticProfileSearchGetNextProfilePageError {
     Status401(),
+    Status429(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -146,6 +148,7 @@ pub enum PostAutomaticProfileSearchGetNextProfilePageError {
 #[serde(untagged)]
 pub enum PostAutomaticProfileSearchResetProfilePagingError {
     Status401(),
+    Status429(),
     Status500(),
     UnknownValue(serde_json::Value),
 }

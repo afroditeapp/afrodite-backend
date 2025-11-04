@@ -12,15 +12,15 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct AccountBanReasonCategory {
-    #[serde(rename = "value")]
-    pub value: i32,
+pub struct SetInitialEmail {
+    #[serde(rename = "email")]
+    pub email: String,
 }
 
-impl AccountBanReasonCategory {
-    pub fn new(value: i32) -> AccountBanReasonCategory {
-        AccountBanReasonCategory {
-            value,
+impl SetInitialEmail {
+    pub fn new(email: String) -> SetInitialEmail {
+        SetInitialEmail {
+            email,
         }
     }
 }

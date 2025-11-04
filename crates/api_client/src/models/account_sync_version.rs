@@ -14,11 +14,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AccountSyncVersion {
     #[serde(rename = "version")]
-    pub version: i64,
+    pub version: i32,
 }
 
 impl AccountSyncVersion {
-    pub fn new(version: i64) -> AccountSyncVersion {
+    pub fn new(version: i32) -> AccountSyncVersion {
         AccountSyncVersion {
             version,
         }

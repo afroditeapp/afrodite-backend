@@ -18,6 +18,11 @@ pub struct LoginResult {
     pub aid: Option<Option<Box<models::AccountId>>>,
     #[serde(rename = "email", skip_serializing_if = "Option::is_none")]
     pub email: Option<String>,
+    /// This might be true, when registering new account using sign in with login method.
+    #[serde(rename = "error_email_already_used", skip_serializing_if = "Option::is_none")]
+    pub error_email_already_used: Option<bool>,
+    #[serde(rename = "error_sign_in_with_email_unverified", skip_serializing_if = "Option::is_none")]
+    pub error_sign_in_with_email_unverified: Option<bool>,
     #[serde(rename = "error_unsupported_client", skip_serializing_if = "Option::is_none")]
     pub error_unsupported_client: Option<bool>,
     /// If `None`, the client is unsupported.
@@ -30,6 +35,8 @@ impl LoginResult {
         LoginResult {
             aid: None,
             email: None,
+            error_email_already_used: None,
+            error_sign_in_with_email_unverified: None,
             error_unsupported_client: None,
             tokens: None,
         }

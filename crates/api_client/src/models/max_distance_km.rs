@@ -15,12 +15,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MaxDistanceKm {
     #[serde(rename = "value")]
-    pub value: i64,
+    pub value: i32,
 }
 
 impl MaxDistanceKm {
     /// Profile iterator max distance in kilometers.  The value is equal or greater than 1.
-    pub fn new(value: i64) -> MaxDistanceKm {
+    pub fn new(value: i32) -> MaxDistanceKm {
         MaxDistanceKm {
             value,
         }

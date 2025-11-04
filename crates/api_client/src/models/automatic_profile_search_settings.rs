@@ -21,11 +21,11 @@ pub struct AutomaticProfileSearchSettings {
     pub new_profiles: bool,
     /// Selected weekdays.  The integer is a bitflag.  - const MONDAY = 0x1; - const TUESDAY = 0x2; - const WEDNESDAY = 0x4; - const THURSDAY = 0x8; - const FRIDAY = 0x10; - const SATURDAY = 0x20; - const SUNDAY = 0x40; 
     #[serde(rename = "weekdays")]
-    pub weekdays: i64,
+    pub weekdays: i32,
 }
 
 impl AutomaticProfileSearchSettings {
-    pub fn new(attribute_filters: bool, distance_filters: bool, new_profiles: bool, weekdays: i64) -> AutomaticProfileSearchSettings {
+    pub fn new(attribute_filters: bool, distance_filters: bool, new_profiles: bool, weekdays: i32) -> AutomaticProfileSearchSettings {
         AutomaticProfileSearchSettings {
             attribute_filters,
             distance_filters,

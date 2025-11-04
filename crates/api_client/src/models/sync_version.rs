@@ -15,12 +15,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SyncVersion {
     #[serde(rename = "version")]
-    pub version: i64,
+    pub version: i32,
 }
 
 impl SyncVersion {
     /// Sync version stored on the server. The value has range of [0, 255].
-    pub fn new(version: i64) -> SyncVersion {
+    pub fn new(version: i32) -> SyncVersion {
         SyncVersion {
             version,
         }

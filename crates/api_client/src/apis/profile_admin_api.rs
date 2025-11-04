@@ -209,7 +209,7 @@ pub async fn get_profile_age_and_name(configuration: &configuration::Configurati
     }
 }
 
-pub async fn get_profile_statistics_history(configuration: &configuration::Configuration, value_type: models::ProfileStatisticsHistoryValueType, age: Option<i64>) -> Result<models::GetProfileStatisticsHistoryResult, Error<GetProfileStatisticsHistoryError>> {
+pub async fn get_profile_statistics_history(configuration: &configuration::Configuration, value_type: models::ProfileStatisticsHistoryValueType, age: Option<i32>) -> Result<models::GetProfileStatisticsHistoryResult, Error<GetProfileStatisticsHistoryError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_value_type = value_type;
     let p_query_age = age;

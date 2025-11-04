@@ -11,6 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
+/// AccountId : This is quaranteed to not be reused for another account
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AccountId {
     #[serde(rename = "aid")]
@@ -18,6 +19,7 @@ pub struct AccountId {
 }
 
 impl AccountId {
+    /// This is quaranteed to not be reused for another account
     pub fn new(aid: String) -> AccountId {
         AccountId {
             aid,

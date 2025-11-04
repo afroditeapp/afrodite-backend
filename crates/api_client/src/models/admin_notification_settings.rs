@@ -15,17 +15,17 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AdminNotificationSettings {
     #[serde(rename = "daily_enabled_time_end_seconds")]
-    pub daily_enabled_time_end_seconds: i64,
+    pub daily_enabled_time_end_seconds: i32,
     #[serde(rename = "daily_enabled_time_start_seconds")]
-    pub daily_enabled_time_start_seconds: i64,
+    pub daily_enabled_time_start_seconds: i32,
     /// Selected weekdays.  The integer is a bitflag.  - const MONDAY = 0x1; - const TUESDAY = 0x2; - const WEDNESDAY = 0x4; - const THURSDAY = 0x8; - const FRIDAY = 0x10; - const SATURDAY = 0x20; - const SUNDAY = 0x40; 
     #[serde(rename = "weekdays")]
-    pub weekdays: i64,
+    pub weekdays: i32,
 }
 
 impl AdminNotificationSettings {
     /// Timezone for timestamps is UTC+0.
-    pub fn new(daily_enabled_time_end_seconds: i64, daily_enabled_time_start_seconds: i64, weekdays: i64) -> AdminNotificationSettings {
+    pub fn new(daily_enabled_time_end_seconds: i32, daily_enabled_time_start_seconds: i32, weekdays: i32) -> AdminNotificationSettings {
         AdminNotificationSettings {
             daily_enabled_time_end_seconds,
             daily_enabled_time_start_seconds,

@@ -19,13 +19,13 @@ pub struct ProfileAgeCounts {
     pub nonbinaries: Vec<i64>,
     /// Age for first count
     #[serde(rename = "start_age")]
-    pub start_age: i64,
+    pub start_age: i32,
     #[serde(rename = "women")]
     pub women: Vec<i64>,
 }
 
 impl ProfileAgeCounts {
-    pub fn new(men: Vec<i64>, nonbinaries: Vec<i64>, start_age: i64, women: Vec<i64>) -> ProfileAgeCounts {
+    pub fn new(men: Vec<i64>, nonbinaries: Vec<i64>, start_age: i32, women: Vec<i64>) -> ProfileAgeCounts {
         ProfileAgeCounts {
             men,
             nonbinaries,

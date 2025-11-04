@@ -15,12 +15,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MediaContentSyncVersion {
     #[serde(rename = "version")]
-    pub version: i64,
+    pub version: i32,
 }
 
 impl MediaContentSyncVersion {
     /// Sync version for profile and security content
-    pub fn new(version: i64) -> MediaContentSyncVersion {
+    pub fn new(version: i32) -> MediaContentSyncVersion {
         MediaContentSyncVersion {
             version,
         }

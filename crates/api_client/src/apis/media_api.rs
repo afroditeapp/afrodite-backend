@@ -87,6 +87,7 @@ pub enum GetMediaContentInfoError {
 #[serde(untagged)]
 pub enum GetProfileContentInfoError {
     Status401(),
+    Status429(),
     Status500(),
     UnknownValue(serde_json::Value),
 }

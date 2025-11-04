@@ -11,7 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// ProfileTextMaxCharactersFilter : Filter value for profile text max characters.
+/// ProfileTextMaxCharactersFilter : Filter value for profile text max characters. The value must be 0 or greater.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProfileTextMaxCharactersFilter {
     #[serde(rename = "value")]
@@ -19,7 +19,7 @@ pub struct ProfileTextMaxCharactersFilter {
 }
 
 impl ProfileTextMaxCharactersFilter {
-    /// Filter value for profile text max characters.
+    /// Filter value for profile text max characters. The value must be 0 or greater.
     pub fn new(value: i32) -> ProfileTextMaxCharactersFilter {
         ProfileTextMaxCharactersFilter {
             value,

@@ -15,13 +15,13 @@ use serde::{Deserialize, Serialize};
 pub struct DailyLikesLeft {
     /// This value can be ignored when like sending limit is not enabled.
     #[serde(rename = "likes")]
-    pub likes: i64,
+    pub likes: i32,
     #[serde(rename = "version")]
     pub version: Box<models::DailyLikesLeftSyncVersion>,
 }
 
 impl DailyLikesLeft {
-    pub fn new(likes: i64, version: models::DailyLikesLeftSyncVersion) -> DailyLikesLeft {
+    pub fn new(likes: i32, version: models::DailyLikesLeftSyncVersion) -> DailyLikesLeft {
         DailyLikesLeft {
             likes,
             version: Box::new(version),

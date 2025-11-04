@@ -11,7 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// ProfileTextMinCharactersFilter : Filter value for profile text min characters.
+/// ProfileTextMinCharactersFilter : Filter value for profile text min characters. The value must be 0 or greater.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProfileTextMinCharactersFilter {
     #[serde(rename = "value")]
@@ -19,7 +19,7 @@ pub struct ProfileTextMinCharactersFilter {
 }
 
 impl ProfileTextMinCharactersFilter {
-    /// Filter value for profile text min characters.
+    /// Filter value for profile text min characters. The value must be 0 or greater.
     pub fn new(value: i32) -> ProfileTextMinCharactersFilter {
         ProfileTextMinCharactersFilter {
             value,

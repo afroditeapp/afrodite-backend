@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AccountIdDbValue {
+    /// This is quaranteed to not be reused for another account
     #[serde(rename = "account_db_id")]
     pub account_db_id: i64,
 }

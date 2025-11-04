@@ -15,12 +15,16 @@ use serde::{Deserialize, Serialize};
 pub struct ReportChatInfo {
     #[serde(rename = "creator_blocked_target", skip_serializing_if = "Option::is_none")]
     pub creator_blocked_target: Option<bool>,
+    #[serde(rename = "creator_created_video_call_url", skip_serializing_if = "Option::is_none")]
+    pub creator_created_video_call_url: Option<bool>,
     #[serde(rename = "creator_sent_messages_count", skip_serializing_if = "Option::is_none")]
     pub creator_sent_messages_count: Option<i64>,
     #[serde(rename = "state")]
     pub state: models::ReportChatInfoInteractionState,
     #[serde(rename = "target_blocked_creator", skip_serializing_if = "Option::is_none")]
     pub target_blocked_creator: Option<bool>,
+    #[serde(rename = "target_created_video_call_url", skip_serializing_if = "Option::is_none")]
+    pub target_created_video_call_url: Option<bool>,
     #[serde(rename = "target_sent_messages_count", skip_serializing_if = "Option::is_none")]
     pub target_sent_messages_count: Option<i64>,
 }
@@ -29,9 +33,11 @@ impl ReportChatInfo {
     pub fn new(state: models::ReportChatInfoInteractionState) -> ReportChatInfo {
         ReportChatInfo {
             creator_blocked_target: None,
+            creator_created_video_call_url: None,
             creator_sent_messages_count: None,
             state,
             target_blocked_creator: None,
+            target_created_video_call_url: None,
             target_sent_messages_count: None,
         }
     }

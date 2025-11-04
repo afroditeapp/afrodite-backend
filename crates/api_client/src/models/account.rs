@@ -13,6 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Account {
+    #[serde(rename = "email_verified", skip_serializing_if = "Option::is_none")]
+    pub email_verified: Option<bool>,
     #[serde(rename = "permissions")]
     pub permissions: Box<models::Permissions>,
     #[serde(rename = "state")]
@@ -26,6 +28,7 @@ pub struct Account {
 impl Account {
     pub fn new(permissions: models::Permissions, state: models::AccountStateContainer, sync_version: models::AccountSyncVersion, visibility: models::ProfileVisibility) -> Account {
         Account {
+            email_verified: None,
             permissions: Box::new(permissions),
             state: Box::new(state),
             sync_version: Box::new(sync_version),

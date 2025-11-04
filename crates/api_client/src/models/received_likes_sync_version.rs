@@ -15,12 +15,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ReceivedLikesSyncVersion {
     #[serde(rename = "version")]
-    pub version: i64,
+    pub version: i32,
 }
 
 impl ReceivedLikesSyncVersion {
     /// Sync version for new received likes count
-    pub fn new(version: i64) -> ReceivedLikesSyncVersion {
+    pub fn new(version: i32) -> ReceivedLikesSyncVersion {
         ReceivedLikesSyncVersion {
             version,
         }

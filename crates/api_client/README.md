@@ -34,9 +34,11 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**get_account_state**](docs/AccountApi.md#get_account_state) | **GET** /account_api/state | Get current account state.
 *AccountApi* | [**get_latest_birthdate**](docs/AccountApi.md#get_latest_birthdate) | **GET** /account_api/latest_birthdate | 
 *AccountApi* | [**get_news_item**](docs/AccountApi.md#get_news_item) | **GET** /account_api/news_item/{nid} | Get news item content using specific locale and fallback to locale \"en\" if news translation is not found.
+*AccountApi* | [**get_verify_email**](docs/AccountApi.md#get_verify_email) | **GET** /account_api/verify_email/{token} | Verify email address using the token sent via email. This endpoint is meant to be accessed via a link in the verification email. To workaround email security scanning related link accessing, the link can be opened multiple times.
+*AccountApi* | [**get_verify_new_email**](docs/AccountApi.md#get_verify_new_email) | **GET** /account_api/verify_new_email/{token} | Verify new email address using the token sent via email. This endpoint is meant to be accessed via a link in the verification email. To workaround email security scanning related link accessing, the link can be opened multiple times.
 *AccountApi* | [**post_account_app_notification_settings**](docs/AccountApi.md#post_account_app_notification_settings) | **POST** /account_api/post_account_app_notification_settings | 
-*AccountApi* | [**post_account_data**](docs/AccountApi.md#post_account_data) | **POST** /account_api/account_data | Set changeable user information to account.
 *AccountApi* | [**post_account_setup**](docs/AccountApi.md#post_account_setup) | **POST** /account_api/account_setup | Setup non-changeable user information during `initial setup` state.
+*AccountApi* | [**post_cancel_email_change**](docs/AccountApi.md#post_cancel_email_change) | **POST** /account_api/cancel_email_change | Cancel email changing process
 *AccountApi* | [**post_complete_setup**](docs/AccountApi.md#post_complete_setup) | **POST** /account_api/complete_setup | Complete initial setup.
 *AccountApi* | [**post_custom_report_empty**](docs/AccountApi.md#post_custom_report_empty) | **POST** /account_api/custom_report_empty | Send custom report without any content
 *AccountApi* | [**post_demo_account_accessible_accounts**](docs/AccountApi.md#post_demo_account_accessible_accounts) | **POST** /account_api/demo_account_accessible_accounts | Get demo account's available accounts.
@@ -44,13 +46,18 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_demo_account_login_to_account**](docs/AccountApi.md#post_demo_account_login_to_account) | **POST** /account_api/demo_account_login_to_account | 
 *AccountApi* | [**post_demo_account_logout**](docs/AccountApi.md#post_demo_account_logout) | **POST** /account_api/demo_account_logout | 
 *AccountApi* | [**post_demo_account_register_account**](docs/AccountApi.md#post_demo_account_register_account) | **POST** /account_api/demo_account_register_account | 
+*AccountApi* | [**post_email_login_with_token**](docs/AccountApi.md#post_email_login_with_token) | **POST** /account_api/email_login_with_token | Login using email login token (single use, max 1 guess).
 *AccountApi* | [**post_get_client_features_config**](docs/AccountApi.md#post_get_client_features_config) | **POST** /account_api/client_features_config | 
 *AccountApi* | [**post_get_custom_reports_config**](docs/AccountApi.md#post_get_custom_reports_config) | **POST** /account_api/custom_reports_config | 
 *AccountApi* | [**post_get_news_page**](docs/AccountApi.md#post_get_news_page) | **POST** /account_api/news_page | 
 *AccountApi* | [**post_get_next_client_id**](docs/AccountApi.md#post_get_next_client_id) | **POST** /account_api/next_client_id | 
 *AccountApi* | [**post_get_unread_news_count**](docs/AccountApi.md#post_get_unread_news_count) | **POST** /account_api/news_count | The unread news count for public news.
+*AccountApi* | [**post_init_email_change**](docs/AccountApi.md#post_init_email_change) | **POST** /account_api/init_email_change | Initiate email change process by providing a new email address.
+*AccountApi* | [**post_initial_email**](docs/AccountApi.md#post_initial_email) | **POST** /account_api/initial_email | Set initial email when initial setup is ongoing
 *AccountApi* | [**post_logout**](docs/AccountApi.md#post_logout) | **POST** /account_api/logout | 
+*AccountApi* | [**post_request_email_login_token**](docs/AccountApi.md#post_request_email_login_token) | **POST** /account_api/request_email_login_token | Request email login token to be sent via email.
 *AccountApi* | [**post_reset_news_paging**](docs/AccountApi.md#post_reset_news_paging) | **POST** /account_api/reset_news_paging | 
+*AccountApi* | [**post_send_verify_email_message**](docs/AccountApi.md#post_send_verify_email_message) | **POST** /account_api/send_verify_email_message | 
 *AccountApi* | [**post_set_account_deletion_request_state**](docs/AccountApi.md#post_set_account_deletion_request_state) | **POST** /account_api/set_account_deletion_request_state/{aid} | Request account deletion or cancel the deletion
 *AccountApi* | [**post_sign_in_with_login**](docs/AccountApi.md#post_sign_in_with_login) | **POST** /account_api/sign_in_with_login | Start new session with sign in with Apple or Google.
 *AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update current or pending profile visiblity value.
@@ -72,6 +79,7 @@ Class | Method | HTTP request | Description
 *AccountBotApi* | [**post_bot_register**](docs/AccountBotApi.md#post_bot_register) | **POST** /account_api/bot_register | Register a new bot account. Returns new account ID which is UUID.
 *AccountBotApi* | [**post_remote_bot_login**](docs/AccountBotApi.md#post_remote_bot_login) | **POST** /account_api/remote_bot_login | Login for remote bots which are listed in server config file.
 *ChatApi* | [**get_chat_app_notification_settings**](docs/ChatApi.md#get_chat_app_notification_settings) | **GET** /chat_api/get_chat_app_notification_settings | 
+*ChatApi* | [**get_chat_email_notification_settings**](docs/ChatApi.md#get_chat_email_notification_settings) | **GET** /chat_api/get_chat_email_notification_settings | 
 *ChatApi* | [**get_conversation_id**](docs/ChatApi.md#get_conversation_id) | **GET** /chat_api/conversation_id/{aid} | Get account specific conversation ID which can be used to display new message received notifications.
 *ChatApi* | [**get_daily_likes_left**](docs/ChatApi.md#get_daily_likes_left) | **GET** /chat_api/daily_likes_left | Get daily likes left value.
 *ChatApi* | [**get_initial_matches_iterator_state**](docs/ChatApi.md#get_initial_matches_iterator_state) | **GET** /chat_api/matches/initial_state | 
@@ -81,13 +89,14 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**get_public_key**](docs/ChatApi.md#get_public_key) | **GET** /chat_api/public_key/{aid} | Get current public key of some account
 *ChatApi* | [**get_sent_blocks**](docs/ChatApi.md#get_sent_blocks) | **GET** /chat_api/sent_blocks | Get list of sent blocks
 *ChatApi* | [**get_sent_message_ids**](docs/ChatApi.md#get_sent_message_ids) | **GET** /chat_api/sent_message_ids | 
-*ChatApi* | [**get_video_call_urls**](docs/ChatApi.md#get_video_call_urls) | **GET** /chat_api/get_video_call_urls | Create Jitsi Meet video call URLs to a meeting with an user.
 *ChatApi* | [**post_add_public_key**](docs/ChatApi.md#post_add_public_key) | **POST** /chat_api/add_public_key | Add new public key.
 *ChatApi* | [**post_add_receiver_acknowledgement**](docs/ChatApi.md#post_add_receiver_acknowledgement) | **POST** /chat_api/add_receiver_acknowledgement | 
 *ChatApi* | [**post_add_sender_acknowledgement**](docs/ChatApi.md#post_add_sender_acknowledgement) | **POST** /chat_api/add_sender_acknowledgement | 
 *ChatApi* | [**post_block_profile**](docs/ChatApi.md#post_block_profile) | **POST** /chat_api/block_profile | Block profile
 *ChatApi* | [**post_chat_app_notification_settings**](docs/ChatApi.md#post_chat_app_notification_settings) | **POST** /chat_api/post_chat_app_notification_settings | 
+*ChatApi* | [**post_chat_email_notification_settings**](docs/ChatApi.md#post_chat_email_notification_settings) | **POST** /chat_api/post_chat_email_notification_settings | 
 *ChatApi* | [**post_chat_message_report**](docs/ChatApi.md#post_chat_message_report) | **POST** /chat_api/chat_message_report | Report chat message.
+*ChatApi* | [**post_create_video_call_url**](docs/ChatApi.md#post_create_video_call_url) | **POST** /chat_api/post_create_video_call_url | Create video call URL to a meeting with an user.
 *ChatApi* | [**post_get_matches_iterator_page**](docs/ChatApi.md#post_get_matches_iterator_page) | **POST** /chat_api/matches | Get requested page of matches iterator page. If the page is empty there is no more matches available.
 *ChatApi* | [**post_get_new_received_likes_count**](docs/ChatApi.md#post_get_new_received_likes_count) | **POST** /chat_api/new_received_likes_count | 
 *ChatApi* | [**post_get_received_likes_page**](docs/ChatApi.md#post_get_received_likes_page) | **POST** /chat_api/received_likes | Get next page of received likes. If the page is empty there is no more received likes available.
@@ -238,6 +247,7 @@ Class | Method | HTTP request | Description
  - [BackendVersion](docs/BackendVersion.md)
  - [BooleanSetting](docs/BooleanSetting.md)
  - [ChatAppNotificationSettings](docs/ChatAppNotificationSettings.md)
+ - [ChatEmailNotificationSettings](docs/ChatEmailNotificationSettings.md)
  - [ChatMessageReport](docs/ChatMessageReport.md)
  - [ClientConfig](docs/ClientConfig.md)
  - [ClientConfigSyncVersion](docs/ClientConfigSyncVersion.md)
@@ -282,7 +292,9 @@ Class | Method | HTTP request | Description
  - [DemoAccountLoginCredentials](docs/DemoAccountLoginCredentials.md)
  - [DemoAccountLoginResult](docs/DemoAccountLoginResult.md)
  - [DemoAccountLoginToAccount](docs/DemoAccountLoginToAccount.md)
+ - [DemoAccountRegisterAccountResult](docs/DemoAccountRegisterAccountResult.md)
  - [DemoAccountToken](docs/DemoAccountToken.md)
+ - [EmailLoginToken](docs/EmailLoginToken.md)
  - [EventToClient](docs/EventToClient.md)
  - [EventType](docs/EventType.md)
  - [FavoriteProfilesPage](docs/FavoriteProfilesPage.md)
@@ -323,14 +335,15 @@ Class | Method | HTTP request | Description
  - [GetPushNotificationInfo](docs/GetPushNotificationInfo.md)
  - [GetReportList](docs/GetReportList.md)
  - [GetSentMessage](docs/GetSentMessage.md)
- - [GetVideoCallUrlsResult](docs/GetVideoCallUrlsResult.md)
  - [GroupValues](docs/GroupValues.md)
+ - [InitEmailChange](docs/InitEmailChange.md)
+ - [InitEmailChangeResult](docs/InitEmailChangeResult.md)
  - [InitialProfileAge](docs/InitialProfileAge.md)
  - [IpAddressInfo](docs/IpAddressInfo.md)
  - [IpCountryStatistics](docs/IpCountryStatistics.md)
  - [IpCountryStatisticsType](docs/IpCountryStatisticsType.md)
  - [IpCountryStatisticsValue](docs/IpCountryStatisticsValue.md)
- - [JitsiMeetUrls](docs/JitsiMeetUrls.md)
+ - [JitsiMeetUrl](docs/JitsiMeetUrl.md)
  - [Language](docs/Language.md)
  - [LastSeenTimeFilter](docs/LastSeenTimeFilter.md)
  - [LatestBirthdate](docs/LatestBirthdate.md)
@@ -388,6 +401,7 @@ Class | Method | HTTP request | Description
  - [PostModerateMediaContent](docs/PostModerateMediaContent.md)
  - [PostModerateProfileString](docs/PostModerateProfileString.md)
  - [PostStartDataExport](docs/PostStartDataExport.md)
+ - [PostVideoCallUrlResult](docs/PostVideoCallUrlResult.md)
  - [ProcessReport](docs/ProcessReport.md)
  - [Profile](docs/Profile.md)
  - [ProfileAgeCounts](docs/ProfileAgeCounts.md)
@@ -450,6 +464,8 @@ Class | Method | HTTP request | Description
  - [ReportIteratorQuery](docs/ReportIteratorQuery.md)
  - [ReportProcessingState](docs/ReportProcessingState.md)
  - [ReportTypeNumber](docs/ReportTypeNumber.md)
+ - [RequestEmailLoginToken](docs/RequestEmailLoginToken.md)
+ - [RequestEmailLoginTokenResult](docs/RequestEmailLoginTokenResult.md)
  - [ResetNewsIteratorResult](docs/ResetNewsIteratorResult.md)
  - [ResetReceivedLikesIteratorResult](docs/ResetReceivedLikesIteratorResult.md)
  - [ScheduledMaintenanceStatus](docs/ScheduledMaintenanceStatus.md)
@@ -461,11 +477,13 @@ Class | Method | HTTP request | Description
  - [SecurityContent](docs/SecurityContent.md)
  - [SendLikeResult](docs/SendLikeResult.md)
  - [SendMessageResult](docs/SendMessageResult.md)
+ - [SendVerifyEmailMessageResult](docs/SendVerifyEmailMessageResult.md)
  - [SentBlocksPage](docs/SentBlocksPage.md)
  - [SentMessageId](docs/SentMessageId.md)
  - [SentMessageIdList](docs/SentMessageIdList.md)
  - [SetAccountBanState](docs/SetAccountBanState.md)
  - [SetAccountSetup](docs/SetAccountSetup.md)
+ - [SetInitialEmail](docs/SetInitialEmail.md)
  - [SetMaxPublicKeyCount](docs/SetMaxPublicKeyCount.md)
  - [SetProfileContent](docs/SetProfileContent.md)
  - [SetProfileName](docs/SetProfileName.md)
