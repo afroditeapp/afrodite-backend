@@ -59,6 +59,7 @@ pub async fn login_impl(
         email: email.email,
         error_unsupported_client: false,
         error_sign_in_with_email_unverified: false,
+        error_email_already_used: false,
     };
     Ok(result)
 }
@@ -222,6 +223,18 @@ async fn handle_sign_in_with_info(
             .email()
             .try_into()
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        // Check if email is already used by another account
+        let email_already_used = state
+            .read()
+            .account()
+            .email()
+            .account_id_from_email(email.clone())
+            .await?;
+
+        if email_already_used.is_some() {
+            return Ok(LoginResult::error_email_already_used());
+        }
 
         let id = state
             .data_all_access()

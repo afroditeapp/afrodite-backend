@@ -48,6 +48,12 @@ pub struct LoginResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub error_sign_in_with_email_unverified: bool,
+
+    /// This might be true, when registering new account using
+    /// sign in with login method.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub error_email_already_used: bool,
 }
 
 impl LoginResult {
@@ -58,6 +64,7 @@ impl LoginResult {
             email: None,
             error_unsupported_client: true,
             error_sign_in_with_email_unverified: false,
+            error_email_already_used: false,
         }
     }
 
@@ -68,6 +75,18 @@ impl LoginResult {
             email: None,
             error_unsupported_client: false,
             error_sign_in_with_email_unverified: true,
+            error_email_already_used: false,
+        }
+    }
+
+    pub fn error_email_already_used() -> Self {
+        Self {
+            tokens: None,
+            aid: None,
+            email: None,
+            error_unsupported_client: false,
+            error_sign_in_with_email_unverified: false,
+            error_email_already_used: true,
         }
     }
 }
