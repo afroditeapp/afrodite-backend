@@ -213,4 +213,15 @@ impl DemoAccountManager {
             Err(DataError::NotFound.report())
         }
     }
+
+    pub async fn max_account_count(&self, id: DemoAccountId) -> Result<u8, DataError> {
+        let r = self.state.read().await;
+        let state = r.states.iter().find(|state| state.info.database_id == id);
+
+        if let Some(state) = state {
+            Ok(state.info.max_account_count())
+        } else {
+            Err(DataError::NotFound.report())
+        }
+    }
 }

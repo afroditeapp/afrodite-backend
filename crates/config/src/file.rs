@@ -400,9 +400,17 @@ pub struct DemoAccountConfig {
     /// Overrides `accessible_accounts`.
     #[serde(default)]
     pub access_all_accounts: bool,
+    /// Maximum number of normal accounts this demo account can create.
+    max_account_count: Option<u8>,
     /// AccountIds for accounts that are accessible with demo account.
     #[serde(default)]
     pub accessible_accounts: Vec<simple_backend_utils::UuidBase64Url>,
+}
+
+impl DemoAccountConfig {
+    pub fn max_account_count(&self) -> u8 {
+        self.max_account_count.unwrap_or(10)
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

@@ -4,10 +4,11 @@ use std::{
 };
 
 use axum::extract::{ConnectInfo, State};
-use model_account::{
-    AccessibleAccount, AccountId, DemoAccountLoginToAccount, LoginResult, SignInWithInfo,
+use model_account::{AccessibleAccount, DemoAccountLoginToAccount, LoginResult, SignInWithInfo};
+use model_server_state::{
+    DemoAccountLoginCredentials, DemoAccountLoginResult, DemoAccountRegisterAccountResult,
+    DemoAccountToken,
 };
-use model_server_state::{DemoAccountLoginCredentials, DemoAccountLoginResult, DemoAccountToken};
 use server_api::{
     S,
     app::{GetAccounts, GetConfig, ReadData},
@@ -16,6 +17,7 @@ use server_api::{
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::{
     demo::{AccessibleAccountsInfoUtils, DemoAccountUtils},
+    read::GetReadCommandsAccount,
     write::GetWriteCommandsAccount,
 };
 use simple_backend::create_counters;
@@ -97,7 +99,7 @@ const PATH_POST_DEMO_ACCOUNT_REGISTER_ACCOUNT: &str = "/account_api/demo_account
     path = PATH_POST_DEMO_ACCOUNT_REGISTER_ACCOUNT,
     request_body = DemoAccountToken,
     responses(
-        (status = 200, description = "Successful.", body = AccountId),
+        (status = 200, description = "Successful.", body = DemoAccountRegisterAccountResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -106,12 +108,24 @@ const PATH_POST_DEMO_ACCOUNT_REGISTER_ACCOUNT: &str = "/account_api/demo_account
 pub async fn post_demo_account_register_account(
     State(state): State<S>,
     Json(token): Json<DemoAccountToken>,
-) -> Result<Json<AccountId>, StatusCode> {
+) -> Result<Json<DemoAccountRegisterAccountResult>, StatusCode> {
     ACCOUNT.post_demo_account_register_account.incr();
 
     let Some(demo_account_id) = state.demo().valid_demo_account_token_exists(&token).await else {
         return Err(StatusCode::UNAUTHORIZED);
     };
+
+    // Check if the demo account has reached its account limit
+    let max_count = state.demo().max_account_count(demo_account_id).await?;
+    let owned_accounts = state
+        .read()
+        .account()
+        .demo_account_owned_account_ids(demo_account_id)
+        .await?;
+
+    if owned_accounts.len() >= max_count as usize {
+        return Ok(DemoAccountRegisterAccountResult::error_max_account_count().into());
+    }
 
     let id = state
         .data_all_access()
@@ -123,7 +137,7 @@ pub async fn post_demo_account_register_account(
         .add_to_demo_account_owned_accounts(demo_account_id, id)
         .await)?;
 
-    Ok(id.as_id().into())
+    Ok(DemoAccountRegisterAccountResult::success(id.as_id()).into())
 }
 
 const PATH_POST_DEMO_ACCOUNT_LOGIN_TO_ACCOUNT: &str = "/account_api/demo_account_login_to_account";

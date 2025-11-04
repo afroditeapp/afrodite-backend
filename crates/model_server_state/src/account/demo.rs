@@ -82,6 +82,34 @@ impl AsRef<i64> for DemoAccountId {
 
 diesel_i64_wrapper!(DemoAccountId);
 
+#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Default)]
+pub struct DemoAccountRegisterAccountResult {
+    /// Account ID if registration was successful
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub aid: Option<AccountId>,
+
+    /// True when the demo account has reached its maximum account limit
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub error_max_account_count: bool,
+}
+
+impl DemoAccountRegisterAccountResult {
+    pub fn success(aid: AccountId) -> Self {
+        Self {
+            aid: Some(aid),
+            error_max_account_count: false,
+        }
+    }
+
+    pub fn error_max_account_count() -> Self {
+        Self {
+            aid: None,
+            error_max_account_count: true,
+        }
+    }
+}
+
 pub enum AccessibleAccountsInfo {
     All,
     Specific {
