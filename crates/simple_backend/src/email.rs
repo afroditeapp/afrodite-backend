@@ -24,7 +24,7 @@ use crate::{ServerQuitWatcher, email::data::Counter};
 mod data;
 
 const EMAIL_SENDING_CHANNEL_BUFFER_SIZE: usize = 1024 * 1024;
-const EMAIL_SENDING_HIGH_PRIORITY_CHANNEL_BUFFER_SIZE: usize = 1024;
+const EMAIL_SENDING_HIGH_PRIORITY_CHANNEL_BUFFER_SIZE: usize = 1024 * 1024;
 
 #[derive(thiserror::Error, Debug)]
 pub enum EmailError {
