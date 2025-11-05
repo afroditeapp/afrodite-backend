@@ -41,6 +41,7 @@ impl CurrentReadAccountData<'_> {
             email_change: account_internal.email_change,
             email_change_verified: account_internal.email_change_verified,
             email_change_completion_time: None,
+            email_login_enabled: account_internal.email_login_enabled,
         })
     }
 

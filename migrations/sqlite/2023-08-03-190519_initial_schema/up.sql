@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS login_session(
 -- server as it propagates the changes to other components.
 CREATE TABLE IF NOT EXISTS account_permissions(
     account_id    INTEGER PRIMARY KEY NOT NULL,
+    admin_edit_login                             BOOLEAN NOT NULL DEFAULT FALSE,
     admin_edit_permissions                       BOOLEAN NOT NULL DEFAULT FALSE,
     admin_edit_profile_name                      BOOLEAN NOT NULL DEFAULT FALSE,
     admin_edit_max_public_key_count              BOOLEAN NOT NULL DEFAULT FALSE,
@@ -295,6 +296,7 @@ CREATE TABLE IF NOT EXISTS account(
     email_change_verified           BOOLEAN   NOT NULL DEFAULT FALSE,
     email_login_token                         BLOB          UNIQUE,
     email_login_token_unix_time               BIGINT,
+    email_login_enabled                       BOOLEAN   NOT NULL DEFAULT TRUE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

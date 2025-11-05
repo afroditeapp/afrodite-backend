@@ -3,11 +3,13 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 mod client_version;
+mod email;
 mod news;
 mod permissions;
 mod search;
 
 pub use client_version::*;
+pub use email::*;
 pub use news::*;
 pub use permissions::*;
 pub use search::*;

@@ -100,6 +100,9 @@ impl ApiDoc {
                 server_api_account::account_admin::router_admin_client_version(state.clone())
                     .into_openapi(),
             )
+            .merge_from(
+                server_api_account::account_admin::router_admin_email(state.clone()).into_openapi(),
+            )
             .tag_routes("account_admin");
         doc.merge(account_admin);
         // Media

@@ -370,4 +370,14 @@ impl WriteCommandsAccountEmail<'_> {
             cmds.account().email().clear_email_login_token(id)
         })
     }
+
+    pub async fn set_email_login_enabled(
+        &self,
+        id: AccountIdInternal,
+        enabled: bool,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.account().email().set_email_login_enabled(id, enabled)
+        })
+    }
 }

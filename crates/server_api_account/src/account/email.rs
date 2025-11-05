@@ -7,9 +7,10 @@ use axum::{
     http::StatusCode,
 };
 use axum_extra::{TypedHeader, headers::ContentType};
-use model::{AccessToken, AccountIdInternal, AccountState};
+use model::{AccessToken, AccountIdInternal, AccountState, Permissions};
 use model_account::{
-    InitEmailChange, InitEmailChangeResult, SendVerifyEmailMessageResult, SetInitialEmail,
+    InitEmailChange, InitEmailChangeResult, SendVerifyEmailMessageResult, SetEmailLoginEnabled,
+    SetInitialEmail,
 };
 use server_api::{
     S, app::WriteData, common::AcceptLanguage, create_open_api_router, db_write, utils::Json,
@@ -21,6 +22,8 @@ use server_data_account::{
 };
 use simple_backend::create_counters;
 use tokio::time::timeout;
+
+use crate::app::GetAccounts;
 
 pub const PATH_GET_VERIFY_EMAIL: &str = "/account_api/verify_email/{token}";
 
@@ -387,12 +390,59 @@ pub async fn post_initial_email(
     Ok(())
 }
 
+pub const PATH_POST_SET_EMAIL_LOGIN_ENABLED: &str = "/account_api/set_email_login_enabled";
+
+/// Enable or disable email login for an account.
+///
+/// Users can set this for their own account.
+/// Admins with `admin_edit_login` permission can set this for any account.
+///
+/// This is useful to prevent email login spam attacks.
+#[utoipa::path(
+    post,
+    path = PATH_POST_SET_EMAIL_LOGIN_ENABLED,
+    request_body = SetEmailLoginEnabled,
+    responses(
+        (status = 200, description = "Successfull."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_set_email_login_enabled(
+    State(state): State<S>,
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    Extension(api_caller_permissions): Extension<Permissions>,
+    Json(request): Json<SetEmailLoginEnabled>,
+) -> Result<(), crate::utils::StatusCode> {
+    ACCOUNT.post_set_email_login_enabled.incr();
+
+    let target_account_internal = state.get_internal_id(request.aid).await?;
+
+    let is_own_account = api_caller_account_id == target_account_internal;
+    let has_admin_permission = api_caller_permissions.admin_edit_login;
+
+    if !is_own_account && !has_admin_permission {
+        return Err(crate::utils::StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    db_write!(state, move |cmds| {
+        cmds.account()
+            .email()
+            .set_email_login_enabled(target_account_internal, request.enabled)
+            .await
+    })?;
+
+    Ok(())
+}
+
 create_open_api_router!(
     fn router_email_private,
     post_send_verify_email_message,
     post_cancel_email_change,
     post_init_email_change,
     post_initial_email,
+    post_set_email_login_enabled,
 );
 
 create_counters!(
@@ -405,4 +455,5 @@ create_counters!(
     post_send_verify_email_message,
     post_init_email_change,
     post_initial_email,
+    post_set_email_login_enabled,
 );

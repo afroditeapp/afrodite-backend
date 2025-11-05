@@ -181,4 +181,19 @@ impl CurrentWriteAccountEmail<'_> {
 
         Ok(())
     }
+
+    pub fn set_email_login_enabled(
+        &mut self,
+        id: AccountIdInternal,
+        enabled: bool,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account::dsl::*;
+
+        update(account.find(id.as_db_id()))
+            .set(email_login_enabled.eq(enabled))
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
+    }
 }

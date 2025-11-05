@@ -137,6 +137,7 @@ pub struct AccountInternal {
     pub email_change_verified: bool,
     pub email_login_token: Option<Vec<u8>>,
     pub email_login_token_unix_time: Option<UnixTime>,
+    pub email_login_enabled: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
@@ -151,6 +152,17 @@ pub struct AccountData {
     /// API route handler sets this value
     #[serde(skip_serializing_if = "Option::is_none")]
     pub email_change_completion_time: Option<UnixTime>,
+    #[serde(default = "default_true", skip_serializing_if = "is_true")]
+    #[schema(default = true)]
+    pub email_login_enabled: bool,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+fn is_true(value: &bool) -> bool {
+    *value
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]

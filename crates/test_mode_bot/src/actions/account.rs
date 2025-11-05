@@ -6,7 +6,8 @@ use api_client::{
         account_bot_api::{post_bot_login, post_bot_register, post_remote_bot_login},
     },
     models::{
-        Account, AccountStateContainer, BooleanSetting, EventToClient, ProfileVisibility, RemoteBotLogin, SetInitialEmail, auth_pair
+        Account, AccountStateContainer, BooleanSetting, EventToClient, ProfileVisibility,
+        RemoteBotLogin, SetInitialEmail, auth_pair,
     },
 };
 use async_trait::async_trait;

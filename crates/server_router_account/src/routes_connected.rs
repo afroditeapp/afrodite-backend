@@ -57,7 +57,8 @@ impl ConnectedApp {
             .merge(api::account_admin::router_admin_state(self.state.clone()))
             .merge(api::account_admin::router_admin_client_version(
                 self.state.clone(),
-            ));
+            ))
+            .merge(api::account_admin::router_admin_email(self.state.clone()));
 
         private.route_layer({
             middleware::from_fn_with_state(

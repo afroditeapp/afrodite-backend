@@ -12,6 +12,7 @@ diesel::table! {
         email_change_verified -> Bool,
         email_login_token -> Nullable<Bytea>,
         email_login_token_unix_time -> Nullable<Int8>,
+        email_login_enabled -> Bool,
     }
 }
 
@@ -87,6 +88,7 @@ diesel::table! {
 diesel::table! {
     account_permissions (account_id) {
         account_id -> Int8,
+        admin_edit_login -> Bool,
         admin_edit_permissions -> Bool,
         admin_edit_profile_name -> Bool,
         admin_edit_max_public_key_count -> Bool,

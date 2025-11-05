@@ -313,6 +313,12 @@ pub async fn post_request_email_login_token(
         db_write!(state, move |cmds| {
             let account_internal = cmds.read().account().account_internal(account_id).await?;
 
+            if !account_internal.email_login_enabled {
+                // Email login is disabled, but don't return error to prevent
+                // email enumeration.
+                return Ok(());
+            }
+
             if let Some(token_time) = account_internal.email_login_token_unix_time {
                 let min_wait_duration = GetConfig::config(&cmds)
                     .limits_account()

@@ -153,6 +153,12 @@ pub struct SetInitialEmail {
     pub email: EmailAddress,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct SetEmailLoginEnabled {
+    pub aid: model::AccountId,
+    pub enabled: bool,
+}
+
 #[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
 pub struct InitEmailChangeResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
