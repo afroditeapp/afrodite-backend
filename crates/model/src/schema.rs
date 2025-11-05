@@ -106,6 +106,7 @@ diesel::table! {
         admin_view_private_info -> Bool,
         admin_view_profile_history -> Bool,
         admin_view_permissions -> Bool,
+        admin_view_email_address -> Bool,
         admin_find_account_by_email -> Bool,
         admin_server_maintenance_view_info -> Bool,
         admin_server_maintenance_view_backend_config -> Bool,

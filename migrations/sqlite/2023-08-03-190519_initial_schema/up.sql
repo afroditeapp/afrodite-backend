@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_view_private_info                      BOOLEAN NOT NULL DEFAULT FALSE,
     admin_view_profile_history                   BOOLEAN NOT NULL DEFAULT FALSE,
     admin_view_permissions                       BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_view_email_address                     BOOLEAN NOT NULL DEFAULT FALSE,
     admin_find_account_by_email                  BOOLEAN NOT NULL DEFAULT FALSE,
     admin_server_maintenance_view_info           BOOLEAN NOT NULL DEFAULT FALSE,
     admin_server_maintenance_view_backend_config BOOLEAN NOT NULL DEFAULT FALSE,
