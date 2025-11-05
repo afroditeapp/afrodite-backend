@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS login_session(
 -- server as it propagates the changes to other components.
 CREATE TABLE IF NOT EXISTS account_permissions(
     account_id    BIGINT PRIMARY KEY NOT NULL,
+    admin_change_email_address                   BOOLEAN NOT NULL DEFAULT FALSE,
     admin_edit_login                             BOOLEAN NOT NULL DEFAULT FALSE,
     admin_edit_permissions                       BOOLEAN NOT NULL DEFAULT FALSE,
     admin_edit_profile_name                      BOOLEAN NOT NULL DEFAULT FALSE,

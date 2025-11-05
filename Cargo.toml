@@ -112,7 +112,7 @@ toml = "0.8.23"
 toml_edit = "0.22.27"
 csv = "1.3.1"
 
-diesel = { version = "2.2.11", features = ["postgres", "sqlite", "returning_clauses_for_sqlite_3_35", "chrono"] }
+diesel = { version = "2.2.11", features = ["postgres", "sqlite", "returning_clauses_for_sqlite_3_35", "chrono", "64-column-tables"] }
 diesel_migrations = "2.2.0"
 deadpool = { version = "0.12.2" }
 

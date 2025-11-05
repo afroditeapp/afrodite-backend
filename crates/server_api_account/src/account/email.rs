@@ -273,6 +273,61 @@ pub async fn post_cancel_email_change(
     Ok(())
 }
 
+pub(crate) async fn init_email_change_impl(
+    state: &S,
+    account_id: AccountIdInternal,
+    new_email: model_account::EmailAddress,
+) -> Result<InitEmailChangeResult, crate::utils::StatusCode> {
+    let send_result = timeout(Duration::from_secs(10), async {
+        db_write!(state, move |cmds| {
+            let account_internal = cmds.read().account().account_internal(account_id).await?;
+
+            if account_internal.email.is_none() {
+                return Ok(InitEmailChangeResult::error_email_sending_failed());
+            }
+
+            if account_internal.email.as_ref() == Some(&new_email) {
+                return Ok(InitEmailChangeResult::error_email_sending_failed());
+            }
+
+            if let Some(change_time) = account_internal.email_change_unix_time {
+                let min_wait_duration = cmds
+                    .config()
+                    .limits_account()
+                    .email_change_resend_min_wait_duration;
+                if !change_time.duration_value_elapsed(min_wait_duration) {
+                    return Ok(InitEmailChangeResult::error_try_again_later_after_seconds(
+                        min_wait_duration.seconds,
+                    ));
+                }
+            }
+
+            cmds.account()
+                .email()
+                .init_email_change(account_id, new_email)
+                .await?;
+
+            cmds.account()
+                .email()
+                .send_email_change_verification_high_priority(account_id)
+                .await?;
+            cmds.account()
+                .email()
+                .send_email_change_notification_high_priority(account_id)
+                .await?;
+
+            Ok(InitEmailChangeResult::ok())
+        })
+    })
+    .await;
+
+    match send_result {
+        Ok(Ok(r)) => Ok(r),
+        Ok(Err(_)) => Ok(InitEmailChangeResult::error_email_sending_failed()),
+        Err(_) => Ok(InitEmailChangeResult::error_email_sending_timeout()),
+    }
+}
+
 pub const PATH_POST_INIT_EMAIL_CHANGE: &str = "/account_api/init_email_change";
 
 /// Initiate email change process by providing a new email address.
@@ -305,54 +360,8 @@ pub async fn post_init_email_change(
 ) -> Result<Json<InitEmailChangeResult>, StatusCode> {
     ACCOUNT.post_init_email_change.incr();
 
-    let send_result = timeout(Duration::from_secs(10), async {
-        db_write!(state, move |cmds| {
-            let account_internal = cmds.read().account().account_internal(account_id).await?;
-
-            if account_internal.email.is_none() {
-                return Ok(InitEmailChangeResult::error_email_sending_failed());
-            }
-
-            if account_internal.email.as_ref() == Some(&request.new_email) {
-                return Ok(InitEmailChangeResult::error_email_sending_failed());
-            }
-
-            if let Some(change_time) = account_internal.email_change_unix_time {
-                let min_wait_duration = cmds
-                    .config()
-                    .limits_account()
-                    .email_change_resend_min_wait_duration;
-                if !change_time.duration_value_elapsed(min_wait_duration) {
-                    return Ok(InitEmailChangeResult::error_try_again_later_after_seconds(
-                        min_wait_duration.seconds,
-                    ));
-                }
-            }
-
-            cmds.account()
-                .email()
-                .init_email_change(account_id, request.new_email)
-                .await?;
-
-            cmds.account()
-                .email()
-                .send_email_change_verification_high_priority(account_id)
-                .await?;
-            cmds.account()
-                .email()
-                .send_email_change_notification_high_priority(account_id)
-                .await?;
-
-            Ok(InitEmailChangeResult::ok())
-        })
-    })
-    .await;
-
-    match send_result {
-        Ok(Ok(r)) => Ok(r.into()),
-        Ok(Err(_)) => Ok(InitEmailChangeResult::error_email_sending_failed().into()),
-        Err(_) => Ok(InitEmailChangeResult::error_email_sending_timeout().into()),
-    }
+    let result = init_email_change_impl(&state, account_id, request.new_email).await?;
+    Ok(result.into())
 }
 
 const PATH_POST_INITIAL_EMAIL: &str = "/account_api/initial_email";

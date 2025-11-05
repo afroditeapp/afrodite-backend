@@ -177,6 +177,7 @@ macro_rules! define_permissions {
 
 define_permissions!(
     struct Permissions,
+    admin_change_email_address,
     admin_edit_login,
     admin_edit_permissions,
     admin_edit_profile_name,

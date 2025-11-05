@@ -1,3 +1,4 @@
+use model::AccountId;
 use model_server_data::EmailAddress;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -14,6 +15,12 @@ pub struct EmailAddressStateForAdmin {
     #[serde(default = "default_true", skip_serializing_if = "is_true")]
     #[schema(default = true)]
     pub email_login_enabled: bool,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct InitEmailChangeAdmin {
+    pub account_id: AccountId,
+    pub new_email: EmailAddress,
 }
 
 fn default_true() -> bool {

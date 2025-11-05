@@ -88,6 +88,7 @@ diesel::table! {
 diesel::table! {
     account_permissions (account_id) {
         account_id -> Int8,
+        admin_change_email_address -> Bool,
         admin_edit_login -> Bool,
         admin_edit_permissions -> Bool,
         admin_edit_profile_name -> Bool,
