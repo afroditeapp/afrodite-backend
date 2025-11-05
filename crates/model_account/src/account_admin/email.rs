@@ -2,11 +2,6 @@ use model_server_data::EmailAddress;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct GetEmailLoginEnabled {
-    pub enabled: bool,
-}
-
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct EmailAddressStateForAdmin {
     #[serde(skip_serializing_if = "Option::is_none")]
