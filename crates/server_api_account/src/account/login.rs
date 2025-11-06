@@ -33,6 +33,17 @@ pub async fn login_impl(
     state: &S,
 ) -> Result<LoginResult, StatusCode> {
     let id = state.get_internal_id(id).await?;
+
+    let locked = state
+        .read()
+        .account_admin()
+        .login()
+        .account_locked_state(id)
+        .await?;
+    if locked.locked {
+        return Ok(LoginResult::error_account_locked());
+    }
+
     let email = state.read().account().account_data(id).await?;
 
     let access = AccessToken::generate_new();
@@ -53,15 +64,7 @@ pub async fn login_impl(
         Ok(())
     })?;
 
-    let result = LoginResult {
-        tokens: Some(tokens),
-        aid: Some(id.as_id()),
-        email: email.email,
-        error_unsupported_client: false,
-        error_sign_in_with_email_unverified: false,
-        error_email_already_used: false,
-    };
-    Ok(result)
+    Ok(LoginResult::ok(tokens, id.as_id(), email.email))
 }
 
 pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";

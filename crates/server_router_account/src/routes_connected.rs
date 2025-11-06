@@ -59,6 +59,7 @@ impl ConnectedApp {
                 self.state.clone(),
             ))
             .merge(api::account_admin::router_admin_email(self.state.clone()))
+            .merge(api::account_admin::router_admin_login(self.state.clone()))
             .merge(api::account_admin::router_admin_logout(self.state.clone()));
 
         private.route_layer({

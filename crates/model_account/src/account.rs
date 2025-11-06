@@ -26,7 +26,7 @@ pub use report::*;
 mod client_features;
 pub use client_features::*;
 
-#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, PartialEq)]
+#[derive(Debug, Default, Deserialize, Serialize, ToSchema, Clone, PartialEq)]
 pub struct LoginResult {
     /// If `None`, the client is unsupported.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -54,39 +54,47 @@ pub struct LoginResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub error_email_already_used: bool,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub error_account_locked: bool,
 }
 
 impl LoginResult {
+    pub fn ok(tokens: AuthPair, aid: AccountId, email: Option<EmailAddress>) -> Self {
+        Self {
+            tokens: Some(tokens),
+            aid: Some(aid),
+            email,
+            ..Default::default()
+        }
+    }
+
     pub fn error_unsupported_client() -> Self {
         Self {
-            tokens: None,
-            aid: None,
-            email: None,
             error_unsupported_client: true,
-            error_sign_in_with_email_unverified: false,
-            error_email_already_used: false,
+            ..Default::default()
         }
     }
 
     pub fn error_sign_in_with_email_unverified() -> Self {
         Self {
-            tokens: None,
-            aid: None,
-            email: None,
-            error_unsupported_client: false,
             error_sign_in_with_email_unverified: true,
-            error_email_already_used: false,
+            ..Default::default()
         }
     }
 
     pub fn error_email_already_used() -> Self {
         Self {
-            tokens: None,
-            aid: None,
-            email: None,
-            error_unsupported_client: false,
-            error_sign_in_with_email_unverified: false,
             error_email_already_used: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_account_locked() -> Self {
+        Self {
+            error_account_locked: true,
+            ..Default::default()
         }
     }
 }
@@ -307,6 +315,7 @@ pub struct AccountStateTableRaw {
     news_sync_version: NewsSyncVersion,
     unread_news_count: i64,
     account_created_unix_time: UnixTime,
+    account_locked: bool,
 }
 
 /// Global state for account component

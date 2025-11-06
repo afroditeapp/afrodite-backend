@@ -144,6 +144,7 @@ diesel::table! {
         news_sync_version -> Int2,
         unread_news_count -> Int8,
         account_created_unix_time -> Int8,
+        account_locked -> Bool,
     }
 }
 

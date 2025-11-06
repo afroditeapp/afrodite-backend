@@ -356,6 +356,7 @@ CREATE TABLE IF NOT EXISTS account_state(
     news_sync_version                  SMALLINT            NOT NULL DEFAULT 0,
     unread_news_count                  BIGINT              NOT NULL DEFAULT 0,
     account_created_unix_time          BIGINT              NOT NULL DEFAULT 0,
+    account_locked                     BOOLEAN             NOT NULL DEFAULT FALSE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

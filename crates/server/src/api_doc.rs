@@ -104,6 +104,9 @@ impl ApiDoc {
                 server_api_account::account_admin::router_admin_email(state.clone()).into_openapi(),
             )
             .merge_from(
+                server_api_account::account_admin::router_admin_login(state.clone()).into_openapi(),
+            )
+            .merge_from(
                 server_api_account::account_admin::router_admin_logout(state.clone())
                     .into_openapi(),
             )

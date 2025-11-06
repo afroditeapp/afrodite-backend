@@ -32,3 +32,8 @@ pub struct SetAccountBanState {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reason_details: Option<AccountBanReasonDetails>,
 }
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct AccountLockedState {
+    pub locked: bool,
+}
