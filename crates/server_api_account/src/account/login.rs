@@ -368,7 +368,10 @@ pub async fn post_request_email_login_token(
 
 pub const PATH_POST_EMAIL_LOGIN_WITH_TOKEN: &str = "/account_api/email_login_with_token";
 
-/// Login using email login token (single use, max 1 guess).
+/// Login using email login token (single use).
+///
+/// The route always takes at least 5 seconds to complete to make
+/// token guessing slower.
 #[utoipa::path(
     post,
     path = PATH_POST_EMAIL_LOGIN_WITH_TOKEN,
@@ -387,6 +390,21 @@ pub async fn post_email_login_with_token(
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT.post_email_login_with_token.incr();
 
+    let wait_until = Instant::now() + Duration::from_secs(5);
+
+    let r = post_email_login_with_token_impl(state, address, request).await;
+
+    // Wait until at least 5 seconds have elapsed
+    tokio::time::sleep_until(wait_until.into()).await;
+
+    r
+}
+
+async fn post_email_login_with_token_impl(
+    state: S,
+    address: SocketAddr,
+    request: EmailLoginToken,
+) -> Result<Json<LoginResult>, StatusCode> {
     if let Some(min_version) = state.config().min_client_version() {
         if !min_version.received_version_is_accepted(request.client_info.client_version) {
             return Ok(LoginResult::error_unsupported_client().into());
@@ -398,7 +416,6 @@ pub async fn post_email_login_with_token(
         .bytes()
         .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
-    // Verify token and get account ID (single use, invalidates after check)
     let account_id = db_write!(state, move |cmds| {
         cmds.account()
             .email()
@@ -412,7 +429,6 @@ pub async fn post_email_login_with_token(
         None => return Err(StatusCode::UNAUTHORIZED),
     };
 
-    // Perform login
     let r = login_impl(account_id.as_id(), address, &state).await?;
 
     if let Some(aid) = r.aid {
