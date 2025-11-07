@@ -16,7 +16,7 @@ const PATH_GET_ACCOUNT_ID_FROM_EMAIL: &str = "/account_api/get_account_id_from_e
 ///
 /// # Access
 ///
-/// Permission [model_account::Permissions::admin_find_account_by_email] is required.
+/// Permission [model_account::Permissions::admin_find_account_by_email_address] is required.
 #[utoipa::path(
     get,
     path = PATH_GET_ACCOUNT_ID_FROM_EMAIL,
@@ -35,7 +35,7 @@ pub async fn get_account_id_from_email(
 ) -> Result<Json<GetAccountIdFromEmailResult>, StatusCode> {
     ACCOUNT_ADMIN.get_account_id_from_email.incr();
 
-    if !permissions.admin_find_account_by_email {
+    if !permissions.admin_find_account_by_email_address {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
