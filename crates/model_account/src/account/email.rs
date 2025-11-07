@@ -101,6 +101,9 @@ impl AccountEmailSendingStateRaw {
 pub struct SendVerifyEmailMessageResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
+    error: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
     error_email_already_verified: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -121,6 +124,7 @@ impl SendVerifyEmailMessageResult {
 
     pub fn error_email_already_verified() -> Self {
         Self {
+            error: true,
             error_email_already_verified: true,
             ..Default::default()
         }
@@ -128,6 +132,7 @@ impl SendVerifyEmailMessageResult {
 
     pub fn error_email_sending_failed() -> Self {
         Self {
+            error: true,
             error_email_sending_failed: true,
             ..Default::default()
         }
@@ -135,6 +140,7 @@ impl SendVerifyEmailMessageResult {
 
     pub fn error_email_sending_timeout() -> Self {
         Self {
+            error: true,
             error_email_sending_timeout: true,
             ..Default::default()
         }
@@ -142,6 +148,7 @@ impl SendVerifyEmailMessageResult {
 
     pub fn error_try_again_later_after_seconds(seconds: u32) -> Self {
         Self {
+            error: true,
             error_try_again_later_after_seconds: Some(seconds),
             ..Default::default()
         }
@@ -163,6 +170,9 @@ pub struct SetEmailLoginEnabled {
 pub struct InitEmailChangeResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
+    error: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
     error_email_sending_failed: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -180,6 +190,7 @@ impl InitEmailChangeResult {
 
     pub fn error_email_sending_failed() -> Self {
         Self {
+            error: true,
             error_email_sending_failed: true,
             ..Default::default()
         }
@@ -187,6 +198,7 @@ impl InitEmailChangeResult {
 
     pub fn error_email_sending_timeout() -> Self {
         Self {
+            error: true,
             error_email_sending_timeout: true,
             ..Default::default()
         }
@@ -194,6 +206,7 @@ impl InitEmailChangeResult {
 
     pub fn error_try_again_later_after_seconds(seconds: u32) -> Self {
         Self {
+            error: true,
             error_try_again_later_after_seconds: Some(seconds),
             ..Default::default()
         }

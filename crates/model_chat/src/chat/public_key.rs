@@ -6,14 +6,20 @@ use utoipa::ToSchema;
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct AddPublicKeyResult {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub key_id: Option<PublicKeyId>,
-    pub error_too_many_public_keys: bool,
+    key_id: Option<PublicKeyId>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_too_many_public_keys: bool,
 }
 
 impl AddPublicKeyResult {
     pub fn success(key_id: PublicKeyId) -> Self {
         Self {
             key_id: Some(key_id),
+            error: false,
             error_too_many_public_keys: false,
         }
     }
@@ -21,6 +27,7 @@ impl AddPublicKeyResult {
     pub fn error_too_many_keys() -> Self {
         Self {
             key_id: None,
+            error: true,
             error_too_many_public_keys: true,
         }
     }

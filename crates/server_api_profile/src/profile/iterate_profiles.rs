@@ -55,17 +55,9 @@ pub async fn post_get_next_profile_page(
 
     if let Some(data) = data {
         // Profile iterator session ID was valid
-        Ok(ProfilePage {
-            profiles: data,
-            error_invalid_iterator_session_id: false,
-        }
-        .into())
+        Ok(ProfilePage::successful(data).into())
     } else {
-        Ok(ProfilePage {
-            profiles: vec![],
-            error_invalid_iterator_session_id: true,
-        }
-        .into())
+        Ok(ProfilePage::error_invalid_iterator_session_id().into())
     }
 }
 
@@ -155,11 +147,7 @@ pub async fn post_automatic_profile_search_get_next_profile_page(
         .await?
     {
         // Automatic search not done yet
-        return Ok(ProfilePage {
-            profiles: vec![],
-            error_invalid_iterator_session_id: false,
-        }
-        .into());
+        return Ok(ProfilePage::successful(vec![]).into());
     }
 
     let data = state
@@ -170,17 +158,9 @@ pub async fn post_automatic_profile_search_get_next_profile_page(
 
     if let Some(data) = data {
         // Profile iterator session ID was valid
-        Ok(ProfilePage {
-            profiles: data,
-            error_invalid_iterator_session_id: false,
-        }
-        .into())
+        Ok(ProfilePage::successful(data).into())
     } else {
-        Ok(ProfilePage {
-            profiles: vec![],
-            error_invalid_iterator_session_id: true,
-        }
-        .into())
+        Ok(ProfilePage::error_invalid_iterator_session_id().into())
     }
 }
 

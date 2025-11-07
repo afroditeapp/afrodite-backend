@@ -30,38 +30,42 @@ pub use client_features::*;
 pub struct LoginResult {
     /// If `None`, the client is unsupported.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub tokens: Option<AuthPair>,
+    tokens: Option<AuthPair>,
 
     /// Account ID of current account. If `None`, the client is unsupported.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub aid: Option<AccountId>,
+    aid: Option<AccountId>,
 
     /// Current email of current account. If `None`, if email address is not
     /// set or the client version is unsupported.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub email: Option<EmailAddress>,
+    email: Option<EmailAddress>,
 
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    pub error_unsupported_client: bool,
+    error: bool,
 
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    pub error_sign_in_with_email_unverified: bool,
+    error_unsupported_client: bool,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_sign_in_with_email_unverified: bool,
 
     /// This might be true, when registering new account using
     /// sign in with login method.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    pub error_email_already_used: bool,
+    error_email_already_used: bool,
 
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    pub error_account_locked: bool,
+    error_account_locked: bool,
 
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    pub error_invalid_email_login_token: bool,
+    error_invalid_email_login_token: bool,
 }
 
 impl LoginResult {
@@ -76,6 +80,7 @@ impl LoginResult {
 
     pub fn error_unsupported_client() -> Self {
         Self {
+            error: true,
             error_unsupported_client: true,
             ..Default::default()
         }
@@ -83,6 +88,7 @@ impl LoginResult {
 
     pub fn error_sign_in_with_email_unverified() -> Self {
         Self {
+            error: true,
             error_sign_in_with_email_unverified: true,
             ..Default::default()
         }
@@ -90,6 +96,7 @@ impl LoginResult {
 
     pub fn error_email_already_used() -> Self {
         Self {
+            error: true,
             error_email_already_used: true,
             ..Default::default()
         }
@@ -97,6 +104,7 @@ impl LoginResult {
 
     pub fn error_account_locked() -> Self {
         Self {
+            error: true,
             error_account_locked: true,
             ..Default::default()
         }
@@ -104,9 +112,14 @@ impl LoginResult {
 
     pub fn error_invalid_email_login_token() -> Self {
         Self {
+            error: true,
             error_invalid_email_login_token: true,
             ..Default::default()
         }
+    }
+
+    pub fn aid(&self) -> Option<AccountId> {
+        self.aid
     }
 }
 

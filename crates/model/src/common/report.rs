@@ -194,35 +194,37 @@ pub struct ReportQueryParams {
     pub target: AccountId,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize, ToSchema)]
 pub struct UpdateReportResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    pub error_outdated_report_content: bool,
+    error: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    pub error_too_many_reports: bool,
+    error_outdated_report_content: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_too_many_reports: bool,
 }
 
 impl UpdateReportResult {
     pub fn success() -> Self {
-        Self {
-            error_outdated_report_content: false,
-            error_too_many_reports: false,
-        }
+        Default::default()
     }
 
     pub fn outdated_report_content() -> Self {
         Self {
+            error: true,
             error_outdated_report_content: true,
-            error_too_many_reports: false,
+            ..Default::default()
         }
     }
 
     pub fn too_many_reports() -> Self {
         Self {
-            error_outdated_report_content: false,
+            error: true,
             error_too_many_reports: true,
+            ..Default::default()
         }
     }
 

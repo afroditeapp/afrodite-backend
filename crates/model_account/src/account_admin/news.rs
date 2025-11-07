@@ -28,18 +28,22 @@ pub struct UpdateNewsTranslation {
 pub struct UpdateNewsTranslationResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    pub error_already_changed: bool,
+    error: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_already_changed: bool,
 }
 
 impl UpdateNewsTranslationResult {
     pub fn success() -> Self {
         Self {
-            error_already_changed: false,
+            ..Default::default()
         }
     }
 
     pub fn error_already_changed() -> Self {
         Self {
+            error: true,
             error_already_changed: true,
         }
     }

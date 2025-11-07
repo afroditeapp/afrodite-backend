@@ -191,7 +191,7 @@ pub async fn post_sign_in_with_login(
         Err(StatusCode::INTERNAL_SERVER_ERROR)
     }?;
 
-    if let Some(aid) = r.aid {
+    if let Some(aid) = r.aid() {
         // Login successful
         let id = state.get_internal_id(aid).await?;
         db_write!(state, move |cmds| {
@@ -433,7 +433,7 @@ async fn post_email_login_with_token_impl(
 
     let r = login_impl(account_id.as_id(), address, &state).await?;
 
-    if let Some(aid) = r.aid {
+    if let Some(aid) = r.aid() {
         // Login successful
         let id = state.get_internal_id(aid).await?;
         db_write!(state, move |cmds| {

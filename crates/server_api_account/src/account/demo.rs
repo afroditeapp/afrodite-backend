@@ -179,7 +179,7 @@ pub async fn post_demo_account_login_to_account(
 
     let r = login_impl(info.aid, address, &state).await?;
 
-    if let Some(aid) = r.aid {
+    if let Some(aid) = r.aid() {
         // Login successful
         let id = state.get_internal_id(aid).await?;
         db_write!(state, move |cmds| {

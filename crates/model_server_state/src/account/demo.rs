@@ -86,26 +86,31 @@ diesel_i64_wrapper!(DemoAccountId);
 pub struct DemoAccountRegisterAccountResult {
     /// Account ID if registration was successful
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub aid: Option<AccountId>,
+    aid: Option<AccountId>,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error: bool,
 
     /// True when the demo account has reached its maximum account limit
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    pub error_max_account_count: bool,
+    error_max_account_count: bool,
 }
 
 impl DemoAccountRegisterAccountResult {
     pub fn success(aid: AccountId) -> Self {
         Self {
             aid: Some(aid),
-            error_max_account_count: false,
+            ..Default::default()
         }
     }
 
     pub fn error_max_account_count() -> Self {
         Self {
-            aid: None,
+            error: true,
             error_max_account_count: true,
+            ..Default::default()
         }
     }
 }
