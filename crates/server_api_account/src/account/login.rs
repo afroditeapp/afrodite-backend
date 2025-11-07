@@ -382,8 +382,7 @@ pub const PATH_POST_EMAIL_LOGIN_WITH_TOKEN: &str = "/account_api/email_login_wit
     security(),
     request_body = EmailLoginToken,
     responses(
-        (status = 200, description = "Login successful.", body = LoginResult),
-        (status = 401, description = "Invalid token."),
+        (status = 200, description = "Successful.", body = LoginResult),
         (status = 500, description = "Internal server error."),
     ),
 )]
@@ -415,10 +414,9 @@ async fn post_email_login_with_token_impl(
         }
     }
 
-    let token = request
-        .token
-        .bytes()
-        .map_err(|_| StatusCode::UNAUTHORIZED)?;
+    let Ok(token) = request.token.bytes() else {
+        return Ok(LoginResult::error_invalid_email_login_token().into());
+    };
 
     let account_id = db_write!(state, move |cmds| {
         cmds.account()
@@ -426,11 +424,11 @@ async fn post_email_login_with_token_impl(
             .verify_email_login_token_and_invalidate(token)
             .await
     })
-    .map_err(|_| StatusCode::UNAUTHORIZED)?;
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     let account_id = match account_id {
         Some(id) => id,
-        None => return Err(StatusCode::UNAUTHORIZED),
+        None => return Ok(LoginResult::error_invalid_email_login_token().into()),
     };
 
     let r = login_impl(account_id.as_id(), address, &state).await?;

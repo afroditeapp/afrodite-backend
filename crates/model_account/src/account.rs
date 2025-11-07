@@ -58,6 +58,10 @@ pub struct LoginResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub error_account_locked: bool,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub error_invalid_email_login_token: bool,
 }
 
 impl LoginResult {
@@ -94,6 +98,13 @@ impl LoginResult {
     pub fn error_account_locked() -> Self {
         Self {
             error_account_locked: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_invalid_email_login_token() -> Self {
+        Self {
+            error_invalid_email_login_token: true,
             ..Default::default()
         }
     }
