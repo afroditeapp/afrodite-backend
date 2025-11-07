@@ -57,7 +57,7 @@ const PATH_POST_GET_API_USAGE_DATA: &str = "/common_api/api_usage_data";
 /// HTTP method is POST because JSON request body requires it.
 ///
 /// # Permissions
-/// Requires [Permissions::admin_view_private_info].
+/// Requires [Permissions::admin_view_account_api_usage].
 #[utoipa::path(
     post,
     path = PATH_POST_GET_API_USAGE_DATA,
@@ -76,7 +76,7 @@ pub async fn post_get_api_usage_data(
 ) -> Result<Json<GetApiUsageStatisticsResult>, StatusCode> {
     COMMON_ADMIN.post_get_api_usage_data.incr();
 
-    if !api_caller_permissions.admin_view_private_info {
+    if !api_caller_permissions.admin_view_account_api_usage {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
@@ -99,7 +99,7 @@ const PATH_POST_GET_IP_ADDRESS_USAGE_DATA: &str = "/common_api/ip_address_usage_
 /// HTTP method is POST because JSON request body requires it.
 ///
 /// # Permissions
-/// Requires [Permissions::admin_view_private_info].
+/// Requires [Permissions::admin_view_account_ip_address_usage].
 #[utoipa::path(
     post,
     path = PATH_POST_GET_IP_ADDRESS_USAGE_DATA,
@@ -118,7 +118,7 @@ pub async fn post_get_ip_address_usage_data(
 ) -> Result<Json<GetIpAddressStatisticsResult>, StatusCode> {
     COMMON_ADMIN.post_get_ip_address_usage_data.incr();
 
-    if !api_caller_permissions.admin_view_private_info {
+    if !api_caller_permissions.admin_view_account_ip_address_usage {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 

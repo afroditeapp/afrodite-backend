@@ -44,7 +44,8 @@ Admin:
 * 'admin_edit_permissions' - Add and remove permissions exept this one.
 * 'admin_moderate_profiles' - View and moderate all user flagged profiles.
 * 'admin_moderate_images' - Account image moderation is now possible.
-* 'admin_view_private_info' - View private account info.
+* 'admin_view_account_api_usage' - View account API usage statistics.
+* 'admin_view_account_ip_address_usage' - View account IP address usage statistics.
 * 'admin_view_profile_history' - View public and private info changes that
 accounts has.
 * 'admin_view_all_profiles' - View all public and private profiles. Also goto to
