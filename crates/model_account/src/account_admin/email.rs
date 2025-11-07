@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
-pub struct EmailAddressStateForAdmin {
+pub struct EmailAddressStateAdmin {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub email: Option<EmailAddress>,
     #[serde(skip_serializing_if = "Option::is_none")]

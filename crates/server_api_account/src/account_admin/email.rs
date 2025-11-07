@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, State},
 };
 use model::{AccountId, Permissions};
-use model_account::{EmailAddressStateForAdmin, InitEmailChangeAdmin, InitEmailChangeResult};
+use model_account::{EmailAddressStateAdmin, InitEmailChangeAdmin, InitEmailChangeResult};
 use server_api::{S, create_open_api_router, db_write};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
@@ -14,28 +14,28 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-pub const PATH_GET_EMAIL_ADDRESS_STATE: &str = "/account_api/get_email_address_state/{aid}";
+pub const PATH_GET_EMAIL_ADDRESS_STATE_ADMIN: &str = "/account_api/email_address_state_admin/{aid}";
 
 /// Get email address state for admin.
 ///
 /// Requires `admin_view_email_address` permission.
 #[utoipa::path(
     get,
-    path = PATH_GET_EMAIL_ADDRESS_STATE,
+    path = PATH_GET_EMAIL_ADDRESS_STATE_ADMIN,
     params(AccountId),
     responses(
-        (status = 200, description = "Successfull.", body = EmailAddressStateForAdmin),
+        (status = 200, description = "Successfull.", body = EmailAddressStateAdmin),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_email_address_state(
+pub async fn get_email_address_state_admin(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
     Path(target_account): Path<AccountId>,
-) -> Result<Json<EmailAddressStateForAdmin>, StatusCode> {
-    ACCOUNT_ADMIN.get_email_address_state.incr();
+) -> Result<Json<EmailAddressStateAdmin>, StatusCode> {
+    ACCOUNT_ADMIN.get_email_address_state_admin.incr();
 
     if !api_caller_permissions.admin_view_email_address {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -49,7 +49,7 @@ pub async fn get_email_address_state(
         .email_address_state(target_account)
         .await?;
 
-    let email_state = EmailAddressStateForAdmin {
+    let email_state = EmailAddressStateAdmin {
         email: data.email,
         email_change: data.email_change,
         email_change_verified: data.email_change_verified,
@@ -140,7 +140,7 @@ pub async fn post_admin_init_email_change(
 
 create_open_api_router!(
     fn router_admin_email,
-    get_email_address_state,
+    get_email_address_state_admin,
     post_admin_cancel_email_change,
     post_admin_init_email_change,
 );
@@ -149,7 +149,7 @@ create_counters!(
     AccountAdminCounters,
     ACCOUNT_ADMIN,
     ACCOUNT_ADMIN_EMAIL_COUNTERS_LIST,
-    get_email_address_state,
+    get_email_address_state_admin,
     post_admin_cancel_email_change,
     post_admin_init_email_change,
 );
