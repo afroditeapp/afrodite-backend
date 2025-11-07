@@ -169,7 +169,7 @@ pub async fn get_latest_created_account_id_db(configuration: &configuration::Con
     }
 }
 
-/// # Access - Permission [model::Permissions::admin_edit_profile_name] - Permission [model::Permissions::admin_find_account_by_email] - Permission [model::Permissions::admin_view_permissions] - Permission [model::Permissions::admin_moderate_media_content] - Permission [model::Permissions::admin_moderate_profile_names] - Permission [model::Permissions::admin_moderate_profile_texts]
+/// # Access - Permission [model::Permissions::admin_edit_profile_name] - Permission [model::Permissions::admin_find_account_by_email_address] - Permission [model::Permissions::admin_view_permissions] - Permission [model::Permissions::admin_moderate_media_content] - Permission [model::Permissions::admin_moderate_profile_names] - Permission [model::Permissions::admin_moderate_profile_texts]
 pub async fn get_profile_age_and_name(configuration: &configuration::Configuration, aid: &str) -> Result<models::GetProfileAgeAndName, Error<GetProfileAgeAndNameError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_aid = aid;

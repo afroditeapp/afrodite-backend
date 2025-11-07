@@ -13,16 +13,19 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AddPublicKeyResult {
-    #[serde(rename = "error_too_many_public_keys")]
-    pub error_too_many_public_keys: bool,
+    #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
+    pub error: Option<bool>,
+    #[serde(rename = "error_too_many_public_keys", skip_serializing_if = "Option::is_none")]
+    pub error_too_many_public_keys: Option<bool>,
     #[serde(rename = "key_id", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub key_id: Option<Option<Box<models::PublicKeyId>>>,
 }
 
 impl AddPublicKeyResult {
-    pub fn new(error_too_many_public_keys: bool) -> AddPublicKeyResult {
+    pub fn new() -> AddPublicKeyResult {
         AddPublicKeyResult {
-            error_too_many_public_keys,
+            error: None,
+            error_too_many_public_keys: None,
             key_id: None,
         }
     }

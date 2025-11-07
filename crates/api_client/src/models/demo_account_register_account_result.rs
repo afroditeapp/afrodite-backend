@@ -16,6 +16,8 @@ pub struct DemoAccountRegisterAccountResult {
     /// Account ID if registration was successful
     #[serde(rename = "aid", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub aid: Option<Option<Box<models::AccountId>>>,
+    #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
+    pub error: Option<bool>,
     /// True when the demo account has reached its maximum account limit
     #[serde(rename = "error_max_account_count", skip_serializing_if = "Option::is_none")]
     pub error_max_account_count: Option<bool>,
@@ -25,6 +27,7 @@ impl DemoAccountRegisterAccountResult {
     pub fn new() -> DemoAccountRegisterAccountResult {
         DemoAccountRegisterAccountResult {
             aid: None,
+            error: None,
             error_max_account_count: None,
         }
     }

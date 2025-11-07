@@ -13,6 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProfilePage {
+    #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
+    pub error: Option<bool>,
     #[serde(rename = "error_invalid_iterator_session_id", skip_serializing_if = "Option::is_none")]
     pub error_invalid_iterator_session_id: Option<bool>,
     #[serde(rename = "profiles")]
@@ -22,6 +24,7 @@ pub struct ProfilePage {
 impl ProfilePage {
     pub fn new(profiles: Vec<models::ProfileLink>) -> ProfilePage {
         ProfilePage {
+            error: None,
             error_invalid_iterator_session_id: None,
             profiles,
         }

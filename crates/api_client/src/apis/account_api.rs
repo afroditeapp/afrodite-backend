@@ -33,15 +33,6 @@ pub enum GetAccountBanTimeError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_account_data`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum GetAccountDataError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
 /// struct for typed errors of method [`get_account_deletion_request_state`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -64,6 +55,15 @@ pub enum GetAccountSetupError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetAccountStateError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`get_email_address_state`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetEmailAddressStateError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -197,7 +197,6 @@ pub enum PostDemoAccountRegisterAccountError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostEmailLoginWithTokenError {
-    Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -308,6 +307,15 @@ pub enum PostSetAccountDeletionRequestStateError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`post_set_email_login_enabled`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostSetEmailLoginEnabledError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`post_sign_in_with_login`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -408,43 +416,6 @@ pub async fn get_account_ban_time(configuration: &configuration::Configuration, 
     } else {
         let content = resp.text().await?;
         let entity: Option<GetAccountBanTimeError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
-pub async fn get_account_data(configuration: &configuration::Configuration, ) -> Result<models::AccountData, Error<GetAccountDataError>> {
-
-    let uri_str = format!("{}/account_api/account_data", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
-
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref token) = configuration.bearer_access_token {
-        req_builder = req_builder.bearer_auth(token.to_owned());
-    };
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-    let content_type = resp
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream");
-    let content_type = super::ContentType::from(content_type);
-
-    if !status.is_client_error() && !status.is_server_error() {
-        let content = resp.text().await?;
-        match content_type {
-            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::AccountData`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::AccountData`")))),
-        }
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<GetAccountDataError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -559,6 +530,43 @@ pub async fn get_account_state(configuration: &configuration::Configuration, ) -
     } else {
         let content = resp.text().await?;
         let entity: Option<GetAccountStateError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn get_email_address_state(configuration: &configuration::Configuration, ) -> Result<models::EmailAddressState, Error<GetEmailAddressStateError>> {
+
+    let uri_str = format!("{}/account_api/email_address_state", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailAddressState`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::EmailAddressState`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetEmailAddressStateError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -1025,6 +1033,7 @@ pub async fn post_demo_account_register_account(configuration: &configuration::C
     }
 }
 
+/// The route always takes at least 5 seconds to complete to make token guessing slower.
 pub async fn post_email_login_with_token(configuration: &configuration::Configuration, email_login_token: models::EmailLoginToken) -> Result<models::LoginResult, Error<PostEmailLoginWithTokenError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_email_login_token = email_login_token;
@@ -1493,6 +1502,36 @@ pub async fn post_set_account_deletion_request_state(configuration: &configurati
     } else {
         let content = resp.text().await?;
         let entity: Option<PostSetAccountDeletionRequestStateError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// Users can set this for their own account. Admins with `admin_edit_login` permission can set this for any account.  This is useful to prevent email login spam attacks.
+pub async fn post_set_email_login_enabled(configuration: &configuration::Configuration, set_email_login_enabled: models::SetEmailLoginEnabled) -> Result<(), Error<PostSetEmailLoginEnabledError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_set_email_login_enabled = set_email_login_enabled;
+
+    let uri_str = format!("{}/account_api/set_email_login_enabled", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_set_email_login_enabled);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostSetEmailLoginEnabledError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

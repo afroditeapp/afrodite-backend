@@ -23,9 +23,9 @@ src/models/account_app_notification_settings.rs
 src/models/account_ban_reason_category.rs
 src/models/account_ban_reason_details.rs
 src/models/account_content.rs
-src/models/account_data.rs
 src/models/account_id.rs
 src/models/account_id_db_value.rs
+src/models/account_locked_state.rs
 src/models/account_setup.rs
 src/models/account_state_container.rs
 src/models/account_sync_version.rs
@@ -98,6 +98,8 @@ src/models/demo_account_login_result.rs
 src/models/demo_account_login_to_account.rs
 src/models/demo_account_register_account_result.rs
 src/models/demo_account_token.rs
+src/models/email_address_state.rs
+src/models/email_address_state_admin.rs
 src/models/email_login_token.rs
 src/models/event_to_client.rs
 src/models/event_type.rs
@@ -141,6 +143,7 @@ src/models/get_report_list.rs
 src/models/get_sent_message.rs
 src/models/group_values.rs
 src/models/init_email_change.rs
+src/models/init_email_change_admin.rs
 src/models/init_email_change_result.rs
 src/models/initial_profile_age.rs
 src/models/ip_address_info.rs
@@ -288,6 +291,7 @@ src/models/sent_message_id.rs
 src/models/sent_message_id_list.rs
 src/models/set_account_ban_state.rs
 src/models/set_account_setup.rs
+src/models/set_email_login_enabled.rs
 src/models/set_initial_email.rs
 src/models/set_max_public_key_count.rs
 src/models/set_profile_content.rs

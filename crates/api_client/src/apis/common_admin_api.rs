@@ -822,7 +822,7 @@ pub async fn post_get_admin_notification(configuration: &configuration::Configur
     }
 }
 
-/// HTTP method is POST because JSON request body requires it.  # Permissions Requires [Permissions::admin_view_private_info].
+/// HTTP method is POST because JSON request body requires it.  # Permissions Requires [Permissions::admin_view_account_api_usage].
 pub async fn post_get_api_usage_data(configuration: &configuration::Configuration, get_api_usage_statistics_settings: models::GetApiUsageStatisticsSettings) -> Result<models::GetApiUsageStatisticsResult, Error<PostGetApiUsageDataError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_get_api_usage_statistics_settings = get_api_usage_statistics_settings;
@@ -903,7 +903,7 @@ pub async fn post_get_chat_message_reports(configuration: &configuration::Config
     }
 }
 
-/// HTTP method is POST because JSON request body requires it.  # Permissions Requires [Permissions::admin_view_private_info].
+/// HTTP method is POST because JSON request body requires it.  # Permissions Requires [Permissions::admin_view_account_ip_address_usage].
 pub async fn post_get_ip_address_usage_data(configuration: &configuration::Configuration, get_ip_address_statistics_settings: models::GetIpAddressStatisticsSettings) -> Result<models::GetIpAddressStatisticsResult, Error<PostGetIpAddressUsageDataError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_get_ip_address_statistics_settings = get_ip_address_statistics_settings;

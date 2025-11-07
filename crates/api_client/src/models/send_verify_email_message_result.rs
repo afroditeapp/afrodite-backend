@@ -13,6 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SendVerifyEmailMessageResult {
+    #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
+    pub error: Option<bool>,
     #[serde(rename = "error_email_already_verified", skip_serializing_if = "Option::is_none")]
     pub error_email_already_verified: Option<bool>,
     #[serde(rename = "error_email_sending_failed", skip_serializing_if = "Option::is_none")]
@@ -26,6 +28,7 @@ pub struct SendVerifyEmailMessageResult {
 impl SendVerifyEmailMessageResult {
     pub fn new() -> SendVerifyEmailMessageResult {
         SendVerifyEmailMessageResult {
+            error: None,
             error_email_already_verified: None,
             error_email_sending_failed: None,
             error_email_sending_timeout: None,

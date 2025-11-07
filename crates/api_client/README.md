@@ -28,10 +28,10 @@ Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *AccountApi* | [**get_account_app_notification_settings**](docs/AccountApi.md#get_account_app_notification_settings) | **GET** /account_api/get_account_app_notification_settings | 
 *AccountApi* | [**get_account_ban_time**](docs/AccountApi.md#get_account_ban_time) | **GET** /account_api/account_ban_time/{aid} | Get account ban time
-*AccountApi* | [**get_account_data**](docs/AccountApi.md#get_account_data) | **GET** /account_api/account_data | Get changeable user information to account.
 *AccountApi* | [**get_account_deletion_request_state**](docs/AccountApi.md#get_account_deletion_request_state) | **GET** /account_api/get_account_deletion_request_state/{aid} | Get account deletion request state
 *AccountApi* | [**get_account_setup**](docs/AccountApi.md#get_account_setup) | **GET** /account_api/account_setup | Get non-changeable user information to account.
 *AccountApi* | [**get_account_state**](docs/AccountApi.md#get_account_state) | **GET** /account_api/state | Get current account state.
+*AccountApi* | [**get_email_address_state**](docs/AccountApi.md#get_email_address_state) | **GET** /account_api/email_address_state | 
 *AccountApi* | [**get_latest_birthdate**](docs/AccountApi.md#get_latest_birthdate) | **GET** /account_api/latest_birthdate | 
 *AccountApi* | [**get_news_item**](docs/AccountApi.md#get_news_item) | **GET** /account_api/news_item/{nid} | Get news item content using specific locale and fallback to locale \"en\" if news translation is not found.
 *AccountApi* | [**get_verify_email**](docs/AccountApi.md#get_verify_email) | **GET** /account_api/verify_email/{token} | Verify email address using the token sent via email. This endpoint is meant to be accessed via a link in the verification email. To workaround email security scanning related link accessing, the link can be opened multiple times.
@@ -46,7 +46,7 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_demo_account_login_to_account**](docs/AccountApi.md#post_demo_account_login_to_account) | **POST** /account_api/demo_account_login_to_account | 
 *AccountApi* | [**post_demo_account_logout**](docs/AccountApi.md#post_demo_account_logout) | **POST** /account_api/demo_account_logout | 
 *AccountApi* | [**post_demo_account_register_account**](docs/AccountApi.md#post_demo_account_register_account) | **POST** /account_api/demo_account_register_account | 
-*AccountApi* | [**post_email_login_with_token**](docs/AccountApi.md#post_email_login_with_token) | **POST** /account_api/email_login_with_token | Login using email login token (single use, max 1 guess).
+*AccountApi* | [**post_email_login_with_token**](docs/AccountApi.md#post_email_login_with_token) | **POST** /account_api/email_login_with_token | Login using email login token (single use).
 *AccountApi* | [**post_get_client_features_config**](docs/AccountApi.md#post_get_client_features_config) | **POST** /account_api/client_features_config | 
 *AccountApi* | [**post_get_custom_reports_config**](docs/AccountApi.md#post_get_custom_reports_config) | **POST** /account_api/custom_reports_config | 
 *AccountApi* | [**post_get_news_page**](docs/AccountApi.md#post_get_news_page) | **POST** /account_api/news_page | 
@@ -59,18 +59,25 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_reset_news_paging**](docs/AccountApi.md#post_reset_news_paging) | **POST** /account_api/reset_news_paging | 
 *AccountApi* | [**post_send_verify_email_message**](docs/AccountApi.md#post_send_verify_email_message) | **POST** /account_api/send_verify_email_message | 
 *AccountApi* | [**post_set_account_deletion_request_state**](docs/AccountApi.md#post_set_account_deletion_request_state) | **POST** /account_api/set_account_deletion_request_state/{aid} | Request account deletion or cancel the deletion
+*AccountApi* | [**post_set_email_login_enabled**](docs/AccountApi.md#post_set_email_login_enabled) | **POST** /account_api/set_email_login_enabled | Enable or disable email login for an account.
 *AccountApi* | [**post_sign_in_with_login**](docs/AccountApi.md#post_sign_in_with_login) | **POST** /account_api/sign_in_with_login | Start new session with sign in with Apple or Google.
 *AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update current or pending profile visiblity value.
 *AccountApi* | [**put_setting_unlimited_likes**](docs/AccountApi.md#put_setting_unlimited_likes) | **PUT** /account_api/settings/unlimited_likes | 
 *AccountAdminApi* | [**delete_news_item**](docs/AccountAdminApi.md#delete_news_item) | **DELETE** /account_api/delete_news/{nid} | 
 *AccountAdminApi* | [**delete_news_translation**](docs/AccountAdminApi.md#delete_news_translation) | **DELETE** /account_api/delete_news_translation/{nid}/{locale} | 
 *AccountAdminApi* | [**get_account_id_from_email**](docs/AccountAdminApi.md#get_account_id_from_email) | **GET** /account_api/get_account_id_from_email/{email} | Get account ID from email
+*AccountAdminApi* | [**get_account_locked_state**](docs/AccountAdminApi.md#get_account_locked_state) | **GET** /account_api/get_account_locked_state/{aid} | Get account locked state
 *AccountAdminApi* | [**get_account_state_admin**](docs/AccountAdminApi.md#get_account_state_admin) | **GET** /account_api/get_account_state_admin/{aid} | Get [model::Account] for specific account.
 *AccountAdminApi* | [**get_all_admins**](docs/AccountAdminApi.md#get_all_admins) | **GET** /account_api/get_all_admins | Get all admins
+*AccountAdminApi* | [**get_email_address_state_admin**](docs/AccountAdminApi.md#get_email_address_state_admin) | **GET** /account_api/email_address_state_admin/{aid} | Get email address state for admin.
 *AccountAdminApi* | [**get_permissions**](docs/AccountAdminApi.md#get_permissions) | **GET** /account_api/get_permissions/{aid} | Get [model::Permissions] for specific account.
+*AccountAdminApi* | [**post_admin_cancel_email_change**](docs/AccountAdminApi.md#post_admin_cancel_email_change) | **POST** /account_api/admin_cancel_email_change/{aid} | Cancel email changing process for any account.
+*AccountAdminApi* | [**post_admin_init_email_change**](docs/AccountAdminApi.md#post_admin_init_email_change) | **POST** /account_api/admin_init_email_change | Initiate email change process for any account by providing a new email address.
+*AccountAdminApi* | [**post_admin_logout**](docs/AccountAdminApi.md#post_admin_logout) | **POST** /account_api/admin_logout/{aid} | Logout any account
 *AccountAdminApi* | [**post_create_news_item**](docs/AccountAdminApi.md#post_create_news_item) | **POST** /account_api/create_news_item | 
 *AccountAdminApi* | [**post_delete_account**](docs/AccountAdminApi.md#post_delete_account) | **POST** /account_api/delete_account/{aid} | Delete account instantly
 *AccountAdminApi* | [**post_get_client_version_statistics**](docs/AccountAdminApi.md#post_get_client_version_statistics) | **POST** /account_api/client_version_statistics | Get client version statistics.
+*AccountAdminApi* | [**post_set_account_locked_state**](docs/AccountAdminApi.md#post_set_account_locked_state) | **POST** /account_api/set_account_locked_state/{aid} | Set account locked state
 *AccountAdminApi* | [**post_set_ban_state**](docs/AccountAdminApi.md#post_set_ban_state) | **POST** /account_api/set_ban_state | Ban or unban account
 *AccountAdminApi* | [**post_set_news_publicity**](docs/AccountAdminApi.md#post_set_news_publicity) | **DELETE** /account_api/set_news_publicity/{nid} | 
 *AccountAdminApi* | [**post_set_permissions**](docs/AccountAdminApi.md#post_set_permissions) | **POST** /account_api/set_permissions/{aid} | Set permissions for account
@@ -219,9 +226,9 @@ Class | Method | HTTP request | Description
  - [AccountBanReasonCategory](docs/AccountBanReasonCategory.md)
  - [AccountBanReasonDetails](docs/AccountBanReasonDetails.md)
  - [AccountContent](docs/AccountContent.md)
- - [AccountData](docs/AccountData.md)
  - [AccountId](docs/AccountId.md)
  - [AccountIdDbValue](docs/AccountIdDbValue.md)
+ - [AccountLockedState](docs/AccountLockedState.md)
  - [AccountSetup](docs/AccountSetup.md)
  - [AccountStateContainer](docs/AccountStateContainer.md)
  - [AccountSyncVersion](docs/AccountSyncVersion.md)
@@ -294,6 +301,8 @@ Class | Method | HTTP request | Description
  - [DemoAccountLoginToAccount](docs/DemoAccountLoginToAccount.md)
  - [DemoAccountRegisterAccountResult](docs/DemoAccountRegisterAccountResult.md)
  - [DemoAccountToken](docs/DemoAccountToken.md)
+ - [EmailAddressState](docs/EmailAddressState.md)
+ - [EmailAddressStateAdmin](docs/EmailAddressStateAdmin.md)
  - [EmailLoginToken](docs/EmailLoginToken.md)
  - [EventToClient](docs/EventToClient.md)
  - [EventType](docs/EventType.md)
@@ -337,6 +346,7 @@ Class | Method | HTTP request | Description
  - [GetSentMessage](docs/GetSentMessage.md)
  - [GroupValues](docs/GroupValues.md)
  - [InitEmailChange](docs/InitEmailChange.md)
+ - [InitEmailChangeAdmin](docs/InitEmailChangeAdmin.md)
  - [InitEmailChangeResult](docs/InitEmailChangeResult.md)
  - [InitialProfileAge](docs/InitialProfileAge.md)
  - [IpAddressInfo](docs/IpAddressInfo.md)
@@ -483,6 +493,7 @@ Class | Method | HTTP request | Description
  - [SentMessageIdList](docs/SentMessageIdList.md)
  - [SetAccountBanState](docs/SetAccountBanState.md)
  - [SetAccountSetup](docs/SetAccountSetup.md)
+ - [SetEmailLoginEnabled](docs/SetEmailLoginEnabled.md)
  - [SetInitialEmail](docs/SetInitialEmail.md)
  - [SetMaxPublicKeyCount](docs/SetMaxPublicKeyCount.md)
  - [SetProfileContent](docs/SetProfileContent.md)

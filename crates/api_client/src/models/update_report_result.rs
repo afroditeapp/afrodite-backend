@@ -13,6 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct UpdateReportResult {
+    #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
+    pub error: Option<bool>,
     #[serde(rename = "error_outdated_report_content", skip_serializing_if = "Option::is_none")]
     pub error_outdated_report_content: Option<bool>,
     #[serde(rename = "error_too_many_reports", skip_serializing_if = "Option::is_none")]
@@ -22,6 +24,7 @@ pub struct UpdateReportResult {
 impl UpdateReportResult {
     pub fn new() -> UpdateReportResult {
         UpdateReportResult {
+            error: None,
             error_outdated_report_content: None,
             error_too_many_reports: None,
         }

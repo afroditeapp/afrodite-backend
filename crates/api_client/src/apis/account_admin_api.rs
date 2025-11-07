@@ -42,6 +42,15 @@ pub enum GetAccountIdFromEmailError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_account_locked_state`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetAccountLockedStateError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_account_state_admin`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -60,10 +69,46 @@ pub enum GetAllAdminsError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_email_address_state_admin`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetEmailAddressStateAdminError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_permissions`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetPermissionsError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_admin_cancel_email_change`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostAdminCancelEmailChangeError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_admin_init_email_change`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostAdminInitEmailChangeError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_admin_logout`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostAdminLogoutError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -91,6 +136,15 @@ pub enum PostDeleteAccountError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostGetClientVersionStatisticsError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_set_account_locked_state`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostSetAccountLockedStateError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -190,7 +244,7 @@ pub async fn delete_news_translation(configuration: &configuration::Configuratio
     }
 }
 
-/// # Access  Permission [model_account::Permissions::admin_find_account_by_email] is required.
+/// # Access  Permission [model_account::Permissions::admin_find_account_by_email_address] is required.
 pub async fn get_account_id_from_email(configuration: &configuration::Configuration, email: &str) -> Result<models::GetAccountIdFromEmailResult, Error<GetAccountIdFromEmailError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_email = email;
@@ -230,7 +284,47 @@ pub async fn get_account_id_from_email(configuration: &configuration::Configurat
     }
 }
 
-/// # Access  Permission [model::Permissions::admin_view_private_info] is required.
+/// # Access  Permission [model::Permissions::admin_edit_login] is required.
+pub async fn get_account_locked_state(configuration: &configuration::Configuration, aid: &str) -> Result<models::AccountLockedState, Error<GetAccountLockedStateError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_aid = aid;
+
+    let uri_str = format!("{}/account_api/get_account_locked_state/{aid}", configuration.base_path, aid=crate::apis::urlencode(p_path_aid));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::AccountLockedState`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::AccountLockedState`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetAccountLockedStateError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// # Access  Permission [model::Permissions::admin_view_account_state] is required.
 pub async fn get_account_state_admin(configuration: &configuration::Configuration, aid: &str) -> Result<models::Account, Error<GetAccountStateAdminError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_aid = aid;
@@ -308,6 +402,46 @@ pub async fn get_all_admins(configuration: &configuration::Configuration, ) -> R
     }
 }
 
+/// Requires `admin_view_email_address` permission.
+pub async fn get_email_address_state_admin(configuration: &configuration::Configuration, aid: &str) -> Result<models::EmailAddressStateAdmin, Error<GetEmailAddressStateAdminError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_aid = aid;
+
+    let uri_str = format!("{}/account_api/email_address_state_admin/{aid}", configuration.base_path, aid=crate::apis::urlencode(p_path_aid));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EmailAddressStateAdmin`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::EmailAddressStateAdmin`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetEmailAddressStateAdminError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 /// # Access  Permission [model::Permissions::admin_view_permissions] is required.
 pub async fn get_permissions(configuration: &configuration::Configuration, aid: &str) -> Result<models::Permissions, Error<GetPermissionsError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -344,6 +478,105 @@ pub async fn get_permissions(configuration: &configuration::Configuration, aid: 
     } else {
         let content = resp.text().await?;
         let entity: Option<GetPermissionsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// # Access  Permission [model::Permissions::admin_change_email_address] is required.
+pub async fn post_admin_cancel_email_change(configuration: &configuration::Configuration, aid: &str) -> Result<(), Error<PostAdminCancelEmailChangeError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_aid = aid;
+
+    let uri_str = format!("{}/account_api/admin_cancel_email_change/{aid}", configuration.base_path, aid=crate::apis::urlencode(p_path_aid));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostAdminCancelEmailChangeError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// This is the admin version of the email change endpoint.  # Access  Permission [model::Permissions::admin_change_email_address] is required.
+pub async fn post_admin_init_email_change(configuration: &configuration::Configuration, init_email_change_admin: models::InitEmailChangeAdmin) -> Result<models::InitEmailChangeResult, Error<PostAdminInitEmailChangeError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_init_email_change_admin = init_email_change_admin;
+
+    let uri_str = format!("{}/account_api/admin_init_email_change", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_init_email_change_admin);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::InitEmailChangeResult`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::InitEmailChangeResult`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostAdminInitEmailChangeError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// # Access  Permission [model::Permissions::admin_edit_login] is required.
+pub async fn post_admin_logout(configuration: &configuration::Configuration, aid: &str) -> Result<(), Error<PostAdminLogoutError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_aid = aid;
+
+    let uri_str = format!("{}/account_api/admin_logout/{aid}", configuration.base_path, aid=crate::apis::urlencode(p_path_aid));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostAdminLogoutError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -451,6 +684,37 @@ pub async fn post_get_client_version_statistics(configuration: &configuration::C
     } else {
         let content = resp.text().await?;
         let entity: Option<PostGetClientVersionStatisticsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// # Access  Permission [model::Permissions::admin_edit_login] is required.
+pub async fn post_set_account_locked_state(configuration: &configuration::Configuration, aid: &str, account_locked_state: models::AccountLockedState) -> Result<(), Error<PostSetAccountLockedStateError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_aid = aid;
+    let p_body_account_locked_state = account_locked_state;
+
+    let uri_str = format!("{}/account_api/set_account_locked_state/{aid}", configuration.base_path, aid=crate::apis::urlencode(p_path_aid));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_account_locked_state);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostSetAccountLockedStateError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

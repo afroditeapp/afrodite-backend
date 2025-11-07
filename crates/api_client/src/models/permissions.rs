@@ -15,10 +15,14 @@ use serde::{Deserialize, Serialize};
 pub struct Permissions {
     #[serde(rename = "admin_ban_account", skip_serializing_if = "Option::is_none")]
     pub admin_ban_account: Option<bool>,
+    #[serde(rename = "admin_change_email_address", skip_serializing_if = "Option::is_none")]
+    pub admin_change_email_address: Option<bool>,
     #[serde(rename = "admin_delete_account", skip_serializing_if = "Option::is_none")]
     pub admin_delete_account: Option<bool>,
     #[serde(rename = "admin_delete_media_content", skip_serializing_if = "Option::is_none")]
     pub admin_delete_media_content: Option<bool>,
+    #[serde(rename = "admin_edit_login", skip_serializing_if = "Option::is_none")]
+    pub admin_edit_login: Option<bool>,
     #[serde(rename = "admin_edit_max_public_key_count", skip_serializing_if = "Option::is_none")]
     pub admin_edit_max_public_key_count: Option<bool>,
     #[serde(rename = "admin_edit_media_content_face_detected_value", skip_serializing_if = "Option::is_none")]
@@ -29,8 +33,8 @@ pub struct Permissions {
     pub admin_edit_profile_name: Option<bool>,
     #[serde(rename = "admin_export_data", skip_serializing_if = "Option::is_none")]
     pub admin_export_data: Option<bool>,
-    #[serde(rename = "admin_find_account_by_email", skip_serializing_if = "Option::is_none")]
-    pub admin_find_account_by_email: Option<bool>,
+    #[serde(rename = "admin_find_account_by_email_address", skip_serializing_if = "Option::is_none")]
+    pub admin_find_account_by_email_address: Option<bool>,
     #[serde(rename = "admin_moderate_media_content", skip_serializing_if = "Option::is_none")]
     pub admin_moderate_media_content: Option<bool>,
     #[serde(rename = "admin_moderate_profile_names", skip_serializing_if = "Option::is_none")]
@@ -64,13 +68,19 @@ pub struct Permissions {
     pub admin_server_maintenance_view_info: Option<bool>,
     #[serde(rename = "admin_subscribe_admin_notifications", skip_serializing_if = "Option::is_none")]
     pub admin_subscribe_admin_notifications: Option<bool>,
+    #[serde(rename = "admin_view_account_api_usage", skip_serializing_if = "Option::is_none")]
+    pub admin_view_account_api_usage: Option<bool>,
+    #[serde(rename = "admin_view_account_ip_address_usage", skip_serializing_if = "Option::is_none")]
+    pub admin_view_account_ip_address_usage: Option<bool>,
+    #[serde(rename = "admin_view_account_state", skip_serializing_if = "Option::is_none")]
+    pub admin_view_account_state: Option<bool>,
     /// View public and private profiles.
     #[serde(rename = "admin_view_all_profiles", skip_serializing_if = "Option::is_none")]
     pub admin_view_all_profiles: Option<bool>,
+    #[serde(rename = "admin_view_email_address", skip_serializing_if = "Option::is_none")]
+    pub admin_view_email_address: Option<bool>,
     #[serde(rename = "admin_view_permissions", skip_serializing_if = "Option::is_none")]
     pub admin_view_permissions: Option<bool>,
-    #[serde(rename = "admin_view_private_info", skip_serializing_if = "Option::is_none")]
-    pub admin_view_private_info: Option<bool>,
     #[serde(rename = "admin_view_profile_history", skip_serializing_if = "Option::is_none")]
     pub admin_view_profile_history: Option<bool>,
 }
@@ -79,14 +89,16 @@ impl Permissions {
     pub fn new() -> Permissions {
         Permissions {
             admin_ban_account: None,
+            admin_change_email_address: None,
             admin_delete_account: None,
             admin_delete_media_content: None,
+            admin_edit_login: None,
             admin_edit_max_public_key_count: None,
             admin_edit_media_content_face_detected_value: None,
             admin_edit_permissions: None,
             admin_edit_profile_name: None,
             admin_export_data: None,
-            admin_find_account_by_email: None,
+            admin_find_account_by_email_address: None,
             admin_moderate_media_content: None,
             admin_moderate_profile_names: None,
             admin_moderate_profile_texts: None,
@@ -103,9 +115,12 @@ impl Permissions {
             admin_server_maintenance_view_backend_config: None,
             admin_server_maintenance_view_info: None,
             admin_subscribe_admin_notifications: None,
+            admin_view_account_api_usage: None,
+            admin_view_account_ip_address_usage: None,
+            admin_view_account_state: None,
             admin_view_all_profiles: None,
+            admin_view_email_address: None,
             admin_view_permissions: None,
-            admin_view_private_info: None,
             admin_view_profile_history: None,
         }
     }

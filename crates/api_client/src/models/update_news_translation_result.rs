@@ -13,6 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct UpdateNewsTranslationResult {
+    #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
+    pub error: Option<bool>,
     #[serde(rename = "error_already_changed", skip_serializing_if = "Option::is_none")]
     pub error_already_changed: Option<bool>,
 }
@@ -20,6 +22,7 @@ pub struct UpdateNewsTranslationResult {
 impl UpdateNewsTranslationResult {
     pub fn new() -> UpdateNewsTranslationResult {
         UpdateNewsTranslationResult {
+            error: None,
             error_already_changed: None,
         }
     }

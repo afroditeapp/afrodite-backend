@@ -231,7 +231,7 @@ impl SetBotPublicKey {
             .await
             .change_context(TestError::ApiRequest)?;
 
-        if r.error_too_many_public_keys {
+        if r.error_too_many_public_keys.unwrap_or_default() {
             return Err(TestError::ApiRequest.report()).attach_printable("Too many public keys");
         }
 

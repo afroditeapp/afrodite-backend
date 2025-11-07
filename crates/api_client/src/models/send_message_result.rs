@@ -16,6 +16,8 @@ pub struct SendMessageResult {
     /// Base64 encoded PGP signed message containing [SignedMessageData].
     #[serde(rename = "d", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub d: Option<Option<String>>,
+    #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
+    pub error: Option<bool>,
     #[serde(rename = "error_receiver_blocked_sender_or_receiver_not_found", skip_serializing_if = "Option::is_none")]
     pub error_receiver_blocked_sender_or_receiver_not_found: Option<bool>,
     #[serde(rename = "error_receiver_public_key_outdated", skip_serializing_if = "Option::is_none")]
@@ -32,6 +34,7 @@ impl SendMessageResult {
     pub fn new() -> SendMessageResult {
         SendMessageResult {
             d: None,
+            error: None,
             error_receiver_blocked_sender_or_receiver_not_found: None,
             error_receiver_public_key_outdated: None,
             error_sender_public_key_outdated: None,
