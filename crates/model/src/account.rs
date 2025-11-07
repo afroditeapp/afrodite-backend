@@ -194,6 +194,7 @@ define_permissions!(
     admin_request_account_deletion,
     /// View public and private profiles.
     admin_view_all_profiles,
+    admin_view_account_state,
     admin_view_account_api_usage,
     admin_view_account_ip_address_usage,
     admin_view_profile_history,

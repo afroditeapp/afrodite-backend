@@ -104,6 +104,7 @@ diesel::table! {
         admin_ban_account -> Bool,
         admin_request_account_deletion -> Bool,
         admin_view_all_profiles -> Bool,
+        admin_view_account_state -> Bool,
         admin_view_account_api_usage -> Bool,
         admin_view_account_ip_address_usage -> Bool,
         admin_view_profile_history -> Bool,

@@ -19,7 +19,7 @@ const PATH_GET_ACCOUNT_STATE_ADMIN: &str = "/account_api/get_account_state_admin
 ///
 /// # Access
 ///
-/// Permission [model::Permissions::admin_view_account_api_usage] is required.
+/// Permission [model::Permissions::admin_view_account_state] is required.
 #[utoipa::path(
     get,
     path = PATH_GET_ACCOUNT_STATE_ADMIN,
@@ -38,7 +38,7 @@ pub async fn get_account_state_admin(
 ) -> Result<Json<Account>, StatusCode> {
     ACCOUNT_ADMIN.get_account_state_admin.incr();
 
-    if !permissions.admin_view_account_api_usage {
+    if !permissions.admin_view_account_state {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 

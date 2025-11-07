@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_ban_account                            BOOLEAN NOT NULL DEFAULT FALSE,
     admin_request_account_deletion               BOOLEAN NOT NULL DEFAULT FALSE,
     admin_view_all_profiles                      BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_view_account_state                     BOOLEAN NOT NULL DEFAULT FALSE,
     admin_view_account_api_usage                 BOOLEAN NOT NULL DEFAULT FALSE,
     admin_view_account_ip_address_usage          BOOLEAN NOT NULL DEFAULT FALSE,
     admin_view_profile_history                   BOOLEAN NOT NULL DEFAULT FALSE,
