@@ -132,10 +132,10 @@ pub struct EmailLoginToken {
 }
 
 #[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
-#[diesel(table_name = crate::schema::account)]
+#[diesel(table_name = crate::schema::account_email_address_state)]
 #[diesel(check_for_backend(crate::Db))]
 #[diesel(treat_none_as_null = true)]
-pub struct AccountInternal {
+pub struct AccountEmailAddressStateInternal {
     pub email: Option<EmailAddress>,
     pub email_verification_token: Option<Vec<u8>>,
     pub email_verification_token_unix_time: Option<UnixTime>,
@@ -149,7 +149,7 @@ pub struct AccountInternal {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
-pub struct AccountData {
+pub struct AccountEmailAddressState {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub email: Option<EmailAddress>,
     #[serde(skip_serializing_if = "Option::is_none")]

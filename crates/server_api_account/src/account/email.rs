@@ -9,11 +9,15 @@ use axum::{
 use axum_extra::{TypedHeader, headers::ContentType};
 use model::{AccessToken, AccountIdInternal, AccountState, Permissions};
 use model_account::{
-    InitEmailChange, InitEmailChangeResult, SendVerifyEmailMessageResult, SetEmailLoginEnabled,
-    SetInitialEmail,
+    AccountEmailAddressState, InitEmailChange, InitEmailChangeResult, SendVerifyEmailMessageResult,
+    SetEmailLoginEnabled, SetInitialEmail,
 };
 use server_api::{
-    S, app::WriteData, common::AcceptLanguage, create_open_api_router, db_write, utils::Json,
+    S,
+    app::{ReadData, WriteData},
+    common::AcceptLanguage,
+    create_open_api_router, db_write,
+    utils::Json,
 };
 use server_data::{app::GetConfig, read::GetReadCommandsCommon};
 use server_data_account::{
@@ -21,6 +25,7 @@ use server_data_account::{
     write::{GetWriteCommandsAccount, account::email::TokenCheckResult},
 };
 use simple_backend::create_counters;
+use simple_backend_utils::time::seconds_until_current_time_is_at;
 use tokio::time::timeout;
 
 use crate::app::GetAccounts;
@@ -155,9 +160,13 @@ pub async fn post_send_verify_email_message(
                 return Ok(SendVerifyEmailMessageResult::error_email_already_verified());
             }
 
-            let account_internal = cmds.read().account().account_internal(account_id).await?;
+            let internal = cmds
+                .read()
+                .account()
+                .email_address_state_internal(account_id)
+                .await?;
 
-            if let Some(token_time) = account_internal.email_verification_token_unix_time {
+            if let Some(token_time) = internal.email_verification_token_unix_time {
                 let min_wait_duration = cmds
                     .config()
                     .limits_account()
@@ -280,17 +289,21 @@ pub(crate) async fn init_email_change_impl(
 ) -> Result<InitEmailChangeResult, crate::utils::StatusCode> {
     let send_result = timeout(Duration::from_secs(10), async {
         db_write!(state, move |cmds| {
-            let account_internal = cmds.read().account().account_internal(account_id).await?;
+            let internal = cmds
+                .read()
+                .account()
+                .email_address_state_internal(account_id)
+                .await?;
 
-            if account_internal.email.is_none() {
+            if internal.email.is_none() {
                 return Ok(InitEmailChangeResult::error_email_sending_failed());
             }
 
-            if account_internal.email.as_ref() == Some(&new_email) {
+            if internal.email.as_ref() == Some(&new_email) {
                 return Ok(InitEmailChangeResult::error_email_sending_failed());
             }
 
-            if let Some(change_time) = account_internal.email_change_unix_time {
+            if let Some(change_time) = internal.email_change_unix_time {
                 let min_wait_duration = cmds
                     .config()
                     .limits_account()
@@ -426,9 +439,9 @@ pub async fn post_set_email_login_enabled(
 ) -> Result<(), crate::utils::StatusCode> {
     ACCOUNT.post_set_email_login_enabled.incr();
 
-    let target_account_internal = state.get_internal_id(request.aid).await?;
+    let target_account = state.get_internal_id(request.aid).await?;
 
-    let is_own_account = api_caller_account_id == target_account_internal;
+    let is_own_account = api_caller_account_id == target_account;
     let has_admin_permission = api_caller_permissions.admin_edit_login;
 
     if !is_own_account && !has_admin_permission {
@@ -438,11 +451,64 @@ pub async fn post_set_email_login_enabled(
     db_write!(state, move |cmds| {
         cmds.account()
             .email()
-            .set_email_login_enabled(target_account_internal, request.enabled)
+            .set_email_login_enabled(target_account, request.enabled)
             .await
     })?;
 
     Ok(())
+}
+
+const PATH_GET_EMAIL_ADDRESS_STATE: &str = "/account_api/email_address_state";
+
+#[utoipa::path(
+    get,
+    path = PATH_GET_EMAIL_ADDRESS_STATE,
+    responses(
+        (status = 200, description = "Request successfull.", body = AccountEmailAddressState),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_email_address_state(
+    State(state): State<S>,
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+) -> Result<Json<AccountEmailAddressState>, crate::utils::StatusCode> {
+    ACCOUNT.get_email_address_state.incr();
+    let mut data = state
+        .read()
+        .account()
+        .email_address_state(api_caller_account_id)
+        .await?;
+
+    let internal = state
+        .read()
+        .account()
+        .email_address_state_internal(api_caller_account_id)
+        .await?;
+
+    if let Some(init_time) = internal.email_change_unix_time {
+        let wait_duration_seconds = state
+            .config()
+            .limits_account()
+            .email_change_min_wait_duration
+            .seconds;
+
+        let scheduled_tasks_config = state.config().simple_backend().scheduled_tasks();
+        let next_scheduled_tasks_run =
+            seconds_until_current_time_is_at(scheduled_tasks_config.daily_start_time)
+                .map_err(|_| crate::utils::StatusCode::INTERNAL_SERVER_ERROR)?;
+        let next_scheduled_tasks_run = TryInto::<u32>::try_into(next_scheduled_tasks_run)
+            .map_err(|_| crate::utils::StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        data.email_change_completion_time = Some(
+            init_time
+                .add_seconds(wait_duration_seconds)
+                .add_seconds(next_scheduled_tasks_run),
+        );
+    }
+
+    Ok(data.into())
 }
 
 create_open_api_router!(
@@ -452,6 +518,7 @@ create_open_api_router!(
     post_init_email_change,
     post_initial_email,
     post_set_email_login_enabled,
+    get_email_address_state,
 );
 
 create_counters!(
@@ -465,4 +532,5 @@ create_counters!(
     post_init_email_change,
     post_initial_email,
     post_set_email_login_enabled,
+    get_email_address_state,
 );

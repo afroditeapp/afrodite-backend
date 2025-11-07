@@ -1,7 +1,14 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
-    account (account_id) {
+    account_app_notification_settings (account_id) {
+        account_id -> Int8,
+        news -> Bool,
+    }
+}
+
+diesel::table! {
+    account_email_address_state (account_id) {
         account_id -> Int8,
         email -> Nullable<Text>,
         email_verification_token -> Nullable<Bytea>,
@@ -13,13 +20,6 @@ diesel::table! {
         email_login_token -> Nullable<Bytea>,
         email_login_token_unix_time -> Nullable<Int8>,
         email_login_enabled -> Bool,
-    }
-}
-
-diesel::table! {
-    account_app_notification_settings (account_id) {
-        account_id -> Int8,
-        news -> Bool,
     }
 }
 
@@ -771,8 +771,8 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(account -> account_id (account_id));
 diesel::joinable!(account_app_notification_settings -> account_id (account_id));
+diesel::joinable!(account_email_address_state -> account_id (account_id));
 diesel::joinable!(account_email_sending_state -> account_id (account_id));
 diesel::joinable!(account_id -> used_account_ids (id));
 diesel::joinable!(account_interaction_index -> account_interaction (interaction_id));
@@ -834,8 +834,8 @@ diesel::joinable!(sign_in_with_info -> account_id (account_id));
 diesel::joinable!(used_content_ids -> account_id (account_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
-    account,
     account_app_notification_settings,
+    account_email_address_state,
     account_email_sending_state,
     account_global_state,
     account_id,

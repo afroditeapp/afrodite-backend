@@ -41,12 +41,12 @@ pub async fn get_email_address_state(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let target_account_internal = state.get_internal_id(target_account).await?;
+    let target_account = state.get_internal_id(target_account).await?;
 
     let data = state
         .read()
         .account()
-        .account_data(target_account_internal)
+        .email_address_state(target_account)
         .await?;
 
     let email_state = EmailAddressStateForAdmin {
@@ -89,12 +89,12 @@ pub async fn post_admin_cancel_email_change(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let target_account_internal = state.get_internal_id(target_account).await?;
+    let target_account = state.get_internal_id(target_account).await?;
 
     db_write!(state, move |cmds| {
         cmds.account()
             .email()
-            .cancel_email_change(target_account_internal)
+            .cancel_email_change(target_account)
             .await
     })?;
 
@@ -132,9 +132,9 @@ pub async fn post_admin_init_email_change(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let target_account_internal = state.get_internal_id(request.account_id).await?;
+    let target_account = state.get_internal_id(request.account_id).await?;
 
-    let result = init_email_change_impl(&state, target_account_internal, request.new_email).await?;
+    let result = init_email_change_impl(&state, target_account, request.new_email).await?;
     Ok(result.into())
 }
 

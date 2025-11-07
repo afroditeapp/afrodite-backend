@@ -1,8 +1,8 @@
 use database::current::read::GetDbReadCommandsCommon;
 use database_account::current::read::GetDbReadCommandsAccount;
 use model_account::{
-    AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountInternal, AccountSetup,
-    AppleAccountId, GoogleAccountId, SignInWithInfo,
+    AccountEmailAddressState, AccountEmailAddressStateInternal, AccountGlobalState, AccountId,
+    AccountIdInternal, AccountSetup, AppleAccountId, GoogleAccountId, SignInWithInfo,
 };
 use model_server_state::DemoAccountId;
 use server_data::{
@@ -65,17 +65,20 @@ impl ReadCommandsAccount<'_> {
         .into_error()
     }
 
-    pub async fn account_data(&self, id: AccountIdInternal) -> Result<AccountData, DataError> {
-        self.db_read(move |mut cmds| cmds.account().data().account_data(id))
+    pub async fn email_address_state(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<AccountEmailAddressState, DataError> {
+        self.db_read(move |mut cmds| cmds.account().data().email_address_state(id))
             .await
             .into_error()
     }
 
-    pub async fn account_internal(
+    pub async fn email_address_state_internal(
         &self,
         id: AccountIdInternal,
-    ) -> Result<AccountInternal, DataError> {
-        self.db_read(move |mut cmds| cmds.account().data().account_internal(id))
+    ) -> Result<AccountEmailAddressStateInternal, DataError> {
+        self.db_read(move |mut cmds| cmds.account().data().email_address_state_internal(id))
             .await
             .into_error()
     }

@@ -28,74 +28,74 @@ impl CurrentReadAccountEmail<'_> {
         &mut self,
         token: Vec<u8>,
     ) -> Result<Option<(AccountIdInternal, UnixTime)>, DieselDatabaseError> {
-        use model::schema::{account, account_id};
+        use model::schema::{account_email_address_state, account_id};
 
-        let account_data = account::table
+        let data = account_email_address_state::table
             .inner_join(account_id::table)
-            .filter(account::email_verification_token.eq(Some(token)))
-            .filter(account::email_verification_token_unix_time.is_not_null())
+            .filter(account_email_address_state::email_verification_token.eq(Some(token)))
+            .filter(account_email_address_state::email_verification_token_unix_time.is_not_null())
             .select((
                 AccountIdInternal::as_select(),
-                account::email_verification_token_unix_time.assume_not_null(),
+                account_email_address_state::email_verification_token_unix_time.assume_not_null(),
             ))
             .first(self.conn())
             .optional()
             .into_db_error(())?;
 
-        Ok(account_data)
+        Ok(data)
     }
 
     pub fn find_account_by_email_change_verification_token(
         &mut self,
         token: Vec<u8>,
     ) -> Result<Option<(AccountIdInternal, UnixTime)>, DieselDatabaseError> {
-        use model::schema::{account, account_id};
+        use model::schema::{account_email_address_state, account_id};
 
-        let account_data = account::table
+        let data = account_email_address_state::table
             .inner_join(account_id::table)
-            .filter(account::email_change_verification_token.eq(Some(token)))
-            .filter(account::email_change_unix_time.is_not_null())
+            .filter(account_email_address_state::email_change_verification_token.eq(Some(token)))
+            .filter(account_email_address_state::email_change_unix_time.is_not_null())
             .select((
                 AccountIdInternal::as_select(),
-                account::email_change_unix_time.assume_not_null(),
+                account_email_address_state::email_change_unix_time.assume_not_null(),
             ))
             .first(self.conn())
             .optional()
             .into_db_error(())?;
 
-        Ok(account_data)
+        Ok(data)
     }
 
     pub fn find_account_by_email_login_token(
         &mut self,
         token: Vec<u8>,
     ) -> Result<Option<(AccountIdInternal, UnixTime)>, DieselDatabaseError> {
-        use model::schema::{account, account_id};
+        use model::schema::{account_email_address_state, account_id};
 
-        let account_data = account::table
+        let data = account_email_address_state::table
             .inner_join(account_id::table)
-            .filter(account::email_login_token.eq(Some(token)))
-            .filter(account::email_login_token_unix_time.is_not_null())
+            .filter(account_email_address_state::email_login_token.eq(Some(token)))
+            .filter(account_email_address_state::email_login_token_unix_time.is_not_null())
             .select((
                 AccountIdInternal::as_select(),
-                account::email_login_token_unix_time.assume_not_null(),
+                account_email_address_state::email_login_token_unix_time.assume_not_null(),
             ))
             .first(self.conn())
             .optional()
             .into_db_error(())?;
 
-        Ok(account_data)
+        Ok(data)
     }
 
     pub fn account_id_from_email(
         &mut self,
         email: EmailAddress,
     ) -> Result<Option<AccountIdInternal>, DieselDatabaseError> {
-        use crate::schema::{account, account_id};
+        use crate::schema::{account_email_address_state, account_id};
 
-        let found_account: Option<AccountIdInternal> = account::table
+        let found_account: Option<AccountIdInternal> = account_email_address_state::table
             .inner_join(account_id::table)
-            .filter(account::email.eq(email))
+            .filter(account_email_address_state::email.eq(email))
             .select(AccountIdInternal::as_select())
             .first(self.conn())
             .optional()

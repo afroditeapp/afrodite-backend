@@ -223,7 +223,11 @@ impl WriteCommandsAccountEmail<'_> {
 
         if let Some(account_id) = account_id {
             db_transaction!(self, move |mut cmds| {
-                let current_state = cmds.read().account().data().account_internal(account_id)?;
+                let current_state = cmds
+                    .read()
+                    .account()
+                    .data()
+                    .email_address_state_internal(account_id)?;
                 if current_state.email_change_verified {
                     // Already verified
                     return Ok(());

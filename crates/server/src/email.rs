@@ -29,7 +29,7 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
             .state
             .read()
             .account()
-            .account_data(receiver)
+            .email_address_state(receiver)
             .await
             .map_err(|e| e.into_report())
             .change_context(EmailError::GettingEmailDataFailed)?;
@@ -166,11 +166,11 @@ impl ServerEmailDataProvider {
         &self,
         receiver: AccountIdInternal,
     ) -> error_stack::Result<String, simple_backend::email::EmailError> {
-        let account_internal = self
+        let internal = self
             .state
             .read()
             .account()
-            .account_internal(receiver)
+            .email_address_state_internal(receiver)
             .await
             .map_err(|e| e.into_report())
             .change_context(EmailError::GettingEmailDataFailed)?;
@@ -180,8 +180,8 @@ impl ServerEmailDataProvider {
         // Reuse existing valid token to avoid sending multiple emails
         // with different links in a short time period.
         let (token, token_bytes) = if let (Some(existing_token_bytes), Some(token_time)) = (
-            account_internal.email_verification_token,
-            account_internal.email_verification_token_unix_time,
+            internal.email_verification_token,
+            internal.email_verification_token_unix_time,
         ) {
             if token_time.duration_value_elapsed(
                 self.state
@@ -217,16 +217,16 @@ impl ServerEmailDataProvider {
         &self,
         receiver: AccountIdInternal,
     ) -> error_stack::Result<String, simple_backend::email::EmailError> {
-        let account_internal = self
+        let internal = self
             .state
             .read()
             .account()
-            .account_internal(receiver)
+            .email_address_state_internal(receiver)
             .await
             .map_err(|e| e.into_report())
             .change_context(EmailError::GettingEmailDataFailed)?;
 
-        if let Some(token_bytes) = account_internal.email_change_verification_token {
+        if let Some(token_bytes) = internal.email_change_verification_token {
             let token = AccessToken::from_bytes(&token_bytes);
             Ok(token.into_string())
         } else {
@@ -239,16 +239,16 @@ impl ServerEmailDataProvider {
         &self,
         receiver: AccountIdInternal,
     ) -> error_stack::Result<String, simple_backend::email::EmailError> {
-        let account_internal = self
+        let internal = self
             .state
             .read()
             .account()
-            .account_internal(receiver)
+            .email_address_state_internal(receiver)
             .await
             .map_err(|e| e.into_report())
             .change_context(EmailError::GettingEmailDataFailed)?;
 
-        if let Some(token_bytes) = account_internal.email_login_token {
+        if let Some(token_bytes) = internal.email_login_token {
             let token = AccessToken::from_bytes(&token_bytes);
             Ok(token.into_string())
         } else {

@@ -1,71 +1,13 @@
 use axum::{Extension, extract::State};
-use model_account::{
-    AccountData, AccountIdInternal, BooleanSetting, EventToClientInternal, ProfileVisibility,
-};
+use model_account::{AccountIdInternal, BooleanSetting, EventToClientInternal, ProfileVisibility};
 use server_api::{S, create_open_api_router, db_write};
-use server_data::app::GetConfig;
-use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
+use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
-use simple_backend_utils::time::seconds_until_current_time_is_at;
 
 use crate::{
-    app::{ReadData, WriteData},
+    app::WriteData,
     utils::{Json, StatusCode},
 };
-
-const PATH_GET_ACCOUNT_DATA: &str = "/account_api/account_data";
-
-/// Get changeable user information to account.
-#[utoipa::path(
-    get,
-    path = PATH_GET_ACCOUNT_DATA,
-    responses(
-        (status = 200, description = "Request successfull.", body = AccountData),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn get_account_data(
-    State(state): State<S>,
-    Extension(api_caller_account_id): Extension<AccountIdInternal>,
-) -> Result<Json<AccountData>, StatusCode> {
-    ACCOUNT.get_account_data.incr();
-    let mut data = state
-        .read()
-        .account()
-        .account_data(api_caller_account_id)
-        .await?;
-
-    let internal = state
-        .read()
-        .account()
-        .account_internal(api_caller_account_id)
-        .await?;
-
-    if let Some(init_time) = internal.email_change_unix_time {
-        let wait_duration_seconds = state
-            .config()
-            .limits_account()
-            .email_change_min_wait_duration
-            .seconds;
-
-        let scheduled_tasks_config = state.config().simple_backend().scheduled_tasks();
-        let next_scheduled_tasks_run =
-            seconds_until_current_time_is_at(scheduled_tasks_config.daily_start_time)
-                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-        let next_scheduled_tasks_run = TryInto::<u32>::try_into(next_scheduled_tasks_run)
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-        data.email_change_completion_time = Some(
-            init_time
-                .add_seconds(wait_duration_seconds)
-                .add_seconds(next_scheduled_tasks_run),
-        );
-    }
-
-    Ok(data.into())
-}
 
 const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile_visibility";
 
@@ -147,7 +89,6 @@ pub async fn put_setting_unlimited_likes(
 
 create_open_api_router!(
         fn router_settings,
-        get_account_data,
         put_setting_profile_visiblity,
         put_setting_unlimited_likes,
 );
@@ -156,7 +97,6 @@ create_counters!(
     AccountCounters,
     ACCOUNT,
     ACCOUNT_SETTINGS_COUNTERS_LIST,
-    get_account_data,
     put_setting_profile_visiblity,
     put_setting_unlimited_likes,
 );

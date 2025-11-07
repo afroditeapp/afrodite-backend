@@ -44,7 +44,7 @@ pub async fn login_impl(
         return Ok(LoginResult::error_account_locked());
     }
 
-    let email = state.read().account().account_data(id).await?;
+    let email = state.read().account().email_address_state(id).await?;
 
     let access = AccessToken::generate_new();
     let refresh = RefreshToken::generate_new();
@@ -314,15 +314,19 @@ pub async fn post_request_email_login_token(
             .ok()??;
 
         db_write!(state, move |cmds| {
-            let account_internal = cmds.read().account().account_internal(account_id).await?;
+            let internal = cmds
+                .read()
+                .account()
+                .email_address_state_internal(account_id)
+                .await?;
 
-            if !account_internal.email_login_enabled {
+            if !internal.email_login_enabled {
                 // Email login is disabled, but don't return error to prevent
                 // email enumeration.
                 return Ok(());
             }
 
-            if let Some(token_time) = account_internal.email_login_token_unix_time {
+            if let Some(token_time) = internal.email_login_token_unix_time {
                 let min_wait_duration = GetConfig::config(&cmds)
                     .limits_account()
                     .email_login_resend_min_wait_duration;

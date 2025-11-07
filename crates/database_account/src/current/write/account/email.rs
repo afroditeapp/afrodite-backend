@@ -38,9 +38,9 @@ impl CurrentWriteAccountEmail<'_> {
         token: Vec<u8>,
         token_unix_time: UnixTime,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account::dsl::*;
+        use model::schema::account_email_address_state::dsl::*;
 
-        update(account.find(id.as_db_id()))
+        update(account_email_address_state.find(id.as_db_id()))
             .set((
                 email_verification_token.eq(Some(token)),
                 email_verification_token_unix_time.eq(Some(token_unix_time)),
@@ -57,9 +57,9 @@ impl CurrentWriteAccountEmail<'_> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account::dsl::*;
+        use model::schema::account_email_address_state::dsl::*;
 
-        update(account.find(id.as_db_id()))
+        update(account_email_address_state.find(id.as_db_id()))
             .set(email_verification_token.eq(None::<Vec<u8>>))
             .execute(self.conn())
             .into_db_error(id)?;
@@ -73,9 +73,9 @@ impl CurrentWriteAccountEmail<'_> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account::dsl::*;
+        use model::schema::account_email_address_state::dsl::*;
 
-        update(account.find(id.as_db_id()))
+        update(account_email_address_state.find(id.as_db_id()))
             .set(email_change_verified.eq(true))
             .execute(self.conn())
             .into_db_error(id)?;
@@ -89,9 +89,9 @@ impl CurrentWriteAccountEmail<'_> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account::dsl::*;
+        use model::schema::account_email_address_state::dsl::*;
 
-        update(account.find(id.as_db_id()))
+        update(account_email_address_state.find(id.as_db_id()))
             .set((
                 email_change.eq(None::<String>),
                 email_change_verification_token.eq(None::<Vec<u8>>),
@@ -110,9 +110,9 @@ impl CurrentWriteAccountEmail<'_> {
         current_time: UnixTime,
         verification_token: Vec<u8>,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account::dsl::*;
+        use model::schema::account_email_address_state::dsl::*;
 
-        update(account.find(id.as_db_id()))
+        update(account_email_address_state.find(id.as_db_id()))
             .set((
                 email_change.eq(Some(new_email)),
                 email_change_unix_time.eq(Some(current_time)),
@@ -132,9 +132,9 @@ impl CurrentWriteAccountEmail<'_> {
         id: AccountIdInternal,
         new_email: String,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account::dsl::*;
+        use model::schema::account_email_address_state::dsl::*;
 
-        update(account.find(id.as_db_id()))
+        update(account_email_address_state.find(id.as_db_id()))
             .set((
                 email.eq(Some(new_email)),
                 email_change.eq(None::<String>),
@@ -153,9 +153,9 @@ impl CurrentWriteAccountEmail<'_> {
         token: Vec<u8>,
         token_unix_time: UnixTime,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account::dsl::*;
+        use model::schema::account_email_address_state::dsl::*;
 
-        update(account.find(id.as_db_id()))
+        update(account_email_address_state.find(id.as_db_id()))
             .set((
                 email_login_token.eq(Some(token)),
                 email_login_token_unix_time.eq(Some(token_unix_time)),
@@ -172,9 +172,9 @@ impl CurrentWriteAccountEmail<'_> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account::dsl::*;
+        use model::schema::account_email_address_state::dsl::*;
 
-        update(account.find(id.as_db_id()))
+        update(account_email_address_state.find(id.as_db_id()))
             .set(email_login_token.eq(None::<Vec<u8>>))
             .execute(self.conn())
             .into_db_error(id)?;
@@ -187,9 +187,9 @@ impl CurrentWriteAccountEmail<'_> {
         id: AccountIdInternal,
         enabled: bool,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account::dsl::*;
+        use model::schema::account_email_address_state::dsl::*;
 
-        update(account.find(id.as_db_id()))
+        update(account_email_address_state.find(id.as_db_id()))
             .set(email_login_enabled.eq(enabled))
             .execute(self.conn())
             .into_db_error(id)?;

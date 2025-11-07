@@ -278,8 +278,7 @@ CREATE TABLE IF NOT EXISTS sign_in_with_info(
             ON UPDATE CASCADE
 );
 
--- Account information which can change
-CREATE TABLE IF NOT EXISTS account(
+CREATE TABLE IF NOT EXISTS account_email_address_state(
     account_id   INTEGER PRIMARY KEY NOT NULL,
     email        TEXT                                UNIQUE,
     email_verification_token           BLOB          UNIQUE,

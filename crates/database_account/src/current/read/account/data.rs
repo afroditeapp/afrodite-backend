@@ -3,7 +3,8 @@ use diesel::prelude::*;
 use error_stack::Result;
 use model::AccountIdInternal;
 use model_account::{
-    AccountData, AccountGlobalState, AccountInternal, AccountSetup, AccountStateTableRaw,
+    AccountEmailAddressState, AccountEmailAddressStateInternal, AccountGlobalState, AccountSetup,
+    AccountStateTableRaw,
 };
 
 use crate::IntoDatabaseError;
@@ -24,35 +25,35 @@ impl CurrentReadAccountData<'_> {
             .into_db_error(id)
     }
 
-    pub fn account_data(
+    pub fn email_address_state(
         &mut self,
         id: AccountIdInternal,
-    ) -> Result<AccountData, DieselDatabaseError> {
-        use crate::schema::account::dsl::*;
+    ) -> Result<AccountEmailAddressState, DieselDatabaseError> {
+        use crate::schema::account_email_address_state::dsl::*;
 
-        let account_internal = account
+        let internal = account_email_address_state
             .filter(account_id.eq(id.as_db_id()))
-            .select(AccountInternal::as_select())
+            .select(AccountEmailAddressStateInternal::as_select())
             .first(self.conn())
             .into_db_error(id)?;
 
-        Ok(AccountData {
-            email: account_internal.email,
-            email_change: account_internal.email_change,
-            email_change_verified: account_internal.email_change_verified,
+        Ok(AccountEmailAddressState {
+            email: internal.email,
+            email_change: internal.email_change,
+            email_change_verified: internal.email_change_verified,
             email_change_completion_time: None,
-            email_login_enabled: account_internal.email_login_enabled,
+            email_login_enabled: internal.email_login_enabled,
         })
     }
 
-    pub fn account_internal(
+    pub fn email_address_state_internal(
         &mut self,
         id: AccountIdInternal,
-    ) -> Result<AccountInternal, DieselDatabaseError> {
-        use crate::schema::account::dsl::*;
-        account
+    ) -> Result<AccountEmailAddressStateInternal, DieselDatabaseError> {
+        use crate::schema::account_email_address_state::dsl::*;
+        account_email_address_state
             .filter(account_id.eq(id.as_db_id()))
-            .select(AccountInternal::as_select())
+            .select(AccountEmailAddressStateInternal::as_select())
             .first(self.conn())
             .into_db_error(id)
     }

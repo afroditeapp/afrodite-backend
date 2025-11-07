@@ -22,12 +22,12 @@ pub async fn complete_initial_setup(
     write_handle: &WriteCommandRunnerHandle,
     id: AccountIdInternal,
 ) -> server_common::result::Result<Account, server_common::data::DataError> {
-    let account_data = read_handle.account().account_data(id).await?;
+    let email_address_state = read_handle.account().email_address_state(id).await?;
     let sign_in_with_info = read_handle.account().account_sign_in_with_info(id).await?;
     let (matches_with_grant_admin_access_config, grant_admin_access_more_than_once) =
         if let (Some(grant_admin_access_config), Some(email)) = (
             config.grant_admin_access_config(),
-            account_data.email.as_ref(),
+            email_address_state.email.as_ref(),
         ) {
             let matches = if grant_admin_access_config.debug_match_only_email_domain {
                 let mut wanted_email_iter = grant_admin_access_config.email.0.split('@');
