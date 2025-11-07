@@ -7,8 +7,7 @@ use database_chat::current::write::GetDbWriteCommandsChat;
 use database_media::current::write::GetDbWriteCommandsMedia;
 use database_profile::current::write::GetDbWriteCommandsProfile;
 use model_account::{
-    AccountEmailAddressStateInternal, AccountIdInternal, EmailAddress, SharedStateRaw,
-    SignInWithInfo,
+    AccountIdInternal, EmailAddress, EmailAddressStateInternal, SharedStateRaw, SignInWithInfo,
 };
 use model_chat::{ProfileContentModificationMetadata, ProfileModificationMetadata};
 use server_data::{
@@ -75,7 +74,7 @@ impl RegisterAccount<'_> {
         current
             .account()
             .data()
-            .insert_email_address_state(id, AccountEmailAddressStateInternal::default())?;
+            .insert_email_address_state(id, EmailAddressStateInternal::default())?;
         current.account().data().insert_default_account_setup(id)?;
         current.account().data().insert_account_state(id)?;
         current

@@ -4,9 +4,7 @@ use database::{
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{AccountCreatedTime, AccountId, AccountIdInternal, ClientId};
-use model_account::{
-    AccountEmailAddressStateInternal, AccountGlobalState, EmailAddress, SetAccountSetup,
-};
+use model_account::{AccountGlobalState, EmailAddress, EmailAddressStateInternal, SetAccountSetup};
 use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::IntoDatabaseError;
@@ -17,7 +15,7 @@ impl CurrentWriteAccountData<'_> {
     pub fn insert_email_address_state(
         &mut self,
         id: AccountIdInternal,
-        internal: AccountEmailAddressStateInternal,
+        internal: EmailAddressStateInternal,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account_email_address_state::dsl::*;
 

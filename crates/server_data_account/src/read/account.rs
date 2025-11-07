@@ -1,8 +1,8 @@
 use database::current::read::GetDbReadCommandsCommon;
 use database_account::current::read::GetDbReadCommandsAccount;
 use model_account::{
-    AccountEmailAddressState, AccountEmailAddressStateInternal, AccountGlobalState, AccountId,
-    AccountIdInternal, AccountSetup, AppleAccountId, GoogleAccountId, SignInWithInfo,
+    AccountGlobalState, AccountId, AccountIdInternal, AccountSetup, AppleAccountId,
+    EmailAddressState, EmailAddressStateInternal, GoogleAccountId, SignInWithInfo,
 };
 use model_server_state::DemoAccountId;
 use server_data::{
@@ -68,7 +68,7 @@ impl ReadCommandsAccount<'_> {
     pub async fn email_address_state(
         &self,
         id: AccountIdInternal,
-    ) -> Result<AccountEmailAddressState, DataError> {
+    ) -> Result<EmailAddressState, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().email_address_state(id))
             .await
             .into_error()
@@ -77,7 +77,7 @@ impl ReadCommandsAccount<'_> {
     pub async fn email_address_state_internal(
         &self,
         id: AccountIdInternal,
-    ) -> Result<AccountEmailAddressStateInternal, DataError> {
+    ) -> Result<EmailAddressStateInternal, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().email_address_state_internal(id))
             .await
             .into_error()

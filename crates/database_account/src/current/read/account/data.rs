@@ -3,8 +3,8 @@ use diesel::prelude::*;
 use error_stack::Result;
 use model::AccountIdInternal;
 use model_account::{
-    AccountEmailAddressState, AccountEmailAddressStateInternal, AccountGlobalState, AccountSetup,
-    AccountStateTableRaw,
+    AccountGlobalState, AccountSetup, AccountStateTableRaw, EmailAddressState,
+    EmailAddressStateInternal,
 };
 
 use crate::IntoDatabaseError;
@@ -28,16 +28,16 @@ impl CurrentReadAccountData<'_> {
     pub fn email_address_state(
         &mut self,
         id: AccountIdInternal,
-    ) -> Result<AccountEmailAddressState, DieselDatabaseError> {
+    ) -> Result<EmailAddressState, DieselDatabaseError> {
         use crate::schema::account_email_address_state::dsl::*;
 
         let internal = account_email_address_state
             .filter(account_id.eq(id.as_db_id()))
-            .select(AccountEmailAddressStateInternal::as_select())
+            .select(EmailAddressStateInternal::as_select())
             .first(self.conn())
             .into_db_error(id)?;
 
-        Ok(AccountEmailAddressState {
+        Ok(EmailAddressState {
             email: internal.email,
             email_change: internal.email_change,
             email_change_verified: internal.email_change_verified,
@@ -49,11 +49,11 @@ impl CurrentReadAccountData<'_> {
     pub fn email_address_state_internal(
         &mut self,
         id: AccountIdInternal,
-    ) -> Result<AccountEmailAddressStateInternal, DieselDatabaseError> {
+    ) -> Result<EmailAddressStateInternal, DieselDatabaseError> {
         use crate::schema::account_email_address_state::dsl::*;
         account_email_address_state
             .filter(account_id.eq(id.as_db_id()))
-            .select(AccountEmailAddressStateInternal::as_select())
+            .select(EmailAddressStateInternal::as_select())
             .first(self.conn())
             .into_db_error(id)
     }

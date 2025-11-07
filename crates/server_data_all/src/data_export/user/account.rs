@@ -1,7 +1,7 @@
 use database::{DbReadMode, DieselDatabaseError};
 use database_account::current::read::GetDbReadCommandsAccount;
 use model_account::{
-    AccountEmailAddressState, AccountEmailSendingStateRaw, AccountSetup, AccountStateTableRaw,
+    AccountEmailSendingStateRaw, AccountSetup, AccountStateTableRaw, EmailAddressState,
 };
 use model_chat::AccountAppNotificationSettings;
 use serde::Serialize;
@@ -12,7 +12,7 @@ use server_data::data_export::SourceAccount;
 
 #[derive(Serialize)]
 pub struct UserDataExportJsonAccount {
-    email_address_state: AccountEmailAddressState,
+    email_address_state: EmailAddressState,
     account_setup: AccountSetup,
     email_sending_states: AccountEmailSendingStateRaw,
     account_state_table: AccountStateTableRaw,

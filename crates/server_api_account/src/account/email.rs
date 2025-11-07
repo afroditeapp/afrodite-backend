@@ -9,7 +9,7 @@ use axum::{
 use axum_extra::{TypedHeader, headers::ContentType};
 use model::{AccessToken, AccountIdInternal, AccountState, Permissions};
 use model_account::{
-    AccountEmailAddressState, InitEmailChange, InitEmailChangeResult, SendVerifyEmailMessageResult,
+    EmailAddressState, InitEmailChange, InitEmailChangeResult, SendVerifyEmailMessageResult,
     SetEmailLoginEnabled, SetInitialEmail,
 };
 use server_api::{
@@ -464,7 +464,7 @@ const PATH_GET_EMAIL_ADDRESS_STATE: &str = "/account_api/email_address_state";
     get,
     path = PATH_GET_EMAIL_ADDRESS_STATE,
     responses(
-        (status = 200, description = "Request successfull.", body = AccountEmailAddressState),
+        (status = 200, description = "Request successfull.", body = EmailAddressState),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -473,7 +473,7 @@ const PATH_GET_EMAIL_ADDRESS_STATE: &str = "/account_api/email_address_state";
 pub async fn get_email_address_state(
     State(state): State<S>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
-) -> Result<Json<AccountEmailAddressState>, crate::utils::StatusCode> {
+) -> Result<Json<EmailAddressState>, crate::utils::StatusCode> {
     ACCOUNT.get_email_address_state.incr();
     let mut data = state
         .read()
