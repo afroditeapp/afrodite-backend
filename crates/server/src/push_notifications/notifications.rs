@@ -283,7 +283,7 @@ impl<'a> NotificationChecker<'a> {
             let notification = PushNotification::new_with_body(
                 PushNotificationId::AdminNotification,
                 "Admin notification".to_string(),
-                format!("{admin:?}"),
+                format!("{admin:#?}"),
             );
             self.notifications.push(notification);
         }
