@@ -4,7 +4,7 @@ Afrodite is an open source dating app aiming to change dating app market to offe
 ethical, private and secure dating apps. Written using modern technologies,
 Flutter and Rust, the app offers ethical profile browsing centered UI together
 with private and secure end-to-end encrypted chat messaging. The app supports
-Android and iOS platforms.
+Android, iOS and Web platforms.
 
 This repository contains the backend part. [Frontend repository](https://github.com/afroditeapp/afrodite-frontend)
 
@@ -19,7 +19,7 @@ Check [features.md](docs/features.md).
 
 ## Building and running
 
-Tagged development preview versions (0.x) of frontend and backend
+Tagged preview versions (0.x) of frontend and backend
 with the same minor version number are compatible with each other.
 Main branch might be broken or incompatible with the frontend.
 
@@ -44,7 +44,7 @@ make run-release
 2. Install other dependencies.
 
 ```
-sudo apt install build-essential pkg-config libsqlite3-dev
+sudo apt install build-essential pkg-config libsqlite3-dev libpq-dev
 ```
 
 #### macOS
@@ -55,7 +55,7 @@ sudo apt install build-essential pkg-config libsqlite3-dev
 2. Install other dependencies.
 
 ```
-brew install openssl@3
+brew install openssl@3 postgresql
 ```
 
 ### Development dependencies
