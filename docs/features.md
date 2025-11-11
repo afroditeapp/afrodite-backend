@@ -6,26 +6,28 @@
 * Sign in with Apple
 * Sign in with Google
 * Demo accounts for developers (access multiple normal accounts)
+* Email one-time password login for existing accounts
 
-## Notifications
+## Emails and notifications
 
 * Email
-  * Email notifying that account was created
-  * Messages (sent when daily tasks will run)
-* Push notifications (Firebase)
+  * Email address verification
+  * Email address change notification to current email address
+* Email (sent when daily tasks will run)
   * Messages
-  * Likes
+  * Chat requests
+  * Account deletion notifications
+* Encrypted push notifications
+  * Messages
+  * Chat requests
   * Image moderation completed
+  * Profile name moderation completed
   * Profile text moderation completed
   * Automatic profile search results available
   * News
   * Admin notification (moderator work available)
-  * Fallback notification (sent if client doesn't download
-    other notifications from server)
 * WebSocket
   * Used for event sending instead of push notifications if connected
-
-Language for fallback notification is current client language.
 
 ## Profile
 
@@ -159,6 +161,7 @@ users about app version changelogs and terms of service updates.
 * [User interaction security](#user-interaction-security)
 * [Image security](#image-security)
 * Account banning
+* Account locking (login prevention)
 * Account removing wait time (90 days by default)
 * Inactive account automatic logout (365 days by default)
 * Account specific API usage statistics
@@ -264,19 +267,8 @@ export types are supported:
 
 ## Account
 
-* Possibility to enable email and password login after account creation
-  * Email login code sending and weekly sending limit
 * Manual profile age, name and picture verification
-* Login method management
 * Association membership related features
-
-## Email
-
-* Email address verification
-* Email address changing
-* Notification emails for chat requests
-* HTML email
-* Email translations
 
 # Possible future backend features
 
