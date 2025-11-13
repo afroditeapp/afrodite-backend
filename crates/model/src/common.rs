@@ -38,6 +38,9 @@ pub use report::*;
 pub mod client_config;
 pub use client_config::*;
 
+pub mod server;
+pub use server::*;
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct BackendVersion {
     /// Backend code version.
@@ -68,6 +71,10 @@ pub enum EventType {
     AutomaticProfileSearchCompleted,
     AdminNotification,
     PushNotificationInfoChanged,
+    /// Data: typing_start
+    TypingStart,
+    /// Data: typing_stop
+    TypingStop,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -87,6 +94,10 @@ pub struct EventToClient {
     content_processing_state_changed: Option<ContentProcessingStateChanged>,
     /// Data for event ScheduledMaintenanceStatus
     scheduled_maintenance_status: Option<ScheduledMaintenanceStatus>,
+    /// Data for event TypingStart
+    typing_start: Option<AccountId>,
+    /// Data for event TypingStop
+    typing_stop: Option<AccountId>,
 }
 
 /// Internal data type for events.
@@ -112,6 +123,8 @@ pub enum EventToClientInternal {
     AutomaticProfileSearchCompleted,
     AdminNotification,
     PushNotificationInfoChanged,
+    TypingStart(AccountId),
+    TypingStop(AccountId),
 }
 
 impl From<&EventToClientInternal> for EventType {
@@ -133,6 +146,8 @@ impl From<&EventToClientInternal> for EventType {
             AutomaticProfileSearchCompleted => Self::AutomaticProfileSearchCompleted,
             AdminNotification => Self::AdminNotification,
             PushNotificationInfoChanged => Self::PushNotificationInfoChanged,
+            TypingStart(_) => Self::TypingStart,
+            TypingStop(_) => Self::TypingStop,
         }
     }
 }
@@ -143,6 +158,8 @@ impl From<EventToClientInternal> for EventToClient {
             event: (&internal).into(),
             content_processing_state_changed: None,
             scheduled_maintenance_status: None,
+            typing_start: None,
+            typing_stop: None,
         };
 
         use EventToClientInternal::*;
@@ -150,6 +167,8 @@ impl From<EventToClientInternal> for EventToClient {
         match internal {
             ContentProcessingStateChanged(v) => value.content_processing_state_changed = Some(v),
             ScheduledMaintenanceStatus(v) => value.scheduled_maintenance_status = Some(v),
+            TypingStart(v) => value.typing_start = Some(v),
+            TypingStop(v) => value.typing_stop = Some(v),
             AccountStateChanged
             | NewMessageReceived
             | ReceivedLikesChanged

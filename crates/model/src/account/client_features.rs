@@ -33,6 +33,8 @@ pub struct ClientFeaturesConfigInternal {
     pub limits: LimitsConfigInternal,
     #[serde(default)]
     pub profile: ProfileConfig,
+    #[serde(default)]
+    pub chat: ChatConfig,
 }
 
 impl ClientFeaturesConfigInternal {
@@ -60,6 +62,7 @@ impl ClientFeaturesConfigInternal {
             map: self.map.into(),
             limits: self.limits.into(),
             profile: self.profile,
+            chat: self.chat,
         })
     }
 }
@@ -74,6 +77,7 @@ pub struct ClientFeaturesConfig {
     pub map: MapConfig,
     pub limits: LimitsConfig,
     pub profile: ProfileConfig,
+    pub chat: ChatConfig,
 }
 
 impl ClientFeaturesConfig {
@@ -290,4 +294,42 @@ pub struct DailyLikesConfig {
 pub struct ProfileConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_name_regex: Option<String>,
+}
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
+pub struct ChatConfig {
+    #[serde(default)]
+    pub typing_indicator: TypingIndicatorConfig,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct TypingIndicatorConfig {
+    pub enabled: bool,
+    /// Client should hide typing indicator after this time elapses
+    /// from [crate::EventType::TypingStart].
+    #[serde(default = "start_event_ttl_seconds_default")]
+    start_event_ttl_seconds: u16,
+    /// Server ignores messages that are received before
+    /// wait time elapses.
+    #[serde(default = "min_wait_seconds_between_sending_messages_default")]
+    pub min_wait_seconds_between_sending_messages: u16,
+}
+
+fn start_event_ttl_seconds_default() -> u16 {
+    10
+}
+
+fn min_wait_seconds_between_sending_messages_default() -> u16 {
+    2
+}
+
+impl Default for TypingIndicatorConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            start_event_ttl_seconds: start_event_ttl_seconds_default(),
+            min_wait_seconds_between_sending_messages:
+                min_wait_seconds_between_sending_messages_default(),
+        }
+    }
 }

@@ -54,6 +54,8 @@ pub enum WebSocketError {
     // Event errors
     #[error("Event channel creation failed")]
     EventChannelCreationFailed,
+    #[error("Event to server handling failed")]
+    EventToServerHandlingFailed,
 
     // Sync
     #[error("Account data version number reset failed")]

@@ -1,7 +1,7 @@
 //! Common routes
 //!
 
-use std::{net::SocketAddr, time::Duration};
+use std::net::SocketAddr;
 
 use axum::{
     body::Bytes,
@@ -31,18 +31,17 @@ use server_state::{
     },
     state_impl::{ReadData, WriteData},
 };
-use simple_backend::{
-    create_counters,
-    perf::websocket::{self, ConnectionTracker},
-    web_socket::WebSocketManager,
-};
+use simple_backend::{create_counters, web_socket::WebSocketManager};
 use simple_backend_utils::{IntoReportFromString, time::DurationValue};
-use tokio::time::Instant;
 use tracing::{error, info};
 
 use super::utils::StatusCode;
 use crate::{
     S,
+    common::websocket::{
+        handle_event_to_server,
+        tracker::{ConnectionPingTracker, WebSocketConnectionTrackers},
+    },
     result::{WrappedContextExt, WrappedResultExt},
     utils::Json,
 };
@@ -58,6 +57,8 @@ pub use file_package::*;
 
 mod push_notification;
 pub use push_notification::*;
+
+mod websocket;
 
 pub const PATH_GET_VERSION: &str = "/common_api/version";
 
@@ -524,9 +525,13 @@ async fn handle_socket_result(
                                 // disconnecting this connection.
                                 timeout_timer.reset().await;
                             },
+                            Message::Text(text) => {
+                                if let Err(e) = handle_event_to_server(state, id, &text).await {
+                                    error!("Failed to handle event to server: {e:?}");
+                                }
+                            },
                             Message::Pong(_) |
-                            Message::Binary(_) |
-                            Message::Text(_) => (),
+                            Message::Binary(_) => (),
                             Message::Close(_) => break,
                         }
                 }
@@ -569,79 +574,6 @@ async fn handle_socket_result(
     drop(connection_trackers);
 
     Ok(())
-}
-
-struct ConnectionPingTracker {
-    timer: tokio::time::Interval,
-}
-
-impl ConnectionPingTracker {
-    const TIMEOUT_IN_SECONDS: u64 = 60 * 6;
-
-    pub fn new() -> Self {
-        let first_tick = Instant::now() + Duration::from_secs(Self::TIMEOUT_IN_SECONDS);
-        Self {
-            timer: tokio::time::interval_at(
-                first_tick,
-                Duration::from_secs(Self::TIMEOUT_IN_SECONDS),
-            ),
-        }
-    }
-
-    pub async fn wait_timeout(&mut self) {
-        self.timer.tick().await;
-    }
-
-    pub async fn reset(&mut self) {
-        self.timer.reset();
-    }
-}
-
-struct WebSocketConnectionTrackers {
-    _all: ConnectionTracker,
-    _gender_specific: Option<ConnectionTracker>,
-}
-
-impl WebSocketConnectionTrackers {
-    async fn new(state: &S, id: AccountIdInternal) -> crate::result::Result<Self, WebSocketError> {
-        let info = state
-            .read()
-            .common()
-            .bot_and_gender_info(id)
-            .await
-            .change_context(WebSocketError::DatabaseBotAndGenderInfoQuery)?;
-
-        let all = if info.is_bot {
-            websocket::BotConnections::create().into()
-        } else {
-            websocket::Connections::create().into()
-        };
-
-        let gender_specific = if info.is_bot {
-            if info.gender.is_man() {
-                Some(websocket::BotConnectionsMen::create().into())
-            } else if info.gender.is_woman() {
-                Some(websocket::BotConnectionsWomen::create().into())
-            } else if info.gender.is_non_binary() {
-                Some(websocket::BotConnectionsNonbinaries::create().into())
-            } else {
-                None
-            }
-        } else if info.gender.is_man() {
-            Some(websocket::ConnectionsMen::create().into())
-        } else if info.gender.is_woman() {
-            Some(websocket::ConnectionsWomen::create().into())
-        } else if info.gender.is_non_binary() {
-            Some(websocket::ConnectionsNonbinaries::create().into())
-        } else {
-            None
-        };
-
-        Ok(Self {
-            _all: all,
-            _gender_specific: gender_specific,
-        })
-    }
 }
 
 async fn send_event(
