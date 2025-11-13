@@ -248,6 +248,41 @@ impl AdminNotification {
             process_reports: self.process_reports && other.process_reports,
         }
     }
+
+    pub fn field_names_of_true_values(&self) -> String {
+        let mut result = String::new();
+        if self.moderate_initial_media_content_bot {
+            result.push_str("moderate_initial_media_content_bot\n");
+        }
+        if self.moderate_initial_media_content_human {
+            result.push_str("moderate_initial_media_content_human\n");
+        }
+        if self.moderate_media_content_bot {
+            result.push_str("moderate_media_content_bot\n");
+        }
+        if self.moderate_media_content_human {
+            result.push_str("moderate_media_content_human\n");
+        }
+        if self.moderate_profile_texts_bot {
+            result.push_str("moderate_profile_texts_bot\n");
+        }
+        if self.moderate_profile_texts_human {
+            result.push_str("moderate_profile_texts_human\n");
+        }
+        if self.moderate_profile_names_bot {
+            result.push_str("moderate_profile_names_bot\n");
+        }
+        if self.moderate_profile_names_human {
+            result.push_str("moderate_profile_names_human\n");
+        }
+        if self.process_reports {
+            result.push_str("process_reports\n");
+        }
+        if result.ends_with('\n') {
+            result.pop();
+        }
+        result
+    }
 }
 
 pub enum AdminNotificationTypes {
