@@ -36,5 +36,21 @@ pub async fn handle_event_to_server(
             chat::handle_typing_start(state, id, typing_to).await
         }
         EventToServerType::TypingStop => chat::handle_typing_stop(state, id).await,
+        EventToServerType::CheckOnlineStatus => {
+            let Some(check_account) = msg.account() else {
+                // Ignore invalid message
+                return Ok(());
+            };
+            let Some(check_account) = state
+                .read()
+                .cache()
+                .to_account_id_internal_optional(check_account)
+                .await
+            else {
+                // Ignore invalid account ID
+                return Ok(());
+            };
+            chat::handle_check_online_status(state, id, check_account, msg.is_online()).await
+        }
     }
 }

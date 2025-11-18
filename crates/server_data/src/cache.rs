@@ -11,10 +11,10 @@ use common::CacheCommon;
 use error_stack::Result;
 use media::CacheMedia;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, LoginSession, Permissions,
-    PushNotificationFlags,
+    AccessToken, AccountId, AccountIdInternal, AccountState, LastSeenUnixTime, LoginSession,
+    Permissions, PushNotificationFlags,
 };
-use model_server_data::{AuthPair, LastSeenUnixTime, LocationIndexProfileData};
+use model_server_data::{AuthPair, LocationIndexProfileData};
 use profile::CacheProfile;
 pub use server_common::data::cache::CacheError;
 use tokio::sync::RwLock;

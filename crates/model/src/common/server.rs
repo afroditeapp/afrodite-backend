@@ -8,6 +8,8 @@ pub enum EventToServerType {
     /// Data: [EventToServer::a]
     TypingStart,
     TypingStop,
+    /// Data: [EventToServer::a] and [EventToServer::o].
+    CheckOnlineStatus,
 }
 
 /// Event from client to server sent via WebSocket
@@ -18,6 +20,9 @@ pub struct EventToServer {
     t: EventToServerType,
     #[serde(skip_serializing_if = "Option::is_none")]
     a: Option<AccountId>,
+    /// Online status (None value is false)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    o: Option<bool>,
 }
 
 impl EventToServer {
@@ -27,5 +32,9 @@ impl EventToServer {
 
     pub fn account(&self) -> Option<AccountId> {
         self.a
+    }
+
+    pub fn is_online(&self) -> bool {
+        self.o.unwrap_or_default()
     }
 }

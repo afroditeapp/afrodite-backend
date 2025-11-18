@@ -300,6 +300,8 @@ pub struct ProfileConfig {
 pub struct ChatConfig {
     #[serde(default)]
     pub typing_indicator: TypingIndicatorConfig,
+    #[serde(default)]
+    pub check_online_status: CheckOnlineStatusConfig,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -330,6 +332,28 @@ impl Default for TypingIndicatorConfig {
             start_event_ttl_seconds: start_event_ttl_seconds_default(),
             min_wait_seconds_between_sending_messages:
                 min_wait_seconds_between_sending_messages_default(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct CheckOnlineStatusConfig {
+    pub enabled: bool,
+    /// After daily limit is reached, server ignores received check
+    /// online status requests.
+    #[serde(default = "daily_max_count_default")]
+    pub daily_max_count: u16,
+}
+
+fn daily_max_count_default() -> u16 {
+    100
+}
+
+impl Default for CheckOnlineStatusConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            daily_max_count: daily_max_count_default(),
         }
     }
 }

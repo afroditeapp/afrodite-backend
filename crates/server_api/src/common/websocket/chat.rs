@@ -143,3 +143,74 @@ async fn check_typing_message_rate_limit<T>(
 
     Ok(action_return_value)
 }
+
+pub async fn handle_check_online_status(
+    state: &S,
+    id: AccountIdInternal,
+    check_account: AccountIdInternal,
+    client_is_online: bool,
+) -> Result<(), WebSocketError> {
+    let config = state
+        .config()
+        .client_features()
+        .map(|v| v.chat.check_online_status.clone())
+        .unwrap_or_default();
+
+    if !config.enabled {
+        // Ignore event because feature is disabled
+        return Ok(());
+    }
+
+    let limit_reached = state
+        .read()
+        .cache_read_write_access()
+        .write_cache(id, |cache| {
+            Ok(cache
+                .common
+                .api_limits()
+                .check_online_status
+                .increment_and_check_is_limit_reached(config.daily_max_count))
+        })
+        .await
+        .change_context(WebSocketError::EventToServerHandlingFailed)?;
+
+    if limit_reached {
+        // Ignore event because daily limit reached
+        return Ok(());
+    }
+
+    let is_match = state
+        .data_all_access()
+        .is_match(id, check_account)
+        .await
+        .change_context(WebSocketError::EventToServerHandlingFailed)?;
+
+    if !is_match {
+        // Ignore event because chatting is not possible
+        return Ok(());
+    }
+
+    let last_seen_time = state
+        .read()
+        .cache_read_write_access()
+        .read_cache(check_account.as_id(), |cache| {
+            Ok(cache.profile.last_seen_time().last_seen_time())
+        })
+        .await
+        .change_context(WebSocketError::EventToServerHandlingFailed)?;
+
+    let actual_is_online = last_seen_time == model::LastSeenTime::ONLINE;
+
+    if client_is_online != actual_is_online {
+        state
+            .event_manager()
+            .send_connected_event(
+                id,
+                EventToClientInternal::CheckOnlineStatusResponse(last_seen_time),
+            )
+            .await
+            .change_context(WebSocketError::EventToServerHandlingFailed)?;
+    }
+
+    Ok(())
+}

@@ -1,9 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
 use diesel::prelude::*;
-use model::{AttributeId, ProfileAge};
+use model::{AttributeId, LastSeenTime, ProfileAge};
 use model_server_data::{
-    LastSeenTime, LastSeenTimeFilter, MaxDistanceKm, MinDistanceKm, ProfileAttributeValue,
+    LastSeenTimeFilter, MaxDistanceKm, MinDistanceKm, ProfileAttributeValue,
     ProfileAttributeValueUpdate, ProfileAttributesInternal, ProfileCreatedTimeFilter,
     ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal, ProfileNameModerationState,
     ProfileStateCached, ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter,

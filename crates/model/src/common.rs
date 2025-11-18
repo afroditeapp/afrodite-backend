@@ -14,7 +14,7 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::{
     Account, AccountStateContainer, ContentProcessingId, ContentProcessingState,
-    InitialSetupCompletedTime, IpAddressInternal, ProfileVisibility,
+    InitialSetupCompletedTime, IpAddressInternal, LastSeenTime, ProfileVisibility,
 };
 
 pub mod api_usage;
@@ -75,6 +75,8 @@ pub enum EventType {
     TypingStart,
     /// Data: typing_stop
     TypingStop,
+    /// Data: check_online_status_response
+    CheckOnlineStatusResponse,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -98,6 +100,8 @@ pub struct EventToClient {
     typing_start: Option<AccountId>,
     /// Data for event TypingStop
     typing_stop: Option<AccountId>,
+    /// Data for event CheckOnlineStatusResponse
+    check_online_status_response: Option<LastSeenTime>,
 }
 
 /// Internal data type for events.
@@ -125,6 +129,7 @@ pub enum EventToClientInternal {
     PushNotificationInfoChanged,
     TypingStart(AccountId),
     TypingStop(AccountId),
+    CheckOnlineStatusResponse(LastSeenTime),
 }
 
 impl From<&EventToClientInternal> for EventType {
@@ -148,6 +153,7 @@ impl From<&EventToClientInternal> for EventType {
             PushNotificationInfoChanged => Self::PushNotificationInfoChanged,
             TypingStart(_) => Self::TypingStart,
             TypingStop(_) => Self::TypingStop,
+            CheckOnlineStatusResponse(_) => Self::CheckOnlineStatusResponse,
         }
     }
 }
@@ -160,6 +166,7 @@ impl From<EventToClientInternal> for EventToClient {
             scheduled_maintenance_status: None,
             typing_start: None,
             typing_stop: None,
+            check_online_status_response: None,
         };
 
         use EventToClientInternal::*;
@@ -169,6 +176,7 @@ impl From<EventToClientInternal> for EventToClient {
             ScheduledMaintenanceStatus(v) => value.scheduled_maintenance_status = Some(v),
             TypingStart(v) => value.typing_start = Some(v),
             TypingStop(v) => value.typing_stop = Some(v),
+            CheckOnlineStatusResponse(v) => value.check_online_status_response = Some(v),
             AccountStateChanged
             | NewMessageReceived
             | ReceivedLikesChanged

@@ -1,10 +1,10 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::SmallInt};
-use model::{AccountId, NextNumberStorage, ProfileContentVersion};
+use model::{AccountId, LastSeenTime, NextNumberStorage, ProfileContentVersion};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i16_wrapper;
 use utoipa::{IntoParams, ToSchema};
 
-use super::{LastSeenTime, ProfileVersion};
+use super::ProfileVersion;
 
 /// Session ID type for profile iterator so that client can detect
 /// server restarts and ask user to refresh profiles.

@@ -2,12 +2,12 @@ use std::sync::Arc;
 
 use error_stack::{Result, ResultExt};
 use model::{
-    AccountId, AccountIdInternal, AutomaticProfileSearchCompletedNotification, NextNumberStorage,
-    UnixTime,
+    AccountId, AccountIdInternal, AutomaticProfileSearchCompletedNotification, LastSeenUnixTime,
+    NextNumberStorage, UnixTime,
 };
 use model_server_data::{
     AtomicLastSeenTime, AutomaticProfileSearchIteratorSessionIdInternal,
-    AutomaticProfileSearchLastSeenUnixTime, AutomaticProfileSearchSettings, LastSeenUnixTime,
+    AutomaticProfileSearchLastSeenUnixTime, AutomaticProfileSearchSettings,
     ProfileAttributeFilterValue, ProfileAttributeValue, ProfileCreatedTimeFilter,
     ProfileEditedTimeFilter, ProfileInternal, ProfileIteratorSessionIdInternal,
     ProfileNameModerationState, ProfileQueryMakerDetails, ProfileStateCached,

@@ -6,7 +6,10 @@ use std::{
     },
 };
 
-use model::{AccountId, InitialSetupCompletedTime, ProfileAge, ProfileContentVersion};
+use model::{
+    AccountId, InitialSetupCompletedTime, LastSeenTime, LastSeenUnixTime, ProfileAge,
+    ProfileContentVersion,
+};
 use nalgebra::DMatrix;
 use simple_backend_model::UnixTime;
 
@@ -18,8 +21,7 @@ use super::{
     SearchGroupFlagsFilter, SortedProfileAttributes,
 };
 use crate::{
-    AutomaticProfileSearchSettings, LastSeenTime, LastSeenUnixTime, ProfileContentEditedTime,
-    ProfileLink, ProfileVersion,
+    AutomaticProfileSearchSettings, ProfileContentEditedTime, ProfileLink, ProfileVersion,
 };
 
 #[derive(Debug)]
