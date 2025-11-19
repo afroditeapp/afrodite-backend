@@ -26,7 +26,8 @@ pub struct ClientFeaturesConfigInternal {
     pub attribution: AttributionConfigInternal,
     #[serde(default)]
     pub features: FeaturesConfig,
-    pub news: Option<NewsConfig>,
+    #[serde(default)]
+    pub news: NewsConfig,
     #[serde(default)]
     pub map: MapConfigInternal,
     #[serde(default)]
@@ -74,9 +75,7 @@ impl ClientFeaturesConfigInternal {
 pub struct ClientFeaturesConfig {
     pub attribution: AttributionConfig,
     pub features: FeaturesConfig,
-    /// Enable news UI
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub news: Option<NewsConfig>,
+    pub news: NewsConfig,
     pub map: MapConfig,
     pub limits: LimitsConfig,
     pub profile: ProfileConfig,
@@ -170,9 +169,11 @@ pub struct FeaturesConfig {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
 pub struct NewsConfig {
+    pub enabled: bool,
     /// Make possible for admins to write translations for news.
     /// If news translation is not available then server returns
     /// news with locale "default".
+    #[serde(default)]
     pub locales: Vec<String>,
 }
 
