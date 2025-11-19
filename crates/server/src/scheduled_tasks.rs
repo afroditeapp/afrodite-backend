@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use backup::backup_data;
-use model::{ReportTypeNumberInternal, UnixTime};
+use model::{ReportTypeNumberInternal, ScheduledTasksConfig, UnixTime};
 use model_profile::{
     AccountIdInternal, AccountState, EventToClientInternal, ProfileAge, ProfileUpdateInternal,
 };
@@ -20,7 +20,6 @@ use server_data_profile::{
 };
 use server_state::{S, app::ApiLimitsProvider};
 use simple_backend::{ServerQuitWatcher, app::PerfCounterDataProvider};
-use simple_backend_config::file::ScheduledTasksConfig;
 use simple_backend_utils::{IntoReportFromString, time::sleep_until_current_time_is_at};
 use tokio::{sync::broadcast::error::TryRecvError, task::JoinHandle, time::sleep};
 use tracing::{error, info, warn};
@@ -83,7 +82,7 @@ impl ScheduledTaskManager {
 
     pub async fn run(self, mut quit_notification: ServerQuitWatcher) {
         let mut check_cooldown = false;
-        let config = self.state.config().simple_backend().scheduled_tasks();
+        let config = self.state.config().scheduled_tasks();
 
         loop {
             tokio::select! {

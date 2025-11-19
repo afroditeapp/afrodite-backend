@@ -35,6 +35,8 @@ pub struct ClientFeaturesConfigInternal {
     pub profile: ProfileConfig,
     #[serde(default)]
     pub chat: ChatConfig,
+    #[serde(default)]
+    pub server: ServerConfig,
 }
 
 impl ClientFeaturesConfigInternal {
@@ -63,6 +65,7 @@ impl ClientFeaturesConfigInternal {
             limits: self.limits.into(),
             profile: self.profile,
             chat: self.chat,
+            server: self.server,
         })
     }
 }
@@ -78,6 +81,7 @@ pub struct ClientFeaturesConfig {
     pub limits: LimitsConfig,
     pub profile: ProfileConfig,
     pub chat: ChatConfig,
+    pub server: ServerConfig,
 }
 
 impl ClientFeaturesConfig {
@@ -354,6 +358,28 @@ impl Default for CheckOnlineStatusConfig {
         Self {
             enabled: false,
             daily_max_count: daily_max_count_default(),
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
+pub struct ServerConfig {
+    #[serde(default)]
+    pub scheduled_tasks: ScheduledTasksConfig,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ScheduledTasksConfig {
+    pub daily_start_time: UtcTimeValue,
+}
+
+impl Default for ScheduledTasksConfig {
+    fn default() -> Self {
+        use simple_backend_utils::time::TimeValue;
+        const DEFAULT_SCHEDULED_TASKS_TIME: TimeValue = TimeValue::new(3, 0);
+
+        Self {
+            daily_start_time: UtcTimeValue(DEFAULT_SCHEDULED_TASKS_TIME),
         }
     }
 }

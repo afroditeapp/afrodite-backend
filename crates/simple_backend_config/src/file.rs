@@ -10,10 +10,7 @@ use chrono::{Datelike, Utc};
 use error_stack::{Report, Result, ResultExt};
 use manager_model::ManagerInstanceName;
 use serde::{Deserialize, Deserializer, Serialize};
-use simple_backend_utils::{
-    ContextExt,
-    time::{DurationValue, TimeValue, UtcTimeValue},
-};
+use simple_backend_utils::{ContextExt, time::DurationValue};
 use url::Url;
 
 pub const CONFIG_FILE_NAME: &str = "simple_backend_config.toml";
@@ -98,9 +95,6 @@ sqlite = true
 # production_servers = false
 # cache_dir = "lets_encrypt_cache"
 
-# [scheduled_tasks]
-# daily_start_time = "3:00"
-
 # [static_file_package_hosting]
 # package = "frontend.tar.gz"
 # read_from_dir = "" # optional, by default disabled
@@ -184,7 +178,6 @@ pub struct SimpleBackendConfigFile {
     /// when debug mode is disabled.
     pub lets_encrypt: Option<LetsEncryptConfig>,
 
-    pub scheduled_tasks: Option<ScheduledTasksConfig>,
     pub static_file_package_hosting: Option<StaticFilePackageHostingConfig>,
     pub image_processing: Option<ImageProcessingConfig>,
 
@@ -214,7 +207,6 @@ impl SimpleBackendConfigFile {
             manager: None,
             tls: None,
             lets_encrypt: None,
-            scheduled_tasks: None,
             static_file_package_hosting: None,
             image_processing: None,
             ip_info: IpInfoConfig::default(),
@@ -592,21 +584,6 @@ fn validate_path(input: &Path) -> std::result::Result<(), String> {
     }
 
     Ok(())
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct ScheduledTasksConfig {
-    pub daily_start_time: UtcTimeValue,
-}
-
-impl Default for ScheduledTasksConfig {
-    fn default() -> Self {
-        const DEFAULT_SCHEDULED_TASKS_TIME: TimeValue = TimeValue::new(3, 0);
-
-        Self {
-            daily_start_time: UtcTimeValue(DEFAULT_SCHEDULED_TASKS_TIME),
-        }
-    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

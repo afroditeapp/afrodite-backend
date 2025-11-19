@@ -19,8 +19,8 @@ use std::{
 use args::ServerModeArgs;
 use error_stack::{Result, ResultExt};
 use file::{
-    ImageProcessingConfig, MaxMindDbConfig, ScheduledTasksConfig, SignInWithAppleConfig,
-    TileMapConfig, VideoCallingConfig,
+    ImageProcessingConfig, MaxMindDbConfig, SignInWithAppleConfig, TileMapConfig,
+    VideoCallingConfig,
 };
 use ip::IpList;
 use reqwest::Url;
@@ -212,10 +212,6 @@ impl SimpleBackendConfig {
 
     pub fn email_sending(&self) -> Option<&file::EmailSendingConfig> {
         self.file.email_sending.as_ref()
-    }
-
-    pub fn scheduled_tasks(&self) -> ScheduledTasksConfig {
-        self.file.scheduled_tasks.clone().unwrap_or_default()
     }
 
     pub fn file_package(&self) -> Option<&file::StaticFilePackageHostingConfig> {

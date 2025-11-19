@@ -33,8 +33,8 @@ use file::{
 use file_dynamic::ConfigFileDynamic;
 use file_email_content::EmailContentFile;
 use file_web_content::WebContentFile;
-use model::CustomReportsConfig;
 pub use model::{ClientFeaturesConfig, ClientFeaturesConfigInternal};
+use model::{CustomReportsConfig, ScheduledTasksConfig};
 use model_server_data::{AttributesFileInternal, ProfileAttributesInternal};
 use sha2::{Digest, Sha256};
 use simple_backend_config::{SimpleBackendConfig, file::SimpleBackendConfigFile};
@@ -245,6 +245,13 @@ impl Config {
 
     pub fn client_features_sha256(&self) -> Option<&str> {
         self.client_features_sha256.as_deref()
+    }
+
+    pub fn scheduled_tasks(&self) -> ScheduledTasksConfig {
+        self.client_features
+            .as_ref()
+            .map(|c| c.server.scheduled_tasks.clone())
+            .unwrap_or_default()
     }
 
     pub fn email_content(&self) -> Option<&EmailContentFile> {

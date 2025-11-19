@@ -494,7 +494,7 @@ pub async fn get_email_address_state(
             .email_change_min_wait_duration
             .seconds;
 
-        let scheduled_tasks_config = state.config().simple_backend().scheduled_tasks();
+        let scheduled_tasks_config = state.config().scheduled_tasks();
         let next_scheduled_tasks_run =
             seconds_until_current_time_is_at(scheduled_tasks_config.daily_start_time)
                 .map_err(|_| crate::utils::StatusCode::INTERNAL_SERVER_ERROR)?;
