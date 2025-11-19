@@ -96,7 +96,7 @@ pub async fn post_send_like(
         let like_sending_limit_enabled = cmds
             .config()
             .client_features()
-            .and_then(|v| v.limits.likes.daily.as_ref())
+            .and_then(|v| v.likes.daily.as_ref())
             .is_some();
 
         let no_like_limit = !like_sending_limit_enabled || unlimited_likes;

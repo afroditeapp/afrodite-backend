@@ -31,7 +31,7 @@ pub struct ClientFeaturesConfigInternal {
     #[serde(default)]
     pub map: MapConfigInternal,
     #[serde(default)]
-    pub limits: LimitsConfigInternal,
+    pub likes: LikesConfig,
     #[serde(default)]
     pub profile: ProfileConfig,
     #[serde(default)]
@@ -63,7 +63,7 @@ impl ClientFeaturesConfigInternal {
             features: self.features,
             news: self.news,
             map: self.map.into(),
-            limits: self.limits.into(),
+            likes: self.likes,
             profile: self.profile,
             chat: self.chat,
             server: self.server,
@@ -77,7 +77,7 @@ pub struct ClientFeaturesConfig {
     pub features: FeaturesConfig,
     pub news: NewsConfig,
     pub map: MapConfig,
-    pub limits: LimitsConfig,
+    pub likes: LikesConfig,
     pub profile: ProfileConfig,
     pub chat: ChatConfig,
     pub server: ServerConfig,
@@ -85,11 +85,7 @@ pub struct ClientFeaturesConfig {
 
 impl ClientFeaturesConfig {
     pub fn daily_likes(&self) -> Option<i16> {
-        self.limits
-            .likes
-            .daily
-            .as_ref()
-            .map(|v| v.daily_likes.into())
+        self.likes.daily.as_ref().map(|v| v.daily_likes.into())
     }
 }
 
@@ -262,25 +258,8 @@ impl Default for MapZoom {
     }
 }
 
-#[derive(Debug, Default, Clone, Deserialize)]
-pub struct LimitsConfigInternal {
-    #[serde(default)]
-    pub likes: LikeLimitsConfig,
-}
-
-#[derive(Debug, Clone, Serialize, ToSchema)]
-pub struct LimitsConfig {
-    pub likes: LikeLimitsConfig,
-}
-
-impl From<LimitsConfigInternal> for LimitsConfig {
-    fn from(value: LimitsConfigInternal) -> Self {
-        Self { likes: value.likes }
-    }
-}
-
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
-pub struct LikeLimitsConfig {
+pub struct LikesConfig {
     /// UTC time with "hh:mm" format.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unlimited_likes_disabling_time: Option<UtcTimeValue>,

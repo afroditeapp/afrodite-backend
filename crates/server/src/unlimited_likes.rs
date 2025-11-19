@@ -62,7 +62,7 @@ impl UnlimitedLikesManager {
             .state
             .config()
             .client_features()
-            .and_then(|v| v.limits.likes.unlimited_likes_disabling_time)
+            .and_then(|v| v.likes.unlimited_likes_disabling_time)
         else {
             return;
         };

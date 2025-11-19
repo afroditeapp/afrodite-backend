@@ -65,7 +65,7 @@ impl DailyLikesManager {
             .state
             .config()
             .client_features()
-            .and_then(|v| v.limits.likes.daily.as_ref())
+            .and_then(|v| v.likes.daily.as_ref())
         else {
             return;
         };
