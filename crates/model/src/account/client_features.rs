@@ -29,7 +29,7 @@ pub struct ClientFeaturesConfigInternal {
     #[serde(default)]
     pub news: NewsConfig,
     #[serde(default)]
-    pub map: MapConfigInternal,
+    pub map: MapConfig,
     #[serde(default)]
     pub likes: LikesConfig,
     #[serde(default)]
@@ -62,7 +62,7 @@ impl ClientFeaturesConfigInternal {
             attribution: self.attribution.into(),
             features: self.features,
             news: self.news,
-            map: self.map.into(),
+            map: self.map,
             likes: self.likes,
             profile: self.profile,
             chat: self.chat,
@@ -173,39 +173,19 @@ pub struct NewsConfig {
     pub locales: Vec<String>,
 }
 
-#[derive(Debug, Default, Clone, Deserialize)]
-pub struct MapConfigInternal {
-    /// Limit viewable map area
-    #[serde(default)]
-    pub bounds: MapBounds,
-    #[serde(default)]
-    pub zoom: MapZoom,
-    #[serde(default)]
-    pub initial_location: MapCoordinate,
-    #[serde(default)]
-    pub tile_data_version: u32,
-}
-
-#[derive(Debug, Default, Clone, Serialize, ToSchema)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
 pub struct MapConfig {
     /// Limit viewable map area
+    #[serde(default)]
     pub bounds: MapBounds,
+    #[serde(default)]
     pub zoom: MapZoom,
+    #[serde(default)]
     pub initial_location: MapCoordinate,
     /// Increase this version number to make client to redownload cached
     /// map tiles.
+    #[serde(default)]
     pub tile_data_version: u32,
-}
-
-impl From<MapConfigInternal> for MapConfig {
-    fn from(value: MapConfigInternal) -> Self {
-        Self {
-            bounds: value.bounds,
-            zoom: value.zoom,
-            initial_location: value.initial_location,
-            tile_data_version: value.tile_data_version,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
