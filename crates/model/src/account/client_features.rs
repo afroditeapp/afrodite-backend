@@ -160,6 +160,7 @@ impl From<StringResourceInternal> for StringResource {
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
 pub struct FeaturesConfig {
     /// Enable video calls
+    #[serde(default)]
     pub video_calls: bool,
 }
 
