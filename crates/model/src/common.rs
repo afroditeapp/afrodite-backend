@@ -13,8 +13,8 @@ use utils::random_bytes::random_128_bits;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    Account, AccountStateContainer, ContentProcessingId, ContentProcessingState,
-    InitialSetupCompletedTime, IpAddressInternal, LastSeenTime, ProfileVisibility,
+    Account, AccountStateContainer, CheckOnlineStatusResponse, ContentProcessingId,
+    ContentProcessingState, InitialSetupCompletedTime, IpAddressInternal, ProfileVisibility,
 };
 
 pub mod api_usage;
@@ -101,7 +101,7 @@ pub struct EventToClient {
     /// Data for event TypingStop
     typing_stop: Option<AccountId>,
     /// Data for event CheckOnlineStatusResponse
-    check_online_status_response: Option<LastSeenTime>,
+    check_online_status_response: Option<CheckOnlineStatusResponse>,
 }
 
 /// Internal data type for events.
@@ -129,7 +129,7 @@ pub enum EventToClientInternal {
     PushNotificationInfoChanged,
     TypingStart(AccountId),
     TypingStop(AccountId),
-    CheckOnlineStatusResponse(LastSeenTime),
+    CheckOnlineStatusResponse(CheckOnlineStatusResponse),
 }
 
 impl From<&EventToClientInternal> for EventType {

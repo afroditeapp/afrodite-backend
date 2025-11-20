@@ -8,7 +8,7 @@ use simple_backend_model::{UnixTime, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 use super::sync_version_wrappers;
-use crate::{AccountId, AccountIdDb, AccountIdInternal, ClientId, ClientLocalId};
+use crate::{AccountId, AccountIdDb, AccountIdInternal, ClientId, ClientLocalId, LastSeenTime};
 
 mod interaction;
 pub use interaction::*;
@@ -209,4 +209,10 @@ impl AdminDataExportPendingMessage {
             message_bytes_base64: BASE64_STANDARD.encode(message_bytes),
         }
     }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct CheckOnlineStatusResponse {
+    pub a: AccountId,
+    pub l: LastSeenTime,
 }
