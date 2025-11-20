@@ -137,7 +137,7 @@ async fn check_typing_message_rate_limit<T>(
         .cache_read_write_access()
         .write_cache(id, |cache| {
             let typing_to_state = cache.chat.currently_typing_to.access_typing_to_state(
-                typing_indicator_config.min_wait_seconds_between_sending_messages,
+                typing_indicator_config.min_wait_seconds_between_sending_messages_server,
             );
             Ok(typing_to_state_action(typing_to_state))
         })
