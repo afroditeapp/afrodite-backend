@@ -64,8 +64,10 @@ impl DailyLikesManager {
         let Some(like_sending_limits) = self
             .state
             .config()
-            .client_features()
-            .and_then(|v| v.likes.daily.as_ref())
+            .client_features_internal()
+            .likes
+            .daily
+            .as_ref()
         else {
             return;
         };

@@ -61,8 +61,9 @@ impl UnlimitedLikesManager {
         let Some(unlimited_likes_disabling_time) = self
             .state
             .config()
-            .client_features()
-            .and_then(|v| v.likes.unlimited_likes_disabling_time)
+            .client_features_internal()
+            .likes
+            .unlimited_likes_disabling_time
         else {
             return;
         };

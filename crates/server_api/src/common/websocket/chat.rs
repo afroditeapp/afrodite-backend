@@ -1,4 +1,4 @@
-use model::{AccountIdInternal, EventToClientInternal};
+use model::{AccountIdInternal, EventToClientInternal, TypingIndicatorConfig};
 use server_common::websocket::WebSocketError;
 use server_data::{
     app::{GetConfig, ReadData},
@@ -14,16 +14,16 @@ pub async fn handle_typing_start(
     id: AccountIdInternal,
     typing_to: AccountIdInternal,
 ) -> Result<(), WebSocketError> {
-    let enabled = state
+    let Some(config) = state
         .config()
-        .client_features()
-        .map(|v| v.chat.typing_indicator.enabled)
-        .unwrap_or_default();
-
-    if !enabled {
+        .client_features_internal()
+        .chat
+        .typing_indicator
+        .as_ref()
+    else {
         // Ignore event because feature is disabled
         return Ok(());
-    }
+    };
 
     let is_match = state
         .data_all_access()
@@ -37,14 +37,19 @@ pub async fn handle_typing_start(
     }
 
     let value =
-        check_typing_message_rate_limit(state, id, |typing_to_state| match typing_to_state {
-            CurrentlyTypingToAccess::Allowed(current) => {
-                let current_value = *current;
-                *current = Some(typing_to);
-                Ok(current_value)
-            }
-            CurrentlyTypingToAccess::Denied => Err(()),
-        })
+        check_typing_message_rate_limit(
+            state,
+            id,
+            config,
+            |typing_to_state| match typing_to_state {
+                CurrentlyTypingToAccess::Allowed(current) => {
+                    let current_value = *current;
+                    *current = Some(typing_to);
+                    Ok(current_value)
+                }
+                CurrentlyTypingToAccess::Denied => Err(()),
+            },
+        )
         .await?;
 
     match value {
@@ -75,26 +80,31 @@ pub async fn handle_typing_start(
 }
 
 pub async fn handle_typing_stop(state: &S, id: AccountIdInternal) -> Result<(), WebSocketError> {
-    let enabled = state
+    let Some(config) = state
         .config()
-        .client_features()
-        .map(|v| v.chat.typing_indicator.enabled)
-        .unwrap_or_default();
-
-    if !enabled {
+        .client_features_internal()
+        .chat
+        .typing_indicator
+        .as_ref()
+    else {
         // Ignore event because feature is disabled
         return Ok(());
-    }
+    };
 
     let value =
-        check_typing_message_rate_limit(state, id, |typing_to_state| match typing_to_state {
-            CurrentlyTypingToAccess::Allowed(current) => {
-                let current_value = *current;
-                *current = None;
-                Ok(current_value)
-            }
-            CurrentlyTypingToAccess::Denied => Err(()),
-        })
+        check_typing_message_rate_limit(
+            state,
+            id,
+            config,
+            |typing_to_state| match typing_to_state {
+                CurrentlyTypingToAccess::Allowed(current) => {
+                    let current_value = *current;
+                    *current = None;
+                    Ok(current_value)
+                }
+                CurrentlyTypingToAccess::Denied => Err(()),
+            },
+        )
         .await?;
 
     match value {
@@ -119,23 +129,16 @@ pub async fn handle_typing_stop(state: &S, id: AccountIdInternal) -> Result<(), 
 async fn check_typing_message_rate_limit<T>(
     state: &S,
     id: AccountIdInternal,
+    typing_indicator_config: &TypingIndicatorConfig,
     typing_to_state_action: impl FnOnce(CurrentlyTypingToAccess) -> T,
 ) -> Result<T, WebSocketError> {
-    let min_wait_seconds = state
-        .config()
-        .client_features()
-        .map(|v| v.chat.typing_indicator.clone())
-        .unwrap_or_default()
-        .min_wait_seconds_between_sending_messages;
-
     let action_return_value = state
         .read()
         .cache_read_write_access()
         .write_cache(id, |cache| {
-            let typing_to_state = cache
-                .chat
-                .currently_typing_to
-                .access_typing_to_state(min_wait_seconds);
+            let typing_to_state = cache.chat.currently_typing_to.access_typing_to_state(
+                typing_indicator_config.min_wait_seconds_between_sending_messages,
+            );
             Ok(typing_to_state_action(typing_to_state))
         })
         .await
@@ -150,16 +153,16 @@ pub async fn handle_check_online_status(
     check_account: AccountIdInternal,
     client_is_online: bool,
 ) -> Result<(), WebSocketError> {
-    let config = state
+    let Some(config) = state
         .config()
-        .client_features()
-        .map(|v| v.chat.check_online_status.clone())
-        .unwrap_or_default();
-
-    if !config.enabled {
+        .client_features_internal()
+        .chat
+        .check_online_status
+        .as_ref()
+    else {
         // Ignore event because feature is disabled
         return Ok(());
-    }
+    };
 
     let limit_reached = state
         .read()

@@ -19,8 +19,10 @@ impl WriteCommandsChatLimits<'_> {
     ) -> Result<(), DataError> {
         let Some(config) = self
             .config()
-            .client_features()
-            .and_then(|v| v.likes.daily.as_ref())
+            .client_features_internal()
+            .likes
+            .daily
+            .as_ref()
         else {
             return Ok(());
         };

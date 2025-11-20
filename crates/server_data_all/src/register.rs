@@ -108,11 +108,11 @@ impl RegisterAccount<'_> {
 
         current.chat().insert_chat_state(id)?;
         current.chat().limits().insert_daily_likes_left(id)?;
-        if let Some(daily_likes) = config.client_features().and_then(|v| v.daily_likes()) {
+        if let Some(config) = &config.client_features_internal().likes.daily {
             current
                 .chat()
                 .limits()
-                .reset_daily_likes_left(id, daily_likes)?;
+                .reset_daily_likes_left(id, config.daily_likes.into())?;
         }
 
         Ok(id)

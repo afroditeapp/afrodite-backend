@@ -54,9 +54,9 @@ pub async fn get_map_tile(
 
     let tile_data_version = state
         .config()
-        .client_features()
-        .map(|v| v.map.tile_data_version)
-        .unwrap_or_default();
+        .client_features_internal()
+        .map
+        .tile_data_version;
     if v.v != tile_data_version {
         return Err(StatusCode::NOT_FOUND);
     }

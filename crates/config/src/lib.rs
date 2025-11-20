@@ -91,6 +91,7 @@ pub struct Config {
     custom_reports_sha256: Option<String>,
     client_features: Option<ClientFeaturesConfig>,
     client_features_sha256: Option<String>,
+    client_features_internal: ClientFeaturesConfigInternal,
     email_content: Option<EmailContentFile>,
     notification_content: NotificationContentFile,
     web_content: WebContentFile,
@@ -118,6 +119,7 @@ impl Config {
             custom_reports_sha256: None,
             client_features: None,
             client_features_sha256: None,
+            client_features_internal: ClientFeaturesConfigInternal::default(),
             email_content: None,
             notification_content: NotificationContentFile::default(),
             web_content: WebContentFile::default(),
@@ -239,8 +241,14 @@ impl Config {
         self.custom_reports_sha256.as_deref()
     }
 
+    /// Only available when config file exists, so that sha256 is valid
     pub fn client_features(&self) -> Option<&ClientFeaturesConfig> {
         self.client_features.as_ref()
+    }
+
+    /// Loaded config file or default value
+    pub fn client_features_internal(&self) -> &ClientFeaturesConfigInternal {
+        &self.client_features_internal
     }
 
     pub fn client_features_sha256(&self) -> Option<&str> {
@@ -248,10 +256,7 @@ impl Config {
     }
 
     pub fn scheduled_tasks(&self) -> ScheduledTasksConfig {
-        self.client_features
-            .as_ref()
-            .map(|c| c.server.scheduled_tasks.clone())
-            .unwrap_or_default()
+        self.client_features_internal().scheduled_tasks()
     }
 
     pub fn email_content(&self) -> Option<&EmailContentFile> {
@@ -385,20 +390,21 @@ pub fn get_config(
             (None, None)
         };
 
-    let (client_features, client_features_sha256) =
+    let (client_features, client_features_sha256, client_features_internal) =
         if let Some(path) = &file_config.config_files.client_features {
             let features = std::fs::read_to_string(path)
                 .change_context(GetConfigError::LoadFileError)
                 .attach_printable_lazy(|| path.to_string_lossy().to_string())?;
             let sha256 = format!("{:x}", Sha256::digest(features.as_bytes()));
-            let features: ClientFeaturesConfigInternal =
+            let features_internal: ClientFeaturesConfigInternal =
                 toml::from_str(&features).change_context(GetConfigError::InvalidConfiguration)?;
-            let features = features
+            let features = features_internal
+                .clone()
                 .to_client_features_config()
                 .into_error_string(GetConfigError::InvalidConfiguration)?;
-            (Some(features), Some(sha256))
+            (Some(features), Some(sha256), features_internal)
         } else {
-            (None, None)
+            (None, None, ClientFeaturesConfigInternal::default())
         };
 
     let email_content = if let Some(path) = &file_config.config_files.email_content {
@@ -442,15 +448,13 @@ pub fn get_config(
     }
     let profile_name_allowlist = allowlist_builder.build();
 
-    let profile_name_regex = if let Some(regex) = client_features
-        .as_ref()
-        .and_then(|v| v.profile.profile_name_regex.as_ref())
-    {
-        let regex = Regex::new(regex).change_context(GetConfigError::LoadFileError)?;
-        Some(regex)
-    } else {
-        None
-    };
+    let profile_name_regex =
+        if let Some(regex) = client_features_internal.profile.profile_name_regex.as_ref() {
+            let regex = Regex::new(regex).change_context(GetConfigError::LoadFileError)?;
+            Some(regex)
+        } else {
+            None
+        };
 
     let bot_config = if let Some(bot_config_file) = &file_config.config_files.bot {
         // Check that bot config file loads correctly
@@ -472,6 +476,7 @@ pub fn get_config(
         custom_reports_sha256,
         client_features,
         client_features_sha256,
+        client_features_internal,
         email_content,
         notification_content,
         web_content,
