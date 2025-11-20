@@ -201,18 +201,18 @@ pub struct TypingIndicatorConfig {
     start_event_ttl_seconds: u16,
     /// Server ignores messages that are received before
     /// wait time elapses.
-    pub min_wait_seconds_between_sending_messages_server: u16,
+    pub min_wait_seconds_between_requests_server: u16,
     /// Client should wait at least this time before sending
     /// another typing indicator message.
-    pub min_wait_seconds_between_sending_messages_client: u16,
+    pub min_wait_seconds_between_requests_client: u16,
 }
 
 impl Default for TypingIndicatorConfig {
     fn default() -> Self {
         Self {
             start_event_ttl_seconds: 10,
-            min_wait_seconds_between_sending_messages_server: 1,
-            min_wait_seconds_between_sending_messages_client: 4,
+            min_wait_seconds_between_requests_server: 1,
+            min_wait_seconds_between_requests_client: 4,
         }
     }
 }
