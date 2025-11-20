@@ -219,15 +219,19 @@ impl Default for TypingIndicatorConfig {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CheckOnlineStatusConfig {
-    /// After daily limit is reached, server ignores received check
-    /// online status requests.
-    pub daily_max_count: u16,
+    /// Server ignores check online status requests that are received before
+    /// wait time elapses.
+    pub min_wait_seconds_between_requests_server: u16,
+    /// Client should wait at least this time before sending
+    /// another check online status request.
+    pub min_wait_seconds_between_requests_client: u16,
 }
 
 impl Default for CheckOnlineStatusConfig {
     fn default() -> Self {
         Self {
-            daily_max_count: 100,
+            min_wait_seconds_between_requests_server: 4,
+            min_wait_seconds_between_requests_client: 8,
         }
     }
 }

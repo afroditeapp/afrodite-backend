@@ -30,6 +30,4 @@ pub struct AllApiLimits {
     pub get_profile: ApiLimitState,
     // Media
     pub get_profile_content_info: ApiLimitState,
-    // Chat
-    pub check_online_status: ApiLimitState,
 }

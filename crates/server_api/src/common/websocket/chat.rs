@@ -164,21 +164,20 @@ pub async fn handle_check_online_status(
         return Ok(());
     };
 
-    let limit_reached = state
+    let allowed = state
         .read()
         .cache_read_write_access()
         .write_cache(id, |cache| {
             Ok(cache
-                .common
-                .api_limits()
+                .chat
                 .check_online_status
-                .increment_and_check_is_limit_reached(config.daily_max_count))
+                .check_if_allowed(config.min_wait_seconds_between_requests_server))
         })
         .await
         .change_context(WebSocketError::EventToServerHandlingFailed)?;
 
-    if limit_reached {
-        // Ignore event because daily limit reached
+    if !allowed {
+        // Ignore event because min wait time has not elapsed
         return Ok(());
     }
 
