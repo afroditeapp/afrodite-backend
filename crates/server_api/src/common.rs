@@ -604,4 +604,7 @@ create_counters!(
     websocket_client_type_ios,
     websocket_client_type_web,
     websocket_client_type_test_mode_bot,
+    event_to_server_typing_start,
+    event_to_server_typing_stop,
+    event_to_server_check_online_status,
 );

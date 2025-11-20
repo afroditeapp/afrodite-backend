@@ -3,6 +3,8 @@ use server_common::websocket::WebSocketError;
 use server_data::{app::ReadData, db_manager::InternalReading};
 use server_state::S;
 
+use super::COMMON;
+
 pub mod chat;
 pub mod tracker;
 
@@ -20,6 +22,7 @@ pub async fn handle_event_to_server(
 
     match msg.message_type() {
         EventToServerType::TypingStart => {
+            COMMON.event_to_server_typing_start.incr();
             let Some(typing_to) = msg.account() else {
                 // Ignore invalid message
                 return Ok(());
@@ -35,8 +38,12 @@ pub async fn handle_event_to_server(
             };
             chat::handle_typing_start(state, id, typing_to).await
         }
-        EventToServerType::TypingStop => chat::handle_typing_stop(state, id).await,
+        EventToServerType::TypingStop => {
+            COMMON.event_to_server_typing_stop.incr();
+            chat::handle_typing_stop(state, id).await
+        }
         EventToServerType::CheckOnlineStatus => {
+            COMMON.event_to_server_check_online_status.incr();
             let Some(check_account) = msg.account() else {
                 // Ignore invalid message
                 return Ok(());
