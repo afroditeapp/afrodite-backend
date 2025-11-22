@@ -1,4 +1,4 @@
-use std::{sync::Arc, vec};
+use std::{sync::Arc, time::Duration, vec};
 
 use api_client::models::AccountId;
 use config::{
@@ -201,7 +201,12 @@ impl BotManager {
 
             if let Some(bot_mode_config) = self.config.bot_mode() {
                 if !bot_mode_config.no_sleep {
-                    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+                    // self.task_id is added sleep time to reduce HTTP traffic
+                    // spikes especiously when option --task-per-bot is enabled.
+                    tokio::time::sleep(Duration::from_millis(
+                        1000 + Into::<u64>::into(self.task_id),
+                    ))
+                    .await;
                 }
             }
         }

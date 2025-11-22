@@ -144,6 +144,7 @@ impl RemoteBotMode {
                     && admin_config.remote_bot_login_password.is_some(),
                 no_sleep: false,
                 save_state: false,
+                task_per_bot: false,
             }),
         })
     }
@@ -188,6 +189,7 @@ pub struct TestMode {
 impl TestMode {
     pub fn bots(&self, task_id: u32) -> u32 {
         match &self.mode {
+            TestModeSubMode::Bot(c) if c.task_per_bot => 1,
             TestModeSubMode::Bot(c) if task_id == 0 => c.users,
             TestModeSubMode::Bot(_) if task_id == 1 => 1, // Admin bot
             TestModeSubMode::Benchmark(c) => c.bots,
@@ -197,6 +199,8 @@ impl TestMode {
 
     pub fn tasks(&self) -> u32 {
         match &self.mode {
+            TestModeSubMode::Bot(c) if c.task_per_bot && c.admin => c.users + 1,
+            TestModeSubMode::Bot(c) if c.task_per_bot => c.users,
             TestModeSubMode::Bot(c) if c.admin => 2,
             TestModeSubMode::Bot(_) => 1,
             TestModeSubMode::Benchmark(c) => match c.benchmark {
@@ -333,6 +337,10 @@ pub struct BotModeConfig {
     /// Save and load state
     #[arg(long)]
     pub save_state: bool,
+
+    /// Run each bot in a separate task
+    #[arg(long)]
+    pub task_per_bot: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, ValueEnum)]
