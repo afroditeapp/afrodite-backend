@@ -238,8 +238,8 @@ async fn handle_connection(stream: &mut WsStream, sender: &EventSender) {
                 Ok(_) => {
                     panic!("Unexpected WebSocket message type");
                 }
-                Err(_) => {
-                    panic!("Unexpected WebSocket error");
+                Err(e) => {
+                    panic!("Unexpected WebSocket error, {e}");
                 }
             },
             None => {
