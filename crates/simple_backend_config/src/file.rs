@@ -594,6 +594,9 @@ pub struct ImageProcessingConfig {
     jpeg_quality: u8,
     pub seetaface: Option<SeetaFaceConfig>,
     pub nsfw_detection: Option<NsfwDetectionConfig>,
+    /// Make sure to use higer value than the server process nice
+    /// value as lower values require privileges.
+    pub process_nice_value: Option<i8>,
 }
 
 fn default_jpeg_quality() -> u8 {
@@ -606,6 +609,7 @@ impl Default for ImageProcessingConfig {
             jpeg_quality: default_jpeg_quality(),
             seetaface: None,
             nsfw_detection: None,
+            process_nice_value: None,
         }
     }
 }

@@ -124,6 +124,34 @@ impl BotClient {
             .spawn()
             .change_context(BotClientError::StartProcess)?;
 
+        #[cfg(unix)]
+        if let Some(nice_value) = config.general().bot_process_nice_value {
+            if let Some(pid) = bot_client.id() {
+                let renice_result = tokio::process::Command::new("renice")
+                    .arg("-n")
+                    .arg(nice_value.to_string())
+                    .arg("-p")
+                    .arg(pid.to_string())
+                    .output()
+                    .await;
+
+                match renice_result {
+                    Ok(output) if !output.status.success() => {
+                        error!(
+                            "Failed to set nice value for bot process: {}",
+                            String::from_utf8_lossy(&output.stderr)
+                        );
+                    }
+                    Ok(_) => {}
+                    Err(e) => {
+                        error!("Failed to execute renice for bot process: {}", e);
+                    }
+                }
+            } else {
+                error!("Failed to set nice value for bot process: no PID value");
+            }
+        }
+
         let stdout = bot_client
             .stdout
             .take()

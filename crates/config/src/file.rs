@@ -195,6 +195,9 @@ pub struct GeneralConfig {
     pub debug_websocket_logging: bool,
     #[serde(default)]
     pub debug_disable_api_limits: bool,
+    /// Make sure to use higer value than the server process nice
+    /// value as lower values require privileges.
+    pub bot_process_nice_value: Option<i8>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]

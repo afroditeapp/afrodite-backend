@@ -5,6 +5,7 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
+use simple_backend_config::file::ImageProcessingConfig;
 use simple_backend_image_process::{ImageProcessingCommand, ImageProcessingInfo, InputFileType};
 use simple_backend_utils::ContextExt;
 use tokio::{
@@ -51,7 +52,7 @@ pub struct ImageProcessHandle {
 }
 
 impl ImageProcessHandle {
-    pub async fn start() -> Result<Self, ImageProcessError> {
+    pub async fn start(config: &ImageProcessingConfig) -> Result<Self, ImageProcessError> {
         let start_cmd = env::args()
             .next()
             .ok_or(ImageProcessError::LaunchCommand.report())?
@@ -79,6 +80,34 @@ impl ImageProcessHandle {
             .kill_on_drop(true)
             .spawn()
             .change_context(ImageProcessError::StartProcess)?;
+
+        #[cfg(unix)]
+        if let Some(nice_value) = config.process_nice_value {
+            if let Some(pid) = child.id() {
+                let renice_result = tokio::process::Command::new("renice")
+                    .arg("-n")
+                    .arg(nice_value.to_string())
+                    .arg("-p")
+                    .arg(pid.to_string())
+                    .output()
+                    .await;
+
+                match renice_result {
+                    Ok(output) if !output.status.success() => {
+                        error!(
+                            "Failed to set nice value for image process: {}",
+                            String::from_utf8_lossy(&output.stderr)
+                        );
+                    }
+                    Ok(_) => {}
+                    Err(e) => {
+                        error!("Failed to execute renice for image process: {}", e);
+                    }
+                }
+            } else {
+                error!("Failed to set nice value for image process: no PID value");
+            }
+        }
 
         let Some(stderr) = child.stderr.take() else {
             return Err(ImageProcessError::StderrHandleMissing.into());
@@ -196,6 +225,7 @@ pub struct ImageProcess;
 
 impl ImageProcess {
     pub async fn start_image_process(
+        config: &ImageProcessingConfig,
         input: &Path,
         input_file_type: InputFileType,
         output: &Path,
@@ -229,7 +259,7 @@ impl ImageProcess {
 
         let handle = match state.take() {
             Some(handle) => handle,
-            None => ImageProcessHandle::start().await?,
+            None => ImageProcessHandle::start(config).await?,
         };
 
         let (handle, info) = handle.run_command(command).await?;
