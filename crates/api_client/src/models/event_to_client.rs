@@ -14,6 +14,9 @@ use serde::{Deserialize, Serialize};
 /// EventToClient : Event to client which is sent through websocket.  This is not an enum to make generated API bindings more easier to use.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct EventToClient {
+    /// Data for event CheckOnlineStatusResponse
+    #[serde(rename = "check_online_status_response", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub check_online_status_response: Option<Option<Box<models::CheckOnlineStatusResponse>>>,
     /// Data for event ContentProcessingStateChanged
     #[serde(rename = "content_processing_state_changed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub content_processing_state_changed: Option<Option<Box<models::ContentProcessingStateChanged>>>,
@@ -22,15 +25,24 @@ pub struct EventToClient {
     /// Data for event ScheduledMaintenanceStatus
     #[serde(rename = "scheduled_maintenance_status", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub scheduled_maintenance_status: Option<Option<Box<models::ScheduledMaintenanceStatus>>>,
+    /// Data for event TypingStart
+    #[serde(rename = "typing_start", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub typing_start: Option<Option<Box<models::AccountId>>>,
+    /// Data for event TypingStop
+    #[serde(rename = "typing_stop", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub typing_stop: Option<Option<Box<models::AccountId>>>,
 }
 
 impl EventToClient {
     /// Event to client which is sent through websocket.  This is not an enum to make generated API bindings more easier to use.
     pub fn new(event: models::EventType) -> EventToClient {
         EventToClient {
+            check_online_status_response: None,
             content_processing_state_changed: None,
             event,
             scheduled_maintenance_status: None,
+            typing_start: None,
+            typing_stop: None,
         }
     }
 }

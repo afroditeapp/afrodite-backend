@@ -13,30 +13,35 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ClientFeaturesConfig {
-    #[serde(rename = "attribution")]
-    pub attribution: Box<models::AttributionConfig>,
-    #[serde(rename = "features")]
-    pub features: Box<models::FeaturesConfig>,
-    #[serde(rename = "limits")]
-    pub limits: Box<models::LimitsConfig>,
-    #[serde(rename = "map")]
-    pub map: Box<models::MapConfig>,
-    /// Enable news UI
+    #[serde(rename = "attribution", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub attribution: Option<Option<Box<models::AttributionConfig>>>,
+    #[serde(rename = "chat", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub chat: Option<Option<Box<models::ChatConfig>>>,
+    #[serde(rename = "features", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub features: Option<Option<Box<models::FeaturesConfig>>>,
+    #[serde(rename = "likes", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub likes: Option<Option<Box<models::LikesConfig>>>,
+    #[serde(rename = "map", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub map: Option<Option<Box<models::MapConfig>>>,
     #[serde(rename = "news", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub news: Option<Option<Box<models::NewsConfig>>>,
-    #[serde(rename = "profile")]
-    pub profile: Box<models::ProfileConfig>,
+    #[serde(rename = "profile", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub profile: Option<Option<Box<models::ProfileConfig>>>,
+    #[serde(rename = "server", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub server: Option<Option<Box<models::ServerConfig>>>,
 }
 
 impl ClientFeaturesConfig {
-    pub fn new(attribution: models::AttributionConfig, features: models::FeaturesConfig, limits: models::LimitsConfig, map: models::MapConfig, profile: models::ProfileConfig) -> ClientFeaturesConfig {
+    pub fn new() -> ClientFeaturesConfig {
         ClientFeaturesConfig {
-            attribution: Box::new(attribution),
-            features: Box::new(features),
-            limits: Box::new(limits),
-            map: Box::new(map),
+            attribution: None,
+            chat: None,
+            features: None,
+            likes: None,
+            map: None,
             news: None,
-            profile: Box::new(profile),
+            profile: None,
+            server: None,
         }
     }
 }

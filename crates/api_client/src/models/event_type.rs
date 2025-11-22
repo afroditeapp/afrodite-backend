@@ -45,6 +45,12 @@ pub enum EventType {
     AdminNotification,
     #[serde(rename = "PushNotificationInfoChanged")]
     PushNotificationInfoChanged,
+    #[serde(rename = "TypingStart")]
+    TypingStart,
+    #[serde(rename = "TypingStop")]
+    TypingStop,
+    #[serde(rename = "CheckOnlineStatusResponse")]
+    CheckOnlineStatusResponse,
 
 }
 
@@ -66,6 +72,9 @@ impl std::fmt::Display for EventType {
             Self::AutomaticProfileSearchCompleted => write!(f, "AutomaticProfileSearchCompleted"),
             Self::AdminNotification => write!(f, "AdminNotification"),
             Self::PushNotificationInfoChanged => write!(f, "PushNotificationInfoChanged"),
+            Self::TypingStart => write!(f, "TypingStart"),
+            Self::TypingStop => write!(f, "TypingStop"),
+            Self::CheckOnlineStatusResponse => write!(f, "CheckOnlineStatusResponse"),
         }
     }
 }

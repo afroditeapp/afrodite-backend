@@ -14,24 +14,24 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MapConfig {
     /// Limit viewable map area
-    #[serde(rename = "bounds")]
-    pub bounds: Box<models::MapBounds>,
-    #[serde(rename = "initial_location")]
-    pub initial_location: Box<models::MapCoordinate>,
+    #[serde(rename = "bounds", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub bounds: Option<Option<Box<models::MapBounds>>>,
+    #[serde(rename = "initial_location", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub initial_location: Option<Option<Box<models::MapCoordinate>>>,
     /// Increase this version number to make client to redownload cached map tiles.
-    #[serde(rename = "tile_data_version")]
-    pub tile_data_version: i32,
-    #[serde(rename = "zoom")]
-    pub zoom: Box<models::MapZoom>,
+    #[serde(rename = "tile_data_version", skip_serializing_if = "Option::is_none")]
+    pub tile_data_version: Option<i32>,
+    #[serde(rename = "zoom", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub zoom: Option<Option<Box<models::MapZoom>>>,
 }
 
 impl MapConfig {
-    pub fn new(bounds: models::MapBounds, initial_location: models::MapCoordinate, tile_data_version: i32, zoom: models::MapZoom) -> MapConfig {
+    pub fn new() -> MapConfig {
         MapConfig {
-            bounds: Box::new(bounds),
-            initial_location: Box::new(initial_location),
-            tile_data_version,
-            zoom: Box::new(zoom),
+            bounds: None,
+            initial_location: None,
+            tile_data_version: None,
+            zoom: None,
         }
     }
 }

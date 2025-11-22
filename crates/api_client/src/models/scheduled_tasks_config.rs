@@ -12,16 +12,16 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct FeaturesConfig {
-    /// Enable video calls
-    #[serde(rename = "video_calls", skip_serializing_if = "Option::is_none")]
-    pub video_calls: Option<bool>,
+pub struct ScheduledTasksConfig {
+    /// UTC time value
+    #[serde(rename = "daily_start_time")]
+    pub daily_start_time: String,
 }
 
-impl FeaturesConfig {
-    pub fn new() -> FeaturesConfig {
-        FeaturesConfig {
-            video_calls: None,
+impl ScheduledTasksConfig {
+    pub fn new(daily_start_time: String) -> ScheduledTasksConfig {
+        ScheduledTasksConfig {
+            daily_start_time,
         }
     }
 }

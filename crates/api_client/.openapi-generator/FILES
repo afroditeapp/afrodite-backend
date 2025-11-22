@@ -51,8 +51,11 @@ src/models/backend_config.rs
 src/models/backend_version.rs
 src/models/boolean_setting.rs
 src/models/chat_app_notification_settings.rs
+src/models/chat_config.rs
 src/models/chat_email_notification_settings.rs
 src/models/chat_message_report.rs
+src/models/check_online_status_config.rs
+src/models/check_online_status_response.rs
 src/models/client_config.rs
 src/models/client_config_sync_version.rs
 src/models/client_features_config.rs
@@ -102,6 +105,8 @@ src/models/email_address_state.rs
 src/models/email_address_state_admin.rs
 src/models/email_login_token.rs
 src/models/event_to_client.rs
+src/models/event_to_server.rs
+src/models/event_to_server_type.rs
 src/models/event_type.rs
 src/models/favorite_profiles_page.rs
 src/models/features_config.rs
@@ -154,9 +159,8 @@ src/models/jitsi_meet_url.rs
 src/models/language.rs
 src/models/last_seen_time_filter.rs
 src/models/latest_birthdate.rs
-src/models/like_limits_config.rs
+src/models/likes_config.rs
 src/models/limited_action_status.rs
-src/models/limits_config.rs
 src/models/local_bots_config.rs
 src/models/location.rs
 src/models/login_result.rs
@@ -280,6 +284,7 @@ src/models/scheduled_maintenance_status.rs
 src/models/scheduled_task_status.rs
 src/models/scheduled_task_type.rs
 src/models/scheduled_task_type_value.rs
+src/models/scheduled_tasks_config.rs
 src/models/search_age_range.rs
 src/models/search_groups.rs
 src/models/security_content.rs
@@ -289,6 +294,7 @@ src/models/send_verify_email_message_result.rs
 src/models/sent_blocks_page.rs
 src/models/sent_message_id.rs
 src/models/sent_message_id_list.rs
+src/models/server_config.rs
 src/models/set_account_ban_state.rs
 src/models/set_account_setup.rs
 src/models/set_email_login_enabled.rs
@@ -308,6 +314,7 @@ src/models/sync_version.rs
 src/models/system_info.rs
 src/models/time_granularity.rs
 src/models/translation.rs
+src/models/typing_indicator_config.rs
 src/models/unix_time.rs
 src/models/unread_news_count.rs
 src/models/unread_news_count_result.rs
