@@ -7,9 +7,9 @@ use axum_extra::TypedHeader;
 use headers::ContentType;
 use model::{GetConversationId, NotificationEvent, PushNotificationFlags};
 use model_chat::{
-    AccountId, AccountIdInternal, EventToClientInternal, GetSentMessage,
-    PendingMessageAcknowledgementList, SendMessageResult, SendMessageToAccountParams,
-    SentMessageId, SentMessageIdList, add_minimal_i64,
+    AccountId, AccountIdInternal, EventToClientInternal, GetSentMessage, MessageDeliveryInfoIdList,
+    MessageDeliveryInfoList, PendingMessageAcknowledgementList, SendMessageResult,
+    SendMessageToAccountParams, SentMessageId, SentMessageIdList, add_minimal_i64,
 };
 use server_api::{
     S,
@@ -115,7 +115,11 @@ pub async fn post_add_receiver_acknowledgement(
 
     db_write!(state, move |cmds| {
         cmds.chat()
-            .add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(id, list.ids)
+            .add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
+                id,
+                list.ids,
+                list.change_to_delivered,
+            )
             .await
     })?;
     Ok(())
@@ -323,6 +327,63 @@ pub async fn get_conversation_id(
     Ok(value.into())
 }
 
+const PATH_GET_MESSAGE_DELIVERY_INFO: &str = "/chat_api/message_delivery_info";
+
+/// Get all message delivery info where the API caller is the message sender.
+///
+/// This endpoint returns delivery information (delivered/seen status) for all
+/// messages sent by the authenticated user.
+#[utoipa::path(
+    get,
+    path = PATH_GET_MESSAGE_DELIVERY_INFO,
+    responses(
+        (status = 200, description = "Success.", body = MessageDeliveryInfoList),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_message_delivery_info(
+    State(state): State<S>,
+    Extension(id): Extension<AccountIdInternal>,
+) -> Result<Json<MessageDeliveryInfoList>, StatusCode> {
+    CHAT.get_message_delivery_info.incr();
+    let info = state.read().chat().get_all_delivery_info(id).await?;
+    Ok(MessageDeliveryInfoList { info }.into())
+}
+
+const PATH_POST_DELETE_MESSAGE_DELIVERY_INFO: &str = "/chat_api/delete_message_delivery_info";
+
+/// Delete message delivery info entries by their database IDs.
+///
+/// This endpoint allows message senders to remove delivery info entries
+/// that they have already processed.
+#[utoipa::path(
+    post,
+    path = PATH_POST_DELETE_MESSAGE_DELIVERY_INFO,
+    request_body(content = MessageDeliveryInfoIdList),
+    responses(
+        (status = 200, description = "Success."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_delete_message_delivery_info(
+    State(state): State<S>,
+    Extension(id): Extension<AccountIdInternal>,
+    Json(id_list): Json<MessageDeliveryInfoIdList>,
+) -> Result<(), StatusCode> {
+    CHAT.post_delete_message_delivery_info.incr();
+
+    db_write!(state, move |cmds| {
+        cmds.chat()
+            .delete_delivery_info_by_ids(id, id_list.ids)
+            .await
+    })?;
+    Ok(())
+}
+
 create_open_api_router!(
         fn router_message,
         get_pending_messages,
@@ -331,6 +392,8 @@ create_open_api_router!(
         post_get_sent_message,
         get_sent_message_ids,
         post_add_sender_acknowledgement,
+        get_message_delivery_info,
+        post_delete_message_delivery_info,
         get_conversation_id,
 );
 
@@ -344,5 +407,7 @@ create_counters!(
     post_get_sent_message,
     get_sent_message_ids,
     post_add_sender_acknowledgement,
+    get_message_delivery_info,
+    post_delete_message_delivery_info,
     get_conversation_id,
 );

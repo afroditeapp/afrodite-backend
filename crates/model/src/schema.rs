@@ -518,6 +518,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    message_delivery_info (id) {
+        id -> Int8,
+        account_id_sender -> Int8,
+        account_id_receiver -> Int8,
+        message_id -> Int8,
+        delivery_info_type -> Int2,
+        unix_time -> Int8,
+    }
+}
+
+diesel::table! {
     news (id) {
         id -> Int8,
         account_id_creator -> Nullable<Int8>,
@@ -887,6 +898,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     media_content,
     media_report_profile_content,
     media_state,
+    message_delivery_info,
     news,
     news_translations,
     pending_messages,

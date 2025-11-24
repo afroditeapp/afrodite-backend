@@ -5,8 +5,8 @@ use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::PublicKeyId;
 use model_chat::{
-    AccountIdInternal, AccountInteractionState, ClientId, ClientLocalId, PendingMessageIdInternal,
-    SentMessageId, SignedMessageData, UnixTime,
+    AccountIdInternal, AccountInteractionState, ClientId, ClientLocalId, DeliveryInfoType,
+    PendingMessageIdInternal, SentMessageId, SignedMessageData, UnixTime,
 };
 use utils::encrypt::ParsedKeys;
 
@@ -193,5 +193,46 @@ impl CurrentWriteChatMessage<'_> {
             .into_db_error((sender, receiver, new_message_id))?;
 
         Ok(Ok(signed))
+    }
+
+    pub fn insert_message_delivery_info(
+        &mut self,
+        sender: AccountIdInternal,
+        receiver: AccountIdInternal,
+        message_id_value: model::MessageId,
+        delivery_info_type_value: DeliveryInfoType,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::message_delivery_info::dsl::*;
+
+        let time = UnixTime::current_time();
+
+        insert_into(message_delivery_info)
+            .values((
+                account_id_sender.eq(sender.as_db_id()),
+                account_id_receiver.eq(receiver.as_db_id()),
+                message_id.eq(message_id_value),
+                delivery_info_type.eq(delivery_info_type_value),
+                unix_time.eq(time),
+            ))
+            .execute(self.conn())
+            .into_db_error((sender, receiver))?;
+
+        Ok(())
+    }
+
+    pub fn delete_delivery_info_by_ids(
+        &mut self,
+        sender_id: AccountIdInternal,
+        ids_to_delete: Vec<i64>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::message_delivery_info::dsl::*;
+
+        delete(message_delivery_info)
+            .filter(account_id_sender.eq(sender_id.as_db_id()))
+            .filter(id.eq_any(ids_to_delete))
+            .execute(self.conn())
+            .into_db_error(sender_id)?;
+
+        Ok(())
     }
 }

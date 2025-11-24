@@ -1019,6 +1019,30 @@ CREATE TABLE IF NOT EXISTS pending_messages(
             ON UPDATE CASCADE
 );
 
+-- Delivery information for messages (delivered, seen status)
+CREATE TABLE IF NOT EXISTS message_delivery_info(
+    id                      INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    -- The account which sent the message.
+    account_id_sender       BIGINT NOT NULL,
+    -- The account which received the message.
+    account_id_receiver     BIGINT NOT NULL,
+    -- Conversation specific ID for the message.
+    message_id              BIGINT NOT NULL,
+    -- 0 = delivered
+    -- 1 = seen
+    delivery_info_type      SMALLINT NOT NULL,
+    -- When the delivery info was created
+    unix_time               BIGINT NOT NULL,
+    FOREIGN KEY (account_id_sender)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (account_id_receiver)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS chat_report_chat_message(
     report_id                          INTEGER PRIMARY KEY NOT NULL,
     message_sender_account_id_uuid     BLOB                NOT NULL,

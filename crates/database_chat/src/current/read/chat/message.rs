@@ -8,7 +8,10 @@ use model::{
     DataExportPendingMessage, MessageId, NewMessageNotification, NewMessageNotificationList,
     PendingMessageIdInternal, PendingMessageIdInternalAndMessageTime, PendingMessageRaw, UnixTime,
 };
-use model_chat::{AccountIdInternal, GetSentMessage, PendingMessageInternal, SentMessageId};
+use model_chat::{
+    AccountIdInternal, DeliveryInfoType, GetSentMessage, MessageDeliveryInfo,
+    PendingMessageInternal, SentMessageId,
+};
 
 use crate::IntoDatabaseError;
 
@@ -271,5 +274,59 @@ impl CurrentReadChatMessage<'_> {
             .collect();
 
         Ok(data)
+    }
+
+    pub fn has_unreceived_delivery_info(
+        &mut self,
+        sender_id: AccountIdInternal,
+    ) -> Result<bool, DieselDatabaseError> {
+        use crate::schema::message_delivery_info::dsl::*;
+
+        let count: i64 = message_delivery_info
+            .filter(account_id_sender.eq(sender_id.as_db_id()))
+            .count()
+            .get_result(self.conn())
+            .into_db_error(())?;
+
+        Ok(count > 0)
+    }
+
+    pub fn get_all_delivery_info(
+        &mut self,
+        sender_id: AccountIdInternal,
+    ) -> Result<Vec<MessageDeliveryInfo>, DieselDatabaseError> {
+        use crate::schema::{account_id, message_delivery_info};
+
+        let data: Vec<(i64, AccountId, MessageId, DeliveryInfoType, UnixTime)> =
+            message_delivery_info::table
+                .inner_join(
+                    account_id::table
+                        .on(message_delivery_info::account_id_receiver.eq(account_id::id)),
+                )
+                .filter(message_delivery_info::account_id_sender.eq(sender_id.as_db_id()))
+                .select((
+                    message_delivery_info::id,
+                    account_id::uuid,
+                    message_delivery_info::message_id,
+                    message_delivery_info::delivery_info_type,
+                    message_delivery_info::unix_time,
+                ))
+                .load(self.conn())
+                .into_db_error(())?;
+
+        let result = data
+            .into_iter()
+            .map(
+                |(id, receiver, message_id, delivery_type, unix_time)| MessageDeliveryInfo {
+                    id,
+                    receiver,
+                    message_id,
+                    delivery_type,
+                    unix_time,
+                },
+            )
+            .collect();
+
+        Ok(result)
     }
 }

@@ -77,6 +77,7 @@ pub enum EventType {
     TypingStop,
     /// Data: check_online_status_response
     CheckOnlineStatusResponse,
+    MessageDeliveryInfoChanged,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -130,6 +131,7 @@ pub enum EventToClientInternal {
     TypingStart(AccountId),
     TypingStop(AccountId),
     CheckOnlineStatusResponse(CheckOnlineStatusResponse),
+    MessageDeliveryInfoChanged,
 }
 
 impl From<&EventToClientInternal> for EventType {
@@ -154,6 +156,7 @@ impl From<&EventToClientInternal> for EventType {
             TypingStart(_) => Self::TypingStart,
             TypingStop(_) => Self::TypingStop,
             CheckOnlineStatusResponse(_) => Self::CheckOnlineStatusResponse,
+            MessageDeliveryInfoChanged => Self::MessageDeliveryInfoChanged,
         }
     }
 }
@@ -189,7 +192,8 @@ impl From<EventToClientInternal> for EventToClient {
             | ProfileStringModerationCompleted
             | AutomaticProfileSearchCompleted
             | AdminNotification
-            | PushNotificationInfoChanged => (),
+            | PushNotificationInfoChanged
+            | MessageDeliveryInfoChanged => (),
         }
 
         value

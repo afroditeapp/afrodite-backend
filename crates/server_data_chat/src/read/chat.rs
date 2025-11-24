@@ -1,8 +1,8 @@
 use database_chat::current::read::GetDbReadCommandsChat;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, ChatStateRaw, GetSentMessage,
-    MatchesIteratorState, ProfileLink, ReceivedLikesIteratorState, ReceivedLikesPage,
-    ReceivedLikesPageItem, SentBlocksPage, SentMessageId,
+    MatchesIteratorState, MessageDeliveryInfo, ProfileLink, ReceivedLikesIteratorState,
+    ReceivedLikesPage, ReceivedLikesPageItem, SentBlocksPage, SentMessageId,
 };
 use server_data::{
     DataError, IntoDataError, cache::CacheReadCommon, db_manager::InternalReading,
@@ -203,5 +203,23 @@ impl ReadCommandsChat<'_> {
             id_at_reset: latest_used_id,
             page: 0,
         })
+    }
+
+    pub async fn has_unreceived_delivery_info(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<bool, DataError> {
+        self.db_read(move |mut cmds| cmds.chat().message().has_unreceived_delivery_info(id))
+            .await
+            .into_error()
+    }
+
+    pub async fn get_all_delivery_info(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Vec<MessageDeliveryInfo>, DataError> {
+        self.db_read(move |mut cmds| cmds.chat().message().get_all_delivery_info(id))
+            .await
+            .into_error()
     }
 }

@@ -2,7 +2,7 @@ mod limits;
 mod notification;
 mod report;
 
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 
 use database_chat::current::{
     read::GetDbReadCommandsChat,
@@ -14,7 +14,7 @@ use database_chat::current::{
 use error_stack::ResultExt;
 use model::{NewReceivedLikesCountResult, ReceivedLikeId};
 use model_chat::{
-    AccountIdInternal, AddPublicKeyResult, ChatStateRaw, ClientId, ClientLocalId,
+    AccountIdInternal, AddPublicKeyResult, ChatStateRaw, ClientId, ClientLocalId, DeliveryInfoType,
     NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PublicKeyId,
     ReceivedLikesIteratorState, ResetReceivedLikesIteratorResult, SendMessageResult, SentMessageId,
     SyncVersionUtils,
@@ -181,8 +181,10 @@ impl WriteCommandsChat<'_> {
         &self,
         message_receiver: AccountIdInternal,
         messages: Vec<PendingMessageId>,
+        change_to_delivered: bool,
     ) -> Result<(), DataError> {
         let mut converted = vec![];
+        let mut unique_senders = HashSet::new();
         for m in messages {
             let sender = self.to_account_id_internal(m.sender).await?;
             converted.push(PendingMessageIdInternal {
@@ -190,6 +192,7 @@ impl WriteCommandsChat<'_> {
                 receiver: message_receiver.into_db_id(),
                 m: m.m,
             });
+            unique_senders.insert(sender);
         }
 
         db_transaction!(self, move |mut cmds| {
@@ -197,8 +200,47 @@ impl WriteCommandsChat<'_> {
                 .message()
                 .add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
                     message_receiver,
-                    converted,
-                )
+                    converted.clone(),
+                )?;
+
+            if change_to_delivered {
+                for msg in &converted {
+                    cmds.chat().message().insert_message_delivery_info(
+                        msg.sender,
+                        message_receiver,
+                        msg.m,
+                        DeliveryInfoType::Delivered,
+                    )?;
+                }
+            }
+
+            Ok(())
+        })?;
+
+        if change_to_delivered {
+            for sender in &unique_senders {
+                self.handle()
+                    .events()
+                    .send_connected_event(
+                        sender.as_id(),
+                        model::EventToClientInternal::MessageDeliveryInfoChanged,
+                    )
+                    .await?;
+            }
+        }
+
+        Ok(())
+    }
+
+    pub async fn delete_delivery_info_by_ids(
+        &self,
+        sender_id: AccountIdInternal,
+        ids: Vec<i64>,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.chat()
+                .message()
+                .delete_delivery_info_by_ids(sender_id, ids)
         })?;
 
         Ok(())

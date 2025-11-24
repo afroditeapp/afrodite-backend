@@ -1,5 +1,10 @@
+use diesel::sql_types::SmallInt;
 use model::{AccountId, MessageId, PublicKeyId, UnixTime};
+use num_enum::TryFromPrimitive;
+use serde::{Deserialize, Serialize};
+use simple_backend_model::SimpleDieselEnum;
 use simple_backend_utils::UuidBase64Url;
+use utoipa::ToSchema;
 
 pub struct SignedMessageData {
     /// Sender of the message.
@@ -113,4 +118,49 @@ fn parse_minimal_i64(d: &mut impl Iterator<Item = u8>) -> Option<i64> {
     };
 
     Some(number)
+}
+
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    TryFromPrimitive,
+    SimpleDieselEnum,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+    Serialize,
+    Deserialize,
+    ToSchema,
+)]
+#[diesel(sql_type = SmallInt)]
+#[repr(i16)]
+pub enum DeliveryInfoType {
+    Delivered = 0,
+    Seen = 1,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, PartialEq)]
+pub struct MessageDeliveryInfo {
+    /// Database ID for the delivery info entry
+    pub id: i64,
+    /// Receiver of the message
+    pub receiver: AccountId,
+    /// Conversation specific ID for the message
+    pub message_id: MessageId,
+    /// Delivery info type (Delivered or Seen)
+    pub delivery_type: DeliveryInfoType,
+    /// Unix time when the delivery info was created
+    pub unix_time: UnixTime,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, PartialEq, Default)]
+pub struct MessageDeliveryInfoList {
+    pub info: Vec<MessageDeliveryInfo>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
+pub struct MessageDeliveryInfoIdList {
+    pub ids: Vec<i64>,
 }
