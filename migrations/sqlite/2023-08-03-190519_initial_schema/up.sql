@@ -1043,6 +1043,24 @@ CREATE TABLE IF NOT EXISTS message_delivery_info(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS latest_seen_message(
+    -- The account viewing/receiving the message
+    account_id_viewer       BIGINT NOT NULL,
+    -- The account who sent the message
+    account_id_sender       BIGINT NOT NULL,
+    -- Latest message which viewer has seen
+    message_id              BIGINT NOT NULL,
+    PRIMARY KEY (account_id_viewer, account_id_sender),
+    FOREIGN KEY (account_id_viewer)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (account_id_sender)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS chat_report_chat_message(
     report_id                          INTEGER PRIMARY KEY NOT NULL,
     message_sender_account_id_uuid     BLOB                NOT NULL,

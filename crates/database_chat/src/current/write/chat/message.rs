@@ -8,6 +8,7 @@ use model_chat::{
     AccountIdInternal, AccountInteractionState, ClientId, ClientLocalId, DeliveryInfoType,
     PendingMessageIdInternal, SentMessageId, SignedMessageData, UnixTime,
 };
+use simple_backend_utils::db::MyRunQueryDsl;
 use utils::encrypt::ParsedKeys;
 
 use super::ReceiverBlockedSender;
@@ -232,6 +233,30 @@ impl CurrentWriteChatMessage<'_> {
             .filter(id.eq_any(ids_to_delete))
             .execute(self.conn())
             .into_db_error(sender_id)?;
+
+        Ok(())
+    }
+
+    pub fn update_latest_seen_message(
+        &mut self,
+        viewer_id: AccountIdInternal,
+        sender_id: AccountIdInternal,
+        msg_id: model::MessageId,
+    ) -> Result<(), DieselDatabaseError> {
+        use diesel::upsert::excluded;
+        use model::schema::latest_seen_message::dsl::*;
+
+        insert_into(latest_seen_message)
+            .values((
+                account_id_viewer.eq(viewer_id.as_db_id()),
+                account_id_sender.eq(sender_id.as_db_id()),
+                message_id.eq(msg_id),
+            ))
+            .on_conflict((account_id_viewer, account_id_sender))
+            .do_update()
+            .set(message_id.eq(excluded(message_id)))
+            .execute_my_conn(self.conn())
+            .into_db_error((viewer_id, sender_id))?;
 
         Ok(())
     }

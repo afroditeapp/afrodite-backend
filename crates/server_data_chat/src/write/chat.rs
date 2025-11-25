@@ -12,7 +12,7 @@ use database_chat::current::{
     },
 };
 use error_stack::ResultExt;
-use model::{NewReceivedLikesCountResult, ReceivedLikeId};
+use model::{MessageId, NewReceivedLikesCountResult, ReceivedLikeId};
 use model_chat::{
     AccountIdInternal, AddPublicKeyResult, ChatStateRaw, ClientId, ClientLocalId, DeliveryInfoType,
     NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PublicKeyId,
@@ -227,6 +227,103 @@ impl WriteCommandsChat<'_> {
                     )
                     .await?;
             }
+        }
+
+        Ok(())
+    }
+
+    pub async fn mark_messages_as_seen(
+        &self,
+        message_receiver: AccountIdInternal,
+        messages: Vec<PendingMessageId>,
+    ) -> Result<(), DataError> {
+        let mut converted = vec![];
+        for m in messages {
+            let sender = self.to_account_id_internal(m.sender).await?;
+            converted.push(PendingMessageIdInternal {
+                sender,
+                receiver: message_receiver.into_db_id(),
+                m: m.m,
+            });
+        }
+
+        // Group messages by sender for efficient processing
+        let mut messages_by_sender: std::collections::HashMap<
+            AccountIdInternal,
+            Vec<model::MessageId>,
+        > = std::collections::HashMap::new();
+        for msg in &converted {
+            messages_by_sender
+                .entry(msg.sender)
+                .or_default()
+                .push(msg.m);
+        }
+
+        let senders_with_updates = db_transaction!(self, move |mut cmds| {
+            let mut senders_with_updates = HashSet::new();
+            for (sender, message_ids) in messages_by_sender {
+                let Some(message_id_max) = cmds
+                    .read()
+                    .chat()
+                    .interaction()
+                    .account_interaction(message_receiver, sender)?
+                    .map(|v| v.next_message_id().id - 1)
+                else {
+                    continue;
+                };
+
+                let message_id_min = cmds
+                    .read()
+                    .chat()
+                    .message()
+                    .get_latest_seen_message_id(message_receiver, sender)?
+                    .map(|v| v.id + 1)
+                    .unwrap_or(1); // First valid MessageId
+
+                let mut largest_valid_id: Option<MessageId> = None;
+
+                for &msg_id in &message_ids {
+                    if msg_id.id < message_id_min || msg_id.id > message_id_max {
+                        continue;
+                    }
+
+                    match largest_valid_id {
+                        Some(current) if current.id < msg_id.id => largest_valid_id = Some(msg_id),
+                        Some(_) => (),
+                        None => largest_valid_id = Some(msg_id),
+                    }
+
+                    cmds.chat().message().insert_message_delivery_info(
+                        sender,
+                        message_receiver,
+                        msg_id,
+                        DeliveryInfoType::Seen,
+                    )?;
+                }
+
+                if let Some(largest_valid_id) = largest_valid_id {
+                    senders_with_updates.insert(sender);
+                    if largest_valid_id.id > message_id_min {
+                        cmds.chat().message().update_latest_seen_message(
+                            message_receiver,
+                            sender,
+                            largest_valid_id,
+                        )?;
+                    }
+                }
+            }
+
+            Ok(senders_with_updates)
+        })?;
+
+        for sender in &senders_with_updates {
+            self.handle()
+                .events()
+                .send_connected_event(
+                    sender.as_id(),
+                    model::EventToClientInternal::MessageDeliveryInfoChanged,
+                )
+                .await?;
         }
 
         Ok(())

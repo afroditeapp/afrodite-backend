@@ -454,6 +454,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    latest_seen_message (account_id_viewer, account_id_sender) {
+        account_id_viewer -> Int8,
+        account_id_sender -> Int8,
+        message_id -> Int8,
+    }
+}
+
+diesel::table! {
     login_session (account_id) {
         account_id -> Int8,
         access_token -> Bytea,
@@ -892,6 +900,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     history_profile_statistics_count_changes_non_binary,
     history_profile_statistics_count_changes_woman,
     ip_address_usage_statistics,
+    latest_seen_message,
     login_session,
     media_app_notification_settings,
     media_app_notification_state,

@@ -88,6 +88,11 @@ fn value_is_true(v: &bool) -> bool {
     *v
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
+pub struct MessageSeenList {
+    pub ids: Vec<PendingMessageId>,
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct SentMessageId {
     pub c: ClientId,

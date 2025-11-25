@@ -329,4 +329,22 @@ impl CurrentReadChatMessage<'_> {
 
         Ok(result)
     }
+
+    pub fn get_latest_seen_message_id(
+        &mut self,
+        viewer_id: AccountIdInternal,
+        sender_id: AccountIdInternal,
+    ) -> Result<Option<MessageId>, DieselDatabaseError> {
+        use crate::schema::latest_seen_message::dsl::*;
+
+        let result: Option<MessageId> = latest_seen_message
+            .filter(account_id_viewer.eq(viewer_id.as_db_id()))
+            .filter(account_id_sender.eq(sender_id.as_db_id()))
+            .select(message_id)
+            .first(self.conn())
+            .optional()
+            .into_db_error(())?;
+
+        Ok(result)
+    }
 }

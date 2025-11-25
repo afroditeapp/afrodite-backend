@@ -8,7 +8,7 @@ use headers::ContentType;
 use model::{GetConversationId, NotificationEvent, PushNotificationFlags};
 use model_chat::{
     AccountId, AccountIdInternal, EventToClientInternal, GetSentMessage, MessageDeliveryInfoIdList,
-    MessageDeliveryInfoList, PendingMessageAcknowledgementList, SendMessageResult,
+    MessageDeliveryInfoList, MessageSeenList, PendingMessageAcknowledgementList, SendMessageResult,
     SendMessageToAccountParams, SentMessageId, SentMessageIdList, add_minimal_i64,
 };
 use server_api::{
@@ -384,6 +384,37 @@ pub async fn post_delete_message_delivery_info(
     Ok(())
 }
 
+const PATH_POST_MARK_MESSAGES_AS_SEEN: &str = "/chat_api/mark_messages_as_seen";
+
+/// Mark received messages as seen.
+///
+/// This endpoint allows message receivers to mark messages as seen.
+/// The seen status is saved to the message_delivery_info table and
+/// an event is sent to each message sender to notify them of the state change.
+#[utoipa::path(
+    post,
+    path = PATH_POST_MARK_MESSAGES_AS_SEEN,
+    request_body(content = MessageSeenList),
+    responses(
+        (status = 200, description = "Success."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_mark_messages_as_seen(
+    State(state): State<S>,
+    Extension(id): Extension<AccountIdInternal>,
+    Json(list): Json<MessageSeenList>,
+) -> Result<(), StatusCode> {
+    CHAT.post_mark_messages_as_seen.incr();
+
+    db_write!(state, move |cmds| {
+        cmds.chat().mark_messages_as_seen(id, list.ids).await
+    })?;
+    Ok(())
+}
+
 create_open_api_router!(
         fn router_message,
         get_pending_messages,
@@ -394,6 +425,7 @@ create_open_api_router!(
         post_add_sender_acknowledgement,
         get_message_delivery_info,
         post_delete_message_delivery_info,
+        post_mark_messages_as_seen,
         get_conversation_id,
 );
 
@@ -409,5 +441,6 @@ create_counters!(
     post_add_sender_acknowledgement,
     get_message_delivery_info,
     post_delete_message_delivery_info,
+    post_mark_messages_as_seen,
     get_conversation_id,
 );
