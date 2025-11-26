@@ -5,7 +5,7 @@ use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::PublicKeyId;
 use model_chat::{
-    AccountIdInternal, AccountInteractionState, ClientLocalId, DeliveryInfoType,
+    AccountIdInternal, AccountInteractionState, DeliveryInfoType, MessageUuid,
     PendingMessageIdInternal, SignedMessageData, UnixTime,
 };
 use simple_backend_utils::db::MyRunQueryDsl;
@@ -87,20 +87,20 @@ impl CurrentWriteChatMessage<'_> {
     pub fn add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(
         &mut self,
         message_sender: AccountIdInternal,
-        messages: Vec<ClientLocalId>,
+        messages: Vec<MessageUuid>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::pending_messages::dsl::*;
 
         for message in messages {
             update(pending_messages)
-                .filter(sender_client_local_id.eq(&message))
+                .filter(message_uuid.eq(&message))
                 .filter(account_id_sender.eq(message_sender.as_db_id()))
                 .set(sender_acknowledgement.eq(true))
                 .execute(self.conn())
                 .into_db_error(message_sender)?;
 
             delete(pending_messages)
-                .filter(sender_client_local_id.eq(&message))
+                .filter(message_uuid.eq(&message))
                 .filter(account_id_sender.eq(message_sender.as_db_id()))
                 .filter(sender_acknowledgement.eq(true))
                 .filter(receiver_acknowledgement.eq(true))
@@ -121,7 +121,7 @@ impl CurrentWriteChatMessage<'_> {
         sender_public_key_id: PublicKeyId,
         receiver_public_key_id: PublicKeyId,
         message: Vec<u8>,
-        client_local_id_value: ClientLocalId,
+        message_uuid_value: MessageUuid,
         keys: Arc<ParsedKeys>,
     ) -> Result<std::result::Result<Vec<u8>, ReceiverBlockedSender>, DieselDatabaseError> {
         use model::schema::{account_interaction, pending_messages::dsl::*};
@@ -165,7 +165,7 @@ impl CurrentWriteChatMessage<'_> {
         let data_for_signing = SignedMessageData {
             sender: sender.as_id(),
             receiver: receiver.as_id(),
-            client_local_id: client_local_id_value,
+            message_uuid: message_uuid_value,
             sender_public_key_id,
             receiver_public_key_id,
             m: new_message_id,
@@ -185,7 +185,7 @@ impl CurrentWriteChatMessage<'_> {
                 message_unix_time.eq(time),
                 message_id.eq(new_message_id),
                 message_bytes.eq(&signed),
-                sender_client_local_id.eq(&client_local_id_value),
+                message_uuid.eq(&message_uuid_value),
             ))
             .execute(self.conn())
             .into_db_error((sender, receiver, new_message_id))?;

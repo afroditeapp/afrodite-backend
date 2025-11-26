@@ -571,7 +571,7 @@ diesel::table! {
         receiver_email_notification_sent -> Bool,
         message_unix_time -> Int8,
         message_id -> Int8,
-        sender_client_local_id -> Bytea,
+        message_uuid -> Bytea,
         message_bytes -> Bytea,
     }
 }

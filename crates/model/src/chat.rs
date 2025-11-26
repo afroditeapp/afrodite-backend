@@ -1,14 +1,18 @@
 use base64::{Engine, prelude::BASE64_STANDARD};
 use diesel::{
-    Selectable, deserialize::FromSqlRow, expression::AsExpression, prelude::Queryable,
-    sql_types::BigInt,
+    Selectable,
+    deserialize::FromSqlRow,
+    expression::AsExpression,
+    prelude::Queryable,
+    sql_types::{BigInt, Binary},
 };
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{UnixTime, diesel_i64_wrapper};
+use simple_backend_utils::diesel_uuid_wrapper;
 use utoipa::{IntoParams, ToSchema};
 
 use super::sync_version_wrappers;
-use crate::{AccountId, AccountIdDb, AccountIdInternal, ClientLocalId, LastSeenTime};
+use crate::{AccountId, AccountIdDb, AccountIdInternal, LastSeenTime};
 
 mod interaction;
 pub use interaction::*;
@@ -47,6 +51,52 @@ impl AsRef<i64> for PublicKeyId {
 }
 
 diesel_i64_wrapper!(PublicKeyId);
+
+/// Message UUID which sender generates
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    ToSchema,
+    Clone,
+    Eq,
+    Hash,
+    PartialEq,
+    IntoParams,
+    Copy,
+    FromSqlRow,
+    AsExpression,
+)]
+#[diesel(sql_type = Binary)]
+pub struct MessageUuid {
+    id: simple_backend_utils::UuidBase64Url,
+}
+
+impl MessageUuid {
+    pub fn new(id: simple_backend_utils::UuidBase64Url) -> Self {
+        Self { id }
+    }
+
+    pub fn id(&self) -> simple_backend_utils::UuidBase64Url {
+        self.id
+    }
+}
+
+impl TryFrom<simple_backend_utils::UuidBase64Url> for MessageUuid {
+    type Error = String;
+
+    fn try_from(id: simple_backend_utils::UuidBase64Url) -> Result<Self, Self::Error> {
+        Ok(Self { id })
+    }
+}
+
+impl AsRef<simple_backend_utils::UuidBase64Url> for MessageUuid {
+    fn as_ref(&self) -> &simple_backend_utils::UuidBase64Url {
+        &self.id
+    }
+}
+
+diesel_uuid_wrapper!(MessageUuid);
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct NewMessageNotificationList {
@@ -171,14 +221,14 @@ pub struct PendingMessageRaw {
     pub receiver_email_notification_sent: bool,
     pub message_unix_time: UnixTime,
     pub message_id: MessageId,
-    pub sender_client_local_id: ClientLocalId,
+    pub message_uuid: MessageUuid,
 }
 
 #[derive(Serialize)]
 pub struct DataExportPendingMessage {
     message_unix_time: UnixTime,
     message_id: MessageId,
-    sender_client_local_id: ClientLocalId,
+    message_uuid: MessageUuid,
     message_bytes_base64: String,
 }
 
@@ -187,7 +237,7 @@ impl DataExportPendingMessage {
         Self {
             message_unix_time: message.message_unix_time,
             message_id: message.message_id,
-            sender_client_local_id: message.sender_client_local_id,
+            message_uuid: message.message_uuid,
             message_bytes_base64: BASE64_STANDARD.encode(message_bytes),
         }
     }

@@ -14,7 +14,7 @@ use database_chat::current::{
 use error_stack::ResultExt;
 use model::{MessageId, NewReceivedLikesCountResult, ReceivedLikeId};
 use model_chat::{
-    AccountIdInternal, AddPublicKeyResult, ChatStateRaw, ClientLocalId, DeliveryInfoType,
+    AccountIdInternal, AddPublicKeyResult, ChatStateRaw, DeliveryInfoType, MessageUuid,
     NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PublicKeyId,
     ReceivedLikesIteratorState, ResetReceivedLikesIteratorResult, SendMessageResult,
     SyncVersionUtils,
@@ -346,7 +346,7 @@ impl WriteCommandsChat<'_> {
     pub async fn add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(
         &self,
         message_receiver: AccountIdInternal,
-        messages: Vec<ClientLocalId>,
+        messages: Vec<MessageUuid>,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
@@ -378,7 +378,7 @@ impl WriteCommandsChat<'_> {
         message: Vec<u8>,
         sender_public_key_from_client: PublicKeyId,
         receiver_public_key_from_client: PublicKeyId,
-        client_local_id_value: ClientLocalId,
+        message_uuid_value: MessageUuid,
         keys: Arc<ParsedKeys>,
     ) -> Result<(SendMessageResult, Option<PushNotificationAllowed>), DataError> {
         db_transaction!(self, move |mut cmds| {
@@ -435,7 +435,7 @@ impl WriteCommandsChat<'_> {
                     sender_public_key_from_client,
                     receiver_public_key_from_client,
                     message,
-                    client_local_id_value,
+                    message_uuid_value,
                     keys,
                 )?;
 

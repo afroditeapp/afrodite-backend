@@ -5,7 +5,7 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use headers::ContentType;
-use model::{ClientLocalId, GetConversationId, NotificationEvent, PushNotificationFlags};
+use model::{GetConversationId, MessageUuid, NotificationEvent, PushNotificationFlags};
 use model_chat::{
     AccountId, AccountIdInternal, EventToClientInternal, GetSentMessage, MessageDeliveryInfoIdList,
     MessageDeliveryInfoList, MessageSeenList, PendingMessageAcknowledgementList, SendMessageResult,
@@ -50,7 +50,7 @@ const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
 /// - Version (u8, values: 1)
 /// - Sender AccountId UUID big-endian bytes (16 bytes)
 /// - Receiver AccountId UUID big-endian bytes (16 bytes)
-/// - Sender client local ID UUID big-endian bytes (16 bytes)
+/// - Message UUID big-endian bytes (16 bytes)
 /// - Sender public key ID (minimal i64)
 /// - Receiver public key ID (minimal i64)
 /// - Message ID (minimal i64)
@@ -178,7 +178,7 @@ pub async fn post_send_message(
                 bytes.into(),
                 query_params.sender_public_key_id,
                 query_params.receiver_public_key_id,
-                query_params.client_local_id,
+                query_params.message_uuid,
                 keys,
             )
             .await?;
@@ -216,7 +216,7 @@ const PATH_POST_GET_SENT_MESSAGE: &str = "/chat_api/sent_message";
 #[utoipa::path(
     post,
     path = PATH_POST_GET_SENT_MESSAGE,
-    request_body = ClientLocalId,
+    request_body = MessageUuid,
     responses(
         (status = 200, description = "Success.", body = GetSentMessage),
         (status = 401, description = "Unauthorized."),
@@ -227,7 +227,7 @@ const PATH_POST_GET_SENT_MESSAGE: &str = "/chat_api/sent_message";
 pub async fn post_get_sent_message(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    Json(message): Json<ClientLocalId>,
+    Json(message): Json<MessageUuid>,
 ) -> Result<Json<GetSentMessage>, StatusCode> {
     CHAT.post_get_sent_message.incr();
     let data = state.read().chat().get_sent_message(id, message).await?;

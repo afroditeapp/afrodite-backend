@@ -1,12 +1,7 @@
-use diesel::{
-    deserialize::FromSqlRow,
-    expression::AsExpression,
-    prelude::*,
-    sql_types::{Binary, SmallInt},
-};
+use diesel::{prelude::*, sql_types::SmallInt};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{NonEmptyString, SimpleDieselEnum, diesel_uuid_wrapper};
-use utoipa::{IntoParams, ToSchema};
+use simple_backend_model::{NonEmptyString, SimpleDieselEnum};
+use utoipa::ToSchema;
 
 use crate::{AccountId, AccountStateRelatedSharedState, AccountSyncVersion, ProfileAge};
 
@@ -274,52 +269,6 @@ impl ProfileVisibility {
         };
     }
 }
-
-/// UUID which client owns
-#[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    ToSchema,
-    Clone,
-    Eq,
-    Hash,
-    PartialEq,
-    IntoParams,
-    Copy,
-    FromSqlRow,
-    AsExpression,
-)]
-#[diesel(sql_type = Binary)]
-pub struct ClientLocalId {
-    id: simple_backend_utils::UuidBase64Url,
-}
-
-impl ClientLocalId {
-    pub fn new(id: simple_backend_utils::UuidBase64Url) -> Self {
-        Self { id }
-    }
-
-    pub fn id(&self) -> simple_backend_utils::UuidBase64Url {
-        self.id
-    }
-}
-
-impl TryFrom<simple_backend_utils::UuidBase64Url> for ClientLocalId {
-    type Error = String;
-
-    fn try_from(id: simple_backend_utils::UuidBase64Url) -> Result<Self, Self::Error> {
-        Ok(Self { id })
-    }
-}
-
-impl AsRef<simple_backend_utils::UuidBase64Url> for ClientLocalId {
-    fn as_ref(&self) -> &simple_backend_utils::UuidBase64Url {
-        &self.id
-    }
-}
-
-diesel_uuid_wrapper!(ClientLocalId);
 
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, Deserialize)]
 pub enum EmailMessages {

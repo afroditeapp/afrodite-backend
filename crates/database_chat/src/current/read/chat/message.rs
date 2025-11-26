@@ -4,9 +4,10 @@ use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
-    AccountId, AccountIdDb, AdminDataExportPendingMessage, ClientLocalId, ConversationId,
-    DataExportPendingMessage, MessageId, NewMessageNotification, NewMessageNotificationList,
-    PendingMessageIdInternal, PendingMessageIdInternalAndMessageTime, PendingMessageRaw, UnixTime,
+    AccountId, AccountIdDb, AdminDataExportPendingMessage, ConversationId,
+    DataExportPendingMessage, MessageId, MessageUuid, NewMessageNotification,
+    NewMessageNotificationList, PendingMessageIdInternal, PendingMessageIdInternalAndMessageTime,
+    PendingMessageRaw, UnixTime,
 };
 use model_chat::{
     AccountIdInternal, DeliveryInfoType, GetSentMessage, MessageDeliveryInfo,
@@ -165,7 +166,7 @@ impl CurrentReadChatMessage<'_> {
     pub fn all_sent_messages(
         &mut self,
         id_message_sender: AccountIdInternal,
-    ) -> Result<Vec<ClientLocalId>, DieselDatabaseError> {
+    ) -> Result<Vec<MessageUuid>, DieselDatabaseError> {
         use crate::schema::pending_messages::dsl::*;
 
         let value: Vec<PendingMessageInternal> = pending_messages
@@ -175,10 +176,7 @@ impl CurrentReadChatMessage<'_> {
             .load(self.conn())
             .into_db_error(())?;
 
-        let messages = value
-            .into_iter()
-            .map(|msg| msg.sender_client_local_id)
-            .collect();
+        let messages = value.into_iter().map(|msg| msg.message_uuid).collect();
 
         Ok(messages)
     }
@@ -186,14 +184,14 @@ impl CurrentReadChatMessage<'_> {
     pub fn get_sent_message(
         &mut self,
         id_message_sender: AccountIdInternal,
-        message: ClientLocalId,
+        message: MessageUuid,
     ) -> Result<GetSentMessage, DieselDatabaseError> {
         use crate::schema::pending_messages::dsl::*;
 
         let value: Vec<u8> = pending_messages
             .filter(account_id_sender.eq(id_message_sender.as_db_id()))
             .filter(sender_acknowledgement.eq(false))
-            .filter(sender_client_local_id.eq(&message))
+            .filter(message_uuid.eq(&message))
             .select(message_bytes)
             .first(self.conn())
             .into_db_error(())?;
