@@ -5,7 +5,7 @@ use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::PublicKeyId;
 use model_chat::{
-    AccountIdInternal, AccountInteractionState, ClientId, ClientLocalId, DeliveryInfoType,
+    AccountIdInternal, AccountInteractionState, ClientLocalId, DeliveryInfoType,
     PendingMessageIdInternal, SentMessageId, SignedMessageData, UnixTime,
 };
 use simple_backend_utils::db::MyRunQueryDsl;
@@ -93,16 +93,14 @@ impl CurrentWriteChatMessage<'_> {
 
         for message in messages {
             update(pending_messages)
-                .filter(sender_client_id.eq(message.c))
-                .filter(sender_client_local_id.eq(message.l))
+                .filter(sender_client_local_id.eq(&message.l))
                 .filter(account_id_sender.eq(message_sender.as_db_id()))
                 .set(sender_acknowledgement.eq(true))
                 .execute(self.conn())
                 .into_db_error(message_sender)?;
 
             delete(pending_messages)
-                .filter(sender_client_id.eq(message.c))
-                .filter(sender_client_local_id.eq(message.l))
+                .filter(sender_client_local_id.eq(&message.l))
                 .filter(account_id_sender.eq(message_sender.as_db_id()))
                 .filter(sender_acknowledgement.eq(true))
                 .filter(receiver_acknowledgement.eq(true))
@@ -123,7 +121,6 @@ impl CurrentWriteChatMessage<'_> {
         sender_public_key_id: PublicKeyId,
         receiver_public_key_id: PublicKeyId,
         message: Vec<u8>,
-        client_id_value: ClientId,
         client_local_id_value: ClientLocalId,
         keys: Arc<ParsedKeys>,
     ) -> Result<std::result::Result<Vec<u8>, ReceiverBlockedSender>, DieselDatabaseError> {
@@ -168,6 +165,7 @@ impl CurrentWriteChatMessage<'_> {
         let data_for_signing = SignedMessageData {
             sender: sender.as_id(),
             receiver: receiver.as_id(),
+            client_local_id: client_local_id_value,
             sender_public_key_id,
             receiver_public_key_id,
             m: new_message_id,
@@ -187,8 +185,7 @@ impl CurrentWriteChatMessage<'_> {
                 message_unix_time.eq(time),
                 message_id.eq(new_message_id),
                 message_bytes.eq(&signed),
-                sender_client_id.eq(client_id_value),
-                sender_client_local_id.eq(client_local_id_value),
+                sender_client_local_id.eq(&client_local_id_value),
             ))
             .execute(self.conn())
             .into_db_error((sender, receiver, new_message_id))?;

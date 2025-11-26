@@ -178,7 +178,6 @@ impl CurrentReadChatMessage<'_> {
         let messages = value
             .into_iter()
             .map(|msg| SentMessageId {
-                c: msg.sender_client_id,
                 l: msg.sender_client_local_id,
             })
             .collect();
@@ -196,8 +195,7 @@ impl CurrentReadChatMessage<'_> {
         let value: Vec<u8> = pending_messages
             .filter(account_id_sender.eq(id_message_sender.as_db_id()))
             .filter(sender_acknowledgement.eq(false))
-            .filter(sender_client_id.eq(message.c))
-            .filter(sender_client_local_id.eq(message.l))
+            .filter(sender_client_local_id.eq(&message.l))
             .select(message_bytes)
             .first(self.conn())
             .into_db_error(())?;

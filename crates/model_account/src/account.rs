@@ -330,7 +330,6 @@ impl From<SignInWithInfoRaw> for SignInWithInfo {
 #[diesel(table_name = crate::schema::account_state)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountStateTableRaw {
-    next_client_id: i64,
     account_deletion_request_unix_time: Option<UnixTime>,
     account_banned_reason_category: Option<i16>,
     account_banned_reason_details: Option<AccountBanReasonDetails>,

@@ -6,11 +6,15 @@ use simple_backend_model::SimpleDieselEnum;
 use simple_backend_utils::UuidBase64Url;
 use utoipa::ToSchema;
 
+use crate::ClientLocalId;
+
 pub struct SignedMessageData {
     /// Sender of the message.
     pub sender: AccountId,
     /// Receiver of the message.
     pub receiver: AccountId,
+    /// Client local ID for message deduplication.
+    pub client_local_id: ClientLocalId,
     pub sender_public_key_id: PublicKeyId,
     pub receiver_public_key_id: PublicKeyId,
     pub m: MessageId,
@@ -33,6 +37,7 @@ impl SignedMessageData {
         }
         let sender = parse_account_id(&mut d)?;
         let receiver = parse_account_id(&mut d)?;
+        let client_local_id = parse_client_local_id(&mut d)?;
         let sender_public_key_id = parse_minimal_i64(&mut d)?;
         let receiver_public_key_id = parse_minimal_i64(&mut d)?;
         let m = parse_minimal_i64(&mut d)?;
@@ -42,6 +47,7 @@ impl SignedMessageData {
         Some(Ok(SignedMessageData {
             sender,
             receiver,
+            client_local_id,
             sender_public_key_id: PublicKeyId {
                 id: sender_public_key_id,
             },
@@ -62,6 +68,8 @@ impl SignedMessageData {
         bytes.extend_from_slice(self.sender.aid.as_bytes());
         // Receiver UUID big-endian bytes (16 bytes)
         bytes.extend_from_slice(self.receiver.aid.as_bytes());
+        // Sender client local ID UUID big-endian bytes (16 bytes)
+        bytes.extend_from_slice(self.client_local_id.id().as_bytes());
         add_minimal_i64(&mut bytes, self.sender_public_key_id.id);
         add_minimal_i64(&mut bytes, self.receiver_public_key_id.id);
         add_minimal_i64(&mut bytes, self.m.id);
@@ -92,6 +100,12 @@ fn parse_account_id(d: &mut impl Iterator<Item = u8>) -> Option<AccountId> {
     let bytes: Vec<u8> = d.by_ref().take(16).collect();
     let bytes = TryInto::<[u8; 16]>::try_into(bytes).ok()?;
     Some(AccountId::new_base_64_url(UuidBase64Url::from_bytes(bytes)))
+}
+
+fn parse_client_local_id(d: &mut impl Iterator<Item = u8>) -> Option<ClientLocalId> {
+    let bytes: Vec<u8> = d.by_ref().take(16).collect();
+    let bytes = TryInto::<[u8; 16]>::try_into(bytes).ok()?;
+    Some(ClientLocalId::new(UuidBase64Url::from_bytes(bytes)))
 }
 
 fn parse_minimal_i64(d: &mut impl Iterator<Item = u8>) -> Option<i64> {

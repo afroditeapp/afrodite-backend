@@ -8,7 +8,7 @@ use model_server_data::LimitedActionStatus;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{AccountId, AccountIdDb, ClientId, ClientLocalId};
+use crate::{AccountId, AccountIdDb, ClientLocalId};
 
 mod public_key;
 pub use public_key::*;
@@ -59,7 +59,6 @@ pub struct PendingMessageInternal {
     pub account_id_receiver: AccountIdDb,
     pub message_id: MessageId,
     pub message_bytes: Vec<u8>,
-    pub sender_client_id: ClientId,
     pub sender_client_local_id: ClientLocalId,
 }
 
@@ -95,7 +94,6 @@ pub struct MessageSeenList {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct SentMessageId {
-    pub c: ClientId,
     pub l: ClientLocalId,
 }
 
@@ -137,16 +135,10 @@ pub struct SendMessageToAccountParams {
     #[param(value_type = i64)]
     pub receiver_public_key_id: PublicKeyId,
     #[serde(
-        serialize_with = "client_id_as_i64",
-        deserialize_with = "client_id_from_i64"
+        serialize_with = "client_local_id_as_string",
+        deserialize_with = "client_local_id_from_string"
     )]
-    #[param(value_type = i64)]
-    pub client_id: ClientId,
-    #[serde(
-        serialize_with = "client_local_id_as_i64",
-        deserialize_with = "client_local_id_from_i64"
-    )]
-    #[param(value_type = i64)]
+    #[param(value_type = String)]
     pub client_local_id: ClientLocalId,
 }
 
@@ -158,15 +150,11 @@ pub fn public_key_id_as_i64<S: Serializer>(value: &PublicKeyId, s: S) -> Result<
     value.id.serialize(s)
 }
 
-pub fn client_id_as_i64<S: Serializer>(value: &ClientId, s: S) -> Result<S::Ok, S::Error> {
-    value.id.serialize(s)
-}
-
-pub fn client_local_id_as_i64<S: Serializer>(
+pub fn client_local_id_as_string<S: Serializer>(
     value: &ClientLocalId,
     s: S,
 ) -> Result<S::Ok, S::Error> {
-    value.id.serialize(s)
+    value.id().serialize(s)
 }
 
 pub fn account_id_from_uuid<'de, D: Deserializer<'de>>(d: D) -> Result<AccountId, D::Error> {
@@ -178,14 +166,10 @@ pub fn public_key_id_from_i64<'de, D: Deserializer<'de>>(d: D) -> Result<PublicK
     i64::deserialize(d).map(|id| PublicKeyId { id })
 }
 
-pub fn client_id_from_i64<'de, D: Deserializer<'de>>(d: D) -> Result<ClientId, D::Error> {
-    i64::deserialize(d).map(|id| ClientId { id })
-}
-
-pub fn client_local_id_from_i64<'de, D: Deserializer<'de>>(
+pub fn client_local_id_from_string<'de, D: Deserializer<'de>>(
     d: D,
 ) -> Result<ClientLocalId, D::Error> {
-    i64::deserialize(d).map(|id| ClientLocalId { id })
+    simple_backend_utils::UuidBase64Url::deserialize(d).map(ClientLocalId::new)
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]

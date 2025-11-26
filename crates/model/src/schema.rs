@@ -136,7 +136,6 @@ diesel::table! {
 diesel::table! {
     account_state (account_id) {
         account_id -> Int8,
-        next_client_id -> Int8,
         account_deletion_request_unix_time -> Nullable<Int8>,
         account_banned_reason_category -> Nullable<Int2>,
         account_banned_reason_details -> Nullable<Text>,
@@ -572,8 +571,7 @@ diesel::table! {
         receiver_email_notification_sent -> Bool,
         message_unix_time -> Int8,
         message_id -> Int8,
-        sender_client_id -> Int8,
-        sender_client_local_id -> Int8,
+        sender_client_local_id -> Bytea,
         message_bytes -> Bytea,
     }
 }

@@ -3,7 +3,7 @@ use database::{
 };
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{AccountCreatedTime, AccountId, AccountIdInternal, ClientId};
+use model::{AccountCreatedTime, AccountId, AccountIdInternal};
 use model_account::{AccountGlobalState, EmailAddress, EmailAddressStateInternal, SetAccountSetup};
 use simple_backend_utils::db::MyRunQueryDsl;
 
@@ -120,33 +120,6 @@ impl CurrentWriteAccountData<'_> {
             .into_db_error(id)?;
 
         Ok(())
-    }
-
-    pub fn get_next_client_id(
-        mut self,
-        id: AccountIdInternal,
-    ) -> Result<ClientId, DieselDatabaseError> {
-        use model::schema::account_state::dsl::*;
-
-        let current: ClientId = account_state
-            .filter(account_id.eq(id.as_db_id()))
-            .select(next_client_id)
-            .first(self.conn())
-            .optional()
-            .into_db_error(())?
-            .unwrap_or_default();
-
-        let next = current.increment();
-
-        insert_into(account_state)
-            .values((account_id.eq(id.as_db_id()), next_client_id.eq(next)))
-            .on_conflict(account_id)
-            .do_update()
-            .set(next_client_id.eq(next))
-            .execute_my_conn(self.conn())
-            .into_db_error(())?;
-
-        Ok(current)
     }
 
     pub fn new_unique_account_id(&mut self) -> Result<AccountIdInternal, DieselDatabaseError> {

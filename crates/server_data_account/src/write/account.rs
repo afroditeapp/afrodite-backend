@@ -3,9 +3,7 @@ use database_account::current::write::GetDbWriteCommandsAccount;
 use delete::WriteCommandsAccountDelete;
 use email::WriteCommandsAccountEmail;
 use model::AccountStateContainer;
-use model_account::{
-    Account, AccountIdInternal, ClientId, Permissions, ProfileVisibility, SetAccountSetup,
-};
+use model_account::{Account, AccountIdInternal, Permissions, ProfileVisibility, SetAccountSetup};
 use model_server_state::DemoAccountId;
 use news::WriteCommandsAccountNews;
 use server_data::{
@@ -132,12 +130,6 @@ impl WriteCommandsAccount<'_> {
             cmds.account()
                 .demo()
                 .add_to_demo_account_owned_accounts(id, account_id)
-        })
-    }
-
-    pub async fn get_next_client_id(&self, id: AccountIdInternal) -> Result<ClientId, DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.account().data().get_next_client_id(id)
         })
     }
 

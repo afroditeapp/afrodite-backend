@@ -50,6 +50,7 @@ const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
 /// - Version (u8, values: 1)
 /// - Sender AccountId UUID big-endian bytes (16 bytes)
 /// - Receiver AccountId UUID big-endian bytes (16 bytes)
+/// - Sender client local ID UUID big-endian bytes (16 bytes)
 /// - Sender public key ID (minimal i64)
 /// - Receiver public key ID (minimal i64)
 /// - Message ID (minimal i64)
@@ -177,7 +178,6 @@ pub async fn post_send_message(
                 bytes.into(),
                 query_params.sender_public_key_id,
                 query_params.receiver_public_key_id,
-                query_params.client_id,
                 query_params.client_local_id,
                 keys,
             )

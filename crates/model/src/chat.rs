@@ -8,7 +8,7 @@ use simple_backend_model::{UnixTime, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 use super::sync_version_wrappers;
-use crate::{AccountId, AccountIdDb, AccountIdInternal, ClientId, ClientLocalId, LastSeenTime};
+use crate::{AccountId, AccountIdDb, AccountIdInternal, ClientLocalId, LastSeenTime};
 
 mod interaction;
 pub use interaction::*;
@@ -171,7 +171,6 @@ pub struct PendingMessageRaw {
     pub receiver_email_notification_sent: bool,
     pub message_unix_time: UnixTime,
     pub message_id: MessageId,
-    pub sender_client_id: ClientId,
     pub sender_client_local_id: ClientLocalId,
 }
 
@@ -179,7 +178,6 @@ pub struct PendingMessageRaw {
 pub struct DataExportPendingMessage {
     message_unix_time: UnixTime,
     message_id: MessageId,
-    sender_client_id: ClientId,
     sender_client_local_id: ClientLocalId,
     message_bytes_base64: String,
 }
@@ -189,7 +187,6 @@ impl DataExportPendingMessage {
         Self {
             message_unix_time: message.message_unix_time,
             message_id: message.message_id,
-            sender_client_id: message.sender_client_id,
             sender_client_local_id: message.sender_client_local_id,
             message_bytes_base64: BASE64_STANDARD.encode(message_bytes),
         }

@@ -14,7 +14,7 @@ use database_chat::current::{
 use error_stack::ResultExt;
 use model::{MessageId, NewReceivedLikesCountResult, ReceivedLikeId};
 use model_chat::{
-    AccountIdInternal, AddPublicKeyResult, ChatStateRaw, ClientId, ClientLocalId, DeliveryInfoType,
+    AccountIdInternal, AddPublicKeyResult, ChatStateRaw, ClientLocalId, DeliveryInfoType,
     NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PublicKeyId,
     ReceivedLikesIteratorState, ResetReceivedLikesIteratorResult, SendMessageResult, SentMessageId,
     SyncVersionUtils,
@@ -378,7 +378,6 @@ impl WriteCommandsChat<'_> {
         message: Vec<u8>,
         sender_public_key_from_client: PublicKeyId,
         receiver_public_key_from_client: PublicKeyId,
-        client_id_value: ClientId,
         client_local_id_value: ClientLocalId,
         keys: Arc<ParsedKeys>,
     ) -> Result<(SendMessageResult, Option<PushNotificationAllowed>), DataError> {
@@ -436,7 +435,6 @@ impl WriteCommandsChat<'_> {
                     sender_public_key_from_client,
                     receiver_public_key_from_client,
                     message,
-                    client_id_value,
                     client_local_id_value,
                     keys,
                 )?;

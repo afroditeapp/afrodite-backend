@@ -1,9 +1,8 @@
 use axum::{Extension, extract::State};
 use model::LatestBirthdate;
-use model_account::{Account, AccountIdInternal, ClientId};
-use server_api::{S, app::WriteData, create_open_api_router, db_write};
+use model_account::{Account, AccountIdInternal};
+use server_api::{S, create_open_api_router};
 use server_data::read::GetReadCommandsCommon;
-use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
 
 use crate::{
@@ -54,36 +53,10 @@ pub async fn get_latest_birthdate(
     Ok(birthdate.into())
 }
 
-const PATH_POST_GET_NEXT_CLIENT_ID: &str = "/account_api/next_client_id";
-
-#[utoipa::path(
-    post,
-    path = PATH_POST_GET_NEXT_CLIENT_ID,
-    responses(
-        (status = 200, description = "Successfull.", body = ClientId),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn post_get_next_client_id(
-    State(state): State<S>,
-    Extension(id): Extension<AccountIdInternal>,
-) -> Result<Json<ClientId>, StatusCode> {
-    ACCOUNT.post_get_next_client_id.incr();
-
-    let client_id = db_write!(state, move |cmds| {
-        cmds.account().get_next_client_id(id).await
-    })?;
-
-    Ok(client_id.into())
-}
-
 create_open_api_router!(
         fn router_state,
         get_account_state,
         get_latest_birthdate,
-        post_get_next_client_id,
 );
 
 create_counters!(
@@ -92,5 +65,4 @@ create_counters!(
     ACCOUNT_STATE_COUNTERS_LIST,
     get_account_state,
     get_latest_birthdate,
-    post_get_next_client_id,
 );

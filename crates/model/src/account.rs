@@ -2,10 +2,10 @@ use diesel::{
     deserialize::FromSqlRow,
     expression::AsExpression,
     prelude::*,
-    sql_types::{BigInt, SmallInt},
+    sql_types::{Binary, SmallInt},
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{NonEmptyString, SimpleDieselEnum, diesel_i64_wrapper};
+use simple_backend_model::{NonEmptyString, SimpleDieselEnum, diesel_uuid_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{AccountId, AccountStateRelatedSharedState, AccountSyncVersion, ProfileAge};
@@ -275,10 +275,7 @@ impl ProfileVisibility {
     }
 }
 
-/// ID which client receives from server once.
-/// Next value is incremented compared to previous value, so
-/// in practice the ID can be used as unique ID even if it
-/// can wrap.
+/// UUID which client owns
 #[derive(
     Debug,
     Serialize,
@@ -290,76 +287,39 @@ impl ProfileVisibility {
     PartialEq,
     IntoParams,
     Copy,
-    Default,
     FromSqlRow,
     AsExpression,
 )]
-#[diesel(sql_type = BigInt)]
-pub struct ClientId {
-    pub id: i64,
-}
-
-impl ClientId {
-    pub fn increment(&self) -> Self {
-        Self {
-            id: self.id.wrapping_add(1),
-        }
-    }
-}
-
-impl TryFrom<i64> for ClientId {
-    type Error = String;
-
-    fn try_from(id: i64) -> Result<Self, Self::Error> {
-        Ok(Self { id })
-    }
-}
-
-impl AsRef<i64> for ClientId {
-    fn as_ref(&self) -> &i64 {
-        &self.id
-    }
-}
-
-diesel_i64_wrapper!(ClientId);
-
-/// ID which client owns. This should be unique when
-/// considering one client instance.
-#[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    ToSchema,
-    Clone,
-    Eq,
-    Hash,
-    PartialEq,
-    IntoParams,
-    Copy,
-    Default,
-    FromSqlRow,
-    AsExpression,
-)]
-#[diesel(sql_type = BigInt)]
+#[diesel(sql_type = Binary)]
 pub struct ClientLocalId {
-    pub id: i64,
+    id: simple_backend_utils::UuidBase64Url,
 }
 
-impl TryFrom<i64> for ClientLocalId {
+impl ClientLocalId {
+    pub fn new(id: simple_backend_utils::UuidBase64Url) -> Self {
+        Self { id }
+    }
+
+    pub fn id(&self) -> simple_backend_utils::UuidBase64Url {
+        self.id
+    }
+}
+
+impl TryFrom<simple_backend_utils::UuidBase64Url> for ClientLocalId {
     type Error = String;
 
-    fn try_from(id: i64) -> Result<Self, Self::Error> {
+    fn try_from(id: simple_backend_utils::UuidBase64Url) -> Result<Self, Self::Error> {
         Ok(Self { id })
     }
 }
 
-impl AsRef<i64> for ClientLocalId {
-    fn as_ref(&self) -> &i64 {
+impl AsRef<simple_backend_utils::UuidBase64Url> for ClientLocalId {
+    fn as_ref(&self) -> &simple_backend_utils::UuidBase64Url {
         &self.id
     }
 }
 
-diesel_i64_wrapper!(ClientLocalId);
+diesel_uuid_wrapper!(ClientLocalId);
 
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, Deserialize)]
 pub enum EmailMessages {
