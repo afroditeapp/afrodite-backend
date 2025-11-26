@@ -4,13 +4,13 @@ use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
-    AccountId, AccountIdDb, AdminDataExportPendingMessage, ConversationId,
+    AccountId, AccountIdDb, AdminDataExportPendingMessage, ClientLocalId, ConversationId,
     DataExportPendingMessage, MessageId, NewMessageNotification, NewMessageNotificationList,
     PendingMessageIdInternal, PendingMessageIdInternalAndMessageTime, PendingMessageRaw, UnixTime,
 };
 use model_chat::{
     AccountIdInternal, DeliveryInfoType, GetSentMessage, MessageDeliveryInfo,
-    PendingMessageInternal, SentMessageId,
+    PendingMessageInternal,
 };
 
 use crate::IntoDatabaseError;
@@ -165,7 +165,7 @@ impl CurrentReadChatMessage<'_> {
     pub fn all_sent_messages(
         &mut self,
         id_message_sender: AccountIdInternal,
-    ) -> Result<Vec<SentMessageId>, DieselDatabaseError> {
+    ) -> Result<Vec<ClientLocalId>, DieselDatabaseError> {
         use crate::schema::pending_messages::dsl::*;
 
         let value: Vec<PendingMessageInternal> = pending_messages
@@ -177,9 +177,7 @@ impl CurrentReadChatMessage<'_> {
 
         let messages = value
             .into_iter()
-            .map(|msg| SentMessageId {
-                l: msg.sender_client_local_id,
-            })
+            .map(|msg| msg.sender_client_local_id)
             .collect();
 
         Ok(messages)
@@ -188,14 +186,14 @@ impl CurrentReadChatMessage<'_> {
     pub fn get_sent_message(
         &mut self,
         id_message_sender: AccountIdInternal,
-        message: SentMessageId,
+        message: ClientLocalId,
     ) -> Result<GetSentMessage, DieselDatabaseError> {
         use crate::schema::pending_messages::dsl::*;
 
         let value: Vec<u8> = pending_messages
             .filter(account_id_sender.eq(id_message_sender.as_db_id()))
             .filter(sender_acknowledgement.eq(false))
-            .filter(sender_client_local_id.eq(&message.l))
+            .filter(sender_client_local_id.eq(&message))
             .select(message_bytes)
             .first(self.conn())
             .into_db_error(())?;

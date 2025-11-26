@@ -16,7 +16,7 @@ use model::{MessageId, NewReceivedLikesCountResult, ReceivedLikeId};
 use model_chat::{
     AccountIdInternal, AddPublicKeyResult, ChatStateRaw, ClientLocalId, DeliveryInfoType,
     NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PublicKeyId,
-    ReceivedLikesIteratorState, ResetReceivedLikesIteratorResult, SendMessageResult, SentMessageId,
+    ReceivedLikesIteratorState, ResetReceivedLikesIteratorResult, SendMessageResult,
     SyncVersionUtils,
 };
 use server_data::{
@@ -346,7 +346,7 @@ impl WriteCommandsChat<'_> {
     pub async fn add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(
         &self,
         message_receiver: AccountIdInternal,
-        messages: Vec<SentMessageId>,
+        messages: Vec<ClientLocalId>,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()

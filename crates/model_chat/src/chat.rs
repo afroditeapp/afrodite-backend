@@ -92,14 +92,9 @@ pub struct MessageSeenList {
     pub ids: Vec<PendingMessageId>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
-pub struct SentMessageId {
-    pub l: ClientLocalId,
-}
-
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct SentMessageIdList {
-    pub ids: Vec<SentMessageId>,
+    pub ids: Vec<ClientLocalId>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq)]

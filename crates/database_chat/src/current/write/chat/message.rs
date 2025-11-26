@@ -6,7 +6,7 @@ use error_stack::{Result, ResultExt};
 use model::PublicKeyId;
 use model_chat::{
     AccountIdInternal, AccountInteractionState, ClientLocalId, DeliveryInfoType,
-    PendingMessageIdInternal, SentMessageId, SignedMessageData, UnixTime,
+    PendingMessageIdInternal, SignedMessageData, UnixTime,
 };
 use simple_backend_utils::db::MyRunQueryDsl;
 use utils::encrypt::ParsedKeys;
@@ -87,20 +87,20 @@ impl CurrentWriteChatMessage<'_> {
     pub fn add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(
         &mut self,
         message_sender: AccountIdInternal,
-        messages: Vec<SentMessageId>,
+        messages: Vec<ClientLocalId>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::pending_messages::dsl::*;
 
         for message in messages {
             update(pending_messages)
-                .filter(sender_client_local_id.eq(&message.l))
+                .filter(sender_client_local_id.eq(&message))
                 .filter(account_id_sender.eq(message_sender.as_db_id()))
                 .set(sender_acknowledgement.eq(true))
                 .execute(self.conn())
                 .into_db_error(message_sender)?;
 
             delete(pending_messages)
-                .filter(sender_client_local_id.eq(&message.l))
+                .filter(sender_client_local_id.eq(&message))
                 .filter(account_id_sender.eq(message_sender.as_db_id()))
                 .filter(sender_acknowledgement.eq(true))
                 .filter(receiver_acknowledgement.eq(true))

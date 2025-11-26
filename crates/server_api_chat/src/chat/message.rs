@@ -5,11 +5,11 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use headers::ContentType;
-use model::{GetConversationId, NotificationEvent, PushNotificationFlags};
+use model::{ClientLocalId, GetConversationId, NotificationEvent, PushNotificationFlags};
 use model_chat::{
     AccountId, AccountIdInternal, EventToClientInternal, GetSentMessage, MessageDeliveryInfoIdList,
     MessageDeliveryInfoList, MessageSeenList, PendingMessageAcknowledgementList, SendMessageResult,
-    SendMessageToAccountParams, SentMessageId, SentMessageIdList, add_minimal_i64,
+    SendMessageToAccountParams, SentMessageIdList, add_minimal_i64,
 };
 use server_api::{
     S,
@@ -216,7 +216,7 @@ const PATH_POST_GET_SENT_MESSAGE: &str = "/chat_api/sent_message";
 #[utoipa::path(
     post,
     path = PATH_POST_GET_SENT_MESSAGE,
-    request_body = SentMessageId,
+    request_body = ClientLocalId,
     responses(
         (status = 200, description = "Success.", body = GetSentMessage),
         (status = 401, description = "Unauthorized."),
@@ -227,7 +227,7 @@ const PATH_POST_GET_SENT_MESSAGE: &str = "/chat_api/sent_message";
 pub async fn post_get_sent_message(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    Json(message): Json<SentMessageId>,
+    Json(message): Json<ClientLocalId>,
 ) -> Result<Json<GetSentMessage>, StatusCode> {
     CHAT.post_get_sent_message.incr();
     let data = state.read().chat().get_sent_message(id, message).await?;
