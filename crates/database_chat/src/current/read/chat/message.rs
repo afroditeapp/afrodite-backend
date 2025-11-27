@@ -6,7 +6,7 @@ use error_stack::Result;
 use model::{
     AccountId, AccountIdDb, AdminDataExportPendingMessage, ConversationId,
     DataExportPendingMessage, MessageId, MessageUuid, NewMessageNotification,
-    NewMessageNotificationList, PendingMessageDbIdAndMessageTime, PendingMessageIdInternal,
+    NewMessageNotificationList, PendingMessageDbId, PendingMessageDbIdAndMessageTime,
     PendingMessageRaw, UnixTime,
 };
 use model_chat::{
@@ -38,18 +38,17 @@ impl CurrentReadChatMessage<'_> {
     pub fn new_message_notification_list(
         &mut self,
         id_message_receiver: AccountIdInternal,
-    ) -> Result<(NewMessageNotificationList, Vec<PendingMessageIdInternal>), DieselDatabaseError>
-    {
+    ) -> Result<(NewMessageNotificationList, Vec<PendingMessageDbId>), DieselDatabaseError> {
         use crate::schema::{account_id, account_interaction, pending_messages::dsl::*};
 
         let data: Vec<(
+            i64,
             AccountIdDb,
             AccountId,
             AccountIdDb,
             ConversationId,
             ConversationId,
             bool,
-            MessageId,
         )> = pending_messages
             .inner_join(account_id::table.on(account_id_sender.eq(account_id::id)))
             .inner_join(account_interaction::table)
@@ -59,13 +58,13 @@ impl CurrentReadChatMessage<'_> {
             .filter(account_interaction::conversation_id_sender.is_not_null())
             .filter(account_interaction::conversation_id_receiver.is_not_null())
             .select((
+                id,
                 account_id::id,
                 account_id::uuid,
                 account_interaction::account_id_sender.assume_not_null(),
                 account_interaction::conversation_id_sender.assume_not_null(),
                 account_interaction::conversation_id_receiver.assume_not_null(),
                 receiver_push_notification_sent,
-                message_id,
             ))
             .order_by(account_id_sender)
             .load(self.conn())
@@ -75,13 +74,13 @@ impl CurrentReadChatMessage<'_> {
         let mut messages_pending_push_notification = vec![];
 
         for (
+            primary_key,
             sender_db_id,
             sender,
             like_sender_db_id,
             conversation_id_sender,
             conversation_id_receiver,
             push_notification_sent,
-            message_id_value,
         ) in data
         {
             // Select message receiver specific conversation ID
@@ -98,14 +97,7 @@ impl CurrentReadChatMessage<'_> {
             if !push_notification_sent {
                 // Message notification needs an update
                 entry.get_mut().1 = false;
-                messages_pending_push_notification.push(PendingMessageIdInternal {
-                    sender: AccountIdInternal {
-                        id: sender_db_id,
-                        uuid: sender,
-                    },
-                    receiver: id_message_receiver.into_db_id(),
-                    m: message_id_value,
-                });
+                messages_pending_push_notification.push(PendingMessageDbId { id: primary_key });
             }
         }
 

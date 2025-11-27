@@ -1,7 +1,7 @@
 use database_chat::current::read::GetDbReadCommandsChat;
 use model::{
-    AccountIdInternal, NewMessageNotificationList, PendingMessageDbIdAndMessageTime,
-    PendingMessageIdInternal, ReceivedLikeId, UnixTime,
+    AccountIdInternal, NewMessageNotificationList, PendingMessageDbId,
+    PendingMessageDbIdAndMessageTime, ReceivedLikeId, UnixTime,
 };
 use model_chat::{ChatAppNotificationSettings, ChatEmailNotificationSettings};
 use server_data::{
@@ -33,7 +33,7 @@ impl ReadCommandsChatNotification<'_> {
     pub async fn new_message_notification_list(
         &self,
         id: AccountIdInternal,
-    ) -> Result<(NewMessageNotificationList, Vec<PendingMessageIdInternal>), DataError> {
+    ) -> Result<(NewMessageNotificationList, Vec<PendingMessageDbId>), DataError> {
         self.db_read(move |mut cmds| cmds.chat().message().new_message_notification_list(id))
             .await
             .into_error()

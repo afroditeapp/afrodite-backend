@@ -1,6 +1,6 @@
 use database_chat::current::write::GetDbWriteCommandsChat;
 use model::{
-    AccountIdInternal, PendingMessageDbIdAndMessageTime, PendingMessageIdInternal, ReceivedLikeId,
+    AccountIdInternal, PendingMessageDbId, PendingMessageDbIdAndMessageTime, ReceivedLikeId,
 };
 use model_chat::{ChatAppNotificationSettings, ChatEmailNotificationSettings};
 use server_data::{
@@ -44,7 +44,7 @@ impl WriteCommandsChatNotification<'_> {
 
     pub async fn mark_receiver_push_notification_sent(
         &self,
-        messages: Vec<PendingMessageIdInternal>,
+        messages: Vec<PendingMessageDbId>,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()

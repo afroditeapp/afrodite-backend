@@ -204,6 +204,11 @@ pub struct PendingMessageIdInternal {
     pub m: MessageId,
 }
 
+pub struct PendingMessageDbId {
+    /// ID column value
+    pub id: i64,
+}
+
 pub struct PendingMessageDbIdAndMessageTime {
     /// ID column value
     pub id: i64,
