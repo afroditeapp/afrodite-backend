@@ -76,7 +76,6 @@ async fn handle_messages_email_notification(
     }
 
     if send_notification {
-        let messages = messages.iter().map(|v| v.id.clone()).collect();
         db_write_raw!(state, move |cmds| {
             cmds.chat()
                 .notification()

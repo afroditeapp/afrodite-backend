@@ -6,7 +6,7 @@ use error_stack::Result;
 use model::{
     AccountId, AccountIdDb, AdminDataExportPendingMessage, ConversationId,
     DataExportPendingMessage, MessageId, MessageUuid, NewMessageNotification,
-    NewMessageNotificationList, PendingMessageIdInternal, PendingMessageIdInternalAndMessageTime,
+    NewMessageNotificationList, PendingMessageDbIdAndMessageTime, PendingMessageIdInternal,
     PendingMessageRaw, UnixTime,
 };
 use model_chat::{
@@ -123,40 +123,23 @@ impl CurrentReadChatMessage<'_> {
     pub fn messages_without_sent_email_notification(
         &mut self,
         id_message_receiver: AccountIdInternal,
-    ) -> Result<Vec<PendingMessageIdInternalAndMessageTime>, DieselDatabaseError> {
-        use crate::schema::{account_id, pending_messages::dsl::*};
+    ) -> Result<Vec<PendingMessageDbIdAndMessageTime>, DieselDatabaseError> {
+        use crate::schema::pending_messages::dsl::*;
 
-        let data: Vec<(AccountIdDb, AccountId, AccountIdDb, UnixTime, MessageId)> =
-            pending_messages
-                .inner_join(account_id::table.on(account_id_sender.eq(account_id::id)))
-                .filter(account_id_receiver.eq(id_message_receiver.as_db_id()))
-                .filter(receiver_acknowledgement.eq(false))
-                .filter(receiver_email_notification_sent.eq(false))
-                .select((
-                    account_id::id,
-                    account_id::uuid,
-                    account_id_receiver,
-                    message_unix_time,
-                    message_id,
-                ))
-                .order_by(account_id_sender)
-                .load(self.conn())
-                .into_db_error(())?;
+        let data: Vec<(i64, UnixTime)> = pending_messages
+            .filter(account_id_receiver.eq(id_message_receiver.as_db_id()))
+            .filter(receiver_acknowledgement.eq(false))
+            .filter(receiver_email_notification_sent.eq(false))
+            .select((id, message_unix_time))
+            .order_by(account_id_sender)
+            .load(self.conn())
+            .into_db_error(())?;
 
         let v = data
             .into_iter()
-            .map(|(sender_db_id, sender_id, receiver_db_id, time, m)| {
-                PendingMessageIdInternalAndMessageTime {
-                    id: PendingMessageIdInternal {
-                        sender: AccountIdInternal {
-                            id: sender_db_id,
-                            uuid: sender_id,
-                        },
-                        receiver: receiver_db_id,
-                        m,
-                    },
-                    time,
-                }
+            .map(|(primary_key, time)| PendingMessageDbIdAndMessageTime {
+                id: primary_key,
+                time,
             })
             .collect();
 

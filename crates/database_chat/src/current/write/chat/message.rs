@@ -3,7 +3,7 @@ use std::sync::Arc;
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
-use model::PublicKeyId;
+use model::{PendingMessageDbIdAndMessageTime, PublicKeyId};
 use model_chat::{
     AccountIdInternal, AccountInteractionState, DeliveryInfoType, MessageUuid,
     PendingMessageIdInternal, SignedMessageData, UnixTime,
@@ -38,15 +38,13 @@ impl CurrentWriteChatMessage<'_> {
 
     pub fn mark_message_email_notification_sent(
         &mut self,
-        messages: Vec<PendingMessageIdInternal>,
+        messages: Vec<PendingMessageDbIdAndMessageTime>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::pending_messages::dsl::*;
 
         for m in messages {
             update(pending_messages)
-                .filter(account_id_sender.eq(m.sender.as_db_id()))
-                .filter(account_id_receiver.eq(m.receiver))
-                .filter(message_id.eq(m.m))
+                .filter(id.eq(m.id))
                 .set(receiver_email_notification_sent.eq(true))
                 .execute(self.conn())
                 .into_db_error(())?;
