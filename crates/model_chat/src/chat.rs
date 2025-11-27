@@ -71,7 +71,7 @@ pub struct SentBlocksPage {
 pub struct PendingMessageId {
     /// Sender of the message.
     pub sender: AccountId,
-    pub m: MessageId,
+    pub uuid: MessageUuid,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]

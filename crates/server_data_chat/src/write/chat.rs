@@ -188,9 +188,11 @@ impl WriteCommandsChat<'_> {
             let sender = self.to_account_id_internal(m.sender).await?;
             let msg_info = self
                 .db_read(move |mut cmds| {
-                    cmds.chat()
-                        .message()
-                        .check_pending_message_info(sender, message_receiver, m.m)
+                    cmds.chat().message().check_pending_message_info(
+                        sender,
+                        message_receiver,
+                        m.uuid,
+                    )
                 })
                 .await?;
             if let Some(msg_info) = msg_info {
@@ -246,9 +248,11 @@ impl WriteCommandsChat<'_> {
             let sender = self.to_account_id_internal(m.sender).await?;
             let msg_info = self
                 .db_read(move |mut cmds| {
-                    cmds.chat()
-                        .message()
-                        .check_pending_message_info(sender, message_receiver, m.m)
+                    cmds.chat().message().check_pending_message_info(
+                        sender,
+                        message_receiver,
+                        m.uuid,
+                    )
                 })
                 .await?;
             if let Some(msg_info) = msg_info {

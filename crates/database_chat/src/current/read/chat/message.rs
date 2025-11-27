@@ -321,23 +321,25 @@ impl CurrentReadChatMessage<'_> {
         &mut self,
         sender: AccountIdInternal,
         receiver: AccountIdInternal,
-        message_id_value: MessageId,
+        message_uuid_value: MessageUuid,
     ) -> Result<Option<PendingMessageInfo>, DieselDatabaseError> {
         use crate::schema::pending_messages::dsl::*;
 
-        let result: Option<i64> = pending_messages
+        let result: Option<(i64, MessageId)> = pending_messages
             .filter(account_id_sender.eq(sender.as_db_id()))
             .filter(account_id_receiver.eq(receiver.as_db_id()))
-            .filter(message_id.eq(message_id_value))
-            .select(id)
+            .filter(message_uuid.eq(message_uuid_value))
+            .select((id, message_id))
             .first(self.conn())
             .optional()
             .into_db_error(())?;
 
-        Ok(result.map(|private_key| PendingMessageInfo {
-            id: private_key,
-            sender,
-            m: message_id_value,
-        }))
+        Ok(
+            result.map(|(private_key, message_id_value)| PendingMessageInfo {
+                id: private_key,
+                sender,
+                m: message_id_value,
+            }),
+        )
     }
 }
