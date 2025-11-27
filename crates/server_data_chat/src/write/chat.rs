@@ -15,13 +15,12 @@ use error_stack::ResultExt;
 use model::{MessageId, NewReceivedLikesCountResult, ReceivedLikeId};
 use model_chat::{
     AccountIdInternal, AddPublicKeyResult, ChatStateRaw, DeliveryInfoType, MessageUuid,
-    NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PublicKeyId,
-    ReceivedLikesIteratorState, ResetReceivedLikesIteratorResult, SendMessageResult,
-    SyncVersionUtils,
+    NewReceivedLikesCount, PendingMessageId, PublicKeyId, ReceivedLikesIteratorState,
+    ResetReceivedLikesIteratorResult, SendMessageResult, SyncVersionUtils,
 };
 use server_data::{
     DataError, DieselDatabaseError, db_transaction, define_cmd_wrapper_write,
-    id::ToAccountIdInternal, result::Result, write::DbTransaction,
+    id::ToAccountIdInternal, read::DbRead, result::Result, write::DbTransaction,
 };
 use simple_backend_utils::ContextExt;
 use utils::encrypt::ParsedKeys;
@@ -187,12 +186,17 @@ impl WriteCommandsChat<'_> {
         let mut unique_senders = HashSet::new();
         for m in messages {
             let sender = self.to_account_id_internal(m.sender).await?;
-            converted.push(PendingMessageIdInternal {
-                sender,
-                receiver: message_receiver.into_db_id(),
-                m: m.m,
-            });
-            unique_senders.insert(sender);
+            let msg_info = self
+                .db_read(move |mut cmds| {
+                    cmds.chat()
+                        .message()
+                        .check_pending_message_info(sender, message_receiver, m.m)
+                })
+                .await?;
+            if let Some(msg_info) = msg_info {
+                converted.push(msg_info);
+                unique_senders.insert(sender);
+            }
         }
 
         db_transaction!(self, move |mut cmds| {
@@ -200,7 +204,7 @@ impl WriteCommandsChat<'_> {
                 .message()
                 .add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
                     message_receiver,
-                    converted.clone(),
+                    &converted,
                 )?;
 
             if change_to_delivered {
@@ -240,11 +244,16 @@ impl WriteCommandsChat<'_> {
         let mut converted = vec![];
         for m in messages {
             let sender = self.to_account_id_internal(m.sender).await?;
-            converted.push(PendingMessageIdInternal {
-                sender,
-                receiver: message_receiver.into_db_id(),
-                m: m.m,
-            });
+            let msg_info = self
+                .db_read(move |mut cmds| {
+                    cmds.chat()
+                        .message()
+                        .check_pending_message_info(sender, message_receiver, m.m)
+                })
+                .await?;
+            if let Some(msg_info) = msg_info {
+                converted.push(msg_info);
+            }
         }
 
         // Group messages by sender for efficient processing

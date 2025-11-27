@@ -3,10 +3,12 @@ use std::sync::Arc;
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
-use model::{PendingMessageDbId, PendingMessageDbIdAndMessageTime, PublicKeyId};
+use model::{
+    PendingMessageDbId, PendingMessageDbIdAndMessageTime, PendingMessageInfo, PublicKeyId,
+};
 use model_chat::{
-    AccountIdInternal, AccountInteractionState, DeliveryInfoType, MessageUuid,
-    PendingMessageIdInternal, SignedMessageData, UnixTime,
+    AccountIdInternal, AccountInteractionState, DeliveryInfoType, MessageUuid, SignedMessageData,
+    UnixTime,
 };
 use simple_backend_utils::db::MyRunQueryDsl;
 use utils::encrypt::ParsedKeys;
@@ -54,23 +56,19 @@ impl CurrentWriteChatMessage<'_> {
     pub fn add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
         &mut self,
         message_receiver: AccountIdInternal,
-        messages: Vec<PendingMessageIdInternal>,
+        messages: &[PendingMessageInfo],
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::pending_messages::dsl::*;
 
         for message in messages {
             update(pending_messages)
-                .filter(message_id.eq(message.m))
-                .filter(account_id_sender.eq(message.sender.as_db_id()))
-                .filter(account_id_receiver.eq(message_receiver.as_db_id()))
+                .filter(id.eq(message.id))
                 .set(receiver_acknowledgement.eq(true))
                 .execute(self.conn())
                 .into_db_error(message_receiver)?;
 
             delete(pending_messages)
-                .filter(message_id.eq(message.m))
-                .filter(account_id_sender.eq(message.sender.as_db_id()))
-                .filter(account_id_receiver.eq(message_receiver.as_db_id()))
+                .filter(id.eq(message.id))
                 .filter(sender_acknowledgement.eq(true))
                 .filter(receiver_acknowledgement.eq(true))
                 .execute(self.conn())

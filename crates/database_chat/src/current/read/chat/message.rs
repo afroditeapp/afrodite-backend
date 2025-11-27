@@ -7,7 +7,7 @@ use model::{
     AccountId, AccountIdDb, AdminDataExportPendingMessage, ConversationId,
     DataExportPendingMessage, MessageId, MessageUuid, NewMessageNotification,
     NewMessageNotificationList, PendingMessageDbId, PendingMessageDbIdAndMessageTime,
-    PendingMessageRaw, UnixTime,
+    PendingMessageInfo, PendingMessageRaw, UnixTime,
 };
 use model_chat::{
     AccountIdInternal, DeliveryInfoType, GetSentMessage, MessageDeliveryInfo,
@@ -315,5 +315,29 @@ impl CurrentReadChatMessage<'_> {
             .into_db_error(())?;
 
         Ok(result)
+    }
+
+    pub fn check_pending_message_info(
+        &mut self,
+        sender: AccountIdInternal,
+        receiver: AccountIdInternal,
+        message_id_value: MessageId,
+    ) -> Result<Option<PendingMessageInfo>, DieselDatabaseError> {
+        use crate::schema::pending_messages::dsl::*;
+
+        let result: Option<i64> = pending_messages
+            .filter(account_id_sender.eq(sender.as_db_id()))
+            .filter(account_id_receiver.eq(receiver.as_db_id()))
+            .filter(message_id.eq(message_id_value))
+            .select(id)
+            .first(self.conn())
+            .optional()
+            .into_db_error(())?;
+
+        Ok(result.map(|private_key| PendingMessageInfo {
+            id: private_key,
+            sender,
+            m: message_id_value,
+        }))
     }
 }

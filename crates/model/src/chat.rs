@@ -196,11 +196,11 @@ pub struct NewReceivedLikesCountResult {
 }
 
 #[derive(Debug, Clone)]
-pub struct PendingMessageIdInternal {
+pub struct PendingMessageInfo {
+    /// ID column value
+    pub id: i64,
     /// Sender of the message.
     pub sender: AccountIdInternal,
-    /// Receiver of the message.
-    pub receiver: AccountIdDb,
     pub m: MessageId,
 }
 
