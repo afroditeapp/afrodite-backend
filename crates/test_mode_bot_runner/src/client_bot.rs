@@ -6,9 +6,10 @@ use api_client::{
     apis::{
         account_api::get_account_state,
         chat_api::{
-            get_latest_public_key_id, get_pending_messages, get_public_key,
+            get_latest_public_key_id, get_pending_messages, get_public_key, post_add_public_key,
             post_add_receiver_acknowledgement, post_add_sender_acknowledgement,
             post_get_received_likes_page, post_reset_received_likes_paging, post_send_like,
+            post_send_message,
         },
         common_api::get_client_config,
         profile_api::{
@@ -16,7 +17,6 @@ use api_client::{
             post_search_groups,
         },
     },
-    manual_additions::{post_add_public_key_fixed, post_send_message_fixed},
     models::{
         AccountId, AttributeMode, MessageId, PendingMessageAcknowledgementList, PendingMessageId,
         ProfileAttributeValueUpdate, ProfileAttributesConfigQuery, ProfileUpdate, SearchAgeRange,
@@ -223,7 +223,7 @@ impl SetBotPublicKey {
             .public_key_bytes()
             .change_context(TestError::MessageEncryptionError)?;
 
-        let r = post_add_public_key_fixed(state.api(), public_key_bytes)
+        let r = post_add_public_key(state.api(), public_key_bytes)
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -573,7 +573,7 @@ async fn send_message(
         .change_context(TestError::MessageEncryptionError)?;
     let message_id = UuidBase64Url::new_random_id().to_string();
 
-    post_send_message_fixed(
+    post_send_message(
         state.api(),
         keys.public_key_id,
         &receiver.aid.to_string(),

@@ -95,8 +95,10 @@ update-api-bindings-step-generate-bindings:
 	cp $(TMP_FILE) crates/api_client/src/apis/common_admin_api.rs
 	sed 's/queue: ModerationQueueType/queue: crate::models::ModerationQueueType/g' crates/api_client/src/apis/media_admin_api.rs > $(TMP_FILE)
 	cp $(TMP_FILE) crates/api_client/src/apis/media_admin_api.rs
-	sed 's/content_type: MediaContentType/content_type: crate::models::MediaContentType/g' crates/api_client/src/apis/media_api.rs > $(TMP_FILE)
+	sed -e 's/content_type: MediaContentType/content_type: crate::models::MediaContentType/g' -e 's/body: std::path::PathBuf/body: Vec<u8>/g' -e 's/TokioFile::open(p_body_body).await?/std::io::Cursor::new(p_body_body)/g' crates/api_client/src/apis/media_api.rs > $(TMP_FILE)
 	cp $(TMP_FILE) crates/api_client/src/apis/media_api.rs
+	sed -e 's/body: std::path::PathBuf/body: Vec<u8>/g' -e 's/TokioFile::open(p_body_body).await?/std::io::Cursor::new(p_body_body)/g' crates/api_client/src/apis/chat_api.rs > $(TMP_FILE)
+	cp $(TMP_FILE) crates/api_client/src/apis/chat_api.rs
 	sed 's/models::models::UnixTime/models::UnixTime/g' crates/api_client/src/apis/common_admin_api.rs > $(TMP_FILE)
 	cp $(TMP_FILE) crates/api_client/src/apis/common_admin_api.rs
 update-api-bindings: update-api-bindings-step-update-binary update-api-bindings-step-generate-bindings

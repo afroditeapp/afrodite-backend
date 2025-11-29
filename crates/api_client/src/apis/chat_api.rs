@@ -743,7 +743,7 @@ pub async fn get_sent_message_ids(configuration: &configuration::Configuration, 
 }
 
 /// Returns next public key ID number.  # Limits  Server can store limited amount of public keys. The limit is configurable from server config file and also user specific config exists. Max value between the two previous values is used to check is adding the key allowed.  Max key size is 8192 bytes.  The key must be OpenPGP public key with one signed user which ID is [model::AccountId] string.  
-pub async fn post_add_public_key(configuration: &configuration::Configuration, body: std::path::PathBuf) -> Result<models::AddPublicKeyResult, Error<PostAddPublicKeyError>> {
+pub async fn post_add_public_key(configuration: &configuration::Configuration, body: Vec<u8>) -> Result<models::AddPublicKeyResult, Error<PostAddPublicKeyError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_body = body;
 
@@ -756,7 +756,7 @@ pub async fn post_add_public_key(configuration: &configuration::Configuration, b
     if let Some(ref token) = configuration.bearer_access_token {
         req_builder = req_builder.bearer_auth(token.to_owned());
     };
-    let file = TokioFile::open(p_body_body).await?;
+    let file = std::io::Cursor::new(p_body_body);
     let stream = FramedRead::new(file, BytesCodec::new());
     req_builder = req_builder.body(reqwest::Body::wrap_stream(stream));
 
@@ -1376,7 +1376,7 @@ pub async fn post_send_like(configuration: &configuration::Configuration, accoun
 }
 
 /// Max pending message count is 50. Max message size is u16::MAX.  Sending will fail if one or two way block exists.  Only the latest public key for sender and receiver can be used when sending a message.
-pub async fn post_send_message(configuration: &configuration::Configuration, sender_public_key_id: i64, receiver: &str, receiver_public_key_id: i64, message_id: &str, body: std::path::PathBuf) -> Result<models::SendMessageResult, Error<PostSendMessageError>> {
+pub async fn post_send_message(configuration: &configuration::Configuration, sender_public_key_id: i64, receiver: &str, receiver_public_key_id: i64, message_id: &str, body: Vec<u8>) -> Result<models::SendMessageResult, Error<PostSendMessageError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_sender_public_key_id = sender_public_key_id;
     let p_query_receiver = receiver;
@@ -1397,7 +1397,7 @@ pub async fn post_send_message(configuration: &configuration::Configuration, sen
     if let Some(ref token) = configuration.bearer_access_token {
         req_builder = req_builder.bearer_auth(token.to_owned());
     };
-    let file = TokioFile::open(p_body_body).await?;
+    let file = std::io::Cursor::new(p_body_body);
     let stream = FramedRead::new(file, BytesCodec::new());
     req_builder = req_builder.body(reqwest::Body::wrap_stream(stream));
 

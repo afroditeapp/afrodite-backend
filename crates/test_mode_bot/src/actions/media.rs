@@ -1,8 +1,10 @@
 use std::{fmt::Debug, path::PathBuf};
 
 use api_client::{
-    apis::media_api::{get_content_slot_state, put_profile_content, put_security_content_info},
-    manual_additions::put_content_to_content_slot_fixed,
+    apis::media_api::{
+        get_content_slot_state, put_content_to_content_slot, put_profile_content,
+        put_security_content_info,
+    },
     models::{ContentId, ContentProcessingStateType, MediaContentType, SetProfileContent},
 };
 use async_trait::async_trait;
@@ -63,7 +65,7 @@ impl SendImageToSlot {
             }
         };
 
-        let _ = put_content_to_content_slot_fixed(
+        let _ = put_content_to_content_slot(
             state.api(),
             self.slot,
             self.slot == 0, // secure capture
@@ -128,7 +130,7 @@ impl SendImageToSlot {
         };
 
         if let Some(slot) = self.copy_to_slot {
-            let _ = put_content_to_content_slot_fixed(
+            let _ = put_content_to_content_slot(
                 state.api(),
                 slot,
                 slot == 0, // slot 0 is for secure capture
