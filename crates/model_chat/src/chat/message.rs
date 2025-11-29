@@ -1,5 +1,5 @@
 use diesel::sql_types::SmallInt;
-use model::{AccountId, MessageId, PublicKeyId, UnixTime};
+use model::{AccountId, MessageNumber, PublicKeyId, UnixTime};
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::SimpleDieselEnum;
@@ -17,7 +17,7 @@ pub struct SignedMessageData {
     pub message_uuid: MessageUuid,
     pub sender_public_key_id: PublicKeyId,
     pub receiver_public_key_id: PublicKeyId,
-    pub m: MessageId,
+    pub m: MessageNumber,
     /// Unix time when server received the message.
     pub unix_time: UnixTime,
     pub message: Vec<u8>,
@@ -40,7 +40,7 @@ impl SignedMessageData {
         let message_uuid = parse_message_uuid(&mut d)?;
         let sender_public_key_id = parse_minimal_i64(&mut d)?;
         let receiver_public_key_id = parse_minimal_i64(&mut d)?;
-        let m = parse_minimal_i64(&mut d)?;
+        let mn = parse_minimal_i64(&mut d)?;
         let ut = parse_minimal_i64(&mut d)?;
         let message = d.collect();
 
@@ -54,7 +54,7 @@ impl SignedMessageData {
             receiver_public_key_id: PublicKeyId {
                 id: receiver_public_key_id,
             },
-            m: MessageId { id: m },
+            m: MessageNumber { mn },
             unix_time: UnixTime { ut },
             message,
         }))
@@ -72,7 +72,7 @@ impl SignedMessageData {
         bytes.extend_from_slice(self.message_uuid.id().as_bytes());
         add_minimal_i64(&mut bytes, self.sender_public_key_id.id);
         add_minimal_i64(&mut bytes, self.receiver_public_key_id.id);
-        add_minimal_i64(&mut bytes, self.m.id);
+        add_minimal_i64(&mut bytes, self.m.mn);
         add_minimal_i64(&mut bytes, self.unix_time.ut);
         // Sent message data
         bytes.extend_from_slice(&self.message);

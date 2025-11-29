@@ -136,7 +136,7 @@ impl CurrentWriteChatMessage<'_> {
             return Err(DieselDatabaseError::NotAllowed.into());
         }
 
-        let new_message_id = interaction.next_message_id();
+        let new_message_number = interaction.next_message_number();
 
         if interaction.account_id_sender == Some(*sender.as_db_id()) {
             update(account_interaction::table.find(interaction.id))
@@ -145,7 +145,7 @@ impl CurrentWriteChatMessage<'_> {
                         .eq(account_interaction::message_counter_sender + 1),
                 )
                 .execute(self.conn())
-                .into_db_error((sender, receiver, new_message_id))?;
+                .into_db_error((sender, receiver, new_message_number))?;
         } else {
             update(account_interaction::table.find(interaction.id))
                 .set(
@@ -153,7 +153,7 @@ impl CurrentWriteChatMessage<'_> {
                         .eq(account_interaction::message_counter_receiver + 1),
                 )
                 .execute(self.conn())
-                .into_db_error((sender, receiver, new_message_id))?;
+                .into_db_error((sender, receiver, new_message_number))?;
         }
 
         let data_for_signing = SignedMessageData {
@@ -162,7 +162,7 @@ impl CurrentWriteChatMessage<'_> {
             message_uuid: message_uuid_value,
             sender_public_key_id,
             receiver_public_key_id,
-            m: new_message_id,
+            m: new_message_number,
             unix_time: time,
             message,
         };
@@ -177,12 +177,12 @@ impl CurrentWriteChatMessage<'_> {
                 account_id_sender.eq(sender.as_db_id()),
                 account_id_receiver.eq(receiver.as_db_id()),
                 message_unix_time.eq(time),
-                message_id.eq(new_message_id),
+                message_number.eq(new_message_number),
                 message_bytes.eq(&signed),
                 message_uuid.eq(&message_uuid_value),
             ))
             .execute(self.conn())
-            .into_db_error((sender, receiver, new_message_id))?;
+            .into_db_error((sender, receiver, new_message_number))?;
 
         Ok(Ok(signed))
     }
@@ -232,7 +232,7 @@ impl CurrentWriteChatMessage<'_> {
         &mut self,
         viewer_id: AccountIdInternal,
         sender_id: AccountIdInternal,
-        msg_id: model::MessageId,
+        msg_number: model::MessageNumber,
     ) -> Result<(), DieselDatabaseError> {
         use diesel::upsert::excluded;
         use model::schema::latest_seen_message::dsl::*;
@@ -241,11 +241,11 @@ impl CurrentWriteChatMessage<'_> {
             .values((
                 account_id_viewer.eq(viewer_id.as_db_id()),
                 account_id_sender.eq(sender_id.as_db_id()),
-                message_id.eq(msg_id),
+                message_number.eq(msg_number),
             ))
             .on_conflict((account_id_viewer, account_id_sender))
             .do_update()
-            .set(message_id.eq(excluded(message_id)))
+            .set(message_number.eq(excluded(message_number)))
             .execute_my_conn(self.conn())
             .into_db_error((viewer_id, sender_id))?;
 

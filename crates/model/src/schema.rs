@@ -225,7 +225,7 @@ diesel::table! {
         message_sender_account_id_uuid -> Bytea,
         message_receiver_account_id_uuid -> Bytea,
         message_unix_time -> Int8,
-        message_id -> Int8,
+        message_number -> Int8,
         message_symmetric_key -> Bytea,
         client_message_bytes -> Bytea,
         backend_signed_message_bytes -> Bytea,
@@ -456,7 +456,7 @@ diesel::table! {
     latest_seen_message (account_id_viewer, account_id_sender) {
         account_id_viewer -> Int8,
         account_id_sender -> Int8,
-        message_id -> Int8,
+        message_number -> Int8,
     }
 }
 
@@ -570,7 +570,7 @@ diesel::table! {
         receiver_push_notification_sent -> Bool,
         receiver_email_notification_sent -> Bool,
         message_unix_time -> Int8,
-        message_id -> Int8,
+        message_number -> Int8,
         message_uuid -> Bytea,
         message_bytes -> Bytea,
     }

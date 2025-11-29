@@ -79,7 +79,7 @@ pub async fn post_chat_message_report(
     let report = NewChatMessageReportInternal {
         message_sender_account_id_uuid: data.sender,
         message_receiver_account_id_uuid: data.receiver,
-        message_id: data.m,
+        message_number: data.m,
         message_unix_time: data.unix_time,
         message_symmetric_key: decryption_key,
         client_message_bytes,

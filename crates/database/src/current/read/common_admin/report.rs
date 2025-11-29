@@ -233,7 +233,7 @@ impl CurrentReadCommonAdminReport<'_> {
 
         page.sort_by_key(|v| {
             match &v.report.content.chat_message {
-                Some(v) => v.message_id.id,
+                Some(v) => v.message_number.mn,
                 None => -1, // Should not happen
             }
         });

@@ -78,7 +78,7 @@ enable_logging!(
 
 disable_logging!(
     // Chat
-    MessageId,
+    MessageNumber,
     // General
     i64,
     (),

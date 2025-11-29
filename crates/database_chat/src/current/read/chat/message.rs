@@ -5,7 +5,7 @@ use diesel::prelude::*;
 use error_stack::Result;
 use model::{
     AccountId, AccountIdDb, AdminDataExportPendingMessage, ConversationId,
-    DataExportPendingMessage, MessageId, MessageUuid, NewMessageNotification,
+    DataExportPendingMessage, MessageNumber, MessageUuid, NewMessageNotification,
     NewMessageNotificationList, PendingMessageDbId, PendingMessageDbIdAndMessageTime,
     PendingMessageInfo, PendingMessageRaw, UnixTime,
 };
@@ -299,17 +299,17 @@ impl CurrentReadChatMessage<'_> {
         Ok(result)
     }
 
-    pub fn get_latest_seen_message_id(
+    pub fn get_latest_seen_message_number(
         &mut self,
         viewer_id: AccountIdInternal,
         sender_id: AccountIdInternal,
-    ) -> Result<Option<MessageId>, DieselDatabaseError> {
+    ) -> Result<Option<MessageNumber>, DieselDatabaseError> {
         use crate::schema::latest_seen_message::dsl::*;
 
-        let result: Option<MessageId> = latest_seen_message
+        let result: Option<MessageNumber> = latest_seen_message
             .filter(account_id_viewer.eq(viewer_id.as_db_id()))
             .filter(account_id_sender.eq(sender_id.as_db_id()))
-            .select(message_id)
+            .select(message_number)
             .first(self.conn())
             .optional()
             .into_db_error(())?;
@@ -325,20 +325,20 @@ impl CurrentReadChatMessage<'_> {
     ) -> Result<Option<PendingMessageInfo>, DieselDatabaseError> {
         use crate::schema::pending_messages::dsl::*;
 
-        let result: Option<(i64, MessageId)> = pending_messages
+        let result: Option<(i64, MessageNumber)> = pending_messages
             .filter(account_id_sender.eq(sender.as_db_id()))
             .filter(account_id_receiver.eq(receiver.as_db_id()))
             .filter(message_uuid.eq(message_uuid_value))
-            .select((id, message_id))
+            .select((id, message_number))
             .first(self.conn())
             .optional()
             .into_db_error(())?;
 
         Ok(
-            result.map(|(private_key, message_id_value)| PendingMessageInfo {
+            result.map(|(private_key, message_number_value)| PendingMessageInfo {
                 id: private_key,
                 sender,
-                m: message_id_value,
+                m: message_number_value,
                 message_uuid: message_uuid_value,
             }),
         )

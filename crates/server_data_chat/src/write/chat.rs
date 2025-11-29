@@ -12,7 +12,7 @@ use database_chat::current::{
     },
 };
 use error_stack::ResultExt;
-use model::{MessageId, NewReceivedLikesCountResult, ReceivedLikeId};
+use model::{MessageNumber, NewReceivedLikesCountResult, ReceivedLikeId};
 use model_chat::{
     AccountIdInternal, AddPublicKeyResult, ChatStateRaw, DeliveryInfoType, MessageUuid,
     NewReceivedLikesCount, PendingMessageId, PublicKeyId, ReceivedLikesIteratorState,
@@ -263,7 +263,7 @@ impl WriteCommandsChat<'_> {
         // Group messages by sender for efficient processing
         let mut messages_by_sender: std::collections::HashMap<
             AccountIdInternal,
-            Vec<(model::MessageId, model::MessageUuid)>,
+            Vec<(model::MessageNumber, model::MessageUuid)>,
         > = std::collections::HashMap::new();
         for msg in &converted {
             messages_by_sender
@@ -275,35 +275,37 @@ impl WriteCommandsChat<'_> {
         let senders_with_updates = db_transaction!(self, move |mut cmds| {
             let mut senders_with_updates = HashSet::new();
             for (sender, message_ids) in messages_by_sender {
-                let Some(message_id_max) = cmds
+                let Some(message_number_max) = cmds
                     .read()
                     .chat()
                     .interaction()
                     .account_interaction(message_receiver, sender)?
-                    .map(|v| v.next_message_id().id - 1)
+                    .map(|v| v.next_message_number().mn - 1)
                 else {
                     continue;
                 };
 
-                let message_id_min = cmds
+                let message_number_min = cmds
                     .read()
                     .chat()
                     .message()
-                    .get_latest_seen_message_id(message_receiver, sender)?
-                    .map(|v| v.id + 1)
-                    .unwrap_or(1); // First valid MessageId
+                    .get_latest_seen_message_number(message_receiver, sender)?
+                    .map(|v| v.mn + 1)
+                    .unwrap_or(1); // First valid MessageNumber
 
-                let mut largest_valid_id: Option<MessageId> = None;
+                let mut largest_valid_number: Option<MessageNumber> = None;
 
-                for &(msg_id, msg_uuid) in &message_ids {
-                    if msg_id.id < message_id_min || msg_id.id > message_id_max {
+                for &(msg_number, msg_uuid) in &message_ids {
+                    if msg_number.mn < message_number_min || msg_number.mn > message_number_max {
                         continue;
                     }
 
-                    match largest_valid_id {
-                        Some(current) if current.id < msg_id.id => largest_valid_id = Some(msg_id),
+                    match largest_valid_number {
+                        Some(current) if current.mn < msg_number.mn => {
+                            largest_valid_number = Some(msg_number)
+                        }
                         Some(_) => (),
-                        None => largest_valid_id = Some(msg_id),
+                        None => largest_valid_number = Some(msg_number),
                     }
 
                     cmds.chat().message().insert_message_delivery_info(
@@ -314,13 +316,13 @@ impl WriteCommandsChat<'_> {
                     )?;
                 }
 
-                if let Some(largest_valid_id) = largest_valid_id {
+                if let Some(largest_valid_number) = largest_valid_number {
                     senders_with_updates.insert(sender);
-                    if largest_valid_id.id > message_id_min {
+                    if largest_valid_number.mn > message_number_min {
                         cmds.chat().message().update_latest_seen_message(
                             message_receiver,
                             sender,
-                            largest_valid_id,
+                            largest_valid_number,
                         )?;
                     }
                 }

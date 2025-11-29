@@ -1,7 +1,7 @@
 use base64::Engine;
 use diesel::prelude::*;
 use model::{
-    ConversationId, DailyLikesLeftSyncVersion, MatchId, MessageId, NewReceivedLikesCount,
+    ConversationId, DailyLikesLeftSyncVersion, MatchId, MessageNumber, NewReceivedLikesCount,
     NewReceivedLikesCountResult, PublicKeyId, ReceivedLikeId, ReceivedLikesSyncVersion, UnixTime,
 };
 use model_server_data::LimitedActionStatus;
@@ -57,7 +57,7 @@ pub struct PendingMessageInternal {
     pub id: i64,
     pub account_id_sender: AccountIdDb,
     pub account_id_receiver: AccountIdDb,
-    pub message_id: MessageId,
+    pub message_number: MessageNumber,
     pub message_bytes: Vec<u8>,
     pub message_uuid: MessageUuid,
 }

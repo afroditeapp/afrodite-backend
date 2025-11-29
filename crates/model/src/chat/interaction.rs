@@ -10,9 +10,9 @@ use utoipa::ToSchema;
 
 use crate::{AccountIdDb, AccountIdInternal};
 
-/// Message ID for identifying a message in a conversation.
+/// Message number for identifying a message in a conversation.
 ///
-/// The ID is conversation specific and it increments.
+/// The number is conversation specific and it increments.
 #[derive(
     Debug,
     Clone,
@@ -26,25 +26,25 @@ use crate::{AccountIdDb, AccountIdInternal};
     AsExpression,
 )]
 #[diesel(sql_type = BigInt)]
-pub struct MessageId {
-    pub id: i64,
+pub struct MessageNumber {
+    pub mn: i64,
 }
 
-impl TryFrom<i64> for MessageId {
+impl TryFrom<i64> for MessageNumber {
     type Error = String;
 
-    fn try_from(id: i64) -> Result<Self, Self::Error> {
-        Ok(Self { id })
+    fn try_from(mn: i64) -> Result<Self, Self::Error> {
+        Ok(Self { mn })
     }
 }
 
-impl AsRef<i64> for MessageId {
+impl AsRef<i64> for MessageNumber {
     fn as_ref(&self) -> &i64 {
-        &self.id
+        &self.mn
     }
 }
 
-diesel_i64_wrapper!(MessageId);
+diesel_i64_wrapper!(MessageNumber);
 
 #[derive(Debug, Clone, Copy)]
 pub enum AccountInteractionStateError {
@@ -470,11 +470,11 @@ impl AccountInteractionInternal {
             .saturating_add(self.message_counter_sender)
     }
 
-    /// Skip message ID 0 to make possible to use that as initial value
+    /// Skip message number 0 to make possible to use that as initial value
     /// for latest viewed message.
-    pub fn next_message_id(&self) -> MessageId {
-        MessageId {
-            id: self.message_counter().saturating_add(1),
+    pub fn next_message_number(&self) -> MessageNumber {
+        MessageNumber {
+            mn: self.message_counter().saturating_add(1),
         }
     }
 
