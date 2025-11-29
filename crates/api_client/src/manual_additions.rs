@@ -29,41 +29,6 @@ impl Copy for Location {}
 
 // Fixed request functions
 
-/// Get content data
-pub async fn get_content_fixed(configuration: &configuration::Configuration, account_id: &str, content_id: &str, is_match: bool) -> Result<Vec<u8>, Error<GetContentError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/media_api/content/{account_id}/{content_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id), content_id=crate::apis::urlencode(content_id));
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
-
-    local_var_req_builder = local_var_req_builder.query(&[("is_match", &is_match.to_string())]);
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref token) = configuration.bearer_access_token {
-        local_var_req_builder = local_var_req_builder.bearer_auth(token.to_owned());
-    };
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.bytes().await?.into_iter().collect();
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        Ok(local_var_content)
-    } else {
-        let local_var_error = ResponseContent {
-            status: local_var_status,
-            content: "".to_string(),
-            entity: None,
-        };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
 /// Set content to content processing slot. Processing ID will be returned and processing of the content will begin. Events about the content processing will be sent to the client.  The state of the processing can be also queired. The querying is required to receive the content ID.  Slots from 0 to 6 are available.  One account can only have one content in upload or processing state. New upload might potentially delete the previous if processing of it is not complete.
 pub async fn put_content_to_content_slot_fixed(
     configuration: &configuration::Configuration,
@@ -136,40 +101,6 @@ pub async fn post_add_public_key_fixed(configuration: &configuration::Configurat
     }
 }
 
-pub async fn get_public_key_fixed(configuration: &configuration::Configuration, aid: &str, id: i64) -> Result<Vec<u8>, Error<GetPublicKeyError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/chat_api/public_key/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
-
-    local_var_req_builder = local_var_req_builder.query(&[("id", &id.to_string())]);
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref token) = configuration.bearer_access_token {
-        local_var_req_builder = local_var_req_builder.bearer_auth(token.to_owned());
-    };
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.bytes().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        Ok(local_var_content.to_vec())
-    } else {
-        let local_var_error = ResponseContent {
-            status: local_var_status,
-            content: "".to_string(),
-            entity: None,
-        };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
 /// Max pending message count is 50. Max message size is u16::MAX.  Sending will fail if one or two way block exists.  Only the latest public key for sender and receiver can be used when sending a message.
 pub async fn post_send_message_fixed(configuration: &configuration::Configuration, sender_public_key_id: i64, receiver: &str, receiver_public_key_id: i64, message_id: &str, body: Vec<u8>) -> Result<SendMessageResult, Error<PostSendMessageError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -205,39 +136,5 @@ pub async fn post_send_message_fixed(configuration: &configuration::Configuratio
         let content = resp.text().await?;
         let entity: Option<PostSendMessageError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
-/// Get list of pending messages.  The returned bytes is list of objects with following data: - UTF-8 text length encoded as 16 bit little endian number. - UTF-8 text which is PendingMessage JSON. - Binary message data length as 16 bit little endian number. - Binary message data
-pub async fn get_pending_messages_fixed(configuration: &configuration::Configuration, ) -> Result<Vec<u8>, Error<GetPendingMessagesError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/chat_api/pending_messages", local_var_configuration.base_path);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref token) = configuration.bearer_access_token {
-        local_var_req_builder = local_var_req_builder.bearer_auth(token.to_owned());
-    };
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.bytes().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        Ok(local_var_content.to_vec())
-    } else {
-        let local_var_error = ResponseContent {
-            status: local_var_status,
-            content: "".to_string(),
-            entity: None,
-        };
-        Err(Error::ResponseError(local_var_error))
     }
 }

@@ -6,9 +6,9 @@ use api_client::{
     apis::{
         account_api::get_account_state,
         chat_api::{
-            get_latest_public_key_id, post_add_receiver_acknowledgement,
-            post_add_sender_acknowledgement, post_get_received_likes_page,
-            post_reset_received_likes_paging, post_send_like,
+            get_latest_public_key_id, get_pending_messages, get_public_key,
+            post_add_receiver_acknowledgement, post_add_sender_acknowledgement,
+            post_get_received_likes_page, post_reset_received_likes_paging, post_send_like,
         },
         common_api::get_client_config,
         profile_api::{
@@ -16,10 +16,7 @@ use api_client::{
             post_search_groups,
         },
     },
-    manual_additions::{
-        get_pending_messages_fixed, get_public_key_fixed, post_add_public_key_fixed,
-        post_send_message_fixed,
-    },
+    manual_additions::{post_add_public_key_fixed, post_send_message_fixed},
     models::{
         AccountId, AttributeMode, MessageId, PendingMessageAcknowledgementList, PendingMessageId,
         ProfileAttributeValueUpdate, ProfileAttributesConfigQuery, ProfileUpdate, SearchAgeRange,
@@ -434,9 +431,13 @@ pub struct AnswerReceivedMessages;
 #[async_trait]
 impl BotAction for AnswerReceivedMessages {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let messages = get_pending_messages_fixed(state.api())
+        let messages = get_pending_messages(state.api())
             .await
-            .change_context(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?
+            .bytes()
+            .await
+            .change_context(TestError::ApiRequest)?
+            .to_vec();
 
         if messages.is_empty() {
             return Ok(());
@@ -554,9 +555,13 @@ async fn send_message(
         }
     };
 
-    let public_key = get_public_key_fixed(state.api(), &receiver.aid.to_string(), latest_key_id)
+    let public_key = get_public_key(state.api(), &receiver.aid.to_string(), latest_key_id)
         .await
-        .change_context(TestError::ApiRequest)?;
+        .change_context(TestError::ApiRequest)?
+        .bytes()
+        .await
+        .change_context(TestError::ApiRequest)?
+        .to_vec();
 
     let keys = SetBotPublicKey::setup_bot_keys_if_needed(state).await?;
 

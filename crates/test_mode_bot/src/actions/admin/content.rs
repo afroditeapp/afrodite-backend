@@ -104,11 +104,11 @@ impl BotAction for ModerateContentModerationRequest {
 
             for request in list.values.clone() {
                 // Test that getting content data works
-                api_client::manual_additions::get_content_fixed(
+                media_api::get_content(
                     state.api(),
                     &request.account_id.to_string(),
                     &request.content_id.to_string(),
-                    false,
+                    Some(false),
                 )
                 .await
                 .change_context(TestError::ApiRequest)
@@ -121,7 +121,11 @@ impl BotAction for ModerateContentModerationRequest {
                         "Request creator: {}, Content ID: {}",
                         request.account_id, request.content_id,
                     )
-                })?;
+                })?
+                .bytes()
+                .await
+                .change_context(TestError::ApiRequest)?
+                .to_vec();
 
                 media_admin_api::post_moderate_media_content(
                     state.api(),
@@ -170,14 +174,18 @@ impl AdminBotContentModerationLogic {
         }
 
         for request in list.values {
-            let image_data = api_client::manual_additions::get_content_fixed(
+            let image_data = media_api::get_content(
                 api.api(),
                 &request.account_id.aid,
                 &request.content_id.cid,
-                false,
+                Some(false),
             )
             .await
-            .change_context(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?
+            .bytes()
+            .await
+            .change_context(TestError::ApiRequest)?
+            .to_vec();
 
             let r = Self::handle_image(
                 image_data,
