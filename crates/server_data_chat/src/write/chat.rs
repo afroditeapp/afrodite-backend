@@ -14,7 +14,7 @@ use database_chat::current::{
 use error_stack::ResultExt;
 use model::{MessageNumber, NewReceivedLikesCountResult, ReceivedLikeId};
 use model_chat::{
-    AccountIdInternal, AddPublicKeyResult, ChatStateRaw, DeliveryInfoType, MessageUuid,
+    AccountIdInternal, AddPublicKeyResult, ChatStateRaw, DeliveryInfoType, MessageId,
     NewReceivedLikesCount, PendingMessageId, PublicKeyId, ReceivedLikesIteratorState,
     ResetReceivedLikesIteratorResult, SendMessageResult, SyncVersionUtils,
 };
@@ -188,11 +188,9 @@ impl WriteCommandsChat<'_> {
             let sender = self.to_account_id_internal(m.sender).await?;
             let msg_info = self
                 .db_read(move |mut cmds| {
-                    cmds.chat().message().check_pending_message_info(
-                        sender,
-                        message_receiver,
-                        m.uuid,
-                    )
+                    cmds.chat()
+                        .message()
+                        .check_pending_message_info(sender, message_receiver, m.id)
                 })
                 .await?;
             if let Some(msg_info) = msg_info {
@@ -214,7 +212,7 @@ impl WriteCommandsChat<'_> {
                     cmds.chat().message().insert_message_delivery_info(
                         msg.sender,
                         message_receiver,
-                        msg.message_uuid,
+                        msg.message_id,
                         DeliveryInfoType::Delivered,
                     )?;
                 }
@@ -248,11 +246,9 @@ impl WriteCommandsChat<'_> {
             let sender = self.to_account_id_internal(m.sender).await?;
             let msg_info = self
                 .db_read(move |mut cmds| {
-                    cmds.chat().message().check_pending_message_info(
-                        sender,
-                        message_receiver,
-                        m.uuid,
-                    )
+                    cmds.chat()
+                        .message()
+                        .check_pending_message_info(sender, message_receiver, m.id)
                 })
                 .await?;
             if let Some(msg_info) = msg_info {
@@ -263,13 +259,13 @@ impl WriteCommandsChat<'_> {
         // Group messages by sender for efficient processing
         let mut messages_by_sender: std::collections::HashMap<
             AccountIdInternal,
-            Vec<(model::MessageNumber, model::MessageUuid)>,
+            Vec<(model::MessageNumber, model::MessageId)>,
         > = std::collections::HashMap::new();
         for msg in &converted {
             messages_by_sender
                 .entry(msg.sender)
                 .or_default()
-                .push((msg.m, msg.message_uuid));
+                .push((msg.m, msg.message_id));
         }
 
         let senders_with_updates = db_transaction!(self, move |mut cmds| {
@@ -361,7 +357,7 @@ impl WriteCommandsChat<'_> {
     pub async fn add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(
         &self,
         message_receiver: AccountIdInternal,
-        messages: Vec<MessageUuid>,
+        messages: Vec<MessageId>,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
@@ -393,7 +389,7 @@ impl WriteCommandsChat<'_> {
         message: Vec<u8>,
         sender_public_key_from_client: PublicKeyId,
         receiver_public_key_from_client: PublicKeyId,
-        message_uuid_value: MessageUuid,
+        message_id_value: MessageId,
         keys: Arc<ParsedKeys>,
     ) -> Result<(SendMessageResult, Option<PushNotificationAllowed>), DataError> {
         db_transaction!(self, move |mut cmds| {
@@ -450,7 +446,7 @@ impl WriteCommandsChat<'_> {
                     sender_public_key_from_client,
                     receiver_public_key_from_client,
                     message,
-                    message_uuid_value,
+                    message_id_value,
                     keys,
                 )?;
 

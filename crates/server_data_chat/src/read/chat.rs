@@ -1,5 +1,5 @@
 use database_chat::current::read::GetDbReadCommandsChat;
-use model::MessageUuid;
+use model::MessageId;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, ChatStateRaw, GetSentMessage,
     MatchesIteratorState, MessageDeliveryInfo, ProfileLink, ReceivedLikesIteratorState,
@@ -131,7 +131,7 @@ impl ReadCommandsChat<'_> {
     pub async fn all_sent_messages(
         &self,
         id: AccountIdInternal,
-    ) -> Result<Vec<MessageUuid>, DataError> {
+    ) -> Result<Vec<MessageId>, DataError> {
         self.db_read(move |mut cmds| cmds.chat().message().all_sent_messages(id))
             .await
             .into_error()
@@ -140,7 +140,7 @@ impl ReadCommandsChat<'_> {
     pub async fn get_sent_message(
         &self,
         id: AccountIdInternal,
-        message: MessageUuid,
+        message: MessageId,
     ) -> Result<GetSentMessage, DataError> {
         self.db_read(move |mut cmds| cmds.chat().message().get_sent_message(id, message))
             .await

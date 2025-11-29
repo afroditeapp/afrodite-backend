@@ -7,7 +7,7 @@ use model::{
     PendingMessageDbId, PendingMessageDbIdAndMessageTime, PendingMessageInfo, PublicKeyId,
 };
 use model_chat::{
-    AccountIdInternal, AccountInteractionState, DeliveryInfoType, MessageUuid, SignedMessageData,
+    AccountIdInternal, AccountInteractionState, DeliveryInfoType, MessageId, SignedMessageData,
     UnixTime,
 };
 use simple_backend_utils::db::MyRunQueryDsl;
@@ -81,20 +81,20 @@ impl CurrentWriteChatMessage<'_> {
     pub fn add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(
         &mut self,
         message_sender: AccountIdInternal,
-        messages: Vec<MessageUuid>,
+        messages: Vec<MessageId>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::pending_messages::dsl::*;
 
         for message in messages {
             update(pending_messages)
-                .filter(message_uuid.eq(&message))
+                .filter(message_id.eq(&message))
                 .filter(account_id_sender.eq(message_sender.as_db_id()))
                 .set(sender_acknowledgement.eq(true))
                 .execute(self.conn())
                 .into_db_error(message_sender)?;
 
             delete(pending_messages)
-                .filter(message_uuid.eq(&message))
+                .filter(message_id.eq(&message))
                 .filter(account_id_sender.eq(message_sender.as_db_id()))
                 .filter(sender_acknowledgement.eq(true))
                 .filter(receiver_acknowledgement.eq(true))
@@ -115,7 +115,7 @@ impl CurrentWriteChatMessage<'_> {
         sender_public_key_id: PublicKeyId,
         receiver_public_key_id: PublicKeyId,
         message: Vec<u8>,
-        message_uuid_value: MessageUuid,
+        message_id_value: MessageId,
         keys: Arc<ParsedKeys>,
     ) -> Result<std::result::Result<Vec<u8>, ReceiverBlockedSender>, DieselDatabaseError> {
         use model::schema::{account_interaction, pending_messages::dsl::*};
@@ -159,7 +159,7 @@ impl CurrentWriteChatMessage<'_> {
         let data_for_signing = SignedMessageData {
             sender: sender.as_id(),
             receiver: receiver.as_id(),
-            message_uuid: message_uuid_value,
+            message_id: message_id_value,
             sender_public_key_id,
             receiver_public_key_id,
             m: new_message_number,
@@ -179,7 +179,7 @@ impl CurrentWriteChatMessage<'_> {
                 message_unix_time.eq(time),
                 message_number.eq(new_message_number),
                 message_bytes.eq(&signed),
-                message_uuid.eq(&message_uuid_value),
+                message_id.eq(&message_id_value),
             ))
             .execute(self.conn())
             .into_db_error((sender, receiver, new_message_number))?;
@@ -191,7 +191,7 @@ impl CurrentWriteChatMessage<'_> {
         &mut self,
         sender: AccountIdInternal,
         receiver: AccountIdInternal,
-        message_uuid_value: model::MessageUuid,
+        message_id_value: model::MessageId,
         delivery_info_type_value: DeliveryInfoType,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::message_delivery_info::dsl::*;
@@ -202,7 +202,7 @@ impl CurrentWriteChatMessage<'_> {
             .values((
                 account_id_sender.eq(sender.as_db_id()),
                 account_id_receiver.eq(receiver.as_db_id()),
-                message_uuid.eq(message_uuid_value),
+                message_id.eq(message_id_value),
                 delivery_info_type.eq(delivery_info_type_value),
                 unix_time.eq(time),
             ))

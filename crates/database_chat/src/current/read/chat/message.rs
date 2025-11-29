@@ -5,7 +5,7 @@ use diesel::prelude::*;
 use error_stack::Result;
 use model::{
     AccountId, AccountIdDb, AdminDataExportPendingMessage, ConversationId,
-    DataExportPendingMessage, MessageNumber, MessageUuid, NewMessageNotification,
+    DataExportPendingMessage, MessageId, MessageNumber, NewMessageNotification,
     NewMessageNotificationList, PendingMessageDbId, PendingMessageDbIdAndMessageTime,
     PendingMessageInfo, PendingMessageRaw, UnixTime,
 };
@@ -141,7 +141,7 @@ impl CurrentReadChatMessage<'_> {
     pub fn all_sent_messages(
         &mut self,
         id_message_sender: AccountIdInternal,
-    ) -> Result<Vec<MessageUuid>, DieselDatabaseError> {
+    ) -> Result<Vec<MessageId>, DieselDatabaseError> {
         use crate::schema::pending_messages::dsl::*;
 
         let value: Vec<PendingMessageInternal> = pending_messages
@@ -151,7 +151,7 @@ impl CurrentReadChatMessage<'_> {
             .load(self.conn())
             .into_db_error(())?;
 
-        let messages = value.into_iter().map(|msg| msg.message_uuid).collect();
+        let messages = value.into_iter().map(|msg| msg.message_id).collect();
 
         Ok(messages)
     }
@@ -159,14 +159,14 @@ impl CurrentReadChatMessage<'_> {
     pub fn get_sent_message(
         &mut self,
         id_message_sender: AccountIdInternal,
-        message: MessageUuid,
+        message: MessageId,
     ) -> Result<GetSentMessage, DieselDatabaseError> {
         use crate::schema::pending_messages::dsl::*;
 
         let value: Vec<u8> = pending_messages
             .filter(account_id_sender.eq(id_message_sender.as_db_id()))
             .filter(sender_acknowledgement.eq(false))
-            .filter(message_uuid.eq(&message))
+            .filter(message_id.eq(&message))
             .select(message_bytes)
             .first(self.conn())
             .into_db_error(())?;
@@ -266,7 +266,7 @@ impl CurrentReadChatMessage<'_> {
     ) -> Result<Vec<MessageDeliveryInfo>, DieselDatabaseError> {
         use crate::schema::{account_id, message_delivery_info};
 
-        let data: Vec<(i64, AccountId, MessageUuid, DeliveryInfoType, UnixTime)> =
+        let data: Vec<(i64, AccountId, MessageId, DeliveryInfoType, UnixTime)> =
             message_delivery_info::table
                 .inner_join(
                     account_id::table
@@ -276,7 +276,7 @@ impl CurrentReadChatMessage<'_> {
                 .select((
                     message_delivery_info::id,
                     account_id::uuid,
-                    message_delivery_info::message_uuid,
+                    message_delivery_info::message_id,
                     message_delivery_info::delivery_info_type,
                     message_delivery_info::unix_time,
                 ))
@@ -286,10 +286,10 @@ impl CurrentReadChatMessage<'_> {
         let result = data
             .into_iter()
             .map(
-                |(id, receiver, message_uuid, delivery_type, unix_time)| MessageDeliveryInfo {
+                |(id, receiver, message_id, delivery_type, unix_time)| MessageDeliveryInfo {
                     id,
                     receiver,
-                    message_uuid,
+                    message_id,
                     delivery_type,
                     unix_time,
                 },
@@ -321,14 +321,14 @@ impl CurrentReadChatMessage<'_> {
         &mut self,
         sender: AccountIdInternal,
         receiver: AccountIdInternal,
-        message_uuid_value: MessageUuid,
+        message_id_value: MessageId,
     ) -> Result<Option<PendingMessageInfo>, DieselDatabaseError> {
         use crate::schema::pending_messages::dsl::*;
 
         let result: Option<(i64, MessageNumber)> = pending_messages
             .filter(account_id_sender.eq(sender.as_db_id()))
             .filter(account_id_receiver.eq(receiver.as_db_id()))
-            .filter(message_uuid.eq(message_uuid_value))
+            .filter(message_id.eq(message_id_value))
             .select((id, message_number))
             .first(self.conn())
             .optional()
@@ -339,7 +339,7 @@ impl CurrentReadChatMessage<'_> {
                 id: private_key,
                 sender,
                 m: message_number_value,
-                message_uuid: message_uuid_value,
+                message_id: message_id_value,
             }),
         )
     }
