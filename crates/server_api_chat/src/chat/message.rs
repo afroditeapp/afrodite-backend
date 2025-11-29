@@ -116,11 +116,7 @@ pub async fn post_add_receiver_acknowledgement(
 
     db_write!(state, move |cmds| {
         cmds.chat()
-            .add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
-                id,
-                list.ids,
-                list.change_to_delivered,
-            )
+            .add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(id, list.ids)
             .await
     })?;
     Ok(())

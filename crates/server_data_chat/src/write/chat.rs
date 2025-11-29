@@ -180,7 +180,6 @@ impl WriteCommandsChat<'_> {
         &self,
         message_receiver: AccountIdInternal,
         messages: Vec<PendingMessageId>,
-        change_to_delivered: bool,
     ) -> Result<(), DataError> {
         let mut converted = vec![];
         let mut unique_senders = HashSet::new();
@@ -213,7 +212,7 @@ impl WriteCommandsChat<'_> {
                     &converted,
                 )?;
 
-            if change_to_delivered && delivered_state_enabled {
+            if delivered_state_enabled {
                 for msg in &converted {
                     cmds.chat().message().insert_message_delivery_info(
                         msg.sender,
@@ -227,7 +226,7 @@ impl WriteCommandsChat<'_> {
             Ok(())
         })?;
 
-        if change_to_delivered && delivered_state_enabled {
+        if delivered_state_enabled {
             for sender in &unique_senders {
                 self.handle()
                     .events()

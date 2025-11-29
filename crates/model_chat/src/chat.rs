@@ -77,14 +77,6 @@ pub struct PendingMessageId {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct PendingMessageAcknowledgementList {
     pub ids: Vec<PendingMessageId>,
-    /// Change sender's messages to delivered state
-    #[serde(default, skip_serializing_if = "value_is_true")]
-    #[schema(default = true)]
-    pub change_to_delivered: bool,
-}
-
-fn value_is_true(v: &bool) -> bool {
-    *v
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
