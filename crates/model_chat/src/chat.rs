@@ -97,14 +97,6 @@ pub struct SentMessageIdList {
     pub ids: Vec<MessageUuid>,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq)]
-pub struct UpdateMessageViewStatus {
-    /// Sender of the messages.
-    pub sender: AccountId,
-    /// New message ID for message view status.
-    pub m: MessageId,
-}
-
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, IntoParams)]
 pub struct SendMessageToAccountParams {
     #[serde(
