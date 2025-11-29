@@ -19,7 +19,7 @@ use model_chat::{
     ResetReceivedLikesIteratorResult, SendMessageResult, SyncVersionUtils,
 };
 use server_data::{
-    DataError, DieselDatabaseError, db_transaction, define_cmd_wrapper_write,
+    DataError, DieselDatabaseError, app::GetConfig, db_transaction, define_cmd_wrapper_write,
     id::ToAccountIdInternal, read::DbRead, result::Result, write::DbTransaction,
 };
 use simple_backend_utils::ContextExt;
@@ -199,6 +199,12 @@ impl WriteCommandsChat<'_> {
             }
         }
 
+        let delivered_state_enabled = self
+            .config()
+            .client_features_internal()
+            .chat
+            .message_state_delivered;
+
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .message()
@@ -207,7 +213,7 @@ impl WriteCommandsChat<'_> {
                     &converted,
                 )?;
 
-            if change_to_delivered {
+            if change_to_delivered && delivered_state_enabled {
                 for msg in &converted {
                     cmds.chat().message().insert_message_delivery_info(
                         msg.sender,
@@ -221,7 +227,7 @@ impl WriteCommandsChat<'_> {
             Ok(())
         })?;
 
-        if change_to_delivered {
+        if change_to_delivered && delivered_state_enabled {
             for sender in &unique_senders {
                 self.handle()
                     .events()
@@ -241,6 +247,16 @@ impl WriteCommandsChat<'_> {
         message_receiver: AccountIdInternal,
         messages: Vec<PendingMessageId>,
     ) -> Result<(), DataError> {
+        let seen_state_enabled = self
+            .config()
+            .client_features_internal()
+            .chat
+            .message_state_seen;
+
+        if !seen_state_enabled {
+            return Ok(());
+        }
+
         let mut converted = vec![];
         for m in messages {
             let sender = self.to_account_id_internal(m.sender).await?;
