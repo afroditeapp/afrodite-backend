@@ -214,7 +214,7 @@ impl WriteCommandsChat<'_> {
                     cmds.chat().message().insert_message_delivery_info(
                         msg.sender,
                         message_receiver,
-                        msg.m,
+                        msg.message_uuid,
                         DeliveryInfoType::Delivered,
                     )?;
                 }
@@ -263,13 +263,13 @@ impl WriteCommandsChat<'_> {
         // Group messages by sender for efficient processing
         let mut messages_by_sender: std::collections::HashMap<
             AccountIdInternal,
-            Vec<model::MessageId>,
+            Vec<(model::MessageId, model::MessageUuid)>,
         > = std::collections::HashMap::new();
         for msg in &converted {
             messages_by_sender
                 .entry(msg.sender)
                 .or_default()
-                .push(msg.m);
+                .push((msg.m, msg.message_uuid));
         }
 
         let senders_with_updates = db_transaction!(self, move |mut cmds| {
@@ -295,7 +295,7 @@ impl WriteCommandsChat<'_> {
 
                 let mut largest_valid_id: Option<MessageId> = None;
 
-                for &msg_id in &message_ids {
+                for &(msg_id, msg_uuid) in &message_ids {
                     if msg_id.id < message_id_min || msg_id.id > message_id_max {
                         continue;
                     }
@@ -309,7 +309,7 @@ impl WriteCommandsChat<'_> {
                     cmds.chat().message().insert_message_delivery_info(
                         sender,
                         message_receiver,
-                        msg_id,
+                        msg_uuid,
                         DeliveryInfoType::Seen,
                     )?;
                 }

@@ -266,7 +266,7 @@ impl CurrentReadChatMessage<'_> {
     ) -> Result<Vec<MessageDeliveryInfo>, DieselDatabaseError> {
         use crate::schema::{account_id, message_delivery_info};
 
-        let data: Vec<(i64, AccountId, MessageId, DeliveryInfoType, UnixTime)> =
+        let data: Vec<(i64, AccountId, MessageUuid, DeliveryInfoType, UnixTime)> =
             message_delivery_info::table
                 .inner_join(
                     account_id::table
@@ -276,7 +276,7 @@ impl CurrentReadChatMessage<'_> {
                 .select((
                     message_delivery_info::id,
                     account_id::uuid,
-                    message_delivery_info::message_id,
+                    message_delivery_info::message_uuid,
                     message_delivery_info::delivery_info_type,
                     message_delivery_info::unix_time,
                 ))
@@ -286,10 +286,10 @@ impl CurrentReadChatMessage<'_> {
         let result = data
             .into_iter()
             .map(
-                |(id, receiver, message_id, delivery_type, unix_time)| MessageDeliveryInfo {
+                |(id, receiver, message_uuid, delivery_type, unix_time)| MessageDeliveryInfo {
                     id,
                     receiver,
-                    message_id,
+                    message_uuid,
                     delivery_type,
                     unix_time,
                 },
@@ -339,6 +339,7 @@ impl CurrentReadChatMessage<'_> {
                 id: private_key,
                 sender,
                 m: message_id_value,
+                message_uuid: message_uuid_value,
             }),
         )
     }

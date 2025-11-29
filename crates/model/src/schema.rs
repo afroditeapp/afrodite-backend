@@ -529,7 +529,7 @@ diesel::table! {
         id -> Int8,
         account_id_sender -> Int8,
         account_id_receiver -> Int8,
-        message_id -> Int8,
+        message_uuid -> Bytea,
         delivery_info_type -> Int2,
         unix_time -> Int8,
     }

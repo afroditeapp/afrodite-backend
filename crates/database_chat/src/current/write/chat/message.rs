@@ -191,7 +191,7 @@ impl CurrentWriteChatMessage<'_> {
         &mut self,
         sender: AccountIdInternal,
         receiver: AccountIdInternal,
-        message_id_value: model::MessageId,
+        message_uuid_value: model::MessageUuid,
         delivery_info_type_value: DeliveryInfoType,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::message_delivery_info::dsl::*;
@@ -202,7 +202,7 @@ impl CurrentWriteChatMessage<'_> {
             .values((
                 account_id_sender.eq(sender.as_db_id()),
                 account_id_receiver.eq(receiver.as_db_id()),
-                message_id.eq(message_id_value),
+                message_uuid.eq(message_uuid_value),
                 delivery_info_type.eq(delivery_info_type_value),
                 unix_time.eq(time),
             ))
