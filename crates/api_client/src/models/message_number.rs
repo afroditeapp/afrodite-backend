@@ -11,7 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// MessageNumber : Message order number in a conversation.
+/// MessageNumber : Message number for identifying a message in a conversation.  The number is conversation specific and it increments.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MessageNumber {
     #[serde(rename = "mn")]
@@ -19,7 +19,7 @@ pub struct MessageNumber {
 }
 
 impl MessageNumber {
-    /// Message order number in a conversation.
+    /// Message number for identifying a message in a conversation.  The number is conversation specific and it increments.
     pub fn new(mn: i64) -> MessageNumber {
         MessageNumber {
             mn,

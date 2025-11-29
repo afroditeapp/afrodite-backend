@@ -50,7 +50,6 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_get_client_features_config**](docs/AccountApi.md#post_get_client_features_config) | **POST** /account_api/client_features_config | 
 *AccountApi* | [**post_get_custom_reports_config**](docs/AccountApi.md#post_get_custom_reports_config) | **POST** /account_api/custom_reports_config | 
 *AccountApi* | [**post_get_news_page**](docs/AccountApi.md#post_get_news_page) | **POST** /account_api/news_page | 
-*AccountApi* | [**post_get_next_client_id**](docs/AccountApi.md#post_get_next_client_id) | **POST** /account_api/next_client_id | 
 *AccountApi* | [**post_get_unread_news_count**](docs/AccountApi.md#post_get_unread_news_count) | **POST** /account_api/news_count | The unread news count for public news.
 *AccountApi* | [**post_init_email_change**](docs/AccountApi.md#post_init_email_change) | **POST** /account_api/init_email_change | Initiate email change process by providing a new email address.
 *AccountApi* | [**post_initial_email**](docs/AccountApi.md#post_initial_email) | **POST** /account_api/initial_email | Set initial email when initial setup is ongoing
@@ -91,6 +90,7 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**get_daily_likes_left**](docs/ChatApi.md#get_daily_likes_left) | **GET** /chat_api/daily_likes_left | Get daily likes left value.
 *ChatApi* | [**get_initial_matches_iterator_state**](docs/ChatApi.md#get_initial_matches_iterator_state) | **GET** /chat_api/matches/initial_state | 
 *ChatApi* | [**get_latest_public_key_id**](docs/ChatApi.md#get_latest_public_key_id) | **GET** /chat_api/latest_public_key_id/{aid} | Get latest public key ID for some account
+*ChatApi* | [**get_message_delivery_info**](docs/ChatApi.md#get_message_delivery_info) | **GET** /chat_api/message_delivery_info | Get all message delivery info where the API caller is the message sender.
 *ChatApi* | [**get_pending_messages**](docs/ChatApi.md#get_pending_messages) | **GET** /chat_api/pending_messages | Get list of pending messages.
 *ChatApi* | [**get_private_public_key_info**](docs/ChatApi.md#get_private_public_key_info) | **GET** /chat_api/private_public_key_info/{aid} | Get private public key info
 *ChatApi* | [**get_public_key**](docs/ChatApi.md#get_public_key) | **GET** /chat_api/public_key/{aid} | Get current public key of some account
@@ -104,10 +104,12 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**post_chat_email_notification_settings**](docs/ChatApi.md#post_chat_email_notification_settings) | **POST** /chat_api/post_chat_email_notification_settings | 
 *ChatApi* | [**post_chat_message_report**](docs/ChatApi.md#post_chat_message_report) | **POST** /chat_api/chat_message_report | Report chat message.
 *ChatApi* | [**post_create_video_call_url**](docs/ChatApi.md#post_create_video_call_url) | **POST** /chat_api/post_create_video_call_url | Create video call URL to a meeting with an user.
+*ChatApi* | [**post_delete_message_delivery_info**](docs/ChatApi.md#post_delete_message_delivery_info) | **POST** /chat_api/delete_message_delivery_info | Delete message delivery info entries by their database IDs.
 *ChatApi* | [**post_get_matches_iterator_page**](docs/ChatApi.md#post_get_matches_iterator_page) | **POST** /chat_api/matches | Get requested page of matches iterator page. If the page is empty there is no more matches available.
 *ChatApi* | [**post_get_new_received_likes_count**](docs/ChatApi.md#post_get_new_received_likes_count) | **POST** /chat_api/new_received_likes_count | 
 *ChatApi* | [**post_get_received_likes_page**](docs/ChatApi.md#post_get_received_likes_page) | **POST** /chat_api/received_likes | Get next page of received likes. If the page is empty there is no more received likes available.
 *ChatApi* | [**post_get_sent_message**](docs/ChatApi.md#post_get_sent_message) | **POST** /chat_api/sent_message | Receive unreceived [model_chat::SignedMessageData] for sent message.
+*ChatApi* | [**post_mark_messages_as_seen**](docs/ChatApi.md#post_mark_messages_as_seen) | **POST** /chat_api/mark_messages_as_seen | Mark received messages as seen.
 *ChatApi* | [**post_mark_received_likes_viewed**](docs/ChatApi.md#post_mark_received_likes_viewed) | **POST** /chat_api/mark_received_likes_viewed | 
 *ChatApi* | [**post_reset_new_received_likes_count**](docs/ChatApi.md#post_reset_new_received_likes_count) | **POST** /chat_api/reset_new_received_likes_count | 
 *ChatApi* | [**post_reset_received_likes_paging**](docs/ChatApi.md#post_reset_received_likes_paging) | **POST** /chat_api/received_likes/reset | 
@@ -263,10 +265,8 @@ Class | Method | HTTP request | Description
  - [ClientConfigSyncVersion](docs/ClientConfigSyncVersion.md)
  - [ClientFeaturesConfig](docs/ClientFeaturesConfig.md)
  - [ClientFeaturesConfigHash](docs/ClientFeaturesConfigHash.md)
- - [ClientId](docs/ClientId.md)
  - [ClientInfo](docs/ClientInfo.md)
  - [ClientLanguage](docs/ClientLanguage.md)
- - [ClientLocalId](docs/ClientLocalId.md)
  - [ClientType](docs/ClientType.md)
  - [ClientVersion](docs/ClientVersion.md)
  - [ClientVersionCount](docs/ClientVersionCount.md)
@@ -299,6 +299,7 @@ Class | Method | HTTP request | Description
  - [DataExportState](docs/DataExportState.md)
  - [DataExportStateType](docs/DataExportStateType.md)
  - [DataExportType](docs/DataExportType.md)
+ - [DeliveryInfoType](docs/DeliveryInfoType.md)
  - [DemoAccountLoginCredentials](docs/DemoAccountLoginCredentials.md)
  - [DemoAccountLoginResult](docs/DemoAccountLoginResult.md)
  - [DemoAccountLoginToAccount](docs/DemoAccountLoginToAccount.md)
@@ -386,7 +387,12 @@ Class | Method | HTTP request | Description
  - [MediaContentPendingModeration](docs/MediaContentPendingModeration.md)
  - [MediaContentSyncVersion](docs/MediaContentSyncVersion.md)
  - [MediaContentType](docs/MediaContentType.md)
+ - [MessageDeliveryInfo](docs/MessageDeliveryInfo.md)
+ - [MessageDeliveryInfoIdList](docs/MessageDeliveryInfoIdList.md)
+ - [MessageDeliveryInfoList](docs/MessageDeliveryInfoList.md)
  - [MessageId](docs/MessageId.md)
+ - [MessageNumber](docs/MessageNumber.md)
+ - [MessageSeenList](docs/MessageSeenList.md)
  - [MinDistanceKm](docs/MinDistanceKm.md)
  - [ModerationQueueType](docs/ModerationQueueType.md)
  - [MyProfileContent](docs/MyProfileContent.md)
@@ -494,7 +500,6 @@ Class | Method | HTTP request | Description
  - [SendMessageResult](docs/SendMessageResult.md)
  - [SendVerifyEmailMessageResult](docs/SendVerifyEmailMessageResult.md)
  - [SentBlocksPage](docs/SentBlocksPage.md)
- - [SentMessageId](docs/SentMessageId.md)
  - [SentMessageIdList](docs/SentMessageIdList.md)
  - [ServerConfig](docs/ServerConfig.md)
  - [SetAccountBanState](docs/SetAccountBanState.md)

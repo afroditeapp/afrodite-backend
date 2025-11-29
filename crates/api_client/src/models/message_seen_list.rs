@@ -11,18 +11,16 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// MessageId : Message UUID which sender generates
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct MessageId {
-    #[serde(rename = "id")]
-    pub id: String,
+pub struct MessageSeenList {
+    #[serde(rename = "ids")]
+    pub ids: Vec<models::PendingMessageId>,
 }
 
-impl MessageId {
-    /// Message UUID which sender generates
-    pub fn new(id: String) -> MessageId {
-        MessageId {
-            id,
+impl MessageSeenList {
+    pub fn new(ids: Vec<models::PendingMessageId>) -> MessageSeenList {
+        MessageSeenList {
+            ids,
         }
     }
 }

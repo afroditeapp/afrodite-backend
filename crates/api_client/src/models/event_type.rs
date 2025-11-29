@@ -51,6 +51,8 @@ pub enum EventType {
     TypingStop,
     #[serde(rename = "CheckOnlineStatusResponse")]
     CheckOnlineStatusResponse,
+    #[serde(rename = "MessageDeliveryInfoChanged")]
+    MessageDeliveryInfoChanged,
 
 }
 
@@ -75,6 +77,7 @@ impl std::fmt::Display for EventType {
             Self::TypingStart => write!(f, "TypingStart"),
             Self::TypingStop => write!(f, "TypingStop"),
             Self::CheckOnlineStatusResponse => write!(f, "CheckOnlineStatusResponse"),
+            Self::MessageDeliveryInfoChanged => write!(f, "MessageDeliveryInfoChanged"),
         }
     }
 }

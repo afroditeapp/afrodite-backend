@@ -21,10 +21,9 @@ use api_client::{
         post_send_message_fixed,
     },
     models::{
-        AccountId, AttributeMode, ClientId, ClientLocalId, MessageId,
-        PendingMessageAcknowledgementList, PendingMessageId, ProfileAttributeValueUpdate,
-        ProfileAttributesConfigQuery, ProfileUpdate, SearchAgeRange, SearchGroups, SentMessageId,
-        SentMessageIdList,
+        AccountId, AttributeMode, MessageId, PendingMessageAcknowledgementList, PendingMessageId,
+        ProfileAttributeValueUpdate, ProfileAttributesConfigQuery, ProfileUpdate, SearchAgeRange,
+        SearchGroups, SentMessageIdList,
     },
 };
 use async_trait::async_trait;
@@ -477,18 +476,27 @@ impl BotAction for AnswerReceivedMessages {
             Some(id)
         }
 
+        fn parse_message_id(d: &mut impl Iterator<Item = u8>) -> Option<MessageId> {
+            let id = d.by_ref().take(16).collect::<Vec<u8>>();
+            let id = TryInto::<[u8; 16]>::try_into(id).ok()?;
+            let id = UuidBase64Url::from_bytes(id);
+            let id = MessageId::new(id.to_string());
+            Some(id)
+        }
+
         fn parse_signed_message_data(data: Vec<u8>) -> Option<PendingMessageId> {
             let d = &mut data.iter().copied();
             let _version = d.next()?;
             let sender = parse_account_id(d)?;
             let _ = parse_account_id(d)?;
+            let message_id = parse_message_id(d)?;
             let _ = parse_minimal_i64(d)?;
             let _ = parse_minimal_i64(d)?;
-            let message_id = parse_minimal_i64(d)?;
+            let _ = parse_minimal_i64(d)?;
 
             Some(PendingMessageId {
                 sender: sender.into(),
-                m: MessageId::new(message_id).into(),
+                id: message_id.into(),
             })
         }
 
@@ -513,6 +521,7 @@ impl BotAction for AnswerReceivedMessages {
 
         let delete_list = PendingMessageAcknowledgementList {
             ids: pending_messages.clone(),
+            change_to_delivered: Some(true),
         };
 
         post_add_receiver_acknowledgement(state.api(), delete_list)
@@ -557,14 +566,14 @@ async fn send_message(
     message_bytes.extend_from_slice(msg.as_bytes());
     let encrypted_bytes = encrypt_data(&keys.private, public_key, message_bytes)
         .change_context(TestError::MessageEncryptionError)?;
+    let message_id = UuidBase64Url::new_random_id().to_string();
 
     post_send_message_fixed(
         state.api(),
         keys.public_key_id,
         &receiver.aid.to_string(),
         latest_key_id,
-        0,
-        0,
+        &message_id,
         encrypted_bytes,
     )
     .await
@@ -573,10 +582,7 @@ async fn send_message(
     post_add_sender_acknowledgement(
         state.api(),
         SentMessageIdList {
-            ids: vec![SentMessageId {
-                c: ClientId::new(0).into(),
-                l: ClientLocalId::new(0).into(),
-            }],
+            ids: vec![MessageId { id: message_id }],
         },
     )
     .await

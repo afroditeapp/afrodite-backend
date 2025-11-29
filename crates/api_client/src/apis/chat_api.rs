@@ -71,6 +71,15 @@ pub enum GetLatestPublicKeyIdError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_message_delivery_info`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetMessageDeliveryInfoError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_pending_messages`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -188,6 +197,15 @@ pub enum PostCreateVideoCallUrlError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`post_delete_message_delivery_info`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostDeleteMessageDeliveryInfoError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`post_get_matches_iterator_page`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -219,6 +237,15 @@ pub enum PostGetReceivedLikesPageError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostGetSentMessageError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_mark_messages_as_seen`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostMarkMessagesAsSeenError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -506,7 +533,45 @@ pub async fn get_latest_public_key_id(configuration: &configuration::Configurati
     }
 }
 
-/// The returned bytes is - Hide notifications (u8, values: 0 or 1) - List of objects  Data for single object: - Binary data length as minimal i64 - Binary data  Minimal i64 has this format: - i64 byte count (u8, values: 1, 2, 4, 8) - i64 bytes (little-endian)  Binary data is binary PGP message which contains backend signed binary data. The binary data contains: - Version (u8, values: 1) - Sender AccountId UUID big-endian bytes (16 bytes) - Receiver AccountId UUID big-endian bytes (16 bytes) - Sender public key ID (minimal i64) - Receiver public key ID (minimal i64) - Message ID (minimal i64) - Unix time (minimal i64) - Message data
+/// This endpoint returns delivery information (delivered/seen status) for all messages sent by the authenticated user.
+pub async fn get_message_delivery_info(configuration: &configuration::Configuration, ) -> Result<models::MessageDeliveryInfoList, Error<GetMessageDeliveryInfoError>> {
+
+    let uri_str = format!("{}/chat_api/message_delivery_info", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::MessageDeliveryInfoList`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::MessageDeliveryInfoList`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetMessageDeliveryInfoError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// The returned bytes is - Hide notifications (u8, values: 0 or 1) - List of objects  Data for single object: - Binary data length as minimal i64 - Binary data  Minimal i64 has this format: - i64 byte count (u8, values: 1, 2, 4, 8) - i64 bytes (little-endian)  Binary data is binary PGP message which contains backend signed binary data. The binary data contains: - Version (u8, values: 1) - Sender AccountId UUID big-endian bytes (16 bytes) - Receiver AccountId UUID big-endian bytes (16 bytes) - Message UUID big-endian bytes (16 bytes) - Sender public key ID (minimal i64) - Receiver public key ID (minimal i64) - Message ID (minimal i64) - Unix time (minimal i64) - Message data
 pub async fn get_pending_messages(configuration: &configuration::Configuration, ) -> Result<reqwest::Response, Error<GetPendingMessagesError>> {
 
     let uri_str = format!("{}/chat_api/pending_messages", configuration.base_path);
@@ -947,6 +1012,36 @@ pub async fn post_create_video_call_url(configuration: &configuration::Configura
     }
 }
 
+/// This endpoint allows message senders to remove delivery info entries that they have already processed.
+pub async fn post_delete_message_delivery_info(configuration: &configuration::Configuration, message_delivery_info_id_list: models::MessageDeliveryInfoIdList) -> Result<(), Error<PostDeleteMessageDeliveryInfoError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_message_delivery_info_id_list = message_delivery_info_id_list;
+
+    let uri_str = format!("{}/chat_api/delete_message_delivery_info", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_message_delivery_info_id_list);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostDeleteMessageDeliveryInfoError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 pub async fn post_get_matches_iterator_page(configuration: &configuration::Configuration, matches_iterator_state: models::MatchesIteratorState) -> Result<models::MatchesPage, Error<PostGetMatchesIteratorPageError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_matches_iterator_state = matches_iterator_state;
@@ -1066,9 +1161,9 @@ pub async fn post_get_received_likes_page(configuration: &configuration::Configu
 }
 
 /// This is HTTP POST route only to allow JSON request body.
-pub async fn post_get_sent_message(configuration: &configuration::Configuration, sent_message_id: models::SentMessageId) -> Result<models::GetSentMessage, Error<PostGetSentMessageError>> {
+pub async fn post_get_sent_message(configuration: &configuration::Configuration, message_id: models::MessageId) -> Result<models::GetSentMessage, Error<PostGetSentMessageError>> {
     // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_sent_message_id = sent_message_id;
+    let p_body_message_id = message_id;
 
     let uri_str = format!("{}/chat_api/sent_message", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
@@ -1079,7 +1174,7 @@ pub async fn post_get_sent_message(configuration: &configuration::Configuration,
     if let Some(ref token) = configuration.bearer_access_token {
         req_builder = req_builder.bearer_auth(token.to_owned());
     };
-    req_builder = req_builder.json(&p_body_sent_message_id);
+    req_builder = req_builder.json(&p_body_message_id);
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -1102,6 +1197,36 @@ pub async fn post_get_sent_message(configuration: &configuration::Configuration,
     } else {
         let content = resp.text().await?;
         let entity: Option<PostGetSentMessageError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// This endpoint allows message receivers to mark messages as seen. The seen status is saved to the message_delivery_info table and an event is sent to each message sender to notify them of the state change.
+pub async fn post_mark_messages_as_seen(configuration: &configuration::Configuration, message_seen_list: models::MessageSeenList) -> Result<(), Error<PostMarkMessagesAsSeenError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_message_seen_list = message_seen_list;
+
+    let uri_str = format!("{}/chat_api/mark_messages_as_seen", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_message_seen_list);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostMarkMessagesAsSeenError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -1251,13 +1376,12 @@ pub async fn post_send_like(configuration: &configuration::Configuration, accoun
 }
 
 /// Max pending message count is 50. Max message size is u16::MAX.  Sending will fail if one or two way block exists.  Only the latest public key for sender and receiver can be used when sending a message.
-pub async fn post_send_message(configuration: &configuration::Configuration, sender_public_key_id: i64, receiver: &str, receiver_public_key_id: i64, client_id: i64, client_local_id: i64, body: std::path::PathBuf) -> Result<models::SendMessageResult, Error<PostSendMessageError>> {
+pub async fn post_send_message(configuration: &configuration::Configuration, sender_public_key_id: i64, receiver: &str, receiver_public_key_id: i64, message_id: &str, body: std::path::PathBuf) -> Result<models::SendMessageResult, Error<PostSendMessageError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_sender_public_key_id = sender_public_key_id;
     let p_query_receiver = receiver;
     let p_query_receiver_public_key_id = receiver_public_key_id;
-    let p_query_client_id = client_id;
-    let p_query_client_local_id = client_local_id;
+    let p_query_message_id = message_id;
     let p_body_body = body;
 
     let uri_str = format!("{}/chat_api/send_message", configuration.base_path);
@@ -1266,8 +1390,7 @@ pub async fn post_send_message(configuration: &configuration::Configuration, sen
     req_builder = req_builder.query(&[("sender_public_key_id", &p_query_sender_public_key_id.to_string())]);
     req_builder = req_builder.query(&[("receiver", &p_query_receiver.to_string())]);
     req_builder = req_builder.query(&[("receiver_public_key_id", &p_query_receiver_public_key_id.to_string())]);
-    req_builder = req_builder.query(&[("client_id", &p_query_client_id.to_string())]);
-    req_builder = req_builder.query(&[("client_local_id", &p_query_client_local_id.to_string())]);
+    req_builder = req_builder.query(&[("message_id", &p_query_message_id.to_string())]);
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }

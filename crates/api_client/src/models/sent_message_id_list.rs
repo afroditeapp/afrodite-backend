@@ -14,11 +14,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SentMessageIdList {
     #[serde(rename = "ids")]
-    pub ids: Vec<models::SentMessageId>,
+    pub ids: Vec<models::MessageId>,
 }
 
 impl SentMessageIdList {
-    pub fn new(ids: Vec<models::SentMessageId>) -> SentMessageIdList {
+    pub fn new(ids: Vec<models::MessageId>) -> SentMessageIdList {
         SentMessageIdList {
             ids,
         }

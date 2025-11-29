@@ -60,10 +60,8 @@ src/models/client_config.rs
 src/models/client_config_sync_version.rs
 src/models/client_features_config.rs
 src/models/client_features_config_hash.rs
-src/models/client_id.rs
 src/models/client_info.rs
 src/models/client_language.rs
-src/models/client_local_id.rs
 src/models/client_type.rs
 src/models/client_version.rs
 src/models/client_version_count.rs
@@ -96,6 +94,7 @@ src/models/data_export_name.rs
 src/models/data_export_state.rs
 src/models/data_export_state_type.rs
 src/models/data_export_type.rs
+src/models/delivery_info_type.rs
 src/models/demo_account_login_credentials.rs
 src/models/demo_account_login_result.rs
 src/models/demo_account_login_to_account.rs
@@ -183,7 +182,12 @@ src/models/media_content_moderation_rejected_reason_details.rs
 src/models/media_content_pending_moderation.rs
 src/models/media_content_sync_version.rs
 src/models/media_content_type.rs
+src/models/message_delivery_info.rs
+src/models/message_delivery_info_id_list.rs
+src/models/message_delivery_info_list.rs
 src/models/message_id.rs
+src/models/message_number.rs
+src/models/message_seen_list.rs
 src/models/min_distance_km.rs
 src/models/mod.rs
 src/models/moderation_queue_type.rs
@@ -292,7 +296,6 @@ src/models/send_like_result.rs
 src/models/send_message_result.rs
 src/models/send_verify_email_message_result.rs
 src/models/sent_blocks_page.rs
-src/models/sent_message_id.rs
 src/models/sent_message_id_list.rs
 src/models/server_config.rs
 src/models/set_account_ban_state.rs

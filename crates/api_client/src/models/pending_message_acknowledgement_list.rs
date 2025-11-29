@@ -13,6 +13,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PendingMessageAcknowledgementList {
+    /// Change sender's messages to delivered state
+    #[serde(rename = "change_to_delivered", skip_serializing_if = "Option::is_none")]
+    pub change_to_delivered: Option<bool>,
     #[serde(rename = "ids")]
     pub ids: Vec<models::PendingMessageId>,
 }
@@ -20,6 +23,7 @@ pub struct PendingMessageAcknowledgementList {
 impl PendingMessageAcknowledgementList {
     pub fn new(ids: Vec<models::PendingMessageId>) -> PendingMessageAcknowledgementList {
         PendingMessageAcknowledgementList {
+            change_to_delivered: None,
             ids,
         }
     }
