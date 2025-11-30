@@ -122,7 +122,10 @@ fn new_config(config: &TestMode, bot_api_port: u16) -> (ConfigFile, SimpleBacken
             email: EmailAddress(TEST_ADMIN_ACCESS_EMAIL.to_string()),
         }
         .into(),
-        general: Default::default(),
+        general: config::file::GeneralConfig {
+            debug_disable_api_limits: config.selected_benchmark().is_some(),
+            ..Default::default()
+        },
         api: ApiConfig::default(),
         config_files: ConfigFileConfig::default(),
         automatic_profile_search: AutomaticProfileSearchConfig::default(),
