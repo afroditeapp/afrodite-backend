@@ -69,7 +69,11 @@ use tokio_rustls::{
 };
 use tokio_rustls_acme::AcmeAcceptor;
 use tower::{Service, ServiceBuilder};
-use tower_http::trace::TraceLayer;
+use tower_http::{
+    CompressionLevel,
+    compression::{CompressionLayer, Predicate, predicate::SizeAbove},
+    trace::TraceLayer,
+};
 use tracing::{debug, error, info, warn};
 use tracing_subscriber::{EnvFilter, Layer, layer::SubscriberExt, util::SubscriberInitExt};
 use utoipa_swagger_ui::SwaggerUi;
@@ -369,12 +373,34 @@ impl<T: BusinessLogic> SimpleBackend<T> {
     }
 
     fn common_layers(router: Router, ip_country_tracker: IpCountryTracker) -> Router {
+        #[derive(Clone)]
+        struct TextContentType;
+
+        impl Predicate for TextContentType {
+            fn should_compress<B>(&self, response: &hyper::Response<B>) -> bool
+            where
+                B: axum::body::HttpBody,
+            {
+                response
+                    .headers()
+                    .get(hyper::header::CONTENT_TYPE)
+                    .map(|ct| ct.as_bytes())
+                    .map(|ct| ct.starts_with(b"application/json") || ct.starts_with(b"text/"))
+                    .unwrap_or(false)
+            }
+        }
+
         router.layer(
             ServiceBuilder::new()
                 .layer(middleware::from_fn_with_state(
                     ip_country_tracker.clone(),
                     track_http_request_country,
                 ))
+                .layer(
+                    CompressionLayer::new()
+                        .quality(CompressionLevel::Fastest)
+                        .compress_when(SizeAbove::new(32).and(TextContentType)),
+                )
                 .map_response(|mut r: hyper::Response<Body>| {
                     let headers = r.headers_mut();
                     if !headers.contains_key(CACHE_CONTROL) {

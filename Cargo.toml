@@ -136,7 +136,7 @@ hyper-util = { version = "0.1.14", features = ["full"] }
 axum = { version = "0.8.4", features = ["ws", "macros", "http2"] }
 axum-extra = { version = "0.10.1", features = ["typed-header"] }
 tower = "0.5.2"
-tower-http = { version = "0.6.6", features = ["trace"] }
+tower-http = { version = "0.6.6", features = ["trace", "compression-br", "compression-gzip", "compression-zstd"] }
 
 # Email sending, tls_client_rustls and tls_client_rustls configures TLS
 lettre = { version = "0.11.17", default-features = false, features = ["smtp-transport", "pool", "hostname", "builder"] }
