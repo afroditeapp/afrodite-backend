@@ -12,6 +12,7 @@ use server_data::{
 
 mod limits;
 mod notification;
+mod privacy;
 mod public_key;
 
 define_cmd_wrapper_read!(ReadCommandsChat);
@@ -22,6 +23,9 @@ impl<'a> ReadCommandsChat<'a> {
     }
     pub fn notification(self) -> notification::ReadCommandsChatNotification<'a> {
         notification::ReadCommandsChatNotification::new(self.0)
+    }
+    pub fn privacy(self) -> privacy::ReadCommandsChatPrivacy<'a> {
+        privacy::ReadCommandsChatPrivacy::new(self.0)
     }
     pub fn limits(self) -> limits::ReadCommandsChatLimits<'a> {
         limits::ReadCommandsChatLimits::new(self.0)

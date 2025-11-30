@@ -220,6 +220,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    chat_privacy_settings (account_id) {
+        account_id -> Int8,
+        message_state_delivered -> Bool,
+        message_state_sent -> Bool,
+        typing_indicator -> Bool,
+    }
+}
+
+diesel::table! {
     chat_report_chat_message (report_id) {
         report_id -> Int8,
         message_sender_account_id_uuid -> Bytea,
@@ -804,6 +813,7 @@ diesel::joinable!(api_usage_statistics_metric_value -> api_usage_statistics_metr
 diesel::joinable!(api_usage_statistics_metric_value -> api_usage_statistics_save_time (time_id));
 diesel::joinable!(chat_app_notification_settings -> account_id (account_id));
 diesel::joinable!(chat_email_notification_settings -> account_id (account_id));
+diesel::joinable!(chat_privacy_settings -> account_id (account_id));
 diesel::joinable!(chat_report_chat_message -> common_report (report_id));
 diesel::joinable!(chat_state -> account_id (account_id));
 diesel::joinable!(common_state -> account_id (account_id));
@@ -871,6 +881,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     chat_app_notification_settings,
     chat_email_notification_settings,
     chat_global_state,
+    chat_privacy_settings,
     chat_report_chat_message,
     chat_state,
     client_features_file_hash,

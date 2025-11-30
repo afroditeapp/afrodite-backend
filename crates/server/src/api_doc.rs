@@ -191,6 +191,7 @@ impl ApiDoc {
             .merge_from(server_api_chat::chat::router_public_key(state.clone()).into_openapi())
             .merge_from(server_api_chat::chat::router_chat_report(state.clone()).into_openapi())
             .merge_from(server_api_chat::chat::router_notification(state.clone()).into_openapi())
+            .merge_from(server_api_chat::chat::router_privacy(state.clone()).into_openapi())
             .merge_from(server_api_chat::chat::router_video_call(state.clone()).into_openapi())
             .tag_routes("chat");
         doc.merge(chat);

@@ -1,5 +1,6 @@
 mod limits;
 mod notification;
+mod privacy;
 mod report;
 
 use std::{collections::HashSet, sync::Arc};
@@ -35,6 +36,9 @@ impl<'a> WriteCommandsChat<'a> {
     }
     pub fn notification(self) -> notification::WriteCommandsChatNotification<'a> {
         notification::WriteCommandsChatNotification::new(self.0)
+    }
+    pub fn privacy(self) -> privacy::WriteCommandsChatPrivacy<'a> {
+        privacy::WriteCommandsChatPrivacy::new(self.0)
     }
     pub fn limits(self) -> limits::WriteCommandsChatLimits<'a> {
         limits::WriteCommandsChatLimits::new(self.0)
@@ -203,6 +207,18 @@ impl WriteCommandsChat<'_> {
             .client_features_internal()
             .chat
             .message_state_delivered;
+
+        let delivered_state_enabled = if delivered_state_enabled {
+            self.handle()
+                .read()
+                .chat()
+                .privacy()
+                .chat_privacy_settings(message_receiver)
+                .await?
+                .message_state_delivered
+        } else {
+            false
+        };
 
         db_transaction!(self, move |mut cmds| {
             cmds.chat()

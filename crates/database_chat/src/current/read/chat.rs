@@ -9,6 +9,7 @@ mod interaction;
 mod limits;
 mod message;
 mod notification;
+mod privacy;
 mod public_key;
 
 define_current_read_commands!(CurrentReadChat);
@@ -28,6 +29,10 @@ impl<'a> CurrentReadChat<'a> {
 
     pub fn notification(self) -> notification::CurrentReadChatNotification<'a> {
         notification::CurrentReadChatNotification::new(self.cmds)
+    }
+
+    pub fn privacy(self) -> privacy::CurrentReadChatPrivacy<'a> {
+        privacy::CurrentReadChatPrivacy::new(self.cmds)
     }
 
     pub fn limits(self) -> limits::CurrentReadChatLimits<'a> {

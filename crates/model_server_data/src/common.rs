@@ -140,6 +140,36 @@ impl Default for ChatEmailNotificationSettings {
     }
 }
 
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Queryable,
+    Selectable,
+    AsChangeset,
+    Insertable,
+    Deserialize,
+    Serialize,
+    ToSchema,
+)]
+#[diesel(table_name = crate::schema::chat_privacy_settings)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct ChatPrivacySettings {
+    pub message_state_delivered: bool,
+    message_state_sent: bool,
+    typing_indicator: bool,
+}
+
+impl Default for ChatPrivacySettings {
+    fn default() -> Self {
+        Self {
+            message_state_delivered: true,
+            message_state_sent: true,
+            typing_indicator: true,
+        }
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct AppNotificationSettingsInternal {
     pub account: AccountAppNotificationSettings,

@@ -1094,6 +1094,17 @@ CREATE TABLE IF NOT EXISTS chat_email_notification_settings(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS chat_privacy_settings(
+    account_id                         INTEGER PRIMARY KEY NOT NULL,
+    message_state_delivered            BOOLEAN             NOT NULL,
+    message_state_sent                 BOOLEAN             NOT NULL,
+    typing_indicator                   BOOLEAN             NOT NULL,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS chat_global_state(
     -- 0 = chat component global state
     row_type              INTEGER PRIMARY KEY NOT NULL,
