@@ -16,7 +16,7 @@ use model::{MessageNumber, NewReceivedLikesCountResult, ReceivedLikeId};
 use model_chat::{
     AccountIdInternal, AddPublicKeyResult, ChatStateRaw, DeliveryInfoType, MessageId,
     NewReceivedLikesCount, PendingMessageId, PublicKeyId, ReceivedLikesIteratorState,
-    ResetReceivedLikesIteratorResult, SendMessageResult, SyncVersionUtils,
+    ResetReceivedLikesIteratorResult, SeenMessage, SendMessageResult, SyncVersionUtils,
 };
 use server_data::{
     DataError, DieselDatabaseError, app::GetConfig, db_transaction, define_cmd_wrapper_write,
@@ -244,7 +244,7 @@ impl WriteCommandsChat<'_> {
     pub async fn mark_messages_as_seen(
         &self,
         message_receiver: AccountIdInternal,
-        messages: Vec<PendingMessageId>,
+        messages: Vec<SeenMessage>,
     ) -> Result<(), DataError> {
         let seen_state_enabled = self
             .config()
@@ -259,16 +259,7 @@ impl WriteCommandsChat<'_> {
         let mut converted = vec![];
         for m in messages {
             let sender = self.to_account_id_internal(m.sender).await?;
-            let msg_info = self
-                .db_read(move |mut cmds| {
-                    cmds.chat()
-                        .message()
-                        .check_pending_message_info(sender, message_receiver, m.id)
-                })
-                .await?;
-            if let Some(msg_info) = msg_info {
-                converted.push(msg_info);
-            }
+            converted.push((sender, m.mn, m.id));
         }
 
         // Group messages by sender for efficient processing
@@ -276,11 +267,11 @@ impl WriteCommandsChat<'_> {
             AccountIdInternal,
             Vec<(model::MessageNumber, model::MessageId)>,
         > = std::collections::HashMap::new();
-        for msg in &converted {
+        for (sender, msg_number, msg_id) in &converted {
             messages_by_sender
-                .entry(msg.sender)
+                .entry(*sender)
                 .or_default()
-                .push((msg.m, msg.message_id));
+                .push((*msg_number, *msg_id));
         }
 
         let senders_with_updates = db_transaction!(self, move |mut cmds| {

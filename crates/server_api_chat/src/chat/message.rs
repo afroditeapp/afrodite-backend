@@ -8,7 +8,7 @@ use headers::ContentType;
 use model::{GetConversationId, MessageId, NotificationEvent, PushNotificationFlags};
 use model_chat::{
     AccountId, AccountIdInternal, EventToClientInternal, GetSentMessage, MessageDeliveryInfoIdList,
-    MessageDeliveryInfoList, MessageSeenList, PendingMessageAcknowledgementList, SendMessageResult,
+    MessageDeliveryInfoList, PendingMessageAcknowledgementList, SeenMessageList, SendMessageResult,
     SendMessageToAccountParams, SentMessageIdList, add_minimal_i64,
 };
 use server_api::{
@@ -390,7 +390,7 @@ const PATH_POST_MARK_MESSAGES_AS_SEEN: &str = "/chat_api/mark_messages_as_seen";
 #[utoipa::path(
     post,
     path = PATH_POST_MARK_MESSAGES_AS_SEEN,
-    request_body(content = MessageSeenList),
+    request_body(content = SeenMessageList),
     responses(
         (status = 200, description = "Success."),
         (status = 401, description = "Unauthorized."),
@@ -401,12 +401,12 @@ const PATH_POST_MARK_MESSAGES_AS_SEEN: &str = "/chat_api/mark_messages_as_seen";
 pub async fn post_mark_messages_as_seen(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    Json(list): Json<MessageSeenList>,
+    Json(list): Json<SeenMessageList>,
 ) -> Result<(), StatusCode> {
     CHAT.post_mark_messages_as_seen.incr();
 
     db_write!(state, move |cmds| {
-        cmds.chat().mark_messages_as_seen(id, list.ids).await
+        cmds.chat().mark_messages_as_seen(id, list.messages).await
     })?;
     Ok(())
 }
