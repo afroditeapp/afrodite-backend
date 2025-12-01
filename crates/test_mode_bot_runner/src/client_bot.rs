@@ -8,8 +8,8 @@ use api_client::{
         chat_api::{
             get_latest_public_key_id, get_pending_messages, get_public_key, post_add_public_key,
             post_add_receiver_acknowledgement, post_add_sender_acknowledgement,
-            post_get_received_likes_page, post_reset_received_likes_paging, post_send_like,
-            post_send_message,
+            post_get_received_likes_page, post_mark_messages_as_seen,
+            post_reset_received_likes_paging, post_send_like, post_send_message,
         },
         common_api::get_client_config,
         profile_api::{
@@ -18,9 +18,9 @@ use api_client::{
         },
     },
     models::{
-        AccountId, AttributeMode, MessageId, PendingMessageAcknowledgementList, PendingMessageId,
-        ProfileAttributeValueUpdate, ProfileAttributesConfigQuery, ProfileUpdate, SearchAgeRange,
-        SearchGroups, SentMessageIdList,
+        AccountId, AttributeMode, MessageId, MessageNumber, PendingMessageAcknowledgementList,
+        PendingMessageId, ProfileAttributeValueUpdate, ProfileAttributesConfigQuery, ProfileUpdate,
+        SearchAgeRange, SearchGroups, SeenMessage, SeenMessageList, SentMessageIdList,
     },
 };
 use async_trait::async_trait;
@@ -485,7 +485,13 @@ impl BotAction for AnswerReceivedMessages {
             Some(id)
         }
 
-        fn parse_signed_message_data(data: Vec<u8>) -> Option<PendingMessageId> {
+        struct ParsedMessage {
+            sender: AccountId,
+            message_id: MessageId,
+            message_number: MessageNumber,
+        }
+
+        fn parse_signed_message_data(data: Vec<u8>) -> Option<ParsedMessage> {
             let d = &mut data.iter().copied();
             let _version = d.next()?;
             let sender = parse_account_id(d)?;
@@ -493,17 +499,18 @@ impl BotAction for AnswerReceivedMessages {
             let message_id = parse_message_id(d)?;
             let _ = parse_minimal_i64(d)?;
             let _ = parse_minimal_i64(d)?;
-            let _ = parse_minimal_i64(d)?;
+            let message_number = parse_minimal_i64(d)?;
 
-            Some(PendingMessageId {
-                sender: sender.into(),
-                id: message_id.into(),
+            Some(ParsedMessage {
+                sender,
+                message_id,
+                message_number: MessageNumber { mn: message_number },
             })
         }
 
-        fn parse_messages(messages: &[u8]) -> Option<Vec<PendingMessageId>> {
+        fn parse_messages(messages: &[u8]) -> Option<Vec<ParsedMessage>> {
             let mut list_iterator = messages.iter().copied();
-            let mut pending_messages: Vec<PendingMessageId> = vec![];
+            let mut pending_messages: Vec<ParsedMessage> = vec![];
             while let Some(data_len) = parse_minimal_i64(&mut list_iterator) {
                 let data_len = match TryInto::<usize>::try_into(data_len) {
                     Ok(len) => len,
@@ -521,16 +528,37 @@ impl BotAction for AnswerReceivedMessages {
         let pending_messages = parse_messages(messages).ok_or(TestError::MissingValue)?;
 
         let delete_list = PendingMessageAcknowledgementList {
-            ids: pending_messages.clone(),
+            ids: pending_messages
+                .iter()
+                .map(|msg| PendingMessageId {
+                    sender: msg.sender.clone().into(),
+                    id: msg.message_id.clone().into(),
+                })
+                .collect(),
         };
 
         post_add_receiver_acknowledgement(state.api(), delete_list)
             .await
             .change_context(TestError::ApiRequest)?;
 
+        let seen_list = SeenMessageList {
+            messages: pending_messages
+                .iter()
+                .map(|msg| SeenMessage {
+                    id: msg.message_id.clone().into(),
+                    mn: msg.message_number.clone().into(),
+                    sender: msg.sender.clone().into(),
+                })
+                .collect(),
+        };
+
+        post_mark_messages_as_seen(state.api(), seen_list)
+            .await
+            .change_context(TestError::ApiRequest)?;
+
         for msg in pending_messages {
             let new_msg = "Hello!".to_string();
-            send_message(state, *msg.sender, new_msg).await?;
+            send_message(state, msg.sender, new_msg).await?;
         }
 
         Ok(())
