@@ -50,10 +50,10 @@ const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
 /// - Version (u8, values: 1)
 /// - Sender AccountId UUID big-endian bytes (16 bytes)
 /// - Receiver AccountId UUID big-endian bytes (16 bytes)
-/// - Message UUID big-endian bytes (16 bytes)
+/// - Message MessageId UUID big-endian bytes (16 bytes)
 /// - Sender public key ID (minimal i64)
 /// - Receiver public key ID (minimal i64)
-/// - Message ID (minimal i64)
+/// - Message number (minimal i64)
 /// - Unix time (minimal i64)
 /// - Message data
 #[utoipa::path(
