@@ -86,6 +86,7 @@ Class | Method | HTTP request | Description
 *AccountBotApi* | [**post_remote_bot_login**](docs/AccountBotApi.md#post_remote_bot_login) | **POST** /account_api/remote_bot_login | Login for remote bots which are listed in server config file.
 *ChatApi* | [**get_chat_app_notification_settings**](docs/ChatApi.md#get_chat_app_notification_settings) | **GET** /chat_api/get_chat_app_notification_settings | 
 *ChatApi* | [**get_chat_email_notification_settings**](docs/ChatApi.md#get_chat_email_notification_settings) | **GET** /chat_api/get_chat_email_notification_settings | 
+*ChatApi* | [**get_chat_privacy_settings**](docs/ChatApi.md#get_chat_privacy_settings) | **GET** /chat_api/get_chat_privacy_settings | 
 *ChatApi* | [**get_conversation_id**](docs/ChatApi.md#get_conversation_id) | **GET** /chat_api/conversation_id/{aid} | Get account specific conversation ID which can be used to display new message received notifications.
 *ChatApi* | [**get_daily_likes_left**](docs/ChatApi.md#get_daily_likes_left) | **GET** /chat_api/daily_likes_left | Get daily likes left value.
 *ChatApi* | [**get_initial_matches_iterator_state**](docs/ChatApi.md#get_initial_matches_iterator_state) | **GET** /chat_api/matches/initial_state | 
@@ -103,6 +104,7 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**post_chat_app_notification_settings**](docs/ChatApi.md#post_chat_app_notification_settings) | **POST** /chat_api/post_chat_app_notification_settings | 
 *ChatApi* | [**post_chat_email_notification_settings**](docs/ChatApi.md#post_chat_email_notification_settings) | **POST** /chat_api/post_chat_email_notification_settings | 
 *ChatApi* | [**post_chat_message_report**](docs/ChatApi.md#post_chat_message_report) | **POST** /chat_api/chat_message_report | Report chat message.
+*ChatApi* | [**post_chat_privacy_settings**](docs/ChatApi.md#post_chat_privacy_settings) | **POST** /chat_api/post_chat_privacy_settings | 
 *ChatApi* | [**post_create_video_call_url**](docs/ChatApi.md#post_create_video_call_url) | **POST** /chat_api/post_create_video_call_url | Create video call URL to a meeting with an user.
 *ChatApi* | [**post_delete_message_delivery_info**](docs/ChatApi.md#post_delete_message_delivery_info) | **POST** /chat_api/delete_message_delivery_info | Delete message delivery info entries by their database IDs.
 *ChatApi* | [**post_get_matches_iterator_page**](docs/ChatApi.md#post_get_matches_iterator_page) | **POST** /chat_api/matches | Get requested page of matches iterator page. If the page is empty there is no more matches available.
@@ -186,6 +188,7 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**get_profile_app_notification_settings**](docs/ProfileApi.md#get_profile_app_notification_settings) | **GET** /profile_api/get_profile_app_notification_settings | 
 *ProfileApi* | [**get_profile_filters**](docs/ProfileApi.md#get_profile_filters) | **GET** /profile_api/profile_filters | Get current profile filters.
 *ProfileApi* | [**get_profile_from_database_debug_mode_benchmark**](docs/ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /profile_api/benchmark/profile/{aid} | Get account's current profile from database. Debug mode must be enabled that route can be used.
+*ProfileApi* | [**get_profile_privacy_settings**](docs/ProfileApi.md#get_profile_privacy_settings) | **GET** /profile_api/get_profile_privacy_settings | 
 *ProfileApi* | [**get_profile_statistics**](docs/ProfileApi.md#get_profile_statistics) | **GET** /profile_api/profile_statistics | Non default values for [model::GetProfileStatisticsParams] requires [model::Permissions::admin_profile_statistics].
 *ProfileApi* | [**get_search_age_range**](docs/ProfileApi.md#get_search_age_range) | **GET** /profile_api/search_age_range | Get account's current search age range
 *ProfileApi* | [**get_search_groups**](docs/ProfileApi.md#get_search_groups) | **GET** /profile_api/search_groups | Get account's current search groups (gender and what gender user is looking for)
@@ -202,6 +205,7 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**post_profile**](docs/ProfileApi.md#post_profile) | **POST** /profile_api/profile | Update profile information.
 *ProfileApi* | [**post_profile_app_notification_settings**](docs/ProfileApi.md#post_profile_app_notification_settings) | **POST** /profile_api/post_profile_app_notification_settings | 
 *ProfileApi* | [**post_profile_filters**](docs/ProfileApi.md#post_profile_filters) | **POST** /profile_api/profile_filters | Set profile filters.
+*ProfileApi* | [**post_profile_privacy_settings**](docs/ProfileApi.md#post_profile_privacy_settings) | **POST** /profile_api/post_profile_privacy_settings | 
 *ProfileApi* | [**post_profile_to_database_debug_mode_benchmark**](docs/ProfileApi.md#post_profile_to_database_debug_mode_benchmark) | **POST** /profile_api/benchmark/profile | Post account's current profile directly to database. Debug mode must be enabled that route can be used.
 *ProfileApi* | [**post_report_profile_name**](docs/ProfileApi.md#post_report_profile_name) | **POST** /profile_api/report_profile_name | Report profile name
 *ProfileApi* | [**post_report_profile_text**](docs/ProfileApi.md#post_report_profile_text) | **POST** /profile_api/report_profile_text | Report profile text
@@ -259,6 +263,7 @@ Class | Method | HTTP request | Description
  - [ChatConfig](docs/ChatConfig.md)
  - [ChatEmailNotificationSettings](docs/ChatEmailNotificationSettings.md)
  - [ChatMessageReport](docs/ChatMessageReport.md)
+ - [ChatPrivacySettings](docs/ChatPrivacySettings.md)
  - [CheckOnlineStatusConfig](docs/CheckOnlineStatusConfig.md)
  - [CheckOnlineStatusResponse](docs/CheckOnlineStatusResponse.md)
  - [ClientConfig](docs/ClientConfig.md)
@@ -392,7 +397,6 @@ Class | Method | HTTP request | Description
  - [MessageDeliveryInfoList](docs/MessageDeliveryInfoList.md)
  - [MessageId](docs/MessageId.md)
  - [MessageNumber](docs/MessageNumber.md)
- - [MessageSeenList](docs/MessageSeenList.md)
  - [MinDistanceKm](docs/MinDistanceKm.md)
  - [ModerationQueueType](docs/ModerationQueueType.md)
  - [MyProfileContent](docs/MyProfileContent.md)
@@ -445,6 +449,7 @@ Class | Method | HTTP request | Description
  - [ProfileIteratorSessionId](docs/ProfileIteratorSessionId.md)
  - [ProfileLink](docs/ProfileLink.md)
  - [ProfilePage](docs/ProfilePage.md)
+ - [ProfilePrivacySettings](docs/ProfilePrivacySettings.md)
  - [ProfileStatisticsHistoryValue](docs/ProfileStatisticsHistoryValue.md)
  - [ProfileStatisticsHistoryValueType](docs/ProfileStatisticsHistoryValueType.md)
  - [ProfileStringModerationCompletedNotification](docs/ProfileStringModerationCompletedNotification.md)
@@ -496,6 +501,8 @@ Class | Method | HTTP request | Description
  - [SearchAgeRange](docs/SearchAgeRange.md)
  - [SearchGroups](docs/SearchGroups.md)
  - [SecurityContent](docs/SecurityContent.md)
+ - [SeenMessage](docs/SeenMessage.md)
+ - [SeenMessageList](docs/SeenMessageList.md)
  - [SendLikeResult](docs/SendLikeResult.md)
  - [SendMessageResult](docs/SendMessageResult.md)
  - [SendVerifyEmailMessageResult](docs/SendVerifyEmailMessageResult.md)

@@ -13,9 +13,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetMyProfileResult {
-    /// Account's most recent disconnect time.  If the last seen time is not None, then it is Unix timestamp or -1 if the profile is currently online.
-    #[serde(rename = "lst", skip_serializing_if = "Option::is_none")]
-    pub lst: Option<i64>,
     #[serde(rename = "name_moderation_info", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub name_moderation_info: Option<Option<Box<models::ProfileStringModerationInfo>>>,
     #[serde(rename = "p")]
@@ -31,7 +28,6 @@ pub struct GetMyProfileResult {
 impl GetMyProfileResult {
     pub fn new(p: models::Profile, sv: models::ProfileSyncVersion, v: models::ProfileVersion) -> GetMyProfileResult {
         GetMyProfileResult {
-            lst: None,
             name_moderation_info: None,
             p: Box::new(p),
             sv: Box::new(sv),

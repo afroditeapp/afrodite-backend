@@ -522,7 +522,6 @@ impl BotAction for AnswerReceivedMessages {
 
         let delete_list = PendingMessageAcknowledgementList {
             ids: pending_messages.clone(),
-            change_to_delivered: Some(true),
         };
 
         post_add_receiver_acknowledgement(state.api(), delete_list)

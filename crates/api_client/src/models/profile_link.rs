@@ -18,18 +18,18 @@ pub struct ProfileLink {
     #[serde(rename = "c")]
     pub c: Box<models::ProfileContentVersion>,
     /// Account's most recent disconnect time.  If the last seen time is not None, then it is Unix timestamp or -1 if the profile is currently online.
-    #[serde(rename = "l")]
-    pub l: i64,
+    #[serde(rename = "l", skip_serializing_if = "Option::is_none")]
+    pub l: Option<i64>,
     #[serde(rename = "p")]
     pub p: Box<models::ProfileVersion>,
 }
 
 impl ProfileLink {
-    pub fn new(a: models::AccountId, c: models::ProfileContentVersion, l: i64, p: models::ProfileVersion) -> ProfileLink {
+    pub fn new(a: models::AccountId, c: models::ProfileContentVersion, p: models::ProfileVersion) -> ProfileLink {
         ProfileLink {
             a: Box::new(a),
             c: Box::new(c),
-            l,
+            l: None,
             p: Box::new(p),
         }
     }

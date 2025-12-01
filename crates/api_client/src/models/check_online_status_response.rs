@@ -16,15 +16,15 @@ pub struct CheckOnlineStatusResponse {
     #[serde(rename = "a")]
     pub a: Box<models::AccountId>,
     /// Account's most recent disconnect time.  If the last seen time is not None, then it is Unix timestamp or -1 if the profile is currently online.
-    #[serde(rename = "l")]
-    pub l: i64,
+    #[serde(rename = "l", skip_serializing_if = "Option::is_none")]
+    pub l: Option<i64>,
 }
 
 impl CheckOnlineStatusResponse {
-    pub fn new(a: models::AccountId, l: i64) -> CheckOnlineStatusResponse {
+    pub fn new(a: models::AccountId) -> CheckOnlineStatusResponse {
         CheckOnlineStatusResponse {
             a: Box::new(a),
-            l,
+            l: None,
         }
     }
 }

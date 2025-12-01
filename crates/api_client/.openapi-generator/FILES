@@ -54,6 +54,7 @@ src/models/chat_app_notification_settings.rs
 src/models/chat_config.rs
 src/models/chat_email_notification_settings.rs
 src/models/chat_message_report.rs
+src/models/chat_privacy_settings.rs
 src/models/check_online_status_config.rs
 src/models/check_online_status_response.rs
 src/models/client_config.rs
@@ -187,7 +188,6 @@ src/models/message_delivery_info_id_list.rs
 src/models/message_delivery_info_list.rs
 src/models/message_id.rs
 src/models/message_number.rs
-src/models/message_seen_list.rs
 src/models/min_distance_km.rs
 src/models/mod.rs
 src/models/moderation_queue_type.rs
@@ -241,6 +241,7 @@ src/models/profile_iterator_page_value.rs
 src/models/profile_iterator_session_id.rs
 src/models/profile_link.rs
 src/models/profile_page.rs
+src/models/profile_privacy_settings.rs
 src/models/profile_statistics_history_value.rs
 src/models/profile_statistics_history_value_type.rs
 src/models/profile_string_moderation_completed_notification.rs
@@ -292,6 +293,8 @@ src/models/scheduled_tasks_config.rs
 src/models/search_age_range.rs
 src/models/search_groups.rs
 src/models/security_content.rs
+src/models/seen_message.rs
+src/models/seen_message_list.rs
 src/models/send_like_result.rs
 src/models/send_message_result.rs
 src/models/send_verify_email_message_result.rs

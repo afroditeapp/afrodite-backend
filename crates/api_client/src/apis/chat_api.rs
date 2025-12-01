@@ -35,6 +35,15 @@ pub enum GetChatEmailNotificationSettingsError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_chat_privacy_settings`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetChatPrivacySettingsError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_conversation_id`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -183,6 +192,15 @@ pub enum PostChatEmailNotificationSettingsError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostChatMessageReportError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_chat_privacy_settings`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostChatPrivacySettingsError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -376,6 +394,43 @@ pub async fn get_chat_email_notification_settings(configuration: &configuration:
     } else {
         let content = resp.text().await?;
         let entity: Option<GetChatEmailNotificationSettingsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn get_chat_privacy_settings(configuration: &configuration::Configuration, ) -> Result<models::ChatPrivacySettings, Error<GetChatPrivacySettingsError>> {
+
+    let uri_str = format!("{}/chat_api/get_chat_privacy_settings", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ChatPrivacySettings`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ChatPrivacySettings`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetChatPrivacySettingsError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -971,6 +1026,35 @@ pub async fn post_chat_message_report(configuration: &configuration::Configurati
     }
 }
 
+pub async fn post_chat_privacy_settings(configuration: &configuration::Configuration, chat_privacy_settings: models::ChatPrivacySettings) -> Result<(), Error<PostChatPrivacySettingsError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_chat_privacy_settings = chat_privacy_settings;
+
+    let uri_str = format!("{}/chat_api/post_chat_privacy_settings", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_chat_privacy_settings);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostChatPrivacySettingsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 /// The user must be a match.  If result value is empty then video calling is disabled.
 pub async fn post_create_video_call_url(configuration: &configuration::Configuration, aid: &str) -> Result<models::PostVideoCallUrlResult, Error<PostCreateVideoCallUrlError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -1202,9 +1286,9 @@ pub async fn post_get_sent_message(configuration: &configuration::Configuration,
 }
 
 /// This endpoint allows message receivers to mark messages as seen. The seen status is saved to the message_delivery_info table and an event is sent to each message sender to notify them of the state change.
-pub async fn post_mark_messages_as_seen(configuration: &configuration::Configuration, message_seen_list: models::MessageSeenList) -> Result<(), Error<PostMarkMessagesAsSeenError>> {
+pub async fn post_mark_messages_as_seen(configuration: &configuration::Configuration, seen_message_list: models::SeenMessageList) -> Result<(), Error<PostMarkMessagesAsSeenError>> {
     // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_message_seen_list = message_seen_list;
+    let p_body_seen_message_list = seen_message_list;
 
     let uri_str = format!("{}/chat_api/mark_messages_as_seen", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
@@ -1215,7 +1299,7 @@ pub async fn post_mark_messages_as_seen(configuration: &configuration::Configura
     if let Some(ref token) = configuration.bearer_access_token {
         req_builder = req_builder.bearer_auth(token.to_owned());
     };
-    req_builder = req_builder.json(&p_body_message_seen_list);
+    req_builder = req_builder.json(&p_body_seen_message_list);
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
