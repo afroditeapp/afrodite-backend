@@ -62,6 +62,13 @@ macro_rules! enable_logging {
 }
 
 enable_logging!(
+    // Media
+    ContentSlot,
+    // General
+    &'static str,
+);
+
+disable_logging!(
     // Account
     AccountIdInternal,
     AccountId,
@@ -71,12 +78,6 @@ enable_logging!(
     ContentIdDb,
     Option<ContentId>,
     ContentIdInternal,
-    ContentSlot,
-    // General
-    &'static str,
-);
-
-disable_logging!(
     // Chat
     MessageNumber,
     // General
