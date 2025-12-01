@@ -46,7 +46,7 @@ impl UserDataExportJsonProfile {
             profile_edited_unix_time: profile_state.profile_edited_unix_time,
             search_age_range: profile_state.into(),
             last_seen_unix_time: current.profile().data().profile_last_seen_time(id)?,
-            my_profile: current.profile().data().my_profile(id, None)?,
+            my_profile: current.profile().data().my_profile(id)?,
             favorite_added_time_list: current.profile().favorite().favorite_added_time_list(id)?,
             profile_name_allowlist: current
                 .profile()

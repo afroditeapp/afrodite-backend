@@ -22,7 +22,7 @@ impl WriteCommandsProfileReport<'_> {
         profile_name: NonEmptyString,
     ) -> Result<UpdateReportResult, DataError> {
         let target_data = self
-            .db_read(move |mut cmds| cmds.profile().data().my_profile(target, None))
+            .db_read(move |mut cmds| cmds.profile().data().my_profile(target))
             .await?;
 
         if Some(&profile_name) != target_data.p.name.as_ref() {
@@ -87,7 +87,7 @@ impl WriteCommandsProfileReport<'_> {
         profile_text: NonEmptyString,
     ) -> Result<UpdateReportResult, DataError> {
         let target_data = self
-            .db_read(move |mut cmds| cmds.profile().data().my_profile(target, None))
+            .db_read(move |mut cmds| cmds.profile().data().my_profile(target))
             .await?;
 
         if Some(&profile_text) != target_data.p.ptext.as_ref() {

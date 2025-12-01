@@ -64,13 +64,7 @@ impl ReadCommandsProfile<'_> {
     }
 
     pub async fn my_profile(&self, id: AccountIdInternal) -> Result<GetMyProfileResult, DataError> {
-        let last_seen_time = self
-            .read_cache_profile_and_common(id, move |cache, _| {
-                Ok(cache.last_seen_time().last_seen_time_private())
-            })
-            .await?;
-
-        self.db_read(move |mut cmds| cmds.profile().data().my_profile(id, Some(last_seen_time)))
+        self.db_read(move |mut cmds| cmds.profile().data().my_profile(id))
             .await
             .into_error()
     }

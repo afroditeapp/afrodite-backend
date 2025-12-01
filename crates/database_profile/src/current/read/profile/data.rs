@@ -5,7 +5,6 @@ use database::{
 };
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
-use model::LastSeenTime;
 use model_profile::{
     AccountIdInternal, AttributeId, GetMyProfileResult, GetProfileFilters, InitialProfileAge,
     LastSeenUnixTime, Location, Profile, ProfileAge, ProfileAttributeFilterValue,
@@ -57,7 +56,6 @@ impl CurrentReadProfileData<'_> {
     pub fn my_profile(
         &mut self,
         id: AccountIdInternal,
-        last_seen_time: Option<LastSeenTime>,
     ) -> Result<GetMyProfileResult, DieselDatabaseError> {
         let profile = self.profile_internal(id)?;
         let profile_version = profile.version_uuid;
@@ -87,7 +85,6 @@ impl CurrentReadProfileData<'_> {
         );
         let r = GetMyProfileResult {
             p,
-            lst: last_seen_time,
             v: profile_version,
             sv: profile_state.profile_sync_version,
             name_moderation_info: profile_name_moderation_state,

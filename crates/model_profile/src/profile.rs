@@ -388,8 +388,6 @@ pub struct GetMyProfileResult {
     pub v: ProfileVersion,
     pub sv: ProfileSyncVersion,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub lst: Option<LastSeenTime>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub name_moderation_info: Option<ProfileStringModerationInfo>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub text_moderation_info: Option<ProfileStringModerationInfo>,
