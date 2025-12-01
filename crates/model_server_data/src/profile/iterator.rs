@@ -41,7 +41,7 @@ pub struct ProfileLink {
     a: AccountId,
     p: ProfileVersion,
     c: ProfileContentVersion,
-    l: LastSeenTime,
+    l: Option<LastSeenTime>,
 }
 
 impl ProfileLink {
@@ -49,7 +49,7 @@ impl ProfileLink {
         id: AccountId,
         version: ProfileVersion,
         content_version: ProfileContentVersion,
-        last_seen_time: LastSeenTime,
+        last_seen_time: Option<LastSeenTime>,
     ) -> Self {
         Self {
             a: id,

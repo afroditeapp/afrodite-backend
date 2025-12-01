@@ -1,5 +1,5 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
-use model::{LastSeenTime, UnixTime};
+use model::{LastSeenTime, LastSeenUnixTime, UnixTime};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_wrapper;
 use utoipa::{IntoParams, ToSchema};
@@ -27,6 +27,12 @@ impl AsRef<i64> for AutomaticProfileSearchLastSeenUnixTime {
 }
 
 diesel_i64_wrapper!(AutomaticProfileSearchLastSeenUnixTime);
+
+impl From<LastSeenUnixTime> for AutomaticProfileSearchLastSeenUnixTime {
+    fn from(value: LastSeenUnixTime) -> Self {
+        Self { ut: value.ut }
+    }
+}
 
 /// Filter value for last seen time.
 ///

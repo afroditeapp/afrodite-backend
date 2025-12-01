@@ -21,7 +21,8 @@ use super::{
     SearchGroupFlagsFilter, SortedProfileAttributes,
 };
 use crate::{
-    AutomaticProfileSearchSettings, ProfileContentEditedTime, ProfileLink, ProfileVersion,
+    AutomaticProfileSearchSettings, ProfileContentEditedTime, ProfileLink, ProfilePrivacySettings,
+    ProfileVersion,
 };
 
 #[derive(Debug)]
@@ -100,16 +101,55 @@ impl ProfileQueryMakerDetails {
 }
 
 #[derive(Debug)]
+pub struct AtomicProfilePrivacySettings {
+    online_status: AtomicBool,
+    last_seen_time: AtomicBool,
+}
+
+impl AtomicProfilePrivacySettings {
+    fn new(settings: ProfilePrivacySettings) -> Self {
+        Self {
+            online_status: AtomicBool::new(settings.online_status),
+            last_seen_time: AtomicBool::new(settings.last_seen_time),
+        }
+    }
+
+    pub fn update(&self, settings: ProfilePrivacySettings) {
+        self.online_status
+            .store(settings.online_status, Ordering::Relaxed);
+        self.last_seen_time
+            .store(settings.last_seen_time, Ordering::Relaxed);
+    }
+
+    pub fn get(&self) -> ProfilePrivacySettings {
+        ProfilePrivacySettings {
+            online_status: self.online_status.load(Ordering::Relaxed),
+            last_seen_time: self.last_seen_time.load(Ordering::Relaxed),
+        }
+    }
+
+    fn online_status_enabled(&self) -> bool {
+        self.online_status.load(Ordering::Relaxed)
+    }
+
+    fn last_seen_time_enabled(&self) -> bool {
+        self.last_seen_time.load(Ordering::Relaxed)
+    }
+}
+
+#[derive(Debug)]
 pub struct AtomicLastSeenTime {
     last_seen_unix_time: AtomicI64,
     is_online: AtomicBool,
+    privacy_settings: AtomicProfilePrivacySettings,
 }
 
 impl AtomicLastSeenTime {
-    pub fn new(last_seen_time: LastSeenUnixTime) -> Self {
+    pub fn new(last_seen_time: LastSeenUnixTime, privacy_settings: ProfilePrivacySettings) -> Self {
         Self {
             last_seen_unix_time: AtomicI64::new(*last_seen_time.as_ref()),
             is_online: AtomicBool::new(false),
+            privacy_settings: AtomicProfilePrivacySettings::new(privacy_settings),
         }
     }
 
@@ -123,7 +163,11 @@ impl AtomicLastSeenTime {
         self.is_online.store(true, Ordering::Relaxed);
     }
 
-    pub fn last_seen_time(&self) -> LastSeenTime {
+    pub fn atomic_profile_privacy_settings(&self) -> &AtomicProfilePrivacySettings {
+        &self.privacy_settings
+    }
+
+    pub fn last_seen_time_private(&self) -> LastSeenTime {
         if self.is_online.load(Ordering::Relaxed) {
             LastSeenTime::ONLINE
         } else {
@@ -131,7 +175,23 @@ impl AtomicLastSeenTime {
         }
     }
 
-    pub fn last_seen_unix_time(&self) -> LastSeenUnixTime {
+    pub fn last_seen_time_public(&self) -> Option<LastSeenTime> {
+        let is_online = self.is_online.load(Ordering::Relaxed);
+
+        if is_online && self.privacy_settings.online_status_enabled() {
+            return Some(LastSeenTime::ONLINE);
+        }
+
+        if self.privacy_settings.last_seen_time_enabled() {
+            Some(LastSeenTime::new(
+                self.last_seen_unix_time.load(Ordering::Relaxed),
+            ))
+        } else {
+            None
+        }
+    }
+
+    pub fn last_seen_unix_time_for_db(&self) -> LastSeenUnixTime {
         LastSeenUnixTime {
             ut: UnixTime::new(self.last_seen_unix_time.load(Ordering::Relaxed)),
         }
@@ -204,7 +264,7 @@ impl LocationIndexProfileData {
             self.account_id,
             self.profile_version,
             self.profile_content_version,
-            self.last_seen_time.last_seen_time(),
+            self.last_seen_time.last_seen_time_public(),
         )
     }
 
@@ -278,7 +338,10 @@ impl LocationIndexProfileData {
         last_seen_time_filter: LastSeenTimeFilter,
         current_time: &UnixTime,
     ) -> bool {
-        last_seen_time_filter.is_match(self.last_seen_time.last_seen_time(), current_time)
+        let Some(last_seen_time) = self.last_seen_time.last_seen_time_public() else {
+            return false;
+        };
+        last_seen_time_filter.is_match(last_seen_time, current_time)
     }
 
     fn attribute_filters_match(

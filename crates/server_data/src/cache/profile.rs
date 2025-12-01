@@ -37,7 +37,6 @@ pub struct CacheProfile {
     profile_name_moderation_state: Option<ProfileNameModerationState>,
     profile_text_character_count: ProfileTextCharacterCount,
     profile_text_moderation_state: Option<ProfileTextModerationState>,
-    privacy_settings: ProfilePrivacySettings,
 }
 
 impl CacheProfile {
@@ -63,7 +62,7 @@ impl CacheProfile {
             location: LocationData::default(),
             attributes: SortedProfileAttributes::new(attributes),
             attribute_filters,
-            last_seen_time: AtomicLastSeenTime::new(last_seen_time).into(),
+            last_seen_time: AtomicLastSeenTime::new(last_seen_time, privacy_settings).into(),
             profile_iterator_session_id: None,
             profile_iterator_session_id_storage: NextNumberStorage::default(),
             automatic_profile_search: AutomaticProfileSearch::new(
@@ -72,7 +71,6 @@ impl CacheProfile {
             ),
             profile_name_moderation_state,
             profile_text_moderation_state,
-            privacy_settings,
         }
     }
 
@@ -136,14 +134,6 @@ impl CacheProfile {
         value: Option<ProfileTextModerationState>,
     ) {
         self.profile_text_moderation_state = value;
-    }
-
-    pub fn privacy_settings(&self) -> ProfilePrivacySettings {
-        self.privacy_settings
-    }
-
-    pub fn update_privacy_settings(&mut self, value: ProfilePrivacySettings) {
-        self.privacy_settings = value;
     }
 }
 

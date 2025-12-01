@@ -20,7 +20,9 @@ impl WriteCommandsProfilePrivacy<'_> {
         })?;
 
         self.write_cache_profile(id.as_id(), |p| {
-            p.update_privacy_settings(value);
+            p.last_seen_time()
+                .atomic_profile_privacy_settings()
+                .update(value);
             Ok(())
         })
         .await

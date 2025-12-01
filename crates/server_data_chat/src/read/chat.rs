@@ -104,7 +104,7 @@ impl ReadCommandsChat<'_> {
                     id,
                     e.profile.profile_internal().version_uuid,
                     e.media.profile_content_version,
-                    e.profile.last_seen_time().last_seen_time(),
+                    e.profile.last_seen_time().last_seen_time_public(),
                 ))
             })
             .await

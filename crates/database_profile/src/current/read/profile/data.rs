@@ -5,9 +5,10 @@ use database::{
 };
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
+use model::LastSeenTime;
 use model_profile::{
     AccountIdInternal, AttributeId, GetMyProfileResult, GetProfileFilters, InitialProfileAge,
-    LastSeenTime, LastSeenUnixTime, Location, Profile, ProfileAge, ProfileAttributeFilterValue,
+    LastSeenUnixTime, Location, Profile, ProfileAge, ProfileAttributeFilterValue,
     ProfileAttributeValue, ProfileInternal, ProfileNameModerationState, ProfileStateInternal,
     ProfileStringModerationContentType, ProfileTextModerationState, UnixTime,
 };

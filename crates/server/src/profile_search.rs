@@ -174,12 +174,12 @@ impl ProfileSearchManager {
             .state
             .read()
             .profile()
-            .profile(account)
+            .last_seen_time_private(account)
             .await
             .change_context(ProfileSearchError::DatabaseError)?
-            .last_seen_time
             .last_seen_unix_time()
         else {
+            // Account is not online
             return Ok(());
         };
 

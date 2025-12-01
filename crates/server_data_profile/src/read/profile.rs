@@ -1,7 +1,8 @@
 use database_profile::current::read::GetDbReadCommandsProfile;
 use model_profile::{
-    AccountIdInternal, GetMyProfileResult, GetProfileFilters, InitialProfileAge, LastSeenUnixTime,
-    Location, Profile, ProfileAndProfileVersion, ProfileInternal, ProfileStateInternal,
+    AccountIdInternal, GetMyProfileResult, GetProfileFilters, InitialProfileAge, LastSeenTime,
+    LastSeenUnixTime, Location, Profile, ProfileAndProfileVersion, ProfileInternal,
+    ProfileStateInternal,
 };
 use server_data::{
     DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead, result::Result,
@@ -55,7 +56,7 @@ impl ReadCommandsProfile<'_> {
                     c.other_shared_state.unlimited_likes,
                 ),
                 version: data.profile_internal().version_uuid,
-                last_seen_time: data.last_seen_time().last_seen_time(),
+                last_seen_time: data.last_seen_time().last_seen_time_public(),
             })
         })
         .await
@@ -65,7 +66,7 @@ impl ReadCommandsProfile<'_> {
     pub async fn my_profile(&self, id: AccountIdInternal) -> Result<GetMyProfileResult, DataError> {
         let last_seen_time = self
             .read_cache_profile_and_common(id, move |cache, _| {
-                Ok(cache.last_seen_time().last_seen_time())
+                Ok(cache.last_seen_time().last_seen_time_private())
             })
             .await?;
 
@@ -126,6 +127,17 @@ impl ReadCommandsProfile<'_> {
         self.db_read(move |mut cmds| cmds.profile().data().profile_last_seen_time(id))
             .await
             .into_error()
+    }
+
+    pub async fn last_seen_time_private(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<LastSeenTime, DataError> {
+        self.read_cache_profile_and_common(id, |p, _| {
+            Ok(p.last_seen_time().last_seen_time_private())
+        })
+        .await
+        .into_error()
     }
 
     pub async fn initial_profile_age(

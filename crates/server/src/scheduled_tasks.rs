@@ -330,10 +330,9 @@ impl ScheduledTaskManager {
             .state
             .read()
             .profile()
-            .profile(id)
+            .last_seen_time_private(id)
             .await
-            .change_context(ScheduledTaskError::DatabaseError)?
-            .last_seen_time;
+            .change_context(ScheduledTaskError::DatabaseError)?;
 
         // TODO(prod): When subscription feature is added prevent requesting
         //             deletion when subscription is active.
@@ -447,10 +446,9 @@ impl ScheduledTaskManager {
                 .state
                 .read()
                 .profile()
-                .profile(id)
+                .last_seen_time_private(id)
                 .await
-                .change_context(ScheduledTaskError::DatabaseError)?
-                .last_seen_time;
+                .change_context(ScheduledTaskError::DatabaseError)?;
 
             if let Some(last_seen_time) = last_seen_time.last_seen_unix_time() {
                 let inactive_account = last_seen_time.ut.add_seconds(

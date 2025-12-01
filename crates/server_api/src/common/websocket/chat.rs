@@ -198,18 +198,20 @@ pub async fn handle_check_online_status(
         .read()
         .cache_read_write_access()
         .read_cache(check_account.as_id(), |cache| {
-            Ok(cache.profile.last_seen_time().last_seen_time())
+            Ok(cache.profile.last_seen_time().last_seen_time_public())
         })
         .await
         .change_context(WebSocketError::EventToServerHandlingFailed)?;
 
-    let actual_is_online = last_seen_time == model::LastSeenTime::ONLINE;
+    let actual_public_online_status = last_seen_time
+        .map(|v| v == model::LastSeenTime::ONLINE)
+        .unwrap_or_default();
     let response = CheckOnlineStatusResponse {
         a: check_account.into(),
         l: last_seen_time,
     };
 
-    if client_is_online != actual_is_online {
+    if client_is_online != actual_public_online_status {
         state
             .event_manager()
             .send_connected_event(

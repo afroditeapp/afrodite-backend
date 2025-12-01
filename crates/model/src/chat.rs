@@ -270,5 +270,5 @@ impl AdminDataExportPendingMessage {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CheckOnlineStatusResponse {
     pub a: AccountId,
-    pub l: LastSeenTime,
+    pub l: Option<LastSeenTime>,
 }

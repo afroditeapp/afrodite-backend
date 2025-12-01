@@ -1,9 +1,9 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
-    AccountIdInternal, AutomaticProfileSearchLastSeenUnixTime, LastSeenUnixTime, Location,
-    ProfileFiltersUpdateValidated, ProfileModificationMetadata, ProfileStateInternal,
-    ProfileUpdateValidated, SearchAgeRangeValidated, ValidatedSearchGroups,
+    AccountIdInternal, LastSeenUnixTime, Location, ProfileFiltersUpdateValidated,
+    ProfileModificationMetadata, ProfileStateInternal, ProfileUpdateValidated,
+    SearchAgeRangeValidated, ValidatedSearchGroups,
 };
 use server_data::{
     DataError, IntoDataError, app::GetConfig, cache::profile::UpdateLocationCacheState,
@@ -335,7 +335,9 @@ impl WriteCommandsProfile<'_> {
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
         let last_seen_time = self
-            .read_cache_profile_and_common(id, |p, _| Ok(p.last_seen_time().last_seen_unix_time()))
+            .read_cache_profile_and_common(id, |p, _| {
+                Ok(p.last_seen_time().last_seen_unix_time_for_db())
+            })
             .await?;
 
         db_transaction!(self, move |mut cmds| {
@@ -360,7 +362,7 @@ impl WriteCommandsProfile<'_> {
         id: AccountIdInternal,
         time: LastSeenUnixTime,
     ) -> Result<(), DataError> {
-        let time = AutomaticProfileSearchLastSeenUnixTime::try_from(time.ut.ut).unwrap();
+        let time = time.into();
         db_transaction!(self, move |mut cmds| {
             cmds.profile_admin()
                 .search()

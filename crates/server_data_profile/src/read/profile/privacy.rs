@@ -10,8 +10,10 @@ impl ReadCommandsProfilePrivacy<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<ProfilePrivacySettings, DataError> {
-        self.read_cache_profile_and_common(id.as_id(), |p, _| Ok(p.privacy_settings()))
-            .await
-            .into_error()
+        self.read_cache_profile_and_common(id.as_id(), |p, _| {
+            Ok(p.last_seen_time().atomic_profile_privacy_settings().get())
+        })
+        .await
+        .into_error()
     }
 }
