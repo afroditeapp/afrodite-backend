@@ -4,6 +4,7 @@ mod data;
 mod favorite;
 mod moderation;
 mod notification;
+mod privacy;
 mod report;
 mod search;
 
@@ -28,6 +29,10 @@ impl<'a> CurrentWriteProfile<'a> {
 
     pub fn notification(self) -> notification::CurrentWriteProfileNotification<'a> {
         notification::CurrentWriteProfileNotification::new(self.cmds)
+    }
+
+    pub fn privacy(self) -> privacy::CurrentWriteProfilePrivacy<'a> {
+        privacy::CurrentWriteProfilePrivacy::new(self.cmds)
     }
 
     pub fn search(self) -> search::CurrentWriteProfileSearch<'a> {

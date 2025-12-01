@@ -631,6 +631,16 @@ CREATE TABLE IF NOT EXISTS profile_app_notification_settings(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS profile_privacy_settings(
+    account_id                         BIGINT PRIMARY KEY  NOT NULL,
+    online_status                      BOOLEAN             NOT NULL,
+    last_seen_time                     BOOLEAN             NOT NULL,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS profile_app_notification_state(
     account_id                         BIGINT PRIMARY KEY  NOT NULL,
     profile_name_accepted              SMALLINT            NOT NULL DEFAULT 0,

@@ -43,8 +43,8 @@ use server_api_media::{
 };
 use server_api_profile::{
     profile::{
-        PROFILE_NOTIFICATION_COUNTERS_LIST, PROFILE_REPORT_COUNTERS_LIST,
-        PROFILE_STATISTICS_COUNTERS_LIST,
+        PROFILE_NOTIFICATION_COUNTERS_LIST, PROFILE_PRIVACY_COUNTERS_LIST,
+        PROFILE_REPORT_COUNTERS_LIST, PROFILE_STATISTICS_COUNTERS_LIST,
     },
     profile_admin::{
         PROFILE_ADMIN_ITERATE_PROFILES_COUNTERS_LIST, PROFILE_ADMIN_MODERATION_COUNTERS_LIST,
@@ -171,6 +171,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("profile_benchmark", PROFILE_BENCHMARK_COUNTERS_LIST),
     &CounterCategory::new("profile_statistics", PROFILE_STATISTICS_COUNTERS_LIST),
     &CounterCategory::new("profile_notification", PROFILE_NOTIFICATION_COUNTERS_LIST),
+    &CounterCategory::new("profile_privacy", PROFILE_PRIVACY_COUNTERS_LIST),
     // Profile admin
     &CounterCategory::new(
         "profile_admin_statistics",

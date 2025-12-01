@@ -4,6 +4,7 @@ mod data;
 mod favorite;
 mod moderation;
 mod notification;
+mod privacy;
 mod report;
 mod search;
 
@@ -21,6 +22,9 @@ impl<'a> CurrentReadProfile<'a> {
     }
     pub fn notification(self) -> notification::CurrentReadProfileNotification<'a> {
         notification::CurrentReadProfileNotification::new(self.cmds)
+    }
+    pub fn privacy(self) -> privacy::CurrentReadProfilePrivacy<'a> {
+        privacy::CurrentReadProfilePrivacy::new(self.cmds)
     }
     pub fn moderation(self) -> moderation::CurrentReadProfileModeration<'a> {
         moderation::CurrentReadProfileModeration::new(self.cmds)

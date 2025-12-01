@@ -15,6 +15,7 @@ use tracing::info;
 use crate::cache::{CacheReadProfile, CacheWriteProfile};
 
 mod notification;
+mod privacy;
 mod report;
 mod search;
 
@@ -26,6 +27,9 @@ impl<'a> WriteCommandsProfile<'a> {
     }
     pub fn notification(self) -> notification::WriteCommandsProfileNotification<'a> {
         notification::WriteCommandsProfileNotification::new(self.0)
+    }
+    pub fn privacy(self) -> privacy::WriteCommandsProfilePrivacy<'a> {
+        privacy::WriteCommandsProfilePrivacy::new(self.0)
     }
     pub fn search(self) -> search::WriteCommandsProfileSearch<'a> {
         search::WriteCommandsProfileSearch::new(self.0)

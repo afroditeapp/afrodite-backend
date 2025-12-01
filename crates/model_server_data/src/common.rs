@@ -170,6 +170,34 @@ impl Default for ChatPrivacySettings {
     }
 }
 
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Queryable,
+    Selectable,
+    AsChangeset,
+    Insertable,
+    Deserialize,
+    Serialize,
+    ToSchema,
+)]
+#[diesel(table_name = crate::schema::profile_privacy_settings)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct ProfilePrivacySettings {
+    pub online_status: bool,
+    pub last_seen_time: bool,
+}
+
+impl Default for ProfilePrivacySettings {
+    fn default() -> Self {
+        Self {
+            online_status: true,
+            last_seen_time: true,
+        }
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct AppNotificationSettingsInternal {
     pub account: AccountAppNotificationSettings,

@@ -10,8 +10,9 @@ use model_server_data::{
     AutomaticProfileSearchLastSeenUnixTime, AutomaticProfileSearchSettings,
     ProfileAttributeFilterValue, ProfileAttributeValue, ProfileCreatedTimeFilter,
     ProfileEditedTimeFilter, ProfileInternal, ProfileIteratorSessionIdInternal,
-    ProfileNameModerationState, ProfileQueryMakerDetails, ProfileStateCached,
-    ProfileTextCharacterCount, ProfileTextModerationState, ProfileVersion, SortedProfileAttributes,
+    ProfileNameModerationState, ProfilePrivacySettings, ProfileQueryMakerDetails,
+    ProfileStateCached, ProfileTextCharacterCount, ProfileTextModerationState, ProfileVersion,
+    SortedProfileAttributes,
 };
 use server_common::data::DataError;
 use simple_backend_model::NonEmptyString;
@@ -36,6 +37,7 @@ pub struct CacheProfile {
     profile_name_moderation_state: Option<ProfileNameModerationState>,
     profile_text_character_count: ProfileTextCharacterCount,
     profile_text_moderation_state: Option<ProfileTextModerationState>,
+    privacy_settings: ProfilePrivacySettings,
 }
 
 impl CacheProfile {
@@ -51,6 +53,7 @@ impl CacheProfile {
         automatic_profile_search_settings: AutomaticProfileSearchSettings,
         profile_name_moderation_state: Option<ProfileNameModerationState>,
         profile_text_moderation_state: Option<ProfileTextModerationState>,
+        privacy_settings: ProfilePrivacySettings,
     ) -> Self {
         Self {
             account_id,
@@ -69,6 +72,7 @@ impl CacheProfile {
             ),
             profile_name_moderation_state,
             profile_text_moderation_state,
+            privacy_settings,
         }
     }
 
@@ -132,6 +136,14 @@ impl CacheProfile {
         value: Option<ProfileTextModerationState>,
     ) {
         self.profile_text_moderation_state = value;
+    }
+
+    pub fn privacy_settings(&self) -> ProfilePrivacySettings {
+        self.privacy_settings
+    }
+
+    pub fn update_privacy_settings(&mut self, value: ProfilePrivacySettings) {
+        self.privacy_settings = value;
     }
 }
 

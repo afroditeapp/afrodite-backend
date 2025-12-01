@@ -201,6 +201,9 @@ impl DbDataToCacheLoader {
                     .profile_text_moderation_state(account_id)
             })
             .await?;
+        let privacy_settings = db
+            .db_read(move |mut cmds| cmds.profile().privacy().privacy_settings(account_id))
+            .await?;
 
         let mut cache_profile = CacheProfile::new(
             account_id.uuid,
@@ -213,6 +216,7 @@ impl DbDataToCacheLoader {
             automatic_profile_search_settings,
             profile_name_moderation_state,
             profile_text_moderation_state,
+            privacy_settings,
         );
 
         let location_area = index_writer.coordinates_to_area(

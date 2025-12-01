@@ -10,6 +10,7 @@ use server_data::{
 use crate::cache::CacheReadProfile;
 
 mod notification;
+mod privacy;
 mod search;
 mod statistics;
 
@@ -21,6 +22,9 @@ impl<'a> ReadCommandsProfile<'a> {
     }
     pub fn notification(self) -> notification::ReadCommandsProfileNotification<'a> {
         notification::ReadCommandsProfileNotification::new(self.0)
+    }
+    pub fn privacy(self) -> privacy::ReadCommandsProfilePrivacy<'a> {
+        privacy::ReadCommandsProfilePrivacy::new(self.0)
     }
     pub fn search(self) -> search::ReadCommandsProfileSearch<'a> {
         search::ReadCommandsProfileSearch::new(self.0)

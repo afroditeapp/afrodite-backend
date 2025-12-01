@@ -160,6 +160,7 @@ impl ApiDoc {
             .merge_from(
                 server_api_profile::profile::router_notification(state.clone()).into_openapi(),
             )
+            .merge_from(server_api_profile::profile::router_privacy(state.clone()).into_openapi())
             .tag_routes("profile");
         doc.merge(profile);
         let profile_admin = ApiDoc::openapi()

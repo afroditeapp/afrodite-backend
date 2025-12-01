@@ -605,6 +605,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    profile_privacy_settings (account_id) {
+        account_id -> Int8,
+        online_status -> Bool,
+        last_seen_time -> Bool,
+    }
+}
+
+diesel::table! {
     profile_app_notification_state (account_id) {
         account_id -> Int8,
         profile_name_accepted -> Int2,
@@ -847,6 +855,7 @@ diesel::joinable!(pending_messages -> account_interaction (account_interaction))
 diesel::joinable!(profile -> account_id (account_id));
 diesel::joinable!(profile_app_notification_settings -> account_id (account_id));
 diesel::joinable!(profile_app_notification_state -> account_id (account_id));
+diesel::joinable!(profile_privacy_settings -> account_id (account_id));
 diesel::joinable!(profile_attributes_filter_list_unwanted -> account_id (account_id));
 diesel::joinable!(profile_attributes_filter_list_wanted -> account_id (account_id));
 diesel::joinable!(profile_attributes_filter_settings -> account_id (account_id));
@@ -923,6 +932,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     profile,
     profile_app_notification_settings,
     profile_app_notification_state,
+    profile_privacy_settings,
     profile_attributes_file_hash,
     profile_attributes_filter_list_unwanted,
     profile_attributes_filter_list_wanted,
