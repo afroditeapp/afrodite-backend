@@ -17,6 +17,9 @@ use crate::{AccountId, AccountIdDb, AccountIdInternal, LastSeenTime};
 mod interaction;
 pub use interaction::*;
 
+mod transfer;
+pub use transfer::*;
+
 #[derive(
     Debug,
     Serialize,

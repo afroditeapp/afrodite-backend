@@ -20,7 +20,15 @@ pub use server_common::{data::DataError, result};
 
 #[derive(OpenApi)]
 #[openapi(
-    components(schemas()),
+    paths(
+        chat::transfer::get_transfer_data,
+    ),
+    components(schemas(
+        model_chat::ClientRole,
+        model_chat::DataTransferInitialMessage,
+        model_chat::DataTransferPublicKey,
+        model_chat::DataTransferByteCount,
+    )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]
 pub struct ApiDocChat;

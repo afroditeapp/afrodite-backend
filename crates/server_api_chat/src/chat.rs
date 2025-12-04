@@ -6,6 +6,7 @@ pub mod notification;
 pub mod privacy;
 pub mod public_key;
 pub mod report;
+pub mod transfer;
 pub mod video_call;
 
 pub use block::*;
@@ -16,4 +17,5 @@ pub use notification::*;
 pub use privacy::*;
 pub use public_key::*;
 pub use report::*;
+pub use transfer::*;
 pub use video_call::*;

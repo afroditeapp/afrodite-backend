@@ -30,7 +30,7 @@ use server_api_account::{
 use server_api_chat::{
     chat::{
         CHAT_NOTIFICATION_COUNTERS_LIST, CHAT_PRIVACY_COUNTERS_LIST, CHAT_PUBLIC_KEY_COUNTERS_LIST,
-        CHAT_REPORT_COUNTERS_LIST, CHAT_VIDEO_CALL_COUNTERS_LIST,
+        CHAT_REPORT_COUNTERS_LIST, CHAT_TRANSFER_COUNTERS_LIST, CHAT_VIDEO_CALL_COUNTERS_LIST,
     },
     chat_admin::CHAT_ADMIN_PUBLIC_KEY_COUNTERS_LIST,
 };
@@ -199,6 +199,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("chat_notification", CHAT_NOTIFICATION_COUNTERS_LIST),
     &CounterCategory::new("chat_privacy", CHAT_PRIVACY_COUNTERS_LIST),
     &CounterCategory::new("chat_video_call", CHAT_VIDEO_CALL_COUNTERS_LIST),
+    &CounterCategory::new("chat_transfer", CHAT_TRANSFER_COUNTERS_LIST),
     // Chat admin
     &CounterCategory::new("chat_admin_public_key", CHAT_ADMIN_PUBLIC_KEY_COUNTERS_LIST),
     // Server info

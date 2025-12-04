@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::{
     ScheduledMaintenanceStatus, UnixTime, diesel_i64_wrapper, diesel_uuid_wrapper,
 };
+use simple_backend_utils::UuidBase64Url;
 use utils::random_bytes::random_128_bits;
 use utoipa::{IntoParams, ToSchema};
 
@@ -335,6 +336,16 @@ impl TryFrom<simple_backend_utils::UuidBase64Url> for AccountId {
 
     fn try_from(aid: simple_backend_utils::UuidBase64Url) -> Result<Self, Self::Error> {
         Ok(Self { aid })
+    }
+}
+
+impl TryFrom<String> for AccountId {
+    type Error = String;
+
+    fn try_from(aid: String) -> Result<Self, Self::Error> {
+        Ok(Self {
+            aid: UuidBase64Url::from_text(&aid)?,
+        })
     }
 }
 
