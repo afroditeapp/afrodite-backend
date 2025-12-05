@@ -1,6 +1,6 @@
 use std::{fmt, path::PathBuf};
 
-use diesel::{RunQueryDsl, SqliteConnection};
+use diesel::{QueryableByName, RunQueryDsl, SqliteConnection, sql_types::BigInt};
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness};
 use error_stack::{Result, ResultExt};
 use simple_backend_config::{Database, SimpleBackendConfig};
@@ -111,6 +111,15 @@ impl DieselWriteHandle {
             .await?
             .into_error_string(DieselDatabaseError::Migrate)?;
 
+        let conn = pool
+            .get()
+            .await
+            .change_context(DieselDatabaseError::GetConnection)?;
+        let db_name = database_info.sqlite_name();
+        conn.interact(move |conn| run_sqlite_wal_checkpoint(conn, db_name))
+            .await?
+            .into_error_string(DieselDatabaseError::Execute)?;
+
         let write_handle = DieselWriteHandle { pool: pool.clone() };
 
         let close_handle = DieselWriteCloseHandle {
@@ -142,6 +151,41 @@ impl DieselWriteHandle {
             pool: self.pool.clone(),
         }
     }
+}
+
+/// Move data from WAL to DB
+fn run_sqlite_wal_checkpoint(
+    conn: &mut MyDbConnection,
+    db_name: &str,
+) -> Result<(), DieselDatabaseError> {
+    if let MyDbConnection::Sqlite(sqlite_conn) = conn {
+        #[derive(QueryableByName)]
+        struct WalCheckpointResult {
+            #[diesel(sql_type = BigInt)]
+            busy: i64,
+        }
+
+        let result: diesel::QueryResult<WalCheckpointResult> =
+            diesel::sql_query("PRAGMA wal_checkpoint(TRUNCATE);").get_result(sqlite_conn);
+
+        match result {
+            Ok(checkpoint_result) => {
+                if checkpoint_result.busy != 0 {
+                    error!(
+                        "WAL checkpoint returned non-zero busy value: {}, DB: '{}'",
+                        checkpoint_result.busy, db_name,
+                    );
+                }
+            }
+            Err(e) => {
+                error!(
+                    "Failed to execute WAL checkpoint: {:?}, DB: '{}'",
+                    e, db_name
+                );
+            }
+        }
+    }
+    Ok(())
 }
 
 pub struct DieselReadCloseHandle {
