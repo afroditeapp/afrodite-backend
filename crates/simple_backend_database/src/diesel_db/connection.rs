@@ -5,7 +5,7 @@ use error_stack::{Result, ResultExt};
 use simple_backend_config::{Database, SimpleBackendConfig};
 use simple_backend_utils::{ContextExt, db::MyDbConnection};
 
-use super::{DieselDatabaseError, sqlite_setup_connection};
+use super::DieselDatabaseError;
 
 pub async fn create_connection(
     config: &SimpleBackendConfig,
@@ -42,4 +42,21 @@ pub async fn create_connection(
     sqlite_setup_connection(&mut conn)?;
 
     Ok(MyDbConnection::Sqlite(conn))
+}
+
+fn sqlite_setup_connection(conn: &mut SqliteConnection) -> Result<(), DieselDatabaseError> {
+    let pragmas = &[
+        "PRAGMA journal_mode=WAL;",
+        "PRAGMA synchronous=NORMAL;",
+        "PRAGMA foreign_keys=ON;",
+        "PRAGMA secure_delete=ON;",
+    ];
+
+    for pragma_str in pragmas.iter() {
+        diesel::sql_query(*pragma_str)
+            .execute(conn)
+            .change_context(DieselDatabaseError::Setup)?;
+    }
+
+    Ok(())
 }

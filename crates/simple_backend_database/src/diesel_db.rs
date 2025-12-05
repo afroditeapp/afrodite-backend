@@ -1,6 +1,6 @@
 use std::{fmt, path::PathBuf};
 
-use diesel::{QueryableByName, RunQueryDsl, SqliteConnection, sql_types::BigInt};
+use diesel::{QueryableByName, RunQueryDsl, sql_types::BigInt};
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness};
 use error_stack::{Result, ResultExt};
 use simple_backend_config::{Database, SimpleBackendConfig};
@@ -199,23 +199,6 @@ impl DieselReadCloseHandle {
         close_connections(&self.pool, self.connections).await;
         self.pool.close()
     }
-}
-
-pub fn sqlite_setup_connection(conn: &mut SqliteConnection) -> Result<(), DieselDatabaseError> {
-    let pragmas = &[
-        "PRAGMA journal_mode=WAL;",
-        "PRAGMA synchronous=NORMAL;",
-        "PRAGMA foreign_keys=ON;",
-        "PRAGMA secure_delete=ON;",
-    ];
-
-    for pragma_str in pragmas.iter() {
-        diesel::sql_query(*pragma_str)
-            .execute(conn)
-            .change_context(DieselDatabaseError::Setup)?;
-    }
-
-    Ok(())
 }
 
 #[derive(Clone)]
