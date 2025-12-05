@@ -10,7 +10,10 @@ use chrono::{Datelike, Utc};
 use error_stack::{Report, Result, ResultExt};
 use manager_model::ManagerInstanceName;
 use serde::{Deserialize, Deserializer, Serialize};
-use simple_backend_utils::{ContextExt, time::DurationValue};
+use simple_backend_utils::{
+    ContextExt,
+    time::{ByteCount, DurationValue},
+};
 use url::Url;
 
 pub const CONFIG_FILE_NAME: &str = "simple_backend_config.toml";
@@ -24,9 +27,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 public_api = "127.0.0.1:3000"
 local_bot_api_port = 3001
 
-[database]
-sqlite = true
-
+# SQLite will be used if PostgreSQL is not configured.
 # TODO(future): Add connection error handling to Postgres support if needed.
 #               Postgres support should not be used in production
 #               before error handling is implemented.
@@ -252,7 +253,7 @@ impl SimpleBackendConfigFile {
             }
         }
 
-        if config.database.sqlite && config.database.postgres.is_some() {
+        if config.database.sqlite.is_some() && config.database.postgres.is_some() {
             return Err(ConfigFileError::InvalidConfig
                 .report()
                 .attach_printable("database: both sqlite and postgres cannot be enabled"));
@@ -768,15 +769,49 @@ pub struct JitsiMeetConfig {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DatabaseConfig {
-    pub sqlite: bool,
+    sqlite: Option<SqliteConfig>,
     pub postgres: Option<PostgresConfig>,
 }
 
 impl DatabaseConfig {
     pub fn sqlite() -> Self {
         Self {
-            sqlite: true,
+            sqlite: Some(SqliteConfig::default()),
             postgres: None,
+        }
+    }
+
+    pub fn is_sqlite(&self) -> bool {
+        self.postgres.is_none()
+    }
+
+    pub fn sqlite_config(&self) -> SqliteConfig {
+        self.sqlite.clone().unwrap_or_default()
+    }
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct SqliteConfig {
+    #[serde(default)]
+    pub vacuum: SqliteVacuumConfig,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SqliteVacuumConfig {
+    /// Minimum wait time since database file creation before running VACUUM
+    pub min_wait_time: DurationValue,
+    /// Maximum wait time since database file creation before forcing VACUUM
+    pub max_wait_time: DurationValue,
+    /// Maximum free space in database file (calculated using free DB pages)
+    pub max_free_space: ByteCount,
+}
+
+impl Default for SqliteVacuumConfig {
+    fn default() -> Self {
+        SqliteVacuumConfig {
+            min_wait_time: DurationValue::from_days(30),
+            max_wait_time: DurationValue::from_days(365),
+            max_free_space: ByteCount::from_megabytes(10),
         }
     }
 }

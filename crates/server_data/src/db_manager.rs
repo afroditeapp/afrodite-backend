@@ -73,7 +73,7 @@ impl DatabaseManager {
             )
             .await?;
 
-        if config.simple_backend().database_config().sqlite {
+        if config.simple_backend().database_config().is_sqlite() {
             let diesel_sqlite = current_write.diesel().sqlite_version().await?;
             info!("Diesel SQLite version: {}", diesel_sqlite);
         }

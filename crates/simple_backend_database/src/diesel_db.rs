@@ -8,6 +8,7 @@ use simple_backend_utils::{ContextExt, IntoReportFromString};
 use tracing::error;
 
 mod connection;
+mod vacuum;
 
 pub use simple_backend_utils::db::{DieselDatabaseError, MyDbConnection};
 
@@ -101,7 +102,7 @@ impl DieselWriteHandle {
         migrations: EmbeddedMigrations,
     ) -> Result<(Self, DieselWriteCloseHandle), DieselDatabaseError> {
         let connections = 1;
-        let pool = create_pool(config, database_info, db_path, connections).await?;
+        let pool = create_pool(config, database_info, db_path.clone(), connections).await?;
 
         let conn = pool
             .get()
@@ -119,6 +120,18 @@ impl DieselWriteHandle {
         conn.interact(move |conn| run_sqlite_wal_checkpoint(conn, db_name))
             .await?
             .into_error_string(DieselDatabaseError::Execute)?;
+
+        let vacuum_config = config.database_config().sqlite_config().vacuum;
+        let db_name = database_info.sqlite_name();
+        let conn = pool
+            .get()
+            .await
+            .change_context(DieselDatabaseError::GetConnection)?;
+        conn.interact(move |conn| {
+            vacuum::run_sqlite_vacuum_if_needed(conn, &db_path, &vacuum_config, db_name)
+        })
+        .await?
+        .into_error_string(DieselDatabaseError::Execute)?;
 
         let write_handle = DieselWriteHandle { pool: pool.clone() };
 
