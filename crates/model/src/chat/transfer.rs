@@ -39,5 +39,7 @@ pub struct DataTransferPublicKey {
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct DataTransferByteCount {
-    pub byte_count: u64,
+    /// Use u32 to prevent integer wrapping when checking is
+    /// the value inside the current transfer budget.
+    pub byte_count: u32,
 }

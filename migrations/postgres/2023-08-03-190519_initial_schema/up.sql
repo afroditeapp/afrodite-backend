@@ -882,6 +882,8 @@ CREATE TABLE IF NOT EXISTS chat_state(
     next_received_like_id        BIGINT        NOT NULL DEFAULT 0,
     max_public_key_count         BIGINT        NOT NULL DEFAULT 0,
     next_conversation_id         BIGINT        NOT NULL DEFAULT 0,
+    data_transfer_byte_count     BIGINT        NOT NULL DEFAULT 0,
+    data_transfer_byte_count_reset_unix_time BIGINT,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

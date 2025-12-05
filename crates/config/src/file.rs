@@ -14,7 +14,7 @@ use simple_backend_config::file::IpAddressAccessConfig;
 use simple_backend_model::VersionNumber;
 use simple_backend_utils::{
     ContextExt,
-    time::{DurationValue, TimeValue, UtcTimeValue},
+    time::{ByteCount, DurationValue, TimeValue, UtcTimeValue},
 };
 
 // Kilpisjärvi ja Nuorgam
@@ -73,6 +73,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # new_message_email_without_push_notification_device_token = "1d"
 # new_like_email_with_push_notification_device_token = "7d"
 # new_like_email_without_push_notification_device_token = "1d"
+# data_transfer_yearly_max_bytes = "100M"
 
 # [limits.media]
 # max_content_count = 20
@@ -334,6 +335,7 @@ pub struct ChatLimitsConfig {
     pub new_message_email_without_push_notification_device_token: DurationValue,
     pub new_like_email_with_push_notification_device_token: DurationValue,
     pub new_like_email_without_push_notification_device_token: DurationValue,
+    pub data_transfer_yearly_max_bytes: ByteCount,
 }
 
 impl Default for ChatLimitsConfig {
@@ -344,6 +346,7 @@ impl Default for ChatLimitsConfig {
             new_message_email_without_push_notification_device_token: DurationValue::from_days(1),
             new_like_email_with_push_notification_device_token: DurationValue::from_days(7),
             new_like_email_without_push_notification_device_token: DurationValue::from_days(1),
+            data_transfer_yearly_max_bytes: ByteCount::from_megabytes(100),
         }
     }
 }

@@ -36,7 +36,10 @@ pub struct ChatStateRaw {
     pub received_likes_sync_version: ReceivedLikesSyncVersion,
     pub new_received_likes_count: NewReceivedLikesCount,
     pub next_received_like_id: ReceivedLikeId,
+    pub max_public_key_count: i64,
     pub next_conversation_id: ConversationId,
+    pub data_transfer_byte_count: i64,
+    pub data_transfer_byte_count_reset_unix_time: Option<UnixTime>,
 }
 
 impl ChatStateRaw {

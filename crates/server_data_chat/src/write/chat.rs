@@ -2,6 +2,7 @@ mod limits;
 mod notification;
 mod privacy;
 mod report;
+mod transfer;
 
 use std::{collections::HashSet, sync::Arc};
 
@@ -42,6 +43,9 @@ impl<'a> WriteCommandsChat<'a> {
     }
     pub fn limits(self) -> limits::WriteCommandsChatLimits<'a> {
         limits::WriteCommandsChatLimits::new(self.0)
+    }
+    pub fn transfer(self) -> transfer::WriteCommandsChatTransfer<'a> {
+        transfer::WriteCommandsChatTransfer::new(self.0)
     }
 }
 

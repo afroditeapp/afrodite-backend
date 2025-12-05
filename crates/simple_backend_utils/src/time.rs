@@ -190,3 +190,60 @@ impl TryFrom<String> for DurationValue {
         Ok(DurationValue { seconds })
     }
 }
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+#[serde(try_from = "String")]
+pub struct ByteCount {
+    bytes: i64,
+}
+
+impl ByteCount {
+    pub fn bytes(&self) -> i64 {
+        self.bytes
+    }
+
+    pub fn from_megabytes(mb: u32) -> Self {
+        Self {
+            bytes: Into::<i64>::into(mb) * 1024 * 1024,
+        }
+    }
+}
+
+impl TryFrom<String> for ByteCount {
+    type Error = String;
+    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
+        let input = value.trim();
+        if input.is_empty() {
+            return Err("Byte count cannot be empty".to_string());
+        }
+
+        // Check if the input ends with a unit suffix
+        let (number_str, unit) = if input.ends_with('K') || input.ends_with('k') {
+            (&input[..input.len() - 1], "K")
+        } else if input.ends_with('M') || input.ends_with('m') {
+            (&input[..input.len() - 1], "M")
+        } else if input.ends_with('G') || input.ends_with('g') {
+            (&input[..input.len() - 1], "G")
+        } else {
+            (input, "B")
+        };
+
+        let number: u32 = number_str
+            .parse()
+            .map_err(|e: std::num::ParseIntError| {
+                format!("Parsing byte count failed: {e}, current value: {input}, example values: 100K, 50M, 1G")
+            })?;
+
+        let number = Into::<i64>::into(number);
+
+        let bytes = match unit {
+            "B" => number,
+            "K" => number * 1024,
+            "M" => number * 1024 * 1024,
+            "G" => number * 1024 * 1024 * 1024,
+            _ => unreachable!(),
+        };
+
+        Ok(ByteCount { bytes })
+    }
+}

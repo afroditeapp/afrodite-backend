@@ -14,6 +14,7 @@ mod limits;
 mod notification;
 mod privacy;
 mod public_key;
+mod transfer;
 
 define_cmd_wrapper_read!(ReadCommandsChat);
 
@@ -29,6 +30,9 @@ impl<'a> ReadCommandsChat<'a> {
     }
     pub fn limits(self) -> limits::ReadCommandsChatLimits<'a> {
         limits::ReadCommandsChatLimits::new(self.0)
+    }
+    pub fn transfer(self) -> transfer::ReadCommandsChatTransfer<'a> {
+        transfer::ReadCommandsChatTransfer::new(self.0)
     }
 }
 

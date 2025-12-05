@@ -249,6 +249,8 @@ diesel::table! {
         next_received_like_id -> Int8,
         max_public_key_count -> Int8,
         next_conversation_id -> Int8,
+        data_transfer_byte_count -> Int8,
+        data_transfer_byte_count_reset_unix_time -> Nullable<Int8>,
     }
 }
 
@@ -605,14 +607,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    profile_privacy_settings (account_id) {
-        account_id -> Int8,
-        online_status -> Bool,
-        last_seen_time -> Bool,
-    }
-}
-
-diesel::table! {
     profile_app_notification_state (account_id) {
         account_id -> Int8,
         profile_name_accepted -> Int2,
@@ -700,6 +694,14 @@ diesel::table! {
         profile_name -> Text,
         name_creator_account_id -> Int8,
         name_moderator_account_id -> Nullable<Int8>,
+    }
+}
+
+diesel::table! {
+    profile_privacy_settings (account_id) {
+        account_id -> Int8,
+        online_status -> Bool,
+        last_seen_time -> Bool,
     }
 }
 
@@ -855,13 +857,13 @@ diesel::joinable!(pending_messages -> account_interaction (account_interaction))
 diesel::joinable!(profile -> account_id (account_id));
 diesel::joinable!(profile_app_notification_settings -> account_id (account_id));
 diesel::joinable!(profile_app_notification_state -> account_id (account_id));
-diesel::joinable!(profile_privacy_settings -> account_id (account_id));
 diesel::joinable!(profile_attributes_filter_list_unwanted -> account_id (account_id));
 diesel::joinable!(profile_attributes_filter_list_wanted -> account_id (account_id));
 diesel::joinable!(profile_attributes_filter_settings -> account_id (account_id));
 diesel::joinable!(profile_attributes_value_list -> account_id (account_id));
 diesel::joinable!(profile_automatic_profile_search_settings -> account_id (account_id));
 diesel::joinable!(profile_automatic_profile_search_state -> account_id (account_id));
+diesel::joinable!(profile_privacy_settings -> account_id (account_id));
 diesel::joinable!(profile_report_profile_name -> common_report (report_id));
 diesel::joinable!(profile_report_profile_text -> common_report (report_id));
 diesel::joinable!(profile_state -> account_id (account_id));
@@ -932,7 +934,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     profile,
     profile_app_notification_settings,
     profile_app_notification_state,
-    profile_privacy_settings,
     profile_attributes_file_hash,
     profile_attributes_filter_list_unwanted,
     profile_attributes_filter_list_wanted,
@@ -942,6 +943,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     profile_automatic_profile_search_state,
     profile_moderation,
     profile_name_allowlist,
+    profile_privacy_settings,
     profile_report_profile_name,
     profile_report_profile_text,
     profile_state,

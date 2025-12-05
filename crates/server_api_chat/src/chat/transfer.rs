@@ -76,6 +76,10 @@ pub const MAX_BINARY_MESSAGE_SIZE: usize = 1024 * 64;
 /// 3. Send binary messages containing the data until all bytes transferred.
 ///    Max size for a binary message is 64 KiB. Server will stop the data
 ///    transfer if binary message size is larger than the max size.
+///
+/// ## Transfer Budget Enforcement:
+/// When the yearly transfer budget is exceeded, both WebSockets (source and target)
+/// are closed with status code 4000.
 #[utoipa::path(
     get,
     path = PATH_TRANSFER_DATA,
@@ -128,15 +132,18 @@ fn get_pending_transfers() -> &'static PendingConnections {
 struct PendingTransfersManager;
 
 impl PendingTransfersManager {
-    async fn insert(account_id: AccountId, transfer: PendingTransfer) {
+    async fn insert(account_id: impl Into<AccountId>, transfer: PendingTransfer) {
         get_pending_transfers()
             .lock()
             .await
-            .insert(account_id, transfer);
+            .insert(account_id.into(), transfer);
     }
 
-    async fn remove(account_id: AccountId) -> Option<PendingTransfer> {
-        get_pending_transfers().lock().await.remove(&account_id)
+    async fn remove(account_id: impl Into<AccountId>) -> Option<PendingTransfer> {
+        get_pending_transfers()
+            .lock()
+            .await
+            .remove(&account_id.into())
     }
 }
 
@@ -215,4 +222,5 @@ create_counters!(
     timeout,
     transfer_completed,
     transfer_error,
+    budget_exceeded,
 );

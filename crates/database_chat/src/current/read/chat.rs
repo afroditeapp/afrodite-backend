@@ -11,6 +11,7 @@ mod message;
 mod notification;
 mod privacy;
 mod public_key;
+pub mod transfer;
 
 define_current_read_commands!(CurrentReadChat);
 
@@ -37,6 +38,10 @@ impl<'a> CurrentReadChat<'a> {
 
     pub fn limits(self) -> limits::CurrentReadChatLimits<'a> {
         limits::CurrentReadChatLimits::new(self.cmds)
+    }
+
+    pub fn transfer(self) -> transfer::CurrentReadChatTransfer<'a> {
+        transfer::CurrentReadChatTransfer::new(self.cmds)
     }
 }
 

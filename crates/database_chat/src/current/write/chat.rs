@@ -16,6 +16,7 @@ mod message;
 mod notification;
 mod privacy;
 mod report;
+pub mod transfer;
 
 define_current_write_commands!(CurrentWriteChat);
 
@@ -42,6 +43,10 @@ impl<'a> CurrentWriteChat<'a> {
 
     pub fn limits(self) -> limits::CurrentWriteChatLimits<'a> {
         limits::CurrentWriteChatLimits::new(self.cmds)
+    }
+
+    pub fn transfer(self) -> transfer::CurrentWriteChatTransfer<'a> {
+        transfer::CurrentWriteChatTransfer::new(self.cmds)
     }
 }
 
