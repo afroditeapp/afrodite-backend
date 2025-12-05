@@ -1,11 +1,7 @@
 //! Data transfer routes for transferring data between clients
 //!
 
-use std::{
-    collections::HashMap,
-    sync::{Arc, OnceLock},
-    time::Duration,
-};
+use std::{collections::HashMap, sync::OnceLock, time::Duration};
 
 use axum::{
     extract::{
@@ -116,7 +112,7 @@ pub async fn get_transfer_data(
     Ok(response)
 }
 
-type PendingConnections = Arc<Mutex<HashMap<AccountId, PendingTransfer>>>;
+type PendingConnections = Mutex<HashMap<AccountId, PendingTransfer>>;
 
 struct PendingTransfer {
     pub password: String,
@@ -126,7 +122,7 @@ struct PendingTransfer {
 static PENDING_TRANSFERS: OnceLock<PendingConnections> = OnceLock::new();
 
 fn get_pending_transfers() -> &'static PendingConnections {
-    PENDING_TRANSFERS.get_or_init(|| Arc::new(Mutex::new(HashMap::new())))
+    PENDING_TRANSFERS.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
 struct PendingTransfersManager;
