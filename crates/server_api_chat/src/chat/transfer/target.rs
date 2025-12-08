@@ -130,7 +130,7 @@ pub async fn handle_target_client(
         Ok(TransferBudgetCheckResult::ExceedsLimit) => {
             TRANSFER.budget_exceeded.incr();
             let close_frame = CloseFrame {
-                code: 4000,
+                code: 1008,
                 reason: "Transfer budget exceeded".into(),
             };
             let _ = source_socket
@@ -169,6 +169,14 @@ pub async fn handle_target_client(
 
         if update_result.is_ok() && total_bytes_transferred == Into::<i64>::into(byte_count) {
             TRANSFER.transfer_completed.incr();
+            let close_frame = CloseFrame {
+                code: 1000,
+                reason: "Transfer completed".into(),
+            };
+            let _ = source_socket
+                .send(Message::Close(Some(close_frame.clone())))
+                .await;
+            let _ = target_socket.send(Message::Close(Some(close_frame))).await;
         } else if update_result.is_err() {
             TRANSFER.protocol_error.incr();
         } else {

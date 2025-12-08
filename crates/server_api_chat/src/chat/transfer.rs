@@ -54,9 +54,10 @@ pub const MAX_BINARY_MESSAGE_SIZE: usize = 1024 * 64;
 ///    Max size for a binary message is 64 KiB. Server will stop the data
 ///    transfer if binary message size is larger than the max size.
 ///
-/// ## Transfer Budget Enforcement:
-/// When the yearly transfer budget is exceeded, both WebSockets (source and target)
-/// are closed with status code 4000.
+/// ## WebSocket Close Status Codes:
+/// - 1000 (Normal Closure): Transfer completed successfully
+/// - 1008 (Policy Violation): Yearly transfer budget exceeded
+/// - No close status code: Other error
 #[utoipa::path(
     get,
     path = PATH_TRANSFER_DATA,
