@@ -41,7 +41,7 @@ pub const MAX_BINARY_MESSAGE_SIZE: usize = 1024 * 64;
 /// 1. Connect and send initial message:
 ///    ```json
 ///    {
-///        "role": "target",
+///        "role": "Target",
 ///        "access_token": "ACCESS_TOKEN",
 ///        "public_key": "PUBLIC_KEY",
 ///        "password": "PASSWORD"
@@ -60,7 +60,7 @@ pub const MAX_BINARY_MESSAGE_SIZE: usize = 1024 * 64;
 /// 1. Connect and send initial message (must connect after target):
 ///    ```json
 ///    {
-///        "role": "source",
+///        "role": "Source",
 ///        "account_id": "ACCOUNT_ID",
 ///        "password": "PASSWORD"
 ///    }
