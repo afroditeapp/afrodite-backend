@@ -38,47 +38,18 @@ pub const MAX_BINARY_MESSAGE_SIZE: usize = 1024 * 64;
 /// Header `Sec-WebSocket-Protocol` must have `v1` as the first value.
 ///
 /// ## Target Client Flow:
-/// 1. Connect and send initial message:
-///    ```json
-///    {
-///        "role": "Target",
-///        "access_token": "ACCESS_TOKEN",
-///        "public_key": "PUBLIC_KEY",
-///        "password": "PASSWORD"
-///    }
-///    ```
+/// 1. Connect and send initial JSON message [DataTransferInitialMessage] with [ClientRole::Target]
 /// 2. Wait for source to connect (timeout: 1 hour)
-/// 3. Receive byte count:
-///    ```json
-///    {
-///        "byte_count": BYTE_COUNT
-///    }
-///    ```
+/// 3. Receive byte count JSON message [model_chat::DataTransferByteCount]
 /// 4. Receive binary messages until all bytes transferred
 ///
 /// ## Source Client Flow:
-/// 1. Connect and send initial message (must connect after target):
-///    ```json
-///    {
-///        "role": "Source",
-///        "account_id": "ACCOUNT_ID",
-///        "password": "PASSWORD"
-///    }
-///    ```
+/// 1. Connect and send initial JSON message [DataTransferInitialMessage] with [ClientRole::Source]
+///    (must connect after target).
 ///    Note: Response has constant 1-second delay. Connection closes if password is invalid
 ///    or target is not connected.
-/// 2. Receive public key:
-///    ```json
-///    {
-///        "public_key": "PUBLIC_KEY"
-///    }
-///    ```
-/// 3. Send byte count:
-///    ```json
-///    {
-///        "byte_count": BYTE_COUNT
-///    }
-///    ```
+/// 2. Receive public key JSON message [DataTransferPublicKey]
+/// 3. Send byte count JSON message [model_chat::DataTransferByteCount]
 /// 4. Send binary messages containing the data until all bytes transferred.
 ///    Max size for a binary message is 64 KiB. Server will stop the data
 ///    transfer if binary message size is larger than the max size.
