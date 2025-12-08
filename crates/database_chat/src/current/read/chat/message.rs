@@ -39,31 +39,22 @@ impl CurrentReadChatMessage<'_> {
         &mut self,
         id_message_receiver: AccountIdInternal,
     ) -> Result<(NewMessageNotificationList, Vec<PendingMessageDbId>), DieselDatabaseError> {
-        use crate::schema::{account_id, account_interaction, pending_messages::dsl::*};
+        use crate::schema::{account_id, conversation_id, pending_messages::dsl::*};
 
-        let data: Vec<(
-            i64,
-            AccountIdDb,
-            AccountId,
-            AccountIdDb,
-            ConversationId,
-            ConversationId,
-            bool,
-        )> = pending_messages
+        let data: Vec<(i64, AccountIdDb, AccountId, ConversationId, bool)> = pending_messages
             .inner_join(account_id::table.on(account_id_sender.eq(account_id::id)))
-            .inner_join(account_interaction::table)
+            .inner_join(
+                conversation_id::table.on(conversation_id::account_id
+                    .eq(id_message_receiver.as_db_id())
+                    .and(conversation_id::other_account_id.eq(account_id_sender))),
+            )
             .filter(account_id_receiver.eq(id_message_receiver.as_db_id()))
             .filter(receiver_acknowledgement.eq(false))
-            .filter(account_interaction::account_id_sender.is_not_null())
-            .filter(account_interaction::conversation_id_sender.is_not_null())
-            .filter(account_interaction::conversation_id_receiver.is_not_null())
             .select((
                 id,
                 account_id::id,
                 account_id::uuid,
-                account_interaction::account_id_sender.assume_not_null(),
-                account_interaction::conversation_id_sender.assume_not_null(),
-                account_interaction::conversation_id_receiver.assume_not_null(),
+                conversation_id::id,
                 receiver_push_notification_sent,
             ))
             .order_by(account_id_sender)
@@ -73,22 +64,7 @@ impl CurrentReadChatMessage<'_> {
         let mut notifications = HashMap::<AccountIdDb, (NewMessageNotification, bool)>::new();
         let mut messages_pending_push_notification = vec![];
 
-        for (
-            primary_key,
-            sender_db_id,
-            sender,
-            like_sender_db_id,
-            conversation_id_sender,
-            conversation_id_receiver,
-            push_notification_sent,
-        ) in data
-        {
-            // Select message receiver specific conversation ID
-            let c = if like_sender_db_id == id_message_receiver.into_db_id() {
-                conversation_id_sender
-            } else {
-                conversation_id_receiver
-            };
+        for (primary_key, sender_db_id, sender, c, push_notification_sent) in data {
             let mut entry = notifications
                 .entry(sender_db_id)
                 .insert_entry((NewMessageNotification { a: sender, c, m: 0 }, true));
@@ -310,6 +286,24 @@ impl CurrentReadChatMessage<'_> {
             .filter(account_id_viewer.eq(viewer_id.as_db_id()))
             .filter(account_id_sender.eq(sender_id.as_db_id()))
             .select(message_number)
+            .first(self.conn())
+            .optional()
+            .into_db_error(())?;
+
+        Ok(result)
+    }
+
+    pub fn get_conversation_id(
+        &mut self,
+        owner_id: AccountIdInternal,
+        other_id: AccountIdInternal,
+    ) -> Result<Option<ConversationId>, DieselDatabaseError> {
+        use crate::schema::conversation_id::dsl::*;
+
+        let result: Option<ConversationId> = conversation_id
+            .filter(account_id.eq(owner_id.as_db_id()))
+            .filter(other_account_id.eq(other_id.as_db_id()))
+            .select(id)
             .first(self.conn())
             .optional()
             .into_db_error(())?;

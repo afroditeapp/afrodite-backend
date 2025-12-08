@@ -945,10 +945,6 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     -- Matches iterator uses match ID to return correct pages.
     match_id                        BIGINT,
     match_unix_time                 BIGINT,
-    -- Account specific conversation ID for new message notifications.
-    -- Available when accounts are a match.
-    conversation_id_sender                  BIGINT,
-    conversation_id_receiver                BIGINT,
     FOREIGN KEY (account_id_sender)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -993,7 +989,6 @@ CREATE TABLE IF NOT EXISTS account_interaction_index(
 -- sender and receiver.
 CREATE TABLE IF NOT EXISTS pending_messages(
     id                  INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    account_interaction             BIGINT NOT NULL,
     -- The account which sent the message.
     account_id_sender               BIGINT NOT NULL,
     -- The account which will receive the message.
@@ -1013,10 +1008,6 @@ CREATE TABLE IF NOT EXISTS pending_messages(
     message_id                      BLOB  NOT NULL,
     -- Message bytes.
     message_bytes                   BLOB   NOT NULL,
-    FOREIGN KEY (account_interaction)
-        REFERENCES account_interaction (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE,
     FOREIGN KEY (account_id_sender)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -1064,6 +1055,26 @@ CREATE TABLE IF NOT EXISTS latest_seen_message(
             ON DELETE CASCADE
             ON UPDATE CASCADE,
     FOREIGN KEY (account_id_sender)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+-- Account specific conversation ID for new message notifications.
+-- Available when accounts are a match.
+CREATE TABLE IF NOT EXISTS conversation_id(
+    -- The account who owns this conversation ID
+    account_id              BIGINT NOT NULL,
+    -- The other account in the conversation
+    other_account_id        BIGINT NOT NULL,
+    -- Conversation ID for this account
+    id                      BIGINT NOT NULL,
+    PRIMARY KEY (account_id, other_account_id),
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (other_account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE

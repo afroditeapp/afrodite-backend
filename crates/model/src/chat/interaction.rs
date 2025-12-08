@@ -285,8 +285,6 @@ pub struct AccountInteractionInternal {
     received_like_unix_time: Option<UnixTime>,
     pub match_id: Option<MatchId>,
     match_unix_time: Option<UnixTime>,
-    conversation_id_sender: Option<ConversationId>,
-    conversation_id_receiver: Option<ConversationId>,
 }
 
 impl AccountInteractionInternal {
@@ -314,12 +312,7 @@ impl AccountInteractionInternal {
         }
     }
 
-    pub fn try_into_match(
-        self,
-        match_id: MatchId,
-        conversation_id_sender: ConversationId,
-        conversation_id_receiver: ConversationId,
-    ) -> Result<Self, AccountInteractionStateError> {
+    pub fn try_into_match(self, match_id: MatchId) -> Result<Self, AccountInteractionStateError> {
         let target = AccountInteractionState::Match;
         let state = self.state_number;
         match state {
@@ -327,8 +320,6 @@ impl AccountInteractionInternal {
                 state_number: target,
                 received_like_id: None,
                 match_id: Some(match_id),
-                conversation_id_sender: Some(conversation_id_sender),
-                conversation_id_receiver: Some(conversation_id_receiver),
                 match_unix_time: Some(UnixTime::current_time()),
                 ..self
             }),
@@ -486,20 +477,6 @@ impl AccountInteractionInternal {
             self.message_counter_receiver
         } else {
             0
-        }
-    }
-
-    pub fn conversation_id_for_account(
-        &self,
-        account: impl Into<AccountIdDb>,
-    ) -> Option<ConversationId> {
-        let account = account.into();
-        if self.account_id_sender == Some(account) {
-            self.conversation_id_sender
-        } else if self.account_id_receiver == Some(account) {
-            self.conversation_id_receiver
-        } else {
-            None
         }
     }
 

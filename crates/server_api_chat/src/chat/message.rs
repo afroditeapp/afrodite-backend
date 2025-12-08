@@ -307,17 +307,15 @@ pub async fn get_conversation_id(
     CHAT.get_conversation_id.incr();
 
     let requested = state.get_internal_id(requested).await?;
-    let Some(interaction) = state
+
+    let conversation_id_value = state
         .read()
         .chat()
-        .account_interaction(id, requested)
-        .await?
-    else {
-        return Ok(GetConversationId::default().into());
-    };
+        .get_conversation_id(id, requested)
+        .await?;
 
     let value = GetConversationId {
-        value: interaction.conversation_id_for_account(id),
+        value: conversation_id_value,
     };
 
     Ok(value.into())

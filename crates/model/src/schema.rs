@@ -72,8 +72,6 @@ diesel::table! {
         received_like_unix_time -> Nullable<Int8>,
         match_id -> Nullable<Int8>,
         match_unix_time -> Nullable<Int8>,
-        conversation_id_sender -> Nullable<Int8>,
-        conversation_id_receiver -> Nullable<Int8>,
     }
 }
 
@@ -280,6 +278,14 @@ diesel::table! {
         client_config_sync_version -> Int2,
         client_login_session_platform -> Nullable<Int2>,
         client_language -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
+    conversation_id (account_id, other_account_id) {
+        account_id -> Int8,
+        other_account_id -> Int8,
+        id -> Int8,
     }
 }
 
@@ -573,7 +579,6 @@ diesel::table! {
 diesel::table! {
     pending_messages (id) {
         id -> Int8,
-        account_interaction -> Int8,
         account_id_sender -> Int8,
         account_id_receiver -> Int8,
         sender_acknowledgement -> Bool,
@@ -853,7 +858,6 @@ diesel::joinable!(media_report_profile_content -> common_report (report_id));
 diesel::joinable!(media_state -> account_id (account_id));
 diesel::joinable!(news -> account_id (account_id_creator));
 diesel::joinable!(news_translations -> news (news_id));
-diesel::joinable!(pending_messages -> account_interaction (account_interaction));
 diesel::joinable!(profile -> account_id (account_id));
 diesel::joinable!(profile_app_notification_settings -> account_id (account_id));
 diesel::joinable!(profile_app_notification_state -> account_id (account_id));
@@ -898,6 +902,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     client_features_file_hash,
     common_report,
     common_state,
+    conversation_id,
     current_account_media,
     custom_reports_file_hash,
     daily_likes_left,

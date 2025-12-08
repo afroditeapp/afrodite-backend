@@ -173,7 +173,6 @@ impl CurrentWriteChatMessage<'_> {
 
         insert_into(pending_messages)
             .values((
-                account_interaction.eq(interaction.id),
                 account_id_sender.eq(sender.as_db_id()),
                 account_id_receiver.eq(receiver.as_db_id()),
                 message_unix_time.eq(time),
@@ -248,6 +247,30 @@ impl CurrentWriteChatMessage<'_> {
             .set(message_number.eq(excluded(message_number)))
             .execute_my_conn(self.conn())
             .into_db_error((viewer_id, sender_id))?;
+
+        Ok(())
+    }
+
+    pub fn upsert_conversation_id(
+        &mut self,
+        owner_id: AccountIdInternal,
+        other_id: AccountIdInternal,
+        conversation_id_value: model_chat::ConversationId,
+    ) -> Result<(), DieselDatabaseError> {
+        use diesel::upsert::excluded;
+        use model::schema::conversation_id::dsl::*;
+
+        insert_into(conversation_id)
+            .values((
+                account_id.eq(owner_id.as_db_id()),
+                other_account_id.eq(other_id.as_db_id()),
+                id.eq(conversation_id_value),
+            ))
+            .on_conflict((account_id, other_account_id))
+            .do_update()
+            .set(id.eq(excluded(id)))
+            .execute_my_conn(self.conn())
+            .into_db_error((owner_id, other_id))?;
 
         Ok(())
     }
