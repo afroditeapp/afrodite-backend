@@ -67,13 +67,19 @@ pub const MAX_BINARY_MESSAGE_SIZE: usize = 1024 * 64;
 ///    ```
 ///    Note: Response has constant 1-second delay. Connection closes if password is invalid
 ///    or target is not connected.
-/// 2. Send byte count:
+/// 2. Receive public key:
+///    ```json
+///    {
+///        "public_key": "PUBLIC_KEY"
+///    }
+///    ```
+/// 3. Send byte count:
 ///    ```json
 ///    {
 ///        "byte_count": BYTE_COUNT
 ///    }
 ///    ```
-/// 3. Send binary messages containing the data until all bytes transferred.
+/// 4. Send binary messages containing the data until all bytes transferred.
 ///    Max size for a binary message is 64 KiB. Server will stop the data
 ///    transfer if binary message size is larger than the max size.
 ///

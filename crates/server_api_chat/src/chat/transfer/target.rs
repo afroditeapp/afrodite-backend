@@ -83,7 +83,7 @@ pub async fn handle_target_client(
         return;
     };
 
-    if target_socket
+    if source_socket
         .send(Message::Text(first_message_to_source.into()))
         .await
         .is_err()
