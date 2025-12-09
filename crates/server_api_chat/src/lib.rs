@@ -26,7 +26,7 @@ pub use server_common::{data::DataError, result};
     components(schemas(
         model_chat::ClientRole,
         model_chat::DataTransferInitialMessage,
-        model_chat::DataTransferPublicKey,
+        model_chat::DataTransferData,
         model_chat::DataTransferByteCount,
     )),
     modifiers(&SecurityApiAccessTokenDefault),

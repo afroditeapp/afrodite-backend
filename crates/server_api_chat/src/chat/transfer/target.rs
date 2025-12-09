@@ -1,96 +1,84 @@
 //! Target client handling for data transfer
 
-use std::{
-    collections::HashMap,
-    sync::{Arc, OnceLock},
-    time::Duration,
-};
+use std::time::Duration;
 
 use axum::extract::ws::{CloseFrame, Message, WebSocket};
 use database_chat::current::read::chat::transfer::TransferBudgetCheckResult;
-use model::AccessToken;
-use model_chat::{DataTransferByteCount, DataTransferPublicKey};
-use server_api::{
-    S,
-    app::{GetAccessTokens, GetConfig},
-    db_write_raw,
-};
+use model_chat::DataTransferByteCount;
+use server_api::{S, app::GetConfig, db_write_raw};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
-use tokio::sync::Mutex;
+use tokio::time::Instant;
 
-use super::{MAX_BINARY_MESSAGE_SIZE, PendingTransfer};
+use super::{MAX_BINARY_MESSAGE_SIZE, PendingTransfer, Sha256Bytes};
 use crate::{
     app::{ReadData, WriteData},
-    chat::transfer::{PendingTransfersManager, TRANSFER},
+    chat::transfer::{TRANSFER, get_pending_transfers},
 };
 
-type TransferLocks = Mutex<HashMap<model::AccountId, Arc<Mutex<()>>>>;
-
-static ACCOUNT_TRANSFER_LOCKS: OnceLock<TransferLocks> = OnceLock::new();
-
-fn get_account_transfer_locks() -> &'static TransferLocks {
-    ACCOUNT_TRANSFER_LOCKS.get_or_init(|| Mutex::new(HashMap::new()))
-}
-
-async fn get_account_lock(account_id: model::AccountId) -> Arc<Mutex<()>> {
-    let mut locks = get_account_transfer_locks().lock().await;
-    locks
-        .entry(account_id)
-        .or_insert_with(|| Arc::new(Mutex::new(())))
-        .clone()
-}
-
 pub async fn handle_target_client(
-    mut target_socket: WebSocket,
     state: S,
-    access_token: String,
-    first_message_to_source: DataTransferPublicKey,
-    password: String,
+    target_socket: WebSocket,
+    account_id: model_chat::AccountIdInternal,
+    sha256: Sha256Bytes,
+    data: String,
 ) {
-    let access_token = AccessToken::new(access_token);
-    let account_id = match state.access_token_exists(&access_token).await {
-        Some(id) => id,
-        None => {
-            TRANSFER.invalid_access_token.incr();
-            return;
-        }
-    };
-
     let (source_ready_tx, source_ready_rx) = tokio::sync::oneshot::channel();
 
     let transfer = PendingTransfer {
-        password,
-        source_ready_tx: Some(source_ready_tx),
+        data,
+        source_ready_tx,
     };
 
-    PendingTransfersManager::insert(account_id, transfer).await;
+    let mut transfers = get_pending_transfers().write().await;
+    let receiver = transfers.replace_connection(account_id.into(), sha256, transfer);
+    drop(transfers);
 
-    let timeout = Duration::from_secs(60 * 60);
-    let mut source_socket = match tokio::time::timeout(timeout, source_ready_rx).await {
-        Ok(Ok(source_socket)) => {
-            PendingTransfersManager::remove(account_id).await;
-            source_socket
-        }
-        Ok(Err(_)) | Err(_) => {
-            TRANSFER.timeout.incr();
-            PendingTransfersManager::remove(account_id).await;
-            return;
-        }
-    };
-
-    let Ok(first_message_to_source) = serde_json::to_string(&first_message_to_source) else {
-        TRANSFER.protocol_error.incr();
-        return;
-    };
-
-    if source_socket
-        .send(Message::Text(first_message_to_source.into()))
-        .await
-        .is_err()
-    {
-        TRANSFER.connection_error.incr();
-        return;
+    tokio::select! {
+        _ = receiver => (),
+        _ = handle_target_client_internal(state, target_socket, account_id, source_ready_rx) => (),
     }
+}
+
+async fn handle_target_client_internal(
+    state: S,
+    mut target_socket: WebSocket,
+    account_id: model_chat::AccountIdInternal,
+    mut source_ready_rx: tokio::sync::oneshot::Receiver<WebSocket>,
+) {
+    let wait_until = Instant::now() + Duration::from_secs(60 * 60);
+    let mut source_socket = loop {
+        tokio::select! {
+            _ = tokio::time::sleep_until(wait_until) => {
+                TRANSFER.timeout.incr();
+                return;
+            }
+            r = &mut source_ready_rx => {
+                match r {
+                    Ok(ws) => break ws,
+                    Err(_) => {
+                        TRANSFER.connection_error.incr();
+                        return;
+                    }
+                }
+            }
+            received_value = target_socket.recv() => {
+                match received_value {
+                    None | Some(Err(_)) => {
+                        TRANSFER.connection_error.incr();
+                        return;
+                    }
+                    Some(Ok(Message::Ping(_)))
+                    | Some(Ok(Message::Pong(_))) => (),
+                    Some(Ok(Message::Binary(data))) if data.is_empty() => (),
+                    Some(Ok(Message::Close(_)))
+                    | Some(Ok(Message::Binary(_)))
+                    | Some(Ok(Message::Text(_))) => {
+                    },
+
+                }
+            }
+        }
+    };
 
     let byte_count_message = match source_socket.recv().await {
         Some(Ok(Message::Text(text))) => text,
@@ -107,10 +95,6 @@ pub async fn handle_target_client(
             return;
         }
     };
-
-    // Get account-specific lock to ensure only one transfer budget check happens at a time
-    let account_lock = get_account_lock(account_id.into()).await;
-    let guard = account_lock.lock().await;
 
     let yearly_limit = state
         .config()
@@ -185,8 +169,6 @@ pub async fn handle_target_client(
     } else {
         TRANSFER.transfer_error.incr();
     }
-
-    drop(guard);
 }
 
 async fn perform_transfer(

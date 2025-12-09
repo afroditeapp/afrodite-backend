@@ -12,10 +12,10 @@ use axum::{
 };
 use http::HeaderMap;
 use model::AccountId;
-use model_chat::{ClientRole, DataTransferInitialMessage, DataTransferPublicKey};
-use server_api::S;
+use model_chat::{ClientRole, DataTransferInitialMessage};
+use server_api::{S, app::GetAccessTokens};
+use sha2::{Digest, Sha256};
 use simple_backend::create_counters;
-use tokio::sync::Mutex;
 
 use super::super::utils::StatusCode;
 
@@ -30,6 +30,8 @@ pub const PATH_TRANSFER_DATA: &str = "/chat_api/transfer_data";
 /// 64 KiB
 pub const MAX_BINARY_MESSAGE_SIZE: usize = 1024 * 64;
 
+type Sha256Bytes = [u8; 32];
+
 /// Transfer data between clients using WebSocket.
 ///
 /// This WebSocket connection facilitates secure data transfer between two clients:
@@ -39,16 +41,18 @@ pub const MAX_BINARY_MESSAGE_SIZE: usize = 1024 * 64;
 ///
 /// ## Target Client Flow:
 /// 1. Connect and send initial JSON message [DataTransferInitialMessage] with [ClientRole::Target]
-/// 2. Wait for source to connect (timeout: 1 hour)
+/// 2. Wait for source to connect (timeout: 1 hour). Sending empty
+///    binary messages is possible to test connectivity.
 /// 3. Receive byte count JSON message [model_chat::DataTransferByteCount]
 /// 4. Receive binary messages until all bytes transferred
 ///
 /// ## Source Client Flow:
-/// 1. Connect and send initial JSON message [DataTransferInitialMessage] with [ClientRole::Source]
-///    (must connect after target).
-///    Note: Response has constant 1-second delay. Connection closes if password is invalid
+/// 1. Connect and send initial JSON message [DataTransferInitialMessage] with
+///    [ClientRole::Source] (must connect after target).
+///    Note: Response has constant 1-second delay.
+///    Connection closes if [DataTransferInitialMessage::data_sha256] is invalid
 ///    or target is not connected.
-/// 2. Receive public key JSON message [DataTransferPublicKey]
+/// 2. Receive data JSON message [DataTransferData]
 /// 3. Send byte count JSON message [model_chat::DataTransferByteCount]
 /// 4. Send binary messages containing the data until all bytes transferred.
 ///    Max size for a binary message is 64 KiB. Server will stop the data
@@ -94,35 +98,65 @@ pub async fn get_transfer_data(
     Ok(response)
 }
 
-type PendingConnections = Mutex<HashMap<AccountId, PendingTransfer>>;
+struct Disconnecter {
+    _sender: tokio::sync::oneshot::Sender<()>,
+    sha256: Sha256Bytes,
+}
+
+struct PendingConnections {
+    /// Allow only single target connection per account.
+    /// New connection replaces current one-shot channel, so old
+    /// channel breaks and old connection will quit.
+    target_connection_disconnecter: HashMap<AccountId, Disconnecter>,
+    connections: HashMap<Sha256Bytes, PendingTransfer>,
+}
+
+impl PendingConnections {
+    fn new() -> Self {
+        Self {
+            target_connection_disconnecter: HashMap::new(),
+            connections: HashMap::new(),
+        }
+    }
+
+    fn exists(&self, sha256: &Sha256Bytes) -> bool {
+        self.connections.contains_key(sha256)
+    }
+
+    fn replace_connection(
+        &mut self,
+        account_id: AccountId,
+        sha256: Sha256Bytes,
+        transfer: PendingTransfer,
+    ) -> tokio::sync::oneshot::Receiver<()> {
+        let (sender, receiver) = tokio::sync::oneshot::channel();
+        if let Some(existing_connection) = self.target_connection_disconnecter.insert(
+            account_id,
+            Disconnecter {
+                _sender: sender,
+                sha256,
+            },
+        ) {
+            self.connections.remove(&existing_connection.sha256);
+        }
+        self.connections.insert(sha256, transfer);
+        receiver
+    }
+
+    fn remove(&mut self, sha256: &Sha256Bytes) -> Option<PendingTransfer> {
+        self.connections.remove(sha256)
+    }
+}
 
 struct PendingTransfer {
-    pub password: String,
-    pub source_ready_tx: Option<tokio::sync::oneshot::Sender<WebSocket>>,
+    pub data: String,
+    pub source_ready_tx: tokio::sync::oneshot::Sender<WebSocket>,
 }
 
-static PENDING_TRANSFERS: OnceLock<PendingConnections> = OnceLock::new();
+static PENDING_TRANSFERS: OnceLock<tokio::sync::RwLock<PendingConnections>> = OnceLock::new();
 
-fn get_pending_transfers() -> &'static PendingConnections {
-    PENDING_TRANSFERS.get_or_init(|| Mutex::new(HashMap::new()))
-}
-
-struct PendingTransfersManager;
-
-impl PendingTransfersManager {
-    async fn insert(account_id: impl Into<AccountId>, transfer: PendingTransfer) {
-        get_pending_transfers()
-            .lock()
-            .await
-            .insert(account_id.into(), transfer);
-    }
-
-    async fn remove(account_id: impl Into<AccountId>) -> Option<PendingTransfer> {
-        get_pending_transfers()
-            .lock()
-            .await
-            .remove(&account_id.into())
-    }
+fn get_pending_transfers() -> &'static tokio::sync::RwLock<PendingConnections> {
+    PENDING_TRANSFERS.get_or_init(|| tokio::sync::RwLock::new(PendingConnections::new()))
 }
 
 async fn handle_transfer_socket(mut socket: WebSocket, state: S) {
@@ -145,42 +179,57 @@ async fn handle_transfer_socket(mut socket: WebSocket, state: S) {
     match initial_message.role {
         ClientRole::Target => {
             let access_token = initial_message.access_token.unwrap_or_default();
-            let public_key = initial_message.public_key.unwrap_or_default();
-            let password = initial_message.password.unwrap_or_default();
+            let data = initial_message.data.unwrap_or_default();
 
-            if access_token.is_empty() || public_key.is_empty() || password.is_empty() {
+            if access_token.is_empty() || data.is_empty() {
                 TRANSFER.protocol_error.incr();
                 return;
             }
 
-            let first_message_to_source = DataTransferPublicKey { public_key };
+            let account_id = match state
+                .access_token_exists(&model::AccessToken::new(access_token.clone()))
+                .await
+            {
+                Some(id) => id,
+                None => {
+                    TRANSFER.invalid_access_token.incr();
+                    return;
+                }
+            };
 
             TRANSFER.target_connected.incr();
             handle_target_client(
-                socket,
                 state,
-                access_token,
-                first_message_to_source,
-                password,
+                socket,
+                account_id,
+                Sha256::digest(data.as_bytes()).into(),
+                data,
             )
             .await;
         }
         ClientRole::Source => {
-            let account_id = initial_message.account_id.unwrap_or_default();
-            let password = initial_message.password.unwrap_or_default();
+            let data_sha256 = initial_message.data_sha256.unwrap_or_default();
 
-            if account_id.is_empty() || password.is_empty() {
+            if data_sha256.is_empty() {
                 TRANSFER.protocol_error.incr();
                 return;
             }
 
-            let Ok(account_id) = TryInto::try_into(account_id) else {
-                TRANSFER.protocol_error.incr();
-                return;
+            // Parse hex SHA256
+            let sha256: Sha256Bytes = match base16ct::lower::decode_vec(&data_sha256) {
+                Ok(bytes) if bytes.len() == 32 => {
+                    let mut arr = [0u8; 32];
+                    arr.copy_from_slice(&bytes);
+                    arr
+                }
+                _ => {
+                    TRANSFER.protocol_error.incr();
+                    return;
+                }
             };
 
             TRANSFER.source_connected.incr();
-            handle_source_client(socket, account_id, password).await;
+            handle_source_client(socket, sha256).await;
         }
     }
 }

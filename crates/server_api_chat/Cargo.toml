@@ -16,6 +16,9 @@ http = { workspace = true }
 tokio = { workspace = true }
 serde_json = { workspace = true }
 
+sha2 = { workspace = true }
+base16ct = { workspace = true }
+
 utoipa = { workspace = true }
 utoipa-axum = { workspace = true }
 

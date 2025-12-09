@@ -5052,6 +5052,7 @@ version = "0.0.0"
 dependencies = [
  "axum",
  "axum-extra",
+ "base16ct",
  "base64 0.22.1",
  "database_chat",
  "headers",
@@ -5064,6 +5065,7 @@ dependencies = [
  "server_common",
  "server_data",
  "server_data_chat",
+ "sha2",
  "simple_backend",
  "tokio",
  "tracing",

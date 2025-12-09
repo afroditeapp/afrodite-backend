@@ -17,24 +17,17 @@ pub struct DataTransferInitialMessage {
     /// Access token from target client
     #[serde(skip_serializing_if = "Option::is_none")]
     pub access_token: Option<String>,
-    /// Public key from target client
+    /// Data from target client
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub public_key: Option<String>,
-    /// Account ID from source client
+    pub data: Option<String>,
+    /// SHA256 hash of target's data from source client. The hash is in hexadecimal format.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub account_id: Option<String>,
-    /// Password from target and source clients.
-    ///
-    /// Target sets the required password and Source must know it.
-    /// The password exists to avoid constant polling to find
-    /// new waiting Target clients.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub password: Option<String>,
+    pub data_sha256: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
-pub struct DataTransferPublicKey {
-    pub public_key: String,
+pub struct DataTransferData {
+    pub data: String,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
