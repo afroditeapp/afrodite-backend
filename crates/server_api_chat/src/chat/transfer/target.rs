@@ -1,10 +1,10 @@
-//! Target client handling for data transfer
+//! Target client handling for backup transfer
 
 use std::time::Duration;
 
 use axum::extract::ws::{CloseFrame, Message, WebSocket};
 use database_chat::current::read::chat::transfer::TransferBudgetCheckResult;
-use model_chat::DataTransferByteCount;
+use model_chat::BackupTransferByteCount;
 use server_api::{S, app::GetConfig, db_write_raw};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use tokio::time::Instant;
@@ -88,7 +88,7 @@ async fn handle_target_client_internal(
         }
     };
 
-    let byte_count = match serde_json::from_str::<DataTransferByteCount>(&byte_count_message) {
+    let byte_count = match serde_json::from_str::<BackupTransferByteCount>(&byte_count_message) {
         Ok(byte_count) => byte_count.byte_count,
         Err(_) => {
             TRANSFER.protocol_error.incr();
@@ -99,7 +99,7 @@ async fn handle_target_client_internal(
     let yearly_limit = state
         .config()
         .limits_chat()
-        .data_transfer_yearly_max_bytes
+        .backup_transfer_yearly_max_bytes
         .bytes();
 
     let budget_check_result = state

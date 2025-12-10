@@ -247,8 +247,8 @@ diesel::table! {
         next_received_like_id -> Int8,
         max_public_key_count -> Int8,
         next_conversation_id -> Int8,
-        data_transfer_byte_count -> Int8,
-        data_transfer_byte_count_reset_unix_time -> Nullable<Int8>,
+        backup_transfer_byte_count -> Int8,
+        backup_transfer_byte_count_reset_unix_time -> Nullable<Int8>,
     }
 }
 

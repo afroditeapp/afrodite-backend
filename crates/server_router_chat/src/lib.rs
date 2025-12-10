@@ -16,9 +16,9 @@ impl ChatRoutes {
     pub fn routes_without_obfuscation_support(state: StateForRouterCreation) -> Router {
         Router::new()
             .route(
-                api::chat::transfer::PATH_TRANSFER_DATA, // This route checks the access token by itself.
+                api::chat::transfer::PATH_BACKUP_TRANSFER, // This route checks the access token by itself.
                 // Use any to allow both GET and CONNECT methods.
-                any(api::chat::transfer::get_transfer_data),
+                any(api::chat::transfer::get_backup_transfer),
             )
             .with_state(state.s)
     }

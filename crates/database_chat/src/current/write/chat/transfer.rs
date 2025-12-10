@@ -24,14 +24,14 @@ impl CurrentWriteChatTransfer<'_> {
 
         let state = self.read().chat().chat_state(id)?;
 
-        let (current_count, reset_time) = match state.data_transfer_byte_count_reset_unix_time {
+        let (current_count, reset_time) = match state.backup_transfer_byte_count_reset_unix_time {
             None => (0, UnixTime::current_time()),
             Some(reset_time)
                 if reset_time.duration_value_elapsed(DurationValue::from_days(365)) =>
             {
                 (0, UnixTime::current_time())
             }
-            Some(reset_time) => (state.data_transfer_byte_count, reset_time),
+            Some(reset_time) => (state.backup_transfer_byte_count, reset_time),
         };
 
         let new_total = current_count + actual_bytes_transferred;
@@ -42,8 +42,8 @@ impl CurrentWriteChatTransfer<'_> {
 
         diesel::update(chat_state.find(id.as_db_id()))
             .set((
-                data_transfer_byte_count.eq(new_total),
-                data_transfer_byte_count_reset_unix_time.eq(reset_time),
+                backup_transfer_byte_count.eq(new_total),
+                backup_transfer_byte_count_reset_unix_time.eq(reset_time),
             ))
             .execute(self.conn())
             .into_db_error(id)?;

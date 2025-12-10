@@ -38,8 +38,8 @@ pub struct ChatStateRaw {
     pub next_received_like_id: ReceivedLikeId,
     pub max_public_key_count: i64,
     pub next_conversation_id: ConversationId,
-    pub data_transfer_byte_count: i64,
-    pub data_transfer_byte_count_reset_unix_time: Option<UnixTime>,
+    pub backup_transfer_byte_count: i64,
+    pub backup_transfer_byte_count_reset_unix_time: Option<UnixTime>,
 }
 
 impl ChatStateRaw {

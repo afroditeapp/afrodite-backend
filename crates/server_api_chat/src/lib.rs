@@ -21,13 +21,13 @@ pub use server_common::{data::DataError, result};
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        chat::transfer::get_transfer_data,
+        chat::transfer::get_backup_transfer,
     ),
     components(schemas(
         model_chat::ClientRole,
-        model_chat::DataTransferInitialMessage,
-        model_chat::DataTransferData,
-        model_chat::DataTransferByteCount,
+        model_chat::BackupTransferInitialMessage,
+        model_chat::BackupTransferData,
+        model_chat::BackupTransferByteCount,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

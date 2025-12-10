@@ -1,4 +1,4 @@
-//! Data transfer routes for transferring data between clients
+//! Backup transfer routes for transferring data between clients
 //!
 
 use std::{collections::HashMap, sync::OnceLock, time::Duration};
@@ -12,7 +12,7 @@ use axum::{
 };
 use http::HeaderMap;
 use model::AccountId;
-use model_chat::{ClientRole, DataTransferInitialMessage};
+use model_chat::{BackupTransferInitialMessage, ClientRole};
 use server_api::{S, app::GetAccessTokens};
 use sha2::{Digest, Sha256};
 use simple_backend::create_counters;
@@ -25,35 +25,35 @@ mod target;
 use source::handle_source_client;
 use target::handle_target_client;
 
-pub const PATH_TRANSFER_DATA: &str = "/chat_api/transfer_data";
+pub const PATH_BACKUP_TRANSFER: &str = "/chat_api/backup_transfer";
 
 /// 64 KiB
 pub const MAX_BINARY_MESSAGE_SIZE: usize = 1024 * 64;
 
 type Sha256Bytes = [u8; 32];
 
-/// Transfer data between clients using WebSocket.
+/// Transfer chat backup between clients using WebSocket.
 ///
-/// This WebSocket connection facilitates secure data transfer between two clients:
+/// This WebSocket connection facilitates secure backup transfer between two clients:
 /// a target client (receiving data) and a source client (sending data).
 ///
 /// Header `Sec-WebSocket-Protocol` must have `v1` as the first value.
 ///
 /// ## Target Client Flow:
-/// 1. Connect and send initial JSON message [DataTransferInitialMessage] with [ClientRole::Target]
+/// 1. Connect and send initial JSON message [BackupTransferInitialMessage] with [ClientRole::Target]
 /// 2. Wait for source to connect (timeout: 1 hour). Sending empty
 ///    binary messages is possible to test connectivity.
-/// 3. Receive byte count JSON message [model_chat::DataTransferByteCount]
+/// 3. Receive byte count JSON message [model_chat::BackupTransferByteCount]
 /// 4. Receive binary messages until all bytes transferred
 ///
 /// ## Source Client Flow:
-/// 1. Connect and send initial JSON message [DataTransferInitialMessage] with
+/// 1. Connect and send initial JSON message [BackupTransferInitialMessage] with
 ///    [ClientRole::Source] (must connect after target).
 ///    Note: Response has constant 1-second delay.
-///    Connection closes if [DataTransferInitialMessage::data_sha256] is invalid
+///    Connection closes if [BackupTransferInitialMessage::data_sha256] is invalid
 ///    or target is not connected.
-/// 2. Receive data JSON message [DataTransferData]
-/// 3. Send byte count JSON message [model_chat::DataTransferByteCount]
+/// 2. Receive data JSON message [BackupTransferData]
+/// 3. Send byte count JSON message [model_chat::BackupTransferByteCount]
 /// 4. Send binary messages containing the data until all bytes transferred.
 ///    Max size for a binary message is 64 KiB. Server will stop the data
 ///    transfer if binary message size is larger than the max size.
@@ -64,7 +64,7 @@ type Sha256Bytes = [u8; 32];
 /// - No close status code: Other error
 #[utoipa::path(
     get,
-    path = PATH_TRANSFER_DATA,
+    path = PATH_BACKUP_TRANSFER,
     responses(
         (status = 101, description = "Switching protocols to WebSocket."),
         (status = 401, description = "Unauthorized."),
@@ -72,12 +72,12 @@ type Sha256Bytes = [u8; 32];
     ),
     security(),
 )]
-pub async fn get_transfer_data(
+pub async fn get_backup_transfer(
     State(state): State<S>,
     websocket: WebSocketUpgrade,
     header_map: HeaderMap,
 ) -> std::result::Result<impl IntoResponse, StatusCode> {
-    TRANSFER.get_transfer_data.incr();
+    TRANSFER.get_backup_transfer.incr();
 
     let mut protocols_iterator = header_map
         .get(http::header::SEC_WEBSOCKET_PROTOCOL)
@@ -168,7 +168,7 @@ async fn handle_transfer_socket(mut socket: WebSocket, state: S) {
         }
     };
 
-    let initial_message: DataTransferInitialMessage = match serde_json::from_str(&role_message) {
+    let initial_message: BackupTransferInitialMessage = match serde_json::from_str(&role_message) {
         Ok(msg) => msg,
         Err(_) => {
             TRANSFER.protocol_error.incr();
@@ -238,7 +238,7 @@ create_counters!(
     TransferCounters,
     TRANSFER,
     CHAT_TRANSFER_COUNTERS_LIST,
-    get_transfer_data,
+    get_backup_transfer,
     target_connected,
     source_connected,
     connection_error,

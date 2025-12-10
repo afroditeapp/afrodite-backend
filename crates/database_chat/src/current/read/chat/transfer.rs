@@ -24,14 +24,14 @@ impl CurrentReadChatTransfer<'_> {
     ) -> Result<TransferBudgetCheckResult, DieselDatabaseError> {
         let state = self.read().chat().chat_state(id)?;
 
-        let current_count = match state.data_transfer_byte_count_reset_unix_time {
+        let current_count = match state.backup_transfer_byte_count_reset_unix_time {
             None => 0,
             Some(reset_time)
                 if reset_time.duration_value_elapsed(DurationValue::from_days(365)) =>
             {
                 0
             }
-            Some(_) => state.data_transfer_byte_count,
+            Some(_) => state.backup_transfer_byte_count,
         };
 
         if current_count + Into::<i64>::into(transfer_bytes) > yearly_limit_bytes {
