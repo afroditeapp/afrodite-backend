@@ -12,7 +12,7 @@ use axum::{
 };
 use http::HeaderMap;
 use model::AccountId;
-use model_chat::{BackupTransferInitialMessage, ClientRole};
+use model_chat::{BackupTransferClientRole, BackupTransferInitialMessage};
 use server_api::{S, app::GetAccessTokens};
 use sha2::{Digest, Sha256};
 use simple_backend::create_counters;
@@ -177,9 +177,9 @@ async fn handle_transfer_socket(mut socket: WebSocket, state: S) {
     };
 
     match initial_message.role {
-        ClientRole::Target => {
+        BackupTransferClientRole::Target => {
             let access_token = initial_message.access_token.unwrap_or_default();
-            let data = initial_message.data.unwrap_or_default();
+            let data = initial_message.target_data.unwrap_or_default();
 
             if access_token.is_empty() || data.is_empty() {
                 TRANSFER.protocol_error.incr();
@@ -207,8 +207,8 @@ async fn handle_transfer_socket(mut socket: WebSocket, state: S) {
             )
             .await;
         }
-        ClientRole::Source => {
-            let data_sha256 = initial_message.data_sha256.unwrap_or_default();
+        BackupTransferClientRole::Source => {
+            let data_sha256 = initial_message.target_data_sha256.unwrap_or_default();
 
             if data_sha256.is_empty() {
                 TRANSFER.protocol_error.incr();

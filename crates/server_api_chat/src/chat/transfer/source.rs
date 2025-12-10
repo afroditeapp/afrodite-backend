@@ -3,7 +3,7 @@
 use std::time::{Duration, Instant};
 
 use axum::extract::ws::{Message, WebSocket};
-use model_chat::BackupTransferData;
+use model_chat::BackupTransferTargetData;
 
 use crate::chat::transfer::{Sha256Bytes, TRANSFER, get_pending_transfers};
 
@@ -37,8 +37,8 @@ async fn handle_source_client_internal(
     };
 
     // Send data to source
-    let data_message = BackupTransferData {
-        data: transfer.data,
+    let data_message = BackupTransferTargetData {
+        target_data: transfer.data,
     };
     let Ok(data_json) = serde_json::to_string(&data_message) else {
         TRANSFER.protocol_error.incr();

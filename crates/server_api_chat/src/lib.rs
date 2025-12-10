@@ -24,9 +24,9 @@ pub use server_common::{data::DataError, result};
         chat::transfer::get_backup_transfer,
     ),
     components(schemas(
-        model_chat::ClientRole,
+        model_chat::BackupTransferClientRole,
         model_chat::BackupTransferInitialMessage,
-        model_chat::BackupTransferData,
+        model_chat::BackupTransferTargetData,
         model_chat::BackupTransferByteCount,
     )),
     modifiers(&SecurityApiAccessTokenDefault),

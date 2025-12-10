@@ -3,9 +3,8 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-/// Client role in backup transfer
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
-pub enum ClientRole {
+pub enum BackupTransferClientRole {
     Target,
     Source,
 }
@@ -13,21 +12,21 @@ pub enum ClientRole {
 /// Initial message from client when establishing transfer connection.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct BackupTransferInitialMessage {
-    pub role: ClientRole,
+    pub role: BackupTransferClientRole,
     /// Access token from target client
     #[serde(skip_serializing_if = "Option::is_none")]
     pub access_token: Option<String>,
     /// Data from target client
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub data: Option<String>,
+    pub target_data: Option<String>,
     /// SHA256 hash of target's data from source client. The hash is in hexadecimal format.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub data_sha256: Option<String>,
+    pub target_data_sha256: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
-pub struct BackupTransferData {
-    pub data: String,
+pub struct BackupTransferTargetData {
+    pub target_data: String,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
