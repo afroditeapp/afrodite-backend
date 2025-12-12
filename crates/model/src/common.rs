@@ -71,6 +71,8 @@ pub enum EventType {
     ProfileStringModerationCompleted,
     AutomaticProfileSearchCompleted,
     AdminNotification,
+    /// Data: admin_bot_notification
+    AdminBotNotification,
     PushNotificationInfoChanged,
     /// Data: typing_start
     TypingStart,
@@ -98,6 +100,8 @@ pub struct EventToClient {
     content_processing_state_changed: Option<ContentProcessingStateChanged>,
     /// Data for event ScheduledMaintenanceStatus
     scheduled_maintenance_status: Option<ScheduledMaintenanceStatus>,
+    /// Data for event AdminBotNotification
+    admin_bot_notification: Option<crate::AdminBotNotificationTypes>,
     /// Data for event TypingStart
     typing_start: Option<AccountId>,
     /// Data for event TypingStop
@@ -128,6 +132,7 @@ pub enum EventToClientInternal {
     ProfileStringModerationCompleted,
     AutomaticProfileSearchCompleted,
     AdminNotification,
+    AdminBotNotification(crate::AdminBotNotificationTypes),
     PushNotificationInfoChanged,
     TypingStart(AccountId),
     TypingStop(AccountId),
@@ -153,6 +158,7 @@ impl From<&EventToClientInternal> for EventType {
             ProfileStringModerationCompleted => Self::ProfileStringModerationCompleted,
             AutomaticProfileSearchCompleted => Self::AutomaticProfileSearchCompleted,
             AdminNotification => Self::AdminNotification,
+            AdminBotNotification(_) => Self::AdminBotNotification,
             PushNotificationInfoChanged => Self::PushNotificationInfoChanged,
             TypingStart(_) => Self::TypingStart,
             TypingStop(_) => Self::TypingStop,
@@ -168,6 +174,7 @@ impl From<EventToClientInternal> for EventToClient {
             event: (&internal).into(),
             content_processing_state_changed: None,
             scheduled_maintenance_status: None,
+            admin_bot_notification: None,
             typing_start: None,
             typing_stop: None,
             check_online_status_response: None,
@@ -178,6 +185,7 @@ impl From<EventToClientInternal> for EventToClient {
         match internal {
             ContentProcessingStateChanged(v) => value.content_processing_state_changed = Some(v),
             ScheduledMaintenanceStatus(v) => value.scheduled_maintenance_status = Some(v),
+            AdminBotNotification(v) => value.admin_bot_notification = Some(v),
             TypingStart(v) => value.typing_start = Some(v),
             TypingStop(v) => value.typing_stop = Some(v),
             CheckOnlineStatusResponse(v) => value.check_online_status_response = Some(v),

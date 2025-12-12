@@ -21,6 +21,8 @@ use simple_backend_utils::time::seconds_until_current_time_is_at;
 use tokio::task::JoinHandle;
 use tracing::{error, warn};
 
+mod bot;
+
 #[derive(thiserror::Error, Debug)]
 enum AdminNotificationError {
     #[error("Database update error")]
@@ -65,9 +67,10 @@ impl AdminNotificationManager {
         mut receiver: AdminNotificationEventReceiver,
         mut quit_notification: ServerQuitWatcher,
     ) {
-        let mut timer = WaitSendTimer::new();
+        let mut timer = WaitSendTimer::new(Duration::from_secs(60));
         let mut waiter = StartTimeWaiter::new(self.state.clone());
         waiter.refresh_state().await;
+        let mut bot_manager = bot::BotNotificationManager::new(self.state.clone());
 
         loop {
             tokio::select! {
@@ -76,14 +79,18 @@ impl AdminNotificationManager {
                         error!("Error: {:?}", e);
                     }
                 }
+                _ = bot_manager.wait_timer_completion() => {
+                    bot_manager.handle_timer_completion().await;
+                }
                 _ = waiter.wait_completion() => {
                     waiter.refresh_state().await;
                     timer.start_if_not_running();
                 }
                 item = receiver.0.recv() => {
                     match item {
-                        Some(AdminNotificationEvent::SendNotificationIfNeeded(_)) => {
+                        Some(AdminNotificationEvent::SendNotificationIfNeeded(notification_type)) => {
                             timer.start_if_not_running();
+                            bot_manager.handle_notification(notification_type).await;
                         },
                         Some(AdminNotificationEvent::RefreshStartTimeWaiter) => {
                             waiter.refresh_state().await;
@@ -253,18 +260,23 @@ impl AdminNotificationManager {
 
 struct WaitSendTimer {
     timer: Option<tokio::time::Interval>,
+    wait_time: Duration,
 }
 
 impl WaitSendTimer {
-    fn new() -> Self {
-        Self { timer: None }
+    fn new(wait_time: Duration) -> Self {
+        Self {
+            timer: None,
+            wait_time,
+        }
     }
 
     fn start_if_not_running(&mut self) {
         if self.timer.is_none() {
-            const WAIT_TIME: Duration = Duration::from_secs(60);
-            let timer =
-                tokio::time::interval_at(tokio::time::Instant::now() + WAIT_TIME, WAIT_TIME);
+            let timer = tokio::time::interval_at(
+                tokio::time::Instant::now() + self.wait_time,
+                self.wait_time,
+            );
             self.timer = Some(timer);
         }
     }

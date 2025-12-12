@@ -297,6 +297,72 @@ pub enum AdminNotificationTypes {
     ProcessReports,
 }
 
+/// Bot-only moderation notification types
+#[derive(Debug, Clone, Default, PartialEq, Deserialize, Serialize, ToSchema)]
+pub struct AdminBotNotificationTypes {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub moderate_initial_media_content_bot: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub moderate_media_content_bot: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub moderate_profile_texts_bot: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub moderate_profile_names_bot: bool,
+}
+
+impl AdminBotNotificationTypes {
+    pub fn is_empty(&self) -> bool {
+        !self.moderate_initial_media_content_bot
+            && !self.moderate_media_content_bot
+            && !self.moderate_profile_texts_bot
+            && !self.moderate_profile_names_bot
+    }
+
+    pub fn merge(&self, other: &Self) -> Self {
+        Self {
+            moderate_initial_media_content_bot: self.moderate_initial_media_content_bot
+                || other.moderate_initial_media_content_bot,
+            moderate_media_content_bot: self.moderate_media_content_bot
+                || other.moderate_media_content_bot,
+            moderate_profile_texts_bot: self.moderate_profile_texts_bot
+                || other.moderate_profile_texts_bot,
+            moderate_profile_names_bot: self.moderate_profile_names_bot
+                || other.moderate_profile_names_bot,
+        }
+    }
+}
+
+impl TryFrom<AdminNotificationTypes> for AdminBotNotificationTypes {
+    type Error = ();
+
+    fn try_from(value: AdminNotificationTypes) -> Result<Self, Self::Error> {
+        let mut result = Self::default();
+        match value {
+            AdminNotificationTypes::ModerateInitialMediaContentBot => {
+                result.moderate_initial_media_content_bot = true;
+                Ok(result)
+            }
+            AdminNotificationTypes::ModerateMediaContentBot => {
+                result.moderate_media_content_bot = true;
+                Ok(result)
+            }
+            AdminNotificationTypes::ModerateProfileTextsBot => {
+                result.moderate_profile_texts_bot = true;
+                Ok(result)
+            }
+            AdminNotificationTypes::ModerateProfileNamesBot => {
+                result.moderate_profile_names_bot = true;
+                Ok(result)
+            }
+            _ => Err(()),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct GetAdminNotification {
     /// If true, client should not show the notification
