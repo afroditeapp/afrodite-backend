@@ -119,6 +119,7 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**post_send_message**](docs/ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match.
 *ChatApi* | [**post_unblock_profile**](docs/ChatApi.md#post_unblock_profile) | **POST** /chat_api/unblock_profile | Unblock profile
 *ChatAdminApi* | [**post_set_max_public_key_count**](docs/ChatAdminApi.md#post_set_max_public_key_count) | **POST** /chat_api/set_max_public_key_count | Set max public key count
+*ChatTransferApi* | [**get_backup_transfer**](docs/ChatTransferApi.md#get_backup_transfer) | **GET** /chat_api/backup_transfer | Transfer chat backup between clients using WebSocket.
 *CommonApi* | [**delete_data_export**](docs/CommonApi.md#delete_data_export) | **DELETE** /common_api/delete_data_export | Delete current data export
 *CommonApi* | [**get_client_config**](docs/CommonApi.md#get_client_config) | **GET** /common_api/client_config | 
 *CommonApi* | [**get_client_language**](docs/CommonApi.md#get_client_language) | **GET** /common_api/client_language | 
@@ -239,6 +240,7 @@ Class | Method | HTTP request | Description
  - [AccountStateContainer](docs/AccountStateContainer.md)
  - [AccountSyncVersion](docs/AccountSyncVersion.md)
  - [AddPublicKeyResult](docs/AddPublicKeyResult.md)
+ - [AdminBotNotificationTypes](docs/AdminBotNotificationTypes.md)
  - [AdminInfo](docs/AdminInfo.md)
  - [AdminNotification](docs/AdminNotification.md)
  - [AdminNotificationSettings](docs/AdminNotificationSettings.md)
@@ -258,6 +260,10 @@ Class | Method | HTTP request | Description
  - [AutomaticProfileSearchSettings](docs/AutomaticProfileSearchSettings.md)
  - [BackendConfig](docs/BackendConfig.md)
  - [BackendVersion](docs/BackendVersion.md)
+ - [BackupTransferByteCount](docs/BackupTransferByteCount.md)
+ - [BackupTransferClientRole](docs/BackupTransferClientRole.md)
+ - [BackupTransferInitialMessage](docs/BackupTransferInitialMessage.md)
+ - [BackupTransferTargetData](docs/BackupTransferTargetData.md)
  - [BooleanSetting](docs/BooleanSetting.md)
  - [ChatAppNotificationSettings](docs/ChatAppNotificationSettings.md)
  - [ChatConfig](docs/ChatConfig.md)

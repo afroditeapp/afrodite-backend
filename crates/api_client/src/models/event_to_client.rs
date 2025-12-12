@@ -14,6 +14,9 @@ use serde::{Deserialize, Serialize};
 /// EventToClient : Event to client which is sent through websocket.  This is not an enum to make generated API bindings more easier to use.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct EventToClient {
+    /// Data for event AdminBotNotification
+    #[serde(rename = "admin_bot_notification", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub admin_bot_notification: Option<Option<Box<models::AdminBotNotificationTypes>>>,
     /// Data for event CheckOnlineStatusResponse
     #[serde(rename = "check_online_status_response", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub check_online_status_response: Option<Option<Box<models::CheckOnlineStatusResponse>>>,
@@ -37,6 +40,7 @@ impl EventToClient {
     /// Event to client which is sent through websocket.  This is not an enum to make generated API bindings more easier to use.
     pub fn new(event: models::EventType) -> EventToClient {
         EventToClient {
+            admin_bot_notification: None,
             check_online_status_response: None,
             content_processing_state_changed: None,
             event,

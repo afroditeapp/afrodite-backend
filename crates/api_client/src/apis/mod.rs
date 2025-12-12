@@ -116,6 +116,7 @@ pub mod account_admin_api;
 pub mod account_bot_api;
 pub mod chat_api;
 pub mod chat_admin_api;
+pub mod chat_transfer_api;
 pub mod common_api;
 pub mod common_admin_api;
 pub mod media_api;
