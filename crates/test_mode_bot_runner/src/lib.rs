@@ -5,6 +5,7 @@
 
 //! Bot mode related test/bot runner.
 
+mod admin_bot;
 mod benchmark;
 mod client_bot;
 mod manager;
@@ -30,7 +31,7 @@ use tokio::{
 };
 use tracing::{error, info};
 
-use crate::manager::BotManager;
+use crate::{admin_bot::AdminBot, manager::BotManager};
 
 pub struct BotTestRunner {
     server_instance_config: ServerInstanceConfig,
@@ -98,15 +99,36 @@ impl BotTestRunner {
             self.log_task_and_bot_count_info();
 
             while task_number > 0 {
-                BotManager::spawn(
-                    task_number - 1,
-                    self.test_config.clone(),
-                    self.bot_config_file.clone(),
-                    old_state.clone(),
-                    bot_quit_receiver.clone(),
-                    bot_running_handle.clone(),
-                    &self.reqwest_client,
-                );
+                let current_task_id = task_number - 1;
+
+                // Check if this is admin bot task in bot mode
+                if self.test_config.bot_mode().is_some() && current_task_id == 1 {
+                    // Spawn admin bot(s) for this task
+                    for bot_i in 0..self.test_config.bots(current_task_id) {
+                        let admin_bot = AdminBot::new(
+                            current_task_id,
+                            bot_i,
+                            self.test_config.clone(),
+                            self.bot_config_file.clone(),
+                            old_state.clone(),
+                            bot_running_handle.clone(),
+                            &self.reqwest_client,
+                        );
+                        let quit_receiver = bot_quit_receiver.clone();
+                        tokio::spawn(admin_bot.run(quit_receiver));
+                    }
+                } else {
+                    // Spawn regular bot manager for this task
+                    BotManager::spawn(
+                        current_task_id,
+                        self.test_config.clone(),
+                        self.bot_config_file.clone(),
+                        old_state.clone(),
+                        bot_quit_receiver.clone(),
+                        bot_running_handle.clone(),
+                        &self.reqwest_client,
+                    );
+                }
 
                 // Special case for profile iterator benchmark:
                 // wait until profile index bot profiles are creates and

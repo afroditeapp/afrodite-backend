@@ -35,10 +35,6 @@ use test_mode_bot::{
             AccountState, AssertAccountState, CompleteAccountSetup, DEFAULT_AGE, Login, Register,
             SetAccountSetup, SetProfileVisibility,
         },
-        admin::{
-            content::AdminBotContentModerationLogic,
-            profile_text::AdminBotProfileStringModerationLogic,
-        },
         media::{SendImageToSlot, SetContent},
         profile::{
             ChangeProfileText, ChangeProfileTextDaily, GetProfile, ProfileText,
@@ -63,62 +59,40 @@ impl Debug for ClientBot {
 
 impl ClientBot {
     pub fn new(state: BotState) -> Self {
-        let iter = if state.is_bot_mode_admin_bot() {
-            // Admin bot
-
-            const SETUP: ActionArray =
-                action_array![Register, Login, DoInitialSetupIfNeeded { admin: true },];
-            const ACTION_LOOP: ActionArray = action_array![
-                ActionsBeforeIteration,
-                AdminBotContentModerationLogic,
-                AdminBotProfileStringModerationLogic::profile_name(),
-                AdminBotProfileStringModerationLogic::profile_text(),
-                ActionsAfterIteration,
-            ];
-            let iter = SETUP
-                .iter()
-                .copied()
-                .chain(ACTION_LOOP.iter().copied().cycle());
-
-            Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>
-        } else {
-            // User bot
-
-            const SETUP: ActionArray = action_array![
-                Register,
-                Login,
-                DoInitialSetupIfNeeded { admin: false },
-                UpdateLocationRandomOrConfigured::new(None),
-                SetProfileVisibility(true),
-                SendLikeIfNeeded,
-            ];
-            const ACTION_LOOP: ActionArray = action_array![
-                ActionsBeforeIteration,
-                GetProfile,
-                RunActionsIf(
-                    action_array!(UpdateLocationRandomOrConfigured::new(None)),
-                    |s| { s.get_bot_config().change_location() && rand::random::<f32>() < 0.2 }
-                ),
-                RunActionsIf(action_array!(SetProfileVisibility(true)), |s| {
-                    s.get_bot_config().change_visibility() && rand::random::<f32>() < 0.5
-                }),
-                RunActionsIf(action_array!(SetProfileVisibility(false)), |s| {
-                    s.get_bot_config().change_visibility() && rand::random::<f32>() < 0.1
-                }),
-                RunActionsIf(action_array!(ChangeProfileTextDaily), |s| {
-                    s.get_bot_config().change_profile_text_time().is_some()
-                }),
-                AcceptReceivedLikesAndSendMessage,
-                AnswerReceivedMessages,
-                ActionsAfterIteration,
-            ];
-            let iter = SETUP
-                .iter()
-                .copied()
-                .chain(ACTION_LOOP.iter().copied().cycle());
-
-            Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>
-        };
+        // User bot
+        const SETUP: ActionArray = action_array![
+            Register,
+            Login,
+            DoInitialSetupIfNeeded { admin: false },
+            UpdateLocationRandomOrConfigured::new(None),
+            SetProfileVisibility(true),
+            SendLikeIfNeeded,
+        ];
+        const ACTION_LOOP: ActionArray = action_array![
+            ActionsBeforeIteration,
+            GetProfile,
+            RunActionsIf(
+                action_array!(UpdateLocationRandomOrConfigured::new(None)),
+                |s| { s.get_bot_config().change_location() && rand::random::<f32>() < 0.2 }
+            ),
+            RunActionsIf(action_array!(SetProfileVisibility(true)), |s| {
+                s.get_bot_config().change_visibility() && rand::random::<f32>() < 0.5
+            }),
+            RunActionsIf(action_array!(SetProfileVisibility(false)), |s| {
+                s.get_bot_config().change_visibility() && rand::random::<f32>() < 0.1
+            }),
+            RunActionsIf(action_array!(ChangeProfileTextDaily), |s| {
+                s.get_bot_config().change_profile_text_time().is_some()
+            }),
+            AcceptReceivedLikesAndSendMessage,
+            AnswerReceivedMessages,
+            ActionsAfterIteration,
+        ];
+        let iter = SETUP
+            .iter()
+            .copied()
+            .chain(ACTION_LOOP.iter().copied().cycle());
+        let iter = Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>;
 
         Self {
             state,
