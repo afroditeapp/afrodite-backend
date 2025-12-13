@@ -37,7 +37,7 @@ pub struct ContentModerationState {
 }
 
 impl ContentModerationState {
-    async fn new(
+    pub async fn new(
         config: &ContentModerationConfig,
         reqwest_client: reqwest::Client,
     ) -> Result<Self, TestError> {
@@ -488,21 +488,12 @@ impl AdminBotContentModerationLogic {
     }
 }
 
-#[async_trait]
-impl BotAction for AdminBotContentModerationLogic {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let Some(config) = &state.bot_config_file.content_moderation else {
-            return Ok(());
-        };
-
-        let moderation_state = if let Some(state) = &mut state.admin.content {
-            state
-        } else {
-            let moderation_state =
-                ContentModerationState::new(config, state.reqwest_client.clone()).await?;
-            state.admin.content.get_or_insert(moderation_state)
-        };
-
+impl AdminBotContentModerationLogic {
+    pub async fn run_content_moderation(
+        api: &ApiClient,
+        config: &ContentModerationConfig,
+        moderation_state: &mut ContentModerationState,
+    ) -> Result<(), TestError> {
         let start_time = Instant::now();
 
         if let Some(previous) = moderation_state.content_moderation_started {
@@ -518,7 +509,7 @@ impl BotAction for AdminBotContentModerationLogic {
         if config.initial_content {
             loop {
                 if let Some(EmptyPage) = Self::moderate_one_page(
-                    &state.api,
+                    api,
                     ModerationQueueType::InitialMediaModeration,
                     config,
                     moderation_state,
@@ -540,7 +531,7 @@ impl BotAction for AdminBotContentModerationLogic {
         if config.added_content {
             loop {
                 if let Some(EmptyPage) = Self::moderate_one_page(
-                    &state.api,
+                    api,
                     ModerationQueueType::MediaModeration,
                     config,
                     moderation_state,

@@ -9,7 +9,6 @@ use async_openai::{
     config::OpenAIConfig,
     types::{ChatCompletionRequestMessage, CreateChatCompletionRequest},
 };
-use async_trait::async_trait;
 use config::bot_config_file::{
     LlmStringModerationConfig, ModerationAction, ProfileStringModerationConfig,
 };
@@ -18,14 +17,14 @@ use test_mode_utils::client::{ApiClient, TestError};
 use tracing::{error, info};
 use unicode_segmentation::UnicodeSegmentation;
 
-use super::{BotAction, BotState, EmptyPage, ModerationResult};
+use super::{EmptyPage, ModerationResult};
 use crate::actions::admin::LlmModerationResult;
 
 #[derive(Debug)]
 pub struct ProfileStringModerationState {
-    moderation_started: Option<Instant>,
-    client: Option<Client<OpenAIConfig>>,
-    reqwest_client: reqwest::Client,
+    pub moderation_started: Option<Instant>,
+    pub client: Option<Client<OpenAIConfig>>,
+    pub reqwest_client: reqwest::Client,
 }
 
 #[derive(Debug)]
@@ -34,18 +33,6 @@ pub struct AdminBotProfileStringModerationLogic {
 }
 
 impl AdminBotProfileStringModerationLogic {
-    pub const fn profile_name() -> Self {
-        Self {
-            content_type: ProfileStringModerationContentType::ProfileName,
-        }
-    }
-
-    pub const fn profile_text() -> Self {
-        Self {
-            content_type: ProfileStringModerationContentType::ProfileText,
-        }
-    }
-
     async fn moderate_one_page(
         &self,
         api: &ApiClient,
@@ -225,32 +212,13 @@ impl AdminBotProfileStringModerationLogic {
     }
 }
 
-#[async_trait]
-impl BotAction for AdminBotProfileStringModerationLogic {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let config = match self.content_type {
-            ProfileStringModerationContentType::ProfileName => {
-                &state.bot_config_file.profile_name_moderation
-            }
-            ProfileStringModerationContentType::ProfileText => {
-                &state.bot_config_file.profile_text_moderation
-            }
-        };
-
-        let Some(config) = config else {
-            return Ok(());
-        };
-
-        let moderation_state =
-            state
-                .admin
-                .profile_string
-                .get_or_insert_with(|| ProfileStringModerationState {
-                    moderation_started: None,
-                    client: None,
-                    reqwest_client: state.reqwest_client.clone(),
-                });
-
+impl AdminBotProfileStringModerationLogic {
+    pub async fn run_profile_string_moderation(
+        content_type: ProfileStringModerationContentType,
+        api: &ApiClient,
+        config: &ProfileStringModerationConfig,
+        moderation_state: &mut ProfileStringModerationState,
+    ) -> Result<(), TestError> {
         let start_time = Instant::now();
 
         if let Some(previous) = moderation_state.moderation_started {
@@ -263,9 +231,10 @@ impl BotAction for AdminBotProfileStringModerationLogic {
 
         moderation_state.moderation_started = Some(start_time);
 
+        let logic = Self { content_type };
         loop {
-            if let Some(EmptyPage) = self
-                .moderate_one_page(&state.api, config, moderation_state)
+            if let Some(EmptyPage) = logic
+                .moderate_one_page(api, config, moderation_state)
                 .await?
             {
                 break;

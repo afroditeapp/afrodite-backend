@@ -133,6 +133,23 @@ impl BotConnections {
             .expect("Account connections are missing")
     }
 
+    /// Receive next event without timeout.
+    pub async fn recv_event(&mut self) -> Result<EventToClient, TestError> {
+        if !self.enable_event_sending.load(Ordering::Relaxed) {
+            return Err(TestError::EventReceivingHandleDisabled.report());
+        }
+
+        let events = self
+            .events
+            .as_mut()
+            .ok_or(TestError::EventReceivingHandleMissing.report())?;
+
+        events
+            .recv()
+            .await
+            .ok_or(TestError::EventChannelClosed.report())
+    }
+
     /// Wait event if event sending is enabled or timeout after 5 seconds
     pub async fn wait_event(
         &mut self,

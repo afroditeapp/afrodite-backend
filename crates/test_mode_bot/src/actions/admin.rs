@@ -1,18 +1,9 @@
-use content::ContentModerationState;
-use profile_text::ProfileStringModerationState;
-
 use super::{BotAction, BotState};
 
 pub mod content;
 pub mod profile_text;
 
 struct EmptyPage;
-
-#[derive(Debug, Default)]
-pub struct AdminBotState {
-    profile_string: Option<ProfileStringModerationState>,
-    content: Option<ContentModerationState>,
-}
 
 /// Default state is reject.
 #[derive(Default)]

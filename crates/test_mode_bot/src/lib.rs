@@ -14,7 +14,7 @@ use std::{
     vec,
 };
 
-use actions::{admin::AdminBotState, chat::ChatState, profile::ProfileState};
+use actions::{chat::ChatState, profile::ProfileState};
 use api_client::{
     apis::configuration::Configuration,
     models::{AccountId, EventToClient},
@@ -42,10 +42,10 @@ pub struct TaskState;
 pub struct BotState {
     pub id: Option<AccountId>,
     pub config: Arc<TestMode>,
-    bot_config_file: Arc<BotConfigFile>,
+    pub bot_config_file: Arc<BotConfigFile>,
     pub task_id: u32,
     pub bot_id: u32,
-    api: ApiClient,
+    pub api: ApiClient,
     pub api_urls: PublicApiUrl,
     pub previous_action: &'static dyn BotAction,
     pub previous_value: PreviousValue,
@@ -54,7 +54,6 @@ pub struct BotState {
     pub media: MediaState,
     pub profile: ProfileState,
     pub chat: ChatState,
-    pub admin: AdminBotState,
     pub connections: BotConnections,
     pub refresh_token: Option<Vec<u8>>,
     pub deterministic_rng: Xoshiro256PlusPlus,
@@ -90,7 +89,6 @@ impl BotState {
             media: MediaState::new(),
             profile: ProfileState::new(),
             chat: ChatState { keys },
-            admin: AdminBotState::default(),
             connections: BotConnections::default(),
             refresh_token: None,
             deterministic_rng: {

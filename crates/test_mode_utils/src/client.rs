@@ -24,6 +24,8 @@ pub enum TestError {
     WebSocketWrongValue,
     #[error("Event channel closed")]
     EventChannelClosed,
+    #[error("Event receiving handle disabled")]
+    EventReceivingHandleDisabled,
     #[error("Event receiving handle missing")]
     EventReceivingHandleMissing,
     #[error("Event receiving timeout")]
@@ -68,6 +70,9 @@ pub enum TestError {
 
     #[error("Content moderation failed")]
     ContentModerationFailed,
+
+    #[error("Admin bot internal error")]
+    AdminBotInternalError,
 }
 
 impl TestError {
