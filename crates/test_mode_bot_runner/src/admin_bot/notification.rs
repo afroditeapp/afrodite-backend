@@ -72,10 +72,7 @@ pub struct NotificationReceiver<H: ModerationHandler> {
 impl<H: ModerationHandler> NotificationReceiver<H> {
     pub async fn process_notifications_loop(&mut self) -> Result<(), TestError> {
         loop {
-            match self.notify_receiver.recv().await {
-                Some(()) => (),
-                None => return Err(report!(TestError::AdminBotInternalError)),
-            }
+            self.wait_next_notification().await?;
 
             let mut pending = self.state.pending.lock().await;
             if *pending {
@@ -89,5 +86,21 @@ impl<H: ModerationHandler> NotificationReceiver<H> {
                 drop(pending);
             }
         }
+    }
+
+    async fn wait_next_notification(&mut self) -> Result<(), TestError> {
+        let pending = self.state.pending.lock().await;
+        if *pending {
+            // Notification received
+            drop(pending);
+        } else {
+            // Wait notification
+            drop(pending);
+            match self.notify_receiver.recv().await {
+                Some(()) => (),
+                None => return Err(report!(TestError::AdminBotInternalError)),
+            }
+        }
+        Ok(())
     }
 }
