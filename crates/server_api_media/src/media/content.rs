@@ -98,7 +98,7 @@ pub async fn get_content(
             .content_data(requested_profile, requested_content_id)
             .await?;
 
-        let (lenght, stream) = data
+        let (length, stream) = data
             .byte_count_and_read_stream()
             .await
             .change_context(DataError::File)?;
@@ -111,7 +111,7 @@ pub async fn get_content(
             TypedHeader(state.etag_utils().immutable_content().clone()),
             TypedHeader(cache_control_for_images()),
             TypedHeader(ContentType::octet_stream()),
-            TypedHeader(ContentLength(lenght)),
+            TypedHeader(ContentLength(length)),
             Body::from_stream(stream),
         ))
     };

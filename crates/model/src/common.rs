@@ -384,7 +384,7 @@ pub struct LoginSession {
 /// The token is 256 bit random value which is base64url encoded
 /// without padding. The previous format is used because
 /// the token is transferred as HTTP header value.
-/// The token lenght in characters is 43.
+/// The token length in characters is 43.
 ///
 /// OWASP recommends at least 128 bit session IDs.
 /// https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
@@ -469,7 +469,7 @@ diesel_i64_wrapper!(AccessTokenUnixTime);
 /// Refresh token is long lived token used for getting new access tokens.
 ///
 /// Refresh token is 3072 bit value which is Base64 encoded.
-/// The token lenght in characters is 512.
+/// The token length in characters is 512.
 ///
 /// Why 3072 bits? Microsoft LinkedIn API uses about 500 character refresh
 /// tokens and 3072 bits is near that value.
@@ -649,7 +649,7 @@ mod tests {
     }
 
     #[test]
-    fn access_token_lenght_is_256_bits() {
+    fn access_token_length_is_256_bits() {
         let data_256_bit = [0u8; 256 / 8];
         let wanted_len = base64::engine::general_purpose::URL_SAFE_NO_PAD
             .encode(data_256_bit)
@@ -668,7 +668,7 @@ mod tests {
     }
 
     #[test]
-    fn refresh_token_lenght_is_24_uuids() {
+    fn refresh_token_length_is_24_uuids() {
         let data_24_uuid = [0u8; 128 * 24 / 8];
         let wanted_len = base64::engine::general_purpose::STANDARD
             .encode(data_24_uuid)

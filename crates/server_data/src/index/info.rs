@@ -3,7 +3,7 @@ use std::num::{NonZeroU8, NonZeroU16};
 use config::file::LocationConfig;
 use model_server_data::CellData;
 
-use super::coordinates::{CoordinateManager, ZOOM_LEVEL_AND_TILE_LENGHT};
+use super::coordinates::{CoordinateManager, ZOOM_LEVEL_AND_TILE_LENGTH};
 
 pub struct LocationIndexInfoCreator {
     config: LocationConfig,
@@ -48,13 +48,13 @@ impl LocationIndexInfoCreator {
 
     pub fn create_all(&self) -> String {
         let mut info = String::new();
-        for (_, tile_lenght) in ZOOM_LEVEL_AND_TILE_LENGHT {
-            let tile_lenght_u64 = *tile_lenght as u64;
+        for (_, tile_length) in ZOOM_LEVEL_AND_TILE_LENGTH {
+            let tile_length_u64 = *tile_length as u64;
             let converted =
-                TryInto::<u8>::try_into(tile_lenght_u64).and_then(TryInto::<NonZeroU8>::try_into);
+                TryInto::<u8>::try_into(tile_length_u64).and_then(TryInto::<NonZeroU8>::try_into);
             match converted {
-                Ok(lenght) => {
-                    info.push_str(&self.create_one_internal(lenght, true));
+                Ok(length) => {
+                    info.push_str(&self.create_one_internal(length, true));
                     info.push('\n');
                 }
                 Err(_) => continue,

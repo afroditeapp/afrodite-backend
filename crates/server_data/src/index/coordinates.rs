@@ -19,7 +19,7 @@ const LATITUDE_FOR_LONGITUDE_CORRECTION: f64 = 59.8 + (70.1 - 59.8) / 2.0;
 
 /// OpenStreetMap zoom levels and map tile side length in kilometers.
 /// Data is from GitHub Codepilot.
-pub const ZOOM_LEVEL_AND_TILE_LENGHT: &[(u8, f64)] = &[
+pub const ZOOM_LEVEL_AND_TILE_LENGTH: &[(u8, f64)] = &[
     (9, 305.0),
     (10, 153.0),
     (11, 76.5),
@@ -33,17 +33,17 @@ pub const ZOOM_LEVEL_AND_TILE_LENGHT: &[(u8, f64)] = &[
 
 fn find_nearest_zoom_level(square_km: NonZeroU8) -> (u8, f64) {
     let square_km = square_km.get() as f64;
-    let (mut nearest_zoom_level, mut nearest_distance) = ZOOM_LEVEL_AND_TILE_LENGHT[0];
-    let mut nearest_tile_lenght = nearest_distance;
-    for (zoom_level, tile_length) in ZOOM_LEVEL_AND_TILE_LENGHT {
+    let (mut nearest_zoom_level, mut nearest_distance) = ZOOM_LEVEL_AND_TILE_LENGTH[0];
+    let mut nearest_tile_length = nearest_distance;
+    for (zoom_level, tile_length) in ZOOM_LEVEL_AND_TILE_LENGTH {
         let distance = (square_km - tile_length).abs();
         if distance < nearest_distance {
             nearest_distance = distance;
             nearest_zoom_level = *zoom_level;
-            nearest_tile_lenght = *tile_length;
+            nearest_tile_length = *tile_length;
         }
     }
-    (nearest_zoom_level, nearest_tile_lenght)
+    (nearest_zoom_level, nearest_tile_length)
 }
 
 // https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Lon./lat._to_tile_numbers
