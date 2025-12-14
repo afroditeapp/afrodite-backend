@@ -2,7 +2,10 @@ use std::{fmt::Debug, sync::Arc, time::Instant};
 
 use api_client::{
     apis::{media_admin_api, media_api},
-    models::{MediaContentModerationRejectedReasonDetails, MediaContentType, ModerationQueueType},
+    models::{
+        MediaContentModerationRejectedReasonDetails, MediaContentPendingModeration,
+        MediaContentType, ModerationQueueType,
+    },
 };
 use async_openai::{
     Client,
@@ -20,6 +23,7 @@ use config::bot_config_file::{
     NsfwDetectionThresholds,
 };
 use error_stack::{Result, ResultExt};
+use futures::stream::{self, StreamExt};
 use image::DynamicImage;
 use nsfw::model::Metric;
 use test_mode_utils::client::{ApiClient, TestError};
@@ -28,12 +32,24 @@ use tracing::{error, info};
 use super::{BotAction, BotState, EmptyPage, ModerationResult};
 use crate::actions::admin::LlmModerationResult;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone)]
+struct NsfwConfigAndModel {
+    config: Arc<NsfwDetectionConfig>,
+    model: Arc<nsfw::Model>,
+}
+
+#[derive(Debug, Clone)]
+struct LlmConfigAndClient {
+    config: Arc<LlmContentModerationConfig>,
+    client: Client<OpenAIConfig>,
+}
+
+#[derive(Debug)]
 pub struct ContentModerationState {
     content_moderation_started: Option<Instant>,
-    model: Option<Arc<nsfw::Model>>,
-    client: Option<Client<OpenAIConfig>>,
-    reqwest_client: reqwest::Client,
+    nsfw: Option<NsfwConfigAndModel>,
+    llm_primary: Option<LlmConfigAndClient>,
+    llm_secondary: Option<LlmConfigAndClient>,
 }
 
 impl ContentModerationState {
@@ -41,10 +57,10 @@ impl ContentModerationState {
         config: &ContentModerationConfig,
         reqwest_client: reqwest::Client,
     ) -> Result<Self, TestError> {
-        let config = config.nsfw_detection.clone();
-        if let Some(config) = config {
+        let model = if let Some(config) = config.nsfw_detection.clone() {
+            let model_file = config.model_file.clone();
             let model = tokio::task::spawn_blocking(move || {
-                let file = std::fs::File::open(config.model_file)
+                let file = std::fs::File::open(model_file)
                     .change_context(TestError::ContentModerationFailed)?;
                 let model = nsfw::create_model(file).map_err(|e| {
                     TestError::ContentModerationFailed
@@ -55,15 +71,46 @@ impl ContentModerationState {
             })
             .await
             .change_context(TestError::ContentModerationFailed)??;
-            Ok(Self {
-                content_moderation_started: None,
-                model: Some(Arc::new(model)),
-                client: None,
-                reqwest_client,
+            Some(NsfwConfigAndModel {
+                config: config.into(),
+                model: model.into(),
             })
         } else {
-            Ok(Self::default())
-        }
+            None
+        };
+
+        let llm_primary = config
+            .llm_primary
+            .as_ref()
+            .map(|config| LlmConfigAndClient {
+                client: Client::with_config(
+                    OpenAIConfig::new()
+                        .with_api_base(config.openai_api_url.to_string())
+                        .with_api_key(""),
+                )
+                .with_http_client(reqwest_client.clone()),
+                config: config.clone().into(),
+            });
+
+        let llm_secondary = config
+            .llm_secondary
+            .as_ref()
+            .map(|config| LlmConfigAndClient {
+                client: Client::with_config(
+                    OpenAIConfig::new()
+                        .with_api_base(config.openai_api_url.to_string())
+                        .with_api_key(""),
+                )
+                .with_http_client(reqwest_client.clone()),
+                config: config.clone().into(),
+            });
+
+        Ok(Self {
+            content_moderation_started: None,
+            nsfw: model,
+            llm_primary,
+            llm_secondary,
+        })
     }
 }
 
@@ -158,7 +205,7 @@ impl AdminBotContentModerationLogic {
         api: &ApiClient,
         queue: ModerationQueueType,
         config: &ContentModerationConfig,
-        moderation_state: &mut ContentModerationState,
+        state: &mut ContentModerationState,
     ) -> Result<Option<EmptyPage>, TestError> {
         let list = media_admin_api::get_media_content_pending_moderation_list(
             api.api(),
@@ -173,78 +220,112 @@ impl AdminBotContentModerationLogic {
             return Ok(Some(EmptyPage));
         }
 
-        for request in list.values {
-            let image_data = media_api::get_content(
-                api.api(),
-                &request.account_id.aid,
-                &request.content_id.cid,
-                Some(false),
-            )
-            .await
-            .change_context(TestError::ApiRequest)?
-            .bytes()
-            .await
-            .change_context(TestError::ApiRequest)?
-            .to_vec();
-
-            let r = Self::handle_image(
-                image_data,
-                config.nsfw_detection.clone(),
-                moderation_state.model.clone(),
-                config.llm_primary.as_ref(),
-                config.llm_secondary.as_ref(),
-                config.default_action,
-                moderation_state,
-            )
-            .await;
-
-            let result = match r {
-                Ok(None) => return Ok(Some(EmptyPage)),
-                Ok(Some(r)) => r,
-                Err(e) => {
-                    error!(
-                        "Content moderation failed: {e:?}, Account ID: {}, Content ID: {}",
-                        request.account_id, request.content_id,
-                    );
-                    ModerationResult::error()
+        let mut stream = stream::iter(list.values)
+            .map(|moderation| {
+                let api = api.clone();
+                let nsfw = state.nsfw.clone();
+                let llm_primary = state.llm_primary.clone();
+                let llm_secondary = state.llm_secondary.clone();
+                async move {
+                    Self::handle_pending_moderation(
+                        &api,
+                        config,
+                        nsfw,
+                        llm_primary,
+                        llm_secondary,
+                        moderation,
+                    )
+                    .await
                 }
-            };
+            })
+            .buffer_unordered(config.concurrency().into());
 
-            if result.delete {
-                media_api::delete_content(
-                    api.api(),
-                    &request.account_id.aid,
-                    &request.content_id.cid,
-                )
-                .await
-                .change_context(TestError::ApiRequest)?;
-
-                if config.debug_log_delete {
-                    info!("Image deleted");
-                }
-            } else {
-                media_admin_api::post_moderate_media_content(
-                    api.api(),
-                    api_client::models::PostModerateMediaContent {
-                        account_id: request.account_id,
-                        content_id: request.content_id,
-                        accept: result.accept,
-                        move_to_human: Some(Some(result.move_to_human)),
-                        rejected_category: None,
-                        rejected_details: Some(result.rejected_details.and_then(|v| {
-                            if v.is_empty() {
-                                None
-                            } else {
-                                Some(Box::new(MediaContentModerationRejectedReasonDetails::new(
-                                    v,
-                                )))
-                            }
-                        })),
-                    },
-                )
-                .await
-                .change_context(TestError::ApiRequest)?;
+        loop {
+            match stream.next().await {
+                Some(Ok(Some(EmptyPage))) => return Ok(Some(EmptyPage)),
+                Some(Ok(None)) => (),
+                Some(Err(e)) => return Err(e),
+                None => return Ok(None),
             }
+        }
+    }
+
+    async fn handle_pending_moderation(
+        api: &ApiClient,
+        config: &ContentModerationConfig,
+        nsfw: Option<NsfwConfigAndModel>,
+        llm_primary: Option<LlmConfigAndClient>,
+        llm_secondary: Option<LlmConfigAndClient>,
+        moderation: MediaContentPendingModeration,
+    ) -> Result<Option<EmptyPage>, TestError> {
+        let image_data = media_api::get_content(
+            api.api(),
+            &moderation.account_id.aid,
+            &moderation.content_id.cid,
+            Some(false),
+        )
+        .await
+        .change_context(TestError::ApiRequest)?
+        .bytes()
+        .await
+        .change_context(TestError::ApiRequest)?
+        .to_vec();
+
+        let r = Self::handle_image(
+            image_data,
+            nsfw,
+            llm_primary,
+            llm_secondary,
+            config.default_action,
+        )
+        .await;
+
+        let result = match r {
+            Ok(None) => return Ok(Some(EmptyPage)),
+            Ok(Some(r)) => r,
+            Err(e) => {
+                error!(
+                    "Content moderation failed: {e:?}, Account ID: {}, Content ID: {}",
+                    moderation.account_id, moderation.content_id,
+                );
+                ModerationResult::error()
+            }
+        };
+
+        if result.delete {
+            media_api::delete_content(
+                api.api(),
+                &moderation.account_id.aid,
+                &moderation.content_id.cid,
+            )
+            .await
+            .change_context(TestError::ApiRequest)?;
+
+            if config.debug_log_delete {
+                info!("Image deleted");
+            }
+        } else {
+            media_admin_api::post_moderate_media_content(
+                api.api(),
+                api_client::models::PostModerateMediaContent {
+                    account_id: moderation.account_id,
+                    content_id: moderation.content_id,
+                    accept: result.accept,
+                    move_to_human: Some(Some(result.move_to_human)),
+                    rejected_category: None,
+                    rejected_details: Some(result.rejected_details.and_then(|v| {
+                        if v.is_empty() {
+                            None
+                        } else {
+                            Some(Box::new(MediaContentModerationRejectedReasonDetails::new(
+                                v,
+                            )))
+                        }
+                    })),
+                },
+            )
+            .await
+            .change_context(TestError::ApiRequest)?;
         }
 
         Ok(None)
@@ -252,18 +333,16 @@ impl AdminBotContentModerationLogic {
 
     async fn handle_image(
         data: Vec<u8>,
-        nsfw_config: Option<NsfwDetectionConfig>,
-        nsfw_model: Option<Arc<nsfw::Model>>,
-        llm_primary_config: Option<&LlmContentModerationConfig>,
-        llm_secondary_config: Option<&LlmContentModerationConfig>,
+        nsfw: Option<NsfwConfigAndModel>,
+        llm_primary: Option<LlmConfigAndClient>,
+        llm_secondary: Option<LlmConfigAndClient>,
         default_action: ModerationAction,
-        state: &mut ContentModerationState,
     ) -> Result<Option<ModerationResult>, TestError> {
-        let nsfw_result = if let (Some(c), Some(m)) = (nsfw_config, nsfw_model) {
+        let nsfw_result = if let Some(nsfw) = nsfw {
             let img = image::load_from_memory(&data)
                 .change_context(TestError::ContentModerationFailed)?;
 
-            tokio::task::spawn_blocking(move || Self::handle_nsfw_detection_sync(img, c, &m))
+            tokio::task::spawn_blocking(move || Self::handle_nsfw_detection_sync(img, nsfw))
                 .await
                 .change_context(TestError::ContentModerationFailed)??
         } else {
@@ -276,12 +355,12 @@ impl AdminBotContentModerationLogic {
             return Ok(nsfw_result);
         }
 
-        let llm_result = if let Some(c) = llm_primary_config {
-            match Self::llm_profile_image_moderation(&data, c, state).await? {
+        let llm_result = if let Some(primary) = llm_primary {
+            match Self::llm_profile_image_moderation(&data, primary).await? {
                 LlmModerationResult::StopModerationSesssion => return Ok(None),
                 LlmModerationResult::Decision(None) => {
-                    if let Some(c) = llm_secondary_config {
-                        match Self::llm_profile_image_moderation(&data, c, state).await? {
+                    if let Some(secondary) = llm_secondary {
+                        match Self::llm_profile_image_moderation(&data, secondary).await? {
                             LlmModerationResult::StopModerationSesssion => return Ok(None),
                             LlmModerationResult::Decision(r) => r,
                         }
@@ -317,17 +396,16 @@ impl AdminBotContentModerationLogic {
 
     fn handle_nsfw_detection_sync(
         img: DynamicImage,
-        nsfw_config: NsfwDetectionConfig,
-        model: &nsfw::Model,
+        nsfw: NsfwConfigAndModel,
     ) -> Result<Option<ModerationResult>, TestError> {
         let img = img.into_rgba8();
-        let results = nsfw::examine(model, &img).map_err(|e| {
+        let results = nsfw::examine(&nsfw.model, &img).map_err(|e| {
             TestError::ContentModerationFailed
                 .report()
                 .attach_printable(e.to_string())
         })?;
 
-        if nsfw_config.debug_log_results {
+        if nsfw.config.debug_log_results {
             info!("NSFW detection results: {:?}", &results);
         }
 
@@ -341,7 +419,7 @@ impl AdminBotContentModerationLogic {
             }
         }
 
-        if let Some(thresholds) = &nsfw_config.delete {
+        if let Some(thresholds) = &nsfw.config.delete {
             for c in &results {
                 if let Some(threshold) = threshold(&c.metric, thresholds)
                     && c.score >= threshold
@@ -351,7 +429,7 @@ impl AdminBotContentModerationLogic {
             }
         }
 
-        if let Some(thresholds) = &nsfw_config.reject {
+        if let Some(thresholds) = &nsfw.config.reject {
             for c in &results {
                 if let Some(threshold) = threshold(&c.metric, thresholds)
                     && c.score >= threshold
@@ -363,7 +441,7 @@ impl AdminBotContentModerationLogic {
             }
         }
 
-        if let Some(thresholds) = &nsfw_config.move_to_human {
+        if let Some(thresholds) = &nsfw.config.move_to_human {
             for c in &results {
                 if let Some(threshold) = threshold(&c.metric, thresholds)
                     && c.score >= threshold
@@ -373,7 +451,7 @@ impl AdminBotContentModerationLogic {
             }
         }
 
-        if let Some(thresholds) = &nsfw_config.accept {
+        if let Some(thresholds) = &nsfw.config.accept {
             for c in results {
                 if let Some(threshold) = threshold(&c.metric, thresholds)
                     && c.score >= threshold
@@ -388,19 +466,10 @@ impl AdminBotContentModerationLogic {
 
     async fn llm_profile_image_moderation(
         image_data: &[u8],
-        config: &LlmContentModerationConfig,
-        state: &mut ContentModerationState,
+        llm: LlmConfigAndClient,
     ) -> Result<LlmModerationResult, TestError> {
-        let client = state.client.get_or_insert_with(|| {
-            Client::with_config(
-                OpenAIConfig::new()
-                    .with_api_base(config.openai_api_url.to_string())
-                    .with_api_key(""),
-            )
-            .with_http_client(state.reqwest_client.clone())
-        });
-
-        let expected_response_lowercase = config.expected_response.to_lowercase();
+        let config = &llm.config;
+        let expected_response_lowercase = llm.config.expected_response.to_lowercase();
 
         let image = ChatCompletionRequestMessageContentPartImage {
             image_url: ImageUrl {
@@ -420,7 +489,8 @@ impl AdminBotContentModerationLogic {
         // Hide warning about max_tokens as Ollama does not yet
         // support max_completion_tokens.
         #[allow(deprecated)]
-        let r = client
+        let r = llm
+            .client
             .chat()
             .create(CreateChatCompletionRequest {
                 messages: vec![

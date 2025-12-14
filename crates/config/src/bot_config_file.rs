@@ -354,9 +354,16 @@ pub struct ProfileStringModerationConfig {
     /// Actions: reject (or move_to_human) and accept
     pub llm: Option<LlmStringModerationConfig>,
     pub default_action: ModerationAction,
+    concurrency: Option<u8>,
 }
 
-#[derive(Debug, Deserialize)]
+impl ProfileStringModerationConfig {
+    pub fn concurrency(&self) -> u8 {
+        self.concurrency.unwrap_or(4)
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct LlmStringModerationConfig {
     /// For example "http://localhost:11434/v1"
     pub openai_api_url: Url,
@@ -413,6 +420,13 @@ pub struct ContentModerationConfig {
     pub default_action: ModerationAction,
     #[serde(default)]
     pub debug_log_delete: bool,
+    concurrency: Option<u8>,
+}
+
+impl ContentModerationConfig {
+    pub fn concurrency(&self) -> u8 {
+        self.concurrency.unwrap_or(4)
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -430,7 +444,7 @@ pub struct NsfwDetectionConfig {
     pub debug_log_results: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct LlmContentModerationConfig {
     /// For example "http://localhost:11434/v1"
     pub openai_api_url: Url,

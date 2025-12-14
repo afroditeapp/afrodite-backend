@@ -36,13 +36,9 @@ impl ProfileTextModerationHandler {
 impl ModerationHandler for ProfileTextModerationHandler {
     async fn handle(&mut self) -> Result<(), TestError> {
         if let Some(config) = &self.bot_config_file.profile_text_moderation {
-            let moderation_state = self
-                .state
-                .get_or_insert_with(|| ProfileStringModerationState {
-                    moderation_started: None,
-                    client: None,
-                    reqwest_client: self.reqwest_client.clone(),
-                });
+            let moderation_state = self.state.get_or_insert_with(|| {
+                ProfileStringModerationState::new(config, self.reqwest_client.clone())
+            });
 
             AdminBotProfileStringModerationLogic::run_profile_string_moderation(
                 ProfileStringModerationContentType::ProfileText,
