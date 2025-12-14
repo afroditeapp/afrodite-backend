@@ -142,6 +142,7 @@ impl From<TimeValue> for String {
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize)]
 #[serde(try_from = "String")]
+#[serde(into = "String")]
 pub struct DurationValue {
     pub seconds: u32,
 }
@@ -191,8 +192,15 @@ impl TryFrom<String> for DurationValue {
     }
 }
 
+impl From<DurationValue> for String {
+    fn from(value: DurationValue) -> Self {
+        format!("{}s", value.seconds)
+    }
+}
+
 #[derive(Debug, Clone, Copy, Deserialize, Serialize)]
 #[serde(try_from = "String")]
+#[serde(into = "String")]
 pub struct ByteCount {
     bytes: i64,
 }
@@ -245,5 +253,11 @@ impl TryFrom<String> for ByteCount {
         };
 
         Ok(ByteCount { bytes })
+    }
+}
+
+impl From<ByteCount> for String {
+    fn from(value: ByteCount) -> Self {
+        value.bytes.to_string()
     }
 }
