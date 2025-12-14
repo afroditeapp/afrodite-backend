@@ -36,10 +36,7 @@ use test_mode_bot::{
             SetAccountSetup, SetProfileVisibility,
         },
         media::{SendImageToSlot, SetContent},
-        profile::{
-            ChangeProfileText, ChangeProfileTextDaily, GetProfile, ProfileText,
-            UpdateLocationRandomOrConfigured,
-        },
+        profile::{ChangeProfileTextDaily, GetProfile, UpdateLocationRandomOrConfigured},
     },
 };
 use test_mode_utils::{client::TestError, state::BotEncryptionKeys};
@@ -224,27 +221,6 @@ impl SetBotPublicKey {
 impl BotAction for SetBotPublicKey {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         Self::setup_bot_keys_if_needed(state).await?;
-        Ok(())
-    }
-}
-
-#[derive(Debug)]
-pub struct ChangeBotProfileText;
-
-#[async_trait]
-impl BotAction for ChangeBotProfileText {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let text = format!(
-            "Hello! My location is\n{:#?}",
-            state.previous_value.location()
-        );
-
-        ChangeProfileText {
-            mode: ProfileText::String(text),
-        }
-        .excecute_impl(state)
-        .await?;
-
         Ok(())
     }
 }
