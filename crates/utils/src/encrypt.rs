@@ -243,7 +243,7 @@ pub fn decrypt_binary_message(data: &[u8], key: &[u8]) -> Result<Vec<u8>, Messag
     let mut message =
         Message::from_bytes(data).map_err(|_| MessageEncryptionError::DecryptWithKeyFromBytes)?;
 
-    let key = PlainSessionKey::V6 { key: key.to_vec() };
+    let key = PlainSessionKey::V6 { key: key.into() };
 
     if let Message::Encrypted { edata, .. } = &mut message {
         edata

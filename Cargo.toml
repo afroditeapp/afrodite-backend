@@ -160,7 +160,7 @@ inventory = "0.3.20"
 # tls_client_rustls and tls_client_rustls configures TLS.
 # tokio-tungstenite 0.27 is available but axum uses 0.26.
 tokio-tungstenite = { version = "0.26.1", features = ["url"] }
-pgp = { version = "0.16.0", default-features = false }
+pgp = { version = "0.18.0", default-features = false }
 smallvec = "1.15.1"
 async-openai = { version = "0.28.3", default-features = false }
 unicode-segmentation = "1.12.0"
