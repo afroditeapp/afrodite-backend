@@ -208,6 +208,4 @@ macro_rules! sync_version_wrappers {
     };
 }
 
-pub(crate) use sync_version_wrappers;
-
 sync_version_wrappers!(AccountSyncVersion, ClientConfigSyncVersion,);

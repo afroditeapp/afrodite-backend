@@ -218,10 +218,10 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             warn!("Debug mode is enabled");
         }
 
-        if let Some(lets_encrypt) = self.config.lets_encrypt_config() {
-            if !lets_encrypt.production_servers {
-                warn!("Let's Encrypt is configured to use staging environment");
-            }
+        if let Some(lets_encrypt) = self.config.lets_encrypt_config()
+            && !lets_encrypt.production_servers
+        {
+            warn!("Let's Encrypt is configured to use staging environment");
         }
 
         if !self.config.data_dir().exists() {

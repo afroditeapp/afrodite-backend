@@ -2,7 +2,7 @@
 
 use std::{fmt, num::NonZeroU8, path::PathBuf};
 
-use clap::{Args, Parser, ValueEnum, arg, command};
+use clap::{Args, Parser, ValueEnum};
 use error_stack::ResultExt;
 use manager_config::args::ManagerApiClientMode;
 use reqwest::Url;

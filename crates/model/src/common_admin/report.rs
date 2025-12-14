@@ -46,18 +46,13 @@ pub struct ReportAccountInfo {
     pub name: Option<NonEmptyString>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
 pub enum ReportChatInfoInteractionState {
+    #[default]
     None,
     CreatorLiked,
     TargetLiked,
     Match,
-}
-
-impl Default for ReportChatInfoInteractionState {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]

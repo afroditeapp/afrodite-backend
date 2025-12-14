@@ -16,15 +16,17 @@ mod push_notification;
 define_cmd_wrapper_write!(WriteCommandsCommon);
 
 impl WriteCommandsCommon<'_> {
-    pub fn push_notification(&mut self) -> push_notification::WriteCommandsCommonPushNotification {
+    pub fn push_notification(
+        &mut self,
+    ) -> push_notification::WriteCommandsCommonPushNotification<'_> {
         push_notification::WriteCommandsCommonPushNotification::new(self.handle())
     }
 
-    pub fn client_config(&mut self) -> client_config::WriteCommandsCommonClientConfig {
+    pub fn client_config(&mut self) -> client_config::WriteCommandsCommonClientConfig<'_> {
         client_config::WriteCommandsCommonClientConfig::new(self.handle())
     }
 
-    pub fn data_export(&mut self) -> data_export::WriteCommandsCommonDataExport {
+    pub fn data_export(&mut self) -> data_export::WriteCommandsCommonDataExport<'_> {
         data_export::WriteCommandsCommonDataExport::new(self.handle())
     }
 }

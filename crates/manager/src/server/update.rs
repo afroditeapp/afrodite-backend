@@ -339,11 +339,11 @@ impl UpdateManagerInternal {
             return Err(report!(UpdateError::SoftwareDownloadFailedNoMatchingFile));
         };
 
-        if let Some(downloaded) = self.update_dir().downloaded_backend_info().await? {
-            if downloaded.name == asset.name {
-                info!("Already downloaded");
-                return Ok(());
-            }
+        if let Some(downloaded) = self.update_dir().downloaded_backend_info().await?
+            && downloaded.name == asset.name
+        {
+            info!("Already downloaded");
+            return Ok(());
         }
 
         self.update_dir()
@@ -375,11 +375,11 @@ impl UpdateManagerInternal {
     }
 
     async fn software_install_impl(&self, info: SoftwareInfo) -> Result<(), UpdateError> {
-        if let Some(installed) = self.update_dir().installed_backend_info().await? {
-            if info == installed {
-                info!("Already installed");
-                return Ok(());
-            }
+        if let Some(installed) = self.update_dir().installed_backend_info().await?
+            && info == installed
+        {
+            info!("Already installed");
+            return Ok(());
         }
 
         let Some(downloaded) = self.update_dir().downloaded_backend_info().await? else {
@@ -417,13 +417,13 @@ impl UpdateManagerInternal {
         Ok(())
     }
 
-    fn backend_utils(&self) -> BackendUtils {
+    fn backend_utils(&self) -> BackendUtils<'_> {
         BackendUtils {
             config: &self.config,
         }
     }
 
-    fn update_dir(&self) -> UpdateDirUtils {
+    fn update_dir(&self) -> UpdateDirUtils<'_> {
         UpdateDirUtils {
             config: self.state.config(),
         }

@@ -68,12 +68,11 @@ impl BotConfigFile {
             let error_location = id
                 .map(|v| format!("Bot ID {v} config error."))
                 .unwrap_or("Bot config error.".to_string());
-            if let Some(age) = bot.age {
-                if age < 18 || age > 99 {
-                    return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
-                        "{error_location} Age must be between 18 and 99"
-                    ));
-                }
+            if let Some(age) = bot.age
+                && (age < 18 || age > 99)
+            {
+                return Err(ConfigFileError::InvalidConfig)
+                    .attach_printable(format!("{error_location} Age must be between 18 and 99"));
             }
 
             if bot.image.is_some() {
@@ -155,15 +154,14 @@ impl BotConfigFile {
             }
         }
 
-        if let Some(config) = &config.content_moderation {
-            if let Some(config) = &config.nsfw_detection {
-                if !config.model_file.exists() {
-                    return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
-                        "NSFW model file {} does not exists",
-                        config.model_file.display()
-                    ));
-                }
-            }
+        if let Some(config) = &config.content_moderation
+            && let Some(config) = &config.nsfw_detection
+            && !config.model_file.exists()
+        {
+            return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
+                "NSFW model file {} does not exists",
+                config.model_file.display()
+            ));
         }
 
         config.merge_base_bot_config_with_specific_bot_configs();

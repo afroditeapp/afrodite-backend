@@ -192,12 +192,12 @@ impl EmailContentFile {
             }
         }
 
-        if let Some(email_verification) = &config.email_verification {
-            if !email_verification.body.all_strings_contain("{{token}}") {
-                return Err(ConfigFileError::InvalidConfig).attach_printable(
-                    "'{{token}}' is missing from email_verification body text".to_string(),
-                );
-            }
+        if let Some(email_verification) = &config.email_verification
+            && !email_verification.body.all_strings_contain("{{token}}")
+        {
+            return Err(ConfigFileError::InvalidConfig).attach_printable(
+                "'{{token}}' is missing from email_verification body text".to_string(),
+            );
         }
 
         Ok(config)

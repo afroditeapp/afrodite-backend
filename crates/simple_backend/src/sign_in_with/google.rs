@@ -12,7 +12,6 @@ use sha2::{Digest, Sha256};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_utils::ContextExt;
 use tokio::sync::Mutex;
-use tracing::error;
 
 /// Possible Google ID token (from client) iss field (issuer) values.
 const POSSIBLE_ISS_VALUES_GOOGLE: &[&str] = &["accounts.google.com", "https://accounts.google.com"];

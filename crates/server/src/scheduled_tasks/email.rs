@@ -262,17 +262,17 @@ async fn remove_expired_email_verification_token(
         .limits_account()
         .email_verification_token_validity_duration;
 
-    if let Some(token_time) = internal.email_verification_token_unix_time {
-        if token_time.duration_value_elapsed(email_verification_token_validity) {
-            db_write_raw!(state, move |cmds| {
-                cmds.account()
-                    .email()
-                    .clear_email_verification_token(id)
-                    .await?;
-                Ok(())
-            })
-            .await?;
-        }
+    if let Some(token_time) = internal.email_verification_token_unix_time
+        && token_time.duration_value_elapsed(email_verification_token_validity)
+    {
+        db_write_raw!(state, move |cmds| {
+            cmds.account()
+                .email()
+                .clear_email_verification_token(id)
+                .await?;
+            Ok(())
+        })
+        .await?;
     }
 
     Ok(())
@@ -290,14 +290,14 @@ async fn cancel_email_change_if_needed(state: &S, id: AccountIdInternal) -> Resu
         .limits_account()
         .email_change_min_wait_duration;
 
-    if let Some(change_time) = internal.email_change_unix_time {
-        if change_time.duration_value_elapsed(email_change_token_validity) {
-            db_write_raw!(state, move |cmds| {
-                cmds.account().email().cancel_email_change(id).await?;
-                Ok(())
-            })
-            .await?;
-        }
+    if let Some(change_time) = internal.email_change_unix_time
+        && change_time.duration_value_elapsed(email_change_token_validity)
+    {
+        db_write_raw!(state, move |cmds| {
+            cmds.account().email().cancel_email_change(id).await?;
+            Ok(())
+        })
+        .await?;
     }
 
     Ok(())
@@ -318,14 +318,14 @@ async fn remove_expired_email_login_token(
         .limits_account()
         .email_login_token_validity_duration;
 
-    if let Some(token_time) = internal.email_login_token_unix_time {
-        if token_time.duration_value_elapsed(email_login_token_validity) {
-            db_write_raw!(state, move |cmds| {
-                cmds.account().email().clear_email_login_token(id).await?;
-                Ok(())
-            })
-            .await?;
-        }
+    if let Some(token_time) = internal.email_login_token_unix_time
+        && token_time.duration_value_elapsed(email_login_token_validity)
+    {
+        db_write_raw!(state, move |cmds| {
+            cmds.account().email().clear_email_login_token(id).await?;
+            Ok(())
+        })
+        .await?;
     }
 
     Ok(())

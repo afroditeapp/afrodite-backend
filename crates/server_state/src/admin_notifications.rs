@@ -86,7 +86,7 @@ impl AdminNotificationManagerData {
             .cloned()
     }
 
-    pub fn write(&self) -> AdminNotificationStateWriteAccess {
+    pub fn write(&self) -> AdminNotificationStateWriteAccess<'_> {
         AdminNotificationStateWriteAccess { state: &self.state }
     }
 }

@@ -4,7 +4,7 @@ use tokio::{
     sync::{mpsc, oneshot},
     task::JoinHandle,
 };
-use tracing::{error, warn};
+use tracing::warn;
 
 use crate::{api::utils::BackupLinkClient, server::ServerQuitWatcher};
 
@@ -212,10 +212,10 @@ impl BackupLinkManagerServer {
                 let _ = handle_sender.send(BackupLinkConnectionReceiver { receiver });
             }
             BackupLinkManagerMessage::CleanConnection { client_type } => {
-                if let Some(connection) = &self.connection(client_type) {
-                    if connection.sender.is_closed() {
-                        *self.connection(client_type) = None;
-                    }
+                if let Some(connection) = &self.connection(client_type)
+                    && connection.sender.is_closed()
+                {
+                    *self.connection(client_type) = None;
                 }
             }
             BackupLinkManagerMessage::ReceiveMessage {

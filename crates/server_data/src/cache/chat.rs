@@ -25,7 +25,7 @@ pub struct CurrentlyTypingTo {
 }
 
 impl CurrentlyTypingTo {
-    pub fn access_typing_to_state(&mut self, min_wait_seconds: u16) -> CurrentlyTypingToAccess {
+    pub fn access_typing_to_state(&mut self, min_wait_seconds: u16) -> CurrentlyTypingToAccess<'_> {
         let time_elapsed = if let Some(timestamp) = self.previously_received {
             timestamp.elapsed().as_secs() >= min_wait_seconds as u64
         } else {

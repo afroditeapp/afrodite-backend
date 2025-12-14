@@ -400,17 +400,17 @@ impl ScheduledTaskManager {
             .await
             .change_context(ScheduledTaskError::DatabaseError)?;
 
-        if let Some(banned_until) = banned_until_time.banned_until {
-            if UnixTime::current_time().ut >= banned_until.ut {
-                db_write_raw!(self.state, move |cmds| {
-                    cmds.account_admin()
-                        .ban()
-                        .set_account_ban_state(id, None, None, None, None)
-                        .await
-                })
-                .await
-                .change_context(ScheduledTaskError::DatabaseError)?;
-            }
+        if let Some(banned_until) = banned_until_time.banned_until
+            && UnixTime::current_time().ut >= banned_until.ut
+        {
+            db_write_raw!(self.state, move |cmds| {
+                cmds.account_admin()
+                    .ban()
+                    .set_account_ban_state(id, None, None, None, None)
+                    .await
+            })
+            .await
+            .change_context(ScheduledTaskError::DatabaseError)?;
         }
 
         Ok(())

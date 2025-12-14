@@ -119,7 +119,7 @@ impl AppState {
         &self.state.demo
     }
 
-    pub fn data_all_access(&self) -> DataAllAccess {
+    pub fn data_all_access(&self) -> DataAllAccess<'_> {
         DataAllAccess { state: &self.state }
     }
 

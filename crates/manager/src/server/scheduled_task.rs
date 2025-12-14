@@ -98,16 +98,16 @@ impl ScheduledTaskManagerHandle {
 
     pub async fn maintenance_time_for_backend_event(&self) -> Option<MaintenanceTime> {
         let state = self.state.lock().await;
-        if let Some(t) = state.backend_restart {
-            if t.notify_backend {
-                return Some(MaintenanceTime(t.time));
-            }
+        if let Some(t) = state.backend_restart
+            && t.notify_backend
+        {
+            return Some(MaintenanceTime(t.time));
         }
 
-        if let Some(t) = state.system_reboot {
-            if t.notify_backend {
-                return Some(MaintenanceTime(t.time));
-            }
+        if let Some(t) = state.system_reboot
+            && t.notify_backend
+        {
+            return Some(MaintenanceTime(t.time));
         }
 
         None

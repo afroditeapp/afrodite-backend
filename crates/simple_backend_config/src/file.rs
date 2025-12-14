@@ -232,12 +232,11 @@ impl SimpleBackendConfigFile {
             .image_processing
             .as_ref()
             .and_then(|v| v.nsfw_detection.as_ref())
+            && nsfw_detection.thresholds == NsfwDetectionThresholds::default()
         {
-            if nsfw_detection.thresholds == NsfwDetectionThresholds::default() {
-                return Err(ConfigFileError::InvalidConfig.report().attach_printable(
-                    "Config image_processing.nsfw_detection.thresholds is empty",
-                ));
-            }
+            return Err(ConfigFileError::InvalidConfig
+                .report()
+                .attach_printable("Config image_processing.nsfw_detection.thresholds is empty"));
         }
 
         if let Some(config) = &config.static_file_package_hosting {

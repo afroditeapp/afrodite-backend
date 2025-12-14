@@ -134,7 +134,9 @@ pub struct ContentInfoDetailed {
 )]
 #[diesel(sql_type = SmallInt)]
 #[repr(i16)]
+#[derive(Default)]
 pub enum ContentModerationState {
+    #[default]
     InSlot = 0,
     /// InModeration
     WaitingBotOrHumanModeration = 1,
@@ -198,12 +200,6 @@ impl ContentModerationState {
             | Self::AcceptedByBot
             | Self::AcceptedByHuman => false,
         }
-    }
-}
-
-impl Default for ContentModerationState {
-    fn default() -> Self {
-        Self::InSlot
     }
 }
 

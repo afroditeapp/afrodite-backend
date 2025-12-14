@@ -3,18 +3,13 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::AccountId;
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub enum DataExportStateType {
+    #[default]
     Empty,
     InProgress,
     Done,
     Error,
-}
-
-impl Default for DataExportStateType {
-    fn default() -> Self {
-        Self::Empty
-    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams, PartialEq)]

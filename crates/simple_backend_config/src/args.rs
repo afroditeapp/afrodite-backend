@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use clap::{Args, arg};
+use clap::Args;
 
 #[derive(Args, Debug, Clone)]
 pub struct ServerModeArgs {

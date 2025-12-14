@@ -167,7 +167,7 @@ pub struct RouterDatabaseWriteHandle {
 }
 
 impl RouterDatabaseWriteHandle {
-    pub fn user_write_commands_account(&self) -> WriteCommandsConcurrent {
+    pub fn user_write_commands_account(&self) -> WriteCommandsConcurrent<'_> {
         WriteCommandsConcurrent::new(
             &self.read.cache,
             &self.read.file_dir,
@@ -206,7 +206,7 @@ pub trait InternalWriting {
     fn email_sender(&self) -> &EmailSenderImpl;
     fn events(&self) -> EventManagerWithCacheReference<'_>;
 
-    fn location_index_write_handle(&self) -> LocationIndexWriteHandle {
+    fn location_index_write_handle(&self) -> LocationIndexWriteHandle<'_> {
         LocationIndexWriteHandle::new(self.location())
     }
 

@@ -9,8 +9,9 @@ pub enum StatisticsGender {
     NonBinary,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, ToSchema)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, ToSchema, Default)]
 pub enum StatisticsProfileVisibility {
+    #[default]
     Public,
     /// Includes [crate::ProfileVisibility::PendingPublic]
     Private,
@@ -20,12 +21,6 @@ pub enum StatisticsProfileVisibility {
 impl StatisticsProfileVisibility {
     pub fn is_default_statistics(&self) -> bool {
         *self == Self::default()
-    }
-}
-
-impl Default for StatisticsProfileVisibility {
-    fn default() -> Self {
-        Self::Public
     }
 }
 

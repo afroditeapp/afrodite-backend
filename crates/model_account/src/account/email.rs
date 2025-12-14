@@ -21,19 +21,15 @@ use crate::EmailMessages;
 )]
 #[diesel(sql_type = SmallInt)]
 #[repr(i16)]
+#[derive(Default)]
 pub enum EmailSendingState {
     /// Backend has not yet tried to send the email.
+    #[default]
     NotSent = 0,
     /// Backend moved the email to send queue.
     SendRequested = 1,
     /// SMTP server returned a positive response.
     SentSuccessfully = 2,
-}
-
-impl Default for EmailSendingState {
-    fn default() -> Self {
-        Self::NotSent
-    }
 }
 
 #[derive(Debug, Clone, Default, Serialize, Queryable, Selectable, AsChangeset, Insertable)]

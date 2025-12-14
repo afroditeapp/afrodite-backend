@@ -109,15 +109,15 @@ impl GitHubApi<'_> {
                         .attach_printable(selected.name.to_string())
                         .attach_printable(name.to_string()));
                 } else {
-                    if let Some(required_uploader) = &config.github.uploader {
-                        if uploader != required_uploader {
-                            return Err(report!(
-                                UpdateError::SotwareDownloadFailedUnknownFileUploader
-                            )
-                            .attach_printable(format!(
-                                "uploader: {uploader}, expected: {required_uploader}"
-                            )));
-                        }
+                    if let Some(required_uploader) = &config.github.uploader
+                        && uploader != required_uploader
+                    {
+                        return Err(
+                            report!(UpdateError::SotwareDownloadFailedUnknownFileUploader)
+                                .attach_printable(format!(
+                                    "uploader: {uploader}, expected: {required_uploader}"
+                                )),
+                        );
                     }
                     selected_asset = Some(ReleaseAsset {
                         name: name.to_string(),

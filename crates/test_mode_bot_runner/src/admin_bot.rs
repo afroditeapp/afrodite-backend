@@ -83,10 +83,10 @@ impl AdminBot {
         persistent_state: Option<BotPersistentState>,
         bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
     ) {
-        if let Some(persistent_state) = persistent_state {
-            if let Err(e) = bot_running_handle.send(vec![persistent_state]).await {
-                error!("Failed to send admin bot state: {:?}", e);
-            }
+        if let Some(persistent_state) = persistent_state
+            && let Err(e) = bot_running_handle.send(vec![persistent_state]).await
+        {
+            error!("Failed to send admin bot state: {:?}", e);
         }
         info!("Admin bot stopped",);
     }
@@ -224,8 +224,8 @@ impl AdminBot {
                 // Receive events from websocket and notify appropriate pipelines
                 event = connections.recv_event() => {
                     let event = event?;
-                    if event.event == EventType::AdminBotNotification {
-                        if let Some(Some(notification)) = event.admin_bot_notification {
+                    if event.event == EventType::AdminBotNotification
+                        && let Some(Some(notification)) = event.admin_bot_notification {
                             if notification.moderate_initial_media_content_bot.unwrap_or(false)
                                 || notification.moderate_media_content_bot.unwrap_or(false)
                             {
@@ -240,7 +240,6 @@ impl AdminBot {
                                 profile_text_sender.notify().await;
                             }
                         }
-                    }
                 }
                 // Forced moderation every hour as fallback - notify all pipelines
                 _ = hourly_timer.tick() => {

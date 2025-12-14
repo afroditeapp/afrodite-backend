@@ -7,15 +7,15 @@ pub mod profile;
 pub mod profile_admin;
 
 pub trait GetDbWriteCommandsProfile {
-    fn profile(&mut self) -> CurrentWriteProfile;
-    fn profile_admin(&mut self) -> CurrentWriteProfileAdmin;
+    fn profile(&mut self) -> CurrentWriteProfile<'_>;
+    fn profile_admin(&mut self) -> CurrentWriteProfileAdmin<'_>;
 }
 
 impl<I: DbWriteAccessProvider> GetDbWriteCommandsProfile for I {
-    fn profile(&mut self) -> CurrentWriteProfile {
+    fn profile(&mut self) -> CurrentWriteProfile<'_> {
         CurrentWriteProfile::new(self.handle())
     }
-    fn profile_admin(&mut self) -> CurrentWriteProfileAdmin {
+    fn profile_admin(&mut self) -> CurrentWriteProfileAdmin<'_> {
         CurrentWriteProfileAdmin::new(self.handle())
     }
 }

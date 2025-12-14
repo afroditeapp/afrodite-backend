@@ -481,13 +481,13 @@ impl SendCounter {
     }
 
     pub async fn wait_until_allowed(&mut self, limit: Option<NonZeroU32>) {
-        if let Some(limit) = limit {
-            if self.value >= limit.get() {
-                // Limit reached
-                self.wait_until_next_reset().await;
-                self.value = 0;
-                self.previous_reset = UnixTime::current_time();
-            }
+        if let Some(limit) = limit
+            && self.value >= limit.get()
+        {
+            // Limit reached
+            self.wait_until_next_reset().await;
+            self.value = 0;
+            self.previous_reset = UnixTime::current_time();
         }
     }
 

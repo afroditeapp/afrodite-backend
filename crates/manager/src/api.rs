@@ -28,7 +28,7 @@ pub trait GetConfig {
 }
 
 pub trait GetApiManager {
-    fn api_manager(&self) -> ApiManager;
+    fn api_manager(&self) -> ApiManager<'_>;
 }
 
 pub trait GetUpdateManager {

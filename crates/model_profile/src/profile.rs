@@ -232,10 +232,10 @@ impl ProfileUpdateInternal {
             return Err("Profile name is not trimmed".to_string());
         }
 
-        if let Some(c) = name.chars().next() {
-            if !c.is_uppercase() {
-                return Err("Profile name does not start with uppercase letter".to_string());
-            }
+        if let Some(c) = name.chars().next()
+            && !c.is_uppercase()
+        {
+            return Err("Profile name does not start with uppercase letter".to_string());
         }
 
         if !is_bot
@@ -255,15 +255,13 @@ impl ProfileUpdateInternal {
             }
         }
 
-        if self.age != current_profile.age {
-            if let Some(age_range) = initial_age {
-                if !age_range.is_age_valid(self.age) {
-                    return Err(
-                        "The new profile age is not in the current accepted profile age range"
-                            .to_string(),
-                    );
-                }
-            }
+        if self.age != current_profile.age
+            && let Some(age_range) = initial_age
+            && !age_range.is_age_valid(self.age)
+        {
+            return Err(
+                "The new profile age is not in the current accepted profile age range".to_string(),
+            );
         }
 
         Ok(ProfileUpdateValidated {

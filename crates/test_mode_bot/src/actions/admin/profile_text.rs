@@ -221,12 +221,11 @@ impl AdminBotProfileStringModerationLogic {
     ) -> Result<(), TestError> {
         let start_time = Instant::now();
 
-        if let Some(previous) = moderation_state.moderation_started {
-            if start_time.duration_since(previous).as_secs()
+        if let Some(previous) = moderation_state.moderation_started
+            && start_time.duration_since(previous).as_secs()
                 < config.moderation_session_min_seconds.into()
-            {
-                return Ok(());
-            }
+        {
+            return Ok(());
         }
 
         moderation_state.moderation_started = Some(start_time);

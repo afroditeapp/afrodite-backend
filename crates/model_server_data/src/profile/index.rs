@@ -280,54 +280,43 @@ impl LocationIndexProfileData {
                 .search_groups_filter
                 .is_match(self.search_groups);
 
-        if is_match {
-            if let Some(last_seen_time_filter) = query_maker_details.last_seen_time_filter {
-                is_match &= self.last_seen_time_match(last_seen_time_filter, current_time);
-            }
+        if is_match && let Some(last_seen_time_filter) = query_maker_details.last_seen_time_filter {
+            is_match &= self.last_seen_time_match(last_seen_time_filter, current_time);
         }
 
-        if is_match {
-            if let Some(unlimited_likes_filter) = query_maker_details.unlimited_likes_filter {
-                is_match &= unlimited_likes_filter == self.unlimited_likes;
-            }
+        if is_match && let Some(unlimited_likes_filter) = query_maker_details.unlimited_likes_filter
+        {
+            is_match &= unlimited_likes_filter == self.unlimited_likes;
         }
 
-        if is_match {
-            if let Some(profile_created_time_filter) =
+        if is_match
+            && let Some(profile_created_time_filter) =
                 query_maker_details.profile_created_time_filter
-            {
-                is_match &=
-                    profile_created_time_filter.is_match(self.profile_created_time, current_time);
-            }
+        {
+            is_match &=
+                profile_created_time_filter.is_match(self.profile_created_time, current_time);
         }
 
-        if is_match {
-            if let Some(profile_edited_time_filter) = query_maker_details.profile_edited_time_filter
-            {
-                is_match &= profile_edited_time_filter.is_match(
-                    self.profile_edited_time,
-                    self.profile_content_edited_time,
-                    current_time,
-                );
-            }
+        if is_match
+            && let Some(profile_edited_time_filter) = query_maker_details.profile_edited_time_filter
+        {
+            is_match &= profile_edited_time_filter.is_match(
+                self.profile_edited_time,
+                self.profile_content_edited_time,
+                current_time,
+            );
         }
 
-        if is_match {
-            if let Some(filter) = query_maker_details.profile_text_min_characters_filter {
-                is_match &= filter.is_match(self.profile_text_character_count);
-            }
+        if is_match && let Some(filter) = query_maker_details.profile_text_min_characters_filter {
+            is_match &= filter.is_match(self.profile_text_character_count);
         }
 
-        if is_match {
-            if let Some(filter) = query_maker_details.profile_text_max_characters_filter {
-                is_match &= filter.is_match(self.profile_text_character_count);
-            }
+        if is_match && let Some(filter) = query_maker_details.profile_text_max_characters_filter {
+            is_match &= filter.is_match(self.profile_text_character_count);
         }
 
-        if is_match {
-            if let Some(attribute_info) = attribute_info {
-                is_match &= self.attribute_filters_match(query_maker_details, attribute_info);
-            }
+        if is_match && let Some(attribute_info) = attribute_info {
+            is_match &= self.attribute_filters_match(query_maker_details, attribute_info);
         }
 
         is_match

@@ -261,19 +261,18 @@ pub fn get_config(
         file_config.data.dir.clone()
     };
 
-    if let Some(config) = file_config.push_notifications.fcm.as_ref() {
-        if !config.service_account_key_path.exists() {
-            return Err(GetConfigError::InvalidConfiguration).attach_printable(
-                "Firebase Cloud Messaging service account key file does not exist",
-            );
-        }
+    if let Some(config) = file_config.push_notifications.fcm.as_ref()
+        && !config.service_account_key_path.exists()
+    {
+        return Err(GetConfigError::InvalidConfiguration)
+            .attach_printable("Firebase Cloud Messaging service account key file does not exist");
     }
 
-    if let Some(config) = file_config.push_notifications.apns.as_ref() {
-        if !config.key_path.exists() {
-            return Err(GetConfigError::InvalidConfiguration)
-                .attach_printable("APNs key file does not exist");
-        }
+    if let Some(config) = file_config.push_notifications.apns.as_ref()
+        && !config.key_path.exists()
+    {
+        return Err(GetConfigError::InvalidConfiguration)
+            .attach_printable("APNs key file does not exist");
     }
 
     let public_api_tls_config = match file_config.tls.clone().and_then(|v| v.public_api) {

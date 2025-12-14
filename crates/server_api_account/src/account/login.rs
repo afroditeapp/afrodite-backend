@@ -163,10 +163,10 @@ pub async fn post_sign_in_with_login(
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT.post_sign_in_with_login.incr();
 
-    if let Some(min_version) = state.config().min_client_version() {
-        if !min_version.received_version_is_accepted(tokens.client_info.client_version) {
-            return Ok(LoginResult::error_unsupported_client().into());
-        }
+    if let Some(min_version) = state.config().min_client_version()
+        && !min_version.received_version_is_accepted(tokens.client_info.client_version)
+    {
+        return Ok(LoginResult::error_unsupported_client().into());
     }
 
     let r = if let Some(apple) = tokens.apple {
@@ -220,7 +220,7 @@ async fn handle_sign_in_with_info(
     if let Some(already_existing_account) = already_existing_account {
         login_impl(already_existing_account.as_id(), address, state).await
     } else if disable_registering {
-        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        Err(StatusCode::INTERNAL_SERVER_ERROR)
     } else {
         let email: EmailAddress = info
             .email()
@@ -408,10 +408,10 @@ async fn post_email_login_with_token_impl(
     address: SocketAddr,
     request: EmailLoginToken,
 ) -> Result<Json<LoginResult>, StatusCode> {
-    if let Some(min_version) = state.config().min_client_version() {
-        if !min_version.received_version_is_accepted(request.client_info.client_version) {
-            return Ok(LoginResult::error_unsupported_client().into());
-        }
+    if let Some(min_version) = state.config().min_client_version()
+        && !min_version.received_version_is_accepted(request.client_info.client_version)
+    {
+        return Ok(LoginResult::error_unsupported_client().into());
     }
 
     let Ok(token) = request.token.bytes() else {

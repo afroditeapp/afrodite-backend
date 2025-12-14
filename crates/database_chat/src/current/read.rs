@@ -8,7 +8,7 @@ pub trait GetDbReadCommandsChat {
 }
 
 impl<I: DbReadAccessProvider> GetDbReadCommandsChat for I {
-    fn chat(&mut self) -> CurrentReadChat {
+    fn chat(&mut self) -> CurrentReadChat<'_> {
         CurrentReadChat::new(self.handle())
     }
 }

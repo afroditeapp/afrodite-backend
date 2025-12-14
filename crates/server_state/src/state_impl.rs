@@ -268,7 +268,7 @@ impl AdminNotificationProvider for S {
 }
 
 impl ApiLimitsProvider for S {
-    fn api_limits(&self, account_id: AccountIdInternal) -> crate::api_limits::ApiLimits {
+    fn api_limits(&self, account_id: AccountIdInternal) -> crate::api_limits::ApiLimits<'_> {
         ApiLimits::new(
             self.read().cache_read_write_access(),
             self.config(),
@@ -326,7 +326,7 @@ impl MaxMindDbDataProvider for S {
 }
 
 impl JitsiMeetUrlCreatorProvider for S {
-    fn jitsi_meet_url_creator(&self) -> JitsiMeetUrlCreator {
+    fn jitsi_meet_url_creator(&self) -> JitsiMeetUrlCreator<'_> {
         JitsiMeetUrlCreator::new(&self.state.simple_backend_state.config)
     }
 }

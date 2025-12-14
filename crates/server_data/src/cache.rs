@@ -98,7 +98,7 @@ impl DatabaseCache {
         }
     }
 
-    pub fn websocket_cache_cmds(&self) -> WebSocketCacheCmds {
+    pub fn websocket_cache_cmds(&self) -> WebSocketCacheCmds<'_> {
         WebSocketCacheCmds { cache: self }
     }
 

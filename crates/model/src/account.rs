@@ -233,9 +233,11 @@ impl Permissions {
 )]
 #[diesel(sql_type = SmallInt)]
 #[repr(i16)]
+#[derive(Default)]
 pub enum ProfileVisibility {
     /// Profile is currently private and its visibility is not
     /// changed when initial moderation request will be moderated as accepted.
+    #[default]
     PendingPrivate = 0,
     /// Profile is currently private and its visibility will
     /// change to public when initial moderation request will be moderated as
@@ -245,12 +247,6 @@ pub enum ProfileVisibility {
     Private = 2,
     /// Profile is currently public.
     Public = 3,
-}
-
-impl Default for ProfileVisibility {
-    fn default() -> Self {
-        Self::PendingPrivate
-    }
 }
 
 impl ProfileVisibility {

@@ -78,7 +78,7 @@ impl IpDb {
         self.get_country_ref(ip).map(|v| v.to_ip_country())
     }
 
-    pub fn get_country_ref(&self, ip: IpAddr) -> Option<IpCountryKeyRef> {
+    pub fn get_country_ref(&self, ip: IpAddr) -> Option<IpCountryKeyRef<'_>> {
         match self.db.lookup::<maxminddb::geoip2::Country>(ip) {
             Ok(v) => v
                 .and_then(|v| v.country)
@@ -108,7 +108,7 @@ impl MaxMindDbManagerData {
         lock.as_ref().cloned()
     }
 
-    pub async fn current_db_ref(&self) -> RwLockReadGuard<Option<Arc<IpDb>>> {
+    pub async fn current_db_ref(&self) -> RwLockReadGuard<'_, Option<Arc<IpDb>>> {
         self.db.read().await
     }
 

@@ -151,12 +151,11 @@ impl BackendManager {
             _ = quit_notification.recv() => (),
         }
 
-        if self.backend_running {
-            if let Some(config) = self.state.config().control_backend().cloned() {
-                if let Err(e) = self.stop_backend(&config).await {
-                    error!("Backend stopping failed. Error: {:?}", e);
-                }
-            }
+        if self.backend_running
+            && let Some(config) = self.state.config().control_backend().cloned()
+            && let Err(e) = self.stop_backend(&config).await
+        {
+            error!("Backend stopping failed. Error: {:?}", e);
         }
     }
 

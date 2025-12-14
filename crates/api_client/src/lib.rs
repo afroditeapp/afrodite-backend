@@ -5,6 +5,7 @@
     clippy::too_many_arguments,
     clippy::uninlined_format_args,
     clippy::needless_return,
+    clippy::derivable_impls,
     unused_imports,
 )]
 

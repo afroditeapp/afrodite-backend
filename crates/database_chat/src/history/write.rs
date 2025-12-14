@@ -7,15 +7,15 @@ pub mod chat;
 pub mod chat_admin;
 
 pub trait GetDbHistoryWriteCommandsChat {
-    fn chat_history(&mut self) -> HistoryWriteChat;
-    fn chat_admin_history(&mut self) -> HistoryWriteChatAdmin;
+    fn chat_history(&mut self) -> HistoryWriteChat<'_>;
+    fn chat_admin_history(&mut self) -> HistoryWriteChatAdmin<'_>;
 }
 
 impl<I: DbWriteAccessProviderHistory> GetDbHistoryWriteCommandsChat for I {
-    fn chat_history(&mut self) -> HistoryWriteChat {
+    fn chat_history(&mut self) -> HistoryWriteChat<'_> {
         HistoryWriteChat::new(self.handle())
     }
-    fn chat_admin_history(&mut self) -> HistoryWriteChatAdmin {
+    fn chat_admin_history(&mut self) -> HistoryWriteChatAdmin<'_> {
         HistoryWriteChatAdmin::new(self.handle())
     }
 }

@@ -168,10 +168,10 @@ pub async fn post_demo_account_login_to_account(
         return Err(StatusCode::UNAUTHORIZED);
     };
 
-    if let Some(min_version) = state.config().min_client_version() {
-        if !min_version.received_version_is_accepted(info.client_info.client_version) {
-            return Ok(LoginResult::error_unsupported_client().into());
-        }
+    if let Some(min_version) = state.config().min_client_version()
+        && !min_version.received_version_is_accepted(info.client_info.client_version)
+    {
+        return Ok(LoginResult::error_unsupported_client().into());
     }
 
     let accessible_accounts = state.demo().accessible_accounts(id).await?;

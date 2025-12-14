@@ -11,7 +11,7 @@ use secure_storage::RpcSecureStorage;
 use software::RpcSoftware;
 use system_info::RpcSystemInfo;
 use task::RpcTask;
-use tracing::{error, info};
+use tracing::info;
 
 use super::{ClientConnectionReadWrite, ServerError};
 use crate::{

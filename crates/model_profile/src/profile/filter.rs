@@ -71,34 +71,34 @@ impl ProfileFiltersUpdate {
             }
         }
 
-        if let Some(value) = self.last_seen_time_filter {
-            if value.value < LastSeenTimeFilter::MIN_VALUE {
-                return Err("Invalid LastSeenTimeFilter value".to_string());
-            }
+        if let Some(value) = self.last_seen_time_filter
+            && value.value < LastSeenTimeFilter::MIN_VALUE
+        {
+            return Err("Invalid LastSeenTimeFilter value".to_string());
         }
 
-        if let Some(value) = self.min_distance_km_filter {
-            if value.value <= 0 {
-                return Err("Min distance can't be less or equal to 0".to_string());
-            }
+        if let Some(value) = self.min_distance_km_filter
+            && value.value <= 0
+        {
+            return Err("Min distance can't be less or equal to 0".to_string());
         }
 
-        if let Some(value) = self.max_distance_km_filter {
-            if value.value <= 0 {
-                return Err("Max distance can't be less or equal to 0".to_string());
-            }
+        if let Some(value) = self.max_distance_km_filter
+            && value.value <= 0
+        {
+            return Err("Max distance can't be less or equal to 0".to_string());
         }
 
-        if let Some(value) = self.profile_created_filter {
-            if value.value < 0 {
-                return Err("Profile created time filter can't be less than zero".to_string());
-            }
+        if let Some(value) = self.profile_created_filter
+            && value.value < 0
+        {
+            return Err("Profile created time filter can't be less than zero".to_string());
         }
 
-        if let Some(value) = self.profile_edited_filter {
-            if value.value < 0 {
-                return Err("Profile edited time filter can't be less than zero".to_string());
-            }
+        if let Some(value) = self.profile_edited_filter
+            && value.value < 0
+        {
+            return Err("Profile edited time filter can't be less than zero".to_string());
         }
 
         Ok(ProfileFiltersUpdateValidated {

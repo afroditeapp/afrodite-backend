@@ -177,15 +177,11 @@ impl ReportTypeNumber {
 )]
 #[diesel(sql_type = SmallInt)]
 #[repr(i16)]
+#[derive(Default)]
 pub enum ReportProcessingState {
+    #[default]
     Waiting = 0,
     Done = 1,
-}
-
-impl Default for ReportProcessingState {
-    fn default() -> Self {
-        Self::Waiting
-    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, IntoParams, PartialEq)]

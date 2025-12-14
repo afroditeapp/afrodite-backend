@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use clap::{Args, Parser, arg, command};
+use clap::{Args, Parser};
 use error_stack::{Result, ResultExt};
 use manager_api::TlsConfig;
 use manager_model::ManagerInstanceName;

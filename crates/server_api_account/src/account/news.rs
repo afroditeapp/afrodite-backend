@@ -140,10 +140,10 @@ pub async fn get_news_item(
         .news()
         .news_item(nid, locale, require_locale)
         .await?;
-    if !permissions.some_admin_news_permissions_granted() {
-        if let Some(item) = item.as_mut() {
-            item.clear_admin_info();
-        }
+    if !permissions.some_admin_news_permissions_granted()
+        && let Some(item) = item.as_mut()
+    {
+        item.clear_admin_info();
     }
 
     let is_public = state.read().account().news().is_public(nid).await?;

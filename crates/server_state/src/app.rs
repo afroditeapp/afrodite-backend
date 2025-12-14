@@ -60,7 +60,7 @@ pub trait AdminNotificationProvider {
 }
 
 pub trait ApiLimitsProvider {
-    fn api_limits(&self, account_id: AccountIdInternal) -> ApiLimits;
+    fn api_limits(&self, account_id: AccountIdInternal) -> ApiLimits<'_>;
 }
 
 pub trait ReadDynamicConfig {

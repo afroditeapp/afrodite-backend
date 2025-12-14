@@ -188,13 +188,13 @@ pub struct DbReadMode<'a>(pub &'a mut DieselConnection);
 pub struct DbReadModeHistory<'a>(pub &'a mut DieselConnection);
 pub struct DbWriteMode<'a>(pub &'a mut DieselConnection);
 impl DbWriteMode<'_> {
-    pub fn read(&mut self) -> DbReadMode {
+    pub fn read(&mut self) -> DbReadMode<'_> {
         DbReadMode(self.0)
     }
 }
 pub struct DbWriteModeHistory<'a>(pub &'a mut DieselConnection);
 impl DbWriteModeHistory<'_> {
-    pub fn read(&mut self) -> DbReadModeHistory {
+    pub fn read(&mut self) -> DbReadModeHistory<'_> {
         DbReadModeHistory(self.0)
     }
 }

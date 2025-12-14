@@ -270,10 +270,10 @@ impl AdminBotContentModerationLogic {
             None
         };
 
-        if let Some(nsfw) = &nsfw_result {
-            if nsfw.is_deleted_or_rejected() {
-                return Ok(nsfw_result);
-            }
+        if let Some(nsfw) = &nsfw_result
+            && nsfw.is_deleted_or_rejected()
+        {
+            return Ok(nsfw_result);
         }
 
         let llm_result = if let Some(c) = llm_primary_config {
@@ -343,42 +343,42 @@ impl AdminBotContentModerationLogic {
 
         if let Some(thresholds) = &nsfw_config.delete {
             for c in &results {
-                if let Some(threshold) = threshold(&c.metric, thresholds) {
-                    if c.score >= threshold {
-                        return Ok(Some(ModerationResult::delete()));
-                    }
+                if let Some(threshold) = threshold(&c.metric, thresholds)
+                    && c.score >= threshold
+                {
+                    return Ok(Some(ModerationResult::delete()));
                 }
             }
         }
 
         if let Some(thresholds) = &nsfw_config.reject {
             for c in &results {
-                if let Some(threshold) = threshold(&c.metric, thresholds) {
-                    if c.score >= threshold {
-                        return Ok(Some(ModerationResult::reject(Some(
-                            "NSFW image detected. If this is a false positive, please contact customer support.",
-                        ))));
-                    }
+                if let Some(threshold) = threshold(&c.metric, thresholds)
+                    && c.score >= threshold
+                {
+                    return Ok(Some(ModerationResult::reject(Some(
+                        "NSFW image detected. If this is a false positive, please contact customer support.",
+                    ))));
                 }
             }
         }
 
         if let Some(thresholds) = &nsfw_config.move_to_human {
             for c in &results {
-                if let Some(threshold) = threshold(&c.metric, thresholds) {
-                    if c.score >= threshold {
-                        return Ok(Some(ModerationResult::move_to_human()));
-                    }
+                if let Some(threshold) = threshold(&c.metric, thresholds)
+                    && c.score >= threshold
+                {
+                    return Ok(Some(ModerationResult::move_to_human()));
                 }
             }
         }
 
         if let Some(thresholds) = &nsfw_config.accept {
             for c in results {
-                if let Some(threshold) = threshold(&c.metric, thresholds) {
-                    if c.score >= threshold {
-                        return Ok(Some(ModerationResult::accept()));
-                    }
+                if let Some(threshold) = threshold(&c.metric, thresholds)
+                    && c.score >= threshold
+                {
+                    return Ok(Some(ModerationResult::accept()));
                 }
             }
         }
@@ -496,12 +496,11 @@ impl AdminBotContentModerationLogic {
     ) -> Result<(), TestError> {
         let start_time = Instant::now();
 
-        if let Some(previous) = moderation_state.content_moderation_started {
-            if start_time.duration_since(previous).as_secs()
+        if let Some(previous) = moderation_state.content_moderation_started
+            && start_time.duration_since(previous).as_secs()
                 < config.moderation_session_min_seconds.into()
-            {
-                return Ok(());
-            }
+        {
+            return Ok(());
         }
 
         moderation_state.content_moderation_started = Some(start_time);

@@ -86,7 +86,7 @@ impl GetScheduledTaskManager for AppState {
 }
 
 impl GetApiManager for AppState {
-    fn api_manager(&self) -> super::client::ApiManager {
+    fn api_manager(&self) -> super::client::ApiManager<'_> {
         ApiManager::new(self)
     }
 }

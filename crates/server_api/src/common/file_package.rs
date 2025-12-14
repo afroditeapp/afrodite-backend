@@ -243,16 +243,14 @@ pub async fn is_ip_address_accepted(
 
     if !config.ip_country_allowlist.is_empty() {
         let ip_db = state.maxmind_db().current_db_ref().await;
-        if let Some(ip_db) = ip_db.as_ref() {
-            if let Some(country) = ip_db.get_country_ref(address.ip()) {
-                if config
-                    .ip_country_allowlist
-                    .iter()
-                    .any(|v| v == country.as_str())
-                {
-                    return true;
-                }
-            }
+        if let Some(ip_db) = ip_db.as_ref()
+            && let Some(country) = ip_db.get_country_ref(address.ip())
+            && config
+                .ip_country_allowlist
+                .iter()
+                .any(|v| v == country.as_str())
+        {
+            return true;
         }
     }
 

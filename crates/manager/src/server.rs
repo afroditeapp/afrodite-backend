@@ -238,10 +238,10 @@ impl AppServer {
 
         // Start backend if it is installed
 
-        if self.config.control_backend().is_some() {
-            if let Err(e) = app.state.backend_manager().trigger_start_backend().await {
-                error!("Backend starting failed. Error: {:?}", e);
-            }
+        if self.config.control_backend().is_some()
+            && let Err(e) = app.state.backend_manager().trigger_start_backend().await
+        {
+            error!("Backend starting failed. Error: {:?}", e);
         }
 
         // Wait until quit signal

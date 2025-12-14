@@ -185,10 +185,10 @@ impl SetBotPublicKey {
             .flatten()
             .map(|v| v.id);
 
-        if let Some(keys) = state.chat.keys.clone() {
-            if latest_public_key_id == Some(keys.public_key_id) {
-                return Ok(keys);
-            }
+        if let Some(keys) = state.chat.keys.clone()
+            && latest_public_key_id == Some(keys.public_key_id)
+        {
+            return Ok(keys);
         }
 
         let keys =

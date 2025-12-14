@@ -324,10 +324,10 @@ impl LocationIndexIteratorState {
         }
 
         // Make area inside inner limit appear empty
-        if let Some(limit) = &self.initial_state.limit_inner {
-            if limit.is_inside(self.round.x, self.round.y) {
-                return None;
-            }
+        if let Some(limit) = &self.initial_state.limit_inner
+            && limit.is_inside(self.round.x, self.round.y)
+        {
+            return None;
         }
 
         // Make area outside outer limit appear empty

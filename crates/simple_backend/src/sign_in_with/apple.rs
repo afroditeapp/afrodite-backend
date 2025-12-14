@@ -14,7 +14,6 @@ use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_utils::ContextExt;
-use tracing::error;
 
 const APPLE_JWT_ISS_VALUE: &str = "https://appleid.apple.com";
 

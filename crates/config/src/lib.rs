@@ -311,7 +311,7 @@ impl Config {
         &self.file.general
     }
 
-    pub fn parsed_files(&self) -> ParsedFiles {
+    pub fn parsed_files(&self) -> ParsedFiles<'_> {
         ParsedFiles {
             server: &self.file,
             dynamic: &self.file_dynamic,

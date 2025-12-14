@@ -101,7 +101,7 @@ pub trait MaxMindDbDataProvider {
 }
 
 pub trait JitsiMeetUrlCreatorProvider {
-    fn jitsi_meet_url_creator(&self) -> JitsiMeetUrlCreator;
+    fn jitsi_meet_url_creator(&self) -> JitsiMeetUrlCreator<'_>;
 }
 
 pub trait IpCountryTrackerProvider {

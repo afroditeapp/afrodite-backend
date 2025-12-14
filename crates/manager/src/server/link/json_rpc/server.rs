@@ -9,7 +9,7 @@ use tokio::{
     sync::{mpsc, oneshot},
     task::JoinHandle,
 };
-use tracing::{error, warn};
+use tracing::warn;
 
 use crate::server::ServerQuitWatcher;
 
@@ -213,11 +213,11 @@ impl JsonRcpLinkManagerServer {
                 self.waiting_response.clear();
             }
             JsonRcpLinkManagerMessage::CleanConnection => {
-                if let Some(connection) = &self.connection {
-                    if connection.sender.is_closed() {
-                        self.connection = None;
-                        self.waiting_response.clear();
-                    }
+                if let Some(connection) = &self.connection
+                    && connection.sender.is_closed()
+                {
+                    self.connection = None;
+                    self.waiting_response.clear();
                 }
             }
             JsonRcpLinkManagerMessage::ReceiveMessage { message } => {

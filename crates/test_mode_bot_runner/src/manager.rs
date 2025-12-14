@@ -199,15 +199,15 @@ impl BotManager {
                 self.removed_bots.push(self.bots.swap_remove(remove_i));
             }
 
-            if let Some(bot_mode_config) = self.config.bot_mode() {
-                if !bot_mode_config.no_sleep {
-                    // self.task_id is added sleep time to reduce HTTP traffic
-                    // spikes especiously when option --task-per-bot is enabled.
-                    tokio::time::sleep(Duration::from_millis(
-                        1000 + Into::<u64>::into(self.task_id),
-                    ))
-                    .await;
-                }
+            if let Some(bot_mode_config) = self.config.bot_mode()
+                && !bot_mode_config.no_sleep
+            {
+                // self.task_id is added sleep time to reduce HTTP traffic
+                // spikes especiously when option --task-per-bot is enabled.
+                tokio::time::sleep(Duration::from_millis(
+                    1000 + Into::<u64>::into(self.task_id),
+                ))
+                .await;
             }
         }
     }
