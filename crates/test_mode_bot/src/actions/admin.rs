@@ -1,7 +1,7 @@
 use super::{BotAction, BotState};
 
 pub mod content;
-pub mod profile_text;
+pub mod profile_string;
 
 struct EmptyPage;
 

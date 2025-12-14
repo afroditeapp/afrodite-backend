@@ -3,7 +3,7 @@ use std::sync::Arc;
 use api_client::models::ProfileStringModerationContentType;
 use config::bot_config_file::BotConfigFile;
 use error_stack::Result;
-use test_mode_bot::actions::admin::profile_text::{
+use test_mode_bot::actions::admin::profile_string::{
     AdminBotProfileStringModerationLogic, ProfileStringModerationState,
 };
 use test_mode_utils::client::{ApiClient, TestError};
