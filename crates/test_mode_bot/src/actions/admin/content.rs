@@ -530,7 +530,7 @@ impl AdminBotContentModerationLogic {
         if config.debug_log_results {
             info!("LLM content moderation result: '{}'", response);
         }
-        let rejected_details = if !accepted && config.debug_show_llm_output_when_rejected {
+        let rejected_details = if !accepted && config.add_llm_output_to_rejection_details {
             Some(response)
         } else {
             None
