@@ -215,9 +215,10 @@ impl AdminBot {
         profile_name_sender: NotificationSender,
         profile_text_sender: NotificationSender,
     ) -> Result<(), TestError> {
-        // Main event receiving and processing loop with hourly fallback
+        // Hourly fallback timer in case there is some event related bug or
+        // error for example. The timer ticks right away after creation as
+        // server only sends events when there is moderation related change.
         let mut hourly_timer = tokio::time::interval(tokio::time::Duration::from_secs(60 * 60));
-        hourly_timer.tick().await; // skip the initial tick
 
         loop {
             tokio::select! {
