@@ -3,12 +3,10 @@ use std::{mem, sync::Arc};
 use api_client::{
     apis::{
         configuration::Configuration,
-        media_admin_api,
         profile_api::{post_profile, post_search_age_range, post_search_groups},
     },
     models::{
-        AccountId, EventToClient, MediaContentType, ModerationQueueType, ProfileUpdate,
-        SearchAgeRange, SearchGroups,
+        AccountId, EventToClient, ModerationQueueType, ProfileUpdate, SearchAgeRange, SearchGroups,
     },
 };
 use config::{args::TestMode, bot_config_file::BotConfigFile};
@@ -330,24 +328,9 @@ impl Admin {
         &mut self,
         queue: ModerationQueueType,
     ) -> Result<(), TestError> {
-        loop {
-            self.account
-                .run(ModerateContentModerationRequest::from_queue(queue))
-                .await?;
-
-            let list = media_admin_api::get_media_content_pending_moderation_list(
-                self.account.media_api(),
-                MediaContentType::JpegImage,
-                queue,
-                true,
-            )
-            .await
-            .change_context(TestError::ApiRequest)?;
-
-            if list.values.is_empty() {
-                break;
-            }
-        }
+        self.account
+            .run(ModerateContentModerationRequest::from_queue(queue, true))
+            .await?;
         Ok(())
     }
 }

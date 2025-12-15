@@ -125,10 +125,10 @@ impl ModerateContentModerationRequest {
         }
     }
 
-    pub const fn from_queue(queue: ModerationQueueType) -> Self {
+    pub const fn from_queue(queue: ModerationQueueType, moderate_all: bool) -> Self {
         Self {
             queue,
-            moderate_all: false,
+            moderate_all,
         }
     }
 }
