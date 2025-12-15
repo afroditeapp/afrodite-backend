@@ -1,4 +1,4 @@
-use std::{fmt::Debug, sync::Arc, time::Instant};
+use std::{fmt::Debug, sync::Arc};
 
 use api_client::{
     apis::profile_admin_api,
@@ -18,11 +18,10 @@ use config::bot_config_file::{
 use error_stack::{Result, ResultExt};
 use futures::{StreamExt, stream};
 use test_mode_utils::client::{ApiClient, TestError};
-use tracing::{error, info};
+use tracing::info;
 use unicode_segmentation::UnicodeSegmentation;
 
 use super::{EmptyPage, ModerationResult};
-use crate::actions::admin::LlmModerationResult;
 
 #[derive(Debug, Clone)]
 struct LlmConfigAndClient {
@@ -32,7 +31,6 @@ struct LlmConfigAndClient {
 
 #[derive(Debug)]
 pub struct ProfileStringModerationState {
-    moderation_started: Option<Instant>,
     llm: Option<LlmConfigAndClient>,
 }
 
@@ -48,10 +46,7 @@ impl ProfileStringModerationState {
             config: config.clone().into(),
         });
 
-        Self {
-            moderation_started: None,
-            llm,
-        }
+        Self { llm }
     }
 }
 
@@ -98,8 +93,7 @@ impl AdminBotProfileStringModerationLogic {
 
         loop {
             match stream.next().await {
-                Some(Ok(Some(EmptyPage))) => return Ok(Some(EmptyPage)),
-                Some(Ok(None)) => (),
+                Some(Ok(())) => (),
                 Some(Err(e)) => return Err(e),
                 None => return Ok(None),
             }
@@ -112,7 +106,7 @@ impl AdminBotProfileStringModerationLogic {
         llm: Option<LlmConfigAndClient>,
         content_type: ProfileStringModerationContentType,
         moderation: ProfileStringPendingModeration,
-    ) -> Result<Option<EmptyPage>, TestError> {
+    ) -> Result<(), TestError> {
         // Allow texts with only single visible character
         if config.accept_single_visible_character && moderation.value.graphemes(true).count() == 1 {
             // Ignore errors as the user might have changed the text to
@@ -131,17 +125,11 @@ impl AdminBotProfileStringModerationLogic {
             )
             .await;
 
-            return Ok(None);
+            return Ok(());
         }
 
         let r = if let Some(llm) = llm {
-            let r =
-                Self::llm_profile_string_moderation(&moderation.value, llm, content_type).await?;
-
-            match r {
-                LlmModerationResult::StopModerationSesssion => return Ok(Some(EmptyPage)),
-                LlmModerationResult::Decision(r) => r,
-            }
+            Self::llm_profile_string_moderation(&moderation.value, llm, content_type).await?
         } else {
             None
         };
@@ -180,14 +168,14 @@ impl AdminBotProfileStringModerationLogic {
         )
         .await;
 
-        Ok(None)
+        Ok(())
     }
 
     async fn llm_profile_string_moderation(
         profile_string: &str,
         llm: LlmConfigAndClient,
         content_type: ProfileStringModerationContentType,
-    ) -> Result<LlmModerationResult, TestError> {
+    ) -> Result<Option<ModerationResult>, TestError> {
         let config = &llm.config;
         let expected_response_lowercase = config.expected_response.to_lowercase();
         let profile_text_paragraph = profile_string.lines().collect::<Vec<&str>>().join(" ");
@@ -219,17 +207,18 @@ impl AdminBotProfileStringModerationLogic {
             Ok(Some(r)) => match r.message.content {
                 Some(response) => response,
                 None => {
-                    error!("LLM {content_type} moderation error: no response content");
-                    return Ok(LlmModerationResult::StopModerationSesssion);
+                    return Err(TestError::LlmError).attach_printable(format!(
+                        "LLM {content_type} moderation error: no response content"
+                    ));
                 }
             },
             Ok(None) => {
-                error!("LLM {content_type} moderation error: no response");
-                return Ok(LlmModerationResult::StopModerationSesssion);
+                return Err(TestError::LlmError)
+                    .attach_printable(format!("LLM {content_type} moderation error: no response"));
             }
             Err(e) => {
-                error!("LLM {content_type} moderation failed: {}", e);
-                return Ok(LlmModerationResult::StopModerationSesssion);
+                return Err(TestError::LlmError)
+                    .attach_printable(format!("LLM {content_type} moderation failed: {e}"));
             }
         };
 
@@ -248,12 +237,12 @@ impl AdminBotProfileStringModerationLogic {
 
         let move_to_human = !accepted && config.move_rejected_to_human_moderation;
 
-        Ok(LlmModerationResult::Decision(Some(ModerationResult {
+        Ok(Some(ModerationResult {
             accept: accepted,
             rejected_details,
             move_to_human,
             delete: false,
-        })))
+        }))
     }
 }
 
@@ -264,17 +253,6 @@ impl AdminBotProfileStringModerationLogic {
         config: &ProfileStringModerationConfig,
         moderation_state: &mut ProfileStringModerationState,
     ) -> Result<(), TestError> {
-        let start_time = Instant::now();
-
-        if let Some(previous) = moderation_state.moderation_started
-            && start_time.duration_since(previous).as_secs()
-                < config.moderation_session_min_seconds.into()
-        {
-            return Ok(());
-        }
-
-        moderation_state.moderation_started = Some(start_time);
-
         let logic = Self { content_type };
         loop {
             if let Some(EmptyPage) = logic
@@ -282,13 +260,6 @@ impl AdminBotProfileStringModerationLogic {
                 .await?
             {
                 break;
-            }
-
-            let current_time = Instant::now();
-            if current_time.duration_since(start_time).as_secs()
-                > config.moderation_session_max_seconds.into()
-            {
-                return Ok(());
             }
         }
 

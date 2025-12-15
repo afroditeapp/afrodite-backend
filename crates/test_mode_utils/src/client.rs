@@ -73,6 +73,9 @@ pub enum TestError {
 
     #[error("Admin bot internal error")]
     AdminBotInternalError,
+
+    #[error("LLM error")]
+    LlmError,
 }
 
 impl TestError {

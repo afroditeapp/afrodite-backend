@@ -348,8 +348,6 @@ impl<'de> Deserialize<'de> for Gender {
 pub struct ProfileStringModerationConfig {
     /// Accept all texts which only have single visible character.
     pub accept_single_visible_character: bool,
-    pub moderation_session_max_seconds: u32,
-    pub moderation_session_min_seconds: u32,
     /// Large language model based moderation.
     /// Actions: reject (or move_to_human) and accept
     pub llm: Option<LlmStringModerationConfig>,
@@ -405,8 +403,6 @@ pub enum ModerationAction {
 pub struct ContentModerationConfig {
     pub initial_content: bool,
     pub added_content: bool,
-    pub moderation_session_max_seconds: u32,
-    pub moderation_session_min_seconds: u32,
     /// Neural network based detection.
     /// Actions: reject, move_to_human, accept and delete.
     pub nsfw_detection: Option<NsfwDetectionConfig>,

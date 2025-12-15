@@ -1,4 +1,4 @@
-use std::{fmt::Debug, sync::Arc, time::Instant};
+use std::{fmt::Debug, sync::Arc};
 
 use api_client::{
     apis::{media_admin_api, media_api},
@@ -27,10 +27,9 @@ use futures::stream::{self, StreamExt};
 use image::DynamicImage;
 use nsfw::model::Metric;
 use test_mode_utils::client::{ApiClient, TestError};
-use tracing::{error, info};
+use tracing::info;
 
 use super::{BotAction, BotState, EmptyPage, ModerationResult};
-use crate::actions::admin::LlmModerationResult;
 
 #[derive(Debug, Clone)]
 struct NsfwConfigAndModel {
@@ -46,7 +45,6 @@ struct LlmConfigAndClient {
 
 #[derive(Debug)]
 pub struct ContentModerationState {
-    content_moderation_started: Option<Instant>,
     nsfw: Option<NsfwConfigAndModel>,
     llm_primary: Option<LlmConfigAndClient>,
     llm_secondary: Option<LlmConfigAndClient>,
@@ -106,7 +104,6 @@ impl ContentModerationState {
             });
 
         Ok(Self {
-            content_moderation_started: None,
             nsfw: model,
             llm_primary,
             llm_secondary,
@@ -242,8 +239,7 @@ impl AdminBotContentModerationLogic {
 
         loop {
             match stream.next().await {
-                Some(Ok(Some(EmptyPage))) => return Ok(Some(EmptyPage)),
-                Some(Ok(None)) => (),
+                Some(Ok(())) => (),
                 Some(Err(e)) => return Err(e),
                 None => return Ok(None),
             }
@@ -257,7 +253,7 @@ impl AdminBotContentModerationLogic {
         llm_primary: Option<LlmConfigAndClient>,
         llm_secondary: Option<LlmConfigAndClient>,
         moderation: MediaContentPendingModeration,
-    ) -> Result<Option<EmptyPage>, TestError> {
+    ) -> Result<(), TestError> {
         let image_data = media_api::get_content(
             api.api(),
             &moderation.account_id.aid,
@@ -271,26 +267,14 @@ impl AdminBotContentModerationLogic {
         .change_context(TestError::ApiRequest)?
         .to_vec();
 
-        let r = Self::handle_image(
+        let result = Self::handle_image(
             image_data,
             nsfw,
             llm_primary,
             llm_secondary,
             config.default_action,
         )
-        .await;
-
-        let result = match r {
-            Ok(None) => return Ok(Some(EmptyPage)),
-            Ok(Some(r)) => r,
-            Err(e) => {
-                error!(
-                    "Content moderation failed: {e:?}, Account ID: {}, Content ID: {}",
-                    moderation.account_id, moderation.content_id,
-                );
-                ModerationResult::error()
-            }
-        };
+        .await?;
 
         if result.delete {
             media_api::delete_content(
@@ -328,7 +312,7 @@ impl AdminBotContentModerationLogic {
             .change_context(TestError::ApiRequest)?;
         }
 
-        Ok(None)
+        Ok(())
     }
 
     async fn handle_image(
@@ -337,7 +321,7 @@ impl AdminBotContentModerationLogic {
         llm_primary: Option<LlmConfigAndClient>,
         llm_secondary: Option<LlmConfigAndClient>,
         default_action: ModerationAction,
-    ) -> Result<Option<ModerationResult>, TestError> {
+    ) -> Result<ModerationResult, TestError> {
         let nsfw_result = if let Some(nsfw) = nsfw {
             let img = image::load_from_memory(&data)
                 .change_context(TestError::ContentModerationFailed)?;
@@ -352,23 +336,19 @@ impl AdminBotContentModerationLogic {
         if let Some(nsfw) = &nsfw_result
             && nsfw.is_deleted_or_rejected()
         {
-            return Ok(nsfw_result);
+            return Ok(nsfw.clone());
         }
 
         let llm_result = if let Some(primary) = llm_primary {
             match Self::llm_profile_image_moderation(&data, primary).await? {
-                LlmModerationResult::StopModerationSesssion => return Ok(None),
-                LlmModerationResult::Decision(None) => {
+                None => {
                     if let Some(secondary) = llm_secondary {
-                        match Self::llm_profile_image_moderation(&data, secondary).await? {
-                            LlmModerationResult::StopModerationSesssion => return Ok(None),
-                            LlmModerationResult::Decision(r) => r,
-                        }
+                        Self::llm_profile_image_moderation(&data, secondary).await?
                     } else {
                         None
                     }
                 }
-                LlmModerationResult::Decision(Some(r)) => Some(r),
+                Some(r) => Some(r),
             }
         } else {
             None
@@ -376,10 +356,10 @@ impl AdminBotContentModerationLogic {
 
         if let Some(llm) = &llm_result {
             if llm.is_deleted_or_rejected() {
-                return Ok(llm_result);
+                return Ok(llm.clone());
             }
             if llm.is_move_to_human() {
-                return Ok(llm_result);
+                return Ok(llm.clone());
             }
         }
 
@@ -391,7 +371,7 @@ impl AdminBotContentModerationLogic {
                 ModerationAction::MoveToHuman => ModerationResult::move_to_human(),
             });
 
-        Ok(Some(r))
+        Ok(r)
     }
 
     fn handle_nsfw_detection_sync(
@@ -467,7 +447,7 @@ impl AdminBotContentModerationLogic {
     async fn llm_profile_image_moderation(
         image_data: &[u8],
         llm: LlmConfigAndClient,
-    ) -> Result<LlmModerationResult, TestError> {
+    ) -> Result<Option<ModerationResult>, TestError> {
         let config = &llm.config;
         let expected_response_lowercase = llm.config.expected_response.to_lowercase();
 
@@ -509,17 +489,18 @@ impl AdminBotContentModerationLogic {
             Ok(Some(r)) => match r.message.content {
                 Some(response) => response,
                 None => {
-                    error!("LLM content moderation error: no response content");
-                    return Ok(LlmModerationResult::StopModerationSesssion);
+                    return Err(TestError::LlmError).attach_printable(
+                        "LLM image moderation error: no response content".to_string(),
+                    );
                 }
             },
             Ok(None) => {
-                error!("LLM content moderation error: no response");
-                return Ok(LlmModerationResult::StopModerationSesssion);
+                return Err(TestError::LlmError)
+                    .attach_printable("LLM image moderation error: no response".to_string());
             }
             Err(e) => {
-                error!("LLM content moderation failed: {}", e);
-                return Ok(LlmModerationResult::StopModerationSesssion);
+                return Err(TestError::LlmError)
+                    .attach_printable(format!("LLM image moderation failed: {e}"));
             }
         };
 
@@ -528,7 +509,7 @@ impl AdminBotContentModerationLogic {
         let accepted = response_lowercase.starts_with(&expected_response_lowercase)
             || response_first_line.contains(&expected_response_lowercase);
         if config.debug_log_results {
-            info!("LLM content moderation result: '{}'", response);
+            info!("LLM image moderation result: '{}'", response);
         }
         let rejected_details = if !accepted && config.add_llm_output_to_rejection_details {
             Some(response)
@@ -537,24 +518,22 @@ impl AdminBotContentModerationLogic {
         };
 
         if config.delete_accepted && accepted {
-            return Ok(LlmModerationResult::Decision(Some(
-                ModerationResult::delete(),
-            )));
+            return Ok(Some(ModerationResult::delete()));
         }
 
         if config.ignore_rejected && !accepted {
-            return Ok(LlmModerationResult::Decision(None));
+            return Ok(None);
         }
 
         let move_to_human = (accepted && config.move_accepted_to_human_moderation)
             || (!accepted && config.move_rejected_to_human_moderation);
 
-        Ok(LlmModerationResult::Decision(Some(ModerationResult {
+        Ok(Some(ModerationResult {
             accept: accepted,
             rejected_details,
             move_to_human,
             delete: false,
-        })))
+        }))
     }
 }
 
@@ -564,17 +543,6 @@ impl AdminBotContentModerationLogic {
         config: &ContentModerationConfig,
         moderation_state: &mut ContentModerationState,
     ) -> Result<(), TestError> {
-        let start_time = Instant::now();
-
-        if let Some(previous) = moderation_state.content_moderation_started
-            && start_time.duration_since(previous).as_secs()
-                < config.moderation_session_min_seconds.into()
-        {
-            return Ok(());
-        }
-
-        moderation_state.content_moderation_started = Some(start_time);
-
         if config.initial_content {
             loop {
                 if let Some(EmptyPage) = Self::moderate_one_page(
@@ -584,13 +552,6 @@ impl AdminBotContentModerationLogic {
                     moderation_state,
                 )
                 .await?
-                {
-                    break;
-                }
-
-                let current_time = Instant::now();
-                if current_time.duration_since(start_time).as_secs()
-                    > config.moderation_session_max_seconds.into()
                 {
                     break;
                 }
@@ -608,13 +569,6 @@ impl AdminBotContentModerationLogic {
                 .await?
                 {
                     break;
-                }
-
-                let current_time = Instant::now();
-                if current_time.duration_since(start_time).as_secs()
-                    > config.moderation_session_max_seconds.into()
-                {
-                    return Ok(());
                 }
             }
         }

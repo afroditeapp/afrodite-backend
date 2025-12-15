@@ -6,7 +6,7 @@ pub mod profile_string;
 struct EmptyPage;
 
 /// Default state is reject.
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct ModerationResult {
     pub accept: bool,
     pub move_to_human: bool,
@@ -15,16 +15,6 @@ pub struct ModerationResult {
 }
 
 impl ModerationResult {
-    pub fn error() -> Self {
-        Self {
-            rejected_details: Some(
-                "Error occurred. Try again and if this continues, please contact customer support."
-                    .to_string(),
-            ),
-            ..Default::default()
-        }
-    }
-
     pub fn reject(details: Option<&str>) -> Self {
         Self {
             rejected_details: details.map(|text| text.to_string()),
@@ -60,9 +50,4 @@ impl ModerationResult {
     pub fn is_move_to_human(&self) -> bool {
         self.move_to_human
     }
-}
-
-enum LlmModerationResult {
-    StopModerationSesssion,
-    Decision(Option<ModerationResult>),
 }
