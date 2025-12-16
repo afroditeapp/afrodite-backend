@@ -68,13 +68,15 @@ impl CurrentReadAccountEmail<'_> {
 
     pub fn find_account_by_email_login_token(
         &mut self,
-        token: Vec<u8>,
+        client_token: Vec<u8>,
+        email_token: Vec<u8>,
     ) -> Result<Option<(AccountIdInternal, UnixTime)>, DieselDatabaseError> {
         use model::schema::{account_email_address_state, account_id};
 
         let data = account_email_address_state::table
             .inner_join(account_id::table)
-            .filter(account_email_address_state::email_login_token.eq(Some(token)))
+            .filter(account_email_address_state::email_login_client_token.eq(Some(client_token)))
+            .filter(account_email_address_state::email_login_email_token.eq(Some(email_token)))
             .filter(account_email_address_state::email_login_token_unix_time.is_not_null())
             .select((
                 AccountIdInternal::as_select(),

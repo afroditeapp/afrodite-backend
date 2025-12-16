@@ -6,11 +6,11 @@ use axum::{
     response::Redirect,
 };
 use base64::Engine;
-use model::AccountIdInternal;
+use model::{AccountIdInternal, EmailLoginToken};
 use model_account::{
-    AccessToken, AccountId, AppleAccountId, AuthPair, EmailAddress, EmailLoginToken,
-    GoogleAccountId, LoginResult, RefreshToken, RequestEmailLoginToken,
-    RequestEmailLoginTokenResult, SignInWithInfo, SignInWithLoginInfo,
+    AccessToken, AccountId, AppleAccountId, AuthPair, EmailAddress, EmailLogin, GoogleAccountId,
+    LoginResult, RefreshToken, RequestEmailLoginToken, RequestEmailLoginTokenResult,
+    SignInWithInfo, SignInWithLoginInfo,
 };
 use server_api::{S, app::GetConfig, db_write};
 use server_data::{IntoDataError, db_manager::InternalReading, write::GetWriteCommandsCommon};
@@ -304,7 +304,7 @@ pub async fn post_request_email_login_token(
 
     let wait_until = Instant::now() + Duration::from_secs(5);
 
-    let _ = timeout(Duration::from_secs(10), async {
+    let client_token = timeout(Duration::from_secs(10), async {
         let account_id = state
             .read()
             .account()
@@ -323,7 +323,7 @@ pub async fn post_request_email_login_token(
             if !internal.email_login_enabled {
                 // Email login is disabled, but don't return error to prevent
                 // email enumeration.
-                return Ok(());
+                return Ok(None);
             }
 
             if let Some(token_time) = internal.email_login_token_unix_time {
@@ -332,13 +332,14 @@ pub async fn post_request_email_login_token(
                     .email_login_resend_min_wait_duration;
                 if !token_time.duration_value_elapsed(min_wait_duration) {
                     // Too soon to send another token, but don't return error
-                    return Ok(());
+                    return Ok(None);
                 }
             }
 
-            cmds.account()
+            let client_token = cmds
+                .account()
                 .email()
-                .set_email_login_token(account_id)
+                .set_email_login_tokens_and_return_client_token(account_id)
                 .await?;
 
             cmds.account()
@@ -346,17 +347,22 @@ pub async fn post_request_email_login_token(
                 .send_email_login_token_high_priority(account_id)
                 .await?;
 
-            Ok(())
+            Ok(Some(client_token))
         })
         .ok()
     })
-    .await;
+    .await
+    .ok()
+    .flatten()
+    .flatten()
+    .unwrap_or_else(EmailLoginToken::generate_new);
 
     // Wait until at least 5 seconds have elapsed
     tokio::time::sleep_until(wait_until.into()).await;
 
-    // Always return success with config values to prevent email enumeration
+    // Always return success with config values (and a token) to prevent email enumeration
     Ok(Json(RequestEmailLoginTokenResult {
+        client_token,
         token_validity_seconds: state
             .config()
             .limits_account()
@@ -380,7 +386,7 @@ pub const PATH_POST_EMAIL_LOGIN_WITH_TOKEN: &str = "/account_api/email_login_wit
     post,
     path = PATH_POST_EMAIL_LOGIN_WITH_TOKEN,
     security(),
-    request_body = EmailLoginToken,
+    request_body = EmailLogin,
     responses(
         (status = 200, description = "Successful.", body = LoginResult),
         (status = 500, description = "Internal server error."),
@@ -389,7 +395,7 @@ pub const PATH_POST_EMAIL_LOGIN_WITH_TOKEN: &str = "/account_api/email_login_wit
 pub async fn post_email_login_with_token(
     State(state): State<S>,
     ConnectInfo(address): ConnectInfo<SocketAddr>,
-    Json(request): Json<EmailLoginToken>,
+    Json(request): Json<EmailLogin>,
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT.post_email_login_with_token.incr();
 
@@ -406,7 +412,7 @@ pub async fn post_email_login_with_token(
 async fn post_email_login_with_token_impl(
     state: S,
     address: SocketAddr,
-    request: EmailLoginToken,
+    request: EmailLogin,
 ) -> Result<Json<LoginResult>, StatusCode> {
     if let Some(min_version) = state.config().min_client_version()
         && !min_version.received_version_is_accepted(request.client_info.client_version)
@@ -414,14 +420,18 @@ async fn post_email_login_with_token_impl(
         return Ok(LoginResult::error_unsupported_client().into());
     }
 
-    let Ok(token) = request.token.bytes() else {
+    let Ok(client_token) = request.client_token.bytes() else {
+        return Ok(LoginResult::error_invalid_email_login_token().into());
+    };
+
+    let Ok(email_token) = request.email_token.bytes() else {
         return Ok(LoginResult::error_invalid_email_login_token().into());
     };
 
     let account_id = db_write!(state, move |cmds| {
         cmds.account()
             .email()
-            .verify_email_login_token_and_invalidate(token)
+            .verify_and_remove_email_login_tokens(client_token, email_token)
             .await
     })
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;

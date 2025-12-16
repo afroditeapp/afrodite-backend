@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use diesel::prelude::*;
-use model::{AccessToken, ClientType, ClientVersion, NewsSyncVersion, UnixTime};
+use model::{ClientType, ClientVersion, EmailLoginToken, NewsSyncVersion, UnixTime};
 use model_server_data::{
     AppleAccountId, AuthPair, EmailAddress, GoogleAccountId, PublicationId, SignInWithInfo,
 };
@@ -143,6 +143,9 @@ pub struct RequestEmailLoginToken {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct RequestEmailLoginTokenResult {
+    /// Client token to be used together with the email token.
+    /// Always returned to prevent email enumeration attacks.
+    pub client_token: EmailLoginToken,
     /// Token validity duration in seconds
     pub token_validity_seconds: i64,
     /// Minimum wait duration between token requests in seconds
@@ -150,9 +153,10 @@ pub struct RequestEmailLoginTokenResult {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct EmailLoginToken {
-    pub token: AccessToken,
+pub struct EmailLogin {
     pub client_info: ClientInfo,
+    pub client_token: EmailLoginToken,
+    pub email_token: EmailLoginToken,
 }
 
 #[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
@@ -167,7 +171,8 @@ pub struct EmailAddressStateInternal {
     pub email_change_unix_time: Option<UnixTime>,
     pub email_change_verification_token: Option<Vec<u8>>,
     pub email_change_verified: bool,
-    pub email_login_token: Option<Vec<u8>>,
+    pub email_login_client_token: Option<Vec<u8>>,
+    pub email_login_email_token: Option<Vec<u8>>,
     pub email_login_token_unix_time: Option<UnixTime>,
     pub email_login_enabled: bool,
 }

@@ -17,7 +17,8 @@ diesel::table! {
         email_change_unix_time -> Nullable<Int8>,
         email_change_verification_token -> Nullable<Bytea>,
         email_change_verified -> Bool,
-        email_login_token -> Nullable<Bytea>,
+        email_login_client_token -> Nullable<Bytea>,
+        email_login_email_token -> Nullable<Bytea>,
         email_login_token_unix_time -> Nullable<Int8>,
         email_login_enabled -> Bool,
     }

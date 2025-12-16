@@ -1,5 +1,7 @@
 use error_stack::ResultExt;
-use model::{AccessToken, AccountIdInternal, EmailMessages, EventToClientInternal, UnixTime};
+use model::{
+    AccessToken, AccountIdInternal, EmailLoginToken, EmailMessages, EventToClientInternal, UnixTime,
+};
 use server_api::{
     app::{GetConfig, ReadData, WriteData},
     db_write_raw,
@@ -248,8 +250,8 @@ impl ServerEmailDataProvider {
             .map_err(|e| e.into_report())
             .change_context(EmailError::GettingEmailDataFailed)?;
 
-        if let Some(token_bytes) = internal.email_login_token {
-            let token = AccessToken::from_bytes(&token_bytes);
+        if let Some(token_bytes) = internal.email_login_email_token {
+            let token = EmailLoginToken::from_bytes(&token_bytes);
             Ok(token.into_string())
         } else {
             Err(EmailError::GettingEmailDataFailed).attach_printable("No email login token found")

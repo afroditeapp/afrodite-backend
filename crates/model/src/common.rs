@@ -466,6 +466,51 @@ impl AsRef<i64> for AccessTokenUnixTime {
 
 diesel_i64_wrapper!(AccessTokenUnixTime);
 
+/// Email login token is a 128 bit token used for email-based authentication
+/// where client receives one token via API and another is sent via email.
+#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
+pub struct EmailLoginToken {
+    /// Base64 URL safe without padding
+    token: String,
+}
+
+impl EmailLoginToken {
+    pub fn generate_new_with_bytes() -> (Self, Vec<u8>) {
+        // Generate 128 bit token
+        let token = random_128_bits();
+        let email_token = Self {
+            token: base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(token),
+        };
+        (email_token, token.to_vec())
+    }
+
+    pub fn generate_new() -> Self {
+        Self::generate_new_with_bytes().0
+    }
+
+    pub fn new(token: String) -> Self {
+        Self { token }
+    }
+
+    pub fn into_string(self) -> String {
+        self.token
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.token
+    }
+
+    pub fn from_bytes(data: &[u8]) -> Self {
+        Self {
+            token: base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(data),
+        }
+    }
+
+    pub fn bytes(&self) -> Result<Vec<u8>, base64::DecodeError> {
+        base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&self.token)
+    }
+}
+
 /// Refresh token is long lived token used for getting new access tokens.
 ///
 /// Refresh token is 3072 bit value which is Base64 encoded.
