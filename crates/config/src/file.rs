@@ -68,7 +68,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # email_login_resend_min_wait_duration = "15m"
 
 # [limits.chat]
-# max_public_key_count = 100
+# max_public_key_count = 20
 # new_message_email_with_push_notification_device_token = "7d"
 # new_message_email_without_push_notification_device_token = "1d"
 # new_like_email_with_push_notification_device_token = "7d"
@@ -341,7 +341,7 @@ pub struct ChatLimitsConfig {
 impl Default for ChatLimitsConfig {
     fn default() -> Self {
         Self {
-            max_public_key_count: 100,
+            max_public_key_count: 20,
             new_message_email_with_push_notification_device_token: DurationValue::from_days(7),
             new_message_email_without_push_notification_device_token: DurationValue::from_days(1),
             new_like_email_with_push_notification_device_token: DurationValue::from_days(7),
