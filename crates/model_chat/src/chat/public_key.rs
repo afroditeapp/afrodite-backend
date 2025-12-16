@@ -1,9 +1,18 @@
 use base64::{Engine, prelude::BASE64_STANDARD};
 use model::{PublicKeyId, UnixTime};
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, IntoParams)]
+pub struct AddPublicKeyParams {
+    /// Ignore pending messages error. If this is true, the public key will be added
+    /// even if there are pending messages.
+    #[serde(default)]
+    #[param(default = false)]
+    pub ignore_pending_messages: bool,
+}
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct AddPublicKeyResult {
     #[serde(skip_serializing_if = "Option::is_none")]
     key_id: Option<PublicKeyId>,
@@ -13,22 +22,32 @@ pub struct AddPublicKeyResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error_too_many_public_keys: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_pending_messages_found: bool,
 }
 
 impl AddPublicKeyResult {
     pub fn success(key_id: PublicKeyId) -> Self {
         Self {
             key_id: Some(key_id),
-            error: false,
-            error_too_many_public_keys: false,
+            ..Default::default()
         }
     }
 
     pub fn error_too_many_keys() -> Self {
         Self {
-            key_id: None,
             error: true,
             error_too_many_public_keys: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_pending_messages_found() -> Self {
+        Self {
+            error: true,
+            error_pending_messages_found: true,
+            ..Default::default()
         }
     }
 }

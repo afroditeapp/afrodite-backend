@@ -7,7 +7,7 @@ use axum::{
 };
 use model::Permissions;
 use model_chat::{
-    AccountId, AccountIdInternal, AddPublicKeyResult, GetLatestPublicKeyId,
+    AccountId, AccountIdInternal, AddPublicKeyParams, AddPublicKeyResult, GetLatestPublicKeyId,
     GetPrivatePublicKeyInfo, PublicKeyId,
 };
 use pgp::composed::{Deserializable, SignedPublicKey};
@@ -110,6 +110,7 @@ const PATH_POST_ADD_PUBLIC_KEY: &str = "/chat_api/add_public_key";
 #[utoipa::path(
     post,
     path = PATH_POST_ADD_PUBLIC_KEY,
+    params(AddPublicKeyParams),
     request_body(content = inline(model::BinaryData), content_type = "application/octet-stream"),
     responses(
         (status = 200, description = "Success.", body = AddPublicKeyResult),
@@ -121,6 +122,7 @@ const PATH_POST_ADD_PUBLIC_KEY: &str = "/chat_api/add_public_key";
 async fn post_add_public_key(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
+    Query(params): Query<AddPublicKeyParams>,
     key_data: Body,
 ) -> Result<Json<AddPublicKeyResult>, StatusCode> {
     CHAT.post_add_public_key.incr();
@@ -139,7 +141,9 @@ async fn post_add_public_key(
     }
 
     let new_key = db_write!(state, move |cmds| {
-        cmds.chat().add_public_key(id, key_data).await
+        cmds.chat()
+            .add_public_key(id, key_data, params.ignore_pending_messages)
+            .await
     })?;
 
     Ok(new_key.into())

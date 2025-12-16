@@ -516,6 +516,7 @@ impl WriteCommandsChat<'_> {
         &self,
         id: AccountIdInternal,
         new_key: Vec<u8>,
+        ignore_pending_messages: bool,
     ) -> Result<AddPublicKeyResult, DataError> {
         let info = self
             .handle()
@@ -537,6 +538,14 @@ impl WriteCommandsChat<'_> {
 
         if key_count >= info.public_key_count_limit() {
             return Ok(AddPublicKeyResult::error_too_many_keys());
+        }
+
+        if !ignore_pending_messages {
+            let pending_messages = self.handle().read().chat().all_pending_messages(id).await?;
+
+            if !pending_messages.is_empty() {
+                return Ok(AddPublicKeyResult::error_pending_messages_found());
+            }
         }
 
         let key = db_transaction!(self, move |mut cmds| {
