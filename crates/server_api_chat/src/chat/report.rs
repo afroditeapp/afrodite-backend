@@ -6,7 +6,7 @@ use model_chat::{
 };
 use server_api::{
     S,
-    app::{AdminNotificationProvider, DataSignerProvider},
+    app::{AdminNotificationProvider, ApiLimitsProvider, DataSignerProvider},
     create_open_api_router, db_write,
 };
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
@@ -30,6 +30,7 @@ const PATH_POST_CHAT_MESSAGE_REPORT: &str = "/chat_api/chat_message_report";
     responses(
         (status = 200, description = "Successfull.", body = UpdateReportResult),
         (status = 401, description = "Unauthorized."),
+        (status = 429, description = "Too many requests."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
@@ -40,6 +41,7 @@ pub async fn post_chat_message_report(
     Json(update): Json<UpdateChatMessageReport>,
 ) -> Result<Json<UpdateReportResult>, StatusCode> {
     CHAT.post_chat_message_report.incr();
+    state.api_limits(account_id).common().send_report().await?;
 
     let signed_message = base64::engine::general_purpose::STANDARD
         .decode(update.backend_signed_message_base64)

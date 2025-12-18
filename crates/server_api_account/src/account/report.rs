@@ -5,7 +5,7 @@ use model::{
 use model_account::{GetCustomReportsConfigResult, UpdateCustomReportEmpty};
 use server_api::{
     S,
-    app::{AdminNotificationProvider, GetConfig},
+    app::{AdminNotificationProvider, ApiLimitsProvider, GetConfig},
     create_open_api_router, db_write,
 };
 use server_data_account::write::GetWriteCommandsAccount;
@@ -26,6 +26,7 @@ const PATH_POST_CUSTOM_REPORT_EMPTY: &str = "/account_api/custom_report_empty";
     responses(
         (status = 200, description = "Successfull.", body = UpdateReportResult),
         (status = 401, description = "Unauthorized."),
+        (status = 429, description = "Too many requests."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
@@ -36,6 +37,7 @@ pub async fn post_custom_report_empty(
     Json(update): Json<UpdateCustomReportEmpty>,
 ) -> Result<Json<UpdateReportResult>, StatusCode> {
     ACCOUNT.post_custom_report_empty.incr();
+    state.api_limits(account_id).common().send_report().await?;
 
     let target = state.get_internal_id(update.target).await?;
 

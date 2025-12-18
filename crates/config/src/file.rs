@@ -52,6 +52,9 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # longitude_bottom_right = 31.58
 # index_cell_square_km = 255       # 1-255 and area width and height must be larger than 255 km
 
+# [limits.common]
+# send_report_daily_max_count = 20
+#
 # [limits.common.processed_report_deletion_wait_duration]
 # profile_name = "90d"
 # profile_text = "90d"
@@ -274,9 +277,19 @@ pub struct LimitsConfig {
 }
 
 /// Common limits config for all server components
-#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct CommonLimitsConfig {
     pub processed_report_deletion_wait_duration: ProcessedReportDeletionConfig,
+    pub send_report_daily_max_count: u16,
+}
+
+impl Default for CommonLimitsConfig {
+    fn default() -> Self {
+        Self {
+            processed_report_deletion_wait_duration: ProcessedReportDeletionConfig::default(),
+            send_report_daily_max_count: 20,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

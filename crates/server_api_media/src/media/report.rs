@@ -1,7 +1,11 @@
 use axum::{Extension, extract::State};
 use model::{AdminNotificationTypes, UpdateReportResult};
 use model_media::{AccountIdInternal, UpdateProfileContentReport};
-use server_api::{S, app::AdminNotificationProvider, create_open_api_router, db_write};
+use server_api::{
+    S,
+    app::{AdminNotificationProvider, ApiLimitsProvider},
+    create_open_api_router, db_write,
+};
 use server_data_media::write::GetWriteCommandsMedia;
 use simple_backend::create_counters;
 
@@ -24,6 +28,7 @@ const PATH_POST_PROFILE_CONTENT_REPORT: &str = "/media_api/profile_content_repor
     responses(
         (status = 200, description = "Successfull.", body = UpdateReportResult),
         (status = 401, description = "Unauthorized."),
+        (status = 429, description = "Too many requests."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
@@ -34,6 +39,7 @@ pub async fn post_profile_content_report(
     Json(update): Json<UpdateProfileContentReport>,
 ) -> Result<Json<UpdateReportResult>, StatusCode> {
     MEDIA.post_profile_content_report.incr();
+    state.api_limits(account_id).common().send_report().await?;
 
     let target = state.get_internal_id(update.target).await?;
 

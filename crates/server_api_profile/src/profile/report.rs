@@ -1,7 +1,11 @@
 use axum::{Extension, extract::State};
 use model::{AdminNotificationTypes, UpdateReportResult};
 use model_profile::{AccountIdInternal, UpdateProfileNameReport, UpdateProfileTextReport};
-use server_api::{S, app::AdminNotificationProvider, create_open_api_router, db_write};
+use server_api::{
+    S,
+    app::{AdminNotificationProvider, ApiLimitsProvider},
+    create_open_api_router, db_write,
+};
 use server_data_profile::write::GetWriteCommandsProfile;
 use simple_backend::create_counters;
 
@@ -24,6 +28,7 @@ const PATH_POST_REPORT_PROFILE_NAME: &str = "/profile_api/report_profile_name";
     responses(
         (status = 200, description = "Successfull.", body = UpdateReportResult),
         (status = 401, description = "Unauthorized."),
+        (status = 429, description = "Too many requests."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
@@ -34,6 +39,7 @@ pub async fn post_report_profile_name(
     Json(update): Json<UpdateProfileNameReport>,
 ) -> Result<Json<UpdateReportResult>, StatusCode> {
     PROFILE.post_report_profile_name.incr();
+    state.api_limits(account_id).common().send_report().await?;
 
     let target = state.get_internal_id(update.target).await?;
 
@@ -65,6 +71,7 @@ const PATH_POST_REPORT_PROFILE_TEXT: &str = "/profile_api/report_profile_text";
     responses(
         (status = 200, description = "Successfull.", body = UpdateReportResult),
         (status = 401, description = "Unauthorized."),
+        (status = 429, description = "Too many requests."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
@@ -75,6 +82,7 @@ pub async fn post_report_profile_text(
     Json(update): Json<UpdateProfileTextReport>,
 ) -> Result<Json<UpdateReportResult>, StatusCode> {
     PROFILE.post_report_profile_text.incr();
+    state.api_limits(account_id).common().send_report().await?;
 
     let target = state.get_internal_id(update.target).await?;
 

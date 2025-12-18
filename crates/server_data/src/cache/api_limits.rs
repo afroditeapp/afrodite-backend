@@ -24,6 +24,8 @@ impl ApiLimitState {
 
 #[derive(Debug, Default)]
 pub struct AllApiLimits {
+    // Common
+    pub send_report: ApiLimitState,
     // Profile
     pub post_reset_profile_paging: ApiLimitState,
     pub post_get_next_profile_page: ApiLimitState,

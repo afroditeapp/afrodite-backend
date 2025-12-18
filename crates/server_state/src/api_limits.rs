@@ -37,6 +37,10 @@ impl<'a> ApiLimits<'a> {
         }
     }
 
+    pub fn common(self) -> CommonApiLimits<'a> {
+        CommonApiLimits { limits: self }
+    }
+
     pub fn profile(self) -> ProfileApiLimits<'a> {
         ProfileApiLimits { limits: self }
     }
@@ -53,6 +57,41 @@ impl<'a> ApiLimits<'a> {
             })
             .await
             .change_context(ApiLimitError::ResetFailed)
+    }
+}
+
+pub struct CommonApiLimits<'a> {
+    limits: ApiLimits<'a>,
+}
+
+impl CommonApiLimits<'_> {
+    async fn check(
+        &self,
+        check: impl FnOnce(&mut AllApiLimits, &Config) -> bool,
+    ) -> Result<(), ApiLimitError> {
+        let is_limit_reached = self
+            .limits
+            .cache
+            .write_cache_common(self.limits.account_id, |e| {
+                Ok(check(e.api_limits(), self.limits.config))
+            })
+            .await
+            .change_context(ApiLimitError::Cache)?;
+
+        if is_limit_reached && !self.limits.config.general().debug_disable_api_limits {
+            Err(ApiLimitError::LimitReached.report())
+        } else {
+            Ok(())
+        }
+    }
+
+    pub async fn send_report(&self) -> Result<(), ApiLimitError> {
+        self.check(|state, config| {
+            state.send_report.increment_and_check_is_limit_reached(
+                config.limits_common().send_report_daily_max_count,
+            )
+        })
+        .await
     }
 }
 
