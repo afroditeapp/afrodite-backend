@@ -1,7 +1,7 @@
 use database::{
     DieselDatabaseError, current::write::GetDbWriteCommandsCommon, define_current_write_commands,
 };
-use diesel::{insert_into, prelude::*, update};
+use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{AccountCreatedTime, AccountId, AccountIdInternal};
 use model_account::{AccountGlobalState, EmailAddress, EmailAddressStateInternal, SetAccountSetup};
@@ -102,20 +102,24 @@ impl CurrentWriteAccountData<'_> {
     /// needs sync version change. That should be done before calling
     /// this method.
     ///
-    /// Does not clear email_verification_token_unix_time to limit
-    /// verification email sending.
+    /// Does not clear email_verification_token_time table's unix_time column
+    /// to limit verification email sending.
     pub fn update_account_email(
         mut self,
         id: AccountIdInternal,
         email_address: &EmailAddress,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account_email_address_state::dsl::*;
+        use model::schema::{
+            account_email_address_state::dsl::*, account_email_verification_token,
+        };
 
         update(account_email_address_state.find(id.as_db_id()))
-            .set((
-                email.eq(email_address),
-                email_verification_token.eq(None::<Vec<u8>>),
-            ))
+            .set(email.eq(email_address))
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        // Clear email verification token (time persists for rate limiting)
+        delete(account_email_verification_token::table.find(id.as_db_id()))
             .execute(self.conn())
             .into_db_error(id)?;
 

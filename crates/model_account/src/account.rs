@@ -165,8 +165,6 @@ pub struct EmailLogin {
 #[diesel(treat_none_as_null = true)]
 pub struct EmailAddressStateInternal {
     pub email: Option<EmailAddress>,
-    pub email_verification_token: Option<Vec<u8>>,
-    pub email_verification_token_unix_time: Option<UnixTime>,
     pub email_change: Option<EmailAddress>,
     pub email_change_unix_time: Option<UnixTime>,
     pub email_change_verification_token: Option<Vec<u8>>,

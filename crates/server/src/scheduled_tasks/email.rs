@@ -251,10 +251,10 @@ async fn remove_expired_email_verification_token(
     state: &S,
     id: AccountIdInternal,
 ) -> Result<(), DataError> {
-    let internal = state
+    let token_time = state
         .read()
         .account()
-        .email_address_state_internal(id)
+        .email_verification_token_time(id)
         .await?;
 
     let email_verification_token_validity = state
@@ -262,7 +262,7 @@ async fn remove_expired_email_verification_token(
         .limits_account()
         .email_verification_token_validity_duration;
 
-    if let Some(token_time) = internal.email_verification_token_unix_time
+    if let Some(token_time) = token_time
         && token_time.duration_value_elapsed(email_verification_token_validity)
     {
         db_write_raw!(state, move |cmds| {

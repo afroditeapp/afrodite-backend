@@ -1,5 +1,5 @@
 use database::{DieselDatabaseError, define_current_write_commands};
-use diesel::{insert_into, prelude::*, update};
+use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{AccountIdInternal, UnixTime};
 use model_account::AccountEmailSendingStateRaw;
@@ -35,32 +35,45 @@ impl CurrentWriteAccountEmail<'_> {
     pub fn set_email_verification_token(
         mut self,
         id: AccountIdInternal,
-        token: Vec<u8>,
+        new_token: Vec<u8>,
         token_unix_time: UnixTime,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account_email_address_state::dsl::*;
+        {
+            use model::schema::account_email_verification_token::dsl::*;
 
-        update(account_email_address_state.find(id.as_db_id()))
-            .set((
-                email_verification_token.eq(Some(token)),
-                email_verification_token_unix_time.eq(Some(token_unix_time)),
-            ))
-            .execute(self.conn())
-            .into_db_error(id)?;
+            insert_into(account_email_verification_token)
+                .values((account_id.eq(id.as_db_id()), token.eq(&new_token)))
+                .on_conflict(account_id)
+                .do_update()
+                .set(token.eq(&new_token))
+                .execute_my_conn(self.conn())
+                .into_db_error(id)?;
+        }
+
+        {
+            use model::schema::account_email_verification_token_time::dsl::*;
+
+            insert_into(account_email_verification_token_time)
+                .values((account_id.eq(id.as_db_id()), unix_time.eq(token_unix_time)))
+                .on_conflict(account_id)
+                .do_update()
+                .set(unix_time.eq(token_unix_time))
+                .execute_my_conn(self.conn())
+                .into_db_error(id)?;
+        }
 
         Ok(())
     }
 
-    /// Does not clear email_verification_token_unix_time to limit
-    /// verification email sending.
+    /// Clears email verification token by deleting the row.
+    /// The unix_time persists for rate limiting.
     pub fn clear_email_verification_token(
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account_email_address_state::dsl::*;
+        use model::schema::account_email_verification_token::dsl::*;
 
-        update(account_email_address_state.find(id.as_db_id()))
-            .set(email_verification_token.eq(None::<Vec<u8>>))
+        delete(account_email_verification_token.find(id.as_db_id()))
             .execute(self.conn())
             .into_db_error(id)?;
 

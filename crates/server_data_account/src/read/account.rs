@@ -1,5 +1,6 @@
 use database::current::read::GetDbReadCommandsCommon;
 use database_account::current::read::GetDbReadCommandsAccount;
+use model::UnixTime;
 use model_account::{
     AccountGlobalState, AccountId, AccountIdInternal, AccountSetup, AppleAccountId,
     EmailAddressState, EmailAddressStateInternal, GoogleAccountId, SignInWithInfo,
@@ -79,6 +80,24 @@ impl ReadCommandsAccount<'_> {
         id: AccountIdInternal,
     ) -> Result<EmailAddressStateInternal, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().email_address_state_internal(id))
+            .await
+            .into_error()
+    }
+
+    pub async fn email_verification_token(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(Option<Vec<u8>>, Option<UnixTime>), DataError> {
+        self.db_read(move |mut cmds| cmds.account().email().email_verification_token(id))
+            .await
+            .into_error()
+    }
+
+    pub async fn email_verification_token_time(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Option<UnixTime>, DataError> {
+        self.db_read(move |mut cmds| cmds.account().email().email_verification_token_time(id))
             .await
             .into_error()
     }

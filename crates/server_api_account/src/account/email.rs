@@ -7,7 +7,7 @@ use axum::{
     http::StatusCode,
 };
 use axum_extra::{TypedHeader, headers::ContentType};
-use model::{AccessToken, AccountIdInternal, AccountState, Permissions};
+use model::{AccessToken, AccountIdInternal, AccountState, Permissions, UnixTime};
 use model_account::{
     EmailAddressState, InitEmailChange, InitEmailChangeResult, SendVerifyEmailMessageResult,
     SetEmailLoginEnabled, SetInitialEmail,
@@ -160,13 +160,13 @@ pub async fn post_send_verify_email_message(
                 return Ok(SendVerifyEmailMessageResult::error_email_already_verified());
             }
 
-            let internal = cmds
+            let token_time: Option<UnixTime> = cmds
                 .read()
                 .account()
-                .email_address_state_internal(account_id)
+                .email_verification_token_time(account_id)
                 .await?;
 
-            if let Some(token_time) = internal.email_verification_token_unix_time {
+            if let Some(token_time) = token_time {
                 let min_wait_duration = cmds
                     .config()
                     .limits_account()

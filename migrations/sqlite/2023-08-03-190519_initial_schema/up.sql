@@ -283,8 +283,6 @@ CREATE TABLE IF NOT EXISTS sign_in_with_info(
 CREATE TABLE IF NOT EXISTS account_email_address_state(
     account_id   INTEGER PRIMARY KEY NOT NULL,
     email        TEXT                                UNIQUE,
-    email_verification_token           BLOB          UNIQUE,
-    email_verification_token_unix_time BIGINT,
     -- Pending new email address
     email_change TEXT,
     -- Time when pending new email address is set
@@ -301,6 +299,24 @@ CREATE TABLE IF NOT EXISTS account_email_address_state(
     email_login_email_token                   BLOB          UNIQUE,
     email_login_token_unix_time               BIGINT,
     email_login_enabled                       BOOLEAN   NOT NULL DEFAULT TRUE,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS account_email_verification_token(
+    account_id   INTEGER PRIMARY KEY NOT NULL,
+    token        BLOB               NOT NULL UNIQUE,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS account_email_verification_token_time(
+    account_id   INTEGER PRIMARY KEY NOT NULL,
+    unix_time    BIGINT             NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

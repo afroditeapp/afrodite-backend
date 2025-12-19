@@ -168,11 +168,11 @@ impl ServerEmailDataProvider {
         &self,
         receiver: AccountIdInternal,
     ) -> error_stack::Result<String, simple_backend::email::EmailError> {
-        let internal = self
+        let token_and_time = self
             .state
             .read()
             .account()
-            .email_address_state_internal(receiver)
+            .email_verification_token(receiver)
             .await
             .map_err(|e| e.into_report())
             .change_context(EmailError::GettingEmailDataFailed)?;
@@ -181,26 +181,24 @@ impl ServerEmailDataProvider {
 
         // Reuse existing valid token to avoid sending multiple emails
         // with different links in a short time period.
-        let (token, token_bytes) = if let (Some(existing_token_bytes), Some(token_time)) = (
-            internal.email_verification_token,
-            internal.email_verification_token_unix_time,
-        ) {
-            if token_time.duration_value_elapsed(
-                self.state
-                    .config()
-                    .limits_account()
-                    .email_verification_token_validity_duration,
-            ) {
-                AccessToken::generate_new_with_bytes()
+        let (token, token_bytes) =
+            if let (Some(existing_token_bytes), Some(token_time)) = token_and_time {
+                if token_time.duration_value_elapsed(
+                    self.state
+                        .config()
+                        .limits_account()
+                        .email_verification_token_validity_duration,
+                ) {
+                    AccessToken::generate_new_with_bytes()
+                } else {
+                    (
+                        AccessToken::from_bytes(&existing_token_bytes),
+                        existing_token_bytes,
+                    )
+                }
             } else {
-                (
-                    AccessToken::from_bytes(&existing_token_bytes),
-                    existing_token_bytes,
-                )
-            }
-        } else {
-            AccessToken::generate_new_with_bytes()
-        };
+                AccessToken::generate_new_with_bytes()
+            };
 
         db_write_raw!(self.state, move |cmds| {
             cmds.account()

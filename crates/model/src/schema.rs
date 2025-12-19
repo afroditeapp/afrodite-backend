@@ -11,8 +11,6 @@ diesel::table! {
     account_email_address_state (account_id) {
         account_id -> Int8,
         email -> Nullable<Text>,
-        email_verification_token -> Nullable<Bytea>,
-        email_verification_token_unix_time -> Nullable<Int8>,
         email_change -> Nullable<Text>,
         email_change_unix_time -> Nullable<Int8>,
         email_change_verification_token -> Nullable<Bytea>,
@@ -36,6 +34,20 @@ diesel::table! {
         email_change_verification_state_number -> Int2,
         email_change_notification_state_number -> Int2,
         email_login_state_number -> Int2,
+    }
+}
+
+diesel::table! {
+    account_email_verification_token (account_id) {
+        account_id -> Int8,
+        token -> Bytea,
+    }
+}
+
+diesel::table! {
+    account_email_verification_token_time (account_id) {
+        account_id -> Int8,
+        unix_time -> Int8,
     }
 }
 
@@ -818,6 +830,8 @@ diesel::table! {
 diesel::joinable!(account_app_notification_settings -> account_id (account_id));
 diesel::joinable!(account_email_address_state -> account_id (account_id));
 diesel::joinable!(account_email_sending_state -> account_id (account_id));
+diesel::joinable!(account_email_verification_token -> account_id (account_id));
+diesel::joinable!(account_email_verification_token_time -> account_id (account_id));
 diesel::joinable!(account_id -> used_account_ids (id));
 diesel::joinable!(account_interaction_index -> account_interaction (interaction_id));
 diesel::joinable!(account_permissions -> account_id (account_id));
@@ -882,6 +896,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     account_app_notification_settings,
     account_email_address_state,
     account_email_sending_state,
+    account_email_verification_token,
+    account_email_verification_token_time,
     account_global_state,
     account_id,
     account_interaction,
