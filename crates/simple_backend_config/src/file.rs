@@ -663,7 +663,7 @@ pub struct NsfwDetectionThresholds {
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct IpInfoConfig {
     #[serde(default)]
-    pub list: Vec<IpListConfig>,
+    pub lists: Vec<IpListConfig>,
     pub maxmind_db: Option<MaxMindDbConfig>,
 }
 

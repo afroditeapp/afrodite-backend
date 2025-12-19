@@ -344,7 +344,7 @@ pub fn get_config(
     };
 
     let mut ip_lists = vec![];
-    for l in &file_config.ip_info.list {
+    for l in &file_config.ip_info.lists {
         ip_lists.push(IpList::new(l)?);
     }
 

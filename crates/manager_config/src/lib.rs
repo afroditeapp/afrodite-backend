@@ -166,7 +166,7 @@ impl Config {
     }
 
     pub fn remote_managers(&self) -> &[ManagerInstance] {
-        &self.file.remote_manager
+        &self.file.remote_managers
     }
 
     pub fn json_rpc_link(&self) -> &JsonRpcLinkConfig {

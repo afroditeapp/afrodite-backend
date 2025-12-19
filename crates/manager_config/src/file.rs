@@ -133,7 +133,7 @@ pub struct ConfigFile {
     pub general: GeneralConfig,
     pub control_backend: Option<ControlBackendConfig>,
     #[serde(default)]
-    pub remote_manager: Vec<ManagerInstance>,
+    pub remote_managers: Vec<ManagerInstance>,
     #[serde(default)]
     pub json_rpc_link: JsonRpcLinkConfig,
     #[serde(default)]
