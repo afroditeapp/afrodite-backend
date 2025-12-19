@@ -163,37 +163,53 @@ impl CurrentWriteAccountEmail<'_> {
     pub fn set_email_login_token(
         &mut self,
         id: AccountIdInternal,
-        client_token: Vec<u8>,
-        email_token: Vec<u8>,
+        client_token_value: Vec<u8>,
+        email_token_value: Vec<u8>,
         token_unix_time: UnixTime,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account_email_address_state::dsl::*;
+        {
+            use model::schema::account_email_login_token::dsl::*;
 
-        update(account_email_address_state.find(id.as_db_id()))
-            .set((
-                email_login_client_token.eq(Some(client_token)),
-                email_login_email_token.eq(Some(email_token)),
-                email_login_token_unix_time.eq(Some(token_unix_time)),
-            ))
-            .execute(self.conn())
-            .into_db_error(id)?;
+            insert_into(account_email_login_token)
+                .values((
+                    account_id.eq(id.as_db_id()),
+                    client_token.eq(&client_token_value),
+                    email_token.eq(&email_token_value),
+                ))
+                .on_conflict(account_id)
+                .do_update()
+                .set((
+                    client_token.eq(&client_token_value),
+                    email_token.eq(&email_token_value),
+                ))
+                .execute_my_conn(self.conn())
+                .into_db_error(id)?;
+        }
+
+        {
+            use model::schema::account_email_login_token_time::dsl::*;
+
+            insert_into(account_email_login_token_time)
+                .values((account_id.eq(id.as_db_id()), unix_time.eq(token_unix_time)))
+                .on_conflict(account_id)
+                .do_update()
+                .set(unix_time.eq(token_unix_time))
+                .execute_my_conn(self.conn())
+                .into_db_error(id)?;
+        }
 
         Ok(())
     }
 
-    /// Does not clear email_login_token_unix_time, so that email sending limit
-    /// will work.
+    /// Does not clear email_login_token_time table's column unix_time, so that
+    /// email sending limit will work.
     pub fn clear_email_login_tokens(
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account_email_address_state::dsl::*;
+        use model::schema::account_email_login_token::dsl::*;
 
-        update(account_email_address_state.find(id.as_db_id()))
-            .set((
-                email_login_client_token.eq(None::<Vec<u8>>),
-                email_login_email_token.eq(None::<Vec<u8>>),
-            ))
+        delete(account_email_login_token.find(id.as_db_id()))
             .execute(self.conn())
             .into_db_error(id)?;
 

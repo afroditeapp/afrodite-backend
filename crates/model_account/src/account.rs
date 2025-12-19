@@ -169,10 +169,13 @@ pub struct EmailAddressStateInternal {
     pub email_change_unix_time: Option<UnixTime>,
     pub email_change_verification_token: Option<Vec<u8>>,
     pub email_change_verified: bool,
-    pub email_login_client_token: Option<Vec<u8>>,
-    pub email_login_email_token: Option<Vec<u8>>,
-    pub email_login_token_unix_time: Option<UnixTime>,
     pub email_login_enabled: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct EmailLoginTokens {
+    pub client_token: Option<Vec<u8>>,
+    pub email_token: Option<Vec<u8>>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]

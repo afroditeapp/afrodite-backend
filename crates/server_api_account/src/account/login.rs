@@ -326,7 +326,13 @@ pub async fn post_request_email_login_token(
                 return Ok(None);
             }
 
-            if let Some(token_time) = internal.email_login_token_unix_time {
+            let token_time = cmds
+                .read()
+                .account()
+                .email_login_token_time(account_id)
+                .await?;
+
+            if let Some(token_time) = token_time {
                 let min_wait_duration = GetConfig::config(&cmds)
                     .limits_account()
                     .email_login_resend_min_wait_duration;

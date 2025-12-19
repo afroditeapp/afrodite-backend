@@ -239,16 +239,16 @@ impl ServerEmailDataProvider {
         &self,
         receiver: AccountIdInternal,
     ) -> error_stack::Result<String, simple_backend::email::EmailError> {
-        let internal = self
+        let tokens = self
             .state
             .read()
             .account()
-            .email_address_state_internal(receiver)
+            .email_login_tokens(receiver)
             .await
             .map_err(|e| e.into_report())
             .change_context(EmailError::GettingEmailDataFailed)?;
 
-        if let Some(token_bytes) = internal.email_login_email_token {
+        if let Some(token_bytes) = tokens.email_token {
             let token = EmailLoginToken::from_bytes(&token_bytes);
             Ok(token.into_string())
         } else {

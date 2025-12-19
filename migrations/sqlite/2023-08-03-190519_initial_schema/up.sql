@@ -295,10 +295,7 @@ CREATE TABLE IF NOT EXISTS account_email_address_state(
     -- This is required to be TRUE when backend logic changes the pending
     -- email to account's email address.
     email_change_verified           BOOLEAN   NOT NULL DEFAULT FALSE,
-    email_login_client_token                  BLOB          UNIQUE,
-    email_login_email_token                   BLOB          UNIQUE,
-    email_login_token_unix_time               BIGINT,
-    email_login_enabled                       BOOLEAN   NOT NULL DEFAULT TRUE,
+    email_login_enabled             BOOLEAN   NOT NULL DEFAULT TRUE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -317,6 +314,25 @@ CREATE TABLE IF NOT EXISTS account_email_verification_token(
 CREATE TABLE IF NOT EXISTS account_email_verification_token_time(
     account_id   INTEGER PRIMARY KEY NOT NULL,
     unix_time    BIGINT             NOT NULL,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS account_email_login_token(
+    account_id              INTEGER PRIMARY KEY NOT NULL,
+    client_token            BLOB               NOT NULL UNIQUE,
+    email_token             BLOB               NOT NULL UNIQUE,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS account_email_login_token_time(
+    account_id                INTEGER PRIMARY KEY NOT NULL,
+    unix_time                 BIGINT             NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

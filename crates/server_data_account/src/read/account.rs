@@ -3,7 +3,8 @@ use database_account::current::read::GetDbReadCommandsAccount;
 use model::UnixTime;
 use model_account::{
     AccountGlobalState, AccountId, AccountIdInternal, AccountSetup, AppleAccountId,
-    EmailAddressState, EmailAddressStateInternal, GoogleAccountId, SignInWithInfo,
+    EmailAddressState, EmailAddressStateInternal, EmailLoginTokens, GoogleAccountId,
+    SignInWithInfo,
 };
 use model_server_state::DemoAccountId;
 use server_data::{
@@ -98,6 +99,24 @@ impl ReadCommandsAccount<'_> {
         id: AccountIdInternal,
     ) -> Result<Option<UnixTime>, DataError> {
         self.db_read(move |mut cmds| cmds.account().email().email_verification_token_time(id))
+            .await
+            .into_error()
+    }
+
+    pub async fn email_login_tokens(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<EmailLoginTokens, DataError> {
+        self.db_read(move |mut cmds| cmds.account().email().email_login_tokens(id))
+            .await
+            .into_error()
+    }
+
+    pub async fn email_login_token_time(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Option<UnixTime>, DataError> {
+        self.db_read(move |mut cmds| cmds.account().email().email_login_token_time(id))
             .await
             .into_error()
     }
