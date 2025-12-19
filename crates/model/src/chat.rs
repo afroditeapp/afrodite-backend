@@ -275,3 +275,9 @@ pub struct CheckOnlineStatusResponse {
     pub a: AccountId,
     pub l: Option<LastSeenTime>,
 }
+
+#[derive(Serialize, Queryable)]
+pub struct DataExportLatestSeenMessage {
+    a: AccountId,
+    mn: i64,
+}

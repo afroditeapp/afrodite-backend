@@ -1,7 +1,9 @@
 use database::{DbReadMode, DieselDatabaseError};
 use database_account::current::read::GetDbReadCommandsAccount;
+use model::UnixTime;
 use model_account::{
     AccountEmailSendingStateRaw, AccountSetup, AccountStateTableRaw, EmailAddressState,
+    EmailLoginTokens,
 };
 use model_chat::AccountAppNotificationSettings;
 use serde::Serialize;
@@ -17,6 +19,10 @@ pub struct UserDataExportJsonAccount {
     email_sending_states: AccountEmailSendingStateRaw,
     account_state_table: AccountStateTableRaw,
     account_notification_settings: AccountAppNotificationSettings,
+    email_login_tokens: EmailLoginTokens,
+    email_login_token_time: Option<UnixTime>,
+    email_verification_token: Option<Vec<u8>>,
+    email_verification_token_time: Option<UnixTime>,
     note: &'static str,
 }
 
@@ -26,6 +32,8 @@ impl UserDataExportJsonAccount {
         id: SourceAccount,
     ) -> error_stack::Result<Self, DieselDatabaseError> {
         let id = id.0;
+        let (email_verification_token, email_verification_token_time) =
+            current.account().email().email_verification_token(id)?;
         let data = Self {
             email_address_state: current.account().data().email_address_state(id)?,
             account_setup: current.account().data().account_setup(id)?,
@@ -35,6 +43,10 @@ impl UserDataExportJsonAccount {
                 .account()
                 .notification()
                 .app_notification_settings(id)?,
+            email_login_tokens: current.account().email().email_login_tokens(id)?,
+            email_login_token_time: current.account().email().email_login_token_time(id)?,
+            email_verification_token,
+            email_verification_token_time,
             note: "If you created or edited news, that data is not currently included here.",
         };
         Ok(data)

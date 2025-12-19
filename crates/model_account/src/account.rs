@@ -172,7 +172,7 @@ pub struct EmailAddressStateInternal {
     pub email_login_enabled: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct EmailLoginTokens {
     pub client_token: Option<Vec<u8>>,
     pub email_token: Option<Vec<u8>>,

@@ -5,13 +5,13 @@ use diesel::prelude::*;
 use error_stack::Result;
 use model::{
     AccountId, AccountIdDb, AdminDataExportPendingMessage, ConversationId,
-    DataExportPendingMessage, MessageId, MessageNumber, NewMessageNotification,
-    NewMessageNotificationList, PendingMessageDbId, PendingMessageDbIdAndMessageTime,
-    PendingMessageInfo, PendingMessageRaw, UnixTime,
+    DataExportLatestSeenMessage, DataExportPendingMessage, MessageId, MessageNumber,
+    NewMessageNotification, NewMessageNotificationList, PendingMessageDbId,
+    PendingMessageDbIdAndMessageTime, PendingMessageInfo, PendingMessageRaw, UnixTime,
 };
 use model_chat::{
-    AccountIdInternal, DeliveryInfoType, GetSentMessage, MessageDeliveryInfo,
-    PendingMessageInternal,
+    AccountIdInternal, DataExportMessageDeliveryInfo, DeliveryInfoType, GetSentMessage,
+    MessageDeliveryInfo, PendingMessageInternal,
 };
 
 use crate::IntoDatabaseError;
@@ -275,6 +275,47 @@ impl CurrentReadChatMessage<'_> {
         Ok(result)
     }
 
+    pub fn data_export_delivery_info_from_me(
+        &mut self,
+        my_account_id: AccountIdInternal,
+    ) -> Result<Vec<DataExportMessageDeliveryInfo>, DieselDatabaseError> {
+        use crate::schema::{account_id, message_delivery_info};
+
+        let data: Vec<(i64, AccountId, MessageId, DeliveryInfoType, UnixTime)> =
+            message_delivery_info::table
+                .inner_join(
+                    account_id::table
+                        .on(message_delivery_info::account_id_sender.eq(account_id::id)),
+                )
+                .filter(message_delivery_info::account_id_receiver.eq(my_account_id.as_db_id()))
+                .select((
+                    message_delivery_info::id,
+                    account_id::uuid,
+                    message_delivery_info::message_id,
+                    message_delivery_info::delivery_info_type,
+                    message_delivery_info::unix_time,
+                ))
+                .load(self.conn())
+                .into_db_error(())?;
+
+        let result = data
+            .into_iter()
+            .map(
+                |(id, message_sender, message_id, delivery_type, unix_time)| {
+                    DataExportMessageDeliveryInfo {
+                        id,
+                        sender: message_sender,
+                        message_id,
+                        delivery_type,
+                        unix_time,
+                    }
+                },
+            )
+            .collect();
+
+        Ok(result)
+    }
+
     pub fn get_latest_seen_message_number(
         &mut self,
         viewer_id: AccountIdInternal,
@@ -336,5 +377,41 @@ impl CurrentReadChatMessage<'_> {
                 message_id: message_id_value,
             }),
         )
+    }
+
+    pub fn data_export_latest_sent_message_numbers_viewer(
+        &mut self,
+        viewer: AccountIdInternal,
+    ) -> Result<Vec<DataExportLatestSeenMessage>, DieselDatabaseError> {
+        use crate::schema::{account_id, latest_seen_message};
+
+        let result: Vec<DataExportLatestSeenMessage> = latest_seen_message::table
+            .inner_join(
+                account_id::table.on(account_id::id.eq(latest_seen_message::account_id_viewer)),
+            )
+            .filter(latest_seen_message::account_id_viewer.eq(viewer.as_db_id()))
+            .select((account_id::uuid, latest_seen_message::message_number))
+            .load(self.conn())
+            .into_db_error(())?;
+
+        Ok(result)
+    }
+
+    pub fn data_export_latest_sent_message_numbers_sender(
+        &mut self,
+        sender: AccountIdInternal,
+    ) -> Result<Vec<DataExportLatestSeenMessage>, DieselDatabaseError> {
+        use crate::schema::{account_id, latest_seen_message};
+
+        let result: Vec<DataExportLatestSeenMessage> = latest_seen_message::table
+            .inner_join(
+                account_id::table.on(account_id::id.eq(latest_seen_message::account_id_sender)),
+            )
+            .filter(latest_seen_message::account_id_sender.eq(sender.as_db_id()))
+            .select((account_id::uuid, latest_seen_message::message_number))
+            .load(self.conn())
+            .into_db_error(())?;
+
+        Ok(result)
     }
 }

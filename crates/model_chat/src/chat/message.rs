@@ -178,3 +178,13 @@ pub struct MessageDeliveryInfoList {
 pub struct MessageDeliveryInfoIdList {
     pub ids: Vec<i64>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, PartialEq)]
+pub struct DataExportMessageDeliveryInfo {
+    pub id: i64,
+    /// Sender of [Self::message_id]
+    pub sender: AccountId,
+    pub message_id: MessageId,
+    pub delivery_type: DeliveryInfoType,
+    pub unix_time: UnixTime,
+}
