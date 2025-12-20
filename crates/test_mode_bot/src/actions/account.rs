@@ -82,7 +82,7 @@ impl BotAction for Login {
         state.api.set_access_token(auth_pair.access.token.clone());
 
         let (event_sender, event_receiver, quit_handle) =
-            create_event_channel(state.connections.enable_event_sending.clone());
+            create_event_channel(state.connections.event_info_handle());
         state.connections.set_events(event_receiver);
 
         let url = state

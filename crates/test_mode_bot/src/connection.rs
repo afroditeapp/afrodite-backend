@@ -14,7 +14,7 @@ use tokio::{
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 
 pub fn create_event_channel(
-    enable_event_sending: Arc<AtomicBool>,
+    enable_event_sending: EventInfoHandle,
 ) -> (
     EventSenderAndQuitWatcher,
     EventReceiver,
@@ -25,7 +25,7 @@ pub fn create_event_channel(
     (
         EventSenderAndQuitWatcher {
             event_sender: EventSender {
-                enable_event_sending,
+                event_info_handle: enable_event_sending,
                 event_sender,
             },
             quit_watcher,
@@ -37,13 +37,13 @@ pub fn create_event_channel(
 
 #[derive(Debug, Clone)]
 pub struct EventSender {
-    enable_event_sending: Arc<AtomicBool>,
+    event_info_handle: EventInfoHandle,
     event_sender: mpsc::UnboundedSender<EventToClient>,
 }
 
 impl EventSender {
     pub async fn send_if_sending_enabled(&self, event: EventToClient) {
-        if self.enable_event_sending.load(Ordering::Relaxed) {
+        if self.event_info_handle.are_events_enabled() {
             let _ = self.event_sender.send(event);
         }
     }
@@ -109,11 +109,22 @@ impl ApiConnection {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct EventInfoHandle {
+    enable_event_sending: Arc<AtomicBool>,
+}
+
+impl EventInfoHandle {
+    pub fn are_events_enabled(&self) -> bool {
+        self.enable_event_sending.load(Ordering::Relaxed)
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct BotConnections {
     /// Setting this true will enable sending the connection
     /// events to event channel.
-    pub enable_event_sending: Arc<AtomicBool>,
+    enable_event_sending: Arc<AtomicBool>,
     connections: Option<ApiConnection>,
     events: Option<EventReceiver>,
 }
@@ -125,6 +136,24 @@ impl BotConnections {
 
     pub fn set_events(&mut self, events: EventReceiver) {
         self.events = Some(events);
+    }
+
+    pub fn event_info_handle(&self) -> EventInfoHandle {
+        EventInfoHandle {
+            enable_event_sending: self.enable_event_sending.clone(),
+        }
+    }
+
+    pub fn are_events_enabled(&self) -> bool {
+        self.enable_event_sending.load(Ordering::Relaxed)
+    }
+
+    pub fn enable_events(&self) {
+        self.enable_event_sending.store(true, Ordering::Relaxed);
+    }
+
+    pub fn disable_events(&self) {
+        self.enable_event_sending.store(true, Ordering::Relaxed);
     }
 
     pub fn unwrap_account_connections(&mut self) -> ApiConnection {

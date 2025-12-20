@@ -8,11 +8,7 @@ pub mod benchmark;
 pub mod connection;
 pub mod utils;
 
-use std::{
-    fmt::Debug,
-    sync::{Arc, atomic::Ordering},
-    vec,
-};
+use std::{fmt::Debug, sync::Arc, vec};
 
 use actions::{chat::ChatState, profile::ProfileState};
 use api_client::{
@@ -113,21 +109,15 @@ impl BotState {
     }
 
     pub fn are_events_enabled(&self) -> bool {
-        self.connections
-            .enable_event_sending
-            .load(Ordering::Relaxed)
+        self.connections.are_events_enabled()
     }
 
     pub fn enable_events(&self) {
-        self.connections
-            .enable_event_sending
-            .store(true, Ordering::Relaxed);
+        self.connections.enable_events();
     }
 
     pub fn disable_events(&self) {
-        self.connections
-            .enable_event_sending
-            .store(true, Ordering::Relaxed);
+        self.connections.disable_events();
     }
 
     pub fn account_id(&self) -> Result<AccountId, TestError> {
