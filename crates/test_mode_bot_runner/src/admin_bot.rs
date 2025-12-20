@@ -144,6 +144,8 @@ impl AdminBot {
     }
 
     async fn run_admin_initial_logic(state: &mut BotState) -> Result<(), TestError> {
+        state.connections.enable_events();
+
         // Initial setup - inline run_actions
         for action in action_array![Register, Login].iter() {
             action.excecute_impl(state).await?;
