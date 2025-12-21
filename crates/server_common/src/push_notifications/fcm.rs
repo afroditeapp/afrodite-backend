@@ -49,12 +49,12 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> FcmManager<T> {
         state: T,
         quit_notification: ServerQuitWatcher,
     ) -> FcmManagerQuitHandle {
-        let fcm = if let Some(config) = config.simple_backend().fcm_config() {
+        let fcm = if let Some(fcm_config) = config.simple_backend().fcm_config() {
             // TODO(future): Make possible to use existing reqwest::Client
             //               with FcmClient.
             let fcm_result = FcmClient::builder()
-                .service_account_key_json_path(&config.service_account_key_path)
-                .token_cache_json_path(&config.token_cache_path)
+                .service_account_key_json_path(&fcm_config.service_account_key_path)
+                .token_cache_json_path(config.simple_backend().fcm_token_cache_path())
                 .fcm_request_timeout(Duration::from_secs(20))
                 .build()
                 .await;

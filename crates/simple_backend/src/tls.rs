@@ -52,7 +52,7 @@ impl TlsManager {
             let mut state = AcmeConfig::new(lets_encrypt.domains.clone())
                 .client_tls_config(client_tls_config.into())
                 .contact([format!("mailto:{}", lets_encrypt.email)])
-                .cache(DirCache::new(lets_encrypt.cache_dir.clone()))
+                .cache(DirCache::new(config.lets_encrypt_cache_dir()))
                 .directory_lets_encrypt(lets_encrypt.production_servers)
                 .state();
             let acceptor = state.acceptor();

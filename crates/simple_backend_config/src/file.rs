@@ -62,7 +62,6 @@ local_bot_api_port = 3001
 
 # [push_notifications.fcm]
 # service_account_key_path = "server_config/service_account_key.json"
-# token_cache_path = "firebase_token_cache.json"
 
 # [push_notifications.apns]
 # key_path = "server_config/apns_key.p8"
@@ -94,7 +93,6 @@ local_bot_api_port = 3001
 # domains = ["example.com"]
 # email = "test@example.com"
 # production_servers = false
-# cache_dir = "lets_encrypt_cache"
 
 # [static_file_package_hosting]
 # package = "frontend.tar.gz"
@@ -400,10 +398,12 @@ pub struct SignInWithGoogleConfig {
 pub struct FcmConfig {
     /// Path to service account key JSON file.
     pub service_account_key_path: PathBuf,
-    /// Path where cache Firebase token cache JSON file will be created.
-    pub token_cache_path: PathBuf,
     #[serde(default)]
     pub debug_logging: bool,
+}
+
+impl FcmConfig {
+    pub(crate) const TOKEN_CACHE_FILE_NAME: &str = "firebase_token_cache.json";
 }
 
 /// Apple Push Notification service config
@@ -498,10 +498,10 @@ pub struct LetsEncryptConfig {
     pub email: String,
     /// Use Let's Encrypt's production servers for certificate generation.
     pub production_servers: bool,
-    /// Cache dir for Let's Encrypt certificates.
-    ///
-    /// The directory is created automatically if it does not exist.
-    pub cache_dir: PathBuf,
+}
+
+impl LetsEncryptConfig {
+    pub(crate) const CACHE_DIR_NAME: &str = "lets_encrypt_cache";
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

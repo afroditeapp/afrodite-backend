@@ -29,7 +29,7 @@ use tokio_rustls::rustls::ServerConfig;
 use web_push::{PartialVapidSignatureBuilder, VapidSignatureBuilder};
 
 use self::file::{ManagerConfig, SignInWithGoogleConfig, SimpleBackendConfigFile, SocketConfig};
-use crate::file::{ApnsConfig, DatabaseConfig, FcmConfig, WebPushConfig};
+use crate::file::{ApnsConfig, DatabaseConfig, FcmConfig, LetsEncryptConfig, WebPushConfig};
 
 /// Config file debug mode status.
 ///
@@ -170,6 +170,10 @@ impl SimpleBackendConfig {
         self.file.push_notifications.fcm.as_ref()
     }
 
+    pub fn fcm_token_cache_path(&self) -> PathBuf {
+        self.data_dir().join(FcmConfig::TOKEN_CACHE_FILE_NAME)
+    }
+
     pub fn apns_config(&self) -> Option<&ApnsConfig> {
         self.file.push_notifications.apns.as_ref()
     }
@@ -192,6 +196,10 @@ impl SimpleBackendConfig {
 
     pub fn lets_encrypt_config(&self) -> Option<&file::LetsEncryptConfig> {
         self.file.lets_encrypt.as_ref()
+    }
+
+    pub fn lets_encrypt_cache_dir(&self) -> PathBuf {
+        self.data_dir().join(LetsEncryptConfig::CACHE_DIR_NAME)
     }
 
     pub fn backend_code_version(&self) -> &str {
@@ -300,10 +308,10 @@ pub fn get_config(
     }
 
     if let Some(lets_encrypt_config) = file_config.lets_encrypt.as_ref() {
-        if !lets_encrypt_config.cache_dir.exists() {
-            fs::create_dir_all(&lets_encrypt_config.cache_dir)
-                .change_context(GetConfigError::DirCreationError)?
-        } else if !lets_encrypt_config.cache_dir.is_dir() {
+        let cache_dir = data_dir.join(LetsEncryptConfig::CACHE_DIR_NAME);
+        if !cache_dir.exists() {
+            fs::create_dir_all(&cache_dir).change_context(GetConfigError::DirCreationError)?
+        } else if !cache_dir.is_dir() {
             return Err(GetConfigError::InvalidConfiguration).attach_printable(
                 "Let's Encrypt cache directory config does not point to a directory",
             );
@@ -319,16 +327,6 @@ pub fn get_config(
         if lets_encrypt_config.email.trim().is_empty() {
             return Err(GetConfigError::InvalidConfiguration)
                 .attach_printable("Let's Encrypt email is empty");
-        }
-
-        if lets_encrypt_config
-            .cache_dir
-            .to_string_lossy()
-            .trim()
-            .is_empty()
-        {
-            return Err(GetConfigError::InvalidConfiguration)
-                .attach_printable("Let's Encrypt cache directory config is empty");
         }
     }
 
