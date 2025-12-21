@@ -13,13 +13,21 @@ use crate::{LastSeenTimeFilter, ProfileAttributesInternal};
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileFiltersUpdate {
     attribute_filters: Vec<ProfileAttributeFilterValueUpdate>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     last_seen_time_filter: Option<LastSeenTimeFilter>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     unlimited_likes_filter: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     min_distance_km_filter: Option<MinDistanceKm>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     max_distance_km_filter: Option<MaxDistanceKm>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     profile_created_filter: Option<ProfileCreatedTimeFilter>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     profile_edited_filter: Option<ProfileEditedTimeFilter>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     profile_text_min_characters_filter: Option<ProfileTextMinCharactersFilter>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     profile_text_max_characters_filter: Option<ProfileTextMaxCharactersFilter>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]

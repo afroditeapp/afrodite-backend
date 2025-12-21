@@ -473,6 +473,7 @@ pub struct GetContentQueryParams {
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct GetProfileContentQueryParams {
+    #[serde(skip_serializing_if = "Option::is_none")]
     version: Option<simple_backend_utils::UuidBase64Url>,
     /// If false profile content access is allowed when profile is set as public.
     /// If true profile content access is allowed when users are a match.

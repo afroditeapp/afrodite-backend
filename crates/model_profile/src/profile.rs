@@ -321,6 +321,7 @@ pub struct FavoriteProfilesPage {
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct GetProfileQueryParam {
     /// Profile version UUID
+    #[serde(skip_serializing_if = "Option::is_none")]
     v: Option<simple_backend_utils::UuidBase64Url>,
     /// If requested profile is not public, allow getting the profile
     /// data if the requested profile is a match.

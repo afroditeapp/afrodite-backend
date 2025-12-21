@@ -160,6 +160,7 @@ pub fn message_id_from_string<'de, D: Deserializer<'de>>(d: D) -> Result<Message
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct SendMessageResult {
     /// Base64 encoded PGP signed message containing [SignedMessageData].
+    #[serde(skip_serializing_if = "Option::is_none")]
     d: Option<String>,
     // Errors
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]

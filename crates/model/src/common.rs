@@ -97,16 +97,22 @@ pub struct ContentProcessingStateChanged {
 pub struct EventToClient {
     event: EventType,
     /// Data for event ContentProcessingStateChanged
+    #[serde(skip_serializing_if = "Option::is_none")]
     content_processing_state_changed: Option<ContentProcessingStateChanged>,
     /// Data for event ScheduledMaintenanceStatus
+    #[serde(skip_serializing_if = "Option::is_none")]
     scheduled_maintenance_status: Option<ScheduledMaintenanceStatus>,
     /// Data for event AdminBotNotification
+    #[serde(skip_serializing_if = "Option::is_none")]
     admin_bot_notification: Option<crate::AdminBotNotificationTypes>,
     /// Data for event TypingStart
+    #[serde(skip_serializing_if = "Option::is_none")]
     typing_start: Option<AccountId>,
     /// Data for event TypingStop
+    #[serde(skip_serializing_if = "Option::is_none")]
     typing_stop: Option<AccountId>,
     /// Data for event CheckOnlineStatusResponse
+    #[serde(skip_serializing_if = "Option::is_none")]
     check_online_status_response: Option<CheckOnlineStatusResponse>,
 }
 

@@ -50,6 +50,7 @@ pub struct GetProfileStringStateParams {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct GetProfileStringState {
     /// If `None`, the `moderation_info` is `None`.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub value: Option<NonEmptyString>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub moderation_info: Option<ProfileStringModerationInfo>,

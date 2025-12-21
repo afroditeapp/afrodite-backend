@@ -249,7 +249,9 @@ impl SetAccountSetup {
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountSetup {
     #[schema(value_type = Option<String>)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     birthdate: Option<NaiveDate>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     is_adult: Option<bool>,
 }
 

@@ -273,6 +273,7 @@ impl AdminDataExportPendingMessage {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CheckOnlineStatusResponse {
     pub a: AccountId,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub l: Option<LastSeenTime>,
 }
 

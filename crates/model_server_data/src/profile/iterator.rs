@@ -41,6 +41,7 @@ pub struct ProfileLink {
     a: AccountId,
     p: ProfileVersion,
     c: ProfileContentVersion,
+    #[serde(skip_serializing_if = "Option::is_none")]
     l: Option<LastSeenTime>,
 }
 
