@@ -29,6 +29,7 @@ use server_state::{
         AdminNotificationProvider, ApiUsageTrackerProvider, ClientVersionTrackerProvider,
         GetAccessTokens, IpAddressUsageTrackerProvider,
     },
+    client_version::TrackingResult,
     state_impl::{ReadData, WriteData},
 };
 use simple_backend::{create_counters, web_socket::WebSocketManager};
@@ -251,10 +252,17 @@ async fn handle_socket_basic_errors(
                 }
             }
 
-            state
+            let tracking_result = state
                 .client_version_tracker()
                 .track_version(info.client_version)
                 .await;
+
+            match tracking_result {
+                TrackingResult::Invalid => COMMON
+                    .websocket_client_version_tracking_invalid_version
+                    .incr(),
+                TrackingResult::Disabled | TrackingResult::Tracked => (),
+            }
 
             if info.client_type == WebSocketClientTypeNumber::TestModeBot {
                 info.client_version == ClientVersion::BOT_CLIENT_VERSION
@@ -604,6 +612,7 @@ create_counters!(
     websocket_client_type_ios,
     websocket_client_type_web,
     websocket_client_type_test_mode_bot,
+    websocket_client_version_tracking_invalid_version,
     event_to_server_typing_start,
     event_to_server_typing_stop,
     event_to_server_check_online_status,

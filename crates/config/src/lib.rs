@@ -42,7 +42,7 @@ use simple_backend_utils::IntoReportFromString;
 
 use self::file::{ConfigFile, LocationConfig};
 use crate::{
-    file::{GeneralConfig, MinClientVersion, ProfileLimitsConfig},
+    file::{ClientVersionTrackingConfig, GeneralConfig, MinClientVersion, ProfileLimitsConfig},
     file_notification_content::NotificationContentFile,
 };
 
@@ -297,6 +297,10 @@ impl Config {
 
     pub fn min_client_version(&self) -> Option<MinClientVersion> {
         self.file.api.min_client_version
+    }
+
+    pub fn client_version_tracking(&self) -> Option<&ClientVersionTrackingConfig> {
+        self.file.api.client_version_tracking.as_ref()
     }
 
     pub fn remote_bots(&self) -> &[RemoteBotConfig] {

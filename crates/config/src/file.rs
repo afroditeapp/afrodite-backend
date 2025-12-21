@@ -102,6 +102,15 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # daily_start_time = "9:00"
 # daily_end_time = "21:00"
 
+# Uncomment to enable client version tracking
+# [api.client_version_tracking]
+# major_min = 0
+# major_max = 10
+# minor_min = 0
+# minor_max = 100
+# patch_min = 0
+# patch_max = 1000
+
 "#;
 
 #[derive(thiserror::Error, Debug)]
@@ -208,6 +217,30 @@ pub struct GeneralConfig {
 pub struct ApiConfig {
     pub obfuscation_salt: Option<String>,
     pub min_client_version: Option<MinClientVersion>,
+    pub client_version_tracking: Option<ClientVersionTrackingConfig>,
+}
+
+/// Client version tracking is disabled when these values are not
+/// configured.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ClientVersionTrackingConfig {
+    pub major_min: u32,
+    pub major_max: u32,
+    pub minor_min: u32,
+    pub minor_max: u32,
+    pub patch_min: u32,
+    pub patch_max: u32,
+}
+
+impl ClientVersionTrackingConfig {
+    pub fn is_valid(&self, version: ClientVersion) -> bool {
+        version.major >= self.major_min
+            && version.major <= self.major_max
+            && version.minor >= self.minor_min
+            && version.minor <= self.minor_max
+            && version.patch >= self.patch_min
+            && version.patch <= self.patch_max
+    }
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]

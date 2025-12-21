@@ -101,7 +101,9 @@ impl AppState {
             simple_backend_state,
             profile_statistics_cache: ProfileStatisticsCache::default().into(),
             data_all_utils,
-            client_version_tracker: ClientVersionTracker::new(),
+            client_version_tracker: ClientVersionTracker::new(
+                config.client_version_tracking().cloned(),
+            ),
             api_usage_tracker: ApiUsageTracker::new(),
             ip_address_usage_tracker: IpAddressUsageTracker::new(),
             data_signer: DataSigner::new(),
