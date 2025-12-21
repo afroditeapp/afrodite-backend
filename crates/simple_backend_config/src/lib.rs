@@ -263,10 +263,26 @@ pub fn get_config(
         file::SimpleBackendConfigFile::load(current_dir, save_default_config_if_not_found)
             .change_context(GetConfigError::LoadFileError)?;
 
-    let data_dir = if let Some(dir) = args_config.data_dir {
-        dir
-    } else {
-        file_config.data.dir.clone()
+    let data_dir = {
+        let mut data_dir_raw = if let Some(dir) = args_config.data_dir {
+            dir
+        } else {
+            file_config.data.dir.clone()
+        };
+        let Some(data_dir_name) = data_dir_raw.file_name().map(|v| v.to_os_string()) else {
+            return Err(GetConfigError::InvalidConfiguration)
+                .attach_printable("Data directory name is empty");
+        };
+        // Pop is required as data_dir_raw might not exists
+        data_dir_raw.pop();
+        if data_dir_raw.file_name().is_none() {
+            data_dir_raw = PathBuf::from(".");
+        }
+        let mut data_dir = data_dir_raw
+            .canonicalize()
+            .change_context(GetConfigError::InvalidConfiguration)?;
+        data_dir.push(data_dir_name);
+        data_dir
     };
 
     if let Some(config) = file_config.push_notifications.fcm.as_ref()
