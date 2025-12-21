@@ -118,7 +118,7 @@ local_bot_api_port = 3001
 # hentai = 0.9
 # porn = 0.9
 
-# [[ip_info.list]]
+# [[ip_info.lists]]
 # name = "test"
 # file = "ip-list.txt"
 

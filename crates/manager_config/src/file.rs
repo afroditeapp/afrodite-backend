@@ -39,7 +39,7 @@ public_api = "127.0.0.1:4000"
 # Second API has no TLS even if it is configured
 # second_public_api_localhost_only_port = 4001
 
-# [[remote_manager]]
+# [[remote_managers]]
 # name = "backup"
 # url = "tls://127.0.0.1:4000"
 
