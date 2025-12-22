@@ -2,6 +2,7 @@ use std::{
     env, num::NonZeroU8, os::unix::process::CommandExt, path::PathBuf, process::Stdio, sync::Arc,
 };
 
+use chrono::{Datelike, Timelike};
 use config::{
     args::{ArgsConfig, SelectedBenchmark, TestMode},
     file::{
@@ -208,10 +209,15 @@ impl ServerInstance {
         settings: AdditionalSettings,
     ) -> Self {
         let id = simple_backend_utils::UuidBase64Url::new_random_id();
+        let time = chrono::Utc::now();
         let dir = dir.join(format!(
-            "{}{}_{}",
+            "{}{}-{}-{}_{}-{}_{}",
             SERVER_INSTANCE_DIR_START,
-            chrono::Utc::now(),
+            time.year(),
+            time.month(),
+            time.day(),
+            time.hour(),
+            time.minute(),
             id,
         ));
         std::fs::create_dir(&dir).unwrap();
@@ -334,7 +340,7 @@ impl ServerInstance {
             if dir.starts_with(SERVER_INSTANCE_DIR_START) {
                 std::fs::remove_dir_all(self.dir).unwrap();
             } else {
-                panic!("Not database instance dir {dir}");
+                panic!("Not server instance dir '{dir}'");
             }
         }
 
