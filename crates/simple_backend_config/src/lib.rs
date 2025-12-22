@@ -25,7 +25,7 @@ use file::{
 use ip::IpList;
 use reqwest::Url;
 use rustls_pemfile::certs;
-use simple_backend_utils::dir::abs_path_for_directory_which_might_not_exists;
+use simple_backend_utils::dir::abs_path_for_directory_or_file_which_might_not_exists;
 use tokio_rustls::rustls::ServerConfig;
 use web_push::{PartialVapidSignatureBuilder, VapidSignatureBuilder};
 
@@ -268,7 +268,7 @@ pub fn get_config(
         file::SimpleBackendConfigFile::load_from_dir(current_dir, save_default_config_if_not_found)
             .change_context(GetConfigError::LoadFileError)?;
 
-    let data_dir = abs_path_for_directory_which_might_not_exists(&args_config.data_dir)
+    let data_dir = abs_path_for_directory_or_file_which_might_not_exists(&args_config.data_dir)
         .change_context(GetConfigError::PathCreationError)?;
 
     if let Some(config) = file_config.push_notifications.fcm.as_ref()

@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-pub fn abs_path_for_directory_which_might_not_exists(
+pub fn abs_path_for_directory_or_file_which_might_not_exists(
     path: &Path,
 ) -> Result<PathBuf, std::io::Error> {
     if path.is_absolute() {

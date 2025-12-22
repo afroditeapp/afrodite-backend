@@ -12,6 +12,7 @@ use config::{
     args::{TestMode, TestModeSubMode},
     bot_config_file::BotConfigFile,
 };
+use simple_backend_utils::dir::abs_path_for_directory_or_file_which_might_not_exists;
 use test_mode_bot_runner::BotTestRunner;
 use test_mode_tests_runner::QaTestRunner;
 use test_mode_utils::server::ServerInstanceConfig;
@@ -21,7 +22,19 @@ pub struct TestRunner {
 }
 
 impl TestRunner {
-    pub fn new(test_config: TestMode) -> Self {
+    pub fn new(mut test_config: TestMode) -> Self {
+        if let Some(data_dir) = &test_config.data_dir {
+            let dir_path = abs_path_for_directory_or_file_which_might_not_exists(data_dir).unwrap();
+            test_config.data_dir = Some(dir_path);
+        }
+        if let Some(bot_config) = &test_config.bot_config {
+            let file_path =
+                abs_path_for_directory_or_file_which_might_not_exists(bot_config).unwrap();
+            let mut dir_path = file_path.clone();
+            dir_path.pop();
+            std::env::set_current_dir(&dir_path).unwrap();
+            test_config.bot_config = Some(file_path);
+        }
         Self {
             test_config: test_config.into(),
         }

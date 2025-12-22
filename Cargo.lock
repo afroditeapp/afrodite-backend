@@ -5792,6 +5792,7 @@ dependencies = [
  "config",
  "error-stack",
  "reqwest",
+ "simple_backend_utils",
  "test_mode_bot_runner",
  "test_mode_tests_account",
  "test_mode_tests_media",

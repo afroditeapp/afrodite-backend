@@ -83,6 +83,8 @@ impl PublicApiUrl {
 
 #[derive(Args, Debug, Clone)]
 pub struct RemoteBotMode {
+    /// Working directory changes where the bot config is located, so
+    /// file paths are relative from config file's directory.
     #[arg(long, value_name = "FILE")]
     pub bot_config: PathBuf,
 }
@@ -152,6 +154,8 @@ pub struct TestMode {
     #[command(flatten)]
     pub api_urls: PublicApiUrl,
 
+    /// Working directory changes where the bot config is located, so
+    /// file paths are relative from config file's directory.
     #[arg(long, value_name = "FILE")]
     pub bot_config: Option<PathBuf>,
 
