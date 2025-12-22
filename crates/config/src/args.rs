@@ -81,12 +81,12 @@ impl PublicApiUrl {
 #[derive(Args, Debug, Clone)]
 pub struct RemoteBotMode {
     #[arg(long, value_name = "FILE")]
-    pub bot_config_file: PathBuf,
+    pub bot_config: PathBuf,
 }
 
 impl RemoteBotMode {
     pub fn to_test_mode(&self) -> error_stack::Result<TestMode, ConfigFileError> {
-        let config = BotConfigFile::load(self.bot_config_file.clone())?;
+        let config = BotConfigFile::load(self.bot_config.clone())?;
         let Some(server_url) = config.remote_bot_mode.map(|v| v.api_url) else {
             return Err(ConfigFileError::InvalidConfig.report())
                 .attach_printable("Remote bot mode config not found");
@@ -122,7 +122,7 @@ impl RemoteBotMode {
         Ok(TestMode {
             server: ServerConfig::default(),
             api_urls: PublicApiUrl::new(server_url),
-            bot_config_file: Some(self.bot_config_file.clone()),
+            bot_config: Some(self.bot_config.clone()),
             server_config_file: None,
             data_dir: None,
             no_clean: false,
@@ -151,7 +151,7 @@ pub struct TestMode {
     pub api_urls: PublicApiUrl,
 
     #[arg(long, value_name = "FILE")]
-    pub bot_config_file: Option<PathBuf>,
+    pub bot_config: Option<PathBuf>,
 
     /// Use location info from server config if bot config does not have it
     #[arg(long, value_name = "FILE")]

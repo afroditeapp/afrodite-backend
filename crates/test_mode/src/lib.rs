@@ -50,10 +50,10 @@ impl TestRunner {
             .await;
         } else {
             let bot_config_file =
-                if let Some(bot_config_file_path) = &self.test_config.bot_config_file {
+                if let Some(bot_config_file_path) = &self.test_config.bot_config {
                     match BotConfigFile::load_if_bot_mode_or_default(
                         bot_config_file_path,
-                        self.test_config.bot_config_file.as_ref(),
+                        self.test_config.bot_config.as_ref(),
                         &self.test_config,
                     ) {
                         Ok(bot_config_file) => bot_config_file,

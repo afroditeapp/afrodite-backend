@@ -93,7 +93,7 @@ impl BotClient {
         if let Some(bot_config_file) = &config.bot_config_file() {
             let path = std::fs::canonicalize(bot_config_file)
                 .change_context(BotClientError::LaunchCommand)?;
-            command.arg("--bot-config-file").arg(path);
+            command.arg("--bot-config").arg(path);
         }
 
         let server_config_path =
