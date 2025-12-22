@@ -8,6 +8,7 @@ use std::fmt::Display;
 use error_stack::{Context, Report, Result, ResultExt};
 
 pub mod db;
+pub mod dir;
 pub mod file;
 pub mod macros;
 pub mod string;
