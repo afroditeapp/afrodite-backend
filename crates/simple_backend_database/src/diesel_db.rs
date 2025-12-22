@@ -118,8 +118,7 @@ impl DieselWriteHandle {
             .change_context(DieselDatabaseError::GetConnection)?;
         let db_name = database_info.sqlite_name();
         conn.interact(move |conn| run_sqlite_wal_checkpoint(conn, db_name))
-            .await?
-            .into_error_string(DieselDatabaseError::Execute)?;
+            .await??;
 
         let vacuum_config = config.database_config().sqlite_config().vacuum;
         let db_name = database_info.sqlite_name();
@@ -130,8 +129,7 @@ impl DieselWriteHandle {
         conn.interact(move |conn| {
             vacuum::run_sqlite_vacuum_if_needed(conn, &db_path, &vacuum_config, db_name)
         })
-        .await?
-        .into_error_string(DieselDatabaseError::Execute)?;
+        .await??;
 
         let write_handle = DieselWriteHandle { pool: pool.clone() };
 
