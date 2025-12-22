@@ -9,7 +9,7 @@ pub mod ip;
 
 use std::{
     fmt::Debug,
-    fs,
+    fs::{self, create_dir},
     io::BufReader,
     path::{Path, PathBuf},
     sync::{Arc, atomic::AtomicBool},
@@ -53,8 +53,8 @@ pub use self::file::ConfigFileError;
 
 #[derive(thiserror::Error, Debug)]
 pub enum GetConfigError {
-    #[error("Get working directory error")]
-    GetWorkingDir,
+    #[error("Set working directory error")]
+    SetWorkingDir,
     #[error("File loading failed")]
     LoadFileError,
     #[error("Load config file")]
@@ -99,6 +99,7 @@ pub struct SimpleBackendConfig {
 
     // Server related configs
     data_dir: PathBuf,
+    config_dir: PathBuf,
     sign_in_with_urls: SignInWithUrls,
     sqlite_in_ram: bool,
 
@@ -115,7 +116,7 @@ pub struct SimpleBackendConfig {
 impl SimpleBackendConfig {
     pub fn load_from_file_with_in_ram_database() -> Self {
         get_config(
-            ServerMode::new_with_default_data_dir(true),
+            ServerMode::new_with_default_dirs(true),
             String::new(),
             String::new(),
             true,
@@ -126,6 +127,10 @@ impl SimpleBackendConfig {
     /// Directory where SQLite databases and other files are stored.
     pub fn data_dir(&self) -> &Path {
         &self.data_dir
+    }
+
+    pub fn config_dir(&self) -> &Path {
+        &self.config_dir
     }
 
     pub fn database_info(&self) -> &DatabaseInfo {
@@ -263,13 +268,31 @@ pub fn get_config(
     backend_semver_version: String,
     save_default_config_if_not_found: bool,
 ) -> Result<SimpleBackendConfig, GetConfigError> {
-    let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
-    let (file_config, config_file_path) =
-        file::SimpleBackendConfigFile::load_from_dir(current_dir, save_default_config_if_not_found)
-            .change_context(GetConfigError::LoadFileError)?;
-
     let data_dir = abs_path_for_directory_or_file_which_might_not_exists(&args_config.data_dir)
         .change_context(GetConfigError::PathCreationError)?;
+
+    let config_dir = if !args_config.config_dir.exists() {
+        if save_default_config_if_not_found {
+            create_dir(&args_config.config_dir).change_context(GetConfigError::DirCreationError)?;
+            args_config.config_dir.clone()
+        } else {
+            return Err(GetConfigError::InvalidConfiguration)
+                .attach_printable("Config directory does not exist");
+        }
+    } else {
+        args_config.config_dir.clone()
+    };
+    let config_dir = config_dir
+        .canonicalize()
+        .change_context(GetConfigError::InvalidConfiguration)?;
+
+    // Change working directory to config directory so that paths in
+    // config files will be relative from config file dir.
+    std::env::set_current_dir(&config_dir).change_context(GetConfigError::SetWorkingDir)?;
+
+    let (file_config, config_file_path) =
+        file::SimpleBackendConfigFile::load_from_dir(&config_dir, save_default_config_if_not_found)
+            .change_context(GetConfigError::LoadFileError)?;
 
     if let Some(config) = file_config.push_notifications.fcm.as_ref()
         && !config.service_account_key_path.exists()
@@ -378,6 +401,7 @@ pub fn get_config(
         file: file_config,
         config_file_path,
         data_dir,
+        config_dir,
         sqlite_in_ram,
         sign_in_with_urls: SignInWithUrls::new()?,
         public_api_tls_config,
