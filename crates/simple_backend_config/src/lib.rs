@@ -16,7 +16,7 @@ use std::{
     vec,
 };
 
-use args::ServerModeArgs;
+use args::ServerMode;
 use error_stack::{Result, ResultExt};
 use file::{
     ImageProcessingConfig, MaxMindDbConfig, SignInWithAppleConfig, TileMapConfig,
@@ -111,7 +111,7 @@ pub struct SimpleBackendConfig {
 impl SimpleBackendConfig {
     pub fn load_from_file_with_in_ram_database() -> Self {
         get_config(
-            ServerModeArgs::new_with_default_data_dir(true),
+            ServerMode::new_with_default_data_dir(true),
             String::new(),
             String::new(),
             true,
@@ -250,7 +250,7 @@ impl SimpleBackendConfig {
 
 /// Read config file from current directory.
 pub fn get_config(
-    args_config: args::ServerModeArgs,
+    args_config: args::ServerMode,
     backend_code_version: String,
     backend_semver_version: String,
     save_default_config_if_not_found: bool,

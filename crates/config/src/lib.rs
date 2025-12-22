@@ -19,7 +19,6 @@ pub mod file_web_content;
 
 use std::{path::Path, sync::Arc};
 
-use args::{AppMode, ArgsConfig};
 use bot_config_file::BotConfigFile;
 use csv::{
     attribute_values::AttributeValuesCsvLoader,
@@ -37,7 +36,7 @@ pub use model::{ClientFeaturesConfig, ClientFeaturesConfigInternal};
 use model::{CustomReportsConfig, ScheduledTasksConfig};
 use model_server_data::{AttributesFileInternal, ProfileAttributesInternal};
 use sha2::{Digest, Sha256};
-use simple_backend_config::{SimpleBackendConfig, file::SimpleBackendConfigFile};
+use simple_backend_config::{SimpleBackendConfig, args::ServerMode, file::SimpleBackendConfigFile};
 use simple_backend_utils::IntoReportFromString;
 
 use self::file::{ConfigFile, LocationConfig};
@@ -84,7 +83,6 @@ pub struct Config {
     simple_backend_config: Arc<SimpleBackendConfig>,
 
     // Other configs
-    mode: Option<AppMode>,
     profile_attributes: Option<ProfileAttributesInternal>,
     profile_attributes_sha256: Option<String>,
     custom_reports: Option<CustomReportsConfig>,
@@ -112,7 +110,6 @@ impl Config {
             file: ConfigFile::minimal_config_for_api_doc_json(),
             file_dynamic: ConfigFileDynamic::minimal_config_for_api_doc_json(),
             simple_backend_config,
-            mode: None,
             profile_attributes: None,
             profile_attributes_sha256: None,
             custom_reports: None,
@@ -143,13 +140,6 @@ impl Config {
     /// Check also [SimpleBackendConfig::debug_mode].
     pub fn debug_mode(&self) -> bool {
         self.simple_backend_config.debug_mode()
-    }
-
-    /// Server binary was launched in a special mode instead of the server mode.
-    ///
-    /// If None then the mode is the server mode.
-    pub fn current_mode(&self) -> Option<AppMode> {
-        self.mode.clone()
     }
 
     pub fn grant_admin_access_config(&self) -> Option<&GrantAdminAccessConfig> {
@@ -332,13 +322,13 @@ impl Config {
 }
 
 pub fn get_config(
-    args_config: ArgsConfig,
+    args_config: ServerMode,
     backend_code_version: String,
     backend_semver_version: String,
     save_default_config_if_not_found: bool,
 ) -> Result<Config, GetConfigError> {
     let simple_backend_config = simple_backend_config::get_config(
-        args_config.server,
+        args_config,
         backend_code_version,
         backend_semver_version,
         save_default_config_if_not_found,
@@ -473,7 +463,6 @@ pub fn get_config(
         simple_backend_config: simple_backend_config.into(),
         file: file_config,
         file_dynamic,
-        mode: args_config.mode.clone(),
         profile_attributes,
         profile_attributes_sha256,
         custom_reports,

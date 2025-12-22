@@ -1,10 +1,7 @@
 use std::{env, path::PathBuf};
 
-use config::{
-    GetConfigError,
-    args::{ArgsConfig, ConfigMode},
-    get_config,
-};
+use config::{GetConfigError, args::ConfigMode, get_config};
+use simple_backend_config::args::ServerMode;
 
 pub fn handle_config_tools(mode: ConfigMode) -> Result<(), GetConfigError> {
     match mode {
@@ -22,7 +19,7 @@ fn handle_check_and_view(dir: Option<PathBuf>, print: bool) -> Result<(), GetCon
     let mut config_file_found = false;
 
     if dir.join(config::file::CONFIG_FILE_NAME).exists() {
-        let c = get_config(ArgsConfig::default(), String::new(), String::new(), false).unwrap();
+        let c = get_config(ServerMode::default(), String::new(), String::new(), false).unwrap();
 
         if print {
             println!("{:#?}", c.parsed_files())

@@ -6,7 +6,7 @@ use clap::{Args, Parser, ValueEnum};
 use error_stack::ResultExt;
 use manager_config::args::ManagerApiClientMode;
 use reqwest::Url;
-use simple_backend_config::args::ServerModeArgs;
+use simple_backend_config::args::ServerMode;
 use simple_backend_utils::ContextExt;
 
 use crate::{bot_config_file::BotConfigFile, file::ConfigFileError};
@@ -22,26 +22,14 @@ pub struct ArgsConfig {
     #[arg(short, long)]
     pub index_info: bool,
 
-    #[command(flatten)]
-    pub server: ServerModeArgs,
-
     #[command(subcommand)]
-    pub mode: Option<AppMode>,
-}
-
-impl Default for ArgsConfig {
-    fn default() -> Self {
-        Self {
-            build_info: false,
-            index_info: false,
-            server: ServerModeArgs::new_with_default_data_dir(false),
-            mode: None,
-        }
-    }
+    pub mode: AppMode,
 }
 
 #[derive(Parser, Debug, Clone)]
 pub enum AppMode {
+    /// Server mode
+    Server(ServerMode),
     /// Run remote bot mode
     RemoteBot(RemoteBotMode),
     /// Run test, benchmark or bot mode
@@ -134,6 +122,7 @@ impl RemoteBotMode {
             no_clean: false,
             no_servers: true,
             early_quit: false,
+            sqlite_in_ram: false,
             mode: TestModeSubMode::Bot(BotModeConfig {
                 users: TryInto::<u32>::try_into(config.bots.len())
                     .change_context(ConfigFileError::InvalidConfig)?,
@@ -178,6 +167,10 @@ pub struct TestMode {
     /// First error quits
     #[arg(long)]
     pub early_quit: bool,
+
+    /// Start servers using in RAM mode for SQLite
+    #[arg(short, long)]
+    pub sqlite_in_ram: bool,
 
     #[command(subcommand)]
     pub mode: TestModeSubMode,

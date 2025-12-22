@@ -9,7 +9,7 @@
 use std::sync::Arc;
 
 use config::{
-    args::{ArgsConfig, TestMode, TestModeSubMode},
+    args::{TestMode, TestModeSubMode},
     bot_config_file::BotConfigFile,
 };
 use test_mode_bot_runner::BotTestRunner;
@@ -17,14 +17,12 @@ use test_mode_tests_runner::QaTestRunner;
 use test_mode_utils::server::ServerInstanceConfig;
 
 pub struct TestRunner {
-    args_config: ArgsConfig,
     test_config: Arc<TestMode>,
 }
 
 impl TestRunner {
-    pub fn new(args_config: ArgsConfig, test_config: TestMode) -> Self {
+    pub fn new(test_config: TestMode) -> Self {
         Self {
-            args_config,
             test_config: test_config.into(),
         }
     }
@@ -43,7 +41,7 @@ impl TestRunner {
 
         if let TestModeSubMode::Qa(config) = self.test_config.mode.clone() {
             QaTestRunner::new(
-                ServerInstanceConfig::from_args(&self.args_config),
+                ServerInstanceConfig::from_test_mode_config(&self.test_config),
                 self.test_config,
                 config,
                 reqwest_client,
@@ -69,7 +67,7 @@ impl TestRunner {
                 };
 
             BotTestRunner::new(
-                ServerInstanceConfig::from_args(&self.args_config),
+                ServerInstanceConfig::from_test_mode_config(&self.test_config),
                 bot_config_file.into(),
                 self.test_config,
                 reqwest_client,

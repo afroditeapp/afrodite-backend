@@ -62,10 +62,10 @@ TMP_FILE = ./target/tmp_file_for_makefile
 
 # Default rule
 run:
-	RUST_LOG=$${RUST_LOG:-info} cargo run --bin afrodite-backend
+	RUST_LOG=$${RUST_LOG:-info} cargo run --bin afrodite-backend -- server
 
 run-release:
-	RUST_LOG=$${RUST_LOG:-info} cargo run --bin afrodite-backend --release
+	RUST_LOG=$${RUST_LOG:-info} cargo run --bin afrodite-backend --release -- server
 
 fmt:
 	cargo +nightly fmt $(CARGO_CRATE_ARGS)
@@ -74,7 +74,7 @@ check-fmt:
 fix:
 	cargo fix ${CARGO_CRATE_ARGS}
 test:
-	RUST_LOG=info cargo run --bin afrodite-backend -- --sqlite-in-ram test ${TEST_ARGS} qa ${TEST_QA_ARGS}
+	RUST_LOG=info cargo run --bin afrodite-backend -- test --sqlite-in-ram ${TEST_ARGS} qa ${TEST_QA_ARGS}
 unit-test:
 	mkdir -p database/sqlite/current
 	DATABASE_URL="sqlite:database/sqlite/current/current.db" cargo test

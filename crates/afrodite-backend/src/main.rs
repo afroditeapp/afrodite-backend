@@ -3,6 +3,7 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
+use simple_backend_config::args::ServerMode;
 use tls_client as _;
 
 pub mod args;
@@ -30,35 +31,34 @@ fn main() -> ExitCode {
         Err(e) => return e,
     };
 
-    if let Some(mode) = args.mode.clone() {
-        return handle_app_mode(args, mode);
-    }
-
-    let index_info = args.index_info;
-    let config = get_config(
-        args,
-        BUILD_INFO_GIT_DESCRIBE.to_string(),
-        BUILD_INFO_CARGO_PKG_VERSION.to_string(),
-        true,
-    )
-    .unwrap();
-
-    if index_info {
-        println!(
-            "{}",
-            LocationIndexInfoCreator::new(config.location().clone()).create_all()
-        );
-        return ExitCode::SUCCESS;
-    }
-
-    let runtime = tokio::runtime::Runtime::new().unwrap();
-    runtime.block_on(async { DatingAppServer::new(config).run().await });
-
-    ExitCode::SUCCESS
+    handle_app_mode(args)
 }
 
-fn handle_app_mode(args: ArgsConfig, mode: AppMode) -> ExitCode {
-    match mode {
+fn handle_app_mode(args: ArgsConfig) -> ExitCode {
+    match args.mode {
+        AppMode::Server(server_mode) => {
+            let index_info = args.index_info;
+            let config = get_config(
+                server_mode,
+                BUILD_INFO_GIT_DESCRIBE.to_string(),
+                BUILD_INFO_CARGO_PKG_VERSION.to_string(),
+                true,
+            )
+            .unwrap();
+
+            if index_info {
+                println!(
+                    "{}",
+                    LocationIndexInfoCreator::new(config.location().clone()).create_all()
+                );
+                return ExitCode::SUCCESS;
+            }
+
+            let runtime = tokio::runtime::Runtime::new().unwrap();
+            runtime.block_on(async { DatingAppServer::new(config).run().await });
+
+            ExitCode::SUCCESS
+        }
         AppMode::ManagerApi(api_client_mode) => {
             let runtime = tokio::runtime::Runtime::new().unwrap();
             runtime.block_on(async {
@@ -85,7 +85,7 @@ fn handle_app_mode(args: ArgsConfig, mode: AppMode) -> ExitCode {
         }
         AppMode::ImageProcess => {
             let config = simple_backend_config::get_config(
-                args.server,
+                ServerMode::default(),
                 BUILD_INFO_GIT_DESCRIBE.to_string(),
                 BUILD_INFO_CARGO_PKG_VERSION.to_string(),
                 true,
@@ -114,12 +114,12 @@ fn handle_app_mode(args: ArgsConfig, mode: AppMode) -> ExitCode {
         AppMode::RemoteBot(remote_bot_mode_config) => {
             let test_mode_config = remote_bot_mode_config.to_test_mode().unwrap();
             let runtime = tokio::runtime::Runtime::new().unwrap();
-            runtime.block_on(async { TestRunner::new(args, test_mode_config).run().await });
+            runtime.block_on(async { TestRunner::new(test_mode_config).run().await });
             ExitCode::SUCCESS
         }
         AppMode::Test(test_mode_config) => {
             let runtime = tokio::runtime::Runtime::new().unwrap();
-            runtime.block_on(async { TestRunner::new(args, test_mode_config).run().await });
+            runtime.block_on(async { TestRunner::new(test_mode_config).run().await });
             ExitCode::SUCCESS
         }
     }

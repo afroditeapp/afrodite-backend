@@ -4,7 +4,7 @@ use std::{
 
 use chrono::{Datelike, Timelike};
 use config::{
-    args::{ArgsConfig, SelectedBenchmark, TestMode},
+    args::{SelectedBenchmark, TestMode},
     file::{
         ApiConfig, AutomaticProfileSearchConfig, CONFIG_FILE_NAME, ConfigFile, ConfigFileConfig,
         EmailAddress, GrantAdminAccessConfig, LocationConfig,
@@ -185,9 +185,9 @@ pub struct ServerInstanceConfig {
 }
 
 impl ServerInstanceConfig {
-    pub fn from_args(args_config: &ArgsConfig) -> Self {
+    pub fn from_test_mode_config(config: &TestMode) -> Self {
         Self {
-            sqlite_in_ram: args_config.server.sqlite_in_ram,
+            sqlite_in_ram: config.sqlite_in_ram,
         }
     }
 }
@@ -249,7 +249,8 @@ impl ServerInstance {
         command
             .current_dir(&dir)
             .env("RUST_LOG", log_value)
-            .process_group(0);
+            .process_group(0)
+            .arg("server");
 
         if server_instance_config.sqlite_in_ram {
             command.arg("--sqlite-in-ram");
