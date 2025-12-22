@@ -20,7 +20,6 @@ use config::{
     get_config,
 };
 use server::{DatingAppServer, api_doc::ApiDoc};
-use server_data::index::info::LocationIndexInfoCreator;
 use test_mode::TestRunner;
 
 use crate::build_info::build_info;
@@ -33,7 +32,6 @@ fn main() -> ExitCode {
 fn handle_app_mode(args: ArgsConfig) -> ExitCode {
     match args.mode {
         AppMode::Server(server_mode) => {
-            let index_info = args.index_info;
             let config = get_config(
                 server_mode,
                 BUILD_INFO_GIT_DESCRIBE.to_string(),
@@ -41,14 +39,6 @@ fn handle_app_mode(args: ArgsConfig) -> ExitCode {
                 true,
             )
             .unwrap();
-
-            if index_info {
-                println!(
-                    "{}",
-                    LocationIndexInfoCreator::new(config.location().clone()).create_all()
-                );
-                return ExitCode::SUCCESS;
-            }
 
             let runtime = tokio::runtime::Runtime::new().unwrap();
             runtime.block_on(async { DatingAppServer::new(config).run().await });

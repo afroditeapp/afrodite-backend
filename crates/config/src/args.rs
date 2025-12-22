@@ -13,11 +13,6 @@ use crate::{bot_config_file::BotConfigFile, file::ConfigFileError};
 
 #[derive(Args, Debug, Clone)]
 pub struct ArgsConfig {
-    /// Print available profile index sizes using
-    /// dimensions from config file and quit.
-    #[arg(short, long)]
-    pub index_info: bool,
-
     #[command(subcommand)]
     pub mode: AppMode,
 }
@@ -369,6 +364,13 @@ pub enum ConfigMode {
     /// directory creation for example) but does not save default config files.
     View {
         /// Try to read config files from this directory. Use current directory
+        /// if the argument does not exists.
+        dir: Option<PathBuf>,
+    },
+    /// Print available profile index sizes using
+    /// dimensions from config file and quit.
+    IndexInfo {
+        /// Try to read config file from this directory. Use current directory
         /// if the argument does not exists.
         dir: Option<PathBuf>,
     },
