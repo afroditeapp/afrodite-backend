@@ -30,7 +30,7 @@ pub enum AppMode {
     /// Print API documentation JSON to stdout
     OpenApi,
     /// Manager mode
-    Manager,
+    Manager(ManagerMode),
     /// Manager API client mode
     ManagerApi(ManagerApiClientMode),
     /// Config related commands
@@ -46,6 +46,16 @@ pub enum AppMode {
 pub struct ImageProcessMode {
     #[arg(long, value_name = "FILE")]
     pub simple_backend_config: PathBuf,
+}
+
+#[derive(Args, Debug, Clone)]
+pub struct ManagerMode {
+    /// Path to manager config file. Default file is created if it
+    /// doesn't exist. Working directory changes to where the file
+    /// is located to make file paths in the config file relative
+    /// from the config file.
+    #[arg(long, value_name = "FILE")]
+    pub manager_config: PathBuf,
 }
 
 #[derive(Parser, Debug, Clone)]

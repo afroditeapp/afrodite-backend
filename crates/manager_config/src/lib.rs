@@ -43,6 +43,10 @@ pub enum GetConfigError {
     LoadConfig,
     #[error("Check config file existance error")]
     CheckConfigFileExistanceError,
+    #[error("File path related error")]
+    FilePathError,
+    #[error("Change directory failed")]
+    ChangeDirectoryFailed,
 
     #[error("TLS config is required when debug mode is off")]
     TlsConfigMissing,
@@ -199,13 +203,20 @@ impl Config {
 }
 
 pub fn get_config(
+    manager_config_file: PathBuf,
     backend_code_version: String,
     backend_semver_version: String,
     backend_pkg_name: String,
 ) -> Result<Config, GetConfigError> {
-    let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
-    let file_config = file::ConfigFile::save_default_if_not_exist_and_load(current_dir)
-        .change_context(GetConfigError::LoadFileError)?;
+    let file_config =
+        file::ConfigFile::save_default_if_not_exist_and_load_file(&manager_config_file)
+            .change_context(GetConfigError::LoadFileError)?;
+
+    let mut config_dir = manager_config_file
+        .canonicalize()
+        .change_context(GetConfigError::FilePathError)?;
+    config_dir.pop();
+    std::env::set_current_dir(config_dir).change_context(GetConfigError::ChangeDirectoryFailed)?;
 
     let public_api_tls_config = match file_config.tls.clone() {
         Some(tls_config) => Some(Arc::new(generate_server_config(

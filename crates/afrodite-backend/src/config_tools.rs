@@ -32,8 +32,15 @@ fn handle_check_and_view(dir: Option<PathBuf>, print: bool) -> Result<(), GetCon
         config_file_found = true;
     }
 
-    if dir.join(manager_config::file::CONFIG_FILE_NAME).exists() {
-        let c = manager_config::get_config(String::new(), String::new(), String::new()).unwrap();
+    let manager_config_file = dir.join(manager_config::file::CONFIG_FILE_NAME);
+    if manager_config_file.exists() {
+        let c = manager_config::get_config(
+            manager_config_file,
+            String::new(),
+            String::new(),
+            String::new(),
+        )
+        .unwrap();
 
         if print {
             println!("{:#?}", c.parsed_file())

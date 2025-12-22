@@ -151,6 +151,17 @@ pub struct ConfigFile {
 }
 
 impl ConfigFile {
+    pub fn save_default_if_not_exist_and_load_file(
+        file_path: impl AsRef<Path>,
+    ) -> Result<ConfigFile, ConfigFileError> {
+        let file_path = file_path.as_ref();
+        if !file_path.exists() {
+            std::fs::write(file_path, DEFAULT_CONFIG_FILE_TEXT)
+                .change_context(ConfigFileError::SaveDefault)?;
+        }
+        Self::load_file(file_path)
+    }
+
     pub fn save_default(dir: impl AsRef<Path>) -> Result<(), ConfigFileError> {
         let file_path =
             Self::default_config_file_path(dir).change_context(ConfigFileError::SaveDefault)?;
@@ -177,7 +188,10 @@ impl ConfigFile {
         if !file_path.exists() && save_default {
             Self::save_default(dir).change_context(ConfigFileError::LoadConfig)?;
         }
+        Self::load_file(file_path)
+    }
 
+    fn load_file(file_path: impl AsRef<Path>) -> Result<ConfigFile, ConfigFileError> {
         let config_string =
             std::fs::read_to_string(file_path).change_context(ConfigFileError::LoadConfig)?;
         let file: ConfigFile =

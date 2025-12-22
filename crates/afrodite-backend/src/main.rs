@@ -58,8 +58,9 @@ fn handle_app_mode(args: ArgsConfig) -> ExitCode {
                 }
             })
         }
-        AppMode::Manager => {
+        AppMode::Manager(manager) => {
             let config = manager_config::get_config(
+                manager.manager_config,
                 BUILD_INFO_GIT_DESCRIBE.to_string(),
                 BUILD_INFO_CARGO_PKG_VERSION.to_string(),
                 BUILD_INFO_CARGO_PKG_NAME.to_string(),
