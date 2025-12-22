@@ -123,7 +123,7 @@ impl RemoteBotMode {
             server: ServerConfig::default(),
             api_urls: PublicApiUrl::new(server_url),
             bot_config: Some(self.bot_config.clone()),
-            server_config_file: None,
+            server_config: None,
             data_dir: None,
             no_clean: false,
             no_servers: true,
@@ -155,7 +155,7 @@ pub struct TestMode {
 
     /// Use location info from server config if bot config does not have it
     #[arg(long, value_name = "FILE")]
-    pub server_config_file: Option<PathBuf>,
+    pub server_config: Option<PathBuf>,
 
     /// Directory for test mode files
     #[arg(long, default_value = "tmp_data", value_name = "DIR")]

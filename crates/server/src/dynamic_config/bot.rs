@@ -100,7 +100,7 @@ impl BotClient {
             ConfigFile::default_file_path().change_context(BotClientError::LaunchCommand)?;
         let path = std::fs::canonicalize(server_config_path)
             .change_context(BotClientError::LaunchCommand)?;
-        command.arg("--server-config-file").arg(path);
+        command.arg("--server-config").arg(path);
 
         // Bot mode config
         command

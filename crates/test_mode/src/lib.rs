@@ -49,22 +49,21 @@ impl TestRunner {
             .run()
             .await;
         } else {
-            let bot_config_file =
-                if let Some(bot_config_file_path) = &self.test_config.bot_config {
-                    match BotConfigFile::load_if_bot_mode_or_default(
-                        bot_config_file_path,
-                        self.test_config.bot_config.as_ref(),
-                        &self.test_config,
-                    ) {
-                        Ok(bot_config_file) => bot_config_file,
-                        Err(e) => {
-                            eprintln!("Failed to load bot config file: {e:?}");
-                            return;
-                        }
+            let bot_config_file = if let Some(bot_config_file_path) = &self.test_config.bot_config {
+                match BotConfigFile::load_if_bot_mode_or_default(
+                    bot_config_file_path,
+                    self.test_config.bot_config.as_ref(),
+                    &self.test_config,
+                ) {
+                    Ok(bot_config_file) => bot_config_file,
+                    Err(e) => {
+                        eprintln!("Failed to load bot config file: {e:?}");
+                        return;
                     }
-                } else {
-                    BotConfigFile::default()
-                };
+                }
+            } else {
+                BotConfigFile::default()
+            };
 
             BotTestRunner::new(
                 ServerInstanceConfig::from_test_mode_config(&self.test_config),
