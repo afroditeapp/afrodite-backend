@@ -1,5 +1,4 @@
 use std::{
-    io::Write,
     net::SocketAddr,
     path::{Path, PathBuf},
 };
@@ -151,47 +150,19 @@ pub struct ConfigFile {
 }
 
 impl ConfigFile {
-    pub fn save_default_if_not_exist_and_load_file(
+    pub fn load_file(
         file_path: impl AsRef<Path>,
+        save_default: bool,
     ) -> Result<ConfigFile, ConfigFileError> {
         let file_path = file_path.as_ref();
-        if !file_path.exists() {
+        if !file_path.exists() && save_default {
             std::fs::write(file_path, DEFAULT_CONFIG_FILE_TEXT)
                 .change_context(ConfigFileError::SaveDefault)?;
         }
-        Self::load_file(file_path)
+        Self::load_file_internal(file_path)
     }
 
-    pub fn save_default(dir: impl AsRef<Path>) -> Result<(), ConfigFileError> {
-        let file_path =
-            Self::default_config_file_path(dir).change_context(ConfigFileError::SaveDefault)?;
-        let mut file =
-            std::fs::File::create(file_path).change_context(ConfigFileError::SaveDefault)?;
-        file.write_all(DEFAULT_CONFIG_FILE_TEXT.as_bytes())
-            .change_context(ConfigFileError::SaveDefault)?;
-        Ok(())
-    }
-
-    pub fn save_default_if_not_exist_and_load(
-        dir: impl AsRef<Path>,
-    ) -> Result<ConfigFile, ConfigFileError> {
-        Self::load(dir, true)
-    }
-
-    pub fn load_config(dir: impl AsRef<Path>) -> Result<ConfigFile, ConfigFileError> {
-        Self::load(dir, false)
-    }
-
-    fn load(dir: impl AsRef<Path>, save_default: bool) -> Result<ConfigFile, ConfigFileError> {
-        let file_path =
-            Self::default_config_file_path(&dir).change_context(ConfigFileError::LoadConfig)?;
-        if !file_path.exists() && save_default {
-            Self::save_default(dir).change_context(ConfigFileError::LoadConfig)?;
-        }
-        Self::load_file(file_path)
-    }
-
-    fn load_file(file_path: impl AsRef<Path>) -> Result<ConfigFile, ConfigFileError> {
+    fn load_file_internal(file_path: impl AsRef<Path>) -> Result<ConfigFile, ConfigFileError> {
         let config_string =
             std::fs::read_to_string(file_path).change_context(ConfigFileError::LoadConfig)?;
         let file: ConfigFile =
@@ -218,12 +189,6 @@ impl ConfigFile {
         let mut file_path = dir.as_ref().to_path_buf();
         file_path.push(CONFIG_FILE_NAME);
         Ok(file_path)
-    }
-
-    pub fn exists(dir: impl AsRef<Path>) -> Result<bool, ConfigFileError> {
-        let file_path =
-            Self::default_config_file_path(&dir).change_context(ConfigFileError::LoadConfig)?;
-        Ok(file_path.exists())
     }
 }
 

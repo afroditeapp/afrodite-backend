@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 
 use clap::{Args, Parser};
-use error_stack::{Result, ResultExt};
+use error_stack::{Result, ResultExt, report};
 use manager_api::TlsConfig;
 use manager_model::ManagerInstanceName;
 use simple_backend_utils::ContextExt;
@@ -14,44 +14,69 @@ use super::{GetConfigError, file::ConfigFile};
 #[derive(Args, Debug, Clone)]
 pub struct ManagerApiClientMode {
     /// API key for accessing the manager API. If not present, value from
-    /// current directory's config file is used.
+    /// config file is used.
     #[arg(short = 'k', long, value_name = "KEY")]
     api_key: Option<String>,
     /// API URL for accessing the manager API. If not present, value from
-    /// current directory's config file is used.
+    /// config file is used.
     #[arg(short = 'u', long, value_name = "URL")]
     pub api_url: Option<Url>,
     /// TLS root certificate for API client. If not present, value from
-    /// current directory's config file is used.
+    /// config file is used.
     #[arg(short = 'c', long, value_name = "FILE")]
     pub tls_root_cert: Option<PathBuf>,
     /// TLS client authentication certificate for API client.
-    /// If not present, value from current directory's config file is used.
+    /// If not present, value from config file is used.
     #[arg(long, value_name = "FILE")]
     pub tls_client_auth_cert: Option<PathBuf>,
     /// TLS client authentication certificate private key for API client.
-    /// If not present, value from current directory's config file is used.
+    /// If not present, value from config file is used.
     #[arg(long, value_name = "FILE")]
     pub tls_client_auth_cert_private_key: Option<PathBuf>,
     /// Name of the manager instance which receives the API request. If not
-    /// present, value from current directory's config file is used.
+    /// present, value from config file is used.
     #[arg(short = 'n', long, value_name = "NAME")]
     pub name: Option<String>,
+    /// Configure manager API client using a manager config file.
+    #[arg(long, value_name = "FILE")]
+    pub manager_config: Option<PathBuf>,
 
     #[command(subcommand)]
     pub api_command: ApiCommand,
 }
 
 impl ManagerApiClientMode {
+    fn load_config(
+        &self,
+        required_options: impl Into<Option<&'static str>>,
+    ) -> Result<ConfigFile, GetConfigError> {
+        let file_path_result = self
+            .manager_config
+            .clone()
+            .ok_or(report!(GetConfigError::LoadFileError));
+        let file_path = {
+            let required_options = required_options.into();
+            if let Some(required_options) = required_options {
+                file_path_result.attach_printable_lazy(|| {
+                    format!(
+                        "Set '--manager-config' or the following options: {}",
+                        required_options
+                    )
+                })?
+            } else {
+                file_path_result?
+            }
+        };
+        let file_config = ConfigFile::load_file(file_path, false)
+            .change_context(GetConfigError::LoadFileError)?;
+        Ok(file_config)
+    }
+
     pub fn api_key(&self) -> Result<String, GetConfigError> {
         if let Some(api_key) = self.api_key.clone() {
             Ok(api_key)
         } else {
-            let current_dir =
-                std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
-            let file_config = ConfigFile::load_config(current_dir)
-                .change_context(GetConfigError::LoadFileError)?;
-
+            let file_config = self.load_config("--api-key")?;
             Ok(file_config.manager.api_key)
         }
     }
@@ -61,10 +86,7 @@ impl ManagerApiClientMode {
             return Ok(api_url);
         }
 
-        let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
-
-        let file_config = super::file::ConfigFile::load_config(current_dir)
-            .change_context(GetConfigError::LoadFileError)?;
+        let file_config = self.load_config("--api-url")?;
 
         let url = if let Some(port) = file_config.socket.second_public_api_localhost_only_port {
             format!("tcp://localhost:{port}")
@@ -95,14 +117,8 @@ impl ManagerApiClientMode {
             return Ok(Some(config));
         }
 
-        let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
-
-        if ConfigFile::exists(&current_dir)
-            .change_context(GetConfigError::CheckConfigFileExistanceError)?
-        {
-            let file_config =
-                super::file::ConfigFile::save_default_if_not_exist_and_load(current_dir)
-                    .change_context(GetConfigError::LoadFileError)?;
+        if self.manager_config.is_some() {
+            let file_config = self.load_config(None)?;
 
             if let Some(tls) = file_config.tls {
                 let config = TlsConfig::new(
@@ -128,11 +144,7 @@ impl ManagerApiClientMode {
         if let Some(name) = self.name.clone() {
             Ok(ManagerInstanceName::new(name))
         } else {
-            let current_dir =
-                std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
-            let file_config = ConfigFile::load_config(current_dir)
-                .change_context(GetConfigError::LoadFileError)?;
-
+            let file_config = self.load_config("--name")?;
             Ok(file_config.manager.name)
         }
     }

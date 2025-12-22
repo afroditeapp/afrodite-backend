@@ -35,8 +35,6 @@ pub mod file;
 
 #[derive(thiserror::Error, Debug)]
 pub enum GetConfigError {
-    #[error("Get working directory error")]
-    GetWorkingDir,
     #[error("File loading failed")]
     LoadFileError,
     #[error("Load config file")]
@@ -208,9 +206,8 @@ pub fn get_config(
     backend_semver_version: String,
     backend_pkg_name: String,
 ) -> Result<Config, GetConfigError> {
-    let file_config =
-        file::ConfigFile::save_default_if_not_exist_and_load_file(&manager_config_file)
-            .change_context(GetConfigError::LoadFileError)?;
+    let file_config = file::ConfigFile::load_file(&manager_config_file, true)
+        .change_context(GetConfigError::LoadFileError)?;
 
     let mut config_dir = manager_config_file
         .canonicalize()
