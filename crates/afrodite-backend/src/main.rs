@@ -23,15 +23,11 @@ use server::{DatingAppServer, api_doc::ApiDoc};
 use server_data::index::info::LocationIndexInfoCreator;
 use test_mode::TestRunner;
 
+use crate::build_info::build_info;
+
 fn main() -> ExitCode {
     tokio_rustls::rustls::crypto::ring::default_provider();
-
-    let args = match args::get_config() {
-        Ok(args) => args,
-        Err(e) => return e,
-    };
-
-    handle_app_mode(args)
+    handle_app_mode(args::get_config())
 }
 
 fn handle_app_mode(args: ArgsConfig) -> ExitCode {
@@ -116,6 +112,10 @@ fn handle_app_mode(args: ArgsConfig) -> ExitCode {
         AppMode::Test(test_mode_config) => {
             let runtime = tokio::runtime::Runtime::new().unwrap();
             runtime.block_on(async { TestRunner::new(test_mode_config).run().await });
+            ExitCode::SUCCESS
+        }
+        AppMode::BuildInfo => {
+            println!("{}", build_info());
             ExitCode::SUCCESS
         }
     }

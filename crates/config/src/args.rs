@@ -13,10 +13,6 @@ use crate::{bot_config_file::BotConfigFile, file::ConfigFileError};
 
 #[derive(Args, Debug, Clone)]
 pub struct ArgsConfig {
-    /// Print build info and quit.
-    #[arg(short, long)]
-    pub build_info: bool,
-
     /// Print available profile index sizes using
     /// dimensions from config file and quit.
     #[arg(short, long)]
@@ -47,6 +43,8 @@ pub enum AppMode {
         #[command(subcommand)]
         mode: ConfigMode,
     },
+    /// Print build info and quit
+    BuildInfo,
 }
 
 #[derive(Args, Debug, Clone)]
