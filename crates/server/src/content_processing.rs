@@ -90,7 +90,7 @@ impl ContentProcessingManager {
     pub async fn handle_content(&self, content: ProcessingState) {
         let result = match content.new_content_params.content_type {
             MediaContentType::JpegImage => ImageProcess::start_image_process(
-                &self.state.config().simple_backend().image_processing(),
+                self.state.config().simple_backend(),
                 content.tmp_raw_img.as_path(),
                 InputFileType::JpegImage,
                 content.tmp_img.as_path(),

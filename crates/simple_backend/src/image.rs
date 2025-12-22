@@ -5,7 +5,7 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
-use simple_backend_config::file::ImageProcessingConfig;
+use simple_backend_config::SimpleBackendConfig;
 use simple_backend_image_process::{ImageProcessingCommand, ImageProcessingInfo, InputFileType};
 use simple_backend_utils::ContextExt;
 use tokio::{
@@ -52,7 +52,7 @@ pub struct ImageProcessHandle {
 }
 
 impl ImageProcessHandle {
-    pub async fn start(config: &ImageProcessingConfig) -> Result<Self, ImageProcessError> {
+    pub async fn start(config: &SimpleBackendConfig) -> Result<Self, ImageProcessError> {
         let start_cmd = env::args()
             .next()
             .ok_or(ImageProcessError::LaunchCommand.report())?
@@ -70,6 +70,8 @@ impl ImageProcessHandle {
         let mut command = std::process::Command::new(start_cmd);
         command
             .arg("image-process")
+            .arg("--simple-backend-config")
+            .arg(config.config_file_path())
             .process_group(0)
             .stderr(Stdio::piped())
             .stdin(Stdio::piped())
@@ -82,7 +84,7 @@ impl ImageProcessHandle {
             .change_context(ImageProcessError::StartProcess)?;
 
         #[cfg(unix)]
-        if let Some(nice_value) = config.process_nice_value {
+        if let Some(nice_value) = config.image_processing().process_nice_value {
             if let Some(pid) = child.id() {
                 let renice_result = tokio::process::Command::new("renice")
                     .arg("-n")
@@ -225,7 +227,7 @@ pub struct ImageProcess;
 
 impl ImageProcess {
     pub async fn start_image_process(
-        config: &ImageProcessingConfig,
+        config: &SimpleBackendConfig,
         input: &Path,
         input_file_type: InputFileType,
         output: &Path,

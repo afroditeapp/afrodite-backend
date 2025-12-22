@@ -35,7 +35,7 @@ pub enum AppMode {
     /// Run test, benchmark or bot mode
     Test(TestMode),
     /// Process received image
-    ImageProcess,
+    ImageProcess(ImageProcessMode),
     /// Print API documentation JSON to stdout
     OpenApi,
     /// Manager mode
@@ -47,6 +47,12 @@ pub enum AppMode {
         #[command(subcommand)]
         mode: ConfigMode,
     },
+}
+
+#[derive(Args, Debug, Clone)]
+pub struct ImageProcessMode {
+    #[arg(long, value_name = "FILE")]
+    pub simple_backend_config: PathBuf,
 }
 
 #[derive(Parser, Debug, Clone)]

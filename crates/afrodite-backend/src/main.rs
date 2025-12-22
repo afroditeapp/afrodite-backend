@@ -3,7 +3,7 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
-use simple_backend_config::args::ServerMode;
+use simple_backend_config::file::SimpleBackendConfigFile;
 use tls_client as _;
 
 pub mod args;
@@ -83,16 +83,12 @@ fn handle_app_mode(args: ArgsConfig) -> ExitCode {
             runtime.block_on(async { manager::server::AppServer::new(config).run().await });
             ExitCode::SUCCESS
         }
-        AppMode::ImageProcess => {
-            let config = simple_backend_config::get_config(
-                ServerMode::default(),
-                BUILD_INFO_GIT_DESCRIBE.to_string(),
-                BUILD_INFO_CARGO_PKG_VERSION.to_string(),
-                true,
-            )
-            .unwrap();
-            match simple_backend_image_process::run_image_processing_loop(config.image_processing())
-            {
+        AppMode::ImageProcess(image_process) => {
+            let config =
+                SimpleBackendConfigFile::load(image_process.simple_backend_config).unwrap();
+            match simple_backend_image_process::run_image_processing_loop(
+                config.image_processing.unwrap_or_default(),
+            ) {
                 Ok(()) => ExitCode::SUCCESS,
                 Err(e) => {
                     eprintln!("{e:?}");
