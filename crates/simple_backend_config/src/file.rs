@@ -27,7 +27,9 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 public_api = "127.0.0.1:3000"
 local_bot_api_port = 3001
 
-# SQLite will be used if PostgreSQL is not configured.
+# Use SQLite with default settings
+[database.sqlite]
+
 # TODO(future): Add connection error handling to Postgres support if needed.
 #               Postgres support should not be used in production
 #               before error handling is implemented.
@@ -255,6 +257,12 @@ impl SimpleBackendConfigFile {
             return Err(ConfigFileError::InvalidConfig
                 .report()
                 .attach_printable("database: both sqlite and postgres cannot be enabled"));
+        }
+
+        if config.database.sqlite.is_none() && config.database.postgres.is_none() {
+            return Err(ConfigFileError::InvalidConfig
+                .report()
+                .attach_printable("database: both sqlite and postgres cannot be disabled"));
         }
 
         Ok(config)
