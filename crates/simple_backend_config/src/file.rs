@@ -154,8 +154,6 @@ pub struct SimpleBackendConfigFile {
     #[serde(default)]
     pub socket: SocketConfig,
     #[serde(default)]
-    pub data: DataConfig,
-    #[serde(default)]
     pub push_notifications: PushNotificationConfig,
     #[serde(default)]
     pub sign_in_with: SignInWithConfig,
@@ -190,9 +188,6 @@ impl SimpleBackendConfigFile {
     pub fn minimal_config_for_api_doc_json() -> Self {
         Self {
             general: GeneralConfig::default(),
-            data: DataConfig {
-                dir: PathBuf::new(),
-            },
             socket: SocketConfig {
                 public_api: None,
                 local_bot_api_port: None,
@@ -305,20 +300,6 @@ pub struct GeneralConfig {
     pub debug_face_detection_result: Option<bool>,
     /// Write timestamp to log messages. Enabled by default.
     pub log_timestamp: Option<bool>,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct DataConfig {
-    /// Data directory for SQLite databases and other files.
-    pub dir: PathBuf,
-}
-
-impl Default for DataConfig {
-    fn default() -> Self {
-        Self {
-            dir: "data".to_string().into(),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]

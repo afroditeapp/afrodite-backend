@@ -34,10 +34,7 @@ impl Default for ArgsConfig {
         Self {
             build_info: false,
             index_info: false,
-            server: ServerModeArgs {
-                data_dir: None,
-                sqlite_in_ram: false,
-            },
+            server: ServerModeArgs::new_with_default_data_dir(false),
             mode: None,
         }
     }

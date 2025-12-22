@@ -13,8 +13,8 @@ use nix::{sys::signal::Signal, unistd::Pid};
 use reqwest::Url;
 use server_data::index::info::LocationIndexInfoCreator;
 use simple_backend_config::file::{
-    DataConfig, DatabaseConfig, GeneralConfig, IpInfoConfig, PushNotificationConfig,
-    SignInWithConfig, SimpleBackendConfigFile, SocketConfig, VideoCallingConfig,
+    DatabaseConfig, GeneralConfig, IpInfoConfig, PushNotificationConfig, SignInWithConfig,
+    SimpleBackendConfigFile, SocketConfig, VideoCallingConfig,
 };
 use tokio::{
     io::{AsyncBufReadExt, AsyncRead},
@@ -157,7 +157,6 @@ fn new_config(config: &TestMode, bot_api_port: u16) -> (ConfigFile, SimpleBacken
             log_timestamp: None,
         },
         database: DatabaseConfig::sqlite(),
-        data: DataConfig::default(),
         socket: SocketConfig {
             public_api: None,
             local_bot_api_port: Some(bot_api_port),

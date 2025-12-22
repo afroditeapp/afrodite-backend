@@ -111,10 +111,7 @@ pub struct SimpleBackendConfig {
 impl SimpleBackendConfig {
     pub fn load_from_file_with_in_ram_database() -> Self {
         get_config(
-            ServerModeArgs {
-                sqlite_in_ram: true,
-                data_dir: None,
-            },
+            ServerModeArgs::new_with_default_data_dir(true),
             String::new(),
             String::new(),
             true,
@@ -264,11 +261,7 @@ pub fn get_config(
             .change_context(GetConfigError::LoadFileError)?;
 
     let data_dir = {
-        let mut data_dir_raw = if let Some(dir) = args_config.data_dir {
-            dir
-        } else {
-            file_config.data.dir.clone()
-        };
+        let mut data_dir_raw = args_config.data_dir;
         let Some(data_dir_name) = data_dir_raw.file_name().map(|v| v.to_os_string()) else {
             return Err(GetConfigError::InvalidConfiguration)
                 .attach_printable("Data directory name is empty");
