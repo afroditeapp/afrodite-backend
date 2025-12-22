@@ -7,7 +7,7 @@ use std::{
     process::Stdio,
 };
 
-use config::{Config, file::ConfigFile};
+use config::Config;
 use error_stack::{Result, ResultExt};
 use nix::{sys::signal::Signal, unistd::Pid};
 use simple_backend_utils::ContextExt;
@@ -95,12 +95,6 @@ impl BotClient {
                 .change_context(BotClientError::LaunchCommand)?;
             command.arg("--bot-config").arg(path);
         }
-
-        let server_config_path =
-            ConfigFile::default_file_path().change_context(BotClientError::LaunchCommand)?;
-        let path = std::fs::canonicalize(server_config_path)
-            .change_context(BotClientError::LaunchCommand)?;
-        command.arg("--server-config").arg(path);
 
         // Bot mode config
         command
