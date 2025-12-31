@@ -25,8 +25,6 @@ use tokio::{
 };
 use tracing::info;
 
-use crate::dir::DataDirUtils;
-
 pub const TEST_ADMIN_ACCESS_EMAIL: &str = "admin@example.com";
 
 pub const SERVER_INSTANCE_DIR_START: &str = "server_instance_";
@@ -67,8 +65,6 @@ impl ServerManager {
     ) -> Self {
         let settings = settings.unwrap_or_default();
 
-        let dir = DataDirUtils::create_data_dir_if_needed(&config);
-
         let check_host = |url: &Url, name| {
             let host = url.host_str().unwrap();
             if !(host == "127.0.0.1" || host == "localhost") {
@@ -83,7 +79,6 @@ impl ServerManager {
         let account_config = new_config(&config, bot_api_port);
         let servers = vec![
             ServerInstance::new(
-                dir.clone(),
                 server_instance_config,
                 account_config,
                 &config,
@@ -201,7 +196,6 @@ pub struct ServerInstance {
 
 impl ServerInstance {
     pub async fn new(
-        dir: PathBuf,
         server_instance_config: &ServerInstanceConfig,
         (server_config, simple_backend_config): (ConfigFile, SimpleBackendConfigFile),
         args_config: &TestMode,
@@ -209,7 +203,7 @@ impl ServerInstance {
     ) -> Self {
         let id = simple_backend_utils::UuidBase64Url::new_random_id();
         let time = chrono::Utc::now();
-        let dir = dir.join(format!(
+        let dir = env::temp_dir().join(format!(
             "{}{}-{}-{}_{}-{}_{}",
             SERVER_INSTANCE_DIR_START,
             time.year(),
