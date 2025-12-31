@@ -221,12 +221,15 @@ impl ServerInstance {
         ));
         std::fs::create_dir(&dir).unwrap();
 
+        let config_dir = dir.join("config");
+        std::fs::create_dir(&config_dir).unwrap();
+
         let config = toml::to_string_pretty(&server_config).unwrap();
-        std::fs::write(dir.join(CONFIG_FILE_NAME), config).unwrap();
+        std::fs::write(config_dir.join(CONFIG_FILE_NAME), config).unwrap();
 
         let config = toml::to_string_pretty(&simple_backend_config).unwrap();
         std::fs::write(
-            dir.join(simple_backend_config::file::CONFIG_FILE_NAME),
+            config_dir.join(simple_backend_config::file::CONFIG_FILE_NAME),
             config,
         )
         .unwrap();
