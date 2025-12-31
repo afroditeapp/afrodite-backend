@@ -53,21 +53,9 @@ pub struct ImageProcessHandle {
 
 impl ImageProcessHandle {
     pub async fn start(config: &SimpleBackendConfig) -> Result<Self, ImageProcessError> {
-        let start_cmd = env::args()
-            .next()
-            .ok_or(ImageProcessError::LaunchCommand.report())?
-            .to_string();
+        let current_exe = env::current_exe().change_context(ImageProcessError::LaunchCommand)?;
 
-        let start_cmd =
-            std::fs::canonicalize(&start_cmd).change_context(ImageProcessError::LaunchCommand)?;
-
-        if !start_cmd.is_file() {
-            return Err(ImageProcessError::LaunchCommand).attach_printable(format!(
-                "First argument does not point to a file {start_cmd:?}"
-            ));
-        }
-
-        let mut command = std::process::Command::new(start_cmd);
+        let mut command = std::process::Command::new(current_exe);
         command
             .arg("image-process")
             .arg("--simple-backend-config")

@@ -10,7 +10,6 @@ use std::{
 use config::Config;
 use error_stack::{Result, ResultExt};
 use nix::{sys::signal::Signal, unistd::Pid};
-use simple_backend_utils::ContextExt;
 use tokio::{
     io::{AsyncBufReadExt, AsyncRead},
     process::Child,
@@ -58,19 +57,7 @@ impl BotClient {
         admin_bot: bool,
         user_bots: u32,
     ) -> Result<Self, BotClientError> {
-        let start_cmd = env::args()
-            .next()
-            .ok_or(BotClientError::LaunchCommand.report())?
-            .to_string();
-
-        let start_cmd =
-            std::fs::canonicalize(start_cmd).change_context(BotClientError::LaunchCommand)?;
-
-        if !start_cmd.is_file() {
-            return Err(BotClientError::LaunchCommand).attach_printable(format!(
-                "First argument does not point to a file {start_cmd:?}"
-            ));
-        }
+        let current_exe = env::current_exe().change_context(BotClientError::LaunchCommand)?;
 
         let bot_api_socket = if let Some(port) = config.simple_backend().socket().local_bot_api_port
         {
@@ -81,7 +68,7 @@ impl BotClient {
 
         let bot_data_dir = config.simple_backend().data_dir().join(BOT_DATA_DIR_NAME);
 
-        let mut command = std::process::Command::new(start_cmd);
+        let mut command = std::process::Command::new(current_exe);
         command
             .arg("test")
             .arg("--data-dir")

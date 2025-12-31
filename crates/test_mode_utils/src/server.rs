@@ -232,12 +232,7 @@ impl ServerInstance {
         )
         .unwrap();
 
-        let start_cmd = env::args().next().unwrap();
-        let start_cmd = std::fs::canonicalize(&start_cmd).unwrap();
-
-        if !start_cmd.is_file() {
-            panic!("First argument does not point to a file {:?}", &start_cmd);
-        }
+        let current_exe = env::current_exe().unwrap();
 
         let log_value = if args_config.server.log_debug {
             "debug"
@@ -245,7 +240,7 @@ impl ServerInstance {
             "warn"
         };
 
-        let mut command = std::process::Command::new(start_cmd);
+        let mut command = std::process::Command::new(current_exe);
         command
             .current_dir(&dir)
             .env("RUST_LOG", log_value)
