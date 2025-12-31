@@ -59,7 +59,7 @@ pub struct BotConfigFile {
 }
 
 impl BotConfigFile {
-    pub const CONFIG_FILE_NAME: &str = "server_config_bots.toml";
+    pub const CONFIG_FILE_NAME: &str = "bots.toml";
     pub fn load_if_bot_mode_or_default(
         file: impl AsRef<Path>,
         server_config_file: Option<impl AsRef<Path>>,

@@ -80,7 +80,7 @@ for all available config file options.
 
 ### Simple config for debugging and development
 
-`server_config.toml`
+`config/server.toml`
 
 ```toml
 [[demo_accounts]]
@@ -95,7 +95,7 @@ debug_for_every_matching_new_account = true
 debug_match_only_email_domain = true
 ```
 
-`simple_backend_config.toml`
+`config/simple_backend.toml`
 
 ```toml
 [general]

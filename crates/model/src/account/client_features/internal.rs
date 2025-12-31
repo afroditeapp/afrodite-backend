@@ -86,7 +86,7 @@ pub struct ClientFeaturesConfigInternal {
 }
 
 impl ClientFeaturesConfigInternal {
-    pub const CONFIG_FILE_NAME: &str = "server_config_client_features.toml";
+    pub const CONFIG_FILE_NAME: &str = "client_features.toml";
     pub const DEFAULT_CONFIG_FILE_TEXT: &str = DEFAULT_CONFIG_FILE_TEXT;
 
     pub fn to_client_features_config(self) -> Result<ClientFeaturesConfig, String> {

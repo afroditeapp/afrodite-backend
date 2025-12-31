@@ -23,7 +23,7 @@ pub struct AttributesFileInternal {
 }
 
 impl AttributesFileInternal {
-    pub const CONFIG_FILE_NAME: &str = "server_config_profile_attributes.toml";
+    pub const CONFIG_FILE_NAME: &str = "profile_attributes.toml";
     pub const DEFAULT_CONFIG_FILE_TEXT: &str = DEFAULT_CONFIG_FILE_TEXT;
 
     fn validate_attributes(

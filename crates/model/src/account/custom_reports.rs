@@ -78,7 +78,7 @@ pub struct CustomReportsConfig {
 }
 
 impl CustomReportsConfig {
-    pub const CONFIG_FILE_NAME: &str = "server_config_custom_reports.toml";
+    pub const CONFIG_FILE_NAME: &str = "custom_reports.toml";
     pub const DEFAULT_CONFIG_FILE_TEXT: &str = DEFAULT_CONFIG_FILE_TEXT;
 
     pub fn validate_and_sort_by_id(&mut self) -> Result<(), String> {

@@ -10,7 +10,7 @@ use toml_edit::{DocumentMut, Item};
 
 use crate::file::ConfigFileError;
 
-pub const CONFIG_FILE_DYNAMIC_NAME: &str = "server_config_dynamic.toml";
+pub const CONFIG_FILE_DYNAMIC_NAME: &str = "dynamic.toml";
 
 pub const DEFAULT_CONFIG_FILE_DYNAMIC_TEXT: &str = r#"
 

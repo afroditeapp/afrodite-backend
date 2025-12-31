@@ -160,7 +160,7 @@ impl Default for EmailContentFile {
 }
 
 impl EmailContentFile {
-    pub const CONFIG_FILE_NAME: &str = "server_config_email_content.toml";
+    pub const CONFIG_FILE_NAME: &str = "email_content.toml";
     pub fn load(
         file: impl AsRef<Path>,
         save_if_needed: bool,

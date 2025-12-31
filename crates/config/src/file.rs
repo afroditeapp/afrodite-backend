@@ -29,7 +29,7 @@ use simple_backend_utils::{
 // latitude_bottom_right = 59.8
 // longitude_bottom_right = 31.58
 
-pub const CONFIG_FILE_NAME: &str = "server_config.toml";
+pub const CONFIG_FILE_NAME: &str = "server.toml";
 
 pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
