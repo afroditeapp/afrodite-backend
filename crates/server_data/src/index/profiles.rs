@@ -62,7 +62,7 @@ impl ProfilesAtLocation {
     pub fn find_profiles(
         &self,
         query_maker_details: &ProfileQueryMakerDetails,
-        attributes: Option<&ProfileAttributesInternal>,
+        attributes: &ProfileAttributesInternal,
         current_time: &UnixTime,
     ) -> Vec<ProfileLink> {
         let men = if query_maker_details.search_groups_filter.is_searching_men() {

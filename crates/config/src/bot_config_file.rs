@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    io::Write,
+    path::{Path, PathBuf},
+};
 
 use error_stack::{Result, ResultExt};
 use serde::{Deserialize, Deserializer};
@@ -11,6 +14,25 @@ use crate::{
     args::TestMode,
     file::{ConfigFile, ConfigFileError, LocationConfig},
 };
+
+const DEFAULT_BOT_CONFIG: &str = r#"
+
+# Local admin bot config
+
+[content_moderation]
+initial_content = true
+added_content = true
+default_action = "move_to_human"
+
+[profile_name_moderation]
+accept_single_visible_character = true
+default_action = "move_to_human"
+
+[profile_text_moderation]
+accept_single_visible_character = true
+default_action = "move_to_human"
+
+"#;
 
 #[derive(Debug, Default, Deserialize)]
 pub struct BotConfigFile {
@@ -37,6 +59,7 @@ pub struct BotConfigFile {
 }
 
 impl BotConfigFile {
+    pub const CONFIG_FILE_NAME: &str = "server_config_bots.toml";
     pub fn load_if_bot_mode_or_default(
         file: impl AsRef<Path>,
         server_config_file: Option<impl AsRef<Path>>,
@@ -46,7 +69,7 @@ impl BotConfigFile {
             return Ok(BotConfigFile::default());
         }
 
-        let mut config = Self::load(file)?;
+        let mut config = Self::load(file, false)?;
 
         if config.location.is_none()
             && let Some(server_config_file) = server_config_file
@@ -58,7 +81,18 @@ impl BotConfigFile {
         Ok(config)
     }
 
-    pub(crate) fn load(file: impl AsRef<Path>) -> Result<BotConfigFile, ConfigFileError> {
+    pub(crate) fn load(
+        file: impl AsRef<Path>,
+        save_if_needed: bool,
+    ) -> Result<BotConfigFile, ConfigFileError> {
+        let path = file.as_ref();
+        if !path.exists() && save_if_needed {
+            let mut new_file =
+                std::fs::File::create_new(path).change_context(ConfigFileError::LoadConfig)?;
+            new_file
+                .write_all(DEFAULT_BOT_CONFIG.as_bytes())
+                .change_context(ConfigFileError::LoadConfig)?;
+        }
         let config_content =
             std::fs::read_to_string(file).change_context(ConfigFileError::LoadConfig)?;
         let mut config: BotConfigFile =

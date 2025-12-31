@@ -22,7 +22,7 @@ impl ClientFeaturesConfigHash {
     }
 }
 
-#[derive(Debug, Clone, Serialize, ToSchema)]
+#[derive(Debug, Default, Clone, Serialize, ToSchema)]
 pub struct ClientFeaturesConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     attribution: Option<AttributionConfig>,

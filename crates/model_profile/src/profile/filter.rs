@@ -37,7 +37,7 @@ pub struct ProfileFiltersUpdate {
 impl ProfileFiltersUpdate {
     pub fn validate(
         self,
-        attribute_info: Option<&ProfileAttributesInternal>,
+        attribute_info: &ProfileAttributesInternal,
     ) -> Result<ProfileFiltersUpdateValidated, String> {
         let mut hash_set = HashSet::new();
         for a in &self.attribute_filters {
@@ -45,37 +45,32 @@ impl ProfileFiltersUpdate {
                 return Err("Duplicate attribute ID".to_string());
             }
 
-            if let Some(info) = attribute_info {
-                let attribute_info = info.get_attribute(a.id);
-                match attribute_info {
-                    None => return Err("Unknown attribute ID".to_string()),
-                    Some(info) => {
-                        let check = |values: &[u32]| {
-                            let error = || {
-                                Err(format!(
-                                    "Attribute supports max {} filter values",
-                                    info.max_filters,
-                                ))
-                            };
-                            if info.mode.is_bitflag() {
-                                let selected =
-                                    values.first().copied().unwrap_or_default().count_ones();
-                                if selected > info.max_filters.into() {
-                                    return error();
-                                }
-                            } else if values.len() > info.max_filters.into() {
+            let attribute_info = attribute_info.get_attribute(a.id);
+            match attribute_info {
+                None => return Err("Unknown attribute ID".to_string()),
+                Some(info) => {
+                    let check = |values: &[u32]| {
+                        let error = || {
+                            Err(format!(
+                                "Attribute supports max {} filter values",
+                                info.max_filters,
+                            ))
+                        };
+                        if info.mode.is_bitflag() {
+                            let selected = values.first().copied().unwrap_or_default().count_ones();
+                            if selected > info.max_filters.into() {
                                 return error();
                             }
+                        } else if values.len() > info.max_filters.into() {
+                            return error();
+                        }
 
-                            Ok(())
-                        };
+                        Ok(())
+                    };
 
-                        check(&a.wanted)?;
-                        check(&a.unwanted)?;
-                    }
+                    check(&a.wanted)?;
+                    check(&a.unwanted)?;
                 }
-            } else {
-                return Err("Profile attributes are disabled".to_string());
             }
         }
 

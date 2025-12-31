@@ -5,8 +5,15 @@ use utoipa::ToSchema;
 
 use crate::{CustomReportTypeNumberValue, ReportTypeNumber};
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
+const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
+report_order = "OrderNumber"
+
+# [[reports]]
+"#;
+
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, ToSchema)]
 pub enum CustomReportsOrderMode {
+    #[default]
     OrderNumber,
 }
 
@@ -63,13 +70,17 @@ pub enum CustomReportType {
     Empty,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CustomReportsConfig {
     report_order: CustomReportsOrderMode,
+    #[serde(default)]
     reports: Vec<CustomReport>,
 }
 
 impl CustomReportsConfig {
+    pub const CONFIG_FILE_NAME: &str = "server_config_custom_reports.toml";
+    pub const DEFAULT_CONFIG_FILE_TEXT: &str = DEFAULT_CONFIG_FILE_TEXT;
+
     pub fn validate_and_sort_by_id(&mut self) -> Result<(), String> {
         let mut keys = HashSet::new();
         let mut ids = HashSet::new();

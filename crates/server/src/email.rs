@@ -87,12 +87,7 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
             return Ok(None);
         };
 
-        let email_content = self
-            .state
-            .config()
-            .email_content()
-            .ok_or(EmailError::GettingEmailDataFailed)
-            .attach_printable("Email content not configured")?;
+        let email_content = self.state.config().email_content();
 
         let language = self
             .state

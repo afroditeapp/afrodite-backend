@@ -38,19 +38,19 @@ pub async fn get_client_config(
         .client_config_sync_version(account_id)
         .await?;
     let info = ClientConfig {
-        client_features: state
-            .config()
-            .client_features_sha256()
-            .map(|v| ClientFeaturesConfigHash::new(v.to_string())),
-        custom_reports: state
-            .config()
-            .custom_reports_sha256()
-            .map(|v| CustomReportsConfigHash::new(v.to_string())),
-        profile_attributes: state
-            .config()
-            .profile_attributes()
-            .map(|a| a.config_for_client())
-            .cloned(),
+        client_features: Some(ClientFeaturesConfigHash::new(
+            state.config().client_features_sha256().to_string(),
+        )),
+        custom_reports: Some(CustomReportsConfigHash::new(
+            state.config().custom_reports_sha256().to_string(),
+        )),
+        profile_attributes: Some(
+            state
+                .config()
+                .profile_attributes()
+                .config_for_client()
+                .clone(),
+        ),
         sync_version,
     };
     Ok(info.into())

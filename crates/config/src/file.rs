@@ -33,15 +33,6 @@ pub const CONFIG_FILE_NAME: &str = "server_config.toml";
 
 pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
-# [config_files]
-# bot = "server_config_bots.toml"
-# email_content = "server_config_email_content.toml"
-# notification_content = "server_config_notification_content.toml"
-# web_content = "server_config_web_content.toml"
-# profile_attributes = "server_config_profile_attributes.toml"
-# custom_reports = "server_config_custom_reports.toml"
-# client_features = "server_config_client_features.toml"
-
 # [grant_admin_access]
 # email = "admin@example.com"
 
@@ -134,8 +125,6 @@ pub struct ConfigFile {
     #[serde(default)]
     pub general: GeneralConfig,
     #[serde(default)]
-    pub config_files: ConfigFileConfig,
-    #[serde(default)]
     pub api: ApiConfig,
     #[serde(default)]
     pub automatic_profile_search: AutomaticProfileSearchConfig,
@@ -153,7 +142,6 @@ impl ConfigFile {
     pub fn minimal_config_for_api_doc_json() -> Self {
         Self {
             general: Default::default(),
-            config_files: ConfigFileConfig::default(),
             api: ApiConfig::default(),
             automatic_profile_search: AutomaticProfileSearchConfig::default(),
             remote_bots: vec![],
@@ -241,17 +229,6 @@ impl ClientVersionTrackingConfig {
             && version.patch >= self.patch_min
             && version.patch <= self.patch_max
     }
-}
-
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
-pub struct ConfigFileConfig {
-    pub bot: Option<PathBuf>,
-    pub email_content: Option<PathBuf>,
-    pub notification_content: Option<PathBuf>,
-    pub web_content: Option<PathBuf>,
-    pub profile_attributes: Option<PathBuf>,
-    pub custom_reports: Option<PathBuf>,
-    pub client_features: Option<PathBuf>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

@@ -74,9 +74,9 @@ pub async fn post_get_custom_reports_config(
 ) -> Result<Json<GetCustomReportsConfigResult>, StatusCode> {
     ACCOUNT.post_get_custom_reports_config.incr();
 
-    let r = if Some(requested_hash.hash()) == state.config().custom_reports_sha256() {
+    let r = if requested_hash.hash() == state.config().custom_reports_sha256() {
         GetCustomReportsConfigResult {
-            config: state.config().custom_reports().cloned(),
+            config: Some(state.config().custom_reports().clone()),
         }
     } else {
         GetCustomReportsConfigResult { config: None }

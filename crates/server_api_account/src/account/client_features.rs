@@ -25,9 +25,9 @@ pub async fn post_get_client_features_config(
 ) -> Result<Json<GetClientFeaturesConfigResult>, StatusCode> {
     ACCOUNT.post_get_client_features_config.incr();
 
-    let r = if Some(requested_hash.hash()) == state.config().client_features_sha256() {
+    let r = if requested_hash.hash() == state.config().client_features_sha256() {
         GetClientFeaturesConfigResult {
-            config: state.config().client_features().cloned(),
+            config: Some(state.config().client_features().clone()),
         }
     } else {
         GetClientFeaturesConfigResult { config: None }

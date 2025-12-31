@@ -77,11 +77,9 @@ impl BotClient {
             .arg("--api-url")
             .arg(Self::bot_api_url(bot_api_socket));
 
-        if let Some(bot_config_file) = &config.bot_config_file() {
-            let path = std::fs::canonicalize(bot_config_file)
-                .change_context(BotClientError::LaunchCommand)?;
-            command.arg("--bot-config").arg(path);
-        }
+        command
+            .arg("--bot-config")
+            .arg(config.bot_config_abs_file_path());
 
         // Bot mode config
         command

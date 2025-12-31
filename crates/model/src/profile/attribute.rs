@@ -3,12 +3,13 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i16_wrapper;
 use utoipa::ToSchema;
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, ToSchema)]
 pub enum AttributeOrderMode {
+    #[default]
     OrderNumber,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
 pub struct PartialProfileAttributesConfig {
     pub attribute_order: AttributeOrderMode,
     pub attributes: Vec<ProfileAttributeInfo>,

@@ -133,7 +133,34 @@ pub struct EmailContentFile {
     other: toml::Table,
 }
 
+const DEFAULT_EMAIL_TEMPLATE: &str = "
+{{subject}}
+
+{{body}}
+";
+
+impl Default for EmailContentFile {
+    fn default() -> Self {
+        Self {
+            email_body_template: DEFAULT_EMAIL_TEMPLATE.to_string(),
+            email_body_content_type_is_html: false,
+            custom_keys: HashMap::new(),
+            email_verification: None,
+            new_message: None,
+            new_like: None,
+            account_deletion_remainder_first: None,
+            account_deletion_remainder_second: None,
+            account_deletion_remainder_third: None,
+            email_change_verification: None,
+            email_change_notification: None,
+            email_login: None,
+            other: toml::Table::new(),
+        }
+    }
+}
+
 impl EmailContentFile {
+    pub const CONFIG_FILE_NAME: &str = "server_config_email_content.toml";
     pub fn load(
         file: impl AsRef<Path>,
         save_if_needed: bool,

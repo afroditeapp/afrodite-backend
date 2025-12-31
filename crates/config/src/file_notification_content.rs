@@ -110,6 +110,7 @@ pub struct NotificationContentFile {
 }
 
 impl NotificationContentFile {
+    pub const CONFIG_FILE_NAME: &str = "server_config_notification_content.toml";
     pub fn load(
         file: impl AsRef<Path>,
         save_if_needed: bool,

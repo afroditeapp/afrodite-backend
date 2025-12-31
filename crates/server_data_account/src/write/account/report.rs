@@ -31,7 +31,7 @@ impl WriteCommandsAccountReport<'_> {
         let custom_report_type = self
             .config()
             .custom_reports()
-            .and_then(|v| v.index_with_id(custom_report_id))
+            .index_with_id(custom_report_id)
             .map(|r| r.report_type);
         if custom_report_type != Some(CustomReportType::Empty) {
             return Err(DataError::NotAllowed.report());

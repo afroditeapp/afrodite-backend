@@ -9,13 +9,23 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use utoipa::ToSchema;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
+attribute_order = "OrderNumber"
+
+# [[attributes]]
+"#;
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AttributesFileInternal {
     attribute_order: AttributeOrderMode,
+    #[serde(default)]
     pub attributes: Vec<AttributeInternal>,
 }
 
 impl AttributesFileInternal {
+    pub const CONFIG_FILE_NAME: &str = "server_config_profile_attributes.toml";
+    pub const DEFAULT_CONFIG_FILE_TEXT: &str = DEFAULT_CONFIG_FILE_TEXT;
+
     fn validate_attributes(
         mut self,
     ) -> Result<(AttributeOrderMode, Vec<AttributeInternal>), String> {
@@ -654,7 +664,7 @@ impl From<IconResource> for String {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct ProfileAttributesInternal {
     /// List of attributes.
     ///

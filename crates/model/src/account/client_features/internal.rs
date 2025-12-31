@@ -8,6 +8,63 @@ use super::{
 };
 use crate::{ClientFeaturesConfig, ScheduledTasksConfig};
 
+const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
+[attribution.generic]
+default = "Generic data attribution"
+
+[attribution.ip_country]
+default = "IP address country data attribution"
+
+[features]
+video_calls = true
+
+[news]
+locales = []
+
+[limits.likes]
+unlimited_likes_disabling_time = "2:00"
+
+[limits.likes.daily]
+daily_likes = 5
+reset_time = "2:00"
+
+[map.bounds]
+top_left = { lat = 90, lon = -180 }
+bottom_right = { lat = -90, lon = 180 }
+
+[map.zoom]
+min = 1
+max = 15
+max_tile_downloading = 13
+location_not_selected = 6
+location_selected = 10
+
+[map.initial_location]
+lat = 0
+lon = 0
+
+[profile]
+# On iOS with default keyboard settings, ' is ‘ or ’.
+profile_name_regex = "^[-'‘’.A-Za-z]+$"
+
+[chat]
+message_state_delivered = true
+message_state_seen = true
+
+[chat.typing_indicator]
+min_wait_seconds_between_requests_server = 1
+min_wait_seconds_between_requests_client = 4
+start_event_ttl_seconds = 10
+
+[chat.check_online_status]
+min_wait_seconds_between_requests_server = 4
+min_wait_seconds_between_requests_client = 8
+
+[server.scheduled_tasks]
+daily_start_time = "3:00"
+
+"#;
+
 /// Client features config file
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct ClientFeaturesConfigInternal {
@@ -29,6 +86,9 @@ pub struct ClientFeaturesConfigInternal {
 }
 
 impl ClientFeaturesConfigInternal {
+    pub const CONFIG_FILE_NAME: &str = "server_config_client_features.toml";
+    pub const DEFAULT_CONFIG_FILE_TEXT: &str = DEFAULT_CONFIG_FILE_TEXT;
+
     pub fn to_client_features_config(self) -> Result<ClientFeaturesConfig, String> {
         if let Some(key) = self.attribution.other.keys().next() {
             return Err(format!(

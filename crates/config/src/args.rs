@@ -91,7 +91,7 @@ pub struct RemoteBotMode {
 
 impl RemoteBotMode {
     pub fn to_test_mode(&self) -> error_stack::Result<TestMode, ConfigFileError> {
-        let config = BotConfigFile::load(self.bot_config.clone())?;
+        let config = BotConfigFile::load(self.bot_config.clone(), false)?;
         let Some(server_url) = config.remote_bot_mode.map(|v| v.api_url) else {
             return Err(ConfigFileError::InvalidConfig.report())
                 .attach_printable("Remote bot mode config not found");

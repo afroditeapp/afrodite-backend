@@ -33,11 +33,7 @@ impl StartupTasks {
     }
 
     async fn handle_profile_attribute_file_changes(state: &S) -> Result<(), DataError> {
-        let hash = if let Some(hash) = state.config().profile_attributes_sha256() {
-            hash.to_string()
-        } else {
-            return Ok(());
-        };
+        let hash = state.config().profile_attributes_sha256().to_string();
 
         db_write_raw!(state, move |cmds| {
             cmds.profile()
@@ -48,11 +44,7 @@ impl StartupTasks {
     }
 
     async fn handle_custom_report_file_changes(state: &S) -> Result<(), DataError> {
-        let hash = if let Some(hash) = state.config().custom_reports_sha256() {
-            hash.to_string()
-        } else {
-            return Ok(());
-        };
+        let hash = state.config().custom_reports_sha256().to_string();
 
         db_write_raw!(state, move |cmds| {
             cmds.account()
@@ -64,11 +56,7 @@ impl StartupTasks {
     }
 
     async fn handle_client_features_file_changes(state: &S) -> Result<(), DataError> {
-        let hash = if let Some(hash) = state.config().client_features_sha256() {
-            hash.to_string()
-        } else {
-            return Ok(());
-        };
+        let hash = state.config().client_features_sha256().to_string();
 
         db_write_raw!(state, move |cmds| {
             cmds.account()

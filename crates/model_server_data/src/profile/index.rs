@@ -271,7 +271,7 @@ impl LocationIndexProfileData {
     pub fn is_match(
         &self,
         query_maker_details: &ProfileQueryMakerDetails,
-        attribute_info: Option<&ProfileAttributesInternal>,
+        attribute_info: &ProfileAttributesInternal,
         current_time: &UnixTime,
     ) -> bool {
         let mut is_match = self.search_age_range.is_match(query_maker_details.age)
@@ -315,7 +315,7 @@ impl LocationIndexProfileData {
             is_match &= filter.is_match(self.profile_text_character_count);
         }
 
-        if is_match && let Some(attribute_info) = attribute_info {
+        if is_match {
             is_match &= self.attribute_filters_match(query_maker_details, attribute_info);
         }
 

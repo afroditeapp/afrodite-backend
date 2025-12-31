@@ -6,8 +6,8 @@ use chrono::{Datelike, Timelike};
 use config::{
     args::{SelectedBenchmark, TestMode},
     file::{
-        ApiConfig, AutomaticProfileSearchConfig, CONFIG_FILE_NAME, ConfigFile, ConfigFileConfig,
-        EmailAddress, GrantAdminAccessConfig, LocationConfig,
+        ApiConfig, AutomaticProfileSearchConfig, CONFIG_FILE_NAME, ConfigFile, EmailAddress,
+        GrantAdminAccessConfig, LocationConfig,
     },
 };
 use nix::{sys::signal::Signal, unistd::Pid};
@@ -128,7 +128,6 @@ fn new_config(config: &TestMode, bot_api_port: u16) -> (ConfigFile, SimpleBacken
             ..Default::default()
         },
         api: ApiConfig::default(),
-        config_files: ConfigFileConfig::default(),
         automatic_profile_search: AutomaticProfileSearchConfig::default(),
         remote_bots: vec![],
         location: if let Some(SelectedBenchmark::GetProfileList) = config.selected_benchmark() {

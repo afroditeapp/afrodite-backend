@@ -87,6 +87,7 @@ impl Default for WebContentFile {
 }
 
 impl WebContentFile {
+    pub const CONFIG_FILE_NAME: &str = "server_config_web_content.toml";
     pub fn load(
         file: impl AsRef<Path>,
         save_if_needed: bool,

@@ -184,7 +184,7 @@ impl ProfileUpdateInternal {
     /// `AcceptedProfileAges` is checked only if it is Some.
     pub fn validate(
         mut self,
-        attribute_info: Option<&ProfileAttributesInternal>,
+        attribute_info: &ProfileAttributesInternal,
         profile_name_regex: Option<&Regex>,
         current_profile: &Profile,
         initial_age: Option<InitialProfileAge>,
@@ -196,29 +196,25 @@ impl ProfileUpdateInternal {
                 return Err("Duplicate attribute ID".to_string());
             }
 
-            if let Some(info) = attribute_info {
-                let attribute_info = info.get_attribute(a.id);
-                match attribute_info {
-                    None => return Err("Unknown attribute ID".to_string()),
-                    Some(info) => {
-                        let error = || {
-                            Err(format!(
-                                "Attribute supports max {} selected values",
-                                info.max_selected,
-                            ))
-                        };
-                        if info.mode.is_bitflag() {
-                            let selected = a.v.first().copied().unwrap_or_default().count_ones();
-                            if selected > info.max_selected.into() {
-                                return error();
-                            }
-                        } else if a.v.len() > info.max_selected.into() {
+            let attribute_info = attribute_info.get_attribute(a.id);
+            match attribute_info {
+                None => return Err("Unknown attribute ID".to_string()),
+                Some(info) => {
+                    let error = || {
+                        Err(format!(
+                            "Attribute supports max {} selected values",
+                            info.max_selected,
+                        ))
+                    };
+                    if info.mode.is_bitflag() {
+                        let selected = a.v.first().copied().unwrap_or_default().count_ones();
+                        if selected > info.max_selected.into() {
                             return error();
                         }
+                    } else if a.v.len() > info.max_selected.into() {
+                        return error();
                     }
                 }
-            } else {
-                return Err("Profile attributes are disabled".to_string());
             }
         }
 

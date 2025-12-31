@@ -41,8 +41,7 @@ pub async fn post_get_query_profile_attributes_config(
         values: state
             .config()
             .profile_attributes()
-            .map(|a| a.query_attributes(query.values))
-            .unwrap_or_default(),
+            .query_attributes(query.values),
     };
     Ok(info.into())
 }
