@@ -75,8 +75,8 @@ Command `make update-api-bindings` requires `openapi-generator-cli`.
 
 ## Config files
 
-Check backend code located at `crates/config` and `crates/simple_backend_config`
-for all available config file options.
+Check code located at `crates/config`, `crates/simple_backend_config`
+and `crates/manager_config` for all available config file options.
 
 ### Simple config for debugging and development
 
