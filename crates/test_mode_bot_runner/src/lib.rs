@@ -58,9 +58,6 @@ impl BotTestRunner {
     pub async fn run(self) {
         info!("Testing mode - bot test runner");
         info!("data dir: {:?}", self.test_config.data_dir);
-        let start_cmd = std::env::args().next().unwrap();
-        let start_cmd = std::fs::canonicalize(&start_cmd).unwrap();
-        info!("Path to server binary: {:?}", &start_cmd);
 
         let old_state = if self.test_config.save_state() {
             self.load_state_data().await.map(Arc::new)
