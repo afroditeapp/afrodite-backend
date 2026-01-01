@@ -368,19 +368,37 @@ impl fmt::Display for SelectedBenchmark {
 
 #[derive(Parser, Debug, Clone)]
 pub enum ConfigMode {
-    /// Check config. This loads the config like normally (includes
-    /// directory creation for example) but does not save default config files.
-    Check {
+    /// Check server config.
+    CheckServer {
         /// Try to read config files from this directory. Use current directory
         /// if the argument does not exists.
         dir: Option<PathBuf>,
     },
-    /// View config. This loads the config like normally (includes
-    /// directory creation for example) but does not save default config files.
-    View {
+    /// View server config.
+    ViewServer {
         /// Try to read config files from this directory. Use current directory
         /// if the argument does not exists.
         dir: Option<PathBuf>,
+    },
+    /// Check manager config.
+    CheckManager {
+        /// Path to manager config file.
+        file: PathBuf,
+    },
+    /// View manager config.
+    ViewManager {
+        /// Path to manager config file.
+        file: PathBuf,
+    },
+    /// Check bot config.
+    CheckBot {
+        /// Path to bot config file.
+        file: PathBuf,
+    },
+    /// View bot config.
+    ViewBot {
+        /// Path to bot config file.
+        file: PathBuf,
     },
     /// Print available profile index sizes using
     /// dimensions from config file and quit.

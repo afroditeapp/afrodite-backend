@@ -1,62 +1,70 @@
 use std::{env, path::PathBuf};
 
-use config::{GetConfigError, args::ConfigMode, get_config};
+use config::{GetConfigError, args::ConfigMode, bot_config_file::BotConfigFile, get_config};
 use server_data::index::info::LocationIndexInfoCreator;
 use simple_backend_config::args::ServerMode;
 
 pub fn handle_config_tools(mode: ConfigMode) -> Result<(), GetConfigError> {
     match mode {
-        ConfigMode::Check { dir } => handle_check_and_view(dir, false),
-        ConfigMode::View { dir } => handle_check_and_view(dir, true),
+        ConfigMode::CheckServer { dir } => handle_check_and_view_server(dir, false),
+        ConfigMode::ViewServer { dir } => handle_check_and_view_server(dir, true),
+        ConfigMode::CheckManager { file } => handle_check_and_view_manager(file, false),
+        ConfigMode::ViewManager { file } => handle_check_and_view_manager(file, true),
+        ConfigMode::CheckBot { file } => handle_check_and_view_bot(file, false),
+        ConfigMode::ViewBot { file } => handle_check_and_view_bot(file, true),
         ConfigMode::IndexInfo { dir } => handle_index_info(dir),
     }
 }
 
-fn handle_check_and_view(dir: Option<PathBuf>, print: bool) -> Result<(), GetConfigError> {
+fn handle_check_and_view_server(dir: Option<PathBuf>, print: bool) -> Result<(), GetConfigError> {
     if let Some(dir) = dir {
         env::set_current_dir(dir).unwrap();
     }
 
     let dir = env::current_dir().unwrap();
-    let mut config_file_found = false;
-
     if dir.join(config::file::CONFIG_FILE_NAME).exists() {
         let c = get_config(ServerMode::default(), String::new(), String::new(), false).unwrap();
-
         if print {
             println!("{:#?}", c.parsed_files())
         } else {
-            println!("Config loaded correctly");
+            println!("Server config loaded correctly");
         }
-
-        config_file_found = true;
+    } else {
+        println!("Could not find {}", config::file::CONFIG_FILE_NAME)
     }
 
-    let manager_config_file = dir.join(manager_config::file::CONFIG_FILE_NAME);
-    if manager_config_file.exists() {
-        let c = manager_config::get_config(
-            manager_config_file,
-            String::new(),
-            String::new(),
-            String::new(),
-        )
-        .unwrap();
+    Ok(())
+}
 
-        if print {
-            println!("{:#?}", c.parsed_file())
-        } else {
-            println!("Manager config loaded correctly");
-        }
-
-        config_file_found = true;
+fn handle_check_and_view_manager(file: PathBuf, print: bool) -> Result<(), GetConfigError> {
+    if !file.exists() {
+        println!("Manager config file '{:?}' not found", file);
+        return Ok(());
     }
 
-    if !config_file_found {
-        println!(
-            "Could not find {} or {}",
-            config::file::CONFIG_FILE_NAME,
-            manager_config::file::CONFIG_FILE_NAME,
-        )
+    let c = manager_config::get_config(file, String::new(), String::new(), String::new()).unwrap();
+
+    if print {
+        println!("{:#?}", c.parsed_file())
+    } else {
+        println!("Manager config loaded correctly");
+    }
+
+    Ok(())
+}
+
+fn handle_check_and_view_bot(file: PathBuf, print: bool) -> Result<(), GetConfigError> {
+    if !file.exists() {
+        println!("Bot config file '{:?}' not found", file);
+        return Ok(());
+    }
+
+    let c = BotConfigFile::load(file, false).unwrap();
+
+    if print {
+        println!("{:#?}", c)
+    } else {
+        println!("Bot config loaded correctly");
     }
 
     Ok(())

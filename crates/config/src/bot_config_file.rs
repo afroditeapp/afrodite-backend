@@ -81,7 +81,7 @@ impl BotConfigFile {
         Ok(config)
     }
 
-    pub(crate) fn load(
+    pub fn load(
         file: impl AsRef<Path>,
         save_if_needed: bool,
     ) -> Result<BotConfigFile, ConfigFileError> {
