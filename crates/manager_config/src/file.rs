@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use error_stack::{Report, Result, ResultExt};
+use error_stack::{Result, ResultExt};
 use manager_model::{ManagerInstanceName, SecureStorageEncryptionKey};
 use serde::{Deserialize, Serialize};
 use simple_backend_utils::{
@@ -14,8 +14,6 @@ use simple_backend_utils::{
 use url::Url;
 
 use super::GetConfigError;
-
-pub const CONFIG_FILE_NAME: &str = "manager.toml";
 
 pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
@@ -180,15 +178,6 @@ impl ConfigFile {
         }
 
         Ok(file)
-    }
-
-    pub fn default_config_file_path(dir: impl AsRef<Path>) -> Result<PathBuf, ConfigFileError> {
-        if !dir.as_ref().is_dir() {
-            return Err(Report::new(ConfigFileError::NotDirectory));
-        }
-        let mut file_path = dir.as_ref().to_path_buf();
-        file_path.push(CONFIG_FILE_NAME);
-        Ok(file_path)
     }
 }
 
