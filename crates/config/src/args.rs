@@ -160,7 +160,7 @@ pub struct TestMode {
     pub bot_config: Option<PathBuf>,
 
     /// Directory for test mode files
-    #[arg(long, default_value = "tmp_data", value_name = "DIR")]
+    #[arg(long, default_value = "test_data", value_name = "DIR")]
     pub data_dir: Option<PathBuf>,
 
     // Boolean flags

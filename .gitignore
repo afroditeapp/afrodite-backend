@@ -4,6 +4,7 @@
 /database-media
 /tmp_databases
 /tmp_data
+/test_data
 /config
 
 server_config.toml
