@@ -133,6 +133,7 @@ impl RemoteBotMode {
             no_servers: true,
             early_quit: false,
             sqlite_in_ram: false,
+            no_tmp_dir: false,
             mode: TestModeSubMode::Bot(BotModeConfig {
                 users: TryInto::<u32>::try_into(config.bots.len())
                     .change_context(ConfigFileError::InvalidConfig)?,
@@ -164,13 +165,18 @@ pub struct TestMode {
     pub data_dir: Option<PathBuf>,
 
     // Boolean flags
-    /// Do not remove server instance database files
+    /// Do not remove server instance files
     #[arg(long)]
     pub no_clean: bool,
 
     /// Do not start new server instances
     #[arg(long)]
     pub no_servers: bool,
+
+    /// Do not use system temporary directory. Server instance files are
+    /// written to data dir when this is set.
+    #[arg(long)]
+    pub no_tmp_dir: bool,
 
     /// First error quits
     #[arg(long)]

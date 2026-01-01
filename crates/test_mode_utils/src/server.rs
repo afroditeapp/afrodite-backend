@@ -25,6 +25,8 @@ use tokio::{
 };
 use tracing::info;
 
+use crate::dir::DataDirUtils;
+
 pub const TEST_ADMIN_ACCESS_EMAIL: &str = "admin@example.com";
 
 pub const SERVER_INSTANCE_DIR_START: &str = "server_instance_";
@@ -203,7 +205,12 @@ impl ServerInstance {
     ) -> Self {
         let id = simple_backend_utils::UuidBase64Url::new_random_id();
         let time = chrono::Utc::now();
-        let dir = env::temp_dir().join(format!(
+        let base_dir = if args_config.no_tmp_dir {
+            DataDirUtils::create_data_dir_if_needed(args_config)
+        } else {
+            env::temp_dir()
+        };
+        let dir = base_dir.join(format!(
             "{}{}-{}-{}_{}-{}_{}",
             SERVER_INSTANCE_DIR_START,
             time.year(),
