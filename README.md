@@ -37,14 +37,14 @@ make run-release
 
 ### Dependencies
 
-#### Ubuntu 22.04
+#### Ubuntu
 
 1. Install [Rust](https://www.rust-lang.org/learn/get-started).
 
 2. Install other dependencies.
 
 ```
-sudo apt install build-essential pkg-config libsqlite3-dev libpq-dev
+sudo apt install git build-essential pkg-config libssl-dev libsqlite3-dev libpq-dev
 ```
 
 #### macOS
