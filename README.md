@@ -23,6 +23,23 @@ Tagged preview versions (0.x) of frontend and backend
 with the same minor version number are compatible with each other.
 Main branch might be broken or incompatible with the frontend.
 
+### Docker
+
+```sh
+docker build -f Dockerfile -t afrodite-backend:dev .
+mkdir -p data config
+docker run --rm -it \
+  --name afrodite-backend \
+  -e RUST_LOG=info \
+  -u "$(id -u):$(id -g)" \
+  -v "$(pwd)/config:/config" \
+  -v "$(pwd)/data:/data" \
+  -p 3000:3000 \
+  afrodite-backend:dev server
+```
+
+### Ubuntu and MacOS
+
 1. Install [dependencies](#dependencies).
 
 2. Build and run the backend.
