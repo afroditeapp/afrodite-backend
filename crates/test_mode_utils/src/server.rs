@@ -6,8 +6,8 @@ use chrono::{Datelike, Timelike};
 use config::{
     args::{SelectedBenchmark, TestMode},
     file::{
-        ApiConfig, AutomaticProfileSearchConfig, CONFIG_FILE_NAME, ConfigFile, EmailAddress,
-        GrantAdminAccessConfig, LocationConfig,
+        ApiConfig, AutomaticProfileSearchConfig, ConfigFile, EmailAddress, GrantAdminAccessConfig,
+        LocationConfig,
     },
 };
 use nix::{sys::signal::Signal, unistd::Pid};
@@ -226,7 +226,7 @@ impl ServerInstance {
         std::fs::create_dir(&config_dir).unwrap();
 
         let config = toml::to_string_pretty(&server_config).unwrap();
-        std::fs::write(config_dir.join(CONFIG_FILE_NAME), config).unwrap();
+        std::fs::write(config_dir.join(ConfigFile::CONFIG_FILE_NAME), config).unwrap();
 
         let config = toml::to_string_pretty(&simple_backend_config).unwrap();
         std::fs::write(

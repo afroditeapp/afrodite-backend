@@ -29,8 +29,6 @@ use simple_backend_utils::{
 // latitude_bottom_right = 59.8
 // longitude_bottom_right = 31.58
 
-pub const CONFIG_FILE_NAME: &str = "server.toml";
-
 pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
 # [grant_admin_access]
@@ -141,6 +139,8 @@ pub struct ConfigFile {
 }
 
 impl ConfigFile {
+    pub const CONFIG_FILE_NAME: &str = "server.toml";
+
     pub fn minimal_config_for_api_doc_json() -> Self {
         Self {
             general: Default::default(),
@@ -157,7 +157,7 @@ impl ConfigFile {
 
     pub fn default_file_path() -> Result<PathBuf, ConfigFileError> {
         let current_dir = std::env::current_dir().change_context(ConfigFileError::LoadConfig)?;
-        Ok(current_dir.join(CONFIG_FILE_NAME))
+        Ok(current_dir.join(Self::CONFIG_FILE_NAME))
     }
 
     pub fn load_from_default_location(save_if_needed: bool) -> Result<Self, ConfigFileError> {

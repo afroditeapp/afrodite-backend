@@ -54,8 +54,8 @@ pub struct BotConfigFile {
     pub content_moderation: Option<ContentModerationConfig>,
     /// Config required for starting backend in remote bot mode.
     pub remote_bot_mode: Option<RemoteBotModeConfig>,
-    /// If None, value from server config might be loaded here
-    /// if server config path command line argument is set.
+    /// If None, reading location from server config file next
+    /// to bot config file is tried.
     pub location: Option<LocationConfig>,
 }
 
@@ -65,23 +65,25 @@ impl BotConfigFile {
     /// config is loaded.
     pub fn load_if_bot_mode_or_default(
         file: impl AsRef<Path>,
-        server_config_file: Option<impl AsRef<Path>>,
         test_mode: &TestMode,
     ) -> Result<BotConfigFile, ConfigFileError> {
         if test_mode.bot_mode().is_none() {
             return Ok(BotConfigFile::default());
         }
 
-        let mut config = Self::load(file, false)?;
+        let bot_config_abs_path = abs_path_for_directory_or_file_which_might_not_exists(file)
+            .change_context(ConfigFileError::LoadConfig)?;
+        let mut bot_config = Self::load(&bot_config_abs_path, false)?;
 
-        if config.location.is_none()
-            && let Some(server_config_file) = server_config_file
-        {
-            let server_config = ConfigFile::load(server_config_file)?;
-            config.location = server_config.location;
+        if bot_config.location.is_none() {
+            let mut server_config_path = bot_config_abs_path;
+            server_config_path.pop();
+            server_config_path.push(ConfigFile::CONFIG_FILE_NAME);
+            let server_config = ConfigFile::load(server_config_path)?;
+            bot_config.location = server_config.location;
         }
 
-        Ok(config)
+        Ok(bot_config)
     }
 
     /// Changes working directory where the config file is located
