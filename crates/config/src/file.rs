@@ -118,6 +118,8 @@ pub enum ConfigFileError {
 
     #[error("Invalid config")]
     InvalidConfig,
+    #[error("Change directory failed")]
+    ChangeDirectoryFailed,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

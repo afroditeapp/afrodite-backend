@@ -261,7 +261,8 @@ impl SimpleBackendConfig {
     }
 }
 
-/// Read config file from current directory.
+/// Read config file from current directory. Changes working directory to
+/// config file directory.
 pub fn get_config(
     args_config: args::ServerMode,
     backend_code_version: String,

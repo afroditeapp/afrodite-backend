@@ -327,6 +327,7 @@ impl Config {
     }
 }
 
+/// Changes working directory to config file directory
 pub fn get_config(
     args_config: ServerMode,
     backend_code_version: String,
@@ -451,9 +452,11 @@ pub fn get_config(
     let bot_config_abs_file_path =
         abs_path_for_directory_or_file_which_might_not_exists(BotConfigFile::CONFIG_FILE_NAME)
             .change_context(GetConfigError::LoadFileError)?;
-    let bot_config =
-        BotConfigFile::load(&bot_config_abs_file_path, save_default_config_if_not_found)
-            .change_context(GetConfigError::LoadFileError)?;
+    let bot_config = BotConfigFile::load(
+        BotConfigFile::CONFIG_FILE_NAME,
+        save_default_config_if_not_found,
+    )
+    .change_context(GetConfigError::LoadFileError)?;
 
     let config = Config {
         simple_backend_config: simple_backend_config.into(),

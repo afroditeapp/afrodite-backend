@@ -7,7 +7,9 @@ use error_stack::{Result, ResultExt};
 use serde::{Deserialize, Deserializer};
 pub use simple_backend_config::file::NsfwDetectionThresholds;
 use simple_backend_model::NonEmptyString;
-use simple_backend_utils::{ContextExt, time::UtcTimeValue};
+use simple_backend_utils::{
+    ContextExt, dir::abs_path_for_directory_or_file_which_might_not_exists, time::UtcTimeValue,
+};
 use url::Url;
 
 use crate::{
@@ -59,6 +61,8 @@ pub struct BotConfigFile {
 
 impl BotConfigFile {
     pub const CONFIG_FILE_NAME: &str = "bots.toml";
+    /// Changes working directory where the config file is located if
+    /// config is loaded.
     pub fn load_if_bot_mode_or_default(
         file: impl AsRef<Path>,
         server_config_file: Option<impl AsRef<Path>>,
@@ -80,14 +84,16 @@ impl BotConfigFile {
         Ok(config)
     }
 
+    /// Changes working directory where the config file is located
     pub fn load(
         file: impl AsRef<Path>,
         save_if_needed: bool,
     ) -> Result<BotConfigFile, ConfigFileError> {
-        let path = file.as_ref();
+        let path = abs_path_for_directory_or_file_which_might_not_exists(file.as_ref())
+            .change_context(ConfigFileError::LoadConfig)?;
         if !path.exists() && save_if_needed {
             let mut new_file =
-                std::fs::File::create_new(path).change_context(ConfigFileError::LoadConfig)?;
+                std::fs::File::create_new(&path).change_context(ConfigFileError::LoadConfig)?;
             new_file
                 .write_all(DEFAULT_BOT_CONFIG.as_bytes())
                 .change_context(ConfigFileError::LoadConfig)?;
@@ -96,6 +102,11 @@ impl BotConfigFile {
             std::fs::read_to_string(file).change_context(ConfigFileError::LoadConfig)?;
         let mut config: BotConfigFile =
             toml::from_str(&config_content).change_context(ConfigFileError::LoadConfig)?;
+
+        let mut config_dir = path.clone();
+        config_dir.pop();
+        std::env::set_current_dir(config_dir)
+            .change_context(ConfigFileError::ChangeDirectoryFailed)?;
 
         let validate_common_config = |bot: &BaseBotConfig, id: Option<u16>| {
             let error_location = id

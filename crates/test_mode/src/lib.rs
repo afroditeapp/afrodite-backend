@@ -30,9 +30,6 @@ impl TestRunner {
         if let Some(bot_config) = &test_config.bot_config {
             let file_path =
                 abs_path_for_directory_or_file_which_might_not_exists(bot_config).unwrap();
-            let mut dir_path = file_path.clone();
-            dir_path.pop();
-            std::env::set_current_dir(&dir_path).unwrap();
             test_config.bot_config = Some(file_path);
         }
         Self {

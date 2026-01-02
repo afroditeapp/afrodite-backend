@@ -7,7 +7,9 @@ use error_stack::ResultExt;
 use manager_config::args::ManagerApiClientMode;
 use reqwest::Url;
 use simple_backend_config::args::ServerMode;
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{
+    ContextExt, dir::abs_path_for_directory_or_file_which_might_not_exists,
+};
 
 use crate::{bot_config_file::BotConfigFile, file::ConfigFileError};
 
@@ -91,7 +93,10 @@ pub struct RemoteBotMode {
 
 impl RemoteBotMode {
     pub fn to_test_mode(&self) -> error_stack::Result<TestMode, ConfigFileError> {
-        let config = BotConfigFile::load(self.bot_config.clone(), false)?;
+        let bot_config_path_abs =
+            abs_path_for_directory_or_file_which_might_not_exists(&self.bot_config)
+                .change_context(ConfigFileError::LoadConfig)?;
+        let config = BotConfigFile::load(&bot_config_path_abs, false)?;
         let Some(remote_bot_mode_config) = config.remote_bot_mode else {
             return Err(ConfigFileError::InvalidConfig.report())
                 .attach_printable("Remote bot mode config not found");
@@ -100,7 +105,7 @@ impl RemoteBotMode {
         Ok(TestMode {
             server: ServerConfig::default(),
             api_urls: PublicApiUrl::new(remote_bot_mode_config.api_url),
-            bot_config: Some(self.bot_config.clone()),
+            bot_config: Some(bot_config_path_abs),
             data_dir: None,
             no_clean: false,
             no_servers: true,
