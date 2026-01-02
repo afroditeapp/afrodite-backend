@@ -18,11 +18,14 @@ use tokio::{
 };
 use tracing::{error, info};
 
-use crate::admin_bot::{
-    content::ContentModerationHandler,
-    notification::{ModerationHandler, NotificationSender},
-    profile_name::ProfileNameModerationHandler,
-    profile_text::ProfileTextModerationHandler,
+use crate::{
+    admin_bot::{
+        content::ContentModerationHandler,
+        notification::{ModerationHandler, NotificationSender},
+        profile_name::ProfileNameModerationHandler,
+        profile_text::ProfileTextModerationHandler,
+    },
+    client_bot::DoInitialSetupIfNeeded,
 };
 
 mod content;
@@ -146,13 +149,10 @@ impl AdminBot {
     async fn run_admin_initial_logic(state: &mut BotState) -> Result<(), TestError> {
         state.connections.enable_events();
 
-        // Initial setup - inline run_actions
-        for action in action_array![Register, Login].iter() {
+        for action in action_array![Register, Login, DoInitialSetupIfNeeded { admin: true }].iter()
+        {
             action.excecute_impl(state).await?;
         }
-
-        // Complete initial setup if needed
-        Self::complete_initial_setup_if_needed(state).await?;
 
         Ok(())
     }
@@ -252,40 +252,5 @@ impl AdminBot {
                 }
             }
         }
-    }
-
-    async fn complete_initial_setup_if_needed(state: &mut BotState) -> Result<(), TestError> {
-        use api_client::apis::account_api::get_account_state;
-        use test_mode_bot::actions::account::AccountState;
-
-        let account_state = get_account_state(state.api()).await.map_err(|e| {
-            TestError::ApiRequest
-                .report()
-                .attach_printable(e.to_string())
-        })?;
-
-        if AccountState::from(account_state) == AccountState::InitialSetup {
-            use test_mode_bot::actions::{
-                account::{CompleteAccountSetup, SetAccountSetup},
-                media::{SendImageToSlot, SetContent},
-            };
-
-            // Inline run_actions
-            for action in action_array![
-                SetAccountSetup::admin(),
-                SendImageToSlot::slot(0),
-                SetContent {
-                    security_content_slot_i: Some(0),
-                    content_0_slot_i: Some(0),
-                },
-                CompleteAccountSetup,
-            ]
-            .iter()
-            {
-                action.excecute_impl(state).await?;
-            }
-        }
-
-        Ok(())
     }
 }

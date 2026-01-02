@@ -113,7 +113,7 @@ impl BotStruct for ClientBot {
 
 #[derive(Debug)]
 pub struct DoInitialSetupIfNeeded {
-    admin: bool,
+    pub admin: bool,
 }
 
 #[async_trait]
