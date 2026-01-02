@@ -1,4 +1,4 @@
-use std::{env, path::PathBuf};
+use std::path::PathBuf;
 
 use config::{GetConfigError, args::ConfigMode, bot_config_file::BotConfigFile, get_config};
 use server_data::index::info::LocationIndexInfoCreator;
@@ -16,21 +16,19 @@ pub fn handle_config_tools(mode: ConfigMode) -> Result<(), GetConfigError> {
     }
 }
 
-fn handle_check_and_view_server(dir: Option<PathBuf>, print: bool) -> Result<(), GetConfigError> {
-    if let Some(dir) = dir {
-        env::set_current_dir(dir).unwrap();
-    }
+fn handle_check_and_view_server(dir: PathBuf, print: bool) -> Result<(), GetConfigError> {
+    let c = get_config(
+        ServerMode::new_with_config_dir(dir),
+        String::new(),
+        String::new(),
+        false,
+    )
+    .unwrap();
 
-    let dir = env::current_dir().unwrap();
-    if dir.join(config::file::CONFIG_FILE_NAME).exists() {
-        let c = get_config(ServerMode::default(), String::new(), String::new(), false).unwrap();
-        if print {
-            println!("{:#?}", c.parsed_files())
-        } else {
-            println!("Server config loaded correctly");
-        }
+    if print {
+        println!("{:#?}", c.parsed_files())
     } else {
-        println!("Could not find {}", config::file::CONFIG_FILE_NAME)
+        println!("Server config loaded correctly");
     }
 
     Ok(())
@@ -70,12 +68,14 @@ fn handle_check_and_view_bot(file: PathBuf, print: bool) -> Result<(), GetConfig
     Ok(())
 }
 
-fn handle_index_info(dir: Option<PathBuf>) -> Result<(), GetConfigError> {
-    if let Some(dir) = dir {
-        env::set_current_dir(dir).unwrap();
-    }
-
-    let config = get_config(ServerMode::default(), String::new(), String::new(), false).unwrap();
+fn handle_index_info(dir: PathBuf) -> Result<(), GetConfigError> {
+    let config = get_config(
+        ServerMode::new_with_config_dir(dir),
+        String::new(),
+        String::new(),
+        false,
+    )
+    .unwrap();
 
     println!(
         "{}",

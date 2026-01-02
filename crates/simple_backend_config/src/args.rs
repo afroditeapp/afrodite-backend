@@ -30,6 +30,14 @@ impl ServerMode {
             sqlite_in_ram,
         }
     }
+
+    pub fn new_with_config_dir(config_dir: PathBuf) -> Self {
+        Self {
+            data_dir: PathBuf::from(DEFAULT_DATA_DIR_NAME),
+            config_dir,
+            sqlite_in_ram: false,
+        }
+    }
 }
 
 impl Default for ServerMode {

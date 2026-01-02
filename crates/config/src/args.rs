@@ -370,15 +370,13 @@ impl fmt::Display for SelectedBenchmark {
 pub enum ConfigMode {
     /// Check server config.
     CheckServer {
-        /// Try to read config files from this directory. Use current directory
-        /// if the argument does not exists.
-        dir: Option<PathBuf>,
+        /// Server config dir.
+        dir: PathBuf,
     },
     /// View server config.
     ViewServer {
-        /// Try to read config files from this directory. Use current directory
-        /// if the argument does not exists.
-        dir: Option<PathBuf>,
+        /// Server config dir.
+        dir: PathBuf,
     },
     /// Check manager config.
     CheckManager {
@@ -403,8 +401,7 @@ pub enum ConfigMode {
     /// Print available profile index sizes using
     /// dimensions from config file and quit.
     IndexInfo {
-        /// Try to read config file from this directory. Use current directory
-        /// if the argument does not exists.
-        dir: Option<PathBuf>,
+        /// Server config dir.
+        dir: PathBuf,
     },
 }
