@@ -121,7 +121,7 @@ pub use utils::api::PATH_CONNECT;
 ///   - Client access token string (prefix 't' and base64url encoded token
 ///     without base64url padding).
 ///   - Client info string (prefix 'c' and values separated with '_' character)
-///     - Client type number (0 = Android, 1 = iOS, 2 = Web, 255 = Test mode bot).
+///     - Client type number (0 = Android, 1 = iOS, 2 = Web, 3 = Bot).
 ///     - Client major version number.
 ///     - Client minor version number.
 ///     - Client patch version number.
@@ -247,9 +247,7 @@ async fn handle_socket_basic_errors(
                 WebSocketClientTypeNumber::Android => COMMON.websocket_client_type_android.incr(),
                 WebSocketClientTypeNumber::Ios => COMMON.websocket_client_type_ios.incr(),
                 WebSocketClientTypeNumber::Web => COMMON.websocket_client_type_web.incr(),
-                WebSocketClientTypeNumber::TestModeBot => {
-                    COMMON.websocket_client_type_test_mode_bot.incr()
-                }
+                WebSocketClientTypeNumber::Bot => COMMON.websocket_client_type_test_mode_bot.incr(),
             }
 
             let tracking_result = state
@@ -264,7 +262,7 @@ async fn handle_socket_basic_errors(
                 TrackingResult::Disabled | TrackingResult::Tracked => (),
             }
 
-            if info.client_type == WebSocketClientTypeNumber::TestModeBot {
+            if info.client_type == WebSocketClientTypeNumber::Bot {
                 info.client_version == ClientVersion::BOT_CLIENT_VERSION
             } else if let Some(min_version) = state.config().min_client_version() {
                 min_version.received_version_is_accepted(info.client_version)

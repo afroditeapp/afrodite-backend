@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Data, DeriveInput, Expr, ExprLit, Fields, Lit, parse_macro_input};
+use syn::{Data, DeriveInput, Expr, ExprCast, ExprLit, Fields, Lit, parse_macro_input};
 
 #[proc_macro_derive(SimpleDieselEnum)]
 pub fn simple_diesel_enum_derive(input: TokenStream) -> TokenStream {
@@ -25,7 +25,7 @@ pub fn simple_diesel_enum_derive(input: TokenStream) -> TokenStream {
             if let Expr::Lit(ExprLit {
                 lit: Lit::Int(lit_int),
                 ..
-            }) = expr
+            }) = &expr
             {
                 let value: i16 = lit_int
                     .base10_parse()
@@ -33,8 +33,18 @@ pub fn simple_diesel_enum_derive(input: TokenStream) -> TokenStream {
                 to_sql_arms.push(quote! {
                     #name::#ident => #value.to_sql(out),
                 });
+            } else if let Expr::Cast(ExprCast { ty, expr, .. }) = &expr {
+                if let syn::Type::Path(type_path) = &**ty
+                    && type_path.path.is_ident("i16")
+                {
+                    to_sql_arms.push(quote! {
+                        #name::#ident => (#expr as i16).to_sql(out),
+                    });
+                } else {
+                    panic!("Cast type must be i16");
+                }
             } else {
-                panic!("Discriminant must be an integer literal");
+                panic!("Discriminant must be an integer literal or cast to i16");
             }
         } else {
             panic!("Each variant must have a discriminant");

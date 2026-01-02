@@ -1,6 +1,7 @@
 use std::{collections::HashSet, net::SocketAddr, sync::LazyLock};
 
 use axum::extract::{ConnectInfo, State};
+use model::ClientType;
 use model_account::{AccountId, LoginResult, RemoteBotLogin, SignInWithInfo};
 use server_api::{
     S,
@@ -49,7 +50,20 @@ pub async fn post_bot_login(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    login_impl(id, address, &state).await.map(|d| d.into())
+    let r = login_impl(id, address, &state).await?;
+
+    if let Some(aid) = r.aid() {
+        // Login successful
+        let id = state.get_internal_id(aid).await?;
+        db_write!(state, move |cmds| {
+            cmds.common()
+                .client_config()
+                .client_login_session_platform(id, ClientType::Bot)
+                .await
+        })?;
+    }
+
+    Ok(r.into())
 }
 
 pub const PATH_BOT_REGISTER: &str = "/account_api/bot_register";
@@ -147,9 +161,20 @@ pub async fn post_remote_bot_login(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    login_impl(info.aid, address, &state)
-        .await
-        .map(|d| d.into())
+    let r = login_impl(info.aid, address, &state).await?;
+
+    if let Some(aid) = r.aid() {
+        // Login successful
+        let id = state.get_internal_id(aid).await?;
+        db_write!(state, move |cmds| {
+            cmds.common()
+                .client_config()
+                .client_login_session_platform(id, ClientType::Bot)
+                .await
+        })?;
+    }
+
+    Ok(r.into())
 }
 
 create_counters!(

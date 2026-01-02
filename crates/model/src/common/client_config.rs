@@ -5,7 +5,10 @@ use simple_backend_model::{NonEmptyString, SimpleDieselEnum, diesel_non_empty_st
 use utoipa::ToSchema;
 
 use super::ClientConfigSyncVersion;
-use crate::{ClientFeaturesConfigHash, CustomReportsConfigHash, PartialProfileAttributesConfig};
+use crate::{
+    ClientFeaturesConfigHash, CustomReportsConfigHash, PartialProfileAttributesConfig,
+    WebSocketClientTypeNumber,
+};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ClientConfig {
@@ -37,9 +40,10 @@ pub struct ClientConfig {
 #[diesel(sql_type = SmallInt)]
 #[repr(i16)]
 pub enum ClientType {
-    Android = 0,
-    Ios = 1,
-    Web = 2,
+    Android = WebSocketClientTypeNumber::Android as i16,
+    Ios = WebSocketClientTypeNumber::Ios as i16,
+    Web = WebSocketClientTypeNumber::Web as i16,
+    Bot = WebSocketClientTypeNumber::Bot as i16,
 }
 
 #[derive(

@@ -2,29 +2,13 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::VersionNumber;
 use utoipa::ToSchema;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, num_enum::TryFromPrimitive)]
 #[repr(u8)]
 pub enum WebSocketClientTypeNumber {
     Android = 0,
     Ios = 1,
     Web = 2,
-    /// Type number for test mode bots. It is the last available value
-    /// to keep it more hidden.
-    TestModeBot = 255,
-}
-
-impl TryFrom<u8> for WebSocketClientTypeNumber {
-    type Error = String;
-
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Self::Android),
-            1 => Ok(Self::Ios),
-            2 => Ok(Self::Web),
-            255 => Ok(Self::TestModeBot),
-            _ => Err(format!("Unknown client type number {value}")),
-        }
-    }
+    Bot = 3,
 }
 
 /// Parsed info from first WebSocket Binary message from client without

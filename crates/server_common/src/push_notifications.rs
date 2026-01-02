@@ -306,6 +306,14 @@ impl<T: PushNotificationStateProvider + Clone + Send + Sync + 'static> PushNotif
                 .send(send_push_notification)
                 .await
                 .change_context(PushNotificationError::NotificationRoutingFailed),
+            ClientType::Bot => {
+                // Ignore notifications for bots
+                self.state
+                    .get_and_reset_push_notifications(send_push_notification.account_id)
+                    .await
+                    .change_context(PushNotificationError::ReadingNotificationSentStatusFailed)?;
+                Ok(())
+            }
         }
     }
 }

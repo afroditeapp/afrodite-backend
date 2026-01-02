@@ -40,3 +40,46 @@ fn test_sqlite_insert_and_query_enum() {
     assert_eq!(rows[0].value, TestEnum::Variant1);
     assert_eq!(rows[1].value, TestEnum::Variant2);
 }
+
+const VARIANT_1: i8 = 1;
+const VARIANT_2: i8 = 2;
+
+#[derive(Debug, Clone, Copy, PartialEq, SimpleDieselEnum, num_enum::TryFromPrimitive)]
+#[repr(i16)]
+enum TestEnumWithCasts {
+    Variant1 = VARIANT_1 as i16,
+    Variant2 = VARIANT_2 as i16,
+}
+
+#[test]
+fn test_sqlite_insert_and_query_enum_with_casts() {
+    #[derive(diesel::QueryableByName, Debug, PartialEq)]
+    struct Row {
+        #[sql_type = "SmallInt"]
+        value: TestEnumWithCasts,
+    }
+
+    let mut conn = diesel::sqlite::SqliteConnection::establish(":memory:").unwrap();
+
+    sql_query(
+        "CREATE TABLE test_enum_table (id INTEGER PRIMARY KEY AUTOINCREMENT, value INTEGER NOT NULL);",
+    )
+    .execute(&mut conn)
+    .unwrap();
+
+    // insert two rows using the enum directly (requires SimpleDieselEnum to provide ToSql for BigInt)
+    sql_query("INSERT INTO test_enum_table (value) VALUES (?1), (?2)")
+        .bind::<SmallInt, _>(TestEnumWithCasts::Variant1)
+        .bind::<SmallInt, _>(TestEnumWithCasts::Variant2)
+        .execute(&mut conn)
+        .unwrap();
+
+    // read back values (requires SimpleDieselEnum to provide FromSql for BigInt)
+    let rows: Vec<Row> = sql_query("SELECT value FROM test_enum_table ORDER BY id")
+        .load(&mut conn)
+        .unwrap();
+
+    assert_eq!(rows.len(), 2);
+    assert_eq!(rows[0].value, TestEnumWithCasts::Variant1);
+    assert_eq!(rows[1].value, TestEnumWithCasts::Variant2);
+}
