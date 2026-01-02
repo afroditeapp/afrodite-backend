@@ -7,7 +7,7 @@ use error_stack::{Result, ResultExt};
 use serde::{Deserialize, Deserializer};
 pub use simple_backend_config::file::NsfwDetectionThresholds;
 use simple_backend_model::NonEmptyString;
-use simple_backend_utils::time::UtcTimeValue;
+use simple_backend_utils::{ContextExt, time::UtcTimeValue};
 use url::Url;
 
 use crate::{
@@ -51,7 +51,6 @@ pub struct BotConfigFile {
     pub profile_text_moderation: Option<ProfileStringModerationConfig>,
     pub content_moderation: Option<ContentModerationConfig>,
     /// Config required for starting backend in remote bot mode.
-    /// Ignored when backend starts in test mode.
     pub remote_bot_mode: Option<RemoteBotModeConfig>,
     /// If None, value from server config might be loaded here
     /// if server config path command line argument is set.
@@ -199,6 +198,7 @@ impl BotConfigFile {
         }
 
         config.merge_base_bot_config_with_specific_bot_configs();
+        config.check_remote_bot_config_if_needed()?;
 
         Ok(config)
     }
@@ -240,6 +240,42 @@ impl BotConfigFile {
                     .or(base.change_profile_text_time),
             };
         }
+    }
+
+    fn check_remote_bot_config_if_needed(&mut self) -> Result<(), ConfigFileError> {
+        if self.remote_bot_mode.is_none() {
+            // Remote bot mode disabled
+            return Ok(());
+        }
+
+        for b in &self.bots {
+            if b.account_id.is_none() {
+                return Err(ConfigFileError::InvalidConfig.report())
+                    .attach_printable(format!("Account ID is missing from bot {}", b.id));
+            }
+
+            if b.remote_bot_login_password.is_none() {
+                return Err(ConfigFileError::InvalidConfig.report()).attach_printable(format!(
+                    "Remote bot login password is missing from bot {}",
+                    b.id
+                ));
+            }
+        }
+
+        let admin = &self.admin_bot_config;
+        if admin.account_id.is_some() || admin.remote_bot_login_password.is_some() {
+            if admin.account_id.is_none() {
+                return Err(ConfigFileError::InvalidConfig.report())
+                    .attach_printable("Account ID is missing from admin bot");
+            }
+
+            if admin.remote_bot_login_password.is_none() {
+                return Err(ConfigFileError::InvalidConfig.report())
+                    .attach_printable("Remote bot login password is missing from admin bot");
+            }
+        }
+
+        Ok(())
     }
 
     pub fn find_bot_config(&self, bot_id: u32) -> Option<&BotInstanceConfig> {
@@ -350,8 +386,10 @@ pub struct BotInstanceConfig {
     pub id: u16,
     /// If `None` and account ID is not in saved state, register
     /// a new account.
+    ///
+    /// User bot requires this when in remote bot mode.
     pub account_id: Option<String>,
-    // Use remote bot login API.
+    /// User bot requires this when in remote bot mode.
     pub remote_bot_login_password: Option<String>,
     #[serde(flatten)]
     pub config: BaseBotConfig,
@@ -502,8 +540,10 @@ pub struct LlmContentModerationConfig {
 pub struct AdminBotConfig {
     /// If `None` and account ID is not in saved state, register
     /// a new account.
+    ///
+    /// Admin bot requires this when in remote bot mode.
     pub account_id: Option<String>,
-    // Use remote bot login API.
+    /// Admin bot requires this when in remote bot mode.
     pub remote_bot_login_password: Option<String>,
 }
 

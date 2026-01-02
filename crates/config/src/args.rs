@@ -92,41 +92,14 @@ pub struct RemoteBotMode {
 impl RemoteBotMode {
     pub fn to_test_mode(&self) -> error_stack::Result<TestMode, ConfigFileError> {
         let config = BotConfigFile::load(self.bot_config.clone(), false)?;
-        let Some(server_url) = config.remote_bot_mode.map(|v| v.api_url) else {
+        let Some(remote_bot_mode_config) = config.remote_bot_mode else {
             return Err(ConfigFileError::InvalidConfig.report())
                 .attach_printable("Remote bot mode config not found");
         };
 
-        for b in &config.bots {
-            if b.account_id.is_none() {
-                return Err(ConfigFileError::InvalidConfig.report())
-                    .attach_printable(format!("Account ID is missing from bot {}", b.id));
-            }
-
-            if b.remote_bot_login_password.is_none() {
-                return Err(ConfigFileError::InvalidConfig.report()).attach_printable(format!(
-                    "Remote bot login password is missing from bot {}",
-                    b.id
-                ));
-            }
-        }
-
-        let admin_config = config.admin_bot_config;
-        if admin_config.account_id.is_some() || admin_config.remote_bot_login_password.is_some() {
-            if admin_config.account_id.is_none() {
-                return Err(ConfigFileError::InvalidConfig.report())
-                    .attach_printable("Account ID is missing from admin bot");
-            }
-
-            if admin_config.remote_bot_login_password.is_none() {
-                return Err(ConfigFileError::InvalidConfig.report())
-                    .attach_printable("Remote bot login password is missing from admin bot");
-            }
-        }
-
         Ok(TestMode {
             server: ServerConfig::default(),
-            api_urls: PublicApiUrl::new(server_url),
+            api_urls: PublicApiUrl::new(remote_bot_mode_config.api_url),
             bot_config: Some(self.bot_config.clone()),
             data_dir: None,
             no_clean: false,
@@ -137,8 +110,8 @@ impl RemoteBotMode {
             mode: TestModeSubMode::Bot(BotModeConfig {
                 users: TryInto::<u32>::try_into(config.bots.len())
                     .change_context(ConfigFileError::InvalidConfig)?,
-                admin: admin_config.account_id.is_some()
-                    && admin_config.remote_bot_login_password.is_some(),
+                admin: config.admin_bot_config.account_id.is_some()
+                    && config.admin_bot_config.remote_bot_login_password.is_some(),
                 no_sleep: false,
                 save_state: false,
                 task_per_bot: false,
