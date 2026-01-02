@@ -75,8 +75,6 @@ fn handle_index_info(dir: Option<PathBuf>) -> Result<(), GetConfigError> {
         env::set_current_dir(dir).unwrap();
     }
 
-    env::current_dir().unwrap();
-
     let config = get_config(ServerMode::default(), String::new(), String::new(), false).unwrap();
 
     println!(
