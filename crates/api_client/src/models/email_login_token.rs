@@ -11,19 +11,19 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
+/// EmailLoginToken : Email login token is a 128 bit token used for email-based authentication where client receives one token via API and another is sent via email.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct EmailLoginToken {
-    #[serde(rename = "client_info")]
-    pub client_info: Box<models::ClientInfo>,
+    /// Base64 URL safe without padding
     #[serde(rename = "token")]
-    pub token: Box<models::AccessToken>,
+    pub token: String,
 }
 
 impl EmailLoginToken {
-    pub fn new(client_info: models::ClientInfo, token: models::AccessToken) -> EmailLoginToken {
+    /// Email login token is a 128 bit token used for email-based authentication where client receives one token via API and another is sent via email.
+    pub fn new(token: String) -> EmailLoginToken {
         EmailLoginToken {
-            client_info: Box::new(client_info),
-            token: Box::new(token),
+            token,
         }
     }
 }

@@ -13,6 +13,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct RequestEmailLoginTokenResult {
+    /// Client token to be used together with the email token. Always returned to prevent email enumeration attacks.
+    #[serde(rename = "client_token")]
+    pub client_token: Box<models::EmailLoginToken>,
     /// Minimum wait duration between token requests in seconds
     #[serde(rename = "resend_wait_seconds")]
     pub resend_wait_seconds: i64,
@@ -22,8 +25,9 @@ pub struct RequestEmailLoginTokenResult {
 }
 
 impl RequestEmailLoginTokenResult {
-    pub fn new(resend_wait_seconds: i64, token_validity_seconds: i64) -> RequestEmailLoginTokenResult {
+    pub fn new(client_token: models::EmailLoginToken, resend_wait_seconds: i64, token_validity_seconds: i64) -> RequestEmailLoginTokenResult {
         RequestEmailLoginTokenResult {
+            client_token: Box::new(client_token),
             resend_wait_seconds,
             token_validity_seconds,
         }

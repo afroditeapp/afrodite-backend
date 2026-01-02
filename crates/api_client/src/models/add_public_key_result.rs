@@ -15,6 +15,8 @@ use serde::{Deserialize, Serialize};
 pub struct AddPublicKeyResult {
     #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
     pub error: Option<bool>,
+    #[serde(rename = "error_pending_messages_found", skip_serializing_if = "Option::is_none")]
+    pub error_pending_messages_found: Option<bool>,
     #[serde(rename = "error_too_many_public_keys", skip_serializing_if = "Option::is_none")]
     pub error_too_many_public_keys: Option<bool>,
     #[serde(rename = "key_id", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -25,6 +27,7 @@ impl AddPublicKeyResult {
     pub fn new() -> AddPublicKeyResult {
         AddPublicKeyResult {
             error: None,
+            error_pending_messages_found: None,
             error_too_many_public_keys: None,
             key_id: None,
         }

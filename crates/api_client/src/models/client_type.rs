@@ -20,6 +20,8 @@ pub enum ClientType {
     Ios,
     #[serde(rename = "Web")]
     Web,
+    #[serde(rename = "Bot")]
+    Bot,
 
 }
 
@@ -29,6 +31,7 @@ impl std::fmt::Display for ClientType {
             Self::Android => write!(f, "Android"),
             Self::Ios => write!(f, "Ios"),
             Self::Web => write!(f, "Web"),
+            Self::Bot => write!(f, "Bot"),
         }
     }
 }

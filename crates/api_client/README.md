@@ -318,6 +318,7 @@ Class | Method | HTTP request | Description
  - [DemoAccountToken](docs/DemoAccountToken.md)
  - [EmailAddressState](docs/EmailAddressState.md)
  - [EmailAddressStateAdmin](docs/EmailAddressStateAdmin.md)
+ - [EmailLogin](docs/EmailLogin.md)
  - [EmailLoginToken](docs/EmailLoginToken.md)
  - [EventToClient](docs/EventToClient.md)
  - [EventToServer](docs/EventToServer.md)

@@ -194,7 +194,7 @@ impl SetBotPublicKey {
             .public_key_bytes()
             .change_context(TestError::MessageEncryptionError)?;
 
-        let r = post_add_public_key(state.api(), public_key_bytes)
+        let r = post_add_public_key(state.api(), public_key_bytes, Some(true))
             .await
             .change_context(TestError::ApiRequest)?;
 

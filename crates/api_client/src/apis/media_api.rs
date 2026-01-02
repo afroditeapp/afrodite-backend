@@ -133,6 +133,7 @@ pub enum PostMediaAppNotificationSettingsError {
 #[serde(untagged)]
 pub enum PostProfileContentReportError {
     Status401(),
+    Status429(),
     Status500(),
     UnknownValue(serde_json::Value),
 }

@@ -109,6 +109,7 @@ src/models/demo_account_register_account_result.rs
 src/models/demo_account_token.rs
 src/models/email_address_state.rs
 src/models/email_address_state_admin.rs
+src/models/email_login.rs
 src/models/email_login_token.rs
 src/models/event_to_client.rs
 src/models/event_to_server.rs

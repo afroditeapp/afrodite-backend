@@ -15,15 +15,15 @@ use serde::{Deserialize, Serialize};
 pub struct CustomReportsConfig {
     #[serde(rename = "report_order")]
     pub report_order: models::CustomReportsOrderMode,
-    #[serde(rename = "reports")]
-    pub reports: Vec<models::CustomReport>,
+    #[serde(rename = "reports", skip_serializing_if = "Option::is_none")]
+    pub reports: Option<Vec<models::CustomReport>>,
 }
 
 impl CustomReportsConfig {
-    pub fn new(report_order: models::CustomReportsOrderMode, reports: Vec<models::CustomReport>) -> CustomReportsConfig {
+    pub fn new(report_order: models::CustomReportsOrderMode) -> CustomReportsConfig {
         CustomReportsConfig {
             report_order,
-            reports,
+            reports: None,
         }
     }
 }

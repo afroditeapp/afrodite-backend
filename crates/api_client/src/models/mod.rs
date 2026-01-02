@@ -182,6 +182,8 @@ pub mod email_address_state;
 pub use self::email_address_state::EmailAddressState;
 pub mod email_address_state_admin;
 pub use self::email_address_state_admin::EmailAddressStateAdmin;
+pub mod email_login;
+pub use self::email_login::EmailLogin;
 pub mod email_login_token;
 pub use self::email_login_token::EmailLoginToken;
 pub mod event_to_client;

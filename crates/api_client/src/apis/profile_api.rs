@@ -285,6 +285,7 @@ pub enum PostProfileToDatabaseDebugModeBenchmarkError {
 #[serde(untagged)]
 pub enum PostReportProfileNameError {
     Status401(),
+    Status429(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -294,6 +295,7 @@ pub enum PostReportProfileNameError {
 #[serde(untagged)]
 pub enum PostReportProfileTextError {
     Status401(),
+    Status429(),
     Status500(),
     UnknownValue(serde_json::Value),
 }

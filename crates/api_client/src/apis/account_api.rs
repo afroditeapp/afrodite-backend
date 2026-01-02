@@ -148,6 +148,7 @@ pub enum PostCompleteSetupError {
 #[serde(untagged)]
 pub enum PostCustomReportEmptyError {
     Status401(),
+    Status429(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -1025,9 +1026,9 @@ pub async fn post_demo_account_register_account(configuration: &configuration::C
 }
 
 /// The route always takes at least 5 seconds to complete to make token guessing slower.
-pub async fn post_email_login_with_token(configuration: &configuration::Configuration, email_login_token: models::EmailLoginToken) -> Result<models::LoginResult, Error<PostEmailLoginWithTokenError>> {
+pub async fn post_email_login_with_token(configuration: &configuration::Configuration, email_login: models::EmailLogin) -> Result<models::LoginResult, Error<PostEmailLoginWithTokenError>> {
     // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_email_login_token = email_login_token;
+    let p_body_email_login = email_login;
 
     let uri_str = format!("{}/account_api/email_login_with_token", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
@@ -1035,7 +1036,7 @@ pub async fn post_email_login_with_token(configuration: &configuration::Configur
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
-    req_builder = req_builder.json(&p_body_email_login_token);
+    req_builder = req_builder.json(&p_body_email_login);
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;

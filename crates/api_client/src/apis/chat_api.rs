@@ -193,6 +193,7 @@ pub enum PostChatEmailNotificationSettingsError {
 #[serde(untagged)]
 pub enum PostChatMessageReportError {
     Status401(),
+    Status429(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -798,13 +799,17 @@ pub async fn get_sent_message_ids(configuration: &configuration::Configuration, 
 }
 
 /// Returns next public key ID number.  # Limits  Server can store limited amount of public keys. The limit is configurable from server config file and also user specific config exists. Max value between the two previous values is used to check is adding the key allowed.  Max key size is 8192 bytes.  The key must be OpenPGP public key with one signed user which ID is [model::AccountId] string.  
-pub async fn post_add_public_key(configuration: &configuration::Configuration, body: Vec<u8>) -> Result<models::AddPublicKeyResult, Error<PostAddPublicKeyError>> {
+pub async fn post_add_public_key(configuration: &configuration::Configuration, body: Vec<u8>, ignore_pending_messages: Option<bool>) -> Result<models::AddPublicKeyResult, Error<PostAddPublicKeyError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_body = body;
+    let p_query_ignore_pending_messages = ignore_pending_messages;
 
     let uri_str = format!("{}/chat_api/add_public_key", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
+    if let Some(ref param_value) = p_query_ignore_pending_messages {
+        req_builder = req_builder.query(&[("ignore_pending_messages", &param_value.to_string())]);
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
