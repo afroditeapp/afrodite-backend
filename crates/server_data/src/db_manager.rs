@@ -408,6 +408,10 @@ impl RouterDatabaseReadHandle {
         &self.cache
     }
 
+    pub fn file_dir_write_access(&self) -> &FileDir {
+        &self.file_dir
+    }
+
     pub fn read_handle_raw(&self) -> &CurrentReadHandle {
         &self.current_read_handle
     }

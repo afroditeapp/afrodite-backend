@@ -1,3 +1,4 @@
+use futures::stream::{self, StreamExt};
 use model::{AccountIdInternal, PushNotificationFlags, PushNotificationStateInfoWithFlags};
 use model_account::{EmailMessages, EmailSendingState};
 use server_api::{
@@ -5,9 +6,9 @@ use server_api::{
     db_write_raw,
 };
 use server_common::{data::DataError, result::Result};
-use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
+use server_data::{IntoDataError, read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
-use server_data_chat::write::GetWriteCommandsChat;
+use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use server_data_profile::write::GetWriteCommandsProfile;
 use server_state::S;
 use sha2::{Digest, Sha256};
@@ -29,7 +30,7 @@ impl StartupTasks {
         Self::handle_custom_report_file_changes(&self.state).await?;
         Self::handle_client_features_file_changes(&self.state).await?;
         Self::handle_vapid_public_key_changes(&self.state).await?;
-        Self::handle_account_specific_tasks(&self.state, email_sender).await
+        Self::handle_account_specific_tasks(&self.state, &email_sender).await
     }
 
     async fn handle_profile_attribute_file_changes(state: &S) -> Result<(), DataError> {
@@ -87,43 +88,72 @@ impl StartupTasks {
 
     async fn handle_account_specific_tasks(
         state: &S,
-        email_sender: EmailSenderImpl,
+        email_sender: &EmailSenderImpl,
     ) -> Result<(), DataError> {
         let ids = state.read().common().account_ids_internal_vec().await?;
 
-        for id in ids {
-            // Email
-            let email_state = state.read().account().email().email_state(id).await?;
-            for m in EmailMessages::VARIANTS {
-                if *email_state.get_ref_to(*m) == EmailSendingState::SendRequested {
-                    email_sender.send(id, *m)
-                }
+        let mut stream = stream::iter(ids)
+            .map(|id| Self::handle_account(state, email_sender, id))
+            .buffer_unordered(num_cpus::get());
+
+        loop {
+            match stream.next().await {
+                Some(Ok(())) => (),
+                Some(Err(e)) => return Err(e),
+                None => return Ok(()),
             }
+        }
+    }
 
+    async fn handle_account(
+        state: &S,
+        email_sender: &EmailSenderImpl,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        // Email
+        let email_state = state.read().account().email().email_state(id).await?;
+        for m in EmailMessages::VARIANTS {
+            if *email_state.get_ref_to(*m) == EmailSendingState::SendRequested {
+                email_sender.send(id, *m)
+            }
+        }
+
+        state
+            .read()
+            .file_dir_write_access()
+            .tmp_dir(id.into())
+            .overwrite_and_remove_contents_if_exists()
+            .await
+            .into_data_error(id)?;
+
+        if let Some(value) = state
+            .read()
+            .chat()
+            .limits()
+            .is_daily_likes_left_reset_needed(id)
+            .await?
+        {
             db_write_raw!(state, move |cmds| {
-                // Remove tmp files
-                cmds.common().remove_tmp_files(id).await?;
-
                 cmds.chat()
                     .limits()
-                    .reset_daily_likes_left_if_needed(id)
+                    .reset_daily_likes_left(id, value.new_value)
                     .await?;
-
-                // Automatic profile search notification state is stored only
-                // in RAM, so it is not available anymore.
-                cmds.events()
-                    .remove_pending_push_notification_flags_from_cache(
-                        id,
-                        PushNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED,
-                    )
-                    .await;
-
                 Ok(())
             })
             .await?;
-
-            Self::send_push_notification_if_needed(state, id).await?;
         }
+
+        // Automatic profile search notification state is stored only
+        // in RAM, so it is not available anymore.
+        state
+            .event_manager()
+            .remove_pending_push_notification_flags_from_cache(
+                id,
+                PushNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED,
+            )
+            .await;
+
+        Self::send_push_notification_if_needed(state, id).await?;
 
         Ok(())
     }

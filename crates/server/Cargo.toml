@@ -8,6 +8,7 @@ edition = "2024"
 [dependencies]
 serde_json = { workspace = true }
 
+futures = { workspace = true }
 tokio = { workspace = true }
 axum = { workspace = true }
 tracing = { workspace = true }
@@ -22,6 +23,7 @@ error-stack = { workspace = true }
 nix = { workspace = true, default-features = false, features = ["signal"] }
 sha2 = { workspace = true }
 chrono = { workspace = true }
+num_cpus = { workspace = true }
 
 config = { path = "../config" }
 model = { path = "../model" }

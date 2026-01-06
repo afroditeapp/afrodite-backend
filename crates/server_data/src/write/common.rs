@@ -6,7 +6,7 @@ use simple_backend_utils::time::DurationValue;
 use super::{DbTransaction, GetWriteCommandsCommon};
 use crate::{
     DataError, IntoDataError, cache::CacheWriteCommon, db_manager::InternalWriting, db_transaction,
-    define_cmd_wrapper_write, file::FileWrite, result::Result,
+    define_cmd_wrapper_write, result::Result,
 };
 
 mod client_config;
@@ -62,14 +62,6 @@ impl WriteCommandsCommon<'_> {
             .await?;
 
         Ok(())
-    }
-
-    pub async fn remove_tmp_files(&self, id: AccountIdInternal) -> Result<(), DataError> {
-        self.files()
-            .tmp_dir(id.into())
-            .overwrite_and_remove_contents_if_exists()
-            .await
-            .into_data_error(id)
     }
 
     pub async fn set_is_bot_account(
