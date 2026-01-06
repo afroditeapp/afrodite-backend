@@ -59,7 +59,7 @@ impl WriteCommandsProfile<'_> {
         })?;
 
         let new_location_area =
-            self.location()
+            self.location_manager()
                 .coordinates_to_area(coordinates, min_distance, max_distance);
         self.location()
             .update_profile_location(
@@ -225,7 +225,7 @@ impl WriteCommandsProfile<'_> {
             p.state.profile_text_max_characters_filter = filters.profile_text_max_characters_filter;
             p.state.random_profile_order = filters.random_profile_order;
 
-            p.location.current_position = self.location().coordinates_to_area(
+            p.location.current_position = self.location_manager().coordinates_to_area(
                 location,
                 filters.min_distance_km_filter,
                 filters.max_distance_km_filter,

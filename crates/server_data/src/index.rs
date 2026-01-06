@@ -44,6 +44,7 @@ pub mod write;
 pub trait LocationWrite {
     fn location(&self) -> crate::index::LocationIndexWriteHandle<'_>;
     fn location_iterator(&self) -> crate::index::LocationIndexIteratorHandle<'_>;
+    fn location_manager(&self) -> &LocationIndexManager;
 }
 
 impl<I: InternalWriting> LocationWrite for I {
@@ -53,6 +54,10 @@ impl<I: InternalWriting> LocationWrite for I {
 
     fn location_iterator(&self) -> crate::index::LocationIndexIteratorHandle<'_> {
         LocationIndexIteratorHandle::new(InternalWriting::location(self))
+    }
+
+    fn location_manager(&self) -> &LocationIndexManager {
+        InternalWriting::location(self)
     }
 }
 
@@ -91,8 +96,14 @@ impl LocationIndexManager {
         }
     }
 
-    pub fn coordinates(&self) -> &CoordinateManager {
-        &self.coordinates
+    pub fn coordinates_to_area(
+        &self,
+        location: Location,
+        min_distance: Option<MinDistanceKm>,
+        max_distance: Option<MaxDistanceKm>,
+    ) -> LocationIndexArea {
+        self.coordinates
+            .to_index_area(location.into(), min_distance, max_distance, &self.index)
     }
 }
 
@@ -200,7 +211,6 @@ impl<'a> LocationIndexIteratorHandle<'a> {
 pub struct LocationIndexWriteHandle<'a> {
     index: &'a Arc<LocationIndex>,
     profiles: &'a RwLock<HashMap<LocationIndexKey, ProfilesAtLocation>>,
-    coordinates: &'a CoordinateManager,
 }
 
 impl<'a> LocationIndexWriteHandle<'a> {
@@ -208,18 +218,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
         Self {
             index: &manager.index,
             profiles: &manager.profiles,
-            coordinates: &manager.coordinates,
         }
-    }
-
-    pub fn coordinates_to_area(
-        &self,
-        location: Location,
-        min_distance: Option<MinDistanceKm>,
-        max_distance: Option<MaxDistanceKm>,
-    ) -> LocationIndexArea {
-        self.coordinates
-            .to_index_area(location.into(), min_distance, max_distance, self.index)
     }
 
     /// Move LocationIndexProfileData to another index location

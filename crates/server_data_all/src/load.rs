@@ -6,6 +6,7 @@ use database_chat::current::read::GetDbReadCommandsChat;
 use database_media::current::read::GetDbReadCommandsMedia;
 use database_profile::current::read::GetDbReadCommandsProfile;
 use error_stack::{Result, ResultExt};
+use futures::stream::{self, StreamExt};
 use model::AccountIdInternal;
 use server_common::data::WithInfo;
 pub use server_common::data::cache::CacheError;
@@ -16,6 +17,7 @@ use server_data::{
     },
     index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
 };
+use tokio::sync::Mutex;
 use tracing::info;
 
 pub struct DbDataToCacheLoader;
@@ -35,16 +37,28 @@ impl DbDataToCacheLoader {
             .await
             .change_context(CacheError::Init)?;
 
-        for id in accounts {
-            Self::load_account_from_db(
-                cache,
-                id,
-                current_db,
-                LocationIndexIteratorHandle::new(location_index),
-                LocationIndexWriteHandle::new(location_index),
-            )
-            .await
-            .change_context(CacheError::Init)?;
+        // Mutex is required because accounts are loaded concurrently
+        let location_index_write_handle = Mutex::new(LocationIndexWriteHandle::new(location_index));
+
+        let mut stream = stream::iter(accounts)
+            .map(|id| {
+                Self::load_account_from_db(
+                    cache,
+                    id,
+                    current_db,
+                    location_index,
+                    LocationIndexIteratorHandle::new(location_index),
+                    &location_index_write_handle,
+                )
+            })
+            .buffer_unordered(num_cpus::get());
+
+        loop {
+            match stream.next().await {
+                Some(Ok(())) => (),
+                Some(Err(e)) => return Err(e),
+                None => break,
+            }
         }
 
         info!("Loading to memory complete");
@@ -55,8 +69,9 @@ impl DbDataToCacheLoader {
         cache: &DatabaseCache,
         account_id: AccountIdInternal,
         current_db: &CurrentReadHandle,
+        index_manager: &LocationIndexManager,
         index_iterator: LocationIndexIteratorHandle<'_>,
-        index_writer: LocationIndexWriteHandle<'_>,
+        index_writer: &Mutex<LocationIndexWriteHandle<'_>>,
     ) -> Result<(), CacheError> {
         let db = DbReaderAll::new(DbReaderRaw::new(current_db));
         let login_session = db
@@ -219,7 +234,7 @@ impl DbDataToCacheLoader {
             privacy_settings,
         );
 
-        let location_area = index_writer.coordinates_to_area(
+        let location_area = index_manager.coordinates_to_area(
             profile_location,
             cache_profile.state.min_distance_km_filter,
             cache_profile.state.max_distance_km_filter,
@@ -256,6 +271,8 @@ impl DbDataToCacheLoader {
             .await?;
         if account.profile_visibility().is_currently_public() {
             index_writer
+                .lock()
+                .await
                 .update_profile_data(
                     account_id.uuid,
                     location_index_profile_data,

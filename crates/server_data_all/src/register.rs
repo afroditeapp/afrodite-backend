@@ -11,9 +11,14 @@ use model_account::{
 };
 use model_chat::{ProfileContentModificationMetadata, ProfileModificationMetadata};
 use server_data::{
-    DataError, IntoDataError, db_manager::InternalWriting, define_cmd_wrapper_write,
-    index::LocationIndexIteratorHandle, result::Result, write::DbTransaction,
+    DataError, IntoDataError,
+    db_manager::InternalWriting,
+    define_cmd_wrapper_write,
+    index::{LocationIndexIteratorHandle, LocationIndexWriteHandle},
+    result::Result,
+    write::DbTransaction,
 };
+use tokio::sync::Mutex;
 
 use crate::load::DbDataToCacheLoader;
 
@@ -32,12 +37,18 @@ impl RegisterAccount<'_> {
         })
         .await?;
 
+        // Mutex is unnecessary here because WriteRunnerCommandHandle
+        // prevents concurrent writes.
+        let location_index_write_handle =
+            Mutex::new(LocationIndexWriteHandle::new(self.location()));
+
         DbDataToCacheLoader::load_account_from_db(
             self.cache(),
             account_id,
             self.current_read_handle(),
+            self.location(),
             LocationIndexIteratorHandle::new(self.location()),
-            self.location_index_write_handle(),
+            &location_index_write_handle,
         )
         .await
         .into_data_error(account_id)?;

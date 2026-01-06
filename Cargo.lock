@@ -5170,6 +5170,7 @@ dependencies = [
  "model_chat",
  "model_media",
  "model_profile",
+ "num_cpus",
  "serde",
  "serde_json",
  "server_common",
@@ -5179,6 +5180,7 @@ dependencies = [
  "server_data_media",
  "server_data_profile",
  "simple_backend",
+ "tokio",
  "tracing",
  "zip 4.6.1",
 ]
