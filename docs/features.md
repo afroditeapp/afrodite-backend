@@ -28,6 +28,7 @@
   * Admin notification (moderator work available)
 * WebSocket
   * Used for event sending instead of push notifications if connected
+  * Admin bot notifications
 
 ## Profile
 
@@ -106,6 +107,9 @@ the search with these options:
 ## Chat
 
 * One-to-one conversations
+* Delivery and read receipts
+* Typing indicator
+* Chat backup transfers between clients
 
 ## Chat security
 
@@ -179,7 +183,15 @@ users about app version changelogs and terms of service updates.
 ## Privacy
 
 * End-to-end message encryption support
-* Profile visibility setting
+* Settings
+  * Profile
+    * Visibility
+    * Online status
+    * Last seen time
+  * Chat
+    * Delivery receipts
+    * Read receipts
+    * Typing indicator
 
 ## Admin API
 
