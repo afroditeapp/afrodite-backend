@@ -4,7 +4,7 @@ use api_client::models::{AccountId, EventType};
 use config::{args::TestMode, bot_config_file::BotConfigFile};
 use error_stack::Result;
 use test_mode_bot::{
-    BotState, action_array,
+    BotState, TaskState, action_array,
     actions::account::{Login, Register},
     connection::BotConnections,
 };
@@ -35,17 +35,16 @@ mod profile_text;
 
 pub struct AdminBot {
     state: BotState,
-    bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
+    bot_running_handle: mpsc::Sender<BotPersistentState>,
 }
 
 impl AdminBot {
     pub fn new(
         task_id: u32,
-        bot_id: u32,
         config: Arc<TestMode>,
         bot_config_file: Arc<BotConfigFile>,
         old_state: Option<Arc<StateData>>,
-        bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
+        bot_running_handle: mpsc::Sender<BotPersistentState>,
         reqwest_client: &reqwest::Client,
     ) -> Self {
         let account_id = if config.bot_mode().is_some() {
@@ -56,12 +55,12 @@ impl AdminBot {
         let account_id = account_id.or_else(|| {
             old_state
                 .as_ref()
-                .and_then(|v| v.find_matching(task_id, bot_id))
+                .and_then(|v| v.find_matching(task_id))
                 .map(|v| v.account_id.clone())
         });
         let keys = old_state
             .as_ref()
-            .and_then(|v| v.find_matching(task_id, bot_id))
+            .and_then(|v| v.find_matching(task_id))
             .and_then(|v| v.keys.clone());
 
         let state = BotState::new(
@@ -70,7 +69,6 @@ impl AdminBot {
             config.clone(),
             bot_config_file.clone(),
             task_id,
-            bot_id,
             ApiClient::new(config.api_urls.clone(), reqwest_client),
             config.api_urls.clone(),
             reqwest_client.clone(),
@@ -84,21 +82,18 @@ impl AdminBot {
 
     async fn handle_quit(
         persistent_state: Option<BotPersistentState>,
-        bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
+        bot_running_handle: mpsc::Sender<BotPersistentState>,
     ) {
         if let Some(persistent_state) = persistent_state
-            && let Err(e) = bot_running_handle.send(vec![persistent_state]).await
+            && let Err(e) = bot_running_handle.send(persistent_state).await
         {
             error!("Failed to send admin bot state: {:?}", e);
         }
-        info!("Admin bot stopped",);
+        info!("Admin bot stopped");
     }
 
     pub async fn run(mut self, mut bot_quit_receiver: watch::Receiver<()>) {
-        info!(
-            "Admin bot started - Task {}, Bot {}",
-            self.state.task_id, self.state.bot_id
-        );
+        info!("Admin bot started - Task {}", self.state.task_id,);
 
         select! {
             result = Self::run_admin_initial_logic(&mut self.state) => {
@@ -108,15 +103,7 @@ impl AdminBot {
                     return;
                 }
             },
-            result = bot_quit_receiver.changed() => {
-                match result {
-                    Ok(()) => {
-                        info!("Admin bot received quit signal");
-                    }
-                    Err(e) => {
-                        error!("Admin bot quit receiver error: {:?}", e);
-                    }
-                }
+            _ = bot_quit_receiver.changed() => {
                 Self::handle_quit(self.state.persistent_state(), self.bot_running_handle).await;
                 return;
             }
@@ -124,23 +111,13 @@ impl AdminBot {
 
         // Admin bot persistent state does not change after initial logic
         let persistent_state = self.state.persistent_state();
-
         select! {
             result = Self::run_admin_logic(self.state) => {
                 if let Err(e) = result {
                     error!("Admin bot logic error: {:?}", e);
                 }
             },
-            result = bot_quit_receiver.changed() => {
-                match result {
-                    Ok(()) => {
-                        info!("Admin bot received quit signal");
-                    }
-                    Err(e) => {
-                        error!("Admin bot quit receiver error: {:?}", e);
-                    }
-                }
-            }
+            _ = bot_quit_receiver.changed() => (),
         };
 
         Self::handle_quit(persistent_state, self.bot_running_handle).await;
@@ -151,7 +128,7 @@ impl AdminBot {
 
         for action in action_array![Register, Login, DoInitialSetupIfNeeded { admin: true }].iter()
         {
-            action.excecute_impl(state).await?;
+            action.excecute(state, &mut TaskState).await?;
         }
 
         Ok(())

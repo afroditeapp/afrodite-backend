@@ -1,6 +1,6 @@
 //! Bots for fake clients
 
-use std::{fmt::Debug, iter::Peekable, time::Instant};
+use std::fmt::Debug;
 
 use api_client::{
     apis::{
@@ -28,88 +28,18 @@ use config::bot_config_file::Gender;
 use error_stack::{Result, ResultExt};
 use simple_backend_utils::UuidBase64Url;
 use test_mode_bot::{
-    BotState, BotStruct, TaskState, action_array,
+    BotState, TaskState, action_array,
     actions::{
-        ActionArray, BotAction, RunActions, RunActionsIf,
+        ActionArray, BotAction, RunActions,
         account::{
-            AccountState, AssertAccountState, CompleteAccountSetup, DEFAULT_AGE, Login, Register,
-            SetAccountSetup, SetProfileVisibility,
+            AccountState, AssertAccountState, CompleteAccountSetup, DEFAULT_AGE, SetAccountSetup,
         },
         media::{SendImageToSlot, SetContent},
-        profile::{ChangeProfileTextDaily, GetProfile, UpdateLocationRandomOrConfigured},
     },
 };
 use test_mode_utils::{client::TestError, state::BotEncryptionKeys};
 use tracing::warn;
 use utils::encrypt::{encrypt_data, generate_keys, unwrap_signed_binary_message};
-
-pub struct ClientBot {
-    state: BotState,
-    actions: Peekable<Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>>,
-}
-
-impl Debug for ClientBot {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("ClientBot").finish()
-    }
-}
-
-impl ClientBot {
-    pub fn new(state: BotState) -> Self {
-        // User bot
-        const SETUP: ActionArray = action_array![
-            Register,
-            Login,
-            DoInitialSetupIfNeeded { admin: false },
-            UpdateLocationRandomOrConfigured::new(None),
-            SetProfileVisibility(true),
-            SendLikeIfNeeded,
-        ];
-        const ACTION_LOOP: ActionArray = action_array![
-            ActionsBeforeIteration,
-            GetProfile,
-            RunActionsIf(
-                action_array!(UpdateLocationRandomOrConfigured::new(None)),
-                |s| { s.get_bot_config().change_location() && rand::random::<f32>() < 0.2 }
-            ),
-            RunActionsIf(action_array!(SetProfileVisibility(true)), |s| {
-                s.get_bot_config().change_visibility() && rand::random::<f32>() < 0.5
-            }),
-            RunActionsIf(action_array!(SetProfileVisibility(false)), |s| {
-                s.get_bot_config().change_visibility() && rand::random::<f32>() < 0.1
-            }),
-            RunActionsIf(action_array!(ChangeProfileTextDaily), |s| {
-                s.get_bot_config().change_profile_text_time().is_some()
-            }),
-            AcceptReceivedLikesAndSendMessage,
-            AnswerReceivedMessages,
-            ActionsAfterIteration,
-        ];
-        let iter = SETUP
-            .iter()
-            .copied()
-            .chain(ACTION_LOOP.iter().copied().cycle());
-        let iter = Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>;
-
-        Self {
-            state,
-            actions: iter.peekable(),
-        }
-    }
-}
-
-#[async_trait]
-impl BotStruct for ClientBot {
-    fn peek_action_and_state(&mut self) -> (Option<&'static dyn BotAction>, &mut BotState) {
-        (self.actions.peek().copied(), &mut self.state)
-    }
-    fn next_action(&mut self) {
-        self.actions.next();
-    }
-    fn state(&self) -> &BotState {
-        &self.state
-    }
-}
 
 #[derive(Debug)]
 pub struct DoInitialSetupIfNeeded {
@@ -259,7 +189,7 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             match bot_config.gender {
                 Some(Gender::Man) => man,
                 Some(Gender::Woman) => woman,
-                None => match state.bot_id % 3 {
+                None => match state.task_id % 3 {
                     0 => man,
                     1 => woman,
                     _ => non_binary,
@@ -305,7 +235,7 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
         }
 
         let name = if self.admin {
-            format!("Admin bot {}", state.bot_id + 1)
+            format!("Admin bot {}", state.task_id + 1)
         } else {
             state
                 .get_bot_config()
@@ -574,29 +504,7 @@ async fn send_message(
 }
 
 #[derive(Debug)]
-struct ActionsBeforeIteration;
-
-#[async_trait]
-impl BotAction for ActionsBeforeIteration {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        state.benchmark.action_duration = Instant::now();
-
-        Ok(())
-    }
-}
-
-#[derive(Debug)]
-struct ActionsAfterIteration;
-
-#[async_trait]
-impl BotAction for ActionsAfterIteration {
-    async fn excecute_impl(&self, _state: &mut BotState) -> Result<(), TestError> {
-        Ok(())
-    }
-}
-
-#[derive(Debug)]
-struct SendLikeIfNeeded;
+pub struct SendLikeIfNeeded;
 
 #[async_trait]
 impl BotAction for SendLikeIfNeeded {
@@ -605,10 +513,7 @@ impl BotAction for SendLikeIfNeeded {
             let account_id = AccountId::new(account_id.to_string());
             let r = post_send_like(state.api(), account_id).await;
             if r.is_err() {
-                warn!(
-                    "Sending like failed. Task: {}, Bot: {}",
-                    state.task_id, state.bot_id
-                );
+                warn!("Sending like failed. Task: {}", state.task_id,);
             }
         }
         Ok(())

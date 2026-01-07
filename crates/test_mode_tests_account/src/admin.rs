@@ -1,4 +1,4 @@
-use api_client::apis::account_api::get_account_state;
+use api_client::apis::{account_admin_api::post_delete_account, account_api::get_account_state};
 use test_mode_tests::prelude::*;
 
 #[server_test]
@@ -14,6 +14,12 @@ async fn admin_rights_granting_only_grants_rights_once_by_default(
             .unwrap_or_default(),
     )?;
 
+    post_delete_account(
+        account1.account().account_api(),
+        &account1.account().account_id().aid,
+    )
+    .await?;
+
     let account2 = context.new_admin().await?;
     assert(
         !get_account_state(account2.account().account_api())
@@ -23,14 +29,7 @@ async fn admin_rights_granting_only_grants_rights_once_by_default(
             .unwrap_or_default(),
     )?;
 
-    let account3 = context.new_admin().await?;
-    assert(
-        !get_account_state(account3.account().account_api())
-            .await?
-            .permissions
-            .admin_moderate_media_content
-            .unwrap_or_default(),
-    )
+    Ok(())
 }
 
 #[server_test]

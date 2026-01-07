@@ -109,7 +109,6 @@ impl RemoteBotMode {
             data_dir: None,
             no_clean: false,
             no_servers: true,
-            early_quit: false,
             sqlite_in_ram: false,
             no_tmp_dir: false,
             mode: TestModeSubMode::Bot(BotModeConfig {
@@ -117,9 +116,7 @@ impl RemoteBotMode {
                     .change_context(ConfigFileError::InvalidConfig)?,
                 admin: config.admin_bot_config.account_id.is_some()
                     && config.admin_bot_config.remote_bot_login_password.is_some(),
-                no_sleep: false,
                 save_state: false,
-                task_per_bot: false,
             }),
         })
     }
@@ -156,10 +153,6 @@ pub struct TestMode {
     #[arg(long)]
     pub no_tmp_dir: bool,
 
-    /// First error quits
-    #[arg(long)]
-    pub early_quit: bool,
-
     /// Start servers using in RAM mode for SQLite
     #[arg(short, long)]
     pub sqlite_in_ram: bool,
@@ -169,42 +162,21 @@ pub struct TestMode {
 }
 
 impl TestMode {
-    pub fn bots(&self, task_id: u32) -> u32 {
-        match &self.mode {
-            TestModeSubMode::Bot(c) if c.task_per_bot => 1,
-            TestModeSubMode::Bot(c) if task_id == 0 => c.users,
-            TestModeSubMode::Bot(_) if task_id == 1 => 1, // Admin bot
-            TestModeSubMode::Benchmark(c) => c.bots,
-            _ => 1,
-        }
-    }
-
     pub fn tasks(&self) -> u32 {
         match &self.mode {
-            TestModeSubMode::Bot(c) if c.task_per_bot && c.admin => c.users + 1,
-            TestModeSubMode::Bot(c) if c.task_per_bot => c.users,
-            TestModeSubMode::Bot(c) if c.admin => 2,
-            TestModeSubMode::Bot(_) => 1,
+            TestModeSubMode::Bot(c) if c.admin => c.users + 1,
+            TestModeSubMode::Bot(c) => c.users,
             TestModeSubMode::Benchmark(c) => match c.benchmark {
-                SelectedBenchmark::GetProfileList => c.tasks + 2,
+                SelectedBenchmark::GetProfileList => c.tasks + 1,
                 _ => c.tasks,
             },
-            _ => 1,
+            TestModeSubMode::Qa(_) => panic!("QA test runner does not call this method"),
         }
     }
 
     pub fn save_state(&self) -> bool {
         match &self.mode {
             TestModeSubMode::Bot(c) => c.save_state,
-            TestModeSubMode::Benchmark(c) => c.save_state,
-            _ => false,
-        }
-    }
-
-    pub fn no_sleep(&self) -> bool {
-        match &self.mode {
-            TestModeSubMode::Bot(c) => c.no_sleep,
-            TestModeSubMode::Benchmark(c) => !c.sleep,
             _ => false,
         }
     }
@@ -266,25 +238,13 @@ pub struct ServerConfig {
 
 #[derive(Args, Debug, Clone)]
 pub struct BenchmarkConfig {
-    /// Bot count per task
-    #[arg(short, long, default_value = "1", value_name = "COUNT")]
-    pub bots: u32,
-
     /// Task count
     #[arg(short, long, default_value = "1", value_name = "COUNT")]
     pub tasks: u32,
 
-    /// Enable bot sleep time
-    #[arg(long)]
-    pub sleep: bool,
-
     /// Select benchmark
     #[arg(long, default_value = "get-profile", value_name = "NAME", value_enum)]
     pub benchmark: SelectedBenchmark,
-
-    /// Save and load state
-    #[arg(long)]
-    pub save_state: bool,
 
     /// Override index cell size value
     #[arg(long)]
@@ -312,27 +272,18 @@ pub struct BotModeConfig {
     #[arg(short, long)]
     pub admin: bool,
 
-    /// Make bots to make requests constantly
-    #[arg(long)]
-    pub no_sleep: bool,
-
     /// Save and load state
     #[arg(long)]
     pub save_state: bool,
-
-    /// Run each bot in a separate task
-    #[arg(long)]
-    pub task_per_bot: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, ValueEnum)]
+#[derive(Debug, Clone, Copy, PartialEq, ValueEnum)]
 pub enum SelectedBenchmark {
     GetProfile,
     GetProfileFromDatabase,
-    /// This benchmark uses one extra task for filling the location index
-    /// with profiles and another for admin bot.
-    /// Bot count controls how many bots are created just
-    /// for that.
+    /// Tasks:
+    ///  - Moderate images and add one profile to index
+    ///  - Location index reader bots (tasks flag)
     GetProfileList,
     PostProfile,
     PostProfileToDatabase,

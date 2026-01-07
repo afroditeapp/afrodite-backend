@@ -10,10 +10,8 @@ pub struct StateData {
 }
 
 impl StateData {
-    pub fn find_matching(&self, task: u32, bot: u32) -> Option<&BotPersistentState> {
-        self.bot_states
-            .iter()
-            .find(|s| s.task == task && s.bot == bot)
+    pub fn find_matching(&self, task: u32) -> Option<&BotPersistentState> {
+        self.bot_states.iter().find(|s| s.task == task)
     }
 }
 
@@ -22,7 +20,6 @@ pub struct BotPersistentState {
     pub account_id: String,
     pub keys: Option<BotEncryptionKeys>,
     pub task: u32,
-    pub bot: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

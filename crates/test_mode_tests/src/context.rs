@@ -34,7 +34,8 @@ pub struct TestContext {
     test_config: Arc<TestMode>,
     state: Arc<Mutex<State>>,
     account_server_api_port: Option<u16>,
-    next_bot_id: u32,
+    /// IDs starts from 1 because 0 is for admin bot.
+    next_task_id: u32,
     admin_access_granted: bool,
     reqwest_client: reqwest::Client,
 }
@@ -51,7 +52,7 @@ impl TestContext {
             })),
             test_config,
             account_server_api_port,
-            next_bot_id: 1, // 0 is for admin bot
+            next_task_id: 1,
             admin_access_granted: false,
             reqwest_client,
         }
@@ -221,13 +222,13 @@ impl Account {
             .change_ports(test_context.account_server_api_port)
             .map_err(|_| TestError::ApiUrlPortConfigFailed.report())?;
 
-        let bot_id = if admin && !test_context.admin_access_granted {
+        let task_id = if admin && !test_context.admin_access_granted {
             let id = 0;
             test_context.admin_access_granted = true;
             id
         } else {
-            let id = test_context.next_bot_id;
-            test_context.next_bot_id += 1;
+            let id = test_context.next_task_id;
+            test_context.next_task_id += 1;
             id
         };
 
@@ -236,8 +237,7 @@ impl Account {
             None,
             test_context.test_config.clone(),
             Arc::new(BotConfigFile::default()),
-            0,
-            bot_id,
+            task_id,
             ApiClient::new(urls.clone(), &test_context.reqwest_client),
             urls,
             test_context.reqwest_client.clone(),

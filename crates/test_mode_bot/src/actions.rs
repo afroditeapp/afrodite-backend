@@ -104,16 +104,6 @@ pub trait BotAction: Debug + Send + Sync {
 }
 
 #[derive(Debug)]
-pub struct DoNothing;
-
-#[async_trait]
-impl BotAction for DoNothing {
-    async fn excecute_impl(&self, _state: &mut BotState) -> Result<(), TestError> {
-        Ok(())
-    }
-}
-
-#[derive(Debug)]
 pub struct AssertFailure<T: BotAction>(pub T);
 
 #[async_trait]

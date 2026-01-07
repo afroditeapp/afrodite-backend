@@ -291,8 +291,10 @@ impl BotConfigFile {
         Ok(())
     }
 
-    pub fn find_bot_config(&self, bot_id: u32) -> Option<&BotInstanceConfig> {
-        self.bots.iter().find(|v| Into::<u32>::into(v.id) == bot_id)
+    pub fn find_bot_config(&self, task_id: u32) -> Option<&BotInstanceConfig> {
+        self.bots
+            .iter()
+            .find(|v| Into::<u32>::into(v.id) == task_id)
     }
 }
 

@@ -377,14 +377,10 @@ impl BotAction for SetAccountSetup {
             .await
             .change_context(TestError::ApiRequest)?;
 
-        let email = if !self.admin || state.bot_id > 0 {
-            if state.task_id > 0 {
-                format!("bot{}task{}@example.com", state.bot_id, state.task_id)
-            } else {
-                format!("bot{}@example.com", state.bot_id)
-            }
-        } else {
+        let email = if self.admin {
             TEST_ADMIN_ACCESS_EMAIL.to_string()
+        } else {
+            format!("bot{}@example.com", state.task_id)
         };
 
         account_api::post_initial_email(state.api(), SetInitialEmail { email })

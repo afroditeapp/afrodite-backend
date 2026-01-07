@@ -7,15 +7,12 @@
 
 mod admin_bot;
 mod benchmark;
+mod benchmark_bot;
 mod client_bot;
-mod manager;
+mod user_bot;
 mod utils;
 
-use std::{
-    collections::{HashMap, HashSet},
-    path::PathBuf,
-    sync::Arc,
-};
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use config::{args::TestMode, bot_config_file::BotConfigFile};
 use test_mode_utils::{
@@ -31,7 +28,7 @@ use tokio::{
 };
 use tracing::{error, info};
 
-use crate::{admin_bot::AdminBot, manager::BotManager};
+use crate::{admin_bot::AdminBot, benchmark_bot::BenchmarkBot, user_bot::UserBot};
 
 pub struct BotTestRunner {
     server_instance_config: ServerInstanceConfig,
@@ -87,69 +84,57 @@ impl BotTestRunner {
             (false, None)
         };
 
-        let (bot_running_handle, mut wait_all_bots) = mpsc::channel::<Vec<BotPersistentState>>(1);
+        let (bot_running_handle, mut wait_all_bots) = mpsc::channel::<BotPersistentState>(1);
         let (quit_handle, bot_quit_receiver) = watch::channel(());
 
         let mut task_number = self.test_config.tasks();
 
         if !quit_now {
-            self.log_task_and_bot_count_info();
+            info!("Task count: {}", self.test_config.tasks());
 
             while task_number > 0 {
                 let current_task_id = task_number - 1;
 
                 // Check if this is admin bot task in bot mode
-                if self.test_config.bot_mode().is_some() && current_task_id == 1 {
-                    // Spawn admin bot(s) for this task
-                    for bot_i in 0..self.test_config.bots(current_task_id) {
-                        let admin_bot = AdminBot::new(
-                            current_task_id,
-                            bot_i,
-                            self.test_config.clone(),
-                            self.bot_config_file.clone(),
-                            old_state.clone(),
-                            bot_running_handle.clone(),
-                            &self.reqwest_client,
-                        );
-                        let quit_receiver = bot_quit_receiver.clone();
-                        tokio::spawn(admin_bot.run(quit_receiver));
-                    }
-                } else {
-                    // Spawn regular bot manager for this task
-                    BotManager::spawn(
+                if self.test_config.bot_mode().is_some() && current_task_id == 0 {
+                    let admin_bot = AdminBot::new(
                         current_task_id,
                         self.test_config.clone(),
                         self.bot_config_file.clone(),
                         old_state.clone(),
-                        bot_quit_receiver.clone(),
                         bot_running_handle.clone(),
                         &self.reqwest_client,
                     );
-                }
-
-                // Special case for profile iterator benchmark:
-                // wait until profile index bot profiles are creates and
-                // then wait that images for those profiles are moderated.
-                if self.test_config.selected_benchmark()
-                    == Some(&config::args::SelectedBenchmark::GetProfileList)
-                    && task_number >= self.test_config.tasks() - 1
-                {
-                    select! {
-                        result = signal::ctrl_c() => {
-                            match result {
-                                Ok(()) => (),
-                                Err(e) => error!("Failed to listen CTRL+C. Error: {}", e),
-                            }
-                            break
-                        }
-                        _ = wait_all_bots.recv() => (),
-                    }
+                    let quit_receiver = bot_quit_receiver.clone();
+                    tokio::spawn(admin_bot.run(quit_receiver));
+                } else if let Some(benchmark) = self.test_config.selected_benchmark() {
+                    let benchmark_bot = BenchmarkBot::new(
+                        current_task_id,
+                        self.test_config.clone(),
+                        self.bot_config_file.clone(),
+                        *benchmark,
+                        bot_running_handle.clone(),
+                        &self.reqwest_client,
+                    );
+                    let quit_receiver = bot_quit_receiver.clone();
+                    tokio::spawn(benchmark_bot.run(quit_receiver));
+                } else {
+                    let user_bot = UserBot::new(
+                        current_task_id,
+                        self.test_config.clone(),
+                        self.bot_config_file.clone(),
+                        old_state.clone(),
+                        bot_running_handle.clone(),
+                        &self.reqwest_client,
+                    );
+                    let quit_receiver = bot_quit_receiver.clone();
+                    tokio::spawn(user_bot.run(quit_receiver));
                 }
 
                 task_number -= 1;
             }
 
-            info!("Bot tasks are now created",);
+            info!("Bot tasks are now created");
         }
 
         drop(bot_running_handle);
@@ -168,7 +153,7 @@ impl BotTestRunner {
                 value = wait_all_bots.recv() => {
                     match value {
                         None => break,
-                        Some(states) => bot_states.extend(states),
+                        Some(state) => bot_states.push(state),
                     }
                 }
             }
@@ -180,7 +165,7 @@ impl BotTestRunner {
         loop {
             match wait_all_bots.recv().await {
                 None => break,
-                Some(states) => bot_states.extend(states),
+                Some(state) => bot_states.push(state),
             }
         }
 
@@ -216,39 +201,18 @@ impl BotTestRunner {
         }
     }
 
-    fn log_task_and_bot_count_info(&self) {
-        let mut bot_counts: Vec<u32> = vec![];
-        for task_id in 0..self.test_config.tasks() {
-            bot_counts.push(self.test_config.bots(task_id));
-        }
-        let all_values_equal_info: HashSet<u32> = bot_counts.iter().copied().collect();
-        if all_values_equal_info.len() <= 1 {
-            info!(
-                "Task count: {}, Bot count per task: {}",
-                self.test_config.tasks(),
-                self.test_config.bots(0),
-            );
-        } else {
-            info!(
-                "Task count: {}, Bot counts per task: {:?}",
-                self.test_config.tasks(),
-                bot_counts,
-            );
-        }
-    }
-
     fn merge_old_and_new_state_data(old: Option<Arc<StateData>>, new: StateData) -> StateData {
-        let mut bot_data: HashMap<(u32, u32), BotPersistentState> = HashMap::new();
+        let mut bot_data: HashMap<u32, BotPersistentState> = HashMap::new();
         if let Some(old_state) = &old {
             for s in old_state.bot_states.iter().cloned() {
-                bot_data.insert((s.task, s.bot), s);
+                bot_data.insert(s.task, s);
             }
         }
         for s in new.bot_states {
-            bot_data.insert((s.task, s.bot), s);
+            bot_data.insert(s.task, s);
         }
         let mut data: Vec<BotPersistentState> = bot_data.into_values().collect();
-        data.sort_by(|a, b| (a.task, a.bot).cmp(&(b.task, b.bot)));
+        data.sort_by(|a, b| a.task.cmp(&b.task));
 
         StateData {
             test_name: new.test_name,

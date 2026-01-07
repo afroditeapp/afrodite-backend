@@ -325,7 +325,7 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             match bot_config.gender {
                 Some(Gender::Man) => man,
                 Some(Gender::Woman) => woman,
-                None => match state.bot_id % 3 {
+                None => match state.task_id % 3 {
                     0 => man,
                     1 => woman,
                     _ => non_binary,
@@ -371,7 +371,7 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
         }
 
         let name = if self.admin {
-            format!("Admin bot {}", state.bot_id + 1)
+            format!("Admin bot {}", state.task_id + 1)
         } else {
             state
                 .get_bot_config()
