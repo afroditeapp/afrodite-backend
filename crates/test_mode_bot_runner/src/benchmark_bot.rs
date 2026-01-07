@@ -14,7 +14,8 @@ use error_stack::Result;
 use test_mode_bot::{
     BotState, TaskState,
     actions::{
-        BotAction, account::SetProfileVisibility, profile::UpdateLocationRandomOrConfigured,
+        BotAction, RunActions, TO_NORMAL_STATE, account::SetProfileVisibility,
+        profile::UpdateLocationRandomOrConfigured,
     },
 };
 use test_mode_utils::{
@@ -260,15 +261,14 @@ impl BenchmarkBot {
     }
 
     async fn benchmark_post_profile(state: &mut BotState) -> Result<(), TestError> {
-        use test_mode_bot::actions::account::{Login, Register};
-
         use crate::benchmark::{ActionsAfterIteration, ActionsBeforeIteration, PostProfile};
 
         let mut task_state = TaskState;
 
         // Setup
-        Register.excecute(state, &mut task_state).await?;
-        Login.excecute(state, &mut task_state).await?;
+        RunActions(TO_NORMAL_STATE)
+            .excecute(state, &mut task_state)
+            .await?;
 
         // Benchmark loop
         loop {
