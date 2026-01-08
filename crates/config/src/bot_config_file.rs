@@ -468,6 +468,11 @@ pub struct LlmStringModerationConfig {
     pub debug_log_results: bool,
     #[serde(default = "max_tokens_default_value")]
     pub max_tokens: u32,
+    /// Wait times in seconds between retry attempts. The length of this vector
+    /// determines the number of retries. For example, [1, 5, 10] means 3 retries
+    /// with 1, 5, and 10 seconds wait time respectively.
+    #[serde(default)]
+    pub retry_wait_times_in_seconds: Vec<u16>,
 }
 
 fn max_tokens_default_value() -> u32 {
@@ -549,6 +554,11 @@ pub struct LlmContentModerationConfig {
     pub debug_log_results: bool,
     #[serde(default = "max_tokens_default_value")]
     pub max_tokens: u32,
+    /// Wait times in seconds between retry attempts. The length of this vector
+    /// determines the number of retries. For example, [1, 5, 10] means 3 retries
+    /// with 1, 5, and 10 seconds wait time respectively.
+    #[serde(default)]
+    pub retry_wait_times_in_seconds: Vec<u16>,
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]

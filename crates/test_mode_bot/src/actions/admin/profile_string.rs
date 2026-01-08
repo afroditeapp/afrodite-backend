@@ -129,7 +129,8 @@ impl AdminBotProfileStringModerationLogic {
         }
 
         let r = if let Some(llm) = llm {
-            Self::llm_profile_string_moderation(&moderation.value, llm, content_type).await?
+            Self::llm_profile_string_moderation_and_retry(&moderation.value, llm, content_type)
+                .await?
         } else {
             None
         };
@@ -243,6 +244,38 @@ impl AdminBotProfileStringModerationLogic {
             move_to_human,
             delete: false,
         }))
+    }
+
+    async fn llm_profile_string_moderation_and_retry(
+        profile_string: &str,
+        llm: LlmConfigAndClient,
+        content_type: ProfileStringModerationContentType,
+    ) -> Result<Option<ModerationResult>, TestError> {
+        let retry_wait_times = &llm.config.retry_wait_times_in_seconds;
+        let mut attempt = 0;
+
+        loop {
+            match Self::llm_profile_string_moderation(profile_string, llm.clone(), content_type)
+                .await
+            {
+                Ok(result) => return Ok(result),
+                Err(e) => {
+                    if attempt < retry_wait_times.len() {
+                        let wait_time = retry_wait_times[attempt];
+                        info!(
+                            "LLM {content_type} moderation attempt {} failed, retrying in {} seconds...",
+                            attempt + 1,
+                            wait_time
+                        );
+                        tokio::time::sleep(tokio::time::Duration::from_secs(wait_time as u64))
+                            .await;
+                        attempt += 1;
+                    } else {
+                        return Err(e);
+                    }
+                }
+            }
+        }
     }
 }
 

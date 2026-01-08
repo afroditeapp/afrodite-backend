@@ -340,10 +340,10 @@ impl AdminBotContentModerationLogic {
         }
 
         let llm_result = if let Some(primary) = llm_primary {
-            match Self::llm_profile_image_moderation(&data, primary).await? {
+            match Self::llm_profile_image_moderation_and_retry(&data, primary).await? {
                 None => {
                     if let Some(secondary) = llm_secondary {
-                        Self::llm_profile_image_moderation(&data, secondary).await?
+                        Self::llm_profile_image_moderation_and_retry(&data, secondary).await?
                     } else {
                         None
                     }
@@ -446,7 +446,7 @@ impl AdminBotContentModerationLogic {
 
     async fn llm_profile_image_moderation(
         image_data: &[u8],
-        llm: LlmConfigAndClient,
+        llm: &LlmConfigAndClient,
     ) -> Result<Option<ModerationResult>, TestError> {
         let config = &llm.config;
         let expected_response_lowercase = llm.config.expected_response.to_lowercase();
@@ -534,6 +534,35 @@ impl AdminBotContentModerationLogic {
             move_to_human,
             delete: false,
         }))
+    }
+
+    async fn llm_profile_image_moderation_and_retry(
+        image_data: &[u8],
+        llm: LlmConfigAndClient,
+    ) -> Result<Option<ModerationResult>, TestError> {
+        let retry_wait_times = &llm.config.retry_wait_times_in_seconds;
+        let mut attempt = 0;
+
+        loop {
+            match Self::llm_profile_image_moderation(image_data, &llm).await {
+                Ok(result) => return Ok(result),
+                Err(e) => {
+                    if attempt < retry_wait_times.len() {
+                        let wait_time = retry_wait_times[attempt];
+                        info!(
+                            "LLM image moderation attempt {} failed, retrying in {} seconds...",
+                            attempt + 1,
+                            wait_time
+                        );
+                        tokio::time::sleep(tokio::time::Duration::from_secs(wait_time as u64))
+                            .await;
+                        attempt += 1;
+                    } else {
+                        return Err(e);
+                    }
+                }
+            }
+        }
     }
 }
 
