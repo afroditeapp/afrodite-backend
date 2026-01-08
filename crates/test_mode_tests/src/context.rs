@@ -278,12 +278,12 @@ impl Account {
     }
 
     pub async fn run<T: BotAction>(&mut self, action: T) -> Result<(), TestError> {
-        action.excecute_impl(&mut self.bot_state).await
+        action.excecute(&mut self.bot_state).await
     }
 
     pub async fn run_actions(&mut self, actions: &[&dyn BotAction]) -> Result<(), TestError> {
         for action in actions.iter() {
-            action.excecute_impl(&mut self.bot_state).await?;
+            action.excecute(&mut self.bot_state).await?;
         }
         Ok(())
     }
