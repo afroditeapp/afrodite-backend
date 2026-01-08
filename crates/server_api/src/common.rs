@@ -82,7 +82,6 @@ pub use utils::api::PATH_CONNECT;
 // ------------------------- WebSocket -------------------------
 
 /// Connect to server using WebSocket after getting refresh and access tokens.
-/// Connection is required as API access is allowed for connected clients.
 ///
 /// Protocol:
 /// 1. Server sends one of these byte values as Binary message:

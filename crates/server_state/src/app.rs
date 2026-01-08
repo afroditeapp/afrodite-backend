@@ -17,9 +17,7 @@ pub trait GetAccessTokens {
         token: &AccessToken,
     ) -> impl std::future::Future<Output = Option<AccountIdInternal>> + Send;
 
-    /// Check that token and current connection IP and port matches
-    /// with WebSocket connection.
-    fn access_token_and_connection_exists(
+    fn access_token_and_ip_is_valid(
         &self,
         token: &AccessToken,
         connection: SocketAddr,

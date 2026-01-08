@@ -18,15 +18,13 @@ impl<'a> AccessTokenManager<'a> {
         self.cache.access_token_exists(token).await
     }
 
-    /// Check that token and current connection IP and port matches
-    /// with WebSocket connection.
-    pub async fn access_token_and_connection_exists(
+    pub async fn access_token_and_ip_is_valid(
         &self,
         token: &AccessToken,
         connection: SocketAddr,
     ) -> Option<(AccountIdInternal, Permissions, AccountState)> {
         self.cache
-            .access_token_and_connection_exists(token, connection)
+            .access_token_and_ip_is_valid(token, connection)
             .await
     }
 }

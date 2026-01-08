@@ -49,7 +49,7 @@ pub async fn authenticate_with_access_token(
     let key = AccessToken::new(header.token().to_string());
 
     if let Some((id, permissions, account_state)) =
-        state.s.access_token_and_connection_exists(&key, addr).await
+        state.s.access_token_and_ip_is_valid(&key, addr).await
     {
         if state.allow_only_remote_bots {
             let is_remote_bot = state

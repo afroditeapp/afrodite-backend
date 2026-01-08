@@ -218,7 +218,7 @@ impl GetAccessTokens for S {
             .await
     }
 
-    async fn access_token_and_connection_exists(
+    async fn access_token_and_ip_is_valid(
         &self,
         token: &AccessToken,
         connection: SocketAddr,
@@ -226,7 +226,7 @@ impl GetAccessTokens for S {
         self.state
             .database
             .access_token_manager()
-            .access_token_and_connection_exists(token, connection)
+            .access_token_and_ip_is_valid(token, connection)
             .await
     }
 }
