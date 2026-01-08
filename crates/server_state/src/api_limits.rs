@@ -73,7 +73,11 @@ impl CommonApiLimits<'_> {
             .limits
             .cache
             .write_cache_common(self.limits.account_id, |e| {
-                Ok(check(e.api_limits(), self.limits.config))
+                if e.other_shared_state.is_bot_account {
+                    Ok(false)
+                } else {
+                    Ok(check(e.api_limits(), self.limits.config))
+                }
             })
             .await
             .change_context(ApiLimitError::Cache)?;
