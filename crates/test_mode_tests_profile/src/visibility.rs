@@ -5,21 +5,22 @@ use api_client::{
     },
     models::ProfileVisibility,
 };
-use test_mode_bot::actions::{AssertFailure, account::SetProfileVisibility};
+use test_mode_bot::actions::account::SetProfileVisibility;
 use test_mode_tests::prelude::*;
 
 #[server_test]
-async fn pending_visiblity_updates_do_not_work_in_initial_setup_state(
-    mut context: TestContext,
-) -> TestResult {
+async fn pending_visiblity_updates_in_initial_setup_state(mut context: TestContext) -> TestResult {
     let mut account = context.new_account_in_initial_setup_state().await?;
     assert_eq(
         ProfileVisibility::PendingPrivate,
         get_account_state(account.account_api()).await?.visibility,
     )?;
-    account
-        .run(AssertFailure(SetProfileVisibility(true)))
-        .await?;
+    account.run(SetProfileVisibility(true)).await?;
+    assert_eq(
+        ProfileVisibility::PendingPublic,
+        get_account_state(account.account_api()).await?.visibility,
+    )?;
+    account.run(SetProfileVisibility(false)).await?;
     assert_eq(
         ProfileVisibility::PendingPrivate,
         get_account_state(account.account_api()).await?.visibility,
