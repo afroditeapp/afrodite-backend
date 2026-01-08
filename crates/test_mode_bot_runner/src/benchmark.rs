@@ -12,7 +12,7 @@ use api_client::{
 use async_trait::async_trait;
 use error_stack::{Result, ResultExt};
 use test_mode_bot::{
-    BotState, TaskState,
+    BotState,
     actions::{
         BotAction,
         profile::{ChangeProfileText, GetProfileList, ProfileText},
@@ -72,15 +72,11 @@ pub struct PostProfile;
 
 #[async_trait]
 impl BotAction for PostProfile {
-    async fn excecute_impl_task_state(
-        &self,
-        state: &mut BotState,
-        task_state: &mut TaskState,
-    ) -> Result<(), TestError> {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         ChangeProfileText {
             mode: ProfileText::Random,
         }
-        .excecute(state, task_state)
+        .excecute(state)
         .await?;
         Ok(())
     }
@@ -91,11 +87,7 @@ pub struct PostProfileToDatabase;
 
 #[async_trait]
 impl BotAction for PostProfileToDatabase {
-    async fn excecute_impl_task_state(
-        &self,
-        state: &mut BotState,
-        _task_state: &mut TaskState,
-    ) -> Result<(), TestError> {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         // Uuid has same string size every time.
         let profile = simple_backend_utils::UuidBase64Url::new_random_id();
         let profile = ProfileUpdate {

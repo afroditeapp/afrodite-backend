@@ -30,9 +30,6 @@ use test_mode_utils::{
 use self::actions::{PreviousValue, media::MediaState};
 use crate::{benchmark::BenchmarkState, connection::BotConnections};
 
-#[derive(Debug, Default)]
-pub struct TaskState;
-
 #[derive(Debug)]
 pub struct BotState {
     pub id: Option<AccountId>,

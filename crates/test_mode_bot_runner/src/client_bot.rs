@@ -28,7 +28,7 @@ use config::bot_config_file::Gender;
 use error_stack::{Result, ResultExt};
 use simple_backend_utils::UuidBase64Url;
 use test_mode_bot::{
-    BotState, TaskState, action_array,
+    BotState, action_array,
     actions::{
         ActionArray, BotAction, RunActions,
         account::{
@@ -48,11 +48,7 @@ pub struct DoInitialSetupIfNeeded {
 
 #[async_trait]
 impl BotAction for DoInitialSetupIfNeeded {
-    async fn excecute_impl_task_state(
-        &self,
-        state: &mut BotState,
-        task_state: &mut TaskState,
-    ) -> Result<(), TestError> {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let account_state = get_account_state(state.api())
             .await
             .change_context(TestError::ApiRequest)?;
@@ -63,7 +59,7 @@ impl BotAction for DoInitialSetupIfNeeded {
             } else {
                 SetAccountSetup::new()
             }
-            .excecute_impl_task_state(state, task_state)
+            .excecute_impl(state)
             .await?;
 
             const ACTIONS1: ActionArray = action_array!(
@@ -77,20 +73,16 @@ impl BotAction for DoInitialSetupIfNeeded {
                     content_0_slot_i: Some(0),
                 },
             );
-            RunActions(ACTIONS1)
-                .excecute_impl_task_state(state, task_state)
-                .await?;
+            RunActions(ACTIONS1).excecute_impl(state).await?;
             ChangeBotAgeAndOtherSettings { admin: self.admin }
-                .excecute_impl_task_state(state, task_state)
+                .excecute_impl(state)
                 .await?;
             const ACTIONS2: ActionArray = action_array!(
                 SetBotPublicKey,
                 CompleteAccountSetup,
                 AssertAccountState::account(AccountState::Normal),
             );
-            RunActions(ACTIONS2)
-                .excecute_impl_task_state(state, task_state)
-                .await?;
+            RunActions(ACTIONS2).excecute_impl(state).await?;
         }
 
         Ok(())

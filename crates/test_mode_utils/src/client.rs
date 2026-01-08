@@ -59,9 +59,6 @@ pub enum TestError {
     #[error("Assert error. message: {0}")]
     AssertError(String),
 
-    #[error("Not an error. Just an indication that bot is waiting.")]
-    BotIsWaiting,
-
     #[error("Server integration test failed.")]
     ServerTestFailed,
 

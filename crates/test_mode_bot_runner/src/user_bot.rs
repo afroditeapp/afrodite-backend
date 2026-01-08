@@ -4,7 +4,7 @@ use api_client::models::AccountId;
 use config::{args::TestMode, bot_config_file::BotConfigFile};
 use error_stack::Result;
 use test_mode_bot::{
-    BotState, TaskState, action_array,
+    BotState, action_array,
     actions::{
         ActionArray, RunActionsIf,
         account::{Login, Register, SetProfileVisibility},
@@ -117,7 +117,7 @@ impl UserBot {
         ];
 
         for action in SETUP.iter() {
-            action.excecute(state, &mut TaskState).await?;
+            action.excecute(state).await?;
         }
 
         Ok(())
@@ -149,7 +149,7 @@ impl UserBot {
         loop {
             interval.tick().await;
             for action in ACTION_LOOP.iter() {
-                action.excecute(state, &mut TaskState).await?;
+                action.excecute(state).await?;
             }
         }
     }

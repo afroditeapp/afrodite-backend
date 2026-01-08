@@ -277,12 +277,10 @@ impl Account {
         self.account_id().aid.to_string()
     }
 
-    /// Only actions without TaskState usage are supported
     pub async fn run<T: BotAction>(&mut self, action: T) -> Result<(), TestError> {
         action.excecute_impl(&mut self.bot_state).await
     }
 
-    /// Only actions without TaskState usage are supported
     pub async fn run_actions(&mut self, actions: &[&dyn BotAction]) -> Result<(), TestError> {
         for action in actions.iter() {
             action.excecute_impl(&mut self.bot_state).await?;

@@ -12,7 +12,7 @@ use config::{
 };
 use error_stack::Result;
 use test_mode_bot::{
-    BotState, TaskState,
+    BotState,
     actions::{
         BotAction, RunActions, TO_NORMAL_STATE, account::SetProfileVisibility,
         profile::UpdateLocationRandomOrConfigured,
@@ -128,21 +128,15 @@ impl BenchmarkBot {
 
         use crate::benchmark::{ActionsAfterIteration, ActionsBeforeIteration, GetProfile};
 
-        let mut task_state = TaskState;
-
         // Setup
-        Register.excecute(state, &mut task_state).await?;
-        Login.excecute(state, &mut task_state).await?;
+        Register.excecute(state).await?;
+        Login.excecute(state).await?;
 
         // Benchmark loop
         loop {
-            ActionsBeforeIteration
-                .excecute(state, &mut task_state)
-                .await?;
-            GetProfile.excecute(state, &mut task_state).await?;
-            ActionsAfterIteration
-                .excecute(state, &mut task_state)
-                .await?;
+            ActionsBeforeIteration.excecute(state).await?;
+            GetProfile.excecute(state).await?;
+            ActionsAfterIteration.excecute(state).await?;
         }
     }
 
@@ -153,23 +147,15 @@ impl BenchmarkBot {
             ActionsAfterIteration, ActionsBeforeIteration, GetProfileFromDatabase,
         };
 
-        let mut task_state = TaskState;
-
         // Setup
-        Register.excecute(state, &mut task_state).await?;
-        Login.excecute(state, &mut task_state).await?;
+        Register.excecute(state).await?;
+        Login.excecute(state).await?;
 
         // Benchmark loop
         loop {
-            ActionsBeforeIteration
-                .excecute(state, &mut task_state)
-                .await?;
-            GetProfileFromDatabase
-                .excecute(state, &mut task_state)
-                .await?;
-            ActionsAfterIteration
-                .excecute(state, &mut task_state)
-                .await?;
+            ActionsBeforeIteration.excecute(state).await?;
+            GetProfileFromDatabase.excecute(state).await?;
+            ActionsAfterIteration.excecute(state).await?;
         }
     }
 
@@ -197,8 +183,6 @@ impl BenchmarkBot {
 
         static READY_COUNT: AtomicU32 = AtomicU32::new(0);
 
-        let mut task_state = TaskState;
-
         // Setup
         const SETUP: ActionArray = action_array![
             RunActions(TO_NORMAL_STATE),
@@ -213,23 +197,17 @@ impl BenchmarkBot {
         ];
 
         for action in SETUP.iter() {
-            action.excecute(state, &mut task_state).await?;
+            action.excecute(state).await?;
         }
 
         // Benchmark loop
         loop {
-            ActionsBeforeIteration
-                .excecute(state, &mut task_state)
-                .await?;
-            ResetProfileIterator
-                .excecute(state, &mut task_state)
-                .await?;
+            ActionsBeforeIteration.excecute(state).await?;
+            ResetProfileIterator.excecute(state).await?;
             RepeatUntilFn(|v, _| v.profile_count(), 0, &GetProfileListBenchmark)
-                .excecute(state, &mut task_state)
+                .excecute(state)
                 .await?;
-            ActionsAfterIteration
-                .excecute(state, &mut task_state)
-                .await?;
+            ActionsAfterIteration.excecute(state).await?;
         }
     }
 
@@ -238,21 +216,15 @@ impl BenchmarkBot {
             RunActions, TO_ADMIN_NORMAL_STATE, admin::content::ModerateContentModerationRequest,
         };
 
-        let mut task_state = TaskState;
-
-        RunActions(TO_ADMIN_NORMAL_STATE)
-            .excecute(state, &mut task_state)
-            .await?;
+        RunActions(TO_ADMIN_NORMAL_STATE).excecute(state).await?;
         UpdateLocationRandomOrConfigured::new_deterministic(Some(
             DEFAULT_LOCATION_CONFIG_BENCHMARK,
         ))
-        .excecute(state, &mut task_state)
+        .excecute(state)
         .await?;
-        SetProfileVisibility(true)
-            .excecute(state, &mut task_state)
-            .await?;
+        SetProfileVisibility(true).excecute(state).await?;
         ModerateContentModerationRequest::moderate_all_initial_content()
-            .excecute(state, &mut task_state)
+            .excecute(state)
             .await?;
 
         BENCHMARK_GET_PROFILE_LIST_INDEX_READY.store(true, Ordering::Relaxed);
@@ -263,22 +235,14 @@ impl BenchmarkBot {
     async fn benchmark_post_profile(state: &mut BotState) -> Result<(), TestError> {
         use crate::benchmark::{ActionsAfterIteration, ActionsBeforeIteration, PostProfile};
 
-        let mut task_state = TaskState;
-
         // Setup
-        RunActions(TO_NORMAL_STATE)
-            .excecute(state, &mut task_state)
-            .await?;
+        RunActions(TO_NORMAL_STATE).excecute(state).await?;
 
         // Benchmark loop
         loop {
-            ActionsBeforeIteration
-                .excecute(state, &mut task_state)
-                .await?;
-            PostProfile.excecute(state, &mut task_state).await?;
-            ActionsAfterIteration
-                .excecute(state, &mut task_state)
-                .await?;
+            ActionsBeforeIteration.excecute(state).await?;
+            PostProfile.excecute(state).await?;
+            ActionsAfterIteration.excecute(state).await?;
         }
     }
 
@@ -289,23 +253,15 @@ impl BenchmarkBot {
             ActionsAfterIteration, ActionsBeforeIteration, PostProfileToDatabase,
         };
 
-        let mut task_state = TaskState;
-
         // Setup
-        Register.excecute(state, &mut task_state).await?;
-        Login.excecute(state, &mut task_state).await?;
+        Register.excecute(state).await?;
+        Login.excecute(state).await?;
 
         // Benchmark loop
         loop {
-            ActionsBeforeIteration
-                .excecute(state, &mut task_state)
-                .await?;
-            PostProfileToDatabase
-                .excecute(state, &mut task_state)
-                .await?;
-            ActionsAfterIteration
-                .excecute(state, &mut task_state)
-                .await?;
+            ActionsBeforeIteration.excecute(state).await?;
+            PostProfileToDatabase.excecute(state).await?;
+            ActionsAfterIteration.excecute(state).await?;
         }
     }
 }

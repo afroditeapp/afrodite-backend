@@ -4,7 +4,7 @@ use api_client::models::{AccountId, EventType};
 use config::{args::TestMode, bot_config_file::BotConfigFile};
 use error_stack::Result;
 use test_mode_bot::{
-    BotState, TaskState, action_array,
+    BotState, action_array,
     actions::account::{Login, Register},
     connection::BotConnections,
 };
@@ -128,7 +128,7 @@ impl AdminBot {
 
         for action in action_array![Register, Login, DoInitialSetupIfNeeded { admin: true }].iter()
         {
-            action.excecute(state, &mut TaskState).await?;
+            action.excecute(state).await?;
         }
 
         Ok(())
