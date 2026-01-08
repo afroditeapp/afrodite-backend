@@ -1,5 +1,3 @@
-//! Bots for benchmarking
-
 use std::{fmt::Debug, time::Instant};
 
 use api_client::{

@@ -3,12 +3,11 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
-//! Bot mode related test/bot runner.
+//! Admin bot, user bots and benchmarks
 
+mod actions;
 mod admin_bot;
-mod benchmark;
 mod benchmark_bot;
-mod client_bot;
 mod user_bot;
 mod utils;
 

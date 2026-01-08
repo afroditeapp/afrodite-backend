@@ -19,13 +19,13 @@ use tokio::{
 use tracing::{error, info};
 
 use crate::{
+    actions::user::DoInitialSetupIfNeeded,
     admin_bot::{
         content::ContentModerationHandler,
         notification::{ModerationHandler, NotificationSender},
         profile_name::ProfileNameModerationHandler,
         profile_text::ProfileTextModerationHandler,
     },
-    client_bot::DoInitialSetupIfNeeded,
 };
 
 mod content;

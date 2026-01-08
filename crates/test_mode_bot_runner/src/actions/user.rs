@@ -1,5 +1,3 @@
-//! Bots for fake clients
-
 use std::fmt::Debug;
 
 use api_client::{

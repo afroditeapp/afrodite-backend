@@ -126,7 +126,9 @@ impl BenchmarkBot {
     async fn benchmark_get_profile(state: &mut BotState) -> Result<(), TestError> {
         use test_mode_bot::actions::account::{Login, Register};
 
-        use crate::benchmark::{ActionsAfterIteration, ActionsBeforeIteration, GetProfile};
+        use crate::actions::benchmark::{
+            ActionsAfterIteration, ActionsBeforeIteration, GetProfile,
+        };
 
         // Setup
         Register.excecute(state).await?;
@@ -143,7 +145,7 @@ impl BenchmarkBot {
     async fn benchmark_get_profile_from_database(state: &mut BotState) -> Result<(), TestError> {
         use test_mode_bot::actions::account::{Login, Register};
 
-        use crate::benchmark::{
+        use crate::actions::benchmark::{
             ActionsAfterIteration, ActionsBeforeIteration, GetProfileFromDatabase,
         };
 
@@ -170,7 +172,7 @@ impl BenchmarkBot {
             },
         };
 
-        use crate::benchmark::{
+        use crate::actions::benchmark::{
             ActionsAfterIteration, ActionsBeforeIteration, GetProfileListBenchmark,
         };
 
@@ -233,7 +235,9 @@ impl BenchmarkBot {
     }
 
     async fn benchmark_post_profile(state: &mut BotState) -> Result<(), TestError> {
-        use crate::benchmark::{ActionsAfterIteration, ActionsBeforeIteration, PostProfile};
+        use crate::actions::benchmark::{
+            ActionsAfterIteration, ActionsBeforeIteration, PostProfile,
+        };
 
         // Setup
         RunActions(TO_NORMAL_STATE).excecute(state).await?;
@@ -249,7 +253,7 @@ impl BenchmarkBot {
     async fn benchmark_post_profile_to_database(state: &mut BotState) -> Result<(), TestError> {
         use test_mode_bot::actions::account::{Login, Register};
 
-        use crate::benchmark::{
+        use crate::actions::benchmark::{
             ActionsAfterIteration, ActionsBeforeIteration, PostProfileToDatabase,
         };
 

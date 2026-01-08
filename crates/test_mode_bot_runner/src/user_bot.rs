@@ -22,7 +22,7 @@ use tokio::{
 };
 use tracing::error;
 
-use crate::client_bot::{
+use crate::actions::user::{
     AcceptReceivedLikesAndSendMessage, AnswerReceivedMessages, DoInitialSetupIfNeeded,
     SendLikeIfNeeded,
 };
