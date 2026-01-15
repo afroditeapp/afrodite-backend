@@ -39,12 +39,11 @@ impl UserBot {
         bot_config_file: Arc<BotConfigFile>,
         old_state: Option<Arc<StateData>>,
         bot_running_handle: mpsc::Sender<BotPersistentState>,
+        account_id_from_api: AccountId,
         reqwest_client: &reqwest::Client,
     ) -> Self {
-        let account_id = old_state
-            .as_ref()
-            .and_then(|v| v.find_matching(task_id))
-            .map(|v| v.account_id.clone());
+        // Use API account ID
+        let account_id = Some(account_id_from_api.aid);
 
         let keys = old_state
             .as_ref()

@@ -150,13 +150,9 @@ impl DynamicConfigManager {
         if (self.current_config.admin_bot || self.current_config.user_bots > 0)
             && !self.current_config.remote_bot_login
         {
-            let bots = BotClient::start_bots(
-                self.state.config(),
-                self.current_config.admin_bot,
-                self.current_config.user_bots,
-            )
-            .await
-            .change_context(DynamicConfigManagerError::BotClient)?;
+            let bots = BotClient::start_bots(self.state.config())
+                .await
+                .change_context(DynamicConfigManagerError::BotClient)?;
             self.bots = Some(bots);
         }
 

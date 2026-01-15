@@ -126,13 +126,6 @@ impl BotState {
         })
     }
 
-    /// Is current bot an bot mode admin bot.
-    ///
-    /// Task ID 0 bot is admin bot.
-    pub fn is_bot_mode_admin_bot(&self) -> bool {
-        matches!(self.config.bot_mode(), Some(bot_mode) if bot_mode.admin) && self.task_id == 0
-    }
-
     /// Default [BaseBotConfig] is returned when current mode is other than
     /// [TestModeSubMode::Bot] even if the bot config file exists.
     pub fn get_bot_config(&self) -> &BaseBotConfig {
@@ -144,16 +137,10 @@ impl BotState {
 
     pub fn remote_bot_password(&self) -> Option<String> {
         if self.config.bot_mode().is_some() {
-            if self.is_bot_mode_admin_bot() {
-                self.bot_config_file
-                    .admin_bot_config
-                    .remote_bot_login_password
-                    .clone()
-            } else {
-                self.bot_config_file
-                    .find_bot_config(self.task_id)
-                    .and_then(|v| v.remote_bot_login_password.clone())
-            }
+            self.bot_config_file
+                .remote_bot_mode
+                .as_ref()
+                .and_then(|mode| mode.password.clone())
         } else {
             None
         }

@@ -196,7 +196,7 @@ impl ReadCommandsAccount<'_> {
 
         // Query user bots
         let mut users = Vec::new();
-        for i in 0..expected_user_count {
+        for i in 1..=expected_user_count {
             let bot_email = EmailAddress(format!("{}{}{}", BOT_EMAIL_PREFIX, i, BOT_EMAIL_SUFFIX));
             if let Some(bot) = self.get_existing_bot_account(bot_email).await? {
                 users.push(bot);

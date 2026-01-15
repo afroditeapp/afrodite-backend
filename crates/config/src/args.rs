@@ -111,13 +111,7 @@ impl RemoteBotMode {
             no_servers: true,
             sqlite_in_ram: false,
             no_tmp_dir: false,
-            mode: TestModeSubMode::Bot(BotModeConfig {
-                users: TryInto::<u32>::try_into(config.bots.len())
-                    .change_context(ConfigFileError::InvalidConfig)?,
-                admin: config.admin_bot_config.account_id.is_some()
-                    && config.admin_bot_config.remote_bot_login_password.is_some(),
-                save_state: false,
-            }),
+            mode: TestModeSubMode::Bot(BotModeConfig { save_state: false }),
         })
     }
 }
@@ -164,8 +158,12 @@ pub struct TestMode {
 impl TestMode {
     pub fn tasks(&self) -> u32 {
         match &self.mode {
-            TestModeSubMode::Bot(c) if c.admin => c.users + 1,
-            TestModeSubMode::Bot(c) => c.users,
+            TestModeSubMode::Bot(_) => {
+                // Bot count is now determined from the API, not from config.
+                // This method is deprecated for bot mode. Use the bot accounts
+                // retrieved from the get_bots API instead.
+                1
+            }
             TestModeSubMode::Benchmark(c) => match c.benchmark {
                 SelectedBenchmark::GetProfileList => c.tasks + 1,
                 _ => c.tasks,
@@ -264,14 +262,6 @@ pub struct QaTestConfig {
 
 #[derive(Args, Debug, Clone)]
 pub struct BotModeConfig {
-    /// User bot count
-    #[arg(short, long, default_value = "1", value_name = "COUNT")]
-    pub users: u32,
-
-    /// Admin bot enabled
-    #[arg(short, long)]
-    pub admin: bool,
-
     /// Save and load state
     #[arg(long)]
     pub save_state: bool,

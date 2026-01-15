@@ -52,11 +52,7 @@ pub struct BotClient {
 }
 
 impl BotClient {
-    pub async fn start_bots(
-        config: &Config,
-        admin_bot: bool,
-        user_bots: u32,
-    ) -> Result<Self, BotClientError> {
+    pub async fn start_bots(config: &Config) -> Result<Self, BotClientError> {
         let current_exe = env::current_exe().change_context(BotClientError::LaunchCommand)?;
 
         let bot_api_socket = if let Some(port) = config.simple_backend().socket().local_bot_api_port
@@ -82,15 +78,7 @@ impl BotClient {
             .arg(config.bot_config_abs_file_path());
 
         // Bot mode config
-        command
-            .arg("bot")
-            .arg("--save-state")
-            .arg("--users")
-            .arg(user_bots.to_string());
-
-        if admin_bot {
-            command.arg("--admin");
-        }
+        command.arg("bot").arg("--save-state");
 
         // Setup logging and prevent signal propagation
         command.env("RUST_LOG", "info").process_group(0);

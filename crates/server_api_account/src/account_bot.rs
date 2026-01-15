@@ -98,7 +98,7 @@ pub async fn post_bot_register(State(state): State<S>) -> Result<Json<AccountId>
 pub const PATH_GET_BOTS: &str = "/account_api/get_bots";
 
 /// Get admin and user bot accounts by email pattern.
-/// Admin bot is admin@example.com, user bots are botNUMBER@example.com.
+/// Admin bot is admin@example.com, user bots are bot1@example.com, bot2@example.com, etc.
 /// Creates accounts if they don't exist.
 ///
 /// Available only from local bot API port.
@@ -119,7 +119,7 @@ pub async fn post_get_bots(State(state): State<S>) -> Result<Json<GetBotsResult>
 pub const PATH_REMOTE_GET_BOTS: &str = "/account_api/remote_get_bots";
 
 /// Get admin and user bot accounts by email pattern.
-/// Admin bot is admin@example.com, user bots are botNUMBER@example.com.
+/// Admin bot is admin@example.com, user bots are bot1@example.com, bot2@example.com, etc.
 /// Creates accounts if they don't exist.
 ///
 /// Available only from public and local bot API ports.
@@ -195,7 +195,11 @@ async fn get_or_create_bots_impl(state: &S) -> Result<Json<GetBotsResult>, Statu
     // Create missing user bots if needed
     if result.users.len() < expected_user_count {
         for i in result.users.len()..expected_user_count {
-            let bot_email = EmailAddress(format!("{}{}{}", BOT_EMAIL_PREFIX, i, BOT_EMAIL_SUFFIX));
+            let bot_number = i + 1; // Start from bot1, not bot0
+            let bot_email = EmailAddress(format!(
+                "{}{}{}",
+                BOT_EMAIL_PREFIX, bot_number, BOT_EMAIL_SUFFIX
+            ));
             if let Some(bot) = create_bot_account(state, bot_email).await? {
                 result.users.push(bot);
             }

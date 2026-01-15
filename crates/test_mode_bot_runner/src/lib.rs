@@ -13,6 +13,7 @@ mod utils;
 
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
+use api_client::apis::account_bot_api;
 use config::{args::TestMode, bot_config_file::BotConfigFile};
 use test_mode_utils::{
     client::ApiClient,
@@ -86,56 +87,29 @@ impl BotTestRunner {
         let (bot_running_handle, mut wait_all_bots) = mpsc::channel::<BotPersistentState>(1);
         let (quit_handle, bot_quit_receiver) = watch::channel(());
 
-        let mut task_number = self.test_config.tasks();
-
         if !quit_now {
-            info!("Task count: {}", self.test_config.tasks());
-
-            while task_number > 0 {
-                let current_task_id = task_number - 1;
-
-                // Check if this is admin bot task in bot mode
-                if let Some(bot_mode) = self.test_config.bot_mode()
-                    && bot_mode.admin
-                    && current_task_id == 0
-                {
-                    let admin_bot = AdminBot::new(
-                        current_task_id,
-                        self.test_config.clone(),
-                        self.bot_config_file.clone(),
-                        old_state.clone(),
-                        bot_running_handle.clone(),
-                        &self.reqwest_client,
-                    );
-                    let quit_receiver = bot_quit_receiver.clone();
-                    tokio::spawn(admin_bot.run(quit_receiver));
-                } else if let Some(benchmark) = self.test_config.selected_benchmark() {
-                    let benchmark_bot = BenchmarkBot::new(
-                        current_task_id,
-                        self.test_config.clone(),
-                        self.bot_config_file.clone(),
-                        *benchmark,
-                        bot_running_handle.clone(),
-                        &self.reqwest_client,
-                    );
-                    let quit_receiver = bot_quit_receiver.clone();
-                    tokio::spawn(benchmark_bot.run(quit_receiver));
-                } else {
-                    let user_bot = UserBot::new(
-                        current_task_id,
-                        self.test_config.clone(),
-                        self.bot_config_file.clone(),
-                        old_state.clone(),
-                        bot_running_handle.clone(),
-                        &self.reqwest_client,
-                    );
-                    let quit_receiver = bot_quit_receiver.clone();
-                    tokio::spawn(user_bot.run(quit_receiver));
-                }
-
-                task_number -= 1;
+            if let Some(benchmark) = self.test_config.selected_benchmark() {
+                let benchmark = *benchmark;
+                Self::spawn_benchmark_tasks(
+                    self.test_config.clone(),
+                    self.bot_config_file.clone(),
+                    bot_running_handle.clone(),
+                    bot_quit_receiver.clone(),
+                    &self.reqwest_client,
+                    benchmark,
+                )
+                .await;
+            } else {
+                Self::spawn_admin_and_user_bot_tasks(
+                    self.test_config.clone(),
+                    self.bot_config_file.clone(),
+                    old_state.clone(),
+                    bot_running_handle.clone(),
+                    bot_quit_receiver.clone(),
+                    &self.reqwest_client,
+                )
+                .await;
             }
-
             info!("Bot tasks are now created");
         }
 
@@ -249,5 +223,114 @@ impl BotTestRunner {
     fn state_data_file(&self) -> PathBuf {
         let data_file = format!("test_{}_state_data.json", self.test_config.test_name());
         DataDirUtils::create_data_dir_if_needed(&self.test_config).join(data_file)
+    }
+
+    async fn spawn_benchmark_tasks(
+        test_config: Arc<TestMode>,
+        bot_config_file: Arc<BotConfigFile>,
+        bot_running_handle: mpsc::Sender<BotPersistentState>,
+        bot_quit_receiver: watch::Receiver<()>,
+        reqwest_client: &reqwest::Client,
+        benchmark: config::args::SelectedBenchmark,
+    ) {
+        info!("Task count: {}", test_config.tasks());
+
+        for task_id in 0..test_config.tasks() {
+            let benchmark_bot = BenchmarkBot::new(
+                task_id,
+                test_config.clone(),
+                bot_config_file.clone(),
+                benchmark,
+                bot_running_handle.clone(),
+                reqwest_client,
+            );
+            let quit_receiver = bot_quit_receiver.clone();
+            tokio::spawn(benchmark_bot.run(quit_receiver));
+        }
+    }
+
+    async fn spawn_admin_and_user_bot_tasks(
+        test_config: Arc<TestMode>,
+        bot_config_file: Arc<BotConfigFile>,
+        old_state: Option<Arc<StateData>>,
+        bot_running_handle: mpsc::Sender<BotPersistentState>,
+        bot_quit_receiver: watch::Receiver<()>,
+        reqwest_client: &reqwest::Client,
+    ) {
+        let bot_accounts =
+            Self::get_or_create_bot_accounts(test_config.clone(), reqwest_client).await;
+
+        let has_admin = bot_accounts
+            .admin
+            .as_ref()
+            .and_then(|b| b.as_ref())
+            .is_some();
+        let user_count = bot_accounts
+            .users
+            .as_ref()
+            .map(|u| u.len() as u32)
+            .unwrap_or(0);
+
+        // Spawn admin bot first if needed (task_id 0)
+        if has_admin {
+            info!("Creating admin bot");
+
+            let account_id_from_api = bot_accounts
+                .admin
+                .as_ref()
+                .and_then(|b| b.as_ref())
+                .map(|b| b.aid.as_ref().clone())
+                .unwrap_or_else(|| api_client::models::AccountId::new(String::new()));
+
+            let admin_bot = AdminBot::new(
+                0,
+                test_config.clone(),
+                bot_config_file.clone(),
+                old_state.clone(),
+                bot_running_handle.clone(),
+                account_id_from_api,
+                reqwest_client,
+            );
+            let quit_receiver = bot_quit_receiver.clone();
+            tokio::spawn(admin_bot.run(quit_receiver));
+        }
+
+        if user_count > 0 {
+            info!("Creating {} user bots", user_count);
+        }
+
+        // Spawn user bots starting from task_id 1
+        for (user_index, _) in (0..user_count).enumerate() {
+            let task_id = 1 + user_index as u32;
+
+            let account_id_from_api = bot_accounts
+                .users
+                .as_ref()
+                .and_then(|users| users.get(user_index))
+                .map(|b| b.aid.as_ref().clone())
+                .unwrap_or_else(|| api_client::models::AccountId::new(String::new()));
+
+            let user_bot = UserBot::new(
+                task_id,
+                test_config.clone(),
+                bot_config_file.clone(),
+                old_state.clone(),
+                bot_running_handle.clone(),
+                account_id_from_api,
+                reqwest_client,
+            );
+            let quit_receiver = bot_quit_receiver.clone();
+            tokio::spawn(user_bot.run(quit_receiver));
+        }
+    }
+
+    async fn get_or_create_bot_accounts(
+        test_config: Arc<TestMode>,
+        reqwest_client: &reqwest::Client,
+    ) -> api_client::models::GetBotsResult {
+        let api_client = ApiClient::new(test_config.api_urls.clone(), reqwest_client);
+        account_bot_api::post_get_bots(api_client.api())
+            .await
+            .expect("Failed to get bot accounts from server")
     }
 }
