@@ -130,7 +130,7 @@ impl BotState {
     ///
     /// Task ID 0 bot is admin bot.
     pub fn is_bot_mode_admin_bot(&self) -> bool {
-        self.config.bot_mode().is_some() && self.task_id == 0
+        matches!(self.config.bot_mode(), Some(bot_mode) if bot_mode.admin) && self.task_id == 0
     }
 
     /// Default [BaseBotConfig] is returned when current mode is other than

@@ -95,7 +95,10 @@ impl BotTestRunner {
                 let current_task_id = task_number - 1;
 
                 // Check if this is admin bot task in bot mode
-                if self.test_config.bot_mode().is_some() && current_task_id == 0 {
+                if let Some(bot_mode) = self.test_config.bot_mode()
+                    && bot_mode.admin
+                    && current_task_id == 0
+                {
                     let admin_bot = AdminBot::new(
                         current_task_id,
                         self.test_config.clone(),
