@@ -33,6 +33,8 @@ pub use server_common::{data::DataError, result};
         account_bot::post_bot_register,
         account_bot::post_bot_login,
         account_bot::post_remote_bot_login,
+        account_bot::post_get_bots,
+        account_bot::post_remote_get_bots,
     ),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

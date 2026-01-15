@@ -278,7 +278,7 @@ macro_rules! db_write_raw {
 pub struct StateForRouterCreation {
     pub s: S,
     pub disable_api_obfuscation: bool,
-    pub allow_only_remote_bots: bool,
+    pub allow_only_bots: bool,
 }
 
 #[macro_export]

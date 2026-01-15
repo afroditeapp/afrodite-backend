@@ -5015,7 +5015,6 @@ dependencies = [
  "simple_backend",
  "simple_backend_utils",
  "tokio",
- "tracing",
  "utoipa",
  "utoipa-axum",
 ]

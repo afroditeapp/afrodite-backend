@@ -166,13 +166,13 @@ impl BusinessLogic for DatingAppBusinessLogic {
         let state = StateForRouterCreation {
             s: state.clone(),
             disable_api_obfuscation,
-            allow_only_remote_bots: false,
+            allow_only_bots: false,
         };
 
         let mut router =
             CommonRoutes::routes_without_obfuscation_support(state.clone(), web_socket_manager);
 
-        if !state.s.config().remote_bots().is_empty() {
+        if state.s.config().remote_bot_login().password().is_some() {
             router = router.merge(RemoteBotApiRoutes::router(state.s.clone()))
         }
         router = router.merge(AccountRoutes::routes_without_obfuscation_support(
@@ -197,13 +197,13 @@ impl BusinessLogic for DatingAppBusinessLogic {
 
         let api_obfuscation_enabled =
             state.s.config().api_obfuscation_salt().is_some() && !state.disable_api_obfuscation;
-        if api_obfuscation_enabled && !state.s.config().remote_bots().is_empty() {
+        if api_obfuscation_enabled && state.s.config().remote_bot_login().password().is_some() {
             router = self.add_obfuscation_supported_routes(
                 router,
                 StateForRouterCreation {
                     s: state.s,
                     disable_api_obfuscation: true,
-                    allow_only_remote_bots: true,
+                    allow_only_bots: true,
                 },
             );
         }
@@ -231,7 +231,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
         let router_state = StateForRouterCreation {
             s: state.clone(),
             disable_api_obfuscation: false,
-            allow_only_remote_bots: false,
+            allow_only_bots: false,
         };
         let mut swagger =
             SwaggerUi::new("/swagger-ui").url(API_DOC_URL, ApiDoc::all(router_state.clone()));
@@ -240,7 +240,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
             let router_state = StateForRouterCreation {
                 s: state.clone(),
                 disable_api_obfuscation: true,
-                allow_only_remote_bots: false,
+                allow_only_bots: false,
             };
             swagger = swagger.url(
                 API_DOC_URL_OBFUSCATION_DISABLED,

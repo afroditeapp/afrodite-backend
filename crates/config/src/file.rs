@@ -1,21 +1,17 @@
 use std::{
-    collections::HashSet,
     num::NonZeroU8,
     path::{Path, PathBuf},
 };
 
 use error_stack::{Result, ResultExt};
-use model::{AccountId, ClientVersion};
+use model::ClientVersion;
 // Re-export for test-mode crate
 pub use model_server_data::EmailAddress;
 use model_server_state::DemoAccountId;
 use serde::{Deserialize, Serialize};
 use simple_backend_config::file::IpAddressAccessConfig;
 use simple_backend_model::VersionNumber;
-use simple_backend_utils::{
-    ContextExt,
-    time::{ByteCount, DurationValue, TimeValue, UtcTimeValue},
-};
+use simple_backend_utils::time::{ByteCount, DurationValue, TimeValue, UtcTimeValue};
 
 // Kilpisjärvi ja Nuorgam
 // latitude_top_left = 70.1
@@ -83,8 +79,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # column_index = 0
 # start_row_index = 1
 
-# [[remote_bots]]
-# account_id = "TODO"
+# [remote_bot_login]
 # password = "TODO"
 
 # [automatic_profile_search]
@@ -129,7 +124,7 @@ pub struct ConfigFile {
     #[serde(default)]
     pub automatic_profile_search: AutomaticProfileSearchConfig,
     #[serde(default)]
-    pub remote_bots: Vec<RemoteBotConfig>,
+    pub remote_bot_login: RemoteBotLoginConfig,
 
     pub grant_admin_access: Option<GrantAdminAccessConfig>,
     pub location: Option<LocationConfig>,
@@ -146,7 +141,7 @@ impl ConfigFile {
             general: Default::default(),
             api: ApiConfig::default(),
             automatic_profile_search: AutomaticProfileSearchConfig::default(),
-            remote_bots: vec![],
+            remote_bot_login: RemoteBotLoginConfig::default(),
             grant_admin_access: None,
             location: None,
             demo_accounts: None,
@@ -174,16 +169,6 @@ impl ConfigFile {
             std::fs::read_to_string(file).change_context(ConfigFileError::LoadConfig)?;
         let file: Self =
             toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)?;
-
-        let mut set = HashSet::<AccountId>::new();
-        for b in &file.remote_bots {
-            let aid = b.account_id();
-            if set.contains(&aid) {
-                return Err(ConfigFileError::InvalidConfig.report())
-                    .attach_printable(format!("Duplicate remote bot config for account {aid}"));
-            }
-            set.insert(aid);
-        }
 
         Ok(file)
     }
@@ -464,28 +449,21 @@ impl MinClientVersion {
     }
 }
 
-/// Remote bot config
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct RemoteBotConfig {
-    account_id: simple_backend_utils::UuidBase64UrlToml,
-    password: String,
-    #[serde(flatten, default)]
-    acccess: IpAddressAccessConfig,
+/// Remote bot login config
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+pub struct RemoteBotLoginConfig {
+    pub password: Option<String>,
+    #[serde(flatten)]
+    pub access: Option<IpAddressAccessConfig>,
 }
 
-impl RemoteBotConfig {
-    pub fn account_id(&self) -> AccountId {
-        AccountId {
-            aid: self.account_id.into(),
-        }
+impl RemoteBotLoginConfig {
+    pub fn password(&self) -> Option<&str> {
+        self.password.as_deref()
     }
 
-    pub fn password(&self) -> &str {
-        &self.password
-    }
-
-    pub fn access(&self) -> &IpAddressAccessConfig {
-        &self.acccess
+    pub fn access(&self) -> Option<&IpAddressAccessConfig> {
+        self.access.as_ref()
     }
 }
 

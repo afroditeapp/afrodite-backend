@@ -29,7 +29,7 @@ use csv::{
 use error_stack::{Result, ResultExt};
 use file::{
     AccountLimitsConfig, AutomaticProfileSearchConfig, ChatLimitsConfig, CommonLimitsConfig,
-    DemoAccountConfig, GrantAdminAccessConfig, MediaLimitsConfig, RemoteBotConfig,
+    DemoAccountConfig, GrantAdminAccessConfig, MediaLimitsConfig, RemoteBotLoginConfig,
 };
 use file_email_content::EmailContentFile;
 use file_web_content::WebContentFile;
@@ -269,8 +269,8 @@ impl Config {
         self.file.api.client_version_tracking.as_ref()
     }
 
-    pub fn remote_bots(&self) -> &[RemoteBotConfig] {
-        &self.file.remote_bots
+    pub fn remote_bot_login(&self) -> &RemoteBotLoginConfig {
+        &self.file.remote_bot_login
     }
 
     pub fn automatic_profile_search(&self) -> &AutomaticProfileSearchConfig {

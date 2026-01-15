@@ -9,7 +9,6 @@ edition = "2024"
 tokio = { workspace = true }
 axum = { workspace = true }
 axum-extra = { workspace = true }
-tracing = { workspace = true }
 
 serde_urlencoded = { workspace = true }
 utoipa = { workspace = true }

@@ -368,3 +368,21 @@ pub struct RemoteBotLogin {
     pub aid: AccountId,
     pub password: String,
 }
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct RemoteBotPassword {
+    pub password: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct BotAccount {
+    pub aid: AccountId,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct GetBotsResult {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub admin: Option<BotAccount>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub users: Vec<BotAccount>,
+}

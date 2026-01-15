@@ -12,6 +12,10 @@ impl RemoteBotApiRoutes {
                 api::account_bot::PATH_REMOTE_BOT_LOGIN,
                 post(api::account_bot::post_remote_bot_login),
             )
+            .route(
+                api::account_bot::PATH_REMOTE_GET_BOTS,
+                post(api::account_bot::post_remote_get_bots),
+            )
             .with_state(state)
     }
 }
@@ -28,6 +32,10 @@ impl LocalBotApiRoutes {
             .route(
                 api::account_bot::PATH_BOT_LOGIN,
                 post(api::account_bot::post_bot_login),
+            )
+            .route(
+                api::account_bot::PATH_GET_BOTS,
+                post(api::account_bot::post_get_bots),
             )
             .with_state(state)
     }

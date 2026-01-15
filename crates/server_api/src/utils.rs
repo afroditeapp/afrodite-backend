@@ -13,7 +13,7 @@ use headers::{
 use hyper::Request;
 use model::AccessToken;
 use serde::Serialize;
-use server_data::app::GetConfig;
+use server_data::{app::ReadData, read::GetReadCommandsCommon};
 pub use server_state::utils::StatusCode;
 use server_state::{StateForRouterCreation, app::GetAccessTokens};
 use simple_backend::create_counters;
@@ -51,16 +51,10 @@ pub async fn authenticate_with_access_token(
     if let Some((id, permissions, account_state)) =
         state.s.access_token_and_ip_is_valid(&key, addr).await
     {
-        if state.allow_only_remote_bots {
-            let is_remote_bot = state
-                .s
-                .config()
-                .remote_bots()
-                .iter()
-                .any(|b| b.account_id() == id.as_id());
-            if !is_remote_bot {
-                API.access_token_found_not_remote_bot.incr();
-                return Err(StatusCode::UNAUTHORIZED);
+        if state.allow_only_bots {
+            match state.s.read().common().is_bot(id).await {
+                Ok(true) => (),
+                _ => return Err(StatusCode::UNAUTHORIZED),
             }
         }
 
@@ -80,7 +74,6 @@ create_counters!(
     API,
     API_COUNTERS_LIST,
     access_token_found,
-    access_token_found_not_remote_bot,
     access_token_not_found,
 );
 
