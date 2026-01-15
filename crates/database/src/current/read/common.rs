@@ -7,6 +7,7 @@ use crate::{
     IntoDatabaseError, current::read::GetDbReadCommandsCommon, define_current_read_commands,
 };
 
+pub mod bot_config;
 mod client_config;
 mod push_notification;
 mod report;
@@ -26,6 +27,10 @@ impl<'a> CurrentReadCommon<'a> {
 
     pub fn report(self) -> report::CurrentReadCommonReport<'a> {
         report::CurrentReadCommonReport::new(self.cmds)
+    }
+
+    pub fn bot_config(self) -> bot_config::CurrentReadCommonBotConfig<'a> {
+        bot_config::CurrentReadCommonBotConfig::new(self.cmds)
     }
 
     pub fn client_config(self) -> client_config::CurrentReadCommonClientConfig<'a> {

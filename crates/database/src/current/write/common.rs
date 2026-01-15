@@ -5,6 +5,7 @@ use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use crate::{IntoDatabaseError, define_current_write_commands};
 
+mod bot_config;
 mod client_config;
 mod push_notification;
 mod report;
@@ -24,6 +25,10 @@ impl<'a> CurrentWriteCommon<'a> {
 
     pub fn report(self) -> report::CurrentWriteCommonReport<'a> {
         report::CurrentWriteCommonReport::new(self.cmds)
+    }
+
+    pub fn bot_config(self) -> bot_config::CurrentWriteCommonBotConfig<'a> {
+        bot_config::CurrentWriteCommonBotConfig::new(self.cmds)
     }
 
     pub fn client_config(self) -> client_config::CurrentWriteCommonClientConfig<'a> {

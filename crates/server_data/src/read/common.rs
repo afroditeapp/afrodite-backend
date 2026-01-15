@@ -13,6 +13,7 @@ use crate::{
     cache::CacheReadCommon, db_manager::InternalReading, define_cmd_wrapper_read, result::Result,
 };
 
+mod bot_config;
 mod client_config;
 mod data_export;
 mod push_notification;
@@ -20,6 +21,10 @@ mod push_notification;
 define_cmd_wrapper_read!(ReadCommandsCommon);
 
 impl<'a> ReadCommandsCommon<'a> {
+    pub fn bot_config(self) -> bot_config::ReadCommandsCommonBotConfig<'a> {
+        bot_config::ReadCommandsCommonBotConfig::new(self.0)
+    }
+
     pub fn client_config(self) -> client_config::ReadCommandsCommonClientConfig<'a> {
         client_config::ReadCommandsCommonClientConfig::new(self.0)
     }

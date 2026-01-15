@@ -12,7 +12,6 @@ pub mod args;
 pub mod bot_config_file;
 pub mod csv;
 pub mod file;
-pub mod file_dynamic;
 pub mod file_email_content;
 pub mod file_notification_content;
 pub mod file_web_content;
@@ -32,7 +31,6 @@ use file::{
     AccountLimitsConfig, AutomaticProfileSearchConfig, ChatLimitsConfig, CommonLimitsConfig,
     DemoAccountConfig, GrantAdminAccessConfig, MediaLimitsConfig, RemoteBotConfig,
 };
-use file_dynamic::ConfigFileDynamic;
 use file_email_content::EmailContentFile;
 use file_web_content::WebContentFile;
 pub use model::{ClientFeaturesConfig, ClientFeaturesConfigInternal};
@@ -69,7 +67,6 @@ pub enum GetConfigError {
 #[derive(Debug)]
 pub struct ParsedFiles<'a> {
     pub server: &'a ConfigFile,
-    pub dynamic: &'a ConfigFileDynamic,
     pub simple_backend: &'a SimpleBackendConfigFile,
     pub profile_attributes: &'a AttributesFileInternal,
     pub custom_reports: &'a CustomReportsConfig,
@@ -84,7 +81,6 @@ pub struct ParsedFiles<'a> {
 #[derive(Debug)]
 pub struct Config {
     file: ConfigFile,
-    file_dynamic: ConfigFileDynamic,
     simple_backend_config: Arc<SimpleBackendConfig>,
 
     // Other configs
@@ -115,7 +111,6 @@ impl Config {
     ) -> Self {
         Self {
             file: ConfigFile::minimal_config_for_api_doc_json(),
-            file_dynamic: ConfigFileDynamic::minimal_config_for_api_doc_json(),
             simple_backend_config,
             profile_attributes: ProfileAttributesInternal::default(),
             profile_attributes_sha256: String::new(),
@@ -152,31 +147,6 @@ impl Config {
 
     pub fn grant_admin_access_config(&self) -> Option<&GrantAdminAccessConfig> {
         self.file.grant_admin_access.as_ref()
-    }
-
-    pub fn remote_bot_login_allowed(&self) -> bool {
-        self.file_dynamic
-            .backend_config
-            .remote_bot_login
-            .unwrap_or_default()
-    }
-
-    pub fn local_admin_bot_enabled(&self) -> bool {
-        self.file_dynamic
-            .backend_config
-            .local_bots
-            .as_ref()
-            .and_then(|v| v.admin)
-            .unwrap_or_default()
-    }
-
-    pub fn local_user_bot_count(&self) -> u32 {
-        self.file_dynamic
-            .backend_config
-            .local_bots
-            .as_ref()
-            .and_then(|v| v.users)
-            .unwrap_or_default()
     }
 
     pub fn bot_config_abs_file_path(&self) -> &Path {
@@ -314,7 +284,6 @@ impl Config {
     pub fn parsed_files(&self) -> ParsedFiles<'_> {
         ParsedFiles {
             server: &self.file,
-            dynamic: &self.file_dynamic,
             simple_backend: self.simple_backend().parsed_file(),
             profile_attributes: &self.profile_attributes_file,
             custom_reports: self.custom_reports(),
@@ -345,9 +314,6 @@ pub fn get_config(
     let file_config =
         file::ConfigFile::load_from_default_location(save_default_config_if_not_found)
             .change_context(GetConfigError::LoadFileError)?;
-
-    let file_dynamic = ConfigFileDynamic::load_from_current_dir(save_default_config_if_not_found)
-        .change_context(GetConfigError::LoadFileError)?;
 
     let (profile_attributes, profile_attributes_sha256, profile_attributes_file) = {
         let path = Path::new(AttributesFileInternal::CONFIG_FILE_NAME);
@@ -459,7 +425,6 @@ pub fn get_config(
     let config = Config {
         simple_backend_config: simple_backend_config.into(),
         file: file_config,
-        file_dynamic,
         profile_attributes,
         profile_attributes_sha256,
         custom_reports,

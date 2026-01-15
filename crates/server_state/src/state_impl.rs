@@ -1,6 +1,6 @@
 use std::{net::SocketAddr, sync::Arc};
 
-use config::{Config, file::ConfigFileError, file_dynamic::ConfigFileDynamic};
+use config::{Config, file::ConfigFileError};
 use error_stack::ResultExt;
 use futures::Future;
 use model::{
@@ -12,6 +12,7 @@ use server_data::{
     content_processing::ContentProcessingManagerData,
     db_manager::RouterDatabaseReadHandle,
     event::EventManagerWithCacheReference,
+    read::GetReadCommandsCommon,
     write_commands::WriteCmds,
     write_concurrent::{
         ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle,
@@ -99,11 +100,16 @@ impl GetConfig for S {
 
 impl ReadDynamicConfig for S {
     async fn read_config(&self) -> error_stack::Result<BackendConfig, ConfigFileError> {
-        let config = tokio::task::spawn_blocking(|| ConfigFileDynamic::load_from_current_dir(true))
+        let config = self
+            .read()
+            .common()
+            .bot_config()
+            .bot_config()
             .await
-            .change_context(ConfigFileError::LoadConfig)??;
+            .map_err(|e| e.into_report())
+            .change_context(ConfigFileError::LoadConfig)?;
 
-        Ok(config.backend_config)
+        Ok(config.unwrap_or_default())
     }
 
     fn is_remote_bot_login_enabled(&self) -> bool {
@@ -118,19 +124,20 @@ impl WriteDynamicConfig for S {
         &self,
         config: BackendConfig,
     ) -> error_stack::Result<(), ConfigFileError> {
-        tokio::task::spawn_blocking(move || {
-            if BackendConfig::empty() != config {
-                ConfigFileDynamic::edit_config_from_current_dir(
-                    config.remote_bot_login,
-                    config.local_bots.clone().and_then(|v| v.admin),
-                    config.local_bots.and_then(|v| v.users),
-                )?
-            }
+        if BackendConfig::empty() != config {
+            use server_data::write::GetWriteCommandsCommon;
 
-            error_stack::Result::<(), ConfigFileError>::Ok(())
-        })
-        .await
-        .change_context(ConfigFileError::LoadConfig)??;
+            self.write(move |cmds| async move {
+                cmds.common()
+                    .bot_config()
+                    .upsert_bot_config(&config)
+                    .await?;
+                Ok(())
+            })
+            .await
+            .map_err(|e| e.into_report())
+            .change_context(ConfigFileError::SaveEditedConfig)?;
+        }
 
         self.state.dynamic_config_manager.reload().await;
 

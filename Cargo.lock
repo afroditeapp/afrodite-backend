@@ -942,7 +942,6 @@ dependencies = [
  "thiserror 2.0.17",
  "tls_client",
  "toml 0.8.23",
- "toml_edit 0.22.27",
  "url",
 ]
 

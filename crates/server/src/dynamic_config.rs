@@ -1,5 +1,5 @@
-use config::file_dynamic::ConfigFileDynamic;
 use error_stack::ResultExt;
+use model::BackendConfig;
 use server_api::{
     app::{GetAccounts, GetConfig, ReadDynamicConfig, WriteData, WriteDynamicConfig},
     db_write_raw,
@@ -19,8 +19,8 @@ mod bot;
 
 #[derive(thiserror::Error, Debug)]
 enum DynamicConfigManagerError {
-    #[error("File error")]
-    File,
+    #[error("Database error")]
+    Database,
     #[error("Bot client error")]
     BotClient,
     #[error("Data error")]
@@ -54,7 +54,7 @@ impl DynamicConfigManagerQuitHandle {
 pub struct DynamicConfigManager {
     state: S,
     bots: Option<BotClient>,
-    current_config: ConfigFileDynamic,
+    current_config: BackendConfig,
 }
 
 impl DynamicConfigManager {
@@ -65,7 +65,7 @@ impl DynamicConfigManager {
         let manager = Self {
             state,
             bots: None,
-            current_config: ConfigFileDynamic::default(),
+            current_config: BackendConfig::default(),
         };
 
         let (manager_quit_handle, manager_quit_watcher) = broadcast::channel(1);
@@ -119,14 +119,16 @@ impl DynamicConfigManager {
     }
 
     async fn update_config(&mut self) -> Result<(), DynamicConfigManagerError> {
-        let new_config = ConfigFileDynamic::load_from_current_dir(false)
-            .change_context(DynamicConfigManagerError::File)?;
+        let new_config = self
+            .state
+            .read_config()
+            .await
+            .change_context(DynamicConfigManagerError::Database)?;
 
         let load_remote_bot_login_enabled_value =
-            self.current_config.backend_config.remote_bot_login
-                != new_config.backend_config.remote_bot_login;
-        let restart_bots =
-            self.current_config.backend_config.local_bots != new_config.backend_config.local_bots;
+            self.current_config.remote_bot_login != new_config.remote_bot_login;
+        let restart_bots = self.current_config.admin_bot != new_config.admin_bot
+            || self.current_config.user_bots != new_config.user_bots;
 
         self.current_config = new_config;
 
@@ -149,15 +151,17 @@ impl DynamicConfigManager {
             };
         }
 
-        if let Some(local_bots) = &self.current_config.backend_config.local_bots {
-            let admin = local_bots.admin.unwrap_or_default();
-            let users = local_bots.users.unwrap_or_default();
-            if admin || users > 0 {
-                let bots = BotClient::start_bots(self.state.config(), admin, users)
-                    .await
-                    .change_context(DynamicConfigManagerError::BotClient)?;
-                self.bots = Some(bots);
-            }
+        if (self.current_config.admin_bot || self.current_config.user_bots > 0)
+            && !self.current_config.remote_bot_login
+        {
+            let bots = BotClient::start_bots(
+                self.state.config(),
+                self.current_config.admin_bot,
+                self.current_config.user_bots,
+            )
+            .await
+            .change_context(DynamicConfigManagerError::BotClient)?;
+            self.bots = Some(bots);
         }
 
         Ok(())
@@ -166,17 +170,12 @@ impl DynamicConfigManager {
     async fn load_remote_bot_login_enabled_value_and_logout_remote_bots_if_needed(
         &self,
     ) -> Result<(), DynamicConfigManagerError> {
-        let value = self
-            .current_config
-            .backend_config
-            .remote_bot_login
-            .unwrap_or_default();
-
-        if !value {
+        if !self.current_config.remote_bot_login {
             self.logout_remote_bots().await?
         }
 
-        self.state.set_remote_bot_login_enabled(value);
+        self.state
+            .set_remote_bot_login_enabled(self.current_config.remote_bot_login);
 
         Ok(())
     }

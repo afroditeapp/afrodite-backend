@@ -9,6 +9,7 @@ use crate::{
     define_cmd_wrapper_write, result::Result,
 };
 
+mod bot_config;
 mod client_config;
 mod data_export;
 mod push_notification;
@@ -16,6 +17,10 @@ mod push_notification;
 define_cmd_wrapper_write!(WriteCommandsCommon);
 
 impl WriteCommandsCommon<'_> {
+    pub fn bot_config(&mut self) -> bot_config::WriteCommandsCommonBotConfig<'_> {
+        bot_config::WriteCommandsCommonBotConfig::new(self.handle())
+    }
+
     pub fn push_notification(
         &mut self,
     ) -> push_notification::WriteCommandsCommonPushNotification<'_> {

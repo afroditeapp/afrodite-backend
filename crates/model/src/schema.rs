@@ -220,6 +220,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    bot_config (row_type) {
+        row_type -> Int4,
+        user_bots -> Int2,
+        admin_bot -> Bool,
+        remote_bot_login -> Bool,
+    }
+}
+
+diesel::table! {
     chat_app_notification_settings (account_id) {
         account_id -> Int8,
         likes -> Bool,
@@ -926,6 +935,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     api_usage_statistics_metric_name,
     api_usage_statistics_metric_value,
     api_usage_statistics_save_time,
+    bot_config,
     chat_app_notification_settings,
     chat_email_notification_settings,
     chat_global_state,
