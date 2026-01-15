@@ -56,6 +56,7 @@ src/models/backup_transfer_client_role.rs
 src/models/backup_transfer_initial_message.rs
 src/models/backup_transfer_target_data.rs
 src/models/boolean_setting.rs
+src/models/bot_account.rs
 src/models/chat_app_notification_settings.rs
 src/models/chat_config.rs
 src/models/chat_email_notification_settings.rs
@@ -124,6 +125,7 @@ src/models/get_admin_notification.rs
 src/models/get_all_admins_result.rs
 src/models/get_api_usage_statistics_result.rs
 src/models/get_api_usage_statistics_settings.rs
+src/models/get_bots_result.rs
 src/models/get_chat_message_reports.rs
 src/models/get_client_features_config_result.rs
 src/models/get_client_language.rs
@@ -168,7 +170,6 @@ src/models/last_seen_time_filter.rs
 src/models/latest_birthdate.rs
 src/models/likes_config.rs
 src/models/limited_action_status.rs
-src/models/local_bots_config.rs
 src/models/location.rs
 src/models/login_result.rs
 src/models/maintenance_task.rs
@@ -277,6 +278,7 @@ src/models/received_likes_page_item.rs
 src/models/received_likes_sync_version.rs
 src/models/refresh_token.rs
 src/models/remote_bot_login.rs
+src/models/remote_bot_password.rs
 src/models/report_account_info.rs
 src/models/report_chat_info.rs
 src/models/report_chat_info_interaction_state.rs

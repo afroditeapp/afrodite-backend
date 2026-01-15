@@ -13,18 +13,23 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BackendConfig {
-    #[serde(rename = "local_bots", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub local_bots: Option<Option<Box<models::LocalBotsConfig>>>,
-    /// Enable remote bot login API  If None, editing the value is disabled.
-    #[serde(rename = "remote_bot_login", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub remote_bot_login: Option<Option<bool>>,
+    /// Admin bot enabled
+    #[serde(rename = "admin_bot", skip_serializing_if = "Option::is_none")]
+    pub admin_bot: Option<bool>,
+    /// Enable remote bot login API
+    #[serde(rename = "remote_bot_login", skip_serializing_if = "Option::is_none")]
+    pub remote_bot_login: Option<bool>,
+    /// User bot count
+    #[serde(rename = "user_bots", skip_serializing_if = "Option::is_none")]
+    pub user_bots: Option<i32>,
 }
 
 impl BackendConfig {
     pub fn new() -> BackendConfig {
         BackendConfig {
-            local_bots: None,
+            admin_bot: None,
             remote_bot_login: None,
+            user_bots: None,
         }
     }
 }
