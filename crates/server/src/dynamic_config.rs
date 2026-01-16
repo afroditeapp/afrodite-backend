@@ -120,21 +120,12 @@ impl DynamicConfigManager {
             .await
             .change_context(DynamicConfigManagerError::Database)?;
 
-        let load_remote_bot_login_enabled_value =
-            self.current_config.remote_bot_login != new_config.remote_bot_login;
-        let restart_bots = self.current_config.admin_bot != new_config.admin_bot
-            || self.current_config.user_bots != new_config.user_bots;
-
         self.current_config = new_config;
 
-        if load_remote_bot_login_enabled_value {
-            self.state
-                .set_remote_bot_login_enabled(self.current_config.remote_bot_login);
-        }
+        self.state
+            .set_remote_bot_login_enabled(self.current_config.remote_bot_login);
 
-        if restart_bots {
-            self.restart_bots().await?;
-        }
+        self.restart_bots().await?;
 
         Ok(())
     }
@@ -145,6 +136,14 @@ impl DynamicConfigManager {
                 Ok(()) => (),
                 Err(e) => error!("{e:?}"),
             };
+        }
+
+        if self.current_config.remote_bot_login {
+            // Restart remote bot client so that new config will be used
+            match self.logout_bots().await {
+                Ok(()) => (),
+                Err(e) => error!("{e:?}"),
+            }
         }
 
         if (self.current_config.admin_bot || self.current_config.user_bots > 0)
