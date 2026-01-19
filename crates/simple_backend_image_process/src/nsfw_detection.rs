@@ -1,15 +1,15 @@
 use error_stack::{Result, ResultExt, report};
 use image::RgbaImage;
 use nsfw::{Model, model::Metric};
-use simple_backend_config::file::{
-    ImageProcessingConfig, NsfwDetectionConfig, NsfwDetectionThresholds,
-};
+use simple_backend_config::{file::NsfwDetectionConfig, image_process::ImageProcessingConfig};
+use simple_backend_model::NsfwDetectionThresholds;
 
 use crate::ImageProcessError;
 
 struct State {
     model: Model,
     config: NsfwDetectionConfig,
+    thresholds: NsfwDetectionThresholds,
 }
 
 pub struct NsfwDetector {
@@ -17,8 +17,8 @@ pub struct NsfwDetector {
 }
 
 impl NsfwDetector {
-    pub fn new(config: &ImageProcessingConfig) -> Result<Self, ImageProcessError> {
-        let Some(config) = config.nsfw_detection.clone() else {
+    pub fn new(image_process_config: &ImageProcessingConfig) -> Result<Self, ImageProcessError> {
+        let Some(config) = image_process_config.file().nsfw_detection.clone() else {
             return Ok(Self { state: None });
         };
 
@@ -29,7 +29,11 @@ impl NsfwDetector {
         })?;
 
         Ok(Self {
-            state: Some(State { model, config }),
+            state: Some(State {
+                model,
+                config,
+                thresholds: image_process_config.dynamic().nsfw_thresholds.clone(),
+            }),
         })
     }
 
@@ -46,7 +50,7 @@ impl NsfwDetector {
             eprintln!("NSFW detection results: {results:?}");
         }
 
-        fn threshold(m: &Metric, thresholds: &NsfwDetectionThresholds) -> Option<f32> {
+        fn threshold(m: &Metric, thresholds: &NsfwDetectionThresholds) -> Option<f64> {
             match m {
                 Metric::Drawings => thresholds.drawings,
                 Metric::Hentai => thresholds.hentai,
@@ -57,8 +61,8 @@ impl NsfwDetector {
         }
 
         for c in &results {
-            if let Some(threshold) = threshold(&c.metric, &state.config.thresholds)
-                && c.score >= threshold
+            if let Some(threshold) = threshold(&c.metric, &state.thresholds)
+                && Into::<f64>::into(c.score) >= threshold
             {
                 return Ok(true);
             }

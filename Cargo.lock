@@ -1255,6 +1255,7 @@ dependencies = [
  "error-stack",
  "model",
  "model_media",
+ "simple_backend_model",
  "simple_backend_utils",
 ]
 
@@ -5460,6 +5461,7 @@ dependencies = [
  "reqwest",
  "rustls-pemfile",
  "serde",
+ "simple_backend_model",
  "simple_backend_utils",
  "thiserror 2.0.17",
  "tokio-rustls",
@@ -5497,6 +5499,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simple_backend_config",
+ "simple_backend_model",
  "thiserror 2.0.17",
 ]
 

@@ -5,7 +5,7 @@ use face_detection::FaceDetector;
 use image::{DynamicImage, EncodableLayout, ImageDecoder, ImageReader};
 use nsfw_detection::NsfwDetector;
 use serde::{Deserialize, Serialize};
-use simple_backend_config::file::ImageProcessingConfig;
+use simple_backend_config::image_process::ImageProcessingConfig;
 
 mod face_detection;
 mod nsfw_detection;

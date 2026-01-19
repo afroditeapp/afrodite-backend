@@ -5,7 +5,7 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
-use simple_backend_config::SimpleBackendConfig;
+use simple_backend_config::image_process::ImageProcessingConfig;
 use simple_backend_image_process::{
     ChangeSettingsCommand, ImageProcessMessage, ImageProcessingInfo, InputFileType,
     ProcessImageCommand,
@@ -37,6 +37,8 @@ pub enum ImageProcessError {
     ReadInfo,
     #[error("Reading timeout")]
     ReadTimeout,
+    #[error("Config loading failed")]
+    ConfigLoading,
 
     #[error("Image processing command creation failed")]
     ImageProcessingCommandCreationFailed,
@@ -55,7 +57,7 @@ pub struct ImageProcessHandle {
 }
 
 impl ImageProcessHandle {
-    pub async fn start(config: &SimpleBackendConfig) -> Result<Self, ImageProcessError> {
+    pub async fn start(config: ImageProcessingConfig) -> Result<Self, ImageProcessError> {
         let current_exe = env::current_exe().change_context(ImageProcessError::LaunchCommand)?;
 
         let mut command = std::process::Command::new(current_exe);
@@ -73,7 +75,7 @@ impl ImageProcessHandle {
             .change_context(ImageProcessError::StartProcess)?;
 
         #[cfg(unix)]
-        if let Some(nice_value) = config.image_processing().process_nice_value {
+        if let Some(nice_value) = config.file().process_nice_value {
             if let Some(pid) = child.id() {
                 let renice_result = tokio::process::Command::new("renice")
                     .arg("-n")
@@ -131,12 +133,10 @@ impl ImageProcessHandle {
         };
 
         // Send initial settings
-        let settings = ImageProcessMessage::ChangeSettings {
-            change_settings: ChangeSettingsCommand {
-                settings: config.image_processing().clone(),
-            },
+        let message = ImageProcessMessage::ChangeSettings {
+            change_settings: ChangeSettingsCommand { settings: config },
         };
-        Self::write_message(&mut handle.stdin, settings).await?;
+        Self::write_message(&mut handle.stdin, message).await?;
 
         Ok(handle)
     }
@@ -234,7 +234,7 @@ pub struct ImageProcess;
 
 impl ImageProcess {
     pub async fn start_image_process(
-        config: &SimpleBackendConfig,
+        load_config: impl AsyncFnOnce() -> Result<ImageProcessingConfig, ImageProcessError>,
         input: &Path,
         input_file_type: InputFileType,
         output: &Path,
@@ -268,13 +268,30 @@ impl ImageProcess {
 
         let handle = match state.take() {
             Some(handle) => handle,
-            None => ImageProcessHandle::start(config).await?,
+            None => ImageProcessHandle::start(load_config().await?).await?,
         };
 
         let (handle, info) = handle.run_command(command).await?;
         *state = Some(handle);
 
         Ok(info)
+    }
+
+    pub async fn update_config_if_process_is_running(
+        config: ImageProcessingConfig,
+    ) -> Result<(), ImageProcessError> {
+        let mut state = get_image_process().lock().await;
+
+        if let Some(mut handle) = state.take() {
+            let message = ImageProcessMessage::ChangeSettings {
+                change_settings: ChangeSettingsCommand { settings: config },
+            };
+            let result = ImageProcessHandle::write_message(&mut handle.stdin, message).await;
+            *state = Some(handle);
+            result
+        } else {
+            Ok(())
+        }
     }
 
     /// Close current image process if it exists

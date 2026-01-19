@@ -494,6 +494,18 @@ diesel::table! {
 }
 
 diesel::table! {
+    image_processing_config (row_type) {
+        row_type -> Int4,
+        seetaface_threshold -> Nullable<Float8>,
+        nsfw_threshold_drawings -> Nullable<Float8>,
+        nsfw_threshold_hentai -> Nullable<Float8>,
+        nsfw_threshold_neutral -> Nullable<Float8>,
+        nsfw_threshold_porn -> Nullable<Float8>,
+        nsfw_threshold_sexy -> Nullable<Float8>,
+    }
+}
+
+diesel::table! {
     ip_address_usage_statistics (account_id, ip_address) {
         account_id -> Int8,
         ip_address -> Bytea,
@@ -967,6 +979,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     history_profile_statistics_count_changes_man,
     history_profile_statistics_count_changes_non_binary,
     history_profile_statistics_count_changes_woman,
+    image_processing_config,
     ip_address_usage_statistics,
     latest_seen_message,
     login_session,

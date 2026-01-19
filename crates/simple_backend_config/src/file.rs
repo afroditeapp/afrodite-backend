@@ -108,15 +108,10 @@ local_bot_api_port = 3001
 # If face detection is not configured all images are marked to include a face
 # [image_processing.seetaface]
 # model_file = "model.bin"
-# detection_threshold = 2.8
 # pyramid_scale_factor = 0.5
 
 # [image_processing.nsfw_detection]
 # model_file = "model.onnx"
-
-# [image_processing.nsfw_detection.thresholds]
-# hentai = 0.9
-# porn = 0.9
 
 # [[ip_info.lists]]
 # name = "test"
@@ -178,7 +173,7 @@ pub struct SimpleBackendConfigFile {
     pub lets_encrypt: Option<LetsEncryptConfig>,
 
     pub static_file_package_hosting: Option<StaticFilePackageHostingConfig>,
-    pub image_processing: Option<ImageProcessingConfig>,
+    pub image_processing: Option<ImageProcessingStaticConfig>,
 
     #[serde(default)]
     pub ip_info: IpInfoConfig,
@@ -228,17 +223,6 @@ impl SimpleBackendConfigFile {
             std::fs::read_to_string(&file_path).change_context(ConfigFileError::LoadConfig)?;
         let config: SimpleBackendConfigFile =
             toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)?;
-
-        if let Some(nsfw_detection) = config
-            .image_processing
-            .as_ref()
-            .and_then(|v| v.nsfw_detection.as_ref())
-            && nsfw_detection.thresholds == NsfwDetectionThresholds::default()
-        {
-            return Err(ConfigFileError::InvalidConfig
-                .report()
-                .attach_printable("Config image_processing.nsfw_detection.thresholds is empty"));
-        }
 
         if let Some(config) = &config.static_file_package_hosting {
             if config.package.is_some() && config.package_dir.is_some() {
@@ -582,11 +566,11 @@ fn validate_path(input: &Path) -> std::result::Result<(), String> {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct ImageProcessingConfig {
+pub struct ImageProcessingStaticConfig {
     /// Jpeg quality value. Value is clamped between 1-100.
     /// Mozjpeg library recommends 60-80 values
     #[serde(default = "default_jpeg_quality")]
-    jpeg_quality: u8,
+    pub(crate) jpeg_quality: u8,
     pub seetaface: Option<SeetaFaceConfig>,
     pub nsfw_detection: Option<NsfwDetectionConfig>,
     /// Make sure to use higer value than the server process nice
@@ -598,7 +582,7 @@ fn default_jpeg_quality() -> u8 {
     60
 }
 
-impl Default for ImageProcessingConfig {
+impl Default for ImageProcessingStaticConfig {
     fn default() -> Self {
         Self {
             jpeg_quality: default_jpeg_quality(),
@@ -609,16 +593,9 @@ impl Default for ImageProcessingConfig {
     }
 }
 
-impl ImageProcessingConfig {
-    pub fn jpeg_quality(&self) -> f32 {
-        self.jpeg_quality as f32
-    }
-}
-
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct SeetaFaceConfig {
     pub model_file: String,
-    pub detection_threshold: f64,
     pub pyramid_scale_factor: f32,
     debug_log_results: Option<bool>,
 }
@@ -632,11 +609,6 @@ impl SeetaFaceConfig {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct NsfwDetectionConfig {
     pub model_file: PathBuf,
-    /// Thresholds when an image is classified as NSFW.
-    ///
-    /// If a probability value is equal or greater than the related
-    /// threshold then the image is classified as NSFW.
-    pub thresholds: NsfwDetectionThresholds,
     debug_log_results: Option<bool>,
 }
 
@@ -644,15 +616,6 @@ impl NsfwDetectionConfig {
     pub fn debug_log_results(&self) -> bool {
         self.debug_log_results.unwrap_or_default()
     }
-}
-
-#[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize)]
-pub struct NsfwDetectionThresholds {
-    pub drawings: Option<f32>,
-    pub hentai: Option<f32>,
-    pub neutral: Option<f32>,
-    pub porn: Option<f32>,
-    pub sexy: Option<f32>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]

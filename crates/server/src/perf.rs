@@ -39,7 +39,7 @@ use server_api_media::{
         MEDIA_MEDIA_CONTENT_COUNTERS_LIST, MEDIA_NOTIFICATION_COUNTERS_LIST,
         MEDIA_REPORT_COUNTERS_LIST,
     },
-    media_admin::MEDIA_ADMIN_CONTENT_COUNTERS_LIST,
+    media_admin::{MEDIA_ADMIN_CONFIG_COUNTERS_LIST, MEDIA_ADMIN_CONTENT_COUNTERS_LIST},
 };
 use server_api_profile::{
     profile::{
@@ -156,6 +156,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("media_report", MEDIA_REPORT_COUNTERS_LIST),
     &CounterCategory::new("media_notification", MEDIA_NOTIFICATION_COUNTERS_LIST),
     // Media admin
+    &CounterCategory::new("media_admin_config", MEDIA_ADMIN_CONFIG_COUNTERS_LIST),
     &CounterCategory::new("media_admin_content", MEDIA_ADMIN_CONTENT_COUNTERS_LIST),
     &CounterCategory::new(
         "media_admin_moderation",

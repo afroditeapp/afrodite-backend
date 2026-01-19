@@ -1,6 +1,7 @@
 use server_data::define_cmd_wrapper_write;
 
 pub mod content;
+mod image_processing_config;
 mod notification;
 
 define_cmd_wrapper_write!(WriteCommandsMediaAdmin);
@@ -11,5 +12,10 @@ impl<'a> WriteCommandsMediaAdmin<'a> {
     }
     pub fn notification(self) -> notification::WriteCommandsMediaAdminNotification<'a> {
         notification::WriteCommandsMediaAdminNotification::new(self.0)
+    }
+    pub fn image_processing_config(
+        self,
+    ) -> image_processing_config::WriteCommandsMediaAdminImageProcessingConfig<'a> {
+        image_processing_config::WriteCommandsMediaAdminImageProcessingConfig::new(self.0)
     }
 }

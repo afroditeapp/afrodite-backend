@@ -3,6 +3,7 @@ use diesel::{
     sql_types::{BigInt, Binary, SmallInt},
 };
 use serde::{Deserialize, Serialize};
+pub use simple_backend_model::ImageProcessingDynamicConfig;
 use simple_backend_model::{SimpleDieselEnum, diesel_i64_wrapper, diesel_uuid_wrapper};
 use utoipa::{IntoParams, ToSchema};
 

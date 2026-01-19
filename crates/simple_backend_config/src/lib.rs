@@ -5,6 +5,7 @@
 
 pub mod args;
 pub mod file;
+pub mod image_process;
 pub mod ip;
 
 use std::{
@@ -18,13 +19,11 @@ use std::{
 
 use args::ServerMode;
 use error_stack::{Result, ResultExt};
-use file::{
-    ImageProcessingConfig, MaxMindDbConfig, SignInWithAppleConfig, TileMapConfig,
-    VideoCallingConfig,
-};
+use file::{MaxMindDbConfig, SignInWithAppleConfig, TileMapConfig, VideoCallingConfig};
 use ip::IpList;
 use reqwest::Url;
 use rustls_pemfile::certs;
+use simple_backend_model::ImageProcessingDynamicConfig;
 use simple_backend_utils::dir::abs_path_for_directory_or_file_which_might_not_exists;
 use tokio_rustls::rustls::ServerConfig;
 use web_push::{PartialVapidSignatureBuilder, VapidSignatureBuilder};
@@ -231,8 +230,15 @@ impl SimpleBackendConfig {
         self.file.static_file_package_hosting.as_ref()
     }
 
-    pub fn image_processing(&self) -> ImageProcessingConfig {
-        self.file.image_processing.clone().unwrap_or_default()
+    pub fn image_process_config(
+        &self,
+        dynamic: ImageProcessingDynamicConfig,
+    ) -> image_process::ImageProcessingConfig {
+        let config_file = self.file.image_processing.clone().unwrap_or_default();
+        image_process::ImageProcessingConfig {
+            file: config_file,
+            dynamic,
+        }
     }
 
     pub fn debug_face_detection_result(&self) -> Option<bool> {

@@ -24,6 +24,9 @@ pub use ip::*;
 pub mod version;
 pub use version::*;
 
+pub mod image_processing;
+pub use image_processing::*;
+
 #[cfg(test)]
 mod tests {
     // Ignore unused dependency warning. Unit tests need this dependency.

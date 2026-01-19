@@ -20,12 +20,12 @@ use async_trait::async_trait;
 use base64::display::Base64Display;
 use config::bot_config_file::{
     ContentModerationConfig, LlmContentModerationConfig, ModerationAction, NsfwDetectionConfig,
-    NsfwDetectionThresholds,
 };
 use error_stack::{Result, ResultExt};
 use futures::stream::{self, StreamExt};
 use image::DynamicImage;
 use nsfw::model::Metric;
+use simple_backend_model::NsfwDetectionThresholds;
 use test_mode_utils::client::{ApiClient, TestError};
 use tracing::info;
 
@@ -389,7 +389,7 @@ impl AdminBotContentModerationLogic {
             info!("NSFW detection results: {:?}", &results);
         }
 
-        fn threshold(m: &Metric, thresholds: &NsfwDetectionThresholds) -> Option<f32> {
+        fn threshold(m: &Metric, thresholds: &NsfwDetectionThresholds) -> Option<f64> {
             match m {
                 Metric::Drawings => thresholds.drawings,
                 Metric::Hentai => thresholds.hentai,
@@ -402,7 +402,7 @@ impl AdminBotContentModerationLogic {
         if let Some(thresholds) = &nsfw.config.delete {
             for c in &results {
                 if let Some(threshold) = threshold(&c.metric, thresholds)
-                    && c.score >= threshold
+                    && Into::<f64>::into(c.score) >= threshold
                 {
                     return Ok(Some(ModerationResult::delete()));
                 }
@@ -412,7 +412,7 @@ impl AdminBotContentModerationLogic {
         if let Some(thresholds) = &nsfw.config.reject {
             for c in &results {
                 if let Some(threshold) = threshold(&c.metric, thresholds)
-                    && c.score >= threshold
+                    && Into::<f64>::into(c.score) >= threshold
                 {
                     return Ok(Some(ModerationResult::reject(Some(
                         "NSFW image detected. If this is a false positive, please contact customer support.",
@@ -424,7 +424,7 @@ impl AdminBotContentModerationLogic {
         if let Some(thresholds) = &nsfw.config.move_to_human {
             for c in &results {
                 if let Some(threshold) = threshold(&c.metric, thresholds)
-                    && c.score >= threshold
+                    && Into::<f64>::into(c.score) >= threshold
                 {
                     return Ok(Some(ModerationResult::move_to_human()));
                 }
@@ -434,7 +434,7 @@ impl AdminBotContentModerationLogic {
         if let Some(thresholds) = &nsfw.config.accept {
             for c in results {
                 if let Some(threshold) = threshold(&c.metric, thresholds)
-                    && c.score >= threshold
+                    && Into::<f64>::into(c.score) >= threshold
                 {
                     return Ok(Some(ModerationResult::accept()));
                 }

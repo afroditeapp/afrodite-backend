@@ -1,5 +1,5 @@
 use database_media::current::read::GetDbReadCommandsMedia;
-use model::AccountIdInternal;
+use model::{AccountIdInternal, ImageProcessingDynamicConfig};
 use model_media::{GetMediaContentPendingModerationList, GetMediaContentPendingModerationParams};
 use server_common::result::Result;
 use server_data::{DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead};
@@ -30,6 +30,18 @@ impl ReadCommandsMediaAdmin<'_> {
             cmds.media_admin()
                 .content()
                 .media_content_pending_moderation_list(is_bot, params)
+        })
+        .await
+        .into_error()
+    }
+
+    pub async fn image_processing_config(
+        &self,
+    ) -> Result<Option<ImageProcessingDynamicConfig>, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.media_admin()
+                .image_processing_config()
+                .image_processing_config()
         })
         .await
         .into_error()

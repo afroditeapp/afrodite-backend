@@ -766,6 +766,18 @@ CREATE TABLE IF NOT EXISTS media_state(
             ON UPDATE CASCADE
 );
 
+-- Store image processing configuration
+CREATE TABLE IF NOT EXISTS image_processing_config(
+    -- 0 = image processing config
+    row_type                                    INTEGER PRIMARY KEY NOT NULL,
+    seetaface_threshold                         DOUBLE PRECISION,
+    nsfw_threshold_drawings                     DOUBLE PRECISION,
+    nsfw_threshold_hentai                       DOUBLE PRECISION,
+    nsfw_threshold_neutral                      DOUBLE PRECISION,
+    nsfw_threshold_porn                         DOUBLE PRECISION,
+    nsfw_threshold_sexy                         DOUBLE PRECISION
+);
+
 -- Information about uploaded media content
 CREATE TABLE IF NOT EXISTS media_content(
     id                  BIGSERIAL PRIMARY KEY NOT NULL,

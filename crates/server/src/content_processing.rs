@@ -7,12 +7,15 @@ use server_api::{
 };
 use server_common::result::{Result, WrappedResultExt};
 use server_data::{
-    app::GetConfig,
+    app::{GetConfig, ReadData},
     content_processing::{ContentProcessingReceiver, ProcessingState},
 };
-use server_data_media::write::GetWriteCommandsMedia;
+use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use server_state::{S, app::AdminNotificationProvider};
-use simple_backend::{ServerQuitWatcher, image::ImageProcess};
+use simple_backend::{
+    ServerQuitWatcher,
+    image::{ImageProcess, ImageProcessError},
+};
 use simple_backend_image_process::{ImageProcessingInfo, InputFileType};
 use tokio::task::JoinHandle;
 use tracing::{error, warn};
@@ -89,14 +92,28 @@ impl ContentProcessingManager {
 
     pub async fn handle_content(&self, content: ProcessingState) {
         let result = match content.new_content_params.content_type {
-            MediaContentType::JpegImage => ImageProcess::start_image_process(
-                self.state.config().simple_backend(),
-                content.tmp_raw_img.as_path(),
-                InputFileType::JpegImage,
-                content.tmp_img.as_path(),
-            )
-            .await
-            .change_context(ContentProcessingError::ContentProcessingFailed),
+            MediaContentType::JpegImage => {
+                let state = self.state.clone();
+                let config = self.state.config().simple_backend().clone();
+                ImageProcess::start_image_process(
+                    || async move {
+                        let dynamic_config = state
+                            .read()
+                            .media_admin()
+                            .image_processing_config()
+                            .await
+                            .change_context(ImageProcessError::ConfigLoading)
+                            .map_err(|e| e.into_report())?
+                            .unwrap_or_default();
+                        Ok(config.image_process_config(dynamic_config))
+                    },
+                    content.tmp_raw_img.as_path(),
+                    InputFileType::JpegImage,
+                    content.tmp_img.as_path(),
+                )
+                .await
+                .change_context(ContentProcessingError::ContentProcessingFailed)
+            }
         };
 
         let mut write = self.state.content_processing().data().write().await;

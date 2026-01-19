@@ -27,4 +27,5 @@ thiserror = { workspace = true }
 error-stack = { workspace = true }
 
 simple_backend_utils = { path = "../simple_backend_utils" }
+simple_backend_model = { path = "../simple_backend_model" }
 manager_model = { path = "../manager_model" }
