@@ -64,14 +64,31 @@ pub enum InputFileType {
 /// * String bytes
 ///
 /// The image process processs the JSON and responds with
-/// writing [ImageProcessingInfo] to standard output.
+/// writing [ImageProcessingInfo] to standard output if the message is
+/// [ImageProcessMessage::ProcessImage].
 #[derive(Debug, Deserialize, Serialize)]
-pub struct ImageProcessingCommand {
+#[serde(tag = "message_type")]
+pub enum ImageProcessMessage {
+    ProcessImage {
+        process_image: ProcessImageCommand,
+    },
+    ChangeSettings {
+        change_settings: ChangeSettingsCommand,
+    },
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ProcessImageCommand {
     /// Input image file.
     pub input: PathBuf,
     pub input_file_type: InputFileType,
     /// Output jpeg image file. Will be overwritten if exists.
     pub output: PathBuf,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ChangeSettingsCommand {
+    pub settings: ImageProcessingConfig,
 }
 
 /// Image process returns this info as JSON to standard output.
@@ -81,7 +98,7 @@ pub struct ImageProcessingInfo {
     pub nsfw_detected: bool,
 }
 
-pub fn read_command(read: &mut impl io::Read) -> Result<ImageProcessingCommand, ImageProcessError> {
+pub fn read_message(read: &mut impl io::Read) -> Result<ImageProcessMessage, ImageProcessError> {
     let mut length = [0; 4];
     read.read_exact(&mut length)
         .change_context(ImageProcessError::ReadCommand)?;
@@ -109,17 +126,37 @@ pub fn write_info(
     Ok(())
 }
 
-pub fn run_image_processing_loop(config: ImageProcessingConfig) -> Result<(), ImageProcessError> {
-    let face_detector = FaceDetector::new(&config)?;
-    let nsfw_detector = NsfwDetector::new(&config)?;
-
+pub fn run_image_processing_loop() -> Result<(), ImageProcessError> {
     let mut stdout = std::io::stdout();
     let mut stdin = std::io::stdin();
 
+    // Wait for initial settings message from stdin
+    let message = read_message(&mut stdin)?;
+    let mut config = match message {
+        ImageProcessMessage::ChangeSettings { change_settings } => change_settings.settings,
+        ImageProcessMessage::ProcessImage { .. } => {
+            return Err(report!(ImageProcessError::ReadCommand)
+                .attach_printable("Expected initial ChangeSettings message, got ProcessImage"));
+        }
+    };
+
+    let mut face_detector = FaceDetector::new(&config)?;
+    let mut nsfw_detector = NsfwDetector::new(&config)?;
+
     loop {
-        let command = read_command(&mut stdin)?;
-        let info = handle_image(&config, &face_detector, &nsfw_detector, command)?;
-        write_info(&mut stdout, info)?;
+        let message = read_message(&mut stdin)?;
+
+        match message {
+            ImageProcessMessage::ProcessImage { process_image } => {
+                let info = handle_image(&config, &face_detector, &nsfw_detector, process_image)?;
+                write_info(&mut stdout, info)?;
+            }
+            ImageProcessMessage::ChangeSettings { change_settings } => {
+                config = change_settings.settings;
+                face_detector = FaceDetector::new(&config)?;
+                nsfw_detector = NsfwDetector::new(&config)?;
+            }
+        }
     }
 }
 
@@ -127,7 +164,7 @@ fn handle_image(
     config: &ImageProcessingConfig,
     face_detector: &FaceDetector,
     nsfw_detector: &NsfwDetector,
-    command: ImageProcessingCommand,
+    command: ProcessImageCommand,
 ) -> Result<ImageProcessingInfo, ImageProcessError> {
     let format = match command.input_file_type {
         InputFileType::JpegImage => image::ImageFormat::Jpeg,

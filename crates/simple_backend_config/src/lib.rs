@@ -90,7 +90,6 @@ impl Debug for VapidWrapper {
 #[derive(Debug, Clone)]
 pub struct SimpleBackendConfig {
     file: SimpleBackendConfigFile,
-    config_file_path: PathBuf,
 
     /// Backend version with git commit ID and other info.
     backend_code_version: String,
@@ -255,10 +254,6 @@ impl SimpleBackendConfig {
     pub fn parsed_file(&self) -> &SimpleBackendConfigFile {
         &self.file
     }
-
-    pub fn config_file_path(&self) -> &Path {
-        &self.config_file_path
-    }
 }
 
 /// Read config file from current directory. Changes working directory to
@@ -291,7 +286,7 @@ pub fn get_config(
     // config files will be relative from config file dir.
     std::env::set_current_dir(&config_dir).change_context(GetConfigError::SetWorkingDir)?;
 
-    let (file_config, config_file_path) =
+    let file_config =
         file::SimpleBackendConfigFile::load_from_dir(&config_dir, save_default_config_if_not_found)
             .change_context(GetConfigError::LoadFileError)?;
 
@@ -400,7 +395,6 @@ pub fn get_config(
 
     let config = SimpleBackendConfig {
         file: file_config,
-        config_file_path,
         data_dir,
         config_dir,
         sqlite_in_ram,

@@ -27,8 +27,8 @@ pub enum AppMode {
     RemoteBot(RemoteBotMode),
     /// Run test, benchmark or bot mode
     Test(TestMode),
-    /// Process received image
-    ImageProcess(ImageProcessMode),
+    /// Process received image - internal use only
+    ImageProcess,
     /// Print API documentation JSON to stdout
     OpenApi,
     /// Manager mode
@@ -42,12 +42,6 @@ pub enum AppMode {
     },
     /// Print build info and quit
     BuildInfo,
-}
-
-#[derive(Args, Debug, Clone)]
-pub struct ImageProcessMode {
-    #[arg(long, value_name = "FILE")]
-    pub simple_backend_config: PathBuf,
 }
 
 #[derive(Args, Debug, Clone)]

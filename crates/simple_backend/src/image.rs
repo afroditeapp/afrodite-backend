@@ -6,7 +6,10 @@ use std::{
 
 use error_stack::{Result, ResultExt};
 use simple_backend_config::SimpleBackendConfig;
-use simple_backend_image_process::{ImageProcessingCommand, ImageProcessingInfo, InputFileType};
+use simple_backend_image_process::{
+    ChangeSettingsCommand, ImageProcessMessage, ImageProcessingInfo, InputFileType,
+    ProcessImageCommand,
+};
 use simple_backend_utils::ContextExt;
 use tokio::{
     io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
@@ -58,8 +61,6 @@ impl ImageProcessHandle {
         let mut command = std::process::Command::new(current_exe);
         command
             .arg("image-process")
-            .arg("--simple-backend-config")
-            .arg(config.config_file_path())
             .process_group(0)
             .stderr(Stdio::piped())
             .stdin(Stdio::piped())
@@ -122,20 +123,30 @@ impl ImageProcessHandle {
             return Err(ImageProcessError::StdoutHandleMissing.into());
         };
 
-        Ok(ImageProcessHandle {
+        let mut handle = ImageProcessHandle {
             stderr_reader,
             stdin,
             stdout,
             child,
-        })
+        };
+
+        // Send initial settings
+        let settings = ImageProcessMessage::ChangeSettings {
+            change_settings: ChangeSettingsCommand {
+                settings: config.image_processing().clone(),
+            },
+        };
+        Self::write_message(&mut handle.stdin, settings).await?;
+
+        Ok(handle)
     }
 
-    async fn write_command(
+    async fn write_message(
         write: &mut ChildStdin,
-        command: ImageProcessingCommand,
+        message: ImageProcessMessage,
     ) -> Result<(), ImageProcessError> {
         let string =
-            serde_json::to_string(&command).change_context(ImageProcessError::WriteCommand)?;
+            serde_json::to_string(&message).change_context(ImageProcessError::WriteCommand)?;
         let len = TryInto::<u32>::try_into(string.len())
             .change_context(ImageProcessError::WriteCommand)?;
         write
@@ -168,9 +179,17 @@ impl ImageProcessHandle {
 
     async fn run_command(
         mut self,
-        command: ImageProcessingCommand,
+        command: ProcessImageCommand,
     ) -> Result<(Self, ImageProcessingInfo), ImageProcessError> {
-        let r = Self::write_command(&mut self.stdin, command).await;
+        let message = ImageProcessMessage::ProcessImage {
+            process_image: ProcessImageCommand {
+                input: command.input,
+                input_file_type: command.input_file_type,
+                output: command.output,
+            },
+        };
+
+        let r = Self::write_message(&mut self.stdin, message).await;
         if let Err(e) = r {
             self.close().await;
             return Err(e);
@@ -239,7 +258,7 @@ impl ImageProcess {
             }
         };
 
-        let command = ImageProcessingCommand {
+        let command = ProcessImageCommand {
             input,
             input_file_type,
             output,

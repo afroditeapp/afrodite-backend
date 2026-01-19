@@ -3,7 +3,6 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
-use simple_backend_config::file::SimpleBackendConfigFile;
 use tls_client as _;
 
 pub mod args;
@@ -70,19 +69,13 @@ fn handle_app_mode(args: ArgsConfig) -> ExitCode {
             runtime.block_on(async { manager::server::AppServer::new(config).run().await });
             ExitCode::SUCCESS
         }
-        AppMode::ImageProcess(image_process) => {
-            let config =
-                SimpleBackendConfigFile::load(image_process.simple_backend_config).unwrap();
-            match simple_backend_image_process::run_image_processing_loop(
-                config.image_processing.unwrap_or_default(),
-            ) {
-                Ok(()) => ExitCode::SUCCESS,
-                Err(e) => {
-                    eprintln!("{e:?}");
-                    ExitCode::FAILURE
-                }
+        AppMode::ImageProcess => match simple_backend_image_process::run_image_processing_loop() {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(e) => {
+                eprintln!("{e:?}");
+                ExitCode::FAILURE
             }
-        }
+        },
         AppMode::OpenApi => {
             let runtime = tokio::runtime::Runtime::new().unwrap();
             runtime.block_on(async {
