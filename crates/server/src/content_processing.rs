@@ -9,6 +9,7 @@ use server_common::result::{Result, WrappedResultExt};
 use server_data::{
     app::{GetConfig, ReadData},
     content_processing::{ContentProcessingReceiver, ProcessingState},
+    read::GetReadCommandsCommon,
 };
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use server_state::{S, app::AdminNotificationProvider};
@@ -175,6 +176,15 @@ impl ContentProcessingManager {
                 info.face_detected
             };
 
+        // Check if uploader is a bot
+        let is_bot = self
+            .state
+            .read()
+            .common()
+            .is_bot(state.content_owner)
+            .await
+            .change_context(ContentProcessingError::DatabaseError)?;
+
         let state_copy = state.clone();
         let content_id = db_write_raw!(self.state, move |cmds| {
             cmds.media()
@@ -184,6 +194,7 @@ impl ContentProcessingManager {
                     state_copy.slot,
                     state_copy.new_content_params,
                     face_detected,
+                    if is_bot { Some(true) } else { None },
                 )
                 .await
         })

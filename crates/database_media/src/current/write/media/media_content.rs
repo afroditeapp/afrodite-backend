@@ -209,6 +209,7 @@ impl CurrentWriteMediaContent<'_> {
         slot: Option<ContentSlot>,
         content_params: NewContentParams,
         face_detected_value: bool,
+        face_detected_manual_value: Option<bool>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::media_content::dsl::*;
 
@@ -232,6 +233,7 @@ impl CurrentWriteMediaContent<'_> {
                 slot_number.eq(slot_number_value),
                 secure_capture.eq(content_params.secure_capture),
                 face_detected.eq(face_detected_value),
+                face_detected_manual.eq(face_detected_manual_value),
                 content_type_number.eq(content_params.content_type),
                 initial_content.eq(initial_content_value),
                 creation_unix_time.eq(current_time),

@@ -58,6 +58,7 @@ impl WriteCommandsMedia<'_> {
         slot: ContentSlot,
         new_content_params: NewContentParams,
         face_detected: bool,
+        face_detected_manual: Option<bool>,
     ) -> Result<ContentId, DataError> {
         let account = self
             .db_read(move |mut cmds| cmds.common().account(id))
@@ -107,6 +108,7 @@ impl WriteCommandsMedia<'_> {
                     slot,
                     new_content_params,
                     face_detected,
+                    face_detected_manual,
                 )?;
 
                 // Move content from tmp dir to content dir
