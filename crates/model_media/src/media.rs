@@ -79,7 +79,7 @@ fn value_is_jpeg_image(v: &MediaContentType) -> bool {
 pub struct ContentInfoWithFd {
     pub cid: ContentId,
     pub ctype: MediaContentType,
-    /// Face detected
+    /// Face detected (automatic or manual)
     pub fd: bool,
     pub state: ContentModerationState,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -96,8 +96,11 @@ pub struct ContentInfoDetailed {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub slot: Option<ContentSlot>,
     pub secure_capture: bool,
-    /// Face detected
-    pub fd: bool,
+    /// Face detected (automatic)
+    fd: bool,
+    /// Manual face detected value set by admin
+    #[serde(skip_serializing_if = "Option::is_none")]
+    fd_manual: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub usage_start_time: Option<UnixTime>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -211,7 +214,8 @@ pub struct MediaContentRaw {
     pub uuid: ContentId,
     pub account_id: AccountIdDb,
     pub secure_capture: bool,
-    pub face_detected: bool,
+    face_detected: bool,
+    face_detected_manual: Option<bool>,
     pub content_type_number: MediaContentType,
     slot_number: ContentSlot,
     pub creation_unix_time: UnixTime,
@@ -249,6 +253,17 @@ impl MediaContentRaw {
         self.id
     }
 
+    /// Get the effective face detected value.
+    /// If face_detected_manual is set, it overrides face_detected.
+    pub fn effective_face_detected(&self) -> bool {
+        self.face_detected_manual.unwrap_or(self.face_detected)
+    }
+
+    /// Admin set face detected value
+    pub fn manual_face_detected(&self) -> Option<bool> {
+        self.face_detected_manual
+    }
+
     pub fn removable_by_user(&self, remove_wait_time: u32) -> bool {
         if self.usage_start_unix_time.is_some() {
             return false;
@@ -275,7 +290,7 @@ impl From<MediaContentRaw> for ContentInfoWithFd {
         ContentInfoWithFd {
             cid: value.uuid,
             ctype: value.content_type_number,
-            fd: value.face_detected,
+            fd: value.effective_face_detected(),
             state: value.state(),
             rejected_reason_category: value.moderation_rejected_reason_category,
             rejected_reason_details: value.moderation_rejected_reason_details,
@@ -292,6 +307,7 @@ impl From<MediaContentRaw> for ContentInfoDetailed {
             slot: value.slot_number(),
             secure_capture: value.secure_capture,
             fd: value.face_detected,
+            fd_manual: value.face_detected_manual,
             usage_end_time: value.usage_end_unix_time,
             usage_start_time: value.usage_start_unix_time,
             rejected_reason_category: value.moderation_rejected_reason_category,
@@ -359,7 +375,7 @@ impl CurrentAccountMediaInternal {
                 cid: v.content_id(),
                 ctype: v.content_type(),
                 a: v.state().is_accepted(),
-                p: (i == 0 && v.face_detected),
+                p: (i == 0 && v.effective_face_detected()),
             })
     }
 
@@ -370,7 +386,7 @@ impl CurrentAccountMediaInternal {
             .map(|v| ContentInfoWithFd {
                 cid: v.content_id(),
                 ctype: v.content_type(),
-                fd: v.face_detected,
+                fd: v.effective_face_detected(),
                 state: v.state(),
                 rejected_reason_category: v.moderation_rejected_reason_category,
                 rejected_reason_details: v.moderation_rejected_reason_details.clone(),

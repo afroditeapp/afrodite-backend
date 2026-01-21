@@ -88,7 +88,9 @@ impl CurrentWriteMediaContent<'_> {
             .media_content()
             .get_account_media_content(id)?;
         let convert_first = |content_id: Option<&ContentId>| {
-            Self::check_content_id(content_id.copied(), &all_content, |c| c.face_detected)
+            Self::check_content_id(content_id.copied(), &all_content, |c| {
+                c.effective_face_detected()
+            })
         };
         let convert = |content_id: Option<&ContentId>| {
             Self::check_content_id(content_id.copied(), &all_content, |_| true)
@@ -163,7 +165,7 @@ impl CurrentWriteMediaContent<'_> {
 
         let accepted = state.content_type() == MediaContentType::JpegImage
             && state.secure_capture
-            && state.face_detected;
+            && state.effective_face_detected();
         if !accepted {
             return Err(DieselDatabaseError::NotAllowed.report());
         }

@@ -93,13 +93,13 @@ impl CurrentWriteMediaAdminMediaContent<'_> {
     pub fn change_face_detected_value(
         &mut self,
         content_id: ContentIdInternal,
-        value: bool,
+        value: Option<bool>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::media_content;
 
         update(media_content::table)
             .filter(media_content::id.eq(content_id.as_db_id()))
-            .set((media_content::face_detected.eq(value),))
+            .set(media_content::face_detected_manual.eq(value))
             .execute(self.conn())
             .into_db_error(())?;
 

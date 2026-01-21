@@ -787,6 +787,8 @@ CREATE TABLE IF NOT EXISTS media_content(
     secure_capture      BOOLEAN             NOT NULL,
     -- Face was detected from the content
     face_detected       BOOLEAN             NOT NULL,
+    -- Manually set face detected value by admin (overrides face_detected when not null)
+    face_detected_manual BOOLEAN,
     -- JpegImage = 0, Jpeg image
     content_type_number SMALLINT            NOT NULL,
     -- Numbers from 0 to 6.

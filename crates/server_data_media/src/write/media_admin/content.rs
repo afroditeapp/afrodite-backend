@@ -108,7 +108,7 @@ impl WriteCommandsProfileAdminContent<'_> {
     pub async fn change_face_detected_value(
         &self,
         content_id: ContentIdInternal,
-        value: bool,
+        value: Option<bool>,
     ) -> Result<(), DataError> {
         let current_content = self
             .db_read(move |mut cmds| {
@@ -117,7 +117,7 @@ impl WriteCommandsProfileAdminContent<'_> {
                     .get_media_content_raw(content_id)
             })
             .await?;
-        if current_content.face_detected == value {
+        if current_content.manual_face_detected() == value {
             // Already done
             return Ok(());
         }

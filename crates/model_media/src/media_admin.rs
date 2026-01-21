@@ -51,5 +51,6 @@ pub struct PostModerateMediaContent {
 pub struct PostMediaContentFaceDetectedValue {
     pub account_id: AccountId,
     pub content_id: ContentId,
-    pub value: bool,
+    /// Set to None to clear the manual override and use the automatic detection value
+    pub value: Option<bool>,
 }
