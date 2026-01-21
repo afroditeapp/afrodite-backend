@@ -105,7 +105,6 @@ local_bot_api_port = 3001
 # [image_processing]
 # jpeg_quality = 60 # optional
 
-# If face detection is not configured all images are marked to include a face
 # [image_processing.seetaface]
 # model_file = "model.bin"
 # pyramid_scale_factor = 0.5
