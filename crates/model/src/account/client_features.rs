@@ -184,6 +184,18 @@ pub struct DailyLikesConfig {
 pub struct ProfileConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_name_regex: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub first_image: Option<FirstImageConfig>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct FirstImageConfig {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub require_face_detected_when_editing: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub require_face_detected_when_viewing: bool,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]

@@ -41,22 +41,14 @@ pub struct ContentInfo {
     #[schema(default = true)]
     /// Accepted
     pub a: bool,
-    #[serde(default = "value_bool_false", skip_serializing_if = "value_is_false")]
-    #[schema(default = false)]
-    /// Primary content
-    ///
-    /// The first profile content is not primary content when admin
-    /// deletes the first profile content and the second content does
-    /// not have face detected.
-    pub p: bool,
+    #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
+    #[schema(default = true)]
+    /// Face detected (automatic or manual)
+    pub fd: bool,
 }
 
 fn value_bool_true() -> bool {
     true
-}
-
-fn value_bool_false() -> bool {
-    false
 }
 
 fn value_jpeg_image() -> MediaContentType {
@@ -65,10 +57,6 @@ fn value_jpeg_image() -> MediaContentType {
 
 fn value_is_true(v: &bool) -> bool {
     *v
-}
-
-fn value_is_false(v: &bool) -> bool {
-    !*v
 }
 
 fn value_is_jpeg_image(v: &MediaContentType) -> bool {
@@ -369,14 +357,12 @@ impl CurrentAccountMediaInternal {
     }
 
     pub fn iter_current_profile_content_info(&self) -> impl Iterator<Item = ContentInfo> + '_ {
-        self.iter_current_profile_content()
-            .enumerate()
-            .map(|(i, v)| ContentInfo {
-                cid: v.content_id(),
-                ctype: v.content_type(),
-                a: v.state().is_accepted(),
-                p: (i == 0 && v.effective_face_detected()),
-            })
+        self.iter_current_profile_content().map(|v| ContentInfo {
+            cid: v.content_id(),
+            ctype: v.content_type(),
+            a: v.state().is_accepted(),
+            fd: v.effective_face_detected(),
+        })
     }
 
     pub fn iter_current_profile_content_info_fd(

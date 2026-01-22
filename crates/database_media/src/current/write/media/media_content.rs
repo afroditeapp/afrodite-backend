@@ -74,7 +74,6 @@ impl CurrentWriteMediaContent<'_> {
     /// Requirements:
     ///  - The content must be of type JpegImage.
     ///  - The content must be in the account's media content.
-    ///  - The first content must have face detected flag set.
     pub fn update_profile_content(
         &mut self,
         id: AccountIdInternal,
@@ -87,11 +86,6 @@ impl CurrentWriteMediaContent<'_> {
             .media()
             .media_content()
             .get_account_media_content(id)?;
-        let convert_first = |content_id: Option<&ContentId>| {
-            Self::check_content_id(content_id.copied(), &all_content, |c| {
-                c.effective_face_detected()
-            })
-        };
         let convert = |content_id: Option<&ContentId>| {
             Self::check_content_id(content_id.copied(), &all_content, |_| true)
         };
@@ -104,7 +98,7 @@ impl CurrentWriteMediaContent<'_> {
 
         update(current_account_media.find(id.as_db_id()))
             .set((
-                profile_content_id_0.eq(convert_first(c.first())?),
+                profile_content_id_0.eq(convert(c.first())?),
                 profile_content_id_1.eq(convert(c.get(1))?),
                 profile_content_id_2.eq(convert(c.get(2))?),
                 profile_content_id_3.eq(convert(c.get(3))?),

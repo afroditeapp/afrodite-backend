@@ -142,7 +142,6 @@ const PATH_PUT_PROFILE_CONTENT: &str = "/media_api/profile_content";
 /// # Restrictions
 /// - All content must be owned by the account.
 /// - All content must be images.
-/// - First content must have face detected.
 #[utoipa::path(
     put,
     path = PATH_PUT_PROFILE_CONTENT,
