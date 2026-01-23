@@ -76,6 +76,8 @@ impl CurrentWriteMediaAdminMediaContent<'_> {
     pub fn move_to_human_moderation(
         &mut self,
         content_id: ContentIdInternal,
+        rejected_category: Option<MediaContentModerationRejectedReasonCategory>,
+        rejected_details: Option<MediaContentModerationRejectedReasonDetails>,
     ) -> Result<ContentModerationState, DieselDatabaseError> {
         use model::schema::media_content;
 
@@ -83,7 +85,11 @@ impl CurrentWriteMediaAdminMediaContent<'_> {
 
         update(media_content::table)
             .filter(media_content::id.eq(content_id.as_db_id()))
-            .set(media_content::moderation_state.eq(next_state))
+            .set((
+                media_content::moderation_state.eq(next_state),
+                media_content::moderation_rejected_reason_category.eq(rejected_category),
+                media_content::moderation_rejected_reason_details.eq(rejected_details),
+            ))
             .execute(self.conn())
             .into_db_error(())?;
 

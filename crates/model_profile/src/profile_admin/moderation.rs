@@ -36,8 +36,9 @@ pub struct PostModerateProfileString {
     pub rejected_category: Option<ProfileStringModerationRejectedReasonCategory>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rejected_details: Option<ProfileStringModerationRejectedReasonDetails>,
-    /// If true, ignore accept, rejected_category, rejected_details and move
-    /// the text to waiting for human moderation state.
+    /// If true, ignore accept and move the text to waiting for human moderation state.
+    /// rejected_category and rejected_details can be used to set the reason why the bot
+    /// moved the content to human moderation.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub move_to_human: Option<bool>,
 }

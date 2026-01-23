@@ -3,7 +3,10 @@ use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCom
 use model::{
     ContentId, ContentIdInternal, ReportTypeNumber, ReportTypeNumberInternal, UpdateReportResult,
 };
-use model_media::{AccountIdInternal, ContentModerationState, EventToClientInternal};
+use model_media::{
+    AccountIdInternal, ContentModerationState, EventToClientInternal,
+    MediaContentModerationRejectedReasonDetails,
+};
 use server_data::{
     DataError, db_transaction, define_cmd_wrapper_write, read::DbRead, result::Result,
     write::DbTransaction,
@@ -37,7 +40,12 @@ impl WriteCommandsMediaReport<'_> {
                     .media_admin()
                     .content()
                     .moderate_media_content(
-                        ContentModerationMode::MoveToHumanModeration,
+                        ContentModerationMode::MoveToHumanModeration {
+                            rejected_category: None,
+                            rejected_details: Some(
+                                MediaContentModerationRejectedReasonDetails::reported(),
+                            ),
+                        },
                         content_id_internal,
                     )
                     .await?;

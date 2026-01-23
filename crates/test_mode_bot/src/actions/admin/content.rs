@@ -368,7 +368,7 @@ impl AdminBotContentModerationLogic {
             .unwrap_or_else(|| match default_action {
                 ModerationAction::Accept => ModerationResult::accept(),
                 ModerationAction::Reject => ModerationResult::reject(None),
-                ModerationAction::MoveToHuman => ModerationResult::move_to_human(),
+                ModerationAction::MoveToHuman => ModerationResult::move_to_human(None),
             });
 
         Ok(r)
@@ -426,7 +426,12 @@ impl AdminBotContentModerationLogic {
                 if let Some(threshold) = threshold(&c.metric, thresholds)
                     && Into::<f64>::into(c.score) >= threshold
                 {
-                    return Ok(Some(ModerationResult::move_to_human()));
+                    return Ok(Some(ModerationResult::move_to_human(Some(format!(
+                        "NSFW detection: {:?} score is {:.2}, which is >= threshold {:.2}",
+                        c.metric,
+                        Into::<f64>::into(c.score),
+                        threshold
+                    )))));
                 }
             }
         }
@@ -511,11 +516,6 @@ impl AdminBotContentModerationLogic {
         if config.debug_log_results {
             info!("LLM image moderation result: '{}'", response);
         }
-        let rejected_details = if !accepted && config.add_llm_output_to_rejection_details {
-            Some(response)
-        } else {
-            None
-        };
 
         if config.delete_accepted && accepted {
             return Ok(Some(ModerationResult::delete()));
@@ -527,6 +527,15 @@ impl AdminBotContentModerationLogic {
 
         let move_to_human = (accepted && config.move_accepted_to_human_moderation)
             || (!accepted && config.move_rejected_to_human_moderation);
+
+        let rejected_details = if (!accepted
+            && config.add_llm_output_to_user_visible_rejection_details)
+            || move_to_human
+        {
+            Some(response)
+        } else {
+            None
+        };
 
         Ok(Some(ModerationResult {
             accept: accepted,

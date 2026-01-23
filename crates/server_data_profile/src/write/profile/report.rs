@@ -2,7 +2,8 @@ use database::current::read::GetDbReadCommandsCommon;
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
     AccountIdInternal, EventToClientInternal, ProfileStringModerationContentType,
-    ProfileStringModerationState, ReportTypeNumber, ReportTypeNumberInternal, UpdateReportResult,
+    ProfileStringModerationRejectedReasonDetails, ProfileStringModerationState, ReportTypeNumber,
+    ReportTypeNumberInternal, UpdateReportResult,
 };
 use server_data::{
     DataError, db_transaction, define_cmd_wrapper_write, read::DbRead, result::Result,
@@ -37,7 +38,12 @@ impl WriteCommandsProfileReport<'_> {
                 .moderation()
                 .moderate_profile_string(
                     ProfileStringModerationContentType::ProfileName,
-                    ModerateProfileValueMode::MoveToHumanModeration,
+                    ModerateProfileValueMode::MoveToHumanModeration {
+                        rejected_category: None,
+                        rejected_details: Some(
+                            ProfileStringModerationRejectedReasonDetails::reported(),
+                        ),
+                    },
                     target,
                     profile_name.clone(),
                 )
@@ -102,7 +108,12 @@ impl WriteCommandsProfileReport<'_> {
                 .moderation()
                 .moderate_profile_string(
                     ProfileStringModerationContentType::ProfileText,
-                    ModerateProfileValueMode::MoveToHumanModeration,
+                    ModerateProfileValueMode::MoveToHumanModeration {
+                        rejected_category: None,
+                        rejected_details: Some(
+                            ProfileStringModerationRejectedReasonDetails::reported(),
+                        ),
+                    },
                     target,
                     profile_text.clone(),
                 )

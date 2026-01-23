@@ -416,7 +416,7 @@ pub struct LlmStringModerationConfig {
     pub expected_response: String,
     pub move_rejected_to_human_moderation: bool,
     #[serde(default)]
-    pub add_llm_output_to_rejection_details: bool,
+    pub add_llm_output_to_user_visible_rejection_details: bool,
     #[serde(default)]
     pub debug_log_results: bool,
     #[serde(default = "max_tokens_default_value")]
@@ -502,7 +502,7 @@ pub struct LlmContentModerationConfig {
     pub move_accepted_to_human_moderation: bool,
     pub move_rejected_to_human_moderation: bool,
     #[serde(default)]
-    pub add_llm_output_to_rejection_details: bool,
+    pub add_llm_output_to_user_visible_rejection_details: bool,
     #[serde(default)]
     pub debug_log_results: bool,
     #[serde(default = "max_tokens_default_value")]

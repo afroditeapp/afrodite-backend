@@ -41,10 +41,17 @@ impl WriteCommandsProfileAdminContent<'_> {
                 .increment_media_content_sync_version(content_id.content_owner())?;
 
             match mode {
-                ContentModerationMode::MoveToHumanModeration => {
+                ContentModerationMode::MoveToHumanModeration {
+                    rejected_category,
+                    rejected_details,
+                } => {
                     cmds.media_admin()
                         .media_content()
-                        .move_to_human_moderation(content_id)?;
+                        .move_to_human_moderation(
+                            content_id,
+                            rejected_category,
+                            rejected_details,
+                        )?;
                 }
                 ContentModerationMode::Moderate {
                     moderator_id,
@@ -168,7 +175,10 @@ impl WriteCommandsProfileAdminContent<'_> {
 }
 
 pub enum ContentModerationMode {
-    MoveToHumanModeration,
+    MoveToHumanModeration {
+        rejected_category: Option<MediaContentModerationRejectedReasonCategory>,
+        rejected_details: Option<MediaContentModerationRejectedReasonDetails>,
+    },
     Moderate {
         moderator_id: AccountIdInternal,
         accept: bool,

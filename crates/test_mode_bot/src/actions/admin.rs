@@ -29,9 +29,10 @@ impl ModerationResult {
         }
     }
 
-    pub fn move_to_human() -> Self {
+    pub fn move_to_human(details: Option<String>) -> Self {
         Self {
             move_to_human: true,
+            rejected_details: details,
             ..Default::default()
         }
     }

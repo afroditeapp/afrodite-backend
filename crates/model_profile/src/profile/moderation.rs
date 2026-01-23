@@ -68,6 +68,12 @@ impl ProfileStringModerationRejectedReasonDetails {
         Self { value }
     }
 
+    pub fn reported() -> Self {
+        Self {
+            value: NonEmptyString::from_string("Reported".to_string()).unwrap(),
+        }
+    }
+
     pub fn as_str(&self) -> &str {
         self.value.as_str()
     }

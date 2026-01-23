@@ -138,7 +138,7 @@ impl AdminBotProfileStringModerationLogic {
         let r = r.unwrap_or_else(|| match config.default_action {
             ModerationAction::Accept => ModerationResult::accept(),
             ModerationAction::Reject => ModerationResult::reject(None),
-            ModerationAction::MoveToHuman => ModerationResult::move_to_human(),
+            ModerationAction::MoveToHuman => ModerationResult::move_to_human(None),
         });
 
         // Ignore errors as the user might have changed the text to
@@ -230,13 +230,17 @@ impl AdminBotProfileStringModerationLogic {
         if config.debug_log_results {
             info!("LLM {content_type} moderation result: '{}'", response);
         }
-        let rejected_details = if !accepted && config.add_llm_output_to_rejection_details {
+
+        let move_to_human = !accepted && config.move_rejected_to_human_moderation;
+
+        let rejected_details = if (!accepted
+            && config.add_llm_output_to_user_visible_rejection_details)
+            || move_to_human
+        {
             Some(response)
         } else {
             None
         };
-
-        let move_to_human = !accepted && config.move_rejected_to_human_moderation;
 
         Ok(Some(ModerationResult {
             accept: accepted,

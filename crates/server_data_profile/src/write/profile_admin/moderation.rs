@@ -56,10 +56,15 @@ impl WriteCommandsProfileAdminModeration<'_> {
                 .data()
                 .required_changes_for_profile_update(string_owner_id, &modification)?;
             let new_state = match mode {
-                ModerateProfileValueMode::MoveToHumanModeration => cmds
-                    .profile_admin()
-                    .moderation()
-                    .move_to_human_moderation(string_owner_id, content_type)?,
+                ModerateProfileValueMode::MoveToHumanModeration {
+                    rejected_category,
+                    rejected_details,
+                } => cmds.profile_admin().moderation().move_to_human_moderation(
+                    string_owner_id,
+                    content_type,
+                    rejected_category,
+                    rejected_details,
+                )?,
                 ModerateProfileValueMode::Moderate {
                     moderator_id,
                     accept,
@@ -119,7 +124,10 @@ impl WriteCommandsProfileAdminModeration<'_> {
 }
 
 pub enum ModerateProfileValueMode {
-    MoveToHumanModeration,
+    MoveToHumanModeration {
+        rejected_category: Option<ProfileStringModerationRejectedReasonCategory>,
+        rejected_details: Option<ProfileStringModerationRejectedReasonDetails>,
+    },
     Moderate {
         moderator_id: AccountIdInternal,
         accept: bool,

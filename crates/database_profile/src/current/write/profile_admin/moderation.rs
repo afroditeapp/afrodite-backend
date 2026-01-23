@@ -100,6 +100,8 @@ impl CurrentWriteProfileAdminModeration<'_> {
         &mut self,
         id: AccountIdInternal,
         content_type_value: ProfileStringModerationContentType,
+        rejected_category: Option<ProfileStringModerationRejectedReasonCategory>,
+        rejected_details: Option<ProfileStringModerationRejectedReasonDetails>,
     ) -> Result<ProfileStringModerationState, DieselDatabaseError> {
         use model::schema::profile_moderation::dsl::*;
 
@@ -108,7 +110,11 @@ impl CurrentWriteProfileAdminModeration<'_> {
         update(profile_moderation)
             .filter(account_id.eq(id.as_db_id()))
             .filter(content_type.eq(content_type_value))
-            .set((state_type.eq(next_state),))
+            .set((
+                state_type.eq(next_state),
+                rejected_reason_category.eq(rejected_category),
+                rejected_reason_details.eq(rejected_details),
+            ))
             .execute(self.conn())
             .into_db_error(())?;
 

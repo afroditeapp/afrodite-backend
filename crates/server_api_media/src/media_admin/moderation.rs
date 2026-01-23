@@ -107,7 +107,10 @@ pub async fn post_moderate_media_content(
     let content_owner = state.get_internal_id(data.account_id).await?;
 
     let mode = if data.move_to_human.unwrap_or_default() {
-        ContentModerationMode::MoveToHumanModeration
+        ContentModerationMode::MoveToHumanModeration {
+            rejected_category: data.rejected_category,
+            rejected_details: data.rejected_details,
+        }
     } else {
         ContentModerationMode::Moderate {
             moderator_id,

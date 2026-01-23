@@ -132,7 +132,10 @@ pub async fn post_moderate_profile_string(
     let string_owner_id = state.get_internal_id(data.id).await?;
 
     let mode = if data.move_to_human.unwrap_or_default() {
-        ModerateProfileValueMode::MoveToHumanModeration
+        ModerateProfileValueMode::MoveToHumanModeration {
+            rejected_category: data.rejected_category,
+            rejected_details: data.rejected_details,
+        }
     } else {
         ModerateProfileValueMode::Moderate {
             moderator_id,
