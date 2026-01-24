@@ -30,6 +30,10 @@ pub struct GetMediaContentPendingModerationList {
 pub struct MediaContentPendingModeration {
     pub account_id: AccountId,
     pub content_id: ContentId,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rejected_category: Option<MediaContentModerationRejectedReasonCategory>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rejected_details: Option<MediaContentModerationRejectedReasonDetails>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Queryable)]

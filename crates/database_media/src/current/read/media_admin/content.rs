@@ -65,7 +65,12 @@ impl CurrentReadMediaAdminContent<'_> {
             )
             .filter(media_content::content_type_number.eq(params.content_type))
             .filter(media_content::initial_content.eq(initial_content_value))
-            .select((account_id::uuid, media_content::uuid))
+            .select((
+                account_id::uuid,
+                media_content::uuid,
+                media_content::moderation_rejected_reason_category,
+                media_content::moderation_rejected_reason_details,
+            ))
             .order((
                 media_content::creation_unix_time.asc(),
                 account_id::id.asc(),

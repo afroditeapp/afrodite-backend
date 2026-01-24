@@ -24,6 +24,10 @@ pub struct GetProfileStringPendingModerationParams {
 pub struct ProfileStringPendingModeration {
     pub id: AccountId,
     pub value: NonEmptyString,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rejected_category: Option<ProfileStringModerationRejectedReasonCategory>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rejected_details: Option<ProfileStringModerationRejectedReasonDetails>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Queryable)]

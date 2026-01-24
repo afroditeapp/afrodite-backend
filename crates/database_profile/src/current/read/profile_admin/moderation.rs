@@ -71,11 +71,21 @@ impl CurrentReadProfileModeration<'_> {
         let values = match params.content_type {
             ProfileStringModerationContentType::ProfileName => query
                 .filter(profile::profile_name.is_not_null())
-                .select((account_id::uuid, profile::profile_name.assume_not_null()))
+                .select((
+                    account_id::uuid,
+                    profile::profile_name.assume_not_null(),
+                    profile_moderation::rejected_reason_category,
+                    profile_moderation::rejected_reason_details,
+                ))
                 .load::<ProfileStringPendingModeration>(self.conn()),
             ProfileStringModerationContentType::ProfileText => query
                 .filter(profile::profile_text.is_not_null())
-                .select((account_id::uuid, profile::profile_text.assume_not_null()))
+                .select((
+                    account_id::uuid,
+                    profile::profile_text.assume_not_null(),
+                    profile_moderation::rejected_reason_category,
+                    profile_moderation::rejected_reason_details,
+                ))
                 .load::<ProfileStringPendingModeration>(self.conn()),
         }
         .into_db_error(())?;
