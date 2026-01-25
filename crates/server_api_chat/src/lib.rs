@@ -11,7 +11,6 @@ use self::utils::SecurityApiAccessTokenDefault;
 
 // Routes
 pub mod chat;
-pub mod chat_admin;
 
 pub use server_api::{app, utils};
 pub use server_common::{data::DataError, result};

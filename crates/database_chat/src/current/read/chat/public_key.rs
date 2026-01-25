@@ -63,19 +63,4 @@ impl CurrentReadChatPublicKey<'_> {
 
         Ok(data)
     }
-
-    pub fn max_public_key_count_account_config(
-        &mut self,
-        account_id_value: AccountIdInternal,
-    ) -> Result<i64, DieselDatabaseError> {
-        use crate::schema::chat_state::dsl::*;
-
-        let value: i64 = chat_state
-            .find(account_id_value.as_db_id())
-            .select(max_public_key_count)
-            .first(self.conn())
-            .into_db_error(())?;
-
-        Ok(value)
-    }
 }

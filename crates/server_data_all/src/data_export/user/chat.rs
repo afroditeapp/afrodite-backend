@@ -10,7 +10,6 @@ use server_data::data_export::SourceAccount;
 #[derive(Serialize)]
 pub struct UserDataExportJsonChat {
     chat_state: ChatStateRaw,
-    max_public_key_count_account_config: i64,
     public_keys: Vec<DataExportPublicKey>,
     daily_likes: DailyLikesLeftInternal,
     pending_messages: Vec<DataExportPendingMessage>,
@@ -26,10 +25,6 @@ impl UserDataExportJsonChat {
         let id = id.0;
         let data = Self {
             chat_state: current.chat().chat_state(id)?,
-            max_public_key_count_account_config: current
-                .chat()
-                .public_key()
-                .max_public_key_count_account_config(id)?,
             public_keys: current.chat().public_key().all_public_keys(id)?,
             daily_likes: current.chat().limits().daily_likes_left(id)?,
             pending_messages: current.chat().message().data_export_pending_messages(id)?,

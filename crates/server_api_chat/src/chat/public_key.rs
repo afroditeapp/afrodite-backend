@@ -5,7 +5,6 @@ use axum::{
     body::{Body, to_bytes},
     extract::{Path, Query, State},
 };
-use model::Permissions;
 use model_chat::{
     AccountId, AccountIdInternal, AddPublicKeyParams, AddPublicKeyResult, GetLatestPublicKeyId,
     GetPrivatePublicKeyInfo, PublicKeyId,
@@ -155,7 +154,6 @@ const PATH_GET_PRIVATE_PUBLIC_KEY_INFO: &str = "/chat_api/private_public_key_inf
 ///
 /// # Access
 /// * Owner of the requested account
-/// * Permission [model::Permissions::admin_edit_max_public_key_count]
 #[utoipa::path(
     get,
     path = PATH_GET_PRIVATE_PUBLIC_KEY_INFO,
@@ -170,13 +168,11 @@ const PATH_GET_PRIVATE_PUBLIC_KEY_INFO: &str = "/chat_api/private_public_key_inf
 async fn get_private_public_key_info(
     State(state): State<S>,
     Extension(api_caller): Extension<AccountIdInternal>,
-    Extension(api_caller_permissions): Extension<Permissions>,
     Path(requested_id): Path<AccountId>,
 ) -> Result<Json<GetPrivatePublicKeyInfo>, StatusCode> {
     CHAT.get_private_public_key_info.incr();
 
-    let access_allowed = api_caller.as_id() == requested_id
-        || api_caller_permissions.admin_edit_max_public_key_count;
+    let access_allowed = api_caller.as_id() == requested_id;
 
     if !access_allowed {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);

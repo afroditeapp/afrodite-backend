@@ -36,15 +36,8 @@ impl ReadCommandsChatPublicKey<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<GetPrivatePublicKeyInfo, DataError> {
-        let (latest_public_key_id, account_specific_value) = self
-            .db_read(move |mut cmds| {
-                let latest_public_key_id = cmds.chat().public_key().latest_public_key_id(id)?;
-                let limit = cmds
-                    .chat()
-                    .public_key()
-                    .max_public_key_count_account_config(id)?;
-                Ok((latest_public_key_id, limit))
-            })
+        let latest_public_key_id = self
+            .db_read(move |mut cmds| cmds.chat().public_key().latest_public_key_id(id))
             .await?;
 
         let config_value = self.config().limits_chat().max_public_key_count;
@@ -52,7 +45,6 @@ impl ReadCommandsChatPublicKey<'_> {
         Ok(GetPrivatePublicKeyInfo {
             latest_public_key_id,
             max_public_key_count_from_backend_config: config_value.into(),
-            max_public_key_count_from_account_config: account_specific_value,
         })
     }
 }

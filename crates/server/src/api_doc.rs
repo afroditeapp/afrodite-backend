@@ -199,12 +199,6 @@ impl ApiDoc {
             .merge_from(server_api_chat::chat::router_video_call(state.clone()).into_openapi())
             .tag_routes("chat");
         doc.merge(chat);
-        let chat_admin = ApiDoc::openapi()
-            .merge_from(
-                server_api_chat::chat_admin::router_admin_public_key(state.clone()).into_openapi(),
-            )
-            .tag_routes("chat_admin");
-        doc.merge(chat_admin);
         doc
     }
 

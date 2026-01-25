@@ -27,8 +27,6 @@ impl ConnectedApp {
             ))
             .merge(api::chat::privacy::router_privacy(self.state.clone()))
             .merge(api::chat::video_call::router_video_call(self.state.clone()))
-            // Chat admin
-            .merge(api::chat_admin::router_admin_public_key(self.state.clone()))
             .route_layer({
                 middleware::from_fn_with_state(
                     self.state.clone(),

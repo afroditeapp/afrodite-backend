@@ -63,13 +63,11 @@ pub struct GetPrivatePublicKeyInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub latest_public_key_id: Option<PublicKeyId>,
     pub max_public_key_count_from_backend_config: i64,
-    pub max_public_key_count_from_account_config: i64,
 }
 
 impl GetPrivatePublicKeyInfo {
     pub fn public_key_count_limit(&self) -> i64 {
         self.max_public_key_count_from_backend_config
-            .max(self.max_public_key_count_from_account_config)
     }
 }
 
