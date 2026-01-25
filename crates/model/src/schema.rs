@@ -628,6 +628,7 @@ diesel::table! {
         id -> Int8,
         account_id_sender -> Int8,
         account_id_receiver -> Int8,
+        sender_public_key_id -> Int8,
         sender_acknowledgement -> Bool,
         receiver_acknowledgement -> Bool,
         receiver_push_notification_sent -> Bool,

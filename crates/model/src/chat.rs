@@ -227,6 +227,7 @@ pub struct PendingMessageRaw {
     pub id: i64,
     pub account_id_sender: AccountIdDb,
     pub account_id_receiver: AccountIdDb,
+    pub sender_public_key_id: PublicKeyId,
     pub sender_acknowledgement: bool,
     pub receiver_acknowledgement: bool,
     pub receiver_push_notification_sent: bool,
@@ -241,6 +242,7 @@ pub struct DataExportPendingMessage {
     message_unix_time: UnixTime,
     message_number: MessageNumber,
     message_id: MessageId,
+    sender_public_key_id: PublicKeyId,
     message_bytes_base64: String,
 }
 
@@ -250,6 +252,7 @@ impl DataExportPendingMessage {
             message_unix_time: message.message_unix_time,
             message_number: message.message_number,
             message_id: message.message_id,
+            sender_public_key_id: message.sender_public_key_id,
             message_bytes_base64: BASE64_STANDARD.encode(message_bytes),
         }
     }

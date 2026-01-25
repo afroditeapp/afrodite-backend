@@ -60,6 +60,7 @@ pub struct PendingMessageInternal {
     pub id: i64,
     pub account_id_sender: AccountIdDb,
     pub account_id_receiver: AccountIdDb,
+    pub sender_public_key_id: PublicKeyId,
     pub message_number: MessageNumber,
     pub message_bytes: Vec<u8>,
     pub message_id: MessageId,

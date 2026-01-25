@@ -1049,6 +1049,8 @@ CREATE TABLE IF NOT EXISTS pending_messages(
     account_id_sender               BIGINT NOT NULL,
     -- The account which will receive the message.
     account_id_receiver             BIGINT NOT NULL,
+    -- Message sender's public key ID
+    sender_public_key_id            BIGINT NOT NULL,
     -- Acknowledgement from sender and receiver
     sender_acknowledgement          BOOLEAN NOT NULL DEFAULT FALSE,
     receiver_acknowledgement        BOOLEAN NOT NULL DEFAULT FALSE,
@@ -1070,6 +1072,10 @@ CREATE TABLE IF NOT EXISTS pending_messages(
             ON UPDATE CASCADE,
     FOREIGN KEY (account_id_receiver)
         REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (account_id_sender, sender_public_key_id)
+        REFERENCES public_key (account_id, key_id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
