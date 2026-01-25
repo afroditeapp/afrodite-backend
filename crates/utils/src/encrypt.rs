@@ -42,7 +42,6 @@ pub enum MessageEncryptionError {
     VerifySignedMessageFromBytes = 70,
     VerifySignedMessageVerify = 71,
     VerifySignedMessageAsDataVec = 72,
-    VerifySignedMessageParsePublicKey = 73,
     DecryptWithKeyFromBytes = 80,
     DecryptWithKeyDecrypt = 81,
     DecryptWithKeyNotEncrypted = 82,
@@ -217,26 +216,6 @@ pub fn unwrap_signed_binary_message(data: &[u8]) -> Result<Vec<u8>, MessageEncry
         .map_err(|_| MessageEncryptionError::UnwrapSignedMessageFromBytes)?
         .as_data_vec()
         .map_err(|_| MessageEncryptionError::UnwrapSignedMessageAsDataVec)
-}
-
-pub fn verify_signed_binary_message(
-    data: &[u8],
-    pgp_public_key: &[u8],
-) -> Result<Vec<u8>, MessageEncryptionError> {
-    let public_key = SignedPublicKey::from_bytes(pgp_public_key)
-        .map_err(|_| MessageEncryptionError::VerifySignedMessageParsePublicKey)?;
-    let mut message = Message::from_bytes(data)
-        .map_err(|_| MessageEncryptionError::VerifySignedMessageFromBytes)?;
-
-    let output = message
-        .as_data_vec()
-        .map_err(|_| MessageEncryptionError::VerifySignedMessageAsDataVec)?;
-
-    message
-        .verify_read(&public_key)
-        .map_err(|_| MessageEncryptionError::VerifySignedMessageVerify)?;
-
-    Ok(output)
 }
 
 pub fn decrypt_binary_message(data: &[u8], key: &[u8]) -> Result<Vec<u8>, MessageEncryptionError> {

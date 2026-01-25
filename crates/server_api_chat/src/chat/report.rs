@@ -9,12 +9,12 @@ use server_api::{
     app::{AdminNotificationProvider, ApiLimitsProvider, DataSignerProvider},
     create_open_api_router, db_write,
 };
-use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
+use server_data_chat::write::GetWriteCommandsChat;
 use simple_backend::create_counters;
-use utils::encrypt::{decrypt_binary_message, verify_signed_binary_message};
+use utils::encrypt::{decrypt_binary_message, unwrap_signed_binary_message};
 
 use crate::{
-    app::{GetAccounts, ReadData, WriteData},
+    app::{GetAccounts, WriteData},
     utils::{Json, StatusCode},
 };
 
@@ -61,21 +61,11 @@ pub async fn post_chat_message_report(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let sender_account_id_internal = state.get_internal_id(data.sender).await?;
-    let sender_public_key = state
-        .read()
-        .chat()
-        .public_key()
-        .get_public_key_data(sender_account_id_internal, data.sender_public_key_id)
-        .await?
-        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
-
     let signed_pgp_message = decrypt_binary_message(&data.message, &decryption_key)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let client_message_bytes =
-        verify_signed_binary_message(&signed_pgp_message, &sender_public_key)
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let client_message_bytes = unwrap_signed_binary_message(&signed_pgp_message)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     let target = state.get_internal_id(update.target).await?;
     let report = NewChatMessageReportInternal {

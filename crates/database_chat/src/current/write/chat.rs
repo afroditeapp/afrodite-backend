@@ -1,7 +1,7 @@
 use database::{DieselDatabaseError, define_current_write_commands};
-use diesel::{insert_into, prelude::*, update};
+use diesel::{dsl::not, insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{ConversationId, UnixTime};
+use model::{AccountIdDb, ConversationId, UnixTime};
 use model_chat::{
     AccountIdInternal, CHAT_GLOBAL_STATE_ROW_TYPE, ChatStateRaw, MatchId, NewReceivedLikesCount,
     PublicKeyId, ReceivedLikesSyncVersion, SyncVersionUtils,
@@ -123,7 +123,40 @@ impl CurrentWriteChat<'_> {
             .execute(self.conn())
             .into_db_error(id)?;
 
+        self.cleanup_public_keys(*id.as_db_id())?;
+
         Ok(new_id)
+    }
+
+    pub fn cleanup_public_keys(
+        &mut self,
+        account_id_db: AccountIdDb,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::{pending_messages::dsl as pm, public_key::dsl as pk};
+
+        let latest: Option<PublicKeyId> = pk::public_key
+            .filter(pk::account_id.eq(account_id_db))
+            .select(pk::key_id)
+            .order(pk::key_id.desc())
+            .first(self.conn())
+            .optional()
+            .into_db_error(())?;
+
+        if let Some(latest) = latest {
+            let referenced_key_ids = pm::pending_messages
+                .filter(pm::account_id_sender.eq(account_id_db))
+                .select(pm::sender_public_key_id);
+
+            diesel::delete(
+                pk::public_key
+                    .filter(pk::account_id.eq(account_id_db))
+                    .filter(pk::key_id.ne(latest))
+                    .filter(not(pk::key_id.eq_any(referenced_key_ids))),
+            )
+            .execute(self.conn())
+            .into_db_error(())?;
+        }
+        Ok(())
     }
 
     /// Return unused MatchId
