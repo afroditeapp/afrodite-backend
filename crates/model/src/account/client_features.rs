@@ -206,9 +206,6 @@ pub struct ChatConfig {
     pub check_online_status: Option<CheckOnlineStatusConfig>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    pub message_state_delivered: bool,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
     pub message_state_seen: bool,
 }
 

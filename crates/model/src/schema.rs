@@ -253,7 +253,6 @@ diesel::table! {
 diesel::table! {
     chat_privacy_settings (account_id) {
         account_id -> Int8,
-        message_state_delivered -> Bool,
         message_state_seen -> Bool,
         typing_indicator -> Bool,
     }

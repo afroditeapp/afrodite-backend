@@ -1179,7 +1179,6 @@ CREATE TABLE IF NOT EXISTS chat_email_notification_settings(
 
 CREATE TABLE IF NOT EXISTS chat_privacy_settings(
     account_id                         INTEGER PRIMARY KEY NOT NULL,
-    message_state_delivered            BOOLEAN             NOT NULL,
     message_state_seen                 BOOLEAN             NOT NULL,
     typing_indicator                   BOOLEAN             NOT NULL,
     FOREIGN KEY (account_id)

@@ -339,7 +339,6 @@ impl From<DailyLikesLeftInternal> for DailyLikesLeft {
 #[diesel(table_name = crate::schema::chat_privacy_settings)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct ChatPrivacySettings {
-    pub message_state_delivered: bool,
     message_state_seen: bool,
     typing_indicator: bool,
 }
@@ -347,7 +346,6 @@ pub struct ChatPrivacySettings {
 impl Default for ChatPrivacySettings {
     fn default() -> Self {
         Self {
-            message_state_delivered: true,
             message_state_seen: true,
             typing_indicator: true,
         }

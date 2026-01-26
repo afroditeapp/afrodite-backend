@@ -217,24 +217,6 @@ impl WriteCommandsChat<'_> {
             }
         }
 
-        let delivered_state_enabled = self
-            .config()
-            .client_features_internal()
-            .chat
-            .message_state_delivered;
-
-        let delivered_state_enabled = if delivered_state_enabled {
-            self.handle()
-                .read()
-                .chat()
-                .privacy()
-                .chat_privacy_settings(message_receiver)
-                .await?
-                .message_state_delivered
-        } else {
-            false
-        };
-
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .message()
@@ -243,30 +225,26 @@ impl WriteCommandsChat<'_> {
                     &converted,
                 )?;
 
-            if delivered_state_enabled {
-                for msg in &converted {
-                    cmds.chat().message().insert_message_delivery_info(
-                        msg.sender,
-                        message_receiver,
-                        msg.message_id,
-                        DeliveryInfoType::Delivered,
-                    )?;
-                }
+            for msg in &converted {
+                cmds.chat().message().insert_message_delivery_info(
+                    msg.sender,
+                    message_receiver,
+                    msg.message_id,
+                    DeliveryInfoType::Delivered,
+                )?;
             }
 
             Ok(())
         })?;
 
-        if delivered_state_enabled {
-            for sender in &unique_senders {
-                self.handle()
-                    .events()
-                    .send_connected_event(
-                        sender.as_id(),
-                        model::EventToClientInternal::MessageDeliveryInfoChanged,
-                    )
-                    .await?;
-            }
+        for sender in &unique_senders {
+            self.handle()
+                .events()
+                .send_connected_event(
+                    sender.as_id(),
+                    model::EventToClientInternal::MessageDeliveryInfoChanged,
+                )
+                .await?;
         }
 
         Ok(())

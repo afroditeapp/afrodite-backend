@@ -48,7 +48,6 @@ lon = 0
 profile_name_regex = "^[-'‘’.A-Za-z]+$"
 
 [chat]
-message_state_delivered = true
 message_state_seen = true
 
 [chat.typing_indicator]
