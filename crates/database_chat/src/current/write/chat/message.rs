@@ -4,7 +4,8 @@ use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::{
-    PendingMessageDbId, PendingMessageDbIdAndMessageTime, PendingMessageInfo, PublicKeyId,
+    MessageNumber, PendingMessageDbId, PendingMessageDbIdAndMessageTime, PendingMessageInfo,
+    PublicKeyId,
 };
 use model_chat::{
     AccountIdInternal, AccountInteractionState, DeliveryInfoType, MessageId, SignedMessageData,
@@ -117,14 +118,22 @@ impl CurrentWriteChatMessage<'_> {
         message: Vec<u8>,
         message_id_value: MessageId,
         keys: Arc<ParsedKeys>,
+        metadata_override: Option<(MessageNumber, UnixTime)>,
     ) -> Result<std::result::Result<Vec<u8>, ReceiverBlockedSender>, DieselDatabaseError> {
         use model::schema::{account_interaction, pending_messages::dsl::*};
-        let time = UnixTime::current_time();
         let interaction = self
             .write()
             .chat()
             .interaction()
             .get_or_create_account_interaction(sender, receiver)?;
+        let (time, new_message_number, should_update_counter) = match metadata_override {
+            Some((message_number_value, unix_time)) => (unix_time, message_number_value, false),
+            None => (
+                UnixTime::current_time(),
+                interaction.next_message_number(),
+                true,
+            ),
+        };
 
         if interaction.is_direction_blocked(receiver, sender) {
             return Ok(Err(ReceiverBlockedSender));
@@ -136,24 +145,24 @@ impl CurrentWriteChatMessage<'_> {
             return Err(DieselDatabaseError::NotAllowed.into());
         }
 
-        let new_message_number = interaction.next_message_number();
-
-        if interaction.account_id_sender == Some(*sender.as_db_id()) {
-            update(account_interaction::table.find(interaction.id))
-                .set(
-                    account_interaction::message_counter_sender
-                        .eq(account_interaction::message_counter_sender + 1),
-                )
-                .execute(self.conn())
-                .into_db_error((sender, receiver, new_message_number))?;
-        } else {
-            update(account_interaction::table.find(interaction.id))
-                .set(
-                    account_interaction::message_counter_receiver
-                        .eq(account_interaction::message_counter_receiver + 1),
-                )
-                .execute(self.conn())
-                .into_db_error((sender, receiver, new_message_number))?;
+        if should_update_counter {
+            if interaction.account_id_sender == Some(*sender.as_db_id()) {
+                update(account_interaction::table.find(interaction.id))
+                    .set(
+                        account_interaction::message_counter_sender
+                            .eq(account_interaction::message_counter_sender + 1),
+                    )
+                    .execute(self.conn())
+                    .into_db_error((sender, receiver, new_message_number))?;
+            } else {
+                update(account_interaction::table.find(interaction.id))
+                    .set(
+                        account_interaction::message_counter_receiver
+                            .eq(account_interaction::message_counter_receiver + 1),
+                    )
+                    .execute(self.conn())
+                    .into_db_error((sender, receiver, new_message_number))?;
+            }
         }
 
         let data_for_signing = SignedMessageData {

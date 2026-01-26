@@ -14,6 +14,7 @@ pub struct ApiUsage {
     pub get_profile_content_info: AtomicU32,
     // Chat
     pub post_send_like: AtomicU32,
+    /// For both post_send_message and post_resend_message
     pub post_send_message: AtomicU32,
     pub post_create_video_call_url: AtomicU32,
 }
