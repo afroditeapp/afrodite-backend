@@ -17,6 +17,8 @@ use crate::{
     file::{ConfigFile, ConfigFileError, LocationConfig},
 };
 
+pub mod internal;
+
 const DEFAULT_BOT_CONFIG: &str = r#"
 
 # Local admin bot config
@@ -36,7 +38,7 @@ default_action = "move_to_human"
 
 "#;
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 pub struct BotConfigFile {
     #[serde(default)]
     pub image_dir: ImageDirConfig,
@@ -46,9 +48,9 @@ pub struct BotConfigFile {
     /// Override config for specific user bots.
     #[serde(default)]
     pub bots: Vec<BotInstanceConfig>,
-    pub profile_name_moderation: Option<ProfileStringModerationConfig>,
-    pub profile_text_moderation: Option<ProfileStringModerationConfig>,
-    pub content_moderation: Option<ContentModerationConfig>,
+    pub profile_name_moderation: Option<ProfileStringModerationFileConfig>,
+    pub profile_text_moderation: Option<ProfileStringModerationFileConfig>,
+    pub content_moderation: Option<ContentModerationFileConfig>,
     /// Config required for starting backend in remote bot mode.
     pub remote_bot_mode: Option<RemoteBotModeConfig>,
     /// If None, reading location from server config file next
@@ -166,35 +168,6 @@ impl BotConfigFile {
 
         if let Some(img_dir) = &config.image_dir.woman {
             check_imgs_exist(&config, img_dir, Gender::Woman)?
-        }
-
-        let profile_string_moderation_configs = [
-            config.profile_name_moderation.as_ref(),
-            config.profile_text_moderation.as_ref(),
-        ];
-
-        for config in profile_string_moderation_configs
-            .iter()
-            .flatten()
-            .flat_map(|v| v.llm.as_ref())
-        {
-            let count = config
-                .user_text_template
-                .split(ProfileStringModerationConfig::TEMPLATE_PLACEHOLDER_TEXT)
-                .count();
-            #[allow(clippy::comparison_chain)]
-            if count > 2 {
-                return Err(ConfigFileError::InvalidConfig)
-                    .attach_printable(format!(
-                        "Profile text LLM moderation user text template: only one '{}' placeholder is allowed",
-                        ProfileStringModerationConfig::TEMPLATE_PLACEHOLDER_TEXT,
-                    ));
-            } else if count < 2 {
-                return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
-                    "Profile text LLM moderation user text template: '{}' placeholder is missing",
-                    ProfileStringModerationConfig::TEMPLATE_PLACEHOLDER_TEXT,
-                ));
-            }
         }
 
         if let Some(config) = &config.content_moderation
@@ -356,7 +329,7 @@ impl BaseBotConfig {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct BotInstanceConfig {
     pub id: u16,
     #[serde(flatten)]
@@ -384,43 +357,19 @@ impl<'de> Deserialize<'de> for Gender {
     }
 }
 
-#[derive(Debug, Deserialize)]
-pub struct ProfileStringModerationConfig {
-    /// Accept all texts which only have single visible character.
-    pub accept_single_visible_character: bool,
-    /// Large language model based moderation.
-    /// Actions: reject (or move_to_human) and accept
-    pub llm: Option<LlmStringModerationConfig>,
-    pub default_action: ModerationAction,
-    concurrency: Option<u8>,
-}
-
-impl ProfileStringModerationConfig {
-    pub fn concurrency(&self) -> u8 {
-        self.concurrency.unwrap_or(4)
-    }
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct ProfileStringModerationFileConfig {
+    pub llm: Option<LlmStringModerationFileConfig>,
+    pub concurrency: Option<u8>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct LlmStringModerationConfig {
+pub struct LlmStringModerationFileConfig {
     /// For example "http://localhost:11434/v1"
     pub openai_api_url: Url,
     pub model: String,
-    pub system_text: String,
-    /// Placeholder "{text}" is replaced with text which will be
-    /// moderated.
-    pub user_text_template: String,
-    /// If LLM response starts with this text or the first
-    /// line of the response contains this text, the profile text
-    /// is moderated as accepted. The comparisons are case insensitive.
-    pub expected_response: String,
-    pub move_rejected_to_human_moderation: bool,
-    #[serde(default)]
-    pub add_llm_output_to_user_visible_rejection_details: bool,
     #[serde(default)]
     pub debug_log_results: bool,
-    #[serde(default = "max_tokens_default_value")]
-    pub max_tokens: u32,
     /// Wait times in seconds between retry attempts. The length of this vector
     /// determines the number of retries. For example, [1, 5, 10] means 3 retries
     /// with 1, 5, and 10 seconds wait time respectively.
@@ -428,85 +377,38 @@ pub struct LlmStringModerationConfig {
     pub retry_wait_times_in_seconds: Vec<u16>,
 }
 
-fn max_tokens_default_value() -> u32 {
-    10_000
-}
-
-impl ProfileStringModerationConfig {
-    pub const TEMPLATE_PLACEHOLDER_TEXT: &'static str = "{text}";
-}
-
-#[derive(Debug, Clone, Copy, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum ModerationAction {
-    Accept,
-    Reject,
-    MoveToHuman,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ContentModerationConfig {
-    pub initial_content: bool,
-    pub added_content: bool,
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct ContentModerationFileConfig {
     /// Neural network based detection.
     /// Actions: reject, move_to_human, accept and delete.
-    pub nsfw_detection: Option<NsfwDetectionConfig>,
+    pub nsfw_detection: Option<NsfwDetectionFileConfig>,
     /// Large language model based moderation.
     /// Actions: reject (can be replaced with move_to_human or ignore) and
     ///          accept (can be replaced with move_to_human or delete).
-    pub llm_primary: Option<LlmContentModerationConfig>,
+    pub llm_primary: Option<LlmContentModerationFileConfig>,
     /// The secondary LLM moderation will run if primary results with ignore
     /// action.
-    pub llm_secondary: Option<LlmContentModerationConfig>,
-    pub default_action: ModerationAction,
+    pub llm_secondary: Option<LlmContentModerationFileConfig>,
     #[serde(default)]
     pub debug_log_delete: bool,
-    concurrency: Option<u8>,
-}
-
-impl ContentModerationConfig {
-    pub fn concurrency(&self) -> u8 {
-        self.concurrency.unwrap_or(4)
-    }
+    /// Default value is 4.
+    pub concurrency: Option<u8>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct NsfwDetectionConfig {
+pub struct NsfwDetectionFileConfig {
     pub model_file: PathBuf,
-    /// Thresholds for image rejection.
-    pub reject: Option<NsfwDetectionThresholds>,
-    /// Thresholds for moving image to human moderation.
-    pub move_to_human: Option<NsfwDetectionThresholds>,
-    /// Thresholds for accepting the image.
-    pub accept: Option<NsfwDetectionThresholds>,
-    /// Thresholds for image deletion.
-    pub delete: Option<NsfwDetectionThresholds>,
     #[serde(default)]
     pub debug_log_results: bool,
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct LlmContentModerationConfig {
+pub struct LlmContentModerationFileConfig {
     /// For example "http://localhost:11434/v1"
     pub openai_api_url: Url,
     pub model: String,
-    pub system_text: String,
-    /// If LLM response starts with this text or the first
-    /// line of the response contains this text, the content
-    /// is moderated as accepted. The comparisons are case insensitive.
-    pub expected_response: String,
-    /// Overrides [Self::move_rejected_to_human_moderation]
-    pub ignore_rejected: bool,
-    /// Overrides [Self::move_accepted_to_human_moderation]
-    pub delete_accepted: bool,
-    pub move_accepted_to_human_moderation: bool,
-    pub move_rejected_to_human_moderation: bool,
-    #[serde(default)]
-    pub add_llm_output_to_user_visible_rejection_details: bool,
     #[serde(default)]
     pub debug_log_results: bool,
-    #[serde(default = "max_tokens_default_value")]
-    pub max_tokens: u32,
     /// Wait times in seconds between retry attempts. The length of this vector
     /// determines the number of retries. For example, [1, 5, 10] means 3 retries
     /// with 1, 5, and 10 seconds wait time respectively.
@@ -514,7 +416,7 @@ pub struct LlmContentModerationConfig {
     pub retry_wait_times_in_seconds: Vec<u16>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct RemoteBotModeConfig {
     pub api_url: Url,
     /// Password for remote bot login.

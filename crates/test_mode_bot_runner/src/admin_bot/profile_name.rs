@@ -1,7 +1,5 @@
-use std::sync::Arc;
-
 use api_client::models::ProfileStringModerationContentType;
-use config::bot_config_file::BotConfigFile;
+use config::bot_config_file::internal::ProfileStringModerationConfig;
 use error_stack::Result;
 use test_mode_bot::actions::admin::profile_string::{
     AdminBotProfileStringModerationLogic, ProfileStringModerationState,
@@ -13,7 +11,7 @@ use super::notification::ModerationHandler;
 /// Profile name moderation handler
 pub struct ProfileNameModerationHandler {
     api_client: ApiClient,
-    bot_config_file: Arc<BotConfigFile>,
+    config: ProfileStringModerationConfig,
     reqwest_client: reqwest::Client,
     state: Option<ProfileStringModerationState>,
 }
@@ -21,12 +19,12 @@ pub struct ProfileNameModerationHandler {
 impl ProfileNameModerationHandler {
     pub fn new(
         api_client: ApiClient,
-        bot_config_file: Arc<BotConfigFile>,
+        config: ProfileStringModerationConfig,
         reqwest_client: reqwest::Client,
     ) -> Self {
         Self {
             api_client,
-            bot_config_file,
+            config,
             reqwest_client,
             state: None,
         }
@@ -35,19 +33,19 @@ impl ProfileNameModerationHandler {
 
 impl ModerationHandler for ProfileNameModerationHandler {
     async fn handle(&mut self) -> Result<(), TestError> {
-        if let Some(config) = &self.bot_config_file.profile_name_moderation {
-            let moderation_state = self.state.get_or_insert_with(|| {
-                ProfileStringModerationState::new(config, self.reqwest_client.clone())
-            });
+        let config = &self.config;
+        let moderation_state = self.state.get_or_insert_with(|| {
+            ProfileStringModerationState::new(config, self.reqwest_client.clone())
+        });
 
-            AdminBotProfileStringModerationLogic::run_profile_string_moderation(
-                ProfileStringModerationContentType::ProfileName,
-                &self.api_client,
-                config,
-                moderation_state,
-            )
-            .await?;
-        }
+        AdminBotProfileStringModerationLogic::run_profile_string_moderation(
+            ProfileStringModerationContentType::ProfileName,
+            &self.api_client,
+            config,
+            moderation_state,
+        )
+        .await?;
+
         Ok(())
     }
 }

@@ -23,6 +23,7 @@ utoipa-axum = { workspace = true }
 manager_model = { path = "../manager_model" }
 
 utils = { path = "../utils" }
+config = { path = "../config" }
 model = { path = "../model" }
 model_server_data = { path = "../model_server_data" }
 

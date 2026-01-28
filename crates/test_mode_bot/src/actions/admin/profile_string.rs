@@ -12,7 +12,7 @@ use async_openai::{
     config::OpenAIConfig,
     types::{ChatCompletionRequestMessage, CreateChatCompletionRequest},
 };
-use config::bot_config_file::{
+use config::bot_config_file::internal::{
     LlmStringModerationConfig, ModerationAction, ProfileStringModerationConfig,
 };
 use error_stack::{Result, ResultExt};
@@ -89,7 +89,7 @@ impl AdminBotProfileStringModerationLogic {
                     .await
                 }
             })
-            .buffer_unordered(config.concurrency().into());
+            .buffer_unordered(config.concurrency.into());
 
         loop {
             match stream.next().await {
@@ -181,7 +181,7 @@ impl AdminBotProfileStringModerationLogic {
         let expected_response_lowercase = config.expected_response.to_lowercase();
         let profile_text_paragraph = profile_string.lines().collect::<Vec<&str>>().join(" ");
         let user_text = config.user_text_template.replace(
-            ProfileStringModerationConfig::TEMPLATE_PLACEHOLDER_TEXT,
+            LlmStringModerationConfig::TEMPLATE_PLACEHOLDER_TEXT,
             &profile_text_paragraph,
         );
 

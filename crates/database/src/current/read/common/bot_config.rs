@@ -12,17 +12,24 @@ impl CurrentReadCommonBotConfig<'_> {
 
         bot_config
             .filter(row_type.eq(0))
-            .select((user_bots, admin_bot, remote_bot_login))
+            .select((
+                user_bots,
+                admin_bot,
+                remote_bot_login,
+                admin_bot_config_json,
+            ))
             .first(self.conn())
             .optional()
             .change_context(DieselDatabaseError::Execute)
             .map(|opt| {
-                opt.map(|(u, a, r): (i16, bool, bool)| {
+                opt.map(|(u, a, r, c): (i16, bool, bool, Option<String>)| {
                     let users = if u < 0 { 0 } else { u as u32 };
+                    let config = c.and_then(|v| serde_json::from_str(&v).ok());
                     BackendConfig {
                         user_bots: users,
                         admin_bot: a,
                         remote_bot_login: r,
+                        admin_bot_config: config,
                     }
                 })
             })

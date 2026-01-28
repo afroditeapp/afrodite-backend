@@ -33,7 +33,9 @@ use file::{
 };
 use file_email_content::EmailContentFile;
 use file_web_content::WebContentFile;
-pub use model::{ClientFeaturesConfig, ClientFeaturesConfigInternal};
+pub use model::{
+    AdminBotConfig, BackendConfig, ClientFeaturesConfig, ClientFeaturesConfigInternal,
+};
 use model::{CustomReportsConfig, ScheduledTasksConfig};
 use model_server_data::{AttributesFileInternal, ProfileAttributesInternal};
 use sha2::{Digest, Sha256};

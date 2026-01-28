@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use api_client::models::{AccountId, EventType};
-use config::{args::TestMode, bot_config_file::BotConfigFile};
-use error_stack::Result;
+use config::{BackendConfig, args::TestMode, bot_config_file::BotConfigFile};
+use error_stack::{Result, ResultExt};
 use test_mode_bot::{
     BotState, action_array,
     actions::account::{Login, Register},
@@ -127,24 +127,40 @@ impl AdminBot {
     }
 
     async fn run_admin_logic(state: BotState) -> Result<(), TestError> {
+        let backend_config_api =
+            api_client::apis::common_admin_api::get_backend_config(state.api.api())
+                .await
+                .change_context(TestError::Reqwest)?;
+
+        let backend_config_json =
+            serde_json::to_string(&backend_config_api).change_context(TestError::Reqwest)?;
+        let backend_config: BackendConfig =
+            serde_json::from_str(&backend_config_json).change_context(TestError::Reqwest)?;
+
+        let (profile_name_config, profile_text_config, content_config) =
+            config::bot_config_file::internal::merge(
+                backend_config.admin_bot_config.unwrap_or_default(),
+                (*state.bot_config_file).clone(),
+            );
+
         // Create separate notification pipelines for each content type
         let (content_sender, mut content_receiver) = ContentModerationHandler::new(
             state.api.clone(),
-            state.bot_config_file.clone(),
+            content_config,
             state.reqwest_client.clone(),
         )
         .create_notification_channel();
 
         let (profile_name_sender, mut profile_name_receiver) = ProfileNameModerationHandler::new(
             state.api.clone(),
-            state.bot_config_file.clone(),
+            profile_name_config,
             state.reqwest_client.clone(),
         )
         .create_notification_channel();
 
         let (profile_text_sender, mut profile_text_receiver) = ProfileTextModerationHandler::new(
             state.api.clone(),
-            state.bot_config_file.clone(),
+            profile_text_config,
             state.reqwest_client.clone(),
         )
         .create_notification_channel();

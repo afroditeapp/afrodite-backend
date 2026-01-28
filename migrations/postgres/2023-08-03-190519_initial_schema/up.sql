@@ -266,13 +266,13 @@ CREATE TABLE IF NOT EXISTS vapid_public_key_hash(
     sha256_hash   TEXT                NOT NULL
 );
 
--- Store bot configuration which was previously in dynamic.toml file
 CREATE TABLE IF NOT EXISTS bot_config(
     -- 0 = bot config
     row_type      INTEGER PRIMARY KEY NOT NULL,
     user_bots     SMALLINT            NOT NULL DEFAULT 0,
     admin_bot     BOOLEAN             NOT NULL DEFAULT FALSE,
-    remote_bot_login BOOLEAN          NOT NULL DEFAULT FALSE
+    remote_bot_login BOOLEAN          NOT NULL DEFAULT FALSE,
+    admin_bot_config_json TEXT
 );
 
 ---------- Tables for server component account ----------

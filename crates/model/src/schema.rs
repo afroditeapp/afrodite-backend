@@ -224,6 +224,7 @@ diesel::table! {
         user_bots -> Int2,
         admin_bot -> Bool,
         remote_bot_login -> Bool,
+        admin_bot_config_json -> Nullable<Text>,
     }
 }
 

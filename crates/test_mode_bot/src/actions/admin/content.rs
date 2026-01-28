@@ -18,7 +18,7 @@ use async_openai::{
 };
 use async_trait::async_trait;
 use base64::display::Base64Display;
-use config::bot_config_file::{
+use config::bot_config_file::internal::{
     ContentModerationConfig, LlmContentModerationConfig, ModerationAction, NsfwDetectionConfig,
 };
 use error_stack::{Result, ResultExt};
@@ -235,7 +235,7 @@ impl AdminBotContentModerationLogic {
                     .await
                 }
             })
-            .buffer_unordered(config.concurrency().into());
+            .buffer_unordered(config.concurrency.into());
 
         loop {
             match stream.next().await {

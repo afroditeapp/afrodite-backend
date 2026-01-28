@@ -1,5 +1,5 @@
 use diesel::{insert_into, prelude::*};
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use model::BackendConfig;
 use simple_backend_utils::db::MyRunQueryDsl;
 
@@ -18,12 +18,21 @@ impl CurrentWriteCommonBotConfig<'_> {
             config.user_bots as i16
         };
 
+        let admin_bot_config_json_value = if let Some(c) = &config.admin_bot_config {
+            let string =
+                serde_json::to_string(&c).change_context(DieselDatabaseError::SerdeSerialize)?;
+            Some(string)
+        } else {
+            None
+        };
+
         insert_into(bot_config)
             .values((
                 row_type.eq(0),
                 user_bots.eq(user_bots_i16),
                 admin_bot.eq(config.admin_bot),
                 remote_bot_login.eq(config.remote_bot_login),
+                admin_bot_config_json.eq(&admin_bot_config_json_value),
             ))
             .on_conflict(row_type)
             .do_update()
@@ -31,6 +40,7 @@ impl CurrentWriteCommonBotConfig<'_> {
                 user_bots.eq(user_bots_i16),
                 admin_bot.eq(config.admin_bot),
                 remote_bot_login.eq(config.remote_bot_login),
+                admin_bot_config_json.eq(&admin_bot_config_json_value),
             ))
             .execute_my_conn(self.conn())
             .into_db_error(())?;
