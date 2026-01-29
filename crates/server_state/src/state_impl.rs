@@ -124,20 +124,18 @@ impl WriteDynamicConfig for S {
         &self,
         config: BackendConfig,
     ) -> error_stack::Result<(), ConfigFileError> {
-        if BackendConfig::empty() != config {
-            use server_data::write::GetWriteCommandsCommon;
+        use server_data::write::GetWriteCommandsCommon;
 
-            self.write(move |cmds| async move {
-                cmds.common()
-                    .bot_config()
-                    .upsert_bot_config(&config)
-                    .await?;
-                Ok(())
-            })
-            .await
-            .map_err(|e| e.into_report())
-            .change_context(ConfigFileError::SaveEditedConfig)?;
-        }
+        self.write(move |cmds| async move {
+            cmds.common()
+                .bot_config()
+                .upsert_bot_config(&config)
+                .await?;
+            Ok(())
+        })
+        .await
+        .map_err(|e| e.into_report())
+        .change_context(ConfigFileError::SaveEditedConfig)?;
 
         self.state.dynamic_config_manager.reload().await;
 

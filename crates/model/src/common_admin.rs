@@ -13,7 +13,7 @@ pub use api_usage::*;
 mod ip_address;
 pub use ip_address::*;
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct BackendConfig {
     /// Enable remote bot login API
     #[serde(default)]
@@ -24,10 +24,4 @@ pub struct BackendConfig {
     /// User bot count
     #[serde(default)]
     pub user_bots: u32,
-}
-
-impl BackendConfig {
-    pub fn empty() -> Self {
-        BackendConfig::default()
-    }
 }
