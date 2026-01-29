@@ -13,19 +13,16 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ChatPrivacySettings {
-    #[serde(rename = "message_state_delivered")]
-    pub message_state_delivered: bool,
-    #[serde(rename = "message_state_sent")]
-    pub message_state_sent: bool,
+    #[serde(rename = "message_state_seen")]
+    pub message_state_seen: bool,
     #[serde(rename = "typing_indicator")]
     pub typing_indicator: bool,
 }
 
 impl ChatPrivacySettings {
-    pub fn new(message_state_delivered: bool, message_state_sent: bool, typing_indicator: bool) -> ChatPrivacySettings {
+    pub fn new(message_state_seen: bool, typing_indicator: bool) -> ChatPrivacySettings {
         ChatPrivacySettings {
-            message_state_delivered,
-            message_state_sent,
+            message_state_seen,
             typing_indicator,
         }
     }

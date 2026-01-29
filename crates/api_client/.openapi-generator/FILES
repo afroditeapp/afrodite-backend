@@ -6,7 +6,6 @@ git_push.sh
 src/apis/account_admin_api.rs
 src/apis/account_api.rs
 src/apis/account_bot_api.rs
-src/apis/chat_admin_api.rs
 src/apis/chat_api.rs
 src/apis/chat_transfer_api.rs
 src/apis/common_admin_api.rs
@@ -31,10 +30,14 @@ src/models/account_setup.rs
 src/models/account_state_container.rs
 src/models/account_sync_version.rs
 src/models/add_public_key_result.rs
+src/models/admin_bot_config.rs
 src/models/admin_bot_notification_types.rs
+src/models/admin_content_moderation_config.rs
 src/models/admin_info.rs
 src/models/admin_notification.rs
 src/models/admin_notification_settings.rs
+src/models/admin_nsfw_detection_config.rs
+src/models/admin_profile_string_moderation_config.rs
 src/models/api_usage_count.rs
 src/models/api_usage_statistics.rs
 src/models/attribute.rs
@@ -118,6 +121,7 @@ src/models/event_to_server_type.rs
 src/models/event_type.rs
 src/models/favorite_profiles_page.rs
 src/models/features_config.rs
+src/models/first_image_config.rs
 src/models/get_account_ban_time_result.rs
 src/models/get_account_deletion_request_result.rs
 src/models/get_account_id_from_email_result.rs
@@ -156,6 +160,7 @@ src/models/get_push_notification_info.rs
 src/models/get_report_list.rs
 src/models/get_sent_message.rs
 src/models/group_values.rs
+src/models/image_processing_dynamic_config.rs
 src/models/init_email_change.rs
 src/models/init_email_change_admin.rs
 src/models/init_email_change_result.rs
@@ -170,6 +175,8 @@ src/models/last_seen_time_filter.rs
 src/models/latest_birthdate.rs
 src/models/likes_config.rs
 src/models/limited_action_status.rs
+src/models/llm_content_moderation_config.rs
+src/models/llm_string_moderation_config.rs
 src/models/location.rs
 src/models/login_result.rs
 src/models/maintenance_task.rs
@@ -198,6 +205,7 @@ src/models/message_id.rs
 src/models/message_number.rs
 src/models/min_distance_km.rs
 src/models/mod.rs
+src/models/moderation_action.rs
 src/models/moderation_queue_type.rs
 src/models/my_profile_content.rs
 src/models/new_received_likes_count.rs
@@ -213,6 +221,7 @@ src/models/news_translation_version.rs
 src/models/notification_id.rs
 src/models/notification_id_viewed.rs
 src/models/notification_status.rs
+src/models/nsfw_detection_thresholds.rs
 src/models/partial_profile_attributes_config.rs
 src/models/pending_message_acknowledgement_list.rs
 src/models/pending_message_id.rs
@@ -314,7 +323,6 @@ src/models/set_account_ban_state.rs
 src/models/set_account_setup.rs
 src/models/set_email_login_enabled.rs
 src/models/set_initial_email.rs
-src/models/set_max_public_key_count.rs
 src/models/set_profile_content.rs
 src/models/set_profile_name.rs
 src/models/sign_in_with_apple_info.rs

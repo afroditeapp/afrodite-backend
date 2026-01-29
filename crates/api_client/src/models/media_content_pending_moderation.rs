@@ -17,6 +17,10 @@ pub struct MediaContentPendingModeration {
     pub account_id: Box<models::AccountId>,
     #[serde(rename = "content_id")]
     pub content_id: Box<models::ContentId>,
+    #[serde(rename = "rejected_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub rejected_category: Option<Option<Box<models::MediaContentModerationRejectedReasonCategory>>>,
+    #[serde(rename = "rejected_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub rejected_details: Option<Option<Box<models::MediaContentModerationRejectedReasonDetails>>>,
 }
 
 impl MediaContentPendingModeration {
@@ -24,6 +28,8 @@ impl MediaContentPendingModeration {
         MediaContentPendingModeration {
             account_id: Box::new(account_id),
             content_id: Box::new(content_id),
+            rejected_category: None,
+            rejected_details: None,
         }
     }
 }

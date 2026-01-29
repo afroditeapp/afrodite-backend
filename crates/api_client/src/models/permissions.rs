@@ -23,8 +23,6 @@ pub struct Permissions {
     pub admin_delete_media_content: Option<bool>,
     #[serde(rename = "admin_edit_login", skip_serializing_if = "Option::is_none")]
     pub admin_edit_login: Option<bool>,
-    #[serde(rename = "admin_edit_max_public_key_count", skip_serializing_if = "Option::is_none")]
-    pub admin_edit_max_public_key_count: Option<bool>,
     #[serde(rename = "admin_edit_media_content_face_detected_value", skip_serializing_if = "Option::is_none")]
     pub admin_edit_media_content_face_detected_value: Option<bool>,
     #[serde(rename = "admin_edit_permissions", skip_serializing_if = "Option::is_none")]
@@ -93,7 +91,6 @@ impl Permissions {
             admin_delete_account: None,
             admin_delete_media_content: None,
             admin_edit_login: None,
-            admin_edit_max_public_key_count: None,
             admin_edit_media_content_face_detected_value: None,
             admin_edit_permissions: None,
             admin_edit_profile_name: None,

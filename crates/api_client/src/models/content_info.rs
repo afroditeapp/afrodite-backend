@@ -21,9 +21,9 @@ pub struct ContentInfo {
     /// Default value is not set to API doc as the API doc will then have \"oneOf\" property and Dart code generator does not support it.  Default value is [MediaContentType::JpegImage].
     #[serde(rename = "ctype", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub ctype: Option<Option<models::MediaContentType>>,
-    /// Primary content  The first profile content is not primary content when admin deletes the first profile content and the second content does not have face detected.
-    #[serde(rename = "p", skip_serializing_if = "Option::is_none")]
-    pub p: Option<bool>,
+    /// Face detected (automatic or manual)
+    #[serde(rename = "fd", skip_serializing_if = "Option::is_none")]
+    pub fd: Option<bool>,
 }
 
 impl ContentInfo {
@@ -32,7 +32,7 @@ impl ContentInfo {
             a: None,
             cid: Box::new(cid),
             ctype: None,
-            p: None,
+            fd: None,
         }
     }
 }

@@ -15,10 +15,28 @@ use crate::{apis::ResponseContent, models};
 use super::{Error, configuration, ContentType};
 
 
+/// struct for typed errors of method [`get_image_processing_config`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetImageProcessingConfigError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_media_content_pending_moderation_list`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetMediaContentPendingModerationListError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_image_processing_config`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostImageProcessingConfigError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -42,6 +60,44 @@ pub enum PostModerateMediaContentError {
     UnknownValue(serde_json::Value),
 }
 
+
+/// # Permissions Requires admin_server_maintenance_view_backend_config.
+pub async fn get_image_processing_config(configuration: &configuration::Configuration, ) -> Result<models::ImageProcessingDynamicConfig, Error<GetImageProcessingConfigError>> {
+
+    let uri_str = format!("{}/media_api/image_processing_config", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ImageProcessingDynamicConfig`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ImageProcessingDynamicConfig`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetImageProcessingConfigError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
 
 pub async fn get_media_content_pending_moderation_list(configuration: &configuration::Configuration, content_type: models::MediaContentType, queue: models::ModerationQueueType, show_content_which_bots_can_moderate: bool) -> Result<models::GetMediaContentPendingModerationList, Error<GetMediaContentPendingModerationListError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -83,6 +139,36 @@ pub async fn get_media_content_pending_moderation_list(configuration: &configura
     } else {
         let content = resp.text().await?;
         let entity: Option<GetMediaContentPendingModerationListError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// # Permissions Requires admin_server_maintenance_save_backend_config.
+pub async fn post_image_processing_config(configuration: &configuration::Configuration, image_processing_dynamic_config: models::ImageProcessingDynamicConfig) -> Result<(), Error<PostImageProcessingConfigError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_image_processing_dynamic_config = image_processing_dynamic_config;
+
+    let uri_str = format!("{}/media_api/image_processing_config", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_image_processing_dynamic_config);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostImageProcessingConfigError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

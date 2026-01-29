@@ -16,6 +16,9 @@ pub struct BackendConfig {
     /// Admin bot enabled
     #[serde(rename = "admin_bot", skip_serializing_if = "Option::is_none")]
     pub admin_bot: Option<bool>,
+    /// Admin bot config
+    #[serde(rename = "admin_bot_config", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub admin_bot_config: Option<Option<Box<models::AdminBotConfig>>>,
     /// Enable remote bot login API
     #[serde(rename = "remote_bot_login", skip_serializing_if = "Option::is_none")]
     pub remote_bot_login: Option<bool>,
@@ -28,6 +31,7 @@ impl BackendConfig {
     pub fn new() -> BackendConfig {
         BackendConfig {
             admin_bot: None,
+            admin_bot_config: None,
             remote_bot_login: None,
             user_bots: None,
         }

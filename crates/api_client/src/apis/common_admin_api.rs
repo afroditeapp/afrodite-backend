@@ -127,6 +127,7 @@ pub enum PostAdminNotificationSubscriptionsError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostBackendConfigError {
+    Status400(),
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -353,7 +354,7 @@ pub async fn get_admin_notification_subscriptions(configuration: &configuration:
     }
 }
 
-/// # Permissions Requires admin_server_maintenance_view_backend_settings.
+/// # Access * [Permissions::admin_server_maintenance_view_backend_config] * Bot account
 pub async fn get_backend_config(configuration: &configuration::Configuration, ) -> Result<models::BackendConfig, Error<GetBackendConfigError>> {
 
     let uri_str = format!("{}/common_api/backend_config", configuration.base_path);
@@ -724,7 +725,7 @@ pub async fn post_admin_notification_subscriptions(configuration: &configuration
     }
 }
 
-/// # Permissions Requires admin_server_maintenance_save_backend_settings.
+/// # Validation * `profile_name_moderation.llm.user_text_template` must contain exactly one `{text}` placeholder. * `profile_text_moderation.llm.user_text_template` must contain exactly one `{text}` placeholder.  # Access * [Permissions::admin_server_maintenance_save_backend_config]
 pub async fn post_backend_config(configuration: &configuration::Configuration, backend_config: models::BackendConfig) -> Result<(), Error<PostBackendConfigError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_backend_config = backend_config;

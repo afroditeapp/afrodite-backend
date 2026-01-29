@@ -83,9 +83,9 @@ Class | Method | HTTP request | Description
 *AccountAdminApi* | [**post_update_news_translation**](docs/AccountAdminApi.md#post_update_news_translation) | **POST** /account_api/update_news_translation/{nid}/{locale} | 
 *AccountBotApi* | [**post_bot_login**](docs/AccountBotApi.md#post_bot_login) | **POST** /account_api/bot_login | Get new AccessToken for a bot account. If the account is not registered as a bot account, then the request will fail.
 *AccountBotApi* | [**post_bot_register**](docs/AccountBotApi.md#post_bot_register) | **POST** /account_api/bot_register | Register a new bot account. Returns new account ID which is UUID.
-*AccountBotApi* | [**post_get_bots**](docs/AccountBotApi.md#post_get_bots) | **POST** /account_api/get_bots | Get admin and user bot accounts by email pattern. Admin bot is admin@example.com, user bots are botNUMBER@example.com. Creates accounts if they don't exist.
+*AccountBotApi* | [**post_get_bots**](docs/AccountBotApi.md#post_get_bots) | **POST** /account_api/get_bots | Get admin and user bot accounts by email pattern. Admin bot is admin@example.com, user bots are bot1@example.com, bot2@example.com, etc. Creates accounts if they don't exist.
 *AccountBotApi* | [**post_remote_bot_login**](docs/AccountBotApi.md#post_remote_bot_login) | **POST** /account_api/remote_bot_login | Login for remote bots.
-*AccountBotApi* | [**post_remote_get_bots**](docs/AccountBotApi.md#post_remote_get_bots) | **POST** /account_api/remote_get_bots | Get admin and user bot accounts by email pattern. Admin bot is admin@example.com, user bots are botNUMBER@example.com. Creates accounts if they don't exist.
+*AccountBotApi* | [**post_remote_get_bots**](docs/AccountBotApi.md#post_remote_get_bots) | **POST** /account_api/remote_get_bots | Get admin and user bot accounts by email pattern. Admin bot is admin@example.com, user bots are bot1@example.com, bot2@example.com, etc. Creates accounts if they don't exist.
 *ChatApi* | [**get_chat_app_notification_settings**](docs/ChatApi.md#get_chat_app_notification_settings) | **GET** /chat_api/get_chat_app_notification_settings | 
 *ChatApi* | [**get_chat_email_notification_settings**](docs/ChatApi.md#get_chat_email_notification_settings) | **GET** /chat_api/get_chat_email_notification_settings | 
 *ChatApi* | [**get_chat_privacy_settings**](docs/ChatApi.md#get_chat_privacy_settings) | **GET** /chat_api/get_chat_privacy_settings | 
@@ -120,7 +120,6 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**post_send_like**](docs/ChatApi.md#post_send_like) | **POST** /chat_api/send_like | Send a like to some account. If both will like each other, then the accounts will be a match.
 *ChatApi* | [**post_send_message**](docs/ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match.
 *ChatApi* | [**post_unblock_profile**](docs/ChatApi.md#post_unblock_profile) | **POST** /chat_api/unblock_profile | Unblock profile
-*ChatAdminApi* | [**post_set_max_public_key_count**](docs/ChatAdminApi.md#post_set_max_public_key_count) | **POST** /chat_api/set_max_public_key_count | Set max public key count
 *ChatTransferApi* | [**get_backup_transfer**](docs/ChatTransferApi.md#get_backup_transfer) | **GET** /chat_api/backup_transfer | Transfer chat backup between clients using WebSocket.
 *CommonApi* | [**delete_data_export**](docs/CommonApi.md#delete_data_export) | **DELETE** /common_api/delete_data_export | Delete current data export
 *CommonApi* | [**get_client_config**](docs/CommonApi.md#get_client_config) | **GET** /common_api/client_config | 
@@ -178,7 +177,9 @@ Class | Method | HTTP request | Description
 *MediaApi* | [**put_content_to_content_slot**](docs/MediaApi.md#put_content_to_content_slot) | **PUT** /media_api/content_slot/{slot_id} | Upload content to server. The content is saved to content processing slot when account state is [model::AccountState::InitialSetup]. In other states the slot number is ignored and content goes directly to moderation.
 *MediaApi* | [**put_profile_content**](docs/MediaApi.md#put_profile_content) | **PUT** /media_api/profile_content | Set new profile content for current account.
 *MediaApi* | [**put_security_content_info**](docs/MediaApi.md#put_security_content_info) | **PUT** /media_api/security_content_info | Set current security content for current account.
+*MediaAdminApi* | [**get_image_processing_config**](docs/MediaAdminApi.md#get_image_processing_config) | **GET** /media_api/image_processing_config | Get image processing configuration
 *MediaAdminApi* | [**get_media_content_pending_moderation_list**](docs/MediaAdminApi.md#get_media_content_pending_moderation_list) | **GET** /media_api/media_content_pending_moderation | Get first page of pending media content moderations. Oldest item is first and count 25.
+*MediaAdminApi* | [**post_image_processing_config**](docs/MediaAdminApi.md#post_image_processing_config) | **POST** /media_api/image_processing_config | Update image processing configuration
 *MediaAdminApi* | [**post_media_content_face_detected_value**](docs/MediaAdminApi.md#post_media_content_face_detected_value) | **POST** /media_api/media_content_face_detected_value | Change media content face detected value
 *MediaAdminApi* | [**post_moderate_media_content**](docs/MediaAdminApi.md#post_moderate_media_content) | **POST** /media_api/moderate_media_content | Rejected category and details can be set only when the content is rejected.
 *ProfileApi* | [**delete_favorite_profile**](docs/ProfileApi.md#delete_favorite_profile) | **DELETE** /profile_api/favorite_profile | Delete favorite profile
@@ -242,10 +243,14 @@ Class | Method | HTTP request | Description
  - [AccountStateContainer](docs/AccountStateContainer.md)
  - [AccountSyncVersion](docs/AccountSyncVersion.md)
  - [AddPublicKeyResult](docs/AddPublicKeyResult.md)
+ - [AdminBotConfig](docs/AdminBotConfig.md)
  - [AdminBotNotificationTypes](docs/AdminBotNotificationTypes.md)
+ - [AdminContentModerationConfig](docs/AdminContentModerationConfig.md)
  - [AdminInfo](docs/AdminInfo.md)
  - [AdminNotification](docs/AdminNotification.md)
  - [AdminNotificationSettings](docs/AdminNotificationSettings.md)
+ - [AdminNsfwDetectionConfig](docs/AdminNsfwDetectionConfig.md)
+ - [AdminProfileStringModerationConfig](docs/AdminProfileStringModerationConfig.md)
  - [ApiUsageCount](docs/ApiUsageCount.md)
  - [ApiUsageStatistics](docs/ApiUsageStatistics.md)
  - [Attribute](docs/Attribute.md)
@@ -329,6 +334,7 @@ Class | Method | HTTP request | Description
  - [EventType](docs/EventType.md)
  - [FavoriteProfilesPage](docs/FavoriteProfilesPage.md)
  - [FeaturesConfig](docs/FeaturesConfig.md)
+ - [FirstImageConfig](docs/FirstImageConfig.md)
  - [GetAccountBanTimeResult](docs/GetAccountBanTimeResult.md)
  - [GetAccountDeletionRequestResult](docs/GetAccountDeletionRequestResult.md)
  - [GetAccountIdFromEmailResult](docs/GetAccountIdFromEmailResult.md)
@@ -367,6 +373,7 @@ Class | Method | HTTP request | Description
  - [GetReportList](docs/GetReportList.md)
  - [GetSentMessage](docs/GetSentMessage.md)
  - [GroupValues](docs/GroupValues.md)
+ - [ImageProcessingDynamicConfig](docs/ImageProcessingDynamicConfig.md)
  - [InitEmailChange](docs/InitEmailChange.md)
  - [InitEmailChangeAdmin](docs/InitEmailChangeAdmin.md)
  - [InitEmailChangeResult](docs/InitEmailChangeResult.md)
@@ -381,6 +388,8 @@ Class | Method | HTTP request | Description
  - [LatestBirthdate](docs/LatestBirthdate.md)
  - [LikesConfig](docs/LikesConfig.md)
  - [LimitedActionStatus](docs/LimitedActionStatus.md)
+ - [LlmContentModerationConfig](docs/LlmContentModerationConfig.md)
+ - [LlmStringModerationConfig](docs/LlmStringModerationConfig.md)
  - [Location](docs/Location.md)
  - [LoginResult](docs/LoginResult.md)
  - [MaintenanceTask](docs/MaintenanceTask.md)
@@ -408,6 +417,7 @@ Class | Method | HTTP request | Description
  - [MessageId](docs/MessageId.md)
  - [MessageNumber](docs/MessageNumber.md)
  - [MinDistanceKm](docs/MinDistanceKm.md)
+ - [ModerationAction](docs/ModerationAction.md)
  - [ModerationQueueType](docs/ModerationQueueType.md)
  - [MyProfileContent](docs/MyProfileContent.md)
  - [NewReceivedLikesCount](docs/NewReceivedLikesCount.md)
@@ -423,6 +433,7 @@ Class | Method | HTTP request | Description
  - [NotificationId](docs/NotificationId.md)
  - [NotificationIdViewed](docs/NotificationIdViewed.md)
  - [NotificationStatus](docs/NotificationStatus.md)
+ - [NsfwDetectionThresholds](docs/NsfwDetectionThresholds.md)
  - [PartialProfileAttributesConfig](docs/PartialProfileAttributesConfig.md)
  - [PendingMessageAcknowledgementList](docs/PendingMessageAcknowledgementList.md)
  - [PendingMessageId](docs/PendingMessageId.md)
@@ -524,7 +535,6 @@ Class | Method | HTTP request | Description
  - [SetAccountSetup](docs/SetAccountSetup.md)
  - [SetEmailLoginEnabled](docs/SetEmailLoginEnabled.md)
  - [SetInitialEmail](docs/SetInitialEmail.md)
- - [SetMaxPublicKeyCount](docs/SetMaxPublicKeyCount.md)
  - [SetProfileContent](docs/SetProfileContent.md)
  - [SetProfileName](docs/SetProfileName.md)
  - [SignInWithAppleInfo](docs/SignInWithAppleInfo.md)

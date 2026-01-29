@@ -17,9 +17,12 @@ pub struct ContentInfoDetailed {
     pub cid: Box<models::ContentId>,
     #[serde(rename = "ctype")]
     pub ctype: models::MediaContentType,
-    /// Face detected
+    /// Face detected (automatic)
     #[serde(rename = "fd")]
     pub fd: bool,
+    /// Manual face detected value set by admin
+    #[serde(rename = "fd_manual", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub fd_manual: Option<Option<bool>>,
     #[serde(rename = "rejected_reason_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub rejected_reason_category: Option<Option<Box<models::MediaContentModerationRejectedReasonCategory>>>,
     #[serde(rename = "rejected_reason_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -42,6 +45,7 @@ impl ContentInfoDetailed {
             cid: Box::new(cid),
             ctype,
             fd,
+            fd_manual: None,
             rejected_reason_category: None,
             rejected_reason_details: None,
             secure_capture,

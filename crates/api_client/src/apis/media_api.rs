@@ -690,7 +690,7 @@ pub async fn put_content_to_content_slot(configuration: &configuration::Configur
     }
 }
 
-/// This also moves the content to moderation if it is not already in moderation or moderated.  Also profile visibility moves from pending to normal when all profile content is moderated as accepted.  # Restrictions - All content must be owned by the account. - All content must be images. - First content must have face detected.
+/// This also moves the content to moderation if it is not already in moderation or moderated.  Also profile visibility moves from pending to normal when all profile content is moderated as accepted.  # Restrictions - All content must be owned by the account. - All content must be images.
 pub async fn put_profile_content(configuration: &configuration::Configuration, set_profile_content: models::SetProfileContent) -> Result<(), Error<PutProfileContentError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_set_profile_content = set_profile_content;

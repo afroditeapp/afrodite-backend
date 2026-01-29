@@ -17,7 +17,7 @@ pub struct ContentInfoWithFd {
     pub cid: Box<models::ContentId>,
     #[serde(rename = "ctype")]
     pub ctype: models::MediaContentType,
-    /// Face detected
+    /// Face detected (automatic or manual)
     #[serde(rename = "fd")]
     pub fd: bool,
     #[serde(rename = "rejected_reason_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]

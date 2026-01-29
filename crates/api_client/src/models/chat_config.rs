@@ -15,8 +15,6 @@ use serde::{Deserialize, Serialize};
 pub struct ChatConfig {
     #[serde(rename = "check_online_status", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub check_online_status: Option<Option<Box<models::CheckOnlineStatusConfig>>>,
-    #[serde(rename = "message_state_delivered", skip_serializing_if = "Option::is_none")]
-    pub message_state_delivered: Option<bool>,
     #[serde(rename = "message_state_seen", skip_serializing_if = "Option::is_none")]
     pub message_state_seen: Option<bool>,
     #[serde(rename = "typing_indicator", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -27,7 +25,6 @@ impl ChatConfig {
     pub fn new() -> ChatConfig {
         ChatConfig {
             check_online_status: None,
-            message_state_delivered: None,
             message_state_seen: None,
             typing_indicator: None,
         }

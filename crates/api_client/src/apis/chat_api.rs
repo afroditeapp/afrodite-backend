@@ -654,7 +654,7 @@ pub async fn get_pending_messages(configuration: &configuration::Configuration, 
     }
 }
 
-/// # Access * Owner of the requested account * Permission [model::Permissions::admin_edit_max_public_key_count]
+/// # Access * Owner of the requested account
 pub async fn get_private_public_key_info(configuration: &configuration::Configuration, aid: &str) -> Result<models::GetPrivatePublicKeyInfo, Error<GetPrivatePublicKeyInfoError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_aid = aid;

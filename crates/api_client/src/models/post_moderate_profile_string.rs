@@ -19,7 +19,7 @@ pub struct PostModerateProfileString {
     pub content_type: models::ProfileStringModerationContentType,
     #[serde(rename = "id")]
     pub id: Box<models::AccountId>,
-    /// If true, ignore accept, rejected_category, rejected_details and move the text to waiting for human moderation state.
+    /// If true, ignore accept and move the text to waiting for human moderation state. rejected_category and rejected_details can be used to set the reason why the bot moved the content to human moderation.
     #[serde(rename = "move_to_human", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub move_to_human: Option<Option<bool>>,
     #[serde(rename = "rejected_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]

@@ -17,16 +17,17 @@ pub struct PostMediaContentFaceDetectedValue {
     pub account_id: Box<models::AccountId>,
     #[serde(rename = "content_id")]
     pub content_id: Box<models::ContentId>,
-    #[serde(rename = "value")]
-    pub value: bool,
+    /// Set to None to clear the manual override and use the automatic detection value
+    #[serde(rename = "value", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub value: Option<Option<bool>>,
 }
 
 impl PostMediaContentFaceDetectedValue {
-    pub fn new(account_id: models::AccountId, content_id: models::ContentId, value: bool) -> PostMediaContentFaceDetectedValue {
+    pub fn new(account_id: models::AccountId, content_id: models::ContentId) -> PostMediaContentFaceDetectedValue {
         PostMediaContentFaceDetectedValue {
             account_id: Box::new(account_id),
             content_id: Box::new(content_id),
-            value,
+            value: None,
         }
     }
 }
