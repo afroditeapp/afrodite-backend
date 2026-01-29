@@ -107,7 +107,7 @@ pub struct SendVerifyEmailMessageResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error_email_sending_timeout: bool,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     error_try_again_later_after_seconds: Option<u32>,
 }
 
@@ -173,7 +173,7 @@ pub struct InitEmailChangeResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error_email_sending_timeout: bool,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     error_try_again_later_after_seconds: Option<u32>,
 }
 
