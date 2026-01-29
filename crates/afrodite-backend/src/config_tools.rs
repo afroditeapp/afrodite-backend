@@ -1,18 +1,27 @@
 use std::path::PathBuf;
 
-use config::{GetConfigError, args::ConfigMode, bot_config_file::BotConfigFile, get_config};
+use config::{
+    GetConfigError,
+    args::{ConfigCheckMode, ConfigMode, ConfigViewMode},
+    bot_config_file::BotConfigFile,
+    get_config,
+};
 use server_data::index::info::LocationIndexInfoCreator;
 use simple_backend_config::args::ServerMode;
 
 pub fn handle_config_tools(mode: ConfigMode) -> Result<(), GetConfigError> {
     match mode {
-        ConfigMode::CheckServer { dir } => handle_check_and_view_server(dir, false),
-        ConfigMode::ViewServer { dir } => handle_check_and_view_server(dir, true),
-        ConfigMode::CheckManager { file } => handle_check_and_view_manager(file, false),
-        ConfigMode::ViewManager { file } => handle_check_and_view_manager(file, true),
-        ConfigMode::CheckBot { file } => handle_check_and_view_bot(file, false),
-        ConfigMode::ViewBot { file } => handle_check_and_view_bot(file, true),
-        ConfigMode::IndexInfo { dir } => handle_index_info(dir),
+        ConfigMode::Check { mode } => match mode {
+            ConfigCheckMode::Server { dir } => handle_check_and_view_server(dir, false),
+            ConfigCheckMode::Manager { file } => handle_check_and_view_manager(file, false),
+            ConfigCheckMode::Bot { file } => handle_check_and_view_bot(file, false),
+        },
+        ConfigMode::View { mode } => match mode {
+            ConfigViewMode::Server { dir } => handle_check_and_view_server(dir, true),
+            ConfigViewMode::Manager { file } => handle_check_and_view_manager(file, true),
+            ConfigViewMode::Bot { file } => handle_check_and_view_bot(file, true),
+            ConfigViewMode::IndexInfo { dir } => handle_index_info(dir),
+        },
     }
 }
 

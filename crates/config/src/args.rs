@@ -281,40 +281,58 @@ impl fmt::Display for SelectedBenchmark {
 
 #[derive(Parser, Debug, Clone)]
 pub enum ConfigMode {
-    /// Check server config.
-    CheckServer {
-        /// Server config dir.
+    /// Check config
+    Check {
+        #[command(subcommand)]
+        mode: ConfigCheckMode,
+    },
+    /// View config
+    View {
+        #[command(subcommand)]
+        mode: ConfigViewMode,
+    },
+}
+
+#[derive(Parser, Debug, Clone)]
+pub enum ConfigCheckMode {
+    /// Check server config
+    Server {
+        /// Server config dir
         dir: PathBuf,
     },
-    /// View server config.
-    ViewServer {
-        /// Server config dir.
+    /// Check manager config
+    Manager {
+        /// Path to manager config file
+        file: PathBuf,
+    },
+    /// Check bot config
+    Bot {
+        /// Path to bot config file
+        file: PathBuf,
+    },
+}
+
+#[derive(Parser, Debug, Clone)]
+pub enum ConfigViewMode {
+    /// View server config
+    Server {
+        /// Server config dir
         dir: PathBuf,
     },
-    /// Check manager config.
-    CheckManager {
-        /// Path to manager config file.
+    /// View manager config
+    Manager {
+        /// Path to manager config file
         file: PathBuf,
     },
-    /// View manager config.
-    ViewManager {
-        /// Path to manager config file.
+    /// View bot config
+    Bot {
+        /// Path to bot config file
         file: PathBuf,
     },
-    /// Check bot config.
-    CheckBot {
-        /// Path to bot config file.
-        file: PathBuf,
-    },
-    /// View bot config.
-    ViewBot {
-        /// Path to bot config file.
-        file: PathBuf,
-    },
-    /// Print available profile index sizes using
-    /// dimensions from config file and quit.
+    /// View available profile index sizes using
+    /// dimensions from config file
     IndexInfo {
-        /// Server config dir.
+        /// Server config dir
         dir: PathBuf,
     },
 }
