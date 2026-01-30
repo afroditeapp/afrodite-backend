@@ -302,6 +302,25 @@ pub enum DataModeSubMode {
         #[command(subcommand)]
         mode: DataViewSubMode,
     },
+    /// Load data to database
+    Load {
+        #[command(subcommand)]
+        mode: DataLoadSubMode,
+    },
+}
+
+#[derive(Parser, Debug, Clone)]
+pub enum DataLoadSubMode {
+    /// Load bot config from file
+    BotConfig {
+        /// Path to bot config file
+        file: PathBuf,
+    },
+    /// Load image processing config from file
+    ImageProcessingConfig {
+        /// Path to image processing config file
+        file: PathBuf,
+    },
 }
 
 #[derive(Parser, Debug, Clone)]

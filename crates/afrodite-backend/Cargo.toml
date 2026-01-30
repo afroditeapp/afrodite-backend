@@ -9,6 +9,7 @@ edition = "2024"
 [dependencies]
 clap = { workspace = true }
 toml = { workspace = true }
+error-stack = { workspace = true }
 
 tokio = { workspace = true }
 tokio-rustls = { workspace = true }
@@ -16,13 +17,17 @@ tokio-rustls = { workspace = true }
 config = { path = "../config" }
 test_mode = { path = "../test_mode" }
 server = { path = "../server" }
+server_common = { path = "../server_common" }
 server_data = { path = "../server_data" }
 
 manager = { path = "../manager" }
 manager_config = { path = "../manager_config" }
 
+simple_backend = { path = "../simple_backend" }
 simple_backend_image_process = { path = "../simple_backend_image_process" }
 simple_backend_config = { path = "../simple_backend_config" }
+simple_backend_utils = { path = "../simple_backend_utils" }
+model = { path = "../model" }
 database = { path = "../database" }
 database_media = { path = "../database_media" }
 
