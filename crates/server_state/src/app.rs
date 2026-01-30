@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
 use config::file::ConfigFileError;
-use model::{AccessToken, AccountIdInternal, AccountState, BackendConfig, Permissions};
+use model::{AccessToken, AccountIdInternal, AccountState, BotConfig, Permissions};
 pub use server_data::app::*;
 use server_data::{DataError, content_processing::ContentProcessingManagerData};
 
@@ -62,14 +62,13 @@ pub trait ApiLimitsProvider {
 }
 
 pub trait ReadDynamicConfig {
-    async fn read_config(&self) -> error_stack::Result<BackendConfig, ConfigFileError>;
+    async fn read_config(&self) -> error_stack::Result<BotConfig, ConfigFileError>;
 
     fn is_remote_bot_login_enabled(&self) -> bool;
 }
 
 pub trait WriteDynamicConfig {
-    async fn write_config(&self, config: BackendConfig)
-    -> error_stack::Result<(), ConfigFileError>;
+    async fn write_config(&self, config: BotConfig) -> error_stack::Result<(), ConfigFileError>;
 
     fn set_remote_bot_login_enabled(&self, value: bool);
 

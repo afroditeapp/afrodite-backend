@@ -1,6 +1,6 @@
 use diesel::{insert_into, prelude::*};
 use error_stack::{Result, ResultExt};
-use model::BackendConfig;
+use model::BotConfig;
 use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
@@ -8,7 +8,7 @@ use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands
 define_current_read_commands!(CurrentWriteCommonBotConfig);
 
 impl CurrentWriteCommonBotConfig<'_> {
-    pub fn upsert_bot_config(&mut self, config: &BackendConfig) -> Result<(), DieselDatabaseError> {
+    pub fn upsert_bot_config(&mut self, config: &BotConfig) -> Result<(), DieselDatabaseError> {
         use model::schema::bot_config::dsl::*;
 
         // Ensure user_bots fits in i16

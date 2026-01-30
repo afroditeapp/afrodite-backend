@@ -10,7 +10,7 @@ use database::{
 };
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
 use error_stack::{Result, report};
-use model::{AccountIdInternal, BackendConfig, EmailMessages, ImageProcessingDynamicConfig};
+use model::{AccountIdInternal, BotConfig, EmailMessages, ImageProcessingDynamicConfig};
 use server_data::db_manager::{DatabaseManager, InternalWriting};
 use simple_backend_config::args::ServerMode;
 use simple_backend_utils::dir::abs_path_for_directory_or_file_which_might_not_exists;
@@ -96,7 +96,7 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
 
 async fn handle_load_bot_config(writer: &DbWriter<'_>, file: PathBuf) {
     let content = std::fs::read_to_string(file).unwrap();
-    let config: BackendConfig = toml::from_str(&content).unwrap();
+    let config: BotConfig = toml::from_str(&content).unwrap();
 
     writer
         .db_transaction_raw(move |mut cmds| {

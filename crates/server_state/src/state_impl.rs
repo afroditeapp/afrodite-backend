@@ -4,7 +4,7 @@ use config::{Config, file::ConfigFileError};
 use error_stack::ResultExt;
 use futures::Future;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion,
+    AccessToken, AccountId, AccountIdInternal, AccountState, BackendVersion, BotConfig,
     EventToClientInternal, Permissions, ScheduledMaintenanceStatus,
 };
 use server_data::{
@@ -99,7 +99,7 @@ impl GetConfig for S {
 }
 
 impl ReadDynamicConfig for S {
-    async fn read_config(&self) -> error_stack::Result<BackendConfig, ConfigFileError> {
+    async fn read_config(&self) -> error_stack::Result<BotConfig, ConfigFileError> {
         let config = self
             .read()
             .common()
@@ -120,10 +120,7 @@ impl ReadDynamicConfig for S {
 }
 
 impl WriteDynamicConfig for S {
-    async fn write_config(
-        &self,
-        config: BackendConfig,
-    ) -> error_stack::Result<(), ConfigFileError> {
+    async fn write_config(&self, config: BotConfig) -> error_stack::Result<(), ConfigFileError> {
         use server_data::write::GetWriteCommandsCommon;
 
         self.write(move |cmds| async move {

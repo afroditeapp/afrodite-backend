@@ -17,7 +17,7 @@ mod admin_bot;
 pub use admin_bot::*;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
-pub struct BackendConfig {
+pub struct BotConfig {
     /// Enable remote bot login API
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]

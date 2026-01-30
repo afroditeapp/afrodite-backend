@@ -1,5 +1,5 @@
 use error_stack::ResultExt;
-use model::BackendConfig;
+use model::BotConfig;
 use server_api::app::{GetConfig, ReadData, ReadDynamicConfig, WriteData, WriteDynamicConfig};
 use server_common::{app::GetAccounts, result::Result};
 use server_data::write::GetWriteCommandsCommon;
@@ -50,7 +50,7 @@ impl DynamicConfigManagerQuitHandle {
 pub struct DynamicConfigManager {
     state: S,
     bots: Option<BotClient>,
-    current_config: BackendConfig,
+    current_config: BotConfig,
 }
 
 impl DynamicConfigManager {
@@ -61,7 +61,7 @@ impl DynamicConfigManager {
         let manager = Self {
             state,
             bots: None,
-            current_config: BackendConfig::default(),
+            current_config: BotConfig::default(),
         };
 
         let (manager_quit_handle, manager_quit_watcher) = broadcast::channel(1);
