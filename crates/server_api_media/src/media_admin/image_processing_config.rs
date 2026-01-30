@@ -9,7 +9,7 @@ use crate::{app::WriteData, db_write, utils::Json};
 /// Get image processing configuration
 ///
 /// # Permissions
-/// Requires admin_server_maintenance_view_backend_config.
+/// Requires admin_server_maintenance_view_image_processing_config.
 #[utoipa::path(
     get,
     path = "/media_api/image_processing_config",
@@ -24,7 +24,7 @@ pub async fn get_image_processing_config(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
 ) -> Result<Json<ImageProcessingDynamicConfig>, StatusCode> {
-    if !api_caller_permissions.admin_server_maintenance_view_backend_config {
+    if !api_caller_permissions.admin_server_maintenance_view_image_processing_config {
         return Err(StatusCode::UNAUTHORIZED);
     }
 
@@ -36,7 +36,7 @@ pub async fn get_image_processing_config(
 /// Update image processing configuration
 ///
 /// # Permissions
-/// Requires admin_server_maintenance_save_backend_config.
+/// Requires admin_server_maintenance_edit_image_processing_config.
 #[utoipa::path(
     post,
     path = "/media_api/image_processing_config",
@@ -53,7 +53,7 @@ pub async fn post_image_processing_config(
     Extension(api_caller_permissions): Extension<Permissions>,
     Json(config): Json<ImageProcessingDynamicConfig>,
 ) -> Result<(), StatusCode> {
-    if !api_caller_permissions.admin_server_maintenance_save_backend_config {
+    if !api_caller_permissions.admin_server_maintenance_edit_image_processing_config {
         return Err(StatusCode::UNAUTHORIZED);
     }
 

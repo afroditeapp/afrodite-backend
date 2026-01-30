@@ -199,10 +199,12 @@ define_permissions!(
     /// software versions.
     admin_server_maintenance_view_info,
     admin_server_maintenance_view_backend_config,
+    admin_server_maintenance_view_image_processing_config,
     admin_server_maintenance_update_software,
     admin_server_maintenance_reset_data,
     admin_server_maintenance_restart_backend,
     admin_server_maintenance_save_backend_config,
+    admin_server_maintenance_edit_image_processing_config,
     admin_server_maintenance_edit_notification,
     admin_news_create,
     admin_news_edit_all,
