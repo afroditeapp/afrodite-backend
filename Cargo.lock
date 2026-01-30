@@ -82,6 +82,8 @@ version = "0.14.0"
 dependencies = [
  "clap",
  "config",
+ "database",
+ "database_media",
  "manager",
  "manager_config",
  "server",
@@ -92,6 +94,7 @@ dependencies = [
  "tls_client",
  "tokio",
  "tokio-rustls",
+ "toml 0.8.23",
  "vergen-gitcl",
 ]
 

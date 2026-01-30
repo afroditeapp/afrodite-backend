@@ -40,6 +40,8 @@ pub enum AppMode {
         #[command(subcommand)]
         mode: ConfigMode,
     },
+    /// Server data related commands
+    Data(DataMode),
     /// Print build info and quit
     BuildInfo,
 }
@@ -277,6 +279,37 @@ impl fmt::Display for SelectedBenchmark {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{self:?}")
     }
+}
+
+#[derive(Args, Debug, Clone)]
+pub struct DataMode {
+    /// Data directory
+    #[arg(long, default_value = "data", value_name = "DIR")]
+    pub data_dir: PathBuf,
+
+    /// Config directory
+    #[arg(long, default_value = "config", value_name = "DIR")]
+    pub config_dir: PathBuf,
+
+    #[command(subcommand)]
+    pub mode: DataModeSubMode,
+}
+
+#[derive(Parser, Debug, Clone)]
+pub enum DataModeSubMode {
+    /// View data from database
+    View {
+        #[command(subcommand)]
+        mode: DataViewSubMode,
+    },
+}
+
+#[derive(Parser, Debug, Clone)]
+pub enum DataViewSubMode {
+    /// View bot config
+    BotConfig,
+    /// View image processing config
+    ImageProcessingConfig,
 }
 
 #[derive(Parser, Debug, Clone)]

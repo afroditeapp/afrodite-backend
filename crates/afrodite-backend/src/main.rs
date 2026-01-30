@@ -8,6 +8,7 @@ use tls_client as _;
 pub mod args;
 pub mod build_info;
 pub mod config_tools;
+pub mod data_tools;
 
 use std::process::ExitCode;
 
@@ -85,6 +86,10 @@ fn handle_app_mode(args: ArgsConfig) -> ExitCode {
         }
         AppMode::Config { mode } => {
             config_tools::handle_config_tools(mode).unwrap();
+            ExitCode::SUCCESS
+        }
+        AppMode::Data(mode) => {
+            data_tools::handle_data_tools(mode).unwrap();
             ExitCode::SUCCESS
         }
         AppMode::RemoteBot(remote_bot_mode_config) => {
