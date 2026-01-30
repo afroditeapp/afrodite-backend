@@ -2,6 +2,7 @@ use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model::ImageProcessingDynamicConfig;
+use simple_backend_model::NsfwDetectionThresholds;
 
 define_current_read_commands!(CurrentReadMediaAdminImageProcessingConfig);
 
@@ -36,12 +37,19 @@ impl CurrentReadMediaAdminImageProcessingConfig<'_> {
                         Option<f64>,
                     )| ImageProcessingDynamicConfig {
                         seetaface_threshold: seetaface,
-                        nsfw_thresholds: simple_backend_model::NsfwDetectionThresholds {
-                            drawings,
-                            hentai,
-                            neutral,
-                            porn,
-                            sexy,
+                        nsfw_thresholds: {
+                            let nsfw_thresholds = simple_backend_model::NsfwDetectionThresholds {
+                                drawings,
+                                hentai,
+                                neutral,
+                                porn,
+                                sexy,
+                            };
+                            if nsfw_thresholds == NsfwDetectionThresholds::default() {
+                                None
+                            } else {
+                                Some(nsfw_thresholds)
+                            }
                         },
                     },
                 )
