@@ -28,6 +28,9 @@ pub struct SendMessageResult {
     pub error_too_many_receiver_acknowledgements_missing: Option<bool>,
     #[serde(rename = "error_too_many_sender_acknowledgements_missing", skip_serializing_if = "Option::is_none")]
     pub error_too_many_sender_acknowledgements_missing: Option<bool>,
+    /// Remaining daily messages count. The value will be returned only if there is 50 or less messages left.
+    #[serde(rename = "remaining_messages", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub remaining_messages: Option<Option<i32>>,
 }
 
 impl SendMessageResult {
@@ -40,6 +43,7 @@ impl SendMessageResult {
             error_sender_public_key_outdated: None,
             error_too_many_receiver_acknowledgements_missing: None,
             error_too_many_sender_acknowledgements_missing: None,
+            remaining_messages: None,
         }
     }
 }

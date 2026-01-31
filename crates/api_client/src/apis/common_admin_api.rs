@@ -354,7 +354,7 @@ pub async fn get_admin_notification_subscriptions(configuration: &configuration:
     }
 }
 
-/// # Access * [Permissions::admin_server_maintenance_view_bot_config] * Bot account
+/// # Access * [Permissions::admin_server_view_bot_config] * Bot account
 pub async fn get_bot_config(configuration: &configuration::Configuration, ) -> Result<models::BotConfig, Error<GetBotConfigError>> {
 
     let uri_str = format!("{}/common_api/bot_config", configuration.base_path);
@@ -429,7 +429,7 @@ pub async fn get_latest_report_iterator_start_position(configuration: &configura
     }
 }
 
-/// # Permissions Requires admin_server_maintenance_edit_notification.
+/// # Permissions Requires admin_server_edit_maintenance_notification.
 pub async fn get_maintenance_notification(configuration: &configuration::Configuration, ) -> Result<models::ScheduledMaintenanceStatus, Error<GetMaintenanceNotificationError>> {
 
     let uri_str = format!("{}/common_api/maintenance_notification", configuration.base_path);
@@ -467,7 +467,7 @@ pub async fn get_maintenance_notification(configuration: &configuration::Configu
     }
 }
 
-/// # Access * Permission [model::Permissions::admin_server_maintenance_view_info] * Permission [model::Permissions::admin_server_maintenance_update_software] * Permission [model::Permissions::admin_server_maintenance_reset_data] * Permission [model::Permissions::admin_server_maintenance_restart_backend]
+/// # Access * Permission [model::Permissions::admin_server_view_info] * Permission [model::Permissions::admin_server_software_update] * Permission [model::Permissions::admin_server_data_reset] * Permission [model::Permissions::admin_server_restart]
 pub async fn get_manager_instance_names(configuration: &configuration::Configuration, ) -> Result<models::ManagerInstanceNameList, Error<GetManagerInstanceNamesError>> {
 
     let uri_str = format!("{}/common_api/manager_instance_names", configuration.base_path);
@@ -505,7 +505,7 @@ pub async fn get_manager_instance_names(configuration: &configuration::Configura
     }
 }
 
-/// # Access * Permission [model::Permissions::admin_server_maintenance_restart_backend]
+/// # Access * Permission [model::Permissions::admin_server_restart]
 pub async fn get_scheduled_tasks_status(configuration: &configuration::Configuration, manager_name: &str) -> Result<models::ScheduledTaskStatus, Error<GetScheduledTasksStatusError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_manager_name = manager_name;
@@ -546,7 +546,7 @@ pub async fn get_scheduled_tasks_status(configuration: &configuration::Configura
     }
 }
 
-/// # Access * Permission [model::Permissions::admin_server_maintenance_view_info]
+/// # Access * Permission [model::Permissions::admin_server_view_info]
 pub async fn get_software_update_status(configuration: &configuration::Configuration, manager_name: &str) -> Result<models::SoftwareUpdateStatus, Error<GetSoftwareUpdateStatusError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_manager_name = manager_name;
@@ -587,7 +587,7 @@ pub async fn get_software_update_status(configuration: &configuration::Configura
     }
 }
 
-/// # Access * Permission [model::Permissions::admin_server_maintenance_view_info]
+/// # Access * Permission [model::Permissions::admin_server_view_info]
 pub async fn get_system_info(configuration: &configuration::Configuration, manager_name: &str) -> Result<models::SystemInfo, Error<GetSystemInfoError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_manager_name = manager_name;
@@ -725,7 +725,7 @@ pub async fn post_admin_notification_subscriptions(configuration: &configuration
     }
 }
 
-/// # Validation * `profile_name_moderation.llm.user_text_template` must contain exactly one `{text}` placeholder. * `profile_text_moderation.llm.user_text_template` must contain exactly one `{text}` placeholder.  # Access * [Permissions::admin_server_maintenance_edit_bot_config]
+/// # Validation * `profile_name_moderation.llm.user_text_template` must contain exactly one `{text}` placeholder. * `profile_text_moderation.llm.user_text_template` must contain exactly one `{text}` placeholder.  # Access * [Permissions::admin_server_edit_bot_config]
 pub async fn post_bot_config(configuration: &configuration::Configuration, bot_config: models::BotConfig) -> Result<(), Error<PostBotConfigError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_bot_config = bot_config;
@@ -755,7 +755,7 @@ pub async fn post_bot_config(configuration: &configuration::Configuration, bot_c
     }
 }
 
-/// # Permissions Requires admin_server_maintenance_edit_notification.
+/// # Permissions Requires admin_server_edit_maintenance_notification.
 pub async fn post_edit_maintenance_notification(configuration: &configuration::Configuration, scheduled_maintenance_status: models::ScheduledMaintenanceStatus) -> Result<(), Error<PostEditMaintenanceNotificationError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_scheduled_maintenance_status = scheduled_maintenance_status;
@@ -945,7 +945,7 @@ pub async fn post_get_ip_address_usage_data(configuration: &configuration::Confi
     }
 }
 
-/// HTTP method is POST to allow JSON request body.  # Permissions Requires admin_server_maintenance_view_info.
+/// HTTP method is POST to allow JSON request body.  # Permissions Requires admin_server_view_info.
 pub async fn post_get_ip_country_statistics(configuration: &configuration::Configuration, get_ip_country_statistics_settings: models::GetIpCountryStatisticsSettings) -> Result<models::GetIpCountryStatisticsResult, Error<PostGetIpCountryStatisticsError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_get_ip_country_statistics_settings = get_ip_country_statistics_settings;
@@ -986,7 +986,7 @@ pub async fn post_get_ip_country_statistics(configuration: &configuration::Confi
     }
 }
 
-/// HTTP method is POST because JSON request body requires it.  # Permissions Requires admin_server_maintenance_view_info.
+/// HTTP method is POST because JSON request body requires it.  # Permissions Requires admin_server_view_info.
 pub async fn post_get_perf_data(configuration: &configuration::Configuration, perf_metric_query: models::PerfMetricQuery) -> Result<models::PerfMetricQueryResult, Error<PostGetPerfDataError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_perf_metric_query = perf_metric_query;
@@ -1097,7 +1097,7 @@ pub async fn post_process_report(configuration: &configuration::Configuration, p
     }
 }
 
-/// # Access * Permission [model::Permissions::admin_server_maintenance_restart_backend]
+/// # Access * Permission [model::Permissions::admin_server_restart]
 pub async fn post_schedule_task(configuration: &configuration::Configuration, manager_name: &str, scheduled_task_type: models::ScheduledTaskType, notify_backend: bool) -> Result<(), Error<PostScheduleTaskError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_manager_name = manager_name;
@@ -1131,7 +1131,7 @@ pub async fn post_schedule_task(configuration: &configuration::Configuration, ma
     }
 }
 
-/// This API route will fail if backend config file field debug_allow_backend_data_reset is not true.  Registering new accounts will be prevented and all accounts will be deleted. After that manager will stop the backend, delete backend's data directory and start the backend.  This can be requested only once per backend process.  Account registering prevention is process specific, so restarting backend will disable that.  # Access * Permission [model::Permissions::admin_server_maintenance_reset_data]
+/// This API route will fail if backend config file field debug_allow_backend_data_reset is not true.  Registering new accounts will be prevented and all accounts will be deleted. After that manager will stop the backend, delete backend's data directory and start the backend.  This can be requested only once per backend process.  Account registering prevention is process specific, so restarting backend will disable that.  # Access * Permission [model::Permissions::admin_server_data_reset]
 pub async fn post_trigger_backend_data_reset(configuration: &configuration::Configuration, manager_name: &str) -> Result<(), Error<PostTriggerBackendDataResetError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_manager_name = manager_name;
@@ -1161,7 +1161,7 @@ pub async fn post_trigger_backend_data_reset(configuration: &configuration::Conf
     }
 }
 
-/// # Access * Permission [model::Permissions::admin_server_maintenance_restart_backend]
+/// # Access * Permission [model::Permissions::admin_server_restart]
 pub async fn post_trigger_backend_restart(configuration: &configuration::Configuration, manager_name: &str) -> Result<(), Error<PostTriggerBackendRestartError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_manager_name = manager_name;
@@ -1191,7 +1191,7 @@ pub async fn post_trigger_backend_restart(configuration: &configuration::Configu
     }
 }
 
-/// # Access * Permission [model::Permissions::admin_server_maintenance_update_software]
+/// # Access * Permission [model::Permissions::admin_server_software_update]
 pub async fn post_trigger_software_update_download(configuration: &configuration::Configuration, manager_name: &str) -> Result<(), Error<PostTriggerSoftwareUpdateDownloadError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_manager_name = manager_name;
@@ -1221,7 +1221,7 @@ pub async fn post_trigger_software_update_download(configuration: &configuration
     }
 }
 
-/// # Access * Permission [model::Permissions::admin_server_maintenance_update_software]
+/// # Access * Permission [model::Permissions::admin_server_software_update]
 pub async fn post_trigger_software_update_install(configuration: &configuration::Configuration, manager_name: &str, name: &str, sha256: &str) -> Result<(), Error<PostTriggerSoftwareUpdateInstallError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_manager_name = manager_name;
@@ -1255,7 +1255,7 @@ pub async fn post_trigger_software_update_install(configuration: &configuration:
     }
 }
 
-/// # Access * Permission [model::Permissions::admin_server_maintenance_restart_backend]
+/// # Access * Permission [model::Permissions::admin_server_restart]
 pub async fn post_trigger_system_reboot(configuration: &configuration::Configuration, manager_name: &str) -> Result<(), Error<PostTriggerSystemRebootError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_manager_name = manager_name;
@@ -1285,7 +1285,7 @@ pub async fn post_trigger_system_reboot(configuration: &configuration::Configura
     }
 }
 
-/// # Access * Permission [model::Permissions::admin_server_maintenance_restart_backend]
+/// # Access * Permission [model::Permissions::admin_server_restart]
 pub async fn post_unschedule_task(configuration: &configuration::Configuration, manager_name: &str, scheduled_task_type: models::ScheduledTaskType) -> Result<(), Error<PostUnscheduleTaskError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_manager_name = manager_name;

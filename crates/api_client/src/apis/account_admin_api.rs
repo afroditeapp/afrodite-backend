@@ -647,7 +647,7 @@ pub async fn post_delete_account(configuration: &configuration::Configuration, a
     }
 }
 
-/// HTTP method is POST to allow JSON request body.  # Permissions Requires admin_server_maintenance_view_info.
+/// HTTP method is POST to allow JSON request body.  # Permissions Requires admin_server_view_info.
 pub async fn post_get_client_version_statistics(configuration: &configuration::Configuration, get_client_version_statistics_settings: models::GetClientVersionStatisticsSettings) -> Result<models::GetClientVersionStatisticsResult, Error<PostGetClientVersionStatisticsError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_get_client_version_statistics_settings = get_client_version_statistics_settings;

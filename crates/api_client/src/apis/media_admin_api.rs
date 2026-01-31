@@ -61,7 +61,7 @@ pub enum PostModerateMediaContentError {
 }
 
 
-/// # Permissions Requires admin_server_maintenance_view_image_processing_config.
+/// # Permissions Requires admin_server_view_image_processing_config.
 pub async fn get_image_processing_config(configuration: &configuration::Configuration, ) -> Result<models::ImageProcessingDynamicConfig, Error<GetImageProcessingConfigError>> {
 
     let uri_str = format!("{}/media_api/image_processing_config", configuration.base_path);
@@ -143,7 +143,7 @@ pub async fn get_media_content_pending_moderation_list(configuration: &configura
     }
 }
 
-/// # Permissions Requires admin_server_maintenance_edit_image_processing_config.
+/// # Permissions Requires admin_server_edit_image_processing_config.
 pub async fn post_image_processing_config(configuration: &configuration::Configuration, image_processing_dynamic_config: models::ImageProcessingDynamicConfig) -> Result<(), Error<PostImageProcessingConfigError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_image_processing_dynamic_config = image_processing_dynamic_config;
