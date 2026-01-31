@@ -147,6 +147,7 @@ mime = "0.3.17"
 
 # Server TLS
 tokio-rustls = { version = "0.26.2", default-features = false, features = ["logging", "tls12", "ring"] }
+tokio-rustls-acme = { version = "0.9.0", default-features = false }
 rustls-pemfile = "2.2.0"
 rustls-platform-verifier = "0.6.0"
 
@@ -164,12 +165,6 @@ smallvec = "1.15.1"
 async-openai = { version = "0.28.3", default-features = false }
 unicode-segmentation = "1.12.0"
 nsfw = { version = "0.2.0", default-features = false }
-
-[workspace.dependencies.tokio-rustls-acme]
-git = "https://github.com/jutuon/tokio-rustls-acme"
-rev = "db4225a5f8c12ae2f6d77d8555a405db30a709ef"
-default-features = false
-features = ["rustls-tls-manual-roots"]
 
 # Firebase cloud messaging, tls_client_rustls and tls_client_rustls configures TLS
 [workspace.dependencies.fcm]

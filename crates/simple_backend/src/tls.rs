@@ -49,12 +49,14 @@ impl TlsManager {
             //               tokio_rustls_acme.
             let client_tls_config = ClientConfig::with_platform_verifier()
                 .expect("Getting platform TLS key verifier failed");
-            let mut state = AcmeConfig::new(lets_encrypt.domains.clone())
-                .client_tls_config(client_tls_config.into())
-                .contact([format!("mailto:{}", lets_encrypt.email)])
-                .cache(DirCache::new(config.lets_encrypt_cache_dir()))
-                .directory_lets_encrypt(lets_encrypt.production_servers)
-                .state();
+            let mut state = AcmeConfig::new_with_client_tls_config(
+                lets_encrypt.domains.clone(),
+                client_tls_config.into(),
+            )
+            .contact([format!("mailto:{}", lets_encrypt.email)])
+            .cache(DirCache::new(config.lets_encrypt_cache_dir()))
+            .directory_lets_encrypt(lets_encrypt.production_servers)
+            .state();
             let acceptor = state.acceptor();
             let mut tls_config = ServerConfig::builder()
                 .with_no_client_auth()
