@@ -44,7 +44,7 @@ impl ReadCommandsChatPublicKey<'_> {
 
         Ok(GetPrivatePublicKeyInfo {
             latest_public_key_id,
-            max_public_key_count_from_backend_config: config_value.into(),
+            max_public_key_count: config_value.into(),
         })
     }
 }
