@@ -15,15 +15,15 @@ use serde::{Deserialize, Serialize};
 pub struct GetPrivatePublicKeyInfo {
     #[serde(rename = "latest_public_key_id", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub latest_public_key_id: Option<Option<Box<models::PublicKeyId>>>,
-    #[serde(rename = "max_public_key_count_from_backend_config")]
-    pub max_public_key_count_from_backend_config: i64,
+    #[serde(rename = "max_public_key_count")]
+    pub max_public_key_count: i64,
 }
 
 impl GetPrivatePublicKeyInfo {
-    pub fn new(max_public_key_count_from_backend_config: i64) -> GetPrivatePublicKeyInfo {
+    pub fn new(max_public_key_count: i64) -> GetPrivatePublicKeyInfo {
         GetPrivatePublicKeyInfo {
             latest_public_key_id: None,
-            max_public_key_count_from_backend_config,
+            max_public_key_count,
         }
     }
 }

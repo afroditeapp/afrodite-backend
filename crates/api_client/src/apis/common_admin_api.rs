@@ -33,10 +33,10 @@ pub enum GetAdminNotificationSubscriptionsError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_backend_config`]
+/// struct for typed errors of method [`get_bot_config`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum GetBackendConfigError {
+pub enum GetBotConfigError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -123,10 +123,10 @@ pub enum PostAdminNotificationSubscriptionsError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_backend_config`]
+/// struct for typed errors of method [`post_bot_config`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostBackendConfigError {
+pub enum PostBotConfigError {
     Status400(),
     Status401(),
     Status500(),
@@ -354,10 +354,10 @@ pub async fn get_admin_notification_subscriptions(configuration: &configuration:
     }
 }
 
-/// # Access * [Permissions::admin_server_maintenance_view_backend_config] * Bot account
-pub async fn get_backend_config(configuration: &configuration::Configuration, ) -> Result<models::BackendConfig, Error<GetBackendConfigError>> {
+/// # Access * [Permissions::admin_server_maintenance_view_bot_config] * Bot account
+pub async fn get_bot_config(configuration: &configuration::Configuration, ) -> Result<models::BotConfig, Error<GetBotConfigError>> {
 
-    let uri_str = format!("{}/common_api/backend_config", configuration.base_path);
+    let uri_str = format!("{}/common_api/bot_config", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -382,12 +382,12 @@ pub async fn get_backend_config(configuration: &configuration::Configuration, ) 
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::BackendConfig`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::BackendConfig`")))),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::BotConfig`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::BotConfig`")))),
         }
     } else {
         let content = resp.text().await?;
-        let entity: Option<GetBackendConfigError> = serde_json::from_str(&content).ok();
+        let entity: Option<GetBotConfigError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -725,12 +725,12 @@ pub async fn post_admin_notification_subscriptions(configuration: &configuration
     }
 }
 
-/// # Validation * `profile_name_moderation.llm.user_text_template` must contain exactly one `{text}` placeholder. * `profile_text_moderation.llm.user_text_template` must contain exactly one `{text}` placeholder.  # Access * [Permissions::admin_server_maintenance_save_backend_config]
-pub async fn post_backend_config(configuration: &configuration::Configuration, backend_config: models::BackendConfig) -> Result<(), Error<PostBackendConfigError>> {
+/// # Validation * `profile_name_moderation.llm.user_text_template` must contain exactly one `{text}` placeholder. * `profile_text_moderation.llm.user_text_template` must contain exactly one `{text}` placeholder.  # Access * [Permissions::admin_server_maintenance_edit_bot_config]
+pub async fn post_bot_config(configuration: &configuration::Configuration, bot_config: models::BotConfig) -> Result<(), Error<PostBotConfigError>> {
     // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_backend_config = backend_config;
+    let p_body_bot_config = bot_config;
 
-    let uri_str = format!("{}/common_api/backend_config", configuration.base_path);
+    let uri_str = format!("{}/common_api/bot_config", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -739,7 +739,7 @@ pub async fn post_backend_config(configuration: &configuration::Configuration, b
     if let Some(ref token) = configuration.bearer_access_token {
         req_builder = req_builder.bearer_auth(token.to_owned());
     };
-    req_builder = req_builder.json(&p_body_backend_config);
+    req_builder = req_builder.json(&p_body_bot_config);
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -750,7 +750,7 @@ pub async fn post_backend_config(configuration: &configuration::Configuration, b
         Ok(())
     } else {
         let content = resp.text().await?;
-        let entity: Option<PostBackendConfigError> = serde_json::from_str(&content).ok();
+        let entity: Option<PostBotConfigError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

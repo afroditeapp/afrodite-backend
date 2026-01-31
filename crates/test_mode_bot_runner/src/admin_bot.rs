@@ -127,10 +127,9 @@ impl AdminBot {
     }
 
     async fn run_admin_logic(state: BotState) -> Result<(), TestError> {
-        let bot_config_api =
-            api_client::apis::common_admin_api::get_backend_config(state.api.api())
-                .await
-                .change_context(TestError::Reqwest)?;
+        let bot_config_api = api_client::apis::common_admin_api::get_bot_config(state.api.api())
+            .await
+            .change_context(TestError::Reqwest)?;
 
         let bot_config_json =
             serde_json::to_string(&bot_config_api).change_context(TestError::Reqwest)?;

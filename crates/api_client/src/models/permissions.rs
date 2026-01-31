@@ -49,18 +49,22 @@ pub struct Permissions {
     pub admin_profile_statistics: Option<bool>,
     #[serde(rename = "admin_request_account_deletion", skip_serializing_if = "Option::is_none")]
     pub admin_request_account_deletion: Option<bool>,
+    #[serde(rename = "admin_server_maintenance_edit_bot_config", skip_serializing_if = "Option::is_none")]
+    pub admin_server_maintenance_edit_bot_config: Option<bool>,
+    #[serde(rename = "admin_server_maintenance_edit_image_processing_config", skip_serializing_if = "Option::is_none")]
+    pub admin_server_maintenance_edit_image_processing_config: Option<bool>,
     #[serde(rename = "admin_server_maintenance_edit_notification", skip_serializing_if = "Option::is_none")]
     pub admin_server_maintenance_edit_notification: Option<bool>,
     #[serde(rename = "admin_server_maintenance_reset_data", skip_serializing_if = "Option::is_none")]
     pub admin_server_maintenance_reset_data: Option<bool>,
     #[serde(rename = "admin_server_maintenance_restart_backend", skip_serializing_if = "Option::is_none")]
     pub admin_server_maintenance_restart_backend: Option<bool>,
-    #[serde(rename = "admin_server_maintenance_save_backend_config", skip_serializing_if = "Option::is_none")]
-    pub admin_server_maintenance_save_backend_config: Option<bool>,
     #[serde(rename = "admin_server_maintenance_update_software", skip_serializing_if = "Option::is_none")]
     pub admin_server_maintenance_update_software: Option<bool>,
-    #[serde(rename = "admin_server_maintenance_view_backend_config", skip_serializing_if = "Option::is_none")]
-    pub admin_server_maintenance_view_backend_config: Option<bool>,
+    #[serde(rename = "admin_server_maintenance_view_bot_config", skip_serializing_if = "Option::is_none")]
+    pub admin_server_maintenance_view_bot_config: Option<bool>,
+    #[serde(rename = "admin_server_maintenance_view_image_processing_config", skip_serializing_if = "Option::is_none")]
+    pub admin_server_maintenance_view_image_processing_config: Option<bool>,
     /// View server infrastructure related info like logs and software versions.
     #[serde(rename = "admin_server_maintenance_view_info", skip_serializing_if = "Option::is_none")]
     pub admin_server_maintenance_view_info: Option<bool>,
@@ -104,12 +108,14 @@ impl Permissions {
             admin_process_reports: None,
             admin_profile_statistics: None,
             admin_request_account_deletion: None,
+            admin_server_maintenance_edit_bot_config: None,
+            admin_server_maintenance_edit_image_processing_config: None,
             admin_server_maintenance_edit_notification: None,
             admin_server_maintenance_reset_data: None,
             admin_server_maintenance_restart_backend: None,
-            admin_server_maintenance_save_backend_config: None,
             admin_server_maintenance_update_software: None,
-            admin_server_maintenance_view_backend_config: None,
+            admin_server_maintenance_view_bot_config: None,
+            admin_server_maintenance_view_image_processing_config: None,
             admin_server_maintenance_view_info: None,
             admin_subscribe_admin_notifications: None,
             admin_view_account_api_usage: None,

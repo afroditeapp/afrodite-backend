@@ -134,7 +134,7 @@ Class | Method | HTTP request | Description
 *CommonApi* | [**post_start_data_export**](docs/CommonApi.md#post_start_data_export) | **POST** /common_api/start_data_export | Start data export
 *CommonAdminApi* | [**get_admin_notification_settings**](docs/CommonAdminApi.md#get_admin_notification_settings) | **GET** /common_api/admin_notification_settings | Get admin notification settings.
 *CommonAdminApi* | [**get_admin_notification_subscriptions**](docs/CommonAdminApi.md#get_admin_notification_subscriptions) | **GET** /common_api/admin_notification_subscriptions | Get admin notification subscriptions.
-*CommonAdminApi* | [**get_backend_config**](docs/CommonAdminApi.md#get_backend_config) | **GET** /common_api/backend_config | Get dynamic backend config.
+*CommonAdminApi* | [**get_bot_config**](docs/CommonAdminApi.md#get_bot_config) | **GET** /common_api/bot_config | Get bot config.
 *CommonAdminApi* | [**get_latest_report_iterator_start_position**](docs/CommonAdminApi.md#get_latest_report_iterator_start_position) | **GET** /common_api/latest_report_iterator_start_position | 
 *CommonAdminApi* | [**get_maintenance_notification**](docs/CommonAdminApi.md#get_maintenance_notification) | **GET** /common_api/maintenance_notification | Get maintenance notification.
 *CommonAdminApi* | [**get_manager_instance_names**](docs/CommonAdminApi.md#get_manager_instance_names) | **GET** /common_api/manager_instance_names | Get available manager instances.
@@ -144,7 +144,7 @@ Class | Method | HTTP request | Description
 *CommonAdminApi* | [**get_waiting_report_page**](docs/CommonAdminApi.md#get_waiting_report_page) | **GET** /common_api/waiting_report_page | 
 *CommonAdminApi* | [**post_admin_notification_settings**](docs/CommonAdminApi.md#post_admin_notification_settings) | **POST** /common_api/admin_notification_settings | Save admin notification settings.
 *CommonAdminApi* | [**post_admin_notification_subscriptions**](docs/CommonAdminApi.md#post_admin_notification_subscriptions) | **POST** /common_api/admin_notification_subscriptions | Save admin notification subscriptions.
-*CommonAdminApi* | [**post_backend_config**](docs/CommonAdminApi.md#post_backend_config) | **POST** /common_api/backend_config | Save dynamic backend config.
+*CommonAdminApi* | [**post_bot_config**](docs/CommonAdminApi.md#post_bot_config) | **POST** /common_api/bot_config | Save bot config.
 *CommonAdminApi* | [**post_edit_maintenance_notification**](docs/CommonAdminApi.md#post_edit_maintenance_notification) | **POST** /common_api/edit_maintenance_notification | Edit maintenance notification
 *CommonAdminApi* | [**post_get_admin_notification**](docs/CommonAdminApi.md#post_get_admin_notification) | **POST** /common_api/admin_notification | Get admin notification data.
 *CommonAdminApi* | [**post_get_api_usage_data**](docs/CommonAdminApi.md#post_get_api_usage_data) | **POST** /common_api/api_usage_data | Get API usage data for account
@@ -265,7 +265,6 @@ Class | Method | HTTP request | Description
  - [AutomaticProfileSearchCompletedNotificationViewed](docs/AutomaticProfileSearchCompletedNotificationViewed.md)
  - [AutomaticProfileSearchIteratorSessionId](docs/AutomaticProfileSearchIteratorSessionId.md)
  - [AutomaticProfileSearchSettings](docs/AutomaticProfileSearchSettings.md)
- - [BackendConfig](docs/BackendConfig.md)
  - [BackendVersion](docs/BackendVersion.md)
  - [BackupTransferByteCount](docs/BackupTransferByteCount.md)
  - [BackupTransferClientRole](docs/BackupTransferClientRole.md)
@@ -273,6 +272,7 @@ Class | Method | HTTP request | Description
  - [BackupTransferTargetData](docs/BackupTransferTargetData.md)
  - [BooleanSetting](docs/BooleanSetting.md)
  - [BotAccount](docs/BotAccount.md)
+ - [BotConfig](docs/BotConfig.md)
  - [ChatAppNotificationSettings](docs/ChatAppNotificationSettings.md)
  - [ChatConfig](docs/ChatConfig.md)
  - [ChatEmailNotificationSettings](docs/ChatEmailNotificationSettings.md)

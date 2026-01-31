@@ -52,7 +52,6 @@ src/models/automatic_profile_search_completed_notification.rs
 src/models/automatic_profile_search_completed_notification_viewed.rs
 src/models/automatic_profile_search_iterator_session_id.rs
 src/models/automatic_profile_search_settings.rs
-src/models/backend_config.rs
 src/models/backend_version.rs
 src/models/backup_transfer_byte_count.rs
 src/models/backup_transfer_client_role.rs
@@ -60,6 +59,7 @@ src/models/backup_transfer_initial_message.rs
 src/models/backup_transfer_target_data.rs
 src/models/boolean_setting.rs
 src/models/bot_account.rs
+src/models/bot_config.rs
 src/models/chat_app_notification_settings.rs
 src/models/chat_config.rs
 src/models/chat_email_notification_settings.rs
