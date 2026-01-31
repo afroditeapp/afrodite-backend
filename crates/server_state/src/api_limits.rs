@@ -58,6 +58,29 @@ impl<'a> ApiLimits<'a> {
             .await
             .change_context(ApiLimitError::ResetFailed)
     }
+
+    async fn check(
+        &self,
+        check: impl FnOnce(&mut AllApiLimits, &Config) -> bool,
+    ) -> Result<(), ApiLimitError> {
+        let is_limit_reached = self
+            .cache
+            .write_cache_common(self.account_id, |e| {
+                if e.other_shared_state.is_bot_account {
+                    Ok(false)
+                } else {
+                    Ok(check(e.api_limits(), self.config))
+                }
+            })
+            .await
+            .change_context(ApiLimitError::Cache)?;
+
+        if is_limit_reached && !self.config.general().debug_disable_api_limits {
+            Err(ApiLimitError::LimitReached.report())
+        } else {
+            Ok(())
+        }
+    }
 }
 
 pub struct CommonApiLimits<'a> {
@@ -65,37 +88,14 @@ pub struct CommonApiLimits<'a> {
 }
 
 impl CommonApiLimits<'_> {
-    async fn check(
-        &self,
-        check: impl FnOnce(&mut AllApiLimits, &Config) -> bool,
-    ) -> Result<(), ApiLimitError> {
-        let is_limit_reached = self
-            .limits
-            .cache
-            .write_cache_common(self.limits.account_id, |e| {
-                if e.other_shared_state.is_bot_account {
-                    Ok(false)
-                } else {
-                    Ok(check(e.api_limits(), self.limits.config))
-                }
+    pub async fn send_report(&self) -> Result<(), ApiLimitError> {
+        self.limits
+            .check(|state, config| {
+                state.send_report.increment_and_check_is_limit_reached(
+                    config.limits_common().send_report_daily_max_count,
+                )
             })
             .await
-            .change_context(ApiLimitError::Cache)?;
-
-        if is_limit_reached && !self.limits.config.general().debug_disable_api_limits {
-            Err(ApiLimitError::LimitReached.report())
-        } else {
-            Ok(())
-        }
-    }
-
-    pub async fn send_report(&self) -> Result<(), ApiLimitError> {
-        self.check(|state, config| {
-            state.send_report.increment_and_check_is_limit_reached(
-                config.limits_common().send_report_daily_max_count,
-            )
-        })
-        .await
     }
 }
 
@@ -104,59 +104,42 @@ pub struct ProfileApiLimits<'a> {
 }
 
 impl ProfileApiLimits<'_> {
-    async fn check(
-        &self,
-        check: impl FnOnce(&mut AllApiLimits, &Config) -> bool,
-    ) -> Result<(), ApiLimitError> {
-        let is_limit_reached = self
-            .limits
-            .cache
-            .write_cache_common(self.limits.account_id, |e| {
-                Ok(check(e.api_limits(), self.limits.config))
+    pub async fn post_reset_profile_paging(&self) -> Result<(), ApiLimitError> {
+        self.limits
+            .check(|state, config| {
+                state
+                    .post_reset_profile_paging
+                    .increment_and_check_is_limit_reached(
+                        config
+                            .limits_profile()
+                            .profile_iterator_reset_daily_max_count,
+                    )
             })
             .await
-            .change_context(ApiLimitError::Cache)?;
-
-        if is_limit_reached && !self.limits.config.general().debug_disable_api_limits {
-            Err(ApiLimitError::LimitReached.report())
-        } else {
-            Ok(())
-        }
-    }
-
-    pub async fn post_reset_profile_paging(&self) -> Result<(), ApiLimitError> {
-        self.check(|state, config| {
-            state
-                .post_reset_profile_paging
-                .increment_and_check_is_limit_reached(
-                    config
-                        .limits_profile()
-                        .profile_iterator_reset_daily_max_count,
-                )
-        })
-        .await
     }
 
     pub async fn post_get_next_profile_page(&self) -> Result<(), ApiLimitError> {
-        self.check(|state, config| {
-            state
-                .post_get_next_profile_page
-                .increment_and_check_is_limit_reached(
-                    config
-                        .limits_profile()
-                        .profile_iterator_next_page_daily_max_count,
-                )
-        })
-        .await
+        self.limits
+            .check(|state, config| {
+                state
+                    .post_get_next_profile_page
+                    .increment_and_check_is_limit_reached(
+                        config
+                            .limits_profile()
+                            .profile_iterator_next_page_daily_max_count,
+                    )
+            })
+            .await
     }
 
     pub async fn get_profile(&self) -> Result<(), ApiLimitError> {
-        self.check(|state, config| {
-            state.get_profile.increment_and_check_is_limit_reached(
-                config.limits_profile().get_profile_daily_max_count,
-            )
-        })
-        .await
+        self.limits
+            .check(|state, config| {
+                state.get_profile.increment_and_check_is_limit_reached(
+                    config.limits_profile().get_profile_daily_max_count,
+                )
+            })
+            .await
     }
 }
 
@@ -165,36 +148,17 @@ pub struct MediaApiLimits<'a> {
 }
 
 impl MediaApiLimits<'_> {
-    async fn check(
-        &self,
-        check: impl FnOnce(&mut AllApiLimits, &Config) -> bool,
-    ) -> Result<(), ApiLimitError> {
-        let is_limit_reached = self
-            .limits
-            .cache
-            .write_cache_common(self.limits.account_id, |e| {
-                Ok(check(e.api_limits(), self.limits.config))
+    pub async fn get_profile_content_info(&self) -> Result<(), ApiLimitError> {
+        self.limits
+            .check(|state, config| {
+                state
+                    .get_profile_content_info
+                    .increment_and_check_is_limit_reached(
+                        config
+                            .limits_media()
+                            .get_profile_content_info_daily_max_count,
+                    )
             })
             .await
-            .change_context(ApiLimitError::Cache)?;
-
-        if is_limit_reached && !self.limits.config.general().debug_disable_api_limits {
-            Err(ApiLimitError::LimitReached.report())
-        } else {
-            Ok(())
-        }
-    }
-
-    pub async fn get_profile_content_info(&self) -> Result<(), ApiLimitError> {
-        self.check(|state, config| {
-            state
-                .get_profile_content_info
-                .increment_and_check_is_limit_reached(
-                    config
-                        .limits_media()
-                        .get_profile_content_info_daily_max_count,
-                )
-        })
-        .await
     }
 }
