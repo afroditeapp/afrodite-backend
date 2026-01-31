@@ -49,6 +49,10 @@ impl<'a> ApiLimits<'a> {
         MediaApiLimits { limits: self }
     }
 
+    pub fn chat(self) -> ChatApiLimits<'a> {
+        ChatApiLimits { limits: self }
+    }
+
     pub async fn reset_limits(self) -> Result<(), ApiLimitError> {
         self.cache
             .write_cache_common(self.account_id, |e| {
@@ -69,7 +73,7 @@ impl<'a> ApiLimits<'a> {
                 if e.other_shared_state.is_bot_account {
                     Ok(false)
                 } else {
-                    Ok(check(e.api_limits(), self.config))
+                    Ok(check(e.api_limits_mut(), self.config))
                 }
             })
             .await
@@ -80,6 +84,13 @@ impl<'a> ApiLimits<'a> {
         } else {
             Ok(())
         }
+    }
+
+    async fn read(&self, read: impl FnOnce(&AllApiLimits) -> u16) -> Result<u16, ApiLimitError> {
+        self.cache
+            .read_cache_common(self.account_id, |e| Ok(read(e.api_limits())))
+            .await
+            .change_context(ApiLimitError::Cache)
     }
 }
 
@@ -160,5 +171,31 @@ impl MediaApiLimits<'_> {
                     )
             })
             .await
+    }
+}
+
+pub struct ChatApiLimits<'a> {
+    limits: ApiLimits<'a>,
+}
+
+impl ChatApiLimits<'_> {
+    /// Returns current daily sent messages count
+    pub async fn post_send_message(&self) -> Result<u16, ApiLimitError> {
+        self.limits
+            .check(|state, config| {
+                state
+                    .post_send_message
+                    .increment_and_check_is_limit_reached(
+                        config.limits_chat().send_message_daily_max_count,
+                    )
+            })
+            .await?;
+
+        let current_count = self
+            .limits
+            .read(|state| state.post_send_message.value())
+            .await?;
+
+        Ok(current_count)
     }
 }

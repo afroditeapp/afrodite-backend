@@ -181,6 +181,10 @@ pub struct SendMessageResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error_receiver_blocked_sender_or_receiver_not_found: bool,
+    /// Remaining daily messages count. The value will be returned only
+    /// if there is 50 or less messages left.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    remaining_messages: Option<u16>,
 }
 
 impl SendMessageResult {
@@ -233,6 +237,11 @@ impl SendMessageResult {
             d: Some(base64::engine::general_purpose::STANDARD.encode(data)),
             ..Self::default()
         }
+    }
+
+    pub fn with_remaining_messages(mut self, remaining_messages: u16) -> Self {
+        self.remaining_messages = Some(remaining_messages);
+        self
     }
 }
 

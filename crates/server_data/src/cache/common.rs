@@ -82,7 +82,11 @@ impl CacheCommon {
             .map(|info| &info.event_sender)
     }
 
-    pub fn api_limits(&mut self) -> &mut AllApiLimits {
+    pub fn api_limits(&self) -> &AllApiLimits {
+        &self.api_limits
+    }
+
+    pub fn api_limits_mut(&mut self) -> &mut AllApiLimits {
         &mut self.api_limits
     }
 

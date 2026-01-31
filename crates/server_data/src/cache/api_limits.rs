@@ -20,6 +20,10 @@ impl ApiLimitState {
     pub fn reset(&mut self) {
         self.value = 0;
     }
+
+    pub fn value(&self) -> u16 {
+        self.value
+    }
 }
 
 #[derive(Debug, Default)]
@@ -32,4 +36,6 @@ pub struct AllApiLimits {
     pub get_profile: ApiLimitState,
     // Media
     pub get_profile_content_info: ApiLimitState,
+    // Chat
+    pub post_send_message: ApiLimitState,
 }

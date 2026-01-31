@@ -13,7 +13,10 @@ use model_chat::{
 };
 use server_api::{
     S,
-    app::{ApiUsageTrackerProvider, DataSignerProvider, EventManagerProvider},
+    app::{
+        ApiLimitsProvider, ApiUsageTrackerProvider, DataSignerProvider, EventManagerProvider,
+        GetConfig,
+    },
     create_open_api_router,
 };
 use server_data_chat::{
@@ -123,6 +126,7 @@ pub async fn post_add_receiver_acknowledgement(
 }
 
 const PATH_POST_SEND_MESSAGE: &str = "/chat_api/send_message";
+const DAILY_MESSAGES_REMAINING_WARNING_THRESHOLD: u16 = 50;
 
 /// Send message to a match.
 ///
@@ -164,6 +168,11 @@ pub async fn post_send_message(
     let Some(message_reciever) = state.get_internal_id_optional(query_params.receiver).await else {
         return Ok(SendMessageResult::receiver_blocked_sender_or_receiver_not_found().into());
     };
+
+    let current_messages = state.api_limits(id).chat().post_send_message().await?;
+    let max_messages = state.config().limits_chat().send_message_daily_max_count;
+    let remaining_messages = max_messages.saturating_sub(current_messages);
+
     let keys = state.data_signer().keys().await?;
     let result = db_write!(state, move |cmds| {
         let (result, push_notification_allowed) = cmds
@@ -199,6 +208,12 @@ pub async fn post_send_message(
 
         Ok(result)
     })?;
+
+    let result = if remaining_messages <= DAILY_MESSAGES_REMAINING_WARNING_THRESHOLD {
+        result.with_remaining_messages(remaining_messages)
+    } else {
+        result
+    };
 
     Ok(result.into())
 }
