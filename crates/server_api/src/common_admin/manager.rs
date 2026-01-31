@@ -22,10 +22,10 @@ const PATH_GET_MANAGER_INSTANCE_NAMES: &str = "/common_api/manager_instance_name
 /// Get available manager instances.
 ///
 /// # Access
-/// * Permission [model::Permissions::admin_server_maintenance_view_info]
-/// * Permission [model::Permissions::admin_server_maintenance_update_software]
-/// * Permission [model::Permissions::admin_server_maintenance_reset_data]
-/// * Permission [model::Permissions::admin_server_maintenance_restart_backend]
+/// * Permission [model::Permissions::admin_server_view_info]
+/// * Permission [model::Permissions::admin_server_software_update]
+/// * Permission [model::Permissions::admin_server_data_reset]
+/// * Permission [model::Permissions::admin_server_restart]
 #[utoipa::path(
     get,
     path = PATH_GET_MANAGER_INSTANCE_NAMES,
@@ -42,10 +42,10 @@ pub async fn get_manager_instance_names(
 ) -> Result<Json<ManagerInstanceNameList>, StatusCode> {
     COMMON_ADMIN.get_manager_instance_names.incr();
 
-    if api_caller_permissions.admin_server_maintenance_view_info
-        || api_caller_permissions.admin_server_maintenance_update_software
-        || api_caller_permissions.admin_server_maintenance_reset_data
-        || api_caller_permissions.admin_server_maintenance_restart_backend
+    if api_caller_permissions.admin_server_view_info
+        || api_caller_permissions.admin_server_software_update
+        || api_caller_permissions.admin_server_data_reset
+        || api_caller_permissions.admin_server_restart
     {
         let info = state
             .manager_request()
@@ -63,7 +63,7 @@ const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
 /// Get system information from manager instance.
 ///
 /// # Access
-/// * Permission [model::Permissions::admin_server_maintenance_view_info]
+/// * Permission [model::Permissions::admin_server_view_info]
 #[utoipa::path(
     get,
     path = PATH_GET_SYSTEM_INFO,
@@ -82,7 +82,7 @@ pub async fn get_system_info(
 ) -> Result<Json<SystemInfo>, StatusCode> {
     COMMON_ADMIN.get_system_info.incr();
 
-    if api_caller_permissions.admin_server_maintenance_view_info {
+    if api_caller_permissions.admin_server_view_info {
         let info = state
             .manager_request_to(manager)
             .await?
@@ -99,7 +99,7 @@ const PATH_GET_SOFTWARE_INFO: &str = "/common_api/software_info";
 /// Get software version information from manager instance.
 ///
 /// # Access
-/// * Permission [model::Permissions::admin_server_maintenance_view_info]
+/// * Permission [model::Permissions::admin_server_view_info]
 #[utoipa::path(
     get,
     path = PATH_GET_SOFTWARE_INFO,
@@ -118,7 +118,7 @@ pub async fn get_software_update_status(
 ) -> Result<Json<SoftwareUpdateStatus>, StatusCode> {
     COMMON_ADMIN.get_software_update_status.incr();
 
-    if api_caller_permissions.admin_server_maintenance_view_info {
+    if api_caller_permissions.admin_server_view_info {
         let info = state
             .manager_request_to(manager)
             .await?
@@ -136,7 +136,7 @@ const PATH_POST_TRIGGER_SOFTWARE_UPDATE_DOWNLOAD: &str =
 /// Trigger software update download.
 ///
 /// # Access
-/// * Permission [model::Permissions::admin_server_maintenance_update_software]
+/// * Permission [model::Permissions::admin_server_software_update]
 #[utoipa::path(
     post,
     path = PATH_POST_TRIGGER_SOFTWARE_UPDATE_DOWNLOAD,
@@ -155,7 +155,7 @@ pub async fn post_trigger_software_update_download(
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_trigger_software_update_download.incr();
 
-    if api_caller_permissions.admin_server_maintenance_update_software {
+    if api_caller_permissions.admin_server_software_update {
         state
             .manager_request_to(manager)
             .await?
@@ -173,7 +173,7 @@ const PATH_POST_TRIGGER_SOFTWARE_UPDATE_INSTALL: &str =
 /// Trigger software update install.
 ///
 /// # Access
-/// * Permission [model::Permissions::admin_server_maintenance_update_software]
+/// * Permission [model::Permissions::admin_server_software_update]
 #[utoipa::path(
     post,
     path = PATH_POST_TRIGGER_SOFTWARE_UPDATE_INSTALL,
@@ -193,7 +193,7 @@ pub async fn post_trigger_software_update_install(
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_trigger_software_update_install.incr();
 
-    if api_caller_permissions.admin_server_maintenance_update_software {
+    if api_caller_permissions.admin_server_software_update {
         state
             .manager_request_to(manager)
             .await?
@@ -222,7 +222,7 @@ const PATH_POST_TRIGGER_BACKEND_DATA_RESET: &str = "/common_api/trigger_backend_
 /// backend will disable that.
 ///
 /// # Access
-/// * Permission [model::Permissions::admin_server_maintenance_reset_data]
+/// * Permission [model::Permissions::admin_server_data_reset]
 #[utoipa::path(
     post,
     path = PATH_POST_TRIGGER_BACKEND_DATA_RESET,
@@ -241,7 +241,7 @@ pub async fn post_trigger_backend_data_reset(
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_trigger_backend_data_reset.incr();
 
-    if !api_caller_permissions.admin_server_maintenance_reset_data {
+    if !api_caller_permissions.admin_server_data_reset {
         return Err(StatusCode::UNAUTHORIZED);
     }
 
@@ -268,7 +268,7 @@ const PATH_POST_TRIGGER_BACKEND_RESTART: &str = "/common_api/trigger_backend_res
 /// Trigger backend restart.
 ///
 /// # Access
-/// * Permission [model::Permissions::admin_server_maintenance_restart_backend]
+/// * Permission [model::Permissions::admin_server_restart]
 #[utoipa::path(
     post,
     path = PATH_POST_TRIGGER_BACKEND_RESTART,
@@ -287,7 +287,7 @@ pub async fn post_trigger_backend_restart(
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_trigger_backend_restart.incr();
 
-    if api_caller_permissions.admin_server_maintenance_restart_backend {
+    if api_caller_permissions.admin_server_restart {
         state
             .manager_request_to(manager)
             .await?
@@ -304,7 +304,7 @@ const PATH_POST_TRIGGER_SYSTEM_REBOOT: &str = "/common_api/trigger_system_reboot
 /// Trigger system reboot.
 ///
 /// # Access
-/// * Permission [model::Permissions::admin_server_maintenance_restart_backend]
+/// * Permission [model::Permissions::admin_server_restart]
 #[utoipa::path(
     post,
     path = PATH_POST_TRIGGER_SYSTEM_REBOOT,
@@ -323,7 +323,7 @@ pub async fn post_trigger_system_reboot(
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_trigger_system_reboot.incr();
 
-    if api_caller_permissions.admin_server_maintenance_restart_backend {
+    if api_caller_permissions.admin_server_restart {
         state
             .manager_request_to(manager)
             .await?
@@ -340,7 +340,7 @@ const PATH_GET_SCHEDULED_TASKS_STATUS: &str = "/common_api/scheduled_tasks_statu
 /// Get scheduled tasks status from manager instance.
 ///
 /// # Access
-/// * Permission [model::Permissions::admin_server_maintenance_restart_backend]
+/// * Permission [model::Permissions::admin_server_restart]
 #[utoipa::path(
     get,
     path = PATH_GET_SCHEDULED_TASKS_STATUS,
@@ -359,7 +359,7 @@ pub async fn get_scheduled_tasks_status(
 ) -> Result<Json<ScheduledTaskStatus>, StatusCode> {
     COMMON_ADMIN.get_software_update_status.incr();
 
-    if api_caller_permissions.admin_server_maintenance_restart_backend {
+    if api_caller_permissions.admin_server_restart {
         let info = state
             .manager_request_to(manager)
             .await?
@@ -376,7 +376,7 @@ const PATH_POST_SCHEDULE_TASK: &str = "/common_api/schedule_task";
 /// Schedule task.
 ///
 /// # Access
-/// * Permission [model::Permissions::admin_server_maintenance_restart_backend]
+/// * Permission [model::Permissions::admin_server_restart]
 #[utoipa::path(
     post,
     path = PATH_POST_SCHEDULE_TASK,
@@ -397,7 +397,7 @@ pub async fn post_schedule_task(
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_schedule_task.incr();
 
-    if api_caller_permissions.admin_server_maintenance_restart_backend {
+    if api_caller_permissions.admin_server_restart {
         state
             .manager_request_to(manager)
             .await?
@@ -414,7 +414,7 @@ const PATH_POST_UNSCHEDULE_TASK: &str = "/common_api/unschedule_task";
 /// Unschedule task.
 ///
 /// # Access
-/// * Permission [model::Permissions::admin_server_maintenance_restart_backend]
+/// * Permission [model::Permissions::admin_server_restart]
 #[utoipa::path(
     post,
     path = PATH_POST_UNSCHEDULE_TASK,
@@ -434,7 +434,7 @@ pub async fn post_unschedule_task(
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_unschedule_task.incr();
 
-    if api_caller_permissions.admin_server_maintenance_restart_backend {
+    if api_caller_permissions.admin_server_restart {
         state
             .manager_request_to(manager)
             .await?

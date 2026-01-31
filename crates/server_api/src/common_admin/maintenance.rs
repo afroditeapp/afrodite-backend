@@ -13,7 +13,7 @@ const PATH_GET_MAINTENANCE_NOTIFICATION: &str = "/common_api/maintenance_notific
 /// Get maintenance notification.
 ///
 /// # Permissions
-/// Requires admin_server_maintenance_edit_notification.
+/// Requires admin_server_edit_maintenance_notification.
 #[utoipa::path(
     get,
     path = PATH_GET_MAINTENANCE_NOTIFICATION,
@@ -30,7 +30,7 @@ pub async fn get_maintenance_notification(
 ) -> Result<Json<ScheduledMaintenanceStatus>, StatusCode> {
     COMMON_ADMIN.get_maintenance_notification.incr();
 
-    if api_caller_permissions.admin_server_maintenance_edit_notification {
+    if api_caller_permissions.admin_server_edit_maintenance_notification {
         Ok(state.manager_api_client().maintenance_status().await.into())
     } else {
         Err(StatusCode::UNAUTHORIZED)
@@ -42,7 +42,7 @@ const PATH_POST_EDIT_MAINTENANCE_NOTIFICATION: &str = "/common_api/edit_maintena
 /// Edit maintenance notification
 ///
 /// # Permissions
-/// Requires admin_server_maintenance_edit_notification.
+/// Requires admin_server_edit_maintenance_notification.
 #[utoipa::path(
     post,
     path = PATH_POST_EDIT_MAINTENANCE_NOTIFICATION,
@@ -61,7 +61,7 @@ pub async fn post_edit_maintenance_notification(
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_edit_maintenance_notification.incr();
 
-    if api_caller_permissions.admin_server_maintenance_edit_notification {
+    if api_caller_permissions.admin_server_edit_maintenance_notification {
         state
             .manager_api_client()
             .set_maintenance_status(status.clone())

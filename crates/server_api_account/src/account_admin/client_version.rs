@@ -17,7 +17,7 @@ const PATH_POST_GET_CLIENT_VERSION_STATISTICS: &str = "/account_api/client_versi
 /// HTTP method is POST to allow JSON request body.
 ///
 /// # Permissions
-/// Requires admin_server_maintenance_view_info.
+/// Requires admin_server_view_info.
 #[utoipa::path(
     post,
     path = PATH_POST_GET_CLIENT_VERSION_STATISTICS,
@@ -35,7 +35,7 @@ pub async fn post_get_client_version_statistics(
     Json(settings): Json<GetClientVersionStatisticsSettings>,
 ) -> Result<Json<GetClientVersionStatisticsResult>, StatusCode> {
     ACCOUNT_ADMIN.post_get_client_version_statistics.incr();
-    if api_caller_permissions.admin_server_maintenance_view_info {
+    if api_caller_permissions.admin_server_view_info {
         let data = state
             .read()
             .account_admin_history()

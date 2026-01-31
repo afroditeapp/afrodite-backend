@@ -24,7 +24,7 @@ const PATH_POST_GET_PERF_DATA: &str = "/common_api/perf_data";
 /// HTTP method is POST because JSON request body requires it.
 ///
 /// # Permissions
-/// Requires admin_server_maintenance_view_info.
+/// Requires admin_server_view_info.
 #[utoipa::path(
     post,
     path = PATH_POST_GET_PERF_DATA,
@@ -42,7 +42,7 @@ pub async fn post_get_perf_data(
     Json(_query): Json<PerfMetricQuery>,
 ) -> Result<Json<PerfMetricQueryResult>, StatusCode> {
     COMMON_ADMIN.post_get_perf_data.incr();
-    if api_caller_permissions.admin_server_maintenance_view_info {
+    if api_caller_permissions.admin_server_view_info {
         let data = state.perf_counter_data().get_history(false).await;
         Ok(data.into())
     } else {
@@ -142,7 +142,7 @@ const PATH_POST_GET_IP_COUNTRY_STATISTICS: &str = "/common_api/ip_country_statis
 /// HTTP method is POST to allow JSON request body.
 ///
 /// # Permissions
-/// Requires admin_server_maintenance_view_info.
+/// Requires admin_server_view_info.
 #[utoipa::path(
     post,
     path = PATH_POST_GET_IP_COUNTRY_STATISTICS,
@@ -160,7 +160,7 @@ pub async fn post_get_ip_country_statistics(
     Json(settings): Json<GetIpCountryStatisticsSettings>,
 ) -> Result<Json<GetIpCountryStatisticsResult>, StatusCode> {
     COMMON_ADMIN.post_get_ip_country_statistics.incr();
-    if api_caller_permissions.admin_server_maintenance_view_info {
+    if api_caller_permissions.admin_server_view_info {
         let data = if settings.data_from_ram {
             let data = state.ip_country_tracker().copy_current_state().await;
 
