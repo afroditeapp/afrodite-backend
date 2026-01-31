@@ -11,7 +11,7 @@ use super::notification::ModerationHandler;
 /// Profile name moderation handler
 pub struct ProfileNameModerationHandler {
     api_client: ApiClient,
-    config: ProfileStringModerationConfig,
+    config: Option<ProfileStringModerationConfig>,
     reqwest_client: reqwest::Client,
     state: Option<ProfileStringModerationState>,
 }
@@ -19,7 +19,7 @@ pub struct ProfileNameModerationHandler {
 impl ProfileNameModerationHandler {
     pub fn new(
         api_client: ApiClient,
-        config: ProfileStringModerationConfig,
+        config: Option<ProfileStringModerationConfig>,
         reqwest_client: reqwest::Client,
     ) -> Self {
         Self {
@@ -33,7 +33,11 @@ impl ProfileNameModerationHandler {
 
 impl ModerationHandler for ProfileNameModerationHandler {
     async fn handle(&mut self) -> Result<(), TestError> {
-        let config = &self.config;
+        let config = match &self.config {
+            Some(c) => c,
+            None => return Ok(()),
+        };
+
         let moderation_state = self.state.get_or_insert_with(|| {
             ProfileStringModerationState::new(config, self.reqwest_client.clone())
         });

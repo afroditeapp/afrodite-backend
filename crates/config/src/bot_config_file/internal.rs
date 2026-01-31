@@ -25,16 +25,16 @@ impl ProfileStringModerationConfig {
     pub fn new(
         db: Option<AdminProfileStringModerationConfig>,
         file: Option<crate::bot_config_file::ProfileStringModerationFileConfig>,
-    ) -> Self {
-        let db = db.unwrap_or_default();
+    ) -> Option<Self> {
+        let db = db?;
         let file = file.unwrap_or_default();
 
-        Self {
+        Some(Self {
             accept_single_visible_character: db.accept_single_visible_character,
             llm: LlmStringModerationConfig::new(db.llm, file.llm),
             default_action: db.default_action,
             concurrency: file.concurrency.unwrap_or(LLM_CONCURRENCY_DEFAULT),
-        }
+        })
     }
 }
 
@@ -96,11 +96,11 @@ impl ContentModerationConfig {
     pub fn new(
         db: Option<AdminContentModerationConfig>,
         file: Option<crate::bot_config_file::ContentModerationFileConfig>,
-    ) -> Self {
-        let db = db.unwrap_or_default();
+    ) -> Option<Self> {
+        let db = db?;
         let file = file.unwrap_or_default();
 
-        Self {
+        Some(Self {
             initial_content: db.initial_content,
             added_content: db.added_content,
             nsfw_detection: NsfwDetectionConfig::new(db.nsfw_detection, file.nsfw_detection),
@@ -109,7 +109,7 @@ impl ContentModerationConfig {
             default_action: db.default_action,
             debug_log_delete: file.debug_log_delete,
             concurrency: file.concurrency.unwrap_or(LLM_CONCURRENCY_DEFAULT),
-        }
+        })
     }
 }
 
@@ -190,9 +190,9 @@ pub fn merge(
     db: AdminBotConfig,
     file: crate::bot_config_file::BotConfigFile,
 ) -> (
-    ProfileStringModerationConfig,
-    ProfileStringModerationConfig,
-    ContentModerationConfig,
+    Option<ProfileStringModerationConfig>,
+    Option<ProfileStringModerationConfig>,
+    Option<ContentModerationConfig>,
 ) {
     let name = ProfileStringModerationConfig::new(
         db.profile_name_moderation,

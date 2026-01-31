@@ -3,11 +3,10 @@ use utoipa::ToSchema;
 
 const MAX_TOKENS_DEFAULT: u32 = 10_000;
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema)]
 pub enum ModerationAction {
     Accept,
     Reject,
-    #[default]
     MoveToHuman,
 }
 
@@ -21,7 +20,7 @@ pub struct AdminBotConfig {
     pub content_moderation: Option<AdminContentModerationConfig>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct AdminProfileStringModerationConfig {
     /// Accept all texts which only have single visible character.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
@@ -62,7 +61,11 @@ impl LlmStringModerationConfig {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct AdminContentModerationConfig {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
     pub initial_content: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
     pub added_content: bool,
     /// Neural network based detection.
     /// Actions: reject, move_to_human, accept and delete.
@@ -78,19 +81,6 @@ pub struct AdminContentModerationConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub llm_secondary: Option<LlmContentModerationConfig>,
     pub default_action: ModerationAction,
-}
-
-impl Default for AdminContentModerationConfig {
-    fn default() -> Self {
-        Self {
-            initial_content: true,
-            added_content: true,
-            nsfw_detection: None,
-            llm_primary: None,
-            llm_secondary: None,
-            default_action: ModerationAction::MoveToHuman,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]

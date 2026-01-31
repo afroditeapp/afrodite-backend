@@ -10,7 +10,7 @@ use super::notification::ModerationHandler;
 /// Content moderation handler for images/media
 pub struct ContentModerationHandler {
     api_client: ApiClient,
-    config: ContentModerationConfig,
+    config: Option<ContentModerationConfig>,
     reqwest_client: reqwest::Client,
     state: Option<ContentModerationState>,
 }
@@ -18,7 +18,7 @@ pub struct ContentModerationHandler {
 impl ContentModerationHandler {
     pub fn new(
         api_client: ApiClient,
-        config: ContentModerationConfig,
+        config: Option<ContentModerationConfig>,
         reqwest_client: reqwest::Client,
     ) -> Self {
         Self {
@@ -32,17 +32,22 @@ impl ContentModerationHandler {
 
 impl ModerationHandler for ContentModerationHandler {
     async fn handle(&mut self) -> Result<(), TestError> {
+        let config = match &self.config {
+            Some(c) => c,
+            None => return Ok(()),
+        };
+
         let moderation_state = if let Some(state) = &mut self.state {
             state
         } else {
             let moderation_state =
-                ContentModerationState::new(&self.config, self.reqwest_client.clone()).await?;
+                ContentModerationState::new(config, self.reqwest_client.clone()).await?;
             self.state.get_or_insert(moderation_state)
         };
 
         AdminBotContentModerationLogic::run_content_moderation(
             &self.api_client,
-            &self.config,
+            config,
             moderation_state,
         )
         .await?;

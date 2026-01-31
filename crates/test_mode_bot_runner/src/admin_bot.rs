@@ -84,6 +84,22 @@ impl AdminBot {
         info!("Admin bot stopped");
     }
 
+    fn warn_mismatched_config(
+        config_name: &str,
+        db: Option<impl std::fmt::Debug>,
+        file: Option<impl std::fmt::Debug>,
+    ) {
+        use tracing::warn;
+        if db.is_some() != file.is_some() {
+            warn!(
+                "Mismatched configuration for {}: DB config is {}, file config is {}",
+                config_name,
+                if db.is_some() { "set" } else { "not set" },
+                if file.is_some() { "set" } else { "not set" }
+            );
+        }
+    }
+
     pub async fn run(mut self, mut bot_quit_receiver: watch::Receiver<()>) {
         info!("Admin bot started - Task {}", self.state.task_id,);
 
@@ -136,11 +152,28 @@ impl AdminBot {
         let bot_config: BotConfig =
             serde_json::from_str(&bot_config_json).change_context(TestError::Reqwest)?;
 
+        let admin_bot_config = bot_config.admin_bot_config.unwrap_or_default();
+        let file_config = (*state.bot_config_file).clone();
+
+        // Warn about mismatched configurations
+        Self::warn_mismatched_config(
+            "profile_name_moderation",
+            admin_bot_config.profile_name_moderation.as_ref(),
+            file_config.profile_name_moderation.as_ref(),
+        );
+        Self::warn_mismatched_config(
+            "profile_text_moderation",
+            admin_bot_config.profile_text_moderation.as_ref(),
+            file_config.profile_text_moderation.as_ref(),
+        );
+        Self::warn_mismatched_config(
+            "content_moderation",
+            admin_bot_config.content_moderation.as_ref(),
+            file_config.content_moderation.as_ref(),
+        );
+
         let (profile_name_config, profile_text_config, content_config) =
-            config::bot_config_file::internal::merge(
-                bot_config.admin_bot_config.unwrap_or_default(),
-                (*state.bot_config_file).clone(),
-            );
+            config::bot_config_file::internal::merge(admin_bot_config, file_config);
 
         // Create separate notification pipelines for each content type
         let (content_sender, mut content_receiver) = ContentModerationHandler::new(
