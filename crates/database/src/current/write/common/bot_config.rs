@@ -18,13 +18,8 @@ impl CurrentWriteCommonBotConfig<'_> {
             config.user_bots as i16
         };
 
-        let admin_bot_config_json_value = if let Some(c) = &config.admin_bot_config {
-            let string =
-                serde_json::to_string(&c).change_context(DieselDatabaseError::SerdeSerialize)?;
-            Some(string)
-        } else {
-            None
-        };
+        let admin_bot_config_json_value = serde_json::to_string(&config.admin_bot_config)
+            .change_context(DieselDatabaseError::SerdeSerialize)?;
 
         insert_into(bot_config)
             .values((

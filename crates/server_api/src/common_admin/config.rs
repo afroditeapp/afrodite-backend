@@ -80,25 +80,24 @@ pub async fn post_bot_config(
         return Err(StatusCode::UNAUTHORIZED);
     }
 
-    if let Some(admin_bot_config) = &bot_config.admin_bot_config {
-        let profile_string_moderation_configs = [
-            admin_bot_config.profile_name_moderation.as_ref(),
-            admin_bot_config.profile_text_moderation.as_ref(),
-        ];
+    let admin_bot_config = &bot_config.admin_bot_config;
+    let profile_string_moderation_configs = [
+        admin_bot_config.profile_name_moderation.as_ref(),
+        admin_bot_config.profile_text_moderation.as_ref(),
+    ];
 
-        for config in profile_string_moderation_configs
-            .iter()
-            .flatten()
-            .flat_map(|v| v.llm.as_ref())
-        {
-            let count = config
-                .user_text_template
-                .split(LlmStringModerationConfig::TEMPLATE_PLACEHOLDER_TEXT)
-                .count();
+    for config in profile_string_moderation_configs
+        .iter()
+        .flatten()
+        .flat_map(|v| v.llm.as_ref())
+    {
+        let count = config
+            .user_text_template
+            .split(LlmStringModerationConfig::TEMPLATE_PLACEHOLDER_TEXT)
+            .count();
 
-            if count != 2 {
-                return Err(StatusCode::BAD_REQUEST);
-            }
+        if count != 2 {
+            return Err(StatusCode::BAD_REQUEST);
         }
     }
 

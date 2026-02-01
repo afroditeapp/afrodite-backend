@@ -32,11 +32,7 @@ impl NsfwDetector {
             state: Some(State {
                 model,
                 config,
-                thresholds: image_process_config
-                    .dynamic()
-                    .nsfw_thresholds
-                    .clone()
-                    .unwrap_or_default(),
+                thresholds: image_process_config.dynamic().nsfw_thresholds.clone(),
             }),
         })
     }

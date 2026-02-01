@@ -31,8 +31,7 @@ pub struct BotConfig {
     #[schema(default = 0)]
     pub user_bots: u32,
     /// Admin bot config
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub admin_bot_config: Option<AdminBotConfig>,
+    pub admin_bot_config: AdminBotConfig,
 }
 
 fn is_zero(value: &u32) -> bool {

@@ -13,8 +13,7 @@ pub struct ImageProcessingDynamicConfig {
     /// threshold then the image is classified as NSFW.
     ///
     /// Threshold values must be in the range 0.0–1.0.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub nsfw_thresholds: Option<NsfwDetectionThresholds>,
+    pub nsfw_thresholds: NsfwDetectionThresholds,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]

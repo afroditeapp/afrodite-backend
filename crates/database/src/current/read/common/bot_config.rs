@@ -24,7 +24,9 @@ impl CurrentReadCommonBotConfig<'_> {
             .map(|opt| {
                 opt.map(|(u, a, r, c): (i16, bool, bool, Option<String>)| {
                     let users = if u < 0 { 0 } else { u as u32 };
-                    let config = c.and_then(|v| serde_json::from_str(&v).ok());
+                    let config = c
+                        .and_then(|v| serde_json::from_str(&v).ok())
+                        .unwrap_or_default();
                     BotConfig {
                         user_bots: users,
                         admin_bot: a,

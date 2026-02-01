@@ -116,10 +116,10 @@ impl ContentModerationConfig {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct NsfwDetectionConfig {
     pub model_file: PathBuf,
-    pub reject: Option<NsfwDetectionThresholds>,
-    pub move_to_human: Option<NsfwDetectionThresholds>,
-    pub accept: Option<NsfwDetectionThresholds>,
-    pub delete: Option<NsfwDetectionThresholds>,
+    pub reject: NsfwDetectionThresholds,
+    pub move_to_human: NsfwDetectionThresholds,
+    pub accept: NsfwDetectionThresholds,
+    pub delete: NsfwDetectionThresholds,
     pub debug_log_results: bool,
 }
 

@@ -399,50 +399,42 @@ impl AdminBotContentModerationLogic {
             }
         }
 
-        if let Some(thresholds) = &nsfw.config.delete {
-            for c in &results {
-                if let Some(threshold) = threshold(&c.metric, thresholds)
-                    && Into::<f64>::into(c.score) >= threshold
-                {
-                    return Ok(Some(ModerationResult::delete()));
-                }
+        for c in &results {
+            if let Some(threshold) = threshold(&c.metric, &nsfw.config.delete)
+                && Into::<f64>::into(c.score) >= threshold
+            {
+                return Ok(Some(ModerationResult::delete()));
             }
         }
 
-        if let Some(thresholds) = &nsfw.config.reject {
-            for c in &results {
-                if let Some(threshold) = threshold(&c.metric, thresholds)
-                    && Into::<f64>::into(c.score) >= threshold
-                {
-                    return Ok(Some(ModerationResult::reject(Some(
-                        "NSFW image detected. If this is a false positive, please contact customer support.",
-                    ))));
-                }
+        for c in &results {
+            if let Some(threshold) = threshold(&c.metric, &nsfw.config.reject)
+                && Into::<f64>::into(c.score) >= threshold
+            {
+                return Ok(Some(ModerationResult::reject(Some(
+                    "NSFW image detected. If this is a false positive, please contact customer support.",
+                ))));
             }
         }
 
-        if let Some(thresholds) = &nsfw.config.move_to_human {
-            for c in &results {
-                if let Some(threshold) = threshold(&c.metric, thresholds)
-                    && Into::<f64>::into(c.score) >= threshold
-                {
-                    return Ok(Some(ModerationResult::move_to_human(Some(format!(
-                        "NSFW detection: {:?} score is {:.2}, which is >= threshold {:.2}",
-                        c.metric,
-                        Into::<f64>::into(c.score),
-                        threshold
-                    )))));
-                }
+        for c in &results {
+            if let Some(threshold) = threshold(&c.metric, &nsfw.config.move_to_human)
+                && Into::<f64>::into(c.score) >= threshold
+            {
+                return Ok(Some(ModerationResult::move_to_human(Some(format!(
+                    "NSFW detection: {:?} score is {:.2}, which is >= threshold {:.2}",
+                    c.metric,
+                    Into::<f64>::into(c.score),
+                    threshold
+                )))));
             }
         }
 
-        if let Some(thresholds) = &nsfw.config.accept {
-            for c in results {
-                if let Some(threshold) = threshold(&c.metric, thresholds)
-                    && Into::<f64>::into(c.score) >= threshold
-                {
-                    return Ok(Some(ModerationResult::accept()));
-                }
+        for c in results {
+            if let Some(threshold) = threshold(&c.metric, &nsfw.config.accept)
+                && Into::<f64>::into(c.score) >= threshold
+            {
+                return Ok(Some(ModerationResult::accept()));
             }
         }
 

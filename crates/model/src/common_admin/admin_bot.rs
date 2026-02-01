@@ -86,17 +86,13 @@ pub struct AdminContentModerationConfig {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct AdminNsfwDetectionConfig {
     /// Thresholds for image rejection.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub reject: Option<simple_backend_model::NsfwDetectionThresholds>,
+    pub reject: simple_backend_model::NsfwDetectionThresholds,
     /// Thresholds for moving image to human moderation.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub move_to_human: Option<simple_backend_model::NsfwDetectionThresholds>,
+    pub move_to_human: simple_backend_model::NsfwDetectionThresholds,
     /// Thresholds for accepting the image.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub accept: Option<simple_backend_model::NsfwDetectionThresholds>,
+    pub accept: simple_backend_model::NsfwDetectionThresholds,
     /// Thresholds for image deletion.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub delete: Option<simple_backend_model::NsfwDetectionThresholds>,
+    pub delete: simple_backend_model::NsfwDetectionThresholds,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]

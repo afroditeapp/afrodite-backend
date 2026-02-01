@@ -13,7 +13,7 @@ impl CurrentWriteMediaAdminImageProcessingConfig<'_> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::image_processing_config::dsl::*;
 
-        let nsfw_thresholds = config.nsfw_thresholds.clone().unwrap_or_default();
+        let nsfw_thresholds = config.nsfw_thresholds.clone();
 
         insert_into(image_processing_config)
             .values((

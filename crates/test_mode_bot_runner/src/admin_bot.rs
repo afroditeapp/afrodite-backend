@@ -152,7 +152,7 @@ impl AdminBot {
         let bot_config: BotConfig =
             serde_json::from_str(&bot_config_json).change_context(TestError::Reqwest)?;
 
-        let admin_bot_config = bot_config.admin_bot_config.unwrap_or_default();
+        let admin_bot_config = bot_config.admin_bot_config;
         let file_config = (*state.bot_config_file).clone();
 
         // Warn about mismatched configurations
