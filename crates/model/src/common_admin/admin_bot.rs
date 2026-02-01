@@ -3,24 +3,31 @@ use utoipa::ToSchema;
 
 const MAX_TOKENS_DEFAULT: u32 = 10_000;
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, Default)]
 pub enum ModerationAction {
     Accept,
     Reject,
+    #[default]
     MoveToHuman,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
 pub struct AdminBotConfig {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub profile_name_moderation: Option<AdminProfileStringModerationConfig>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub profile_text_moderation: Option<AdminProfileStringModerationConfig>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub content_moderation: Option<AdminContentModerationConfig>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub profile_name_moderation_enabled: bool,
+    pub profile_name_moderation: AdminProfileStringModerationConfig,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub profile_text_moderation_enabled: bool,
+    pub profile_text_moderation: AdminProfileStringModerationConfig,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub content_moderation_enabled: bool,
+    pub content_moderation: AdminContentModerationConfig,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
 pub struct AdminProfileStringModerationConfig {
     /// Accept all texts which only have single visible character.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
@@ -28,8 +35,10 @@ pub struct AdminProfileStringModerationConfig {
     pub accept_single_visible_character: bool,
     /// Large language model based moderation.
     /// Actions: reject (or move_to_human) and accept
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub llm: Option<LlmStringModerationConfig>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub llm_enabled: bool,
+    pub llm: LlmStringModerationConfig,
     pub default_action: ModerationAction,
 }
 
@@ -43,23 +52,33 @@ pub struct LlmStringModerationConfig {
     /// line of the response contains this text, the profile text
     /// is moderated as accepted. The comparisons are case insensitive.
     pub expected_response: String,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
     pub move_rejected_to_human_moderation: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub add_llm_output_to_user_visible_rejection_details: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    max_tokens: Option<u32>,
+    pub max_tokens: u32,
 }
 
 impl LlmStringModerationConfig {
     pub const TEMPLATE_PLACEHOLDER_TEXT: &'static str = "{text}";
+}
 
-    pub fn max_tokens(&self) -> u32 {
-        self.max_tokens.unwrap_or(MAX_TOKENS_DEFAULT)
+impl Default for LlmStringModerationConfig {
+    fn default() -> Self {
+        Self {
+            system_text: "You are a dating app text moderator. Output 'accepted' when the text is safe for a dating app. Output 'rejected' when it's not.".to_string(),
+            user_text_template: "Text:\n\n{text}".to_string(),
+            expected_response: "accepted".to_string(),
+            move_rejected_to_human_moderation: false,
+            add_llm_output_to_user_visible_rejection_details: false,
+            max_tokens: MAX_TOKENS_DEFAULT,
+        }
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
 pub struct AdminContentModerationConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -69,21 +88,27 @@ pub struct AdminContentModerationConfig {
     pub added_content: bool,
     /// Neural network based detection.
     /// Actions: reject, move_to_human, accept and delete.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub nsfw_detection: Option<AdminNsfwDetectionConfig>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub nsfw_detection_enabled: bool,
+    pub nsfw_detection: AdminNsfwDetectionConfig,
     /// Large language model based moderation.
     /// Actions: reject (can be replaced with move_to_human or ignore) and
     ///          accept (can be replaced with move_to_human or delete).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub llm_primary: Option<LlmContentModerationConfig>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub llm_primary_enabled: bool,
+    pub llm_primary: LlmContentModerationConfig,
     /// The secondary LLM moderation will run if primary results with ignore
     /// action.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub llm_secondary: Option<LlmContentModerationConfig>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub llm_secondary_enabled: bool,
+    pub llm_secondary: LlmContentModerationConfig,
     pub default_action: ModerationAction,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
 pub struct AdminNsfwDetectionConfig {
     /// Thresholds for image rejection.
     pub reject: simple_backend_model::NsfwDetectionThresholds,
@@ -119,12 +144,26 @@ pub struct LlmContentModerationConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub add_llm_output_to_user_visible_rejection_details: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    max_tokens: Option<u32>,
+    pub max_tokens: u32,
 }
 
 impl LlmContentModerationConfig {
     pub fn max_tokens(&self) -> u32 {
-        self.max_tokens.unwrap_or(MAX_TOKENS_DEFAULT)
+        self.max_tokens
+    }
+}
+
+impl Default for LlmContentModerationConfig {
+    fn default() -> Self {
+        Self {
+            system_text: "You are a dating app image moderator. Output 'accepted' when the image is safe for a dating app. Output 'rejected' when it's not.".to_string(),
+            expected_response: "accepted".to_string(),
+            ignore_rejected: false,
+            delete_accepted: false,
+            move_accepted_to_human_moderation: false,
+            move_rejected_to_human_moderation: false,
+            add_llm_output_to_user_visible_rejection_details: false,
+            max_tokens: MAX_TOKENS_DEFAULT,
+        }
     }
 }

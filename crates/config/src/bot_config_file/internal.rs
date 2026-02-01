@@ -23,15 +23,18 @@ pub struct ProfileStringModerationConfig {
 
 impl ProfileStringModerationConfig {
     pub fn new(
-        db: Option<AdminProfileStringModerationConfig>,
+        db: AdminProfileStringModerationConfig,
+        db_enabled: bool,
         file: Option<crate::bot_config_file::ProfileStringModerationFileConfig>,
     ) -> Option<Self> {
-        let db = db?;
+        if !db_enabled {
+            return None;
+        }
         let file = file.unwrap_or_default();
 
         Some(Self {
             accept_single_visible_character: db.accept_single_visible_character,
-            llm: LlmStringModerationConfig::new(db.llm, file.llm),
+            llm: LlmStringModerationConfig::new(db.llm, db.llm_enabled, file.llm),
             default_action: db.default_action,
             concurrency: file.concurrency.unwrap_or(LLM_CONCURRENCY_DEFAULT),
         })
@@ -56,13 +59,14 @@ impl LlmStringModerationConfig {
     pub const TEMPLATE_PLACEHOLDER_TEXT: &'static str = "{text}";
 
     pub fn new(
-        db: Option<AdminLlmStringModerationConfig>,
+        db: AdminLlmStringModerationConfig,
+        db_enabled: bool,
         file: Option<crate::bot_config_file::LlmStringModerationFileConfig>,
     ) -> Option<Self> {
-        let db = db?;
+        if !db_enabled {
+            return None;
+        }
         let file = file?;
-
-        let max_tokens = db.max_tokens();
 
         Some(Self {
             openai_api_url: file.openai_api_url,
@@ -74,7 +78,7 @@ impl LlmStringModerationConfig {
             add_llm_output_to_user_visible_rejection_details: db
                 .add_llm_output_to_user_visible_rejection_details,
             debug_log_results: file.debug_log_results,
-            max_tokens,
+            max_tokens: db.max_tokens,
             retry_wait_times_in_seconds: file.retry_wait_times_in_seconds,
         })
     }
@@ -94,18 +98,33 @@ pub struct ContentModerationConfig {
 
 impl ContentModerationConfig {
     pub fn new(
-        db: Option<AdminContentModerationConfig>,
+        db: AdminContentModerationConfig,
+        db_enabled: bool,
         file: Option<crate::bot_config_file::ContentModerationFileConfig>,
     ) -> Option<Self> {
-        let db = db?;
+        if !db_enabled {
+            return None;
+        }
         let file = file.unwrap_or_default();
 
         Some(Self {
             initial_content: db.initial_content,
             added_content: db.added_content,
-            nsfw_detection: NsfwDetectionConfig::new(db.nsfw_detection, file.nsfw_detection),
-            llm_primary: LlmContentModerationConfig::new(db.llm_primary, file.llm_primary),
-            llm_secondary: LlmContentModerationConfig::new(db.llm_secondary, file.llm_secondary),
+            nsfw_detection: NsfwDetectionConfig::new(
+                db.nsfw_detection,
+                db.nsfw_detection_enabled,
+                file.nsfw_detection,
+            ),
+            llm_primary: LlmContentModerationConfig::new(
+                db.llm_primary,
+                db.llm_primary_enabled,
+                file.llm_primary,
+            ),
+            llm_secondary: LlmContentModerationConfig::new(
+                db.llm_secondary,
+                db.llm_secondary_enabled,
+                file.llm_secondary,
+            ),
             default_action: db.default_action,
             debug_log_delete: file.debug_log_delete,
             concurrency: file.concurrency.unwrap_or(LLM_CONCURRENCY_DEFAULT),
@@ -125,10 +144,13 @@ pub struct NsfwDetectionConfig {
 
 impl NsfwDetectionConfig {
     pub fn new(
-        db: Option<AdminNsfwDetectionConfig>,
+        db: AdminNsfwDetectionConfig,
+        db_enabled: bool,
         file: Option<crate::bot_config_file::NsfwDetectionFileConfig>,
     ) -> Option<Self> {
-        let db = db?;
+        if !db_enabled {
+            return None;
+        }
         let file = file?;
 
         Some(Self {
@@ -160,13 +182,14 @@ pub struct LlmContentModerationConfig {
 
 impl LlmContentModerationConfig {
     pub fn new(
-        db: Option<AdminLlmContentModerationConfig>,
+        db: AdminLlmContentModerationConfig,
+        db_enabled: bool,
         file: Option<crate::bot_config_file::LlmContentModerationFileConfig>,
     ) -> Option<Self> {
-        let db = db?;
+        if !db_enabled {
+            return None;
+        }
         let file = file?;
-
-        let max_tokens = db.max_tokens();
 
         Some(Self {
             openai_api_url: file.openai_api_url,
@@ -180,7 +203,7 @@ impl LlmContentModerationConfig {
             add_llm_output_to_user_visible_rejection_details: db
                 .add_llm_output_to_user_visible_rejection_details,
             debug_log_results: file.debug_log_results,
-            max_tokens,
+            max_tokens: db.max_tokens,
             retry_wait_times_in_seconds: file.retry_wait_times_in_seconds,
         })
     }
@@ -196,12 +219,18 @@ pub fn merge(
 ) {
     let name = ProfileStringModerationConfig::new(
         db.profile_name_moderation,
+        db.profile_name_moderation_enabled,
         file.profile_name_moderation,
     );
     let text = ProfileStringModerationConfig::new(
         db.profile_text_moderation,
+        db.profile_text_moderation_enabled,
         file.profile_text_moderation,
     );
-    let content = ContentModerationConfig::new(db.content_moderation, file.content_moderation);
+    let content = ContentModerationConfig::new(
+        db.content_moderation,
+        db.content_moderation_enabled,
+        file.content_moderation,
+    );
     (name, text, content)
 }

@@ -82,15 +82,11 @@ pub async fn post_bot_config(
 
     let admin_bot_config = &bot_config.admin_bot_config;
     let profile_string_moderation_configs = [
-        admin_bot_config.profile_name_moderation.as_ref(),
-        admin_bot_config.profile_text_moderation.as_ref(),
+        &admin_bot_config.profile_name_moderation,
+        &admin_bot_config.profile_text_moderation,
     ];
 
-    for config in profile_string_moderation_configs
-        .iter()
-        .flatten()
-        .flat_map(|v| v.llm.as_ref())
-    {
+    for config in profile_string_moderation_configs.iter().map(|v| &v.llm) {
         let count = config
             .user_text_template
             .split(LlmStringModerationConfig::TEMPLATE_PLACEHOLDER_TEXT)
