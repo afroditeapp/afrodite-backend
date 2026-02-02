@@ -17,15 +17,8 @@ jobs:
         include:
           - target: x86_64-unknown-linux-gnu
             runs-on: ubuntu-22.04
-            id: 1
           - target: aarch64-unknown-linux-gnu
             runs-on: ubuntu-22.04-arm
-            id: 2
-    outputs:
-      checksum-1: ${{ steps.create-assets.outputs.checksum-1 }}
-      asset-1: ${{ steps.create-assets.outputs.asset-1 }}
-      checksum-2: ${{ steps.create-assets.outputs.checksum-2 }}
-      asset-2: ${{ steps.create-assets.outputs.asset-2 }}
     steps:
       - name: Install PostgreSQL library
         run: |
@@ -37,7 +30,6 @@ jobs:
         run: |
           cargo build --release
       - name: Create release assets
-        id: create-assets
         run: |
           BINARY=afrodite-backend
           NAME="$BINARY-${{ github.ref_name }}-${{ matrix.target }}"
@@ -47,11 +39,6 @@ jobs:
           mkdir "$NAME"
           mv "../release/$BINARY" "$NAME"
           tar --owner=0 --group=0 -czf "$ASSET" "$NAME"
-          shasum -ba 256 "$ASSET" > "$ASSET.sha256"
-          CHECKSUM=$(cut -d " " -f 1 "$ASSET.sha256")
-          ID="${{ matrix.id }}"
-          echo "asset-$ID=$ASSET" >> "$GITHUB_OUTPUT"
-          echo "checksum-$ID=$CHECKSUM" >> "$GITHUB_OUTPUT"
       - name: Upload assets
         uses: softprops/action-gh-release@v2.2.1
         if: startsWith(github.ref, 'refs/tags/')
@@ -59,35 +46,3 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             target/assets/*.tar.gz
-            target/assets/*.tar.gz.sha256
-
-  update-release-description:
-    name: Update release description
-    needs: release
-    runs-on: ubuntu-22.04
-    env:
-      ASSET_1: ${{ needs.release.outputs.asset-1 }}
-      CHECKSUM_1: ${{ needs.release.outputs.checksum-1 }}
-      ASSET_2: ${{ needs.release.outputs.asset-2 }}
-      CHECKSUM_2: ${{ needs.release.outputs.checksum-2 }}
-    steps:
-      - name: Create release description
-        run: |
-          echo "## Files and checksums (SHA-256)" >> description.txt
-
-          echo "$ASSET_2" >> description.txt
-
-          echo '```' >> description.txt
-          echo "$CHECKSUM_2" >> description.txt
-          echo '```' >> description.txt
-
-          echo "$ASSET_1" >> description.txt
-
-          echo '```' >> description.txt
-          echo "$CHECKSUM_1" >> description.txt
-          echo '```' >> description.txt
-      - name: Update release description
-        uses: softprops/action-gh-release@v2.2.1
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          body_path: description.txt
