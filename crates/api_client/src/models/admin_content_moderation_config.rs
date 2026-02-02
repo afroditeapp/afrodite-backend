@@ -13,32 +13,41 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AdminContentModerationConfig {
-    #[serde(rename = "added_content")]
-    pub added_content: bool,
+    #[serde(rename = "added_content", skip_serializing_if = "Option::is_none")]
+    pub added_content: Option<bool>,
     #[serde(rename = "default_action")]
     pub default_action: models::ModerationAction,
-    #[serde(rename = "initial_content")]
-    pub initial_content: bool,
+    #[serde(rename = "initial_content", skip_serializing_if = "Option::is_none")]
+    pub initial_content: Option<bool>,
+    #[serde(rename = "llm_primary")]
+    pub llm_primary: Box<models::LlmContentModerationConfig>,
     /// Large language model based moderation. Actions: reject (can be replaced with move_to_human or ignore) and          accept (can be replaced with move_to_human or delete).
-    #[serde(rename = "llm_primary", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub llm_primary: Option<Option<Box<models::LlmContentModerationConfig>>>,
+    #[serde(rename = "llm_primary_enabled", skip_serializing_if = "Option::is_none")]
+    pub llm_primary_enabled: Option<bool>,
+    #[serde(rename = "llm_secondary")]
+    pub llm_secondary: Box<models::LlmContentModerationConfig>,
     /// The secondary LLM moderation will run if primary results with ignore action.
-    #[serde(rename = "llm_secondary", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub llm_secondary: Option<Option<Box<models::LlmContentModerationConfig>>>,
+    #[serde(rename = "llm_secondary_enabled", skip_serializing_if = "Option::is_none")]
+    pub llm_secondary_enabled: Option<bool>,
+    #[serde(rename = "nsfw_detection")]
+    pub nsfw_detection: Box<models::AdminNsfwDetectionConfig>,
     /// Neural network based detection. Actions: reject, move_to_human, accept and delete.
-    #[serde(rename = "nsfw_detection", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub nsfw_detection: Option<Option<Box<models::AdminNsfwDetectionConfig>>>,
+    #[serde(rename = "nsfw_detection_enabled", skip_serializing_if = "Option::is_none")]
+    pub nsfw_detection_enabled: Option<bool>,
 }
 
 impl AdminContentModerationConfig {
-    pub fn new(added_content: bool, default_action: models::ModerationAction, initial_content: bool) -> AdminContentModerationConfig {
+    pub fn new(default_action: models::ModerationAction, llm_primary: models::LlmContentModerationConfig, llm_secondary: models::LlmContentModerationConfig, nsfw_detection: models::AdminNsfwDetectionConfig) -> AdminContentModerationConfig {
         AdminContentModerationConfig {
-            added_content,
+            added_content: None,
             default_action,
-            initial_content,
-            llm_primary: None,
-            llm_secondary: None,
-            nsfw_detection: None,
+            initial_content: None,
+            llm_primary: Box::new(llm_primary),
+            llm_primary_enabled: None,
+            llm_secondary: Box::new(llm_secondary),
+            llm_secondary_enabled: None,
+            nsfw_detection: Box::new(nsfw_detection),
+            nsfw_detection_enabled: None,
         }
     }
 }

@@ -14,26 +14,26 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AdminNsfwDetectionConfig {
     /// Thresholds for accepting the image.
-    #[serde(rename = "accept", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub accept: Option<Option<Box<models::NsfwDetectionThresholds>>>,
+    #[serde(rename = "accept")]
+    pub accept: Box<models::NsfwDetectionThresholds>,
     /// Thresholds for image deletion.
-    #[serde(rename = "delete", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub delete: Option<Option<Box<models::NsfwDetectionThresholds>>>,
+    #[serde(rename = "delete")]
+    pub delete: Box<models::NsfwDetectionThresholds>,
     /// Thresholds for moving image to human moderation.
-    #[serde(rename = "move_to_human", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub move_to_human: Option<Option<Box<models::NsfwDetectionThresholds>>>,
+    #[serde(rename = "move_to_human")]
+    pub move_to_human: Box<models::NsfwDetectionThresholds>,
     /// Thresholds for image rejection.
-    #[serde(rename = "reject", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub reject: Option<Option<Box<models::NsfwDetectionThresholds>>>,
+    #[serde(rename = "reject")]
+    pub reject: Box<models::NsfwDetectionThresholds>,
 }
 
 impl AdminNsfwDetectionConfig {
-    pub fn new() -> AdminNsfwDetectionConfig {
+    pub fn new(accept: models::NsfwDetectionThresholds, delete: models::NsfwDetectionThresholds, move_to_human: models::NsfwDetectionThresholds, reject: models::NsfwDetectionThresholds) -> AdminNsfwDetectionConfig {
         AdminNsfwDetectionConfig {
-            accept: None,
-            delete: None,
-            move_to_human: None,
-            reject: None,
+            accept: Box::new(accept),
+            delete: Box::new(delete),
+            move_to_human: Box::new(move_to_human),
+            reject: Box::new(reject),
         }
     }
 }

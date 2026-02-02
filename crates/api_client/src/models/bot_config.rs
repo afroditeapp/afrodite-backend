@@ -17,8 +17,8 @@ pub struct BotConfig {
     #[serde(rename = "admin_bot", skip_serializing_if = "Option::is_none")]
     pub admin_bot: Option<bool>,
     /// Admin bot config
-    #[serde(rename = "admin_bot_config", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub admin_bot_config: Option<Option<Box<models::AdminBotConfig>>>,
+    #[serde(rename = "admin_bot_config")]
+    pub admin_bot_config: Box<models::AdminBotConfig>,
     /// Enable remote bot login API
     #[serde(rename = "remote_bot_login", skip_serializing_if = "Option::is_none")]
     pub remote_bot_login: Option<bool>,
@@ -28,10 +28,10 @@ pub struct BotConfig {
 }
 
 impl BotConfig {
-    pub fn new() -> BotConfig {
+    pub fn new(admin_bot_config: models::AdminBotConfig) -> BotConfig {
         BotConfig {
             admin_bot: None,
-            admin_bot_config: None,
+            admin_bot_config: Box::new(admin_bot_config),
             remote_bot_login: None,
             user_bots: None,
         }

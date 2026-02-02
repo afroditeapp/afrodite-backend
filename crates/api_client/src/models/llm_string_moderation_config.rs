@@ -18,10 +18,10 @@ pub struct LlmStringModerationConfig {
     /// If LLM response starts with this text or the first line of the response contains this text, the profile text is moderated as accepted. The comparisons are case insensitive.
     #[serde(rename = "expected_response")]
     pub expected_response: String,
-    #[serde(rename = "max_tokens", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub max_tokens: Option<Option<i32>>,
-    #[serde(rename = "move_rejected_to_human_moderation")]
-    pub move_rejected_to_human_moderation: bool,
+    #[serde(rename = "max_tokens")]
+    pub max_tokens: i32,
+    #[serde(rename = "move_rejected_to_human_moderation", skip_serializing_if = "Option::is_none")]
+    pub move_rejected_to_human_moderation: Option<bool>,
     #[serde(rename = "system_text")]
     pub system_text: String,
     /// Placeholder \"{text}\" is replaced with text which will be moderated.
@@ -30,12 +30,12 @@ pub struct LlmStringModerationConfig {
 }
 
 impl LlmStringModerationConfig {
-    pub fn new(expected_response: String, move_rejected_to_human_moderation: bool, system_text: String, user_text_template: String) -> LlmStringModerationConfig {
+    pub fn new(expected_response: String, max_tokens: i32, system_text: String, user_text_template: String) -> LlmStringModerationConfig {
         LlmStringModerationConfig {
             add_llm_output_to_user_visible_rejection_details: None,
             expected_response,
-            max_tokens: None,
-            move_rejected_to_human_moderation,
+            max_tokens,
+            move_rejected_to_human_moderation: None,
             system_text,
             user_text_template,
         }

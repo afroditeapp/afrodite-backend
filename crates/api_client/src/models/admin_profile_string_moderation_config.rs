@@ -18,17 +18,20 @@ pub struct AdminProfileStringModerationConfig {
     pub accept_single_visible_character: Option<bool>,
     #[serde(rename = "default_action")]
     pub default_action: models::ModerationAction,
+    #[serde(rename = "llm")]
+    pub llm: Box<models::LlmStringModerationConfig>,
     /// Large language model based moderation. Actions: reject (or move_to_human) and accept
-    #[serde(rename = "llm", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub llm: Option<Option<Box<models::LlmStringModerationConfig>>>,
+    #[serde(rename = "llm_enabled", skip_serializing_if = "Option::is_none")]
+    pub llm_enabled: Option<bool>,
 }
 
 impl AdminProfileStringModerationConfig {
-    pub fn new(default_action: models::ModerationAction) -> AdminProfileStringModerationConfig {
+    pub fn new(default_action: models::ModerationAction, llm: models::LlmStringModerationConfig) -> AdminProfileStringModerationConfig {
         AdminProfileStringModerationConfig {
             accept_single_visible_character: None,
             default_action,
-            llm: None,
+            llm: Box::new(llm),
+            llm_enabled: None,
         }
     }
 }

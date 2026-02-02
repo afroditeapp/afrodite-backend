@@ -24,8 +24,8 @@ pub struct LlmContentModerationConfig {
     /// Overrides [Self::move_rejected_to_human_moderation]
     #[serde(rename = "ignore_rejected", skip_serializing_if = "Option::is_none")]
     pub ignore_rejected: Option<bool>,
-    #[serde(rename = "max_tokens", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub max_tokens: Option<Option<i32>>,
+    #[serde(rename = "max_tokens")]
+    pub max_tokens: i32,
     #[serde(rename = "move_accepted_to_human_moderation", skip_serializing_if = "Option::is_none")]
     pub move_accepted_to_human_moderation: Option<bool>,
     #[serde(rename = "move_rejected_to_human_moderation", skip_serializing_if = "Option::is_none")]
@@ -35,13 +35,13 @@ pub struct LlmContentModerationConfig {
 }
 
 impl LlmContentModerationConfig {
-    pub fn new(expected_response: String, system_text: String) -> LlmContentModerationConfig {
+    pub fn new(expected_response: String, max_tokens: i32, system_text: String) -> LlmContentModerationConfig {
         LlmContentModerationConfig {
             add_llm_output_to_user_visible_rejection_details: None,
             delete_accepted: None,
             expected_response,
             ignore_rejected: None,
-            max_tokens: None,
+            max_tokens,
             move_accepted_to_human_moderation: None,
             move_rejected_to_human_moderation: None,
             system_text,

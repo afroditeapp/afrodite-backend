@@ -13,20 +13,29 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AdminBotConfig {
-    #[serde(rename = "content_moderation", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub content_moderation: Option<Option<Box<models::AdminContentModerationConfig>>>,
-    #[serde(rename = "profile_name_moderation", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_name_moderation: Option<Option<Box<models::AdminProfileStringModerationConfig>>>,
-    #[serde(rename = "profile_text_moderation", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_text_moderation: Option<Option<Box<models::AdminProfileStringModerationConfig>>>,
+    #[serde(rename = "content_moderation")]
+    pub content_moderation: Box<models::AdminContentModerationConfig>,
+    #[serde(rename = "content_moderation_enabled", skip_serializing_if = "Option::is_none")]
+    pub content_moderation_enabled: Option<bool>,
+    #[serde(rename = "profile_name_moderation")]
+    pub profile_name_moderation: Box<models::AdminProfileStringModerationConfig>,
+    #[serde(rename = "profile_name_moderation_enabled", skip_serializing_if = "Option::is_none")]
+    pub profile_name_moderation_enabled: Option<bool>,
+    #[serde(rename = "profile_text_moderation")]
+    pub profile_text_moderation: Box<models::AdminProfileStringModerationConfig>,
+    #[serde(rename = "profile_text_moderation_enabled", skip_serializing_if = "Option::is_none")]
+    pub profile_text_moderation_enabled: Option<bool>,
 }
 
 impl AdminBotConfig {
-    pub fn new() -> AdminBotConfig {
+    pub fn new(content_moderation: models::AdminContentModerationConfig, profile_name_moderation: models::AdminProfileStringModerationConfig, profile_text_moderation: models::AdminProfileStringModerationConfig) -> AdminBotConfig {
         AdminBotConfig {
-            content_moderation: None,
-            profile_name_moderation: None,
-            profile_text_moderation: None,
+            content_moderation: Box::new(content_moderation),
+            content_moderation_enabled: None,
+            profile_name_moderation: Box::new(profile_name_moderation),
+            profile_name_moderation_enabled: None,
+            profile_text_moderation: Box::new(profile_text_moderation),
+            profile_text_moderation_enabled: None,
         }
     }
 }
