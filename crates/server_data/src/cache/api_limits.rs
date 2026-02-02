@@ -13,8 +13,12 @@ impl fmt::Debug for ApiLimitState {
 
 impl ApiLimitState {
     pub fn increment_and_check_is_limit_reached(&mut self, limit: u16) -> bool {
-        self.value = self.value.wrapping_add(1);
-        self.value >= limit
+        if self.value < limit {
+            self.value += 1;
+            false
+        } else {
+            true
+        }
     }
 
     pub fn reset(&mut self) {
