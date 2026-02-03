@@ -165,11 +165,11 @@ impl DataAllAccess<'_> {
     pub async fn register_impl(
         &self,
         sign_in_with: SignInWithInfo,
-        email: Option<EmailAddress>,
+        sign_in_with_email: Option<EmailAddress>,
     ) -> server_common::result::Result<AccountIdInternal, DataError> {
         let cmd = self
             .utils()
-            .register_impl(self.write(), sign_in_with, email);
+            .register_impl(self.write(), sign_in_with, sign_in_with_email);
         cmd.await
     }
 

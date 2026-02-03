@@ -13,7 +13,7 @@ use server_api::{
     db_write,
 };
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
-use server_data_account::read::GetReadCommandsAccount;
+use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 
 use super::account::login_impl;
@@ -216,11 +216,17 @@ async fn create_bot_account(
 ) -> Result<Option<BotAccount>, StatusCode> {
     let new_account_id = state
         .data_all_access()
-        .register_impl(SignInWithInfo::default(), Some(email))
+        .register_impl(SignInWithInfo::default(), None)
         .await?;
 
     db_write!(state, move |cmds| {
-        cmds.common().set_is_bot_account(new_account_id, true).await
+        cmds.common()
+            .set_is_bot_account(new_account_id, true)
+            .await?;
+        cmds.account()
+            .email()
+            .inital_setup_account_email_change(new_account_id, email)
+            .await
     })?;
 
     Ok(Some(BotAccount {

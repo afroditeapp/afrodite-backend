@@ -57,8 +57,6 @@ pub async fn complete_initial_setup(
             (false, false)
         };
 
-    let is_bot_account = read_handle.account().is_bot_account(id).await?;
-
     let new_account = write_handle
         .write(move |cmds| async move {
             // Second account state check as db_write quarantees synchronous
@@ -114,7 +112,7 @@ pub async fn complete_initial_setup(
             // Update initial setup completed time to profile index
             (&cmds.profile()).update_location_cache_profile(id).await?;
 
-            if !is_bot_account && !sign_in_with_info.some_sign_in_with_method_is_set() {
+            if !sign_in_with_info.some_sign_in_with_method_is_set() {
                 // Email verification email is not yet sent if email address
                 // was provided manually and not from some sign in with method.
                 cmds.account()

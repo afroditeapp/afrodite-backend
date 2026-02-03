@@ -113,7 +113,7 @@ pub trait DataAllUtils: Send + Sync + 'static {
         &self,
         write_command_runner: &'a WriteCommandRunnerHandle,
         sign_in_with: SignInWithInfo,
-        email: Option<EmailAddress>,
+        sign_in_with_email: Option<EmailAddress>,
     ) -> BoxFuture<'a, server_common::result::Result<AccountIdInternal, DataError>>;
 
     #[allow(clippy::too_many_arguments)]

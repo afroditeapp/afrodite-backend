@@ -40,7 +40,7 @@ impl DataAllUtils for DataAllUtilsImpl {
         &self,
         write_command_runner: &'a WriteCommandRunnerHandle,
         sign_in_with: SignInWithInfo,
-        email: Option<EmailAddress>,
+        sign_in_with_email: Option<EmailAddress>,
     ) -> BoxFuture<'a, server_common::result::Result<AccountIdInternal, DataError>> {
         async move {
             let id = write_command_runner
@@ -51,10 +51,10 @@ impl DataAllUtils for DataAllUtilsImpl {
 
                     let id = cmds.account().get_next_unique_account_id().await?;
                     RegisterAccount::new(cmds.write_handle())
-                        .register(id, sign_in_with, email.clone())
+                        .register(id, sign_in_with, sign_in_with_email.clone())
                         .await?;
 
-                    if email.is_some() {
+                    if sign_in_with_email.is_some() {
                         cmds.account()
                             .email()
                             .send_email_if_not_already_sent(id, EmailMessages::EmailVerification)
