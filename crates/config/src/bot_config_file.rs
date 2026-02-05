@@ -422,5 +422,5 @@ pub struct LlmContentModerationFileConfig {
 pub struct RemoteBotModeConfig {
     pub api_url: Url,
     /// Password for remote bot login.
-    pub password: Option<String>,
+    pub password: String,
 }

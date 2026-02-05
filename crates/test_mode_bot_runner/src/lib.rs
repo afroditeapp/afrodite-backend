@@ -62,7 +62,8 @@ impl BotTestRunner {
             None
         };
 
-        ApiClient::new(self.test_config.api_urls.clone(), &self.reqwest_client).print_to_log();
+        let api_client = ApiClient::new(self.test_config.api_urls.clone(), &self.reqwest_client);
+        api_client.print_to_log();
 
         let (quit_now, server) = if !self.test_config.no_servers {
             info!("Creating ServerManager...");
@@ -107,6 +108,7 @@ impl BotTestRunner {
                     bot_running_handle.clone(),
                     bot_quit_receiver.clone(),
                     &self.reqwest_client,
+                    api_client,
                 )
                 .await;
             }
@@ -256,9 +258,10 @@ impl BotTestRunner {
         bot_running_handle: mpsc::Sender<BotPersistentState>,
         bot_quit_receiver: watch::Receiver<()>,
         reqwest_client: &reqwest::Client,
+        api_client: ApiClient,
     ) {
         let bot_accounts =
-            Self::get_or_create_bot_accounts(test_config.clone(), reqwest_client).await;
+            Self::get_or_create_bot_accounts(bot_config_file.clone(), api_client).await;
 
         let has_admin = bot_accounts
             .admin
@@ -325,12 +328,20 @@ impl BotTestRunner {
     }
 
     async fn get_or_create_bot_accounts(
-        test_config: Arc<TestMode>,
-        reqwest_client: &reqwest::Client,
+        bot_config_file: Arc<BotConfigFile>,
+        api_client: ApiClient,
     ) -> api_client::models::GetBotsResult {
-        let api_client = ApiClient::new(test_config.api_urls.clone(), reqwest_client);
-        account_bot_api::post_get_bots(api_client.api())
+        if let Some(remote_config) = &bot_config_file.remote_bot_mode {
+            account_bot_api::post_remote_get_bots(
+                api_client.api(),
+                api_client::models::RemoteBotPassword::new(remote_config.password.clone()),
+            )
             .await
-            .expect("Failed to get bot accounts from server")
+            .expect("Failed to get bot accounts from server using remote bot mode")
+        } else {
+            account_bot_api::post_get_bots(api_client.api())
+                .await
+                .expect("Failed to get bot accounts from server")
+        }
     }
 }

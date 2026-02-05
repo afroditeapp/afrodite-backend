@@ -140,7 +140,7 @@ impl BotState {
             self.bot_config_file
                 .remote_bot_mode
                 .as_ref()
-                .and_then(|mode| mode.password.clone())
+                .map(|mode| mode.password.clone())
         } else {
             None
         }
