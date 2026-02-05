@@ -78,7 +78,9 @@ impl BotConfigFile {
             let mut server_config_path = bot_config_abs_path;
             server_config_path.pop();
             server_config_path.push(ConfigFile::CONFIG_FILE_NAME);
-            let server_config = ConfigFile::load(server_config_path)?;
+            let server_config = ConfigFile::load(server_config_path).attach_printable(
+                "Bot config does not have [location] and server config could not be loaded. Try adding [location] to bot config.",
+            )?;
             bot_config.location = server_config.location;
         }
 
