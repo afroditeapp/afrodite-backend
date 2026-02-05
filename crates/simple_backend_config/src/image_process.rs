@@ -13,6 +13,10 @@ pub struct ImageProcessingConfig {
 }
 
 impl ImageProcessingConfig {
+    pub fn new(file: ImageProcessingStaticConfig, dynamic: ImageProcessingDynamicConfig) -> Self {
+        Self { file, dynamic }
+    }
+
     pub fn file(&self) -> &ImageProcessingStaticConfig {
         &self.file
     }

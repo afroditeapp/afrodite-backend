@@ -29,3 +29,9 @@ pub struct NsfwDetectionThresholds {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sexy: Option<f64>,
 }
+
+impl NsfwDetectionThresholds {
+    pub fn all_disabled(&self) -> bool {
+        *self == Self::default()
+    }
+}

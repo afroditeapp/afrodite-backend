@@ -5,11 +5,12 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
-use simple_backend_config::image_process::ImageProcessingConfig;
+use simple_backend_config::{SimpleBackendConfig, image_process::ImageProcessingConfig};
 use simple_backend_image_process::{
     ChangeSettingsCommand, ImageProcessMessage, ImageProcessingInfo, InputFileType,
     ProcessImageCommand,
 };
+use simple_backend_model::ImageProcessingDynamicConfig;
 use simple_backend_utils::ContextExt;
 use tokio::{
     io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
@@ -234,7 +235,8 @@ pub struct ImageProcess;
 
 impl ImageProcess {
     pub async fn start_image_process(
-        load_config: impl AsyncFnOnce() -> Result<ImageProcessingConfig, ImageProcessError>,
+        config: &SimpleBackendConfig,
+        load_config: impl AsyncFnOnce() -> Result<ImageProcessingDynamicConfig, ImageProcessError>,
         input: &Path,
         input_file_type: InputFileType,
         output: &Path,
@@ -268,7 +270,11 @@ impl ImageProcess {
 
         let handle = match state.take() {
             Some(handle) => handle,
-            None => ImageProcessHandle::start(load_config().await?).await?,
+            None => {
+                let dynamic_config = load_config().await?;
+                let image_process_config = Self::build_image_process_config(config, dynamic_config);
+                ImageProcessHandle::start(image_process_config).await?
+            }
         };
 
         let (handle, info) = handle.run_command(command).await?;
@@ -278,8 +284,10 @@ impl ImageProcess {
     }
 
     pub async fn update_config_if_process_is_running(
-        config: ImageProcessingConfig,
+        config: &SimpleBackendConfig,
+        dynamic_config: ImageProcessingDynamicConfig,
     ) -> Result<(), ImageProcessError> {
+        let config = Self::build_image_process_config(config, dynamic_config);
         let mut state = get_image_process().lock().await;
 
         if let Some(mut handle) = state.take() {
@@ -299,5 +307,31 @@ impl ImageProcess {
         if let Some(handle) = get_image_process().lock().await.take() {
             handle.close().await;
         }
+    }
+
+    fn build_image_process_config(
+        config: &SimpleBackendConfig,
+        dynamic_config: ImageProcessingDynamicConfig,
+    ) -> ImageProcessingConfig {
+        if !dynamic_config.nsfw_thresholds.all_disabled()
+            && config
+                .image_process_static_config()
+                .nsfw_detection
+                .is_none()
+        {
+            warn!(
+                "Image processing NSFW detection enabled in DB config but file config is missing"
+            );
+        }
+
+        if dynamic_config.seetaface_threshold.is_some()
+            && config.image_process_static_config().seetaface.is_none()
+        {
+            warn!(
+                "Image processing face detection (SeetaFace) enabled in DB config but file config is missing"
+            );
+        }
+
+        ImageProcessingConfig::new(config.image_process_static_config(), dynamic_config)
     }
 }

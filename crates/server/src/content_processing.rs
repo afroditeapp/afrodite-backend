@@ -95,8 +95,8 @@ impl ContentProcessingManager {
         let result = match content.new_content_params.content_type {
             MediaContentType::JpegImage => {
                 let state = self.state.clone();
-                let config = self.state.config().simple_backend().clone();
                 ImageProcess::start_image_process(
+                    self.state.config().simple_backend(),
                     || async move {
                         let dynamic_config = state
                             .read()
@@ -106,7 +106,7 @@ impl ContentProcessingManager {
                             .change_context(ImageProcessError::ConfigLoading)
                             .map_err(|e| e.into_report())?
                             .unwrap_or_default();
-                        Ok(config.image_process_config(dynamic_config))
+                        Ok(dynamic_config)
                     },
                     content.tmp_raw_img.as_path(),
                     InputFileType::JpegImage,

@@ -57,19 +57,17 @@ pub async fn post_image_processing_config(
         return Err(StatusCode::UNAUTHORIZED);
     }
 
-    let simple_backend_config = state.simple_backend_config();
-    let image_process_config = simple_backend_config.image_process_config(config.clone());
-
+    let config_clone = config.clone();
     db_write!(state, move |cmds| {
         cmds.media_admin()
             .image_processing_config()
-            .upsert_image_processing_config(&config)
+            .upsert_image_processing_config(&config_clone)
             .await?;
 
         Ok(())
     })?;
 
-    ImageProcess::update_config_if_process_is_running(image_process_config)
+    ImageProcess::update_config_if_process_is_running(state.simple_backend_config(), config)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 

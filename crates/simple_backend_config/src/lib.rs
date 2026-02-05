@@ -23,13 +23,15 @@ use file::{MaxMindDbConfig, SignInWithAppleConfig, TileMapConfig, VideoCallingCo
 use ip::IpList;
 use reqwest::Url;
 use rustls_pemfile::certs;
-use simple_backend_model::ImageProcessingDynamicConfig;
 use simple_backend_utils::dir::abs_path_for_directory_or_file_which_might_not_exists;
 use tokio_rustls::rustls::ServerConfig;
 use web_push::{PartialVapidSignatureBuilder, VapidSignatureBuilder};
 
 use self::file::{ManagerConfig, SignInWithGoogleConfig, SimpleBackendConfigFile, SocketConfig};
-use crate::file::{ApnsConfig, DatabaseConfig, FcmConfig, LetsEncryptConfig, WebPushConfig};
+use crate::file::{
+    ApnsConfig, DatabaseConfig, FcmConfig, ImageProcessingStaticConfig, LetsEncryptConfig,
+    WebPushConfig,
+};
 
 /// Config file debug mode status.
 ///
@@ -230,15 +232,8 @@ impl SimpleBackendConfig {
         self.file.static_file_package_hosting.as_ref()
     }
 
-    pub fn image_process_config(
-        &self,
-        dynamic: ImageProcessingDynamicConfig,
-    ) -> image_process::ImageProcessingConfig {
-        let config_file = self.file.image_processing.clone().unwrap_or_default();
-        image_process::ImageProcessingConfig {
-            file: config_file,
-            dynamic,
-        }
+    pub fn image_process_static_config(&self) -> ImageProcessingStaticConfig {
+        self.file.image_processing.clone().unwrap_or_default()
     }
 
     pub fn debug_face_detection_result(&self) -> Option<bool> {
