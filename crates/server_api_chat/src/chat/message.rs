@@ -115,7 +115,7 @@ pub async fn post_add_receiver_acknowledgement(
     Extension(id): Extension<AccountIdInternal>,
     Json(list): Json<PendingMessageAcknowledgementList>,
 ) -> Result<(), StatusCode> {
-    CHAT.delete_pending_messages.incr();
+    CHAT.post_add_receiver_acknowledgement.incr();
 
     db_write!(state, move |cmds| {
         cmds.chat()
@@ -447,7 +447,7 @@ create_counters!(
     CHAT,
     CHAT_MESSAGE_COUNTERS_LIST,
     get_pending_messages,
-    delete_pending_messages,
+    post_add_receiver_acknowledgement,
     post_send_message,
     post_get_sent_message,
     get_sent_message_ids,
