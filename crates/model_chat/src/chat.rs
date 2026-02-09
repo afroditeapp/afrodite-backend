@@ -80,6 +80,9 @@ pub struct PendingMessageId {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct PendingMessageAcknowledgementList {
     pub ids: Vec<PendingMessageId>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub delivery_failed: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]

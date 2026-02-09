@@ -1080,7 +1080,6 @@ CREATE TABLE IF NOT EXISTS pending_messages(
             ON UPDATE CASCADE
 );
 
--- Delivery information for messages (delivered, seen status)
 CREATE TABLE IF NOT EXISTS message_delivery_info(
     id                      BIGSERIAL PRIMARY KEY NOT NULL,
     -- The account which sent the message.
@@ -1091,6 +1090,7 @@ CREATE TABLE IF NOT EXISTS message_delivery_info(
     message_id              BYTEA NOT NULL,
     -- 0 = delivered
     -- 1 = seen
+    -- 2 = delivery failed
     delivery_info_type      SMALLINT NOT NULL,
     -- When the delivery info was created
     unix_time               BIGINT NOT NULL,

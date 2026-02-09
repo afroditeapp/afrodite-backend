@@ -199,6 +199,7 @@ impl WriteCommandsChat<'_> {
         &self,
         message_receiver: AccountIdInternal,
         messages: Vec<PendingMessageId>,
+        delivery_failed: bool,
     ) -> Result<(), DataError> {
         let mut converted = vec![];
         let mut unique_senders = HashSet::new();
@@ -217,6 +218,12 @@ impl WriteCommandsChat<'_> {
             }
         }
 
+        let delivery_type = if delivery_failed {
+            DeliveryInfoType::DeliveryFailed
+        } else {
+            DeliveryInfoType::Delivered
+        };
+
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .message()
@@ -230,7 +237,7 @@ impl WriteCommandsChat<'_> {
                     msg.sender,
                     message_receiver,
                     msg.message_id,
-                    DeliveryInfoType::Delivered,
+                    delivery_type,
                 )?;
             }
 
