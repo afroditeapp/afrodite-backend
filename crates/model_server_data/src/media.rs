@@ -27,10 +27,18 @@ pub enum MediaContentType {
     JpegImage = 0,
 }
 
-impl MediaContentType {
-    pub fn file_extension(&self) -> &'static str {
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema)]
+pub enum MediaContentUploadType {
+    /// JPEG and PNG images are supported
+    Image,
+}
+
+impl MediaContentUploadType {
+    /// Convert upload type to the stored content type.
+    /// Images are always processed and stored as JPEG.
+    pub fn to_stored_type(&self) -> MediaContentType {
         match self {
-            Self::JpegImage => "jpg",
+            Self::Image => MediaContentType::JpegImage,
         }
     }
 }
@@ -39,5 +47,5 @@ impl MediaContentType {
 pub struct NewContentParams {
     /// Client captured this content.
     pub secure_capture: bool,
-    pub content_type: MediaContentType,
+    pub content_type: MediaContentUploadType,
 }

@@ -7,8 +7,7 @@ use std::{
 use error_stack::{Result, ResultExt};
 use simple_backend_config::{SimpleBackendConfig, image_process::ImageProcessingConfig};
 use simple_backend_image_process::{
-    ChangeSettingsCommand, ImageProcessMessage, ImageProcessingInfo, InputFileType,
-    ProcessImageCommand,
+    ChangeSettingsCommand, ImageProcessMessage, ImageProcessingInfo, ProcessImageCommand,
 };
 use simple_backend_model::ImageProcessingDynamicConfig;
 use simple_backend_utils::ContextExt;
@@ -185,7 +184,6 @@ impl ImageProcessHandle {
         let message = ImageProcessMessage::ProcessImage {
             process_image: ProcessImageCommand {
                 input: command.input,
-                input_file_type: command.input_file_type,
                 output: command.output,
             },
         };
@@ -238,7 +236,6 @@ impl ImageProcess {
         config: &SimpleBackendConfig,
         load_config: impl AsyncFnOnce() -> Result<ImageProcessingDynamicConfig, ImageProcessError>,
         input: &Path,
-        input_file_type: InputFileType,
         output: &Path,
     ) -> Result<ImageProcessingInfo, ImageProcessError> {
         let input = std::fs::canonicalize(input)
@@ -260,11 +257,7 @@ impl ImageProcess {
             }
         };
 
-        let command = ProcessImageCommand {
-            input,
-            input_file_type,
-            output,
-        };
+        let command = ProcessImageCommand { input, output };
 
         let mut state = get_image_process().lock().await;
 

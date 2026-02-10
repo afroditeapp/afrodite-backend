@@ -51,11 +51,6 @@ pub enum ImageProcessError {
     NsfwDetectionError,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
-pub enum InputFileType {
-    JpegImage,
-}
-
 /// Image process reads this info as JSON from standard input.
 ///
 /// The standard input receives JSON strings with this format
@@ -81,7 +76,6 @@ pub enum ImageProcessMessage {
 pub struct ProcessImageCommand {
     /// Input image file.
     pub input: PathBuf,
-    pub input_file_type: InputFileType,
     /// Output jpeg image file. Will be overwritten if exists.
     pub output: PathBuf,
 }
@@ -166,14 +160,10 @@ fn handle_image(
     nsfw_detector: &NsfwDetector,
     command: ProcessImageCommand,
 ) -> Result<ImageProcessingInfo, ImageProcessError> {
-    let format = match command.input_file_type {
-        InputFileType::JpegImage => image::ImageFormat::Jpeg,
-    };
-
-    let mut img_reader =
-        ImageReader::open(&command.input).change_context(ImageProcessError::InputReadingFailed)?;
-    img_reader.set_format(format);
-    let mut img_decoder = img_reader
+    let mut img_decoder = ImageReader::open(&command.input)
+        .change_context(ImageProcessError::InputReadingFailed)?
+        .with_guessed_format()
+        .change_context(ImageProcessError::InputReadingFailed)?
         .into_decoder()
         .change_context(ImageProcessError::InputReadingFailed)?;
     let orientation = img_decoder

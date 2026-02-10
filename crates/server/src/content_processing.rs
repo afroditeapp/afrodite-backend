@@ -1,6 +1,6 @@
 use config::Config;
 use model::{AdminNotificationTypes, ContentId};
-use model_media::MediaContentType;
+use model_media::MediaContentUploadType;
 use server_api::{
     app::{ContentProcessingProvider, EventManagerProvider, WriteData},
     db_write_raw,
@@ -17,7 +17,7 @@ use simple_backend::{
     ServerQuitWatcher,
     image::{ImageProcess, ImageProcessError},
 };
-use simple_backend_image_process::{ImageProcessingInfo, InputFileType};
+use simple_backend_image_process::ImageProcessingInfo;
 use tokio::task::JoinHandle;
 use tracing::{error, warn};
 
@@ -93,7 +93,7 @@ impl ContentProcessingManager {
 
     pub async fn handle_content(&self, content: ProcessingState) {
         let result = match content.new_content_params.content_type {
-            MediaContentType::JpegImage => {
+            MediaContentUploadType::Image => {
                 let state = self.state.clone();
                 ImageProcess::start_image_process(
                     self.state.config().simple_backend(),
@@ -109,7 +109,6 @@ impl ContentProcessingManager {
                         Ok(dynamic_config)
                     },
                     content.tmp_raw_img.as_path(),
-                    InputFileType::JpegImage,
                     content.tmp_img.as_path(),
                 )
                 .await

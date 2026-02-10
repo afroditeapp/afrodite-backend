@@ -22,6 +22,8 @@ pub use server_common::{data::DataError, result};
 #[openapi(
     paths(),
     components(schemas(
+        // Media
+        model_media::MediaContentUploadType,
         // Media admin
         model_media::ModerationQueueType,
     )),

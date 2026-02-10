@@ -228,7 +228,7 @@ impl CurrentWriteMediaContent<'_> {
                 secure_capture.eq(content_params.secure_capture),
                 face_detected.eq(face_detected_value),
                 face_detected_manual.eq(face_detected_manual_value),
-                content_type_number.eq(content_params.content_type),
+                content_type_number.eq(content_params.content_type.to_stored_type()),
                 initial_content.eq(initial_content_value),
                 creation_unix_time.eq(current_time),
                 moderation_state.eq(state_value),
