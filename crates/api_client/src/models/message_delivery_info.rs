@@ -13,7 +13,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MessageDeliveryInfo {
-    /// Delivery info type (Delivered or Seen)
     #[serde(rename = "delivery_type")]
     pub delivery_type: models::DeliveryInfoType,
     /// Database ID for the delivery info entry

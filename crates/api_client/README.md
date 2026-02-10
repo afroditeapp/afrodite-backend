@@ -115,6 +115,7 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**post_get_sent_message**](docs/ChatApi.md#post_get_sent_message) | **POST** /chat_api/sent_message | Receive unreceived [model_chat::SignedMessageData] for sent message.
 *ChatApi* | [**post_mark_messages_as_seen**](docs/ChatApi.md#post_mark_messages_as_seen) | **POST** /chat_api/mark_messages_as_seen | Mark received messages as seen.
 *ChatApi* | [**post_mark_received_likes_viewed**](docs/ChatApi.md#post_mark_received_likes_viewed) | **POST** /chat_api/mark_received_likes_viewed | 
+*ChatApi* | [**post_resend_message**](docs/ChatApi.md#post_resend_message) | **POST** /chat_api/resend_message | Resend a message.
 *ChatApi* | [**post_reset_new_received_likes_count**](docs/ChatApi.md#post_reset_new_received_likes_count) | **POST** /chat_api/reset_new_received_likes_count | 
 *ChatApi* | [**post_reset_received_likes_paging**](docs/ChatApi.md#post_reset_received_likes_paging) | **POST** /chat_api/received_likes/reset | 
 *ChatApi* | [**post_send_like**](docs/ChatApi.md#post_send_like) | **POST** /chat_api/send_like | Send a like to some account. If both will like each other, then the accounts will be a match.
@@ -411,6 +412,7 @@ Class | Method | HTTP request | Description
  - [MediaContentPendingModeration](docs/MediaContentPendingModeration.md)
  - [MediaContentSyncVersion](docs/MediaContentSyncVersion.md)
  - [MediaContentType](docs/MediaContentType.md)
+ - [MediaContentUploadType](docs/MediaContentUploadType.md)
  - [MessageDeliveryInfo](docs/MessageDeliveryInfo.md)
  - [MessageDeliveryInfoIdList](docs/MessageDeliveryInfoIdList.md)
  - [MessageDeliveryInfoList](docs/MessageDeliveryInfoList.md)
@@ -513,6 +515,7 @@ Class | Method | HTTP request | Description
  - [ReportTypeNumber](docs/ReportTypeNumber.md)
  - [RequestEmailLoginToken](docs/RequestEmailLoginToken.md)
  - [RequestEmailLoginTokenResult](docs/RequestEmailLoginTokenResult.md)
+ - [ResendMessage](docs/ResendMessage.md)
  - [ResetNewsIteratorResult](docs/ResetNewsIteratorResult.md)
  - [ResetReceivedLikesIteratorResult](docs/ResetReceivedLikesIteratorResult.md)
  - [ScheduledMaintenanceStatus](docs/ScheduledMaintenanceStatus.md)

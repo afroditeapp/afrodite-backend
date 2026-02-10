@@ -5,7 +5,7 @@ use api_client::{
         get_content_slot_state, put_content_to_content_slot, put_profile_content,
         put_security_content_info,
     },
-    models::{ContentId, ContentProcessingStateType, MediaContentType, SetProfileContent},
+    models::{ContentId, ContentProcessingStateType, MediaContentUploadType, SetProfileContent},
 };
 use async_trait::async_trait;
 use config::bot_config_file::{BaseBotConfig, BotConfigFile, Gender};
@@ -69,7 +69,7 @@ impl SendImageToSlot {
             state.api(),
             self.slot,
             self.slot == 0, // secure capture
-            MediaContentType::JpegImage,
+            MediaContentUploadType::Image,
             img_data.clone(),
         )
         .await
@@ -134,7 +134,7 @@ impl SendImageToSlot {
                 state.api(),
                 slot,
                 slot == 0, // slot 0 is for secure capture
-                MediaContentType::JpegImage,
+                MediaContentUploadType::Image,
                 img_data,
             )
             .await

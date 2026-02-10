@@ -405,6 +405,7 @@ impl BotAction for AnswerReceivedMessages {
                     id: msg.message_id.clone().into(),
                 })
                 .collect(),
+            delivery_failed: None,
         };
 
         post_add_receiver_acknowledgement(state.api(), delete_list)

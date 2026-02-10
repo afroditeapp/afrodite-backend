@@ -18,6 +18,8 @@ pub enum DeliveryInfoType {
     Delivered,
     #[serde(rename = "Seen")]
     Seen,
+    #[serde(rename = "DeliveryFailed")]
+    DeliveryFailed,
 
 }
 
@@ -26,6 +28,7 @@ impl std::fmt::Display for DeliveryInfoType {
         match self {
             Self::Delivered => write!(f, "Delivered"),
             Self::Seen => write!(f, "Seen"),
+            Self::DeliveryFailed => write!(f, "DeliveryFailed"),
         }
     }
 }

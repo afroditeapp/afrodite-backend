@@ -198,6 +198,7 @@ src/models/media_content_moderation_rejected_reason_details.rs
 src/models/media_content_pending_moderation.rs
 src/models/media_content_sync_version.rs
 src/models/media_content_type.rs
+src/models/media_content_upload_type.rs
 src/models/message_delivery_info.rs
 src/models/message_delivery_info_id_list.rs
 src/models/message_delivery_info_list.rs
@@ -301,6 +302,7 @@ src/models/report_processing_state.rs
 src/models/report_type_number.rs
 src/models/request_email_login_token.rs
 src/models/request_email_login_token_result.rs
+src/models/resend_message.rs
 src/models/reset_news_iterator_result.rs
 src/models/reset_received_likes_iterator_result.rs
 src/models/scheduled_maintenance_status.rs

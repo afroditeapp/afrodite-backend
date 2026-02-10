@@ -643,7 +643,7 @@ pub async fn post_profile_content_report(configuration: &configuration::Configur
 }
 
 /// Processing ID will be returned and processing of the content will begin. Events about the content processing will be sent to the client.  The state of the processing can be also queired. The querying is required to receive the content ID.  Slots from 0 to 6 are available.  One account can only have one content in upload or processing state. New upload might potentially delete the previous if processing of it is not complete.  Content processing will fail if image content resolution width or height value is less than 512.  
-pub async fn put_content_to_content_slot(configuration: &configuration::Configuration, slot_id: i32, secure_capture: bool, content_type: models::MediaContentType, body: Vec<u8>) -> Result<models::ContentProcessingId, Error<PutContentToContentSlotError>> {
+pub async fn put_content_to_content_slot(configuration: &configuration::Configuration, slot_id: i32, secure_capture: bool, content_type: models::MediaContentUploadType, body: Vec<u8>) -> Result<models::ContentProcessingId, Error<PutContentToContentSlotError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_slot_id = slot_id;
     let p_query_secure_capture = secure_capture;
