@@ -56,6 +56,9 @@ fn db_data_export(
     cmd: DataExportCmd,
 ) -> error_stack::Result<(), DieselDatabaseError> {
     let archive = file_dir.tmp_dir(cmd.target().0.into()).data_export();
+    archive
+        .create_parent_dirs_blocking()
+        .change_context(DieselDatabaseError::File)?;
     let file =
         std::fs::File::create_new(archive.path()).change_context(DieselDatabaseError::File)?;
     let mut writer = DataExportArchiveWriter {

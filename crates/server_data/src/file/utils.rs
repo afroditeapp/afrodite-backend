@@ -245,6 +245,10 @@ impl TmpDataExport {
         self.path.overwrite_and_remove_if_exists().await
     }
 
+    pub fn create_parent_dirs_blocking(&self) -> Result<(), FileError> {
+        self.path.create_parent_dirs_blocking()
+    }
+
     pub async fn byte_count_and_read_stream(
         &self,
     ) -> Result<(u64, ReaderStream<tokio::fs::File>), FileError> {
