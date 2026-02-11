@@ -20,6 +20,16 @@ impl WriteCommandsCommonClientConfig<'_> {
         })
     }
 
+    pub async fn increment_client_config_sync_version_for_every_account(
+        &self,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.common()
+                .client_config()
+                .increment_client_config_sync_version_for_every_account()
+        })
+    }
+
     pub async fn client_login_session_platform(
         &self,
         id: AccountIdInternal,

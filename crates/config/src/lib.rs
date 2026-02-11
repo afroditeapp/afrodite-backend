@@ -22,10 +22,7 @@ use std::{
 };
 
 use bot_config_file::BotConfigFile;
-use csv::{
-    attribute_values::AttributeValuesCsvLoader,
-    profile_name_allowlist::{ProfileNameAllowlistBuilder, ProfileNameAllowlistData},
-};
+use csv::profile_name_allowlist::{ProfileNameAllowlistBuilder, ProfileNameAllowlistData};
 use error_stack::{Result, ResultExt};
 use file::{
     AccountLimitsConfig, AutomaticProfileSearchConfig, ChatLimitsConfig, CommonLimitsConfig,
@@ -35,7 +32,6 @@ use file_email_content::EmailContentFile;
 use file_web_content::WebContentFile;
 pub use model::{AdminBotConfig, BotConfig, ClientFeaturesConfig, ClientFeaturesConfigInternal};
 use model::{CustomReportsConfig, ScheduledTasksConfig};
-use model_server_data::{AttributesFileInternal, ProfileAttributesInternal};
 use sha2::{Digest, Sha256};
 use simple_backend_config::{SimpleBackendConfig, args::ServerMode, file::SimpleBackendConfigFile};
 use simple_backend_utils::{
@@ -68,7 +64,6 @@ pub enum GetConfigError {
 pub struct ParsedFiles<'a> {
     pub server: &'a ConfigFile,
     pub simple_backend: &'a SimpleBackendConfigFile,
-    pub profile_attributes: &'a AttributesFileInternal,
     pub custom_reports: &'a CustomReportsConfig,
     pub client_features: &'a ClientFeaturesConfig,
     pub email_content: &'a EmailContentFile,
@@ -84,8 +79,6 @@ pub struct Config {
     simple_backend_config: Arc<SimpleBackendConfig>,
 
     // Other configs
-    profile_attributes: ProfileAttributesInternal,
-    profile_attributes_sha256: String,
     custom_reports: CustomReportsConfig,
     custom_reports_sha256: String,
     client_features: ClientFeaturesConfig,
@@ -102,7 +95,6 @@ pub struct Config {
 
     // Used only for config utils
     bot_config: BotConfigFile,
-    profile_attributes_file: AttributesFileInternal,
 }
 
 impl Config {
@@ -112,8 +104,6 @@ impl Config {
         Self {
             file: ConfigFile::minimal_config_for_api_doc_json(),
             simple_backend_config,
-            profile_attributes: ProfileAttributesInternal::default(),
-            profile_attributes_sha256: String::new(),
             custom_reports: CustomReportsConfig::default(),
             custom_reports_sha256: String::new(),
             client_features: ClientFeaturesConfig::default(),
@@ -126,7 +116,6 @@ impl Config {
             profile_name_regex: None,
             bot_config_abs_file_path: PathBuf::new(),
             bot_config: BotConfigFile::default(),
-            profile_attributes_file: AttributesFileInternal::default(),
         }
     }
 
@@ -191,14 +180,6 @@ impl Config {
             .as_ref()
             .and_then(|v| v.profile.as_ref().cloned())
             .unwrap_or_default()
-    }
-
-    pub fn profile_attributes(&self) -> &ProfileAttributesInternal {
-        &self.profile_attributes
-    }
-
-    pub fn profile_attributes_sha256(&self) -> &str {
-        &self.profile_attributes_sha256
     }
 
     pub fn custom_reports(&self) -> &CustomReportsConfig {
@@ -285,7 +266,6 @@ impl Config {
         ParsedFiles {
             server: &self.file,
             simple_backend: self.simple_backend().parsed_file(),
-            profile_attributes: &self.profile_attributes_file,
             custom_reports: self.custom_reports(),
             client_features: self.client_features(),
             email_content: self.email_content(),
@@ -314,31 +294,6 @@ pub fn get_config(
     let file_config =
         file::ConfigFile::load_from_default_location(save_default_config_if_not_found)
             .change_context(GetConfigError::LoadFileError)?;
-
-    let (profile_attributes, profile_attributes_sha256, profile_attributes_file) = {
-        let path = Path::new(AttributesFileInternal::CONFIG_FILE_NAME);
-        if !path.exists() && save_default_config_if_not_found {
-            std::fs::write(path, AttributesFileInternal::DEFAULT_CONFIG_FILE_TEXT)
-                .change_context(GetConfigError::LoadFileError)?;
-        }
-        let attributes =
-            std::fs::read_to_string(path).change_context(GetConfigError::LoadFileError)?;
-        let mut profile_attributes_sha256 = Sha256::new();
-        profile_attributes_sha256.update(attributes.as_bytes());
-        let mut attributes_file: AttributesFileInternal =
-            toml::from_str(&attributes).change_context(GetConfigError::InvalidConfiguration)?;
-        AttributeValuesCsvLoader::load_if_needed(
-            &mut attributes_file,
-            &mut profile_attributes_sha256,
-        )
-        .change_context(GetConfigError::LoadFileError)?;
-        let profile_attributes_sha256 = format!("{:x}", profile_attributes_sha256.finalize());
-        let attributes = attributes_file
-            .clone()
-            .validate()
-            .into_error_string(GetConfigError::InvalidConfiguration)?;
-        (attributes, profile_attributes_sha256, attributes_file)
-    };
 
     let (custom_reports, custom_reports_sha256) = {
         let path = Path::new(CustomReportsConfig::CONFIG_FILE_NAME);
@@ -425,8 +380,6 @@ pub fn get_config(
     let config = Config {
         simple_backend_config: simple_backend_config.into(),
         file: file_config,
-        profile_attributes,
-        profile_attributes_sha256,
         custom_reports,
         custom_reports_sha256,
         client_features,
@@ -439,7 +392,6 @@ pub fn get_config(
         profile_name_regex,
         bot_config_abs_file_path,
         bot_config,
-        profile_attributes_file,
     };
 
     Ok(config)

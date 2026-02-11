@@ -1,4 +1,4 @@
-use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
+use database::current::read::GetDbReadCommandsCommon;
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
     AccountIdInternal, LastSeenUnixTime, Location, ProfileFiltersUpdateValidated,
@@ -10,7 +10,6 @@ use server_data::{
     db_transaction, define_cmd_wrapper_write, index::LocationWrite, read::DbRead, result::Result,
     write::DbTransaction,
 };
-use tracing::info;
 
 use crate::cache::{CacheReadProfile, CacheWriteProfile};
 
@@ -260,35 +259,6 @@ impl WriteCommandsProfile<'_> {
             cmds.profile()
                 .favorite()
                 .remove_favorite_profile(id, favorite)
-        })
-    }
-
-    /// Updates the profile attributes sha256 and related sync version for it for every
-    /// account if needed.
-    pub async fn update_profile_attributes_sha256_and_sync_versions(
-        &self,
-        sha256: String,
-    ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            let current_hash = cmds.read().profile().data().attribute_file_hash()?;
-
-            if current_hash.as_deref() != Some(&sha256) {
-                info!(
-                    "Profile attributes file hash changed from {:?} to {:?}",
-                    current_hash,
-                    Some(&sha256)
-                );
-
-                cmds.profile()
-                    .data()
-                    .upsert_profile_attributes_file_hash(&sha256)?;
-
-                cmds.common()
-                    .client_config()
-                    .increment_client_config_sync_version_for_every_account()?;
-            }
-
-            Ok(())
         })
     }
 

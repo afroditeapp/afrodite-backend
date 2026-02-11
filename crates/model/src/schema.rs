@@ -674,13 +674,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    profile_attributes_file_hash (row_type) {
-        row_type -> Int4,
-        sha256_hash -> Text,
-    }
-}
-
-diesel::table! {
     profile_attributes_filter_list_unwanted (account_id, attribute_id, filter_value) {
         account_id -> Int8,
         attribute_id -> Int2,
@@ -702,6 +695,28 @@ diesel::table! {
         attribute_id -> Int2,
         filter_accept_missing_attribute -> Bool,
         filter_use_logical_operator_and -> Bool,
+    }
+}
+
+diesel::table! {
+    profile_attributes_schema (row_type) {
+        row_type -> Int4,
+        attribute_order_mode -> Int2,
+    }
+}
+
+diesel::table! {
+    profile_attributes_schema_attribute (attribute_id) {
+        attribute_id -> Int2,
+        attribute_json -> Text,
+        sha256_hash -> Text,
+    }
+}
+
+diesel::table! {
+    profile_attributes_schema_hash (row_type) {
+        row_type -> Int4,
+        sha256_hash -> Text,
     }
 }
 
@@ -997,10 +1012,12 @@ diesel::allow_tables_to_appear_in_same_query!(
     profile,
     profile_app_notification_settings,
     profile_app_notification_state,
-    profile_attributes_file_hash,
     profile_attributes_filter_list_unwanted,
     profile_attributes_filter_list_wanted,
     profile_attributes_filter_settings,
+    profile_attributes_schema,
+    profile_attributes_schema_attribute,
+    profile_attributes_schema_hash,
     profile_attributes_value_list,
     profile_automatic_profile_search_settings,
     profile_automatic_profile_search_state,

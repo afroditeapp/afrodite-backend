@@ -14,8 +14,9 @@ use super::write_concurrent::{
 };
 use crate::{
     DataError,
-    db_manager::{ReadAdapter, RouterDatabaseWriteHandle},
+    db_manager::{InternalReading, ReadAdapter, RouterDatabaseWriteHandle},
     event::EventManagerWithCacheReference,
+    profile_attributes::ProfileAttributesSchemaManager,
     result::{WrappedContextExt, WrappedResultExt},
     write_concurrent::ConcurrentWriteProfileHandleBlocking,
 };
@@ -47,6 +48,10 @@ impl Cmds {
 
     pub fn events(&self) -> EventManagerWithCacheReference<'_> {
         self.write_handle().events()
+    }
+
+    pub fn profile_attributes(&self) -> &ProfileAttributesSchemaManager {
+        self.write_handle().profile_attributes()
     }
 }
 

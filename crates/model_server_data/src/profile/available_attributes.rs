@@ -9,11 +9,11 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use utoipa::ToSchema;
 
-const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
-attribute_order = "OrderNumber"
-
-# [[attributes]]
-"#;
+#[derive(Debug, Serialize)]
+pub struct ProfileAttributesSchemaExport {
+    pub attribute_order: AttributeOrderMode,
+    pub attributes: Vec<Attribute>,
+}
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AttributesFileInternal {
@@ -23,9 +23,6 @@ pub struct AttributesFileInternal {
 }
 
 impl AttributesFileInternal {
-    pub const CONFIG_FILE_NAME: &str = "profile_attributes.toml";
-    pub const DEFAULT_CONFIG_FILE_TEXT: &str = DEFAULT_CONFIG_FILE_TEXT;
-
     fn validate_attributes(
         mut self,
     ) -> Result<(AttributeOrderMode, Vec<AttributeInternal>), String> {
@@ -664,7 +661,7 @@ impl From<IconResource> for String {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct ProfileAttributesInternal {
     /// List of attributes.
     ///
@@ -677,6 +674,14 @@ pub struct ProfileAttributesInternal {
 impl ProfileAttributesInternal {
     pub fn get_attribute(&self, id: AttributeId) -> Option<&Attribute> {
         self.get_attribute_and_hash(id).map(|v| &v.0)
+    }
+
+    pub fn attributes(&self) -> &[(Attribute, AttributeHash)] {
+        &self.attributes
+    }
+
+    pub fn attribute_order(&self) -> AttributeOrderMode {
+        self.config.attribute_order
     }
 
     fn get_attribute_and_hash(&self, id: AttributeId) -> Option<&(Attribute, AttributeHash)> {
@@ -721,6 +726,32 @@ impl ProfileAttributesInternal {
                 attributes: attributes_for_info,
             },
         })
+    }
+
+    /// Construct ProfileAttributesInternal from database data.
+    ///
+    /// This is used when loading attributes from the database, which were
+    /// already validated when written by the CLI tool. The attributes must
+    /// be sorted by attribute_id.
+    pub fn from_db_data(
+        attributes: Vec<(Attribute, AttributeHash)>,
+        attribute_order: AttributeOrderMode,
+    ) -> Self {
+        let attributes_for_info = attributes
+            .iter()
+            .map(|(a, h)| ProfileAttributeInfo {
+                id: a.id,
+                h: h.clone(),
+            })
+            .collect();
+
+        Self {
+            attributes,
+            config: PartialProfileAttributesConfig {
+                attribute_order,
+                attributes: attributes_for_info,
+            },
+        }
     }
 
     pub fn config_for_client(&self) -> &PartialProfileAttributesConfig {

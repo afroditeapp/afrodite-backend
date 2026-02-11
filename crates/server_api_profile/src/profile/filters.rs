@@ -10,7 +10,7 @@ use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
 
 use crate::{
-    app::{GetConfig, ReadData, WriteData},
+    app::{GetProfileAttributes, ReadData, WriteData},
     utils::{Json, StatusCode},
 };
 
@@ -39,8 +39,8 @@ pub async fn post_get_query_profile_attributes_config(
     PROFILE.post_get_query_profile_attributes_config.incr();
     let info = ProfileAttributesConfigQueryResult {
         values: state
-            .config()
-            .profile_attributes()
+            .profile_attributes_manager()
+            .schema()
             .query_attributes(query.values),
     };
     Ok(info.into())
@@ -89,7 +89,7 @@ pub async fn post_profile_filters(
 ) -> Result<(), StatusCode> {
     PROFILE.post_profile_filters.incr();
     let validated = data
-        .validate(state.config().profile_attributes())
+        .validate(state.profile_attributes_manager().schema())
         .into_error_string(DataError::NotAllowed)?;
     db_write!(state, move |cmds| cmds
         .profile()

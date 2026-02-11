@@ -186,7 +186,7 @@ pub async fn post_profile(
         };
         let profile = Into::<ProfileUpdateInternal>::into(profile)
             .validate(
-                cmds.config().profile_attributes(),
+                cmds.profile_attributes().schema(),
                 cmds.config().profile_name_regex(),
                 &old_profile.profile,
                 accepted_ages,

@@ -23,6 +23,7 @@ pub mod file;
 pub mod id;
 pub mod index;
 pub mod macros;
+pub mod profile_attributes;
 pub mod read;
 pub mod statistics;
 pub mod utils;

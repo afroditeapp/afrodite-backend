@@ -277,6 +277,29 @@ CREATE TABLE IF NOT EXISTS bot_config(
     admin_bot_config_json TEXT
 );
 
+-- Store profile attributes schema setting
+CREATE TABLE IF NOT EXISTS profile_attributes_schema(
+    -- 0 = profile attributes schema
+    row_type INTEGER PRIMARY KEY NOT NULL,
+    -- Attribute order mode (0 = OrderNumber)
+    attribute_order_mode SMALLINT NOT NULL
+);
+
+-- Store profile attributes schema hash, so that changes to it can be detected
+-- when server starts.
+CREATE TABLE IF NOT EXISTS profile_attributes_schema_hash(
+    -- 0 = profile attributes schema hash
+    row_type      INTEGER PRIMARY KEY NOT NULL,
+    sha256_hash   TEXT                NOT NULL
+);
+
+-- Store profile attributes definitions as JSON
+CREATE TABLE IF NOT EXISTS profile_attributes_schema_attribute(
+    attribute_id   SMALLINT PRIMARY KEY NOT NULL,
+    attribute_json TEXT NOT NULL,
+    sha256_hash    TEXT NOT NULL
+);
+
 ---------- Tables for server component account ----------
 
 -- Sign in with related IDs for account
@@ -602,14 +625,6 @@ CREATE TABLE IF NOT EXISTS profile_attributes_filter_list_unwanted(
         REFERENCES account_id (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
-);
-
--- Store profile attributes file hash, so that changes to it can be detected
--- when server starts.
-CREATE TABLE IF NOT EXISTS profile_attributes_file_hash(
-    -- 0 = profile attributes file hash
-    row_type      INTEGER PRIMARY KEY NOT NULL,
-    sha256_hash   TEXT                NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS favorite_profile(

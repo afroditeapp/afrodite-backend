@@ -152,17 +152,6 @@ impl CurrentReadProfileData<'_> {
             .change_context(DieselDatabaseError::Execute)
     }
 
-    pub fn attribute_file_hash(&mut self) -> Result<Option<String>, DieselDatabaseError> {
-        use crate::schema::profile_attributes_file_hash::dsl::*;
-
-        profile_attributes_file_hash
-            .filter(row_type.eq(0))
-            .select(sha256_hash)
-            .first(self.conn())
-            .optional()
-            .change_context(DieselDatabaseError::Execute)
-    }
-
     /// Get profile attributes values for attributes which are set.
     pub fn profile_attribute_values(
         &mut self,

@@ -297,7 +297,7 @@ impl ScheduledTaskManager {
             };
             let profile_update = profile_update
                 .validate(
-                    cmds.config().profile_attributes(),
+                    cmds.profile_attributes().schema(),
                     cmds.config().profile_name_regex(),
                     &profile,
                     None,

@@ -1,12 +1,27 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::SmallInt};
+use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::diesel_i16_wrapper;
+use simple_backend_model::{SimpleDieselEnum, diesel_i16_wrapper};
 use utoipa::ToSchema;
 
-#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, ToSchema)]
+#[derive(
+    Debug,
+    Default,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    ToSchema,
+    TryFromPrimitive,
+    SimpleDieselEnum,
+    FromSqlRow,
+    AsExpression,
+)]
+#[diesel(sql_type = SmallInt)]
+#[repr(i16)]
 pub enum AttributeOrderMode {
     #[default]
-    OrderNumber,
+    OrderNumber = 0,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
@@ -29,6 +44,10 @@ pub struct AttributeHash {
 impl AttributeHash {
     pub fn new(h: String) -> Self {
         Self { h }
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.h
     }
 }
 
@@ -67,6 +86,10 @@ impl AttributeId {
     pub fn new(id: i16) -> Self {
         assert!(id >= 0);
         Self(id)
+    }
+
+    pub fn to_i16(&self) -> i16 {
+        self.0
     }
 
     pub fn to_usize(&self) -> usize {

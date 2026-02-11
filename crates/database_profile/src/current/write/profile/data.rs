@@ -134,23 +134,6 @@ impl CurrentWriteProfileData<'_> {
         Ok(())
     }
 
-    pub fn upsert_profile_attributes_file_hash(
-        &mut self,
-        sha256_attribute_file_hash: &str,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::profile_attributes_file_hash::dsl::*;
-
-        insert_into(profile_attributes_file_hash)
-            .values((row_type.eq(0), sha256_hash.eq(sha256_attribute_file_hash)))
-            .on_conflict(row_type)
-            .do_update()
-            .set(sha256_hash.eq(sha256_attribute_file_hash))
-            .execute_my_conn(self.conn())
-            .into_db_error(())?;
-
-        Ok(())
-    }
-
     /// Update profile version, increment profile sync version and
     /// update profile edited time.
     pub fn required_changes_for_profile_update(

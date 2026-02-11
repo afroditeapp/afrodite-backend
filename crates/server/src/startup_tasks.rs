@@ -1,15 +1,18 @@
+use error_stack::ResultExt;
 use futures::stream::{self, StreamExt};
 use model::{AccountIdInternal, PushNotificationFlags, PushNotificationStateInfoWithFlags};
 use model_account::{EmailMessages, EmailSendingState};
+use serde_json;
 use server_api::{
-    app::{EmailSenderImpl, EventManagerProvider, GetConfig, ReadData, WriteData},
+    app::{
+        EmailSenderImpl, EventManagerProvider, GetConfig, GetProfileAttributes, ReadData, WriteData,
+    },
     db_write_raw,
 };
 use server_common::{data::DataError, result::Result};
 use server_data::{IntoDataError, read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
-use server_data_profile::write::GetWriteCommandsProfile;
 use server_state::S;
 use sha2::{Digest, Sha256};
 
@@ -26,22 +29,46 @@ impl StartupTasks {
         self,
         email_sender: EmailSenderImpl,
     ) -> Result<(), DataError> {
-        Self::handle_profile_attribute_file_changes(&self.state).await?;
+        Self::handle_profile_attribute_schema_changes(&self.state).await?;
         Self::handle_custom_report_file_changes(&self.state).await?;
         Self::handle_client_features_file_changes(&self.state).await?;
         Self::handle_vapid_public_key_changes(&self.state).await?;
         Self::handle_account_specific_tasks(&self.state, &email_sender).await
     }
 
-    async fn handle_profile_attribute_file_changes(state: &S) -> Result<(), DataError> {
-        let hash = state.config().profile_attributes_sha256().to_string();
+    async fn handle_profile_attribute_schema_changes(state: &S) -> Result<(), DataError> {
+        let export = state.profile_attributes_manager().export();
+        let json = serde_json::to_string(&export).change_context(DataError::Diesel)?;
+        let hash = Sha256::digest(json.as_bytes());
+        let hash_str = format!("{:x}", hash);
 
-        db_write_raw!(state, move |cmds| {
-            cmds.profile()
-                .update_profile_attributes_sha256_and_sync_versions(hash)
-                .await
-        })
-        .await
+        let current_hash = state
+            .read()
+            .common()
+            .profile_attributes()
+            .profile_attributes_hash()
+            .await?;
+
+        let hash_changed = match current_hash {
+            Some(h) => h != hash_str,
+            None => true,
+        };
+
+        if hash_changed {
+            db_write_raw!(state, move |cmds| {
+                cmds.common()
+                    .profile_attributes()
+                    .upsert_profile_attributes_hash(&hash_str)
+                    .await?;
+                cmds.common()
+                    .client_config()
+                    .increment_client_config_sync_version_for_every_account()
+                    .await
+            })
+            .await?;
+        }
+
+        Ok(())
     }
 
     async fn handle_custom_report_file_changes(state: &S) -> Result<(), DataError> {

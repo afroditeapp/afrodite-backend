@@ -11,7 +11,11 @@ use database::{
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
 use error_stack::{Result, report};
 use model::{AccountIdInternal, BotConfig, EmailMessages, ImageProcessingDynamicConfig};
-use server_data::db_manager::{DatabaseManager, InternalWriting};
+use model_server_data::AttributesFileInternal;
+use server_data::{
+    db_manager::{DatabaseManager, InternalWriting},
+    profile_attributes::load_profile_attributes_from_db,
+};
 use simple_backend_config::args::ServerMode;
 use simple_backend_utils::dir::abs_path_for_directory_or_file_which_might_not_exists;
 
@@ -25,6 +29,10 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
                     .map_err(|_| report!(GetConfigError::GetWorkingDir))?;
             }
             DataLoadSubMode::ImageProcessingConfig { file } => {
+                *file = abs_path_for_directory_or_file_which_might_not_exists(&*file)
+                    .map_err(|_| report!(GetConfigError::GetWorkingDir))?;
+            }
+            DataLoadSubMode::ProfileAttributes { file } => {
                 *file = abs_path_for_directory_or_file_which_might_not_exists(&*file)
                     .map_err(|_| report!(GetConfigError::GetWorkingDir))?;
             }
@@ -73,6 +81,7 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
                 DataViewSubMode::ImageProcessingConfig => {
                     handle_view_image_processing_config(&reader).await
                 }
+                DataViewSubMode::ProfileAttributes => handle_view_profile_attributes(&reader).await,
             },
             DataModeSubMode::Load { mode: load_mode } => {
                 let writer = DbWriter::new(write_handle.current_write_handle());
@@ -83,6 +92,9 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
                     }
                     DataLoadSubMode::ImageProcessingConfig { file } => {
                         handle_load_image_processing_config(&writer, file).await
+                    }
+                    DataLoadSubMode::ProfileAttributes { file } => {
+                        handle_load_profile_attributes(&writer, file).await
                     }
                 }
             }
@@ -144,4 +156,70 @@ async fn handle_view_image_processing_config(reader: &DbReaderRaw<'_>) {
         .unwrap();
 
     println!("{}", toml::to_string_pretty(&config).unwrap());
+}
+
+async fn handle_load_profile_attributes(writer: &DbWriter<'_>, file: PathBuf) {
+    // Read and parse the TOML file
+    let content = std::fs::read_to_string(&file)
+        .unwrap_or_else(|e| panic!("Failed to read file {:?}: {}", file, e));
+
+    let file_content: AttributesFileInternal =
+        toml::from_str(&content).unwrap_or_else(|e| panic!("Failed to parse TOML: {}", e));
+
+    // Validate and convert to ProfileAttributesInternal
+    let profile_attrs = file_content
+        .validate()
+        .unwrap_or_else(|e| panic!("Validation failed: {}", e));
+
+    // Prepare data for database insertion
+    let attrs_data: Vec<(i16, String, String)> = profile_attrs
+        .attributes()
+        .iter()
+        .map(|(attr, hash)| {
+            let json = serde_json::to_string(attr)
+                .unwrap_or_else(|e| panic!("JSON serialization failed: {}", e));
+            (attr.id.to_i16(), json, hash.as_str().to_string())
+        })
+        .collect();
+
+    let attr_count = attrs_data.len();
+    let attribute_order = profile_attrs.attribute_order();
+
+    // Store in database
+    writer
+        .db_transaction_raw(move |mut cmds| {
+            // Delete all existing profile attributes
+            cmds.common()
+                .profile_attributes()
+                .delete_all_profile_attributes()?;
+
+            // Insert each attribute
+            for (attr_id, json, hash) in &attrs_data {
+                cmds.common()
+                    .profile_attributes()
+                    .insert_profile_attribute(*attr_id, json, hash)?;
+            }
+
+            // Upsert attribute order mode
+            cmds.common()
+                .profile_attributes()
+                .upsert_profile_attributes_order_mode(attribute_order)?;
+
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+    println!(
+        "Successfully loaded {} profile attributes into database",
+        attr_count
+    );
+}
+
+async fn handle_view_profile_attributes(reader: &DbReaderRaw<'_>) {
+    let manager = load_profile_attributes_from_db(reader).await.unwrap();
+
+    let export = manager.export();
+
+    println!("{}", toml::to_string_pretty(&export).unwrap());
 }

@@ -88,6 +88,8 @@ dependencies = [
  "manager",
  "manager_config",
  "model",
+ "model_server_data",
+ "serde_json",
  "server",
  "server_common",
  "server_data",
@@ -5156,6 +5158,7 @@ dependencies = [
  "nalgebra",
  "num_cpus",
  "rand 0.8.5",
+ "serde_json",
  "server_common",
  "simple_backend",
  "simple_backend_database",
@@ -5256,7 +5259,6 @@ dependencies = [
  "server_data",
  "simple_backend",
  "simple_backend_model",
- "tracing",
 ]
 
 [[package]]

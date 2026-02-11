@@ -321,6 +321,11 @@ pub enum DataLoadSubMode {
         /// Path to image processing config file
         file: PathBuf,
     },
+    /// Load profile attributes from file
+    ProfileAttributes {
+        /// Path to profile attributes file
+        file: PathBuf,
+    },
 }
 
 #[derive(Parser, Debug, Clone)]
@@ -329,6 +334,8 @@ pub enum DataViewSubMode {
     BotConfig,
     /// View image processing config
     ImageProcessingConfig,
+    /// View profile attributes
+    ProfileAttributes,
 }
 
 #[derive(Parser, Debug, Clone)]

@@ -22,7 +22,7 @@ use info::LocationIndexInfoCreator;
 use model::{AccountId, UnixTime};
 use model_server_data::{
     Location, LocationIndexKey, LocationIndexProfileData, MaxDistanceKm, MinDistanceKm,
-    ProfileLink, ProfileQueryMakerDetails,
+    ProfileAttributesInternal, ProfileLink, ProfileQueryMakerDetails,
 };
 use profiles::ProfilesAtLocation;
 use read::LocationIndexIteratorState;
@@ -63,7 +63,6 @@ impl<I: InternalWriting> LocationWrite for I {
 
 #[derive(Debug)]
 pub struct LocationIndexManager {
-    config: Arc<Config>,
     index: Arc<LocationIndex>,
     profiles: RwLock<HashMap<LocationIndexKey, ProfilesAtLocation>>,
     coordinates: CoordinateManager,
@@ -89,7 +88,6 @@ impl LocationIndexManager {
         );
 
         Self {
-            config,
             index,
             coordinates,
             profiles: RwLock::new(HashMap::new()),
@@ -115,7 +113,6 @@ enum IteratorResultInternal {
 
 #[derive(Debug)]
 pub struct LocationIndexIteratorHandle<'a> {
-    config: &'a Config,
     index: &'a Arc<LocationIndex>,
     profiles: &'a RwLock<HashMap<LocationIndexKey, ProfilesAtLocation>>,
 }
@@ -123,7 +120,6 @@ pub struct LocationIndexIteratorHandle<'a> {
 impl<'a> LocationIndexIteratorHandle<'a> {
     pub fn new(manager: &'a LocationIndexManager) -> Self {
         Self {
-            config: &manager.config,
             index: &manager.index,
             profiles: &manager.profiles,
         }
@@ -133,12 +129,17 @@ impl<'a> LocationIndexIteratorHandle<'a> {
         &self,
         previous_iterator_state: LocationIndexIteratorState,
         query_maker_details: &ProfileQueryMakerDetails,
+        profile_attributes: &ProfileAttributesInternal,
     ) -> (LocationIndexIteratorState, Option<Vec<ProfileLink>>) {
         let current_time = UnixTime::current_time();
         let mut iterator_state = previous_iterator_state;
         loop {
-            let (new_state, result) =
-                self.next_profiles_internal(iterator_state, query_maker_details, &current_time);
+            let (new_state, result) = self.next_profiles_internal(
+                iterator_state,
+                query_maker_details,
+                profile_attributes,
+                &current_time,
+            );
             iterator_state = new_state;
             match result {
                 IteratorResultInternal::NoProfiles => {
@@ -160,6 +161,7 @@ impl<'a> LocationIndexIteratorHandle<'a> {
         &self,
         previous_iterator_state: LocationIndexIteratorState,
         query_maker_details: &ProfileQueryMakerDetails,
+        profile_attributes: &ProfileAttributesInternal,
         current_time: &UnixTime,
     ) -> (LocationIndexIteratorState, IteratorResultInternal) {
         let index = self.index.clone();
@@ -180,7 +182,7 @@ impl<'a> LocationIndexIteratorHandle<'a> {
                 Some(profiles) => {
                     let matches: Vec<ProfileLink> = profiles.find_profiles(
                         query_maker_details,
-                        self.config.profile_attributes(),
+                        profile_attributes,
                         current_time,
                     );
                     if matches.is_empty() {

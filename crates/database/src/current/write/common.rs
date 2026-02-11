@@ -7,6 +7,7 @@ use crate::{IntoDatabaseError, define_current_write_commands};
 
 mod bot_config;
 mod client_config;
+pub mod profile_attributes;
 mod push_notification;
 mod report;
 mod state;
@@ -15,6 +16,10 @@ mod token;
 define_current_write_commands!(CurrentWriteCommon);
 
 impl<'a> CurrentWriteCommon<'a> {
+    pub fn profile_attributes(self) -> profile_attributes::CurrentWriteCommonProfileAttributes<'a> {
+        profile_attributes::CurrentWriteCommonProfileAttributes::new(self.cmds)
+    }
+
     pub fn state(self) -> state::CurrentWriteCommonState<'a> {
         state::CurrentWriteCommonState::new(self.cmds)
     }

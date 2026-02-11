@@ -33,6 +33,12 @@ macro_rules! define_cmd_wrapper_read {
             fn config_arc(&self) -> std::sync::Arc<$crate::db_manager::handle_types::Config> {
                 self.0.config_arc()
             }
+
+            fn profile_attributes(
+                &self,
+            ) -> &$crate::profile_attributes::ProfileAttributesSchemaManager {
+                self.0.profile_attributes()
+            }
         }
     };
 }
@@ -105,6 +111,12 @@ macro_rules! define_cmd_wrapper_write {
 
             fn events(&self) -> $crate::event::EventManagerWithCacheReference<'_> {
                 $crate::db_manager::InternalWriting::events(self.0)
+            }
+
+            fn profile_attributes(
+                &self,
+            ) -> &$crate::profile_attributes::ProfileAttributesSchemaManager {
+                $crate::db_manager::InternalWriting::profile_attributes(self.0)
             }
         }
     };

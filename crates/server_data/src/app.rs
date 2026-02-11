@@ -87,6 +87,12 @@ impl<I: InternalWriting> GetConfig for I {
     }
 }
 
+pub trait GetProfileAttributes {
+    fn profile_attributes_manager(
+        &self,
+    ) -> &crate::profile_attributes::ProfileAttributesSchemaManager;
+}
+
 pub trait GetEmailSender {
     fn email_sender(&self) -> &EmailSenderImpl;
 }

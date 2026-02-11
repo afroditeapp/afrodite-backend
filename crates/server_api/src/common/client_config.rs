@@ -3,7 +3,11 @@ use model::{
     AccountIdInternal, ClientConfig, ClientFeaturesConfigHash, ClientLanguage,
     CustomReportsConfigHash, GetClientLanguage,
 };
-use server_data::{app::GetConfig, read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
+use server_data::{
+    app::{GetConfig, GetProfileAttributes},
+    read::GetReadCommandsCommon,
+    write::GetWriteCommandsCommon,
+};
 use server_state::db_write;
 use simple_backend::create_counters;
 
@@ -46,8 +50,8 @@ pub async fn get_client_config(
         )),
         profile_attributes: Some(
             state
-                .config()
-                .profile_attributes()
+                .profile_attributes_manager()
+                .schema()
                 .config_for_client()
                 .clone(),
         ),

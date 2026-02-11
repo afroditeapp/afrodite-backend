@@ -12,6 +12,7 @@ use crate::{
 mod bot_config;
 mod client_config;
 mod data_export;
+mod profile_attributes;
 mod push_notification;
 
 define_cmd_wrapper_write!(WriteCommandsCommon);
@@ -33,6 +34,12 @@ impl WriteCommandsCommon<'_> {
 
     pub fn data_export(&mut self) -> data_export::WriteCommandsCommonDataExport<'_> {
         data_export::WriteCommandsCommonDataExport::new(self.handle())
+    }
+
+    pub fn profile_attributes(
+        &mut self,
+    ) -> profile_attributes::WriteCommandsCommonProfileAttributes<'_> {
+        profile_attributes::WriteCommandsCommonProfileAttributes::new(self.handle())
     }
 }
 

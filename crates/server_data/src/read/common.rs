@@ -16,6 +16,7 @@ use crate::{
 mod bot_config;
 mod client_config;
 mod data_export;
+mod profile_attributes;
 mod push_notification;
 
 define_cmd_wrapper_read!(ReadCommandsCommon);
@@ -31,6 +32,10 @@ impl<'a> ReadCommandsCommon<'a> {
 
     pub fn data_export(self) -> data_export::ReadCommandsCommonDataExport<'a> {
         data_export::ReadCommandsCommonDataExport::new(self.0)
+    }
+
+    pub fn profile_attributes(self) -> profile_attributes::ReadCommandsCommonProfileAttributes<'a> {
+        profile_attributes::ReadCommandsCommonProfileAttributes::new(self.0)
     }
 
     pub fn push_notification(self) -> push_notification::ReadCommandsCommonPushNotification<'a> {

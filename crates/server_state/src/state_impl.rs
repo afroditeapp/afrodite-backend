@@ -98,6 +98,14 @@ impl GetConfig for S {
     }
 }
 
+impl server_data::app::GetProfileAttributes for S {
+    fn profile_attributes_manager(
+        &self,
+    ) -> &server_data::profile_attributes::ProfileAttributesSchemaManager {
+        self.state.database.profile_attributes()
+    }
+}
+
 impl ReadDynamicConfig for S {
     async fn read_config(&self) -> error_stack::Result<BotConfig, ConfigFileError> {
         let config = self

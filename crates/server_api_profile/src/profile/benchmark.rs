@@ -13,7 +13,7 @@ use simple_backend_utils::IntoReportFromString;
 
 use crate::{
     DataError,
-    app::{GetAccounts, GetConfig, ReadData, WriteData},
+    app::{GetAccounts, GetConfig, GetProfileAttributes, ReadData, WriteData},
     utils::{Json, StatusCode},
 };
 
@@ -101,7 +101,7 @@ pub async fn post_profile_to_database_debug_mode_benchmark(
     };
     let profile = Into::<ProfileUpdateInternal>::into(profile)
         .validate(
-            state.config().profile_attributes(),
+            state.profile_attributes_manager().schema(),
             state.config().profile_name_regex(),
             &old_profile.profile,
             accepted_ages,

@@ -6,8 +6,6 @@ edition = "2024"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tracing = { workspace = true }
-
 error-stack = { workspace = true }
 
 model_profile = { path = "../model_profile" }

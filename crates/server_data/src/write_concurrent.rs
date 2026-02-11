@@ -242,6 +242,7 @@ pub struct WriteCommandsConcurrent<'a> {
     cache: &'a DatabaseCache,
     file_dir: &'a FileDir,
     location: LocationIndexIteratorHandle<'a>,
+    profile_attributes: &'a crate::profile_attributes::ProfileAttributesSchemaManager,
 }
 
 impl<'a> WriteCommandsConcurrent<'a> {
@@ -249,11 +250,13 @@ impl<'a> WriteCommandsConcurrent<'a> {
         cache: &'a DatabaseCache,
         file_dir: &'a FileDir,
         location: LocationIndexIteratorHandle<'a>,
+        profile_attributes: &'a crate::profile_attributes::ProfileAttributesSchemaManager,
     ) -> Self {
         Self {
             cache,
             file_dir,
             location,
+            profile_attributes,
         }
     }
 
@@ -311,18 +314,22 @@ impl<'a> WriteCommandsConcurrent<'a> {
             return Ok(None);
         }
 
-        let (mut next_state, profiles) = self
-            .location
-            .next_profiles(location.current_iterator, &query_maker_filters);
+        let (mut next_state, profiles) = self.location.next_profiles(
+            location.current_iterator,
+            &query_maker_filters,
+            self.profile_attributes.schema(),
+        );
 
         let (next_state, profiles) = if let Some(mut profiles) = profiles {
             loop {
                 if profiles.len() >= PROFILE_ITERATOR_PAGE_SIZE {
                     break (next_state, profiles);
                 } else {
-                    let (new_next_state, new_profiles) = self
-                        .location
-                        .next_profiles(next_state, &query_maker_filters);
+                    let (new_next_state, new_profiles) = self.location.next_profiles(
+                        next_state,
+                        &query_maker_filters,
+                        self.profile_attributes.schema(),
+                    );
                     next_state = new_next_state;
 
                     if let Some(new_profiles) = new_profiles {
@@ -373,6 +380,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
         id: AccountIdInternal,
         iterator_id_from_client: AutomaticProfileSearchIteratorSessionId,
     ) -> Result<Option<Vec<ProfileLink>>, DataError> {
+        let profile_attributes = self.profile_attributes.schema();
         let (iterator_state, query_maker_filters, iterator_id_current) = self
             .cache
             .read_cache_blocking(id.as_id(), |e| {
@@ -391,18 +399,20 @@ impl<'a> WriteCommandsConcurrent<'a> {
             return Ok(None);
         }
 
-        let (mut next_state, profiles) = self
-            .location
-            .next_profiles(iterator_state, &query_maker_filters);
+        let (mut next_state, profiles) =
+            self.location
+                .next_profiles(iterator_state, &query_maker_filters, profile_attributes);
 
         let (next_state, profiles) = if let Some(mut profiles) = profiles {
             loop {
                 if profiles.len() >= PROFILE_ITERATOR_PAGE_SIZE {
                     break (next_state, profiles);
                 } else {
-                    let (new_next_state, new_profiles) = self
-                        .location
-                        .next_profiles(next_state, &query_maker_filters);
+                    let (new_next_state, new_profiles) = self.location.next_profiles(
+                        next_state,
+                        &query_maker_filters,
+                        profile_attributes,
+                    );
                     next_state = new_next_state;
 
                     if let Some(new_profiles) = new_profiles {

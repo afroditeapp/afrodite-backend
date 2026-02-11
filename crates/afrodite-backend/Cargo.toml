@@ -9,6 +9,7 @@ edition = "2024"
 [dependencies]
 clap = { workspace = true }
 toml = { workspace = true }
+serde_json = { workspace = true }
 error-stack = { workspace = true }
 
 tokio = { workspace = true }
@@ -28,6 +29,7 @@ simple_backend_image_process = { path = "../simple_backend_image_process" }
 simple_backend_config = { path = "../simple_backend_config" }
 simple_backend_utils = { path = "../simple_backend_utils" }
 model = { path = "../model" }
+model_server_data = { path = "../model_server_data" }
 database = { path = "../database" }
 database_media = { path = "../database_media" }
 

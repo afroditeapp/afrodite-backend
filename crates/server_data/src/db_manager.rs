@@ -8,7 +8,8 @@ use database::{
     TransactionError, current::write::TransactionConnection,
 };
 use server_common::{
-    app::EmailSenderImpl, push_notifications::PushNotificationSender, result::Result,
+    app::EmailSenderImpl, data::WithInfo, push_notifications::PushNotificationSender,
+    result::Result,
 };
 pub use server_common::{
     data::{DataError, IntoDataError},
@@ -21,6 +22,7 @@ use crate::{
     event::EventManagerWithCacheReference,
     file::utils::FileDir,
     index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
+    profile_attributes::load_profile_attributes_from_db,
     utils::{AccessTokenManager, AccountIdManager},
     write_commands::Cmds,
     write_concurrent::WriteCommandsConcurrent,
@@ -110,6 +112,11 @@ impl DatabaseManager {
 
         let cache = DatabaseCache::new();
 
+        let profile_attributes =
+            load_profile_attributes_from_db(&DbReaderRaw::new(&current_read_handle))
+                .await
+                .into_error_without_context()?;
+
         let router_write_handle = RouterDatabaseWriteHandle {
             read: RouterDatabaseReadHandle {
                 current_read_handle: current_write_handle.to_read_handle(),
@@ -117,11 +124,13 @@ impl DatabaseManager {
                 file_dir: FileDir::new(&config)?.into(),
                 cache: cache.into(),
                 config: config.clone(),
+                profile_attributes: profile_attributes.clone(),
             },
             config: config.clone(),
             current_write_handle: current_write_handle.clone(),
             history_write_handle: history_write_handle.clone(),
             location: index.into(),
+            profile_attributes: profile_attributes.clone(),
             push_notification_sender,
             email_sender,
         };
@@ -132,6 +141,7 @@ impl DatabaseManager {
             file_dir: router_write_handle.read.file_dir.clone(),
             cache: router_write_handle.read.cache.clone(),
             config,
+            profile_attributes,
         };
 
         let database_manager = DatabaseManager {
@@ -162,6 +172,7 @@ pub struct RouterDatabaseWriteHandle {
     current_write_handle: CurrentWriteHandle,
     history_write_handle: HistoryWriteHandle,
     location: Arc<LocationIndexManager>,
+    profile_attributes: crate::profile_attributes::ProfileAttributesSchemaManager,
     push_notification_sender: PushNotificationSender,
     email_sender: EmailSenderImpl,
 }
@@ -172,6 +183,7 @@ impl RouterDatabaseWriteHandle {
             &self.read.cache,
             &self.read.file_dir,
             LocationIndexIteratorHandle::new(&self.location),
+            &self.profile_attributes,
         )
     }
 
@@ -205,6 +217,7 @@ pub trait InternalWriting {
     fn push_notification_sender(&self) -> &PushNotificationSender;
     fn email_sender(&self) -> &EmailSenderImpl;
     fn events(&self) -> EventManagerWithCacheReference<'_>;
+    fn profile_attributes(&self) -> &crate::profile_attributes::ProfileAttributesSchemaManager;
 
     fn location_index_write_handle(&self) -> LocationIndexWriteHandle<'_> {
         LocationIndexWriteHandle::new(self.location())
@@ -299,6 +312,10 @@ impl InternalWriting for RouterDatabaseWriteHandle {
         &self.read.history_read_handle
     }
 
+    fn profile_attributes(&self) -> &crate::profile_attributes::ProfileAttributesSchemaManager {
+        &self.profile_attributes
+    }
+
     fn cache(&self) -> &DatabaseCache {
         &self.read.cache
     }
@@ -368,6 +385,10 @@ impl InternalWriting for Cmds {
     fn events(&self) -> EventManagerWithCacheReference<'_> {
         InternalWriting::events(self.write_handle())
     }
+
+    fn profile_attributes(&self) -> &crate::profile_attributes::ProfileAttributesSchemaManager {
+        InternalWriting::profile_attributes(self.write_handle())
+    }
 }
 
 pub trait WriteAccessProvider {
@@ -393,6 +414,7 @@ pub struct RouterDatabaseReadHandle {
     history_read_handle: HistoryReadHandle,
     cache: Arc<DatabaseCache>,
     config: Arc<Config>,
+    profile_attributes: crate::profile_attributes::ProfileAttributesSchemaManager,
 }
 
 impl RouterDatabaseReadHandle {
@@ -402,6 +424,10 @@ impl RouterDatabaseReadHandle {
 
     pub fn account_id_manager(&self) -> AccountIdManager<'_> {
         AccountIdManager::new(&self.cache)
+    }
+
+    pub fn profile_attributes(&self) -> &crate::profile_attributes::ProfileAttributesSchemaManager {
+        &self.profile_attributes
     }
 
     pub fn cache_read_write_access(&self) -> &DatabaseCache {
@@ -448,6 +474,7 @@ pub trait InternalReading {
     fn cache(&self) -> &DatabaseCache;
     fn config(&self) -> &Config;
     fn config_arc(&self) -> Arc<Config>;
+    fn profile_attributes(&self) -> &crate::profile_attributes::ProfileAttributesSchemaManager;
 
     async fn db_read_raw<
         T: FnOnce(database::DbReadMode<'_>) -> error_stack::Result<R, DieselDatabaseError>
@@ -532,6 +559,10 @@ impl InternalReading for &RouterDatabaseReadHandle {
     fn config_arc(&self) -> Arc<Config> {
         self.config.clone()
     }
+
+    fn profile_attributes(&self) -> &crate::profile_attributes::ProfileAttributesSchemaManager {
+        &self.profile_attributes
+    }
 }
 
 impl<I: InternalWriting> InternalReading for I {
@@ -558,6 +589,10 @@ impl<I: InternalWriting> InternalReading for I {
     fn config_arc(&self) -> Arc<Config> {
         InternalWriting::config_arc(self)
     }
+
+    fn profile_attributes(&self) -> &crate::profile_attributes::ProfileAttributesSchemaManager {
+        InternalWriting::profile_attributes(self)
+    }
 }
 
 impl InternalReading for ReadAdapter<'_> {
@@ -583,5 +618,9 @@ impl InternalReading for ReadAdapter<'_> {
 
     fn config_arc(&self) -> Arc<Config> {
         self.cmds.read.config.clone()
+    }
+
+    fn profile_attributes(&self) -> &crate::profile_attributes::ProfileAttributesSchemaManager {
+        &self.cmds.read.profile_attributes
     }
 }
