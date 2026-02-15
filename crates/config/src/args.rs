@@ -326,6 +326,29 @@ pub enum DataLoadSubMode {
         /// Path to profile attributes file
         file: PathBuf,
     },
+    /// Import profile attribute values and translations from CSV file
+    /// and update one attribute in database.
+    ProfileAttributeValuesCsv {
+        /// Target attribute ID to import from CSV and update
+        attribute_id: usize,
+        /// Path to CSV file
+        csv_file: PathBuf,
+        /// CSV delimiter character
+        #[arg(long, default_value = ";")]
+        delimiter: char,
+        /// Values column index (zero-based)
+        #[arg(long)]
+        values_column_index: usize,
+        /// Group values column index (zero-based)
+        #[arg(long)]
+        group_values_column_index: usize,
+        /// First data row index (zero-based)
+        #[arg(long, default_value = "0")]
+        start_row_index: usize,
+        /// Translation column mapping in format lang:values_col:group_values_col
+        #[arg(long = "translation")]
+        translations: Vec<String>,
+    },
 }
 
 #[derive(Parser, Debug, Clone)]

@@ -19,6 +19,8 @@ use server_data::{
 use simple_backend_config::args::ServerMode;
 use simple_backend_utils::dir::abs_path_for_directory_or_file_which_might_not_exists;
 
+mod csv;
+
 pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
     // Convert config file paths to absolute paths because get_config
     // changes working directory.
@@ -34,6 +36,10 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
             }
             DataLoadSubMode::ProfileAttributes { file } => {
                 *file = abs_path_for_directory_or_file_which_might_not_exists(&*file)
+                    .map_err(|_| report!(GetConfigError::GetWorkingDir))?;
+            }
+            DataLoadSubMode::ProfileAttributeValuesCsv { csv_file, .. } => {
+                *csv_file = abs_path_for_directory_or_file_which_might_not_exists(&*csv_file)
                     .map_err(|_| report!(GetConfigError::GetWorkingDir))?;
             }
         }
@@ -95,6 +101,28 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
                     }
                     DataLoadSubMode::ProfileAttributes { file } => {
                         handle_load_profile_attributes(&writer, file).await
+                    }
+                    DataLoadSubMode::ProfileAttributeValuesCsv {
+                        attribute_id,
+                        csv_file,
+                        delimiter,
+                        values_column_index,
+                        group_values_column_index,
+                        start_row_index,
+                        translations,
+                    } => {
+                        csv::handle_load_profile_attributes_values_from_csv(
+                            &reader,
+                            &writer,
+                            attribute_id,
+                            csv_file,
+                            delimiter,
+                            values_column_index,
+                            group_values_column_index,
+                            start_row_index,
+                            translations,
+                        )
+                        .await
                     }
                 }
             }

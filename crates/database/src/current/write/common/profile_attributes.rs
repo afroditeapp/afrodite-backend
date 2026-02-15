@@ -39,6 +39,29 @@ impl CurrentWriteCommonProfileAttributes<'_> {
         Ok(())
     }
 
+    pub fn upsert_profile_attribute(
+        &mut self,
+        attr_id: i16,
+        json: &str,
+        hash: &str,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::profile_attributes_schema_attribute::dsl::*;
+
+        insert_into(profile_attributes_schema_attribute)
+            .values((
+                attribute_id.eq(attr_id),
+                attribute_json.eq(json),
+                sha256_hash.eq(hash),
+            ))
+            .on_conflict(attribute_id)
+            .do_update()
+            .set((attribute_json.eq(json), sha256_hash.eq(hash)))
+            .execute_my_conn(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
     pub fn upsert_profile_attributes_order_mode(
         &mut self,
         mode: AttributeOrderMode,

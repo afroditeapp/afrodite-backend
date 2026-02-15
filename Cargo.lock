@@ -82,6 +82,7 @@ version = "0.15.1"
 dependencies = [
  "clap",
  "config",
+ "csv",
  "database",
  "database_media",
  "error-stack",

@@ -1,4 +1,3 @@
-pub mod attribute_values;
 pub mod profile_name_allowlist;
 
 #[derive(thiserror::Error, Debug)]
@@ -9,6 +8,4 @@ pub enum CsvFileError {
     SelectedColumnDoesNotExists,
     #[error("Delimiter character is unsupported")]
     UnsupportedDelimiterCharacter,
-    #[error("Invalid config")]
-    InvalidConfig,
 }

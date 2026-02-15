@@ -1,4 +1,4 @@
-use std::{collections::HashSet, num::NonZeroU8, path::PathBuf, str::FromStr};
+use std::{collections::HashSet, num::NonZeroU8, str::FromStr};
 
 use base64::Engine;
 use model::{
@@ -106,7 +106,6 @@ pub struct AttributeInternal {
     pub group_values: Vec<GroupValuesInternal>,
     #[serde(default = "value_empty_vec")]
     pub translations: Vec<Language>,
-    pub group_values_csv: Option<GroupValuesCsv>,
 }
 
 fn value_bool_true() -> bool {
@@ -147,31 +146,6 @@ fn value_u8_one() -> u8 {
 
 fn value_u8_is_one(v: &u8) -> bool {
     *v == 1
-}
-
-/// Load atribute values from CSV file
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GroupValuesCsv {
-    pub csv_file: PathBuf,
-    pub delimiter: char,
-    /// Column index starting from zero.
-    pub values_column_index: usize,
-    /// Column index starting from zero.
-    pub group_values_column_index: usize,
-    /// Index for first row where data reading starts. The index values
-    /// starts from zero.
-    pub start_row_index: usize,
-    #[serde(default = "value_empty_vec")]
-    pub translations: Vec<GroupValuesCsvTranslationColumn>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GroupValuesCsvTranslationColumn {
-    pub lang: String,
-    /// Column index starting from zero.
-    pub values_column_index: usize,
-    /// Column index starting from zero.
-    pub group_values_column_index: usize,
 }
 
 struct ModeAndIdSequenceNumber {
@@ -274,6 +248,29 @@ struct AttributeInfoValidated {
 impl AttributeInternal {
     pub fn attribute_name_to_attribute_key(s: &str) -> String {
         s.to_lowercase().replace(' ', "_")
+    }
+
+    pub fn to_attribute_and_hash(&self) -> Result<(Attribute, AttributeHash), String> {
+        let info = self.validate()?;
+        let attribute = Attribute {
+            key: self.key.clone(),
+            name: self.name.clone(),
+            mode: self.mode,
+            max_selected: self.max_selected.into(),
+            max_filters: self.max_filters.into(),
+            editable: self.editable,
+            visible: self.visible,
+            required: self.required,
+            icon: self.icon.clone(),
+            id: self.id,
+            order_number: self.order_number,
+            value_order: self.value_order,
+            values: info.values,
+            translations: info.translations,
+        };
+        let hash = attribute.hash()?;
+
+        Ok((attribute, hash))
     }
 
     fn validate(&self) -> Result<AttributeInfoValidated, String> {
@@ -694,24 +691,7 @@ impl ProfileAttributesInternal {
         let mut attributes = vec![];
         let mut attributes_for_info = vec![];
         for a in internal_attributes {
-            let info = a.validate()?;
-            let a = Attribute {
-                key: a.key,
-                name: a.name,
-                mode: a.mode,
-                max_selected: a.max_selected.into(),
-                max_filters: a.max_filters.into(),
-                editable: a.editable,
-                visible: a.visible,
-                required: a.required,
-                icon: a.icon,
-                id: a.id,
-                order_number: a.order_number,
-                value_order: a.value_order,
-                values: info.values,
-                translations: info.translations,
-            };
-            let hash = a.hash()?;
+            let (a, hash) = a.to_attribute_and_hash()?;
             let id_and_hash = ProfileAttributeInfo {
                 id: a.id,
                 h: hash.clone(),
