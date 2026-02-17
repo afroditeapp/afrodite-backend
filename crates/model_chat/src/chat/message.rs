@@ -157,12 +157,6 @@ pub enum DeliveryInfoType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, PartialEq)]
-pub struct ResendMessage {
-    pub backend_signed_message_base64: String,
-    pub message_base64: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, PartialEq)]
 pub struct MessageDeliveryInfo {
     /// Database ID for the delivery info entry
     pub id: i64,

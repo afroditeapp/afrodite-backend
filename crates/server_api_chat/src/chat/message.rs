@@ -4,17 +4,12 @@ use axum::{
     extract::{Path, Query, State},
 };
 use axum_extra::TypedHeader;
-use base64::Engine;
 use headers::ContentType;
-use model::{
-    GetConversationId, MessageId, MessageNumber, NotificationEvent, PublicKeyId,
-    PushNotificationFlags, UnixTime,
-};
+use model::{GetConversationId, MessageId, NotificationEvent, PushNotificationFlags};
 use model_chat::{
     AccountId, AccountIdInternal, EventToClientInternal, GetSentMessage, MessageDeliveryInfoIdList,
-    MessageDeliveryInfoList, PendingMessageAcknowledgementList, ResendMessage, SeenMessageList,
-    SendMessageResult, SendMessageToAccountParams, SentMessageIdList, SignedMessageData,
-    add_minimal_i64,
+    MessageDeliveryInfoList, PendingMessageAcknowledgementList, SeenMessageList, SendMessageResult,
+    SendMessageToAccountParams, SentMessageIdList, add_minimal_i64,
 };
 use server_api::{
     S,
@@ -40,9 +35,6 @@ use crate::{
 const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
 
 /// Get list of pending messages.
-///
-/// Sender can resend the same message, so client must prevent replacing
-/// successfully received messages.
 ///
 /// The returned bytes is
 /// - Hide notifications (u8, values: 0 or 1)
@@ -137,76 +129,8 @@ pub async fn post_add_receiver_acknowledgement(
     Ok(())
 }
 
-const PATH_POST_RESEND_MESSAGE: &str = "/chat_api/resend_message";
-
-/// Resend a message.
-///
-/// Uses the normal send pipeline while preserving original message metadata.
-#[utoipa::path(
-    post,
-    path = PATH_POST_RESEND_MESSAGE,
-    request_body = ResendMessage,
-    responses(
-        (status = 200, description = "Success.", body = SendMessageResult),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error or message data related error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn post_resend_message(
-    State(state): State<S>,
-    Extension(id): Extension<AccountIdInternal>,
-    Json(body): Json<ResendMessage>,
-) -> Result<Json<SendMessageResult>, StatusCode> {
-    CHAT.post_resend_message.incr();
-    state
-        .api_usage_tracker()
-        .incr(id, |u| &u.post_send_message)
-        .await;
-
-    let backend_signed_message = base64::engine::general_purpose::STANDARD
-        .decode(body.backend_signed_message_base64)
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    let message = base64::engine::general_purpose::STANDARD
-        .decode(body.message_base64)
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    if message.len() > u16::MAX as usize {
-        return Err(StatusCode::INTERNAL_SERVER_ERROR);
-    }
-
-    let data_signer = state.data_signer();
-    let data_bytes = data_signer
-        .verify_and_extract_backend_signed_data(&backend_signed_message)
-        .await?;
-    let data =
-        SignedMessageData::parse(&data_bytes).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    let sender = state.get_internal_id(data.sender).await?;
-    if sender != id {
-        return Err(StatusCode::UNAUTHORIZED);
-    }
-
-    let Some(receiver) = state.get_internal_id_optional(data.receiver).await else {
-        return Ok(SendMessageResult::receiver_blocked_sender_or_receiver_not_found().into());
-    };
-
-    let result = handle_send_message(
-        &state,
-        sender,
-        receiver,
-        message,
-        data.sender_public_key_id,
-        data.receiver_public_key_id,
-        data.message_id,
-        Some((data.m, data.unix_time)),
-    )
-    .await?;
-
-    Ok(result.into())
-}
-
 const PATH_POST_SEND_MESSAGE: &str = "/chat_api/send_message";
+const DAILY_MESSAGES_REMAINING_WARNING_THRESHOLD: u16 = 50;
 
 /// Send message to a match.
 ///
@@ -245,37 +169,11 @@ pub async fn post_send_message(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let Some(message_receiver) = state.get_internal_id_optional(query_params.receiver).await else {
+    let Some(message_reciever) = state.get_internal_id_optional(query_params.receiver).await else {
         return Ok(SendMessageResult::receiver_blocked_sender_or_receiver_not_found().into());
     };
 
-    let result = handle_send_message(
-        &state,
-        id,
-        message_receiver,
-        bytes.into(),
-        query_params.sender_public_key_id,
-        query_params.receiver_public_key_id,
-        query_params.message_id,
-        None,
-    )
-    .await?;
-
-    Ok(result.into())
-}
-
-#[allow(clippy::too_many_arguments)]
-async fn handle_send_message(
-    state: &S,
-    sender: AccountIdInternal,
-    receiver: AccountIdInternal,
-    message: Vec<u8>,
-    sender_public_key_id: PublicKeyId,
-    receiver_public_key_id: PublicKeyId,
-    message_id: MessageId,
-    metadata_override: Option<(MessageNumber, UnixTime)>,
-) -> Result<SendMessageResult, StatusCode> {
-    let current_messages = state.api_limits(sender).chat().post_send_message().await?;
+    let current_messages = state.api_limits(id).chat().post_send_message().await?;
     let max_messages = state.config().limits_chat().send_message_daily_max_count;
     let remaining_messages = max_messages.saturating_sub(current_messages);
 
@@ -284,14 +182,13 @@ async fn handle_send_message(
         let (result, push_notification_allowed) = cmds
             .chat()
             .insert_pending_message_if_match_and_not_blocked(
-                sender,
-                receiver,
-                message,
-                sender_public_key_id,
-                receiver_public_key_id,
-                message_id,
+                id,
+                message_reciever,
+                bytes.into(),
+                query_params.sender_public_key_id,
+                query_params.receiver_public_key_id,
+                query_params.message_id,
                 keys,
-                metadata_override,
             )
             .await?;
 
@@ -299,12 +196,15 @@ async fn handle_send_message(
             match push_notification_allowed {
                 Some(PushNotificationAllowed) => cmds
                     .events()
-                    .send_notification(receiver, NotificationEvent::NewMessageReceived)
+                    .send_notification(message_reciever, NotificationEvent::NewMessageReceived)
                     .await
                     .ignore_and_log_error(),
                 None => cmds
                     .events()
-                    .send_connected_event(receiver, EventToClientInternal::NewMessageReceived)
+                    .send_connected_event(
+                        message_reciever,
+                        EventToClientInternal::NewMessageReceived,
+                    )
                     .await
                     .ignore_and_log_error(),
             }
@@ -313,14 +213,13 @@ async fn handle_send_message(
         Ok(result)
     })?;
 
-    const DAILY_MESSAGES_REMAINING_WARNING_THRESHOLD: u16 = 50;
     let result = if remaining_messages <= DAILY_MESSAGES_REMAINING_WARNING_THRESHOLD {
         result.with_remaining_messages(remaining_messages)
     } else {
         result
     };
 
-    Ok(result)
+    Ok(result.into())
 }
 
 const PATH_POST_GET_SENT_MESSAGE: &str = "/chat_api/sent_message";
@@ -533,7 +432,6 @@ create_open_api_router!(
         fn router_message,
         get_pending_messages,
         post_add_receiver_acknowledgement,
-        post_resend_message,
         post_send_message,
         post_get_sent_message,
         get_sent_message_ids,
@@ -550,7 +448,6 @@ create_counters!(
     CHAT_MESSAGE_COUNTERS_LIST,
     get_pending_messages,
     post_add_receiver_acknowledgement,
-    post_resend_message,
     post_send_message,
     post_get_sent_message,
     get_sent_message_ids,

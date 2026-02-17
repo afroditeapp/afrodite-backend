@@ -14,7 +14,7 @@ use database_chat::current::{
     },
 };
 use error_stack::ResultExt;
-use model::{MessageNumber, NewReceivedLikesCountResult, ReceivedLikeId, UnixTime};
+use model::{MessageNumber, NewReceivedLikesCountResult, ReceivedLikeId};
 use model_chat::{
     AccountIdInternal, AddPublicKeyResult, ChatStateRaw, DeliveryInfoType, MessageId,
     NewReceivedLikesCount, PendingMessageId, PublicKeyId, ReceivedLikesIteratorState,
@@ -413,7 +413,6 @@ impl WriteCommandsChat<'_> {
         receiver_public_key_from_client: PublicKeyId,
         message_id_value: MessageId,
         keys: Arc<ParsedKeys>,
-        metadata_override: Option<(MessageNumber, UnixTime)>,
     ) -> Result<(SendMessageResult, Option<PushNotificationAllowed>), DataError> {
         db_transaction!(self, move |mut cmds| {
             let sender_current_key = cmds
@@ -471,7 +470,6 @@ impl WriteCommandsChat<'_> {
                     message,
                     message_id_value,
                     keys,
-                    metadata_override,
                 )?;
 
             let message_values = match message_values {
