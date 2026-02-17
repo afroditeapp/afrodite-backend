@@ -483,11 +483,11 @@ impl ProfileAttributesInternal {
     }
 
     pub fn from_db_data(
-        attributes: Vec<(Attribute, AttributeHash)>,
+        attributes: Vec<Attribute>,
         attribute_order: AttributeOrderMode,
     ) -> Result<Self, String> {
         let mut validated_attributes: Vec<ValidatedAttribute> = Vec::new();
-        for (a, _) in attributes {
+        for a in attributes {
             validated_attributes.push(a.validate()?);
         }
 

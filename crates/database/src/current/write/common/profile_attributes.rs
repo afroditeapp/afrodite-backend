@@ -23,16 +23,11 @@ impl CurrentWriteCommonProfileAttributes<'_> {
         &mut self,
         attr_id: i16,
         json: &str,
-        hash: &str,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::profile_attributes_schema_attribute::dsl::*;
 
         insert_into(profile_attributes_schema_attribute)
-            .values((
-                attribute_id.eq(attr_id),
-                attribute_json.eq(json),
-                sha256_hash.eq(hash),
-            ))
+            .values((attribute_id.eq(attr_id), attribute_json.eq(json)))
             .execute(self.conn())
             .into_db_error(())?;
 
@@ -43,19 +38,14 @@ impl CurrentWriteCommonProfileAttributes<'_> {
         &mut self,
         attr_id: i16,
         json: &str,
-        hash: &str,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::profile_attributes_schema_attribute::dsl::*;
 
         insert_into(profile_attributes_schema_attribute)
-            .values((
-                attribute_id.eq(attr_id),
-                attribute_json.eq(json),
-                sha256_hash.eq(hash),
-            ))
+            .values((attribute_id.eq(attr_id), attribute_json.eq(json)))
             .on_conflict(attribute_id)
             .do_update()
-            .set((attribute_json.eq(json), sha256_hash.eq(hash)))
+            .set(attribute_json.eq(json))
             .execute_my_conn(self.conn())
             .into_db_error(())?;
 

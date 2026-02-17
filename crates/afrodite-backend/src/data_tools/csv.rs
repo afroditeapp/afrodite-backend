@@ -49,8 +49,8 @@ pub(super) async fn handle_load_profile_attributes_values_from_csv(
                 .profile_attributes()
                 .all_profile_attributes()?
                 .into_iter()
-                .find(|(id, _, _)| *id == attribute_id as i16);
-            Ok(row.map(|(_, json, _)| json))
+                .find(|(id, _)| *id == attribute_id as i16);
+            Ok(row.map(|(_, json)| json))
         })
         .await
         .unwrap_or_else(|e| panic!("Failed to read profile attributes from DB: {e:?}"));
@@ -82,17 +82,15 @@ pub(super) async fn handle_load_profile_attributes_values_from_csv(
         .unwrap_or_else(|e| panic!("Validation failed: {}", e));
 
     let attribute_for_db = validated.attribute();
-    let hash = validated.hash();
     let attr_id = attribute_for_db.id.to_i16();
     let json = serde_json::to_string(attribute_for_db)
         .unwrap_or_else(|e| panic!("JSON serialization failed: {}", e));
-    let hash = hash.as_str().to_string();
 
     writer
         .db_transaction_raw(move |mut cmds| {
             cmds.common()
                 .profile_attributes()
-                .upsert_profile_attribute(attr_id, &json, &hash)?;
+                .upsert_profile_attribute(attr_id, &json)?;
             Ok(())
         })
         .await

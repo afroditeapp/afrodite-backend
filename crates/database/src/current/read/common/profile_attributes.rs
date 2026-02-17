@@ -8,13 +8,11 @@ use crate::{IntoDatabaseError, define_current_read_commands};
 define_current_read_commands!(CurrentReadCommonProfileAttributes);
 
 impl CurrentReadCommonProfileAttributes<'_> {
-    pub fn all_profile_attributes(
-        &mut self,
-    ) -> Result<Vec<(i16, String, String)>, DieselDatabaseError> {
+    pub fn all_profile_attributes(&mut self) -> Result<Vec<(i16, String)>, DieselDatabaseError> {
         use model::schema::profile_attributes_schema_attribute::dsl::*;
 
         profile_attributes_schema_attribute
-            .select((attribute_id, attribute_json, sha256_hash))
+            .select((attribute_id, attribute_json))
             .order_by(attribute_id.asc())
             .load(self.conn())
             .into_db_error(())

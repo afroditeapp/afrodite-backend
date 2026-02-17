@@ -200,15 +200,14 @@ async fn handle_load_profile_attributes(writer: &DbWriter<'_>, file: PathBuf) {
         .unwrap_or_else(|e| panic!("Validation failed: {}", e));
 
     // Prepare data for database insertion
-    let attrs_data: Vec<(i16, String, String)> = profile_attrs
+    let attrs_data: Vec<(i16, String)> = profile_attrs
         .attributes()
         .iter()
         .map(|validated| {
             let attr = validated.attribute();
-            let hash = validated.hash();
             let json = serde_json::to_string(attr)
                 .unwrap_or_else(|e| panic!("JSON serialization failed: {}", e));
-            (attr.id.to_i16(), json, hash.as_str().to_string())
+            (attr.id.to_i16(), json)
         })
         .collect();
 
@@ -224,10 +223,10 @@ async fn handle_load_profile_attributes(writer: &DbWriter<'_>, file: PathBuf) {
                 .delete_all_profile_attributes()?;
 
             // Insert each attribute
-            for (attr_id, json, hash) in &attrs_data {
+            for (attr_id, json) in &attrs_data {
                 cmds.common()
                     .profile_attributes()
-                    .insert_profile_attribute(*attr_id, json, hash)?;
+                    .insert_profile_attribute(*attr_id, json)?;
             }
 
             // Upsert attribute order mode

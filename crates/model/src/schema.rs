@@ -709,7 +709,6 @@ diesel::table! {
     profile_attributes_schema_attribute (attribute_id) {
         attribute_id -> Int2,
         attribute_json -> Text,
-        sha256_hash -> Text,
     }
 }
 

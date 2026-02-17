@@ -48,7 +48,7 @@ pub async fn load_profile_attributes_from_db(
     reader: &database::DbReaderRaw<'_>,
 ) -> error_stack::Result<ProfileAttributesSchemaManager, DataError> {
     let (attributes, order_mode): (
-        Vec<(i16, String, String)>,
+        Vec<(i16, String)>,
         Option<model::profile::AttributeOrderMode>,
     ) = reader
         .db_read(|mut mode| {
@@ -66,15 +66,14 @@ pub async fn load_profile_attributes_from_db(
 
     // Deserialize each attribute from JSON
     let mut parsed_attributes = Vec::new();
-    for (attr_id, attribute_json, hash_text) in attributes {
+    for (attr_id, attribute_json) in attributes {
         let attribute: model_server_data::Attribute = serde_json::from_str(&attribute_json)
             .map_err(|e| {
                 tracing::error!("Failed to deserialize attribute {}: {}", attr_id, e);
                 DataError::Diesel
             })?;
 
-        let hash = model::profile::AttributeHash::new(hash_text);
-        parsed_attributes.push((attribute, hash));
+        parsed_attributes.push(attribute);
     }
 
     // Build ProfileAttributesInternal from the parsed data

@@ -296,8 +296,7 @@ CREATE TABLE IF NOT EXISTS profile_attributes_schema_hash(
 -- Store profile attributes definitions as JSON
 CREATE TABLE IF NOT EXISTS profile_attributes_schema_attribute(
     attribute_id   SMALLINT PRIMARY KEY NOT NULL,
-    attribute_json TEXT NOT NULL,
-    sha256_hash    TEXT NOT NULL
+    attribute_json TEXT NOT NULL
 );
 
 ---------- Tables for server component account ----------
