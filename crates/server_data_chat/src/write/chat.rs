@@ -481,6 +481,22 @@ impl WriteCommandsChat<'_> {
                 }
             };
 
+            let remaining_conversation_messages = {
+                let missing_acknowledgements = i64::max(
+                    receiver_acknowledgements_missing,
+                    sender_acknowledgements_missing,
+                );
+                let remaining = conversation_pending_messages_max_count
+                    .saturating_sub(missing_acknowledgements);
+                if remaining <= 0 {
+                    Some(0)
+                } else if remaining <= 5 {
+                    Some(remaining as u16)
+                } else {
+                    None
+                }
+            };
+
             let push_notification_allowd = if receiver_acknowledgements_missing <= 1 {
                 // Update new message notification twice so that notification
                 // displays singular or plural text correctly.
@@ -490,7 +506,7 @@ impl WriteCommandsChat<'_> {
             };
 
             Ok((
-                SendMessageResult::successful(message_values),
+                SendMessageResult::successful(message_values, remaining_conversation_messages),
                 push_notification_allowd,
             ))
         })

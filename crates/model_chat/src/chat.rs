@@ -188,6 +188,11 @@ pub struct SendMessageResult {
     /// if there is 50 or less messages left.
     #[serde(skip_serializing_if = "Option::is_none")]
     remaining_messages: Option<u16>,
+    /// Remaining messages which can be sent to conversation before
+    /// delivery to reciever or message sending acknowledgement must happen.
+    /// The value will be returned only if there is 5 or less messages left.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    remaining_conversation_messages: Option<u16>,
 }
 
 impl SendMessageResult {
@@ -235,9 +240,10 @@ impl SendMessageResult {
         }
     }
 
-    pub fn successful(data: Vec<u8>) -> Self {
+    pub fn successful(data: Vec<u8>, remaining_conversation_messages: Option<u16>) -> Self {
         Self {
             d: Some(base64::engine::general_purpose::STANDARD.encode(data)),
+            remaining_conversation_messages,
             ..Self::default()
         }
     }
