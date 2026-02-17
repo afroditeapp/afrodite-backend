@@ -217,10 +217,9 @@ fn load_for_attribute(
             .ok_or(CsvFileError::Load)?;
 
         let group_value_key = Attribute::attribute_name_to_attribute_key(&group_value);
-        let group_values = top_level.group_values.get_or_insert_with(|| GroupValues {
-            key: key.clone(),
-            values: vec![],
-        });
+        let group_values = top_level
+            .group_values
+            .get_or_insert_with(|| GroupValues { values: vec![] });
         if !group_values.values.iter().any(|v| v.key == group_value_key) {
             let next_id: u16 = (group_values.values.len() + 1)
                 .try_into()

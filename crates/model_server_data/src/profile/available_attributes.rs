@@ -241,13 +241,6 @@ impl Attribute {
             if let Some(g) = &top_level_value.group_values {
                 has_group_values = true;
 
-                if g.key != top_level_value.key {
-                    return Err(format!(
-                        "Value group key {} must match parent value key {}",
-                        g.key, top_level_value.key
-                    ));
-                }
-
                 let mut sub_level_ids = HashSet::new();
                 let mut sub_level_order_numbers = HashSet::new();
 
@@ -255,7 +248,7 @@ impl Attribute {
                     if value.group_values.is_some() {
                         return Err(format!(
                             "Value {} in group {} cannot contain nested group values",
-                            value.key, g.key
+                            value.key, top_level_value.key
                         ));
                     }
 
@@ -280,7 +273,7 @@ impl Attribute {
                 if g.values.is_empty() {
                     return Err(format!(
                         "Value group {} must have at least one value",
-                        g.key
+                        top_level_value.key
                     ));
                 }
 
@@ -290,7 +283,7 @@ impl Attribute {
                         return Err(format!(
                             "ID {} is missing from value IDs for value group {}, all numbers between 1 and {} should be used",
                             i,
-                            g.key,
+                            top_level_value.key,
                             g.values.len()
                         ));
                     }
@@ -323,7 +316,6 @@ impl Attribute {
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct GroupValues {
-    pub key: String,
     /// Values for this group.
     ///
     /// Values are sorted by AttributeValue ID related to this group.
