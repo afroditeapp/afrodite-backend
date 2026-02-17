@@ -3,6 +3,7 @@ use std::sync::Arc;
 use database::current::read::GetDbReadCommandsCommon;
 use error_stack::ResultExt;
 use model_server_data::{ProfileAttributesInternal, ProfileAttributesSchemaExport};
+use simple_backend_utils::IntoReportFromString;
 
 use crate::DataError;
 
@@ -30,7 +31,7 @@ impl ProfileAttributesSchemaManager {
                 .schema
                 .attributes()
                 .iter()
-                .map(|(a, _h)| a.clone())
+                .map(|validated| validated.attribute().clone())
                 .collect(),
         }
     }
@@ -78,7 +79,8 @@ pub async fn load_profile_attributes_from_db(
 
     // Build ProfileAttributesInternal from the parsed data
     let profile_attributes =
-        ProfileAttributesInternal::from_db_data(parsed_attributes, attribute_order);
+        ProfileAttributesInternal::from_db_data(parsed_attributes, attribute_order)
+            .into_error_string(DataError::NotAllowed)?;
 
     Ok(ProfileAttributesSchemaManager::new(profile_attributes))
 }

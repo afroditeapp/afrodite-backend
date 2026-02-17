@@ -203,7 +203,9 @@ async fn handle_load_profile_attributes(writer: &DbWriter<'_>, file: PathBuf) {
     let attrs_data: Vec<(i16, String, String)> = profile_attrs
         .attributes()
         .iter()
-        .map(|(attr, hash)| {
+        .map(|validated| {
+            let attr = validated.attribute();
+            let hash = validated.hash();
             let json = serde_json::to_string(attr)
                 .unwrap_or_else(|e| panic!("JSON serialization failed: {}", e));
             (attr.id.to_i16(), json, hash.as_str().to_string())

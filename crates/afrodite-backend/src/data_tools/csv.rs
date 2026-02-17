@@ -77,12 +77,14 @@ pub(super) async fn handle_load_profile_attributes_values_from_csv(
     attribute.values = values;
     attribute.translations = translations;
 
-    let (attribute_for_db, hash) = attribute
-        .to_attribute_and_hash_with_validation()
+    let validated = attribute
+        .validate()
         .unwrap_or_else(|e| panic!("Validation failed: {}", e));
 
+    let attribute_for_db = validated.attribute();
+    let hash = validated.hash();
     let attr_id = attribute_for_db.id.to_i16();
-    let json = serde_json::to_string(&attribute_for_db)
+    let json = serde_json::to_string(attribute_for_db)
         .unwrap_or_else(|e| panic!("JSON serialization failed: {}", e));
     let hash = hash.as_str().to_string();
 

@@ -66,12 +66,12 @@ impl ProfileAttributesSchemaExport {
         let mut attributes = vec![];
         let mut attributes_for_info = vec![];
         for a in internal_attributes {
-            let (a, hash) = a.to_attribute_and_hash_with_validation()?;
+            let validated = a.validate()?;
             let id_and_hash = ProfileAttributeInfo {
-                id: a.id,
-                h: hash.clone(),
+                id: validated.attribute().id,
+                h: validated.hash().clone(),
             };
-            attributes.push((a, hash.clone()));
+            attributes.push(validated);
             attributes_for_info.push(id_and_hash);
         }
         Ok(ProfileAttributesInternal {
@@ -162,17 +162,17 @@ impl Attribute {
         s.to_lowercase().replace(' ', "_")
     }
 
-    pub fn to_attribute_and_hash_with_validation(
-        &self,
-    ) -> Result<(Attribute, AttributeHash), String> {
-        let mut attribute = self.clone();
-        attribute.validate()?;
-        let hash = attribute.hash()?;
+    pub fn validate(mut self) -> Result<ValidatedAttribute, String> {
+        self.validate_internal()?;
+        for top_level_value in &mut self.values {
+            top_level_value.group_values.sort_by_key(|v| v.id);
+        }
+        let hash = self.hash()?;
 
-        Ok((self.clone(), hash))
+        Ok(ValidatedAttribute::new(self, hash))
     }
 
-    fn validate(&mut self) -> Result<(), String> {
+    fn validate_internal(&self) -> Result<(), String> {
         let mut keys = HashSet::new();
         keys.insert(self.key.clone());
 
@@ -238,9 +238,7 @@ impl Attribute {
         }
 
         let mut has_group_values = false;
-        for top_level_value in &mut self.values {
-            top_level_value.group_values.sort_by_key(|v| v.id);
-
+        for top_level_value in &self.values {
             let mut sub_level_ids = HashSet::new();
             let mut sub_level_order_numbers = HashSet::new();
 
@@ -437,22 +435,42 @@ impl From<IconResource> for String {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct ValidatedAttribute {
+    attribute: Attribute,
+    hash: AttributeHash,
+}
+
+impl ValidatedAttribute {
+    fn new(attribute: Attribute, hash: AttributeHash) -> Self {
+        Self { attribute, hash }
+    }
+
+    pub fn attribute(&self) -> &Attribute {
+        &self.attribute
+    }
+
+    pub fn hash(&self) -> &AttributeHash {
+        &self.hash
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct ProfileAttributesInternal {
     /// List of attributes.
     ///
     /// Attributes are sorted by Attribute ID.
     /// Indexing with the ID is not possible as ID values start from 1.
-    attributes: Vec<(Attribute, AttributeHash)>,
+    attributes: Vec<ValidatedAttribute>,
     config: PartialProfileAttributesConfig,
 }
 
 impl ProfileAttributesInternal {
     pub fn get_attribute(&self, id: AttributeId) -> Option<&Attribute> {
-        self.get_attribute_and_hash(id).map(|v| &v.0)
+        self.get_attribute_and_hash(id).map(|v| v.attribute())
     }
 
-    pub fn attributes(&self) -> &[(Attribute, AttributeHash)] {
+    pub fn attributes(&self) -> &[ValidatedAttribute] {
         &self.attributes
     }
 
@@ -460,34 +478,36 @@ impl ProfileAttributesInternal {
         self.config.attribute_order
     }
 
-    fn get_attribute_and_hash(&self, id: AttributeId) -> Option<&(Attribute, AttributeHash)> {
+    fn get_attribute_and_hash(&self, id: AttributeId) -> Option<&ValidatedAttribute> {
         self.attributes.get(id.to_usize().saturating_sub(1))
     }
 
-    /// Construct ProfileAttributesInternal from database data.
-    ///
-    /// This is used when loading attributes from the database, which were
-    /// already validated when written by the CLI tool. The attributes must
-    /// be sorted by attribute_id.
     pub fn from_db_data(
         attributes: Vec<(Attribute, AttributeHash)>,
         attribute_order: AttributeOrderMode,
-    ) -> Self {
-        let attributes_for_info = attributes
+    ) -> Result<Self, String> {
+        let mut validated_attributes: Vec<ValidatedAttribute> = Vec::new();
+        for (a, _) in attributes {
+            validated_attributes.push(a.validate()?);
+        }
+
+        validated_attributes.sort_by_key(|v| v.attribute.id);
+
+        let attributes_for_info = validated_attributes
             .iter()
-            .map(|(a, h)| ProfileAttributeInfo {
-                id: a.id,
-                h: h.clone(),
+            .map(|validated| ProfileAttributeInfo {
+                id: validated.attribute().id,
+                h: validated.hash().clone(),
             })
             .collect();
 
-        Self {
-            attributes,
+        Ok(Self {
+            attributes: validated_attributes,
             config: PartialProfileAttributesConfig {
                 attribute_order,
                 attributes: attributes_for_info,
             },
-        }
+        })
     }
 
     pub fn config_for_client(&self) -> &PartialProfileAttributesConfig {
@@ -497,9 +517,12 @@ impl ProfileAttributesInternal {
     pub fn query_attributes(&self, ids: Vec<AttributeId>) -> Vec<ProfileAttributesConfigQueryItem> {
         ids.into_iter()
             .filter_map(|id| {
-                self.get_attribute_and_hash(id)
-                    .cloned()
-                    .map(|(a, h)| ProfileAttributesConfigQueryItem { a, h })
+                self.get_attribute_and_hash(id).cloned().map(|validated| {
+                    ProfileAttributesConfigQueryItem {
+                        a: validated.attribute,
+                        h: validated.hash,
+                    }
+                })
             })
             .collect()
     }
