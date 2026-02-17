@@ -4,7 +4,7 @@ use database::{
     DbReaderRaw, DbWriter,
     current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon},
 };
-use model_server_data::{Attribute, AttributeValue, GroupValues, Language, Translation};
+use model_server_data::{Attribute, AttributeValue, Language, Translation};
 
 #[derive(Debug)]
 enum CsvFileError {
@@ -200,7 +200,7 @@ fn load_for_attribute(
                 editable: true,
                 visible: true,
                 icon: None,
-                group_values: None,
+                group_values: Default::default(),
             });
         }
 
@@ -217,14 +217,15 @@ fn load_for_attribute(
             .ok_or(CsvFileError::Load)?;
 
         let group_value_key = Attribute::attribute_name_to_attribute_key(&group_value);
-        let group_values = top_level
+        if !top_level
             .group_values
-            .get_or_insert_with(|| GroupValues { values: vec![] });
-        if !group_values.values.iter().any(|v| v.key == group_value_key) {
-            let next_id: u16 = (group_values.values.len() + 1)
+            .iter()
+            .any(|v| v.key == group_value_key)
+        {
+            let next_id: u16 = (top_level.group_values.len() + 1)
                 .try_into()
                 .map_err(|_| CsvFileError::Load)?;
-            group_values.values.push(AttributeValue {
+            top_level.group_values.push(AttributeValue {
                 key: group_value_key.clone(),
                 name: group_value.clone(),
                 id: next_id,
@@ -232,7 +233,7 @@ fn load_for_attribute(
                 editable: true,
                 visible: true,
                 icon: None,
-                group_values: None,
+                group_values: Default::default(),
             });
         }
 

@@ -22,7 +22,6 @@ pub use server_common::{data::DataError, result};
 #[openapi(
     components(schemas(
         // Profile
-        model_profile::GroupValues,
         model_profile::StatisticsProfileVisibility,
         // Profile admin
         model_profile::profile_admin::ProfileStatisticsHistoryValueType,

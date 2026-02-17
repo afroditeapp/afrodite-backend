@@ -165,13 +165,14 @@ impl Attribute {
     pub fn to_attribute_and_hash_with_validation(
         &self,
     ) -> Result<(Attribute, AttributeHash), String> {
-        self.validate()?;
-        let hash = self.hash()?;
+        let mut attribute = self.clone();
+        attribute.validate()?;
+        let hash = attribute.hash()?;
 
         Ok((self.clone(), hash))
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&mut self) -> Result<(), String> {
         let mut keys = HashSet::new();
         keys.insert(self.key.clone());
 
@@ -237,56 +238,48 @@ impl Attribute {
         }
 
         let mut has_group_values = false;
-        for top_level_value in &self.values {
-            if let Some(g) = &top_level_value.group_values {
+        for top_level_value in &mut self.values {
+            top_level_value.group_values.sort_by_key(|v| v.id);
+
+            let mut sub_level_ids = HashSet::new();
+            let mut sub_level_order_numbers = HashSet::new();
+
+            for value in &top_level_value.group_values {
                 has_group_values = true;
-
-                let mut sub_level_ids = HashSet::new();
-                let mut sub_level_order_numbers = HashSet::new();
-
-                for value in &g.values {
-                    if value.group_values.is_some() {
-                        return Err(format!(
-                            "Value {} in group {} cannot contain nested group values",
-                            value.key, top_level_value.key
-                        ));
-                    }
-
-                    ModeAndIdSequenceNumber::validate_integer_id(value.id)?;
-
-                    if sub_level_ids.contains(&value.id) {
-                        return Err(format!("Duplicate id {}", value.id));
-                    }
-                    sub_level_ids.insert(value.id);
-
-                    if sub_level_order_numbers.contains(&value.order_number) {
-                        return Err(format!("Duplicate order number {}", value.order_number));
-                    }
-                    sub_level_order_numbers.insert(value.order_number);
-
-                    if keys.contains(&value.key) {
-                        return Err(format!("Duplicate key {}", value.key));
-                    }
-                    keys.insert(value.key.clone());
-                }
-
-                if g.values.is_empty() {
+                if !value.group_values.is_empty() {
                     return Err(format!(
-                        "Value group {} must have at least one value",
-                        top_level_value.key
+                        "Value {} in group {} cannot contain nested group values",
+                        value.key, top_level_value.key
                     ));
                 }
 
-                for i in 1..=g.values.len() {
-                    let i = i as u16;
-                    if !sub_level_ids.contains(&i) {
-                        return Err(format!(
-                            "ID {} is missing from value IDs for value group {}, all numbers between 1 and {} should be used",
-                            i,
-                            top_level_value.key,
-                            g.values.len()
-                        ));
-                    }
+                ModeAndIdSequenceNumber::validate_integer_id(value.id)?;
+
+                if sub_level_ids.contains(&value.id) {
+                    return Err(format!("Duplicate id {}", value.id));
+                }
+                sub_level_ids.insert(value.id);
+
+                if sub_level_order_numbers.contains(&value.order_number) {
+                    return Err(format!("Duplicate order number {}", value.order_number));
+                }
+                sub_level_order_numbers.insert(value.order_number);
+
+                if keys.contains(&value.key) {
+                    return Err(format!("Duplicate key {}", value.key));
+                }
+                keys.insert(value.key.clone());
+            }
+
+            for i in 1..=top_level_value.group_values.len() {
+                let i = i as u16;
+                if !sub_level_ids.contains(&i) {
+                    return Err(format!(
+                        "ID {} is missing from value IDs for value group {}, all numbers between 1 and {} should be used",
+                        i,
+                        top_level_value.key,
+                        top_level_value.group_values.len()
+                    ));
                 }
             }
         }
@@ -315,15 +308,6 @@ impl Attribute {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct GroupValues {
-    /// Values for this group.
-    ///
-    /// Values are sorted by AttributeValue ID related to this group.
-    /// Indexing with the ID is not possible as ID values start from 1.
-    pub values: Vec<AttributeValue>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct AttributeValue {
     /// Unique string identifier for the attribute value.
     pub key: String,
@@ -347,10 +331,13 @@ pub struct AttributeValue {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<String>)]
     pub icon: Option<IconResource>,
-    /// Sub level values for this attribute value.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[schema(no_recursion)]
-    pub group_values: Option<GroupValues>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[schema(no_recursion, default = json!([]))]
+    /// Change attribute value to be a group identifier. Max depth 2.
+    ///
+    /// Vec values are sorted by [AttributeValue::id].
+    /// Indexing with the ID is not possible as ID values start from 1.
+    pub group_values: Vec<AttributeValue>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
