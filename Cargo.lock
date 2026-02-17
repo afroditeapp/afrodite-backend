@@ -3205,7 +3205,6 @@ dependencies = [
  "sha2",
  "simple_backend_model",
  "simple_backend_utils",
- "toml 0.8.23",
  "unicode-segmentation",
  "utoipa",
  "uuid",

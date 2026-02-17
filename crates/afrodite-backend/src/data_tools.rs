@@ -11,7 +11,7 @@ use database::{
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
 use error_stack::{Result, report};
 use model::{AccountIdInternal, BotConfig, EmailMessages, ImageProcessingDynamicConfig};
-use model_server_data::AttributesFileInternal;
+use model_server_data::ProfileAttributesSchemaExport;
 use server_data::{
     db_manager::{DatabaseManager, InternalWriting},
     profile_attributes::load_profile_attributes_from_db,
@@ -191,7 +191,7 @@ async fn handle_load_profile_attributes(writer: &DbWriter<'_>, file: PathBuf) {
     let content = std::fs::read_to_string(&file)
         .unwrap_or_else(|e| panic!("Failed to read file {:?}: {}", file, e));
 
-    let file_content: AttributesFileInternal =
+    let file_content: ProfileAttributesSchemaExport =
         toml::from_str(&content).unwrap_or_else(|e| panic!("Failed to parse TOML: {}", e));
 
     // Validate and convert to ProfileAttributesInternal

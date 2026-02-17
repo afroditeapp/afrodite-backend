@@ -9,23 +9,14 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use utoipa::ToSchema;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ProfileAttributesSchemaExport {
     pub attribute_order: AttributeOrderMode,
     pub attributes: Vec<Attribute>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct AttributesFileInternal {
-    attribute_order: AttributeOrderMode,
-    #[serde(default)]
-    pub attributes: Vec<AttributeInternal>,
-}
-
-impl AttributesFileInternal {
-    fn validate_attributes(
-        mut self,
-    ) -> Result<(AttributeOrderMode, Vec<AttributeInternal>), String> {
+impl ProfileAttributesSchemaExport {
+    fn validate_attributes(mut self) -> Result<(AttributeOrderMode, Vec<Attribute>), String> {
         let mut keys = HashSet::new();
         let mut ids = HashSet::new();
         let mut order_numbers = HashSet::new();
@@ -70,42 +61,27 @@ impl AttributesFileInternal {
     }
 
     pub fn validate(self) -> Result<ProfileAttributesInternal, String> {
-        ProfileAttributesInternal::from_file(self)
-    }
-}
+        let (attribute_order, internal_attributes) = self.validate_attributes()?;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AttributeInternal {
-    pub key: String,
-    pub name: String,
-    pub mode: AttributeMode,
-    #[serde(
-        default = "value_non_zero_u8_one",
-        skip_serializing_if = "value_non_zero_u8_is_one"
-    )]
-    pub max_selected: NonZeroU8,
-    #[serde(
-        default = "value_non_zero_u8_one",
-        skip_serializing_if = "value_non_zero_u8_is_one"
-    )]
-    pub max_filters: NonZeroU8,
-    #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
-    pub editable: bool,
-    #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
-    pub visible: bool,
-    #[serde(default = "value_bool_false", skip_serializing_if = "value_is_false")]
-    pub required: bool,
-    pub icon: Option<IconResource>,
-    pub id: AttributeId,
-    pub order_number: u16,
-    pub value_order: AttributeValueOrderMode,
-    /// Array of strings or objects
-    #[serde(default = "value_empty_vec")]
-    pub values: toml::value::Array,
-    #[serde(default = "value_empty_vec")]
-    pub group_values: Vec<GroupValuesInternal>,
-    #[serde(default = "value_empty_vec")]
-    pub translations: Vec<Language>,
+        let mut attributes = vec![];
+        let mut attributes_for_info = vec![];
+        for a in internal_attributes {
+            let (a, hash) = a.to_attribute_and_hash_with_validation()?;
+            let id_and_hash = ProfileAttributeInfo {
+                id: a.id,
+                h: hash.clone(),
+            };
+            attributes.push((a, hash.clone()));
+            attributes_for_info.push(id_and_hash);
+        }
+        Ok(ProfileAttributesInternal {
+            attributes,
+            config: PartialProfileAttributesConfig {
+                attribute_order,
+                attributes: attributes_for_info,
+            },
+        })
+    }
 }
 
 fn value_bool_true() -> bool {
@@ -140,40 +116,12 @@ fn value_non_zero_u8_is_one(v: &NonZeroU8) -> bool {
     v.get() == 1
 }
 
-struct ModeAndIdSequenceNumber {
-    mode: AttributeMode,
-    current_id: Option<u16>,
-}
+struct ModeAndIdSequenceNumber;
 
 impl ModeAndIdSequenceNumber {
     const FIRST_INTEGER_ID: u16 = 1;
     const FIRST_BITFLAG_ID: u16 = 1;
     const LAST_BITFLAG_ID: u32 = 0x8000;
-
-    fn new(mode: AttributeMode) -> Self {
-        Self {
-            mode,
-            current_id: None,
-        }
-    }
-
-    /// Increment next value.
-    ///
-    /// (Other mode is bit shifting for bitflags attribute value IDs.)
-    fn new_increment_only_mode() -> Self {
-        Self::new(AttributeMode::OneLevel)
-    }
-
-    fn set_value(&mut self, id: u16) -> Result<u16, String> {
-        if self.mode.is_bitflag() {
-            Self::validate_bitflag_id(id)?;
-            self.current_id = Some(id);
-        } else {
-            Self::validate_integer_id(id)?;
-            self.current_id = Some(id);
-        }
-        Ok(id)
-    }
 
     fn validate_integer_id(id: u16) -> Result<(), String> {
         if id < Self::FIRST_INTEGER_ID {
@@ -207,172 +155,53 @@ impl ModeAndIdSequenceNumber {
 
         Ok(())
     }
-
-    /// Increment the current ID and return the updated current ID.
-    fn increment_value(&mut self) -> Result<u16, String> {
-        if self.mode.is_bitflag() {
-            let tmp = if let Some(current_id) = self.current_id {
-                current_id << 1
-            } else {
-                1
-            };
-            Self::validate_bitflag_id(tmp)?;
-            self.current_id = Some(tmp);
-            Ok(tmp)
-        } else {
-            let tmp = if let Some(current_id) = self.current_id {
-                current_id + 1
-            } else {
-                1
-            };
-            Self::validate_integer_id(tmp)?;
-            self.current_id = Some(tmp);
-            Ok(tmp)
-        }
-    }
 }
 
-struct AttributeInfoValidated {
-    values: Vec<AttributeValue>,
-    translations: Vec<Language>,
-}
-
-impl AttributeInternal {
+impl Attribute {
     pub fn attribute_name_to_attribute_key(s: &str) -> String {
         s.to_lowercase().replace(' ', "_")
     }
 
-    pub fn to_attribute_and_hash(&self) -> Result<(Attribute, AttributeHash), String> {
-        let info = self.validate()?;
-        let attribute = Attribute {
-            key: self.key.clone(),
-            name: self.name.clone(),
-            mode: self.mode,
-            max_selected: self.max_selected,
-            max_filters: self.max_filters,
-            editable: self.editable,
-            visible: self.visible,
-            required: self.required,
-            icon: self.icon.clone(),
-            id: self.id,
-            order_number: self.order_number,
-            value_order: self.value_order,
-            values: info.values,
-            translations: info.translations,
-        };
-        let hash = attribute.hash()?;
+    pub fn to_attribute_and_hash_with_validation(
+        &self,
+    ) -> Result<(Attribute, AttributeHash), String> {
+        self.validate()?;
+        let hash = self.hash()?;
 
-        Ok((attribute, hash))
+        Ok((self.clone(), hash))
     }
 
-    fn validate(&self) -> Result<AttributeInfoValidated, String> {
-        fn handle_attribute_value(
-            v: toml::Value,
-            all_ids: &mut HashSet<u16>,
-            all_order_numbers: &mut HashSet<u16>,
-            all_keys: &mut HashSet<String>,
-            id_state: &mut ModeAndIdSequenceNumber,
-            order_number_state: &mut ModeAndIdSequenceNumber,
-        ) -> Result<AttributeValue, String> {
-            match v {
-                toml::Value::Table(t) => {
-                    let value: AttributeValueInternal = t
-                        .try_into()
-                        .map_err(|e| format!("Attribute value error: {e}"))?;
-
-                    let id = match value.id {
-                        Some(id) => id_state.set_value(id)?,
-                        None => id_state.increment_value()?,
-                    };
-                    if all_ids.contains(&id) {
-                        return Err(format!("Duplicate id {id}"));
-                    }
-                    all_ids.insert(id);
-
-                    let key = match value.key {
-                        Some(key) => key,
-                        None => AttributeInternal::attribute_name_to_attribute_key(&value.name),
-                    };
-                    if all_keys.contains(&key) {
-                        return Err(format!("Duplicate key {key}"));
-                    }
-                    all_keys.insert(key.clone());
-
-                    let order_number = match value.order_number {
-                        Some(order_number) => order_number_state.set_value(order_number)?,
-                        None => order_number_state.increment_value()?,
-                    };
-                    if all_order_numbers.contains(&order_number) {
-                        return Err(format!("Duplicate order number {order_number}"));
-                    }
-                    all_order_numbers.insert(order_number);
-
-                    let value = AttributeValue {
-                        key,
-                        name: value.name,
-                        id,
-                        order_number,
-                        editable: value.editable,
-                        visible: value.visible,
-                        icon: value.icon,
-                        group_values: None,
-                    };
-                    Ok(value)
-                }
-                toml::Value::String(s) => {
-                    let value = AttributeValue {
-                        key: AttributeInternal::attribute_name_to_attribute_key(&s),
-                        name: s,
-                        id: id_state.increment_value()?,
-                        order_number: order_number_state.increment_value()?,
-                        editable: true,
-                        visible: true,
-                        icon: None,
-                        group_values: None,
-                    };
-
-                    if all_ids.contains(&value.id) {
-                        return Err(format!("Duplicate id {}", value.id));
-                    }
-                    all_ids.insert(value.id);
-
-                    if all_keys.contains(&value.key) {
-                        return Err(format!("Duplicate key {}", value.key));
-                    }
-                    all_keys.insert(value.key.clone());
-
-                    if all_order_numbers.contains(&value.order_number) {
-                        return Err(format!("Duplicate order number {}", value.order_number));
-                    }
-                    all_order_numbers.insert(value.order_number);
-
-                    Ok(value)
-                }
-                _ => Err(format!("Invalid value type: {v:?}")),
-            }
-        }
-
+    fn validate(&self) -> Result<(), String> {
         let mut keys = HashSet::new();
         keys.insert(self.key.clone());
 
         let mut top_level_ids = HashSet::new();
         let mut top_level_order_numbers = HashSet::new();
-        let mut current_top_level_id = ModeAndIdSequenceNumber::new(self.mode);
-        let mut current_top_level_count_number = ModeAndIdSequenceNumber::new_increment_only_mode();
-        let mut values = Vec::new();
 
-        for v in self.values.clone() {
-            values.push(handle_attribute_value(
-                v,
-                &mut top_level_ids,
-                &mut top_level_order_numbers,
-                &mut keys,
-                &mut current_top_level_id,
-                &mut current_top_level_count_number,
-            )?);
+        for value in &self.values {
+            if top_level_ids.contains(&value.id) {
+                return Err(format!("Duplicate id {}", value.id));
+            }
+            top_level_ids.insert(value.id);
+
+            if top_level_order_numbers.contains(&value.order_number) {
+                return Err(format!("Duplicate order number {}", value.order_number));
+            }
+            top_level_order_numbers.insert(value.order_number);
+
+            if keys.contains(&value.key) {
+                return Err(format!("Duplicate key {}", value.key));
+            }
+            keys.insert(value.key.clone());
+
+            if self.mode.is_bitflag() {
+                ModeAndIdSequenceNumber::validate_bitflag_id(value.id)?;
+            } else {
+                ModeAndIdSequenceNumber::validate_integer_id(value.id)?;
+            }
         }
 
-        if values.is_empty() {
+        if self.values.is_empty() {
             return Err(format!(
                 "Attribute {} must have at least one value",
                 self.key
@@ -382,7 +211,7 @@ impl AttributeInternal {
         // Check that correct IDs are used.
         if self.mode.is_bitflag() {
             let mut current = 1;
-            for _ in 0..values.len() {
+            for _ in 0..self.values.len() {
                 if !top_level_ids.contains(&current) {
                     return Err(format!(
                         "ID {} is missing from attribute value IDs for attribute {}, all bitflags between 0 and {} should be used",
@@ -406,73 +235,75 @@ impl AttributeInternal {
                 }
             }
         }
-        values.sort_by(|a, b| a.id.cmp(&b.id));
 
-        let mut group_values = Vec::new();
+        let mut has_group_values = false;
+        for top_level_value in &self.values {
+            if let Some(g) = &top_level_value.group_values {
+                has_group_values = true;
 
-        for g in self.group_values.clone() {
-            if !keys.contains(&g.key) {
-                return Err(format!(
-                    "Missing attribute value definition for key {}",
-                    g.key
-                ));
-            }
-
-            let mut sub_level_ids = HashSet::new();
-            let mut sub_level_order_numbers = HashSet::new();
-            let mut current_sub_level_id = ModeAndIdSequenceNumber::new(self.mode);
-            let mut current_sub_level_count_number =
-                ModeAndIdSequenceNumber::new_increment_only_mode();
-            let mut values = Vec::new();
-
-            for v in g.values {
-                let value = handle_attribute_value(
-                    v,
-                    &mut sub_level_ids,
-                    &mut sub_level_order_numbers,
-                    &mut keys,
-                    &mut current_sub_level_id,
-                    &mut current_sub_level_count_number,
-                )?;
-                values.push(value);
-            }
-
-            if values.is_empty() {
-                return Err(format!(
-                    "Value group {} must have at least one value",
-                    g.key
-                ));
-            }
-
-            // Check that correct IDs are used.
-            for i in 1..=values.len() {
-                let i = i as u16;
-                if !sub_level_ids.contains(&i) {
+                if g.key != top_level_value.key {
                     return Err(format!(
-                        "ID {} is missing from value IDs for value group {}, all numbers between 1 and {} should be used",
-                        i,
-                        g.key,
-                        values.len()
+                        "Value group key {} must match parent value key {}",
+                        g.key, top_level_value.key
                     ));
                 }
-            }
-            values.sort_by(|a, b| a.id.cmp(&b.id));
 
-            group_values.push(GroupValues { key: g.key, values });
+                let mut sub_level_ids = HashSet::new();
+                let mut sub_level_order_numbers = HashSet::new();
+
+                for value in &g.values {
+                    if value.group_values.is_some() {
+                        return Err(format!(
+                            "Value {} in group {} cannot contain nested group values",
+                            value.key, g.key
+                        ));
+                    }
+
+                    ModeAndIdSequenceNumber::validate_integer_id(value.id)?;
+
+                    if sub_level_ids.contains(&value.id) {
+                        return Err(format!("Duplicate id {}", value.id));
+                    }
+                    sub_level_ids.insert(value.id);
+
+                    if sub_level_order_numbers.contains(&value.order_number) {
+                        return Err(format!("Duplicate order number {}", value.order_number));
+                    }
+                    sub_level_order_numbers.insert(value.order_number);
+
+                    if keys.contains(&value.key) {
+                        return Err(format!("Duplicate key {}", value.key));
+                    }
+                    keys.insert(value.key.clone());
+                }
+
+                if g.values.is_empty() {
+                    return Err(format!(
+                        "Value group {} must have at least one value",
+                        g.key
+                    ));
+                }
+
+                for i in 1..=g.values.len() {
+                    let i = i as u16;
+                    if !sub_level_ids.contains(&i) {
+                        return Err(format!(
+                            "ID {} is missing from value IDs for value group {}, all numbers between 1 and {} should be used",
+                            i,
+                            g.key,
+                            g.values.len()
+                        ));
+                    }
+                }
+            }
         }
 
-        if self.mode.is_bitflag() && !group_values.is_empty() {
+        if self.mode.is_bitflag() && has_group_values {
             return Err("Bitflag mode cannot have group values".to_string());
         }
 
-        if self.mode.is_one_level() && !group_values.is_empty() {
+        if self.mode.is_one_level() && has_group_values {
             return Err("One level attribute cannot have group values".to_string());
-        }
-
-        for g in group_values.into_iter() {
-            if let Some(v) = values.iter_mut().find(|v| v.key == g.key) {
-                v.group_values = Some(g);
-            }
         }
 
         for t in self.translations.clone() {
@@ -486,18 +317,8 @@ impl AttributeInternal {
             }
         }
 
-        Ok(AttributeInfoValidated {
-            values,
-            translations: self.translations.clone(),
-        })
+        Ok(())
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GroupValuesInternal {
-    pub key: String,
-    /// Array of strings or objects
-    pub values: toml::value::Array,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -507,20 +328,7 @@ pub struct GroupValues {
     ///
     /// Values are sorted by AttributeValue ID related to this group.
     /// Indexing with the ID is not possible as ID values start from 1.
-    values: Vec<AttributeValue>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AttributeValueInternal {
-    pub key: Option<String>,
-    pub name: String,
-    pub id: Option<u16>,
-    pub order_number: Option<u16>,
-    #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
-    pub editable: bool,
-    #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
-    pub visible: bool,
-    pub icon: Option<IconResource>,
+    pub values: Vec<AttributeValue>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -675,29 +483,6 @@ impl ProfileAttributesInternal {
 
     fn get_attribute_and_hash(&self, id: AttributeId) -> Option<&(Attribute, AttributeHash)> {
         self.attributes.get(id.to_usize().saturating_sub(1))
-    }
-
-    pub fn from_file(file: AttributesFileInternal) -> Result<Self, String> {
-        let (attribute_order, internal_attributes) = file.validate_attributes()?;
-
-        let mut attributes = vec![];
-        let mut attributes_for_info = vec![];
-        for a in internal_attributes {
-            let (a, hash) = a.to_attribute_and_hash()?;
-            let id_and_hash = ProfileAttributeInfo {
-                id: a.id,
-                h: hash.clone(),
-            };
-            attributes.push((a, hash.clone()));
-            attributes_for_info.push(id_and_hash);
-        }
-        Ok(Self {
-            attributes,
-            config: PartialProfileAttributesConfig {
-                attribute_order,
-                attributes: attributes_for_info,
-            },
-        })
     }
 
     /// Construct ProfileAttributesInternal from database data.

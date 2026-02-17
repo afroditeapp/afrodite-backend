@@ -4,14 +4,13 @@ use database::{
     DbReaderRaw, DbWriter,
     current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon},
 };
-use model_server_data::{Attribute, AttributeInternal, GroupValuesInternal, Language, Translation};
+use model_server_data::{Attribute, AttributeValue, GroupValues, Language, Translation};
 
 #[derive(Debug)]
 enum CsvFileError {
     Load,
     SelectedColumnDoesNotExists,
     UnsupportedDelimiterCharacter,
-    InvalidConfig,
 }
 
 #[derive(Debug, Clone)]
@@ -59,10 +58,8 @@ pub(super) async fn handle_load_profile_attributes_values_from_csv(
     let db_attribute_json = db_attribute_json
         .unwrap_or_else(|| panic!("Attribute ID {} not found in database", attribute_id));
 
-    let db_attribute: Attribute = serde_json::from_str(&db_attribute_json)
+    let mut attribute: Attribute = serde_json::from_str(&db_attribute_json)
         .unwrap_or_else(|e| panic!("Failed to parse attribute JSON from DB: {}", e));
-
-    let mut attribute = attribute_to_internal_for_csv_update(db_attribute);
 
     let translation_columns = parse_csv_translations(translations);
     let csv_config = GroupValuesCsvConfig {
@@ -74,11 +71,14 @@ pub(super) async fn handle_load_profile_attributes_values_from_csv(
         translations: translation_columns,
     };
 
-    load_for_attribute(&mut attribute, &csv_config)
-        .unwrap_or_else(|e| panic!("CSV loading failed: {e:?}"));
+    let (values, translations) =
+        load_for_attribute(&csv_config).unwrap_or_else(|e| panic!("CSV loading failed: {e:?}"));
+
+    attribute.values = values;
+    attribute.translations = translations;
 
     let (attribute_for_db, hash) = attribute
-        .to_attribute_and_hash()
+        .to_attribute_and_hash_with_validation()
         .unwrap_or_else(|e| panic!("Validation failed: {}", e));
 
     let attr_id = attribute_for_db.id.to_i16();
@@ -100,26 +100,6 @@ pub(super) async fn handle_load_profile_attributes_values_from_csv(
         "Imported CSV data for attribute ID {} and updated database",
         attribute_id
     );
-}
-
-fn attribute_to_internal_for_csv_update(attribute: Attribute) -> AttributeInternal {
-    AttributeInternal {
-        key: attribute.key,
-        name: attribute.name,
-        mode: attribute.mode,
-        max_selected: attribute.max_selected,
-        max_filters: attribute.max_filters,
-        editable: attribute.editable,
-        visible: attribute.visible,
-        required: attribute.required,
-        icon: attribute.icon,
-        id: attribute.id,
-        order_number: attribute.order_number,
-        value_order: attribute.value_order,
-        values: vec![],
-        group_values: vec![],
-        translations: vec![],
-    }
 }
 
 fn parse_csv_translations(translations: Vec<String>) -> Vec<GroupValuesCsvTranslationColumn> {
@@ -178,19 +158,8 @@ fn parse_csv_translations(translations: Vec<String>) -> Vec<GroupValuesCsvTransl
 }
 
 fn load_for_attribute(
-    attribute: &mut AttributeInternal,
     config: &GroupValuesCsvConfig,
-) -> Result<(), CsvFileError> {
-    if !attribute.values.is_empty() {
-        return Err(CsvFileError::InvalidConfig);
-    }
-    if !attribute.group_values.is_empty() {
-        return Err(CsvFileError::InvalidConfig);
-    }
-    if !attribute.translations.is_empty() {
-        return Err(CsvFileError::InvalidConfig);
-    }
-
+) -> Result<(Vec<AttributeValue>, Vec<Language>), CsvFileError> {
     let delimiter: u8 = config
         .delimiter
         .try_into()
@@ -205,8 +174,7 @@ fn load_for_attribute(
     let group_value_rows = reader.into_records().skip(config.start_row_index);
 
     let mut values_hash_set = HashSet::new();
-    let mut values = vec![];
-    let mut group_values: Vec<GroupValuesInternal> = vec![];
+    let mut values: Vec<AttributeValue> = vec![];
     let mut translations: Vec<Language> = vec![];
 
     for row in group_value_rows {
@@ -220,7 +188,20 @@ fn load_for_attribute(
 
         if !values_hash_set.contains(&value) {
             values_hash_set.insert(value.clone());
-            values.push(toml::Value::String(value.clone()));
+            let key = Attribute::attribute_name_to_attribute_key(&value);
+            let next_id: u16 = (values.len() + 1)
+                .try_into()
+                .map_err(|_| CsvFileError::Load)?;
+            values.push(AttributeValue {
+                key,
+                name: value.clone(),
+                id: next_id,
+                order_number: next_id,
+                editable: true,
+                visible: true,
+                icon: None,
+                group_values: None,
+            });
         }
 
         let group_value = row
@@ -229,19 +210,33 @@ fn load_for_attribute(
             .trim()
             .to_string();
 
-        let key = AttributeInternal::attribute_name_to_attribute_key(&value);
-        if let Some(found_group_values) = group_values.iter_mut().find(|v| v.key == key) {
-            found_group_values
-                .values
-                .push(toml::Value::String(group_value.clone()));
-        } else {
-            group_values.push(GroupValuesInternal {
-                key: key.clone(),
-                values: vec![toml::Value::String(group_value.clone())],
+        let key = Attribute::attribute_name_to_attribute_key(&value);
+        let top_level = values
+            .iter_mut()
+            .find(|v| v.key == key)
+            .ok_or(CsvFileError::Load)?;
+
+        let group_value_key = Attribute::attribute_name_to_attribute_key(&group_value);
+        let group_values = top_level.group_values.get_or_insert_with(|| GroupValues {
+            key: key.clone(),
+            values: vec![],
+        });
+        if !group_values.values.iter().any(|v| v.key == group_value_key) {
+            let next_id: u16 = (group_values.values.len() + 1)
+                .try_into()
+                .map_err(|_| CsvFileError::Load)?;
+            group_values.values.push(AttributeValue {
+                key: group_value_key.clone(),
+                name: group_value.clone(),
+                id: next_id,
+                order_number: next_id,
+                editable: true,
+                visible: true,
+                icon: None,
+                group_values: None,
             });
         }
 
-        let group_value_key = AttributeInternal::attribute_name_to_attribute_key(&group_value);
         for translation_column in &config.translations {
             let value_translation = row
                 .get(translation_column.values_column_index)
@@ -293,9 +288,5 @@ fn load_for_attribute(
         }
     }
 
-    attribute.values = values;
-    attribute.group_values = group_values;
-    attribute.translations = translations;
-
-    Ok(())
+    Ok((values, translations))
 }
