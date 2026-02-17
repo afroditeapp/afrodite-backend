@@ -140,14 +140,6 @@ fn value_non_zero_u8_is_one(v: &NonZeroU8) -> bool {
     v.get() == 1
 }
 
-fn value_u8_one() -> u8 {
-    1
-}
-
-fn value_u8_is_one(v: &u8) -> bool {
-    *v == 1
-}
-
 struct ModeAndIdSequenceNumber {
     mode: AttributeMode,
     current_id: Option<u16>,
@@ -256,8 +248,8 @@ impl AttributeInternal {
             key: self.key.clone(),
             name: self.name.clone(),
             mode: self.mode,
-            max_selected: self.max_selected.into(),
-            max_filters: self.max_filters.into(),
+            max_selected: self.max_selected,
+            max_filters: self.max_filters,
             editable: self.editable,
             visible: self.visible,
             required: self.required,
@@ -763,12 +755,18 @@ pub struct Attribute {
     pub name: String,
     /// Mode of the attribute.
     pub mode: AttributeMode,
-    #[serde(default = "value_u8_one", skip_serializing_if = "value_u8_is_one")]
-    #[schema(default = 1)]
-    pub max_selected: u8,
-    #[serde(default = "value_u8_one", skip_serializing_if = "value_u8_is_one")]
-    #[schema(default = 1)]
-    pub max_filters: u8,
+    #[serde(
+        default = "value_non_zero_u8_one",
+        skip_serializing_if = "value_non_zero_u8_is_one"
+    )]
+    #[schema(default = 1, value_type = u8)]
+    pub max_selected: NonZeroU8,
+    #[serde(
+        default = "value_non_zero_u8_one",
+        skip_serializing_if = "value_non_zero_u8_is_one"
+    )]
+    #[schema(default = 1, value_type = u8)]
+    pub max_filters: NonZeroU8,
     /// Client should show this attribute when editing a profile.
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
     #[schema(default = true)]

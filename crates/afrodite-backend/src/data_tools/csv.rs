@@ -1,4 +1,4 @@
-use std::{collections::HashSet, num::NonZeroU8, path::PathBuf};
+use std::{collections::HashSet, path::PathBuf};
 
 use database::{
     DbReaderRaw, DbWriter,
@@ -107,10 +107,8 @@ fn attribute_to_internal_for_csv_update(attribute: Attribute) -> AttributeIntern
         key: attribute.key,
         name: attribute.name,
         mode: attribute.mode,
-        max_selected: NonZeroU8::new(attribute.max_selected)
-            .unwrap_or_else(|| panic!("Invalid max_selected value 0 for attribute")),
-        max_filters: NonZeroU8::new(attribute.max_filters)
-            .unwrap_or_else(|| panic!("Invalid max_filters value 0 for attribute")),
+        max_selected: attribute.max_selected,
+        max_filters: attribute.max_filters,
         editable: attribute.editable,
         visible: attribute.visible,
         required: attribute.required,

@@ -208,10 +208,10 @@ impl ProfileUpdateInternal {
                     };
                     if info.mode.is_bitflag() {
                         let selected = a.v.first().copied().unwrap_or_default().count_ones();
-                        if selected > info.max_selected.into() {
+                        if selected > info.max_selected.get().into() {
                             return error();
                         }
-                    } else if a.v.len() > info.max_selected.into() {
+                    } else if a.v.len() > info.max_selected.get().into() {
                         return error();
                     }
                 }
