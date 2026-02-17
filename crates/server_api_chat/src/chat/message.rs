@@ -134,7 +134,7 @@ const DAILY_MESSAGES_REMAINING_WARNING_THRESHOLD: u16 = 50;
 
 /// Send message to a match.
 ///
-/// Max pending message count is 50.
+/// Server config file defines max count for conversation pending messages.
 /// Max message size is u16::MAX.
 ///
 /// Sending will fail if one or two way block exists.

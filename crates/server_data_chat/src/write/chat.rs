@@ -398,11 +398,6 @@ impl WriteCommandsChat<'_> {
     ///
     /// Receiver public key check is for preventing client from
     /// sending messages encrypted with outdated public key.
-    ///
-    /// Max receiver acknowledgements missing count is 50.
-    ///
-    /// Max sender acknowledgements missing count is 50.
-    ///
     #[allow(clippy::too_many_arguments)]
     pub async fn insert_pending_message_if_match_and_not_blocked(
         &self,
@@ -414,6 +409,10 @@ impl WriteCommandsChat<'_> {
         message_id_value: MessageId,
         keys: Arc<ParsedKeys>,
     ) -> Result<(SendMessageResult, Option<PushNotificationAllowed>), DataError> {
+        let chat_limits = self.config().limits_chat();
+        let conversation_pending_messages_max_count =
+            i64::from(chat_limits.conversation_pending_messages_max_count);
+
         db_transaction!(self, move |mut cmds| {
             let sender_current_key = cmds
                 .read()
@@ -439,7 +438,7 @@ impl WriteCommandsChat<'_> {
                 .message()
                 .receiver_acknowledgements_missing_count_for_one_conversation(sender, receiver)?;
 
-            if receiver_acknowledgements_missing >= 50 {
+            if receiver_acknowledgements_missing >= conversation_pending_messages_max_count {
                 return Ok((
                     SendMessageResult::too_many_receiver_acknowledgements_missing(),
                     None,
@@ -452,7 +451,7 @@ impl WriteCommandsChat<'_> {
                 .message()
                 .sender_acknowledgements_missing_count_for_one_conversation(sender, receiver)?;
 
-            if sender_acknowledgements_missing >= 50 {
+            if sender_acknowledgements_missing >= conversation_pending_messages_max_count {
                 return Ok((
                     SendMessageResult::too_many_sender_acknowledgements_missing(),
                     None,
