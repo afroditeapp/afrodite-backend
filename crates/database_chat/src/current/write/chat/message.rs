@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{delete, insert_into, prelude::*, update};
@@ -235,19 +235,57 @@ impl CurrentWriteChatMessage<'_> {
         msg_number: model::MessageNumber,
     ) -> Result<(), DieselDatabaseError> {
         use diesel::upsert::excluded;
-        use model::schema::latest_seen_message::dsl::*;
 
-        insert_into(latest_seen_message)
-            .values((
-                account_id_viewer.eq(viewer_id.as_db_id()),
-                account_id_sender.eq(sender_id.as_db_id()),
-                message_number.eq(msg_number),
-            ))
-            .on_conflict((account_id_viewer, account_id_sender))
-            .do_update()
-            .set(message_number.eq(excluded(message_number)))
-            .execute_my_conn(self.conn())
-            .into_db_error((viewer_id, sender_id))?;
+        {
+            use model::schema::latest_seen_message::dsl::*;
+
+            insert_into(latest_seen_message)
+                .values((
+                    account_id_viewer.eq(viewer_id.as_db_id()),
+                    account_id_sender.eq(sender_id.as_db_id()),
+                    message_number.eq(msg_number),
+                ))
+                .on_conflict((account_id_viewer, account_id_sender))
+                .do_update()
+                .set(message_number.eq(excluded(message_number)))
+                .execute_my_conn(self.conn())
+                .into_db_error((viewer_id, sender_id))?;
+        }
+
+        {
+            use model::schema::latest_seen_message_pending_delivery::dsl::*;
+
+            insert_into(latest_seen_message_pending_delivery)
+                .values((
+                    account_id_viewer.eq(viewer_id.as_db_id()),
+                    account_id_sender.eq(sender_id.as_db_id()),
+                    message_number.eq(msg_number),
+                ))
+                .on_conflict((account_id_viewer, account_id_sender))
+                .do_update()
+                .set(message_number.eq(excluded(message_number)))
+                .execute_my_conn(self.conn())
+                .into_db_error((viewer_id, sender_id))?;
+        }
+
+        Ok(())
+    }
+
+    pub fn delete_pending_latest_seen_message_deliveries(
+        &mut self,
+        sender_id: AccountIdInternal,
+        acknowledged: HashMap<AccountIdInternal, model::MessageNumber>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::latest_seen_message_pending_delivery::dsl::*;
+
+        for (viewer, acknowledged_message_number) in acknowledged {
+            delete(latest_seen_message_pending_delivery)
+                .filter(account_id_sender.eq(sender_id.as_db_id()))
+                .filter(account_id_viewer.eq(viewer.as_db_id()))
+                .filter(message_number.eq(acknowledged_message_number))
+                .execute(self.conn())
+                .into_db_error(sender_id)?;
+        }
 
         Ok(())
     }

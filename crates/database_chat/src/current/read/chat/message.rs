@@ -11,7 +11,7 @@ use model::{
 };
 use model_chat::{
     AccountIdInternal, DataExportMessageDeliveryInfo, DeliveryInfoType, GetSentMessage,
-    MessageDeliveryInfo, PendingMessageInternal,
+    LatestSeenMessageInfo, MessageDeliveryInfo, PendingMessageInternal,
 };
 
 use crate::IntoDatabaseError;
@@ -270,6 +270,50 @@ impl CurrentReadChatMessage<'_> {
                     unix_time,
                 },
             )
+            .collect();
+
+        Ok(result)
+    }
+
+    pub fn has_pending_latest_seen_message_deliveries(
+        &mut self,
+        sender_id: AccountIdInternal,
+    ) -> Result<bool, DieselDatabaseError> {
+        use crate::schema::latest_seen_message_pending_delivery::dsl::*;
+
+        let count: i64 = latest_seen_message_pending_delivery
+            .filter(account_id_sender.eq(sender_id.as_db_id()))
+            .count()
+            .get_result(self.conn())
+            .into_db_error(())?;
+
+        Ok(count > 0)
+    }
+
+    pub fn get_pending_latest_seen_message_deliveries(
+        &mut self,
+        sender_id: AccountIdInternal,
+    ) -> Result<Vec<LatestSeenMessageInfo>, DieselDatabaseError> {
+        use crate::schema::{account_id, latest_seen_message_pending_delivery};
+
+        let data: Vec<(AccountId, MessageNumber)> = latest_seen_message_pending_delivery::table
+            .inner_join(
+                account_id::table
+                    .on(latest_seen_message_pending_delivery::account_id_viewer.eq(account_id::id)),
+            )
+            .filter(
+                latest_seen_message_pending_delivery::account_id_sender.eq(sender_id.as_db_id()),
+            )
+            .select((
+                account_id::uuid,
+                latest_seen_message_pending_delivery::message_number,
+            ))
+            .load(self.conn())
+            .into_db_error(())?;
+
+        let result = data
+            .into_iter()
+            .map(|(viewer, mn)| LatestSeenMessageInfo { viewer, mn })
             .collect();
 
         Ok(result)

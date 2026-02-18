@@ -2,8 +2,8 @@ use database_chat::current::read::GetDbReadCommandsChat;
 use model::{ConversationId, MessageId};
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, ChatStateRaw, GetSentMessage,
-    MatchesIteratorState, MessageDeliveryInfo, ProfileLink, ReceivedLikesIteratorState,
-    ReceivedLikesPage, ReceivedLikesPageItem, SentBlocksPage,
+    LatestSeenMessageInfo, MatchesIteratorState, MessageDeliveryInfo, ProfileLink,
+    ReceivedLikesIteratorState, ReceivedLikesPage, ReceivedLikesPageItem, SentBlocksPage,
 };
 use server_data::{
     DataError, IntoDataError, cache::CacheReadCommon, db_manager::InternalReading,
@@ -230,6 +230,32 @@ impl ReadCommandsChat<'_> {
         self.db_read(move |mut cmds| cmds.chat().message().get_all_delivery_info(id))
             .await
             .into_error()
+    }
+
+    pub async fn has_pending_latest_seen_message_deliveries(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<bool, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.chat()
+                .message()
+                .has_pending_latest_seen_message_deliveries(id)
+        })
+        .await
+        .into_error()
+    }
+
+    pub async fn get_pending_latest_seen_message_deliveries(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Vec<LatestSeenMessageInfo>, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.chat()
+                .message()
+                .get_pending_latest_seen_message_deliveries(id)
+        })
+        .await
+        .into_error()
     }
 
     pub async fn get_conversation_id(

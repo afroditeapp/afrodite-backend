@@ -97,6 +97,16 @@ pub async fn send_events_if_needed(
         send_event(socket, EventToClientInternal::MessageDeliveryInfoChanged).await?;
     }
 
+    let has_latest_seen_info = read_handle
+        .chat()
+        .has_pending_latest_seen_message_deliveries(id)
+        .await
+        .change_context(WebSocketError::DatabasePendingMessagesQuery)?;
+
+    if has_latest_seen_info {
+        send_event(socket, EventToClientInternal::LatestSeenMessageChanged).await?;
+    }
+
     // Common
 
     let status = manager_api_client.maintenance_status().await;

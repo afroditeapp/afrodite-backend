@@ -7,9 +7,9 @@ use axum_extra::TypedHeader;
 use headers::ContentType;
 use model::{GetConversationId, MessageId, NotificationEvent, PushNotificationFlags};
 use model_chat::{
-    AccountId, AccountIdInternal, EventToClientInternal, GetSentMessage, MessageDeliveryInfoIdList,
-    MessageDeliveryInfoList, PendingMessageAcknowledgementList, SeenMessageList, SendMessageResult,
-    SendMessageToAccountParams, SentMessageIdList, add_minimal_i64,
+    AccountId, AccountIdInternal, EventToClientInternal, GetSentMessage, LatestSeenMessageInfoList,
+    MessageDeliveryInfoIdList, MessageDeliveryInfoList, PendingMessageAcknowledgementList,
+    SeenMessage, SendMessageResult, SendMessageToAccountParams, SentMessageIdList, add_minimal_i64,
 };
 use server_api::{
     S,
@@ -397,17 +397,14 @@ pub async fn post_delete_message_delivery_info(
     Ok(())
 }
 
-const PATH_POST_MARK_MESSAGES_AS_SEEN: &str = "/chat_api/mark_messages_as_seen";
+const PATH_POST_MARK_MESSAGE_AS_SEEN: &str = "/chat_api/mark_message_as_seen";
 
-/// Mark received messages as seen.
-///
-/// This endpoint allows message receivers to mark messages as seen.
-/// The seen status is saved to the message_delivery_info table and
-/// an event is sent to each message sender to notify them of the state change.
+/// Mark received message as seen. Only latest message number is stored
+/// so client should mark the latest messages as seen.
 #[utoipa::path(
     post,
-    path = PATH_POST_MARK_MESSAGES_AS_SEEN,
-    request_body(content = SeenMessageList),
+    path = PATH_POST_MARK_MESSAGE_AS_SEEN,
+    request_body(content = SeenMessage),
     responses(
         (status = 200, description = "Success."),
         (status = 401, description = "Unauthorized."),
@@ -415,16 +412,77 @@ const PATH_POST_MARK_MESSAGES_AS_SEEN: &str = "/chat_api/mark_messages_as_seen";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_mark_messages_as_seen(
+pub async fn post_mark_message_as_seen(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    Json(list): Json<SeenMessageList>,
+    Json(message): Json<SeenMessage>,
 ) -> Result<(), StatusCode> {
-    CHAT.post_mark_messages_as_seen.incr();
+    CHAT.post_mark_message_as_seen.incr();
 
     db_write!(state, move |cmds| {
-        cmds.chat().mark_messages_as_seen(id, list.messages).await
+        cmds.chat().mark_message_as_seen(id, message).await
     })?;
+    Ok(())
+}
+
+const PATH_GET_PENDING_LATEST_SEEN_MESSAGES: &str = "/chat_api/pending_latest_seen_messages";
+
+/// Get pending latest seen message numbers where the API caller is the message sender.
+/// Returns entries that the viewer has reported as seen but have not yet been
+/// delivered back to the sender.
+///
+/// The received entries must be deleted using delete API.
+#[utoipa::path(
+    get,
+    path = PATH_GET_PENDING_LATEST_SEEN_MESSAGES,
+    responses(
+        (status = 200, description = "Success.", body = LatestSeenMessageInfoList),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_pending_latest_seen_messages(
+    State(state): State<S>,
+    Extension(id): Extension<AccountIdInternal>,
+) -> Result<Json<LatestSeenMessageInfoList>, StatusCode> {
+    CHAT.get_pending_latest_seen_messages.incr();
+    let info = state
+        .read()
+        .chat()
+        .get_pending_latest_seen_message_deliveries(id)
+        .await?;
+    Ok(LatestSeenMessageInfoList { info }.into())
+}
+
+const PATH_POST_DELETE_PENDING_LATEST_SEEN_MESSAGES: &str =
+    "/chat_api/pending_latest_seen_messages/delete";
+
+/// Delete pending latest seen message entries.
+#[utoipa::path(
+    post,
+    path = PATH_POST_DELETE_PENDING_LATEST_SEEN_MESSAGES,
+    request_body(content = LatestSeenMessageInfoList),
+    responses(
+        (status = 200, description = "Success."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_delete_pending_latest_seen_messages(
+    State(state): State<S>,
+    Extension(id): Extension<AccountIdInternal>,
+    Json(acknowledged): Json<LatestSeenMessageInfoList>,
+) -> Result<(), StatusCode> {
+    CHAT.post_delete_pending_latest_seen_messages.incr();
+
+    db_write!(state, move |cmds| {
+        cmds.chat()
+            .delete_pending_latest_seen_message_deliveries(id, acknowledged.info)
+            .await
+    })?;
+
     Ok(())
 }
 
@@ -438,7 +496,9 @@ create_open_api_router!(
         post_add_sender_acknowledgement,
         get_message_delivery_info,
         post_delete_message_delivery_info,
-        post_mark_messages_as_seen,
+        post_mark_message_as_seen,
+        get_pending_latest_seen_messages,
+        post_delete_pending_latest_seen_messages,
         get_conversation_id,
 );
 
@@ -454,6 +514,8 @@ create_counters!(
     post_add_sender_acknowledgement,
     get_message_delivery_info,
     post_delete_message_delivery_info,
-    post_mark_messages_as_seen,
+    post_mark_message_as_seen,
+    get_pending_latest_seen_messages,
+    post_delete_pending_latest_seen_messages,
     get_conversation_id,
 );

@@ -4,7 +4,10 @@ mod privacy;
 mod report;
 mod transfer;
 
-use std::{collections::HashSet, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 use database_chat::current::{
     read::GetDbReadCommandsChat,
@@ -14,10 +17,10 @@ use database_chat::current::{
     },
 };
 use error_stack::ResultExt;
-use model::{MessageNumber, NewReceivedLikesCountResult, ReceivedLikeId};
+use model::{NewReceivedLikesCountResult, ReceivedLikeId};
 use model_chat::{
-    AccountIdInternal, AddPublicKeyResult, ChatStateRaw, DeliveryInfoType, MessageId,
-    NewReceivedLikesCount, PendingMessageId, PublicKeyId, ReceivedLikesIteratorState,
+    AccountIdInternal, AddPublicKeyResult, ChatStateRaw, DeliveryInfoType, LatestSeenMessageInfo,
+    MessageId, NewReceivedLikesCount, PendingMessageId, PublicKeyId, ReceivedLikesIteratorState,
     ResetReceivedLikesIteratorResult, SeenMessage, SendMessageResult, SyncVersionUtils,
 };
 use server_data::{
@@ -257,10 +260,10 @@ impl WriteCommandsChat<'_> {
         Ok(())
     }
 
-    pub async fn mark_messages_as_seen(
+    pub async fn mark_message_as_seen(
         &self,
         message_receiver: AccountIdInternal,
-        messages: Vec<SeenMessage>,
+        message: SeenMessage,
     ) -> Result<(), DataError> {
         let seen_state_enabled = self
             .config()
@@ -272,89 +275,53 @@ impl WriteCommandsChat<'_> {
             return Ok(());
         }
 
-        let mut converted = vec![];
-        for m in messages {
-            let sender = self.to_account_id_internal(m.sender).await?;
-            converted.push((sender, m.mn, m.id));
-        }
+        let sender = self.to_account_id_internal(message.sender).await?;
 
-        // Group messages by sender for efficient processing
-        let mut messages_by_sender: std::collections::HashMap<
-            AccountIdInternal,
-            Vec<(model::MessageNumber, model::MessageId)>,
-        > = std::collections::HashMap::new();
-        for (sender, msg_number, msg_id) in &converted {
-            messages_by_sender
-                .entry(*sender)
-                .or_default()
-                .push((*msg_number, *msg_id));
-        }
+        let sender_was_updated = db_transaction!(self, move |mut cmds| {
+            let Some(message_number_max) = cmds
+                .read()
+                .chat()
+                .interaction()
+                .account_interaction(message_receiver, sender)?
+                .map(|v| v.next_message_number().mn - 1)
+            else {
+                return Ok(false);
+            };
 
-        let senders_with_updates = db_transaction!(self, move |mut cmds| {
-            let mut senders_with_updates = HashSet::new();
-            for (sender, message_ids) in messages_by_sender {
-                let Some(message_number_max) = cmds
-                    .read()
-                    .chat()
-                    .interaction()
-                    .account_interaction(message_receiver, sender)?
-                    .map(|v| v.next_message_number().mn - 1)
-                else {
-                    continue;
-                };
-
-                let message_number_min = cmds
-                    .read()
-                    .chat()
-                    .message()
-                    .get_latest_seen_message_number(message_receiver, sender)?
-                    .map(|v| v.mn + 1)
-                    .unwrap_or(1); // First valid MessageNumber
-
-                let mut largest_valid_number: Option<MessageNumber> = None;
-
-                for &(msg_number, msg_uuid) in &message_ids {
-                    if msg_number.mn < message_number_min || msg_number.mn > message_number_max {
-                        continue;
-                    }
-
-                    match largest_valid_number {
-                        Some(current) if current.mn < msg_number.mn => {
-                            largest_valid_number = Some(msg_number)
-                        }
-                        Some(_) => (),
-                        None => largest_valid_number = Some(msg_number),
-                    }
-
-                    cmds.chat().message().insert_message_delivery_info(
-                        sender,
-                        message_receiver,
-                        msg_uuid,
-                        DeliveryInfoType::Seen,
-                    )?;
-                }
-
-                if let Some(largest_valid_number) = largest_valid_number {
-                    senders_with_updates.insert(sender);
-                    if largest_valid_number.mn > message_number_min {
-                        cmds.chat().message().update_latest_seen_message(
-                            message_receiver,
-                            sender,
-                            largest_valid_number,
-                        )?;
-                    }
-                }
+            if message.mn.mn > message_number_max {
+                // message is not sent yet
+                return Ok(false);
             }
 
-            Ok(senders_with_updates)
+            let message_number_min = cmds
+                .read()
+                .chat()
+                .message()
+                .get_latest_seen_message_number(message_receiver, sender)?
+                .map(|v| v.mn);
+
+            if let Some(message_number_min) = message_number_min
+                && message.mn.mn <= message_number_min
+            {
+                // message is already marked as seen
+                return Ok(false);
+            }
+
+            cmds.chat().message().update_latest_seen_message(
+                message_receiver,
+                sender,
+                message.mn,
+            )?;
+
+            Ok(true)
         })?;
 
-        for sender in &senders_with_updates {
+        if sender_was_updated {
             self.handle()
                 .events()
                 .send_connected_event(
                     sender.as_id(),
-                    model::EventToClientInternal::MessageDeliveryInfoChanged,
+                    model::EventToClientInternal::LatestSeenMessageChanged,
                 )
                 .await?;
         }
@@ -371,6 +338,34 @@ impl WriteCommandsChat<'_> {
             cmds.chat()
                 .message()
                 .delete_delivery_info_by_ids(sender_id, ids)
+        })?;
+
+        Ok(())
+    }
+
+    pub async fn delete_pending_latest_seen_message_deliveries(
+        &self,
+        sender_id: AccountIdInternal,
+        acknowledged: Vec<LatestSeenMessageInfo>,
+    ) -> Result<(), DataError> {
+        let mut acknowledged_internal: HashMap<AccountIdInternal, model::MessageNumber> =
+            HashMap::new();
+        for info in acknowledged {
+            let viewer = self.to_account_id_internal(info.viewer).await?;
+            acknowledged_internal
+                .entry(viewer)
+                .and_modify(|current| {
+                    if current.mn < info.mn.mn {
+                        *current = info.mn;
+                    }
+                })
+                .or_insert(info.mn);
+        }
+
+        db_transaction!(self, move |mut cmds| {
+            cmds.chat()
+                .message()
+                .delete_pending_latest_seen_message_deliveries(sender_id, acknowledged_internal)
         })?;
 
         Ok(())

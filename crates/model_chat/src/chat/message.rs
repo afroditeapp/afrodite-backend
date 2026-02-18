@@ -152,8 +152,7 @@ fn parse_minimal_i64(d: &mut impl Iterator<Item = u8>) -> Option<i64> {
 #[repr(i16)]
 pub enum DeliveryInfoType {
     Delivered = 0,
-    Seen = 1,
-    DeliveryFailed = 2,
+    DeliveryFailed = 1,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, PartialEq)]
@@ -177,6 +176,19 @@ pub struct MessageDeliveryInfoList {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct MessageDeliveryInfoIdList {
     pub ids: Vec<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, PartialEq)]
+pub struct LatestSeenMessageInfo {
+    /// Account which viewed/received the message
+    pub viewer: AccountId,
+    /// Latest message number seen by the viewer
+    pub mn: MessageNumber,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, PartialEq, Default)]
+pub struct LatestSeenMessageInfoList {
+    pub info: Vec<LatestSeenMessageInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, PartialEq)]

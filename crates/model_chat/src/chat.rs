@@ -89,13 +89,7 @@ pub struct PendingMessageAcknowledgementList {
 pub struct SeenMessage {
     /// Sender of the message.
     pub sender: AccountId,
-    pub id: MessageId,
     pub mn: MessageNumber,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
-pub struct SeenMessageList {
-    pub messages: Vec<SeenMessage>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
