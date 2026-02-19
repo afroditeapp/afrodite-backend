@@ -55,6 +55,8 @@ pub enum EventType {
     CheckOnlineStatusResponse,
     #[serde(rename = "MessageDeliveryInfoChanged")]
     MessageDeliveryInfoChanged,
+    #[serde(rename = "LatestSeenMessageChanged")]
+    LatestSeenMessageChanged,
 
 }
 
@@ -81,6 +83,7 @@ impl std::fmt::Display for EventType {
             Self::TypingStop => write!(f, "TypingStop"),
             Self::CheckOnlineStatusResponse => write!(f, "CheckOnlineStatusResponse"),
             Self::MessageDeliveryInfoChanged => write!(f, "MessageDeliveryInfoChanged"),
+            Self::LatestSeenMessageChanged => write!(f, "LatestSeenMessageChanged"),
         }
     }
 }

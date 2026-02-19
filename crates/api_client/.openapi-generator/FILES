@@ -29,6 +29,7 @@ src/models/account_locked_state.rs
 src/models/account_setup.rs
 src/models/account_state_container.rs
 src/models/account_sync_version.rs
+src/models/add_favorite_profile_result.rs
 src/models/add_public_key_result.rs
 src/models/admin_bot_config.rs
 src/models/admin_bot_notification_types.rs
@@ -159,7 +160,6 @@ src/models/get_profile_string_state.rs
 src/models/get_push_notification_info.rs
 src/models/get_report_list.rs
 src/models/get_sent_message.rs
-src/models/group_values.rs
 src/models/image_processing_dynamic_config.rs
 src/models/init_email_change.rs
 src/models/init_email_change_admin.rs
@@ -173,6 +173,8 @@ src/models/jitsi_meet_url.rs
 src/models/language.rs
 src/models/last_seen_time_filter.rs
 src/models/latest_birthdate.rs
+src/models/latest_seen_message_info.rs
+src/models/latest_seen_message_info_list.rs
 src/models/likes_config.rs
 src/models/limited_action_status.rs
 src/models/llm_content_moderation_config.rs
@@ -302,7 +304,6 @@ src/models/report_processing_state.rs
 src/models/report_type_number.rs
 src/models/request_email_login_token.rs
 src/models/request_email_login_token_result.rs
-src/models/resend_message.rs
 src/models/reset_news_iterator_result.rs
 src/models/reset_received_likes_iterator_result.rs
 src/models/scheduled_maintenance_status.rs
@@ -314,7 +315,6 @@ src/models/search_age_range.rs
 src/models/search_groups.rs
 src/models/security_content.rs
 src/models/seen_message.rs
-src/models/seen_message_list.rs
 src/models/send_like_result.rs
 src/models/send_message_result.rs
 src/models/send_verify_email_message_result.rs

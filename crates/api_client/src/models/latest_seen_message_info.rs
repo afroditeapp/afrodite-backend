@@ -12,19 +12,20 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct SeenMessage {
+pub struct LatestSeenMessageInfo {
+    /// Latest message number seen by the viewer
     #[serde(rename = "mn")]
     pub mn: Box<models::MessageNumber>,
-    /// Sender of the message.
-    #[serde(rename = "sender")]
-    pub sender: Box<models::AccountId>,
+    /// Account which viewed/received the message
+    #[serde(rename = "viewer")]
+    pub viewer: Box<models::AccountId>,
 }
 
-impl SeenMessage {
-    pub fn new(mn: models::MessageNumber, sender: models::AccountId) -> SeenMessage {
-        SeenMessage {
+impl LatestSeenMessageInfo {
+    pub fn new(mn: models::MessageNumber, viewer: models::AccountId) -> LatestSeenMessageInfo {
+        LatestSeenMessageInfo {
             mn: Box::new(mn),
-            sender: Box::new(sender),
+            viewer: Box::new(viewer),
         }
     }
 }

@@ -89,6 +89,15 @@ pub enum GetMessageDeliveryInfoError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_pending_latest_seen_messages`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetPendingLatestSeenMessagesError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_pending_messages`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -225,6 +234,15 @@ pub enum PostDeleteMessageDeliveryInfoError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`post_delete_pending_latest_seen_messages`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostDeletePendingLatestSeenMessagesError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`post_get_matches_iterator_page`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -261,10 +279,10 @@ pub enum PostGetSentMessageError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_mark_messages_as_seen`]
+/// struct for typed errors of method [`post_mark_message_as_seen`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostMarkMessagesAsSeenError {
+pub enum PostMarkMessageAsSeenError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -274,15 +292,6 @@ pub enum PostMarkMessagesAsSeenError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostMarkReceivedLikesViewedError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`post_resend_message`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum PostResendMessageError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -636,7 +645,45 @@ pub async fn get_message_delivery_info(configuration: &configuration::Configurat
     }
 }
 
-/// Sender can resend the same message, so client must prevent replacing successfully received messages.  The returned bytes is - Hide notifications (u8, values: 0 or 1) - List of objects  Data for single object: - Binary data length as minimal i64 - Binary data  Minimal i64 has this format: - i64 byte count (u8, values: 1, 2, 4, 8) - i64 bytes (little-endian)  Binary data is binary PGP message which contains backend signed binary data. The binary data contains: - Version (u8, values: 1) - Sender AccountId UUID big-endian bytes (16 bytes) - Receiver AccountId UUID big-endian bytes (16 bytes) - Message MessageId UUID big-endian bytes (16 bytes) - Sender public key ID (minimal i64) - Receiver public key ID (minimal i64) - Message number (minimal i64) - Unix time (minimal i64) - Message data
+/// The received entries must be deleted using delete API.
+pub async fn get_pending_latest_seen_messages(configuration: &configuration::Configuration, ) -> Result<models::LatestSeenMessageInfoList, Error<GetPendingLatestSeenMessagesError>> {
+
+    let uri_str = format!("{}/chat_api/pending_latest_seen_messages", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::LatestSeenMessageInfoList`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::LatestSeenMessageInfoList`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetPendingLatestSeenMessagesError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// The returned bytes is - Hide notifications (u8, values: 0 or 1) - List of objects  Data for single object: - Binary data length as minimal i64 - Binary data  Minimal i64 has this format: - i64 byte count (u8, values: 1, 2, 4, 8) - i64 bytes (little-endian)  Binary data is binary PGP message which contains backend signed binary data. The binary data contains: - Version (u8, values: 1) - Sender AccountId UUID big-endian bytes (16 bytes) - Receiver AccountId UUID big-endian bytes (16 bytes) - Message MessageId UUID big-endian bytes (16 bytes) - Sender public key ID (minimal i64) - Receiver public key ID (minimal i64) - Message number (minimal i64) - Unix time (minimal i64) - Message data
 pub async fn get_pending_messages(configuration: &configuration::Configuration, ) -> Result<reqwest::Response, Error<GetPendingMessagesError>> {
 
     let uri_str = format!("{}/chat_api/pending_messages", configuration.base_path);
@@ -1140,6 +1187,35 @@ pub async fn post_delete_message_delivery_info(configuration: &configuration::Co
     }
 }
 
+pub async fn post_delete_pending_latest_seen_messages(configuration: &configuration::Configuration, latest_seen_message_info_list: models::LatestSeenMessageInfoList) -> Result<(), Error<PostDeletePendingLatestSeenMessagesError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_latest_seen_message_info_list = latest_seen_message_info_list;
+
+    let uri_str = format!("{}/chat_api/pending_latest_seen_messages/delete", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_latest_seen_message_info_list);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostDeletePendingLatestSeenMessagesError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 pub async fn post_get_matches_iterator_page(configuration: &configuration::Configuration, matches_iterator_state: models::MatchesIteratorState) -> Result<models::MatchesPage, Error<PostGetMatchesIteratorPageError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_matches_iterator_state = matches_iterator_state;
@@ -1299,12 +1375,11 @@ pub async fn post_get_sent_message(configuration: &configuration::Configuration,
     }
 }
 
-/// This endpoint allows message receivers to mark messages as seen. The seen status is saved to the message_delivery_info table and an event is sent to each message sender to notify them of the state change.
-pub async fn post_mark_messages_as_seen(configuration: &configuration::Configuration, seen_message_list: models::SeenMessageList) -> Result<(), Error<PostMarkMessagesAsSeenError>> {
+pub async fn post_mark_message_as_seen(configuration: &configuration::Configuration, seen_message: models::SeenMessage) -> Result<(), Error<PostMarkMessageAsSeenError>> {
     // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_seen_message_list = seen_message_list;
+    let p_body_seen_message = seen_message;
 
-    let uri_str = format!("{}/chat_api/mark_messages_as_seen", configuration.base_path);
+    let uri_str = format!("{}/chat_api/mark_message_as_seen", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -1313,7 +1388,7 @@ pub async fn post_mark_messages_as_seen(configuration: &configuration::Configura
     if let Some(ref token) = configuration.bearer_access_token {
         req_builder = req_builder.bearer_auth(token.to_owned());
     };
-    req_builder = req_builder.json(&p_body_seen_message_list);
+    req_builder = req_builder.json(&p_body_seen_message);
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -1324,7 +1399,7 @@ pub async fn post_mark_messages_as_seen(configuration: &configuration::Configura
         Ok(())
     } else {
         let content = resp.text().await?;
-        let entity: Option<PostMarkMessagesAsSeenError> = serde_json::from_str(&content).ok();
+        let entity: Option<PostMarkMessageAsSeenError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -1354,47 +1429,6 @@ pub async fn post_mark_received_likes_viewed(configuration: &configuration::Conf
     } else {
         let content = resp.text().await?;
         let entity: Option<PostMarkReceivedLikesViewedError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
-/// Uses the normal send pipeline while preserving original message metadata.
-pub async fn post_resend_message(configuration: &configuration::Configuration, resend_message: models::ResendMessage) -> Result<models::SendMessageResult, Error<PostResendMessageError>> {
-    // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_resend_message = resend_message;
-
-    let uri_str = format!("{}/chat_api/resend_message", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
-
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref token) = configuration.bearer_access_token {
-        req_builder = req_builder.bearer_auth(token.to_owned());
-    };
-    req_builder = req_builder.json(&p_body_resend_message);
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-    let content_type = resp
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream");
-    let content_type = super::ContentType::from(content_type);
-
-    if !status.is_client_error() && !status.is_server_error() {
-        let content = resp.text().await?;
-        match content_type {
-            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::SendMessageResult`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::SendMessageResult`")))),
-        }
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<PostResendMessageError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -1514,7 +1548,7 @@ pub async fn post_send_like(configuration: &configuration::Configuration, accoun
     }
 }
 
-/// Max pending message count is 50. Max message size is u16::MAX.  Sending will fail if one or two way block exists.  Only the latest public key for sender and receiver can be used when sending a message.
+/// Server config file defines max count for conversation pending messages. Max message size is u16::MAX.  Sending will fail if one or two way block exists.  Only the latest public key for sender and receiver can be used when sending a message.
 pub async fn post_send_message(configuration: &configuration::Configuration, sender_public_key_id: i64, receiver: &str, receiver_public_key_id: i64, message_id: &str, body: Vec<u8>) -> Result<models::SendMessageResult, Error<PostSendMessageError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_sender_public_key_id = sender_public_key_id;

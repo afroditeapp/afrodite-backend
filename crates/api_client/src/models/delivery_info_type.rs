@@ -16,8 +16,6 @@ use serde::{Deserialize, Serialize};
 pub enum DeliveryInfoType {
     #[serde(rename = "Delivered")]
     Delivered,
-    #[serde(rename = "Seen")]
-    Seen,
     #[serde(rename = "DeliveryFailed")]
     DeliveryFailed,
 
@@ -27,7 +25,6 @@ impl std::fmt::Display for DeliveryInfoType {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::Delivered => write!(f, "Delivered"),
-            Self::Seen => write!(f, "Seen"),
             Self::DeliveryFailed => write!(f, "DeliveryFailed"),
         }
     }

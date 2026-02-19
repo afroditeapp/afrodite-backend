@@ -4,9 +4,11 @@ use api_client::{
     apis::{
         account_api::get_account_state,
         chat_api::{
-            get_latest_public_key_id, get_pending_messages, get_public_key, post_add_public_key,
+            get_latest_public_key_id, get_message_delivery_info, get_pending_latest_seen_messages,
+            get_pending_messages, get_public_key, post_add_public_key,
             post_add_receiver_acknowledgement, post_add_sender_acknowledgement,
-            post_get_received_likes_page, post_mark_messages_as_seen,
+            post_delete_message_delivery_info, post_delete_pending_latest_seen_messages,
+            post_get_received_likes_page, post_mark_message_as_seen,
             post_reset_received_likes_paging, post_send_like, post_send_message,
         },
         common_api::get_client_config,
@@ -16,9 +18,10 @@ use api_client::{
         },
     },
     models::{
-        AccountId, AttributeMode, MessageId, MessageNumber, PendingMessageAcknowledgementList,
-        PendingMessageId, ProfileAttributeValueUpdate, ProfileAttributesConfigQuery, ProfileUpdate,
-        SearchAgeRange, SearchGroups, SeenMessage, SeenMessageList, SentMessageIdList,
+        AccountId, AttributeMode, MessageDeliveryInfoIdList, MessageId, MessageNumber,
+        PendingMessageAcknowledgementList, PendingMessageId, ProfileAttributeValueUpdate,
+        ProfileAttributesConfigQuery, ProfileUpdate, SearchAgeRange, SearchGroups, SeenMessage,
+        SentMessageIdList,
     },
 };
 use async_trait::async_trait;
@@ -412,20 +415,16 @@ impl BotAction for AnswerReceivedMessages {
             .await
             .change_context(TestError::ApiRequest)?;
 
-        let seen_list = SeenMessageList {
-            messages: pending_messages
-                .iter()
-                .map(|msg| SeenMessage {
-                    id: msg.message_id.clone().into(),
-                    mn: msg.message_number.clone().into(),
-                    sender: msg.sender.clone().into(),
-                })
-                .collect(),
-        };
+        for msg in &pending_messages {
+            let seen = SeenMessage {
+                mn: Box::new(msg.message_number.clone()),
+                sender: Box::new(msg.sender.clone()),
+            };
 
-        post_mark_messages_as_seen(state.api(), seen_list)
-            .await
-            .change_context(TestError::ApiRequest)?;
+            post_mark_message_as_seen(state.api(), seen)
+                .await
+                .change_context(TestError::ApiRequest)?;
+        }
 
         for msg in pending_messages {
             let new_msg = "Hello!".to_string();
@@ -436,11 +435,47 @@ impl BotAction for AnswerReceivedMessages {
     }
 }
 
+struct Retry;
+
 async fn send_message(
     state: &mut BotState,
     receiver: AccountId,
     msg: String,
 ) -> Result<(), TestError> {
+    loop {
+        match send_message_internal(state, &receiver, &msg).await? {
+            Some(Retry) => continue,
+            None => return Ok(()),
+        }
+    }
+}
+
+async fn send_message_internal(
+    state: &mut BotState,
+    receiver: &AccountId,
+    msg: &str,
+) -> Result<Option<Retry>, TestError> {
+    let delivery_info = get_message_delivery_info(state.api())
+        .await
+        .change_context(TestError::ApiRequest)?;
+
+    if !delivery_info.info.is_empty() {
+        let ids = delivery_info.info.iter().map(|msg| msg.id).collect();
+        post_delete_message_delivery_info(state.api(), MessageDeliveryInfoIdList { ids })
+            .await
+            .change_context(TestError::ApiRequest)?;
+    }
+
+    let seen_info = get_pending_latest_seen_messages(state.api())
+        .await
+        .change_context(TestError::ApiRequest)?;
+
+    if !seen_info.info.is_empty() {
+        post_delete_pending_latest_seen_messages(state.api(), seen_info)
+            .await
+            .change_context(TestError::ApiRequest)?;
+    }
+
     let latest_key_id = get_latest_public_key_id(state.api(), &receiver.aid.to_string())
         .await
         .change_context(TestError::ApiRequest)?;
@@ -449,7 +484,7 @@ async fn send_message(
         Some(value) => value,
         None => {
             warn!("Receiver public key is missing");
-            return Ok(());
+            return Ok(None);
         }
     };
 
@@ -471,7 +506,7 @@ async fn send_message(
         .change_context(TestError::MessageEncryptionError)?;
     let message_id = UuidBase64Url::new_random_id().to_string();
 
-    post_send_message(
+    let r = post_send_message(
         state.api(),
         keys.public_key_id,
         &receiver.aid.to_string(),
@@ -482,6 +517,10 @@ async fn send_message(
     .await
     .change_context(TestError::ApiRequest)?;
 
+    if r.error_pending_delivery_info_exists.unwrap_or_default() {
+        return Ok(Some(Retry));
+    }
+
     post_add_sender_acknowledgement(
         state.api(),
         SentMessageIdList {
@@ -491,7 +530,7 @@ async fn send_message(
     .await
     .change_context(TestError::ApiRequest)?;
 
-    Ok(())
+    Ok(None)
 }
 
 #[derive(Debug)]

@@ -15,9 +15,9 @@ use serde::{Deserialize, Serialize};
 pub struct AttributeValue {
     #[serde(rename = "editable", skip_serializing_if = "Option::is_none")]
     pub editable: Option<bool>,
-    /// Sub level values for this attribute value.
-    #[serde(rename = "group_values", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub group_values: Option<Option<Box<models::GroupValues>>>,
+    /// Change attribute value to be a group identifier. Max depth 2.  Vec values are sorted by [AttributeValue::id]. Indexing with the ID is not possible as ID values start from 1.
+    #[serde(rename = "group_values", skip_serializing_if = "Option::is_none")]
+    pub group_values: Option<Vec<models::AttributeValue>>,
     #[serde(rename = "icon", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub icon: Option<Option<String>>,
     /// Numeric unique identifier for the attribute value. Note that the value must only be unique within a group of values, so value in top level group A, sub level group C and sub level group B can have the same ID.
