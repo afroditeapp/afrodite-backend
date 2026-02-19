@@ -314,6 +314,42 @@ pub struct FavoriteProfilesPage {
     pub profiles: Vec<AccountId>,
 }
 
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct AddFavoriteProfileResult {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error: bool,
+    /// No space for more favorite profiles.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_too_many_favorites: bool,
+    /// Remaining favorites count. The value will be returned only
+    /// if there is 5 or less favorites left.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    remaining_favorites_count: Option<u16>,
+}
+
+impl AddFavoriteProfileResult {
+    pub fn too_many_favorites() -> Self {
+        Self {
+            error: true,
+            error_too_many_favorites: true,
+            ..Self::default()
+        }
+    }
+
+    pub fn ok_with_remaining_count(remaining: u16) -> Self {
+        Self {
+            remaining_favorites_count: Some(remaining),
+            ..Self::default()
+        }
+    }
+
+    pub fn ok() -> Self {
+        Self::default()
+    }
+}
+
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct GetProfileQueryParam {
     /// Profile version UUID

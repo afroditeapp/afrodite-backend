@@ -1,5 +1,5 @@
 use axum::{Extension, extract::State};
-use model_profile::{AccountId, AccountIdInternal, FavoriteProfilesPage};
+use model_profile::{AccountId, AccountIdInternal, AddFavoriteProfileResult, FavoriteProfilesPage};
 use server_api::{S, create_open_api_router, db_write};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -47,7 +47,7 @@ const PATH_POST_FAVORITE_PROFILE: &str = "/profile_api/favorite_profile";
     path = PATH_POST_FAVORITE_PROFILE,
     request_body(content = AccountId),
     responses(
-        (status = 200, description = "Request successfull."),
+        (status = 200, description = "Request successfull.", body = AddFavoriteProfileResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -57,16 +57,16 @@ pub async fn post_favorite_profile(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(favorite): Json<AccountId>,
-) -> Result<(), StatusCode> {
+) -> Result<Json<AddFavoriteProfileResult>, StatusCode> {
     PROFILE.post_favorite_profile.incr();
 
     let favorite_account_id = state.get_internal_id(favorite).await?;
-    db_write!(state, move |cmds| cmds
+    let result = db_write!(state, move |cmds| cmds
         .profile()
         .insert_favorite_profile(account_id, favorite_account_id)
         .await)?;
 
-    Ok(())
+    Ok(result.into())
 }
 
 const PATH_DELETE_FAVORITE_PROFILE: &str = "/profile_api/favorite_profile";

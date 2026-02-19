@@ -1,9 +1,9 @@
 use database::current::read::GetDbReadCommandsCommon;
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
-    AccountIdInternal, LastSeenUnixTime, Location, ProfileFiltersUpdateValidated,
-    ProfileModificationMetadata, ProfileStateInternal, ProfileUpdateValidated,
-    SearchAgeRangeValidated, ValidatedSearchGroups,
+    AccountIdInternal, AddFavoriteProfileResult, LastSeenUnixTime, Location,
+    ProfileFiltersUpdateValidated, ProfileModificationMetadata, ProfileStateInternal,
+    ProfileUpdateValidated, SearchAgeRangeValidated, ValidatedSearchGroups,
 };
 use server_data::{
     DataError, IntoDataError, app::GetConfig, cache::profile::UpdateLocationCacheState,
@@ -242,11 +242,12 @@ impl WriteCommandsProfile<'_> {
         &self,
         id: AccountIdInternal,
         favorite: AccountIdInternal,
-    ) -> Result<(), DataError> {
+    ) -> Result<AddFavoriteProfileResult, DataError> {
+        let max_count = self.config().limits_profile().favorite_profiles_max_count;
         db_transaction!(self, move |mut cmds| {
             cmds.profile()
                 .favorite()
-                .insert_favorite_profile(id, favorite)
+                .insert_favorite_profile(id, favorite, max_count)
         })
     }
 
