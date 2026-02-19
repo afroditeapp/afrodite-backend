@@ -178,6 +178,9 @@ pub struct SendMessageResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error_receiver_blocked_sender_or_receiver_not_found: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_pending_delivery_info_exists: bool,
     /// Remaining daily messages count. The value will be returned only
     /// if there is 50 or less messages left.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -230,6 +233,14 @@ impl SendMessageResult {
         Self {
             error: true,
             error_receiver_blocked_sender_or_receiver_not_found: true,
+            ..Self::default()
+        }
+    }
+
+    pub fn pending_delivery_info_exists() -> Self {
+        Self {
+            error: true,
+            error_pending_delivery_info_exists: true,
             ..Self::default()
         }
     }

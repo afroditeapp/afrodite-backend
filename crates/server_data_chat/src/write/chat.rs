@@ -427,6 +427,16 @@ impl WriteCommandsChat<'_> {
                 return Ok((SendMessageResult::receiver_public_key_outdated(), None));
             }
 
+            let sender_has_unreceived_delivery_info = cmds
+                .read()
+                .chat()
+                .message()
+                .has_unreceived_delivery_info(sender)?;
+
+            if sender_has_unreceived_delivery_info {
+                return Ok((SendMessageResult::pending_delivery_info_exists(), None));
+            }
+
             let receiver_acknowledgements_missing = cmds
                 .read()
                 .chat()
