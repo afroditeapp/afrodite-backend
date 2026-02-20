@@ -517,7 +517,9 @@ async fn send_message_internal(
     .await
     .change_context(TestError::ApiRequest)?;
 
-    if r.error_pending_delivery_info_exists.unwrap_or_default() {
+    if r.error_too_many_pending_delivery_infos_exists
+        .unwrap_or_default()
+    {
         return Ok(Some(Retry));
     }
 

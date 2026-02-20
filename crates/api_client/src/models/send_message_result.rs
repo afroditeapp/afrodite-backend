@@ -18,14 +18,14 @@ pub struct SendMessageResult {
     pub d: Option<Option<String>>,
     #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
     pub error: Option<bool>,
-    #[serde(rename = "error_pending_delivery_info_exists", skip_serializing_if = "Option::is_none")]
-    pub error_pending_delivery_info_exists: Option<bool>,
     #[serde(rename = "error_receiver_blocked_sender_or_receiver_not_found", skip_serializing_if = "Option::is_none")]
     pub error_receiver_blocked_sender_or_receiver_not_found: Option<bool>,
     #[serde(rename = "error_receiver_public_key_outdated", skip_serializing_if = "Option::is_none")]
     pub error_receiver_public_key_outdated: Option<bool>,
     #[serde(rename = "error_sender_public_key_outdated", skip_serializing_if = "Option::is_none")]
     pub error_sender_public_key_outdated: Option<bool>,
+    #[serde(rename = "error_too_many_pending_delivery_infos_exists", skip_serializing_if = "Option::is_none")]
+    pub error_too_many_pending_delivery_infos_exists: Option<bool>,
     #[serde(rename = "error_too_many_receiver_acknowledgements_missing", skip_serializing_if = "Option::is_none")]
     pub error_too_many_receiver_acknowledgements_missing: Option<bool>,
     #[serde(rename = "error_too_many_sender_acknowledgements_missing", skip_serializing_if = "Option::is_none")]
@@ -43,10 +43,10 @@ impl SendMessageResult {
         SendMessageResult {
             d: None,
             error: None,
-            error_pending_delivery_info_exists: None,
             error_receiver_blocked_sender_or_receiver_not_found: None,
             error_receiver_public_key_outdated: None,
             error_sender_public_key_outdated: None,
+            error_too_many_pending_delivery_infos_exists: None,
             error_too_many_receiver_acknowledgements_missing: None,
             error_too_many_sender_acknowledgements_missing: None,
             remaining_conversation_messages: None,

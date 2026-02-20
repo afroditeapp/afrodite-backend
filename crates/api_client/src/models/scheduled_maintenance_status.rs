@@ -15,6 +15,9 @@ use serde::{Deserialize, Serialize};
 pub struct ScheduledMaintenanceStatus {
     #[serde(rename = "end", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub end: Option<Option<Box<models::UnixTime>>>,
+    /// Maintenance target  * 0 - Server * 1 - Admin bot
+    #[serde(rename = "maintenance_target", skip_serializing_if = "Option::is_none")]
+    pub maintenance_target: Option<i32>,
     /// If None, ignore [Self::end].
     #[serde(rename = "start", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub start: Option<Option<Box<models::UnixTime>>>,
@@ -24,6 +27,7 @@ impl ScheduledMaintenanceStatus {
     pub fn new() -> ScheduledMaintenanceStatus {
         ScheduledMaintenanceStatus {
             end: None,
+            maintenance_target: None,
             start: None,
         }
     }

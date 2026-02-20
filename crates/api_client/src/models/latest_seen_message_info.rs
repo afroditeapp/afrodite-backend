@@ -16,15 +16,18 @@ pub struct LatestSeenMessageInfo {
     /// Latest message number seen by the viewer
     #[serde(rename = "mn")]
     pub mn: Box<models::MessageNumber>,
+    #[serde(rename = "ut")]
+    pub ut: Box<models::UnixTime>,
     /// Account which viewed/received the message
     #[serde(rename = "viewer")]
     pub viewer: Box<models::AccountId>,
 }
 
 impl LatestSeenMessageInfo {
-    pub fn new(mn: models::MessageNumber, viewer: models::AccountId) -> LatestSeenMessageInfo {
+    pub fn new(mn: models::MessageNumber, ut: models::UnixTime, viewer: models::AccountId) -> LatestSeenMessageInfo {
         LatestSeenMessageInfo {
             mn: Box::new(mn),
+            ut: Box::new(ut),
             viewer: Box::new(viewer),
         }
     }
