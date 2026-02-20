@@ -221,10 +221,10 @@ impl CurrentReadChatMessage<'_> {
         Ok(data)
     }
 
-    pub fn has_unreceived_delivery_info(
+    pub fn pending_delivery_info_count(
         &mut self,
         sender_id: AccountIdInternal,
-    ) -> Result<bool, DieselDatabaseError> {
+    ) -> Result<i64, DieselDatabaseError> {
         use crate::schema::message_delivery_info::dsl::*;
 
         let count: i64 = message_delivery_info
@@ -233,7 +233,14 @@ impl CurrentReadChatMessage<'_> {
             .get_result(self.conn())
             .into_db_error(())?;
 
-        Ok(count > 0)
+        Ok(count)
+    }
+
+    pub fn has_pending_delivery_info(
+        &mut self,
+        sender_id: AccountIdInternal,
+    ) -> Result<bool, DieselDatabaseError> {
+        Ok(self.pending_delivery_info_count(sender_id)? > 0)
     }
 
     pub fn get_all_delivery_info(

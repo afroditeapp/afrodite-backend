@@ -214,11 +214,11 @@ impl ReadCommandsChat<'_> {
         })
     }
 
-    pub async fn has_unreceived_delivery_info(
+    pub async fn has_pending_delivery_info(
         &self,
         id: AccountIdInternal,
     ) -> Result<bool, DataError> {
-        self.db_read(move |mut cmds| cmds.chat().message().has_unreceived_delivery_info(id))
+        self.db_read(move |mut cmds| cmds.chat().message().has_pending_delivery_info(id))
             .await
             .into_error()
     }

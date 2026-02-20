@@ -89,7 +89,7 @@ pub async fn send_events_if_needed(
 
     let has_delivery_info = read_handle
         .chat()
-        .has_unreceived_delivery_info(id)
+        .has_pending_delivery_info(id)
         .await
         .change_context(WebSocketError::DatabasePendingMessagesQuery)?;
 

@@ -427,14 +427,17 @@ impl WriteCommandsChat<'_> {
                 return Ok((SendMessageResult::receiver_public_key_outdated(), None));
             }
 
-            let sender_has_unreceived_delivery_info = cmds
+            let sender_pending_delivery_info_count = cmds
                 .read()
                 .chat()
                 .message()
-                .has_unreceived_delivery_info(sender)?;
+                .pending_delivery_info_count(sender)?;
 
-            if sender_has_unreceived_delivery_info {
-                return Ok((SendMessageResult::pending_delivery_info_exists(), None));
+            if sender_pending_delivery_info_count > 10 {
+                return Ok((
+                    SendMessageResult::too_many_pending_delivery_infos_exists(),
+                    None,
+                ));
             }
 
             let receiver_acknowledgements_missing = cmds
