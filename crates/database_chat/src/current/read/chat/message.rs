@@ -303,24 +303,28 @@ impl CurrentReadChatMessage<'_> {
     ) -> Result<Vec<LatestSeenMessageInfo>, DieselDatabaseError> {
         use crate::schema::{account_id, latest_seen_message_pending_delivery};
 
-        let data: Vec<(AccountId, MessageNumber)> = latest_seen_message_pending_delivery::table
-            .inner_join(
-                account_id::table
-                    .on(latest_seen_message_pending_delivery::account_id_viewer.eq(account_id::id)),
-            )
-            .filter(
-                latest_seen_message_pending_delivery::account_id_sender.eq(sender_id.as_db_id()),
-            )
-            .select((
-                account_id::uuid,
-                latest_seen_message_pending_delivery::message_number,
-            ))
-            .load(self.conn())
-            .into_db_error(())?;
+        let data: Vec<(AccountId, MessageNumber, UnixTime)> =
+            latest_seen_message_pending_delivery::table
+                .inner_join(
+                    account_id::table
+                        .on(latest_seen_message_pending_delivery::account_id_viewer
+                            .eq(account_id::id)),
+                )
+                .filter(
+                    latest_seen_message_pending_delivery::account_id_sender
+                        .eq(sender_id.as_db_id()),
+                )
+                .select((
+                    account_id::uuid,
+                    latest_seen_message_pending_delivery::message_number,
+                    latest_seen_message_pending_delivery::unix_time,
+                ))
+                .load(self.conn())
+                .into_db_error(())?;
 
         let result = data
             .into_iter()
-            .map(|(viewer, mn)| LatestSeenMessageInfo { viewer, mn })
+            .map(|(viewer, mn, ut)| LatestSeenMessageInfo { viewer, mn, ut })
             .collect();
 
         Ok(result)

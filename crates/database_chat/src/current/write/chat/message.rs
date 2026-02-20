@@ -252,6 +252,8 @@ impl CurrentWriteChatMessage<'_> {
                 .into_db_error((viewer_id, sender_id))?;
         }
 
+        let current_time = model::UnixTime::current_time();
+
         {
             use model::schema::latest_seen_message_pending_delivery::dsl::*;
 
@@ -260,10 +262,14 @@ impl CurrentWriteChatMessage<'_> {
                     account_id_viewer.eq(viewer_id.as_db_id()),
                     account_id_sender.eq(sender_id.as_db_id()),
                     message_number.eq(msg_number),
+                    unix_time.eq(current_time),
                 ))
                 .on_conflict((account_id_viewer, account_id_sender))
                 .do_update()
-                .set(message_number.eq(excluded(message_number)))
+                .set((
+                    message_number.eq(excluded(message_number)),
+                    unix_time.eq(excluded(unix_time)),
+                ))
                 .execute_my_conn(self.conn())
                 .into_db_error((viewer_id, sender_id))?;
         }

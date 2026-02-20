@@ -1142,6 +1142,8 @@ CREATE TABLE IF NOT EXISTS latest_seen_message_pending_delivery(
     account_id_sender       BIGINT NOT NULL,
     -- Message number that has not yet been delivered to sender
     message_number          BIGINT NOT NULL,
+    -- Unix time when message was seen
+    unix_time               BIGINT NOT NULL,
     PRIMARY KEY (account_id_viewer, account_id_sender),
     FOREIGN KEY (account_id_viewer)
         REFERENCES account_id (id)

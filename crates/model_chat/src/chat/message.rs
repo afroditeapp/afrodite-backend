@@ -184,6 +184,7 @@ pub struct LatestSeenMessageInfo {
     pub viewer: AccountId,
     /// Latest message number seen by the viewer
     pub mn: MessageNumber,
+    pub ut: UnixTime,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, PartialEq, Default)]

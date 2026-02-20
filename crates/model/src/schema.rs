@@ -528,6 +528,7 @@ diesel::table! {
         account_id_viewer -> Int8,
         account_id_sender -> Int8,
         message_number -> Int8,
+        unix_time -> Int8,
     }
 }
 
