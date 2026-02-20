@@ -3197,6 +3197,7 @@ dependencies = [
  "base64 0.22.1",
  "bitflags",
  "diesel",
+ "icu_properties",
  "model",
  "nalgebra",
  "num_enum",

@@ -1,12 +1,14 @@
 use std::{collections::HashSet, num::NonZeroU8, str::FromStr};
 
 use base64::Engine;
+use icu_properties::props::BinaryProperty;
 use model::{
     AttributeHash, AttributeId, AttributeOrderMode, PartialProfileAttributesConfig,
     ProfileAttributeInfo,
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use unicode_segmentation::UnicodeSegmentation;
 use utoipa::ToSchema;
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -384,12 +386,15 @@ pub enum AttributeValueOrderMode {
 pub enum IconLocation {
     /// Icon is located in the Material icon set.
     Material,
+    /// Icon is a single emoji.
+    Emoji,
 }
 
 impl From<IconLocation> for &str {
     fn from(src: IconLocation) -> Self {
         match src {
             IconLocation::Material => "material",
+            IconLocation::Emoji => "emoji",
         }
     }
 }
@@ -400,6 +405,7 @@ impl FromStr for IconLocation {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "material" => Ok(IconLocation::Material),
+            "emoji" => Ok(IconLocation::Emoji),
             _ => Err(format!("Unknown icon location {s}")),
         }
     }
@@ -421,6 +427,23 @@ impl TryFrom<String> for IconResource {
             .split_once(':')
             .ok_or(format!("Missing delimiter in {value}"))?;
         let location = location.parse()?;
+
+        if matches!(location, IconLocation::Emoji) {
+            let mut graphemes = identifier.graphemes(true);
+            let first = graphemes
+                .next()
+                .ok_or_else(|| "Emoji icon requires an emoji identifier".to_string())?;
+            if graphemes.next().is_some() {
+                return Err("Emoji icon requires exactly one emoji".to_string());
+            }
+
+            let is_emoji = first.chars().any(icu_properties::props::Emoji::for_char);
+
+            if !is_emoji {
+                return Err("Emoji characters not found".to_string());
+            }
+        }
+
         Ok(Self {
             location,
             identifier: identifier.to_string(),

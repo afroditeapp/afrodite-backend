@@ -164,6 +164,7 @@ pgp = { version = "0.18.0", default-features = false }
 smallvec = "1.15.1"
 async-openai = { version = "0.28.3", default-features = false }
 unicode-segmentation = "1.12.0"
+icu_properties = "2.1.2"
 nsfw = { version = "0.2.0", default-features = false }
 
 # Firebase cloud messaging, tls_client_rustls and tls_client_rustls configures TLS
