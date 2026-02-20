@@ -101,11 +101,30 @@ impl From<chrono::DateTime<chrono::Utc>> for UnixTime {
 #[derive(Debug, Default, Clone, Deserialize, Serialize, PartialEq, ToSchema)]
 pub struct ScheduledMaintenanceStatus {
     /// If None, ignore [Self::end].
-    pub start: Option<UnixTime>,
-    pub end: Option<UnixTime>,
+    start: Option<UnixTime>,
+    end: Option<UnixTime>,
+    /// Maintenance target
+    ///
+    /// * 0 - Server
+    /// * 1 - Admin bot
+    #[serde(default, skip_serializing_if = "is_zero")]
+    #[schema(default = 0)]
+    maintenance_target: u8,
+}
+
+fn is_zero(value: &u8) -> bool {
+    *value == 0
 }
 
 impl ScheduledMaintenanceStatus {
+    pub fn server_maintenance(start: Option<UnixTime>, end: Option<UnixTime>) -> Self {
+        Self {
+            start,
+            end,
+            maintenance_target: 0,
+        }
+    }
+
     pub fn is_empty(&self) -> bool {
         self.start.is_none()
     }

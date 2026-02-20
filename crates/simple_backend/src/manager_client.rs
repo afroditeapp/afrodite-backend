@@ -195,10 +195,10 @@ impl<T: ManagerEventHandler> ManagerConnectionManager<T> {
             let event = listener.next_event().await?;
             match event.event() {
                 ServerEventType::MaintenanceSchedulingStatus(time) => {
-                    let status = ScheduledMaintenanceStatus {
-                        start: time.map(|v| v.0),
-                        end: time.map(|v| v.0.add_seconds(5 * 60)),
-                    };
+                    let status = ScheduledMaintenanceStatus::server_maintenance(
+                        time.map(|v| v.0),
+                        time.map(|v| v.0.add_seconds(5 * 60)),
+                    );
                     self.client.set_maintenance_status(status.clone()).await;
                     self.event_handler.send_maintenance_status(status).await;
                 }
