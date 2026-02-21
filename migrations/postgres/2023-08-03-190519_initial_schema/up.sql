@@ -83,6 +83,8 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_news_edit_all                          BOOLEAN NOT NULL DEFAULT FALSE,
     admin_profile_statistics                     BOOLEAN NOT NULL DEFAULT FALSE,
     admin_subscribe_admin_notifications          BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_edit_profile_attributes_schema         BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_edit_profile_attributes_schema_visible_content BOOLEAN NOT NULL DEFAULT FALSE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

@@ -213,6 +213,10 @@ define_permissions!(
     admin_news_edit_all,
     admin_profile_statistics,
     admin_subscribe_admin_notifications,
+    admin_edit_profile_attributes_schema,
+    /// Additionally required when modifying user-visible content:
+    /// attribute/value `name`, `icon`, and `translations`.
+    admin_edit_profile_attributes_schema_visible_content,
 );
 
 impl Permissions {

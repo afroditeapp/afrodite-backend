@@ -11,7 +11,7 @@ use sha2::{Digest, Sha256};
 use unicode_segmentation::UnicodeSegmentation;
 use utoipa::ToSchema;
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ProfileAttributesSchemaExport {
     pub attribute_order: AttributeOrderMode,
     pub attributes: Vec<Attribute>,
@@ -307,7 +307,7 @@ impl Attribute {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 pub struct AttributeValue {
     /// Unique string identifier for the attribute value.
     pub key: String,
@@ -340,14 +340,14 @@ pub struct AttributeValue {
     pub group_values: Vec<AttributeValue>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 pub struct Language {
     /// Language code.
     pub lang: String,
     pub values: Vec<Translation>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 pub struct Translation {
     /// Attribute name or attribute value key.
     pub key: String,
@@ -375,14 +375,14 @@ impl AttributeMode {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, ToSchema)]
 pub enum AttributeValueOrderMode {
     AlphabethicalKey,
     AlphabethicalValue,
     OrderNumber,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum IconLocation {
     /// Icon is located in the Material icon set.
     Material,
@@ -411,7 +411,7 @@ impl FromStr for IconLocation {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(try_from = "String")]
 #[serde(into = "String")]
 pub struct IconResource {
@@ -458,7 +458,7 @@ impl From<IconResource> for String {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ValidatedAttribute {
     attribute: Attribute,
     hash: AttributeHash,
@@ -557,7 +557,7 @@ pub struct ProfileAttributesConfigQueryItem {
     pub h: AttributeHash,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 pub struct Attribute {
     /// String unique identifier for the attribute.
     pub key: String,

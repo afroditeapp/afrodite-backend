@@ -149,6 +149,8 @@ diesel::table! {
         admin_news_edit_all -> Bool,
         admin_profile_statistics -> Bool,
         admin_subscribe_admin_notifications -> Bool,
+        admin_edit_profile_attributes_schema -> Bool,
+        admin_edit_profile_attributes_schema_visible_content -> Bool,
     }
 }
 

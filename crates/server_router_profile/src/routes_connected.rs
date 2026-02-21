@@ -36,6 +36,9 @@ impl ConnectedApp {
             ))
             .merge(api::profile_admin::router_admin_moderation(
                 self.state.clone(),
+            ))
+            .merge(api::profile_admin::router_admin_profile_attributes(
+                self.state.clone(),
             ));
 
         let private = if self.state.s.config().debug_mode() {

@@ -5256,6 +5256,7 @@ dependencies = [
  "database_profile",
  "error-stack",
  "model_profile",
+ "serde_json",
  "server_common",
  "server_data",
  "simple_backend",

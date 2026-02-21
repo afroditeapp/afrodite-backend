@@ -183,6 +183,10 @@ impl ApiDoc {
                 server_api_profile::profile_admin::router_admin_moderation(state.clone())
                     .into_openapi(),
             )
+            .merge_from(
+                server_api_profile::profile_admin::router_admin_profile_attributes(state.clone())
+                    .into_openapi(),
+            )
             .tag_routes("profile_admin");
         doc.merge(profile_admin);
         // Chat

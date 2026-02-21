@@ -10,6 +10,9 @@ pub use attribute::*;
 mod available_attributes;
 pub use available_attributes::*;
 
+mod attributes_schema_admin;
+pub use attributes_schema_admin::*;
+
 mod age;
 pub use age::*;
 

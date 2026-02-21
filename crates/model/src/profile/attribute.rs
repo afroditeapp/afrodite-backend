@@ -16,6 +16,8 @@ use utoipa::ToSchema;
     SimpleDieselEnum,
     FromSqlRow,
     AsExpression,
+    PartialEq,
+    Eq,
 )]
 #[diesel(sql_type = SmallInt)]
 #[repr(i16)]
@@ -24,19 +26,19 @@ pub enum AttributeOrderMode {
     OrderNumber = 0,
 }
 
-#[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct PartialProfileAttributesConfig {
     pub attribute_order: AttributeOrderMode,
     pub attributes: Vec<ProfileAttributeInfo>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct ProfileAttributeInfo {
     pub id: AttributeId,
     pub h: AttributeHash,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct AttributeHash {
     h: String,
 }
