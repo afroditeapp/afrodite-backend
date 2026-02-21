@@ -5,8 +5,8 @@ use axum::{
 use manager_api::RequestSenderCmds;
 use manager_model::{
     ManagerInstanceNameList, ManagerInstanceNameValue, ManualTaskType, NotifyBackend,
-    ScheduledTaskStatus, ScheduledTaskTypeValue, SoftwareInfo, SoftwareUpdateStatus,
-    SoftwareUpdateTaskType, SystemInfo,
+    ScheduledTaskStatus, ScheduledTaskType, ScheduledTaskTypeValue, SoftwareInfo,
+    SoftwareUpdateStatus, SoftwareUpdateTaskType, SystemInfo,
 };
 use model::Permissions;
 use server_data::{app::GetConfig, data_reset::BACKEND_DATA_RESET_STATE};
@@ -26,6 +26,8 @@ const PATH_GET_MANAGER_INSTANCE_NAMES: &str = "/common_api/manager_instance_name
 /// * Permission [model::Permissions::admin_server_software_update]
 /// * Permission [model::Permissions::admin_server_data_reset]
 /// * Permission [model::Permissions::admin_server_restart]
+/// * Permission [model::Permissions::admin_server_scheduled_restart]
+/// * Permission [model::Permissions::admin_server_scheduled_reboot]
 #[utoipa::path(
     get,
     path = PATH_GET_MANAGER_INSTANCE_NAMES,
@@ -46,6 +48,8 @@ pub async fn get_manager_instance_names(
         || api_caller_permissions.admin_server_software_update
         || api_caller_permissions.admin_server_data_reset
         || api_caller_permissions.admin_server_restart
+        || api_caller_permissions.admin_server_scheduled_restart
+        || api_caller_permissions.admin_server_scheduled_reboot
     {
         let info = state
             .manager_request()
@@ -340,7 +344,8 @@ const PATH_GET_SCHEDULED_TASKS_STATUS: &str = "/common_api/scheduled_tasks_statu
 /// Get scheduled tasks status from manager instance.
 ///
 /// # Access
-/// * Permission [model::Permissions::admin_server_restart]
+/// * Permission [model::Permissions::admin_server_scheduled_restart]
+/// * Permission [model::Permissions::admin_server_scheduled_reboot]
 #[utoipa::path(
     get,
     path = PATH_GET_SCHEDULED_TASKS_STATUS,
@@ -357,9 +362,11 @@ pub async fn get_scheduled_tasks_status(
     Extension(api_caller_permissions): Extension<Permissions>,
     Query(manager): Query<ManagerInstanceNameValue>,
 ) -> Result<Json<ScheduledTaskStatus>, StatusCode> {
-    COMMON_ADMIN.get_software_update_status.incr();
+    COMMON_ADMIN.get_scheduled_tasks_status.incr();
 
-    if api_caller_permissions.admin_server_restart {
+    if api_caller_permissions.admin_server_scheduled_restart
+        || api_caller_permissions.admin_server_scheduled_reboot
+    {
         let info = state
             .manager_request_to(manager)
             .await?
@@ -376,7 +383,8 @@ const PATH_POST_SCHEDULE_TASK: &str = "/common_api/schedule_task";
 /// Schedule task.
 ///
 /// # Access
-/// * Permission [model::Permissions::admin_server_restart]
+/// * Permission [model::Permissions::admin_server_scheduled_restart]
+/// * Permission [model::Permissions::admin_server_scheduled_reboot]
 #[utoipa::path(
     post,
     path = PATH_POST_SCHEDULE_TASK,
@@ -397,7 +405,12 @@ pub async fn post_schedule_task(
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_schedule_task.incr();
 
-    if api_caller_permissions.admin_server_restart {
+    let authorized = match task.scheduled_task_type {
+        ScheduledTaskType::BackendRestart => api_caller_permissions.admin_server_scheduled_restart,
+        ScheduledTaskType::SystemReboot => api_caller_permissions.admin_server_scheduled_reboot,
+    };
+
+    if authorized {
         state
             .manager_request_to(manager)
             .await?
@@ -414,7 +427,8 @@ const PATH_POST_UNSCHEDULE_TASK: &str = "/common_api/unschedule_task";
 /// Unschedule task.
 ///
 /// # Access
-/// * Permission [model::Permissions::admin_server_restart]
+/// * Permission [model::Permissions::admin_server_scheduled_restart]
+/// * Permission [model::Permissions::admin_server_scheduled_reboot]
 #[utoipa::path(
     post,
     path = PATH_POST_UNSCHEDULE_TASK,
@@ -434,7 +448,12 @@ pub async fn post_unschedule_task(
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_unschedule_task.incr();
 
-    if api_caller_permissions.admin_server_restart {
+    let authorized = match task.scheduled_task_type {
+        ScheduledTaskType::BackendRestart => api_caller_permissions.admin_server_scheduled_restart,
+        ScheduledTaskType::SystemReboot => api_caller_permissions.admin_server_scheduled_reboot,
+    };
+
+    if authorized {
         state
             .manager_request_to(manager)
             .await?
