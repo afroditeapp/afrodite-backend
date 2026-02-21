@@ -203,6 +203,7 @@ define_permissions!(
     admin_server_software_update,
     admin_server_data_reset,
     admin_server_restart,
+    admin_server_reboot,
     admin_server_scheduled_restart,
     admin_server_scheduled_reboot,
     admin_server_edit_bot_config,

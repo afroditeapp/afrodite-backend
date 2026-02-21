@@ -139,6 +139,7 @@ diesel::table! {
         admin_server_software_update -> Bool,
         admin_server_data_reset -> Bool,
         admin_server_restart -> Bool,
+        admin_server_reboot -> Bool,
         admin_server_scheduled_restart -> Bool,
         admin_server_scheduled_reboot -> Bool,
         admin_server_edit_bot_config -> Bool,

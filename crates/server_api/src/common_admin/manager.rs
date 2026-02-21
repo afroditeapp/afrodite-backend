@@ -26,6 +26,7 @@ const PATH_GET_MANAGER_INSTANCE_NAMES: &str = "/common_api/manager_instance_name
 /// * Permission [model::Permissions::admin_server_software_update]
 /// * Permission [model::Permissions::admin_server_data_reset]
 /// * Permission [model::Permissions::admin_server_restart]
+/// * Permission [model::Permissions::admin_server_reboot]
 /// * Permission [model::Permissions::admin_server_scheduled_restart]
 /// * Permission [model::Permissions::admin_server_scheduled_reboot]
 #[utoipa::path(
@@ -48,6 +49,7 @@ pub async fn get_manager_instance_names(
         || api_caller_permissions.admin_server_software_update
         || api_caller_permissions.admin_server_data_reset
         || api_caller_permissions.admin_server_restart
+        || api_caller_permissions.admin_server_reboot
         || api_caller_permissions.admin_server_scheduled_restart
         || api_caller_permissions.admin_server_scheduled_reboot
     {
@@ -308,7 +310,7 @@ const PATH_POST_TRIGGER_SYSTEM_REBOOT: &str = "/common_api/trigger_system_reboot
 /// Trigger system reboot.
 ///
 /// # Access
-/// * Permission [model::Permissions::admin_server_restart]
+/// * Permission [model::Permissions::admin_server_reboot]
 #[utoipa::path(
     post,
     path = PATH_POST_TRIGGER_SYSTEM_REBOOT,
@@ -327,7 +329,7 @@ pub async fn post_trigger_system_reboot(
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_trigger_system_reboot.incr();
 
-    if api_caller_permissions.admin_server_restart {
+    if api_caller_permissions.admin_server_reboot {
         state
             .manager_request_to(manager)
             .await?

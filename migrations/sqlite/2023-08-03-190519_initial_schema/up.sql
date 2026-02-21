@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_server_software_update                 BOOLEAN NOT NULL DEFAULT FALSE,
     admin_server_data_reset                      BOOLEAN NOT NULL DEFAULT FALSE,
     admin_server_restart                         BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_server_reboot                          BOOLEAN NOT NULL DEFAULT FALSE,
     admin_server_scheduled_restart               BOOLEAN NOT NULL DEFAULT FALSE,
     admin_server_scheduled_reboot                BOOLEAN NOT NULL DEFAULT FALSE,
     admin_server_edit_bot_config                 BOOLEAN NOT NULL DEFAULT FALSE,
