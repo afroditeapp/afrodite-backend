@@ -1,7 +1,6 @@
 use database::current::write::GetDbWriteCommandsCommon;
 use model_profile::{
-    Attribute, AttributeValue, ProfileAttributesInternal, ProfileAttributesSchemaExport,
-    UpdateProfileAttributesSchema,
+    Attribute, AttributeValue, ProfileAttributesInternal, UpdateProfileAttributesSchema,
 };
 use server_data::{
     DataError, db_transaction, define_cmd_wrapper_write,
@@ -27,14 +26,6 @@ async fn load_schema(
         DataError::NotAllowed
             .report()
             .attach_printable(format!("Profile attributes validation error: {e}"))
-    })
-}
-
-fn serialize_attribute(attr: &Attribute) -> Result<String, DataError> {
-    serde_json::to_string(attr).map_err(|e| {
-        DataError::NotAllowed
-            .report()
-            .attach_printable(format!("Failed to serialize attribute: {e}"))
     })
 }
 
@@ -155,7 +146,7 @@ impl WriteCommandsProfileAdminAttributeSchema<'_> {
         &self,
         request: UpdateProfileAttributesSchema,
         has_content_permission: bool,
-    ) -> Result<ProfileAttributesSchemaExport, DataError> {
+    ) -> Result<(), DataError> {
         let current_state = request.current_state.validate().map_err(|e| {
             DataError::NotAllowed
                 .report()
@@ -177,33 +168,17 @@ impl WriteCommandsProfileAdminAttributeSchema<'_> {
 
         validate_new_state(&current_state, &new_state, has_content_permission)?;
 
-        let mut serialized: Vec<(i16, String)> = Vec::with_capacity(new_state.attributes().len());
-
-        for attr in new_state.attributes() {
-            let id = attr.attribute().id.to_i16();
-            let json = serialize_attribute(attr.attribute())?;
-            serialized.push((id, json));
-        }
-
-        let order = new_state.attribute_order();
         db_transaction!(self, move |mut cmds| {
-            for (id, json) in &serialized {
+            for attr in new_state.attributes() {
                 cmds.common()
                     .profile_attributes()
-                    .upsert_profile_attribute(*id, json)?;
+                    .upsert_profile_attribute(attr.attribute())?;
             }
             cmds.common()
                 .profile_attributes()
-                .upsert_profile_attributes_order_mode(order)
+                .upsert_profile_attributes_order_mode(new_state.attribute_order())
         })?;
 
-        Ok(ProfileAttributesSchemaExport {
-            attribute_order: new_state.attribute_order(),
-            attributes: new_state
-                .attributes()
-                .iter()
-                .map(|v| v.attribute().clone())
-                .collect(),
-        })
+        Ok(())
     }
 }

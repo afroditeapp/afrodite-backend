@@ -1,11 +1,7 @@
 use database::current::read::GetDbReadCommandsCommon;
 use model::{Attribute, AttributeOrderMode};
 
-use crate::{
-    DataError, IntoDataError, define_cmd_wrapper_read,
-    read::DbRead,
-    result::{Result, WrappedContextExt},
-};
+use crate::{DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead, result::Result};
 
 define_cmd_wrapper_read!(ReadCommandsCommonProfileAttributes);
 
@@ -19,7 +15,7 @@ impl ReadCommandsCommonProfileAttributes<'_> {
     pub async fn all_attributes_from_db(
         &self,
     ) -> Result<(Vec<Attribute>, AttributeOrderMode), DataError> {
-        let (raw, order_mode) = self
+        let (attributes, order_mode) = self
             .db_read(|mut cmds| {
                 let attrs = cmds
                     .common()
@@ -32,15 +28,6 @@ impl ReadCommandsCommonProfileAttributes<'_> {
             .into_error()?;
 
         let order = order_mode.unwrap_or_default();
-
-        let mut attributes = Vec::with_capacity(raw.len());
-        for (attr_id, json) in raw {
-            let attr: Attribute = serde_json::from_str(&json).map_err(|e| {
-                tracing::error!("Failed to deserialize attribute {attr_id}: {e}");
-                DataError::Diesel.report()
-            })?;
-            attributes.push(attr);
-        }
 
         Ok((attributes, order))
     }

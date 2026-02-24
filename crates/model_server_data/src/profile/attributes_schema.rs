@@ -9,8 +9,8 @@ use utoipa::ToSchema;
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ProfileAttributesSchemaExport {
-    pub attribute_order: AttributeOrderMode,
-    pub attributes: Vec<Attribute>,
+    attribute_order: AttributeOrderMode,
+    attributes: Vec<Attribute>,
 }
 
 impl ProfileAttributesSchemaExport {
@@ -149,5 +149,16 @@ impl ProfileAttributesInternal {
                     .map(|validated| validated.into())
             })
             .collect()
+    }
+
+    pub fn export(&self) -> ProfileAttributesSchemaExport {
+        ProfileAttributesSchemaExport {
+            attribute_order: self.attribute_order(),
+            attributes: self
+                .attributes()
+                .iter()
+                .map(|validated| validated.attribute().clone())
+                .collect(),
+        }
     }
 }

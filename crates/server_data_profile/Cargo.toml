@@ -7,7 +7,6 @@ edition = "2024"
 
 [dependencies]
 error-stack = { workspace = true }
-serde_json = { workspace = true }
 
 model_profile = { path = "../model_profile" }
 server_common = { path = "../server_common" }

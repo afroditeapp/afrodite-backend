@@ -9,7 +9,6 @@ edition = "2024"
 [dependencies]
 clap = { workspace = true }
 toml = { workspace = true }
-serde_json = { workspace = true }
 error-stack = { workspace = true }
 csv = { workspace = true }
 

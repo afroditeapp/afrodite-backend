@@ -199,20 +199,7 @@ async fn handle_load_profile_attributes(writer: &DbWriter<'_>, file: PathBuf) {
         .validate()
         .unwrap_or_else(|e| panic!("Validation failed: {}", e));
 
-    // Prepare data for database insertion
-    let attrs_data: Vec<(i16, String)> = profile_attrs
-        .attributes()
-        .iter()
-        .map(|validated| {
-            let attr = validated.attribute();
-            let json = serde_json::to_string(attr)
-                .unwrap_or_else(|e| panic!("JSON serialization failed: {}", e));
-            (attr.id.to_i16(), json)
-        })
-        .collect();
-
-    let attr_count = attrs_data.len();
-    let attribute_order = profile_attrs.attribute_order();
+    let attr_count = profile_attrs.attributes().len();
 
     // Store in database
     writer
@@ -222,17 +209,17 @@ async fn handle_load_profile_attributes(writer: &DbWriter<'_>, file: PathBuf) {
                 .profile_attributes()
                 .delete_all_profile_attributes()?;
 
-            // Insert each attribute
-            for (attr_id, json) in &attrs_data {
+            // Upsert each attribute
+            for attr in profile_attrs.attributes() {
                 cmds.common()
                     .profile_attributes()
-                    .insert_profile_attribute(*attr_id, json)?;
+                    .upsert_profile_attribute(attr.attribute())?;
             }
 
             // Upsert attribute order mode
             cmds.common()
                 .profile_attributes()
-                .upsert_profile_attributes_order_mode(attribute_order)?;
+                .upsert_profile_attributes_order_mode(profile_attrs.attribute_order())?;
 
             Ok(())
         })
@@ -248,7 +235,7 @@ async fn handle_load_profile_attributes(writer: &DbWriter<'_>, file: PathBuf) {
 async fn handle_view_profile_attributes(reader: &DbReaderRaw<'_>) {
     let manager = load_profile_attributes_from_db(reader).await.unwrap();
 
-    let export = manager.export();
+    let export = manager.schema().export();
 
     println!("{}", toml::to_string_pretty(&export).unwrap());
 }

@@ -37,7 +37,7 @@ impl StartupTasks {
     }
 
     async fn handle_profile_attribute_schema_changes(state: &S) -> Result<(), DataError> {
-        let export = state.profile_attributes_manager().export();
+        let export = state.profile_attributes_manager().schema().export();
         let json = serde_json::to_string(&export).change_context(DataError::Diesel)?;
         let hash = Sha256::digest(json.as_bytes());
         let hash_str = format!("{:x}", hash);

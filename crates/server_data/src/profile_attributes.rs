@@ -2,7 +2,8 @@ use std::sync::Arc;
 
 use database::current::read::GetDbReadCommandsCommon;
 use error_stack::ResultExt;
-use model_server_data::{ProfileAttributesInternal, ProfileAttributesSchemaExport};
+use model::Attribute;
+use model_server_data::ProfileAttributesInternal;
 use simple_backend_utils::IntoReportFromString;
 
 use crate::DataError;
@@ -23,18 +24,6 @@ impl ProfileAttributesSchemaManager {
     pub fn schema(&self) -> &ProfileAttributesInternal {
         &self.schema
     }
-
-    pub fn export(&self) -> ProfileAttributesSchemaExport {
-        ProfileAttributesSchemaExport {
-            attribute_order: self.schema.attribute_order(),
-            attributes: self
-                .schema
-                .attributes()
-                .iter()
-                .map(|validated| validated.attribute().clone())
-                .collect(),
-        }
-    }
 }
 
 /// Load profile attributes from the database and create a ProfileAttributesManager.
@@ -47,38 +36,24 @@ impl ProfileAttributesSchemaManager {
 pub async fn load_profile_attributes_from_db(
     reader: &database::DbReaderRaw<'_>,
 ) -> error_stack::Result<ProfileAttributesSchemaManager, DataError> {
-    let (attributes, order_mode): (
-        Vec<(i16, String)>,
-        Option<model::profile::AttributeOrderMode>,
-    ) = reader
-        .db_read(|mut mode| {
-            let attrs = mode
-                .common()
-                .profile_attributes()
-                .all_profile_attributes()?;
-            let order = mode.common().profile_attributes().attribute_order_mode()?;
-            Ok((attrs, order))
-        })
-        .await
-        .change_context(DataError::Diesel)?;
+    let (attributes, order_mode): (Vec<Attribute>, Option<model::profile::AttributeOrderMode>) =
+        reader
+            .db_read(|mut mode| {
+                let attrs = mode
+                    .common()
+                    .profile_attributes()
+                    .all_profile_attributes()?;
+                let order = mode.common().profile_attributes().attribute_order_mode()?;
+                Ok((attrs, order))
+            })
+            .await
+            .change_context(DataError::Diesel)?;
 
     let attribute_order = order_mode.unwrap_or_default();
 
-    // Deserialize each attribute from JSON
-    let mut parsed_attributes = Vec::new();
-    for (attr_id, attribute_json) in attributes {
-        let attribute: model::Attribute = serde_json::from_str(&attribute_json).map_err(|e| {
-            tracing::error!("Failed to deserialize attribute {}: {}", attr_id, e);
-            DataError::Diesel
-        })?;
-
-        parsed_attributes.push(attribute);
-    }
-
     // Build ProfileAttributesInternal from the parsed data
-    let profile_attributes =
-        ProfileAttributesInternal::from_db_data(parsed_attributes, attribute_order)
-            .into_error_string(DataError::NotAllowed)?;
+    let profile_attributes = ProfileAttributesInternal::from_db_data(attributes, attribute_order)
+        .into_error_string(DataError::NotAllowed)?;
 
     Ok(ProfileAttributesSchemaManager::new(profile_attributes))
 }

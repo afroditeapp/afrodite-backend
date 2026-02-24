@@ -1,7 +1,7 @@
 use std::{collections::HashSet, path::PathBuf};
 
 use database::{
-    DbReaderRaw, DbWriter,
+    DbReaderRaw, DbWriter, DieselDatabaseError,
     current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon},
 };
 use model::{Attribute, AttributeValue, Language, Translation};
@@ -42,24 +42,24 @@ pub(super) async fn handle_load_profile_attributes_values_from_csv(
     start_row_index: usize,
     translations: Vec<String>,
 ) {
-    let db_attribute_json = reader
+    let attr_id_i16 = attribute_id as i16;
+    let mut attribute: Attribute = reader
         .db_read(move |mut cmds| {
-            let row = cmds
-                .common()
-                .profile_attributes()
-                .all_profile_attributes()?
-                .into_iter()
-                .find(|(id, _)| *id == attribute_id as i16);
-            Ok(row.map(|(_, json)| json))
+            let attr =
+                cmds.common()
+                    .profile_attributes()
+                    .all_profile_attributes()?
+                    .into_iter()
+                    .find(|attr| attr.id.to_i16() == attr_id_i16)
+                    .ok_or_else(|| {
+                        error_stack::report!(DieselDatabaseError::NotFound).attach_printable(
+                            format!("Attribute ID {} not found in database", attr_id_i16),
+                        )
+                    })?;
+            Ok(attr)
         })
         .await
         .unwrap_or_else(|e| panic!("Failed to read profile attributes from DB: {e:?}"));
-
-    let db_attribute_json = db_attribute_json
-        .unwrap_or_else(|| panic!("Attribute ID {} not found in database", attribute_id));
-
-    let mut attribute: Attribute = serde_json::from_str(&db_attribute_json)
-        .unwrap_or_else(|e| panic!("Failed to parse attribute JSON from DB: {}", e));
 
     let translation_columns = parse_csv_translations(translations);
     let csv_config = GroupValuesCsvConfig {
@@ -81,16 +81,11 @@ pub(super) async fn handle_load_profile_attributes_values_from_csv(
         .validate()
         .unwrap_or_else(|e| panic!("Validation failed: {}", e));
 
-    let attribute_for_db = validated.attribute();
-    let attr_id = attribute_for_db.id.to_i16();
-    let json = serde_json::to_string(attribute_for_db)
-        .unwrap_or_else(|e| panic!("JSON serialization failed: {}", e));
-
     writer
         .db_transaction_raw(move |mut cmds| {
             cmds.common()
                 .profile_attributes()
-                .upsert_profile_attribute(attr_id, &json)?;
+                .upsert_profile_attribute(validated.attribute())?;
             Ok(())
         })
         .await

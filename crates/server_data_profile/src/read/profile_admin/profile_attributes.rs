@@ -22,15 +22,6 @@ impl ReadCommandsProfileAdminAttributeSchema<'_> {
                 .attach_printable(format!("Profile attributes validation error: {e}"))
         })?;
 
-        let attributes = schema
-            .attributes()
-            .iter()
-            .map(|v| v.attribute().clone())
-            .collect();
-
-        Ok(ProfileAttributesSchemaExport {
-            attributes,
-            attribute_order: schema.attribute_order(),
-        })
+        Ok(schema.export())
     }
 }
