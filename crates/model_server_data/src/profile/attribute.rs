@@ -1,8 +1,6 @@
-use model::AttributeId;
+use model::{AttributeId, AttributeMode};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
-
-use super::AttributeMode;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileAttributeValueUpdate {

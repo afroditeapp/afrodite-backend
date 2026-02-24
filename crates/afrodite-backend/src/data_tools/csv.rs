@@ -4,7 +4,7 @@ use database::{
     DbReaderRaw, DbWriter,
     current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon},
 };
-use model_server_data::{Attribute, AttributeValue, Language, Translation};
+use model::{Attribute, AttributeValue, Language, Translation};
 
 #[derive(Debug)]
 enum CsvFileError {

@@ -10,8 +10,8 @@ use utoipa::ToSchema;
 
 use crate::{NotificationIdViewed, NotificationStatus};
 
-mod attribute;
-pub use attribute::*;
+mod attributes_schema;
+pub use attributes_schema::*;
 
 mod search;
 pub use search::*;

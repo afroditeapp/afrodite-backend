@@ -19,8 +19,8 @@ use crate::{AccountId, sync_version_wrappers};
 mod age;
 pub use age::*;
 
-mod available_attributes;
-pub use available_attributes::*;
+mod attributes_schema;
+pub use attributes_schema::*;
 
 mod filter;
 pub use filter::*;

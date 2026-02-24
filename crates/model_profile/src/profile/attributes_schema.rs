@@ -1,5 +1,4 @@
-use model::AttributeId;
-use model_server_data::ProfileAttributesConfigQueryItem;
+use model::{AttributeId, ProfileAttributesConfigQueryItem};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 

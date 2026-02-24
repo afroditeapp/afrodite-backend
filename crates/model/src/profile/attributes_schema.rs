@@ -1,90 +1,14 @@
 use std::{collections::HashSet, num::NonZeroU8, str::FromStr};
 
 use base64::Engine;
+use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::SmallInt};
 use icu_properties::props::BinaryProperty;
-use model::{
-    AttributeHash, AttributeId, AttributeOrderMode, PartialProfileAttributesConfig,
-    ProfileAttributeInfo,
-};
+use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use simple_backend_model::{SimpleDieselEnum, diesel_i16_wrapper};
 use unicode_segmentation::UnicodeSegmentation;
 use utoipa::ToSchema;
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
-pub struct ProfileAttributesSchemaExport {
-    pub attribute_order: AttributeOrderMode,
-    pub attributes: Vec<Attribute>,
-}
-
-impl ProfileAttributesSchemaExport {
-    fn validate_attributes(mut self) -> Result<(AttributeOrderMode, Vec<Attribute>), String> {
-        let mut keys = HashSet::new();
-        let mut ids = HashSet::new();
-        let mut order_numbers = HashSet::new();
-        // Validate uniquenes of keys, IDs and order numbers.
-        for attribute in &self.attributes {
-            if keys.contains(&attribute.key) {
-                return Err(format!("Duplicate key {}", attribute.key));
-            }
-            keys.insert(attribute.key.clone());
-
-            if ids.contains(&attribute.id) {
-                return Err(format!("Duplicate id {}", attribute.id.to_usize()));
-            }
-            ids.insert(attribute.id);
-
-            if order_numbers.contains(&attribute.order_number) {
-                return Err(format!("Duplicate order number {}", attribute.order_number));
-            }
-            order_numbers.insert(attribute.order_number);
-        }
-
-        // Check that correct IDs are used.
-        for i in 1..=self.attributes.len() {
-            let i: i16 = i
-                .try_into()
-                .map_err(|e: std::num::TryFromIntError| e.to_string())?;
-            if i < 0 {
-                return Err(format!("ID {i} is is negative"));
-            }
-            let id = AttributeId::new(i);
-            if !ids.contains(&id) {
-                return Err(format!(
-                    "ID {} is missing from attribute ID values, all numbers between 1 and {} should be used",
-                    i,
-                    self.attributes.len()
-                ));
-            }
-        }
-        self.attributes.sort_by_key(|a| a.id);
-
-        Ok((self.attribute_order, self.attributes))
-    }
-
-    pub fn validate(self) -> Result<ProfileAttributesInternal, String> {
-        let (attribute_order, internal_attributes) = self.validate_attributes()?;
-
-        let mut attributes = vec![];
-        let mut attributes_for_info = vec![];
-        for a in internal_attributes {
-            let validated = a.validate()?;
-            let id_and_hash = ProfileAttributeInfo {
-                id: validated.attribute().id,
-                h: validated.hash().clone(),
-            };
-            attributes.push(validated);
-            attributes_for_info.push(id_and_hash);
-        }
-        Ok(ProfileAttributesInternal {
-            attributes,
-            config: PartialProfileAttributesConfig {
-                attribute_order,
-                attributes: attributes_for_info,
-            },
-        })
-    }
-}
 
 fn value_bool_true() -> bool {
     true
@@ -117,6 +41,116 @@ fn value_non_zero_u8_one() -> NonZeroU8 {
 fn value_non_zero_u8_is_one(v: &NonZeroU8) -> bool {
     v.get() == 1
 }
+
+#[derive(
+    Debug,
+    Default,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    ToSchema,
+    TryFromPrimitive,
+    SimpleDieselEnum,
+    FromSqlRow,
+    AsExpression,
+    PartialEq,
+    Eq,
+)]
+#[diesel(sql_type = SmallInt)]
+#[repr(i16)]
+pub enum AttributeOrderMode {
+    #[default]
+    OrderNumber = 0,
+}
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct PartialProfileAttributesConfig {
+    pub attribute_order: AttributeOrderMode,
+    pub attributes: Vec<ProfileAttributeInfo>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct ProfileAttributeInfo {
+    pub id: AttributeId,
+    pub h: AttributeHash,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct AttributeHash {
+    h: String,
+}
+
+impl AttributeHash {
+    pub fn new(h: String) -> Self {
+        Self { h }
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.h
+    }
+}
+
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    FromSqlRow,
+    AsExpression,
+)]
+#[diesel(sql_type = SmallInt)]
+pub struct AttributeId(#[serde(deserialize_with = "deserialize_non_negative_i16")] i16);
+
+fn deserialize_non_negative_i16<'de, D>(deserializer: D) -> Result<i16, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = i16::deserialize(deserializer)?;
+    if v < 0 {
+        Err(serde::de::Error::custom("negative value not allowed"))
+    } else {
+        Ok(v)
+    }
+}
+
+impl AttributeId {
+    /// The `id` must be 0 or greater.
+    pub fn new(id: i16) -> Self {
+        assert!(id >= 0);
+        Self(id)
+    }
+
+    pub fn to_i16(&self) -> i16 {
+        self.0
+    }
+
+    pub fn to_usize(&self) -> usize {
+        self.0 as usize
+    }
+}
+
+impl TryFrom<i16> for AttributeId {
+    type Error = String;
+    fn try_from(value: i16) -> Result<Self, Self::Error> {
+        Ok(Self(value))
+    }
+}
+
+impl AsRef<i16> for AttributeId {
+    fn as_ref(&self) -> &i16 {
+        &self.0
+    }
+}
+
+diesel_i16_wrapper!(AttributeId);
 
 struct ModeAndIdSequenceNumber;
 
@@ -157,6 +191,60 @@ impl ModeAndIdSequenceNumber {
 
         Ok(())
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+pub struct Attribute {
+    /// String unique identifier for the attribute.
+    pub key: String,
+    /// Default name for the attribute if translated value is not available.
+    pub name: String,
+    /// Mode of the attribute.
+    pub mode: AttributeMode,
+    #[serde(
+        default = "value_non_zero_u8_one",
+        skip_serializing_if = "value_non_zero_u8_is_one"
+    )]
+    #[schema(default = 1, value_type = u8)]
+    pub max_selected: NonZeroU8,
+    #[serde(
+        default = "value_non_zero_u8_one",
+        skip_serializing_if = "value_non_zero_u8_is_one"
+    )]
+    #[schema(default = 1, value_type = u8)]
+    pub max_filters: NonZeroU8,
+    /// Client should show this attribute when editing a profile.
+    #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
+    #[schema(default = true)]
+    pub editable: bool,
+    /// Client should show this attribute when viewing a profile.
+    #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
+    #[schema(default = true)]
+    pub visible: bool,
+    /// Client should ask this attribute when doing account initial setup.
+    #[serde(default = "value_bool_false", skip_serializing_if = "value_is_false")]
+    #[schema(default = false)]
+    pub required: bool,
+    /// Icon for the attribute.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(value_type = Option<String>)]
+    pub icon: Option<IconResource>,
+    /// Numeric unique identifier for the attribute.
+    pub id: AttributeId,
+    /// Attribute order number.
+    pub order_number: u16,
+    /// Attribute value ordering mode for client to determine in what order
+    /// the values should be displayed.
+    pub value_order: AttributeValueOrderMode,
+    /// Top level values for the attribute.
+    ///
+    /// Values are sorted by AttributeValue ID. Indexing with it is
+    /// not possible as ID might be a bitflag value.
+    pub values: Vec<AttributeValue>,
+    /// Translations for attribute name and attribute values.
+    #[serde(default = "value_empty_vec", skip_serializing_if = "value_is_empty")]
+    #[schema(default = json!([]))]
+    pub translations: Vec<Language>,
 }
 
 impl Attribute {
@@ -304,6 +392,53 @@ impl Attribute {
         }
 
         Ok(())
+    }
+
+    pub fn hash(&self) -> Result<AttributeHash, String> {
+        let attribute_json = serde_json::to_string(self).map_err(|e| e.to_string())?;
+
+        let mut hasher = Sha256::new();
+        hasher.update(attribute_json);
+        let result = hasher.finalize();
+
+        let h = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(result);
+
+        Ok(AttributeHash::new(h))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ValidatedAttribute {
+    attribute: Attribute,
+    hash: AttributeHash,
+}
+
+impl ValidatedAttribute {
+    fn new(attribute: Attribute, hash: AttributeHash) -> Self {
+        Self { attribute, hash }
+    }
+
+    pub fn attribute(&self) -> &Attribute {
+        &self.attribute
+    }
+
+    pub fn hash(&self) -> &AttributeHash {
+        &self.hash
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct ProfileAttributesConfigQueryItem {
+    pub a: Attribute,
+    pub h: AttributeHash,
+}
+
+impl From<ValidatedAttribute> for ProfileAttributesConfigQueryItem {
+    fn from(value: ValidatedAttribute) -> Self {
+        Self {
+            a: value.attribute,
+            h: value.hash,
+        }
     }
 }
 
@@ -455,172 +590,5 @@ impl From<IconResource> for String {
     fn from(icon: IconResource) -> Self {
         let location: &str = icon.location.into();
         format!("{}:{}", location, icon.identifier)
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct ValidatedAttribute {
-    attribute: Attribute,
-    hash: AttributeHash,
-}
-
-impl ValidatedAttribute {
-    fn new(attribute: Attribute, hash: AttributeHash) -> Self {
-        Self { attribute, hash }
-    }
-
-    pub fn attribute(&self) -> &Attribute {
-        &self.attribute
-    }
-
-    pub fn hash(&self) -> &AttributeHash {
-        &self.hash
-    }
-}
-
-#[derive(Debug, Default)]
-pub struct ProfileAttributesInternal {
-    /// List of attributes.
-    ///
-    /// Attributes are sorted by Attribute ID.
-    /// Indexing with the ID is not possible as ID values start from 1.
-    attributes: Vec<ValidatedAttribute>,
-    config: PartialProfileAttributesConfig,
-}
-
-impl ProfileAttributesInternal {
-    pub fn get_attribute(&self, id: AttributeId) -> Option<&Attribute> {
-        self.get_attribute_and_hash(id).map(|v| v.attribute())
-    }
-
-    pub fn attributes(&self) -> &[ValidatedAttribute] {
-        &self.attributes
-    }
-
-    pub fn attribute_order(&self) -> AttributeOrderMode {
-        self.config.attribute_order
-    }
-
-    fn get_attribute_and_hash(&self, id: AttributeId) -> Option<&ValidatedAttribute> {
-        self.attributes.get(id.to_usize().saturating_sub(1))
-    }
-
-    pub fn from_db_data(
-        attributes: Vec<Attribute>,
-        attribute_order: AttributeOrderMode,
-    ) -> Result<Self, String> {
-        let mut validated_attributes: Vec<ValidatedAttribute> = Vec::new();
-        for a in attributes {
-            validated_attributes.push(a.validate()?);
-        }
-
-        validated_attributes.sort_by_key(|v| v.attribute.id);
-
-        let attributes_for_info = validated_attributes
-            .iter()
-            .map(|validated| ProfileAttributeInfo {
-                id: validated.attribute().id,
-                h: validated.hash().clone(),
-            })
-            .collect();
-
-        Ok(Self {
-            attributes: validated_attributes,
-            config: PartialProfileAttributesConfig {
-                attribute_order,
-                attributes: attributes_for_info,
-            },
-        })
-    }
-
-    pub fn config_for_client(&self) -> &PartialProfileAttributesConfig {
-        &self.config
-    }
-
-    pub fn query_attributes(&self, ids: Vec<AttributeId>) -> Vec<ProfileAttributesConfigQueryItem> {
-        ids.into_iter()
-            .filter_map(|id| {
-                self.get_attribute_and_hash(id).cloned().map(|validated| {
-                    ProfileAttributesConfigQueryItem {
-                        a: validated.attribute,
-                        h: validated.hash,
-                    }
-                })
-            })
-            .collect()
-    }
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct ProfileAttributesConfigQueryItem {
-    pub a: Attribute,
-    pub h: AttributeHash,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
-pub struct Attribute {
-    /// String unique identifier for the attribute.
-    pub key: String,
-    /// Default name for the attribute if translated value is not available.
-    pub name: String,
-    /// Mode of the attribute.
-    pub mode: AttributeMode,
-    #[serde(
-        default = "value_non_zero_u8_one",
-        skip_serializing_if = "value_non_zero_u8_is_one"
-    )]
-    #[schema(default = 1, value_type = u8)]
-    pub max_selected: NonZeroU8,
-    #[serde(
-        default = "value_non_zero_u8_one",
-        skip_serializing_if = "value_non_zero_u8_is_one"
-    )]
-    #[schema(default = 1, value_type = u8)]
-    pub max_filters: NonZeroU8,
-    /// Client should show this attribute when editing a profile.
-    #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
-    #[schema(default = true)]
-    pub editable: bool,
-    /// Client should show this attribute when viewing a profile.
-    #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
-    #[schema(default = true)]
-    pub visible: bool,
-    /// Client should ask this attribute when doing account initial setup.
-    #[serde(default = "value_bool_false", skip_serializing_if = "value_is_false")]
-    #[schema(default = false)]
-    pub required: bool,
-    /// Icon for the attribute.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[schema(value_type = Option<String>)]
-    pub icon: Option<IconResource>,
-    /// Numeric unique identifier for the attribute.
-    pub id: AttributeId,
-    /// Attribute order number.
-    pub order_number: u16,
-    /// Attribute value ordering mode for client to determine in what order
-    /// the values should be displayed.
-    pub value_order: AttributeValueOrderMode,
-    /// Top level values for the attribute.
-    ///
-    /// Values are sorted by AttributeValue ID. Indexing with it is
-    /// not possible as ID might be a bitflag value.
-    pub values: Vec<AttributeValue>,
-    /// Translations for attribute name and attribute values.
-    #[serde(default = "value_empty_vec", skip_serializing_if = "value_is_empty")]
-    #[schema(default = json!([]))]
-    pub translations: Vec<Language>,
-}
-
-impl Attribute {
-    pub fn hash(&self) -> Result<AttributeHash, String> {
-        let attribute_json = serde_json::to_string(self).map_err(|e| e.to_string())?;
-
-        let mut hasher = Sha256::new();
-        hasher.update(attribute_json);
-        let result = hasher.finalize();
-
-        let h = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(result);
-
-        Ok(AttributeHash::new(h))
     }
 }

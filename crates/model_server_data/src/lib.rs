@@ -27,4 +27,7 @@ pub use media::*;
 mod profile;
 pub use profile::*;
 
+mod profile_admin;
+pub use profile_admin::*;
+
 mod markers_server_data;

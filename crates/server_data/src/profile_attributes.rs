@@ -67,11 +67,10 @@ pub async fn load_profile_attributes_from_db(
     // Deserialize each attribute from JSON
     let mut parsed_attributes = Vec::new();
     for (attr_id, attribute_json) in attributes {
-        let attribute: model_server_data::Attribute = serde_json::from_str(&attribute_json)
-            .map_err(|e| {
-                tracing::error!("Failed to deserialize attribute {}: {}", attr_id, e);
-                DataError::Diesel
-            })?;
+        let attribute: model::Attribute = serde_json::from_str(&attribute_json).map_err(|e| {
+            tracing::error!("Failed to deserialize attribute {}: {}", attr_id, e);
+            DataError::Diesel
+        })?;
 
         parsed_attributes.push(attribute);
     }

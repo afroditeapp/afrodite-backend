@@ -1,6 +1,5 @@
 use database::current::read::GetDbReadCommandsCommon;
-use model::AttributeOrderMode;
-use model_server_data::Attribute;
+use model::{Attribute, AttributeOrderMode};
 
 use crate::{
     DataError, IntoDataError, define_cmd_wrapper_read,

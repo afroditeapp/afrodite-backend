@@ -7,11 +7,8 @@ use utoipa::{IntoParams, ToSchema};
 mod attribute;
 pub use attribute::*;
 
-mod available_attributes;
-pub use available_attributes::*;
-
-mod attributes_schema_admin;
-pub use attributes_schema_admin::*;
+mod attributes_schema;
+pub use attributes_schema::*;
 
 mod age;
 pub use age::*;
