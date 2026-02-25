@@ -137,11 +137,7 @@ impl DatabaseCache {
         let tokens = self.access_tokens.read().await;
         if let Some(entry) = tokens.get(access_token) {
             let r = entry.cache.read().await;
-            let is_valid = r
-                .common
-                .login_session_for_access_token_check()
-                .map(|s| s.is_valid(connection.ip()))
-                .unwrap_or(false);
+            let is_valid = r.common.is_login_session_valid(connection.ip());
 
             if is_valid {
                 Some((

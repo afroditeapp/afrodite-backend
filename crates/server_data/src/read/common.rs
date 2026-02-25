@@ -1,8 +1,5 @@
 use database::current::read::GetDbReadCommandsCommon;
-use model::{
-    Account, AccountId, AccountIdInternal, LatestBirthdate, LoginSessionForAccessTokenCheck,
-    RefreshToken,
-};
+use model::{Account, AccountId, AccountIdInternal, LatestBirthdate, RefreshToken};
 use model_server_data::SearchGroupFlags;
 use server_common::data::IntoDataError;
 use simple_backend_model::NonEmptyString;
@@ -44,11 +41,12 @@ impl<'a> ReadCommandsCommon<'a> {
 }
 
 impl ReadCommandsCommon<'_> {
-    pub async fn account_login_session_for_access_token_check_from_cache(
+    pub async fn is_account_login_session_valid(
         &self,
         id: AccountIdInternal,
-    ) -> Result<Option<LoginSessionForAccessTokenCheck>, DataError> {
-        self.read_cache_common(id, |e| Ok(e.login_session_for_access_token_check()))
+        ip: std::net::IpAddr,
+    ) -> Result<bool, DataError> {
+        self.read_cache_common(id, |e| Ok(e.is_login_session_valid(ip)))
             .await
             .into_error()
     }

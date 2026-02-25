@@ -1,7 +1,6 @@
 use model::{
     AccessToken, AccessTokenUnixTime, AccountStateRelatedSharedState, IpAddressInternal,
-    LoginSession, LoginSessionForAccessTokenCheck, OtherSharedState, Permissions,
-    PushNotificationFlags, RefreshToken,
+    LoginSession, OtherSharedState, Permissions, PushNotificationFlags, RefreshToken,
 };
 use model_server_data::{AppNotificationSettingsInternal, AuthPair};
 
@@ -62,10 +61,11 @@ impl CacheCommon {
         }
     }
 
-    pub fn login_session_for_access_token_check(&self) -> Option<LoginSessionForAccessTokenCheck> {
+    pub fn is_login_session_valid(&self, ip: std::net::IpAddr) -> bool {
         self.login_session
             .as_ref()
-            .map(|v| v.for_access_token_check())
+            .map(|v| v.is_valid(ip))
+            .unwrap_or(false)
     }
 
     pub fn access_token(&self) -> Option<&AccessToken> {

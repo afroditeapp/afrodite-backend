@@ -371,16 +371,12 @@ async fn handle_socket_result(
     id: AccountIdInternal,
     state: &S,
 ) -> crate::result::Result<(), WebSocketError> {
-    let session = state
+    let is_session_valid = state
         .read()
         .common()
-        .account_login_session_for_access_token_check_from_cache(id)
+        .is_account_login_session_valid(id, address.ip())
         .await
         .change_context(WebSocketError::DatabaseAccessTokenIpAddress)?;
-
-    let is_session_valid = session
-        .map(|session| session.is_valid(address.ip()))
-        .unwrap_or(false);
 
     let mut event_receiver = if !is_session_valid {
         socket
