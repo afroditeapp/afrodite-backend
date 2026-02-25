@@ -129,7 +129,6 @@ impl DatabaseCache {
         tokens.get(token).map(|entry| entry.account_id_internal)
     }
 
-    /// Checks that connection comes from current login session IP address
     pub async fn access_token_and_ip_is_valid(
         &self,
         access_token: &AccessToken,
@@ -138,7 +137,13 @@ impl DatabaseCache {
         let tokens = self.access_tokens.read().await;
         if let Some(entry) = tokens.get(access_token) {
             let r = entry.cache.read().await;
-            if r.common.access_token_ip_address().map(|a| a.to_ip_addr()) == Some(connection.ip()) {
+            let is_valid = r
+                .common
+                .login_session_for_access_token_check()
+                .map(|s| s.is_valid(connection.ip()))
+                .unwrap_or(false);
+
+            if is_valid {
                 Some((
                     entry.account_id_internal,
                     r.common.permissions.clone(),

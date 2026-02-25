@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS login_session(
     access_token_unix_time  BIGINT              NOT NULL,
     -- 4 or 16 bytes
     access_token_ip_address BLOB                NOT NULL,
+    access_token_ip_address_previous BLOB ,
     -- Using refresh token requires valid access token, so
     -- UNIQUE constraint is not needed here.
     refresh_token           BLOB                NOT NULL,

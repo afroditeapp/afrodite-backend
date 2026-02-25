@@ -1,6 +1,7 @@
 use model::{
     AccessToken, AccessTokenUnixTime, AccountStateRelatedSharedState, IpAddressInternal,
-    LoginSession, OtherSharedState, Permissions, PushNotificationFlags, RefreshToken,
+    LoginSession, LoginSessionForAccessTokenCheck, OtherSharedState, Permissions,
+    PushNotificationFlags, RefreshToken,
 };
 use model_server_data::{AppNotificationSettingsInternal, AuthPair};
 
@@ -34,10 +35,15 @@ impl CacheCommon {
         auth_pair: AuthPair,
         access_token_ip_address: IpAddressInternal,
     ) {
+        let access_token_ip_address_previous = self
+            .login_session
+            .as_ref()
+            .map(|s| s.access_token_ip_address);
         self.login_session = Some(LoginSession {
             access_token: auth_pair.access,
             access_token_unix_time: AccessTokenUnixTime::current_time(),
             access_token_ip_address,
+            access_token_ip_address_previous,
             refresh_token: auth_pair.refresh,
         });
         self.login_session_changed = true;
@@ -56,20 +62,14 @@ impl CacheCommon {
         }
     }
 
+    pub fn login_session_for_access_token_check(&self) -> Option<LoginSessionForAccessTokenCheck> {
+        self.login_session
+            .as_ref()
+            .map(|v| v.for_access_token_check())
+    }
+
     pub fn access_token(&self) -> Option<&AccessToken> {
         self.login_session.as_ref().map(|v| &v.access_token)
-    }
-
-    pub fn access_token_unix_time(&self) -> Option<AccessTokenUnixTime> {
-        self.login_session
-            .as_ref()
-            .map(|v| v.access_token_unix_time)
-    }
-
-    pub fn access_token_ip_address(&self) -> Option<IpAddressInternal> {
-        self.login_session
-            .as_ref()
-            .map(|v| v.access_token_ip_address)
     }
 
     pub fn refresh_token(&self) -> Option<&RefreshToken> {

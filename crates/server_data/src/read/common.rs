@@ -1,6 +1,6 @@
 use database::current::read::GetDbReadCommandsCommon;
 use model::{
-    AccessTokenUnixTime, Account, AccountId, AccountIdInternal, IpAddressInternal, LatestBirthdate,
+    Account, AccountId, AccountIdInternal, LatestBirthdate, LoginSessionForAccessTokenCheck,
     RefreshToken,
 };
 use model_server_data::SearchGroupFlags;
@@ -44,20 +44,11 @@ impl<'a> ReadCommandsCommon<'a> {
 }
 
 impl ReadCommandsCommon<'_> {
-    pub async fn account_access_token_creation_time_from_cache(
+    pub async fn account_login_session_for_access_token_check_from_cache(
         &self,
         id: AccountIdInternal,
-    ) -> Result<Option<AccessTokenUnixTime>, DataError> {
-        self.read_cache_common(id, |e| Ok(e.access_token_unix_time()))
-            .await
-            .into_error()
-    }
-
-    pub async fn account_access_token_ip_address_from_cache(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<Option<IpAddressInternal>, DataError> {
-        self.read_cache_common(id, |e| Ok(e.access_token_ip_address()))
+    ) -> Result<Option<LoginSessionForAccessTokenCheck>, DataError> {
+        self.read_cache_common(id, |e| Ok(e.login_session_for_access_token_check()))
             .await
             .into_error()
     }

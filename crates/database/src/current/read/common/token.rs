@@ -1,6 +1,9 @@
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{AccessToken, AccountIdInternal, LoginSession, RefreshToken};
+use model::{
+    AccessToken, AccessTokenUnixTime, AccountIdInternal, IpAddressInternal, LoginSession,
+    RefreshToken,
+};
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
 
@@ -19,17 +22,27 @@ impl CurrentReadAccountToken<'_> {
                 access_token,
                 access_token_unix_time,
                 access_token_ip_address,
+                access_token_ip_address_previous,
                 refresh_token,
             ))
-            .first::<(Vec<u8>, _, _, Vec<u8>)>(self.conn())
+            .first::<(
+                Vec<u8>,
+                AccessTokenUnixTime,
+                IpAddressInternal,
+                Option<IpAddressInternal>,
+                Vec<u8>,
+            )>(self.conn())
             .optional()
             .into_db_error(id)?
-            .map(|(access, access_time, access_ip, refresh)| LoginSession {
-                access_token: AccessToken::from_bytes(&access),
-                access_token_unix_time: access_time,
-                access_token_ip_address: access_ip,
-                refresh_token: RefreshToken::from_bytes(&refresh),
-            });
+            .map(
+                |(access, access_time, access_ip, access_ip_prev, refresh)| LoginSession {
+                    access_token: AccessToken::from_bytes(&access),
+                    access_token_unix_time: access_time,
+                    access_token_ip_address: access_ip,
+                    access_token_ip_address_previous: access_ip_prev,
+                    refresh_token: RefreshToken::from_bytes(&refresh),
+                },
+            );
 
         Ok(data)
     }

@@ -30,6 +30,7 @@ impl CurrentWriteAccountToken<'_> {
                     access_token.eq(access_token_value),
                     access_token_unix_time.eq(data.access_token_unix_time),
                     access_token_ip_address.eq(data.access_token_ip_address),
+                    access_token_ip_address_previous.eq(data.access_token_ip_address_previous),
                     refresh_token.eq(refresh_token_value),
                 ))
                 .on_conflict(account_id)
@@ -38,6 +39,7 @@ impl CurrentWriteAccountToken<'_> {
                     access_token.eq(excluded(access_token)),
                     access_token_unix_time.eq(excluded(access_token_unix_time)),
                     access_token_ip_address.eq(excluded(access_token_ip_address)),
+                    access_token_ip_address_previous.eq(excluded(access_token_ip_address_previous)),
                     refresh_token.eq(excluded(refresh_token)),
                 ))
                 .execute_my_conn(self.conn())

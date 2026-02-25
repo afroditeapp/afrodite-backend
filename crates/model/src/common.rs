@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::{
     ScheduledMaintenanceStatus, UnixTime, diesel_i64_wrapper, diesel_uuid_wrapper,
 };
-use simple_backend_utils::UuidBase64Url;
+use simple_backend_utils::{UuidBase64Url, time::DurationValue};
 use utils::random_bytes::random_128_bits;
 use utoipa::{IntoParams, ToSchema};
 
@@ -386,7 +386,45 @@ pub struct LoginSession {
     pub access_token: AccessToken,
     pub access_token_unix_time: AccessTokenUnixTime,
     pub access_token_ip_address: IpAddressInternal,
+    pub access_token_ip_address_previous: Option<IpAddressInternal>,
     pub refresh_token: RefreshToken,
+}
+
+impl LoginSession {
+    pub fn for_access_token_check(&self) -> LoginSessionForAccessTokenCheck {
+        LoginSessionForAccessTokenCheck {
+            access_token_unix_time: self.access_token_unix_time,
+            access_token_ip_address: self.access_token_ip_address,
+            access_token_ip_address_previous: self.access_token_ip_address_previous,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct LoginSessionForAccessTokenCheck {
+    pub access_token_unix_time: AccessTokenUnixTime,
+    pub access_token_ip_address: IpAddressInternal,
+    pub access_token_ip_address_previous: Option<IpAddressInternal>,
+}
+
+impl LoginSessionForAccessTokenCheck {
+    fn is_ip_valid(&self, ip: std::net::IpAddr) -> bool {
+        self.access_token_ip_address.to_ip_addr() == ip
+            || self
+                .access_token_ip_address_previous
+                .map(|a| a.to_ip_addr() == ip)
+                .unwrap_or(false)
+    }
+
+    fn is_too_old(&self) -> bool {
+        self.access_token_unix_time
+            .ut
+            .duration_value_elapsed(DurationValue::from_days(1))
+    }
+
+    pub fn is_valid(&self, ip: std::net::IpAddr) -> bool {
+        self.is_ip_valid(ip) && !self.is_too_old()
+    }
 }
 
 /// AccessToken is used as a short lived token for API access.

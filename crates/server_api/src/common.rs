@@ -33,7 +33,7 @@ use server_state::{
     state_impl::{ReadData, WriteData},
 };
 use simple_backend::{create_counters, web_socket::WebSocketManager};
-use simple_backend_utils::{IntoReportFromString, time::DurationValue};
+use simple_backend_utils::IntoReportFromString;
 use tracing::{error, info};
 
 use super::utils::StatusCode;
@@ -371,29 +371,18 @@ async fn handle_socket_result(
     id: AccountIdInternal,
     state: &S,
 ) -> crate::result::Result<(), WebSocketError> {
-    let access_token_too_old = state
+    let session = state
         .read()
         .common()
-        .account_access_token_creation_time_from_cache(id)
+        .account_login_session_for_access_token_check_from_cache(id)
         .await
-        .change_context(WebSocketError::DatabaseAccessTokenCreationTime)?
-        .map(|created| {
-            created
-                .ut
-                .duration_value_elapsed(DurationValue::from_days(1))
-        })
-        .unwrap_or(true);
+        .change_context(WebSocketError::DatabaseAccessTokenIpAddress)?;
 
-    let access_token_ip_address_changed = state
-        .read()
-        .common()
-        .account_access_token_ip_address_from_cache(id)
-        .await
-        .change_context(WebSocketError::DatabaseAccessTokenIpAddress)?
-        .map(|token_ip_address| token_ip_address.to_ip_addr() != address.ip())
-        .unwrap_or(true);
+    let is_session_valid = session
+        .map(|session| session.is_valid(address.ip()))
+        .unwrap_or(false);
 
-    let mut event_receiver = if access_token_too_old || access_token_ip_address_changed {
+    let mut event_receiver = if !is_session_valid {
         socket
             .send(Message::Binary(Bytes::from_static(&[1])))
             .await
