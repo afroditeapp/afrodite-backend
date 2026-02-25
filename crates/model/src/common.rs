@@ -402,7 +402,7 @@ impl LoginSession {
     fn is_access_token_too_old(&self) -> bool {
         self.access_token_unix_time
             .ut
-            .duration_value_elapsed(DurationValue::from_days(1))
+            .duration_value_elapsed(DurationValue::from_days(3))
     }
 
     pub fn is_valid(&self, ip: std::net::IpAddr) -> bool {
