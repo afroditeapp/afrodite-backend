@@ -4,11 +4,11 @@
 #![warn(unused_crate_dependencies)]
 
 use axum::{Router, routing::any};
-use routes_connected::ConnectedApp;
+use private::PrivateRoutes;
 use server_state::StateForRouterCreation;
 
 mod api;
-mod routes_connected;
+mod private;
 
 pub struct ChatRoutes;
 
@@ -25,6 +25,6 @@ impl ChatRoutes {
 
     pub fn routes_with_obfuscation_support(state: StateForRouterCreation) -> Router {
         let public = Router::new();
-        public.merge(ConnectedApp::new(state).private_chat_server_router())
+        public.merge(PrivateRoutes::new(state).private_chat_server_router())
     }
 }

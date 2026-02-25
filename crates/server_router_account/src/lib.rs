@@ -7,13 +7,13 @@ use axum::{
     Router,
     routing::{any, get, post},
 };
-use routes_connected::ConnectedApp;
+use private::PrivateRoutes;
 use server_api::app::GetConfig;
 use server_state::StateForRouterCreation;
 
 mod api;
+mod private;
 mod routes_bot;
-mod routes_connected;
 
 pub use routes_bot::{LocalBotApiRoutes, RemoteBotApiRoutes};
 use simple_backend::web_socket::WebSocketManager;
@@ -58,7 +58,7 @@ impl CommonRoutes {
 
     pub fn routes_with_obfuscation_support(state: StateForRouterCreation) -> Router {
         let public = Router::new();
-        public.merge(ConnectedApp::new(state).private_common_router())
+        public.merge(PrivateRoutes::new(state).private_common_router())
     }
 }
 
@@ -101,6 +101,6 @@ impl AccountRoutes {
         } else {
             public
         };
-        public.merge(ConnectedApp::new(state).private_account_server_router())
+        public.merge(PrivateRoutes::new(state).private_account_server_router())
     }
 }

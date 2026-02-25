@@ -3,12 +3,11 @@ use server_state::StateForRouterCreation;
 
 use crate::api;
 
-/// Private routes only accessible when WebSocket is connected.
-pub struct ConnectedApp {
+pub struct PrivateRoutes {
     state: StateForRouterCreation,
 }
 
-impl ConnectedApp {
+impl PrivateRoutes {
     pub fn new(state: StateForRouterCreation) -> Self {
         Self { state }
     }
