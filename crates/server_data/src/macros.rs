@@ -39,6 +39,12 @@ macro_rules! define_cmd_wrapper_read {
             ) -> &$crate::profile_attributes::ProfileAttributesSchemaManager {
                 self.0.profile_attributes()
             }
+
+            fn dynamic_client_features(
+                &self,
+            ) -> &$crate::dynamic_client_features::DynamicClientFeaturesManager {
+                self.0.dynamic_client_features()
+            }
         }
     };
 }
@@ -117,6 +123,12 @@ macro_rules! define_cmd_wrapper_write {
                 &self,
             ) -> &$crate::profile_attributes::ProfileAttributesSchemaManager {
                 $crate::db_manager::InternalWriting::profile_attributes(self.0)
+            }
+
+            fn dynamic_client_features(
+                &self,
+            ) -> &$crate::dynamic_client_features::DynamicClientFeaturesManager {
+                $crate::db_manager::InternalWriting::dynamic_client_features(self.0)
             }
         }
     };

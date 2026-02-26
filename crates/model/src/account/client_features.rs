@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use simple_backend_utils::time::UtcTimeValue;
 use utoipa::ToSchema;
 
@@ -21,6 +22,26 @@ impl ClientFeaturesConfigHash {
         &self.h
     }
 }
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct DynamicClientFeaturesConfigHash {
+    h: String,
+}
+
+impl DynamicClientFeaturesConfigHash {
+    pub fn from_json_string(json: &str) -> Self {
+        Self {
+            h: format!("{:x}", Sha256::digest(json.as_bytes())),
+        }
+    }
+
+    pub fn hash(&self) -> &str {
+        &self.h
+    }
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
+pub struct DynamicClientFeaturesConfig {}
 
 #[derive(Debug, Default, Clone, Serialize, ToSchema)]
 pub struct ClientFeaturesConfig {

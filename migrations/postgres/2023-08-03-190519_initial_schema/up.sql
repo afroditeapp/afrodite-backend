@@ -305,6 +305,13 @@ CREATE TABLE IF NOT EXISTS profile_attributes_schema_attribute(
     attribute_json TEXT NOT NULL
 );
 
+-- Store dynamic client features config JSON.
+CREATE TABLE IF NOT EXISTS dynamic_client_features_config(
+    -- 0 = dynamic client features config
+    row_type      INTEGER PRIMARY KEY NOT NULL,
+    config_json   TEXT                NOT NULL
+);
+
 ---------- Tables for server component account ----------
 
 -- Sign in with related IDs for account

@@ -4,7 +4,7 @@ use model::{
     CustomReportsConfigHash, GetClientLanguage,
 };
 use server_data::{
-    app::{GetConfig, GetProfileAttributes},
+    app::{GetConfig, GetDynamicClientFeatures, GetProfileAttributes},
     read::GetReadCommandsCommon,
     write::GetWriteCommandsCommon,
 };
@@ -41,10 +41,15 @@ pub async fn get_client_config(
         .client_config()
         .client_config_sync_version(account_id)
         .await?;
+    let dynamic_client_features = state
+        .dynamic_client_features_manager()
+        .dynamic_client_features_hash()
+        .await;
     let info = ClientConfig {
         client_features: Some(ClientFeaturesConfigHash::new(
             state.config().client_features_sha256().to_string(),
         )),
+        dynamic_client_features,
         custom_reports: Some(CustomReportsConfigHash::new(
             state.config().custom_reports_sha256().to_string(),
         )),

@@ -326,6 +326,11 @@ pub enum DataLoadSubMode {
         /// Path to profile attributes file
         file: PathBuf,
     },
+    /// Load dynamic client features config from file
+    DynamicClientFeatures {
+        /// Path to dynamic client features config file
+        file: PathBuf,
+    },
     /// Import profile attribute values and translations from CSV file
     /// and update one attribute in database.
     ProfileAttributeValuesCsv {
@@ -359,6 +364,8 @@ pub enum DataViewSubMode {
     ImageProcessingConfig,
     /// View profile attributes
     ProfileAttributes,
+    /// View dynamic client features config
+    DynamicClientFeatures,
 }
 
 #[derive(Parser, Debug, Clone)]

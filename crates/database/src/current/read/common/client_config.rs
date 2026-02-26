@@ -1,6 +1,9 @@
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, ClientConfigSyncVersion, ClientLanguage, ClientType};
+use model::{
+    AccountIdInternal, ClientConfigSyncVersion, ClientLanguage, ClientType,
+    DynamicClientFeaturesConfig, DynamicClientFeaturesConfigHash,
+};
 
 use crate::{DieselDatabaseError, define_current_read_commands};
 
@@ -46,5 +49,30 @@ impl CurrentReadCommonClientConfig<'_> {
             .select(client_language)
             .first(self.conn())
             .change_context(DieselDatabaseError::Execute)
+    }
+
+    pub fn dynamic_client_features(
+        &mut self,
+    ) -> Result<
+        Option<(DynamicClientFeaturesConfigHash, DynamicClientFeaturesConfig)>,
+        DieselDatabaseError,
+    > {
+        use crate::schema::dynamic_client_features_config::dsl::*;
+
+        let value: Option<String> = dynamic_client_features_config
+            .filter(row_type.eq(0))
+            .select(config_json)
+            .first(self.conn())
+            .optional()
+            .change_context(DieselDatabaseError::Execute)?;
+
+        value
+            .map(|json| {
+                let config =
+                    serde_json::from_str(&json).change_context(DieselDatabaseError::Execute)?;
+                let hash = DynamicClientFeaturesConfigHash::from_json_string(&json);
+                Ok((hash, config))
+            })
+            .transpose()
     }
 }

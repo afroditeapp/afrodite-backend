@@ -13,8 +13,9 @@ use error_stack::{Result, report};
 use model::{AccountIdInternal, BotConfig, EmailMessages, ImageProcessingDynamicConfig};
 use model_server_data::ProfileAttributesSchemaExport;
 use server_data::{
-    db_manager::{DatabaseManager, InternalWriting},
+    db_manager::{DatabaseManager, InternalWriting, RouterDatabaseWriteHandle},
     profile_attributes::load_profile_attributes_from_db,
+    write::GetWriteCommandsCommon,
 };
 use simple_backend_config::args::ServerMode;
 use simple_backend_utils::dir::abs_path_for_directory_or_file_which_might_not_exists;
@@ -35,6 +36,10 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
                     .map_err(|_| report!(GetConfigError::GetWorkingDir))?;
             }
             DataLoadSubMode::ProfileAttributes { file } => {
+                *file = abs_path_for_directory_or_file_which_might_not_exists(&*file)
+                    .map_err(|_| report!(GetConfigError::GetWorkingDir))?;
+            }
+            DataLoadSubMode::DynamicClientFeatures { file } => {
                 *file = abs_path_for_directory_or_file_which_might_not_exists(&*file)
                     .map_err(|_| report!(GetConfigError::GetWorkingDir))?;
             }
@@ -88,6 +93,9 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
                     handle_view_image_processing_config(&reader).await
                 }
                 DataViewSubMode::ProfileAttributes => handle_view_profile_attributes(&reader).await,
+                DataViewSubMode::DynamicClientFeatures => {
+                    handle_view_dynamic_client_features(&reader).await
+                }
             },
             DataModeSubMode::Load { mode: load_mode } => {
                 let writer = DbWriter::new(write_handle.current_write_handle());
@@ -101,6 +109,9 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
                     }
                     DataLoadSubMode::ProfileAttributes { file } => {
                         handle_load_profile_attributes(&writer, file).await
+                    }
+                    DataLoadSubMode::DynamicClientFeatures { file } => {
+                        handle_load_dynamic_client_features(&write_handle, file).await
                     }
                     DataLoadSubMode::ProfileAttributeValuesCsv {
                         attribute_id,
@@ -238,4 +249,40 @@ async fn handle_view_profile_attributes(reader: &DbReaderRaw<'_>) {
     let export = manager.schema().export();
 
     println!("{}", toml::to_string_pretty(&export).unwrap());
+}
+
+async fn handle_load_dynamic_client_features(
+    write_handle: &RouterDatabaseWriteHandle,
+    file: PathBuf,
+) {
+    let content = std::fs::read_to_string(&file)
+        .unwrap_or_else(|e| panic!("Failed to read file {:?}: {}", file, e));
+
+    let config: model::DynamicClientFeaturesConfig =
+        toml::from_str(&content).unwrap_or_else(|e| panic!("Failed to parse TOML: {}", e));
+
+    write_handle
+        .common()
+        .client_config()
+        .upsert_dynamic_client_features_config(&config)
+        .await
+        .unwrap();
+
+    println!("Successfully loaded dynamic client features config into database");
+}
+
+async fn handle_view_dynamic_client_features(reader: &DbReaderRaw<'_>) {
+    let config = reader
+        .db_read(|mut mode| {
+            Ok(mode
+                .common()
+                .client_config()
+                .dynamic_client_features()?
+                .map(|(_, config)| config)
+                .unwrap_or_default())
+        })
+        .await
+        .unwrap();
+
+    println!("{}", toml::to_string_pretty(&config).unwrap());
 }

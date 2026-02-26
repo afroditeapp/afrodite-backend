@@ -93,6 +93,12 @@ pub trait GetProfileAttributes {
     ) -> &crate::profile_attributes::ProfileAttributesSchemaManager;
 }
 
+pub trait GetDynamicClientFeatures {
+    fn dynamic_client_features_manager(
+        &self,
+    ) -> &crate::dynamic_client_features::DynamicClientFeaturesManager;
+}
+
 pub trait GetEmailSender {
     fn email_sender(&self) -> &EmailSenderImpl;
 }

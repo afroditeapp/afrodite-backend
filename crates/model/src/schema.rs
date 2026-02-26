@@ -369,6 +369,13 @@ diesel::table! {
 }
 
 diesel::table! {
+    dynamic_client_features_config (row_type) {
+        row_type -> Int4,
+        config_json -> Text,
+    }
+}
+
+diesel::table! {
     favorite_profile (account_id, favorite_account_id) {
         account_id -> Int8,
         favorite_account_id -> Int8,
@@ -993,6 +1000,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     custom_reports_file_hash,
     daily_likes_left,
     demo_account_owned_accounts,
+    dynamic_client_features_config,
     favorite_profile,
     history_client_version_statistics,
     history_client_version_statistics_version_number,

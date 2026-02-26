@@ -6,8 +6,8 @@ use utoipa::ToSchema;
 
 use super::ClientConfigSyncVersion;
 use crate::{
-    ClientFeaturesConfigHash, CustomReportsConfigHash, PartialProfileAttributesConfig,
-    WebSocketClientTypeNumber,
+    ClientFeaturesConfigHash, CustomReportsConfigHash, DynamicClientFeaturesConfigHash,
+    PartialProfileAttributesConfig, WebSocketClientTypeNumber,
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -15,6 +15,9 @@ pub struct ClientConfig {
     /// None, if client features are not configured.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub client_features: Option<ClientFeaturesConfigHash>,
+    /// None, if dynamic client features are not configured.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dynamic_client_features: Option<DynamicClientFeaturesConfigHash>,
     /// None, if custom reports are not configured.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_reports: Option<CustomReportsConfigHash>,

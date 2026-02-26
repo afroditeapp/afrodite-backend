@@ -106,6 +106,14 @@ impl server_data::app::GetProfileAttributes for S {
     }
 }
 
+impl server_data::app::GetDynamicClientFeatures for S {
+    fn dynamic_client_features_manager(
+        &self,
+    ) -> &server_data::dynamic_client_features::DynamicClientFeaturesManager {
+        self.state.database.dynamic_client_features()
+    }
+}
+
 impl ReadDynamicConfig for S {
     async fn read_config(&self) -> error_stack::Result<BotConfig, ConfigFileError> {
         let config = self

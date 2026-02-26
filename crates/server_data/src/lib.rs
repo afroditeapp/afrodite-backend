@@ -18,6 +18,7 @@ pub mod data_export;
 pub mod data_reset;
 pub mod db_manager;
 pub mod demo;
+pub mod dynamic_client_features;
 pub mod event;
 pub mod file;
 pub mod id;
