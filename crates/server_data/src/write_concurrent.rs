@@ -314,10 +314,12 @@ impl<'a> WriteCommandsConcurrent<'a> {
             return Ok(None);
         }
 
+        let profile_attributes = &*self.profile_attributes.read_blocking();
+
         let (mut next_state, profiles) = self.location.next_profiles(
             location.current_iterator,
             &query_maker_filters,
-            self.profile_attributes.schema(),
+            profile_attributes,
         );
 
         let (next_state, profiles) = if let Some(mut profiles) = profiles {
@@ -328,7 +330,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
                     let (new_next_state, new_profiles) = self.location.next_profiles(
                         next_state,
                         &query_maker_filters,
-                        self.profile_attributes.schema(),
+                        profile_attributes,
                     );
                     next_state = new_next_state;
 
@@ -380,7 +382,6 @@ impl<'a> WriteCommandsConcurrent<'a> {
         id: AccountIdInternal,
         iterator_id_from_client: AutomaticProfileSearchIteratorSessionId,
     ) -> Result<Option<Vec<ProfileLink>>, DataError> {
-        let profile_attributes = self.profile_attributes.schema();
         let (iterator_state, query_maker_filters, iterator_id_current) = self
             .cache
             .read_cache_blocking(id.as_id(), |e| {
@@ -398,6 +399,8 @@ impl<'a> WriteCommandsConcurrent<'a> {
         if iterator_id_current != Some(iterator_id_from_client) {
             return Ok(None);
         }
+
+        let profile_attributes = &*self.profile_attributes.read_blocking();
 
         let (mut next_state, profiles) =
             self.location

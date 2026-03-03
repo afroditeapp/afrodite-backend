@@ -5,24 +5,33 @@ use error_stack::ResultExt;
 use model::Attribute;
 use model_server_data::ProfileAttributesInternal;
 use simple_backend_utils::IntoReportFromString;
+use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use crate::DataError;
 
 #[derive(Debug, Default, Clone)]
 pub struct ProfileAttributesSchemaManager {
-    schema: Arc<ProfileAttributesInternal>,
+    schema: Arc<RwLock<ProfileAttributesInternal>>,
 }
 
 impl ProfileAttributesSchemaManager {
     /// Create a new manager with initial profile attributes data.
     pub fn new(schema: ProfileAttributesInternal) -> Self {
         Self {
-            schema: schema.into(),
+            schema: Arc::new(RwLock::new(schema)),
         }
     }
 
-    pub fn schema(&self) -> &ProfileAttributesInternal {
-        &self.schema
+    pub async fn read(&self) -> RwLockReadGuard<'_, ProfileAttributesInternal> {
+        self.schema.read().await
+    }
+
+    pub fn read_blocking(&self) -> RwLockReadGuard<'_, ProfileAttributesInternal> {
+        self.schema.blocking_read()
+    }
+
+    pub fn write_blocking(&self) -> RwLockWriteGuard<'_, ProfileAttributesInternal> {
+        self.schema.blocking_write()
     }
 }
 

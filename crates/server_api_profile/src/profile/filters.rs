@@ -40,7 +40,8 @@ pub async fn post_get_query_profile_attributes_config(
     let info = ProfileAttributesConfigQueryResult {
         values: state
             .profile_attributes_manager()
-            .schema()
+            .read()
+            .await
             .query_attributes(query.values),
     };
     Ok(info.into())
@@ -89,7 +90,7 @@ pub async fn post_profile_filters(
 ) -> Result<(), StatusCode> {
     PROFILE.post_profile_filters.incr();
     let validated = data
-        .validate(state.profile_attributes_manager().schema())
+        .validate(&*state.profile_attributes_manager().read().await)
         .into_error_string(DataError::NotAllowed)?;
     db_write!(state, move |cmds| cmds
         .profile()

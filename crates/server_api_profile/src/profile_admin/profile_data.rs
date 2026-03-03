@@ -132,7 +132,7 @@ pub async fn post_set_profile_name(
         };
         let profile_update = profile_update
             .validate(
-                cmds.profile_attributes().schema(),
+                &*cmds.profile_attributes().read().await,
                 cmds.config().profile_name_regex(),
                 &profile,
                 None,

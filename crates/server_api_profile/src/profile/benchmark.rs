@@ -101,7 +101,7 @@ pub async fn post_profile_to_database_debug_mode_benchmark(
     };
     let profile = Into::<ProfileUpdateInternal>::into(profile)
         .validate(
-            state.profile_attributes_manager().schema(),
+            &*state.profile_attributes_manager().read().await,
             state.config().profile_name_regex(),
             &old_profile.profile,
             accepted_ages,

@@ -198,39 +198,35 @@ async fn handle_view_image_processing_config(reader: &DbReaderRaw<'_>) {
 }
 
 async fn handle_load_profile_attributes(writer: &DbWriter<'_>, file: PathBuf) {
-    // Read and parse the TOML file
     let content = std::fs::read_to_string(&file)
         .unwrap_or_else(|e| panic!("Failed to read file {:?}: {}", file, e));
 
     let file_content: ProfileAttributesSchemaExport =
         toml::from_str(&content).unwrap_or_else(|e| panic!("Failed to parse TOML: {}", e));
 
-    // Validate and convert to ProfileAttributesInternal
     let profile_attrs = file_content
         .validate()
         .unwrap_or_else(|e| panic!("Validation failed: {}", e));
 
     let attr_count = profile_attrs.attributes().len();
 
-    // Store in database
     writer
         .db_transaction_raw(move |mut cmds| {
-            // Delete all existing profile attributes
             cmds.common()
                 .profile_attributes()
                 .delete_all_profile_attributes()?;
-
-            // Upsert each attribute
             for attr in profile_attrs.attributes() {
                 cmds.common()
                     .profile_attributes()
                     .upsert_profile_attribute(attr.attribute())?;
             }
-
-            // Upsert attribute order mode
             cmds.common()
                 .profile_attributes()
                 .upsert_profile_attributes_order_mode(profile_attrs.attribute_order())?;
+
+            cmds.common()
+                .client_config()
+                .increment_client_config_sync_version_for_every_account()?;
 
             Ok(())
         })
@@ -246,7 +242,7 @@ async fn handle_load_profile_attributes(writer: &DbWriter<'_>, file: PathBuf) {
 async fn handle_view_profile_attributes(reader: &DbReaderRaw<'_>) {
     let manager = load_profile_attributes_from_db(reader).await.unwrap();
 
-    let export = manager.schema().export();
+    let export = manager.read().await.export();
 
     println!("{}", toml::to_string_pretty(&export).unwrap());
 }

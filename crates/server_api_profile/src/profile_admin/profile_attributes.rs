@@ -50,8 +50,6 @@ pub async fn get_profile_attributes_schema(
 ///
 /// Removing attributes or attribute values is not possible.
 ///
-/// Restart server to make changes visible to users.
-///
 /// # Access
 /// - Permission [Permissions::admin_edit_profile_attributes_schema].
 /// - Modifying user visible values (texts and icons) requires

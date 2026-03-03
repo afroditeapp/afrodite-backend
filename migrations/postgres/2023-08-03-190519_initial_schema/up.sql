@@ -291,14 +291,6 @@ CREATE TABLE IF NOT EXISTS profile_attributes_schema(
     attribute_order_mode SMALLINT NOT NULL
 );
 
--- Store profile attributes schema hash, so that changes to it can be detected
--- when server starts.
-CREATE TABLE IF NOT EXISTS profile_attributes_schema_hash(
-    -- 0 = profile attributes schema hash
-    row_type      INTEGER PRIMARY KEY NOT NULL,
-    sha256_hash   TEXT                NOT NULL
-);
-
 -- Store profile attributes definitions as JSON
 CREATE TABLE IF NOT EXISTS profile_attributes_schema_attribute(
     attribute_id   SMALLINT PRIMARY KEY NOT NULL,

@@ -41,15 +41,4 @@ impl CurrentReadCommonProfileAttributes<'_> {
             .optional()
             .into_db_error(())
     }
-
-    pub fn profile_attributes_hash(&mut self) -> Result<Option<String>, DieselDatabaseError> {
-        use model::schema::profile_attributes_schema_hash::dsl::*;
-
-        profile_attributes_schema_hash
-            .filter(row_type.eq(0))
-            .select(sha256_hash)
-            .first(self.conn())
-            .optional()
-            .into_db_error(())
-    }
 }

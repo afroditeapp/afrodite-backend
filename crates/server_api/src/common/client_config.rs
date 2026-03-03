@@ -56,7 +56,8 @@ pub async fn get_client_config(
         profile_attributes: Some(
             state
                 .profile_attributes_manager()
-                .schema()
+                .read()
+                .await
                 .config_for_client()
                 .clone(),
         ),

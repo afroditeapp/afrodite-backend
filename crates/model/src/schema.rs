@@ -735,13 +735,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    profile_attributes_schema_hash (row_type) {
-        row_type -> Int4,
-        sha256_hash -> Text,
-    }
-}
-
-diesel::table! {
     profile_attributes_value_list (account_id, attribute_id, attribute_value) {
         account_id -> Int8,
         attribute_id -> Int2,
@@ -1040,7 +1033,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     profile_attributes_filter_settings,
     profile_attributes_schema,
     profile_attributes_schema_attribute,
-    profile_attributes_schema_hash,
     profile_attributes_value_list,
     profile_automatic_profile_search_settings,
     profile_automatic_profile_search_state,

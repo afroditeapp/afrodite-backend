@@ -55,21 +55,4 @@ impl CurrentWriteCommonProfileAttributes<'_> {
 
         Ok(())
     }
-
-    pub fn upsert_profile_attributes_hash(
-        &mut self,
-        hash: &str,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::profile_attributes_schema_hash::dsl::*;
-
-        insert_into(profile_attributes_schema_hash)
-            .values((row_type.eq(0), sha256_hash.eq(hash)))
-            .on_conflict(row_type)
-            .do_update()
-            .set(sha256_hash.eq(hash))
-            .execute_my_conn(self.conn())
-            .into_db_error(())?;
-
-        Ok(())
-    }
 }

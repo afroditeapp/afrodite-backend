@@ -1,9 +1,12 @@
 use database::current::write::GetDbWriteCommandsCommon;
 use model_profile::{
-    Attribute, AttributeValue, ProfileAttributesInternal, UpdateProfileAttributesSchema,
+    Attribute, AttributeValue, EventToClientInternal, ProfileAttributesInternal,
+    UpdateProfileAttributesSchema,
 };
 use server_data::{
-    DataError, db_transaction, define_cmd_wrapper_write,
+    DataError,
+    db_manager::InternalWriting,
+    db_transaction, define_cmd_wrapper_write,
     read::GetReadCommandsCommon,
     result::{Result, WrappedContextExt},
     write::DbTransaction,
@@ -168,6 +171,8 @@ impl WriteCommandsProfileAdminAttributeSchema<'_> {
 
         validate_new_state(&current_state, &new_state, has_content_permission)?;
 
+        let profile_attributes = self.profile_attributes().clone();
+
         db_transaction!(self, move |mut cmds| {
             for attr in new_state.attributes() {
                 cmds.common()
@@ -176,8 +181,20 @@ impl WriteCommandsProfileAdminAttributeSchema<'_> {
             }
             cmds.common()
                 .profile_attributes()
-                .upsert_profile_attributes_order_mode(new_state.attribute_order())
+                .upsert_profile_attributes_order_mode(new_state.attribute_order())?;
+
+            cmds.common()
+                .client_config()
+                .increment_client_config_sync_version_for_every_account()?;
+
+            *profile_attributes.write_blocking() = new_state;
+
+            Ok(())
         })?;
+
+        self.events()
+            .send_connected_event_to_logged_in_clients(EventToClientInternal::ClientConfigChanged)
+            .await;
 
         Ok(())
     }
