@@ -9,6 +9,7 @@ pub mod args;
 pub mod build_info;
 pub mod config_tools;
 pub mod data_tools;
+pub mod process_lock;
 
 use std::process::ExitCode;
 
@@ -20,6 +21,7 @@ use config::{
     get_config,
 };
 use server::{DatingAppServer, api_doc::ApiDoc};
+use simple_backend_utils::dir::abs_path_for_directory_or_file_which_might_not_exists;
 use test_mode::TestRunner;
 
 use crate::build_info::build_info;
@@ -32,6 +34,27 @@ fn main() -> ExitCode {
 fn handle_app_mode(args: ArgsConfig) -> ExitCode {
     match args.mode {
         AppMode::Server(server_mode) => {
+            let data_dir = match abs_path_for_directory_or_file_which_might_not_exists(
+                &server_mode.data_dir,
+            ) {
+                Ok(path) => path,
+                Err(e) => {
+                    eprintln!(
+                        "Failed to resolve data dir path '{}': {e}",
+                        server_mode.data_dir.display()
+                    );
+                    return ExitCode::FAILURE;
+                }
+            };
+
+            let _server_lock = match process_lock::acquire_server_lock(&data_dir) {
+                Ok(lock) => lock,
+                Err(e) => {
+                    eprintln!("{e}");
+                    return ExitCode::FAILURE;
+                }
+            };
+
             let config = get_config(
                 server_mode,
                 BUILD_INFO_GIT_DESCRIBE.to_string(),

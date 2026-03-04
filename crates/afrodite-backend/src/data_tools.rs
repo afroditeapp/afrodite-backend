@@ -20,6 +20,8 @@ use server_data::{
 use simple_backend_config::args::ServerMode;
 use simple_backend_utils::dir::abs_path_for_directory_or_file_which_might_not_exists;
 
+use crate::process_lock;
+
 mod csv;
 
 pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
@@ -58,6 +60,14 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
         eprintln!("Config directory '{:?}' not found", mode.config_dir);
         return Err(report!(GetConfigError::SimpleBackendError));
     }
+
+    let _lock = if let DataModeSubMode::Load { .. } = mode.mode {
+        let lock = process_lock::acquire_server_lock(&mode.data_dir)
+            .map_err(|e| report!(GetConfigError::LoadFileError).attach_printable(e))?;
+        Some(lock)
+    } else {
+        None
+    };
 
     let config = config::get_config(
         ServerMode {
