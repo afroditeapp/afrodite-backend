@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Instant};
 
 use api_client::models::AccountId;
 use config::{args::TestMode, bot_config_file::BotConfigFile};
@@ -22,14 +22,52 @@ use tokio::{
 };
 use tracing::error;
 
-use crate::actions::user::{
-    AcceptReceivedLikesAndSendMessage, AnswerReceivedMessages, DoInitialSetupIfNeeded,
-    SendLikeIfNeeded,
+use crate::{
+    actions::user::{
+        AcceptReceivedLikesAndSendMessage, AnswerReceivedMessages, DoInitialSetupIfNeeded,
+        SendLikeIfNeeded,
+    },
+    utils::{BotRunResult, run_result_from_error, should_restart_bot_after_run_result},
 };
 
 pub struct UserBot {
     state: BotState,
     bot_running_handle: mpsc::Sender<BotPersistentState>,
+}
+
+pub(crate) struct UserBotWithRestart {
+    pub(crate) task_id: u32,
+    pub(crate) account_id_from_api: AccountId,
+    pub(crate) test_config: Arc<TestMode>,
+    pub(crate) bot_config_file: Arc<BotConfigFile>,
+    pub(crate) old_state: Option<Arc<StateData>>,
+    pub(crate) bot_running_handle: mpsc::Sender<BotPersistentState>,
+    pub(crate) bot_quit_receiver: watch::Receiver<()>,
+    pub(crate) reqwest_client: reqwest::Client,
+}
+
+impl UserBotWithRestart {
+    pub(crate) async fn run(self) {
+        loop {
+            let started_at = Instant::now();
+            let user_bot = UserBot::new(
+                self.task_id,
+                self.test_config.clone(),
+                self.bot_config_file.clone(),
+                self.old_state.clone(),
+                self.bot_running_handle.clone(),
+                self.account_id_from_api.clone(),
+                &self.reqwest_client,
+            );
+
+            let run_result = user_bot.run(self.bot_quit_receiver.clone()).await;
+            if should_restart_bot_after_run_result(run_result, started_at, self.task_id, "User bot")
+            {
+                continue;
+            }
+            break;
+        }
+    }
 }
 
 impl UserBot {
@@ -78,31 +116,41 @@ impl UserBot {
         }
     }
 
-    pub async fn run(mut self, mut bot_quit_receiver: watch::Receiver<()>) {
+    pub async fn run(mut self, mut bot_quit_receiver: watch::Receiver<()>) -> BotRunResult {
         select! {
             result = Self::run_bot_setup_logic(&mut self.state) => {
                 if let Err(e) = result {
-                    error!("User bot setup logic error: {:?}", e);
+                    let run_result = run_result_from_error(&e);
+                    if run_result == BotRunResult::Quit {
+                        error!("User bot setup logic error: {:?}", e);
+                    }
                     Self::handle_quit(self.state.persistent_state(), self.bot_running_handle).await;
-                    return;
+                    return run_result;
                 }
             },
             _ = bot_quit_receiver.changed() => {
                 Self::handle_quit(self.state.persistent_state(), self.bot_running_handle).await;
-                return;
+                return BotRunResult::Quit;
             }
         };
 
-        select! {
+        let run_result = select! {
             result = Self::run_user_action_loop(&mut self.state) => {
                 if let Err(e) = result {
-                    error!("User bot action loop error: {:?}", e);
+                    let run_result = run_result_from_error(&e);
+                    if run_result == BotRunResult::Quit {
+                        error!("User bot action loop error: {:?}", e);
+                    }
+                    run_result
+                } else {
+                    BotRunResult::Quit
                 }
             },
-            _ = bot_quit_receiver.changed() => (),
+            _ = bot_quit_receiver.changed() => BotRunResult::Quit,
         };
 
         Self::handle_quit(self.state.persistent_state(), self.bot_running_handle).await;
+        run_result
     }
 
     async fn run_bot_setup_logic(state: &mut BotState) -> Result<(), TestError> {

@@ -2,7 +2,9 @@
 
 use std::fmt::Debug;
 
-use api_client::apis::configuration::Configuration;
+use api_client::{
+    apis::configuration::Configuration, manual_additions::RESPONSE_ERROR_STATUS_CODE_401,
+};
 use config::args::PublicApiUrl;
 use error_stack::Result;
 use hyper::StatusCode;
@@ -128,4 +130,9 @@ pub fn get_api_url(url: &Option<Url>) -> Result<Url, TestError> {
     url.as_ref()
         .ok_or(TestError::ApiUrlNotConfigured.report())
         .cloned()
+}
+
+pub fn is_unauthorized_error(report: &error_stack::Report<TestError>) -> bool {
+    let report_text = format!("{report:?}").to_ascii_lowercase();
+    report_text.contains(RESPONSE_ERROR_STATUS_CODE_401)
 }

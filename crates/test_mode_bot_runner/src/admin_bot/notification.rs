@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use error_stack::{Result, report};
-use test_mode_utils::client::TestError;
+use test_mode_utils::client::{TestError, is_unauthorized_error};
 use tokio::sync::{Mutex, mpsc};
 use tracing::error;
 
@@ -80,6 +80,9 @@ impl<H: ModerationHandler> NotificationReceiver<H> {
                 drop(pending);
 
                 if let Err(e) = self.handler.handle().await {
+                    if is_unauthorized_error(&e) {
+                        return Err(e);
+                    }
                     error!("Moderation handler error: {:?}", e);
                 }
             } else {
