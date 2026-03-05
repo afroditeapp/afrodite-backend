@@ -11,31 +11,22 @@ use api_client::{
             post_get_received_likes_page, post_mark_message_as_seen,
             post_reset_received_likes_paging, post_send_like, post_send_message,
         },
-        common_api::get_client_config,
-        profile_api::{
-            post_get_query_profile_attributes_config, post_profile, post_search_age_range,
-            post_search_groups,
-        },
     },
     models::{
-        AccountId, AttributeMode, MessageDeliveryInfoIdList, MessageId, MessageNumber,
-        PendingMessageAcknowledgementList, PendingMessageId, ProfileAttributeValueUpdate,
-        ProfileAttributesConfigQuery, ProfileUpdate, SearchAgeRange, SearchGroups, SeenMessage,
-        SentMessageIdList,
+        AccountId, MessageDeliveryInfoIdList, MessageId, MessageNumber,
+        PendingMessageAcknowledgementList, PendingMessageId, SeenMessage, SentMessageIdList,
     },
 };
 use async_trait::async_trait;
-use config::bot_config_file::Gender;
 use error_stack::{Result, ResultExt};
 use simple_backend_utils::UuidBase64Url;
 use test_mode_bot::{
     BotState, action_array,
     actions::{
         ActionArray, BotAction, RunActions,
-        account::{
-            AccountState, AssertAccountState, CompleteAccountSetup, DEFAULT_AGE, SetAccountSetup,
-        },
+        account::{AccountState, AssertAccountState, CompleteAccountSetup, SetAccountSetup},
         media::{SendImageToSlot, SetContent},
+        profile::ChangeBotAgeAndOtherSettings,
     },
 };
 use test_mode_utils::{client::TestError, state::BotEncryptionKeys};
@@ -144,121 +135,6 @@ impl SetBotPublicKey {
 impl BotAction for SetBotPublicKey {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         Self::setup_bot_keys_if_needed(state).await?;
-        Ok(())
-    }
-}
-
-#[derive(Debug)]
-pub struct ChangeBotAgeAndOtherSettings {
-    pub admin: bool,
-}
-
-#[async_trait]
-impl BotAction for ChangeBotAgeAndOtherSettings {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let bot_config = state.get_bot_config();
-        let age = bot_config.age.unwrap_or(DEFAULT_AGE);
-
-        let groups = {
-            let man = SearchGroups {
-                man_for_man: Some(true),
-                man_for_woman: Some(true),
-                man_for_non_binary: Some(true),
-                ..Default::default()
-            };
-            let woman = SearchGroups {
-                woman_for_man: Some(true),
-                woman_for_woman: Some(true),
-                woman_for_non_binary: Some(true),
-                ..Default::default()
-            };
-            let non_binary = SearchGroups {
-                non_binary_for_man: Some(true),
-                non_binary_for_woman: Some(true),
-                non_binary_for_non_binary: Some(true),
-                ..Default::default()
-            };
-
-            match bot_config.gender {
-                Some(Gender::Man) => man,
-                Some(Gender::Woman) => woman,
-                None => match state.task_id % 3 {
-                    0 => man,
-                    1 => woman,
-                    _ => non_binary,
-                },
-            }
-        };
-
-        let available_attributes = get_client_config(state.api())
-            .await
-            .change_context(TestError::ApiRequest)?
-            .profile_attributes
-            .flatten()
-            .map(|v| v.attributes)
-            .unwrap_or_default();
-
-        let available_attributes = post_get_query_profile_attributes_config(
-            state.api(),
-            ProfileAttributesConfigQuery {
-                values: available_attributes.iter().map(|v| v.id).collect(),
-            },
-        )
-        .await
-        .change_context(TestError::ApiRequest)?
-        .values
-        .into_iter()
-        .map(|v| v.a);
-
-        let mut attributes: Vec<ProfileAttributeValueUpdate> = vec![];
-        for attribute in available_attributes {
-            if attribute.required.unwrap_or_default() && attribute.mode == AttributeMode::Bitflag {
-                let mut select_all = 0;
-                for value in attribute.values {
-                    select_all |= value.id;
-                }
-
-                let update = ProfileAttributeValueUpdate {
-                    id: attribute.id,
-                    v: vec![select_all],
-                };
-
-                attributes.push(update);
-            }
-        }
-
-        let name = if self.admin {
-            format!("Admin bot {}", state.task_id + 1)
-        } else {
-            state
-                .get_bot_config()
-                .name
-                .clone()
-                .map(|v| v.into_string())
-                .unwrap_or("B".to_string())
-        };
-
-        let update = ProfileUpdate {
-            name,
-            age: age.into(),
-            attributes,
-            ptext: state.get_bot_config().text.clone().map(|v| v.into_string()),
-        };
-
-        post_profile(state.api(), update)
-            .await
-            .change_context(TestError::ApiRequest)?;
-
-        let age_range = SearchAgeRange { min: 18, max: 99 };
-
-        post_search_age_range(state.api(), age_range)
-            .await
-            .change_context(TestError::ApiRequest)?;
-
-        post_search_groups(state.api(), groups)
-            .await
-            .change_context(TestError::ApiRequest)?;
-
         Ok(())
     }
 }
