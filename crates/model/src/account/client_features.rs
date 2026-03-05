@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -166,8 +166,9 @@ impl From<AttributionConfigInternal> for AttributionConfig {
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema, PartialEq)]
 pub struct StringResource {
     default: String,
+    // Use BTreeMap so that serialization order is stable
     /// Keys are country codes like "en".
-    translations: HashMap<String, String>,
+    translations: BTreeMap<String, String>,
 }
 
 impl From<StringResourceInternal> for StringResource {

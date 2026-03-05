@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -135,7 +135,7 @@ pub struct StringResourceInternal {
     pub default: String,
     /// Keys are country codes like "en".
     #[serde(flatten)]
-    pub translations: HashMap<String, String>,
+    pub translations: BTreeMap<String, String>,
 }
 
 impl StringResourceInternal {
