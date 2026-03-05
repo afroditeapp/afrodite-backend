@@ -34,6 +34,13 @@ pub struct BotConfig {
     pub admin_bot_config: AdminBotConfig,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
+pub struct BotConfigWarnings {
+    pub profile_name_moderation_file_config_missing: bool,
+    pub profile_text_moderation_file_config_missing: bool,
+    pub content_moderation_file_config_missing: bool,
+}
+
 fn is_zero(value: &u32) -> bool {
     *value == 0
 }

@@ -1,7 +1,7 @@
 use axum::{Extension, extract::State};
 use config::bot_config_file::internal::LlmStringModerationConfig;
-use model::{AccountIdInternal, BotConfig, Permissions};
-use server_data::read::GetReadCommandsCommon;
+use model::{AccountIdInternal, BotConfig, BotConfigWarnings, Permissions};
+use server_data::{app::GetConfig, read::GetReadCommandsCommon};
 use simple_backend::create_counters;
 
 use crate::{
@@ -21,7 +21,6 @@ const PATH_GET_BOT_CONFIG: &str = "/common_api/bot_config";
 #[utoipa::path(
     get,
     path = PATH_GET_BOT_CONFIG,
-    params(),
     responses(
         (status = 200, description = "Get was successfull.", body = BotConfig),
         (status = 401, description = "Unauthorized."),
@@ -101,7 +100,58 @@ pub async fn post_bot_config(
     Ok(())
 }
 
-create_open_api_router!(fn router_config, get_bot_config, post_bot_config,);
+const PATH_GET_BOT_CONFIG_WARNINGS: &str = "/common_api/bot_config_warnings";
+
+/// Get bot config warnings.
+///
+/// # Access
+/// * [Permissions::admin_server_view_bot_config]
+#[utoipa::path(
+    get,
+    path = PATH_GET_BOT_CONFIG_WARNINGS,
+    params(),
+    responses(
+        (status = 200, description = "Successful.", body = BotConfigWarnings),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_bot_config_warnings(
+    State(state): State<S>,
+    Extension(api_caller_permissions): Extension<Permissions>,
+) -> Result<Json<BotConfigWarnings>, StatusCode> {
+    COMMON_ADMIN.get_bot_config_warnings.incr();
+
+    if !api_caller_permissions.admin_server_view_bot_config {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let config = state.read_config().await?;
+    let bot_config_file = state.config().parsed_files().bot;
+
+    let warnings = BotConfigWarnings {
+        profile_name_moderation_file_config_missing: config
+            .admin_bot_config
+            .profile_name_moderation_enabled
+            && bot_config_file.profile_name_moderation.is_none(),
+        profile_text_moderation_file_config_missing: config
+            .admin_bot_config
+            .profile_text_moderation_enabled
+            && bot_config_file.profile_text_moderation.is_none(),
+        content_moderation_file_config_missing: config.admin_bot_config.content_moderation_enabled
+            && bot_config_file.content_moderation.is_none(),
+    };
+
+    Ok(Json(warnings))
+}
+
+create_open_api_router!(
+    fn router_config,
+    get_bot_config,
+    post_bot_config,
+    get_bot_config_warnings,
+);
 
 create_counters!(
     CommonAdminCounters,
@@ -109,4 +159,5 @@ create_counters!(
     COMMON_ADMIN_CONFIG_COUNTERS_LIST,
     get_bot_config,
     post_bot_config,
+    get_bot_config_warnings,
 );

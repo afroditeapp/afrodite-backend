@@ -30,6 +30,12 @@ pub struct NsfwDetectionThresholds {
     pub sexy: Option<f64>,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
+pub struct ImageProcessingWarnings {
+    pub seetaface_file_config_missing: bool,
+    pub nsfw_detection_file_config_missing: bool,
+}
+
 impl NsfwDetectionThresholds {
     pub fn all_disabled(&self) -> bool {
         *self == Self::default()
