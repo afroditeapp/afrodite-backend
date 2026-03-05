@@ -145,6 +145,7 @@ diesel::table! {
         admin_server_edit_bot_config -> Bool,
         admin_server_edit_image_processing_config -> Bool,
         admin_server_edit_maintenance_notification -> Bool,
+        admin_server_edit_info_banners -> Bool,
         admin_news_create -> Bool,
         admin_news_edit_all -> Bool,
         admin_profile_statistics -> Bool,

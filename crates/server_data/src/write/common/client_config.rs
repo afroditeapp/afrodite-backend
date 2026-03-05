@@ -11,10 +11,10 @@ define_cmd_wrapper_write!(WriteCommandsCommonClientConfig);
 impl WriteCommandsCommonClientConfig<'_> {
     pub async fn upsert_dynamic_client_features_config(
         &self,
-        config: &DynamicClientFeaturesConfig,
+        config: DynamicClientFeaturesConfig,
     ) -> Result<(), DataError> {
-        let config = config.clone();
-        let (hash, config) = db_transaction!(self, move |mut cmds| {
+        let manager = self.dynamic_client_features().clone();
+        db_transaction!(self, move |mut cmds| {
             let hash = cmds
                 .common()
                 .client_config()
@@ -22,13 +22,10 @@ impl WriteCommandsCommonClientConfig<'_> {
             cmds.common()
                 .client_config()
                 .increment_client_config_sync_version_for_every_account()?;
-            Ok((hash, config))
+            manager
+                .set_dynamic_client_features_blocking(Some(DynamicClientFeatures { hash, config }));
+            Ok(())
         })?;
-
-        self.dynamic_client_features()
-            .set_dynamic_client_features(Some(DynamicClientFeatures { hash, config }))
-            .await;
-
         Ok(())
     }
 

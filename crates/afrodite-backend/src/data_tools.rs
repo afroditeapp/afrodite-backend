@@ -270,7 +270,7 @@ async fn handle_load_dynamic_client_features(
     write_handle
         .common()
         .client_config()
-        .upsert_dynamic_client_features_config(&config)
+        .upsert_dynamic_client_features_config(config)
         .await
         .unwrap();
 

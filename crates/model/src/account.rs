@@ -209,6 +209,7 @@ define_permissions!(
     admin_server_edit_bot_config,
     admin_server_edit_image_processing_config,
     admin_server_edit_maintenance_notification,
+    admin_server_edit_info_banners,
     admin_news_create,
     admin_news_edit_all,
     admin_profile_statistics,

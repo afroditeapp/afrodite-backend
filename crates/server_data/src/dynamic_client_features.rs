@@ -43,8 +43,8 @@ impl DynamicClientFeaturesManager {
         self.value.read().await.clone()
     }
 
-    pub async fn set_dynamic_client_features(&self, value: Option<DynamicClientFeatures>) {
-        *self.value.write().await = value;
+    pub fn set_dynamic_client_features_blocking(&self, value: Option<DynamicClientFeatures>) {
+        *self.value.blocking_write() = value;
     }
 }
 

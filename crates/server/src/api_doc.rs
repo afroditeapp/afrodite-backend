@@ -94,6 +94,10 @@ impl ApiDoc {
                     .into_openapi(),
             )
             .merge_from(
+                server_api_account::account_admin::router_admin_client_features(state.clone())
+                    .into_openapi(),
+            )
+            .merge_from(
                 server_api_account::account_admin::router_admin_state(state.clone()).into_openapi(),
             )
             .merge_from(

@@ -53,6 +53,9 @@ impl PrivateRoutes {
             .merge(api::account_admin::router_admin_permissions(
                 self.state.clone(),
             ))
+            .merge(api::account_admin::router_admin_client_features(
+                self.state.clone(),
+            ))
             .merge(api::account_admin::router_admin_state(self.state.clone()))
             .merge(api::account_admin::router_admin_client_version(
                 self.state.clone(),

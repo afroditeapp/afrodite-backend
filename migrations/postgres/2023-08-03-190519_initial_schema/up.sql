@@ -80,6 +80,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_server_edit_bot_config                 BOOLEAN NOT NULL DEFAULT FALSE,
     admin_server_edit_image_processing_config    BOOLEAN NOT NULL DEFAULT FALSE,
     admin_server_edit_maintenance_notification   BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_server_edit_info_banners               BOOLEAN NOT NULL DEFAULT FALSE,
     admin_news_create                            BOOLEAN NOT NULL DEFAULT FALSE,
     admin_news_edit_all                          BOOLEAN NOT NULL DEFAULT FALSE,
     admin_profile_statistics                     BOOLEAN NOT NULL DEFAULT FALSE,
