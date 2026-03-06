@@ -5150,7 +5150,6 @@ dependencies = [
  "axum",
  "config",
  "database",
- "database_chat",
  "error-stack",
  "futures",
  "model",

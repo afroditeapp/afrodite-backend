@@ -25,7 +25,6 @@ num_cpus = { workspace = true }
 
 config = { path = "../config" }
 database = { path = "../database" }
-database_chat = { path = "../database_chat" }
 model = { path = "../model" }
 model_server_data = { path = "../model_server_data" }
 server_common = { path = "../server_common" }

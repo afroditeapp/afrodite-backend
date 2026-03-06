@@ -5,5 +5,6 @@
 #![allow(async_fn_in_trait)]
 
 pub mod cache;
+pub mod event;
 pub mod read;
 pub mod write;

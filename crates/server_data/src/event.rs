@@ -1,6 +1,5 @@
 //! Send events to connected or not connected clients.
 
-use database_chat::current::write::chat::ChatStateChanges;
 use model::{
     AccountId, AccountIdInternal, ContentProcessingStateChanged, EventToClient,
     EventToClientInternal, NotificationEvent, PushNotificationFlags,
@@ -299,22 +298,6 @@ impl<'a> EventManagerWithCacheReference<'a> {
                 PushNotificationFlags::empty()
             }
         }
-    }
-
-    pub async fn handle_chat_state_changes(
-        &'a self,
-        c: &ChatStateChanges,
-    ) -> Result<(), DataError> {
-        if let Some(info) = &c.received_likes_change {
-            if info.previous_count.c == 0 && info.current_count.c == 1 {
-                self.send_notification(c.id, NotificationEvent::ReceivedLikesChanged)
-                    .await?;
-            } else {
-                self.send_connected_event(c.id, EventToClientInternal::ReceivedLikesChanged)
-                    .await?;
-            }
-        }
-        Ok(())
     }
 
     pub async fn send_content_processing_state_change_to_client(&self, state: &ProcessingState) {

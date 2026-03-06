@@ -11,7 +11,9 @@ use server_api::{
     app::{ApiUsageTrackerProvider, EventManagerProvider, GetConfig},
     create_open_api_router,
 };
-use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
+use server_data_chat::{
+    event::EventManagerChatMethods, read::GetReadChatCommands, write::GetWriteCommandsChat,
+};
 use simple_backend::create_counters;
 
 use super::super::utils::{Json, StatusCode};
