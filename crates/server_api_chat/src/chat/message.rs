@@ -169,7 +169,7 @@ pub async fn post_send_message(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let Some(message_reciever) = state.get_internal_id_optional(query_params.receiver).await else {
+    let Some(message_receiver) = state.get_internal_id_optional(query_params.receiver).await else {
         return Ok(SendMessageResult::receiver_blocked_sender_or_receiver_not_found().into());
     };
 
@@ -183,7 +183,7 @@ pub async fn post_send_message(
             .chat()
             .insert_pending_message_if_match_and_not_blocked(
                 id,
-                message_reciever,
+                message_receiver,
                 bytes.into(),
                 query_params.sender_public_key_id,
                 query_params.receiver_public_key_id,
@@ -196,13 +196,13 @@ pub async fn post_send_message(
             match push_notification_allowed {
                 Some(PushNotificationAllowed) => cmds
                     .events()
-                    .send_notification(message_reciever, NotificationEvent::NewMessageReceived)
+                    .send_notification(message_receiver, NotificationEvent::NewMessageReceived)
                     .await
                     .ignore_and_log_error(),
                 None => cmds
                     .events()
                     .send_connected_event(
-                        message_reciever,
+                        message_receiver,
                         EventToClientInternal::NewMessageReceived,
                     )
                     .await

@@ -186,7 +186,7 @@ pub struct SendMessageResult {
     #[serde(skip_serializing_if = "Option::is_none")]
     remaining_messages: Option<u16>,
     /// Remaining messages which can be sent to conversation before
-    /// delivery to reciever or message sending acknowledgement must happen.
+    /// delivery to receiver or message sending acknowledgement must happen.
     /// The value will be returned only if there is 5 or less messages left.
     #[serde(skip_serializing_if = "Option::is_none")]
     remaining_conversation_messages: Option<u16>,
