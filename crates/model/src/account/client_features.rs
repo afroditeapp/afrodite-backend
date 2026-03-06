@@ -116,6 +116,9 @@ pub struct InfoBanner {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct TextInfoBanner {
     pub body: StringResource,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub dismissible: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub url_button: Option<InfoBannerUrlButton>,
     #[serde(skip_serializing_if = "Option::is_none")]
