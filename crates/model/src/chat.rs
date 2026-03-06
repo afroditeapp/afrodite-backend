@@ -165,7 +165,7 @@ diesel_i64_wrapper!(NewReceivedLikesCount);
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize, ToSchema)]
 pub struct ChatMessageReport {
     pub sender: AccountId,
-    pub receiver: AccountId,
+    pub recipient: AccountId,
     pub message_time: UnixTime,
     pub message_number: MessageNumber,
     /// Message without encryption and signing
@@ -226,12 +226,12 @@ pub struct PendingMessageDbIdAndMessageTime {
 pub struct PendingMessageRaw {
     pub id: i64,
     pub account_id_sender: AccountIdDb,
-    pub account_id_receiver: AccountIdDb,
+    pub account_id_recipient: AccountIdDb,
     pub sender_public_key_id: PublicKeyId,
     pub sender_acknowledgement: bool,
-    pub receiver_acknowledgement: bool,
-    pub receiver_push_notification_sent: bool,
-    pub receiver_email_notification_sent: bool,
+    pub recipient_acknowledgement: bool,
+    pub recipient_push_notification_sent: bool,
+    pub recipient_email_notification_sent: bool,
     pub message_unix_time: UnixTime,
     pub message_number: MessageNumber,
     pub message_id: MessageId,

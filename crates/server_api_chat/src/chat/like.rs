@@ -123,7 +123,7 @@ pub async fn post_send_like(
                 .handle_chat_state_changes(&changes.sender)
                 .await?;
             cmds.events()
-                .handle_chat_state_changes(&changes.receiver)
+                .handle_chat_state_changes(&changes.recipient)
                 .await?;
         }
 

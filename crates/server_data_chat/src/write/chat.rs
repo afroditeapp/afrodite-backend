@@ -13,7 +13,7 @@ use database_chat::current::{
     read::GetDbReadCommandsChat,
     write::{
         GetDbWriteCommandsChat,
-        chat::{ChatStateChanges, ReceiverBlockedSender},
+        chat::{ChatStateChanges, RecipientBlockedSender},
     },
 };
 use error_stack::ResultExt;
@@ -70,35 +70,35 @@ impl WriteCommandsChat<'_> {
     pub async fn like_or_match_profile(
         &self,
         id_like_sender: AccountIdInternal,
-        id_like_receiver: AccountIdInternal,
-    ) -> Result<SenderAndReceiverStateChanges, DataError> {
+        id_like_recipient: AccountIdInternal,
+    ) -> Result<SenderAndRecipientStateChanges, DataError> {
         db_transaction!(self, move |mut cmds| {
             let interaction = cmds
                 .chat()
                 .interaction()
-                .get_or_create_account_interaction(id_like_sender, id_like_receiver)?;
+                .get_or_create_account_interaction(id_like_sender, id_like_recipient)?;
 
             let updated = if interaction.is_like()
                 && interaction.account_id_sender == Some(id_like_sender.into_db_id())
-                && interaction.account_id_receiver == Some(id_like_receiver.into_db_id())
+                && interaction.account_id_recipient == Some(id_like_recipient.into_db_id())
             {
                 return Err(DieselDatabaseError::AlreadyDone.report());
             } else if interaction.is_like()
-                && interaction.account_id_sender == Some(id_like_receiver.into_db_id())
-                && interaction.account_id_receiver == Some(id_like_sender.into_db_id())
+                && interaction.account_id_sender == Some(id_like_recipient.into_db_id())
+                && interaction.account_id_recipient == Some(id_like_sender.into_db_id())
             {
-                let conversation_id_receiver =
-                    cmds.chat().upsert_next_conversation_id(id_like_receiver)?;
+                let conversation_id_recipient =
+                    cmds.chat().upsert_next_conversation_id(id_like_recipient)?;
                 cmds.chat().message().upsert_conversation_id(
-                    id_like_receiver,
+                    id_like_recipient,
                     id_like_sender,
-                    conversation_id_receiver,
+                    conversation_id_recipient,
                 )?;
                 let conversation_id_sender =
                     cmds.chat().upsert_next_conversation_id(id_like_sender)?;
                 cmds.chat().message().upsert_conversation_id(
                     id_like_sender,
-                    id_like_receiver,
+                    id_like_recipient,
                     conversation_id_sender,
                 )?;
 
@@ -113,13 +113,13 @@ impl WriteCommandsChat<'_> {
                 let next_id = cmds
                     .read()
                     .chat()
-                    .chat_state(id_like_receiver)?
+                    .chat_state(id_like_recipient)?
                     .next_received_like_id;
                 let updated_interaction = interaction
                     .clone()
-                    .try_into_like(id_like_sender, id_like_receiver, next_id)
+                    .try_into_like(id_like_sender, id_like_recipient, next_id)
                     .change_context(DieselDatabaseError::NotAllowed)?;
-                cmds.chat().modify_chat_state(id_like_receiver, |s| {
+                cmds.chat().modify_chat_state(id_like_recipient, |s| {
                     s.next_received_like_id = next_id.increment();
                 })?;
                 updated_interaction
@@ -130,7 +130,7 @@ impl WriteCommandsChat<'_> {
 
             let sender = cmds.chat().modify_chat_state(id_like_sender, |_| ())?;
 
-            let receiver = cmds.chat().modify_chat_state(id_like_receiver, |s| {
+            let recipient = cmds.chat().modify_chat_state(id_like_recipient, |s| {
                 if interaction.is_empty() {
                     s.new_received_likes_count = s.new_received_likes_count.increment();
                     s.received_likes_sync_version
@@ -138,7 +138,7 @@ impl WriteCommandsChat<'_> {
                 }
             })?;
 
-            Ok(SenderAndReceiverStateChanges { sender, receiver })
+            Ok(SenderAndRecipientStateChanges { sender, recipient })
         })
     }
 
@@ -148,20 +148,20 @@ impl WriteCommandsChat<'_> {
     pub async fn block_profile(
         &self,
         id_block_sender: AccountIdInternal,
-        id_block_receiver: AccountIdInternal,
+        id_block_recipient: AccountIdInternal,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             let interaction = cmds
                 .chat()
                 .interaction()
-                .get_or_create_account_interaction(id_block_sender, id_block_receiver)?;
+                .get_or_create_account_interaction(id_block_sender, id_block_recipient)?;
 
-            if interaction.is_direction_blocked(id_block_sender, id_block_receiver) {
+            if interaction.is_direction_blocked(id_block_sender, id_block_recipient) {
                 return Err(DieselDatabaseError::AlreadyDone.report());
             }
             let updated = interaction
                 .clone()
-                .add_block(id_block_sender, id_block_receiver);
+                .add_block(id_block_sender, id_block_recipient);
             cmds.chat()
                 .interaction()
                 .update_account_interaction(updated)?;
@@ -176,20 +176,20 @@ impl WriteCommandsChat<'_> {
     pub async fn delete_block(
         &self,
         id_block_sender: AccountIdInternal,
-        id_block_receiver: AccountIdInternal,
+        id_block_recipient: AccountIdInternal,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             let interaction = cmds
                 .chat()
                 .interaction()
-                .get_or_create_account_interaction(id_block_sender, id_block_receiver)?;
+                .get_or_create_account_interaction(id_block_sender, id_block_recipient)?;
 
-            if !interaction.is_direction_blocked(id_block_sender, id_block_receiver) {
+            if !interaction.is_direction_blocked(id_block_sender, id_block_recipient) {
                 return Err(DieselDatabaseError::NotAllowed.report());
             }
             let updated = interaction
                 .clone()
-                .delete_block(id_block_sender, id_block_receiver);
+                .delete_block(id_block_sender, id_block_recipient);
             cmds.chat()
                 .interaction()
                 .update_account_interaction(updated)?;
@@ -198,9 +198,9 @@ impl WriteCommandsChat<'_> {
         })
     }
 
-    pub async fn add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
+    pub async fn add_recipient_acknowledgement_and_delete_if_also_sender_has_acknowledged(
         &self,
-        message_receiver: AccountIdInternal,
+        message_recipient: AccountIdInternal,
         messages: Vec<PendingMessageId>,
         delivery_failed: bool,
     ) -> Result<(), DataError> {
@@ -210,9 +210,11 @@ impl WriteCommandsChat<'_> {
             let sender = self.to_account_id_internal(m.sender).await?;
             let msg_info = self
                 .db_read(move |mut cmds| {
-                    cmds.chat()
-                        .message()
-                        .check_pending_message_info(sender, message_receiver, m.id)
+                    cmds.chat().message().check_pending_message_info(
+                        sender,
+                        message_recipient,
+                        m.id,
+                    )
                 })
                 .await?;
             if let Some(msg_info) = msg_info {
@@ -230,15 +232,15 @@ impl WriteCommandsChat<'_> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .message()
-                .add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
-                    message_receiver,
+                .add_recipient_acknowledgement_and_delete_if_also_sender_has_acknowledged(
+                    message_recipient,
                     &converted,
                 )?;
 
             for msg in &converted {
                 cmds.chat().message().insert_message_delivery_info(
                     msg.sender,
-                    message_receiver,
+                    message_recipient,
                     msg.message_id,
                     delivery_type,
                 )?;
@@ -262,7 +264,7 @@ impl WriteCommandsChat<'_> {
 
     pub async fn mark_message_as_seen(
         &self,
-        message_receiver: AccountIdInternal,
+        message_recipient: AccountIdInternal,
         message: SeenMessage,
     ) -> Result<(), DataError> {
         let seen_state_enabled = self
@@ -282,7 +284,7 @@ impl WriteCommandsChat<'_> {
                 .read()
                 .chat()
                 .interaction()
-                .account_interaction(message_receiver, sender)?
+                .account_interaction(message_recipient, sender)?
                 .map(|v| v.next_message_number().mn - 1)
             else {
                 return Ok(false);
@@ -297,7 +299,7 @@ impl WriteCommandsChat<'_> {
                 .read()
                 .chat()
                 .message()
-                .get_latest_seen_message_number(message_receiver, sender)?
+                .get_latest_seen_message_number(message_recipient, sender)?
                 .map(|v| v.mn);
 
             if let Some(message_number_min) = message_number_min
@@ -308,7 +310,7 @@ impl WriteCommandsChat<'_> {
             }
 
             cmds.chat().message().update_latest_seen_message(
-                message_receiver,
+                message_recipient,
                 sender,
                 message.mn,
             )?;
@@ -371,16 +373,16 @@ impl WriteCommandsChat<'_> {
         Ok(())
     }
 
-    pub async fn add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(
+    pub async fn add_sender_acknowledgement_and_delete_if_also_recipient_has_acknowledged(
         &self,
-        message_receiver: AccountIdInternal,
+        message_recipient: AccountIdInternal,
         messages: Vec<MessageId>,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .message()
-                .add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(
-                    message_receiver,
+                .add_sender_acknowledgement_and_delete_if_also_recipient_has_acknowledged(
+                    message_recipient,
                     messages,
                 )
         })?;
@@ -388,19 +390,19 @@ impl WriteCommandsChat<'_> {
         Ok(())
     }
 
-    /// Insert a new pending message if sender and receiver are a match and
+    /// Insert a new pending message if sender and recipient are a match and
     /// one or two way block exists.
     ///
-    /// Receiver public key check is for preventing client from
+    /// Recipient public key check is for preventing client from
     /// sending messages encrypted with outdated public key.
     #[allow(clippy::too_many_arguments)]
     pub async fn insert_pending_message_if_match_and_not_blocked(
         &self,
         sender: AccountIdInternal,
-        receiver: AccountIdInternal,
+        recipient: AccountIdInternal,
         message: Vec<u8>,
         sender_public_key_from_client: PublicKeyId,
-        receiver_public_key_from_client: PublicKeyId,
+        recipient_public_key_from_client: PublicKeyId,
         message_id_value: MessageId,
         keys: Arc<ParsedKeys>,
     ) -> Result<(SendMessageResult, Option<PushNotificationAllowed>), DataError> {
@@ -418,13 +420,13 @@ impl WriteCommandsChat<'_> {
                 return Ok((SendMessageResult::sender_public_key_outdated(), None));
             }
 
-            let receiver_current_key = cmds
+            let recipient_current_key = cmds
                 .read()
                 .chat()
                 .public_key()
-                .latest_public_key_id(receiver)?;
-            if Some(receiver_public_key_from_client) != receiver_current_key {
-                return Ok((SendMessageResult::receiver_public_key_outdated(), None));
+                .latest_public_key_id(recipient)?;
+            if Some(recipient_public_key_from_client) != recipient_current_key {
+                return Ok((SendMessageResult::recipient_public_key_outdated(), None));
             }
 
             let sender_pending_delivery_info_count = cmds
@@ -440,15 +442,15 @@ impl WriteCommandsChat<'_> {
                 ));
             }
 
-            let receiver_acknowledgements_missing = cmds
+            let recipient_acknowledgements_missing = cmds
                 .read()
                 .chat()
                 .message()
-                .receiver_acknowledgements_missing_count_for_one_conversation(sender, receiver)?;
+                .recipient_acknowledgements_missing_count_for_one_conversation(sender, recipient)?;
 
-            if receiver_acknowledgements_missing >= conversation_pending_messages_max_count {
+            if recipient_acknowledgements_missing >= conversation_pending_messages_max_count {
                 return Ok((
-                    SendMessageResult::too_many_receiver_acknowledgements_missing(),
+                    SendMessageResult::too_many_recipient_acknowledgements_missing(),
                     None,
                 ));
             }
@@ -457,7 +459,7 @@ impl WriteCommandsChat<'_> {
                 .read()
                 .chat()
                 .message()
-                .sender_acknowledgements_missing_count_for_one_conversation(sender, receiver)?;
+                .sender_acknowledgements_missing_count_for_one_conversation(sender, recipient)?;
 
             if sender_acknowledgements_missing >= conversation_pending_messages_max_count {
                 return Ok((
@@ -471,9 +473,9 @@ impl WriteCommandsChat<'_> {
                 .message()
                 .insert_pending_message_if_match_and_not_blocked(
                     sender,
-                    receiver,
+                    recipient,
                     sender_public_key_from_client,
-                    receiver_public_key_from_client,
+                    recipient_public_key_from_client,
                     message,
                     message_id_value,
                     keys,
@@ -481,9 +483,9 @@ impl WriteCommandsChat<'_> {
 
             let message_values = match message_values {
                 Ok(v) => v,
-                Err(ReceiverBlockedSender) => {
+                Err(RecipientBlockedSender) => {
                     return Ok((
-                        SendMessageResult::receiver_blocked_sender_or_receiver_not_found(),
+                        SendMessageResult::recipient_blocked_sender_or_recipient_not_found(),
                         None,
                     ));
                 }
@@ -491,7 +493,7 @@ impl WriteCommandsChat<'_> {
 
             let remaining_conversation_messages = {
                 let missing_acknowledgements = i64::max(
-                    receiver_acknowledgements_missing,
+                    recipient_acknowledgements_missing,
                     sender_acknowledgements_missing,
                 );
                 let remaining = conversation_pending_messages_max_count
@@ -505,7 +507,7 @@ impl WriteCommandsChat<'_> {
                 }
             };
 
-            let push_notification_allowd = if receiver_acknowledgements_missing <= 1 {
+            let push_notification_allowd = if recipient_acknowledgements_missing <= 1 {
                 // Update new message notification twice so that notification
                 // displays singular or plural text correctly.
                 Some(PushNotificationAllowed)
@@ -599,20 +601,20 @@ impl WriteCommandsChat<'_> {
 
     pub async fn mark_received_likes_viewed(
         &self,
-        like_receiver: AccountIdInternal,
+        like_recipient: AccountIdInternal,
         likes: Vec<ReceivedLikeId>,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .interaction()
-                .mark_received_likes_viewed(like_receiver, likes)?;
+                .mark_received_likes_viewed(like_recipient, likes)?;
             Ok(())
         })
     }
 
     /// Mark video call URL as created for the caller account.
     ///
-    /// This determines whether the caller is the sender or receiver in the
+    /// This determines whether the caller is the sender or recipient in the
     /// interaction and sets the appropriate flag.
     pub async fn mark_video_call_url_created(
         &self,
@@ -627,11 +629,11 @@ impl WriteCommandsChat<'_> {
                 .account_interaction(caller, other_user)?
                 .ok_or(DieselDatabaseError::NotAllowed)?;
 
-            // Determine if caller is like sender or receiver and set appropriate flag
+            // Determine if caller is like sender or recipient and set appropriate flag
             if interaction.account_id_sender == Some(caller.into_db_id()) {
                 interaction.video_call_url_created_sender = true;
             } else {
-                interaction.video_call_url_created_receiver = true;
+                interaction.video_call_url_created_recipient = true;
             }
 
             cmds.chat()
@@ -643,12 +645,12 @@ impl WriteCommandsChat<'_> {
     }
 }
 
-pub struct SenderAndReceiverStateChanges {
+pub struct SenderAndRecipientStateChanges {
     pub sender: ChatStateChanges,
-    pub receiver: ChatStateChanges,
+    pub recipient: ChatStateChanges,
 }
 
-/// Message push notification is allowed to be sent if receiver side
+/// Message push notification is allowed to be sent if recipient side
 /// of acknowledgement queue is empty when sending a new message.
 /// This avoids sending multiple push notifications if client is running
 /// in background and can receive push notifications.

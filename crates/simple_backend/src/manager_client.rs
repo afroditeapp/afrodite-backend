@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use error_stack::Result;
 use manager_api::{
-    ClientConfig, ClientError, ManagerClient, ManagerClientWithRequestReceiver,
+    ClientConfig, ClientError, ManagerClient, ManagerClientWithRequestRecipient,
     ServerEventListerner, TlsConfig, backup::BackupSourceClient,
 };
 use manager_model::{ManagerInstanceName, ServerEventType};
@@ -70,7 +70,7 @@ impl ManagerApiClient {
         })
     }
 
-    pub async fn new_request(&self) -> Result<ManagerClientWithRequestReceiver, ClientError> {
+    pub async fn new_request(&self) -> Result<ManagerClientWithRequestRecipient, ClientError> {
         if let Some((c, name, _)) = self.manager.clone() {
             let c = ManagerClient::connect(c).await?.request_to(name);
             Ok(c)
@@ -82,7 +82,7 @@ impl ManagerApiClient {
     pub async fn new_request_to_instance(
         &self,
         name: ManagerInstanceName,
-    ) -> Result<ManagerClientWithRequestReceiver, ClientError> {
+    ) -> Result<ManagerClientWithRequestRecipient, ClientError> {
         if let Some((c, _, _)) = self.manager.clone() {
             let c = ManagerClient::connect(c).await?.request_to(name);
             Ok(c)

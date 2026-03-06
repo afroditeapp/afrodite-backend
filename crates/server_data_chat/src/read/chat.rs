@@ -181,7 +181,7 @@ impl ReadCommandsChat<'_> {
                 if interaction.account_id_sender == Some(caller.into_db_id()) {
                     Ok(interaction.video_call_url_created_sender)
                 } else {
-                    Ok(interaction.video_call_url_created_receiver)
+                    Ok(interaction.video_call_url_created_recipient)
                 }
             }
             None => Ok(false),

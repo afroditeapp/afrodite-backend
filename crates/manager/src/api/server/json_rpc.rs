@@ -73,14 +73,14 @@ pub async fn handle_rpc_request(
     log_address: Option<String>,
     state: &S,
 ) -> Result<JsonRpcResponse, ServerError> {
-    if state.config().manager_name() == request.receiver {
+    if state.config().manager_name() == request.recipient {
         if let Some(address) = log_address {
             info!("Running RPC {:?} from {}", &request.request, address);
         }
         handle_request_type(request.request, state)
             .await
             .change_context(ServerError::JsonRpcFailed)
-    } else if let Some(m) = state.config().find_remote_manager(&request.receiver) {
+    } else if let Some(m) = state.config().find_remote_manager(&request.recipient) {
         if let Some(address) = log_address {
             info!("Forwarding RPC {:?} from {}", &request.request, address);
         }
@@ -97,7 +97,7 @@ pub async fn handle_rpc_request(
             .await
             .change_context(ServerError::Client)?;
         Ok(response)
-    } else if state.config().json_rpc_link().accepted_login_name() == Some(&request.receiver) {
+    } else if state.config().json_rpc_link().accepted_login_name() == Some(&request.recipient) {
         if let Some(address) = log_address {
             info!("Forwarding RPC {:?} from {}", &request.request, address);
         }
@@ -107,7 +107,7 @@ pub async fn handle_rpc_request(
             .await
             .change_context(ServerError::JsonRpcLink)
     } else {
-        Ok(JsonRpcResponse::request_receiver_not_found())
+        Ok(JsonRpcResponse::request_recipient_not_found())
     }
 }
 

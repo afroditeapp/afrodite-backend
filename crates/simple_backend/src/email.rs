@@ -67,7 +67,7 @@ impl EmailManagerQuitHandle {
 
 #[derive(Debug)]
 pub struct SendEmail<R, M> {
-    pub receiver: R,
+    pub recipient: R,
     pub message: M,
     pub result_sender: Option<oneshot::Sender<Result<(), EmailError>>>,
 }
@@ -79,9 +79,9 @@ pub struct EmailSender<R, M> {
 }
 
 impl<R, M> EmailSender<R, M> {
-    pub fn send(&self, receiver: R, message: M) {
+    pub fn send(&self, recipient: R, message: M) {
         let email_send_cmd = SendEmail {
-            receiver,
+            recipient,
             message,
             result_sender: None,
         };
@@ -96,10 +96,10 @@ impl<R, M> EmailSender<R, M> {
         }
     }
 
-    pub async fn send_high_priority(&self, receiver: R, message: M) -> Result<(), EmailError> {
+    pub async fn send_high_priority(&self, recipient: R, message: M) -> Result<(), EmailError> {
         let (result_sender, result_receiver) = oneshot::channel();
         let email_send_cmd = SendEmail {
-            receiver,
+            recipient,
             message,
             result_sender: Some(result_sender),
         };
@@ -135,16 +135,16 @@ pub struct EmailData {
 
 pub trait EmailDataProvider<R, M> {
     /// If `Ok(None)` is returned the email sending is disabled for the
-    /// provided `receiver`.
+    /// provided `recipient`.
     fn get_email_data(
         &self,
-        receiver: R,
+        recipient: R,
         message: M,
     ) -> impl Future<Output = Result<Option<EmailData>, EmailError>> + Send;
 
     fn mark_as_sent(
         &self,
-        receiver: R,
+        recipient: R,
         message: M,
     ) -> impl Future<Output = Result<(), EmailError>> + Send;
 }
@@ -349,14 +349,14 @@ impl<
 
         let info = self
             .state
-            .get_email_data(send_cmd.receiver.clone(), send_cmd.message.clone())
+            .get_email_data(send_cmd.recipient.clone(), send_cmd.message.clone())
             .await
             .change_context(EmailError::GettingEmailDataFailed)?;
 
         let info = if let Some(info) = info {
             info
         } else {
-            // Email disabled for the email receiver
+            // Email disabled for the email recipient
             return Ok(());
         };
 
@@ -387,7 +387,7 @@ impl<
         match sending_logic.send_email(message, email_sender).await {
             Ok(()) => {
                 self.state
-                    .mark_as_sent(send_cmd.receiver, send_cmd.message)
+                    .mark_as_sent(send_cmd.recipient, send_cmd.message)
                     .await
             }
             e => e,

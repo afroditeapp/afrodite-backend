@@ -264,18 +264,18 @@ pub trait ConnectionUtilsWrite: tokio::io::AsyncWrite + Unpin {
 
 impl<T: tokio::io::AsyncWrite + Unpin> ConnectionUtilsWrite for T {}
 
-pub struct ManagerClientWithRequestReceiver {
+pub struct ManagerClientWithRequestRecipient {
     pub(crate) client: ManagerClient,
-    pub(crate) request_receiver: ManagerInstanceName,
+    pub(crate) request_recipient: ManagerInstanceName,
 }
 
 pub trait RequestSenderCmds: Sized {
-    fn request_receiver_name(&self) -> ManagerInstanceName;
+    fn request_recipient_name(&self) -> ManagerInstanceName;
     async fn send_request(self, request: JsonRpcRequest) -> Result<JsonRpcResponse, ClientError>;
 
     async fn get_available_instances(self) -> Result<ManagerInstanceNameList, ClientError> {
         let request = JsonRpcRequest::new(
-            self.request_receiver_name(),
+            self.request_recipient_name(),
             JsonRpcRequestType::GetManagerInstanceNames,
         );
         let response = self.send_request(request).await?;
@@ -291,7 +291,7 @@ pub trait RequestSenderCmds: Sized {
         key: ManagerInstanceName,
     ) -> Result<SecureStorageEncryptionKey, ClientError> {
         let request = JsonRpcRequest::new(
-            self.request_receiver_name(),
+            self.request_recipient_name(),
             JsonRpcRequestType::GetSecureStorageEncryptionKey(key),
         );
         let response = self.send_request(request).await?;
@@ -304,7 +304,7 @@ pub trait RequestSenderCmds: Sized {
 
     async fn get_system_info(self) -> Result<SystemInfo, ClientError> {
         let request = JsonRpcRequest::new(
-            self.request_receiver_name(),
+            self.request_recipient_name(),
             JsonRpcRequestType::GetSystemInfo,
         );
         let response = self.send_request(request).await?;
@@ -317,7 +317,7 @@ pub trait RequestSenderCmds: Sized {
 
     async fn get_software_update_status(self) -> Result<SoftwareUpdateStatus, ClientError> {
         let request = JsonRpcRequest::new(
-            self.request_receiver_name(),
+            self.request_recipient_name(),
             JsonRpcRequestType::GetSoftwareUpdateStatus,
         );
         let response = self.send_request(request).await?;
@@ -333,7 +333,7 @@ pub trait RequestSenderCmds: Sized {
         task: SoftwareUpdateTaskType,
     ) -> Result<(), ClientError> {
         let request = JsonRpcRequest::new(
-            self.request_receiver_name(),
+            self.request_recipient_name(),
             JsonRpcRequestType::TriggerSoftwareUpdateTask(task),
         );
         self.send_request(request).await?.require_successful()
@@ -341,7 +341,7 @@ pub trait RequestSenderCmds: Sized {
 
     async fn trigger_manual_task(self, task: ManualTaskType) -> Result<(), ClientError> {
         let request = JsonRpcRequest::new(
-            self.request_receiver_name(),
+            self.request_recipient_name(),
             JsonRpcRequestType::TriggerManualTask(task),
         );
         self.send_request(request).await?.require_successful()
@@ -349,7 +349,7 @@ pub trait RequestSenderCmds: Sized {
 
     async fn get_scheduled_tasks_status(self) -> Result<ScheduledTaskStatus, ClientError> {
         let request = JsonRpcRequest::new(
-            self.request_receiver_name(),
+            self.request_recipient_name(),
             JsonRpcRequestType::GetScheduledTasksStatus,
         );
         let response = self.send_request(request).await?;
@@ -366,7 +366,7 @@ pub trait RequestSenderCmds: Sized {
         notify_backend: NotifyBackend,
     ) -> Result<(), ClientError> {
         let request = JsonRpcRequest::new(
-            self.request_receiver_name(),
+            self.request_recipient_name(),
             JsonRpcRequestType::ScheduleTask(task, notify_backend),
         );
         self.send_request(request).await?.require_successful()
@@ -374,7 +374,7 @@ pub trait RequestSenderCmds: Sized {
 
     async fn unschedule_task(self, task: ScheduledTaskType) -> Result<(), ClientError> {
         let request = JsonRpcRequest::new(
-            self.request_receiver_name(),
+            self.request_recipient_name(),
             JsonRpcRequestType::UnscheduleTask(task),
         );
         self.send_request(request).await?.require_successful()
@@ -395,9 +395,9 @@ impl RpcResponseExtensions for JsonRpcResponse {
     }
 }
 
-impl RequestSenderCmds for ManagerClientWithRequestReceiver {
-    fn request_receiver_name(&self) -> ManagerInstanceName {
-        self.request_receiver.clone()
+impl RequestSenderCmds for ManagerClientWithRequestRecipient {
+    fn request_recipient_name(&self) -> ManagerInstanceName {
+        self.request_recipient.clone()
     }
     async fn send_request(self, request: JsonRpcRequest) -> Result<JsonRpcResponse, ClientError> {
         self.client.send_request(request).await

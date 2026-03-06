@@ -263,22 +263,22 @@ pub struct AccountInteractionInternal {
     pub id: i64,
     pub state_number: AccountInteractionState,
     pub account_id_sender: Option<AccountIdDb>,
-    pub account_id_receiver: Option<AccountIdDb>,
+    pub account_id_recipient: Option<AccountIdDb>,
     pub account_id_block_sender: Option<AccountIdDb>,
-    pub account_id_block_receiver: Option<AccountIdDb>,
+    pub account_id_block_recipient: Option<AccountIdDb>,
     pub two_way_block: bool,
     /// Message counter for [Self::account_id_sender] which increments for each
     /// message. The counter does not reset. Zero means that no messages are
     /// sent.
     pub message_counter_sender: i64,
-    /// Message counter for [Self::account_id_receiver] which increments for each
+    /// Message counter for [Self::account_id_recipient] which increments for each
     /// message. The counter does not reset. Zero means that no messages are
     /// sent.
-    pub message_counter_receiver: i64,
+    pub message_counter_recipient: i64,
     /// Video call URL created flag for [Self::account_id_sender]
     pub video_call_url_created_sender: bool,
-    /// Video call URL created flag for [Self::account_id_receiver]
-    pub video_call_url_created_receiver: bool,
+    /// Video call URL created flag for [Self::account_id_recipient]
+    pub video_call_url_created_recipient: bool,
     pub received_like_id: Option<ReceivedLikeId>,
     received_like_viewed: bool,
     received_like_email_notification_sent: bool,
@@ -291,7 +291,7 @@ impl AccountInteractionInternal {
     pub fn try_into_like(
         self,
         id_like_sender: AccountIdInternal,
-        id_like_receiver: AccountIdInternal,
+        id_like_recipient: AccountIdInternal,
         received_like_id: ReceivedLikeId,
     ) -> Result<Self, AccountInteractionStateError> {
         let target = AccountInteractionState::Like;
@@ -300,7 +300,7 @@ impl AccountInteractionInternal {
             AccountInteractionState::Empty => Ok(Self {
                 state_number: target,
                 account_id_sender: Some(id_like_sender.into_db_id()),
-                account_id_receiver: Some(id_like_receiver.into_db_id()),
+                account_id_recipient: Some(id_like_recipient.into_db_id()),
                 received_like_id: Some(received_like_id),
                 received_like_unix_time: Some(UnixTime::current_time()),
                 ..self
@@ -334,21 +334,21 @@ impl AccountInteractionInternal {
     pub fn add_block(
         self,
         id_block_sender: AccountIdInternal,
-        id_block_receiver: AccountIdInternal,
+        id_block_recipient: AccountIdInternal,
     ) -> Self {
         if self.account_id_block_sender == Some(id_block_sender.into_db_id())
-            && self.account_id_block_receiver == Some(id_block_receiver.into_db_id())
+            && self.account_id_block_recipient == Some(id_block_recipient.into_db_id())
         {
             // Already blocked
             self
-        } else if self.account_id_block_sender == Some(id_block_receiver.into_db_id())
-            && self.account_id_block_receiver == Some(id_block_sender.into_db_id())
+        } else if self.account_id_block_sender == Some(id_block_recipient.into_db_id())
+            && self.account_id_block_recipient == Some(id_block_sender.into_db_id())
             && self.two_way_block
         {
             // Already blocked
             self
-        } else if self.account_id_block_sender == Some(id_block_receiver.into_db_id())
-            && self.account_id_block_receiver == Some(id_block_sender.into_db_id())
+        } else if self.account_id_block_sender == Some(id_block_recipient.into_db_id())
+            && self.account_id_block_recipient == Some(id_block_sender.into_db_id())
         {
             Self {
                 two_way_block: true,
@@ -357,7 +357,7 @@ impl AccountInteractionInternal {
         } else {
             Self {
                 account_id_block_sender: Some(id_block_sender.into_db_id()),
-                account_id_block_receiver: Some(id_block_receiver.into_db_id()),
+                account_id_block_recipient: Some(id_block_recipient.into_db_id()),
                 ..self
             }
         }
@@ -366,28 +366,28 @@ impl AccountInteractionInternal {
     pub fn delete_block(
         self,
         id_block_sender: AccountIdInternal,
-        id_block_receiver: AccountIdInternal,
+        id_block_recipient: AccountIdInternal,
     ) -> Self {
         if self.account_id_block_sender == Some(id_block_sender.into_db_id())
-            && self.account_id_block_receiver == Some(id_block_receiver.into_db_id())
+            && self.account_id_block_recipient == Some(id_block_recipient.into_db_id())
         {
             // Block detected
             if self.two_way_block {
                 Self {
-                    account_id_block_sender: Some(id_block_receiver.into_db_id()),
-                    account_id_block_receiver: Some(id_block_sender.into_db_id()),
+                    account_id_block_sender: Some(id_block_recipient.into_db_id()),
+                    account_id_block_recipient: Some(id_block_sender.into_db_id()),
                     two_way_block: false,
                     ..self
                 }
             } else {
                 Self {
                     account_id_block_sender: None,
-                    account_id_block_receiver: None,
+                    account_id_block_recipient: None,
                     ..self
                 }
             }
-        } else if self.account_id_block_sender == Some(id_block_receiver.into_db_id())
-            && self.account_id_block_receiver == Some(id_block_sender.into_db_id())
+        } else if self.account_id_block_sender == Some(id_block_recipient.into_db_id())
+            && self.account_id_block_recipient == Some(id_block_sender.into_db_id())
             && self.two_way_block
         {
             // Block detected
@@ -422,15 +422,15 @@ impl AccountInteractionInternal {
     pub fn is_direction_blocked(
         &self,
         id_block_sender: impl Into<AccountIdDb> + Copy,
-        id_block_receiver: impl Into<AccountIdDb> + Copy,
+        id_block_recipient: impl Into<AccountIdDb> + Copy,
     ) -> bool {
         if self.account_id_block_sender == Some(id_block_sender.into())
-            && self.account_id_block_receiver == Some(id_block_receiver.into())
+            && self.account_id_block_recipient == Some(id_block_recipient.into())
         {
             // Already blocked
             true
-        } else if self.account_id_block_sender == Some(id_block_receiver.into())
-            && self.account_id_block_receiver == Some(id_block_sender.into())
+        } else if self.account_id_block_sender == Some(id_block_recipient.into())
+            && self.account_id_block_recipient == Some(id_block_sender.into())
             && self.two_way_block
         {
             // Already blocked
@@ -443,21 +443,21 @@ impl AccountInteractionInternal {
     pub fn is_direction_liked(
         &self,
         id_like_sender: impl Into<AccountIdDb> + Copy,
-        id_like_receiver: impl Into<AccountIdDb> + Copy,
+        id_like_recipient: impl Into<AccountIdDb> + Copy,
     ) -> bool {
         if self.is_match() {
             true
         } else {
             self.is_like()
                 && self.account_id_sender == Some(id_like_sender.into())
-                && self.account_id_receiver == Some(id_like_receiver.into())
+                && self.account_id_recipient == Some(id_like_recipient.into())
         }
     }
 
     /// Total sent messages for [Self::message_counter_sender] and
-    /// [Self::message_counter_receiver].
+    /// [Self::message_counter_recipient].
     pub fn message_counter(&self) -> i64 {
-        self.message_counter_receiver
+        self.message_counter_recipient
             .saturating_add(self.message_counter_sender)
     }
 
@@ -473,8 +473,8 @@ impl AccountInteractionInternal {
         let account = account.into();
         if self.account_id_sender == Some(account) {
             self.message_counter_sender
-        } else if self.account_id_receiver == Some(account) {
-            self.message_counter_receiver
+        } else if self.account_id_recipient == Some(account) {
+            self.message_counter_recipient
         } else {
             0
         }
@@ -484,8 +484,8 @@ impl AccountInteractionInternal {
         let account = account.into();
         if self.account_id_sender == Some(account) {
             self.video_call_url_created_sender
-        } else if self.account_id_receiver == Some(account) {
-            self.video_call_url_created_receiver
+        } else if self.account_id_recipient == Some(account) {
+            self.video_call_url_created_recipient
         } else {
             false
         }

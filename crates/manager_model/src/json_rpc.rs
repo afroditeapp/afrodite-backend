@@ -25,14 +25,14 @@ pub enum ManagerProtocolMode {
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct JsonRpcRequest {
     /// If instance name is not found, then
-    /// [JsonRpcResponseType::RequestReceiverNotFound]
-    pub receiver: ManagerInstanceName,
+    /// [JsonRpcResponseType::RequestRecipientNotFound]
+    pub recipient: ManagerInstanceName,
     pub request: JsonRpcRequestType,
 }
 
 impl JsonRpcRequest {
-    pub fn new(receiver: ManagerInstanceName, request: JsonRpcRequestType) -> Self {
-        Self { receiver, request }
+    pub fn new(recipient: ManagerInstanceName, request: JsonRpcRequestType) -> Self {
+        Self { recipient, request }
     }
 }
 
@@ -70,9 +70,9 @@ impl JsonRpcResponse {
         }
     }
 
-    pub fn request_receiver_not_found() -> Self {
+    pub fn request_recipient_not_found() -> Self {
         Self {
-            response: JsonRpcResponseType::RequestReceiverNotFound,
+            response: JsonRpcResponseType::RequestRecipientNotFound,
         }
     }
 
@@ -130,7 +130,7 @@ pub enum JsonRpcResponseType {
     SoftwareUpdateStatus(SoftwareUpdateStatus),
     ScheduledTasksStatus(ScheduledTaskStatus),
     Successful,
-    RequestReceiverNotFound,
+    RequestRecipientNotFound,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, ToSchema)]

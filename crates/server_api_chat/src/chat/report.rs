@@ -57,7 +57,7 @@ pub async fn post_chat_message_report(
         .await?;
     let data = SignedMessageData::parse(&data).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    if data.receiver != update.target && data.sender != update.target {
+    if data.recipient != update.target && data.sender != update.target {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
@@ -70,7 +70,7 @@ pub async fn post_chat_message_report(
     let target = state.get_internal_id(update.target).await?;
     let report = NewChatMessageReportInternal {
         message_sender_account_id_uuid: data.sender,
-        message_receiver_account_id_uuid: data.receiver,
+        message_recipient_account_id_uuid: data.recipient,
         message_number: data.m,
         message_unix_time: data.unix_time,
         message_symmetric_key: decryption_key,

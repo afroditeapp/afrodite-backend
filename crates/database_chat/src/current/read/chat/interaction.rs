@@ -51,7 +51,7 @@ impl CurrentReadChatInteraction<'_> {
             .filter(
                 account_id_sender
                     .eq(account.as_db_id())
-                    .or(account_id_receiver.eq(account.as_db_id())),
+                    .or(account_id_recipient.eq(account.as_db_id())),
             )
             .select(AccountInteractionInternal::as_select())
             .load(self.conn())
@@ -68,11 +68,11 @@ impl CurrentReadChatInteraction<'_> {
 
         let mut first_list: Vec<AccountId> = account_interaction
             .inner_join(
-                account_id::table.on(account_id_block_receiver
+                account_id::table.on(account_id_block_recipient
                     .assume_not_null()
                     .eq(account_id::id)),
             )
-            .filter(account_id_block_receiver.is_not_null())
+            .filter(account_id_block_recipient.is_not_null())
             .filter(account_id_block_sender.eq(id_sender.as_db_id()))
             .select(account_id::uuid)
             .load(self.conn())
@@ -83,7 +83,7 @@ impl CurrentReadChatInteraction<'_> {
                 account_id::table.on(account_id_block_sender.assume_not_null().eq(account_id::id)),
             )
             .filter(account_id_block_sender.is_not_null())
-            .filter(account_id_block_receiver.eq(id_sender.as_db_id()))
+            .filter(account_id_block_recipient.eq(id_sender.as_db_id()))
             .filter(two_way_block.eq(true))
             .select(account_id::uuid)
             .load(self.conn())
@@ -98,7 +98,7 @@ impl CurrentReadChatInteraction<'_> {
     /// from `received_like_id_value`.
     pub fn paged_received_likes_from_received_like_id(
         &mut self,
-        id_receiver: AccountIdInternal,
+        id_recipient: AccountIdInternal,
         received_like_id_value: ReceivedLikeId,
         page: i64,
     ) -> Result<Vec<(AccountId, ReceivedLikeId, bool)>, DieselDatabaseError> {
@@ -111,7 +111,7 @@ impl CurrentReadChatInteraction<'_> {
                 account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)),
             )
             .filter(account_id_sender.is_not_null())
-            .filter(account_id_receiver.eq(id_receiver.as_db_id()))
+            .filter(account_id_recipient.eq(id_recipient.as_db_id()))
             .filter(state_number.eq(AccountInteractionState::Like))
             .filter(received_like_id.is_not_null())
             .filter(received_like_id.le(received_like_id_value))
@@ -144,8 +144,8 @@ impl CurrentReadChatInteraction<'_> {
                 account_id::table.on((account_id_sender
                     .assume_not_null()
                     .eq(account_id::id)
-                    .and(account_id_receiver.eq(id_value.as_db_id())))
-                .or(account_id_receiver
+                    .and(account_id_recipient.eq(id_value.as_db_id())))
+                .or(account_id_recipient
                     .assume_not_null()
                     .eq(account_id::id)
                     .and(account_id_sender.eq(id_value.as_db_id())))),
@@ -153,8 +153,8 @@ impl CurrentReadChatInteraction<'_> {
             .filter(
                 (account_id_sender
                     .is_not_null()
-                    .and(account_id_receiver.eq(id_value.as_db_id())))
-                .or(account_id_receiver
+                    .and(account_id_recipient.eq(id_value.as_db_id())))
+                .or(account_id_recipient
                     .is_not_null()
                     .and(account_id_sender.eq(id_value.as_db_id()))),
             )
@@ -173,12 +173,12 @@ impl CurrentReadChatInteraction<'_> {
 
     pub fn unviewed_received_likes_without_sent_email_notification(
         &mut self,
-        id_receiver: AccountIdInternal,
+        id_recipient: AccountIdInternal,
     ) -> Result<Vec<(ReceivedLikeId, UnixTime)>, DieselDatabaseError> {
         use crate::schema::account_interaction::dsl::*;
 
         let like_data = account_interaction
-            .filter(account_id_receiver.eq(id_receiver.as_db_id()))
+            .filter(account_id_recipient.eq(id_recipient.as_db_id()))
             .filter(received_like_viewed.eq(false))
             .filter(received_like_email_notification_sent.eq(false))
             .filter(received_like_id.is_not_null())
@@ -188,7 +188,7 @@ impl CurrentReadChatInteraction<'_> {
                 received_like_unix_time.assume_not_null(),
             ))
             .load(self.conn())
-            .into_db_error(id_receiver)?;
+            .into_db_error(id_recipient)?;
 
         Ok(like_data)
     }

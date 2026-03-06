@@ -42,14 +42,14 @@ impl WriteCommandsChatNotification<'_> {
         })
     }
 
-    pub async fn mark_receiver_push_notification_sent(
+    pub async fn mark_recipient_push_notification_sent(
         &self,
         messages: Vec<PendingMessageDbId>,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .message()
-                .mark_receiver_push_notification_sent(messages)
+                .mark_recipient_push_notification_sent(messages)
         })
     }
 
@@ -66,13 +66,13 @@ impl WriteCommandsChatNotification<'_> {
 
     pub async fn mark_like_email_notification_sent(
         &self,
-        id_receiver: AccountIdInternal,
+        id_recipient: AccountIdInternal,
         likes: Vec<ReceivedLikeId>,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .interaction()
-                .mark_like_email_notification_sent(id_receiver, likes)
+                .mark_like_email_notification_sent(id_recipient, likes)
         })
     }
 }

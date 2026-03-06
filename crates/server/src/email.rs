@@ -24,14 +24,14 @@ impl ServerEmailDataProvider {
 impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProvider {
     async fn get_email_data(
         &self,
-        receiver: AccountIdInternal,
+        recipient: AccountIdInternal,
         message: EmailMessages,
     ) -> error_stack::Result<Option<EmailData>, simple_backend::email::EmailError> {
         let data = self
             .state
             .read()
             .account()
-            .email_address_state(receiver)
+            .email_address_state(recipient)
             .await
             .map_err(|e| e.into_report())
             .change_context(EmailError::GettingEmailDataFailed)?;
@@ -56,7 +56,7 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
                     db_write_raw!(self.state, move |cmds| {
                         cmds.account()
                             .update_syncable_account_data(
-                                receiver,
+                                recipient,
                                 None,
                                 |_, _, _, email_verified| {
                                     *email_verified = true;
@@ -66,7 +66,7 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
                             .await?;
                         cmds.events()
                             .send_connected_event(
-                                receiver,
+                                recipient,
                                 EventToClientInternal::AccountStateChanged,
                             )
                             .await?;
@@ -77,7 +77,7 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
                     .change_context(EmailError::GettingEmailDataFailed)?;
                 }
 
-                self.mark_as_sent(receiver, message).await?;
+                self.mark_as_sent(recipient, message).await?;
 
                 return Ok(None);
             }
@@ -94,7 +94,7 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
             .read()
             .common()
             .client_config()
-            .client_language(receiver)
+            .client_language(recipient)
             .await
             .ok()
             .flatten();
@@ -103,7 +103,9 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
 
         let content = match message {
             EmailMessages::EmailVerification => {
-                let token = self.generate_token_for_email_verification(receiver).await?;
+                let token = self
+                    .generate_token_for_email_verification(recipient)
+                    .await?;
                 getter.email_verification(&token)
             }
             EmailMessages::NewMessage => getter.new_message(),
@@ -119,13 +121,13 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
             }
             EmailMessages::EmailChangeVerification => {
                 let token = self
-                    .get_token_for_email_change_verification(receiver)
+                    .get_token_for_email_change_verification(recipient)
                     .await?;
                 getter.email_change_verification(&token)
             }
             EmailMessages::EmailChangeNotification => getter.email_change_notification(),
             EmailMessages::EmailLoginToken => {
-                let token = self.get_token_for_email_login(receiver).await?;
+                let token = self.get_token_for_email_login(recipient).await?;
                 getter.email_login(&token)
             }
         }
@@ -143,13 +145,13 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
 
     async fn mark_as_sent(
         &self,
-        receiver: AccountIdInternal,
+        recipient: AccountIdInternal,
         message: EmailMessages,
     ) -> error_stack::Result<(), simple_backend::email::EmailError> {
         db_write_raw!(self.state, move |cmds| {
             cmds.account()
                 .email()
-                .mark_email_as_sent(receiver, message)
+                .mark_email_as_sent(recipient, message)
                 .await
         })
         .await
@@ -161,13 +163,13 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
 impl ServerEmailDataProvider {
     async fn generate_token_for_email_verification(
         &self,
-        receiver: AccountIdInternal,
+        recipient: AccountIdInternal,
     ) -> error_stack::Result<String, simple_backend::email::EmailError> {
         let token_and_time = self
             .state
             .read()
             .account()
-            .email_verification_token(receiver)
+            .email_verification_token(recipient)
             .await
             .map_err(|e| e.into_report())
             .change_context(EmailError::GettingEmailDataFailed)?;
@@ -198,7 +200,7 @@ impl ServerEmailDataProvider {
         db_write_raw!(self.state, move |cmds| {
             cmds.account()
                 .email()
-                .set_email_verification_token(receiver, token_bytes, current_time)
+                .set_email_verification_token(recipient, token_bytes, current_time)
                 .await
         })
         .await
@@ -210,13 +212,13 @@ impl ServerEmailDataProvider {
 
     async fn get_token_for_email_change_verification(
         &self,
-        receiver: AccountIdInternal,
+        recipient: AccountIdInternal,
     ) -> error_stack::Result<String, simple_backend::email::EmailError> {
         let internal = self
             .state
             .read()
             .account()
-            .email_address_state_internal(receiver)
+            .email_address_state_internal(recipient)
             .await
             .map_err(|e| e.into_report())
             .change_context(EmailError::GettingEmailDataFailed)?;
@@ -232,13 +234,13 @@ impl ServerEmailDataProvider {
 
     async fn get_token_for_email_login(
         &self,
-        receiver: AccountIdInternal,
+        recipient: AccountIdInternal,
     ) -> error_stack::Result<String, simple_backend::email::EmailError> {
         let tokens = self
             .state
             .read()
             .account()
-            .email_login_tokens(receiver)
+            .email_login_tokens(recipient)
             .await
             .map_err(|e| e.into_report())
             .change_context(EmailError::GettingEmailDataFailed)?;

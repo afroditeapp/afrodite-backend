@@ -16,7 +16,7 @@ pub struct UpdateChatMessageReport {
 #[diesel(check_for_backend(crate::Db))]
 pub struct NewChatMessageReportInternal {
     pub message_sender_account_id_uuid: AccountId,
-    pub message_receiver_account_id_uuid: AccountId,
+    pub message_recipient_account_id_uuid: AccountId,
     pub message_unix_time: UnixTime,
     pub message_number: MessageNumber,
     pub message_symmetric_key: Vec<u8>,
@@ -28,7 +28,7 @@ impl NewChatMessageReportInternal {
     pub fn to_chat_message_report(&self) -> ChatMessageReport {
         ChatMessageReport {
             sender: self.message_sender_account_id_uuid,
-            receiver: self.message_receiver_account_id_uuid,
+            recipient: self.message_recipient_account_id_uuid,
             message_time: self.message_unix_time,
             message_number: self.message_number,
             message_base64: base64::engine::general_purpose::STANDARD

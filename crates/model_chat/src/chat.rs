@@ -58,7 +58,7 @@ impl ChatStateRaw {
 pub struct PendingMessageInternal {
     pub id: i64,
     pub account_id_sender: AccountIdDb,
-    pub account_id_receiver: AccountIdDb,
+    pub account_id_recipient: AccountIdDb,
     pub sender_public_key_id: PublicKeyId,
     pub message_number: MessageNumber,
     pub message_bytes: Vec<u8>,
@@ -105,14 +105,14 @@ pub struct SendMessageToAccountParams {
     )]
     #[param(value_type = i64)]
     pub sender_public_key_id: PublicKeyId,
-    /// Receiver of the message.
+    /// Recipient of the message.
     #[serde(
         serialize_with = "account_id_as_string",
         deserialize_with = "account_id_from_uuid"
     )]
     #[param(value_type = String)]
-    pub receiver: AccountId,
-    /// Message receiver's public key ID for check
+    pub recipient: AccountId,
+    /// Message recipient's public key ID for check
     /// to prevent sending message encrypted with outdated
     /// public key.
     #[serde(
@@ -120,7 +120,7 @@ pub struct SendMessageToAccountParams {
         deserialize_with = "public_key_id_from_i64"
     )]
     #[param(value_type = i64)]
-    pub receiver_public_key_id: PublicKeyId,
+    pub recipient_public_key_id: PublicKeyId,
     #[serde(
         serialize_with = "message_id_as_string",
         deserialize_with = "message_id_from_string"
@@ -165,7 +165,7 @@ pub struct SendMessageResult {
     error: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    error_too_many_receiver_acknowledgements_missing: bool,
+    error_too_many_recipient_acknowledgements_missing: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error_too_many_sender_acknowledgements_missing: bool,
@@ -174,10 +174,10 @@ pub struct SendMessageResult {
     error_sender_public_key_outdated: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    error_receiver_public_key_outdated: bool,
+    error_recipient_public_key_outdated: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    error_receiver_blocked_sender_or_receiver_not_found: bool,
+    error_recipient_blocked_sender_or_recipient_not_found: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error_too_many_pending_delivery_infos_exists: bool,
@@ -186,7 +186,7 @@ pub struct SendMessageResult {
     #[serde(skip_serializing_if = "Option::is_none")]
     remaining_messages: Option<u16>,
     /// Remaining messages which can be sent to conversation before
-    /// delivery to receiver or message sending acknowledgement must happen.
+    /// delivery to recipient or message sending acknowledgement must happen.
     /// The value will be returned only if there is 5 or less messages left.
     #[serde(skip_serializing_if = "Option::is_none")]
     remaining_conversation_messages: Option<u16>,
@@ -197,10 +197,10 @@ impl SendMessageResult {
         self.error
     }
 
-    pub fn too_many_receiver_acknowledgements_missing() -> Self {
+    pub fn too_many_recipient_acknowledgements_missing() -> Self {
         Self {
             error: true,
-            error_too_many_receiver_acknowledgements_missing: true,
+            error_too_many_recipient_acknowledgements_missing: true,
             ..Self::default()
         }
     }
@@ -221,18 +221,18 @@ impl SendMessageResult {
         }
     }
 
-    pub fn receiver_public_key_outdated() -> Self {
+    pub fn recipient_public_key_outdated() -> Self {
         Self {
             error: true,
-            error_receiver_public_key_outdated: true,
+            error_recipient_public_key_outdated: true,
             ..Self::default()
         }
     }
 
-    pub fn receiver_blocked_sender_or_receiver_not_found() -> Self {
+    pub fn recipient_blocked_sender_or_recipient_not_found() -> Self {
         Self {
             error: true,
-            error_receiver_blocked_sender_or_receiver_not_found: true,
+            error_recipient_blocked_sender_or_recipient_not_found: true,
             ..Self::default()
         }
     }

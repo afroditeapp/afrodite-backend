@@ -204,7 +204,7 @@ impl CurrentReadCommonReport<'_> {
                 .find(id)
                 .select((
                     message_sender_account_id_uuid,
-                    message_receiver_account_id_uuid,
+                    message_recipient_account_id_uuid,
                     message_unix_time,
                     message_number,
                     client_message_bytes,
@@ -213,10 +213,10 @@ impl CurrentReadCommonReport<'_> {
                 .optional()
                 .into_db_error(())?;
 
-        if let Some((sender, receiver, message_time, m, data)) = value {
+        if let Some((sender, recipient, message_time, m, data)) = value {
             Ok(Some(ChatMessageReport {
                 sender,
-                receiver,
+                recipient,
                 message_time,
                 message_number: m,
                 message_base64: base64::engine::general_purpose::STANDARD.encode(data),

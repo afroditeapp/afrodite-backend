@@ -57,7 +57,7 @@ impl CurrentWriteChatInteraction<'_> {
 
         let id_value = value.id;
         let account1 = value.account_id_sender;
-        let account2 = value.account_id_receiver;
+        let account2 = value.account_id_recipient;
 
         update(account_interaction.find(value.id))
             .set(value)
@@ -86,14 +86,14 @@ impl CurrentWriteChatInteraction<'_> {
 
     pub fn mark_received_likes_viewed(
         &mut self,
-        like_receiver: AccountIdInternal,
+        like_recipient: AccountIdInternal,
         likes: Vec<ReceivedLikeId>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account_interaction::dsl::*;
 
         update(
             account_interaction
-                .filter(account_id_receiver.eq(like_receiver.as_db_id()))
+                .filter(account_id_recipient.eq(like_recipient.as_db_id()))
                 .filter(received_like_id.eq_any(likes)),
         )
         .set(received_like_viewed.eq(true))
@@ -105,13 +105,13 @@ impl CurrentWriteChatInteraction<'_> {
 
     pub fn mark_like_email_notification_sent(
         &mut self,
-        like_receiver: AccountIdInternal,
+        like_recipient: AccountIdInternal,
         likes: Vec<ReceivedLikeId>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account_interaction::dsl::*;
 
         update(account_interaction)
-            .filter(account_id_receiver.eq(like_receiver.as_db_id()))
+            .filter(account_id_recipient.eq(like_recipient.as_db_id()))
             .filter(received_like_id.eq_any(likes))
             .set(received_like_email_notification_sent.eq(true))
             .execute(self.conn())

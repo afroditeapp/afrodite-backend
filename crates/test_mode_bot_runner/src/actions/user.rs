@@ -315,11 +315,11 @@ struct Retry;
 
 async fn send_message(
     state: &mut BotState,
-    receiver: AccountId,
+    recipient: AccountId,
     msg: String,
 ) -> Result<(), TestError> {
     loop {
-        match send_message_internal(state, &receiver, &msg).await? {
+        match send_message_internal(state, &recipient, &msg).await? {
             Some(Retry) => continue,
             None => return Ok(()),
         }
@@ -328,7 +328,7 @@ async fn send_message(
 
 async fn send_message_internal(
     state: &mut BotState,
-    receiver: &AccountId,
+    recipient: &AccountId,
     msg: &str,
 ) -> Result<Option<Retry>, TestError> {
     let delivery_info = get_message_delivery_info(state.api())
@@ -352,19 +352,19 @@ async fn send_message_internal(
             .change_context(TestError::ApiRequest)?;
     }
 
-    let latest_key_id = get_latest_public_key_id(state.api(), &receiver.aid.to_string())
+    let latest_key_id = get_latest_public_key_id(state.api(), &recipient.aid.to_string())
         .await
         .change_context(TestError::ApiRequest)?;
 
     let latest_key_id = match latest_key_id.id.flatten().map(|v| v.id) {
         Some(value) => value,
         None => {
-            warn!("Receiver public key is missing");
+            warn!("Recipient public key is missing");
             return Ok(None);
         }
     };
 
-    let public_key = get_public_key(state.api(), &receiver.aid.to_string(), latest_key_id)
+    let public_key = get_public_key(state.api(), &recipient.aid.to_string(), latest_key_id)
         .await
         .change_context(TestError::ApiRequest)?
         .bytes()
@@ -385,7 +385,7 @@ async fn send_message_internal(
     let r = post_send_message(
         state.api(),
         keys.public_key_id,
-        &receiver.aid.to_string(),
+        &recipient.aid.to_string(),
         latest_key_id,
         &message_id,
         encrypted_bytes,

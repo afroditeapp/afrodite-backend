@@ -120,7 +120,7 @@ impl<'a> NotificationChecker<'a> {
         db_write_raw!(self.state, move |cmds| {
             cmds.chat()
                 .notification()
-                .mark_receiver_push_notification_sent(messages)
+                .mark_recipient_push_notification_sent(messages)
                 .await
         })
         .await?;

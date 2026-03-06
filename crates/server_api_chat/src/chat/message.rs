@@ -52,10 +52,10 @@ const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
 /// binary data. The binary data contains:
 /// - Version (u8, values: 1)
 /// - Sender AccountId UUID big-endian bytes (16 bytes)
-/// - Receiver AccountId UUID big-endian bytes (16 bytes)
+/// - Recipient AccountId UUID big-endian bytes (16 bytes)
 /// - Message MessageId UUID big-endian bytes (16 bytes)
 /// - Sender public key ID (minimal i64)
-/// - Receiver public key ID (minimal i64)
+/// - Recipient public key ID (minimal i64)
 /// - Message number (minimal i64)
 /// - Unix time (minimal i64)
 /// - Message data
@@ -97,11 +97,11 @@ pub async fn get_pending_messages(
     Ok((TypedHeader(ContentType::octet_stream()), bytes))
 }
 
-const PATH_POST_ADD_RECEIVER_ACKNOWLEDGEMENT: &str = "/chat_api/add_receiver_acknowledgement";
+const PATH_POST_ADD_RECIPIENT_ACKNOWLEDGEMENT: &str = "/chat_api/add_recipient_acknowledgement";
 
 #[utoipa::path(
     post,
-    path = PATH_POST_ADD_RECEIVER_ACKNOWLEDGEMENT,
+    path = PATH_POST_ADD_RECIPIENT_ACKNOWLEDGEMENT,
     request_body(content = PendingMessageAcknowledgementList),
     responses(
         (status = 200, description = "Success."),
@@ -110,16 +110,16 @@ const PATH_POST_ADD_RECEIVER_ACKNOWLEDGEMENT: &str = "/chat_api/add_receiver_ack
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_add_receiver_acknowledgement(
+pub async fn post_add_recipient_acknowledgement(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(list): Json<PendingMessageAcknowledgementList>,
 ) -> Result<(), StatusCode> {
-    CHAT.post_add_receiver_acknowledgement.incr();
+    CHAT.post_add_recipient_acknowledgement.incr();
 
     db_write!(state, move |cmds| {
         cmds.chat()
-            .add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
+            .add_recipient_acknowledgement_and_delete_if_also_sender_has_acknowledged(
                 id,
                 list.ids,
                 list.delivery_failed,
@@ -139,7 +139,7 @@ const DAILY_MESSAGES_REMAINING_WARNING_THRESHOLD: u16 = 50;
 ///
 /// Sending will fail if one or two way block exists.
 ///
-/// Only the latest public key for sender and receiver can be used when
+/// Only the latest public key for sender and recipient can be used when
 /// sending a message.
 #[utoipa::path(
     post,
@@ -169,8 +169,9 @@ pub async fn post_send_message(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let Some(message_receiver) = state.get_internal_id_optional(query_params.receiver).await else {
-        return Ok(SendMessageResult::receiver_blocked_sender_or_receiver_not_found().into());
+    let Some(message_recipient) = state.get_internal_id_optional(query_params.recipient).await
+    else {
+        return Ok(SendMessageResult::recipient_blocked_sender_or_recipient_not_found().into());
     };
 
     let current_messages = state.api_limits(id).chat().post_send_message().await?;
@@ -183,10 +184,10 @@ pub async fn post_send_message(
             .chat()
             .insert_pending_message_if_match_and_not_blocked(
                 id,
-                message_receiver,
+                message_recipient,
                 bytes.into(),
                 query_params.sender_public_key_id,
-                query_params.receiver_public_key_id,
+                query_params.recipient_public_key_id,
                 query_params.message_id,
                 keys,
             )
@@ -196,13 +197,13 @@ pub async fn post_send_message(
             match push_notification_allowed {
                 Some(PushNotificationAllowed) => cmds
                     .events()
-                    .send_notification(message_receiver, NotificationEvent::NewMessageReceived)
+                    .send_notification(message_recipient, NotificationEvent::NewMessageReceived)
                     .await
                     .ignore_and_log_error(),
                 None => cmds
                     .events()
                     .send_connected_event(
-                        message_receiver,
+                        message_recipient,
                         EventToClientInternal::NewMessageReceived,
                     )
                     .await
@@ -292,7 +293,7 @@ pub async fn post_add_sender_acknowledgement(
     CHAT.post_add_sender_acknowledgement.incr();
     db_write!(state, move |cmds| {
         cmds.chat()
-            .add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(
+            .add_sender_acknowledgement_and_delete_if_also_recipient_has_acknowledged(
                 id,
                 id_list.ids,
             )
@@ -489,7 +490,7 @@ pub async fn post_delete_pending_latest_seen_messages(
 create_open_api_router!(
         fn router_message,
         get_pending_messages,
-        post_add_receiver_acknowledgement,
+        post_add_recipient_acknowledgement,
         post_send_message,
         post_get_sent_message,
         get_sent_message_ids,
@@ -507,7 +508,7 @@ create_counters!(
     CHAT,
     CHAT_MESSAGE_COUNTERS_LIST,
     get_pending_messages,
-    post_add_receiver_acknowledgement,
+    post_add_recipient_acknowledgement,
     post_send_message,
     post_get_sent_message,
     get_sent_message_ids,

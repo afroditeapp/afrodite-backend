@@ -26,7 +26,7 @@ use url::Url;
 pub mod backup;
 pub mod protocol;
 
-pub use protocol::{ManagerClientWithRequestReceiver, RequestSenderCmds};
+pub use protocol::{ManagerClientWithRequestRecipient, RequestSenderCmds};
 pub use tokio_rustls::rustls::RootCertStore;
 
 #[derive(thiserror::Error, Debug)]
@@ -258,11 +258,11 @@ impl ManagerClient {
 
     pub fn request_to(
         self,
-        request_receiver: ManagerInstanceName,
-    ) -> ManagerClientWithRequestReceiver {
-        ManagerClientWithRequestReceiver {
+        request_recipient: ManagerInstanceName,
+    ) -> ManagerClientWithRequestRecipient {
+        ManagerClientWithRequestRecipient {
             client: self,
-            request_receiver,
+            request_recipient,
         }
     }
 

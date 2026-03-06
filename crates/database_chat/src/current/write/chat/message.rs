@@ -13,13 +13,13 @@ use model_chat::{
 use simple_backend_utils::db::MyRunQueryDsl;
 use utils::encrypt::ParsedKeys;
 
-use super::ReceiverBlockedSender;
+use super::RecipientBlockedSender;
 use crate::{IntoDatabaseError, current::write::GetDbWriteCommandsChat};
 
 define_current_write_commands!(CurrentWriteChatMessage);
 
 impl CurrentWriteChatMessage<'_> {
-    pub fn mark_receiver_push_notification_sent(
+    pub fn mark_recipient_push_notification_sent(
         &mut self,
         messages: Vec<PendingMessageDbId>,
     ) -> Result<(), DieselDatabaseError> {
@@ -28,7 +28,7 @@ impl CurrentWriteChatMessage<'_> {
         for m in messages {
             update(pending_messages)
                 .filter(id.eq(m.id))
-                .set(receiver_push_notification_sent.eq(true))
+                .set(recipient_push_notification_sent.eq(true))
                 .execute(self.conn())
                 .into_db_error(())?;
         }
@@ -45,7 +45,7 @@ impl CurrentWriteChatMessage<'_> {
         for m in messages {
             update(pending_messages)
                 .filter(id.eq(m.id))
-                .set(receiver_email_notification_sent.eq(true))
+                .set(recipient_email_notification_sent.eq(true))
                 .execute(self.conn())
                 .into_db_error(())?;
         }
@@ -53,9 +53,9 @@ impl CurrentWriteChatMessage<'_> {
         Ok(())
     }
 
-    pub fn add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
+    pub fn add_recipient_acknowledgement_and_delete_if_also_sender_has_acknowledged(
         &mut self,
-        message_receiver: AccountIdInternal,
+        message_recipient: AccountIdInternal,
         messages: &[PendingMessageInfo],
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::pending_messages::dsl::*;
@@ -63,22 +63,22 @@ impl CurrentWriteChatMessage<'_> {
         for message in messages {
             update(pending_messages)
                 .filter(id.eq(message.id))
-                .set(receiver_acknowledgement.eq(true))
+                .set(recipient_acknowledgement.eq(true))
                 .execute(self.conn())
-                .into_db_error(message_receiver)?;
+                .into_db_error(message_recipient)?;
 
             delete(pending_messages)
                 .filter(id.eq(message.id))
                 .filter(sender_acknowledgement.eq(true))
-                .filter(receiver_acknowledgement.eq(true))
+                .filter(recipient_acknowledgement.eq(true))
                 .execute(self.conn())
-                .into_db_error(message_receiver)?;
+                .into_db_error(message_recipient)?;
         }
 
         Ok(())
     }
 
-    pub fn add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(
+    pub fn add_sender_acknowledgement_and_delete_if_also_recipient_has_acknowledged(
         &mut self,
         message_sender: AccountIdInternal,
         messages: Vec<MessageId>,
@@ -97,7 +97,7 @@ impl CurrentWriteChatMessage<'_> {
                 .filter(message_id.eq(&message))
                 .filter(account_id_sender.eq(message_sender.as_db_id()))
                 .filter(sender_acknowledgement.eq(true))
-                .filter(receiver_acknowledgement.eq(true))
+                .filter(recipient_acknowledgement.eq(true))
                 .execute(self.conn())
                 .into_db_error(message_sender)?;
         }
@@ -111,27 +111,27 @@ impl CurrentWriteChatMessage<'_> {
     pub fn insert_pending_message_if_match_and_not_blocked(
         &mut self,
         sender: AccountIdInternal,
-        receiver: AccountIdInternal,
+        recipient: AccountIdInternal,
         sender_public_key_id_value: PublicKeyId,
-        receiver_public_key_id: PublicKeyId,
+        recipient_public_key_id: PublicKeyId,
         message: Vec<u8>,
         message_id_value: MessageId,
         keys: Arc<ParsedKeys>,
-    ) -> Result<std::result::Result<Vec<u8>, ReceiverBlockedSender>, DieselDatabaseError> {
+    ) -> Result<std::result::Result<Vec<u8>, RecipientBlockedSender>, DieselDatabaseError> {
         use model::schema::{account_interaction, pending_messages::dsl::*};
         let time = UnixTime::current_time();
         let interaction = self
             .write()
             .chat()
             .interaction()
-            .get_or_create_account_interaction(sender, receiver)?;
+            .get_or_create_account_interaction(sender, recipient)?;
 
-        if interaction.is_direction_blocked(receiver, sender) {
-            return Ok(Err(ReceiverBlockedSender));
+        if interaction.is_direction_blocked(recipient, sender) {
+            return Ok(Err(RecipientBlockedSender));
         }
 
         // The is_blocked handles the case where sender has blocked the
-        // message receiver.
+        // message recipient.
         if interaction.state_number != AccountInteractionState::Match || interaction.is_blocked() {
             return Err(DieselDatabaseError::NotAllowed.into());
         }
@@ -145,23 +145,23 @@ impl CurrentWriteChatMessage<'_> {
                         .eq(account_interaction::message_counter_sender + 1),
                 )
                 .execute(self.conn())
-                .into_db_error((sender, receiver, new_message_number))?;
+                .into_db_error((sender, recipient, new_message_number))?;
         } else {
             update(account_interaction::table.find(interaction.id))
                 .set(
-                    account_interaction::message_counter_receiver
-                        .eq(account_interaction::message_counter_receiver + 1),
+                    account_interaction::message_counter_recipient
+                        .eq(account_interaction::message_counter_recipient + 1),
                 )
                 .execute(self.conn())
-                .into_db_error((sender, receiver, new_message_number))?;
+                .into_db_error((sender, recipient, new_message_number))?;
         }
 
         let data_for_signing = SignedMessageData {
             sender: sender.as_id(),
-            receiver: receiver.as_id(),
+            recipient: recipient.as_id(),
             message_id: message_id_value,
             sender_public_key_id: sender_public_key_id_value,
-            receiver_public_key_id,
+            recipient_public_key_id,
             m: new_message_number,
             unix_time: time,
             message,
@@ -174,7 +174,7 @@ impl CurrentWriteChatMessage<'_> {
         insert_into(pending_messages)
             .values((
                 account_id_sender.eq(sender.as_db_id()),
-                account_id_receiver.eq(receiver.as_db_id()),
+                account_id_recipient.eq(recipient.as_db_id()),
                 sender_public_key_id.eq(sender_public_key_id_value),
                 message_unix_time.eq(time),
                 message_number.eq(new_message_number),
@@ -182,7 +182,7 @@ impl CurrentWriteChatMessage<'_> {
                 message_id.eq(&message_id_value),
             ))
             .execute(self.conn())
-            .into_db_error((sender, receiver, new_message_number))?;
+            .into_db_error((sender, recipient, new_message_number))?;
 
         Ok(Ok(signed))
     }
@@ -190,7 +190,7 @@ impl CurrentWriteChatMessage<'_> {
     pub fn insert_message_delivery_info(
         &mut self,
         sender: AccountIdInternal,
-        receiver: AccountIdInternal,
+        recipient: AccountIdInternal,
         message_id_value: model::MessageId,
         delivery_info_type_value: DeliveryInfoType,
     ) -> Result<(), DieselDatabaseError> {
@@ -201,13 +201,13 @@ impl CurrentWriteChatMessage<'_> {
         insert_into(message_delivery_info)
             .values((
                 account_id_sender.eq(sender.as_db_id()),
-                account_id_receiver.eq(receiver.as_db_id()),
+                account_id_recipient.eq(recipient.as_db_id()),
                 message_id.eq(message_id_value),
                 delivery_info_type.eq(delivery_info_type_value),
                 unix_time.eq(time),
             ))
             .execute(self.conn())
-            .into_db_error((sender, receiver))?;
+            .into_db_error((sender, recipient))?;
 
         Ok(())
     }

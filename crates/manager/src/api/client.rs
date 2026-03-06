@@ -6,22 +6,22 @@ use super::server::json_rpc::handle_rpc_request;
 use crate::server::app::S;
 
 pub struct LocalOrRemoteApiClient<'a> {
-    request_receiver: ManagerInstanceName,
+    request_recipient: ManagerInstanceName,
     state: &'a S,
 }
 
 impl<'a> LocalOrRemoteApiClient<'a> {
-    pub fn new(request_receiver: ManagerInstanceName, state: &'a S) -> Self {
+    pub fn new(request_recipient: ManagerInstanceName, state: &'a S) -> Self {
         Self {
-            request_receiver,
+            request_recipient,
             state,
         }
     }
 }
 
 impl RequestSenderCmds for LocalOrRemoteApiClient<'_> {
-    fn request_receiver_name(&self) -> ManagerInstanceName {
-        self.request_receiver.clone()
+    fn request_recipient_name(&self) -> ManagerInstanceName {
+        self.request_recipient.clone()
     }
     async fn send_request(self, request: JsonRpcRequest) -> Result<JsonRpcResponse, ClientError> {
         handle_rpc_request(request, None, self.state)

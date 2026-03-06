@@ -54,12 +54,12 @@ impl ReadCommandsChatNotification<'_> {
 
     pub async fn unviewed_received_likes_without_sent_email_notification(
         &self,
-        id_receiver: AccountIdInternal,
+        id_recipient: AccountIdInternal,
     ) -> Result<Vec<(ReceivedLikeId, UnixTime)>, DataError> {
         self.db_read(move |mut cmds| {
             cmds.chat()
                 .interaction()
-                .unviewed_received_likes_without_sent_email_notification(id_receiver)
+                .unviewed_received_likes_without_sent_email_notification(id_recipient)
         })
         .await
         .into_error()
