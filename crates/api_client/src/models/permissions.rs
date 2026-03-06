@@ -27,6 +27,11 @@ pub struct Permissions {
     pub admin_edit_media_content_face_detected_value: Option<bool>,
     #[serde(rename = "admin_edit_permissions", skip_serializing_if = "Option::is_none")]
     pub admin_edit_permissions: Option<bool>,
+    #[serde(rename = "admin_edit_profile_attributes_schema", skip_serializing_if = "Option::is_none")]
+    pub admin_edit_profile_attributes_schema: Option<bool>,
+    /// Additionally required when modifying user-visible content: attribute/value `name`, `icon`, and `translations`.
+    #[serde(rename = "admin_edit_profile_attributes_schema_visible_content", skip_serializing_if = "Option::is_none")]
+    pub admin_edit_profile_attributes_schema_visible_content: Option<bool>,
     #[serde(rename = "admin_edit_profile_name", skip_serializing_if = "Option::is_none")]
     pub admin_edit_profile_name: Option<bool>,
     #[serde(rename = "admin_export_data", skip_serializing_if = "Option::is_none")]
@@ -55,10 +60,18 @@ pub struct Permissions {
     pub admin_server_edit_bot_config: Option<bool>,
     #[serde(rename = "admin_server_edit_image_processing_config", skip_serializing_if = "Option::is_none")]
     pub admin_server_edit_image_processing_config: Option<bool>,
+    #[serde(rename = "admin_server_edit_info_banners", skip_serializing_if = "Option::is_none")]
+    pub admin_server_edit_info_banners: Option<bool>,
     #[serde(rename = "admin_server_edit_maintenance_notification", skip_serializing_if = "Option::is_none")]
     pub admin_server_edit_maintenance_notification: Option<bool>,
+    #[serde(rename = "admin_server_reboot", skip_serializing_if = "Option::is_none")]
+    pub admin_server_reboot: Option<bool>,
     #[serde(rename = "admin_server_restart", skip_serializing_if = "Option::is_none")]
     pub admin_server_restart: Option<bool>,
+    #[serde(rename = "admin_server_scheduled_reboot", skip_serializing_if = "Option::is_none")]
+    pub admin_server_scheduled_reboot: Option<bool>,
+    #[serde(rename = "admin_server_scheduled_restart", skip_serializing_if = "Option::is_none")]
+    pub admin_server_scheduled_restart: Option<bool>,
     #[serde(rename = "admin_server_software_update", skip_serializing_if = "Option::is_none")]
     pub admin_server_software_update: Option<bool>,
     #[serde(rename = "admin_server_view_bot_config", skip_serializing_if = "Option::is_none")]
@@ -97,6 +110,8 @@ impl Permissions {
             admin_edit_login: None,
             admin_edit_media_content_face_detected_value: None,
             admin_edit_permissions: None,
+            admin_edit_profile_attributes_schema: None,
+            admin_edit_profile_attributes_schema_visible_content: None,
             admin_edit_profile_name: None,
             admin_export_data: None,
             admin_find_account_by_email_address: None,
@@ -111,8 +126,12 @@ impl Permissions {
             admin_server_data_reset: None,
             admin_server_edit_bot_config: None,
             admin_server_edit_image_processing_config: None,
+            admin_server_edit_info_banners: None,
             admin_server_edit_maintenance_notification: None,
+            admin_server_reboot: None,
             admin_server_restart: None,
+            admin_server_scheduled_reboot: None,
+            admin_server_scheduled_restart: None,
             admin_server_software_update: None,
             admin_server_view_bot_config: None,
             admin_server_view_image_processing_config: None,

@@ -141,6 +141,15 @@ pub enum PostGetClientVersionStatisticsError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`post_save_info_banners`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostSaveInfoBannersError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`post_set_account_locked_state`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -684,6 +693,36 @@ pub async fn post_get_client_version_statistics(configuration: &configuration::C
     } else {
         let content = resp.text().await?;
         let entity: Option<PostGetClientVersionStatisticsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// Existing banners cannot be removed.  Don't edit [model:InfoBanner::version] field as server will update that.  # Access  Permission [model::Permissions::admin_server_edit_info_banners] is required.
+pub async fn post_save_info_banners(configuration: &configuration::Configuration, save_info_banners: models::SaveInfoBanners) -> Result<(), Error<PostSaveInfoBannersError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_save_info_banners = save_info_banners;
+
+    let uri_str = format!("{}/account_api/save_info_banners", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_save_info_banners);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostSaveInfoBannersError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

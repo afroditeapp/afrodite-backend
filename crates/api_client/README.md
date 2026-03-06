@@ -49,6 +49,7 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_email_login_with_token**](docs/AccountApi.md#post_email_login_with_token) | **POST** /account_api/email_login_with_token | Login using email login token (single use).
 *AccountApi* | [**post_get_client_features_config**](docs/AccountApi.md#post_get_client_features_config) | **POST** /account_api/client_features_config | 
 *AccountApi* | [**post_get_custom_reports_config**](docs/AccountApi.md#post_get_custom_reports_config) | **POST** /account_api/custom_reports_config | 
+*AccountApi* | [**post_get_dynamic_client_features_config**](docs/AccountApi.md#post_get_dynamic_client_features_config) | **POST** /account_api/dynamic_client_features_config | 
 *AccountApi* | [**post_get_news_page**](docs/AccountApi.md#post_get_news_page) | **POST** /account_api/news_page | 
 *AccountApi* | [**post_get_unread_news_count**](docs/AccountApi.md#post_get_unread_news_count) | **POST** /account_api/news_count | The unread news count for public news.
 *AccountApi* | [**post_init_email_change**](docs/AccountApi.md#post_init_email_change) | **POST** /account_api/init_email_change | Initiate email change process by providing a new email address.
@@ -76,6 +77,7 @@ Class | Method | HTTP request | Description
 *AccountAdminApi* | [**post_create_news_item**](docs/AccountAdminApi.md#post_create_news_item) | **POST** /account_api/create_news_item | 
 *AccountAdminApi* | [**post_delete_account**](docs/AccountAdminApi.md#post_delete_account) | **POST** /account_api/delete_account/{aid} | Delete account instantly
 *AccountAdminApi* | [**post_get_client_version_statistics**](docs/AccountAdminApi.md#post_get_client_version_statistics) | **POST** /account_api/client_version_statistics | Get client version statistics.
+*AccountAdminApi* | [**post_save_info_banners**](docs/AccountAdminApi.md#post_save_info_banners) | **POST** /account_api/save_info_banners | Save info banners to dynamic client config.
 *AccountAdminApi* | [**post_set_account_locked_state**](docs/AccountAdminApi.md#post_set_account_locked_state) | **POST** /account_api/set_account_locked_state/{aid} | Set account locked state
 *AccountAdminApi* | [**post_set_ban_state**](docs/AccountAdminApi.md#post_set_ban_state) | **POST** /account_api/set_ban_state | Ban or unban account
 *AccountAdminApi* | [**post_set_news_publicity**](docs/AccountAdminApi.md#post_set_news_publicity) | **DELETE** /account_api/set_news_publicity/{nid} | 
@@ -101,7 +103,7 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**get_sent_blocks**](docs/ChatApi.md#get_sent_blocks) | **GET** /chat_api/sent_blocks | Get list of sent blocks
 *ChatApi* | [**get_sent_message_ids**](docs/ChatApi.md#get_sent_message_ids) | **GET** /chat_api/sent_message_ids | 
 *ChatApi* | [**post_add_public_key**](docs/ChatApi.md#post_add_public_key) | **POST** /chat_api/add_public_key | Add new public key.
-*ChatApi* | [**post_add_receiver_acknowledgement**](docs/ChatApi.md#post_add_receiver_acknowledgement) | **POST** /chat_api/add_receiver_acknowledgement | 
+*ChatApi* | [**post_add_recipient_acknowledgement**](docs/ChatApi.md#post_add_recipient_acknowledgement) | **POST** /chat_api/add_recipient_acknowledgement | 
 *ChatApi* | [**post_add_sender_acknowledgement**](docs/ChatApi.md#post_add_sender_acknowledgement) | **POST** /chat_api/add_sender_acknowledgement | 
 *ChatApi* | [**post_block_profile**](docs/ChatApi.md#post_block_profile) | **POST** /chat_api/block_profile | Block profile
 *ChatApi* | [**post_chat_app_notification_settings**](docs/ChatApi.md#post_chat_app_notification_settings) | **POST** /chat_api/post_chat_app_notification_settings | 
@@ -137,6 +139,7 @@ Class | Method | HTTP request | Description
 *CommonAdminApi* | [**get_admin_notification_settings**](docs/CommonAdminApi.md#get_admin_notification_settings) | **GET** /common_api/admin_notification_settings | Get admin notification settings.
 *CommonAdminApi* | [**get_admin_notification_subscriptions**](docs/CommonAdminApi.md#get_admin_notification_subscriptions) | **GET** /common_api/admin_notification_subscriptions | Get admin notification subscriptions.
 *CommonAdminApi* | [**get_bot_config**](docs/CommonAdminApi.md#get_bot_config) | **GET** /common_api/bot_config | Get bot config.
+*CommonAdminApi* | [**get_bot_config_warnings**](docs/CommonAdminApi.md#get_bot_config_warnings) | **GET** /common_api/bot_config_warnings | Get bot config warnings.
 *CommonAdminApi* | [**get_latest_report_iterator_start_position**](docs/CommonAdminApi.md#get_latest_report_iterator_start_position) | **GET** /common_api/latest_report_iterator_start_position | 
 *CommonAdminApi* | [**get_maintenance_notification**](docs/CommonAdminApi.md#get_maintenance_notification) | **GET** /common_api/maintenance_notification | Get maintenance notification.
 *CommonAdminApi* | [**get_manager_instance_names**](docs/CommonAdminApi.md#get_manager_instance_names) | **GET** /common_api/manager_instance_names | Get available manager instances.
@@ -180,6 +183,7 @@ Class | Method | HTTP request | Description
 *MediaApi* | [**put_profile_content**](docs/MediaApi.md#put_profile_content) | **PUT** /media_api/profile_content | Set new profile content for current account.
 *MediaApi* | [**put_security_content_info**](docs/MediaApi.md#put_security_content_info) | **PUT** /media_api/security_content_info | Set current security content for current account.
 *MediaAdminApi* | [**get_image_processing_config**](docs/MediaAdminApi.md#get_image_processing_config) | **GET** /media_api/image_processing_config | Get image processing configuration
+*MediaAdminApi* | [**get_image_processing_config_warnings**](docs/MediaAdminApi.md#get_image_processing_config_warnings) | **GET** /media_api/image_processing_config_warnings | Get image processing config warnings
 *MediaAdminApi* | [**get_media_content_pending_moderation_list**](docs/MediaAdminApi.md#get_media_content_pending_moderation_list) | **GET** /media_api/media_content_pending_moderation | Get first page of pending media content moderations. Oldest item is first and count 25.
 *MediaAdminApi* | [**post_image_processing_config**](docs/MediaAdminApi.md#post_image_processing_config) | **POST** /media_api/image_processing_config | Update image processing configuration
 *MediaAdminApi* | [**post_media_content_face_detected_value**](docs/MediaAdminApi.md#post_media_content_face_detected_value) | **POST** /media_api/media_content_face_detected_value | Change media content face detected value
@@ -222,11 +226,13 @@ Class | Method | HTTP request | Description
 *ProfileAdminApi* | [**get_admin_profile_iterator_page**](docs/ProfileAdminApi.md#get_admin_profile_iterator_page) | **GET** /profile_api/get_admin_profile_iterator_page | Get admin profile iterator page
 *ProfileAdminApi* | [**get_latest_created_account_id_db**](docs/ProfileAdminApi.md#get_latest_created_account_id_db) | **GET** /profile_api/get_latest_created_account_id_db | Get latest created account ID DB
 *ProfileAdminApi* | [**get_profile_age_and_name**](docs/ProfileAdminApi.md#get_profile_age_and_name) | **GET** /profile_api/get_profile_age_and_name/{aid} | Get profile age and name
+*ProfileAdminApi* | [**get_profile_attributes_schema**](docs/ProfileAdminApi.md#get_profile_attributes_schema) | **GET** /profile_api/profile_attributes_schema | Get profile attributes schema from DB.
 *ProfileAdminApi* | [**get_profile_statistics_history**](docs/ProfileAdminApi.md#get_profile_statistics_history) | **GET** /profile_api/profile_statistics_history | 
 *ProfileAdminApi* | [**get_profile_string_pending_moderation_list**](docs/ProfileAdminApi.md#get_profile_string_pending_moderation_list) | **GET** /profile_api/profile_string_pending_moderation | Get first page of pending profile string moderations. Oldest item is first and count 25.
 *ProfileAdminApi* | [**get_profile_string_state**](docs/ProfileAdminApi.md#get_profile_string_state) | **GET** /profile_api/get_profile_string_state/{aid} | Get profile string state
 *ProfileAdminApi* | [**post_moderate_profile_string**](docs/ProfileAdminApi.md#post_moderate_profile_string) | **POST** /profile_api/moderate_profile_string | Rejected category and details can be set only when [PostModerateProfileString::value] is rejected.
 *ProfileAdminApi* | [**post_set_profile_name**](docs/ProfileAdminApi.md#post_set_profile_name) | **POST** /profile_api/set_profile_name | Set profile name
+*ProfileAdminApi* | [**put_profile_attributes_schema**](docs/ProfileAdminApi.md#put_profile_attributes_schema) | **PUT** /profile_api/profile_attributes_schema | Add or edit profile attributes to profile attributes schema in DB.
 
 
 ## Documentation For Models
@@ -273,9 +279,12 @@ Class | Method | HTTP request | Description
  - [BackupTransferClientRole](docs/BackupTransferClientRole.md)
  - [BackupTransferInitialMessage](docs/BackupTransferInitialMessage.md)
  - [BackupTransferTargetData](docs/BackupTransferTargetData.md)
+ - [BannerPlatform](docs/BannerPlatform.md)
+ - [BannerVisibility](docs/BannerVisibility.md)
  - [BooleanSetting](docs/BooleanSetting.md)
  - [BotAccount](docs/BotAccount.md)
  - [BotConfig](docs/BotConfig.md)
+ - [BotConfigWarnings](docs/BotConfigWarnings.md)
  - [ChatAppNotificationSettings](docs/ChatAppNotificationSettings.md)
  - [ChatConfig](docs/ChatConfig.md)
  - [ChatEmailNotificationSettings](docs/ChatEmailNotificationSettings.md)
@@ -327,6 +336,8 @@ Class | Method | HTTP request | Description
  - [DemoAccountLoginToAccount](docs/DemoAccountLoginToAccount.md)
  - [DemoAccountRegisterAccountResult](docs/DemoAccountRegisterAccountResult.md)
  - [DemoAccountToken](docs/DemoAccountToken.md)
+ - [DynamicClientFeaturesConfig](docs/DynamicClientFeaturesConfig.md)
+ - [DynamicClientFeaturesConfigHash](docs/DynamicClientFeaturesConfigHash.md)
  - [EmailAddressState](docs/EmailAddressState.md)
  - [EmailAddressStateAdmin](docs/EmailAddressStateAdmin.md)
  - [EmailLogin](docs/EmailLogin.md)
@@ -353,6 +364,7 @@ Class | Method | HTTP request | Description
  - [GetClientVersionStatisticsSettings](docs/GetClientVersionStatisticsSettings.md)
  - [GetConversationId](docs/GetConversationId.md)
  - [GetCustomReportsConfigResult](docs/GetCustomReportsConfigResult.md)
+ - [GetDynamicClientFeaturesConfigResult](docs/GetDynamicClientFeaturesConfigResult.md)
  - [GetInitialProfileAgeResult](docs/GetInitialProfileAgeResult.md)
  - [GetIpAddressStatisticsResult](docs/GetIpAddressStatisticsResult.md)
  - [GetIpAddressStatisticsSettings](docs/GetIpAddressStatisticsSettings.md)
@@ -376,6 +388,11 @@ Class | Method | HTTP request | Description
  - [GetReportList](docs/GetReportList.md)
  - [GetSentMessage](docs/GetSentMessage.md)
  - [ImageProcessingDynamicConfig](docs/ImageProcessingDynamicConfig.md)
+ - [ImageProcessingWarnings](docs/ImageProcessingWarnings.md)
+ - [InfoBanner](docs/InfoBanner.md)
+ - [InfoBannerMode](docs/InfoBannerMode.md)
+ - [InfoBannerUrlButton](docs/InfoBannerUrlButton.md)
+ - [InfoBannersConfig](docs/InfoBannersConfig.md)
  - [InitEmailChange](docs/InitEmailChange.md)
  - [InitEmailChangeAdmin](docs/InitEmailChangeAdmin.md)
  - [InitEmailChangeResult](docs/InitEmailChangeResult.md)
@@ -464,6 +481,7 @@ Class | Method | HTTP request | Description
  - [ProfileAttributesConfigQuery](docs/ProfileAttributesConfigQuery.md)
  - [ProfileAttributesConfigQueryItem](docs/ProfileAttributesConfigQueryItem.md)
  - [ProfileAttributesConfigQueryResult](docs/ProfileAttributesConfigQueryResult.md)
+ - [ProfileAttributesSchemaExport](docs/ProfileAttributesSchemaExport.md)
  - [ProfileConfig](docs/ProfileConfig.md)
  - [ProfileContent](docs/ProfileContent.md)
  - [ProfileContentVersion](docs/ProfileContentVersion.md)
@@ -520,6 +538,7 @@ Class | Method | HTTP request | Description
  - [RequestEmailLoginTokenResult](docs/RequestEmailLoginTokenResult.md)
  - [ResetNewsIteratorResult](docs/ResetNewsIteratorResult.md)
  - [ResetReceivedLikesIteratorResult](docs/ResetReceivedLikesIteratorResult.md)
+ - [SaveInfoBanners](docs/SaveInfoBanners.md)
  - [ScheduledMaintenanceStatus](docs/ScheduledMaintenanceStatus.md)
  - [ScheduledTaskStatus](docs/ScheduledTaskStatus.md)
  - [ScheduledTaskType](docs/ScheduledTaskType.md)
@@ -551,6 +570,7 @@ Class | Method | HTTP request | Description
  - [StringResource](docs/StringResource.md)
  - [SyncVersion](docs/SyncVersion.md)
  - [SystemInfo](docs/SystemInfo.md)
+ - [TextInfoBanner](docs/TextInfoBanner.md)
  - [TimeGranularity](docs/TimeGranularity.md)
  - [Translation](docs/Translation.md)
  - [TypingIndicatorConfig](docs/TypingIndicatorConfig.md)
@@ -561,6 +581,7 @@ Class | Method | HTTP request | Description
  - [UpdateCustomReportEmpty](docs/UpdateCustomReportEmpty.md)
  - [UpdateNewsTranslation](docs/UpdateNewsTranslation.md)
  - [UpdateNewsTranslationResult](docs/UpdateNewsTranslationResult.md)
+ - [UpdateProfileAttributesSchema](docs/UpdateProfileAttributesSchema.md)
  - [UpdateProfileContentReport](docs/UpdateProfileContentReport.md)
  - [UpdateProfileNameReport](docs/UpdateProfileNameReport.md)
  - [UpdateProfileTextReport](docs/UpdateProfileTextReport.md)

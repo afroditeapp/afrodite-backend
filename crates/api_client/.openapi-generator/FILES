@@ -58,9 +58,12 @@ src/models/backup_transfer_byte_count.rs
 src/models/backup_transfer_client_role.rs
 src/models/backup_transfer_initial_message.rs
 src/models/backup_transfer_target_data.rs
+src/models/banner_platform.rs
+src/models/banner_visibility.rs
 src/models/boolean_setting.rs
 src/models/bot_account.rs
 src/models/bot_config.rs
+src/models/bot_config_warnings.rs
 src/models/chat_app_notification_settings.rs
 src/models/chat_config.rs
 src/models/chat_email_notification_settings.rs
@@ -112,6 +115,8 @@ src/models/demo_account_login_result.rs
 src/models/demo_account_login_to_account.rs
 src/models/demo_account_register_account_result.rs
 src/models/demo_account_token.rs
+src/models/dynamic_client_features_config.rs
+src/models/dynamic_client_features_config_hash.rs
 src/models/email_address_state.rs
 src/models/email_address_state_admin.rs
 src/models/email_login.rs
@@ -138,6 +143,7 @@ src/models/get_client_version_statistics_result.rs
 src/models/get_client_version_statistics_settings.rs
 src/models/get_conversation_id.rs
 src/models/get_custom_reports_config_result.rs
+src/models/get_dynamic_client_features_config_result.rs
 src/models/get_initial_profile_age_result.rs
 src/models/get_ip_address_statistics_result.rs
 src/models/get_ip_address_statistics_settings.rs
@@ -161,6 +167,11 @@ src/models/get_push_notification_info.rs
 src/models/get_report_list.rs
 src/models/get_sent_message.rs
 src/models/image_processing_dynamic_config.rs
+src/models/image_processing_warnings.rs
+src/models/info_banner.rs
+src/models/info_banner_mode.rs
+src/models/info_banner_url_button.rs
+src/models/info_banners_config.rs
 src/models/init_email_change.rs
 src/models/init_email_change_admin.rs
 src/models/init_email_change_result.rs
@@ -250,6 +261,7 @@ src/models/profile_attribute_value_update.rs
 src/models/profile_attributes_config_query.rs
 src/models/profile_attributes_config_query_item.rs
 src/models/profile_attributes_config_query_result.rs
+src/models/profile_attributes_schema_export.rs
 src/models/profile_config.rs
 src/models/profile_content.rs
 src/models/profile_content_version.rs
@@ -306,6 +318,7 @@ src/models/request_email_login_token.rs
 src/models/request_email_login_token_result.rs
 src/models/reset_news_iterator_result.rs
 src/models/reset_received_likes_iterator_result.rs
+src/models/save_info_banners.rs
 src/models/scheduled_maintenance_status.rs
 src/models/scheduled_task_status.rs
 src/models/scheduled_task_type.rs
@@ -337,6 +350,7 @@ src/models/statistics_profile_visibility.rs
 src/models/string_resource.rs
 src/models/sync_version.rs
 src/models/system_info.rs
+src/models/text_info_banner.rs
 src/models/time_granularity.rs
 src/models/translation.rs
 src/models/typing_indicator_config.rs
@@ -347,6 +361,7 @@ src/models/update_chat_message_report.rs
 src/models/update_custom_report_empty.rs
 src/models/update_news_translation.rs
 src/models/update_news_translation_result.rs
+src/models/update_profile_attributes_schema.rs
 src/models/update_profile_content_report.rs
 src/models/update_profile_name_report.rs
 src/models/update_profile_text_report.rs

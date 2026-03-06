@@ -19,6 +19,9 @@ pub struct ClientConfig {
     /// None, if custom reports are not configured.
     #[serde(rename = "custom_reports", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub custom_reports: Option<Option<Box<models::CustomReportsConfigHash>>>,
+    /// None, if dynamic client features are not configured.
+    #[serde(rename = "dynamic_client_features", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub dynamic_client_features: Option<Option<Box<models::DynamicClientFeaturesConfigHash>>>,
     /// None, if attributes are not configured.
     #[serde(rename = "profile_attributes", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub profile_attributes: Option<Option<Box<models::PartialProfileAttributesConfig>>>,
@@ -31,6 +34,7 @@ impl ClientConfig {
         ClientConfig {
             client_features: None,
             custom_reports: None,
+            dynamic_client_features: None,
             profile_attributes: None,
             sync_version: Box::new(sync_version),
         }

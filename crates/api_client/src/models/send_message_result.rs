@@ -18,19 +18,19 @@ pub struct SendMessageResult {
     pub d: Option<Option<String>>,
     #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
     pub error: Option<bool>,
-    #[serde(rename = "error_receiver_blocked_sender_or_receiver_not_found", skip_serializing_if = "Option::is_none")]
-    pub error_receiver_blocked_sender_or_receiver_not_found: Option<bool>,
-    #[serde(rename = "error_receiver_public_key_outdated", skip_serializing_if = "Option::is_none")]
-    pub error_receiver_public_key_outdated: Option<bool>,
+    #[serde(rename = "error_recipient_blocked_sender_or_recipient_not_found", skip_serializing_if = "Option::is_none")]
+    pub error_recipient_blocked_sender_or_recipient_not_found: Option<bool>,
+    #[serde(rename = "error_recipient_public_key_outdated", skip_serializing_if = "Option::is_none")]
+    pub error_recipient_public_key_outdated: Option<bool>,
     #[serde(rename = "error_sender_public_key_outdated", skip_serializing_if = "Option::is_none")]
     pub error_sender_public_key_outdated: Option<bool>,
     #[serde(rename = "error_too_many_pending_delivery_infos_exists", skip_serializing_if = "Option::is_none")]
     pub error_too_many_pending_delivery_infos_exists: Option<bool>,
-    #[serde(rename = "error_too_many_receiver_acknowledgements_missing", skip_serializing_if = "Option::is_none")]
-    pub error_too_many_receiver_acknowledgements_missing: Option<bool>,
+    #[serde(rename = "error_too_many_recipient_acknowledgements_missing", skip_serializing_if = "Option::is_none")]
+    pub error_too_many_recipient_acknowledgements_missing: Option<bool>,
     #[serde(rename = "error_too_many_sender_acknowledgements_missing", skip_serializing_if = "Option::is_none")]
     pub error_too_many_sender_acknowledgements_missing: Option<bool>,
-    /// Remaining messages which can be sent to conversation before delivery to reciever or message sending acknowledgement must happen. The value will be returned only if there is 5 or less messages left.
+    /// Remaining messages which can be sent to conversation before delivery to recipient or message sending acknowledgement must happen. The value will be returned only if there is 5 or less messages left.
     #[serde(rename = "remaining_conversation_messages", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub remaining_conversation_messages: Option<Option<i32>>,
     /// Remaining daily messages count. The value will be returned only if there is 50 or less messages left.
@@ -43,11 +43,11 @@ impl SendMessageResult {
         SendMessageResult {
             d: None,
             error: None,
-            error_receiver_blocked_sender_or_receiver_not_found: None,
-            error_receiver_public_key_outdated: None,
+            error_recipient_blocked_sender_or_recipient_not_found: None,
+            error_recipient_public_key_outdated: None,
             error_sender_public_key_outdated: None,
             error_too_many_pending_delivery_infos_exists: None,
-            error_too_many_receiver_acknowledgements_missing: None,
+            error_too_many_recipient_acknowledgements_missing: None,
             error_too_many_sender_acknowledgements_missing: None,
             remaining_conversation_messages: None,
             remaining_messages: None,

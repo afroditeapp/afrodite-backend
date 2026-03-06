@@ -152,10 +152,10 @@ pub enum PostAddPublicKeyError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_add_receiver_acknowledgement`]
+/// struct for typed errors of method [`post_add_recipient_acknowledgement`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostAddReceiverAcknowledgementError {
+pub enum PostAddRecipientAcknowledgementError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -683,7 +683,7 @@ pub async fn get_pending_latest_seen_messages(configuration: &configuration::Con
     }
 }
 
-/// The returned bytes is - Hide notifications (u8, values: 0 or 1) - List of objects  Data for single object: - Binary data length as minimal i64 - Binary data  Minimal i64 has this format: - i64 byte count (u8, values: 1, 2, 4, 8) - i64 bytes (little-endian)  Binary data is binary PGP message which contains backend signed binary data. The binary data contains: - Version (u8, values: 1) - Sender AccountId UUID big-endian bytes (16 bytes) - Receiver AccountId UUID big-endian bytes (16 bytes) - Message MessageId UUID big-endian bytes (16 bytes) - Sender public key ID (minimal i64) - Receiver public key ID (minimal i64) - Message number (minimal i64) - Unix time (minimal i64) - Message data
+/// The returned bytes is - Hide notifications (u8, values: 0 or 1) - List of objects  Data for single object: - Binary data length as minimal i64 - Binary data  Minimal i64 has this format: - i64 byte count (u8, values: 1, 2, 4, 8) - i64 bytes (little-endian)  Binary data is binary PGP message which contains backend signed binary data. The binary data contains: - Version (u8, values: 1) - Sender AccountId UUID big-endian bytes (16 bytes) - Recipient AccountId UUID big-endian bytes (16 bytes) - Message MessageId UUID big-endian bytes (16 bytes) - Sender public key ID (minimal i64) - Recipient public key ID (minimal i64) - Message number (minimal i64) - Unix time (minimal i64) - Message data
 pub async fn get_pending_messages(configuration: &configuration::Configuration, ) -> Result<reqwest::Response, Error<GetPendingMessagesError>> {
 
     let uri_str = format!("{}/chat_api/pending_messages", configuration.base_path);
@@ -901,11 +901,11 @@ pub async fn post_add_public_key(configuration: &configuration::Configuration, b
     }
 }
 
-pub async fn post_add_receiver_acknowledgement(configuration: &configuration::Configuration, pending_message_acknowledgement_list: models::PendingMessageAcknowledgementList) -> Result<(), Error<PostAddReceiverAcknowledgementError>> {
+pub async fn post_add_recipient_acknowledgement(configuration: &configuration::Configuration, pending_message_acknowledgement_list: models::PendingMessageAcknowledgementList) -> Result<(), Error<PostAddRecipientAcknowledgementError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_pending_message_acknowledgement_list = pending_message_acknowledgement_list;
 
-    let uri_str = format!("{}/chat_api/add_receiver_acknowledgement", configuration.base_path);
+    let uri_str = format!("{}/chat_api/add_recipient_acknowledgement", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -925,7 +925,7 @@ pub async fn post_add_receiver_acknowledgement(configuration: &configuration::Co
         Ok(())
     } else {
         let content = resp.text().await?;
-        let entity: Option<PostAddReceiverAcknowledgementError> = serde_json::from_str(&content).ok();
+        let entity: Option<PostAddRecipientAcknowledgementError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -1548,12 +1548,12 @@ pub async fn post_send_like(configuration: &configuration::Configuration, accoun
     }
 }
 
-/// Server config file defines max count for conversation pending messages. Max message size is u16::MAX.  Sending will fail if one or two way block exists.  Only the latest public key for sender and receiver can be used when sending a message.
-pub async fn post_send_message(configuration: &configuration::Configuration, sender_public_key_id: i64, receiver: &str, receiver_public_key_id: i64, message_id: &str, body: Vec<u8>) -> Result<models::SendMessageResult, Error<PostSendMessageError>> {
+/// Server config file defines max count for conversation pending messages. Max message size is u16::MAX.  Sending will fail if one or two way block exists.  Only the latest public key for sender and recipient can be used when sending a message.
+pub async fn post_send_message(configuration: &configuration::Configuration, sender_public_key_id: i64, recipient: &str, recipient_public_key_id: i64, message_id: &str, body: Vec<u8>) -> Result<models::SendMessageResult, Error<PostSendMessageError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_sender_public_key_id = sender_public_key_id;
-    let p_query_receiver = receiver;
-    let p_query_receiver_public_key_id = receiver_public_key_id;
+    let p_query_recipient = recipient;
+    let p_query_recipient_public_key_id = recipient_public_key_id;
     let p_query_message_id = message_id;
     let p_body_body = body;
 
@@ -1561,8 +1561,8 @@ pub async fn post_send_message(configuration: &configuration::Configuration, sen
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     req_builder = req_builder.query(&[("sender_public_key_id", &p_query_sender_public_key_id.to_string())]);
-    req_builder = req_builder.query(&[("receiver", &p_query_receiver.to_string())]);
-    req_builder = req_builder.query(&[("receiver_public_key_id", &p_query_receiver_public_key_id.to_string())]);
+    req_builder = req_builder.query(&[("recipient", &p_query_recipient.to_string())]);
+    req_builder = req_builder.query(&[("recipient_public_key_id", &p_query_recipient_public_key_id.to_string())]);
     req_builder = req_builder.query(&[("message_id", &p_query_message_id.to_string())]);
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());

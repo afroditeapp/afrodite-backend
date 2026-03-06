@@ -42,6 +42,15 @@ pub enum GetProfileAgeAndNameError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_profile_attributes_schema`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetProfileAttributesSchemaError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_profile_statistics_history`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -82,6 +91,15 @@ pub enum PostModerateProfileStringError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostSetProfileNameError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`put_profile_attributes_schema`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PutProfileAttributesSchemaError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -205,6 +223,44 @@ pub async fn get_profile_age_and_name(configuration: &configuration::Configurati
     } else {
         let content = resp.text().await?;
         let entity: Option<GetProfileAgeAndNameError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// # Access - Permission [Permissions::admin_edit_profile_attributes_schema].
+pub async fn get_profile_attributes_schema(configuration: &configuration::Configuration, ) -> Result<models::ProfileAttributesSchemaExport, Error<GetProfileAttributesSchemaError>> {
+
+    let uri_str = format!("{}/profile_api/profile_attributes_schema", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ProfileAttributesSchemaExport`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ProfileAttributesSchemaExport`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetProfileAttributesSchemaError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -394,6 +450,36 @@ pub async fn post_set_profile_name(configuration: &configuration::Configuration,
     } else {
         let content = resp.text().await?;
         let entity: Option<PostSetProfileNameError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// Removing attributes or attribute values is not possible.  # Access - Permission [Permissions::admin_edit_profile_attributes_schema]. - Modifying user visible values (texts and icons) requires   [Permissions::admin_edit_profile_attributes_schema_visible_content].
+pub async fn put_profile_attributes_schema(configuration: &configuration::Configuration, update_profile_attributes_schema: models::UpdateProfileAttributesSchema) -> Result<(), Error<PutProfileAttributesSchemaError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_update_profile_attributes_schema = update_profile_attributes_schema;
+
+    let uri_str = format!("{}/profile_api/profile_attributes_schema", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_update_profile_attributes_schema);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PutProfileAttributesSchemaError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

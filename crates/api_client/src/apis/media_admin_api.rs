@@ -24,6 +24,15 @@ pub enum GetImageProcessingConfigError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_image_processing_config_warnings`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetImageProcessingConfigWarningsError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_media_content_pending_moderation_list`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -95,6 +104,44 @@ pub async fn get_image_processing_config(configuration: &configuration::Configur
     } else {
         let content = resp.text().await?;
         let entity: Option<GetImageProcessingConfigError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// # Permissions Requires admin_server_view_image_processing_config.
+pub async fn get_image_processing_config_warnings(configuration: &configuration::Configuration, ) -> Result<models::ImageProcessingWarnings, Error<GetImageProcessingConfigWarningsError>> {
+
+    let uri_str = format!("{}/media_api/image_processing_config_warnings", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ImageProcessingWarnings`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ImageProcessingWarnings`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetImageProcessingConfigWarningsError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

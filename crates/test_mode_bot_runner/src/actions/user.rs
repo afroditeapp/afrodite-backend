@@ -6,7 +6,7 @@ use api_client::{
         chat_api::{
             get_latest_public_key_id, get_message_delivery_info, get_pending_latest_seen_messages,
             get_pending_messages, get_public_key, post_add_public_key,
-            post_add_receiver_acknowledgement, post_add_sender_acknowledgement,
+            post_add_recipient_acknowledgement, post_add_sender_acknowledgement,
             post_delete_message_delivery_info, post_delete_pending_latest_seen_messages,
             post_get_received_likes_page, post_mark_message_as_seen,
             post_reset_received_likes_paging, post_send_like, post_send_message,
@@ -287,7 +287,7 @@ impl BotAction for AnswerReceivedMessages {
             delivery_failed: None,
         };
 
-        post_add_receiver_acknowledgement(state.api(), delete_list)
+        post_add_recipient_acknowledgement(state.api(), delete_list)
             .await
             .change_context(TestError::ApiRequest)?;
 
