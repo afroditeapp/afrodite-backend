@@ -38,12 +38,16 @@ impl CurrentWriteProfileNotification<'_> {
         insert_into(profile_app_notification_state)
             .values((
                 account_id.eq(id.as_db_id()),
+                profile_name_accepted_viewed.eq(values.name_accepted),
+                profile_name_rejected_viewed.eq(values.name_rejected),
                 profile_text_accepted_viewed.eq(values.text_accepted),
                 profile_text_rejected_viewed.eq(values.text_rejected),
             ))
             .on_conflict(account_id)
             .do_update()
             .set((
+                profile_name_accepted_viewed.eq(values.name_accepted),
+                profile_name_rejected_viewed.eq(values.name_rejected),
                 profile_text_accepted_viewed.eq(values.text_accepted),
                 profile_text_rejected_viewed.eq(values.text_rejected),
             ))
