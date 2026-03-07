@@ -274,6 +274,14 @@ impl GetSentMessage {
     }
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct SendLike {
+    pub account_id: AccountId,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub allow_matching: bool,
+}
+
 #[derive(Serialize, ToSchema)]
 pub struct SendLikeResult {
     #[serde(skip_serializing_if = "Option::is_none")]

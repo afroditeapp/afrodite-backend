@@ -1,10 +1,10 @@
 use axum::{Extension, extract::State};
 use model::AccountState;
 use model_chat::{
-    AccountId, AccountIdInternal, AccountInteractionState, CurrentAccountInteractionState,
-    DailyLikesLeft, LimitedActionStatus, MarkReceivedLikesViewed, NewReceivedLikesCountResult,
+    AccountIdInternal, AccountInteractionState, CurrentAccountInteractionState, DailyLikesLeft,
+    LimitedActionStatus, MarkReceivedLikesViewed, NewReceivedLikesCountResult,
     PushNotificationFlags, ReceivedLikesIteratorState, ReceivedLikesPage,
-    ResetReceivedLikesIteratorResult, SendLikeResult,
+    ResetReceivedLikesIteratorResult, SendLike, SendLikeResult,
 };
 use server_api::{
     S,
@@ -25,7 +25,8 @@ use crate::{
 const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
 
 /// Send a like to some account. If both will like each other, then
-/// the accounts will be a match.
+/// the accounts will be a match. The second account must set
+/// [SendLike::allow_matching] to true.
 ///
 /// This route might update [model_chat::DailyLikesLeft] and WebSocket event
 /// about the update is not sent because this route returns the new value.
@@ -39,7 +40,7 @@ const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
 #[utoipa::path(
     post,
     path = PATH_POST_SEND_LIKE,
-    request_body(content = AccountId),
+    request_body(content = SendLike),
     responses(
         (status = 200, description = "Success.", body = SendLikeResult),
         (status = 401, description = "Unauthorized."),
@@ -51,7 +52,7 @@ pub async fn post_send_like(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Extension(account_state): Extension<AccountState>,
-    Json(requested_account): Json<AccountId>,
+    Json(send_like): Json<SendLike>,
 ) -> Result<Json<SendLikeResult>, StatusCode> {
     CHAT.post_send_like.incr();
     state
@@ -63,7 +64,7 @@ pub async fn post_send_like(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let requested_account = state.get_internal_id(requested_account).await?;
+    let requested_account = state.get_internal_id(send_like.account_id).await?;
 
     let r = db_write!(state, move |cmds| {
         let current_interaction = cmds
@@ -83,6 +84,10 @@ pub async fn post_send_like(
                     if current_interaction.account_id_sender == Some(id.into_db_id()) {
                         return Ok(SendLikeResult::error_account_interaction_state_mismatch(
                             CurrentAccountInteractionState::LikeSent,
+                        ));
+                    } else if !send_like.allow_matching {
+                        return Ok(SendLikeResult::error_account_interaction_state_mismatch(
+                            CurrentAccountInteractionState::LikeReceived,
                         ));
                     }
                 }
