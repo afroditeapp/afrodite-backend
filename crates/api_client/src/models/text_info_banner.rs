@@ -15,6 +15,8 @@ use serde::{Deserialize, Serialize};
 pub struct TextInfoBanner {
     #[serde(rename = "body")]
     pub body: Box<models::StringResource>,
+    #[serde(rename = "dismissible", skip_serializing_if = "Option::is_none")]
+    pub dismissible: Option<bool>,
     #[serde(rename = "icon", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub icon: Option<Option<String>>,
     #[serde(rename = "url_button", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -25,6 +27,7 @@ impl TextInfoBanner {
     pub fn new(body: models::StringResource) -> TextInfoBanner {
         TextInfoBanner {
             body: Box::new(body),
+            dismissible: None,
             icon: None,
             url_button: None,
         }

@@ -620,6 +620,8 @@ pub mod security_content;
 pub use self::security_content::SecurityContent;
 pub mod seen_message;
 pub use self::seen_message::SeenMessage;
+pub mod send_like;
+pub use self::send_like::SendLike;
 pub mod send_like_result;
 pub use self::send_like_result::SendLikeResult;
 pub mod send_message_result;

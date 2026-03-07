@@ -121,7 +121,7 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**post_mark_received_likes_viewed**](docs/ChatApi.md#post_mark_received_likes_viewed) | **POST** /chat_api/mark_received_likes_viewed | 
 *ChatApi* | [**post_reset_new_received_likes_count**](docs/ChatApi.md#post_reset_new_received_likes_count) | **POST** /chat_api/reset_new_received_likes_count | 
 *ChatApi* | [**post_reset_received_likes_paging**](docs/ChatApi.md#post_reset_received_likes_paging) | **POST** /chat_api/received_likes/reset | 
-*ChatApi* | [**post_send_like**](docs/ChatApi.md#post_send_like) | **POST** /chat_api/send_like | Send a like to some account. If both will like each other, then the accounts will be a match.
+*ChatApi* | [**post_send_like**](docs/ChatApi.md#post_send_like) | **POST** /chat_api/send_like | Send a like to some account. If both will like each other, then the accounts will be a match. The second account must set [SendLike::allow_matching] to true.
 *ChatApi* | [**post_send_message**](docs/ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match.
 *ChatApi* | [**post_unblock_profile**](docs/ChatApi.md#post_unblock_profile) | **POST** /chat_api/unblock_profile | Unblock profile
 *ChatTransferApi* | [**get_backup_transfer**](docs/ChatTransferApi.md#get_backup_transfer) | **GET** /chat_api/backup_transfer | Transfer chat backup between clients using WebSocket.
@@ -548,6 +548,7 @@ Class | Method | HTTP request | Description
  - [SearchGroups](docs/SearchGroups.md)
  - [SecurityContent](docs/SecurityContent.md)
  - [SeenMessage](docs/SeenMessage.md)
+ - [SendLike](docs/SendLike.md)
  - [SendLikeResult](docs/SendLikeResult.md)
  - [SendMessageResult](docs/SendMessageResult.md)
  - [SendVerifyEmailMessageResult](docs/SendVerifyEmailMessageResult.md)

@@ -14,7 +14,8 @@ use api_client::{
     },
     models::{
         AccountId, MessageDeliveryInfoIdList, MessageId, MessageNumber,
-        PendingMessageAcknowledgementList, PendingMessageId, SeenMessage, SentMessageIdList,
+        PendingMessageAcknowledgementList, PendingMessageId, SeenMessage, SendLike,
+        SentMessageIdList,
     },
 };
 use async_trait::async_trait;
@@ -161,9 +162,15 @@ impl BotAction for AcceptReceivedLikesAndSendMessage {
             }
 
             for like in received_likes.l {
-                post_send_like(state.api(), like.p.a.as_ref().clone())
-                    .await
-                    .change_context(TestError::ApiRequest)?;
+                post_send_like(
+                    state.api(),
+                    SendLike {
+                        account_id: like.p.a.as_ref().clone().into(),
+                        allow_matching: Some(true),
+                    },
+                )
+                .await
+                .change_context(TestError::ApiRequest)?;
 
                 let new_msg = "Hello!".to_string();
                 send_message(state, *like.p.a, new_msg).await?;
@@ -419,7 +426,14 @@ impl BotAction for SendLikeIfNeeded {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         if let Some(account_id) = state.get_bot_config().send_like_to_account_id {
             let account_id = AccountId::new(account_id.to_string());
-            let r = post_send_like(state.api(), account_id).await;
+            let r = post_send_like(
+                state.api(),
+                SendLike {
+                    account_id: account_id.into(),
+                    allow_matching: Some(true),
+                },
+            )
+            .await;
             if r.is_err() {
                 warn!("Sending like failed. Task: {}", state.task_id,);
             }
