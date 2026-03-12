@@ -2,7 +2,7 @@ use axum::{
     Extension,
     extract::{Query, State},
 };
-use model::{AdminNotificationTypes, NotificationEvent, PendingAppNotificationType};
+use model::{AdminNotificationTypes, NotificationEvent, PendingAppNotificationInternal};
 use model_media::{
     AccountIdInternal, EventToClientInternal, GetMediaContentPendingModerationList,
     GetMediaContentPendingModerationParams, Permissions, PostModerateMediaContent,
@@ -157,9 +157,9 @@ pub async fn post_moderate_media_content(
             // Accepted or rejected
 
             let pending_type = if data.accept {
-                PendingAppNotificationType::MediaContentModerationAccepted
+                PendingAppNotificationInternal::MediaContentModerationAccepted
             } else {
-                PendingAppNotificationType::MediaContentModerationRejected
+                PendingAppNotificationInternal::MediaContentModerationRejected
             };
 
             cmds.common()

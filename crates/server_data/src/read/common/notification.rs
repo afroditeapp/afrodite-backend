@@ -33,6 +33,19 @@ impl ReadCommandsCommonNotification<'_> {
         .into_error()
     }
 
+    pub async fn pending_app_notifications_without_sent_push(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Vec<PendingAppNotification>, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.common()
+                .notification()
+                .pending_app_notifications_without_sent_push(id)
+        })
+        .await
+        .into_error()
+    }
+
     pub async fn pending_app_notifications(
         &self,
         id: AccountIdInternal,

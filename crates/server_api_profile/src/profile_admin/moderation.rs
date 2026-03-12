@@ -2,7 +2,7 @@ use axum::{
     Extension,
     extract::{Path, Query, State},
 };
-use model::{AccountId, AdminNotificationTypes, NotificationEvent, PendingAppNotificationType};
+use model::{AccountId, AdminNotificationTypes, NotificationEvent, PendingAppNotificationInternal};
 use model_profile::{
     AccountIdInternal, EventToClientInternal, GetProfileStringPendingModerationList,
     GetProfileStringPendingModerationParams, GetProfileStringState, GetProfileStringStateParams,
@@ -161,16 +161,16 @@ pub async fn post_moderate_profile_string(
 
             let pending_type = match (data.content_type, data.accept) {
                 (ProfileStringModerationContentType::ProfileName, true) => {
-                    PendingAppNotificationType::ProfileNameModerationAccepted
+                    PendingAppNotificationInternal::ProfileNameModerationAccepted
                 }
                 (ProfileStringModerationContentType::ProfileName, false) => {
-                    PendingAppNotificationType::ProfileNameModerationRejected
+                    PendingAppNotificationInternal::ProfileNameModerationRejected
                 }
                 (ProfileStringModerationContentType::ProfileText, true) => {
-                    PendingAppNotificationType::ProfileTextModerationAccepted
+                    PendingAppNotificationInternal::ProfileTextModerationAccepted
                 }
                 (ProfileStringModerationContentType::ProfileText, false) => {
-                    PendingAppNotificationType::ProfileTextModerationRejected
+                    PendingAppNotificationInternal::ProfileTextModerationRejected
                 }
             };
 

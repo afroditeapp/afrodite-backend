@@ -1,14 +1,6 @@
 use axum::{Extension, extract::State};
-use model::{
-    AutomaticProfileSearchCompletedNotification, AutomaticProfileSearchCompletedNotificationViewed,
-    PushNotificationFlags,
-};
 use model_profile::{AccountIdInternal, ProfileAppNotificationSettings};
-use server_api::{
-    S,
-    app::{EventManagerProvider, WriteData},
-    create_open_api_router, db_write,
-};
+use server_api::{S, app::WriteData, create_open_api_router, db_write};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 
@@ -73,87 +65,10 @@ async fn post_profile_app_notification_settings(
     Ok(())
 }
 
-const PATH_POST_GET_AUTOMATIC_PROFILE_SEARCH_COMPLETED_NOTIFICATION: &str =
-    "/profile_api/automatic_profile_search_completed_notification";
-
-#[utoipa::path(
-    post,
-    path = PATH_POST_GET_AUTOMATIC_PROFILE_SEARCH_COMPLETED_NOTIFICATION,
-    responses(
-        (status = 200, description = "Successfull.", body = AutomaticProfileSearchCompletedNotification),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn post_get_automatic_profile_search_completed_notification(
-    State(state): State<S>,
-    Extension(account_id): Extension<AccountIdInternal>,
-) -> Result<Json<AutomaticProfileSearchCompletedNotification>, StatusCode> {
-    PROFILE
-        .post_get_automatic_profile_search_completed_notification
-        .incr();
-
-    let mut info = state
-        .read()
-        .profile()
-        .notification()
-        .automatic_profile_search_completed(account_id)
-        .await?;
-
-    let visiblity = state
-        .event_manager()
-        .remove_pending_push_notification_flags_from_cache(
-            account_id,
-            PushNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED,
-        )
-        .await;
-    info.hidden = visiblity.hidden;
-
-    Ok(info.into())
-}
-
-const PATH_POST_MARK_AUTOMATIC_PROFILE_SEARCH_COMPLETED_NOTIFICATION_VIEWED: &str =
-    "/profile_api/mark_automatic_profile_search_completed_notification_viewed";
-
-/// The viewed values must be updated to prevent WebSocket code from sending
-/// unnecessary event about new notification.
-#[utoipa::path(
-    post,
-    path = PATH_POST_MARK_AUTOMATIC_PROFILE_SEARCH_COMPLETED_NOTIFICATION_VIEWED,
-    request_body = AutomaticProfileSearchCompletedNotificationViewed,
-    responses(
-        (status = 200, description = "Successfull."),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn post_mark_automatic_profile_search_completed_notification_viewed(
-    State(state): State<S>,
-    Extension(account_id): Extension<AccountIdInternal>,
-    Json(viewed): Json<AutomaticProfileSearchCompletedNotificationViewed>,
-) -> Result<(), StatusCode> {
-    PROFILE
-        .post_mark_automatic_profile_search_completed_notification_viewed
-        .incr();
-
-    db_write!(state, move |cmds| {
-        cmds.profile()
-            .notification()
-            .update_automatic_profile_search_notification_viewed_values(account_id, viewed)
-            .await
-    })?;
-
-    Ok(())
-}
-
 create_open_api_router!(
    fn router_notification,
    get_profile_app_notification_settings,
    post_profile_app_notification_settings,
-   post_get_automatic_profile_search_completed_notification,
-   post_mark_automatic_profile_search_completed_notification_viewed,
 );
 
 create_counters!(
@@ -162,6 +77,4 @@ create_counters!(
     PROFILE_NOTIFICATION_COUNTERS_LIST,
     get_profile_app_notification_settings,
     post_profile_app_notification_settings,
-    post_get_automatic_profile_search_completed_notification,
-    post_mark_automatic_profile_search_completed_notification_viewed,
 );

@@ -36,6 +36,23 @@ impl CurrentReadCommonNotification<'_> {
             .into_db_error(id)
     }
 
+    pub fn pending_app_notifications_without_sent_push(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<Vec<PendingAppNotification>, DieselDatabaseError> {
+        use crate::schema::pending_app_notifications::dsl::*;
+
+        let rows: Vec<PendingAppNotification> = pending_app_notifications
+            .filter(account_id.eq(id.as_db_id()))
+            .filter(push_notification_sent.eq(false))
+            .select(PendingAppNotification::as_select())
+            .order_by(notification_type_number.asc())
+            .load(self.conn())
+            .into_db_error(id)?;
+
+        Ok(rows)
+    }
+
     pub fn pending_app_notifications(
         &mut self,
         id: AccountIdInternal,

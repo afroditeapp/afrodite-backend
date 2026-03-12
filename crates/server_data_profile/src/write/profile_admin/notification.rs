@@ -1,7 +1,8 @@
-use model_profile::AccountIdInternal;
-use server_data::{DataError, IntoDataError, define_cmd_wrapper_write, result::Result};
-
-use crate::cache::CacheWriteProfile;
+use database::current::write::GetDbWriteCommandsCommon;
+use model_profile::{AccountIdInternal, PendingAppNotificationInternal};
+use server_data::{
+    DataError, db_transaction, define_cmd_wrapper_write, result::Result, write::DbTransaction,
+};
 
 define_cmd_wrapper_write!(WriteCommandsProfileAdminNotification);
 
@@ -11,17 +12,17 @@ impl WriteCommandsProfileAdminNotification<'_> {
         id: AccountIdInternal,
         profile_count: i64,
     ) -> Result<(), DataError> {
-        self.write_cache_profile(id, |p| {
-            p.automatic_profile_search.notification.profiles_found.id = p
-                .automatic_profile_search
-                .notification
-                .profiles_found
-                .id
-                .wrapping_increment();
-            p.automatic_profile_search.notification.profile_count = profile_count;
-            Ok(())
-        })
-        .await
-        .into_error()
+        db_transaction!(self, move |mut cmds| {
+            cmds.common()
+                .notification()
+                .upsert_pending_app_notification(
+                    id,
+                    PendingAppNotificationInternal::AutomaticProfileSearchCompleted {
+                        profile_count,
+                    },
+                )
+        })?;
+
+        Ok(())
     }
 }

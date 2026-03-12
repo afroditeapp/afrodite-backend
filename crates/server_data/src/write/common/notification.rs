@@ -1,5 +1,5 @@
 use database::current::write::GetDbWriteCommandsCommon;
-use model::{AccountIdInternal, PendingAppNotification, PendingAppNotificationType};
+use model::{AccountIdInternal, PendingAppNotification, PendingAppNotificationInternal};
 
 use crate::{
     DataError, db_transaction, define_cmd_wrapper_write, result::Result, write::DbTransaction,
@@ -11,12 +11,12 @@ impl WriteCommandsCommonNotification<'_> {
     pub async fn upsert_pending_app_notification(
         &self,
         id: AccountIdInternal,
-        type_number: PendingAppNotificationType,
+        notification: PendingAppNotificationInternal,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.common()
                 .notification()
-                .upsert_pending_app_notification(id, type_number)
+                .upsert_pending_app_notification(id, notification)
         })?;
 
         Ok(())
@@ -25,12 +25,12 @@ impl WriteCommandsCommonNotification<'_> {
     pub async fn mark_pending_app_notifications_push_sent(
         &self,
         id: AccountIdInternal,
-        type_numbers: Vec<PendingAppNotificationType>,
+        notifications: Vec<PendingAppNotification>,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.common()
                 .notification()
-                .mark_pending_app_notifications_push_sent(id, type_numbers)
+                .mark_pending_app_notifications_push_sent(id, notifications)
         })?;
 
         Ok(())

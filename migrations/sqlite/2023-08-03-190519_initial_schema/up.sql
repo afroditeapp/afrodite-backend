@@ -199,6 +199,7 @@ CREATE TABLE IF NOT EXISTS pending_app_notifications(
     account_id                BIGINT   NOT NULL,
     notification_type_number  SMALLINT NOT NULL,
     push_notification_sent    BOOLEAN  NOT NULL DEFAULT FALSE,
+    data_integer              BIGINT,
     PRIMARY KEY (account_id, notification_type_number),
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)

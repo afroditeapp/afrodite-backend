@@ -1,10 +1,7 @@
 use std::sync::Arc;
 
 use error_stack::{Result, ResultExt};
-use model::{
-    AccountId, AccountIdInternal, AutomaticProfileSearchCompletedNotification, LastSeenUnixTime,
-    NextNumberStorage, UnixTime,
-};
+use model::{AccountId, AccountIdInternal, LastSeenUnixTime, NextNumberStorage, UnixTime};
 use model_server_data::{
     AtomicLastSeenTime, AutomaticProfileSearchIteratorSessionIdInternal,
     AutomaticProfileSearchLastSeenUnixTime, AutomaticProfileSearchSettings,
@@ -192,7 +189,6 @@ pub struct AutomaticProfileSearch {
     pub iterator_session_id: Option<AutomaticProfileSearchIteratorSessionIdInternal>,
     pub iterator_session_id_storage: NextNumberStorage,
     last_seen_unix_time: Option<AutomaticProfileSearchLastSeenUnixTime>,
-    pub notification: AutomaticProfileSearchCompletedNotification,
     settings: AutomaticProfileSearchSettings,
 }
 
@@ -206,7 +202,6 @@ impl AutomaticProfileSearch {
             iterator_session_id: None,
             iterator_session_id_storage: NextNumberStorage::default(),
             last_seen_unix_time,
-            notification: AutomaticProfileSearchCompletedNotification::default(),
             settings,
         }
     }

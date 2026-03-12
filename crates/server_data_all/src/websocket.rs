@@ -68,16 +68,14 @@ pub async fn send_events_if_needed(
         .await?;
     }
 
-    // Profile
+    let has_automatic_profile_search = pending_notifications.iter().any(|v| {
+        matches!(
+            v,
+            PendingAppNotificationType::AutomaticProfileSearchCompleted
+        )
+    });
 
-    let notification = read_handle
-        .profile()
-        .notification()
-        .automatic_profile_search_completed(id)
-        .await
-        .change_context(WebSocketError::DatabaseAutomaticProfileSearchCompletedNotificationQuery)?;
-
-    if !notification.notifications_viewed() {
+    if has_automatic_profile_search {
         send_event(
             socket,
             EventToClientInternal::AutomaticProfileSearchCompleted,

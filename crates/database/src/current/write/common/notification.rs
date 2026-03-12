@@ -1,6 +1,6 @@
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{AccountIdInternal, PendingAppNotification, PendingAppNotificationType};
+use model::{AccountIdInternal, PendingAppNotification, PendingAppNotificationInternal};
 use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_write_commands};
@@ -11,19 +11,25 @@ impl CurrentWriteCommonNotification<'_> {
     pub fn upsert_pending_app_notification(
         &mut self,
         id: AccountIdInternal,
-        type_number: PendingAppNotificationType,
+        notification: PendingAppNotificationInternal,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::pending_app_notifications::dsl::*;
+
+        let (type_number, data_integer_value) = notification.into_db_values();
 
         insert_into(pending_app_notifications)
             .values((
                 account_id.eq(id.as_db_id()),
                 notification_type_number.eq(type_number),
                 push_notification_sent.eq(false),
+                data_integer.eq(data_integer_value),
             ))
             .on_conflict((account_id, notification_type_number))
             .do_update()
-            .set(push_notification_sent.eq(false))
+            .set((
+                push_notification_sent.eq(false),
+                data_integer.eq(data_integer_value),
+            ))
             .execute_my_conn(self.conn())
             .into_db_error(id)?;
 
@@ -33,20 +39,24 @@ impl CurrentWriteCommonNotification<'_> {
     pub fn mark_pending_app_notifications_push_sent(
         &mut self,
         id: AccountIdInternal,
-        type_numbers: Vec<PendingAppNotificationType>,
+        notifications: Vec<PendingAppNotification>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::pending_app_notifications::dsl::*;
 
-        if type_numbers.is_empty() {
+        if notifications.is_empty() {
             return Ok(());
         }
 
-        update(pending_app_notifications)
-            .filter(account_id.eq(id.as_db_id()))
-            .filter(notification_type_number.eq_any(type_numbers))
-            .set(push_notification_sent.eq(true))
-            .execute(self.conn())
-            .into_db_error(id)?;
+        for notification in notifications {
+            update(pending_app_notifications)
+                .filter(account_id.eq(id.as_db_id()))
+                .filter(notification_type_number.eq(notification.notification_type))
+                .filter(push_notification_sent.eq(notification.push_notification_sent))
+                .filter(data_integer.eq(notification.data_integer))
+                .set(push_notification_sent.eq(true))
+                .execute(self.conn())
+                .into_db_error(id)?;
+        }
 
         Ok(())
     }
@@ -62,31 +72,12 @@ impl CurrentWriteCommonNotification<'_> {
             return Ok(());
         }
 
-        let mut push_sent_type_numbers = Vec::new();
-        let mut push_not_sent_type_numbers = Vec::new();
-
         for notification in notifications {
-            if notification.push_notification_sent {
-                push_sent_type_numbers.push(notification.notification_type);
-            } else {
-                push_not_sent_type_numbers.push(notification.notification_type);
-            }
-        }
-
-        if !push_sent_type_numbers.is_empty() {
             delete(pending_app_notifications)
                 .filter(account_id.eq(id.as_db_id()))
-                .filter(notification_type_number.eq_any(push_sent_type_numbers))
-                .filter(push_notification_sent.eq(true))
-                .execute(self.conn())
-                .into_db_error(id)?;
-        }
-
-        if !push_not_sent_type_numbers.is_empty() {
-            delete(pending_app_notifications)
-                .filter(account_id.eq(id.as_db_id()))
-                .filter(notification_type_number.eq_any(push_not_sent_type_numbers))
-                .filter(push_notification_sent.eq(false))
+                .filter(notification_type_number.eq(notification.notification_type))
+                .filter(push_notification_sent.eq(notification.push_notification_sent))
+                .filter(data_integer.eq(notification.data_integer))
                 .execute(self.conn())
                 .into_db_error(id)?;
         }

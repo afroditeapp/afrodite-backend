@@ -3,8 +3,6 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i16_wrapper;
 use utoipa::ToSchema;
 
-use crate::{NotificationIdViewed, NotificationStatus};
-
 /// Selected weekdays.
 ///
 /// The integer is a bitflag.
@@ -105,25 +103,4 @@ impl From<WeekdayFlags> for SelectedWeekdays {
     fn from(value: WeekdayFlags) -> Self {
         SelectedWeekdays(value.bits())
     }
-}
-
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
-pub struct AutomaticProfileSearchCompletedNotification {
-    pub profiles_found: NotificationStatus,
-    pub profile_count: i64,
-    /// If true, client should not show the notification
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub hidden: bool,
-}
-
-impl AutomaticProfileSearchCompletedNotification {
-    pub fn notifications_viewed(&self) -> bool {
-        self.profiles_found.notification_viewed()
-    }
-}
-
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
-pub struct AutomaticProfileSearchCompletedNotificationViewed {
-    pub profiles_found: NotificationIdViewed,
 }

@@ -13,7 +13,6 @@ use server_api::{
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use server_data_account::read::GetReadCommandsAccount;
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
-use server_data_profile::read::GetReadProfileCommands;
 use server_state::{S, result::Result};
 
 pub async fn notifications_for_sending(
@@ -48,17 +47,14 @@ pub async fn notifications_for_sending(
 
     if flags.intersects(
         PushNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED
-            | PushNotificationFlags::PROFILE_STRING_MODERATION_COMPLETED,
+            | PushNotificationFlags::PROFILE_STRING_MODERATION_COMPLETED
+            | PushNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED,
     ) {
         checker.handle_pending_notifications().await?;
     }
 
     if flags.contains(PushNotificationFlags::NEWS_CHANGED) {
         checker.handle_news().await?;
-    }
-
-    if flags.contains(PushNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED) {
-        checker.handle_automatic_profile_search_completed().await?;
     }
 
     if flags.contains(PushNotificationFlags::ADMIN_NOTIFICATION) {
@@ -156,11 +152,11 @@ impl<'a> NotificationChecker<'a> {
             .read()
             .common()
             .notification()
-            .pending_app_notification_type_numbers_without_sent_push(self.id)
+            .pending_app_notifications_without_sent_push(self.id)
             .await?;
 
         for notification in &pending_notifications {
-            match notification {
+            match notification.notification_type {
                 PendingAppNotificationType::MediaContentModerationAccepted => {
                     self.add_notification(
                         PushNotificationId::MediaContentModerationAccepted,
@@ -203,6 +199,21 @@ impl<'a> NotificationChecker<'a> {
                         self.notification_strings.profile_text_rejected(),
                     );
                 }
+                PendingAppNotificationType::AutomaticProfileSearchCompleted => {
+                    let data_integer = notification.data_integer.unwrap_or_default();
+                    self.add_notification(
+                        PushNotificationId::AutomaticProfileSearchCompleted,
+                        if data_integer == 1 {
+                            self.notification_strings
+                                .automatic_profile_search_found_profiles_single()
+                        } else {
+                            self.notification_strings
+                                .automatic_profile_search_found_profiles_multiple(
+                                    &data_integer.to_string(),
+                                )
+                        },
+                    );
+                }
             }
         }
 
@@ -235,33 +246,6 @@ impl<'a> NotificationChecker<'a> {
             self.add_notification(
                 PushNotificationId::NewsItemAvailable,
                 self.notification_strings.news_item_available(),
-            );
-        }
-
-        Ok(())
-    }
-
-    async fn handle_automatic_profile_search_completed(&mut self) -> Result<(), DataError> {
-        let search = self
-            .state
-            .read()
-            .profile()
-            .notification()
-            .automatic_profile_search_completed(self.id)
-            .await?;
-
-        if !search.notifications_viewed() {
-            self.add_notification(
-                PushNotificationId::AutomaticProfileSearchCompleted,
-                if search.profile_count == 1 {
-                    self.notification_strings
-                        .automatic_profile_search_found_profiles_single()
-                } else {
-                    self.notification_strings
-                        .automatic_profile_search_found_profiles_multiple(
-                            &search.profile_count.to_string(),
-                        )
-                },
             );
         }
 

@@ -32,7 +32,59 @@ pub enum PendingAppNotificationType {
     ProfileNameModerationRejected = 61,
     ProfileTextModerationAccepted = 62,
     ProfileTextModerationRejected = 63,
+    AutomaticProfileSearchCompleted = 64,
     // 80..99: chat
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum PendingAppNotificationInternal {
+    MediaContentModerationAccepted,
+    MediaContentModerationRejected,
+    MediaContentModerationDeleted,
+    ProfileNameModerationAccepted,
+    ProfileNameModerationRejected,
+    ProfileTextModerationAccepted,
+    ProfileTextModerationRejected,
+    AutomaticProfileSearchCompleted { profile_count: i64 },
+}
+
+impl PendingAppNotificationInternal {
+    pub fn into_db_values(self) -> (PendingAppNotificationType, Option<i64>) {
+        match self {
+            Self::MediaContentModerationAccepted => (
+                PendingAppNotificationType::MediaContentModerationAccepted,
+                None,
+            ),
+            Self::MediaContentModerationRejected => (
+                PendingAppNotificationType::MediaContentModerationRejected,
+                None,
+            ),
+            Self::MediaContentModerationDeleted => (
+                PendingAppNotificationType::MediaContentModerationDeleted,
+                None,
+            ),
+            Self::ProfileNameModerationAccepted => (
+                PendingAppNotificationType::ProfileNameModerationAccepted,
+                None,
+            ),
+            Self::ProfileNameModerationRejected => (
+                PendingAppNotificationType::ProfileNameModerationRejected,
+                None,
+            ),
+            Self::ProfileTextModerationAccepted => (
+                PendingAppNotificationType::ProfileTextModerationAccepted,
+                None,
+            ),
+            Self::ProfileTextModerationRejected => (
+                PendingAppNotificationType::ProfileTextModerationRejected,
+                None,
+            ),
+            Self::AutomaticProfileSearchCompleted { profile_count } => (
+                PendingAppNotificationType::AutomaticProfileSearchCompleted,
+                Some(profile_count),
+            ),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
@@ -49,4 +101,6 @@ pub struct PendingAppNotification {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub push_notification_sent: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub data_integer: Option<i64>,
 }

@@ -1,5 +1,5 @@
 use futures::stream::{self, StreamExt};
-use model::{AccountIdInternal, PushNotificationFlags, PushNotificationStateInfoWithFlags};
+use model::{AccountIdInternal, PushNotificationStateInfoWithFlags};
 use model_account::{EmailMessages, EmailSendingState};
 use server_api::{
     app::{EmailSenderImpl, EventManagerProvider, GetConfig, ReadData, WriteData},
@@ -129,16 +129,6 @@ impl StartupTasks {
             })
             .await?;
         }
-
-        // Automatic profile search notification state is stored only
-        // in RAM, so it is not available anymore.
-        state
-            .event_manager()
-            .remove_pending_push_notification_flags_from_cache(
-                id,
-                PushNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED,
-            )
-            .await;
 
         Self::send_push_notification_if_needed(state, id).await?;
 

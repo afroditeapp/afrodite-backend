@@ -639,6 +639,7 @@ diesel::table! {
         account_id -> Int8,
         notification_type_number -> Int2,
         push_notification_sent -> Bool,
+        data_integer -> Nullable<Int8>,
     }
 }
 
