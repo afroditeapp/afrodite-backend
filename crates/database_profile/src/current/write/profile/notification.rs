@@ -1,7 +1,7 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{insert_into, prelude::*};
 use error_stack::Result;
-use model::{AccountIdInternal, ProfileStringModerationCompletedNotificationViewed};
+use model::AccountIdInternal;
 use model_profile::ProfileAppNotificationSettings;
 use simple_backend_utils::db::MyRunQueryDsl;
 
@@ -22,35 +22,6 @@ impl CurrentWriteProfileNotification<'_> {
             .on_conflict(account_id)
             .do_update()
             .set(settings)
-            .execute_my_conn(self.conn())
-            .into_db_error(())?;
-
-        Ok(())
-    }
-
-    pub fn update_notification_viewed_values(
-        &mut self,
-        id: AccountIdInternal,
-        values: ProfileStringModerationCompletedNotificationViewed,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::profile_app_notification_state::dsl::*;
-
-        insert_into(profile_app_notification_state)
-            .values((
-                account_id.eq(id.as_db_id()),
-                profile_name_accepted_viewed.eq(values.name_accepted),
-                profile_name_rejected_viewed.eq(values.name_rejected),
-                profile_text_accepted_viewed.eq(values.text_accepted),
-                profile_text_rejected_viewed.eq(values.text_rejected),
-            ))
-            .on_conflict(account_id)
-            .do_update()
-            .set((
-                profile_name_accepted_viewed.eq(values.name_accepted),
-                profile_name_rejected_viewed.eq(values.name_rejected),
-                profile_text_accepted_viewed.eq(values.text_accepted),
-                profile_text_rejected_viewed.eq(values.text_rejected),
-            ))
             .execute_my_conn(self.conn())
             .into_db_error(())?;
 

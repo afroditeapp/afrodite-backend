@@ -8,8 +8,6 @@ use simple_backend_model::{UnixTime, diesel_db_i16_is_u8_struct};
 use simple_backend_utils::diesel_i64_wrapper;
 use utoipa::ToSchema;
 
-use crate::{NotificationIdViewed, NotificationStatus};
-
 mod attributes_schema;
 pub use attributes_schema::*;
 
@@ -83,35 +81,6 @@ impl From<ProfileAge> for i16 {
 }
 
 diesel_db_i16_is_u8_struct!(ProfileAge);
-
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
-pub struct ProfileStringModerationCompletedNotification {
-    pub name_accepted: NotificationStatus,
-    pub name_rejected: NotificationStatus,
-    pub text_accepted: NotificationStatus,
-    pub text_rejected: NotificationStatus,
-    /// If true, client should not show the notifications
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub hidden: bool,
-}
-
-impl ProfileStringModerationCompletedNotification {
-    pub fn notifications_viewed(&self) -> bool {
-        self.name_accepted.notification_viewed()
-            && self.name_rejected.notification_viewed()
-            && self.text_accepted.notification_viewed()
-            && self.text_rejected.notification_viewed()
-    }
-}
-
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
-pub struct ProfileStringModerationCompletedNotificationViewed {
-    pub name_accepted: NotificationIdViewed,
-    pub name_rejected: NotificationIdViewed,
-    pub text_accepted: NotificationIdViewed,
-    pub text_rejected: NotificationIdViewed,
-}
 
 #[derive(Debug, Clone, Copy, Default, Serialize, FromSqlRow, AsExpression)]
 #[diesel(sql_type = BigInt)]

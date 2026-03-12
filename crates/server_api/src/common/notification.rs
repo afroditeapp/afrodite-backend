@@ -41,7 +41,8 @@ pub async fn get_pending_app_notifications(
         .event_manager()
         .remove_pending_push_notification_flags_from_cache(
             id,
-            PushNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED,
+            PushNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED
+                | PushNotificationFlags::PROFILE_STRING_MODERATION_COMPLETED,
         )
         .await;
 

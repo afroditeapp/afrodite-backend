@@ -1,5 +1,5 @@
 use axum::extract::ws::{Message, WebSocket};
-use model::ScheduledMaintenanceStatus;
+use model::{PendingAppNotificationType, ScheduledMaintenanceStatus};
 use model_chat::{
     AccountIdInternal, ChatStateRaw, EventToClient, EventToClientInternal, SyncCheckDataType,
     SyncCheckResult, SyncDataVersionFromClient, SyncVersionFromClient, SyncVersionUtils,
@@ -33,7 +33,16 @@ pub async fn send_events_if_needed(
         .await
         .change_context(WebSocketError::DatabaseGetPendingNotifications)?;
 
-    if !pending_notifications.is_empty() {
+    let has_media_content_moderation = pending_notifications.iter().any(|v| {
+        matches!(
+            v,
+            PendingAppNotificationType::MediaContentModerationAccepted
+                | PendingAppNotificationType::MediaContentModerationRejected
+                | PendingAppNotificationType::MediaContentModerationDeleted
+        )
+    });
+
+    if has_media_content_moderation {
         send_event(
             socket,
             EventToClientInternal::MediaContentModerationCompleted,
@@ -41,24 +50,25 @@ pub async fn send_events_if_needed(
         .await?;
     }
 
-    // Profile
+    let has_profile_string_moderation = pending_notifications.iter().any(|v| {
+        matches!(
+            v,
+            PendingAppNotificationType::ProfileNameModerationAccepted
+                | PendingAppNotificationType::ProfileNameModerationRejected
+                | PendingAppNotificationType::ProfileTextModerationAccepted
+                | PendingAppNotificationType::ProfileTextModerationRejected
+        )
+    });
 
-    let notification = read_handle
-        .profile()
-        .notification()
-        .profile_string_moderation_completed(id)
-        .await
-        .change_context(
-            WebSocketError::DatabaseProfileStringModerationCompletedNotificationQuery,
-        )?;
-
-    if !notification.notifications_viewed() {
+    if has_profile_string_moderation {
         send_event(
             socket,
             EventToClientInternal::ProfileStringModerationCompleted,
         )
         .await?;
     }
+
+    // Profile
 
     let notification = read_handle
         .profile()

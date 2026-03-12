@@ -1,11 +1,8 @@
-use database_profile::current::read::GetDbReadCommandsProfile;
 use model_profile::{
     AccountIdInternal, AutomaticProfileSearchCompletedNotification, ProfileAppNotificationSettings,
-    ProfileStringModerationCompletedNotification,
 };
 use server_data::{
-    DataError, IntoDataError, cache::CacheReadCommon, define_cmd_wrapper_read, read::DbRead,
-    result::Result,
+    DataError, IntoDataError, cache::CacheReadCommon, define_cmd_wrapper_read, result::Result,
 };
 
 use crate::cache::CacheReadProfile;
@@ -20,22 +17,6 @@ impl ReadCommandsProfileNotification<'_> {
         self.read_cache_common(id, |entry| Ok(entry.app_notification_settings.profile))
             .await
             .into_error()
-    }
-
-    pub async fn profile_string_moderation_completed(
-        &self,
-        account_id: AccountIdInternal,
-    ) -> Result<ProfileStringModerationCompletedNotification, DataError> {
-        let info = self
-            .db_read(move |mut cmds| {
-                cmds.profile()
-                    .notification()
-                    .profile_string_moderation_completed(account_id)
-            })
-            .await
-            .into_error()?;
-
-        Ok(info)
     }
 
     pub async fn automatic_profile_search_completed(

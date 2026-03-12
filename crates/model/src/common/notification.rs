@@ -28,6 +28,10 @@ pub enum PendingAppNotificationType {
     MediaContentModerationRejected = 41,
     MediaContentModerationDeleted = 42,
     // 60..79: profile
+    ProfileNameModerationAccepted = 60,
+    ProfileNameModerationRejected = 61,
+    ProfileTextModerationAccepted = 62,
+    ProfileTextModerationRejected = 63,
     // 80..99: chat
 }
 

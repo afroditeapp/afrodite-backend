@@ -1,6 +1,6 @@
 use database::{DbReadMode, DieselDatabaseError};
 use database_profile::current::read::GetDbReadCommandsProfile;
-use model::{ProfileStringModerationCompletedNotification, UnixTime};
+use model::UnixTime;
 use model_chat::{
     AutomaticProfileSearchLastSeenUnixTime, AutomaticProfileSearchSettings, LastSeenUnixTime,
     Location, ProfileAppNotificationSettings, ProfileEditedTime,
@@ -25,7 +25,6 @@ pub struct UserDataExportJsonProfile {
     favorite_added_time_list: Vec<UnixTime>,
     profile_name_allowlist: Vec<String>,
     profile_app_notification_settings: ProfileAppNotificationSettings,
-    profile_string_moderation_completed: ProfileStringModerationCompletedNotification,
     automatic_profile_search_settings: AutomaticProfileSearchSettings,
     automatic_profile_search_last_seen_time: Option<AutomaticProfileSearchLastSeenUnixTime>,
     profile_string_moderation_created: ProfileStringModerationCreated,
@@ -56,10 +55,6 @@ impl UserDataExportJsonProfile {
                 .profile()
                 .notification()
                 .app_notification_settings(id)?,
-            profile_string_moderation_completed: current
-                .profile()
-                .notification()
-                .profile_string_moderation_completed(id)?,
             automatic_profile_search_settings: current
                 .profile()
                 .search()

@@ -2,7 +2,7 @@ use axum::{
     Extension,
     extract::{Path, Query, State},
 };
-use model::{AccountId, AdminNotificationTypes, NotificationEvent};
+use model::{AccountId, AdminNotificationTypes, NotificationEvent, PendingAppNotificationType};
 use model_profile::{
     AccountIdInternal, EventToClientInternal, GetProfileStringPendingModerationList,
     GetProfileStringPendingModerationParams, GetProfileStringState, GetProfileStringStateParams,
@@ -13,6 +13,7 @@ use server_api::{
     app::{AdminNotificationProvider, GetAccounts, WriteData},
     create_open_api_router, db_write,
 };
+use server_data::write::GetWriteCommandsCommon;
 use server_data_profile::{
     read::GetReadProfileCommands,
     write::{GetWriteCommandsProfile, profile_admin::moderation::ModerateProfileValueMode},
@@ -158,26 +159,25 @@ pub async fn post_moderate_profile_string(
         if !data.move_to_human.unwrap_or_default() {
             // Accepted or rejected
 
-            match data.content_type {
-                ProfileStringModerationContentType::ProfileName => {
-                    cmds.profile_admin()
-                        .notification()
-                        .show_profile_name_moderation_completed_notification(
-                            string_owner_id,
-                            data.accept,
-                        )
-                        .await?;
+            let pending_type = match (data.content_type, data.accept) {
+                (ProfileStringModerationContentType::ProfileName, true) => {
+                    PendingAppNotificationType::ProfileNameModerationAccepted
                 }
-                ProfileStringModerationContentType::ProfileText => {
-                    cmds.profile_admin()
-                        .notification()
-                        .show_profile_text_moderation_completed_notification(
-                            string_owner_id,
-                            data.accept,
-                        )
-                        .await?;
+                (ProfileStringModerationContentType::ProfileName, false) => {
+                    PendingAppNotificationType::ProfileNameModerationRejected
                 }
-            }
+                (ProfileStringModerationContentType::ProfileText, true) => {
+                    PendingAppNotificationType::ProfileTextModerationAccepted
+                }
+                (ProfileStringModerationContentType::ProfileText, false) => {
+                    PendingAppNotificationType::ProfileTextModerationRejected
+                }
+            };
+
+            cmds.common()
+                .notification()
+                .upsert_pending_app_notification(string_owner_id, pending_type)
+                .await?;
 
             cmds.events()
                 .send_notification(

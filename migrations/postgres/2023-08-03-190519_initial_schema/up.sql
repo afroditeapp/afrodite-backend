@@ -715,22 +715,6 @@ CREATE TABLE IF NOT EXISTS profile_privacy_settings(
             ON UPDATE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS profile_app_notification_state(
-    account_id                         BIGINT PRIMARY KEY  NOT NULL,
-    profile_name_accepted              SMALLINT            NOT NULL DEFAULT 0,
-    profile_name_accepted_viewed       SMALLINT            NOT NULL DEFAULT 0,
-    profile_name_rejected              SMALLINT            NOT NULL DEFAULT 0,
-    profile_name_rejected_viewed       SMALLINT            NOT NULL DEFAULT 0,
-    profile_text_accepted              SMALLINT            NOT NULL DEFAULT 0,
-    profile_text_accepted_viewed       SMALLINT            NOT NULL DEFAULT 0,
-    profile_text_rejected              SMALLINT            NOT NULL DEFAULT 0,
-    profile_text_rejected_viewed       SMALLINT            NOT NULL DEFAULT 0,
-    FOREIGN KEY (account_id)
-        REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
-);
-
 CREATE TABLE IF NOT EXISTS profile_automatic_profile_search_settings(
     account_id        BIGINT PRIMARY KEY  NOT NULL,
     new_profiles      BOOLEAN             NOT NULL,

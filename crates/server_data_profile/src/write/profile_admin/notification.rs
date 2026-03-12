@@ -1,45 +1,11 @@
-use database_profile::current::write::GetDbWriteCommandsProfile;
 use model_profile::AccountIdInternal;
-use server_data::{
-    DataError, IntoDataError, db_transaction, define_cmd_wrapper_write, result::Result,
-    write::DbTransaction,
-};
+use server_data::{DataError, IntoDataError, define_cmd_wrapper_write, result::Result};
 
 use crate::cache::CacheWriteProfile;
 
 define_cmd_wrapper_write!(WriteCommandsProfileAdminNotification);
 
 impl WriteCommandsProfileAdminNotification<'_> {
-    pub async fn show_profile_name_moderation_completed_notification(
-        &self,
-        id: AccountIdInternal,
-        accepted: bool,
-    ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.profile_admin()
-                .notification()
-                .show_profile_name_moderation_completed_notification(id, accepted)?;
-            Ok(())
-        })?;
-
-        Ok(())
-    }
-
-    pub async fn show_profile_text_moderation_completed_notification(
-        &self,
-        id: AccountIdInternal,
-        accepted: bool,
-    ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.profile_admin()
-                .notification()
-                .show_profile_text_moderation_completed_notification(id, accepted)?;
-            Ok(())
-        })?;
-
-        Ok(())
-    }
-
     pub async fn show_automatic_profile_search_notification(
         &self,
         id: AccountIdInternal,

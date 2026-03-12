@@ -679,20 +679,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    profile_app_notification_state (account_id) {
-        account_id -> Int8,
-        profile_name_accepted -> Int2,
-        profile_name_accepted_viewed -> Int2,
-        profile_name_rejected -> Int2,
-        profile_name_rejected_viewed -> Int2,
-        profile_text_accepted -> Int2,
-        profile_text_accepted_viewed -> Int2,
-        profile_text_rejected -> Int2,
-        profile_text_rejected_viewed -> Int2,
-    }
-}
-
-diesel::table! {
     profile_attributes_filter_list_unwanted (account_id, attribute_id, filter_value) {
         account_id -> Int8,
         attribute_id -> Int2,
@@ -938,7 +924,6 @@ diesel::joinable!(news_translations -> news (news_id));
 diesel::joinable!(pending_app_notifications -> account_id (account_id));
 diesel::joinable!(profile -> account_id (account_id));
 diesel::joinable!(profile_app_notification_settings -> account_id (account_id));
-diesel::joinable!(profile_app_notification_state -> account_id (account_id));
 diesel::joinable!(profile_attributes_filter_list_unwanted -> account_id (account_id));
 diesel::joinable!(profile_attributes_filter_list_wanted -> account_id (account_id));
 diesel::joinable!(profile_attributes_filter_settings -> account_id (account_id));
@@ -1024,7 +1009,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     pending_messages,
     profile,
     profile_app_notification_settings,
-    profile_app_notification_state,
     profile_attributes_filter_list_unwanted,
     profile_attributes_filter_list_wanted,
     profile_attributes_filter_settings,

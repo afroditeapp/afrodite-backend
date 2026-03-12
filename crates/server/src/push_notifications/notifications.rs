@@ -46,16 +46,15 @@ pub async fn notifications_for_sending(
         checker.handle_received_likes().await?;
     }
 
-    if flags.contains(PushNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED) {
+    if flags.intersects(
+        PushNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED
+            | PushNotificationFlags::PROFILE_STRING_MODERATION_COMPLETED,
+    ) {
         checker.handle_pending_notifications().await?;
     }
 
     if flags.contains(PushNotificationFlags::NEWS_CHANGED) {
         checker.handle_news().await?;
-    }
-
-    if flags.contains(PushNotificationFlags::PROFILE_STRING_MODERATION_COMPLETED) {
-        checker.handle_profile_string_moderation().await?;
     }
 
     if flags.contains(PushNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED) {
@@ -180,6 +179,30 @@ impl<'a> NotificationChecker<'a> {
                         self.notification_strings.media_content_deleted(),
                     );
                 }
+                PendingAppNotificationType::ProfileNameModerationAccepted => {
+                    self.add_notification(
+                        PushNotificationId::ProfileNameModerationAccepted,
+                        self.notification_strings.profile_name_accepted(),
+                    );
+                }
+                PendingAppNotificationType::ProfileNameModerationRejected => {
+                    self.add_notification(
+                        PushNotificationId::ProfileNameModerationRejected,
+                        self.notification_strings.profile_name_rejected(),
+                    );
+                }
+                PendingAppNotificationType::ProfileTextModerationAccepted => {
+                    self.add_notification(
+                        PushNotificationId::ProfileTextModerationAccepted,
+                        self.notification_strings.profile_text_accepted(),
+                    );
+                }
+                PendingAppNotificationType::ProfileTextModerationRejected => {
+                    self.add_notification(
+                        PushNotificationId::ProfileTextModerationRejected,
+                        self.notification_strings.profile_text_rejected(),
+                    );
+                }
             }
         }
 
@@ -212,46 +235,6 @@ impl<'a> NotificationChecker<'a> {
             self.add_notification(
                 PushNotificationId::NewsItemAvailable,
                 self.notification_strings.news_item_available(),
-            );
-        }
-
-        Ok(())
-    }
-
-    async fn handle_profile_string_moderation(&mut self) -> Result<(), DataError> {
-        let v = self
-            .state
-            .read()
-            .profile()
-            .notification()
-            .profile_string_moderation_completed(self.id)
-            .await?;
-
-        if !v.name_accepted.notification_viewed() {
-            self.add_notification(
-                PushNotificationId::ProfileNameModerationAccepted,
-                self.notification_strings.profile_name_accepted(),
-            );
-        }
-
-        if !v.name_rejected.notification_viewed() {
-            self.add_notification(
-                PushNotificationId::ProfileNameModerationRejected,
-                self.notification_strings.profile_name_rejected(),
-            );
-        }
-
-        if !v.text_accepted.notification_viewed() {
-            self.add_notification(
-                PushNotificationId::ProfileTextModerationAccepted,
-                self.notification_strings.profile_text_accepted(),
-            );
-        }
-
-        if !v.text_rejected.notification_viewed() {
-            self.add_notification(
-                PushNotificationId::ProfileTextModerationRejected,
-                self.notification_strings.profile_text_rejected(),
             );
         }
 
