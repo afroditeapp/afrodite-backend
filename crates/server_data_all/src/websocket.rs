@@ -24,6 +24,23 @@ pub async fn send_events_if_needed(
     socket: &mut WebSocket,
     id: AccountIdInternal,
 ) -> Result<(), WebSocketError> {
+    // Common
+
+    let pending_notifications = read_handle
+        .common()
+        .notification()
+        .pending_app_notification_type_numbers(id)
+        .await
+        .change_context(WebSocketError::DatabaseGetPendingNotifications)?;
+
+    if !pending_notifications.is_empty() {
+        send_event(
+            socket,
+            EventToClientInternal::MediaContentModerationCompleted,
+        )
+        .await?;
+    }
+
     // Profile
 
     let notification = read_handle
@@ -54,23 +71,6 @@ pub async fn send_events_if_needed(
         send_event(
             socket,
             EventToClientInternal::AutomaticProfileSearchCompleted,
-        )
-        .await?;
-    }
-
-    // Media
-
-    let notification = read_handle
-        .media()
-        .notification()
-        .media_content_moderation_completed(id)
-        .await
-        .change_context(WebSocketError::DatabaseMediaContentModerationCompletedNotificationQuery)?;
-
-    if !notification.notifications_viewed() {
-        send_event(
-            socket,
-            EventToClientInternal::MediaContentModerationCompleted,
         )
         .await?;
     }

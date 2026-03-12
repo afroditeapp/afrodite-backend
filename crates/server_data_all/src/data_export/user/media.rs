@@ -1,9 +1,6 @@
 use database::{DbReadMode, DieselDatabaseError};
 use database_media::current::read::GetDbReadCommandsMedia;
-use model::{
-    ContentId, ContentIdDb, MediaContentModerationCompletedNotification, ProfileContentVersion,
-    UnixTime,
-};
+use model::{ContentId, ContentIdDb, ProfileContentVersion, UnixTime};
 use model_chat::MediaAppNotificationSettings;
 use model_media::{
     ContentInfoDetailed, MediaContentRaw, MediaStateRaw, MyProfileContent, SecurityContent,
@@ -20,7 +17,6 @@ pub struct UserDataExportJsonMedia {
     content_extra_info: Vec<DataExportMediaContent>,
     pub content: Vec<ContentInfoDetailed>,
     media_app_notification_settings: MediaAppNotificationSettings,
-    media_content_moderation_completed: MediaContentModerationCompletedNotification,
 }
 
 impl UserDataExportJsonMedia {
@@ -48,10 +44,6 @@ impl UserDataExportJsonMedia {
                 .media()
                 .notification()
                 .app_notification_settings(id)?,
-            media_content_moderation_completed: current
-                .media()
-                .notification()
-                .media_content_moderation_completed(id)?,
         };
         Ok(data)
     }

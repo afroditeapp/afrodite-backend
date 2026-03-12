@@ -9,6 +9,7 @@ use crate::{
 
 pub mod bot_config;
 mod client_config;
+mod notification;
 pub mod profile_attributes;
 mod push_notification;
 mod report;
@@ -40,6 +41,10 @@ impl<'a> CurrentReadCommon<'a> {
 
     pub fn client_config(self) -> client_config::CurrentReadCommonClientConfig<'a> {
         client_config::CurrentReadCommonClientConfig::new(self.cmds)
+    }
+
+    pub fn notification(self) -> notification::CurrentReadCommonNotification<'a> {
+        notification::CurrentReadCommonNotification::new(self.cmds)
     }
 
     pub fn push_notification(self) -> push_notification::CurrentReadCommonPushNotification<'a> {

@@ -35,6 +35,7 @@ impl ApiDoc {
         let common = ApiDoc::openapi()
             .merge_from(server_api::common::router_client_config(state.clone()).into_openapi())
             .merge_from(server_api::common::router_data_export(state.clone()).into_openapi())
+            .merge_from(server_api::common::router_notification(state.clone()).into_openapi())
             .merge_from(
                 server_api::common::router_push_notification_private(state.clone()).into_openapi(),
             )

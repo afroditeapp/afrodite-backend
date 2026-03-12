@@ -24,6 +24,9 @@ pub use api_usage::*;
 pub mod data_export;
 pub use data_export::*;
 
+pub mod notification;
+pub use notification::*;
+
 pub mod sync_version;
 pub use sync_version::*;
 
@@ -64,6 +67,7 @@ pub enum EventType {
     ClientConfigChanged,
     ProfileChanged,
     NewsCountChanged,
+    // TODO: Remove once all pending notifications are added
     MediaContentModerationCompleted,
     MediaContentChanged,
     DailyLikesLeftChanged,

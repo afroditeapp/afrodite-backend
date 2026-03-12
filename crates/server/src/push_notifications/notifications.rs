@@ -1,16 +1,18 @@
 use config::file_notification_content::{
     NotificationStringGetter, NotificationTitle, NotificationTitleAndBody,
 };
-use model::{AccountIdInternal, PushNotification, PushNotificationFlags, PushNotificationId};
+use model::{
+    AccountIdInternal, PendingAppNotificationType, PushNotification, PushNotificationFlags,
+    PushNotificationId,
+};
 use server_api::{
     DataError,
     app::{AdminNotificationProvider, GetConfig, ReadData, WriteData},
     db_write_raw,
 };
-use server_data::read::GetReadCommandsCommon;
+use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use server_data_account::read::GetReadCommandsAccount;
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
-use server_data_media::read::GetReadMediaCommands;
 use server_data_profile::read::GetReadProfileCommands;
 use server_state::{S, result::Result};
 
@@ -45,7 +47,7 @@ pub async fn notifications_for_sending(
     }
 
     if flags.contains(PushNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED) {
-        checker.handle_media_content_moderation().await?;
+        checker.handle_pending_notifications().await?;
     }
 
     if flags.contains(PushNotificationFlags::NEWS_CHANGED) {
@@ -149,35 +151,46 @@ impl<'a> NotificationChecker<'a> {
         Ok(())
     }
 
-    async fn handle_media_content_moderation(&mut self) -> Result<(), DataError> {
-        let v = self
+    async fn handle_pending_notifications(&mut self) -> Result<(), DataError> {
+        let pending_notifications = self
             .state
             .read()
-            .media()
+            .common()
             .notification()
-            .media_content_moderation_completed(self.id)
+            .pending_app_notification_type_numbers_without_sent_push(self.id)
             .await?;
 
-        if !v.accepted.notification_viewed() {
-            self.add_notification(
-                PushNotificationId::MediaContentModerationAccepted,
-                self.notification_strings.media_content_accepted(),
-            );
+        for notification in &pending_notifications {
+            match notification {
+                PendingAppNotificationType::MediaContentModerationAccepted => {
+                    self.add_notification(
+                        PushNotificationId::MediaContentModerationAccepted,
+                        self.notification_strings.media_content_accepted(),
+                    );
+                }
+                PendingAppNotificationType::MediaContentModerationRejected => {
+                    self.add_notification(
+                        PushNotificationId::MediaContentModerationRejected,
+                        self.notification_strings.media_content_rejected(),
+                    );
+                }
+                PendingAppNotificationType::MediaContentModerationDeleted => {
+                    self.add_notification_with_body(
+                        PushNotificationId::MediaContentModerationDeleted,
+                        self.notification_strings.media_content_deleted(),
+                    );
+                }
+            }
         }
 
-        if !v.rejected.notification_viewed() {
-            self.add_notification(
-                PushNotificationId::MediaContentModerationRejected,
-                self.notification_strings.media_content_rejected(),
-            );
-        }
-
-        if !v.deleted.notification_viewed() {
-            self.add_notification_with_body(
-                PushNotificationId::MediaContentModerationDeleted,
-                self.notification_strings.media_content_deleted(),
-            );
-        }
+        let account_id = self.id;
+        db_write_raw!(self.state, move |cmds| {
+            cmds.common()
+                .notification()
+                .mark_pending_app_notifications_push_sent(account_id, pending_notifications)
+                .await
+        })
+        .await?;
 
         Ok(())
     }

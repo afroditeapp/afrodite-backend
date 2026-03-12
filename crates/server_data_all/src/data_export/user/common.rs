@@ -3,7 +3,7 @@ use model::{
     Account, AccountIdInternal, AdminNotification, AdminNotificationSettings,
     ClientConfigSyncVersion, ClientLanguage, ClientType, GetApiUsageStatisticsResult,
     GetApiUsageStatisticsSettings, GetIpAddressStatisticsResult, InitialSetupCompletedTime,
-    LatestBirthdate, OtherSharedState, PushNotificationDbState, ReportId,
+    LatestBirthdate, OtherSharedState, PendingAppNotification, PushNotificationDbState, ReportId,
     ReportIteratorQueryInternal, ReportProcessingState, ReportTypeNumber, UnixTime,
 };
 use serde::Serialize;
@@ -20,6 +20,7 @@ pub struct UserDataExportJsonCommon {
     ip_address_statistics: GetIpAddressStatisticsResult,
     admin_notification_settings: AdminNotificationSettings,
     admin_notification_subscriptions: AdminNotification,
+    pending_app_notifications: Vec<PendingAppNotification>,
     note: &'static str,
 }
 
@@ -53,6 +54,10 @@ impl UserDataExportJsonCommon {
                 .common_admin()
                 .notification()
                 .admin_notification_subscriptions(id)?,
+            pending_app_notifications: current
+                .common()
+                .notification()
+                .pending_app_notifications(id)?,
             note: "Account IDs of moderation decision makers are not included in this data export.",
         };
         Ok(data)

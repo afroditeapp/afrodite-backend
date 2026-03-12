@@ -564,18 +564,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    media_app_notification_state (account_id) {
-        account_id -> Int8,
-        media_content_accepted -> Int2,
-        media_content_accepted_viewed -> Int2,
-        media_content_rejected -> Int2,
-        media_content_rejected_viewed -> Int2,
-        media_content_deleted -> Int2,
-        media_content_deleted_viewed -> Int2,
-    }
-}
-
-diesel::table! {
     media_content (id) {
         id -> Int8,
         uuid -> Bytea,
@@ -643,6 +631,14 @@ diesel::table! {
         account_id_creator -> Nullable<Int8>,
         account_id_editor -> Nullable<Int8>,
         edit_unix_time -> Nullable<Int8>,
+    }
+}
+
+diesel::table! {
+    pending_app_notifications (account_id, notification_type_number) {
+        account_id -> Int8,
+        notification_type_number -> Int2,
+        push_notification_sent -> Bool,
     }
 }
 
@@ -935,11 +931,11 @@ diesel::joinable!(history_profile_statistics_count_changes_woman -> history_comm
 diesel::joinable!(ip_address_usage_statistics -> account_id (account_id));
 diesel::joinable!(login_session -> account_id (account_id));
 diesel::joinable!(media_app_notification_settings -> account_id (account_id));
-diesel::joinable!(media_app_notification_state -> account_id (account_id));
 diesel::joinable!(media_report_profile_content -> common_report (report_id));
 diesel::joinable!(media_state -> account_id (account_id));
 diesel::joinable!(news -> account_id (account_id_creator));
 diesel::joinable!(news_translations -> news (news_id));
+diesel::joinable!(pending_app_notifications -> account_id (account_id));
 diesel::joinable!(profile -> account_id (account_id));
 diesel::joinable!(profile_app_notification_settings -> account_id (account_id));
 diesel::joinable!(profile_app_notification_state -> account_id (account_id));
@@ -1018,13 +1014,13 @@ diesel::allow_tables_to_appear_in_same_query!(
     latest_seen_message_pending_delivery,
     login_session,
     media_app_notification_settings,
-    media_app_notification_state,
     media_content,
     media_report_profile_content,
     media_state,
     message_delivery_info,
     news,
     news_translations,
+    pending_app_notifications,
     pending_messages,
     profile,
     profile_app_notification_settings,

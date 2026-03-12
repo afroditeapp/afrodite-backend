@@ -7,7 +7,7 @@ pub use simple_backend_model::{ImageProcessingDynamicConfig, ImageProcessingWarn
 use simple_backend_model::{SimpleDieselEnum, diesel_i64_wrapper, diesel_uuid_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{AccountId, AccountIdInternal, NotificationIdViewed, NotificationStatus};
+use crate::{AccountId, AccountIdInternal};
 
 /// media_content table primary key
 #[derive(
@@ -301,29 +301,3 @@ impl AsRef<simple_backend_utils::UuidBase64Url> for ProfileContentVersion {
 }
 
 diesel_uuid_wrapper!(ProfileContentVersion);
-
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
-pub struct MediaContentModerationCompletedNotification {
-    pub accepted: NotificationStatus,
-    pub rejected: NotificationStatus,
-    pub deleted: NotificationStatus,
-    /// If true, client should not show notifications
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub hidden: bool,
-}
-
-impl MediaContentModerationCompletedNotification {
-    pub fn notifications_viewed(&self) -> bool {
-        self.accepted.notification_viewed()
-            && self.rejected.notification_viewed()
-            && self.deleted.notification_viewed()
-    }
-}
-
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, ToSchema)]
-pub struct MediaContentModerationCompletedNotificationViewed {
-    pub accepted: NotificationIdViewed,
-    pub rejected: NotificationIdViewed,
-    pub deleted: NotificationIdViewed,
-}

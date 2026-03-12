@@ -46,8 +46,8 @@ pub enum WebSocketError {
     DatabaseProfileStringModerationCompletedNotificationQuery,
     #[error("Database: Automatic profile search completed notification query failed")]
     DatabaseAutomaticProfileSearchCompletedNotificationQuery,
-    #[error("Database: Media content moderation completed notification query failed")]
-    DatabaseMediaContentModerationCompletedNotificationQuery,
+    #[error("Database: Getting pending notifications failed")]
+    DatabaseGetPendingNotifications,
     #[error("Database: Bot and gender info query failed")]
     DatabaseBotAndGenderInfoQuery,
 

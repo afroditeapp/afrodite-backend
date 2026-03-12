@@ -13,6 +13,7 @@ use crate::{
 mod bot_config;
 mod client_config;
 mod data_export;
+mod notification;
 mod profile_attributes;
 mod push_notification;
 
@@ -33,6 +34,10 @@ impl<'a> ReadCommandsCommon<'a> {
 
     pub fn profile_attributes(self) -> profile_attributes::ReadCommandsCommonProfileAttributes<'a> {
         profile_attributes::ReadCommandsCommonProfileAttributes::new(self.0)
+    }
+
+    pub fn notification(self) -> notification::ReadCommandsCommonNotification<'a> {
+        notification::ReadCommandsCommonNotification::new(self.0)
     }
 
     pub fn push_notification(self) -> push_notification::ReadCommandsCommonPushNotification<'a> {

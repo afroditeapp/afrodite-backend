@@ -16,6 +16,7 @@ impl PrivateRoutes {
         Router::new()
             .merge(api::common::router_client_config(self.state.clone()))
             .merge(api::common::router_data_export(self.state.clone()))
+            .merge(api::common::router_notification(self.state.clone()))
             .merge(api::common::router_push_notification_private(
                 self.state.clone(),
             ))

@@ -7,6 +7,7 @@ use crate::{IntoDatabaseError, define_current_write_commands};
 
 mod bot_config;
 mod client_config;
+mod notification;
 pub mod profile_attributes;
 mod push_notification;
 mod report;
@@ -38,6 +39,10 @@ impl<'a> CurrentWriteCommon<'a> {
 
     pub fn client_config(self) -> client_config::CurrentWriteCommonClientConfig<'a> {
         client_config::CurrentWriteCommonClientConfig::new(self.cmds)
+    }
+
+    pub fn notification(self) -> notification::CurrentWriteCommonNotification<'a> {
+        notification::CurrentWriteCommonNotification::new(self.cmds)
     }
 
     pub fn push_notification(self) -> push_notification::CurrentWriteCommonPushNotification<'a> {

@@ -56,6 +56,9 @@ pub use data_export::*;
 mod file_package;
 pub use file_package::*;
 
+mod notification;
+pub use notification::*;
+
 mod push_notification;
 pub use push_notification::*;
 

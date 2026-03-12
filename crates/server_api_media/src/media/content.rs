@@ -5,7 +5,7 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use headers::{CacheControl, ContentLength, ContentType, ETag, IfNoneMatch};
-use model::{EventToClientInternal, NotificationEvent};
+use model::{EventToClientInternal, NotificationEvent, PendingAppNotificationType};
 use model_media::{
     AccountContent, AccountId, AccountIdInternal, AccountState, ContentId, ContentProcessingId,
     ContentProcessingState, ContentSlot, GetContentQueryParams, NewContentParams, Permissions,
@@ -21,6 +21,7 @@ use server_api::{
 use server_data::{
     DataError,
     read::GetReadCommandsCommon,
+    write::GetWriteCommandsCommon,
     write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle},
 };
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
@@ -420,9 +421,12 @@ pub async fn delete_content(
         if content.moderation_state.is_in_moderation() {
             // Removed content was in moderation.
 
-            cmds.media_admin()
+            cmds.common()
                 .notification()
-                .show_media_content_deleted_notification(content_id.content_owner())
+                .upsert_pending_app_notification(
+                    content_id.content_owner(),
+                    PendingAppNotificationType::MediaContentModerationDeleted,
+                )
                 .await?;
 
             cmds.events()

@@ -2,7 +2,7 @@ use axum::{
     Extension,
     extract::{Query, State},
 };
-use model::{AdminNotificationTypes, NotificationEvent};
+use model::{AdminNotificationTypes, NotificationEvent, PendingAppNotificationType};
 use model_media::{
     AccountIdInternal, EventToClientInternal, GetMediaContentPendingModerationList,
     GetMediaContentPendingModerationParams, Permissions, PostModerateMediaContent,
@@ -12,6 +12,7 @@ use server_api::{
     app::{AdminNotificationProvider, GetAccounts, ReadData},
     create_open_api_router,
 };
+use server_data::write::GetWriteCommandsCommon;
 use server_data_media::{
     read::GetReadMediaCommands,
     write::{
@@ -155,17 +156,16 @@ pub async fn post_moderate_media_content(
         if !data.move_to_human.unwrap_or_default() {
             // Accepted or rejected
 
-            if data.accept {
-                cmds.media_admin()
-                    .notification()
-                    .show_media_content_accepted_notification(content_id.content_owner())
-                    .await?;
+            let pending_type = if data.accept {
+                PendingAppNotificationType::MediaContentModerationAccepted
             } else {
-                cmds.media_admin()
-                    .notification()
-                    .show_media_content_rejected_notification(content_id.content_owner())
-                    .await?;
-            }
+                PendingAppNotificationType::MediaContentModerationRejected
+            };
+
+            cmds.common()
+                .notification()
+                .upsert_pending_app_notification(content_id.content_owner(), pending_type)
+                .await?;
 
             cmds.events()
                 .send_notification(

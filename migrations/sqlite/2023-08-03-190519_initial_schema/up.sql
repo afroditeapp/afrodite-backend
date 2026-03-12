@@ -195,6 +195,17 @@ CREATE TABLE IF NOT EXISTS push_notification(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS pending_app_notifications(
+    account_id                BIGINT   NOT NULL,
+    notification_type_number  SMALLINT NOT NULL,
+    push_notification_sent    BOOLEAN  NOT NULL DEFAULT FALSE,
+    PRIMARY KEY (account_id, notification_type_number),
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS api_usage_statistics_save_time(
     id           INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     unix_time    BIGINT                            NOT NULL UNIQUE
@@ -929,20 +940,6 @@ CREATE TABLE IF NOT EXISTS media_report_profile_content(
 CREATE TABLE IF NOT EXISTS media_app_notification_settings(
     account_id                         INTEGER PRIMARY KEY NOT NULL,
     media_content_moderation           BOOLEAN             NOT NULL,
-    FOREIGN KEY (account_id)
-        REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS media_app_notification_state(
-    account_id                         INTEGER PRIMARY KEY NOT NULL,
-    media_content_accepted             SMALLINT            NOT NULL DEFAULT 0,
-    media_content_accepted_viewed      SMALLINT            NOT NULL DEFAULT 0,
-    media_content_rejected             SMALLINT            NOT NULL DEFAULT 0,
-    media_content_rejected_viewed      SMALLINT            NOT NULL DEFAULT 0,
-    media_content_deleted              SMALLINT            NOT NULL DEFAULT 0,
-    media_content_deleted_viewed       SMALLINT            NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
