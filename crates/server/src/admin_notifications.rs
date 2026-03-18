@@ -1,14 +1,17 @@
 use std::time::Duration;
 
-use model::{AdminNotification, NotificationEvent};
+use model::{AdminNotification, NotificationEvent, PendingAppNotificationInternal};
 use model_media::{
     GetMediaContentPendingModerationParams, MediaContentType, ModerationQueueType,
     ProfileStringModerationContentType,
 };
 use model_profile::GetProfileStringPendingModerationParams;
-use server_api::app::EventManagerProvider;
+use server_api::{
+    app::{EventManagerProvider, WriteData},
+    db_write_raw,
+};
 use server_common::result::{Result, WrappedResultExt};
-use server_data::{app::ReadData, read::GetReadCommandsCommon};
+use server_data::{app::ReadData, read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use server_data_media::read::GetReadMediaCommands;
 use server_data_profile::read::GetReadProfileCommands;
 use server_state::{
@@ -156,13 +159,25 @@ impl AdminNotificationManager {
             .change_context(AdminNotificationError::DatabaseError)?;
 
         for (a, settings) in accounts {
-            let send_event = self
+            let notification_bitflags = self
                 .state
                 .admin_notification()
                 .write()
                 .send_if_needed(a, settings.union(&notification))
                 .await;
-            if send_event {
+            if let Some(bitflags) = notification_bitflags {
+                db_write_raw!(&self.state, move |cmds| {
+                    cmds.common()
+                        .notification()
+                        .upsert_pending_app_notification(
+                            a,
+                            PendingAppNotificationInternal::AdminNotification { bitflags },
+                        )
+                        .await
+                })
+                .await
+                .change_context(AdminNotificationError::DatabaseError)?;
+
                 let r = self
                     .state
                     .event_manager()

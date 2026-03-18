@@ -43,7 +43,8 @@ pub async fn get_pending_app_notifications(
             id,
             PushNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED
                 | PushNotificationFlags::PROFILE_STRING_MODERATION_COMPLETED
-                | PushNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED,
+                | PushNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED
+                | PushNotificationFlags::ADMIN_NOTIFICATION,
         )
         .await;
 

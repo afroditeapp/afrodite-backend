@@ -285,6 +285,91 @@ impl AdminNotification {
     }
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct AdminNotificationBitflags {
+    bits: i64,
+}
+
+impl AdminNotificationBitflags {
+    pub const MODERATE_INITIAL_MEDIA_CONTENT_BOT: i64 = 1 << 0;
+    pub const MODERATE_INITIAL_MEDIA_CONTENT_HUMAN: i64 = 1 << 1;
+    pub const MODERATE_MEDIA_CONTENT_BOT: i64 = 1 << 2;
+    pub const MODERATE_MEDIA_CONTENT_HUMAN: i64 = 1 << 3;
+    pub const MODERATE_PROFILE_TEXTS_BOT: i64 = 1 << 4;
+    pub const MODERATE_PROFILE_TEXTS_HUMAN: i64 = 1 << 5;
+    pub const MODERATE_PROFILE_NAMES_BOT: i64 = 1 << 6;
+    pub const MODERATE_PROFILE_NAMES_HUMAN: i64 = 1 << 7;
+    pub const PROCESS_REPORTS: i64 = 1 << 8;
+
+    pub fn from_bits_truncate(bits: i64) -> Self {
+        Self { bits }
+    }
+
+    pub fn bits(self) -> i64 {
+        self.bits
+    }
+
+    pub fn into_admin_notification(self) -> AdminNotification {
+        AdminNotification {
+            moderate_initial_media_content_bot: self.bits
+                & Self::MODERATE_INITIAL_MEDIA_CONTENT_BOT
+                != 0,
+            moderate_initial_media_content_human: self.bits
+                & Self::MODERATE_INITIAL_MEDIA_CONTENT_HUMAN
+                != 0,
+            moderate_media_content_bot: self.bits & Self::MODERATE_MEDIA_CONTENT_BOT != 0,
+            moderate_media_content_human: self.bits & Self::MODERATE_MEDIA_CONTENT_HUMAN != 0,
+            moderate_profile_texts_bot: self.bits & Self::MODERATE_PROFILE_TEXTS_BOT != 0,
+            moderate_profile_texts_human: self.bits & Self::MODERATE_PROFILE_TEXTS_HUMAN != 0,
+            moderate_profile_names_bot: self.bits & Self::MODERATE_PROFILE_NAMES_BOT != 0,
+            moderate_profile_names_human: self.bits & Self::MODERATE_PROFILE_NAMES_HUMAN != 0,
+            process_reports: self.bits & Self::PROCESS_REPORTS != 0,
+        }
+    }
+}
+
+impl From<AdminNotification> for AdminNotificationBitflags {
+    fn from(value: AdminNotification) -> Self {
+        let mut bits = 0;
+
+        if value.moderate_initial_media_content_bot {
+            bits |= Self::MODERATE_INITIAL_MEDIA_CONTENT_BOT;
+        }
+        if value.moderate_initial_media_content_human {
+            bits |= Self::MODERATE_INITIAL_MEDIA_CONTENT_HUMAN;
+        }
+        if value.moderate_media_content_bot {
+            bits |= Self::MODERATE_MEDIA_CONTENT_BOT;
+        }
+        if value.moderate_media_content_human {
+            bits |= Self::MODERATE_MEDIA_CONTENT_HUMAN;
+        }
+        if value.moderate_profile_texts_bot {
+            bits |= Self::MODERATE_PROFILE_TEXTS_BOT;
+        }
+        if value.moderate_profile_texts_human {
+            bits |= Self::MODERATE_PROFILE_TEXTS_HUMAN;
+        }
+        if value.moderate_profile_names_bot {
+            bits |= Self::MODERATE_PROFILE_NAMES_BOT;
+        }
+        if value.moderate_profile_names_human {
+            bits |= Self::MODERATE_PROFILE_NAMES_HUMAN;
+        }
+        if value.process_reports {
+            bits |= Self::PROCESS_REPORTS;
+        }
+
+        Self { bits }
+    }
+}
+
+impl From<AdminNotificationBitflags> for AdminNotification {
+    fn from(value: AdminNotificationBitflags) -> Self {
+        value.into_admin_notification()
+    }
+}
+
 pub enum AdminNotificationTypes {
     ModerateInitialMediaContentBot,
     ModerateInitialMediaContentHuman,
@@ -361,13 +446,4 @@ impl TryFrom<AdminNotificationTypes> for AdminBotNotificationTypes {
             _ => Err(()),
         }
     }
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct GetAdminNotification {
-    /// If true, client should not show the notification
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub hidden: bool,
-    pub state: AdminNotification,
 }

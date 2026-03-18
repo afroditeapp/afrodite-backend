@@ -13,9 +13,8 @@ use axum::{
 };
 use http::HeaderMap;
 use model::{
-    AccessToken, AccountIdInternal, BackendVersion, ClientVersion, EventToClient,
-    EventToClientInternal, RefreshToken, SyncDataVersionFromClient, WebSocketClientInfo,
-    WebSocketClientTypeNumber,
+    AccessToken, AccountIdInternal, BackendVersion, ClientVersion, EventToClient, RefreshToken,
+    SyncDataVersionFromClient, WebSocketClientInfo, WebSocketClientTypeNumber,
 };
 use model_server_data::AuthPair;
 use server_common::websocket::WebSocketError;
@@ -26,8 +25,8 @@ use server_data::{
 };
 use server_state::{
     app::{
-        AdminNotificationProvider, ApiUsageTrackerProvider, ClientVersionTrackerProvider,
-        GetAccessTokens, IpAddressUsageTrackerProvider,
+        ApiUsageTrackerProvider, ClientVersionTrackerProvider, GetAccessTokens,
+        IpAddressUsageTrackerProvider,
     },
     client_version::TrackingResult,
     state_impl::{ReadData, WriteData},
@@ -485,15 +484,6 @@ async fn handle_socket_result(
         .handle_new_websocket_connection(&mut socket, id, data_sync_versions)
         .await?;
 
-    if state
-        .admin_notification()
-        .get_unreceived_notification(id)
-        .await
-        .is_some()
-    {
-        send_event(&mut socket, EventToClientInternal::AdminNotification).await?;
-    }
-
     COMMON.websocket_connected.incr();
     let connection_trackers = WebSocketConnectionTrackers::new(state, id).await?;
 
@@ -565,20 +555,6 @@ async fn handle_socket_result(
     // Make sure that connection trackers are not dropped right
     // after those are created.
     drop(connection_trackers);
-
-    Ok(())
-}
-
-async fn send_event(
-    socket: &mut WebSocket,
-    event: impl Into<EventToClient>,
-) -> crate::result::Result<(), WebSocketError> {
-    let event: EventToClient = event.into();
-    let event = serde_json::to_string(&event).change_context(WebSocketError::Serialize)?;
-    socket
-        .send(Message::Text(event.into()))
-        .await
-        .change_context(WebSocketError::Send)?;
 
     Ok(())
 }

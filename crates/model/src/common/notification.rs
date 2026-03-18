@@ -4,6 +4,25 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::SimpleDieselEnum;
 use utoipa::ToSchema;
 
+use crate::AdminNotificationBitflags;
+
+/// App notification types
+///
+/// # Notification specific data
+///
+/// ## Admin notification
+///
+/// Integer payload contains the following bitflags:
+///
+/// * MODERATE_INITIAL_MEDIA_CONTENT_BOT = 1 << 0
+/// * MODERATE_INITIAL_MEDIA_CONTENT_HUMAN = 1 << 1
+/// * MODERATE_MEDIA_CONTENT_BOT = 1 << 2
+/// * MODERATE_MEDIA_CONTENT_HUMAN = 1 << 3
+/// * MODERATE_PROFILE_TEXTS_BOT = 1 << 4
+/// * MODERATE_PROFILE_TEXTS_HUMAN = 1 << 5
+/// * MODERATE_PROFILE_NAMES_BOT = 1 << 6
+/// * MODERATE_PROFILE_NAMES_HUMAN = 1 << 7
+/// * PROCESS_REPORTS = 1 << 8
 #[derive(
     Debug,
     Clone,
@@ -22,6 +41,7 @@ use utoipa::ToSchema;
 #[repr(i16)]
 pub enum PendingAppNotificationType {
     // 0..19: common
+    AdminNotification = 0,
     // 20..39: account
     // 40..59: media
     MediaContentModerationAccepted = 40,
@@ -38,6 +58,7 @@ pub enum PendingAppNotificationType {
 
 #[derive(Debug, Clone, Copy)]
 pub enum PendingAppNotificationInternal {
+    AdminNotification { bitflags: AdminNotificationBitflags },
     MediaContentModerationAccepted,
     MediaContentModerationRejected,
     MediaContentModerationDeleted,
@@ -51,6 +72,10 @@ pub enum PendingAppNotificationInternal {
 impl PendingAppNotificationInternal {
     pub fn into_db_values(self) -> (PendingAppNotificationType, Option<i64>) {
         match self {
+            Self::AdminNotification { bitflags } => (
+                PendingAppNotificationType::AdminNotification,
+                Some(bitflags.bits()),
+            ),
             Self::MediaContentModerationAccepted => (
                 PendingAppNotificationType::MediaContentModerationAccepted,
                 None,

@@ -7,7 +7,7 @@ use model::{
 };
 use server_api::{
     DataError,
-    app::{AdminNotificationProvider, GetConfig, ReadData, WriteData},
+    app::{GetConfig, ReadData, WriteData},
     db_write_raw,
 };
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
@@ -48,17 +48,14 @@ pub async fn notifications_for_sending(
     if flags.intersects(
         PushNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED
             | PushNotificationFlags::PROFILE_STRING_MODERATION_COMPLETED
-            | PushNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED,
+            | PushNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED
+            | PushNotificationFlags::ADMIN_NOTIFICATION,
     ) {
         checker.handle_pending_notifications().await?;
     }
 
     if flags.contains(PushNotificationFlags::NEWS_CHANGED) {
         checker.handle_news().await?;
-    }
-
-    if flags.contains(PushNotificationFlags::ADMIN_NOTIFICATION) {
-        checker.handle_admin_notification().await?;
     }
 
     Ok(checker.notifications)
@@ -214,6 +211,12 @@ impl<'a> NotificationChecker<'a> {
                         },
                     );
                 }
+                PendingAppNotificationType::AdminNotification => {
+                    self.notifications.push(PushNotification::new(
+                        PushNotificationId::AdminNotification,
+                        "Admin notification".to_string(),
+                    ));
+                }
             }
         }
 
@@ -247,25 +250,6 @@ impl<'a> NotificationChecker<'a> {
                 PushNotificationId::NewsItemAvailable,
                 self.notification_strings.news_item_available(),
             );
-        }
-
-        Ok(())
-    }
-
-    async fn handle_admin_notification(&mut self) -> Result<(), DataError> {
-        let admin = self
-            .state
-            .admin_notification()
-            .get_unreceived_notification(self.id)
-            .await;
-
-        if let Some(admin) = admin {
-            let notification = PushNotification::new_with_body(
-                PushNotificationId::AdminNotification,
-                "Admin notification".to_string(),
-                admin.field_names_of_true_values(),
-            );
-            self.notifications.push(notification);
         }
 
         Ok(())

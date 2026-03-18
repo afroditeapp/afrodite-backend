@@ -83,6 +83,14 @@ pub async fn send_events_if_needed(
         .await?;
     }
 
+    let has_admin_notification = pending_notifications
+        .iter()
+        .any(|v| matches!(v, PendingAppNotificationType::AdminNotification));
+
+    if has_admin_notification {
+        send_event(socket, EventToClientInternal::AdminNotification).await?;
+    }
+
     // Chat
 
     let pending_messages = read_handle

@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use model::{AccountIdDb, AccountIdInternal, AdminNotification, AdminNotificationTypes, UnixTime};
+use model::{
+    AccountIdDb, AccountIdInternal, AdminNotification, AdminNotificationBitflags,
+    AdminNotificationTypes, UnixTime,
+};
 use simple_backend_utils::time::DurationValue;
 use tokio::sync::{
     RwLock,
@@ -18,7 +21,6 @@ pub struct AdminNotificationEventReceiver(pub Receiver<AdminNotificationEvent>);
 #[derive(Default)]
 pub struct AccountSpecificState {
     notification: AdminNotification,
-    received: bool,
     sending_time: UnixTime,
 }
 
@@ -67,25 +69,6 @@ impl AdminNotificationManagerData {
         }
     }
 
-    pub async fn get_unreceived_notification(
-        &self,
-        id: AccountIdInternal,
-    ) -> Option<AdminNotification> {
-        self.state
-            .read()
-            .await
-            .state
-            .get(id.as_db_id())
-            .and_then(|v| {
-                if v.received {
-                    None
-                } else {
-                    Some(&v.notification)
-                }
-            })
-            .cloned()
-    }
-
     pub fn write(&self) -> AdminNotificationStateWriteAccess<'_> {
         AdminNotificationStateWriteAccess { state: &self.state }
     }
@@ -96,26 +79,14 @@ pub struct AdminNotificationStateWriteAccess<'a> {
 }
 
 impl AdminNotificationStateWriteAccess<'_> {
-    pub async fn mark_notification_received_and_return_it(
-        &self,
-        id: AccountIdInternal,
-    ) -> AdminNotification {
-        if let Some(s) = self.state.write().await.state.get_mut(id.as_db_id()) {
-            s.received = true;
-            s.notification.clone()
-        } else {
-            AdminNotification::default()
-        }
-    }
-
-    /// Returns true, if notification event should be sent to client
+    /// Returns payload bitflags if notification event should be sent to client.
     pub async fn send_if_needed(
         &self,
         id: AccountIdInternal,
         notification: AdminNotification,
-    ) -> bool {
+    ) -> Option<AdminNotificationBitflags> {
         if notification == AdminNotification::default() {
-            return false;
+            return None;
         }
         let mut write = self.state.write().await;
         let state = write
@@ -129,11 +100,10 @@ impl AdminNotificationStateWriteAccess<'_> {
                 .duration_value_elapsed(DurationValue::from_days(1))
         {
             state.notification = new_notification;
-            state.received = false;
             state.sending_time = UnixTime::current_time();
-            true
+            Some(state.notification.clone().into())
         } else {
-            false
+            None
         }
     }
 }
