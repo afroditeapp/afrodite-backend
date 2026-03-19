@@ -96,7 +96,7 @@ impl TestContext {
             name: name.to_string(),
             ptext: None,
         };
-        post_profile(account.profile_api(), update)
+        post_profile(&account.profile_api(), update)
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -121,11 +121,11 @@ impl TestContext {
             min: min_age,
             max: max_age,
         };
-        post_search_age_range(account.profile_api(), range)
+        post_search_age_range(&account.profile_api(), range)
             .await
             .change_context(TestError::ApiRequest)?;
 
-        post_search_groups(account.profile_api(), groups)
+        post_search_groups(&account.profile_api(), groups)
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -253,19 +253,19 @@ impl Account {
         Ok(Self { bot_state: state })
     }
 
-    pub fn account_api(&self) -> &Configuration {
+    pub fn account_api(&self) -> Arc<Configuration> {
         self.bot_state.api()
     }
 
-    pub fn profile_api(&self) -> &Configuration {
+    pub fn profile_api(&self) -> Arc<Configuration> {
         self.bot_state.api()
     }
 
-    pub fn media_api(&self) -> &Configuration {
+    pub fn media_api(&self) -> Arc<Configuration> {
         self.bot_state.api()
     }
 
-    pub fn chat_api(&self) -> &Configuration {
+    pub fn chat_api(&self) -> Arc<Configuration> {
         self.bot_state.api()
     }
 

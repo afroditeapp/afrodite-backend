@@ -63,7 +63,7 @@ impl AdminBotProfileStringModerationLogic {
         state: &mut ProfileStringModerationState,
     ) -> Result<Option<EmptyPage>, TestError> {
         let list = profile_admin_api::get_profile_string_pending_moderation_list(
-            api.api(),
+            &api.api(),
             self.content_type,
             true,
         )
@@ -112,7 +112,7 @@ impl AdminBotProfileStringModerationLogic {
             // Ignore errors as the user might have changed the text to
             // another one or it is already moderated.
             let _ = profile_admin_api::post_moderate_profile_string(
-                api.api(),
+                &api.api(),
                 api_client::models::PostModerateProfileString {
                     content_type,
                     id: moderation.id.clone(),
@@ -144,7 +144,7 @@ impl AdminBotProfileStringModerationLogic {
         // Ignore errors as the user might have changed the text to
         // another one or it is already moderated.
         let _ = profile_admin_api::post_moderate_profile_string(
-            api.api(),
+            &api.api(),
             api_client::models::PostModerateProfileString {
                 content_type,
                 id: moderation.id.clone(),

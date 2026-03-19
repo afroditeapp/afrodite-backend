@@ -333,13 +333,13 @@ impl BotTestRunner {
     ) -> api_client::models::GetBotsResult {
         if let Some(remote_config) = &bot_config_file.remote_bot_mode {
             account_bot_api::post_remote_get_bots(
-                api_client.api(),
+                &api_client.api(),
                 api_client::models::RemoteBotPassword::new(remote_config.password.clone()),
             )
             .await
             .expect("Failed to get bot accounts from server using remote bot mode")
         } else {
-            account_bot_api::post_get_bots(api_client.api())
+            account_bot_api::post_get_bots(&api_client.api())
                 .await
                 .expect("Failed to get bot accounts from server")
         }

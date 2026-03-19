@@ -42,7 +42,7 @@ pub struct DoInitialSetupIfNeeded {
 #[async_trait]
 impl BotAction for DoInitialSetupIfNeeded {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let account_state = get_account_state(state.api())
+        let account_state = get_account_state(&state.api())
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -90,7 +90,7 @@ impl SetBotPublicKey {
         state: &mut BotState,
     ) -> Result<BotEncryptionKeys, TestError> {
         let account_id_string = state.account_id_string()?;
-        let latest_public_key_id = get_latest_public_key_id(state.api(), &account_id_string)
+        let latest_public_key_id = get_latest_public_key_id(&state.api(), &account_id_string)
             .await
             .change_context(TestError::ApiRequest)?
             .id
@@ -109,7 +109,7 @@ impl SetBotPublicKey {
             .public_key_bytes()
             .change_context(TestError::MessageEncryptionError)?;
 
-        let r = post_add_public_key(state.api(), public_key_bytes, Some(true))
+        let r = post_add_public_key(&state.api(), public_key_bytes, Some(true))
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -146,13 +146,13 @@ pub struct AcceptReceivedLikesAndSendMessage;
 #[async_trait]
 impl BotAction for AcceptReceivedLikesAndSendMessage {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let r = post_reset_received_likes_paging(state.api())
+        let r = post_reset_received_likes_paging(&state.api())
             .await
             .change_context(TestError::ApiRequest)?;
         let mut iterator_state = *r.s;
 
         loop {
-            let received_likes = post_get_received_likes_page(state.api(), iterator_state.clone())
+            let received_likes = post_get_received_likes_page(&state.api(), iterator_state.clone())
                 .await
                 .change_context(TestError::ApiRequest)?;
             iterator_state.page += 1;
@@ -163,7 +163,7 @@ impl BotAction for AcceptReceivedLikesAndSendMessage {
 
             for like in received_likes.l {
                 post_send_like(
-                    state.api(),
+                    &state.api(),
                     SendLike {
                         account_id: like.p.a.as_ref().clone().into(),
                         allow_matching: Some(true),
@@ -187,7 +187,7 @@ pub struct AnswerReceivedMessages;
 #[async_trait]
 impl BotAction for AnswerReceivedMessages {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let messages = get_pending_messages(state.api())
+        let messages = get_pending_messages(&state.api())
             .await
             .change_context(TestError::ApiRequest)?
             .bytes()
@@ -294,7 +294,7 @@ impl BotAction for AnswerReceivedMessages {
             delivery_failed: None,
         };
 
-        post_add_recipient_acknowledgement(state.api(), delete_list)
+        post_add_recipient_acknowledgement(&state.api(), delete_list)
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -304,7 +304,7 @@ impl BotAction for AnswerReceivedMessages {
                 sender: Box::new(msg.sender.clone()),
             };
 
-            post_mark_message_as_seen(state.api(), seen)
+            post_mark_message_as_seen(&state.api(), seen)
                 .await
                 .change_context(TestError::ApiRequest)?;
         }
@@ -338,28 +338,28 @@ async fn send_message_internal(
     recipient: &AccountId,
     msg: &str,
 ) -> Result<Option<Retry>, TestError> {
-    let delivery_info = get_message_delivery_info(state.api())
+    let delivery_info = get_message_delivery_info(&state.api())
         .await
         .change_context(TestError::ApiRequest)?;
 
     if !delivery_info.info.is_empty() {
         let ids = delivery_info.info.iter().map(|msg| msg.id).collect();
-        post_delete_message_delivery_info(state.api(), MessageDeliveryInfoIdList { ids })
+        post_delete_message_delivery_info(&state.api(), MessageDeliveryInfoIdList { ids })
             .await
             .change_context(TestError::ApiRequest)?;
     }
 
-    let seen_info = get_pending_latest_seen_messages(state.api())
+    let seen_info = get_pending_latest_seen_messages(&state.api())
         .await
         .change_context(TestError::ApiRequest)?;
 
     if !seen_info.info.is_empty() {
-        post_delete_pending_latest_seen_messages(state.api(), seen_info)
+        post_delete_pending_latest_seen_messages(&state.api(), seen_info)
             .await
             .change_context(TestError::ApiRequest)?;
     }
 
-    let latest_key_id = get_latest_public_key_id(state.api(), &recipient.aid.to_string())
+    let latest_key_id = get_latest_public_key_id(&state.api(), &recipient.aid.to_string())
         .await
         .change_context(TestError::ApiRequest)?;
 
@@ -371,7 +371,7 @@ async fn send_message_internal(
         }
     };
 
-    let public_key = get_public_key(state.api(), &recipient.aid.to_string(), latest_key_id)
+    let public_key = get_public_key(&state.api(), &recipient.aid.to_string(), latest_key_id)
         .await
         .change_context(TestError::ApiRequest)?
         .bytes()
@@ -390,7 +390,7 @@ async fn send_message_internal(
     let message_id = UuidBase64Url::new_random_id().to_string();
 
     let r = post_send_message(
-        state.api(),
+        &state.api(),
         keys.public_key_id,
         &recipient.aid.to_string(),
         latest_key_id,
@@ -407,7 +407,7 @@ async fn send_message_internal(
     }
 
     post_add_sender_acknowledgement(
-        state.api(),
+        &state.api(),
         SentMessageIdList {
             ids: vec![MessageId { id: message_id }],
         },
@@ -427,7 +427,7 @@ impl BotAction for SendLikeIfNeeded {
         if let Some(account_id) = state.get_bot_config().send_like_to_account_id {
             let account_id = AccountId::new(account_id.to_string());
             let r = post_send_like(
-                state.api(),
+                &state.api(),
                 SendLike {
                     account_id: account_id.into(),
                     allow_matching: Some(true),

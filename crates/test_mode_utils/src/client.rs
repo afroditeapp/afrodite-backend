@@ -1,6 +1,9 @@
 //! Access REST API from Rust
 
-use std::fmt::Debug;
+use std::{
+    fmt::Debug,
+    sync::{Arc, Mutex},
+};
 
 use api_client::apis::configuration::Configuration;
 use config::args::PublicApiUrl;
@@ -84,13 +87,18 @@ impl TestError {
 
 #[derive(Debug, Clone)]
 pub struct ApiClient {
-    api: Configuration,
+    api: Arc<Mutex<Arc<Configuration>>>,
 }
 
 impl ApiClient {
+    const MUTEX_ERROR: &str = "ApiClient configuration mutex poisoned";
+
     pub fn new(base_urls: PublicApiUrl, client: &reqwest::Client) -> Self {
         Self {
-            api: Self::create_configuration(client, base_urls.api_url.as_str()),
+            api: Arc::new(Mutex::new(Arc::new(Self::create_configuration(
+                client,
+                base_urls.api_url.as_str(),
+            )))),
         }
     }
 
@@ -104,23 +112,28 @@ impl ApiClient {
     }
 
     pub fn print_to_log(&self) {
-        info!("API base url: {}", self.api.base_path);
+        let base_path = self.api.lock().expect(Self::MUTEX_ERROR).base_path.clone();
+        info!("API base url: {}", base_path);
     }
 
-    pub fn api(&self) -> &Configuration {
-        &self.api
+    pub fn api(&self) -> Arc<Configuration> {
+        self.api.lock().expect(Self::MUTEX_ERROR).clone()
     }
 
-    pub fn set_access_token(&mut self, token: String) {
-        self.api.bearer_access_token = Some(token);
+    pub fn set_access_token(&self, token: String) {
+        let mut lock = self.api.lock().expect(Self::MUTEX_ERROR);
+        let mut clone = lock.as_ref().clone();
+        clone.bearer_access_token = Some(token);
+        *lock = Arc::new(clone);
     }
 
     pub fn is_access_token_available(&self) -> bool {
-        self.api.bearer_access_token.is_some()
-    }
-
-    pub fn api_key(&self) -> Option<String> {
-        self.api.bearer_access_token.clone()
+        self.api
+            .lock()
+            .expect(Self::MUTEX_ERROR)
+            .bearer_access_token
+            .clone()
+            .is_some()
     }
 }
 

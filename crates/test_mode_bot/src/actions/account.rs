@@ -43,7 +43,7 @@ impl BotAction for Register {
             return Ok(());
         }
 
-        let id = post_bot_register(state.api())
+        let id = post_bot_register(&state.api())
             .await
             .change_context(TestError::ApiRequest)?;
         state.id = Some(id);
@@ -62,13 +62,13 @@ impl BotAction for Login {
         }
         let login_result = if let Some(password) = state.remote_bot_password() {
             post_remote_bot_login(
-                state.api(),
+                &state.api(),
                 RemoteBotLogin::new(state.account_id()?, password),
             )
             .await
             .change_context(TestError::ApiRequest)?
         } else {
-            post_bot_login(state.api(), state.account_id()?)
+            post_bot_login(&state.api(), state.account_id()?)
                 .await
                 .change_context(TestError::ApiRequest)?
         };
@@ -333,7 +333,7 @@ impl AssertAccountState {
 #[async_trait]
 impl BotAction for AssertAccountState {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let state = get_account_state(state.api())
+        let state = get_account_state(&state.api())
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -373,7 +373,7 @@ impl BotAction for SetAccountSetup {
             birthdate: None,
             is_adult: true,
         };
-        post_account_setup(state.api(), setup)
+        post_account_setup(&state.api(), setup)
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -383,7 +383,7 @@ impl BotAction for SetAccountSetup {
             format!("bot{}@example.com", state.task_id)
         };
 
-        account_api::post_initial_email(state.api(), SetInitialEmail { email })
+        account_api::post_initial_email(&state.api(), SetInitialEmail { email })
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -397,7 +397,7 @@ pub struct CompleteAccountSetup;
 #[async_trait]
 impl BotAction for CompleteAccountSetup {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        post_complete_setup(state.api())
+        post_complete_setup(&state.api())
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -411,7 +411,7 @@ pub struct SetProfileVisibility(pub bool);
 #[async_trait]
 impl BotAction for SetProfileVisibility {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        account_api::put_setting_profile_visiblity(state.api(), BooleanSetting::new(self.0))
+        account_api::put_setting_profile_visiblity(&state.api(), BooleanSetting::new(self.0))
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -425,7 +425,7 @@ pub struct GetAccount;
 #[async_trait]
 impl BotAction for GetAccount {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let account = get_account_state(state.api())
+        let account = get_account_state(&state.api())
             .await
             .change_context(TestError::ApiRequest)?;
         state.previous_value = PreviousValue::Account(account);

@@ -137,7 +137,7 @@ impl AdminBot {
     }
 
     async fn run_admin_logic(state: BotState) -> Result<(), TestError> {
-        let bot_config_api = api_client::apis::common_admin_api::get_bot_config(state.api.api())
+        let bot_config_api = api_client::apis::common_admin_api::get_bot_config(&state.api.api())
             .await
             .change_context(TestError::Reqwest)?;
 

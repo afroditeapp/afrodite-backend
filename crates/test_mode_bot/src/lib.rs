@@ -83,7 +83,7 @@ impl BotState {
         }
     }
 
-    pub fn api(&self) -> &Configuration {
+    pub fn api(&self) -> Arc<Configuration> {
         self.api.api()
     }
 

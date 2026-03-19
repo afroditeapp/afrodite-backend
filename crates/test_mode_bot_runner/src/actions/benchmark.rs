@@ -29,7 +29,7 @@ pub struct GetProfile;
 #[async_trait]
 impl BotAction for GetProfile {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        get_profile(state.api(), &state.account_id_string()?, None, None)
+        get_profile(&state.api(), &state.account_id_string()?, None, None)
             .await
             .change_context(TestError::ApiRequest)?;
         Ok(())
@@ -58,7 +58,7 @@ pub struct GetProfileFromDatabase;
 #[async_trait]
 impl BotAction for GetProfileFromDatabase {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        get_profile_from_database_debug_mode_benchmark(state.api(), &state.account_id_string()?)
+        get_profile_from_database_debug_mode_benchmark(&state.api(), &state.account_id_string()?)
             .await
             .change_context(TestError::ApiRequest)?;
         Ok(())
@@ -94,7 +94,7 @@ impl BotAction for PostProfileToDatabase {
             name: "Bot".to_string(),
             ptext: Some(profile.to_string()),
         };
-        post_profile_to_database_debug_mode_benchmark(state.api(), profile)
+        post_profile_to_database_debug_mode_benchmark(&state.api(), profile)
             .await
             .change_context(TestError::ApiRequest)?;
         Ok(())
