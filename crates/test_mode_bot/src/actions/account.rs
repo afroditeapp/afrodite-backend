@@ -6,8 +6,8 @@ use api_client::{
         account_bot_api::{post_bot_login, post_bot_register, post_remote_bot_login},
     },
     models::{
-        Account, AccountStateContainer, BooleanSetting, EventToClient, ProfileVisibility,
-        RemoteBotLogin, SetInitialEmail, auth_pair,
+        AccessToken, Account, AccountStateContainer, BooleanSetting, EventToClient,
+        ProfileVisibility, RefreshToken, RemoteBotLogin, SetInitialEmail, auth_pair,
     },
 };
 use async_trait::async_trait;
@@ -16,7 +16,10 @@ use error_stack::{Result, ResultExt};
 use futures::SinkExt;
 use headers::HeaderValue;
 use simple_backend_model::VersionNumber;
-use test_mode_utils::{client::TestError, server::TEST_ADMIN_ACCESS_EMAIL};
+use test_mode_utils::{
+    client::{ApiClient, TestError},
+    server::TEST_ADMIN_ACCESS_EMAIL,
+};
 use tokio_stream::StreamExt;
 use tokio_tungstenite::tungstenite::{Message, client::IntoClientRequest};
 use url::Url;
@@ -91,9 +94,7 @@ impl BotAction for Login {
             .join(PATH_CONNECT)
             .change_context(TestError::WebSocket)?;
         let connection: Option<WsConnection> =
-            connect_websocket(auth_pair, url, state, event_sender.clone())
-                .await?
-                .into();
+            connect_websocket(auth_pair, url, event_sender.clone(), state.api.clone()).into();
 
         state.connections.set_connections(ApiConnection {
             connection,
@@ -104,12 +105,52 @@ impl BotAction for Login {
     }
 }
 
-async fn connect_websocket(
-    auth: auth_pair::AuthPair,
+fn connect_websocket(
+    mut auth: auth_pair::AuthPair,
+    url: Url,
+    mut events: EventSenderAndQuitWatcher,
+    api_client: ApiClient,
+) -> WsConnection {
+    let task = tokio::spawn(async move {
+        let mut stream = connect_websocket_internal(&mut auth, url.clone(), &api_client)
+            .await
+            .unwrap_or_else(|e| panic!("Connecting websocket failed, error: {e}"));
+
+        let mut ping_timer = tokio::time::interval(Duration::from_secs(60));
+        ping_timer.tick().await; // skip the initial tick
+        let mut reconnect_timer = tokio::time::interval(Duration::from_secs(8 * 24 * 60 * 60));
+        reconnect_timer.tick().await; // skip the initial tick
+
+        loop {
+            tokio::select! {
+                _ = events.quit_watcher.recv() => break,
+                _ = handle_connection(&mut stream, &events.event_sender) => (),
+                _ = reconnect_timer.tick() => {
+                    let new_stream = connect_websocket_internal(&mut auth, url.clone(), &api_client)
+                        .await
+                        .unwrap_or_else(|e| panic!("Reconnecting websocket failed, error: {e}"));
+                    stream = new_stream;
+                }
+                _ = ping_timer.tick() => {
+                    match stream
+                        .send(Message::Ping(vec![].into()))
+                        .await {
+                            Ok(_) => (),
+                            Err(e) => panic!("Sending ping message to websocket failed, error: {e}"),
+                        }
+                }
+            }
+        }
+    });
+
+    WsConnection::new(task)
+}
+
+async fn connect_websocket_internal(
+    auth: &mut auth_pair::AuthPair,
     mut url: Url,
-    state: &mut BotState,
-    events: EventSenderAndQuitWatcher,
-) -> Result<WsConnection, TestError> {
+    api_client: &ApiClient,
+) -> Result<WsStream, TestError> {
     if url.scheme() == "https" {
         url.set_scheme("wss")
             .map_err(|_| TestError::WebSocket.report())?;
@@ -162,7 +203,7 @@ async fn connect_websocket(
 
     if update_tokens {
         let binary_token = base64::engine::general_purpose::STANDARD
-            .decode(auth.refresh.token)
+            .decode(&auth.refresh.token)
             .change_context(TestError::WebSocket)?;
         stream
             .send(Message::Binary(binary_token.into()))
@@ -175,7 +216,11 @@ async fn connect_websocket(
             .ok_or(TestError::WebSocket.report())?
             .change_context(TestError::WebSocket)?;
         match refresh_token {
-            Message::Binary(refresh_token) => state.refresh_token = Some(refresh_token.into()),
+            Message::Binary(refresh_token) => {
+                *auth.refresh = RefreshToken::new(
+                    base64::engine::general_purpose::STANDARD.encode(&refresh_token),
+                );
+            }
             _ => return Err(TestError::WebSocketWrongValue.report()),
         }
 
@@ -188,7 +233,8 @@ async fn connect_websocket(
             Message::Binary(access_token_bytes) => {
                 let access_token =
                     base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(access_token_bytes);
-                state.api.set_access_token(access_token)
+                *auth.access = AccessToken::new(access_token.clone());
+                api_client.set_access_token(access_token);
             }
             _ => return Err(TestError::WebSocketWrongValue.report()),
         }
@@ -200,27 +246,7 @@ async fn connect_websocket(
         .await
         .change_context(TestError::WebSocket)?;
 
-    let task = tokio::spawn(async move {
-        let mut events = events;
-        let mut ping_timer = tokio::time::interval(Duration::from_secs(60));
-        ping_timer.tick().await; // skip the initial tick
-        loop {
-            tokio::select! {
-                _ = events.quit_watcher.recv() => break,
-                _ = handle_connection(&mut stream, &events.event_sender) => (),
-                _ = ping_timer.tick() => {
-                    match stream
-                        .send(Message::Ping(vec![].into()))
-                        .await {
-                            Ok(_) => (),
-                            Err(e) => panic!("Sending ping message to websocket failed, error: {e}"),
-                        }
-                }
-            }
-        }
-    });
-
-    Ok(WsConnection::new(task))
+    Ok(stream)
 }
 
 async fn handle_connection(stream: &mut WsStream, sender: &EventSender) {
