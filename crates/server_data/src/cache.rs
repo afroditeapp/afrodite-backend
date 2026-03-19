@@ -11,8 +11,8 @@ use common::CacheCommon;
 use error_stack::Result;
 use media::CacheMedia;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, LastSeenUnixTime, LoginSession,
-    Permissions, PushNotificationFlags,
+    AccessToken, AccessTokenType, AccountId, AccountIdInternal, AccountState, LastSeenUnixTime,
+    LoginSession, Permissions, PushNotificationFlags,
 };
 use model_server_data::{AuthPair, LocationIndexProfileData};
 use profile::CacheProfile;
@@ -37,10 +37,17 @@ pub struct AccountEntry {
     pub cache: RwLock<CacheEntry>,
 }
 
+#[derive(Debug)]
+pub struct AccessTokenEntry {
+    pub account_entry: Arc<AccountEntry>,
+    pub access_token_type: AccessTokenType,
+}
+
 #[derive(Debug, Default)]
 pub struct DatabaseCache {
-    /// Accounts which are logged in (have valid access token).
-    access_tokens: RwLock<HashMap<AccessToken, Arc<AccountEntry>>>,
+    /// All access tokens (current and previous) for accounts
+    /// which are logged in.
+    access_tokens: RwLock<HashMap<AccessToken, AccessTokenEntry>>,
     /// All accounts registered in the service.
     accounts: RwLock<HashMap<AccountId, Arc<AccountEntry>>>,
 }
@@ -60,13 +67,29 @@ impl DatabaseCache {
             .get(&account_id.as_id())
             .ok_or(CacheError::KeyNotExists.report())?;
 
-        if let Some(token) = login_session.as_ref().map(|v| v.access_token.clone()) {
+        if let Some(login_session) = login_session.as_ref() {
             let mut access_tokens = self.access_tokens.write().await;
-            match access_tokens.entry(token) {
+
+            match access_tokens.entry(login_session.access_token.clone()) {
                 Entry::Vacant(e) => {
-                    e.insert(account_entry.clone());
+                    e.insert(AccessTokenEntry {
+                        account_entry: account_entry.clone(),
+                        access_token_type: AccessTokenType::Current,
+                    });
                 }
                 Entry::Occupied(_) => return Err(CacheError::AlreadyExists.report()),
+            }
+
+            if let Some(previous_access_token) = login_session.access_token_previous.as_ref() {
+                match access_tokens.entry(previous_access_token.clone()) {
+                    Entry::Vacant(e) => {
+                        e.insert(AccessTokenEntry {
+                            account_entry: account_entry.clone(),
+                            access_token_type: AccessTokenType::Previous,
+                        });
+                    }
+                    Entry::Occupied(_) => return Err(CacheError::AlreadyExists.report()),
+                }
             }
         }
 
@@ -103,17 +126,22 @@ impl DatabaseCache {
     }
 
     pub(crate) async fn logout(&self, id: AccountId) -> Result<(), CacheError> {
-        let access_token = self
+        let (access_token, previous_access_token) = self
             .write_cache(id, |e| {
                 let access_token = e.common.access_token().cloned();
+                let previous_access_token = e.common.access_token_previous().cloned();
                 e.common.logout();
                 e.remove_connection();
-                Ok(access_token)
+                Ok((access_token, previous_access_token))
             })
             .await?;
 
+        let mut access_tokens = self.access_tokens.write().await;
         if let Some(access_token) = access_token {
-            self.access_tokens.write().await.remove(&access_token);
+            access_tokens.remove(&access_token);
+        }
+        if let Some(previous_access_token) = previous_access_token {
+            access_tokens.remove(&previous_access_token);
         }
 
         Ok(())
@@ -124,9 +152,19 @@ impl DatabaseCache {
         self.accounts.write().await.remove(&id);
     }
 
-    pub async fn access_token_exists(&self, token: &AccessToken) -> Option<AccountIdInternal> {
+    pub async fn access_token_with_type_exists(
+        &self,
+        token: &AccessToken,
+        access_token_type: AccessTokenType,
+    ) -> Option<AccountIdInternal> {
         let tokens = self.access_tokens.read().await;
-        tokens.get(token).map(|entry| entry.account_id_internal)
+        tokens.get(token).and_then(|entry| {
+            if entry.access_token_type == access_token_type {
+                Some(entry.account_entry.account_id_internal)
+            } else {
+                None
+            }
+        })
     }
 
     pub async fn access_token_and_ip_is_valid(
@@ -136,12 +174,15 @@ impl DatabaseCache {
     ) -> Option<(AccountIdInternal, Permissions, AccountState)> {
         let tokens = self.access_tokens.read().await;
         if let Some(entry) = tokens.get(access_token) {
-            let r = entry.cache.read().await;
-            let is_valid = r.common.is_login_session_valid(connection.ip());
+            let r = entry.account_entry.cache.read().await;
+            let is_valid = r.common.is_login_session_valid_for_access_token_type(
+                connection.ip(),
+                entry.access_token_type,
+            );
 
             if is_valid {
                 Some((
-                    entry.account_id_internal,
+                    entry.account_entry.account_id_internal,
                     r.common.permissions.clone(),
                     r.common
                         .account_state_related_shared_state
@@ -175,13 +216,20 @@ impl DatabaseCache {
 
     pub async fn logged_in_clients(&self) -> Vec<AccountIdInternal> {
         let guard = self.access_tokens.read().await;
-        guard.values().map(|v| v.account_id_internal).collect()
+        guard
+            .values()
+            .filter(|v| v.access_token_type == AccessTokenType::Current)
+            .map(|v| v.account_entry.account_id_internal)
+            .collect()
     }
 
     pub async fn read_cache_for_logged_in_clients(&self, cache_operation: impl Fn(&CacheEntry)) {
         let guard = self.access_tokens.read().await;
-        for v in guard.values() {
-            let cache_entry = v.cache.read().await;
+        for v in guard
+            .values()
+            .filter(|v| v.access_token_type == AccessTokenType::Current)
+        {
+            let cache_entry = v.account_entry.cache.read().await;
             cache_operation(&cache_entry)
         }
     }
@@ -262,9 +310,12 @@ impl DatabaseCache {
         cache_operation: impl Fn(AccountIdInternal, &mut CacheEntry),
     ) {
         let guard = self.access_tokens.read().await;
-        for v in guard.values() {
-            let mut cache_entry = v.cache.write().await;
-            cache_operation(v.account_id_internal, &mut cache_entry)
+        for v in guard
+            .values()
+            .filter(|v| v.access_token_type == AccessTokenType::Current)
+        {
+            let mut cache_entry = v.account_entry.cache.write().await;
+            cache_operation(v.account_entry.account_id_internal, &mut cache_entry)
         }
     }
 
@@ -332,7 +383,20 @@ impl WebSocketCacheCmds<'_> {
         let mut tokens = self.cache.access_tokens.write().await;
 
         if let Some(current) = cache_entry.cache.read().await.common.access_token() {
+            // Avoid adding same token as current and previous
+            if *current == new_tokens.access {
+                return Err(CacheError::AlreadyExists.report());
+            }
             tokens.remove(current);
+        }
+        if let Some(previous) = cache_entry
+            .cache
+            .read()
+            .await
+            .common
+            .access_token_previous()
+        {
+            tokens.remove(previous);
         }
 
         // Avoid collisions
@@ -355,12 +419,27 @@ impl WebSocketCacheCmds<'_> {
 
             let new_access_token = new_tokens.access.clone();
             let mut lock = cache_entry.cache.write().await;
-            lock.common.update_tokens(new_tokens, address.ip().into());
+            let previous_access_token = lock.common.update_tokens(new_tokens, address.ip().into());
             lock.common.pending_push_notification_flags = PushNotificationFlags::empty();
             // Show notifications on login
             lock.common.sent_push_notification_flags = PushNotificationFlags::empty();
             drop(lock);
-            tokens.insert(new_access_token, cache_entry);
+            tokens.insert(
+                new_access_token.clone(),
+                AccessTokenEntry {
+                    account_entry: cache_entry.clone(),
+                    access_token_type: AccessTokenType::Current,
+                },
+            );
+            if let Some(previous_access_token) = previous_access_token {
+                tokens.insert(
+                    previous_access_token,
+                    AccessTokenEntry {
+                        account_entry: cache_entry,
+                        access_token_type: AccessTokenType::Previous,
+                    },
+                );
+            }
 
             event_receiver
         } else {

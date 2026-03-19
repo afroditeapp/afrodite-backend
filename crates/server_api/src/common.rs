@@ -13,8 +13,8 @@ use axum::{
 };
 use http::HeaderMap;
 use model::{
-    AccessToken, AccountIdInternal, BackendVersion, ClientVersion, EventToClient, RefreshToken,
-    SyncDataVersionFromClient, WebSocketClientInfo, WebSocketClientTypeNumber,
+    AccessToken, AccessTokenType, AccountIdInternal, BackendVersion, ClientVersion, EventToClient,
+    RefreshToken, SyncDataVersionFromClient, WebSocketClientInfo, WebSocketClientTypeNumber,
 };
 use model_server_data::AuthPair;
 use server_common::websocket::WebSocketError;
@@ -213,7 +213,9 @@ pub async fn get_connect_websocket(
             })
         })?;
 
-    let id = state.access_token_exists(&access_token).await;
+    let id = state
+        .access_token_with_type_exists(&access_token, AccessTokenType::Current)
+        .await;
 
     if let Some(id) = &id {
         state
@@ -376,7 +378,11 @@ async fn handle_socket_result(
     let is_session_valid = state
         .read()
         .common()
-        .is_account_login_session_valid(id, address.ip())
+        .is_account_login_session_valid_for_access_token_type(
+            id,
+            address.ip(),
+            AccessTokenType::Current,
+        )
         .await
         .change_context(WebSocketError::DatabaseAccessTokenIpAddress)?;
 

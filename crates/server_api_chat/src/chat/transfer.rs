@@ -1,17 +1,17 @@
 //! Backup transfer routes for transferring data between clients
 //!
 
-use std::{collections::HashMap, sync::OnceLock, time::Duration};
+use std::{collections::HashMap, net::SocketAddr, sync::OnceLock, time::Duration};
 
 use axum::{
     extract::{
-        State, WebSocketUpgrade,
+        ConnectInfo, State, WebSocketUpgrade,
         ws::{Message, WebSocket},
     },
     response::IntoResponse,
 };
 use http::HeaderMap;
-use model::AccountId;
+use model::{AccessToken, AccountId};
 use model_chat::{BackupTransferClientRole, BackupTransferInitialMessage};
 use server_api::{S, app::GetAccessTokens};
 use sha2::{Digest, Sha256};
@@ -76,6 +76,7 @@ pub async fn get_backup_transfer(
     State(state): State<S>,
     websocket: WebSocketUpgrade,
     header_map: HeaderMap,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
 ) -> std::result::Result<impl IntoResponse, StatusCode> {
     TRANSFER.get_backup_transfer.incr();
 
@@ -93,7 +94,7 @@ pub async fn get_backup_transfer(
 
     let response = websocket
         .protocols(["v1"])
-        .on_upgrade(move |socket| handle_transfer_socket(socket, state));
+        .on_upgrade(move |socket| handle_transfer_socket(socket, addr, state));
 
     Ok(response)
 }
@@ -159,7 +160,7 @@ fn get_pending_transfers() -> &'static tokio::sync::RwLock<PendingConnections> {
     PENDING_TRANSFERS.get_or_init(|| tokio::sync::RwLock::new(PendingConnections::new()))
 }
 
-async fn handle_transfer_socket(mut socket: WebSocket, state: S) {
+async fn handle_transfer_socket(mut socket: WebSocket, addr: SocketAddr, state: S) {
     let role_message = match tokio::time::timeout(Duration::from_secs(10), socket.recv()).await {
         Ok(Some(Ok(Message::Text(text)))) => text,
         _ => {
@@ -187,10 +188,10 @@ async fn handle_transfer_socket(mut socket: WebSocket, state: S) {
             }
 
             let account_id = match state
-                .access_token_exists(&model::AccessToken::new(access_token.clone()))
+                .access_token_and_ip_is_valid(&AccessToken::new(access_token), addr)
                 .await
             {
-                Some(id) => id,
+                Some((id, _, _)) => id,
                 None => {
                     TRANSFER.invalid_access_token.incr();
                     return;

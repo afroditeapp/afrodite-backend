@@ -20,6 +20,15 @@ impl CurrentWriteAccountToken<'_> {
                 .access_token
                 .bytes()
                 .change_context(DieselDatabaseError::DataFormatConversion)?;
+            let access_token_previous_value = data
+                .access_token_previous
+                .as_ref()
+                .map(|token| {
+                    token
+                        .bytes()
+                        .change_context(DieselDatabaseError::DataFormatConversion)
+                })
+                .transpose()?;
             let refresh_token_value = data
                 .refresh_token
                 .bytes()
@@ -29,6 +38,7 @@ impl CurrentWriteAccountToken<'_> {
                     account_id.eq(id.as_db_id()),
                     access_token.eq(access_token_value),
                     access_token_unix_time.eq(data.access_token_unix_time),
+                    access_token_previous.eq(access_token_previous_value),
                     access_token_ip_address.eq(data.access_token_ip_address),
                     access_token_ip_address_previous.eq(data.access_token_ip_address_previous),
                     refresh_token.eq(refresh_token_value),
@@ -38,6 +48,7 @@ impl CurrentWriteAccountToken<'_> {
                 .set((
                     access_token.eq(excluded(access_token)),
                     access_token_unix_time.eq(excluded(access_token_unix_time)),
+                    access_token_previous.eq(excluded(access_token_previous)),
                     access_token_ip_address.eq(excluded(access_token_ip_address)),
                     access_token_ip_address_previous.eq(excluded(access_token_ip_address_previous)),
                     refresh_token.eq(excluded(refresh_token)),

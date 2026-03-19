@@ -1,6 +1,7 @@
 use model::{
-    AccessToken, AccessTokenUnixTime, AccountStateRelatedSharedState, IpAddressInternal,
-    LoginSession, OtherSharedState, Permissions, PushNotificationFlags, RefreshToken,
+    AccessToken, AccessTokenType, AccessTokenUnixTime, AccountStateRelatedSharedState,
+    IpAddressInternal, LoginSession, OtherSharedState, Permissions, PushNotificationFlags,
+    RefreshToken,
 };
 use model_server_data::{AppNotificationSettingsInternal, AuthPair};
 
@@ -29,11 +30,13 @@ impl CacheCommon {
         self.login_session = data;
     }
 
+    /// Returns new previous access token
     pub fn update_tokens(
         &mut self,
         auth_pair: AuthPair,
         access_token_ip_address: IpAddressInternal,
-    ) {
+    ) -> Option<AccessToken> {
+        let access_token_previous = self.login_session.as_ref().map(|s| s.access_token.clone());
         let access_token_ip_address_previous = self
             .login_session
             .as_ref()
@@ -41,11 +44,13 @@ impl CacheCommon {
         self.login_session = Some(LoginSession {
             access_token: auth_pair.access,
             access_token_unix_time: AccessTokenUnixTime::current_time(),
+            access_token_previous: access_token_previous.clone(),
             access_token_ip_address,
             access_token_ip_address_previous,
             refresh_token: auth_pair.refresh,
         });
         self.login_session_changed = true;
+        access_token_previous
     }
 
     pub fn logout(&mut self) {
@@ -61,15 +66,25 @@ impl CacheCommon {
         }
     }
 
-    pub fn is_login_session_valid(&self, ip: std::net::IpAddr) -> bool {
+    pub fn is_login_session_valid_for_access_token_type(
+        &self,
+        ip: std::net::IpAddr,
+        access_token_type: AccessTokenType,
+    ) -> bool {
         self.login_session
             .as_ref()
-            .map(|v| v.is_valid(ip))
+            .map(|v| v.is_valid(ip, access_token_type))
             .unwrap_or(false)
     }
 
     pub fn access_token(&self) -> Option<&AccessToken> {
         self.login_session.as_ref().map(|v| &v.access_token)
+    }
+
+    pub fn access_token_previous(&self) -> Option<&AccessToken> {
+        self.login_session
+            .as_ref()
+            .and_then(|v| v.access_token_previous.as_ref())
     }
 
     pub fn refresh_token(&self) -> Option<&RefreshToken> {

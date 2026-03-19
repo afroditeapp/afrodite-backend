@@ -1,6 +1,8 @@
 use std::net::SocketAddr;
 
-use model::{AccessToken, AccountId, AccountIdInternal, AccountState, Permissions};
+use model::{
+    AccessToken, AccessTokenType, AccountId, AccountIdInternal, AccountState, Permissions,
+};
 
 use super::{DataError, IntoDataError, cache::DatabaseCache};
 use crate::result::Result;
@@ -14,8 +16,14 @@ impl<'a> AccessTokenManager<'a> {
         Self { cache }
     }
 
-    pub async fn access_token_exists(&self, token: &AccessToken) -> Option<AccountIdInternal> {
-        self.cache.access_token_exists(token).await
+    pub async fn access_token_with_type_exists(
+        &self,
+        token: &AccessToken,
+        access_token_type: AccessTokenType,
+    ) -> Option<AccountIdInternal> {
+        self.cache
+            .access_token_with_type_exists(token, access_token_type)
+            .await
     }
 
     pub async fn access_token_and_ip_is_valid(

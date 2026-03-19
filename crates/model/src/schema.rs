@@ -550,6 +550,7 @@ diesel::table! {
         account_id -> Int8,
         access_token -> Bytea,
         access_token_unix_time -> Int8,
+        access_token_previous -> Nullable<Bytea>,
         access_token_ip_address -> Bytea,
         access_token_ip_address_previous -> Nullable<Bytea>,
         refresh_token -> Bytea,

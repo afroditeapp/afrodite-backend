@@ -389,9 +389,16 @@ impl std::fmt::Display for AccountId {
 pub struct LoginSession {
     pub access_token: AccessToken,
     pub access_token_unix_time: AccessTokenUnixTime,
+    pub access_token_previous: Option<AccessToken>,
     pub access_token_ip_address: IpAddressInternal,
     pub access_token_ip_address_previous: Option<IpAddressInternal>,
     pub refresh_token: RefreshToken,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum AccessTokenType {
+    Current,
+    Previous,
 }
 
 impl LoginSession {
@@ -403,14 +410,19 @@ impl LoginSession {
                 .unwrap_or(false)
     }
 
-    fn is_access_token_too_old(&self) -> bool {
-        self.access_token_unix_time
+    fn is_access_token_valid(&self, access_token_type: AccessTokenType) -> bool {
+        if access_token_type == AccessTokenType::Previous && self.access_token_previous.is_none() {
+            return false;
+        }
+
+        !self
+            .access_token_unix_time
             .ut
             .duration_value_elapsed(DurationValue::from_days(3))
     }
 
-    pub fn is_valid(&self, ip: std::net::IpAddr) -> bool {
-        self.is_ip_valid(ip) && !self.is_access_token_too_old()
+    pub fn is_valid(&self, ip: std::net::IpAddr, access_token_type: AccessTokenType) -> bool {
+        self.is_ip_valid(ip) && self.is_access_token_valid(access_token_type)
     }
 }
 

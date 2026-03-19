@@ -4,8 +4,8 @@ use config::{Config, file::ConfigFileError};
 use error_stack::ResultExt;
 use futures::Future;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, BackendVersion, BotConfig,
-    EventToClientInternal, Permissions, ScheduledMaintenanceStatus,
+    AccessToken, AccessTokenType, AccountId, AccountIdInternal, AccountState, BackendVersion,
+    BotConfig, EventToClientInternal, Permissions, ScheduledMaintenanceStatus,
 };
 use server_data::{
     DataError,
@@ -228,11 +228,15 @@ impl DataExportManagerDataProvider for S {
 // Server API
 
 impl GetAccessTokens for S {
-    async fn access_token_exists(&self, token: &AccessToken) -> Option<AccountIdInternal> {
+    async fn access_token_with_type_exists(
+        &self,
+        token: &AccessToken,
+        access_token_type: AccessTokenType,
+    ) -> Option<AccountIdInternal> {
         self.state
             .database
             .access_token_manager()
-            .access_token_exists(token)
+            .access_token_with_type_exists(token, access_token_type)
             .await
     }
 

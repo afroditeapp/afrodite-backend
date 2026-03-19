@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS login_session(
     -- UNIQUE constrait is not needed here.
     access_token            BLOB                NOT NULL,
     access_token_unix_time  BIGINT              NOT NULL,
+    access_token_previous   BLOB ,
     -- 4 or 16 bytes
     access_token_ip_address BLOB                NOT NULL,
     access_token_ip_address_previous BLOB ,

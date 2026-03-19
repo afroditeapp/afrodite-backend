@@ -1,7 +1,9 @@
 use std::net::SocketAddr;
 
 use config::file::ConfigFileError;
-use model::{AccessToken, AccountIdInternal, AccountState, BotConfig, Permissions};
+use model::{
+    AccessToken, AccessTokenType, AccountIdInternal, AccountState, BotConfig, Permissions,
+};
 pub use server_data::app::*;
 use server_data::{DataError, content_processing::ContentProcessingManagerData};
 
@@ -12,9 +14,10 @@ use crate::{
 };
 
 pub trait GetAccessTokens {
-    fn access_token_exists(
+    fn access_token_with_type_exists(
         &self,
         token: &AccessToken,
+        access_token_type: AccessTokenType,
     ) -> impl std::future::Future<Output = Option<AccountIdInternal>> + Send;
 
     fn access_token_and_ip_is_valid(

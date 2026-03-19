@@ -21,6 +21,7 @@ impl CurrentReadAccountToken<'_> {
             .select((
                 access_token,
                 access_token_unix_time,
+                access_token_previous,
                 access_token_ip_address,
                 access_token_ip_address_previous,
                 refresh_token,
@@ -28,6 +29,7 @@ impl CurrentReadAccountToken<'_> {
             .first::<(
                 Vec<u8>,
                 AccessTokenUnixTime,
+                Option<Vec<u8>>,
                 IpAddressInternal,
                 Option<IpAddressInternal>,
                 Vec<u8>,
@@ -35,12 +37,17 @@ impl CurrentReadAccountToken<'_> {
             .optional()
             .into_db_error(id)?
             .map(
-                |(access, access_time, access_ip, access_ip_prev, refresh)| LoginSession {
-                    access_token: AccessToken::from_bytes(&access),
-                    access_token_unix_time: access_time,
-                    access_token_ip_address: access_ip,
-                    access_token_ip_address_previous: access_ip_prev,
-                    refresh_token: RefreshToken::from_bytes(&refresh),
+                |(access, access_time, access_previous, access_ip, access_ip_prev, refresh)| {
+                    LoginSession {
+                        access_token: AccessToken::from_bytes(&access),
+                        access_token_unix_time: access_time,
+                        access_token_previous: access_previous
+                            .as_ref()
+                            .map(|bytes| AccessToken::from_bytes(bytes)),
+                        access_token_ip_address: access_ip,
+                        access_token_ip_address_previous: access_ip_prev,
+                        refresh_token: RefreshToken::from_bytes(&refresh),
+                    }
                 },
             );
 
