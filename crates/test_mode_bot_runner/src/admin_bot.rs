@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::Instant};
+use std::sync::Arc;
 
 use api_client::models::{AccountId, EventType};
 use config::{BotConfig, args::TestMode, bot_config_file::BotConfigFile};
@@ -26,7 +26,6 @@ use crate::{
         profile_name::ProfileNameModerationHandler,
         profile_text::ProfileTextModerationHandler,
     },
-    utils::{BotRunResult, run_result_from_error, should_restart_bot_after_run_result},
 };
 
 mod content;
@@ -37,45 +36,6 @@ mod profile_text;
 pub struct AdminBot {
     state: BotState,
     bot_running_handle: mpsc::Sender<BotPersistentState>,
-}
-
-pub(crate) struct AdminBotWithRestart {
-    pub(crate) task_id: u32,
-    pub(crate) account_id_from_api: AccountId,
-    pub(crate) test_config: Arc<TestMode>,
-    pub(crate) bot_config_file: Arc<BotConfigFile>,
-    pub(crate) old_state: Option<Arc<StateData>>,
-    pub(crate) bot_running_handle: mpsc::Sender<BotPersistentState>,
-    pub(crate) bot_quit_receiver: watch::Receiver<()>,
-    pub(crate) reqwest_client: reqwest::Client,
-}
-
-impl AdminBotWithRestart {
-    pub(crate) async fn run(self) {
-        loop {
-            let started_at = Instant::now();
-            let admin_bot = AdminBot::new(
-                self.task_id,
-                self.test_config.clone(),
-                self.bot_config_file.clone(),
-                self.old_state.clone(),
-                self.bot_running_handle.clone(),
-                self.account_id_from_api.clone(),
-                &self.reqwest_client,
-            );
-
-            let run_result = admin_bot.run(self.bot_quit_receiver.clone()).await;
-            if should_restart_bot_after_run_result(
-                run_result,
-                started_at,
-                self.task_id,
-                "Admin bot",
-            ) {
-                continue;
-            }
-            break;
-        }
-    }
 }
 
 impl AdminBot {
@@ -134,45 +94,35 @@ impl AdminBot {
         }
     }
 
-    pub async fn run(mut self, mut bot_quit_receiver: watch::Receiver<()>) -> BotRunResult {
+    pub async fn run(mut self, mut bot_quit_receiver: watch::Receiver<()>) {
         info!("Admin bot started - Task {}", self.state.task_id,);
 
         select! {
             result = Self::run_admin_initial_logic(&mut self.state) => {
                 if let Err(e) = result {
-                    let run_result = run_result_from_error(&e);
-                    if run_result == BotRunResult::Quit {
-                        error!("Admin bot initial logic error: {:?}", e);
-                    }
+                    error!("Admin bot logic error: {:?}", e);
                     Self::handle_quit(self.state.persistent_state(), self.bot_running_handle).await;
-                    return run_result;
+                    return;
                 }
             },
             _ = bot_quit_receiver.changed() => {
                 Self::handle_quit(self.state.persistent_state(), self.bot_running_handle).await;
-                return BotRunResult::Quit;
+                return;
             }
         };
 
         // Admin bot persistent state does not change after initial logic
         let persistent_state = self.state.persistent_state();
-        let run_result = select! {
+        select! {
             result = Self::run_admin_logic(self.state) => {
                 if let Err(e) = result {
-                    let run_result = run_result_from_error(&e);
-                    if run_result == BotRunResult::Quit {
-                        error!("Admin bot logic error: {:?}", e);
-                    }
-                    run_result
-                } else {
-                    BotRunResult::Quit
+                    error!("Admin bot logic error: {:?}", e);
                 }
             },
-            _ = bot_quit_receiver.changed() => BotRunResult::Quit,
+            _ = bot_quit_receiver.changed() => (),
         };
 
         Self::handle_quit(persistent_state, self.bot_running_handle).await;
-        run_result
     }
 
     async fn run_admin_initial_logic(state: &mut BotState) -> Result<(), TestError> {
@@ -246,17 +196,27 @@ impl AdminBot {
                 content_sender,
                 profile_name_sender,
                 profile_text_sender,
-            ) => result.attach_printable("Admin bot logic error"),
+            ) => {
+                if let Err(e) = result {
+                    error!("Admin bot logic error: {:?}", e);
+                }
+            },
             result = content_receiver.process_notifications_loop() => {
-                result.attach_printable("Content moderation pipeline error")
+                if let Err(e) = result {
+                    error!("Content moderation pipeline error: {:?}", e);
+                }
             },
             result = profile_name_receiver.process_notifications_loop() => {
-                result.attach_printable("Profile name moderation pipeline error")
+                if let Err(e) = result {
+                    error!("Profile name moderation pipeline error: {:?}", e);
+                }
             },
             result = profile_text_receiver.process_notifications_loop() => {
-                result.attach_printable("Profile text moderation pipeline error")
+                if let Err(e) = result {
+                    error!("Profile text moderation pipeline error: {:?}", e);
+                }
             },
-        }?;
+        };
 
         Ok(())
     }

@@ -28,9 +28,7 @@ use tokio::{
 };
 use tracing::{error, info};
 
-use crate::{
-    admin_bot::AdminBotWithRestart, benchmark_bot::BenchmarkBot, user_bot::UserBotWithRestart,
-};
+use crate::{admin_bot::AdminBot, benchmark_bot::BenchmarkBot, user_bot::UserBot};
 
 pub struct BotTestRunner {
     server_instance_config: ServerInstanceConfig,
@@ -120,7 +118,7 @@ impl BotTestRunner {
         drop(bot_running_handle);
         drop(bot_quit_receiver);
 
-        let mut latest_bot_states: HashMap<u32, BotPersistentState> = HashMap::new();
+        let mut bot_states = vec![];
         loop {
             select! {
                 result = signal::ctrl_c() => {
@@ -133,9 +131,7 @@ impl BotTestRunner {
                 value = wait_all_bots.recv() => {
                     match value {
                         None => break,
-                        Some(state) => {
-                            latest_bot_states.insert(state.task, state);
-                        },
+                        Some(state) => bot_states.push(state),
                     }
                 }
             }
@@ -147,14 +143,9 @@ impl BotTestRunner {
         loop {
             match wait_all_bots.recv().await {
                 None => break,
-                Some(state) => {
-                    latest_bot_states.insert(state.task, state);
-                }
+                Some(state) => bot_states.push(state),
             }
         }
-
-        let mut bot_states: Vec<BotPersistentState> = latest_bot_states.into_values().collect();
-        bot_states.sort_by(|a, b| a.task.cmp(&b.task));
 
         let new_state = StateData {
             test_name: self.test_config.test_name(),
@@ -294,18 +285,17 @@ impl BotTestRunner {
                 .map(|b| b.aid.as_ref().clone())
                 .unwrap_or_else(|| api_client::models::AccountId::new(String::new()));
 
-            let admin_bot_with_restart = AdminBotWithRestart {
-                task_id: 0,
+            let admin_bot = AdminBot::new(
+                0,
+                test_config.clone(),
+                bot_config_file.clone(),
+                old_state.clone(),
+                bot_running_handle.clone(),
                 account_id_from_api,
-                test_config: test_config.clone(),
-                bot_config_file: bot_config_file.clone(),
-                old_state: old_state.clone(),
-                bot_running_handle: bot_running_handle.clone(),
-                bot_quit_receiver: bot_quit_receiver.clone(),
-                reqwest_client: reqwest_client.clone(),
-            };
-
-            tokio::spawn(admin_bot_with_restart.run());
+                reqwest_client,
+            );
+            let quit_receiver = bot_quit_receiver.clone();
+            tokio::spawn(admin_bot.run(quit_receiver));
         }
 
         if user_count > 0 {
@@ -323,18 +313,17 @@ impl BotTestRunner {
                 .map(|b| b.aid.as_ref().clone())
                 .unwrap_or_else(|| api_client::models::AccountId::new(String::new()));
 
-            let user_bot_with_restart = UserBotWithRestart {
+            let user_bot = UserBot::new(
                 task_id,
+                test_config.clone(),
+                bot_config_file.clone(),
+                old_state.clone(),
+                bot_running_handle.clone(),
                 account_id_from_api,
-                test_config: test_config.clone(),
-                bot_config_file: bot_config_file.clone(),
-                old_state: old_state.clone(),
-                bot_running_handle: bot_running_handle.clone(),
-                bot_quit_receiver: bot_quit_receiver.clone(),
-                reqwest_client: reqwest_client.clone(),
-            };
-
-            tokio::spawn(user_bot_with_restart.run());
+                reqwest_client,
+            );
+            let quit_receiver = bot_quit_receiver.clone();
+            tokio::spawn(user_bot.run(quit_receiver));
         }
     }
 
