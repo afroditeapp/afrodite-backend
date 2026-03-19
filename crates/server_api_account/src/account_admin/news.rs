@@ -3,8 +3,8 @@ use axum::{
     extract::{Path, State},
 };
 use model_account::{
-    AccountIdInternal, BooleanSetting, NewsId, NewsLocale, NotificationEvent, Permissions,
-    UpdateNewsTranslation, UpdateNewsTranslationResult,
+    AccountIdInternal, BooleanSetting, NewsId, NewsLocale, Permissions, UpdateNewsTranslation,
+    UpdateNewsTranslationResult,
 };
 use server_api::{DataError, S, create_open_api_router, db_write, result::WrappedContextExt};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
@@ -239,17 +239,10 @@ pub async fn post_set_news_publicity(
             return Ok(());
         }
 
-        let send_notification = cmds
-            .account_admin()
+        cmds.account_admin()
             .news()
             .set_news_publicity(nid, publicity.value)
             .await?;
-
-        if send_notification {
-            cmds.events()
-                .send_low_priority_notification_to_logged_in_clients(NotificationEvent::NewsChanged)
-                .await;
-        }
 
         Ok(())
     })?;

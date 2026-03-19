@@ -11,7 +11,6 @@ use server_api::{
     db_write_raw,
 };
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
-use server_data_account::read::GetReadCommandsAccount;
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use server_state::{S, result::Result};
 
@@ -46,16 +45,13 @@ pub async fn notifications_for_sending(
     }
 
     if flags.intersects(
-        PushNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED
+        PushNotificationFlags::NEWS_CHANGED
+            | PushNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED
             | PushNotificationFlags::PROFILE_STRING_MODERATION_COMPLETED
             | PushNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED
             | PushNotificationFlags::ADMIN_NOTIFICATION,
     ) {
         checker.handle_pending_notifications().await?;
-    }
-
-    if flags.contains(PushNotificationFlags::NEWS_CHANGED) {
-        checker.handle_news().await?;
     }
 
     Ok(checker.notifications)
@@ -154,6 +150,20 @@ impl<'a> NotificationChecker<'a> {
 
         for notification in &pending_notifications {
             match notification.notification_type {
+                PendingAppNotificationType::NewsChanged => {
+                    let unread_news_count = notification.data_integer.unwrap_or_default();
+                    if unread_news_count == 0 {
+                        self.notifications
+                            .push(PushNotification::remove_notification(
+                                PushNotificationId::NewsItemAvailable,
+                            ));
+                    } else {
+                        self.add_notification(
+                            PushNotificationId::NewsItemAvailable,
+                            self.notification_strings.news_item_available(),
+                        );
+                    }
+                }
                 PendingAppNotificationType::MediaContentModerationAccepted => {
                     self.add_notification(
                         PushNotificationId::MediaContentModerationAccepted,
@@ -228,29 +238,6 @@ impl<'a> NotificationChecker<'a> {
                 .await
         })
         .await?;
-
-        Ok(())
-    }
-
-    async fn handle_news(&mut self) -> Result<(), DataError> {
-        let count = self
-            .state
-            .read()
-            .account()
-            .news()
-            .unread_news_count(self.id)
-            .await?;
-
-        if count.c.c == 0 {
-            let notification =
-                PushNotification::remove_notification(PushNotificationId::NewsItemAvailable);
-            self.notifications.push(notification);
-        } else {
-            self.add_notification(
-                PushNotificationId::NewsItemAvailable,
-                self.notification_strings.news_item_available(),
-            );
-        }
 
         Ok(())
     }

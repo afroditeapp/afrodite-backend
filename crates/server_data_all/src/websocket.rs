@@ -83,6 +83,14 @@ pub async fn send_events_if_needed(
         .await?;
     }
 
+    let has_news_changed = pending_notifications
+        .iter()
+        .any(|v| matches!(v, PendingAppNotificationType::NewsChanged));
+
+    if has_news_changed {
+        send_event(socket, EventToClientInternal::NewsChanged).await?;
+    }
+
     let has_admin_notification = pending_notifications
         .iter()
         .any(|v| matches!(v, PendingAppNotificationType::AdminNotification));

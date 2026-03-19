@@ -17,7 +17,7 @@ impl ReadCommandsAccountNews<'_> {
         self.db_read(move |mut cmds| {
             let c = cmds.account().news().unread_news_count(id)?;
             let v = cmds.account().news().news_sync_version(id)?;
-            Ok(UnreadNewsCountResult { v, c, h: false })
+            Ok(UnreadNewsCountResult { v, c })
         })
         .await
         .into_data_error(id)

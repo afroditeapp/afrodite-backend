@@ -1,7 +1,9 @@
-use database::{DieselDatabaseError, define_current_write_commands};
+use database::{
+    DieselDatabaseError, current::write::GetDbWriteCommandsCommon, define_current_write_commands,
+};
 use diesel::{delete, insert_into, prelude::*, update, upsert::excluded};
 use error_stack::Result;
-use model::{AccountIdInternal, SyncVersion, UnixTime};
+use model::{AccountIdInternal, PendingAppNotificationInternal, SyncVersion, UnixTime};
 use model_account::{AccountGlobalState, NewsId, NewsLocale, PublicationId, UpdateNewsTranslation};
 use simple_backend_utils::db::MyRunQueryDsl;
 
@@ -155,6 +157,35 @@ impl CurrentWriteAccountNewsAdmin<'_> {
             .into_db_error(())?;
 
         Ok(send_notification)
+    }
+
+    pub fn upsert_news_pending_notification_for_every_account(
+        &mut self,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::{account_id, account_state};
+
+        let unread_counts: Vec<(AccountIdInternal, i64)> = account_state::table
+            .inner_join(account_id::table.on(account_state::account_id.eq(account_id::id)))
+            .select((
+                AccountIdInternal::as_select(),
+                account_state::unread_news_count,
+            ))
+            .load(self.conn())
+            .into_db_error(())?;
+
+        for (account_id, count) in unread_counts {
+            self.write()
+                .common()
+                .notification()
+                .upsert_pending_app_notification(
+                    account_id,
+                    PendingAppNotificationInternal::NewsChanged {
+                        unread_news_count: count,
+                    },
+                )?;
+        }
+
+        Ok(())
     }
 
     fn increment_news_sync_version_for_every_account(&mut self) -> Result<(), DieselDatabaseError> {

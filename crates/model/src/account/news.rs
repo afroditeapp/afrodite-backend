@@ -44,8 +44,4 @@ diesel_i64_wrapper!(UnreadNewsCount);
 pub struct UnreadNewsCountResult {
     pub v: NewsSyncVersion,
     pub c: UnreadNewsCount,
-    /// If true, client should not show the notification
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub h: bool,
 }

@@ -4,10 +4,9 @@ use axum::{
 };
 use model_account::{
     AccountIdInternal, GetNewsItemResult, NewsId, NewsIteratorState, NewsLocale, NewsPage,
-    Permissions, PushNotificationFlags, RequireNewsLocale, ResetNewsIteratorResult,
-    UnreadNewsCountResult,
+    Permissions, RequireNewsLocale, ResetNewsIteratorResult, UnreadNewsCountResult,
 };
-use server_api::{S, app::EventManagerProvider, create_open_api_router, db_write};
+use server_api::{S, create_open_api_router, db_write};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 
@@ -33,15 +32,13 @@ pub async fn post_get_unread_news_count(
 ) -> Result<Json<UnreadNewsCountResult>, StatusCode> {
     ACCOUNT.get_unread_news_count.incr();
 
-    let mut r = state.read().account().news().unread_news_count(id).await?;
-
-    let visibility = state
-        .event_manager()
-        .remove_pending_push_notification_flags_from_cache(id, PushNotificationFlags::NEWS_CHANGED)
-        .await;
-    r.h = visibility.hidden;
-
-    Ok(r.into())
+    Ok(state
+        .read()
+        .account()
+        .news()
+        .unread_news_count(id)
+        .await?
+        .into())
 }
 
 const PATH_POST_RESET_NEWS_PAGING: &str = "/account_api/reset_news_paging";

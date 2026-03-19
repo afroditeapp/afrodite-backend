@@ -23,6 +23,10 @@ use crate::AdminNotificationBitflags;
 /// * MODERATE_PROFILE_NAMES_BOT = 1 << 6
 /// * MODERATE_PROFILE_NAMES_HUMAN = 1 << 7
 /// * PROCESS_REPORTS = 1 << 8
+///
+/// ## News changed
+///
+/// Integer payload contains current unread news count.
 #[derive(
     Debug,
     Clone,
@@ -43,6 +47,7 @@ pub enum PendingAppNotificationType {
     // 0..19: common
     AdminNotification = 0,
     // 20..39: account
+    NewsChanged = 20,
     // 40..59: media
     MediaContentModerationAccepted = 40,
     MediaContentModerationRejected = 41,
@@ -59,6 +64,7 @@ pub enum PendingAppNotificationType {
 #[derive(Debug, Clone, Copy)]
 pub enum PendingAppNotificationInternal {
     AdminNotification { bitflags: AdminNotificationBitflags },
+    NewsChanged { unread_news_count: i64 },
     MediaContentModerationAccepted,
     MediaContentModerationRejected,
     MediaContentModerationDeleted,
@@ -75,6 +81,10 @@ impl PendingAppNotificationInternal {
             Self::AdminNotification { bitflags } => (
                 PendingAppNotificationType::AdminNotification,
                 Some(bitflags.bits()),
+            ),
+            Self::NewsChanged { unread_news_count } => (
+                PendingAppNotificationType::NewsChanged,
+                Some(unread_news_count),
             ),
             Self::MediaContentModerationAccepted => (
                 PendingAppNotificationType::MediaContentModerationAccepted,
