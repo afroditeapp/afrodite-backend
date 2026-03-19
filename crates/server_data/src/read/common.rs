@@ -48,14 +48,13 @@ impl<'a> ReadCommandsCommon<'a> {
 }
 
 impl ReadCommandsCommon<'_> {
-    pub async fn is_account_login_session_valid_for_access_token_type(
+    pub async fn is_current_access_token_valid_for_websocket_connection(
         &self,
         id: AccountIdInternal,
         ip: std::net::IpAddr,
-        access_token_type: AccessTokenType,
     ) -> Result<bool, DataError> {
         self.read_cache_common(id, |e| {
-            Ok(e.is_login_session_valid_for_access_token_type(ip, access_token_type))
+            Ok(e.is_login_session_valid_for_access_token_type(ip, AccessTokenType::Current, true))
         })
         .await
         .into_error()

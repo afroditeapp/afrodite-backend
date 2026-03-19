@@ -378,11 +378,7 @@ async fn handle_socket_result(
     let is_session_valid = state
         .read()
         .common()
-        .is_account_login_session_valid_for_access_token_type(
-            id,
-            address.ip(),
-            AccessTokenType::Current,
-        )
+        .is_current_access_token_valid_for_websocket_connection(id, address.ip())
         .await
         .change_context(WebSocketError::DatabaseAccessTokenIpAddress)?;
 

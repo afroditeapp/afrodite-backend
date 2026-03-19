@@ -178,6 +178,7 @@ impl DatabaseCache {
             let is_valid = r.common.is_login_session_valid_for_access_token_type(
                 connection.ip(),
                 entry.access_token_type,
+                false,
             );
 
             if is_valid {

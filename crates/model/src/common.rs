@@ -410,19 +410,37 @@ impl LoginSession {
                 .unwrap_or(false)
     }
 
-    fn is_access_token_valid(&self, access_token_type: AccessTokenType) -> bool {
-        if access_token_type == AccessTokenType::Previous && self.access_token_previous.is_none() {
-            return false;
-        }
+    fn is_access_token_valid(&self, access_token_type: AccessTokenType, websocket: bool) -> bool {
+        let expires_in = match access_token_type {
+            AccessTokenType::Current => {
+                if websocket {
+                    DurationValue::from_days(7)
+                } else {
+                    DurationValue::from_days(14)
+                }
+            }
+            AccessTokenType::Previous => {
+                if self.access_token_previous.is_some() {
+                    DurationValue::from_seconds(60)
+                } else {
+                    return false;
+                }
+            }
+        };
 
         !self
             .access_token_unix_time
             .ut
-            .duration_value_elapsed(DurationValue::from_days(3))
+            .duration_value_elapsed(expires_in)
     }
 
-    pub fn is_valid(&self, ip: std::net::IpAddr, access_token_type: AccessTokenType) -> bool {
-        self.is_ip_valid(ip) && self.is_access_token_valid(access_token_type)
+    pub fn is_valid(
+        &self,
+        ip: std::net::IpAddr,
+        access_token_type: AccessTokenType,
+        websocket: bool,
+    ) -> bool {
+        self.is_ip_valid(ip) && self.is_access_token_valid(access_token_type, websocket)
     }
 }
 

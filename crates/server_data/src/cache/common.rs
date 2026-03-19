@@ -70,10 +70,11 @@ impl CacheCommon {
         &self,
         ip: std::net::IpAddr,
         access_token_type: AccessTokenType,
+        websocket: bool,
     ) -> bool {
         self.login_session
             .as_ref()
-            .map(|v| v.is_valid(ip, access_token_type))
+            .map(|v| v.is_valid(ip, access_token_type, websocket))
             .unwrap_or(false)
     }
 
