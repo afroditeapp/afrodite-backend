@@ -9,6 +9,7 @@ use std::{
     sync::Arc,
 };
 
+use database::current::write::GetDbWriteCommandsCommon;
 use database_chat::current::{
     read::GetDbReadCommandsChat,
     write::{
@@ -17,20 +18,25 @@ use database_chat::current::{
     },
 };
 use error_stack::ResultExt;
-use model::{NewReceivedLikesCountResult, ReceivedLikeId};
+use model::{NewReceivedLikesCountResult, PendingAppNotificationInternal, ReceivedLikeId};
 use model_chat::{
     AccountIdInternal, AddPublicKeyResult, ChatStateRaw, DeliveryInfoType, LatestSeenMessageInfo,
     MessageId, NewReceivedLikesCount, PendingMessageId, PublicKeyId, ReceivedLikesIteratorState,
     ResetReceivedLikesIteratorResult, SeenMessage, SendMessageResult, SyncVersionUtils,
 };
 use server_data::{
-    DataError, DieselDatabaseError, app::GetConfig, db_transaction, define_cmd_wrapper_write,
-    id::ToAccountIdInternal, read::DbRead, result::Result, write::DbTransaction,
+    DataError, DieselDatabaseError,
+    app::{EventManagerProvider, GetConfig},
+    db_transaction, define_cmd_wrapper_write,
+    id::ToAccountIdInternal,
+    read::DbRead,
+    result::Result,
+    write::DbTransaction,
 };
 use simple_backend_utils::ContextExt;
 use utils::encrypt::ParsedKeys;
 
-use crate::read::GetReadChatCommands;
+use crate::{event::EventManagerChatMethods, read::GetReadChatCommands};
 
 define_cmd_wrapper_write!(WriteCommandsChat);
 
@@ -71,8 +77,8 @@ impl WriteCommandsChat<'_> {
         &self,
         id_like_sender: AccountIdInternal,
         id_like_recipient: AccountIdInternal,
-    ) -> Result<SenderAndRecipientStateChanges, DataError> {
-        db_transaction!(self, move |mut cmds| {
+    ) -> Result<(), DataError> {
+        let changes = db_transaction!(self, move |mut cmds| {
             let interaction = cmds
                 .chat()
                 .interaction()
@@ -138,8 +144,28 @@ impl WriteCommandsChat<'_> {
                 }
             })?;
 
+            if let Some(info) = &recipient.received_likes_change {
+                cmds.common()
+                    .notification()
+                    .upsert_pending_app_notification(
+                        recipient.id,
+                        PendingAppNotificationInternal::ReceivedLikesChanged {
+                            new_received_likes_count: info.current_count.c,
+                        },
+                    )?;
+            }
+
             Ok(SenderAndRecipientStateChanges { sender, recipient })
-        })
+        })?;
+
+        self.event_manager()
+            .handle_chat_state_changes(&changes.sender)
+            .await?;
+        self.event_manager()
+            .handle_chat_state_changes(&changes.recipient)
+            .await?;
+
+        Ok(())
     }
 
     /// Block a profile.

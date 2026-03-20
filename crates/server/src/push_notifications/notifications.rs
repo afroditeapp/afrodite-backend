@@ -40,12 +40,9 @@ pub async fn notifications_for_sending(
         checker.handle_new_message().await?;
     }
 
-    if flags.contains(PushNotificationFlags::RECEIVED_LIKES_CHANGED) {
-        checker.handle_received_likes().await?;
-    }
-
     if flags.intersects(
-        PushNotificationFlags::NEWS_CHANGED
+        PushNotificationFlags::RECEIVED_LIKES_CHANGED
+            | PushNotificationFlags::NEWS_CHANGED
             | PushNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED
             | PushNotificationFlags::PROFILE_STRING_MODERATION_COMPLETED
             | PushNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED
@@ -118,27 +115,6 @@ impl<'a> NotificationChecker<'a> {
         Ok(())
     }
 
-    async fn handle_received_likes(&mut self) -> Result<(), DataError> {
-        let v = self
-            .state
-            .read()
-            .chat()
-            .chat_state(self.id)
-            .await?
-            .new_received_likes_info();
-
-        self.add_notification(
-            PushNotificationId::LikeReceived,
-            if v.c.c == 1 {
-                self.notification_strings.like_received_single()
-            } else {
-                self.notification_strings.like_received_multiple()
-            },
-        );
-
-        Ok(())
-    }
-
     async fn handle_pending_notifications(&mut self) -> Result<(), DataError> {
         let pending_notifications = self
             .state
@@ -150,6 +126,19 @@ impl<'a> NotificationChecker<'a> {
 
         for notification in &pending_notifications {
             match notification.notification_type {
+                PendingAppNotificationType::ReceivedLikesChanged => {
+                    let received_likes_count = notification.data_integer.unwrap_or_default();
+                    // Notification is sent only when like is added so
+                    // received_likes_count == 0 doesn't happen.
+                    self.add_notification(
+                        PushNotificationId::LikeReceived,
+                        if received_likes_count == 1 {
+                            self.notification_strings.like_received_single()
+                        } else {
+                            self.notification_strings.like_received_multiple()
+                        },
+                    )
+                }
                 PendingAppNotificationType::NewsChanged => {
                     let unread_news_count = notification.data_integer.unwrap_or_default();
                     if unread_news_count == 0 {

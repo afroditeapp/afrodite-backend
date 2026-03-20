@@ -41,7 +41,8 @@ pub async fn get_pending_app_notifications(
         .event_manager()
         .remove_pending_push_notification_flags_from_cache(
             id,
-            PushNotificationFlags::NEWS_CHANGED
+            PushNotificationFlags::RECEIVED_LIKES_CHANGED
+                | PushNotificationFlags::NEWS_CHANGED
                 | PushNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED
                 | PushNotificationFlags::PROFILE_STRING_MODERATION_COMPLETED
                 | PushNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED

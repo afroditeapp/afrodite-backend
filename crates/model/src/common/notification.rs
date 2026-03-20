@@ -27,6 +27,10 @@ use crate::AdminNotificationBitflags;
 /// ## News changed
 ///
 /// Integer payload contains current unread news count.
+///
+/// ## Received likes changed
+///
+/// Integer payload contains current received likes count.
 #[derive(
     Debug,
     Clone,
@@ -59,12 +63,14 @@ pub enum PendingAppNotificationType {
     ProfileTextModerationRejected = 63,
     AutomaticProfileSearchCompleted = 64,
     // 80..99: chat
+    ReceivedLikesChanged = 80,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub enum PendingAppNotificationInternal {
     AdminNotification { bitflags: AdminNotificationBitflags },
     NewsChanged { unread_news_count: i64 },
+    ReceivedLikesChanged { new_received_likes_count: i64 },
     MediaContentModerationAccepted,
     MediaContentModerationRejected,
     MediaContentModerationDeleted,
@@ -85,6 +91,12 @@ impl PendingAppNotificationInternal {
             Self::NewsChanged { unread_news_count } => (
                 PendingAppNotificationType::NewsChanged,
                 Some(unread_news_count),
+            ),
+            Self::ReceivedLikesChanged {
+                new_received_likes_count,
+            } => (
+                PendingAppNotificationType::ReceivedLikesChanged,
+                Some(new_received_likes_count),
             ),
             Self::MediaContentModerationAccepted => (
                 PendingAppNotificationType::MediaContentModerationAccepted,

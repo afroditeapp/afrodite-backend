@@ -3,17 +3,15 @@ use model::AccountState;
 use model_chat::{
     AccountIdInternal, AccountInteractionState, CurrentAccountInteractionState, DailyLikesLeft,
     LimitedActionStatus, MarkReceivedLikesViewed, NewReceivedLikesCountResult,
-    PushNotificationFlags, ReceivedLikesIteratorState, ReceivedLikesPage,
-    ResetReceivedLikesIteratorResult, SendLike, SendLikeResult,
+    ReceivedLikesIteratorState, ReceivedLikesPage, ResetReceivedLikesIteratorResult, SendLike,
+    SendLikeResult,
 };
 use server_api::{
     S,
-    app::{ApiUsageTrackerProvider, EventManagerProvider, GetConfig},
+    app::{ApiUsageTrackerProvider, GetConfig},
     create_open_api_router,
 };
-use server_data_chat::{
-    event::EventManagerChatMethods, read::GetReadChatCommands, write::GetWriteCommandsChat,
-};
+use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 
 use super::super::utils::{Json, StatusCode};
@@ -122,15 +120,8 @@ pub async fn post_send_like(
         };
 
         if allow_action {
-            let changes = cmds
-                .chat()
+            cmds.chat()
                 .like_or_match_profile(id, requested_account)
-                .await?;
-            cmds.events()
-                .handle_chat_state_changes(&changes.sender)
-                .await?;
-            cmds.events()
-                .handle_chat_state_changes(&changes.recipient)
                 .await?;
         }
 
@@ -179,23 +170,13 @@ pub async fn post_get_new_received_likes_count(
 ) -> Result<Json<NewReceivedLikesCountResult>, StatusCode> {
     CHAT.post_get_new_received_likes_count.incr();
 
-    let mut info = state
+    Ok(state
         .read()
         .chat()
         .chat_state(id)
         .await?
-        .new_received_likes_info();
-
-    let visibility = state
-        .event_manager()
-        .remove_pending_push_notification_flags_from_cache(
-            id,
-            PushNotificationFlags::RECEIVED_LIKES_CHANGED,
-        )
-        .await;
-    info.h = visibility.hidden;
-
-    Ok(info.into())
+        .new_received_likes_info()
+        .into())
 }
 
 const PATH_POST_RESET_NEW_RECEIVED_LIKES_COUNT: &str = "/chat_api/reset_new_received_likes_count";

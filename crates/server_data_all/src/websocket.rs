@@ -91,6 +91,14 @@ pub async fn send_events_if_needed(
         send_event(socket, EventToClientInternal::NewsChanged).await?;
     }
 
+    let has_received_likes_changed = pending_notifications
+        .iter()
+        .any(|v| matches!(v, PendingAppNotificationType::ReceivedLikesChanged));
+
+    if has_received_likes_changed {
+        send_event(socket, EventToClientInternal::ReceivedLikesChanged).await?;
+    }
+
     let has_admin_notification = pending_notifications
         .iter()
         .any(|v| matches!(v, PendingAppNotificationType::AdminNotification));
