@@ -78,7 +78,7 @@ impl<'a> NotificationChecker<'a> {
     }
 
     async fn handle_new_message(&mut self) -> Result<(), DataError> {
-        let (notifications, messages) = self
+        let notifications = self
             .state
             .read()
             .chat()
@@ -86,34 +86,25 @@ impl<'a> NotificationChecker<'a> {
             .new_message_notification_list(self.id)
             .await?;
 
-        let conversations: Vec<_> = notifications.v.iter().map(|n| n.c).collect();
-        let pending_chat_notifications = self
-            .state
-            .read()
-            .chat()
-            .notification()
-            .pending_chat_notifications(self.id)
-            .await?;
-        let pending_chat_notifications = pending_chat_notifications
-            .into_iter()
-            .filter(|n| !n.push_notification_sent && conversations.contains(&n.conversation_id))
-            .collect();
+        if notifications.values.is_empty() {
+            return Ok(());
+        }
 
-        for n in notifications.v {
+        for n in &notifications.values {
             let name = self
                 .state
                 .read()
                 .common()
-                .user_visible_profile_name_if_data_available(n.a)
+                .user_visible_profile_name_if_data_available(n.message_sender.as_id())
                 .await?
                 .map(|v| v.into_string())
                 .unwrap_or_default();
-            let title = if n.m == 1 {
+            let title = if n.message_count == 1 {
                 self.notification_strings.message_received_single(&name)
             } else {
                 self.notification_strings.message_received_multiple(&name)
             };
-            let notification = PushNotification::new_message(n.c, title.title);
+            let notification = PushNotification::new_message(n.conversation_id, title.title);
             self.notifications.push(notification);
         }
 
@@ -121,11 +112,7 @@ impl<'a> NotificationChecker<'a> {
         db_write_raw!(self.state, move |cmds| {
             cmds.chat()
                 .notification()
-                .mark_recipient_push_notification_sent(messages)
-                .await?;
-            cmds.chat()
-                .notification()
-                .mark_pending_chat_notifications_push_sent(account_id, pending_chat_notifications)
+                .mark_new_message_notifications_push_sent(account_id, notifications.values)
                 .await
         })
         .await?;

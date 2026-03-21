@@ -1,7 +1,6 @@
 use database_chat::current::write::GetDbWriteCommandsChat;
 use model::{
-    AccountIdInternal, ConversationId, PendingMessageDbId, PendingMessageDbIdAndMessageTime,
-    ReceivedLikeId,
+    AccountIdInternal, NewMessagePushNotification, PendingMessageDbIdAndMessageTime, ReceivedLikeId,
 };
 use model_chat::{
     ChatAppNotificationSettings, ChatEmailNotificationSettings, PendingChatNotification,
@@ -45,17 +44,6 @@ impl WriteCommandsChatNotification<'_> {
         })
     }
 
-    pub async fn mark_recipient_push_notification_sent(
-        &self,
-        messages: Vec<PendingMessageDbId>,
-    ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.chat()
-                .message()
-                .mark_recipient_push_notification_sent(messages)
-        })
-    }
-
     pub async fn mark_message_email_notification_sent(
         &self,
         messages: Vec<PendingMessageDbIdAndMessageTime>,
@@ -81,23 +69,23 @@ impl WriteCommandsChatNotification<'_> {
 
     pub async fn upsert_pending_chat_notification(
         &self,
-        id: AccountIdInternal,
-        conversation_id: ConversationId,
+        viewer_id: AccountIdInternal,
+        sender_id: AccountIdInternal,
         message_count: i64,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat().notification().upsert_pending_chat_notification(
-                id,
-                conversation_id,
+                viewer_id,
+                sender_id,
                 message_count,
             )
         })
     }
 
-    pub async fn mark_pending_chat_notifications_push_sent(
+    pub async fn mark_new_message_notifications_push_sent(
         &self,
         id: AccountIdInternal,
-        notifications: Vec<PendingChatNotification>,
+        notifications: Vec<NewMessagePushNotification>,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()

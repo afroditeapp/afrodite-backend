@@ -1,13 +1,10 @@
-use std::collections::HashMap;
-
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
-    AccountId, AccountIdDb, AdminDataExportPendingMessage, ConversationId,
-    DataExportLatestSeenMessage, DataExportPendingMessage, MessageId, MessageNumber,
-    NewMessageNotification, NewMessageNotificationList, PendingMessageDbId,
-    PendingMessageDbIdAndMessageTime, PendingMessageInfo, PendingMessageRaw, UnixTime,
+    AccountId, AdminDataExportPendingMessage, ConversationId, DataExportLatestSeenMessage,
+    DataExportPendingMessage, MessageId, MessageNumber, PendingMessageDbIdAndMessageTime,
+    PendingMessageInfo, PendingMessageRaw, UnixTime,
 };
 use model_chat::{
     AccountIdInternal, DataExportMessageDeliveryInfo, DeliveryInfoType, GetSentMessage,
@@ -33,59 +30,6 @@ impl CurrentReadChatMessage<'_> {
             .into_db_error(())?;
 
         Ok(value)
-    }
-
-    pub fn new_message_notification_list(
-        &mut self,
-        id_message_recipient: AccountIdInternal,
-    ) -> Result<(NewMessageNotificationList, Vec<PendingMessageDbId>), DieselDatabaseError> {
-        use crate::schema::{account_id, conversation_id, pending_messages::dsl::*};
-
-        let data: Vec<(i64, AccountIdDb, AccountId, ConversationId, bool)> = pending_messages
-            .inner_join(account_id::table.on(account_id_sender.eq(account_id::id)))
-            .inner_join(
-                conversation_id::table.on(conversation_id::account_id
-                    .eq(id_message_recipient.as_db_id())
-                    .and(conversation_id::other_account_id.eq(account_id_sender))),
-            )
-            .filter(account_id_recipient.eq(id_message_recipient.as_db_id()))
-            .filter(recipient_acknowledgement.eq(false))
-            .select((
-                id,
-                account_id::id,
-                account_id::uuid,
-                conversation_id::id,
-                recipient_push_notification_sent,
-            ))
-            .order_by(account_id_sender)
-            .load(self.conn())
-            .into_db_error(())?;
-
-        let mut notifications = HashMap::<AccountIdDb, (NewMessageNotification, bool)>::new();
-        let mut messages_pending_push_notification = vec![];
-
-        for (primary_key, sender_db_id, sender, c, push_notification_sent) in data {
-            let mut entry = notifications
-                .entry(sender_db_id)
-                .insert_entry((NewMessageNotification { a: sender, c, m: 0 }, true));
-            entry.get_mut().0.m += 1;
-
-            if !push_notification_sent {
-                // Message notification needs an update
-                entry.get_mut().1 = false;
-                messages_pending_push_notification.push(PendingMessageDbId { id: primary_key });
-            }
-        }
-
-        let v = notifications
-            .into_values()
-            .filter_map(|(n, no_update)| if no_update { None } else { Some(n) })
-            .collect();
-
-        Ok((
-            NewMessageNotificationList { v },
-            messages_pending_push_notification,
-        ))
     }
 
     pub fn messages_without_sent_email_notification(

@@ -64,11 +64,9 @@ pub struct PendingMessageInternal {
     pub message_id: MessageId,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, Queryable, Selectable)]
-#[diesel(table_name = crate::schema::pending_chat_notifications)]
-#[diesel(check_for_backend(crate::Db))]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema)]
 pub struct PendingChatNotification {
-    pub conversation_id: ConversationId,
+    pub account_id_sender: AccountId,
     pub message_count: i64,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]

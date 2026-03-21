@@ -1057,9 +1057,6 @@ CREATE TABLE IF NOT EXISTS pending_messages(
     -- Acknowledgement from sender and recipient
     sender_acknowledgement          BOOLEAN NOT NULL DEFAULT FALSE,
     recipient_acknowledgement       BOOLEAN NOT NULL DEFAULT FALSE,
-    -- Track push notification sending for the message to
-    -- avoid sending the same data again.
-    recipient_push_notification_sent BOOLEAN NOT NULL DEFAULT FALSE,
     -- Email notification for the message.
     recipient_email_notification_sent BOOLEAN NOT NULL DEFAULT FALSE,
     message_unix_time               BIGINT NOT NULL,
@@ -1165,12 +1162,18 @@ CREATE TABLE IF NOT EXISTS conversation_id(
 );
 
 CREATE TABLE IF NOT EXISTS pending_chat_notifications(
-    account_id                   BIGINT  NOT NULL,
-    conversation_id              BIGINT  NOT NULL,
+    -- Notification viewer
+    account_id_viewer            BIGINT  NOT NULL,
+    -- Message sender
+    account_id_sender            BIGINT  NOT NULL,
     message_count                BIGINT  NOT NULL,
     push_notification_sent       BOOLEAN NOT NULL DEFAULT FALSE,
-    PRIMARY KEY (account_id, conversation_id),
-    FOREIGN KEY (account_id)
+    PRIMARY KEY (account_id_viewer, account_id_sender),
+    FOREIGN KEY (account_id_viewer)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (account_id_sender)
         REFERENCES account_id (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE

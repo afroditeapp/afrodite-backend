@@ -517,18 +517,11 @@ impl WriteCommandsChat<'_> {
                 }
             };
 
-            let conversation = cmds
-                .read()
-                .chat()
-                .message()
-                .get_conversation_id(recipient, sender)?
-                .ok_or(DieselDatabaseError::NotAllowed)?;
-
             cmds.chat()
                 .notification()
                 .upsert_pending_chat_notification(
                     recipient,
-                    conversation,
+                    sender,
                     recipient_acknowledgements_missing.saturating_add(1),
                 )?;
 

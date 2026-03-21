@@ -114,6 +114,16 @@ pub struct NewMessageNotification {
     pub m: i64,
 }
 
+pub struct NewMessagePushNotificationList {
+    pub values: Vec<NewMessagePushNotification>,
+}
+
+pub struct NewMessagePushNotification {
+    pub message_sender: AccountIdInternal,
+    pub conversation_id: ConversationId,
+    pub message_count: i64,
+}
+
 sync_version_wrappers!(
     /// Sync version for new received likes count
     ReceivedLikesSyncVersion,
@@ -226,7 +236,6 @@ pub struct PendingMessageRaw {
     pub sender_public_key_id: PublicKeyId,
     pub sender_acknowledgement: bool,
     pub recipient_acknowledgement: bool,
-    pub recipient_push_notification_sent: bool,
     pub recipient_email_notification_sent: bool,
     pub message_unix_time: UnixTime,
     pub message_number: MessageNumber,
