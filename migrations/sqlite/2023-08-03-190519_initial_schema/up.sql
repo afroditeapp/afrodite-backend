@@ -1164,6 +1164,18 @@ CREATE TABLE IF NOT EXISTS conversation_id(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS pending_chat_notifications(
+    account_id                   BIGINT  NOT NULL,
+    conversation_id              BIGINT  NOT NULL,
+    message_count                BIGINT  NOT NULL,
+    push_notification_sent       BOOLEAN NOT NULL DEFAULT FALSE,
+    PRIMARY KEY (account_id, conversation_id),
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS chat_report_chat_message(
     report_id                          INTEGER PRIMARY KEY NOT NULL,
     message_sender_account_id_uuid     BLOB                NOT NULL,

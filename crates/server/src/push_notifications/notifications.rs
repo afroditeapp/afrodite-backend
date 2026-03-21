@@ -86,6 +86,19 @@ impl<'a> NotificationChecker<'a> {
             .new_message_notification_list(self.id)
             .await?;
 
+        let conversations: Vec<_> = notifications.v.iter().map(|n| n.c).collect();
+        let pending_chat_notifications = self
+            .state
+            .read()
+            .chat()
+            .notification()
+            .pending_chat_notifications(self.id)
+            .await?;
+        let pending_chat_notifications = pending_chat_notifications
+            .into_iter()
+            .filter(|n| !n.push_notification_sent && conversations.contains(&n.conversation_id))
+            .collect();
+
         for n in notifications.v {
             let name = self
                 .state
@@ -104,10 +117,15 @@ impl<'a> NotificationChecker<'a> {
             self.notifications.push(notification);
         }
 
+        let account_id = self.id;
         db_write_raw!(self.state, move |cmds| {
             cmds.chat()
                 .notification()
                 .mark_recipient_push_notification_sent(messages)
+                .await?;
+            cmds.chat()
+                .notification()
+                .mark_pending_chat_notifications_push_sent(account_id, pending_chat_notifications)
                 .await
         })
         .await?;

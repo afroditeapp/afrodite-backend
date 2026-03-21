@@ -517,6 +517,21 @@ impl WriteCommandsChat<'_> {
                 }
             };
 
+            let conversation = cmds
+                .read()
+                .chat()
+                .message()
+                .get_conversation_id(recipient, sender)?
+                .ok_or(DieselDatabaseError::NotAllowed)?;
+
+            cmds.chat()
+                .notification()
+                .upsert_pending_chat_notification(
+                    recipient,
+                    conversation,
+                    recipient_acknowledgements_missing.saturating_add(1),
+                )?;
+
             let remaining_conversation_messages = {
                 let missing_acknowledgements = i64::max(
                     recipient_acknowledgements_missing,

@@ -1,8 +1,10 @@
 use database::{DieselDatabaseError, define_current_write_commands};
-use diesel::{insert_into, prelude::*};
+use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
-use model::AccountIdInternal;
-use model_chat::{ChatAppNotificationSettings, ChatEmailNotificationSettings};
+use model::{AccountIdInternal, ConversationId};
+use model_chat::{
+    ChatAppNotificationSettings, ChatEmailNotificationSettings, PendingChatNotification,
+};
 use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::IntoDatabaseError;
@@ -42,6 +44,82 @@ impl CurrentWriteChatNotification<'_> {
             .set(settings)
             .execute_my_conn(self.conn())
             .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn upsert_pending_chat_notification(
+        &mut self,
+        id: AccountIdInternal,
+        conversation_id_value: ConversationId,
+        message_count_value: i64,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::pending_chat_notifications::dsl::*;
+
+        insert_into(pending_chat_notifications)
+            .values((
+                account_id.eq(id.as_db_id()),
+                conversation_id.eq(conversation_id_value),
+                message_count.eq(message_count_value),
+                push_notification_sent.eq(false),
+            ))
+            .on_conflict((account_id, conversation_id))
+            .do_update()
+            .set((
+                message_count.eq(message_count_value),
+                push_notification_sent.eq(false),
+            ))
+            .execute_my_conn(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
+    }
+
+    pub fn mark_pending_chat_notifications_push_sent(
+        &mut self,
+        id: AccountIdInternal,
+        notifications: Vec<PendingChatNotification>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::pending_chat_notifications::dsl::*;
+
+        if notifications.is_empty() {
+            return Ok(());
+        }
+
+        for notification in notifications {
+            update(pending_chat_notifications)
+                .filter(account_id.eq(id.as_db_id()))
+                .filter(conversation_id.eq(notification.conversation_id))
+                .filter(message_count.eq(notification.message_count))
+                .filter(push_notification_sent.eq(notification.push_notification_sent))
+                .set(push_notification_sent.eq(true))
+                .execute(self.conn())
+                .into_db_error(id)?;
+        }
+
+        Ok(())
+    }
+
+    pub fn delete_pending_chat_notifications(
+        &mut self,
+        id: AccountIdInternal,
+        notifications: Vec<PendingChatNotification>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::pending_chat_notifications::dsl::*;
+
+        if notifications.is_empty() {
+            return Ok(());
+        }
+
+        for notification in notifications {
+            delete(pending_chat_notifications)
+                .filter(account_id.eq(id.as_db_id()))
+                .filter(conversation_id.eq(notification.conversation_id))
+                .filter(message_count.eq(notification.message_count))
+                .filter(push_notification_sent.eq(notification.push_notification_sent))
+                .execute(self.conn())
+                .into_db_error(id)?;
+        }
 
         Ok(())
     }

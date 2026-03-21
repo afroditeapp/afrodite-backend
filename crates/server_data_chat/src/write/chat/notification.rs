@@ -1,8 +1,11 @@
 use database_chat::current::write::GetDbWriteCommandsChat;
 use model::{
-    AccountIdInternal, PendingMessageDbId, PendingMessageDbIdAndMessageTime, ReceivedLikeId,
+    AccountIdInternal, ConversationId, PendingMessageDbId, PendingMessageDbIdAndMessageTime,
+    ReceivedLikeId,
 };
-use model_chat::{ChatAppNotificationSettings, ChatEmailNotificationSettings};
+use model_chat::{
+    ChatAppNotificationSettings, ChatEmailNotificationSettings, PendingChatNotification,
+};
 use server_data::{
     DataError, IntoDataError, cache::CacheWriteCommon, db_transaction, define_cmd_wrapper_write,
     result::Result, write::DbTransaction,
@@ -73,6 +76,45 @@ impl WriteCommandsChatNotification<'_> {
             cmds.chat()
                 .interaction()
                 .mark_like_email_notification_sent(id_recipient, likes)
+        })
+    }
+
+    pub async fn upsert_pending_chat_notification(
+        &self,
+        id: AccountIdInternal,
+        conversation_id: ConversationId,
+        message_count: i64,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.chat().notification().upsert_pending_chat_notification(
+                id,
+                conversation_id,
+                message_count,
+            )
+        })
+    }
+
+    pub async fn mark_pending_chat_notifications_push_sent(
+        &self,
+        id: AccountIdInternal,
+        notifications: Vec<PendingChatNotification>,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.chat()
+                .notification()
+                .mark_pending_chat_notifications_push_sent(id, notifications)
+        })
+    }
+
+    pub async fn delete_pending_chat_notifications(
+        &self,
+        id: AccountIdInternal,
+        notifications: Vec<PendingChatNotification>,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.chat()
+                .notification()
+                .delete_pending_chat_notifications(id, notifications)
         })
     }
 }

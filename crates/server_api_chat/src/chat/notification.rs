@@ -1,6 +1,14 @@
 use axum::{Extension, extract::State};
-use model_chat::{AccountIdInternal, ChatAppNotificationSettings, ChatEmailNotificationSettings};
-use server_api::{S, app::WriteData, create_open_api_router, db_write};
+use model::PushNotificationFlags;
+use model_chat::{
+    AccountIdInternal, ChatAppNotificationSettings, ChatEmailNotificationSettings,
+    PendingChatNotificationList,
+};
+use server_api::{
+    S,
+    app::{EventManagerProvider, WriteData},
+    create_open_api_router, db_write,
+};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 
@@ -123,12 +131,77 @@ async fn post_chat_email_notification_settings(
     Ok(())
 }
 
+const PATH_GET_PENDING_CHAT_NOTIFICATIONS: &str = "/chat_api/pending_notifications";
+
+#[utoipa::path(
+    get,
+    path = PATH_GET_PENDING_CHAT_NOTIFICATIONS,
+    responses(
+        (status = 200, description = "Success.", body = PendingChatNotificationList),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+async fn get_pending_chat_notifications(
+    State(state): State<S>,
+    Extension(id): Extension<AccountIdInternal>,
+) -> Result<Json<PendingChatNotificationList>, StatusCode> {
+    CHAT.get_pending_chat_notifications.incr();
+
+    let notifications = state
+        .read()
+        .chat()
+        .notification()
+        .pending_chat_notifications(id)
+        .await?;
+
+    state
+        .event_manager()
+        .remove_pending_push_notification_flags_from_cache(id, PushNotificationFlags::NEW_MESSAGE)
+        .await;
+
+    Ok(PendingChatNotificationList { notifications }.into())
+}
+
+const PATH_POST_DELETE_PENDING_CHAT_NOTIFICATIONS: &str = "/chat_api/pending_notifications/delete";
+
+#[utoipa::path(
+    post,
+    path = PATH_POST_DELETE_PENDING_CHAT_NOTIFICATIONS,
+    request_body = PendingChatNotificationList,
+    responses(
+        (status = 200, description = "Success."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+async fn post_delete_pending_chat_notifications(
+    State(state): State<S>,
+    Extension(id): Extension<AccountIdInternal>,
+    Json(notifications): Json<PendingChatNotificationList>,
+) -> Result<(), StatusCode> {
+    CHAT.post_delete_pending_chat_notifications.incr();
+
+    db_write!(state, move |cmds| {
+        cmds.chat()
+            .notification()
+            .delete_pending_chat_notifications(id, notifications.notifications)
+            .await
+    })?;
+
+    Ok(())
+}
+
 create_open_api_router!(
     fn router_notification,
     get_chat_app_notification_settings,
     post_chat_app_notification_settings,
     get_chat_email_notification_settings,
     post_chat_email_notification_settings,
+    get_pending_chat_notifications,
+    post_delete_pending_chat_notifications,
 );
 
 create_counters!(
@@ -139,4 +212,6 @@ create_counters!(
     post_chat_app_notification_settings,
     get_chat_email_notification_settings,
     post_chat_email_notification_settings,
+    get_pending_chat_notifications,
+    post_delete_pending_chat_notifications,
 );

@@ -645,6 +645,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    pending_chat_notifications (account_id, conversation_id) {
+        account_id -> Int8,
+        conversation_id -> Int8,
+        message_count -> Int8,
+        push_notification_sent -> Bool,
+    }
+}
+
+diesel::table! {
     pending_messages (id) {
         id -> Int8,
         account_id_sender -> Int8,
@@ -924,6 +933,7 @@ diesel::joinable!(media_state -> account_id (account_id));
 diesel::joinable!(news -> account_id (account_id_creator));
 diesel::joinable!(news_translations -> news (news_id));
 diesel::joinable!(pending_app_notifications -> account_id (account_id));
+diesel::joinable!(pending_chat_notifications -> account_id (account_id));
 diesel::joinable!(profile -> account_id (account_id));
 diesel::joinable!(profile_app_notification_settings -> account_id (account_id));
 diesel::joinable!(profile_attributes_filter_list_unwanted -> account_id (account_id));
@@ -1008,6 +1018,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     news,
     news_translations,
     pending_app_notifications,
+    pending_chat_notifications,
     pending_messages,
     profile,
     profile_app_notification_settings,

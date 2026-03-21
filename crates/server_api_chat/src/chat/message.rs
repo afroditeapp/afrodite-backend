@@ -194,6 +194,14 @@ pub async fn post_send_message(
             .await?;
 
         if !result.is_err() {
+            cmds.events()
+                .send_connected_event(
+                    message_recipient,
+                    EventToClientInternal::PendingChatNotificationsChanged,
+                )
+                .await
+                .ignore_and_log_error();
+
             match push_notification_allowed {
                 Some(PushNotificationAllowed) => cmds
                     .events()

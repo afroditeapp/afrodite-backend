@@ -61,6 +61,7 @@ pub enum EventType {
     /// Account state, profile visibility or permissions changed.
     AccountStateChanged,
     NewMessageReceived,
+    PendingChatNotificationsChanged,
     ReceivedLikesChanged,
     /// Data: content_processing_state_changed
     ContentProcessingStateChanged,
@@ -132,6 +133,7 @@ pub enum EventToClientInternal {
     AccountStateChanged,
     ContentProcessingStateChanged(ContentProcessingStateChanged),
     NewMessageReceived,
+    PendingChatNotificationsChanged,
     ReceivedLikesChanged,
     ClientConfigChanged,
     ProfileChanged,
@@ -159,6 +161,7 @@ impl From<&EventToClientInternal> for EventType {
             ContentProcessingStateChanged(_) => Self::ContentProcessingStateChanged,
             AccountStateChanged => Self::AccountStateChanged,
             NewMessageReceived => Self::NewMessageReceived,
+            PendingChatNotificationsChanged => Self::PendingChatNotificationsChanged,
             ReceivedLikesChanged => Self::ReceivedLikesChanged,
             ClientConfigChanged => Self::ClientConfigChanged,
             ProfileChanged => Self::ProfileChanged,
@@ -204,6 +207,7 @@ impl From<EventToClientInternal> for EventToClient {
             CheckOnlineStatusResponse(v) => value.check_online_status_response = Some(v),
             AccountStateChanged
             | NewMessageReceived
+            | PendingChatNotificationsChanged
             | ReceivedLikesChanged
             | ClientConfigChanged
             | ProfileChanged

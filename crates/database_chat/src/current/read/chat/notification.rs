@@ -1,7 +1,10 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
-use model_chat::{AccountIdInternal, ChatAppNotificationSettings, ChatEmailNotificationSettings};
+use model_chat::{
+    AccountIdInternal, ChatAppNotificationSettings, ChatEmailNotificationSettings,
+    PendingChatNotification,
+};
 
 use crate::IntoDatabaseError;
 
@@ -38,5 +41,19 @@ impl CurrentReadChatNotification<'_> {
             .into_db_error(())?;
 
         Ok(query_result.unwrap_or_default())
+    }
+
+    pub fn pending_chat_notifications(
+        &mut self,
+        account_id_value: AccountIdInternal,
+    ) -> Result<Vec<PendingChatNotification>, DieselDatabaseError> {
+        use crate::schema::pending_chat_notifications::dsl::*;
+
+        pending_chat_notifications
+            .filter(account_id.eq(account_id_value.as_db_id()))
+            .select(PendingChatNotification::as_select())
+            .order_by(conversation_id.asc())
+            .load(self.conn())
+            .into_db_error(())
     }
 }
