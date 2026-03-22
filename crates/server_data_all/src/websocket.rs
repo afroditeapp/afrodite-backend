@@ -119,6 +119,21 @@ pub async fn send_events_if_needed(
         send_event(socket, EventToClientInternal::NewMessageReceived).await?;
     }
 
+    let pending_chat_notifications = read_handle
+        .chat()
+        .notification()
+        .pending_chat_notifications(id)
+        .await
+        .change_context(WebSocketError::DatabasePendingMessagesQuery)?;
+
+    if !pending_chat_notifications.is_empty() {
+        send_event(
+            socket,
+            EventToClientInternal::PendingChatNotificationsChanged,
+        )
+        .await?;
+    }
+
     let has_delivery_info = read_handle
         .chat()
         .has_pending_delivery_info(id)
