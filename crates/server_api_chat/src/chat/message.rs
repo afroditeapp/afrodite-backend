@@ -5,7 +5,7 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use headers::ContentType;
-use model::{GetConversationId, MessageId, NotificationEvent, PushNotificationFlags};
+use model::{GetConversationId, MessageId, NotificationEvent};
 use model_chat::{
     AccountId, AccountIdInternal, EventToClientInternal, GetSentMessage, LatestSeenMessageInfoList,
     MessageDeliveryInfoIdList, MessageDeliveryInfoList, PendingMessageAcknowledgementList,
@@ -13,10 +13,7 @@ use model_chat::{
 };
 use server_api::{
     S,
-    app::{
-        ApiLimitsProvider, ApiUsageTrackerProvider, DataSignerProvider, EventManagerProvider,
-        GetConfig,
-    },
+    app::{ApiLimitsProvider, ApiUsageTrackerProvider, DataSignerProvider, GetConfig},
     create_open_api_router,
 };
 use server_data_chat::{
@@ -37,7 +34,6 @@ const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
 /// Get list of pending messages.
 ///
 /// The returned bytes is
-/// - Hide notifications (u8, values: 0 or 1)
 /// - List of objects
 ///
 /// Data for single object:
@@ -76,12 +72,7 @@ pub async fn get_pending_messages(
     CHAT.get_pending_messages.incr();
     let pending_messages = state.read().chat().all_pending_messages(id).await?;
 
-    let visibility = state
-        .event_manager()
-        .remove_pending_push_notification_flags_from_cache(id, PushNotificationFlags::NEW_MESSAGE)
-        .await;
-
-    let mut bytes: Vec<u8> = vec![if visibility.hidden { 1 } else { 0 }];
+    let mut bytes: Vec<u8> = vec![];
     for m in pending_messages {
         let message_length: i64 = match m.len().try_into() {
             Ok(len) => len,

@@ -280,8 +280,7 @@ impl BotAction for AnswerReceivedMessages {
             Some(pending_messages)
         }
 
-        let (_hide_notifications_flag, messages) = messages.split_at(1);
-        let pending_messages = parse_messages(messages).ok_or(TestError::MissingValue)?;
+        let pending_messages = parse_messages(&messages).ok_or(TestError::MissingValue)?;
 
         let delete_list = PendingMessageAcknowledgementList {
             ids: pending_messages
