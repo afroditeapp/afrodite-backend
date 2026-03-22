@@ -832,7 +832,6 @@ diesel::table! {
     push_notification (account_id) {
         account_id -> Int8,
         pending_flags -> Int8,
-        sent_flags -> Int8,
         encryption_key -> Nullable<Text>,
         device_token -> Nullable<Text>,
         device_token_unix_time -> Nullable<Int8>,

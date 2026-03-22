@@ -58,23 +58,14 @@ impl WriteCommandsCommonPushNotification<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
-        let (flags, sent_flags) = self
-            .read_cache_common(id, move |entry| {
-                Ok((
-                    entry.pending_push_notification_flags,
-                    entry.sent_push_notification_flags,
-                ))
-            })
+        let flags = self
+            .read_cache_common(id, move |entry| Ok(entry.pending_push_notification_flags))
             .await?;
 
         db_transaction!(self, move |mut cmds| {
             cmds.common()
                 .push_notification()
-                .save_current_notification_flags_to_database_if_needed(
-                    id,
-                    flags.into(),
-                    sent_flags.into(),
-                )
+                .save_current_notification_flags_to_database_if_needed(id, flags.into())
         })
         .map(|_| ())
     }

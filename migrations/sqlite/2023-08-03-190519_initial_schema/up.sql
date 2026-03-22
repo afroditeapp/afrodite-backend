@@ -179,10 +179,6 @@ CREATE TABLE IF NOT EXISTS push_notification(
     account_id             INTEGER PRIMARY KEY NOT NULL,
     -- Bitflag value for pending push notification
     pending_flags          BIGINT              NOT NULL DEFAULT 0,
-    -- Bitflag value for sent push notifications. Used
-    -- to prevent showing same notification again when WebSocket
-    -- connects.
-    sent_flags             BIGINT              NOT NULL DEFAULT 0,
     -- Push notification encryption key for APNs and FCM notifications
     encryption_key         TEXT,
     device_token           TEXT                         UNIQUE,

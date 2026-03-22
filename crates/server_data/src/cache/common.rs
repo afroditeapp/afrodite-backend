@@ -20,7 +20,6 @@ pub struct CacheCommon {
     /// notification which PushNotificationManager will handle as soon as
     /// possible.
     pub pending_push_notification_flags: PushNotificationFlags,
-    pub sent_push_notification_flags: PushNotificationFlags,
     pub app_notification_settings: AppNotificationSettingsInternal,
     api_limits: AllApiLimits,
 }
@@ -121,7 +120,6 @@ impl Default for CacheCommon {
             login_session: None,
             login_session_changed: false,
             pending_push_notification_flags: PushNotificationFlags::empty(),
-            sent_push_notification_flags: PushNotificationFlags::empty(),
             app_notification_settings: AppNotificationSettingsInternal::default(),
             api_limits: AllApiLimits::default(),
         }

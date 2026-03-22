@@ -422,8 +422,6 @@ impl WebSocketCacheCmds<'_> {
             let mut lock = cache_entry.cache.write().await;
             let previous_access_token = lock.common.update_tokens(new_tokens, address.ip().into());
             lock.common.pending_push_notification_flags = PushNotificationFlags::empty();
-            // Show notifications on login
-            lock.common.sent_push_notification_flags = PushNotificationFlags::empty();
             drop(lock);
             tokens.insert(
                 new_access_token.clone(),

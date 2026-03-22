@@ -87,26 +87,18 @@ impl CurrentWriteCommonPushNotification<'_> {
         &mut self,
         id: AccountIdInternal,
         current_flags: PushNotificationFlagsDb,
-        current_sent_flags: PushNotificationFlagsDb,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::push_notification::dsl::*;
 
-        let (db_pending_flags, db_sent_flags): (i64, i64) = push_notification
+        let db_pending_flags: i64 = push_notification
             .filter(account_id.eq(id.as_db_id()))
-            .select((pending_flags, sent_flags))
+            .select(pending_flags)
             .first(self.conn())
             .into_db_error(())?;
 
         if db_pending_flags != *current_flags.as_ref() {
             update(push_notification.find(id.as_db_id()))
                 .set(pending_flags.eq(current_flags))
-                .execute(self.conn())
-                .into_db_error(())?;
-        }
-
-        if db_sent_flags != *current_sent_flags.as_ref() {
-            update(push_notification.find(id.as_db_id()))
-                .set(sent_flags.eq(current_sent_flags))
                 .execute(self.conn())
                 .into_db_error(())?;
         }

@@ -224,7 +224,6 @@ diesel_string_wrapper!(PushNotificationEncryptionKey);
 #[diesel(treat_none_as_null = true)]
 pub struct PushNotificationDbState {
     pub pending_flags: PushNotificationFlagsDb,
-    pub sent_flags: PushNotificationFlagsDb,
     pub encryption_key: Option<PushNotificationEncryptionKey>,
     pub device_token: Option<PushNotificationDeviceToken>,
 }
