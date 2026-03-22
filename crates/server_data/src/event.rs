@@ -35,12 +35,44 @@ pub enum InternalEventType {
 }
 
 impl InternalEventType {
-    pub fn to_client_event(&self) -> EventToClient {
-        match self.clone() {
-            InternalEventType::NormalEvent(event) => event.into(),
+    pub fn to_client_event(&self) -> (EventToClient, Option<EventToClient>) {
+        match self {
+            InternalEventType::NormalEvent(event) => (event.clone().into(), None),
             InternalEventType::Notification(event) => {
-                let event: EventToClientInternal = event.into();
-                event.into()
+                use NotificationEvent::*;
+
+                let (event, pending_notifications_changed) = match event {
+                    NewMessageReceived => (
+                        EventToClientInternal::NewMessageReceived,
+                        EventToClientInternal::PendingChatNotificationsChanged,
+                    ),
+                    ReceivedLikesChanged => (
+                        EventToClientInternal::ReceivedLikesChanged,
+                        EventToClientInternal::PendingAppNotificationsChanged,
+                    ),
+                    MediaContentModerationCompleted => (
+                        EventToClientInternal::MediaContentModerationCompleted,
+                        EventToClientInternal::PendingAppNotificationsChanged,
+                    ),
+                    NewsChanged => (
+                        EventToClientInternal::NewsChanged,
+                        EventToClientInternal::PendingAppNotificationsChanged,
+                    ),
+                    ProfileStringModerationCompleted => (
+                        EventToClientInternal::ProfileStringModerationCompleted,
+                        EventToClientInternal::PendingAppNotificationsChanged,
+                    ),
+                    AutomaticProfileSearchCompleted => (
+                        EventToClientInternal::AutomaticProfileSearchCompleted,
+                        EventToClientInternal::PendingAppNotificationsChanged,
+                    ),
+                    AdminNotification => (
+                        EventToClientInternal::AdminNotification,
+                        EventToClientInternal::PendingAppNotificationsChanged,
+                    ),
+                };
+
+                (event.into(), Some(pending_notifications_changed.into()))
             }
         }
     }

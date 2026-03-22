@@ -62,6 +62,7 @@ pub enum EventType {
     AccountStateChanged,
     NewMessageReceived,
     PendingChatNotificationsChanged,
+    PendingAppNotificationsChanged,
     ReceivedLikesChanged,
     /// Data: content_processing_state_changed
     ContentProcessingStateChanged,
@@ -134,6 +135,7 @@ pub enum EventToClientInternal {
     ContentProcessingStateChanged(ContentProcessingStateChanged),
     NewMessageReceived,
     PendingChatNotificationsChanged,
+    PendingAppNotificationsChanged,
     ReceivedLikesChanged,
     ClientConfigChanged,
     ProfileChanged,
@@ -162,6 +164,7 @@ impl From<&EventToClientInternal> for EventType {
             AccountStateChanged => Self::AccountStateChanged,
             NewMessageReceived => Self::NewMessageReceived,
             PendingChatNotificationsChanged => Self::PendingChatNotificationsChanged,
+            PendingAppNotificationsChanged => Self::PendingAppNotificationsChanged,
             ReceivedLikesChanged => Self::ReceivedLikesChanged,
             ClientConfigChanged => Self::ClientConfigChanged,
             ProfileChanged => Self::ProfileChanged,
@@ -208,6 +211,7 @@ impl From<EventToClientInternal> for EventToClient {
             AccountStateChanged
             | NewMessageReceived
             | PendingChatNotificationsChanged
+            | PendingAppNotificationsChanged
             | ReceivedLikesChanged
             | ClientConfigChanged
             | ProfileChanged
@@ -236,26 +240,6 @@ pub enum NotificationEvent {
     ProfileStringModerationCompleted,
     AutomaticProfileSearchCompleted,
     AdminNotification,
-}
-
-impl From<NotificationEvent> for EventToClientInternal {
-    fn from(event: NotificationEvent) -> Self {
-        match event {
-            NotificationEvent::NewMessageReceived => EventToClientInternal::NewMessageReceived,
-            NotificationEvent::ReceivedLikesChanged => EventToClientInternal::ReceivedLikesChanged,
-            NotificationEvent::MediaContentModerationCompleted => {
-                EventToClientInternal::MediaContentModerationCompleted
-            }
-            NotificationEvent::NewsChanged => EventToClientInternal::NewsChanged,
-            NotificationEvent::ProfileStringModerationCompleted => {
-                EventToClientInternal::ProfileStringModerationCompleted
-            }
-            NotificationEvent::AutomaticProfileSearchCompleted => {
-                EventToClientInternal::AutomaticProfileSearchCompleted
-            }
-            NotificationEvent::AdminNotification => EventToClientInternal::AdminNotification,
-        }
-    }
 }
 
 /// Used with database

@@ -13,8 +13,8 @@ use axum::{
 };
 use http::HeaderMap;
 use model::{
-    AccessToken, AccessTokenType, AccountIdInternal, BackendVersion, ClientVersion, EventToClient,
-    RefreshToken, SyncDataVersionFromClient, WebSocketClientInfo, WebSocketClientTypeNumber,
+    AccessToken, AccessTokenType, AccountIdInternal, BackendVersion, ClientVersion, RefreshToken,
+    SyncDataVersionFromClient, WebSocketClientInfo, WebSocketClientTypeNumber,
 };
 use model_server_data::AuthPair;
 use server_common::websocket::WebSocketError;
@@ -524,12 +524,19 @@ async fn handle_socket_result(
             event = event_receiver.recv() => {
                 match event {
                     Some(internal_event) => {
-                        let event: EventToClient = internal_event.to_client_event();
+                        let (event, extra_event) = internal_event.to_client_event();
                         let event = serde_json::to_string(&event)
                             .change_context(WebSocketError::Serialize)?;
                         socket.send(Message::Text(event.into()))
                             .await
                             .change_context(WebSocketError::Send)?;
+                        if let Some(event) = extra_event {
+                            let event = serde_json::to_string(&event)
+                                .change_context(WebSocketError::Serialize)?;
+                            socket.send(Message::Text(event.into()))
+                                .await
+                                .change_context(WebSocketError::Send)?;
+                        }
                         // If event is pending push notification related, the cached
                         // pending push notification flags are removed in the related
                         // HTTP route handlers using event manager assuming

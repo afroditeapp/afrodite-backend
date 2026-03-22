@@ -1,5 +1,5 @@
 use axum::extract::ws::{Message, WebSocket};
-use model::{PendingAppNotificationType, ScheduledMaintenanceStatus};
+use model::ScheduledMaintenanceStatus;
 use model_chat::{
     AccountIdInternal, ChatStateRaw, EventToClient, EventToClientInternal, SyncCheckDataType,
     SyncCheckResult, SyncDataVersionFromClient, SyncVersionFromClient, SyncVersionUtils,
@@ -33,78 +33,12 @@ pub async fn send_events_if_needed(
         .await
         .change_context(WebSocketError::DatabaseGetPendingNotifications)?;
 
-    let has_media_content_moderation = pending_notifications.iter().any(|v| {
-        matches!(
-            v,
-            PendingAppNotificationType::MediaContentModerationAccepted
-                | PendingAppNotificationType::MediaContentModerationRejected
-                | PendingAppNotificationType::MediaContentModerationDeleted
-        )
-    });
-
-    if has_media_content_moderation {
+    if !pending_notifications.is_empty() {
         send_event(
             socket,
-            EventToClientInternal::MediaContentModerationCompleted,
+            EventToClientInternal::PendingAppNotificationsChanged,
         )
         .await?;
-    }
-
-    let has_profile_string_moderation = pending_notifications.iter().any(|v| {
-        matches!(
-            v,
-            PendingAppNotificationType::ProfileNameModerationAccepted
-                | PendingAppNotificationType::ProfileNameModerationRejected
-                | PendingAppNotificationType::ProfileTextModerationAccepted
-                | PendingAppNotificationType::ProfileTextModerationRejected
-        )
-    });
-
-    if has_profile_string_moderation {
-        send_event(
-            socket,
-            EventToClientInternal::ProfileStringModerationCompleted,
-        )
-        .await?;
-    }
-
-    let has_automatic_profile_search = pending_notifications.iter().any(|v| {
-        matches!(
-            v,
-            PendingAppNotificationType::AutomaticProfileSearchCompleted
-        )
-    });
-
-    if has_automatic_profile_search {
-        send_event(
-            socket,
-            EventToClientInternal::AutomaticProfileSearchCompleted,
-        )
-        .await?;
-    }
-
-    let has_news_changed = pending_notifications
-        .iter()
-        .any(|v| matches!(v, PendingAppNotificationType::NewsChanged));
-
-    if has_news_changed {
-        send_event(socket, EventToClientInternal::NewsChanged).await?;
-    }
-
-    let has_received_likes_changed = pending_notifications
-        .iter()
-        .any(|v| matches!(v, PendingAppNotificationType::ReceivedLikesChanged));
-
-    if has_received_likes_changed {
-        send_event(socket, EventToClientInternal::ReceivedLikesChanged).await?;
-    }
-
-    let has_admin_notification = pending_notifications
-        .iter()
-        .any(|v| matches!(v, PendingAppNotificationType::AdminNotification));
-
-    if has_admin_notification {
-        send_event(socket, EventToClientInternal::AdminNotification).await?;
     }
 
     // Chat
