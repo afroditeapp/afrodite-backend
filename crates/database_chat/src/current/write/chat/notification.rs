@@ -1,7 +1,7 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{AccountIdDb, AccountIdInternal, NewMessagePushNotification};
+use model::{AccountIdDb, AccountIdInternal, NewMessagePushNotification, UnixTime};
 use model_chat::{
     ChatAppNotificationSettings, ChatEmailNotificationSettings, PendingChatNotification,
 };
@@ -56,17 +56,22 @@ impl CurrentWriteChatNotification<'_> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::pending_chat_notifications::dsl::*;
 
+        let current_time = UnixTime::current_time();
+
         insert_into(pending_chat_notifications)
             .values((
                 account_id_viewer.eq(viewer_id.as_db_id()),
                 account_id_sender.eq(sender_id.as_db_id()),
                 message_count.eq(message_count_value),
+                created_unix_time.eq(current_time),
+                email_notification_sent.eq(false),
                 push_notification_sent.eq(false),
             ))
             .on_conflict((account_id_viewer, account_id_sender))
             .do_update()
             .set((
                 message_count.eq(message_count_value),
+                email_notification_sent.eq(false),
                 push_notification_sent.eq(false),
             ))
             .execute_my_conn(self.conn())
@@ -96,6 +101,22 @@ impl CurrentWriteChatNotification<'_> {
                 .execute(self.conn())
                 .into_db_error(viewer_id)?;
         }
+
+        Ok(())
+    }
+
+    pub fn mark_message_email_notification_sent(
+        &mut self,
+        viewer_id: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::pending_chat_notifications::dsl::*;
+
+        update(pending_chat_notifications)
+            .filter(account_id_viewer.eq(viewer_id.as_db_id()))
+            .filter(email_notification_sent.eq(false))
+            .set(email_notification_sent.eq(true))
+            .execute(self.conn())
+            .into_db_error(viewer_id)?;
 
         Ok(())
     }

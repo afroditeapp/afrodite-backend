@@ -1057,8 +1057,6 @@ CREATE TABLE IF NOT EXISTS pending_messages(
     -- Acknowledgement from sender and recipient
     sender_acknowledgement          BOOLEAN NOT NULL DEFAULT FALSE,
     recipient_acknowledgement       BOOLEAN NOT NULL DEFAULT FALSE,
-    -- Email notification for the message.
-    recipient_email_notification_sent BOOLEAN NOT NULL DEFAULT FALSE,
     message_unix_time               BIGINT NOT NULL,
     -- Conversation specific number for the message.
     message_number                  BIGINT NOT NULL,
@@ -1167,6 +1165,8 @@ CREATE TABLE IF NOT EXISTS pending_chat_notifications(
     -- Message sender
     account_id_sender            BIGINT  NOT NULL,
     message_count                BIGINT  NOT NULL,
+    created_unix_time            BIGINT  NOT NULL,
+    email_notification_sent      BOOLEAN NOT NULL DEFAULT FALSE,
     push_notification_sent       BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (account_id_viewer, account_id_sender),
     FOREIGN KEY (account_id_viewer)

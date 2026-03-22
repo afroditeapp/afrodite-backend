@@ -3,8 +3,8 @@ use diesel::prelude::*;
 use error_stack::Result;
 use model::{
     AccountId, AdminDataExportPendingMessage, ConversationId, DataExportLatestSeenMessage,
-    DataExportPendingMessage, MessageId, MessageNumber, PendingMessageDbIdAndMessageTime,
-    PendingMessageInfo, PendingMessageRaw, UnixTime,
+    DataExportPendingMessage, MessageId, MessageNumber, PendingMessageInfo, PendingMessageRaw,
+    UnixTime,
 };
 use model_chat::{
     AccountIdInternal, DataExportMessageDeliveryInfo, DeliveryInfoType, GetSentMessage,
@@ -30,32 +30,6 @@ impl CurrentReadChatMessage<'_> {
             .into_db_error(())?;
 
         Ok(value)
-    }
-
-    pub fn messages_without_sent_email_notification(
-        &mut self,
-        id_message_recipient: AccountIdInternal,
-    ) -> Result<Vec<PendingMessageDbIdAndMessageTime>, DieselDatabaseError> {
-        use crate::schema::pending_messages::dsl::*;
-
-        let data: Vec<(i64, UnixTime)> = pending_messages
-            .filter(account_id_recipient.eq(id_message_recipient.as_db_id()))
-            .filter(recipient_acknowledgement.eq(false))
-            .filter(recipient_email_notification_sent.eq(false))
-            .select((id, message_unix_time))
-            .order_by(account_id_sender)
-            .load(self.conn())
-            .into_db_error(())?;
-
-        let v = data
-            .into_iter()
-            .map(|(primary_key, time)| PendingMessageDbIdAndMessageTime {
-                id: primary_key,
-                time,
-            })
-            .collect();
-
-        Ok(v)
     }
 
     pub fn all_sent_messages(

@@ -61,7 +61,7 @@ async fn handle_messages_email_notification(
             .new_message_email_without_push_notification_device_token
     };
 
-    let messages = state
+    let message_times = state
         .read()
         .chat()
         .notification()
@@ -69,8 +69,8 @@ async fn handle_messages_email_notification(
         .await?;
     let mut send_notification = false;
 
-    for m in &messages {
-        if m.time.duration_value_elapsed(wait_time) {
+    for time in &message_times {
+        if time.duration_value_elapsed(wait_time) {
             send_notification = true;
         }
     }
@@ -79,7 +79,7 @@ async fn handle_messages_email_notification(
         db_write_raw!(state, move |cmds| {
             cmds.chat()
                 .notification()
-                .mark_message_email_notification_sent(messages)
+                .mark_message_email_notification_sent(id)
                 .await?;
             cmds.account()
                 .email()

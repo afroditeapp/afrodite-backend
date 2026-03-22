@@ -1,8 +1,5 @@
 use database_chat::current::read::GetDbReadCommandsChat;
-use model::{
-    AccountIdInternal, NewMessagePushNotificationList, PendingMessageDbIdAndMessageTime,
-    ReceivedLikeId, UnixTime,
-};
+use model::{AccountIdInternal, NewMessagePushNotificationList, ReceivedLikeId, UnixTime};
 use model_chat::{
     ChatAppNotificationSettings, ChatEmailNotificationSettings, PendingChatNotification,
 };
@@ -44,10 +41,10 @@ impl ReadCommandsChatNotification<'_> {
     pub async fn messages_without_sent_email_notification(
         &self,
         id: AccountIdInternal,
-    ) -> Result<Vec<PendingMessageDbIdAndMessageTime>, DataError> {
+    ) -> Result<Vec<UnixTime>, DataError> {
         self.db_read(move |mut cmds| {
             cmds.chat()
-                .message()
+                .notification()
                 .messages_without_sent_email_notification(id)
         })
         .await

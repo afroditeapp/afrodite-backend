@@ -215,17 +215,6 @@ pub struct PendingMessageInfo {
     pub message_id: MessageId,
 }
 
-pub struct PendingMessageDbId {
-    /// ID column value
-    pub id: i64,
-}
-
-pub struct PendingMessageDbIdAndMessageTime {
-    /// ID column value
-    pub id: i64,
-    pub time: UnixTime,
-}
-
 #[derive(Serialize, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::pending_messages)]
 #[diesel(check_for_backend(crate::Db))]
@@ -236,7 +225,6 @@ pub struct PendingMessageRaw {
     pub sender_public_key_id: PublicKeyId,
     pub sender_acknowledgement: bool,
     pub recipient_acknowledgement: bool,
-    pub recipient_email_notification_sent: bool,
     pub message_unix_time: UnixTime,
     pub message_number: MessageNumber,
     pub message_id: MessageId,

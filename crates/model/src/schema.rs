@@ -649,6 +649,8 @@ diesel::table! {
         account_id_viewer -> Int8,
         account_id_sender -> Int8,
         message_count -> Int8,
+        created_unix_time -> Int8,
+        email_notification_sent -> Bool,
         push_notification_sent -> Bool,
     }
 }
@@ -661,7 +663,6 @@ diesel::table! {
         sender_public_key_id -> Int8,
         sender_acknowledgement -> Bool,
         recipient_acknowledgement -> Bool,
-        recipient_email_notification_sent -> Bool,
         message_unix_time -> Int8,
         message_number -> Int8,
         message_id -> Bytea,

@@ -1,7 +1,7 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{NewMessagePushNotification, NewMessagePushNotificationList};
+use model::{NewMessagePushNotification, NewMessagePushNotificationList, UnixTime};
 use model_chat::{
     AccountIdInternal, ChatAppNotificationSettings, ChatEmailNotificationSettings,
     PendingChatNotification,
@@ -73,6 +73,20 @@ impl CurrentReadChatNotification<'_> {
             .into_db_error(())?;
 
         Ok(query_result.unwrap_or_default())
+    }
+
+    pub fn messages_without_sent_email_notification(
+        &mut self,
+        account_id_value: AccountIdInternal,
+    ) -> Result<Vec<UnixTime>, DieselDatabaseError> {
+        use crate::schema::pending_chat_notifications;
+
+        pending_chat_notifications::table
+            .filter(pending_chat_notifications::account_id_viewer.eq(account_id_value.as_db_id()))
+            .filter(pending_chat_notifications::email_notification_sent.eq(false))
+            .select(pending_chat_notifications::created_unix_time)
+            .load(self.conn())
+            .into_db_error(())
     }
 
     pub fn email_notification_settings(
