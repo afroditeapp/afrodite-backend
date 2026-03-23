@@ -40,39 +40,27 @@ impl InternalEventType {
             InternalEventType::NormalEvent(event) => (event.clone().into(), None),
             InternalEventType::Notification(event) => {
                 use NotificationEvent::*;
-
-                let (event, pending_notifications_changed) = match event {
+                match event {
                     NewMessageReceived => (
-                        EventToClientInternal::NewMessageReceived,
-                        EventToClientInternal::PendingChatNotificationsChanged,
+                        EventToClientInternal::NewMessageReceived.into(),
+                        Some(EventToClientInternal::PendingChatNotificationsChanged.into()),
                     ),
                     ReceivedLikesChanged => (
-                        EventToClientInternal::ReceivedLikesChanged,
-                        EventToClientInternal::PendingAppNotificationsChanged,
+                        EventToClientInternal::ReceivedLikesChanged.into(),
+                        Some(EventToClientInternal::PendingAppNotificationsChanged.into()),
                     ),
-                    MediaContentModerationCompleted => (
-                        EventToClientInternal::MediaContentModerationCompleted,
-                        EventToClientInternal::PendingAppNotificationsChanged,
+                    MediaContentModerationCompleted
+                    | ProfileStringModerationCompleted
+                    | AutomaticProfileSearchCompleted
+                    | AdminNotification => (
+                        EventToClientInternal::PendingAppNotificationsChanged.into(),
+                        None,
                     ),
                     NewsChanged => (
-                        EventToClientInternal::NewsChanged,
-                        EventToClientInternal::PendingAppNotificationsChanged,
+                        EventToClientInternal::NewsChanged.into(),
+                        Some(EventToClientInternal::PendingAppNotificationsChanged.into()),
                     ),
-                    ProfileStringModerationCompleted => (
-                        EventToClientInternal::ProfileStringModerationCompleted,
-                        EventToClientInternal::PendingAppNotificationsChanged,
-                    ),
-                    AutomaticProfileSearchCompleted => (
-                        EventToClientInternal::AutomaticProfileSearchCompleted,
-                        EventToClientInternal::PendingAppNotificationsChanged,
-                    ),
-                    AdminNotification => (
-                        EventToClientInternal::AdminNotification,
-                        EventToClientInternal::PendingAppNotificationsChanged,
-                    ),
-                };
-
-                (event.into(), Some(pending_notifications_changed.into()))
+                }
             }
         }
     }

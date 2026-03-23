@@ -69,14 +69,9 @@ pub enum EventType {
     ClientConfigChanged,
     ProfileChanged,
     NewsCountChanged,
-    // TODO: Remove once all pending notifications are added
-    MediaContentModerationCompleted,
     MediaContentChanged,
     DailyLikesLeftChanged,
     ScheduledMaintenanceStatus,
-    ProfileStringModerationCompleted,
-    AutomaticProfileSearchCompleted,
-    AdminNotification,
     /// Data: admin_bot_notification
     AdminBotNotification,
     PushNotificationInfoChanged,
@@ -140,13 +135,9 @@ pub enum EventToClientInternal {
     ClientConfigChanged,
     ProfileChanged,
     NewsChanged,
-    MediaContentModerationCompleted,
     MediaContentChanged,
     DailyLikesLeftChanged,
     ScheduledMaintenanceStatus(ScheduledMaintenanceStatus),
-    ProfileStringModerationCompleted,
-    AutomaticProfileSearchCompleted,
-    AdminNotification,
     AdminBotNotification(crate::AdminBotNotificationTypes),
     PushNotificationInfoChanged,
     TypingStart(AccountId),
@@ -169,13 +160,9 @@ impl From<&EventToClientInternal> for EventType {
             ClientConfigChanged => Self::ClientConfigChanged,
             ProfileChanged => Self::ProfileChanged,
             NewsChanged => Self::NewsCountChanged,
-            MediaContentModerationCompleted => Self::MediaContentModerationCompleted,
             MediaContentChanged => Self::MediaContentChanged,
             DailyLikesLeftChanged => Self::DailyLikesLeftChanged,
             ScheduledMaintenanceStatus(_) => Self::ScheduledMaintenanceStatus,
-            ProfileStringModerationCompleted => Self::ProfileStringModerationCompleted,
-            AutomaticProfileSearchCompleted => Self::AutomaticProfileSearchCompleted,
-            AdminNotification => Self::AdminNotification,
             AdminBotNotification(_) => Self::AdminBotNotification,
             PushNotificationInfoChanged => Self::PushNotificationInfoChanged,
             TypingStart(_) => Self::TypingStart,
@@ -216,12 +203,8 @@ impl From<EventToClientInternal> for EventToClient {
             | ClientConfigChanged
             | ProfileChanged
             | NewsChanged
-            | MediaContentModerationCompleted
             | MediaContentChanged
             | DailyLikesLeftChanged
-            | ProfileStringModerationCompleted
-            | AutomaticProfileSearchCompleted
-            | AdminNotification
             | PushNotificationInfoChanged
             | MessageDeliveryInfoChanged
             | LatestSeenMessageChanged => (),
