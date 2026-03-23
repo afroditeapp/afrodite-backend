@@ -193,20 +193,16 @@ pub async fn post_send_message(
                 .await
                 .ignore_and_log_error();
 
-            match push_notification_allowed {
-                Some(PushNotificationAllowed) => cmds
-                    .events()
+            cmds.events()
+                .send_connected_event(message_recipient, EventToClientInternal::NewMessageReceived)
+                .await
+                .ignore_and_log_error();
+
+            if let Some(PushNotificationAllowed) = push_notification_allowed {
+                cmds.events()
                     .send_notification(message_recipient, NotificationEvent::NewMessageReceived)
                     .await
-                    .ignore_and_log_error(),
-                None => cmds
-                    .events()
-                    .send_connected_event(
-                        message_recipient,
-                        EventToClientInternal::NewMessageReceived,
-                    )
-                    .await
-                    .ignore_and_log_error(),
+                    .ignore_and_log_error();
             }
         }
 

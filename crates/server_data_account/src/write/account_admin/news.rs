@@ -1,4 +1,5 @@
 use database_account::current::write::GetDbWriteCommandsAccount;
+use model::EventToClientInternal;
 use model_account::{
     AccountIdInternal, NewsId, NewsLocale, NotificationEvent, UpdateNewsTranslation,
 };
@@ -63,6 +64,10 @@ impl WriteCommandsAccountNewsAdmin<'_> {
         })?;
 
         if send_notification {
+            self.events()
+                .send_connected_event_to_logged_in_clients(EventToClientInternal::NewsChanged)
+                .await;
+
             self.events()
                 .send_low_priority_notification_to_logged_in_clients(NotificationEvent::NewsChanged)
                 .await;

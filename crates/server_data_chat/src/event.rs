@@ -9,11 +9,11 @@ pub trait EventManagerChatMethods {
 impl EventManagerChatMethods for EventManagerWithCacheReference<'_> {
     async fn handle_chat_state_changes(&self, c: &ChatStateChanges) -> Result<(), DataError> {
         if let Some(info) = &c.received_likes_change {
+            self.send_connected_event(c.id, EventToClientInternal::ReceivedLikesChanged)
+                .await?;
+
             if info.previous_count.c == 0 && info.current_count.c == 1 {
                 self.send_notification(c.id, NotificationEvent::ReceivedLikesChanged)
-                    .await?;
-            } else {
-                self.send_connected_event(c.id, EventToClientInternal::ReceivedLikesChanged)
                     .await?;
             }
         }

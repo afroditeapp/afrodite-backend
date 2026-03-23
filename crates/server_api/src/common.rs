@@ -524,19 +524,12 @@ async fn handle_socket_result(
             event = event_receiver.recv() => {
                 match event {
                     Some(internal_event) => {
-                        let (event, extra_event) = internal_event.to_client_event();
+                        let event = internal_event.to_client_event();
                         let event = serde_json::to_string(&event)
                             .change_context(WebSocketError::Serialize)?;
                         socket.send(Message::Text(event.into()))
                             .await
                             .change_context(WebSocketError::Send)?;
-                        if let Some(event) = extra_event {
-                            let event = serde_json::to_string(&event)
-                                .change_context(WebSocketError::Serialize)?;
-                            socket.send(Message::Text(event.into()))
-                                .await
-                                .change_context(WebSocketError::Send)?;
-                        }
                         // If event is pending push notification related, the cached
                         // pending push notification flags are removed in the related
                         // HTTP route handlers using event manager assuming

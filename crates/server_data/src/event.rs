@@ -35,31 +35,21 @@ pub enum InternalEventType {
 }
 
 impl InternalEventType {
-    pub fn to_client_event(&self) -> (EventToClient, Option<EventToClient>) {
+    pub fn to_client_event(&self) -> EventToClient {
         match self {
-            InternalEventType::NormalEvent(event) => (event.clone().into(), None),
+            InternalEventType::NormalEvent(event) => event.clone().into(),
             InternalEventType::Notification(event) => {
                 use NotificationEvent::*;
                 match event {
-                    NewMessageReceived => (
-                        EventToClientInternal::NewMessageReceived.into(),
-                        Some(EventToClientInternal::PendingChatNotificationsChanged.into()),
-                    ),
-                    ReceivedLikesChanged => (
-                        EventToClientInternal::ReceivedLikesChanged.into(),
-                        Some(EventToClientInternal::PendingAppNotificationsChanged.into()),
-                    ),
-                    MediaContentModerationCompleted
+                    NewMessageReceived => {
+                        EventToClientInternal::PendingChatNotificationsChanged.into()
+                    }
+                    ReceivedLikesChanged
+                    | MediaContentModerationCompleted
                     | ProfileStringModerationCompleted
                     | AutomaticProfileSearchCompleted
-                    | AdminNotification => (
-                        EventToClientInternal::PendingAppNotificationsChanged.into(),
-                        None,
-                    ),
-                    NewsChanged => (
-                        EventToClientInternal::NewsChanged.into(),
-                        Some(EventToClientInternal::PendingAppNotificationsChanged.into()),
-                    ),
+                    | AdminNotification
+                    | NewsChanged => EventToClientInternal::PendingAppNotificationsChanged.into(),
                 }
             }
         }
