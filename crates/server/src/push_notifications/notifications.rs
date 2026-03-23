@@ -36,18 +36,11 @@ pub async fn notifications_for_sending(
         notifications: vec![],
     };
 
-    if flags.contains(PushNotificationFlags::NEW_MESSAGE) {
+    if flags.contains(PushNotificationFlags::PENDING_CHAT_NOTIFICATION) {
         checker.handle_new_message().await?;
     }
 
-    if flags.intersects(
-        PushNotificationFlags::RECEIVED_LIKES_CHANGED
-            | PushNotificationFlags::NEWS_CHANGED
-            | PushNotificationFlags::MEDIA_CONTENT_MODERATION_COMPLETED
-            | PushNotificationFlags::PROFILE_STRING_MODERATION_COMPLETED
-            | PushNotificationFlags::AUTOMATIC_PROFILE_SEARCH_COMPLETED
-            | PushNotificationFlags::ADMIN_NOTIFICATION,
-    ) {
+    if flags.contains(PushNotificationFlags::PENDING_APP_NOTIFICATION) {
         checker.handle_pending_notifications().await?;
     }
 

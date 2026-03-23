@@ -18,13 +18,8 @@ use crate::{ConversationId, NotificationEvent, sync_version_wrappers};
 ///
 /// The integer is a bitflag.
 ///
-/// - const NEW_MESSAGE = 0x1;
-/// - const RECEIVED_LIKES_CHANGED = 0x2;
-/// - const MEDIA_CONTENT_MODERATION_COMPLETED = 0x4;
-/// - const NEWS_CHANGED = 0x8;
-/// - const PROFILE_STRING_MODERATION_COMPLETED = 0x10;
-/// - const AUTOMATIC_PROFILE_SEARCH_COMPLETED = 0x20;
-/// - const ADMIN_NOTIFICATION = 0x40;
+/// - const PENDING_APP_NOTIFICATION = 0x1;
+/// - const PENDING_CHAT_NOTIFICATION = 0x2;
 ///
 #[derive(
     Debug,
@@ -64,13 +59,8 @@ bitflags::bitflags! {
     /// is not needed.
     #[derive(Clone, Copy, Debug, PartialEq)]
     pub struct PushNotificationFlags: i64 {
-        const NEW_MESSAGE = 0x1;
-        const RECEIVED_LIKES_CHANGED = 0x2;
-        const MEDIA_CONTENT_MODERATION_COMPLETED = 0x4;
-        const NEWS_CHANGED = 0x8;
-        const PROFILE_STRING_MODERATION_COMPLETED = 0x10;
-        const AUTOMATIC_PROFILE_SEARCH_COMPLETED = 0x20;
-        const ADMIN_NOTIFICATION = 0x40;
+        const PENDING_APP_NOTIFICATION = 0x1;
+        const PENDING_CHAT_NOTIFICATION = 0x2;
     }
 }
 
@@ -83,19 +73,13 @@ impl From<PushNotificationFlagsDb> for PushNotificationFlags {
 impl From<NotificationEvent> for PushNotificationFlags {
     fn from(value: NotificationEvent) -> Self {
         match value {
-            NotificationEvent::NewMessageReceived => Self::NEW_MESSAGE,
-            NotificationEvent::ReceivedLikesChanged => Self::RECEIVED_LIKES_CHANGED,
-            NotificationEvent::MediaContentModerationCompleted => {
-                Self::MEDIA_CONTENT_MODERATION_COMPLETED
-            }
-            NotificationEvent::NewsChanged => Self::NEWS_CHANGED,
-            NotificationEvent::ProfileStringModerationCompleted => {
-                Self::PROFILE_STRING_MODERATION_COMPLETED
-            }
-            NotificationEvent::AutomaticProfileSearchCompleted => {
-                Self::AUTOMATIC_PROFILE_SEARCH_COMPLETED
-            }
-            NotificationEvent::AdminNotification => Self::ADMIN_NOTIFICATION,
+            NotificationEvent::NewMessageReceived => Self::PENDING_CHAT_NOTIFICATION,
+            NotificationEvent::ReceivedLikesChanged
+            | NotificationEvent::MediaContentModerationCompleted
+            | NotificationEvent::NewsChanged
+            | NotificationEvent::ProfileStringModerationCompleted
+            | NotificationEvent::AutomaticProfileSearchCompleted
+            | NotificationEvent::AdminNotification => Self::PENDING_APP_NOTIFICATION,
         }
     }
 }

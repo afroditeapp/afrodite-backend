@@ -158,7 +158,10 @@ async fn get_pending_chat_notifications(
 
     state
         .event_manager()
-        .remove_pending_push_notification_flags_from_cache(id, PushNotificationFlags::NEW_MESSAGE)
+        .remove_pending_push_notification_flags_from_cache(
+            id,
+            PushNotificationFlags::PENDING_CHAT_NOTIFICATION,
+        )
         .await;
 
     Ok(PendingChatNotificationList { notifications }.into())
