@@ -1,5 +1,8 @@
 use database::current::write::GetDbWriteCommandsCommon;
-use model::{AccountIdInternal, PendingAppNotification, PendingAppNotificationInternal};
+use model::{
+    AccountIdInternal, PendingAppNotification, PendingAppNotificationInternal,
+    PendingAppNotificationType,
+};
 
 use crate::{
     DataError, db_transaction, define_cmd_wrapper_write, result::Result, write::DbTransaction,
@@ -31,6 +34,20 @@ impl WriteCommandsCommonNotification<'_> {
             cmds.common()
                 .notification()
                 .mark_pending_app_notifications_push_sent(id, notifications)
+        })?;
+
+        Ok(())
+    }
+
+    pub async fn mark_pending_app_notification_email_sent(
+        &self,
+        id: AccountIdInternal,
+        notification: PendingAppNotificationType,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.common()
+                .notification()
+                .mark_pending_app_notification_email_sent(id, notification)
         })?;
 
         Ok(())

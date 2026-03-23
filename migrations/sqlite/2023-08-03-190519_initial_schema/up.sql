@@ -196,6 +196,8 @@ CREATE TABLE IF NOT EXISTS pending_app_notifications(
     account_id                BIGINT   NOT NULL,
     notification_type_number  SMALLINT NOT NULL,
     push_notification_sent    BOOLEAN  NOT NULL DEFAULT FALSE,
+    email_notification_sent   BOOLEAN  NOT NULL DEFAULT FALSE,
+    created_unix_time         BIGINT   NOT NULL,
     data_integer              BIGINT,
     PRIMARY KEY (account_id, notification_type_number),
     FOREIGN KEY (account_id)
@@ -995,8 +997,6 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     -- correct pages.
     received_like_id                BIGINT,
     received_like_viewed            BOOLEAN NOT NULL DEFAULT FALSE,
-    received_like_email_notification_sent BOOLEAN NOT NULL DEFAULT FALSE,
-    received_like_unix_time         BIGINT,
     -- Matches iterator uses match ID to return correct pages.
     match_id                        BIGINT,
     match_unix_time                 BIGINT,

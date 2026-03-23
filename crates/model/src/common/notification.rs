@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::SimpleDieselEnum;
 use utoipa::ToSchema;
 
-use crate::AdminNotificationBitflags;
+use crate::{AdminNotificationBitflags, UnixTime};
 
 /// App notification types
 ///
@@ -149,5 +149,17 @@ pub struct PendingAppNotification {
     #[schema(default = false)]
     pub push_notification_sent: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub data_integer: Option<i64>,
+}
+
+#[derive(Debug, Clone, Copy, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::pending_app_notifications)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct PendingAppNotificationDb {
+    #[diesel(column_name = notification_type_number)]
+    pub notification_type: PendingAppNotificationType,
+    pub push_notification_sent: bool,
+    pub email_notification_sent: bool,
+    pub created_unix_time: UnixTime,
     pub data_integer: Option<i64>,
 }

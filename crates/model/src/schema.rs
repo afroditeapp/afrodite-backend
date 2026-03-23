@@ -93,8 +93,6 @@ diesel::table! {
         video_call_url_created_recipient -> Bool,
         received_like_id -> Nullable<Int8>,
         received_like_viewed -> Bool,
-        received_like_email_notification_sent -> Bool,
-        received_like_unix_time -> Nullable<Int8>,
         match_id -> Nullable<Int8>,
         match_unix_time -> Nullable<Int8>,
     }
@@ -640,6 +638,8 @@ diesel::table! {
         account_id -> Int8,
         notification_type_number -> Int2,
         push_notification_sent -> Bool,
+        email_notification_sent -> Bool,
+        created_unix_time -> Int8,
         data_integer -> Nullable<Int8>,
     }
 }

@@ -1,11 +1,11 @@
-use model::{AccountIdInternal, EmailMessages, UnixTime};
+use model::{AccountIdInternal, EmailMessages, PendingAppNotificationType, UnixTime};
 use server_api::{
     DataError,
     app::{GetConfig, ReadData, WriteData},
     db_write_raw,
 };
 use server_common::result::Result;
-use server_data::read::GetReadCommandsCommon;
+use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use server_state::S;
@@ -97,6 +97,17 @@ async fn handle_likes_email_notification(
     state: &S,
     id: AccountIdInternal,
 ) -> Result<(), DataError> {
+    let pending_likes_notification = state
+        .read()
+        .common()
+        .notification()
+        .received_likes_notification_with_unsent_email(id)
+        .await?;
+
+    let Some(pending_likes_notification) = pending_likes_notification else {
+        return Ok(());
+    };
+
     let push_notification_device_token_exists = state
         .read()
         .common()
@@ -116,27 +127,17 @@ async fn handle_likes_email_notification(
             .new_like_email_without_push_notification_device_token
     };
 
-    let likes_with_time = state
-        .read()
-        .chat()
-        .notification()
-        .unviewed_received_likes_without_sent_email_notification(id)
-        .await?;
-
-    let mut send_notification = false;
-    for (_, received_time) in &likes_with_time {
-        if received_time.duration_value_elapsed(wait_time) {
-            send_notification = true;
-        }
-    }
+    let send_notification = pending_likes_notification
+        .created_unix_time
+        .duration_value_elapsed(wait_time);
 
     if send_notification {
         db_write_raw!(state, move |cmds| {
-            cmds.chat()
+            cmds.common()
                 .notification()
-                .mark_like_email_notification_sent(
+                .mark_pending_app_notification_email_sent(
                     id,
-                    likes_with_time.into_iter().map(|v| v.0).collect(),
+                    PendingAppNotificationType::ReceivedLikesChanged,
                 )
                 .await?;
             cmds.account()

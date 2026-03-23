@@ -1,6 +1,6 @@
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{AccountIdInternal, PendingAppNotification, PendingAppNotificationInternal};
+use model::{AccountIdInternal, PendingAppNotification, PendingAppNotificationInternal, UnixTime};
 use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_write_commands};
@@ -16,12 +16,15 @@ impl CurrentWriteCommonNotification<'_> {
         use model::schema::pending_app_notifications::dsl::*;
 
         let (type_number, data_integer_value) = notification.into_db_values();
+        let current_time = UnixTime::current_time();
 
         insert_into(pending_app_notifications)
             .values((
                 account_id.eq(id.as_db_id()),
                 notification_type_number.eq(type_number),
                 push_notification_sent.eq(false),
+                email_notification_sent.eq(false),
+                created_unix_time.eq(current_time),
                 data_integer.eq(data_integer_value),
             ))
             .on_conflict((account_id, notification_type_number))
@@ -57,6 +60,24 @@ impl CurrentWriteCommonNotification<'_> {
                 .execute(self.conn())
                 .into_db_error(id)?;
         }
+
+        Ok(())
+    }
+
+    pub fn mark_pending_app_notification_email_sent(
+        &mut self,
+        id: AccountIdInternal,
+        notification: model::PendingAppNotificationType,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::pending_app_notifications::dsl::*;
+
+        update(pending_app_notifications)
+            .filter(account_id.eq(id.as_db_id()))
+            .filter(notification_type_number.eq(notification))
+            .filter(email_notification_sent.eq(false))
+            .set(email_notification_sent.eq(true))
+            .execute(self.conn())
+            .into_db_error(id)?;
 
         Ok(())
     }

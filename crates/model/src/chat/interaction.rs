@@ -281,8 +281,6 @@ pub struct AccountInteractionInternal {
     pub video_call_url_created_recipient: bool,
     pub received_like_id: Option<ReceivedLikeId>,
     received_like_viewed: bool,
-    received_like_email_notification_sent: bool,
-    received_like_unix_time: Option<UnixTime>,
     pub match_id: Option<MatchId>,
     match_unix_time: Option<UnixTime>,
 }
@@ -302,7 +300,6 @@ impl AccountInteractionInternal {
                 account_id_sender: Some(id_like_sender.into_db_id()),
                 account_id_recipient: Some(id_like_recipient.into_db_id()),
                 received_like_id: Some(received_like_id),
-                received_like_unix_time: Some(UnixTime::current_time()),
                 ..self
             }),
             AccountInteractionState::Like => Ok(self),

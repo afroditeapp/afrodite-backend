@@ -102,21 +102,4 @@ impl CurrentWriteChatInteraction<'_> {
 
         Ok(())
     }
-
-    pub fn mark_like_email_notification_sent(
-        &mut self,
-        like_recipient: AccountIdInternal,
-        likes: Vec<ReceivedLikeId>,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account_interaction::dsl::*;
-
-        update(account_interaction)
-            .filter(account_id_recipient.eq(like_recipient.as_db_id()))
-            .filter(received_like_id.eq_any(likes))
-            .set(received_like_email_notification_sent.eq(true))
-            .execute(self.conn())
-            .into_db_error(())?;
-
-        Ok(())
-    }
 }
