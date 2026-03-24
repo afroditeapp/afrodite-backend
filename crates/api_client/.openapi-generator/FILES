@@ -49,8 +49,6 @@ src/models/attribute_value.rs
 src/models/attribute_value_order_mode.rs
 src/models/attribution_config.rs
 src/models/auth_pair.rs
-src/models/automatic_profile_search_completed_notification.rs
-src/models/automatic_profile_search_completed_notification_viewed.rs
 src/models/automatic_profile_search_iterator_session_id.rs
 src/models/automatic_profile_search_settings.rs
 src/models/backend_version.rs
@@ -131,7 +129,6 @@ src/models/first_image_config.rs
 src/models/get_account_ban_time_result.rs
 src/models/get_account_deletion_request_result.rs
 src/models/get_account_id_from_email_result.rs
-src/models/get_admin_notification.rs
 src/models/get_all_admins_result.rs
 src/models/get_api_usage_statistics_result.rs
 src/models/get_api_usage_statistics_settings.rs
@@ -204,8 +201,6 @@ src/models/matches_iterator_state.rs
 src/models/matches_page.rs
 src/models/max_distance_km.rs
 src/models/media_app_notification_settings.rs
-src/models/media_content_moderation_completed_notification.rs
-src/models/media_content_moderation_completed_notification_viewed.rs
 src/models/media_content_moderation_rejected_reason_category.rs
 src/models/media_content_moderation_rejected_reason_details.rs
 src/models/media_content_pending_moderation.rs
@@ -232,11 +227,13 @@ src/models/news_iterator_state.rs
 src/models/news_page.rs
 src/models/news_sync_version.rs
 src/models/news_translation_version.rs
-src/models/notification_id.rs
-src/models/notification_id_viewed.rs
-src/models/notification_status.rs
 src/models/nsfw_detection_thresholds.rs
 src/models/partial_profile_attributes_config.rs
+src/models/pending_app_notification.rs
+src/models/pending_app_notification_list.rs
+src/models/pending_app_notification_type.rs
+src/models/pending_chat_notification.rs
+src/models/pending_chat_notification_list.rs
 src/models/pending_message_acknowledgement_list.rs
 src/models/pending_message_id.rs
 src/models/perf_metric_query.rs
@@ -276,8 +273,6 @@ src/models/profile_page.rs
 src/models/profile_privacy_settings.rs
 src/models/profile_statistics_history_value.rs
 src/models/profile_statistics_history_value_type.rs
-src/models/profile_string_moderation_completed_notification.rs
-src/models/profile_string_moderation_completed_notification_viewed.rs
 src/models/profile_string_moderation_content_type.rs
 src/models/profile_string_moderation_info.rs
 src/models/profile_string_moderation_rejected_reason_category.rs

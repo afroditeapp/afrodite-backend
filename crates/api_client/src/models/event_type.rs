@@ -19,6 +19,10 @@ pub enum EventType {
     AccountStateChanged,
     #[serde(rename = "NewMessageReceived")]
     NewMessageReceived,
+    #[serde(rename = "PendingChatNotificationsChanged")]
+    PendingChatNotificationsChanged,
+    #[serde(rename = "PendingAppNotificationsChanged")]
+    PendingAppNotificationsChanged,
     #[serde(rename = "ReceivedLikesChanged")]
     ReceivedLikesChanged,
     #[serde(rename = "ContentProcessingStateChanged")]
@@ -29,20 +33,12 @@ pub enum EventType {
     ProfileChanged,
     #[serde(rename = "NewsCountChanged")]
     NewsCountChanged,
-    #[serde(rename = "MediaContentModerationCompleted")]
-    MediaContentModerationCompleted,
     #[serde(rename = "MediaContentChanged")]
     MediaContentChanged,
     #[serde(rename = "DailyLikesLeftChanged")]
     DailyLikesLeftChanged,
     #[serde(rename = "ScheduledMaintenanceStatus")]
     ScheduledMaintenanceStatus,
-    #[serde(rename = "ProfileStringModerationCompleted")]
-    ProfileStringModerationCompleted,
-    #[serde(rename = "AutomaticProfileSearchCompleted")]
-    AutomaticProfileSearchCompleted,
-    #[serde(rename = "AdminNotification")]
-    AdminNotification,
     #[serde(rename = "AdminBotNotification")]
     AdminBotNotification,
     #[serde(rename = "PushNotificationInfoChanged")]
@@ -65,18 +61,16 @@ impl std::fmt::Display for EventType {
         match self {
             Self::AccountStateChanged => write!(f, "AccountStateChanged"),
             Self::NewMessageReceived => write!(f, "NewMessageReceived"),
+            Self::PendingChatNotificationsChanged => write!(f, "PendingChatNotificationsChanged"),
+            Self::PendingAppNotificationsChanged => write!(f, "PendingAppNotificationsChanged"),
             Self::ReceivedLikesChanged => write!(f, "ReceivedLikesChanged"),
             Self::ContentProcessingStateChanged => write!(f, "ContentProcessingStateChanged"),
             Self::ClientConfigChanged => write!(f, "ClientConfigChanged"),
             Self::ProfileChanged => write!(f, "ProfileChanged"),
             Self::NewsCountChanged => write!(f, "NewsCountChanged"),
-            Self::MediaContentModerationCompleted => write!(f, "MediaContentModerationCompleted"),
             Self::MediaContentChanged => write!(f, "MediaContentChanged"),
             Self::DailyLikesLeftChanged => write!(f, "DailyLikesLeftChanged"),
             Self::ScheduledMaintenanceStatus => write!(f, "ScheduledMaintenanceStatus"),
-            Self::ProfileStringModerationCompleted => write!(f, "ProfileStringModerationCompleted"),
-            Self::AutomaticProfileSearchCompleted => write!(f, "AutomaticProfileSearchCompleted"),
-            Self::AdminNotification => write!(f, "AdminNotification"),
             Self::AdminBotNotification => write!(f, "AdminBotNotification"),
             Self::PushNotificationInfoChanged => write!(f, "PushNotificationInfoChanged"),
             Self::TypingStart => write!(f, "TypingStart"),

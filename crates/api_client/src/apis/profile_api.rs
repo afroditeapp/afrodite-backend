@@ -180,15 +180,6 @@ pub enum PostFavoriteProfileError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_get_automatic_profile_search_completed_notification`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum PostGetAutomaticProfileSearchCompletedNotificationError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
 /// struct for typed errors of method [`post_get_next_profile_page`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -199,37 +190,10 @@ pub enum PostGetNextProfilePageError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_get_profile_string_moderation_completed_notification`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum PostGetProfileStringModerationCompletedNotificationError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
 /// struct for typed errors of method [`post_get_query_profile_attributes_config`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostGetQueryProfileAttributesConfigError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`post_mark_automatic_profile_search_completed_notification_viewed`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum PostMarkAutomaticProfileSearchCompletedNotificationViewedError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`post_mark_profile_string_moderation_completed_notification_viewed`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum PostMarkProfileStringModerationCompletedNotificationViewedError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -1018,43 +982,6 @@ pub async fn post_favorite_profile(configuration: &configuration::Configuration,
     }
 }
 
-pub async fn post_get_automatic_profile_search_completed_notification(configuration: &configuration::Configuration, ) -> Result<models::AutomaticProfileSearchCompletedNotification, Error<PostGetAutomaticProfileSearchCompletedNotificationError>> {
-
-    let uri_str = format!("{}/profile_api/automatic_profile_search_completed_notification", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
-
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref token) = configuration.bearer_access_token {
-        req_builder = req_builder.bearer_auth(token.to_owned());
-    };
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-    let content_type = resp
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream");
-    let content_type = super::ContentType::from(content_type);
-
-    if !status.is_client_error() && !status.is_server_error() {
-        let content = resp.text().await?;
-        match content_type {
-            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::AutomaticProfileSearchCompletedNotification`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::AutomaticProfileSearchCompletedNotification`")))),
-        }
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<PostGetAutomaticProfileSearchCompletedNotificationError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
 pub async fn post_get_next_profile_page(configuration: &configuration::Configuration, profile_iterator_session_id: models::ProfileIteratorSessionId) -> Result<models::ProfilePage, Error<PostGetNextProfilePageError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_profile_iterator_session_id = profile_iterator_session_id;
@@ -1091,43 +1018,6 @@ pub async fn post_get_next_profile_page(configuration: &configuration::Configura
     } else {
         let content = resp.text().await?;
         let entity: Option<PostGetNextProfilePageError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
-pub async fn post_get_profile_string_moderation_completed_notification(configuration: &configuration::Configuration, ) -> Result<models::ProfileStringModerationCompletedNotification, Error<PostGetProfileStringModerationCompletedNotificationError>> {
-
-    let uri_str = format!("{}/profile_api/profile_string_moderation_completed_notification", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
-
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref token) = configuration.bearer_access_token {
-        req_builder = req_builder.bearer_auth(token.to_owned());
-    };
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-    let content_type = resp
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream");
-    let content_type = super::ContentType::from(content_type);
-
-    if !status.is_client_error() && !status.is_server_error() {
-        let content = resp.text().await?;
-        match content_type {
-            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ProfileStringModerationCompletedNotification`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ProfileStringModerationCompletedNotification`")))),
-        }
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<PostGetProfileStringModerationCompletedNotificationError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -1169,64 +1059,6 @@ pub async fn post_get_query_profile_attributes_config(configuration: &configurat
     } else {
         let content = resp.text().await?;
         let entity: Option<PostGetQueryProfileAttributesConfigError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
-pub async fn post_mark_automatic_profile_search_completed_notification_viewed(configuration: &configuration::Configuration, automatic_profile_search_completed_notification_viewed: models::AutomaticProfileSearchCompletedNotificationViewed) -> Result<(), Error<PostMarkAutomaticProfileSearchCompletedNotificationViewedError>> {
-    // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_automatic_profile_search_completed_notification_viewed = automatic_profile_search_completed_notification_viewed;
-
-    let uri_str = format!("{}/profile_api/mark_automatic_profile_search_completed_notification_viewed", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
-
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref token) = configuration.bearer_access_token {
-        req_builder = req_builder.bearer_auth(token.to_owned());
-    };
-    req_builder = req_builder.json(&p_body_automatic_profile_search_completed_notification_viewed);
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-
-    if !status.is_client_error() && !status.is_server_error() {
-        Ok(())
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<PostMarkAutomaticProfileSearchCompletedNotificationViewedError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
-pub async fn post_mark_profile_string_moderation_completed_notification_viewed(configuration: &configuration::Configuration, profile_string_moderation_completed_notification_viewed: models::ProfileStringModerationCompletedNotificationViewed) -> Result<(), Error<PostMarkProfileStringModerationCompletedNotificationViewedError>> {
-    // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_profile_string_moderation_completed_notification_viewed = profile_string_moderation_completed_notification_viewed;
-
-    let uri_str = format!("{}/profile_api/mark_profile_string_moderation_completed_notification_viewed", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
-
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref token) = configuration.bearer_access_token {
-        req_builder = req_builder.bearer_auth(token.to_owned());
-    };
-    req_builder = req_builder.json(&p_body_profile_string_moderation_completed_notification_viewed);
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-
-    if !status.is_client_error() && !status.is_server_error() {
-        Ok(())
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<PostMarkProfileStringModerationCompletedNotificationViewedError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

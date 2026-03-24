@@ -96,6 +96,7 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**get_initial_matches_iterator_state**](docs/ChatApi.md#get_initial_matches_iterator_state) | **GET** /chat_api/matches/initial_state | 
 *ChatApi* | [**get_latest_public_key_id**](docs/ChatApi.md#get_latest_public_key_id) | **GET** /chat_api/latest_public_key_id/{aid} | Get latest public key ID for some account
 *ChatApi* | [**get_message_delivery_info**](docs/ChatApi.md#get_message_delivery_info) | **GET** /chat_api/message_delivery_info | Get all message delivery info where the API caller is the message sender.
+*ChatApi* | [**get_pending_chat_notifications**](docs/ChatApi.md#get_pending_chat_notifications) | **GET** /chat_api/pending_notifications | 
 *ChatApi* | [**get_pending_latest_seen_messages**](docs/ChatApi.md#get_pending_latest_seen_messages) | **GET** /chat_api/pending_latest_seen_messages | Get pending latest seen message numbers where the API caller is the message sender. Returns entries that the viewer has reported as seen but have not yet been delivered back to the sender.
 *ChatApi* | [**get_pending_messages**](docs/ChatApi.md#get_pending_messages) | **GET** /chat_api/pending_messages | Get list of pending messages.
 *ChatApi* | [**get_private_public_key_info**](docs/ChatApi.md#get_private_public_key_info) | **GET** /chat_api/private_public_key_info/{aid} | Get private public key info
@@ -112,6 +113,7 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**post_chat_privacy_settings**](docs/ChatApi.md#post_chat_privacy_settings) | **POST** /chat_api/post_chat_privacy_settings | 
 *ChatApi* | [**post_create_video_call_url**](docs/ChatApi.md#post_create_video_call_url) | **POST** /chat_api/post_create_video_call_url | Create video call URL to a meeting with an user.
 *ChatApi* | [**post_delete_message_delivery_info**](docs/ChatApi.md#post_delete_message_delivery_info) | **POST** /chat_api/delete_message_delivery_info | Delete message delivery info entries by their database IDs.
+*ChatApi* | [**post_delete_pending_chat_notifications**](docs/ChatApi.md#post_delete_pending_chat_notifications) | **POST** /chat_api/pending_notifications/delete | 
 *ChatApi* | [**post_delete_pending_latest_seen_messages**](docs/ChatApi.md#post_delete_pending_latest_seen_messages) | **POST** /chat_api/pending_latest_seen_messages/delete | Delete pending latest seen message entries.
 *ChatApi* | [**post_get_matches_iterator_page**](docs/ChatApi.md#post_get_matches_iterator_page) | **POST** /chat_api/matches | Get requested page of matches iterator page. If the page is empty there is no more matches available.
 *ChatApi* | [**post_get_new_received_likes_count**](docs/ChatApi.md#post_get_new_received_likes_count) | **POST** /chat_api/new_received_likes_count | 
@@ -131,9 +133,11 @@ Class | Method | HTTP request | Description
 *CommonApi* | [**get_connect_websocket**](docs/CommonApi.md#get_connect_websocket) | **GET** /common_api/connect | Connect to server using WebSocket after getting refresh and access tokens.
 *CommonApi* | [**get_data_export_archive**](docs/CommonApi.md#get_data_export_archive) | **GET** /common_api/data_export_archive | Download current data export archive
 *CommonApi* | [**get_data_export_state**](docs/CommonApi.md#get_data_export_state) | **GET** /common_api/data_export_state | 
+*CommonApi* | [**get_pending_app_notifications**](docs/CommonApi.md#get_pending_app_notifications) | **GET** /common_api/pending_app_notifications | 
 *CommonApi* | [**get_push_notification_info**](docs/CommonApi.md#get_push_notification_info) | **GET** /common_api/get_push_notification_info | 
 *CommonApi* | [**get_version**](docs/CommonApi.md#get_version) | **GET** /common_api/version | Get backend version.
 *CommonApi* | [**post_client_language**](docs/CommonApi.md#post_client_language) | **POST** /common_api/client_language | 
+*CommonApi* | [**post_delete_pending_app_notifications**](docs/CommonApi.md#post_delete_pending_app_notifications) | **POST** /common_api/pending_app_notifications/delete | 
 *CommonApi* | [**post_set_device_token**](docs/CommonApi.md#post_set_device_token) | **POST** /common_api/set_device_token | 
 *CommonApi* | [**post_start_data_export**](docs/CommonApi.md#post_start_data_export) | **POST** /common_api/start_data_export | Start data export
 *CommonAdminApi* | [**get_admin_notification_settings**](docs/CommonAdminApi.md#get_admin_notification_settings) | **GET** /common_api/admin_notification_settings | Get admin notification settings.
@@ -151,7 +155,6 @@ Class | Method | HTTP request | Description
 *CommonAdminApi* | [**post_admin_notification_subscriptions**](docs/CommonAdminApi.md#post_admin_notification_subscriptions) | **POST** /common_api/admin_notification_subscriptions | Save admin notification subscriptions.
 *CommonAdminApi* | [**post_bot_config**](docs/CommonAdminApi.md#post_bot_config) | **POST** /common_api/bot_config | Save bot config.
 *CommonAdminApi* | [**post_edit_maintenance_notification**](docs/CommonAdminApi.md#post_edit_maintenance_notification) | **POST** /common_api/edit_maintenance_notification | Edit maintenance notification
-*CommonAdminApi* | [**post_get_admin_notification**](docs/CommonAdminApi.md#post_get_admin_notification) | **POST** /common_api/admin_notification | Get admin notification data.
 *CommonAdminApi* | [**post_get_api_usage_data**](docs/CommonAdminApi.md#post_get_api_usage_data) | **POST** /common_api/api_usage_data | Get API usage data for account
 *CommonAdminApi* | [**post_get_chat_message_reports**](docs/CommonAdminApi.md#post_get_chat_message_reports) | **POST** /chat_api/get_chat_message_reports | Get all chat message reports. The reports are ordered by message sending order from oldest to latest.
 *CommonAdminApi* | [**post_get_ip_address_usage_data**](docs/CommonAdminApi.md#post_get_ip_address_usage_data) | **POST** /common_api/ip_address_usage_data | Get IP address usage data for account
@@ -175,8 +178,6 @@ Class | Method | HTTP request | Description
 *MediaApi* | [**get_media_content_info**](docs/MediaApi.md#get_media_content_info) | **GET** /media_api/media_content_info | Get my profile and security content
 *MediaApi* | [**get_profile_content_info**](docs/MediaApi.md#get_profile_content_info) | **GET** /media_api/profile_content_info/{aid} | Get current profile content for selected profile.
 *MediaApi* | [**get_security_content_info**](docs/MediaApi.md#get_security_content_info) | **GET** /media_api/security_content_info/{aid} | Get current security content for selected profile.
-*MediaApi* | [**post_get_media_content_moderation_completed_notification**](docs/MediaApi.md#post_get_media_content_moderation_completed_notification) | **POST** /media_api/media_content_moderation_completed_notification | Get media content moderation completed notification.
-*MediaApi* | [**post_mark_media_content_moderation_completed_notification_viewed**](docs/MediaApi.md#post_mark_media_content_moderation_completed_notification_viewed) | **POST** /media_api/mark_media_content_moderation_completed_notification_viewed | The viewed values must be updated to prevent WebSocket code from sending unnecessary event about new notification.
 *MediaApi* | [**post_media_app_notification_settings**](docs/MediaApi.md#post_media_app_notification_settings) | **POST** /media_api/post_media_app_notification_settings | 
 *MediaApi* | [**post_profile_content_report**](docs/MediaApi.md#post_profile_content_report) | **POST** /media_api/profile_content_report | Report profile content.
 *MediaApi* | [**put_content_to_content_slot**](docs/MediaApi.md#put_content_to_content_slot) | **PUT** /media_api/content_slot/{slot_id} | Upload content to server. The content is saved to content processing slot when account state is [model::AccountState::InitialSetup]. In other states the slot number is ignored and content goes directly to moderation.
@@ -206,12 +207,8 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**post_automatic_profile_search_reset_profile_paging**](docs/ProfileApi.md#post_automatic_profile_search_reset_profile_paging) | **POST** /profile_api/automatic_profile_search/reset | Reset automatic profile search profile paging.
 *ProfileApi* | [**post_automatic_profile_search_settings**](docs/ProfileApi.md#post_automatic_profile_search_settings) | **POST** /profile_api/automatic_profile_search_settings | 
 *ProfileApi* | [**post_favorite_profile**](docs/ProfileApi.md#post_favorite_profile) | **POST** /profile_api/favorite_profile | Add new favorite profile
-*ProfileApi* | [**post_get_automatic_profile_search_completed_notification**](docs/ProfileApi.md#post_get_automatic_profile_search_completed_notification) | **POST** /profile_api/automatic_profile_search_completed_notification | 
 *ProfileApi* | [**post_get_next_profile_page**](docs/ProfileApi.md#post_get_next_profile_page) | **POST** /profile_api/page/next | Post (updates iterator) to get next page of profile list.
-*ProfileApi* | [**post_get_profile_string_moderation_completed_notification**](docs/ProfileApi.md#post_get_profile_string_moderation_completed_notification) | **POST** /profile_api/profile_string_moderation_completed_notification | Get profile string moderation completed notification.
 *ProfileApi* | [**post_get_query_profile_attributes_config**](docs/ProfileApi.md#post_get_query_profile_attributes_config) | **POST** /profile_api/query_profile_attributes_config | Query profile attributes from profile attributes config using profile attribute ID list.
-*ProfileApi* | [**post_mark_automatic_profile_search_completed_notification_viewed**](docs/ProfileApi.md#post_mark_automatic_profile_search_completed_notification_viewed) | **POST** /profile_api/mark_automatic_profile_search_completed_notification_viewed | The viewed values must be updated to prevent WebSocket code from sending unnecessary event about new notification.
-*ProfileApi* | [**post_mark_profile_string_moderation_completed_notification_viewed**](docs/ProfileApi.md#post_mark_profile_string_moderation_completed_notification_viewed) | **POST** /profile_api/mark_profile_string_moderation_completed_notification_viewed | The viewed values must be updated to prevent WebSocket code from sending unnecessary event about new notification.
 *ProfileApi* | [**post_profile**](docs/ProfileApi.md#post_profile) | **POST** /profile_api/profile | Update profile information.
 *ProfileApi* | [**post_profile_app_notification_settings**](docs/ProfileApi.md#post_profile_app_notification_settings) | **POST** /profile_api/post_profile_app_notification_settings | 
 *ProfileApi* | [**post_profile_filters**](docs/ProfileApi.md#post_profile_filters) | **POST** /profile_api/profile_filters | Set profile filters.
@@ -270,8 +267,6 @@ Class | Method | HTTP request | Description
  - [AttributeValueOrderMode](docs/AttributeValueOrderMode.md)
  - [AttributionConfig](docs/AttributionConfig.md)
  - [AuthPair](docs/AuthPair.md)
- - [AutomaticProfileSearchCompletedNotification](docs/AutomaticProfileSearchCompletedNotification.md)
- - [AutomaticProfileSearchCompletedNotificationViewed](docs/AutomaticProfileSearchCompletedNotificationViewed.md)
  - [AutomaticProfileSearchIteratorSessionId](docs/AutomaticProfileSearchIteratorSessionId.md)
  - [AutomaticProfileSearchSettings](docs/AutomaticProfileSearchSettings.md)
  - [BackendVersion](docs/BackendVersion.md)
@@ -352,7 +347,6 @@ Class | Method | HTTP request | Description
  - [GetAccountBanTimeResult](docs/GetAccountBanTimeResult.md)
  - [GetAccountDeletionRequestResult](docs/GetAccountDeletionRequestResult.md)
  - [GetAccountIdFromEmailResult](docs/GetAccountIdFromEmailResult.md)
- - [GetAdminNotification](docs/GetAdminNotification.md)
  - [GetAllAdminsResult](docs/GetAllAdminsResult.md)
  - [GetApiUsageStatisticsResult](docs/GetApiUsageStatisticsResult.md)
  - [GetApiUsageStatisticsSettings](docs/GetApiUsageStatisticsSettings.md)
@@ -425,8 +419,6 @@ Class | Method | HTTP request | Description
  - [MatchesPage](docs/MatchesPage.md)
  - [MaxDistanceKm](docs/MaxDistanceKm.md)
  - [MediaAppNotificationSettings](docs/MediaAppNotificationSettings.md)
- - [MediaContentModerationCompletedNotification](docs/MediaContentModerationCompletedNotification.md)
- - [MediaContentModerationCompletedNotificationViewed](docs/MediaContentModerationCompletedNotificationViewed.md)
  - [MediaContentModerationRejectedReasonCategory](docs/MediaContentModerationRejectedReasonCategory.md)
  - [MediaContentModerationRejectedReasonDetails](docs/MediaContentModerationRejectedReasonDetails.md)
  - [MediaContentPendingModeration](docs/MediaContentPendingModeration.md)
@@ -452,11 +444,13 @@ Class | Method | HTTP request | Description
  - [NewsPage](docs/NewsPage.md)
  - [NewsSyncVersion](docs/NewsSyncVersion.md)
  - [NewsTranslationVersion](docs/NewsTranslationVersion.md)
- - [NotificationId](docs/NotificationId.md)
- - [NotificationIdViewed](docs/NotificationIdViewed.md)
- - [NotificationStatus](docs/NotificationStatus.md)
  - [NsfwDetectionThresholds](docs/NsfwDetectionThresholds.md)
  - [PartialProfileAttributesConfig](docs/PartialProfileAttributesConfig.md)
+ - [PendingAppNotification](docs/PendingAppNotification.md)
+ - [PendingAppNotificationList](docs/PendingAppNotificationList.md)
+ - [PendingAppNotificationType](docs/PendingAppNotificationType.md)
+ - [PendingChatNotification](docs/PendingChatNotification.md)
+ - [PendingChatNotificationList](docs/PendingChatNotificationList.md)
  - [PendingMessageAcknowledgementList](docs/PendingMessageAcknowledgementList.md)
  - [PendingMessageId](docs/PendingMessageId.md)
  - [PerfMetricQuery](docs/PerfMetricQuery.md)
@@ -496,8 +490,6 @@ Class | Method | HTTP request | Description
  - [ProfilePrivacySettings](docs/ProfilePrivacySettings.md)
  - [ProfileStatisticsHistoryValue](docs/ProfileStatisticsHistoryValue.md)
  - [ProfileStatisticsHistoryValueType](docs/ProfileStatisticsHistoryValueType.md)
- - [ProfileStringModerationCompletedNotification](docs/ProfileStringModerationCompletedNotification.md)
- - [ProfileStringModerationCompletedNotificationViewed](docs/ProfileStringModerationCompletedNotificationViewed.md)
  - [ProfileStringModerationContentType](docs/ProfileStringModerationContentType.md)
  - [ProfileStringModerationInfo](docs/ProfileStringModerationInfo.md)
  - [ProfileStringModerationRejectedReasonCategory](docs/ProfileStringModerationRejectedReasonCategory.md)
