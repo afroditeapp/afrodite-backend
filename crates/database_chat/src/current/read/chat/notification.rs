@@ -1,5 +1,5 @@
 use database::{DieselDatabaseError, define_current_read_commands};
-use diesel::prelude::*;
+use diesel::{dsl::exists, prelude::*};
 use error_stack::Result;
 use model::{NewMessagePushNotification, NewMessagePushNotificationList, UnixTime};
 use model_chat::{
@@ -87,6 +87,23 @@ impl CurrentReadChatNotification<'_> {
             .select(pending_chat_notifications::created_unix_time)
             .load(self.conn())
             .into_db_error(())
+    }
+
+    pub fn has_sent_message_email_notification(
+        &mut self,
+        account_id_value: AccountIdInternal,
+    ) -> Result<bool, DieselDatabaseError> {
+        use crate::schema::pending_chat_notifications;
+
+        let query = pending_chat_notifications::table
+            .filter(pending_chat_notifications::account_id_viewer.eq(account_id_value.as_db_id()))
+            .filter(pending_chat_notifications::email_notification_sent.eq(true));
+
+        let sent_row_exists = diesel::select(exists(query))
+            .get_result(self.conn())
+            .into_db_error(())?;
+
+        Ok(sent_row_exists)
     }
 
     pub fn email_notification_settings(

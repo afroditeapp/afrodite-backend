@@ -71,7 +71,6 @@ impl CurrentWriteChatNotification<'_> {
             .do_update()
             .set((
                 message_count.eq(message_count_value),
-                email_notification_sent.eq(false),
                 push_notification_sent.eq(false),
             ))
             .execute_my_conn(self.conn())

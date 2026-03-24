@@ -76,15 +76,26 @@ async fn handle_messages_email_notification(
     }
 
     if send_notification {
+        let sent_email_exists = state
+            .read()
+            .chat()
+            .notification()
+            .has_sent_message_email_notification(id)
+            .await?;
+
         db_write_raw!(state, move |cmds| {
             cmds.chat()
                 .notification()
                 .mark_message_email_notification_sent(id)
                 .await?;
-            cmds.account()
-                .email()
-                .send_email_if_sending_is_not_in_progress(id, EmailMessages::NewMessage)
-                .await?;
+
+            if !sent_email_exists {
+                cmds.account()
+                    .email()
+                    .send_email_if_sending_is_not_in_progress(id, EmailMessages::NewMessage)
+                    .await?;
+            }
+
             Ok(())
         })
         .await?;

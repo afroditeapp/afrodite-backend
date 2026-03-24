@@ -51,6 +51,19 @@ impl ReadCommandsChatNotification<'_> {
         .into_error()
     }
 
+    pub async fn has_sent_message_email_notification(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<bool, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.chat()
+                .notification()
+                .has_sent_message_email_notification(id)
+        })
+        .await
+        .into_error()
+    }
+
     pub async fn pending_chat_notifications(
         &self,
         id: AccountIdInternal,
