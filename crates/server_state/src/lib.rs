@@ -12,7 +12,7 @@ use client_version::ClientVersionTracker;
 use config::Config;
 use data_signer::DataSigner;
 use ip_address::IpAddressUsageTracker;
-use model::{Account, AccountIdInternal, SyncDataVersionFromClient};
+use model::{Account, AccountIdInternal};
 use model_chat::SignInWithInfo;
 use model_server_data::EmailAddress;
 use server_common::{push_notifications::PushNotificationSender, websocket::WebSocketError};
@@ -173,19 +173,19 @@ impl DataAllAccess<'_> {
         cmd.await
     }
 
-    pub async fn handle_new_websocket_connection(
+    pub async fn handle_websocket_binary_message_from_client(
         &self,
         socket: &mut WebSocket,
         id: AccountIdInternal,
-        sync_versions: Vec<SyncDataVersionFromClient>,
+        binary_message: &[u8],
     ) -> server_common::result::Result<(), WebSocketError> {
-        let cmd = self.utils().handle_new_websocket_connection(
+        let cmd = self.utils().handle_websocket_binary_message_from_client(
             self.read(),
             self.write(),
             &self.state.simple_backend_state.manager_api,
             socket,
             id,
-            sync_versions,
+            binary_message,
         );
         cmd.await
     }

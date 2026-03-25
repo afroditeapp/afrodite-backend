@@ -3,7 +3,7 @@ use std::{future::Future, sync::Arc};
 use axum::extract::ws::WebSocket;
 use config::{Config, file::EmailAddress};
 use futures::future::BoxFuture;
-use model::{Account, AccountId, AccountIdInternal, SyncDataVersionFromClient};
+use model::{Account, AccountId, AccountIdInternal};
 use model_server_data::SignInWithInfo;
 pub use server_common::app::*;
 use server_common::websocket::WebSocketError;
@@ -129,14 +129,14 @@ pub trait DataAllUtils: Send + Sync + 'static {
     ) -> BoxFuture<'a, server_common::result::Result<AccountIdInternal, DataError>>;
 
     #[allow(clippy::too_many_arguments)]
-    fn handle_new_websocket_connection<'a>(
+    fn handle_websocket_binary_message_from_client<'a>(
         &self,
         read_handle: &'a RouterDatabaseReadHandle,
         write_handle: &'a WriteCommandRunnerHandle,
         manager_api_client: &'a ManagerApiClient,
         socket: &'a mut WebSocket,
         id: AccountIdInternal,
-        sync_versions: Vec<SyncDataVersionFromClient>,
+        binary_message: &'a [u8],
     ) -> BoxFuture<'a, server_common::result::Result<(), WebSocketError>>;
 
     fn complete_initial_setup<'a>(

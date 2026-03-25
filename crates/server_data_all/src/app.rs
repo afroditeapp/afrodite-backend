@@ -1,7 +1,7 @@
 use axum::extract::ws::WebSocket;
 use config::Config;
 use futures::{FutureExt, future::BoxFuture};
-use model::{Account, AccountIdInternal, EmailMessages, SyncDataVersionFromClient};
+use model::{Account, AccountIdInternal, EmailMessages};
 use model_account::{EmailAddress, SignInWithInfo};
 use server_common::websocket::WebSocketError;
 use server_data::{
@@ -70,28 +70,23 @@ impl DataAllUtils for DataAllUtilsImpl {
         .boxed()
     }
 
-    fn handle_new_websocket_connection<'a>(
+    fn handle_websocket_binary_message_from_client<'a>(
         &self,
         read_handle: &'a RouterDatabaseReadHandle,
         write_handle: &'a WriteCommandRunnerHandle,
         manager_api: &'a ManagerApiClient,
         socket: &'a mut WebSocket,
         id: AccountIdInternal,
-        sync_versions: Vec<SyncDataVersionFromClient>,
+        binary_message: &'a [u8],
     ) -> BoxFuture<'a, server_common::result::Result<(), WebSocketError>> {
-        async move {
-            crate::websocket::sync_data_with_client_if_needed(
-                read_handle,
-                write_handle,
-                manager_api,
-                socket,
-                id,
-                sync_versions,
-            )
-            .await?;
-            crate::websocket::send_events_if_needed(read_handle, manager_api, socket, id).await?;
-            Ok(())
-        }
+        crate::websocket::handle_websocket_binary_message_from_client(
+            read_handle,
+            write_handle,
+            manager_api,
+            socket,
+            id,
+            binary_message,
+        )
         .boxed()
     }
 

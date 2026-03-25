@@ -1,5 +1,5 @@
 use axum::extract::ws::{Message, WebSocket};
-use model::ScheduledMaintenanceStatus;
+use model::{ClientMessageType, ScheduledMaintenanceStatus};
 use model_chat::{
     AccountIdInternal, ChatStateRaw, EventToClient, EventToClientInternal, SyncCheckDataType,
     SyncCheckResult, SyncDataVersionFromClient, SyncVersionFromClient, SyncVersionUtils,
@@ -8,7 +8,7 @@ use server_common::websocket::WebSocketError;
 use server_data::{
     db_manager::RouterDatabaseReadHandle,
     read::GetReadCommandsCommon,
-    result::{Result, WrappedResultExt},
+    result::{Result, WrappedContextExt, WrappedResultExt},
     write::GetWriteCommandsCommon,
     write_commands::WriteCommandRunnerHandle,
 };
@@ -17,6 +17,41 @@ use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::manager_client::ManagerApiClient;
+
+pub async fn handle_websocket_binary_message_from_client(
+    read_handle: &RouterDatabaseReadHandle,
+    write_handle: &WriteCommandRunnerHandle,
+    manager_api_client: &ManagerApiClient,
+    socket: &mut WebSocket,
+    id: AccountIdInternal,
+    binary_message: &[u8],
+) -> Result<(), WebSocketError> {
+    let (message_type_u8, payload) = binary_message
+        .split_first()
+        .ok_or(WebSocketError::ProtocolError.report())?;
+
+    let message_type = ClientMessageType::try_from(*message_type_u8)
+        .map_err(|_| WebSocketError::ProtocolError.report())?;
+
+    match message_type {
+        ClientMessageType::SyncVersionList => {
+            let sync_versions = SyncDataVersionFromClient::parse_sync_data_list(payload)
+                .map_err(|_| WebSocketError::ProtocolError.report())?;
+
+            sync_data_with_client_if_needed(
+                read_handle,
+                write_handle,
+                manager_api_client,
+                socket,
+                id,
+                sync_versions,
+            )
+            .await?;
+            send_events_if_needed(read_handle, manager_api_client, socket, id).await?;
+            Ok(())
+        }
+    }
+}
 
 pub async fn send_events_if_needed(
     read_handle: &RouterDatabaseReadHandle,

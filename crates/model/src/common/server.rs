@@ -1,7 +1,28 @@
+use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::AccountId;
+
+/// First byte of websocket binary protocol messages sent from client to server.
+///
+/// Remaining bytes are message payload. Payload format depends on the message
+/// type value:
+/// - `SyncVersionList` (0): payload contains list of current data sync versions
+///   where items are `[u8; 2]`. The first `u8` is the data type number and the
+///   second `u8` is the sync version number for that data. If client does not
+///   have any version of the data, version number must be `255`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
+#[repr(u8)]
+pub enum ClientMessageType {
+    // Reserved message type ranges (u8):
+    // - common: 0..=29
+    SyncVersionList = 0,
+    // - account: 30..=59
+    // - profile: 60..=89
+    // - media: 90..=119
+    // - chat: 120..=149
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, ToSchema)]
 pub enum EventToServerType {

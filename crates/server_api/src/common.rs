@@ -14,7 +14,7 @@ use axum::{
 use http::HeaderMap;
 use model::{
     AccessToken, AccessTokenType, AccountIdInternal, BackendVersion, ClientVersion, RefreshToken,
-    SyncDataVersionFromClient, WebSocketClientInfo, WebSocketClientTypeNumber,
+    WebSocketClientInfo, WebSocketClientTypeNumber,
 };
 use model_server_data::AuthPair;
 use server_common::websocket::WebSocketError;
@@ -32,7 +32,6 @@ use server_state::{
     state_impl::{ReadData, WriteData},
 };
 use simple_backend::{create_counters, web_socket::WebSocketManager};
-use simple_backend_utils::IntoReportFromString;
 use tracing::{error, info};
 
 use super::utils::StatusCode;
@@ -98,14 +97,11 @@ pub use utils::api::PATH_CONNECT;
 /// 4. Server sends new access token as Binary message. The client must
 ///    convert the token to base64url encoding without padding.
 ///    (At this point API can be used.)
-/// 5. Client sends list of current data sync versions as Binary message, where
-///    items are [u8; 2] and the first u8 of an item is the data type number
-///    and the second u8 of an item is the sync version number for that data.
-///    If client does not have any version of the data, the client should
-///    send 255 as the version number.
-///
-///    Available data types:
-///    - 0: Account
+/// 5. Client sends first websocket binary protocol message.
+///    - First byte is ClientMessageType value.
+///    - Remaining bytes are message payload bytes.
+///    Payload formats for each message type are documented in
+///    `ClientMessageType`.
 /// 6. Server starts to send JSON events as Text messages and empty binary
 ///    messages to test connection to the client. Client can ignore the empty
 ///    binary messages.
@@ -467,23 +463,20 @@ async fn handle_socket_result(
         event_receiver
     };
 
-    // Receive sync data version list
-    let data_sync_versions = match socket
+    // Receive first websocket binary protocol message from client.
+    let binary_message = match socket
         .recv()
         .await
         .ok_or(WebSocketError::Receive.report())?
         .change_context(WebSocketError::Receive)?
     {
-        Message::Binary(sync_data_version_list) => {
-            SyncDataVersionFromClient::parse_sync_data_list(&sync_data_version_list)
-                .into_error_string(WebSocketError::ProtocolError)?
-        }
+        Message::Binary(binary_message) => binary_message,
         _ => return Err(WebSocketError::ProtocolError.report()),
     };
 
     state
         .data_all_access()
-        .handle_new_websocket_connection(&mut socket, id, data_sync_versions)
+        .handle_websocket_binary_message_from_client(&mut socket, id, &binary_message)
         .await?;
 
     COMMON.websocket_connected.incr();
