@@ -4,10 +4,10 @@ use num_enum::TryFromPrimitive;
 ///
 /// Remaining bytes are message payload. Payload format depends on the message
 /// type value:
-/// - `SyncVersionList` (0): payload contains list of current data sync versions
-///   where items are `[u8; 2]`. The first `u8` is the data type number and the
-///   second `u8` is the sync version number for that data. If client does not
-///   have any version of the data, version number must be `255`.
+/// - `SyncVersionList` (0): payload contains list of current data sync versions.
+///   Each byte in the payload is a sync version for a data type. The position
+///   of the byte defines the data type (see `SyncCheckDataType`). If client
+///   does not have any version of the data, version number must be `255`.
 /// - `ClearMaintenanceStatusIfPossible` (1): payload is empty.
 /// - `TypingStart` (120): payload is exactly 16 bytes account UUID in big-endian
 ///   byte order.

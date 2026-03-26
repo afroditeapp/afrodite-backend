@@ -11,17 +11,16 @@ pub struct SyncDataVersionFromClient {
 impl SyncDataVersionFromClient {
     pub fn parse_sync_data_list(data: &[u8]) -> Result<Vec<Self>, String> {
         let mut data_versions = vec![];
-        for chunk in data.chunks_exact(2) {
-            data_versions.push(Self::parse([chunk[0], chunk[1]])?);
+        for (i, &version_u8) in data.iter().enumerate().take(u8::MAX.into()) {
+            let data_type =
+                SyncCheckDataType::try_from(i as u8).map_err(|_| "Unknown sync version")?;
+            data_versions.push(Self {
+                data_type,
+                version: SyncVersionFromClient(version_u8),
+            });
         }
 
         Ok(data_versions)
-    }
-
-    fn parse([data_type_u8, version_u8]: [u8; 2]) -> Result<Self, String> {
-        let data_type = SyncCheckDataType::try_from(data_type_u8).map_err(|e| e.to_string())?;
-        let version = SyncVersionFromClient(version_u8);
-        Ok(Self { data_type, version })
     }
 }
 
