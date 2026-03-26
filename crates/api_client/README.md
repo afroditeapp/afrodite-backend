@@ -338,8 +338,6 @@ Class | Method | HTTP request | Description
  - [EmailLogin](docs/EmailLogin.md)
  - [EmailLoginToken](docs/EmailLoginToken.md)
  - [EventToClient](docs/EventToClient.md)
- - [EventToServer](docs/EventToServer.md)
- - [EventToServerType](docs/EventToServerType.md)
  - [EventType](docs/EventType.md)
  - [FavoriteProfilesPage](docs/FavoriteProfilesPage.md)
  - [FeaturesConfig](docs/FeaturesConfig.md)

@@ -240,12 +240,6 @@ async fn connect_websocket_internal(
         }
     }
 
-    // Send empty sync data list
-    stream
-        .send(Message::Binary(vec![].into()))
-        .await
-        .change_context(TestError::WebSocket)?;
-
     Ok(stream)
 }
 
