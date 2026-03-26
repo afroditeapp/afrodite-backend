@@ -8,6 +8,7 @@ use num_enum::TryFromPrimitive;
 ///   where items are `[u8; 2]`. The first `u8` is the data type number and the
 ///   second `u8` is the sync version number for that data. If client does not
 ///   have any version of the data, version number must be `255`.
+/// - `ClearMaintenanceStatusIfPossible` (1): payload is empty.
 /// - `TypingStart` (120): payload is exactly 16 bytes account UUID in big-endian
 ///   byte order.
 /// - `TypingStop` (121): payload is empty.
@@ -19,6 +20,7 @@ pub enum ClientMessageType {
     // Reserved message type ranges (u8):
     // - common: 0..=29
     SyncVersionList = 0,
+    ClearMaintenanceStatusIfPossible = 1,
     // - account: 30..=59
     // - profile: 60..=89
     // - media: 90..=119

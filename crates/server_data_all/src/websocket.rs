@@ -1,5 +1,5 @@
 use axum::extract::ws::{Message, WebSocket};
-use model::{ClientMessageForDataAllCrate, ScheduledMaintenanceStatus};
+use model::ClientMessageForDataAllCrate;
 use model_chat::{
     AccountIdInternal, ChatStateRaw, EventToClient, EventToClientInternal, SyncCheckDataType,
     SyncCheckResult, SyncDataVersionFromClient, SyncVersionFromClient, SyncVersionUtils,
@@ -31,15 +31,8 @@ pub async fn handle_websocket_binary_message_from_client(
             let sync_versions = SyncDataVersionFromClient::parse_sync_data_list(payload)
                 .map_err(|_| WebSocketError::ProtocolError.report())?;
 
-            sync_data_with_client_if_needed(
-                read_handle,
-                write_handle,
-                manager_api_client,
-                socket,
-                id,
-                sync_versions,
-            )
-            .await?;
+            sync_data_with_client_if_needed(read_handle, write_handle, socket, id, sync_versions)
+                .await?;
             send_events_if_needed(read_handle, manager_api_client, socket, id).await?;
             Ok(())
         }
@@ -133,7 +126,6 @@ pub async fn send_events_if_needed(
 pub async fn sync_data_with_client_if_needed(
     read_handle: &RouterDatabaseReadHandle,
     write_handle: &WriteCommandRunnerHandle,
-    manager_api_client: &ManagerApiClient,
     socket: &mut WebSocket,
     id: AccountIdInternal,
     sync_versions: Vec<SyncDataVersionFromClient>,
@@ -221,9 +213,6 @@ pub async fn sync_data_with_client_if_needed(
                     version.version,
                 )
                 .await?;
-            }
-            SyncCheckDataType::ServerMaintenanceIsScheduled => {
-                handle_maintenance_info_removing_if_needed(manager_api_client, socket).await?;
             }
         }
     }
@@ -474,22 +463,6 @@ async fn handle_push_notification_info_sync_version_check(
     };
 
     send_event(socket, EventToClientInternal::PushNotificationInfoChanged).await?;
-
-    Ok(())
-}
-
-async fn handle_maintenance_info_removing_if_needed(
-    manager_api_client: &ManagerApiClient,
-    socket: &mut WebSocket,
-) -> Result<(), WebSocketError> {
-    if manager_api_client.maintenance_status().await.is_empty() {
-        send_event(
-            socket,
-            EventToClientInternal::ScheduledMaintenanceStatus(
-                ScheduledMaintenanceStatus::default()
-            ),
-        ).await?;
-    }
 
     Ok(())
 }

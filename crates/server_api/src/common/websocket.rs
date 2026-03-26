@@ -1,7 +1,12 @@
-use model::{AccountId, AccountIdInternal, ClientMessageForDataAllCrate, ClientMessageType};
+use axum::extract::ws::{Message, WebSocket};
+use model::{
+    AccountId, AccountIdInternal, ClientMessageForDataAllCrate, ClientMessageType, EventToClient,
+    EventToClientInternal, ScheduledMaintenanceStatus,
+};
 use server_common::websocket::WebSocketError;
-use server_data::{app::ReadData, db_manager::InternalReading};
+use server_data::{app::ReadData, db_manager::InternalReading, result::WrappedResultExt};
 use server_state::S;
+use simple_backend::app::GetManagerApi;
 use simple_backend_utils::UuidBase64Url;
 
 use super::COMMON;
@@ -12,6 +17,7 @@ pub mod tracker;
 
 #[derive(Debug, Clone, Copy)]
 pub enum ClientMessageForServerApiCrate {
+    ClearMaintenanceStatusIfPossible,
     TypingStart {
         typing_to: AccountId,
     },
@@ -42,6 +48,15 @@ pub fn parse_client_binary_message(
         ClientMessageType::SyncVersionList => Ok(ClientMessageParsed::ForDataAll(
             ClientMessageForDataAllCrate::SyncVersionList(payload),
         )),
+        ClientMessageType::ClearMaintenanceStatusIfPossible => {
+            if !payload.is_empty() {
+                return Err(WebSocketError::ProtocolError.report());
+            }
+
+            Ok(ClientMessageParsed::ForServerApi(
+                ClientMessageForServerApiCrate::ClearMaintenanceStatusIfPossible,
+            ))
+        }
         ClientMessageType::TypingStart => {
             let typing_to = parse_account_id(payload)?;
             Ok(ClientMessageParsed::ForServerApi(
@@ -87,10 +102,28 @@ fn parse_account_id(payload: &[u8]) -> crate::result::Result<AccountId, WebSocke
 /// logging the returned error is safe.
 pub async fn handle_message_from_client(
     state: &S,
+    socket: &mut WebSocket,
     id: AccountIdInternal,
     msg: ClientMessageForServerApiCrate,
 ) -> crate::result::Result<(), WebSocketError> {
     match msg {
+        ClientMessageForServerApiCrate::ClearMaintenanceStatusIfPossible => {
+            if state
+                .manager_api_client()
+                .maintenance_status()
+                .await
+                .is_empty()
+            {
+                send_event(
+                    socket,
+                    EventToClientInternal::ScheduledMaintenanceStatus(
+                        ScheduledMaintenanceStatus::default(),
+                    ),
+                )
+                .await?;
+            }
+            Ok(())
+        }
         ClientMessageForServerApiCrate::TypingStart { typing_to } => {
             COMMON.event_to_server_typing_start.incr();
             let Some(typing_to) = state
@@ -125,4 +158,18 @@ pub async fn handle_message_from_client(
             chat::handle_check_online_status(state, id, check_account, is_online).await
         }
     }
+}
+
+pub async fn send_event(
+    socket: &mut WebSocket,
+    event: impl Into<EventToClient>,
+) -> crate::result::Result<(), WebSocketError> {
+    let event: EventToClient = event.into();
+    let event = serde_json::to_string(&event).change_context(WebSocketError::Serialize)?;
+    socket
+        .send(Message::Text(event.into()))
+        .await
+        .change_context(WebSocketError::Send)?;
+
+    Ok(())
 }

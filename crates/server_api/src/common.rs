@@ -500,7 +500,7 @@ async fn handle_socket_result(
                                     }
                                     ClientMessageParsed::ForServerApi(server_api_message) => {
                                         if let Err(e) =
-                                            handle_message_from_client(state, id, server_api_message)
+                                            handle_message_from_client(state, &mut socket, id, server_api_message)
                                                 .await
                                         {
                                             error!("Failed to handle message from client: {e:?}");

@@ -36,9 +36,6 @@ pub enum SyncCheckDataType {
     MediaContent = 5,
     DailyLikesLeft = 6,
     PushNotificationInfo = 7,
-    /// Special value without valid [SyncVersionFromClient] informing
-    /// the server that client has info that server maintenance is scheduled.
-    ServerMaintenanceIsScheduled = 255,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
