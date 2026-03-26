@@ -1,5 +1,5 @@
 use axum::extract::ws::{Message, WebSocket};
-use model::{ClientMessageType, ScheduledMaintenanceStatus};
+use model::{ClientMessageForDataAllCrate, ScheduledMaintenanceStatus};
 use model_chat::{
     AccountIdInternal, ChatStateRaw, EventToClient, EventToClientInternal, SyncCheckDataType,
     SyncCheckResult, SyncDataVersionFromClient, SyncVersionFromClient, SyncVersionUtils,
@@ -24,17 +24,10 @@ pub async fn handle_websocket_binary_message_from_client(
     manager_api_client: &ManagerApiClient,
     socket: &mut WebSocket,
     id: AccountIdInternal,
-    binary_message: &[u8],
+    message: ClientMessageForDataAllCrate<'_>,
 ) -> Result<(), WebSocketError> {
-    let (message_type_u8, payload) = binary_message
-        .split_first()
-        .ok_or(WebSocketError::ProtocolError.report())?;
-
-    let message_type = ClientMessageType::try_from(*message_type_u8)
-        .map_err(|_| WebSocketError::ProtocolError.report())?;
-
-    match message_type {
-        ClientMessageType::SyncVersionList => {
+    match message {
+        ClientMessageForDataAllCrate::SyncVersionList(payload) => {
             let sync_versions = SyncDataVersionFromClient::parse_sync_data_list(payload)
                 .map_err(|_| WebSocketError::ProtocolError.report())?;
 

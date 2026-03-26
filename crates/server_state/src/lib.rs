@@ -12,7 +12,7 @@ use client_version::ClientVersionTracker;
 use config::Config;
 use data_signer::DataSigner;
 use ip_address::IpAddressUsageTracker;
-use model::{Account, AccountIdInternal};
+use model::{Account, AccountIdInternal, ClientMessageForDataAllCrate};
 use model_chat::SignInWithInfo;
 use model_server_data::EmailAddress;
 use server_common::{push_notifications::PushNotificationSender, websocket::WebSocketError};
@@ -177,7 +177,7 @@ impl DataAllAccess<'_> {
         &self,
         socket: &mut WebSocket,
         id: AccountIdInternal,
-        binary_message: &[u8],
+        client_message: ClientMessageForDataAllCrate<'_>,
     ) -> server_common::result::Result<(), WebSocketError> {
         let cmd = self.utils().handle_websocket_binary_message_from_client(
             self.read(),
@@ -185,7 +185,7 @@ impl DataAllAccess<'_> {
             &self.state.simple_backend_state.manager_api,
             socket,
             id,
-            binary_message,
+            client_message,
         );
         cmd.await
     }

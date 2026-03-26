@@ -1,7 +1,7 @@
 use axum::extract::ws::WebSocket;
 use config::Config;
 use futures::{FutureExt, future::BoxFuture};
-use model::{Account, AccountIdInternal, EmailMessages};
+use model::{Account, AccountIdInternal, ClientMessageForDataAllCrate, EmailMessages};
 use model_account::{EmailAddress, SignInWithInfo};
 use server_common::websocket::WebSocketError;
 use server_data::{
@@ -77,7 +77,7 @@ impl DataAllUtils for DataAllUtilsImpl {
         manager_api: &'a ManagerApiClient,
         socket: &'a mut WebSocket,
         id: AccountIdInternal,
-        binary_message: &'a [u8],
+        client_message: ClientMessageForDataAllCrate<'a>,
     ) -> BoxFuture<'a, server_common::result::Result<(), WebSocketError>> {
         crate::websocket::handle_websocket_binary_message_from_client(
             read_handle,
@@ -85,7 +85,7 @@ impl DataAllUtils for DataAllUtilsImpl {
             manager_api,
             socket,
             id,
-            binary_message,
+            client_message,
         )
         .boxed()
     }

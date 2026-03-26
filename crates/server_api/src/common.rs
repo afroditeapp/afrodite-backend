@@ -38,7 +38,7 @@ use super::utils::StatusCode;
 use crate::{
     S,
     common::websocket::{
-        handle_event_to_server,
+        ClientMessageParsed, handle_message_from_client, parse_client_binary_message,
         tracker::{ConnectionPingTracker, WebSocketConnectionTrackers},
     },
     result::{WrappedContextExt, WrappedResultExt},
@@ -97,16 +97,13 @@ pub use utils::api::PATH_CONNECT;
 /// 4. Server sends new access token as Binary message. The client must
 ///    convert the token to base64url encoding without padding.
 ///    (At this point API can be used.)
-/// 5. Client sends first websocket binary protocol message.
-///    - First byte is ClientMessageType value.
-///    - Remaining bytes are message payload bytes.
-///    Payload formats for each message type are documented in
-///    `ClientMessageType`.
-/// 6. Server starts to send JSON events as Text messages and empty binary
-///    messages to test connection to the client. Client can ignore the empty
-///    binary messages.
-/// 7. If needed, the client sends empty binary messages to test connection to
-///    the server.
+/// 5. Both client and server starts send messages.
+///    - Client sends websocket binary protocol messages when needed.
+///      The message can be empty to test connection or alternatively
+///      message which `ClientMessageType` defines.
+///    - Server sends JSON messages as Text messages and empty binary messages
+///      to test connection to the client. Client can ignore the empty
+///      binary messages.
 ///
 /// The new access token is valid until this WebSocket is closed or the
 /// server detects a timeout. To prevent the timeout the client must
@@ -463,22 +460,6 @@ async fn handle_socket_result(
         event_receiver
     };
 
-    // Receive first websocket binary protocol message from client.
-    let binary_message = match socket
-        .recv()
-        .await
-        .ok_or(WebSocketError::Receive.report())?
-        .change_context(WebSocketError::Receive)?
-    {
-        Message::Binary(binary_message) => binary_message,
-        _ => return Err(WebSocketError::ProtocolError.report()),
-    };
-
-    state
-        .data_all_access()
-        .handle_websocket_binary_message_from_client(&mut socket, id, &binary_message)
-        .await?;
-
     COMMON.websocket_connected.incr();
     let connection_trackers = WebSocketConnectionTrackers::new(state, id).await?;
 
@@ -503,13 +484,32 @@ async fn handle_socket_result(
                                 // disconnecting this connection.
                                 timeout_timer.reset().await;
                             },
-                            Message::Text(text) => {
-                                if let Err(e) = handle_event_to_server(state, id, &text).await {
-                                    error!("Failed to handle event to server: {e:?}");
+                            Message::Binary(data) => {
+                                let binary_message = data.as_ref();
+
+                                match parse_client_binary_message(binary_message)? {
+                                    ClientMessageParsed::ForDataAll(data_all_message) => {
+                                        state
+                                            .data_all_access()
+                                            .handle_websocket_binary_message_from_client(
+                                                &mut socket,
+                                                id,
+                                                data_all_message,
+                                            )
+                                            .await?;
+                                    }
+                                    ClientMessageParsed::ForServerApi(server_api_message) => {
+                                        if let Err(e) =
+                                            handle_message_from_client(state, id, server_api_message)
+                                                .await
+                                        {
+                                            error!("Failed to handle message from client: {e:?}");
+                                        }
+                                    }
                                 }
                             },
-                            Message::Pong(_) |
-                            Message::Binary(_) => (),
+                            Message::Text(_) |
+                            Message::Pong(_) => (),
                             Message::Close(_) => break,
                         }
                 }

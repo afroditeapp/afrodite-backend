@@ -3,7 +3,7 @@ use std::{future::Future, sync::Arc};
 use axum::extract::ws::WebSocket;
 use config::{Config, file::EmailAddress};
 use futures::future::BoxFuture;
-use model::{Account, AccountId, AccountIdInternal};
+use model::{Account, AccountId, AccountIdInternal, ClientMessageForDataAllCrate};
 use model_server_data::SignInWithInfo;
 pub use server_common::app::*;
 use server_common::websocket::WebSocketError;
@@ -136,7 +136,7 @@ pub trait DataAllUtils: Send + Sync + 'static {
         manager_api_client: &'a ManagerApiClient,
         socket: &'a mut WebSocket,
         id: AccountIdInternal,
-        binary_message: &'a [u8],
+        client_message: ClientMessageForDataAllCrate<'a>,
     ) -> BoxFuture<'a, server_common::result::Result<(), WebSocketError>>;
 
     fn complete_initial_setup<'a>(

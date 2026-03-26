@@ -5025,6 +5025,7 @@ dependencies = [
  "simple_backend",
  "simple_backend_config",
  "simple_backend_model",
+ "simple_backend_utils",
  "tokio",
  "tracing",
  "utils",
