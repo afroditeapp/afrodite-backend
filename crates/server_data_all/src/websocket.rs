@@ -1,8 +1,9 @@
 use axum::extract::ws::{Message, WebSocket};
 use model::ClientMessageForDataAllCrate;
 use model_chat::{
-    AccountIdInternal, ChatStateRaw, EventToClient, EventToClientInternal, SyncCheckDataType,
-    SyncCheckResult, SyncDataVersionFromClient, SyncVersionFromClient, SyncVersionUtils,
+    AccountIdInternal, ChatStateRaw, EventToClientInternal, SyncCheckDataType, SyncCheckResult,
+    SyncDataVersionFromClient, SyncVersionFromClient, SyncVersionUtils,
+    create_server_binary_message,
 };
 use server_common::websocket::WebSocketError;
 use server_data::{
@@ -469,12 +470,11 @@ async fn handle_push_notification_info_sync_version_check(
 
 async fn send_event(
     socket: &mut WebSocket,
-    event: impl Into<EventToClient>,
+    event: EventToClientInternal,
 ) -> Result<(), WebSocketError> {
-    let event: EventToClient = event.into();
-    let event = serde_json::to_string(&event).change_context(WebSocketError::Serialize)?;
+    let event = create_server_binary_message(&event).change_context(WebSocketError::Serialize)?;
     socket
-        .send(Message::Text(event.into()))
+        .send(Message::Binary(event.into()))
         .await
         .change_context(WebSocketError::Send)?;
 

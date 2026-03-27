@@ -13,13 +13,15 @@ use axum::{
 };
 use http::HeaderMap;
 use model::{
-    AccessToken, AccessTokenType, AccountIdInternal, BackendVersion, ClientVersion, RefreshToken,
-    WebSocketClientInfo, WebSocketClientTypeNumber,
+    AccessToken, AccessTokenType, AccountIdInternal, BackendVersion, ClientVersion,
+    EventToClientInternal, NotificationEvent, RefreshToken, WebSocketClientInfo,
+    WebSocketClientTypeNumber,
 };
 use model_server_data::AuthPair;
 use server_common::websocket::WebSocketError;
 use server_data::{
     app::{BackendVersionProvider, EventManagerProvider, GetConfig},
+    event::InternalEventType,
     read::GetReadCommandsCommon,
     write::GetWriteCommandsCommon,
 };
@@ -38,7 +40,7 @@ use super::utils::StatusCode;
 use crate::{
     S,
     common::websocket::{
-        ClientMessageParsed, handle_message_from_client, parse_client_binary_message,
+        ClientMessageParsed, handle_message_from_client, parse_client_binary_message, send_event,
         tracker::{ConnectionPingTracker, WebSocketConnectionTrackers},
     },
     result::{WrappedContextExt, WrappedResultExt},
@@ -101,9 +103,10 @@ pub use utils::api::PATH_CONNECT;
 ///    - Client sends websocket binary protocol messages when needed.
 ///      The message can be empty to test connection or alternatively
 ///      message which `ClientMessageType` defines.
-///    - Server sends JSON messages as Text messages and empty binary messages
-///      to test connection to the client. Client can ignore the empty
-///      binary messages.
+///    - Server sends websocket binary protocol messages.
+///      The first byte is message type (`ServerMessageType`) and remaining
+///      bytes are message payload. Client can ignore empty binary
+///      messages used for connection testing.
 ///
 /// The new access token is valid until this WebSocket is closed or the
 /// server detects a timeout. To prevent the timeout the client must
@@ -517,12 +520,26 @@ async fn handle_socket_result(
             event = event_receiver.recv() => {
                 match event {
                     Some(internal_event) => {
-                        let event = internal_event.to_client_event();
-                        let event = serde_json::to_string(&event)
-                            .change_context(WebSocketError::Serialize)?;
-                        socket.send(Message::Text(event.into()))
-                            .await
-                            .change_context(WebSocketError::Send)?;
+                        let event = match internal_event {
+                            InternalEventType::NormalEvent(event) => event,
+                            InternalEventType::Notification(event) => {
+                                match event {
+                                    NotificationEvent::NewMessageReceived => {
+                                        EventToClientInternal::PendingChatNotificationsChanged
+                                    }
+                                    NotificationEvent::ReceivedLikesChanged
+                                    | NotificationEvent::MediaContentModerationCompleted
+                                    | NotificationEvent::NewsChanged
+                                    | NotificationEvent::ProfileStringModerationCompleted
+                                    | NotificationEvent::AutomaticProfileSearchCompleted
+                                    | NotificationEvent::AdminNotification => {
+                                        EventToClientInternal::PendingAppNotificationsChanged
+                                    }
+                                }
+                            }
+                        };
+
+                        send_event(&mut socket, event).await?;
                         // If event is pending push notification related, the cached
                         // pending push notification flags are removed in the related
                         // HTTP route handlers using event manager assuming

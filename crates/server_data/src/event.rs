@@ -1,8 +1,8 @@
 //! Send events to connected or not connected clients.
 
 use model::{
-    AccountId, AccountIdInternal, ContentProcessingStateChanged, EventToClient,
-    EventToClientInternal, NotificationEvent, PushNotificationFlags,
+    AccountId, AccountIdInternal, ContentProcessingStateChanged, EventToClientInternal,
+    NotificationEvent, PushNotificationFlags,
 };
 use server_common::{data::IntoDataError, push_notifications::PushNotificationSender};
 use tokio::sync::mpsc::{self, error::TrySendError};
@@ -32,28 +32,6 @@ pub fn event_channel() -> (EventSender, EventReceiver) {
 pub enum InternalEventType {
     NormalEvent(EventToClientInternal),
     Notification(NotificationEvent),
-}
-
-impl InternalEventType {
-    pub fn to_client_event(&self) -> EventToClient {
-        match self {
-            InternalEventType::NormalEvent(event) => event.clone().into(),
-            InternalEventType::Notification(event) => {
-                use NotificationEvent::*;
-                match event {
-                    NewMessageReceived => {
-                        EventToClientInternal::PendingChatNotificationsChanged.into()
-                    }
-                    ReceivedLikesChanged
-                    | MediaContentModerationCompleted
-                    | ProfileStringModerationCompleted
-                    | AutomaticProfileSearchCompleted
-                    | AdminNotification
-                    | NewsChanged => EventToClientInternal::PendingAppNotificationsChanged.into(),
-                }
-            }
-        }
-    }
 }
 
 #[derive(Debug)]

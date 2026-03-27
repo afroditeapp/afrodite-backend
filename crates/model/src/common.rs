@@ -55,67 +55,10 @@ pub struct BackendVersion {
     pub protocol_version: String,
 }
 
-/// Identifier for event.
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub enum EventType {
-    /// Account state, profile visibility or permissions changed.
-    AccountStateChanged,
-    NewMessageReceived,
-    PendingChatNotificationsChanged,
-    PendingAppNotificationsChanged,
-    ReceivedLikesChanged,
-    /// Data: content_processing_state_changed
-    ContentProcessingStateChanged,
-    ClientConfigChanged,
-    ProfileChanged,
-    NewsCountChanged,
-    MediaContentChanged,
-    DailyLikesLeftChanged,
-    ScheduledMaintenanceStatus,
-    /// Data: admin_bot_notification
-    AdminBotNotification,
-    PushNotificationInfoChanged,
-    /// Data: typing_start
-    TypingStart,
-    /// Data: typing_stop
-    TypingStop,
-    /// Data: check_online_status_response
-    CheckOnlineStatusResponse,
-    MessageDeliveryInfoChanged,
-    LatestSeenMessageChanged,
-}
-
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ContentProcessingStateChanged {
     pub id: ContentProcessingId,
     pub new_state: ContentProcessingState,
-}
-
-/// Event to client which is sent through websocket.
-///
-/// This is not an enum to make generated API bindings more easier to
-/// use.
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct EventToClient {
-    event: EventType,
-    /// Data for event ContentProcessingStateChanged
-    #[serde(skip_serializing_if = "Option::is_none")]
-    content_processing_state_changed: Option<ContentProcessingStateChanged>,
-    /// Data for event ScheduledMaintenanceStatus
-    #[serde(skip_serializing_if = "Option::is_none")]
-    scheduled_maintenance_status: Option<ScheduledMaintenanceStatus>,
-    /// Data for event AdminBotNotification
-    #[serde(skip_serializing_if = "Option::is_none")]
-    admin_bot_notification: Option<crate::AdminBotNotificationTypes>,
-    /// Data for event TypingStart
-    #[serde(skip_serializing_if = "Option::is_none")]
-    typing_start: Option<AccountId>,
-    /// Data for event TypingStop
-    #[serde(skip_serializing_if = "Option::is_none")]
-    typing_stop: Option<AccountId>,
-    /// Data for event CheckOnlineStatusResponse
-    #[serde(skip_serializing_if = "Option::is_none")]
-    check_online_status_response: Option<CheckOnlineStatusResponse>,
 }
 
 /// Internal data type for events.
@@ -145,73 +88,6 @@ pub enum EventToClientInternal {
     CheckOnlineStatusResponse(CheckOnlineStatusResponse),
     MessageDeliveryInfoChanged,
     LatestSeenMessageChanged,
-}
-
-impl From<&EventToClientInternal> for EventType {
-    fn from(value: &EventToClientInternal) -> Self {
-        use EventToClientInternal::*;
-        match value {
-            ContentProcessingStateChanged(_) => Self::ContentProcessingStateChanged,
-            AccountStateChanged => Self::AccountStateChanged,
-            NewMessageReceived => Self::NewMessageReceived,
-            PendingChatNotificationsChanged => Self::PendingChatNotificationsChanged,
-            PendingAppNotificationsChanged => Self::PendingAppNotificationsChanged,
-            ReceivedLikesChanged => Self::ReceivedLikesChanged,
-            ClientConfigChanged => Self::ClientConfigChanged,
-            ProfileChanged => Self::ProfileChanged,
-            NewsChanged => Self::NewsCountChanged,
-            MediaContentChanged => Self::MediaContentChanged,
-            DailyLikesLeftChanged => Self::DailyLikesLeftChanged,
-            ScheduledMaintenanceStatus(_) => Self::ScheduledMaintenanceStatus,
-            AdminBotNotification(_) => Self::AdminBotNotification,
-            PushNotificationInfoChanged => Self::PushNotificationInfoChanged,
-            TypingStart(_) => Self::TypingStart,
-            TypingStop(_) => Self::TypingStop,
-            CheckOnlineStatusResponse(_) => Self::CheckOnlineStatusResponse,
-            MessageDeliveryInfoChanged => Self::MessageDeliveryInfoChanged,
-            LatestSeenMessageChanged => Self::LatestSeenMessageChanged,
-        }
-    }
-}
-
-impl From<EventToClientInternal> for EventToClient {
-    fn from(internal: EventToClientInternal) -> Self {
-        let mut value = Self {
-            event: (&internal).into(),
-            content_processing_state_changed: None,
-            scheduled_maintenance_status: None,
-            admin_bot_notification: None,
-            typing_start: None,
-            typing_stop: None,
-            check_online_status_response: None,
-        };
-
-        use EventToClientInternal::*;
-
-        match internal {
-            ContentProcessingStateChanged(v) => value.content_processing_state_changed = Some(v),
-            ScheduledMaintenanceStatus(v) => value.scheduled_maintenance_status = Some(v),
-            AdminBotNotification(v) => value.admin_bot_notification = Some(v),
-            TypingStart(v) => value.typing_start = Some(v),
-            TypingStop(v) => value.typing_stop = Some(v),
-            CheckOnlineStatusResponse(v) => value.check_online_status_response = Some(v),
-            AccountStateChanged
-            | NewMessageReceived
-            | PendingChatNotificationsChanged
-            | PendingAppNotificationsChanged
-            | ReceivedLikesChanged
-            | ClientConfigChanged
-            | ProfileChanged
-            | NewsChanged
-            | MediaContentChanged
-            | DailyLikesLeftChanged
-            | PushNotificationInfoChanged
-            | MessageDeliveryInfoChanged
-            | LatestSeenMessageChanged => (),
-        }
-
-        value
-    }
 }
 
 #[derive(Debug, Clone, Copy)]

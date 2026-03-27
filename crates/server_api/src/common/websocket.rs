@@ -1,7 +1,7 @@
 use axum::extract::ws::{Message, WebSocket};
 use model::{
-    AccountId, AccountIdInternal, ClientMessageForDataAllCrate, ClientMessageType, EventToClient,
-    EventToClientInternal, ScheduledMaintenanceStatus,
+    AccountId, AccountIdInternal, ClientMessageForDataAllCrate, ClientMessageType,
+    EventToClientInternal, ScheduledMaintenanceStatus, create_server_binary_message,
 };
 use server_common::websocket::WebSocketError;
 use server_data::{app::ReadData, db_manager::InternalReading, result::WrappedResultExt};
@@ -162,12 +162,11 @@ pub async fn handle_message_from_client(
 
 pub async fn send_event(
     socket: &mut WebSocket,
-    event: impl Into<EventToClient>,
+    event: EventToClientInternal,
 ) -> crate::result::Result<(), WebSocketError> {
-    let event: EventToClient = event.into();
-    let event = serde_json::to_string(&event).change_context(WebSocketError::Serialize)?;
+    let event = create_server_binary_message(&event).change_context(WebSocketError::Serialize)?;
     socket
-        .send(Message::Text(event.into()))
+        .send(Message::Binary(event.into()))
         .await
         .change_context(WebSocketError::Send)?;
 
