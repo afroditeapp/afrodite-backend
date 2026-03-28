@@ -105,26 +105,11 @@ pub struct ScheduledMaintenanceStatus {
     start: Option<UnixTime>,
     #[serde(skip_serializing_if = "Option::is_none")]
     end: Option<UnixTime>,
-    /// Maintenance target
-    ///
-    /// * 0 - Server
-    /// * 1 - Admin bot
-    #[serde(default, skip_serializing_if = "is_zero")]
-    #[schema(default = 0)]
-    maintenance_target: u8,
-}
-
-fn is_zero(value: &u8) -> bool {
-    *value == 0
 }
 
 impl ScheduledMaintenanceStatus {
     pub fn server_maintenance(start: Option<UnixTime>, end: Option<UnixTime>) -> Self {
-        Self {
-            start,
-            end,
-            maintenance_target: 0,
-        }
+        Self { start, end }
     }
 
     pub fn is_empty(&self) -> bool {
