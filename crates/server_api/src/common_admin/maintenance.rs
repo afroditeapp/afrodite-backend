@@ -1,5 +1,5 @@
 use axum::{Extension, extract::State};
-use model::{EventToClientInternal, Permissions, ScheduledMaintenanceStatus};
+use model::{EventToClientInternal, Permissions, ServerMaintenanceStatus};
 use server_data::app::EventManagerProvider;
 use simple_backend::{app::GetManagerApi, create_counters};
 
@@ -18,7 +18,7 @@ const PATH_GET_MAINTENANCE_NOTIFICATION: &str = "/common_api/maintenance_notific
     get,
     path = PATH_GET_MAINTENANCE_NOTIFICATION,
     responses(
-        (status = 200, description = "Successful.", body = ScheduledMaintenanceStatus),
+        (status = 200, description = "Successful.", body = ServerMaintenanceStatus),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -27,11 +27,16 @@ const PATH_GET_MAINTENANCE_NOTIFICATION: &str = "/common_api/maintenance_notific
 pub async fn get_maintenance_notification(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
-) -> Result<Json<ScheduledMaintenanceStatus>, StatusCode> {
+) -> Result<Json<ServerMaintenanceStatus>, StatusCode> {
     COMMON_ADMIN.get_maintenance_notification.incr();
 
     if api_caller_permissions.admin_server_edit_maintenance_notification {
-        Ok(state.manager_api_client().maintenance_status().await.into())
+        Ok(state
+            .manager_api_client()
+            .maintenance_status()
+            .await
+            .server_maintenance_status()
+            .into())
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }
@@ -46,7 +51,7 @@ const PATH_POST_EDIT_MAINTENANCE_NOTIFICATION: &str = "/common_api/edit_maintena
 #[utoipa::path(
     post,
     path = PATH_POST_EDIT_MAINTENANCE_NOTIFICATION,
-    request_body = ScheduledMaintenanceStatus,
+    request_body = ServerMaintenanceStatus,
     responses(
         (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
@@ -57,15 +62,17 @@ const PATH_POST_EDIT_MAINTENANCE_NOTIFICATION: &str = "/common_api/edit_maintena
 pub async fn post_edit_maintenance_notification(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
-    Json(status): Json<ScheduledMaintenanceStatus>,
+    Json(status): Json<ServerMaintenanceStatus>,
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_edit_maintenance_notification.incr();
 
     if api_caller_permissions.admin_server_edit_maintenance_notification {
         state
             .manager_api_client()
-            .set_maintenance_status(status.clone())
+            .set_maintenance_time(status.start(), status.end())
             .await;
+
+        let status = state.manager_api_client().maintenance_status().await;
         state
             .event_manager()
             .send_connected_event_to_logged_in_clients(

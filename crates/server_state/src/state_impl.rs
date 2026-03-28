@@ -299,6 +299,12 @@ impl ApiLimitsProvider for S {
     }
 }
 
+impl AdminBotStatusProvider for S {
+    fn admin_bot_status_data(&self) -> &crate::admin_bot_status::AdminBotStatusManagerData {
+        &self.state.admin_bot_status
+    }
+}
+
 // Simple backend
 
 impl SignInWith for S {

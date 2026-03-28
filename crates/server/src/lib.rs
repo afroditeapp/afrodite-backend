@@ -4,6 +4,7 @@
 #![warn(unused_crate_dependencies)]
 #![allow(clippy::while_let_loop)]
 
+pub mod admin_bot_status;
 pub mod admin_notifications;
 pub mod api;
 pub mod api_doc;
@@ -67,6 +68,7 @@ use tracing::{error, warn};
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
+    admin_bot_status::{AdminBotStatusManager, AdminBotStatusManagerQuitHandle},
     admin_notifications::{AdminNotificationManager, AdminNotificationManagerQuitHandle},
     daily_likes::{DailyLikesManager, DailyLikesManagerQuitHandle},
     data_export::{DataExportManager, DataExportManagerQuitHandle},
@@ -89,6 +91,7 @@ impl DatingAppServer {
         let logic = DatingAppBusinessLogic {
             config: self.config.clone(),
             dynamic_config_manager: None,
+            admin_bot_status: None,
             write_cmd_waiter: None,
             database_manager: None,
             content_processing_quit_handle: None,
@@ -111,6 +114,7 @@ impl DatingAppServer {
 pub struct DatingAppBusinessLogic {
     config: Arc<Config>,
     dynamic_config_manager: Option<DynamicConfigManagerQuitHandle>,
+    admin_bot_status: Option<AdminBotStatusManagerQuitHandle>,
     write_cmd_waiter: Option<WriteCmdWatcher>,
     database_manager: Option<DatabaseManager>,
     content_processing_quit_handle: Option<ContentProcessingManagerQuitHandle>,
@@ -337,6 +341,11 @@ impl BusinessLogic for DatingAppBusinessLogic {
             server_quit_watcher.resubscribe(),
         );
 
+        let admin_bot_status_manager_quit_handle = AdminBotStatusManager::new_manager(
+            app_state.clone(),
+            server_quit_watcher.resubscribe(),
+        );
+
         let data_export_quit_handle = DataExportManager::new_manager(
             data_export_receiver,
             app_state.clone(),
@@ -381,6 +390,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
         self.write_cmd_waiter = Some(write_cmd_waiter);
         self.content_processing_quit_handle = Some(content_processing_quit_handle);
         self.admin_notification_quit_handle = Some(admin_notification_quit_handle);
+        self.admin_bot_status = Some(admin_bot_status_manager_quit_handle);
         self.data_export_quit_handle = Some(data_export_quit_handle);
         self.push_notifications_quit_handle = Some(push_notifications_quit_handle);
         self.email_manager_quit_handle = Some(email_manager_quit_handle);
@@ -439,6 +449,10 @@ impl BusinessLogic for DatingAppBusinessLogic {
             .wait_quit()
             .await;
         self.admin_notification_quit_handle
+            .expect("Not initialized")
+            .wait_quit()
+            .await;
+        self.admin_bot_status
             .expect("Not initialized")
             .wait_quit()
             .await;

@@ -40,6 +40,7 @@ create_connection_tracker!(BOT_CONNECTIONS, BotConnections,);
 create_connection_tracker!(BOT_CONNECTIONS_MEN, BotConnectionsMen,);
 create_connection_tracker!(BOT_CONNECTIONS_WOMEN, BotConnectionsWomen,);
 create_connection_tracker!(BOT_CONNECTIONS_NONBINARIES, BotConnectionsNonbinaries,);
+create_connection_tracker!(ADMIN_BOT_CONNECTIONS, AdminBotConnections,);
 
 pub enum ConnectionTracker {
     Connections(Connections),
@@ -50,4 +51,5 @@ pub enum ConnectionTracker {
     BotConnectionsMen(BotConnectionsMen),
     BotConnectionsWomen(BotConnectionsWomen),
     BotConnectionsNonbinaries(BotConnectionsNonbinaries),
+    AdminBotConnections(AdminBotConnections),
 }

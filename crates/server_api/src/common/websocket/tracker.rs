@@ -3,7 +3,9 @@ use std::time::Duration;
 use model::AccountIdInternal;
 use server_common::websocket::WebSocketError;
 use server_data::{read::GetReadCommandsCommon, result::WrappedResultExt};
-use server_state::{S, state_impl::ReadData};
+use server_state::{
+    S, admin_bot_status::AdminBotStatusTracker, app::AdminBotStatusProvider, state_impl::ReadData,
+};
 use simple_backend::perf::websocket::{self, ConnectionTracker};
 use tokio::time::Instant;
 
@@ -36,6 +38,7 @@ impl ConnectionPingTracker {
 pub struct WebSocketConnectionTrackers {
     _all: ConnectionTracker,
     _gender_specific: Option<ConnectionTracker>,
+    _admin_bot: Option<AdminBotStatusTracker>,
 }
 
 impl WebSocketConnectionTrackers {
@@ -76,9 +79,27 @@ impl WebSocketConnectionTrackers {
             None
         };
 
+        let admin_bot = if info.is_bot {
+            let admin_bot_accounts = state
+                .read()
+                .common_admin()
+                .admin_bot_account_ids()
+                .await
+                .change_context(WebSocketError::DatabaseBotAndGenderInfoQuery)?;
+
+            if admin_bot_accounts.contains(&id) {
+                Some(state.admin_bot_status_data().create_tracker())
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
         Ok(Self {
             _all: all,
             _gender_specific: gender_specific,
+            _admin_bot: admin_bot,
         })
     }
 }

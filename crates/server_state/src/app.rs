@@ -8,9 +8,9 @@ pub use server_data::app::*;
 use server_data::{DataError, content_processing::ContentProcessingManagerData};
 
 use crate::{
-    admin_notifications::AdminNotificationManagerData, api_limits::ApiLimits,
-    api_usage::ApiUsageTracker, client_version::ClientVersionTracker, data_signer::DataSigner,
-    ip_address::IpAddressUsageTracker,
+    admin_bot_status::AdminBotStatusManagerData, admin_notifications::AdminNotificationManagerData,
+    api_limits::ApiLimits, api_usage::ApiUsageTracker, client_version::ClientVersionTracker,
+    data_signer::DataSigner, ip_address::IpAddressUsageTracker,
 };
 
 pub trait GetAccessTokens {
@@ -62,6 +62,10 @@ pub trait AdminNotificationProvider {
 
 pub trait ApiLimitsProvider {
     fn api_limits(&self, account_id: AccountIdInternal) -> ApiLimits<'_>;
+}
+
+pub trait AdminBotStatusProvider {
+    fn admin_bot_status_data(&self) -> &AdminBotStatusManagerData;
 }
 
 pub trait ReadDynamicConfig {

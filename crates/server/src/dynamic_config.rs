@@ -6,6 +6,7 @@ use server_data::write::GetWriteCommandsCommon;
 use server_data_account::read::GetReadCommandsAccount;
 use server_state::{
     S,
+    app::AdminBotStatusProvider,
     dynamic_config::{DynamicConfigEvent, DynamicConfigEventReceiver},
 };
 use tokio::{sync::broadcast, task::JoinHandle};
@@ -120,12 +121,18 @@ impl DynamicConfigManager {
             .await
             .change_context(DynamicConfigManagerError::Database)?;
 
+        let admin_bot_enabled_changed = self.current_config.admin_bot != new_config.admin_bot;
+
         self.current_config = new_config;
 
         self.state
             .set_remote_bot_login_enabled(self.current_config.remote_bot_login);
 
         self.restart_bots().await?;
+
+        if admin_bot_enabled_changed {
+            self.state.admin_bot_status_data().trigger_update();
+        }
 
         Ok(())
     }

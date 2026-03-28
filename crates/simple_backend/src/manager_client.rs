@@ -7,7 +7,7 @@ use manager_api::{
 };
 use manager_model::{ManagerInstanceName, ServerEventType};
 use simple_backend_config::SimpleBackendConfig;
-use simple_backend_model::ScheduledMaintenanceStatus;
+use simple_backend_model::{ScheduledMaintenanceStatus, UnixTime};
 use simple_backend_utils::ContextExt;
 use tokio::{sync::RwLock, task::JoinHandle};
 use tracing::{error, info, warn};
@@ -125,18 +125,29 @@ impl ManagerApiClient {
     }
 
     pub async fn maintenance_status(&self) -> ScheduledMaintenanceStatus {
-        let status = self.maintenance_status.read().await.clone();
+        let mut status = self.maintenance_status.read().await.clone();
         if status.expired() {
-            let empty = ScheduledMaintenanceStatus::default();
-            self.set_maintenance_status(empty.clone()).await;
-            empty
-        } else {
-            status
+            status.clear_server_maintenance_time();
+            self.set_maintenance_status(status.clone()).await;
         }
+
+        status
     }
 
-    pub async fn set_maintenance_status(&self, status: ScheduledMaintenanceStatus) {
-        *self.maintenance_status.write().await = status;
+    async fn set_maintenance_status(&self, status: ScheduledMaintenanceStatus) {
+        let mut current_status = self.maintenance_status.write().await;
+        *current_status = status;
+    }
+
+    pub async fn set_maintenance_time(&self, start: Option<UnixTime>, end: Option<UnixTime>) {
+        let mut current_status = self.maintenance_status.write().await;
+        current_status.set_maintenance_time(start, end);
+    }
+
+    /// Returns true if value changes
+    pub async fn set_admin_bot_offline(&self, admin_bot_offline: bool) -> bool {
+        let mut current_status = self.maintenance_status.write().await;
+        current_status.set_admin_bot_offline(admin_bot_offline)
     }
 }
 
@@ -195,12 +206,15 @@ impl<T: ManagerEventHandler> ManagerConnectionManager<T> {
             let event = listener.next_event().await?;
             match event.event() {
                 ServerEventType::MaintenanceSchedulingStatus(time) => {
-                    let status = ScheduledMaintenanceStatus::server_maintenance(
-                        time.map(|v| v.0),
-                        time.map(|v| v.0.add_seconds(5 * 60)),
-                    );
-                    self.client.set_maintenance_status(status.clone()).await;
-                    self.event_handler.send_maintenance_status(status).await;
+                    self.client
+                        .set_maintenance_time(
+                            time.map(|v| v.0),
+                            time.map(|v| v.0.add_seconds(5 * 60)),
+                        )
+                        .await;
+                    self.event_handler
+                        .send_maintenance_status(self.client.maintenance_status().await)
+                        .await;
                 }
             }
         }

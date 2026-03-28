@@ -6,7 +6,7 @@
 
 //! Data types for API and database.
 
-pub use simple_backend_model::{ScheduledMaintenanceStatus, UnixTime};
+pub use simple_backend_model::{ScheduledMaintenanceStatus, ServerMaintenanceStatus, UnixTime};
 
 pub mod common;
 pub use common::*;

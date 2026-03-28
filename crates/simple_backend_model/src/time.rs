@@ -99,7 +99,7 @@ impl From<chrono::DateTime<chrono::Utc>> for UnixTime {
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, PartialEq, ToSchema)]
-pub struct ScheduledMaintenanceStatus {
+pub struct ServerMaintenanceStatus {
     /// If None, ignore [Self::end].
     #[serde(skip_serializing_if = "Option::is_none")]
     start: Option<UnixTime>,
@@ -107,13 +107,58 @@ pub struct ScheduledMaintenanceStatus {
     end: Option<UnixTime>,
 }
 
+impl ServerMaintenanceStatus {
+    pub fn start(&self) -> Option<UnixTime> {
+        self.start
+    }
+
+    pub fn end(&self) -> Option<UnixTime> {
+        self.end
+    }
+}
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, PartialEq, ToSchema)]
+pub struct ScheduledMaintenanceStatus {
+    /// If None, ignore [Self::end].
+    #[serde(skip_serializing_if = "Option::is_none")]
+    start: Option<UnixTime>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    end: Option<UnixTime>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    admin_bot_offline: bool,
+}
+
 impl ScheduledMaintenanceStatus {
-    pub fn server_maintenance(start: Option<UnixTime>, end: Option<UnixTime>) -> Self {
-        Self { start, end }
+    pub fn server_maintenance_status(&self) -> ServerMaintenanceStatus {
+        ServerMaintenanceStatus {
+            start: self.start,
+            end: self.end,
+        }
+    }
+
+    pub fn clear_server_maintenance_time(&mut self) {
+        self.start = None;
+        self.end = None;
     }
 
     pub fn is_empty(&self) -> bool {
-        self.start.is_none()
+        self.start.is_none() && !self.admin_bot_offline
+    }
+
+    pub fn set_maintenance_time(&mut self, start: Option<UnixTime>, end: Option<UnixTime>) {
+        self.start = start;
+        self.end = end;
+    }
+
+    /// Returns true if value changes
+    pub fn set_admin_bot_offline(&mut self, value: bool) -> bool {
+        if self.admin_bot_offline != value {
+            self.admin_bot_offline = value;
+            true
+        } else {
+            false
+        }
     }
 
     pub fn expired(&self) -> bool {

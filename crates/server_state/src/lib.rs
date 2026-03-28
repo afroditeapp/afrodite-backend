@@ -27,10 +27,11 @@ use server_data::{
 use simple_backend::app::SimpleBackendAppState;
 
 use crate::{
-    admin_notifications::AdminNotificationManagerData, demo::DemoAccountManager,
-    dynamic_config::DynamicConfigManagerData, utils::ETagUtils,
+    admin_bot_status::AdminBotStatusManagerData, admin_notifications::AdminNotificationManagerData,
+    demo::DemoAccountManager, dynamic_config::DynamicConfigManagerData, utils::ETagUtils,
 };
 
+pub mod admin_bot_status;
 pub mod admin_notifications;
 pub mod api_limits;
 pub mod api_usage;
@@ -71,6 +72,7 @@ struct AppStateInternal {
     data_signer: DataSigner,
     data_export: DataExportManagerData,
     dynamic_config_manager: DynamicConfigManagerData,
+    admin_bot_status: AdminBotStatusManagerData,
     etag_utils: ETagUtils,
 }
 
@@ -109,6 +111,7 @@ impl AppState {
             data_signer: DataSigner::new(),
             data_export,
             dynamic_config_manager,
+            admin_bot_status: AdminBotStatusManagerData::new(),
             etag_utils: ETagUtils::new(),
         };
 
