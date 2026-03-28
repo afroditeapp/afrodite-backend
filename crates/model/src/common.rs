@@ -42,8 +42,8 @@ pub use report::*;
 pub mod client_config;
 pub use client_config::*;
 
-pub mod server;
-pub use server::*;
+pub mod websocket;
+pub use websocket::*;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct BackendVersion {
