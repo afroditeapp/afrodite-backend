@@ -11,8 +11,9 @@ use crate::{AccountId, CheckOnlineStatusResponse, EventToClientInternal, LastSee
 /// - `NewsCountChanged` (2): payload is empty.
 /// - `ScheduledMaintenanceStatus` (3): payload is JSON for
 ///   `ScheduledMaintenanceStatus`.
-/// - `AdminBotNotification` (4): payload is JSON for
-///   `AdminBotNotificationTypes`.
+/// - `AdminBotNotification` (4): payload is unsigned integer with
+///   little-endian byte order for `AdminBotNotificationTypes` bitflags.
+///   (1 byte = u8, 2 bytes = u16 etc.)
 /// - `PushNotificationInfoChanged` (5): payload is empty.
 /// - `AccountStateChanged` (30): payload is empty.
 /// - `ProfileChanged` (60): payload is empty.
@@ -114,7 +115,7 @@ pub fn create_server_binary_message(
             message.extend(serde_json::to_vec(value)?);
         }
         EventToClientInternal::AdminBotNotification(value) => {
-            message.extend(serde_json::to_vec(value)?);
+            message.push(value.bits());
         }
         EventToClientInternal::TypingStart(value) | EventToClientInternal::TypingStop(value) => {
             append_account_id_payload(&mut message, *value);
@@ -174,7 +175,15 @@ pub fn parse_server_binary_message(
             EventToClientInternal::ScheduledMaintenanceStatus(serde_json::from_slice(payload)?)
         }
         ServerMessageType::AdminBotNotification => {
-            EventToClientInternal::AdminBotNotification(serde_json::from_slice(payload)?)
+            let bits = payload.first().copied().ok_or_else(|| {
+                serde_json::Error::io(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    "missing admin bot notification payload",
+                ))
+            })?;
+            EventToClientInternal::AdminBotNotification(
+                crate::AdminBotNotificationTypes::from_bits_truncate(bits),
+            )
         }
         ServerMessageType::PushNotificationInfoChanged => {
             expect_empty_payload(payload)?;

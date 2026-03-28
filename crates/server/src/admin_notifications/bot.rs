@@ -67,7 +67,7 @@ impl BotNotificationManager {
             .await?;
 
         for account_id in admin_bot_accounts {
-            let event = EventToClientInternal::AdminBotNotification(notification.clone());
+            let event = EventToClientInternal::AdminBotNotification(*notification);
             self.state
                 .event_manager()
                 .send_connected_event(account_id, event)

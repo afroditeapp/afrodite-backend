@@ -382,42 +382,20 @@ pub enum AdminNotificationTypes {
     ProcessReports,
 }
 
-/// Bot-only moderation notification types
-#[derive(Debug, Clone, Default, PartialEq, Deserialize, Serialize, ToSchema)]
-pub struct AdminBotNotificationTypes {
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub moderate_initial_media_content_bot: bool,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub moderate_media_content_bot: bool,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub moderate_profile_texts_bot: bool,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub moderate_profile_names_bot: bool,
+bitflags::bitflags! {
+    /// Bot-only moderation notification types
+    #[derive(Debug, Clone, Copy, Default)]
+    pub struct AdminBotNotificationTypes: u8 {
+        const MODERATE_INITIAL_MEDIA_CONTENT_BOT = 1 << 0;
+        const MODERATE_MEDIA_CONTENT_BOT = 1 << 1;
+        const MODERATE_PROFILE_TEXTS_BOT = 1 << 2;
+        const MODERATE_PROFILE_NAMES_BOT = 1 << 3;
+    }
 }
 
 impl AdminBotNotificationTypes {
-    pub fn is_empty(&self) -> bool {
-        !self.moderate_initial_media_content_bot
-            && !self.moderate_media_content_bot
-            && !self.moderate_profile_texts_bot
-            && !self.moderate_profile_names_bot
-    }
-
     pub fn merge(&self, other: &Self) -> Self {
-        Self {
-            moderate_initial_media_content_bot: self.moderate_initial_media_content_bot
-                || other.moderate_initial_media_content_bot,
-            moderate_media_content_bot: self.moderate_media_content_bot
-                || other.moderate_media_content_bot,
-            moderate_profile_texts_bot: self.moderate_profile_texts_bot
-                || other.moderate_profile_texts_bot,
-            moderate_profile_names_bot: self.moderate_profile_names_bot
-                || other.moderate_profile_names_bot,
-        }
+        *self | *other
     }
 }
 
@@ -425,23 +403,18 @@ impl TryFrom<AdminNotificationTypes> for AdminBotNotificationTypes {
     type Error = ();
 
     fn try_from(value: AdminNotificationTypes) -> Result<Self, Self::Error> {
-        let mut result = Self::default();
         match value {
             AdminNotificationTypes::ModerateInitialMediaContentBot => {
-                result.moderate_initial_media_content_bot = true;
-                Ok(result)
+                Ok(AdminBotNotificationTypes::MODERATE_INITIAL_MEDIA_CONTENT_BOT)
             }
             AdminNotificationTypes::ModerateMediaContentBot => {
-                result.moderate_media_content_bot = true;
-                Ok(result)
+                Ok(AdminBotNotificationTypes::MODERATE_MEDIA_CONTENT_BOT)
             }
             AdminNotificationTypes::ModerateProfileTextsBot => {
-                result.moderate_profile_texts_bot = true;
-                Ok(result)
+                Ok(AdminBotNotificationTypes::MODERATE_PROFILE_TEXTS_BOT)
             }
             AdminNotificationTypes::ModerateProfileNamesBot => {
-                result.moderate_profile_names_bot = true;
-                Ok(result)
+                Ok(AdminBotNotificationTypes::MODERATE_PROFILE_NAMES_BOT)
             }
             _ => Err(()),
         }
