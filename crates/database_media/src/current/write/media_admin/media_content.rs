@@ -111,4 +111,36 @@ impl CurrentWriteMediaAdminMediaContent<'_> {
 
         Ok(())
     }
+
+    pub fn change_face_verified_value(
+        &mut self,
+        content_id: ContentIdInternal,
+        value: Option<bool>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::media_content;
+
+        update(media_content::table)
+            .filter(media_content::id.eq(content_id.as_db_id()))
+            .set(media_content::face_verified.eq(value))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn change_face_verified_manual_value(
+        &mut self,
+        content_id: ContentIdInternal,
+        value: Option<bool>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::media_content;
+
+        update(media_content::table)
+            .filter(media_content::id.eq(content_id.as_db_id()))
+            .set(media_content::face_verified_manual.eq(value))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
 }

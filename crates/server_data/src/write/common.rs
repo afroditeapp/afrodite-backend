@@ -104,6 +104,7 @@ impl WriteCommandsCommon<'_> {
                         permissions.admin_moderate_media_content = true;
                         permissions.admin_moderate_profile_names = true;
                         permissions.admin_moderate_profile_texts = true;
+                        permissions.admin_edit_media_content_face_verified_value = true;
                         Ok(())
                     },
                 )?;

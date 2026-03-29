@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_edit_permissions                       BOOLEAN NOT NULL DEFAULT FALSE,
     admin_edit_profile_name                      BOOLEAN NOT NULL DEFAULT FALSE,
     admin_edit_media_content_face_detected_value BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_edit_media_content_face_verified_value BOOLEAN NOT NULL DEFAULT FALSE,
     admin_export_data                            BOOLEAN NOT NULL DEFAULT FALSE,
     admin_moderate_media_content                 BOOLEAN NOT NULL DEFAULT FALSE,
     admin_moderate_profile_names                 BOOLEAN NOT NULL DEFAULT FALSE,

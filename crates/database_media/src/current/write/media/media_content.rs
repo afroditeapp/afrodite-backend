@@ -182,6 +182,23 @@ impl CurrentWriteMediaContent<'_> {
         Ok(())
     }
 
+    pub fn reset_face_verified_values(
+        &mut self,
+        account: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::media_content::dsl::*;
+
+        update(media_content.filter(account_id.eq(account.as_db_id())))
+            .set((
+                face_verified.eq(None::<bool>),
+                face_verified_manual.eq(None::<bool>),
+            ))
+            .execute(self.conn())
+            .into_db_error(account)?;
+
+        Ok(())
+    }
+
     /// Delete content from account's media content
     pub fn delete_content(
         &mut self,

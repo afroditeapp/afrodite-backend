@@ -59,3 +59,18 @@ pub struct PostMediaContentFaceDetectedValue {
     /// Set to None to clear the manual override and use the automatic detection value
     pub value: Option<bool>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Queryable)]
+pub struct PostMediaContentFaceVerifiedValue {
+    pub account_id: AccountId,
+    pub values: Vec<PostMediaContentFaceVerifiedValueItem>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Queryable)]
+pub struct PostMediaContentFaceVerifiedValueItem {
+    pub content_id: ContentId,
+    /// Bot sets automatic face verification value.
+    /// Human admin sets manual override value.
+    /// Set to None to clear the currently applicable value.
+    pub value: Option<bool>,
+}

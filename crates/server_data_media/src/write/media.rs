@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
 use error_stack::ResultExt;
-use model::{Account, AccountState, ContentIdInternal, ProfileVisibility};
+use model::{Account, AccountState, ContentIdInternal, EventToClientInternal, ProfileVisibility};
 use model_media::{
     AccountIdInternal, ContentId, ContentIdDb, ContentSlot, CurrentAccountMediaInternal,
     NewContentParams, ProfileContent, ProfileContentModificationMetadata, SetProfileContent,
@@ -11,6 +11,7 @@ use model_media::{
 use server_data::{
     DataError, DieselDatabaseError,
     cache::profile::UpdateLocationCacheState,
+    db_manager::InternalWriting,
     db_transaction, define_cmd_wrapper_write,
     file::{FileWrite, utils::TmpContentFile},
     read::DbRead,
@@ -168,17 +169,55 @@ impl WriteCommandsMedia<'_> {
             })
             .await?;
 
-        db_transaction!(self, move |mut cmds| {
+        if content_before_update
+            .security_content_id
+            .as_ref()
+            .map(|v| v.id)
+            == Some(*content_id.as_db_id())
+        {
+            // Already set
+            return Ok(());
+        }
+
+        let content_before_update_for_usage = content_before_update.clone();
+
+        let cache_update = db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .media_content()
                 .update_security_content(content_id)?;
 
             cmds.media()
                 .media_content()
-                .increment_media_content_sync_version(content_id.content_owner())
+                .reset_face_verified_values(content_id.content_owner())?;
+
+            cmds.media()
+                .media_content()
+                .increment_media_content_sync_version(content_id.content_owner())?;
+
+            // Face verified is public info and ususally profile contains at
+            // least one face picture.
+            let modification = ProfileContentModificationMetadata::generate();
+            cmds.media()
+                .media_content()
+                .required_changes_for_public_profile_content_update(
+                    content_id.content_owner(),
+                    &modification,
+                )?;
+
+            Ok(modification)
         })?;
 
-        self.update_content_usage(content_id.content_owner(), content_before_update)
+        self.public_profile_content_cache_update(content_id.content_owner(), &cache_update)
+            .await?;
+
+        self.update_content_usage(content_id.content_owner(), content_before_update_for_usage)
+            .await?;
+
+        self.events()
+            .send_connected_event(
+                content_id.content_owner(),
+                EventToClientInternal::MediaContentChanged,
+            )
             .await
     }
 
@@ -198,6 +237,25 @@ impl WriteCommandsMedia<'_> {
                 .media()
                 .media_content()
                 .current_account_media(content_id.content_owner())?;
+            let security_content_changed = media_content
+                .security_content_id
+                .as_ref()
+                .map(|v| v.content_id())
+                != media_content_new
+                    .security_content_id
+                    .as_ref()
+                    .map(|v| v.content_id());
+            let media_content_new = if security_content_changed {
+                cmds.media()
+                    .media_content()
+                    .reset_face_verified_values(content_id.content_owner())?;
+                cmds.read()
+                    .media()
+                    .media_content()
+                    .current_account_media(content_id.content_owner())?
+            } else {
+                media_content_new
+            };
             let current_media_changed = media_content != media_content_new;
             let cache_update = if current_media_changed {
                 // Admin removed in use image, so current media content changed

@@ -1,5 +1,8 @@
 use axum::{Extension, extract::State};
-use model_media::{EventToClientInternal, Permissions, PostMediaContentFaceDetectedValue};
+use model_media::{
+    AccountIdInternal, EventToClientInternal, Permissions, PostMediaContentFaceDetectedValue,
+    PostMediaContentFaceVerifiedValue,
+};
 use server_api::{S, app::GetAccounts, create_open_api_router};
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
@@ -68,9 +71,73 @@ pub async fn post_media_content_face_detected_value(
     Ok(())
 }
 
+const PATH_POST_MEDIA_CONTENT_FACE_VERIFIED_VALUE: &str =
+    "/media_api/media_content_face_verified_value";
+
+/// Change media content face verified value
+///
+/// Bot account sets automatic value and human admin account sets manual override value.
+///
+/// # Access
+/// * Permission [model::Permissions::admin_edit_media_content_face_verified_value]
+#[utoipa::path(
+    post,
+    path = PATH_POST_MEDIA_CONTENT_FACE_VERIFIED_VALUE,
+    request_body = PostMediaContentFaceVerifiedValue,
+    responses(
+        (status = 200, description = "Successful"),
+        (status = 401, description = "Unauthorized"),
+        (
+            status = 500,
+            description = "Internal server error",
+        ),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_media_content_face_verified_value(
+    State(state): State<S>,
+    Extension(permissions): Extension<Permissions>,
+    Extension(moderator_id): Extension<AccountIdInternal>,
+    Json(data): Json<PostMediaContentFaceVerifiedValue>,
+) -> Result<(), StatusCode> {
+    MEDIA_ADMIN.post_media_content_face_verified_value.incr();
+
+    if !permissions.admin_edit_media_content_face_verified_value {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    if data.values.is_empty() {
+        return Ok(());
+    }
+
+    let content_owner = state.get_internal_id(data.account_id).await?;
+
+    db_write!(state, move |cmds| {
+        let mut values = Vec::with_capacity(data.values.len());
+        for value in data.values {
+            let content_id = cmds
+                .read()
+                .media()
+                .content_id_internal(content_owner, value.content_id)
+                .await?;
+            values.push((content_id, value.value));
+        }
+
+        cmds.media_admin()
+            .content()
+            .change_face_verified_values(moderator_id, values)
+            .await?;
+
+        Ok(())
+    })?;
+
+    Ok(())
+}
+
 create_open_api_router!(
         fn router_admin_content,
         post_media_content_face_detected_value,
+        post_media_content_face_verified_value,
 );
 
 create_counters!(
@@ -78,4 +145,5 @@ create_counters!(
     MEDIA_ADMIN,
     MEDIA_ADMIN_CONTENT_COUNTERS_LIST,
     post_media_content_face_detected_value,
+    post_media_content_face_verified_value,
 );
