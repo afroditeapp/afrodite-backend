@@ -331,7 +331,7 @@ pub async fn get_content_slot_state(
     if let Some(state) = state.content_processing().get_state(account_id, slot).await {
         Ok(state.into())
     } else {
-        Ok(ContentProcessingState::empty().into())
+        Ok(ContentProcessingState::default().into())
     }
 }
 

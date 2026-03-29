@@ -1,5 +1,5 @@
 use config::Config;
-use model::{AdminNotificationTypes, ContentId};
+use model::{AdminNotificationTypes, ContentId, ContentProcessingStateInternal};
 use model_media::MediaContentUploadType;
 use server_api::{
     app::{ContentProcessingProvider, EventManagerProvider, WriteData},
@@ -126,15 +126,16 @@ impl ContentProcessingManager {
                     face_detected,
                     content_id,
                 }) => {
-                    state
-                        .processing_state
-                        .change_to_completed(content_id, face_detected);
+                    state.processing_state = ContentProcessingStateInternal::Completed {
+                        content_id,
+                        fd: face_detected,
+                    };
                 }
                 Ok(ImgInfo::NsfwDetected) => {
-                    state.processing_state.change_to_nsfw_detected();
+                    state.processing_state = ContentProcessingStateInternal::NsfwDetected;
                 }
                 Err(e) => {
-                    state.processing_state.change_to_failed();
+                    state.processing_state = ContentProcessingStateInternal::Failed;
                     error!("Content processing error: {:?}", e);
                 }
             }

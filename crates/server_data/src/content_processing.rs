@@ -1,7 +1,8 @@
 use std::collections::{HashMap, VecDeque};
 
 use model::{
-    AccountIdDb, AccountIdInternal, ContentProcessingId, ContentProcessingState, ContentSlot,
+    AccountIdDb, AccountIdInternal, ContentProcessingId, ContentProcessingState,
+    ContentProcessingStateInternal, ContentSlot,
 };
 use model_server_data::NewContentParams;
 use server_common::result::WrappedResultExt;
@@ -67,7 +68,9 @@ impl ContentProcessingManagerData {
             processing_id,
             content_owner,
             slot,
-            processing_state: ContentProcessingState::in_queue_state(queue_position),
+            processing_state: ContentProcessingStateInternal::InQueue {
+                wait_queue_position: queue_position,
+            },
             tmp_img: content_info.tmp_img,
             tmp_raw_img: content_info.tmp_raw_img,
             new_content_params,
@@ -102,9 +105,11 @@ impl ContentProcessingManagerData {
         // Update queue position numbers
         for (index, processing_id_in_queue) in queue.iter_mut().enumerate() {
             if let Some(state) = processing_states.get_mut(processing_id_in_queue)
-                && let Some(number) = state.processing_state.wait_queue_position.as_mut()
+                && let ContentProcessingStateInternal::InQueue {
+                    wait_queue_position,
+                } = &mut state.processing_state
             {
-                *number = index as u64 + 1;
+                *wait_queue_position = index as u64 + 1;
                 events
                     .send_content_processing_state_change_to_client(state)
                     .await;
@@ -112,7 +117,7 @@ impl ContentProcessingManagerData {
         }
 
         let state = processing_states.get_mut(&processing_id)?;
-        state.processing_state.change_to_processing();
+        state.processing_state = ContentProcessingStateInternal::Processing;
         state.in_event_queue = false;
         events
             .send_content_processing_state_change_to_client(state)
@@ -132,7 +137,7 @@ impl ContentProcessingManagerData {
             .await
             .processing_states
             .get(&key)
-            .map(|d| d.processing_state.clone())
+            .map(|d| d.processing_state.to_external())
     }
 }
 
@@ -172,7 +177,7 @@ pub struct ProcessingState {
     pub processing_id: ContentProcessingId,
     pub content_owner: AccountIdInternal,
     pub slot: ContentSlot,
-    pub processing_state: ContentProcessingState,
+    pub processing_state: ContentProcessingStateInternal,
     pub tmp_raw_img: TmpContentFile,
     pub tmp_img: TmpContentFile,
     pub new_content_params: NewContentParams,

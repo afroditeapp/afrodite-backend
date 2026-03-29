@@ -273,8 +273,7 @@ impl<'a> EventManagerWithCacheReference<'a> {
     pub async fn send_content_processing_state_change_to_client(&self, state: &ProcessingState) {
         let state_change = ContentProcessingStateChanged {
             id: state.processing_id.server_process_id(),
-            new_state: state.processing_state.state,
-            queue_number: state.processing_state.wait_queue_position,
+            new_state: state.processing_state,
         };
 
         if let Err(e) = self

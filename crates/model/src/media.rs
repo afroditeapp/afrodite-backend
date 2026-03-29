@@ -178,11 +178,20 @@ impl ContentProcessingId {
 }
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Deserialize, Serialize, ToSchema, num_enum::TryFromPrimitive,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Default,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    num_enum::TryFromPrimitive,
 )]
 #[repr(u8)]
 pub enum ContentProcessingStateType {
     /// This content slot is empty.
+    #[default]
     Empty = 0,
     /// Content is waiting in processing queue.
     InQueue = 1,
@@ -196,7 +205,73 @@ pub enum ContentProcessingStateType {
     NsfwDetected = 5,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ContentProcessingStateInternal {
+    Empty,
+    InQueue { wait_queue_position: u64 },
+    Processing,
+    Completed { content_id: ContentId, fd: bool },
+    Failed,
+    NsfwDetected,
+}
+
+impl ContentProcessingStateInternal {
+    pub fn state_type(&self) -> ContentProcessingStateType {
+        match self {
+            Self::Empty => ContentProcessingStateType::Empty,
+            Self::InQueue { .. } => ContentProcessingStateType::InQueue,
+            Self::Processing => ContentProcessingStateType::Processing,
+            Self::Completed { .. } => ContentProcessingStateType::Completed,
+            Self::Failed => ContentProcessingStateType::Failed,
+            Self::NsfwDetected => ContentProcessingStateType::NsfwDetected,
+        }
+    }
+
+    pub fn to_external(&self) -> ContentProcessingState {
+        match self {
+            Self::Empty => ContentProcessingState {
+                state: ContentProcessingStateType::Empty,
+                wait_queue_position: None,
+                cid: None,
+                fd: None,
+            },
+            Self::InQueue {
+                wait_queue_position,
+            } => ContentProcessingState {
+                state: ContentProcessingStateType::InQueue,
+                wait_queue_position: Some(*wait_queue_position),
+                cid: None,
+                fd: None,
+            },
+            Self::Processing => ContentProcessingState {
+                state: ContentProcessingStateType::Processing,
+                wait_queue_position: None,
+                cid: None,
+                fd: None,
+            },
+            Self::Completed { content_id, fd } => ContentProcessingState {
+                state: ContentProcessingStateType::Completed,
+                wait_queue_position: None,
+                cid: Some(*content_id),
+                fd: Some(*fd),
+            },
+            Self::Failed => ContentProcessingState {
+                state: ContentProcessingStateType::Failed,
+                wait_queue_position: None,
+                cid: None,
+                fd: None,
+            },
+            Self::NsfwDetected => ContentProcessingState {
+                state: ContentProcessingStateType::NsfwDetected,
+                wait_queue_position: None,
+                cid: None,
+                fd: None,
+            },
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
 pub struct ContentProcessingState {
     pub state: ContentProcessingStateType,
     /// Current position in processing queue.
@@ -211,54 +286,6 @@ pub struct ContentProcessingState {
     /// Face detected info of the processed content.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fd: Option<bool>,
-}
-
-impl ContentProcessingState {
-    pub fn empty() -> Self {
-        Self {
-            state: ContentProcessingStateType::Empty,
-            wait_queue_position: None,
-            cid: None,
-            fd: None,
-        }
-    }
-
-    pub fn in_queue_state(wait_queue_position: u64) -> Self {
-        Self {
-            state: ContentProcessingStateType::InQueue,
-            wait_queue_position: Some(wait_queue_position),
-            cid: None,
-            fd: None,
-        }
-    }
-
-    pub fn change_to_processing(&mut self) {
-        self.state = ContentProcessingStateType::Processing;
-        self.wait_queue_position = None;
-        self.cid = None;
-        self.fd = None;
-    }
-
-    pub fn change_to_completed(&mut self, content_id: ContentId, face_detected: bool) {
-        self.state = ContentProcessingStateType::Completed;
-        self.wait_queue_position = None;
-        self.cid = Some(content_id);
-        self.fd = Some(face_detected);
-    }
-
-    pub fn change_to_failed(&mut self) {
-        self.state = ContentProcessingStateType::Failed;
-        self.wait_queue_position = None;
-        self.cid = None;
-        self.fd = None;
-    }
-
-    pub fn change_to_nsfw_detected(&mut self) {
-        self.state = ContentProcessingStateType::NsfwDetected;
-        self.wait_queue_position = None;
-        self.cid = None;
-        self.fd = None;
-    }
 }
 
 /// Version UUID for public profile content.

@@ -3,8 +3,8 @@ use utils::minimal_i64;
 
 use crate::{
     AccountId, CheckOnlineStatusResponse, ContentProcessingStateChanged,
-    ContentProcessingStateType, EventToClientInternal, LastSeenTime, ScheduledMaintenanceStatus,
-    UnixTime,
+    ContentProcessingStateInternal, ContentProcessingStateType, EventToClientInternal,
+    LastSeenTime, ScheduledMaintenanceStatus, UnixTime,
 };
 
 /// First byte of websocket binary protocol messages sent from server to client.
@@ -35,6 +35,9 @@ use crate::{
 ///     - 5: NsfwDetected
 ///   - state specific data:
 ///     - InQueue: queue number as minimal i64
+///     - Completed:
+///       - content ID as 16 byte big-endian UUID (16 bytes)
+///       - face detection bool (1 byte, 0 or 1)
 /// - `MediaContentChanged` (91): payload is empty.
 /// - `NewMessageReceived` (120): payload is empty.
 /// - `PendingChatNotificationsChanged` (121): payload is empty.
@@ -299,12 +302,24 @@ fn append_content_processing_state_changed_payload(
     value: &ContentProcessingStateChanged,
 ) {
     minimal_i64::add_minimal_i64(buffer, value.id);
-    buffer.push(value.new_state as u8);
+    let state_type = value.new_state.state_type();
+    buffer.push(state_type as u8);
 
-    if value.new_state == ContentProcessingStateType::InQueue {
-        let queue_number = value.queue_number.unwrap_or_default();
-        let queue_number_i64: i64 = queue_number.try_into().unwrap_or(i64::MAX);
-        minimal_i64::add_minimal_i64(buffer, queue_number_i64);
+    match value.new_state {
+        ContentProcessingStateInternal::InQueue {
+            wait_queue_position,
+        } => {
+            let queue_number_i64: i64 = wait_queue_position.try_into().unwrap_or(i64::MAX);
+            minimal_i64::add_minimal_i64(buffer, queue_number_i64);
+        }
+        ContentProcessingStateInternal::Completed { content_id, fd } => {
+            buffer.extend_from_slice(content_id.cid.as_bytes());
+            buffer.push(u8::from(fd));
+        }
+        ContentProcessingStateInternal::Empty
+        | ContentProcessingStateInternal::Processing
+        | ContentProcessingStateInternal::Failed
+        | ContentProcessingStateInternal::NsfwDetected => (),
     }
 }
 
@@ -317,30 +332,43 @@ fn parse_content_processing_state_changed_payload(
     let state_raw = payload_iter
         .next()
         .ok_or_else(|| "missing content processing state payload".to_owned())?;
-    let new_state = ContentProcessingStateType::try_from(state_raw)
+    let state = ContentProcessingStateType::try_from(state_raw)
         .map_err(|_| format!("unsupported content processing state value {state_raw}"))?;
 
-    let queue_number = if new_state == ContentProcessingStateType::InQueue {
-        let value = parse_minimal_i64_value(&mut payload_iter)?;
-        if value < 0 {
-            return Err("invalid queue number payload".to_owned());
+    let new_state = match state {
+        ContentProcessingStateType::InQueue => {
+            let value = parse_minimal_i64_value(&mut payload_iter)?;
+            if value < 0 {
+                return Err("invalid queue number payload".to_owned());
+            }
+            ContentProcessingStateInternal::InQueue {
+                wait_queue_position: value as u64,
+            }
         }
-        Some(value as u64)
-    } else {
-        None
+        ContentProcessingStateType::Completed => {
+            let mut cid_bytes = [0u8; 16];
+            for byte in cid_bytes.iter_mut() {
+                *byte = payload_iter
+                    .next()
+                    .ok_or_else(|| "missing content id payload".to_owned())?;
+            }
+            let fd_byte = payload_iter
+                .next()
+                .ok_or_else(|| "missing face detection payload".to_owned())?;
+            ContentProcessingStateInternal::Completed {
+                content_id: crate::ContentId {
+                    cid: simple_backend_utils::UuidBase64Url::from_bytes(cid_bytes),
+                },
+                fd: fd_byte != 0,
+            }
+        }
+        ContentProcessingStateType::Empty => ContentProcessingStateInternal::Empty,
+        ContentProcessingStateType::Processing => ContentProcessingStateInternal::Processing,
+        ContentProcessingStateType::Failed => ContentProcessingStateInternal::Failed,
+        ContentProcessingStateType::NsfwDetected => ContentProcessingStateInternal::NsfwDetected,
     };
 
-    if payload_iter.next().is_some() {
-        return Err(
-            "content processing state payload contains unexpected trailing data".to_owned(),
-        );
-    }
-
-    Ok(ContentProcessingStateChanged {
-        id,
-        new_state,
-        queue_number,
-    })
+    Ok(ContentProcessingStateChanged { id, new_state })
 }
 
 fn append_check_online_status_response_payload(
