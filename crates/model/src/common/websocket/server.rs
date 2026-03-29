@@ -88,9 +88,7 @@ pub enum ServerMessageType {
     LatestSeenMessageChanged = 128,
 }
 
-pub fn create_server_binary_message(
-    event: &EventToClientInternal,
-) -> Result<Vec<u8>, serde_json::Error> {
+pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
     let message_type = match event {
         EventToClientInternal::AccountStateChanged => ServerMessageType::AccountStateChanged,
         EventToClientInternal::ContentProcessingStateChanged(_) => {
@@ -133,7 +131,7 @@ pub fn create_server_binary_message(
 
     match event {
         EventToClientInternal::ContentProcessingStateChanged(value) => {
-            append_content_processing_state_changed_payload(&mut message, value)?;
+            append_content_processing_state_changed_payload(&mut message, value);
         }
         EventToClientInternal::ScheduledMaintenanceStatus(value) => {
             append_scheduled_maintenance_status_payload(&mut message, value);
@@ -162,25 +160,16 @@ pub fn create_server_binary_message(
         | EventToClientInternal::LatestSeenMessageChanged => (),
     }
 
-    Ok(message)
+    message
 }
 
-pub fn parse_server_binary_message(
-    message: &[u8],
-) -> Result<EventToClientInternal, serde_json::Error> {
-    let (message_type_u8, payload) = message.split_first().ok_or_else(|| {
-        serde_json::Error::io(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "missing server message type byte",
-        ))
-    })?;
+pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientInternal, String> {
+    let (message_type_u8, payload) = message
+        .split_first()
+        .ok_or_else(|| "missing server message type byte".to_owned())?;
 
-    let message_type = ServerMessageType::try_from(*message_type_u8).map_err(|_| {
-        serde_json::Error::io(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            format!("unsupported server message type {message_type_u8}"),
-        ))
-    })?;
+    let message_type = ServerMessageType::try_from(*message_type_u8)
+        .map_err(|_| format!("unsupported server message type {message_type_u8}"))?;
 
     let event = match message_type {
         ServerMessageType::PendingAppNotificationsChanged => {
@@ -194,12 +183,10 @@ pub fn parse_server_binary_message(
             )
         }
         ServerMessageType::AdminBotNotification => {
-            let bits = payload.first().copied().ok_or_else(|| {
-                serde_json::Error::io(std::io::Error::new(
-                    std::io::ErrorKind::InvalidData,
-                    "missing admin bot notification payload",
-                ))
-            })?;
+            let bits = payload
+                .first()
+                .copied()
+                .ok_or_else(|| "missing admin bot notification payload".to_owned())?;
             EventToClientInternal::AdminBotNotification(
                 crate::AdminBotNotificationTypes::from_bits_truncate(bits),
             )
@@ -261,13 +248,10 @@ fn append_scheduled_maintenance_status_payload(
     }
 }
 
-fn parse_account_id_payload(payload: &[u8]) -> Result<AccountId, serde_json::Error> {
-    let bytes: [u8; 16] = payload.try_into().map_err(|_| {
-        serde_json::Error::io(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "invalid account id payload size",
-        ))
-    })?;
+fn parse_account_id_payload(payload: &[u8]) -> Result<AccountId, String> {
+    let bytes: [u8; 16] = payload
+        .try_into()
+        .map_err(|_| "invalid account id payload size".to_owned())?;
 
     Ok(AccountId::new_base_64_url(
         simple_backend_utils::UuidBase64Url::from_bytes(bytes),
@@ -276,13 +260,10 @@ fn parse_account_id_payload(payload: &[u8]) -> Result<AccountId, serde_json::Err
 
 fn parse_scheduled_maintenance_status_payload(
     payload: &[u8],
-) -> Result<ScheduledMaintenanceStatus, serde_json::Error> {
-    let (admin_bot_offline_raw, remaining_payload) = payload.split_first().ok_or_else(|| {
-        serde_json::Error::io(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "missing scheduled maintenance admin_bot_offline payload",
-        ))
-    })?;
+) -> Result<ScheduledMaintenanceStatus, String> {
+    let (admin_bot_offline_raw, remaining_payload) = payload
+        .split_first()
+        .ok_or_else(|| "missing scheduled maintenance admin_bot_offline payload".to_owned())?;
 
     let mut payload_iter = remaining_payload.iter().copied();
     let start = if remaining_payload.is_empty() {
@@ -298,10 +279,7 @@ fn parse_scheduled_maintenance_status_payload(
     };
 
     if payload_iter.next().is_some() {
-        return Err(serde_json::Error::io(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "scheduled maintenance payload contains unexpected trailing data",
-        )));
+        return Err("scheduled maintenance payload contains unexpected trailing data".to_owned());
     }
 
     let mut status = ScheduledMaintenanceStatus::default();
@@ -311,21 +289,15 @@ fn parse_scheduled_maintenance_status_payload(
     Ok(status)
 }
 
-fn parse_minimal_i64_value(
-    payload_iter: &mut impl Iterator<Item = u8>,
-) -> Result<i64, serde_json::Error> {
-    minimal_i64::parse_minimal_i64_from_iter(payload_iter).ok_or_else(|| {
-        serde_json::Error::io(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "invalid or truncated minimal i64 payload",
-        ))
-    })
+fn parse_minimal_i64_value(payload_iter: &mut impl Iterator<Item = u8>) -> Result<i64, String> {
+    minimal_i64::parse_minimal_i64_from_iter(payload_iter)
+        .ok_or_else(|| "invalid or truncated minimal i64 payload".to_owned())
 }
 
 fn append_content_processing_state_changed_payload(
     buffer: &mut Vec<u8>,
     value: &ContentProcessingStateChanged,
-) -> Result<(), serde_json::Error> {
+) {
     minimal_i64::add_minimal_i64(buffer, value.id);
     buffer.push(value.new_state as u8);
 
@@ -334,36 +306,24 @@ fn append_content_processing_state_changed_payload(
         let queue_number_i64: i64 = queue_number.try_into().unwrap_or(i64::MAX);
         minimal_i64::add_minimal_i64(buffer, queue_number_i64);
     }
-
-    Ok(())
 }
 
 fn parse_content_processing_state_changed_payload(
     payload: &[u8],
-) -> Result<ContentProcessingStateChanged, serde_json::Error> {
+) -> Result<ContentProcessingStateChanged, String> {
     let mut payload_iter = payload.iter().copied();
 
     let id = parse_minimal_i64_value(&mut payload_iter)?;
-    let state_raw = payload_iter.next().ok_or_else(|| {
-        serde_json::Error::io(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "missing content processing state payload",
-        ))
-    })?;
-    let new_state = ContentProcessingStateType::try_from(state_raw).map_err(|_| {
-        serde_json::Error::io(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            format!("unsupported content processing state value {state_raw}"),
-        ))
-    })?;
+    let state_raw = payload_iter
+        .next()
+        .ok_or_else(|| "missing content processing state payload".to_owned())?;
+    let new_state = ContentProcessingStateType::try_from(state_raw)
+        .map_err(|_| format!("unsupported content processing state value {state_raw}"))?;
 
     let queue_number = if new_state == ContentProcessingStateType::InQueue {
         let value = parse_minimal_i64_value(&mut payload_iter)?;
         if value < 0 {
-            return Err(serde_json::Error::io(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "invalid queue number payload",
-            )));
+            return Err("invalid queue number payload".to_owned());
         }
         Some(value as u64)
     } else {
@@ -371,10 +331,9 @@ fn parse_content_processing_state_changed_payload(
     };
 
     if payload_iter.next().is_some() {
-        return Err(serde_json::Error::io(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "content processing state payload contains unexpected trailing data",
-        )));
+        return Err(
+            "content processing state payload contains unexpected trailing data".to_owned(),
+        );
     }
 
     Ok(ContentProcessingStateChanged {
@@ -402,12 +361,9 @@ fn append_check_online_status_response_payload(
 
 fn parse_check_online_status_response_payload(
     payload: &[u8],
-) -> Result<CheckOnlineStatusResponse, serde_json::Error> {
+) -> Result<CheckOnlineStatusResponse, String> {
     if payload.len() != 17 && payload.len() != 25 {
-        return Err(serde_json::Error::io(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "invalid check online status payload size",
-        )));
+        return Err("invalid check online status payload size".to_owned());
     }
 
     let (account_id_payload, has_last_seen_and_tail) = payload.split_at(16);
@@ -415,25 +371,16 @@ fn parse_check_online_status_response_payload(
     let has_last_seen = has_last_seen_and_tail.first().copied().unwrap_or_default() != 0;
 
     let last_seen = if has_last_seen {
-        let last_seen_tail = has_last_seen_and_tail.get(1..).ok_or_else(|| {
-            serde_json::Error::io(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "missing last seen payload",
-            ))
-        })?;
-        let raw_bytes: [u8; 8] = last_seen_tail.try_into().map_err(|_| {
-            serde_json::Error::io(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "invalid last seen payload size",
-            ))
-        })?;
+        let last_seen_tail = has_last_seen_and_tail
+            .get(1..)
+            .ok_or_else(|| "missing last seen payload".to_owned())?;
+        let raw_bytes: [u8; 8] = last_seen_tail
+            .try_into()
+            .map_err(|_| "invalid last seen payload size".to_owned())?;
         Some(LastSeenTime::new(i64::from_be_bytes(raw_bytes)))
     } else {
         if has_last_seen_and_tail.len() != 1 {
-            return Err(serde_json::Error::io(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "check online status payload contains unexpected trailing data",
-            )));
+            return Err("check online status payload contains unexpected trailing data".to_owned());
         }
         None
     };

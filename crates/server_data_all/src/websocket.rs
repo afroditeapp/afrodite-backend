@@ -472,9 +472,8 @@ async fn send_event(
     socket: &mut WebSocket,
     event: EventToClientInternal,
 ) -> Result<(), WebSocketError> {
-    let event = create_server_binary_message(&event).change_context(WebSocketError::Serialize)?;
     socket
-        .send(Message::Binary(event.into()))
+        .send(Message::Binary(create_server_binary_message(&event).into()))
         .await
         .change_context(WebSocketError::Send)?;
 
