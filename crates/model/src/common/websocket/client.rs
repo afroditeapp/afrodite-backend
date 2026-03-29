@@ -1,4 +1,5 @@
 use num_enum::TryFromPrimitive;
+use utoipa::ToSchema;
 
 /// First byte of websocket binary protocol messages sent from client to server.
 ///
@@ -14,7 +15,7 @@ use num_enum::TryFromPrimitive;
 /// - `TypingStop` (121): payload is empty.
 /// - `CheckOnlineStatus` (122): payload is 16 bytes account UUID. Optional 17th
 ///   byte can be included for online status hint (0 = false, non-zero = true).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive, ToSchema)]
 #[repr(u8)]
 pub enum ClientMessageType {
     // Reserved message type ranges (u8):

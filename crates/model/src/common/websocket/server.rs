@@ -1,5 +1,6 @@
 use num_enum::TryFromPrimitive;
 use utils::minimal_i64;
+use utoipa::ToSchema;
 
 use crate::{
     AccountId, CheckOnlineStatusResponse, ContentProcessingStateChanged,
@@ -60,7 +61,7 @@ use crate::{
 ///   - i64 byte count (u8, values: 1, 2, 4, 8)
 ///   - i64 bytes (little-endian byte order)
 /// - optional values in payloads are omitted when they are not present
-#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive, ToSchema)]
 #[repr(u8)]
 pub enum ServerMessageType {
     // Reserved message type ranges (u8):

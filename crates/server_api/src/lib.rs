@@ -33,6 +33,8 @@ pub mod app {
     ),
     components(schemas(
         // Common
+        model::common::websocket::client::ClientMessageType,
+        model::common::websocket::server::ServerMessageType,
         model::common_admin::ReportIteratorMode,
         // Manager
         manager_model::ScheduledTaskTypeValue,
