@@ -21,7 +21,7 @@ pub struct ContentProcessingState {
     pub fd: Option<Option<bool>>,
     #[serde(rename = "state")]
     pub state: models::ContentProcessingStateType,
-    /// Current position in processing queue.  If ProcessingContentId is added to empty queue, then this will be 1.
+    /// Current position in processing queue.  If ProcessingContentId is added to empty queue, then this will be 1.  Use i64 as Dart has only signed integers.
     #[serde(rename = "wait_queue_position", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub wait_queue_position: Option<Option<i64>>,
 }

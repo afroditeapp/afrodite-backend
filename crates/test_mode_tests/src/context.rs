@@ -5,9 +5,7 @@ use api_client::{
         configuration::Configuration,
         profile_api::{post_profile, post_search_age_range, post_search_groups},
     },
-    models::{
-        AccountId, EventToClient, ModerationQueueType, ProfileUpdate, SearchAgeRange, SearchGroups,
-    },
+    models::{AccountId, ModerationQueueType, ProfileUpdate, SearchAgeRange, SearchGroups},
 };
 use config::{args::TestMode, bot_config_file::BotConfigFile};
 use error_stack::{Result, ResultExt};
@@ -21,7 +19,10 @@ use test_mode_bot::{
     },
     connection::ApiConnection,
 };
-use test_mode_utils::client::{ApiClient, TestError};
+use test_mode_utils::{
+    client::{ApiClient, TestError},
+    websocket_protocol::EventToClient,
+};
 use tokio::sync::Mutex;
 
 #[derive(Debug)]

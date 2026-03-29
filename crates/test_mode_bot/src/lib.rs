@@ -11,10 +11,7 @@ pub mod utils;
 use std::{fmt::Debug, sync::Arc};
 
 use actions::{chat::ChatState, profile::ProfileState};
-use api_client::{
-    apis::configuration::Configuration,
-    models::{AccountId, EventToClient},
-};
+use api_client::{apis::configuration::Configuration, models::AccountId};
 use config::{
     args::{PublicApiUrl, TestMode},
     bot_config_file::{BaseBotConfig, BotConfigFile},
@@ -25,6 +22,7 @@ use rand_xoshiro::Xoshiro256PlusPlus;
 use test_mode_utils::{
     client::{ApiClient, TestError},
     state::{BotEncryptionKeys, BotPersistentState},
+    websocket_protocol::EventToClient,
 };
 
 use self::actions::{PreviousValue, media::MediaState};

@@ -6,8 +6,8 @@ use api_client::{
         account_bot_api::{post_bot_login, post_bot_register, post_remote_bot_login},
     },
     models::{
-        AccessToken, Account, AccountStateContainer, BooleanSetting, EventToClient,
-        ProfileVisibility, RefreshToken, RemoteBotLogin, SetInitialEmail, auth_pair,
+        AccessToken, Account, AccountStateContainer, BooleanSetting, ProfileVisibility,
+        RefreshToken, RemoteBotLogin, SetInitialEmail, auth_pair,
     },
 };
 use async_trait::async_trait;
@@ -19,9 +19,11 @@ use simple_backend_model::VersionNumber;
 use test_mode_utils::{
     client::{ApiClient, TestError},
     server::TEST_ADMIN_ACCESS_EMAIL,
+    websocket_protocol::parse_server_event_to_client_for_test_mode,
 };
 use tokio_stream::StreamExt;
 use tokio_tungstenite::tungstenite::{Message, client::IntoClientRequest};
+use tracing::warn;
 use url::Url;
 use utils::api::PATH_CONNECT;
 
@@ -247,13 +249,16 @@ async fn handle_connection(stream: &mut WsStream, sender: &EventSender) {
     loop {
         match stream.next().await {
             Some(event) => match event {
-                Ok(Message::Text(event)) => {
-                    let event: EventToClient =
-                        serde_json::from_str(&event).expect("Failed to parse WebSocket event");
-                    sender.send_if_sending_enabled(event).await;
-                }
+                Ok(Message::Text(_)) => panic!("Unexpected WebSocket message type"),
                 // Connection test message, which does not need a response
                 Ok(Message::Binary(data)) if data.is_empty() => (),
+                Ok(Message::Binary(data)) => {
+                    match parse_server_event_to_client_for_test_mode(data.as_ref()) {
+                        Ok(None) => (),
+                        Ok(Some(event)) => sender.send_if_sending_enabled(event).await,
+                        Err(error) => warn!("Failed to parse WebSocket binary event: {error}"),
+                    }
+                }
                 Ok(Message::Pong(_)) => (),
                 Ok(_) => {
                     panic!("Unexpected WebSocket message type");

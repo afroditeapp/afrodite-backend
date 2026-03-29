@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use api_client::models::{AccountId, EventType};
+use api_client::models::AccountId;
 use config::{BotConfig, args::TestMode, bot_config_file::BotConfigFile};
 use error_stack::{Result, ResultExt};
 use test_mode_bot::{
@@ -11,6 +11,7 @@ use test_mode_bot::{
 use test_mode_utils::{
     client::{ApiClient, TestError},
     state::{BotPersistentState, StateData},
+    websocket_protocol::EventType,
 };
 use tokio::{
     select,
@@ -238,7 +239,7 @@ impl AdminBot {
                 event = connections.recv_event() => {
                     let event = event?;
                     if event.event == EventType::AdminBotNotification
-                        && let Some(Some(notification)) = event.admin_bot_notification {
+                        && let Some(notification) = event.admin_bot_notification {
                             if notification.moderate_initial_media_content_bot.unwrap_or(false)
                                 || notification.moderate_media_content_bot.unwrap_or(false)
                             {

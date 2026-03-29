@@ -3,9 +3,8 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
 };
 
-use api_client::models::EventToClient;
 use error_stack::Result;
-use test_mode_utils::client::TestError;
+use test_mode_utils::{client::TestError, websocket_protocol::EventToClient};
 use tokio::{
     net::TcpStream,
     sync::{broadcast, mpsc},

@@ -81,7 +81,7 @@ impl SendImageToSlot {
         ) -> Result<ContentId, TestError> {
             let event_waiting_result = state
                 .wait_event(|e| match e.content_processing_state_changed.as_ref() {
-                    Some(Some(content_processing_state)) => {
+                    Some(content_processing_state) => {
                         content_processing_state.new_state.state
                             == ContentProcessingStateType::Completed
                     }

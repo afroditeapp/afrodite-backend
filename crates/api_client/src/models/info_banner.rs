@@ -15,6 +15,8 @@ use serde::{Deserialize, Serialize};
 pub struct InfoBanner {
     #[serde(rename = "mode")]
     pub mode: models::InfoBannerMode,
+    #[serde(rename = "override_predefined_banner", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub override_predefined_banner: Option<Option<models::PredefinedBanner>>,
     #[serde(rename = "platform")]
     pub platform: Box<models::BannerPlatform>,
     #[serde(rename = "text", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -30,6 +32,7 @@ impl InfoBanner {
     pub fn new(mode: models::InfoBannerMode, platform: models::BannerPlatform, visibility: models::BannerVisibility) -> InfoBanner {
         InfoBanner {
             mode,
+            override_predefined_banner: None,
             platform: Box::new(platform),
             text: None,
             version: None,

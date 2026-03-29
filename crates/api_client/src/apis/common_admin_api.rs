@@ -468,7 +468,7 @@ pub async fn get_latest_report_iterator_start_position(configuration: &configura
 }
 
 /// # Permissions Requires admin_server_edit_maintenance_notification.
-pub async fn get_maintenance_notification(configuration: &configuration::Configuration, ) -> Result<models::ScheduledMaintenanceStatus, Error<GetMaintenanceNotificationError>> {
+pub async fn get_maintenance_notification(configuration: &configuration::Configuration, ) -> Result<models::ServerMaintenanceStatus, Error<GetMaintenanceNotificationError>> {
 
     let uri_str = format!("{}/common_api/maintenance_notification", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -495,8 +495,8 @@ pub async fn get_maintenance_notification(configuration: &configuration::Configu
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ScheduledMaintenanceStatus`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ScheduledMaintenanceStatus`")))),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ServerMaintenanceStatus`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ServerMaintenanceStatus`")))),
         }
     } else {
         let content = resp.text().await?;
@@ -794,9 +794,9 @@ pub async fn post_bot_config(configuration: &configuration::Configuration, bot_c
 }
 
 /// # Permissions Requires admin_server_edit_maintenance_notification.
-pub async fn post_edit_maintenance_notification(configuration: &configuration::Configuration, scheduled_maintenance_status: models::ScheduledMaintenanceStatus) -> Result<(), Error<PostEditMaintenanceNotificationError>> {
+pub async fn post_edit_maintenance_notification(configuration: &configuration::Configuration, server_maintenance_status: models::ServerMaintenanceStatus) -> Result<(), Error<PostEditMaintenanceNotificationError>> {
     // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_scheduled_maintenance_status = scheduled_maintenance_status;
+    let p_body_server_maintenance_status = server_maintenance_status;
 
     let uri_str = format!("{}/common_api/edit_maintenance_notification", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
@@ -807,7 +807,7 @@ pub async fn post_edit_maintenance_notification(configuration: &configuration::C
     if let Some(ref token) = configuration.bearer_access_token {
         req_builder = req_builder.bearer_auth(token.to_owned());
     };
-    req_builder = req_builder.json(&p_body_scheduled_maintenance_status);
+    req_builder = req_builder.json(&p_body_server_maintenance_status);
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;

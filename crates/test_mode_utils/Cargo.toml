@@ -24,4 +24,5 @@ simple_backend_config = { path = "../simple_backend_config" }
 simple_backend = { path = "../simple_backend" }
 server_data = { path = "../server_data" }
 api_client = { path = "../api_client" }
+model = { path = "../model" }
 config = { path = "../config" }

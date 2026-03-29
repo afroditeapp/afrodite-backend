@@ -9,6 +9,7 @@ pub mod client;
 pub mod dir;
 pub mod server;
 pub mod state;
+pub mod websocket_protocol;
 
 /// Workaround for api_client error type conversion to
 /// avoid change_context calls.

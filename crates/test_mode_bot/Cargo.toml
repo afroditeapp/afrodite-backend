@@ -26,7 +26,6 @@ url = { workspace = true }
 headers = { workspace = true }
 nsfw = { workspace = true }
 http = { workspace = true }
-serde_json = { workspace = true }
 unicode-segmentation = { workspace = true }
 
 simple_backend_model = { path = "../simple_backend_model" }

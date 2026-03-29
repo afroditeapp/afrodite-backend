@@ -32,7 +32,6 @@ src/models/account_sync_version.rs
 src/models/add_favorite_profile_result.rs
 src/models/add_public_key_result.rs
 src/models/admin_bot_config.rs
-src/models/admin_bot_notification_types.rs
 src/models/admin_content_moderation_config.rs
 src/models/admin_info.rs
 src/models/admin_notification.rs
@@ -68,13 +67,13 @@ src/models/chat_email_notification_settings.rs
 src/models/chat_message_report.rs
 src/models/chat_privacy_settings.rs
 src/models/check_online_status_config.rs
-src/models/check_online_status_response.rs
 src/models/client_config.rs
 src/models/client_config_sync_version.rs
 src/models/client_features_config.rs
 src/models/client_features_config_hash.rs
 src/models/client_info.rs
 src/models/client_language.rs
+src/models/client_message_type.rs
 src/models/client_type.rs
 src/models/client_version.rs
 src/models/client_version_count.rs
@@ -88,7 +87,6 @@ src/models/content_info_with_fd.rs
 src/models/content_moderation_state.rs
 src/models/content_processing_id.rs
 src/models/content_processing_state.rs
-src/models/content_processing_state_changed.rs
 src/models/content_processing_state_type.rs
 src/models/content_slot.rs
 src/models/conversation_id.rs
@@ -119,8 +117,6 @@ src/models/email_address_state.rs
 src/models/email_address_state_admin.rs
 src/models/email_login.rs
 src/models/email_login_token.rs
-src/models/event_to_client.rs
-src/models/event_type.rs
 src/models/favorite_profiles_page.rs
 src/models/features_config.rs
 src/models/first_image_config.rs
@@ -244,6 +240,7 @@ src/models/post_moderate_media_content.rs
 src/models/post_moderate_profile_string.rs
 src/models/post_start_data_export.rs
 src/models/post_video_call_url_result.rs
+src/models/predefined_banner.rs
 src/models/process_report.rs
 src/models/profile.rs
 src/models/profile_age_counts.rs
@@ -312,7 +309,6 @@ src/models/request_email_login_token_result.rs
 src/models/reset_news_iterator_result.rs
 src/models/reset_received_likes_iterator_result.rs
 src/models/save_info_banners.rs
-src/models/scheduled_maintenance_status.rs
 src/models/scheduled_task_status.rs
 src/models/scheduled_task_type.rs
 src/models/scheduled_task_type_value.rs
@@ -328,6 +324,8 @@ src/models/send_verify_email_message_result.rs
 src/models/sent_blocks_page.rs
 src/models/sent_message_id_list.rs
 src/models/server_config.rs
+src/models/server_maintenance_status.rs
+src/models/server_message_type.rs
 src/models/set_account_ban_state.rs
 src/models/set_account_setup.rs
 src/models/set_email_login_enabled.rs
