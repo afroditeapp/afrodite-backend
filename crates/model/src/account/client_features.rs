@@ -67,6 +67,12 @@ pub enum InfoBannerMode {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub enum PredefinedBanner {
+    ServerMaintenance,
+    AdminBotOffline,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct BannerPlatform {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -109,6 +115,8 @@ pub struct InfoBanner {
     pub mode: InfoBannerMode,
     pub platform: BannerPlatform,
     pub visibility: BannerVisibility,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub override_predefined_banner: Option<PredefinedBanner>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub text: Option<TextInfoBanner>,
 }
