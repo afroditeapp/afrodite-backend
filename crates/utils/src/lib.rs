@@ -5,5 +5,6 @@
 
 pub mod api;
 pub mod encrypt;
+pub mod minimal_i64;
 pub mod random_bytes;
 pub mod time;

@@ -130,6 +130,18 @@ pub struct ScheduledMaintenanceStatus {
 }
 
 impl ScheduledMaintenanceStatus {
+    pub fn start(&self) -> Option<UnixTime> {
+        self.start
+    }
+
+    pub fn end(&self) -> Option<UnixTime> {
+        self.end
+    }
+
+    pub fn admin_bot_offline(&self) -> bool {
+        self.admin_bot_offline
+    }
+
     pub fn server_maintenance_status(&self) -> ServerMaintenanceStatus {
         ServerMaintenanceStatus {
             start: self.start,

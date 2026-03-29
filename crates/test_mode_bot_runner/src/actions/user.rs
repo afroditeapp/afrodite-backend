@@ -32,7 +32,10 @@ use test_mode_bot::{
 };
 use test_mode_utils::{client::TestError, state::BotEncryptionKeys};
 use tracing::warn;
-use utils::encrypt::{encrypt_data, generate_keys, unwrap_signed_binary_message};
+use utils::{
+    encrypt::{encrypt_data, generate_keys, unwrap_signed_binary_message},
+    minimal_i64,
+};
 
 #[derive(Debug)]
 pub struct DoInitialSetupIfNeeded {
@@ -199,32 +202,6 @@ impl BotAction for AnswerReceivedMessages {
             return Ok(());
         }
 
-        fn parse_minimal_i64(d: &mut impl Iterator<Item = u8>) -> Option<i64> {
-            let count = d.next()?;
-            let number: i64 = if count == 1 {
-                i8::from_le_bytes([d.next()?]).into()
-            } else if count == 2 {
-                i16::from_le_bytes([d.next()?, d.next()?]).into()
-            } else if count == 4 {
-                i32::from_le_bytes([d.next()?, d.next()?, d.next()?, d.next()?]).into()
-            } else if count == 8 {
-                i64::from_le_bytes([
-                    d.next()?,
-                    d.next()?,
-                    d.next()?,
-                    d.next()?,
-                    d.next()?,
-                    d.next()?,
-                    d.next()?,
-                    d.next()?,
-                ])
-            } else {
-                return None;
-            };
-
-            Some(number)
-        }
-
         fn parse_account_id(d: &mut impl Iterator<Item = u8>) -> Option<AccountId> {
             let id = d.by_ref().take(16).collect::<Vec<u8>>();
             let id = TryInto::<[u8; 16]>::try_into(id).ok()?;
@@ -253,9 +230,9 @@ impl BotAction for AnswerReceivedMessages {
             let sender = parse_account_id(d)?;
             let _ = parse_account_id(d)?;
             let message_id = parse_message_id(d)?;
-            let _ = parse_minimal_i64(d)?;
-            let _ = parse_minimal_i64(d)?;
-            let message_number = parse_minimal_i64(d)?;
+            let _ = minimal_i64::parse_minimal_i64_from_iter(d)?;
+            let _ = minimal_i64::parse_minimal_i64_from_iter(d)?;
+            let message_number = minimal_i64::parse_minimal_i64_from_iter(d)?;
 
             Some(ParsedMessage {
                 sender,
@@ -267,7 +244,8 @@ impl BotAction for AnswerReceivedMessages {
         fn parse_messages(messages: &[u8]) -> Option<Vec<ParsedMessage>> {
             let mut list_iterator = messages.iter().copied();
             let mut pending_messages: Vec<ParsedMessage> = vec![];
-            while let Some(data_len) = parse_minimal_i64(&mut list_iterator) {
+            while let Some(data_len) = minimal_i64::parse_minimal_i64_from_iter(&mut list_iterator)
+            {
                 let data_len = match TryInto::<usize>::try_into(data_len) {
                     Ok(len) => len,
                     Err(_) => break,

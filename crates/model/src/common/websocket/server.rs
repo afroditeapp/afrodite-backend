@@ -1,16 +1,22 @@
 use num_enum::TryFromPrimitive;
+use utils::minimal_i64;
 
-use crate::{AccountId, CheckOnlineStatusResponse, EventToClientInternal, LastSeenTime};
+use crate::{
+    AccountId, CheckOnlineStatusResponse, EventToClientInternal, LastSeenTime,
+    ScheduledMaintenanceStatus, UnixTime,
+};
 
 /// First byte of websocket binary protocol messages sent from server to client.
 ///
-/// Remaining bytes are message payload. Payload format depends on the message type
-/// value:
+/// # Message types and payloads
+///
 /// - `PendingAppNotificationsChanged` (0): payload is empty.
 /// - `ClientConfigChanged` (1): payload is empty.
 /// - `NewsCountChanged` (2): payload is empty.
-/// - `ScheduledMaintenanceStatus` (3): payload is JSON for
-///   `ScheduledMaintenanceStatus`.
+/// - `ScheduledMaintenanceStatus` (3): payload format:
+///   - admin bot offline (u8, 0 or 1)
+///   - maintenance start as optional minimal i64
+///   - if start exists, maintenance end as optional minimal i64
 /// - `AdminBotNotification` (4): payload is unsigned integer with
 ///   little-endian byte order for `AdminBotNotificationTypes` bitflags.
 ///   (1 byte = u8, 2 bytes = u16 etc.)
@@ -33,6 +39,14 @@ use crate::{AccountId, CheckOnlineStatusResponse, EventToClientInternal, LastSee
 ///   value is included. If included, payload ends with 8-byte big-endian i64.
 /// - `MessageDeliveryInfoChanged` (127): payload is empty.
 /// - `LatestSeenMessageChanged` (128): payload is empty.
+///
+/// # Data formats
+///
+/// Data types used in payload definitions:
+/// - minimal i64:
+///   - i64 byte count (u8, values: 1, 2, 4, 8)
+///   - i64 bytes (little-endian byte order)
+/// - optional values in payloads are omitted when they are not present
 #[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
 #[repr(u8)]
 pub enum ServerMessageType {
@@ -112,7 +126,7 @@ pub fn create_server_binary_message(
             message.extend(serde_json::to_vec(value)?);
         }
         EventToClientInternal::ScheduledMaintenanceStatus(value) => {
-            message.extend(serde_json::to_vec(value)?);
+            append_scheduled_maintenance_status_payload(&mut message, value);
         }
         EventToClientInternal::AdminBotNotification(value) => {
             message.push(value.bits());
@@ -172,7 +186,9 @@ pub fn parse_server_binary_message(
             EventToClientInternal::NewsChanged
         }
         ServerMessageType::ScheduledMaintenanceStatus => {
-            EventToClientInternal::ScheduledMaintenanceStatus(serde_json::from_slice(payload)?)
+            EventToClientInternal::ScheduledMaintenanceStatus(
+                parse_scheduled_maintenance_status_payload(payload)?,
+            )
         }
         ServerMessageType::AdminBotNotification => {
             let bits = payload.first().copied().ok_or_else(|| {
@@ -248,6 +264,20 @@ fn append_account_id_payload(buffer: &mut Vec<u8>, account_id: AccountId) {
     buffer.extend_from_slice(account_id.as_ref().as_bytes());
 }
 
+fn append_scheduled_maintenance_status_payload(
+    buffer: &mut Vec<u8>,
+    value: &ScheduledMaintenanceStatus,
+) {
+    buffer.push(u8::from(value.admin_bot_offline()));
+
+    if let Some(start) = value.start().map(|time| time.ut) {
+        minimal_i64::add_minimal_i64(buffer, start);
+        if let Some(end) = value.end().map(|time| time.ut) {
+            minimal_i64::add_minimal_i64(buffer, end);
+        }
+    }
+}
+
 fn parse_account_id_payload(payload: &[u8]) -> Result<AccountId, serde_json::Error> {
     let bytes: [u8; 16] = payload.try_into().map_err(|_| {
         serde_json::Error::io(std::io::Error::new(
@@ -259,6 +289,54 @@ fn parse_account_id_payload(payload: &[u8]) -> Result<AccountId, serde_json::Err
     Ok(AccountId::new_base_64_url(
         simple_backend_utils::UuidBase64Url::from_bytes(bytes),
     ))
+}
+
+fn parse_scheduled_maintenance_status_payload(
+    payload: &[u8],
+) -> Result<ScheduledMaintenanceStatus, serde_json::Error> {
+    let (admin_bot_offline_raw, remaining_payload) = payload.split_first().ok_or_else(|| {
+        serde_json::Error::io(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "missing scheduled maintenance admin_bot_offline payload",
+        ))
+    })?;
+
+    let mut payload_iter = remaining_payload.iter().copied();
+    let start = if remaining_payload.is_empty() {
+        None
+    } else {
+        Some(parse_minimal_i64_value(&mut payload_iter)?)
+    };
+
+    let end = if payload_iter.clone().next().is_some() {
+        Some(parse_minimal_i64_value(&mut payload_iter)?)
+    } else {
+        None
+    };
+
+    if payload_iter.next().is_some() {
+        return Err(serde_json::Error::io(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "scheduled maintenance payload contains unexpected trailing data",
+        )));
+    }
+
+    let mut status = ScheduledMaintenanceStatus::default();
+    status.set_admin_bot_offline(*admin_bot_offline_raw != 0);
+    status.set_maintenance_time(start.map(UnixTime::new), end.map(UnixTime::new));
+
+    Ok(status)
+}
+
+fn parse_minimal_i64_value(
+    payload_iter: &mut impl Iterator<Item = u8>,
+) -> Result<i64, serde_json::Error> {
+    minimal_i64::parse_minimal_i64_from_iter(payload_iter).ok_or_else(|| {
+        serde_json::Error::io(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "invalid or truncated minimal i64 payload",
+        ))
+    })
 }
 
 fn append_check_online_status_response_payload(
