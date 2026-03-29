@@ -570,6 +570,8 @@ diesel::table! {
         secure_capture -> Bool,
         face_detected -> Bool,
         face_detected_manual -> Nullable<Bool>,
+        face_verified -> Nullable<Bool>,
+        face_verified_manual -> Nullable<Bool>,
         content_type_number -> Int2,
         slot_number -> Int2,
         creation_unix_time -> Int8,

@@ -45,6 +45,9 @@ pub struct ContentInfo {
     #[schema(default = true)]
     /// Face detected (automatic or manual)
     pub fd: bool,
+    /// Face verified against current security content (automatic or manual)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fv: Option<bool>,
 }
 
 fn value_bool_true() -> bool {
@@ -69,6 +72,8 @@ pub struct ContentInfoWithFd {
     pub ctype: MediaContentType,
     /// Face detected (automatic or manual)
     pub fd: bool,
+    /// Face verified against current security content (automatic or manual)
+    pub fv: Option<bool>,
     pub state: ContentModerationState,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rejected_reason_category: Option<MediaContentModerationRejectedReasonCategory>,
@@ -89,6 +94,12 @@ pub struct ContentInfoDetailed {
     /// Manual face detected value set by admin
     #[serde(skip_serializing_if = "Option::is_none")]
     fd_manual: Option<bool>,
+    /// Face verified against current security content (automatic or manual)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    fv: Option<bool>,
+    /// Manual face verified value set by admin
+    #[serde(skip_serializing_if = "Option::is_none")]
+    fv_manual: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub usage_start_time: Option<UnixTime>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -204,6 +215,8 @@ pub struct MediaContentRaw {
     pub secure_capture: bool,
     face_detected: bool,
     face_detected_manual: Option<bool>,
+    face_verified: Option<bool>,
+    face_verified_manual: Option<bool>,
     pub content_type_number: MediaContentType,
     slot_number: ContentSlot,
     pub creation_unix_time: UnixTime,
@@ -252,6 +265,17 @@ impl MediaContentRaw {
         self.face_detected_manual
     }
 
+    /// Get the effective face verified value.
+    /// If face_verified_manual is set, it overrides face_verified.
+    pub fn effective_face_verified(&self) -> Option<bool> {
+        self.face_verified_manual.or(self.face_verified)
+    }
+
+    /// Admin set face verified value
+    pub fn manual_face_verified(&self) -> Option<bool> {
+        self.face_verified_manual
+    }
+
     pub fn removable_by_user(&self, remove_wait_time: u32) -> bool {
         if self.usage_start_unix_time.is_some() {
             return false;
@@ -279,6 +303,7 @@ impl From<MediaContentRaw> for ContentInfoWithFd {
             cid: value.uuid,
             ctype: value.content_type_number,
             fd: value.effective_face_detected(),
+            fv: value.effective_face_verified(),
             state: value.state(),
             rejected_reason_category: value.moderation_rejected_reason_category,
             rejected_reason_details: value.moderation_rejected_reason_details,
@@ -296,6 +321,8 @@ impl From<MediaContentRaw> for ContentInfoDetailed {
             secure_capture: value.secure_capture,
             fd: value.face_detected,
             fd_manual: value.face_detected_manual,
+            fv: value.face_verified,
+            fv_manual: value.face_verified_manual,
             usage_end_time: value.usage_end_unix_time,
             usage_start_time: value.usage_start_unix_time,
             rejected_reason_category: value.moderation_rejected_reason_category,
@@ -362,6 +389,7 @@ impl CurrentAccountMediaInternal {
             ctype: v.content_type(),
             a: v.state().is_accepted(),
             fd: v.effective_face_detected(),
+            fv: v.effective_face_verified(),
         })
     }
 
@@ -373,6 +401,7 @@ impl CurrentAccountMediaInternal {
                 cid: v.content_id(),
                 ctype: v.content_type(),
                 fd: v.effective_face_detected(),
+                fv: v.effective_face_verified(),
                 state: v.state(),
                 rejected_reason_category: v.moderation_rejected_reason_category,
                 rejected_reason_details: v.moderation_rejected_reason_details.clone(),
