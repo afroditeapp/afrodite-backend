@@ -2,8 +2,9 @@ use num_enum::TryFromPrimitive;
 use utils::minimal_i64;
 
 use crate::{
-    AccountId, CheckOnlineStatusResponse, EventToClientInternal, LastSeenTime,
-    ScheduledMaintenanceStatus, UnixTime,
+    AccountId, CheckOnlineStatusResponse, ContentProcessingStateChanged,
+    ContentProcessingStateType, EventToClientInternal, LastSeenTime, ScheduledMaintenanceStatus,
+    UnixTime,
 };
 
 /// First byte of websocket binary protocol messages sent from server to client.
@@ -23,8 +24,17 @@ use crate::{
 /// - `PushNotificationInfoChanged` (5): payload is empty.
 /// - `AccountStateChanged` (30): payload is empty.
 /// - `ProfileChanged` (60): payload is empty.
-/// - `ContentProcessingStateChanged` (90): payload is JSON for
-///   `ContentProcessingStateChanged`.
+/// - `ContentProcessingStateChanged` (90): payload format:
+///   - content processing server process ID as minimal i64
+///   - content processing state byte:
+///     - 0: Empty
+///     - 1: InQueue
+///     - 2: Processing
+///     - 3: Completed
+///     - 4: Failed
+///     - 5: NsfwDetected
+///   - state specific data:
+///     - InQueue: queue number as minimal i64
 /// - `MediaContentChanged` (91): payload is empty.
 /// - `NewMessageReceived` (120): payload is empty.
 /// - `PendingChatNotificationsChanged` (121): payload is empty.
@@ -123,7 +133,7 @@ pub fn create_server_binary_message(
 
     match event {
         EventToClientInternal::ContentProcessingStateChanged(value) => {
-            message.extend(serde_json::to_vec(value)?);
+            append_content_processing_state_changed_payload(&mut message, value)?;
         }
         EventToClientInternal::ScheduledMaintenanceStatus(value) => {
             append_scheduled_maintenance_status_payload(&mut message, value);
@@ -200,7 +210,9 @@ pub fn parse_server_binary_message(
         ServerMessageType::AccountStateChanged => EventToClientInternal::AccountStateChanged,
         ServerMessageType::ProfileChanged => EventToClientInternal::ProfileChanged,
         ServerMessageType::ContentProcessingStateChanged => {
-            EventToClientInternal::ContentProcessingStateChanged(serde_json::from_slice(payload)?)
+            EventToClientInternal::ContentProcessingStateChanged(
+                parse_content_processing_state_changed_payload(payload)?,
+            )
         }
         ServerMessageType::MediaContentChanged => EventToClientInternal::MediaContentChanged,
         ServerMessageType::NewMessageReceived => EventToClientInternal::NewMessageReceived,
@@ -307,6 +319,68 @@ fn parse_minimal_i64_value(
             std::io::ErrorKind::InvalidData,
             "invalid or truncated minimal i64 payload",
         ))
+    })
+}
+
+fn append_content_processing_state_changed_payload(
+    buffer: &mut Vec<u8>,
+    value: &ContentProcessingStateChanged,
+) -> Result<(), serde_json::Error> {
+    minimal_i64::add_minimal_i64(buffer, value.id);
+    buffer.push(value.new_state as u8);
+
+    if value.new_state == ContentProcessingStateType::InQueue {
+        let queue_number = value.queue_number.unwrap_or_default();
+        let queue_number_i64: i64 = queue_number.try_into().unwrap_or(i64::MAX);
+        minimal_i64::add_minimal_i64(buffer, queue_number_i64);
+    }
+
+    Ok(())
+}
+
+fn parse_content_processing_state_changed_payload(
+    payload: &[u8],
+) -> Result<ContentProcessingStateChanged, serde_json::Error> {
+    let mut payload_iter = payload.iter().copied();
+
+    let id = parse_minimal_i64_value(&mut payload_iter)?;
+    let state_raw = payload_iter.next().ok_or_else(|| {
+        serde_json::Error::io(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "missing content processing state payload",
+        ))
+    })?;
+    let new_state = ContentProcessingStateType::try_from(state_raw).map_err(|_| {
+        serde_json::Error::io(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("unsupported content processing state value {state_raw}"),
+        ))
+    })?;
+
+    let queue_number = if new_state == ContentProcessingStateType::InQueue {
+        let value = parse_minimal_i64_value(&mut payload_iter)?;
+        if value < 0 {
+            return Err(serde_json::Error::io(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "invalid queue number payload",
+            )));
+        }
+        Some(value as u64)
+    } else {
+        None
+    };
+
+    if payload_iter.next().is_some() {
+        return Err(serde_json::Error::io(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "content processing state payload contains unexpected trailing data",
+        )));
+    }
+
+    Ok(ContentProcessingStateChanged {
+        id,
+        new_state,
+        queue_number,
     })
 }
 

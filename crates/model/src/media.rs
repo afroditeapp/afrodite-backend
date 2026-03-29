@@ -163,6 +163,10 @@ impl ContentProcessingId {
         Self { aid, slot, id }
     }
 
+    pub fn server_process_id(&self) -> i64 {
+        self.id
+    }
+
     /// File name for unprocessed user uploaded content.
     pub fn raw_content_file_name(&self) -> String {
         format!("{}_{}.raw", self.id, self.slot as i64)
@@ -173,7 +177,10 @@ impl ContentProcessingId {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Deserialize, Serialize, ToSchema, num_enum::TryFromPrimitive,
+)]
+#[repr(u8)]
 pub enum ContentProcessingStateType {
     /// This content slot is empty.
     Empty = 0,

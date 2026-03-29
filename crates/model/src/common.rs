@@ -14,8 +14,8 @@ use utils::random_bytes::random_128_bits;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    Account, AccountStateContainer, CheckOnlineStatusResponse, ContentProcessingId,
-    ContentProcessingState, InitialSetupCompletedTime, IpAddressInternal, ProfileVisibility,
+    Account, AccountStateContainer, CheckOnlineStatusResponse, ContentProcessingStateType,
+    InitialSetupCompletedTime, IpAddressInternal, ProfileVisibility,
 };
 
 pub mod api_usage;
@@ -55,10 +55,12 @@ pub struct BackendVersion {
     pub protocol_version: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Clone)]
 pub struct ContentProcessingStateChanged {
-    pub id: ContentProcessingId,
-    pub new_state: ContentProcessingState,
+    /// Server process specific unique ID.
+    pub id: i64,
+    pub new_state: ContentProcessingStateType,
+    pub queue_number: Option<u64>,
 }
 
 /// Internal data type for events.
