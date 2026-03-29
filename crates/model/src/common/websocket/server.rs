@@ -305,8 +305,7 @@ fn append_content_processing_state_changed_payload(
         ContentProcessingStateInternal::InQueue {
             wait_queue_position,
         } => {
-            let queue_number_i64: i64 = wait_queue_position.try_into().unwrap_or(i64::MAX);
-            minimal_i64::add_minimal_i64(buffer, queue_number_i64);
+            minimal_i64::add_minimal_i64(buffer, wait_queue_position);
         }
         ContentProcessingStateInternal::Completed { content_id, fd } => {
             buffer.extend_from_slice(content_id.cid.as_bytes());
@@ -332,15 +331,9 @@ fn parse_content_processing_state_changed_payload(
         .map_err(|_| format!("unsupported content processing state value {state_raw}"))?;
 
     let new_state = match state {
-        ContentProcessingStateType::InQueue => {
-            let value = parse_minimal_i64_value(&mut payload_iter)?;
-            if value < 0 {
-                return Err("invalid queue number payload".to_owned());
-            }
-            ContentProcessingStateInternal::InQueue {
-                wait_queue_position: value as u64,
-            }
-        }
+        ContentProcessingStateType::InQueue => ContentProcessingStateInternal::InQueue {
+            wait_queue_position: parse_minimal_i64_value(&mut payload_iter)?,
+        },
         ContentProcessingStateType::Completed => {
             let mut cid_bytes = [0u8; 16];
             for byte in cid_bytes.iter_mut() {

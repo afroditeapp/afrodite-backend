@@ -69,7 +69,7 @@ impl ContentProcessingManagerData {
             content_owner,
             slot,
             processing_state: ContentProcessingStateInternal::InQueue {
-                wait_queue_position: queue_position,
+                wait_queue_position: queue_position.try_into().unwrap_or(i64::MAX),
             },
             tmp_img: content_info.tmp_img,
             tmp_raw_img: content_info.tmp_raw_img,
@@ -109,7 +109,7 @@ impl ContentProcessingManagerData {
                     wait_queue_position,
                 } = &mut state.processing_state
             {
-                *wait_queue_position = index as u64 + 1;
+                *wait_queue_position = (index + 1).try_into().unwrap_or(i64::MAX);
                 events
                     .send_content_processing_state_change_to_client(state)
                     .await;

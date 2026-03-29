@@ -208,7 +208,7 @@ pub enum ContentProcessingStateType {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ContentProcessingStateInternal {
     Empty,
-    InQueue { wait_queue_position: u64 },
+    InQueue { wait_queue_position: i64 },
     Processing,
     Completed { content_id: ContentId, fd: bool },
     Failed,
@@ -278,8 +278,10 @@ pub struct ContentProcessingState {
     ///
     /// If ProcessingContentId is added to empty queue, then
     /// this will be 1.
+    ///
+    /// Use i64 as Dart has only signed integers.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub wait_queue_position: Option<u64>,
+    pub wait_queue_position: Option<i64>,
     /// Content ID of the processed content.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cid: Option<ContentId>,
