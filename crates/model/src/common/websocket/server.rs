@@ -174,17 +174,10 @@ pub fn parse_server_binary_message(
 
     let event = match message_type {
         ServerMessageType::PendingAppNotificationsChanged => {
-            expect_empty_payload(payload)?;
             EventToClientInternal::PendingAppNotificationsChanged
         }
-        ServerMessageType::ClientConfigChanged => {
-            expect_empty_payload(payload)?;
-            EventToClientInternal::ClientConfigChanged
-        }
-        ServerMessageType::NewsCountChanged => {
-            expect_empty_payload(payload)?;
-            EventToClientInternal::NewsChanged
-        }
+        ServerMessageType::ClientConfigChanged => EventToClientInternal::ClientConfigChanged,
+        ServerMessageType::NewsCountChanged => EventToClientInternal::NewsChanged,
         ServerMessageType::ScheduledMaintenanceStatus => {
             EventToClientInternal::ScheduledMaintenanceStatus(
                 parse_scheduled_maintenance_status_payload(payload)?,
@@ -202,40 +195,20 @@ pub fn parse_server_binary_message(
             )
         }
         ServerMessageType::PushNotificationInfoChanged => {
-            expect_empty_payload(payload)?;
             EventToClientInternal::PushNotificationInfoChanged
         }
-        ServerMessageType::AccountStateChanged => {
-            expect_empty_payload(payload)?;
-            EventToClientInternal::AccountStateChanged
-        }
-        ServerMessageType::ProfileChanged => {
-            expect_empty_payload(payload)?;
-            EventToClientInternal::ProfileChanged
-        }
+        ServerMessageType::AccountStateChanged => EventToClientInternal::AccountStateChanged,
+        ServerMessageType::ProfileChanged => EventToClientInternal::ProfileChanged,
         ServerMessageType::ContentProcessingStateChanged => {
             EventToClientInternal::ContentProcessingStateChanged(serde_json::from_slice(payload)?)
         }
-        ServerMessageType::MediaContentChanged => {
-            expect_empty_payload(payload)?;
-            EventToClientInternal::MediaContentChanged
-        }
-        ServerMessageType::NewMessageReceived => {
-            expect_empty_payload(payload)?;
-            EventToClientInternal::NewMessageReceived
-        }
+        ServerMessageType::MediaContentChanged => EventToClientInternal::MediaContentChanged,
+        ServerMessageType::NewMessageReceived => EventToClientInternal::NewMessageReceived,
         ServerMessageType::PendingChatNotificationsChanged => {
-            expect_empty_payload(payload)?;
             EventToClientInternal::PendingChatNotificationsChanged
         }
-        ServerMessageType::ReceivedLikesChanged => {
-            expect_empty_payload(payload)?;
-            EventToClientInternal::ReceivedLikesChanged
-        }
-        ServerMessageType::DailyLikesLeftChanged => {
-            expect_empty_payload(payload)?;
-            EventToClientInternal::DailyLikesLeftChanged
-        }
+        ServerMessageType::ReceivedLikesChanged => EventToClientInternal::ReceivedLikesChanged,
+        ServerMessageType::DailyLikesLeftChanged => EventToClientInternal::DailyLikesLeftChanged,
         ServerMessageType::TypingStart => {
             EventToClientInternal::TypingStart(parse_account_id_payload(payload)?)
         }
@@ -248,11 +221,9 @@ pub fn parse_server_binary_message(
             )
         }
         ServerMessageType::MessageDeliveryInfoChanged => {
-            expect_empty_payload(payload)?;
             EventToClientInternal::MessageDeliveryInfoChanged
         }
         ServerMessageType::LatestSeenMessageChanged => {
-            expect_empty_payload(payload)?;
             EventToClientInternal::LatestSeenMessageChanged
         }
     };
@@ -397,15 +368,4 @@ fn parse_check_online_status_response_payload(
         a: account_id,
         l: last_seen,
     })
-}
-
-fn expect_empty_payload(payload: &[u8]) -> Result<(), serde_json::Error> {
-    if payload.is_empty() {
-        Ok(())
-    } else {
-        Err(serde_json::Error::io(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "expected empty payload",
-        )))
-    }
 }
