@@ -281,10 +281,6 @@ fn parse_scheduled_maintenance_status_payload(
         None
     };
 
-    if payload_iter.next().is_some() {
-        return Err("scheduled maintenance payload contains unexpected trailing data".to_owned());
-    }
-
     let mut status = ScheduledMaintenanceStatus::default();
     status.set_admin_bot_offline(*admin_bot_offline_raw != 0);
     status.set_maintenance_time(start.map(UnixTime::new), end.map(UnixTime::new));
@@ -407,9 +403,6 @@ fn parse_check_online_status_response_payload(
             .map_err(|_| "invalid last seen payload size".to_owned())?;
         Some(LastSeenTime::new(i64::from_be_bytes(raw_bytes)))
     } else {
-        if has_last_seen_and_tail.len() != 1 {
-            return Err("check online status payload contains unexpected trailing data".to_owned());
-        }
         None
     };
 
