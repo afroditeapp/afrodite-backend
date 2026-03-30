@@ -89,7 +89,7 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
         db_write_raw!(self.state, move |cmds| {
             cmds.chat()
                 .notification()
-                .mark_new_message_notifications_push_sent(account_id, new_message_notifications)
+                .mark_pending_chat_notifications_push_sent(account_id, new_message_notifications)
                 .await?;
 
             cmds.common()

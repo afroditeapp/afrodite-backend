@@ -68,7 +68,7 @@ impl WriteCommandsChatNotification<'_> {
         })
     }
 
-    pub async fn mark_new_message_notifications_push_sent(
+    pub async fn mark_pending_chat_notifications_push_sent(
         &self,
         id: AccountIdInternal,
         notifications: Vec<NewMessagePushNotification>,
