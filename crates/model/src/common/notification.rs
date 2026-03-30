@@ -56,16 +56,16 @@ pub enum PendingAppNotificationType {
     AdminNotification = 0,
     // 20..39: account
     NewsChanged = 20,
-    // 40..59: media
-    MediaContentModerationAccepted = 40,
-    MediaContentModerationRejected = 41,
-    MediaContentModerationDeleted = 42,
-    // 60..79: profile
-    ProfileNameModerationAccepted = 60,
-    ProfileNameModerationRejected = 61,
-    ProfileTextModerationAccepted = 62,
-    ProfileTextModerationRejected = 63,
-    AutomaticProfileSearchCompleted = 64,
+    // 40..59: profile
+    ProfileNameModerationAccepted = 40,
+    ProfileNameModerationRejected = 41,
+    ProfileTextModerationAccepted = 42,
+    ProfileTextModerationRejected = 43,
+    AutomaticProfileSearchCompleted = 44,
+    // 60..79: media
+    MediaContentModerationAccepted = 60,
+    MediaContentModerationRejected = 61,
+    MediaContentModerationDeleted = 62,
     // 80..99: chat
     ReceivedLikesChanged = 80,
 }
