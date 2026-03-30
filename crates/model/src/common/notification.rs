@@ -28,6 +28,10 @@ use crate::{AdminNotificationBitflags, UnixTime};
 ///
 /// Integer payload contains current unread news count.
 ///
+/// ## Automatic profile search completed
+///
+/// Integer payload contains the found profile count.
+///
 /// ## Received likes changed
 ///
 /// Integer payload contains current received likes count.
