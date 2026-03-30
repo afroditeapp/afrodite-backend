@@ -2,23 +2,28 @@ use config::file_notification_content::{
     NotificationStringGetter, NotificationTitle, NotificationTitleAndBody,
 };
 use model::{
-    AccountIdInternal, PendingAppNotificationType, PushNotification, PushNotificationFlags,
-    PushNotificationId,
+    AccountIdInternal, NewMessagePushNotification, PendingAppNotification,
+    PendingAppNotificationType, PushNotification, PushNotificationFlags, PushNotificationId,
 };
 use server_api::{
     DataError,
-    app::{GetConfig, ReadData, WriteData},
-    db_write_raw,
+    app::{GetConfig, ReadData},
 };
-use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
-use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
+use server_data::read::GetReadCommandsCommon;
+use server_data_chat::read::GetReadChatCommands;
 use server_state::{S, result::Result};
+
+pub struct NotificationsForSending {
+    pub notifications: Vec<PushNotification>,
+    pub pending_app_notifications_to_mark_as_sent: Vec<PendingAppNotification>,
+    pub new_message_notifications_to_mark_as_sent: Vec<NewMessagePushNotification>,
+}
 
 pub async fn notifications_for_sending(
     state: &S,
     id: AccountIdInternal,
     flags: PushNotificationFlags,
-) -> Result<Vec<PushNotification>, DataError> {
+) -> Result<NotificationsForSending, DataError> {
     let client_language = state
         .read()
         .common()
@@ -34,6 +39,8 @@ pub async fn notifications_for_sending(
             .notification_content()
             .get(client_language.as_ref()),
         notifications: vec![],
+        pending_app_notifications_to_mark_as_sent: vec![],
+        new_message_notifications_to_mark_as_sent: vec![],
     };
 
     if flags.contains(PushNotificationFlags::PENDING_CHAT_NOTIFICATION) {
@@ -44,7 +51,13 @@ pub async fn notifications_for_sending(
         checker.handle_pending_notifications().await?;
     }
 
-    Ok(checker.notifications)
+    Ok(NotificationsForSending {
+        notifications: checker.notifications,
+        pending_app_notifications_to_mark_as_sent: checker
+            .pending_app_notifications_to_mark_as_sent,
+        new_message_notifications_to_mark_as_sent: checker
+            .new_message_notifications_to_mark_as_sent,
+    })
 }
 
 struct NotificationChecker<'a> {
@@ -52,6 +65,8 @@ struct NotificationChecker<'a> {
     id: AccountIdInternal,
     notification_strings: NotificationStringGetter<'a>,
     notifications: Vec<PushNotification>,
+    pending_app_notifications_to_mark_as_sent: Vec<PendingAppNotification>,
+    new_message_notifications_to_mark_as_sent: Vec<NewMessagePushNotification>,
 }
 
 impl<'a> NotificationChecker<'a> {
@@ -79,11 +94,13 @@ impl<'a> NotificationChecker<'a> {
             .new_message_notification_list(self.id)
             .await?;
 
-        if notifications.values.is_empty() {
+        let notifications = notifications.values;
+
+        if notifications.is_empty() {
             return Ok(());
         }
 
-        for n in &notifications.values {
+        for n in &notifications {
             let name = self
                 .state
                 .read()
@@ -101,14 +118,7 @@ impl<'a> NotificationChecker<'a> {
             self.notifications.push(notification);
         }
 
-        let account_id = self.id;
-        db_write_raw!(self.state, move |cmds| {
-            cmds.chat()
-                .notification()
-                .mark_new_message_notifications_push_sent(account_id, notifications.values)
-                .await
-        })
-        .await?;
+        self.new_message_notifications_to_mark_as_sent = notifications;
 
         Ok(())
     }
@@ -217,14 +227,7 @@ impl<'a> NotificationChecker<'a> {
             }
         }
 
-        let account_id = self.id;
-        db_write_raw!(self.state, move |cmds| {
-            cmds.common()
-                .notification()
-                .mark_pending_app_notifications_push_sent(account_id, pending_notifications)
-                .await
-        })
-        .await?;
+        self.pending_app_notifications_to_mark_as_sent = pending_notifications;
 
         Ok(())
     }

@@ -9,7 +9,7 @@ use fcm::{
     message::{AndroidConfig, AndroidMessagePriority, Message, Target},
     response::{RecomendedAction, RecomendedWaitTime},
 };
-use model::{PushNotification, PushNotificationDeviceToken};
+use model::{PushNotification, PushNotificationDeviceToken, PushNotificationSendingInfo};
 use rand::{Rng, rngs::OsRng};
 use serde_json::Value;
 use simple_backend::ServerQuitWatcher;
@@ -130,11 +130,17 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> FcmManager<T> {
             .await
             .change_context(PushNotificationError::ReadingNotificationSentStatusFailed)?;
 
-        let Some(token) = info.db_state.device_token else {
+        let PushNotificationSendingInfo {
+            db_state,
+            notifications,
+            notifications_to_mark_as_sent,
+        } = info;
+
+        let Some(token) = db_state.device_token else {
             return Ok(());
         };
 
-        let Some(encryption_key) = info.db_state.encryption_key else {
+        let Some(encryption_key) = db_state.encryption_key else {
             return Ok(());
         };
 
@@ -142,7 +148,7 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> FcmManager<T> {
             .decode(encryption_key.as_str())
             .change_context(PushNotificationError::EncryptionFailed)?;
 
-        for n in info.notifications {
+        for n in notifications {
             let message = self.create_message(&token, &n, &encryption_key_bytes)?;
 
             match self
@@ -166,6 +172,14 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> FcmManager<T> {
                 },
             }
         }
+
+        self.state
+            .mark_push_notifications_as_sent(
+                send_push_notification.account_id,
+                notifications_to_mark_as_sent,
+            )
+            .await
+            .change_context(PushNotificationError::MarkNotificationsAsSentFailed)?;
 
         Ok(())
     }

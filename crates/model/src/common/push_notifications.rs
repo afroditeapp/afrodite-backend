@@ -10,7 +10,10 @@ use simple_backend_model::{diesel_db_i16_is_i8_struct, diesel_i64_wrapper, diese
 use utils::random_bytes::random_128_bits;
 use utoipa::ToSchema;
 
-use crate::{ConversationId, NotificationEvent, sync_version_wrappers};
+use crate::{
+    ConversationId, NewMessagePushNotification, NotificationEvent, PendingAppNotification,
+    sync_version_wrappers,
+};
 
 /// Push notification type. Backend uses this internally for
 /// tracking which notifications should be send and which notifications
@@ -346,6 +349,12 @@ pub enum PushNotificationStateInfoWithFlags {
 pub struct PushNotificationSendingInfo {
     pub db_state: PushNotificationDbState,
     pub notifications: Vec<PushNotification>,
+    pub notifications_to_mark_as_sent: PushNotificationsToMarkAsSent,
+}
+
+pub struct PushNotificationsToMarkAsSent {
+    pub pending_app_notifications: Vec<PendingAppNotification>,
+    pub new_message_notifications: Vec<NewMessagePushNotification>,
 }
 
 #[derive(Serialize)]

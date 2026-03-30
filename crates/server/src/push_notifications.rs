@@ -1,11 +1,14 @@
 use error_stack::ResultExt;
-use model::{AccountIdInternal, ClientType, PushNotificationSendingInfo};
+use model::{
+    AccountIdInternal, ClientType, PushNotificationSendingInfo, PushNotificationsToMarkAsSent,
+};
 use server_api::{
     app::{EventManagerProvider, ReadData, WriteData},
     db_write_raw,
 };
 use server_common::push_notifications::{PushNotificationError, PushNotificationStateProvider};
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
+use server_data_chat::write::GetWriteCommandsChat;
 use server_state::S;
 
 mod notifications;
@@ -50,7 +53,11 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
 
         Ok(PushNotificationSendingInfo {
             db_state,
-            notifications,
+            notifications: notifications.notifications,
+            notifications_to_mark_as_sent: PushNotificationsToMarkAsSent {
+                pending_app_notifications: notifications.pending_app_notifications_to_mark_as_sent,
+                new_message_notifications: notifications.new_message_notifications_to_mark_as_sent,
+            },
         })
     }
 
@@ -67,6 +74,32 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
         .await
         .map_err(|e| e.into_report())
         .change_context(PushNotificationError::RemoveDeviceTokenFailed)
+    }
+
+    async fn mark_push_notifications_as_sent(
+        &self,
+        account_id: AccountIdInternal,
+        notifications_to_mark_as_sent: PushNotificationsToMarkAsSent,
+    ) -> error_stack::Result<(), PushNotificationError> {
+        let PushNotificationsToMarkAsSent {
+            pending_app_notifications,
+            new_message_notifications,
+        } = notifications_to_mark_as_sent;
+
+        db_write_raw!(self.state, move |cmds| {
+            cmds.chat()
+                .notification()
+                .mark_new_message_notifications_push_sent(account_id, new_message_notifications)
+                .await?;
+
+            cmds.common()
+                .notification()
+                .mark_pending_app_notifications_push_sent(account_id, pending_app_notifications)
+                .await
+        })
+        .await
+        .map_err(|e| e.into_report())
+        .change_context(PushNotificationError::MarkNotificationsAsSentFailed)
     }
 
     async fn save_current_notification_flags_to_database_if_needed(

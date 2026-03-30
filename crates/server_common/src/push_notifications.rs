@@ -2,7 +2,9 @@ use std::{future::Future, sync::Arc, time::Duration};
 
 use config::Config;
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, ClientType, PushNotificationSendingInfo};
+use model::{
+    AccountIdInternal, ClientType, PushNotificationSendingInfo, PushNotificationsToMarkAsSent,
+};
 use simple_backend::ServerQuitWatcher;
 use simple_backend_utils::ContextExt;
 use tokio::{
@@ -53,6 +55,8 @@ pub enum PushNotificationError {
     NotificationRoutingFailed,
     #[error("Notification encryption failed")]
     EncryptionFailed,
+    #[error("Mark notifications as sent failed")]
+    MarkNotificationsAsSentFailed,
 }
 
 pub struct PushNotificationManagerQuitHandle {
@@ -124,6 +128,12 @@ pub trait PushNotificationStateProvider {
     fn remove_device_token(
         &self,
         account_id: AccountIdInternal,
+    ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
+
+    fn mark_push_notifications_as_sent(
+        &self,
+        account_id: AccountIdInternal,
+        notifications_to_mark_as_sent: PushNotificationsToMarkAsSent,
     ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
 
     fn save_current_notification_flags_to_database_if_needed(
@@ -308,10 +318,20 @@ impl<T: PushNotificationStateProvider + Clone + Send + Sync + 'static> PushNotif
                 .change_context(PushNotificationError::NotificationRoutingFailed),
             ClientType::Bot => {
                 // Ignore notifications for bots
-                self.state
+                let info = self
+                    .state
                     .get_and_reset_push_notifications(send_push_notification.account_id)
                     .await
                     .change_context(PushNotificationError::ReadingNotificationSentStatusFailed)?;
+
+                self.state
+                    .mark_push_notifications_as_sent(
+                        send_push_notification.account_id,
+                        info.notifications_to_mark_as_sent,
+                    )
+                    .await
+                    .change_context(PushNotificationError::MarkNotificationsAsSentFailed)?;
+
                 Ok(())
             }
         }

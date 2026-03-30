@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use config::Config;
 use error_stack::{Result, ResultExt};
-use model::{PushNotification, PushNotificationDeviceToken};
+use model::{PushNotification, PushNotificationDeviceToken, PushNotificationSendingInfo};
 use simple_backend::ServerQuitWatcher;
 use tokio::{sync::mpsc::Receiver, task::JoinHandle};
 use tracing::{error, info, warn};
@@ -119,11 +119,17 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> WebPushManager<T>
             .await
             .change_context(PushNotificationError::ReadingNotificationSentStatusFailed)?;
 
-        let Some(token) = info.db_state.device_token else {
+        let PushNotificationSendingInfo {
+            db_state,
+            notifications,
+            notifications_to_mark_as_sent,
+        } = info;
+
+        let Some(token) = db_state.device_token else {
             return Ok(());
         };
 
-        for n in info.notifications {
+        for n in notifications {
             if n.title().is_none() {
                 // Hiding notfications is not supported on web
                 continue;
@@ -158,6 +164,14 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> WebPushManager<T>
                 },
             }
         }
+
+        self.state
+            .mark_push_notifications_as_sent(
+                send_push_notification.account_id,
+                notifications_to_mark_as_sent,
+            )
+            .await
+            .change_context(PushNotificationError::MarkNotificationsAsSentFailed)?;
 
         Ok(())
     }
