@@ -95,6 +95,7 @@ fn convert_server_event_to_client_for_test_mode(
         | EventToClientInternal::ReceivedLikesChanged
         | EventToClientInternal::ClientConfigChanged
         | EventToClientInternal::ProfileChanged
+        | EventToClientInternal::ResponseNextProfilePage { .. }
         | EventToClientInternal::NewsChanged
         | EventToClientInternal::MediaContentChanged
         | EventToClientInternal::DailyLikesLeftChanged

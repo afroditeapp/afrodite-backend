@@ -6,7 +6,7 @@ use server_api::{
     common::{
         COMMON_CLIENT_CONFIG_COUNTERS_LIST, COMMON_DATA_EXPORT_COUNTERS_LIST,
         COMMON_FILE_PACKAGE_COUNTERS_LIST, COMMON_NOTIFICATION_COUNTERS_LIST,
-        COMMON_PUSH_NOTIFICATION_COUNTERS_LIST,
+        COMMON_PROFILE_PAGING_COUNTERS_LIST, COMMON_PUSH_NOTIFICATION_COUNTERS_LIST,
     },
     common_admin::{
         COMMON_ADMIN_MAINTENANCE_COUNTERS_LIST, COMMON_ADMIN_NOTIFICATION_COUNTERS_LIST,
@@ -93,6 +93,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
         "common_push_notification",
         COMMON_PUSH_NOTIFICATION_COUNTERS_LIST,
     ),
+    &CounterCategory::new("common_profile_paging", COMMON_PROFILE_PAGING_COUNTERS_LIST),
     // Common admin
     &CounterCategory::new(
         "common_admin_maintenance",

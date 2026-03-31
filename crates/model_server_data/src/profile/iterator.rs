@@ -1,5 +1,5 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::SmallInt};
-use model::NextNumberStorage;
+use model::{NextNumberStorage, ProfileLink};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i16_wrapper;
 use utoipa::{IntoParams, ToSchema};
@@ -28,9 +28,55 @@ pub struct ProfileIteratorSessionId {
     id: i64,
 }
 
+impl ProfileIteratorSessionId {
+    pub fn from_i64(id: i64) -> Self {
+        Self { id }
+    }
+
+    pub fn as_i64(&self) -> i64 {
+        self.id
+    }
+}
+
 impl From<ProfileIteratorSessionIdInternal> for ProfileIteratorSessionId {
     fn from(value: ProfileIteratorSessionIdInternal) -> Self {
         Self { id: value.id }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
+pub struct ProfilePage {
+    profiles: Vec<ProfileLink>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_invalid_iterator_session_id: bool,
+}
+
+impl ProfilePage {
+    pub fn successful(profiles: Vec<ProfileLink>) -> Self {
+        Self {
+            profiles,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_invalid_iterator_session_id() -> Self {
+        Self {
+            error: true,
+            error_invalid_iterator_session_id: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn profiles(&self) -> &[ProfileLink] {
+        &self.profiles
+    }
+
+    pub fn error_invalid_iterator_session_id_value(&self) -> bool {
+        self.error_invalid_iterator_session_id
     }
 }
 

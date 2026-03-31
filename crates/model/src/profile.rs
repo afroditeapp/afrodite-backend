@@ -86,6 +86,22 @@ impl ProfileLink {
             l: last_seen_time,
         }
     }
+
+    pub fn account_id(&self) -> AccountId {
+        self.a
+    }
+
+    pub fn profile_version(&self) -> ProfileVersion {
+        self.p
+    }
+
+    pub fn profile_content_version(&self) -> ProfileContentVersion {
+        self.c
+    }
+
+    pub fn last_seen_time(&self) -> Option<LastSeenTime> {
+        self.l
+    }
 }
 
 /// Profile age value which is in inclusive range `[18, 99]`.

@@ -5,6 +5,7 @@ use diesel::{
     prelude::*,
     sql_types::{BigInt, Binary},
 };
+use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{
     ScheduledMaintenanceStatus, UnixTime, diesel_i64_wrapper, diesel_uuid_wrapper,
@@ -15,7 +16,7 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::{
     Account, AccountStateContainer, CheckOnlineStatusResponse, ContentProcessingStateInternal,
-    InitialSetupCompletedTime, IpAddressInternal, ProfileVisibility,
+    InitialSetupCompletedTime, IpAddressInternal, ProfileLink, ProfileVisibility,
 };
 
 pub mod api_usage;
@@ -62,6 +63,15 @@ pub struct ContentProcessingStateChanged {
     pub new_state: ContentProcessingStateInternal,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
+#[repr(u8)]
+pub enum ResponseNextProfilePageStatus {
+    Success = 0,
+    InvalidIteratorSessionId = 1,
+    RateLimited = 2,
+    InternalServerError = 3,
+}
+
 /// Internal data type for events.
 ///
 /// If data is not included in the event it might be too large to send
@@ -78,6 +88,10 @@ pub enum EventToClientInternal {
     ReceivedLikesChanged,
     ClientConfigChanged,
     ProfileChanged,
+    ResponseNextProfilePage {
+        status: ResponseNextProfilePageStatus,
+        profiles: Vec<ProfileLink>,
+    },
     NewsChanged,
     MediaContentChanged,
     DailyLikesLeftChanged,

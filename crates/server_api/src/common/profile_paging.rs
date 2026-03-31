@@ -1,0 +1,89 @@
+use axum::{Extension, extract::State};
+use model::{AccountIdInternal, ProfileLink};
+use model_server_data::{ProfileIteratorSessionId, ProfilePage};
+use simple_backend::create_counters;
+
+use crate::{
+    S,
+    app::{ApiLimitsProvider, ApiUsageTrackerProvider, WriteData},
+    create_open_api_router,
+    utils::{Json, StatusCode},
+};
+
+const PATH_POST_GET_NEXT_PROFILE_PAGE: &str = "/common_api/profile/page/next";
+
+/// Post (updates iterator) to get next page of profile list.
+#[utoipa::path(
+    post,
+    path = PATH_POST_GET_NEXT_PROFILE_PAGE,
+    request_body(content = ProfileIteratorSessionId),
+    responses(
+        (status = 200, description = "Update successfull.", body = ProfilePage),
+        (status = 401, description = "Unauthorized."),
+        (status = 429, description = "Too many requests."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_get_next_profile_page(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+    Json(iterator_session_id): Json<ProfileIteratorSessionId>,
+) -> Result<Json<ProfilePage>, StatusCode> {
+    Ok(
+        get_next_profile_page(account_id, iterator_session_id, &state)
+            .await?
+            .into(),
+    )
+}
+
+pub async fn get_next_profile_page(
+    account_id: AccountIdInternal,
+    iterator_session_id: ProfileIteratorSessionId,
+    state: &S,
+) -> Result<ProfilePage, StatusCode> {
+    let data = get_next_profile_page_data(account_id, iterator_session_id, state).await?;
+
+    if let Some(data) = data {
+        Ok(ProfilePage::successful(data))
+    } else {
+        Ok(ProfilePage::error_invalid_iterator_session_id())
+    }
+}
+
+pub async fn get_next_profile_page_data(
+    account_id: AccountIdInternal,
+    iterator_session_id: ProfileIteratorSessionId,
+    state: &S,
+) -> Result<Option<Vec<ProfileLink>>, StatusCode> {
+    COMMON.post_get_next_profile_page.incr();
+    state
+        .api_usage_tracker()
+        .incr(account_id, |u| &u.post_get_next_profile_page)
+        .await;
+    state
+        .api_limits(account_id)
+        .profile()
+        .post_get_next_profile_page()
+        .await?;
+
+    let data = state
+        .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {
+            cmds.next_profiles(account_id, iterator_session_id)
+        })
+        .await??;
+
+    Ok(data)
+}
+
+create_open_api_router!(
+    fn router_profile_paging,
+    post_get_next_profile_page,
+);
+
+create_counters!(
+    CommonCounters,
+    COMMON,
+    COMMON_PROFILE_PAGING_COUNTERS_LIST,
+    post_get_next_profile_page,
+);

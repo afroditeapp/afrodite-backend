@@ -16,51 +16,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-const PATH_POST_GET_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
-
-/// Post (updates iterator) to get next page of profile list.
-#[utoipa::path(
-    post,
-    path = PATH_POST_GET_NEXT_PROFILE_PAGE,
-    request_body(content = ProfileIteratorSessionId),
-    responses(
-        (status = 200, description = "Update successfull.", body = ProfilePage),
-        (status = 401, description = "Unauthorized."),
-        (status = 429, description = "Too many requests."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn post_get_next_profile_page(
-    State(state): State<S>,
-    Extension(account_id): Extension<AccountIdInternal>,
-    Json(iterator_session_id): Json<ProfileIteratorSessionId>,
-) -> Result<Json<ProfilePage>, StatusCode> {
-    PROFILE.post_get_next_profile_page.incr();
-    state
-        .api_usage_tracker()
-        .incr(account_id, |u| &u.post_get_next_profile_page)
-        .await;
-    state
-        .api_limits(account_id)
-        .profile()
-        .post_get_next_profile_page()
-        .await?;
-
-    let data = state
-        .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {
-            cmds.next_profiles(account_id, iterator_session_id)
-        })
-        .await??;
-
-    if let Some(data) = data {
-        // Profile iterator session ID was valid
-        Ok(ProfilePage::successful(data).into())
-    } else {
-        Ok(ProfilePage::error_invalid_iterator_session_id().into())
-    }
-}
-
 const PATH_POST_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
 
 /// Reset profile paging.
@@ -269,7 +224,6 @@ pub async fn post_automatic_profile_search_settings(
 
 create_open_api_router!(
     fn router_iterate_profiles,
-    post_get_next_profile_page,
     post_reset_profile_paging,
     post_automatic_profile_search_get_next_profile_page,
     post_automatic_profile_search_reset_profile_paging,
@@ -281,7 +235,6 @@ create_counters!(
     ProfileCounters,
     PROFILE,
     PROFILE_ITERATE_PROFILES_COUNTERS_LIST,
-    post_get_next_profile_page,
     post_reset_profile_paging,
     post_automatic_profile_search_get_next_profile_page,
     post_automatic_profile_search_reset_profile_paging,

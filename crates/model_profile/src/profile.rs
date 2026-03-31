@@ -25,9 +25,6 @@ pub use attributes_schema::*;
 mod filter;
 pub use filter::*;
 
-mod iterator;
-pub use iterator::*;
-
 mod search_group;
 pub use search_group::*;
 

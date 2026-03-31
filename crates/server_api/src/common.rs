@@ -59,6 +59,9 @@ pub use file_package::*;
 mod notification;
 pub use notification::*;
 
+mod profile_paging;
+pub use profile_paging::*;
+
 mod push_notification;
 pub use push_notification::*;
 

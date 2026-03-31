@@ -5,7 +5,8 @@ use utoipa::ToSchema;
 use crate::{
     AccountId, CheckOnlineStatusResponse, ContentProcessingStateChanged,
     ContentProcessingStateInternal, ContentProcessingStateType, EventToClientInternal,
-    LastSeenTime, ScheduledMaintenanceStatus, UnixTime,
+    LastSeenTime, ProfileContentVersion, ProfileLink, ProfileVersion,
+    ResponseNextProfilePageStatus, ScheduledMaintenanceStatus, UnixTime,
 };
 
 /// First byte of websocket binary protocol messages sent from server to client.
@@ -25,6 +26,18 @@ use crate::{
 /// - `PushNotificationInfoChanged` (5): payload is empty.
 /// - `AccountStateChanged` (30): payload is empty.
 /// - `ProfileChanged` (60): payload is empty.
+/// - `ResponseNextProfilePage` (61): payload format:
+///   - status byte:
+///     - 0: success
+///     - 1: invalid iterator session id
+///     - 2: rate limited
+///     - 3: internal server error
+///   - if status is 0:
+///     - repeated profile entries until payload ends:
+///       - account id as 16-byte big-endian UUID
+///       - profile version as 16-byte big-endian UUID
+///       - profile content version as 16-byte big-endian UUID
+///       - null last seen time (0 byte) or last seen time as minimal i64
 /// - `ContentProcessingStateChanged` (90): payload format:
 ///   - content processing server process ID as minimal i64
 ///   - content processing state byte:
@@ -77,6 +90,7 @@ pub enum ServerMessageType {
     AccountStateChanged = 30,
     // - profile: 60..=89
     ProfileChanged = 60,
+    ResponseNextProfilePage = 61,
     // - media: 90..=119
     ContentProcessingStateChanged = 90,
     MediaContentChanged = 91,
@@ -108,6 +122,9 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         EventToClientInternal::ReceivedLikesChanged => ServerMessageType::ReceivedLikesChanged,
         EventToClientInternal::ClientConfigChanged => ServerMessageType::ClientConfigChanged,
         EventToClientInternal::ProfileChanged => ServerMessageType::ProfileChanged,
+        EventToClientInternal::ResponseNextProfilePage { .. } => {
+            ServerMessageType::ResponseNextProfilePage
+        }
         EventToClientInternal::NewsChanged => ServerMessageType::NewsCountChanged,
         EventToClientInternal::MediaContentChanged => ServerMessageType::MediaContentChanged,
         EventToClientInternal::DailyLikesLeftChanged => ServerMessageType::DailyLikesLeftChanged,
@@ -148,6 +165,9 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         }
         EventToClientInternal::CheckOnlineStatusResponse(value) => {
             append_check_online_status_response_payload(&mut message, value);
+        }
+        EventToClientInternal::ResponseNextProfilePage { status, profiles } => {
+            append_response_next_profile_page_payload(&mut message, *status, profiles);
         }
         EventToClientInternal::AccountStateChanged
         | EventToClientInternal::NewMessageReceived
@@ -200,6 +220,10 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
         }
         ServerMessageType::AccountStateChanged => EventToClientInternal::AccountStateChanged,
         ServerMessageType::ProfileChanged => EventToClientInternal::ProfileChanged,
+        ServerMessageType::ResponseNextProfilePage => {
+            let (status, profiles) = parse_response_next_profile_page_payload(payload)?;
+            EventToClientInternal::ResponseNextProfilePage { status, profiles }
+        }
         ServerMessageType::ContentProcessingStateChanged => {
             EventToClientInternal::ContentProcessingStateChanged(
                 parse_content_processing_state_changed_payload(payload)?,
@@ -236,6 +260,34 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
 
 fn append_account_id_payload(buffer: &mut Vec<u8>, account_id: AccountId) {
     buffer.extend_from_slice(account_id.as_ref().as_bytes());
+}
+
+fn append_response_next_profile_page_payload(
+    buffer: &mut Vec<u8>,
+    status: ResponseNextProfilePageStatus,
+    profiles: &[ProfileLink],
+) {
+    buffer.push(status as u8);
+
+    if !matches!(status, ResponseNextProfilePageStatus::Success) {
+        return;
+    }
+
+    for profile in profiles {
+        let account_id = profile.account_id();
+        let profile_version = profile.profile_version();
+        let profile_content_version = profile.profile_content_version();
+
+        buffer.extend_from_slice(account_id.aid.as_bytes());
+        buffer.extend_from_slice(profile_version.as_ref().as_bytes());
+        buffer.extend_from_slice(profile_content_version.as_ref().as_bytes());
+
+        if let Some(last_seen) = profile.last_seen_time() {
+            minimal_i64::add_minimal_i64(buffer, last_seen.raw());
+        } else {
+            buffer.push(0);
+        }
+    }
 }
 
 fn append_scheduled_maintenance_status_payload(
@@ -292,6 +344,120 @@ fn parse_scheduled_maintenance_status_payload(
 fn parse_minimal_i64_value(payload_iter: &mut impl Iterator<Item = u8>) -> Result<i64, String> {
     minimal_i64::parse_minimal_i64_from_iter(payload_iter)
         .ok_or_else(|| "invalid or truncated minimal i64 payload".to_owned())
+}
+
+fn parse_response_next_profile_page_payload(
+    payload: &[u8],
+) -> Result<(ResponseNextProfilePageStatus, Vec<ProfileLink>), String> {
+    let (status_raw, mut tail) = payload
+        .split_first()
+        .ok_or_else(|| "missing response next profile page status payload".to_owned())?;
+    let status = ResponseNextProfilePageStatus::try_from(*status_raw)
+        .map_err(|_| format!("unsupported next profile page status value {status_raw}"))?;
+
+    if !matches!(status, ResponseNextProfilePageStatus::Success) {
+        if !tail.is_empty() {
+            return Err(
+                "unexpected profile payload for non-success next profile page response".to_owned(),
+            );
+        }
+        return Ok((status, Vec::new()));
+    }
+
+    let mut profiles = Vec::new();
+    while !tail.is_empty() {
+        if tail.len() < 48 {
+            return Err("truncated response next profile page profile payload".to_owned());
+        }
+
+        let account_id = parse_account_id_payload(&tail[..16])?;
+        let profile_version = parse_profile_version_payload(&tail[16..32])?;
+        let profile_content_version = parse_profile_content_version_payload(&tail[32..48])?;
+        tail = &tail[48..];
+
+        let (last_seen, consumed) = parse_optional_last_seen_time_payload(tail)?;
+        tail = &tail[consumed..];
+
+        profiles.push(ProfileLink::new(
+            account_id,
+            profile_version,
+            profile_content_version,
+            last_seen,
+        ));
+    }
+
+    Ok((status, profiles))
+}
+
+fn parse_profile_version_payload(payload: &[u8]) -> Result<ProfileVersion, String> {
+    let bytes: [u8; 16] = payload
+        .try_into()
+        .map_err(|_| "invalid profile version payload size".to_owned())?;
+    Ok(ProfileVersion::new_base_64_url(
+        simple_backend_utils::UuidBase64Url::from_bytes(bytes),
+    ))
+}
+
+fn parse_profile_content_version_payload(payload: &[u8]) -> Result<ProfileContentVersion, String> {
+    let bytes: [u8; 16] = payload
+        .try_into()
+        .map_err(|_| "invalid profile content version payload size".to_owned())?;
+    Ok(ProfileContentVersion::new_base_64_url(
+        simple_backend_utils::UuidBase64Url::from_bytes(bytes),
+    ))
+}
+
+fn parse_optional_last_seen_time_payload(
+    payload: &[u8],
+) -> Result<(Option<LastSeenTime>, usize), String> {
+    let marker = *payload
+        .first()
+        .ok_or_else(|| "missing next profile page last seen marker".to_owned())?;
+
+    if marker == 0 {
+        return Ok((None, 1));
+    }
+
+    let byte_len = match marker {
+        1 => 1,
+        2 => 2,
+        4 => 4,
+        8 => 8,
+        _ => {
+            return Err(format!(
+                "unsupported next profile page last seen marker {marker}"
+            ));
+        }
+    };
+
+    if payload.len() < 1 + byte_len {
+        return Err("truncated next profile page last seen payload".to_owned());
+    }
+
+    let value_payload = &payload[1..1 + byte_len];
+    let value = match marker {
+        1 => i8::from_le_bytes([value_payload[0]]) as i64,
+        2 => i16::from_le_bytes([value_payload[0], value_payload[1]]) as i64,
+        4 => i32::from_le_bytes([
+            value_payload[0],
+            value_payload[1],
+            value_payload[2],
+            value_payload[3],
+        ]) as i64,
+        8 => i64::from_le_bytes([
+            value_payload[0],
+            value_payload[1],
+            value_payload[2],
+            value_payload[3],
+            value_payload[4],
+            value_payload[5],
+            value_payload[6],
+            value_payload[7],
+        ]),
+        _ => unreachable!(),
+    };
+
+    Ok((Some(LastSeenTime::new(value)), 1 + byte_len))
 }
 
 fn append_content_processing_state_changed_payload(

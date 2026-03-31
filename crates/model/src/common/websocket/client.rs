@@ -10,11 +10,21 @@ use utoipa::ToSchema;
 ///   of the byte defines the data type (see `SyncCheckDataType`). If client
 ///   does not have any version of the data, version number must be `255`.
 /// - `ClearMaintenanceStatusIfPossible` (1): payload is empty.
+/// - `RequestGetNextProfilePage` (60): payload is profile iterator session id as
+///   minimal i64.
 /// - `TypingStart` (120): payload is exactly 16 bytes account UUID in big-endian
 ///   byte order.
 /// - `TypingStop` (121): payload is empty.
 /// - `CheckOnlineStatus` (122): payload is 16 bytes account UUID. Optional 17th
 ///   byte can be included for online status hint (0 = false, non-zero = true).
+///
+/// # Data formats
+///
+/// Data types used in payload definitions:
+/// - minimal i64:
+///   - i64 byte count (u8, values: 1, 2, 4, 8)
+///   - i64 bytes (little-endian byte order)
+/// - optional values in payloads are omitted when they are not present
 #[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive, ToSchema)]
 #[repr(u8)]
 pub enum ClientMessageType {
@@ -24,6 +34,7 @@ pub enum ClientMessageType {
     ClearMaintenanceStatusIfPossible = 1,
     // - account: 30..=59
     // - profile: 60..=89
+    RequestGetNextProfilePage = 60,
     // - media: 90..=119
     // - chat: 120..=149
     TypingStart = 120,

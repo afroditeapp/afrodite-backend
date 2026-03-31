@@ -3,21 +3,27 @@ use model::{
     AccountId, AccountIdInternal, ClientMessageForDataAllCrate, ClientMessageType,
     EventToClientInternal, ScheduledMaintenanceStatus, create_server_binary_message,
 };
+use model_server_data::ProfileIteratorSessionId;
 use server_common::websocket::WebSocketError;
 use server_data::{app::ReadData, db_manager::InternalReading, result::WrappedResultExt};
 use server_state::S;
 use simple_backend::app::GetManagerApi;
 use simple_backend_utils::UuidBase64Url;
+use utils::minimal_i64;
 
 use super::COMMON;
 use crate::result::WrappedContextExt;
 
 pub mod chat;
+pub mod profile;
 pub mod tracker;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum ClientMessageForServerApiCrate {
     ClearMaintenanceStatusIfPossible,
+    RequestGetNextProfilePage {
+        iterator_session_id: ProfileIteratorSessionId,
+    },
     TypingStart {
         typing_to: AccountId,
     },
@@ -55,6 +61,14 @@ pub fn parse_client_binary_message(
 
             Ok(ClientMessageParsed::ForServerApi(
                 ClientMessageForServerApiCrate::ClearMaintenanceStatusIfPossible,
+            ))
+        }
+        ClientMessageType::RequestGetNextProfilePage => {
+            let iterator_session_id = parse_profile_iterator_session_id(payload)?;
+            Ok(ClientMessageParsed::ForServerApi(
+                ClientMessageForServerApiCrate::RequestGetNextProfilePage {
+                    iterator_session_id,
+                },
             ))
         }
         ClientMessageType::TypingStart => {
@@ -98,6 +112,20 @@ fn parse_account_id(payload: &[u8]) -> crate::result::Result<AccountId, WebSocke
     Ok(AccountId::new_base_64_url(UuidBase64Url::from_bytes(bytes)))
 }
 
+fn parse_profile_iterator_session_id(
+    payload: &[u8],
+) -> crate::result::Result<ProfileIteratorSessionId, WebSocketError> {
+    let mut iterator = payload.iter().copied();
+    let value = minimal_i64::parse_minimal_i64_from_iter(&mut iterator)
+        .ok_or(WebSocketError::ProtocolError.report())?;
+
+    if iterator.next().is_some() {
+        return Err(WebSocketError::ProtocolError.report());
+    }
+
+    Ok(ProfileIteratorSessionId::from_i64(value))
+}
+
 /// Errors which can cause log spam are ignored so
 /// logging the returned error is safe.
 pub async fn handle_message_from_client(
@@ -124,6 +152,9 @@ pub async fn handle_message_from_client(
             }
             Ok(())
         }
+        ClientMessageForServerApiCrate::RequestGetNextProfilePage {
+            iterator_session_id,
+        } => profile::handle_get_next_profile_page(state, socket, id, iterator_session_id).await,
         ClientMessageForServerApiCrate::TypingStart { typing_to } => {
             COMMON.event_to_server_typing_start.incr();
             let Some(typing_to) = state
