@@ -8,7 +8,7 @@ use std::{
 
 use model::{
     AccountId, InitialSetupCompletedTime, LastSeenTime, LastSeenUnixTime, ProfileAge,
-    ProfileContentVersion,
+    ProfileContentVersion, ProfileLink, ProfileVersion,
 };
 use nalgebra::DMatrix;
 use simple_backend_model::UnixTime;
@@ -20,10 +20,7 @@ use super::{
     ProfileTextMinCharactersFilter, SearchAgeRangeValidated, SearchGroupFlags,
     SearchGroupFlagsFilter, SortedProfileAttributes,
 };
-use crate::{
-    AutomaticProfileSearchSettings, ProfileContentEditedTime, ProfileLink, ProfilePrivacySettings,
-    ProfileVersion,
-};
+use crate::{AutomaticProfileSearchSettings, ProfileContentEditedTime, ProfilePrivacySettings};
 
 #[derive(Debug)]
 pub struct ProfileQueryMakerDetails {

@@ -1,8 +1,6 @@
-use diesel::{Selectable, prelude::Queryable, sql_types::Binary};
-use model::{AccountIdDb, ProfileAge};
-use serde::{Deserialize, Serialize};
-use simple_backend_model::{NonEmptyString, diesel_uuid_wrapper};
-use utoipa::{IntoParams, ToSchema};
+use diesel::{Selectable, prelude::Queryable};
+use model::{AccountIdDb, ProfileAge, ProfileVersion};
+use simple_backend_model::NonEmptyString;
 
 mod attribute;
 pub use attribute::*;
@@ -60,53 +58,6 @@ pub struct ProfileInternal {
     pub profile_text: Option<NonEmptyString>,
     pub age: ProfileAge,
 }
-
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    Deserialize,
-    Serialize,
-    ToSchema,
-    IntoParams,
-    PartialEq,
-    Eq,
-    Hash,
-    diesel::FromSqlRow,
-    diesel::AsExpression,
-)]
-#[diesel(sql_type = Binary)]
-pub struct ProfileVersion {
-    v: simple_backend_utils::UuidBase64Url,
-}
-
-impl ProfileVersion {
-    pub fn new_base_64_url(version: simple_backend_utils::UuidBase64Url) -> Self {
-        Self { v: version }
-    }
-
-    pub fn new_random() -> Self {
-        Self {
-            v: simple_backend_utils::UuidBase64Url::new_random_id(),
-        }
-    }
-}
-
-impl TryFrom<simple_backend_utils::UuidBase64Url> for ProfileVersion {
-    type Error = String;
-
-    fn try_from(v: simple_backend_utils::UuidBase64Url) -> Result<Self, Self::Error> {
-        Ok(Self { v })
-    }
-}
-
-impl AsRef<simple_backend_utils::UuidBase64Url> for ProfileVersion {
-    fn as_ref(&self) -> &simple_backend_utils::UuidBase64Url {
-        &self.v
-    }
-}
-
-diesel_uuid_wrapper!(ProfileVersion);
 
 /// Subset of ProfileStateInternal which is cached in memory.
 #[derive(Debug, Clone, Copy)]

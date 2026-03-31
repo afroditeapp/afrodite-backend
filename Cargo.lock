@@ -3205,10 +3205,8 @@ dependencies = [
  "num_enum",
  "serde",
  "simple_backend_model",
- "simple_backend_utils",
  "unicode-segmentation",
  "utoipa",
- "uuid",
 ]
 
 [[package]]

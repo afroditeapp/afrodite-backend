@@ -1,10 +1,8 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::SmallInt};
-use model::{AccountId, LastSeenTime, NextNumberStorage, ProfileContentVersion};
+use model::NextNumberStorage;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i16_wrapper;
 use utoipa::{IntoParams, ToSchema};
-
-use super::ProfileVersion;
 
 /// Session ID type for profile iterator so that client can detect
 /// server restarts and ask user to refresh profiles.
@@ -33,31 +31,6 @@ pub struct ProfileIteratorSessionId {
 impl From<ProfileIteratorSessionIdInternal> for ProfileIteratorSessionId {
     fn from(value: ProfileIteratorSessionIdInternal) -> Self {
         Self { id: value.id }
-    }
-}
-
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq)]
-pub struct ProfileLink {
-    a: AccountId,
-    p: ProfileVersion,
-    c: ProfileContentVersion,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    l: Option<LastSeenTime>,
-}
-
-impl ProfileLink {
-    pub fn new(
-        id: AccountId,
-        version: ProfileVersion,
-        content_version: ProfileContentVersion,
-        last_seen_time: Option<LastSeenTime>,
-    ) -> Self {
-        Self {
-            a: id,
-            p: version,
-            c: content_version,
-            l: last_seen_time,
-        }
     }
 }
 

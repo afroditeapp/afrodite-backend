@@ -1,14 +1,16 @@
 use std::sync::Arc;
 
 use error_stack::{Result, ResultExt};
-use model::{AccountId, AccountIdInternal, LastSeenUnixTime, NextNumberStorage, UnixTime};
+use model::{
+    AccountId, AccountIdInternal, LastSeenUnixTime, NextNumberStorage, ProfileVersion, UnixTime,
+};
 use model_server_data::{
     AtomicLastSeenTime, AutomaticProfileSearchIteratorSessionIdInternal,
     AutomaticProfileSearchLastSeenUnixTime, AutomaticProfileSearchSettings,
     ProfileAttributeFilterValue, ProfileAttributeValue, ProfileCreatedTimeFilter,
     ProfileEditedTimeFilter, ProfileInternal, ProfileIteratorSessionIdInternal,
     ProfileNameModerationState, ProfilePrivacySettings, ProfileQueryMakerDetails,
-    ProfileStateCached, ProfileTextCharacterCount, ProfileTextModerationState, ProfileVersion,
+    ProfileStateCached, ProfileTextCharacterCount, ProfileTextModerationState,
     SortedProfileAttributes,
 };
 use server_common::data::DataError;

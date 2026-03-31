@@ -1,13 +1,13 @@
 use std::collections::{HashMap, HashSet};
 
 use diesel::prelude::*;
-use model::{AttributeId, LastSeenTime, ProfileAge};
+use model::{AttributeId, LastSeenTime, ProfileAge, ProfileVersion};
 use model_server_data::{
     LastSeenTimeFilter, MaxDistanceKm, MinDistanceKm, ProfileAttributeValue,
     ProfileAttributeValueUpdate, ProfileAttributesInternal, ProfileCreatedTimeFilter,
     ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal, ProfileNameModerationState,
     ProfileStateCached, ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter,
-    ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes,
+    ProfileTextModerationState, SearchGroupFlags, SortedProfileAttributes,
 };
 use regex::Regex;
 use serde::{Deserialize, Serialize};

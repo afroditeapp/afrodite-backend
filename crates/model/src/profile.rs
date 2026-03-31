@@ -1,18 +1,92 @@
 use diesel::{
     deserialize::FromSqlRow,
     expression::AsExpression,
-    sql_types::{BigInt, SmallInt},
+    sql_types::{BigInt, Binary, SmallInt},
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{UnixTime, diesel_db_i16_is_u8_struct};
+use simple_backend_model::{UnixTime, diesel_db_i16_is_u8_struct, diesel_uuid_wrapper};
 use simple_backend_utils::diesel_i64_wrapper;
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
+
+use crate::{AccountId, ProfileContentVersion};
 
 mod attributes_schema;
 pub use attributes_schema::*;
 
 mod search;
 pub use search::*;
+
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    IntoParams,
+    PartialEq,
+    Eq,
+    Hash,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+)]
+#[diesel(sql_type = Binary)]
+pub struct ProfileVersion {
+    v: simple_backend_utils::UuidBase64Url,
+}
+
+impl ProfileVersion {
+    pub fn new_base_64_url(version: simple_backend_utils::UuidBase64Url) -> Self {
+        Self { v: version }
+    }
+
+    pub fn new_random() -> Self {
+        Self {
+            v: simple_backend_utils::UuidBase64Url::new_random_id(),
+        }
+    }
+}
+
+impl TryFrom<simple_backend_utils::UuidBase64Url> for ProfileVersion {
+    type Error = String;
+
+    fn try_from(v: simple_backend_utils::UuidBase64Url) -> Result<Self, Self::Error> {
+        Ok(Self { v })
+    }
+}
+
+impl AsRef<simple_backend_utils::UuidBase64Url> for ProfileVersion {
+    fn as_ref(&self) -> &simple_backend_utils::UuidBase64Url {
+        &self.v
+    }
+}
+
+diesel_uuid_wrapper!(ProfileVersion);
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct ProfileLink {
+    a: AccountId,
+    p: ProfileVersion,
+    c: ProfileContentVersion,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    l: Option<LastSeenTime>,
+}
+
+impl ProfileLink {
+    pub fn new(
+        id: AccountId,
+        version: ProfileVersion,
+        content_version: ProfileContentVersion,
+        last_seen_time: Option<LastSeenTime>,
+    ) -> Self {
+        Self {
+            a: id,
+            p: version,
+            c: content_version,
+            l: last_seen_time,
+        }
+    }
+}
 
 /// Profile age value which is in inclusive range `[18, 99]`.
 ///

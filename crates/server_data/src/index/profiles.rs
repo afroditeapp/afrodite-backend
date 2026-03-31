@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use model::{AccountId, UnixTime};
+use model::{AccountId, ProfileLink, UnixTime};
 use model_server_data::{
-    LocationIndexProfileData, ProfileAttributesInternal, ProfileLink, ProfileQueryMakerDetails,
+    LocationIndexProfileData, ProfileAttributesInternal, ProfileQueryMakerDetails,
 };
 
 #[derive(Debug)]

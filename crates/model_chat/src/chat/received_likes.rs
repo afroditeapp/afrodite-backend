@@ -1,5 +1,5 @@
-use model::ReceivedLikeId;
-use model_server_data::{ProfileLink, ReceivedLikesIteratorState};
+use model::{ProfileLink, ReceivedLikeId};
+use model_server_data::ReceivedLikesIteratorState;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 

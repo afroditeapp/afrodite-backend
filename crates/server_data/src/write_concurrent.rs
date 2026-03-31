@@ -12,10 +12,10 @@ use std::{
 
 use axum::body::BodyDataStream;
 use futures::Future;
-use model::{AccountId, AccountIdInternal, ContentProcessingId, ContentSlot};
+use model::{AccountId, AccountIdInternal, ContentProcessingId, ContentSlot, ProfileLink};
 use model_server_data::{
     AutomaticProfileSearchIteratorSessionId, AutomaticProfileSearchIteratorSessionIdInternal,
-    ProfileIteratorSessionId, ProfileIteratorSessionIdInternal, ProfileLink,
+    ProfileIteratorSessionId, ProfileIteratorSessionIdInternal,
 };
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 

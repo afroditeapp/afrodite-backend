@@ -8,7 +8,6 @@ edition = "2024"
 [dependencies]
 
 serde = { workspace = true }
-uuid = { workspace = true }
 utoipa = { workspace = true }
 diesel = { workspace = true }
 unicode-segmentation = { workspace = true }
@@ -20,4 +19,3 @@ num_enum = { workspace = true }
 model = { path = "../model" }
 
 simple_backend_model = { path = "../simple_backend_model"}
-simple_backend_utils = { path = "../simple_backend_utils"}

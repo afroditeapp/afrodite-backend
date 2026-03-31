@@ -19,10 +19,10 @@ use coordinates::{CoordinateManager, LocationIndexArea};
 use data::IndexSize;
 use error_stack::ResultExt;
 use info::LocationIndexInfoCreator;
-use model::{AccountId, UnixTime};
+use model::{AccountId, ProfileLink, UnixTime};
 use model_server_data::{
     Location, LocationIndexKey, LocationIndexProfileData, MaxDistanceKm, MinDistanceKm,
-    ProfileAttributesInternal, ProfileLink, ProfileQueryMakerDetails,
+    ProfileAttributesInternal, ProfileQueryMakerDetails,
 };
 use profiles::ProfilesAtLocation;
 use read::LocationIndexIteratorState;
