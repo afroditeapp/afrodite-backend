@@ -98,20 +98,6 @@ fn next_payload_byte(
         .ok_or_else(|| format!("missing {payload_name} payload"))
 }
 
-fn parse_fixed_bytes_from_iter<const N: usize>(
-    payload_iter: &mut impl Iterator<Item = u8>,
-    payload_name: &'static str,
-) -> Result<[u8; N], String> {
-    let mut bytes = [0u8; N];
-    for byte in bytes.iter_mut() {
-        *byte = payload_iter
-            .next()
-            .ok_or_else(|| format!("truncated {payload_name} payload"))?;
-    }
-
-    Ok(bytes)
-}
-
 fn parse_uuid_base64_url_from_iter(
     payload_iter: &mut impl Iterator<Item = u8>,
     payload_name: &'static str,
@@ -319,29 +305,22 @@ fn parse_check_online_status_response_payload(
     payload_iter: &mut impl Iterator<Item = u8>,
 ) -> Result<ResponseCheckOnlineStatus, String> {
     let account_id = parse_account_id_payload(payload_iter)?;
-    let has_last_seen = next_payload_byte(payload_iter, "check online status has_last_seen")? != 0;
+    let marker = next_payload_byte(payload_iter, "check online status last seen marker")?;
 
-    let last_seen = if has_last_seen {
-        Some(LastSeenTime::new(parse_i64_be_value(
-            payload_iter,
-            "last seen",
-        )?))
-    } else {
+    let last_seen = if marker == 0 {
         None
+    } else {
+        Some(LastSeenTime::new(parse_minimal_i64_value_from_marker(
+            marker,
+            payload_iter,
+            "invalid or truncated check online status last seen payload",
+        )?))
     };
 
     Ok(ResponseCheckOnlineStatus {
         a: account_id,
         l: last_seen,
     })
-}
-
-fn parse_i64_be_value(
-    payload_iter: &mut impl Iterator<Item = u8>,
-    payload_name: &'static str,
-) -> Result<i64, String> {
-    let bytes = parse_fixed_bytes_from_iter::<8>(payload_iter, payload_name)?;
-    Ok(i64::from_be_bytes(bytes))
 }
 
 #[cfg(test)]
@@ -598,6 +577,28 @@ mod tests {
         );
         let parsed = parse_server_binary_message(&message)
             .expect("check online status response should parse");
+
+        match parsed {
+            EventToClientInternal::ResponseCheckOnlineStatus(parsed_value) => {
+                assert_eq!(parsed_value.a, expected.a);
+                assert_eq!(parsed_value.l, expected.l);
+            }
+            _ => panic!("unexpected event parsed"),
+        }
+    }
+
+    #[test]
+    fn roundtrip_check_online_status_response_without_last_seen_message() {
+        let expected = ResponseCheckOnlineStatus {
+            a: test_account_id(13),
+            l: None,
+        };
+
+        let message = create_server_binary_message(
+            &EventToClientInternal::ResponseCheckOnlineStatus(expected.clone()),
+        );
+        let parsed = parse_server_binary_message(&message)
+            .expect("check online status response without last seen should parse");
 
         match parsed {
             EventToClientInternal::ResponseCheckOnlineStatus(parsed_value) => {

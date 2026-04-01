@@ -64,8 +64,7 @@ pub use parser::parse_server_binary_message;
 /// - `TypingStop` (125): payload is exactly 16 bytes account UUID in
 ///   big-endian byte order.
 /// - `ResponseCheckOnlineStatus` (126): payload is 16 bytes account UUID,
-///   followed by one byte which is 0 when last seen time is missing and 1 when
-///   value is included. If included, payload ends with 8-byte big-endian i64.
+///   followed by null last seen time (0 byte) or last seen time as minimal i64.
 /// - `MessageDeliveryInfoChanged` (127): payload is empty.
 /// - `LatestSeenMessageChanged` (128): payload is empty.
 ///
@@ -267,8 +266,7 @@ fn append_check_online_status_response_payload(
     append_account_id_payload(buffer, value.a);
     match value.l {
         Some(last_seen) => {
-            buffer.push(1);
-            buffer.extend_from_slice(&last_seen.raw().to_be_bytes());
+            minimal_i64::add_minimal_i64(buffer, last_seen.raw());
         }
         None => {
             buffer.push(0);
