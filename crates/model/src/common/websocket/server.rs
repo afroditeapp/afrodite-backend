@@ -3,10 +3,10 @@ use utils::minimal_i64;
 use utoipa::ToSchema;
 
 use crate::{
-    AccountId, CheckOnlineStatusResponse, ContentProcessingStateChanged,
-    ContentProcessingStateInternal, ContentProcessingStateType, EventToClientInternal,
-    LastSeenTime, ProfileContentVersion, ProfileLink, ProfileVersion,
-    ResponseNextProfilePageStatus, ScheduledMaintenanceStatus, UnixTime,
+    AccountId, ContentProcessingStateChanged, ContentProcessingStateInternal,
+    ContentProcessingStateType, EventToClientInternal, LastSeenTime, ProfileContentVersion,
+    ProfileLink, ProfileVersion, ResponseCheckOnlineStatus, ResponseNextProfilePageStatus,
+    ScheduledMaintenanceStatus, UnixTime,
 };
 
 /// First byte of websocket binary protocol messages sent from server to client.
@@ -61,7 +61,7 @@ use crate::{
 ///   big-endian byte order.
 /// - `TypingStop` (125): payload is exactly 16 bytes account UUID in
 ///   big-endian byte order.
-/// - `CheckOnlineStatusResponse` (126): payload is 16 bytes account UUID,
+/// - `ResponseCheckOnlineStatus` (126): payload is 16 bytes account UUID,
 ///   followed by one byte which is 0 when last seen time is missing and 1 when
 ///   value is included. If included, payload ends with 8-byte big-endian i64.
 /// - `MessageDeliveryInfoChanged` (127): payload is empty.
@@ -101,7 +101,7 @@ pub enum ServerMessageType {
     DailyLikesLeftChanged = 123,
     TypingStart = 124,
     TypingStop = 125,
-    CheckOnlineStatusResponse = 126,
+    ResponseCheckOnlineStatus = 126,
     MessageDeliveryInfoChanged = 127,
     LatestSeenMessageChanged = 128,
 }
@@ -137,8 +137,8 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         }
         EventToClientInternal::TypingStart(_) => ServerMessageType::TypingStart,
         EventToClientInternal::TypingStop(_) => ServerMessageType::TypingStop,
-        EventToClientInternal::CheckOnlineStatusResponse(_) => {
-            ServerMessageType::CheckOnlineStatusResponse
+        EventToClientInternal::ResponseCheckOnlineStatus(_) => {
+            ServerMessageType::ResponseCheckOnlineStatus
         }
         EventToClientInternal::MessageDeliveryInfoChanged => {
             ServerMessageType::MessageDeliveryInfoChanged
@@ -163,7 +163,7 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         EventToClientInternal::TypingStart(value) | EventToClientInternal::TypingStop(value) => {
             append_account_id_payload(&mut message, *value);
         }
-        EventToClientInternal::CheckOnlineStatusResponse(value) => {
+        EventToClientInternal::ResponseCheckOnlineStatus(value) => {
             append_check_online_status_response_payload(&mut message, value);
         }
         EventToClientInternal::ResponseNextProfilePage { status, profiles } => {
@@ -242,8 +242,8 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
         ServerMessageType::TypingStop => {
             EventToClientInternal::TypingStop(parse_account_id_payload(payload)?)
         }
-        ServerMessageType::CheckOnlineStatusResponse => {
-            EventToClientInternal::CheckOnlineStatusResponse(
+        ServerMessageType::ResponseCheckOnlineStatus => {
+            EventToClientInternal::ResponseCheckOnlineStatus(
                 parse_check_online_status_response_payload(payload)?,
             )
         }
@@ -529,7 +529,7 @@ fn parse_content_processing_state_changed_payload(
 
 fn append_check_online_status_response_payload(
     buffer: &mut Vec<u8>,
-    value: &CheckOnlineStatusResponse,
+    value: &ResponseCheckOnlineStatus,
 ) {
     append_account_id_payload(buffer, value.a);
     match value.l {
@@ -545,7 +545,7 @@ fn append_check_online_status_response_payload(
 
 fn parse_check_online_status_response_payload(
     payload: &[u8],
-) -> Result<CheckOnlineStatusResponse, String> {
+) -> Result<ResponseCheckOnlineStatus, String> {
     if payload.len() != 17 && payload.len() != 25 {
         return Err("invalid check online status payload size".to_owned());
     }
@@ -566,7 +566,7 @@ fn parse_check_online_status_response_payload(
         None
     };
 
-    Ok(CheckOnlineStatusResponse {
+    Ok(ResponseCheckOnlineStatus {
         a: account_id,
         l: last_seen,
     })

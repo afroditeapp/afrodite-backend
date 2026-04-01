@@ -28,7 +28,7 @@ pub enum ClientMessageForServerApiCrate {
         typing_to: AccountId,
     },
     TypingStop,
-    CheckOnlineStatus {
+    RequestCheckOnlineStatus {
         check_account: AccountId,
         is_online: bool,
     },
@@ -86,7 +86,7 @@ pub fn parse_client_binary_message(
                 ClientMessageForServerApiCrate::TypingStop,
             ))
         }
-        ClientMessageType::CheckOnlineStatus => {
+        ClientMessageType::RequestCheckOnlineStatus => {
             let (check_account_payload, is_online_payload) = payload
                 .split_at_checked(16)
                 .ok_or(WebSocketError::ProtocolError.report())?;
@@ -95,7 +95,7 @@ pub fn parse_client_binary_message(
             let check_account = parse_account_id(check_account_payload)?;
 
             Ok(ClientMessageParsed::ForServerApi(
-                ClientMessageForServerApiCrate::CheckOnlineStatus {
+                ClientMessageForServerApiCrate::RequestCheckOnlineStatus {
                     check_account,
                     is_online,
                 },
@@ -172,7 +172,7 @@ pub async fn handle_message_from_client(
             COMMON.event_to_server_typing_stop.incr();
             chat::handle_typing_stop(state, id).await
         }
-        ClientMessageForServerApiCrate::CheckOnlineStatus {
+        ClientMessageForServerApiCrate::RequestCheckOnlineStatus {
             check_account,
             is_online,
         } => {

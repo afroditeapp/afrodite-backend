@@ -1,5 +1,5 @@
 use model::{
-    AccountIdInternal, CheckOnlineStatusResponse, EventToClientInternal, TypingIndicatorConfig,
+    AccountIdInternal, EventToClientInternal, ResponseCheckOnlineStatus, TypingIndicatorConfig,
 };
 use server_common::websocket::WebSocketError;
 use server_data::{
@@ -206,7 +206,7 @@ pub async fn handle_check_online_status(
     let actual_public_online_status = last_seen_time
         .map(|v| v == model::LastSeenTime::ONLINE)
         .unwrap_or_default();
-    let response = CheckOnlineStatusResponse {
+    let response = ResponseCheckOnlineStatus {
         a: check_account.into(),
         l: last_seen_time,
     };
@@ -216,7 +216,7 @@ pub async fn handle_check_online_status(
             .event_manager()
             .send_connected_event(
                 id,
-                EventToClientInternal::CheckOnlineStatusResponse(response),
+                EventToClientInternal::ResponseCheckOnlineStatus(response),
             )
             .await
             .change_context(WebSocketError::EventToServerHandlingFailed)?;

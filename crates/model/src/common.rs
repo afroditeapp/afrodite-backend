@@ -15,8 +15,8 @@ use utils::random_bytes::random_128_bits;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    Account, AccountStateContainer, CheckOnlineStatusResponse, ContentProcessingStateInternal,
-    InitialSetupCompletedTime, IpAddressInternal, ProfileLink, ProfileVisibility,
+    Account, AccountStateContainer, ContentProcessingStateInternal, InitialSetupCompletedTime,
+    IpAddressInternal, ProfileLink, ProfileVisibility, ResponseCheckOnlineStatus,
 };
 
 pub mod api_usage;
@@ -100,7 +100,7 @@ pub enum EventToClientInternal {
     PushNotificationInfoChanged,
     TypingStart(AccountId),
     TypingStop(AccountId),
-    CheckOnlineStatusResponse(CheckOnlineStatusResponse),
+    ResponseCheckOnlineStatus(ResponseCheckOnlineStatus),
     MessageDeliveryInfoChanged,
     LatestSeenMessageChanged,
 }

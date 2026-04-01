@@ -15,8 +15,8 @@ use utoipa::ToSchema;
 /// - `TypingStart` (120): payload is exactly 16 bytes account UUID in big-endian
 ///   byte order.
 /// - `TypingStop` (121): payload is empty.
-/// - `CheckOnlineStatus` (122): payload is 16 bytes account UUID. Optional 17th
-///   byte can be included for online status hint (0 = false, non-zero = true).
+/// - `RequestCheckOnlineStatus` (122): payload is 16 bytes account UUID. Optional
+///   17th byte can be included for online status hint (0 = false, non-zero = true).
 ///
 /// # Data formats
 ///
@@ -39,7 +39,7 @@ pub enum ClientMessageType {
     // - chat: 120..=149
     TypingStart = 120,
     TypingStop = 121,
-    CheckOnlineStatus = 122,
+    RequestCheckOnlineStatus = 122,
 }
 
 #[derive(Debug, Clone, Copy)]
