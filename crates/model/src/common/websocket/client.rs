@@ -12,6 +12,7 @@ use utoipa::ToSchema;
 /// - `ClearMaintenanceStatusIfPossible` (1): payload is empty.
 /// - `RequestGetNextProfilePage` (60): payload is profile iterator session id as
 ///   minimal i64.
+/// - `RequestResetProfilePaging` (61): payload is empty.
 /// - `TypingStart` (120): payload is exactly 16 bytes account UUID in big-endian
 ///   byte order.
 /// - `TypingStop` (121): payload is empty.
@@ -35,6 +36,7 @@ pub enum ClientMessageType {
     // - account: 30..=59
     // - profile: 60..=89
     RequestGetNextProfilePage = 60,
+    RequestResetProfilePaging = 61,
     // - media: 90..=119
     // - chat: 120..=149
     TypingStart = 120,

@@ -4,7 +4,7 @@ use crate::{
     AccountId, ContentProcessingStateChanged, ContentProcessingStateInternal,
     ContentProcessingStateType, EventToClientInternal, LastSeenTime, ProfileContentVersion,
     ProfileLink, ProfileVersion, ResponseCheckOnlineStatus, ResponseNextProfilePageStatus,
-    ScheduledMaintenanceStatus, ServerMessageType, UnixTime,
+    ResponseResetProfilePagingStatus, ScheduledMaintenanceStatus, ServerMessageType, UnixTime,
 };
 
 pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientInternal, String> {
@@ -41,6 +41,14 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
         ServerMessageType::ResponseNextProfilePage => {
             let (status, profiles) = parse_response_next_profile_page_payload(&mut message_iter)?;
             EventToClientInternal::ResponseNextProfilePage { status, profiles }
+        }
+        ServerMessageType::ResponseResetProfilePaging => {
+            let (status, iterator_session_id) =
+                parse_response_reset_profile_paging_payload(&mut message_iter)?;
+            EventToClientInternal::ResponseResetProfilePaging {
+                status,
+                iterator_session_id,
+            }
         }
         ServerMessageType::ContentProcessingStateChanged => {
             EventToClientInternal::ContentProcessingStateChanged(
@@ -218,6 +226,30 @@ fn parse_response_next_profile_page_payload(
     Ok((status, profiles))
 }
 
+fn parse_response_reset_profile_paging_payload(
+    payload_iter: &mut impl Iterator<Item = u8>,
+) -> Result<(ResponseResetProfilePagingStatus, Option<i64>), String> {
+    let status_raw = next_payload_byte(payload_iter, "response reset profile paging status")?;
+    let status = ResponseResetProfilePagingStatus::try_from(status_raw)
+        .map_err(|_| format!("unsupported reset profile paging status value {status_raw}"))?;
+
+    if !matches!(status, ResponseResetProfilePagingStatus::Success) {
+        if payload_iter.next().is_some() {
+            return Err(
+                "unexpected payload for non-success reset profile paging response".to_owned(),
+            );
+        }
+        return Ok((status, None));
+    }
+
+    let iterator_session_id = parse_minimal_i64_value_with_context(
+        payload_iter,
+        "invalid or missing reset profile paging iterator session id payload",
+    )?;
+
+    Ok((status, Some(iterator_session_id)))
+}
+
 fn parse_optional_account_id_payload(
     payload_iter: &mut impl Iterator<Item = u8>,
 ) -> Result<Option<AccountId>, String> {
@@ -331,8 +363,8 @@ mod tests {
     use crate::{
         AccountId, ContentProcessingStateChanged, ContentProcessingStateInternal,
         EventToClientInternal, LastSeenTime, ProfileContentVersion, ProfileLink, ProfileVersion,
-        ResponseCheckOnlineStatus, ResponseNextProfilePageStatus, UnixTime,
-        common::websocket::server::create_server_binary_message,
+        ResponseCheckOnlineStatus, ResponseNextProfilePageStatus, ResponseResetProfilePagingStatus,
+        UnixTime, common::websocket::server::create_server_binary_message,
     };
 
     fn test_uuid(value: u8) -> simple_backend_utils::UuidBase64Url {
@@ -505,6 +537,56 @@ mod tests {
             } => {
                 assert_eq!(parsed_status, status);
                 assert_eq!(parsed_profiles, profiles);
+            }
+            _ => panic!("unexpected event parsed"),
+        }
+    }
+
+    #[test]
+    fn roundtrip_response_reset_profile_paging_message() {
+        let status = ResponseResetProfilePagingStatus::Success;
+        let iterator_session_id = Some(42);
+
+        let message =
+            create_server_binary_message(&EventToClientInternal::ResponseResetProfilePaging {
+                status,
+                iterator_session_id,
+            });
+        let parsed =
+            parse_server_binary_message(&message).expect("reset profile paging should parse");
+
+        match parsed {
+            EventToClientInternal::ResponseResetProfilePaging {
+                status: parsed_status,
+                iterator_session_id: parsed_iterator_session_id,
+            } => {
+                assert_eq!(parsed_status, status);
+                assert_eq!(parsed_iterator_session_id, iterator_session_id);
+            }
+            _ => panic!("unexpected event parsed"),
+        }
+    }
+
+    #[test]
+    fn roundtrip_response_reset_profile_paging_rate_limited_message() {
+        let status = ResponseResetProfilePagingStatus::RateLimited;
+        let iterator_session_id = None;
+
+        let message =
+            create_server_binary_message(&EventToClientInternal::ResponseResetProfilePaging {
+                status,
+                iterator_session_id,
+            });
+        let parsed = parse_server_binary_message(&message)
+            .expect("rate limited reset profile paging should parse");
+
+        match parsed {
+            EventToClientInternal::ResponseResetProfilePaging {
+                status: parsed_status,
+                iterator_session_id: parsed_iterator_session_id,
+            } => {
+                assert_eq!(parsed_status, status);
+                assert_eq!(parsed_iterator_session_id, iterator_session_id);
             }
             _ => panic!("unexpected event parsed"),
         }

@@ -10,6 +10,55 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
+const PATH_POST_RESET_PROFILE_PAGING: &str = "/common_api/profile/page/reset";
+
+/// Reset profile paging.
+///
+/// After this request getting next profiles will continue from the nearest
+/// profiles.
+#[utoipa::path(
+    post,
+    path = PATH_POST_RESET_PROFILE_PAGING,
+    responses(
+        (status = 200, description = "Update successfull.", body = ProfileIteratorSessionId),
+        (status = 401, description = "Unauthorized."),
+        (status = 429, description = "Too many requests."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_reset_profile_paging(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+) -> Result<Json<ProfileIteratorSessionId>, StatusCode> {
+    Ok(reset_profile_paging(account_id, &state).await?.into())
+}
+
+pub async fn reset_profile_paging(
+    account_id: AccountIdInternal,
+    state: &S,
+) -> Result<ProfileIteratorSessionId, StatusCode> {
+    COMMON.post_reset_profile_paging.incr();
+    state
+        .api_usage_tracker()
+        .incr(account_id, |u| &u.post_reset_profile_paging)
+        .await;
+    state
+        .api_limits(account_id)
+        .profile()
+        .post_reset_profile_paging()
+        .await?;
+
+    let iterator_session_id: ProfileIteratorSessionId = state
+        .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {
+            cmds.reset_profile_iterator(account_id)
+        })
+        .await??
+        .into();
+
+    Ok(iterator_session_id)
+}
+
 const PATH_POST_GET_NEXT_PROFILE_PAGE: &str = "/common_api/profile/page/next";
 
 /// Post (updates iterator) to get next page of profile list.
@@ -78,6 +127,7 @@ pub async fn get_next_profile_page_data(
 
 create_open_api_router!(
     fn router_profile_paging,
+    post_reset_profile_paging,
     post_get_next_profile_page,
 );
 
@@ -85,5 +135,6 @@ create_counters!(
     CommonCounters,
     COMMON,
     COMMON_PROFILE_PAGING_COUNTERS_LIST,
+    post_reset_profile_paging,
     post_get_next_profile_page,
 );

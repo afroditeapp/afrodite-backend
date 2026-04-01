@@ -72,6 +72,14 @@ pub enum ResponseNextProfilePageStatus {
     InternalServerError = 3,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
+#[repr(u8)]
+pub enum ResponseResetProfilePagingStatus {
+    Success = 0,
+    RateLimited = 1,
+    InternalServerError = 2,
+}
+
 /// Internal data type for events.
 ///
 /// If data is not included in the event it might be too large to send
@@ -91,6 +99,10 @@ pub enum EventToClientInternal {
     ResponseNextProfilePage {
         status: ResponseNextProfilePageStatus,
         profiles: Vec<ProfileLink>,
+    },
+    ResponseResetProfilePaging {
+        status: ResponseResetProfilePagingStatus,
+        iterator_session_id: Option<i64>,
     },
     NewsChanged,
     MediaContentChanged,

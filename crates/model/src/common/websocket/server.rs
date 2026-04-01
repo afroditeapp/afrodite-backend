@@ -6,6 +6,7 @@ use utoipa::ToSchema;
 use crate::{
     AccountId, ContentProcessingStateChanged, ContentProcessingStateInternal,
     EventToClientInternal, ProfileLink, ResponseCheckOnlineStatus, ResponseNextProfilePageStatus,
+    ResponseResetProfilePagingStatus,
 };
 
 mod parser;
@@ -40,6 +41,13 @@ pub use parser::parse_server_binary_message;
 ///       - profile version as 16-byte big-endian UUID
 ///       - profile content version as 16-byte big-endian UUID
 ///       - null last seen time (0 byte) or last seen time as minimal i64
+/// - `ResponseResetProfilePaging` (62): payload format:
+///   - status byte:
+///     - 0: success
+///     - 1: rate limited
+///     - 2: internal server error
+///   - if status is 0:
+///     - profile iterator session id as minimal i64
 /// - `ContentProcessingStateChanged` (90): payload format:
 ///   - content processing server process ID as minimal i64
 ///   - content processing state byte:
@@ -92,6 +100,7 @@ pub enum ServerMessageType {
     // - profile: 60..=89
     ProfileChanged = 60,
     ResponseNextProfilePage = 61,
+    ResponseResetProfilePaging = 62,
     // - media: 90..=119
     ContentProcessingStateChanged = 90,
     MediaContentChanged = 91,
@@ -125,6 +134,9 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         EventToClientInternal::ProfileChanged => ServerMessageType::ProfileChanged,
         EventToClientInternal::ResponseNextProfilePage { .. } => {
             ServerMessageType::ResponseNextProfilePage
+        }
+        EventToClientInternal::ResponseResetProfilePaging { .. } => {
+            ServerMessageType::ResponseResetProfilePaging
         }
         EventToClientInternal::NewsChanged => ServerMessageType::NewsCountChanged,
         EventToClientInternal::MediaContentChanged => ServerMessageType::MediaContentChanged,
@@ -169,6 +181,16 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         }
         EventToClientInternal::ResponseNextProfilePage { status, profiles } => {
             append_response_next_profile_page_payload(&mut message, *status, profiles);
+        }
+        EventToClientInternal::ResponseResetProfilePaging {
+            status,
+            iterator_session_id,
+        } => {
+            append_response_reset_profile_paging_payload(
+                &mut message,
+                *status,
+                *iterator_session_id,
+            );
         }
         EventToClientInternal::AccountStateChanged
         | EventToClientInternal::NewMessageReceived
@@ -217,6 +239,22 @@ fn append_response_next_profile_page_payload(
         } else {
             buffer.push(0);
         }
+    }
+}
+
+fn append_response_reset_profile_paging_payload(
+    buffer: &mut Vec<u8>,
+    status: ResponseResetProfilePagingStatus,
+    iterator_session_id: Option<i64>,
+) {
+    buffer.push(status as u8);
+
+    if !matches!(status, ResponseResetProfilePagingStatus::Success) {
+        return;
+    }
+
+    if let Some(iterator_session_id) = iterator_session_id {
+        minimal_i64::add_minimal_i64(buffer, iterator_session_id);
     }
 }
 
