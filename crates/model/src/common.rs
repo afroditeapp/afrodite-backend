@@ -65,19 +65,19 @@ pub struct ContentProcessingStateChanged {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
 #[repr(u8)]
+pub enum ResponseResetProfilePagingStatus {
+    Success = 0,
+    RateLimited = 1,
+    InternalServerError = 2,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
+#[repr(u8)]
 pub enum ResponseNextProfilePageStatus {
     Success = 0,
     InvalidIteratorSessionId = 1,
     RateLimited = 2,
     InternalServerError = 3,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
-#[repr(u8)]
-pub enum ResponseResetProfilePagingStatus {
-    Success = 0,
-    RateLimited = 1,
-    InternalServerError = 2,
 }
 
 /// Internal data type for events.
@@ -96,13 +96,13 @@ pub enum EventToClientInternal {
     ReceivedLikesChanged,
     ClientConfigChanged,
     ProfileChanged,
-    ResponseNextProfilePage {
-        status: ResponseNextProfilePageStatus,
-        profiles: Vec<ProfileLink>,
-    },
     ResponseResetProfilePaging {
         status: ResponseResetProfilePagingStatus,
         iterator_session_id: Option<i64>,
+    },
+    ResponseNextProfilePage {
+        status: ResponseNextProfilePageStatus,
+        profiles: Vec<ProfileLink>,
     },
     NewsChanged,
     MediaContentChanged,

@@ -29,7 +29,14 @@ pub use parser::parse_server_binary_message;
 /// - `PushNotificationInfoChanged` (5): payload is empty.
 /// - `AccountStateChanged` (30): payload is empty.
 /// - `ProfileChanged` (60): payload is empty.
-/// - `ResponseNextProfilePage` (61): payload format:
+/// - `ResponseResetProfilePaging` (61): payload format:
+///   - status byte:
+///     - 0: success
+///     - 1: rate limited
+///     - 2: internal server error
+///   - if status is 0:
+///     - profile iterator session id as minimal i64
+/// - `ResponseNextProfilePage` (62): payload format:
 ///   - status byte:
 ///     - 0: success
 ///     - 1: invalid iterator session id
@@ -41,13 +48,6 @@ pub use parser::parse_server_binary_message;
 ///       - profile version as 16-byte big-endian UUID
 ///       - profile content version as 16-byte big-endian UUID
 ///       - null last seen time (0 byte) or last seen time as minimal i64
-/// - `ResponseResetProfilePaging` (62): payload format:
-///   - status byte:
-///     - 0: success
-///     - 1: rate limited
-///     - 2: internal server error
-///   - if status is 0:
-///     - profile iterator session id as minimal i64
 /// - `ContentProcessingStateChanged` (90): payload format:
 ///   - content processing server process ID as minimal i64
 ///   - content processing state byte:
@@ -99,8 +99,8 @@ pub enum ServerMessageType {
     AccountStateChanged = 30,
     // - profile: 60..=89
     ProfileChanged = 60,
-    ResponseNextProfilePage = 61,
-    ResponseResetProfilePaging = 62,
+    ResponseResetProfilePaging = 61,
+    ResponseNextProfilePage = 62,
     // - media: 90..=119
     ContentProcessingStateChanged = 90,
     MediaContentChanged = 91,
@@ -132,11 +132,11 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         EventToClientInternal::ReceivedLikesChanged => ServerMessageType::ReceivedLikesChanged,
         EventToClientInternal::ClientConfigChanged => ServerMessageType::ClientConfigChanged,
         EventToClientInternal::ProfileChanged => ServerMessageType::ProfileChanged,
-        EventToClientInternal::ResponseNextProfilePage { .. } => {
-            ServerMessageType::ResponseNextProfilePage
-        }
         EventToClientInternal::ResponseResetProfilePaging { .. } => {
             ServerMessageType::ResponseResetProfilePaging
+        }
+        EventToClientInternal::ResponseNextProfilePage { .. } => {
+            ServerMessageType::ResponseNextProfilePage
         }
         EventToClientInternal::NewsChanged => ServerMessageType::NewsCountChanged,
         EventToClientInternal::MediaContentChanged => ServerMessageType::MediaContentChanged,
@@ -179,9 +179,6 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         EventToClientInternal::ResponseCheckOnlineStatus(value) => {
             append_check_online_status_response_payload(&mut message, value);
         }
-        EventToClientInternal::ResponseNextProfilePage { status, profiles } => {
-            append_response_next_profile_page_payload(&mut message, *status, profiles);
-        }
         EventToClientInternal::ResponseResetProfilePaging {
             status,
             iterator_session_id,
@@ -191,6 +188,9 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
                 *status,
                 *iterator_session_id,
             );
+        }
+        EventToClientInternal::ResponseNextProfilePage { status, profiles } => {
+            append_response_next_profile_page_payload(&mut message, *status, profiles);
         }
         EventToClientInternal::AccountStateChanged
         | EventToClientInternal::NewMessageReceived
@@ -212,6 +212,22 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
 
 fn append_account_id_payload(buffer: &mut Vec<u8>, account_id: AccountId) {
     buffer.extend_from_slice(account_id.as_ref().as_bytes());
+}
+
+fn append_response_reset_profile_paging_payload(
+    buffer: &mut Vec<u8>,
+    status: ResponseResetProfilePagingStatus,
+    iterator_session_id: Option<i64>,
+) {
+    buffer.push(status as u8);
+
+    if !matches!(status, ResponseResetProfilePagingStatus::Success) {
+        return;
+    }
+
+    if let Some(iterator_session_id) = iterator_session_id {
+        minimal_i64::add_minimal_i64(buffer, iterator_session_id);
+    }
 }
 
 fn append_response_next_profile_page_payload(
@@ -239,22 +255,6 @@ fn append_response_next_profile_page_payload(
         } else {
             buffer.push(0);
         }
-    }
-}
-
-fn append_response_reset_profile_paging_payload(
-    buffer: &mut Vec<u8>,
-    status: ResponseResetProfilePagingStatus,
-    iterator_session_id: Option<i64>,
-) {
-    buffer.push(status as u8);
-
-    if !matches!(status, ResponseResetProfilePagingStatus::Success) {
-        return;
-    }
-
-    if let Some(iterator_session_id) = iterator_session_id {
-        minimal_i64::add_minimal_i64(buffer, iterator_session_id);
     }
 }
 

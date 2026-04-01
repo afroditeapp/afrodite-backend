@@ -21,10 +21,10 @@ pub mod tracker;
 #[derive(Debug, Clone)]
 pub enum ClientMessageForServerApiCrate {
     ClearMaintenanceStatusIfPossible,
+    RequestResetProfilePaging,
     RequestGetNextProfilePage {
         iterator_session_id: ProfileIteratorSessionId,
     },
-    RequestResetProfilePaging,
     TypingStart {
         typing_to: AccountId,
     },
@@ -64,14 +64,6 @@ pub fn parse_client_binary_message(
                 ClientMessageForServerApiCrate::ClearMaintenanceStatusIfPossible,
             ))
         }
-        ClientMessageType::RequestGetNextProfilePage => {
-            let iterator_session_id = parse_profile_iterator_session_id(payload)?;
-            Ok(ClientMessageParsed::ForServerApi(
-                ClientMessageForServerApiCrate::RequestGetNextProfilePage {
-                    iterator_session_id,
-                },
-            ))
-        }
         ClientMessageType::RequestResetProfilePaging => {
             if !payload.is_empty() {
                 return Err(WebSocketError::ProtocolError.report());
@@ -79,6 +71,14 @@ pub fn parse_client_binary_message(
 
             Ok(ClientMessageParsed::ForServerApi(
                 ClientMessageForServerApiCrate::RequestResetProfilePaging,
+            ))
+        }
+        ClientMessageType::RequestGetNextProfilePage => {
+            let iterator_session_id = parse_profile_iterator_session_id(payload)?;
+            Ok(ClientMessageParsed::ForServerApi(
+                ClientMessageForServerApiCrate::RequestGetNextProfilePage {
+                    iterator_session_id,
+                },
             ))
         }
         ClientMessageType::TypingStart => {
@@ -162,12 +162,12 @@ pub async fn handle_message_from_client(
             }
             Ok(())
         }
-        ClientMessageForServerApiCrate::RequestGetNextProfilePage {
-            iterator_session_id,
-        } => profile::handle_get_next_profile_page(state, socket, id, iterator_session_id).await,
         ClientMessageForServerApiCrate::RequestResetProfilePaging => {
             profile::handle_reset_profile_paging(state, socket, id).await
         }
+        ClientMessageForServerApiCrate::RequestGetNextProfilePage {
+            iterator_session_id,
+        } => profile::handle_get_next_profile_page(state, socket, id, iterator_session_id).await,
         ClientMessageForServerApiCrate::TypingStart { typing_to } => {
             COMMON.event_to_server_typing_start.incr();
             let Some(typing_to) = state

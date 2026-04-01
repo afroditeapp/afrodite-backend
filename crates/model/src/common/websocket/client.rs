@@ -10,9 +10,9 @@ use utoipa::ToSchema;
 ///   of the byte defines the data type (see `SyncCheckDataType`). If client
 ///   does not have any version of the data, version number must be `255`.
 /// - `ClearMaintenanceStatusIfPossible` (1): payload is empty.
-/// - `RequestGetNextProfilePage` (60): payload is profile iterator session id as
+/// - `RequestResetProfilePaging` (60): payload is empty.
+/// - `RequestGetNextProfilePage` (61): payload is profile iterator session id as
 ///   minimal i64.
-/// - `RequestResetProfilePaging` (61): payload is empty.
 /// - `TypingStart` (120): payload is exactly 16 bytes account UUID in big-endian
 ///   byte order.
 /// - `TypingStop` (121): payload is empty.
@@ -35,8 +35,8 @@ pub enum ClientMessageType {
     ClearMaintenanceStatusIfPossible = 1,
     // - account: 30..=59
     // - profile: 60..=89
-    RequestGetNextProfilePage = 60,
-    RequestResetProfilePaging = 61,
+    RequestResetProfilePaging = 60,
+    RequestGetNextProfilePage = 61,
     // - media: 90..=119
     // - chat: 120..=149
     TypingStart = 120,

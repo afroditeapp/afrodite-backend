@@ -38,10 +38,6 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
         }
         ServerMessageType::AccountStateChanged => EventToClientInternal::AccountStateChanged,
         ServerMessageType::ProfileChanged => EventToClientInternal::ProfileChanged,
-        ServerMessageType::ResponseNextProfilePage => {
-            let (status, profiles) = parse_response_next_profile_page_payload(&mut message_iter)?;
-            EventToClientInternal::ResponseNextProfilePage { status, profiles }
-        }
         ServerMessageType::ResponseResetProfilePaging => {
             let (status, iterator_session_id) =
                 parse_response_reset_profile_paging_payload(&mut message_iter)?;
@@ -49,6 +45,10 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
                 status,
                 iterator_session_id,
             }
+        }
+        ServerMessageType::ResponseNextProfilePage => {
+            let (status, profiles) = parse_response_next_profile_page_payload(&mut message_iter)?;
+            EventToClientInternal::ResponseNextProfilePage { status, profiles }
         }
         ServerMessageType::ContentProcessingStateChanged => {
             EventToClientInternal::ContentProcessingStateChanged(
@@ -193,6 +193,30 @@ fn parse_optional_minimal_i64_value(
     .map(Some)
 }
 
+fn parse_response_reset_profile_paging_payload(
+    payload_iter: &mut impl Iterator<Item = u8>,
+) -> Result<(ResponseResetProfilePagingStatus, Option<i64>), String> {
+    let status_raw = next_payload_byte(payload_iter, "response reset profile paging status")?;
+    let status = ResponseResetProfilePagingStatus::try_from(status_raw)
+        .map_err(|_| format!("unsupported reset profile paging status value {status_raw}"))?;
+
+    if !matches!(status, ResponseResetProfilePagingStatus::Success) {
+        if payload_iter.next().is_some() {
+            return Err(
+                "unexpected payload for non-success reset profile paging response".to_owned(),
+            );
+        }
+        return Ok((status, None));
+    }
+
+    let iterator_session_id = parse_minimal_i64_value_with_context(
+        payload_iter,
+        "invalid or missing reset profile paging iterator session id payload",
+    )?;
+
+    Ok((status, Some(iterator_session_id)))
+}
+
 fn parse_response_next_profile_page_payload(
     payload_iter: &mut impl Iterator<Item = u8>,
 ) -> Result<(ResponseNextProfilePageStatus, Vec<ProfileLink>), String> {
@@ -224,30 +248,6 @@ fn parse_response_next_profile_page_payload(
     }
 
     Ok((status, profiles))
-}
-
-fn parse_response_reset_profile_paging_payload(
-    payload_iter: &mut impl Iterator<Item = u8>,
-) -> Result<(ResponseResetProfilePagingStatus, Option<i64>), String> {
-    let status_raw = next_payload_byte(payload_iter, "response reset profile paging status")?;
-    let status = ResponseResetProfilePagingStatus::try_from(status_raw)
-        .map_err(|_| format!("unsupported reset profile paging status value {status_raw}"))?;
-
-    if !matches!(status, ResponseResetProfilePagingStatus::Success) {
-        if payload_iter.next().is_some() {
-            return Err(
-                "unexpected payload for non-success reset profile paging response".to_owned(),
-            );
-        }
-        return Ok((status, None));
-    }
-
-    let iterator_session_id = parse_minimal_i64_value_with_context(
-        payload_iter,
-        "invalid or missing reset profile paging iterator session id payload",
-    )?;
-
-    Ok((status, Some(iterator_session_id)))
 }
 
 fn parse_optional_account_id_payload(
