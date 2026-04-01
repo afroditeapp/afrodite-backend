@@ -8,11 +8,12 @@ use crate::{
 };
 
 pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientInternal, String> {
-    let (message_type_u8, payload) = message
-        .split_first()
+    let mut message_iter = message.iter().copied();
+    let message_type_u8 = message_iter
+        .next()
         .ok_or_else(|| "missing server message type byte".to_owned())?;
 
-    let message_type = ServerMessageType::try_from(*message_type_u8)
+    let message_type = ServerMessageType::try_from(message_type_u8)
         .map_err(|_| format!("unsupported server message type {message_type_u8}"))?;
 
     let event = match message_type {
@@ -23,14 +24,11 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
         ServerMessageType::NewsCountChanged => EventToClientInternal::NewsChanged,
         ServerMessageType::ScheduledMaintenanceStatus => {
             EventToClientInternal::ScheduledMaintenanceStatus(
-                parse_scheduled_maintenance_status_payload(payload)?,
+                parse_scheduled_maintenance_status_payload(&mut message_iter)?,
             )
         }
         ServerMessageType::AdminBotNotification => {
-            let bits = payload
-                .first()
-                .copied()
-                .ok_or_else(|| "missing admin bot notification payload".to_owned())?;
+            let bits = next_payload_byte(&mut message_iter, "admin bot notification")?;
             EventToClientInternal::AdminBotNotification(
                 crate::AdminBotNotificationTypes::from_bits_truncate(bits),
             )
@@ -41,12 +39,12 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
         ServerMessageType::AccountStateChanged => EventToClientInternal::AccountStateChanged,
         ServerMessageType::ProfileChanged => EventToClientInternal::ProfileChanged,
         ServerMessageType::ResponseNextProfilePage => {
-            let (status, profiles) = parse_response_next_profile_page_payload(payload)?;
+            let (status, profiles) = parse_response_next_profile_page_payload(&mut message_iter)?;
             EventToClientInternal::ResponseNextProfilePage { status, profiles }
         }
         ServerMessageType::ContentProcessingStateChanged => {
             EventToClientInternal::ContentProcessingStateChanged(
-                parse_content_processing_state_changed_payload(payload)?,
+                parse_content_processing_state_changed_payload(&mut message_iter)?,
             )
         }
         ServerMessageType::MediaContentChanged => EventToClientInternal::MediaContentChanged,
@@ -57,14 +55,14 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
         ServerMessageType::ReceivedLikesChanged => EventToClientInternal::ReceivedLikesChanged,
         ServerMessageType::DailyLikesLeftChanged => EventToClientInternal::DailyLikesLeftChanged,
         ServerMessageType::TypingStart => {
-            EventToClientInternal::TypingStart(parse_account_id_payload(payload)?)
+            EventToClientInternal::TypingStart(parse_account_id_payload(&mut message_iter)?)
         }
         ServerMessageType::TypingStop => {
-            EventToClientInternal::TypingStop(parse_account_id_payload(payload)?)
+            EventToClientInternal::TypingStop(parse_account_id_payload(&mut message_iter)?)
         }
         ServerMessageType::ResponseCheckOnlineStatus => {
             EventToClientInternal::ResponseCheckOnlineStatus(
-                parse_check_online_status_response_payload(payload)?,
+                parse_check_online_status_response_payload(&mut message_iter)?,
             )
         }
         ServerMessageType::MessageDeliveryInfoChanged => {
@@ -75,62 +73,141 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
         }
     };
 
+    ensure_payload_fully_consumed(&mut message_iter, message_type)?;
+
     Ok(event)
 }
 
-fn parse_account_id_payload(payload: &[u8]) -> Result<AccountId, String> {
-    let bytes: [u8; 16] = payload
-        .try_into()
-        .map_err(|_| "invalid account id payload size".to_owned())?;
+fn ensure_payload_fully_consumed(
+    payload_iter: &mut impl Iterator<Item = u8>,
+    message_type: ServerMessageType,
+) -> Result<(), String> {
+    if payload_iter.next().is_some() {
+        return Err(format!("unexpected trailing payload for {message_type:?}"));
+    }
 
-    Ok(AccountId::new_base_64_url(
-        simple_backend_utils::UuidBase64Url::from_bytes(bytes),
-    ))
+    Ok(())
+}
+
+fn next_payload_byte(
+    payload_iter: &mut impl Iterator<Item = u8>,
+    payload_name: &'static str,
+) -> Result<u8, String> {
+    payload_iter
+        .next()
+        .ok_or_else(|| format!("missing {payload_name} payload"))
+}
+
+fn parse_fixed_bytes_from_iter<const N: usize>(
+    payload_iter: &mut impl Iterator<Item = u8>,
+    payload_name: &'static str,
+) -> Result<[u8; N], String> {
+    let mut bytes = [0u8; N];
+    for byte in bytes.iter_mut() {
+        *byte = payload_iter
+            .next()
+            .ok_or_else(|| format!("truncated {payload_name} payload"))?;
+    }
+
+    Ok(bytes)
+}
+
+fn parse_uuid_base64_url_from_iter(
+    payload_iter: &mut impl Iterator<Item = u8>,
+    payload_name: &'static str,
+) -> Result<simple_backend_utils::UuidBase64Url, String> {
+    let first_byte = next_payload_byte(payload_iter, payload_name)?;
+    parse_uuid_base64_url_from_iter_with_first_byte(first_byte, payload_iter, payload_name)
+}
+
+fn parse_uuid_base64_url_from_iter_with_first_byte(
+    first_byte: u8,
+    payload_iter: &mut impl Iterator<Item = u8>,
+    payload_name: &'static str,
+) -> Result<simple_backend_utils::UuidBase64Url, String> {
+    let mut bytes = [0u8; 16];
+    bytes[0] = first_byte;
+    for byte in bytes.iter_mut().skip(1) {
+        *byte = payload_iter
+            .next()
+            .ok_or_else(|| format!("truncated {payload_name} payload"))?;
+    }
+
+    Ok(simple_backend_utils::UuidBase64Url::from_bytes(bytes))
+}
+
+fn parse_account_id_payload(
+    payload_iter: &mut impl Iterator<Item = u8>,
+) -> Result<AccountId, String> {
+    let account_id = parse_uuid_base64_url_from_iter(payload_iter, "account id")?;
+
+    Ok(AccountId::new_base_64_url(account_id))
 }
 
 fn parse_scheduled_maintenance_status_payload(
-    payload: &[u8],
+    payload_iter: &mut impl Iterator<Item = u8>,
 ) -> Result<ScheduledMaintenanceStatus, String> {
-    let (admin_bot_offline_raw, remaining_payload) = payload
-        .split_first()
-        .ok_or_else(|| "missing scheduled maintenance admin_bot_offline payload".to_owned())?;
+    let admin_bot_offline_raw =
+        next_payload_byte(payload_iter, "scheduled maintenance admin_bot_offline")?;
 
-    let mut payload_iter = remaining_payload.iter().copied();
-    let start = if remaining_payload.is_empty() {
-        None
-    } else {
-        Some(parse_minimal_i64_value(&mut payload_iter)?)
-    };
-
-    let end = if payload_iter.clone().next().is_some() {
-        Some(parse_minimal_i64_value(&mut payload_iter)?)
+    let start = parse_optional_minimal_i64_value(payload_iter)?;
+    let end = if start.is_some() {
+        parse_optional_minimal_i64_value(payload_iter)?
     } else {
         None
     };
 
     let mut status = ScheduledMaintenanceStatus::default();
-    status.set_admin_bot_offline(*admin_bot_offline_raw != 0);
+    status.set_admin_bot_offline(admin_bot_offline_raw != 0);
     status.set_maintenance_time(start.map(UnixTime::new), end.map(UnixTime::new));
 
     Ok(status)
 }
 
 fn parse_minimal_i64_value(payload_iter: &mut impl Iterator<Item = u8>) -> Result<i64, String> {
-    minimal_i64::parse_minimal_i64_from_iter(payload_iter)
-        .ok_or_else(|| "invalid or truncated minimal i64 payload".to_owned())
+    parse_minimal_i64_value_with_context(payload_iter, "invalid or truncated minimal i64 payload")
+}
+
+fn parse_minimal_i64_value_with_context(
+    payload_iter: &mut impl Iterator<Item = u8>,
+    error_context: &'static str,
+) -> Result<i64, String> {
+    minimal_i64::parse_minimal_i64_from_iter(payload_iter).ok_or_else(|| error_context.to_owned())
+}
+
+fn parse_minimal_i64_value_from_marker(
+    marker: u8,
+    payload_iter: &mut impl Iterator<Item = u8>,
+    error_context: &'static str,
+) -> Result<i64, String> {
+    let mut iter_with_marker = std::iter::once(marker).chain(payload_iter.by_ref());
+    parse_minimal_i64_value_with_context(&mut iter_with_marker, error_context)
+}
+
+fn parse_optional_minimal_i64_value(
+    payload_iter: &mut impl Iterator<Item = u8>,
+) -> Result<Option<i64>, String> {
+    let Some(marker) = payload_iter.next() else {
+        return Ok(None);
+    };
+
+    parse_minimal_i64_value_from_marker(
+        marker,
+        payload_iter,
+        "invalid or truncated minimal i64 payload",
+    )
+    .map(Some)
 }
 
 fn parse_response_next_profile_page_payload(
-    payload: &[u8],
+    payload_iter: &mut impl Iterator<Item = u8>,
 ) -> Result<(ResponseNextProfilePageStatus, Vec<ProfileLink>), String> {
-    let (status_raw, mut tail) = payload
-        .split_first()
-        .ok_or_else(|| "missing response next profile page status payload".to_owned())?;
-    let status = ResponseNextProfilePageStatus::try_from(*status_raw)
+    let status_raw = next_payload_byte(payload_iter, "response next profile page status")?;
+    let status = ResponseNextProfilePageStatus::try_from(status_raw)
         .map_err(|_| format!("unsupported next profile page status value {status_raw}"))?;
 
     if !matches!(status, ResponseNextProfilePageStatus::Success) {
-        if !tail.is_empty() {
+        if payload_iter.next().is_some() {
             return Err(
                 "unexpected profile payload for non-success next profile page response".to_owned(),
             );
@@ -139,18 +216,10 @@ fn parse_response_next_profile_page_payload(
     }
 
     let mut profiles = Vec::new();
-    while !tail.is_empty() {
-        if tail.len() < 48 {
-            return Err("truncated response next profile page profile payload".to_owned());
-        }
-
-        let account_id = parse_account_id_payload(&tail[..16])?;
-        let profile_version = parse_profile_version_payload(&tail[16..32])?;
-        let profile_content_version = parse_profile_content_version_payload(&tail[32..48])?;
-        tail = &tail[48..];
-
-        let (last_seen, consumed) = parse_optional_last_seen_time_payload(tail)?;
-        tail = &tail[consumed..];
+    while let Some(account_id) = parse_optional_account_id_payload(payload_iter)? {
+        let profile_version = parse_profile_version_payload(payload_iter)?;
+        let profile_content_version = parse_profile_content_version_payload(payload_iter)?;
+        let last_seen = parse_optional_last_seen_time_payload(payload_iter)?;
 
         profiles.push(ProfileLink::new(
             account_id,
@@ -163,107 +232,70 @@ fn parse_response_next_profile_page_payload(
     Ok((status, profiles))
 }
 
-fn parse_profile_version_payload(payload: &[u8]) -> Result<ProfileVersion, String> {
-    let bytes: [u8; 16] = payload
-        .try_into()
-        .map_err(|_| "invalid profile version payload size".to_owned())?;
-    Ok(ProfileVersion::new_base_64_url(
-        simple_backend_utils::UuidBase64Url::from_bytes(bytes),
-    ))
+fn parse_optional_account_id_payload(
+    payload_iter: &mut impl Iterator<Item = u8>,
+) -> Result<Option<AccountId>, String> {
+    let Some(first_byte) = payload_iter.next() else {
+        return Ok(None);
+    };
+
+    let account_id =
+        parse_uuid_base64_url_from_iter_with_first_byte(first_byte, payload_iter, "account id")?;
+    Ok(Some(AccountId::new_base_64_url(account_id)))
 }
 
-fn parse_profile_content_version_payload(payload: &[u8]) -> Result<ProfileContentVersion, String> {
-    let bytes: [u8; 16] = payload
-        .try_into()
-        .map_err(|_| "invalid profile content version payload size".to_owned())?;
+fn parse_profile_version_payload(
+    payload_iter: &mut impl Iterator<Item = u8>,
+) -> Result<ProfileVersion, String> {
+    let profile_version = parse_uuid_base64_url_from_iter(payload_iter, "profile version")?;
+    Ok(ProfileVersion::new_base_64_url(profile_version))
+}
+
+fn parse_profile_content_version_payload(
+    payload_iter: &mut impl Iterator<Item = u8>,
+) -> Result<ProfileContentVersion, String> {
+    let profile_content_version =
+        parse_uuid_base64_url_from_iter(payload_iter, "profile content version")?;
     Ok(ProfileContentVersion::new_base_64_url(
-        simple_backend_utils::UuidBase64Url::from_bytes(bytes),
+        profile_content_version,
     ))
 }
 
 fn parse_optional_last_seen_time_payload(
-    payload: &[u8],
-) -> Result<(Option<LastSeenTime>, usize), String> {
-    let marker = *payload
-        .first()
-        .ok_or_else(|| "missing next profile page last seen marker".to_owned())?;
+    payload_iter: &mut impl Iterator<Item = u8>,
+) -> Result<Option<LastSeenTime>, String> {
+    let marker = next_payload_byte(payload_iter, "next profile page last seen marker")?;
 
     if marker == 0 {
-        return Ok((None, 1));
+        return Ok(None);
     }
 
-    let byte_len = match marker {
-        1 => 1,
-        2 => 2,
-        4 => 4,
-        8 => 8,
-        _ => {
-            return Err(format!(
-                "unsupported next profile page last seen marker {marker}"
-            ));
-        }
-    };
+    let value = parse_minimal_i64_value_from_marker(
+        marker,
+        payload_iter,
+        "invalid or truncated next profile page last seen payload",
+    )?;
 
-    if payload.len() < 1 + byte_len {
-        return Err("truncated next profile page last seen payload".to_owned());
-    }
-
-    let value_payload = &payload[1..1 + byte_len];
-    let value = match marker {
-        1 => i8::from_le_bytes([value_payload[0]]) as i64,
-        2 => i16::from_le_bytes([value_payload[0], value_payload[1]]) as i64,
-        4 => i32::from_le_bytes([
-            value_payload[0],
-            value_payload[1],
-            value_payload[2],
-            value_payload[3],
-        ]) as i64,
-        8 => i64::from_le_bytes([
-            value_payload[0],
-            value_payload[1],
-            value_payload[2],
-            value_payload[3],
-            value_payload[4],
-            value_payload[5],
-            value_payload[6],
-            value_payload[7],
-        ]),
-        _ => unreachable!(),
-    };
-
-    Ok((Some(LastSeenTime::new(value)), 1 + byte_len))
+    Ok(Some(LastSeenTime::new(value)))
 }
 
 fn parse_content_processing_state_changed_payload(
-    payload: &[u8],
+    payload_iter: &mut impl Iterator<Item = u8>,
 ) -> Result<ContentProcessingStateChanged, String> {
-    let mut payload_iter = payload.iter().copied();
-
-    let id = parse_minimal_i64_value(&mut payload_iter)?;
-    let state_raw = payload_iter
-        .next()
-        .ok_or_else(|| "missing content processing state payload".to_owned())?;
+    let id = parse_minimal_i64_value(payload_iter)?;
+    let state_raw = next_payload_byte(payload_iter, "content processing state")?;
     let state = ContentProcessingStateType::try_from(state_raw)
         .map_err(|_| format!("unsupported content processing state value {state_raw}"))?;
 
     let new_state = match state {
         ContentProcessingStateType::InQueue => ContentProcessingStateInternal::InQueue {
-            wait_queue_position: parse_minimal_i64_value(&mut payload_iter)?,
+            wait_queue_position: parse_minimal_i64_value(payload_iter)?,
         },
         ContentProcessingStateType::Completed => {
-            let mut cid_bytes = [0u8; 16];
-            for byte in cid_bytes.iter_mut() {
-                *byte = payload_iter
-                    .next()
-                    .ok_or_else(|| "missing content id payload".to_owned())?;
-            }
-            let fd_byte = payload_iter
-                .next()
-                .ok_or_else(|| "missing face detection payload".to_owned())?;
+            let content_id = parse_content_id_payload(payload_iter)?;
+            let fd_byte = next_payload_byte(payload_iter, "face detection")?;
             ContentProcessingStateInternal::Completed {
-                content_id: crate::ContentId {
-                    cid: simple_backend_utils::UuidBase64Url::from_bytes(cid_bytes),
-                },
+                content_id,
                 fd: fd_byte != 0,
             }
         }
@@ -276,25 +308,24 @@ fn parse_content_processing_state_changed_payload(
     Ok(ContentProcessingStateChanged { id, new_state })
 }
 
-fn parse_check_online_status_response_payload(
-    payload: &[u8],
-) -> Result<ResponseCheckOnlineStatus, String> {
-    if payload.len() != 17 && payload.len() != 25 {
-        return Err("invalid check online status payload size".to_owned());
-    }
+fn parse_content_id_payload(
+    payload_iter: &mut impl Iterator<Item = u8>,
+) -> Result<crate::ContentId, String> {
+    let content_id = parse_uuid_base64_url_from_iter(payload_iter, "content id")?;
+    Ok(crate::ContentId { cid: content_id })
+}
 
-    let (account_id_payload, has_last_seen_and_tail) = payload.split_at(16);
-    let account_id = parse_account_id_payload(account_id_payload)?;
-    let has_last_seen = has_last_seen_and_tail.first().copied().unwrap_or_default() != 0;
+fn parse_check_online_status_response_payload(
+    payload_iter: &mut impl Iterator<Item = u8>,
+) -> Result<ResponseCheckOnlineStatus, String> {
+    let account_id = parse_account_id_payload(payload_iter)?;
+    let has_last_seen = next_payload_byte(payload_iter, "check online status has_last_seen")? != 0;
 
     let last_seen = if has_last_seen {
-        let last_seen_tail = has_last_seen_and_tail
-            .get(1..)
-            .ok_or_else(|| "missing last seen payload".to_owned())?;
-        let raw_bytes: [u8; 8] = last_seen_tail
-            .try_into()
-            .map_err(|_| "invalid last seen payload size".to_owned())?;
-        Some(LastSeenTime::new(i64::from_be_bytes(raw_bytes)))
+        Some(LastSeenTime::new(parse_i64_be_value(
+            payload_iter,
+            "last seen",
+        )?))
     } else {
         None
     };
@@ -303,4 +334,277 @@ fn parse_check_online_status_response_payload(
         a: account_id,
         l: last_seen,
     })
+}
+
+fn parse_i64_be_value(
+    payload_iter: &mut impl Iterator<Item = u8>,
+    payload_name: &'static str,
+) -> Result<i64, String> {
+    let bytes = parse_fixed_bytes_from_iter::<8>(payload_iter, payload_name)?;
+    Ok(i64::from_be_bytes(bytes))
+}
+
+#[cfg(test)]
+mod tests {
+    use simple_backend_model::ScheduledMaintenanceStatus;
+
+    use super::parse_server_binary_message;
+    use crate::{
+        AccountId, ContentProcessingStateChanged, ContentProcessingStateInternal,
+        EventToClientInternal, LastSeenTime, ProfileContentVersion, ProfileLink, ProfileVersion,
+        ResponseCheckOnlineStatus, ResponseNextProfilePageStatus, UnixTime,
+        common::websocket::server::create_server_binary_message,
+    };
+
+    fn test_uuid(value: u8) -> simple_backend_utils::UuidBase64Url {
+        simple_backend_utils::UuidBase64Url::from_bytes([value; 16])
+    }
+
+    fn test_account_id(value: u8) -> AccountId {
+        AccountId::new_base_64_url(test_uuid(value))
+    }
+
+    fn test_profile_version(value: u8) -> ProfileVersion {
+        ProfileVersion::new_base_64_url(test_uuid(value))
+    }
+
+    fn test_profile_content_version(value: u8) -> ProfileContentVersion {
+        ProfileContentVersion::new_base_64_url(test_uuid(value))
+    }
+
+    macro_rules! assert_roundtrip_without_payload {
+        ($name:ident, $event:expr, $pattern:pat) => {
+            #[test]
+            fn $name() {
+                let message = create_server_binary_message(&$event);
+                let parsed = parse_server_binary_message(&message)
+                    .expect("parsing message without payload should succeed");
+
+                assert!(matches!(parsed, $pattern));
+            }
+        };
+    }
+
+    assert_roundtrip_without_payload!(
+        roundtrip_pending_app_notifications_changed_message,
+        EventToClientInternal::PendingAppNotificationsChanged,
+        EventToClientInternal::PendingAppNotificationsChanged
+    );
+    assert_roundtrip_without_payload!(
+        roundtrip_client_config_changed_message,
+        EventToClientInternal::ClientConfigChanged,
+        EventToClientInternal::ClientConfigChanged
+    );
+    assert_roundtrip_without_payload!(
+        roundtrip_news_changed_message,
+        EventToClientInternal::NewsChanged,
+        EventToClientInternal::NewsChanged
+    );
+    assert_roundtrip_without_payload!(
+        roundtrip_push_notification_info_changed_message,
+        EventToClientInternal::PushNotificationInfoChanged,
+        EventToClientInternal::PushNotificationInfoChanged
+    );
+    assert_roundtrip_without_payload!(
+        roundtrip_account_state_changed_message,
+        EventToClientInternal::AccountStateChanged,
+        EventToClientInternal::AccountStateChanged
+    );
+    assert_roundtrip_without_payload!(
+        roundtrip_profile_changed_message,
+        EventToClientInternal::ProfileChanged,
+        EventToClientInternal::ProfileChanged
+    );
+    assert_roundtrip_without_payload!(
+        roundtrip_media_content_changed_message,
+        EventToClientInternal::MediaContentChanged,
+        EventToClientInternal::MediaContentChanged
+    );
+    assert_roundtrip_without_payload!(
+        roundtrip_new_message_received_message,
+        EventToClientInternal::NewMessageReceived,
+        EventToClientInternal::NewMessageReceived
+    );
+    assert_roundtrip_without_payload!(
+        roundtrip_pending_chat_notifications_changed_message,
+        EventToClientInternal::PendingChatNotificationsChanged,
+        EventToClientInternal::PendingChatNotificationsChanged
+    );
+    assert_roundtrip_without_payload!(
+        roundtrip_received_likes_changed_message,
+        EventToClientInternal::ReceivedLikesChanged,
+        EventToClientInternal::ReceivedLikesChanged
+    );
+    assert_roundtrip_without_payload!(
+        roundtrip_daily_likes_left_changed_message,
+        EventToClientInternal::DailyLikesLeftChanged,
+        EventToClientInternal::DailyLikesLeftChanged
+    );
+    assert_roundtrip_without_payload!(
+        roundtrip_message_delivery_info_changed_message,
+        EventToClientInternal::MessageDeliveryInfoChanged,
+        EventToClientInternal::MessageDeliveryInfoChanged
+    );
+    assert_roundtrip_without_payload!(
+        roundtrip_latest_seen_message_changed_message,
+        EventToClientInternal::LatestSeenMessageChanged,
+        EventToClientInternal::LatestSeenMessageChanged
+    );
+
+    #[test]
+    fn roundtrip_scheduled_maintenance_status_message() {
+        let mut status = ScheduledMaintenanceStatus::default();
+        status.set_admin_bot_offline(true);
+        status.set_maintenance_time(Some(UnixTime::new(1234)), Some(UnixTime::new(5678)));
+
+        let message = create_server_binary_message(
+            &EventToClientInternal::ScheduledMaintenanceStatus(status.clone()),
+        );
+        let parsed =
+            parse_server_binary_message(&message).expect("scheduled maintenance should parse");
+
+        match parsed {
+            EventToClientInternal::ScheduledMaintenanceStatus(parsed_status) => {
+                assert_eq!(
+                    parsed_status.admin_bot_offline(),
+                    status.admin_bot_offline()
+                );
+                assert_eq!(parsed_status.start(), status.start());
+                assert_eq!(parsed_status.end(), status.end());
+            }
+            _ => panic!("unexpected event parsed"),
+        }
+    }
+
+    #[test]
+    fn roundtrip_admin_bot_notification_message() {
+        let value = crate::AdminBotNotificationTypes::MODERATE_INITIAL_MEDIA_CONTENT_BOT
+            | crate::AdminBotNotificationTypes::MODERATE_PROFILE_TEXTS_BOT;
+
+        let message =
+            create_server_binary_message(&EventToClientInternal::AdminBotNotification(value));
+        let parsed =
+            parse_server_binary_message(&message).expect("admin bot notification should parse");
+
+        match parsed {
+            EventToClientInternal::AdminBotNotification(parsed_value) => {
+                assert_eq!(parsed_value.bits(), value.bits());
+            }
+            _ => panic!("unexpected event parsed"),
+        }
+    }
+
+    #[test]
+    fn roundtrip_response_next_profile_page_message() {
+        let profiles = vec![
+            ProfileLink::new(
+                test_account_id(1),
+                test_profile_version(2),
+                test_profile_content_version(3),
+                Some(LastSeenTime::new(-1)),
+            ),
+            ProfileLink::new(
+                test_account_id(4),
+                test_profile_version(5),
+                test_profile_content_version(6),
+                None,
+            ),
+        ];
+        let status = ResponseNextProfilePageStatus::Success;
+
+        let message =
+            create_server_binary_message(&EventToClientInternal::ResponseNextProfilePage {
+                status,
+                profiles: profiles.clone(),
+            });
+        let parsed = parse_server_binary_message(&message).expect("next profile page should parse");
+
+        match parsed {
+            EventToClientInternal::ResponseNextProfilePage {
+                status: parsed_status,
+                profiles: parsed_profiles,
+            } => {
+                assert_eq!(parsed_status, status);
+                assert_eq!(parsed_profiles, profiles);
+            }
+            _ => panic!("unexpected event parsed"),
+        }
+    }
+
+    #[test]
+    fn roundtrip_content_processing_state_changed_message() {
+        let expected = ContentProcessingStateChanged {
+            id: 42,
+            new_state: ContentProcessingStateInternal::Completed {
+                content_id: crate::ContentId { cid: test_uuid(9) },
+                fd: true,
+            },
+        };
+
+        let message = create_server_binary_message(
+            &EventToClientInternal::ContentProcessingStateChanged(expected.clone()),
+        );
+        let parsed = parse_server_binary_message(&message)
+            .expect("content processing state changed should parse");
+
+        match parsed {
+            EventToClientInternal::ContentProcessingStateChanged(parsed_value) => {
+                assert_eq!(parsed_value.id, expected.id);
+                assert_eq!(parsed_value.new_state, expected.new_state);
+            }
+            _ => panic!("unexpected event parsed"),
+        }
+    }
+
+    #[test]
+    fn roundtrip_typing_start_message() {
+        let account_id = test_account_id(10);
+
+        let message = create_server_binary_message(&EventToClientInternal::TypingStart(account_id));
+        let parsed = parse_server_binary_message(&message).expect("typing start should parse");
+
+        match parsed {
+            EventToClientInternal::TypingStart(parsed_account_id) => {
+                assert_eq!(parsed_account_id, account_id);
+            }
+            _ => panic!("unexpected event parsed"),
+        }
+    }
+
+    #[test]
+    fn roundtrip_typing_stop_message() {
+        let account_id = test_account_id(11);
+
+        let message = create_server_binary_message(&EventToClientInternal::TypingStop(account_id));
+        let parsed = parse_server_binary_message(&message).expect("typing stop should parse");
+
+        match parsed {
+            EventToClientInternal::TypingStop(parsed_account_id) => {
+                assert_eq!(parsed_account_id, account_id);
+            }
+            _ => panic!("unexpected event parsed"),
+        }
+    }
+
+    #[test]
+    fn roundtrip_check_online_status_response_message() {
+        let expected = ResponseCheckOnlineStatus {
+            a: test_account_id(12),
+            l: Some(LastSeenTime::new(123_456_789)),
+        };
+
+        let message = create_server_binary_message(
+            &EventToClientInternal::ResponseCheckOnlineStatus(expected.clone()),
+        );
+        let parsed = parse_server_binary_message(&message)
+            .expect("check online status response should parse");
+
+        match parsed {
+            EventToClientInternal::ResponseCheckOnlineStatus(parsed_value) => {
+                assert_eq!(parsed_value.a, expected.a);
+                assert_eq!(parsed_value.l, expected.l);
+            }
+            _ => panic!("unexpected event parsed"),
+        }
+    }
 }
