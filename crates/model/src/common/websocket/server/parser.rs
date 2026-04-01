@@ -50,6 +50,14 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
             let (status, profiles) = parse_response_next_profile_page_payload(&mut message_iter)?;
             EventToClientInternal::ResponseNextProfilePage { status, profiles }
         }
+        ServerMessageType::ResponseAutomaticProfileSearchResetProfilePaging => {
+            let (status, iterator_session_id) =
+                parse_response_reset_profile_paging_payload(&mut message_iter)?;
+            EventToClientInternal::ResponseAutomaticProfileSearchResetProfilePaging {
+                status,
+                iterator_session_id,
+            }
+        }
         ServerMessageType::ContentProcessingStateChanged => {
             EventToClientInternal::ContentProcessingStateChanged(
                 parse_content_processing_state_changed_payload(&mut message_iter)?,
@@ -582,6 +590,32 @@ mod tests {
 
         match parsed {
             EventToClientInternal::ResponseResetProfilePaging {
+                status: parsed_status,
+                iterator_session_id: parsed_iterator_session_id,
+            } => {
+                assert_eq!(parsed_status, status);
+                assert_eq!(parsed_iterator_session_id, iterator_session_id);
+            }
+            _ => panic!("unexpected event parsed"),
+        }
+    }
+
+    #[test]
+    fn roundtrip_response_automatic_profile_search_reset_profile_paging_message() {
+        let status = ResponseResetProfilePagingStatus::Success;
+        let iterator_session_id = Some(55);
+
+        let message = create_server_binary_message(
+            &EventToClientInternal::ResponseAutomaticProfileSearchResetProfilePaging {
+                status,
+                iterator_session_id,
+            },
+        );
+        let parsed = parse_server_binary_message(&message)
+            .expect("automatic profile search reset profile paging should parse");
+
+        match parsed {
+            EventToClientInternal::ResponseAutomaticProfileSearchResetProfilePaging {
                 status: parsed_status,
                 iterator_session_id: parsed_iterator_session_id,
             } => {

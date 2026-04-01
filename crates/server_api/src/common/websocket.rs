@@ -25,6 +25,7 @@ pub enum ClientMessageForServerApiCrate {
     RequestGetNextProfilePage {
         iterator_session_id: ProfileIteratorSessionId,
     },
+    RequestAutomaticProfileSearchResetProfilePaging,
     TypingStart {
         typing_to: AccountId,
     },
@@ -79,6 +80,15 @@ pub fn parse_client_binary_message(
                 ClientMessageForServerApiCrate::RequestGetNextProfilePage {
                     iterator_session_id,
                 },
+            ))
+        }
+        ClientMessageType::RequestAutomaticProfileSearchResetProfilePaging => {
+            if !payload.is_empty() {
+                return Err(WebSocketError::ProtocolError.report());
+            }
+
+            Ok(ClientMessageParsed::ForServerApi(
+                ClientMessageForServerApiCrate::RequestAutomaticProfileSearchResetProfilePaging,
             ))
         }
         ClientMessageType::TypingStart => {
@@ -168,6 +178,9 @@ pub async fn handle_message_from_client(
         ClientMessageForServerApiCrate::RequestGetNextProfilePage {
             iterator_session_id,
         } => profile::handle_get_next_profile_page(state, socket, id, iterator_session_id).await,
+        ClientMessageForServerApiCrate::RequestAutomaticProfileSearchResetProfilePaging => {
+            profile::handle_automatic_profile_search_reset_profile_paging(state, socket, id).await
+        }
         ClientMessageForServerApiCrate::TypingStart { typing_to } => {
             COMMON.event_to_server_typing_start.incr();
             let Some(typing_to) = state

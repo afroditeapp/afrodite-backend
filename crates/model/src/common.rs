@@ -104,6 +104,10 @@ pub enum EventToClientInternal {
         status: ResponseNextProfilePageStatus,
         profiles: Vec<ProfileLink>,
     },
+    ResponseAutomaticProfileSearchResetProfilePaging {
+        status: ResponseResetProfilePagingStatus,
+        iterator_session_id: Option<i64>,
+    },
     NewsChanged,
     MediaContentChanged,
     DailyLikesLeftChanged,

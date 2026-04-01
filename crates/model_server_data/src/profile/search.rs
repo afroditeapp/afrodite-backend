@@ -24,6 +24,12 @@ pub struct AutomaticProfileSearchIteratorSessionId {
     id: i64,
 }
 
+impl AutomaticProfileSearchIteratorSessionId {
+    pub fn as_i64(&self) -> i64 {
+        self.id
+    }
+}
+
 impl From<AutomaticProfileSearchIteratorSessionIdInternal>
     for AutomaticProfileSearchIteratorSessionId
 {

@@ -8,7 +8,9 @@ use server_common::websocket::WebSocketError;
 use server_state::S;
 
 use super::send_event;
-use crate::common::{get_next_profile_page, reset_profile_paging};
+use crate::common::{
+    automatic_profile_search_reset_profile_paging, get_next_profile_page, reset_profile_paging,
+};
 
 pub async fn handle_get_next_profile_page(
     state: &S,
@@ -91,6 +93,47 @@ pub async fn handle_reset_profile_paging(
             send_event(
                 socket,
                 EventToClientInternal::ResponseResetProfilePaging {
+                    status: ResponseResetProfilePagingStatus::InternalServerError,
+                    iterator_session_id: None,
+                },
+            )
+            .await?;
+        }
+    }
+
+    Ok(())
+}
+
+pub async fn handle_automatic_profile_search_reset_profile_paging(
+    state: &S,
+    socket: &mut WebSocket,
+    account_id: AccountIdInternal,
+) -> crate::result::Result<(), WebSocketError> {
+    match automatic_profile_search_reset_profile_paging(account_id, state).await {
+        Ok(iterator_session_id) => {
+            send_event(
+                socket,
+                EventToClientInternal::ResponseAutomaticProfileSearchResetProfilePaging {
+                    status: ResponseResetProfilePagingStatus::Success,
+                    iterator_session_id: Some(iterator_session_id.as_i64()),
+                },
+            )
+            .await?;
+        }
+        Err(crate::utils::StatusCode::TOO_MANY_REQUESTS) => {
+            send_event(
+                socket,
+                EventToClientInternal::ResponseAutomaticProfileSearchResetProfilePaging {
+                    status: ResponseResetProfilePagingStatus::RateLimited,
+                    iterator_session_id: None,
+                },
+            )
+            .await?;
+        }
+        Err(_) => {
+            send_event(
+                socket,
+                EventToClientInternal::ResponseAutomaticProfileSearchResetProfilePaging {
                     status: ResponseResetProfilePagingStatus::InternalServerError,
                     iterator_session_id: None,
                 },

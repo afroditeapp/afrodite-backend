@@ -1,6 +1,8 @@
 use axum::{Extension, extract::State};
 use model::{AccountIdInternal, ProfileLink};
-use model_server_data::{ProfileIteratorSessionId, ProfilePage};
+use model_server_data::{
+    AutomaticProfileSearchIteratorSessionId, ProfileIteratorSessionId, ProfilePage,
+};
 use simple_backend::create_counters;
 
 use crate::{
@@ -125,10 +127,69 @@ pub async fn get_next_profile_page_data(
     Ok(data)
 }
 
+const PATH_POST_AUTOMATIC_PROFILE_SEARCH_RESET_PROFILE_PAGING: &str =
+    "/common_api/automatic_profile_search/reset";
+
+/// Reset automatic profile search profile paging.
+///
+/// After this request getting next profiles will continue from the nearest
+/// profiles.
+#[utoipa::path(
+    post,
+    path = PATH_POST_AUTOMATIC_PROFILE_SEARCH_RESET_PROFILE_PAGING,
+    responses(
+        (status = 200, description = "Update successfull.", body = AutomaticProfileSearchIteratorSessionId),
+        (status = 401, description = "Unauthorized."),
+        (status = 429, description = "Too many requests."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_automatic_profile_search_reset_profile_paging(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+) -> Result<Json<AutomaticProfileSearchIteratorSessionId>, StatusCode> {
+    Ok(
+        automatic_profile_search_reset_profile_paging(account_id, &state)
+            .await?
+            .into(),
+    )
+}
+
+pub async fn automatic_profile_search_reset_profile_paging(
+    account_id: AccountIdInternal,
+    state: &S,
+) -> Result<AutomaticProfileSearchIteratorSessionId, StatusCode> {
+    COMMON
+        .post_automatic_profile_search_reset_profile_paging
+        .incr();
+    state
+        .api_usage_tracker()
+        .incr(account_id, |u| {
+            &u.post_automatic_profile_search_reset_profile_paging
+        })
+        .await;
+    state
+        .api_limits(account_id)
+        .profile()
+        .post_reset_profile_paging()
+        .await?;
+
+    let iterator_session_id: AutomaticProfileSearchIteratorSessionId = state
+        .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {
+            cmds.automatic_profile_search_reset_profile_iterator(account_id)
+        })
+        .await??
+        .into();
+
+    Ok(iterator_session_id)
+}
+
 create_open_api_router!(
     fn router_profile_paging,
     post_reset_profile_paging,
     post_get_next_profile_page,
+    post_automatic_profile_search_reset_profile_paging,
 );
 
 create_counters!(
@@ -137,4 +198,5 @@ create_counters!(
     COMMON_PROFILE_PAGING_COUNTERS_LIST,
     post_reset_profile_paging,
     post_get_next_profile_page,
+    post_automatic_profile_search_reset_profile_paging,
 );
